@@ -19,89 +19,71 @@ import { FlightSearchPanel } from "./FlightSearchPanel";
 import { flowColors, flowStyles } from "./flowStyles";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
 
-const guestHeroSource = require("../../../assets/heroes/home-santorini.png");
-const loggedInHeroSource = {
+const homeHeroSource = {
   uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
 };
-const LOGGED_IN_HERO_WIDTH = 2047;
-const LOGGED_IN_HERO_HEIGHT = 1380;
-const LOGGED_IN_HERO_DISPLAY_HEIGHT = 420;
+const HOME_HERO_WIDTH = 2047;
+const HOME_HERO_HEIGHT = 1380;
+const HOME_HERO_DISPLAY_HEIGHT = 420;
 
 function HomeHero({
-  isAuthenticated,
   safeAreaTop,
 }: {
-  isAuthenticated: boolean;
   safeAreaTop: number;
 }) {
   const { width } = useWindowDimensions();
   const coverScale = Math.max(
-    width / LOGGED_IN_HERO_WIDTH,
-    LOGGED_IN_HERO_DISPLAY_HEIGHT / LOGGED_IN_HERO_HEIGHT,
+    width / HOME_HERO_WIDTH,
+    HOME_HERO_DISPLAY_HEIGHT / HOME_HERO_HEIGHT,
   );
-  const imageWidth = LOGGED_IN_HERO_WIDTH * coverScale;
-  const imageHeight = LOGGED_IN_HERO_HEIGHT * coverScale;
+  const imageWidth = HOME_HERO_WIDTH * coverScale;
+  const imageHeight = HOME_HERO_HEIGHT * coverScale;
 
   // Mirrors the mobile web hero's object-cover and object-position: 62% center.
   const imageLeft = -(imageWidth - width) * 0.62;
-  const imageTop = -(imageHeight - LOGGED_IN_HERO_DISPLAY_HEIGHT) * 0.5;
+  const imageTop = -(imageHeight - HOME_HERO_DISPLAY_HEIGHT) * 0.5;
 
   return (
-    <View style={styles.loggedInHero}>
-      {isAuthenticated ? (
-        <>
-          <Image
-            accessibilityIgnoresInvertColors
-            accessibilityLabel="Traveler with luggage in a modern city"
-            resizeMode="stretch"
-            source={loggedInHeroSource}
-            style={[
-              styles.loggedInHeroImage,
-              {
-                height: imageHeight,
-                left: imageLeft,
-                top: imageTop,
-                width: imageWidth,
-              },
-            ]}
-          />
-          <Svg pointerEvents="none" style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id="horizontalOverlay" x1="0" y1="0" x2="1" y2="0">
-                <Stop offset="0" stopColor="#020617" stopOpacity={0.28} />
-                <Stop offset="0.5" stopColor="#020617" stopOpacity={0.08} />
-                <Stop offset="1" stopColor="#020617" stopOpacity={0} />
-              </LinearGradient>
-              <LinearGradient id="verticalOverlay" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor="#020617" stopOpacity={0.08} />
-                <Stop offset="0.5" stopColor="#020617" stopOpacity={0} />
-                <Stop offset="1" stopColor="#020617" stopOpacity={0.1} />
-              </LinearGradient>
-            </Defs>
-            <Rect width="88%" height="100%" fill="url(#horizontalOverlay)" />
-            <Rect width="100%" height="100%" fill="url(#verticalOverlay)" />
-          </Svg>
-        </>
-      ) : (
-        <>
-          <Image
-            accessibilityIgnoresInvertColors
-            accessibilityLabel="Santorini coastline"
-            resizeMode="cover"
-            source={guestHeroSource}
-            style={styles.guestHeroImage}
-          />
-          <View pointerEvents="none" style={styles.guestHeroOverlay} />
-        </>
-      )}
+    <View style={styles.homeHero}>
+      <Image
+        accessibilityIgnoresInvertColors
+        accessibilityLabel="Traveler with luggage in a modern city"
+        resizeMode="stretch"
+        source={homeHeroSource}
+        style={[
+          styles.homeHeroImage,
+          {
+            height: imageHeight,
+            left: imageLeft,
+            top: imageTop,
+            width: imageWidth,
+          },
+        ]}
+      />
+      <Svg pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <Defs>
+          <LinearGradient id="horizontalOverlay" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0" stopColor="#020617" stopOpacity={0.28} />
+            <Stop offset="0.5" stopColor="#020617" stopOpacity={0.08} />
+            <Stop offset="1" stopColor="#020617" stopOpacity={0} />
+          </LinearGradient>
+          <LinearGradient id="verticalOverlay" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor="#020617" stopOpacity={0.08} />
+            <Stop offset="0.5" stopColor="#020617" stopOpacity={0} />
+            <Stop offset="1" stopColor="#020617" stopOpacity={0.1} />
+          </LinearGradient>
+        </Defs>
+        <Rect width="88%" height="100%" fill="url(#horizontalOverlay)" />
+        <Rect width="100%" height="100%" fill="url(#verticalOverlay)" />
+      </Svg>
       <View
-        style={[styles.loggedInHeroHeader, { paddingTop: safeAreaTop + 5 }]}
+        style={[styles.homeHeroHeader, { paddingTop: safeAreaTop + 5 }]}
       >
         <Image
           accessibilityLabel="Kurioticket"
           resizeMode="contain"
           source={require("../../../assets/kurioticket-logo-primary-light-bg.png")}
-          style={styles.loggedInLogo}
+          style={styles.homeLogo}
         />
         <Pressable
           accessibilityRole="button"
@@ -112,16 +94,6 @@ function HomeHero({
           <FlowIcon name="bell" />
         </Pressable>
       </View>
-      {!isAuthenticated ? (
-        <View style={styles.heroCopy}>
-          <Text style={styles.heroHeading}>
-            Explore the world with Kurioticket
-          </Text>
-          <Text style={styles.heroSupportingText}>
-            Compare flights, hotels and cars in one place.
-          </Text>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -153,7 +125,7 @@ export function SharedHomePage() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <HomeHero isAuthenticated={isAuthenticated} safeAreaTop={insets.top} />
+        <HomeHero safeAreaTop={insets.top} />
         <View style={[styles.products, flowStyles.shadow]}>
           {products.map((product, index) => (
             <Pressable
@@ -214,52 +186,23 @@ export const HomeFlowScreen = SharedHomePage;
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 14, paddingBottom: 120, gap: 14 },
-  loggedInHero: {
-    height: LOGGED_IN_HERO_DISPLAY_HEIGHT,
+  homeHero: {
+    height: HOME_HERO_DISPLAY_HEIGHT,
     marginHorizontal: -14,
     overflow: "hidden",
   },
-  loggedInHeroImage: { position: "absolute" },
-  guestHeroImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: "100%",
-    height: "100%",
-  },
-  guestHeroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(3, 15, 34, 0.42)",
-  },
-  loggedInHeroHeader: {
+  homeHeroImage: { position: "absolute" },
+  homeHeroHeader: {
     minHeight: 57,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  loggedInLogo: {
+  homeLogo: {
     width: 130,
     height: 32,
     transform: [{ translateY: -10 }],
-  },
-  heroCopy: {
-    position: "absolute",
-    left: 18,
-    right: 18,
-    bottom: 18,
-    maxWidth: 290,
-    gap: 6,
-  },
-  heroHeading: {
-    color: "white",
-    fontSize: 22,
-    fontWeight: "800",
-    lineHeight: 27,
-  },
-  heroSupportingText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "500",
-    lineHeight: 20,
   },
   products: {
     marginTop: -34,
