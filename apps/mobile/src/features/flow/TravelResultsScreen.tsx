@@ -113,23 +113,27 @@ export function TravelResultsScreen({ product }: { product: Product }) {
   const title = `${product[0].toUpperCase()}${product.slice(1)} results`;
   const loadingCopy = product === "flight" ? "Searching available flights" : product === "hotel" ? "Checking available stays" : "Checking available cars";
   const retrySearch = () => setRetry((value) => value + 1);
+  const editSearch = () => {
+    if (router.canGoBack()) { router.back(); return; }
+    if (product === "car" && planResult.plan) router.replace({ pathname: "/cars", params: Object.fromEntries(Object.entries(planResult.plan.payload).map(([name, value]) => [name, String(value)])) });
+  };
   return <SafeAreaView style={flowStyles.safe} edges={["top"]}>
     <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={flowStyles.iconButton}><FlowIcon name="back" /></Pressable><View><Text accessibilityRole="header" style={flowStyles.title}>{title}</Text>{planResult.plan ? <Text style={flowStyles.meta}>{planResult.plan.summary}</Text> : null}</View></View>
     <ScrollView contentContainerStyle={flowStyles.scroll}>
       {status === "loading" ? <View style={styles.loading}><ActivityIndicator color={flowColors.blue} size="large" /><Text style={flowStyles.value}>{loadingCopy}</Text><Text style={flowStyles.meta}>This search will stop automatically if providers do not respond.</Text></View> : null}
       {message ? <Text accessibilityRole="alert" style={styles.notice}>{message}</Text> : null}
-      {status === "validating" ? <State title="Search details need attention" body="Edit the search and keep your entered values." edit /> : null}
-      {status === "empty" ? <State title="No results for this search" body="Try different dates or adjust the destination." retry={retrySearch} edit /> : null}
-      {status === "unavailable" ? <State title="Live inventory is unavailable" body="No demo or fallback inventory will be shown." retry={retrySearch} edit /> : null}
-      {status === "error" ? <State title="Search could not be completed" body="Check your connection and try again." retry={retrySearch} edit /> : null}
+      {status === "validating" ? <State title="Search details need attention" body="Edit the search and keep your entered values." onEdit={editSearch} /> : null}
+      {status === "empty" ? <State title="No results for this search" body="Try different dates or adjust the destination." retry={retrySearch} onEdit={editSearch} /> : null}
+      {status === "unavailable" ? <State title="Live inventory is unavailable" body="No demo or fallback inventory will be shown." retry={retrySearch} onEdit={editSearch} /> : null}
+      {status === "error" ? <State title="Search could not be completed" body="Check your connection and try again." retry={retrySearch} onEdit={editSearch} /> : null}
       {results.map((result) => product === "flight" ? <FlightCard key={result.id} result={result as FlightResult} /> : product === "hotel" ? <HotelCard key={result.id} result={result as HotelResult} /> : <CarCard key={result.id} result={result as CarResult} />)}
       {discoveryHotels.length ? <View style={styles.discovery}><Text style={flowStyles.sectionTitle}>Places to consider — live rates unavailable</Text>{discoveryHotels.map((hotel) => <SafeProviderCard key={hotel.id} label={`View ${hotel.name} details`} result={hotel}><Text style={flowStyles.value}>{hotel.name}</Text><Text style={flowStyles.meta}>{hotel.neighbourhood || hotel.location}</Text><Text style={styles.discoveryLabel}>Discovery only — no live rate</Text></SafeProviderCard>)}</View> : null}
     </ScrollView>
   </SafeAreaView>;
 }
 
-function State({ title, body, retry, edit }: { title: string; body: string; retry?: () => void; edit?: boolean }) {
-  return <View style={styles.center}><FlowIcon name="search" color={flowColors.blue} size={38} /><Text style={flowStyles.value}>{title}</Text><Text style={flowStyles.meta}>{body}</Text><View style={styles.actions}>{retry ? <Pressable accessibilityRole="button" onPress={retry} style={flowStyles.primary}><Text style={flowStyles.primaryText}>Try again</Text></Pressable> : null}{edit ? <Pressable accessibilityRole="button" onPress={() => router.back()} style={styles.edit}><Text style={styles.editText}>Edit search</Text></Pressable> : null}</View></View>;
+function State({ title, body, retry, onEdit }: { title: string; body: string; retry?: () => void; onEdit?: () => void }) {
+  return <View style={styles.center}><FlowIcon name="search" color={flowColors.blue} size={38} /><Text style={flowStyles.value}>{title}</Text><Text style={flowStyles.meta}>{body}</Text><View style={styles.actions}>{retry ? <Pressable accessibilityRole="button" onPress={retry} style={flowStyles.primary}><Text style={flowStyles.primaryText}>Try again</Text></Pressable> : null}{onEdit ? <Pressable accessibilityRole="button" onPress={onEdit} style={styles.edit}><Text style={styles.editText}>Edit search</Text></Pressable> : null}</View></View>;
 }
 function SafeProviderCard({ label, result, children }: { label: string; result: Result; children: React.ReactNode }) {
   const actionable = result.searchPolicy.action.enabled;

@@ -22,6 +22,10 @@ test("hotel guests, rooms and car driver age are preserved", () => {
   assert.deepEqual(buildSearchPlan("hotel", { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: "4", rooms: "2" }, now).plan?.payload, { destination: "Paris", checkIn: "2026-08-10", checkOut: "2026-08-12", guests: 4, rooms: 2 });
   assert.equal(buildSearchPlan("car", { pickupLocation: "LAX", dropoffLocation: "SFO", pickupDate: "2026-08-10", pickupTime: "10:00", dropoffDate: "2026-08-12", dropoffTime: "10:00", driverAge: "42" }, now).plan?.payload.driverAge, "42");
 });
+test("car plans reject every server-unsupported driver age from 71 through 99", () => {
+  const base = { pickupLocation: "LAX", dropoffLocation: "SFO", pickupDate: "2026-08-10", pickupTime: "10:00", dropoffDate: "2026-08-12", dropoffTime: "10:00" };
+  for (let age = 71; age <= 99; age += 1) assert.ok(buildSearchPlan("car", { ...base, driverAge: String(age) }, now).error);
+});
 test("shared result policy accepts website inventory and still rejects malformed records", () => {
   const plan = buildSearchPlan("flight", { tripType: "one-way", from: "JFK", to: "LAX", departureDate: "2026-08-10", travelers: "1", cabin: "Economy" }, now).plan!;
   const internalAction = { mode: "live", bookable: true, sourceLabel: "Duffel", action: { kind: "internal-detail", href: "/flights/details/f", enabled: true } };

@@ -1,10 +1,10 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Field, PrimaryButton, UnavailableNotice } from "./FlowPrimitives";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
+import { LocalCalendarModal } from "./LocalCalendarModal";
 import { addCalendarDays, changeGuests, changeRooms, countLabel, firstParam, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, type HotelForm, type RouteValue, validateHotelForm } from "./hotelSearchModel";
 
 export type HotelSearchHandle = { useDestination: (destination: string) => void };
@@ -54,20 +54,11 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
     {errors.guests || errors.rooms ? <Text accessibilityRole="alert" style={styles.error}>{errors.guests || errors.rooms}</Text> : null}
     {notice ? <UnavailableNotice text={notice}/> : null}
     <View style={styles.pad}><PrimaryButton label="Search hotels" onPress={submit}/></View>
-    <CalendarModal kind={calendar} selected={calendar ? form[calendar] : form.checkIn} minimum={calendar === "checkOut" ? addCalendarDays(form.checkIn, 1) : localIsoDate(new Date())} onChoose={chooseDate} onClose={() => setCalendar(undefined)}/>
+    <LocalCalendarModal visible={Boolean(calendar)} title={calendar === "checkOut" ? "Choose check-out date" : "Choose check-in date"} selected={calendar ? form[calendar] : form.checkIn} minimum={calendar === "checkOut" ? addCalendarDays(form.checkIn, 1) : localIsoDate(new Date())} onChoose={chooseDate} onClose={() => setCalendar(undefined)}/>
     <CountModal visible={countsOpen} form={form} onChange={(next) => { update(next); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); }} onClose={() => setCountsOpen(false)}/>
   </View>;
 });
 
-function CalendarModal({ kind, selected, minimum, onChoose, onClose }: { kind?: "checkIn" | "checkOut"; selected: string; minimum: string; onChoose: (iso: string) => void; onClose: () => void }) {
-  const selectedDate = localDateFromIso(selected) ?? new Date();
-  const [monthOffset, setMonthOffset] = useState(0);
-  const month = useMemo(() => new Date(selectedDate.getFullYear(), selectedDate.getMonth() + monthOffset, 1, 12), [kind, monthOffset]);
-  if (!kind) return null;
-  const leading = month.getDay(); const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-  const cells = Array.from({ length: leading + days }, (_, index) => index < leading ? undefined : new Date(month.getFullYear(), month.getMonth(), index - leading + 1, 12));
-  return <Modal visible transparent animationType="slide" onRequestClose={onClose}><SafeAreaView style={styles.overlay}><View accessibilityViewIsModal style={styles.modal}><View style={styles.monthRow}><Pressable accessibilityRole="button" accessibilityLabel="Previous month" onPress={() => setMonthOffset((v) => v - 1)} style={styles.control}><Text style={styles.controlText}>‹</Text></Pressable><Text accessibilityRole="header" style={flowStyles.title}>{month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</Text><Pressable accessibilityRole="button" accessibilityLabel="Next month" onPress={() => setMonthOffset((v) => v + 1)} style={styles.control}><Text style={styles.controlText}>›</Text></Pressable></View><View style={styles.week}>{["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day) => <Text key={day} style={styles.weekday}>{day}</Text>)}</View><View style={styles.grid}>{cells.map((date, index) => { if (!date) return <View key={`blank-${index}`} style={styles.day}/>; const iso = localIsoDate(date); const disabled = iso < minimum; const chosen = iso === selected; return <Pressable key={iso} accessibilityRole="button" accessibilityLabel={date.toLocaleDateString(undefined, { dateStyle: "full" })} accessibilityState={{ disabled, selected: chosen }} disabled={disabled} onPress={() => onChoose(iso)} style={[styles.day, chosen && styles.selectedDay, disabled && styles.disabledDay]}><Text style={[styles.dayText, chosen && styles.selectedText]}>{date.getDate()}{chosen ? " ✓" : ""}</Text></Pressable>; })}</View><Pressable accessibilityRole="button" accessibilityLabel="Close calendar without changing date" onPress={onClose} style={styles.close}><Text style={styles.closeText}>Cancel</Text></Pressable></View></SafeAreaView></Modal>;
-}
 function CountModal({ visible, form, onChange, onClose }: { visible: boolean; form: HotelForm; onChange: (form: HotelForm) => void; onClose: () => void }) {
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><Pressable style={styles.overlay} onPress={onClose}><Pressable accessibilityViewIsModal style={styles.modal}><Text accessibilityRole="header" style={flowStyles.title}>Guests and rooms</Text><Counter label="Guests" value={form.guests} minusDisabled={form.guests <= 1} plusDisabled={form.guests >= 20} onMinus={() => onChange(changeGuests(form, -1))} onPlus={() => onChange(changeGuests(form, 1))}/><Counter label="Rooms" value={form.rooms} minusDisabled={form.rooms <= 1} plusDisabled={form.rooms >= 9 || form.rooms >= form.guests} onMinus={() => onChange(changeRooms(form, -1))} onPlus={() => onChange(changeRooms(form, 1))}/><PrimaryButton label="Done" icon="check" onPress={onClose}/></Pressable></Pressable></Modal>;
 }

@@ -14,6 +14,7 @@ import { StatusBar } from "expo-status-bar";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { HotelSearchPanel, type HotelSearchHandle } from "./HotelSearchPanel";
+import { CarSearchPanel } from "./CarSearchPanel";
 import {
   Field,
   PrimaryButton,
@@ -24,12 +25,6 @@ import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { ResponsiveHero } from "./ResponsiveHero";
 
-const futureIso = (days: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
-};
-const displayDate = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", weekday: "short" });
 
 function Page({
   title,
@@ -175,82 +170,12 @@ export function HotelsScreen() {
 }
 
 export function CarsScreen() {
-  const [location, setLocation] = useState("");
-  const [different, setDifferent] = useState(false);
-  const pickupDate = futureIso(14);
-  const dropoffDate = futureIso(17);
+  const params = useLocalSearchParams<{ pickupLocation?: string | string[]; dropoffLocation?: string | string[]; pickupDate?: string | string[]; pickupTime?: string | string[]; dropoffDate?: string | string[]; dropoffTime?: string | string[]; driverAge?: string | string[] }>();
   return (
-    <Page
-      title="Cars"
-      hero={require("../../../assets/heroes/cars-suv.png")}
-      heroWidth={308}
-      heroHeight={596}
-      focalY={0.66}
-    >
-      <View style={[flowStyles.card, flowStyles.shadow]}>
-        <View style={styles.inputField}>
-          <Text style={flowStyles.label}>Pick-up location</Text>
-          <View style={styles.inputRow}>
-            <TextInput
-              accessibilityLabel="Pick-up location"
-              value={location}
-              onChangeText={setLocation}
-              placeholder="Enter city or airport"
-              placeholderTextColor={flowColors.muted}
-              style={styles.input}
-            />
-            <FlowIcon name="location" size={20} />
-          </View>
-        </View>
-        <Pressable
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: different }}
-          onPress={() => setDifferent(!different)}
-          style={styles.checkboxRow}
-        >
-          <View style={[styles.checkbox, different && styles.checked]}>
-            {different ? (
-              <FlowIcon name="check" color="white" size={15} />
-            ) : null}
-          </View>
-          <Text style={flowStyles.meta}>Return to a different location</Text>
-        </Pressable>
-        <View style={styles.row}>
-          <View style={styles.half}>
-            <Field label="Pick-up date" value={displayDate(pickupDate)} />
-          </View>
-          <View style={styles.half}>
-            <Field label="Time" value="10:00 AM" />
-          </View>
-        </View>
-        <View style={styles.row}>
-          <View style={styles.half}>
-            <Field label="Return date" value={displayDate(dropoffDate)} />
-          </View>
-          <View style={styles.half}>
-            <Field label="Time" value="10:00 AM" />
-          </View>
-        </View>
-        <Field
-          label="Driver age"
-          value="30 – 65 years"
-          trailing={<FlowIcon name="chevron" size={18} />}
-        />
-        <View style={styles.pad}>
-          <PrimaryButton
-            label="Search cars"
-            onPress={() => location.trim() ? router.push({ pathname: "/car-results", params: { pickupLocation: location.trim(), dropoffLocation: location.trim(), pickupDate, dropoffDate, pickupTime: "10:00", dropoffTime: "10:00", driverAge: "30" } }) : undefined}
-          />
-        </View>
-      </View>
-      <Cards
-        title="Car categories"
-        items={[
-          { name: "Economy" },
-          { name: "SUV" },
-          { name: "Luxury" },
-        ]}
-      />
+    <Page title="Cars" hero={require("../../../assets/heroes/cars-suv.png")} heroWidth={308} heroHeight={596} focalY={0.66}>
+      <CarSearchPanel params={params} />
+      <Cards title="Vehicle types" items={[{ name: "Economy" }, { name: "SUV" }, { name: "Luxury" }]} />
+      <Text style={styles.categoryNote}>Examples of common rental vehicle types. Availability is shown only after a search.</Text>
     </Page>
   );
 }
@@ -330,6 +255,7 @@ export function DealsScreen() {
 }
 
 const styles = StyleSheet.create({
+  categoryNote: { color: flowColors.muted, fontSize: 12, lineHeight: 17, paddingHorizontal: 8, marginTop: -8, marginBottom: 8 },
   page: { paddingHorizontal: 9, paddingBottom: 28 },
   heroShell: { height: 290, marginHorizontal: -9, overflow: "hidden" },
   heroHeader: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 5 },

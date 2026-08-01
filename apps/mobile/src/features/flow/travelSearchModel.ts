@@ -50,7 +50,7 @@ export function buildSearchPlan(product: Product, params: Record<string, string 
   const driverAge = integer(text(params.driverAge), 30);
   if (!pickupLocation || !dropoffLocation) return { error: "Enter valid pickup and drop-off locations." };
   if (!future(pickupDate, now) || !future(dropoffDate, now) || !clockTime(pickupTime) || !clockTime(dropoffTime) || `${dropoffDate}T${dropoffTime}` <= `${pickupDate}T${pickupTime}`) return { error: "Choose a return date and time after pickup." };
-  if (driverAge < 18 || driverAge > 99) return { error: "Enter a valid driver age." };
+  if (driverAge < 18 || driverAge > 70) return { error: "Enter a valid driver age from 18 to 70." };
   const payload = { pickupLocation, dropoffLocation, pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge: String(driverAge) };
   return { plan: { payload, key: JSON.stringify(["car", ...Object.values(payload)]), summary: `${pickupLocation} · ${pickupDate}` } };
 }
