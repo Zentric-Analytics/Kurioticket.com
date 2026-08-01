@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { availableFlightAlertCurrencies, buildFlightPriceAlertPayload, MAX_PRICE_ALERT_TARGET, parseTargetPrice } from "./flightPriceAlertModel";
+import { availableFlightAlertCurrencies, buildFlightPriceAlertPayload, flightAlertPresentation, MAX_PRICE_ALERT_TARGET, parseTargetPrice } from "./flightPriceAlertModel";
 
 const plan = { key: "flight", summary: "JFK → CDG", payload: { tripType: "round-trip", origin: "JFK", destination: "CDG", departureDate: "2030-01-01", returnDate: "2030-01-08", adults: 2, children: 1, infants: 0, travelers: 3, cabinClass: "premium-economy" } };
 test("builds canonical premium economy round-trip payload", () => {
@@ -21,4 +21,16 @@ test("extracts only returned supported currencies", () => {
   const result = (currency: string) => ({ currency }) as never;
   assert.deepEqual(availableFlightAlertCurrencies([result("EUR"), result("EUR"), result("USD"), result("ZZZ")]), ["EUR", "USD"]);
   assert.deepEqual(availableFlightAlertCurrencies([]), []);
+});
+test("flight alert stays visible while unsupported currency only disables its action", () => {
+  const result = (currency: string, mode = "live") => ({ currency, searchPolicy: { mode } }) as never;
+  const unavailable = flightAlertPresentation("flight", true, [result("ZZZ")]);
+  assert.equal(unavailable.visible, true); assert.equal(unavailable.enabled, false);
+  const available = flightAlertPresentation("flight", true, [result("USD")]);
+  assert.equal(available.visible, true); assert.equal(available.enabled, true);
+});
+test("hotel and car products never expose the flight alert", () => {
+  const live = [{ currency: "USD", searchPolicy: { mode: "live" } }] as never;
+  assert.equal(flightAlertPresentation("hotel", true, live).visible, false);
+  assert.equal(flightAlertPresentation("car", true, live).visible, false);
 });

@@ -7,7 +7,8 @@ import { getApiBaseUrl } from "../../config/apiUrl";
 import { buildSearchPlan, type Product, validBookableCar, validBookableHotel, validDiscoveryHotel, validFlight } from "./travelSearchModel";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
-import { availableFlightAlertCurrencies, buildFlightPriceAlertPayload, parseTargetPrice } from "./flightPriceAlertModel";
+import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "./flightPriceAlertModel";
+import { getRuntimeDiagnostics } from "../../diagnostics/runtimeDiagnostics";
 
 type Result = FlightResult | HotelResult | CarResult;
 type Status = "validating" | "loading" | "partial" | "ready" | "empty" | "unavailable" | "error";
@@ -114,8 +115,10 @@ export function TravelResultsScreen({ product }: { product: Product }) {
   }, [key, load, retry]);
 
   const title = `${product[0].toUpperCase()}${product.slice(1)} results`;
-  const flightResults = product === "flight" ? results.filter((result) => result.searchPolicy.mode === "live") as FlightResult[] : [];
-  const alertCurrencies = availableFlightAlertCurrencies(flightResults);
+  const flightAlert = flightAlertPresentation(product, Boolean(planResult.plan), results as FlightResult[]);
+  const flightResults = flightAlert.liveResults;
+  const alertCurrencies = flightAlert.currencies;
+  const diagnostics = getRuntimeDiagnostics();
   const alertCurrency = alertCurrencies.includes(selectedCurrency) ? selectedCurrency : alertCurrencies.length === 1 ? alertCurrencies[0] : "";
   const createAlert = async () => {
     if (creating || !planResult.plan || !alertCurrency) return;
@@ -138,12 +141,16 @@ export function TravelResultsScreen({ product }: { product: Product }) {
     if (product === "flight" && planResult.plan) router.replace({ pathname: "/flights", params: Object.fromEntries(Object.entries(params).map(([name, value]) => [name, one(value) ?? ""])) });
     if (product === "car" && planResult.plan) router.replace({ pathname: "/cars", params: Object.fromEntries(Object.entries(planResult.plan.payload).map(([name, value]) => [name, String(value)])) });
   };
+  useEffect(() => {
+    if (product !== "flight") return;
+    console.info("[flight-results] current-price-alert-ui=true", { product, hasPlan: Boolean(planResult.plan), resultCount: results.length, liveFlightResultCount: flightResults.length, availableAlertCurrencies: alertCurrencies });
+  }, [product, Boolean(planResult.plan), results.length, flightResults.length, alertCurrencies.join(",")]);
   return <SafeAreaView style={flowStyles.safe} edges={["top"]}>
-    <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={flowStyles.iconButton}><FlowIcon name="back" /></Pressable><View><Text accessibilityRole="header" style={flowStyles.title}>{title}</Text>{planResult.plan ? <Text style={flowStyles.meta}>{planResult.plan.summary}</Text> : null}</View></View>
+    <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={flowStyles.iconButton}><FlowIcon name="back" /></Pressable><View><Text accessibilityRole="header" style={flowStyles.title}>{title}</Text>{planResult.plan ? <Text style={flowStyles.meta}>{planResult.plan.summary}</Text> : null}{product === "flight" && (__DEV__ || diagnostics.channel === "preview") ? <Text style={styles.fingerprint}>Build: {diagnostics.shortUpdateId}</Text> : null}</View></View>
     <ScrollView contentContainerStyle={flowStyles.scroll}>
       {status === "loading" ? <View style={styles.loading}><ActivityIndicator color={flowColors.blue} size="large" /><Text style={flowStyles.value}>{loadingCopy}</Text><Text style={flowStyles.meta}>This search will stop automatically if providers do not respond.</Text></View> : null}
       {message ? <Text accessibilityRole="alert" style={styles.notice}>{message}</Text> : null}
-      {product === "flight" && planResult.plan ? <View style={[styles.track, flowStyles.shadow]}><Text style={flowStyles.sectionTitle}>Track this search</Text><Text style={flowStyles.meta}>Get notified when this flight search reaches your target price.</Text>{alertCurrencies.length > 1 ? <View accessibilityLabel="Choose alert currency" style={styles.currencyRow}>{alertCurrencies.map((currency) => <Pressable key={currency} accessibilityRole="button" accessibilityState={{ selected: alertCurrency === currency }} onPress={() => setSelectedCurrency(currency)} style={[styles.currency, alertCurrency === currency && styles.currencySelected]}><Text>{currency}</Text></Pressable>)}</View> : null}<Pressable accessibilityRole="button" accessibilityLabel="Create price alert" accessibilityState={{ disabled: !alertCurrency }} disabled={!alertCurrency} onPress={() => { if (!alertOpen) { setTargetError(""); setAlertOpen(true); } }} style={[flowStyles.primary, !alertCurrency && styles.disabled]}><Text style={flowStyles.primaryText}>Create price alert</Text></Pressable>{!alertCurrency ? <Text accessibilityRole="alert" style={flowStyles.meta}>{flightResults.length ? "A supported result currency was not available for this search." : "Price alerts require a valid live flight result."}</Text> : null}</View> : null}
+      {flightAlert.visible ? <View style={[styles.track, flowStyles.shadow]}><Text style={flowStyles.sectionTitle}>Track this search</Text><Text style={flowStyles.meta}>Get notified when this flight search reaches your target price.</Text>{alertCurrencies.length > 1 ? <View accessibilityLabel="Choose alert currency" style={styles.currencyRow}>{alertCurrencies.map((currency) => <Pressable key={currency} accessibilityRole="button" accessibilityState={{ selected: alertCurrency === currency }} onPress={() => setSelectedCurrency(currency)} style={[styles.currency, alertCurrency === currency && styles.currencySelected]}><Text>{currency}</Text></Pressable>)}</View> : null}<Pressable accessibilityRole="button" accessibilityLabel="Create price alert" accessibilityState={{ disabled: !alertCurrency }} disabled={!alertCurrency} onPress={() => { if (!alertOpen) { setTargetError(""); setAlertOpen(true); } }} style={[flowStyles.primary, !alertCurrency && styles.disabled]}><Text style={flowStyles.primaryText}>Create price alert</Text></Pressable>{!alertCurrency ? <Text accessibilityRole="alert" style={flowStyles.meta}>{flightResults.length ? "A supported result currency was not available for this search." : "Price alerts require a valid live flight result."}</Text> : null}</View> : null}
       {status === "validating" ? <State title="Search details need attention" body="Edit the search and keep your entered values." onEdit={editSearch} /> : null}
       {status === "empty" ? <State title="No results for this search" body="Try different dates or adjust the destination." retry={retrySearch} onEdit={editSearch} /> : null}
       {status === "unavailable" ? <State title="Live inventory is unavailable" body="No demo or fallback inventory will be shown." retry={retrySearch} onEdit={editSearch} /> : null}
@@ -183,6 +190,7 @@ function CarCard({ result }: { result: CarResult }) {
 }
 const styles = StyleSheet.create({
   header: { minHeight: 68, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 8, borderBottomColor: flowColors.border, borderBottomWidth: 1 },
+  fingerprint: { color: flowColors.muted, fontSize: 11 },
   loading: { minHeight: 260, alignItems: "center", justifyContent: "center", gap: 12, padding: 24, backgroundColor: "white", borderRadius: 14 },
   center: { minHeight: 280, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },
   notice: { color: flowColors.navy, backgroundColor: "#F2F6FF", borderRadius: 10, padding: 12 },

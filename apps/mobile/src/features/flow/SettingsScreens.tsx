@@ -7,6 +7,7 @@ import { clearSession, readSession } from "../../storage/sessionStorage";
 import { readCurrency, writeCurrency } from "../../storage/preferenceStorage";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
+import { getRuntimeDiagnostics } from "../../diagnostics/runtimeDiagnostics";
 
 function Header({ title }: { title: string }) {
   return (
@@ -22,6 +23,7 @@ function Header({ title }: { title: string }) {
 
 export function SettingsScreen() {
   const [email, setEmail] = useState("");
+  const diagnostics = getRuntimeDiagnostics();
   useEffect(() => { void readSession().then((session) => setEmail(session?.user.email || "")); }, []);
   const signOut = async () => {
     await clearSession();
@@ -45,6 +47,10 @@ export function SettingsScreen() {
             <Text style={styles.primaryText}>Sign in</Text>
           </Pressable>
         )}
+        <Text style={flowStyles.sectionTitle}>System information</Text>
+        <View style={[flowStyles.card, flowStyles.shadow, styles.account]} accessibilityLabel="Build diagnostics">
+          {[["Application version", diagnostics.applicationVersion], ["Native build", diagnostics.nativeBuildVersion], ["Runtime", diagnostics.runtimeVersion], ["Update ID", diagnostics.updateId], ["Channel", diagnostics.channel], ["Created", diagnostics.createdAt], ["Embedded update", diagnostics.embedded ? "Yes" : "No"], ["Expo project", diagnostics.projectId], ["API environment", diagnostics.apiBaseUrl]].map(([label, value]) => <View key={label}><Text style={flowStyles.label}>{label}</Text><Text selectable style={styles.diagnosticValue}>{value}</Text></View>)}
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -96,5 +102,6 @@ const styles = StyleSheet.create({
   primaryText: { color: "white", fontWeight: "800" },
   row: { minHeight: 54, flexDirection: "row", alignItems: "center", paddingHorizontal: 16, borderBottomColor: flowColors.border, borderBottomWidth: 1 },
   grow: { flex: 1 },
+  diagnosticValue: { color: flowColors.navy, fontSize: 13 },
   error: { color: "#D92D20" },
 });

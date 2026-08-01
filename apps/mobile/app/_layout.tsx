@@ -1,8 +1,12 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { AppThemeProvider, useAppTheme } from "../src/theme/AppTheme";
+import { useEffect } from "react";
+import { buildStartupLog } from "../src/diagnostics/buildDiagnostics";
+import { getRuntimeDiagnostics } from "../src/diagnostics/runtimeDiagnostics";
 
 export default function RootLayout() {
+  useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
   return <AppThemeProvider><ThemedRootLayout /></AppThemeProvider>;
 }
 
