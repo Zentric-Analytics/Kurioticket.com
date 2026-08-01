@@ -5,6 +5,10 @@ export type HomepageAirport = {
   airport: string;
 };
 
+import { homepageAirportGroups, type HomepageAirportGroup } from "./homepageAirportGroups";
+
+export type HomepageAirportResult = HomepageAirport | (HomepageAirportGroup & { airport: "All airports"; isMetro: true });
+
 export const HOMEPAGE_AIRPORT_RESULT_LIMIT = 20;
 
 /** A bundled catalogue used only by the two airport sheets on the homepage. */
@@ -98,23 +102,76 @@ export const homepageAirports: readonly HomepageAirport[] = [
   { code: "PER", city: "Perth", country: "Australia", airport: "Perth Airport" },
   { code: "AKL", city: "Auckland", country: "New Zealand", airport: "Auckland Airport" },
   { code: "CHC", city: "Christchurch", country: "New Zealand", airport: "Christchurch International Airport" },
+  { code: "EWR", city: "New York", country: "United States", airport: "Newark Liberty International Airport" },
+  { code: "LGA", city: "New York", country: "United States", airport: "LaGuardia Airport" },
+  { code: "SWF", city: "New York", country: "United States", airport: "New York Stewart International Airport" },
+  { code: "DCA", city: "Washington", country: "United States", airport: "Ronald Reagan Washington National Airport" },
+  { code: "BWI", city: "Washington", country: "United States", airport: "Baltimore/Washington International Airport" },
+  { code: "MDW", city: "Chicago", country: "United States", airport: "Chicago Midway International Airport" },
+  { code: "YTZ", city: "Toronto", country: "Canada", airport: "Billy Bishop Toronto City Airport" },
+  { code: "YHM", city: "Toronto", country: "Canada", airport: "John C. Munro Hamilton International Airport" },
+  { code: "LGW", city: "London", country: "United Kingdom", airport: "Gatwick Airport" },
+  { code: "STN", city: "London", country: "United Kingdom", airport: "Stansted Airport" },
+  { code: "LTN", city: "London", country: "United Kingdom", airport: "Luton Airport" },
+  { code: "LCY", city: "London", country: "United Kingdom", airport: "London City Airport" },
+  { code: "SEN", city: "London", country: "United Kingdom", airport: "London Southend Airport" },
+  { code: "ORY", city: "Paris", country: "France", airport: "Paris Orly Airport" },
+  { code: "BVA", city: "Paris", country: "France", airport: "Paris Beauvais Airport" },
+  { code: "MXP", city: "Milan", country: "Italy", airport: "Milan Malpensa Airport" },
+  { code: "LIN", city: "Milan", country: "Italy", airport: "Milan Linate Airport" },
+  { code: "BGY", city: "Milan", country: "Italy", airport: "Milan Bergamo Airport" },
+  { code: "CIA", city: "Rome", country: "Italy", airport: "Ciampino Airport" },
+  { code: "SVO", city: "Moscow", country: "Russia", airport: "Sheremetyevo International Airport" },
+  { code: "DME", city: "Moscow", country: "Russia", airport: "Domodedovo International Airport" },
+  { code: "VKO", city: "Moscow", country: "Russia", airport: "Vnukovo International Airport" },
+  { code: "ZIA", city: "Moscow", country: "Russia", airport: "Zhukovsky International Airport" },
+  { code: "BMA", city: "Stockholm", country: "Sweden", airport: "Stockholm Bromma Airport" },
+  { code: "NYO", city: "Stockholm", country: "Sweden", airport: "Stockholm Skavsta Airport" },
+  { code: "VST", city: "Stockholm", country: "Sweden", airport: "Stockholm Vasteras Airport" },
+  { code: "GMP", city: "Seoul", country: "South Korea", airport: "Gimpo International Airport" },
+  { code: "PKX", city: "Beijing", country: "China", airport: "Beijing Daxing International Airport" },
+  { code: "KIX", city: "Osaka", country: "Japan", airport: "Kansai International Airport" },
+  { code: "ITM", city: "Osaka", country: "Japan", airport: "Osaka Itami Airport" },
+  { code: "UKB", city: "Osaka", country: "Japan", airport: "Kobe Airport" },
+  { code: "SHA", city: "Shanghai", country: "China", airport: "Shanghai Hongqiao International Airport" },
+  { code: "HLP", city: "Jakarta", country: "Indonesia", airport: "Halim Perdanakusuma International Airport" },
+  { code: "SDU", city: "Rio de Janeiro", country: "Brazil", airport: "Santos Dumont Airport" },
+  { code: "CGH", city: "Sao Paulo", country: "Brazil", airport: "Sao Paulo Congonhas Airport" },
+  { code: "VCP", city: "Sao Paulo", country: "Brazil", airport: "Viracopos International Airport" },
+  { code: "AEP", city: "Buenos Aires", country: "Argentina", airport: "Aeroparque Jorge Newbery" },
 ];
 
 const normalizedFields = (airport: HomepageAirport) =>
   [airport.code, airport.airport, airport.city, airport.country].map((field) => field.toLocaleLowerCase());
 
-export function searchHomepageAirports(query: string): HomepageAirport[] {
+export function searchHomepageAirports(query: string): HomepageAirportResult[] {
   const term = query.trim().toLocaleLowerCase();
   if (!term) return homepageAirports.slice(0, HOMEPAGE_AIRPORT_RESULT_LIMIT);
 
-  return homepageAirports
-    .map((airport, index) => {
-      const fields = normalizedFields(airport);
-      const score = airport.code.toLocaleLowerCase() === term ? 0 : fields.some((field) => field.startsWith(term)) ? 1 : 2;
-      return { airport, index, score, matches: fields.some((field) => field.includes(term)) };
-    })
-    .filter((result) => result.matches)
-    .sort((left, right) => left.score - right.score || left.index - right.index)
-    .slice(0, HOMEPAGE_AIRPORT_RESULT_LIMIT)
-    .map((result) => result.airport);
+  const relatedGroupCodes = new Set<string>();
+  const directlyMatchedGroupCodes = new Set<string>();
+  homepageAirportGroups.forEach((group) => {
+    const groupFields = [group.code, group.city, ...group.aliases].map((value) => value.toLocaleLowerCase());
+    if (groupFields.some((value) => value.includes(term))) directlyMatchedGroupCodes.add(group.code);
+    if (directlyMatchedGroupCodes.has(group.code) || group.airportCodes.some((code) => code.toLocaleLowerCase() === term)) relatedGroupCodes.add(group.code);
+  });
+  const ranked: { result: HomepageAirportResult; score: number; index: number }[] = [];
+  homepageAirportGroups.forEach((group, index) => {
+    if (!relatedGroupCodes.has(group.code)) return;
+    const code = group.code.toLocaleLowerCase(); const city = group.city.toLocaleLowerCase();
+    const aliases = group.aliases.map((alias) => alias.toLocaleLowerCase());
+    const score = code === term ? 0 : city === term ? 2 : code.startsWith(term) || city.startsWith(term) ? 4 : aliases.some((alias) => alias.includes(term)) ? 6 : 8;
+    ranked.push({ result: { ...group, airport: "All airports", isMetro: true }, score, index });
+  });
+  homepageAirports.forEach((airport, index) => {
+    const code = airport.code.toLocaleLowerCase(); const city = airport.city.toLocaleLowerCase();
+    const group = homepageAirportGroups.find((candidate) => candidate.airportCodes.includes(airport.code));
+    const contextual = group ? relatedGroupCodes.has(group.code) : false;
+    const fields = normalizedFields(airport);
+    if (!contextual && !fields.some((field) => field.includes(term))) return;
+    const score = code === term ? 1 : city === term || (contextual && directlyMatchedGroupCodes.has(group!.code)) ? 3 : code.startsWith(term) || city.startsWith(term) ? 5 : airport.airport.toLocaleLowerCase().includes(term) ? 7 : airport.country.toLocaleLowerCase().includes(term) ? 8 : 9;
+    ranked.push({ result: airport, score, index: homepageAirportGroups.length + index });
+  });
+  const seen = new Set<string>();
+  return ranked.sort((a, b) => a.score - b.score || a.index - b.index).map(({ result }) => result).filter((result) => !seen.has(result.code) && Boolean(seen.add(result.code))).slice(0, HOMEPAGE_AIRPORT_RESULT_LIMIT);
 }
