@@ -129,12 +129,12 @@ export function SharedHomePage() {
   return (
     <SafeAreaView style={flowStyles.safe} edges={[]}>
       <StatusBar style="dark" translucent backgroundColor="white" />
-      <HomeTopNavigation safeAreaTop={insets.top} />
       <ScrollView
         style={styles.homeScroll}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        <HomeTopNavigation safeAreaTop={insets.top} />
         <HomeHero />
         <View style={[styles.products, flowStyles.shadow]}>
           {products.map((product, index) => (
@@ -164,7 +164,7 @@ export function SharedHomePage() {
             </Pressable>
           ))}
         </View>
-        <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker initializeHomepageDates />
+        <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Track prices and save"
@@ -206,6 +206,7 @@ const styles = StyleSheet.create({
   homeHeroImage: { position: "absolute" },
   homeTopNavigation: {
     backgroundColor: "white",
+    marginHorizontal: -14,
     borderBottomColor: flowColors.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
     elevation: 2,
