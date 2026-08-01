@@ -1,31 +1,58 @@
 "use client";
-import Image from "next/image";
-import Link from "next/link";
-import { BedDouble, CalendarDays, Car, Check, ImageOff, Plane } from "lucide-react";
-import { formatCurrency } from "@/lib/currency/formatCurrency";
+
+import { AlertCircle, CalendarDays } from "lucide-react";
 import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
-import type { DealsPackageCandidate, DealsPackageProduct } from "@/lib/deals/dealsPackageCandidates";
+import type { DealsPackageCandidate } from "@/lib/deals/dealsPackageCandidates";
 import { getDealsPackageCardPresentation } from "@/lib/deals/dealsPackageCardPresentation";
+import { DealsPackageCarSummary } from "./DealsPackageCarSummary";
+import { DealsPackageFlightSummary } from "./DealsPackageFlightSummary";
+import { DealsPackageHotelSummary } from "./DealsPackageHotelSummary";
+import { DealsPackagePricePanel } from "./DealsPackagePricePanel";
 
-type Props={candidate:DealsPackageCandidate;search:DealsSearch;locale:string;selected:boolean;t:(key:string)=>string;onSelect:()=>void};
-const badgeStyle={recommended:"bg-cyan-50 text-cyan-800","lowest-total":"bg-emerald-50 text-emerald-800",comfort:"bg-indigo-50 text-indigo-800",alternative:"bg-slate-100 text-slate-700"};
-const interpolate=(value:string,values:Record<string,string|number>)=>Object.entries(values).reduce((copy,[key,replacement])=>copy.replaceAll(`{{${key}}}`,String(replacement)),value);
+type Props = {
+  candidate: DealsPackageCandidate;
+  search: DealsSearch;
+  locale: string;
+  selected: boolean;
+  t: (key: string) => string;
+  onSelect: () => void;
+};
 
-export function DealsPackageCard({candidate,search,locale,selected,t,onSelect}:Props){
- const view=getDealsPackageCardPresentation(candidate,search);
- const formatDate=(value:string,withTime=false)=>{if(!value)return t("deals.results.package.notProvided");const date=new Date(withTime?value:`${value}T00:00:00`);return Number.isNaN(date.valueOf())?value:new Intl.DateTimeFormat(locale,withTime?{dateStyle:"medium",timeStyle:"short"}:{dateStyle:"medium"}).format(date)};
- const compactPrice=(amount:number,currency:string)=>formatCurrency(amount,currency,{maximumFractionDigits:currency.toUpperCase()==="JPY"?0:2,minimumFractionDigits:0});
- const details=(product:DealsPackageProduct,path:string|null)=>path?<Link href={path} className="inline-flex min-h-10 items-center font-bold text-[#004BB8] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2">{t(`deals.results.package.details.${product}`)}</Link>:null;
- return <article aria-labelledby={view.headingId} className={`scroll-mt-20 rounded-3xl border bg-white shadow-sm transition motion-reduce:transition-none hover:shadow-md ${selected?"border-[#004BB8] ring-2 ring-blue-100":"border-slate-200"}`}>
-  <header className="border-b border-slate-100 px-5 py-4 sm:flex sm:items-start sm:justify-between sm:gap-6 sm:px-6"><div className="min-w-0"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-extrabold ${badgeStyle[candidate.strategy]}`}>{t(candidate.badgeKey)}</span><h2 id={view.headingId} tabIndex={-1} className="mt-2 scroll-mt-20 text-xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]">{view.title}</h2></div><p className="mt-3 flex shrink-0 items-center gap-2 text-sm font-semibold text-slate-700 sm:mt-1"><CalendarDays aria-hidden className="h-4 w-4 text-[#004BB8]"/>{formatDate(view.dateRange.start)}{view.dateRange.end?` – ${formatDate(view.dateRange.end)}`:""}</p></header>
-  <div className="grid min-w-0 xl:grid-cols-[minmax(0,1fr)_minmax(280px,34%)]">
-   <div className="min-w-0 divide-y divide-slate-200 px-5 sm:px-6">
-    {view.flight&&<section aria-labelledby={`${view.headingId}-flight`} className="py-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 id={`${view.headingId}-flight`} className="flex items-center gap-2 font-extrabold"><Plane aria-hidden className="h-4 w-4 text-[#004BB8]"/>{t("deals.results.package.flight")}</h3><p className="mt-1 font-bold">{view.flight.airline}{view.flight.number?` · ${view.flight.number}`:""}</p></div>{details("flight",view.flight.detailsPath)}</div><div className="mt-4 grid gap-3 sm:grid-cols-2">{view.flight.legs.map((leg,index)=><div key={`${leg.direction}-${index}`} className="rounded-xl bg-slate-50 p-3"><p className="text-xs font-bold uppercase tracking-wide text-[#004BB8]">{leg.direction==="return"?t("deals.results.package.return"):index===0?t("deals.results.package.outbound"):t("deals.results.package.leg")}</p><p className="mt-1 font-extrabold" dir="ltr">{leg.origin} → {leg.destination}</p><p className="text-sm text-slate-700">{formatDate(leg.departure,true)} – {formatDate(leg.arrival,true)}</p><p className="mt-1 text-sm text-slate-600">{leg.duration} · {leg.stops===0?t("deals.results.package.nonstop"):interpolate(t("deals.results.package.stops"),{count:leg.stops})}</p>{leg.layovers.length>0&&<p className="text-sm text-slate-600">{t("deals.results.package.layovers")}: {leg.layovers.map(item=>`${item.duration} ${item.airport}`).join(" · ")}</p>}{leg.segments.length>1&&<p className="text-xs text-slate-500">{interpolate(t("deals.results.package.segments"),{count:leg.segments.length})}</p>}</div>)}</div><p className="mt-3 text-sm text-slate-600">{view.flight.cabin} · {view.flight.baggage}</p></section>}
-    {view.hotel&&<section aria-labelledby={`${view.headingId}-hotel`} className="py-5"><div className="grid gap-4 sm:grid-cols-[150px_minmax(0,1fr)]"><div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100">{view.hotel.image?<Image src={view.hotel.image} alt="" fill sizes="150px" className="object-cover"/>:<div className="flex h-full items-center justify-center gap-2 text-xs text-slate-500"><ImageOff aria-hidden className="h-4 w-4"/>{t("deals.results.package.imageUnavailable")}</div>}</div><div className="min-w-0"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 id={`${view.headingId}-hotel`} className="flex items-center gap-2 font-extrabold"><BedDouble aria-hidden className="h-4 w-4 text-[#004BB8]"/>{t("deals.results.package.hotel")}</h3><p className="mt-1 text-lg font-bold">{view.hotel.name}</p></div>{details("hotel",view.hotel.detailsPath)}</div><p className="mt-2 text-sm text-slate-700">{view.hotel.stars?interpolate(t("deals.results.package.stars"),{count:view.hotel.stars}):t("deals.results.package.unclassified")}{view.hotel.review!==null?` · ${view.hotel.review.toFixed(1)}/10${view.hotel.reviewCount!==undefined?` (${interpolate(t("deals.results.package.reviews"),{count:view.hotel.reviewCount})})`:""}`:""}</p><p className="mt-2 text-sm text-slate-700">{view.hotel.location} · {view.hotel.room}</p><p className="text-sm text-slate-600">{formatDate(view.hotel.checkIn)} – {formatDate(view.hotel.checkOut)} · {interpolate(t("deals.results.package.staySummary"),{nights:view.hotel.nights??"—",rooms:view.hotel.rooms,guests:view.hotel.guests})}</p><p className="mt-1 text-sm text-slate-600">{view.hotel.cancellation}</p>{view.hotel.amenities.length>0&&<p className="mt-1 text-sm text-slate-600">{view.hotel.amenities.join(" · ")}</p>}</div></div></section>}
-    {view.car&&<section aria-labelledby={`${view.headingId}-car`} className="py-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 id={`${view.headingId}-car`} className="flex items-center gap-2 font-extrabold"><Car aria-hidden className="h-4 w-4 text-[#004BB8]"/>{t("deals.results.package.car")}</h3><p className="mt-1 font-bold">{view.car.model} · {view.car.category}</p></div>{details("car",view.car.detailsPath)}</div><div className="mt-3 grid gap-1 text-sm text-slate-600 sm:grid-cols-2"><p>{view.car.locations}</p><p>{view.car.capacity.passengers} {t("deals.results.package.passengers")} · {view.car.capacity.bags} {t("deals.results.package.bags")}</p><p>{formatDate(view.car.pickupDate)} {view.car.pickupTime} – {formatDate(view.car.returnDate)} {view.car.returnTime}</p><p>{interpolate(t("deals.results.package.rentalDays"),{count:view.car.duration??"—"})} · {t(view.car.policy.freeCancellation?"deals.results.package.freeCancellation":"deals.results.package.cancellationRestrictions")} · {t(view.car.policy.payAtPickup?"deals.results.package.payAtPickup":"deals.results.package.prepayment")}</p></div></section>}
-   </div>
-   <aside className="min-w-0 border-t border-slate-200 bg-slate-50 p-5 xl:border-s xl:border-t-0"><p id={`${view.headingId}-total-label`} className="text-xs font-bold uppercase tracking-wide text-slate-500">{t("deals.results.package.estimatedTotal")}</p><p aria-labelledby={`${view.headingId}-total-label`} className="mt-1 break-words text-2xl font-extrabold text-[#004BB8]">{candidate.estimatedTotal===null?t("deals.results.priceUnavailable"):compactPrice(candidate.estimatedTotal,candidate.displayCurrency)}</p><dl className="my-4 space-y-3 border-y border-slate-200 py-4">{candidate.priceBreakdown.map(item=><div key={item.product} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 text-sm"><dt>{t(`deals.results.package.price.${item.product}`)}</dt><dd title={`${item.sourceAmount} ${item.sourceCurrency}`} className="max-w-full break-words text-right font-bold">{item.displayAmount===null?t("deals.results.priceUnavailable"):compactPrice(item.displayAmount,candidate.displayCurrency)}<span className="block text-xs font-normal text-slate-500">{t("deals.results.package.providerPrice")}: {compactPrice(item.sourceAmount,item.sourceCurrency)}</span></dd></div>)}</dl><p className="text-xs text-slate-600">{interpolate(t("deals.results.package.providerCount"),{count:candidate.providerCount})}</p><button type="button" aria-pressed={selected} onClick={onSelect} className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 font-extrabold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${selected?"bg-[#004BB8] text-white":"border border-[#004BB8] bg-white text-[#004BB8]"}`}>{selected&&<Check aria-hidden className="h-4 w-4"/>}{t(selected?"deals.results.package.selected":"deals.results.package.choose")}</button></aside>
-  </div>
-  <footer className="border-t border-slate-200 px-5 py-4 text-xs leading-5 text-slate-600 sm:px-6">{t("deals.results.package.disclosure")}</footer>
- </article>;
+const badgeStyle = {
+  recommended: "bg-cyan-50 text-cyan-800",
+  "lowest-total": "bg-emerald-50 text-emerald-800",
+  comfort: "bg-indigo-50 text-indigo-800",
+  alternative: "bg-slate-100 text-slate-700",
+};
+
+export function DealsPackageCard({ candidate, search, locale, selected, t, onSelect }: Props) {
+  const view = getDealsPackageCardPresentation(candidate, search, locale);
+
+  return (
+    <article aria-labelledby={view.headingId} aria-describedby={`${view.headingId}-summary`} className={`scroll-mt-20 overflow-hidden rounded-2xl border bg-white shadow-sm transition motion-reduce:transition-none hover:shadow-md ${selected ? "border-[#004BB8] ring-2 ring-blue-100" : "border-slate-200"}`}>
+      <p id={`${view.headingId}-summary`} className="sr-only">{view.header.accessibleSummary}</p>
+      <header className="flex flex-wrap items-start justify-between gap-x-5 gap-y-2 border-b border-slate-100 px-4 py-3 sm:px-5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-extrabold ${badgeStyle[candidate.strategy]}`}>{t(candidate.badgeKey)}</span>
+            <span className="text-xs font-semibold text-slate-500">{view.header.modeLabel}</span>
+          </div>
+          <h2 id={view.headingId} tabIndex={-1} className="mt-1.5 scroll-mt-20 text-lg font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]">{view.header.title}</h2>
+        </div>
+        <div className="text-sm text-slate-700">
+          <p className="flex items-center gap-2 font-semibold"><CalendarDays aria-hidden className="h-4 w-4 text-[#004BB8]" />{view.header.dateRangeLabel}</p>
+          {view.header.stayDurationLabel && <p className="mt-0.5 text-right text-xs text-slate-500">{view.header.stayDurationLabel}</p>}
+        </div>
+      </header>
+      {view.routeNotice && <p className="flex items-start gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-900 sm:px-5"><AlertCircle aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />{view.routeNotice.label}</p>}
+      <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_260px]">
+        <div className="min-w-0 divide-y divide-slate-200 px-4 sm:px-5">
+          {view.flight && <DealsPackageFlightSummary flight={view.flight} headingId={view.headingId} t={t} />}
+          {view.hotel && <DealsPackageHotelSummary hotel={view.hotel} headingId={view.headingId} t={t} />}
+          {view.car && <DealsPackageCarSummary car={view.car} headingId={view.headingId} t={t} />}
+        </div>
+        <DealsPackagePricePanel candidate={candidate} headingId={view.headingId} selected={selected} t={t} onSelect={onSelect} />
+      </div>
+    </article>
+  );
 }
