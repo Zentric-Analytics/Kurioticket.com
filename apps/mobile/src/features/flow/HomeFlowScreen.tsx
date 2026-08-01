@@ -183,7 +183,6 @@ export function SharedHomePage() {
           ))}
         </View>
         <FlightSearchPanel compact />
-        <PopularDestinationStays />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Track prices and save"
@@ -205,6 +204,7 @@ export function SharedHomePage() {
           </View>
           <FlowIcon name="chevron" />
         </Pressable>
+        {isAuthenticated ? <PopularDestinationStays /> : null}
       </ScrollView>
     </SafeAreaView>
   );
