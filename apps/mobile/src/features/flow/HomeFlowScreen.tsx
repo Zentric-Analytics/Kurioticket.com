@@ -236,7 +236,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  loggedInLogo: { width: 130, height: 32 },
+  loggedInLogo: {
+    width: 130,
+    height: 32,
+    transform: [{ translateY: -10 }],
+  },
   heroImage: { borderRadius: 20 },
   heroOverlay: {
     flex: 1,
