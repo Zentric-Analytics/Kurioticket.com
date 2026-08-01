@@ -7,7 +7,7 @@ type Props = { hotel: NonNullable<DealsPackageCardView["hotel"]>; headingId: str
 
 export function DealsPackageHotelSummary({ hotel, headingId, t }: Props) {
   return (
-    <section aria-labelledby={`${headingId}-hotel`} className="py-4">
+    <section aria-labelledby={`${headingId}-hotel`} className="py-4 xl:py-3">
       <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-4 lg:grid-cols-[136px_minmax(0,1fr)]">
         <div className="relative aspect-square overflow-hidden rounded-xl bg-slate-100">
           {hotel.image ? <Image src={hotel.image} alt="" fill sizes="(min-width: 1024px) 136px, (min-width: 640px) 120px, 96px" className="object-cover" /> : <div className="flex h-full items-center justify-center"><ImageOff aria-label={t("deals.results.package.imageUnavailable")} className="h-6 w-6 text-slate-400 sm:h-7 sm:w-7" /></div>}
