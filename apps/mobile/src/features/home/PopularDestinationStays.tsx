@@ -148,9 +148,10 @@ export function PopularDestinationStays() {
                         y2="1"
                       >
                         <Stop offset="0" stopColor="#020617" stopOpacity={0} />
-                        <Stop offset="0.55" stopColor="#020617" stopOpacity={0} />
-                        <Stop offset="0.75" stopColor="#020617" stopOpacity={0.28} />
-                        <Stop offset="1" stopColor="#020617" stopOpacity={0.9} />
+                        <Stop offset="0.72" stopColor="#020617" stopOpacity={0} />
+                        <Stop offset="0.82" stopColor="#020617" stopOpacity={0.08} />
+                        <Stop offset="0.92" stopColor="#020617" stopOpacity={0.38} />
+                        <Stop offset="1" stopColor="#020617" stopOpacity={0.82} />
                       </LinearGradient>
                     </Defs>
                     <Rect
@@ -230,6 +231,8 @@ const styles = StyleSheet.create({
     left: 14,
     minHeight: 28,
     paddingHorizontal: 14,
+    alignSelf: "flex-start",
+    flexDirection: "row",
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: "rgba(255,255,255,0.38)",
