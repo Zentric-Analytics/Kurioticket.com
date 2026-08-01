@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router, useLocalSearchParams } from "expo-router";
 import { FlightSearchPanel } from "./FlightSearchPanel";
+import { HotelSearchPanel, type HotelSearchHandle } from "./HotelSearchPanel";
 import {
   Field,
   PrimaryButton,
@@ -94,9 +95,11 @@ function Page({
 function Cards({
   title,
   items,
+  onItemPress,
 }: {
   title: string;
   items: { name: string; detail?: string; image?: number }[];
+  onItemPress?: (name: string) => void;
 }) {
   return (
     <>
@@ -109,13 +112,13 @@ function Cards({
         contentContainerStyle={styles.cardRow}
       >
         {items.map((item) => (
-          <View key={item.name} style={[styles.smallCard, flowStyles.shadow]}>
+          <Pressable key={item.name} accessibilityRole={onItemPress ? "button" : undefined} accessibilityLabel={onItemPress ? `Use ${item.name} as hotel destination` : undefined} disabled={!onItemPress} onPress={() => onItemPress?.(item.name)} style={({ pressed }) => [styles.smallCard, flowStyles.shadow, pressed && flowStyles.pressed]}>
             {item.image ? (
               <Image source={item.image} style={styles.smallImage} />
             ) : null}
             <Text style={flowStyles.value}>{item.name}</Text>
             {item.detail ? <Text style={flowStyles.meta}>{item.detail}</Text> : null}
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
     </>
@@ -144,11 +147,8 @@ export function FlightsScreen() {
 }
 
 export function HotelsScreen() {
-  const params = useLocalSearchParams<{ destination?: string | string[] }>();
-  const initialDestination = Array.isArray(params.destination) ? params.destination[0] : params.destination;
-  const [destination, setDestination] = useState(initialDestination ?? "");
-  const checkIn = futureIso(14);
-  const checkOut = futureIso(17);
+  const params = useLocalSearchParams<{ destination?: string | string[]; checkIn?: string | string[]; checkOut?: string | string[]; guests?: string | string[]; rooms?: string | string[] }>();
+  const panel = useRef<HotelSearchHandle>(null);
   return (
     <Page
       title="Hotels"
@@ -157,41 +157,7 @@ export function HotelsScreen() {
       heroHeight={596}
       focalY={0.63}
     >
-      <View style={[flowStyles.card, flowStyles.shadow]}>
-        <View style={styles.inputField}>
-          <Text style={flowStyles.label}>Destination</Text>
-          <View style={styles.inputRow}>
-            <TextInput
-              accessibilityLabel="Destination"
-              value={destination}
-              onChangeText={setDestination}
-              placeholder="Enter city or hotel"
-              placeholderTextColor={flowColors.muted}
-              style={styles.input}
-            />
-            <FlowIcon name="location" size={20} />
-          </View>
-        </View>
-        <View style={styles.row}>
-          <View style={styles.half}>
-            <Field label="Check-in" value={displayDate(checkIn)} />
-          </View>
-          <View style={styles.half}>
-            <Field label="Check-out" value={displayDate(checkOut)} />
-          </View>
-        </View>
-        <Field
-          label="Guests"
-          value="1 Room, 2 Guests"
-          trailing={<FlowIcon name="chevron" size={18} />}
-        />
-        <View style={styles.pad}>
-          <PrimaryButton
-            label="Search hotels"
-            onPress={() => destination.trim() ? router.push({ pathname: "/hotel-results", params: { destination: destination.trim(), checkIn, checkOut, rooms: "1", guests: "2" } }) : undefined}
-          />
-        </View>
-      </View>
+      <HotelSearchPanel ref={panel} params={params} />
       <Cards
         title="Featured destinations"
         items={[
@@ -202,6 +168,7 @@ export function HotelsScreen() {
           { name: "Paris", image: require("../../../assets/destinations/paris.jpg") },
           { name: "Bali" },
         ]}
+        onItemPress={(destination) => panel.current?.useDestination(destination)}
       />
     </Page>
   );
