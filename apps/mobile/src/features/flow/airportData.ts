@@ -2,8 +2,8 @@ import { airports as globalAirports } from "../../../../../src/data/airports";
 
 /**
  * Mobile compatibility view of the canonical repository airport catalogue.
- * A relative workspace import works in Metro and in the Node test runner;
- * TypeScript's `@/*` alias alone was not sufficient at runtime. This keeps one
+ * Metro is configured in apps/mobile/metro.config.js to watch the repository
+ * root, while Node tests resolve this relative import directly. This keeps one
  * airport seed source. New destination behavior belongs in destinationCatalogue.
  */
 export type Airport = {

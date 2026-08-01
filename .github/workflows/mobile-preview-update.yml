@@ -1,6 +1,12 @@
 name: Publish mobile preview update
 
 on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - "apps/mobile/**"
+      - ".github/workflows/mobile-preview-update.yml"
   push:
     branches:
       - dev
@@ -10,7 +16,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: mobile-preview-update
+  group: mobile-preview-update-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -18,11 +24,12 @@ permissions:
 
 jobs:
   publish-preview-update:
-    name: Publish mobile preview update
+    name: Validate and publish mobile preview
     runs-on: ubuntu-latest
 
     steps:
       - name: Check for EXPO_TOKEN
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
@@ -43,6 +50,7 @@ jobs:
           cache-dependency-path: apps/mobile/package-lock.json
 
       - name: Setup Expo and EAS
+        if: github.event_name != 'pull_request'
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
@@ -64,6 +72,12 @@ jobs:
         working-directory: apps/mobile
         run: npm run expo:doctor
 
+      - name: Validate Metro export
+        working-directory: apps/mobile
+        env:
+          CI: "1"
+        run: npx expo export --platform all --output-dir /tmp/kurioticket-mobile-export --clear
+
       - name: Select safe delivery method
         id: delivery
         if: github.event_name == 'push'
@@ -79,8 +93,10 @@ jobs:
           fi
 
       - name: Publish update to preview channel
-        if: github.event_name == 'workflow_dispatch' || steps.delivery.outputs.native_changed != 'true'
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && steps.delivery.outputs.native_changed != 'true')
         working-directory: apps/mobile
+        env:
+          CI: "1"
         run: >-
           eas update
           --channel preview
@@ -90,6 +106,6 @@ jobs:
           --message "Automated preview update from dev ${{ github.sha }}"
 
       - name: Build native preview app
-        if: steps.delivery.outputs.native_changed == 'true'
+        if: github.event_name == 'push' && steps.delivery.outputs.native_changed == 'true'
         working-directory: apps/mobile
         run: eas build --platform android --profile preview --non-interactive
