@@ -19,6 +19,34 @@ const deferred = <T>() => {
   return { promise, resolve, reject };
 };
 
+const APPROVED_FEATURED_IDS = [
+  "fr-paris",
+  "gb-london",
+  "us-new-york",
+  "id-bali",
+  "ng-lagos",
+  "ae-dubai",
+  "jp-tokyo",
+  "za-cape-town",
+  "it-rome",
+  "tr-istanbul",
+  "th-bangkok",
+  "es-barcelona",
+  "eg-cairo",
+  "ma-marrakesh",
+  "sg-singapore",
+  "nl-amsterdam",
+  "ca-toronto",
+  "us-los-angeles",
+  "ng-abuja",
+  "gh-accra",
+  "za-johannesburg",
+  "ke-nairobi",
+  "pt-lisbon",
+  "au-sydney",
+  "br-rio-de-janeiro",
+] as const;
+
 test("shared airport catalogue derives a stable destination catalogue", () => {
   assert.ok(airports.length > 12);
   assert.ok(destinations.length > 12);
@@ -57,10 +85,10 @@ test("search covers names, countries, ISO codes, airport codes, airport names, a
 });
 
 test("featured IDs and media manifest are explicit and valid", () => {
-  assert.deepEqual(FEATURED_DESTINATIONS.map((item) => item.destination.id), ["fr-paris", "id-bali", "gb-london", "us-new-york"]);
+  assert.deepEqual(FEATURED_DESTINATIONS.map((item) => item.destination.id), APPROVED_FEATURED_IDS);
   assert.doesNotThrow(assertDestinationMediaIsValid);
   assert.equal(DESTINATION_MEDIA.length, destinations.length);
-  assert.equal(EXPLICIT_DESTINATION_MEDIA.length, 3);
+  assert.equal(EXPLICIT_DESTINATION_MEDIA.length, APPROVED_FEATURED_IDS.length);
   assert.ok(DESTINATION_MEDIA.every((media) => media.source));
   assert.equal(DESTINATION_MEDIA.filter((media) => media.provenance === "fallback").length, destinations.length - EXPLICIT_DESTINATION_MEDIA.length);
 });

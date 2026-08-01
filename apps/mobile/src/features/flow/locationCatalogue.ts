@@ -3,7 +3,33 @@ import { destinationById, destinations, type Destination } from "../explore/dest
 import { destinationImage } from "../explore/destinationMedia";
 
 export type LocationPresentation = { destination: Destination; airport: Airport; image?: number };
-const FEATURED_DESTINATION_IDS = ["fr-paris", "id-bali", "gb-london", "us-new-york"] as const;
+const FEATURED_DESTINATION_IDS = [
+  "fr-paris",
+  "gb-london",
+  "us-new-york",
+  "id-bali",
+  "ng-lagos",
+  "ae-dubai",
+  "jp-tokyo",
+  "za-cape-town",
+  "it-rome",
+  "tr-istanbul",
+  "th-bangkok",
+  "es-barcelona",
+  "eg-cairo",
+  "ma-marrakesh",
+  "sg-singapore",
+  "nl-amsterdam",
+  "ca-toronto",
+  "us-los-angeles",
+  "ng-abuja",
+  "gh-accra",
+  "za-johannesburg",
+  "ke-nairobi",
+  "pt-lisbon",
+  "au-sydney",
+  "br-rio-de-janeiro",
+] as const;
 
 function locationById(id: string): LocationPresentation {
   const destination = destinationById.get(id);

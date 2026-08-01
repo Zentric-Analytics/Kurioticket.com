@@ -6,10 +6,11 @@ import { FEATURED_DESTINATIONS, HERO_SLIDES, INTERESTS } from "./exploreData";
 
 const mediaSource = () => readFileSync("src/features/explore/destinationMedia.ts", "utf8");
 
-test("featured and maintained inspiration remain a small curated set", () => {
-  assert.equal(FEATURED_DESTINATIONS.length, 4);
+test("featured destinations use the approved 25-item catalogue while inspiration stays curated", () => {
+  assert.equal(FEATURED_DESTINATIONS.length, 25);
   assert.equal(HERO_SLIDES.length, 4);
   assert.equal(INTERESTS.length, 4);
+  assert.equal(new Set(FEATURED_DESTINATIONS.map((item) => item.destination.id)).size, 25);
   for (const item of FEATURED_DESTINATIONS) assert.ok(item.destination.id);
 });
 
@@ -28,6 +29,6 @@ test("visible interests use the same maintained destination mappings", () => {
   ]);
 });
 
-test("known unverified Bali destination asset is not in the destination media manifest", () => {
-  assert.doesNotMatch(mediaSource(), /destinations\/bali\.jpg/);
+test("approved Bali destination asset is registered in the destination media manifest", () => {
+  assert.match(mediaSource(), /destinations\/bali\.jpg/);
 });
