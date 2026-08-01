@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { airports } from "../flow/airportData";
-import { countries, destinationCardLayout, exploreBottomPadding, REGION_BY_AIRPORT, regions, searchExplore } from "./exploreModels";
+import { countries, destinationCardLayout, exactExploreResult, exploreBottomPadding, REGION_BY_AIRPORT, regions, searchExplore } from "./exploreModels";
 import { parseSavedDestinationIds, resolveSavedDestinationIds } from "../../storage/savedDestinationsModel";
 import { SavedDestinationsStore } from "../../storage/savedDestinationsStore";
 import { navigateFromDestination, selectFromBrowser } from "./exploreInteractionModels";
@@ -19,6 +19,7 @@ test("Explore search handles empty, exact, partial, code, countries, aliases, in
  assert.equal(searchExplore("Beaches")[0]?.match,"interest"); assert.deepEqual(searchExplore("unknown"),[]);
 });
 test("ranking is exact, prefix, contains and deterministic",()=>{const r=searchExplore("on");assert.ok(r.every((x,i)=>i===0||r[i-1]!.rank<=x.rank));assert.deepEqual(searchExplore("usa"),searchExplore("USA"));});
+test("exact search submission only resolves one exact result",()=>{assert.equal(exactExploreResult(searchExplore("Paris"))?.code,"CDG");assert.equal(exactExploreResult(searchExplore("Par")),undefined);assert.equal(exactExploreResult([]),undefined);});
 test("country, code, and interest searches remain supported",()=>{
  assert.deepEqual(searchExplore("United Kingdom").map(x=>x.airport.code),["LHR"]);
  assert.deepEqual(searchExplore("Dubai").map(x=>x.airport.code),["DXB"]);
@@ -68,4 +69,7 @@ test("destination navigation captures params and closes first",()=>{
 });
 test("browser selection closes before opening destination actions",()=>{
  const events:string[]=[];selectFromBrowser(airports[0]!,()=>events.push("close"),airport=>events.push(`open:${airport.code}`));assert.deepEqual(events,["close",`open:${airports[0]!.code}`]);
+});
+test("browser selection can defer actions until its close render is scheduled",()=>{
+ const events:string[]=[],scheduled:(()=>void)[]=[];selectFromBrowser(airports[0]!,()=>events.push("close"),airport=>events.push(`open:${airport.code}`),open=>scheduled.push(open));assert.deepEqual(events,["close"]);scheduled[0]?.();assert.deepEqual(events,["close",`open:${airports[0]!.code}`]);
 });

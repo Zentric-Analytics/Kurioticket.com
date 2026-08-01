@@ -20,6 +20,12 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
   }).sort((a, b) => a.rank - b.rank || a.airport.city.localeCompare(b.airport.city) || a.airport.code.localeCompare(b.airport.code));
 }
 
+/** Returns the only exact catalogue or maintained-interest match, if one exists. */
+export function exactExploreResult(results: readonly ExploreSearchResult[]): Airport | undefined {
+  const exact = results.filter((result) => result.rank === 0);
+  return exact.length === 1 ? exact[0]?.airport : undefined;
+}
+
 export function searchableCountryValues(airport: Airport): string[] {
   return airport.country === "USA" ? ["USA", "United States"] : [airport.country];
 }
