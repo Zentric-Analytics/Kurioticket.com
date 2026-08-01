@@ -5,7 +5,7 @@ import { airports } from "../flow/airportData";
 import { destinations, destinationByAirportCode, deriveDestinations } from "./destinationCatalogue";
 import { ALL_DESTINATIONS, destinationCardLayout, exactExploreResult, EXPLORE_TABS, exploreBottomPadding, searchExplore } from "./exploreModels";
 import { FEATURED_DESTINATIONS } from "./exploreData";
-import { DESTINATION_MEDIA, assertDestinationMediaIsValid } from "./destinationMedia";
+import { DESTINATION_MEDIA, EXPLICIT_DESTINATION_MEDIA, assertDestinationMediaIsValid } from "./destinationMedia";
 import { navigateFromDestination, selectFromBrowser } from "./exploreInteractionModels";
 import { parseSavedDestinationIds, resolveSavedDestinationIds } from "../../storage/savedDestinationsModel";
 import { SavedDestinationsStore } from "../../storage/savedDestinationsStore";
@@ -59,7 +59,10 @@ test("search covers names, countries, ISO codes, airport codes, airport names, a
 test("featured IDs and media manifest are explicit and valid", () => {
   assert.deepEqual(FEATURED_DESTINATIONS.map((item) => item.destination.id), ["fr-paris", "id-bali", "gb-london", "us-new-york"]);
   assert.doesNotThrow(assertDestinationMediaIsValid);
-  assert.equal(DESTINATION_MEDIA.length, 3);
+  assert.equal(DESTINATION_MEDIA.length, destinations.length);
+  assert.equal(EXPLICIT_DESTINATION_MEDIA.length, 3);
+  assert.ok(DESTINATION_MEDIA.every((media) => media.source));
+  assert.equal(DESTINATION_MEDIA.filter((media) => media.provenance === "fallback").length, destinations.length - EXPLICIT_DESTINATION_MEDIA.length);
 });
 
 test("saved values resolve to stable destination IDs safely and idempotently", () => {
