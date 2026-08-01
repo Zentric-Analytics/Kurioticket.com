@@ -45,8 +45,8 @@ export function DealsPackageCard({ candidate, search, locale, selected, t, onSel
         </div>
       </header>
       {view.routeNotice && <p className="flex items-start gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-900 sm:px-5"><AlertCircle aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />{view.routeNotice.label}</p>}
-      <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_260px]">
-        <div className="min-w-0 divide-y divide-slate-200 px-4 sm:px-5">
+      <div className="grid min-w-0 xl:grid-cols-[minmax(0,1fr)_288px] xl:items-start xl:gap-4 xl:p-4">
+        <div className="min-w-0 divide-y divide-slate-200 px-4 sm:px-5 xl:px-1">
           {view.flight && <DealsPackageFlightSummary flight={view.flight} headingId={view.headingId} t={t} />}
           {view.hotel && <DealsPackageHotelSummary hotel={view.hotel} headingId={view.headingId} t={t} />}
           {view.car && <DealsPackageCarSummary car={view.car} headingId={view.headingId} t={t} />}

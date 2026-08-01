@@ -7,6 +7,7 @@ const toolbar = readFileSync(new URL("./DealsPackageResultsToolbar.tsx", import.
 const card = readFileSync(new URL("./DealsPackageCard.tsx", import.meta.url), "utf8");
 const pricePanel = readFileSync(new URL("./DealsPackagePricePanel.tsx", import.meta.url), "utf8");
 const flightSummary = readFileSync(new URL("./DealsPackageFlightSummary.tsx", import.meta.url), "utf8");
+const skeleton = readFileSync(new URL("./DealsPreviewSkeleton.tsx", import.meta.url), "utf8");
 
 test("results render one combined package list after the shared search header", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
@@ -70,7 +71,36 @@ test("combined cards disclose estimated totals and separate provider booking", (
   assert.match(card, /candidate\.badgeKey/);
   assert.match(pricePanel, /deals\.results\.package\.providerPrice/);
   assert.match(pricePanel, /deals\.results\.package\.providerCount/);
+  assert.match(pricePanel, /deals\.results\.package\.choose/);
+  assert.match(pricePanel, /deals\.results\.package\.selected/);
+  assert.match(pricePanel, /aria-pressed=\{selected\}/);
+  assert.match(pricePanel, /selected && <Check aria-hidden/);
+  assert.match(pricePanel, /candidate\.priceBreakdown\.map/);
   assert.doesNotMatch(card + pricePanel, /candidate\.reasonKey|deals\.results\.package\.providedBy|provider\(view\./);
   assert.doesNotMatch(card + pricePanel, /discount|saving|one checkout|one reservation/i);
   assert.doesNotMatch(flightSummary, /segments/);
+});
+
+test("package pricing uses a full-width summary before a content-height xl side panel", () => {
+  assert.match(card, /xl:grid-cols-\[minmax\(0,1fr\)_288px\]/);
+  assert.match(card, /xl:items-start/);
+  assert.doesNotMatch(card, /lg:grid-cols-\[minmax\(0,1fr\)_260px\]/);
+  assert.ok(card.indexOf("<DealsPackageFlightSummary") < card.indexOf("<DealsPackagePricePanel"));
+  assert.ok(card.indexOf("<DealsPackageHotelSummary") < card.indexOf("<DealsPackagePricePanel"));
+  assert.ok(card.indexOf("<DealsPackageCarSummary") < card.indexOf("<DealsPackagePricePanel"));
+
+  assert.match(pricePanel, /xl:self-start/);
+  assert.match(pricePanel, /md:grid-cols-\[minmax\(0,0\.8fr\)_minmax\(0,1\.2fr\)\]/);
+  assert.match(pricePanel, /lg:grid-cols-\[minmax\(180px,0\.75fr\)_minmax\(300px,1\.15fr\)_minmax\(220px,0\.85fr\)\]/);
+  assert.match(pricePanel, /xl:block/);
+  assert.doesNotMatch(pricePanel, /\b(?:h-full|min-h-full|justify-between|justify-around|justify-evenly|mt-auto|flex-grow)\b/);
+});
+
+test("the loading card mirrors the compact responsive pricing layout", () => {
+  assert.match(skeleton, /xl:grid-cols-\[minmax\(0,1fr\)_288px\]/);
+  assert.match(skeleton, /xl:items-start/);
+  assert.match(skeleton, /xl:self-start/);
+  assert.match(skeleton, /md:grid-cols-\[minmax\(0,0\.8fr\)_minmax\(0,1\.2fr\)\]/);
+  assert.match(skeleton, /lg:grid-cols-\[minmax\(180px,0\.75fr\)_minmax\(300px,1\.15fr\)_minmax\(220px,0\.85fr\)\]/);
+  assert.doesNotMatch(skeleton, /lg:grid-cols-\[minmax\(0,1fr\)_260px\]/);
 });
