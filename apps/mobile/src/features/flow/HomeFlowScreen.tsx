@@ -1,7 +1,7 @@
 import {
+  Animated,
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
@@ -27,11 +27,7 @@ const HOME_HERO_WIDTH = 2047;
 const HOME_HERO_HEIGHT = 1380;
 const HOME_HERO_DISPLAY_HEIGHT = 300;
 
-function HomeHero({
-  safeAreaTop,
-}: {
-  safeAreaTop: number;
-}) {
+function HomeHero() {
   const { width } = useWindowDimensions();
   const coverScale = Math.max(
     width / HOME_HERO_WIDTH,
@@ -77,7 +73,25 @@ function HomeHero({
         <Rect width="88%" height="100%" fill="url(#horizontalOverlay)" />
         <Rect width="100%" height="100%" fill="url(#verticalOverlay)" />
       </Svg>
+    </View>
+  );
+}
+
+function HomeTopNavigation({
+  safeAreaTop,
+  solidOpacity,
+}: {
+  safeAreaTop: number;
+  solidOpacity: Animated.AnimatedInterpolation<number>;
+}) {
+  return (
+    <View pointerEvents="box-none" style={styles.homeTopNavigation}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.homeTopNavigationSolid, { opacity: solidOpacity }]}
+      />
       <View
+        pointerEvents="box-none"
         style={[styles.homeHeroHeader, { paddingTop: safeAreaTop + 5 }]}
       >
         <Image
@@ -112,6 +126,12 @@ const products: {
 export function SharedHomePage() {
   const insets = useSafeAreaInsets();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const solidHeaderOpacity = scrollY.interpolate({
+    inputRange: [HOME_HERO_DISPLAY_HEIGHT - 110, HOME_HERO_DISPLAY_HEIGHT - 50],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
 
   useEffect(() => {
     void readSession()
@@ -122,11 +142,16 @@ export function SharedHomePage() {
   return (
     <SafeAreaView style={flowStyles.safe} edges={[]}>
       <StatusBar style="dark" translucent backgroundColor="transparent" />
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true },
+        )}
+        scrollEventThrottle={16}
       >
-        <HomeHero safeAreaTop={insets.top} />
+        <HomeHero />
         <View style={[styles.products, flowStyles.shadow]}>
           {products.map((product, index) => (
             <Pressable
@@ -179,7 +204,11 @@ export function SharedHomePage() {
         </Pressable>
         <PopularDestinationStays />
         <DiscoverNextAdventure />
-      </ScrollView>
+      </Animated.ScrollView>
+      <HomeTopNavigation
+        safeAreaTop={insets.top}
+        solidOpacity={solidHeaderOpacity}
+      />
     </SafeAreaView>
   );
 }
@@ -194,6 +223,24 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   homeHeroImage: { position: "absolute" },
+  homeTopNavigation: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  homeTopNavigationSolid: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "white",
+    borderBottomColor: flowColors.border,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    elevation: 2,
+    shadowColor: "#18305B",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
   homeHeroHeader: {
     minHeight: 57,
     paddingHorizontal: 16,
