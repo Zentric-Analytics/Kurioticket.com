@@ -18,6 +18,7 @@ import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { flowColors, flowStyles } from "./flowStyles";
+import { PopularDestinationStays } from "../home/PopularDestinationStays";
 
 const guestHeroSource = require("../../../assets/heroes/home-santorini.png");
 const loggedInHeroSource = {
@@ -210,6 +211,7 @@ export function HomeFlowScreen() {
           </View>
           <FlowIcon name="chevron" />
         </Pressable>
+        <PopularDestinationStays />
       </ScrollView>
     </SafeAreaView>
   );
