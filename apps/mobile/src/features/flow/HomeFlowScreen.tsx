@@ -18,6 +18,7 @@ import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { flowColors, flowStyles } from "./flowStyles";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
+import { DiscoverNextAdventure } from "../home/DiscoverNextAdventure";
 
 const homeHeroSource = {
   uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
@@ -177,6 +178,7 @@ export function SharedHomePage() {
           <FlowIcon name="chevron" />
         </Pressable>
         <PopularDestinationStays />
+        <DiscoverNextAdventure />
       </ScrollView>
     </SafeAreaView>
   );
