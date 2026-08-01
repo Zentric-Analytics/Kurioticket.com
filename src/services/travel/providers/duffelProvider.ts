@@ -8,7 +8,7 @@ import type { FlightSearchParams, NormalizedFlightResult, ProviderResult } from 
 import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
 import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
-import { airports, type AirportOption } from "@/data/airports";
+import { airports, searchAirports, type AirportOption } from "@/data/airports";
 import { countryNameToCountryCode, isIsoCountryCode, normalizeCountryCode } from "@/lib/geo/context";
 import { distanceKm } from "@/lib/geo/distance";
 
@@ -332,14 +332,6 @@ const filterIntentionalForeignPlaces = (
   });
 };
 
-const airportMatchesQuery = (airport: AirportOption, normalizedQuery: string) => {
-  const haystack = [airport.code, airport.city, airport.airport]
-    .filter(Boolean)
-    .map((value) => normalizeSuggestionText(value || ""));
-
-  return haystack.some((value) => value.includes(normalizedQuery));
-};
-
 const curatedAirportToSuggestion = (airport: AirportOption): DuffelPlaceSuggestion => ({
   code: airport.code,
   city: airport.city,
@@ -369,7 +361,7 @@ export const searchCuratedPlaceSuggestions = (query: string, searchContext?: Pla
   const normalizedQuery = normalizeSuggestionText(query);
   if (!normalizedQuery) return [];
 
-  const matchingAirports = airports.filter((airport) => airportMatchesQuery(airport, normalizedQuery));
+  const matchingAirports = searchAirports(query, airports.length);
   const orderByCode = new Map(airports.map((airport, index) => [airport.code, index]));
 
   const rankedPlaces = rankPlaces(
