@@ -64,6 +64,12 @@ jobs:
         working-directory: apps/mobile
         run: npm run expo:doctor
 
+      - name: Validate Metro export
+        working-directory: apps/mobile
+        env:
+          CI: "1"
+        run: npx expo export --platform all --output-dir /tmp/kurioticket-mobile-export --clear
+
       - name: Select safe delivery method
         id: delivery
         if: github.event_name == 'push'
@@ -81,6 +87,8 @@ jobs:
       - name: Publish update to preview channel
         if: github.event_name == 'workflow_dispatch' || steps.delivery.outputs.native_changed != 'true'
         working-directory: apps/mobile
+        env:
+          CI: "1"
         run: >-
           eas update
           --channel preview
