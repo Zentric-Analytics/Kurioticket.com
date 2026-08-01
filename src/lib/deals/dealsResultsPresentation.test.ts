@@ -49,7 +49,7 @@ const makeCar = (id: string, values: Partial<NormalizedCarResult> = {}): Normali
   pickupType: "airport-counter", pickupLocation: "LAX", returnLocation: "LAX",
   shuttleRequired: false, rentalCompanyName: "Rental Co", supplierRating: 8,
   supplierReviewCount: 10, recommendationScore: 50, requiredDocuments: [],
-  includedItems: [], importantInformation: [], isDemo: true,
+  includedItems: [], importantInformation: [], inventorySource: "kurioticket-static-cars",
   offers: [{ id: `${id}-offer`, bookingProviderName: "Provider", rentalCompanyName: "Rental Co", currency: "USD", pricePerDay: 50, totalPrice: 150, taxesAndFeesIncluded: true, payAtPickup: true, freeCancellation: true }],
   ...values,
 });

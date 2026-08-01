@@ -2,10 +2,7 @@ import {
   getAdminEmails,
   getAuthSecret,
   getDuffelApiMode,
-  getFlightProviderPrimary,
-  getHotelProviderPrimary,
   getHotelbedsApiMode,
-  getKayakApiMode,
   getTravelProviderMode,
 } from "@/lib/env";
 import { getOptionalPrisma, isDatabaseConfigured, withOptionalDb } from "@/lib/prisma";
@@ -127,12 +124,12 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
     getLatestHotelFailure(),
   ]);
 
-  const flightPrimary = getFlightProviderPrimary();
-  const flightCredentials = flightPrimary === "duffel" && Boolean(process.env.DUFFEL_API_KEY);
+  const flightPrimary = "duffel";
+  const flightCredentials = Boolean(process.env.DUFFEL_API_KEY);
   const flightEnvironment = getDuffelApiMode() === "test" ? "Test mode" : "Production";
 
-  const hotelPrimary = getHotelProviderPrimary();
-  const hotelCredentials = getHotelCredentialsPresent(hotelPrimary);
+  const hotelPrimary = "hotelbeds";
+  const hotelCredentials = Boolean(process.env.HOTELBEDS_API_KEY && process.env.HOTELBEDS_SECRET);
 
   return [
     {
@@ -153,7 +150,7 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
       providerName: hotelProviderLabel(hotelPrimary),
       environment: hotelEnvironment(hotelPrimary),
       credentialsPresent: hotelCredentials,
-      searchEnabled: hotelPrimary !== "none" && hotelCredentials,
+      searchEnabled: hotelCredentials,
       bookingEnabled: false,
       lastSuccessfulRequest: hotelRequest,
       lastFailedRequest: hotelFailure,
@@ -225,9 +222,7 @@ function hasAnyProviderCredentials() {
   return Boolean(
     process.env.DUFFEL_API_KEY ||
       process.env.HOTELBEDS_API_KEY ||
-      process.env.HOTEL_API_KEY ||
-      process.env.TRAVELPAYOUTS_API_KEY ||
-      process.env.CAR_PROVIDER_API_KEY,
+      process.env.HOTELBEDS_SECRET,
   );
 }
 
@@ -244,30 +239,8 @@ function safeProviderEnvironment(value?: string) {
   return getTravelProviderMode() === "production" ? "Production" : "Sandbox/Test";
 }
 
-function getHotelCredentialsPresent(provider: string) {
-  if (provider === "hotelbeds") return Boolean(process.env.HOTELBEDS_API_KEY && process.env.HOTELBEDS_SECRET);
-  if (provider === "generic_partner") return Boolean(process.env.HOTEL_API_KEY || process.env.TRAVELPAYOUTS_API_KEY);
-  if (provider === "kayak_sandbox") return Boolean(process.env.HOTEL_API_KEY || process.env.TRAVELPAYOUTS_API_KEY);
-  if (provider === "amadeus_hotels") return Boolean(process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET);
-  return false;
-}
-
-function hotelProviderLabel(provider: string) {
-  return {
-    none: "Not connected",
-    kayak_sandbox: "Configured hotel provider",
-    hotelbeds: "Hotelbeds",
-    amadeus_hotels: "Configured hotel provider",
-    generic_partner: "Configured hotel provider",
-  }[provider] || "Not connected";
-}
-
-function hotelEnvironment(provider: string) {
-  if (provider === "none") return "Unavailable";
-  if (provider === "hotelbeds") return getHotelbedsApiMode() === "live" ? "Production" : "Test mode";
-  if (provider === "kayak_sandbox") return getKayakApiMode() === "live" ? "Production" : "Sandbox";
-  return safeProviderEnvironment();
-}
+function hotelProviderLabel(provider:string){return provider==="hotelbeds"?"Hotelbeds":"Not connected";}
+function hotelEnvironment(provider:string){return provider==="hotelbeds"?(getHotelbedsApiMode()==="live"?"Production":"Test mode"):"Unavailable";}
 
 async function getLatestProviderLog(provider: string, status: "SUCCESS" | "FAILED") {
   return withOptionalDb(async (db) => {

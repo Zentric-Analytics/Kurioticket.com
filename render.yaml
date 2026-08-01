@@ -128,19 +128,13 @@ services:
         sync: false
       - key: OPENAI_MODEL
         value: gpt-5.4-mini
-      - key: AMADEUS_CLIENT_ID
-        sync: false
-      - key: AMADEUS_CLIENT_SECRET
-        sync: false
       - key: DUFFEL_API_KEY
         sync: false
-      - key: KIWI_API_KEY
+      - key: HOTELBEDS_API_KEY
         sync: false
-      - key: TRAVELPAYOUTS_API_KEY
+      - key: HOTELBEDS_SECRET
         sync: false
-      - key: TRAVELPAYOUTS_MARKER
-        sync: false
-      - key: HOTEL_API_KEY
+      - key: HOTELBEDS_BASE_URL
         sync: false
       - key: ADMIN_EMAILS
         sync: false
@@ -151,8 +145,6 @@ services:
       - key: ROUTE_WATCH_UPDATES_CRON_SECRET
         sync: false
       # Return production to exact `live` when an approved Cars provider is connected.
-      - key: CARS_RESULTS_MODE
-        value: demo
 
   - type: web
     name: kurioticket-web-staging
@@ -202,19 +194,13 @@ services:
         sync: false
       - key: OPENAI_MODEL
         value: gpt-5.4-mini
-      - key: AMADEUS_CLIENT_ID
-        sync: false
-      - key: AMADEUS_CLIENT_SECRET
-        sync: false
       - key: DUFFEL_API_KEY
         sync: false
-      - key: KIWI_API_KEY
+      - key: HOTELBEDS_API_KEY
         sync: false
-      - key: TRAVELPAYOUTS_API_KEY
+      - key: HOTELBEDS_SECRET
         sync: false
-      - key: TRAVELPAYOUTS_MARKER
-        sync: false
-      - key: HOTEL_API_KEY
+      - key: HOTELBEDS_BASE_URL
         sync: false
       - key: ADMIN_EMAILS
         sync: false
@@ -224,8 +210,6 @@ services:
         sync: false
       - key: ROUTE_WATCH_UPDATES_CRON_SECRET
         sync: false
-      - key: CARS_RESULTS_MODE
-        value: demo
 
 databases:
   - name: kurioticket-postgres

@@ -42,9 +42,8 @@ export async function POST(request: Request) {
       {
         error: aggregate.unavailableMessage,
         results: [],
-        mode: "live",
         status: "unavailable",
-        sourceLabel: "",
+        source: "duffel",
         warnings: aggregate.warnings,
         partial: false,
         requestId,
@@ -95,7 +94,7 @@ export async function POST(request: Request) {
   ]);
 
   return NextResponse.json({
-    ...classifyFlights(publicResults, aggregate.servedFromFallback, aggregate.warnings, requestId),
+    ...classifyFlights(publicResults, aggregate.warnings, requestId),
     servedFromFallback: aggregate.servedFromFallback,
     latencyMs: aggregate.latencyMs,
   });

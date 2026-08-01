@@ -59,8 +59,7 @@ export type NormalizedCarResult = {
   importantInformation: string[];
   pickupInstructions?: string;
   offers: CarOffer[];
-  isDemo: boolean;
+  inventorySource: "kurioticket-static-cars";
 };
 
 export type CarInventoryStatus = "available" | "unavailable" | "invalid-search";
-export type CarResultsMode = "live" | "demo";

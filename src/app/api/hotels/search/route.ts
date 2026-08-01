@@ -42,9 +42,8 @@ export async function POST(request: Request) {
       {
         error: aggregate.unavailableMessage,
         results: [],
-        mode: "live",
         status: "unavailable",
-        sourceLabel: "",
+        source: "hotelbeds",
         warnings: aggregate.warnings,
         partial: false,
         requestId,
@@ -101,7 +100,7 @@ export async function POST(request: Request) {
   ]);
 
   return NextResponse.json({
-    ...classifyHotels(publicResults, aggregate.servedFromFallback, aggregate.warnings, requestId),
+    ...classifyHotels(publicResults, aggregate.warnings, requestId),
     providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs, error }) => ({
       provider,
       status,
@@ -116,15 +115,11 @@ export async function POST(request: Request) {
 
 function sanitizeProviderError(error?: string) {
   if (!error) return undefined;
-  if (error === "no_live_hotel_provider") return "no_live_hotel_provider";
   if (error === "unsupported_destination") return "unsupported_destination";
   return "provider_unavailable";
 }
 
 function deriveHotelWarningCategory(aggregate: Awaited<ReturnType<typeof searchHotels>>) {
-  if (aggregate.providerStatuses.some((provider) => provider.error === "no_live_hotel_provider")) {
-    return "no_live_hotel_provider";
-  }
   if (aggregate.providerStatuses.some((provider) => provider.error === "unsupported_destination")) {
     return "unsupported_destination";
   }

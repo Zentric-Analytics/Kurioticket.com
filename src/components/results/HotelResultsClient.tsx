@@ -742,7 +742,7 @@ export function HotelResultsClient() {
       .then(async (response) => {
         const data = await response.json();
 
-        if (data.warningCategory === "no_live_hotel_provider") {
+        if (data.warningCategory === "provider_unavailable") {
           throw new Error(t("hotelResults.searchUnavailableDetailed"));
         }
 

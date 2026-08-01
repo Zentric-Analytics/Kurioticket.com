@@ -114,7 +114,7 @@ function getHotelbedsProviderBlockReason(baseUrl: string) {
 
 export function searchHotelbedsHotels(search: HotelSearchParams): Promise<ProviderResult<NormalizedHotelResult>> {
   if (!process.env.HOTELBEDS_API_KEY || !process.env.HOTELBEDS_SECRET) {
-    return Promise.resolve(skippedProvider("Hotelbeds", "no_live_hotel_provider"));
+    return Promise.resolve(skippedProvider("Hotelbeds", "provider_unavailable"));
   }
 
   const baseUrl = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";

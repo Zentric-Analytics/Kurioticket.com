@@ -60,13 +60,9 @@ export function validFlight(result: FlightResult, plan: SearchPlan) {
   return Boolean(result.id && result.provider && result.airlineName && result.originAirport === payload.origin && result.destinationAirport === payload.destination && Number.isFinite(result.price) && result.price >= 0 && /^[A-Z]{3}$/.test(result.currency) && !Number.isNaN(Date.parse(result.departureTime)) && !Number.isNaN(Date.parse(result.arrivalTime)) && safeImage(result.airlineLogo) && safeAction(result));
 }
 export function validBookableHotel(result: HotelResult) {
-  if (result.inventoryKind === "discovery" || result.searchPolicy?.mode === "discovery") return false;
   return Boolean(result.id && result.provider && result.name && Number.isFinite(result.totalPrice) && (result.totalPrice ?? -1) >= 0 && result.currency && /^[A-Z]{3}$/.test(result.currency) && safeImage(result.imageUrl) && safeAction(result));
 }
-export function validDiscoveryHotel(result: HotelResult) {
-  return Boolean(result.id && result.provider && result.name && result.inventoryKind === "discovery" && result.searchPolicy?.mode === "discovery" && !result.searchPolicy.bookable && safeImage(result.imageUrl) && safeAction(result));
-}
 export function validBookableCar(result: CarResult) {
-  return Boolean(result.id && result.rentalCompanyName && Array.isArray(result.offers) && result.offers.length && result.offers.every((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0 && /^[A-Z]{3}$/.test(offer.currency)) && safeImage(result.imageUrl) && safeAction(result) && (result.isDemo ? result.searchPolicy.mode === "demo" && !result.searchPolicy.bookable : true));
+  return Boolean(result.id && result.rentalCompanyName && Array.isArray(result.offers) && result.offers.length && result.offers.every((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice >= 0 && /^[A-Z]{3}$/.test(offer.currency)) && safeImage(result.imageUrl) && safeAction(result));
 }
 export { httpsUrl };
