@@ -176,7 +176,7 @@ export function SharedHomePage() {
           </View>
           <FlowIcon name="chevron" />
         </Pressable>
-        {isAuthenticated ? <PopularDestinationStays /> : null}
+        <PopularDestinationStays />
       </ScrollView>
     </SafeAreaView>
   );
