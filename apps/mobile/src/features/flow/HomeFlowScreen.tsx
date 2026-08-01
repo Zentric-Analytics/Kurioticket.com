@@ -1,7 +1,7 @@
 import {
-  Animated,
   Image,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
@@ -77,22 +77,15 @@ function HomeHero() {
   );
 }
 
-function HomeTopNavigation({
-  safeAreaTop,
-  solidOpacity,
-}: {
-  safeAreaTop: number;
-  solidOpacity: Animated.AnimatedInterpolation<number>;
-}) {
+function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
   return (
-    <View pointerEvents="box-none" style={styles.homeTopNavigation}>
-      <Animated.View
-        pointerEvents="none"
-        style={[styles.homeTopNavigationSolid, { opacity: solidOpacity }]}
-      />
+    <View
+      pointerEvents="box-none"
+      style={[styles.homeTopNavigation, { paddingTop: safeAreaTop }]}
+    >
       <View
         pointerEvents="box-none"
-        style={[styles.homeHeroHeader, { paddingTop: safeAreaTop + 5 }]}
+        style={styles.homeTopNavigationContent}
       >
         <Image
           accessibilityLabel="Kurioticket"
@@ -126,12 +119,6 @@ const products: {
 export function SharedHomePage() {
   const insets = useSafeAreaInsets();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const solidHeaderOpacity = scrollY.interpolate({
-    inputRange: [HOME_HERO_DISPLAY_HEIGHT - 110, HOME_HERO_DISPLAY_HEIGHT - 50],
-    outputRange: [0, 1],
-    extrapolate: "clamp",
-  });
 
   useEffect(() => {
     void readSession()
@@ -141,15 +128,12 @@ export function SharedHomePage() {
 
   return (
     <SafeAreaView style={flowStyles.safe} edges={[]}>
-      <StatusBar style="dark" translucent backgroundColor="transparent" />
-      <Animated.ScrollView
+      <StatusBar style="dark" translucent backgroundColor="white" />
+      <HomeTopNavigation safeAreaTop={insets.top} />
+      <ScrollView
+        style={styles.homeScroll}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
-        scrollEventThrottle={16}
       >
         <HomeHero />
         <View style={[styles.products, flowStyles.shadow]}>
@@ -204,11 +188,7 @@ export function SharedHomePage() {
         </Pressable>
         <PopularDestinationStays />
         <DiscoverNextAdventure />
-      </Animated.ScrollView>
-      <HomeTopNavigation
-        safeAreaTop={insets.top}
-        solidOpacity={solidHeaderOpacity}
-      />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -216,6 +196,7 @@ export function SharedHomePage() {
 export const HomeFlowScreen = SharedHomePage;
 
 const styles = StyleSheet.create({
+  homeScroll: { flex: 1 },
   content: { paddingHorizontal: 14, paddingBottom: 120, gap: 14 },
   homeHero: {
     height: HOME_HERO_DISPLAY_HEIGHT,
@@ -224,14 +205,6 @@ const styles = StyleSheet.create({
   },
   homeHeroImage: { position: "absolute" },
   homeTopNavigation: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  homeTopNavigationSolid: {
-    ...StyleSheet.absoluteFillObject,
     backgroundColor: "white",
     borderBottomColor: flowColors.border,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -241,8 +214,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 3,
   },
-  homeHeroHeader: {
-    minHeight: 57,
+  homeTopNavigationContent: {
+    height: 60,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
@@ -251,7 +224,6 @@ const styles = StyleSheet.create({
   homeLogo: {
     width: 130,
     height: 32,
-    transform: [{ translateY: -10 }],
   },
   products: {
     marginTop: -34,
