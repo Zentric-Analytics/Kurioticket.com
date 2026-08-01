@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { useState } from "react";
 import {
   ImageBackground,
   Pressable,
@@ -15,51 +16,59 @@ import { flowColors, flowStyles } from "../flow/flowStyles";
 
 export const popularDestinationStays = [
   {
-    id: "us-new-york",
-    city: "New York",
-    country: "United States",
+    id: "ng-dubai",
+    city: "Dubai",
+    country: "United Arab Emirates",
     image: {
-      uri: "https://kurioticket.com/images/premium/homepage/destinations/kurioticket-homepage-destination-new-york-statue-liberty-skyline-001.jpg",
+      uri: "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1600",
     },
   },
   {
-    id: "us-miami",
-    city: "Miami",
-    country: "United States",
-    image: {
-      uri: "https://kurioticket.com/images/premium/homepage/destinations/kurioticket-homepage-destination-miami-skyline-waterfront-001.jpg",
-    },
-  },
-  {
-    id: "us-las-vegas",
-    city: "Las Vegas",
-    country: "United States",
-    image: {
-      uri: "https://kurioticket.com/images/premium/homepage/destinations/kurioticket-homepage-destination-las-vegas-strip-night-drone-001.jpg",
-    },
-  },
-  {
-    id: "us-los-angeles",
-    city: "Los Angeles",
-    country: "United States",
-    image: {
-      uri: "https://kurioticket.com/images/premium/homepage/destinations/kurioticket-homepage-destination-los-angeles-palm-skyline-001.jpg",
-    },
-  },
-  {
-    id: "us-london",
+    id: "ng-london",
     city: "London",
     country: "United Kingdom",
     image: {
-      uri: "https://kurioticket.com/images/premium/homepage/destinations/kurioticket-homepage-destination-london-tower-bridge-thames-001.jpg",
+      uri: "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
     },
   },
   {
-    id: "us-paris",
+    id: "ng-johannesburg",
+    city: "Johannesburg",
+    country: "South Africa",
+    image: {
+      uri: "https://images.unsplash.com/photo-1604633193983-5ad0f0f9d4f8?auto=format&fit=crop&w=1600&q=90",
+    },
+  },
+  {
+    id: "ng-accra",
+    city: "Accra",
+    country: "Ghana",
+    image: {
+      uri: "https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=1600&q=90",
+    },
+  },
+  {
+    id: "ng-nairobi",
+    city: "Nairobi",
+    country: "Kenya",
+    image: {
+      uri: "https://images.unsplash.com/photo-1611348586804-61bf6c080437?auto=format&fit=crop&w=1600&q=90",
+    },
+  },
+  {
+    id: "ng-istanbul",
+    city: "Istanbul",
+    country: "Türkiye",
+    image: {
+      uri: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1600&q=90",
+    },
+  },
+  {
+    id: "ng-paris",
     city: "Paris",
     country: "France",
     image: {
-      uri: "https://kurioticket.com/images/premium/homepage/destinations/kurioticket-homepage-destination-paris-eiffel-tower-buildings-001.jpg",
+      uri: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=90",
     },
   },
 ] as const;
@@ -67,6 +76,9 @@ export const popularDestinationStays = [
 export function PopularDestinationStays() {
   const { width } = useWindowDimensions();
   const { savedIds, toggle } = useSavedDestinations();
+  const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const cardWidth = Math.min(280, Math.max(230, width * 0.7));
 
   return (
@@ -87,6 +99,7 @@ export function PopularDestinationStays() {
       >
         {popularDestinationStays.map((destination) => {
           const saved = savedIds.has(destination.id);
+          const imageFailed = failedImageIds.has(destination.id);
           return (
             <Pressable
               key={destination.id}
@@ -109,7 +122,19 @@ export function PopularDestinationStays() {
                 accessibilityIgnoresInvertColors
                 accessibilityLabel={`${destination.city}, ${destination.country}`}
                 resizeMode="cover"
-                source={destination.image}
+                source={imageFailed ? undefined : destination.image}
+                onError={() => {
+                  if (__DEV__) {
+                    console.warn(
+                      `[Popular destination stays] Image failed for ${destination.city}: ${destination.image.uri}`,
+                    );
+                  }
+                  setFailedImageIds((current) => {
+                    const next = new Set(current);
+                    next.add(destination.id);
+                    return next;
+                  });
+                }}
                 style={styles.image}
                 imageStyle={styles.imageCorners}
               >
