@@ -32,6 +32,46 @@ test("handoff cards omit provider identities while preserving product, price, an
   assert.match(card, /deals\.handoff\.newTab/);
   assert.match(presentation, /provider:\s*item\.provider/);
 });
+
+test("handoff cards keep prices and actions readable in balanced columns", () => {
+  assert.doesNotMatch(card, /lg:grid-cols-\[minmax\(0,1fr\)_220px\]/);
+  assert.match(card, /lg:grid-cols-\[minmax\(0,1fr\)_240px\]/);
+
+  const mainPrice = card.match(/<p aria-label=\{price\.ariaLabel\}[\s\S]*?<\/p>/)?.[0] ?? "";
+  assert.doesNotMatch(mainPrice, /break-words/);
+  assert.match(mainPrice, /tabular-nums/);
+  assert.match(mainPrice, /dir="ltr"/);
+  assert.match(mainPrice, /whitespace-nowrap/);
+  assert.match(mainPrice, /\{price\.formatted\}/);
+
+  const sourcePrice = card.match(/\{t\("deals\.handoff\.sourcePrice"\)[\s\S]*?\{price\.providerFormatted\}[\s\S]*?<\/p>/)?.[0] ?? "";
+  assert.match(sourcePrice, /dir="ltr"/);
+  assert.match(sourcePrice, /whitespace-nowrap/);
+  assert.match(sourcePrice, /tabular-nums/);
+  assert.match(card, /deals\.handoff\.providerPrice/);
+
+  const action = card.match(/<a href=\{step\.href\}[\s\S]*?<\/a>/)?.[0] ?? "";
+  assert.match(action, /target="_blank"/);
+  assert.match(action, /rel="noopener noreferrer"/);
+  assert.match(action, /onClick=\{onOpen\}/);
+  assert.match(action, /min-h-11/);
+  assert.match(action, /w-full/);
+  assert.match(action, /whitespace-nowrap/);
+  assert.match(action, /deals\.handoff\.newTab/);
+  assert.match(card, /inline-flex whitespace-nowrap items-center gap-1 rounded-full/);
+});
+
+test("handoff cards retain consistent product details and semantic room grouping", () => {
+  for (const field of ["step.airline", "step.flightNumber", "step.routeLabel", "step.departureLabel", "step.arrivalLabel", "step.durationLabel"]) assert.match(card, new RegExp(field.replace(".", "\\.")));
+  for (const field of ["step.name", "step.location", "step.checkInLabel", "step.checkOutLabel", "step.nights", "step.roomType"]) assert.match(card, new RegExp(field.replace(".", "\\.")));
+  for (const field of ["step.company", "step.model", "step.category", "step.pickupLocation", "step.pickupLabel", "step.returnLocation", "step.returnLabel", "step.rentalDays"]) assert.match(card, new RegExp(field.replace(".", "\\.")));
+  assert.match(card, /\{step\.roomType && <dl className="mt-4"><Detail label=\{t\("deals\.handoff\.room"\)\} value=\{step\.roomType\} \/><\/dl>\}/);
+  assert.match(card, /dir="ltr" className="mt-2[^"]*"><span className="whitespace-nowrap">\{step\.routeLabel\}<\/span>/);
+});
+
+test("handoff cards avoid layout shortcuts that conceal readable content", () => {
+  assert.doesNotMatch(card, /line-clamp-|truncate|overflow-clip|overflow-hidden|break-all|max-h-|h-\[[^\]]+\]|(?:^|[\s"`])-mt-|translate-|scale-/m);
+});
 test("loading and exceptional states use dedicated accessible presentations", () => {
   assert.match(client, /DealsHandoffSkeleton/); assert.match(client, /<StatePanel/); assert.match(client, /progressUnsaved/); assert.match(client, /getDealsTripPlanEstimatedTotal/); assert.match(client, /deals\.handoff\.returnSearch/); assert.doesNotMatch(client + card, /line-clamp-|truncate|h-\[[^\]]+\]/);
 });
