@@ -12,7 +12,7 @@ import {
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { FlowIcon } from "../flow/FlowIcon";
-import { flowColors, flowStyles } from "../flow/flowStyles";
+import { flowColors } from "../flow/flowStyles";
 
 export const popularDestinationStays = [
   {
@@ -113,70 +113,79 @@ export function PopularDestinationStays() {
               }
               style={({ pressed }) => [
                 styles.card,
-                flowStyles.shadow,
                 { width: cardWidth },
-                pressed && flowStyles.pressed,
+                pressed && styles.cardPressed,
               ]}
             >
-              <ImageBackground
-                accessibilityIgnoresInvertColors
-                accessibilityLabel={`${destination.city}, ${destination.country}`}
-                resizeMode="cover"
-                source={imageFailed ? undefined : destination.image}
-                onError={() => {
-                  if (__DEV__) {
-                    console.warn(
-                      `[Popular destination stays] Image failed for ${destination.city}: ${destination.image.uri}`,
-                    );
-                  }
-                  setFailedImageIds((current) => {
-                    const next = new Set(current);
-                    next.add(destination.id);
-                    return next;
-                  });
-                }}
-                style={styles.image}
-                imageStyle={styles.imageCorners}
-              >
-                <Svg pointerEvents="none" style={StyleSheet.absoluteFill}>
-                  <Defs>
-                    <LinearGradient
-                      id={`card-overlay-${destination.id}`}
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <Stop offset="0" stopColor="#020617" stopOpacity={0} />
-                      <Stop offset="0.52" stopColor="#020617" stopOpacity={0.06} />
-                      <Stop offset="1" stopColor="#020617" stopOpacity={0.78} />
-                    </LinearGradient>
-                  </Defs>
-                  <Rect
-                    width="100%"
-                    height="100%"
-                    rx={18}
-                    fill={`url(#card-overlay-${destination.id})`}
-                  />
-                </Svg>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
-                  accessibilityState={{ selected: saved }}
-                  hitSlop={8}
-                  onPress={(event) => {
-                    event.stopPropagation();
-                    toggle(destination.id);
+              <View style={styles.cardSurface}>
+                <ImageBackground
+                  accessibilityIgnoresInvertColors
+                  accessibilityLabel={`${destination.city}, ${destination.country}`}
+                  resizeMode="cover"
+                  source={imageFailed ? undefined : destination.image}
+                  onError={() => {
+                    if (__DEV__) {
+                      console.warn(
+                        `[Popular destination stays] Image failed for ${destination.city}: ${destination.image.uri}`,
+                      );
+                    }
+                    setFailedImageIds((current) => {
+                      const next = new Set(current);
+                      next.add(destination.id);
+                      return next;
+                    });
                   }}
-                  style={[styles.heart, saved && styles.heartSaved]}
+                  style={styles.image}
+                  imageStyle={styles.imageCorners}
                 >
-                  <FlowIcon name="heart" color="white" size={23} />
-                </Pressable>
-                <View style={styles.copy}>
-                  <Text style={styles.city}>{destination.city}</Text>
-                  <Text style={styles.country}>{destination.country}</Text>
-                </View>
-              </ImageBackground>
+                  <Svg pointerEvents="none" style={StyleSheet.absoluteFill}>
+                    <Defs>
+                      <LinearGradient
+                        id={`card-overlay-${destination.id}`}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <Stop offset="0" stopColor="#020617" stopOpacity={0} />
+                        <Stop offset="0.43" stopColor="#020617" stopOpacity={0.02} />
+                        <Stop offset="0.7" stopColor="#020617" stopOpacity={0.28} />
+                        <Stop offset="1" stopColor="#020617" stopOpacity={0.9} />
+                      </LinearGradient>
+                    </Defs>
+                    <Rect
+                      width="100%"
+                      height="100%"
+                      rx={20}
+                      fill={`url(#card-overlay-${destination.id})`}
+                    />
+                  </Svg>
+                  <View pointerEvents="none" style={styles.badge}>
+                    <Text style={styles.badgeText}>Popular</Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
+                    accessibilityState={{ selected: saved }}
+                    hitSlop={8}
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      toggle(destination.id);
+                    }}
+                    style={({ pressed }) => [
+                      styles.heart,
+                      saved && styles.heartSaved,
+                      pressed && styles.heartPressed,
+                    ]}
+                  >
+                    <FlowIcon name="heart" color="white" size={22} />
+                  </Pressable>
+                  <View pointerEvents="none" style={styles.copyPanel}>
+                    <Text style={styles.city}>{destination.city}</Text>
+                    <Text style={styles.country}>{destination.country}</Text>
+                  </View>
+                </ImageBackground>
+              </View>
             </Pressable>
           );
         })}
@@ -196,35 +205,86 @@ const styles = StyleSheet.create({
   carousel: { gap: 14, paddingBottom: 8, paddingRight: 34 },
   card: {
     height: 350,
-    borderRadius: 18,
+    borderRadius: 20,
     backgroundColor: "#DCE5F3",
+    shadowColor: "#10254D",
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 6,
+  },
+  cardPressed: {
+    opacity: 0.96,
+    transform: [{ scale: 0.985 }],
+  },
+  cardSurface: {
+    flex: 1,
+    borderRadius: 20,
     overflow: "hidden",
   },
-  image: { flex: 1, justifyContent: "flex-end", padding: 18 },
-  imageCorners: { borderRadius: 18 },
-  heart: {
+  image: { flex: 1, justifyContent: "flex-end", padding: 16 },
+  imageCorners: { borderRadius: 20 },
+  badge: {
     position: "absolute",
-    top: 12,
-    right: 12,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(2, 15, 42, 0.42)",
+    top: 14,
+    left: 14,
+    minHeight: 28,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.38)",
+    backgroundColor: "rgba(10,24,51,0.44)",
     alignItems: "center",
     justifyContent: "center",
   },
-  heartSaved: { backgroundColor: "rgba(7, 84, 247, 0.88)" },
-  copy: { zIndex: 1 },
+  badgeText: {
+    color: "white",
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  heart: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.46)",
+    backgroundColor: "rgba(10,24,51,0.46)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heartSaved: {
+    borderColor: "rgba(255,255,255,0.72)",
+    backgroundColor: "rgba(6,76,247,0.92)",
+  },
+  heartPressed: { opacity: 0.76, transform: [{ scale: 0.94 }] },
+  copyPanel: {
+    zIndex: 1,
+    marginHorizontal: -4,
+    marginBottom: -4,
+    paddingHorizontal: 13,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(4,16,39,0.2)",
+  },
   city: {
     color: "white",
-    fontSize: 23,
-    lineHeight: 29,
-    fontWeight: "800",
+    fontSize: 25,
+    lineHeight: 30,
+    fontWeight: "900",
+    letterSpacing: -0.35,
   },
   country: {
-    color: "rgba(255,255,255,0.92)",
-    fontSize: 14,
-    lineHeight: 20,
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 13,
+    lineHeight: 19,
     fontWeight: "600",
+    letterSpacing: 0.15,
   },
 });
