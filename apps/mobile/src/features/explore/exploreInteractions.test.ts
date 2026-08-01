@@ -196,11 +196,38 @@ test("search covers names, countries, ISO codes, airport codes, airport names, a
   assert.equal(exactExploreResult(searchExplore("LHR"))?.id, "gb-london");
 });
 
-test("featured IDs and media manifest are explicit and valid", () => {
+test("former featured destinations remain in their correct country groups", () => {
   assert.deepEqual(
     FEATURED_DESTINATIONS.map((item) => item.destination.id),
     APPROVED_FEATURED_IDS,
   );
+  const groupedCountryById = new Map(
+    COUNTRY_DESTINATION_GROUPS.flatMap((group) =>
+      group.destinations.map((destination) => [
+        destination.id,
+        group.countryCode,
+      ] as const),
+    ),
+  );
+  for (const destinationId of APPROVED_FEATURED_IDS) {
+    assert.equal(
+      groupedCountryById.get(destinationId),
+      FEATURED_DESTINATIONS.find(
+        (item) => item.destination.id === destinationId,
+      )?.destination.countryCode,
+    );
+  }
+  assert.equal(groupedCountryById.get("ng-lagos"), "NG");
+  assert.equal(groupedCountryById.get("ng-abuja"), "NG");
+  assert.equal(groupedCountryById.get("gh-accra"), "GH");
+  assert.equal(groupedCountryById.get("fr-paris"), "FR");
+  assert.equal(groupedCountryById.get("gb-london"), "GB");
+  assert.equal(groupedCountryById.get("it-rome"), "IT");
+  assert.equal(groupedCountryById.get("ae-dubai"), "AE");
+  assert.equal(groupedCountryById.get("jp-tokyo"), "JP");
+});
+
+test("former featured destinations retain local-first media", () => {
   assert.doesNotThrow(assertDestinationMediaIsValid);
   assert.equal(DESTINATION_MEDIA.length, destinations.length);
   assert.equal(EXPLICIT_DESTINATION_MEDIA.length, APPROVED_FEATURED_IDS.length);
@@ -308,18 +335,25 @@ test("Explore keeps only the focused tabs and supported actions", () => {
   );
 });
 
-test("browse all is virtualized and retains action selection", () => {
+test("country browsing is virtualized and retains action selection", () => {
   const source = screen();
   assert.match(source, /FlatList/);
   assert.match(source, /data=\{browser\?\.destinations/);
   assert.match(source, /selectFromBrowser/);
-  assert.match(source, /Browse all destinations/);
   assert.match(source, /<SectionList/);
   assert.match(source, /COUNTRY_DESTINATION_GROUPS/);
   assert.match(source, /destinationMedia\(destination.id\)/);
   assert.match(source, /savedDestinations\.map\(\(a\) =>/);
   assert.match(source, /results\.map\(\(r\) =>/);
   assert.match(source, /renderItem=\{\(\{ item \}\) =>/);
+});
+
+test("Destinations renders country groups directly without a featured carousel", () => {
+  const source = screen();
+  assert.doesNotMatch(source, /Featured destinations/);
+  assert.doesNotMatch(source, /Browse all destinations/);
+  assert.doesNotMatch(source, /FEATURED_DESTINATIONS/);
+  assert.match(source, /ListHeaderComponent=\{header\}/);
 });
 
 test("handoff closes first and blocks duplicate navigation", () => {

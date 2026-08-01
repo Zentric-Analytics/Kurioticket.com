@@ -25,9 +25,8 @@ import {
 } from "react-native-safe-area-context";
 import { destinations, type Destination } from "./destinationCatalogue";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
-import { FEATURED_DESTINATIONS, HERO_SLIDES, INTERESTS } from "./exploreData";
+import { HERO_SLIDES, INTERESTS } from "./exploreData";
 import {
-  ALL_DESTINATIONS,
   COUNTRY_DESTINATION_GROUPS,
   destinationCardLayout,
   exactExploreResult,
@@ -360,11 +359,6 @@ export function ExploreScreen() {
         `${results.length} ${results.length === 1 ? "result" : "results"}`,
       );
   }, [query, results.length]);
-  const allBrowser = {
-    title: "All destinations",
-    subtitle: "Destinations in our current destination catalogue.",
-    destinations: ALL_DESTINATIONS,
-  } satisfies NonNullable<Browser>;
   const header = (
     <ExploreHeader
       query={query}
@@ -404,7 +398,6 @@ export function ExploreScreen() {
           select={select}
           toggle={toggle}
           browse={setBrowser}
-          all={allBrowser}
         />
         {overlays}
       </SafeAreaView>
@@ -549,7 +542,6 @@ function Destinations({
   select,
   toggle,
   browse,
-  all,
 }: {
   header: React.ReactElement;
   width: number;
@@ -559,66 +551,12 @@ function Destinations({
   select: (a: Destination) => void;
   toggle: (id: string) => void;
   browse: (b: Browser) => void;
-  all: NonNullable<Browser>;
 }) {
   const layout = destinationCardLayout(width);
   const sections = COUNTRY_DESTINATION_GROUPS.map((group) => ({
     ...group,
     data: [group],
   }));
-  const featured = (
-    <View>
-      <Section
-        title="Featured destinations"
-        action="Browse all destinations"
-        onAction={() => browse(all)}
-      />
-      <ScrollView
-        horizontal
-        snapToInterval={layout.snapInterval}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        disableIntervalMomentum
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.destinationRow}
-      >
-        {FEATURED_DESTINATIONS.map(({ destination, image }) => (
-          <View
-            key={destination.id}
-            style={[s.destinationCard, { width: layout.cardWidth }]}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Open actions for ${destination.name}, ${destination.country}`}
-              onPress={() => select(destination)}
-              style={s.cardPress}
-            >
-              <ImageBackground
-                source={image}
-                resizeMode="cover"
-                style={s.cardImage}
-                imageStyle={s.cardRadius}
-              >
-                <View style={s.overlay} />
-                <CardCopy destination={destination} />
-              </ImageBackground>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${saved.has(destination.id) ? "Remove" : "Save"} ${destination.name}`}
-              onPress={() => toggle(destination.id)}
-              style={s.heart}
-            >
-              <FlowIcon
-                name="heart"
-                color={saved.has(destination.id) ? "#E92D55" : "white"}
-              />
-            </Pressable>
-          </View>
-        ))}
-      </ScrollView>
-    </View>
-  );
   return (
     <SectionList
       sections={sections}
@@ -628,12 +566,7 @@ function Destinations({
       maxToRenderPerBatch={3}
       windowSize={5}
       contentContainerStyle={[s.page, { paddingBottom: bottomPadding }]}
-      ListHeaderComponent={
-        <>
-          {header}
-          {featured}
-        </>
-      }
+      ListHeaderComponent={header}
       renderSectionHeader={({ section }) => (
         <View style={s.countryHeader}>
           <View>
@@ -712,19 +645,6 @@ function Destinations({
         </View>
       }
     />
-  );
-}
-function CardCopy({ destination }: { destination: Destination }) {
-  return (
-    <View style={s.cardCopy}>
-      <Text style={s.cardTitle}>{destination.name}</Text>
-      <Text style={s.cardMeta}>
-        {destination.country} · {destination.primaryAirportCode}
-        {destination.airportCodes.length > 1
-          ? ` + ${destination.airportCodes.length - 1} airports`
-          : ""}
-      </Text>
-    </View>
   );
 }
 function Inspiration({
@@ -933,58 +853,11 @@ const s = StyleSheet.create({
   link: { minHeight: 44, flexDirection: "row", alignItems: "center" },
   linkText: { color: BLUE, fontSize: 13, fontWeight: "700" },
   destinationRow: { gap: 14, paddingRight: 18 },
-  destinationCard: {
-    height: 268,
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#24436E",
-  },
-  cardPress: { flex: 1 },
-  cardImage: { flex: 1, padding: 16, justifyContent: "flex-end" },
   cardRadius: { borderRadius: 16 },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(2,15,42,.46)",
     borderRadius: 16,
-  },
-  fallback: { backgroundColor: "#24436E" },
-  orbit: {
-    position: "absolute",
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,.2)",
-    right: -45,
-    top: -35,
-  },
-  code: {
-    position: "absolute",
-    top: 18,
-    left: 60,
-    color: "white",
-    fontSize: 18,
-    fontWeight: "800",
-    letterSpacing: 2,
-  },
-  cardCopy: { zIndex: 1 },
-  cardTitle: {
-    color: "white",
-    fontSize: 21,
-    lineHeight: 27,
-    fontWeight: "800",
-    textShadowColor: "rgba(2,15,42,.7)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  cardMeta: {
-    color: "white",
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "600",
-    textShadowColor: "rgba(2,15,42,.7)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   heart: {
     position: "absolute",
@@ -1067,17 +940,6 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   actionText: { flex: 1, color: NAVY, fontSize: 14, fontWeight: "700" },
-  browseAll: {
-    minHeight: 50,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: BORDER,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 4,
-  },
-  browseAllText: { color: BLUE, fontSize: 14, fontWeight: "700" },
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(2,15,42,.45)",
