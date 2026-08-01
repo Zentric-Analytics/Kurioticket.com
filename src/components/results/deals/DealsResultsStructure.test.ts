@@ -76,6 +76,46 @@ test("the anchored toolbar retains its count, sort control, and mode-specific op
   assert.match(toolbar, /mode !== "hotel-flight"/);
 });
 
+test("package sorting uses a bounded, restartable presentation transition", () => {
+  assert.match(results, /const \[packageSortPending, setPackageSortPending\] = useState\(false\)/);
+  assert.match(results, /const packageSortTimerRef = useRef<number \| null>\(null\)/);
+  assert.match(results, /const PACKAGE_SORT_SKELETON_MS = 400/);
+  assert.match(results, /const handlePackageSortChange = useCallback/);
+  assert.match(results, /if \(nextSort === packageSort\) return/);
+  assert.ok(results.indexOf("setPackageSort(nextSort)") < results.indexOf("setPackageSortPending(true)"));
+  assert.match(results, /window\.clearTimeout\(packageSortTimerRef\.current\)/);
+  assert.match(results, /setPackageSortPending\(false\)[\s\S]*PACKAGE_SORT_SKELETON_MS/);
+  assert.match(results, /packageSortTransitionRef\.current/);
+  assert.match(results, /\}, \[fingerprint, loading\]\)/);
+  assert.match(results, /useEffect\(\(\) => \(\) => \{[\s\S]*window\.clearTimeout\(packageSortTimerRef\.current\)/);
+  assert.doesNotMatch(results, /onChange=\{setPackageSort\}/);
+  assert.match(results, /onChange=\{handlePackageSortChange\}/);
+
+  const handler = results.slice(
+    results.indexOf("const handlePackageSortChange"),
+    results.indexOf("const showPackageSortSkeleton"),
+  );
+  assert.doesNotMatch(handler, /request\(|retryAll\(|router\.push\(|startRouteProgress\(/);
+});
+
+test("sorting keeps the toolbar and replaces only its ordered list with the shared skeleton", () => {
+  const candidateBlock = results.slice(
+    results.indexOf("{candidates.length > 0"),
+    results.indexOf("</section>"),
+  );
+
+  assert.match(results, /aria-busy=\{loading \|\| packageSortPending\}/);
+  assert.match(results, /const showPackageSortSkeleton = !loading && !failed && candidates\.length > 0 && packageSortPending/);
+  assert.ok(candidateBlock.indexOf("<DealsPackageResultsToolbar") < candidateBlock.indexOf("showPackageSortSkeleton ?"));
+  assert.match(candidateBlock, /showPackageSortSkeleton \? <DealsPreviewSkeleton withTopMargin=\{false\} \/> : <ol/);
+  assert.equal(candidateBlock.match(/<ol /g)?.length, 1);
+  assert.equal(candidateBlock.match(/<DealsPreviewSkeleton/g)?.length, 1);
+  assert.match(results, /loading && <><span[\s\S]*<DealsPreviewSkeleton \/>/);
+  assert.match(results, /<li key=\{candidate\.id\}>/);
+  assert.match(skeleton, /withTopMargin = true/);
+  assert.match(skeleton, /cn\("space-y-4", withTopMargin && "mt-6"\)/);
+});
+
 test("a package is selected atomically with every included product", () => {
   assert.match(results, /const selectPackage/);
   for (const product of ["flight", "hotel", "car"]) assert.match(results, new RegExp(`${product}: candidate\.${product}`));
