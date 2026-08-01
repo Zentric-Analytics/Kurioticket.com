@@ -10,16 +10,9 @@ export const HERO_SLIDES = [
 
 export const FEATURED_DESTINATIONS = featuredLocations;
 
-export const QUICK_DESTINATIONS = [
-  ["New York", "search"], ["London", "search"], ["Dubai", "search"],
-  ["Rome", "search"], ["Barcelona", "search"], ["Bangkok", "search"],
-] as const satisfies readonly (readonly [string, FlowIconName])[];
-
 export const INTERESTS = [
-  { name: "Beaches", destination: "Bali", icon: "beach", image: require("../../../assets/heroes/explore-tropical-beach.png") },
-  { name: "Cities", destination: "New York", icon: "city", image: require("../../../assets/destinations/new-york.jpg") },
-  { name: "Adventure", destination: "London", icon: "adventure", image: require("../../../assets/destinations/london.jpg") },
-  { name: "Nature", destination: "Bali", icon: "nature", image: require("../../../assets/heroes/explore-tropical-beach.png") },
-  { name: "Culture", destination: "Paris", icon: "culture", image: require("../../../assets/destinations/paris.jpg") },
-  { name: "Family", destination: "Santorini", icon: "family", image: require("../../../assets/heroes/home-santorini.png") },
+  { name: "Beach escapes", destination: "Bali", icon: "beach", image: require("../../../assets/heroes/explore-tropical-beach.png") },
+  { name: "City breaks", destination: "Paris", icon: "city", image: require("../../../assets/destinations/paris.jpg") },
+  { name: "Culture and landmarks", destination: "London", icon: "culture", image: require("../../../assets/destinations/london.jpg") },
+  { name: "Island scenery", destination: "Santorini", icon: "nature", image: require("../../../assets/heroes/home-santorini.png") },
 ] as const satisfies readonly { name: string; destination: string; icon: FlowIconName; image: number }[];
