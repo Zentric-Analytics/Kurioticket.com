@@ -1,4 +1,4 @@
-import { airports, type Airport } from "./airportData";
+import { airports, searchAirports, type Airport } from "./airportData";
 import { findAirportByDestination } from "./airportMatching";
 import { localDateFromIso, localIsoDate } from "./localDateModel";
 
@@ -59,4 +59,4 @@ export function validateFlightForm(form: FlightForm, today = new Date()): Flight
 export function adjustFlightDeparture(form: FlightForm, departureDate: string) { return !form.returnDate || form.returnDate > departureDate ? { form: { ...form, departureDate }, adjusted: false } : { form: { ...form, departureDate, returnDate: "" }, adjusted: true }; }
 export function changeTraveler(form: FlightForm, kind: "adults" | "children" | "infants", delta: number): FlightForm { const next = form[kind] + delta; if (!Number.isInteger(next) || next < (kind === "adults" ? 1 : 0) || (delta > 0 && totalTravelers(form) >= 9)) return form; return { ...form, [kind]: next }; }
 export const flightSearchParams = (form: FlightForm) => ({ tripType: form.tripType, from: form.from!.code, to: form.to!.code, departureDate: form.departureDate, ...(form.tripType === "round-trip" ? { returnDate: form.returnDate } : {}), adults: String(form.adults), children: String(form.children), infants: String(form.infants), travelers: String(totalTravelers(form)), cabin: form.cabin });
-export function searchAirports(query: string): Airport[] { const q = query.trim().toLowerCase().replace(/\s+/g, " "); const unique = [...new Map(airports.map((airport) => [airport.code, airport])).values()]; if (!q) return unique; const rank = (airport: Airport) => { const values = [airport.code, airport.city, airport.country].map((v) => v.toLowerCase()); if (airport.code.toLowerCase() === q) return 0; if (values.some((v) => v === q)) return 1; if (values.some((v) => v.startsWith(q))) return 2; if (values.some((v) => v.includes(q))) return 3; return 99; }; return unique.filter((airport) => rank(airport) < 99).sort((a, b) => rank(a) - rank(b) || a.code.localeCompare(b.code) || a.city.localeCompare(b.city)); }
+export { searchAirports };
