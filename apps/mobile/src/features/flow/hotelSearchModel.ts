@@ -1,23 +1,11 @@
 export type RouteValue = string | string[] | undefined;
+import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
+export { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
 export type HotelForm = { destination: string; checkIn: string; checkOut: string; guests: number; rooms: number };
 export type HotelFormErrors = Partial<Record<keyof HotelForm, string>>;
 
 export const HOTEL_LIMITS = { guests: { min: 1, max: 20 }, rooms: { min: 1, max: 9 } } as const;
 export const firstParam = (value: RouteValue) => (Array.isArray(value) ? value[0] : value) ?? "";
-const pad = (value: number) => String(value).padStart(2, "0");
-export const localIsoDate = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-export const localDateFromIso = (iso: string) => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return undefined;
-  const [year, month, day] = iso.split("-").map(Number);
-  const date = new Date(year, month - 1, day, 12);
-  return localIsoDate(date) === iso ? date : undefined;
-};
-export const addCalendarDays = (iso: string, days: number) => {
-  const date = localDateFromIso(iso);
-  if (!date) return "";
-  date.setDate(date.getDate() + days);
-  return localIsoDate(date);
-};
 export const defaultHotelDates = (today = new Date()) => {
   const todayIso = localIsoDate(today);
   return { checkIn: addCalendarDays(todayIso, 14), checkOut: addCalendarDays(todayIso, 17) };
