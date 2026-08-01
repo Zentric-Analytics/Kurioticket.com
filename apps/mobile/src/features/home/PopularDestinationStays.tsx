@@ -70,12 +70,18 @@ export function PopularDestinationStays() {
   const cardWidth = Math.min(280, Math.max(230, width * 0.7));
 
   return (
-    <View style={styles.section}>
+    <View
+      collapsable={false}
+      testID="popular-destination-stays"
+      style={styles.section}
+    >
       <Text accessibilityRole="header" style={styles.heading}>
         Popular destination stays
       </Text>
       <ScrollView
         horizontal
+        nestedScrollEnabled
+        removeClippedSubviews={false}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.carousel}
       >
@@ -109,7 +115,13 @@ export function PopularDestinationStays() {
               >
                 <Svg pointerEvents="none" style={StyleSheet.absoluteFill}>
                   <Defs>
-                    <LinearGradient id={`card-overlay-${destination.id}`} x1="0" y1="0" x2="0" y2="1">
+                    <LinearGradient
+                      id={`card-overlay-${destination.id}`}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <Stop offset="0" stopColor="#020617" stopOpacity={0} />
                       <Stop offset="0.52" stopColor="#020617" stopOpacity={0.06} />
                       <Stop offset="1" stopColor="#020617" stopOpacity={0.78} />
@@ -178,6 +190,16 @@ const styles = StyleSheet.create({
   },
   heartSaved: { backgroundColor: "rgba(7, 84, 247, 0.88)" },
   copy: { zIndex: 1 },
-  city: { color: "white", fontSize: 23, lineHeight: 29, fontWeight: "800" },
-  country: { color: "rgba(255,255,255,0.92)", fontSize: 14, lineHeight: 20, fontWeight: "600" },
+  city: {
+    color: "white",
+    fontSize: 23,
+    lineHeight: 29,
+    fontWeight: "800",
+  },
+  country: {
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "600",
+  },
 });
