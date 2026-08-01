@@ -17,7 +17,12 @@ export function navigateFromDestination(
   return true;
 }
 
-export function selectFromBrowser(airport: Airport, closeBrowser: () => void, openActions: (airport: Airport) => void) {
+export function selectFromBrowser(
+  airport: Airport,
+  closeBrowser: () => void,
+  openActions: (airport: Airport) => void,
+  afterClose: (open: () => void) => void = (open) => open(),
+) {
   closeBrowser();
-  openActions(airport);
+  afterClose(() => openActions(airport));
 }
