@@ -12,7 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router, useLocalSearchParams } from "expo-router";
-import { FlightSearchPanel } from "./FlightSearchPanel";
+import { FlightSearchPanel, type FlightSearchHandle } from "./FlightSearchPanel";
 import { HotelSearchPanel, type HotelSearchHandle } from "./HotelSearchPanel";
 import { CarSearchPanel } from "./CarSearchPanel";
 import {
@@ -107,7 +107,7 @@ function Cards({
         contentContainerStyle={styles.cardRow}
       >
         {items.map((item) => (
-          <Pressable key={item.name} accessibilityRole={onItemPress ? "button" : undefined} accessibilityLabel={onItemPress ? `Use ${item.name} as hotel destination` : undefined} disabled={!onItemPress} onPress={() => onItemPress?.(item.name)} style={({ pressed }) => [styles.smallCard, flowStyles.shadow, pressed && flowStyles.pressed]}>
+          <Pressable key={item.name} accessibilityRole={onItemPress ? "button" : undefined} accessibilityLabel={onItemPress ? item.name === "JFK → LAX" ? "Use JFK to LAX as flight route" : `Use ${item.name} as hotel destination` : undefined} disabled={!onItemPress} onPress={() => onItemPress?.(item.name)} style={({ pressed }) => [styles.smallCard, flowStyles.shadow, pressed && flowStyles.pressed]}>
             {item.image ? (
               <Image source={item.image} style={styles.smallImage} />
             ) : null}
@@ -120,8 +120,8 @@ function Cards({
   );
 }
 export function FlightsScreen() {
-  const params = useLocalSearchParams<{ destination?: string | string[] }>();
-  const destination = Array.isArray(params.destination) ? params.destination[0] : params.destination;
+  const params = useLocalSearchParams<Record<string, string | string[]>>();
+  const panel = useRef<FlightSearchHandle>(null);
   return (
     <Page
       title="Flights"
@@ -130,12 +130,13 @@ export function FlightsScreen() {
       heroHeight={596}
       focalY={0.49}
     >
-      <FlightSearchPanel initialDestination={destination} />
+      <FlightSearchPanel ref={panel} params={params} />
       <Cards
         title="Routes"
         items={[
           { name: "JFK → LAX" },
         ]}
+        onItemPress={() => panel.current?.useRouteShortcut()}
       />
     </Page>
   );
