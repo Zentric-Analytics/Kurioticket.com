@@ -180,13 +180,13 @@ export function DealsPackageResultsToolbar({
   }, [sortMenuOpen]);
 
   return (
-    <div className="mt-5 flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm font-bold text-slate-700">
+    <div className="flex min-w-0 flex-col gap-3 sm:min-h-10 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
         {count} complete trip {count === 1 ? "option" : "options"}
       </p>
 
       <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
-        <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
+        <span className="whitespace-nowrap text-sm font-medium text-[#142033] sm:text-[16px]">
           Sort by:
         </span>
 
@@ -205,7 +205,7 @@ export function DealsPackageResultsToolbar({
             aria-haspopup="listbox"
             aria-expanded={sortMenuOpen}
             aria-controls={sortMenuId}
-            className="inline-flex h-10 shrink-0 items-center gap-1 whitespace-nowrap bg-transparent py-1 text-[clamp(0.75rem,3.3vw,1rem)] font-bold text-slate-950 outline-none transition-colors hover:text-[#004BB8] focus-visible:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 focus-visible:ring-offset-2 sm:gap-2 sm:pl-1 sm:text-lg"
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-transparent px-2 text-sm font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 sm:gap-2 sm:text-[16px]"
             onClick={handleSortTriggerClick}
           >
             <span>{currentSortLabel}</span>
