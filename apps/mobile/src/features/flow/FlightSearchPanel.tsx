@@ -9,28 +9,43 @@ import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateMode
 import { adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, FLIGHT_CABINS, flightSearchParams, initializeFlightForm, searchAirports, totalTravelers, validateFlightForm, type FlightCabin, type FlightForm, type FlightFormErrors, type RouteValue } from "./flightSearchModel";
 import type { Airport } from "./airportData";
 import { searchHomepageAirports, type HomepageAirport, type HomepageAirportResult } from "../home/homepageAirports";
+import { canApplyHomepageDefaultOrigin, fetchHomepageDefaultOrigin } from "../home/homepageDefaultOrigin";
 
 export type FlightSearchHandle = { useRouteShortcut: () => void };
 type Picker = "from" | "to" | "departureDate" | "returnDate" | "travelers" | "cabin";
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 const plural = (count: number, singular: string, pluralForm = `${singular}s`) => `${count} ${count === 1 ? singular : pluralForm}`;
 
-export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: boolean; homepageAirportPicker?: boolean; initializeHomepageDates?: boolean; params?: Record<string, RouteValue> }>(({ compact = false, homepageAirportPicker = false, initializeHomepageDates = false, params = {} }, ref) => {
+export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: boolean; enableHomepageDefaultOrigin?: boolean; homepageAirportPicker?: boolean; initializeHomepageDates?: boolean; params?: Record<string, RouteValue> }>(({ compact = false, enableHomepageDefaultOrigin = false, homepageAirportPicker = false, initializeHomepageDates = false, params = {} }, ref) => {
   const initial = useRef<ReturnType<typeof initializeFlightForm> | undefined>(undefined); if (!initial.current) initial.current = initializeFlightForm(params, new Date(), initializeHomepageDates);
   const [form, setForm] = useState<FlightForm>(initial.current.form); const [errors, setErrors] = useState<FlightFormErrors>({}); const [notice, setNotice] = useState(initial.current.notice); const [picker, setPicker] = useState<Picker>();
+  const defaultOriginRequested = useRef(false); const userControlsOrigin = useRef(false);
+  const hasRouteOrigin = Boolean(initial.current.form.from);
+  useEffect(() => {
+    if (!enableHomepageDefaultOrigin || defaultOriginRequested.current || hasRouteOrigin) return;
+    defaultOriginRequested.current = true;
+    let active = true;
+    void fetchHomepageDefaultOrigin().then((airport) => {
+      if (!active || !airport || userControlsOrigin.current) return;
+      setForm((current) => canApplyHomepageDefaultOrigin(Boolean(current.from), hasRouteOrigin, userControlsOrigin.current)
+        ? { ...current, from: (airportByCode(airport.code) ?? airport) as Airport }
+        : current);
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [enableHomepageDefaultOrigin, hasRouteOrigin]);
   const intent = JSON.stringify(params); const previousIntent = useRef(intent);
   useEffect(() => { if (intent !== previousIntent.current && Object.values(params).some(Boolean)) { const next = initializeFlightForm(params, new Date(), initializeHomepageDates); setForm(next.form); setErrors({}); setNotice(next.notice); } previousIntent.current = intent; }, [initializeHomepageDates, intent]);
   const clear = (...keys: (keyof FlightFormErrors)[]) => setErrors((current) => { const next = { ...current }; keys.forEach((key) => delete next[key]); return next; });
   const shortcut = () => { setForm((current) => ({ ...current, from: airportByCode("JFK"), to: airportByCode("LAX") })); clear("from", "to"); setNotice("JFK to LAX selected. Review the form, then search when ready."); };
-  const swapAirports = () => { setForm((current) => current.from && current.to ? { ...current, from: current.to, to: current.from } : current); clear("from", "to"); };
+  const swapAirports = () => { userControlsOrigin.current = true; setForm((current) => current.from && current.to ? { ...current, from: current.to, to: current.from } : current); clear("from", "to"); };
   useImperativeHandle(ref, () => ({ useRouteShortcut: shortcut }));
   const submit = () => { const next = validateFlightForm(form); setErrors(next); if (Object.keys(next).length) { setNotice("Please correct the highlighted search details."); const first = Object.keys(next)[0]; if (["from","to","departureDate","returnDate","travelers","cabin"].includes(first)) setPicker(first as Picker); return; } router.push({ pathname: "/flight-results", params: flightSearchParams(form) }); };
-  const chooseAirport = (airport: Airport) => { const key = picker as "from" | "to"; setForm({ ...form, [key]: airport }); clear(key); setPicker(undefined); };
+  const chooseAirport = (airport: Airport) => { const key = picker as "from" | "to"; if (key === "from") userControlsOrigin.current = true; setForm({ ...form, [key]: airport }); clear(key); setPicker(undefined); };
   const chooseDate = (iso: string) => { if (picker === "departureDate") { const result = adjustFlightDeparture(form, iso, initializeHomepageDates); setForm(result.form); if (result.adjusted) setNotice("Return was adjusted to remain after departure."); } else setForm({ ...form, returnDate: iso }); clear("departureDate", "returnDate"); setPicker(undefined); };
   return <View style={[flowStyles.card, flowStyles.shadow, compact && styles.compact]}>
     <Segments value={form.tripType} onChange={(tripType) => { setForm(changeFlightTripType(form, tripType as FlightForm["tripType"], initializeHomepageDates)); clear("tripType", "returnDate"); }} options={[{ value: "round-trip", label: "Round trip" }, { value: "one-way", label: "One way" }]} />
     {errors.tripType ? <ErrorText text={errors.tripType}/> : null}
-    <View><Field label="From" value={form.from?.code ?? "Select origin"} meta={form.from ? `${form.from.city}, ${form.from.country}` : "No airport selected"} onPress={() => setPicker("from")}/>{errors.from ? <ErrorText text={errors.from}/> : null}<Field label="To" value={form.to?.code ?? "Select destination"} meta={form.to ? `${form.to.city}, ${form.to.country}` : "No airport selected"} onPress={() => setPicker("to")}/>{errors.to ? <ErrorText text={errors.to}/> : null}<Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" accessibilityState={{ disabled: !form.from || !form.to }} disabled={!form.from || !form.to} onPress={swapAirports} style={styles.swap}><FlowIcon name="swap" color={flowColors.blue}/></Pressable></View>
+    <View><Field label="From" value={form.from?.code ?? "Select origin"} meta={form.from ? `${form.from.city}, ${form.from.country}` : "No airport selected"} onPress={() => { userControlsOrigin.current = true; setPicker("from"); }}/>{errors.from ? <ErrorText text={errors.from}/> : null}<Field label="To" value={form.to?.code ?? "Select destination"} meta={form.to ? `${form.to.city}, ${form.to.country}` : "No airport selected"} onPress={() => setPicker("to")}/>{errors.to ? <ErrorText text={errors.to}/> : null}<Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" accessibilityState={{ disabled: !form.from || !form.to }} disabled={!form.from || !form.to} onPress={swapAirports} style={styles.swap}><FlowIcon name="swap" color={flowColors.blue}/></Pressable></View>
     <View style={styles.row}><View style={styles.half}><Field label="Depart" value={form.departureDate ? displayDate(form.departureDate) : "Select departure date"} icon="calendar" onPress={() => setPicker("departureDate")}/>{errors.departureDate ? <ErrorText text={errors.departureDate}/> : null}</View>{form.tripType === "round-trip" ? <View style={styles.half}><Field label="Return" value={form.returnDate ? displayDate(form.returnDate) : "Select return date"} icon="calendar" onPress={() => setPicker("returnDate")}/>{errors.returnDate ? <ErrorText text={errors.returnDate}/> : null}</View> : null}</View>
     <View style={styles.row}><View style={styles.half}><Field label="Travelers" value={totalTravelers(form) ? plural(totalTravelers(form), "traveler") : "Select travelers"} meta={totalTravelers(form) ? `${plural(form.adults,"adult")} · ${plural(form.children,"child","children")} · ${plural(form.infants,"infant")}` : "No travelers selected"} icon="person" onPress={() => { if (!totalTravelers(form)) setForm({ ...form, adults: 1 }); setPicker("travelers"); }}/>{errors.travelers ? <ErrorText text={errors.travelers}/> : null}</View><View style={styles.half}><Field label="Cabin" value={form.cabin ?? "Select cabin"} onPress={() => setPicker("cabin")} trailing={<FlowIcon name="chevron" size={18}/>}/>{errors.cabin ? <ErrorText text={errors.cabin}/> : null}</View></View>
     {notice ? <UnavailableNotice text={notice}/> : null}<View style={styles.button}><PrimaryButton label="Search flights" onPress={submit}/></View>

@@ -180,7 +180,7 @@ export function SharedHomePage() {
             </Pressable>
           ))}
         </View>
-        <FlightSearchPanel compact homepageAirportPicker initializeHomepageDates />
+        <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker initializeHomepageDates />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Track prices and save"

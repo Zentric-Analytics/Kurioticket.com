@@ -9,9 +9,18 @@ const home = source("src/features/flow/HomeFlowScreen.tsx");
 const products = source("src/features/flow/ProductScreens.tsx");
 
 test("the homepage enables its local airport picker for guest and authenticated renders", () => {
-  assert.match(home, /<FlightSearchPanel compact homepageAirportPicker initializeHomepageDates \/>/);
+  assert.match(home, /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker initializeHomepageDates \/>/);
   assert.equal(home.match(/homepageAirportPicker/g)?.length, 1);
   assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*homepageAirportPicker/s);
+});
+
+test("default origin is homepage-only and independent of authentication state", () => {
+  assert.equal(home.match(/enableHomepageDefaultOrigin/g)?.length, 1);
+  assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*enableHomepageDefaultOrigin/s);
+  assert.doesNotMatch(products, /enableHomepageDefaultOrigin/);
+  assert.match(panel, /enableHomepageDefaultOrigin = false/);
+  assert.match(panel, /userControlsOrigin\.current = true; setPicker\("from"\)/);
+  assert.doesNotMatch(panel.split("useEffect")[0], /fetchHomepageDefaultOrigin\(\)/);
 });
 
 test("the actual AirportSheet calls the metro-aware search on the homepage", () => {
