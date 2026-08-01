@@ -27,21 +27,26 @@ const badgeStyle = {
 
 export function DealsPackageCard({ candidate, search, locale, selected, t, onSelect }: Props) {
   const view = getDealsPackageCardPresentation(candidate, search, locale);
+  const accessibleHeading = [
+    t(candidate.badgeKey),
+    view.header.modeLabel,
+    view.flight?.airlineLabel,
+    view.hotel?.name,
+    view.car?.modelLabel,
+  ].filter(Boolean).join(" — ");
 
   return (
     <article aria-labelledby={view.headingId} aria-describedby={`${view.headingId}-summary`} className={`scroll-mt-20 overflow-hidden rounded-2xl border bg-white shadow-sm transition motion-reduce:transition-none hover:shadow-md ${selected ? "border-[#004BB8] ring-2 ring-blue-100" : "border-slate-200"}`}>
       <p id={`${view.headingId}-summary`} className="sr-only">{view.header.accessibleSummary}</p>
-      <header className="flex flex-wrap items-start justify-between gap-x-5 gap-y-2 border-b border-slate-100 px-4 py-3 sm:px-5">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-extrabold ${badgeStyle[candidate.strategy]}`}>{t(candidate.badgeKey)}</span>
-            <span className="text-xs font-semibold text-slate-500">{view.header.modeLabel}</span>
-          </div>
-          <h2 id={view.headingId} tabIndex={-1} className="mt-1.5 scroll-mt-20 text-lg font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]">{view.header.title}</h2>
+      <header className="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-x-5 sm:px-5">
+        <h2 id={view.headingId} className="sr-only">{accessibleHeading}</h2>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-extrabold ${badgeStyle[candidate.strategy]}`}>{t(candidate.badgeKey)}</span>
+          <span className="text-xs font-semibold text-slate-500">{view.header.modeLabel}</span>
         </div>
-        <div className="text-sm text-slate-700">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-700 sm:justify-end">
           <p className="flex items-center gap-2 font-semibold"><CalendarDays aria-hidden className="h-4 w-4 text-[#004BB8]" />{view.header.dateRangeLabel}</p>
-          {view.header.stayDurationLabel && <p className="mt-0.5 text-right text-xs text-slate-500">{view.header.stayDurationLabel}</p>}
+          {view.header.stayDurationLabel && <p className="text-xs text-slate-500">·&nbsp; {view.header.stayDurationLabel}</p>}
         </div>
       </header>
       {view.routeNotice && <p className="flex items-start gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-900 sm:px-5"><AlertCircle aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0" />{view.routeNotice.label}</p>}
