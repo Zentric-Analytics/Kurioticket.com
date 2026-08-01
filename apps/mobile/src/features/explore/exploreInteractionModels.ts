@@ -1,28 +1,9 @@
-import type { Airport } from "../flow/airportData";
-
+import type { Destination } from "./destinationCatalogue";
 export type DestinationProduct = "flights" | "hotels";
-
-export function navigateFromDestination(
-  airport: Airport,
-  product: DestinationProduct,
-  close: () => void,
-  navigate: (product: DestinationProduct, destination: string) => void,
-  navigationLock?: { current: boolean },
-) {
+export type DestinationHandoff = { destinationId: string; primaryAirportCode: string; airportCodes: readonly string[] };
+export function navigateFromDestination(destination: Destination, product: DestinationProduct, close: () => void, navigate: (product: DestinationProduct, destination: string, handoff: DestinationHandoff) => void, navigationLock?: { current: boolean }) {
   if (navigationLock?.current) return false;
   if (navigationLock) navigationLock.current = true;
-  const destination = airport.city;
-  close();
-  navigate(product, destination);
-  return true;
+  close(); navigate(product, destination.name, { destinationId: destination.id, primaryAirportCode: destination.primaryAirportCode, airportCodes: destination.airportCodes }); return true;
 }
-
-export function selectFromBrowser(
-  airport: Airport,
-  closeBrowser: () => void,
-  openActions: (airport: Airport) => void,
-  afterClose: (open: () => void) => void = (open) => open(),
-) {
-  closeBrowser();
-  afterClose(() => openActions(airport));
-}
+export function selectFromBrowser(destination: Destination, closeBrowser: () => void, openActions: (destination: Destination) => void, afterClose: (open: () => void) => void = (open) => open()) { closeBrowser(); afterClose(() => openActions(destination)); }

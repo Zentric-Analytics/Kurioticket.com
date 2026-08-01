@@ -1,6 +1,6 @@
-import { countryCodeToCountryName, countryMatchesCode, normalizeCountryCode } from "@/lib/geo/context";
-import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
-import { distanceKm } from "@/lib/geo/distance";
+import { countryCodeToCountryName, countryMatchesCode, normalizeCountryCode } from "../lib/geo/context";
+import { getCountryDisplayNameForLocale } from "../lib/region/countryDisplayNames";
+import { distanceKm } from "../lib/geo/distance";
 
 export type AirportOption = {
   code: string;

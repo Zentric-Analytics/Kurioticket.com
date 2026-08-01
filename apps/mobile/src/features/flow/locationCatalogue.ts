@@ -1,24 +1,24 @@
 import { airports, type Airport } from "./airportData";
+import { destinationById, destinations, type Destination } from "../explore/destinationCatalogue";
+import { destinationImage } from "../explore/destinationMedia";
 
-export type LocationPresentation = { airport: Airport; image?: number };
+export type LocationPresentation = { destination: Destination; airport: Airport; image?: number };
+const FEATURED_DESTINATION_IDS = ["fr-paris", "id-bali", "gb-london", "us-new-york"] as const;
 
-const imagesByAirportCode: Partial<Record<Airport["code"], number>> = {
-  JFK: require("../../../assets/destinations/new-york.jpg"),
-  LHR: require("../../../assets/destinations/london.jpg"),
-  CDG: require("../../../assets/destinations/paris.jpg"),
-  JTR: require("../../../assets/heroes/home-santorini.png"),
-};
-
-export function locationByCity(city: Airport["city"]): LocationPresentation {
-  const airport = airports.find((item) => item.city === city);
-  if (!airport) throw new Error(`Unknown catalogue city: ${city}`);
-  return { airport, image: imagesByAirportCode[airport.code] };
+function locationById(id: string): LocationPresentation {
+  const destination = destinationById.get(id);
+  if (!destination) throw new Error(`Missing featured destination: ${id}`);
+  const airport = airports.find((item) => item.code === destination.primaryAirportCode);
+  if (!airport) throw new Error(`Missing primary airport for: ${id}`);
+  return { destination, airport, image: destinationImage(id) as number | undefined };
 }
 
-export const featuredLocations = (["Paris", "Bali", "Santorini", "New York"] as const).map(locationByCity);
-export const locationImages = imagesByAirportCode;
+export const featuredLocations = FEATURED_DESTINATION_IDS.map(locationById);
+export const locationImages = Object.fromEntries(destinations.flatMap((destination) => {
+  const image = destinationImage(destination.id) as number | undefined;
+  return image ? destination.airportCodes.map((code) => [code, image]) : [];
+}));
 
 export function locationImageByCity(city: string): number | undefined {
-  const airport = airports.find((item) => item.city === city);
-  return airport ? imagesByAirportCode[airport.code] : undefined;
+  return destinationImage(destinations.find((item) => item.name === city)?.id ?? "") as number | undefined;
 }

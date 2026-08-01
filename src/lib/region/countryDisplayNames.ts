@@ -1,4 +1,4 @@
-import { supportedLocales } from "@/lib/supportedLocales";
+import { supportedLocales } from "../supportedLocales";
 
 const DEFAULT_LOCALE = "en-US";
 
