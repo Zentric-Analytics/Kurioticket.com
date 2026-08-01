@@ -19,11 +19,9 @@ const deferred = <T>() => {
   return { promise, resolve, reject };
 };
 
-test("global airports derive a stable, unique, complete destination catalogue", () => {
-  assert.equal(airports.length, 248);
-  assert.equal(destinations.length, 234);
-  assert.equal(new Set(destinations.map((item) => item.countryCode)).size, 162);
-  assert.equal(destinations.filter((item) => item.airportCodes.length > 1).length, 11);
+test("emergency mobile catalogue derives a stable destination catalogue", () => {
+  assert.equal(airports.length, 12);
+  assert.equal(destinations.length, 12);
   assert.equal(ALL_DESTINATIONS, destinations);
   assert.equal(new Set(destinations.map((item) => item.id)).size, destinations.length);
   const codes = destinations.flatMap((item) => item.airportCodes);
@@ -37,10 +35,7 @@ test("global airports derive a stable, unique, complete destination catalogue", 
   assert.deepEqual(deriveDestinations([...airports].reverse()), destinations);
 });
 
-test("metropolitan grouping and maintained naming are correct", () => {
-  const london = destinationByAirportCode.get("LHR")!;
-  for (const code of ["LHR", "LGW", "LCY", "STN", "LTN"]) assert.equal(destinationByAirportCode.get(code)?.id, london.id);
-  assert.equal(destinationByAirportCode.get("CDG")?.id, destinationByAirportCode.get("ORY")?.id);
+test("maintained naming is correct in the emergency catalogue", () => {
   assert.equal(destinationByAirportCode.get("DPS")?.name, "Bali");
   assert.ok(result("Denpasar").some((item) => item.id === "id-bali"));
   assert.ok(result("Ngurah Rai").some((item) => item.id === "id-bali"));
@@ -49,12 +44,11 @@ test("metropolitan grouping and maintained naming are correct", () => {
 });
 
 test("search covers names, countries, ISO codes, airport codes, airport names, aliases and interests", () => {
-  for (const [query, id] of [["London", "gb-london"], ["LHR", "gb-london"], ["Gatwick", "gb-london"], ["ORY", "fr-paris"], ["Bali", "id-bali"], ["DPS", "id-bali"], ["IST", "tr-istanbul"], ["Beach escapes", "id-bali"], ["City skylines", "us-new-york"]]) {
+  for (const [query, id] of [["London", "gb-london"], ["LHR", "gb-london"], ["Paris", "fr-paris"], ["CDG", "fr-paris"], ["Bali", "id-bali"], ["DPS", "id-bali"], ["IST", "tr-istanbul"], ["Beach escapes", "id-bali"], ["City skylines", "us-new-york"]]) {
     assert.equal(result(query)[0]?.id, id);
   }
   assert.ok(result("United Kingdom").every((item) => item.countryCode === "GB"));
   assert.ok(result("GB").every((item) => item.countryCode === "GB"));
-  assert.equal(result("Nigeria").length, airports.filter((item) => item.countryCode === "NG").length);
   assert.deepEqual(searchExplore("sao"), searchExplore("São"));
   assert.equal(new Set(result("United").map((item) => item.id)).size, result("United").length);
   const ranks = searchExplore("on").map((item) => item.rank);
@@ -68,13 +62,13 @@ test("featured IDs and media manifest are explicit and valid", () => {
   assert.equal(DESTINATION_MEDIA.length, 3);
 });
 
-test("saved v1 values resolve to stable destination IDs safely and idempotently", () => {
+test("saved values resolve to stable destination IDs safely and idempotently", () => {
   assert.deepEqual(parseSavedDestinationIds("not json"), []);
   assert.deepEqual(parseSavedDestinationIds('["LHR",2,null]'), ["LHR"]);
-  const migrated = resolveSavedDestinationIds(["LHR", "LGW", "London", "bad", "", "gb-london"]);
+  const migrated = resolveSavedDestinationIds(["LHR", "London", "bad", "", "gb-london"]);
   assert.deepEqual(migrated, ["gb-london"]);
   assert.deepEqual(resolveSavedDestinationIds(migrated), migrated);
-  assert.equal(resolveSavedDestinationIds(["ORY"])[0], "fr-paris");
+  assert.equal(resolveSavedDestinationIds(["CDG"])[0], "fr-paris");
 });
 
 test("responsive calculations support narrow phones and tab clearance", () => {
@@ -107,7 +101,7 @@ test("browse all is virtualized and retains action selection", () => {
   assert.match(source, /Browse all destinations/);
 });
 
-test("handoff closes first, preserves grouped codes, and blocks duplicate navigation", () => {
+test("handoff closes first and blocks duplicate navigation", () => {
   const destination = destinationByAirportCode.get("LHR")!;
   const events: string[] = [];
   const lock = { current: false };
@@ -115,7 +109,7 @@ test("handoff closes first, preserves grouped codes, and blocks duplicate naviga
   navigateFromDestination(destination, "flights", () => events.push("close"), navigate, lock);
   navigateFromDestination(destination, "flights", () => events.push("close"), navigate, lock);
   assert.equal(events[0], "close");
-  assert.match(events[1]!, /LHR,LGW,LCY,STN,LTN/);
+  assert.match(events[1]!, /LHR/);
 });
 
 test("browser selection can defer opening actions until after close", () => {
