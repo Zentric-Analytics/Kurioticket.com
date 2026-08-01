@@ -115,6 +115,7 @@ export function TravelResultsScreen({ product }: { product: Product }) {
   const retrySearch = () => setRetry((value) => value + 1);
   const editSearch = () => {
     if (router.canGoBack()) { router.back(); return; }
+    if (product === "flight" && planResult.plan) router.replace({ pathname: "/flights", params: Object.fromEntries(Object.entries(params).map(([name, value]) => [name, one(value) ?? ""])) });
     if (product === "car" && planResult.plan) router.replace({ pathname: "/cars", params: Object.fromEntries(Object.entries(planResult.plan.payload).map(([name, value]) => [name, String(value)])) });
   };
   return <SafeAreaView style={flowStyles.safe} edges={["top"]}>

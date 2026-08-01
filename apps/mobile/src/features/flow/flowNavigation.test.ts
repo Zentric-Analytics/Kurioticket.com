@@ -22,9 +22,10 @@ test("bottom navigation keeps the approved order and active accessibility state"
 
 test("flight controls retain trip type, complete airport swap, and validated submission", () => {
   const flight = source("src/features/flow/FlightSearchPanel.tsx");
-  assert.match(flight, /useState<TripType>\("round-trip"\)/);
-  assert.match(flight, /const previous = from; setFrom\(to\); setTo\(previous\)/);
-  assert.match(flight, /if \(from\.code === to\.code\)/);
+  assert.match(flight, /options=\{\[\{ value: "round-trip"/);
+  assert.doesNotMatch(flight, /value: "multi-city"/);
+  assert.match(flight, /from: current\.to, to: current\.from/);
+  assert.match(flight, /validateFlightForm\(form\)/);
   assert.match(flight, /pathname: "\/flight-results"/);
 });
 

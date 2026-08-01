@@ -1,78 +1,47 @@
-import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
-import { airports, type Airport, type Cabin, type TripType } from "./flowData";
-import { ChoiceSheet, Field, PrimaryButton, Segments, UnavailableNotice } from "./FlowPrimitives";
+import { Field, PrimaryButton, Segments, UnavailableNotice } from "./FlowPrimitives";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
-import { findAirportByDestination } from "./airportMatching";
+import { LocalCalendarModal } from "./LocalCalendarModal";
+import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
+import { adjustFlightDeparture, airportByCode, changeTraveler, FLIGHT_CABINS, flightSearchParams, initializeFlightForm, searchAirports, totalTravelers, validateFlightForm, type FlightCabin, type FlightForm, type FlightFormErrors, type RouteValue } from "./flightSearchModel";
+import type { Airport } from "./airportData";
 
-const addDays = (days: number) => {
-  const date = new Date();
-  date.setHours(12, 0, 0, 0);
-  date.setDate(date.getDate() + days);
-  return {
-    iso: date.toISOString().slice(0, 10),
-    label: date.toLocaleDateString(undefined, { month: "short", day: "numeric", weekday: "short" }),
-  };
-};
-const dates = [addDays(14), addDays(15), addDays(21), addDays(22)];
-const cabins: Cabin[] = ["Economy", "Premium Economy", "Business", "First"];
-type Picker = "from" | "to" | "depart" | "return" | "travelers" | "cabin" | null;
+export type FlightSearchHandle = { useRouteShortcut: () => void };
+type Picker = "from" | "to" | "departureDate" | "returnDate" | "travelers" | "cabin";
+const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
+const plural = (count: number, singular: string, pluralForm = `${singular}s`) => `${count} ${count === 1 ? singular : pluralForm}`;
 
-export function FlightSearchPanel({ compact = false, initialDestination }: { compact?: boolean; initialDestination?: string }) {
-  const initialAirport = initialDestination ? findAirportByDestination(initialDestination) : airports[1];
-  const [tripType, setTripType] = useState<TripType>("round-trip");
-  const [from, setFrom] = useState<Airport>(initialAirport?.code === airports[0].code ? airports[1] : airports[0]);
-  const [to, setTo] = useState<Airport | undefined>(initialAirport);
-  const [depart, setDepart] = useState(dates[0]);
-  const [returnDate, setReturnDate] = useState(dates[2]);
-  const [travelers, setTravelers] = useState(1);
-  const [cabin, setCabin] = useState<Cabin>("Economy");
-  const [picker, setPicker] = useState<Picker>(null);
-  const [notice, setNotice] = useState(initialDestination && !initialAirport ? `We couldn't match “${initialDestination}” to an airport. Choose a destination airport to continue.` : "");
-
-  useEffect(() => {
-    if (!initialDestination) return;
-    const match = findAirportByDestination(initialDestination);
-    setTo(match);
-    if (match?.code === from.code) setFrom(airports.find((airport) => airport.code !== match.code) ?? airports[0]);
-    setNotice(match ? "" : `We couldn't match “${initialDestination}” to an airport. Choose a destination airport to continue.`);
-  }, [initialDestination]);
-
-  const chooseAirport = (code: string) => {
-    const airport = airports.find((item) => item.code === code);
-    if (airport && picker === "from") setFrom(airport);
-    if (airport && picker === "to") setTo(airport);
-    setPicker(null); setNotice("");
-  };
-  const submit = () => {
-    if (!to) { setNotice("Choose a destination airport to continue."); setPicker("to"); return; }
-    if (from.code === to.code) { setNotice("Origin and destination must be different."); return; }
-    router.push({ pathname: "/flight-results", params: { from: from.code, to: to.code, tripType, departureDate: depart.iso, returnDate: returnDate.iso, travelers: String(travelers), cabin } });
-  };
+export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: boolean; params?: Record<string, RouteValue> }>(({ compact = false, params = {} }, ref) => {
+  const initial = useRef<ReturnType<typeof initializeFlightForm> | undefined>(undefined); if (!initial.current) initial.current = initializeFlightForm(params);
+  const [form, setForm] = useState<FlightForm>(initial.current.form); const [errors, setErrors] = useState<FlightFormErrors>({}); const [notice, setNotice] = useState(initial.current.notice); const [picker, setPicker] = useState<Picker>();
+  const intent = JSON.stringify(params); const previousIntent = useRef(intent);
+  useEffect(() => { if (intent !== previousIntent.current && Object.values(params).some(Boolean)) { const next = initializeFlightForm(params); setForm(next.form); setErrors({}); setNotice(next.notice); } previousIntent.current = intent; }, [intent]);
+  const clear = (...keys: (keyof FlightFormErrors)[]) => setErrors((current) => { const next = { ...current }; keys.forEach((key) => delete next[key]); return next; });
+  const shortcut = () => { setForm((current) => ({ ...current, from: airportByCode("JFK"), to: airportByCode("LAX") })); clear("from", "to"); setNotice("JFK to LAX selected. Review the form, then search when ready."); };
+  const swapAirports = () => { setForm((current) => current.from && current.to ? { ...current, from: current.to, to: current.from } : current); clear("from", "to"); };
+  useImperativeHandle(ref, () => ({ useRouteShortcut: shortcut }));
+  const submit = () => { const next = validateFlightForm(form); setErrors(next); if (Object.keys(next).length) { setNotice("Please correct the highlighted search details."); const first = Object.keys(next)[0]; if (["from","to","departureDate","returnDate","travelers","cabin"].includes(first)) setPicker(first as Picker); return; } router.push({ pathname: "/flight-results", params: flightSearchParams(form) }); };
+  const chooseAirport = (airport: Airport) => { const key = picker as "from" | "to"; setForm({ ...form, [key]: airport }); clear(key); setPicker(undefined); };
+  const chooseDate = (iso: string) => { if (picker === "departureDate") { const result = adjustFlightDeparture(form, iso); setForm(result.form); if (result.adjusted) setNotice("Return was adjusted to remain after departure."); } else setForm({ ...form, returnDate: iso }); clear("departureDate", "returnDate"); setPicker(undefined); };
   return <View style={[flowStyles.card, flowStyles.shadow, compact && styles.compact]}>
-    <Segments value={tripType} onChange={(value) => { setTripType(value); setNotice(""); }} options={[{ value: "round-trip", label: "Round trip" }, { value: "one-way", label: "One way" }, { value: "multi-city", label: "Multi-city" }]} />
-    <View>
-      <Field label="From" value={from.code} meta={`${from.city}, ${from.country}`} onPress={() => setPicker("from")} />
-      <Field label="To" value={to?.code ?? "Choose airport"} meta={to ? `${to.city}, ${to.country}` : "No airport selected"} onPress={() => setPicker("to")} />
-      <Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" accessibilityState={{ disabled: !to }} disabled={!to} onPress={() => { if (!to) return; const previous = from; setFrom(to); setTo(previous); setNotice(""); }} style={styles.swap}><FlowIcon name="swap" color={flowColors.blue} /></Pressable>
-    </View>
-    <View style={styles.row}><View style={styles.half}><Field label="Depart" value={depart.label} icon="calendar" onPress={() => setPicker("depart")} /></View>{tripType === "round-trip" ? <View style={styles.half}><Field label="Return" value={returnDate.label} icon="calendar" onPress={() => setPicker("return")} /></View> : null}</View>
-    <View style={styles.row}><View style={styles.half}><Field label="Travelers" value={`${travelers} Traveler${travelers === 1 ? "" : "s"}`} icon="person" onPress={() => setPicker("travelers")} /></View><View style={styles.half}><Field label="Cabin" value={cabin} onPress={() => setPicker("cabin")} trailing={<FlowIcon name="chevron" size={18} />} /></View></View>
-    {notice ? <UnavailableNotice text={notice} /> : null}
-    <View style={styles.button}><PrimaryButton label="Search flights" onPress={submit} /></View>
-    <ChoiceSheet visible={picker === "from" || picker === "to"} title={picker === "from" ? "Choose origin" : "Choose destination"} choices={airports.map((item) => ({ value: item.code, label: item.code, meta: `${item.city}, ${item.country}` }))} onChoose={chooseAirport} onClose={() => setPicker(null)} />
-    <ChoiceSheet visible={picker === "depart" || picker === "return"} title={picker === "depart" ? "Departure date" : "Return date"} choices={dates.map((date) => ({ value: date.iso, label: date.label }))} onChoose={(iso) => { const date = dates.find((item) => item.iso === iso) ?? dates[0]; if (picker === "depart") setDepart(date); else setReturnDate(date); setPicker(null); }} onClose={() => setPicker(null)} />
-    <ChoiceSheet visible={picker === "travelers"} title="Travelers" choices={[1,2,3,4,5].map((count) => ({ value: String(count), label: `${count} Traveler${count === 1 ? "" : "s"}` }))} onChoose={(count) => { setTravelers(Number(count)); setPicker(null); }} onClose={() => setPicker(null)} />
-    <ChoiceSheet visible={picker === "cabin"} title="Cabin class" choices={cabins.map((item) => ({ value: item, label: item }))} onChoose={(item) => { setCabin(item as Cabin); setPicker(null); }} onClose={() => setPicker(null)} />
+    <Segments value={form.tripType} onChange={(tripType) => { const returnDate = form.returnDate > form.departureDate ? form.returnDate : addCalendarDays(form.departureDate, 1); setForm({ ...form, tripType: tripType as FlightForm["tripType"], returnDate }); clear("tripType", "returnDate"); }} options={[{ value: "round-trip", label: "Round trip" }, { value: "one-way", label: "One way" }]} />
+    {errors.tripType ? <ErrorText text={errors.tripType}/> : null}
+    <View><Field label="From" value={form.from?.code ?? "Choose airport"} meta={form.from ? `${form.from.city}, ${form.from.country}` : "No airport selected"} onPress={() => setPicker("from")}/>{errors.from ? <ErrorText text={errors.from}/> : null}<Field label="To" value={form.to?.code ?? "Choose airport"} meta={form.to ? `${form.to.city}, ${form.to.country}` : "No airport selected"} onPress={() => setPicker("to")}/>{errors.to ? <ErrorText text={errors.to}/> : null}<Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" accessibilityState={{ disabled: !form.from || !form.to }} disabled={!form.from || !form.to} onPress={swapAirports} style={styles.swap}><FlowIcon name="swap" color={flowColors.blue}/></Pressable></View>
+    <View style={styles.row}><View style={styles.half}><Field label="Depart" value={displayDate(form.departureDate)} icon="calendar" onPress={() => setPicker("departureDate")}/>{errors.departureDate ? <ErrorText text={errors.departureDate}/> : null}</View>{form.tripType === "round-trip" ? <View style={styles.half}><Field label="Return" value={displayDate(form.returnDate)} icon="calendar" onPress={() => setPicker("returnDate")}/>{errors.returnDate ? <ErrorText text={errors.returnDate}/> : null}</View> : null}</View>
+    <View style={styles.row}><View style={styles.half}><Field label="Travelers" value={plural(totalTravelers(form), "traveler")} meta={`${plural(form.adults,"adult")} · ${plural(form.children,"child","children")} · ${plural(form.infants,"infant")}`} icon="person" onPress={() => setPicker("travelers")}/>{errors.travelers ? <ErrorText text={errors.travelers}/> : null}</View><View style={styles.half}><Field label="Cabin" value={form.cabin} onPress={() => setPicker("cabin")} trailing={<FlowIcon name="chevron" size={18}/>}/>{errors.cabin ? <ErrorText text={errors.cabin}/> : null}</View></View>
+    {notice ? <UnavailableNotice text={notice}/> : null}<View style={styles.button}><PrimaryButton label="Search flights" onPress={submit}/></View>
+    <AirportSheet kind={picker === "from" || picker === "to" ? picker : undefined} selected={picker === "from" ? form.from : form.to} onChoose={chooseAirport} onClose={() => setPicker(undefined)}/>
+    <LocalCalendarModal visible={picker === "departureDate" || picker === "returnDate"} title={picker === "returnDate" ? "Choose return date" : "Choose departure date"} selected={picker === "returnDate" ? form.returnDate : form.departureDate} minimum={picker === "returnDate" ? addCalendarDays(form.departureDate, 1) : localIsoDate(new Date())} onChoose={chooseDate} onClose={() => setPicker(undefined)}/>
+    <TravelerSheet visible={picker === "travelers"} form={form} onChange={setForm} onClose={() => { clear("travelers"); setPicker(undefined); }}/><CabinSheet visible={picker === "cabin"} selected={form.cabin} onChoose={(cabin) => { setForm({ ...form, cabin }); clear("cabin"); setPicker(undefined); }} onClose={() => setPicker(undefined)}/>
   </View>;
-}
-
-const styles = StyleSheet.create({
-  compact: { borderRadius: 12 },
-  row: { flexDirection: "row" },
-  half: { flex: 1 },
-  swap: { position: "absolute", right: 12, top: 50, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: "white", borderColor: flowColors.border, borderWidth: 1, elevation: 2 },
-  button: { padding: 8 },
 });
+function ErrorText({ text }: { text: string }) { return <Text accessibilityRole="alert" style={styles.error}>{text}</Text>; }
+function AirportSheet({ kind, selected, onChoose, onClose }: { kind?: "from" | "to"; selected?: Airport; onChoose: (airport: Airport) => void; onClose: () => void }) { const [query,setQuery]=useState(""); useEffect(() => { if (kind) setQuery(""); },[kind]); const matches=searchAirports(query); return <Modal transparent animationType="slide" visible={Boolean(kind)} onRequestClose={onClose}><View style={styles.overlay}><View accessibilityViewIsModal style={styles.sheet}><Text accessibilityRole="header" style={flowStyles.title}>{kind === "from" ? "Choose origin" : "Choose destination"}</Text><View style={styles.searchRow}><TextInput accessibilityLabel="Search airports" placeholder="Search code, city, or country" placeholderTextColor={flowColors.muted} value={query} onChangeText={setQuery} autoCapitalize="none" style={styles.search}/>{query ? <Pressable accessibilityRole="button" accessibilityLabel="Clear airport search" onPress={() => setQuery("")}><Text style={styles.link}>Clear</Text></Pressable> : null}</View><ScrollView keyboardShouldPersistTaps="handled">{matches.map((airport) => <Pressable key={airport.code} accessibilityRole="button" accessibilityLabel={`${airport.code}, ${airport.city}, ${airport.country}`} accessibilityState={{ selected: selected?.code === airport.code }} onPress={() => onChoose(airport)} style={[styles.choice,selected?.code===airport.code&&styles.selected]}><Text style={flowStyles.value}>{airport.code} · {airport.city}</Text><Text style={flowStyles.meta}>{airport.country}{selected?.code===airport.code ? " · Selected" : ""}</Text></Pressable>)}{!matches.length ? <Text accessibilityRole="alert" style={styles.empty}>No airports match this search.</Text> : null}</ScrollView><Cancel onPress={onClose}/></View></View></Modal>; }
+function TravelerSheet({ visible, form, onChange, onClose }: { visible:boolean; form:FlightForm; onChange:(form:FlightForm)=>void; onClose:()=>void }) { return <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}><View style={styles.overlay}><View accessibilityViewIsModal style={styles.sheet}><Text accessibilityRole="header" style={flowStyles.title}>Travelers</Text>{(["adults","children","infants"] as const).map((kind) => { const minimum=kind==="adults"?1:0; const full=totalTravelers(form)>=9; return <View key={kind} style={styles.counter}><View><Text style={flowStyles.value}>{kind[0].toUpperCase()+kind.slice(1)}</Text><Text style={flowStyles.meta}>{plural(form[kind],kind==="children"?"child":kind.slice(0,-1),kind)}</Text></View><View style={styles.counterButtons}><Counter label={`Decrease ${kind}`} disabled={form[kind]<=minimum} onPress={()=>onChange(changeTraveler(form,kind,-1))} symbol="−"/><Text style={styles.count}>{form[kind]}</Text><Counter label={`Increase ${kind}`} disabled={full} onPress={()=>onChange(changeTraveler(form,kind,1))} symbol="+"/></View></View>; })}<PrimaryButton label="Done" onPress={onClose}/><Cancel onPress={onClose}/></View></View></Modal>; }
+function Counter({label,disabled,onPress,symbol}:{label:string;disabled:boolean;onPress:()=>void;symbol:string}) { return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={[styles.counterButton,disabled&&styles.disabled]}><Text style={styles.symbol}>{symbol}</Text></Pressable>; }
+function CabinSheet({visible,selected,onChoose,onClose}:{visible:boolean;selected:FlightCabin;onChoose:(cabin:FlightCabin)=>void;onClose:()=>void}) { return <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}><View style={styles.overlay}><View accessibilityViewIsModal style={styles.sheet}><Text accessibilityRole="header" style={flowStyles.title}>Cabin class</Text>{FLIGHT_CABINS.map((cabin)=><Pressable key={cabin} accessibilityRole="button" accessibilityState={{selected:cabin===selected}} accessibilityLabel={`${cabin}${cabin===selected?", selected":""}`} onPress={()=>onChoose(cabin)} style={[styles.choice,cabin===selected&&styles.selected]}><Text style={flowStyles.value}>{cabin}{cabin===selected?" ✓":""}</Text></Pressable>)}<Cancel onPress={onClose}/></View></View></Modal>; }
+function Cancel({onPress}:{onPress:()=>void}) { return <Pressable accessibilityRole="button" onPress={onPress} style={styles.cancel}><Text style={styles.link}>Cancel</Text></Pressable>; }
+const styles=StyleSheet.create({compact:{borderRadius:12},row:{flexDirection:"row",flexWrap:"wrap"},half:{flexGrow:1,flexBasis:150},swap:{position:"absolute",right:12,top:50,width:44,height:44,borderRadius:22,alignItems:"center",justifyContent:"center",backgroundColor:"white",borderColor:flowColors.border,borderWidth:1,elevation:2},button:{padding:8},error:{color:"#A21D25",fontSize:12,lineHeight:18,paddingHorizontal:12,paddingVertical:4},overlay:{flex:1,backgroundColor:"#071A4866",justifyContent:"flex-end"},sheet:{maxHeight:"82%",backgroundColor:"white",borderTopLeftRadius:24,borderTopRightRadius:24,padding:20,gap:12},searchRow:{flexDirection:"row",alignItems:"center",gap:10},search:{flex:1,minHeight:48,borderWidth:1,borderColor:flowColors.border,borderRadius:9,paddingHorizontal:12,color:flowColors.navy},choice:{minHeight:58,justifyContent:"center",padding:10,borderBottomWidth:1,borderBottomColor:flowColors.border},selected:{backgroundColor:"#F2F6FF",borderLeftWidth:4,borderLeftColor:flowColors.blue},empty:{padding:24,textAlign:"center",color:flowColors.muted},cancel:{minHeight:44,alignItems:"center",justifyContent:"center"},link:{color:flowColors.blue,fontWeight:"800"},counter:{minHeight:64,flexDirection:"row",alignItems:"center",justifyContent:"space-between",gap:8},counterButtons:{flexDirection:"row",alignItems:"center",gap:10},counterButton:{width:44,height:44,borderRadius:22,borderWidth:1,borderColor:flowColors.border,alignItems:"center",justifyContent:"center"},disabled:{opacity:.35},symbol:{fontSize:24,color:flowColors.navy},count:{minWidth:24,textAlign:"center",fontWeight:"800",color:flowColors.navy}});

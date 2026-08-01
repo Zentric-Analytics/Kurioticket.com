@@ -1,16 +1,6 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
-
-test("Flights reads destination params and passes the prefill into flight search", () => {
-  const source = readFileSync("src/features/flow/ProductScreens.tsx", "utf8");
-  assert.match(source, /useLocalSearchParams<\{ destination\?: string \| string\[\] \}>/);
-  assert.match(source, /<FlightSearchPanel initialDestination=\{destination\} \/>/);
-});
-
-test("unknown destinations do not retain an unrelated default airport", () => {
-  const source = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
-  assert.match(source, /setTo\(match\)/);
-  assert.match(source, /We couldn't match/);
-  assert.match(source, /if \(!to\).*Choose a destination airport/);
-});
+import { initializeFlightForm } from "./flightSearchModel";
+const today=new Date(2026,7,1,12);
+test("Flights resolves Explore destination and explicit destination precedence",()=>{ assert.equal(initializeFlightForm({destination:"Paris"},today).form.to?.code,"CDG"); assert.equal(initializeFlightForm({destination:"Paris",to:["JFK","LAX"]},today).form.to?.code,"JFK"); });
+test("unknown destinations do not retain an unrelated default airport",()=>{ const result=initializeFlightForm({destination:"Unknown place"},today); assert.equal(result.form.to,undefined); assert.match(result.notice??"",/Choose a destination airport/); });
