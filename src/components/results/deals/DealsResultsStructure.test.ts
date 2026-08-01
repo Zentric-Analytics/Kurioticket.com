@@ -10,7 +10,26 @@ const flightSummary = readFileSync(new URL("./DealsPackageFlightSummary.tsx", im
 const hotelSummary = readFileSync(new URL("./DealsPackageHotelSummary.tsx", import.meta.url), "utf8");
 const carSummary = readFileSync(new URL("./DealsPackageCarSummary.tsx", import.meta.url), "utf8");
 const skeleton = readFileSync(new URL("./DealsPreviewSkeleton.tsx", import.meta.url), "utf8");
+const tripPlanBar = readFileSync(new URL("./DealsTripPlanBar.tsx", import.meta.url), "utf8");
 const presentation = readFileSync(new URL("../../../lib/deals/dealsPackageCardPresentation.ts", import.meta.url), "utf8");
+
+test("package result states share one centered max-w-5xl width contract", () => {
+  const wrapperStart = results.indexOf('<div className="page-shell max-w-5xl pt-5 sm:pt-6">');
+  const wrapperEnd = results.indexOf("</section></div>", wrapperStart);
+  const resultsWrapper = results.slice(wrapperStart, wrapperEnd);
+
+  assert.ok(wrapperStart >= 0 && wrapperEnd > wrapperStart);
+  assert.match(resultsWrapper, /page-shell max-w-5xl/);
+  assert.doesNotMatch(resultsWrapper, /max-w-6xl/);
+  assert.match(resultsWrapper, /<DealsPreviewSkeleton/);
+  assert.match(resultsWrapper, /\{failed && <div/);
+  assert.match(resultsWrapper, /!candidates\.length && <div/);
+  assert.ok(resultsWrapper.indexOf("<DealsPackageResultsToolbar") < resultsWrapper.indexOf("<ol "));
+  assert.match(resultsWrapper, /<div className="space-y-4"><DealsPackageResultsToolbar[\s\S]*<ol aria-label=/);
+  assert.doesNotMatch(resultsWrapper, /(?:w|max-w)-\[(?:1024px|88%)\]/);
+  assert.doesNotMatch(card, /\b(?:mx|ms|me)-\S+|translate-\S+/);
+  assert.match(tripPlanBar, /\bmax-w-5xl\b/);
+});
 
 test("results render one combined package list after the shared search header", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
