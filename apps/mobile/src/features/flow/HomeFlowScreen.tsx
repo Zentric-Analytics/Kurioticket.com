@@ -25,7 +25,7 @@ const homeHeroSource = {
 };
 const HOME_HERO_WIDTH = 2047;
 const HOME_HERO_HEIGHT = 1380;
-const HOME_HERO_DISPLAY_HEIGHT = 420;
+const HOME_HERO_DISPLAY_HEIGHT = 300;
 
 function HomeHero({
   safeAreaTop,
