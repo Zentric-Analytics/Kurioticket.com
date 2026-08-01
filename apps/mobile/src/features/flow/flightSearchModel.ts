@@ -1,6 +1,6 @@
 import { airports, searchAirports, type Airport } from "./airportData";
 import { findAirportByDestination } from "./airportMatching";
-import { localDateFromIso, localIsoDate } from "./localDateModel";
+import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
 
 export type RouteValue = string | string[] | undefined;
 export type FlightTripType = "round-trip" | "one-way";
@@ -20,7 +20,7 @@ export function defaultFlightForm(): FlightForm {
   return { tripType: "round-trip", departureDate: "", returnDate: "", adults: 0, children: 0, infants: 0 };
 }
 
-export function initializeFlightForm(params: Record<string, RouteValue>, today = new Date()): { form: FlightForm; notice?: string } {
+export function initializeFlightForm(params: Record<string, RouteValue>, today = new Date(), initializeHomepageDates = false): { form: FlightForm; notice?: string } {
   const defaults = defaultFlightForm(); const notices: string[] = [];
   const explicitToText = firstFlightParam(params.to); const destinationText = firstFlightParam(params.destination);
   const explicitTo = airportByCode(explicitToText); const explored = destinationText ? findAirportByDestination(destinationText) : undefined;
@@ -40,7 +40,10 @@ export function initializeFlightForm(params: Record<string, RouteValue>, today =
   let adults = separatePresent ? adultsValue ?? 0 : legacy ?? 0; let children = separatePresent ? childrenValue ?? 0 : 0; let infants = separatePresent ? infantsValue ?? 0 : 0;
   if (!Number.isInteger(adults) || adults < 1 || !Number.isInteger(children) || children < 0 || !Number.isInteger(infants) || infants < 0 || adults + children + infants > 9) { adults = 0; children = 0; infants = 0; if (separatePresent || legacy !== undefined) notices.push("Some traveler counts were invalid. Please select travelers again."); }
   const cabinText = firstFlightParam(params.cabin); const cabin = normalizeCabin(cabinText); if (cabinText && !cabin) notices.push("Choose a supported cabin class.");
-  return { form: { ...defaults, tripType, from, to, departureDate: departureValid ? departureText : "", returnDate: returnValid ? returnText : "", adults, children, infants, cabin }, notice: notices[0] };
+  const isFreshHomepageForm = initializeHomepageDates && !Object.values(params).some((value) => firstFlightParam(value));
+  const homepageDeparture = isFreshHomepageForm ? todayIso : "";
+  const homepageReturn = isFreshHomepageForm && tripType === "round-trip" ? addCalendarDays(todayIso, 7) : "";
+  return { form: { ...defaults, tripType, from, to, departureDate: departureValid ? departureText : homepageDeparture, returnDate: returnValid ? returnText : homepageReturn, adults, children, infants, cabin }, notice: notices[0] };
 }
 
 export function validateFlightForm(form: FlightForm, today = new Date()): FlightFormErrors {
@@ -56,7 +59,19 @@ export function validateFlightForm(form: FlightForm, today = new Date()): Flight
   return errors;
 }
 
-export function adjustFlightDeparture(form: FlightForm, departureDate: string) { return !form.returnDate || form.returnDate > departureDate ? { form: { ...form, departureDate }, adjusted: false } : { form: { ...form, departureDate, returnDate: "" }, adjusted: true }; }
+export function adjustFlightDeparture(form: FlightForm, departureDate: string, initializeHomepageDates = false) {
+  if (!form.returnDate || form.returnDate <= departureDate) {
+    const returnDate = initializeHomepageDates && form.tripType === "round-trip" ? addCalendarDays(departureDate, 7) : "";
+    return { form: { ...form, departureDate, returnDate }, adjusted: Boolean(form.returnDate) || Boolean(returnDate) };
+  }
+  return { form: { ...form, departureDate }, adjusted: false };
+}
+export function changeFlightTripType(form: FlightForm, tripType: FlightTripType, initializeHomepageDates = false): FlightForm {
+  if (tripType === "round-trip" && initializeHomepageDates && (!localDateFromIso(form.returnDate) || form.returnDate <= form.departureDate)) {
+    return { ...form, tripType, returnDate: addCalendarDays(form.departureDate, 7) };
+  }
+  return { ...form, tripType };
+}
 export function changeTraveler(form: FlightForm, kind: "adults" | "children" | "infants", delta: number): FlightForm { const next = form[kind] + delta; if (!Number.isInteger(next) || next < (kind === "adults" ? 1 : 0) || (delta > 0 && totalTravelers(form) >= 9)) return form; return { ...form, [kind]: next }; }
 export const flightSearchParams = (form: FlightForm) => ({ tripType: form.tripType, from: form.from!.code, to: form.to!.code, departureDate: form.departureDate, ...(form.tripType === "round-trip" ? { returnDate: form.returnDate } : {}), adults: String(form.adults), children: String(form.children), infants: String(form.infants), travelers: String(totalTravelers(form)), cabin: form.cabin });
 export { searchAirports };
