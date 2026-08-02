@@ -75,7 +75,7 @@ test("airport city localization coverage is complete for every active locale", (
   const report = getAirportCityLocalizationCoverage();
   const uniqueCities = new Set(airports.map((airport) => airport.city));
 
-  assert.equal(uniqueCities.size, 234);
+  assert.equal(uniqueCities.size, 235);
   assert.equal(report.length, 13);
   for (const localeReport of report) {
     assert.equal(localeReport.total, uniqueCities.size);

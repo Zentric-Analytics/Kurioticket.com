@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const shell = readFileSync("src/components/admin/AdminPageShell.tsx", "utf8");
+// AdminPageShell.tsx is a compatibility barrel after the approved pre-July-16 rollback.
+const shell = readFileSync("src/components/admin/AdminPageShellHistorical.tsx", "utf8");
 
 test("admin shell uses a responsive inline navigation instead of a drawer", () => {
   assert.match(shell, /<aside className="sticky top-0/);
-  assert.match(shell, /lg:h-screen lg:w-\[280px\]/);
+  assert.match(shell, /lg:grid-cols-\[280px_1fr\]/);
+  assert.match(shell, /lg:h-screen/);
   assert.match(shell, /<nav className="flex gap-2 overflow-x-auto/);
   assert.match(shell, /lg:block/);
   assert.match(shell, /lg:overflow-y-auto/);
@@ -15,7 +17,8 @@ test("admin shell uses a responsive inline navigation instead of a drawer", () =
 
 test("admin shell restores original branding and grouped navigation labels", () => {
   assert.match(shell, />Internal operations</);
-  assert.match(shell, /adminNavigationGroups/);
+  assert.match(shell, /const grouped = items\.reduce/);
+  assert.match(shell, /sectionLabels\[section\]/);
   assert.doesNotMatch(shell, /Workspace|Travel inventory|Administration/);
 });
 
@@ -23,9 +26,10 @@ test("admin topbar restores internal workspace controls", () => {
   assert.match(shell, />Kurioticket Admin</);
   assert.match(shell, />Secure internal workspace</);
   assert.match(shell, /placeholder="Search users, searches, providers\.\.\."/);
-  assert.match(shell, /disabled aria-label="Notifications unavailable"/);
+  assert.match(shell, /disabled[\s\S]*?aria-label="Notifications unavailable"/);
   assert.match(shell, /\{adminRole\}/);
-  assert.match(shell, /aria-label="Open administrator profile menu"/);
+  assert.match(shell, /<details className=\{`relative \$\{className\}`\}>/);
+  assert.match(shell, /<summary className="flex h-10 cursor-pointer/);
 });
 
 test("administrator profile keeps all original destinations", () => {

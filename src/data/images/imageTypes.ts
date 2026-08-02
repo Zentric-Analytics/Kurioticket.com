@@ -31,7 +31,6 @@ export const imageSources = [
   "owned",
   "pexels",
   "unsplash",
-  "kiwi",
   "hotelbeds",
   "temporary",
 ] as const;

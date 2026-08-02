@@ -48,7 +48,7 @@ test("modify trigger and close controls retain accessible button contracts", () 
   assert.match(overview, /onClick=\{handleModify\}/);
   assert.doesNotMatch(overview, /href=.*deals/);
   assert.match(dialog, /<button ref=\{closeRef\} type="button" onClick=\{onClose\} aria-label=\{t\("deals\.results\.editor\.close"\)\}/);
-  assert.match(results, /requestAnimationFrame\(\(\) => modifyButtonRef\.current\?\.focus\(\)\)/);
+  assert.match(results, /requestAnimationFrame\(\(\) => activeModifyTriggerRef\.current\?\.focus\(\)\)/);
 });
 
 test("dialog traps focus, locks scrolling, and restores document styles", () => {

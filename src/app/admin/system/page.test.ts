@@ -10,11 +10,11 @@ const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
 const homepageFareStatusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");
 const homepageFareRefreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
-test("settings route redirects to system without rendering duplicate UI", () => {
-  assert.match(settingsPage, /import \{ redirect \} from "next\/navigation"/);
-  assert.match(settingsPage, /redirect\("\/admin\/system"\)/);
-  assert.doesNotMatch(settingsPage, /AdminPageShell/);
-  assert.doesNotMatch(settingsPage, /Feature Flags/);
+test("settings route remains the linked operational settings workspace", () => {
+  assert.match(settingsPage, /AdminPageShell title="Settings"/);
+  assert.match(settingsPage, /HomepageFaresRefreshCard/);
+  assert.match(settingsPage, /Feature flags/);
+  assert.doesNotMatch(settingsPage, /redirect\(/);
 });
 
 test("system page owns admin configuration and read-only feature flag visibility", () => {

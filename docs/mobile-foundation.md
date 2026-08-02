@@ -48,7 +48,7 @@ Approved Version 1 mobile scope:
 - support ticket creation
 - basic in-app notification list
 
-Version 1 does **not** include premium subscription access, native payments, hotels, cars, push notifications, admin tools, or direct AI calls from the mobile client.
+The native client uses the same Kurioticket search endpoints and contracts as web. Provider credentials and policy remain server-owned.
 
 ## Postponed or feature-flagged features
 
@@ -59,14 +59,11 @@ These features should remain postponed or behind feature flags until separately 
 - push notifications, until device-token infrastructure is implemented
 - route watch
 - social authentication, including Google and Apple authentication
-- premium subscriptions
-- Stripe digital subscription checkout inside mobile
 - native Apple or Google in-app purchases
 - mobile passkeys
 - advanced two-factor management
 - offline mode beyond basic caching
 - mobile admin functionality
-- direct OpenAI calls from the mobile client
 
 Social authentication needs special review. Google sign-in must not be included on iOS without an approved Apple Sign In implementation. Social authentication can be postponed until both platforms are planned correctly.
 
@@ -90,7 +87,7 @@ The mobile application must never directly import:
 - NextAuth server configuration
 - server environment helpers
 - provider SDKs or provider secrets
-- Stripe, Resend, OpenAI, or database secrets
+- provider, Resend, authentication, cron, or database secrets
 - Node-only server modules
 
 This keeps secrets out of the mobile binary and prevents mobile releases from depending on server-only runtime behavior.
