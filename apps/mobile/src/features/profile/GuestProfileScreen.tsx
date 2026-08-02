@@ -39,6 +39,9 @@ export function GuestProfileScreen() {
     { title: "Terms of Service", description: "Read our terms and conditions", icon: "document", action: () => void openUrl(TERMS, "Terms of Service") },
     { title: "Privacy Policy", description: "Learn how we protect your data", icon: "shield", action: () => void openUrl(PRIVACY, "Privacy Policy") },
   ];
+  const saved: Row[] = [
+    { title: "Saved & recent", description: "Sign in to view saved favorites", icon: "heart", action: () => router.push("/saved") },
+  ];
   const appSettings: Row[] = [
     { title: "Language", icon: "globe", value: "English", action: () => unavailable("Language selection") },
     { title: "Currency", icon: "currency", value: currency, action: () => router.push("/currency") },
@@ -49,6 +52,7 @@ export function GuestProfileScreen() {
     <Text accessibilityRole="header" style={[styles.heroTitle, { color: theme.text }]}>Your journey starts here</Text>
     <Text style={[styles.heroBody, { color: theme.muted }]}>Sign in to access your trips, saved items,{"\n"}price alerts and personalized recommendations.</Text>
     <Pressable accessibilityRole="button" accessibilityLabel="Sign in" accessibilityHint="Choose an authentication method" onPress={() => router.push("/(tabs)/profile/sign-in")} style={({ pressed }) => [styles.signIn, pressed && styles.pressed]}><FlowIcon name="person" color="white" size={24} /><Text style={styles.signInText}>Sign in</Text><View style={styles.signInArrow}><FlowIcon name="chevron" color="white" size={22} /></View></Pressable>
+    <Section title="Your travel" rows={saved} />
     <Section title="Support" rows={support} />
     <Section title="App settings">
       {appSettings.map((row) => <GuestRow key={row.title} row={row} last={false} />)}
