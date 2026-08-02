@@ -24,6 +24,7 @@ import {
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { ResponsiveHero } from "./ResponsiveHero";
+import { HomeTopNavigation } from "./HomeFlowScreen";
 
 
 function Page({
@@ -145,28 +146,41 @@ export function FlightsScreen() {
 export function HotelsScreen() {
   const params = useLocalSearchParams<{ destination?: string | string[]; checkIn?: string | string[]; checkOut?: string | string[]; guests?: string | string[]; rooms?: string | string[] }>();
   const panel = useRef<HotelSearchHandle>(null);
+  const insets = useSafeAreaInsets();
   return (
-    <Page
-      title="Hotels"
-      hero={require("../../../assets/heroes/hotels-room.png")}
-      heroWidth={306}
-      heroHeight={596}
-      focalY={0.63}
-    >
-      <HotelSearchPanel ref={panel} params={params} />
-      <Cards
-        title="Featured destinations"
-        items={[
-          {
-            name: "New York",
-            image: require("../../../assets/destinations/new-york.jpg"),
-          },
-          { name: "Paris", image: require("../../../assets/destinations/paris.jpg") },
-          { name: "Bali" },
-        ]}
-        onItemPress={(destination) => panel.current?.useDestination(destination)}
-      />
-    </Page>
+    <View style={flowStyles.safe}>
+      <StatusBar style="dark" translucent backgroundColor="white" />
+      <ScrollView contentContainerStyle={styles.hotelPage} keyboardShouldPersistTaps="handled">
+        <HomeTopNavigation safeAreaTop={insets.top} />
+        <View style={styles.hotelHero}>
+          <ResponsiveHero
+            source={require("../../../assets/heroes/hotels-room.png")}
+            sourceWidth={306}
+            sourceHeight={596}
+            height={290}
+            focalY={0.63}
+            accessibilityLabel="Hotels hero image"
+          />
+          <View pointerEvents="none" style={styles.hotelHeroOverlay} />
+          <View style={styles.hotelHeroCopy}>
+            <Text accessibilityRole="header" style={styles.hotelHeroHeading}>Find the stays that start the right trip</Text>
+            <Text style={styles.hotelHeroSupporting}>Compare hotels in one place, from city breaks to luxury resorts.</Text>
+          </View>
+        </View>
+        <View style={styles.hotelBody}>
+          <HotelSearchPanel ref={panel} params={params} />
+          <Cards
+            title="Featured destinations"
+            items={[
+              { name: "New York", image: require("../../../assets/destinations/new-york.jpg") },
+              { name: "Paris", image: require("../../../assets/destinations/paris.jpg") },
+              { name: "Bali" },
+            ]}
+            onItemPress={(destination) => panel.current?.useDestination(destination)}
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -258,6 +272,13 @@ export function DealsScreen() {
 const styles = StyleSheet.create({
   categoryNote: { color: flowColors.muted, fontSize: 12, lineHeight: 17, paddingHorizontal: 8, marginTop: -8, marginBottom: 8 },
   page: { paddingHorizontal: 9, paddingBottom: 28 },
+  hotelPage: { paddingHorizontal: 14, paddingBottom: 28 },
+  hotelHero: { height: 290, marginHorizontal: -14, overflow: "hidden" },
+  hotelHeroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "#071A4866" },
+  hotelHeroCopy: { position: "absolute", left: 20, right: 20, bottom: 46, gap: 8 },
+  hotelHeroHeading: { color: "white", fontSize: 27, lineHeight: 33, fontWeight: "800", maxWidth: 330 },
+  hotelHeroSupporting: { color: "white", fontSize: 14, lineHeight: 20, fontWeight: "500", maxWidth: 330 },
+  hotelBody: { marginTop: -24, gap: 10 },
   heroShell: { height: 290, marginHorizontal: -9, overflow: "hidden" },
   heroHeader: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 5 },
   heroActions: { flexDirection: "row", justifyContent: "space-between" },

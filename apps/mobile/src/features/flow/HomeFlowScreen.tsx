@@ -76,7 +76,7 @@ function HomeHero() {
   );
 }
 
-function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
+export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
   return (
     <View pointerEvents="box-none" style={styles.homeTopNavigation}>
       <View style={{ height: safeAreaTop }} />
