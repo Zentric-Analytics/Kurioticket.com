@@ -2,7 +2,6 @@ import { nanoid } from "nanoid";
 import type { FlightLeg, FlightSearchParams, Layover, NormalizedFlightResult } from "@/lib/types";
 import { minutesToDuration, sanitizeAirportCode } from "@/lib/utils";
 import { scoreFlight } from "@/services/travel/scoring";
-import { buildTravelpayoutsAffiliateUrl, getTravelpayoutsMarker } from "@/services/travel/providers/travelpayoutsProvider";
 
 const airlineNames: Record<string, string> = {
   AA: "American Airlines",
@@ -21,65 +20,11 @@ const airlineNames: Record<string, string> = {
 };
 
 export function normalizeFlightResult(
-  provider: "Amadeus" | "Duffel" | "Kiwi" | "Development Fallback",
+  provider: "Duffel",
   raw: unknown,
   search: FlightSearchParams,
 ): NormalizedFlightResult | null {
-  if (provider === "Amadeus") return normalizeAmadeusFlight(raw, search);
-  if (provider === "Duffel") return normalizeDuffelFlight(raw, search);
-  if (provider === "Kiwi") return normalizeKiwiFlight(raw, search);
-  return normalizeFallbackFlight(raw, search);
-}
-
-function normalizeAmadeusFlight(raw: unknown, search: FlightSearchParams): NormalizedFlightResult | null {
-  const offer = raw as {
-    id?: string;
-    itineraries?: Array<{
-      duration?: string;
-      segments?: Array<{
-        departure?: { iataCode?: string; at?: string };
-        arrival?: { iataCode?: string; at?: string };
-        carrierCode?: string;
-        number?: string;
-        duration?: string;
-      }>;
-    }>;
-    price?: { grandTotal?: string; currency?: string };
-    travelerPricings?: Array<{ fareDetailsBySegment?: Array<{ cabin?: string; includedCheckedBags?: unknown }> }>;
-    validatingAirlineCodes?: string[];
-  };
-
-  const legs = buildAmadeusLegs(offer, search);
-  const primaryLeg = legs[0];
-  const segments = offer.itineraries?.[0]?.segments ?? [];
-  const first = segments[0];
-  if (!primaryLeg || !offer.price?.grandTotal) return null;
-
-  const carrier = first?.carrierCode || offer.validatingAirlineCodes?.[0] || "Flight";
-  const baggageInfo = offer.travelerPricings?.[0]?.fareDetailsBySegment?.[0]?.includedCheckedBags
-    ? "Checked baggage details available"
-    : "Baggage rules vary by fare";
-
-  return buildFlight({
-    provider: "Amadeus",
-    providerId: offer.id,
-    airlineName: airlineNames[carrier] || carrier,
-    flightNumber: `${carrier}${first?.number || ""}`.trim(),
-    originAirport: primaryLeg.originAirport,
-    destinationAirport: primaryLeg.destinationAirport,
-    departureTime: primaryLeg.departureTime,
-    arrivalTime: primaryLeg.arrivalTime,
-    durationMinutes: primaryLeg.durationMinutes,
-    stops: primaryLeg.stops,
-    layovers: primaryLeg.layovers,
-    legs,
-    cabinClass: search.cabinClass,
-    baggageInfo,
-    refundInfo: "Fare rules are reviewed on the external provider site.",
-    price: Number(offer.price.grandTotal),
-    currency: offer.price.currency || "USD",
-    rawProviderReference: { provider: "amadeus", id: offer.id },
-  });
+  return normalizeDuffelFlight(raw, search);
 }
 
 function normalizeDuffelFlight(raw: unknown, search: FlightSearchParams): NormalizedFlightResult | null {
@@ -155,82 +100,6 @@ function normalizeDuffelFlight(raw: unknown, search: FlightSearchParams): Normal
   });
 }
 
-function normalizeKiwiFlight(raw: unknown, search: FlightSearchParams): NormalizedFlightResult | null {
-  const offer = raw as {
-    id?: string;
-    price?: number;
-    currency?: string;
-    airlines?: string[];
-    route?: Array<{
-      flyFrom?: string;
-      flyTo?: string;
-      local_departure?: string;
-      local_arrival?: string;
-      airline?: string;
-      flight_no?: number;
-    }>;
-    duration?: { total?: number; departure?: number };
-    deep_link?: string;
-  };
-
-  const route = offer.route ?? [];
-  const first = route[0];
-  const last = route[route.length - 1];
-  if (!first?.local_departure || !last?.local_arrival || !offer.price) return null;
-
-  const carrier = first.airline || offer.airlines?.[0] || "";
-  const durationMinutes = Math.round((offer.duration?.departure || offer.duration?.total || 0) / 60) || estimateDuration(first.local_departure, last.local_arrival);
-
-  const leg = buildKiwiLeg(route, search, carrier);
-
-  return buildFlight({
-    provider: "Kiwi",
-    providerId: offer.id,
-    airlineName: airlineNames[carrier] || carrier || "Airline",
-    flightNumber: `${carrier}${first.flight_no || ""}`.trim(),
-    originAirport: first.flyFrom || sanitizeAirportCode(search.origin),
-    destinationAirport: last.flyTo || sanitizeAirportCode(search.destination),
-    departureTime: first.local_departure,
-    arrivalTime: last.local_arrival,
-    durationMinutes,
-    stops: Math.max(route.length - 1, 0),
-    layovers: buildKiwiLayovers(route),
-    legs: leg ? [leg] : undefined,
-    cabinClass: search.cabinClass,
-    baggageInfo: "Baggage rules are shown by the external provider.",
-    refundInfo: "Fare rules are reviewed on the external provider site.",
-    price: Number(offer.price),
-    currency: offer.currency || "USD",
-    bookingUrl: offer.deep_link,
-    rawProviderReference: { provider: "kiwi", id: offer.id },
-  });
-}
-
-function normalizeFallbackFlight(raw: unknown, search: FlightSearchParams): NormalizedFlightResult {
-  const item = raw as Partial<NormalizedFlightResult>;
-  return buildFlight({
-    provider: "Development Fallback",
-    providerId: item.id,
-    airlineName: item.airlineName || "United Airlines",
-    flightNumber: item.flightNumber || "UA1482",
-    originAirport: sanitizeAirportCode(search.origin),
-    destinationAirport: sanitizeAirportCode(search.destination),
-    departureTime: item.departureTime || `${search.departureDate}T08:30:00`,
-    arrivalTime: item.arrivalTime || `${search.departureDate}T14:45:00`,
-    durationMinutes: item.durationMinutes || 375,
-    stops: item.stops ?? 0,
-    layovers: item.layovers || [],
-    legs: item.legs,
-    cabinClass: search.cabinClass,
-    baggageInfo: item.baggageInfo || "Baggage details are reviewed on the external provider site.",
-    refundInfo: item.refundInfo || "Change and refund rules vary by fare and are reviewed externally.",
-    price: item.price || 286,
-    currency: item.currency || "USD",
-    bookingUrl: item.bookingUrl,
-    rawProviderReference: { provider: "fallback", id: item.id },
-  });
-}
-
 function buildFlight(input: {
   provider: NormalizedFlightResult["provider"];
   providerId?: string;
@@ -253,13 +122,13 @@ function buildFlight(input: {
   rawProviderReference?: unknown;
 }): NormalizedFlightResult {
   const scores = scoreFlight(input);
-  const partnerUrl = input.bookingUrl || buildMetasearchPartnerUrl(input);
+  const partnerUrl = input.bookingUrl || buildMetasearchPartnerUrl();
 
   return {
     id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,
     provider: input.provider,
     airlineName: input.airlineName,
-    airlineLogo: buildAirlineLogo(input.flightNumber),
+    airlineLogo: undefined,
     flightNumber: input.flightNumber,
     originAirport: input.originAirport,
     destinationAirport: input.destinationAirport,
@@ -294,56 +163,6 @@ function buildReasons(input: { price: number; stops: number; baggageInfo: string
   return reasons;
 }
 
-
-function buildAmadeusLegs(
-  offer: {
-    itineraries?: Array<{
-      duration?: string;
-      segments?: Array<{
-        departure?: { iataCode?: string; at?: string };
-        arrival?: { iataCode?: string; at?: string };
-        carrierCode?: string;
-        number?: string;
-      }>;
-    }>;
-    validatingAirlineCodes?: string[];
-  },
-  search: FlightSearchParams,
-): FlightLeg[] {
-  return (offer.itineraries ?? [])
-    .map((itinerary, index) => {
-      const segments = itinerary.segments ?? [];
-      const first = segments[0];
-      const last = segments[segments.length - 1];
-      if (!first?.departure?.at || !last?.arrival?.at) return null;
-
-      const durationMinutes = parseIsoDuration(itinerary.duration) || estimateDuration(first.departure.at, last.arrival.at);
-      const carrier = first.carrierCode || offer.validatingAirlineCodes?.[0] || "";
-
-      return {
-        direction: legDirection(index, search),
-        originAirport: first.departure.iataCode || (index === 1 ? sanitizeAirportCode(search.destination) : sanitizeAirportCode(search.origin)),
-        destinationAirport: last.arrival.iataCode || (index === 1 ? sanitizeAirportCode(search.origin) : sanitizeAirportCode(search.destination)),
-        departureTime: first.departure.at,
-        arrivalTime: last.arrival.at,
-        duration: minutesToDuration(durationMinutes),
-        durationMinutes,
-        stops: Math.max(segments.length - 1, 0),
-        layovers: buildLayovers(segments),
-        segments: segments
-          .filter((segment) => segment.departure?.at && segment.arrival?.at)
-          .map((segment) => ({
-            originAirport: segment.departure?.iataCode || "",
-            destinationAirport: segment.arrival?.iataCode || "",
-            departureTime: segment.departure?.at || "",
-            arrivalTime: segment.arrival?.at || "",
-            airlineName: airlineNames[segment.carrierCode || ""] || segment.carrierCode,
-            flightNumber: `${segment.carrierCode || carrier}${segment.number || ""}`.trim(),
-          })),
-      } satisfies FlightLeg;
-    })
-    .filter(Boolean) as FlightLeg[];
-}
 
 function buildDuffelLegs(
   offer: {
@@ -400,65 +219,10 @@ function buildDuffelLegs(
     .filter(Boolean) as FlightLeg[];
 }
 
-function buildKiwiLeg(
-  route: Array<{
-    flyFrom?: string;
-    flyTo?: string;
-    local_departure?: string;
-    local_arrival?: string;
-    airline?: string;
-    flight_no?: number;
-  }>,
-  search: FlightSearchParams,
-  carrier: string,
-): FlightLeg | undefined {
-  const first = route[0];
-  const last = route[route.length - 1];
-  if (!first?.local_departure || !last?.local_arrival) return undefined;
-
-  const durationMinutes = estimateDuration(first.local_departure, last.local_arrival);
-
-  return {
-    direction: "outbound",
-    originAirport: first.flyFrom || sanitizeAirportCode(search.origin),
-    destinationAirport: last.flyTo || sanitizeAirportCode(search.destination),
-    departureTime: first.local_departure,
-    arrivalTime: last.local_arrival,
-    duration: minutesToDuration(durationMinutes),
-    durationMinutes,
-    stops: Math.max(route.length - 1, 0),
-    layovers: buildKiwiLayovers(route),
-    segments: route
-      .filter((segment) => segment.local_departure && segment.local_arrival)
-      .map((segment) => ({
-        originAirport: segment.flyFrom || "",
-        destinationAirport: segment.flyTo || "",
-        departureTime: segment.local_departure || "",
-        arrivalTime: segment.local_arrival || "",
-        airlineName: airlineNames[segment.airline || carrier] || segment.airline || carrier,
-        flightNumber: `${segment.airline || carrier}${segment.flight_no || ""}`.trim(),
-      })),
-  };
-}
-
 function legDirection(index: number, search: FlightSearchParams): FlightLeg["direction"] {
   if (index === 0) return "outbound";
   if (index === 1 && search.tripType === "round-trip") return "return";
   return "leg";
-}
-
-function buildLayovers(segments: Array<{ arrival?: { iataCode?: string; at?: string }; departure?: { at?: string } }>) {
-  const layovers: Layover[] = [];
-  for (let index = 0; index < segments.length - 1; index += 1) {
-    const current = segments[index];
-    const next = segments[index + 1];
-    layovers.push({
-      airport: current.arrival?.iataCode || "Connection",
-      duration: minutesToDuration(estimateDuration(current.arrival?.at, next.departure?.at)),
-      quality: classifyLayover(estimateDuration(current.arrival?.at, next.departure?.at)),
-    });
-  }
-  return layovers;
 }
 
 function buildDuffelLayovers(
@@ -512,40 +276,11 @@ function buildDuffelRefundInfo(conditions?: {
   return parts.length ? parts.join(". ") : "Change and refund rules vary by fare and are reviewed externally.";
 }
 
-function buildMetasearchPartnerUrl(input: {
-  provider: NormalizedFlightResult["provider"];
-  originAirport: string;
-  destinationAirport: string;
-  departureTime: string;
-}) {
-  if (!getTravelpayoutsMarker()) return "";
-
-  return buildTravelpayoutsAffiliateUrl({
-    origin: input.originAirport,
-    destination: input.destinationAirport,
-    departureDate: input.departureTime.slice(0, 10),
-    subId: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-metasearch`,
-  });
-}
+function buildMetasearchPartnerUrl(){ return ""; }
 
 function formatDuffelCabin(value?: string) {
   if (!value) return "";
   return value.replace(/_/g, " ");
-}
-
-function buildKiwiLayovers(route: Array<{ local_arrival?: string; local_departure?: string; flyTo?: string }>) {
-  const layovers: Layover[] = [];
-  for (let index = 0; index < route.length - 1; index += 1) {
-    const current = route[index];
-    const next = route[index + 1];
-    const minutes = estimateDuration(current.local_arrival, next.local_departure);
-    layovers.push({
-      airport: current.flyTo || "Connection",
-      duration: minutesToDuration(minutes),
-      quality: classifyLayover(minutes),
-    });
-  }
-  return layovers;
 }
 
 function parseIsoDuration(value?: string) {
@@ -567,9 +302,4 @@ function classifyLayover(minutes: number): Layover["quality"] {
   if (minutes <= 180) return "good";
   if (minutes >= 480) return "overnight";
   return "long";
-}
-
-function buildAirlineLogo(flightNumber?: string) {
-  const carrier = flightNumber?.match(/^[A-Z0-9]{2}/)?.[0];
-  return carrier ? `https://images.kiwi.com/airlines/64/${carrier}.png` : undefined;
 }

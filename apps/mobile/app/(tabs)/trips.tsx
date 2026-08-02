@@ -1,3 +1,3 @@
-import { TripsScreen } from "../../src/features/home/HomeScreen";
+import { TripsFlowScreen } from "../../src/features/flow/TabScreens";
 
-export default TripsScreen;
+export default TripsFlowScreen;

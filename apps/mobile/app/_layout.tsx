@@ -1,15 +1,24 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { colors } from "../src/theme/tokens";
+import { AppThemeProvider, useAppTheme } from "../src/theme/AppTheme";
+import { useEffect } from "react";
+import { buildStartupLog } from "../src/diagnostics/buildDiagnostics";
+import { getRuntimeDiagnostics } from "../src/diagnostics/runtimeDiagnostics";
 
 export default function RootLayout() {
+  useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
+  return <AppThemeProvider><ThemedRootLayout /></AppThemeProvider>;
+}
+
+function ThemedRootLayout() {
+  const { theme } = useAppTheme();
   return (
     <>
-      <StatusBar style="dark" backgroundColor={colors.background} />
+      <StatusBar style={theme.dark ? "light" : "dark"} backgroundColor={theme.background} />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
+          contentStyle: { backgroundColor: theme.background },
         }}
       >
         <Stack.Screen name="index" />

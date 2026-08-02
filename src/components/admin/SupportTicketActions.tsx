@@ -63,7 +63,7 @@ export function SupportTicketActions({ ticketId, status }: { ticketId: string; s
     <div className="space-y-5">
       <AdminSectionCard className="space-y-4 p-5">
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">Reply to customer</h2>
+          <h2 className="text-lg font-black text-slate-950">Reply to customer</h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">Send a visible support reply to the ticket email address.</p>
         </div>
         <label className="block" htmlFor="support-reply-body">
@@ -88,7 +88,7 @@ export function SupportTicketActions({ ticketId, status }: { ticketId: string; s
 
       <AdminSectionCard className="space-y-4 p-5">
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">Ticket controls</h2>
+          <h2 className="text-lg font-black text-slate-950">Ticket controls</h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">Update the ticket lifecycle status without sending a customer email.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,280px)_auto] sm:items-end">

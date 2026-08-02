@@ -11,6 +11,7 @@ import {
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
+import { Card } from "@/components/ui/Card";
 import type { PublicHotelResult } from "@/lib/types";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
@@ -473,8 +474,9 @@ export function HotelDetailsClient({
 
   return (
     <main className="flex-1 bg-surface-muted/40">
-      <section className="page-shell py-6 sm:py-8 lg:py-10">
-        <div className="space-y-6 sm:space-y-8 lg:space-y-10">
+      <section className="border-b border-border bg-white">
+        <div className="page-shell py-6 sm:py-8 lg:py-10">
+          <div className="space-y-6 sm:space-y-8 lg:space-y-10">
           <HotelDetailsHeader
             resultsHref={resultsHref}
             backToResultsText={backToResultsText}
@@ -499,30 +501,46 @@ export function HotelDetailsClient({
           />
 
           <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
-            <HotelDetailsGallery
-            activeUrl={activeUrl}
-            hotelName={hotel.name}
-            imageAlt={t("hotelResults.hotelImageAlt").replace("{{name}}", hotel.name).replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
-            imageUnavailableText={t("hotelResults.imageUnavailable")}
-            showGalleryControls={showGalleryControls}
-            onPrevious={() => selectAdjacentImage(-1)}
-            onNext={() => selectAdjacentImage(1)}
-            previousPhotoLabel={t("hotelResults.previousPhoto") || "Previous photo"}
-            nextPhotoLabel={t("hotelResults.nextPhoto") || "Next photo"}
-            photoCounter={photoCounter}
-            photoPositionAnnouncement={photoPositionAnnouncement}
-            usableIndices={usableIndices}
-            displayCandidates={displayCandidates}
-            activeIndex={activeIndex}
-            activePosition={activePosition}
-            selectPhotoLabel={t("hotelResults.selectPhoto") || "Show photo {{number}}"}
-            viewAllPhotosLabel={t("hotelDetails.viewAllPhotos") || "View all photos"}
-            openPhotoViewerLabel={t("hotelDetails.openPhotoViewer") || "Open photo {{current}} of {{total}} for {{hotelName}}"}
-            closePhotoViewerLabel={t("hotelDetails.closePhotoViewer") || "Close photo viewer"}
-            photoViewerTitle={(t("hotelDetails.photoViewerTitle") || "Photos for {{hotelName}}").replace("{{hotelName}}", hotel.name)}
-            onSelectImage={setPreferredImageIndex}
-            onImageError={markImageFailed}
-            />
+            <Card
+              variant="flat"
+              className="min-w-0 overflow-hidden p-0 shadow-[0_12px_32px_-26px_rgba(2,28,43,0.32)]"
+            >
+              <HotelDetailsGallery
+                embedded
+                activeUrl={activeUrl}
+                hotelName={hotel.name}
+                imageAlt={t("hotelResults.hotelImageAlt").replace("{{name}}", hotel.name).replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
+                imageUnavailableText={t("hotelResults.imageUnavailable")}
+                showGalleryControls={showGalleryControls}
+                onPrevious={() => selectAdjacentImage(-1)}
+                onNext={() => selectAdjacentImage(1)}
+                previousPhotoLabel={t("hotelResults.previousPhoto") || "Previous photo"}
+                nextPhotoLabel={t("hotelResults.nextPhoto") || "Next photo"}
+                photoCounter={photoCounter}
+                photoPositionAnnouncement={photoPositionAnnouncement}
+                usableIndices={usableIndices}
+                displayCandidates={displayCandidates}
+                activeIndex={activeIndex}
+                activePosition={activePosition}
+                selectPhotoLabel={t("hotelResults.selectPhoto") || "Show photo {{number}}"}
+                viewAllPhotosLabel={t("hotelDetails.viewAllPhotos") || "View all photos"}
+                openPhotoViewerLabel={t("hotelDetails.openPhotoViewer") || "Open photo {{current}} of {{total}} for {{hotelName}}"}
+                closePhotoViewerLabel={t("hotelDetails.closePhotoViewer") || "Close photo viewer"}
+                photoViewerTitle={(t("hotelDetails.photoViewerTitle") || "Photos for {{hotelName}}").replace("{{hotelName}}", hotel.name)}
+                onSelectImage={setPreferredImageIndex}
+                onImageError={markImageFailed}
+              />
+
+              <HotelDetailsSections
+                embedded
+                roomTitle={t("hotelResults.roomDetails") || "Room"}
+                roomItems={[roomType, mealPlan]}
+                cancellationTitle={t("hotelResults.cancellationDetails") || "Cancellation"}
+                cancellationItems={[cancellationText]}
+                amenitiesTitle={t("hotelResults.amenitiesDetails") || "Amenities"}
+                amenityItems={amenityItems}
+              />
+            </Card>
 
             <HotelDetailsBookingPanel
             priceDetailsAvailable={Boolean(priceDetails)}
@@ -553,14 +571,7 @@ export function HotelDetailsClient({
             />
           </div>
 
-          <HotelDetailsSections
-            roomTitle={t("hotelResults.roomDetails") || "Room"}
-            roomItems={[roomType, mealPlan]}
-            cancellationTitle={t("hotelResults.cancellationDetails") || "Cancellation"}
-            cancellationItems={[cancellationText]}
-            amenitiesTitle={t("hotelResults.amenitiesDetails") || "Amenities"}
-            amenityItems={amenityItems}
-          />
+          </div>
         </div>
       </section>
     </main>

@@ -1,11 +1,12 @@
 import type { DealsPackageMode, DealsSearch } from "./dealsSearchParams";
 import { buildDealsInternalRedirectHref } from "./dealsProviderHandoff";
+import { convertCurrencyAmount, type ExchangeRates } from "@/lib/currency/exchangeRates";
 
 export const DEALS_TRIP_PLAN_VERSION = 1 as const;
 export const DEALS_TRIP_PLAN_TTL_MS = 25 * 60 * 1000;
 export type DealsTripPlanProduct = "flight" | "hotel" | "car";
-export type DealsTripPlanFlight = { id: string; provider: string; airline: string; flightNumber?: string; origin: string; destination: string; departure: string; arrival: string; duration: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number };
-export type DealsTripPlanHotel = { id: string; provider: string; name: string; location: string; checkIn: string; checkOut: string; roomType?: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number };
+export type DealsTripPlanFlight = { id: string; provider: string; airline: string; flightNumber?: string; origin: string; destination: string; departure: string; arrival: string; duration: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number; detailsPath?: string };
+export type DealsTripPlanHotel = { id: string; provider: string; name: string; location: string; checkIn: string; checkOut: string; roomType?: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number; detailsPath?: string };
 export type DealsTripPlanCar = { id: string; provider: string; rentalCompany: string; modelName: string; categoryLabel: string; pickupLocation: string; returnLocation: string; pickupDate: string; pickupTime: string; dropoffDate: string; dropoffTime: string; sourcePrice: number; sourceCurrency: string; resultReceivedAt: number; detailsPath: string };
 export type DealsTripPlan = { version: 1; mode: DealsPackageMode; searchFingerprint: string; resultsPath: string; carsResultsPath?: string; createdAt: number; updatedAt: number; expiresAt: number; flight?: DealsTripPlanFlight; hotel?: DealsTripPlanHotel; car?: DealsTripPlanCar; opened: { flight?: number; hotel?: number; car?: number } };
 
@@ -21,19 +22,26 @@ export const isDealsTripPlanProductExpired = (receivedAt: number, now = Date.now
 export type DealsNextProviderStep = { product: DealsTripPlanProduct | null; href: string | null; allOpened: boolean };
 
 export function getNextDealsProviderStep(plan: DealsTripPlan, now = Date.now()): DealsNextProviderStep {
-  const candidates = (["flight", "hotel"] as const).filter(product => {
+  const candidates = (["flight", "hotel", "car"] as const).filter(product => {
     const selection = plan[product];
     return selection && !isDealsTripPlanProductExpired(selection.resultReceivedAt, now);
   });
   const product = candidates.find(candidate => !plan.opened[candidate]) ?? null;
-  return { product, href: product ? buildDealsInternalRedirectHref(plan[product]!.id, product) : null, allOpened: candidates.length > 0 && product === null };
+  return { product, href: product ? plan[product]!.detailsPath ?? (product === "car" ? null : buildDealsInternalRedirectHref(plan[product]!.id, product)) : null, allOpened: candidates.length > 0 && product === null };
 }
 
 export function getDealsTripPlanReadiness(mode: DealsPackageMode, plan: Pick<DealsTripPlan, "flight" | "hotel" | "car">) {
   const missing: DealsTripPlanProduct[] = [];
   if (mode !== "hotel-car" && !plan.flight) missing.push("flight");
   if (mode !== "flight-car" && !plan.hotel) missing.push("hotel");
-  return { ready: missing.length === 0, missing, guidanceKey: missing.length > 1 ? "deals.tripPlan.chooseMultiple" : missing[0] === "flight" ? "deals.tripPlan.chooseFlight" : missing[0] === "hotel" ? "deals.tripPlan.chooseStay" : "deals.tripPlan.continue" };
+  if (mode !== "hotel-flight" && !plan.car) missing.push("car");
+  return { ready: missing.length === 0, missing, guidanceKey: missing.length > 1 ? "deals.tripPlan.chooseMultiple" : missing[0] === "flight" ? "deals.tripPlan.chooseFlight" : missing[0] === "hotel" ? "deals.tripPlan.chooseStay" : missing[0] === "car" ? "deals.tripPlan.chooseCar" : "deals.tripPlan.continue" };
+}
+
+export function getDealsTripPlanEstimatedTotal(plan: Pick<DealsTripPlan,"flight"|"hotel"|"car">, displayCurrency:string, rates:ExchangeRates){
+  const components=[plan.flight,plan.hotel,plan.car].filter(Boolean) as Array<{sourcePrice:number;sourceCurrency:string}>;
+  const converted=components.map(item=>convertCurrencyAmount(item.sourcePrice,item.sourceCurrency,displayCurrency,rates));
+  return converted.every((amount):amount is number=>amount!==null)?converted.reduce((sum,amount)=>sum+amount,0):null;
 }
 
 export function buildDealsSearchFingerprint(search: DealsSearch): string {
@@ -60,6 +68,19 @@ export function validateDealsCarDetailsPath(value: unknown): string | null {
     if (!match || !decodeURIComponent(match[1]).trim() || [".", ".."].includes(decodeURIComponent(match[1]))) return null;
     const expected = ["pickupLocation", "dropoffLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge"];
     if ([...url.searchParams.keys()].some(key => !expected.includes(key)) || expected.some(key => !url.searchParams.get(key)?.trim())) return null;
+    return `${url.pathname}${url.search}`;
+  } catch { return null; }
+}
+
+export function validateDealsProductDetailsPath(value: unknown, product: "flight" | "hotel", id?: string): string | null {
+  const plural = product === "flight" ? "flights" : "hotels";
+  if (typeof value !== "string" || !value.startsWith(`/${plural}/details/`) || value.startsWith("//") || value.includes("\\") || value.includes("#")) return null;
+  try {
+    decodeURIComponent(value);
+    const url = new URL(value, "https://kurioticket.invalid");
+    const match = new RegExp(`^/${plural}/details/([^/]+)$`).exec(url.pathname);
+    const pathId = match ? decodeURIComponent(match[1]) : "";
+    if (url.origin !== "https://kurioticket.invalid" || !pathId.trim() || [".", ".."].includes(pathId) || (id !== undefined && pathId !== id.trim())) return null;
     return `${url.pathname}${url.search}`;
   } catch { return null; }
 }

@@ -8,7 +8,7 @@ const supportedCurrencyCodes = new Set(supportedCurrencies.map((currency) => cur
 const airportCodeSchema = z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3,8}$/);
 const isoDateSchema = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/);
 const tripTypeSchema = z.enum(["round-trip", "one-way"]);
-const cabinClassSchema = z.enum(["economy", "business", "first"]);
+const cabinClassSchema = z.enum(["economy", "premium-economy", "business", "first"]);
 const travelerCountSchema = z.coerce.number().int().min(0).max(9);
 
 function parseIsoDate(value: string) {

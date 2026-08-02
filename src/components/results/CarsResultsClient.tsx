@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import { CarResultCard } from "@/components/results/CarResultCard";
 import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { assignCarBadges, buildCarDetailsHref, filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "@/lib/cars/carResults";
-import type { CarInventoryStatus, CarResultsMode, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
+import type { CarInventoryStatus, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
 import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
 import {
@@ -493,7 +493,7 @@ const fieldLabelClass =
 const fieldInputClass =
   "focus-ring h-8 min-w-0 w-full truncate border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm lg:font-semibold lg:leading-6";
 
-export function CarsResultsClient({ values, initialResults, inventoryStatus }: { values: CarsResultsValues; initialResults: NormalizedCarResult[]; resultsMode: CarResultsMode; inventoryStatus: CarInventoryStatus }) {
+export function CarsResultsClient({ values, initialResults, inventoryStatus }: { values: CarsResultsValues; initialResults: NormalizedCarResult[]; inventoryStatus: CarInventoryStatus }) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);
@@ -1136,13 +1136,13 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
 
       <div
         className={cn(
-          "pointer-events-none fixed inset-x-0 top-3 z-[1000] hidden px-4 transition-all duration-200 lg:block",
+          "pointer-events-none fixed inset-x-0 top-0 z-[1000] hidden px-4 transition-all duration-200 lg:block",
           showCompactSearchSummary ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0",
         )}
         aria-hidden={!showCompactSearchSummary}
         inert={!showCompactSearchSummary ? true : undefined}
       >
-        <div className="mx-auto grid h-[58px] w-full max-w-[980px] grid-cols-[minmax(260px,1.7fr)_minmax(170px,1fr)_minmax(190px,1.1fr)_minmax(145px,0.85fr)_104px] overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.03] pointer-events-auto">
+        <div className="mx-auto grid h-[58px] w-full max-w-[920px] grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,0.85fr)_104px] overflow-hidden rounded-lg border border-slate-200/95 bg-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.03] pointer-events-auto">
           {([
             ["locations", locationPairSummary, MapPin, t("carsResults.pickupLocationLabel")],
             ["dates", rentalDateSummary, CalendarDays, t("carsResults.rentalDatesLabel")],
@@ -1151,7 +1151,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
           ] as const).map(([section, summary, Icon, label]) => (
             <button key={section} ref={(node) => { if (desktopStickySearchSection === section && node) stickyLauncherRef.current = node; }} type="button" aria-label={label} onClick={(event) => { stickyLauncherRef.current = event.currentTarget; setDesktopStickySearchSection(section); }} className="focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-e border-slate-200/85 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90">
               <Icon className="h-4 w-4 shrink-0 text-[#004BB8]" aria-hidden="true" />
-              <span className="min-w-0 truncate whitespace-nowrap text-[0.86rem] font-medium leading-5 text-slate-800">{summary}</span>
+              <span title={summary} className="min-w-0 truncate whitespace-nowrap text-[0.86rem] font-medium leading-5 text-slate-800">{summary}</span>
             </button>
           ))}
           <div className="flex items-center justify-center px-1">

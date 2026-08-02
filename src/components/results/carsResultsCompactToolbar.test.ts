@@ -2,15 +2,17 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 const source = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url), "utf8");
-test("source-contract: Cars compact toolbar is transparent and five-column", () => {
-  assert.match(source, /pointer-events-none fixed inset-x-0 top-3 z-\[1000\] hidden px-4/);
-  assert.match(source, /h-\[58px\].*max-w-\[980px\].*grid-cols-\[minmax\(260px,1\.7fr\)/s);
+test("source-contract: Cars compact toolbar is transparent, shrink-safe, and five-column", () => {
+  assert.match(source, /pointer-events-none fixed inset-x-0 top-0 z-\[1000\] hidden px-4/);
+  assert.doesNotMatch(source, /pointer-events-none fixed inset-x-0 top-3/);
+  assert.match(source, /h-\[58px\].*max-w-\[920px\].*grid-cols-\[minmax\(0,1\.7fr\)_minmax\(0,1fr\)_minmax\(0,1\.1fr\)_minmax\(0,0\.85fr\)_104px\]/s);
   for (const section of ["locations", "dates", "times", "driverAge"]) assert.match(source, new RegExp(`\\["${section}"`));
   assert.match(source, /searchFormRef\.current\?\.requestSubmit\(\)/);
   assert.match(source, /locationPairSummary/);
   assert.match(source, /rentalDateSummary/);
   assert.match(source, /timeSummary/);
   assert.match(source, /driverAgeSummary/);
+  assert.match(source, /<span title=\{summary\} className="min-w-0 truncate whitespace-nowrap text-\[0\.86rem\] font-medium leading-5 text-slate-800">\{summary\}<\/span>/);
 });
 
 test("source-contract: phone and tablet filter launchers remain responsive", () => {

@@ -34,7 +34,7 @@ export function CarDetailsClient({ car, search, resultsHref }: { car: Normalized
   const primaryOffer = getPrimaryCarOffer(car);
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
   const price = (amount: number, currency: string) => formatDisplayPrice({ amount, sourceCurrency: currency, displayCurrency: selectedOption.currency, convertSourceEstimate: true, maximumFractionDigits: 0, rates: rates.rates, isFallbackRate: rates.isFallback });
-  return <main className="flex-1 bg-[#f6f8fb] lg:pb-14"><div className="page-shell py-5 sm:py-7"><DetailsBackLink href={resultsHref}>{copy("carDetails.backToResults")}</DetailsBackLink>
+  return <main className="flex-1 bg-surface-muted/40"><section className="border-b border-border bg-white lg:pb-14"><div className="page-shell py-5 sm:py-7"><DetailsBackLink href={resultsHref}>{copy("carDetails.backToResults")}</DetailsBackLink>
     <div className="mt-5 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0 space-y-5">
         <CarDetailsHero car={car} offer={primaryOffer} text={text} />
@@ -42,7 +42,7 @@ export function CarDetailsClient({ car, search, resultsHref }: { car: Normalized
           {[[copy("carDetails.pickup"),car.pickupLocation,search.pickupDate,search.pickupTime],[copy("carDetails.return"),car.returnLocation,search.dropoffDate,search.dropoffTime]].map(([label,location,date,time])=><div key={label} className="relative border-s-2 border-blue-200 ps-5"><span className="absolute -start-[7px] top-1 size-3 rounded-full bg-[#004BB8]"/><h3 className="font-bold">{label}</h3><p className="mt-1 flex gap-2 text-sm"><MapPin size={16} className="shrink-0 text-[#004BB8]"/>{location || copy("carDetails.locationUnavailable")}</p><p className="mt-1 flex gap-2 text-sm text-slate-600"><Clock3 size={16}/><time dateTime={`${date}T${time}`}>{formatCarDate(date, locale)}{time ? ` · ${time}` : ""}</time></p></div>)}</div><p className="mt-4 text-sm font-medium">{pickupTypeLabels[car.pickupType]}{car.shuttleRequired ? ` · ${copy("carDetails.shuttleRequired")}` : ""}</p>{car.pickupInstructions && <p className="mt-2 text-sm"><strong>{copy("carDetails.pickupInstructions")}:</strong> {car.pickupInstructions}</p>}</section>
       </div>
       {primaryOffer && <aside className="self-start lg:sticky lg:top-24"><BookingSummary offer={primaryOffer} days={days} price={price} copy={copy}/></aside>}
-    </div></div></main>;
+    </div></div></section></main>;
 }
 
 type PriceFn=(amount:number,currency:string)=>ReturnType<typeof formatDisplayPrice>;

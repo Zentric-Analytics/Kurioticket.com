@@ -1,6 +1,7 @@
 import { validateCarsForm, type CarsFormValues } from "@/lib/cars/carsSearchUtils";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { searchCars } from "@/services/travel/carAggregator";
+import { classifyCars } from "@/lib/travel/searchContract";
 
 const noStore = { "Cache-Control": "no-store" };
 const text = (value: unknown) => typeof value === "string" ? value.trim() : "";
@@ -16,14 +17,19 @@ function canonicalSearch(value: unknown): CarSearchParams | null {
 }
 
 export async function POST(request: Request) {
+  const requestId = text(request.headers.get("x-search-request-id")) || crypto.randomUUID();
   let body: unknown;
-  try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON request body." }, { status: 400, headers: noStore }); }
+  try { body = await request.json(); } catch { return Response.json({ error: "Invalid JSON request body.", requestId }, { status: 400, headers: noStore }); }
   const search = canonicalSearch(body);
-  if (!search) return Response.json({ error: "Invalid car search parameters." }, { status: 400, headers: noStore });
+  if (!search) return Response.json({ error: "Invalid car search parameters.", requestId }, { status: 400, headers: noStore });
   try {
-    const { results, mode, status } = await searchCars(search);
-    return Response.json({ results, mode, status }, { headers: noStore });
+    const { results, status } = await searchCars(search);
+    const response = classifyCars(results, search, requestId);
+    if (status === "unavailable") {
+      return Response.json({ ...response, error: "Car search is temporarily unavailable." }, { status: 503, headers: noStore });
+    }
+    return Response.json(response, { headers: noStore });
   } catch {
-    return Response.json({ error: "Car search is temporarily unavailable." }, { status: 500, headers: noStore });
+    return Response.json({ error: "Car search is temporarily unavailable.", requestId }, { status: 500, headers: noStore });
   }
 }

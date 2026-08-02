@@ -3,32 +3,12 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import {
-  AirVent,
-  Armchair,
   Award,
-  Bike,
   Building2,
-  BusFront,
-  ChevronLeft,
-  ChevronRight,
-  CircleDot,
-  CircleParking,
-  Clock3,
-  Coffee,
-  ConciergeBell,
-  CookingPot,
-  Dumbbell,
-  Flower2,
   Heart,
-  Laptop,
   MapPin,
   Star,
   Tag,
-  Trees,
-  UtensilsCrossed,
-  VolumeX,
-  Waves,
-  Wifi,
   type LucideIcon,
 } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
@@ -52,16 +32,12 @@ import {
 } from "@/components/results/hotelReviewPresentation";
 import {
   buildHotelGalleryCandidates,
-  getAdjacentHotelGalleryIndex,
   resolveHotelGalleryIndex,
 } from "@/components/results/hotelGalleryPresentation";
 import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
 import { useSavedHotel } from "@/components/results/useSavedHotel";
-import {
-  buildHotelAmenityPresentation,
-  type HotelAmenityIconKey,
-  type HotelAmenityPresentationItem,
-} from "@/components/results/hotelAmenityPresentation";
+import { HotelAmenityList } from "@/components/results/HotelAmenityList";
+import { buildHotelAmenityPresentation } from "@/components/results/hotelAmenityPresentation";
 
 function isSafeHttpUrl(value?: string) {
   if (!value) return false;
@@ -273,81 +249,6 @@ const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
   reviewScore: "Review score",
 };
 
-const hotelAmenityIcons: Record<HotelAmenityIconKey, LucideIcon> = {
-  wifi: Wifi,
-  breakfast: Coffee,
-  pool: Waves,
-  spa: Flower2,
-  airportShuttle: BusFront,
-  parking: CircleParking,
-  fitness: Dumbbell,
-  workspace: Laptop,
-  quietRooms: VolumeX,
-  frontDesk: ConciergeBell,
-  lateCheckIn: Clock3,
-  kitchenette: CookingPot,
-  bikeStorage: Bike,
-  courtyard: Trees,
-  lounge: Armchair,
-  restaurant: UtensilsCrossed,
-  airConditioning: AirVent,
-  generic: CircleDot,
-};
-
-function resolveAmenityLabels(
-  items: HotelAmenityPresentationItem[],
-  t: (key: string) => string,
-) {
-  return items.map((item) => {
-    const translatedLabel = item.translationKey ? t(item.translationKey) : "";
-
-    return {
-      ...item,
-      label: translatedLabel.trim() || item.label,
-    };
-  });
-}
-
-function HotelAmenityList({
-  items,
-  expanded = false,
-}: {
-  items: HotelAmenityPresentationItem[];
-  expanded?: boolean;
-}) {
-  if (items.length === 0) return null;
-
-  return (
-    <ul
-      role="list"
-      className={
-        expanded
-          ? "mt-2 grid grid-cols-1 gap-y-1.5"
-          : "mt-2 grid grid-cols-1 gap-y-1.5"
-      }
-    >
-      {items.map((item) => {
-        const Icon = hotelAmenityIcons[item.iconKey];
-
-        return (
-          <li
-            key={item.key}
-            className="flex min-w-0 items-start gap-1.5 text-[12px] font-medium leading-4 text-slate-600"
-          >
-            <Icon
-              className="h-4 w-4 shrink-0 text-slate-500"
-              strokeWidth={1.8}
-              aria-hidden="true"
-            />
-            <span className="min-w-0">{item.label}</span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-
 type HotelSortBadge = "cheapest" | "bestValue" | "topRated";
 
 type HotelCardProps = {
@@ -361,7 +262,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const starRating = normalizeHotelClassificationStars(hotel.classificationStars);
   const resolvedDetailsHref =
     detailsHref || `/hotels/details/${encodeURIComponent(hotel.id)}`;
@@ -375,7 +275,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
   const resolvedActiveImageIndex = resolveHotelGalleryIndex(
     explicitGalleryImages,
     failedImageUrls,
-    preferredImageIndex,
+    0,
   );
   const availableImageIndices = explicitGalleryImages.reduce<number[]>(
     (indices, url, index) => {
@@ -566,18 +466,6 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
     .replace("{{current}}", String(activeGalleryPosition + 1))
     .replace("{{total}}", String(availableImageIndices.length));
 
-  function selectAdjacentImage(direction: -1 | 1) {
-    const nextIndex = getAdjacentHotelGalleryIndex(
-      explicitGalleryImages,
-      failedImageUrls,
-      resolvedActiveImageIndex,
-      direction,
-    );
-
-    if (nextIndex !== -1) setPreferredImageIndex(nextIndex);
-  }
-
-
   return (
     <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
       <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
@@ -621,29 +509,9 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
                 onError={() => markImageFailed(displayImageUrl)}
               />
               {showGalleryControls ? (
-                <>
-                  <button
-                    type="button"
-                    className="absolute left-2 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white shadow-lg ring-1 ring-white/40 transition hover:bg-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                    aria-label={
-                      t("hotelResults.previousPhoto") || "Previous photo"
-                    }
-                    onClick={() => selectAdjacentImage(-1)}
-                  >
-                    <ChevronLeft size={20} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    className="absolute right-2 top-1/2 flex min-h-10 min-w-10 -translate-y-1/2 items-center justify-center rounded-full bg-slate-950/75 text-white shadow-lg ring-1 ring-white/40 transition hover:bg-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                    aria-label={t("hotelResults.nextPhoto") || "Next photo"}
-                    onClick={() => selectAdjacentImage(1)}
-                  >
-                    <ChevronRight size={20} aria-hidden="true" />
-                  </button>
-                  <div className="absolute bottom-2 right-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-xs font-semibold text-white shadow-lg ring-1 ring-white/30">
-                    {photoCounterText}
-                  </div>
-                </>
+                <div className="absolute bottom-2 right-2 rounded-full bg-slate-950/75 px-2.5 py-1 text-xs font-semibold text-white shadow-lg ring-1 ring-white/30">
+                  {photoCounterText}
+                </div>
               ) : null}
             </>
           ) : (
@@ -767,7 +635,8 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
                       </p>
                     ) : null}
                     <HotelAmenityList
-                      items={resolveAmenityLabels(collapsedAmenityItems, t)}
+                      items={collapsedAmenityItems}
+                      t={t}
                     />
                   </div>
                 ) : null}

@@ -60,7 +60,6 @@ export default async function CarsResultsPage({
       <CarsResultsClient
         values={values}
         initialResults={inventory.results}
-        resultsMode={inventory.mode}
         inventoryStatus={inventory.status}
       />
       <Footer />

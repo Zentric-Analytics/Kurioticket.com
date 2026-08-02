@@ -49,6 +49,15 @@ test("one-way canonical query omits return date", () => {
   assert.equal("returnDate" in parsed.data, false);
 });
 
+test("premium economy is canonical and participates in duplicate identity", () => {
+  const premium = { ...query, cabinClass: "premium-economy" };
+  const parsed = buildCanonicalFlightPriceAlertQuery(premium);
+  assert.equal(parsed.success, true);
+  const economyKey = flightPriceAlertDuplicateKey({ origin: "JFK", destination: "LHR", targetPrice: 499, currency: "USD", query });
+  const premiumKey = flightPriceAlertDuplicateKey({ origin: "JFK", destination: "LHR", targetPrice: 499, currency: "USD", query: premium });
+  assert.notEqual(economyKey, premiumKey);
+});
+
 test("canonical flight price alert query rejects invalid shapes", () => {
   assert.equal(buildCanonicalFlightPriceAlertQuery({ ...query, tripType: "multi-city" }).success, false);
   assert.equal(buildCanonicalFlightPriceAlertQuery({ ...query, tripType: "round-trip", returnDate: undefined }).success, false);

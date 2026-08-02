@@ -4,10 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicHotel } from "@/lib/searchCache";
 import { hotelSearchSchema } from "@/lib/validation";
+import { classifyHotels } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchHotels } from "@/services/travel/hotelAggregator";
 
 export async function POST(request: Request) {
+  const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
   const ip = getClientIp(request);
   const rate = checkRateLimit(`hotel-search:${ip}`, 35, 60_000);
   if (!rate.allowed) {
@@ -39,6 +41,12 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: aggregate.unavailableMessage,
+        results: [],
+        status: "unavailable",
+        source: "hotelbeds",
+        warnings: aggregate.warnings,
+        partial: false,
+        requestId,
         warningCategory: deriveHotelWarningCategory(aggregate),
         providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs }) => ({
           provider,
@@ -51,9 +59,7 @@ export async function POST(request: Request) {
   }
 
   const publicResults = aggregate.results.map(toPublicHotel);
-  const status = aggregate.servedFromFallback
-    ? "PARTIAL"
-    : aggregate.providerStatuses.some((provider) => provider.status === "failed")
+  const status = aggregate.providerStatuses.some((provider) => provider.status === "failed")
       ? "PARTIAL"
       : "SUCCESS";
 
@@ -76,7 +82,6 @@ export async function POST(request: Request) {
       metadata: {
         destination: parsed.data.destination,
         resultCount: publicResults.length,
-        servedFromFallback: aggregate.servedFromFallback,
       },
     }),
     ...aggregate.providerStatuses.map((provider) =>
@@ -92,31 +97,25 @@ export async function POST(request: Request) {
   ]);
 
   return NextResponse.json({
-    results: publicResults,
+    ...classifyHotels(publicResults, aggregate.warnings, requestId),
     providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs, error }) => ({
       provider,
       status,
       latencyMs,
       error: sanitizeProviderError(error),
     })),
-    warnings: aggregate.warnings,
     warningCategory: deriveHotelWarningCategory(aggregate),
-    servedFromFallback: aggregate.servedFromFallback,
     latencyMs: aggregate.latencyMs,
   });
 }
 
 function sanitizeProviderError(error?: string) {
   if (!error) return undefined;
-  if (error === "no_live_hotel_provider") return "no_live_hotel_provider";
   if (error === "unsupported_destination") return "unsupported_destination";
   return "provider_unavailable";
 }
 
 function deriveHotelWarningCategory(aggregate: Awaited<ReturnType<typeof searchHotels>>) {
-  if (aggregate.providerStatuses.some((provider) => provider.error === "no_live_hotel_provider")) {
-    return "no_live_hotel_provider";
-  }
   if (aggregate.providerStatuses.some((provider) => provider.error === "unsupported_destination")) {
     return "unsupported_destination";
   }

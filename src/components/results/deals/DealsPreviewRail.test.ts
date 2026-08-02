@@ -7,6 +7,7 @@ const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.ur
 const skeleton = readFileSync(new URL("./DealsPreviewSkeleton.tsx", import.meta.url), "utf8");
 const flightCard = readFileSync(new URL("./DealsFlightPreviewCard.tsx", import.meta.url), "utf8");
 const hotelCard = readFileSync(new URL("./DealsHotelPreviewCard.tsx", import.meta.url), "utf8");
+const carCard = readFileSync(new URL("./DealsCarPreviewCard.tsx", import.meta.url), "utf8");
 
 test("the shared rail uses native horizontal scrolling and child-aware geometry", () => {
   for (const contract of [
@@ -28,6 +29,20 @@ test("the shared rail uses native horizontal scrolling and child-aware geometry"
   assert.doesNotMatch(rail, /hasMultipleChildren[\s\S]*\? "auto-cols-\[minmax\(0,100%\)\]"/);
   assert.match(rail, /px-1/);
   assert.match(rail, /gap-4/);
+});
+
+test("mobile rail items use natural heights before restoring stretch at sm", () => {
+  for (const contract of [
+    "items-start",
+    "sm:items-stretch",
+    "h-auto",
+    "self-start",
+    "sm:h-full",
+    "sm:self-stretch",
+    "min-w-0",
+  ]) assert.ok(rail.includes(contract), `missing ${contract}`);
+
+  assert.doesNotMatch(rail, /className="h-full min-w-0 snap-start/);
 });
 
 test("the rail snaps each card and hides native scrollbars", () => {
@@ -70,7 +85,12 @@ test("the rail contains no scripted carousel behavior or keyboard stop", () => {
   for (const forbidden of [
     "useState",
     "useEffect",
+    "useRef",
+    "ResizeObserver",
+    "IntersectionObserver",
     "addEventListener",
+    "scrollLeft",
+    "requestAnimationFrame",
     "onScroll",
     "onTouchStart",
     "onTouchMove",
@@ -89,54 +109,25 @@ test("the rail contains no scripted carousel behavior or keyboard stop", () => {
   ]) assert.ok(!rail.includes(forbidden), `unexpected ${forbidden}`);
 });
 
-test("Flight, Stay and Car use exactly three separate localized rails", () => {
-  const visibleRails = results.match(/<DealsPreviewRail ariaLabel=/g) ?? [];
-  assert.equal(visibleRails.length, 3);
-  const flight = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.flightOptions")}');
-  const stay = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.stayOptions")}');
-  const cars = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.carOptions")}', stay);
-  assert.ok(flight >= 0 && flight < stay && stay < cars);
+test("preview cards retain full-height columns and price anchors", () => {
+  for (const card of [flightCard, hotelCard, carCard]) {
+    assert.match(card, /h-full/);
+    assert.match(card, /flex-col/);
+    assert.match(card, /mt-auto pt-5/);
+  }
+  assert.doesNotMatch(carCard, /car\.orSimilar|deals\.results\.car\.orSimilar/);
 });
 
-test("the Flight and Hotel rail mappings preserve every card prop", () => {
-  const flight = results.slice(
-    results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.flightOptions")}'),
-    results.indexOf("</DealsPreviewRail>"),
-  );
-  const stayStart = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.stayOptions")}');
-  const stay = results.slice(stayStart, results.indexOf("</DealsPreviewRail>", stayStart));
-
-  for (const prop of [
-    "key={result.id}", "flight={result}", "badgeKey={badgeKey}",
-    "reasonKey={reasonKey}", "locale={locale}", "t={t}",
-    "selected={plan?.flight?.id === result.id}",
-    "onSelect={() => selectFlight(result)}",
-  ]) assert.ok(flight.includes(prop), `missing Flight prop ${prop}`);
-
-  for (const prop of [
-    "key={result.id}", "hotel={result}", "badgeKey={badgeKey}",
-    "reasonKey={reasonKey}", "locale={locale}",
-    "nights={countHotelNights(search.hotelCheckIn, search.hotelCheckOut)}",
-    "rooms={search.hotelRooms}", "t={t}",
-    "selected={plan?.hotel?.id === result.id}",
-    "onSelect={() => selectHotel(result)}",
-  ]) assert.ok(stay.includes(prop), `missing Hotel prop ${prop}`);
+test("Deals results replace separate product rails with one combined package list", () => {
+  assert.doesNotMatch(results, /<DealsPreviewRail ariaLabel=/);
+  assert.match(results, /<DealsPackageCard candidate=\{candidate\}/);
+  assert.match(results, /<ol aria-label=\{t\("deals.results.package.title"\)\}/);
 });
 
-test("the Car rail mapping preserves display props without selection behavior", () => {
-  const carsStart = results.indexOf('<DealsPreviewRail ariaLabel={t("deals.results.carOptions")}');
-  const cars = results.slice(carsStart, results.indexOf("</DealsPreviewRail>", carsStart));
-
-  for (const prop of [
-    "key={result.id}", "car={result}", "badgeKey={badgeKey}",
-    "locale={locale}", "search={carSearch}", "t={t}",
-  ]) assert.ok(cars.includes(prop), `missing Car prop ${prop}`);
-  assert.doesNotMatch(cars, /reasonKey|selected=|onSelect=|selectCar\(/);
-});
-
-test("loading skeletons share the hidden rail and retain their visual contract", () => {
-  assert.match(skeleton, /<DealsPreviewRail ariaHidden>/);
-  assert.match(skeleton, /dealsPreviewLimit/);
+test("loading skeletons mirror the combined package-list visual contract", () => {
+  assert.match(skeleton, /aria-hidden/);
+  assert.match(skeleton, /Array\.from\(\{ length: 3 \}/);
+  assert.match(skeleton, /xl:grid-cols-\[minmax\(0,1fr\)_288px\]/);
   assert.match(skeleton, /motion-safe:animate-pulse/);
 });
 

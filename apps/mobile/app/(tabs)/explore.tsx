@@ -1,3 +1,3 @@
-import { ExploreScreen } from "../../src/features/home/HomeScreen";
+import { ExploreScreen } from "../../src/features/explore/ExploreScreen";
 
 export default ExploreScreen;

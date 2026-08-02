@@ -38,7 +38,7 @@ test("invalid and empty timestamps return empty presentation values", () => {
 });
 test("stops preserve direct, singular, and plural inputs", () => { assert.equal(normalizeFlightLegs({ ...flight, stops: 0 }).at(0)?.stops, 0); assert.equal(normalizeFlightLegs({ ...flight, stops: 1 }).at(0)?.stops, 1); assert.equal(normalizeFlightLegs({ ...flight, stops: 2 }).at(0)?.stops, 2); });
 test("hotel price distinguishes bookable and discovery", () => { const hotel = { totalPrice: 200, currency: "USD" } as PublicHotelResult; assert.deepEqual(getHotelPreviewPrice(hotel), { amount: 200, currency: "USD" }); assert.equal(getHotelPreviewPrice({ inventoryKind: "discovery" } as PublicHotelResult), null); });
-test("preview contract and metadata normalization", () => { assert.equal(dealsPreviewLimit, 3); assert.deepEqual(normalizeMetadata({ warnings: ["safe", 2], servedFromFallback: "yes", latencyMs: Infinity, warningCategory: "secret" }), { warnings: ["safe"], servedFromFallback: false, latencyMs: undefined, warningCategory: undefined }); assert.deepEqual(normalizeMetadata({ warnings: null }).warnings, []); });
+test("preview contract and metadata normalization", () => { assert.equal(dealsPreviewLimit, 3); assert.deepEqual(normalizeMetadata({ warnings: ["safe", 2], latencyMs: Infinity, warningCategory: "secret" }), { warnings: ["safe"], latencyMs: undefined, warningCategory: undefined }); assert.deepEqual(normalizeMetadata({ warnings: null }).warnings, []); });
 
 const makeFlight = (id: string, values: Partial<PublicFlightResult> = {}) => ({ ...flight, id, valueScore: 50, price: 500, durationMinutes: 300, ...values } as PublicFlightResult);
 const makeHotel = (id: string, values: Record<string, unknown> = {}) => ({ id, provider: "provider", name: id, rating: 4, location: "City", amenities: [], roomType: "Room", cancellationInfo: "", valueScore: 50, travelConfidenceScore: 0, arrivalSuitabilityScore: 0, recommendationReasons: [], badges: [], totalPrice: 500, pricePerNight: 250, currency: "USD", bookingUrl: "#", partnerRedirectUrl: "#", ...values } as unknown as PublicHotelResult);
@@ -49,7 +49,7 @@ const makeCar = (id: string, values: Partial<NormalizedCarResult> = {}): Normali
   pickupType: "airport-counter", pickupLocation: "LAX", returnLocation: "LAX",
   shuttleRequired: false, rentalCompanyName: "Rental Co", supplierRating: 8,
   supplierReviewCount: 10, recommendationScore: 50, requiredDocuments: [],
-  includedItems: [], importantInformation: [], isDemo: true,
+  includedItems: [], importantInformation: [], inventorySource: "kurioticket-static-cars",
   offers: [{ id: `${id}-offer`, bookingProviderName: "Provider", rentalCompanyName: "Rental Co", currency: "USD", pricePerDay: 50, totalPrice: 150, taxesAndFeesIncluded: true, payAtPickup: true, freeCancellation: true }],
   ...values,
 });

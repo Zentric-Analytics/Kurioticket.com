@@ -1,5 +1,5 @@
 export type TripType = "round-trip" | "one-way" | "multi-city";
-export type CabinClass = "economy" | "business" | "first";
+export type CabinClass = "economy" | "premium-economy" | "business" | "first";
 export type SortMode = "cheapest" | "best" | "fastest" | "stops";
 
 export type FlightSearchParams = {
@@ -224,7 +224,6 @@ export type AggregatedResult<T> = {
   results: T[];
   providerStatuses: ProviderResult<unknown>[];
   warnings: string[];
-  servedFromFallback: boolean;
   latencyMs: number;
   unavailableMessage?: string;
 };

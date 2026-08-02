@@ -93,7 +93,6 @@ export function DealsCarPreviewCard({
           </p>
           <h3 className="break-words text-lg font-extrabold text-slate-950">
             {car.modelName}
-            {car.orSimilar ? ` ${t("deals.results.car.orSimilar")}` : ""}
           </h3>
         </div>
         <p className="mt-2 flex items-start gap-2 text-sm text-slate-700">
@@ -104,47 +103,53 @@ export function DealsCarPreviewCard({
             {car.shuttleRequired ? ` · ${t("deals.results.car.shuttle")}` : ""}
           </span>
         </p>
-        <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-600">
-          {specs.map(([Icon, label]) => (
-            <li key={label} className="flex min-w-0 items-center gap-1.5">
-              <Icon aria-hidden size={15} className="shrink-0" />
-              <span className="min-w-0 break-words">{label}</span>
-            </li>
-          ))}
-          {car.airConditioning && (
-            <li className="flex min-w-0 items-center gap-1.5">
-              <Snowflake aria-hidden size={15} className="shrink-0" />
-              <span className="min-w-0 break-words">
-                {t("deals.results.car.airConditioning")}
+        <div className="mt-4 divide-y divide-slate-200 border-y border-slate-200">
+          <div className="py-4">
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-600">
+              {specs.map(([Icon, label]) => (
+                <li key={label} className="flex min-w-0 items-center gap-1.5">
+                  <Icon aria-hidden size={15} className="shrink-0" />
+                  <span className="min-w-0 break-words">{label}</span>
+                </li>
+              ))}
+              {car.airConditioning && (
+                <li className="flex min-w-0 items-center gap-1.5">
+                  <Snowflake aria-hidden size={15} className="shrink-0" />
+                  <span className="min-w-0 break-words">
+                    {t("deals.results.car.airConditioning")}
+                  </span>
+                </li>
+              )}
+            </ul>
+          </div>
+          <div className="py-4">
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1">
+                <Gauge aria-hidden className="shrink-0" size={14} />
+                {t(
+                  car.mileagePolicy === "unlimited"
+                    ? "deals.results.car.unlimitedMileage"
+                    : "deals.results.car.limitedMileage",
+                )}
               </span>
-            </li>
-          )}
-        </ul>
-        <div className="mt-4 flex flex-wrap gap-2 text-xs">
-          <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1">
-            <Gauge aria-hidden className="shrink-0" size={14} />
-            {t(
-              car.mileagePolicy === "unlimited"
-                ? "deals.results.car.unlimitedMileage"
-                : "deals.results.car.limitedMileage",
-            )}
-          </span>
-          <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1">
-            <Fuel aria-hidden className="shrink-0" size={14} />
-            {t(`deals.results.car.fuel.${car.fuelPolicy}`)}
-          </span>
-          {offer.freeCancellation && (
-            <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-emerald-800">
-              <Check aria-hidden className="shrink-0" size={14} />
-              {t("deals.results.car.freeCancellation")}
-            </span>
-          )}
-          {offer.payAtPickup && (
-            <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-emerald-800">
-              <Check aria-hidden className="shrink-0" size={14} />
-              {t("deals.results.car.payAtPickup")}
-            </span>
-          )}
+              <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-1">
+                <Fuel aria-hidden className="shrink-0" size={14} />
+                {t(`deals.results.car.fuel.${car.fuelPolicy}`)}
+              </span>
+              {offer.freeCancellation && (
+                <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-emerald-800">
+                  <Check aria-hidden className="shrink-0" size={14} />
+                  {t("deals.results.car.freeCancellation")}
+                </span>
+              )}
+              {offer.payAtPickup && (
+                <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-emerald-800">
+                  <Check aria-hidden className="shrink-0" size={14} />
+                  {t("deals.results.car.payAtPickup")}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         <div className="mt-auto pt-5">
           <p

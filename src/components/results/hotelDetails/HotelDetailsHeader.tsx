@@ -55,22 +55,19 @@ export function HotelDetailsHeader({
       <DetailsBackLink href={resultsHref}>
         {backToResultsText}
       </DetailsBackLink>
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        {badges.map((badge) => (
-          <Badge key={badge} variant="brand" size="sm">
-            {badge}
-          </Badge>
-        ))}
-      </div>
-      <div className="mt-3 flex min-w-0 flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-        <h1 className="min-w-0 max-w-4xl break-words text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-[2.625rem]">
-          {name}
-        </h1>
+      <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 sm:grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] md:gap-x-8">
+        <div className="col-start-1 row-start-1 flex min-w-0 flex-wrap items-center gap-2 md:col-span-2">
+          {badges.map((badge) => (
+            <Badge key={badge} variant="brand" size="sm">
+              {badge}
+            </Badge>
+          ))}
+        </div>
         <Button
           type="button"
           variant="secondary"
           size="sm"
-          className="shrink-0"
+          className="col-start-2 row-start-1 shrink-0 whitespace-nowrap sm:col-start-1 sm:row-start-3 sm:mt-4 sm:w-full md:col-start-2 md:row-start-2 md:mt-3 md:w-auto md:justify-self-end"
           aria-label={savedHotelLabel}
           aria-pressed={isSaved}
           title={
@@ -88,6 +85,9 @@ export function HotelDetailsHeader({
           />
           <span>{saveActionText}</span>
         </Button>
+        <h1 className="col-span-2 row-start-2 mt-3 min-w-0 max-w-4xl break-words text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:col-span-1 sm:text-4xl md:col-start-1 md:row-start-2 lg:text-[2.625rem]">
+          {name}
+        </h1>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
         {starRating ? (

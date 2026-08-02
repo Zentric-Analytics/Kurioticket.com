@@ -16,6 +16,7 @@ function buildReadyManifest(): MarketAssetManifest {
     ...manifest,
     entries: manifest.entries.map((entry, index) => ({
       ...entry,
+      alt: `Approved US travel image ${index + 1}`,
       sourcePage: `https://example.com/assets/${index}`,
       license: "Commercial license",
       licenseNotes: "Commercial web and mobile-web use approved.",

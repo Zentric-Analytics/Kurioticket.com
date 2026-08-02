@@ -2,13 +2,9 @@ import {
   getAdminEmails,
   getAuthSecret,
   getDuffelApiMode,
-  getFlightProviderPrimary,
-  getHotelProviderPrimary,
   getHotelbedsApiMode,
-  getKayakApiMode,
-  getTravelProviderMode,
 } from "@/lib/env";
-import { DatabaseUnavailableError, getPrisma, getOptionalPrisma, isDatabaseConfigured, withOptionalDb } from "@/lib/prisma";
+import { getOptionalPrisma, isDatabaseConfigured, withOptionalDb } from "@/lib/prisma";
 
 type ProviderStatus = {
   product: "Flights" | "Hotels" | "Cars";
@@ -43,7 +39,6 @@ export async function getSafeSystemStatus() {
     sessionConfigured: Boolean(getAuthSecret()),
     emailConfigured: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL),
     providerCredentialsPresent: hasAnyProviderCredentials(),
-    webhookConfigured: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
     adminEmailsConfigured: getAdminEmails().length > 0,
   };
 }
@@ -58,7 +53,7 @@ type AdminMetrics = {
 };
 
 export async function getAdminMetrics(): Promise<AdminMetrics> {
-  return withRequiredAdminDb<AdminMetrics>(async (db) => {
+  return withOptionalDb<AdminMetrics>(async (db) => {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const [totalUsers, activeUsers, suspendedUsers, adminUsers, recentSearches, recentAdminActions] = await Promise.all([
       db.user.count(),
@@ -70,7 +65,7 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
     ]);
 
     return { totalUsers, activeUsers, suspendedUsers, adminUsers, recentSearches, recentAdminActions };
-  });
+  }, unavailableMetrics());
 }
 
 type SearchHealth = {
@@ -82,7 +77,7 @@ type SearchHealth = {
 };
 
 export async function getSearchHealth(): Promise<SearchHealth> {
-  return withRequiredAdminDb<SearchHealth>(async (db) => {
+  return withOptionalDb<SearchHealth>(async (db) => {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const [totalRecentSearches, noResultSearches, failedSearches, topProducts] = await Promise.all([
       db.searchHistory.count({ where: { createdAt: { gte: since } } }),
@@ -104,11 +99,11 @@ export async function getSearchHealth(): Promise<SearchHealth> {
       failedSearches,
       topProducts: topProducts.map((item) => ({ label: item.type, count: item._count._all })),
     };
-  });
+  }, { hasLogs: false, totalRecentSearches: "—", noResultSearches: "—", failedSearches: "—", topProducts: [] } satisfies SearchHealth);
 }
 
 export async function getRecentAdminActivity(limit = 6) {
-  return withRequiredAdminDb(async (db) => {
+  return withOptionalDb(async (db) => {
     const logs = await db.adminAuditLog.findMany({ orderBy: { createdAt: "desc" }, take: limit });
     return logs.map((log) => ({
       id: log.id,
@@ -116,7 +111,7 @@ export async function getRecentAdminActivity(limit = 6) {
       detail: `${log.adminEmail} ${log.targetType ? `on ${log.targetType}` : ""}${log.targetEmail ? ` (${log.targetEmail})` : ""}`,
       timestamp: formatDateTime(log.createdAt),
     }));
-  });
+  }, []);
 }
 
 export async function getProviderStatuses(): Promise<ProviderStatus[]> {
@@ -127,12 +122,12 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
     getLatestHotelFailure(),
   ]);
 
-  const flightPrimary = getFlightProviderPrimary();
-  const flightCredentials = flightPrimary === "duffel" && Boolean(process.env.DUFFEL_API_KEY);
+  const flightPrimary = "duffel";
+  const flightCredentials = Boolean(process.env.DUFFEL_API_KEY);
   const flightEnvironment = getDuffelApiMode() === "test" ? "Test mode" : "Production";
 
-  const hotelPrimary = getHotelProviderPrimary();
-  const hotelCredentials = getHotelCredentialsPresent(hotelPrimary);
+  const hotelPrimary = "hotelbeds";
+  const hotelCredentials = Boolean(process.env.HOTELBEDS_API_KEY && process.env.HOTELBEDS_SECRET);
 
   return [
     {
@@ -153,7 +148,7 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
       providerName: hotelProviderLabel(hotelPrimary),
       environment: hotelEnvironment(hotelPrimary),
       credentialsPresent: hotelCredentials,
-      searchEnabled: hotelPrimary !== "none" && hotelCredentials,
+      searchEnabled: hotelCredentials,
       bookingEnabled: false,
       lastSuccessfulRequest: hotelRequest,
       lastFailedRequest: hotelFailure,
@@ -163,16 +158,14 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
     },
     {
       product: "Cars",
-      providerName: process.env.CAR_PROVIDER_PRIMARY?.trim() || "Not connected",
-      environment: process.env.CAR_PROVIDER_PRIMARY ? safeProviderEnvironment(process.env.CAR_PROVIDER_MODE) : "Unavailable",
-      credentialsPresent: Boolean(process.env.CAR_PROVIDER_API_KEY),
-      searchEnabled: Boolean(process.env.CAR_PROVIDER_PRIMARY && process.env.CAR_PROVIDER_API_KEY),
+      providerName: "Kurioticket static catalogue",
+      environment: "Server-owned catalogue",
+      credentialsPresent: false,
+      searchEnabled: true,
       bookingEnabled: false,
       lastSuccessfulRequest: null,
       lastFailedRequest: null,
-      notes: process.env.CAR_PROVIDER_PRIMARY && process.env.CAR_PROVIDER_API_KEY
-        ? "Car provider configuration is detected. Live inventory should display only after provider approval and environment configuration are confirmed."
-        : "Cars remain provider-ready; live inventory and prices stay unavailable until an approved provider is configured.",
+      notes: "Static catalogue search and internal details are available without provider credentials. External booking is not offered.",
     },
   ];
 }
@@ -210,21 +203,22 @@ export const pausedProviderRows = [
   { name: "Car providers", status: "Provider-ready", note: "Enable only after an approved provider is configured for the environment." },
 ];
 
-async function withRequiredAdminDb<T>(task: (db: ReturnType<typeof getPrisma>) => Promise<T>) {
-  if (!isDatabaseConfigured()) {
-    throw new DatabaseUnavailableError("Admin Home requires a configured database for this dashboard resource.");
-  }
-
-  return task(getPrisma());
+function unavailableMetrics(): AdminMetrics {
+  return {
+    totalUsers: "—",
+    activeUsers: "—",
+    suspendedUsers: "—",
+    adminUsers: "—",
+    recentSearches: "—",
+    recentAdminActions: "—",
+  };
 }
 
 function hasAnyProviderCredentials() {
   return Boolean(
     process.env.DUFFEL_API_KEY ||
       process.env.HOTELBEDS_API_KEY ||
-      process.env.HOTEL_API_KEY ||
-      process.env.TRAVELPAYOUTS_API_KEY ||
-      process.env.CAR_PROVIDER_API_KEY,
+      process.env.HOTELBEDS_SECRET,
   );
 }
 
@@ -233,38 +227,8 @@ function safeAppEnvironment() {
   return process.env.NODE_ENV === "production" ? "Production" : process.env.NODE_ENV === "test" ? "Test" : "Local development";
 }
 
-function safeProviderEnvironment(value?: string) {
-  const normalized = value?.trim().toLowerCase();
-  if (normalized === "production" || normalized === "live") return "Production";
-  if (normalized === "sandbox") return "Sandbox";
-  if (normalized === "test") return "Test mode";
-  return getTravelProviderMode() === "production" ? "Production" : "Sandbox/Test";
-}
-
-function getHotelCredentialsPresent(provider: string) {
-  if (provider === "hotelbeds") return Boolean(process.env.HOTELBEDS_API_KEY && process.env.HOTELBEDS_SECRET);
-  if (provider === "generic_partner") return Boolean(process.env.HOTEL_API_KEY || process.env.TRAVELPAYOUTS_API_KEY);
-  if (provider === "kayak_sandbox") return Boolean(process.env.HOTEL_API_KEY || process.env.TRAVELPAYOUTS_API_KEY);
-  if (provider === "amadeus_hotels") return Boolean(process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET);
-  return false;
-}
-
-function hotelProviderLabel(provider: string) {
-  return {
-    none: "Not connected",
-    kayak_sandbox: "Configured hotel provider",
-    hotelbeds: "Hotelbeds",
-    amadeus_hotels: "Configured hotel provider",
-    generic_partner: "Configured hotel provider",
-  }[provider] || "Not connected";
-}
-
-function hotelEnvironment(provider: string) {
-  if (provider === "none") return "Unavailable";
-  if (provider === "hotelbeds") return getHotelbedsApiMode() === "live" ? "Production" : "Test mode";
-  if (provider === "kayak_sandbox") return getKayakApiMode() === "live" ? "Production" : "Sandbox";
-  return safeProviderEnvironment();
-}
+function hotelProviderLabel(provider:string){return provider==="hotelbeds"?"Hotelbeds":"Not connected";}
+function hotelEnvironment(provider:string){return provider==="hotelbeds"?(getHotelbedsApiMode()==="live"?"Production":"Test mode"):"Unavailable";}
 
 async function getLatestProviderLog(provider: string, status: "SUCCESS" | "FAILED") {
   return withOptionalDb(async (db) => {

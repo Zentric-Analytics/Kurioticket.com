@@ -1,98 +1,277 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.url), "utf8");
-const productSection = readFileSync(new URL("./DealsProductSection.tsx", import.meta.url), "utf8");
+const toolbar = readFileSync(new URL("./DealsPackageResultsToolbar.tsx", import.meta.url), "utf8");
+const card = readFileSync(new URL("./DealsPackageCard.tsx", import.meta.url), "utf8");
+const pricePanel = readFileSync(new URL("./DealsPackagePricePanel.tsx", import.meta.url), "utf8");
+const flightSummary = readFileSync(new URL("./DealsPackageFlightSummary.tsx", import.meta.url), "utf8");
+const hotelSummary = readFileSync(new URL("./DealsPackageHotelSummary.tsx", import.meta.url), "utf8");
+const carSummary = readFileSync(new URL("./DealsPackageCarSummary.tsx", import.meta.url), "utf8");
+const skeleton = readFileSync(new URL("./DealsPreviewSkeleton.tsx", import.meta.url), "utf8");
+const tripPlanBar = readFileSync(new URL("./DealsTripPlanBar.tsx", import.meta.url), "utf8");
+const presentation = readFileSync(new URL("../../../lib/deals/dealsPackageCardPresentation.ts", import.meta.url), "utf8");
 const english = readFileSync(new URL("../../../lib/i18n/en.ts", import.meta.url), "utf8");
 
-test("results hierarchy uses one summary, breadcrumbs, and product sections", () => {
+test("translated Deals copy states the separate-provider booking model", () => {
+  for (const copy of [
+    "Mix-and-match trip options",
+    "Estimated trip total",
+    "Provider sources: {{count}}",
+    "Choose trip option",
+    "Trip option selected",
+    "This is not one package booking.",
+    "Review separate booking steps",
+    "Each item is booked separately with its provider.",
+  ]) assert.match(english, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(card, /deals\.results\.package\.bookingModel/);
+  assert.doesNotMatch(results + card + pricePanel + tripPlanBar, /Choose package|Book package|Continue to provider/);
+});
+
+test("package result states share one centered max-w-5xl width contract", () => {
+  const wrapperStart = results.indexOf('<div className="page-shell max-w-5xl pt-5 sm:pt-6">');
+  const wrapperEnd = results.indexOf("</section></div>", wrapperStart);
+  const resultsWrapper = results.slice(wrapperStart, wrapperEnd);
+
+  assert.ok(wrapperStart >= 0 && wrapperEnd > wrapperStart);
+  assert.match(resultsWrapper, /page-shell max-w-5xl/);
+  assert.doesNotMatch(resultsWrapper, /max-w-6xl/);
+  assert.match(resultsWrapper, /<DealsPreviewSkeleton/);
+  assert.match(resultsWrapper, /\{failed && <div/);
+  assert.match(resultsWrapper, /!candidates\.length && <div/);
+  assert.ok(resultsWrapper.indexOf("<DealsPackageResultsToolbar") < resultsWrapper.indexOf("<ol "));
+  assert.match(resultsWrapper, /<div className="space-y-4">[\s\S]*<DealsPackageResultsToolbar[\s\S]*<ol aria-label=/);
+  assert.doesNotMatch(resultsWrapper, /(?:w|max-w)-\[(?:1024px|88%)\]/);
+  assert.doesNotMatch(card, /\b(?:mx|ms|me)-\S+|translate-\S+/);
+  assert.match(tripPlanBar, /\bmax-w-5xl\b/);
+});
+
+test("results render one mix-and-match trip-option list after the shared search header", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
   const breadcrumbs = results.indexOf("<DealsResultsBreadcrumbs", summary);
-  const products = results.indexOf("<DealsProductSection", breadcrumbs);
-  assert.ok(summary >= 0 && summary < breadcrumbs && breadcrumbs < products);
-  assert.doesNotMatch(results, /DealsResultsIntro/);
-  assert.equal(existsSync(new URL("./DealsResultsIntro.tsx", import.meta.url)), false);
-  assert.match(results, /included\.flight && <DealsProductSection/);
-  assert.match(results, /included\.hotel && <DealsProductSection/);
-  assert.ok(results.includes('included.car && <DealsProductSection id="car-options" headingLevel={2}'));
-  assert.doesNotMatch(results, /car-continuation|carContinuationTitle/);
-  assert.match(results, /<DealsTripPlanBar/);
+  const packages = results.indexOf('id="package-options"', breadcrumbs);
+  assert.ok(summary >= 0 && summary < breadcrumbs && breadcrumbs < packages);
+  assert.match(results, /buildDealsPackageCandidates/);
+  assert.match(results, /<DealsPackageResultsToolbar/);
+  assert.match(results, /<ol aria-label=/);
+  assert.match(results, /sortedCandidates\.map\(candidate/);
+  assert.match(results, /t\("deals\.results\.package\.intro"\)/);
+  assert.match(results, /<h1 className="text-2xl font-extrabold/);
+  assert.doesNotMatch(results, /<DealsProductSection|<DealsPreviewRail/);
 });
 
-test("legacy dark overview is removed and the existing modal remains", () => {
-  assert.equal(existsSync(new URL("./DealsTripOverview.tsx", import.meta.url)), false);
-  assert.doesNotMatch(results, /DealsTripOverview|bg-\[#021C2B\]/);
-  assert.match(results, /editorOpen && editor/);
-  assert.match(results, /DealsModifySearchDialog/);
-  assert.doesNotMatch(results, /deals-trip-overview-heading|countLabel|supportingText|formatDealsOptionCount/);
-  assert.match(results, /document\.getElementById\(included\.flight \? "flight-options" : "stay-options"\)/);
-  assert.match(results, /deals\.results\.viewFlightsCount/);
-  assert.match(results, /deals\.results\.viewHotelsCount/);
+test("the borderless results toolbar is anchored to the package list by shared spacing", () => {
+  const candidateBlock = results.slice(
+    results.indexOf("{candidates.length > 0"),
+    results.indexOf("</section>"),
+  );
+  const toolbarWrapper = toolbar.slice(
+    toolbar.indexOf('<div className="flex min-w-0'),
+    toolbar.indexOf("<p className=", toolbar.indexOf('<div className="flex min-w-0')),
+  );
+  const packageList = candidateBlock.slice(candidateBlock.indexOf("<ol "));
+
+  assert.match(candidateBlock, /<div className="space-y-4">[\s\S]*<DealsPackageResultsToolbar/);
+  assert.ok(candidateBlock.indexOf("<DealsPackageResultsToolbar") < candidateBlock.indexOf("<ol "));
+  assert.match(packageList, /className="space-y-4 sm:space-y-6"/);
+  assert.doesNotMatch(packageList, /\bmt-4\b|\bsm:mt-6\b/);
+  assert.doesNotMatch(toolbarWrapper, /\b(?:mt-5|py-3|border-y|border-t|border-b)\b/);
+  assert.doesNotMatch(candidateBlock + toolbarWrapper, /<hr\b|\b-m[trblxy]?-[^\s"']+|\babsolute\b|\btransform\b/);
 });
 
-test("the first included product owns the sole primary heading contract", () => {
-  assert.match(productSection, /headingLevel\?: 1 \| 2/);
-  assert.match(productSection, /headingLevel === 1 \? "h1" : "h2"/);
-  assert.match(productSection, /<Heading id=\{id\} tabIndex=\{-1\}/);
-  assert.match(productSection, /focus-visible:ring-2/);
-  assert.match(productSection, /<section aria-labelledby=\{id\}/);
-  assert.match(results, /id="flight-options" headingLevel=\{1\}/);
-  assert.match(results, /id="stay-options" headingLevel=\{included\.flight \? 2 : 1\}/);
+test("the anchored toolbar retains its count, sort control, and mode-specific options", () => {
+  assert.match(toolbar, /deals\.results\.tripOptions\.count/);
+  assert.match(toolbar, /deals\.results\.tripOptions\.sort/);
+  assert.match(toolbar, /\{currentSortLabel\}/);
+  assert.match(toolbar, /aria-haspopup="listbox"/);
+  assert.match(toolbar, /aria-expanded=\{sortMenuOpen\}/);
+  assert.match(toolbar, /role="listbox"/);
+  assert.match(toolbar, /mode !== "hotel-car"/);
+  assert.match(toolbar, /mode !== "flight-car"/);
+  assert.match(toolbar, /mode !== "hotel-flight"/);
 });
 
-test("product sections are semantic and do not recreate an outer card shell", () => {
-  const sectionOpening = productSection.match(/<section\b[^>]*>/)?.[0];
-  assert.ok(sectionOpening);
-  assert.match(sectionOpening, /aria-labelledby=\{id\}/);
-  assert.match(sectionOpening, /aria-busy=\{status === "loading"\}/);
-  assert.match(sectionOpening, /className="min-w-0"/);
-  assert.doesNotMatch(sectionOpening, /rounded-3xl|border(?:\s|")|border-\[#D8E1EC\]|bg-white|p-5|sm:p-6|shadow-sm/);
+test("package sorting uses a bounded, restartable presentation transition", () => {
+  assert.match(results, /const \[packageSortPending, setPackageSortPending\] = useState\(false\)/);
+  assert.match(results, /const packageSortTimerRef = useRef<number \| null>\(null\)/);
+  assert.match(results, /const PACKAGE_SORT_SKELETON_MS = 400/);
+  assert.match(results, /const handlePackageSortChange = useCallback/);
+  assert.match(results, /if \(nextSort === packageSort\) return/);
+  assert.ok(results.indexOf("setPackageSort(nextSort)") < results.indexOf("setPackageSortPending(true)"));
+  assert.match(results, /window\.clearTimeout\(packageSortTimerRef\.current\)/);
+  assert.match(results, /setPackageSortPending\(false\)[\s\S]*PACKAGE_SORT_SKELETON_MS/);
+  assert.match(results, /packageSortTransitionRef\.current/);
+  assert.match(results, /\}, \[fingerprint, loading\]\)/);
+  assert.match(results, /useEffect\(\(\) => \(\) => \{[\s\S]*window\.clearTimeout\(packageSortTimerRef\.current\)/);
+  assert.doesNotMatch(results, /onChange=\{setPackageSort\}/);
+  assert.match(results, /onChange=\{handlePackageSortChange\}/);
 
-  assert.match(productSection, /const Heading = headingLevel === 1 \? "h1" : "h2"/);
-  assert.match(productSection, /<Heading id=\{id\} tabIndex=\{-1\}/);
-  assert.match(productSection, /<div className="flex flex-col items-start justify-between gap-4 sm:flex-row">/);
-  assert.match(productSection, /<Link href=\{href\}/);
-  assert.match(productSection, /status === "loading"/);
-  assert.match(productSection, /status === "empty"/);
-  assert.match(productSection, /status === "error"/);
-  assert.ok(productSection.includes('status === "success" && <>{children}</>'));
-  assert.doesNotMatch(productSection, /priceNotice/);
-  assert.doesNotMatch(results, /priceNotice=/);
-  assert.doesNotMatch(results, /deals\.results\.priceResponsibility/);
-
-  assert.match(productSection, /rounded-xl bg-amber-50/);
-  assert.match(productSection, /rounded-2xl bg-slate-50/);
-  assert.match(productSection, /rounded-2xl bg-rose-50/);
-  assert.match(productSection, /rounded-xl border border-rose-300 bg-white/);
+  const handler = results.slice(
+    results.indexOf("const handlePackageSortChange"),
+    results.indexOf("const showPackageSortSkeleton"),
+  );
+  assert.doesNotMatch(handler, /request\(|retryAll\(|router\.push\(|startRouteProgress\(/);
 });
 
-test("section notices disclose fallback inventory without presenting partial-provider warnings", () => {
-  const noticeHelper = results.slice(results.indexOf("const notice"), results.indexOf("const flightPreviews"));
-  assert.doesNotMatch(results, /deals\.results\.partialResults/);
-  assert.doesNotMatch(noticeHelper, /item\.warnings\.length/);
-  assert.doesNotMatch(noticeHelper, /item\.warningCategory === "partial_results"/);
-  assert.match(noticeHelper, /item\.servedFromFallback/);
-  assert.match(noticeHelper, /deals\.results\.fallbackNotice/);
-  assert.match(results, /notice=\{notice\(state\.flight\)\}/);
-  assert.match(results, /notice=\{notice\(state\.hotel\)\}/);
+test("sorting keeps the toolbar and replaces only its ordered list with the shared skeleton", () => {
+  const candidateBlock = results.slice(
+    results.indexOf("{candidates.length > 0"),
+    results.indexOf("</section>"),
+  );
+
+  assert.match(results, /aria-busy=\{loading \|\| packageSortPending\}/);
+  assert.match(results, /const showPackageSortSkeleton = !loading && !failed && candidates\.length > 0 && packageSortPending/);
+  assert.ok(candidateBlock.indexOf("<DealsPackageResultsToolbar") < candidateBlock.indexOf("showPackageSortSkeleton ?"));
+  assert.match(candidateBlock, /showPackageSortSkeleton \? <DealsPreviewSkeleton withTopMargin=\{false\} \/> : <ol/);
+  assert.equal(candidateBlock.match(/<ol /g)?.length, 1);
+  assert.equal(candidateBlock.match(/<DealsPreviewSkeleton/g)?.length, 1);
+  assert.match(results, /loading && <><span[\s\S]*<DealsPreviewSkeleton \/>/);
+  assert.match(results, /<li key=\{candidate\.id\}>/);
+  assert.match(skeleton, /withTopMargin = true/);
+  assert.match(skeleton, /cn\("space-y-4", withTopMargin && "mt-6"\)/);
 });
 
-test("the English dictionary retains only the fallback section notice", () => {
-  assert.doesNotMatch(english, /deals\.results\.partialResults/);
-  assert.match(english, /deals\.results\.fallbackNotice/);
+test("a package is selected atomically with every included product", () => {
+  assert.match(results, /const selectPackage/);
+  for (const product of ["flight", "hotel", "car"]) assert.match(results, new RegExp(`${product}: candidate\.${product}`));
+  assert.match(results, /onSelect=\{\(\) => selectPackage\(candidate\)\}/);
+  assert.match(results, /reconcileDealsCarSelection/);
 });
 
-test("product sections still support and render their generic notice", () => {
-  assert.match(productSection, /notice\?: string/);
-  assert.match(productSection, /notice &&/);
-  assert.match(productSection, /role="status"/);
-  assert.match(productSection, /\{notice\}/);
+test("combined cards disclose estimated totals and separate provider booking", () => {
+  assert.match(pricePanel, /deals\.results\.package\.estimatedTotal/);
+  assert.match(pricePanel, /deals\.results\.package\.disclosure/);
+  assert.match(card, /view\.flight/);
+  assert.match(card, /view\.hotel/);
+  assert.match(card, /view\.car/);
+  assert.match(pricePanel, /priceBreakdown/);
+  assert.match(card, /candidate\.badgeKey/);
+  assert.match(pricePanel, /deals\.results\.package\.providerPrice/);
+  assert.match(pricePanel, /deals\.results\.package\.providerCount/);
+  assert.match(pricePanel, /deals\.results\.package\.choose/);
+  assert.match(pricePanel, /deals\.results\.package\.selected/);
+  assert.match(pricePanel, /aria-pressed=\{selected\}/);
+  assert.match(pricePanel, /selected && <Check aria-hidden/);
+  assert.match(pricePanel, /candidate\.priceBreakdown\.map/);
+  assert.doesNotMatch(card + pricePanel, /candidate\.reasonKey|deals\.results\.package\.providedBy|provider\(view\./);
+  assert.doesNotMatch(card + pricePanel, /discount|saving|one checkout|one reservation/i);
+  assert.doesNotMatch(flightSummary, /segments/);
 });
 
-test("invalid results include breadcrumbs without a valid-search summary", () => {
-  const invalidBranch = results.slice(results.indexOf("if (invalid)"), results.indexOf("const notice"));
-  assert.match(invalidBranch, /<DealsResultsBreadcrumbs/);
-  assert.doesNotMatch(invalidBranch, /<DealsResultsSearchSummary/);
-  assert.match(invalidBranch, /aria-controls="deals-modify-search-dialog"/);
+test("package pricing uses a full-width summary before a content-height xl side panel", () => {
+  assert.match(card, /xl:grid-cols-\[minmax\(0,1fr\)_288px\]/);
+  assert.match(card, /xl:items-start/);
+  assert.doesNotMatch(card, /lg:grid-cols-\[minmax\(0,1fr\)_260px\]/);
+  assert.ok(card.indexOf("<DealsPackageFlightSummary") < card.indexOf("<DealsPackagePricePanel"));
+  assert.ok(card.indexOf("<DealsPackageHotelSummary") < card.indexOf("<DealsPackagePricePanel"));
+  assert.ok(card.indexOf("<DealsPackageCarSummary") < card.indexOf("<DealsPackagePricePanel"));
+
+  assert.match(pricePanel, /xl:self-start/);
+  assert.match(pricePanel, /md:grid-cols-\[minmax\(0,0\.8fr\)_minmax\(0,1\.2fr\)\]/);
+  assert.match(pricePanel, /lg:grid-cols-\[minmax\(180px,0\.75fr\)_minmax\(300px,1\.15fr\)_minmax\(220px,0\.85fr\)\]/);
+  assert.match(pricePanel, /xl:block/);
+  assert.doesNotMatch(pricePanel, /\b(?:h-full|min-h-full|justify-between|justify-around|justify-evenly|mt-auto|flex-grow)\b/);
+});
+
+test("the loading card mirrors the compact responsive pricing layout", () => {
+  assert.match(skeleton, /xl:grid-cols-\[minmax\(0,1fr\)_288px\]/);
+  assert.match(skeleton, /xl:items-start/);
+  assert.match(skeleton, /xl:self-start/);
+  assert.match(skeleton, /md:grid-cols-\[minmax\(0,0\.8fr\)_minmax\(0,1\.2fr\)\]/);
+  assert.match(skeleton, /lg:grid-cols-\[minmax\(180px,0\.75fr\)_minmax\(300px,1\.15fr\)_minmax\(220px,0\.85fr\)\]/);
+  assert.doesNotMatch(skeleton, /lg:grid-cols-\[minmax\(0,1fr\)_260px\]/);
+});
+
+test("package cards use compact, content-driven vertical spacing", () => {
+  assert.match(card, /gap-1\.5 border-b border-slate-100 px-4 py-2\.5/);
+  assert.match(card, /xl:gap-4 xl:px-4 xl:py-3/);
+  assert.doesNotMatch(card, /\bxl:p-4\b/);
+  assert.match(flightSummary, /className="py-4 xl:py-3"/);
+  assert.match(flightSummary, /mt-2 grid gap-x-6 gap-y-2/);
+  assert.match(flightSummary, /cabinAndBaggageLabel && <p className="mt-2/);
+  assert.match(hotelSummary, /className="py-4 xl:py-3"/);
+  assert.match(carSummary, /className="py-4 xl:py-3"/);
+  assert.match(pricePanel, /xl:self-start[^"]*xl:py-3/);
+  assert.match(pricePanel, /\bmin-h-11\b/);
+  assert.match(pricePanel, /deals\.results\.package\.disclosure/);
+
+  assert.match(skeleton, /gap-1\.5 border-b px-4 py-2\.5/);
+  assert.match(skeleton, /xl:gap-4 xl:px-4 xl:py-3/);
+  assert.match(skeleton, /xl:self-start[^"]*xl:py-3/);
+
+  const productionCard = card + flightSummary + hotelSummary + carSummary + pricePanel;
+  assert.doesNotMatch(productionCard, /h-\[[^\]]+\]|max-h-|line-clamp-|truncate|overflow-clip|(?:^|\s)-m[trblxy]?-[^\s"']+|translate-|scale-/);
+  assert.doesNotMatch(flightSummary + carSummary + pricePanel, /overflow-hidden/);
+  assert.match(hotelSummary, /relative aspect-square overflow-hidden rounded-xl/);
+  assert.doesNotMatch(pricePanel, /bg-slate-50|xl:rounded-xl|whitespace-nowrap/);
+});
+
+test("package imagery and typography use the readable card hierarchy", () => {
+  assert.match(hotelSummary, /grid-cols-\[96px_minmax\(0,1fr\)\]/);
+  assert.match(hotelSummary, /sm:grid-cols-\[120px_minmax\(0,1fr\)\]/);
+  assert.match(hotelSummary, /lg:grid-cols-\[136px_minmax\(0,1fr\)\]/);
+  assert.match(hotelSummary, /aspect-square/);
+  assert.match(hotelSummary, /className="object-cover"/);
+  assert.match(hotelSummary, /sizes="\(min-width: 1024px\) 136px, \(min-width: 640px\) 120px, 96px"/);
+  assert.doesNotMatch(hotelSummary, /\b(?:w-full|h-screen)\b/);
+
+  const productionCard = card + flightSummary + hotelSummary + carSummary + pricePanel;
+  assert.doesNotMatch(productionCard, /text-\[11px\]/);
+  assert.doesNotMatch(productionCard, /font-extrabold/);
+  for (const summary of [flightSummary, hotelSummary, carSummary]) {
+    assert.match(summary, /text-base font-semibold leading-6 text-slate-950/);
+    assert.match(summary, /text-base font-semibold leading-[56] text-slate-950/);
+    assert.match(summary, /text-sm font-medium text-\[#004BB8\]/);
+  }
+  assert.match(flightSummary + hotelSummary, /text-\[13px\] leading-5 text-slate-600/);
+  assert.match(pricePanel, /text-\[13px\] leading-5 text-slate-600/);
+});
+
+test("pricing is plain, semantic, and lets long currency values wrap", () => {
+  const aside = pricePanel.slice(pricePanel.indexOf("<aside"), pricePanel.indexOf(">", pricePanel.indexOf("<aside")) + 1);
+  assert.doesNotMatch(aside, /bg-slate-50|xl:rounded-xl|(?:^|\s)xl:border(?:\s|")/);
+  assert.match(aside, /xl:self-start/);
+  assert.match(aside, /xl:border-s/);
+  assert.match(aside, /xl:border-t-0/);
+  assert.match(pricePanel, /<dl className=/);
+  assert.match(pricePanel, /aria-pressed=\{selected\}/);
+  assert.match(pricePanel, /selected && <Check aria-hidden/);
+  assert.match(pricePanel, /aria-labelledby=\{`\$\{headingId\}-total-label`\}/);
+  assert.doesNotMatch(pricePanel, /whitespace-nowrap|overflow-hidden|truncate|ellipsis/);
+  assert.match(pricePanel, /grid-cols-\[minmax\(0,0\.9fr\)_minmax\(0,1\.1fr\)\]/);
+  assert.match(pricePanel, /min-w-0 break-words text-end tabular-nums/);
+});
+
+test("the skeleton mirrors the enlarged image and unboxed price area", () => {
+  assert.match(skeleton, /grid-cols-\[96px_minmax\(0,1fr\)\]/);
+  assert.match(skeleton, /sm:grid-cols-\[120px_minmax\(0,1fr\)\]/);
+  assert.match(skeleton, /lg:grid-cols-\[136px_minmax\(0,1fr\)\]/);
+  assert.match(skeleton, /aspect-square/);
+  assert.doesNotMatch(skeleton, /bg-slate-50|xl:rounded-xl|xl:border xl:border-slate-200/);
+  assert.match(skeleton, /xl:border-s xl:border-t-0/);
+});
+
+test("package cards remove the visible destination heading without losing header semantics or content", () => {
+  assert.match(card, /<article aria-labelledby=\{view\.headingId\}/);
+  assert.match(card, /<h2 id=\{view\.headingId\} className="sr-only">\{accessibleHeading\}<\/h2>/);
+  assert.equal(card.match(/id=\{view\.headingId\}/g)?.length, 1);
+  assert.doesNotMatch(card, /\{view\.header\.title\}/);
+  assert.doesNotMatch(card, /text-lg font-extrabold text-slate-950/);
+  assert.doesNotMatch(card + presentation, /Trip to|Complete trip/);
+  assert.match(card, /candidate\.badgeKey/);
+  assert.match(card, /view\.header\.modeLabel/);
+  assert.match(card, /<CalendarDays aria-hidden/);
+  assert.match(card, /view\.header\.dateRangeLabel/);
+  assert.match(card, /view\.header\.stayDurationLabel &&/);
+  for (const component of ["DealsPackageFlightSummary", "DealsPackageHotelSummary", "DealsPackageCarSummary", "DealsPackagePricePanel"]) {
+    assert.match(card, new RegExp(`<${component}`));
+  }
+  assert.doesNotMatch(card, /<h2[^>]*>\s*<\/h2>|opacity-0|invisible/);
+  assert.doesNotMatch(card, /<div className="[^"]*\b(?:min-)?h-\d+/);
+  assert.match(card, /xl:grid-cols-\[minmax\(0,1fr\)_288px\]/);
+  assert.match(card, /xl:items-start/);
+  assert.match(skeleton, /xl:self-start/);
+  assert.match(skeleton, /md:grid-cols-\[minmax\(0,0\.8fr\)_minmax\(0,1\.2fr\)\]/);
+  assert.match(skeleton, /lg:grid-cols-\[minmax\(180px,0\.75fr\)_minmax\(300px,1\.15fr\)_minmax\(220px,0\.85fr\)\]/);
 });

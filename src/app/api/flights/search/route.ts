@@ -4,10 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
+import { classifyFlights } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchFlights } from "@/services/travel/flightAggregator";
 
 export async function POST(request: Request) {
+  const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
   const ip = getClientIp(request);
   const rate = checkRateLimit(`flight-search:${ip}`, 35, 60_000);
   if (!rate.allowed) {
@@ -39,15 +41,19 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: aggregate.unavailableMessage,
+        results: [],
+        status: "unavailable",
+        source: "duffel",
+        warnings: aggregate.warnings,
+        partial: false,
+        requestId,
       },
       { status: 503 },
     );
   }
 
   const publicResults = aggregate.results.map(toPublicFlight);
-  const status = aggregate.servedFromFallback
-    ? "PARTIAL"
-    : aggregate.providerStatuses.some((provider) => provider.status === "failed")
+  const status = aggregate.providerStatuses.some((provider) => provider.status === "failed")
       ? "PARTIAL"
       : "SUCCESS";
 
@@ -70,7 +76,6 @@ export async function POST(request: Request) {
         origin: parsed.data.origin,
         destination: parsed.data.destination,
         resultCount: publicResults.length,
-        servedFromFallback: aggregate.servedFromFallback,
       },
     }),
     ...aggregate.providerStatuses.map((provider) =>
@@ -86,9 +91,7 @@ export async function POST(request: Request) {
   ]);
 
   return NextResponse.json({
-    results: publicResults,
-    warnings: aggregate.servedFromFallback ? aggregate.warnings : [],
-    servedFromFallback: aggregate.servedFromFallback,
+    ...classifyFlights(publicResults, aggregate.warnings, requestId),
     latencyMs: aggregate.latencyMs,
   });
 }

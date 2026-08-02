@@ -94,22 +94,25 @@ test("inline desktop surface is full-width, enlarged, and content-safe without c
   assert.match(summarySource.slice(0, summarySource.indexOf("<div ref={visibleSummaryRef}")), /page-shell/);
 });
 
-test("summary cells use explicit densities and enlarge only the inline desktop presentation", () => {
+test("summary cells keep inline labels visible and compact labels accessible but visually hidden", () => {
   assert.match(summaryCell, /type SummaryCellVariant = "inline" \| "compact"/);
   assert.match(summaryCell, /variant: SummaryCellVariant/);
   assert.match(summaryCell, /variant === "inline"/);
   assert.match(summaryCell, /min-w-0 items-center/);
   assert.match(summaryCell, /border-e border-slate/);
-  assert.match(summaryCell, /px-3 py-2/);
-  assert.match(summaryCell, /lg:gap-3 lg:px-5 lg:py-3\.5/);
+  assert.match(summaryCell, /px-3/);
+  assert.match(summaryCell, /py-2 lg:gap-3 lg:px-5 lg:py-3\.5/);
+  assert.match(summaryCell, /h-\[56px\]/);
   assert.match(summaryCell, /\[&>svg\]:h-4 \[&>svg\]:w-4/);
   assert.match(summaryCell, /lg:\[&>svg\]:h-5 lg:\[&>svg\]:w-5/);
   assert.match(summaryCell, /text-\[10px\][^\n]+tracking-\[0\.1em\]/);
   assert.match(summaryCell, /lg:text-\[11px\] lg:tracking-\[0\.11em\]/);
   assert.match(summaryCell, /text-sm font-semibold leading-tight/);
   assert.match(summaryCell, /lg:mt-1 lg:text-base lg:leading-6/);
-  assert.match(summaryCell, /title=\{label\}/);
+  assert.match(summaryCell, /className="sr-only">\{label\}: <\/span>/);
+  assert.doesNotMatch(summaryCell, /sr-only[^\n]+uppercase/);
   assert.match(summaryCell, /title=\{value\}/);
+  assert.match(summaryCell, /block min-w-0 truncate whitespace-nowrap text-\[0\.86rem\] font-medium leading-5 text-slate-800/);
   assert.equal((inlineRoot.match(/<SummaryCell variant="inline"/g) ?? []).length, 5);
   assert.equal((fixedRoot.match(/<SummaryCell variant="compact"/g) ?? []).length, 4);
 });
@@ -147,14 +150,16 @@ test("desktop sticky measurement coordinates and cleans up browser observers and
 });
 
 test("a separate compact toolbar is fixed, desktop-only, transitioned, and inert while hidden", () => {
-  assert.match(summarySource, /pointer-events-none fixed inset-x-0 top-3/);
+  assert.match(summarySource, /pointer-events-none fixed inset-x-0 top-0/);
+  assert.doesNotMatch(summarySource, /pointer-events-none fixed inset-x-0 top-3/);
   assert.match(summarySource, /hidden px-4 transition-all duration-200 motion-reduce:transition-none lg:block/);
   assert.match(summarySource, /desktopStickyVisible \? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0"/);
   assert.match(summarySource, /aria-hidden=\{!desktopStickyVisible\}/);
   assert.match(summarySource, /inert=\{!desktopStickyVisible \? true : undefined\}/);
   assert.match(summarySource, /desktopStickyVisible \? "pointer-events-auto" : "pointer-events-none"/);
   assert.match(fixedRoot, /h-\[58px\]/);
-  assert.match(fixedRoot, /max-w-\[980px\]/);
+  assert.match(fixedRoot, /max-w-\[920px\]/);
+  assert.match(fixedRoot, /grid-cols-\[minmax\(110px,0\.7fr\)_minmax\(220px,1\.5fr\)_minmax\(150px,1fr\)_minmax\(190px,1\.25fr\)_auto\]/);
 });
 
 test("the desktop toolbar retains every Deals summary value and localized label", () => {
