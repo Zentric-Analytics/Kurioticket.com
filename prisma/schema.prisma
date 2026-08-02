@@ -553,7 +553,6 @@ model SupportMessage {
   ticketId  String
   author    String
   body      String
-  isAiDraft Boolean       @default(false)
   createdAt DateTime      @default(now())
   ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 

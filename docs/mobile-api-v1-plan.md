@@ -4,7 +4,7 @@
 
 `/api/mobile/v1` is the planned API boundary for the iOS and Android mobile apps. It gives the mobile client stable, mobile-friendly endpoints while keeping server-only logic inside the existing Next.js backend.
 
-The mobile app should call these endpoints over HTTPS. It should not import backend code directly or communicate directly with Prisma, PostgreSQL, provider SDKs, Stripe, Resend, OpenAI, or other secret-bearing services.
+The mobile app calls these endpoints over HTTPS. It must not import backend code directly or communicate directly with Prisma, PostgreSQL, provider SDKs, Resend, or other secret-bearing services.
 
 This is a planning document. The endpoint map below is proposed and should be implemented incrementally after approval, not all at once.
 
@@ -155,7 +155,6 @@ The following areas should have explicit feature flags or remain postponed until
 - push notifications
 - route watch
 - social authentication
-- premium subscriptions
 
 Feature flags should be controlled by the backend or approved configuration. A hidden mobile screen is not enough protection for unfinished server behavior.
 

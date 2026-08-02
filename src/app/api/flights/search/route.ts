@@ -53,9 +53,7 @@ export async function POST(request: Request) {
   }
 
   const publicResults = aggregate.results.map(toPublicFlight);
-  const status = aggregate.servedFromFallback
-    ? "PARTIAL"
-    : aggregate.providerStatuses.some((provider) => provider.status === "failed")
+  const status = aggregate.providerStatuses.some((provider) => provider.status === "failed")
       ? "PARTIAL"
       : "SUCCESS";
 
@@ -78,7 +76,6 @@ export async function POST(request: Request) {
         origin: parsed.data.origin,
         destination: parsed.data.destination,
         resultCount: publicResults.length,
-        servedFromFallback: aggregate.servedFromFallback,
       },
     }),
     ...aggregate.providerStatuses.map((provider) =>
@@ -95,7 +92,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ...classifyFlights(publicResults, aggregate.warnings, requestId),
-    servedFromFallback: aggregate.servedFromFallback,
     latencyMs: aggregate.latencyMs,
   });
 }

@@ -128,7 +128,7 @@ function buildFlight(input: {
     id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,
     provider: input.provider,
     airlineName: input.airlineName,
-    airlineLogo: buildAirlineLogo(input.flightNumber),
+    airlineLogo: undefined,
     flightNumber: input.flightNumber,
     originAirport: input.originAirport,
     destinationAirport: input.destinationAirport,
@@ -302,9 +302,4 @@ function classifyLayover(minutes: number): Layover["quality"] {
   if (minutes <= 180) return "good";
   if (minutes >= 480) return "overnight";
   return "long";
-}
-
-function buildAirlineLogo(flightNumber?: string) {
-  const carrier = flightNumber?.match(/^[A-Z0-9]{2}/)?.[0];
-  return carrier ? `https://images.kiwi.com/airlines/64/${carrier}.png` : undefined;
 }

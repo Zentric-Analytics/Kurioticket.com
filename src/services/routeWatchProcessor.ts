@@ -244,7 +244,6 @@ export async function processDueRouteWatches(options: {
 
 export async function resolveRouteWatchFare(search: FlightSearchParams): Promise<ResolvedRouteWatchFare> {
   const result = await searchFlights({ ...search, sort: "cheapest" });
-  if (result.servedFromFallback) throw new Error("fallback_results_rejected");
   const liveSuccess = result.providerStatuses.some((provider) => provider.status === "success" && !/fallback|demo|mock|synthetic/i.test(provider.provider));
   if (!liveSuccess) throw new Error("live_provider_unavailable");
   const fare = result.results
