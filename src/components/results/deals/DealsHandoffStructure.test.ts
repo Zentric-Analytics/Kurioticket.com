@@ -14,18 +14,6 @@ test("handoff keeps the responsive summary and ordered provider steps contract",
 test("provider activation remains safe, persistent, specific, and accessible", () => {
   assert.match(client, /markDealsProviderOpened/); assert.match(client, /writeDealsTripPlan/); assert.match(client, /getNextDealsProviderStep/); assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /deals\.handoff\.newTab/); assert.match(client, /plan\.resultsPath/); assert.match(card, /min-h-11/); assert.doesNotMatch(client + card, /window\.open|partnerRedirectUrl|bookingUrl|Open details/);
 });
-test("provider handoffs and internal Car details use explicit, matching action labels", () => {
-  assert.match(presentation, /DealsHandoffActionKind = "provider-handoff" \| "internal-details"/);
-  assert.match(presentation, /product === "car" \? "internal-details" : "provider-handoff"/);
-  assert.match(card, /step\.actionKind === "provider-handoff"/);
-  assert.match(card, /deals\.handoff\.continueToProvider/);
-  assert.match(card, /reviewCarAgain/);
-  assert.match(card, /openCar/);
-  assert.doesNotMatch(card, /openFlight|openStay|reviewFlightAgain|reviewStayAgain/);
-  assert.match(card, /onClick=\{onOpen\}/);
-  assert.match(card, /ArrowUpRight/);
-  assert.match(card, /whitespace-nowrap/);
-});
 test("handoff cards omit provider identities while preserving product, price, and action contracts", () => {
   assert.doesNotMatch(card, /deals\.handoff\.providerLabel|step\.provider/);
   assert.doesNotMatch(card, /<Detail className="mt-5 border-t border-slate-200 pt-4"/);

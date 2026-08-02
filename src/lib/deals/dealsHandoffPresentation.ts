@@ -2,8 +2,7 @@ import { buildDealsInternalRedirectHref } from "./dealsProviderHandoff";
 import { getNextDealsProviderStep, isDealsTripPlanProductExpired, type DealsTripPlan, type DealsTripPlanProduct } from "./dealsTripPlan";
 
 export type DealsHandoffStatus = "next" | "pending" | "opened" | "expired";
-export type DealsHandoffActionKind = "provider-handoff" | "internal-details";
-type Common = Readonly<{ product: DealsTripPlanProduct; id: string; position: number; total: number; provider: string; status: DealsHandoffStatus; actionKind: DealsHandoffActionKind; href: string | null; sourcePrice: number; sourceCurrency: string }>;
+type Common = Readonly<{ product: DealsTripPlanProduct; id: string; position: number; total: number; provider: string; status: DealsHandoffStatus; href: string | null; sourcePrice: number; sourceCurrency: string }>;
 export type DealsHandoffStepView =
   | (Common & Readonly<{ product: "flight"; airline: string; flightNumber?: string; routeLabel: string; departureLabel: string; arrivalLabel: string; durationLabel: string }>)
   | (Common & Readonly<{ product: "hotel"; name: string; location: string; checkInLabel: string; checkOutLabel: string; nights: number | null; roomType?: string }>)
@@ -59,9 +58,7 @@ export function getDealsHandoffSteps(plan: DealsTripPlan, now: number, locale: s
   return products.map((product, index) => {
     const item = plan[product]!;
     const expired = isDealsTripPlanProductExpired(item.resultReceivedAt, now);
-    const actionKind: DealsHandoffActionKind = product === "car" ? "internal-details" : "provider-handoff";
-    const href = product === "car" ? item.detailsPath ?? null : buildDealsInternalRedirectHref(item.id, product);
-    const common: Common = { product, id: `provider-step-${product}`, position: index + 1, total: products.length, provider: item.provider, status: status(plan, product, expired, next), actionKind, href, sourcePrice: item.sourcePrice, sourceCurrency: item.sourceCurrency };
+    const common: Common = { product, id: `provider-step-${product}`, position: index + 1, total: products.length, provider: item.provider, status: status(plan, product, expired, next), href: item.detailsPath ?? (product === "car" ? null : buildDealsInternalRedirectHref(item.id, product)), sourcePrice: item.sourcePrice, sourceCurrency: item.sourceCurrency };
     if (product === "flight") { const flight = plan.flight!; return { ...common, product, airline: flight.airline, flightNumber: flight.flightNumber, routeLabel: `${flight.origin} → ${flight.destination}`, departureLabel: formatDate(flight.departure, locale, true), arrivalLabel: formatDate(flight.arrival, locale, true), durationLabel: flight.duration }; }
     if (product === "hotel") { const hotel = plan.hotel!; return { ...common, product, name: hotel.name, location: hotel.location, checkInLabel: formatDate(hotel.checkIn, locale, false), checkOutLabel: formatDate(hotel.checkOut, locale, false), nights: daysBetween(hotel.checkIn, hotel.checkOut), roomType: titleCaseIfUpper(hotel.roomType) }; }
     const car = plan.car!;
