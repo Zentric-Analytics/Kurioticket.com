@@ -14,6 +14,18 @@ test("handoff keeps the responsive summary and ordered provider steps contract",
 test("provider activation remains safe, persistent, specific, and accessible", () => {
   assert.match(client, /markDealsProviderOpened/); assert.match(client, /writeDealsTripPlan/); assert.match(client, /getNextDealsProviderStep/); assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /deals\.handoff\.newTab/); assert.match(client, /plan\.resultsPath/); assert.match(card, /min-h-11/); assert.doesNotMatch(client + card, /window\.open|partnerRedirectUrl|bookingUrl|Open details/);
 });
+test("flight and hotel use explicit protected-provider actions while cars retain details actions", () => {
+  assert.match(presentation, /DealsHandoffActionKind/);
+  assert.match(presentation, /"provider-handoff"/);
+  assert.match(presentation, /"internal-details"/);
+  assert.match(presentation, /buildDealsInternalRedirectHref/);
+  assert.match(card, /step\.actionKind === "provider-handoff"/);
+  assert.match(card, /deals\.handoff\.continueToProvider/);
+  assert.match(card, /deals\.handoff\.reviewCarAgain/);
+  assert.match(card, /deals\.handoff\.openCar/);
+  assert.doesNotMatch(card, /openFlight|openStay|reviewFlightAgain|reviewStayAgain/);
+  assert.doesNotMatch(card + presentation, /partnerRedirectUrl|bookingUrl|window\.open|window\.location|location\.assign|location\.replace/);
+});
 test("handoff cards omit provider identities while preserving product, price, and action contracts", () => {
   assert.doesNotMatch(card, /deals\.handoff\.providerLabel|step\.provider/);
   assert.doesNotMatch(card, /<Detail className="mt-5 border-t border-slate-200 pt-4"/);
@@ -58,6 +70,7 @@ test("handoff cards keep prices and actions readable in balanced columns", () =>
   assert.match(action, /w-full/);
   assert.match(action, /whitespace-nowrap/);
   assert.match(action, /deals\.handoff\.newTab/);
+  assert.match(action, /ArrowUpRight/);
   assert.match(card, /inline-flex whitespace-nowrap items-center gap-1 rounded-full/);
 });
 

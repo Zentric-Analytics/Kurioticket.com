@@ -11,7 +11,9 @@ export function DealsHandoffStepCard({ step, price, displayCurrency, resultsPath
   const title = t(`deals.tripPlan.${step.product === "hotel" ? "stay" : step.product}`);
   const statusKey = step.status === "next" ? "nextToReview" : step.status === "pending" ? "pending" : step.status === "opened" ? "opened" : "refreshRequired";
   const opened = step.status === "opened";
-  const cta = t(`deals.handoff.${opened ? `review${step.product === "hotel" ? "Stay" : step.product[0].toUpperCase() + step.product.slice(1)}Again` : `open${step.product === "hotel" ? "Stay" : step.product[0].toUpperCase() + step.product.slice(1)}`}`);
+  const cta = t(step.actionKind === "provider-handoff"
+    ? "deals.handoff.continueToProvider"
+    : opened ? "deals.handoff.reviewCarAgain" : "deals.handoff.openCar");
 
   return <article id={step.id} aria-labelledby={`${step.id}-title`} aria-current={step.status === "next" ? "step" : undefined} className={`rounded-2xl border bg-white p-5 shadow-sm sm:p-6 ${step.status === "next" ? "border-[#004BB8] ring-2 ring-blue-100" : step.status === "expired" ? "border-amber-300" : "border-slate-200"}`}>
     <div className="flex flex-wrap items-start justify-between gap-3">

@@ -3467,6 +3467,7 @@ export const translations: TranslationDictionary = {
   "deals.handoff.openAgain": "Open again",
   "deals.handoff.openFlight": "Review Flight details",
   "deals.handoff.openStay": "Review Stay details",
+  "deals.handoff.continueToProvider": "Continue to provider",
   "deals.handoff.newTab": "opens in a new tab",
   "deals.handoff.productExpired": "This selected option may have expired. Refresh results before continuing.",
   "deals.handoff.carsStep": "Compare cars on Kurioticket",
