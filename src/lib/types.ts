@@ -224,7 +224,6 @@ export type AggregatedResult<T> = {
   results: T[];
   providerStatuses: ProviderResult<unknown>[];
   warnings: string[];
-  servedFromFallback: boolean;
   latencyMs: number;
   unavailableMessage?: string;
 };
