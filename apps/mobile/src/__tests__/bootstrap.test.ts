@@ -2,7 +2,7 @@ import * as assert from "node:assert/strict";
 import { test } from "node:test";
 import { runBootstrap } from "../launch/bootstrap";
 
-const config = { data: { apiVersion: "v1", minimumSupportedAppVersion: null, latestAppVersion: null, maintenanceMode: false, features: { flights: true, hotels: false, cars: false, pushNotifications: false, socialAuthentication: false, premiumSubscriptions: false } } };
+const config = { data: { apiVersion: "v1", minimumSupportedAppVersion: null, latestAppVersion: null, maintenanceMode: false, features: { flights: true, hotels: false, cars: false, pushNotifications: false, socialAuthentication: false } } };
 function fetcher(responses: unknown[]) { return async () => ({ ok: true, json: async () => responses.shift() }) as Response; }
 
 test("routes a new signed-out user to authentication without persisting guest state", async () => {

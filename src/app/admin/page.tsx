@@ -92,7 +92,6 @@ export default async function AdminPage() {
               <HealthRow label="Auth/session" ok={system.authConfigured && system.sessionConfigured} fallback="Not fully configured" />
               <HealthRow label="Email / Resend" ok={system.emailConfigured} fallback="Unavailable" />
               <HealthRow label="Provider credentials" ok={system.providerCredentialsPresent} fallback="Not present" />
-              <HealthRow label="Webhooks" ok={system.webhookConfigured} fallback="Unavailable" />
             </div>
           </AdminSectionCard>
         </div>
