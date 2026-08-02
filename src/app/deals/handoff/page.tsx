@@ -5,10 +5,12 @@ import { DealsHandoffClient } from "@/components/results/deals/DealsHandoffClien
 export default function DealsHandoffPage() {
   return <>
     <AppHeader flushDesktopBottom hideDesktopTravelNav />
-    <main className="flex-1 bg-[#f6f8fb] py-7 sm:py-10">
-      <div className="page-shell max-w-5xl">
-        <DealsHandoffClient />
-      </div>
+    <main className="flex-1 bg-surface-muted/40">
+      <section className="border-b border-border bg-white">
+        <div className="page-shell max-w-5xl py-7 sm:py-10">
+          <DealsHandoffClient />
+        </div>
+      </section>
     </main>
     <Footer />
   </>;

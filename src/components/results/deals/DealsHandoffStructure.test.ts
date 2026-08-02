@@ -95,15 +95,40 @@ test("handoff removes its visible introduction while preserving navigation and i
 
 test("trip summary keeps its content without owning results navigation", () => {
   assert.doesNotMatch(summary, /from "next\/link"|ArrowLeft|resultsPath|deals\.handoff\.returnResults/);
+  assert.match(summary, /<aside aria-labelledby="trip-summary-title"/);
+  assert.match(summary, /xl:sticky xl:top-24/);
+  assert.match(summary, /rounded-2xl border border-slate-200\/80 bg-white shadow-none/);
+  assert.doesNotMatch(summary, /shadow-sm/);
+  assert.match(summary, /function OpenSectionLine/);
+  assert.equal(summary.match(/<OpenSectionLine/g)?.length, 3);
+  assert.match(summary, /aria-hidden="true"/);
+  assert.match(summary, /border-slate-300\/80/);
   assert.match(summary, /deals\.handoff\.tripSummary/);
+  assert.match(summary, /\{modeLabel\}/);
   assert.match(summary, /role="progressbar"/);
+  assert.match(summary, /aria-valuemin=\{0\}/);
+  assert.match(summary, /aria-valuemax=\{total\}/);
+  assert.match(summary, /aria-valuenow=\{opened\}/);
   assert.match(summary, /deals\.handoff\.estimatedCombinedTotal/);
+  assert.match(summary, /deals\.handoff\.combinedEstimateUnavailable/);
+  assert.match(summary, /deals\.handoff\.estimateDisclosure/);
+  assert.match(summary, /deals\.handoff\.openingDoesNotBook/);
+  assert.match(summary, /deals\.handoff\.summaryRefreshRequired/);
   assert.match(summary, /deals\.handoff\.goToNextStep/);
+  assert.match(summary, /href=\{`#\$\{nextId\}`\}/);
+  assert.match(summary, /<ArrowDown aria-hidden/);
+  assert.match(summary, /min-h-11/);
+  assert.doesNotMatch(summary, /bg-blue-50|bg-amber-50|rounded-xl p-3/);
 });
 
 test("handoff shell and navigation remain free of unsafe back fallbacks", () => {
-  assert.match(page, /flex-1 bg-\[#f6f8fb\] py-7 sm:py-10/);
-  assert.match(page, /page-shell max-w-5xl/);
+  const mainIndex = page.indexOf('<main className="flex-1 bg-surface-muted/40">');
+  const sectionIndex = page.indexOf('<section className="border-b border-border bg-white">', mainIndex);
+  const shellIndex = page.indexOf('<div className="page-shell max-w-5xl py-7 sm:py-10">', sectionIndex);
+  assert.ok(mainIndex >= 0, "retains the muted main foundation");
+  assert.ok(sectionIndex > mainIndex, "the white section is inside main");
+  assert.ok(shellIndex > sectionIndex, "the page shell is inside the white section");
+  assert.doesNotMatch(page, /bg-\[#f6f8fb\]|bg-slate-50|gradient|background-image|border-x|border-t/);
   assert.doesNotMatch(page + client + summary, /router\.back|history\.back|document\.referrer/);
   assert.doesNotMatch(client + summary, /ArrowLeft/);
 });
