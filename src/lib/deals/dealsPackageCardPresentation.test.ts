@@ -8,6 +8,7 @@ const candidate = {
   id: "package:test",
   mode: "hotel-flight",
   strategy: "recommended",
+  bookingFlow: "separate-providers",
   badgeKey: "deals.results.package.recommended.badge",
   reasonKey: "unused",
   anchor: "hotel",

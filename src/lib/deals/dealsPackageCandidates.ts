@@ -8,9 +8,15 @@ import type { DealsPackageMode } from "./dealsSearchParams";
 export const DEALS_PACKAGE_CANDIDATE_LIMIT = 6;
 export type DealsPackageProduct = "flight" | "hotel" | "car";
 export type DealsPackageStrategy = "recommended" | "lowest-total" | "comfort" | "alternative";
+/**
+ * These are Kurioticket-created combinations of independently sourced results,
+ * not upstream package offers. Every component is booked separately. Never
+ * infer a package from matching provider names or providerCount === 1.
+ */
+export type DealsCandidateBookingFlow = "separate-providers";
 export type DealsPackagePriceComponent = { product: DealsPackageProduct; sourceAmount: number; sourceCurrency: string; displayAmount: number | null; provider: string };
 export type DealsPackageCandidate = {
-  id: string; mode: DealsPackageMode; strategy: DealsPackageStrategy; badgeKey: string; reasonKey: string;
+  id: string; mode: DealsPackageMode; strategy: DealsPackageStrategy; bookingFlow: DealsCandidateBookingFlow; badgeKey: string; reasonKey: string;
   flight?: ContractResult<PublicFlightResult>; hotel?: ContractResult<PublicHotelResult>; car?: ContractResult<NormalizedCarResult>;
   priceBreakdown: DealsPackagePriceComponent[]; estimatedTotal: number | null; displayCurrency: string; providerCount: number; anchor: "hotel" | "flight";
 };
@@ -62,7 +68,7 @@ export function buildDealsPackageCandidates({ mode, flights, hotels, cars, displ
     if(car){const offer=getPrimaryCarOffer(car)!; raw.push(["car",offer.totalPrice,offer.currency,offer.bookingProviderName||car.rentalCompanyName]);}
     const priceBreakdown=raw.map(([product,sourceAmount,sourceCurrency,provider])=>({product,sourceAmount,sourceCurrency,provider,displayAmount:convertCurrencyAmount(sourceAmount,sourceCurrency,currency,rates)}));
     const estimatedTotal=priceBreakdown.every(p=>p.displayAmount!==null)?priceBreakdown.reduce((sum,p)=>sum+p.displayAmount!,0):null;
-    output.push({id,mode,strategy,badgeKey:`deals.results.package.${strategy}.badge`,reasonKey:`deals.results.package.${strategy}.reason`,flight,hotel,car,priceBreakdown,estimatedTotal,displayCurrency:currency,providerCount:new Set(priceBreakdown.map(p=>p.provider.trim().toLowerCase()).filter(Boolean)).size,anchor:needs.hotel?"hotel":"flight"});
+    output.push({id,mode,strategy,bookingFlow:"separate-providers",badgeKey:`deals.results.package.${strategy}.badge`,reasonKey:`deals.results.package.${strategy}.reason`,flight,hotel,car,priceBreakdown,estimatedTotal,displayCurrency:currency,providerCount:new Set(priceBreakdown.map(p=>p.provider.trim().toLowerCase()).filter(Boolean)).size,anchor:needs.hotel?"hotel":"flight"});
   };
   add("recommended",needs.flight?fr[0].result:undefined,needs.hotel?hr[0].result:undefined,needs.car?cr[0].result:undefined);
   const lowestConvertible=(!needs.flight||fl[0].displayPrice!==null)&&(!needs.hotel||hl[0].displayPrice!==null)&&(!needs.car||cl[0].displayPrice!==null);

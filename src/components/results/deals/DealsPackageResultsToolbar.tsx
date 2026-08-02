@@ -26,6 +26,7 @@ type DealsPackageResultsToolbarProps = {
   mode: DealsPackageMode;
   value: DealsPackageSort;
   onChange: (value: DealsPackageSort) => void;
+  t: (key: string) => string;
 };
 
 export function DealsPackageResultsToolbar({
@@ -33,6 +34,7 @@ export function DealsPackageResultsToolbar({
   mode,
   value,
   onChange,
+  t,
 }: DealsPackageResultsToolbarProps) {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const sortMenuId = useId();
@@ -42,32 +44,32 @@ export function DealsPackageResultsToolbar({
   const sortOptions = useMemo(
     () =>
       [
-        { value: "recommended", label: "Recommended", visible: true },
+        { value: "recommended", label: t("deals.results.sort.recommended"), visible: true },
         {
           value: "lowest-total",
-          label: "Lowest combined total",
+          label: t("deals.results.sort.lowestTotal"),
           visible: true,
         },
         {
           value: "shortest-flight",
-          label: "Shortest flight",
+          label: t("deals.results.sort.shortestFlight"),
           visible: mode !== "hotel-car",
         },
         {
           value: "highest-hotel",
-          label: "Highest-rated hotel",
+          label: t("deals.results.sort.highestHotel"),
           visible: mode !== "flight-car",
         },
         {
           value: "highest-car",
-          label: "Highest-rated car supplier",
+          label: t("deals.results.sort.highestCar"),
           visible: mode !== "hotel-flight",
         },
       ].filter((option) => option.visible) as Array<{
         value: DealsPackageSort;
         label: string;
       }>,
-    [mode],
+    [mode, t],
   );
   const currentSortLabel =
     sortOptions.find((option) => option.value === value)?.label ??
@@ -182,12 +184,12 @@ export function DealsPackageResultsToolbar({
   return (
     <div className="flex min-w-0 flex-col gap-3 sm:min-h-10 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
-        {count} complete trip {count === 1 ? "option" : "options"}
+        {t("deals.results.tripOptions.count").replace("{{count}}", String(count))}
       </p>
 
       <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
         <span className="whitespace-nowrap text-sm font-medium text-[#142033] sm:text-[16px]">
-          Sort by:
+          {t("deals.results.tripOptions.sort")}
         </span>
 
         <div
@@ -223,7 +225,7 @@ export function DealsPackageResultsToolbar({
             <div
               id={sortMenuId}
               role="listbox"
-              aria-label="Sort by"
+              aria-label={t("deals.results.tripOptions.sort")}
               className="absolute right-0 top-[calc(100%+0.5rem)] z-50 min-w-[190px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_38px_-18px_rgba(15,23,42,0.35)]"
             >
               {sortOptions.map((option, index) => {

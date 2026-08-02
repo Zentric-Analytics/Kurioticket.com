@@ -12,6 +12,22 @@ const carSummary = readFileSync(new URL("./DealsPackageCarSummary.tsx", import.m
 const skeleton = readFileSync(new URL("./DealsPreviewSkeleton.tsx", import.meta.url), "utf8");
 const tripPlanBar = readFileSync(new URL("./DealsTripPlanBar.tsx", import.meta.url), "utf8");
 const presentation = readFileSync(new URL("../../../lib/deals/dealsPackageCardPresentation.ts", import.meta.url), "utf8");
+const english = readFileSync(new URL("../../../lib/i18n/en.ts", import.meta.url), "utf8");
+
+test("translated Deals copy states the separate-provider booking model", () => {
+  for (const copy of [
+    "Mix-and-match trip options",
+    "Estimated trip total",
+    "Provider sources: {{count}}",
+    "Choose trip option",
+    "Trip option selected",
+    "This is not one package booking.",
+    "Review separate booking steps",
+    "Each item is booked separately with its provider.",
+  ]) assert.match(english, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(card, /deals\.results\.package\.bookingModel/);
+  assert.doesNotMatch(results + card + pricePanel + tripPlanBar, /Choose package|Book package|Continue to provider/);
+});
 
 test("package result states share one centered max-w-5xl width contract", () => {
   const wrapperStart = results.indexOf('<div className="page-shell max-w-5xl pt-5 sm:pt-6">');
@@ -25,13 +41,13 @@ test("package result states share one centered max-w-5xl width contract", () => 
   assert.match(resultsWrapper, /\{failed && <div/);
   assert.match(resultsWrapper, /!candidates\.length && <div/);
   assert.ok(resultsWrapper.indexOf("<DealsPackageResultsToolbar") < resultsWrapper.indexOf("<ol "));
-  assert.match(resultsWrapper, /<div className="space-y-4"><DealsPackageResultsToolbar[\s\S]*<ol aria-label=/);
+  assert.match(resultsWrapper, /<div className="space-y-4">[\s\S]*<DealsPackageResultsToolbar[\s\S]*<ol aria-label=/);
   assert.doesNotMatch(resultsWrapper, /(?:w|max-w)-\[(?:1024px|88%)\]/);
   assert.doesNotMatch(card, /\b(?:mx|ms|me)-\S+|translate-\S+/);
   assert.match(tripPlanBar, /\bmax-w-5xl\b/);
 });
 
-test("results render one combined package list after the shared search header", () => {
+test("results render one mix-and-match trip-option list after the shared search header", () => {
   const summary = results.indexOf("<DealsResultsSearchSummary");
   const breadcrumbs = results.indexOf("<DealsResultsBreadcrumbs", summary);
   const packages = results.indexOf('id="package-options"', breadcrumbs);
@@ -40,8 +56,8 @@ test("results render one combined package list after the shared search header", 
   assert.match(results, /<DealsPackageResultsToolbar/);
   assert.match(results, /<ol aria-label=/);
   assert.match(results, /sortedCandidates\.map\(candidate/);
-  assert.doesNotMatch(results, /t\("deals\.results\.package\.intro"\)/);
-  assert.doesNotMatch(results, /<h1 id="package-options"/);
+  assert.match(results, /t\("deals\.results\.package\.intro"\)/);
+  assert.match(results, /<h1 className="text-2xl font-extrabold/);
   assert.doesNotMatch(results, /<DealsProductSection|<DealsPreviewRail/);
 });
 
@@ -56,7 +72,7 @@ test("the borderless results toolbar is anchored to the package list by shared s
   );
   const packageList = candidateBlock.slice(candidateBlock.indexOf("<ol "));
 
-  assert.match(candidateBlock, /<div className="space-y-4"><DealsPackageResultsToolbar/);
+  assert.match(candidateBlock, /<div className="space-y-4">[\s\S]*<DealsPackageResultsToolbar/);
   assert.ok(candidateBlock.indexOf("<DealsPackageResultsToolbar") < candidateBlock.indexOf("<ol "));
   assert.match(packageList, /className="space-y-4 sm:space-y-6"/);
   assert.doesNotMatch(packageList, /\bmt-4\b|\bsm:mt-6\b/);
@@ -65,8 +81,8 @@ test("the borderless results toolbar is anchored to the package list by shared s
 });
 
 test("the anchored toolbar retains its count, sort control, and mode-specific options", () => {
-  assert.match(toolbar, /complete trip \{count === 1 \? "option" : "options"\}/);
-  assert.match(toolbar, /Sort by:/);
+  assert.match(toolbar, /deals\.results\.tripOptions\.count/);
+  assert.match(toolbar, /deals\.results\.tripOptions\.sort/);
   assert.match(toolbar, /\{currentSortLabel\}/);
   assert.match(toolbar, /aria-haspopup="listbox"/);
   assert.match(toolbar, /aria-expanded=\{sortMenuOpen\}/);

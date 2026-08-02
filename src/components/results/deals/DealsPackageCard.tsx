@@ -37,7 +37,7 @@ export function DealsPackageCard({ candidate, search, locale, selected, t, onSel
 
   return (
     <article aria-labelledby={view.headingId} aria-describedby={`${view.headingId}-summary`} className={`scroll-mt-20 overflow-hidden rounded-2xl border bg-white shadow-sm transition motion-reduce:transition-none hover:shadow-md ${selected ? "border-[#004BB8] ring-2 ring-blue-100" : "border-slate-200"}`}>
-      <p id={`${view.headingId}-summary`} className="sr-only">{view.header.accessibleSummary}</p>
+      <p id={`${view.headingId}-summary`} className="sr-only">{t("deals.results.package.bookingModel")} {view.header.accessibleSummary}</p>
       <header className="flex flex-col gap-1.5 border-b border-slate-100 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-x-5 sm:px-5">
         <h2 id={view.headingId} className="sr-only">{accessibleHeading}</h2>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
