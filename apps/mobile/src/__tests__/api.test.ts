@@ -18,7 +18,7 @@ test("parses health responses", () => {
 });
 
 test("parses config responses", () => {
-  const result = parseConfigResponse({ data: { apiVersion: "v1", minimumSupportedAppVersion: null, latestAppVersion: null, maintenanceMode: false, features: { flights: true, hotels: false, cars: false, pushNotifications: false, socialAuthentication: false } } });
+  const result = parseConfigResponse({ data: { apiVersion: "v1", minimumSupportedAppVersion: null, latestAppVersion: null, maintenanceMode: false, features: { flights: true, hotels: false, cars: false, pushNotifications: false, socialAuthentication: false, premiumSubscriptions: false } } });
   assert.equal(result.ok, true);
 });
 

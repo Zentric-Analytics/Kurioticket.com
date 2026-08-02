@@ -28,10 +28,10 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { buildCarDetailsHref, getPrimaryCarOffer } from "@/lib/cars/carResults";
 
 type Status = "idle" | "loading" | "success" | "empty" | "error";
-type ProductState<T> = { status: Status; results: ContractResult<T>[]; receivedAt?: number; errorKey?: string; warnings: string[]; latencyMs?: number; warningCategory?: string; source?: string };
+type ProductState<T> = { status: Status; results: ContractResult<T>[]; receivedAt?: number; errorKey?: string; warnings: string[]; servedFromFallback: boolean; latencyMs?: number; warningCategory?: string; source?: string };
 type State = { flight: ProductState<PublicFlightResult>; hotel: ProductState<PublicHotelResult>; car: ProductState<NormalizedCarResult> };
 type Action = { product: "flight"; value: ProductState<PublicFlightResult> } | { product: "hotel"; value: ProductState<PublicHotelResult> } | { product: "car"; value: ProductState<NormalizedCarResult> };
-const empty = <T,>(): ProductState<T> => ({ status: "idle", results: [], warnings: [] });
+const empty = <T,>(): ProductState<T> => ({ status: "idle", results: [], warnings: [], servedFromFallback: false });
 const initialState: State = { flight: empty(), hotel: empty(), car: empty() };
 function reducer(state: State, action: Action): State { return { ...state, [action.product]: action.value }; }
 const modeKeys = { "hotel-flight": "deals.package.hotelFlight", "hotel-flight-car": "deals.package.hotelFlightCar", "flight-car": "deals.package.flightCar", "hotel-car": "deals.package.hotelCar" } as const;

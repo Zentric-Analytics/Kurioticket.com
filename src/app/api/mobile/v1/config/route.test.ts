@@ -15,6 +15,7 @@ const expectedConfig = {
       cars: false,
       pushNotifications: false,
       socialAuthentication: true,
+      premiumSubscriptions: false,
     },
   },
 };
@@ -36,7 +37,7 @@ test("mobile config exposes explicit safe feature defaults", async () => {
   assert.equal(payload.data.features.cars, false);
   assert.equal(payload.data.features.pushNotifications, false);
   assert.equal(payload.data.features.socialAuthentication, true);
-  assert.deepEqual(Object.keys(payload.data.features).sort(), ["cars", "flights", "hotels", "pushNotifications", "socialAuthentication"]);
+  assert.equal(payload.data.features.premiumSubscriptions, false);
 });
 
 test("mobile config does not expose secret-bearing or infrastructure fields", async () => {

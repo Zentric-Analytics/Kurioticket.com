@@ -103,7 +103,7 @@ test("admin overview platform health content remains unchanged", () => {
   assert.match(platformHealthBlock, /<HealthRow label="Auth\/session" ok=\{system\.authConfigured && system\.sessionConfigured\} fallback="Not fully configured" \/>/);
   assert.match(platformHealthBlock, /<HealthRow label="Email \/ Resend" ok=\{system\.emailConfigured\} fallback="Unavailable" \/>/);
   assert.match(platformHealthBlock, /<HealthRow label="Provider credentials" ok=\{system\.providerCredentialsPresent\} fallback="Not present" \/>/);
-  assert.doesNotMatch(platformHealthBlock, /Webhooks|webhookConfigured/);
+  assert.match(platformHealthBlock, /<HealthRow label="Webhooks" ok=\{system\.webhookConfigured\} fallback="Unavailable" \/>/);
 });
 
 test("admin overview data helpers, queries, and other sections remain unchanged", () => {

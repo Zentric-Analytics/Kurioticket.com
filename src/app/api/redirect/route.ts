@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "This hotel result does not include a supported external provider link.",
+          "This illustrative demo hotel cannot be opened with an external provider.",
       },
       { status: 409 },
     );

@@ -16,6 +16,7 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
     results,
     providerStatuses: [provider],
     warnings: provider.status === "failed" ? ["Flight results are temporarily unavailable. Please try again."] : [],
+    servedFromFallback: false,
     latencyMs: Date.now() - startedAt,
     ...(provider.status !== "success" ? { unavailableMessage: "Flight results are temporarily unavailable. Please try again." } : {}),
   };
