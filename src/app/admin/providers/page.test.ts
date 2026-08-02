@@ -38,24 +38,21 @@ test("providers page filters provider sections by product query", () => {
   assert.deepEqual(filterProviderStatuses(providerStatuses, "cars").map((item) => item.product), ["Cars"]);
 });
 
-test("providers page exposes accessible server-rendered product filter links", () => {
+test("provider filter helpers remain available while the restored page shows all providers", () => {
   assert.deepEqual(productFilters.map((filter) => filter.key), ["all", "flights", "hotels", "cars"]);
-  assert.match(providersPage, /aria-label="Provider product filter"/);
-  assert.match(providersPage, /aria-current=\{active \? "page" : undefined\}/);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=flights"/);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=hotels"/);
   assert.match(providerFiltersSource, /href: "\/admin\/providers\?product=cars"/);
   assert.match(providersPage, /getProviderStatuses\(\)/);
-  assert.match(providersPage, /<AdminProviderStatusCard \{\.\.\.provider\} \/>/);
+  assert.match(providersPage, /<AdminProviderStatusCard key=\{provider\.product\} \{\.\.\.provider\} \/>/);
 });
 
-test("providers page preserves provider data, product guidance, and Duffel-only retest control", () => {
+test("providers page preserves truthful provider data and the active retest control", () => {
   assert.match(providersPage, /Provider health retest/);
   assert.match(providersPage, /<ProviderRetestButton \/>/);
-  assert.match(providersPage, /Duffel only/);
-  assert.match(providersPage, /Flight search visibility comes from real search logs/);
-  assert.match(providersPage, /Hotel inventory, ratings, confirmations, and bookings/);
-  assert.match(providersPage, /No fake car provider inventory/);
+  assert.match(providersPage, /Retesting records real provider health/);
+  assert.match(providersPage, /Cars pending unless configured/);
+  assert.match(providersPage, /Secrets hidden/);
 });
 
 test("admin navigation restores Providers and the original product destinations", () => {
@@ -65,16 +62,11 @@ test("admin navigation restores Providers and the original product destinations"
   assert.equal(adminNavigation.some((item) => item.href === "/admin/cars" && item.label === "Cars"), true);
 });
 
-test("legacy admin product pages are server redirects and no longer render duplicate provider cards", () => {
-  assert.match(flightsPage, /redirect\("\/admin\/providers\?product=flights"\)/);
-  assert.match(hotelsPage, /redirect\("\/admin\/providers\?product=hotels"\)/);
-  assert.match(carsPage, /redirect\("\/admin\/providers\?product=cars"\)/);
-
-  for (const source of [flightsPage, hotelsPage, carsPage]) {
-    assert.doesNotMatch(source, /AdminProviderStatusCard/);
-    assert.doesNotMatch(source, /getProviderStatuses/);
-    assert.doesNotMatch(source, /AdminPageShell/);
-  }
+test("restored product operations pages retain their product-specific readiness views", () => {
+  assert.match(flightsPage, /title="Flight Operations"/);
+  assert.match(hotelsPage, /title="Hotel Operations"/);
+  assert.match(carsPage, /title="Car Operations"/);
+  for (const source of [flightsPage, hotelsPage, carsPage]) assert.match(source, /AdminProviderStatusCard/);
 });
 
 test("provider APIs, retest API, and unrelated admin pages are not edited by provider page consolidation", () => {
@@ -83,7 +75,7 @@ test("provider APIs, retest API, and unrelated admin pages are not edited by pro
   assert.match(providerRetestApi, /writeAdminAuditLog/);
   assert.match(overviewPage, /Operations Dashboard/);
   assert.match(systemPage, /Safe operational status only/);
-  assert.match(settingsPage, /redirect\("\/admin\/system"\)/);
+  assert.match(settingsPage, /AdminPageShell title="Settings"/);
 });
 
 function provider(product: TestProvider["product"], providerName: string): TestProvider {

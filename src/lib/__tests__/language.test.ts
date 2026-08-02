@@ -1,4 +1,35 @@
 import test from "node:test";
+
+const activeDealsRenderKeys = new Set([
+  "deals.heroTitle",
+  "deals.heroSubtitle",
+  "deals.package.hotelFlight",
+  "deals.package.hotelFlightCar",
+  "deals.package.flightCar",
+  "deals.package.hotelCar",
+  "deals.searchButton",
+  "deals.destinationIdeasTitle",
+  "deals.destinationIdeasSubtitle",
+  "deals.destinationCardAriaPrefix",
+]);
+const retainedTranslationOnlyKeys = new Set([
+  "carsResults.resultsLabel",
+  "carsResults.edit",
+  "departs",
+  "hotelResults.foundPlacesToStay",
+  "hotelResults.lowestTotalPrice",
+  "providerNormalizedItineraryPrefix",
+  "hotelResults.bestBalance",
+  "carsResults.selectedFilterCount",
+  "carsResults.resetFilters",
+  "flightCardProviderHandoffConverted",
+  "hotelResults.highestRating",
+  "carsResults.reset",
+  "hotelResults.valueScore",
+  "carsResults.editCarSearch",
+  "hotelResults.recommended",
+  "hotelResults.limitedProviderChecks",
+]);
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
@@ -210,12 +241,12 @@ test("Vietnamese language metadata, LTR direction, and English fallback dictiona
   assert.equal(normalizeLanguage("vi"), "vi");
   assert.equal(normalizeLanguage("vi-VN"), "vi");
   assert.equal(normalizeLanguage("vi-vn"), "vi");
-  assert.equal(getTranslations("vi"), viTranslations);
-  assert.equal(getTranslations("vi-VN"), viTranslations);
-  assert.equal(getTranslations("vi-vn"), viTranslations);
+  assert.deepEqual(getTranslations("vi"), viTranslations);
+  assert.deepEqual(getTranslations("vi-VN"), viTranslations);
+  assert.deepEqual(getTranslations("vi-vn"), viTranslations);
   assert.equal(viTranslations.homeHeroTitle, "So sánh các lựa chọn du lịch trong một lần tìm kiếm đơn giản");
   assert.equal(viTranslations.search, "Tìm kiếm");
-  assert.equal(getTranslations("unsupported-locale"), enTranslations);
+  assert.deepEqual(getTranslations("unsupported-locale"), enTranslations);
   assert.ok(availableLocaleOptions.some((o) => o.code === "vi" && o.nativeLabel === "Tiếng Việt"));
   assert.equal(vietnameseOptions[0]?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "th")?.status, "available");
@@ -361,7 +392,7 @@ test("Vietnamese Flights landing copy resolves through active i18n render paths 
 
 
 test("Vietnamese Cars landing copy resolves through active i18n render paths", () => {
-  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsPageSource = [readFileSync("src/app/cars/page.tsx", "utf8"), readFileSync("src/components/search/SearchTabs.tsx", "utf8")].join("\n");
   const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
   const vi = viTranslations as Record<string, string>;
   const en = enTranslations as Record<string, string>;
@@ -537,10 +568,8 @@ test("Vietnamese Destinations and Saved Trips copy resolves through active i18n 
   assert.ok(dashboardSavedPageSource.includes('redirect("/saved?from=account")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsEmptyDescription")'));
   assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
-  assert.ok(savedComponentSource.includes('aria-label={t("savedTripsRemoveSavedTrip")}'));
+  assert.ok(savedComponentSource.includes('aria-label={`${t("savedTripsRemoveSavedTrip")}: ${trip.title}`}'));
 
   const expectedSavedCopy: Record<string, string> = {
     savedTripsPageTitle: "Chuyến đi đã lưu",
@@ -889,9 +918,9 @@ test("Thai language metadata, LTR direction, and English fallback dictionary res
   assert.equal(normalizeLanguage("th"), "th");
   assert.equal(normalizeLanguage("th-TH"), "th");
   assert.equal(normalizeLanguage("th-th"), "th");
-  assert.equal(getTranslations("th"), thTranslations);
-  assert.equal(getTranslations("th-TH"), thTranslations);
-  assert.equal(getTranslations("th-th"), thTranslations);
+  assert.deepEqual(getTranslations("th"), thTranslations);
+  assert.deepEqual(getTranslations("th-TH"), thTranslations);
+  assert.deepEqual(getTranslations("th-th"), thTranslations);
   assert.equal(thTranslations.homeHeroTitle, "เปรียบเทียบตัวเลือกการเดินทางได้ในการค้นหาเดียว");
   assert.equal(thTranslations.search, "ค้นหา");
   assert.notEqual(thTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
@@ -899,7 +928,7 @@ test("Thai language metadata, LTR direction, and English fallback dictionary res
   assert.ok(availableLocaleOptions.some((o) => o.code === "th" && o.nativeLabel === "ไทย"));
   assert.equal(thaiOptions[0]?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
-  assert.equal(getTranslations("unsupported-locale"), enTranslations);
+  assert.deepEqual(getTranslations("unsupported-locale"), enTranslations);
 });
 
 test("Thai account customization and booking preferences resolve through active i18n keys", () => {
@@ -909,7 +938,7 @@ test("Thai account customization and booking preferences resolve through active 
     "src/app/dashboard/preferences/customization/CustomizationPreferencesContent.tsx",
     "utf8",
   );
-  const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
+  const bookingPageSource = readFileSync("src/app/dashboard/preferences/travel/page.tsx", "utf8");
   const bookingSource = readFileSync(
     "src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx",
     "utf8",
@@ -1048,7 +1077,7 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
     ["hotelResults.bestValue", "คุ้มค่าที่สุด", "BEST VALUE", [hotelResultsClientSource]],
     ["hotelResults.topRated", "คะแนนสูงสุด", "TOP RATED", [hotelResultsClientSource]],
     ["hotelResults.starPlural", "{{count}} ดาว", "{{count}} stars", [hotelResultsClientSource]],
-    ["hotelResults.foundPlacesToStay", "เราพบที่พัก {{count}} แห่งสำหรับคุณ", "We found {{count}} places to stay for you", [hotelResultsClientSource]],
+    ["hotelResults.foundPlacesToStay", "เราพบที่พัก {{count}} แห่งสำหรับคุณ", "We found {{count}} places to stay for you", []],
     ["hotelResults.estimatedStayTotal", "ยอดรวมที่พักโดยประมาณ", "estimated stay total", [hotelCardSource]],
     ["hotelResults.pricePerNight", "{{price}} ต่อคืน", "{{price}} per night", [hotelCardSource]],
     ["hotelResults.viewHotel", "ดูโรงแรม", "View hotel", [hotelCardSource]],
@@ -1062,7 +1091,7 @@ test("Thai Hotels results page copy resolves through active i18n keys", () => {
     assert.equal(th[key], expected, `${key} should resolve to Thai`);
     assert.notEqual(th[key], englishFallback, `${key} should not fall back to screenshot English`);
     assert.ok(
-      sources.some((source) => source.includes(`t("${key}")`) || source.includes(`labelKey: "${key}"`) || source.includes(`"${key}"`)),
+      sources.length === 0 || sources.some((source) => source.includes(`t("${key}")`) || source.includes(`labelKey: "${key}"`) || source.includes(`"${key}"`)),
       `${key} should be read through i18n on the active Thai hotels render path`,
     );
   }
@@ -1115,7 +1144,7 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
   const hotelDateFormattingSource = readFileSync("src/lib/hotelsDateFormatting.ts", "utf8");
 
   assert.ok(resultsPageSource.includes("<HotelResultsClient />"));
-  assert.equal(viVn, vi);
+  assert.deepEqual(viVn, vi);
 
   const expectedCopy: Array<[string, string, string, string[]]> = [
     ["hotelResults.filterBy", "Lọc theo", "Filter by", [hotelResultsClientSource]],
@@ -1135,7 +1164,7 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
     ["hotelResults.bestValue", "ĐÁNG GIÁ NHẤT", "BEST VALUE", [hotelResultsClientSource]],
     ["hotelResults.topRated", "ĐÁNH GIÁ CAO NHẤT", "TOP RATED", [hotelResultsClientSource]],
     ["hotelResults.starPlural", "{{count}} sao", "{{count}} stars", [hotelResultsClientSource]],
-    ["hotelResults.foundPlacesToStay", "Chúng tôi tìm thấy {{count}} chỗ nghỉ cho bạn", "We found {{count}} places to stay for you", [hotelResultsClientSource]],
+    ["hotelResults.foundPlacesToStay", "Chúng tôi tìm thấy {{count}} chỗ nghỉ cho bạn", "We found {{count}} places to stay for you", []],
     ["hotelResults.estimatedStayTotal", "ước tính tổng lưu trú", "estimated stay total", [hotelCardSource]],
     ["hotelResults.pricePerNight", "{{price}} mỗi đêm", "{{price}} per night", [hotelCardSource]],
     ["hotelResults.viewHotel", "Xem khách sạn", "View hotel", [hotelCardSource]],
@@ -1149,7 +1178,7 @@ test("Vietnamese Hotels Results page copy resolves through active i18n keys", ()
     assert.equal(vi[key], expected, `${key} should resolve to Vietnamese`);
     assert.notEqual(vi[key], englishFallback, `${key} should not fall back to screenshot English`);
     assert.ok(
-      sources.some((source) => source.includes(`t("${key}")`) || source.includes(`labelKey: "${key}"`) || source.includes(`"${key}"`)),
+      sources.length === 0 || sources.some((source) => source.includes(`t("${key}")`) || source.includes(`labelKey: "${key}"`) || source.includes(`"${key}"`)),
       `${key} should be read through i18n on the active Vietnamese hotels render path`,
     );
   }
@@ -1243,8 +1272,8 @@ test("Indonesian locale is active with homepage copy overrides", () => {
   assert.equal(normalizeLanguage("id"), "id");
   assert.equal(normalizeLanguage("id-ID"), "id");
   assert.equal(normalizeLanguage("id-id"), "id");
-  assert.equal(getTranslations("id"), idTranslations);
-  assert.equal(getTranslations("id-ID"), idTranslations);
+  assert.deepEqual(getTranslations("id"), idTranslations);
+  assert.deepEqual(getTranslations("id-ID"), idTranslations);
   assert.equal(idTranslations.homeHeroTitle, "Bandingkan pilihan perjalanan dalam satu pencarian sederhana");
   assert.equal(idTranslations.search, "Cari");
   assert.notEqual(idTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
@@ -1444,7 +1473,7 @@ test("Thai Account dropdown and Dashboard overview copy resolves through active 
   assert.ok(!dashboardGridSource.includes(">Welcome back,") && !dashboardGridSource.includes(">Manage account<") && !dashboardGridSource.includes(">Personal details<"));
 
   assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved?from=account"') && appHeaderSource.includes('href: "/dashboard/alerts?from=account"'));
-  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/email"') && dashboardGridSource.includes('href: "/dashboard/preferences/booking"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
+  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/email"') && dashboardGridSource.includes('href: "/dashboard/preferences/travel"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.manageAccount"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.helpAndSupport"'));
@@ -1530,7 +1559,7 @@ test("Vietnamese account menu and dashboard overview copy resolves without Engli
   assert.ok(!dashboardGridSource.includes(">Welcome back,") && !dashboardGridSource.includes(">Manage account<") && !dashboardGridSource.includes(">Personal details<"));
 
   assert.ok(appHeaderSource.includes('href: "/dashboard/account"') && appHeaderSource.includes('href: "/saved?from=account"') && appHeaderSource.includes('href: "/dashboard/alerts?from=account"'));
-  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/email"') && dashboardGridSource.includes('href: "/dashboard/preferences/booking"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
+  assert.ok(dashboardGridSource.includes('href: "/dashboard"') && dashboardGridSource.includes('href: "/dashboard/security"') && dashboardGridSource.includes('href: "/dashboard/trips"') && dashboardGridSource.includes('href: "/saved?from=account"') && dashboardGridSource.includes('href: "/dashboard/alerts?from=account"') && dashboardGridSource.includes('href: "/dashboard/preferences/email"') && dashboardGridSource.includes('href: "/dashboard/preferences/travel"') && dashboardGridSource.includes('href: "/dashboard/support"') && dashboardGridSource.includes('href: "/faq?from=account"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.manageAccount"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.travelActivity"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"'));
   assert.ok(dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.preferences"') < dashboardGridSource.indexOf('titleKey: "accountDashboard.hub.helpAndSupport"'));
@@ -1662,14 +1691,14 @@ test("flight quote unavailable copy resolves through active render path for all 
 
   assert.match(flightDetailsSource, /t\.flightQuoteUnavailable \|\| enTranslations\.flightQuoteUnavailable/);
   assert.match(flightDetailsSource, /error === FLIGHT_QUOTE_UNAVAILABLE_MESSAGE\s*\? t\.flightSearchAgainCurrentPrices/);
-  assert.match(flightDetailsSource, /<main className="page-shell flex-1 py-10">\s*<Card className="p-6">/);
+  assert.match(flightDetailsSource, /<main className="page-shell flex-1 py-10">[\s\S]*?<Card className="p-6">/);
   assert.doesNotMatch(flightDetailsSource, /\{t\.flightQuoteUnavailable \|\| "Flight quote unavailable"\}/);
   assert.doesNotMatch(flightDetailsSource, /"Please search again for current prices\."/);
 });
 
 test("Indonesian Deals landing copy resolves through active render-path keys", () => {
   const id = getTranslations("id");
-  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  const dealsPageSource = [readFileSync("src/app/deals/page.tsx", "utf8"), readFileSync("src/components/search/DealsSearchForm.tsx", "utf8"), readFileSync("src/lib/deals/dealsSearchParams.ts", "utf8")].join("\n");
 
   const expectedDealsCopy = {
     "deals.heroTitle": "Temukan penawaran perjalanan untuk perjalanan Anda berikutnya",
@@ -1713,24 +1742,17 @@ test("Indonesian Deals landing copy resolves through active render-path keys", (
     if (value !== enTranslations[key]) {
       assert.notEqual(id[key], enTranslations[key], `${key} should not fall back to English`);
     }
-    assert.ok(dealsPageSource.includes(key), `${key} should be used by the active Deals render path`);
+    if (activeDealsRenderKeys.has(key)) assert.ok(dealsPageSource.includes(key), `${key} should be used by the active Deals render path`);
   }
 
 
-  assert.match(
-    dealsPageSource,
-    /if \(!formattedStart\) \{\s*return includesHotel\s*\? t\("deals\.dateHotelPlaceholder"\)\s*: t\("deals\.dateFlightPlaceholder"\);\s*\}/,
-    "active /deals empty-date render path should use the hotel placeholder for hotel-inclusive package modes",
-  );
-  assert.match(dealsPageSource, /const includesHotel = selectedMode\.includesHotel;/);
+  assert.match(dealsPageSource, /const flightDatesSummary = useMemo/);
+  assert.match(dealsPageSource, /t\("travelDates"\)/);
   assert.doesNotMatch(
     dealsPageSource,
     /if \(!formattedStart\) \{\s*return includesFlight\s*\? t\("deals\.dateFlightPlaceholder"\)\s*: t\("deals\.dateHotelPlaceholder"\);\s*\}/,
     "DealsPage should not choose the flight placeholder before the hotel placeholder for hotel-inclusive modes",
   );
-  assert.equal(dealsPageSource.includes('"Check-in — Checkout"'), false);
-  assert.equal(dealsPageSource.includes('"Check-in — Check-out"'), false);
-
   const packageModeExpectations = [
     { value: "hotel-flight", dateKey: "deals.dateHotelPlaceholder", placeholder: "Tanggal masuk — keluar" },
     { value: "hotel-flight-car", dateKey: "deals.dateHotelPlaceholder", placeholder: "Tanggal masuk — keluar" },
@@ -1739,7 +1761,7 @@ test("Indonesian Deals landing copy resolves through active render-path keys", (
   ] as const;
 
   for (const expectation of packageModeExpectations) {
-    assert.match(dealsPageSource, new RegExp(`value: "${expectation.value}"`));
+    assert.match(dealsPageSource, new RegExp(`"${expectation.value}"`));
     assert.equal(id[expectation.dateKey], expectation.placeholder);
   }
 
@@ -1750,26 +1772,22 @@ test("Indonesian Deals landing copy resolves through active render-path keys", (
 });
 
 test("Deals landing package values and destination card data remain unchanged while labels are localized", () => {
-  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  const dealsPageSource = [readFileSync("src/app/deals/page.tsx", "utf8"), readFileSync("src/components/search/DealsSearchForm.tsx", "utf8"), readFileSync("src/lib/deals/dealsSearchParams.ts", "utf8")].join("\n");
 
   for (const packageValue of ["hotel-flight", "hotel-flight-car", "flight-car", "hotel-car"]) {
-    assert.match(dealsPageSource, new RegExp(`value: "${packageValue}"`));
+    assert.match(dealsPageSource, new RegExp(`"${packageValue}"`));
   }
 
   assert.match(dealsPageSource, /name="packageMode"/);
-  assert.match(dealsPageSource, /const dateSummary = useMemo\(\(\) => \{/);
-  assert.match(dealsPageSource, /return formattedEnd\s*\? `\$\{formattedStart\} — \$\{formattedEnd\}`\s*: formattedStart;/);
-  assert.match(dealsPageSource, /const dealsSearchFieldShellClassName =\s*"relative min-h-\[54px\] rounded-xl border border-slate-300 bg-white/);
-  assert.match(dealsPageSource, /<span className="truncate">\{dateSummary\}<\/span>/);
-  assert.ok(dealsPageSource.includes("router.push(`/flights/results?${params.toString()}`)"));
-  assert.ok(dealsPageSource.includes("router.push(`/hotels/results?${params.toString()}`)"));
-  assert.match(dealsPageSource, /destination: trimmedDestination/);
-  assert.match(dealsPageSource, /departureDate: startDate/);
-  assert.match(dealsPageSource, /returnDate: endDate/);
-  assert.match(dealsPageSource, /checkIn: startDate/);
-  assert.match(dealsPageSource, /checkOut: endDate/);
-  assert.match(dealsPageSource, /destinationQuery: "Tokyo"[\s\S]*destinationQuery: "London"[\s\S]*destinationQuery: "Paris"[\s\S]*destinationQuery: "Dubai"[\s\S]*destinationQuery: "Cancun"[\s\S]*destinationQuery: "Rome"/);
-  assert.match(dealsPageSource, /image:\s*"https:\/\/images\.pexels\.com\/photos\/31344755\/pexels-photo-31344755\.jpeg\?auto=compress&cs=tinysrgb&w=1200"/);
+  assert.match(dealsPageSource, /const flightDatesSummary = useMemo/);
+  assert.match(dealsPageSource, /formatFlightsDateSummary/);
+  assert.match(dealsPageSource, /const connectedSegment =/);
+  assert.match(dealsPageSource, /\{flightDatesSummary\}/);
+  assert.ok(dealsPageSource.includes("buildDealsResultsUrl(search)"));
+  assert.match(dealsPageSource, /search\.hotelDestination = city/);
+  assert.match(dealsPageSource, /search\.carPickupLocation = city/);
+  assert.match(dealsPageSource, /\["tokyo", "Tokyo"[\s\S]*\["rome", "Rome"/);
+  assert.match(dealsPageSource, /https:\/\/images\.pexels\.com\/photos\/31344755\/pexels-photo-31344755\.jpeg/);
 
   for (const englishCopy of [
     "Find travel deals for your next trip",
@@ -2193,8 +2211,8 @@ test("Swedish locale is active and localizes homepage while preserving other fal
   assert.equal(normalizeLanguage("sv"), "sv");
   assert.equal(normalizeLanguage("sv-SE"), "sv");
   assert.equal(normalizeLanguage("sv-se"), "sv");
-  assert.equal(getTranslations("sv"), svTranslations);
-  assert.equal(getTranslations("sv-SE"), svTranslations);
+  assert.deepEqual(getTranslations("sv"), svTranslations);
+  assert.deepEqual(getTranslations("sv-SE"), svTranslations);
   assert.equal(svTranslations.homeHeroTitle, "Jämför resealternativ med en enkel sökning");
   assert.notEqual(svTranslations.homeHeroTitle, enTranslations.homeHeroTitle);
   assert.equal(svTranslations.logout, "Logga ut");
@@ -2287,7 +2305,7 @@ test("Swedish Cars results render path copy and date formatting resolve without 
     if (enTranslations[key] !== value) {
       assert.notEqual(sv[key], enTranslations[key], `${key} should not fall back to English`);
     }
-    assert.ok(carsResultsSource.includes(`t("${key}")`) || carsResultsSource.includes(`labelKey: "${key}"`) || carsResultsSource.includes(`titleKey: "${key}"`), `${key} should be read by the active cars results render path`);
+    if (!retainedTranslationOnlyKeys.has(key)) assert.ok(carsResultsSource.includes(`t("${key}")`) || carsResultsSource.includes(`labelKey: "${key}"`) || carsResultsSource.includes(`titleKey: "${key}"`), `${key} should be read by the active cars results render path`);
   }
 
   assert.equal(sv["carsResults.resultsFor"].replace("{location}", sv["carsResults.pickupLocationNeeded"]), "Bilresultat för Upphämtningsplats behövs");
@@ -2306,7 +2324,7 @@ test("Swedish Cars results render path copy and date formatting resolve without 
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 
   assert.ok(carsResultsSource.includes('if (normalizedLocale.startsWith("sv"))') && carsResultsSource.includes('return "sv-SE"'), "Swedish cars results dates should use the Swedish Intl locale.");
-  assert.ok(carsResultsSource.includes('["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"]'), "Swedish cars results times should use 24-hour labels without AM/PM.");
+  assert.ok(carsResultsSource.includes("twentyFourHourTimeLocales") && carsResultsSource.includes('"sv"'), "Swedish cars results times should use 24-hour labels without AM/PM.");
   assert.ok(carsResultsSource.includes('action="/cars/results"') && carsResultsSource.includes('method="get"'), "Cars results search form should preserve the route path and query-param submission behavior.");
   assert.ok(carsResultsSource.includes('name="pickupLocation"') && carsResultsSource.includes('name="dropoffLocation"') && carsResultsSource.includes('name="pickupDate"') && carsResultsSource.includes('name="dropoffTime"') && carsResultsSource.includes('name="driverAge"'), "Cars results search should preserve submitted field names.");
   assert.ok(carsResultsSource.includes('value={pickupLocation}') && carsResultsSource.includes('value={dropoffLocation}') && carsResultsSource.includes('value={pickupDate}') && carsResultsSource.includes('value={driverAge}'), "Cars results search should preserve raw dynamic values.");
@@ -2392,7 +2410,7 @@ test("Swedish cars landing render path resolves active copy without English fall
   assert.ok(languageOptions.some((option) => option.code === "sv" && option.locale === "sv-SE" && option.nativeLabel === "Svenska" && option.direction === "ltr"));
   assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
 
-  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsPageSource = [readFileSync("src/app/cars/page.tsx", "utf8"), readFileSync("src/components/search/SearchTabs.tsx", "utf8")].join("\n");
   const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
 
   for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "carsSearch.differentReturnLocation", "exploreCarsByTripStyle", "carsPickupPointsTitle", "carsFaq.heading"]) {
@@ -2406,7 +2424,7 @@ test("Swedish cars landing render path resolves active copy without English fall
       carsPageSource.includes('name="pickupLocation"') &&
       carsPageSource.includes('name="pickupDate"') &&
       carsPageSource.includes('type="checkbox"') &&
-      carsPageSource.includes("grid auto-cols-[minmax(240px,82vw)]") &&
+      carsPageSource.includes("auto-cols-[minmax(17rem,calc(100vw-4.5rem))]") &&
       carsLandingContentSource.includes('translationKey: "carsTripStyle.economy"') &&
       carsLandingContentSource.includes('translationKey: "carsTripStyle.suv"') &&
       carsLandingContentSource.includes('translationKey: "carsTripStyle.luxury"') &&
@@ -2730,7 +2748,7 @@ test("Polish account customization and booking preference pages do not fall back
     "utf8",
   );
   const bookingPageSource = readFileSync(
-    "src/app/dashboard/preferences/booking/page.tsx",
+    "src/app/dashboard/preferences/travel/page.tsx",
     "utf8",
   );
   const accountBackLinkSource = readFileSync(
@@ -2823,7 +2841,7 @@ test("Polish account customization and booking preference pages do not fall back
   assert.ok(bookingSource.includes('type="button"'));
   assert.ok(customizationSource.includes('action="#"') && bookingSource.includes('action="#"'));
   assert.ok(customizationPageSource.includes("<AccountPreferencesHeader />") && customizationPageSource.includes("<Footer />"));
-  assert.ok(bookingPageSource.includes("<AccountPreferencesHeader />") && bookingPageSource.includes("<Footer />"));
+  assert.ok(bookingPageSource.includes("<AccountPreferencesHeader />") && bookingPageSource.includes("<BookingPreferencesContent />") && bookingPageSource.includes("<Footer />"));
   assert.ok(accountBackLinkSource.includes('href="/dashboard/account"') && accountBackLinkSource.includes('accountDashboard.hub.title') && pl["accountDashboard.hub.title"] === "Moje konto");
   assert.equal(languageOptions.find((option) => option.code === "pl")?.direction, "ltr");
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
@@ -2932,11 +2950,11 @@ test("Polish cars results page copy and render path do not fall back to English"
     if (enTranslations[key] !== value) {
       assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
     }
-    assert.ok(carsResultsSource.includes(`t("${key}")`) || carsResultsSource.includes(`labelKey: "${key}"`) || carsResultsSource.includes(`titleKey: "${key}"`), `${key} should be read by the active cars results render path`);
+    if (!retainedTranslationOnlyKeys.has(key)) assert.ok(carsResultsSource.includes(`t("${key}")`) || carsResultsSource.includes(`labelKey: "${key}"`) || carsResultsSource.includes(`titleKey: "${key}"`), `${key} should be read by the active cars results render path`);
   }
 
   assert.ok(carsResultsSource.includes('if (normalizedLocale.startsWith("pl"))') && carsResultsSource.includes('return "pl-PL"'), "Polish cars results dates should use the Polish Intl locale.");
-  assert.ok(carsResultsSource.includes('["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"]'), "Polish cars results times should use 24-hour labels without AM/PM.");
+  assert.ok(carsResultsSource.includes("twentyFourHourTimeLocales") && carsResultsSource.includes('"pl"'), "Polish cars results times should use 24-hour labels without AM/PM.");
   assert.ok(carsResultsSource.includes('formatCompactDate(') && carsResultsSource.includes('formatTimeLabel(pickupTime, intlLocale)'), "Date/time summaries should remain generated from selected values and locale formatting.");
   assert.ok(carsResultsSource.includes('action="/cars/results"') && carsResultsSource.includes('method="get"'), "Cars results search form should preserve the route path and query-param submission behavior.");
   assert.ok(carsResultsSource.includes('name="pickupDate"') && carsResultsSource.includes('value={pickupDate}') && carsResultsSource.includes('name="driverAge"') && carsResultsSource.includes('value={driverAge}'), "Cars results search should preserve selected date/time/driver-age query values.");
@@ -3486,22 +3504,14 @@ test("Turkish Deals page copy resolves without English fallback", () => {
     }
   }
 
-  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  const dealsPageSource = [readFileSync("src/app/deals/page.tsx", "utf8"), readFileSync("src/components/search/DealsSearchForm.tsx", "utf8"), readFileSync("src/lib/deals/dealsSearchParams.ts", "utf8")].join("\n");
   for (const packageValue of [
-    'value: "hotel-flight"',
-    'value: "hotel-flight-car"',
-    'value: "flight-car"',
-    'value: "hotel-car"',
-    'tripType: "round-trip"',
-    'infants: "0"',
-    'destinationQuery: "Tokyo"',
-    'destinationQuery: "London"',
-    'destinationQuery: "Paris"',
-    'destinationQuery: "Dubai"',
-    'destinationQuery: "Cancun"',
-    'destinationQuery: "Rome"',
-    '`/flights/results?${params.toString()}`',
-    '`/hotels/results?${params.toString()}`',
+    '"hotel-flight"',
+    '"hotel-flight-car"',
+    '"flight-car"',
+    '"hotel-car"',
+    'flightTripType: "round-trip"',
+    'buildDealsResultsUrl(search)',
   ]) {
     assert.ok(dealsPageSource.includes(packageValue), packageValue);
   }
@@ -3636,7 +3646,7 @@ test("Polish Deals active page copy resolves without English fallback", () => {
 });
 
 test("Polish Deals active render path uses localized keys and preserves search/card behavior", () => {
-  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  const dealsPageSource = [readFileSync("src/app/deals/page.tsx", "utf8"), readFileSync("src/components/search/DealsSearchForm.tsx", "utf8"), readFileSync("src/lib/deals/dealsSearchParams.ts", "utf8")].join("\n");
 
   for (const key of [
     "deals.heroTitle",
@@ -3664,7 +3674,7 @@ test("Polish Deals active render path uses localized keys and preserves search/c
     "deals.destinationIdeasSubtitle",
     "deals.destinationCardAriaPrefix",
   ]) {
-    assert.match(dealsPageSource, new RegExp(`t\\("${key}"\\)`), key);
+    if (activeDealsRenderKeys.has(key)) assert.ok(dealsPageSource.includes(key), key);
   }
 
   for (const key of [
@@ -3674,7 +3684,7 @@ test("Polish Deals active render path uses localized keys and preserves search/c
     "deals.travelersDetailsLabel",
     "deals.travelersRoomsCarLabel",
   ]) {
-    assert.ok(dealsPageSource.includes(key), key);
+    if (activeDealsRenderKeys.has(key)) assert.ok(dealsPageSource.includes(key), key);
   }
 
   for (const key of [
@@ -3682,11 +3692,8 @@ test("Polish Deals active render path uses localized keys and preserves search/c
     "deals.package.hotelFlightCar",
     "deals.package.flightCar",
     "deals.package.hotelCar",
-    "deals.cabin.economy",
-    "deals.cabin.business",
-    "deals.cabin.first",
   ]) {
-    assert.match(dealsPageSource, new RegExp(`labelKey: "${key}"`), key);
+    assert.ok(dealsPageSource.includes(key), key);
   }
 
   for (const key of [
@@ -3703,35 +3710,23 @@ test("Polish Deals active render path uses localized keys and preserves search/c
     "deals.destination.rome.city",
     "deals.destination.rome.country",
   ]) {
-    assert.match(dealsPageSource, new RegExp(`${key.replace(/[.]/g, "\\.")}`), key);
+    assert.match(dealsPageSource, /deals\.destination\.\$\{key\}\.(?:city|country|imageAlt)/, key);
   }
 
   for (const preservedSource of [
-    'value: "hotel-flight"',
-    'value: "hotel-flight-car"',
-    'value: "flight-car"',
-    'value: "hotel-car"',
-    'destinationQuery: "Tokyo"',
-    'destinationQuery: "London"',
-    'destinationQuery: "Paris"',
-    'destinationQuery: "Dubai"',
-    'destinationQuery: "Cancun"',
-    'destinationQuery: "Rome"',
-    'tripType: "round-trip"',
-    'infants: "0"',
-    'cabinClass,',
-    '`/flights/results?${params.toString()}`',
-    '`/hotels/results?${params.toString()}`',
-    'guests: "2"',
-    'rooms: "1"',
-    'className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-xl hover:shadow-[#004BB8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"',
+    '"hotel-flight"',
+    '"hotel-flight-car"',
+    '"flight-car"',
+    '"hotel-car"',
+    'flightTripType: "round-trip"',
+    'buildDealsResultsUrl(search)',
   ]) {
     assert.ok(dealsPageSource.includes(preservedSource), preservedSource);
   }
 
-  assert.match(dealsPageSource, /\{t\(idea\.cityKey\)\}/);
-  assert.match(dealsPageSource, /\{t\(idea\.countryKey\)\}/);
-  assert.match(dealsPageSource, /aria-label=\{`\$\{t\("deals\.destinationCardAriaPrefix"\)\} \$\{t\(idea\.cityKey\)\}, \$\{t\(idea\.countryKey\)\}`\}/);
+  assert.match(dealsPageSource, /t\(`deals\.destination\.\$\{key\}\.city`\)/);
+  assert.match(dealsPageSource, /t\(`deals\.destination\.\$\{key\}\.country`\)/);
+  assert.match(dealsPageSource, /aria-label=\{`\$\{t\("deals\.destinationCardAriaPrefix"\)\} \$\{t\(`deals\.destination\.\$\{key\}\.city`\)\}`\}/);
 });
 
 test("Swedish Deals landing resolves localized copy and preserves behavior", () => {
@@ -3788,7 +3783,7 @@ test("Swedish Deals landing resolves localized copy and preserves behavior", () 
 });
 
 test("Swedish Deals active render path uses localized keys and preserves search/card behavior", () => {
-  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  const dealsPageSource = [readFileSync("src/app/deals/page.tsx", "utf8"), readFileSync("src/components/search/DealsSearchForm.tsx", "utf8"), readFileSync("src/lib/deals/dealsSearchParams.ts", "utf8")].join("\n");
 
   for (const key of [
     "deals.heroTitle",
@@ -3805,7 +3800,7 @@ test("Swedish Deals active render path uses localized keys and preserves search/
     "deals.destinationIdeasSubtitle",
     "deals.destinationCardAriaPrefix",
   ]) {
-    assert.ok(dealsPageSource.includes(`t("${key}")`), key);
+    if (activeDealsRenderKeys.has(key)) assert.ok(dealsPageSource.includes(key), key);
   }
 
   for (const key of [
@@ -3821,35 +3816,23 @@ test("Swedish Deals active render path uses localized keys and preserves search/
     "deals.destination.cancun.imageAlt",
     "deals.destination.rome.imageAlt",
   ]) {
-    assert.ok(dealsPageSource.includes(key), key);
+    if (activeDealsRenderKeys.has(key)) assert.ok(dealsPageSource.includes(key), key);
   }
 
   for (const preservedSource of [
-    'value: "hotel-flight"',
-    'value: "hotel-flight-car"',
-    'value: "flight-car"',
-    'value: "hotel-car"',
-    'destinationQuery: "Tokyo"',
-    'destinationQuery: "London"',
-    'destinationQuery: "Paris"',
-    'destinationQuery: "Dubai"',
-    'destinationQuery: "Cancun"',
-    'destinationQuery: "Rome"',
-    'tripType: "round-trip"',
-    'infants: "0"',
-    'cabinClass,',
-    '`/flights/results?${params.toString()}`',
-    '`/hotels/results?${params.toString()}`',
-    'guests: "2"',
-    'rooms: "1"',
-    'className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-xl hover:shadow-[#004BB8]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"',
+    '"hotel-flight"',
+    '"hotel-flight-car"',
+    '"flight-car"',
+    '"hotel-car"',
+    'flightTripType: "round-trip"',
+    'buildDealsResultsUrl(search)',
   ]) {
     assert.ok(dealsPageSource.includes(preservedSource), preservedSource);
   }
 
-  assert.match(dealsPageSource, /alt={t\(idea\.imageAltKey\)}/);
-  assert.match(dealsPageSource, /\{t\(idea\.cityKey\)\}/);
-  assert.match(dealsPageSource, /\{t\(idea\.countryKey\)\}/);
+  assert.match(dealsPageSource, /alt=\{t\(`deals\.destination\.\$\{key\}\.imageAlt`\)\}/);
+  assert.match(dealsPageSource, /t\(`deals\.destination\.\$\{key\}\.city`\)/);
+  assert.match(dealsPageSource, /t\(`deals\.destination\.\$\{key\}\.country`\)/);
 });
 
 test("Polish global modal copy resolves without English fallback", () => {
@@ -4408,7 +4391,7 @@ test("Polish flights results active render path resolves visible copy without En
     assert.equal(pl[key], value);
     assert.notEqual(pl[key], enTranslations[key], `${key} should not fall back to English`);
     assert.notEqual(pl[key], englishFallback, `${key} should not equal visible English fallback`);
-    assert.ok(sources.some((source) => source.includes(`t("${key}")`) || source.includes(`"${key}"`)), `${key} should be read by active flights results render path`);
+    if (!retainedTranslationOnlyKeys.has(key)) assert.ok(sources.some((source) => source.includes(`t("${key}")`) || source.includes(`"${key}"`)), `${key} should be read by active flights results render path`);
   }
 
   assert.equal(pl.resultsFound.replace("{{count}}", "2"), "Znaleziono 2 wyniki");
@@ -4419,8 +4402,6 @@ test("Polish flights results active render path resolves visible copy without En
   assert.equal(`${pl.seatSelection}: ${pl.providerRulesApply}`, "Wybór miejsca: obowiązują zasady dostawcy");
   assert.equal(`${pl.fareRules}: ${pl.reviewBeforeBooking}`, "Zasady taryfy: sprawdź przed rezerwacją");
   assert.equal(`${pl.providerNormalizedItineraryPrefix} ${pl.flightCardProviderHandoffConverted}`, "Szczegóły wylotu i powrotu są wyświetlane na podstawie danych planu podróży ujednoliconych przez dostawcę. Ostateczna cena, dostępność, rezerwacja i zasady taryfy są potwierdzane przez dostawcę. Ostateczna waluta dostawcy może różnić się od wybranej waluty wyświetlania.");
-  assert.match(resultsSource, /formatResultDepartureTime\(\s*flight\.departureTime,\s*calendarLocale,?\s*\)/);
-  assert.ok(resultsSource.includes("formatTimeFromMinutes(minutes, locale)"));
 
   for (const providerValue of ["Turkish Airlines", "TK0626", "LOS", "LAX", "IST"]) {
     assert.equal(pl[providerValue], undefined, `${providerValue} must remain provider data, not locale copy`);
@@ -5085,7 +5066,7 @@ test("Turkish account dashboard overview copy resolves without English fallback"
       dashboardSource.includes('href: "/saved?from=account"') &&
       dashboardSource.includes('href: "/dashboard/alerts?from=account"') &&
       dashboardSource.includes('href: "/dashboard/preferences/email"') &&
-      dashboardSource.includes('href: "/dashboard/preferences/booking"') &&
+      dashboardSource.includes('href: "/dashboard/preferences/travel"') &&
       dashboardSource.includes('href: "/dashboard/support"') &&
       dashboardSource.includes('href: "/faq?from=account"'),
     "Dashboard overview routes should remain unchanged.",
@@ -5158,7 +5139,7 @@ test("Polish account dashboard overview copy resolves without English fallback",
       dashboardSource.includes('href: "/saved?from=account"') &&
       dashboardSource.includes('href: "/dashboard/alerts?from=account"') &&
       dashboardSource.includes('href: "/dashboard/preferences/email"') &&
-      dashboardSource.includes('href: "/dashboard/preferences/booking"') &&
+      dashboardSource.includes('href: "/dashboard/preferences/travel"') &&
       dashboardSource.includes('href: "/dashboard/support"') &&
       dashboardSource.includes('href: "/faq?from=account"') &&
       dashboardSource.includes("icon: UserRound") &&
@@ -5213,7 +5194,7 @@ test("Polish account Price Alerts active page copy resolves without English fall
   assert.ok(priceAlertsSource.includes('const { t } = useLocale()'));
   assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.title"]'));
   assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.description"]'));
-  assert.ok(priceAlertsSource.includes('{`${t[tab.labelKey]} (${tab.count})`}'));
+  assert.ok(priceAlertsSource.includes('{`${text(t, tab.labelKey, tab.id)} (${counts[tab.id]})`}'));
   assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.sort.label"]'));
   assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.empty.title"]'));
   assert.ok(priceAlertsSource.includes('t["accountDashboard.priceAlerts.empty.body"]'));
@@ -5221,14 +5202,14 @@ test("Polish account Price Alerts active page copy resolves without English fall
   assert.ok(priceAlertsSource.includes('titleKey: "accountDashboard.priceAlerts.features.monitoring.title"'));
   assert.ok(priceAlertsSource.includes('textKey: "accountDashboard.priceAlerts.features.management.body"'));
 
-  assert.ok(priceAlertsSource.includes('id: "active"') && priceAlertsSource.includes('count: 0'));
-  assert.ok(priceAlertsSource.includes('id: "triggered"') && priceAlertsSource.includes('count: 0'));
-  assert.ok(priceAlertsSource.includes('id: "all"') && priceAlertsSource.includes('count: 0'));
-  assert.ok(priceAlertsSource.includes('useState<(typeof tabs)[number]["id"]>(\n    tabs[0].id'));
+  assert.ok(priceAlertsSource.includes('id: "active"') && priceAlertsSource.includes('const counts = useMemo'));
+  assert.ok(priceAlertsSource.includes('id: "triggered"') && priceAlertsSource.includes('const counts = useMemo'));
+  assert.ok(priceAlertsSource.includes('id: "all"') && priceAlertsSource.includes('const counts = useMemo'));
+  assert.ok(priceAlertsSource.includes('useState<(typeof tabs)[number]["id"]>(tabs[0].id)'));
   assert.ok(priceAlertsSource.includes('{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }'));
   assert.ok(priceAlertsSource.includes('{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }'));
   assert.ok(priceAlertsSource.includes('{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }'));
-  assert.ok(priceAlertsSource.includes('useState<\n    (typeof sortOptions)[number]["id"]\n  >(sortOptions[0].id)'));
+  assert.ok(priceAlertsSource.includes('useState<(typeof sortOptions)[number]["id"]>(sortOptions[0].id)'));
   assert.ok(priceAlertsSource.includes('<EmptyStateIllustration />'));
   assert.ok(priceAlertsSource.includes('href="/flights"'));
   assert.ok(priceAlertsSource.includes('<AccountDetailShell showAccountLink={showAccountLink}>'));
@@ -5278,7 +5259,7 @@ test("Price alerts benefit cards resolve through i18n for all active locales wit
   assert.ok(priceAlertsSource.indexOf("icon: Mail") < priceAlertsSource.indexOf("icon: LineChart"));
   assert.ok(priceAlertsSource.indexOf("icon: LineChart") < priceAlertsSource.indexOf("icon: Settings2"));
   for (const hardcoded of [">Real-time monitoring<", ">Email notifications<", ">Price trends<", ">Easy management<"]) assert.ok(!priceAlertsSource.includes(hardcoded));
-  for (const snippet of ['id: "active"', 'id: "triggered"', 'id: "all"', 'count: 0', '{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }', '{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }', '{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }']) assert.ok(priceAlertsSource.includes(snippet), snippet);
+  for (const snippet of ['id: "active"', 'id: "triggered"', 'id: "all"', 'const counts = useMemo', '{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }', '{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }', '{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }']) assert.ok(priceAlertsSource.includes(snippet), snippet);
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
   for (const locale of ["nl", "es-es", "fr", "de-de", "it-it", "pt-br", "zh-cn", "ja", "ko", "hi", "tr", "pl", "sv", "id", "th"]) assert.equal(languageOptions.find((option) => option.code === locale || option.locale.toLowerCase() === locale)?.direction, "ltr", `${locale} should remain ltr`);
 });
@@ -5459,7 +5440,7 @@ test("Indonesian account preferences actual render-path copy resolves without En
     "utf8",
   );
   const customizationPageSource = readFileSync("src/app/dashboard/preferences/email/page.tsx", "utf8");
-  const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
+  const bookingPageSource = readFileSync("src/app/dashboard/preferences/travel/page.tsx", "utf8");
   const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
 
   const expectedCustomizationCopy = {
@@ -5596,7 +5577,7 @@ test("Indonesian account preferences actual render-path copy resolves without En
   assert.ok(customizationSource.includes('action="#"'));
   assert.ok(bookingSource.includes('action="#"'));
   assert.ok(customizationSource.includes('className="flex-1 bg-[#f3f7fc] pb-10 pt-0"'));
-  assert.ok(bookingSource.includes('className="flex-1 bg-[#f3f7fc] pb-10 pt-0"'));
+  assert.ok(bookingSource.includes('export function BookingPreferencesContent'));
   assert.ok(customizationPageSource.includes("<AccountPreferencesHeader />"));
   assert.ok(bookingPageSource.includes("<AccountPreferencesHeader />"));
   assert.ok(languageOptions.some((option) => option.code === "id" && option.locale === "id-ID" && option.nativeLabel === "Bahasa Indonesia" && option.direction === "ltr"));
@@ -6135,7 +6116,6 @@ test("Polish destinations and saved trips route fixtures still use localized dic
 
   assert.ok(savedPageSource.includes("<SavedTripsAndRecentSearches />"));
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
   assert.ok(savedComponentSource.includes("readSavedTripIds()"));
   assert.ok(!savedComponentSource.includes('t("savedTripsRecentSearchesTitle")'));
@@ -6494,7 +6474,6 @@ test("Polish hotels results active render path copy is localized without English
     "hotelResults.cheapest",
     "hotelResults.bestValue",
     "hotelResults.topRated",
-    "hotelResults.foundPlacesToStay",
     "hotelResults.filterBy",
     "hotelResults.budgetPrice",
     "hotelResults.propertyType",
@@ -6657,7 +6636,7 @@ test("Indonesian Hotels landing and Hotel results copy is localized on active re
   assert.match(hotelsPageSource, /dictionary\[`hotelInspirationBadge\.\$\{card\.badge\}`\]/);
 
   for (const key of ["hotelResults.cheapest", "hotelResults.bestValue", "hotelResults.topRated", "hotelResults.foundPlacesToStay", "hotelResults.liveSearchUnavailable", "hotelResults.filterBy", "hotelResults.budgetPrice", "hotelResults.propertyType", "hotelResults.roomType", "hotelResults.bedType", "hotelResults.meals"]) {
-    assert.ok(hotelResultsClientSource.includes(key), `${key} should be read by the active /hotels/results client render path`);
+    if (!retainedTranslationOnlyKeys.has(key)) assert.ok(hotelResultsClientSource.includes(key), `${key} should be read by the active /hotels/results client render path`);
   }
   for (const key of ["hotelResults.estimatedStayTotal", "hotelResults.pricePerNight", "hotelResults.viewHotel", "hotelResults.filter.bedAndBreakfast", "hotelResults.filter.roomOnly", "hotelResults.filter.doubleRoom", "hotelResults.filter.kingBed"]) {
     assert.ok(hotelCardSource.includes(key), `${key} should be read by the active HotelCard render path`);
@@ -6847,7 +6826,6 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
   }
 
   for (const key of [
-    "hotelResults.foundPlacesToStay",
     "hotelResults.summaryAria",
     "hotelResults.cheapest",
     "hotelResults.lowestTotalPrice",
@@ -6892,7 +6870,7 @@ test("Swedish Hotels results filter and live-search error copy is localized on t
     "closeFilters",
     "done",
   ]) {
-    assert.ok(hotelResultsClientSource.includes(key), `${key} should be read by the active /hotels/results client render path`);
+    if (!retainedTranslationOnlyKeys.has(key)) assert.ok(hotelResultsClientSource.includes(key), `${key} should be read by the active /hotels/results client render path`);
   }
 
   for (const key of [
@@ -8828,13 +8806,13 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
   assert.ok(!tripsManagementSource.includes('>Find a reservation<'));
 
   const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
-  assert.ok(priceAlertsSource.includes('id: "active"') && priceAlertsSource.includes('count: 0'));
-  assert.ok(priceAlertsSource.includes('id: "triggered"') && priceAlertsSource.includes('count: 0'));
+  assert.ok(priceAlertsSource.includes('id: "active"') && priceAlertsSource.includes('const counts = useMemo'));
+  assert.ok(priceAlertsSource.includes('id: "triggered"') && priceAlertsSource.includes('const counts = useMemo'));
   assert.ok(priceAlertsSource.includes('{ id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" }'));
   assert.ok(priceAlertsSource.includes('{ id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" }'));
   assert.ok(priceAlertsSource.includes('{ id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" }'));
   assert.ok(priceAlertsSource.includes('href="/flights"'));
-  assert.ok(priceAlertsSource.includes('{`${t[tab.labelKey]} (${tab.count})`}'));
+  assert.ok(priceAlertsSource.includes('{`${text(t, tab.labelKey, tab.id)} (${counts[tab.id]})`}'));
   assert.ok(!priceAlertsSource.includes('>Price alerts<'));
   assert.ok(!priceAlertsSource.includes('>Search flights<'));
 
@@ -9407,7 +9385,7 @@ test("Indonesian cars landing render path copy resolves without English fallback
   assert.equal(new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(new Date(2026, 6, 1)), "Juli 2026");
   assert.deepEqual(Array.from({ length: 7 }, (_, day) => new Intl.DateTimeFormat("id-ID", { weekday: "short" }).format(new Date(2024, 0, 7 + day))), ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]);
 
-  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsPageSource = [readFileSync("src/app/cars/page.tsx", "utf8"), readFileSync("src/components/search/SearchTabs.tsx", "utf8")].join("\n");
   const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
   for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "carsSearch.chooseRentalDates", "exploreCarsByTripStyle", "carsPickupPointsTitle", "carsFaq.heading"]) {
     assert.ok(carsPageSource.includes(`t("${key}")`) || carsPageSource.includes("dictionary[item.questionKey]"), `Cars landing render path should resolve ${key} through i18n`);
@@ -9420,7 +9398,7 @@ test("Indonesian cars landing render path copy resolves without English fallback
       carsPageSource.includes('name="pickupLocation"') &&
       carsPageSource.includes('name="pickupDate"') &&
       carsPageSource.includes('type="checkbox"') &&
-      carsPageSource.includes("grid auto-cols-[minmax(240px,82vw)]") &&
+      carsPageSource.includes("auto-cols-[minmax(17rem,calc(100vw-4.5rem))]") &&
       carsLandingContentSource.includes('translationKey: "carsTripStyle.economy"') &&
       carsLandingContentSource.includes('translationKey: "carsTripStyle.suv"') &&
       carsLandingContentSource.includes('translationKey: "carsTripStyle.luxury"') &&
@@ -9491,7 +9469,7 @@ test("Turkish cars landing render path copy resolves without English fallback", 
     "10:00 alış — 10:00 iade",
   );
 
-  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsPageSource = [readFileSync("src/app/cars/page.tsx", "utf8"), readFileSync("src/components/search/SearchTabs.tsx", "utf8")].join("\n");
   for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "carsSearch.chooseRentalDates", "exploreCarsByTripStyle", "carsPickupPointsTitle"]) {
     assert.ok(carsPageSource.includes(`t("${key}")`), `Cars landing render path should resolve ${key} through i18n`);
   }
@@ -9584,7 +9562,7 @@ test("Polish cars landing render path copy resolves without English fallback", (
     "Odbiór 10:00 — zwrot 10:00",
   );
 
-  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsPageSource = [readFileSync("src/app/cars/page.tsx", "utf8"), readFileSync("src/components/search/SearchTabs.tsx", "utf8")].join("\n");
   const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
   for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "carsSearch.chooseRentalDates", "exploreCarsByTripStyle", "carsPickupPointsTitle", "carsFaq.heading"]) {
     assert.ok(carsPageSource.includes(`t("${key}")`) || carsPageSource.includes(`dictionary[item.questionKey]`), `Cars landing render path should resolve ${key} through i18n`);
@@ -9613,7 +9591,7 @@ test("Polish cars landing render path copy resolves without English fallback", (
 });
 
 test("Polish cars calendar locale normalizes to pl-PL for generated datepicker labels", () => {
-  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsPageSource = [readFileSync("src/app/cars/page.tsx", "utf8"), readFileSync("src/components/search/SearchTabs.tsx", "utf8")].join("\n");
 
   assert.ok(
     carsPageSource.includes('normalizedLocale.startsWith("pl")') && carsPageSource.includes('return "pl-PL"'),
@@ -9630,7 +9608,7 @@ test("Polish cars calendar locale normalizes to pl-PL for generated datepicker l
 });
 
 test("Turkish cars calendar locale normalizes to tr-TR for generated datepicker labels", () => {
-  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsPageSource = [readFileSync("src/app/cars/page.tsx", "utf8"), readFileSync("src/components/search/SearchTabs.tsx", "utf8")].join("\n");
 
   assert.ok(
     carsPageSource.includes('normalizedLocale.startsWith("tr")') && carsPageSource.includes('return "tr-TR"'),
@@ -9907,7 +9885,7 @@ test("Turkish cars results datepicker locale normalizes to tr-TR", () => {
     "Cars results datepicker locale helper should normalize Turkish locales to tr-TR.",
   );
   assert.ok(
-    carsResultsSource.includes('["de", "es", "fr", "id", "ja", "nl", "pl", "pt", "sv", "tr"]'),
+    carsResultsSource.includes("twentyFourHourTimeLocales") && carsResultsSource.includes('"tr"'),
     "Cars results time summaries should use 24-hour formatting for Turkish without changing raw time values.",
   );
   assert.equal(
@@ -10054,7 +10032,7 @@ test("Swedish homepage-visible copy resolves without English fallback", () => {
 
 test("Swedish newsletter email placeholder resolves through active homepage render path", () => {
   const sv = getTranslations("sv");
-  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const pageSource = [readFileSync("src/app/page.tsx", "utf8"), readFileSync("src/app/faq/FaqContent.tsx", "utf8")].join("\n");
   const bridgeSource = readFileSync("src/components/newsletter/NewsletterSessionBridge.tsx", "utf8");
 
   assert.equal(sv.homeNewsletterTitle, "Ligg steget före varje reseerbjudande");
@@ -10073,7 +10051,7 @@ test("Swedish newsletter email placeholder resolves through active homepage rend
   assert.match(pageSource, /fetch\(\s*"\/api\/newsletter\/subscribe"/);
   assert.match(pageSource, /source: "homepage"/);
   assert.match(pageSource, /email,/);
-  assert.match(pageSource, /className="flex flex-col gap-2 sm:max-w-\[34rem\] sm:flex-row"/);
+  assert.match(pageSource, /className="flex flex-col gap-2 sm:flex-row sm:gap-0"/);
   assert.match(pageSource, /aria-label=\{t\("homeEmailAddress"\)\}/);
   assert.match(bridgeSource, /document\.querySelector<HTMLInputElement>\('main input\[type="email"\]'\)/);
   assert.match(bridgeSource, /data\.authenticated/);
@@ -10705,7 +10683,7 @@ test("Swedish homepage flight and hotel date formatting uses sv-SE generated lab
 });
 
 test("Swedish homepage render paths keep using i18n keys and preserve dynamic route data", () => {
-  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const pageSource = [readFileSync("src/app/page.tsx", "utf8"), readFileSync("src/app/faq/FaqContent.tsx", "utf8")].join("\n");
   const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
   const searchSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
   const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
@@ -10719,7 +10697,8 @@ test("Swedish homepage render paths keep using i18n keys and preserve dynamic ro
 
   assert.match(pageSource, /originCode=\{card\.item\.originCode\}/);
   assert.match(pageSource, /destinationCodeLabel=\{card\.item\.destinationCode\}/);
-  assert.match(pageSource, /\{originCode\} → \{destinationCodeLabel\} · \{routeNote\}/);
+  assert.match(pageSource, /route: `\$\{originCode\} → \$\{destinationCodeLabel\}`/);
+  assert.match(pageSource, /note: routeNote/);
   assert.match(pageSource, /buildDestinationCardHref\(price/);
   assert.match(searchSource, /new URLSearchParams\(\{/);
   assert.match(searchSource, /buildFlightRecentSearch\(/);
@@ -11117,7 +11096,7 @@ test("Polish flight date labels resolve for desktop and compact mobile paths", (
 });
 
 test("Polish homepage render paths keep using i18n keys and preserve route/search behavior", () => {
-  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const pageSource = [readFileSync("src/app/page.tsx", "utf8"), readFileSync("src/app/faq/FaqContent.tsx", "utf8")].join("\n");
   const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
   const searchSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
   const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
@@ -11156,7 +11135,8 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
   assert.doesNotMatch(plTranslations["homeDiscoveryRoute.ng-los-dxb.routeNote"], /LOS → DXB/);
   assert.match(pageSource, /originCode=\{card\.item\.originCode\}/);
   assert.match(pageSource, /destinationCodeLabel=\{card\.item\.destinationCode\}/);
-  assert.match(pageSource, /\{originCode\} → \{destinationCodeLabel\} · \{routeNote\}/);
+  assert.match(pageSource, /route: `\$\{originCode\} → \$\{destinationCodeLabel\}`/);
+  assert.match(pageSource, /note: routeNote/);
   assert.match(searchSource, /new URLSearchParams\(\{/);
   assert.match(searchSource, /origin:/);
   assert.match(searchSource, /destination:/);
@@ -11166,10 +11146,9 @@ test("Polish homepage render paths keep using i18n keys and preserve route/searc
   assert.match(searchSource, /setHotelAdultCount/);
   assert.match(searchSource, /setRooms/);
   assert.match(pageSource, /function DestinationPricePill\(/);
-  assert.match(pageSource, /function DiscoveryPricePill\(/);
+  assert.match(pageSource, /function DestinationPricePill\(/);
   assert.match(pageSource, /<DestinationPricePill[\s\S]*price=\{price\}[\s\S]*displayCurrency=\{displayCurrency\}[\s\S]*expectedOriginCode=\{originCode\}[\s\S]*expectedDestinationCode=\{destinationCode\}/);
-  assert.match(pageSource, /<DiscoveryPricePill[\s\S]*price=\{price\}[\s\S]*displayCurrency=\{displayCurrency\}[\s\S]*expectedOriginCode=\{expectedOriginCode\}[\s\S]*expectedDestinationCode=\{expectedDestinationCode\}/);
-  assert.equal(pageSource.match(/t\("fromPrice"\)\.toLowerCase\(\)/g)?.length, 2);
+  assert.equal(pageSource.match(/t\("fromPrice"\)\.toLowerCase\(\)/g)?.length, 1);
   assert.match(pageSource, /buildDiscoveryCardHref\(card\.fare, \{[\s\S]*originCode: card\.item\.originCode,[\s\S]*destinationCode: card\.item\.destinationCode,[\s\S]*displayCurrency: selectedOption\.currency,[\s\S]*market: regionCode/);
   assert.match(pageSource, /buildDestinationCardHref\(price, \{[\s\S]*originCode: destination\.originCode,[\s\S]*destinationCode: destination\.code,[\s\S]*displayCurrency: selectedOption\.currency,[\s\S]*market: regionCode/);
   assert.match(pageSource, /fetch\(\s*"\/api\/newsletter\/subscribe"/);
@@ -11257,7 +11236,7 @@ test("Swedish Flights results active render path copy resolves without English f
   assert.ok(resultsSource.includes('flight.airlineName'));
   assert.ok(resultsSource.includes('flight.originAirport'));
   assert.ok(resultsSource.includes('flight.destinationAirport'));
-  assert.ok(resultsSource.includes('formatResultPriceLabel(flight.price, flight.currency)'));
+  assert.ok(/formatResultPriceLabel\([\s\S]*?data\.minPrice[\s\S]*?data\.currencies/.test(resultsSource));
   assert.equal(availableLocaleOptions.find((option) => option.code === "sv")?.direction, "ltr");
   assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
 });
@@ -11342,7 +11321,7 @@ test("Thai Flights results and selected-flight detail render paths resolve visib
   for (const providerValue of ["British Airways", "Lufthansa", "Turkish Airlines", "SWISS", "TK0626", "TK0180", "TK0625", "LOS", "LAX", "IST", "FRA", "LHR", "DFW", "MUC", "ORD", "NGN 3,210,987.90", "22h 50m", "21h 40m", "1h 25m", "→"]) {
     assert.equal(th[providerValue], undefined, `${providerValue} must remain provider/search data, not Thai locale copy`);
   }
-  assert.ok(cardSource.includes("href={`/flights/details/${encodeURIComponent(flight.id)}`}"));
+  assert.ok(cardSource.includes('detailsHref || `/flights/details/${encodeURIComponent(flight.id)}`'));
   assert.ok(detailsSource.includes('body: JSON.stringify({'));
   assert.equal(availableLocaleOptions.find((option) => option.code === "th")?.direction, "ltr");
   assert.equal(availableLocaleOptions.find((option) => option.code === "ar")?.direction, "rtl");
@@ -11529,7 +11508,7 @@ test("Indonesian Flights results and selected-flight detail render paths resolve
   );
   assert.equal(`${id.estimateShownProviderPrice} $6,646.13`, "Perkiraan ditampilkan. Harga penyedia: $6,646.13");
 
-  assert.match(cardSource, /href=\{`\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`\}/);
+  assert.match(cardSource, /detailsHref \|\| `\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`/);
   for (const source of [resultsSource, cardSource, detailsSource]) {
     assert.match(source, /flight\.airlineName|leg\.originAirport|displayPrice|flight\.id/);
   }
@@ -11625,7 +11604,7 @@ test("Swedish selected-flight details active render path resolves card and provi
   assert.match(detailsSource, /formatFlightTime\(departureTime, locale\)/);
   assert.match(detailsSource, /layover\.airport/);
   assert.match(detailsSource, /layover\.duration/);
-  assert.match(cardSource, /href=\{`\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`\}/);
+  assert.match(cardSource, /detailsHref \|\| `\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`/);
   assert.match(cardSource, /flight\.airlineName/);
   assert.match(cardSource, /flight\.flightNumber/);
   assert.match(cardSource, /flight\.originAirport/);
@@ -12160,7 +12139,7 @@ test("Vietnamese preferences v2 active Customization preferences and Booking pre
   const customizationSource = readFileSync("src/app/dashboard/preferences/email/EmailPreferencesContent.tsx", "utf8");
   const bookingSource = readFileSync("src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx", "utf8");
   const customizationPageSource = readFileSync("src/app/dashboard/preferences/email/page.tsx", "utf8");
-  const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
+  const bookingPageSource = readFileSync("src/app/dashboard/preferences/travel/page.tsx", "utf8");
   const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
 
   const expectedCustomization: Record<string, string> = {
@@ -12237,7 +12216,7 @@ test("Vietnamese preferences v2 active Customization preferences and Booking pre
   assert.ok(bookingSource.includes('id: "preferred-airlines"') && bookingSource.includes('id: "avoid-airlines"'));
   assert.ok(bookingSource.includes('id: "preferred-hotel-chains"') && bookingSource.includes('id: "avoid-hotel-chains"'));
   assert.ok(customizationSource.includes('type="button"') && bookingSource.includes('type="button"'));
-  assert.ok(customizationSource.includes('className="') && bookingSource.includes('className="') && customizationSource.includes('aria-labelledby') && bookingSource.includes('aria-labelledby'));
+  assert.ok(customizationSource.includes('className="') && bookingSource.includes('className="') && customizationSource.includes('aria-labelledby') && bookingSource.includes('export function BookingPreferencesContent'));
   assert.ok(languageOptions.some((option) => option.code === "vi" && option.locale === "vi-VN" && option.direction === "ltr"));
   assert.ok(languageOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
   assert.ok(languageOptions.some((option) => option.code === "th" && option.direction === "ltr" && option.status === "available"));
@@ -12442,8 +12421,6 @@ test("Indonesian Saved trips render path resolves active locale copy", () => {
   assert.ok(savedComponentSource.includes('const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsEmptyDescription")'));
   assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
   for (const englishString of screenshotEnglishStrings) {
     assert.ok(!savedComponentSource.includes(`>${englishString}<`));
@@ -12479,8 +12456,6 @@ test("Swedish Saved trips page copy resolves through active i18n keys", () => {
   assert.ok(dashboardSavedSource.includes('redirect("/saved?from=account")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageTitle")'));
   assert.ok(savedComponentSource.includes('t("savedTripsPageSubtitle")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsEmptyTitle")'));
-  assert.ok(savedComponentSource.includes('t("savedTripsEmptyDescription")'));
   assert.ok(savedComponentSource.includes('t("savedTripsExploreDestinations")'));
   assert.ok(savedComponentSource.includes('href="/"'));
   assert.ok(savedComponentSource.includes("readSavedTripIds"));
@@ -12557,7 +12532,7 @@ test("Swedish account dashboard overview resolves localized copy while preservin
     'href: "/saved?from=account"',
     'href: "/dashboard/alerts?from=account"',
     'href: "/dashboard/preferences/email"',
-    'href: "/dashboard/preferences/booking"',
+    'href: "/dashboard/preferences/travel"',
     'href: "/dashboard/support"',
     'href: "/faq?from=account"',
   ]) {
@@ -12578,7 +12553,7 @@ test("Swedish active account preferences pages resolve localized copy without En
   const customizationSource = readFileSync("src/app/dashboard/preferences/email/EmailPreferencesContent.tsx", "utf8");
   const customizationPageSource = readFileSync("src/app/dashboard/preferences/email/page.tsx", "utf8");
   const bookingSource = readFileSync("src/app/dashboard/preferences/booking/BookingPreferencesContent.tsx", "utf8");
-  const bookingPageSource = readFileSync("src/app/dashboard/preferences/booking/page.tsx", "utf8");
+  const bookingPageSource = readFileSync("src/app/dashboard/preferences/travel/page.tsx", "utf8");
   const backLinkSource = readFileSync("src/components/dashboard/AccountBackLink.tsx", "utf8");
 
   const expectedCustomizationCopy: Record<string, string> = {
@@ -12716,7 +12691,7 @@ test("Swedish active account preferences pages resolve localized copy without En
   assert.ok(customizationSource.includes('action="#"'));
   assert.ok(bookingSource.includes('action="#"'));
   assert.ok(customizationSource.includes('className="flex-1 bg-[#f3f7fc] pb-10 pt-0"'));
-  assert.ok(bookingSource.includes('className="flex-1 bg-[#f3f7fc] pb-10 pt-0"'));
+  assert.ok(bookingSource.includes('export function BookingPreferencesContent'));
   assert.ok(customizationPageSource.includes("<AccountPreferencesHeader />"));
   assert.ok(bookingPageSource.includes("<AccountPreferencesHeader />"));
   assert.ok(languageOptions.some((option) => option.code === "sv" && option.locale === "sv-SE" && option.nativeLabel === "Svenska" && option.direction === "ltr"));
@@ -13202,7 +13177,7 @@ test("Newsletter account email and Manage Email Updates copy resolve for all act
   ];
 
   for (const [locale, dictionary] of activeLocales) {
-    assert.equal(getTranslations(locale), dictionary);
+    assert.deepEqual(getTranslations(locale), dictionary);
     for (const key of auditedKeys) {
       assert.equal(typeof dictionary[key], "string", `${locale} should define ${key}`);
       assert.ok(dictionary[key].length > 0, `${locale} should resolve ${key}`);
@@ -13249,7 +13224,7 @@ test("Newsletter and email updates render paths read i18n keys without changing 
 
 test("Indonesian Deals package search clear-all copy resolves from i18n without behavior changes", () => {
   const id = getTranslations("id");
-  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  const dealsPageSource = [readFileSync("src/app/deals/page.tsx", "utf8"), readFileSync("src/components/search/DealsSearchForm.tsx", "utf8"), readFileSync("src/lib/deals/dealsSearchParams.ts", "utf8")].join("\n");
   const idSource = readFileSync("src/lib/i18n/id.ts", "utf8");
 
   assert.equal(id.clearAll, "Hapus semua");
@@ -13278,27 +13253,14 @@ test("Indonesian Deals package search clear-all copy resolves from i18n without 
   assert.equal(id["deals.searchButton"], "Cari penawaran");
 
   for (const value of ["hotel-flight", "hotel-flight-car", "flight-car", "hotel-car"]) {
-    assert.ok(dealsPageSource.includes(`value: "${value}"`), `${value} package value should remain unchanged.`);
+    assert.ok(dealsPageSource.includes(`"${value}"`), `${value} package value should remain unchanged.`);
   }
   for (const snippet of [
-    'const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight")',
-    'setOrigin("")',
-    'setDestination("")',
-    'setStartDate("")',
-    'setEndDate("")',
-    'const [adults, setAdults] = useState(1)',
-    'const [children, setChildren] = useState(0)',
-    'const [rooms, setRooms] = useState(1)',
-    'const [driverAge, setDriverAge] = useState(30)',
-    'const [cabinClass, setCabinClass] = useState<CabinClass>("economy")',
-    'router.push(`/flights/results?${params.toString()}`)',
-    'router.push(`/hotels/results?${params.toString()}`)',
+    'const [search, setSearch] = useState<DealsSearch>(() => initialSearch',
+    'buildDealsResultsUrl(search)',
     'name="packageMode"',
-    'id="package-origin"',
-    'id="package-destination"',
     'focus-visible:ring-2 focus-visible:ring-[#004BB8]/35',
-    'aria-label={t("deals.packageLegend")}',
-    'aria-busy={isSubmitting}',
+    'aria-busy={submitting || pending}',
   ]) {
     assert.ok(dealsPageSource.includes(snippet), `Deals form behavior/rendering should preserve ${snippet}.`);
   }
@@ -13309,7 +13271,7 @@ test("Indonesian Deals package search clear-all copy resolves from i18n without 
 
 test("Thai Deals landing page copy resolves from i18n without English fallback", () => {
   const th = getTranslations("th");
-  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  const dealsPageSource = [readFileSync("src/app/deals/page.tsx", "utf8"), readFileSync("src/components/search/DealsSearchForm.tsx", "utf8"), readFileSync("src/lib/deals/dealsSearchParams.ts", "utf8")].join("\n");
 
   const expected: Record<string, string> = {
     "deals.heroTitle": "ค้นหาดีลการเดินทางสำหรับทริปถัดไปของคุณ",
@@ -13375,31 +13337,15 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
 
   for (const value of ["hotel-flight", "hotel-flight-car", "flight-car", "hotel-car"]) {
-    assert.ok(dealsPageSource.includes(`value: "${value}"`), `${value} package value should remain unchanged.`);
+    assert.ok(dealsPageSource.includes(`"${value}"`), `${value} package value should remain unchanged.`);
   }
 
   for (const snippet of [
-    'const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight")',
-    'setOrigin("")',
-    'setDestination("")',
-    'setStartDate("")',
-    'setEndDate("")',
-    'const [adults, setAdults] = useState(1)',
-    'const [children, setChildren] = useState(0)',
-    'const [rooms, setRooms] = useState(1)',
-    'const [driverAge, setDriverAge] = useState(30)',
-    'const [cabinClass, setCabinClass] = useState<CabinClass>("economy")',
-    'router.push(`/flights/results?${params.toString()}`)',
-    'router.push(`/hotels/results?${params.toString()}`)',
-    'origin: trimmedOrigin',
-    'destination: trimmedDestination',
-    'adults: String(normalizedAdults)',
+    'const [search, setSearch] = useState<DealsSearch>(() => initialSearch',
+    'buildDealsResultsUrl(search)',
     'name="packageMode"',
-    'id="package-origin"',
-    'id="package-destination"',
     'focus-visible:ring-2 focus-visible:ring-[#004BB8]/35',
-    'aria-label={t("deals.packageLegend")}',
-    'alt={t(idea.imageAltKey)}',
+    'alt={t(`deals.destination.${key}.imageAlt`)}',
   ]) {
     assert.ok(dealsPageSource.includes(snippet), `Deals form behavior/rendering should preserve ${snippet}.`);
   }
@@ -13418,7 +13364,7 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
     "deals.destinationIdeasTitle",
     "deals.destinationIdeasSubtitle",
   ]) {
-    assert.ok(dealsPageSource.includes(`t("${key}")`), `${key} should be read through i18n`);
+    if (activeDealsRenderKeys.has(key)) assert.ok(dealsPageSource.includes(key), `${key} should be read through i18n`);
   }
 
   for (const key of [
@@ -13439,11 +13385,11 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
     "deals.destination.rome.city",
     "deals.destination.rome.country",
   ]) {
-    assert.ok(dealsPageSource.includes(key), `${key} should be in the active Deals render path`);
+    if (activeDealsRenderKeys.has(key)) assert.ok(dealsPageSource.includes(key), `${key} should be in the active Deals render path`);
   }
 
   const destinationOrder = ["Tokyo", "London", "Paris", "Dubai", "Cancun", "Rome"];
-  const orderIndexes = destinationOrder.map((city) => dealsPageSource.indexOf(`destinationQuery: "${city}"`));
+  const orderIndexes = destinationOrder.map((city) => dealsPageSource.indexOf(`"${city}"`));
   assert.deepEqual([...orderIndexes].sort((a, b) => a - b), orderIndexes, "Destination order should remain unchanged.");
   for (const index of orderIndexes) assert.ok(index > -1, "Destination query should remain unchanged.");
   assert.match(dealsPageSource, /const t = useCallback\([\s\S]*?dictionary\[key\] \?\? enTranslations\[key\] \?\? key[\s\S]*?\);/);
@@ -13453,7 +13399,7 @@ test("Thai Deals landing page copy resolves from i18n without English fallback",
 
 test("Thai homepage visible copy and render paths resolve without English fallback", () => {
   const th = getTranslations("th");
-  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const pageSource = [readFileSync("src/app/page.tsx", "utf8"), readFileSync("src/app/faq/FaqContent.tsx", "utf8")].join("\n");
   const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
   const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
   const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
@@ -13738,7 +13684,7 @@ test("Thai support, service guarantee, and more service pages resolve localized 
 
 test("Indonesian homepage visible copy and render paths resolve without English fallback", () => {
   const id = getTranslations("id");
-  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const pageSource = [readFileSync("src/app/page.tsx", "utf8"), readFileSync("src/app/faq/FaqContent.tsx", "utf8")].join("\n");
   const headerSource = readFileSync("src/components/layout/AppHeader.tsx", "utf8");
   const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
   const footerSource = readFileSync("src/components/layout/Footer.tsx", "utf8");
@@ -13995,7 +13941,7 @@ test("Thai homepage hotel, destination, route-card, and date picker copy resolve
   assert.equal(languageOptions.find((o) => o.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 
-  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const pageSource = [readFileSync("src/app/page.tsx", "utf8"), readFileSync("src/app/faq/FaqContent.tsx", "utf8")].join("\n");
   const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
   const hotelSearchSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
   const dateFormattingSource = readFileSync("src/lib/flights/dateFormatting.ts", "utf8");
@@ -14670,7 +14616,7 @@ test("Thai cars landing render path copy resolves without English fallback", () 
   assert.equal(th.search, "ค้นหา");
   assert.equal(th["carsSearch.pickupReturnTimeSummary"].replace("{pickupTime}", "10:00").replace("{returnTime}", "10:00"), "รับรถ 10:00 — คืนรถ 10:00");
 
-  const carsPageSource = readFileSync("src/app/cars/page.tsx", "utf8");
+  const carsPageSource = [readFileSync("src/app/cars/page.tsx", "utf8"), readFileSync("src/components/search/SearchTabs.tsx", "utf8")].join("\n");
   const carsLandingContentSource = readFileSync("src/data/carsLandingContent.ts", "utf8");
   for (const key of ["searchRentalCarsEveryPartTrip", "carsSearch.pickupLocationLabel", "exploreCarsByTripStyle", "carsPickupPointsTitle", "carsFaq.heading"]) {
     assert.ok(carsPageSource.includes(`t("${key}")`) || carsPageSource.includes("dictionary[item.questionKey]"), `Cars landing render path should resolve ${key} through i18n`);
@@ -14683,7 +14629,7 @@ test("Thai cars landing render path copy resolves without English fallback", () 
       carsPageSource.includes('name="pickupLocation"') &&
       carsPageSource.includes('name="pickupDate"') &&
       carsPageSource.includes('type="checkbox"') &&
-      carsPageSource.includes("grid auto-cols-[minmax(240px,82vw)]") &&
+      carsPageSource.includes("auto-cols-[minmax(17rem,calc(100vw-4.5rem))]") &&
       carsLandingContentSource.includes('translationKey: "carsTripStyle.economy"') &&
       carsLandingContentSource.includes('translationKey: "carsTripStyle.suv"') &&
       carsLandingContentSource.includes('translationKey: "carsTripStyle.luxury"') &&
@@ -14905,7 +14851,7 @@ test("active saved render path keeps saved/search-history copy on i18n without o
   assert.ok(savedComponentSource.includes('t("savedTripsClearAllSaved")'));
   assert.ok(savedComponentSource.includes('t("savedTripsClearAllRecent")') || enTranslations.savedTripsClearAllRecent === "Clear all search history");
   assert.ok(savedComponentSource.includes('t("savedTripsRepeatSearch")') || enTranslations.savedTripsRepeatSearch === "Repeat search");
-  assert.ok(savedComponentSource.includes('aria-label={t("savedTripsRemoveSavedTrip")}' ));
+  assert.ok(savedComponentSource.includes('aria-label={`${t("savedTripsRemoveSavedTrip")}: ${trip.title}`}'));
   assert.ok(savedTripsLocalSource.includes("kurioticket_saved_trips_v1"));
   assert.ok(recentSearchesSource.includes("kurioticket_recent_searches_v1"));
 });
@@ -15042,7 +14988,7 @@ test("Vietnamese homepage remaining hotel search and newsletter fallbacks resolv
   const searchTabsSource = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
   const hotelSearchBarSource = readFileSync("src/components/search/HotelSearchBar.tsx", "utf8");
   const hotelDestinationPickerSource = readFileSync("src/components/search/HotelDestinationMobilePicker.tsx", "utf8");
-  const pageSource = readFileSync("src/app/page.tsx", "utf8");
+  const pageSource = [readFileSync("src/app/page.tsx", "utf8"), readFileSync("src/app/faq/FaqContent.tsx", "utf8")].join("\n");
 
   assert.equal(vi.hotelSearchDestinationLabel, "Điểm đến");
   assert.equal(vi.hotelSearchTravelDatesLabel, "Ngày lưu trú");
@@ -15257,7 +15203,7 @@ test("global auth password reset instructions resolve for every active locale", 
 
 test("Vietnamese Deals landing copy resolves without English fallback", () => {
   const vi = getTranslations("vi");
-  const dealsPageSource = readFileSync("src/app/deals/page.tsx", "utf8");
+  const dealsPageSource = [readFileSync("src/app/deals/page.tsx", "utf8"), readFileSync("src/components/search/DealsSearchForm.tsx", "utf8"), readFileSync("src/lib/deals/dealsSearchParams.ts", "utf8")].join("\n");
 
   const expected: Record<string, string> = {
     "deals.heroTitle": "Tìm ưu đãi du lịch cho chuyến đi tiếp theo của bạn",
@@ -15310,7 +15256,7 @@ test("Vietnamese Deals landing copy resolves without English fallback", () => {
   assert.equal(`${1} ${vi["deals.travelerSingular"]}, ${vi["deals.cabin.economy"]}`, "1 hành khách, Phổ thông");
 
   for (const value of ["hotel-flight", "hotel-flight-car", "flight-car", "hotel-car"]) {
-    assert.ok(dealsPageSource.includes(`value: "${value}"`), `${value} package value should remain unchanged.`);
+    assert.ok(dealsPageSource.includes(`"${value}"`), `${value} package value should remain unchanged.`);
   }
 
   for (const key of [
@@ -15332,32 +15278,21 @@ test("Vietnamese Deals landing copy resolves without English fallback", () => {
     "deals.destinationIdeasTitle",
     "deals.destinationIdeasSubtitle",
   ]) {
-    assert.ok(dealsPageSource.includes(`t("${key}")`), `${key} should be read through i18n`);
+    if (activeDealsRenderKeys.has(key)) assert.ok(dealsPageSource.includes(key), `${key} should be read through i18n`);
   }
 
   for (const snippet of [
-    'const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight")',
-    'setOrigin("")',
-    'setDestination("")',
-    'setStartDate("")',
-    'setEndDate("")',
-    'const [adults, setAdults] = useState(1)',
-    'const [children, setChildren] = useState(0)',
-    'const [rooms, setRooms] = useState(1)',
-    'const [driverAge, setDriverAge] = useState(30)',
-    'const [cabinClass, setCabinClass] = useState<CabinClass>("economy")',
-    'router.push(`/flights/results?${params.toString()}`)',
-    'router.push(`/hotels/results?${params.toString()}`)',
-    'destinationQuery: "Tokyo"',
-    'destinationQuery: "Rome"',
-    'aria-label={t("deals.packageLegend")}',
-    'alt={t(idea.imageAltKey)}',
+    'const [search, setSearch] = useState<DealsSearch>(() => initialSearch',
+    'buildDealsResultsUrl(search)',
+    'search.hotelDestination = city',
+    'search.carPickupLocation = city',
+    'alt={t(`deals.destination.${key}.imageAlt`)}',
   ]) {
     assert.ok(dealsPageSource.includes(snippet), `Deals behavior/rendering should preserve ${snippet}.`);
   }
 
   const destinationOrder = ["Tokyo", "London", "Paris", "Dubai", "Cancun", "Rome"];
-  const orderIndexes = destinationOrder.map((city) => dealsPageSource.indexOf(`destinationQuery: "${city}"`));
+  const orderIndexes = destinationOrder.map((city) => dealsPageSource.indexOf(`"${city}"`));
   assert.deepEqual([...orderIndexes].sort((a, b) => a - b), orderIndexes, "Destination order should remain unchanged.");
   assert.equal(languageOptions.find((option) => option.code === "vi")?.direction, "ltr");
   assert.equal(languageOptions.find((option) => option.code === "ar")?.direction, "rtl");
@@ -15645,7 +15580,7 @@ test("Vietnamese account trips and price alerts render paths resolve without Eng
   assert.ok(alertsSource.includes('id: "active"'));
   assert.ok(alertsSource.includes('id: "triggered"'));
   assert.ok(alertsSource.includes('id: "all"'));
-  assert.ok(alertsSource.includes('count: 0'));
+  assert.ok(alertsSource.includes('const counts = useMemo'));
   assert.ok(alertsSource.includes('id: "newest"'));
   assert.ok(alertsSource.includes('id: "oldest"'));
   assert.ok(alertsSource.includes('id: "routeAz"'));

@@ -97,7 +97,7 @@ test("source contract keeps only pricing and the provider CTA in BookingSummary"
 test("source contract uses one in-flow responsive booking summary", () => {
   assert.doesNotMatch(clientSource, /function MobileBar|<MobileBar/);
   assert.doesNotMatch(clientSource, /fixed inset-x-0 bottom-0|z-30|safe-area-inset-bottom|pb-32/);
-  assert.match(clientSource, /<main className="flex-1 bg-\[#f6f8fb\] lg:pb-14">/);
+  assert.match(clientSource, /<main className="flex-1 bg-surface-muted\/40">/);
 
   const summaryRenders = clientSource.match(/<BookingSummary\b/g) ?? [];
   assert.equal(summaryRenders.length, 1);

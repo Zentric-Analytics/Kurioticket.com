@@ -35,13 +35,11 @@ function classNameAfter(heading: string): string {
   return classNameMatch[1];
 }
 
-test("admin overview operations snapshot keeps a stable one, two, then three column grid", () => {
+test("admin overview operations snapshot keeps the restored compact metric grid", () => {
   const operationsGrid = classNameAfter("Operations Snapshot");
 
-  assert.match(operationsGrid, /\bgrid-cols-1\b/);
   assert.match(operationsGrid, /\bsm:grid-cols-2\b/);
-  assert.match(operationsGrid, /\blg:grid-cols-3\b/);
-  assert.doesNotMatch(operationsGrid, /\bxl:grid-cols-6\b/);
+  assert.match(operationsGrid, /\bxl:grid-cols-6\b/);
 });
 
 test("admin overview operations snapshot preserves the six metric cards in order", () => {
@@ -60,29 +58,25 @@ test("admin overview operations snapshot preserves the six metric cards in order
   ]);
 });
 
-test("admin overview provider readiness uses one column until the laptop three column breakpoint", () => {
+test("admin overview provider readiness uses the restored wide-screen three column breakpoint", () => {
   const providerGrid = classNameAfter("Provider Readiness");
 
-  assert.match(providerGrid, /\bgrid-cols-1\b/);
-  assert.match(providerGrid, /\blg:grid-cols-3\b/);
-  assert.doesNotMatch(providerGrid, /\bxl:grid-cols-3\b/);
+  assert.match(providerGrid, /\bxl:grid-cols-3\b/);
   assert.match(adminOverviewPage, /providers\.map\(\(provider\) => <AdminProviderStatusCard key=\{provider\.product\} \{\.\.\.provider\} \/>\)/);
 });
 
-test("admin overview search and platform health use a laptop-safe two column wrapper", () => {
+test("admin overview search and platform health use the restored wide-screen wrapper", () => {
   const healthWrapper = sectionClassNameBefore("Search Health");
 
   assert.match(healthWrapper, /\bmt-8\b/);
   assert.match(healthWrapper, /\bgrid\b/);
   assert.match(healthWrapper, /\bgap-4\b/);
-  assert.match(healthWrapper, /\blg:grid-cols-\[minmax\(0,1\.2fr\)_minmax\(280px,0\.8fr\)\]/);
-  assert.doesNotMatch(healthWrapper, /\bxl:grid-cols-\[1\.2fr_0\.8fr\]/);
-  assert.doesNotMatch(adminOverviewPage, /xl:grid-cols-\[1\.2fr_0\.8fr\]/);
+  assert.match(healthWrapper, /\bxl:grid-cols-\[1\.2fr_0\.8fr\]/);
 });
 
-test("admin overview health columns can shrink without horizontal overflow", () => {
-  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-black text-slate-950">Search Health<\/h2>/);
-  assert.match(adminOverviewPage, /<div className="min-w-0">\n          <h2 className="text-lg font-black text-slate-950">Platform Health<\/h2>/);
+test("admin overview health columns retain both operational sections", () => {
+  assert.match(adminOverviewPage, /<div>\n          <h2 className="text-lg font-black text-slate-950">Search Health<\/h2>/);
+  assert.match(adminOverviewPage, /<div>\n          <h2 className="text-lg font-black text-slate-950">Platform Health<\/h2>/);
 });
 
 test("admin overview search health content remains unchanged", () => {

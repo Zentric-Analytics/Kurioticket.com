@@ -121,12 +121,13 @@ test("preview cards retain full-height columns and price anchors", () => {
 test("Deals results replace separate product rails with one combined package list", () => {
   assert.doesNotMatch(results, /<DealsPreviewRail ariaLabel=/);
   assert.match(results, /<DealsPackageCard candidate=\{candidate\}/);
-  assert.match(results, /role="list" aria-label=\{t\("deals.results.package.title"\)\}/);
+  assert.match(results, /<ol aria-label=\{t\("deals.results.package.title"\)\}/);
 });
 
-test("loading skeletons share the hidden rail and retain their visual contract", () => {
-  assert.match(skeleton, /<DealsPreviewRail ariaHidden>/);
-  assert.match(skeleton, /dealsPreviewLimit/);
+test("loading skeletons mirror the combined package-list visual contract", () => {
+  assert.match(skeleton, /aria-hidden/);
+  assert.match(skeleton, /Array\.from\(\{ length: 3 \}/);
+  assert.match(skeleton, /xl:grid-cols-\[minmax\(0,1fr\)_288px\]/);
   assert.match(skeleton, /motion-safe:animate-pulse/);
 });
 

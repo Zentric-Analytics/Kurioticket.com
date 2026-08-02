@@ -951,7 +951,7 @@ export function SavedTripsAndRecentSearches({
                         <button
                           type="button"
                           onClick={() => handleUnsaveTrip(trip.id)}
-                          aria-label={`Remove saved trip ${trip.title}`}
+                          aria-label={`${t("savedTripsRemoveSavedTrip")}: ${trip.title}`}
                           aria-pressed
                           className="focus-ring absolute end-3 top-3 z-10 flex min-h-11 min-w-11 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 shadow-sm backdrop-blur-sm transition hover:bg-rose-100"
                         >

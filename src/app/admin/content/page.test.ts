@@ -9,11 +9,8 @@ const refreshCard = readFileSync("src/components/admin/HomepageFaresRefreshCard.
 const statusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");
 const refreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
-test("Content Inventory page owns homepage fare freshness and preserves inventory sections", () => {
-  assert.match(contentPage, /title="Content Inventory"/);
-  assert.match(contentPage, /Review the public content currently available across Kurioticket and manage homepage fare freshness\./);
-  assert.match(contentPage, /<HomepageFaresRefreshCard \/>/);
-  assert.ok(contentPage.indexOf("<HomepageFaresRefreshCard />") < contentPage.indexOf("contentAreas.map"));
+test("public content management preserves the restored read-only inventory sections", () => {
+  assert.match(contentPage, /title="Public Content Management"/);
 
   for (const section of [
     "Homepage destination cards",
@@ -26,18 +23,18 @@ test("Content Inventory page owns homepage fare freshness and preserves inventor
     assert.match(contentPage, new RegExp(section));
   }
 
-  assert.doesNotMatch(contentPage, /Public Content Management/);
-  assert.doesNotMatch(contentPage, /Content Management/);
+  assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(contentPage, /Create content|Edit content|Delete content|Upload image|Approve content/i);
 });
 
-test("System page owns settings visibility without restoring homepage fare refresh", () => {
+test("settings remains the canonical homepage fare and feature-flag workspace", () => {
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.match(systemPage, /Admin Configuration/);
   assert.match(systemPage, /Feature Flags/);
   assert.doesNotMatch(systemPage, /homepage fare/i);
-  assert.match(settingsPage, /redirect\("\/admin\/system"\)/);
-  assert.doesNotMatch(settingsPage, /HomepageFaresRefreshCard/);
+  assert.match(settingsPage, /title="Settings"/);
+  assert.match(settingsPage, /HomepageFaresRefreshCard/);
+  assert.match(settingsPage, /Feature flags/);
 });
 
 test("homepage fare refresh component keeps existing client APIs, scopes, and status messaging", () => {
