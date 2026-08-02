@@ -3,6 +3,7 @@ import {
   getAuthSecret,
   getDuffelApiMode,
   getHotelbedsApiMode,
+  getTravelProviderMode,
 } from "@/lib/env";
 import { getOptionalPrisma, isDatabaseConfigured, withOptionalDb } from "@/lib/prisma";
 
@@ -39,6 +40,7 @@ export async function getSafeSystemStatus() {
     sessionConfigured: Boolean(getAuthSecret()),
     emailConfigured: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL),
     providerCredentialsPresent: hasAnyProviderCredentials(),
+    webhookConfigured: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
     adminEmailsConfigured: getAdminEmails().length > 0,
   };
 }
@@ -158,14 +160,16 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
     },
     {
       product: "Cars",
-      providerName: "Kurioticket static catalogue",
-      environment: "Server-owned catalogue",
-      credentialsPresent: false,
-      searchEnabled: true,
+      providerName: process.env.CAR_PROVIDER_PRIMARY?.trim() || "Not connected",
+      environment: process.env.CAR_PROVIDER_PRIMARY ? safeProviderEnvironment(process.env.CAR_PROVIDER_MODE) : "Unavailable",
+      credentialsPresent: Boolean(process.env.CAR_PROVIDER_API_KEY),
+      searchEnabled: Boolean(process.env.CAR_PROVIDER_PRIMARY && process.env.CAR_PROVIDER_API_KEY),
       bookingEnabled: false,
       lastSuccessfulRequest: null,
       lastFailedRequest: null,
-      notes: "Static catalogue search and internal details are available without provider credentials. External booking is not offered.",
+      notes: process.env.CAR_PROVIDER_PRIMARY && process.env.CAR_PROVIDER_API_KEY
+        ? "Car provider configuration is detected. Live inventory should display only after provider approval and environment configuration are confirmed."
+        : "Cars remain provider-ready; live inventory and prices stay unavailable until an approved provider is configured.",
     },
   ];
 }
@@ -225,6 +229,14 @@ function hasAnyProviderCredentials() {
 function safeAppEnvironment() {
   if (process.env.RENDER) return process.env.RENDER_SERVICE_NAME?.toLowerCase().includes("staging") ? "Staging" : "Production";
   return process.env.NODE_ENV === "production" ? "Production" : process.env.NODE_ENV === "test" ? "Test" : "Local development";
+}
+
+function safeProviderEnvironment(value?: string) {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "production" || normalized === "live") return "Production";
+  if (normalized === "sandbox") return "Sandbox";
+  if (normalized === "test") return "Test mode";
+  return getTravelProviderMode() === "production" ? "Production" : "Sandbox/Test";
 }
 
 function hotelProviderLabel(provider:string){return provider==="hotelbeds"?"Hotelbeds":"Not connected";}

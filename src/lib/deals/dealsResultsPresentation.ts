@@ -141,5 +141,5 @@ export const normalizeWarnings = (value: unknown) => Array.isArray(value) ? valu
 export const normalizeMetadata = (value: unknown) => {
   const data = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const categories = new Set(["unsupported_destination", "partial_results", "provider_unavailable", "discovery_only"]);
-  return { warnings: normalizeWarnings(data.warnings), latencyMs: typeof data.latencyMs === "number" && Number.isFinite(data.latencyMs) ? data.latencyMs : undefined, warningCategory: typeof data.warningCategory === "string" && categories.has(data.warningCategory) ? data.warningCategory : undefined };
+  return { warnings: normalizeWarnings(data.warnings), servedFromFallback: data.servedFromFallback === true, latencyMs: typeof data.latencyMs === "number" && Number.isFinite(data.latencyMs) ? data.latencyMs : undefined, warningCategory: typeof data.warningCategory === "string" && categories.has(data.warningCategory) ? data.warningCategory : undefined };
 };

@@ -114,6 +114,20 @@ services:
         sync: false
       - key: SAVED_TRIP_REMINDERS_CRON_SECRET
         sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_MONTHLY_PRICE_ID
+        sync: false
+      - key: STRIPE_YEARLY_PRICE_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.4-mini
       - key: DUFFEL_API_KEY
         sync: false
       - key: HOTELBEDS_API_KEY
@@ -166,6 +180,20 @@ services:
         sync: false
       - key: SAVED_TRIP_REMINDERS_CRON_SECRET
         sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_MONTHLY_PRICE_ID
+        sync: false
+      - key: STRIPE_YEARLY_PRICE_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-5.4-mini
       - key: DUFFEL_API_KEY
         sync: false
       - key: HOTELBEDS_API_KEY

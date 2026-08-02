@@ -14,6 +14,7 @@ export const mobileApiV1Config = {
     cars: false,
     pushNotifications: false,
     socialAuthentication: true,
+    premiumSubscriptions: false,
   },
 } as const;
 

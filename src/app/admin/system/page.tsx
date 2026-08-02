@@ -18,6 +18,7 @@ export default async function AdminSystemPage() {
     ["Session secret configured", system.sessionConfigured ? "Yes" : "No", system.sessionConfigured],
     ["Email configured", system.emailConfigured ? "Yes" : "No", system.emailConfigured],
     ["Provider configs present", system.providerCredentialsPresent ? "Yes" : "No", system.providerCredentialsPresent],
+    ["Webhook configured", system.webhookConfigured ? "Yes" : "No", system.webhookConfigured],
   ] as const;
 
   return (

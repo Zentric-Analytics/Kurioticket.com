@@ -7,7 +7,7 @@ const REQUEST_TIMEOUT_MS = 8000;
 export type HealthResponse = { data: { available: boolean; apiVersion: "v1" | string } };
 export type MobileFeatures = {
   flights: boolean; hotels: boolean; cars: boolean; pushNotifications: boolean;
-  socialAuthentication: boolean;
+  socialAuthentication: boolean; premiumSubscriptions: boolean;
 };
 export type ConfigResponse = { data: { apiVersion: "v1" | string; minimumSupportedAppVersion: string | null; latestAppVersion: string | null; maintenanceMode: boolean; features: MobileFeatures } };
 export type ApiError = { message: string; code: "configuration" | "network" | "http" | "parse" | "schema" };
@@ -24,7 +24,7 @@ export function parseHealthResponse(value: unknown): ApiResult<HealthResponse> {
 }
 
 export function parseConfigResponse(value: unknown): ApiResult<ConfigResponse> {
-  const featureKeys = ["flights", "hotels", "cars", "pushNotifications", "socialAuthentication"];
+  const featureKeys = ["flights", "hotels", "cars", "pushNotifications", "socialAuthentication", "premiumSubscriptions"];
   if (isRecord(value) && isRecord(value.data) && typeof value.data.apiVersion === "string" && (typeof value.data.minimumSupportedAppVersion === "string" || value.data.minimumSupportedAppVersion === null) && (typeof value.data.latestAppVersion === "string" || value.data.latestAppVersion === null) && typeof value.data.maintenanceMode === "boolean" && hasBooleanRecord(value.data.features, featureKeys)) return { ok: true, data: value as ConfigResponse };
   return { ok: false, error: { code: "schema", message: SAFE_ERROR_MESSAGE } };
 }

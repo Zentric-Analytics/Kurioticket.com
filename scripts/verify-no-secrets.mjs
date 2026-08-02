@@ -32,6 +32,7 @@ const secretTokenPatterns = [
   /whsec_[A-Za-z0-9_]+/g,
   /re_[A-Za-z0-9]{20,}/g,
   /duffel_(test|live)_[A-Za-z0-9_]+/gi,
+  /OPENAI_API_KEY\s*=\s*sk-[A-Za-z0-9_-]+/g,
 ];
 
 const serverSecretNames = [
@@ -40,8 +41,11 @@ const serverSecretNames = [
   "KIWI_API_KEY",
   "TRAVELPAYOUTS_API_KEY",
   "HOTEL_API_KEY",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
   "RESEND_API_KEY",
   "RESEND_WEBHOOK_SECRET",
+  "OPENAI_API_KEY",
   "DATABASE_URL",
   "AUTH_SECRET",
   "NEXTAUTH_SECRET",

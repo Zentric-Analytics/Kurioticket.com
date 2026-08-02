@@ -68,7 +68,7 @@ Requires macOS and Xcode. iOS simulators can usually reach `http://localhost:300
 
 - Production home screen with legacy welcome and connection-status routes redirected back to `/`.
 - Calls only `GET /api/mobile/v1/health` and `GET /api/mobile/v1/config`.
-- Flights, hotels, cars, and Deals use the shared Kurioticket API contracts.
+- Flights, hotels, cars, and deals show usable mobile search forms; push notifications, social authentication, and premium subscriptions remain disabled or coming later.
 
 ## Postponed features
 

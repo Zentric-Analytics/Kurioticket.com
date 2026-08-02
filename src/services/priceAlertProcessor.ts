@@ -173,13 +173,13 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
   if (alert.type === "FLIGHT") {
     const search = alert.query as Partial<FlightSearchParams>;
     const result = await searchFlights(search as FlightSearchParams);
-    if (result.results.length === 0) throw new Error("live_flight_price_unavailable");
+    if (result.servedFromFallback || result.results.length === 0) throw new Error("live_flight_price_unavailable");
     const best = result.results[0];
     return { provider: best.provider, price: best.price, currency: best.currency, url: best.partnerRedirectUrl || best.bookingUrl, payload: { resultId: best.id } };
   }
   const search = alert.query as Partial<HotelSearchParams>;
   const result = await searchHotels(search as HotelSearchParams);
-    if (result.results.length === 0) throw new Error("live_hotel_price_unavailable");
+  if (result.servedFromFallback || result.results.length === 0) throw new Error("live_hotel_price_unavailable");
   const selected = selectHotelPriceAlertResult(result.results);
   if (selected === null) throw new Error("live_hotel_price_unavailable");
   return selected;
