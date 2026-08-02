@@ -11,7 +11,7 @@ import { flowColors } from "../flow/flowStyles";
 import { membershipLabel, profileIdentity } from "./profileModel";
 import { useAppTheme } from "../../theme/AppTheme";
 
-type Route = "/personal-information" | "/saved-travelers" | "/price-alerts" | "/settings" | "/currency";
+type Route = "/personal-information" | "/saved-travelers" | "/price-alerts" | "/settings" | "/currency" | "/saved";
 type Row = { title: string; description?: string; icon: FlowIconName; route?: Route; value?: string; action?: () => void };
 
 const TERMS_URL = "https://kurioticket.com/terms";
@@ -93,6 +93,7 @@ export function AuthenticatedProfileScreen() {
   useFocusEffect(load);
 
   const account = useMemo<Row[]>(() => [
+    { title: "Saved & recent", description: "View and manage your favorite destinations", icon: "heart", route: "/saved" },
     { title: "Personal information", description: "Update your name, email and more", icon: "person", route: "/personal-information" },
     { title: "Saved travelers", description: "Manage your saved traveler details", icon: "people", action: () => unavailable("Saved travelers") },
     { title: "Price alerts", description: "View and manage your price alerts", icon: "bell", route: "/price-alerts" },
