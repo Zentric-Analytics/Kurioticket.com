@@ -3702,6 +3702,7 @@ export const translations: TranslationDictionary = {
   "deals.handoff.carExpired": "This car result has expired. Refresh your results to choose again.",
   "deals.productSelector.instruction": "Choose at least two products",
   "deals.productSelector.minimumTwo": "Deals requires at least two products.",
+  "deals.sameAsPickup": "Same as pick-up",
   "deals.journey.navigationLabel": "Build your trip progress",
   "deals.journey.stepCount": "Step {{current}} of {{total}}",
   "deals.journey.step.hotel": "Hotel",

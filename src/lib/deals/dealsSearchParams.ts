@@ -76,6 +76,30 @@ export const createDefaultDealsSearch = (): DealsSearch => ({
   carPickupLocation: "", carReturnToDifferentLocation: false, carReturnLocation: "", carPickupDate: "", carReturnDate: "", carPickupTime: "10:00", carReturnTime: "10:00", carDriverAge: defaultDriverAge,
 });
 
+/** Prefills package fields from one shared itinerary without overwriting explicit product values. */
+export function synchronizeDealsSearchDefaults(search: DealsSearch): DealsSearch {
+  const included = getIncludedProducts(search.mode);
+  const destination = included.flight ? search.flightDestinationText.trim() : search.hotelDestination.trim();
+  const departure = included.flight ? search.flightDepartureDate : search.hotelCheckIn;
+  const returning = included.flight ? search.flightReturnDate : search.hotelCheckOut;
+  const sharedAdults = included.flight ? search.flightAdults : search.hotelAdults;
+  const sharedChildren = included.flight ? search.flightChildren : search.hotelChildren;
+  return {
+    ...search,
+    hotelDestination: included.hotel && !search.hotelDestination.trim() ? destination : search.hotelDestination,
+    hotelCheckIn: included.hotel && !search.hotelCheckIn ? departure : search.hotelCheckIn,
+    hotelCheckOut: included.hotel && !search.hotelCheckOut ? returning : search.hotelCheckOut,
+    carPickupLocation: included.car && !search.carPickupLocation.trim() ? destination : search.carPickupLocation,
+    carPickupDate: included.car && !search.carPickupDate ? departure : search.carPickupDate,
+    carReturnDate: included.car && !search.carReturnDate ? returning : search.carReturnDate,
+    flightAdults: sharedAdults,
+    flightChildren: sharedChildren,
+    hotelAdults: sharedAdults,
+    hotelChildren: sharedChildren,
+    carReturnLocation: search.carReturnToDifferentLocation ? search.carReturnLocation : "",
+  };
+}
+
 const get = (input: QueryInput, key: string) => {
   const value = input instanceof URLSearchParams ? input.get(key) : input[key];
   return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";

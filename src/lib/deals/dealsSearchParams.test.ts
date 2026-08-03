@@ -28,3 +28,18 @@ test("hotel API payload normalizes only the destination search value", () => {
 test("hidden products do not affect validation", () => { const search = valid(); search.mode = "flight-car"; search.hotelDestination = ""; assert.equal(validateDealsSearch(search, "2000-01-01").hotel, undefined); search.mode = "hotel-flight"; search.carPickupLocation = ""; assert.equal(validateDealsSearch(search, "2000-01-01").car, undefined); });
 test("car reuses canonical validation and effective return location", () => { const search = valid(); assert.deepEqual(validateCarSearch(search, "2000-01-01"), {}); let url = new URL(buildCarResultsUrl(search), "https://example.test"); assert.equal(url.searchParams.get("dropoffLocation"), "Los Angeles"); search.carReturnToDifferentLocation = true; search.carReturnLocation = ""; assert.ok(validateCarSearch(search, "2000-01-01").dropoffLocation); search.carReturnLocation = "San Diego"; url = new URL(buildCarResultsUrl(search), "https://example.test"); assert.equal(url.searchParams.get("dropoffLocation"), "San Diego"); search.carReturnDate = "2000-01-01"; assert.ok(validateCarSearch(search, "2000-01-01").dateRange); });
 test("product deep links preserve separate canonical values", () => { const search = valid(); search.flightDepartureDate = "2099-02-01"; search.flightReturnDate = "2099-02-10"; search.hotelCheckIn = "2099-02-03"; search.hotelCheckOut = "2099-02-07"; search.carPickupDate = "2099-02-04"; search.carReturnDate = "2099-02-06"; const flight = new URL(buildFlightResultsUrl(search), "https://x"); const hotel = new URL(buildHotelResultsUrl(search), "https://x"); const car = new URL(buildCarResultsUrl(search), "https://x"); assert.equal(flight.searchParams.get("destination"), "LAX"); assert.notEqual(flight.searchParams.get("destination"), search.flightDestinationText); assert.equal(hotel.searchParams.get("checkIn"), "2099-02-03"); assert.equal(car.searchParams.get("pickupDate"), "2099-02-04"); assert.equal(car.searchParams.get("pickupTime"), "10:00"); });
+
+test("synchronized package defaults mirror itinerary values without overwriting custom values", async () => {
+  const { createDefaultDealsSearch, synchronizeDealsSearchDefaults } = await import("./dealsSearchParams");
+  const defaults = createDefaultDealsSearch();
+  const synced = synchronizeDealsSearchDefaults({ ...defaults, mode: "hotel-flight-car", flightDestinationText: "Paris, France", flightDepartureDate: "2030-05-10", flightReturnDate: "2030-05-17", flightAdults: 2 });
+  assert.equal(synced.hotelDestination, "Paris, France");
+  assert.equal(synced.carPickupLocation, "Paris, France");
+  assert.equal(synced.hotelCheckIn, "2030-05-10");
+  assert.equal(synced.carReturnDate, "2030-05-17");
+  assert.equal(synced.hotelAdults, 2);
+  assert.equal(synced.carReturnLocation, "");
+  const custom = synchronizeDealsSearchDefaults({ ...synced, hotelDestination: "Versailles", carPickupLocation: "CDG" });
+  assert.equal(custom.hotelDestination, "Versailles");
+  assert.equal(custom.carPickupLocation, "CDG");
+});
