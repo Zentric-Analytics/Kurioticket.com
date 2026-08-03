@@ -12,7 +12,7 @@ test("handoff keeps the responsive summary and ordered provider steps contract",
   assert.match(page, /page-shell max-w-5xl/); assert.match(client, /xl:grid-cols-\[minmax\(0,1fr\)_300px\]/); assert.match(client, /<DealsHandoffSummary[\s\S]*<div className="order-2/); assert.match(client, /<ol id="provider-steps"/); assert.match(summary, /role="progressbar"/); assert.match(card, /aria-current=/);
 });
 test("provider activation remains safe, persistent, specific, and accessible", () => {
-  assert.match(client, /markDealsProviderOpened/); assert.match(client, /writeDealsTripPlan/); assert.match(client, /getNextDealsProviderStep/); assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /deals\.handoff\.newTab/); assert.match(client, /plan\.resultsPath/); assert.match(card, /min-h-11/); assert.doesNotMatch(client + card, /window\.open|partnerRedirectUrl|bookingUrl|Open details/);
+  assert.match(client, /markDealsProviderOpened/); assert.match(client, /writeDealsTripPlan/); assert.match(client, /getNextDealsProviderStep/); assert.match(client, /allOpened=\{next\.allOpened\}/); assert.doesNotMatch(client, /nextId=/); assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /deals\.handoff\.newTab/); assert.match(client, /plan\.resultsPath/); assert.match(card, /min-h-11/); assert.doesNotMatch(client + card, /window\.open|partnerRedirectUrl|bookingUrl|Open details/);
 });
 test("flight and hotel use explicit protected-provider actions while cars retain details actions", () => {
   assert.match(presentation, /DealsHandoffActionKind/);
@@ -127,10 +127,11 @@ test("trip summary keeps its content without owning results navigation", () => {
   assert.match(summary, /deals\.handoff\.estimateDisclosure/);
   assert.match(summary, /deals\.handoff\.openingDoesNotBook/);
   assert.match(summary, /deals\.handoff\.summaryRefreshRequired/);
-  assert.match(summary, /deals\.handoff\.goToNextStep/);
-  assert.match(summary, /href=\{`#\$\{nextId\}`\}/);
-  assert.match(summary, /<ArrowDown aria-hidden/);
-  assert.match(summary, /min-h-11/);
+  assert.doesNotMatch(summary, /\bnextId\b/);
+  assert.doesNotMatch(summary, /deals\.handoff\.goToNextStep/);
+  assert.doesNotMatch(summary, /ArrowDown/);
+  assert.doesNotMatch(summary, /href=\{`#\$\{nextId\}`\}/);
+  assert.doesNotMatch(summary, /Go to next provider step/);
   assert.doesNotMatch(summary, /bg-blue-50|bg-amber-50|rounded-xl p-3/);
 });
 

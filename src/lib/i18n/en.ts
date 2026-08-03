@@ -3495,7 +3495,6 @@ export const translations: TranslationDictionary = {
   "deals.handoff.estimateDisclosure": "This total combines estimates from separate providers. Each provider confirms its own final price and availability.",
   "deals.handoff.openingDoesNotBook": "Opening a provider page marks that step as reviewed. It does not book or reserve anything.",
   "deals.handoff.summaryRefreshRequired": "One or more selected options need fresh prices. Refresh results before continuing with those items.",
-  "deals.handoff.goToNextStep": "Go to next provider step",
   "deals.handoff.nextToReview": "Next to review",
   "deals.handoff.pending": "Not opened",
   "deals.handoff.refreshRequired": "Refresh required",
