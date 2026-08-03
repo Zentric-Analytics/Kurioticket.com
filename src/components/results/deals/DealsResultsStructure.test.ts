@@ -18,7 +18,7 @@ test("translated Deals copy states the separate-provider booking model", () => {
   for (const copy of [
     "Mix-and-match trip options",
     "Estimated trip total",
-    "Provider sources: {{count}}",
+    "Included sources: {{count}}",
     "Choose trip option",
     "Trip option selected",
     "This is not one package booking.",
