@@ -73,7 +73,7 @@ export function tryToggleDealsProduct(mode: DealsPackageMode, product: DealsProd
 
 export const createDefaultDealsSearch = (): DealsSearch => ({
   mode: "hotel-flight", flightOriginText: "", flightOriginCode: "", flightDestinationText: "", flightDestinationCode: "",
-  flightTripType: "round-trip", flightDepartureDate: "", flightReturnDate: "", flightAdults: 1, flightChildren: 0, flightInfants: 0, flightCabinClass: "economy",
+  flightTripType: "round-trip", flightDepartureDate: "", flightReturnDate: "", flightAdults: 2, flightChildren: 0, flightInfants: 0, flightCabinClass: "economy",
   hotelDestination: "", hotelCheckIn: "", hotelCheckOut: "", hotelAdults: 2, hotelChildren: 0, hotelRooms: 1, hotelPetFriendly: false,
   carPickupLocation: "", carReturnToDifferentLocation: false, carReturnLocation: "", carPickupDate: "", carReturnDate: "", carPickupTime: "10:00", carReturnTime: "10:00", carDriverAge: defaultDriverAge,
   stayDestinationLinked: true, stayDatesLinked: true, carPickupLinked: true, carDatesLinked: true,
@@ -103,6 +103,8 @@ export function parseDealsSearchParams(input: QueryInput): DealsSearch {
   const carPickupLocation = get(input, "carPickupLocation");
   const carPickupDate = date(get(input, "carPickupDate"));
   const carReturnDate = date(get(input, "carReturnDate"));
+  const sharedAdults = integer(get(input, "flightAdults") || get(input, "hotelAdults"), defaults.flightAdults);
+  const sharedChildren = integer(get(input, "flightChildren") || get(input, "hotelChildren"), defaults.flightChildren);
   const explicitLink = (key: string, inferred: boolean) => { const value = get(input, key); return value === "true" ? true : value === "false" ? false : inferred; };
   return {
     mode: isDealsPackageMode(modeValue) ? modeValue : defaults.mode,
@@ -110,10 +112,10 @@ export function parseDealsSearchParams(input: QueryInput): DealsSearch {
     flightOriginText: get(input, "flightOriginText"), flightOriginCode: normalizeIataCode(get(input, "flightOriginCode")),
     flightDestinationText, flightDestinationCode: normalizeIataCode(get(input, "flightDestinationCode")),
     flightDepartureDate, flightReturnDate: flightTripType === "one-way" ? "" : parsedFlightReturnDate,
-    flightAdults: integer(get(input, "flightAdults"), defaults.flightAdults), flightChildren: integer(get(input, "flightChildren"), defaults.flightChildren), flightInfants: integer(get(input, "flightInfants"), defaults.flightInfants),
+    flightAdults: sharedAdults, flightChildren: sharedChildren, flightInfants: integer(get(input, "flightInfants"), defaults.flightInfants),
     flightCabinClass: cabin === "business" || cabin === "first" ? cabin : "economy",
     hotelDestination, hotelCheckIn, hotelCheckOut,
-    hotelAdults: integer(get(input, "hotelAdults"), defaults.hotelAdults), hotelChildren: integer(get(input, "hotelChildren"), defaults.hotelChildren), hotelRooms: integer(get(input, "hotelRooms"), defaults.hotelRooms), hotelPetFriendly: bool(get(input, "hotelPetFriendly")),
+    hotelAdults: sharedAdults, hotelChildren: sharedChildren, hotelRooms: integer(get(input, "hotelRooms"), defaults.hotelRooms), hotelPetFriendly: bool(get(input, "hotelPetFriendly")),
     carPickupLocation, carReturnToDifferentLocation: bool(get(input, "carReturnToDifferentLocation")), carReturnLocation: get(input, "carReturnLocation"),
     carPickupDate, carReturnDate,
     carPickupTime: timeOptions.includes(get(input, "carPickupTime")) ? get(input, "carPickupTime") : defaults.carPickupTime,
