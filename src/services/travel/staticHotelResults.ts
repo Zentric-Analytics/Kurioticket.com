@@ -1,4 +1,5 @@
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
+import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 import { scoreHotel } from "@/services/travel/scoring";
 import { staticHotelCatalogue, type StaticHotelRecord } from "./staticHotelCatalogue";
 
@@ -10,7 +11,7 @@ export function getStaticHotelById(id: string) {
 }
 
 export function searchStaticHotelCatalogue(destination: string) {
-  const query = normalize(destination);
+  const query = normalize(normalizeHotelDestinationSearchValue(destination));
   if (!query) return [];
   return staticHotelCatalogue.filter((hotel) => [hotel.city, hotel.country, hotel.region, ...hotel.aliases].some((value) => normalize(value) === query));
 }

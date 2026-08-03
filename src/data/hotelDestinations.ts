@@ -163,6 +163,7 @@ export const normalizeHotelDestinationSearchValue = (value: string) => {
   const matchingDestination = hotelDestinations.find((destination) => {
     if (normalizeText(destination.searchValue) === normalizedValue) return true;
     if (normalizeText(destination.name) === normalizedValue) return true;
+    if (normalizeText(`${destination.name}, ${destination.country}`) === normalizedValue) return true;
 
     return false;
   });

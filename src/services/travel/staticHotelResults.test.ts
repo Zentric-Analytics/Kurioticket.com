@@ -10,6 +10,15 @@ test("static hotel catalogue is authoritative and destination relevant", () => {
   assert.deepEqual([...supportedStaticHotelDestinations], ["London","Paris","New York","Tokyo"]);
   assert.ok(searchStaticHotelCatalogue("LON").every(hotel => hotel.city === "London"));
   assert.deepEqual(searchStaticHotelCatalogue("Atlantis"), []);
+  assert.deepEqual(searchStaticHotelCatalogue("Lagos, Nigeria"), []);
+});
+
+test("decorated supported destinations resolve only to their catalogue city", () => {
+  for (const [destination, city] of [["London, United Kingdom", "London"], ["Paris, France", "Paris"], ["New York, NY", "New York"], ["New York, United States", "New York"], ["Tokyo, Japan", "Tokyo"], ["LON", "London"]]) {
+    const results = searchStaticHotelCatalogue(destination);
+    assert.ok(results.length > 0, destination);
+    assert.ok(results.every(hotel => hotel.city === city), destination);
+  }
 });
 
 test("static hotel results are deterministic planning estimates", () => {
@@ -17,7 +26,7 @@ test("static hotel results are deterministic planning estimates", () => {
   assert.deepEqual(first,second);
   assert.ok(first.length>0);
   assert.equal(calculateHotelStayNights(search.checkIn,search.checkOut),3);
-  assert.equal(first[0].totalPrice,first[0].pricePerNight*3);
+  assert.equal(first[0]!.totalPrice,first[0]!.pricePerNight*3);
   assert.equal(first[0].provider,"Kurioticket static catalogue");
   assert.equal(first[0].bookingUrl,"");
   assert.equal(first[0].partnerRedirectUrl,"");

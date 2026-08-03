@@ -5,6 +5,7 @@ import {
   type CarsFormValues,
 } from "@/lib/cars/carsSearchUtils";
 import type { CarSearchParams } from "@/lib/cars/types";
+import { normalizeHotelDestinationSearchValue } from "@/data/hotelDestinations";
 
 export const dealsPackageModes = [
   "hotel-flight",
@@ -105,7 +106,7 @@ export const buildHotelResultsUrl = (search: DealsSearch) => `/hotels/results?${
 export const buildCarApiPayload = (search: DealsSearch): CarSearchParams => ({ pickupLocation: search.carPickupLocation.trim(), dropoffLocation: search.carReturnToDifferentLocation ? search.carReturnLocation.trim() : search.carPickupLocation.trim(), pickupDate: search.carPickupDate, pickupTime: search.carPickupTime, dropoffDate: search.carReturnDate, dropoffTime: search.carReturnTime, driverAge: search.carDriverAge });
 export const buildCarResultsUrl = (search: DealsSearch) => `/cars/results?${new URLSearchParams(buildCarApiPayload(search))}`;
 export const buildFlightApiPayload = (search: DealsSearch) => ({ tripType: search.flightTripType, origin: normalizeIataCode(search.flightOriginCode), destination: normalizeIataCode(search.flightDestinationCode), departureDate: search.flightDepartureDate, ...search.flightTripType === "round-trip" ? { returnDate: search.flightReturnDate } : {}, travelers: search.flightAdults + search.flightChildren + search.flightInfants, adults: search.flightAdults, children: search.flightChildren, infants: search.flightInfants, cabinClass: search.flightCabinClass });
-export const buildHotelApiPayload = (search: DealsSearch) => ({ destination: search.hotelDestination.trim(), checkIn: search.hotelCheckIn, checkOut: search.hotelCheckOut, guests: search.hotelAdults + search.hotelChildren, rooms: search.hotelRooms });
+export const buildHotelApiPayload = (search: DealsSearch) => ({ destination: normalizeHotelDestinationSearchValue(search.hotelDestination), checkIn: search.hotelCheckIn, checkOut: search.hotelCheckOut, guests: search.hotelAdults + search.hotelChildren, rooms: search.hotelRooms });
 
 export function validateFlightSearch(search: DealsSearch, today = todayIso()) {
   const errors: Record<string, string> = {};
