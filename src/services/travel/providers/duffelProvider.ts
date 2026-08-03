@@ -8,6 +8,7 @@ import type { FlightSearchParams, NormalizedFlightResult, ProviderResult } from 
 import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
 import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
+import { getStagingProviderSafety } from "@/lib/stagingSafety";
 import { airports, searchAirports, type AirportOption } from "@/data/airports";
 import { countryNameToCountryCode, isIsoCountryCode, normalizeCountryCode } from "@/lib/geo/context";
 import { distanceKm } from "@/lib/geo/distance";
@@ -34,6 +35,9 @@ export type PlaceSearchContext = {
 };
 
 function getDuffelProviderBlockReason(apiKey: string) {
+  const stagingSafety = getStagingProviderSafety();
+  if (!stagingSafety.safe) return stagingSafety.reason;
+
   const apiMode = getDuffelApiMode();
 
   try {
@@ -62,6 +66,10 @@ const cabinClassMap: Record<FlightSearchParams["cabinClass"], string> = {
 
 export function searchDuffelFlights(search: FlightSearchParams): Promise<ProviderResult<NormalizedFlightResult>> {
   const apiKey = process.env.DUFFEL_API_KEY;
+  const stagingSafety = getStagingProviderSafety();
+  if (!stagingSafety.safe) {
+    return Promise.resolve(skippedProvider("Duffel", stagingSafety.reason));
+  }
   if (!apiKey) {
     return Promise.resolve(skippedProvider("Duffel", "Missing DUFFEL_API_KEY."));
   }
@@ -122,6 +130,17 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
 export async function checkDuffelHealth() {
   const apiKey = process.env.DUFFEL_API_KEY;
   const checkedAt = new Date().toISOString();
+
+  const stagingSafety = getStagingProviderSafety();
+  if (!stagingSafety.safe) {
+    return {
+      configured: Boolean(apiKey),
+      connected: false,
+      latencyMs: 0,
+      lastError: stagingSafety.reason,
+      checkedAt,
+    };
+  }
 
   if (!apiKey) {
     return {
@@ -409,6 +428,10 @@ const mergeProviderAndCuratedPlaces = (
 
 export async function searchDuffelPlaces(query: string, searchContext?: PlaceSearchContext): Promise<ProviderResult<DuffelPlaceSuggestion>> {
   const apiKey = process.env.DUFFEL_API_KEY;
+  const stagingSafety = getStagingProviderSafety();
+  if (!stagingSafety.safe) {
+    return skippedProvider("DuffelPlaces", stagingSafety.reason);
+  }
   if (!apiKey) {
     return skippedProvider("DuffelPlaces", "Missing DUFFEL_API_KEY.");
   }

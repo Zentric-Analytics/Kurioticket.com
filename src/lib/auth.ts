@@ -30,6 +30,7 @@ import {
 
 import { signinSchema } from "@/lib/validation";
 import { isPasskeyLoginToken, passkeyStrongAuthNote } from "@/lib/passkeys";
+import { assertStagingAuthenticationSafety } from "@/lib/stagingSafety";
 
 import {
   EmailVerificationCooldownError,
@@ -39,6 +40,8 @@ import {
 } from "@/services/emailVerificationService";
 
 import { logAuthEvent } from "@/services/authService";
+
+assertStagingAuthenticationSafety();
 
 type SessionAugmentedUser = {
   role?: string;
