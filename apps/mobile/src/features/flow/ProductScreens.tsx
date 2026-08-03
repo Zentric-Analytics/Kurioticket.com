@@ -162,11 +162,6 @@ export function HotelsScreen() {
             focalY={0.63}
             accessibilityLabel="Hotels hero image"
           />
-          <View pointerEvents="none" style={styles.hotelHeroOverlay} />
-          <View style={styles.hotelHeroCopy}>
-            <Text accessibilityRole="header" style={styles.hotelHeroHeading}>Find the stays that start the right trip</Text>
-            <Text style={styles.hotelHeroSupporting}>Compare hotels in one place, from city breaks to luxury resorts.</Text>
-          </View>
         </View>
         <View style={styles.hotelBody}>
           <HotelSearchPanel ref={panel} params={params} />
@@ -247,11 +242,7 @@ const styles = StyleSheet.create({
   page: { paddingHorizontal: 9, paddingBottom: 28 },
   hotelPage: { paddingHorizontal: 14, paddingBottom: 28 },
   hotelHero: { height: 290, marginHorizontal: -14, overflow: "hidden" },
-  hotelHeroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "#071A4866" },
-  hotelHeroCopy: { position: "absolute", left: 20, right: 20, bottom: 46, gap: 8 },
-  hotelHeroHeading: { color: "white", fontSize: 27, lineHeight: 33, fontWeight: "800", maxWidth: 330 },
-  hotelHeroSupporting: { color: "white", fontSize: 14, lineHeight: 20, fontWeight: "500", maxWidth: 330 },
-  hotelBody: { marginTop: -24, gap: 10 },
+  hotelBody: { marginTop: -22, gap: 10 },
   heroShell: { height: 290, marginHorizontal: -9, overflow: "hidden" },
   heroHeader: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 5 },
   heroActions: { flexDirection: "row", justifyContent: "space-between" },
