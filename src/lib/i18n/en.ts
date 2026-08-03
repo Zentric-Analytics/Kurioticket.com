@@ -3580,7 +3580,6 @@ export const translations: TranslationDictionary = {
   "carDetails.notIncluded": "Not included",
   "carDetails.unavailable": "Car unavailable",
   "deals.results.package.title": "Mix-and-match trip options",
-  "deals.results.package.intro": "Kurioticket combines separately sourced live and planning results into these options. Live items continue to their provider; planning-only items are reviewed on Kurioticket.",
   "deals.results.package.loading": "Building mix-and-match trip options…",
   "deals.results.package.empty": "We could not build a complete trip option because one or more required products are unavailable.",
   "deals.results.package.unavailableTitle": "No complete trip options found",

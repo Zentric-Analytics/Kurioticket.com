@@ -33,7 +33,6 @@ test("hotel availability reasons distinguish catalogue misses from ineligible re
   assert.match(results, /state\.hotel\.results\.length \? "deals\.results\.package\.hotelUnavailable" : "deals\.results\.package\.hotelEmpty"/);
   assert.match(english, /No stays are available for this destination in Kurioticket’s current hotel catalogue\./);
   assert.match(english, /The returned stays are missing an indicative total or a safe Kurioticket details page\./);
-  assert.match(english, /Kurioticket combines separately sourced live and planning results/);
   assert.doesNotMatch(english, /The returned hotels do not have a live price and a safe, bookable details action\./);
   assert.doesNotMatch(results, /partnerRedirectUrl|bookingUrl/);
 });
@@ -63,10 +62,13 @@ test("results render one mix-and-match trip-option list after the shared search 
   assert.ok(summary >= 0 && summary < breadcrumbs && breadcrumbs < packages);
   assert.match(results, /buildDealsPackageCandidates/);
   assert.match(results, /<DealsPackageResultsToolbar/);
-  assert.match(results, /<ol aria-label=/);
+  assert.match(results, /<ol aria-label=\{t\("deals\.results\.package\.title"\)\}/);
   assert.match(results, /sortedCandidates\.map\(candidate/);
-  assert.match(results, /t\("deals\.results\.package\.intro"\)/);
-  assert.match(results, /<h1 className="text-2xl font-extrabold/);
+  assert.match(results, /<h1 className="sr-only">\{t\("deals\.results\.package\.title"\)\}<\/h1>/);
+  assert.match(results, /<h1 className="sr-only">[\s\S]*<div className="space-y-4"><DealsPackageResultsToolbar[\s\S]*showPackageSortSkeleton \?/);
+  assert.doesNotMatch(results, /<h1 className="text-2xl font-extrabold text-slate-950">/);
+  assert.doesNotMatch(results, /t\("deals\.results\.package\.intro"\)/);
+  assert.doesNotMatch(results, /mt-2 max-w-3xl text-sm leading-6 text-slate-600/);
   assert.doesNotMatch(results, /<DealsProductSection|<DealsPreviewRail/);
 });
 
