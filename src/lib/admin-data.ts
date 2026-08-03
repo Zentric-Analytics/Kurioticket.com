@@ -2,7 +2,6 @@ import {
   getAdminEmails,
   getAuthSecret,
   getDuffelApiMode,
-  getHotelbedsApiMode,
 } from "@/lib/env";
 import { getOptionalPrisma, isDatabaseConfigured, withOptionalDb } from "@/lib/prisma";
 
@@ -115,19 +114,14 @@ export async function getRecentAdminActivity(limit = 6) {
 }
 
 export async function getProviderStatuses(): Promise<ProviderStatus[]> {
-  const [flightRequest, flightFailure, hotelRequest, hotelFailure] = await Promise.all([
+  const [flightRequest, flightFailure] = await Promise.all([
     getLatestProviderLog("Duffel", "SUCCESS"),
     getLatestProviderLog("Duffel", "FAILED"),
-    getLatestHotelSuccess(),
-    getLatestHotelFailure(),
   ]);
 
   const flightPrimary = "duffel";
   const flightCredentials = Boolean(process.env.DUFFEL_API_KEY);
   const flightEnvironment = getDuffelApiMode() === "test" ? "Test mode" : "Production";
-
-  const hotelPrimary = "hotelbeds";
-  const hotelCredentials = Boolean(process.env.HOTELBEDS_API_KEY && process.env.HOTELBEDS_SECRET);
 
   return [
     {
@@ -145,16 +139,14 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
     },
     {
       product: "Hotels",
-      providerName: hotelProviderLabel(hotelPrimary),
-      environment: hotelEnvironment(hotelPrimary),
-      credentialsPresent: hotelCredentials,
-      searchEnabled: hotelCredentials,
+      providerName: "Kurioticket static catalogue",
+      environment: "Server-owned catalogue",
+      credentialsPresent: false,
+      searchEnabled: true,
       bookingEnabled: false,
-      lastSuccessfulRequest: hotelRequest,
-      lastFailedRequest: hotelFailure,
-      notes: hotelCredentials
-        ? "Hotel search credentials are present for the configured provider. Live inventory should display only after provider approval and environment configuration are confirmed."
-        : "Hotels remain provider-ready; live inventory and prices stay unavailable until an approved provider is configured.",
+      lastSuccessfulRequest: null,
+      lastFailedRequest: null,
+      notes: "Destination-relevant static catalogue search and internal details are available without credentials. Prices are indicative and external booking is disabled.",
     },
     {
       product: "Cars",
@@ -199,8 +191,8 @@ export async function getDuffelAdminHealth() {
 
 export const pausedProviderRows = [
   { name: "Additional flight providers", status: "Not active", note: "Duffel is the only active working flight provider path today." },
-  { name: "Hotel providers", status: "Provider-ready", note: "Enable only after an approved provider is configured for the environment." },
-  { name: "Car providers", status: "Provider-ready", note: "Enable only after an approved provider is configured for the environment." },
+  { name: "Hotels", status: "Static catalogue", note: "Internal search and details are active; external booking is not offered." },
+  { name: "Cars", status: "Static catalogue", note: "Internal search and details are active; external booking is not offered." },
 ];
 
 function unavailableMetrics(): AdminMetrics {
@@ -215,11 +207,7 @@ function unavailableMetrics(): AdminMetrics {
 }
 
 function hasAnyProviderCredentials() {
-  return Boolean(
-    process.env.DUFFEL_API_KEY ||
-      process.env.HOTELBEDS_API_KEY ||
-      process.env.HOTELBEDS_SECRET,
-  );
+  return Boolean(process.env.DUFFEL_API_KEY);
 }
 
 function safeAppEnvironment() {
@@ -227,29 +215,12 @@ function safeAppEnvironment() {
   return process.env.NODE_ENV === "production" ? "Production" : process.env.NODE_ENV === "test" ? "Test" : "Local development";
 }
 
-function hotelProviderLabel(provider:string){return provider==="hotelbeds"?"Hotelbeds":"Not connected";}
-function hotelEnvironment(provider:string){return provider==="hotelbeds"?(getHotelbedsApiMode()==="live"?"Production":"Test mode"):"Unavailable";}
-
 async function getLatestProviderLog(provider: string, status: "SUCCESS" | "FAILED") {
   return withOptionalDb(async (db) => {
     const apiLog = await db.apiProviderLog.findFirst({ where: { provider, status }, orderBy: { createdAt: "desc" } });
     const healthLog = await db.providerHealthLog.findFirst({ where: { provider, status }, orderBy: { checkedAt: "desc" } });
     const date = apiLog?.createdAt || healthLog?.checkedAt;
     return date ? formatDateTime(date) : null;
-  }, null as string | null);
-}
-
-async function getLatestHotelSuccess() {
-  return withOptionalDb(async (db) => {
-    const log = await db.apiProviderLog.findFirst({ where: { service: { contains: "hotel", mode: "insensitive" }, status: "SUCCESS" }, orderBy: { createdAt: "desc" } });
-    return log ? formatDateTime(log.createdAt) : null;
-  }, null as string | null);
-}
-
-async function getLatestHotelFailure() {
-  return withOptionalDb(async (db) => {
-    const log = await db.apiProviderLog.findFirst({ where: { service: { contains: "hotel", mode: "insensitive" }, status: "FAILED" }, orderBy: { createdAt: "desc" } });
-    return log ? formatDateTime(log.createdAt) : null;
   }, null as string | null);
 }
 

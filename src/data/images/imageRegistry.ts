@@ -7,29 +7,6 @@ const premiumHomepageDestinationApprovedCropNotes = "Homepage destination-card c
 const premiumFlightCropNotes = "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
 const premiumHotelCropNotes = "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
 
-export const hotelbedsProviderImagePattern: RegisteredImage = {
-  id: "provider-hotelbeds-giata-bigger-pattern",
-  url: "https://photos.hotelbeds.com/giata/bigger/",
-  alt: "Hotelbeds provider property image supplied for the matched hotel",
-  product: "hotels",
-  usage: "hotel-result-provider",
-  source: "hotelbeds",
-  status: "provider-real",
-  sourcePage: "https://photos.hotelbeds.com/giata/bigger/{hotelbeds-content-image-path}",
-  creator: "Hotelbeds",
-  license: "Provider content agreement",
-  licenseNotes:
-    "Runtime Hotelbeds images are provider-real property images from Hotelbeds content paths and must not be reused as generic marketing stock.",
-  pageSurfaces: ["Hotel search results"],
-  intendedSlot: "Provider-backed hotel result image when Hotelbeds returns a validated GIATA content image path.",
-  cropNotes: "Remote provider image dimensions vary; HotelCard object-cover crop must be QA checked with real provider responses.",
-  focalPoint: "center",
-  desktopApproved: true,
-  mobileApproved: true,
-  launchCritical: true,
-  notes: "Documents the provider URL pattern built in src/services/travel/providers/hotelbedsProvider.ts.",
-};
-
 export const imageRegistry: RegisteredImage[] = [
   {
     id: "phase-3-001-global-homepage-hero",
@@ -848,5 +825,4 @@ export const imageRegistry: RegisteredImage[] = [
     mobileApproved: true,
     launchCritical: true,
   },
-  hotelbedsProviderImagePattern,
 ];

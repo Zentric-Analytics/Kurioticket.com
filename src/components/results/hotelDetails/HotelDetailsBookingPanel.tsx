@@ -219,25 +219,13 @@ export function HotelDetailsBookingPanel({
                   {redirectError}
                 </p>
               ) : null}
-              <div aria-busy={redirecting}>
-                <Button
-                  type="button"
-                  variant="accent"
-                  size="lg"
-                  className="w-full"
-                  disabled={!providerEnabled || redirecting}
-                  aria-describedby={
-                    providerUnavailableText
-                      ? "hotel-provider-unavailable-message"
-                      : undefined
-                  }
-                  onClick={onContinue}
-                >
-                  {redirecting
-                    ? `${continueToProviderText}...`
-                    : continueToProviderText}
-                </Button>
-              </div>
+              {providerEnabled ? (
+                <div aria-busy={redirecting}>
+                  <Button type="button" variant="accent" size="lg" className="w-full" disabled={redirecting} onClick={onContinue}>
+                    {redirecting ? `${continueToProviderText}...` : continueToProviderText}
+                  </Button>
+                </div>
+              ) : null}
               {providerEnabled ? (
                 <p className="text-xs leading-5 text-slate-500">
                   {providerDisclaimerText}

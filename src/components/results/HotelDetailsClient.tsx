@@ -365,7 +365,9 @@ export function HotelDetailsClient({
   const reviewCountText = reviewCount !== null ? (reviewCount === 1 ? t("hotelResults.review.single") || "{{count}} review" : t("hotelResults.review.multiple") || "{{count}} reviews").replace("{{count}}", new Intl.NumberFormat(locale).format(reviewCount)) : "";
   const taxesText = hotel.taxesAndFeesIncluded === true ? t("hotelResults.taxesFeesIncluded") : hotel.taxesAndFeesIncluded === false ? t("hotelResults.taxesFeesNotIncluded") : "";
   const providerEnabled = canUseHotelDetailsProviderLink(hotel);
-  const providerUnavailableText = hotel.dataSource === "demo"
+  const providerUnavailableText = hotel.provider === "Kurioticket static catalogue"
+    ? "Prices shown are estimated for trip planning. Live booking availability will be introduced before launch."
+    : hotel.dataSource === "demo"
     ? ""
     : hotel.inventoryKind === "discovery" || !hasValidPrice
       ? discoveryBookingUnavailableText

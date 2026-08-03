@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         error: aggregate.unavailableMessage,
         results: [],
         status: "unavailable",
-        source: "hotelbeds",
+        source: "kurioticket-static-hotels",
         warnings: aggregate.warnings,
         partial: false,
         requestId,

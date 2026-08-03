@@ -11,7 +11,7 @@
 ## Travel architecture
 
 - Duffel is the only flight provider.
-- Hotelbeds is the only hotel provider.
+- Kurioticket's static hotel catalogue is the only current hotel source and exposes no external booking.
 - Cars use the server-owned static catalogue without external checkout.
 - Deals compose those same pipelines.
 - Provider failures never create fabricated inventory.
