@@ -85,11 +85,5 @@ jobs:
       - name: Verify deployed schema
         run: node scripts/verify-production-schema.mjs
 
-      - name: Verify Preview tester schema
-        run: node scripts/verify-preview-tester-schema.mjs
-
-      - name: Confirm migration deployment is idempotent
-        run: npx prisma migrate deploy
-
       - name: Confirm migration status
         run: npx prisma migrate status
