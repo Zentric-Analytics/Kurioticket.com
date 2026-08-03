@@ -59,16 +59,26 @@ test("hero directly follows the complete header for guests and signed-in users",
 
 test("Hotels starts with its hero and overlaps it with search without marketing copy", () => {
   const products = source("src/features/flow/ProductScreens.tsx");
+  const hotelSearch = source("src/features/flow/HotelSearchPanel.tsx");
   const hotels = products.slice(
     products.indexOf("export function HotelsScreen()"),
     products.indexOf("export function CarsScreen()"),
   );
 
   assert.match(hotels, /<ScrollView[^>]*>\s*<View style=\{styles\.hotelHero\}>/s);
+  assert.match(hotels, /assets\/heroes\/hotels-room\.png/);
   assert.match(hotels, /<View pointerEvents="none" style=\{styles\.hotelHeroOverlay\} \/>/);
+  assert.match(hotels, /<HotelSearchPanel ref=\{panel\} params=\{params\} \/>/);
+  assert.match(hotels, /title="Featured destinations"/);
   assert.match(products, /hotelBody:\s*\{\s*marginTop:\s*-22/);
+  assert.match(hotelSearch, />Destination<\/Text>/);
+  assert.match(hotelSearch, /label="Travel dates"/);
+  assert.match(hotelSearch, /label="Guests"/);
+  assert.match(hotelSearch, /submitLabel = "Search hotels"/);
   assert.doesNotMatch(hotels, /HomeTopNavigation|accessibilityLabel="Notifications"/);
-  assert.doesNotMatch(hotels, /accessibilityRole="header"|Find the stays|Compare hotels/);
+  assert.doesNotMatch(hotels, /accessibilityRole="header"/);
+  assert.doesNotMatch(hotels, /Find the stays that start the right trip/);
+  assert.doesNotMatch(hotels, /Compare hotels in one place, from city breaks to luxury resorts\./);
 });
 
 test("bottom navigation remains owned by the fixed tabs layout", () => {
