@@ -11,7 +11,7 @@ Kurioticket uses one Expo codebase and exactly two permanent application identit
 | API origin | `https://staging.kurioticket.com` | `https://kurioticket.com` |
 | EAS profile/channel | `preview` | `production` |
 | Distribution | Internal / TestFlight | App Store / Google Play |
-| App/runtime version | `0.3.0` / `0.3.0` | `0.2.0` / app-version policy |
+| App/runtime version | `0.3.0` / `preview-0.3.0` | `0.3.0` / `production-0.3.0` |
 
 There are no separate staging or development identities. Local development reuses Preview and must be started explicitly:
 
@@ -43,7 +43,7 @@ The `preview` profile is platform-specific: iOS uses store distribution to creat
 
 Preview Android uses EAS internal distribution; no Preview Google Play record is required. The legacy `com.kurioticket.mobile` Play draft, EAS credential, builds, and update history are preserved and must not be deleted or repurposed.
 
-EAS uses remote app-version management. Android `versionCode` is independent of the user-visible `0.3.0` version and must be read from EAS before each approved build. The Preview profile does not auto-increment it. The live inventory contained only Android `0.2.0 (8)` builds when `0.3.0` was selected; no iOS build-number or `0.3.0` conflict was present. Before the first iOS build, perform a read-only remote build-number check and select build number `1` only if it remains unused.
+EAS remote app-version management is authoritative. Android `versionCode` is independent of the user-visible `0.3.0` version and is tracked separately for each package/profile. Both profiles auto-increment remotely. The protected delivery workflow reports the current remote value before starting an approved build. A failed EAS build may consume a value; gaps are safe and values are never reused. Google Play upload history is the final authority for Production conflicts. This PR changes policy only and does not mutate any remote version code.
 
 The Apple Explicit App IDs and App Store Connect records for `Kurioticket` and `Kurioticket Preview` already exist under the approved organization. No iOS signing certificate, provisioning profile, or iOS build exists. Historical Android `0.2.0 (8)` Preview and Production builds remain preserved.
 
@@ -63,9 +63,9 @@ Configuration generation fails when the variant, build mode, or API origin is mi
 
 ## Runtime and OTA eligibility
 
-Preview `0.3.0` uses the explicit runtime `0.3.0`. Production remains version `0.2.0` with its existing app-version runtime policy. This makes the first `com.kurioticket.app.preview` binary incompatible with the legacy Preview updates published for runtime `0.2.0`.
+Preview uses runtime `preview-0.3.0`; Production uses `production-0.3.0`. Marketing version remains `0.3.0`. Runtime and channel are independent isolation boundaries, while package identity is not used as an EAS Update boundary. Both new identities exclude legacy runtime `0.2.0`.
 
-Preview and Production versions are intentionally independent. They converge only when a future Production release deliberately adopts Preview-tested native code: that release receives its own approved Production version, and a later Preview cycle advances again. Never lower or silently align Preview merely to match Production.
+Preview and Production version counters are governed independently even when their values deliberately converge. They converge only when Production adopts Preview-tested native code through an approved release change; a later Preview cycle then advances first. Never lower or silently align Preview merely to match Production.
 
 An OTA update is eligible only when all of these match the intended binary: EAS project, platform, channel, and runtime. Before publishing, confirm the update contains no native dependency, app configuration, permission, plugin, bundle/package, runtime, or other native change. OTA publishing remains disabled until a separately approved workflow is reviewed after the first binary is installed and its channel/runtime mapping is verified.
 

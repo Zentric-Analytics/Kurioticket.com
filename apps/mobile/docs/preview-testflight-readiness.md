@@ -9,7 +9,7 @@ This record contains no secret values. It describes the read-only state observed
 - Git history identifies the former Preview GitHub Actions workflow as their source. Commit `e25b6d9` removed its `eas update` and Android `eas build` steps.
 - Current mobile GitHub Actions workflows are validation-only. The EAS Workflows page is unconfigured. No remaining repository or EAS server-side workflow capable of automatic mobile delivery was found.
 
-The smallest collision-free Preview increase is app version and runtime `0.3.0`. Production stays at version `0.2.0` and retains its app-version runtime policy.
+Preview keeps marketing version `0.3.0` and uses isolated runtime `preview-0.3.0`. Production marketing version is also `0.3.0`, with isolated runtime `production-0.3.0`; neither can receive legacy runtime `0.2.0` updates.
 
 ## Staging safety classification
 

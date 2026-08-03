@@ -27,7 +27,7 @@ test("resolves the approved Production identity", () => {
     variant: "production", buildMode: "release", displayName: "Kurioticket",
     bundleIdentifier: "com.kurioticket.app", androidPackage: "com.kurioticket.app",
     scheme: "kurioticket", apiBaseUrl: "https://kurioticket.com", channel: "production",
-    appVersion: "0.2.0", isPreview: false,
+    appVersion: "0.3.0", isPreview: false,
   });
 });
 

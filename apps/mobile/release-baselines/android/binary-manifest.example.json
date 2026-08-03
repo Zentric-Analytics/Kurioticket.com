@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "environment": "preview",
+  "easBuildId": "00000000-0000-4000-8000-000000000000",
+  "commitSha": "0000000000000000000000000000000000000000",
+  "package": "com.kurioticket.app.preview",
+  "profile": "preview",
+  "platform": "ANDROID",
+  "runtime": "preview-0.3.0",
+  "channel": "preview",
+  "nativeFingerprint": "replace-with-reviewed-generated-fingerprint"
+}

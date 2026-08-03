@@ -1,26 +1,8 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 import type { AppBuildMode, AppVariant, MobileEnvironment, MobileEnvironmentInput } from "./src/config/environment.schema";
+import releasePolicy from "./release-policy.json";
 
-const RELEASES = {
-  preview: {
-    displayName: "Kurioticket Preview",
-    bundleIdentifier: "com.kurioticket.app.preview",
-    androidPackage: "com.kurioticket.app.preview",
-    scheme: "kurioticket-preview",
-    apiBaseUrl: "https://staging.kurioticket.com",
-    channel: "preview",
-    appVersion: "0.3.0",
-  },
-  production: {
-    displayName: "Kurioticket",
-    bundleIdentifier: "com.kurioticket.app",
-    androidPackage: "com.kurioticket.app",
-    scheme: "kurioticket",
-    apiBaseUrl: "https://kurioticket.com",
-    channel: "production",
-    appVersion: "0.2.0",
-  },
-} as const;
+const RELEASES = releasePolicy;
 
 function required(input: MobileEnvironmentInput, name: string): string {
   const value = input[name]?.trim();
@@ -71,11 +53,11 @@ export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileE
   }
 
   return { variant, buildMode, displayName: release.displayName, bundleIdentifier: release.bundleIdentifier,
-    androidPackage: release.androidPackage, scheme: release.scheme, apiBaseUrl, channel: release.channel,
+    androidPackage: release.androidPackage, scheme: release.scheme, apiBaseUrl, channel: release.channel as AppVariant,
     appVersion: release.appVersion, isPreview: variant === "preview" };
 }
 
-export default ({ config }: ConfigContext): ExpoConfig => {
+const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   const environment = resolveMobileEnvironment(process.env);
   return {
     ...config,
@@ -113,7 +95,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         isPreview: environment.isPreview,
       },
     },
-    runtimeVersion: environment.isPreview ? environment.appVersion : { policy: "appVersion" },
+    runtimeVersion: RELEASES[environment.variant].runtimeVersion,
     updates: {
       url: "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d",
       checkAutomatically: "ON_LOAD",
@@ -121,3 +103,5 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
   };
 };
+
+export default createAppConfig;
