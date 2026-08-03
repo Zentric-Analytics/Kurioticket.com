@@ -4,23 +4,26 @@ This document defines the delivery foundation. It does not authorize credentials
 
 ## Environment matrix
 
-| Control | Preview | Production |
-| --- | --- | --- |
-| Source | approved commit reachable from `dev` | immutable release tag, or explicitly approved commit reachable from `main` |
-| GitHub environment | `mobile-preview` | `mobile-production` |
-| Package | `com.kurioticket.app.preview` | `com.kurioticket.app` |
-| API | `https://staging.kurioticket.com` | `https://kurioticket.com` |
-| Profile/channel | `preview` / `preview` | `production` / `production` |
-| Version/runtime | `0.3.0` / `preview-0.3.0` | `0.3.0` / `production-0.3.0` |
-| Native artifact | internal APK | Google Play AAB |
+| Control | Preview OTA | Preview build | Production |
+| --- | --- | --- | --- |
+| Source | exact approved commit reachable from `dev` | exact approved commit reachable from `dev` | explicitly approved full commit reachable from `main` |
+| GitHub environment | `mobile-preview-ota` | `mobile-preview-build` | `mobile-production` |
+| Required reviewer | none | `ZentricAnalytics` | `ZentricAnalytics` |
+| Package | `com.kurioticket.app.preview` | `com.kurioticket.app.preview` | `com.kurioticket.app` |
+| API | `https://staging.kurioticket.com` | `https://staging.kurioticket.com` | `https://kurioticket.com` |
+| Profile/channel | `preview` / `preview` | `preview` / `preview` | `production` / `production` |
+| Version/runtime | `0.3.0` / `preview-0.3.0` | `0.3.0` / `preview-0.3.0` | `0.3.0` / `production-0.3.0` |
+| Permitted action | OTA update only | native APK build only | approved Production action |
 
 The marketing versions converge at `0.3.0`, while environment-prefixed runtimes and channels independently prevent cross-delivery. Package identity is not an EAS Update isolation mechanism. Legacy runtime `0.2.0` is excluded.
 
 ## Approval and branch model
 
-Pull-request and branch-push workflows validate only. Delivery is available solely through `workflow_dispatch`. Configure `mobile-preview` with a required reviewer, prevent self-review/admin bypass, allow only `dev`, and store its own environment-scoped `EXPO_TOKEN`. Configure `mobile-production` with owner plus independent release/security review, prevent self-review/admin bypass, allow protected `main` and immutable `mobile-prod-v*` tags only, and store a separate environment-scoped token; an optional wait timer is recommended. These external settings are not created by this PR.
+Pull-request and branch-push workflows validate only. Delivery is available solely through `workflow_dispatch`. The Preview workflows are structurally separated: `mobile-preview-ota` has no reviewer and can only publish a fingerprint-compatible update from `dev`; `mobile-preview-build` requires `ZentricAnalytics` approval and can only start a native Android build from `dev`. Both environments disable admin bypass, allow only `dev`, and require distinct environment-scoped Preview tokens. The old `mobile-preview` environment must remain until both replacements are configured and verified, then may be removed separately.
 
-The dispatcher supplies an exact SHA, action, runtime, package, channel, nonblank reason, confirmation phrase, and an approved EAS build ID for OTA updates (`NONE` for builds). It cannot supply a baseline SHA or fingerprint. The workflow verifies live EAS build metadata against an immutable repository-reviewed binary manifest, then generates the current Android fingerprint. Missing or inconsistent evidence fails closed. Production tags must match `mobile-prod-v*`, be annotated, signed, protected from update/deletion, and resolve to the exact SHA; an explicitly environment-approved `main` commit is the documented exception.
+`mobile-production` retains `ZentricAnalytics` review, disabled environment admin bypass, a dedicated Production token, and `main` only. Production release-tag support is future capability: no `mobile-prod-v*` tags or tag rules are authorized until a release-operator team is approved. The existing organization-administrator bypass on `main` is temporary emergency break-glass access and must not be used for routine releases.
+
+Each Preview dispatcher has one fixed action and supplies an exact SHA, runtime, package, channel, nonblank reason, and confirmation phrase. Preview OTA additionally requires an approved EAS build ID and verifies live EAS build metadata against an immutable repository-reviewed binary manifest before generating the current Android fingerprint. Missing or inconsistent evidence fails closed. Preview build reports the proposed remote Android version code and treats the initial binary as an explicit native-build state. Production currently requires an explicitly environment-approved full `main` SHA; signed-tag support remains disabled future capability.
 
 Merge, push, pull-request labels, and EAS GitHub build labels never authorize delivery. Neither workflow submits to Google Play or uses `--auto-submit`. Play upload is a later, separate owner-approved action.
 
