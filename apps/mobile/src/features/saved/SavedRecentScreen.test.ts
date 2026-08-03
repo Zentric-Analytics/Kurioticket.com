@@ -22,4 +22,21 @@ test("Saved & recent resolves existing records, protects guests, and supports re
   assert.match(screen, /No saved favorites yet/);
   assert.match(screen, /Tap the heart on a destination to save it here\./);
   assert.match(screen, /event\.stopPropagation\(\); toggle\(item\.id\)/);
+  assert.match(screen, /destinationMedia\(id\)\?\.source \?\? FALLBACK_SOURCE/);
+  assert.match(screen, /failed \? FALLBACK_SOURCE : item\.image/);
+  assert.match(screen, /onError=\{\(\) => setFailed\(true\)\}/);
+  assert.match(screen, /destinationId: destination\.id/);
+  assert.match(screen, /airportCodes: destination\.airportCodes\.join\(","\)/);
+  assert.match(screen, /to: destination\.primaryAirportCode/);
+});
+
+test("Explore and Profile share saved destination IDs, including search-only destinations", () => {
+  const explore = source("src/features/explore/ExploreScreen.tsx");
+  const saved = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(explore, /useSavedDestinations\(\)/);
+  assert.match(saved, /useSavedDestinations\(\)/);
+  assert.match(explore, /onToggle=\{\(\) => toggle\(r\.destination\.id\)\}/);
+  assert.match(saved, /\[\.\.\.savedIds\]\.map\(savedItem\)/);
+  assert.match(saved, /destinations\.find\(\(item\) => item\.id === id\)/);
+  assert.match(saved, /toggle\(item\.id\)/);
 });

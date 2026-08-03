@@ -368,9 +368,17 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.doesNotMatch(destinationsView, /horizontal/);
   assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
   assert.match(source, /destinationMedia\(destination.id\)/);
-  assert.match(source, /savedDestinations\.map\(\(a\) =>/);
   assert.match(source, /results\.map\(\(r\) =>/);
   assert.match(source, /Search flights to/);
+});
+
+test("Explore has no saved destinations section or saved empty state", () => {
+  const source = screen();
+  assert.doesNotMatch(source, /Saved destinations/);
+  assert.doesNotMatch(source, /No saved destinations yet/);
+  assert.doesNotMatch(source, /savedDestinations/);
+  assert.match(source, /const \{ savedIds, toggle \} = useSavedDestinations\(\)/);
+  assert.match(source, /results\.map\(\(r\) =>[\s\S]*?onToggle=\{\(\) => toggle\(r\.destination\.id\)\}/);
 });
 
 test("default destinations use only the curated list without a featured carousel", () => {

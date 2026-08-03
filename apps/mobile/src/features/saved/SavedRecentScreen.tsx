@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { destinations } from "../explore/destinationCatalogue";
@@ -10,15 +11,20 @@ import { flowColors } from "../flow/flowStyles";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useAppTheme } from "../../theme/AppTheme";
 
-type SavedItem = { id: string; name: string; country: string; image: ImageSourcePropType; open: () => void };
+export type SavedItem = { id: string; name: string; country: string; image: ImageSourcePropType; open: () => void };
 
-function savedItem(id: string): SavedItem | undefined {
+export function savedItem(id: string): SavedItem | undefined {
   const stay = popularDestinationStays.find((item) => item.id === id);
   if (stay) return { id, name: stay.city, country: stay.country, image: stay.image, open: () => router.push({ pathname: "/hotels", params: { destination: stay.city } }) };
   const adventure = nextAdventureCards.find((item) => item.id === id);
   if (adventure) return { id, name: adventure.title, country: `${adventure.originCode} → ${adventure.destinationCode}`, image: adventure.image, open: () => router.push({ pathname: "/flights", params: { from: adventure.originCode, to: adventure.destinationCode } }) };
   const destination = destinations.find((item) => item.id === id);
   if (destination) return { id, name: destination.name, country: destination.country, image: destinationMedia(id)?.source ?? FALLBACK_SOURCE, open: () => router.push({ pathname: "/flights", params: { destination: destination.name, destinationId: destination.id, airportCodes: destination.airportCodes.join(","), to: destination.primaryAirportCode } }) };
+}
+
+function SavedItemImage({ item }: { item: SavedItem }) {
+  const [failed, setFailed] = useState(false);
+  return <Image source={failed ? FALLBACK_SOURCE : item.image} onError={() => setFailed(true)} accessibilityLabel={`${item.name}, ${item.country} travel image`} resizeMode="cover" style={styles.image} />;
 }
 
 export function SavedRecentScreen() {
@@ -29,7 +35,7 @@ export function SavedRecentScreen() {
     <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><FlowIcon name="back" color={theme.icon} size={27} /></Pressable><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>Saved & recent</Text></View>
     {!authResolved ? null : !isAuthenticated ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>Sign in to view saved favorites</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Your saved destinations are private to your signed-in profile on this device.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push("/(tabs)/profile/sign-in")} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : <ScrollView contentContainerStyle={styles.content}>
       <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>Saved favorites</Text>
-      {items.length ? items.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}, ${item.country}`} onPress={item.open} style={({ pressed }) => [styles.card, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}><Image source={item.image} style={styles.image} /><View style={styles.copy}><Text numberOfLines={2} style={[styles.name, { color: theme.text }]}>{item.name}</Text><Text numberOfLines={1} style={[styles.country, { color: theme.muted }]}>{item.country}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.name} from favorites`} accessibilityState={{ selected: true }} hitSlop={8} onPress={(event) => { event.stopPropagation(); toggle(item.id); }} style={styles.heart}><FlowIcon name="heart" color="#E11D48" size={22} /></Pressable></Pressable>) : <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>No saved favorites yet</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Tap the heart on a destination to save it here.</Text><Pressable accessibilityRole="button" accessibilityLabel="Explore destinations" onPress={() => router.replace("/(tabs)/explore")} style={styles.primary}><Text style={styles.primaryText}>Explore destinations</Text></Pressable></View>}
+      {items.length ? items.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}, ${item.country}`} onPress={item.open} style={({ pressed }) => [styles.card, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}><SavedItemImage item={item} /><View style={styles.copy}><Text numberOfLines={2} style={[styles.name, { color: theme.text }]}>{item.name}</Text><Text numberOfLines={1} style={[styles.country, { color: theme.muted }]}>{item.country}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.name} from favorites`} accessibilityState={{ selected: true }} hitSlop={8} onPress={(event) => { event.stopPropagation(); toggle(item.id); }} style={styles.heart}><FlowIcon name="heart" color="#E11D48" size={22} /></Pressable></Pressable>) : <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>No saved favorites yet</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Tap the heart on a destination to save it here.</Text><Pressable accessibilityRole="button" accessibilityLabel="Explore destinations" onPress={() => router.replace("/(tabs)/explore")} style={styles.primary}><Text style={styles.primaryText}>Explore destinations</Text></Pressable></View>}
     </ScrollView>}
   </SafeAreaView>;
 }
