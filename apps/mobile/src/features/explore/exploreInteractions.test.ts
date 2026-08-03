@@ -33,6 +33,8 @@ import {
 } from "../../../../../src/data/destinationImages";
 import {
   navigateFromDestination,
+  destinationDetailsRoute,
+  destinationHandoff,
   selectFromBrowser,
 } from "./exploreInteractionModels";
 import {
@@ -40,6 +42,7 @@ import {
   resolveSavedDestinationIds,
 } from "../../storage/savedDestinationsModel";
 import { SavedDestinationsStore } from "../../storage/savedDestinationsStore";
+import { resolveDestinationDetails } from "./destinationDetailsModel";
 
 const screen = () =>
   readFileSync("src/features/explore/ExploreScreen.tsx", "utf8");
@@ -282,13 +285,14 @@ test("Explore keeps only the focused tabs and supported actions", () => {
   ]) {
     assert.doesNotMatch(source, new RegExp(removed, "i"));
   }
-  assert.match(source, /label="Search flights"/);
-  assert.match(source, /label="Search hotels"/);
-  assert.match(source, /Save destination/);
-  assert.match(source, /Remove from saved destinations/);
+  const details = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
+  assert.match(details, /label="Search flights"/);
+  assert.match(details, /label="Search hotels"/);
+  assert.match(details, /Save \$\{destination\.name\}/);
+  assert.match(details, /Remove \$\{destination\.name\} from saved destinations/);
   assert.doesNotMatch(
     source,
-    /destination-detail|Coming soon|\/cars|\/price-alerts/,
+    /Coming soon|\/cars|\/price-alerts/,
   );
 });
 
@@ -332,16 +336,46 @@ test("default destinations use only the curated list without a featured carousel
 });
 
 
-test("destination details omit unsupported optional content", () => {
-  const source = screen();
-  assert.match(source, /Explore destination details/);
+test("destination details render shared records and omit absent optional content", () => {
+  const source = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
   assert.match(source, /destination\.airportCodes\.map/);
-  assert.match(source, /detailImage/);
-  assert.doesNotMatch(source, /destination\.(description|summary|highlights)/);
+  assert.match(source, /destination\.summary \?/);
+  assert.match(source, /destination\.description \?/);
+  assert.match(source, /destination\.highlights\?\.length \?/);
+  assert.match(source, /destinationMedia\(destination\.id\)/);
+  assert.doesNotMatch(source, /Coming soon/);
   for (const destination of destinations) {
     assert.equal("description" in destination, false);
     assert.equal("highlights" in destination, false);
   }
+});
+
+test("all Explore destination entry points use the ID-only details route without the old sheet", () => {
+  const source = screen();
+  assert.match(source, /router\.push\(destinationDetailsRoute\(destination\.id\)\)/);
+  assert.doesNotMatch(source, /DestinationAction|<Modal|setSelected|modalBackdrop/);
+  assert.deepEqual(destinationDetailsRoute("fr-paris"), {
+    pathname: "/explore/destination/[id]",
+    params: { id: "fr-paris" },
+  });
+  assert.deepEqual(Object.keys(destinationDetailsRoute("fr-paris").params), ["id"]);
+  assert.equal(resolveDestinationDetails("fr-paris"), destinationById.get("fr-paris"));
+  assert.equal(resolveDestinationDetails("xx-invalid"), undefined);
+  assert.equal(resolveDestinationDetails(["fr-paris"]), undefined);
+});
+
+test("details handoffs preserve genuine shared airport data", () => {
+  const destination = destinationById.get("gb-london")!;
+  assert.deepEqual(destinationHandoff(destination), {
+    destinationId: destination.id,
+    primaryAirportCode: destination.primaryAirportCode,
+    airportCodes: destination.airportCodes,
+  });
+  const details = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
+  assert.match(details, /destinationId: destination\.id, destination: destination\.name, to: handoff\.primaryAirportCode, airportCodes: handoff\.airportCodes\.join/);
+  assert.match(details, /destinationId: destination\.id, destination: destination\.name/);
+  assert.match(details, /Destination not found/);
+  assert.match(details, /useSavedDestinations\(\)/);
 });
 
 test("handoff closes first and blocks duplicate navigation", () => {
