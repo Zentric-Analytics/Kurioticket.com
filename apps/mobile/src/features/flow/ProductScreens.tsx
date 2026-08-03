@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Image,
   Pressable,
   ScrollView,
@@ -195,29 +196,26 @@ export function CarsScreen() {
   );
 }
 
-type DealTab = "all" | "flights" | "hotels" | "cars";
+type DealTab = "hotel-flight" | "hotel-flight-car" | "flight" | "hotel" | "car";
+const dealTabs: { value: DealTab; label: string }[] = [
+  { value: "hotel-flight", label: "Hotel + Flight" },
+  { value: "hotel-flight-car", label: "Hotel + Flight + Car" },
+  { value: "flight", label: "Flight" },
+  { value: "hotel", label: "Hotel" },
+  { value: "car", label: "Car" },
+];
+
 export function DealsScreen() {
-  const [tab, setTab] = useState<DealTab>("all");
-  const deals = [
-    {
-      name: "Compare flights",
-      detail: "Search live provider fares",
-      route: "/flights" as const,
-      image: require("../../../assets/heroes/flights-aircraft.png"),
-    },
-    {
-      name: "Compare hotels",
-      detail: "Search live rooms and availability",
-      route: "/hotels" as const,
-      image: require("../../../assets/heroes/hotels-room.png"),
-    },
-    {
-      name: "Compare rental cars",
-      detail: "Search live rental offers",
-      route: "/cars" as const,
-      image: require("../../../assets/heroes/cars-suv.png"),
-    },
-  ];
+  const [tab, setTab] = useState<DealTab>("hotel-flight");
+  const fade = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    fade.setValue(0);
+    Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+  }, [fade, tab]);
+  const includesFlight = tab === "flight" || tab === "hotel-flight" || tab === "hotel-flight-car";
+  const includesHotel = tab === "hotel" || tab === "hotel-flight" || tab === "hotel-flight-car";
+  const includesCar = tab === "car" || tab === "hotel-flight-car";
+  const isPackage = tab === "hotel-flight" || tab === "hotel-flight-car";
   return (
     <Page
       title="Deals"
@@ -226,50 +224,27 @@ export function DealsScreen() {
       heroHeight={596}
       focalY={0.58}
     >
-      <View style={[flowStyles.card, flowStyles.shadow]}>
-        <Segments
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: "all", label: "All Deals", icon: "deal" },
-            { value: "flights", label: "Flights", icon: "flight" },
-            { value: "hotels", label: "Hotels", icon: "hotel" },
-            { value: "cars", label: "Cars", icon: "car" },
-          ]}
-        />
-      </View>
-      <View style={flowStyles.sectionHeader}>
-        <Text style={flowStyles.sectionTitle}>Compare travel options</Text>
-      </View>
-      {deals
-        .filter(
-          (_, i) =>
-            tab === "all" || i === ["flights", "hotels", "cars"].indexOf(tab),
-        )
-        .map((deal) => (
-          <Pressable
-            key={deal.name}
-            accessibilityRole="button"
-            onPress={() => router.push(deal.route)}
-            style={({ pressed }) => [
-              styles.deal,
-              flowStyles.shadow,
-              pressed && flowStyles.pressed,
-            ]}
-          >
-            <Image source={deal.image} style={styles.dealImage} />
-            <View style={styles.grow}>
-              <Text style={flowStyles.value}>{deal.name}</Text>
-              <Text style={flowStyles.meta}>{deal.detail}</Text>
-            </View>
-            <FlowIcon name="chevron" size={18} />
-          </Pressable>
-        ))}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dealTabs}>
+        {dealTabs.map((option) => <Pressable key={option.value} accessibilityRole="tab" accessibilityState={{ selected: tab === option.value }} onPress={() => setTab(option.value)} style={[styles.dealTab, tab === option.value && styles.dealTabSelected]}><Text style={[styles.dealTabText, tab === option.value && styles.dealTabTextSelected]}>{option.label}</Text></Pressable>)}
+      </ScrollView>
+      <Animated.View style={[styles.packageCard, flowStyles.shadow, { opacity: fade, transform: [{ translateY: fade.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }]}>
+        {includesFlight ? <View><Text style={styles.packageSection}>Flight</Text><FlightSearchPanel embedded showSubmit={!isPackage && tab === "flight"} params={{}} /></View> : null}
+        {includesHotel ? <View style={includesFlight && styles.packageDivider}><Text style={styles.packageSection}>Hotel</Text><HotelSearchPanel embedded showSubmit={tab === "hotel" || tab === "hotel-flight"} submitLabel={isPackage ? "Search package" : undefined} params={{}} /></View> : null}
+        {includesCar ? <View style={(includesFlight || includesHotel) && styles.packageDivider}><Text style={styles.packageSection}>Car</Text><CarSearchPanel embedded showSubmit submitLabel={isPackage ? "Search package" : undefined} params={{}} /></View> : null}
+      </Animated.View>
     </Page>
   );
 }
 
 const styles = StyleSheet.create({
+  dealTabs: { gap: 8, paddingHorizontal: 2, paddingVertical: 4 },
+  dealTab: { minHeight: 42, justifyContent: "center", paddingHorizontal: 16, borderRadius: 22, backgroundColor: "white", borderWidth: 1, borderColor: flowColors.border },
+  dealTabSelected: { backgroundColor: flowColors.blue, borderColor: flowColors.blue },
+  dealTabText: { color: flowColors.navy, fontSize: 14, fontWeight: "700" },
+  dealTabTextSelected: { color: "white" },
+  packageCard: { marginTop: 12, overflow: "hidden", borderRadius: 18, backgroundColor: "white" },
+  packageSection: { paddingHorizontal: 12, paddingTop: 16, paddingBottom: 4, color: flowColors.navy, fontSize: 17, fontWeight: "800" },
+  packageDivider: { borderTopWidth: 1, borderTopColor: flowColors.border },
   categoryNote: { color: flowColors.muted, fontSize: 12, lineHeight: 17, paddingHorizontal: 8, marginTop: -8, marginBottom: 8 },
   page: { paddingHorizontal: 9, paddingBottom: 28 },
   hotelPage: { paddingHorizontal: 14, paddingBottom: 28 },

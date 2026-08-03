@@ -8,10 +8,10 @@ import { LocalCalendarModal } from "./LocalCalendarModal";
 import { addCalendarDays, changeGuests, changeRooms, countLabel, firstParam, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, type HotelForm, type RouteValue, validateHotelForm } from "./hotelSearchModel";
 
 export type HotelSearchHandle = { useDestination: (destination: string) => void };
-type Props = { params: Record<string, RouteValue> };
+type Props = { params: Record<string, RouteValue>; embedded?: boolean; showSubmit?: boolean; submitLabel?: string };
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 
-export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function HotelSearchPanel({ params }, ref) {
+export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function HotelSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search hotels" }, ref) {
   const initial = useRef<ReturnType<typeof initializeHotelForm> | undefined>(undefined);
   if (!initial.current) {
     const initialized = initializeHotelForm(params);
@@ -63,14 +63,14 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
     }
   };
   const datesValue = form.checkIn && form.checkOut ? `${displayDate(form.checkIn)} — ${displayDate(form.checkOut)}` : "Check-in — Check-out";
-  return <View style={[flowStyles.card, flowStyles.shadow]}>
+  return <View style={[!embedded && flowStyles.card, !embedded && flowStyles.shadow]}>
     <View style={styles.inputField}><Text style={flowStyles.label}>Destination</Text><View style={styles.inputRow}><TextInput ref={destinationRef} accessibilityLabel="Hotel destination" value={form.destination} onChangeText={(destination) => { update({ ...form, destination }); if (destination.trim()) setErrors((value) => ({ ...value, destination: undefined })); }} placeholder="City, area, or hotel" placeholderTextColor={flowColors.muted} style={styles.input} returnKeyType="done"/><FlowIcon name="location" size={20}/></View>{errors.destination ? <Text accessibilityRole="alert" style={styles.error}>{errors.destination}</Text> : null}</View>
     <Field label="Travel dates" value={datesValue} icon="calendar" trailing={<FlowIcon name="chevron" size={18}/>} onPress={() => setCalendar("checkIn")}/>
     {errors.checkIn || errors.checkOut ? <Text accessibilityRole="alert" style={styles.error}>{errors.checkIn || errors.checkOut}</Text> : null}
     <Field label="Guests" value={`${countLabel(form.guests, "guest")}, ${countLabel(form.rooms, "room")}`} icon="person" trailing={<FlowIcon name="chevron" size={18}/>} onPress={() => setCountsOpen(true)}/>
     {errors.guests || errors.rooms ? <Text accessibilityRole="alert" style={styles.error}>{errors.guests || errors.rooms}</Text> : null}
     {notice ? <UnavailableNotice text={notice}/> : null}
-    <View style={styles.pad}><PrimaryButton label="Search hotels" onPress={submit}/></View>
+    {showSubmit ? <View style={styles.pad}><PrimaryButton label={submitLabel} onPress={submit}/></View> : null}
     <LocalCalendarModal visible={Boolean(calendar)} title={calendar === "checkOut" ? "Choose check-out date" : "Choose check-in date"} selected={calendar ? form[calendar] : form.checkIn} minimum={calendar === "checkOut" && form.checkIn ? addCalendarDays(form.checkIn, 1) : localIsoDate(new Date())} onChoose={chooseDate} onClose={() => setCalendar(undefined)}/>
     <CountModal visible={countsOpen} form={form} onChange={(next) => { update(next); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); }} onClose={() => setCountsOpen(false)}/>
   </View>;

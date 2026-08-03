@@ -33,7 +33,7 @@ test("deals, trips, and trip details expose real selected-state controls and rou
   const products = source("src/features/flow/ProductScreens.tsx");
   const tabs = source("src/features/flow/TabScreens.tsx");
   const details = source("src/features/flow/TripDetailsScreen.tsx");
-  assert.match(products, /useState<DealTab>\("all"\)/);
+  assert.match(products, /useState<DealTab>\("hotel-flight"\)/);
   assert.match(tabs, /useState<TripTab>\("upcoming"\)/);
   assert.match(tabs, /pathname: "\/trips\/\[id\]"/);
   assert.match(details, /travelApi\.trip\(id\)/);
