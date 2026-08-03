@@ -1,6 +1,8 @@
 # Kurioticket Mobile
 
-Initial Expo + React Native + TypeScript shell for visual mobile review.
+Expo + React Native + TypeScript application for iOS and Android.
+
+The permanent application identities are Preview and Production. See [docs/environments.md](docs/environments.md) for the exact bundle IDs, packages, schemes, API origins, EAS profiles, security rules, and approval gates.
 
 ## Prerequisites
 
@@ -17,7 +19,7 @@ npm install
 
 ## Environment setup
 
-Copy `.env.example` to `.env` and set:
+Copy `.env.example` to `.env` and set an explicit local API origin:
 
 ```bash
 EXPO_PUBLIC_API_BASE_URL=http://localhost:3000
@@ -31,11 +33,13 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.1.25:3000
 
 Start the Next.js backend bound to an address your device can reach, then ensure firewalls allow inbound traffic to port 3000.
 
-## Start Expo
+## Start local Preview
 
 ```bash
-npm run start
+npm run local:preview
 ```
+
+This command reuses the `Kurioticket Preview` application identity. There is no separate development application identity. Release builds reject local overrides.
 
 ## Expo Go
 
@@ -72,7 +76,7 @@ Requires macOS and Xcode. iOS simulators can usually reach `http://localhost:300
 
 ## Postponed features
 
-Authentication, Prisma/database work, travel search, booking, payments, push notifications, provider integrations, staging changes, and production changes are intentionally postponed.
+Push notifications, native payments, and new Apple capabilities require separate approval.
 
 ## Visual verification steps
 
