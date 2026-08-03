@@ -22,12 +22,14 @@ export async function PATCH(request: Request, context: Context) {
   if (!actions.includes(action)) return NextResponse.json({ error: "Choose a valid action." }, { status: 400 });
   const previous = await getPrisma().previewTester.findUnique({ where: { id } });
   if (!previous) return NextResponse.json({ error: "Tester not found." }, { status: 404 });
+  const expectedUpdatedAt = new Date(String(body.updatedAt || ""));
+  if (Number.isNaN(expectedUpdatedAt.getTime())) return NextResponse.json({ error: "Refresh the tester list and try again." }, { status: 409 });
   const now = new Date();
   const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 500) || null : undefined;
   const expiresAt = body.expiresAt === null || body.expiresAt === "" ? null : body.expiresAt ? new Date(String(body.expiresAt)) : undefined;
   if (expiresAt instanceof Date && Number.isNaN(expiresAt.getTime())) return NextResponse.json({ error: "Choose a valid expiration." }, { status: 400 });
-  const tester = await getPrisma().previewTester.update({
-    where: { id },
+  const updateResult = await getPrisma().previewTester.updateMany({
+    where: { id, updatedAt: expectedUpdatedAt },
     data: action === "update"
       ? { allowGoogleSignIn: body.allowGoogleSignIn === true, allowStagingEmail: body.allowStagingEmail === true, expiresAt, reason }
       : action === "reactivate"
@@ -36,6 +38,8 @@ export async function PATCH(request: Request, context: Context) {
         ? { status: "SUSPENDED", suspendedByAdminId: auth.session.user.id, suspendedAt: now, reason }
         : { status: "REVOKED", revokedByAdminId: auth.session.user.id, revokedAt: now, reason },
   });
+  if (updateResult.count !== 1) return NextResponse.json({ error: "This tester changed. Refresh and try again." }, { status: 409 });
+  const tester = await getPrisma().previewTester.findUniqueOrThrow({ where: { id } });
   if (action === "suspend" || action === "revoke") {
     const user = await getPrisma().user.findUnique({ where: { email: tester.emailNormalized }, select: { id: true } });
     if (user) await getPrisma().userSessionActivity.updateMany({ where: { userId: user.id, revokedAt: null }, data: { revokedAt: now } });

@@ -5,6 +5,8 @@ import { readFileSync } from "node:fs";
 const api = readFileSync("src/app/api/admin/preview-testers/route.ts", "utf8");
 const mutationApi = readFileSync("src/app/api/admin/preview-testers/[id]/route.ts", "utf8");
 const page = readFileSync("src/app/admin/preview-testers/page.tsx", "utf8");
+const auth = readFileSync("src/lib/auth.ts", "utf8");
+const mobileAuth = readFileSync("src/lib/mobile-auth.ts", "utf8");
 const migration = readFileSync("prisma/migrations/20260803180000_add_preview_testers/migration.sql", "utf8");
 
 test("Preview tester admin APIs and UI fail closed outside staging", () => {
@@ -19,6 +21,15 @@ test("Preview tester mutations are rate limited, audited, and revoke sessions", 
   assert.match(mutationApi, /checkAuthRateLimit/);
   assert.match(mutationApi, /writeAdminAuditLog/);
   assert.match(mutationApi, /userSessionActivity\.updateMany/);
+  assert.match(mutationApi, /updatedAt: expectedUpdatedAt/);
+  assert.match(mutationApi, /updateResult\.count !== 1/);
+});
+
+test("session rechecks retain the actual authentication method", () => {
+  assert.match(auth, /previewAuthMethod = account\?\.provider === "google"/);
+  assert.match(auth, /previewAuthMethod === "google"/);
+  assert.match(mobileAuth, /authMethod === "google" \? "g" : "c"/);
+  assert.match(mobileAuth, /token\.startsWith\("g\."\)/);
 });
 
 test("Preview tester migration is additive and has no destructive statements", () => {

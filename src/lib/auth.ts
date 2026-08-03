@@ -545,6 +545,7 @@ export const authOptions: NextAuthOptions =
       async jwt({
         token,
         user,
+        account,
         trigger,
         session,
       }) {
@@ -560,6 +561,7 @@ export const authOptions: NextAuthOptions =
         }
 
         if (user) {
+          token.previewAuthMethod = account?.provider === "google" ? "google" : "credentials";
           const authUser =
             user as typeof user &
               SessionAugmentedUser;
@@ -603,9 +605,10 @@ export const authOptions: NextAuthOptions =
             );
 
           if (dbUser) {
+            const previewAuthMethod = token.previewAuthMethod || (dbUser.accounts.some((linkedAccount) => linkedAccount.provider === "google") ? "google" : "credentials");
             const retainsPreviewAccess = await canRetainStagingSession(
               dbUser.email || "",
-              dbUser.accounts.some((account) => account.provider === "google"),
+              previewAuthMethod === "google",
             );
             token.id =
               dbUser.id;

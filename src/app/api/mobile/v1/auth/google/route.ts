@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "This account is not available. Please contact support." }, { status: 403 });
     }
 
-    const session = await createMobileSession(user.id);
+    const session = await createMobileSession(user.id, "google");
     return NextResponse.json({
       session,
       user: { id: user.id, email: user.email, name: user.name, image: user.image },

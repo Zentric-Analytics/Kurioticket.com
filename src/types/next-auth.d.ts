@@ -31,5 +31,6 @@ declare module "next-auth/jwt" {
     sessionActivityId?: string;
     twoFactorEnabled?: boolean;
     twoFactorVerified?: boolean;
+    previewAuthMethod?: "credentials" | "google";
   }
 }
