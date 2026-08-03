@@ -22,7 +22,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { destinations, type Destination } from "./destinationCatalogue";
+import { destinationById, type Destination } from "./destinationCatalogue";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { HERO_SLIDES, INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
 import {
@@ -42,8 +42,14 @@ const NAVY = "#071A48",
   MUTED = "#56658E",
   BORDER = "#E7ECF5";
 type Tab = (typeof EXPLORE_TABS)[number];
-const destinationFor = (name: string) =>
-  destinations.find((destination) => destination.name === name);
+const INSPIRATION_SLIDES = HERO_SLIDES.map((slide) => ({
+  ...slide,
+  destination: destinationById.get(slide.destinationId)!,
+}));
+const RESOLVED_INTERESTS = INTERESTS.map((interest) => ({
+  ...interest,
+  destination: destinationById.get(interest.destinationId)!,
+}));
 
 function DestinationAction({
   destination,
@@ -57,8 +63,11 @@ function DestinationAction({
   onClose: () => void;
 }) {
   const navigating = useRef(false);
+  const media = destination ? destinationMedia(destination.id) : undefined;
+  const [imageFailed, setImageFailed] = useState(false);
   useEffect(() => {
     navigating.current = false;
+    setImageFailed(false);
   }, [destination]);
   const navigate = (product: DestinationProduct) => {
     if (!destination) return;
@@ -95,11 +104,18 @@ function DestinationAction({
             <SafeAreaView
               edges={["bottom"]}
               style={s.sheet}
-              accessibilityLabel="Destination actions"
+              accessibilityLabel="Explore destination details"
             >
-              <View style={s.sheetHandle} />
               {destination ? (
-                <>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <Image
+                    source={imageFailed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)}
+                    onError={() => setImageFailed(true)}
+                    accessibilityLabel={media?.accessibilityLabel}
+                    resizeMode="cover"
+                    style={s.detailImage}
+                  />
+                  <View style={s.detailBody}>
                   <Text
                     accessibilityRole="header"
                     numberOfLines={2}
@@ -108,11 +124,14 @@ function DestinationAction({
                     {destination.name}
                   </Text>
                   <Text style={s.sheetMeta}>
-                    {destination.country} · {destination.primaryAirportCode}
-                    {destination.airportCodes.length > 1
-                      ? ` + ${destination.airportCodes.length - 1} airports`
-                      : ""}
+                    {destination.country}
                   </Text>
+                  <Text accessibilityRole="header" style={s.airportsTitle}>Airports</Text>
+                  {destination.airportCodes.map((code, index) => (
+                    <Text key={code} style={s.airportDetail}>
+                      {code} · {destination.airportNames[index] ?? destination.airportNames[0]}
+                    </Text>
+                  ))}
                   <Action
                     icon="heart"
                     label={
@@ -134,13 +153,14 @@ function DestinationAction({
                   />
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Close destination actions"
+                    accessibilityLabel="Close destination details"
                     onPress={onClose}
                     style={s.close}
                   >
                     <Text style={s.closeText}>Close</Text>
                   </Pressable>
-                </>
+                  </View>
+                </ScrollView>
               ) : null}
             </SafeAreaView>
           </TouchableWithoutFeedback>
@@ -381,6 +401,29 @@ export function ExploreScreen() {
         {overlays}
       </SafeAreaView>
     );
+  if (query.trim())
+    return (
+      <SafeAreaView style={s.safe} edges={["top"]}>
+        <FlatList
+          data={results}
+          keyExtractor={(item) => item.destination.id}
+          keyboardShouldPersistTaps="handled"
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          windowSize={7}
+          contentContainerStyle={[s.page, { paddingBottom: exploreBottomPadding(65, insets.bottom) }]}
+          ListHeaderComponent={<View>{header}<Section title={`${results.length} result${results.length === 1 ? "" : "s"}`} /></View>}
+          ListEmptyComponent={<Text style={s.empty}>No destinations or maintained interests match “{query.trim()}”. Try a city, destination code, or country.</Text>}
+          renderItem={({ item: r }) => (
+            <View>
+              {r.match === "interest" ? <Text style={s.matchLabel}>Interest match: {r.interest}</Text> : null}
+              <Row destination={r.destination} saved={savedIds.has(r.destination.id)} onSelect={() => select(r.destination)} onToggle={() => toggle(r.destination.id)} />
+            </View>
+          )}
+        />
+        {overlays}
+      </SafeAreaView>
+    );
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
       <ScrollView
@@ -391,40 +434,7 @@ export function ExploreScreen() {
         ]}
       >
         {header}
-        {query.trim() ? (
-          <View
-            accessibilityLiveRegion="polite"
-            accessibilityLabel={`${results.length} Explore results`}
-          >
-            <Section
-              title={`${results.length} result${results.length === 1 ? "" : "s"}`}
-            />
-            {results.length ? (
-              results.map((r) => (
-                <View key={r.destination.id}>
-                  {r.match === "interest" ? (
-                    <Text style={s.matchLabel}>
-                      Interest match: {r.interest}
-                    </Text>
-                  ) : null}
-                  <Row
-                    destination={r.destination}
-                    saved={savedIds.has(r.destination.id)}
-                    onSelect={() => select(r.destination)}
-                    onToggle={() => toggle(r.destination.id)}
-                  />
-                </View>
-              ))
-            ) : (
-              <Text style={s.empty}>
-                No destinations or maintained interests match “{query.trim()}”.
-                Try a city, destination code, or country.
-              </Text>
-            )}
-          </View>
-        ) : (
-          <Inspiration width={width} select={select} />
-        )}
+        <Inspiration width={width} select={select} />
       </ScrollView>
       {overlays}
     </SafeAreaView>
@@ -570,30 +580,30 @@ function Inspiration({
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={end}
         >
-          {HERO_SLIDES.map((slide) => (
+          {INSPIRATION_SLIDES.map((slide) => {
+            const media = destinationMedia(slide.destination.id);
+            return (
             <Pressable
               key={slide.id}
               accessibilityRole="button"
-              accessibilityLabel={`Open actions for ${slide.destination}, ${slide.label}`}
-              onPress={() => {
-                const a = destinationFor(slide.destination);
-                if (a) select(a);
-              }}
+              accessibilityLabel={`Open details for ${slide.destination.name}, ${slide.label}`}
+              onPress={() => select(slide.destination)}
             >
               <ImageBackground
-                source={slide.image}
+                source={media?.source ?? FALLBACK_SOURCE}
                 style={[s.hero, { width: cardWidth }]}
                 imageStyle={s.cardRadius}
               >
                 <View style={s.overlay} />
                 <Text style={s.heroLabel}>{slide.label}</Text>
-                <Text style={s.heroTitle}>{slide.destination}</Text>
+                <Text style={s.heroTitle}>{slide.destination.name}</Text>
                 <View style={s.heroCta}>
-                  <Text style={s.heroCtaText}>Explore {slide.destination}</Text>
+                  <Text style={s.heroCtaText}>Explore {slide.destination.name}</Text>
                 </View>
               </ImageBackground>
             </Pressable>
-          ))}
+            );
+          })}
         </ScrollView>
         <View style={s.dots}>
           {HERO_SLIDES.map((x, i) => (
@@ -604,21 +614,18 @@ function Inspiration({
       <View>
         <Section title="Explore by interest" />
         <View style={s.interests}>
-          {INTERESTS.map((item) => (
+          {RESOLVED_INTERESTS.map((item) => (
             <Pressable
               key={item.name}
               accessibilityRole="button"
-              accessibilityLabel={`${item.name}, mapped to ${item.destination}`}
-              onPress={() => {
-                const a = destinationFor(item.destination);
-                if (a) select(a);
-              }}
+              accessibilityLabel={`${item.name}, mapped to ${item.destination.name}`}
+              onPress={() => select(item.destination)}
               style={s.interest}
             >
               <FlowIcon name={item.icon} color={BLUE} />
               <View>
                 <Text style={s.resultTitle}>{item.name}</Text>
-                <Text style={s.resultMeta}>{item.destination}</Text>
+                <Text style={s.resultMeta}>{item.destination.name}</Text>
               </View>
             </Pressable>
           ))}
@@ -773,8 +780,8 @@ const s = StyleSheet.create({
     backgroundColor: "white",
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
-    padding: 18,
-    maxHeight: "92%",
+    maxHeight: "96%",
+    minHeight: "88%",
   },
   sheetHandle: {
     width: 42,
@@ -786,6 +793,10 @@ const s = StyleSheet.create({
   },
   sheetTitle: { color: NAVY, fontSize: 24, lineHeight: 31, fontWeight: "800" },
   sheetMeta: { color: MUTED, fontSize: 14, marginBottom: 18 },
+  detailImage: { width: "100%", height: 280, backgroundColor: "#E7ECF5" },
+  detailBody: { padding: 18 },
+  airportsTitle: { color: NAVY, fontSize: 16, fontWeight: "800", marginBottom: 6 },
+  airportDetail: { color: MUTED, fontSize: 13, lineHeight: 20, marginBottom: 3 },
   close: { minHeight: 50, alignItems: "center", justifyContent: "center" },
   closeText: { color: BLUE, fontWeight: "800" },
   heroShell: { height: 290, borderRadius: 14, overflow: "hidden" },

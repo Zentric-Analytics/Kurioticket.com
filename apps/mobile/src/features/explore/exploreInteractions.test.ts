@@ -5,16 +5,16 @@ import { airports } from "../flow/airportData";
 import {
   destinations,
   destinationByAirportCode,
+  destinationById,
   deriveDestinations,
 } from "./destinationCatalogue";
+import { requireExploreDestination } from "../../../../../src/shared/destinations/exploreDestinationContent";
 import {
   ALL_DESTINATIONS,
-  COUNTRY_DESTINATION_GROUPS,
   destinationCardLayout,
   exactExploreResult,
   EXPLORE_TABS,
   exploreBottomPadding,
-  groupDestinationsByCountry,
   searchExplore,
 } from "./exploreModels";
 import { POPULAR_DESTINATIONS } from "./exploreData";
@@ -104,58 +104,13 @@ test("shared airport catalogue derives a stable destination catalogue", () => {
   assert.deepEqual(deriveDestinations([...airports].reverse()), destinations);
 });
 
-test("country groups contain every catalogue destination exactly once with real counts", () => {
-  const grouped = COUNTRY_DESTINATION_GROUPS.flatMap(
-    (group) => group.destinations,
+test("shared records reject duplicate IDs and report unknown IDs clearly", () => {
+  const seed = airports.find((airport) => airport.code === "DPS")!;
+  assert.throws(
+    () => deriveDestinations([seed, { ...seed, code: "ZZZ", city: "Bali" }]),
+    /Duplicate Explore destination ID: id-bali/,
   );
-  assert.equal(grouped.length, destinations.length);
-  assert.equal(
-    new Set(grouped.map((destination) => destination.id)).size,
-    destinations.length,
-  );
-  for (const group of COUNTRY_DESTINATION_GROUPS) {
-    assert.ok(group.destinations.length > 0);
-    assert.ok(
-      group.destinations.every(
-        (destination) =>
-          destination.country === group.country &&
-          destination.countryCode === group.countryCode,
-      ),
-    );
-  }
-});
-
-test("countries and their destinations are deterministically ordered", () => {
-  assert.deepEqual(
-    groupDestinationsByCountry([...destinations].reverse()),
-    COUNTRY_DESTINATION_GROUPS,
-  );
-  const countryLabels = COUNTRY_DESTINATION_GROUPS.map(
-    (group) => `${group.country}|${group.countryCode}`,
-  );
-  assert.deepEqual(
-    countryLabels,
-    [...countryLabels].sort((a, b) => a.localeCompare(b)),
-  );
-  for (const group of COUNTRY_DESTINATION_GROUPS) {
-    const labels = group.destinations.map(
-      (destination) => `${destination.name}|${destination.id}`,
-    );
-    assert.deepEqual(
-      labels,
-      [...labels].sort((a, b) => a.localeCompare(b)),
-    );
-  }
-});
-
-test("a country See all collection contains only that country's destinations", () => {
-  for (const group of COUNTRY_DESTINATION_GROUPS) {
-    assert.ok(
-      group.destinations.every(
-        (destination) => destination.countryCode === group.countryCode,
-      ),
-    );
-  }
+  assert.throws(() => requireExploreDestination("xx-atlantis"), /Unknown Explore destination ID: xx-atlantis/);
 });
 
 test("maintained naming is correct in the shared catalogue", () => {
@@ -216,35 +171,17 @@ test("destinations outside the popular list remain searchable and saveable", asy
   assert.deepEqual(stored, [outsidePopular.id]);
 });
 
-test("former featured destinations remain in their correct country groups", () => {
+test("popular destinations resolve directly through the shared model", () => {
   assert.deepEqual(
     POPULAR_DESTINATIONS.map((item) => item.destination.id),
     APPROVED_FEATURED_IDS,
   );
-  const groupedCountryById = new Map(
-    COUNTRY_DESTINATION_GROUPS.flatMap((group) =>
-      group.destinations.map((destination) => [
-        destination.id,
-        group.countryCode,
-      ] as const),
-    ),
-  );
   for (const destinationId of APPROVED_FEATURED_IDS) {
     assert.equal(
-      groupedCountryById.get(destinationId),
-      POPULAR_DESTINATIONS.find(
-        (item) => item.destination.id === destinationId,
-      )?.destination.countryCode,
+      POPULAR_DESTINATIONS.find((item) => item.destination.id === destinationId)?.destination,
+      destinationById.get(destinationId),
     );
   }
-  assert.equal(groupedCountryById.get("ng-lagos"), "NG");
-  assert.equal(groupedCountryById.get("ng-abuja"), "NG");
-  assert.equal(groupedCountryById.get("gh-accra"), "GH");
-  assert.equal(groupedCountryById.get("fr-paris"), "FR");
-  assert.equal(groupedCountryById.get("gb-london"), "GB");
-  assert.equal(groupedCountryById.get("it-rome"), "IT");
-  assert.equal(groupedCountryById.get("ae-dubai"), "AE");
-  assert.equal(groupedCountryById.get("jp-tokyo"), "JP");
 });
 
 test("former featured destinations retain local-first media", () => {
@@ -368,7 +305,7 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.doesNotMatch(destinationsView, /horizontal/);
   assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
   assert.match(source, /destinationMedia\(destination.id\)/);
-  assert.match(source, /results\.map\(\(r\) =>/);
+  assert.match(source, /data=\{results\}/);
   assert.match(source, /Search flights to/);
 });
 
@@ -378,7 +315,7 @@ test("Explore has no saved destinations section or saved empty state", () => {
   assert.doesNotMatch(source, /No saved destinations yet/);
   assert.doesNotMatch(source, /savedDestinations/);
   assert.match(source, /const \{ savedIds, toggle \} = useSavedDestinations\(\)/);
-  assert.match(source, /results\.map\(\(r\) =>[\s\S]*?onToggle=\{\(\) => toggle\(r\.destination\.id\)\}/);
+  assert.match(source, /onToggle=\{\(\) => toggle\(r\.destination\.id\)\}/);
 });
 
 test("default destinations use only the curated list without a featured carousel", () => {
@@ -392,6 +329,19 @@ test("default destinations use only the curated list without a featured carousel
   assert.doesNotMatch(source, /Browse all destinations/);
   assert.doesNotMatch(source, /FEATURED_DESTINATIONS/);
   assert.match(source, /ListHeaderComponent=\{[\s\S]*?\{header\}[\s\S]*?Popular destinations/);
+});
+
+
+test("destination details omit unsupported optional content", () => {
+  const source = screen();
+  assert.match(source, /Explore destination details/);
+  assert.match(source, /destination\.airportCodes\.map/);
+  assert.match(source, /detailImage/);
+  assert.doesNotMatch(source, /destination\.(description|summary|highlights)/);
+  for (const destination of destinations) {
+    assert.equal("description" in destination, false);
+    assert.equal("highlights" in destination, false);
+  }
 });
 
 test("handoff closes first and blocks duplicate navigation", () => {
