@@ -1,6 +1,4 @@
-import { ArrowDown } from "lucide-react";
-
-type Props = { modeLabel: string; opened: number; total: number; totalLabel: string | null; progressLabel: string; allOpened: boolean; hasExpired: boolean; nextId: string | null; t: (key: string) => string };
+type Props = { modeLabel: string; opened: number; total: number; totalLabel: string | null; progressLabel: string; allOpened: boolean; hasExpired: boolean; t: (key: string) => string };
 
 type OpenLineSide = "left" | "right";
 type OpenLineTurn = "top" | "bottom";
@@ -18,7 +16,7 @@ function OpenSectionLine({ side, turn }: { side: OpenLineSide; turn: OpenLineTur
   </div>;
 }
 
-export function DealsHandoffSummary({ modeLabel, opened, total, totalLabel, progressLabel, allOpened, hasExpired, nextId, t }: Props) {
+export function DealsHandoffSummary({ modeLabel, opened, total, totalLabel, progressLabel, allOpened, hasExpired, t }: Props) {
   const percent = total ? Math.round(opened / total * 100) : 0;
   return <aside aria-labelledby="trip-summary-title" className="order-1 min-w-0 xl:order-2 xl:sticky xl:top-24">
     <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-none">
@@ -42,7 +40,6 @@ export function DealsHandoffSummary({ modeLabel, opened, total, totalLabel, prog
       <OpenSectionLine side="right" turn="top" />
       <div className="space-y-4 p-5 pt-3 sm:p-6 sm:pt-4">
         <p className={hasExpired ? "text-sm font-medium leading-6 text-amber-800" : "text-sm leading-6 text-slate-600"}>{hasExpired ? t("deals.handoff.summaryRefreshRequired") : t("deals.handoff.openingDoesNotBook")}</p>
-        {nextId && <a href={`#${nextId}`} className="inline-flex min-h-11 items-center gap-2 font-bold text-[#004BB8] underline decoration-2 underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"><ArrowDown aria-hidden className="size-4" />{t("deals.handoff.goToNextStep")}</a>}
       </div>
     </div>
   </aside>;
