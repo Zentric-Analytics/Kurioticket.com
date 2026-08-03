@@ -43,6 +43,13 @@ test('Preview OTA and native build are separate manual-only approval paths', () 
   assert.doesNotMatch(build, /eas-cli@16\.17\.4 update/);
   assert.doesNotMatch(build, /action:\s*\{/);
 });
+test('Preview workflows validate the staging classification inside the mobile API response envelope', () => {
+  for (const name of ['android-preview-ota.yml', 'android-preview-build.yml']) {
+    const workflow = readFileSync(resolve(root, '../../.github/workflows', name), 'utf8');
+    assert.match(workflow, /body\.data\?\.environment !== 'staging'/);
+    assert.doesNotMatch(workflow, /body\.environment !== 'staging'/);
+  }
+});
 test('delivery workflows require their protected environment token without repository fallback syntax', () => {
   const names = ['android-preview-ota.yml', 'android-preview-build.yml', 'android-production-delivery.yml'];
   for (const name of names) {

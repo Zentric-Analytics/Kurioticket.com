@@ -55,7 +55,7 @@ jobs:
             const response = await fetch(origin + path);
             if (!response.ok) throw new Error(`${path} returned HTTP ${response.status}`);
             const body = await response.json();
-            if (body.environment !== 'staging') throw new Error(`${path} is not classified as staging`);
+            if (body.data?.environment !== 'staging') throw new Error(`${path} is not classified as staging`);
           }
           NODE
       - name: Classify as native build or explicit first binary
