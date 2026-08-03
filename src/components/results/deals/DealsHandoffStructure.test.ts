@@ -125,7 +125,12 @@ test("handoff removes its visible introduction while preserving navigation and i
   const content = client.indexOf("{content}");
   assert.ok(backLink < heading && heading < content);
   assert.equal((page + client).match(/<h1/g)?.length, 1);
-  assert.match(client, /return <div className="mt-7 grid gap-6 xl:grid-cols-\[minmax\(0,1fr\)_300px\] xl:items-start">/);
+  assert.match(client, /<DealsJourneyProgress progress=\{journeyProgress\} t=\{t\} \/>/);
+  assert.match(client, /getHandoffReadyDealsJourneyProgress\(plan\)/);
+  const journey = client.indexOf("<DealsJourneyProgress");
+  const readyGrid = client.indexOf("data-deals-handoff-ready-grid");
+  assert.ok(journey >= 0 && journey < readyGrid, "journey progress precedes ready-plan content");
+  assert.match(client, /data-deals-handoff-ready-grid className="mt-6 grid gap-6 xl:grid-cols-\[minmax\(0,1fr\)_300px\] xl:items-start"/);
   assert.doesNotMatch(client, /(?:-m[trblxy]?|translate-[xy]|transform|absolute)\b|aria-hidden="true"\s*><\/|<div\s*><\/div>/);
 });
 
