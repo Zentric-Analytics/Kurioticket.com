@@ -10,11 +10,17 @@ test("Preview uses platform-specific TestFlight and Android internal distributio
   assert.equal(eas.build.preview.ios.distribution, "store");
   assert.equal(eas.build.preview.android.distribution, "internal");
   assert.equal(eas.build.preview.android.buildType, "apk");
+  assert.equal(eas.build.preview.android.autoIncrement, true);
+  assert.equal(eas.build.preview.autoIncrement, undefined);
   assert.equal(eas.build.preview.channel, "preview");
 });
 
-test("Production release profile remains unchanged", () => {
+test("Production release profile produces a store AAB", () => {
   assert.equal(eas.build.production.distribution, "store");
+  assert.equal(eas.build.production.android.distribution, "store");
+  assert.equal(eas.build.production.android.buildType, "app-bundle");
+  assert.equal(eas.build.production.android.autoIncrement, true);
+  assert.equal(eas.build.production.autoIncrement, undefined);
   assert.equal(eas.build.production.channel, "production");
   assert.equal(eas.build.production.env.APP_VARIANT, "production");
   assert.equal(eas.build.production.env.EXPO_PUBLIC_API_BASE_URL, "https://kurioticket.com");
@@ -25,5 +31,25 @@ test("repository workflows cannot build, update, submit, or upload mobile artifa
     const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
     assert.doesNotMatch(workflow, /\beas\s+(?:build|update|submit)\b/i);
     assert.doesNotMatch(workflow, /\bexpo\s+upload\b/i);
+  }
+});
+
+test("delivery workflows are manual-only, protected, and never submit", () => {
+  for (const [name, environment] of [["android-preview-delivery.yml", "mobile-preview"], ["android-production-delivery.yml", "mobile-production"]]) {
+    const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
+    assert.match(workflow, /^\s*workflow_dispatch:/m);
+    assert.doesNotMatch(workflow, /^\s*(?:push|pull_request|schedule):/m);
+    assert.match(workflow, new RegExp(`environment: ${environment}`));
+    assert.match(workflow, /validate-delivery-inputs\.mjs/);
+    assert.match(workflow, /classify-release\.mjs/);
+    assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|upload.*google play/i);
+  }
+});
+
+test("push and pull-request workflows remain validation-only", () => {
+  const workflows = ["mobile-preview-update.yml", "mobile-production-update.yml"];
+  for (const name of workflows) {
+    const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
+    assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+(?:build|update|submit)\b/i);
   }
 });
