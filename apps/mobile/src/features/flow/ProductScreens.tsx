@@ -196,13 +196,12 @@ export function CarsScreen() {
   );
 }
 
-type DealTab = "hotel-flight" | "hotel-flight-car" | "flight" | "hotel" | "car";
+type DealTab = "hotel-flight" | "hotel-flight-car" | "hotel-car" | "flight-car";
 const dealTabs: { value: DealTab; label: string }[] = [
   { value: "hotel-flight", label: "Hotel + Flight" },
   { value: "hotel-flight-car", label: "Hotel + Flight + Car" },
-  { value: "flight", label: "Flight" },
-  { value: "hotel", label: "Hotel" },
-  { value: "car", label: "Car" },
+  { value: "hotel-car", label: "Hotel + Car" },
+  { value: "flight-car", label: "Flight + Car" },
 ];
 
 export function DealsScreen() {
@@ -212,10 +211,9 @@ export function DealsScreen() {
     fade.setValue(0);
     Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }).start();
   }, [fade, tab]);
-  const includesFlight = tab === "flight" || tab === "hotel-flight" || tab === "hotel-flight-car";
-  const includesHotel = tab === "hotel" || tab === "hotel-flight" || tab === "hotel-flight-car";
-  const includesCar = tab === "car" || tab === "hotel-flight-car";
-  const isPackage = tab === "hotel-flight" || tab === "hotel-flight-car";
+  const includesFlight = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "flight-car";
+  const includesHotel = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "hotel-car";
+  const includesCar = tab === "hotel-flight-car" || tab === "hotel-car" || tab === "flight-car";
   return (
     <Page
       title="Deals"
@@ -228,9 +226,9 @@ export function DealsScreen() {
         {dealTabs.map((option) => <Pressable key={option.value} accessibilityRole="tab" accessibilityState={{ selected: tab === option.value }} onPress={() => setTab(option.value)} style={[styles.dealTab, tab === option.value && styles.dealTabSelected]}><Text style={[styles.dealTabText, tab === option.value && styles.dealTabTextSelected]}>{option.label}</Text></Pressable>)}
       </ScrollView>
       <Animated.View style={[styles.packageCard, flowStyles.shadow, { opacity: fade, transform: [{ translateY: fade.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }] }]}>
-        {includesFlight ? <View><Text style={styles.packageSection}>Flight</Text><FlightSearchPanel embedded showSubmit={!isPackage && tab === "flight"} params={{}} /></View> : null}
-        {includesHotel ? <View style={includesFlight && styles.packageDivider}><Text style={styles.packageSection}>Hotel</Text><HotelSearchPanel embedded showSubmit={tab === "hotel" || tab === "hotel-flight"} submitLabel={isPackage ? "Search package" : undefined} params={{}} /></View> : null}
-        {includesCar ? <View style={(includesFlight || includesHotel) && styles.packageDivider}><Text style={styles.packageSection}>Car</Text><CarSearchPanel embedded showSubmit submitLabel={isPackage ? "Search package" : undefined} params={{}} /></View> : null}
+        {includesFlight ? <View><Text style={styles.packageSection}>Flights</Text><FlightSearchPanel embedded showSubmit={false} params={{}} /></View> : null}
+        {includesHotel ? <View style={includesFlight && styles.packageDivider}><Text style={styles.packageSection}>Hotels</Text><HotelSearchPanel embedded showSubmit={!includesCar} submitLabel="Search package" params={{}} /></View> : null}
+        {includesCar ? <View style={(includesFlight || includesHotel) && styles.packageDivider}><Text style={styles.packageSection}>Cars</Text><CarSearchPanel embedded showSubmit submitLabel="Search package" params={{}} /></View> : null}
       </Animated.View>
     </Page>
   );

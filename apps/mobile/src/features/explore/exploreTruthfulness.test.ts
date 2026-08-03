@@ -26,5 +26,5 @@ test("provider-backed result prices remain rendered", () => {
 
 test("Deals retains every reusable product form and package tab", () => {
   for (const route of ["/flights", "/hotels", "/cars"]) assert.match(products, new RegExp(route));
-  for (const tab of ["hotel-flight", "hotel-flight-car", "flight", "hotel", "car"]) assert.match(products, new RegExp(`value: "${tab}"`));
+  for (const tab of ["hotel-flight", "hotel-flight-car", "hotel-car", "flight-car"]) assert.match(products, new RegExp(`value: "${tab}"`));
 });
