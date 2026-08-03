@@ -1,17 +1,25 @@
 import { getPrisma } from "@/lib/prisma";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
 
-const COMPANY_DOMAIN = "zentricanalytics.com";
+export const TRUSTED_PREVIEW_DOMAINS = new Set([
+  "kurioticket.com",
+  "zentricanalytics.com",
+]);
 const EMAIL = /^[^\s,@<>]+@[^\s,@<>]+\.[^\s,@<>]+$/;
 
 export function normalizePreviewTesterEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-export function isCompanyPreviewEmail(email: string) {
+export function isTrustedPreviewCompanyEmail(email: string) {
   const normalized = normalizePreviewTesterEmail(email);
-  return EMAIL.test(normalized) && normalized.endsWith(`@${COMPANY_DOMAIN}`);
+  if (!EMAIL.test(normalized)) return false;
+  const separator = normalized.lastIndexOf("@");
+  return separator > 0 && TRUSTED_PREVIEW_DOMAINS.has(normalized.slice(separator + 1));
 }
+
+/** @deprecated Use isTrustedPreviewCompanyEmail. */
+export const isCompanyPreviewEmail = isTrustedPreviewCompanyEmail;
 
 type TesterRecord = {
   status: "ACTIVE" | "SUSPENDED" | "REVOKED";
@@ -30,6 +38,22 @@ export function hasPreviewTesterPermission(record: TesterRecord | null | undefin
   return permission === "google" ? Boolean(record?.allowGoogleSignIn) : Boolean(record?.allowStagingEmail);
 }
 
+export function isStagingGoogleAccessAllowed(
+  email: string,
+  googleEmailVerified: boolean,
+  tester: TesterRecord | null | undefined,
+) {
+  if (isTrustedPreviewCompanyEmail(email)) return googleEmailVerified;
+  return googleEmailVerified && hasPreviewTesterPermission(tester, "google");
+}
+
+export function isStagingEmailRecipientAllowed(
+  email: string,
+  tester: TesterRecord | null | undefined,
+) {
+  return isTrustedPreviewCompanyEmail(email) || hasPreviewTesterPermission(tester, "email");
+}
+
 async function findTester(email: string) {
   return getPrisma().previewTester.findUnique({
     where: { emailNormalized: normalizePreviewTesterEmail(email) },
@@ -39,21 +63,25 @@ async function findTester(email: string) {
 
 export async function canUseStagingCredentials(email: string) {
   if (!isStagingEnvironment()) return true;
-  return isCompanyPreviewEmail(email);
+  return isTrustedPreviewCompanyEmail(email);
 }
 
-export async function canUseStagingGoogle(email: string) {
+export async function canUseStagingGoogle(email: string, googleEmailVerified?: boolean) {
   if (!isStagingEnvironment()) return true;
+  const verified = googleEmailVerified !== false;
+  if (isTrustedPreviewCompanyEmail(email)) {
+    return isStagingGoogleAccessAllowed(email, verified, null);
+  }
   const tester = await findTester(email);
-  return hasPreviewTesterPermission(tester, "google");
+  return isStagingGoogleAccessAllowed(email, verified, tester);
 }
 
 export async function canReceiveStagingEmail(email: string) {
   if (!isStagingEnvironment()) return true;
   if (process.env.STAGING_EMAIL_DELIVERY_ENABLED?.trim().toLowerCase() !== "true") return false;
-  if (isCompanyPreviewEmail(email)) return true;
+  if (isTrustedPreviewCompanyEmail(email)) return isStagingEmailRecipientAllowed(email, null);
   const tester = await findTester(email);
-  return hasPreviewTesterPermission(tester, "email");
+  return isStagingEmailRecipientAllowed(email, tester);
 }
 
 export async function canRetainStagingSession(email: string, usesGoogle: boolean) {

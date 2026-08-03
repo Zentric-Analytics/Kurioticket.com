@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { logSafeAuthDiagnostics } from "@/lib/auth-diagnostics";
 import { getAdminEmails } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
+import { isTrustedPreviewCompanyEmail } from "@/lib/previewTesterAccess";
+import { isStagingEnvironment } from "@/lib/stagingSafety";
 
 type AdminRequest = Request & {
   headers: Headers;
@@ -68,7 +70,8 @@ export function isProtectedAdminEmail(
     normalizedEmail &&
       getAdminEmails().includes(
         normalizedEmail,
-      ),
+      ) &&
+      (!isStagingEnvironment() || isTrustedPreviewCompanyEmail(normalizedEmail)),
   );
 }
 
