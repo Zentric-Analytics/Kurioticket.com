@@ -9,7 +9,7 @@ const RELEASES = {
     scheme: "kurioticket-preview",
     apiBaseUrl: "https://staging.kurioticket.com",
     channel: "preview",
-    distribution: "internal",
+    appVersion: "0.3.0",
   },
   production: {
     displayName: "Kurioticket",
@@ -18,7 +18,7 @@ const RELEASES = {
     scheme: "kurioticket",
     apiBaseUrl: "https://kurioticket.com",
     channel: "production",
-    distribution: "store",
+    appVersion: "0.2.0",
   },
 } as const;
 
@@ -72,7 +72,7 @@ export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileE
 
   return { variant, buildMode, displayName: release.displayName, bundleIdentifier: release.bundleIdentifier,
     androidPackage: release.androidPackage, scheme: release.scheme, apiBaseUrl, channel: release.channel,
-    distribution: release.distribution, isPreview: variant === "preview" };
+    appVersion: release.appVersion, isPreview: variant === "preview" };
 }
 
 export default ({ config }: ConfigContext): ExpoConfig => {
@@ -83,7 +83,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: "kurioticket-mobile",
     owner: "zentric-analytics",
     platforms: ["android", "ios"],
-    version: "0.2.0",
+    version: environment.appVersion,
     orientation: "portrait",
     scheme: environment.scheme,
     userInterfaceStyle: "light",
@@ -113,7 +113,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         isPreview: environment.isPreview,
       },
     },
-    runtimeVersion: { policy: "appVersion" },
+    runtimeVersion: environment.isPreview ? environment.appVersion : { policy: "appVersion" },
     updates: {
       url: "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d",
       checkAutomatically: "ON_LOAD",

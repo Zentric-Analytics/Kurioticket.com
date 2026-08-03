@@ -17,3 +17,18 @@ test("production runtime isolates native changes and waits for launch updates", 
     process.env = previous;
   }
 });
+
+test("preview uses a runtime that cannot receive legacy 0.2.0 updates", () => {
+  const previous = { ...process.env };
+  try {
+    process.env.APP_VARIANT = "preview";
+    process.env.APP_BUILD_MODE = "release";
+    process.env.EXPO_PUBLIC_API_BASE_URL = "https://staging.kurioticket.com";
+    const appConfig = createAppConfig({ config: {} } as never);
+    assert.equal(appConfig.version, "0.3.0");
+    assert.equal(appConfig.runtimeVersion, "0.3.0");
+    assert.equal(appConfig.extra?.environment.channel, "preview");
+  } finally {
+    process.env = previous;
+  }
+});
