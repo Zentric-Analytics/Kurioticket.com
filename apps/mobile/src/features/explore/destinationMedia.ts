@@ -66,6 +66,9 @@ export const DESTINATION_MEDIA: readonly DestinationMedia[] = [...destinationByI
 export const destinationMediaById = new Map(DESTINATION_MEDIA.map((media) => [media.destinationId, media]));
 export function destinationMedia(destinationId: string) { return destinationMediaById.get(destinationId); }
 export function destinationImage(destinationId: string) { return destinationMedia(destinationId)?.source; }
+export function resolvedDestinationHeroSource(media: DestinationMedia | undefined, failed: boolean) {
+  return failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE);
+}
 export function assertDestinationMediaIsValid() {
   if (explicitMediaById.size !== EXPLICIT_DESTINATION_MEDIA.length) throw new Error("Duplicate local destination media ID");
   for (const media of DESTINATION_MEDIA) if (!destinationById.has(media.destinationId)) throw new Error(`Unknown media destination: ${media.destinationId}`);

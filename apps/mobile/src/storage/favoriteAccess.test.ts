@@ -22,7 +22,12 @@ test("every existing favorite-bearing section uses the protected shared hook", (
   for (const path of ["src/features/home/PopularDestinationStays.tsx", "src/features/home/DiscoverNextAdventure.tsx", "src/features/explore/ExploreScreen.tsx"]) {
     const contents = source(path);
     assert.match(contents, /useSavedDestinations\(\)/, path);
-    assert.match(contents, /stopPropagation\(\)/, `${path} keeps card navigation isolated from heart presses`);
+    if (path.includes("ExploreScreen")) {
+      assert.match(contents, /style=\{s\.rowHeart\}/, `${path} keeps the search heart outside its navigation pressable`);
+      assert.match(contents, /style=\{s\.heart\}/, `${path} keeps the card heart outside its navigation pressable`);
+    } else {
+      assert.match(contents, /stopPropagation\(\)/, `${path} keeps card navigation isolated from heart presses`);
+    }
   }
 });
 

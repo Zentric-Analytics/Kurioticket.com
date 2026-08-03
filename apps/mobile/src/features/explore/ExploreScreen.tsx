@@ -4,7 +4,6 @@ import {
   Image,
   ImageBackground,
   Keyboard,
-  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
@@ -13,7 +12,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableWithoutFeedback,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -23,7 +21,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { destinationById, type Destination } from "./destinationCatalogue";
-import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
+import { FlowIcon } from "../flow/FlowIcon";
 import { HERO_SLIDES, INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
 import {
   exactExploreResult,
@@ -32,10 +30,7 @@ import {
   searchExplore,
 } from "./exploreModels";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import {
-  navigateFromDestination,
-  type DestinationProduct,
-} from "./exploreInteractionModels";
+import { destinationDetailsRoute, navigateFromDestination } from "./exploreInteractionModels";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
 const NAVY = "#071A48",
   BLUE = "#0754F7",
@@ -51,146 +46,6 @@ const RESOLVED_INTERESTS = INTERESTS.map((interest) => ({
   destination: destinationById.get(interest.destinationId)!,
 }));
 
-function DestinationAction({
-  destination,
-  saved,
-  onToggle,
-  onClose,
-}: {
-  destination: Destination | null;
-  saved: boolean;
-  onToggle: () => void;
-  onClose: () => void;
-}) {
-  const navigating = useRef(false);
-  const media = destination ? destinationMedia(destination.id) : undefined;
-  const [imageFailed, setImageFailed] = useState(false);
-  useEffect(() => {
-    navigating.current = false;
-    setImageFailed(false);
-  }, [destination]);
-  const navigate = (product: DestinationProduct) => {
-    if (!destination) return;
-    navigateFromDestination(
-      destination,
-      product,
-      onClose,
-      (route, name, handoff) =>
-        router.push({
-          pathname: `/${route}`,
-          params: {
-            destination: name,
-            destinationId: handoff.destinationId,
-            airportCodes: handoff.airportCodes.join(","),
-            to: handoff.primaryAirportCode,
-          },
-        }),
-      navigating,
-    );
-  };
-  return (
-    <Modal
-      visible={!!destination}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-      accessibilityViewIsModal
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={s.modalBackdrop}>
-          <TouchableWithoutFeedback
-            onPress={(event) => event.stopPropagation()}
-          >
-            <SafeAreaView
-              edges={["bottom"]}
-              style={s.sheet}
-              accessibilityLabel="Explore destination details"
-            >
-              {destination ? (
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  <Image
-                    source={imageFailed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)}
-                    onError={() => setImageFailed(true)}
-                    accessibilityLabel={media?.accessibilityLabel}
-                    resizeMode="cover"
-                    style={s.detailImage}
-                  />
-                  <View style={s.detailBody}>
-                  <Text
-                    accessibilityRole="header"
-                    numberOfLines={2}
-                    style={s.sheetTitle}
-                  >
-                    {destination.name}
-                  </Text>
-                  <Text style={s.sheetMeta}>
-                    {destination.country}
-                  </Text>
-                  <Text accessibilityRole="header" style={s.airportsTitle}>Airports</Text>
-                  {destination.airportCodes.map((code, index) => (
-                    <Text key={code} style={s.airportDetail}>
-                      {code} · {destination.airportNames[index] ?? destination.airportNames[0]}
-                    </Text>
-                  ))}
-                  <Action
-                    icon="heart"
-                    label={
-                      saved
-                        ? "Remove from saved destinations"
-                        : "Save destination"
-                    }
-                    onPress={onToggle}
-                  />
-                  <Action
-                    icon="flight"
-                    label="Search flights"
-                    onPress={() => navigate("flights")}
-                  />
-                  <Action
-                    icon="hotel"
-                    label="Search hotels"
-                    onPress={() => navigate("hotels")}
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Close destination details"
-                    onPress={onClose}
-                    style={s.close}
-                  >
-                    <Text style={s.closeText}>Close</Text>
-                  </Pressable>
-                  </View>
-                </ScrollView>
-              ) : null}
-            </SafeAreaView>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
-}
-function Action({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: FlowIconName;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={s.action}
-    >
-      <FlowIcon name={icon} color={BLUE} />
-      <Text style={s.actionText}>{label}</Text>
-      <FlowIcon name="chevron" size={18} />
-    </Pressable>
-  );
-}
 function Header() {
   return (
     <View style={s.header}>
@@ -254,7 +109,7 @@ function Row({
     <View style={s.resultRow}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Open actions for ${destination.name}, ${destination.country}, ${destination.primaryAirportCode}`}
+        accessibilityLabel={`Open details for ${destination.name}, ${destination.country}, ${destination.primaryAirportCode}`}
         onPress={onSelect}
         style={s.resultMain}
       >
@@ -346,8 +201,7 @@ function ExploreHeader({
 
 export function ExploreScreen() {
   const [tab, setTab] = useState<Tab>("Destinations"),
-    [query, setQuery] = useState(""),
-    [selected, setSelected] = useState<Destination | null>(null);
+    [query, setQuery] = useState("");
   const { savedIds, toggle } = useSavedDestinations();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -356,7 +210,7 @@ export function ExploreScreen() {
   const select = (destination: Destination) => {
     Keyboard.dismiss();
     input.current?.blur();
-    setSelected(destination);
+    router.push(destinationDetailsRoute(destination.id));
   };
   const submit = () => {
     const exact = exactExploreResult(results);
@@ -378,16 +232,6 @@ export function ExploreScreen() {
       submit={submit}
     />
   );
-  const overlays = (
-    <>
-      <DestinationAction
-        destination={selected}
-        saved={!!selected && savedIds.has(selected.id)}
-        onToggle={() => selected && toggle(selected.id)}
-        onClose={() => setSelected(null)}
-      />
-    </>
-  );
   if (!query.trim() && tab === "Destinations")
     return (
       <SafeAreaView style={s.safe} edges={["top"]}>
@@ -398,7 +242,6 @@ export function ExploreScreen() {
           select={select}
           toggle={toggle}
         />
-        {overlays}
       </SafeAreaView>
     );
   if (query.trim())
@@ -421,7 +264,6 @@ export function ExploreScreen() {
             </View>
           )}
         />
-        {overlays}
       </SafeAreaView>
     );
   return (
@@ -436,7 +278,6 @@ export function ExploreScreen() {
         {header}
         <Inspiration width={width} select={select} />
       </ScrollView>
-      {overlays}
     </SafeAreaView>
   );
 }
@@ -475,7 +316,7 @@ function PopularDestinationCard({
     <View style={s.popularCard}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Open actions for ${destination.name}, ${destination.country}`}
+        accessibilityLabel={`Open details for ${destination.name}, ${destination.country}`}
         onPress={onSelect}
       >
         <Image
@@ -758,47 +599,6 @@ const s = StyleSheet.create({
     padding: 14,
   },
   matchLabel: { color: BLUE, fontSize: 12, fontWeight: "700", marginBottom: 4 },
-  action: {
-    minHeight: 58,
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 12,
-    backgroundColor: "white",
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 8,
-  },
-  actionText: { flex: 1, color: NAVY, fontSize: 14, fontWeight: "700" },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(2,15,42,.45)",
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    maxHeight: "96%",
-    minHeight: "88%",
-  },
-  sheetHandle: {
-    width: 42,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: BORDER,
-    alignSelf: "center",
-    marginBottom: 18,
-  },
-  sheetTitle: { color: NAVY, fontSize: 24, lineHeight: 31, fontWeight: "800" },
-  sheetMeta: { color: MUTED, fontSize: 14, marginBottom: 18 },
-  detailImage: { width: "100%", height: 280, backgroundColor: "#E7ECF5" },
-  detailBody: { padding: 18 },
-  airportsTitle: { color: NAVY, fontSize: 16, fontWeight: "800", marginBottom: 6 },
-  airportDetail: { color: MUTED, fontSize: 13, lineHeight: 20, marginBottom: 3 },
-  close: { minHeight: 50, alignItems: "center", justifyContent: "center" },
-  closeText: { color: BLUE, fontWeight: "800" },
   heroShell: { height: 290, borderRadius: 14, overflow: "hidden" },
   hero: {
     height: 290,

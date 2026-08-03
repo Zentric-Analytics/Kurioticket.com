@@ -36,3 +36,10 @@ test("visible interests use the same maintained destination mappings", () => {
 test("approved Bali destination asset is registered in the destination media manifest", () => {
   assert.match(mediaSource(), /destinations\/bali\.jpg/);
 });
+
+test("destination hero media remains local-first, website-curated, then fallback", () => {
+  const source = mediaSource();
+  assert.ok(source.indexOf("explicitMediaById.get") < source.indexOf("curatedDestinationImage(destinationId)"));
+  assert.ok(source.indexOf("curatedDestinationImage(destinationId)") < source.indexOf("source: FALLBACK_SOURCE"));
+  assert.match(source, /failed \? FALLBACK_SOURCE/);
+});
