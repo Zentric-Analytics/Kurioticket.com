@@ -24,7 +24,7 @@ test("provider-backed result prices remain rendered", () => {
   assert.match(results, /offer\.totalPrice\.toFixed/);
 });
 
-test("comparison filters retain all product routes", () => {
+test("Deals retains every reusable product form and package tab", () => {
   for (const route of ["/flights", "/hotels", "/cars"]) assert.match(products, new RegExp(route));
-  for (const tab of ["all", "flights", "hotels", "cars"]) assert.match(products, new RegExp(`value: "${tab}"`));
+  for (const tab of ["hotel-flight", "hotel-flight-car", "flight", "hotel", "car"]) assert.match(products, new RegExp(`value: "${tab}"`));
 });
