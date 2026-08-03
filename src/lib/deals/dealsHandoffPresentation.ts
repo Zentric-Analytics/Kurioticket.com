@@ -59,8 +59,8 @@ export function getDealsHandoffSteps(plan: DealsTripPlan, now: number, locale: s
   return products.map((product, index) => {
     const item = plan[product]!;
     const expired = isDealsTripPlanProductExpired(item.resultReceivedAt, now);
-    const actionKind: DealsHandoffActionKind = product === "car" ? "internal-details" : "provider-handoff";
-    const href = product === "car" ? item.detailsPath ?? null : buildDealsInternalRedirectHref(item.id, product);
+    const actionKind: DealsHandoffActionKind = product === "flight" ? "provider-handoff" : "internal-details";
+    const href = product === "flight" ? buildDealsInternalRedirectHref(item.id, "flight") : item.detailsPath ?? null;
     const common: Common = { product, id: `provider-step-${product}`, position: index + 1, total: products.length, provider: item.provider, status: status(plan, product, expired, next), actionKind, href, sourcePrice: item.sourcePrice, sourceCurrency: item.sourceCurrency };
     if (product === "flight") { const flight = plan.flight!; return { ...common, product, airline: flight.airline, flightNumber: flight.flightNumber, routeLabel: `${flight.origin} → ${flight.destination}`, departureLabel: formatDate(flight.departure, locale, true), arrivalLabel: formatDate(flight.arrival, locale, true), durationLabel: flight.duration }; }
     if (product === "hotel") { const hotel = plan.hotel!; return { ...common, product, name: hotel.name, location: hotel.location, checkInLabel: formatDate(hotel.checkIn, locale, false), checkOutLabel: formatDate(hotel.checkOut, locale, false), nights: daysBetween(hotel.checkIn, hotel.checkOut), roomType: titleCaseIfUpper(hotel.roomType) }; }

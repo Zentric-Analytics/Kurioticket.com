@@ -19,7 +19,7 @@ test("builds structured localized flight, hotel, and car steps without mutating 
   assert.equal(flight.actionKind, "provider-handoff"); assert.equal(flight.href, "/redirect?id=flight+%2F%3F%26%3D%E2%9C%93&type=flight"); assert.notEqual(flight.href, plan.flight?.detailsPath);
   assert.equal(flight.routeLabel, "LOS → LAX"); assert.equal(flight.flightNumber, "SN7261"); assert.match(flight.departureLabel, /Aug 1, 2026/); assert.match(flight.departureLabel, /11:35 PM/); assert.doesNotMatch(flight.departureLabel, /T23:35/); assert.equal(flight.status, "next");
   const hotel = steps[1]; assert.equal(hotel.product, "hotel"); if (hotel.product !== "hotel") return;
-  assert.equal(hotel.actionKind, "provider-handoff"); assert.equal(hotel.href, "/redirect?id=hotel+%2F%3F%26%3D%E2%9C%93&type=hotel"); assert.notEqual(hotel.href, plan.hotel?.detailsPath);
+  assert.equal(hotel.actionKind, "internal-details"); assert.equal(hotel.href, plan.hotel?.detailsPath); assert.doesNotMatch(hotel.href ?? "", /\/redirect|type=hotel/);
   assert.match(hotel.checkInLabel, /Aug 1, 2026/); assert.match(hotel.checkOutLabel, /Aug 3, 2026/); assert.equal(hotel.nights, 2); assert.equal(hotel.roomType, "Deluxe King Room");
   const car = steps[2]; assert.equal(car.product, "car"); if (car.product !== "car") return;
   assert.equal(car.actionKind, "internal-details"); assert.equal(car.href, plan.car?.detailsPath); assert.doesNotMatch(car.href ?? "", /\/redirect|type=car/);
@@ -33,6 +33,16 @@ test("keeps cars without a details path classified as internal details", () => {
   assert.equal(car.product, "car");
   assert.equal(car.actionKind, "internal-details");
   assert.equal(car.href, null);
+});
+
+test("keeps hotels without a details path classified as internal details", () => {
+  const hotelWithoutDetails = { ...plan.hotel! };
+  delete (hotelWithoutDetails as Partial<typeof hotelWithoutDetails>).detailsPath;
+  const steps = getDealsHandoffSteps({ ...plan, hotel: hotelWithoutDetails as DealsTripPlan["hotel"] }, now, "en-US");
+  const hotel = steps[1];
+  assert.equal(hotel.product, "hotel");
+  assert.equal(hotel.actionKind, "internal-details");
+  assert.equal(hotel.href, null);
 });
 
 test("derives opened and expired state using canonical semantics", () => {

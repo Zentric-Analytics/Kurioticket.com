@@ -14,7 +14,7 @@ const tripPlanBar = readFileSync(new URL("./DealsTripPlanBar.tsx", import.meta.u
 const presentation = readFileSync(new URL("../../../lib/deals/dealsPackageCardPresentation.ts", import.meta.url), "utf8");
 const english = readFileSync(new URL("../../../lib/i18n/en.ts", import.meta.url), "utf8");
 
-test("translated Deals copy states the separate-provider booking model", () => {
+test("translated Deals copy states the mixed live and planning inventory model", () => {
   for (const copy of [
     "Mix-and-match trip options",
     "Estimated trip total",
@@ -22,11 +22,20 @@ test("translated Deals copy states the separate-provider booking model", () => {
     "Choose trip option",
     "Trip option selected",
     "This is not one package booking.",
-    "Review separate booking steps",
-    "Each item is booked separately with its provider.",
+    "Review separate trip steps",
+    "Live items continue to their provider; planning-only items are reviewed on Kurioticket.",
   ]) assert.match(english, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(card, /deals\.results\.package\.bookingModel/);
   assert.doesNotMatch(results + card + pricePanel + tripPlanBar, /Choose package|Book package|Continue to provider/);
+});
+
+test("hotel availability reasons distinguish catalogue misses from ineligible returned stays", () => {
+  assert.match(results, /state\.hotel\.results\.length \? "deals\.results\.package\.hotelUnavailable" : "deals\.results\.package\.hotelEmpty"/);
+  assert.match(english, /No stays are available for this destination in Kurioticket’s current hotel catalogue\./);
+  assert.match(english, /The returned stays are missing an indicative total or a safe Kurioticket details page\./);
+  assert.match(english, /Kurioticket combines separately sourced live and planning results/);
+  assert.doesNotMatch(english, /The returned hotels do not have a live price and a safe, bookable details action\./);
+  assert.doesNotMatch(results, /partnerRedirectUrl|bookingUrl/);
 });
 
 test("package result states share one centered max-w-5xl width contract", () => {

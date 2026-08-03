@@ -92,6 +92,7 @@ test("hotel destination search value normalizes decorated suggestions to city na
   assert.equal(normalizeHotelDestinationSearchValue("London, United Kingdom"), "London");
   assert.equal(normalizeHotelDestinationSearchValue("Paris, France"), "Paris");
   assert.equal(normalizeHotelDestinationSearchValue("New York, NY"), "New York");
+  assert.equal(normalizeHotelDestinationSearchValue("New York, United States"), "New York");
   assert.equal(normalizeHotelDestinationSearchValue("Tokyo"), "Tokyo");
   assert.equal(normalizeHotelDestinationSearchValue("  Custom Beach  "), "Custom Beach");
 });
