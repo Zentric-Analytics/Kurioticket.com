@@ -7,38 +7,6 @@ import { INTEREST_DESTINATIONS } from "./interestMappings";
 
 export const EXPLORE_TABS = ["Destinations", "Inspiration"] as const;
 export const ALL_DESTINATIONS = destinations;
-export type CountryDestinationGroup = {
-  countryCode: string;
-  country: string;
-  destinations: readonly Destination[];
-};
-
-/** Catalogue-derived groups, ordered by country then ISO code; destinations use the catalogue order. */
-export function groupDestinationsByCountry(
-  source: readonly Destination[],
-): CountryDestinationGroup[] {
-  const grouped = new Map<string, Destination[]>();
-  for (const destination of source) {
-    const key = `${destination.countryCode}|${destination.country}`;
-    grouped.set(key, [...(grouped.get(key) ?? []), destination]);
-  }
-  return [...grouped.values()]
-    .map((items) => ({
-      countryCode: items[0]!.countryCode,
-      country: items[0]!.country,
-      destinations: [...items].sort(
-        (a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id),
-      ),
-    }))
-    .sort(
-      (a, b) =>
-        a.country.localeCompare(b.country) ||
-        a.countryCode.localeCompare(b.countryCode),
-    );
-}
-
-export const COUNTRY_DESTINATION_GROUPS =
-  groupDestinationsByCountry(destinations);
 export type ExploreSearchResult = {
   destination: Destination;
   match: "destination" | "interest";

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { destinationByUnambiguousName } from "./destinationCatalogue";
+import { destinationById } from "./destinationCatalogue";
 import { POPULAR_DESTINATIONS, HERO_SLIDES, INTERESTS } from "./exploreData";
 import { CURATED_POPULAR_DESTINATION_IDS } from "../flow/locationCatalogue";
 
@@ -20,7 +20,7 @@ test("popular destinations use the curated 25-item catalogue in maintained order
 
 test("every visible inspiration target resolves to one catalogue destination", () => {
   for (const item of [...HERO_SLIDES, ...INTERESTS]) {
-    assert.ok(destinationByUnambiguousName(item.destination), `Unsupported inspiration destination: ${item.destination}`);
+    assert.ok(destinationById.get(item.destinationId), `Unsupported inspiration destination: ${item.destinationId}`);
   }
 });
 
