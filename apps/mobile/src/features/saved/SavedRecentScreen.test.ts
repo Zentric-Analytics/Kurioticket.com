@@ -24,10 +24,28 @@ test("Saved & recent resolves existing records, protects guests, and supports re
   assert.match(screen, /event\.stopPropagation\(\); toggle\(item\.id\)/);
   assert.match(screen, /destinationMedia\(id\)\?\.source \?\? FALLBACK_SOURCE/);
   assert.match(screen, /failed \? FALLBACK_SOURCE : item\.image/);
-  assert.match(screen, /onError=\{\(\) => setFailed\(true\)\}/);
+  assert.match(screen, /onError=\{\(\) => \{ if \(!failed\) setFailed\(true\); \}\}/);
   assert.match(screen, /destinationId: destination\.id/);
   assert.match(screen, /airportCodes: destination\.airportCodes\.join\(","\)/);
   assert.match(screen, /to: destination\.primaryAirportCode/);
+});
+
+test("saved favorites use compact, stable cards and covered images", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /card: \{ height: 104,/);
+  assert.match(screen, /image: \{ width: 112, height: 104, flexShrink: 0,/);
+  assert.match(screen, /resizeMode="cover"/);
+  assert.doesNotMatch(screen, /alignSelf: "stretch"/);
+  assert.match(screen, /copy: \{ flex: 1, minWidth: 0,/);
+  assert.match(screen, /<Text numberOfLines=\{2\}[^>]*styles\.name/);
+  assert.match(screen, /items\.map\(\(item\) => <Pressable key=\{item\.id\}/);
+});
+
+test("saved destination media keeps catalogue resolution and a loop-safe fallback", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /image: destinationMedia\(id\)\?\.source \?\? FALLBACK_SOURCE/);
+  assert.match(screen, /source=\{failed \? FALLBACK_SOURCE : item\.image\}/);
+  assert.match(screen, /if \(!failed\) setFailed\(true\)/);
 });
 
 test("Explore and Profile share saved destination IDs, including search-only destinations", () => {
