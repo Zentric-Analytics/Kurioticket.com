@@ -6,6 +6,7 @@ const results = readFileSync(new URL("../DealsResultsClient.tsx", import.meta.ur
 const toolbar = readFileSync(new URL("./DealsPackageResultsToolbar.tsx", import.meta.url), "utf8");
 const card = readFileSync(new URL("./DealsPackageCard.tsx", import.meta.url), "utf8");
 const pricePanel = readFileSync(new URL("./DealsPackagePricePanel.tsx", import.meta.url), "utf8");
+const openSectionLine = readFileSync(new URL("./DealsOpenSectionLine.tsx", import.meta.url), "utf8");
 const flightSummary = readFileSync(new URL("./DealsPackageFlightSummary.tsx", import.meta.url), "utf8");
 const hotelSummary = readFileSync(new URL("./DealsPackageHotelSummary.tsx", import.meta.url), "utf8");
 const carSummary = readFileSync(new URL("./DealsPackageCarSummary.tsx", import.meta.url), "utf8");
@@ -188,6 +189,64 @@ test("package pricing uses a full-width summary before a content-height xl side 
   assert.doesNotMatch(pricePanel, /\b(?:h-full|min-h-full|justify-between|justify-around|justify-evenly|mt-auto|flex-grow)\b/);
 });
 
+test("Deals curved section lines preserve the Hotel reference geometry and remain decorative", () => {
+  for (const origin of [
+    '"left-top": "start-0 top-0 border-s border-t rounded-ss-2xl"',
+    '"left-bottom": "start-0 bottom-0 border-s border-b rounded-es-2xl"',
+    '"right-top": "end-0 top-0 border-e border-t rounded-se-2xl"',
+    '"right-bottom": "end-0 bottom-0 border-e border-b rounded-ee-2xl"',
+  ]) assert.match(openSectionLine, new RegExp(origin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+
+  for (const contract of [
+    "h-5",
+    "w-[calc(100%-2rem)]",
+    "sm:w-[calc(100%-2.5rem)]",
+    "border-slate-300/80",
+    "pointer-events-none",
+    "select-none",
+    "overflow-visible",
+    'aria-hidden="true"',
+  ]) assert.ok(openSectionLine.includes(contract));
+
+  assert.match(openSectionLine, /className\?: string/);
+  assert.match(openSectionLine, /cn\(/);
+  assert.doesNotMatch(openSectionLine, /<hr\b|role="separator"|<svg\b|from ["']next\/image|border-left|border-right/);
+});
+
+test("the loaded price panel uses exactly two responsive curved lines between its three groups", () => {
+  const lines = pricePanel.match(/<DealsOpenSectionLine\b/g) ?? [];
+  assert.equal(lines.length, 2);
+
+  const total = pricePanel.indexOf("deals.results.package.estimatedTotal");
+  const firstLine = pricePanel.indexOf('<DealsOpenSectionLine side="right" turn="bottom"');
+  const breakdown = pricePanel.indexOf("candidate.priceBreakdown.map");
+  const secondLine = pricePanel.indexOf('<DealsOpenSectionLine side="left" turn="top"');
+  const cta = pricePanel.indexOf("<button", secondLine);
+  const disclosure = pricePanel.indexOf("deals.results.package.disclosure", cta);
+  assert.ok(total < firstLine && firstLine < breakdown && breakdown < secondLine && secondLine < cta && cta < disclosure);
+
+  assert.match(pricePanel, /side="right" turn="bottom" className="mt-3 md:hidden xl:block"/);
+  assert.match(pricePanel, /side="left" turn="top" className="mt-3 md:col-span-2 md:mt-0 lg:hidden xl:mt-3 xl:block"/);
+  assert.match(pricePanel, /md:col-span-2 md:pt-0 lg:col-span-1/);
+  assert.match(pricePanel, /\bmin-h-11\b/);
+  assert.match(pricePanel, /aria-pressed=\{selected\}/);
+  assert.match(pricePanel, /selected && <Check aria-hidden/);
+
+  const priceBreakdown = pricePanel.slice(pricePanel.indexOf("<dl className="), pricePanel.indexOf("</dl>"));
+  assert.doesNotMatch(priceBreakdown, /\bborder-t\b/);
+  assert.match(pricePanel, /border-t border-slate-200[^\n]*xl:self-start[^\n]*xl:border-s xl:border-t-0/);
+  assert.doesNotMatch(pricePanel, /<hr\b|role="separator"|h-\[[^\]]+\]|overflow-clip|(?:^|\s)-m[trblxy]?-[^\s"']+|translate-|transform/);
+});
+
+test("the loading price panel uses the same two responsive curved lines", () => {
+  assert.equal(skeleton.match(/<DealsOpenSectionLine\b/g)?.length, 2);
+  assert.match(skeleton, /side="right" turn="bottom" className="mt-3 md:hidden xl:block"/);
+  assert.match(skeleton, /side="left" turn="top" className="mt-3 md:col-span-2 md:mt-0 lg:hidden xl:mt-3 xl:block"/);
+  assert.match(pricePanel, /grid min-w-0 gap-0[^\n]*md:gap-4/);
+  assert.match(skeleton, /grid min-w-0 gap-0[^\n]*md:gap-4/);
+  assert.doesNotMatch(skeleton, /<hr\b|role="separator"|h-\[[^\]]+\]|overflow-clip|(?:^|\s)-m[trblxy]?-[^\s"']+|translate-|transform/);
+});
+
 test("the loading card mirrors the compact responsive pricing layout", () => {
   assert.match(skeleton, /xl:grid-cols-\[minmax\(0,1fr\)_288px\]/);
   assert.match(skeleton, /xl:items-start/);
@@ -197,7 +256,7 @@ test("the loading card mirrors the compact responsive pricing layout", () => {
   assert.doesNotMatch(skeleton, /lg:grid-cols-\[minmax\(0,1fr\)_260px\]/);
   assert.match(skeleton, /space-y-2"><div className="h-3 w-3\/4 rounded bg-slate-200" \/><div className="h-7 rounded bg-slate-200" \/><\/div>/);
   assert.doesNotMatch(skeleton, /h-3 w-2\/3 rounded bg-slate-200/);
-  assert.match(skeleton, /space-y-2"><div className="h-8 rounded bg-slate-200" \/><div className="h-8 rounded bg-slate-200" \/><\/div>/);
+  assert.match(skeleton, /space-y-2 pt-3 md:pt-0 xl:pt-3"><div className="h-8 rounded bg-slate-200" \/><div className="h-8 rounded bg-slate-200" \/><\/div>/);
   assert.match(skeleton, /h-11 rounded-xl bg-slate-200/);
   assert.match(skeleton, /h-3 w-5\/6 rounded bg-slate-200/);
 });
