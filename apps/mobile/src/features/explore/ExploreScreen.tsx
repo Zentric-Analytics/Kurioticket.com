@@ -333,7 +333,6 @@ export function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const input = useRef<TextInput>(null);
   const results = useMemo(() => searchExplore(query), [query]);
-  const saved = destinations.filter((a) => savedIds.has(a.id));
   const select = (destination: Destination) => {
     Keyboard.dismiss();
     input.current?.blur();
@@ -376,7 +375,6 @@ export function ExploreScreen() {
           header={header}
           bottomPadding={exploreBottomPadding(65, insets.bottom)}
           saved={savedIds}
-          savedDestinations={saved}
           select={select}
           toggle={toggle}
         />
@@ -516,14 +514,12 @@ function Destinations({
   header,
   bottomPadding,
   saved,
-  savedDestinations,
   select,
   toggle,
 }: {
   header: React.ReactElement;
   bottomPadding: number;
   saved: ReadonlySet<string>;
-  savedDestinations: Destination[];
   select: (a: Destination) => void;
   toggle: (id: string) => void;
 }) {
@@ -550,32 +546,6 @@ function Destinations({
           onToggle={() => toggle(item.destination.id)}
         />
       )}
-      ListFooterComponent={
-        <View>
-          <Section title="Saved destinations" />
-          {savedDestinations.length ? (
-            savedDestinations.map((a) => (
-              <Row
-                key={a.id}
-                destination={a}
-                saved
-                onSelect={() => select(a)}
-                onToggle={() => toggle(a.id)}
-              />
-            ))
-          ) : (
-            <View style={s.emptyState}>
-              <FlowIcon name="heart" color={MUTED} />
-              <View style={s.emptyCopy}>
-                <Text style={s.emptyTitle}>No saved destinations yet</Text>
-                <Text style={s.emptyText}>
-                  Tap a heart to keep a destination close at hand.
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-      }
     />
   );
 }
@@ -780,20 +750,6 @@ const s = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
   },
-  emptyState: {
-    minHeight: 76,
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 12,
-    padding: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  emptyCopy: { flex: 1 },
-  emptyTitle: { color: NAVY, fontSize: 14, fontWeight: "800" },
-  emptyText: { color: MUTED, fontSize: 12, lineHeight: 18, marginTop: 2 },
   matchLabel: { color: BLUE, fontSize: 12, fontWeight: "700", marginBottom: 4 },
   action: {
     minHeight: 58,
