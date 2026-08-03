@@ -4,10 +4,11 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
+    "start": "npm run local:preview",
+    "local:preview": "node ./scripts/start-local-preview.mjs",
+    "android": "node ./scripts/start-local-preview.mjs --android",
+    "ios": "node ./scripts/start-local-preview.mjs --ios",
+    "web": "node ./scripts/start-local-preview.mjs --web",
     "typecheck": "tsc --noEmit",
     "test": "node --test --require ./testAssetSetup.cjs --import jiti/register \"src/**/*.test.ts\"",
     "expo:doctor": "expo-doctor"

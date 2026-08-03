@@ -9,10 +9,10 @@ import { localDateFromIso, localIsoDate } from "./localDateModel";
 import { adjustDropoff, boundedAge, CAR_AGE, carSearchParams, formatTime, initializeCarForm, timeOptions, type CarForm, type CarFormErrors, validateCarForm } from "./carSearchModel";
 import type { RouteValue } from "./hotelSearchModel";
 
-type Props = { params: Record<string, RouteValue> };
+type Props = { params: Record<string, RouteValue>; embedded?: boolean; showSubmit?: boolean; submitLabel?: string };
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 
-export function CarSearchPanel({ params }: Props) {
+export function CarSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search cars" }: Props) {
   const initial = useRef<ReturnType<typeof initializeCarForm> | undefined>(undefined);
   if (!initial.current) initial.current = initializeCarForm(params);
   const [form, setForm] = useState<CarForm>(initial.current.form);
@@ -49,14 +49,14 @@ export function CarSearchPanel({ params }: Props) {
     const adjusted = timeSheet === "pickupTime" ? adjustDropoff(next) : { form: next, adjusted: false };
     setForm(adjusted.form); if (adjusted.adjusted) setNotice("Drop-off was adjusted to remain later than pick-up."); clear("pickupTime", "dropoffTime"); setTimeSheet(undefined);
   };
-  return <View style={[flowStyles.card, flowStyles.shadow]}>
+  return <View style={[!embedded && flowStyles.card, !embedded && flowStyles.shadow]}>
     <LocationInput inputRef={pickupRef} label="Pick-up location" value={form.pickupLocation} error={errors.pickupLocation} onChange={(pickupLocation) => { setForm({ ...form, pickupLocation }); if (pickupLocation.trim()) clear("pickupLocation"); }}/>
     <Pressable accessibilityRole="checkbox" accessibilityLabel="Return to a different location" accessibilityState={{ checked: form.separateDropoff }} onPress={() => setForm({ ...form, separateDropoff: !form.separateDropoff })} style={styles.checkboxRow}><View style={[styles.checkbox, form.separateDropoff && styles.checked]}>{form.separateDropoff ? <FlowIcon name="check" color="white" size={15}/> : null}</View><Text style={flowStyles.meta}>Return to a different location</Text></Pressable>
     {form.separateDropoff ? <LocationInput label="Drop-off location" value={form.dropoffLocation} error={errors.dropoffLocation} onChange={(dropoffLocation) => { setForm({ ...form, dropoffLocation }); if (dropoffLocation.trim()) clear("dropoffLocation"); }}/> : null}
     <View style={styles.row}><FieldError error={errors.pickupDate} style={styles.half}><Field label="Pick-up date" value={displayDate(form.pickupDate)} onPress={() => setCalendar("pickupDate")}/></FieldError><FieldError error={errors.pickupTime} style={styles.half}><Field label="Pick-up time" value={formatTime(form.pickupTime)} onPress={() => setTimeSheet("pickupTime")}/></FieldError></View>
     <View style={styles.row}><FieldError error={errors.dropoffDate} style={styles.half}><Field label="Drop-off date" value={displayDate(form.dropoffDate)} onPress={() => setCalendar("dropoffDate")}/></FieldError><FieldError error={errors.dropoffTime} style={styles.half}><Field label="Drop-off time" value={formatTime(form.dropoffTime)} onPress={() => setTimeSheet("dropoffTime")}/></FieldError></View>
     <Field label="Driver age" value={`${form.driverAge} years old`} trailing={<FlowIcon name="chevron" size={18}/>} onPress={() => setAgeOpen(true)}/>{errors.driverAge ? <Text accessibilityRole="alert" style={styles.error}>{errors.driverAge}</Text> : null}
-    {notice ? <UnavailableNotice text={notice}/> : null}<View style={styles.pad}><PrimaryButton label="Search cars" onPress={submit}/></View>
+    {notice ? <UnavailableNotice text={notice}/> : null}{showSubmit ? <View style={styles.pad}><PrimaryButton label={submitLabel} onPress={submit}/></View> : null}
     <LocalCalendarModal visible={Boolean(calendar)} title={calendar === "dropoffDate" ? "Choose drop-off date" : "Choose pick-up date"} selected={calendar ? form[calendar] : form.pickupDate} minimum={calendar === "dropoffDate" ? form.pickupDate : localIsoDate(new Date())} onChoose={chooseDate} onClose={() => setCalendar(undefined)}/>
     <TimeSheet kind={timeSheet} selected={timeSheet ? form[timeSheet] : form.pickupTime} onChoose={chooseTime} onClose={() => setTimeSheet(undefined)}/>
     <AgeSheet visible={ageOpen} age={form.driverAge} onConfirm={(driverAge) => { setForm({ ...form, driverAge }); clear("driverAge"); setAgeOpen(false); }} onClose={() => setAgeOpen(false)}/>

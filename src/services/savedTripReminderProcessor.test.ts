@@ -35,7 +35,7 @@ function hotel(overrides: Record<string, unknown> = {}) {
   return {
     id: "hotel-1",
     userId: "user-1",
-    provider: "Hotelbeds",
+    provider: "Kurioticket static catalogue",
     hotelName: "Kuri Hotel",
     destination: "Los Angeles",
     checkIn: new Date(now.getTime() + day),

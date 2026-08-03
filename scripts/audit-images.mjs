@@ -18,7 +18,7 @@ const {
 } = jiti("../src/data/images/imagePurchasePlan.ts");
 const { getSourceIdentity, validateImageRegistry } = jiti("../src/data/images/imageRegistryValidation.ts");
 
-const commonImageHostPattern = /https:\/\/(?:images\.unsplash\.com|images\.pexels\.com|photos\.hotelbeds\.com)\/[^\s"'`<>)]*/g;
+const commonImageHostPattern = /https:\/\/(?:images\.unsplash\.com|images\.pexels\.com)\/[^\s"'`<>)]*/g;
 const localPublicImagePathPattern = /(?<![\w.-])\/images\/[\w./-]+\.(?:avif|gif|jpe?g|png|svg|webp)(?:\?[^\s"'`<>)]*)?/gi;
 const registeredLocalPublicImagePattern = /^\/images\/[\w./-]+\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 const textFileExtensions = new Set([

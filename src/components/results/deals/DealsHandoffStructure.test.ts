@@ -12,18 +12,21 @@ test("handoff keeps the responsive summary and ordered provider steps contract",
   assert.match(page, /page-shell max-w-5xl/); assert.match(client, /xl:grid-cols-\[minmax\(0,1fr\)_300px\]/); assert.match(client, /<DealsHandoffSummary[\s\S]*<div className="order-2/); assert.match(client, /<ol id="provider-steps"/); assert.match(summary, /role="progressbar"/); assert.match(card, /aria-current=/);
 });
 test("provider activation remains safe, persistent, specific, and accessible", () => {
-  assert.match(client, /markDealsProviderOpened/); assert.match(client, /writeDealsTripPlan/); assert.match(client, /getNextDealsProviderStep/); assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /deals\.handoff\.newTab/); assert.match(client, /plan\.resultsPath/); assert.match(card, /min-h-11/); assert.doesNotMatch(client + card, /window\.open|partnerRedirectUrl|bookingUrl|Open details/);
+  assert.match(client, /markDealsProviderOpened/); assert.match(client, /writeDealsTripPlan/); assert.match(client, /getNextDealsProviderStep/); assert.match(client, /allOpened=\{next\.allOpened\}/); assert.doesNotMatch(client, /nextId=/); assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /deals\.handoff\.newTab/); assert.match(client, /plan\.resultsPath/); assert.match(card, /min-h-11/); assert.doesNotMatch(client + card, /window\.open|partnerRedirectUrl|bookingUrl|Open details/);
 });
-test("flight and hotel use explicit protected-provider actions while cars retain details actions", () => {
+test("flight uses a protected-provider action while stays and cars retain internal details actions", () => {
   assert.match(presentation, /DealsHandoffActionKind/);
   assert.match(presentation, /"provider-handoff"/);
   assert.match(presentation, /"internal-details"/);
   assert.match(presentation, /buildDealsInternalRedirectHref/);
   assert.match(card, /step\.actionKind === "provider-handoff"/);
   assert.match(card, /deals\.handoff\.continueToProvider/);
+  assert.match(card, /step\.product === "hotel"/);
+  assert.match(card, /deals\.handoff\.reviewStayAgain/);
+  assert.match(card, /deals\.handoff\.openStay/);
   assert.match(card, /deals\.handoff\.reviewCarAgain/);
   assert.match(card, /deals\.handoff\.openCar/);
-  assert.doesNotMatch(card, /openFlight|openStay|reviewFlightAgain|reviewStayAgain/);
+  assert.doesNotMatch(card, /openFlight|reviewFlightAgain/);
   assert.doesNotMatch(card + presentation, /partnerRedirectUrl|bookingUrl|window\.open|window\.location|location\.assign|location\.replace/);
 });
 test("handoff cards omit provider identities while preserving product, price, and action contracts", () => {
@@ -127,10 +130,11 @@ test("trip summary keeps its content without owning results navigation", () => {
   assert.match(summary, /deals\.handoff\.estimateDisclosure/);
   assert.match(summary, /deals\.handoff\.openingDoesNotBook/);
   assert.match(summary, /deals\.handoff\.summaryRefreshRequired/);
-  assert.match(summary, /deals\.handoff\.goToNextStep/);
-  assert.match(summary, /href=\{`#\$\{nextId\}`\}/);
-  assert.match(summary, /<ArrowDown aria-hidden/);
-  assert.match(summary, /min-h-11/);
+  assert.doesNotMatch(summary, /\bnextId\b/);
+  assert.doesNotMatch(summary, /deals\.handoff\.goToNextStep/);
+  assert.doesNotMatch(summary, /ArrowDown/);
+  assert.doesNotMatch(summary, /href=\{`#\$\{nextId\}`\}/);
+  assert.doesNotMatch(summary, /Go to next provider step/);
   assert.doesNotMatch(summary, /bg-blue-50|bg-amber-50|rounded-xl p-3/);
 });
 

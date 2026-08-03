@@ -65,7 +65,7 @@ function ReadyPlan({ plan, now, locale, selectedCurrency, rates, t, progressUnsa
   const combined = getDealsTripPlanEstimatedTotal(plan, selectedCurrency, rates.rates);
   const progress = t("deals.handoff.progress").replace("{{opened}}", String(opened)).replace("{{total}}", String(actionable.length));
   return <div className="mt-7 grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
-    <DealsHandoffSummary modeLabel={t(modeKeys[plan.mode])} opened={opened} total={actionable.length} totalLabel={combined === null ? null : formatCurrency(combined, selectedCurrency)} progressLabel={progress} allOpened={next.allOpened} hasExpired={steps.some(step => step.status === "expired")} nextId={next.product ? `provider-step-${next.product}` : null} t={t} />
+    <DealsHandoffSummary modeLabel={t(modeKeys[plan.mode])} opened={opened} total={actionable.length} totalLabel={combined === null ? null : formatCurrency(combined, selectedCurrency)} progressLabel={progress} allOpened={next.allOpened} hasExpired={steps.some(step => step.status === "expired")} t={t} />
     <div className="order-2 min-w-0 xl:order-1">
       <p className="sr-only" aria-live="polite">{announcement}</p>
       {progressUnsaved && <p role="status" className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-semibold text-amber-900">{t("deals.handoff.progressUnsaved")}</p>}

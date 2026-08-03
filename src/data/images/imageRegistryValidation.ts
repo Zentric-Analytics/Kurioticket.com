@@ -98,7 +98,7 @@ export function validateImageRegistry(images: RegisteredImage[]): ImageRegistryV
     }
 
     if (image.status === "provider-real") {
-      if (!image.sourcePage && !image.licenseNotes && !["provider", "hotelbeds"].includes(image.source)) {
+      if (!image.sourcePage && !image.licenseNotes && image.source !== "provider") {
         warnings.push(issue(image, "Provider-real images should identify their provider/source."));
       }
       if (["premium-stock", "pexels", "unsplash", "temporary"].includes(image.source)) {

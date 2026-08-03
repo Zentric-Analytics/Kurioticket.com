@@ -20,7 +20,7 @@ type TestProvider = Parameters<typeof filterProviderStatuses>[0][number];
 
 const providerStatuses = [
   provider("Flights", "Duffel"),
-  provider("Hotels", "Hotelbeds"),
+  provider("Hotels", "Kurioticket static catalogue"),
   provider("Cars", "Not connected"),
 ];
 

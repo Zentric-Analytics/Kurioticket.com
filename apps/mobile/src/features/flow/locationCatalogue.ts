@@ -1,35 +1,11 @@
 import { airports, type Airport } from "./airportData";
 import { destinationById, destinations, type Destination } from "../explore/destinationCatalogue";
 import { destinationImage } from "../explore/destinationMedia";
+import { CURATED_POPULAR_EXPLORE_DESTINATION_IDS } from "../../../../../src/shared/destinations/exploreDestinationContent";
 
 export type LocationPresentation = { destination: Destination; airport: Airport; image?: number };
-export const CURATED_POPULAR_DESTINATION_IDS = [
-  "fr-paris",
-  "gb-london",
-  "us-new-york",
-  "id-bali",
-  "ng-lagos",
-  "ae-dubai",
-  "jp-tokyo",
-  "za-cape-town",
-  "it-rome",
-  "tr-istanbul",
-  "th-bangkok",
-  "es-barcelona",
-  "eg-cairo",
-  "ma-marrakesh",
-  "sg-singapore",
-  "nl-amsterdam",
-  "ca-toronto",
-  "us-los-angeles",
-  "ng-abuja",
-  "gh-accra",
-  "za-johannesburg",
-  "ke-nairobi",
-  "pt-lisbon",
-  "au-sydney",
-  "br-rio-de-janeiro",
-] as const;
+export const CURATED_POPULAR_DESTINATION_IDS =
+  CURATED_POPULAR_EXPLORE_DESTINATION_IDS;
 
 function locationById(id: string): LocationPresentation {
   const destination = destinationById.get(id);

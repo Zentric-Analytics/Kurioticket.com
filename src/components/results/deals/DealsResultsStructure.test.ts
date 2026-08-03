@@ -14,19 +14,27 @@ const tripPlanBar = readFileSync(new URL("./DealsTripPlanBar.tsx", import.meta.u
 const presentation = readFileSync(new URL("../../../lib/deals/dealsPackageCardPresentation.ts", import.meta.url), "utf8");
 const english = readFileSync(new URL("../../../lib/i18n/en.ts", import.meta.url), "utf8");
 
-test("translated Deals copy states the separate-provider booking model", () => {
+test("translated Deals copy states the mixed live and planning inventory model", () => {
   for (const copy of [
     "Mix-and-match trip options",
     "Estimated trip total",
-    "Provider sources: {{count}}",
+    "Included sources: {{count}}",
     "Choose trip option",
     "Trip option selected",
     "This is not one package booking.",
-    "Review separate booking steps",
-    "Each item is booked separately with its provider.",
+    "Review separate trip steps",
+    "Live items continue to their provider; planning-only items are reviewed on Kurioticket.",
   ]) assert.match(english, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(card, /deals\.results\.package\.bookingModel/);
   assert.doesNotMatch(results + card + pricePanel + tripPlanBar, /Choose package|Book package|Continue to provider/);
+});
+
+test("hotel availability reasons distinguish catalogue misses from ineligible returned stays", () => {
+  assert.match(results, /state\.hotel\.results\.length \? "deals\.results\.package\.hotelUnavailable" : "deals\.results\.package\.hotelEmpty"/);
+  assert.match(english, /No stays are available for this destination in Kurioticket’s current hotel catalogue\./);
+  assert.match(english, /The returned stays are missing an indicative total or a safe Kurioticket details page\./);
+  assert.doesNotMatch(english, /The returned hotels do not have a live price and a safe, bookable details action\./);
+  assert.doesNotMatch(results, /partnerRedirectUrl|bookingUrl/);
 });
 
 test("package result states share one centered max-w-5xl width contract", () => {
@@ -54,10 +62,13 @@ test("results render one mix-and-match trip-option list after the shared search 
   assert.ok(summary >= 0 && summary < breadcrumbs && breadcrumbs < packages);
   assert.match(results, /buildDealsPackageCandidates/);
   assert.match(results, /<DealsPackageResultsToolbar/);
-  assert.match(results, /<ol aria-label=/);
+  assert.match(results, /<ol aria-label=\{t\("deals\.results\.package\.title"\)\}/);
   assert.match(results, /sortedCandidates\.map\(candidate/);
-  assert.match(results, /t\("deals\.results\.package\.intro"\)/);
-  assert.match(results, /<h1 className="text-2xl font-extrabold/);
+  assert.match(results, /<h1 className="sr-only">\{t\("deals\.results\.package\.title"\)\}<\/h1>/);
+  assert.match(results, /<h1 className="sr-only">[\s\S]*<div className="space-y-4"><DealsPackageResultsToolbar[\s\S]*showPackageSortSkeleton \?/);
+  assert.doesNotMatch(results, /<h1 className="text-2xl font-extrabold text-slate-950">/);
+  assert.doesNotMatch(results, /t\("deals\.results\.package\.intro"\)/);
+  assert.doesNotMatch(results, /mt-2 max-w-3xl text-sm leading-6 text-slate-600/);
   assert.doesNotMatch(results, /<DealsProductSection|<DealsPreviewRail/);
 });
 

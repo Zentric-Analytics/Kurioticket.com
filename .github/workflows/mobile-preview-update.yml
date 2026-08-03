@@ -1,4 +1,4 @@
-name: Publish mobile preview update
+name: Validate mobile preview
 
 on:
   pull_request:
@@ -23,20 +23,15 @@ permissions:
   contents: read
 
 jobs:
-  publish-preview-update:
-    name: Validate and publish mobile preview
+  validate-preview:
+    name: Validate mobile preview
     runs-on: ubuntu-latest
+    env:
+      APP_VARIANT: preview
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
 
     steps:
-      - name: Check for EXPO_TOKEN
-        if: github.event_name != 'pull_request'
-        shell: bash
-        run: |
-          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
-            echo "Missing EXPO_TOKEN repository secret."
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
@@ -48,13 +43,6 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
-
-      - name: Setup Expo and EAS
-        if: github.event_name != 'pull_request'
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install mobile dependencies
         working-directory: apps/mobile
@@ -72,40 +60,31 @@ jobs:
         working-directory: apps/mobile
         run: npm run expo:doctor
 
+      - name: Resolve Preview public configuration
+        working-directory: apps/mobile
+        run: npx expo config --type public --json > /tmp/kurioticket-preview-public.json
+
+      - name: Validate Preview iOS prebuild configuration
+        working-directory: apps/mobile
+        run: npx expo config --type prebuild --json > /tmp/kurioticket-preview-prebuild.json
+
+      - name: Resolve Production public configuration
+        working-directory: apps/mobile
+        env:
+          APP_VARIANT: production
+          APP_BUILD_MODE: release
+          EXPO_PUBLIC_API_BASE_URL: https://kurioticket.com
+        run: npx expo config --type public --json > /tmp/kurioticket-production-public.json
+
+      - name: Validate resolved application identities
+        run: >-
+          node -e "const fs=require('fs'); const preview=JSON.parse(fs.readFileSync('/tmp/kurioticket-preview-public.json')); const production=JSON.parse(fs.readFileSync('/tmp/kurioticket-production-public.json')); const ok=preview.name==='Kurioticket Preview'&&preview.ios.bundleIdentifier==='com.kurioticket.app.preview'&&preview.android.package==='com.kurioticket.app.preview'&&preview.scheme==='kurioticket-preview'&&preview.extra.environment.apiBaseUrl==='https://staging.kurioticket.com'&&production.name==='Kurioticket'&&production.ios.bundleIdentifier==='com.kurioticket.app'&&production.android.package==='com.kurioticket.app'&&production.scheme==='kurioticket'&&production.extra.environment.apiBaseUrl==='https://kurioticket.com'; if(!ok) throw new Error('Resolved mobile identities do not match the approved matrix');"
+
       - name: Validate Metro export
         working-directory: apps/mobile
         env:
           CI: "1"
         run: npx expo export --platform all --output-dir /tmp/kurioticket-mobile-export --clear
 
-      - name: Select safe delivery method
-        id: delivery
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" > /tmp/mobile-changes.txt
-          git show "${{ github.event.before }}:apps/mobile/package.json" > /tmp/mobile-package-before.json
-          if grep -Eq '^apps/mobile/(app\.json|eas\.json|android/|ios/)' /tmp/mobile-changes.txt || \
-             ! node -e "const fs=require('fs'); const normalize=(value)=>Object.entries(value ?? {}).sort(([a],[b])=>a.localeCompare(b)); const before=JSON.parse(fs.readFileSync('/tmp/mobile-package-before.json')); const after=require('./apps/mobile/package.json'); process.exit(JSON.stringify(normalize(before.dependencies)) === JSON.stringify(normalize(after.dependencies)) ? 0 : 1)"; then
-            echo "native_changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "native_changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Publish update to preview channel
-        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && steps.delivery.outputs.native_changed != 'true')
-        working-directory: apps/mobile
-        env:
-          CI: "1"
-        run: >-
-          eas update
-          --channel preview
-          --environment preview
-          --platform all
-          --non-interactive
-          --message "Automated preview update from dev ${{ github.sha }}"
-
-      - name: Build native preview app
-        if: github.event_name == 'push' && steps.delivery.outputs.native_changed == 'true'
-        working-directory: apps/mobile
-        run: eas build --platform android --profile preview --non-interactive
+      - name: Confirm delivery remains gated
+        run: echo "Validation complete. EAS Updates and native builds require a separately approved workflow."

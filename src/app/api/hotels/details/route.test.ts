@@ -50,7 +50,7 @@ test("hotel details returns 404 for an unknown id", async () => {
   const payload = await response.json() as { error?: string };
 
   assert.equal(response.status, 404);
-  assert.equal(payload.error, "This hotel quote is no longer available. Please search again for current prices.");
+  assert.equal(payload.error, "Hotel not found.");
 });
 
 test("hotel details returns the selected cached public hotel", async () => {
@@ -79,5 +79,5 @@ test("hotel details does not return a different cached hotel for an unknown id",
 
   assert.equal(response.status, 404);
   assert.equal(payload.hotel, undefined);
-  assert.equal(payload.error, "This hotel quote is no longer available. Please search again for current prices.");
+  assert.equal(payload.error, "Hotel not found.");
 });

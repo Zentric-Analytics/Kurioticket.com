@@ -5,13 +5,13 @@ Kurioticket is a travel metasearch and provider-handoff product for flights, hot
 ## Authoritative travel architecture
 
 - Flights use Duffel only.
-- Hotels use Hotelbeds only.
+- Hotels use Kurioticket's server-owned static catalogue. Prices are indicative and external booking is disabled.
 - Cars use Kurioticket's server-owned static catalogue. Cars do not expose an external checkout.
 - Deals compose those same flight, hotel, and car pipelines; Deals is not a provider.
 - Web and native clients call Kurioticket server endpoints and share the same search contracts.
 - Provider credentials stay server-side.
 
-Provider failures return bounded empty or unavailable states. The application must never fabricate flight or hotel inventory, insert editorial hotels into live availability, or claim an unsupported car booking action.
+Provider failures return bounded empty or unavailable states. Static catalogue products must remain truthful about indicative pricing and unsupported booking actions.
 
 ## Local setup
 
@@ -40,7 +40,7 @@ Use `.env.example` as the source of truth. Important categories are:
 - Google authentication;
 - Resend email delivery;
 - Duffel flight credentials and active API mode;
-- Hotelbeds hotel credentials, base URL, and active API mode;
+- server-owned static hotel catalogue configuration (no hotel credentials required);
 - server-owned scheduled-job secrets;
 - mobile's public Kurioticket API origin.
 
