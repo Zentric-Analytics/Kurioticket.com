@@ -159,6 +159,7 @@ export function HotelsScreen() {
             focalY={0.63}
             accessibilityLabel="Hotels hero image"
           />
+          <View pointerEvents="none" style={styles.hotelHeroOverlay} />
         </View>
         <View style={styles.hotelBody}>
           <HotelSearchPanel ref={panel} params={params} />
@@ -239,6 +240,7 @@ const styles = StyleSheet.create({
   page: { paddingHorizontal: 9, paddingBottom: 28 },
   hotelPage: { paddingHorizontal: 14, paddingBottom: 28 },
   hotelHero: { height: 290, marginHorizontal: -14, overflow: "hidden" },
+  hotelHeroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "#071A4866" },
   hotelBody: { marginTop: -22, gap: 10 },
   heroShell: { height: 290, marginHorizontal: -9, overflow: "hidden" },
   heroHeader: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 5 },

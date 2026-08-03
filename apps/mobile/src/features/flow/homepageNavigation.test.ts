@@ -65,6 +65,7 @@ test("Hotels starts with its hero and overlaps it with search without marketing 
   );
 
   assert.match(hotels, /<ScrollView[^>]*>\s*<View style=\{styles\.hotelHero\}>/s);
+  assert.match(hotels, /<View pointerEvents="none" style=\{styles\.hotelHeroOverlay\} \/>/);
   assert.match(products, /hotelBody:\s*\{\s*marginTop:\s*-22/);
   assert.doesNotMatch(hotels, /HomeTopNavigation|accessibilityLabel="Notifications"/);
   assert.doesNotMatch(hotels, /accessibilityRole="header"|Find the stays|Compare hotels/);
