@@ -38,7 +38,7 @@ export const CURATED_HOTEL_FALLBACK_IMAGES = [
 export function normalizeHotelImageUrl(candidate: unknown, context: HotelImageContext = {}): string {
   if (typeof candidate === "string") {
     const trimmed = candidate.trim();
-    if (isSafeHttpsImageUrl(trimmed)) return trimmed;
+    if (isSafeHotelImageUrl(trimmed)) return trimmed;
   }
 
   return selectCuratedHotelFallbackImage(context);
@@ -53,7 +53,7 @@ export function normalizeHotelImageUrls(candidates: unknown): string[] {
   for (const candidate of candidates) {
     if (typeof candidate !== "string") continue;
     const trimmed = candidate.trim();
-    if (!isSafeHttpsImageUrl(trimmed) || seen.has(trimmed)) continue;
+    if (!isSafeHotelImageUrl(trimmed) || seen.has(trimmed)) continue;
     seen.add(trimmed);
     urls.push(trimmed);
   }
@@ -70,6 +70,10 @@ export function isSafeHttpsImageUrl(candidate: string): boolean {
   } catch {
     return false;
   }
+}
+
+export function isSafeHotelImageUrl(candidate: string): boolean {
+  return /^\/images\/[a-z0-9_./-]+\.(?:avif|gif|jpe?g|png|svg|webp)$/i.test(candidate) || isSafeHttpsImageUrl(candidate);
 }
 
 export function selectCuratedHotelFallbackImage(context: HotelImageContext = {}): string {

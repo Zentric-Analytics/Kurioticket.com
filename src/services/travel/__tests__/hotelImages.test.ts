@@ -1,11 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { normalizeHotelImageUrl, selectCuratedHotelFallbackImage } from "../hotelImages";
+import { isSafeHotelImageUrl, normalizeHotelImageUrl, selectCuratedHotelFallbackImage } from "../hotelImages";
 
 test("hotel image helper accepts valid HTTPS provider URLs", () => {
   const url = "https://images.example.com/hotel.jpg";
   assert.equal(normalizeHotelImageUrl(url, { destination: "Paris" }), url);
+});
+
+test("hotel image helper accepts approved local repository assets", () => {
+  assert.equal(isSafeHotelImageUrl("/images/premium/hotels/property.jpg"), true);
+  assert.equal(normalizeHotelImageUrl("/images/premium/hotels/property.jpg"), "/images/premium/hotels/property.jpg");
+  assert.equal(isSafeHotelImageUrl("/api/private-image"), false);
 });
 
 test("hotel image helper rejects empty, malformed, and non-HTTPS URLs", () => {

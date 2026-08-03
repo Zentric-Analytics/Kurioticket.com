@@ -15,7 +15,7 @@ Every image used in production should be:
 
 ## Provider-real vs. marketing images
 
-Provider-real images are supplied by travel inventory providers for a specific returned entity, such as a hotel property image from Hotelbeds. These images may appear in hotel results only when they correspond to the matched provider result and should not be reused for generic marketing cards, destination inspiration, or fallback imagery.
+Provider-real images are supplied by an approved travel inventory provider for a specific returned entity. Kurioticket's current static hotel catalogue uses approved repository assets with recorded provenance and does not claim provider imagery.
 
 Marketing images are selected by Kurioticket for surfaces such as homepage hero modules, destination cards, car discovery cards, deal cards, and inspiration cards. Marketing images require source, creator, license, crop, and launch approval metadata before they become launch-critical.
 

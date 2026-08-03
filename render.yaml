@@ -116,12 +116,6 @@ services:
         sync: false
       - key: DUFFEL_API_KEY
         sync: false
-      - key: HOTELBEDS_API_KEY
-        sync: false
-      - key: HOTELBEDS_SECRET
-        sync: false
-      - key: HOTELBEDS_BASE_URL
-        sync: false
       - key: ADMIN_EMAILS
         sync: false
       - key: HOMEPAGE_FARES_CRON_SECRET
@@ -167,12 +161,6 @@ services:
       - key: SAVED_TRIP_REMINDERS_CRON_SECRET
         sync: false
       - key: DUFFEL_API_KEY
-        sync: false
-      - key: HOTELBEDS_API_KEY
-        sync: false
-      - key: HOTELBEDS_SECRET
-        sync: false
-      - key: HOTELBEDS_BASE_URL
         sync: false
       - key: ADMIN_EMAILS
         sync: false

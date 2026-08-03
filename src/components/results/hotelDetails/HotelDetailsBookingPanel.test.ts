@@ -139,7 +139,7 @@ test("uses unboxed icon and text rows for the stay summary", () => {
   assert.ok(priceToStayLine < bookingSource.indexOf("staySummary.dateText"));
 });
 
-test("preserves both actions after the open-line transition", () => {
+test("preserves internal planning action and conditionally renders provider action", () => {
   for (const contract of [
     "LinkButton",
     "href={changeSearchHref}",
@@ -148,8 +148,8 @@ test("preserves both actions after the open-line transition", () => {
     "Button",
     'variant="accent"',
     'size="lg"',
-    "disabled={!providerEnabled || redirecting}",
-    "aria-describedby",
+    "providerEnabled ?",
+    "disabled={redirecting}",
     "onClick={onContinue}",
     "providerDisclaimerText",
   ])
