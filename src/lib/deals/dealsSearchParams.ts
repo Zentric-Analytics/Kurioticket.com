@@ -16,7 +16,11 @@ export const dealsPackageModes = [
 export type DealsPackageMode = (typeof dealsPackageModes)[number];
 export type DealsCabinClass = "economy" | "business" | "first";
 export type DealsFlightTripType = "round-trip" | "one-way";
-export type DealsProduct = "flight" | "hotel" | "car";
+export type DealsProduct = "hotel" | "flight" | "car";
+export const dealsProductOrder = ["hotel", "flight", "car"] as const satisfies readonly DealsProduct[];
+export type DealsProductToggleResult =
+  | { changed: true; mode: DealsPackageMode }
+  | { changed: false; mode: DealsPackageMode; reason: "minimum-products" };
 
 export type DealsSearch = {
   mode: DealsPackageMode;
@@ -49,6 +53,21 @@ export const isDealsPackageMode = (value: string): value is DealsPackageMode => 
 export const getIncludedProducts = (mode: DealsPackageMode): Record<DealsProduct, boolean> => ({
   flight: mode !== "hotel-car", hotel: mode !== "flight-car", car: mode !== "hotel-flight",
 });
+export const getIncludedProductList = (mode: DealsPackageMode): DealsProduct[] =>
+  dealsProductOrder.filter((product) => getIncludedProducts(mode)[product]);
+
+export function getDealsPackageModeForProducts(products: Iterable<DealsProduct>): DealsPackageMode | null {
+  const selected = new Set(products);
+  const key = dealsProductOrder.filter((product) => selected.has(product)).join("-");
+  return isDealsPackageMode(key) ? key : null;
+}
+
+export function tryToggleDealsProduct(mode: DealsPackageMode, product: DealsProduct): DealsProductToggleResult {
+  const selected = new Set(getIncludedProductList(mode));
+  if (selected.has(product)) selected.delete(product); else selected.add(product);
+  const nextMode = getDealsPackageModeForProducts(selected);
+  return nextMode ? { changed: true, mode: nextMode } : { changed: false, mode, reason: "minimum-products" };
+}
 
 export const createDefaultDealsSearch = (): DealsSearch => ({
   mode: "hotel-flight", flightOriginText: "", flightOriginCode: "", flightDestinationText: "", flightDestinationCode: "",

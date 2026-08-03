@@ -10,8 +10,10 @@ import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import { DealsHandoffSkeleton } from "./DealsHandoffSkeleton";
 import { DealsHandoffStepCard } from "./DealsHandoffStepCard";
 import { DealsHandoffSummary } from "./DealsHandoffSummary";
+import { DealsJourneyProgress } from "./DealsJourneyProgress";
 import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getDealsHandoffSteps } from "@/lib/deals/dealsHandoffPresentation";
+import { getHandoffReadyDealsJourneyProgress } from "@/lib/deals/dealsJourneyProgress";
 import { getDealsTripPlanEstimatedTotal, getDealsTripPlanReadiness, getNextDealsProviderStep, markDealsProviderOpened, type DealsTripPlan, type DealsTripPlanProduct } from "@/lib/deals/dealsTripPlan";
 import { readDealsTripPlan, writeDealsTripPlan, type DealsTripPlanReadResult } from "@/lib/deals/dealsTripPlanStorage";
 import { translations as en } from "@/lib/i18n/en";
@@ -64,7 +66,10 @@ function ReadyPlan({ plan, now, locale, selectedCurrency, rates, t, progressUnsa
   const opened = actionable.filter(step => step.status === "opened").length;
   const combined = getDealsTripPlanEstimatedTotal(plan, selectedCurrency, rates.rates);
   const progress = t("deals.handoff.progress").replace("{{opened}}", String(opened)).replace("{{total}}", String(actionable.length));
-  return <div className="mt-7 grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
+  const journeyProgress = getHandoffReadyDealsJourneyProgress(plan);
+  return <>
+    <DealsJourneyProgress progress={journeyProgress} t={t} />
+    <div data-deals-handoff-ready-grid className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
     <DealsHandoffSummary modeLabel={t(modeKeys[plan.mode])} opened={opened} total={actionable.length} totalLabel={combined === null ? null : formatCurrency(combined, selectedCurrency)} progressLabel={progress} allOpened={next.allOpened} hasExpired={steps.some(step => step.status === "expired")} t={t} />
     <div className="order-2 min-w-0 xl:order-1">
       <p className="sr-only" aria-live="polite">{announcement}</p>
@@ -72,7 +77,8 @@ function ReadyPlan({ plan, now, locale, selectedCurrency, rates, t, progressUnsa
       <ol id="provider-steps" aria-label={t("deals.handoff.providerSteps")} className="space-y-4">{steps.map(step => <li key={step.product}><DealsHandoffStepCard step={step} displayCurrency={selectedCurrency} resultsPath={plan.resultsPath} t={t} onOpen={() => onOpen(step.product)} price={Number.isFinite(step.sourcePrice) && step.sourcePrice > 0 && step.sourceCurrency.trim() ? formatDisplayPrice({ amount: step.sourcePrice, sourceCurrency: step.sourceCurrency, displayCurrency: selectedCurrency, convertSourceEstimate: true, rates: rates.rates, isFallbackRate: rates.isFallback }) : null} /></li>)}</ol>
       {plan.carsResultsPath && <Link href={plan.carsResultsPath} className="mt-4 inline-flex min-h-11 items-center font-bold text-[#004BB8] underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">{t("deals.handoff.compareCars")}</Link>}
     </div>
-  </div>;
+    </div>
+  </>;
 }
 
 function StatePanel({ kind, title, body, action, href, missing }: { kind: "storage" | "missing" | "warning"; title: string; body: string; action: string; href: string; missing?: string[] }) {
