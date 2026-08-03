@@ -1,0 +1,137 @@
+name: Publish mobile preview update
+
+on:
+  workflow_run:
+    workflows:
+      - Validate mobile preview
+    types:
+      - completed
+  workflow_dispatch:
+
+concurrency:
+  group: publish-mobile-preview-update
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish-preview:
+    name: Publish Android preview OTA update
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'dev' &&
+      github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    env:
+      APP_VARIANT: preview
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+      CI: "1"
+
+    steps:
+      - name: Require Expo credentials
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::EXPO_TOKEN is required to publish the preview OTA update."
+            exit 1
+          fi
+
+      - name: Checkout validated source
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'dev' }}
+
+      - name: Confirm mobile project exists
+        run: test -d apps/mobile || { echo "::error::apps/mobile does not exist."; exit 1; }
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Validate resolved Expo project
+        id: expo-config
+        working-directory: apps/mobile
+        run: |
+          npx expo config --type public --json > /tmp/kurioticket-preview-config.json
+          node <<'NODE'
+          const fs = require('fs');
+          const config = JSON.parse(fs.readFileSync('/tmp/kurioticket-preview-config.json', 'utf8'));
+          const projectId = config.extra?.eas?.projectId;
+          if (!config.slug || !projectId || !config.version || !config.runtimeVersion) {
+            throw new Error('Resolved Expo project must include slug, EAS project ID, app version, and runtime version.');
+          }
+          const runtimeVersion = typeof config.runtimeVersion === 'string'
+            ? config.runtimeVersion
+            : JSON.stringify(config.runtimeVersion);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `app_version=${config.version}\nruntime_version=${runtimeVersion}\n`);
+          console.log(`Expo project: ${config.owner ? `${config.owner}/` : ''}${config.slug} (${projectId})`);
+          console.log(`App version: ${config.version}`);
+          console.log(`Runtime version: ${runtimeVersion}`);
+          NODE
+          echo "Commit to publish: $(git rev-parse HEAD)"
+          echo "EAS channel: preview"
+          echo "EAS environment: preview"
+
+      - name: Publish Android preview OTA update
+        working-directory: apps/mobile
+        run: |
+          GITHUB_SHA="$(git rev-parse HEAD)"
+          export GITHUB_SHA
+          eas update \
+            --channel preview \
+            --environment preview \
+            --platform android \
+            --non-interactive \
+            --message "Preview update from ${GITHUB_SHA}" \
+            --json | tee /tmp/kurioticket-preview-update.json
+
+      - name: Write publication summary
+        env:
+          APP_VERSION: ${{ steps.expo-config.outputs.app_version }}
+          RUNTIME_VERSION: ${{ steps.expo-config.outputs.runtime_version }}
+          TRIGGER_TYPE: ${{ github.event_name }}
+        run: |
+          SOURCE_COMMIT="$(git rev-parse HEAD)"
+          export SOURCE_COMMIT
+          node <<'NODE'
+          const fs = require('fs');
+          const parsed = JSON.parse(fs.readFileSync('/tmp/kurioticket-preview-update.json', 'utf8'));
+          const updates = Array.isArray(parsed) ? parsed : (parsed.updates || [parsed]);
+          const update = updates.find((item) => item.platform === 'android') || updates[0] || {};
+          const updateId = update.id || update.updateId || 'Not reported';
+          const groupId = update.group || update.groupId || 'Not reported';
+          const updateUrl = update.url || update.updateUrl || 'Not reported';
+          const lines = [
+            '# Mobile preview OTA publication',
+            '',
+            `- Source commit: \`${process.env.SOURCE_COMMIT}\``,
+            `- Trigger type: \`${process.env.TRIGGER_TYPE}\``,
+            '- Preview channel: `preview`',
+            '- Preview environment: `preview`',
+            `- App version: \`${process.env.APP_VERSION}\``,
+            `- Runtime version: \`${process.env.RUNTIME_VERSION}\``,
+            `- EAS update ID: \`${updateId}\``,
+            `- EAS update group ID: \`${groupId}\``,
+            `- Update URL: ${updateUrl === 'Not reported' ? updateUrl : `[Open update](${updateUrl})`}`,
+            '- APK built: **No** — this workflow publishes only an EAS OTA update.',
+            '- Runtime compatibility: an installed preview APK must have the matching runtime version to receive this update.',
+          ];
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
+          NODE
