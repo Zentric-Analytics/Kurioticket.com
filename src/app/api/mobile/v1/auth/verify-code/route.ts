@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { checkAuthRateLimit, AuthRateLimitError } from "@/lib/auth-rate-limit";
 import { emailSchema } from "@/lib/validation";
 import { getPrisma } from "@/lib/prisma";
+import { canUseStagingCredentials } from "@/lib/previewTesterAccess";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,7 @@ export async function POST(request: Request) {
   const email = emailSchema.safeParse(body?.email);
   const code = String(body?.code || "").trim();
   if (!email.success || !/^\d{6}$/.test(code)) return NextResponse.json({ error: "Enter the six-digit code." }, { status: 400 });
+  if (!(await canUseStagingCredentials(email.data))) return NextResponse.json({ error: "Preview access is restricted." }, { status: 403 });
   try {
     checkAuthRateLimit({ action: "mobile-verify-code", email: email.data, request, limit: 10, windowMs: 15 * 60_000 });
     const identifier = `email-verification:${email.data}`;
