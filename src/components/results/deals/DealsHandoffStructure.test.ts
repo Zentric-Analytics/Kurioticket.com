@@ -77,6 +77,26 @@ test("handoff cards keep prices and actions readable in balanced columns", () =>
   assert.match(card, /inline-flex whitespace-nowrap items-center gap-1 rounded-full/);
 });
 
+test("handoff cards use a calm and consistent typography hierarchy", () => {
+  assert.match(card, /text-sm font-medium leading-5 text-slate-500/);
+  assert.match(card, /text-xl font-semibold leading-7 text-slate-950/);
+  assert.match(card, /inline-flex whitespace-nowrap items-center gap-1 rounded-full px-3 py-1\.5 text-sm font-medium/);
+  assert.match(card, /text-lg font-semibold leading-7 text-slate-950/);
+  assert.match(card, /mt-2 text-2xl font-semibold leading-8 tracking-wide text-slate-900/);
+  assert.match(card, /<dt className="text-sm font-medium leading-5 text-slate-500">/);
+  assert.match(card, /<dd className="mt-1 font-medium leading-6 text-slate-900">/);
+  assert.match(card, /text-sm font-medium leading-5 text-slate-600/);
+  assert.match(card, /mt-1 text-xl font-semibold leading-7 tracking-tight tabular-nums text-slate-950/);
+
+  const action = card.match(/<a href=\{step\.href\}[\s\S]*?<\/a>/)?.[0] ?? "";
+  assert.match(action, /text-sm font-semibold/);
+  const refresh = card.match(/<Link href=\{resultsPath\}[\s\S]*?<\/Link>/)?.[0] ?? "";
+  assert.match(refresh, /font-semibold/);
+
+  assert.doesNotMatch(card, /\bfont-bold\b/);
+  assert.doesNotMatch(card, /\bfont-extrabold\b/);
+});
+
 test("handoff cards retain consistent product details and semantic room grouping", () => {
   for (const field of ["step.airline", "step.flightNumber", "step.routeLabel", "step.departureLabel", "step.arrivalLabel", "step.durationLabel"]) assert.match(card, new RegExp(field.replace(".", "\\.")));
   for (const field of ["step.name", "step.location", "step.checkInLabel", "step.checkOutLabel", "step.nights", "step.roomType"]) assert.match(card, new RegExp(field.replace(".", "\\.")));
