@@ -53,4 +53,3 @@ export function buildStaticHotelResults(search: HotelSearchParams) {
 export function calculateHotelStayNights(checkIn: string, checkOut: string) {
   return Math.max(Math.round((Date.parse(checkOut) - Date.parse(checkIn)) / 86_400_000), 1);
 }
-

@@ -53,4 +53,3 @@ export const staticHotelCatalogue: readonly StaticHotelRecord[] = [
 ];
 
 export const supportedStaticHotelDestinations = ["London", "Paris", "New York", "Tokyo"] as const;
-

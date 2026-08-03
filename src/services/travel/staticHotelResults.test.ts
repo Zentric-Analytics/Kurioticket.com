@@ -28,4 +28,3 @@ test("details resolve from the same catalogue", () => {
   assert.equal(getStaticHotelById(selected.id),selected);
   assert.equal(getStaticHotelById("unknown-hotel"),null);
 });
-

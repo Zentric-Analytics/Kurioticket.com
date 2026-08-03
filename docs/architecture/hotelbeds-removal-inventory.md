@@ -19,4 +19,3 @@ Inventory completed before implementation on `refactor/static-hotel-pipeline`.
 ## Database finding
 
 No Hotelbeds-specific Prisma field or migration exists. Generic provider logging and cached selection data remain reusable. No schema migration is required.
-
