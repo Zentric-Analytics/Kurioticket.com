@@ -6,6 +6,8 @@ const api = readFileSync("src/app/api/admin/preview-testers/route.ts", "utf8");
 const mutationApi = readFileSync("src/app/api/admin/preview-testers/[id]/route.ts", "utf8");
 const page = readFileSync("src/app/admin/preview-testers/page.tsx", "utf8");
 const migration = readFileSync("prisma/migrations/20260803180000_add_preview_testers/migration.sql", "utf8");
+const migrationWorkflow = readFileSync(".github/workflows/migration-validation.yml", "utf8");
+const schemaVerifier = readFileSync("scripts/verify-preview-tester-schema.mjs", "utf8");
 
 test("Preview tester admin APIs and UI fail closed outside staging", () => {
   assert.match(api, /requirePreviewTesterAdmin/);
@@ -26,4 +28,13 @@ test("Preview tester migration is additive and has no destructive statements", (
   assert.match(migration, /CREATE TABLE "PreviewTester"/);
   assert.doesNotMatch(migration, /\b(DROP\s+(TABLE|COLUMN|TYPE)|TRUNCATE|DELETE\s+FROM|UPDATE\s+\S+\s+SET)\b/i);
   assert.doesNotMatch(migration, /ON DELETE CASCADE/i);
+});
+
+test("ephemeral PostgreSQL CI verifies Preview schema and migration idempotency", () => {
+  assert.match(migrationWorkflow, /postgres:16-alpine/);
+  assert.match(migrationWorkflow, /verify-preview-tester-schema\.mjs/);
+  assert.match(migrationWorkflow, /Confirm migration deployment is idempotent/);
+  assert.match(schemaVerifier, /PreviewTester_emailNormalized_key/);
+  assert.match(schemaVerifier, /confdeltype !== "n"/);
+  assert.match(schemaVerifier, /must not seed records/);
 });
