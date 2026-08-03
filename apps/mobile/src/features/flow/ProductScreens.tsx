@@ -25,7 +25,6 @@ import {
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { ResponsiveHero } from "./ResponsiveHero";
-import { HomeTopNavigation } from "./HomeFlowScreen";
 
 
 function Page({
@@ -147,12 +146,10 @@ export function FlightsScreen() {
 export function HotelsScreen() {
   const params = useLocalSearchParams<{ destination?: string | string[]; checkIn?: string | string[]; checkOut?: string | string[]; guests?: string | string[]; rooms?: string | string[] }>();
   const panel = useRef<HotelSearchHandle>(null);
-  const insets = useSafeAreaInsets();
   return (
     <View style={flowStyles.safe}>
-      <StatusBar style="dark" translucent backgroundColor="white" />
+      <StatusBar style="dark" translucent backgroundColor="transparent" />
       <ScrollView contentContainerStyle={styles.hotelPage} keyboardShouldPersistTaps="handled">
-        <HomeTopNavigation safeAreaTop={insets.top} />
         <View style={styles.hotelHero}>
           <ResponsiveHero
             source={require("../../../assets/heroes/hotels-room.png")}
