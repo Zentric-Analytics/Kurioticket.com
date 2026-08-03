@@ -36,12 +36,15 @@ test("homepage uses one continuous header surface and applies its safe area once
   );
 });
 
-test("homepage header assets and notification action render once", () => {
+test("homepage alone owns the logo and notification action", () => {
   const home = source("src/features/flow/HomeFlowScreen.tsx");
+  const products = source("src/features/flow/ProductScreens.tsx");
   assert.equal(home.match(/kurioticket-logo-primary-light-bg\.png/g)?.length, 1);
   assert.equal(home.match(/accessibilityLabel="Notifications"/g)?.length, 1);
   assert.equal(home.match(/router\.push\("\/notifications"\)/g)?.length, 1);
   assert.match(home, /homeTopNavigationContent:\s*\{\s*height: 60/);
+  assert.doesNotMatch(products, /kurioticket-logo-primary-light-bg\.png/);
+  assert.doesNotMatch(products, /<HomeTopNavigation/);
 });
 
 test("hero directly follows the complete header for guests and signed-in users", () => {
@@ -54,11 +57,17 @@ test("hero directly follows the complete header for guests and signed-in users",
   assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*HomeHero/s);
 });
 
-test("non-homepage route files do not own the homepage header", () => {
-  const routeFiles = ["app/(tabs)/explore.tsx", "app/(tabs)/trips.tsx"];
-  for (const routeFile of routeFiles) {
-    assert.doesNotMatch(source(routeFile), /HomeTopNavigation|homeTopNavigation/);
-  }
+test("Hotels starts with its hero and overlaps it with search without marketing copy", () => {
+  const products = source("src/features/flow/ProductScreens.tsx");
+  const hotels = products.slice(
+    products.indexOf("export function HotelsScreen()"),
+    products.indexOf("export function CarsScreen()"),
+  );
+
+  assert.match(hotels, /<ScrollView[^>]*>\s*<View style=\{styles\.hotelHero\}>/s);
+  assert.match(products, /hotelBody:\s*\{\s*marginTop:\s*-22/);
+  assert.doesNotMatch(hotels, /HomeTopNavigation|accessibilityLabel="Notifications"/);
+  assert.doesNotMatch(hotels, /accessibilityRole="header"|Find the stays|Compare hotels/);
 });
 
 test("bottom navigation remains owned by the fixed tabs layout", () => {
