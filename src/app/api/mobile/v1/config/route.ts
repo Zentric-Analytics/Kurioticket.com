@@ -1,10 +1,12 @@
 import { mobileApiSuccess } from "@/lib/mobile-api/response";
+import { getPublicEnvironment, isStagingEnvironment } from "@/lib/stagingSafety";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const mobileApiV1Config = {
+export function getMobileApiV1Config() { return {
   apiVersion: "v1",
+  environment: getPublicEnvironment(),
   minimumSupportedAppVersion: null,
   latestAppVersion: null,
   maintenanceMode: false,
@@ -14,9 +16,10 @@ export const mobileApiV1Config = {
     cars: false,
     pushNotifications: false,
     socialAuthentication: true,
+    externalCheckout: !isStagingEnvironment(),
   },
-} as const;
+} as const; }
 
 export async function GET() {
-  return mobileApiSuccess(mobileApiV1Config);
+  return mobileApiSuccess(getMobileApiV1Config());
 }

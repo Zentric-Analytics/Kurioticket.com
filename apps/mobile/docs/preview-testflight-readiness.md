@@ -15,14 +15,14 @@ The smallest collision-free Preview increase is app version and runtime `0.3.0`.
 
 | Dependency | Classification | Evidence and required follow-up |
 | --- | --- | --- |
-| Database | Unknown | `render.yaml` declares a distinct `kurioticket-postgres-staging` database, name, and user, but the deployed binding was not accessible for verification. |
-| Travel provider | Unknown | The staging blueprint declares a separate `DUFFEL_API_KEY`, but does not declare `TRAVEL_PROVIDER_MODE`, `DUFFEL_API_MODE`, or `ALLOW_SANDBOX_PROVIDERS`. Server defaults are production/live under a production Node runtime. An authorized operator must prove sandbox mode and a non-production key. |
-| Authentication | Unknown | Staging has separate secret placeholders, but deployed issuer, callback origin, client, and secret isolation were not verifiable. |
-| Email | Unknown | Staging has separate Resend placeholders, but the deployed key, sender, and recipient safeguards were not verifiable. Real email cannot yet be ruled out. |
-| Transactions and bookings | Unknown | Kurioticket does not directly collect travel-payment cards and generally hands off to providers, but a live provider redirect or booking path cannot be ruled out until provider mode and `DUFFEL_BOOKING_ENABLED` are verified. |
-| Monitoring and analytics | Unknown | No dedicated staging monitoring/analytics binding was found in the blueprint, and deployed metadata separation was not accessible. |
+| Database | Verified non-production | The deployed service is bound to the separate database in the authorized Staging Workspace and not to the Production database. |
+| Travel provider | Production/live | Staging mode and sandbox permission are configured, but the deployed Duffel mode and credential are live. Replacement with test mode and a test credential remains mandatory. |
+| Authentication | Unknown | Canonical staging application and callback URLs are configured, but an authorized operator must still confirm the protected secret values differ from Production. |
+| Email | Production/live | Resend is configured without a verified staging allowlist or staging-labelled sender, so unrestricted external delivery remains possible. |
+| Transactions and bookings | Production/live | Kurioticket does not directly create supplier orders or charges, but its current live provider handoff can reach an external checkout. |
+| Monitoring and analytics | Verified non-production | Render logs and metrics are scoped to the staging service and application records use the separate staging database. |
 
-The first Preview build is blocked until an authorized hosting-account operator verifies the deployed staging bindings without exposing their values. Travel providers must be sandbox/non-production, database/auth/email must be isolated, and live booking or charging must be impossible or explicitly disabled.
+The first Preview build remains blocked until the live provider credential and mode are replaced, email is restricted, authentication secret separation is confirmed, the staging deployment is reverified, and the repository safeguards below are deployed.
 
 ## Apple signing audit
 
@@ -36,3 +36,13 @@ No Apple Distribution certificate, App Store provisioning profile, or EAS iOS cr
 The account currently has no certificate to reuse, so the new certificate consumes one distribution-certificate slot. EAS must not revoke, replace, or modify an unrelated certificate. Provisioning profiles can be regenerated; certificate revocation is disruptive to future builds and profiles and is never part of this flow without separate approval.
 
 No certificate, provisioning profile, build, upload, submission, or release occurred while preparing this change.
+
+## Staging hardening and Render follow-up
+
+Repository safeguards now fail closed when the canonical staging deployment is not explicitly configured for staging provider mode, Duffel test mode, sandbox-provider permission, and a configured provider credential. The credential's test/live classification must still be verified manually by an authorized operator; repository code does not inspect, log, or claim to prove the protected value's classification. Staging email requires a non-empty recipient allowlist containing only valid addresses and permits one normalized exact-match recipient per send. Display-name, multiple-recipient, substring, and unlisted plus-address forms are rejected. CC and BCC are not supported by the centralized sender. The sender address must use a `staging` or `preview` local-part token, or an exact `staging` or `preview` domain label; a superficial substring is insufficient. Provider checkout handoffs are disabled in staging, authentication requires canonical staging URLs and configured staging secrets, and public/diagnostic records carry only the safe `staging` or `production` environment classification.
+
+After this repository change is approved and merged, an authorized operator must separately approve and perform the Render changes. Set `TRAVEL_PROVIDER_MODE` to `staging`, `DUFFEL_API_MODE` to `test`, and `ALLOW_SANDBOX_PROVIDERS` to `true`; replace the live Duffel credential with a test credential and manually verify its classification; configure `STAGING_EMAIL_ALLOWED_RECIPIENTS`; and use a sender matching the exact policy above. Confirm `NEXT_PUBLIC_APP_URL` and `NEXTAUTH_URL` remain on `staging.kurioticket.com`, and manually confirm staging authentication and OAuth secret values differ from Production without displaying them.
+
+Saving Render environment changes requires a staging redeploy. Redeployment needs separate owner approval. Afterward, verify the mobile health and config endpoints report `environment: staging`, confirm provider test-mode behavior without creating an order, verify allowed and blocked email recipients without contacting external recipients, and repeat the complete staging safety audit. The first Preview build remains blocked until those checks pass.
+
+Rollback is repository-first: revert the hardening commit if it causes an application regression. Render variables and credentials should be restored only from Render's protected history by an authorized operator. Removing the staging allowlist or invalidating any provider control intentionally leaves the affected feature disabled. Production URL, provider, email, authentication, redirect, and version behavior are unchanged by these staging-only gates.

@@ -6,8 +6,16 @@ import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import type { NormalizedHotelResult } from "@/lib/types";
+import { isStagingEnvironment } from "@/lib/stagingSafety";
 
 export async function POST(request: Request) {
+  if (isStagingEnvironment()) {
+    return NextResponse.json(
+      { error: "Provider checkout is disabled in Preview." },
+      { status: 403 },
+    );
+  }
+
   const body = (await request.json()) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string };
   if (!body.id || !body.type) {
     return NextResponse.json({ error: "Redirect target is required." }, { status: 400 });
