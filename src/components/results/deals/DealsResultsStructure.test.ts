@@ -18,7 +18,6 @@ test("translated Deals copy states the mixed live and planning inventory model",
   for (const copy of [
     "Mix-and-match trip options",
     "Estimated trip total",
-    "Included sources: {{count}}",
     "Choose trip option",
     "Trip option selected",
     "This is not one package booking.",
@@ -159,7 +158,11 @@ test("combined cards disclose estimated totals and separate provider booking", (
   assert.match(pricePanel, /priceBreakdown/);
   assert.match(card, /candidate\.badgeKey/);
   assert.match(pricePanel, /deals\.results\.package\.providerPrice/);
-  assert.match(pricePanel, /deals\.results\.package\.providerCount/);
+  assert.doesNotMatch(pricePanel, /deals\.results\.package\.providerCount/);
+  assert.doesNotMatch(pricePanel, /candidate\.providerCount/);
+  assert.doesNotMatch(pricePanel, /\binterpolate\b/);
+  assert.doesNotMatch(english, /"deals\.results\.package\.providerCount"/);
+  assert.doesNotMatch(english, /Included sources: \{\{count\}\}/);
   assert.match(pricePanel, /deals\.results\.package\.choose/);
   assert.match(pricePanel, /deals\.results\.package\.selected/);
   assert.match(pricePanel, /aria-pressed=\{selected\}/);
@@ -192,6 +195,11 @@ test("the loading card mirrors the compact responsive pricing layout", () => {
   assert.match(skeleton, /md:grid-cols-\[minmax\(0,0\.8fr\)_minmax\(0,1\.2fr\)\]/);
   assert.match(skeleton, /lg:grid-cols-\[minmax\(180px,0\.75fr\)_minmax\(300px,1\.15fr\)_minmax\(220px,0\.85fr\)\]/);
   assert.doesNotMatch(skeleton, /lg:grid-cols-\[minmax\(0,1fr\)_260px\]/);
+  assert.match(skeleton, /space-y-2"><div className="h-3 w-3\/4 rounded bg-slate-200" \/><div className="h-7 rounded bg-slate-200" \/><\/div>/);
+  assert.doesNotMatch(skeleton, /h-3 w-2\/3 rounded bg-slate-200/);
+  assert.match(skeleton, /space-y-2"><div className="h-8 rounded bg-slate-200" \/><div className="h-8 rounded bg-slate-200" \/><\/div>/);
+  assert.match(skeleton, /h-11 rounded-xl bg-slate-200/);
+  assert.match(skeleton, /h-3 w-5\/6 rounded bg-slate-200/);
 });
 
 test("package cards use compact, content-driven vertical spacing", () => {

@@ -3628,7 +3628,6 @@ export const translations: TranslationDictionary = {
   "deals.results.package.providerPrice": "Source price",
   "deals.results.package.notProvided": "Not provided",
   "deals.results.package.estimatedTotal": "Estimated trip total",
-  "deals.results.package.providerCount": "Included sources: {{count}}",
   "deals.results.package.disclosure": "This is not one package booking. Live provider prices and availability are confirmed separately; planning estimates are not bookings.",
   "deals.results.package.bookingModel": "Mix-and-match trip option. Live items continue separately to providers, while planning-only items are reviewed on Kurioticket.",
   "deals.results.package.choose": "Choose trip option",
