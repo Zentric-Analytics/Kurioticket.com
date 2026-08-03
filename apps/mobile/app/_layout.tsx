@@ -4,6 +4,8 @@ import { AppThemeProvider, useAppTheme } from "../src/theme/AppTheme";
 import { useEffect } from "react";
 import { buildStartupLog } from "../src/diagnostics/buildDiagnostics";
 import { getRuntimeDiagnostics } from "../src/diagnostics/runtimeDiagnostics";
+import { PreviewBanner } from "../src/components/PreviewBanner";
+import { View } from "react-native";
 
 export default function RootLayout() {
   useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
@@ -13,8 +15,9 @@ export default function RootLayout() {
 function ThemedRootLayout() {
   const { theme } = useAppTheme();
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <StatusBar style={theme.dark ? "light" : "dark"} backgroundColor={theme.background} />
+      <PreviewBanner />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -28,6 +31,6 @@ function ThemedRootLayout() {
         <Stack.Screen name="welcome" />
         <Stack.Screen name="connection-status" />
       </Stack>
-    </>
+    </View>
   );
 }
