@@ -30,8 +30,8 @@ import {
 
 import { signinSchema } from "@/lib/validation";
 import { isPasskeyLoginToken, passkeyStrongAuthNote } from "@/lib/passkeys";
-import { assertStagingAuthenticationSafety } from "@/lib/stagingSafety";
-import { canRetainStagingSession, canUseStagingCredentials, canUseStagingGoogle } from "@/lib/previewTesterAccess";
+import { assertStagingAuthenticationSafety, isStagingEnvironment } from "@/lib/stagingSafety";
+import { canRetainStagingSession, canUseStagingCredentials, canUseStagingGoogle, isTrustedPreviewCompanyEmail } from "@/lib/previewTesterAccess";
 
 import {
   EmailVerificationCooldownError,
@@ -454,10 +454,6 @@ export const authOptions: NextAuthOptions =
           account?.provider ===
           "google";
 
-        if (isGoogleSignIn && !(await canUseStagingGoogle(email))) {
-          return "/auth/signin?error=PreviewAccessRequired";
-        }
-
         const googleVerified =
           Boolean(
             (
@@ -468,6 +464,10 @@ export const authOptions: NextAuthOptions =
                 | undefined
             )?.email_verified
           );
+
+        if (isGoogleSignIn && !(await canUseStagingGoogle(email, googleVerified))) {
+          return "/auth/signin?error=PreviewAccessRequired";
+        }
 
         if (
           dbUser &&
@@ -520,9 +520,8 @@ export const authOptions: NextAuthOptions =
           getAdminEmails();
 
         if (
-          adminEmails.includes(
-            email
-          )
+          adminEmails.includes(email) &&
+          (!isStagingEnvironment() || isTrustedPreviewCompanyEmail(email))
         ) {
           await getPrisma().user.updateMany(
             {

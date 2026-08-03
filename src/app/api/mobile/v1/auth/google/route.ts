@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   if (!payload?.sub || !email || payload.email_verified !== true || payload.nonce !== nonce) {
     return NextResponse.json({ error: genericError }, { status: 401 });
   }
-  if (!(await canUseStagingGoogle(email))) return NextResponse.json({ error: "Preview access is restricted." }, { status: 403 });
+  if (!(await canUseStagingGoogle(email, payload.email_verified === true))) return NextResponse.json({ error: "Preview access is restricted." }, { status: 403 });
 
   try {
     const user = await getOrCreateGoogleUser({
