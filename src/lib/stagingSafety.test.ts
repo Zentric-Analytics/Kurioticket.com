@@ -123,28 +123,22 @@ function testAddress(local: string, domain = ["example", "test"].join(".")) {
   return [local, domain].join("@");
 }
 
-test("staging email fails closed and permits normalized exact matches only", () => {
+test("staging email validates a single recipient and safely labelled sender", () => {
   configureStaging();
   const allowed = testAddress("recipient");
   const blocked = testAddress("blocked");
   const sender = testAddress("staging-notifications");
 
-  assert.throws(() => assertStagingEmailSafety({ to: allowed, from: sender }), /allowlist is not safely configured/);
-  process.env.STAGING_EMAIL_ALLOWED_RECIPIENTS = ` ${allowed.toUpperCase()} `;
-  assert.throws(() => assertStagingEmailSafety({ to: blocked, from: sender }), /not permitted/);
-  assert.throws(() => assertStagingEmailSafety({ to: testAddress("recipient+tag"), from: sender }), /not permitted/);
-  assert.throws(() => assertStagingEmailSafety({ to: `${allowed},${blocked}`, from: sender }), /not permitted/);
-  assert.throws(() => assertStagingEmailSafety({ to: `Recipient <${allowed}>`, from: sender }), /not permitted/);
+  assert.doesNotThrow(() => assertStagingEmailSafety({ to: allowed, from: sender }));
+  assert.doesNotThrow(() => assertStagingEmailSafety({ to: testAddress("recipient+tag"), from: sender }));
+  assert.throws(() => assertStagingEmailSafety({ to: `${allowed},${blocked}`, from: sender }), /not valid/);
+  assert.throws(() => assertStagingEmailSafety({ to: `Recipient <${allowed}>`, from: sender }), /not valid/);
   assert.doesNotThrow(() => assertStagingEmailSafety({ to: ` ${allowed.toUpperCase()} `, from: sender }));
 });
 
-test("staging email rejects malformed allowlists and requires an exact sender label", () => {
+test("staging email requires an exact sender label", () => {
   configureStaging();
   const allowed = testAddress("recipient");
-  process.env.STAGING_EMAIL_ALLOWED_RECIPIENTS = `${allowed}, ${testAddress("malformed", "invalid")}`;
-  assert.throws(() => assertStagingEmailSafety({ to: allowed, from: testAddress("staging-notifications") }), /allowlist/);
-
-  process.env.STAGING_EMAIL_ALLOWED_RECIPIENTS = allowed;
   assert.throws(() => assertStagingEmailSafety({ to: allowed, from: testAddress("notstaging") }), /sender/);
   assert.throws(() => assertStagingEmailSafety({ to: allowed, from: `${testAddress("staging")},${testAddress("preview")}` }), /sender/);
   assert.doesNotThrow(() => assertStagingEmailSafety({ to: allowed, from: `Kurioticket Preview <${testAddress("notifications", "staging.example.test")}>` }));

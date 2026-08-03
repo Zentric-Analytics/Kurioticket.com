@@ -4,6 +4,7 @@ import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getGoogleClientId } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
 import { createMobileSession } from "@/lib/mobile-auth";
+import { canUseStagingGoogle } from "@/lib/previewTesterAccess";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
   if (!payload?.sub || !email || payload.email_verified !== true || payload.nonce !== nonce) {
     return NextResponse.json({ error: genericError }, { status: 401 });
   }
+  if (!(await canUseStagingGoogle(email))) return NextResponse.json({ error: "Preview access is restricted." }, { status: 403 });
 
   try {
     const user = await getOrCreateGoogleUser({

@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
+import { canRetainStagingSession } from "@/lib/previewTesterAccess";
 
 export const MOBILE_SESSION_DAYS = 30;
 
@@ -14,10 +15,14 @@ export async function getMobileSession(request: Request) {
   const header = request.headers.get("authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   if (!token) return null;
-  return getPrisma().session.findFirst({
+  const session = await getPrisma().session.findFirst({
     where: { sessionToken: token, expires: { gt: new Date() } },
-    include: { user: { select: { id: true, email: true, name: true, image: true, status: true } } },
+    include: { user: { select: { id: true, email: true, name: true, image: true, status: true, accounts: { select: { provider: true } } } } },
   });
+  if (!session?.user.email) return session;
+  const allowed = await canRetainStagingSession(session.user.email, session.user.accounts.some((account) => account.provider === "google"));
+  if (!allowed) return null;
+  return session;
 }
 
 export function mobileSessionFingerprint(token: string) {

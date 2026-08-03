@@ -20,6 +20,12 @@ enum UserStatus {
   DELETED
 }
 
+enum PreviewTesterStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
 enum SearchType {
   FLIGHT
   HOTEL
@@ -177,10 +183,40 @@ model User {
   accountDeletionRequests  AccountDeletionRequest[]
   passkeys                 UserPasskey[]
   webAuthnChallenges       WebAuthnChallenge[]
+  previewTestersApproved   PreviewTester[]               @relation("PreviewTesterApprovedBy")
+  previewTestersSuspended  PreviewTester[]               @relation("PreviewTesterSuspendedBy")
+  previewTestersRevoked    PreviewTester[]               @relation("PreviewTesterRevokedBy")
 
   @@index([role])
   @@index([status])
   @@index([createdAt])
+}
+
+model PreviewTester {
+  id                    String              @id @default(cuid())
+  email                 String
+  emailNormalized       String              @unique
+  status                PreviewTesterStatus @default(SUSPENDED)
+  allowGoogleSignIn     Boolean             @default(false)
+  allowStagingEmail     Boolean             @default(false)
+  expiresAt             DateTime?
+  approvedByAdminId     String?
+  approvedAt            DateTime?
+  suspendedByAdminId    String?
+  suspendedAt           DateTime?
+  revokedByAdminId      String?
+  revokedAt             DateTime?
+  reason                String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  approvedByAdmin       User?               @relation("PreviewTesterApprovedBy", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
+  suspendedByAdmin      User?               @relation("PreviewTesterSuspendedBy", fields: [suspendedByAdminId], references: [id], onDelete: SetNull)
+  revokedByAdmin        User?               @relation("PreviewTesterRevokedBy", fields: [revokedByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([status, expiresAt])
+  @@index([approvedByAdminId])
+  @@index([suspendedByAdminId])
+  @@index([revokedByAdminId])
 }
 
 model UserProfile {

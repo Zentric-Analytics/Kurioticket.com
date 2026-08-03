@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { emailSchema } from "@/lib/validation";
 import { getPrisma } from "@/lib/prisma";
 import { createMobileSession } from "@/lib/mobile-auth";
+import { canUseStagingCredentials } from "@/lib/previewTesterAccess";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,7 @@ export async function POST(request: Request) {
   if (!email.success || name.length < 2 || name.length > 120 || !/^[A-Za-z0-9_-]{40,60}$/.test(verificationToken)) {
     return NextResponse.json({ error: "Check your account details and try again." }, { status: 400 });
   }
+  if (!(await canUseStagingCredentials(email.data))) return NextResponse.json({ error: "Preview access is restricted." }, { status: 403 });
   const identifier = `mobile-verified:${email.data}`;
   const proof = await getPrisma().verificationToken.findUnique({ where: { identifier_token: { identifier, token: verificationToken } } });
   if (!proof || proof.expires <= new Date()) return NextResponse.json({ error: "Verify your email again before creating an account." }, { status: 403 });

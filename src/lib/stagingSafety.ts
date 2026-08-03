@@ -72,15 +72,6 @@ export function assertStagingAuthenticationSafety() {
   }
 }
 
-function stagingEmailAllowlist() {
-  const configured = process.env.STAGING_EMAIL_ALLOWED_RECIPIENTS || "";
-  const entries = configured.split(",").map((value) => value.trim().toLowerCase());
-  if (!configured.trim() || entries.some((value) => !value || !EMAIL_ADDRESS.test(value))) {
-    throw new Error("Staging email allowlist is not safely configured.");
-  }
-  return new Set(entries);
-}
-
 function singleEmailAddress(value: string, allowDisplayName = false) {
   const normalizedValue = value.trim().toLowerCase();
   const displayNameMatch = normalizedValue.match(/^[^<>,]+<([^<>,]+)>$/);
@@ -101,12 +92,9 @@ function isStagingLabelledSender(sender: string) {
 export function assertStagingEmailSafety(input: { to: string; from: string }) {
   if (!isStagingEnvironment()) return;
 
-  const allowlist = stagingEmailAllowlist();
   const recipient = singleEmailAddress(input.to);
 
-  if (!recipient || !allowlist.has(recipient)) {
-    throw new Error("Staging email recipient is not permitted.");
-  }
+  if (!recipient) throw new Error("Staging email recipient is not valid.");
   if (!isStagingLabelledSender(input.from)) {
     throw new Error("Staging email sender is not safely labelled.");
   }
