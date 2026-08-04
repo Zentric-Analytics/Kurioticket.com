@@ -17,6 +17,7 @@ import {
 } from "react-native-safe-area-context";
 import { destinationById, type Destination } from "./destinationCatalogue";
 import { FlowIcon } from "../flow/FlowIcon";
+import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
 import { INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
 import {
   exactExploreResult,
@@ -300,14 +301,12 @@ function PopularDestinationCard({
           style={s.popularImage}
         />
       </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${saved ? "Remove" : "Save"} ${destination.name}`}
+      <AndroidFavoriteButton
+        saved={saved}
+        label={`${saved ? "Remove" : "Save"} ${destination.name}`}
         onPress={onToggle}
         style={s.heart}
-      >
-        <FlowIcon name="heart" color={saved ? "#E92D55" : "white"} />
-      </Pressable>
+      />
       <View style={s.popularCopy}>
         <Text style={s.popularCardTitle}>{destination.name}</Text>
         <Text style={s.countryName}>{destination.country}</Text>

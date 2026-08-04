@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { HomepageFavoriteButton } from "./HomepageFavoriteButton";
+import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
 
 export const popularDestinationStays = [
@@ -138,7 +138,7 @@ export function PopularDestinationStays() {
                   style={styles.image}
                   imageStyle={styles.imageCorners}
                 >
-                  <HomepageFavoriteButton
+                  <AndroidFavoriteButton
                     saved={saved}
                     label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
                     onPress={(event) => {
