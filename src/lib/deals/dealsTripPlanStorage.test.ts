@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createDealsTripPlan, DEALS_TRIP_PLAN_TTL_MS, updateDealsTripPlan } from "./dealsTripPlan";
-import { DEALS_TRIP_PLAN_STORAGE_KEY, parseDealsTripPlan, readDealsTripPlan, removeDealsTripPlan, serializeDealsTripPlan, writeDealsTripPlan } from "./dealsTripPlanStorage";
+import { DEALS_STAGED_JOURNEY_STORAGE_KEY, DEALS_TRIP_PLAN_STORAGE_KEY, parseDealsTripPlan, readDealsStagedJourneyPlan, readDealsTripPlan, removeDealsStagedJourneyPlan, removeDealsTripPlan, serializeDealsTripPlan, writeDealsStagedJourneyPlan, writeDealsTripPlan } from "./dealsTripPlanStorage";
 
 const makePlan = () => updateDealsTripPlan(createDealsTripPlan({ mode: "flight-car", searchFingerprint: "safe", resultsPath: "/deals/results?q=x", carsResultsPath: "/cars/results?q=x" }, 100), { flight: { id: " f ", provider: " P ", airline: " A ", origin: "LOS", destination: "LAX", departure: "d", arrival: "a", duration: "1h", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 100 } }, 101);
 const memoryStorage = (initial?: string) => { let value = initial ?? null; return { getItem: () => value, setItem: (_key: string, next: string) => { value = next; }, removeItem: () => { value = null; }, value: () => value }; };
@@ -38,4 +38,17 @@ test("storage failures are explicit and a later retry can succeed", () => {
   assert.equal(writeDealsTripPlan(makePlan(), throwing), false); assert.equal(removeDealsTripPlan(throwing), false);
   const storage = memoryStorage(); assert.equal(writeDealsTripPlan(makePlan(), storage), true); assert.ok(storage.value()); assert.equal(removeDealsTripPlan(storage), true); assert.equal(storage.value(), null);
   assert.equal(DEALS_TRIP_PLAN_STORAGE_KEY, "kurioticket_deals_trip_plan_v1");
+});
+
+test("staged and legacy storage reads, writes, removals, and invalidation are isolated", () => {
+  const values = new Map<string, string>(); const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); }, removeItem: (key: string) => { values.delete(key); } };
+  const legacy = makePlan(); const staged = { ...makePlan(), resultsPath: "/deals/results?q=x&journey=staged" };
+  assert.equal(writeDealsTripPlan(legacy, storage), true); const legacyRaw = values.get(DEALS_TRIP_PLAN_STORAGE_KEY);
+  assert.equal(writeDealsStagedJourneyPlan(staged, storage), true); assert.equal(values.get(DEALS_TRIP_PLAN_STORAGE_KEY), legacyRaw);
+  assert.equal(readDealsTripPlan("safe", 101, storage).status, "valid"); assert.equal(readDealsStagedJourneyPlan("safe", 101, storage).status, "valid");
+  removeDealsStagedJourneyPlan(storage); assert.equal(readDealsTripPlan("safe", 101, storage).status, "valid");
+  writeDealsStagedJourneyPlan(staged, storage); removeDealsTripPlan(storage); assert.equal(readDealsStagedJourneyPlan("safe", 101, storage).status, "valid");
+  values.set(DEALS_TRIP_PLAN_STORAGE_KEY, serializeDealsTripPlan(legacy)); assert.equal(readDealsStagedJourneyPlan("wrong", 101, storage).status, "fingerprint_mismatch"); assert.equal(readDealsTripPlan("safe", 101, storage).status, "valid");
+  values.set(DEALS_STAGED_JOURNEY_STORAGE_KEY, "{"); assert.equal(readDealsStagedJourneyPlan("safe", 101, storage).status, "invalid"); assert.equal(readDealsTripPlan("safe", 101, storage).status, "valid");
+  writeDealsStagedJourneyPlan(staged, storage); assert.equal(readDealsStagedJourneyPlan("safe", 100 + DEALS_TRIP_PLAN_TTL_MS, storage).status, "expired"); assert.equal(readDealsTripPlan("safe", 101, storage).status, "valid");
 });
