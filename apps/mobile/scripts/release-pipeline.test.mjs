@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import test from 'node:test';
 import { classifyRelease } from './classify-release.mjs';
@@ -7,6 +8,7 @@ import { validateSourcePolicy, validateStaticDeliveryInputs } from './delivery-p
 import { assertReleasePolicy, loadReleaseFiles } from './release-policy.mjs';
 import { resolvePreviewVersionEvidence } from './resolve-preview-version-code.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
+import { buildReleaseAudit } from './write-release-audit.mjs';
 
 const { policy, eas, root } = loadReleaseFiles();
 const valid = (variant = 'preview', overrides = {}) => ({ variant, sha: 'a'.repeat(40), runtime: policy[variant].runtimeVersion, packageName: policy[variant].androidPackage, channel: policy[variant].channel, profile: policy[variant].profile, apiBaseUrl: policy[variant].apiBaseUrl, confirmation: variant === 'preview' ? 'DELIVER ANDROID PREVIEW' : 'DELIVER ANDROID PRODUCTION', action: 'build', releaseReason: 'approved release', baselineBuildId: 'NONE', policy, eas, ...overrides });
@@ -57,6 +59,28 @@ test('Preview build verifies first-binary history for the exact package and prof
   assert.match(workflow, /resolve-preview-version-code\.mjs/);
   assert.doesNotMatch(workflow, /build:list[^\n]*(?:production|com\.kurioticket\.mobile)/);
 });
+test('Preview build preserves EAS failure through tee and freezes credential mutation', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
+  assert.match(workflow, /set -o pipefail[\s\S]*eas-cli@16\.17\.4 build --platform android --profile preview --freeze-credentials --non-interactive --json \| tee/);
+  assert.match(workflow, /if-no-files-found:\s*warn/);
+  assert.doesNotMatch(workflow, /continue-on-error/);
+});
+test('failed build submission still produces a safe audit with no empty-result parser failure', () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-audit-'));
+  try {
+    const delivery = resolve(directory, 'delivery.json');
+    const version = resolve(directory, 'version.json');
+    writeFileSync(delivery, '');
+    writeFileSync(version, JSON.stringify({ currentRemoteVersionCode: 2, proposedVersionCode: 3 }));
+    const audit = buildReleaseAudit({ WORKFLOW_RUN_ID: 'run', RELEASE_ENVIRONMENT: 'preview', RELEASE_PACKAGE: policy.preview.androidPackage, RELEASE_PROFILE: 'preview', RELEASE_RUNTIME: 'preview-0.3.0', RELEASE_CHANNEL: 'preview', BASELINE_EAS_BUILD_ID: 'NONE', DELIVERY_RESULT_PATH: delivery, VERSION_EVIDENCE_PATH: version, FINAL_STATUS: 'failure' }, '2026-08-04T00:00:00.000Z');
+    assert.equal(audit.finalStatus, 'failure');
+    assert.equal(audit.deliveryResult, null);
+    assert.equal(audit.evidenceStatus.deliveryResult, 'empty');
+    assert.equal(audit.versionCode.currentRemoteVersionCode, 2);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 test('delivery workflows require their protected environment token without repository fallback syntax', () => {
   const names = ['android-preview-ota.yml', 'android-preview-build.yml', 'android-production-delivery.yml'];
   for (const name of names) {
@@ -91,6 +115,12 @@ test('configured Preview versionCode increments and is never reset to 1', () => 
   const result = resolvePreviewVersionEvidence({ versionOutput: 'Android versionCode - 7', versionExitCode: 0, buildsOutput: '[]', buildsExitCode: 0, packageName: policy.preview.androidPackage, profile: 'preview', runtime: 'preview-0.3.0' });
   assert.equal(result.currentRemoteVersionCode, 7);
   assert.equal(result.proposedVersionCode, 8);
+});
+test('initialized remote Preview state remains authoritative after a failed attempt', () => {
+  const result = resolvePreviewVersionEvidence({ versionOutput: 'Android versionCode - 2', versionExitCode: 0, buildsOutput: '[]', buildsExitCode: 0, packageName: policy.preview.androidPackage, profile: 'preview', runtime: 'preview-0.3.0' });
+  assert.equal(result.currentRemoteVersionCode, 2);
+  assert.equal(result.proposedVersionCode, 3);
+  assert.equal(result.remoteVersionStatus, 'configured');
 });
 test('Preview version resolution fails closed for malformed, empty, failed, or ambiguous output', () => {
   const base = { versionOutput: 'not a version response', versionExitCode: 0, buildsOutput: '[]', buildsExitCode: 0, packageName: policy.preview.androidPackage, profile: 'preview', runtime: 'preview-0.3.0' };
