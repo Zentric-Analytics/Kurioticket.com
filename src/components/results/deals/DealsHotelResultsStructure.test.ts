@@ -40,8 +40,17 @@ test("guided Hotel results are a labelled region without a nested main", async (
   assert.match(shared, /const ResultsRoot = guided \? "div" : "main"/);
 });
 
-test("guided Hotel details has a truthful pending marker", async () => {
-  const shell = await readFile(new URL("./DealsJourneyShell.tsx", import.meta.url), "utf8");
-  assert.match(shell, /data-deals-guided-hotel-details-pending/);
-  assert.doesNotMatch(shell, /Continue to Flight|Confirm room/);
+test("guided Hotel details uses shared details experience without provider exits", async () => {
+  const [shell, stage, client] = await Promise.all([
+    readFile(new URL("./DealsJourneyShell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("./DealsHotelDetailsStage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../HotelDetailsClient.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(shell, /<DealsHotelDetailsStage/);
+  assert.match(stage, /<HotelDetailsClient/);
+  assert.match(client, /mode === "guided"/);
+  assert.match(client, /buildDealsHotelDetailsApiParams/);
+  assert.match(client, /AbortController/);
+  assert.match(client, /setResultReceivedAt\(Date\.now\(\)\)/);
+  assert.doesNotMatch(stage, /writeDealsStagedJourneyPlan|writeDealsTripPlan|\/api\/redirect|window\.location|bookingUrl|partnerRedirectUrl/);
 });

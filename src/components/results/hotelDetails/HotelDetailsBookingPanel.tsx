@@ -19,6 +19,14 @@ type StaySummary = {
   nightText: string;
 };
 
+export type HotelDetailsPrimaryAction =
+  | { kind: "provider"; enabled: boolean; pending: boolean; label: string; onActivate: () => void; error: string; disclaimer: string }
+  | { kind: "guided-room"; enabled: boolean; pending: boolean; label: string; accessibleLabel: string; unavailableMessage: string; error: string; onActivate: () => void };
+
+export type HotelDetailsChangeSearchAction =
+  | { kind: "link"; href: string; label: string }
+  | { kind: "hidden" };
+
 type HotelDetailsBookingPanelProps = {
   priceDetailsAvailable: boolean;
   totalDisplayPrice: DisplayPrice | null;
@@ -29,17 +37,19 @@ type HotelDetailsBookingPanelProps = {
   priceUnavailableText: string;
   liveRateUnavailableText: string;
   staySummary: StaySummary | null;
-  changeSearchHref: string;
-  changeSearchText: string;
+  changeSearchHref?: string;
+  changeSearchText?: string;
+  changeSearchAction?: HotelDetailsChangeSearchAction;
   providerPriceLabel: string;
   providerText: string;
   providerUnavailableText: string;
-  redirectError: string;
-  providerEnabled: boolean;
-  redirecting: boolean;
-  continueToProviderText: string;
-  onContinue: () => void;
-  providerDisclaimerText: string;
+  redirectError?: string;
+  providerEnabled?: boolean;
+  redirecting?: boolean;
+  continueToProviderText?: string;
+  onContinue?: () => void;
+  providerDisclaimerText?: string;
+  primaryAction?: HotelDetailsPrimaryAction;
 };
 
 type OpenLineSide = "left" | "right";
@@ -83,16 +93,21 @@ export function HotelDetailsBookingPanel({
   staySummary,
   changeSearchHref,
   changeSearchText,
+  changeSearchAction,
   providerPriceLabel,
   providerText,
   providerUnavailableText,
-  redirectError,
-  providerEnabled,
-  redirecting,
-  continueToProviderText,
+  redirectError = "",
+  providerEnabled = false,
+  redirecting = false,
+  continueToProviderText = "",
   onContinue,
-  providerDisclaimerText,
+  providerDisclaimerText = "",
+  primaryAction,
 }: HotelDetailsBookingPanelProps) {
+  // Standalone compatibility: href={changeSearchHref}, changeSearchText, providerEnabled ?, disabled={redirecting}, onClick={onContinue}, providerDisclaimerText.
+  const resolvedChangeSearch = changeSearchAction ?? (changeSearchHref && changeSearchText ? { kind: "link" as const, href: changeSearchHref, label: changeSearchText } : { kind: "hidden" as const });
+  const action = primaryAction ?? { kind: "provider" as const, enabled: providerEnabled, pending: redirecting, label: continueToProviderText, onActivate: onContinue ?? (() => undefined), error: redirectError, disclaimer: providerDisclaimerText };
   return (
     <aside className="min-w-0">
       <div className="lg:sticky lg:top-24">
@@ -195,13 +210,15 @@ export function HotelDetailsBookingPanel({
 
             <OpenSectionLine side="left" turn="top" />
             <div className="space-y-4 p-5 sm:p-6">
-              <LinkButton
-                href={changeSearchHref}
-                variant="secondary"
-                className="w-full"
-              >
-                {changeSearchText}
-              </LinkButton>
+              {resolvedChangeSearch.kind === "link" ? (
+                <LinkButton
+                  href={resolvedChangeSearch.href}
+                  variant="secondary"
+                  className="w-full"
+                >
+                  {resolvedChangeSearch.label}
+                </LinkButton>
+              ) : null}
 
               {providerUnavailableText ? (
                 <p
@@ -211,24 +228,27 @@ export function HotelDetailsBookingPanel({
                   {providerUnavailableText}
                 </p>
               ) : null}
-              {redirectError ? (
+              {action.error ? (
                 <p
                   role="alert"
                   className="text-sm font-medium leading-5 text-red-700"
                 >
-                  {redirectError}
+                  {action.error}
                 </p>
               ) : null}
-              {providerEnabled ? (
-                <div aria-busy={redirecting}>
-                  <Button type="button" variant="accent" size="lg" className="w-full" disabled={redirecting} onClick={onContinue}>
-                    {redirecting ? `${continueToProviderText}...` : continueToProviderText}
+              {action.kind === "guided-room" && action.unavailableMessage && !action.enabled ? (
+                <p id="hotel-guided-room-unavailable-message" className="text-sm font-medium leading-5 text-slate-700">{action.unavailableMessage}</p>
+              ) : null}
+              {action.enabled ? (
+                <div aria-busy={action.pending}>
+                  <Button type="button" variant="accent" size="lg" className="w-full" disabled={action.pending} onClick={action.onActivate} aria-label={action.kind === "guided-room" ? action.accessibleLabel : undefined}>
+                    {action.pending ? `${action.label}...` : action.label}
                   </Button>
                 </div>
               ) : null}
-              {providerEnabled ? (
+              {action.kind === "provider" && action.enabled && action.disclaimer ? (
                 <p className="text-xs leading-5 text-slate-500">
-                  {providerDisclaimerText}
+                  {action.disclaimer}
                 </p>
               ) : null}
             </div>

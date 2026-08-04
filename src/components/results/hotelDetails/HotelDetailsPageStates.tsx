@@ -1,3 +1,4 @@
+import type React from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -11,12 +12,13 @@ function SkeletonBlock({ className }: { className: string }) {
   );
 }
 
-export function HotelDetailsLoadingState({ loadingText }: { loadingText: string }) {
-  return (
-    <main className="flex-1 bg-surface-muted/40" aria-busy="true">
+export function HotelDetailsLoadingState({ loadingText, embedded = false, statusRef }: { loadingText: string; embedded?: boolean; statusRef?: React.RefObject<HTMLDivElement | null> }) {
+  const content = (
       <section className="border-b border-border bg-white">
         <div className="page-shell py-6 sm:py-8 lg:py-10">
           <div
+          ref={statusRef}
+          tabIndex={statusRef ? -1 : undefined}
           role="status"
           aria-live="polite"
           className="sr-only"
@@ -66,8 +68,8 @@ export function HotelDetailsLoadingState({ loadingText }: { loadingText: string 
           </div>
         </div>
       </section>
-    </main>
   );
+  return embedded ? content : <main className="flex-1 bg-surface-muted/40" aria-busy="true">{content}</main>;
 }
 
 type HotelDetailsUnavailableStateProps = {
@@ -77,6 +79,10 @@ type HotelDetailsUnavailableStateProps = {
   backToResultsText: string;
   resultsHref: string;
   onRetry: () => void;
+  embedded?: boolean;
+  showBackLink?: boolean;
+  headingLevel?: "h1" | "h2";
+  headingRef?: React.RefObject<HTMLHeadingElement | null>;
 };
 
 export function HotelDetailsUnavailableState({
@@ -86,9 +92,13 @@ export function HotelDetailsUnavailableState({
   backToResultsText,
   resultsHref,
   onRetry,
+  embedded = false,
+  showBackLink = true,
+  headingLevel = "h1",
+  headingRef,
 }: HotelDetailsUnavailableStateProps) {
-  return (
-    <main className="flex-1 bg-surface-muted/40">
+  const Heading = headingLevel;
+  const content = (
       <section className="border-b border-border bg-white">
         <div className="page-shell py-6 sm:py-8 lg:py-10">
           <div className="mx-auto max-w-3xl">
@@ -99,15 +109,17 @@ export function HotelDetailsUnavailableState({
                 aria-hidden="true"
               />
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl font-bold text-navy">{title}</h1>
+                <Heading ref={headingRef} tabIndex={headingRef ? -1 : undefined} className="text-2xl font-bold text-navy">{title}</Heading>
                 <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                   <Button type="button" onClick={onRetry}>
                     {retryText}
                   </Button>
-                  <LinkButton href={resultsHref} variant="secondary">
-                    {backToResultsText}
-                  </LinkButton>
+                  {showBackLink ? (
+                    <LinkButton href={resultsHref} variant="secondary">
+                      {backToResultsText}
+                    </LinkButton>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -115,6 +127,6 @@ export function HotelDetailsUnavailableState({
           </div>
         </div>
       </section>
-    </main>
   );
+  return embedded ? content : <main className="flex-1 bg-surface-muted/40">{content}</main>;
 }

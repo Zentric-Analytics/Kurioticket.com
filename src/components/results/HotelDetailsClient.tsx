@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import type {
   SavedHotelSnapshot,
@@ -56,6 +56,9 @@ import {
   translateKnownHotelDetailsLabel,
   type HotelDetailsSearchContext,
 } from "@/components/results/hotelDetails/hotelDetailsPresentation";
+import { buildDealsHotelDetailsApiParams, buildDealsHotelDetailsSelection, isCurrentDealsHotelDetailsResponse, type DealsHotelDetailsRequestContext } from "@/lib/deals/dealsHotelDetails";
+import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
+import type { DealsTripPlanHotel } from "@/lib/deals/dealsTripPlan";
 import {
   getHotelReviewBand,
   getHotelReviewCount,
@@ -68,6 +71,12 @@ export type { HotelDetailsSearchContext };
 type HotelDetailsClientProps = {
   id: string;
   searchContext?: HotelDetailsSearchContext;
+  mode?: "standalone" | "guided";
+  requestContext?: DealsHotelDetailsRequestContext;
+  guidedSearch?: DealsSearch;
+  confirming?: boolean;
+  confirmationError?: string;
+  onGuidedSelection?: (selection: DealsTripPlanHotel) => void;
 };
 
 const reviewLabelKeys: Record<HotelReviewBand, string> = {
@@ -89,6 +98,12 @@ const reviewLabelFallbacks: Record<HotelReviewBand, string> = {
 export function HotelDetailsClient({
   id,
   searchContext,
+  mode = "standalone",
+  requestContext,
+  guidedSearch,
+  confirming = false,
+  confirmationError = "",
+  onGuidedSelection,
 }: HotelDetailsClientProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
@@ -102,9 +117,21 @@ export function HotelDetailsClient({
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(() => new Set());
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const [resultReceivedAt, setResultReceivedAt] = useState<number | null>(null);
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const loadingRef = useRef<HTMLDivElement | null>(null);
+  const errorRef = useRef<HTMLHeadingElement | null>(null);
+  const retryFocusRef = useRef(false);
+  const effectiveRequestContext = requestContext ?? { id, checkIn: searchContext?.checkIn ?? "", checkOut: searchContext?.checkOut ?? "", guests: searchContext?.guests ?? "", rooms: searchContext?.rooms ?? "" };
+  const requestId = effectiveRequestContext.id;
+  const requestCheckIn = effectiveRequestContext.checkIn;
+  const requestCheckOut = effectiveRequestContext.checkOut;
+  const requestGuests = effectiveRequestContext.guests;
+  const requestRooms = effectiveRequestContext.rooms;
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     const unavailableFallback =
       enTranslations["hotelDetails.unavailableBody"] ||
       "This hotel quote is no longer available. Please search again for current prices.";
@@ -116,23 +143,27 @@ export function HotelDetailsClient({
       setLoadError("");
       setRedirectError("");
       setRedirecting(false);
+      setResultReceivedAt(null);
       setPreferredImageIndex(0);
       setFailedImageUrls(new Set());
     });
 
-    fetch(`/api/hotels/details?id=${encodeURIComponent(id)}`)
+    fetch(`/api/hotels/details?${buildDealsHotelDetailsApiParams({ id: requestId, checkIn: requestCheckIn, checkOut: requestCheckOut, guests: requestGuests, rooms: requestRooms }).toString()}`, { signal: controller.signal })
       .then(async (response) => {
         const data = (await response.json().catch(() => ({}))) as { hotel?: PublicHotelResult; error?: string };
         if (!response.ok || !data.hotel) throw new Error(data.error || unavailableFallback);
+        if (!isCurrentDealsHotelDetailsResponse(requestId, data.hotel)) throw new Error(unavailableFallback);
         return data.hotel;
       })
       .then((nextHotel) => {
         if (!active) return;
         setHotel(nextHotel);
+        setResultReceivedAt(Date.now());
         setLoadError("");
       })
       .catch((error) => {
         if (!active) return;
+        if (error instanceof DOMException && error.name === "AbortError") return;
         setLoadError(error instanceof Error ? error.message : unavailableFallback);
       })
       .finally(() => {
@@ -141,8 +172,9 @@ export function HotelDetailsClient({
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [id, loadAttempt]);
+  }, [requestId, requestCheckIn, requestCheckOut, requestGuests, requestRooms, loadAttempt]);
 
   async function continueToProvider() {
     if (!hotel || redirecting || !canUseHotelDetailsProviderLink(hotel)) return;
@@ -160,6 +192,7 @@ export function HotelDetailsClient({
     } catch (error) {
       setRedirectError(error instanceof Error ? error.message : t("hotelDetails.redirectError"));
       setRedirecting(false);
+      setResultReceivedAt(null);
     }
   }
 
@@ -268,12 +301,18 @@ export function HotelDetailsClient({
     t("hotelResults.backToResults") || "Back to Hotels results";
 
   function retryHotelLoad() {
+    retryFocusRef.current = mode === "guided";
     setLoadAttempt((attempt) => attempt + 1);
   }
+
+  useEffect(() => { if (retryFocusRef.current && loading) loadingRef.current?.focus({ preventScroll: true }); }, [loading]);
+  useEffect(() => { if (!retryFocusRef.current || loading) return; if (hotel && !loadError) headingRef.current?.focus({ preventScroll: true }); else errorRef.current?.focus({ preventScroll: true }); retryFocusRef.current = false; }, [hotel, loadError, loading]);
 
   if (loading) {
     return (
       <HotelDetailsLoadingState
+        embedded={mode === "guided"}
+        statusRef={loadingRef}
         loadingText={
           t("hotelDetails.loading") || enTranslations["hotelDetails.loading"]
         }
@@ -296,6 +335,10 @@ export function HotelDetailsClient({
         backToResultsText={backToResultsText}
         resultsHref={resultsHref}
         onRetry={retryHotelLoad}
+        embedded={mode === "guided"}
+        showBackLink={mode !== "guided"}
+        headingLevel={mode === "guided" ? "h2" : "h1"}
+        headingRef={errorRef}
       />
     );
   }
@@ -374,6 +417,9 @@ export function HotelDetailsClient({
       : !providerEnabled
         ? t("hotelDetails.directLinkUnavailable")
         : "";
+  const guidedSelection = mode === "guided" && guidedSearch && resultReceivedAt !== null ? buildDealsHotelDetailsSelection({ hotel, requestedHotelId: requestId, search: guidedSearch, resultReceivedAt }) : null;
+  const guidedActionLabel = guidedSearch?.mode === "hotel-car" ? (t("deals.guided.hotelDetails.continueCars") || "Choose this room and continue to cars") : (t("deals.guided.hotelDetails.continueFlights") || "Choose this room and continue to flights");
+  const guidedUnavailableText = t("deals.guided.hotelDetails.roomUnavailable") || "This room cannot be added to your Trip Plan because a current live room rate is unavailable.";
   const savedHotelLabel = (
     isSaved
       ? t("hotelResults.removeSavedHotel") ||
@@ -474,10 +520,9 @@ export function HotelDetailsClient({
     if (nextIndex !== -1) setPreferredImageIndex(nextIndex);
   }
 
-  return (
-    <main className="flex-1 bg-surface-muted/40">
+  const detailsContent = (
       <section className="border-b border-border bg-white">
-        <div className="page-shell py-6 sm:py-8 lg:py-10">
+        <div className={mode === "guided" ? "py-6 sm:py-8 lg:py-10" : "page-shell py-6 sm:py-8 lg:py-10"}>
           <div className="space-y-6 sm:space-y-8 lg:space-y-10">
           <HotelDetailsHeader
             resultsHref={resultsHref}
@@ -500,6 +545,11 @@ export function HotelDetailsClient({
             reviewCountText={reviewCountText}
             sourceAttributions={sourceAttributions}
             isSafeAttributionUrl={isSafeHotelDetailsHttpUrl}
+            headingLevel={mode === "guided" ? "h2" : "h1"}
+            showBackLink={mode !== "guided"}
+            showSave={mode !== "guided"}
+            allowExternalAttribution={mode !== "guided"}
+            headingRef={mode === "guided" ? headingRef : undefined}
           />
 
           <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
@@ -559,23 +609,28 @@ export function HotelDetailsClient({
               t("hotelDetails.changeDatesGuests") ||
               "Change dates and guests"
             }
+            changeSearchAction={mode === "guided" ? { kind: "hidden" } : { kind: "link", href: resultsHref, label:
+              t("hotelDetails.changeDatesGuests") ||
+              "Change dates and guests"
+            }}
             providerPriceLabel={
               t("hotelDetails.providerPrice") || "Provider price"
             }
             providerText={hotel.provider && hotel.dataSource !== "demo" ? `${t("providedBy")} ${hotel.provider}` : ""}
-            providerUnavailableText={providerUnavailableText}
+            providerUnavailableText={mode === "guided" ? "" : providerUnavailableText}
             redirectError={redirectError}
             providerEnabled={providerEnabled}
             redirecting={redirecting}
             continueToProviderText={t("continueToProvider")}
             onContinue={continueToProvider}
             providerDisclaimerText={t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}
+            primaryAction={mode === "guided" ? { kind: "guided-room", enabled: Boolean(guidedSelection) && !confirming, pending: confirming, label: guidedActionLabel, accessibleLabel: `${guidedActionLabel}: ${hotel.name}${roomType ? `, ${roomType}` : ""}`, unavailableMessage: guidedSelection ? "" : guidedUnavailableText, error: confirmationError, onActivate: () => { if (guidedSelection) onGuidedSelection?.(guidedSelection); } } : undefined}
             />
           </div>
 
           </div>
         </div>
       </section>
-    </main>
   );
+  return mode === "guided" ? <div data-guided-hotel-details-experience>{detailsContent}</div> : <main className="flex-1 bg-surface-muted/40">{detailsContent}</main>;
 }
