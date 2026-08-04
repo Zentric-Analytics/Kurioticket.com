@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.5 seconds
-Output:
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
