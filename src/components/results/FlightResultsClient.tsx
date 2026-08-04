@@ -523,12 +523,15 @@ function RecentSearchCard({
     <>
       <div className="relative h-full min-h-[112px] w-20 shrink-0 overflow-hidden bg-gradient-to-br from-[#004BB8] via-[#004BB8] to-[#5CB6B2] sm:w-24">
         {entry.image ? (
-          <img
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Recent search thumbnails can be external saved-search data and preserve the existing lightweight card contract. */}
+            <img
             src={entry.image}
             alt={entry.imageAlt || entry.label}
             loading="lazy"
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
+          </>
         ) : (
           <div className="flex h-full flex-col justify-between p-3 text-white">
             <p className="text-[0.6rem] font-black uppercase tracking-[0.16em] text-white/75">
@@ -803,7 +806,48 @@ function lockDocumentScrollWithoutLayoutShift() {
   };
 }
 
-export function FlightResultsClient() {
+export type FlightResultsPresentationMode = "standalone" | "deals-guided";
+
+export type FlightResultsSearchInput = {
+  tripType: string;
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  adults: number;
+  children: number;
+  infants: number;
+  travelers: number;
+  cabinClass: string;
+  currency?: string;
+};
+
+export type FlightResultsClientProps = {
+  presentationMode?: FlightResultsPresentationMode;
+  searchInput?: FlightResultsSearchInput;
+  buildDetailsHref?: (flight: PublicFlightResult) => string | null;
+  actionLabel?: string;
+  actionAriaLabel?: (flight: PublicFlightResult) => string;
+};
+
+const searchInputToParams = (input: FlightResultsSearchInput) => {
+  const params = new URLSearchParams({
+    tripType: input.tripType,
+    origin: input.origin,
+    destination: input.destination,
+    departureDate: input.departureDate,
+    adults: String(input.adults),
+    children: String(input.children),
+    infants: String(input.infants),
+    travelers: String(input.travelers),
+    cabinClass: input.cabinClass,
+  });
+  if (input.tripType === "round-trip" && input.returnDate) params.set("returnDate", input.returnDate);
+  if (input.currency) params.set("currency", input.currency);
+  return params;
+};
+
+export function FlightResultsClient({ presentationMode = "standalone", searchInput, buildDetailsHref, actionLabel, actionAriaLabel }: FlightResultsClientProps = {}) {
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
@@ -845,11 +889,13 @@ export function FlightResultsClient() {
     }),
     [dictionary],
   );
-  const params = useSearchParams();
+  const urlParams = useSearchParams();
   const router = useRouter();
+  const guidedMode = presentationMode === "deals-guided";
+  const params = useMemo(() => searchInput ? searchInputToParams(searchInput) : new URLSearchParams(urlParams.toString()), [searchInput, urlParams]);
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
-  const selectedCurrency = selectedOption.currency;
+  const selectedCurrency = searchInput?.currency ?? selectedOption.currency;
   const initialDateSafeParams = normalizeFlightDateSearchParams(params);
   const discoveryCards = useMemo(
     () => getHomeDiscoveryByRegion(selectedOption.code).slice(0, 4),
@@ -1509,6 +1555,7 @@ export function FlightResultsClient() {
   }, []);
 
   useEffect(() => {
+    if (guidedMode) return;
     if (sessionStatus === "loading") return;
 
     if (sessionStatus === "authenticated") {
@@ -1530,7 +1577,7 @@ export function FlightResultsClient() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [refreshBackendRecentSearches, sessionStatus]);
+  }, [guidedMode, refreshBackendRecentSearches, sessionStatus]);
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -1756,6 +1803,7 @@ export function FlightResultsClient() {
       window.removeEventListener("keydown", handleKeyDown);
       releaseExistingLock();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Existing drawer lifecycle intentionally depends on open state only.
   }, [mobileSearchOpen]);
 
   useLayoutEffect(() => {
@@ -2183,6 +2231,7 @@ export function FlightResultsClient() {
   }, []);
 
   useEffect(() => {
+    if (guidedMode) return;
     const searchValues = new URLSearchParams(searchQueryString);
     const normalizedSearchValues =
       normalizeFlightDateSearchParams(searchValues);
@@ -2240,9 +2289,11 @@ export function FlightResultsClient() {
     setInfantCount(Math.min(Math.min(9, nextAdults), nextInfants));
     setCabinClassInput(nextCabinClass);
     closeFlightSearchPopovers();
-  }, [router, searchQueryString]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Existing URL sync closes transient popovers after search params change.
+  }, [guidedMode, router, searchQueryString]);
 
   useEffect(() => {
+    if (guidedMode) return;
     const query = originInput.trim();
     if (query.length < 2) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears stale suggestions when the search query becomes too short.
@@ -2281,9 +2332,10 @@ export function FlightResultsClient() {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [originInput, countryHint]);
+  }, [guidedMode, originInput, countryHint]);
 
   useEffect(() => {
+    if (guidedMode) return;
     const query = destinationInput.trim();
     if (query.length < 2) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears stale suggestions when the search query becomes too short.
@@ -2323,7 +2375,7 @@ export function FlightResultsClient() {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [destinationInput, countryHint]);
+  }, [guidedMode, destinationInput, countryHint]);
 
   const body = useMemo(() => {
     const searchParams = normalizeFlightDateSearchParams(
@@ -2535,6 +2587,7 @@ export function FlightResultsClient() {
     }
 
     let active = true;
+    let controller: AbortController | null = null;
     const searchKey = buildFlightResultsSearchKey(body);
     activeFlightSearchKeyRef.current = searchKey;
 
@@ -2561,10 +2614,12 @@ export function FlightResultsClient() {
       setError("");
       setWarnings([]);
 
+      controller = new AbortController();
       fetch("/api/flights/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        signal: controller.signal,
       })
         .then(async (response) => {
           const data = await response.json();
@@ -2593,7 +2648,7 @@ export function FlightResultsClient() {
           setWarnings(warnings);
         })
         .catch((searchError) => {
-          if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
+          if (controller?.signal.aborted || !active || activeFlightSearchKeyRef.current !== searchKey) return;
 
           setError(
             searchError instanceof Error
@@ -2611,6 +2666,7 @@ export function FlightResultsClient() {
     return () => {
       active = false;
       window.clearTimeout(timer);
+      controller?.abort();
     };
   }, [body, dictionary.unableToSearchFlights, t]);
 
@@ -3365,6 +3421,7 @@ export function FlightResultsClient() {
 
   const handleNearbyFareDateSelect = useCallback(
     (date: string) => {
+      if (guidedMode) return;
       if (!body || date === body.departureDate) return;
 
       const nextParams = new URLSearchParams(queryString);
@@ -3394,7 +3451,7 @@ export function FlightResultsClient() {
         scroll: true,
       });
     },
-    [body, queryString, router, triggerFilterApplying],
+    [body, guidedMode, queryString, router, triggerFilterApplying],
   );
 
   const stopOptions = useMemo(() => {
@@ -3495,6 +3552,10 @@ export function FlightResultsClient() {
   }, [formatResultPriceLabel, results]);
 
   useEffect(() => {
+    if (guidedMode) {
+      preferredAirlineDefaultResolvedRef.current = true;
+      return;
+    }
     if (sessionStatus === "loading") return;
 
     if (sessionStatus !== "authenticated") {
@@ -3534,7 +3595,7 @@ export function FlightResultsClient() {
     void loadPreferredAirlineDefaults();
 
     return () => controller.abort();
-  }, [sessionStatus]);
+  }, [guidedMode, sessionStatus]);
 
   const airportOptions = useMemo(() => {
     const airportsForResults = results.flatMap((flight) => [
@@ -6808,6 +6869,7 @@ export function FlightResultsClient() {
   }
 
   if (loading) {
+    if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
     return (
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
         <BrandedLoading
@@ -6827,6 +6889,19 @@ export function FlightResultsClient() {
       </main>
     );
   }
+
+  if (guidedMode) return (
+    <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided">
+      <h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{formatResultsFound(sortedResults.length, t)}</h2>
+      <div ref={resultsGridRef} className="flight-results-grid grid gap-x-6 gap-y-4 pb-5 pt-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-x-9">
+        <aside ref={desktopFilterSidebarRef} className="relative hidden self-stretch lg:block"><DesktopFlightFilters activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
+        <section className="min-w-0 space-y-4">
+          <div className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#D8E1EC] bg-white p-3 shadow-sm sm:p-4 lg:bg-transparent"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p><Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div>
+          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert">{error}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? sortedResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} showProviderHandoffCopy={false} />) : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p></div>}
+        </section>
+      </div>
+    </section>
+  );
 
   return (
     <main className="flex-1 bg-[#F3F6FA] pb-8">
