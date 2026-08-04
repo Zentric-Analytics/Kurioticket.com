@@ -209,22 +209,39 @@ export function ExploreScreen() {
         <FlatList
           data={results}
           keyExtractor={(item) => item.destination.id}
+          keyboardDismissMode="none"
           keyboardShouldPersistTaps="handled"
           initialNumToRender={10}
           maxToRenderPerBatch={8}
           windowSize={7}
           contentContainerStyle={[s.content, { paddingBottom: bottomPadding }]}
-          ListHeaderComponent={<Section title={`${results.length} result${results.length === 1 ? "" : "s"}`} />}
-          ListEmptyComponent={<Text style={s.empty}>No destinations or maintained interests match “{query.trim()}”. Try a city, destination code, or country.</Text>}
+          ListHeaderComponent={
+            <Section
+              title={`${results.length} result${results.length === 1 ? "" : "s"}`}
+            />
+          }
+          ListEmptyComponent={
+            <Text style={s.empty}>
+              No destinations or maintained interests match “{query.trim()}”.
+              Try a city, destination code, or country.
+            </Text>
+          }
           renderItem={({ item: r }) => (
             <View>
-              {r.match === "interest" ? <Text style={s.matchLabel}>Interest match: {r.interest}</Text> : null}
-              <Row destination={r.destination} saved={savedIds.has(r.destination.id)} onSelect={() => select(r.destination)} onToggle={() => toggle(r.destination.id)} />
+              {r.match === "interest" ? (
+                <Text style={s.matchLabel}>Interest match: {r.interest}</Text>
+              ) : null}
+              <Row
+                destination={r.destination}
+                saved={savedIds.has(r.destination.id)}
+                onSelect={() => select(r.destination)}
+                onToggle={() => toggle(r.destination.id)}
+              />
             </View>
           )}
         />
       ) : (
-        <Destinations
+        <ExploreDiscoveryContent
           bottomPadding={bottomPadding}
           saved={savedIds}
           select={select}
@@ -314,7 +331,7 @@ function PopularDestinationCard({
   );
 }
 
-function Destinations({
+function ExploreDiscoveryContent({
   bottomPadding,
   saved,
   select,
@@ -329,6 +346,8 @@ function Destinations({
     <FlatList
       data={POPULAR_DESTINATIONS}
       keyExtractor={(item) => item.destination.id}
+      keyboardDismissMode="none"
+      keyboardShouldPersistTaps="handled"
       initialNumToRender={4}
       maxToRenderPerBatch={4}
       windowSize={5}
@@ -349,26 +368,26 @@ function Destinations({
 }
 function Interests({ select }: { select: (destination: Destination) => void }) {
   return (
-      <View style={s.interestSection}>
-        <Section title="Explore by interest" />
-        <View style={s.interests}>
-          {RESOLVED_INTERESTS.map((item) => (
-            <Pressable
-              key={item.name}
-              accessibilityRole="button"
-              accessibilityLabel={`${item.name}, mapped to ${item.destination.name}`}
-              onPress={() => select(item.destination)}
-              style={s.interest}
-            >
-              <FlowIcon name={item.icon} color={BLUE} />
-              <View>
-                <Text style={s.resultTitle}>{item.name}</Text>
-                <Text style={s.resultMeta}>{item.destination.name}</Text>
-              </View>
-            </Pressable>
-          ))}
-        </View>
+    <View style={s.interestSection}>
+      <Section title="Explore by interest" />
+      <View style={s.interests}>
+        {RESOLVED_INTERESTS.map((item) => (
+          <Pressable
+            key={item.name}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.name}, mapped to ${item.destination.name}`}
+            onPress={() => select(item.destination)}
+            style={s.interest}
+          >
+            <FlowIcon name={item.icon} color={BLUE} />
+            <View>
+              <Text style={s.resultTitle}>{item.name}</Text>
+              <Text style={s.resultMeta}>{item.destination.name}</Text>
+            </View>
+          </Pressable>
+        ))}
       </View>
+    </View>
   );
 }
 const shadow = {
