@@ -3737,6 +3737,8 @@ export const translations: TranslationDictionary = {
   "deals.journey.substate.choose-outbound": "Choose outbound",
   "deals.journey.substate.choose-return": "Choose return",
   "deals.journey.substate.choose-car": "Choose car",
+  "deals.journey.substate.review-flight": "Review flight",
+  "deals.journey.substate.review-car": "Review car",
   "deals.journey.substate.review-trip": "Review trip",
   "deals.guided.back": "Back",
   "deals.guided.escape": "Use current trip options",

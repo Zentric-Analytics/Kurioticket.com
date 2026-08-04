@@ -5,7 +5,7 @@ import type { DealsJourneyStage } from "./dealsJourneyRoutes";
 
 export type DealsJourneyStepId = "hotel" | "flight" | "car" | "review";
 export type DealsJourneyStatus = "completed" | "current" | "upcoming" | "needs-attention";
-export type DealsJourneySubstate = "choose-property" | "choose-room" | "choose-outbound" | "choose-return" | "choose-car" | "review-trip";
+export type DealsJourneySubstate = "choose-property" | "choose-room" | "choose-outbound" | "choose-return" | "choose-car" | "review-flight" | "review-car" | "review-trip";
 export type DealsJourneyStep = { id: DealsJourneyStepId; status: DealsJourneyStatus; substate?: DealsJourneySubstate; summary?: string };
 export type DealsJourneyProgress = { mode: DealsPackageMode; steps: DealsJourneyStep[]; currentStepIndex: number; total: number };
 
@@ -33,7 +33,7 @@ export function getHandoffReadyDealsJourneyProgress(plan: Pick<DealsTripPlan, "m
 
 export function getGuidedDealsJourneyProgress(stage: DealsJourneyStage, mode: DealsPackageMode, plan: Pick<DealsTripPlan, "hotel" | "flight" | "car"> | null): DealsJourneyProgress {
   const currentId: DealsJourneyStepId = stage.startsWith("hotel") ? "hotel" : stage.startsWith("flight") ? "flight" : stage.startsWith("car") ? "car" : "review";
-  const substate: DealsJourneySubstate = stage === "hotel-results" ? "choose-property" : stage === "hotel-details" ? "choose-room" : stage === "flight-results" ? "choose-outbound" : stage === "flight-details" ? "choose-return" : stage.startsWith("car") ? "choose-car" : "review-trip";
+  const substate: DealsJourneySubstate = stage === "hotel-results" ? "choose-property" : stage === "hotel-details" ? "choose-room" : stage === "flight-results" ? "choose-outbound" : stage === "flight-details" ? "review-flight" : stage === "car-results" ? "choose-car" : stage === "car-details" ? "review-car" : "review-trip";
   const requested: Partial<Record<DealsJourneyStepId, Omit<DealsJourneyStep, "id">>> = {};
   for (const id of getDealsJourneyStepIds(mode)) {
     if (id === currentId) requested[id] = { status: "current", substate };
