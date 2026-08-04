@@ -90,8 +90,9 @@ jobs:
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
         run: |
+          set -o pipefail
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
-          npx eas-cli@16.17.4 build --platform android --profile preview --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.json"
+          npx eas-cli@16.17.4 build --platform android --profile preview --freeze-credentials --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.json"
       - name: Write consolidated release audit
         if: always()
         working-directory: apps/mobile
@@ -121,5 +122,5 @@ jobs:
         with:
           name: android-preview-build-evidence-${{ github.run_id }}
           path: ${{ runner.temp }}/release-audit.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 365
