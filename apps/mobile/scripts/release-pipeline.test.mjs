@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import test from 'node:test';
 import { classifyRelease } from './classify-release.mjs';
 import { validateSourcePolicy, validateStaticDeliveryInputs } from './delivery-policy.mjs';
+import { downloadArtifactArchive, extractReviewedAudit, fetchGithubBuildAttestation } from './fetch-github-build-attestation.mjs';
 import { assertReleasePolicy, loadReleaseFiles } from './release-policy.mjs';
 import { resolvePreviewVersionEvidence } from './resolve-preview-version-code.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
@@ -12,6 +14,47 @@ import { buildReleaseAudit } from './write-release-audit.mjs';
 
 const { policy, eas, root } = loadReleaseFiles();
 const valid = (variant = 'preview', overrides = {}) => ({ variant, sha: 'a'.repeat(40), runtime: policy[variant].runtimeVersion, packageName: policy[variant].androidPackage, channel: policy[variant].channel, profile: policy[variant].profile, apiBaseUrl: policy[variant].apiBaseUrl, confirmation: variant === 'preview' ? 'DELIVER ANDROID PREVIEW' : 'DELIVER ANDROID PRODUCTION', action: 'build', releaseReason: 'approved release', baselineBuildId: 'NONE', policy, eas, ...overrides });
+
+const testCrcTable = Array.from({ length: 256 }, (_, index) => {
+  let value = index;
+  for (let bit = 0; bit < 8; bit += 1) value = (value & 1) ? (0xedb88320 ^ (value >>> 1)) : (value >>> 1);
+  return value >>> 0;
+});
+const testCrc32 = (bytes) => {
+  let crc = 0xffffffff;
+  for (const byte of bytes) crc = testCrcTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  return (crc ^ 0xffffffff) >>> 0;
+};
+function testZip(content = '{"ok":true}', name = 'release-audit.json', { externalAttributes = 0 } = {}) {
+  const data = Buffer.from(content);
+  const filename = Buffer.from(name);
+  const crc = testCrc32(data);
+  const local = Buffer.alloc(30);
+  local.writeUInt32LE(0x04034b50, 0);
+  local.writeUInt16LE(20, 4);
+  local.writeUInt32LE(crc, 14);
+  local.writeUInt32LE(data.length, 18);
+  local.writeUInt32LE(data.length, 22);
+  local.writeUInt16LE(filename.length, 26);
+  const central = Buffer.alloc(46);
+  central.writeUInt32LE(0x02014b50, 0);
+  central.writeUInt16LE(0x0314, 4);
+  central.writeUInt16LE(20, 6);
+  central.writeUInt32LE(crc, 16);
+  central.writeUInt32LE(data.length, 20);
+  central.writeUInt32LE(data.length, 24);
+  central.writeUInt16LE(filename.length, 28);
+  central.writeUInt32LE(externalAttributes, 38);
+  const centralOffset = local.length + filename.length + data.length;
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);
+  eocd.writeUInt16LE(1, 8);
+  eocd.writeUInt16LE(1, 10);
+  eocd.writeUInt32LE(central.length + filename.length, 12);
+  eocd.writeUInt32LE(centralOffset, 16);
+  return Buffer.concat([local, filename, data, central, filename, eocd]);
+}
+const response = (body, { status = 200, headers = {} } = {}) => new Response(body, { status, headers });
 
 test('approved matrix isolates runtimes and Android-only counters', () => {
   assert.doesNotThrow(() => assertReleasePolicy(policy, eas));
@@ -146,6 +189,85 @@ test('Preview attestation identity is repository-owned and never dispatcher supp
   assert.doesNotMatch(workflow, /workflow_run_id:|artifact_id:|source_sha:/);
   assert.match(workflow, /fetch-github-build-attestation\.mjs --manifest release-baselines\/android\/preview\.json/);
   assert.match(workflow, /permissions: \{ contents: read, actions: read \}/);
+});
+test('supported GitHub artifact redirect downloads without forwarding authorization', async () => {
+  const archive = testZip();
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({ url: String(url), options });
+    if (calls.length === 1) return response(null, { status: 302, headers: { location: 'https://signed.example.test/archive.zip' } });
+    return response(archive, { headers: { 'content-type': 'application/zip', 'content-length': String(archive.length) } });
+  };
+  assert.deepEqual(await downloadArtifactArchive('https://api.github.com/repos/org/repo/actions/artifacts/1/zip', 'secret', fetchImpl), archive);
+  assert.equal(calls[0].options.headers.Accept, 'application/vnd.github+json');
+  assert.equal(calls[0].options.headers['X-GitHub-Api-Version'], '2022-11-28');
+  assert.equal(calls[0].options.redirect, 'manual');
+  assert.equal(calls[1].options.headers, undefined);
+  assert.equal(calls[1].options.redirect, 'follow');
+});
+test('artifact HTTP, expiry, empty, content type, and non-ZIP failures are closed', async () => {
+  for (const status of [415, 404, 410]) {
+    await assert.rejects(() => downloadArtifactArchive('https://api.github.com/archive', 'secret', async () => response(null, { status })), new RegExp(String(status)));
+  }
+  const redirected = async (body, contentType = 'application/zip') => {
+    let call = 0;
+    return downloadArtifactArchive('https://api.github.com/archive', 'secret', async () => (++call === 1
+      ? response(null, { status: 302, headers: { location: 'https://signed.example.test/archive.zip' } })
+      : response(body, { headers: { 'content-type': contentType } })));
+  };
+  await assert.rejects(() => redirected(Buffer.alloc(0)), /empty/);
+  await assert.rejects(() => redirected('not zip', 'text/html'), /content type/);
+  await assert.rejects(() => redirected('not zip'), /not a ZIP/);
+});
+test('reviewed artifact digest is verified before safe extraction', async () => {
+  const archive = testZip('{"workflowRunId":"123"}');
+  const digest = `sha256:${createHash('sha256').update(archive).digest('hex')}`;
+  const manifest = { schemaVersion: 2, sourceAttestation: { type: 'github-actions-build', repository: 'Zentric-Analytics/Kurioticket.com', workflowRunId: '123', artifactId: 456, artifactDigest: digest } };
+  const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-attestation-'));
+  let request = 0;
+  const fetchImpl = async () => {
+    request += 1;
+    if (request === 1) return response(JSON.stringify({ id: 123 }), { headers: { 'content-type': 'application/json' } });
+    if (request === 2) return response(JSON.stringify({ id: 456, digest, expired: false }), { headers: { 'content-type': 'application/json' } });
+    if (request === 3) return response(null, { status: 302, headers: { location: 'https://signed.example.test/archive.zip' } });
+    return response(archive, { headers: { 'content-type': 'application/zip' } });
+  };
+  try {
+    const result = await fetchGithubBuildAttestation({ manifest, token: 'secret', outputDirectory: directory, fetchImpl });
+    assert.equal(result.digest, digest);
+    assert.deepEqual(JSON.parse(readFileSync(resolve(directory, 'audit/release-audit.json'), 'utf8')), { workflowRunId: '123' });
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+
+  const badManifest = { ...manifest, sourceAttestation: { ...manifest.sourceAttestation, artifactDigest: `sha256:${'0'.repeat(64)}` } };
+  request = 0;
+  await assert.rejects(() => fetchGithubBuildAttestation({ manifest: badManifest, token: 'secret', outputDirectory: directory, fetchImpl }), /digest mismatch/);
+});
+test('corrupted, traversal, symlink, unexpected, and oversized ZIP content is rejected', () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-zip-'));
+  try {
+    const corrupted = testZip();
+    corrupted[30 + Buffer.byteLength('release-audit.json')] ^= 0xff;
+    assert.throws(() => extractReviewedAudit(corrupted, directory), /integrity/);
+    assert.throws(() => extractReviewedAudit(testZip('{}', '../release-audit.json'), directory), /unsafe path/);
+    assert.throws(() => extractReviewedAudit(testZip('{}', 'release-audit.json', { externalAttributes: (0o120777 << 16) >>> 0 }), directory), /symbolic link/);
+    assert.throws(() => extractReviewedAudit(testZip('{}', 'other.json'), directory), /unexpected or unsafe path/);
+    const duplicate = testZip();
+    duplicate.writeUInt16LE(2, duplicate.length - 14);
+    duplicate.writeUInt16LE(2, duplicate.length - 12);
+    assert.throws(() => extractReviewedAudit(duplicate, directory), /unexpected or duplicate/);
+    assert.throws(() => extractReviewedAudit(testZip(`{"value":"${'x'.repeat(1024 * 1024)}"}`), directory), /size limit/);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+test('artifact verification remains ordered before fingerprint, channel, and publication with no fail-open path', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
+  const download = workflow.indexOf('fetch-github-build-attestation.mjs');
+  const composite = workflow.indexOf('verify-release-evidence.mjs --kind baseline');
+  const fingerprint = workflow.indexOf('fingerprint fingerprint:generate');
+  const channel = workflow.indexOf('channel:view preview');
+  const publication = workflow.indexOf('update --channel preview');
+  assert.ok(download >= 0 && download < composite && composite < fingerprint && fingerprint < channel && channel < publication);
+  assert.doesNotMatch(workflow.slice(download, publication), /continue-on-error|if:\s*always\(\)/);
+  assert.doesNotMatch(workflow, /\bunzip\b/);
 });
 test('future Preview builds preserve exact checkout and do not suppress EAS VCS metadata', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
