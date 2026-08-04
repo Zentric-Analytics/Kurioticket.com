@@ -25,6 +25,14 @@ Routine JavaScript-only changes that remain compatible with the reviewed Preview
 
 The manual Android Preview OTA dispatcher remains temporarily as a break-glass retry for a platform outage or reviewed baseline remediation. It calls the same workflow, baseline attestation, classifier, channel, staging, replay, publication, and audit implementation as the automatic path. It cannot select package, runtime, channel, API, profile, or baseline evidence, and the selected exact SHA must still be reachable from `dev`.
 
+### Production source promotion
+
+`dev` is the continuous-integration and staging branch; `main` contains only owner-approved Production snapshots. The required history invariant is that `main` remains an ancestor of `dev`, while normal team work keeps `dev` ahead. A merge to either branch remains validation-only and cannot itself build, upload, submit, publish an OTA update, or release to customers.
+
+For a Production release, cut `release/mobile-vX.Y.Z` from one exact approved `dev` SHA and open that immutable release branch into `main`. Team work may continue on `dev` while the release branch receives only explicitly approved release fixes. Every release fix must be merged back into `dev` so the ancestry invariant is preserved. Before an administrator merges the release PR, review the complete `main...release/mobile-vX.Y.Z` diff and rerun Production release validation against its exact head SHA. Only an authorized owner or organization administrator may merge into `main`.
+
+The resulting immutable `main` SHA is the sole Production build source. Production build, Play upload, Internal testing, OTA publication, and public rollout remain separate owner approvals. A direct `dev`-to-`main` PR is reserved for a deliberately short merge pause where the approved `dev` SHA will not move during review; the dedicated release branch is the default because it preserves team delivery speed without mutating the Production candidate.
+
 `mobile-production` retains `ZentricAnalytics` review, disabled environment admin bypass, a dedicated Production token, and `main` only. Production release-tag support is future capability: no `mobile-prod-v*` tags or tag rules are authorized until a release-operator team is approved. The existing organization-administrator bypass on `main` is temporary emergency break-glass access and must not be used for routine releases.
 
 Each native-build dispatcher has one fixed action and immutable identity inputs. The Preview OTA evaluator fixes runtime, package, channel, profile, API, and baseline in repository-reviewed policy; the manual break-glass form supplies only an exact dev-reachable SHA, nonblank reason, Android selection, and confirmation phrase. Preview OTA verifies live EAS build metadata against the immutable repository-reviewed binary manifest before generating the current Android fingerprint. Neither automatic event data nor the manual dispatcher can supply baseline source, workflow-run, artifact, fingerprint, package, runtime, channel, profile, or API evidence.
@@ -76,6 +84,8 @@ Each run uploads one secret-free JSON audit manifest with run/actor, workflow he
 Preview rollout requires separate approval to create its EAS-managed keystore, run one `preview` APK build, install it, and complete staging QA. A later harmless compatible change may be used for a separately approved OTA test.
 
 Production requires separate approvals to create the `com.kurioticket.app` Play record, create its dedicated upload keystore, select and enroll in Play App Signing, build an AAB from approved `main`, upload to Internal testing, and advance any track. Public rollout is never implied by an internal upload.
+
+EAS remains the active secure store for the Production upload keystore. The owner-approved protected export is deferred to final operational hardening: it is not a blocker for ancestry reconciliation, release-PR preparation, the first Production AAB, or Internal testing. A verified encrypted organizational backup is required before broader or public rollout, final blueprint completion, and operational-hardening sign-off. Repository workflows must never export the keystore.
 
 ## Rollback and emergency stop
 
