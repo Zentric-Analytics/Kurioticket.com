@@ -1,4 +1,3 @@
-
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -59,8 +58,6 @@ export function normalizePreviewUpdatePage(value) {
     requireValue(typeof entry.group === "string" && entry.group.trim().length > 0, "EAS update group is missing.");
     return {
       branch: entry.branch,
-
-
       runtimeVersion: entry.runtimeVersion,
       group: entry.group,
       platforms: parsePlatforms(entry.platforms),
@@ -121,8 +118,6 @@ export async function waitForStaging({ origin, targetSha, attempts = 20, delayMs
         fetchImpl(`${origin}/api/mobile/v1/health`, { cache: "no-store" }),
         fetchImpl(`${origin}/api/mobile/v1/config`, { cache: "no-store" }),
       ]);
-
-
       requireValue(healthResponse.ok, `Staging health returned HTTP ${healthResponse.status}.`);
       requireValue(configResponse.ok, `Staging config returned HTTP ${configResponse.status}.`);
       const result = validateStagingReadiness({ health: await healthResponse.json(), config: await configResponse.json(), targetSha });
@@ -183,12 +178,9 @@ async function main() {
     writeFileSync(process.env.PREVIEW_STAGING_OUTPUT, `${JSON.stringify(result, null, 2)}\n`);
     return;
   }
-
-
   throw new Error("Unknown Preview OTA automation command.");
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   await main();
 }
-
