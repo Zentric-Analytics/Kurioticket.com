@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "provenance": {
+    "baselineBuildId": "179ae3b8-3e7a-404c-bcf0-44cbdc759cff",
+    "baselineWorkflowRunId": "30868280478",
+    "baselineArtifactId": 8877213375,
+    "failedOtaWorkflowRunId": "30889562651",
+    "capturedAt": "2026-08-04T08:00:00Z"
+  },
+  "dispatch": {
+    "sha": "4dbb7391329f8c487335ae757610acfa933c09bd",
+    "runtime": "preview-0.3.0",
+    "package": "com.kurioticket.app.preview",
+    "channel": "preview",
+    "profile": "preview",
+    "apiBaseUrl": "https://staging.kurioticket.com",
+    "confirmation": "DELIVER ANDROID PREVIEW",
+    "releaseReason": "Sanitized Preview OTA dry run"
+  },
+  "build": {
+    "id": "179ae3b8-3e7a-404c-bcf0-44cbdc759cff",
+    "status": "FINISHED",
+    "platform": "ANDROID",
+    "project": { "id": "89f6fd88-c0d7-495a-9e2b-8301b09f407d" },
+    "channel": "preview",
+    "distribution": "INTERNAL",
+    "buildProfile": "preview",
+    "appVersion": "0.3.0",
+    "appBuildVersion": "3",
+    "runtimeVersion": "preview-0.3.0"
+  },
+  "workflowRun": {
+    "id": 30868280478,
+    "repository": { "full_name": "Zentric-Analytics/Kurioticket.com" },
+    "name": "Android Preview Build",
+    "path": ".github/workflows/android-preview-build.yml",
+    "event": "workflow_dispatch",
+    "head_branch": "dev",
+    "head_sha": "34fa29bbfe3b969051f009c59643b2b8e3680507",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "artifact": {
+    "id": 8877213375,
+    "name": "android-preview-build-evidence-30868280478",
+    "digest": "sha256:7640c3c45361e8d48ad5bf3091998e4e5d9f7c24e7fa329ecb3206eb0a9b7aaa",
+    "expired": false,
+    "workflow_run": {
+      "id": 30868280478,
+      "head_sha": "34fa29bbfe3b969051f009c59643b2b8e3680507"
+    }
+  },
+  "artifactTransport": {
+    "expectedDigest": "sha256:73b94e6e5d660ae43356ec04ab9d168506964126f8a42227e5a646463f259a08"
+  },
+  "audit": {
+    "workflowRunId": "30868280478",
+    "commit": "34fa29bbfe3b969051f009c59643b2b8e3680507",
+    "environment": "preview",
+    "action": "build",
+    "package": "com.kurioticket.app.preview",
+    "profile": "preview",
+    "runtime": "preview-0.3.0",
+    "channel": "preview",
+    "fingerprint": { "hash": "25d1251ee757ccadc9ec1be5026c9bcac849fc92" },
+    "deliveryResult": [{ "id": "179ae3b8-3e7a-404c-bcf0-44cbdc759cff" }],
+    "finalStatus": "success"
+  },
+  "currentFingerprint": "25d1251ee757ccadc9ec1be5026c9bcac849fc92",
+  "changedFiles": [
+    "apps/mobile/docs/android-release-pipeline.md",
+    "apps/mobile/release-baselines/android/binary-manifest.example.json",
+    "apps/mobile/release-baselines/android/preview.json",
+    "apps/mobile/scripts/fetch-github-build-attestation.mjs",
+    "apps/mobile/scripts/release-pipeline.test.mjs",
+    "apps/mobile/scripts/verify-release-evidence.mjs",
+    "apps/mobile/scripts/write-release-audit.mjs",
+    "apps/mobile/src/components/PreviewBanner.tsx"
+  ],
+  "channelResponse": {
+    "currentPage": {
+      "id": "019faa2e-74b6-79f0-8707-6c047d7cbf6b",
+      "isPaused": false,
+      "name": "preview",
+      "branchMapping": "{\"data\":[{\"branchId\":\"019f8f1c-dd43-7328-9f04-26a38023a640\",\"branchMappingLogic\":\"true\"}],\"version\":0}",
+      "updateBranches": [{ "id": "019f8f1c-dd43-7328-9f04-26a38023a640", "name": "preview", "updateGroups": [] }]
+    }
+  },
+  "staging": {
+    "health": { "data": { "available": true, "apiVersion": "v1", "environment": "staging" } },
+    "config": {
+      "data": {
+        "apiVersion": "v1",
+        "environment": "staging",
+        "maintenanceMode": false,
+        "features": { "flights": true, "externalCheckout": false }
+      }
+    },
+    "provider": { "mode": "staging", "duffelMode": "test", "sandboxProvidersAllowed": true },
+    "email": { "deliveryEnabled": true, "policyRestricted": true }
+  },
+  "historicalFailures": [
+    "unsupported-build-view-non-interactive",
+    "missing-eas-git-metadata",
+    "artifact-http-415",
+    "artifact-digest-or-zip-invalid",
+    "classifier-exit-masked-by-tee",
+    "overbroad-android-path",
+    "flat-channel-json-assumption"
+  ],
+  "failedRun": {
+    "workflowRunId": 30889562651,
+    "auditArtifactId": 8884475826,
+    "baselineLookup": "passed",
+    "artifactDownload": "passed",
+    "digestVerification": "passed",
+    "compositeAttestation": "passed",
+    "classifier": { "classification": "native-build-required", "reason": "native-sensitive-files" },
+    "channelError": "Channel name mismatch.",
+    "publication": "skipped"
+  }
+}
