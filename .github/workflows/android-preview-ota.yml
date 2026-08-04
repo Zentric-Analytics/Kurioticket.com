@@ -15,7 +15,7 @@ on:
 
 permissions: { contents: read, actions: read }
 concurrency:
-  group: android-preview-ota-${{ inputs.target_sha || inputs.commit_sha }}
+  group: android-preview-ota
   cancel-in-progress: false
 
 jobs:
