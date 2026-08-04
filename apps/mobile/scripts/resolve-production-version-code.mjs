@@ -44,8 +44,17 @@ export function validateProductionPlayHistory(history, now, { requireFresh = tru
     }
     return { playRecordStatus: 'absent', highestUploadedVersionCode: null, uploadedVersionCodes };
   }
-  if (history.recordStatus !== 'present' || history.playApplicationRecord !== 'present' || uploadedVersionCodes.length === 0 || !Number.isInteger(history.highestUploadedVersionCode) || history.highestUploadedVersionCode < 1) {
+  if (history.recordStatus !== 'present' || history.playApplicationRecord !== 'present') {
     throw new Error('Production Play history is unknown or malformed.');
+  }
+  if (uploadedVersionCodes.length === 0) {
+    if (history.highestUploadedVersionCode !== null) {
+      throw new Error('Present-empty Production Play history must not claim a highest uploaded versionCode.');
+    }
+    return { playRecordStatus: 'present', highestUploadedVersionCode: null, uploadedVersionCodes };
+  }
+  if (!Number.isInteger(history.highestUploadedVersionCode) || history.highestUploadedVersionCode < 1) {
+    throw new Error('Production Play history with bundles must include the highest uploaded versionCode.');
   }
   const bundleMaximum = uploadedVersionCodes.at(-1);
   if (history.highestUploadedVersionCode !== bundleMaximum) {
@@ -113,7 +122,7 @@ export function resolveProductionVersionEvidence({
   if (buildsExitCode !== 0) throw new Error('Filtered EAS Production build-history query failed.');
   const builds = parseBuilds(buildsOutput);
   if (builds.length !== 0) throw new Error('Cannot initialize Production versionCode because an existing build uses this package/profile.');
-  if (play.playRecordStatus !== 'absent' || play.highestUploadedVersionCode !== null) {
+  if (play.uploadedVersionCodes.length !== 0 || play.highestUploadedVersionCode !== null) {
     throw new Error('Cannot initialize Production versionCode because Google Play history is not empty.');
   }
 

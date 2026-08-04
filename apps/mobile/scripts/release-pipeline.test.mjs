@@ -10,7 +10,7 @@ import { buildPreviewUpdateCommand, runPreviewOtaDryRun } from './dry-run-previe
 import { downloadArtifactArchive, extractReviewedAudit, fetchGithubBuildAttestation } from './fetch-github-build-attestation.mjs';
 import { assertReleasePolicy, loadReleaseFiles } from './release-policy.mjs';
 import { resolvePreviewVersionEvidence } from './resolve-preview-version-code.mjs';
-import { resolveProductionVersionEvidence } from './resolve-production-version-code.mjs';
+import { resolveProductionVersionEvidence, validateProductionPlayHistory } from './resolve-production-version-code.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
 import { buildReleaseAudit } from './write-release-audit.mjs';
 import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
@@ -424,6 +424,11 @@ const productionHistory = (overrides = {}) => ({
   evidenceReference: 'reviewed read-only Play audit',
   ...overrides,
 });
+const productionPresentEmptyHistory = (overrides = {}) => productionHistory({
+  recordStatus: 'present',
+  playApplicationRecord: 'present',
+  ...overrides,
+});
 const productionVersionInput = (overrides = {}) => ({
   versionOutput: 'No remote versions are configured for this project.',
   versionExitCode: 0,
@@ -437,15 +442,26 @@ const productionVersionInput = (overrides = {}) => ({
   now: new Date('2026-08-04T08:30:00.000Z'),
   ...overrides,
 });
-test('first Production binary proposes versionCode 1 only for empty EAS and Play history', () => {
-  assert.deepEqual(resolveProductionVersionEvidence(productionVersionInput()), {
+test('first Production binary proposes versionCode 1 for a present-empty Play record', () => {
+  assert.deepEqual(resolveProductionVersionEvidence(productionVersionInput({
+    history: productionPresentEmptyHistory(),
+    previousHistory: productionHistory(),
+  })), {
     currentRemoteVersionCode: null,
     proposedVersionCode: 1,
     remoteVersionStatus: 'uninitialized',
-    playRecordStatus: 'absent',
+    playRecordStatus: 'present',
     highestUploadedVersionCode: null,
     uploadedVersionCodes: [],
   });
+});
+test('absent, present-empty, and present-with-bundles Play states validate consistently', () => {
+  assert.equal(validateProductionPlayHistory(productionHistory(), new Date('2026-08-04T08:30:00.000Z')).playRecordStatus, 'absent');
+  const presentEmpty = validateProductionPlayHistory(productionPresentEmptyHistory(), new Date('2026-08-04T08:30:00.000Z'));
+  assert.deepEqual(presentEmpty, { playRecordStatus: 'present', highestUploadedVersionCode: null, uploadedVersionCodes: [] });
+  const presentBundled = validateProductionPlayHistory(productionPresentEmptyHistory({ uploadedBundles: [3, 1, 2], highestUploadedVersionCode: 3 }), new Date('2026-08-04T08:30:00.000Z'));
+  assert.deepEqual(presentBundled, { playRecordStatus: 'present', highestUploadedVersionCode: 3, uploadedVersionCodes: [1, 2, 3] });
+  assert.throws(() => validateProductionPlayHistory(productionPresentEmptyHistory({ highestUploadedVersionCode: 1 }), new Date('2026-08-04T08:30:00.000Z')), /must not claim/);
 });
 test('configured Production counters increment and never reset below Play history', () => {
   const result = resolveProductionVersionEvidence(productionVersionInput({
@@ -477,7 +493,7 @@ test('Production Play history is internally consistent, normalized, and monotoni
   assert.deepEqual(result.uploadedVersionCodes, [1, 2, 3]);
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, highestUploadedVersionCode: 2 }, previousHistory: absent })), /does not match/);
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, highestUploadedVersionCode: 4 }, previousHistory: absent })), /does not match/);
-  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, uploadedBundles: [] }, previousHistory: absent })), /unknown or malformed/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, uploadedBundles: [], highestUploadedVersionCode: 3 }, previousHistory: absent })), /must not claim/);
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, playApplicationRecord: 'absent' }, previousHistory: absent })), /unknown or malformed/);
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...absent, uploadedBundles: [1] } })), /Absent/);
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, uploadedBundles: [1, '2', 3] }, previousHistory: absent })), /malformed/);
@@ -542,8 +558,8 @@ test('Production delivery is manual-only, main-only, and requires the reviewed P
   const history = JSON.parse(readFileSync(resolve(root, 'release-baselines/android/production-play-history.json'), 'utf8'));
   assert.equal(history.schemaVersion, 2);
   assert.equal(history.package, policy.production.androidPackage);
-  assert.equal(history.recordStatus, 'absent');
-  assert.equal(history.playApplicationRecord, 'absent');
+  assert.equal(history.recordStatus, 'present');
+  assert.equal(history.playApplicationRecord, 'present');
   assert.deepEqual(history.uploadedBundles, []);
   assert.equal(history.highestUploadedVersionCode, null);
   assert.ok(Date.parse(history.verifiedAt));
