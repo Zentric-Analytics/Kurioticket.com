@@ -30,6 +30,8 @@ jobs:
       PREVIEW_TRIGGER_MODE: ${{ github.event_name == 'workflow_dispatch' && 'manual' || inputs.trigger_mode }}
       PREVIEW_RELEASE_REASON: ${{ github.event_name == 'workflow_dispatch' && inputs.release_reason || inputs.release_reason }}
     steps:
+      - name: Capture evaluation start time
+        run: echo "WORKFLOW_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.commit_sha || inputs.target_sha }}
@@ -179,7 +181,7 @@ jobs:
           REPLAY_EVIDENCE_PATH: "${{ runner.temp }}/preview-replay.json"
           DELIVERY_RESULT_PATH: "${{ runner.temp }}/delivery-result.json"
           AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
-          WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
+          WORKFLOW_STARTED_AT: "${{ env.WORKFLOW_STARTED_AT }}"
           FINAL_STATUS: "${{ job.status }}"
         run: node scripts/write-release-audit.mjs
       - name: Preserve non-secret Preview evaluation evidence
