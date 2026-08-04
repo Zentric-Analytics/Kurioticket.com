@@ -3,10 +3,14 @@ import test, { afterEach } from "node:test";
 
 import { GET } from "./route";
 
-const originalUrl = process.env.NEXT_PUBLIC_APP_URL;
+const environmentKeys = ["NEXT_PUBLIC_APP_URL", "NEXTAUTH_URL", "RENDER_GIT_COMMIT", "TRAVEL_PROVIDER_MODE", "DUFFEL_API_MODE", "ALLOW_SANDBOX_PROVIDERS", "DUFFEL_API_KEY"] as const;
+const originalEnvironment = Object.fromEntries(environmentKeys.map((key) => [key, process.env[key]]));
 afterEach(() => {
-  if (originalUrl === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
-  else process.env.NEXT_PUBLIC_APP_URL = originalUrl;
+  for (const key of environmentKeys) {
+    const value = originalEnvironment[key];
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
 });
 
 test("mobile health returns availability and API compatibility", async () => {
@@ -44,6 +48,17 @@ test("mobile health disables response caching", async () => {
 
 test("mobile health reports only the staging public classification", async () => {
   process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
-  const payload = await (await GET()).json() as { data: { environment: string } };
+  process.env.RENDER_GIT_COMMIT = "a".repeat(40);
+  process.env.TRAVEL_PROVIDER_MODE = "staging";
+  process.env.NEXTAUTH_URL = "https://staging.kurioticket.com";
+  process.env.DUFFEL_API_MODE = "test";
+  process.env.ALLOW_SANDBOX_PROVIDERS = "true";
+  process.env.DUFFEL_API_KEY = "configured-test-credential";
+  const payload = await (await GET()).json() as { data: { environment: string; releaseReadiness: { commitSha: string; sandboxTravelSafe: boolean; emailPolicyRestricted: boolean } } };
   assert.equal(payload.data.environment, "staging");
+  assert.deepEqual(payload.data.releaseReadiness, {
+    commitSha: "a".repeat(40),
+    sandboxTravelSafe: true,
+    emailPolicyRestricted: true,
+  });
 });

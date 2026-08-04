@@ -96,7 +96,7 @@ export async function runPreviewOtaDryRun({ fixture, workflow, manifest, policy,
   requireValue(!updateCommand.includes('build') && !updateCommand.includes('submit'), 'Dry-run command crossed into build or submission.');
   requireValue(!/eas-cli@16\.17\.4 build:view[^\n]*--non-interactive/.test(workflow), 'Unsupported build:view option returned.');
   requireValue(!/\bnpx\s+eas-cli@\S+\s+(?:build|submit)(?:\s|$)/im.test(workflow), 'Preview OTA workflow contains a build or Play submission command.');
-  requireValue(/release-classification\.json" \|\| \{[\s\S]*exit "\$status"/.test(workflow), 'Classifier failure propagation is not fail-closed.');
+  requireValue(/classifier_status=\$\?[\s\S]*decision=NATIVE_BUILD_REQUIRED[\s\S]*exit "\$classifier_status"/.test(workflow), 'Classifier failure propagation is not fail-closed.');
   requireValue(/if: always\(\)[\s\S]*write-release-audit\.mjs[\s\S]*if: always\(\)[\s\S]*actions\/upload-artifact@/.test(workflow), 'Audit generation or upload is not preserved on failure.');
 
   const auditDirectory = mkdtempSync(resolve(tmpdir(), 'preview-ota-audit-dry-run-'));

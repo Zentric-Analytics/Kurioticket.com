@@ -342,7 +342,38 @@ type HotelMobileSearchDraft = {
   rooms: number;
 };
 
+export type HotelResultsSearchInput = HotelMobileSearchDraft & {
+  sort?: string;
+};
+
 export function HotelResultsClient() {
+  const params = useSearchParams();
+  const searchInput = useMemo<HotelResultsSearchInput>(
+    () => ({
+      destination: normalizeHotelDestinationSearchValue(
+        params.get("destination") || "Tokyo",
+      ),
+      checkIn: params.get("checkIn") || nextDate(28),
+      checkOut: params.get("checkOut") || nextDate(35),
+      guests: Number(params.get("guests") || 2),
+      rooms: Number(params.get("rooms") || 1),
+      sort: params.get("sort") || "cheapest",
+    }),
+    [params],
+  );
+
+  return <HotelResultsExperience searchInput={searchInput} />;
+}
+
+export function HotelResultsExperience({
+  searchInput,
+  guided = false,
+  buildDetailsHref,
+}: {
+  searchInput: HotelResultsSearchInput;
+  guided?: boolean;
+  buildDetailsHref?: (hotelId: string) => string | null;
+}) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -350,7 +381,6 @@ export function HotelResultsClient() {
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
   );
-  const params = useSearchParams();
 
   const [results, setResults] = useState<PublicHotelResult[]>([]);
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>(
@@ -358,6 +388,7 @@ export function HotelResultsClient() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryKey, setRetryKey] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterApplying, setFilterApplying] = useState(false);
   const [searchApplying, setSearchApplying] = useState(false);
@@ -411,23 +442,18 @@ export function HotelResultsClient() {
   const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
+  const guidedLoadingStatusRef = useRef<HTMLHeadingElement | null>(null);
+  const guidedResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const guidedErrorRef = useRef<HTMLDivElement | null>(null);
+  const retryFocusPendingRef = useRef(false);
 
   useEffect(() => {
     currencyRatesRef.current = currencyRates.rates;
   }, [currencyRates.rates]);
 
   const body = useMemo(
-    () => ({
-      destination: normalizeHotelDestinationSearchValue(
-        params.get("destination") || "Tokyo",
-      ),
-      checkIn: params.get("checkIn") || nextDate(28),
-      checkOut: params.get("checkOut") || nextDate(35),
-      guests: Number(params.get("guests") || 2),
-      rooms: Number(params.get("rooms") || 1),
-      sort: params.get("sort") || "cheapest",
-    }),
-    [params],
+    () => ({ ...searchInput, sort: searchInput.sort || "cheapest" }),
+    [searchInput],
   );
   const hotelDetailsSearchParams = useMemo(() => {
     return new URLSearchParams({
@@ -733,11 +759,13 @@ export function HotelResultsClient() {
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
 
     fetch("/api/hotels/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      signal: controller.signal,
     })
       .then(async (response) => {
         const data = await response.json();
@@ -772,7 +800,7 @@ export function HotelResultsClient() {
         setSelectedStarRating(ALL_HOTEL_STAR_RATINGS);
       })
       .catch((searchError) => {
-        if (!active) return;
+        if (!active || controller.signal.aborted) return;
 
         setSearchApplying(false);
         if (searchApplyingTimeoutRef.current !== null) {
@@ -791,8 +819,33 @@ export function HotelResultsClient() {
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [body, t]);
+  }, [body, retryKey, t]);
+
+  const retryGuidedHotelSearch = useCallback(() => {
+    retryFocusPendingRef.current = true;
+    setError("");
+    setLoading(true);
+    setRetryKey((value) => value + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!guided || !retryFocusPendingRef.current) return;
+
+    if (loading) {
+      guidedLoadingStatusRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    const finalTarget = error
+      ? guidedErrorRef.current
+      : guidedResultsHeadingRef.current;
+    if (!finalTarget) return;
+
+    finalTarget.focus({ preventScroll: true });
+    retryFocusPendingRef.current = false;
+  }, [error, guided, loading, results]);
 
   const searchedDestination = body.destination.trim();
   const filterOptions = useMemo(
@@ -1494,6 +1547,7 @@ export function HotelResultsClient() {
   }
 
   function renderDesktopStickyHotelSearchDialog() {
+    if (guided) return null;
     if (!desktopStickyHotelSearchOpen) return null;
 
     return (
@@ -1566,6 +1620,17 @@ export function HotelResultsClient() {
   }
 
   if (loading) {
+    if (guided) {
+      return (
+        <section aria-labelledby="deals-guided-hotel-results-status" aria-busy="true" className="mt-6 space-y-4">
+          <h2 ref={guidedLoadingStatusRef} id="deals-guided-hotel-results-status" tabIndex={-1} className="text-lg font-bold text-slate-950" role="status">
+            {t("deals.guided.hotelResults.loading")}
+          </h2>
+          <HotelCardSkeleton />
+          <HotelCardSkeleton />
+        </section>
+      );
+    }
     return (
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-[radial-gradient(circle_at_top_left,rgba(92,182,178,0.20),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(0,75,184,0.16),transparent_36%),linear-gradient(180deg,#F2F7FA_0%,#FFFFFF_58%,#FFFFFF_100%)]">
         <BrandedLoading
@@ -1580,9 +1645,14 @@ export function HotelResultsClient() {
     );
   }
 
+  const ResultsRoot = guided ? "div" : "main";
+
   return (
-    <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8">
-      <div
+    <ResultsRoot
+      className={guided ? "mt-6 min-w-0" : "flex-1 overflow-x-clip bg-[#f6f8fb] pb-8"}
+      {...(guided && !error ? { role: "region", "aria-labelledby": "deals-guided-hotel-results-heading" } : {})}
+    >
+      {!guided ? <div
         className={cn(
           "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
           mobileHotelSearchOpen && "hidden",
@@ -1605,9 +1675,9 @@ export function HotelResultsClient() {
           onMobileDraftChange={updateMobileHotelSearchDraft}
           onSubmitStart={triggerSearchApplying}
         />
-      </div>
+      </div> : null}
 
-      {mobileHotelSearchOpen ? (
+      {!guided && mobileHotelSearchOpen ? (
         <div className="fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden">
           <HotelSearchBar
             key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
@@ -1628,7 +1698,7 @@ export function HotelResultsClient() {
         </div>
       ) : null}
 
-      <section className="hidden bg-white pb-0 pt-7 shadow-none sm:block">
+      {!guided ? <section className="hidden bg-white pb-0 pt-7 shadow-none sm:block">
         <div className="page-shell">
           <div
             ref={desktopSearchFrameRef}
@@ -1654,9 +1724,9 @@ export function HotelResultsClient() {
             </div>
           </div>
         </div>
-      </section>
+      </section> : null}
 
-      <div
+      {!guided ? <div
         className={cn(
           "pointer-events-none fixed inset-x-0 top-0 z-[1000] hidden px-4 transition-all duration-200 lg:block",
           showDesktopMinimizedSearch && !desktopStickyHotelSearchOpen
@@ -1673,11 +1743,11 @@ export function HotelResultsClient() {
         }
       >
         {renderDesktopMinimizedHotelSearchBar()}
-      </div>
+      </div> : null}
 
       {renderDesktopStickyHotelSearchDialog()}
 
-      <nav
+      {!guided ? <nav
         aria-label="Breadcrumb"
         className="page-shell hidden pt-12 sm:block lg:pt-14"
       >
@@ -1712,11 +1782,11 @@ export function HotelResultsClient() {
             Hotel results
           </li>
         </ol>
-      </nav>
+      </nav> : null}
 
       <div
         ref={resultsGridRef}
-        className="page-shell grid gap-y-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] lg:gap-x-9"
+        className={cn(guided ? "grid gap-y-5 pb-6 lg:grid-cols-[256px_minmax(0,1fr)] lg:gap-x-9" : "page-shell grid gap-y-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] lg:gap-x-9")}
       >
         <aside
           ref={desktopFilterSidebarRef}
@@ -1797,12 +1867,19 @@ export function HotelResultsClient() {
         <section className="min-w-0 space-y-4">
           {error ? (
             <div
+              ref={guided ? guidedErrorRef : undefined}
+              tabIndex={guided ? -1 : undefined}
               className={cn(
                 hotelResultStackClass,
                 "rounded-md border border-danger/30 bg-red-50 p-4 text-danger",
               )}
             >
-              {error}
+              <p role="alert">{error}</p>
+              {guided ? (
+                <Button className="mt-4 min-h-11" onClick={retryGuidedHotelSearch}>
+                  {t("deals.guided.hotelResults.retry")}
+                </Button>
+              ) : null}
             </div>
           ) : showFilteredEmptyState ? (
             <div className={cn(hotelResultStackClass, "space-y-4")}>
@@ -1838,14 +1915,22 @@ export function HotelResultsClient() {
                   t={t}
                 />
 
+                {guided ? (
+                  <Button type="button" variant="secondary" className="min-h-11 lg:hidden" onClick={() => setFiltersOpen(true)}>
+                    {t("filters")}{activeFilterCount ? ` (${activeFilterCount})` : ""}
+                  </Button>
+                ) : null}
+
                 <div
                   role="group"
                   aria-label={t("hotelResults.summaryAria")}
                   className="flex w-full flex-nowrap items-center justify-between gap-2 py-1"
                 >
-                  <h1 className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
-                    {resultsHeading}
-                  </h1>
+                  {guided ? (
+                    <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h2>
+                  ) : (
+                    <h1 className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h1>
+                  )}
                   <div className="flex shrink-0 flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
                     <span className="whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
                       {`${t("sortBy") || "Sort by"}:`}
@@ -1970,13 +2055,24 @@ export function HotelResultsClient() {
                     <HotelCard
                       key={hotel.id}
                       hotel={hotel}
-                      detailsHref={`/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`}
+                      detailsHref={guided ? buildDetailsHref?.(hotel.id) ?? null : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`}
+                      actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined}
+                      actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined}
+                      unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined}
+                      unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined}
+                      allowExternalAttribution={!guided}
+                      allowSave={!guided}
                       sortBadge={index === 0 ? hotelSummarySortMode : undefined}
                     />
                   ))
                 ) : (
                   <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
-                    {t("hotelResults.noStaysMatchFiltersInline")}
+                    <p>{guided && results.length === 0 ? t("deals.guided.hotelResults.empty") : t("hotelResults.noStaysMatchFiltersInline")}</p>
+                    {guided && results.length === 0 ? (
+                      <Button className="mt-4 min-h-11" onClick={retryGuidedHotelSearch}>
+                        {t("deals.guided.hotelResults.retry")}
+                      </Button>
+                    ) : null}
                   </div>
                 )}
               </div>
@@ -2059,7 +2155,7 @@ export function HotelResultsClient() {
           </Button>
         </div>
       </aside>
-    </main>
+    </ResultsRoot>
   );
 }
 

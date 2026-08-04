@@ -1,146 +1,201 @@
 name: Android Preview OTA
 
 on:
+  workflow_call:
+    inputs:
+      target_sha: { description: "Trusted dev SHA supplied by the validated push workflow", required: true, type: string }
+      trigger_mode: { description: "Must be automatic", required: true, type: string }
+      release_reason: { description: "Generated non-shell release context", required: true, type: string }
   workflow_dispatch:
     inputs:
-      commit_sha: { description: "Exact approved dev commit SHA", required: true, type: string }
+      commit_sha: { description: "Exact dev commit SHA for owner-approved break-glass retry", required: true, type: string }
       platform: { description: "Must be android", required: true, type: choice, options: [android] }
-      runtime_version: { description: "Expected runtime", required: true, type: string }
-      release_reason: { description: "Approval or change reference", required: true, type: string }
+      release_reason: { description: "Owner approval reference", required: true, type: string }
       confirmation_phrase: { description: "Type DELIVER ANDROID PREVIEW", required: true, type: string }
-      expected_package: { description: "Expected Android package", required: true, type: string }
-      expected_channel: { description: "Expected EAS channel", required: true, type: string }
-      baseline_eas_build_id: { description: "Approved EAS build UUID", required: true, type: string }
 
 permissions: { contents: read, actions: read }
-concurrency: { group: android-preview-ota, cancel-in-progress: false }
+concurrency:
+  group: android-preview-ota
+  cancel-in-progress: false
 
 jobs:
-  deliver:
+  evaluate-and-deliver:
     environment: mobile-preview-ota
     runs-on: ubuntu-latest
     env:
       APP_VARIANT: preview
       APP_BUILD_MODE: release
       EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+      PREVIEW_TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.commit_sha || inputs.target_sha }}
+      PREVIEW_TRIGGER_MODE: ${{ github.event_name == 'workflow_dispatch' && 'manual' || inputs.trigger_mode }}
+      PREVIEW_RELEASE_REASON: ${{ github.event_name == 'workflow_dispatch' && inputs.release_reason || inputs.release_reason }}
     steps:
+      - name: Capture evaluation start time
+        run: echo "WORKFLOW_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
-        with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.commit_sha || inputs.target_sha }}
+          fetch-depth: 0
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
         with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
       - name: Install mobile dependencies
         working-directory: apps/mobile
         run: npm ci
-      - name: Validate immutable Preview inputs
+      - name: Resolve trusted Preview target
+        id: context
         working-directory: apps/mobile
         env:
-          APPROVED_SHA: "${{ inputs.commit_sha }}"
-          APPROVED_RUNTIME: "${{ inputs.runtime_version }}"
-          APPROVED_PACKAGE: "${{ inputs.expected_package }}"
-          APPROVED_CHANNEL: "${{ inputs.expected_channel }}"
-          APPROVED_CONFIRMATION: "${{ inputs.confirmation_phrase }}"
-          DELIVERY_ACTION: update
-          RELEASE_REASON: "${{ inputs.release_reason }}"
-          BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}"
+          PREVIEW_CONTEXT_OUTPUT: ${{ runner.temp }}/preview-context.json
+          BREAK_GLASS_CONFIRMATION: ${{ inputs.confirmation_phrase }}
         run: |
-          ACTUAL_SHA=$(git rev-parse HEAD)
-          test "$ACTUAL_SHA" = "$APPROVED_SHA" || { echo 'Checked-out SHA does not match approval.' >&2; exit 1; }
-          test "$GITHUB_SHA" = "$APPROVED_SHA" || { echo 'Workflow dispatch SHA does not match approval.' >&2; exit 1; }
-          echo "CHECKED_OUT_SHA=$ACTUAL_SHA" >> "$GITHUB_ENV"
-          node scripts/validate-delivery-inputs.mjs preview "$APPROVED_SHA" "$APPROVED_RUNTIME" "$APPROVED_PACKAGE" "$APPROVED_CHANNEL" preview https://staging.kurioticket.com "$APPROVED_CONFIRMATION" branch "$DELIVERY_ACTION" "$RELEASE_REASON" "$BASELINE_EAS_BUILD_ID"
+          set -euo pipefail
+          test "$PREVIEW_TRIGGER_MODE" = automatic || test "$PREVIEW_TRIGGER_MODE" = manual
+          if [ "$PREVIEW_TRIGGER_MODE" = automatic ]; then
+            test "${{ github.event_name }}" = push || { echo 'Automatic Preview OTA requires the validated push event.' >&2; exit 1; }
+            test "${{ inputs.trigger_mode }}" = automatic || { echo 'Automatic Preview trigger mode mismatch.' >&2; exit 1; }
+          else
+            test "${{ github.event_name }}" = workflow_dispatch || { echo 'Break-glass Preview OTA requires workflow_dispatch.' >&2; exit 1; }
+            test "$BREAK_GLASS_CONFIRMATION" = 'DELIVER ANDROID PREVIEW' || { echo 'Break-glass confirmation mismatch.' >&2; exit 1; }
+          fi
+          node scripts/preview-ota-automation.mjs context
       - name: Validate release matrix and resolved config
         working-directory: apps/mobile
         run: |
+          set -euo pipefail
           npm run release:validate
           npx expo config --type public --json > "$RUNNER_TEMP/preview-config.json"
-          node -e "const c=require(process.env.RUNNER_TEMP+'/preview-config.json');if(c.android.package!=='com.kurioticket.app.preview'||c.runtimeVersion!=='preview-0.3.0'||c.extra.environment.channel!=='preview'||c.extra.environment.apiBaseUrl!=='https://staging.kurioticket.com')throw Error('Preview configuration mismatch')"
-      - name: Verify staging API safety
-        run: |
-          node - <<'NODE'
-          const origin = 'https://staging.kurioticket.com';
-          for (const path of ['/api/mobile/v1/health', '/api/mobile/v1/config']) {
-            const response = await fetch(origin + path);
-            if (!response.ok) throw new Error(`${path} returned HTTP ${response.status}`);
-            const body = await response.json();
-            if (body.data?.environment !== 'staging') throw new Error(`${path} is not classified as staging`);
-          }
-          NODE
+          node -e "const c=require(process.env.RUNNER_TEMP+'/preview-config.json');if(c.name!=='Kurioticket Preview'||c.android.package!=='com.kurioticket.app.preview'||c.runtimeVersion!=='preview-0.3.0'||c.extra.environment.channel!=='preview'||c.extra.environment.apiBaseUrl!=='https://staging.kurioticket.com')throw Error('Preview configuration mismatch')"
       - name: Resolve approved binary baseline
-        working-directory: apps/mobile
-        env:
-          EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}"
-          BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}"
-        run: |
-          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
-          test -f release-baselines/android/preview.json || { echo 'Reviewed Preview binary manifest is missing.' >&2; exit 1; }
-          npx eas-cli@16.17.4 build:view "$BASELINE_EAS_BUILD_ID" --json > "$RUNNER_TEMP/baseline-build.json"
-      - name: Resolve protected GitHub build attestation
-        working-directory: apps/mobile
-        env:
-          GITHUB_TOKEN: "${{ github.token }}"
-        run: |
-          node scripts/fetch-github-build-attestation.mjs --manifest release-baselines/android/preview.json --output "$RUNNER_TEMP/baseline-attestation"
-          node scripts/verify-release-evidence.mjs --kind baseline --variant preview --manifest release-baselines/android/preview.json --build "$RUNNER_TEMP/baseline-build.json" --workflow-run "$RUNNER_TEMP/baseline-attestation/workflow-run.json" --artifact "$RUNNER_TEMP/baseline-attestation/artifact.json" --audit "$RUNNER_TEMP/baseline-attestation/audit/release-audit.json" --output "$RUNNER_TEMP/baseline-evidence.json"
-      - name: Require OTA-compatible native fingerprint
-        working-directory: apps/mobile
-        env:
-          APPROVED_SHA: "${{ inputs.commit_sha }}"
-          DELIVERY_ACTION: update
-        run: |
-          npx fingerprint fingerprint:generate --platform android > "$RUNNER_TEMP/current-fingerprint.json"
-          BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)")
-          BASE_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.nativeFingerprint)")
-          CURRENT_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/current-fingerprint.json');process.stdout.write(x.hash)")
-          node scripts/classify-release.mjs --variant preview --base "$BASE" --head "$APPROVED_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime preview-0.3.0 --channel preview --action "$DELIVERY_ACTION" > "$RUNNER_TEMP/release-classification.json" || {
-            status=$?
-            cat "$RUNNER_TEMP/release-classification.json"
-            echo 'Preview change is not OTA-compatible; channel verification and publication are blocked.' >&2
-            exit "$status"
-          }
-          cat "$RUNNER_TEMP/release-classification.json"
-      - name: Verify live channel mapping
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
         run: |
+          set -euo pipefail
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
-          npx eas-cli@16.17.4 channel:view preview --json --non-interactive > "$RUNNER_TEMP/channel.json"
-          node scripts/verify-release-evidence.mjs --kind channel --variant preview --input "$RUNNER_TEMP/channel.json" --output "$RUNNER_TEMP/channel-evidence.json"
-      - name: Publish approved Preview OTA through verified channel
+          test -f release-baselines/android/preview.json || { echo 'Reviewed Preview binary manifest is missing.' >&2; exit 1; }
+          BASELINE_EAS_BUILD_ID=$(node -e "const x=require('./release-baselines/android/preview.json');process.stdout.write(x.easBuildId)")
+          test "$BASELINE_EAS_BUILD_ID" = '179ae3b8-3e7a-404c-bcf0-44cbdc759cff' || { echo 'Unexpected reviewed Preview baseline.' >&2; exit 1; }
+          echo "BASELINE_EAS_BUILD_ID=$BASELINE_EAS_BUILD_ID" >> "$GITHUB_ENV"
+          npx eas-cli@16.17.4 build:view "$BASELINE_EAS_BUILD_ID" --json > "$RUNNER_TEMP/baseline-build.json"
+      - name: Resolve protected GitHub build attestation
+        working-directory: apps/mobile
+        env: { GITHUB_TOKEN: "${{ github.token }}" }
+        run: |
+          set -euo pipefail
+          node scripts/fetch-github-build-attestation.mjs --manifest release-baselines/android/preview.json --output "$RUNNER_TEMP/baseline-attestation"
+          node scripts/verify-release-evidence.mjs --kind baseline --variant preview --manifest release-baselines/android/preview.json --build "$RUNNER_TEMP/baseline-build.json" --workflow-run "$RUNNER_TEMP/baseline-attestation/workflow-run.json" --artifact "$RUNNER_TEMP/baseline-attestation/artifact.json" --audit "$RUNNER_TEMP/baseline-attestation/audit/release-audit.json" --output "$RUNNER_TEMP/baseline-evidence.json"
+          BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)")
+          git merge-base --is-ancestor "$BASE" "$PREVIEW_TARGET_SHA" || { echo 'Reviewed Preview baseline is not an ancestor of the target dev SHA.' >&2; exit 1; }
+      - name: Prevent duplicate publication for the target SHA
+        id: replay
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}"
-          RELEASE_REASON: "${{ inputs.release_reason }}"
+          PREVIEW_UPDATE_HISTORY: ${{ runner.temp }}/preview-update-history.json
+          PREVIEW_UPDATE_PAGE: ${{ runner.temp }}/preview-update-page.json
+          PREVIEW_UPDATE_STDERR: ${{ runner.temp }}/preview-update-stderr.log
+          PREVIEW_REPLAY_OUTPUT: ${{ runner.temp }}/preview-replay.json
         run: |
+          set -euo pipefail
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
-          npx eas-cli@16.17.4 update --channel preview --platform android --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.json"
-      - name: Write consolidated release audit
+          printf '[]\n' > "$PREVIEW_UPDATE_HISTORY"
+          offset=0
+          while [ "$offset" -lt 5000 ]; do
+            echo "Preview replay lookup: cli=eas-cli@16.17.4 branch=preview platform=android(local-filter) runtime=preview-0.3.0(local-filter) offset=$offset limit=50"
+            set +e
+            npx eas-cli@16.17.4 update:list --branch preview --limit 50 --offset "$offset" --json --non-interactive > "$PREVIEW_UPDATE_PAGE" 2> "$PREVIEW_UPDATE_STDERR"
+            lookup_status=$?
+            set -e
+            if [ "$lookup_status" -ne 0 ]; then
+              PREVIEW_UPDATE_EXIT_CODE="$lookup_status" node scripts/preview-ota-automation.mjs diagnose-replay-failure
+              exit "$lookup_status"
+            fi
+            node scripts/preview-ota-automation.mjs merge-history-page
+            page_count=$(node -e "const x=require(process.env.PREVIEW_UPDATE_PAGE);if(!x||typeof x!=='object'||Array.isArray(x)||!Array.isArray(x.currentPage))throw Error('Malformed EAS update page');process.stdout.write(String(x.currentPage.length))")
+            if [ "$page_count" -lt 50 ]; then break; fi
+            offset=$((offset + 50))
+          done
+          test "$page_count" -lt 50 || { echo 'Preview update history exceeded the bounded replay audit.' >&2; exit 1; }
+          node scripts/preview-ota-automation.mjs replay
+          already_published=$(node -e "const x=require(process.env.PREVIEW_REPLAY_OUTPUT);process.stdout.write(String(x.alreadyPublished))")
+          if [ "$already_published" = true ]; then
+            echo "Preview OTA for $PREVIEW_TARGET_SHA is already published; replay exits without publication." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Classify complete baseline-to-target range
+        id: classify
+        if: steps.replay.outputs.already_published != 'true'
+        working-directory: apps/mobile
+        run: |
+          set -uo pipefail
+          npx fingerprint fingerprint:generate --platform android > "$RUNNER_TEMP/current-fingerprint.json" || { echo 'Preview fingerprint generation failed.' >&2; exit 1; }
+          BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)") || exit 1
+          BASE_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.nativeFingerprint)") || exit 1
+          CURRENT_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/current-fingerprint.json');process.stdout.write(x.hash)") || exit 1
+          node scripts/classify-release.mjs --variant preview --base "$BASE" --head "$PREVIEW_TARGET_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime preview-0.3.0 --channel preview --action update > "$RUNNER_TEMP/release-classification.json"
+          classifier_status=$?
+          cat "$RUNNER_TEMP/release-classification.json"
+          if [ "$classifier_status" -eq 0 ]; then
+            echo 'decision=OTA_SAFE' >> "$GITHUB_OUTPUT"
+          elif [ "$classifier_status" -eq 2 ]; then
+            reason=$(node -e "const x=require(process.env.RUNNER_TEMP+'/release-classification.json');process.stdout.write(x.reason)")
+            echo 'decision=NATIVE_BUILD_REQUIRED' >> "$GITHUB_OUTPUT"
+            printf '## PREVIEW BUILD REQUIRED\n\nTarget: `%s`\n\nReason: `%s`\n\nOwner approval is required for `mobile-preview-build`. No OTA or native build was started.\n' "$PREVIEW_TARGET_SHA" "$reason" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Preview OTA classifier failed unexpectedly.' >&2
+            exit "$classifier_status"
+          fi
+      - name: Verify live Preview channel mapping
+        if: steps.replay.outputs.already_published != 'true' && steps.classify.outputs.decision == 'OTA_SAFE'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          set -euo pipefail
+          npx eas-cli@16.17.4 channel:view preview --json --non-interactive > "$RUNNER_TEMP/channel.json"
+          node scripts/verify-release-evidence.mjs --kind channel --variant preview --input "$RUNNER_TEMP/channel.json" --output "$RUNNER_TEMP/channel-evidence.json"
+      - name: Wait for exact staging deployment and safety
+        if: steps.replay.outputs.already_published != 'true' && steps.classify.outputs.decision == 'OTA_SAFE'
+        working-directory: apps/mobile
+        env: { PREVIEW_STAGING_OUTPUT: "${{ runner.temp }}/staging-readiness.json" }
+        run: node scripts/preview-ota-automation.mjs wait-staging
+      - name: Publish one verified Android Preview OTA
+        if: steps.replay.outputs.already_published != 'true' && steps.classify.outputs.decision == 'OTA_SAFE'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          RELEASE_MESSAGE="Automated safe Preview OTA for $PREVIEW_TARGET_SHA; audit run $GITHUB_RUN_ID"
+          npx eas-cli@16.17.4 update --channel preview --platform android --message "$RELEASE_MESSAGE" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.json"
+      - name: Write consolidated Preview evaluation audit
         if: always()
         working-directory: apps/mobile
         env:
           WORKFLOW_RUN_ID: "${{ github.run_id }}"
-          WORKFLOW_HEAD_SHA: "${{ env.CHECKED_OUT_SHA }}"
+          WORKFLOW_HEAD_SHA: "${{ env.PREVIEW_TARGET_SHA }}"
           RELEASE_ACTOR: "${{ github.actor }}"
           RELEASE_ENVIRONMENT: preview
           RELEASE_ACTION: update
-          RELEASE_REASON: "${{ inputs.release_reason }}"
-          RELEASE_COMMIT: "${{ inputs.commit_sha }}"
+          RELEASE_REASON: "${{ env.PREVIEW_RELEASE_REASON }}"
+          RELEASE_COMMIT: "${{ env.PREVIEW_TARGET_SHA }}"
           RELEASE_PACKAGE: com.kurioticket.app.preview
           RELEASE_PROFILE: preview
           RELEASE_RUNTIME: preview-0.3.0
           RELEASE_CHANNEL: preview
-          BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}"
+          BASELINE_EAS_BUILD_ID: "${{ env.BASELINE_EAS_BUILD_ID }}"
           BASELINE_EVIDENCE_PATH: "${{ runner.temp }}/baseline-evidence.json"
           CHANNEL_EVIDENCE_PATH: "${{ runner.temp }}/channel-evidence.json"
           CURRENT_FINGERPRINT_PATH: "${{ runner.temp }}/current-fingerprint.json"
           CLASSIFIER_PATH: "${{ runner.temp }}/release-classification.json"
-          VERSION_EVIDENCE_PATH: "${{ runner.temp }}/version-evidence.json"
+          STAGING_EVIDENCE_PATH: "${{ runner.temp }}/staging-readiness.json"
+          TRIGGER_EVIDENCE_PATH: "${{ runner.temp }}/preview-context.json"
+          REPLAY_EVIDENCE_PATH: "${{ runner.temp }}/preview-replay.json"
           DELIVERY_RESULT_PATH: "${{ runner.temp }}/delivery-result.json"
           AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
-          WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
+          WORKFLOW_STARTED_AT: "${{ env.WORKFLOW_STARTED_AT }}"
           FINAL_STATUS: "${{ job.status }}"
         run: node scripts/write-release-audit.mjs
-      - name: Preserve non-secret release evidence
+      - name: Preserve non-secret Preview evaluation evidence
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: android-preview-release-evidence-${{ github.run_id }}

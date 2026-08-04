@@ -27,6 +27,17 @@ export function getPublicEnvironment(): PublicEnvironment {
   return isStagingEnvironment() ? "staging" : "production";
 }
 
+export function getStagingReleaseReadiness() {
+  if (!isStagingEnvironment()) return null;
+
+  const commitSha = process.env.RENDER_GIT_COMMIT?.trim().toLowerCase() || "";
+  return {
+    commitSha: /^[a-f0-9]{40}$/.test(commitSha) ? commitSha : null,
+    sandboxTravelSafe: getStagingProviderSafety().safe,
+    emailPolicyRestricted: true,
+  } as const;
+}
+
 export function getStagingProviderSafety() {
   if (!isStagingEnvironment()) return { safe: true as const };
 
