@@ -1,3 +1,6 @@
+Exit code: 0
+Wall time: 0.5 seconds
+Output:
 # Protected Android release pipeline
 
 This document defines the delivery foundation. It does not authorize credentials, builds, OTA publication, Play resources, uploads, or releases.
@@ -29,7 +32,9 @@ The manual Android Preview OTA dispatcher remains temporarily as a break-glass r
 
 Each native-build dispatcher has one fixed action and immutable identity inputs. The Preview OTA evaluator fixes runtime, package, channel, profile, API, and baseline in repository-reviewed policy; the manual break-glass form supplies only an exact dev-reachable SHA, nonblank reason, Android selection, and confirmation phrase. Preview OTA verifies live EAS build metadata against the immutable repository-reviewed binary manifest before generating the current Android fingerprint. Neither automatic event data nor the manual dispatcher can supply baseline source, workflow-run, artifact, fingerprint, package, runtime, channel, profile, or API evidence.
 
-The automatic evaluator does not use dispatcher inputs. Its source comes from the successful `push` event on `refs/heads/dev` inside the required validation workflow, and the reusable OTA workflow verifies repository identity, event SHA, checked-out `HEAD`, and reachability from current `origin/dev`. Classification always covers the complete reviewed binary source-to-target range; a non-ancestor baseline fails closed. A SHA-specific concurrency group prevents overlapping publications, and EAS Preview update history prevents a repeated event from publishing the same generated audit message twice.
+The automatic evaluator does not use dispatcher inputs. Its source comes from the successful `push` event on `refs/heads/dev` inside the required validation workflow, and the reusable OTA workflow verifies repository identity, event SHA, checked-out `HEAD`, and reachability from current `origin/dev`. Classification always covers the complete reviewed binary source-to-target range; a non-ancestor baseline fails closed. A single non-cancelling concurrency lane serializes publications, and EAS Preview update history prevents a repeated event from publishing the same generated audit message twice.
+
+Replay lookup is pinned to `eas-cli@16.17.4`. That version queries `update:list` with the supported branch, pagination, JSON, and non-interactive flags; Android platform and `preview-0.3.0` runtime filtering are applied locally to its validated `{ name, currentPage }` JSON response because those two CLI flags are not supported in 16.17.4. A legitimate empty `currentPage` means no prior publication. CLI failure, malformed JSON, wrong branch/runtime/platform, or malformed generated audit metadata fails closed before classification or publication.
 
 When EAS reports a full Git commit, it must exactly match the reviewed manifest. The first Preview APK was created while `EAS_NO_VCS` was present with the value `0`; EAS treats presence as no-VCS mode, so build `179ae3b8-3e7a-404c-bcf0-44cbdc759cff` has `Git Ref: None`. Its schema-v2 manifest therefore uses a fail-closed composite attestation: the exact finished EAS build plus the successful protected `Android Preview Build` workflow run, its immutable `dev` head SHA, the named unexpired audit artifact and GitHub-provided SHA-256 digest, and the audit's matching build ID, package, profile, runtime, channel, version, and native fingerprint. The OTA workflow retrieves those records read-only with `actions: read`, recomputes the downloaded artifact digest, and rejects any missing, expired, unrelated, or inconsistent evidence. This is not a blank-commit exception.
 
@@ -88,3 +93,4 @@ Emergency stop: cancel pending workflow runs, withhold environment approval, rem
 ## Legacy preservation
 
 The `com.kurioticket.mobile` Play draft, Android keystore, Preview APK, Production AAB, and runtime `0.2.0` update branches/history remain untouched for audit and rollback reference. New workflows reject the legacy package and runtime. Legacy credentials and artifacts are not reused by either new identity.
+
