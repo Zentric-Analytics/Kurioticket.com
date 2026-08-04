@@ -4,15 +4,9 @@ on:
   pull_request:
     branches:
       - dev
-    paths:
-      - "apps/mobile/**"
-      - ".github/workflows/mobile-preview-update.yml"
   push:
     branches:
       - dev
-    paths:
-      - "apps/mobile/**"
-      - ".github/workflows/mobile-preview-update.yml"
   workflow_dispatch:
 
 concurrency:
@@ -35,9 +29,50 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          fetch-depth: 2
+          fetch-depth: 0
+
+      - name: Classify mobile-relevant changes
+        id: changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          PUSH_AFTER_SHA: ${{ github.event.after }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            printf '%s\n' 'mobile_relevant=true' 'classification=manual-full-validation' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if ! [[ "$PR_BASE_SHA" =~ ^[0-9a-f]{40}$ && "$PR_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+              printf '%s\n' 'mobile_relevant=true' 'classification=uncertain-invalid-pr-range' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            git diff --name-only -z "$PR_BASE_SHA...$PR_HEAD_SHA" > /tmp/mobile-validation-paths
+          elif [ "$EVENT_NAME" = "push" ]; then
+            if ! [[ "$PUSH_BEFORE_SHA" =~ ^[0-9a-f]{40}$ && "$PUSH_AFTER_SHA" =~ ^[0-9a-f]{40}$ ]] ||
+               [ "$PUSH_BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+              printf '%s\n' 'mobile_relevant=true' 'classification=uncertain-invalid-push-range' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            git diff --name-only -z "$PUSH_BEFORE_SHA..$PUSH_AFTER_SHA" > /tmp/mobile-validation-paths
+          else
+            printf '%s\n' 'mobile_relevant=true' 'classification=uncertain-event' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          node apps/mobile/scripts/classify-mobile-validation-paths.mjs --stdin-null < /tmp/mobile-validation-paths >> "$GITHUB_OUTPUT"
+
+      - name: Mobile validation not applicable
+        if: steps.changes.outputs.mobile_relevant == 'false'
+        run: echo "No mobile-relevant files changed; the required mobile check is conclusive without running the mobile suite."
 
       - name: Setup Node.js
+        if: steps.changes.outputs.mobile_relevant == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -45,30 +80,37 @@ jobs:
           cache-dependency-path: apps/mobile/package-lock.json
 
       - name: Install mobile dependencies
+        if: steps.changes.outputs.mobile_relevant == 'true'
         working-directory: apps/mobile
         run: npm ci
 
       - name: Type-check mobile app
+        if: steps.changes.outputs.mobile_relevant == 'true'
         working-directory: apps/mobile
         run: npm run typecheck
 
       - name: Test mobile app
+        if: steps.changes.outputs.mobile_relevant == 'true'
         working-directory: apps/mobile
         run: npm test
 
       - name: Validate Expo project
+        if: steps.changes.outputs.mobile_relevant == 'true'
         working-directory: apps/mobile
         run: npm run expo:doctor
 
       - name: Resolve Preview public configuration
+        if: steps.changes.outputs.mobile_relevant == 'true'
         working-directory: apps/mobile
         run: npx expo config --type public --json > /tmp/kurioticket-preview-public.json
 
       - name: Validate Preview iOS prebuild configuration
+        if: steps.changes.outputs.mobile_relevant == 'true'
         working-directory: apps/mobile
         run: npx expo config --type prebuild --json > /tmp/kurioticket-preview-prebuild.json
 
       - name: Resolve Production public configuration
+        if: steps.changes.outputs.mobile_relevant == 'true'
         working-directory: apps/mobile
         env:
           APP_VARIANT: production
@@ -77,14 +119,17 @@ jobs:
         run: npx expo config --type public --json > /tmp/kurioticket-production-public.json
 
       - name: Validate resolved application identities
+        if: steps.changes.outputs.mobile_relevant == 'true'
         run: >-
           node -e "const fs=require('fs'); const preview=JSON.parse(fs.readFileSync('/tmp/kurioticket-preview-public.json')); const production=JSON.parse(fs.readFileSync('/tmp/kurioticket-production-public.json')); const ok=preview.name==='Kurioticket Preview'&&preview.ios.bundleIdentifier==='com.kurioticket.app.preview'&&preview.android.package==='com.kurioticket.app.preview'&&preview.scheme==='kurioticket-preview'&&preview.extra.environment.apiBaseUrl==='https://staging.kurioticket.com'&&production.name==='Kurioticket'&&production.ios.bundleIdentifier==='com.kurioticket.app'&&production.android.package==='com.kurioticket.app'&&production.scheme==='kurioticket'&&production.extra.environment.apiBaseUrl==='https://kurioticket.com'; if(!ok) throw new Error('Resolved mobile identities do not match the approved matrix');"
 
       - name: Validate Metro export
+        if: steps.changes.outputs.mobile_relevant == 'true'
         working-directory: apps/mobile
         env:
           CI: "1"
         run: npx expo export --platform all --output-dir /tmp/kurioticket-mobile-export --clear
 
       - name: Confirm delivery remains gated
+        if: steps.changes.outputs.mobile_relevant == 'true'
         run: echo "Validation complete. EAS Updates and native builds require a separately approved workflow."
