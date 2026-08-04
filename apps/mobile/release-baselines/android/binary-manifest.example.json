@@ -1,12 +1,23 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "environment": "preview",
   "easBuildId": "00000000-0000-4000-8000-000000000000",
+  "projectId": "00000000-0000-4000-8000-000000000000",
   "commitSha": "0000000000000000000000000000000000000000",
   "package": "com.kurioticket.app.preview",
   "profile": "preview",
   "platform": "ANDROID",
   "runtime": "preview-0.3.0",
   "channel": "preview",
-  "nativeFingerprint": "replace-with-reviewed-generated-fingerprint"
+  "appVersion": "0.3.0",
+  "versionCode": 1,
+  "nativeFingerprint": "replace-with-reviewed-generated-fingerprint",
+  "sourceAttestation": {
+    "type": "github-actions-build",
+    "repository": "Zentric-Analytics/Kurioticket.com",
+    "workflowRunId": "replace-with-protected-build-run-id",
+    "artifactId": 1,
+    "artifactName": "replace-with-build-audit-artifact-name",
+    "artifactDigest": "sha256:replace-with-github-artifact-digest"
+  }
 }

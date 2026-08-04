@@ -21,9 +21,12 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
     versionCode: read(env.VERSION_EVIDENCE_PATH),
     deliveryResult: read(env.DELIVERY_RESULT_PATH),
   };
+  const deliveryResult = evidence.deliveryResult.value;
+  const easBuildId = deliveryResult?.id ?? (Array.isArray(deliveryResult) ? deliveryResult[0]?.id : null) ?? null;
   return {
     schemaVersion: 1,
     workflowRunId: env.WORKFLOW_RUN_ID,
+    workflowHeadSha: env.WORKFLOW_HEAD_SHA ?? null,
     actor: env.RELEASE_ACTOR,
     environment: env.RELEASE_ENVIRONMENT,
     action: env.RELEASE_ACTION,
@@ -34,6 +37,7 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
     runtime: env.RELEASE_RUNTIME,
     channel: env.RELEASE_CHANNEL,
     baselineEasBuildId: env.BASELINE_EAS_BUILD_ID === 'NONE' ? null : env.BASELINE_EAS_BUILD_ID,
+    easBuildId,
     baseline: evidence.baseline.value,
     channelMapping: evidence.channelMapping.value,
     fingerprint: evidence.fingerprint.value,

@@ -12,7 +12,7 @@ on:
       expected_channel: { description: "Expected EAS channel", required: true, type: string }
       baseline_eas_build_id: { description: "Approved EAS build UUID", required: true, type: string }
 
-permissions: { contents: read }
+permissions: { contents: read, actions: read }
 concurrency: { group: android-preview-ota, cancel-in-progress: false }
 
 jobs:
@@ -23,7 +23,6 @@ jobs:
       APP_VARIANT: preview
       APP_BUILD_MODE: release
       EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
-      EAS_NO_VCS: "0"
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
         with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
@@ -43,7 +42,12 @@ jobs:
           DELIVERY_ACTION: update
           RELEASE_REASON: "${{ inputs.release_reason }}"
           BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}"
-        run: node scripts/validate-delivery-inputs.mjs preview "$APPROVED_SHA" "$APPROVED_RUNTIME" "$APPROVED_PACKAGE" "$APPROVED_CHANNEL" preview https://staging.kurioticket.com "$APPROVED_CONFIRMATION" branch "$DELIVERY_ACTION" "$RELEASE_REASON" "$BASELINE_EAS_BUILD_ID"
+        run: |
+          ACTUAL_SHA=$(git rev-parse HEAD)
+          test "$ACTUAL_SHA" = "$APPROVED_SHA" || { echo 'Checked-out SHA does not match approval.' >&2; exit 1; }
+          test "$GITHUB_SHA" = "$APPROVED_SHA" || { echo 'Workflow dispatch SHA does not match approval.' >&2; exit 1; }
+          echo "CHECKED_OUT_SHA=$ACTUAL_SHA" >> "$GITHUB_ENV"
+          node scripts/validate-delivery-inputs.mjs preview "$APPROVED_SHA" "$APPROVED_RUNTIME" "$APPROVED_PACKAGE" "$APPROVED_CHANNEL" preview https://staging.kurioticket.com "$APPROVED_CONFIRMATION" branch "$DELIVERY_ACTION" "$RELEASE_REASON" "$BASELINE_EAS_BUILD_ID"
       - name: Validate release matrix and resolved config
         working-directory: apps/mobile
         run: |
@@ -70,7 +74,16 @@ jobs:
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
           test -f release-baselines/android/preview.json || { echo 'Reviewed Preview binary manifest is missing.' >&2; exit 1; }
           npx eas-cli@16.17.4 build:view "$BASELINE_EAS_BUILD_ID" --json > "$RUNNER_TEMP/baseline-build.json"
-          node scripts/verify-release-evidence.mjs --kind baseline --variant preview --manifest release-baselines/android/preview.json --build "$RUNNER_TEMP/baseline-build.json" --output "$RUNNER_TEMP/baseline-evidence.json"
+      - name: Resolve protected GitHub build attestation
+        working-directory: apps/mobile
+        env:
+          GITHUB_TOKEN: "${{ github.token }}"
+        run: |
+          node scripts/fetch-github-build-attestation.mjs --manifest release-baselines/android/preview.json --output "$RUNNER_TEMP/baseline-attestation"
+          mkdir -p "$RUNNER_TEMP/baseline-attestation/audit"
+          unzip -q "$RUNNER_TEMP/baseline-attestation/artifact.zip" -d "$RUNNER_TEMP/baseline-attestation/audit"
+          test "$(find "$RUNNER_TEMP/baseline-attestation/audit" -name release-audit.json -type f | wc -l)" -eq 1 || { echo 'Build audit artifact is missing or ambiguous.' >&2; exit 1; }
+          node scripts/verify-release-evidence.mjs --kind baseline --variant preview --manifest release-baselines/android/preview.json --build "$RUNNER_TEMP/baseline-build.json" --workflow-run "$RUNNER_TEMP/baseline-attestation/workflow-run.json" --artifact "$RUNNER_TEMP/baseline-attestation/artifact.json" --audit "$RUNNER_TEMP/baseline-attestation/audit/release-audit.json" --output "$RUNNER_TEMP/baseline-evidence.json"
       - name: Require OTA-compatible native fingerprint
         working-directory: apps/mobile
         env:
@@ -102,6 +115,7 @@ jobs:
         working-directory: apps/mobile
         env:
           WORKFLOW_RUN_ID: "${{ github.run_id }}"
+          WORKFLOW_HEAD_SHA: "${{ env.CHECKED_OUT_SHA }}"
           RELEASE_ACTOR: "${{ github.actor }}"
           RELEASE_ENVIRONMENT: preview
           RELEASE_ACTION: update

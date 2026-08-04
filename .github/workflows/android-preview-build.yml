@@ -22,7 +22,6 @@ jobs:
       APP_VARIANT: preview
       APP_BUILD_MODE: release
       EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
-      EAS_NO_VCS: "0"
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
         with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
@@ -40,7 +39,12 @@ jobs:
           APPROVED_CHANNEL: "${{ inputs.expected_channel }}"
           APPROVED_CONFIRMATION: "${{ inputs.confirmation_phrase }}"
           RELEASE_REASON: "${{ inputs.release_reason }}"
-        run: node scripts/validate-delivery-inputs.mjs preview "$APPROVED_SHA" "$APPROVED_RUNTIME" "$APPROVED_PACKAGE" "$APPROVED_CHANNEL" preview https://staging.kurioticket.com "$APPROVED_CONFIRMATION" branch build "$RELEASE_REASON" NONE
+        run: |
+          ACTUAL_SHA=$(git rev-parse HEAD)
+          test "$ACTUAL_SHA" = "$APPROVED_SHA" || { echo 'Checked-out SHA does not match approval.' >&2; exit 1; }
+          test "$GITHUB_SHA" = "$APPROVED_SHA" || { echo 'Workflow dispatch SHA does not match approval.' >&2; exit 1; }
+          echo "CHECKED_OUT_SHA=$ACTUAL_SHA" >> "$GITHUB_ENV"
+          node scripts/validate-delivery-inputs.mjs preview "$APPROVED_SHA" "$APPROVED_RUNTIME" "$APPROVED_PACKAGE" "$APPROVED_CHANNEL" preview https://staging.kurioticket.com "$APPROVED_CONFIRMATION" branch build "$RELEASE_REASON" NONE
       - name: Validate release matrix and resolved config
         working-directory: apps/mobile
         run: |
@@ -98,6 +102,7 @@ jobs:
         working-directory: apps/mobile
         env:
           WORKFLOW_RUN_ID: "${{ github.run_id }}"
+          WORKFLOW_HEAD_SHA: "${{ env.CHECKED_OUT_SHA }}"
           RELEASE_ACTOR: "${{ github.actor }}"
           RELEASE_ENVIRONMENT: preview
           RELEASE_ACTION: build
