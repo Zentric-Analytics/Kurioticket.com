@@ -13,6 +13,7 @@ import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors, flowStyles, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
+import { discoverAdventureNavigation } from "./homepageCardNavigation";
 
 type AdventureCard = {
   id: string;
@@ -100,7 +101,7 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${card.title}. ${card.originCode} to ${card.destinationCode}.`}
-      onPress={() => router.push({ pathname: "/flights", params: { from: card.originCode, to: card.destinationCode } })}
+      onPress={() => router.push(discoverAdventureNavigation(card))}
       style={({ pressed }) => [styles.card, flowStyles.shadow, { width }, pressed && flowStyles.pressed]}
     >
       <View style={styles.imageFrame}>

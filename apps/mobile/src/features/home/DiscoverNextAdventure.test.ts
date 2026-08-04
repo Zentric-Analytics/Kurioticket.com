@@ -20,6 +20,6 @@ test("the discovery board matches the website mobile board and opens real flight
   assert.match(discovery, /Compare smart route ideas, flexible fares, and destinations picked for your region\./);
   assert.equal((discovery.match(/id: "ng-/g) ?? []).length, 8);
   assert.match(discovery, /nextAdventureCards\.map\(\(card\) => <AdventureCardView/);
-  assert.match(discovery, /pathname: "\/flights"/);
+  assert.match(discovery, /router\.push\(discoverAdventureNavigation\(card\)\)/);
   assert.match(discovery, /imageFailed \?/);
 });
