@@ -14,7 +14,7 @@ import { resolveProductionVersionEvidence } from './resolve-production-version-c
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
 import { buildReleaseAudit } from './write-release-audit.mjs';
 import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
-import { inspectPreviewUpdateHistory, resolveTrustedPreviewTarget, validateStagingReadiness, waitForStaging } from './preview-ota-automation.mjs';
+import { classifyReplayLookupFailure, inspectPreviewUpdateHistory, normalizePreviewUpdatePage, resolveTrustedPreviewTarget, validateStagingReadiness, waitForStaging } from './preview-ota-automation.mjs';
 
 const { policy, eas, root } = loadReleaseFiles();
 
@@ -627,12 +627,45 @@ test('manual Preview retry cannot weaken automatic target or identity constants'
   assert.match(workflow, /BASELINE_EAS_BUILD_ID.*preview\.json/);
   assert.match(workflow, /git merge-base --is-ancestor "\$BASE" "\$PREVIEW_TARGET_SHA"/);
 });
-test('duplicate Preview SHA is detected only from generated audit messages', () => {
+function previewUpdatePage(entries = []) {
+  return { name: 'preview', id: 'preview-branch-id', currentPage: entries };
+}
+
+function previewUpdate({ sha = 'a'.repeat(40), runtimeVersion = 'preview-0.3.0', platforms = 'android', branch = 'preview', message, group = 'update-group-id' } = {}) {
+  return {
+    branch,
+    runtimeVersion,
+    platforms,
+    group,
+    message: message ?? `"Automated safe Preview OTA for ${sha}; audit run 123" (Aug 4, 2026 by CI)`,
+  };
+}
+
+test('duplicate Preview SHA is detected only for the exact Android Preview runtime and branch', () => {
   const targetSha = 'a'.repeat(40);
-  assert.equal(inspectPreviewUpdateHistory([{ message: `Automated safe Preview OTA for ${targetSha}; audit run 123` }], targetSha).alreadyPublished, true);
-  assert.equal(inspectPreviewUpdateHistory([{ message: `user text ${targetSha}` }], targetSha).alreadyPublished, false);
-  assert.equal(inspectPreviewUpdateHistory([{ message: `Automated safe Preview OTA for ${'b'.repeat(40)}; audit run 123` }], targetSha).alreadyPublished, false);
+  const exact = normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha })]));
+  assert.equal(inspectPreviewUpdateHistory(exact, targetSha).alreadyPublished, true);
+  assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([])), targetSha).historyState, 'empty');
+  assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: 'b'.repeat(40) })])), targetSha).alreadyPublished, false);
+  assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, platforms: 'ios' })])), targetSha).alreadyPublished, false);
+  assert.equal(inspectPreviewUpdateHistory([{ ...exact[0], runtimeVersion: 'production-0.3.0' }], targetSha).alreadyPublished, false);
+  assert.equal(inspectPreviewUpdateHistory([{ ...exact[0], branch: 'production' }], targetSha).alreadyPublished, false);
+  assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, runtimeVersion: 'production-0.3.0' })])), /runtime mismatch/);
+  assert.throws(() => normalizePreviewUpdatePage({ ...previewUpdatePage([previewUpdate({ sha: targetSha })]), name: 'production' }), /branch mismatch/);
+  assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, branch: 'production' })])), /branch mismatch/);
+  assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ message: `Automated safe Preview OTA for ${targetSha}` })])), /message is malformed/);
   assert.throws(() => inspectPreviewUpdateHistory('not-json-shape', targetSha), /malformed/);
+});
+
+test('Preview replay JSON and CLI failures fail closed with safe classifications', () => {
+  assert.throws(() => normalizePreviewUpdatePage([]), /page is malformed/);
+  assert.throws(() => normalizePreviewUpdatePage({ name: 'preview', currentPage: 'not-an-array' }), /currentPage/);
+  assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ platforms: 'web' })])), /platforms/);
+  assert.equal(classifyReplayLookupFailure('Error: Nonexistent flag: --platform', 1), 'unsupported-command');
+  assert.equal(classifyReplayLookupFailure('Authentication failed', 1), 'authentication');
+  assert.equal(classifyReplayLookupFailure('HTTP 403 Forbidden', 1), 'authorization');
+  assert.equal(classifyReplayLookupFailure('HTTP 503 Service unavailable', 1), 'service-or-network');
+  assert.equal(classifyReplayLookupFailure('Error: update:list command failed.', 1), 'cli-failure');
 });
 test('staging readiness requires exact deployed SHA and every public safety gate', async () => {
   const targetSha = 'a'.repeat(40);
@@ -672,7 +705,13 @@ test('automatic Preview publication remains ordered and every failed gate blocks
   const staging = workflow.indexOf('Wait for exact staging deployment and safety');
   const publish = workflow.indexOf('Publish one verified Android Preview OTA');
   assert.ok(baseline >= 0 && baseline < replay && replay < classifier && classifier < channel && channel < staging && staging < publish);
-  assert.match(workflow, /update:list --branch preview/);
+  assert.match(workflow, /update:list --branch preview --limit 50 --offset "\$offset" --json --non-interactive/);
+  assert.doesNotMatch(workflow, /update:list[^\n]*(?:--platform|--runtime-version)/);
+  const replayStep = workflow.slice(replay, classifier);
+  assert.match(replayStep, /lookup_status=\$\?/);
+  assert.match(replayStep, /diagnose-replay-failure/);
+  assert.match(replayStep, /exit "\$lookup_status"/);
+  assert.doesNotMatch(replayStep, /\|\|\s*true|continue-on-error/);
   assert.match(workflow, /group: android-preview-ota\n\s+cancel-in-progress: false/);
   assert.doesNotMatch(workflow, /group: android-preview-ota-\$\{\{/);
   assert.match(workflow, /set -euo pipefail[\s\S]*update --channel preview[\s\S]*\| tee/);

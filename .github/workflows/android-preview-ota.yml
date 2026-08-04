@@ -92,6 +92,7 @@ jobs:
           EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}"
           PREVIEW_UPDATE_HISTORY: ${{ runner.temp }}/preview-update-history.json
           PREVIEW_UPDATE_PAGE: ${{ runner.temp }}/preview-update-page.json
+          PREVIEW_UPDATE_STDERR: ${{ runner.temp }}/preview-update-stderr.log
           PREVIEW_REPLAY_OUTPUT: ${{ runner.temp }}/preview-replay.json
         run: |
           set -euo pipefail
@@ -99,9 +100,17 @@ jobs:
           printf '[]\n' > "$PREVIEW_UPDATE_HISTORY"
           offset=0
           while [ "$offset" -lt 5000 ]; do
-            npx eas-cli@16.17.4 update:list --branch preview --platform android --runtime-version preview-0.3.0 --limit 50 --offset "$offset" --json --non-interactive > "$PREVIEW_UPDATE_PAGE"
-            page_count=$(node -e "const x=require(process.env.PREVIEW_UPDATE_PAGE);if(!Array.isArray(x))throw Error('Malformed EAS update page');process.stdout.write(String(x.length))")
+            echo "Preview replay lookup: cli=eas-cli@16.17.4 branch=preview platform=android(local-filter) runtime=preview-0.3.0(local-filter) offset=$offset limit=50"
+            set +e
+            npx eas-cli@16.17.4 update:list --branch preview --limit 50 --offset "$offset" --json --non-interactive > "$PREVIEW_UPDATE_PAGE" 2> "$PREVIEW_UPDATE_STDERR"
+            lookup_status=$?
+            set -e
+            if [ "$lookup_status" -ne 0 ]; then
+              PREVIEW_UPDATE_EXIT_CODE="$lookup_status" node scripts/preview-ota-automation.mjs diagnose-replay-failure
+              exit "$lookup_status"
+            fi
             node scripts/preview-ota-automation.mjs merge-history-page
+            page_count=$(node -e "const x=require(process.env.PREVIEW_UPDATE_PAGE);if(!x||typeof x!=='object'||Array.isArray(x)||!Array.isArray(x.currentPage))throw Error('Malformed EAS update page');process.stdout.write(String(x.currentPage.length))")
             if [ "$page_count" -lt 50 ]; then break; fi
             offset=$((offset + 50))
           done
