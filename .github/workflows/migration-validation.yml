@@ -5,28 +5,10 @@ on:
     branches:
       - dev
       - main
-    paths:
-      - "prisma/**"
-      - "scripts/check-prisma-migration-timestamps.mjs"
-      - "scripts/deploy-render-migrations.mjs"
-      - "scripts/run-render-migrations.mjs"
-      - "scripts/verify-production-schema.mjs"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/migration-validation.yml"
   push:
     branches:
       - dev
       - main
-    paths:
-      - "prisma/**"
-      - "scripts/check-prisma-migration-timestamps.mjs"
-      - "scripts/deploy-render-migrations.mjs"
-      - "scripts/run-render-migrations.mjs"
-      - "scripts/verify-production-schema.mjs"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/migration-validation.yml"
   workflow_dispatch:
 
 permissions:
@@ -37,8 +19,106 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect-migration-changes:
+    name: Detect migration-related changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      applicable: ${{ steps.classify.outputs.applicable }}
+      classification: ${{ steps.classify.outputs.classification }}
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Resolve trusted change range
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
+          PUSH_HEAD_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed_files="$RUNNER_TEMP/migration-validation-changed-files.zlist"
+          case "$EVENT_NAME" in
+            pull_request)
+              base_sha="$PR_BASE_SHA"
+              head_sha="$PR_HEAD_SHA"
+              ;;
+            push)
+              base_sha="$PUSH_BASE_SHA"
+              head_sha="$PUSH_HEAD_SHA"
+              ;;
+            *)
+              # Manual or unknown events fail closed to the full validation path.
+              printf '%s\0' '.github/workflows/migration-validation.yml' > "$changed_files"
+              echo "changed_files=$changed_files" >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+
+          if [[ ! "$base_sha" =~ ^[0-9a-f]{40}$ ]] ||
+             [[ ! "$head_sha" =~ ^[0-9a-f]{40}$ ]] ||
+             [[ "$base_sha" == '0000000000000000000000000000000000000000' ]]; then
+            printf '%s\0' '.github/workflows/migration-validation.yml' > "$changed_files"
+          else
+            if ! git diff --name-only --no-renames -z "$base_sha" "$head_sha" -- > "$changed_files"; then
+              # Detection uncertainty must run the full validation suite.
+              printf '%s\0' '.github/workflows/migration-validation.yml' > "$changed_files"
+            fi
+          fi
+          echo "changed_files=$changed_files" >> "$GITHUB_OUTPUT"
+
+      - name: Classify migration applicability
+        id: classify
+        env:
+          CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          applicable=false
+          classification=not-applicable
+
+          # This policy is deliberately inline: pull-request code is never
+          # executed to decide whether that same pull request receives the
+          # full database validation suite.
+          if [[ -z "$CHANGED_FILES" || ! -f "$CHANGED_FILES" ]]; then
+            applicable=true
+            classification=uncertain-change-set
+          else
+            while IFS= read -r -d '' changed_file; do
+              changed_file="${changed_file//\\//}"
+              case "$changed_file" in
+                prisma/*|\
+                prisma.config.ts|\
+                package.json|\
+                package-lock.json|\
+                .github/workflows/migration-validation.yml|\
+                scripts/check-prisma-migration-timestamps.mjs|\
+                scripts/classify-migration-validation-paths.mjs|\
+                scripts/deploy-render-migrations.mjs|\
+                scripts/migration-validation-workflow.test.mjs|\
+                scripts/run-render-migrations.mjs|\
+                scripts/verify-production-schema.mjs)
+                  applicable=true
+                  classification=migration-related-change
+                  break
+                  ;;
+              esac
+            done < "$CHANGED_FILES"
+          fi
+
+          echo "applicable=$applicable" >> "$GITHUB_OUTPUT"
+          echo "classification=$classification" >> "$GITHUB_OUTPUT"
+
   validate-migrations:
     name: Validate Prisma migrations
+    needs: detect-migration-changes
+    if: needs.detect-migration-changes.outputs.applicable == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -87,3 +167,39 @@ jobs:
 
       - name: Confirm migration status
         run: npx prisma migrate status
+
+  migration-validation:
+    name: migration validation
+    needs:
+      - detect-migration-changes
+      - validate-migrations
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Report conclusive migration validation result
+        env:
+          APPLICABLE: ${{ needs.detect-migration-changes.outputs.applicable }}
+          CLASSIFICATION: ${{ needs.detect-migration-changes.outputs.classification }}
+          DETECTION_RESULT: ${{ needs.detect-migration-changes.result }}
+          VALIDATION_RESULT: ${{ needs.validate-migrations.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$DETECTION_RESULT" != 'success' ]]; then
+            echo 'Migration change detection failed; full validation status is unknown.'
+            exit 1
+          fi
+          if [[ "$APPLICABLE" == 'true' ]]; then
+            if [[ "$VALIDATION_RESULT" != 'success' ]]; then
+              echo "Migration validation failed with result: $VALIDATION_RESULT"
+              exit 1
+            fi
+            echo 'Migration validation completed successfully.'
+            exit 0
+          fi
+          if [[ "$APPLICABLE" != 'false' || "$CLASSIFICATION" != 'not-applicable' ]]; then
+            echo 'Migration applicability was ambiguous.'
+            exit 1
+          fi
+          echo 'Migration validation not applicable'
