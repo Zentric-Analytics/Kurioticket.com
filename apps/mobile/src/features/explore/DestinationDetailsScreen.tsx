@@ -3,6 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon } from "../flow/FlowIcon";
+import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
 import { destinationById, type Destination } from "./destinationCatalogue";
 import { resolveDestinationDetails } from "./destinationDetailsModel";
 import { destinationMedia, FALLBACK_SOURCE, resolvedDestinationHeroSource } from "./destinationMedia";
@@ -77,15 +78,12 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
               <Text accessibilityRole="header" style={styles.title}>{destination.name}</Text>
               <Text style={styles.country}>{destination.country}</Text>
             </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={saved ? `Remove ${destination.name} from saved destinations` : `Save ${destination.name}`}
-              accessibilityState={{ selected: saved }}
+            <AndroidFavoriteButton
+              saved={saved}
+              label={saved ? `Remove ${destination.name} from saved destinations` : `Save ${destination.name}`}
               onPress={onToggle}
               style={styles.heart}
-            >
-              <FlowIcon name="heart" color={saved ? "#E92D55" : NAVY} size={24} />
-            </Pressable>
+            />
           </View>
           <View style={styles.primaryAirport}>
             <Text style={styles.eyebrow}>PRIMARY AIRPORT</Text>
@@ -129,7 +127,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   titleCopy: { flex: 1 }, title: { color: NAVY, fontSize: 30, lineHeight: 38, fontWeight: "800" },
   country: { color: MUTED, fontSize: 16, marginTop: 2 },
-  heart: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: BORDER, backgroundColor: "white", alignItems: "center", justifyContent: "center" },
+  heart: { flexShrink: 0 },
   primaryAirport: { padding: 16, borderRadius: 14, backgroundColor: "#EDF3FF" },
   eyebrow: { color: BLUE, fontSize: 11, letterSpacing: 1, fontWeight: "800" }, airportCode: { color: NAVY, fontSize: 26, fontWeight: "800", marginTop: 3 }, airportName: { color: MUTED, fontSize: 13, lineHeight: 19 },
   summary: { color: NAVY, fontSize: 17, lineHeight: 25, fontWeight: "600" }, paragraph: { color: MUTED, fontSize: 15, lineHeight: 23 },

@@ -4,41 +4,39 @@ import { join } from "node:path";
 import test from "node:test";
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
-const favorite = source("src/features/home/HomepageFavoriteButton.tsx");
+const favorite = source("src/features/home/AndroidFavoriteButton.tsx");
+const shim = source("src/features/home/HomepageFavoriteButton.tsx");
+const explore = source("src/features/explore/ExploreScreen.tsx");
+const details = source("src/features/explore/DestinationDetailsScreen.tsx");
 const popular = source("src/features/home/PopularDestinationStays.tsx");
 const adventure = source("src/features/home/DiscoverNextAdventure.tsx");
+const savedRecent = source("src/features/saved/SavedRecentScreen.tsx");
 
-test("homepage favorite buttons use the website-style white circular surface", () => {
-  assert.match(favorite, /background:\s*"#FFFFFF"/);
-  assert.match(favorite, /width:\s*42/);
-  assert.match(favorite, /height:\s*42/);
-  assert.match(favorite, /borderRadius:\s*21/);
-  assert.match(favorite, /shadowOpacity:\s*0\.16/);
-  assert.match(favorite, /elevation:\s*5/);
-});
-
-test("inactive and active hearts use the same pink red website color family", () => {
+test("shared Android favorite button preserves the Explore card visual source of truth", () => {
+  assert.match(favorite, /background:\s*"rgba\(2,15,42,\.62\)"/);
+  assert.match(favorite, /width:\s*44/);
+  assert.match(favorite, /height:\s*44/);
+  assert.match(favorite, /borderRadius:\s*22/);
   assert.match(favorite, /active:\s*"#E92D55"/);
-  assert.match(favorite, /inactive:\s*"#E92D55"/);
-  assert.match(favorite, /fill=\{saved \? homepageFavoriteColors\.active : "none"\}/);
-  assert.match(favorite, /color=\{homepageFavoriteColors\.active\}/);
+  assert.match(favorite, /inactive:\s*"white"/);
+  assert.match(favorite, /color=\{saved \? androidFavoriteColors\.active : androidFavoriteColors\.inactive\}/);
+  assert.doesNotMatch(favorite, /shadowOpacity|elevation|pressed|fill=\{/);
+  assert.match(shim, /export \{ AndroidFavoriteButton, androidFavoriteColors \}/);
 });
 
-test("no homepage favorite button keeps the old blue filled background", () => {
-  for (const [name, file] of [["popular", popular], ["adventure", adventure], ["button", favorite]] as const) {
-    assert.doesNotMatch(file, /backgroundColor:\s*"rgba\(6,76,247,0\.92\)"/, `${name} removed blue saved background`);
-    assert.doesNotMatch(file, /color="white" size=\{22\}/, `${name} removed white-on-blue heart icon`);
-    assert.doesNotMatch(file, /heartSaved/, `${name} does not keep a second homepage heart design`);
-  }
+test("Explore keeps the same heart placement while using the shared Android component", () => {
+  assert.match(explore, /<AndroidFavoriteButton[\s\S]*label=\{`\$\{saved \? "Remove" : "Save"\} \$\{destination\.name\}`\}[\s\S]*style=\{s\.heart\}/);
+  assert.match(explore, /heart:\s*\{[\s\S]*position:\s*"absolute",[\s\S]*right:\s*10,[\s\S]*top:\s*10,[\s\S]*width:\s*44,[\s\S]*height:\s*44,[\s\S]*borderRadius:\s*22,[\s\S]*backgroundColor:\s*"rgba\(2,15,42,\.62\)"/);
 });
 
-test("all homepage destination and recommendation cards share one favorite component", () => {
-  assert.match(popular, /<HomepageFavoriteButton[\s\S]*toggle\(destination\.id\)/);
-  assert.match(adventure, /<HomepageFavoriteButton[\s\S]*toggle\(card\.id\)/);
-  assert.equal((`${popular}\n${adventure}`.match(/<HomepageFavoriteButton/g) ?? []).length, 2);
+test("all current save-enabled destination cards share one Android favorite component", () => {
+  assert.match(popular, /<AndroidFavoriteButton[\s\S]*toggle\(destination\.id\)/);
+  assert.match(adventure, /<AndroidFavoriteButton[\s\S]*toggle\(card\.id\)/);
+  assert.match(details, /<AndroidFavoriteButton[\s\S]*onPress=\{onToggle\}/);
+  assert.equal((`${popular}\n${adventure}\n${details}\n${explore}`.match(/<AndroidFavoriteButton/g) ?? []).length, 4);
 });
 
-test("favorite interactions preserve guest sign-in and authenticated save behavior", () => {
+test("favorite behavior and propagation remain unchanged", () => {
   const hook = source("src/storage/useSavedDestinations.ts");
   const store = source("src/storage/savedDestinationsStore.ts");
   assert.match(hook, /favoriteAction\(userId\) === "sign-in"/);
@@ -46,4 +44,14 @@ test("favorite interactions preserve guest sign-in and authenticated save behavi
   assert.match(store, /next\.has\(id\) \? next\.delete\(id\) : next\.add\(id\)/);
   assert.match(popular, /event\.stopPropagation\(\);\s*toggle\(destination\.id\);/);
   assert.match(adventure, /event\.stopPropagation\(\);\s*toggle\(card\.id\);/);
+});
+
+test("no old blue favorite circle remains and Saved & Recent keeps remove close control", () => {
+  for (const [name, file] of [["popular", popular], ["adventure", adventure], ["button", favorite], ["explore", explore], ["details", details]] as const) {
+    assert.doesNotMatch(file, /backgroundColor:\s*"rgba\(6,76,247,0\.92\)"/, `${name} removed blue saved background`);
+    assert.doesNotMatch(file, /heartSaved/, `${name} does not keep a second heart design`);
+  }
+  assert.match(savedRecent, /<FlowIcon name="close"/);
+  assert.match(savedRecent, /accessibilityLabel=\{`Remove \$\{item\.name\} from favorites`\}/);
+  assert.doesNotMatch(savedRecent, /<AndroidFavoriteButton/);
 });

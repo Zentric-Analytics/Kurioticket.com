@@ -12,7 +12,7 @@ import {
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors, flowStyles, useFlowTheme } from "../flow/flowStyles";
-import { HomepageFavoriteButton } from "./HomepageFavoriteButton";
+import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 
 type AdventureCard = {
   id: string;
@@ -120,7 +120,7 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
             style={styles.image}
           />
         )}
-        <HomepageFavoriteButton
+        <AndroidFavoriteButton
           saved={saved}
           label={saved ? "Remove from saved routes" : "Save route"}
           onPress={(event) => {

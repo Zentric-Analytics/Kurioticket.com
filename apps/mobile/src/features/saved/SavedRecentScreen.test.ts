@@ -57,7 +57,7 @@ test("saved destination media keeps catalogue resolution and a loop-safe fallbac
 test("Saved favorites uses the close icon only for saved-list removal while other favorite surfaces keep hearts", () => {
   const saved = source("src/features/saved/SavedRecentScreen.tsx");
   const flowIcon = source("src/features/flow/FlowIcon.tsx");
-  const homeFavorite = source("src/features/home/HomepageFavoriteButton.tsx");
+  const homeFavorite = source("src/features/home/AndroidFavoriteButton.tsx");
   const explore = source("src/features/explore/ExploreScreen.tsx");
   const details = source("src/features/explore/DestinationDetailsScreen.tsx");
 
@@ -69,8 +69,9 @@ test("Saved favorites uses the close icon only for saved-list removal while othe
   assert.match(saved, /No saved favorites yet/);
   assert.match(homeFavorite, /<FlowIcon name="heart"/);
   assert.match(homeFavorite, /onPress=\{onPress\}/);
-  assert.match(explore, /<FlowIcon name="heart"/);
-  assert.match(details, /<FlowIcon name="heart"/);
+  assert.match(homeFavorite, /androidFavoriteColors\.inactive/);
+  assert.match(explore, /<AndroidFavoriteButton/);
+  assert.match(details, /<AndroidFavoriteButton/);
   assert.doesNotMatch(`${homeFavorite}\n${explore}\n${details}`, /name="close"/);
 });
 
