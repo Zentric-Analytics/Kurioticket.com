@@ -26,6 +26,13 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
   };
   const deliveryResult = evidence.deliveryResult.value;
   const easBuildId = deliveryResult?.id ?? (Array.isArray(deliveryResult) ? deliveryResult[0]?.id : null) ?? null;
+  const publicationDecision = easBuildId
+    ? 'published'
+    : evidence.replay.value?.alreadyPublished === true
+      ? 'already-published'
+      : evidence.classifier.value?.classification === 'native-build-required'
+        ? 'preview-build-required'
+        : 'blocked-or-not-reached';
   return {
     schemaVersion: 1,
     workflowRunId: env.WORKFLOW_RUN_ID,
@@ -41,6 +48,7 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
     channel: env.RELEASE_CHANNEL,
     baselineEasBuildId: env.BASELINE_EAS_BUILD_ID === 'NONE' ? null : env.BASELINE_EAS_BUILD_ID,
     easBuildId,
+    publicationDecision,
     baseline: evidence.baseline.value,
     channelMapping: evidence.channelMapping.value,
     fingerprint: evidence.fingerprint.value,
