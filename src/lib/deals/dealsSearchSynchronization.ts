@@ -5,10 +5,10 @@ export type SharedTripDates = { start: string; end: string };
 export const getSharedDestination = (search: DealsSearch) =>
   getIncludedProducts(search.mode).flight ? search.flightDestinationText : search.hotelDestination;
 
-export const getSharedDates = (search: DealsSearch): SharedTripDates =>
-  getIncludedProducts(search.mode).flight
-    ? { start: search.flightDepartureDate, end: search.flightReturnDate || search.hotelCheckOut || search.carReturnDate }
-    : { start: search.hotelCheckIn, end: search.hotelCheckOut };
+export const getSharedDates = (search: DealsSearch): SharedTripDates => ({
+  start: search.sharedTravelStartDate,
+  end: search.sharedTravelEndDate,
+});
 
 export function applySharedDestination(search: DealsSearch, destination: string, flightText = destination): DealsSearch {
   const included = getIncludedProducts(search.mode);
@@ -24,6 +24,8 @@ export function applySharedDates(search: DealsSearch, dates: SharedTripDates): D
   const included = getIncludedProducts(search.mode);
   return {
     ...search,
+    sharedTravelStartDate: dates.start,
+    sharedTravelEndDate: dates.end,
     ...(included.flight ? { flightDepartureDate: dates.start, flightReturnDate: search.flightTripType === "round-trip" ? dates.end : "" } : { hotelCheckIn: dates.start, hotelCheckOut: dates.end }),
     ...(included.flight && search.stayDatesLinked ? { hotelCheckIn: dates.start, hotelCheckOut: dates.end } : {}),
     ...(search.carDatesLinked ? { carPickupDate: dates.start, carReturnDate: dates.end } : {}),
@@ -49,12 +51,32 @@ export function relinkInheritedField(search: DealsSearch, field: "stayDestinatio
 export function transitionDealsMode(search: DealsSearch, mode: DealsPackageMode): DealsSearch {
   const was = getIncludedProducts(search.mode); const next = getIncludedProducts(mode);
   let transitioned = { ...search, mode };
-  if (was.flight && !next.flight && next.hotel) {
-    transitioned = { ...transitioned, flightDestinationText: transitioned.hotelDestination, flightDepartureDate: transitioned.hotelCheckIn, flightReturnDate: transitioned.hotelCheckOut };
+  if (was.flight && !next.flight && next.hotel && transitioned.stayDestinationLinked) transitioned.hotelDestination = getSharedDestination(search);
+  if (was.flight && !next.flight && next.hotel && transitioned.stayDatesLinked) {
+    transitioned.hotelCheckIn = search.sharedTravelStartDate;
+    transitioned.hotelCheckOut = search.sharedTravelEndDate;
   }
   if (!was.hotel && next.hotel && transitioned.stayDestinationLinked) transitioned = relinkInheritedField(transitioned, "stayDestination");
   if (!was.hotel && next.hotel && transitioned.stayDatesLinked) transitioned = relinkInheritedField(transitioned, "stayDates");
   if (!was.car && next.car && transitioned.carPickupLinked) transitioned = relinkInheritedField(transitioned, "carPickup");
   if (!was.car && next.car && transitioned.carDatesLinked) transitioned = relinkInheritedField(transitioned, "carDates");
   return transitioned;
+}
+
+export function setFlightTripType(search: DealsSearch, tripType: DealsSearch["flightTripType"]): DealsSearch {
+  return {
+    ...search,
+    flightTripType: tripType,
+    flightDepartureDate: search.sharedTravelStartDate,
+    flightReturnDate: tripType === "round-trip" ? search.sharedTravelEndDate : "",
+  };
+}
+
+export function swapFlightAirports(search: DealsSearch, newSharedDestination: string): DealsSearch {
+  return {
+    ...applySharedDestination(search, newSharedDestination, search.flightOriginText),
+    flightOriginText: search.flightDestinationText,
+    flightOriginCode: search.flightDestinationCode,
+    flightDestinationCode: search.flightOriginCode,
+  };
 }

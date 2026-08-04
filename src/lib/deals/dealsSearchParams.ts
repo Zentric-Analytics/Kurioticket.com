@@ -28,6 +28,8 @@ export type DealsSearch = {
   flightOriginText: string; flightOriginCode: string;
   flightDestinationText: string; flightDestinationCode: string;
   flightDepartureDate: string; flightReturnDate: string;
+  /** Canonical package range. Flight one-way searches intentionally keep the end here. */
+  sharedTravelStartDate: string; sharedTravelEndDate: string;
   flightAdults: number; flightChildren: number; flightInfants: number;
   flightCabinClass: DealsCabinClass;
   hotelDestination: string; hotelCheckIn: string; hotelCheckOut: string;
@@ -73,7 +75,7 @@ export function tryToggleDealsProduct(mode: DealsPackageMode, product: DealsProd
 
 export const createDefaultDealsSearch = (): DealsSearch => ({
   mode: "hotel-flight", flightOriginText: "", flightOriginCode: "", flightDestinationText: "", flightDestinationCode: "",
-  flightTripType: "round-trip", flightDepartureDate: "", flightReturnDate: "", flightAdults: 2, flightChildren: 0, flightInfants: 0, flightCabinClass: "economy",
+  flightTripType: "round-trip", flightDepartureDate: "", flightReturnDate: "", sharedTravelStartDate: "", sharedTravelEndDate: "", flightAdults: 2, flightChildren: 0, flightInfants: 0, flightCabinClass: "economy",
   hotelDestination: "", hotelCheckIn: "", hotelCheckOut: "", hotelAdults: 2, hotelChildren: 0, hotelRooms: 1, hotelPetFriendly: false,
   carPickupLocation: "", carReturnToDifferentLocation: false, carReturnLocation: "", carPickupDate: "", carReturnDate: "", carPickupTime: "10:00", carReturnTime: "10:00", carDriverAge: defaultDriverAge,
   stayDestinationLinked: true, stayDatesLinked: true, carPickupLinked: true, carDatesLinked: true,
@@ -91,6 +93,8 @@ export const normalizeIataCode = (value: string) => /^[a-z]{3}$/i.test(value.tri
 export function parseDealsSearchParams(input: QueryInput): DealsSearch {
   const defaults = createDefaultDealsSearch();
   const modeValue = get(input, "mode");
+  const mode = isDealsPackageMode(modeValue) ? modeValue : defaults.mode;
+  const included = getIncludedProducts(mode);
   const cabin = get(input, "flightCabinClass");
   const tripTypeValue = get(input, "flightTripType") || get(input, "tripType");
   const flightTripType = tripTypeValue === "one-way" ? "one-way" : defaults.flightTripType;
@@ -103,15 +107,33 @@ export function parseDealsSearchParams(input: QueryInput): DealsSearch {
   const carPickupLocation = get(input, "carPickupLocation");
   const carPickupDate = date(get(input, "carPickupDate"));
   const carReturnDate = date(get(input, "carReturnDate"));
-  const sharedAdults = integer(get(input, "flightAdults") || get(input, "hotelAdults"), defaults.flightAdults);
-  const sharedChildren = integer(get(input, "flightChildren") || get(input, "hotelChildren"), defaults.flightChildren);
+  // Legacy party fields conflict in the wild. Product mode, never query ordering,
+  // decides which provider's values seed the canonical party.
+  const primaryAdults = included.flight ? get(input, "flightAdults") : get(input, "hotelAdults");
+  const fallbackAdults = included.flight ? get(input, "hotelAdults") : get(input, "flightAdults");
+  const primaryChildren = included.flight ? get(input, "flightChildren") : get(input, "hotelChildren");
+  const fallbackChildren = included.flight ? get(input, "hotelChildren") : get(input, "flightChildren");
+  const sharedAdults = integer(primaryAdults || fallbackAdults, defaults.flightAdults);
+  const sharedChildren = integer(primaryChildren || fallbackChildren, defaults.flightChildren);
   const explicitLink = (key: string, inferred: boolean) => { const value = get(input, key); return value === "true" ? true : value === "false" ? false : inferred; };
+  const stayDatesLinked = explicitLink("stayDatesLinked", (!hotelCheckIn && !hotelCheckOut) || (hotelCheckIn === flightDepartureDate && hotelCheckOut === parsedFlightReturnDate));
+  const carDatesLinked = explicitLink("carDatesLinked", (!carPickupDate && !carReturnDate) || (carPickupDate === hotelCheckIn && carReturnDate === hotelCheckOut) || (carPickupDate === flightDepartureDate && carReturnDate === parsedFlightReturnDate));
+  const explicitSharedStart = date(get(input, "sharedTravelStartDate"));
+  const explicitSharedEnd = date(get(input, "sharedTravelEndDate"));
+  const sharedTravelStartDate = explicitSharedStart || (included.flight ? flightDepartureDate : "") || (included.hotel ? hotelCheckIn : "") || (included.car ? carPickupDate : "");
+  const sharedTravelEndDate = explicitSharedEnd
+    || (included.flight && flightTripType === "round-trip" ? parsedFlightReturnDate : "")
+    || (included.hotel && (stayDatesLinked || !included.flight) ? hotelCheckOut : "")
+    || (included.car && carDatesLinked ? carReturnDate : "")
+    || (included.hotel ? hotelCheckOut : "")
+    || (included.car ? carReturnDate : "");
   return {
-    mode: isDealsPackageMode(modeValue) ? modeValue : defaults.mode,
+    mode,
     flightTripType,
     flightOriginText: get(input, "flightOriginText"), flightOriginCode: normalizeIataCode(get(input, "flightOriginCode")),
     flightDestinationText, flightDestinationCode: normalizeIataCode(get(input, "flightDestinationCode")),
-    flightDepartureDate, flightReturnDate: flightTripType === "one-way" ? "" : parsedFlightReturnDate,
+    flightDepartureDate: explicitSharedStart || flightDepartureDate, flightReturnDate: flightTripType === "one-way" ? "" : (explicitSharedEnd || parsedFlightReturnDate),
+    sharedTravelStartDate, sharedTravelEndDate,
     flightAdults: sharedAdults, flightChildren: sharedChildren, flightInfants: integer(get(input, "flightInfants"), defaults.flightInfants),
     flightCabinClass: cabin === "business" || cabin === "first" ? cabin : "economy",
     hotelDestination, hotelCheckIn, hotelCheckOut,
@@ -122,9 +144,9 @@ export function parseDealsSearchParams(input: QueryInput): DealsSearch {
     carReturnTime: timeOptions.includes(get(input, "carReturnTime")) ? get(input, "carReturnTime") : defaults.carReturnTime,
     carDriverAge: get(input, "carDriverAge") || defaults.carDriverAge,
     stayDestinationLinked: explicitLink("stayDestinationLinked", !hotelDestination || hotelDestination === flightDestinationText),
-    stayDatesLinked: explicitLink("stayDatesLinked", (!hotelCheckIn && !hotelCheckOut) || (hotelCheckIn === flightDepartureDate && hotelCheckOut === parsedFlightReturnDate)),
+    stayDatesLinked,
     carPickupLinked: explicitLink("carPickupLinked", !carPickupLocation || carPickupLocation === hotelDestination || carPickupLocation === flightDestinationText),
-    carDatesLinked: explicitLink("carDatesLinked", (!carPickupDate && !carReturnDate) || (carPickupDate === hotelCheckIn && carReturnDate === hotelCheckOut) || (carPickupDate === flightDepartureDate && carReturnDate === parsedFlightReturnDate)),
+    carDatesLinked,
   };
 }
 

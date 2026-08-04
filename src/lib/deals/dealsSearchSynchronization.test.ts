@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createDefaultDealsSearch, parseDealsSearchParams, serializeDealsSearchParams } from "./dealsSearchParams";
-import { applySharedDates, applySharedDestination, customizeInheritedField, relinkInheritedField, transitionDealsMode } from "./dealsSearchSynchronization";
+import { applySharedDates, applySharedDestination, customizeInheritedField, relinkInheritedField, setFlightTripType, swapFlightAirports, transitionDealsMode } from "./dealsSearchSynchronization";
 
 const base = () => ({ ...createDefaultDealsSearch(), mode: "hotel-flight-car" as const });
 test("linked inherited fields follow shared destination and dates independently", () => {
@@ -30,10 +30,12 @@ test("hotel and car become visible primary shared editors when Flight is removed
   assert.equal(search.hotelDestination, "Porto"); assert.equal(search.carPickupLocation, "Porto");
 });
 test("one-way flight keeps the shared end date for Stay and Car", () => {
-  let search = { ...base(), flightTripType: "one-way" as const };
+  let search = { ...base(), flightTripType: "one-way" as const } as ReturnType<typeof base>;
   search = applySharedDates(search, { start: "2099-04-01", end: "2099-04-10" });
   assert.equal(search.flightReturnDate, ""); assert.equal(search.hotelCheckOut, "2099-04-10"); assert.equal(search.carReturnDate, "2099-04-10");
 });
+test("trip type transitions preserve and restore the canonical end", () => { let search = applySharedDates(base(), { start: "2099-05-01", end: "2099-05-08" }); search = setFlightTripType(search, "one-way"); assert.equal(search.flightReturnDate, ""); assert.equal(search.sharedTravelEndDate, "2099-05-08"); search = setFlightTripType(search, "round-trip"); assert.equal(search.flightReturnDate, "2099-05-08"); });
+test("airport swap updates linked values but preserves detached values", () => { let search = applySharedDestination(base(), "Paris", "Paris (CDG)"); search.flightOriginText = "Berlin (BER)"; search.flightOriginCode = "BER"; search.flightDestinationCode = "CDG"; search = customizeInheritedField(search, "stayDestination", "Versailles"); search = swapFlightAirports(search, "Berlin"); assert.equal(search.flightDestinationText, "Berlin (BER)"); assert.equal(search.hotelDestination, "Versailles"); assert.equal(search.carPickupLocation, "Berlin"); });
 test("link flags and custom return mode round trip while old URLs infer safely", () => {
   const search = { ...base(), stayDestinationLinked: false, hotelDestination: "Potsdam", carReturnToDifferentLocation: true, carReturnLocation: "Hamburg" };
   assert.deepEqual(parseDealsSearchParams(serializeDealsSearchParams(search)), search);
