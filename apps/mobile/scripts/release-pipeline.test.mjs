@@ -13,8 +13,49 @@ import { resolvePreviewVersionEvidence } from './resolve-preview-version-code.mj
 import { resolveProductionVersionEvidence } from './resolve-production-version-code.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
 import { buildReleaseAudit } from './write-release-audit.mjs';
+import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
 
 const { policy, eas, root } = loadReleaseFiles();
+
+test('web-only changes conclude without running the heavy mobile suite', () => {
+  assert.deepEqual(classifyMobileValidationPaths(['src/components/search/DealsSearchForm.tsx']), {
+    mobileRelevant: false,
+    classification: 'not-mobile-relevant',
+  });
+});
+
+test('mobile code, workflows, dependencies, configs, and shared imports require full validation', () => {
+  for (const file of [
+    'apps/mobile/src/api/travelApi.ts',
+    '.github/workflows/mobile-preview-update.yml',
+    '.github/workflows/android-preview-ota.yml',
+    '.github/actions/mobile-helper/action.yml',
+    'package.json',
+    'package-lock.json',
+    'tsconfig.json',
+    'src/lib/travel/searchContract.ts',
+    'src/shared/airports.ts',
+    'src/data/destinationImages.ts',
+  ]) assert.equal(isMobileRelevantPath(file), true, file);
+});
+
+test('uncertain mobile path classification fails closed to the full suite', () => {
+  assert.equal(classifyMobileValidationPaths([]).mobileRelevant, true);
+  assert.equal(classifyMobileValidationPaths(['../outside']).mobileRelevant, true);
+  assert.equal(classifyMobileValidationPaths(['']).mobileRelevant, true);
+});
+
+test('required Preview validation has no top-level path filter or delivery command', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/mobile-preview-update.yml'), 'utf8');
+  assert.match(workflow, /^name: Validate mobile preview$/m);
+  assert.doesNotMatch(workflow, /^\s+paths:/m);
+  assert.match(workflow, /Mobile validation not applicable/);
+  assert.match(workflow, /permissions:\s*\n\s+contents: read/);
+  assert.match(workflow, /github\.event\.pull_request\.base\.sha/);
+  assert.match(workflow, /github\.event\.pull_request\.head\.sha/);
+  assert.doesNotMatch(workflow, /pull_request_target|inputs\.(?:changed|path|mobile)|secrets\./);
+  assert.doesNotMatch(workflow, /continue-on-error|\beas(?:-cli@[^\s]+)?\s+(?:build|update|submit)\b/i);
+});
 const valid = (variant = 'preview', overrides = {}) => ({ variant, sha: 'a'.repeat(40), runtime: policy[variant].runtimeVersion, packageName: policy[variant].androidPackage, channel: policy[variant].channel, profile: policy[variant].profile, apiBaseUrl: policy[variant].apiBaseUrl, confirmation: variant === 'preview' ? 'DELIVER ANDROID PREVIEW' : 'DELIVER ANDROID PRODUCTION', action: 'build', releaseReason: 'approved release', baselineBuildId: 'NONE', policy, eas, ...overrides });
 
 const testCrcTable = Array.from({ length: 256 }, (_, index) => {
