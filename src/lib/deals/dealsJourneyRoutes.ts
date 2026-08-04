@@ -36,6 +36,23 @@ export function buildDealsJourneyUrl(stage: DealsJourneyStage, search: DealsSear
   if (!isStageInDealsMode(stage, search.mode)) throw new TypeError("Stage is not part of this Deals mode");
   return `/deals/journey/${stage}?${serializeDealsSearchParams(search).toString()}`;
 }
+
+const MAX_DEALS_JOURNEY_HOTEL_ID_LENGTH = 256;
+
+export function normalizeDealsJourneyHotelId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  if (!normalized || normalized.length > MAX_DEALS_JOURNEY_HOTEL_ID_LENGTH || /[\u0000-\u001f\u007f]/.test(normalized)) return null;
+  return normalized;
+}
+
+export function buildDealsHotelDetailsJourneyUrl(search: DealsSearch, hotelId: unknown): string | null {
+  const normalizedHotelId = normalizeDealsJourneyHotelId(hotelId);
+  if (!normalizedHotelId || !isStageInDealsMode("hotel-details", search.mode)) return null;
+  const params = serializeDealsSearchParams(search);
+  params.set("hotelId", normalizedHotelId);
+  return `/deals/journey/hotel-details?${params.toString()}`;
+}
 export const buildLegacyDealsResultsUrl = (search: DealsSearch) => buildDealsResultsUrl(search);
 
 export function validateDealsJourneyUrl(value: unknown): string | null {
@@ -58,11 +75,11 @@ export function getEarliestIncompleteDealsJourneyStage(mode: DealsPackageMode, p
   return "review";
 }
 
-export function getRequiredDealsJourneyStage(stage: DealsJourneyStage, mode: DealsPackageMode, plan: Pick<DealsTripPlan, "hotel" | "flight" | "car"> | null): DealsJourneyStage {
+export function getRequiredDealsJourneyStage(stage: DealsJourneyStage, mode: DealsPackageMode, plan: Pick<DealsTripPlan, "hotel" | "flight" | "car"> | null, transientHotelId?: unknown): DealsJourneyStage {
   if (!isStageInDealsMode(stage, mode)) return getFirstDealsJourneyStage(mode);
   const included = getIncludedProducts(mode);
   if (stage === "hotel-results") return "hotel-results";
-  if (stage === "hotel-details") return has(plan, "hotel") ? stage : "hotel-results";
+  if (stage === "hotel-details") return has(plan, "hotel") || normalizeDealsJourneyHotelId(transientHotelId) ? stage : "hotel-results";
   if (included.hotel && !has(plan, "hotel")) return "hotel-results";
   if (stage === "flight-results") return stage;
   if (stage === "flight-details") return has(plan, "flight") ? stage : "flight-results";
