@@ -9,6 +9,6 @@ import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 export async function generateMetadata() { const t = getTranslations((await cookies()).get(LOCALE_COOKIE_KEY)?.value); return { title: t["deals.results.breadcrumb.current"], description: t["deals.results.tripOptionsExplanation"] }; }
 export default async function DealsResultsPage({ searchParams }: { searchParams: SearchParams }) {
-  const search = parseDealsSearchParams(await searchParams); const invalid = Object.keys(validateDealsSearch(search)).length > 0;
-  return <><AppHeader flushDesktopBottom hideDesktopTravelNav /><DealsResultsClient initialSearch={search} invalid={invalid} /><Footer /></>;
+  const params = await searchParams; const search = parseDealsSearchParams(params); const invalid = Object.keys(validateDealsSearch(search)).length > 0;
+  return <><AppHeader flushDesktopBottom hideDesktopTravelNav /><DealsResultsClient initialSearch={search} invalid={invalid} stagedRequested={params.journey === "staged"} /><Footer /></>;
 }
