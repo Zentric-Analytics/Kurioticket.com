@@ -13,7 +13,6 @@ import {
   ALL_DESTINATIONS,
   destinationCardLayout,
   exactExploreResult,
-  EXPLORE_TABS,
   exploreBottomPadding,
   searchExplore,
 } from "./exploreModels";
@@ -271,9 +270,9 @@ test("responsive calculations support narrow phones and tab clearance", () => {
   assert.equal(exploreBottomPadding(65, 24), 107);
 });
 
-test("Explore keeps only the focused tabs and supported actions", () => {
-  assert.deepEqual(EXPLORE_TABS, ["Destinations", "Inspiration"]);
+test("Explore removes destination and inspiration tabs while keeping supported actions", () => {
   const source = screen();
+  assert.doesNotMatch(source, /EXPLORE_TABS|tablist|accessibilityRole="tab"|function Inspiration/);
   for (const removed of [
     "Compare",
     "Price alerts",
@@ -304,7 +303,7 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.doesNotMatch(source, /<SectionList|COUNTRY_DESTINATION_GROUPS/);
   const destinationsView = source.slice(
     source.indexOf("function Destinations"),
-    source.indexOf("function Inspiration"),
+    source.indexOf("function Interests"),
   );
   assert.doesNotMatch(destinationsView, /horizontal/);
   assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
@@ -332,7 +331,36 @@ test("default destinations use only the curated list without a featured carousel
   assert.doesNotMatch(source, /Featured destinations/);
   assert.doesNotMatch(source, /Browse all destinations/);
   assert.doesNotMatch(source, /FEATURED_DESTINATIONS/);
-  assert.match(source, /ListHeaderComponent=\{[\s\S]*?\{header\}[\s\S]*?Popular destinations/);
+  assert.match(source, /ListHeaderComponent=\{<Section title="Popular destinations"/);
+  assert.match(source, /ListFooterComponent=\{<Interests select=\{select\} \/>\}/);
+});
+
+test("Explore keeps one controlled search input mounted above changing content", () => {
+  const source = screen();
+  assert.equal(source.match(/<TextInput\n/g)?.length, 1);
+  assert.match(source, /value=\{query\}[\s\S]*?onChangeText=\{setQuery\}/);
+  assert.match(source, /<SafeAreaView[\s\S]*?<ExploreHeader[\s\S]*?\{isSearching \? \(/);
+  assert.doesNotMatch(source, /if \(query\.trim\(\)\)\s*return/);
+  assert.doesNotMatch(source, /setTimeout|onChangeText=.*blur|onChangeText=.*focus/);
+  assert.match(source, /keyboardShouldPersistTaps="handled"/);
+});
+
+test("Explore search preserves successive characters and clearing restores discovery", () => {
+  assert.equal(result("L").some((item) => item.id === "gb-london"), true);
+  for (const query of ["Lo", "Lon", "Lond", "Londo", "London"])
+    assert.equal(result(query).some((item) => item.id === "gb-london"), true);
+  assert.equal(result("London")[0]?.id, "gb-london");
+  assert.deepEqual(searchExplore(""), []);
+  const source = screen();
+  assert.match(source, /onPress=\{\(\) => \{\s*setQuery\(""\);\s*input\.current\?\.focus\(\);/);
+  assert.match(source, /isSearching \? \([\s\S]*?data=\{results\}[\s\S]*?: \([\s\S]*?<Destinations/);
+});
+
+test("the one-page discovery order and maintained interest navigation stay explicit", () => {
+  const source = screen();
+  assert.ok(source.indexOf('title="Popular destinations"') < source.indexOf('title="Explore by interest"'));
+  assert.match(source, /RESOLVED_INTERESTS\.map/);
+  assert.match(source, /onPress=\{\(\) => select\(item\.destination\)\}/);
 });
 
 
