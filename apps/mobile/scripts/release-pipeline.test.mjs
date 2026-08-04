@@ -673,7 +673,8 @@ test('automatic Preview publication remains ordered and every failed gate blocks
   const publish = workflow.indexOf('Publish one verified Android Preview OTA');
   assert.ok(baseline >= 0 && baseline < replay && replay < classifier && classifier < channel && channel < staging && staging < publish);
   assert.match(workflow, /update:list --branch preview/);
-  assert.match(workflow, /group: android-preview-ota-\$\{\{ inputs\.target_sha \|\| inputs\.commit_sha \}\}/);
+  assert.match(workflow, /group: android-preview-ota\n\s+cancel-in-progress: false/);
+  assert.doesNotMatch(workflow, /group: android-preview-ota-\$\{\{/);
   assert.match(workflow, /set -euo pipefail[\s\S]*update --channel preview[\s\S]*\| tee/);
   assert.doesNotMatch(workflow.slice(0, publish), /continue-on-error/);
   assert.match(workflow.slice(channel, publish), /steps\.replay\.outputs\.already_published != 'true' && steps\.classify\.outputs\.decision == 'OTA_SAFE'/);
