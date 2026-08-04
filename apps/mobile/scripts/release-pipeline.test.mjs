@@ -18,10 +18,45 @@ test('approved matrix isolates runtimes and Android-only counters', () => {
   assert.equal(eas.build.preview.android.autoIncrement, true);
 });
 test('dispatcher has no baseline fingerprint or SHA inputs', () => {
-  for (const name of ['android-preview-delivery.yml', 'android-production-delivery.yml']) {
+  for (const name of ['android-preview-ota.yml', 'android-preview-build.yml', 'android-production-delivery.yml']) {
     const workflow = readFileSync(resolve(root, '../../.github/workflows', name), 'utf8');
     assert.doesNotMatch(workflow, /baseline_(?:sha|fingerprint)|current_fingerprint/);
-    assert.match(workflow, /baseline_eas_build_id/);
+    if (name !== 'android-preview-build.yml') assert.match(workflow, /baseline_eas_build_id/);
+  }
+});
+test('Preview OTA and native build are separate manual-only approval paths', () => {
+  const ota = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
+  const build = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
+  for (const workflow of [ota, build]) {
+    assert.match(workflow, /workflow_dispatch:/);
+    assert.doesNotMatch(workflow, /(?:^|\n)\s*(?:push|pull_request|schedule):/);
+    assert.doesNotMatch(workflow, /environment:\s*mobile-production/);
+    assert.doesNotMatch(workflow, /com\.kurioticket\.app(?:\s|['"]|$)/);
+    assert.doesNotMatch(workflow, /production-0\.3\.0|--channel production|https:\/\/kurioticket\.com(?:\/|['"]|\s)/);
+  }
+  assert.match(ota, /environment:\s*mobile-preview-ota/);
+  assert.match(ota, /eas-cli@16\.17\.4 update --channel preview/);
+  assert.doesNotMatch(ota, /eas-cli@16\.17\.4 build --platform/);
+  assert.doesNotMatch(ota, /action:\s*\{/);
+  assert.match(build, /environment:\s*mobile-preview-build/);
+  assert.match(build, /eas-cli@16\.17\.4 build --platform android --profile preview/);
+  assert.doesNotMatch(build, /eas-cli@16\.17\.4 update/);
+  assert.doesNotMatch(build, /action:\s*\{/);
+});
+test('Preview workflows validate the staging classification inside the mobile API response envelope', () => {
+  for (const name of ['android-preview-ota.yml', 'android-preview-build.yml']) {
+    const workflow = readFileSync(resolve(root, '../../.github/workflows', name), 'utf8');
+    assert.match(workflow, /body\.data\?\.environment !== 'staging'/);
+    assert.doesNotMatch(workflow, /body\.environment !== 'staging'/);
+  }
+});
+test('delivery workflows require their protected environment token without repository fallback syntax', () => {
+  const names = ['android-preview-ota.yml', 'android-preview-build.yml', 'android-production-delivery.yml'];
+  for (const name of names) {
+    const workflow = readFileSync(resolve(root, '../../.github/workflows', name), 'utf8');
+    assert.match(workflow, /environment:\s*mobile-(?:preview-ota|preview-build|production)/);
+    assert.match(workflow, /EXPO_TOKEN: "\$\{\{ secrets\.EXPO_TOKEN \}\}"/);
+    assert.doesNotMatch(workflow, /vars\.EXPO_TOKEN|EXPO_TOKEN\s*\|\||github\.token/);
   }
 });
 test('approved EAS build and protected manifest must match', () => {
@@ -59,6 +94,9 @@ test('mutable or unsigned Production tags fail closed', () => {
   assert.throws(() => validateSourcePolicy({ ...base, tagName: 'latest' }), /immutable signed/);
   assert.throws(() => validateSourcePolicy({ ...base, tagSignatureValid: false }), /immutable signed/);
 });
+test('Production rejects a commit not reachable from main', () => {
+  assert.throws(() => validateSourcePolicy({ variant: 'production', refType: 'main', isReachableFromApprovedBranch: false }), /not reachable from main/);
+});
 test('uncertain or native-sensitive classification requires a build', () => {
   const common = { expectedRuntime: 'preview-0.3.0', actualRuntime: 'preview-0.3.0', expectedChannel: 'preview', actualChannel: 'preview' };
   assert.equal(classifyRelease({ files: ['apps/mobile/src/a.ts'], baselineFingerprint: '', currentFingerprint: '', ...common }).classification, 'native-build-required');
@@ -66,7 +104,7 @@ test('uncertain or native-sensitive classification requires a build', () => {
   assert.equal(classifyRelease({ files: ['apps/mobile/src/a.ts'], baselineFingerprint: 'a', currentFingerprint: 'a', ...common }).classification, 'ota-compatible');
 });
 test('EXPO_TOKEN is step scoped and updates publish through channels', () => {
-  for (const name of ['android-preview-delivery.yml', 'android-production-delivery.yml']) {
+  for (const name of ['android-preview-ota.yml', 'android-production-delivery.yml']) {
     const workflow = readFileSync(resolve(root, '../../.github/workflows', name), 'utf8');
     assert.match(workflow, /EXPO_TOKEN: "\$\{\{ secrets\.EXPO_TOKEN \}\}"/);
     assert.match(workflow, /test -n "\$EXPO_TOKEN"/);

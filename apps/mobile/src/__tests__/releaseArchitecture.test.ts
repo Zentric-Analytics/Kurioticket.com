@@ -35,7 +35,7 @@ test("repository workflows cannot build, update, submit, or upload mobile artifa
 });
 
 test("delivery workflows are manual-only, protected, and never submit", () => {
-  for (const [name, environment] of [["android-preview-delivery.yml", "mobile-preview"], ["android-production-delivery.yml", "mobile-production"]]) {
+  for (const [name, environment] of [["android-preview-ota.yml", "mobile-preview-ota"], ["android-preview-build.yml", "mobile-preview-build"], ["android-production-delivery.yml", "mobile-production"]]) {
     const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
     assert.match(workflow, /^\s*workflow_dispatch:/m);
     assert.doesNotMatch(workflow, /^\s*(?:push|pull_request|schedule):/m);
