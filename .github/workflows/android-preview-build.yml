@@ -71,10 +71,21 @@ jobs:
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
         run: |
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
-          VERSION_OUTPUT=$(npx eas-cli@16.17.4 build:version:get --platform android --profile preview --non-interactive)
-          CURRENT=$(printf '%s' "$VERSION_OUTPUT" | sed -nE 's/.*versionCode[^0-9]*([0-9]+).*/\1/ip' | tail -1)
-          test -n "$CURRENT" || { echo 'Unable to parse EAS remote versionCode.' >&2; exit 1; }
-          CURRENT="$CURRENT" node -e "const fs=require('fs');const current=Number(process.env.CURRENT);fs.writeFileSync(process.env.RUNNER_TEMP+'/version-evidence.json',JSON.stringify({currentRemoteVersionCode:current,proposedVersionCode:current+1,playRecordStatus:'not-applicable-preview'},null,2)+'\n')"
+          set +e
+          npx eas-cli@16.17.4 build:version:get --platform android --profile preview --non-interactive > "$RUNNER_TEMP/preview-version-output.txt" 2>&1
+          VERSION_STATUS=$?
+          npx eas-cli@16.17.4 build:list --platform android --build-profile preview --app-identifier com.kurioticket.app.preview --limit 1 --json --non-interactive > "$RUNNER_TEMP/preview-builds.json" 2> "$RUNNER_TEMP/preview-builds-error.txt"
+          BUILDS_STATUS=$?
+          set -e
+          node scripts/resolve-preview-version-code.mjs \
+            --version-output "$RUNNER_TEMP/preview-version-output.txt" \
+            --version-exit-code "$VERSION_STATUS" \
+            --builds-output "$RUNNER_TEMP/preview-builds.json" \
+            --builds-exit-code "$BUILDS_STATUS" \
+            --package com.kurioticket.app.preview \
+            --profile preview \
+            --runtime preview-0.3.0 \
+            --output "$RUNNER_TEMP/version-evidence.json"
       - name: Build approved Preview APK
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }

@@ -41,7 +41,11 @@ Package, scheme, version/runtime, dependency, lockfile, config/plugin, permissio
 
 ## Version codes
 
-EAS remote versioning is authoritative and isolated by package/profile. Auto-increment is nested under Android, so iOS build numbers are unchanged and the two Android counters remain independent. Production additionally requires a repository-reviewed, read-only Play history manifest and proves the proposed value is greater than the highest uploaded versionCode; an absent Play record is explicit. Missing/unknown history blocks the build. No command in this PR creates a Play record or uploads anything.
+EAS remote versioning is authoritative and isolated by package/profile. Auto-increment is nested under Android, so iOS build numbers are unchanged and the two Android counters remain independent. When EAS reports the exact unconfigured-project state and a filtered EAS query confirms there are no builds for `com.kurioticket.app.preview` with the `preview` profile, the first approved Preview binary proposes `versionCode` 1. EAS initializes the remote counter during that build; it is not initialized manually beforehand.
+
+After initialization, every Preview build increments the existing numeric counter. Failed builds may safely consume values and create gaps. A consumed or previously observed value must never be reset or reused. Malformed, empty, ambiguous, unauthenticated, or otherwise unexpected EAS responses fail closed, as does any attempt to use the first-binary path for Production or the legacy package.
+
+Production remains governed by both EAS remote versioning and a repository-reviewed, read-only Google Play history manifest. The protected Production workflow proves the proposed value is greater than the highest uploaded `versionCode`; an absent Play record is explicit. Missing or unknown history blocks the build. No command in this PR creates a Play record or uploads anything.
 
 Each run uploads one secret-free JSON audit manifest for 365 days with run/actor, environment/action/reason, exact source identity, verified mapping/baseline, fingerprints/classification, version evidence, result ID where produced, timestamps, and final status. Third-party Actions are pinned to reviewed commit SHAs; upgrades require a dependency PR that verifies the upstream tag/commit, reviews release notes and permissions, and reruns workflow security tests.
 
