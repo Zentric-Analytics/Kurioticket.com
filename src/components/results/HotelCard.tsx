@@ -255,9 +255,12 @@ type HotelCardProps = {
   hotel: PublicHotelResult;
   detailsHref?: string;
   sortBadge?: HotelSortBadge;
+  actionLabel?: string;
+  allowExternalAttribution?: boolean;
+  allowSave?: boolean;
 };
 
-export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
+export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, allowExternalAttribution = true, allowSave = true }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
@@ -470,7 +473,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
     <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-[0_16px_38px_-26px_rgba(2,28,43,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(2,28,43,0.26)]">
       <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
         <div className="relative h-[clamp(280px,78vw,340px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
-          <button
+          {allowSave ? <button
             type="button"
             aria-label={savedHotelLabel}
             aria-pressed={isSaved}
@@ -490,7 +493,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
               aria-hidden="true"
               fill={isSaved ? "currentColor" : "none"}
             />
-          </button>
+          </button> : null}
           {displayImageUrl ? (
             <>
               <Image
@@ -606,7 +609,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
                   {sourceAttributions.map((attribution, index) => (
                     <span key={`${attribution.provider}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5">
                       <span>Data:</span>
-                      {isSafeHttpUrl(attribution.providerUri) ? (
+                      {allowExternalAttribution && isSafeHttpUrl(attribution.providerUri) ? (
                         <a href={attribution.providerUri} target="_blank" rel="noopener noreferrer" translate="no" className="text-[#004BB8] hover:underline">
                           {attribution.provider}
                         </a>
@@ -706,7 +709,7 @@ export function HotelCard({ hotel, detailsHref, sortBadge }: HotelCardProps) {
                     size="sm"
                     className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] md:px-3"
                   >
-                    {t("hotelResults.viewHotel") || "View hotel"}
+                    {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
                   </LinkButton>
                 </div>
               </div>
