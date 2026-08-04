@@ -648,19 +648,32 @@ test('duplicate Preview SHA is detected only for the exact Android Preview runti
   assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([])), targetSha).historyState, 'empty');
   assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: 'b'.repeat(40) })])), targetSha).alreadyPublished, false);
   assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, platforms: 'ios' })])), targetSha).alreadyPublished, false);
-  assert.equal(inspectPreviewUpdateHistory([{ ...exact[0], runtimeVersion: 'production-0.3.0' }], targetSha).alreadyPublished, false);
-  assert.equal(inspectPreviewUpdateHistory([{ ...exact[0], branch: 'production' }], targetSha).alreadyPublished, false);
-  assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, runtimeVersion: 'production-0.3.0' })])), /runtime mismatch/);
+  assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, runtimeVersion: 'production-0.3.0' })])), targetSha).alreadyPublished, false);
+  assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, branch: 'production' })])), targetSha).alreadyPublished, false);
   assert.throws(() => normalizePreviewUpdatePage({ ...previewUpdatePage([previewUpdate({ sha: targetSha })]), name: 'production' }), /branch mismatch/);
-  assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, branch: 'production' })])), /branch mismatch/);
-  assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ message: `Automated safe Preview OTA for ${targetSha}` })])), /message is malformed/);
+  assert.throws(() => inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ message: `Automated safe Preview OTA for ${targetSha}` })])), targetSha), /message is malformed/);
   assert.throws(() => inspectPreviewUpdateHistory('not-json-shape', targetSha), /malformed/);
+});
+
+test('mixed valid Preview history ignores unrelated entries and detects only the exact Android duplicate', () => {
+  const targetSha = 'a'.repeat(40);
+  const history = normalizePreviewUpdatePage(previewUpdatePage([
+    previewUpdate({ sha: targetSha, runtimeVersion: 'preview-0.2.0' }),
+    previewUpdate({ sha: targetSha, platforms: 'ios' }),
+    previewUpdate({ sha: 'b'.repeat(40) }),
+    previewUpdate({ sha: targetSha, branch: 'production' }),
+  ]));
+  assert.equal(inspectPreviewUpdateHistory(history, targetSha).alreadyPublished, false);
+  history.push(...normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha })])));
+  assert.equal(inspectPreviewUpdateHistory(history, targetSha).alreadyPublished, true);
 });
 
 test('Preview replay JSON and CLI failures fail closed with safe classifications', () => {
   assert.throws(() => normalizePreviewUpdatePage([]), /page is malformed/);
   assert.throws(() => normalizePreviewUpdatePage({ name: 'preview', currentPage: 'not-an-array' }), /currentPage/);
   assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ platforms: 'web' })])), /platforms/);
+  assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([{ ...previewUpdate(), runtimeVersion: '' }])), /runtime is missing/);
+  assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([{ ...previewUpdate(), group: '' }])), /group is missing/);
   assert.equal(classifyReplayLookupFailure('Error: Nonexistent flag: --platform', 1), 'unsupported-command');
   assert.equal(classifyReplayLookupFailure('Authentication failed', 1), 'authentication');
   assert.equal(classifyReplayLookupFailure('HTTP 403 Forbidden', 1), 'authorization');

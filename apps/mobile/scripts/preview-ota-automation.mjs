@@ -53,15 +53,16 @@ export function normalizePreviewUpdatePage(value) {
   requireValue(Array.isArray(value.currentPage), "EAS update history currentPage is malformed.");
   return value.currentPage.map((entry) => {
     requireValue(entry && typeof entry === "object" && !Array.isArray(entry), "EAS update history entry is malformed.");
-    requireValue(entry.branch === PREVIEW_BRANCH, "EAS update entry branch mismatch.");
-    requireValue(entry.runtimeVersion === PREVIEW_RUNTIME, "EAS update entry runtime mismatch.");
+    requireValue(typeof entry.branch === "string" && entry.branch.trim().length > 0, "EAS update entry branch is missing.");
+    requireValue(typeof entry.runtimeVersion === "string" && entry.runtimeVersion.trim().length > 0, "EAS update entry runtime is missing.");
     requireValue(typeof entry.group === "string" && entry.group.trim().length > 0, "EAS update group is missing.");
+    requireValue(typeof entry.message === "string", "EAS update message is malformed.");
     return {
       branch: entry.branch,
       runtimeVersion: entry.runtimeVersion,
       group: entry.group,
       platforms: parsePlatforms(entry.platforms),
-      generatedMessage: parseGeneratedMessage(entry.message),
+      message: entry.message,
     };
   });
 }
@@ -73,7 +74,8 @@ export function inspectPreviewUpdateHistory(value, targetSha) {
     requireValue(entry && typeof entry === "object" && !Array.isArray(entry), "Normalized EAS update history entry is malformed.");
     requireValue(typeof entry.branch === "string" && typeof entry.runtimeVersion === "string", "Normalized EAS update identity is malformed.");
     requireValue(Array.isArray(entry.platforms), "Normalized EAS update platforms are malformed.");
-    return entry.branch === PREVIEW_BRANCH && entry.runtimeVersion === PREVIEW_RUNTIME && entry.platforms.includes("android") && entry.generatedMessage?.targetSha === targetSha;
+    if (entry.branch !== PREVIEW_BRANCH || entry.runtimeVersion !== PREVIEW_RUNTIME || !entry.platforms.includes("android")) return false;
+    return parseGeneratedMessage(entry.message)?.targetSha === targetSha;
   });
   return {
     alreadyPublished: matching.length > 0,
