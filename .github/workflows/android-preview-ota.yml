@@ -91,7 +91,13 @@ jobs:
           BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)")
           BASE_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.nativeFingerprint)")
           CURRENT_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/current-fingerprint.json');process.stdout.write(x.hash)")
-          node scripts/classify-release.mjs --variant preview --base "$BASE" --head "$APPROVED_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime preview-0.3.0 --channel preview --action "$DELIVERY_ACTION" | tee "$RUNNER_TEMP/release-classification.json"
+          node scripts/classify-release.mjs --variant preview --base "$BASE" --head "$APPROVED_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime preview-0.3.0 --channel preview --action "$DELIVERY_ACTION" > "$RUNNER_TEMP/release-classification.json" || {
+            status=$?
+            cat "$RUNNER_TEMP/release-classification.json"
+            echo 'Preview change is not OTA-compatible; channel verification and publication are blocked.' >&2
+            exit "$status"
+          }
+          cat "$RUNNER_TEMP/release-classification.json"
       - name: Verify live channel mapping
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }

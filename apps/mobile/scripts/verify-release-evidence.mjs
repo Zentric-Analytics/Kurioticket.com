@@ -68,10 +68,25 @@ export function verifyBaseline({ manifest, build, variant, policy, workflowRun, 
 }
 
 export function verifyChannelMapping({ document, expectedChannel, expectedBranch }) {
-  if (document.name !== expectedChannel) throw new Error('Channel name mismatch.');
-  const names = (document.updateBranches ?? document.branches ?? []).map((entry) => typeof entry === 'string' ? entry : entry.name).filter(Boolean);
-  if (names.length !== 1 || names[0] !== expectedBranch) throw new Error('Channel mapping is missing, unexpected, or ambiguous.');
-  return { verified: true, channel: expectedChannel, branches: names };
+  const page = document?.currentPage;
+  if (!page || Array.isArray(page) || typeof page !== 'object') throw new Error('Unsupported EAS channel response structure.');
+  if (page.name !== expectedChannel) throw new Error('Channel name mismatch.');
+  if (page.isPaused !== false) throw new Error('Channel is paused or its state is unknown.');
+  if (!Array.isArray(page.updateBranches) || page.updateBranches.length !== 1) throw new Error('Channel mapping is missing, unexpected, or ambiguous.');
+
+  let mapping;
+  try { mapping = JSON.parse(page.branchMapping); } catch { throw new Error('Channel mapping metadata is invalid.'); }
+  if (mapping?.version !== 0 || !Array.isArray(mapping?.data) || mapping.data.length !== 1) throw new Error('Channel mapping metadata is missing, unexpected, or ambiguous.');
+
+  const [entry] = mapping.data;
+  const [branch] = page.updateBranches;
+  if (!entry || typeof entry !== 'object' || entry.branchMappingLogic !== 'true' || typeof entry.branchId !== 'string') {
+    throw new Error('Channel rollout or mapping logic is not an exact single-branch mapping.');
+  }
+  if (!branch || typeof branch !== 'object' || branch.id !== entry.branchId || branch.name !== expectedBranch) {
+    throw new Error('Channel mapping targets an unexpected branch.');
+  }
+  return { verified: true, channel: expectedChannel, branches: [branch.name], mappingVersion: mapping.version };
 }
 
 export function verifyPlayVersion({ currentRemoteVersionCode, history }) {

@@ -43,6 +43,8 @@ OTA is permitted only when all conditions hold:
 
 Package, scheme, version/runtime, dependency, lockfile, config/plugin, permission, deep-link, intent-filter, manifest, Gradle, native-directory, icon, splash, font/native-asset, or native environment-resolution changes require a native build. Missing evidence or uncertain classification also requires a native build. A human label cannot override the classifier.
 
+The classifier treats only the actual `apps/mobile/android/` and `apps/mobile/ios/` source trees as native directories; release evidence stored beneath paths such as `release-baselines/android/` is metadata and is still bound by manifest, digest, attestation, and fingerprint verification. For an OTA dispatch, any non-`ota-compatible` result exits at classification before channel lookup or publication. Channel verification accepts only the EAS CLI's `currentPage` response with one active, unpaused, unconditional branch mapping whose channel and branch are both exactly `preview`; rollouts, multiple branches, missing mappings, and unknown response shapes fail closed.
+
 ## Version codes
 
 EAS remote versioning is authoritative and isolated by package/profile. Auto-increment is nested under Android, so iOS build numbers are unchanged and the two Android counters remain independent. When EAS reports the exact unconfigured-project state and a filtered EAS query confirms there are no builds for `com.kurioticket.app.preview` with the `preview` profile, the first approved Preview binary proposes `versionCode` 1. EAS initializes the remote counter during that build; it is not initialized manually beforehand.
