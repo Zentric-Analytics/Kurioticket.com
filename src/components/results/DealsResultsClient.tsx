@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useReducer, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type MouseEvent } from "react";
 import { CircleAlert, RefreshCw } from "lucide-react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -17,7 +17,7 @@ import { DealsResultsBreadcrumbs } from "./deals/DealsResultsBreadcrumbs";
 import { DealsModifySearchDialog } from "./deals/DealsModifySearchDialog";
 import { DealsTripPlanBar } from "./deals/DealsTripPlanBar";
 import { buildDealsSearchFingerprint, createDealsTripPlan, updateDealsTripPlan, validateDealsInternalPath, type DealsTripPlan } from "@/lib/deals/dealsTripPlan";
-import { readDealsTripPlan, removeDealsTripPlan, writeDealsTripPlan } from "@/lib/deals/dealsTripPlanStorage";
+import { readDealsStagedJourneyPlan, readDealsTripPlan, removeDealsStagedJourneyPlan, removeDealsTripPlan, writeDealsStagedJourneyPlan, writeDealsTripPlan } from "@/lib/deals/dealsTripPlanStorage";
 import { reconcileDealsCarSelection, reconcileDealsFlightSelection, reconcileDealsHotelSelection } from "@/lib/deals/dealsTripPlanReconciliation";
 import { buildDealsPackageCandidates, isDealsCarEligible, isDealsFlightEligible, isDealsHotelEligible, type DealsPackageCandidate } from "@/lib/deals/dealsPackageCandidates";
 import { DealsPackageCard } from "./deals/DealsPackageCard";
@@ -26,6 +26,8 @@ import { DealsPackageResultsToolbar, type DealsPackageSort } from "./deals/Deals
 import { useRegion } from "@/components/region/RegionProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { buildCarDetailsHref, getPrimaryCarOffer } from "@/lib/cars/carResults";
+import { buildDealsHotelPropertyOptions, buildDealsHotelRoomOptions, confirmDealsHotelRoom, getStagedHotelProgress, type DealsHotelJourneyPhase, type DealsHotelPropertyOption } from "@/lib/deals/dealsHotelJourney";
+import { DealsHotelCompleteStage, DealsHotelPropertyStage, DealsHotelRoomStage } from "./deals/DealsHotelJourneyStage";
 
 type Status = "idle" | "loading" | "success" | "empty" | "error";
 type ProductState<T> = { status: Status; results: ContractResult<T>[]; receivedAt?: number; errorKey?: string; warnings: string[]; latencyMs?: number; warningCategory?: string; source?: string };
@@ -37,11 +39,12 @@ function reducer(state: State, action: Action): State { return { ...state, [acti
 const modeKeys = { "hotel-flight": "deals.package.hotelFlight", "hotel-flight-car": "deals.package.hotelFlightCar", "flight-car": "deals.package.flightCar", "hotel-car": "deals.package.hotelCar" } as const;
 const PACKAGE_SORT_SKELETON_MS = 400;
 
-export function DealsResultsClient({ initialSearch: search, invalid }: { initialSearch: DealsSearch; invalid: boolean }) {
+export function DealsResultsClient({ initialSearch: search, invalid, stagedRequested = false }: { initialSearch: DealsSearch; invalid: boolean; stagedRequested?: boolean }) {
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
   const { t: dictionary, locale } = useLocale(); const { selectedCurrency } = useRegion(); const rates = useCurrencyRates(); const t = useCallback((key: string) => dictionary[key] ?? en[key] ?? key, [dictionary]);
   const [state, dispatch] = useReducer(reducer, initialState); const included = getIncludedProducts(search.mode);
+  const stagedHotelJourneyActive = stagedRequested && included.hotel;
   const fingerprint = buildDealsSearchFingerprint(search); const [plan, setPlan] = useState<DealsTripPlan | null>(null); const [announcement, setAnnouncement] = useState("");
   const [editorOpen, setEditorOpen] = useState(invalid); const [draftChanged, setDraftChanged] = useState(false); const activeModifyTriggerRef = useRef<HTMLButtonElement>(null);
   const [packageSort,setPackageSort]=useState<DealsPackageSort>("recommended");
@@ -50,9 +53,13 @@ export function DealsResultsClient({ initialSearch: search, invalid }: { initial
   const packageSortTransitionRef = useRef(0);
   const [pendingFingerprint, setPendingFingerprint] = useState<string | null>(null);
   const [persistence, setPersistence] = useState<"idle" | "saving" | "saved" | "unavailable">("idle");
-  useEffect(() => { const timer = window.setTimeout(() => { const result = readDealsTripPlan(fingerprint); if (result.status === "valid") { setPlan(result.plan); setPersistence("saved"); } else if (result.status === "storage_unavailable") setPersistence("unavailable"); }, 0); return () => window.clearTimeout(timer); }, [fingerprint]);
-  const basePlan = useCallback(() => createDealsTripPlan({ mode: search.mode, searchFingerprint: fingerprint, resultsPath: validateDealsInternalPath(buildDealsResultsUrl(search))!, carsResultsPath: included.car ? validateDealsInternalPath(buildCarResultsUrl(search), "/cars/results") ?? undefined : undefined }), [fingerprint, included.car, search]);
-  const persist = useCallback((next: DealsTripPlan) => { setPersistence("saving"); const saved = writeDealsTripPlan(next); setPersistence(saved ? "saved" : "unavailable"); return saved; }, []);
+  const stagedResultsPath = `${buildDealsResultsUrl(search)}&journey=staged`;
+  useEffect(() => { const timer = window.setTimeout(() => { const result = stagedHotelJourneyActive ? readDealsStagedJourneyPlan(fingerprint) : readDealsTripPlan(fingerprint); if (result.status === "valid") { setPlan(result.plan); setPersistence("saved"); } else if (result.status === "storage_unavailable") setPersistence("unavailable"); }, 0); return () => window.clearTimeout(timer); }, [fingerprint, stagedHotelJourneyActive]);
+  const basePlan = useCallback(() => createDealsTripPlan({ mode: search.mode, searchFingerprint: fingerprint, resultsPath: validateDealsInternalPath(stagedHotelJourneyActive ? stagedResultsPath : buildDealsResultsUrl(search))!, carsResultsPath: included.car ? validateDealsInternalPath(buildCarResultsUrl(search), "/cars/results") ?? undefined : undefined }), [fingerprint, included.car, search, stagedHotelJourneyActive, stagedResultsPath]);
+  const persist = useCallback((next: DealsTripPlan) => { setPersistence("saving"); const saved = stagedHotelJourneyActive ? writeDealsStagedJourneyPlan(next) : writeDealsTripPlan(next); setPersistence(saved ? "saved" : "unavailable"); return saved; }, [stagedHotelJourneyActive]);
+  const [hotelPhase, setHotelPhase] = useState<DealsHotelJourneyPhase>("choose-property");
+  const [selectedProperty, setSelectedProperty] = useState<DealsHotelPropertyOption | null>(null);
+  const roomHeadingRef = useRef<HTMLHeadingElement>(null); const selectedStayRef = useRef<HTMLElement>(null); const chooseRefs = useRef(new Map<string, HTMLButtonElement>()); const returnPropertyId = useRef<string | null>(null);
   const selectPackage = (candidate: DealsPackageCandidate) => {
     const received = { flight: state.flight.receivedAt, hotel: state.hotel.receivedAt, car: state.car.receivedAt };
     if ((candidate.flight && !received.flight) || (candidate.hotel && !received.hotel) || (candidate.car && !received.car)) { setAnnouncement(t("deals.tripPlan.resultTimestampUnavailable")); return; }
@@ -64,7 +71,7 @@ export function DealsResultsClient({ initialSearch: search, invalid }: { initial
     });
     setPlan(next); persist(next); setAnnouncement(t("deals.results.package.selectedAnnouncement"));
   };
-  const clearPlan = () => { setPlan(null); removeDealsTripPlan(); setPersistence("idle"); setAnnouncement(t("deals.tripPlan.cleared")); };
+  const clearPlan = () => { setPlan(null); if (stagedHotelJourneyActive) removeDealsStagedJourneyPlan(); else removeDealsTripPlan(); setPersistence("idle"); setHotelPhase("choose-property"); setAnnouncement(t("deals.tripPlan.cleared")); };
   const closeEditor = useCallback(() => { if (pendingFingerprint) return; setEditorOpen(false); setDraftChanged(false); requestAnimationFrame(() => activeModifyTriggerRef.current?.focus()); }, [pendingFingerprint]);
   const openEditor=(event:MouseEvent<HTMLButtonElement>)=>{activeModifyTriggerRef.current=event.currentTarget;setEditorOpen(true);};
   const updateDraft = useCallback((draft: DealsSearch) => setDraftChanged(buildDealsSearchFingerprint(draft) !== fingerprint), [fingerprint]);
@@ -72,8 +79,9 @@ export function DealsResultsClient({ initialSearch: search, invalid }: { initial
     if (buildDealsSearchFingerprint(draft) === fingerprint) { setAnnouncement(t("deals.results.editor.unchanged")); closeEditor(); return; }
     const nextFingerprint = buildDealsSearchFingerprint(draft);
     startRouteProgress(); setPendingFingerprint(nextFingerprint); setAnnouncement(t("deals.results.editor.updatingAnnouncement"));
-    router.push(buildDealsResultsUrl(draft), { scroll: false });
-  }, [closeEditor, fingerprint, router, startRouteProgress, t]);
+    if (stagedHotelJourneyActive) router.push(`${buildDealsResultsUrl(draft)}&journey=staged`, { scroll: false });
+    else router.push(buildDealsResultsUrl(draft), { scroll: false });
+  }, [closeEditor, fingerprint, router, stagedHotelJourneyActive, startRouteProgress, t]);
   const warningKey = [plan?.flight, plan?.hotel, plan?.car].filter(Boolean).length > 1 ? "deals.results.editor.clearMultiple" : plan?.flight ? "deals.results.editor.clearFlight" : plan?.hotel ? "deals.results.editor.clearStay" : plan?.car ? "deals.results.editor.clearCar" : null;
   const editor = editorOpen ? <DealsModifySearchDialog key={fingerprint} search={search} locale={locale} t={t} onSubmit={submitSearch} onClose={closeEditor} onDraftChange={updateDraft} pending={Boolean(pendingFingerprint)} warning={draftChanged && warningKey ? <p role="status" className="mb-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-950">{t(warningKey)}</p> : undefined} /> : null;
   const changeSelection = () => { const heading = document.getElementById("package-options"); heading?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); heading?.focus({ preventScroll: true }); };
@@ -88,26 +96,26 @@ export function DealsResultsClient({ initialSearch: search, invalid }: { initial
       dispatch({ product, value: { status: results.length ? "success" : "empty", results, ...(results.length ? { receivedAt: Date.now() } : {}), ...metadata, ...(typeof record.source === "string" ? { source: record.source } : {}) } } as Action);
     }).catch((error: unknown) => { if (error instanceof DOMException && error.name === "AbortError") return; const reason = error instanceof Error ? error.message : "provider"; dispatch({ product, value: { ...empty(), status: "error", errorKey: reason === "rate" ? "deals.results.rateLimited" : reason === "unsupported" ? "deals.results.unsupportedDestination" : product === "car" ? "deals.results.carUnavailable" : "deals.results.providerUnavailable" } } as Action); });
   }, [search]);
-  useEffect(() => { if (invalid) return; const flight = new AbortController(); const hotel = new AbortController(); const car = new AbortController(); if (included.flight) request("flight", flight.signal); if (included.hotel) request("hotel", hotel.signal); if (included.car) request("car", car.signal); return () => { flight.abort(); hotel.abort(); car.abort(); }; }, [included.flight, included.hotel, included.car, invalid, request]);
+  useEffect(() => { if (invalid) return; const flight = new AbortController(); const hotel = new AbortController(); const car = new AbortController(); if (included.flight && !stagedHotelJourneyActive) request("flight", flight.signal); if (included.hotel) request("hotel", hotel.signal); if (included.car && !stagedHotelJourneyActive) request("car", car.signal); return () => { flight.abort(); hotel.abort(); car.abort(); }; }, [included.flight, included.hotel, included.car, invalid, request, stagedHotelJourneyActive]);
   useEffect(() => {
     if (!pendingFingerprint) return;
     if (fingerprint === pendingFingerprint) {
       const applied = window.setTimeout(() => {
-        setPlan(null); removeDealsTripPlan(); setPersistence("idle"); setPendingFingerprint(null); setEditorOpen(false); setDraftChanged(false); setAnnouncement(t("deals.results.editor.selectionsCleared"));
+        setPlan(null); if (stagedHotelJourneyActive) removeDealsStagedJourneyPlan(); else removeDealsTripPlan(); setPersistence("idle"); setPendingFingerprint(null); setEditorOpen(false); setDraftChanged(false); setHotelPhase("choose-property"); setAnnouncement(t("deals.results.editor.selectionsCleared"));
         requestAnimationFrame(() => { const heading = document.getElementById("package-options"); heading?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); heading?.focus({ preventScroll: true }); });
       }, 0);
       return () => window.clearTimeout(applied);
     }
     const timeout = window.setTimeout(() => { setPendingFingerprint(null); setAnnouncement(t("deals.results.editor.updateFailed")); }, 10000);
     return () => window.clearTimeout(timeout);
-  }, [fingerprint, included.flight, pendingFingerprint, t]);
-  useEffect(() => { if (!plan || (state.flight.status !== "success" && state.flight.status !== "empty")) return; const next = reconcileDealsFlightSelection(plan, state.flight.results); if (next === plan) return; const timer = window.setTimeout(() => { setPlan(next); persist(next); setAnnouncement(t("deals.tripPlan.flightRemoved")); }, 0); return () => window.clearTimeout(timer); }, [plan, state.flight.results, state.flight.status, persist, t]);
-  useEffect(() => { if (!plan || (state.hotel.status !== "success" && state.hotel.status !== "empty")) return; const next = reconcileDealsHotelSelection(plan, state.hotel.results); if (next === plan) return; const timer = window.setTimeout(() => { setPlan(next); persist(next); setAnnouncement(t("deals.tripPlan.stayRemoved")); }, 0); return () => window.clearTimeout(timer); }, [plan, state.hotel.results, state.hotel.status, persist, t]);
-  useEffect(() => { if (!plan || (state.car.status !== "success" && state.car.status !== "empty")) return; const next = reconcileDealsCarSelection(plan, state.car.results); if (next === plan) return; const timer = window.setTimeout(() => { setPlan(next); persist(next); setAnnouncement(t("deals.tripPlan.carRemoved")); }, 0); return () => window.clearTimeout(timer); }, [plan, state.car.results, state.car.status, persist, t]);
+  }, [fingerprint, included.flight, pendingFingerprint, stagedHotelJourneyActive, t]);
+  useEffect(() => { if (stagedHotelJourneyActive || !plan || (state.flight.status !== "success" && state.flight.status !== "empty")) return; const next = reconcileDealsFlightSelection(plan, state.flight.results); if (next === plan) return; const timer = window.setTimeout(() => { setPlan(next); persist(next); setAnnouncement(t("deals.tripPlan.flightRemoved")); }, 0); return () => window.clearTimeout(timer); }, [plan, state.flight.results, state.flight.status, persist, stagedHotelJourneyActive, t]);
+  useEffect(() => { if (stagedHotelJourneyActive || !plan || (state.hotel.status !== "success" && state.hotel.status !== "empty")) return; const next = reconcileDealsHotelSelection(plan, state.hotel.results); if (next === plan) return; const timer = window.setTimeout(() => { setPlan(next); persist(next); setAnnouncement(t("deals.tripPlan.stayRemoved")); }, 0); return () => window.clearTimeout(timer); }, [plan, state.hotel.results, state.hotel.status, persist, stagedHotelJourneyActive, t]);
+  useEffect(() => { if (stagedHotelJourneyActive || !plan || (state.car.status !== "success" && state.car.status !== "empty")) return; const next = reconcileDealsCarSelection(plan, state.car.results); if (next === plan) return; const timer = window.setTimeout(() => { setPlan(next); persist(next); setAnnouncement(t("deals.tripPlan.carRemoved")); }, 0); return () => window.clearTimeout(timer); }, [plan, state.car.results, state.car.status, persist, stagedHotelJourneyActive, t]);
   const requiredStates = [included.flight && state.flight, included.hotel && state.hotel, included.car && state.car].filter(Boolean) as ProductState<unknown>[];
   const loading = requiredStates.some(item => item.status === "loading" || item.status === "idle");
   const failed = requiredStates.find(item => item.status === "error");
-  const candidates = loading || failed ? [] : buildDealsPackageCandidates({ mode: search.mode, flights: state.flight.results, hotels: state.hotel.results, cars: state.car.results, displayCurrency: selectedCurrency, rates: rates.rates });
+  const candidates = stagedHotelJourneyActive || loading || failed ? [] : buildDealsPackageCandidates({ mode: search.mode, flights: state.flight.results, hotels: state.hotel.results, cars: state.car.results, displayCurrency: selectedCurrency, rates: rates.rates });
   const sortedCandidates=[...candidates].sort((a,b)=>{let difference=0;if(packageSort==="lowest-total")difference=(a.estimatedTotal??Infinity)-(b.estimatedTotal??Infinity);else if(packageSort==="shortest-flight")difference=(a.flight?.durationMinutes??Infinity)-(b.flight?.durationMinutes??Infinity);else if(packageSort==="highest-hotel")difference=(b.hotel?.reviewScore??b.hotel?.rating??-Infinity)-(a.hotel?.reviewScore??a.hotel?.rating??-Infinity);else if(packageSort==="highest-car")difference=(b.car?.supplierRating??-Infinity)-(a.car?.supplierRating??-Infinity);else difference=({recommended:0,"lowest-total":1,comfort:2,alternative:3}[a.strategy]-{recommended:0,"lowest-total":1,comfort:2,alternative:3}[b.strategy]);return difference||a.id.localeCompare(b.id);});
   const handlePackageSortChange = useCallback((nextSort: DealsPackageSort) => {
     if (nextSort === packageSort) return;
@@ -146,8 +154,27 @@ export function DealsResultsClient({ initialSearch: search, invalid }: { initial
       window.clearTimeout(packageSortTimerRef.current);
     }
   }, []);
+  const hotelProperties = useMemo(() => buildDealsHotelPropertyOptions(state.hotel.results), [state.hotel.results]);
+  useEffect(() => {
+    if (!stagedHotelJourneyActive || !plan?.hotel || (state.hotel.status !== "success" && state.hotel.status !== "empty")) return;
+    const next = reconcileDealsHotelSelection(plan, state.hotel.results);
+    if (next !== plan) {
+      const timer = window.setTimeout(() => { setPlan(next); persist(next); setHotelPhase("choose-property"); setAnnouncement(t("deals.staged.hotel.invalidated")); }, 0);
+      return () => window.clearTimeout(timer);
+    }
+    const timer = window.setTimeout(() => setHotelPhase("complete"), 0);
+    return () => window.clearTimeout(timer);
+  }, [persist, plan, stagedHotelJourneyActive, state.hotel.results, state.hotel.status, t]);
   const showPackageSortSkeleton = !loading && !failed && candidates.length > 0 && packageSortPending;
   if (invalid) return <main className="flex-1 bg-[#f6f8fb] pb-10"><DealsResultsBreadcrumbs t={t} /><div className="page-shell pt-8 sm:pt-6"><div className="rounded-3xl border border-rose-200 bg-white p-8 text-center"><CircleAlert aria-hidden className="mx-auto h-10 w-10 text-rose-600" /><p className="mt-3 text-xs font-bold uppercase text-rose-700">{t("deals.results.breadcrumb.current")}</p><h1 className="mt-1 text-2xl font-extrabold text-slate-950">{t("deals.results.invalidTitle")}</h1><p className="mt-2 text-slate-600">{t("deals.results.editor.correctHere")}</p><button type="button" aria-expanded={editorOpen} aria-controls="deals-modify-search-dialog" onClick={openEditor} className="mt-5 min-h-11 rounded-xl bg-[#004BB8] px-6 font-extrabold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">{t("deals.results.editor.correctSearch")}</button><p className="mt-4"><Link href="/deals" className="rounded-sm text-sm font-bold text-[#004BB8] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30">{t("deals.results.returnToDeals")}</Link></p></div></div>{editor}<p className="sr-only" aria-live="polite">{announcement}</p></main>;
+  if (stagedHotelJourneyActive) {
+    const chooseProperty = (property: DealsHotelPropertyOption) => { returnPropertyId.current = property.id; setSelectedProperty(property); setHotelPhase("choose-room"); setAnnouncement(t("deals.staged.property.selected").replace("{{name}}", property.result.name)); requestAnimationFrame(() => roomHeadingRef.current?.focus()); };
+    const back = () => { const id = returnPropertyId.current; setSelectedProperty(null); setHotelPhase("choose-property"); requestAnimationFrame(() => { if (id) chooseRefs.current.get(id)?.focus(); }); };
+    const room = selectedProperty ? buildDealsHotelRoomOptions(selectedProperty)[0] : undefined;
+    const confirm = () => { if (!room) return; const hotel = confirmDealsHotelRoom(room, search, state.hotel.receivedAt); if (!hotel) { setAnnouncement(t("deals.staged.room.invalid")); return; } const next = updateDealsTripPlan(plan ?? basePlan(), { hotel }); setPlan(next); persist(next); setHotelPhase("complete"); setAnnouncement(t("deals.staged.room.confirmed").replace("{{name}}", hotel.name)); requestAnimationFrame(() => selectedStayRef.current?.focus()); };
+    const progress = getStagedHotelProgress(search.mode, hotelPhase, plan?.hotel);
+    return <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-10"><DealsResultsSearchSummary search={search} locale={locale} t={t} modeLabel={t(modeKeys[search.mode])} onModify={() => setEditorOpen(true)} modifyExpanded={editorOpen} modifyButtonRef={activeModifyTriggerRef} /><DealsResultsBreadcrumbs t={t} /><div className="page-shell max-w-5xl pt-6">{editorOpen && editor}{hotelPhase === "choose-property" && <DealsHotelPropertyStage phase={hotelPhase} search={search} locale={locale} t={t} progress={progress} properties={hotelProperties} loading={state.hotel.status === "loading" || state.hotel.status === "idle"} errorKey={state.hotel.status === "error" ? state.hotel.errorKey : undefined} onChoose={chooseProperty} chooseRefs={chooseRefs} onRetry={() => request("hotel")} onModify={() => setEditorOpen(true)} />}{hotelPhase === "choose-room" && selectedProperty && <DealsHotelRoomStage phase={hotelPhase} search={search} locale={locale} t={t} progress={progress} property={selectedProperty} room={room} receivedAt={state.hotel.receivedAt} headingRef={roomHeadingRef} onBack={back} onConfirm={confirm} />}{hotelPhase === "complete" && plan?.hotel && <DealsHotelCompleteStage t={t} locale={locale} progress={progress} hotel={plan.hotel} summaryRef={selectedStayRef} onChange={() => { setHotelPhase("choose-property"); requestAnimationFrame(() => document.getElementById("staged-hotel-heading")?.focus()); }} onClear={clearPlan} legacyHref={buildDealsResultsUrl(search)} />}</div><p className="sr-only" aria-live="polite">{announcement}</p></main>;
+  }
   const unavailable = [
     included.flight && !state.flight.results.some(isDealsFlightEligible) && { product: "flight", key: state.flight.results.length ? "deals.results.package.flightUnavailable" : "deals.results.package.flightEmpty", href: buildFlightResultsUrl(search) },
     included.hotel && !state.hotel.results.some(isDealsHotelEligible) && { product: "hotel", key: state.hotel.results.length ? "deals.results.package.hotelUnavailable" : "deals.results.package.hotelEmpty", href: buildHotelResultsUrl(search) },

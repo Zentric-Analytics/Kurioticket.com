@@ -12,6 +12,7 @@ import {
 } from "./dealsTripPlan";
 
 export const DEALS_TRIP_PLAN_STORAGE_KEY = "kurioticket_deals_trip_plan_v1";
+export const DEALS_STAGED_JOURNEY_STORAGE_KEY = "kurioticket_deals_staged_journey_v1";
 
 export type DealsTripPlanReadResult =
   | { status: "valid"; plan: DealsTripPlan }
@@ -97,30 +98,37 @@ function browserStorage(): StorageLike | null {
   try { return typeof window === "undefined" ? null : window.localStorage; } catch { return null; }
 }
 
-function safelyRemove(storage: StorageLike): boolean {
-  try { storage.removeItem(DEALS_TRIP_PLAN_STORAGE_KEY); return true; } catch { return false; }
+function safelyRemove(storage: StorageLike, key: string): boolean {
+  try { storage.removeItem(key); return true; } catch { return false; }
 }
 
-export function readDealsTripPlan(fingerprint?: string, now = Date.now(), providedStorage?: StorageLike | null): DealsTripPlanReadResult {
+function readPlan(key: string, fingerprint?: string, now = Date.now(), providedStorage?: StorageLike | null): DealsTripPlanReadResult {
   const storage = providedStorage === undefined ? browserStorage() : providedStorage;
   if (!storage) return { status: "storage_unavailable" };
   let raw: string | null;
-  try { raw = storage.getItem(DEALS_TRIP_PLAN_STORAGE_KEY); } catch { return { status: "storage_unavailable" }; }
+  try { raw = storage.getItem(key); } catch { return { status: "storage_unavailable" }; }
   if (raw === null) return { status: "missing" };
   const plan = parseDealsTripPlan(raw);
-  if (!plan) { safelyRemove(storage); return { status: "invalid" }; }
-  if (isDealsTripPlanExpired(plan, now)) { safelyRemove(storage); return { status: "expired", plan }; }
-  if (fingerprint && plan.searchFingerprint !== fingerprint) { safelyRemove(storage); return { status: "fingerprint_mismatch" }; }
+  if (!plan) { safelyRemove(storage, key); return { status: "invalid" }; }
+  if (isDealsTripPlanExpired(plan, now)) { safelyRemove(storage, key); return { status: "expired", plan }; }
+  if (fingerprint && plan.searchFingerprint !== fingerprint) { safelyRemove(storage, key); return { status: "fingerprint_mismatch" }; }
   return { status: "valid", plan };
 }
 
-export function writeDealsTripPlan(plan: DealsTripPlan, providedStorage?: StorageLike | null): boolean {
+function writePlan(key: string, plan: DealsTripPlan, providedStorage?: StorageLike | null): boolean {
   const storage = providedStorage === undefined ? browserStorage() : providedStorage;
   if (!storage) return false;
-  try { storage.setItem(DEALS_TRIP_PLAN_STORAGE_KEY, serializeDealsTripPlan(plan)); return true; } catch { return false; }
+  try { storage.setItem(key, serializeDealsTripPlan(plan)); return true; } catch { return false; }
 }
 
-export function removeDealsTripPlan(providedStorage?: StorageLike | null): boolean {
+function removePlan(key: string, providedStorage?: StorageLike | null): boolean {
   const storage = providedStorage === undefined ? browserStorage() : providedStorage;
-  return storage ? safelyRemove(storage) : false;
+  return storage ? safelyRemove(storage, key) : false;
 }
+
+export const readDealsTripPlan = (fingerprint?: string, now = Date.now(), storage?: StorageLike | null) => readPlan(DEALS_TRIP_PLAN_STORAGE_KEY, fingerprint, now, storage);
+export const writeDealsTripPlan = (plan: DealsTripPlan, storage?: StorageLike | null) => writePlan(DEALS_TRIP_PLAN_STORAGE_KEY, plan, storage);
+export const removeDealsTripPlan = (storage?: StorageLike | null) => removePlan(DEALS_TRIP_PLAN_STORAGE_KEY, storage);
+export const readDealsStagedJourneyPlan = (fingerprint?: string, now = Date.now(), storage?: StorageLike | null) => readPlan(DEALS_STAGED_JOURNEY_STORAGE_KEY, fingerprint, now, storage);
+export const writeDealsStagedJourneyPlan = (plan: DealsTripPlan, storage?: StorageLike | null) => writePlan(DEALS_STAGED_JOURNEY_STORAGE_KEY, plan, storage);
+export const removeDealsStagedJourneyPlan = (storage?: StorageLike | null) => removePlan(DEALS_STAGED_JOURNEY_STORAGE_KEY, storage);
