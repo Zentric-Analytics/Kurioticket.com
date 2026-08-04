@@ -301,11 +301,11 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.match(source, /data=\{POPULAR_DESTINATIONS\}/);
   assert.match(source, /Popular destinations/);
   assert.doesNotMatch(source, /<SectionList|COUNTRY_DESTINATION_GROUPS/);
-  const destinationsView = source.slice(
-    source.indexOf("function Destinations"),
+  const discoveryView = source.slice(
+    source.indexOf("function ExploreDiscoveryContent"),
     source.indexOf("function Interests"),
   );
-  assert.doesNotMatch(destinationsView, /horizontal/);
+  assert.doesNotMatch(discoveryView, /horizontal/);
   assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
   assert.match(source, /destinationMedia\(destination.id\)/);
   assert.match(source, /data=\{results\}/);
@@ -342,7 +342,8 @@ test("Explore keeps one controlled search input mounted above changing content",
   assert.match(source, /<SafeAreaView[\s\S]*?<ExploreHeader[\s\S]*?\{isSearching \? \(/);
   assert.doesNotMatch(source, /if \(query\.trim\(\)\)\s*return/);
   assert.doesNotMatch(source, /setTimeout|onChangeText=.*blur|onChangeText=.*focus/);
-  assert.match(source, /keyboardShouldPersistTaps="handled"/);
+  assert.equal(source.match(/keyboardDismissMode="none"/g)?.length, 2);
+  assert.equal(source.match(/keyboardShouldPersistTaps="handled"/g)?.length, 2);
 });
 
 test("Explore search preserves successive characters and clearing restores discovery", () => {
@@ -353,7 +354,7 @@ test("Explore search preserves successive characters and clearing restores disco
   assert.deepEqual(searchExplore(""), []);
   const source = screen();
   assert.match(source, /onPress=\{\(\) => \{\s*setQuery\(""\);\s*input\.current\?\.focus\(\);/);
-  assert.match(source, /isSearching \? \([\s\S]*?data=\{results\}[\s\S]*?: \([\s\S]*?<Destinations/);
+  assert.match(source, /isSearching \? \([\s\S]*?data=\{results\}[\s\S]*?: \([\s\S]*?<ExploreDiscoveryContent/);
 });
 
 test("the one-page discovery order and maintained interest navigation stay explicit", () => {
