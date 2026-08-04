@@ -1,4 +1,3 @@
-
 # Protected Android release pipeline
 
 This document defines the delivery foundation. It does not authorize credentials, builds, OTA publication, Play resources, uploads, or releases.
@@ -60,8 +59,6 @@ Before an owner approves a real Preview OTA attempt, run `node scripts/dry-run-p
 
 EAS remote versioning is authoritative and isolated by package/profile. Auto-increment is nested under Android, so iOS build numbers are unchanged and the two Android counters remain independent. When EAS reports the exact unconfigured-project state and a filtered EAS query confirms there are no builds for `com.kurioticket.app.preview` with the `preview` profile, the first approved Preview binary proposes `versionCode` 1. EAS initializes the remote counter during that build; it is not initialized manually beforehand.
 
-
-
 After initialization, every Preview build increments the existing numeric counter. Failed builds, including failures before EAS accepts a build job, may still advance the remote counter; those gaps are safe. A consumed or previously observed value must never be reset or reused. The failed first submission left the authoritative Preview counter at 2, so the next approved auto-incrementing attempt proposes versionCode 3 unless another approved attempt advances it first. Malformed, empty, ambiguous, unauthenticated, or otherwise unexpected EAS responses fail closed, as does any attempt to use the first-binary path for Production or the legacy package.
 
 The Preview build runs with frozen credentials and non-interactive mode. A missing or incomplete Preview keystore therefore fails before build submission instead of generating or replacing signing material. Shell pipeline failure propagation preserves the EAS exit code through log capture. Failed runs still write a secret-free audit manifest; missing, empty, or invalid optional result files are classified without parsing failures, and artifact preservation cannot mask the original EAS failure.
@@ -93,4 +90,3 @@ Emergency stop: cancel pending workflow runs, withhold environment approval, rem
 ## Legacy preservation
 
 The `com.kurioticket.mobile` Play draft, Android keystore, Preview APK, Production AAB, and runtime `0.2.0` update branches/history remain untouched for audit and rollback reference. New workflows reject the legacy package and runtime. Legacy credentials and artifacts are not reused by either new identity.
-
