@@ -31,6 +31,16 @@ export function initializeCarForm(params: Record<string, RouteValue>, today = ne
 
 /** Cars-route initialization: valid incoming intent wins, while a fresh form stays empty. */
 export function initializeCarsPageForm(params: Record<string, RouteValue>, today = new Date()): { form: CarForm; notice?: string } {
+  const emptyForm: CarForm = {
+    pickupLocation: "",
+    separateDropoff: false,
+    dropoffLocation: "",
+    pickupDate: "",
+    pickupTime: "",
+    dropoffDate: "",
+    dropoffTime: "",
+    driverAge: undefined,
+  };
   const todayIso = localIsoDate(today);
   const pickupLocation = firstRouteParam(params.pickupLocation);
   const dropoffLocation = firstRouteParam(params.dropoffLocation);
@@ -44,7 +54,19 @@ export function initializeCarsPageForm(params: Record<string, RouteValue>, today
   const pickupTime = validTime(incomingPickupTime) ? incomingPickupTime : "";
   let dropoffTime = validTime(incomingDropoffTime) ? incomingDropoffTime : "";
   if (pickupDate && dropoffDate && pickupTime && dropoffTime && compareLocalDateTimes(dropoffDate, dropoffTime, pickupDate, pickupTime) <= 0) dropoffTime = "";
-  return { form: { pickupLocation, separateDropoff: Boolean(dropoffLocation.trim() && dropoffLocation.trim() !== pickupLocation.trim()), dropoffLocation, pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge: parseDriverAge(ageText) } };
+  return {
+    form: {
+      ...emptyForm,
+      pickupLocation,
+      separateDropoff: Boolean(dropoffLocation.trim() && dropoffLocation.trim() !== pickupLocation.trim()),
+      dropoffLocation,
+      pickupDate,
+      pickupTime,
+      dropoffDate,
+      dropoffTime,
+      driverAge: parseDriverAge(ageText),
+    },
+  };
 }
 
 export function selectCarsPickupDate(form: CarForm, pickupDate: string): CarForm {

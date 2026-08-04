@@ -17,6 +17,23 @@ test("fresh Cars page state has no automatic search details for guests or signed
     assert.deepEqual(initializeCarsPageForm({}, today).form, { pickupLocation:"", separateDropoff:false, dropoffLocation:"", pickupDate:"", pickupTime:"", dropoffDate:"", dropoffTime:"", driverAge:undefined });
   }
 });
+test("Cars route opts into its empty initializer without changing another route", () => {
+  const screens = readFileSync(`${process.cwd()}/src/features/flow/ProductScreens.tsx`, "utf8");
+  const cars = screens.slice(screens.indexOf("export function CarsScreen()"), screens.indexOf("type DealTab"));
+  const deals = screens.slice(screens.indexOf("export function DealsScreen()"));
+  assert.match(cars, /<CarSearchPanel params=\{params\} requireManualDetails \/>/);
+  assert.doesNotMatch(deals, /requireManualDetails/);
+});
+test("Cars initializer contains no generated date, time, age, or location defaults", () => {
+  const model = readFileSync(`${process.cwd()}/src/features/flow/carSearchModel.ts`, "utf8");
+  const initializer = model.slice(model.indexOf("export function initializeCarsPageForm"), model.indexOf("export function selectCarsPickupDate"));
+  assert.doesNotMatch(initializer, /defaultCarForm|addCalendarDays|DEFAULT_CAR_TIME|CAR_AGE\.default/);
+  assert.match(initializer, /pickupDate: ""/);
+  assert.match(initializer, /pickupTime: ""/);
+  assert.match(initializer, /dropoffDate: ""/);
+  assert.match(initializer, /dropoffTime: ""/);
+  assert.match(initializer, /driverAge: undefined/);
+});
 test("Cars page renders the manual-selection placeholders", () => {
   const panel = readFileSync(`${process.cwd()}/src/features/flow/CarSearchPanel.tsx`, "utf8");
   for (const placeholder of ["Enter city or airport", "Select pick-up date", "Select pick-up time", "Select drop-off date", "Select drop-off time", "Select driver age"]) assert.match(panel, new RegExp(placeholder));
@@ -25,6 +42,10 @@ test("Cars page preserves valid restored and route-provided values", () => {
   const params = { pickupLocation:"LAX", dropoffLocation:"SFO", pickupDate:"2026-08-10", pickupTime:"09:30", dropoffDate:"2026-08-11", dropoffTime:"10:00", driverAge:"35" };
   assert.deepEqual(initializeCarsPageForm(params, new Date(2026, 6, 1)).form, { ...params, separateDropoff:true, driverAge:35 });
   assert.deepEqual(initializeCarsPageForm(Object.fromEntries(Object.entries(params).map(([key, value]) => [key, [value]])), new Date(2026, 6, 1)).form, { ...params, separateDropoff:true, driverAge:35 });
+});
+test("Cars page rejects invalid restored values without replacing them", () => {
+  const restored = initializeCarsPageForm({ pickupLocation:"LAX", pickupDate:"bad", pickupTime:"10:15", dropoffDate:"2020-01-01", dropoffTime:"24:00", driverAge:"71" }, today).form;
+  assert.deepEqual(restored, { pickupLocation:"LAX", separateDropoff:false, dropoffLocation:"", pickupDate:"", pickupTime:"", dropoffDate:"", dropoffTime:"", driverAge:undefined });
 });
 test("Cars page selections never generate return values and clear only invalid ones", () => {
   const empty = initializeCarsPageForm({}, today).form;
