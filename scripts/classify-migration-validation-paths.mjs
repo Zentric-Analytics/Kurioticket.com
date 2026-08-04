@@ -5,6 +5,7 @@ const EXACT_MIGRATION_PATHS = new Set([
   ".github/workflows/migration-validation.yml",
   "package-lock.json",
   "package.json",
+  "prisma.config.ts",
   "scripts/check-prisma-migration-timestamps.mjs",
   "scripts/classify-migration-validation-paths.mjs",
   "scripts/deploy-render-migrations.mjs",
