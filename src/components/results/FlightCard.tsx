@@ -564,7 +564,7 @@ function FlightFareAction({
         )}
       >
         {viewFlightLabel}
-      </LinkButton> : <button type="button" disabled aria-disabled="true" className={cn("inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500", desktop ? "flight-card-view-button rounded-md" : "min-w-[104px]")}>{viewFlightLabel}</button>}
+      </LinkButton> : <button type="button" disabled aria-disabled="true" aria-label={viewFlightAriaLabel} className={cn("inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500", desktop ? "flight-card-view-button rounded-md" : "min-w-[104px]")}>{viewFlightLabel}</button>}
     </div>
   );
 }
