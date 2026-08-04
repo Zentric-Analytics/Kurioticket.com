@@ -3,27 +3,42 @@ import { getIncludedProducts, type DealsPackageMode, type DealsSearch } from "./
 export type SharedTripDates = { start: string; end: string };
 
 export const getSharedDestination = (search: DealsSearch) =>
-  getIncludedProducts(search.mode).flight ? search.flightDestinationText : search.hotelDestination;
+  search.sharedDestination;
 
-export const getSharedDates = (search: DealsSearch): SharedTripDates =>
-  getIncludedProducts(search.mode).flight
-    ? { start: search.flightDepartureDate, end: search.flightReturnDate || search.hotelCheckOut || search.carReturnDate }
-    : { start: search.hotelCheckIn, end: search.hotelCheckOut };
+export const getSharedDates = (search: DealsSearch): SharedTripDates => ({
+  start: search.sharedTravelStartDate,
+  end: search.sharedTravelEndDate,
+});
 
 export function applySharedDestination(search: DealsSearch, destination: string, flightText = destination): DealsSearch {
   const included = getIncludedProducts(search.mode);
   return {
     ...search,
+    sharedDestination: destination,
     ...(included.flight ? { flightDestinationText: flightText } : { hotelDestination: destination }),
     ...(included.flight && search.stayDestinationLinked ? { hotelDestination: destination } : {}),
     ...(search.carPickupLinked ? { carPickupLocation: destination } : {}),
   };
 }
 
+export function applyFlightDestination(search: DealsSearch, destination: string, flightText: string, flightCode: string): DealsSearch {
+  return { ...applySharedDestination(search, destination, flightText), flightDestinationCode: flightCode };
+}
+
+export function swapFlightAirports(search: DealsSearch, canonicalDestination: string): DealsSearch {
+  return applyFlightDestination({
+    ...search,
+    flightOriginText: search.flightDestinationText,
+    flightOriginCode: search.flightDestinationCode,
+  }, canonicalDestination, search.flightOriginText, search.flightOriginCode);
+}
+
 export function applySharedDates(search: DealsSearch, dates: SharedTripDates): DealsSearch {
   const included = getIncludedProducts(search.mode);
   return {
     ...search,
+    sharedTravelStartDate: dates.start,
+    sharedTravelEndDate: dates.end,
     ...(included.flight ? { flightDepartureDate: dates.start, flightReturnDate: search.flightTripType === "round-trip" ? dates.end : "" } : { hotelCheckIn: dates.start, hotelCheckOut: dates.end }),
     ...(included.flight && search.stayDatesLinked ? { hotelCheckIn: dates.start, hotelCheckOut: dates.end } : {}),
     ...(search.carDatesLinked ? { carPickupDate: dates.start, carReturnDate: dates.end } : {}),
@@ -49,9 +64,9 @@ export function relinkInheritedField(search: DealsSearch, field: "stayDestinatio
 export function transitionDealsMode(search: DealsSearch, mode: DealsPackageMode): DealsSearch {
   const was = getIncludedProducts(search.mode); const next = getIncludedProducts(mode);
   let transitioned = { ...search, mode };
-  if (was.flight && !next.flight && next.hotel) {
-    transitioned = { ...transitioned, flightDestinationText: transitioned.hotelDestination, flightDepartureDate: transitioned.hotelCheckIn, flightReturnDate: transitioned.hotelCheckOut };
-  }
+  if (was.flight && !next.flight && next.hotel && transitioned.stayDestinationLinked) transitioned = { ...transitioned, hotelDestination: transitioned.sharedDestination };
+  if (was.flight && !next.flight && next.hotel && transitioned.stayDatesLinked) transitioned = { ...transitioned, hotelCheckIn: transitioned.sharedTravelStartDate, hotelCheckOut: transitioned.sharedTravelEndDate };
+  if (!was.flight && next.flight) transitioned = { ...transitioned, flightDestinationText: transitioned.sharedDestination, flightDestinationCode: "", flightDepartureDate: transitioned.sharedTravelStartDate, flightReturnDate: transitioned.flightTripType === "round-trip" ? transitioned.sharedTravelEndDate : "" };
   if (!was.hotel && next.hotel && transitioned.stayDestinationLinked) transitioned = relinkInheritedField(transitioned, "stayDestination");
   if (!was.hotel && next.hotel && transitioned.stayDatesLinked) transitioned = relinkInheritedField(transitioned, "stayDates");
   if (!was.car && next.car && transitioned.carPickupLinked) transitioned = relinkInheritedField(transitioned, "carPickup");

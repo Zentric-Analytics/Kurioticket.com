@@ -3026,6 +3026,7 @@ export const translations: TranslationDictionary = {
   "deals.pickup": "Pick-up",
   "deals.returnLocation": "Return location",
   "deals.sameAsPickup": "Same as pick-up",
+  "deals.useSameAsPickup": "Use same as pick-up",
   "deals.carOptions": "Car options",
   "deals.cabinClass": "Cabin class",
   "deals.cabin.economy": "Economy",

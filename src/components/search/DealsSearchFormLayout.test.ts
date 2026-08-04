@@ -20,6 +20,7 @@ test("the approved primary row field labels are explicit", () => {
   assert.match(form, /\{t\("deals\.cabinClass"\)\}/);
   assert.match(form, /\{t\("deals\.pickup"\)\}/);
   assert.match(form, /\{t\("deals\.returnLocation"\)\}/);
-  assert.match(form, /\{t\("deals\.sameAsPickup"\)\}/);
+  assert.match(form, /t\("deals\.sameAsPickup"\)/);
+  assert.match(form, /\{t\("deals\.useSameAsPickup"\)\}/);
   assert.match(form, /\{t\("deals\.carOptions"\)\}/);
 });

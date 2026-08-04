@@ -31,7 +31,7 @@ type FlightMobilePickerShellProps = {
   onClose: () => void;
   className?: string;
   contentClassName?: string;
-  pickerMarker?: "flight-date" | "traveler-cabin";
+  pickerMarker?: "flight-date" | "traveler-cabin" | "shared-travellers";
 };
 
 type ScrollLockSnapshot = {
@@ -327,6 +327,9 @@ export function FlightMobilePickerShell({
       }
       data-mobile-traveler-cabin-picker={
         pickerMarker === "traveler-cabin" ? "true" : undefined
+      }
+      data-mobile-shared-travellers-picker={
+        pickerMarker === "shared-travellers" ? "true" : undefined
       }
       data-closing={isClosing ? "true" : undefined}
       className="fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden"
