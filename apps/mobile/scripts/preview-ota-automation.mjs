@@ -1,3 +1,6 @@
+Exit code: 0
+Wall time: 0.5 seconds
+Output:
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -6,6 +9,9 @@ import { pathToFileURL } from "node:url";
 const FULL_SHA = /^[a-f0-9]{40}$/;
 const REPOSITORY = "Zentric-Analytics/Kurioticket.com";
 const PREVIEW_MESSAGE = /^Automated safe Preview OTA for ([a-f0-9]{40}); audit run ([0-9]+)$/;
+const FORMATTED_PREVIEW_MESSAGE = /^"Automated safe Preview OTA for ([a-f0-9]{40}); audit run ([0-9]+)" \(.+\)$/;
+const PREVIEW_BRANCH = "preview";
+const PREVIEW_RUNTIME = "preview-0.3.0";
 
 function requireValue(condition, message) {
   if (!condition) throw new Error(message);
@@ -28,22 +34,69 @@ export function resolveTrustedPreviewTarget({ mode, event, targetSha, repository
   return { triggerType: "manual-break-glass", targetSha, baselineRef: null };
 }
 
-function messages(value, result = []) {
-  if (Array.isArray(value)) for (const item of value) messages(item, result);
-  else if (value && typeof value === "object") {
-    for (const [key, item] of Object.entries(value)) {
-      if (key === "message" && typeof item === "string") result.push(item);
-      else messages(item, result);
-    }
-  }
-  return result;
+function parsePlatforms(value) {
+  requireValue(typeof value === "string", "EAS update platforms are malformed.");
+  const platforms = value.split(",").map((item) => item.trim().toLowerCase()).filter(Boolean);
+  requireValue(platforms.length > 0 && platforms.every((item) => item === "android" || item === "ios"), "EAS update platforms are malformed.");
+  return [...new Set(platforms)];
+}
+
+function parseGeneratedMessage(value) {
+  requireValue(typeof value === "string", "EAS update message is malformed.");
+  const raw = PREVIEW_MESSAGE.exec(value);
+  const formatted = FORMATTED_PREVIEW_MESSAGE.exec(value);
+  if (raw || formatted) return { targetSha: (raw ?? formatted)[1], auditRunId: (raw ?? formatted)[2] };
+  requireValue(!value.includes("Automated safe Preview OTA"), "Generated Preview update message is malformed.");
+  return null;
+}
+
+export function normalizePreviewUpdatePage(value) {
+  requireValue(value && typeof value === "object" && !Array.isArray(value), "EAS update history page is malformed.");
+  requireValue(value.name === PREVIEW_BRANCH, "EAS update history branch mismatch.");
+  requireValue(Array.isArray(value.currentPage), "EAS update history currentPage is malformed.");
+  return value.currentPage.map((entry) => {
+    requireValue(entry && typeof entry === "object" && !Array.isArray(entry), "EAS update history entry is malformed.");
+    requireValue(entry.branch === PREVIEW_BRANCH, "EAS update entry branch mismatch.");
+    requireValue(entry.runtimeVersion === PREVIEW_RUNTIME, "EAS update entry runtime mismatch.");
+    requireValue(typeof entry.group === "string" && entry.group.trim().length > 0, "EAS update group is missing.");
+    return {
+      branch: entry.branch,
+      runtimeVersion: entry.runtimeVersion,
+      group: entry.group,
+      platforms: parsePlatforms(entry.platforms),
+      generatedMessage: parseGeneratedMessage(entry.message),
+    };
+  });
 }
 
 export function inspectPreviewUpdateHistory(value, targetSha) {
   requireValue(FULL_SHA.test(targetSha ?? ""), "Replay target SHA is invalid.");
-  requireValue(value && (Array.isArray(value) || typeof value === "object"), "EAS update history is malformed.");
-  const matching = messages(value).filter((message) => PREVIEW_MESSAGE.test(message) && message.includes(targetSha));
-  return { alreadyPublished: matching.length > 0, matchingMessages: matching.length };
+  requireValue(Array.isArray(value), "EAS update history is malformed.");
+  const matching = value.filter((entry) => {
+    requireValue(entry && typeof entry === "object" && !Array.isArray(entry), "Normalized EAS update history entry is malformed.");
+    requireValue(typeof entry.branch === "string" && typeof entry.runtimeVersion === "string", "Normalized EAS update identity is malformed.");
+    requireValue(Array.isArray(entry.platforms), "Normalized EAS update platforms are malformed.");
+    return entry.branch === PREVIEW_BRANCH && entry.runtimeVersion === PREVIEW_RUNTIME && entry.platforms.includes("android") && entry.generatedMessage?.targetSha === targetSha;
+  });
+  return {
+    alreadyPublished: matching.length > 0,
+    matchingUpdates: matching.length,
+    branch: PREVIEW_BRANCH,
+    runtimeVersion: PREVIEW_RUNTIME,
+    platform: "android",
+    historyState: value.length === 0 ? "empty" : "queried",
+  };
+}
+
+export function classifyReplayLookupFailure(stderr, exitCode) {
+  requireValue(Number.isInteger(exitCode) && exitCode !== 0, "Replay lookup failure exit code is invalid.");
+  const text = typeof stderr === "string" ? stderr : "";
+  if (/nonexistent flag|unknown flag|unexpected argument|not a valid flag/i.test(text)) return "unsupported-command";
+  if (/401|unauthorized|not authenticated|authentication/i.test(text)) return "authentication";
+  if (/403|forbidden|permission|not authorized/i.test(text)) return "authorization";
+  if (/404|project.*not found|could not find.*project/i.test(text)) return "project-resolution";
+  if (/\b5\d\d\b|service unavailable|timed? out|network|fetch failed|graphql request failed/i.test(text)) return "service-or-network";
+  return "cli-failure";
 }
 
 export function validateStagingReadiness({ health, config, targetSha }) {
@@ -109,11 +162,18 @@ async function main() {
   }
   if (command === "merge-history-page") {
     const page = JSON.parse(readFileSync(process.env.PREVIEW_UPDATE_PAGE, "utf8"));
-    requireValue(Array.isArray(page), "EAS update history page is malformed.");
+    const normalizedPage = normalizePreviewUpdatePage(page);
     const existing = JSON.parse(readFileSync(process.env.PREVIEW_UPDATE_HISTORY, "utf8"));
     requireValue(Array.isArray(existing), "Combined EAS update history is malformed.");
-    writeFileSync(process.env.PREVIEW_UPDATE_HISTORY, `${JSON.stringify([...existing, ...page])}\n`);
-    if (process.env.GITHUB_OUTPUT) writeFileSync(process.env.GITHUB_OUTPUT, `page_count=${page.length}\n`, { flag: "a" });
+    writeFileSync(process.env.PREVIEW_UPDATE_HISTORY, `${JSON.stringify([...existing, ...normalizedPage])}\n`);
+    if (process.env.GITHUB_OUTPUT) writeFileSync(process.env.GITHUB_OUTPUT, `page_count=${normalizedPage.length}\n`, { flag: "a" });
+    return;
+  }
+  if (command === "diagnose-replay-failure") {
+    const stderr = readFileSync(process.env.PREVIEW_UPDATE_STDERR, "utf8");
+    const exitCode = Number(process.env.PREVIEW_UPDATE_EXIT_CODE);
+    const classification = classifyReplayLookupFailure(stderr, exitCode);
+    console.error(`Preview replay lookup failed closed: category=${classification}; cli=eas-cli@16.17.4; branch=${PREVIEW_BRANCH}; platform=android(local-filter); runtime=${PREVIEW_RUNTIME}(local-filter); exit=${exitCode}.`);
     return;
   }
   if (command === "wait-staging") {
@@ -127,3 +187,4 @@ async function main() {
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   await main();
 }
+
