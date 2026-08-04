@@ -130,7 +130,21 @@ jobs:
           set -o pipefail
           npx eas-cli@16.17.4 build --platform android --profile production --non-interactive --freeze-credentials --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
           PROPOSED_VERSION=$(node -e "const x=require(process.env.RUNNER_TEMP+'/version-evidence.json');process.stdout.write(String(x.proposedVersionCode))")
-          node scripts/verify-production-eas-result.mjs --kind build --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --version-code "$PROPOSED_VERSION" --output "$RUNNER_TEMP/delivery-result.json"
+          VERSION_STATUS=$(node -e "const x=require(process.env.RUNNER_TEMP+'/version-evidence.json');process.stdout.write(x.remoteVersionStatus)")
+          EXPECTED_BUILT_VERSION=$(node -e "const x=require(process.env.RUNNER_TEMP+'/version-evidence.json');process.stdout.write(String(x.remoteVersionStatus==='uninitialized'?x.proposedVersionCode+1:x.proposedVersionCode))")
+          BUILD_ID=$(node -e "const x=require(process.env.RUNNER_TEMP+'/delivery-result.raw.json');if(!Array.isArray(x)||x.length!==1||typeof x[0]?.id!=='string')throw Error('Build submission result is missing one exact ID');process.stdout.write(x[0].id)")
+          export BUILD_ID
+          npx eas-cli@16.17.4 build:list --platform android --build-profile production --app-identifier com.kurioticket.app --app-version 0.3.0 --app-build-version "$EXPECTED_BUILT_VERSION" --runtime-version production-0.3.0 --channel production --git-commit-hash "$CHECKED_OUT_SHA" --status finished --limit 2 --json --non-interactive > "$RUNNER_TEMP/production-built-history.json"
+          AAB_URL=$(node -e "const x=require(process.env.RUNNER_TEMP+'/production-built-history.json');if(!Array.isArray(x)||x.length!==1||x[0]?.id!==process.env.BUILD_ID)throw Error('Filtered build history is missing or ambiguous');const u=x[0].artifacts?.applicationArchiveUrl??x[0].artifacts?.buildUrl;if(typeof u!=='string'||!/^https:\/\//.test(u)||!/.aab(?:\?|$)/i.test(u))throw Error('AAB URL is missing');process.stdout.write(u)")
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --output "$RUNNER_TEMP/production.aab" "$AAB_URL"
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --output "$RUNNER_TEMP/bundletool.jar" https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
+          echo 'a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29  '"$RUNNER_TEMP/bundletool.jar" | sha256sum --check --strict
+          java -jar "$RUNNER_TEMP/bundletool.jar" validate --bundle="$RUNNER_TEMP/production.aab" > "$RUNNER_TEMP/aab-validation.txt"
+          java -jar "$RUNNER_TEMP/bundletool.jar" dump manifest --bundle="$RUNNER_TEMP/production.aab" --module=base > "$RUNNER_TEMP/aab-manifest.xml"
+          jarsigner -verify "$RUNNER_TEMP/production.aab" > "$RUNNER_TEMP/aab-signing.txt" 2>&1
+          unzip -p "$RUNNER_TEMP/production.aab" base/assets/index.android.bundle base/assets/app.config base/assets/app.manifest > "$RUNNER_TEMP/aab-contents.txt"
+          node scripts/verify-production-aab.mjs --manifest "$RUNNER_TEMP/aab-manifest.xml" --validation "$RUNNER_TEMP/aab-validation.txt" --signing "$RUNNER_TEMP/aab-signing.txt" --contents "$RUNNER_TEMP/aab-contents.txt" --output "$RUNNER_TEMP/aab-evidence.json"
+          node scripts/verify-production-eas-result.mjs --kind build --input "$RUNNER_TEMP/delivery-result.raw.json" --history "$RUNNER_TEMP/production-built-history.json" --aab-evidence "$RUNNER_TEMP/aab-evidence.json" --sha "$CHECKED_OUT_SHA" --version-code "$PROPOSED_VERSION" --version-status "$VERSION_STATUS" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Publish approved Production OTA through verified channel
         if: inputs.action == 'update'
         working-directory: apps/mobile
