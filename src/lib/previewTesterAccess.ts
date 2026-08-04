@@ -54,16 +54,22 @@ export function isStagingEmailRecipientAllowed(
   return isTrustedPreviewCompanyEmail(email) || hasPreviewTesterPermission(tester, "email");
 }
 
-async function findTester(email: string) {
+export async function findTester(email: string) {
   return getPrisma().previewTester.findUnique({
     where: { emailNormalized: normalizePreviewTesterEmail(email) },
     select: { status: true, allowGoogleSignIn: true, allowStagingEmail: true, expiresAt: true, approvedAt: true },
   });
 }
 
-export async function canUseStagingCredentials(email: string) {
+export async function canUseStagingCredentials(
+  email: string,
+  lookupTester: (email: string) => Promise<TesterRecord | null> = findTester,
+) {
   if (!isStagingEnvironment()) return true;
-  return isTrustedPreviewCompanyEmail(email);
+  if (isTrustedPreviewCompanyEmail(email)) return isStagingEmailRecipientAllowed(email, null);
+  if (!EMAIL.test(normalizePreviewTesterEmail(email))) return false;
+  const tester = await lookupTester(normalizePreviewTesterEmail(email));
+  return isStagingEmailRecipientAllowed(email, tester);
 }
 
 export async function canUseStagingGoogle(email: string, googleEmailVerified?: boolean) {
