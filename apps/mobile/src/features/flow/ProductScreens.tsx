@@ -25,7 +25,6 @@ import {
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { ResponsiveHero } from "./ResponsiveHero";
-import { HomeTopNavigation } from "./HomeFlowScreen";
 
 
 function Page({
@@ -147,12 +146,10 @@ export function FlightsScreen() {
 export function HotelsScreen() {
   const params = useLocalSearchParams<{ destination?: string | string[]; checkIn?: string | string[]; checkOut?: string | string[]; guests?: string | string[]; rooms?: string | string[] }>();
   const panel = useRef<HotelSearchHandle>(null);
-  const insets = useSafeAreaInsets();
   return (
     <View style={flowStyles.safe}>
-      <StatusBar style="dark" translucent backgroundColor="white" />
+      <StatusBar style="dark" translucent backgroundColor="transparent" />
       <ScrollView contentContainerStyle={styles.hotelPage} keyboardShouldPersistTaps="handled">
-        <HomeTopNavigation safeAreaTop={insets.top} />
         <View style={styles.hotelHero}>
           <ResponsiveHero
             source={require("../../../assets/heroes/hotels-room.png")}
@@ -163,10 +160,6 @@ export function HotelsScreen() {
             accessibilityLabel="Hotels hero image"
           />
           <View pointerEvents="none" style={styles.hotelHeroOverlay} />
-          <View style={styles.hotelHeroCopy}>
-            <Text accessibilityRole="header" style={styles.hotelHeroHeading}>Find the stays that start the right trip</Text>
-            <Text style={styles.hotelHeroSupporting}>Compare hotels in one place, from city breaks to luxury resorts.</Text>
-          </View>
         </View>
         <View style={styles.hotelBody}>
           <HotelSearchPanel ref={panel} params={params} />
@@ -189,7 +182,7 @@ export function CarsScreen() {
   const params = useLocalSearchParams<{ pickupLocation?: string | string[]; dropoffLocation?: string | string[]; pickupDate?: string | string[]; pickupTime?: string | string[]; dropoffDate?: string | string[]; dropoffTime?: string | string[]; driverAge?: string | string[] }>();
   return (
     <Page title="Cars" hero={require("../../../assets/heroes/cars-suv.png")} heroWidth={308} heroHeight={596} focalY={0.66}>
-      <CarSearchPanel params={params} />
+      <CarSearchPanel params={params} requireManualDetails />
       <Cards title="Vehicle types" items={[{ name: "Economy" }, { name: "SUV" }, { name: "Luxury" }]} />
       <Text style={styles.categoryNote}>Examples of common rental vehicle types. Availability is shown only after a search.</Text>
     </Page>
@@ -248,10 +241,7 @@ const styles = StyleSheet.create({
   hotelPage: { paddingHorizontal: 14, paddingBottom: 28 },
   hotelHero: { height: 290, marginHorizontal: -14, overflow: "hidden" },
   hotelHeroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "#071A4866" },
-  hotelHeroCopy: { position: "absolute", left: 20, right: 20, bottom: 46, gap: 8 },
-  hotelHeroHeading: { color: "white", fontSize: 27, lineHeight: 33, fontWeight: "800", maxWidth: 330 },
-  hotelHeroSupporting: { color: "white", fontSize: 14, lineHeight: 20, fontWeight: "500", maxWidth: 330 },
-  hotelBody: { marginTop: -24, gap: 10 },
+  hotelBody: { marginTop: -22, gap: 10 },
   heroShell: { height: 290, marginHorizontal: -9, overflow: "hidden" },
   heroHeader: { ...StyleSheet.absoluteFillObject, paddingHorizontal: 5 },
   heroActions: { flexDirection: "row", justifyContent: "space-between" },

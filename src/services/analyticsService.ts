@@ -1,4 +1,5 @@
 import { withOptionalDb } from "@/lib/prisma";
+import { withEnvironmentMetadata } from "@/lib/stagingSafety";
 
 export async function trackAnalyticsEvent(input: {
   userId?: string | null;
@@ -20,7 +21,7 @@ export async function trackAnalyticsEvent(input: {
           userId: input.userId || undefined,
           type: input.type,
           name: input.name,
-          metadata: (input.metadata || {}) as never,
+          metadata: withEnvironmentMetadata(input.metadata) as never,
         },
       });
       return true;
@@ -43,7 +44,7 @@ export async function logProviderCall(input: {
       await db.apiProviderLog.create({
         data: {
           ...input,
-          metadata: (input.metadata || {}) as never,
+          metadata: withEnvironmentMetadata(input.metadata) as never,
         },
       });
       return true;
@@ -74,7 +75,7 @@ export async function logSearchHistory(input: {
           destination: input.destination || undefined,
           checkIn: input.checkIn || undefined,
           checkOut: input.checkOut || undefined,
-          query: input.query as never,
+          query: withEnvironmentMetadata(input.query) as never,
           resultCount: input.resultCount,
           latencyMs: input.latencyMs,
           status: input.status,

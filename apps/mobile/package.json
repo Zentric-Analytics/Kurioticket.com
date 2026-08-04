@@ -11,7 +11,10 @@
     "web": "node ./scripts/start-local-preview.mjs --web",
     "typecheck": "tsc --noEmit",
     "test": "node --test --require ./testAssetSetup.cjs --import jiti/register \"src/**/*.test.ts\"",
-    "expo:doctor": "expo-doctor"
+    "expo:doctor": "expo-doctor",
+    "release:validate": "node ./scripts/validate-release-policy.mjs",
+    "release:classify": "node ./scripts/classify-release.mjs",
+    "test:release-pipeline": "node --test ./scripts/release-pipeline.test.mjs"
   },
   "dependencies": {
     "expo": "^54.0.0",

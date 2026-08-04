@@ -11,6 +11,7 @@ Kurioticket uses one Expo codebase and exactly two permanent application identit
 | API origin | `https://staging.kurioticket.com` | `https://kurioticket.com` |
 | EAS profile/channel | `preview` | `production` |
 | Distribution | Internal / TestFlight | App Store / Google Play |
+| App/runtime version | `0.3.0` / `preview-0.3.0` | `0.3.0` / `production-0.3.0` |
 
 There are no separate staging or development identities. Local development reuses Preview and must be started explicitly:
 
@@ -38,11 +39,13 @@ eas build --platform ios --profile production
 
 Do not run either command without the relevant owner approval. A Preview build is a signing and environment-validation build. Production builds, uploads, submissions, and releases require separate approval.
 
-The current `preview` profile uses internal distribution. On iOS that produces an internal/ad hoc build, not an App Store Connect/TestFlight upload. The same `com.kurioticket.app.preview` identity can later be used for TestFlight, but changing the iOS Preview distribution to `store` and uploading it require a separately reviewed configuration change and owner approval.
+The `preview` profile is platform-specific: iOS uses store distribution to create a TestFlight-compatible IPA, while Android remains internal and produces an APK. A build only creates an EAS artifact. Submission to App Store Connect is a separate owner-approved action; never add `--auto-submit` to the build command.
 
 Preview Android uses EAS internal distribution; no Preview Google Play record is required. The legacy `com.kurioticket.mobile` Play draft, EAS credential, builds, and update history are preserved and must not be deleted or repurposed.
 
-The Apple Explicit App IDs and App Store Connect records for `Kurioticket` and `Kurioticket Preview` already exist under the approved organization. No signing certificate or provisioning profile was created, and no Preview or Production build has been created.
+EAS remote app-version management is authoritative. Android `versionCode` is independent of the user-visible `0.3.0` version and is tracked separately for each package/profile. Both profiles auto-increment remotely. The protected delivery workflow reports the current remote value before starting an approved build. A failed EAS build may consume a value; gaps are safe and values are never reused. Google Play upload history is the final authority for Production conflicts. This PR changes policy only and does not mutate any remote version code.
+
+The Apple Explicit App IDs and App Store Connect records for `Kurioticket` and `Kurioticket Preview` already exist under the approved organization. No iOS signing certificate, provisioning profile, or iOS build exists. Historical Android `0.2.0 (8)` Preview and Production builds remain preserved.
 
 ## Public-variable policy
 
@@ -58,15 +61,39 @@ Configuration generation fails when the variant, build mode, or API origin is mi
 4. Verify signing and environment identity before any TestFlight upload.
 5. Obtain separate approval before uploading or adding testers.
 
+## Runtime and OTA eligibility
+
+Preview uses runtime `preview-0.3.0`; Production uses `production-0.3.0`. Marketing version remains `0.3.0`. Runtime and channel are independent isolation boundaries, while package identity is not used as an EAS Update boundary. Both new identities exclude legacy runtime `0.2.0`.
+
+Preview and Production version counters are governed independently even when their values deliberately converge. They converge only when Production adopts Preview-tested native code through an approved release change; a later Preview cycle then advances first. Never lower or silently align Preview merely to match Production.
+
+An OTA update is eligible only when all of these match the intended binary: EAS project, platform, channel, and runtime. Before publishing, confirm the update contains no native dependency, app configuration, permission, plugin, bundle/package, runtime, or other native change. OTA publishing remains disabled until a separately approved workflow is reviewed after the first binary is installed and its channel/runtime mapping is verified.
+
+The runtime `0.2.0` Preview updates came from the former `.github/workflows/mobile-preview-update.yml`. Before commit `e25b6d9`, pushes to `dev` ran `eas update --channel preview` with messages beginning `Automated preview update from dev`; native changes could start an Android build. Commit `e25b6d9` replaced those automatic delivery steps with validation-only jobs. The repository now provides separate, protected, manually dispatched Android Preview OTA and native-build workflows. OTA publication uses the reviewer-free `mobile-preview-ota` environment only after baseline, fingerprint, channel-mapping, and staging checks pass; native builds use the owner-reviewed `mobile-preview-build` environment. Production delivery remains separately protected by `mobile-production`. Merges and pushes do not invoke `eas build`, `eas update`, or `eas submit`, and the Expo project has no configured automatic EAS Workflow.
+
+## Required mobile validation
+
+`Validate mobile preview` is an always-scheduled required check for pull requests and pushes to `dev`. It performs a lightweight successful no-op for changes that cannot affect mobile, and runs the complete mobile TypeScript, test, Expo configuration, identity, and export validation for mobile-relevant changes. The lightweight result explicitly reports that the full mobile suite was not applicable.
+
+Mobile-relevant paths include all of `apps/mobile/**`; Android and mobile GitHub workflow files; shared GitHub actions; root package manifests, lockfiles, Node/npm selectors, and TypeScript configuration; and the root `src/lib/**`, `src/shared/**`, and `src/data/**` trees imported by mobile. Manual runs, missing or invalid Git ranges, empty diffs, malformed paths, and unknown events fail closed to the complete suite. The detector has no workflow-dispatch input and uses only GitHub event SHAs and the checked-out Git diff.
+
+## Android internal distribution
+
+After separate build approval, run `eas build --platform android --profile preview`. Confirm the resolved package, API origin, channel, runtime, and remote `versionCode` before proceeding. The output is an internal APK; it is not uploaded to Google Play.
+
+## Production release gates
+
+Production never builds from `dev`. Its validation workflow is scoped to `main`, and it contains no delivery command. Production build, signing, upload, submission, tester rollout, pricing, and release decisions each require explicit owner approval. Preview credentials and artifacts must never be selected for Production.
+
 ## Rollback
 
 Automatic EAS Update publication and native builds are disabled in the repository workflows. Before delivery automation is restored, confirm the new binary exists, verify channel/runtime mapping, and prove legacy `com.kurioticket.mobile` binaries cannot receive an incompatible update.
 
-Recovery is to leave publication disabled and revert the application-configuration commit. Do not delete Apple App IDs, App Store Connect records, EAS credentials, or legacy resources; those are permanent audit records. Existing binaries and updates remain addressable by their original runtime/channel identity.
+Recovery is to leave publication disabled and revert the application-configuration commit. If a bad OTA is ever published after automation is restored, publish a separately approved corrective update to the same channel/runtime or republish the last verified update; do not change runtime merely to mask it. Do not delete Apple App IDs, App Store Connect records, EAS credentials, or legacy resources; those are permanent audit records. Existing binaries and updates remain addressable by their original runtime/channel identity.
 
 ## Known limitations and approval gates
 
 - iOS native compilation requires macOS and Xcode and is not validated on Windows.
 - Preview uses a persistent in-app banner; a badged Preview icon remains recommended future artwork.
-- The staging hostname and mobile health/config endpoints are live, and repository infrastructure documents separate staging services. Actual provider, authentication, email, and transaction credential classification has not been verified; confirm it before producing a Preview binary.
+- The staging hostname and mobile health/config endpoints are live, but deployed secret values and resource bindings have not been verified. See [Preview TestFlight readiness audit](preview-testflight-readiness.md). The first Preview build remains blocked pending that verification.
 - Builds, credential generation, uploads, TestFlight distribution, store submissions, pricing, and public releases require explicit approval.

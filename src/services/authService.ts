@@ -11,6 +11,7 @@ import {
 } from "@/lib/validation";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { EmailDeliveryError, passwordResetEmail, sendTransactionalEmail } from "@/services/emailService";
+import { canUseStagingCredentials } from "@/lib/previewTesterAccess";
 
 export class DuplicateEmailError extends Error {
   constructor() {
@@ -66,6 +67,10 @@ export async function createPasswordUser(
 
   const { email, password } =
     parsed.data;
+
+  if (!(await canUseStagingCredentials(email))) {
+    throw new InvalidEmailError();
+  }
 
   // Preserve strict validation from codex
   if (

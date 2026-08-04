@@ -1,0 +1,161 @@
+name: Android Production Delivery
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha: { description: "Exact approved full commit SHA reachable from protected main", required: true, type: string }
+      platform: { description: "Must be android", required: true, type: choice, options: [android] }
+      action: { description: "Approved delivery action", required: true, type: choice, options: [build, update] }
+      runtime_version: { description: "Expected runtime", required: true, type: string }
+      release_reason: { description: "Approval or release reference", required: true, type: string }
+      confirmation_phrase: { description: "Type DELIVER ANDROID PRODUCTION", required: true, type: string }
+      expected_package: { description: "Expected Android package", required: true, type: string }
+      expected_channel: { description: "Expected EAS channel", required: true, type: string }
+      baseline_eas_build_id: { description: "Approved EAS build UUID for update; NONE for build", required: true, type: string }
+permissions: { contents: read }
+concurrency: { group: android-production-delivery, cancel-in-progress: false }
+jobs:
+  deliver:
+    environment: mobile-production
+    runs-on: ubuntu-latest
+    env: { APP_VARIANT: production, APP_BUILD_MODE: release, EXPO_PUBLIC_API_BASE_URL: "https://kurioticket.com" }
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
+      - name: Verify exact approved Production checkout
+        env:
+          APPROVED_SHA: "${{ inputs.commit_sha }}"
+          WORKFLOW_SHA: "${{ github.sha }}"
+        run: |
+          ACTUAL_SHA=$(git rev-parse HEAD)
+          test "$ACTUAL_SHA" = "$APPROVED_SHA" || { echo 'Checked-out Production SHA does not match approval.' >&2; exit 1; }
+          test "$WORKFLOW_SHA" = "$APPROVED_SHA" || { echo 'Workflow source SHA does not match approval.' >&2; exit 1; }
+          echo "CHECKED_OUT_SHA=$ACTUAL_SHA" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
+      - working-directory: apps/mobile
+        run: npm ci
+      - name: Validate immutable Production inputs
+        working-directory: apps/mobile
+        env:
+          APPROVED_SHA: "${{ inputs.commit_sha }}"
+          APPROVED_RUNTIME: "${{ inputs.runtime_version }}"
+          APPROVED_PACKAGE: "${{ inputs.expected_package }}"
+          APPROVED_CHANNEL: "${{ inputs.expected_channel }}"
+          APPROVED_CONFIRMATION: "${{ inputs.confirmation_phrase }}"
+          DELIVERY_ACTION: "${{ inputs.action }}"
+          RELEASE_REASON: "${{ inputs.release_reason }}"
+          BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}"
+        run: node scripts/validate-delivery-inputs.mjs production "$APPROVED_SHA" "$APPROVED_RUNTIME" "$APPROVED_PACKAGE" "$APPROVED_CHANNEL" production https://kurioticket.com "$APPROVED_CONFIRMATION" main "$DELIVERY_ACTION" "$RELEASE_REASON" "$BASELINE_EAS_BUILD_ID"
+      - name: Validate release matrix and resolved config
+        working-directory: apps/mobile
+        run: |
+          npm run release:validate
+          npx expo config --type public --json > "$RUNNER_TEMP/production-config.json"
+          node -e "const c=require(process.env.RUNNER_TEMP+'/production-config.json');if(c.android.package!=='com.kurioticket.app'||c.runtimeVersion!=='production-0.3.0'||c.extra.environment.channel!=='production'||c.extra.environment.apiBaseUrl!=='https://kurioticket.com')throw Error('Production configuration mismatch')"
+      - name: Resolve approved binary baseline
+        if: inputs.action == 'update'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}" }
+        run: |
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          test -f release-baselines/android/production.json || { echo 'Reviewed Production binary manifest is missing.' >&2; exit 1; }
+          npx eas-cli@16.17.4 build:view "$BASELINE_EAS_BUILD_ID" --json > "$RUNNER_TEMP/baseline-build.json"
+          node scripts/verify-release-evidence.mjs --kind baseline --variant production --manifest release-baselines/android/production.json --build "$RUNNER_TEMP/baseline-build.json" --output "$RUNNER_TEMP/baseline-evidence.json"
+      - name: Classify native versus OTA delivery
+        working-directory: apps/mobile
+        env: { APPROVED_SHA: "${{ inputs.commit_sha }}", DELIVERY_ACTION: "${{ inputs.action }}" }
+        run: |
+          set -o pipefail
+          npx fingerprint fingerprint:generate --platform android > "$RUNNER_TEMP/current-fingerprint.json"
+          if [ "$DELIVERY_ACTION" = update ]; then BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)"); BASE_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.nativeFingerprint)"); else BASE="$APPROVED_SHA"; BASE_FP=BUILD_ACTION; fi
+          CURRENT_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/current-fingerprint.json');process.stdout.write(x.hash)")
+          set +e
+          node scripts/classify-release.mjs --variant production --base "$BASE" --head "$APPROVED_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime production-0.3.0 --channel production --action "$DELIVERY_ACTION" | tee "$RUNNER_TEMP/release-classification.json"
+          CLASSIFIER_PIPE_STATUS=("${PIPESTATUS[@]}")
+          set -e
+          if [ "${CLASSIFIER_PIPE_STATUS[0]}" -ne 0 ]; then exit "${CLASSIFIER_PIPE_STATUS[0]}"; fi
+          if [ "${CLASSIFIER_PIPE_STATUS[1]}" -ne 0 ]; then exit "${CLASSIFIER_PIPE_STATUS[1]}"; fi
+      - name: Verify live channel mapping
+        if: inputs.action == 'update'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          npx eas-cli@16.17.4 channel:view production --json --non-interactive > "$RUNNER_TEMP/channel.json"
+          node scripts/verify-release-evidence.mjs --kind channel --variant production --input "$RUNNER_TEMP/channel.json" --output "$RUNNER_TEMP/channel-evidence.json"
+      - name: Verify proposed versionCode against EAS and Play history
+        if: inputs.action == 'build'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", APPROVED_SHA: "${{ inputs.commit_sha }}" }
+        run: |
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          test -f release-baselines/android/production-play-history.json || { echo 'Reviewed Google Play version history is missing.' >&2; exit 1; }
+          set +e
+          npx eas-cli@16.17.4 build:version:get --platform android --profile production --non-interactive > "$RUNNER_TEMP/production-version.txt" 2>&1
+          VERSION_EXIT=$?
+          npx eas-cli@16.17.4 build:list --platform android --build-profile production --app-identifier com.kurioticket.app --limit 1 --json --non-interactive > "$RUNNER_TEMP/production-builds.json" 2> "$RUNNER_TEMP/production-builds-error.txt"
+          BUILDS_EXIT=$?
+          set -e
+          PREVIOUS_HISTORY_ARGS=()
+          HISTORY_PATH=apps/mobile/release-baselines/android/production-play-history.json
+          if git cat-file -e "$APPROVED_SHA^:$HISTORY_PATH" 2>/dev/null; then
+            git show "$APPROVED_SHA^:$HISTORY_PATH" > "$RUNNER_TEMP/previous-production-play-history.json"
+            PREVIOUS_HISTORY_ARGS=(--previous-play-history "$RUNNER_TEMP/previous-production-play-history.json")
+          fi
+          node scripts/resolve-production-version-code.mjs \
+            --version-output "$RUNNER_TEMP/production-version.txt" \
+            --version-exit-code "$VERSION_EXIT" \
+            --builds-output "$RUNNER_TEMP/production-builds.json" \
+            --builds-exit-code "$BUILDS_EXIT" \
+            --play-history release-baselines/android/production-play-history.json \
+            --package com.kurioticket.app \
+            --profile production \
+            --runtime production-0.3.0 \
+            "${PREVIOUS_HISTORY_ARGS[@]}" \
+            --output "$RUNNER_TEMP/version-evidence.json"
+      - name: Build approved Production AAB
+        if: inputs.action == 'build'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          set -o pipefail
+          npx eas-cli@16.17.4 build --platform android --profile production --non-interactive --freeze-credentials --json | tee "$RUNNER_TEMP/delivery-result.json"
+      - name: Publish approved Production OTA through verified channel
+        if: inputs.action == 'update'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", RELEASE_REASON: "${{ inputs.release_reason }}" }
+        run: |
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          set -o pipefail
+          npx eas-cli@16.17.4 update --channel production --platform android --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.json"
+      - name: Write consolidated release audit
+        if: always()
+        working-directory: apps/mobile
+        env:
+          WORKFLOW_RUN_ID: "${{ github.run_id }}"
+          WORKFLOW_HEAD_SHA: "${{ env.CHECKED_OUT_SHA }}"
+          RELEASE_ACTOR: "${{ github.actor }}"
+          RELEASE_ENVIRONMENT: production
+          RELEASE_ACTION: "${{ inputs.action }}"
+          RELEASE_REASON: "${{ inputs.release_reason }}"
+          RELEASE_COMMIT: "${{ inputs.commit_sha }}"
+          RELEASE_PACKAGE: com.kurioticket.app
+          RELEASE_PROFILE: production
+          RELEASE_RUNTIME: production-0.3.0
+          RELEASE_CHANNEL: production
+          BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}"
+          BASELINE_EVIDENCE_PATH: "${{ runner.temp }}/baseline-evidence.json"
+          CHANNEL_EVIDENCE_PATH: "${{ runner.temp }}/channel-evidence.json"
+          CURRENT_FINGERPRINT_PATH: "${{ runner.temp }}/current-fingerprint.json"
+          CLASSIFIER_PATH: "${{ runner.temp }}/release-classification.json"
+          VERSION_EVIDENCE_PATH: "${{ runner.temp }}/version-evidence.json"
+          DELIVERY_RESULT_PATH: "${{ runner.temp }}/delivery-result.json"
+          AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
+          WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
+          FINAL_STATUS: "${{ job.status }}"
+        run: node scripts/write-release-audit.mjs
+      - name: Preserve non-secret release evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with: { name: "android-production-release-evidence-${{ github.run_id }}", path: "${{ runner.temp }}/release-audit.json", if-no-files-found: warn, retention-days: 365 }

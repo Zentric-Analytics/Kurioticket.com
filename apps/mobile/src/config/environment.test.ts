@@ -18,7 +18,7 @@ test("resolves the approved Preview identity", () => {
     variant: "preview", buildMode: "release", displayName: "Kurioticket Preview",
     bundleIdentifier: "com.kurioticket.app.preview", androidPackage: "com.kurioticket.app.preview",
     scheme: "kurioticket-preview", apiBaseUrl: "https://staging.kurioticket.com", channel: "preview",
-    distribution: "internal", isPreview: true,
+    appVersion: "0.3.0", isPreview: true,
   });
 });
 
@@ -27,7 +27,7 @@ test("resolves the approved Production identity", () => {
     variant: "production", buildMode: "release", displayName: "Kurioticket",
     bundleIdentifier: "com.kurioticket.app", androidPackage: "com.kurioticket.app",
     scheme: "kurioticket", apiBaseUrl: "https://kurioticket.com", channel: "production",
-    distribution: "store", isPreview: false,
+    appVersion: "0.3.0", isPreview: false,
   });
 });
 

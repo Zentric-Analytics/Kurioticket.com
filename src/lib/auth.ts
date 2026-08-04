@@ -30,6 +30,8 @@ import {
 
 import { signinSchema } from "@/lib/validation";
 import { isPasskeyLoginToken, passkeyStrongAuthNote } from "@/lib/passkeys";
+import { assertStagingAuthenticationSafety, isStagingEnvironment } from "@/lib/stagingSafety";
+import { canRetainStagingSession, canUseStagingCredentials, canUseStagingGoogle, isTrustedPreviewCompanyEmail } from "@/lib/previewTesterAccess";
 
 import {
   EmailVerificationCooldownError,
@@ -39,6 +41,8 @@ import {
 } from "@/services/emailVerificationService";
 
 import { logAuthEvent } from "@/services/authService";
+
+assertStagingAuthenticationSafety();
 
 type SessionAugmentedUser = {
   role?: string;
@@ -125,7 +129,7 @@ const providers: NextAuthOptions["providers"] = [
           include: { user: true },
         });
 
-        if (!challenge?.user || !(await isAuthenticatableUserStatus(challenge.user)) || !challenge.user.emailVerified) return null;
+        if (!challenge?.user || !(await isAuthenticatableUserStatus(challenge.user)) || !challenge.user.emailVerified || !challenge.user.email || !(await canUseStagingCredentials(challenge.user.email))) return null;
 
         await getPrisma().webAuthnChallenge.update({ where: { id: challenge.id }, data: { expiresAt: new Date() } });
         logAuthEvent("passkey-login-strong-auth", { userId: challenge.user.id, note: passkeyStrongAuthNote });
@@ -201,7 +205,8 @@ const providers: NextAuthOptions["providers"] = [
         if (
           !user ||
           !(await isAuthenticatableUserStatus(user)) ||
-          !user.emailVerified
+          !user.emailVerified ||
+          !(await canUseStagingCredentials(email))
         ) {
           return null;
         }
@@ -235,6 +240,8 @@ const providers: NextAuthOptions["providers"] = [
         email,
         password,
       } = parsed.data;
+
+      if (!(await canUseStagingCredentials(email))) return null;
 
       try {
         checkAuthRateLimit({
@@ -458,6 +465,10 @@ export const authOptions: NextAuthOptions =
             )?.email_verified
           );
 
+        if (isGoogleSignIn && !(await canUseStagingGoogle(email, googleVerified))) {
+          return "/auth/signin?error=PreviewAccessRequired";
+        }
+
         if (
           dbUser &&
           !dbUser.emailVerified
@@ -509,9 +520,8 @@ export const authOptions: NextAuthOptions =
           getAdminEmails();
 
         if (
-          adminEmails.includes(
-            email
-          )
+          adminEmails.includes(email) &&
+          (!isStagingEnvironment() || isTrustedPreviewCompanyEmail(email))
         ) {
           await getPrisma().user.updateMany(
             {
@@ -534,6 +544,7 @@ export const authOptions: NextAuthOptions =
       async jwt({
         token,
         user,
+        account,
         trigger,
         session,
       }) {
@@ -549,6 +560,7 @@ export const authOptions: NextAuthOptions =
         }
 
         if (user) {
+          token.previewAuthMethod = account?.provider === "google" ? "google" : "credentials";
           const authUser =
             user as typeof user &
               SessionAugmentedUser;
@@ -581,6 +593,7 @@ export const authOptions: NextAuthOptions =
                   ? { id: String(token.id) }
                   : { email: String(token.email).toLowerCase() },
                 include: {
+                  accounts: { select: { provider: true } },
                   securitySettings: {
                     select: {
                       twoFactorEnabled: true,
@@ -591,6 +604,11 @@ export const authOptions: NextAuthOptions =
             );
 
           if (dbUser) {
+            const previewAuthMethod = token.previewAuthMethod || (dbUser.accounts.some((linkedAccount) => linkedAccount.provider === "google") ? "google" : "credentials");
+            const retainsPreviewAccess = await canRetainStagingSession(
+              dbUser.email || "",
+              previewAuthMethod === "google",
+            );
             token.id =
               dbUser.id;
 
@@ -598,7 +616,7 @@ export const authOptions: NextAuthOptions =
               dbUser.role;
 
             token.status =
-              dbUser.status;
+              retainsPreviewAccess ? dbUser.status : "SUSPENDED";
 
             token.email =
               dbUser.email ||

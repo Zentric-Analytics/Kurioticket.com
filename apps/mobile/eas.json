@@ -5,7 +5,6 @@
   },
   "build": {
     "preview": {
-      "distribution": "internal",
       "environment": "preview",
       "env": {
         "APP_VARIANT": "preview",
@@ -13,12 +12,16 @@
         "EXPO_PUBLIC_API_BASE_URL": "https://staging.kurioticket.com"
       },
       "android": {
+        "autoIncrement": true,
+        "distribution": "internal",
         "buildType": "apk"
+      },
+      "ios": {
+        "distribution": "store"
       },
       "channel": "preview"
     },
     "production": {
-      "autoIncrement": true,
       "channel": "production",
       "environment": "production",
       "distribution": "store",
@@ -26,6 +29,11 @@
         "APP_VARIANT": "production",
         "APP_BUILD_MODE": "release",
         "EXPO_PUBLIC_API_BASE_URL": "https://kurioticket.com"
+      },
+      "android": {
+        "autoIncrement": true,
+        "distribution": "store",
+        "buildType": "app-bundle"
       }
     }
   },

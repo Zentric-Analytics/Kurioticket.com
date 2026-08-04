@@ -10,7 +10,7 @@ export type MobileEnvironment = {
   scheme: string;
   apiBaseUrl: string;
   channel: AppVariant;
-  distribution: "internal" | "store";
+  appVersion: string;
   isPreview: boolean;
 };
 

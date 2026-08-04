@@ -17,6 +17,10 @@ export type ExploreDestination = {
   searchAliases: readonly string[];
   imageDestinationId: string;
   provenance: ExploreDestinationProvenance;
+  description?: string;
+  summary?: string;
+  highlights?: readonly string[];
+  relatedDestinationIds?: readonly string[];
 };
 
 type DestinationOverride = {

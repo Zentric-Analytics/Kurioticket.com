@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 import type { ErrorResponse } from "resend";
 import { canSendOptionalEmail, type OptionalEmailCategory } from "@/services/emailPreferencesService";
+import { assertStagingEmailSafety } from "@/lib/stagingSafety";
+import { canReceiveStagingEmail } from "@/lib/previewTesterAccess";
 
 import {
   createEmailDeliveryRecord,
@@ -45,6 +47,10 @@ export async function sendTransactionalEmail(input: {
 }) {
   const resend = getResend();
   const from = input.from || process.env.RESEND_FROM_EMAIL || "";
+  assertStagingEmailSafety({ to: input.to, from });
+  if (!(await canReceiveStagingEmail(input.to))) {
+    throw new EmailDeliveryError("Staging email recipient is not permitted.");
+  }
   const template = input.template || "notification";
   const strictDelivery = input.requireConfigured || process.env.NODE_ENV === "production";
   const deliveryId = from
@@ -69,7 +75,7 @@ export async function sendTransactionalEmail(input: {
       throw new EmailDeliveryError(message);
     }
 
-    console.info("[email:fallback]", input.subject, input.to);
+    console.info("[email:fallback]", { template });
     return { id: "resend-not-configured" };
   }
 

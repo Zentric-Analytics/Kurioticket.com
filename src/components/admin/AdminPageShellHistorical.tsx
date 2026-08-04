@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Bell, Building2, ChevronDown, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
-import { adminNavigation, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
+import { getAdminNavForRole, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
 
 type StatusTone = "good" | "bad" | "warn" | "neutral" | "info";
 
@@ -21,14 +21,16 @@ export function AdminShell({
   adminEmail,
   adminName,
   adminRole,
+  showPreviewTesters = false,
 }: {
   children: React.ReactNode;
   adminEmail?: string | null;
   adminName?: string | null;
   adminRole: string;
+  showPreviewTesters?: boolean;
 }) {
   const safeRole: AdminRole = adminRole === "SUPPORT" || adminRole === "USER" ? adminRole : "ADMIN";
-  const navItems = adminNavigation.filter((item) => item.roles.includes(safeRole));
+  const navItems = getAdminNavForRole(safeRole, showPreviewTesters);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-950">

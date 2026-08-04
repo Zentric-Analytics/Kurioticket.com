@@ -2,19 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Image,
-  ImageBackground,
   Keyboard,
-  Modal,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
-  ScrollView,
   FlatList,
   StyleSheet,
   Text,
   TextInput,
-  TouchableWithoutFeedback,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { router } from "expo-router";
@@ -23,174 +16,25 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { destinationById, type Destination } from "./destinationCatalogue";
-import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
-import { HERO_SLIDES, INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
+import { FlowIcon } from "../flow/FlowIcon";
+import { INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
 import {
   exactExploreResult,
-  EXPLORE_TABS,
   exploreBottomPadding,
   searchExplore,
 } from "./exploreModels";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import {
-  navigateFromDestination,
-  type DestinationProduct,
-} from "./exploreInteractionModels";
+import { destinationDetailsRoute, navigateFromDestination } from "./exploreInteractionModels";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
 const NAVY = "#071A48",
   BLUE = "#0754F7",
   MUTED = "#56658E",
   BORDER = "#E7ECF5";
-type Tab = (typeof EXPLORE_TABS)[number];
-const INSPIRATION_SLIDES = HERO_SLIDES.map((slide) => ({
-  ...slide,
-  destination: destinationById.get(slide.destinationId)!,
-}));
 const RESOLVED_INTERESTS = INTERESTS.map((interest) => ({
   ...interest,
   destination: destinationById.get(interest.destinationId)!,
 }));
 
-function DestinationAction({
-  destination,
-  saved,
-  onToggle,
-  onClose,
-}: {
-  destination: Destination | null;
-  saved: boolean;
-  onToggle: () => void;
-  onClose: () => void;
-}) {
-  const navigating = useRef(false);
-  const media = destination ? destinationMedia(destination.id) : undefined;
-  const [imageFailed, setImageFailed] = useState(false);
-  useEffect(() => {
-    navigating.current = false;
-    setImageFailed(false);
-  }, [destination]);
-  const navigate = (product: DestinationProduct) => {
-    if (!destination) return;
-    navigateFromDestination(
-      destination,
-      product,
-      onClose,
-      (route, name, handoff) =>
-        router.push({
-          pathname: `/${route}`,
-          params: {
-            destination: name,
-            destinationId: handoff.destinationId,
-            airportCodes: handoff.airportCodes.join(","),
-            to: handoff.primaryAirportCode,
-          },
-        }),
-      navigating,
-    );
-  };
-  return (
-    <Modal
-      visible={!!destination}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-      accessibilityViewIsModal
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={s.modalBackdrop}>
-          <TouchableWithoutFeedback
-            onPress={(event) => event.stopPropagation()}
-          >
-            <SafeAreaView
-              edges={["bottom"]}
-              style={s.sheet}
-              accessibilityLabel="Explore destination details"
-            >
-              {destination ? (
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  <Image
-                    source={imageFailed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)}
-                    onError={() => setImageFailed(true)}
-                    accessibilityLabel={media?.accessibilityLabel}
-                    resizeMode="cover"
-                    style={s.detailImage}
-                  />
-                  <View style={s.detailBody}>
-                  <Text
-                    accessibilityRole="header"
-                    numberOfLines={2}
-                    style={s.sheetTitle}
-                  >
-                    {destination.name}
-                  </Text>
-                  <Text style={s.sheetMeta}>
-                    {destination.country}
-                  </Text>
-                  <Text accessibilityRole="header" style={s.airportsTitle}>Airports</Text>
-                  {destination.airportCodes.map((code, index) => (
-                    <Text key={code} style={s.airportDetail}>
-                      {code} · {destination.airportNames[index] ?? destination.airportNames[0]}
-                    </Text>
-                  ))}
-                  <Action
-                    icon="heart"
-                    label={
-                      saved
-                        ? "Remove from saved destinations"
-                        : "Save destination"
-                    }
-                    onPress={onToggle}
-                  />
-                  <Action
-                    icon="flight"
-                    label="Search flights"
-                    onPress={() => navigate("flights")}
-                  />
-                  <Action
-                    icon="hotel"
-                    label="Search hotels"
-                    onPress={() => navigate("hotels")}
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Close destination details"
-                    onPress={onClose}
-                    style={s.close}
-                  >
-                    <Text style={s.closeText}>Close</Text>
-                  </Pressable>
-                  </View>
-                </ScrollView>
-              ) : null}
-            </SafeAreaView>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
-}
-function Action({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: FlowIconName;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={s.action}
-    >
-      <FlowIcon name={icon} color={BLUE} />
-      <Text style={s.actionText}>{label}</Text>
-      <FlowIcon name="chevron" size={18} />
-    </Pressable>
-  );
-}
 function Header() {
   return (
     <View style={s.header}>
@@ -254,7 +98,7 @@ function Row({
     <View style={s.resultRow}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Open actions for ${destination.name}, ${destination.country}, ${destination.primaryAirportCode}`}
+        accessibilityLabel={`Open details for ${destination.name}, ${destination.country}, ${destination.primaryAirportCode}`}
         onPress={onSelect}
         style={s.resultMain}
       >
@@ -285,15 +129,11 @@ function ExploreHeader({
   query,
   setQuery,
   input,
-  tab,
-  setTab,
   submit,
 }: {
   query: string;
   setQuery: (value: string) => void;
   input: React.RefObject<TextInput | null>;
-  tab: Tab;
-  setTab: (tab: Tab) => void;
   submit: () => void;
 }) {
   return (
@@ -313,50 +153,35 @@ function ExploreHeader({
           placeholderTextColor="#7B849F"
           style={s.searchInput}
         />
-        {query ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Clear Explore search"
-            onPress={() => {
-              setQuery("");
-              input.current?.focus();
-            }}
-            style={s.clear}
-          >
-            <Text style={s.clearText}>Clear</Text>
-          </Pressable>
-        ) : null}
-      </View>
-      <View accessibilityRole="tablist" style={s.tabs}>
-        {EXPLORE_TABS.map((t) => (
-          <Pressable
-            key={t}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: tab === t }}
-            onPress={() => setTab(t)}
-            style={[s.tab, tab === t && s.tabActive]}
-          >
-            <Text style={[s.tabText, tab === t && s.tabTextActive]}>{t}</Text>
-          </Pressable>
-        ))}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Clear Explore search"
+          accessibilityElementsHidden={!query}
+          importantForAccessibility={query ? "auto" : "no-hide-descendants"}
+          disabled={!query}
+          onPress={() => {
+            setQuery("");
+            input.current?.focus();
+          }}
+          style={[s.clear, !query && s.clearHidden]}
+        >
+          <Text style={s.clearText}>Clear</Text>
+        </Pressable>
       </View>
     </>
   );
 }
 
 export function ExploreScreen() {
-  const [tab, setTab] = useState<Tab>("Destinations"),
-    [query, setQuery] = useState(""),
-    [selected, setSelected] = useState<Destination | null>(null);
+  const [query, setQuery] = useState("");
   const { savedIds, toggle } = useSavedDestinations();
-  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const input = useRef<TextInput>(null);
   const results = useMemo(() => searchExplore(query), [query]);
   const select = (destination: Destination) => {
     Keyboard.dismiss();
     input.current?.blur();
-    setSelected(destination);
+    router.push(destinationDetailsRoute(destination.id));
   };
   const submit = () => {
     const exact = exactExploreResult(results);
@@ -368,75 +193,61 @@ export function ExploreScreen() {
         `${results.length} ${results.length === 1 ? "result" : "results"}`,
       );
   }, [query, results.length]);
-  const header = (
-    <ExploreHeader
-      query={query}
-      setQuery={setQuery}
-      input={input}
-      tab={tab}
-      setTab={setTab}
-      submit={submit}
-    />
-  );
-  const overlays = (
-    <>
-      <DestinationAction
-        destination={selected}
-        saved={!!selected && savedIds.has(selected.id)}
-        onToggle={() => selected && toggle(selected.id)}
-        onClose={() => setSelected(null)}
-      />
-    </>
-  );
-  if (!query.trim() && tab === "Destinations")
-    return (
-      <SafeAreaView style={s.safe} edges={["top"]}>
-        <Destinations
-          header={header}
-          bottomPadding={exploreBottomPadding(65, insets.bottom)}
-          saved={savedIds}
-          select={select}
-          toggle={toggle}
+  const bottomPadding = exploreBottomPadding(65, insets.bottom);
+  const isSearching = Boolean(query.trim());
+  return (
+    <SafeAreaView style={s.safe} edges={["top"]}>
+      <View style={s.stableHeader}>
+        <ExploreHeader
+          query={query}
+          setQuery={setQuery}
+          input={input}
+          submit={submit}
         />
-        {overlays}
-      </SafeAreaView>
-    );
-  if (query.trim())
-    return (
-      <SafeAreaView style={s.safe} edges={["top"]}>
+      </View>
+      {isSearching ? (
         <FlatList
           data={results}
           keyExtractor={(item) => item.destination.id}
+          keyboardDismissMode="none"
           keyboardShouldPersistTaps="handled"
           initialNumToRender={10}
           maxToRenderPerBatch={8}
           windowSize={7}
-          contentContainerStyle={[s.page, { paddingBottom: exploreBottomPadding(65, insets.bottom) }]}
-          ListHeaderComponent={<View>{header}<Section title={`${results.length} result${results.length === 1 ? "" : "s"}`} /></View>}
-          ListEmptyComponent={<Text style={s.empty}>No destinations or maintained interests match “{query.trim()}”. Try a city, destination code, or country.</Text>}
+          contentContainerStyle={[s.content, { paddingBottom: bottomPadding }]}
+          ListHeaderComponent={
+            <Section
+              title={`${results.length} result${results.length === 1 ? "" : "s"}`}
+            />
+          }
+          ListEmptyComponent={
+            <Text style={s.empty}>
+              No destinations or maintained interests match “{query.trim()}”.
+              Try a city, destination code, or country.
+            </Text>
+          }
           renderItem={({ item: r }) => (
             <View>
-              {r.match === "interest" ? <Text style={s.matchLabel}>Interest match: {r.interest}</Text> : null}
-              <Row destination={r.destination} saved={savedIds.has(r.destination.id)} onSelect={() => select(r.destination)} onToggle={() => toggle(r.destination.id)} />
+              {r.match === "interest" ? (
+                <Text style={s.matchLabel}>Interest match: {r.interest}</Text>
+              ) : null}
+              <Row
+                destination={r.destination}
+                saved={savedIds.has(r.destination.id)}
+                onSelect={() => select(r.destination)}
+                onToggle={() => toggle(r.destination.id)}
+              />
             </View>
           )}
         />
-        {overlays}
-      </SafeAreaView>
-    );
-  return (
-    <SafeAreaView style={s.safe} edges={["top"]}>
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[
-          s.page,
-          { paddingBottom: exploreBottomPadding(65, insets.bottom) },
-        ]}
-      >
-        {header}
-        <Inspiration width={width} select={select} />
-      </ScrollView>
-      {overlays}
+      ) : (
+        <ExploreDiscoveryContent
+          bottomPadding={bottomPadding}
+          saved={savedIds}
+          select={select}
+          toggle={toggle}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -475,7 +286,7 @@ function PopularDestinationCard({
     <View style={s.popularCard}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Open actions for ${destination.name}, ${destination.country}`}
+        accessibilityLabel={`Open details for ${destination.name}, ${destination.country}`}
         onPress={onSelect}
       >
         <Image
@@ -520,14 +331,12 @@ function PopularDestinationCard({
   );
 }
 
-function Destinations({
-  header,
+function ExploreDiscoveryContent({
   bottomPadding,
   saved,
   select,
   toggle,
 }: {
-  header: React.ReactElement;
   bottomPadding: number;
   saved: ReadonlySet<string>;
   select: (a: Destination) => void;
@@ -537,16 +346,14 @@ function Destinations({
     <FlatList
       data={POPULAR_DESTINATIONS}
       keyExtractor={(item) => item.destination.id}
+      keyboardDismissMode="none"
+      keyboardShouldPersistTaps="handled"
       initialNumToRender={4}
       maxToRenderPerBatch={4}
       windowSize={5}
-      contentContainerStyle={[s.page, { paddingBottom: bottomPadding }]}
-      ListHeaderComponent={
-        <View>
-          {header}
-          <Section title="Popular destinations" />
-        </View>
-      }
+      contentContainerStyle={[s.content, { paddingBottom: bottomPadding }]}
+      ListHeaderComponent={<Section title="Popular destinations" />}
+      ListFooterComponent={<Interests select={select} />}
       ItemSeparatorComponent={() => <View style={s.popularSeparator} />}
       renderItem={({ item }) => (
         <PopularDestinationCard
@@ -559,79 +366,28 @@ function Destinations({
     />
   );
 }
-function Inspiration({
-  width,
-  select,
-}: {
-  width: number;
-  select: (a: Destination) => void;
-}) {
-  const [active, setActive] = useState(0);
-  const cardWidth = width - 36;
-  const end = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
-    setActive(Math.round(e.nativeEvent.contentOffset.x / cardWidth));
+function Interests({ select }: { select: (destination: Destination) => void }) {
   return (
-    <>
-      <View style={s.heroShell}>
-        <ScrollView
-          horizontal
-          pagingEnabled
-          decelerationRate="fast"
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={end}
-        >
-          {INSPIRATION_SLIDES.map((slide) => {
-            const media = destinationMedia(slide.destination.id);
-            return (
-            <Pressable
-              key={slide.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Open details for ${slide.destination.name}, ${slide.label}`}
-              onPress={() => select(slide.destination)}
-            >
-              <ImageBackground
-                source={media?.source ?? FALLBACK_SOURCE}
-                style={[s.hero, { width: cardWidth }]}
-                imageStyle={s.cardRadius}
-              >
-                <View style={s.overlay} />
-                <Text style={s.heroLabel}>{slide.label}</Text>
-                <Text style={s.heroTitle}>{slide.destination.name}</Text>
-                <View style={s.heroCta}>
-                  <Text style={s.heroCtaText}>Explore {slide.destination.name}</Text>
-                </View>
-              </ImageBackground>
-            </Pressable>
-            );
-          })}
-        </ScrollView>
-        <View style={s.dots}>
-          {HERO_SLIDES.map((x, i) => (
-            <View key={x.id} style={[s.dot, i === active && s.dotActive]} />
-          ))}
-        </View>
+    <View style={s.interestSection}>
+      <Section title="Explore by interest" />
+      <View style={s.interests}>
+        {RESOLVED_INTERESTS.map((item) => (
+          <Pressable
+            key={item.name}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.name}, mapped to ${item.destination.name}`}
+            onPress={() => select(item.destination)}
+            style={s.interest}
+          >
+            <FlowIcon name={item.icon} color={BLUE} />
+            <View>
+              <Text style={s.resultTitle}>{item.name}</Text>
+              <Text style={s.resultMeta}>{item.destination.name}</Text>
+            </View>
+          </Pressable>
+        ))}
       </View>
-      <View>
-        <Section title="Explore by interest" />
-        <View style={s.interests}>
-          {RESOLVED_INTERESTS.map((item) => (
-            <Pressable
-              key={item.name}
-              accessibilityRole="button"
-              accessibilityLabel={`${item.name}, mapped to ${item.destination.name}`}
-              onPress={() => select(item.destination)}
-              style={s.interest}
-            >
-              <FlowIcon name={item.icon} color={BLUE} />
-              <View>
-                <Text style={s.resultTitle}>{item.name}</Text>
-                <Text style={s.resultMeta}>{item.destination.name}</Text>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    </>
+    </View>
   );
 }
 const shadow = {
@@ -643,7 +399,8 @@ const shadow = {
 };
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#FAFBFF" },
-  page: { paddingHorizontal: 18, gap: 15 },
+  stableHeader: { paddingHorizontal: 18, paddingBottom: 8 },
+  content: { paddingHorizontal: 18 },
   header: { minHeight: 58, justifyContent: "center" },
   title: { color: NAVY, fontSize: 30, lineHeight: 38, fontWeight: "800" },
   iconButton: {
@@ -666,23 +423,8 @@ const s = StyleSheet.create({
   },
   searchInput: { flex: 1, minHeight: 50, color: NAVY, fontSize: 13 },
   clear: { minHeight: 44, justifyContent: "center" },
+  clearHidden: { opacity: 0 },
   clearText: { color: BLUE, fontWeight: "700" },
-  tabs: {
-    height: 48,
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER,
-  },
-  tab: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-  },
-  tabActive: { borderBottomColor: BLUE },
-  tabText: { color: NAVY, fontSize: 14, fontWeight: "700" },
-  tabTextActive: { color: BLUE },
   sectionHeader: {
     minHeight: 44,
     flexDirection: "row",
@@ -698,12 +440,6 @@ const s = StyleSheet.create({
   link: { minHeight: 44, flexDirection: "row", alignItems: "center" },
   linkText: { color: BLUE, fontSize: 13, fontWeight: "700" },
   popularSeparator: { height: 15 },
-  cardRadius: { borderRadius: 16 },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(2,15,42,.46)",
-    borderRadius: 16,
-  },
   heart: {
     position: "absolute",
     right: 10,
@@ -758,88 +494,7 @@ const s = StyleSheet.create({
     padding: 14,
   },
   matchLabel: { color: BLUE, fontSize: 12, fontWeight: "700", marginBottom: 4 },
-  action: {
-    minHeight: 58,
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 12,
-    backgroundColor: "white",
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 8,
-  },
-  actionText: { flex: 1, color: NAVY, fontSize: 14, fontWeight: "700" },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(2,15,42,.45)",
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    maxHeight: "96%",
-    minHeight: "88%",
-  },
-  sheetHandle: {
-    width: 42,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: BORDER,
-    alignSelf: "center",
-    marginBottom: 18,
-  },
-  sheetTitle: { color: NAVY, fontSize: 24, lineHeight: 31, fontWeight: "800" },
-  sheetMeta: { color: MUTED, fontSize: 14, marginBottom: 18 },
-  detailImage: { width: "100%", height: 280, backgroundColor: "#E7ECF5" },
-  detailBody: { padding: 18 },
-  airportsTitle: { color: NAVY, fontSize: 16, fontWeight: "800", marginBottom: 6 },
-  airportDetail: { color: MUTED, fontSize: 13, lineHeight: 20, marginBottom: 3 },
-  close: { minHeight: 50, alignItems: "center", justifyContent: "center" },
-  closeText: { color: BLUE, fontWeight: "800" },
-  heroShell: { height: 290, borderRadius: 14, overflow: "hidden" },
-  hero: {
-    height: 290,
-    justifyContent: "flex-end",
-    padding: 24,
-    paddingBottom: 42,
-  },
-  heroLabel: { color: "white", fontSize: 14, fontWeight: "700", zIndex: 1 },
-  heroTitle: {
-    color: "white",
-    fontSize: 30,
-    fontWeight: "800",
-    zIndex: 1,
-    marginTop: 3,
-  },
-  heroCta: {
-    alignSelf: "flex-start",
-    backgroundColor: "white",
-    borderRadius: 9,
-    paddingHorizontal: 15,
-    minHeight: 42,
-    justifyContent: "center",
-    marginTop: 14,
-    zIndex: 1,
-  },
-  heroCtaText: { color: NAVY, fontWeight: "800" },
-  dots: {
-    position: "absolute",
-    bottom: 13,
-    alignSelf: "center",
-    flexDirection: "row",
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "white",
-  },
-  dotActive: { backgroundColor: "white" },
+  interestSection: { paddingTop: 15 },
   interests: { gap: 8 },
   interest: {
     minHeight: 66,

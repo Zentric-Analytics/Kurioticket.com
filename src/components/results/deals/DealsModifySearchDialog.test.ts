@@ -58,6 +58,13 @@ test("dialog traps focus, locks scrolling, and restores document styles", () => 
   assert.match(dialog, /overscroll-contain/);
 });
 
+test("modify search uses one child-overlay selector for detection and focus filtering", () => {
+  const selector = dialog.match(/const dealsChildOverlaySelector = ([^;]+);/)?.[0] ?? "";
+  assert.match(selector, /data-deals-car-return-location-popover/);
+  assert.match(dialog, /document\.querySelector\(dealsChildOverlaySelector\)/);
+  assert.match(dialog, /node\.closest\(dealsChildOverlaySelector\)/);
+});
+
 test("Escape yields to nested pickers and backdrop dismissal only handles the backdrop", () => {
   assert.match(dialog, /if \(event\.key === "Escape"\) \{ if \(hasOpenChild\(\)\) return;[\s\S]*?onClose\(\); return; \}/);
   assert.match(dialog, /event\.target === event\.currentTarget/);

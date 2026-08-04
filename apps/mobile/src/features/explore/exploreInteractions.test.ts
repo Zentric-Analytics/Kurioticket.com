@@ -13,7 +13,6 @@ import {
   ALL_DESTINATIONS,
   destinationCardLayout,
   exactExploreResult,
-  EXPLORE_TABS,
   exploreBottomPadding,
   searchExplore,
 } from "./exploreModels";
@@ -33,6 +32,8 @@ import {
 } from "../../../../../src/data/destinationImages";
 import {
   navigateFromDestination,
+  destinationDetailsRoute,
+  destinationHandoff,
   selectFromBrowser,
 } from "./exploreInteractionModels";
 import {
@@ -40,6 +41,7 @@ import {
   resolveSavedDestinationIds,
 } from "../../storage/savedDestinationsModel";
 import { SavedDestinationsStore } from "../../storage/savedDestinationsStore";
+import { resolveDestinationDetails } from "./destinationDetailsModel";
 
 const screen = () =>
   readFileSync("src/features/explore/ExploreScreen.tsx", "utf8");
@@ -268,9 +270,9 @@ test("responsive calculations support narrow phones and tab clearance", () => {
   assert.equal(exploreBottomPadding(65, 24), 107);
 });
 
-test("Explore keeps only the focused tabs and supported actions", () => {
-  assert.deepEqual(EXPLORE_TABS, ["Destinations", "Inspiration"]);
+test("Explore removes destination and inspiration tabs while keeping supported actions", () => {
   const source = screen();
+  assert.doesNotMatch(source, /EXPLORE_TABS|tablist|accessibilityRole="tab"|function Inspiration/);
   for (const removed of [
     "Compare",
     "Price alerts",
@@ -282,13 +284,14 @@ test("Explore keeps only the focused tabs and supported actions", () => {
   ]) {
     assert.doesNotMatch(source, new RegExp(removed, "i"));
   }
-  assert.match(source, /label="Search flights"/);
-  assert.match(source, /label="Search hotels"/);
-  assert.match(source, /Save destination/);
-  assert.match(source, /Remove from saved destinations/);
+  const details = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
+  assert.match(details, /label="Search flights"/);
+  assert.match(details, /label="Search hotels"/);
+  assert.match(details, /Save \$\{destination\.name\}/);
+  assert.match(details, /Remove \$\{destination\.name\} from saved destinations/);
   assert.doesNotMatch(
     source,
-    /destination-detail|Coming soon|\/cars|\/price-alerts/,
+    /Coming soon|\/cars|\/price-alerts/,
   );
 });
 
@@ -298,11 +301,11 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.match(source, /data=\{POPULAR_DESTINATIONS\}/);
   assert.match(source, /Popular destinations/);
   assert.doesNotMatch(source, /<SectionList|COUNTRY_DESTINATION_GROUPS/);
-  const destinationsView = source.slice(
-    source.indexOf("function Destinations"),
-    source.indexOf("function Inspiration"),
+  const discoveryView = source.slice(
+    source.indexOf("function ExploreDiscoveryContent"),
+    source.indexOf("function Interests"),
   );
-  assert.doesNotMatch(destinationsView, /horizontal/);
+  assert.doesNotMatch(discoveryView, /horizontal/);
   assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
   assert.match(source, /destinationMedia\(destination.id\)/);
   assert.match(source, /data=\{results\}/);
@@ -328,20 +331,80 @@ test("default destinations use only the curated list without a featured carousel
   assert.doesNotMatch(source, /Featured destinations/);
   assert.doesNotMatch(source, /Browse all destinations/);
   assert.doesNotMatch(source, /FEATURED_DESTINATIONS/);
-  assert.match(source, /ListHeaderComponent=\{[\s\S]*?\{header\}[\s\S]*?Popular destinations/);
+  assert.match(source, /ListHeaderComponent=\{<Section title="Popular destinations"/);
+  assert.match(source, /ListFooterComponent=\{<Interests select=\{select\} \/>\}/);
+});
+
+test("Explore keeps one controlled search input mounted above changing content", () => {
+  const source = screen();
+  assert.equal(source.match(/<TextInput\n/g)?.length, 1);
+  assert.match(source, /value=\{query\}[\s\S]*?onChangeText=\{setQuery\}/);
+  assert.match(source, /<SafeAreaView[\s\S]*?<ExploreHeader[\s\S]*?\{isSearching \? \(/);
+  assert.doesNotMatch(source, /if \(query\.trim\(\)\)\s*return/);
+  assert.doesNotMatch(source, /setTimeout|onChangeText=.*blur|onChangeText=.*focus/);
+  assert.equal(source.match(/keyboardDismissMode="none"/g)?.length, 2);
+  assert.equal(source.match(/keyboardShouldPersistTaps="handled"/g)?.length, 2);
+});
+
+test("Explore search preserves successive characters and clearing restores discovery", () => {
+  assert.equal(result("L").some((item) => item.id === "gb-london"), true);
+  for (const query of ["Lo", "Lon", "Lond", "Londo", "London"])
+    assert.equal(result(query).some((item) => item.id === "gb-london"), true);
+  assert.equal(result("London")[0]?.id, "gb-london");
+  assert.deepEqual(searchExplore(""), []);
+  const source = screen();
+  assert.match(source, /onPress=\{\(\) => \{\s*setQuery\(""\);\s*input\.current\?\.focus\(\);/);
+  assert.match(source, /isSearching \? \([\s\S]*?data=\{results\}[\s\S]*?: \([\s\S]*?<ExploreDiscoveryContent/);
+});
+
+test("the one-page discovery order and maintained interest navigation stay explicit", () => {
+  const source = screen();
+  assert.ok(source.indexOf('title="Popular destinations"') < source.indexOf('title="Explore by interest"'));
+  assert.match(source, /RESOLVED_INTERESTS\.map/);
+  assert.match(source, /onPress=\{\(\) => select\(item\.destination\)\}/);
 });
 
 
-test("destination details omit unsupported optional content", () => {
-  const source = screen();
-  assert.match(source, /Explore destination details/);
+test("destination details render shared records and omit absent optional content", () => {
+  const source = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
   assert.match(source, /destination\.airportCodes\.map/);
-  assert.match(source, /detailImage/);
-  assert.doesNotMatch(source, /destination\.(description|summary|highlights)/);
+  assert.match(source, /destination\.summary \?/);
+  assert.match(source, /destination\.description \?/);
+  assert.match(source, /destination\.highlights\?\.length \?/);
+  assert.match(source, /destinationMedia\(destination\.id\)/);
+  assert.doesNotMatch(source, /Coming soon/);
   for (const destination of destinations) {
     assert.equal("description" in destination, false);
     assert.equal("highlights" in destination, false);
   }
+});
+
+test("all Explore destination entry points use the ID-only details route without the old sheet", () => {
+  const source = screen();
+  assert.match(source, /router\.push\(destinationDetailsRoute\(destination\.id\)\)/);
+  assert.doesNotMatch(source, /DestinationAction|<Modal|setSelected|modalBackdrop/);
+  assert.deepEqual(destinationDetailsRoute("fr-paris"), {
+    pathname: "/explore/destination/[id]",
+    params: { id: "fr-paris" },
+  });
+  assert.deepEqual(Object.keys(destinationDetailsRoute("fr-paris").params), ["id"]);
+  assert.equal(resolveDestinationDetails("fr-paris"), destinationById.get("fr-paris"));
+  assert.equal(resolveDestinationDetails("xx-invalid"), undefined);
+  assert.equal(resolveDestinationDetails(["fr-paris"]), undefined);
+});
+
+test("details handoffs preserve genuine shared airport data", () => {
+  const destination = destinationById.get("gb-london")!;
+  assert.deepEqual(destinationHandoff(destination), {
+    destinationId: destination.id,
+    primaryAirportCode: destination.primaryAirportCode,
+    airportCodes: destination.airportCodes,
+  });
+  const details = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
+  assert.match(details, /destinationId: destination\.id, destination: destination\.name, to: handoff\.primaryAirportCode, airportCodes: handoff\.airportCodes\.join/);
+  assert.match(details, /destinationId: destination\.id, destination: destination\.name/);
+  assert.match(details, /Destination not found/);
+  assert.match(details, /useSavedDestinations\(\)/);
 });
 
 test("handoff closes first and blocks duplicate navigation", () => {

@@ -1,22 +1,30 @@
 import { mobileApiSuccess } from "@/lib/mobile-api/response";
+import { getPublicEnvironment, getStagingReleaseReadiness, isStagingEnvironment } from "@/lib/stagingSafety";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const mobileApiV1Config = {
-  apiVersion: "v1",
-  minimumSupportedAppVersion: null,
-  latestAppVersion: null,
-  maintenanceMode: false,
-  features: {
-    flights: true,
-    hotels: false,
-    cars: false,
-    pushNotifications: false,
-    socialAuthentication: true,
-  },
-} as const;
+export function getMobileApiV1Config() {
+  const releaseReadiness = getStagingReleaseReadiness();
+
+  return {
+    apiVersion: "v1",
+    environment: getPublicEnvironment(),
+    minimumSupportedAppVersion: null,
+    latestAppVersion: null,
+    maintenanceMode: false,
+    ...(releaseReadiness ? { releaseReadiness } : {}),
+    features: {
+      flights: true,
+      hotels: false,
+      cars: false,
+      pushNotifications: false,
+      socialAuthentication: true,
+      externalCheckout: !isStagingEnvironment(),
+    },
+  } as const;
+}
 
 export async function GET() {
-  return mobileApiSuccess(mobileApiV1Config);
+  return mobileApiSuccess(getMobileApiV1Config());
 }

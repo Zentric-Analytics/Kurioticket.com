@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getPrisma } from "@/lib/prisma";
 import { signinSchema } from "@/lib/validation";
+import { canUseStagingCredentials } from "@/lib/previewTesterAccess";
 import {
   EmailVerificationCooldownError,
   getEmailVerificationRedirect,
@@ -41,6 +42,9 @@ export async function POST(request: Request) {
 
   if (!parsed.success) {
     return NextResponse.json({ error: "We could not sign you in. Check your email and password, then try again." }, { status: 400 });
+  }
+  if (!(await canUseStagingCredentials(parsed.data.email))) {
+    return NextResponse.json({ error: "Preview access is restricted." }, { status: 403 });
   }
 
   const user = await getPrisma().user.findUnique({

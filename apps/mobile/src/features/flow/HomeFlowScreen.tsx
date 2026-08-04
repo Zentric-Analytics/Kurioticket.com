@@ -10,9 +10,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
-import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { flowColors, flowStyles } from "./flowStyles";
@@ -116,13 +114,6 @@ const products: {
 ];
 export function SharedHomePage() {
   const insets = useSafeAreaInsets();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    void readSession()
-      .then((session) => setIsAuthenticated(session !== null))
-      .catch(() => setIsAuthenticated(false));
-  }, []);
 
   return (
     <View style={flowStyles.safe}>
@@ -165,27 +156,6 @@ export function SharedHomePage() {
           ))}
         </View>
         <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Track prices and save"
-          onPress={() => router.push("/price-alerts")}
-          style={({ pressed }) => [
-            styles.alert,
-            flowStyles.shadow,
-            pressed && flowStyles.pressed,
-          ]}
-        >
-          <View style={styles.alertIcon}>
-            <FlowIcon name="bell" color={flowColors.blue} />
-          </View>
-          <View style={styles.grow}>
-            <Text style={flowStyles.value}>Track prices & save</Text>
-            <Text style={flowStyles.meta}>
-              Get alerts when prices drop{"\n"}for your favorite trips.
-            </Text>
-          </View>
-          <FlowIcon name="chevron" />
-        </Pressable>
         <PopularDestinationStays />
         <DiscoverNextAdventure />
         <HomepageDealPromos />
@@ -244,24 +214,4 @@ const styles = StyleSheet.create({
   },
   productText: { color: flowColors.navy, fontSize: 11, fontWeight: "700" },
   productTextActive: { color: flowColors.blue },
-  alert: {
-    minHeight: 82,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: flowColors.border,
-    backgroundColor: "white",
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    gap: 12,
-  },
-  alertIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "#EEF4FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  grow: { flex: 1 },
 });

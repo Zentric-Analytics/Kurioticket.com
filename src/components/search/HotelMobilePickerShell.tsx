@@ -8,6 +8,7 @@ type HotelMobilePickerShellProps = {
   open: boolean;
   title: string;
   titleId: string;
+  dialogId?: string;
   launcherRef?: RefObject<HTMLElement | null>;
   children: ReactNode | ((requestClose: FlightMobilePickerRequestClose) => ReactNode);
   footer?: ReactNode | ((requestClose: FlightMobilePickerRequestClose) => ReactNode);
