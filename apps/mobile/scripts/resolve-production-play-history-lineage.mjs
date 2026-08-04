@@ -1,4 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -23,6 +24,16 @@ function canonicalManifest(raw, label) {
   return JSON.stringify(manifest, Object.keys(manifest).sort());
 }
 
+function evidenceAt(commit, raw, label) {
+  const canonical = canonicalManifest(raw, label);
+  return {
+    commit,
+    raw,
+    canonical,
+    digest: createHash('sha256').update(canonical).digest('hex'),
+  };
+}
+
 function defaultGit(args, { allowFailure = false } = {}) {
   if (allowFailure) {
     const result = spawnSync('git', args, { encoding: 'utf8' });
@@ -44,20 +55,42 @@ function historyAt(commit, historyPath, git) {
   return result.status === 0 ? result.stdout : null;
 }
 
-function findPriorHistory(releaseParent, currentCanonical, historyPath, git) {
-  let cursor = releaseParent;
-  for (let depth = 0; depth < 500; depth += 1) {
-    const parents = parentsOf(cursor, git);
-    if (parents.length === 0) throw new Error('Reviewed release lineage has no immutable prior Play history.');
-    if (parents.length > 1) throw new Error('Reviewed release lineage is ambiguous before the prior Play history.');
-    const [parent] = parents;
-    const raw = historyAt(parent, historyPath, git);
-    if (raw === null) throw new Error('Reviewed release lineage is missing prior Play history.');
-    const canonical = canonicalManifest(raw, 'Prior reviewed Production');
-    if (canonical !== currentCanonical) return { commit: parent, raw };
-    cursor = parent;
+function convergeEvidence(evidence) {
+  const [first, ...rest] = evidence;
+  if (!first || rest.some((entry) => entry.digest !== first.digest || entry.canonical !== first.canonical)) {
+    throw new Error('Production parent paths resolve to conflicting prior Play history.');
   }
-  throw new Error('Reviewed release lineage exceeded the bounded prior-history search.');
+  return {
+    ...first,
+    sourceCommits: [...new Set(evidence.flatMap((entry) => entry.sourceCommits ?? [entry.commit]))].sort(),
+  };
+}
+
+function resolveParentSet(parents, currentCanonical, historyPath, git, depth, active) {
+  if (parents.length === 0) throw new Error('Reviewed release lineage has no immutable prior Play history.');
+  if (parents.length > 2) throw new Error('Reviewed release lineage contains an unsupported multi-parent merge.');
+  const inspected = parents.map((commit) => {
+    const raw = historyAt(commit, historyPath, git);
+    return raw === null ? { commit, raw: null, evidence: null } : { commit, raw, evidence: evidenceAt(commit, raw, 'Prior reviewed Production') };
+  });
+  const continuing = inspected.filter((entry) => entry.evidence?.canonical === currentCanonical);
+  if (continuing.length > 0) {
+    return convergeEvidence(continuing.map((entry) => resolveParentPath(entry.commit, currentCanonical, historyPath, git, depth, active)));
+  }
+  if (inspected.some((entry) => entry.evidence === null)) throw new Error('Reviewed release lineage is missing prior Play history.');
+  return convergeEvidence(inspected.map((entry) => ({ ...entry.evidence, sourceCommits: [entry.commit] })));
+}
+
+function resolveParentPath(commit, currentCanonical, historyPath, git, depth = 0, active = new Set()) {
+  if (depth >= 500) throw new Error('Reviewed release lineage exceeded the bounded prior-history search.');
+  if (active.has(commit)) throw new Error('Reviewed release lineage contains a cycle.');
+  const raw = historyAt(commit, historyPath, git);
+  if (raw === null) throw new Error('Reviewed release lineage is missing prior Play history.');
+  const evidence = evidenceAt(commit, raw, 'Prior reviewed Production');
+  if (evidence.canonical !== currentCanonical) return { ...evidence, sourceCommits: [commit] };
+  const parents = parentsOf(commit, git);
+  const nextActive = new Set(active).add(commit);
+  return resolveParentSet(parents, currentCanonical, historyPath, git, depth + 1, nextActive);
 }
 
 export function resolveTrustedPreviousPlayHistory({ approvedSha, historyPath, git = defaultGit }) {
@@ -72,23 +105,15 @@ export function resolveTrustedPreviousPlayHistory({ approvedSha, historyPath, gi
   if (currentRaw === null) throw new Error('Approved Production source is missing reviewed Play history.');
   const currentCanonical = canonicalManifest(currentRaw, 'Current reviewed Production');
   const parents = parentsOf(approvedSha, git);
-
-  if (parents.length === 1) {
-    const previousRaw = historyAt(parents[0], historyPath, git);
-    if (previousRaw === null) throw new Error('Single-parent Production source is missing immutable prior Play history.');
-    canonicalManifest(previousRaw, 'Prior reviewed Production');
-    return { releaseParent: parents[0], previousCommit: parents[0], previousRaw, sourceType: 'single-parent' };
-  }
-  if (parents.length !== 2) throw new Error('Production release source must have one parent or one normal two-parent merge.');
-
-  const candidates = parents.filter((parent) => {
-    const raw = historyAt(parent, historyPath, git);
-    return raw !== null && canonicalManifest(raw, 'Merge-parent Production') === currentCanonical;
-  });
-  if (candidates.length !== 1) throw new Error('Production release-parent identity is ambiguous or missing.');
-  const releaseParent = candidates[0];
-  const prior = findPriorHistory(releaseParent, currentCanonical, historyPath, git);
-  return { releaseParent, previousCommit: prior.commit, previousRaw: prior.raw, sourceType: 'normal-merge' };
+  if (parents.length < 1 || parents.length > 2) throw new Error('Production source must have one parent or one normal two-parent merge.');
+  const prior = resolveParentSet(parents, currentCanonical, historyPath, git, 0, new Set([approvedSha]));
+  return {
+    previousCommit: prior.commit,
+    previousCommits: prior.sourceCommits,
+    previousDigest: prior.digest,
+    previousRaw: prior.raw,
+    sourceType: parents.length === 1 ? 'single-parent' : 'convergent-merge',
+  };
 }
 
 function readArgs(argv) {
@@ -102,7 +127,7 @@ function readArgs(argv) {
   return values;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = readArgs(process.argv.slice(2));
   const resolved = resolveTrustedPreviousPlayHistory({ approvedSha: args['approved-sha'], historyPath: args['history-path'] });
   writeFileSync(args.output, resolved.previousRaw.endsWith('\n') ? resolved.previousRaw : `${resolved.previousRaw}\n`);

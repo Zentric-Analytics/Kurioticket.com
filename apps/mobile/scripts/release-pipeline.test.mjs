@@ -575,7 +575,7 @@ function lineageGit({ approved, main = approved, parents, histories }) {
       const commit = args[1].split(':', 1)[0];
       const raw = histories[commit];
       if (raw === undefined) return { status: allowFailure ? 1 : 1, stdout: '', stderr: 'missing' };
-      return { status: 0, stdout: `${JSON.stringify(raw)}\n`, stderr: '' };
+      return { status: 0, stdout: `${typeof raw === 'string' ? raw : JSON.stringify(raw)}\n`, stderr: '' };
     }
     throw new Error(`Unexpected git call: ${args.join(' ')}`);
   };
@@ -585,24 +585,36 @@ test('Production Play history resolves the reviewed second-parent release lineag
   const present = { ...absent, recordStatus: 'present', playApplicationRecord: 'present', verifiedAt: '2026-08-04T19:00:00Z', evidenceReference: 'reviewed present-empty state' };
   const merge = 'a'.repeat(40); const mainParent = 'b'.repeat(40); const releaseParent = 'c'.repeat(40); const prior = 'd'.repeat(40);
   const result = resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents: { [merge]: [mainParent, releaseParent], [releaseParent]: [prior] }, histories: { [merge]: present, [mainParent]: absent, [releaseParent]: present, [prior]: absent } }) });
-  assert.equal(result.releaseParent, releaseParent);
-  assert.equal(result.previousCommit, prior);
+  assert.equal(result.sourceType, 'convergent-merge');
+  assert.deepEqual(result.previousCommits, [prior]);
   const evidence = resolveProductionVersionEvidence({ versionOutput: 'No remote versions are configured for this project.', versionExitCode: 0, buildsOutput: '[]', buildsExitCode: 0, history: present, previousHistory: JSON.parse(result.previousRaw), packageName: 'com.kurioticket.app', profile: 'production', runtime: 'production-0.3.0', now: new Date('2026-08-04T19:30:00Z') });
   assert.equal(evidence.proposedVersionCode, 1);
 });
 test('Production Play history supports ordinary single-parent main commits', () => {
-  const history = { schemaVersion: 2, package: 'com.kurioticket.app', recordStatus: 'present', playApplicationRecord: 'present', uploadedBundles: [], highestUploadedVersionCode: null, verifiedAt: '2026-08-04T19:00:00Z', evidenceReference: 'reviewed state' };
+  const prior = { schemaVersion: 2, package: 'com.kurioticket.app', recordStatus: 'absent', playApplicationRecord: 'absent', uploadedBundles: [], highestUploadedVersionCode: null, verifiedAt: '2026-08-03T19:00:00Z', evidenceReference: 'prior state' };
+  const current = { ...prior, recordStatus: 'present', playApplicationRecord: 'present', verifiedAt: '2026-08-04T19:00:00Z', evidenceReference: 'current state' };
   const approved = 'a'.repeat(40); const parent = 'b'.repeat(40);
-  const result = resolveTrustedPreviousPlayHistory({ approvedSha: approved, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved, parents: { [approved]: [parent] }, histories: { [approved]: history, [parent]: history } }) });
+  const result = resolveTrustedPreviousPlayHistory({ approvedSha: approved, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved, parents: { [approved]: [parent] }, histories: { [approved]: current, [parent]: prior } }) });
   assert.equal(result.previousCommit, parent);
   assert.equal(result.sourceType, 'single-parent');
 });
-test('Production Play lineage fails closed for ambiguous, missing, wrong-package, or untrusted history', () => {
+test('Production Play lineage accepts duplicate current manifests only when every parent converges', () => {
+  const absent = { schemaVersion: 2, package: 'com.kurioticket.app', recordStatus: 'absent', playApplicationRecord: 'absent', uploadedBundles: [], highestUploadedVersionCode: null, verifiedAt: '2026-08-03T19:00:00Z', evidenceReference: 'reviewed absent state' };
+  const present = { ...absent, recordStatus: 'present', playApplicationRecord: 'present', verifiedAt: '2026-08-04T19:00:00Z', evidenceReference: 'reviewed present-empty state' };
+  const merge = 'a'.repeat(40); const left = 'b'.repeat(40); const right = 'c'.repeat(40); const leftPrior = 'd'.repeat(40); const rightPrior = 'e'.repeat(40);
+  const result = resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents: { [merge]: [left, right], [left]: [leftPrior], [right]: [rightPrior] }, histories: { [merge]: present, [left]: present, [right]: present, [leftPrior]: absent, [rightPrior]: absent } }) });
+  assert.equal(result.sourceType, 'convergent-merge');
+  assert.deepEqual(result.previousCommits, [leftPrior, rightPrior].sort());
+});
+test('Production Play lineage fails closed for divergent, malformed, missing, wrong-package, or untrusted paths', () => {
   const present = { schemaVersion: 2, package: 'com.kurioticket.app', recordStatus: 'present', playApplicationRecord: 'present', uploadedBundles: [], highestUploadedVersionCode: null, verifiedAt: '2026-08-04T19:00:00Z', evidenceReference: 'reviewed state' };
-  const merge = 'a'.repeat(40); const left = 'b'.repeat(40); const right = 'c'.repeat(40);
-  const parents = { [merge]: [left, right] };
-  assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents, histories: { [merge]: present, [left]: present, [right]: present } }) }), /ambiguous/);
-  assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents, histories: { [merge]: present } }) }), /ambiguous|missing/);
+  const absent = { ...present, recordStatus: 'absent', playApplicationRecord: 'absent', verifiedAt: '2026-08-03T19:00:00Z' };
+  const bundled = { ...present, uploadedBundles: [1], highestUploadedVersionCode: 1, evidenceReference: 'reviewed bundled state' };
+  const merge = 'a'.repeat(40); const left = 'b'.repeat(40); const right = 'c'.repeat(40); const leftPrior = 'd'.repeat(40); const rightPrior = 'e'.repeat(40);
+  const parents = { [merge]: [left, right], [left]: [leftPrior], [right]: [rightPrior] };
+  assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents, histories: { [merge]: present, [left]: present, [right]: present, [leftPrior]: absent, [rightPrior]: bundled } }) }), /conflicting/);
+  assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents, histories: { [merge]: present, [left]: present, [right]: present, [leftPrior]: absent, [rightPrior]: '{bad' } }) }), /malformed/);
+  assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents, histories: { [merge]: present, [left]: present, [right]: present, [leftPrior]: absent } }) }), /missing/);
   assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents, histories: { [merge]: { ...present, package: 'com.kurioticket.app.preview' } } }) }), /package-mismatched/);
   assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'dispatcher/history.json', git: lineageGit({ approved: merge, parents, histories: {} }) }), /repository-owned/);
 });
