@@ -1,3 +1,4 @@
+
 # Protected Android release pipeline
 
 This document defines the delivery foundation. It does not authorize credentials, builds, OTA publication, Play resources, uploads, or releases.
@@ -58,6 +59,8 @@ Before an owner approves a real Preview OTA attempt, run `node scripts/dry-run-p
 ## Version codes
 
 EAS remote versioning is authoritative and isolated by package/profile. Auto-increment is nested under Android, so iOS build numbers are unchanged and the two Android counters remain independent. When EAS reports the exact unconfigured-project state and a filtered EAS query confirms there are no builds for `com.kurioticket.app.preview` with the `preview` profile, the first approved Preview binary proposes `versionCode` 1. EAS initializes the remote counter during that build; it is not initialized manually beforehand.
+
+
 
 After initialization, every Preview build increments the existing numeric counter. Failed builds, including failures before EAS accepts a build job, may still advance the remote counter; those gaps are safe. A consumed or previously observed value must never be reset or reused. The failed first submission left the authoritative Preview counter at 2, so the next approved auto-incrementing attempt proposes versionCode 3 unless another approved attempt advances it first. Malformed, empty, ambiguous, unauthenticated, or otherwise unexpected EAS responses fail closed, as does any attempt to use the first-binary path for Production or the legacy package.
 
