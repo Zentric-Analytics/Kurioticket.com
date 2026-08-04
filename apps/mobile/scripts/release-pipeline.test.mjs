@@ -688,6 +688,7 @@ test('Preview evaluation audit includes trigger, replay, staging, classifier, an
     assert.equal(audit.stagingReadiness.ready, true);
     assert.equal(audit.classifier.classification, 'ota-compatible');
     assert.equal(audit.easBuildId, 'update-id');
+    assert.equal(audit.publicationDecision, 'published');
     assert.equal(JSON.stringify(audit).includes('EXPO_TOKEN'), false);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
