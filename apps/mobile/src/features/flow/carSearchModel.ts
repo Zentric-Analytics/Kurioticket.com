@@ -3,7 +3,7 @@ import type { RouteValue } from "./hotelSearchModel";
 
 export const CAR_AGE = { min: 18, max: 70, default: 30 } as const;
 export const DEFAULT_CAR_TIME = "10:00";
-export type CarForm = { pickupLocation: string; separateDropoff: boolean; dropoffLocation: string; pickupDate: string; pickupTime: string; dropoffDate: string; dropoffTime: string; driverAge: number };
+export type CarForm = { pickupLocation: string; separateDropoff: boolean; dropoffLocation: string; pickupDate: string; pickupTime: string; dropoffDate: string; dropoffTime: string; driverAge?: number };
 export type CarFormErrors = Partial<Record<"pickupLocation" | "dropoffLocation" | "pickupDate" | "pickupTime" | "dropoffDate" | "dropoffTime" | "driverAge", string>>;
 export const firstRouteParam = (value: RouteValue) => (Array.isArray(value) ? value[0] : value) ?? "";
 export const validTime = (value: string) => /^(?:[01]\d|2[0-3]):(?:00|30)$/.test(value);
@@ -29,6 +29,35 @@ export function initializeCarForm(params: Record<string, RouteValue>, today = ne
   return { form: { ...defaults, pickupLocation, dropoffLocation, separateDropoff, ...(datesValid && timesValid ? { pickupDate, dropoffDate, pickupTime, dropoffTime } : {}), driverAge: age ?? CAR_AGE.default }, notice: hadInvalid ? "Some search details were invalid, so safe defaults were used." : undefined };
 }
 
+/** Cars-route initialization: valid incoming intent wins, while a fresh form stays empty. */
+export function initializeCarsPageForm(params: Record<string, RouteValue>, today = new Date()): { form: CarForm; notice?: string } {
+  const todayIso = localIsoDate(today);
+  const pickupLocation = firstRouteParam(params.pickupLocation);
+  const dropoffLocation = firstRouteParam(params.dropoffLocation);
+  const incomingPickupDate = firstRouteParam(params.pickupDate);
+  const incomingDropoffDate = firstRouteParam(params.dropoffDate);
+  const incomingPickupTime = firstRouteParam(params.pickupTime);
+  const incomingDropoffTime = firstRouteParam(params.dropoffTime);
+  const ageText = firstRouteParam(params.driverAge);
+  const pickupDate = localDateFromIso(incomingPickupDate) && incomingPickupDate >= todayIso ? incomingPickupDate : "";
+  const dropoffDate = pickupDate && localDateFromIso(incomingDropoffDate) && incomingDropoffDate >= pickupDate ? incomingDropoffDate : "";
+  const pickupTime = validTime(incomingPickupTime) ? incomingPickupTime : "";
+  let dropoffTime = validTime(incomingDropoffTime) ? incomingDropoffTime : "";
+  if (pickupDate && dropoffDate && pickupTime && dropoffTime && compareLocalDateTimes(dropoffDate, dropoffTime, pickupDate, pickupTime) <= 0) dropoffTime = "";
+  return { form: { pickupLocation, separateDropoff: Boolean(dropoffLocation.trim() && dropoffLocation.trim() !== pickupLocation.trim()), dropoffLocation, pickupDate, pickupTime, dropoffDate, dropoffTime, driverAge: parseDriverAge(ageText) } };
+}
+
+export function selectCarsPickupDate(form: CarForm, pickupDate: string): CarForm {
+  const dropoffDate = form.dropoffDate && form.dropoffDate < pickupDate ? "" : form.dropoffDate;
+  const dropoffTime = dropoffDate && form.pickupTime && form.dropoffTime && compareLocalDateTimes(dropoffDate, form.dropoffTime, pickupDate, form.pickupTime) <= 0 ? "" : form.dropoffTime;
+  return { ...form, pickupDate, dropoffDate, dropoffTime };
+}
+
+export function selectCarsPickupTime(form: CarForm, pickupTime: string): CarForm {
+  const dropoffTime = form.pickupDate && form.dropoffDate && form.dropoffTime && compareLocalDateTimes(form.dropoffDate, form.dropoffTime, form.pickupDate, pickupTime) <= 0 ? "" : form.dropoffTime;
+  return { ...form, pickupTime, dropoffTime };
+}
+
 export function validateCarForm(form: CarForm, today = new Date()): CarFormErrors {
   const errors: CarFormErrors = {}; const todayIso = localIsoDate(today);
   if (!form.pickupLocation.trim()) errors.pickupLocation = "Enter a pick-up location.";
@@ -38,7 +67,7 @@ export function validateCarForm(form: CarForm, today = new Date()): CarFormError
   if (!validTime(form.pickupTime)) errors.pickupTime = "Choose a valid pick-up time.";
   if (!validTime(form.dropoffTime)) errors.dropoffTime = "Choose a valid drop-off time.";
   if (!errors.pickupDate && !errors.dropoffDate && !errors.pickupTime && !errors.dropoffTime && compareLocalDateTimes(form.dropoffDate, form.dropoffTime, form.pickupDate, form.pickupTime) <= 0) errors.dropoffTime = "Drop-off must be later than pick-up.";
-  if (!Number.isInteger(form.driverAge) || form.driverAge < CAR_AGE.min || form.driverAge > CAR_AGE.max) errors.driverAge = "Driver age must be a whole number from 18 to 70.";
+  if (form.driverAge === undefined || !Number.isInteger(form.driverAge) || form.driverAge < CAR_AGE.min || form.driverAge > CAR_AGE.max) errors.driverAge = "Driver age must be a whole number from 18 to 70.";
   return errors;
 }
 
@@ -48,4 +77,4 @@ export function adjustDropoff(form: CarForm): { form: CarForm; adjusted: boolean
   return option ? { form: { ...form, dropoffDate: form.pickupDate, dropoffTime: option }, adjusted: true } : { form: { ...form, dropoffDate: addCalendarDays(form.pickupDate, 1), dropoffTime: "00:00" }, adjusted: true };
 }
 
-export const carSearchParams = (form: CarForm) => ({ pickupLocation: form.pickupLocation.trim(), dropoffLocation: (form.separateDropoff ? form.dropoffLocation : form.pickupLocation).trim(), pickupDate: form.pickupDate, pickupTime: form.pickupTime, dropoffDate: form.dropoffDate, dropoffTime: form.dropoffTime, driverAge: String(form.driverAge) });
+export const carSearchParams = (form: CarForm) => ({ pickupLocation: form.pickupLocation.trim(), dropoffLocation: (form.separateDropoff ? form.dropoffLocation : form.pickupLocation).trim(), pickupDate: form.pickupDate, pickupTime: form.pickupTime, dropoffDate: form.dropoffDate, dropoffTime: form.dropoffTime, driverAge: form.driverAge === undefined ? "" : String(form.driverAge) });
