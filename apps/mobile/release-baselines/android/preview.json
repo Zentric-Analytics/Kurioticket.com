@@ -1,12 +1,23 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "environment": "preview",
   "easBuildId": "179ae3b8-3e7a-404c-bcf0-44cbdc759cff",
+  "projectId": "89f6fd88-c0d7-495a-9e2b-8301b09f407d",
   "commitSha": "34fa29bbfe3b969051f009c59643b2b8e3680507",
   "package": "com.kurioticket.app.preview",
   "profile": "preview",
   "platform": "ANDROID",
   "runtime": "preview-0.3.0",
   "channel": "preview",
-  "nativeFingerprint": "25d1251ee757ccadc9ec1be5026c9bcac849fc92"
+  "appVersion": "0.3.0",
+  "versionCode": 3,
+  "nativeFingerprint": "25d1251ee757ccadc9ec1be5026c9bcac849fc92",
+  "sourceAttestation": {
+    "type": "github-actions-build",
+    "repository": "Zentric-Analytics/Kurioticket.com",
+    "workflowRunId": "30868280478",
+    "artifactId": 8877213375,
+    "artifactName": "android-preview-build-evidence-30868280478",
+    "artifactDigest": "sha256:7640c3c45361e8d48ad5bf3091998e4e5d9f7c24e7fa329ecb3206eb0a9b7aaa"
+  }
 }

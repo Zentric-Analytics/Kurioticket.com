@@ -105,14 +105,55 @@ test('delivery workflows require their protected environment token without repos
     const workflow = readFileSync(resolve(root, '../../.github/workflows', name), 'utf8');
     assert.match(workflow, /environment:\s*mobile-(?:preview-ota|preview-build|production)/);
     assert.match(workflow, /EXPO_TOKEN: "\$\{\{ secrets\.EXPO_TOKEN \}\}"/);
-    assert.doesNotMatch(workflow, /vars\.EXPO_TOKEN|EXPO_TOKEN\s*\|\||github\.token/);
+    assert.doesNotMatch(workflow, /vars\.EXPO_TOKEN|EXPO_TOKEN\s*\|\||EXPO_TOKEN:\s*"?\$\{\{ github\.token/);
   }
 });
+const directManifest = () => ({ schemaVersion: 1, environment: 'preview', easBuildId: 'id', commitSha: 'b'.repeat(40), package: policy.preview.androidPackage, profile: 'preview', platform: 'ANDROID', runtime: 'preview-0.3.0', channel: 'preview', nativeFingerprint: 'f'.repeat(64) });
+const directBuild = () => ({ id: 'id', gitCommitHash: 'b'.repeat(40), applicationIdentifier: policy.preview.androidPackage, buildProfile: 'preview', platform: 'ANDROID', runtimeVersion: 'preview-0.3.0', channel: 'preview', status: 'FINISHED' });
+const composite = () => {
+  const commit = 'b'.repeat(40);
+  const manifest = { ...directManifest(), schemaVersion: 2, projectId: 'project', appVersion: '0.3.0', versionCode: 3, sourceAttestation: { type: 'github-actions-build', repository: 'Zentric-Analytics/Kurioticket.com', workflowRunId: '123', artifactId: 456, artifactName: 'android-preview-build-evidence-123', artifactDigest: `sha256:${'d'.repeat(64)}` } };
+  const build = { ...directBuild(), gitCommitHash: null, project: { id: 'project' }, appVersion: '0.3.0', appBuildVersion: '3' };
+  const workflowRun = { id: 123, name: 'Android Preview Build', path: '.github/workflows/android-preview-build.yml', repository: { full_name: 'Zentric-Analytics/Kurioticket.com' }, event: 'workflow_dispatch', head_branch: 'dev', head_sha: commit, status: 'completed', conclusion: 'success' };
+  const artifact = { id: 456, name: 'android-preview-build-evidence-123', digest: manifest.sourceAttestation.artifactDigest, expired: false, workflow_run: { id: 123, head_sha: commit } };
+  const audit = { schemaVersion: 1, workflowRunId: '123', commit, environment: 'preview', action: 'build', package: policy.preview.androidPackage, profile: 'preview', runtime: 'preview-0.3.0', channel: 'preview', fingerprint: { hash: manifest.nativeFingerprint }, deliveryResult: { id: 'id' }, finalStatus: 'success' };
+  return { manifest, build, workflowRun, artifact, audit };
+};
+
 test('approved EAS build and protected manifest must match', () => {
-  const manifest = { schemaVersion: 1, environment: 'preview', easBuildId: 'id', commitSha: 'b'.repeat(40), package: policy.preview.androidPackage, profile: 'preview', platform: 'ANDROID', runtime: 'preview-0.3.0', channel: 'preview', nativeFingerprint: 'f'.repeat(64) };
-  const build = { id: 'id', gitCommitHash: 'b'.repeat(40), applicationIdentifier: policy.preview.androidPackage, buildProfile: 'preview', platform: 'ANDROID', runtimeVersion: 'preview-0.3.0', channel: 'preview', status: 'FINISHED' };
+  const manifest = directManifest();
+  const build = directBuild();
   assert.equal(verifyBaseline({ manifest, build, variant: 'preview', policy }).verified, true);
   assert.throws(() => verifyBaseline({ manifest, build: { ...build, channel: 'production' }, variant: 'preview', policy }), /channel/);
+});
+test('missing EAS commit requires complete immutable composite evidence', () => {
+  const evidence = composite();
+  assert.equal(verifyBaseline({ ...evidence, variant: 'preview', policy }).sourceVerification, 'github-actions-composite');
+  assert.throws(() => verifyBaseline({ manifest: evidence.manifest, build: evidence.build, variant: 'preview', policy }), /composite source attestation|Workflow run/);
+});
+test('composite baseline rejects mismatched workflow SHA, build ID, identity, and unrelated workflow', () => {
+  const evidence = composite();
+  assert.throws(() => verifyBaseline({ ...evidence, workflowRun: { ...evidence.workflowRun, head_sha: 'c'.repeat(40) }, variant: 'preview', policy }), /source SHA/);
+  assert.throws(() => verifyBaseline({ ...evidence, build: { ...evidence.build, id: 'other' }, variant: 'preview', policy }), /EAS build ID/);
+  assert.throws(() => verifyBaseline({ ...evidence, audit: { ...evidence.audit, package: 'com.kurioticket.mobile' }, variant: 'preview', policy }), /identity/);
+  assert.throws(() => verifyBaseline({ ...evidence, build: { ...evidence.build, buildProfile: 'production' }, variant: 'preview', policy }), /profile/);
+  assert.throws(() => verifyBaseline({ ...evidence, build: { ...evidence.build, runtimeVersion: 'production-0.3.0' }, variant: 'preview', policy }), /runtime/);
+  assert.throws(() => verifyBaseline({ ...evidence, build: { ...evidence.build, channel: 'production' }, variant: 'preview', policy }), /channel/);
+  assert.throws(() => verifyBaseline({ ...evidence, workflowRun: { ...evidence.workflowRun, name: 'Other workflow' }, variant: 'preview', policy }), /Unrelated/);
+});
+test('Preview attestation identity is repository-owned and never dispatcher supplied', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
+  assert.doesNotMatch(workflow, /workflow_run_id:|artifact_id:|source_sha:/);
+  assert.match(workflow, /fetch-github-build-attestation\.mjs --manifest release-baselines\/android\/preview\.json/);
+  assert.match(workflow, /permissions: \{ contents: read, actions: read \}/);
+});
+test('future Preview builds preserve exact checkout and do not suppress EAS VCS metadata', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
+  assert.match(workflow, /actions\/checkout[^\n]*[\s\S]*ref: "\$\{\{ inputs\.commit_sha \}\}"/);
+  assert.doesNotMatch(workflow, /EAS_NO_VCS|--no-vcs/);
+  assert.match(workflow, /test "\$ACTUAL_SHA" = "\$APPROVED_SHA"/);
+  assert.match(workflow, /test "\$GITHUB_SHA" = "\$APPROVED_SHA"/);
+  assert.match(workflow, /WORKFLOW_HEAD_SHA: "\$\{\{ env\.CHECKED_OUT_SHA \}\}"/);
 });
 test('channel mapping is exact and unambiguous', () => {
   assert.deepEqual(verifyChannelMapping({ document: { name: 'preview', updateBranches: [{ name: 'preview' }] }, expectedChannel: 'preview', expectedBranch: 'preview' }).branches, ['preview']);
