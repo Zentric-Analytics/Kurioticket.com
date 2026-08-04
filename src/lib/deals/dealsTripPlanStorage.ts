@@ -13,6 +13,11 @@ import {
 
 export const DEALS_TRIP_PLAN_STORAGE_KEY = "kurioticket_deals_trip_plan_v1";
 export const DEALS_STAGED_JOURNEY_STORAGE_KEY = "kurioticket_deals_staged_journey_v1";
+export type DealsPlanScope = "legacy" | "guided";
+export const buildDealsPlanContextKey = (scope: DealsPlanScope, fingerprint: string) => `${scope}:${fingerprint}`;
+export function getVisibleDealsPlan(plan: DealsTripPlan | null, storedContextKey: string | null, currentContextKey: string): DealsTripPlan | null {
+  return storedContextKey === currentContextKey ? plan : null;
+}
 
 export type DealsTripPlanReadResult =
   | { status: "valid"; plan: DealsTripPlan }
