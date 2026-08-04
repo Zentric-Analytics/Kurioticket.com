@@ -182,7 +182,7 @@ export function CarsScreen() {
   const params = useLocalSearchParams<{ pickupLocation?: string | string[]; dropoffLocation?: string | string[]; pickupDate?: string | string[]; pickupTime?: string | string[]; dropoffDate?: string | string[]; dropoffTime?: string | string[]; driverAge?: string | string[] }>();
   return (
     <Page title="Cars" hero={require("../../../assets/heroes/cars-suv.png")} heroWidth={308} heroHeight={596} focalY={0.66}>
-      <CarSearchPanel params={params} />
+      <CarSearchPanel params={params} requireManualDetails />
       <Cards title="Vehicle types" items={[{ name: "Economy" }, { name: "SUV" }, { name: "Luxury" }]} />
       <Text style={styles.categoryNote}>Examples of common rental vehicle types. Availability is shown only after a search.</Text>
     </Page>
