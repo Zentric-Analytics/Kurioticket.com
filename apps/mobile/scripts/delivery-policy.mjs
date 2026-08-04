@@ -21,8 +21,8 @@ export function validateStaticDeliveryInputs({ variant, sha, runtime, packageNam
   for (const [valid, message] of checks) if (!valid) throw new Error(message);
 }
 
-export function validateSourcePolicy({ variant, isReachableFromApprovedBranch, refType, isDispatchRefTag, tagResolvesToSha, tagName, tagObjectType, tagSignatureValid }) {
+export function validateSourcePolicy({ variant, isReachableFromApprovedBranch, refType }) {
   if (variant === "preview" && !isReachableFromApprovedBranch) throw new Error("Preview SHA is not reachable from dev.");
-  if (variant === "production" && refType === "tag" && (!isDispatchRefTag || !tagResolvesToSha || !/^mobile-prod-v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(tagName ?? '') || tagObjectType !== 'tag' || !tagSignatureValid)) throw new Error("Production tag is not an approved immutable signed release tag.");
-  if (variant === "production" && refType !== "tag" && !isReachableFromApprovedBranch) throw new Error("Production SHA is not reachable from main.");
+  if (variant === "production" && refType !== "main") throw new Error("Production delivery requires an exact commit reachable from protected main; tags are disabled.");
+  if (variant === "production" && !isReachableFromApprovedBranch) throw new Error("Production SHA is not reachable from main.");
 }

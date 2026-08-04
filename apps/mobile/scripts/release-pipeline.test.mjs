@@ -10,6 +10,7 @@ import { buildPreviewUpdateCommand, runPreviewOtaDryRun } from './dry-run-previe
 import { downloadArtifactArchive, extractReviewedAudit, fetchGithubBuildAttestation } from './fetch-github-build-attestation.mjs';
 import { assertReleasePolicy, loadReleaseFiles } from './release-policy.mjs';
 import { resolvePreviewVersionEvidence } from './resolve-preview-version-code.mjs';
+import { resolveProductionVersionEvidence } from './resolve-production-version-code.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
 import { buildReleaseAudit } from './write-release-audit.mjs';
 
@@ -317,6 +318,21 @@ test('future Preview builds preserve exact checkout and do not suppress EAS VCS 
   assert.match(workflow, /test "\$GITHUB_SHA" = "\$APPROVED_SHA"/);
   assert.match(workflow, /WORKFLOW_HEAD_SHA: "\$\{\{ env\.CHECKED_OUT_SHA \}\}"/);
 });
+test('Production build preserves exact main checkout and normal EAS VCS metadata', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
+  assert.match(workflow, /actions\/checkout[^\n]*[\s\S]*ref: "\$\{\{ inputs\.commit_sha \}\}"/);
+  assert.doesNotMatch(workflow, /EAS_NO_VCS|--no-vcs/);
+  assert.match(workflow, /test "\$ACTUAL_SHA" = "\$APPROVED_SHA"/);
+  assert.match(workflow, /test "\$WORKFLOW_SHA" = "\$APPROVED_SHA"/);
+  assert.match(workflow, /WORKFLOW_HEAD_SHA: "\$\{\{ env\.CHECKED_OUT_SHA \}\}"/);
+});
+test('Production baseline lookup uses the supported build:view command', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
+  assert.match(workflow, /build:view "\$BASELINE_EAS_BUILD_ID" --json > /);
+  assert.doesNotMatch(workflow, /build:view[^\n]*--non-interactive/);
+  assert.match(workflow, /channel:view production --json --non-interactive/);
+  assert.match(workflow, /update --channel production[^\n]*--non-interactive --json/);
+});
 test('channel mapping is exact and unambiguous', () => {
   const fixture = (overrides = {}) => ({
     currentPage: {
@@ -337,10 +353,147 @@ test('channel mapping is exact and unambiguous', () => {
   assert.throws(() => verifyChannelMapping({ document: { name: 'preview', updateBranches: [{ name: 'preview' }] }, expectedChannel: 'preview', expectedBranch: 'preview' }), /Unsupported/);
 });
 test('Google Play versionCode must be exceeded and absent record is explicit', () => {
-  const evidence = { schemaVersion: 1, package: 'com.kurioticket.app', verifiedAt: new Date().toISOString(), evidenceReference: 'approved-audit' };
-  assert.equal(verifyPlayVersion({ currentRemoteVersionCode: 4, history: { ...evidence, recordStatus: 'absent' } }).playRecordStatus, 'absent');
-  assert.throws(() => verifyPlayVersion({ currentRemoteVersionCode: 4, history: { ...evidence, recordStatus: 'present', highestUploadedVersionCode: 5 } }), /does not exceed/);
-  assert.throws(() => verifyPlayVersion({ currentRemoteVersionCode: 4, history: { ...evidence, verifiedAt: '2020-01-01T00:00:00Z', recordStatus: 'absent' } }), /current reviewed audit/);
+  const evidence = { schemaVersion: 2, package: 'com.kurioticket.app', verifiedAt: new Date().toISOString(), evidenceReference: 'approved-audit' };
+  const absent = { ...evidence, recordStatus: 'absent', playApplicationRecord: 'absent', uploadedBundles: [], highestUploadedVersionCode: null };
+  assert.equal(verifyPlayVersion({ currentRemoteVersionCode: 4, history: absent }).playRecordStatus, 'absent');
+  assert.throws(() => verifyPlayVersion({ currentRemoteVersionCode: 4, history: { ...evidence, recordStatus: 'present', playApplicationRecord: 'present', uploadedBundles: [5], highestUploadedVersionCode: 5 }, previousHistory: absent }), /does not exceed/);
+  assert.throws(() => verifyPlayVersion({ currentRemoteVersionCode: 4, history: { ...absent, verifiedAt: '2020-01-01T00:00:00Z' } }), /stale/);
+});
+const productionHistory = (overrides = {}) => ({
+  schemaVersion: 2,
+  package: 'com.kurioticket.app',
+  recordStatus: 'absent',
+  playApplicationRecord: 'absent',
+  uploadedBundles: [],
+  highestUploadedVersionCode: null,
+  verifiedAt: '2026-08-04T08:00:00.000Z',
+  evidenceReference: 'reviewed read-only Play audit',
+  ...overrides,
+});
+const productionVersionInput = (overrides = {}) => ({
+  versionOutput: 'No remote versions are configured for this project.',
+  versionExitCode: 0,
+  buildsOutput: '[]',
+  buildsExitCode: 0,
+  history: productionHistory(),
+  previousHistory: null,
+  packageName: policy.production.androidPackage,
+  profile: 'production',
+  runtime: 'production-0.3.0',
+  now: new Date('2026-08-04T08:30:00.000Z'),
+  ...overrides,
+});
+test('first Production binary proposes versionCode 1 only for empty EAS and Play history', () => {
+  assert.deepEqual(resolveProductionVersionEvidence(productionVersionInput()), {
+    currentRemoteVersionCode: null,
+    proposedVersionCode: 1,
+    remoteVersionStatus: 'uninitialized',
+    playRecordStatus: 'absent',
+    highestUploadedVersionCode: null,
+    uploadedVersionCodes: [],
+  });
+});
+test('configured Production counters increment and never reset below Play history', () => {
+  const result = resolveProductionVersionEvidence(productionVersionInput({
+    versionOutput: 'Android versionCode - 7',
+    history: productionHistory({ recordStatus: 'present', playApplicationRecord: 'present', uploadedBundles: [7, 5, 7], highestUploadedVersionCode: 7 }),
+    previousHistory: productionHistory(),
+  }));
+  assert.equal(result.currentRemoteVersionCode, 7);
+  assert.equal(result.proposedVersionCode, 8);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({
+    versionOutput: 'Android versionCode - 4',
+    history: productionHistory({ recordStatus: 'present', playApplicationRecord: 'present', uploadedBundles: [5], highestUploadedVersionCode: 5 }),
+    previousHistory: productionHistory(),
+  })), /does not exceed/);
+});
+test('Production first-binary response must match the exact supported EAS message', () => {
+  assert.doesNotThrow(() => resolveProductionVersionEvidence(productionVersionInput()));
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'warning\nNo remote versions are configured for this project.' })), /Unrecognized/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'No remote versions are configured for this project.\nwarning' })), /Unrecognized/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'No remote versions are configured for this project. warning' })), /Unrecognized/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'No remote versions are configured' })), /Unrecognized/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: '' })), /empty/);
+  assert.equal(resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 8' })).proposedVersionCode, 9);
+});
+test('Production Play history is internally consistent, normalized, and monotonic', () => {
+  const absent = productionHistory();
+  const present = productionHistory({ recordStatus: 'present', playApplicationRecord: 'present', uploadedBundles: [3, 1, 3, 2], highestUploadedVersionCode: 3 });
+  const result = resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: present, previousHistory: absent }));
+  assert.deepEqual(result.uploadedVersionCodes, [1, 2, 3]);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, highestUploadedVersionCode: 2 }, previousHistory: absent })), /does not match/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, highestUploadedVersionCode: 4 }, previousHistory: absent })), /does not match/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, uploadedBundles: [] }, previousHistory: absent })), /unknown or malformed/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, playApplicationRecord: 'absent' }, previousHistory: absent })), /unknown or malformed/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...absent, uploadedBundles: [1] } })), /Absent/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: { ...present, uploadedBundles: [1, '2', 3] }, previousHistory: absent })), /malformed/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 3', history: present })), /previous reviewed/);
+  const previous = productionHistory({ recordStatus: 'present', playApplicationRecord: 'present', uploadedBundles: [1, 2, 3, 4], highestUploadedVersionCode: 4, verifiedAt: '2026-08-01T08:00:00.000Z' });
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 4', history: present, previousHistory: previous })), /cannot decrease|cannot remove/);
+});
+test('Production first-binary handling rejects existing builds, Preview, and legacy identities', () => {
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ buildsOutput: '[{"id":"existing"}]' })), /existing build/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ packageName: policy.preview.androidPackage, profile: 'preview', runtime: 'preview-0.3.0' })), /restricted/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ packageName: 'com.kurioticket.mobile' })), /restricted/);
+});
+test('Production version resolution fails closed for errors, ambiguity, and stale or mismatched Play history', () => {
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: '', versionExitCode: 0 })), /empty/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'Authentication failed', versionExitCode: 1 })), /query failed/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: 'versionCode: 4\nversionCode: 5' })), /conflicting/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ history: productionHistory({ verifiedAt: '2026-08-01T00:00:00Z' }) })), /stale/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ history: productionHistory({ package: 'com.kurioticket.app.preview' }) })), /package-mismatched/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ history: productionHistory({ evidenceReference: '' }) })), /stale|evidence/);
+});
+test('Production build freezes credentials, propagates CLI failure, and retains safe audit evidence', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
+  assert.match(workflow, /set -o pipefail[\s\S]*eas-cli@16\.17\.4 build --platform android --profile production --non-interactive --freeze-credentials --json \| tee/);
+  assert.match(workflow, /set -o pipefail[\s\S]*eas-cli@16\.17\.4 update --channel production/);
+  assert.match(workflow, /if-no-files-found:\s*warn/);
+  assert.doesNotMatch(workflow, /continue-on-error/);
+  assert.doesNotMatch(workflow, /credentials:(?:configure|sync)|generate.*keystore|--auto-submit|eas-cli@[^\n]*submit/);
+  const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-production-audit-'));
+  try {
+    const delivery = resolve(directory, 'delivery.json');
+    writeFileSync(delivery, '');
+    const audit = buildReleaseAudit({ WORKFLOW_RUN_ID: 'run', RELEASE_ENVIRONMENT: 'production', RELEASE_PACKAGE: policy.production.androidPackage, RELEASE_PROFILE: 'production', RELEASE_RUNTIME: 'production-0.3.0', RELEASE_CHANNEL: 'production', BASELINE_EAS_BUILD_ID: 'NONE', DELIVERY_RESULT_PATH: delivery, FINAL_STATUS: 'failure' }, '2026-08-04T09:00:00.000Z');
+    assert.equal(audit.finalStatus, 'failure');
+    assert.equal(audit.deliveryResult, null);
+    assert.equal(audit.evidenceStatus.deliveryResult, 'empty');
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+test('Production classifier preserves every nonzero exit through tee and blocks downstream OTA work', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
+  const classifierStart = workflow.indexOf('- name: Classify native versus OTA delivery');
+  const channelStart = workflow.indexOf('- name: Verify live channel mapping');
+  const classifierStep = workflow.slice(classifierStart, channelStart);
+  assert.match(classifierStep, /set -o pipefail/);
+  assert.match(classifierStep, /CLASSIFIER_PIPE_STATUS=\("\$\{PIPESTATUS\[@\]\}"\)/);
+  assert.match(classifierStep, /if \[ "\$\{CLASSIFIER_PIPE_STATUS\[0\]\}" -ne 0 \]; then exit "\$\{CLASSIFIER_PIPE_STATUS\[0\]\}"; fi/);
+  assert.match(classifierStep, /if \[ "\$\{CLASSIFIER_PIPE_STATUS\[1\]\}" -ne 0 \]; then exit "\$\{CLASSIFIER_PIPE_STATUS\[1\]\}"; fi/);
+  assert.doesNotMatch(classifierStep, /\|\|\s*true|continue-on-error/);
+  assert.ok(channelStart > classifierStart);
+  assert.doesNotMatch(workflow.slice(channelStart, workflow.indexOf('- name: Write consolidated release audit')), /if:\s*always\(\)/);
+  assert.match(workflow, /- name: Write consolidated release audit\s+if: always\(\)/);
+  assert.match(workflow, /- name: Preserve non-secret release evidence\s+if: always\(\)/);
+});
+test('Production delivery is manual-only, main-only, and requires the reviewed Play-history file', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /(?:^|\n)\s*(?:push|pull_request|schedule):/);
+  assert.doesNotMatch(workflow, /source_kind:|options:\s*\[tag|mobile-prod-v/);
+  assert.match(workflow, /validate-delivery-inputs\.mjs production[^\n]* main /);
+  assert.match(workflow, /test -f release-baselines\/android\/production-play-history\.json/);
+  assert.match(workflow, /git show "\$APPROVED_SHA\^:\$HISTORY_PATH"/);
+  assert.doesNotMatch(workflow, /inputs\.(?:play_history|previous_play_history)|APPROVED_(?:PLAY|HISTORY)/i);
+  const history = JSON.parse(readFileSync(resolve(root, 'release-baselines/android/production-play-history.json'), 'utf8'));
+  assert.equal(history.schemaVersion, 2);
+  assert.equal(history.package, policy.production.androidPackage);
+  assert.equal(history.recordStatus, 'absent');
+  assert.equal(history.playApplicationRecord, 'absent');
+  assert.deepEqual(history.uploadedBundles, []);
+  assert.equal(history.highestUploadedVersionCode, null);
+  assert.ok(Date.parse(history.verifiedAt));
+  assert.ok(history.evidenceReference.includes('9106799153088925304'));
 });
 test('first Preview binary proposes versionCode 1 only with exact uninitialized state and no builds', () => {
   const result = resolvePreviewVersionEvidence({ versionOutput: 'No remote versions are configured for this project.\n', versionExitCode: 0, buildsOutput: '[]', buildsExitCode: 0, packageName: policy.preview.androidPackage, profile: 'preview', runtime: 'preview-0.3.0' });
@@ -382,11 +535,10 @@ test('Preview and Production inputs cannot cross', () => {
   assert.throws(() => validateStaticDeliveryInputs(valid('preview', { runtime: policy.production.runtimeVersion })), /Runtime/);
   assert.throws(() => validateStaticDeliveryInputs(valid('production', { channel: 'preview' })), /Channel/);
 });
-test('mutable or unsigned Production tags fail closed', () => {
-  const base = { variant: 'production', isReachableFromApprovedBranch: false, refType: 'tag', isDispatchRefTag: true, tagResolvesToSha: true, tagName: 'mobile-prod-v0.3.0', tagObjectType: 'tag', tagSignatureValid: true };
-  assert.doesNotThrow(() => validateSourcePolicy(base));
-  assert.throws(() => validateSourcePolicy({ ...base, tagName: 'latest' }), /immutable signed/);
-  assert.throws(() => validateSourcePolicy({ ...base, tagSignatureValid: false }), /immutable signed/);
+test('Production accepts only protected main and rejects tags or dev', () => {
+  assert.doesNotThrow(() => validateSourcePolicy({ variant: 'production', refType: 'main', isReachableFromApprovedBranch: true }));
+  assert.throws(() => validateSourcePolicy({ variant: 'production', refType: 'tag', isReachableFromApprovedBranch: true }), /tags are disabled/);
+  assert.throws(() => validateSourcePolicy({ variant: 'production', refType: 'dev', isReachableFromApprovedBranch: true }), /protected main/);
 });
 test('Production rejects a commit not reachable from main', () => {
   assert.throws(() => validateSourcePolicy({ variant: 'production', refType: 'main', isReachableFromApprovedBranch: false }), /not reachable from main/);
