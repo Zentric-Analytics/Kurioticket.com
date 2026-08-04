@@ -2,9 +2,10 @@ export function validateStaticDeliveryInputs({ variant, sha, runtime, packageNam
   if (variant !== "preview" && variant !== "production") throw new Error("Invalid variant.");
   if (!/^[a-f0-9]{40}$/.test(sha ?? "")) throw new Error("Commit SHA must be an exact 40-character lowercase SHA.");
   const release = policy[variant];
-  if (!['build', 'update'].includes(action)) throw new Error("Unsupported delivery action.");
+  const actions = variant === 'production' ? ['build', 'update', 'dry-run'] : ['build', 'update'];
+  if (!actions.includes(action)) throw new Error("Unsupported delivery action.");
   if (!(releaseReason ?? '').trim()) throw new Error("Release reason must not be empty.");
-  if (action === 'build' && baselineBuildId !== 'NONE') throw new Error("Build actions must use baseline build ID NONE.");
+  if (['build', 'dry-run'].includes(action) && baselineBuildId !== 'NONE') throw new Error("Build and dry-run actions must use baseline build ID NONE.");
   if (action === 'update' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(baselineBuildId ?? '')) throw new Error("Update actions require an approved EAS build ID.");
   const expectedConfirmation = variant === "preview" ? "DELIVER ANDROID PREVIEW" : "DELIVER ANDROID PRODUCTION";
   const checks = [

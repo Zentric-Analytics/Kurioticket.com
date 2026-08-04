@@ -6,10 +6,29 @@ const PRODUCTION = Object.freeze({
   profile: 'production',
   runtime: 'production-0.3.0',
 });
-const UNINITIALIZED_MESSAGE = 'No remote versions are configured for this project.';
 const MAX_HISTORY_AGE_MS = 24 * 60 * 60 * 1000;
 
-function parseBuilds(output) {
+function parseVersionDocument(output) {
+  let document;
+  try {
+    document = JSON.parse(output);
+  } catch {
+    throw new Error('Unable to parse structured EAS remote Production version output.');
+  }
+  if (!document || Array.isArray(document) || typeof document !== 'object') {
+    throw new Error('EAS remote Production version output must be a JSON object.');
+  }
+  const keys = Object.keys(document);
+  if (keys.length === 0) return { status: 'uninitialized', value: null };
+  if (keys.length !== 1 || keys[0] !== 'versionCode' || typeof document.versionCode !== 'string' || !/^(?:0|[1-9]\d*)$/.test(document.versionCode)) {
+    throw new Error('EAS remote Production version JSON has an unsupported schema.');
+  }
+  const value = Number(document.versionCode);
+  if (!Number.isSafeInteger(value)) throw new Error('EAS remote Production versionCode exceeds the safe integer range.');
+  return { status: 'configured', value };
+}
+
+function parseBuilds(output, expected) {
   let builds;
   try {
     builds = JSON.parse(output);
@@ -17,6 +36,12 @@ function parseBuilds(output) {
     throw new Error('Unable to parse the filtered EAS Production build history.');
   }
   if (!Array.isArray(builds)) throw new Error('EAS Production build history must be a JSON array.');
+  for (const build of builds) {
+    const applicationIdentifier = build?.applicationIdentifier ?? build?.appIdentifier;
+    if (!build || typeof build !== 'object' || build.platform !== 'ANDROID' || build.buildProfile !== expected.profile || applicationIdentifier !== expected.packageName || build.runtimeVersion !== expected.runtime || build.project?.id !== expected.projectId) {
+      throw new Error('EAS Production build history contains mismatched or incomplete identity metadata.');
+    }
+  }
   return builds;
 }
 
@@ -99,18 +124,10 @@ export function resolveProductionVersionEvidence({
   const play = validateProductionPlayHistoryTransition(history, previousHistory, now);
   if (versionExitCode !== 0) throw new Error('EAS remote Production version query failed.');
 
-  const output = versionOutput.trim();
-  if (!output) throw new Error('EAS remote Production version query returned empty output.');
-  const numericMatches = [...output.matchAll(/versionCode\s*(?:-|:|=)\s*(\d+)\b/gi)].map((match) => Number(match[1]));
-  const numericValues = [...new Set(numericMatches)];
-  const isUninitialized = output === UNINITIALIZED_MESSAGE;
-
-  if (isUninitialized && numericValues.length > 0) throw new Error('EAS remote Production version output is ambiguous.');
-  if (numericValues.length > 1) throw new Error('EAS remote Production version output contains conflicting values.');
-
-  if (numericValues.length === 1) {
-    const current = numericValues[0];
-    if (!Number.isInteger(current) || current < 0) throw new Error('EAS remote Production versionCode must be a non-negative integer.');
+  if (!versionOutput.trim()) throw new Error('EAS remote Production version query returned empty stdout.');
+  const remote = parseVersionDocument(versionOutput);
+  if (remote.status === 'configured') {
+    const current = remote.value;
     const proposed = current + 1;
     if (play.highestUploadedVersionCode !== null && proposed <= play.highestUploadedVersionCode) {
       throw new Error('Proposed Production versionCode does not exceed Google Play history.');
@@ -118,9 +135,8 @@ export function resolveProductionVersionEvidence({
     return { currentRemoteVersionCode: current, proposedVersionCode: proposed, remoteVersionStatus: 'configured', ...play };
   }
 
-  if (!isUninitialized) throw new Error('Unrecognized EAS remote Production version response.');
   if (buildsExitCode !== 0) throw new Error('Filtered EAS Production build-history query failed.');
-  const builds = parseBuilds(buildsOutput);
+  const builds = parseBuilds(buildsOutput, { packageName, profile, runtime, projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' });
   if (builds.length !== 0) throw new Error('Cannot initialize Production versionCode because an existing build uses this package/profile.');
   if (play.uploadedVersionCodes.length !== 0 || play.highestUploadedVersionCode !== null) {
     throw new Error('Cannot initialize Production versionCode because Google Play history is not empty.');
