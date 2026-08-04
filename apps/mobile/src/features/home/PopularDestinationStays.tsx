@@ -10,8 +10,8 @@ import {
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { FavoriteButton } from "../../components/FavoriteButton";
-import { flowColors } from "../flow/flowStyles";
+import { HomepageFavoriteButton } from "./HomepageFavoriteButton";
+import { flowColors, useFlowTheme } from "../flow/flowStyles";
 
 export const popularDestinationStays = [
   {
@@ -73,6 +73,7 @@ export const popularDestinationStays = [
 ] as const;
 
 export function PopularDestinationStays() {
+  const ft = useFlowTheme();
   const { width } = useWindowDimensions();
   const { savedIds, toggle } = useSavedDestinations();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
@@ -86,7 +87,7 @@ export function PopularDestinationStays() {
       testID="popular-destination-stays"
       style={styles.section}
     >
-      <Text accessibilityRole="header" style={styles.heading}>
+      <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>
         Popular destination stays
       </Text>
       <ScrollView
@@ -163,7 +164,6 @@ export function PopularDestinationStays() {
 const styles = StyleSheet.create({
   section: { gap: 14, marginTop: 4 },
   heading: {
-    color: flowColors.navy,
     fontSize: 21,
     lineHeight: 27,
     fontWeight: "800",
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   city: {
-    color: "white",
+    color: flowColors.white,
     fontSize: 25,
     lineHeight: 30,
     fontWeight: "900",
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   country: {
-    color: "white",
+    color: flowColors.white,
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "600",

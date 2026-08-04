@@ -9,7 +9,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { translations as en } from "@/lib/i18n/en";
 import { buildDealsSearchFingerprint, createDealsTripPlan, replaceDealsHotelSelection, validateDealsInternalPath, type DealsTripPlanHotel } from "@/lib/deals/dealsTripPlan";
 import { applyDealsPlanReadResult, buildDealsPlanContextKey, getVisibleDealsPlan, readDealsStagedJourneyPlan, removeDealsStagedJourneyPlan, unresolvedDealsPlanState, writeDealsStagedJourneyPlan } from "@/lib/deals/dealsTripPlanStorage";
-import { buildDealsResultsUrl, getIncludedProducts, type DealsSearch } from "@/lib/deals/dealsSearchParams";
+import { buildCarResultsUrl, buildDealsResultsUrl, getIncludedProducts, type DealsSearch } from "@/lib/deals/dealsSearchParams";
 import { getGuidedDealsJourneyProgress } from "@/lib/deals/dealsJourneyProgress";
 import { buildDealsJourneyUrl, buildLegacyDealsResultsUrl, getFirstDealsJourneyStage, getNextDealsJourneyStage, getPreviousDealsJourneyStage, getRequiredDealsJourneyStage, type DealsJourneyStage } from "@/lib/deals/dealsJourneyRoutes";
 import { DealsResultsSearchSummary } from "./DealsResultsSearchSummary";
@@ -65,7 +65,23 @@ export function DealsJourneyShell({ stage, search, invalid, hotelId }: { stage: 
     }
     setConfirmingHotel(true);
     const included = getIncludedProducts(search.mode);
-    const base = currentPlan ?? createDealsTripPlan({ mode: search.mode, searchFingerprint: fingerprint, resultsPath: validateDealsInternalPath(buildDealsResultsUrl(search)) || "/deals/results", ...(included.car ? { carsResultsPath: validateDealsInternalPath("/cars/results", "/cars/results") || "/cars/results" } : {}) });
+    let base = currentPlan;
+    if (!base) {
+      const resultsPath = validateDealsInternalPath(buildDealsResultsUrl(search));
+      const carsResultsPath = included.car
+        ? validateDealsInternalPath(
+          buildCarResultsUrl(search),
+          "/cars/results",
+        )
+        : undefined;
+      if (!resultsPath || (included.car && !carsResultsPath)) {
+        setConfirmingHotel(false);
+        setConfirmationError(t("deals.guided.hotelDetails.saveError"));
+        setPlanState(previous => ({ ...previous, persistence: "unavailable" }));
+        return;
+      }
+      base = createDealsTripPlan({ mode: search.mode, searchFingerprint: fingerprint, resultsPath, ...(included.car && carsResultsPath ? { carsResultsPath } : {}) });
+    }
     const nextPlan = replaceDealsHotelSelection(base, selection);
     const wrote = writeDealsStagedJourneyPlan(nextPlan);
     if (!wrote) { setConfirmingHotel(false); setConfirmationError(t("deals.guided.hotelDetails.saveError")); setPlanState(previous => ({ ...previous, persistence: "unavailable" })); return; }

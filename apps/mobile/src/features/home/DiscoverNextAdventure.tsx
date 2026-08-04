@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { FlowIcon } from "../flow/FlowIcon";
-import { flowColors, flowStyles } from "../flow/flowStyles";
-import { FavoriteButton } from "../../components/FavoriteButton";
+import { flowColors, flowStyles, useFlowTheme } from "../flow/flowStyles";
+import { HomepageFavoriteButton } from "./HomepageFavoriteButton";
 
 type AdventureCard = {
   id: string;
@@ -141,6 +141,7 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
 }
 
 export function DiscoverNextAdventure() {
+  const ft = useFlowTheme();
   const { width } = useWindowDimensions();
   const cardWidth = Math.min(210, Math.max(170, width * 0.44));
   const rows = [
@@ -151,8 +152,8 @@ export function DiscoverNextAdventure() {
   return (
     <View collapsable={false} testID="discover-next-adventure" style={styles.section}>
       <View style={styles.headingCopy}>
-        <Text accessibilityRole="header" style={styles.heading}>Discover your next adventure here</Text>
-        <Text style={styles.subtitle}>Compare smart route ideas, flexible fares, and destinations picked for your region.</Text>
+        <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>Discover your next adventure here</Text>
+        <Text style={[styles.subtitle, { color: ft.colors.textSecondary }]}>Compare smart route ideas, flexible fares, and destinations picked for your region.</Text>
       </View>
       <View style={styles.rows}>
         {rows.map((cards, rowIndex) => (
@@ -175,8 +176,8 @@ export function DiscoverNextAdventure() {
 const styles = StyleSheet.create({
   section: { gap: 12, marginTop: 4 },
   headingCopy: { gap: 8 },
-  heading: { color: flowColors.navy, fontSize: 21, lineHeight: 27, fontWeight: "600", letterSpacing: -0.25 },
-  subtitle: { color: "#475569", fontSize: 14, lineHeight: 24, fontWeight: "400" },
+  heading: { fontSize: 21, lineHeight: 27, fontWeight: "600", letterSpacing: -0.25 },
+  subtitle: { fontSize: 14, lineHeight: 24, fontWeight: "400" },
   rows: { gap: 12 },
   carousel: { gap: 12, paddingBottom: 4, paddingRight: 40 },
   card: { height: 300, borderRadius: 16, borderWidth: 1, borderColor: "rgba(226,232,240,0.8)", backgroundColor: "white", overflow: "hidden" },
