@@ -87,6 +87,8 @@ Production requires separate approvals to create the `com.kurioticket.app` Play 
 
 EAS remains the active secure store for the Production upload keystore. The owner-approved protected export is deferred to final operational hardening: it is not a blocker for ancestry reconciliation, release-PR preparation, the first Production AAB, or Internal testing. A verified encrypted organizational backup is required before broader or public rollout, final blueprint completion, and operational-hardening sign-off. Repository workflows must never export the keystore.
 
+For Android profiles using remote app versioning with `autoIncrement: true`, the pre-build value is the input to the approved build, not a promise that the finished artifact will retain that value. EAS may initialize from the local `versionCode` and increment it while creating the build; the finished AAB's embedded manifest is authoritative for the consumed value. Post-build verification therefore reconciles the exact submitted build ID with a uniquely filtered EAS build-history record and then validates the downloaded signed AAB directly. A missing, duplicate, mismatched, unsigned, malformed, or identity-crossed result fails closed and never causes an automatic rebuild or version reset.
+
 ## Rollback and emergency stop
 
 - Preview OTA: republish the last approved compatible Preview update.

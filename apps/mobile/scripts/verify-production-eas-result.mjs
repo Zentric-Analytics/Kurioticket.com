@@ -16,28 +16,38 @@ function parseJson(source, label) {
   try { return JSON.parse(source); } catch { throw new Error(`${label} returned malformed JSON.`); }
 }
 
-export function verifyProductionBuildResult({ source, approvedSha, proposedVersionCode }) {
+export function verifyProductionBuildResult({ source, historySource, aabEvidenceSource, approvedSha, proposedVersionCode, remoteVersionStatus }) {
   const value = parseJson(source, 'EAS Production build');
   if (!Array.isArray(value) || value.length !== 1 || !value[0] || typeof value[0] !== 'object') throw new Error('EAS Production build result must contain exactly one build.');
   const build = value[0];
-  const archive = build.artifacts?.applicationArchiveUrl ?? build.artifacts?.buildUrl;
+  const history = parseJson(historySource, 'Filtered EAS Production build history');
+  if (!Array.isArray(history) || history.length !== 1 || !history[0] || typeof history[0] !== 'object') throw new Error('Filtered EAS Production build history must contain exactly one build.');
+  const authoritative = history[0];
+  const aab = parseJson(aabEvidenceSource, 'Production AAB inspection');
+  if (!['uninitialized', 'configured'].includes(remoteVersionStatus)) throw new Error('Remote Production version status is missing or invalid.');
+  const expectedBuiltVersionCode = remoteVersionStatus === 'uninitialized' ? proposedVersionCode + 1 : proposedVersionCode;
+  if (authoritative.id !== build.id) throw new Error('Submitted build ID does not match filtered EAS history.');
+  const archive = authoritative.artifacts?.applicationArchiveUrl ?? authoritative.artifacts?.buildUrl;
   const checks = [
-    [uuid.test(build.id ?? ''), 'Build ID is missing or malformed.'],
-    [build.status === 'FINISHED', `Build status is not FINISHED (${build.status ?? 'missing'}).`],
-    [build.platform === 'ANDROID', 'Build platform mismatch.'],
-    [build.project?.id === EXPECTED.projectId, 'Build project mismatch.'],
-    [build.buildProfile === EXPECTED.profile, 'Build profile mismatch.'],
-    [(build.applicationIdentifier ?? build.appIdentifier) === EXPECTED.packageName, 'Build package metadata is missing or mismatched.'],
-    [build.distribution === 'STORE', 'Build distribution mismatch.'],
-    [build.runtimeVersion === EXPECTED.runtime, 'Build runtime mismatch.'],
-    [build.channel === EXPECTED.channel, 'Build channel mismatch.'],
-    [build.appVersion === EXPECTED.appVersion, 'Build app version mismatch.'],
-    [String(build.appBuildVersion) === String(proposedVersionCode), 'Build versionCode mismatch.'],
-    [build.gitCommitHash === approvedSha, 'Build Git commit metadata is missing or mismatched.'],
+    [uuid.test(authoritative.id ?? ''), 'Build ID is missing or malformed.'],
+    [authoritative.status === 'FINISHED', `Build status is not FINISHED (${authoritative.status ?? 'missing'}).`],
+    [authoritative.platform === 'ANDROID', 'Build platform mismatch.'],
+    [authoritative.project?.id === EXPECTED.projectId, 'Build project mismatch.'],
+    [authoritative.buildProfile === EXPECTED.profile, 'Build profile mismatch.'],
+    [(authoritative.applicationIdentifier ?? authoritative.appIdentifier) === EXPECTED.packageName, 'Filtered build package metadata is missing or mismatched.'],
+    [authoritative.distribution === 'STORE', 'Build distribution mismatch.'],
+    [authoritative.runtimeVersion === EXPECTED.runtime, 'Build runtime mismatch.'],
+    [authoritative.channel === EXPECTED.channel, 'Build channel mismatch.'],
+    [authoritative.appVersion === EXPECTED.appVersion, 'Build app version mismatch.'],
+    [String(authoritative.appBuildVersion) === String(expectedBuiltVersionCode), 'Build versionCode mismatch.'],
+    [authoritative.gitCommitHash === approvedSha, 'Build Git commit metadata is missing or mismatched.'],
     [typeof archive === 'string' && /^https:\/\//.test(archive) && /\.aab(?:\?|$)/i.test(archive), 'Finished Production build is missing a Play-compatible AAB artifact.'],
+    [aab.verified === true && aab.package === EXPECTED.packageName, 'Inspected AAB package mismatch.'],
+    [aab.versionName === EXPECTED.appVersion && String(aab.versionCode) === String(expectedBuiltVersionCode), 'Inspected AAB version mismatch.'],
+    [aab.signed === true && aab.forbiddenIdentityFound === false, 'AAB signing or identity-isolation verification failed.'],
   ];
   for (const [ok, message] of checks) if (!ok) throw new Error(message);
-  return { kind: 'build', id: build.id, status: build.status, platform: build.platform, package: EXPECTED.packageName, projectId: EXPECTED.projectId, profile: build.buildProfile, runtime: build.runtimeVersion, channel: build.channel, appVersion: build.appVersion, versionCode: Number(build.appBuildVersion), commitSha: build.gitCommitHash, artifactType: 'AAB', artifactUrlPresent: true };
+  return { kind: 'build', id: authoritative.id, status: authoritative.status, platform: authoritative.platform, package: EXPECTED.packageName, projectId: EXPECTED.projectId, profile: authoritative.buildProfile, runtime: authoritative.runtimeVersion, channel: authoritative.channel, appVersion: authoritative.appVersion, versionCode: Number(authoritative.appBuildVersion), commitSha: authoritative.gitCommitHash, artifactType: 'AAB', artifactUrlPresent: true, aabInspected: true, signed: true };
 }
 
 export function verifyProductionUpdateResult({ source, approvedSha }) {
@@ -53,7 +63,7 @@ function args(values) { const out = {}; for (let i = 0; i < values.length; i += 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const a = args(process.argv.slice(2));
   const source = readFileSync(a.input, 'utf8');
-  const evidence = a.kind === 'build' ? verifyProductionBuildResult({ source, approvedSha: a.sha, proposedVersionCode: Number(a['version-code']) }) : verifyProductionUpdateResult({ source, approvedSha: a.sha });
+  const evidence = a.kind === 'build' ? verifyProductionBuildResult({ source, historySource: readFileSync(a.history, 'utf8'), aabEvidenceSource: readFileSync(a['aab-evidence'], 'utf8'), approvedSha: a.sha, proposedVersionCode: Number(a['version-code']), remoteVersionStatus: a['version-status'] }) : verifyProductionUpdateResult({ source, approvedSha: a.sha });
   writeFileSync(a.output, `${JSON.stringify(evidence, null, 2)}\n`);
   console.log(`Verified Production EAS ${a.kind} result ${evidence.id}.`);
 }
