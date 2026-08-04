@@ -1,7 +1,3 @@
-Exit code: 0
-Wall time: 0.5 seconds
-Total output lines: 744
-Output:
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
