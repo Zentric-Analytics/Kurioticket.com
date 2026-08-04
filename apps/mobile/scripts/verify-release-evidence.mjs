@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { loadReleaseFiles } from './release-policy.mjs';
+import { validateProductionPlayHistoryTransition } from './resolve-production-version-code.mjs';
 
 const fullSha = (value) => /^[a-f0-9]{40}$/.test(value ?? '');
 const deliveryId = (audit) => audit?.easBuildId ?? audit?.deliveryResult?.id ?? (Array.isArray(audit?.deliveryResult) ? audit.deliveryResult[0]?.id : null);
@@ -89,16 +90,12 @@ export function verifyChannelMapping({ document, expectedChannel, expectedBranch
   return { verified: true, channel: expectedChannel, branches: [branch.name], mappingVersion: mapping.version };
 }
 
-export function verifyPlayVersion({ currentRemoteVersionCode, history }) {
+export function verifyPlayVersion({ currentRemoteVersionCode, history, previousHistory = null, now = new Date() }) {
   if (!Number.isInteger(currentRemoteVersionCode) || currentRemoteVersionCode < 0) throw new Error('Invalid EAS remote versionCode.');
   const proposedVersionCode = currentRemoteVersionCode + 1;
-  if (history.schemaVersion !== 1 || history.package !== 'com.kurioticket.app') throw new Error('Invalid Play history manifest.');
-  const verifiedAt = Date.parse(history.verifiedAt ?? '');
-  if (!Number.isFinite(verifiedAt) || Date.now() - verifiedAt < 0 || Date.now() - verifiedAt > 24 * 60 * 60 * 1000 || !(history.evidenceReference ?? '').trim()) throw new Error('Play history is missing a current reviewed audit (maximum age 24 hours).');
-  if (history.recordStatus === 'absent') return { currentRemoteVersionCode, proposedVersionCode, playRecordStatus: 'absent', highestUploadedVersionCode: null };
-  if (history.recordStatus !== 'present' || !Number.isInteger(history.highestUploadedVersionCode)) throw new Error('Play history is unknown.');
-  if (proposedVersionCode <= history.highestUploadedVersionCode) throw new Error('Proposed versionCode does not exceed Google Play history.');
-  return { currentRemoteVersionCode, proposedVersionCode, playRecordStatus: 'present', highestUploadedVersionCode: history.highestUploadedVersionCode };
+  const play = validateProductionPlayHistoryTransition(history, previousHistory, now);
+  if (play.highestUploadedVersionCode !== null && proposedVersionCode <= play.highestUploadedVersionCode) throw new Error('Proposed versionCode does not exceed Google Play history.');
+  return { currentRemoteVersionCode, proposedVersionCode, playRecordStatus: play.playRecordStatus, highestUploadedVersionCode: play.highestUploadedVersionCode };
 }
 
 function args(values) { const out = {}; for (let i = 0; i < values.length; i += 2) out[values[i].replace(/^--/, '')] = values[i + 1]; return out; }

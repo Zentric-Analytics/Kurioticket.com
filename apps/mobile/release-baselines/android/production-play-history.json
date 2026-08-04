@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "package": "com.kurioticket.app",
+  "recordStatus": "absent",
+  "playApplicationRecord": "absent",
+  "uploadedBundles": [],
+  "highestUploadedVersionCode": null,
+  "verifiedAt": "2026-08-04T09:05:56Z",
+  "evidenceReference": "Google Play Console account 9106799153088925304 read-only app-list and com.kurioticket.app package-availability audit at 2026-08-04T09:05:56Z"
+}
