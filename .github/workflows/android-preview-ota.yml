@@ -69,7 +69,7 @@ jobs:
         run: |
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
           test -f release-baselines/android/preview.json || { echo 'Reviewed Preview binary manifest is missing.' >&2; exit 1; }
-          npx eas-cli@16.17.4 build:view "$BASELINE_EAS_BUILD_ID" --json --non-interactive > "$RUNNER_TEMP/baseline-build.json"
+          npx eas-cli@16.17.4 build:view "$BASELINE_EAS_BUILD_ID" --json > "$RUNNER_TEMP/baseline-build.json"
           node scripts/verify-release-evidence.mjs --kind baseline --variant preview --manifest release-baselines/android/preview.json --build "$RUNNER_TEMP/baseline-build.json" --output "$RUNNER_TEMP/baseline-evidence.json"
       - name: Require OTA-compatible native fingerprint
         working-directory: apps/mobile

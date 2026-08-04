@@ -53,6 +53,24 @@ test('Preview workflows validate the staging classification inside the mobile AP
     assert.doesNotMatch(workflow, /body\.environment !== 'staging'/);
   }
 });
+test('Preview OTA uses only supported non-interactive flags and fails closed after baseline lookup', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
+  const baselineLookup = 'eas-cli@16.17.4 build:view "$BASELINE_EAS_BUILD_ID" --json > "$RUNNER_TEMP/baseline-build.json"';
+  const baselineIndex = workflow.indexOf(baselineLookup);
+  const fingerprintIndex = workflow.indexOf('fingerprint fingerprint:generate');
+  const channelIndex = workflow.indexOf('channel:view preview --json --non-interactive');
+  const updateIndex = workflow.indexOf('update --channel preview --platform android');
+
+  assert.ok(baselineIndex >= 0, 'Preview OTA must perform the approved baseline lookup');
+  assert.doesNotMatch(workflow, /build:view[^\n]*--non-interactive/);
+  assert.ok(baselineIndex < fingerprintIndex, 'baseline lookup must gate fingerprint verification');
+  assert.ok(fingerprintIndex < channelIndex, 'fingerprint verification must gate channel verification');
+  assert.ok(channelIndex < updateIndex, 'channel verification must gate publication');
+  assert.doesNotMatch(workflow.slice(baselineIndex, updateIndex), /continue-on-error|if:\s*always\(\)/);
+
+  assert.match(workflow, /channel:view preview --json --non-interactive/);
+  assert.match(workflow, /update --channel preview --platform android[^\n]*--non-interactive --json/);
+});
 test('Preview build verifies first-binary history for the exact package and profile', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
   assert.match(workflow, /build:list --platform android --build-profile preview --app-identifier com\.kurioticket\.app\.preview --limit 1 --json --non-interactive/);
