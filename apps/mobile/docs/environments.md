@@ -71,6 +71,12 @@ An OTA update is eligible only when all of these match the intended binary: EAS 
 
 The runtime `0.2.0` Preview updates came from the former `.github/workflows/mobile-preview-update.yml`. Before commit `e25b6d9`, pushes to `dev` ran `eas update --channel preview` with messages beginning `Automated preview update from dev`; native changes could start an Android build. Commit `e25b6d9` replaced those automatic delivery steps with validation-only jobs. The repository now provides separate, protected, manually dispatched Android Preview OTA and native-build workflows. OTA publication uses the reviewer-free `mobile-preview-ota` environment only after baseline, fingerprint, channel-mapping, and staging checks pass; native builds use the owner-reviewed `mobile-preview-build` environment. Production delivery remains separately protected by `mobile-production`. Merges and pushes do not invoke `eas build`, `eas update`, or `eas submit`, and the Expo project has no configured automatic EAS Workflow.
 
+## Required mobile validation
+
+`Validate mobile preview` is an always-scheduled required check for pull requests and pushes to `dev`. It performs a lightweight successful no-op for changes that cannot affect mobile, and runs the complete mobile TypeScript, test, Expo configuration, identity, and export validation for mobile-relevant changes. The lightweight result explicitly reports that the full mobile suite was not applicable.
+
+Mobile-relevant paths include all of `apps/mobile/**`; Android and mobile GitHub workflow files; shared GitHub actions; root package manifests, lockfiles, Node/npm selectors, and TypeScript configuration; and the root `src/lib/**`, `src/shared/**`, and `src/data/**` trees imported by mobile. Manual runs, missing or invalid Git ranges, empty diffs, malformed paths, and unknown events fail closed to the complete suite. The detector has no workflow-dispatch input and uses only GitHub event SHAs and the checked-out Git diff.
+
 ## Android internal distribution
 
 After separate build approval, run `eas build --platform android --profile preview`. Confirm the resolved package, API origin, channel, runtime, and remote `versionCode` before proceeding. The output is an internal APK; it is not uploaded to Google Play.

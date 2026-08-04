@@ -53,3 +53,28 @@ test("push and pull-request workflows remain validation-only", () => {
     assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+(?:build|update|submit)\b/i);
   }
 });
+
+test("required Preview validation is always conclusive and conditionally runs the full suite", () => {
+  const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/mobile-preview-update.yml"), "utf8");
+  assert.match(workflow, /name: Validate mobile preview/);
+  assert.doesNotMatch(workflow, /^\s+paths:/m);
+  assert.match(workflow, /name: Classify mobile-relevant changes/);
+  assert.match(workflow, /name: Mobile validation not applicable/);
+  assert.match(workflow, /if: steps\.changes\.outputs\.mobile_relevant == 'false'/);
+  for (const step of [
+    "Setup Node.js",
+    "Install mobile dependencies",
+    "Type-check mobile app",
+    "Test mobile app",
+    "Validate Expo project",
+    "Resolve Preview public configuration",
+    "Validate Preview iOS prebuild configuration",
+    "Resolve Production public configuration",
+    "Validate resolved application identities",
+    "Validate Metro export",
+    "Confirm delivery remains gated",
+  ]) {
+    assert.match(workflow, new RegExp(`name: ${step}\\n\\s+if: steps\\.changes\\.outputs\\.mobile_relevant == 'true'`));
+  }
+  assert.doesNotMatch(workflow, /continue-on-error/);
+});
