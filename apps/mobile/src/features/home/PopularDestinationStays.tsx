@@ -12,6 +12,7 @@ import {
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
+import { popularDestinationStayNavigation } from "./homepageCardNavigation";
 
 export const popularDestinationStays = [
   {
@@ -105,12 +106,7 @@ export function PopularDestinationStays() {
               key={destination.id}
               accessibilityRole="button"
               accessibilityLabel={`Explore hotel stays in ${destination.city}, ${destination.country}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/hotels",
-                  params: { destination: destination.city },
-                })
-              }
+              onPress={() => router.push(popularDestinationStayNavigation(destination))}
               style={({ pressed }) => [
                 styles.card,
                 { width: cardWidth },
