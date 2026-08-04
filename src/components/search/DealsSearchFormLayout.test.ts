@@ -31,6 +31,14 @@ test("the approved primary row field labels are explicit", () => {
   assert.match(form, /\{t\("deals\.carOptions"\)\}/);
 });
 
+test("the desktop return-location editor labels and focuses its input", () => {
+  assert.match(form, /const carReturnLocationInputRef = useRef<HTMLInputElement>\(null\)/);
+  assert.match(form, /htmlFor="deals-car-desktop-return-location-input"[\s\S]{0,100}\{t\("deals\.returnLocation"\)\}/);
+  assert.match(form, /ref=\{carReturnLocationInputRef\}[\s\S]{0,100}id="deals-car-desktop-return-location-input"/);
+  assert.match(form, /if \([\s\S]{0,100}!carReturnLocationOpen[\s\S]{0,100}window\.matchMedia\("\(min-width: 640px\)"\)\.matches/);
+  assert.match(form, /requestAnimationFrame\(\(\) => \{[\s\S]{0,100}carReturnLocationInputRef\.current\?\.focus\(\{ preventScroll: true \}\);[\s\S]{0,100}carReturnLocationInputRef\.current\?\.select\(\)/);
+});
+
 test("the shared travellers picker keeps its mobile behavior without an unsupported marker", () => {
   assert.match(
     form,

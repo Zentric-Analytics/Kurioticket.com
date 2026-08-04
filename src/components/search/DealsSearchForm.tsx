@@ -630,6 +630,7 @@ export function DealsSearchForm({
   const carPickupLocationRef = useRef<HTMLInputElement>(null);
   const carPickupLocationLauncherRef = useRef<HTMLButtonElement>(null);
   const carReturnLocationLauncherRef = useRef<HTMLButtonElement>(null);
+  const carReturnLocationInputRef = useRef<HTMLInputElement>(null);
   const carPickupMobileInputRef = useRef<HTMLInputElement>(null);
   const carReturnMobileInputRef = useRef<HTMLInputElement>(null);
   const carDatesLauncherRef = useRef<HTMLButtonElement>(null);
@@ -645,6 +646,18 @@ export function DealsSearchForm({
   const [draftCarReturnLocation, setDraftCarReturnLocation] = useState(
     search.carReturnLocation,
   );
+  useEffect(() => {
+    if (
+      !carReturnLocationOpen ||
+      !window.matchMedia("(min-width: 640px)").matches
+    )
+      return;
+    const frame = requestAnimationFrame(() => {
+      carReturnLocationInputRef.current?.focus({ preventScroll: true });
+      carReturnLocationInputRef.current?.select();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [carReturnLocationOpen]);
   const [carDatesOpen, setCarDatesOpen] = useState(false);
   const [mobileCarDatesOpen, setMobileCarDatesOpen] = useState(false);
   const [draftCarPickupDate, setDraftCarPickupDate] = useState(
@@ -3674,7 +3687,15 @@ export function DealsSearchForm({
           >
             {t("deals.returnLocation")}
           </h3>
+          <label
+            htmlFor="deals-car-desktop-return-location-input"
+            className="sr-only"
+          >
+            {t("deals.returnLocation")}
+          </label>
           <input
+            ref={carReturnLocationInputRef}
+            id="deals-car-desktop-return-location-input"
             value={draftCarReturnLocation}
             placeholder={t("carsSearch.returnLocationPlaceholder")}
             autoComplete="off"
