@@ -90,3 +90,18 @@ test("hotel result cards retain content, pricing, and details contracts", () => 
     assert.match(source, new RegExp(retainedContract.replace(".", "\\.")));
   }
 });
+
+test("hotel details actions distinguish omitted, valid, and unavailable destinations", () => {
+  assert.match(source, /detailsHref\?: string \| null/);
+  assert.match(source, /detailsHref === undefined\s*\? `\/hotels\/details\/\$\{encodeURIComponent\(hotel\.id\)\}`\s*:\s*detailsHref/);
+  assert.match(source, /resolvedDetailsHref === null \? \(/);
+  assert.match(source, /<Button[\s\S]*?disabled[\s\S]*?unavailableActionLabel/);
+  assert.match(source, /<LinkButton[\s\S]*?href=\{resolvedDetailsHref\}/);
+  assert.doesNotMatch(source, /detailsHref\s*\|\|\s*`\/hotels\/details/);
+});
+
+test("standalone Hotel actions and attribution retain their link fallbacks", () => {
+  assert.match(source, /t\("hotelResults\.viewHotel"\) \|\| "View hotel"/);
+  assert.match(source, /allowExternalAttribution && isSafeHttpUrl/);
+  assert.match(source, /<a href=\{attribution\.providerUri\}/);
+});

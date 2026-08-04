@@ -442,6 +442,10 @@ export function HotelResultsExperience({
   const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
+  const guidedLoadingStatusRef = useRef<HTMLHeadingElement | null>(null);
+  const guidedResultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const guidedErrorRef = useRef<HTMLDivElement | null>(null);
+  const retryFocusPendingRef = useRef(false);
 
   useEffect(() => {
     currencyRatesRef.current = currencyRates.rates;
@@ -818,6 +822,30 @@ export function HotelResultsExperience({
       controller.abort();
     };
   }, [body, retryKey, t]);
+
+  const retryGuidedHotelSearch = useCallback(() => {
+    retryFocusPendingRef.current = true;
+    setError("");
+    setLoading(true);
+    setRetryKey((value) => value + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!guided || !retryFocusPendingRef.current) return;
+
+    if (loading) {
+      guidedLoadingStatusRef.current?.focus({ preventScroll: true });
+      return;
+    }
+
+    const finalTarget = error
+      ? guidedErrorRef.current
+      : guidedResultsHeadingRef.current;
+    if (!finalTarget) return;
+
+    finalTarget.focus({ preventScroll: true });
+    retryFocusPendingRef.current = false;
+  }, [error, guided, loading, results]);
 
   const searchedDestination = body.destination.trim();
   const filterOptions = useMemo(
@@ -1595,7 +1623,7 @@ export function HotelResultsExperience({
     if (guided) {
       return (
         <section aria-labelledby="deals-guided-hotel-results-status" aria-busy="true" className="mt-6 space-y-4">
-          <h2 id="deals-guided-hotel-results-status" className="text-lg font-bold text-slate-950" role="status">
+          <h2 ref={guidedLoadingStatusRef} id="deals-guided-hotel-results-status" tabIndex={-1} className="text-lg font-bold text-slate-950" role="status">
             {t("deals.guided.hotelResults.loading")}
           </h2>
           <HotelCardSkeleton />
@@ -1620,7 +1648,10 @@ export function HotelResultsExperience({
   const ResultsRoot = guided ? "div" : "main";
 
   return (
-    <ResultsRoot className={guided ? "mt-6 min-w-0" : "flex-1 overflow-x-clip bg-[#f6f8fb] pb-8"}>
+    <ResultsRoot
+      className={guided ? "mt-6 min-w-0" : "flex-1 overflow-x-clip bg-[#f6f8fb] pb-8"}
+      {...(guided && !error ? { role: "region", "aria-labelledby": "deals-guided-hotel-results-heading" } : {})}
+    >
       {!guided ? <div
         className={cn(
           "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
@@ -1836,6 +1867,8 @@ export function HotelResultsExperience({
         <section className="min-w-0 space-y-4">
           {error ? (
             <div
+              ref={guided ? guidedErrorRef : undefined}
+              tabIndex={guided ? -1 : undefined}
               className={cn(
                 hotelResultStackClass,
                 "rounded-md border border-danger/30 bg-red-50 p-4 text-danger",
@@ -1843,7 +1876,7 @@ export function HotelResultsExperience({
             >
               <p role="alert">{error}</p>
               {guided ? (
-                <Button className="mt-4 min-h-11" onClick={() => { setError(""); setLoading(true); setRetryKey((value) => value + 1); }}>
+                <Button className="mt-4 min-h-11" onClick={retryGuidedHotelSearch}>
                   {t("deals.guided.hotelResults.retry")}
                 </Button>
               ) : null}
@@ -1894,7 +1927,7 @@ export function HotelResultsExperience({
                   className="flex w-full flex-nowrap items-center justify-between gap-2 py-1"
                 >
                   {guided ? (
-                    <h2 id="deals-guided-hotel-results-heading" className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h2>
+                    <h2 ref={guidedResultsHeadingRef} id="deals-guided-hotel-results-heading" tabIndex={-1} className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h2>
                   ) : (
                     <h1 className="whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">{resultsHeading}</h1>
                   )}
@@ -2022,8 +2055,11 @@ export function HotelResultsExperience({
                     <HotelCard
                       key={hotel.id}
                       hotel={hotel}
-                      detailsHref={guided ? buildDetailsHref?.(hotel.id) ?? "#" : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`}
+                      detailsHref={guided ? buildDetailsHref?.(hotel.id) ?? null : `/hotels/details/${encodeURIComponent(hotel.id)}?${hotelDetailsSearchParams}`}
                       actionLabel={guided ? t("deals.guided.hotelResults.viewRooms") : undefined}
+                      actionAriaLabel={guided ? t("deals.guided.hotelResults.viewRoomsFor").replace("{{hotelName}}", hotel.name) : undefined}
+                      unavailableActionLabel={guided ? t("deals.guided.hotelResults.roomsUnavailable") : undefined}
+                      unavailableActionAriaLabel={guided ? t("deals.guided.hotelResults.roomsUnavailableFor").replace("{{hotelName}}", hotel.name) : undefined}
                       allowExternalAttribution={!guided}
                       allowSave={!guided}
                       sortBadge={index === 0 ? hotelSummarySortMode : undefined}
@@ -2033,7 +2069,7 @@ export function HotelResultsExperience({
                   <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
                     <p>{guided && results.length === 0 ? t("deals.guided.hotelResults.empty") : t("hotelResults.noStaysMatchFiltersInline")}</p>
                     {guided && results.length === 0 ? (
-                      <Button className="mt-4 min-h-11" onClick={() => { setLoading(true); setRetryKey((value) => value + 1); }}>
+                      <Button className="mt-4 min-h-11" onClick={retryGuidedHotelSearch}>
                         {t("deals.guided.hotelResults.retry")}
                       </Button>
                     ) : null}
