@@ -13,7 +13,7 @@ import { router } from "expo-router";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
-import { flowColors, flowStyles } from "./flowStyles";
+import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
 import { DiscoverNextAdventure } from "../home/DiscoverNextAdventure";
 import { HomepageDealPromos } from "../home/HomepageDealPromos";
@@ -76,8 +76,9 @@ function HomeHero() {
 }
 
 export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
+  const ft = useFlowTheme();
   return (
-    <View pointerEvents="box-none" style={styles.homeTopNavigation}>
+    <View pointerEvents="box-none" style={[styles.homeTopNavigation, { backgroundColor: ft.colors.surface, borderBottomColor: ft.colors.border }]}>
       <View style={{ height: safeAreaTop }} />
       <View
         pointerEvents="box-none"
@@ -93,9 +94,9 @@ export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
           accessibilityRole="button"
           accessibilityLabel="Notifications"
           onPress={() => router.push("/notifications")}
-          style={flowStyles.iconButton}
+          style={ft.styles.iconButton}
         >
-          <FlowIcon name="bell" />
+          <FlowIcon name="bell" color={ft.colors.icon} />
         </Pressable>
       </View>
     </View>
@@ -113,11 +114,12 @@ const products: {
   { label: "Deals", route: "/deals", icon: "deal" },
 ];
 export function SharedHomePage() {
+  const ft = useFlowTheme();
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={flowStyles.safe}>
-      <StatusBar style="dark" translucent backgroundColor="white" />
+    <View style={ft.styles.safe}>
+      <StatusBar style={ft.theme.dark ? "light" : "dark"} translucent backgroundColor={ft.colors.page} />
       <ScrollView
         style={styles.homeScroll}
         contentContainerStyle={styles.content}
@@ -127,7 +129,7 @@ export function SharedHomePage() {
           <HomeTopNavigation safeAreaTop={insets.top} />
           <HomeHero />
         </View>
-        <View style={[styles.products, flowStyles.shadow]}>
+        <View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>
           {products.map((product, index) => (
             <Pressable
               key={product.label}
@@ -136,17 +138,17 @@ export function SharedHomePage() {
               onPress={() => router.push(product.route)}
               style={({ pressed }) => [
                 styles.product,
-                index === 0 && styles.productActive,
-                pressed && flowStyles.pressed,
+                index === 0 && [styles.productActive, { backgroundColor: ft.colors.selected }],
+                pressed && ft.styles.pressed,
               ]}
             >
               <FlowIcon
                 name={product.icon}
-                color={index === 0 ? flowColors.blue : flowColors.navy}
+                color={index === 0 ? flowColors.blue : ft.colors.icon}
               />
               <Text
                 style={[
-                  styles.productText,
+                  styles.productText, { color: ft.colors.text },
                   index === 0 && styles.productTextActive,
                 ]}
               >
