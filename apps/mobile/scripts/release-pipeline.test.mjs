@@ -1,4 +1,3 @@
-
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -49,8 +48,6 @@ test('uncertain mobile path classification fails closed to the full suite', () =
 
 test('required Preview validation always concludes and gates automatic OTA after a successful dev push', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/mobile-preview-update.yml'), 'utf8');
-
-
   assert.match(workflow, /^name: Validate mobile preview$/m);
   assert.doesNotMatch(workflow, /^\s+paths:/m);
   assert.match(workflow, /Mobile validation not applicable/);
@@ -101,8 +98,6 @@ function testZip(content = '{"ok":true}', name = 'release-audit.json', { externa
   eocd.writeUInt32LE(0x06054b50, 0);
   eocd.writeUInt16LE(1, 8);
   eocd.writeUInt16LE(1, 10);
-
-
   eocd.writeUInt32LE(central.length + filename.length, 12);
   eocd.writeUInt32LE(centralOffset, 16);
   return Buffer.concat([local, filename, data, central, filename, eocd]);
@@ -153,8 +148,6 @@ test('Preview workflows validate the staging classification inside the mobile AP
   assert.match(build, /body\.data\?\.environment !== 'staging'/);
   assert.match(ota, /preview-ota-automation\.mjs wait-staging/);
   assert.match(automation, /body\?\.data\?\.environment === "staging"/);
-
-
   assert.doesNotMatch(`${build}\n${automation}`, /body\.environment !== ['"]staging['"]/);
 });
 test('Preview OTA uses only supported non-interactive flags and fails closed after baseline lookup', () => {
@@ -205,8 +198,6 @@ test('failed build submission still produces a safe audit with no empty-result p
 });
 test('delivery workflows require their protected environment token without repository fallback syntax', () => {
   const names = ['android-preview-ota.yml', 'android-preview-build.yml', 'android-production-delivery.yml'];
-
-
   for (const name of names) {
     const workflow = readFileSync(resolve(root, '../../.github/workflows', name), 'utf8');
     assert.match(workflow, /environment:\s*mobile-(?:preview-ota|preview-build|production)/);
@@ -257,8 +248,6 @@ test('supported GitHub artifact redirect downloads without forwarding authorizat
   const archive = testZip();
   const calls = [];
   const fetchImpl = async (url, options) => {
-
-
     calls.push({ url: String(url), options });
     if (calls.length === 1) return response(null, { status: 302, headers: { location: 'https://signed.example.test/archive.zip' } });
     return response(archive, { headers: { 'content-type': 'application/zip', 'content-length': String(archive.length) } });
@@ -309,8 +298,6 @@ test('reviewed artifact digest is verified before safe extraction', async () => 
 });
 test('corrupted, traversal, symlink, unexpected, and oversized ZIP content is rejected', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-zip-'));
-
-
   try {
     const corrupted = testZip();
     corrupted[30 + Buffer.byteLength('release-audit.json')] ^= 0xff;
@@ -361,8 +348,6 @@ test('sanitized end-to-end Preview OTA dry run reaches but never crosses publica
   assert.equal(result.artifactTransport.authorizationForwarded, false);
   assert.equal(result.artifactTransport.zipValidated, true);
   assert.equal(result.classifier.classification, 'ota-compatible');
-
-
   assert.deepEqual(result.channel.branches, ['preview']);
   assert.equal(result.staging.config.data.features.externalCheckout, false);
   assert.deepEqual(result.updateCommand, buildPreviewUpdateCommand(fixture.dispatch.releaseReason));
@@ -413,8 +398,6 @@ test('channel mapping is exact and unambiguous', () => {
       ...overrides,
     },
   });
-
-
   assert.deepEqual(verifyChannelMapping({ document: fixture(), expectedChannel: 'preview', expectedBranch: 'preview' }).branches, ['preview']);
   assert.throws(() => verifyChannelMapping({ document: fixture({ name: 'production' }), expectedChannel: 'preview', expectedBranch: 'preview' }), /name mismatch/);
   assert.throws(() => verifyChannelMapping({ document: fixture({ updateBranches: [{ id: 'branch-preview', name: 'production' }] }), expectedChannel: 'preview', expectedBranch: 'preview' }), /unexpected branch/);
@@ -465,8 +448,6 @@ test('first Production binary proposes versionCode 1 only for empty EAS and Play
   });
 });
 test('configured Production counters increment and never reset below Play history', () => {
-
-
   const result = resolveProductionVersionEvidence(productionVersionInput({
     versionOutput: 'Android versionCode - 7',
     history: productionHistory({ recordStatus: 'present', playApplicationRecord: 'present', uploadedBundles: [7, 5, 7], highestUploadedVersionCode: 7 }),
@@ -517,8 +498,6 @@ test('Production version resolution fails closed for errors, ambiguity, and stal
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ history: productionHistory({ package: 'com.kurioticket.app.preview' }) })), /package-mismatched/);
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ history: productionHistory({ evidenceReference: '' }) })), /stale|evidence/);
 });
-
-
 test('Production build freezes credentials, propagates CLI failure, and retains safe audit evidence', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
   assert.match(workflow, /set -o pipefail[\s\S]*eas-cli@16\.17\.4 build --platform android --profile production --non-interactive --freeze-credentials --json \| tee/);
@@ -569,8 +548,6 @@ test('Production delivery is manual-only, main-only, and requires the reviewed P
   assert.equal(history.highestUploadedVersionCode, null);
   assert.ok(Date.parse(history.verifiedAt));
   assert.ok(history.evidenceReference.includes('9106799153088925304'));
-
-
 });
 test('first Preview binary proposes versionCode 1 only with exact uninitialized state and no builds', () => {
   const result = resolvePreviewVersionEvidence({ versionOutput: 'No remote versions are configured for this project.\n', versionExitCode: 0, buildsOutput: '[]', buildsExitCode: 0, packageName: policy.preview.androidPackage, profile: 'preview', runtime: 'preview-0.3.0' });
@@ -621,8 +598,6 @@ test('Production rejects a commit not reachable from main', () => {
   assert.throws(() => validateSourcePolicy({ variant: 'production', refType: 'main', isReachableFromApprovedBranch: false }), /not reachable from main/);
 });
 test('uncertain or native-sensitive classification requires a build', () => {
-
-
   const common = { expectedRuntime: 'preview-0.3.0', actualRuntime: 'preview-0.3.0', expectedChannel: 'preview', actualChannel: 'preview' };
   assert.equal(classifyRelease({ files: ['apps/mobile/src/a.ts'], baselineFingerprint: '', currentFingerprint: '', ...common }).classification, 'native-build-required');
   assert.equal(classifyRelease({ files: ['apps/mobile/app.config.ts'], baselineFingerprint: 'a', currentFingerprint: 'a', ...common }).classification, 'native-build-required');
@@ -673,8 +648,6 @@ test('duplicate Preview SHA is detected only for the exact Android Preview runti
   assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([])), targetSha).historyState, 'empty');
   assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: 'b'.repeat(40) })])), targetSha).alreadyPublished, false);
   assert.equal(inspectPreviewUpdateHistory(normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, platforms: 'ios' })])), targetSha).alreadyPublished, false);
-
-
   assert.equal(inspectPreviewUpdateHistory([{ ...exact[0], runtimeVersion: 'production-0.3.0' }], targetSha).alreadyPublished, false);
   assert.equal(inspectPreviewUpdateHistory([{ ...exact[0], branch: 'production' }], targetSha).alreadyPublished, false);
   assert.throws(() => normalizePreviewUpdatePage(previewUpdatePage([previewUpdate({ sha: targetSha, runtimeVersion: 'production-0.3.0' })])), /runtime mismatch/);
@@ -725,8 +698,6 @@ test('automatic Preview workflow is Android-only and structurally isolated from 
 });
 test('automatic Preview publication remains ordered and every failed gate blocks update', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
-
-
   const baseline = workflow.indexOf('Resolve approved binary baseline');
   const replay = workflow.indexOf('Prevent duplicate publication');
   const classifier = workflow.indexOf('Classify complete baseline-to-target range');
@@ -770,4 +741,3 @@ test('EXPO_TOKEN is step scoped and updates publish through channels', () => {
     assert.doesNotMatch(workflow, /update --branch/);
   }
 });
-
