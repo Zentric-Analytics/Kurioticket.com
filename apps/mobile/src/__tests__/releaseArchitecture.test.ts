@@ -34,8 +34,8 @@ test("repository workflows cannot build, update, submit, or upload mobile artifa
   }
 });
 
-test("delivery workflows are manual-only, protected, and never submit", () => {
-  for (const [name, environment] of [["android-preview-ota.yml", "mobile-preview-ota"], ["android-preview-build.yml", "mobile-preview-build"], ["android-production-delivery.yml", "mobile-production"]]) {
+test("native and Production delivery workflows are manual-only, protected, and never submit", () => {
+  for (const [name, environment] of [["android-preview-build.yml", "mobile-preview-build"], ["android-production-delivery.yml", "mobile-production"]]) {
     const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
     assert.match(workflow, /^\s*workflow_dispatch:/m);
     assert.doesNotMatch(workflow, /^\s*(?:push|pull_request|schedule):/m);
@@ -44,6 +44,18 @@ test("delivery workflows are manual-only, protected, and never submit", () => {
     assert.match(workflow, /classify-release\.mjs/);
     assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|upload.*google play/i);
   }
+});
+
+test("Preview OTA is reusable only after validation and retains a protected manual break-glass path", () => {
+  const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/android-preview-ota.yml"), "utf8");
+  assert.match(workflow, /^\s*workflow_call:/m);
+  assert.match(workflow, /^\s*workflow_dispatch:/m);
+  assert.doesNotMatch(workflow, /^\s*(?:push|pull_request|schedule):/m);
+  assert.match(workflow, /environment: mobile-preview-ota/);
+  assert.match(workflow, /PREVIEW_TRIGGER_MODE/);
+  assert.match(workflow, /Resolve trusted Preview target/);
+  assert.match(workflow, /BREAK_GLASS_CONFIRMATION/);
+  assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+(?:build|submit)\s|--auto-submit|upload.*google play/i);
 });
 
 test("push and pull-request workflows remain validation-only", () => {
@@ -61,6 +73,10 @@ test("required Preview validation is always conclusive and conditionally runs th
   assert.match(workflow, /name: Classify mobile-relevant changes/);
   assert.match(workflow, /name: Mobile validation not applicable/);
   assert.match(workflow, /if: steps\.changes\.outputs\.mobile_relevant == 'false'/);
+  assert.match(workflow, /name: Evaluate automatic Android Preview OTA/);
+  assert.match(workflow, /needs: validate-preview/);
+  assert.match(workflow, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev' && needs\.validate-preview\.result == 'success'/);
+  assert.match(workflow, /target_sha: \$\{\{ github\.sha \}\}/);
   for (const step of [
     "Setup Node.js",
     "Install mobile dependencies",
@@ -74,7 +90,7 @@ test("required Preview validation is always conclusive and conditionally runs th
     "Validate Metro export",
     "Confirm delivery remains gated",
   ]) {
-    assert.match(workflow, new RegExp(`name: ${step}\\n\\s+if: steps\\.changes\\.outputs\\.mobile_relevant == 'true'`));
+    assert.match(workflow, new RegExp(`name: ${step}\\r?\\n\\s+if: steps\\.changes\\.outputs\\.mobile_relevant == 'true'`));
   }
   assert.doesNotMatch(workflow, /continue-on-error/);
 });

@@ -20,9 +20,19 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
     classifier: read(env.CLASSIFIER_PATH),
     versionCode: read(env.VERSION_EVIDENCE_PATH),
     deliveryResult: read(env.DELIVERY_RESULT_PATH),
+    trigger: read(env.TRIGGER_EVIDENCE_PATH),
+    replay: read(env.REPLAY_EVIDENCE_PATH),
+    stagingReadiness: read(env.STAGING_EVIDENCE_PATH),
   };
   const deliveryResult = evidence.deliveryResult.value;
   const easBuildId = deliveryResult?.id ?? (Array.isArray(deliveryResult) ? deliveryResult[0]?.id : null) ?? null;
+  const publicationDecision = easBuildId
+    ? 'published'
+    : evidence.replay.value?.alreadyPublished === true
+      ? 'already-published'
+      : evidence.classifier.value?.classification === 'native-build-required'
+        ? 'preview-build-required'
+        : 'blocked-or-not-reached';
   return {
     schemaVersion: 1,
     workflowRunId: env.WORKFLOW_RUN_ID,
@@ -38,12 +48,16 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
     channel: env.RELEASE_CHANNEL,
     baselineEasBuildId: env.BASELINE_EAS_BUILD_ID === 'NONE' ? null : env.BASELINE_EAS_BUILD_ID,
     easBuildId,
+    publicationDecision,
     baseline: evidence.baseline.value,
     channelMapping: evidence.channelMapping.value,
     fingerprint: evidence.fingerprint.value,
     classifier: evidence.classifier.value,
     versionCode: evidence.versionCode.value,
     deliveryResult: evidence.deliveryResult.value,
+    trigger: evidence.trigger.value,
+    replay: evidence.replay.value,
+    stagingReadiness: evidence.stagingReadiness.value,
     evidenceStatus: Object.fromEntries(Object.entries(evidence).map(([name, result]) => [name, result.status])),
     startedAt: env.WORKFLOW_STARTED_AT,
     completedAt,
