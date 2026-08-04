@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { FlowIcon } from "../flow/FlowIcon";
+import { HomepageFavoriteButton } from "./HomepageFavoriteButton";
 import { flowColors } from "../flow/flowStyles";
 
 export const popularDestinationStays = [
@@ -137,23 +137,15 @@ export function PopularDestinationStays() {
                   style={styles.image}
                   imageStyle={styles.imageCorners}
                 >
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
-                    accessibilityState={{ selected: saved }}
-                    hitSlop={8}
+                  <HomepageFavoriteButton
+                    saved={saved}
+                    label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
                     onPress={(event) => {
                       event.stopPropagation();
                       toggle(destination.id);
                     }}
-                    style={({ pressed }) => [
-                      styles.heart,
-                      saved && styles.heartSaved,
-                      pressed && styles.heartPressed,
-                    ]}
-                  >
-                    <FlowIcon name="heart" color="white" size={22} />
-                  </Pressable>
+                    style={styles.heart}
+                  />
                   <View pointerEvents="none" style={styles.copy}>
                     <Text style={styles.city}>{destination.city}</Text>
                     <Text style={styles.country}>{destination.country}</Text>
@@ -197,24 +189,7 @@ const styles = StyleSheet.create({
   },
   image: { flex: 1, justifyContent: "flex-end", padding: 16 },
   imageCorners: { borderRadius: 20 },
-  heart: {
-    position: "absolute",
-    top: 14,
-    right: 14,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.46)",
-    backgroundColor: "rgba(255,255,255,0.24)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heartSaved: {
-    borderColor: "rgba(255,255,255,0.72)",
-    backgroundColor: "rgba(6,76,247,0.92)",
-  },
-  heartPressed: { opacity: 0.76, transform: [{ scale: 0.94 }] },
+  heart: { position: "absolute", top: 14, right: 14 },
   copy: {
     zIndex: 1,
     alignSelf: "flex-start",
