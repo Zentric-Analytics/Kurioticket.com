@@ -91,9 +91,9 @@ type LocationApiResponse = {
   countryCode?: string | null;
 };
 const productOptions = {
-  hotel: { label: "hotels", Icon: BedDouble },
-  flight: { label: "flights", Icon: Plane },
-  car: { label: "cars", Icon: Car },
+  hotel: { label: "deals.product.hotel", Icon: BedDouble },
+  flight: { label: "deals.product.flight", Icon: Plane },
+  car: { label: "deals.product.car", Icon: Car },
 } as const;
 const field =
   "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-medium text-slate-900 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20";
@@ -177,14 +177,17 @@ function DealsCarPopover({
   anchorRef,
   width: preferredWidth,
   marker,
+  onDismiss,
   children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
   width: number;
-  marker: "dates" | "times";
+  marker: "dates" | "times" | "return-location";
+  onDismiss?: () => void;
   children: ReactNode;
 }) {
+  const popoverRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{
     left: number;
     top: number;
@@ -229,12 +232,35 @@ function DealsCarPopover({
       desktop.removeEventListener("change", updatePosition);
     };
   }, [anchorRef, open, preferredWidth]);
+  useEffect(() => {
+    if (!open || !onDismiss) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (
+        !popoverRef.current?.contains(target) &&
+        !anchorRef.current?.contains(target)
+      )
+        onDismiss();
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onDismiss();
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [anchorRef, onDismiss, open]);
   if (!open || !position || typeof document === "undefined") return null;
   return createPortal(
     <div
+      ref={popoverRef}
       {...(marker === "dates"
         ? { "data-deals-car-dates-popover": true }
-        : { "data-deals-car-times-popover": true })}
+        : marker === "times"
+          ? { "data-deals-car-times-popover": true }
+          : { "data-deals-car-return-location-popover": true })}
       className="fixed z-[1200] hidden overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:block"
       style={position}
     >
@@ -615,6 +641,7 @@ export function DealsSearchForm({
   const [mobileCarLocation, setMobileCarLocation] = useState<
     "pickup" | "return" | null
   >(null);
+  const [carReturnLocationOpen, setCarReturnLocationOpen] = useState(false);
   const [draftCarReturnLocation, setDraftCarReturnLocation] = useState(
     search.carReturnLocation,
   );
@@ -812,10 +839,12 @@ export function DealsSearchForm({
   }, []);
   const flightDatesSummary = useMemo(() => {
     const departure = parseIsoDate(search.flightDepartureDate);
-    const returning = parseIsoDate(search.flightReturnDate);
+    const returning = parseIsoDate(
+      search.flightTripType === "one-way"
+        ? search.sharedTravelEndDate
+        : search.flightReturnDate,
+    );
     if (!departure || isBeforeToday(departure)) return t("travelDates");
-    if (search.flightTripType === "one-way")
-      return formatFlightsDateSummary(departure, null, calendarLocale);
     return returning && !isBeforeToday(returning) && returning >= departure
       ? formatFlightsDateSummary(departure, returning, calendarLocale)
       : t("travelDates");
@@ -824,18 +853,25 @@ export function DealsSearchForm({
     isBeforeToday,
     search.flightDepartureDate,
     search.flightReturnDate,
+    search.sharedTravelEndDate,
     search.flightTripType,
     t,
   ]);
   const resetFlightDatesDraft = useCallback(() => {
-    setDraftFlightDepartureDate(search.flightDepartureDate);
+    setDraftFlightDepartureDate(
+      search.sharedTravelStartDate || search.flightDepartureDate,
+    );
     setDraftFlightReturnDate(
-      search.flightTripType === "round-trip" ? search.flightReturnDate : "",
+      search.flightTripType === "one-way"
+        ? search.sharedTravelEndDate
+        : search.flightReturnDate,
     );
   }, [
     search.flightDepartureDate,
     search.flightReturnDate,
     search.flightTripType,
+    search.sharedTravelEndDate,
+    search.sharedTravelStartDate,
   ]);
   const restoreFlightDatesFocus = () =>
     requestAnimationFrame(() =>
@@ -868,26 +904,21 @@ export function DealsSearchForm({
   const validDraftFlightRange = useMemo(() => {
     const departure = parseIsoDate(draftFlightDepartureDate);
     if (!departure || isBeforeToday(departure)) return false;
-    if (search.flightTripType === "one-way")
-      return draftFlightReturnDate === "";
     const returning = parseIsoDate(draftFlightReturnDate);
     return Boolean(
-      returning && !isBeforeToday(returning) && returning >= departure,
+      returning &&
+        !isBeforeToday(returning) &&
+        (included.hotel ? returning > departure : returning >= departure),
     );
   }, [
     draftFlightDepartureDate,
     draftFlightReturnDate,
     isBeforeToday,
-    search.flightTripType,
+    included.hotel,
   ]);
   const selectDraftFlightDate = (date: Date) => {
     if (isBeforeToday(date)) return;
     const selected = toIsoDate(date);
-    if (search.flightTripType === "one-way") {
-      setDraftFlightDepartureDate(selected);
-      setDraftFlightReturnDate("");
-      return;
-    }
     const departure = parseIsoDate(draftFlightDepartureDate);
     if (!departure || isBeforeToday(departure) || draftFlightReturnDate) {
       setDraftFlightDepartureDate(selected);
@@ -901,24 +932,20 @@ export function DealsSearchForm({
     const departure = parseIsoDate(draftFlightDepartureDate);
     if (!departure || isBeforeToday(departure)) return;
     const normalizedDeparture = toIsoDate(departure);
-    if (search.flightTripType === "one-way")
-      setSearch((current) =>
-        applySharedDates(current, {
-          start: normalizedDeparture,
-          end: current.sharedTravelEndDate,
-        }),
-      );
-    else {
-      const returning = parseIsoDate(draftFlightReturnDate);
-      if (!returning || isBeforeToday(returning) || returning < departure)
-        return;
-      setSearch((current) =>
-        applySharedDates(current, {
-          start: normalizedDeparture,
-          end: toIsoDate(returning),
-        }),
-      );
-    }
+    const returning = parseIsoDate(draftFlightReturnDate);
+    if (
+      !returning ||
+      isBeforeToday(returning) ||
+      returning < departure ||
+      (included.hotel && returning <= departure)
+    )
+      return;
+    setSearch((current) =>
+      applySharedDates(current, {
+        start: normalizedDeparture,
+        end: toIsoDate(returning),
+      }),
+    );
     if (mobile) mobileFlightDatesCommittedRef.current = true;
     else {
       setFlightDatesOpen(false);
@@ -933,7 +960,7 @@ export function DealsSearchForm({
         nextTripType === "round-trip" ? current.sharedTravelEndDate : "",
     }));
     setDraftFlightReturnDate(
-      nextTripType === "round-trip" ? search.sharedTravelEndDate : "",
+      search.sharedTravelEndDate,
     );
   };
   const closeMobileFlightDates = useCallback(() => {
@@ -1263,7 +1290,22 @@ export function DealsSearchForm({
     setCarTimesOpen(false);
     closeCarMobilePickers();
     if (kind === "return") setDraftCarReturnLocation(search.carReturnLocation);
-    setMobileCarLocation(kind);
+    if (window.matchMedia("(max-width: 639px)").matches)
+      setMobileCarLocation(kind);
+    else if (kind === "return") setCarReturnLocationOpen(true);
+    else setMobileCarLocation(kind);
+  };
+  const dismissCarReturnLocation = useCallback(() => {
+    setDraftCarReturnLocation(search.carReturnLocation);
+    setCarReturnLocationOpen(false);
+    restoreCarFocus(carReturnLocationLauncherRef);
+  }, [search.carReturnLocation]);
+  const commitCarReturnLocation = () => {
+    const location = draftCarReturnLocation.trim();
+    if (!location) return;
+    setSearch((current) => setCarReturnMode(current, true, location));
+    setCarReturnLocationOpen(false);
+    restoreCarFocus(carReturnLocationLauncherRef);
   };
   const openCarDates = () => {
     resetCarDatesDraft();
@@ -1553,6 +1595,7 @@ export function DealsSearchForm({
     }
     if (product === "car") {
       setMobileCarLocation(null);
+      setCarReturnLocationOpen(false);
       setCarDatesOpen(false);
       setMobileCarDatesOpen(false);
       setCarTimesOpen(false);
@@ -1989,11 +2032,8 @@ export function DealsSearchForm({
               );
             const disabled = isBeforeToday(date);
             const departure = iso === draftFlightDepartureDate;
-            const returning =
-              search.flightTripType === "round-trip" &&
-              iso === draftFlightReturnDate;
+            const returning = iso === draftFlightReturnDate;
             const inRange =
-              search.flightTripType === "round-trip" &&
               Boolean(
                 draftDeparture &&
                 draftReturn &&
@@ -2029,6 +2069,11 @@ export function DealsSearchForm({
     if (mobile)
       return (
         <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
+          {search.flightTripType === "one-way" ? (
+            <p className="text-sm font-bold text-slate-700">
+              {t("deals.packageEndDate")}
+            </p>
+          ) : null}
           {Array.from({ length: 12 }, (_, offset) =>
             renderMonth(addMonths(todayLocal, offset)),
           )}
@@ -2036,6 +2081,11 @@ export function DealsSearchForm({
       );
     return (
       <div className="mx-auto w-full max-w-2xl">
+        {search.flightTripType === "one-way" ? (
+          <p className="mb-3 text-sm font-bold text-slate-700">
+            {t("deals.packageEndDate")}
+          </p>
+        ) : null}
         <div className="mb-3 flex items-center justify-between gap-3">
           <button
             type="button"
@@ -2618,7 +2668,11 @@ export function DealsSearchForm({
                     />
                   </span>
                   <span>
-                    {t(value === "round-trip" ? "roundTrip" : "oneWay")}
+                    {t(
+                      value === "round-trip"
+                        ? "deals.tripType.return"
+                        : "deals.tripType.oneWay",
+                    )}
                   </span>
                 </button>
               ))}
@@ -2764,6 +2818,7 @@ export function DealsSearchForm({
                         type="button"
                         aria-haspopup="dialog"
                         aria-expanded={flightMobileAirport === kind}
+                        aria-controls={`deals-flight-mobile-${kind}-dialog`}
                         onClick={() => openFlightAirport(kind, true)}
                         className={`${field} flex items-center justify-between gap-2 text-start sm:hidden`}
                       >
@@ -3127,6 +3182,8 @@ export function DealsSearchForm({
                 ref={carPickupLocationLauncherRef}
                 type="button"
                 aria-haspopup="dialog"
+                aria-expanded={mobileCarLocation === "pickup"}
+                aria-controls="deals-car-mobile-pickup-location-dialog"
                 onClick={() => openCarLocation("pickup")}
                 className={`${field} flex items-center justify-between sm:hidden`}
               >
@@ -3156,8 +3213,14 @@ export function DealsSearchForm({
                 type="button"
                 ref={carReturnLocationLauncherRef}
                 aria-haspopup="dialog"
-                aria-expanded={mobileCarLocation === "return"}
-                aria-controls="deals-car-mobile-return-location"
+                aria-expanded={
+                  carReturnLocationOpen || mobileCarLocation === "return"
+                }
+                aria-controls={
+                  mobileCarLocation === "return"
+                    ? "deals-car-mobile-return-location-dialog"
+                    : "deals-car-desktop-return-location"
+                }
                 onClick={() => openCarLocation("return")}
                 className={`${field} ${connectedField} flex items-center justify-between text-start`}
               >
@@ -3189,6 +3252,11 @@ export function DealsSearchForm({
                 type="button"
                 aria-haspopup="dialog"
                 aria-expanded={carDatesOpen || mobileCarDatesOpen}
+                aria-controls={
+                  mobileCarDatesOpen
+                    ? "deals-car-mobile-dates"
+                    : "deals-car-desktop-dates"
+                }
                 onClick={() =>
                   carDatesOpen ? dismissCarDates(true) : openCarDates()
                 }
@@ -3221,6 +3289,13 @@ export function DealsSearchForm({
               <button
                 ref={carTimesLauncherRef}
                 type="button"
+                aria-haspopup="dialog"
+                aria-expanded={carTimesOpen || mobileCarTimesOpen}
+                aria-controls={
+                  mobileCarTimesOpen
+                    ? "deals-car-mobile-times"
+                    : "deals-car-desktop-times"
+                }
                 onClick={() => openCarTimes()}
                 className={`${field} text-start`}
               >
@@ -3300,6 +3375,7 @@ export function DealsSearchForm({
             open={flightMobileAirport === kind}
             title={t(kind)}
             titleId={`deals-flight-mobile-${kind}-title`}
+            dialogId={`deals-flight-mobile-${kind}-dialog`}
             launcherRef={launcherRef}
             onClose={() => setFlightMobileAirport(null)}
             contentClassName="px-4 py-5"
@@ -3432,7 +3508,8 @@ export function DealsSearchForm({
       <FlightMobilePickerShell
         open={mobileFlightDatesOpen}
         title={t("chooseTravelDates")}
-        titleId="deals-flight-mobile-dates"
+        titleId="deals-flight-mobile-dates-title"
+        dialogId="deals-flight-mobile-dates"
         launcherRef={flightDatesLauncherRef}
         onClose={closeMobileFlightDates}
         pickerMarker="flight-date"
@@ -3487,7 +3564,8 @@ export function DealsSearchForm({
       <FlightMobilePickerShell
         open={mobileTravelersOpen}
         title={t("deals.travellersRooms")}
-        titleId="deals-mobile-travellers"
+        titleId="deals-mobile-travellers-title"
+        dialogId="deals-mobile-travellers"
         launcherRef={travelersLauncherRef}
         onClose={closeMobileTravelers}
         contentClassName="px-4 py-5"
@@ -3544,7 +3622,8 @@ export function DealsSearchForm({
       <HotelMobilePickerShell
         open={mobileHotelDatesOpen}
         title={t("chooseTravelDates")}
-        titleId="deals-hotel-mobile-dates"
+        titleId="deals-hotel-mobile-dates-title"
+        dialogId="deals-hotel-mobile-dates"
         launcherRef={hotelDatesLauncherRef}
         onClose={closeMobileHotelDates}
         contentClassName="px-4 py-5"
@@ -3576,6 +3655,51 @@ export function DealsSearchForm({
       >
         {renderHotelDatesCalendar(true)}
       </HotelMobilePickerShell>
+      <DealsCarPopover
+        open={carReturnLocationOpen}
+        anchorRef={carReturnLocationLauncherRef}
+        width={360}
+        marker="return-location"
+        onDismiss={dismissCarReturnLocation}
+      >
+        <div
+          id="deals-car-desktop-return-location"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="deals-car-desktop-return-location-title"
+        >
+          <h3
+            id="deals-car-desktop-return-location-title"
+            className="mb-3 text-base font-extrabold text-slate-950"
+          >
+            {t("deals.returnLocation")}
+          </h3>
+          <input
+            value={draftCarReturnLocation}
+            placeholder={t("carsSearch.returnLocationPlaceholder")}
+            autoComplete="off"
+            onChange={(event) => setDraftCarReturnLocation(event.target.value)}
+            className={field}
+          />
+          <div className="mt-4 flex justify-end gap-3 border-t border-slate-100 pt-3">
+            <button
+              type="button"
+              onClick={dismissCarReturnLocation}
+              className="focus-ring min-h-10 rounded-xl px-4 text-sm font-extrabold text-slate-700 hover:bg-slate-100"
+            >
+              {t("cancel")}
+            </button>
+            <button
+              type="button"
+              disabled={!draftCarReturnLocation.trim()}
+              onClick={commitCarReturnLocation}
+              className="focus-ring min-h-10 rounded-xl bg-[#004BB8] px-5 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t("done")}
+            </button>
+          </div>
+        </div>
+      </DealsCarPopover>
       <DealsCarPopover
         open={carDatesOpen}
         anchorRef={carDatesLauncherRef}
@@ -3658,7 +3782,8 @@ export function DealsSearchForm({
             key={kind}
             open={mobileCarLocation === kind}
             title={title}
-            titleId={`deals-car-mobile-${kind}-location`}
+            titleId={`deals-car-mobile-${kind}-location-title`}
+            dialogId={`deals-car-mobile-${kind}-location-dialog`}
             launcherRef={launcherRef}
             onClose={() => {
               if (!pickup) setDraftCarReturnLocation(search.carReturnLocation);
@@ -3738,7 +3863,8 @@ export function DealsSearchForm({
       <FlightMobilePickerShell
         open={mobileCarDatesOpen}
         title={t("carsSearch.chooseRentalDates")}
-        titleId="deals-car-mobile-dates"
+        titleId="deals-car-mobile-dates-title"
+        dialogId="deals-car-mobile-dates"
         launcherRef={carDatesLauncherRef}
         onClose={closeMobileCarDates}
         contentClassName="overflow-x-hidden px-4 py-5"
@@ -3773,7 +3899,8 @@ export function DealsSearchForm({
       <FlightMobilePickerShell
         open={mobileCarTimesOpen}
         title={t("carsSearch.pickupReturnTimeLabel")}
-        titleId="deals-car-mobile-times"
+        titleId="deals-car-mobile-times-title"
+        dialogId="deals-car-mobile-times"
         launcherRef={carTimesLauncherRef}
         onClose={closeMobileCarTimes}
         contentClassName="overflow-x-hidden px-4 py-5"
@@ -3798,7 +3925,8 @@ export function DealsSearchForm({
       <FlightMobilePickerShell
         open={mobileCarDriverAgeOpen}
         title={t("carsSearch.driverAgeLabel")}
-        titleId="deals-car-mobile-driver-age"
+        titleId="deals-car-mobile-driver-age-title"
+        dialogId="deals-car-mobile-driver-age"
         launcherRef={carDriverAgeLauncherRef}
         onClose={closeMobileCarDriverAge}
         contentClassName="overflow-x-hidden px-4 py-5"

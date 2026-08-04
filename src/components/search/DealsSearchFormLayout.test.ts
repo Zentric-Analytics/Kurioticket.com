@@ -42,7 +42,8 @@ test("the shared travellers picker keeps its mobile behavior without an unsuppor
   );
   assert.match(form, /commitTravelers\(true\);[\s\S]{0,40}requestClose\(\);/);
   assert.match(form, /id="deals-desktop-travellers"/);
-  assert.match(form, /titleId="deals-mobile-travellers"/);
+  assert.match(form, /titleId="deals-mobile-travellers-title"/);
+  assert.match(form, /dialogId="deals-mobile-travellers"/);
   assert.doesNotMatch(form, /hotelGuests(?:Open|Picker|Launcher)/);
   assert.doesNotMatch(form, /pickerMarker="shared-travellers"/);
 });

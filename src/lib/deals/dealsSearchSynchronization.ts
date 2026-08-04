@@ -127,6 +127,23 @@ export function transitionDealsMode(
   const was = getIncludedProducts(search.mode);
   const next = getIncludedProducts(mode);
   let transitioned = { ...search, mode };
+  if (was.flight && !next.flight && next.hotel) {
+    transitioned = {
+      ...transitioned,
+      sharedDestination: transitioned.hotelDestination,
+      sharedTravelStartDate: transitioned.hotelCheckIn,
+      sharedTravelEndDate: transitioned.hotelCheckOut,
+      ...(transitioned.carPickupLinked
+        ? { carPickupLocation: transitioned.hotelDestination }
+        : {}),
+      ...(transitioned.carDatesLinked
+        ? {
+            carPickupDate: transitioned.hotelCheckIn,
+            carReturnDate: transitioned.hotelCheckOut,
+          }
+        : {}),
+    };
+  }
   if (!was.flight && next.flight)
     transitioned = {
       ...transitioned,
@@ -169,9 +186,10 @@ export function setCarReturnMode(
   customized: boolean,
   location = "",
 ): DealsSearch {
+  const normalizedLocation = location.trim();
   return {
     ...search,
-    carReturnToDifferentLocation: customized,
-    carReturnLocation: customized ? location : "",
+    carReturnToDifferentLocation: customized && Boolean(normalizedLocation),
+    carReturnLocation: customized ? normalizedLocation : "",
   };
 }

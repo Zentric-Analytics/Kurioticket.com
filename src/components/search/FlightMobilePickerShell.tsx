@@ -21,6 +21,7 @@ type FlightMobilePickerShellProps = {
   open: boolean;
   title: string;
   titleId: string;
+  dialogId?: string;
   launcherRef?: RefObject<HTMLElement | null>;
   children:
     | ReactNode
@@ -131,6 +132,7 @@ export function FlightMobilePickerShell({
   open,
   title,
   titleId,
+  dialogId,
   launcherRef,
   children,
   footer,
@@ -332,6 +334,7 @@ export function FlightMobilePickerShell({
       className="fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden"
     >
       <div
+        id={dialogId}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
