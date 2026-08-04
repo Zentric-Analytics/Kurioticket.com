@@ -245,6 +245,10 @@ export function parseDealsSearchParams(input: QueryInput): DealsSearch {
     (included.car && carDatesLinked ? carReturnDate : "") ||
     (included.hotel ? hotelCheckOut : "") ||
     (included.car ? carReturnDate : "");
+  const customCarReturnLocation = get(input, "carReturnLocation").trim();
+  const customCarReturn =
+    bool(get(input, "carReturnToDifferentLocation")) &&
+    Boolean(customCarReturnLocation);
   return {
     mode,
     flightTripType,
@@ -270,20 +274,22 @@ export function parseDealsSearchParams(input: QueryInput): DealsSearch {
     flightInfants: integer(get(input, "flightInfants"), defaults.flightInfants),
     flightCabinClass:
       cabin === "business" || cabin === "first" ? cabin : "economy",
-    hotelDestination,
-    hotelCheckIn,
-    hotelCheckOut,
+    hotelDestination: stayDestinationLinked
+      ? sharedDestination
+      : hotelDestination,
+    hotelCheckIn: stayDatesLinked ? sharedTravelStartDate : hotelCheckIn,
+    hotelCheckOut: stayDatesLinked ? sharedTravelEndDate : hotelCheckOut,
     hotelAdults: sharedAdults,
     hotelChildren: sharedChildren,
     hotelRooms: integer(get(input, "hotelRooms"), defaults.hotelRooms),
     hotelPetFriendly: bool(get(input, "hotelPetFriendly")),
-    carPickupLocation,
-    carReturnToDifferentLocation: bool(
-      get(input, "carReturnToDifferentLocation"),
-    ),
-    carReturnLocation: get(input, "carReturnLocation"),
-    carPickupDate,
-    carReturnDate,
+    carPickupLocation: carPickupLinked
+      ? sharedDestination
+      : carPickupLocation,
+    carReturnToDifferentLocation: customCarReturn,
+    carReturnLocation: customCarReturn ? customCarReturnLocation : "",
+    carPickupDate: carDatesLinked ? sharedTravelStartDate : carPickupDate,
+    carReturnDate: carDatesLinked ? sharedTravelEndDate : carReturnDate,
     carPickupTime: timeOptions.includes(get(input, "carPickupTime"))
       ? get(input, "carPickupTime")
       : defaults.carPickupTime,

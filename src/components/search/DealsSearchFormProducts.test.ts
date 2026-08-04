@@ -14,9 +14,9 @@ test("one shared selector renders three pressed product buttons rather than pack
   assert.match(form, /dealsProductOrder\.map/);
   assert.match(form, /data-deals-product=\{product\}/);
   assert.match(form, /type="button"[\s\S]{0,100}aria-pressed=\{selected\}/);
-  assert.match(form, /hotel: \{ label: "hotels"/);
-  assert.match(form, /flight: \{ label: "flights"/);
-  assert.match(form, /car: \{ label: "cars"/);
+  assert.match(form, /hotel: \{ label: "deals\.product\.hotel"/);
+  assert.match(form, /flight: \{ label: "deals\.product\.flight"/);
+  assert.match(form, /car: \{ label: "deals\.product\.car"/);
   assert.doesNotMatch(form, /type="radio" name="packageMode"/);
   assert.match(modify, /<DealsSearchForm/);
 });

@@ -39,9 +39,11 @@ const valid = (): DealsSearch => ({
   hotelDestination: "Los Angeles",
   hotelCheckIn: "2099-02-03",
   hotelCheckOut: "2099-02-07",
+  stayDatesLinked: false,
   carPickupLocation: "Los Angeles",
   carPickupDate: "2099-02-04",
   carReturnDate: "2099-02-06",
+  carDatesLinked: false,
 });
 test("fresh defaults leave every product date empty and show placeholders", () => {
   const search = createDefaultDealsSearch();
@@ -376,5 +378,64 @@ test("legacy party precedence follows package mode", () => {
       hotelCar.hotelChildren,
     ],
     [8, 8, 3, 3],
+  );
+});
+
+test("legacy linked provider fields hydrate from canonical Flight values", () => {
+  for (const mode of ["hotel-flight", "flight-car", "hotel-flight-car"] as const) {
+    const parsed = parseDealsSearchParams(
+      new URLSearchParams({
+        mode,
+        flightDestinationText: "Paris",
+        flightDepartureDate: "2099-06-01",
+        flightReturnDate: "2099-06-08",
+      }),
+    );
+    assert.equal(parsed.sharedDestination, "Paris");
+    if (getIncludedProducts(mode).hotel)
+      assert.deepEqual(
+        [parsed.hotelDestination, parsed.hotelCheckIn, parsed.hotelCheckOut],
+        ["Paris", "2099-06-01", "2099-06-08"],
+      );
+    if (getIncludedProducts(mode).car)
+      assert.deepEqual(
+        [parsed.carPickupLocation, parsed.carPickupDate, parsed.carReturnDate],
+        ["Paris", "2099-06-01", "2099-06-08"],
+      );
+  }
+});
+
+test("explicit detached legacy fields survive hydration and blank custom returns normalize", () => {
+  const parsed = parseDealsSearchParams(
+    new URLSearchParams({
+      mode: "hotel-flight-car",
+      sharedDestination: "Paris",
+      sharedTravelStartDate: "2099-07-01",
+      sharedTravelEndDate: "2099-07-09",
+      hotelDestination: "Lyon",
+      hotelCheckIn: "2099-07-02",
+      hotelCheckOut: "2099-07-08",
+      carPickupLocation: "Orly",
+      carPickupDate: "2099-07-03",
+      carReturnDate: "2099-07-07",
+      stayDestinationLinked: "false",
+      stayDatesLinked: "false",
+      carPickupLinked: "false",
+      carDatesLinked: "false",
+      carReturnToDifferentLocation: "true",
+      carReturnLocation: "   ",
+    }),
+  );
+  assert.deepEqual(
+    [parsed.hotelDestination, parsed.hotelCheckIn, parsed.hotelCheckOut],
+    ["Lyon", "2099-07-02", "2099-07-08"],
+  );
+  assert.deepEqual(
+    [parsed.carPickupLocation, parsed.carPickupDate, parsed.carReturnDate],
+    ["Orly", "2099-07-03", "2099-07-07"],
+  );
+  assert.deepEqual(
+    [parsed.carReturnToDifferentLocation, parsed.carReturnLocation],
+    [false, ""],
   );
 });

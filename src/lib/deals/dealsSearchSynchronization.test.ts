@@ -59,7 +59,20 @@ test("reset actions use current shared values and restore future synchronization
 test("hotel and car become visible primary shared editors when Flight is removed", () => {
   let search = applySharedDestination(base(), "Lisbon", "Lisbon (LIS)");
   search = applySharedDates(search, { start: "2099-03-01", end: "2099-03-09" });
+  search = customizeInheritedField(search, "stayDestination", "Sintra");
+  search = customizeInheritedField(search, "stayDates", {
+    start: "2099-03-02",
+    end: "2099-03-08",
+  });
   search = transitionDealsMode(search, "hotel-car");
+  assert.deepEqual(
+    [search.sharedDestination, search.sharedTravelStartDate, search.sharedTravelEndDate],
+    ["Sintra", "2099-03-02", "2099-03-08"],
+  );
+  assert.deepEqual(
+    [search.carPickupLocation, search.carPickupDate, search.carReturnDate],
+    ["Sintra", "2099-03-02", "2099-03-08"],
+  );
   search = applySharedDestination(search, "Porto");
   assert.equal(search.hotelDestination, "Porto");
   assert.equal(search.carPickupLocation, "Porto");
@@ -133,5 +146,42 @@ test("car return mode has one explicit transition", () => {
   assert.deepEqual(
     [search.carReturnToDifferentLocation, search.carReturnLocation],
     [false, ""],
+  );
+  search = setCarReturnMode(search, true, "   ");
+  assert.deepEqual(
+    [search.carReturnToDifferentLocation, search.carReturnLocation],
+    [false, ""],
+  );
+});
+
+test("removing and re-adding Flight preserves detached Stay and Car values", () => {
+  let search = customizeInheritedField(base(), "stayDestination", "Versailles");
+  search = customizeInheritedField(search, "carPickup", "Orly");
+  search = customizeInheritedField(search, "carDates", {
+    start: "2099-05-02",
+    end: "2099-05-04",
+  });
+  search = { ...search, hotelCheckIn: "2099-05-01", hotelCheckOut: "2099-05-05" };
+  search = transitionDealsMode(search, "hotel-car");
+  search = transitionDealsMode(search, "hotel-flight-car");
+  assert.deepEqual(
+    [
+      search.flightDestinationText,
+      search.flightDepartureDate,
+      search.flightReturnDate,
+      search.hotelDestination,
+      search.carPickupLocation,
+      search.carPickupDate,
+      search.carReturnDate,
+    ],
+    [
+      "Versailles",
+      "2099-05-01",
+      "2099-05-05",
+      "Versailles",
+      "Orly",
+      "2099-05-02",
+      "2099-05-04",
+    ],
   );
 });
