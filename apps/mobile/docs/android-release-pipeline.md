@@ -21,6 +21,14 @@ The marketing versions converge at `0.3.0`, while environment-prefixed runtimes 
 
 Pull-request and branch-push workflows validate only. Delivery is available solely through `workflow_dispatch`. The Preview workflows are structurally separated: `mobile-preview-ota` has no reviewer and can only publish a fingerprint-compatible update from `dev`; `mobile-preview-build` requires `ZentricAnalytics` approval and can only start a native Android build from `dev`. Both environments disable admin bypass, allow only `dev`, and require distinct environment-scoped Preview tokens. The old `mobile-preview` environment must remain until both replacements are configured and verified, then may be removed separately.
 
+### Production source promotion
+
+`dev` is the continuous-integration and staging branch; `main` contains only owner-approved Production snapshots. The required history invariant is that `main` remains an ancestor of `dev`, while normal team work keeps `dev` ahead. A merge to either branch remains validation-only and cannot itself build, upload, submit, publish an OTA update, or release to customers.
+
+For a Production release, cut `release/mobile-vX.Y.Z` from one exact approved `dev` SHA and open that immutable release branch into `main`. Team work may continue on `dev` while the release branch receives only explicitly approved release fixes. Every release fix must be merged back into `dev` so the ancestry invariant is preserved. Before an administrator merges the release PR, review the complete `main...release/mobile-vX.Y.Z` diff and rerun Production release validation against its exact head SHA. Only an authorized owner or organization administrator may merge into `main`.
+
+The resulting immutable `main` SHA is the sole Production build source. Production build, Play upload, Internal testing, OTA publication, and public rollout remain separate owner approvals. A direct `dev`-to-`main` PR is reserved for a deliberately short merge pause where the approved `dev` SHA will not move during review; the dedicated release branch is the default because it preserves team delivery speed without mutating the Production candidate.
+
 `mobile-production` retains `ZentricAnalytics` review, disabled environment admin bypass, a dedicated Production token, and `main` only. Production release-tag support is future capability: no `mobile-prod-v*` tags or tag rules are authorized until a release-operator team is approved. The existing organization-administrator bypass on `main` is temporary emergency break-glass access and must not be used for routine releases.
 
 Each Preview dispatcher has one fixed action and supplies an exact SHA, runtime, package, channel, nonblank reason, and confirmation phrase. Preview OTA additionally requires an approved EAS build ID and verifies live EAS build metadata against an immutable repository-reviewed binary manifest before generating the current Android fingerprint. The dispatcher cannot supply baseline source, workflow-run, artifact, or fingerprint evidence.
@@ -69,6 +77,8 @@ Preview rollout requires separate approval to create its EAS-managed keystore, r
 
 Production requires separate approvals to create the `com.kurioticket.app` Play record, create its dedicated upload keystore, select and enroll in Play App Signing, build an AAB from approved `main`, upload to Internal testing, and advance any track. Public rollout is never implied by an internal upload.
 
+EAS remains the active secure store for the Production upload keystore. The owner-approved protected export is deferred to final operational hardening: it is not a blocker for ancestry reconciliation, release-PR preparation, the first Production AAB, or Internal testing. A verified encrypted organizational backup is required before broader or public rollout, final blueprint completion, and operational-hardening sign-off. Repository workflows must never export the keystore.
+
 ## Rollback and emergency stop
 
 - Preview OTA: republish the last approved compatible Preview update.
@@ -82,3 +92,4 @@ Emergency stop: cancel pending workflow runs, withhold environment approval, rem
 ## Legacy preservation
 
 The `com.kurioticket.mobile` Play draft, Android keystore, Preview APK, Production AAB, and runtime `0.2.0` update branches/history remain untouched for audit and rollback reference. New workflows reject the legacy package and runtime. Legacy credentials and artifacts are not reused by either new identity.
+
