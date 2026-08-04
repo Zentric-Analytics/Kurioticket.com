@@ -15,6 +15,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   validate-preview:
@@ -133,3 +134,14 @@ jobs:
       - name: Confirm delivery remains gated
         if: steps.changes.outputs.mobile_relevant == 'true'
         run: echo "Validation complete. EAS Updates and native builds require a separately approved workflow."
+
+  automatic-preview-ota:
+    name: Evaluate automatic Android Preview OTA
+    needs: validate-preview
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.validate-preview.result == 'success'
+    uses: ./.github/workflows/android-preview-ota.yml
+    with:
+      target_sha: ${{ github.sha }}
+      trigger_mode: automatic
+      release_reason: Automated safe Preview OTA evaluation for validated dev integration
+    secrets: inherit
