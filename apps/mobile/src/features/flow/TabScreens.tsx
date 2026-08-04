@@ -223,7 +223,7 @@ function ProfileRow({ label, route, icon, trailing }: (typeof rows)[number]) {
       ]}
     >
       <FlowIcon name={icon} size={20} color={ft.colors.icon} />
-      <Text style={[flowStyles.value, styles.grow]}>{label}</Text>
+      <Text style={[ft.styles.value, styles.grow]}>{label}</Text>
       {trailing ? <Text style={ft.styles.meta}>{trailing}</Text> : null}
       <FlowIcon name="chevron" size={17} color={ft.colors.icon} />
     </Pressable>

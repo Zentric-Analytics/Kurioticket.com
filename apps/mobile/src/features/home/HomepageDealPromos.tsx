@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
-import { flowColors, flowStyles } from "../flow/flowStyles";
+import { flowColors, flowStyles, useFlowTheme } from "../flow/flowStyles";
 
 type DealPromo = {
   title: string;
@@ -33,6 +33,7 @@ const homepageDealPromos: readonly DealPromo[] = [
 ] as const;
 
 export function HomepageDealPromos() {
+  const ft = useFlowTheme();
   return (
     <View testID="homepage-deal-promos" style={styles.section}>
       {homepageDealPromos.map((promo) => (
@@ -41,14 +42,14 @@ export function HomepageDealPromos() {
           style={[
             styles.card,
             flowStyles.shadow,
-            { backgroundColor: promo.backgroundColor },
+            { backgroundColor: ft.theme.dark ? ft.colors.surface : promo.backgroundColor, borderColor: ft.theme.dark ? ft.colors.border : "rgba(6,76,247,0.08)" },
           ]}
         >
           <View style={styles.copy}>
-            <Text accessibilityRole="header" style={styles.heading}>
+            <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>
               {promo.title}
             </Text>
-            <Text style={styles.description}>{promo.description}</Text>
+            <Text style={[styles.description, { color: ft.colors.textSecondary }]}>{promo.description}</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={promo.buttonLabel}
@@ -83,13 +84,11 @@ const styles = StyleSheet.create({
   },
   copy: { flex: 1, alignItems: "flex-start", gap: 10, paddingRight: 12 },
   heading: {
-    color: flowColors.navy,
     fontSize: 21,
     lineHeight: 27,
     fontWeight: "800",
   },
   description: {
-    color: flowColors.muted,
     fontSize: 14,
     lineHeight: 21,
   },
