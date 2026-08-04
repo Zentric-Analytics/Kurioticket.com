@@ -12,6 +12,7 @@ import {
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors, flowStyles } from "../flow/flowStyles";
+import { HomepageFavoriteButton } from "./HomepageFavoriteButton";
 
 type AdventureCard = {
   id: string;
@@ -119,19 +120,15 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
             style={styles.image}
           />
         )}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={saved ? "Remove from saved routes" : "Save route"}
-          accessibilityState={{ selected: saved }}
-          hitSlop={8}
+        <HomepageFavoriteButton
+          saved={saved}
+          label={saved ? "Remove from saved routes" : "Save route"}
           onPress={(event) => {
             event.stopPropagation();
             toggle(card.id);
           }}
-          style={[styles.heart, saved && styles.heartSaved]}
-        >
-          <FlowIcon name="heart" color={saved ? "#E11D48" : "#64748B"} size={17} />
-        </Pressable>
+          style={styles.heart}
+        />
       </View>
       <View style={styles.cardCopy}>
         <Text numberOfLines={2} style={styles.cardTitle}>{card.title}</Text>
@@ -188,8 +185,7 @@ const styles = StyleSheet.create({
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4, backgroundColor: "#EAF2FF" },
   fallbackLabel: { color: "#475569", fontSize: 10, fontWeight: "600", letterSpacing: 1.4 },
   fallbackCode: { color: flowColors.navy, fontSize: 12, fontWeight: "900", letterSpacing: 1.4 },
-  heart: { position: "absolute", right: 12, top: 12, width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.8)", backgroundColor: "rgba(255,255,255,0.92)", alignItems: "center", justifyContent: "center" },
-  heartSaved: { borderColor: "#FECDD3", backgroundColor: "#FFF1F2" },
+  heart: { position: "absolute", right: 12, top: 12 },
   cardCopy: { flex: 1, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 12 },
   cardTitle: { minHeight: 36, color: "#020617", fontSize: 14, lineHeight: 18, fontWeight: "600", letterSpacing: -0.1 },
   route: { color: "#334155", fontSize: 12, lineHeight: 20, fontWeight: "600" },
