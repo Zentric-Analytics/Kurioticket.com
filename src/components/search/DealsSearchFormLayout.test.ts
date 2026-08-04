@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 
-const form = readFileSync(new URL("./DealsSearchForm.tsx", import.meta.url), "utf8");
+const form = readFileSync(
+  new URL("./DealsSearchForm.tsx", import.meta.url),
+  "utf8",
+);
 const mobilePickerShell = readFileSync(
   new URL("./FlightMobilePickerShell.tsx", import.meta.url),
   "utf8",
@@ -31,13 +34,16 @@ test("the approved primary row field labels are explicit", () => {
 test("the shared travellers picker keeps its mobile behavior without an unsupported marker", () => {
   assert.match(
     form,
-    /onClick=\{\(\) => travelersOpen \? dismissDesktopTravelers\(\) : openTravelers\(\)\}/,
+    /onClick=\{\(\) =>[\s\S]{0,80}travelersOpen[\s\S]{0,80}dismissDesktopTravelers\(\)[\s\S]{0,80}openTravelers\(\)/,
   );
   assert.match(
     form,
-    /<FlightMobilePickerShell open=\{mobileTravelersOpen\}[\s\S]*?onClose=\{closeMobileTravelers\}[\s\S]*?>\{travelersPicker\}<\/FlightMobilePickerShell>/,
+    /<FlightMobilePickerShell[\s\S]*?open=\{mobileTravelersOpen\}[\s\S]*?onClose=\{closeMobileTravelers\}[\s\S]*?>[\s\S]*?\{travelersPicker\}[\s\S]*?<\/FlightMobilePickerShell>/,
   );
-  assert.match(form, /commitTravelers\(true\); requestClose\(\);/);
+  assert.match(form, /commitTravelers\(true\);[\s\S]{0,40}requestClose\(\);/);
+  assert.match(form, /id="deals-desktop-travellers"/);
+  assert.match(form, /titleId="deals-mobile-travellers"/);
+  assert.doesNotMatch(form, /hotelGuests(?:Open|Picker|Launcher)/);
   assert.doesNotMatch(form, /pickerMarker="shared-travellers"/);
 });
 
