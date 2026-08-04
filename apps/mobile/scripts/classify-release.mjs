@@ -4,8 +4,8 @@ import { pathToFileURL } from "node:url";
 import { loadReleaseFiles } from "./release-policy.mjs";
 
 const NATIVE_PATTERNS = [
-  /(^|\/)android\//,
-  /(^|\/)ios\//,
+  /^apps\/mobile\/android\//,
+  /^apps\/mobile\/ios\//,
   /(^|\/)(app\.config\.(?:js|ts)|app\.json|eas\.json|release-policy\.json)$/,
   /(^|\/)(package|npm-shrinkwrap)\.json$/,
   /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/,

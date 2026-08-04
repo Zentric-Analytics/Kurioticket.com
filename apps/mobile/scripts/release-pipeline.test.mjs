@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import test from 'node:test';
 import { classifyRelease } from './classify-release.mjs';
 import { validateSourcePolicy, validateStaticDeliveryInputs } from './delivery-policy.mjs';
+import { buildPreviewUpdateCommand, runPreviewOtaDryRun } from './dry-run-preview-ota.mjs';
 import { downloadArtifactArchive, extractReviewedAudit, fetchGithubBuildAttestation } from './fetch-github-build-attestation.mjs';
 import { assertReleasePolicy, loadReleaseFiles } from './release-policy.mjs';
 import { resolvePreviewVersionEvidence } from './resolve-preview-version-code.mjs';
@@ -269,6 +270,45 @@ test('artifact verification remains ordered before fingerprint, channel, and pub
   assert.doesNotMatch(workflow.slice(download, publication), /continue-on-error|if:\s*always\(\)/);
   assert.doesNotMatch(workflow, /\bunzip\b/);
 });
+test('Preview OTA classification failure exits before channel lookup and publication', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
+  const classifier = workflow.indexOf('node scripts/classify-release.mjs');
+  const failure = workflow.indexOf('Preview change is not OTA-compatible');
+  const channel = workflow.indexOf('channel:view preview');
+  const publication = workflow.indexOf('update --channel preview');
+  assert.ok(classifier >= 0 && classifier < failure && failure < channel && channel < publication);
+  assert.match(workflow.slice(classifier, channel), /> "\$RUNNER_TEMP\/release-classification\.json" \|\| \{[\s\S]*exit "\$status"/);
+  assert.doesNotMatch(workflow.slice(classifier, channel), /\|\s*tee|continue-on-error/);
+});
+test('sanitized end-to-end Preview OTA dry run reaches but never crosses publication boundary', async () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
+  const fixture = JSON.parse(readFileSync(resolve(root, 'scripts/fixtures/preview-ota-dry-run.json'), 'utf8'));
+  const manifest = JSON.parse(readFileSync(resolve(root, 'release-baselines/android/preview.json'), 'utf8'));
+  const result = await runPreviewOtaDryRun({ fixture, workflow, manifest, policy, eas });
+  assert.equal(result.status, 'publication-boundary-reached');
+  assert.equal(result.published, false);
+  assert.equal(result.stages.length, 24);
+  assert.ok(result.stages.every(({ status }) => status === 'passed'));
+  assert.equal(result.baseline.sourceVerification, 'github-actions-composite');
+  assert.equal(result.artifactTransport.authorizationForwarded, false);
+  assert.equal(result.artifactTransport.zipValidated, true);
+  assert.equal(result.classifier.classification, 'ota-compatible');
+  assert.deepEqual(result.channel.branches, ['preview']);
+  assert.equal(result.staging.config.data.features.externalCheckout, false);
+  assert.deepEqual(result.updateCommand, buildPreviewUpdateCommand(fixture.dispatch.releaseReason));
+  assert.equal(result.historicalFailuresCovered.length, 7);
+  assert.equal(fixture.failedRun.classifier.classification, 'native-build-required');
+  assert.equal(fixture.failedRun.channelError, 'Channel name mismatch.');
+  assert.equal(fixture.failedRun.publication, 'skipped');
+});
+test('Preview update command construction is fixed to Preview Android and rejects empty reasons', () => {
+  const command = buildPreviewUpdateCommand('approved dry run');
+  assert.deepEqual(command.slice(0, 7), ['npx', 'eas-cli@16.17.4', 'update', '--channel', 'preview', '--platform', 'android']);
+  assert.ok(command.includes('--non-interactive'));
+  assert.ok(command.includes('--json'));
+  assert.ok(!command.includes('production') && !command.includes('build') && !command.includes('submit'));
+  assert.throws(() => buildPreviewUpdateCommand('   '), /reason/);
+});
 test('future Preview builds preserve exact checkout and do not suppress EAS VCS metadata', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
   assert.match(workflow, /actions\/checkout[^\n]*[\s\S]*ref: "\$\{\{ inputs\.commit_sha \}\}"/);
@@ -278,9 +318,23 @@ test('future Preview builds preserve exact checkout and do not suppress EAS VCS 
   assert.match(workflow, /WORKFLOW_HEAD_SHA: "\$\{\{ env\.CHECKED_OUT_SHA \}\}"/);
 });
 test('channel mapping is exact and unambiguous', () => {
-  assert.deepEqual(verifyChannelMapping({ document: { name: 'preview', updateBranches: [{ name: 'preview' }] }, expectedChannel: 'preview', expectedBranch: 'preview' }).branches, ['preview']);
-  assert.throws(() => verifyChannelMapping({ document: { name: 'preview', updateBranches: [{ name: 'production' }] }, expectedChannel: 'preview', expectedBranch: 'preview' }), /mapping/);
-  assert.throws(() => verifyChannelMapping({ document: { name: 'preview', updateBranches: [{ name: 'preview' }, { name: 'other' }] }, expectedChannel: 'preview', expectedBranch: 'preview' }), /ambiguous/);
+  const fixture = (overrides = {}) => ({
+    currentPage: {
+      id: 'channel-preview',
+      isPaused: false,
+      name: 'preview',
+      branchMapping: JSON.stringify({ data: [{ branchId: 'branch-preview', branchMappingLogic: 'true' }], version: 0 }),
+      updateBranches: [{ id: 'branch-preview', name: 'preview', updateGroups: [] }],
+      ...overrides,
+    },
+  });
+  assert.deepEqual(verifyChannelMapping({ document: fixture(), expectedChannel: 'preview', expectedBranch: 'preview' }).branches, ['preview']);
+  assert.throws(() => verifyChannelMapping({ document: fixture({ name: 'production' }), expectedChannel: 'preview', expectedBranch: 'preview' }), /name mismatch/);
+  assert.throws(() => verifyChannelMapping({ document: fixture({ updateBranches: [{ id: 'branch-preview', name: 'production' }] }), expectedChannel: 'preview', expectedBranch: 'preview' }), /unexpected branch/);
+  assert.throws(() => verifyChannelMapping({ document: fixture({ updateBranches: [{ id: 'branch-preview', name: 'preview' }, { id: 'other', name: 'other' }] }), expectedChannel: 'preview', expectedBranch: 'preview' }), /ambiguous/);
+  assert.throws(() => verifyChannelMapping({ document: fixture({ branchMapping: JSON.stringify({ data: [{ branchId: 'branch-preview', branchMappingLogic: 'rollout(0.5)' }], version: 0 }) }), expectedChannel: 'preview', expectedBranch: 'preview' }), /rollout/);
+  assert.throws(() => verifyChannelMapping({ document: fixture({ isPaused: true }), expectedChannel: 'preview', expectedBranch: 'preview' }), /paused/);
+  assert.throws(() => verifyChannelMapping({ document: { name: 'preview', updateBranches: [{ name: 'preview' }] }, expectedChannel: 'preview', expectedBranch: 'preview' }), /Unsupported/);
 });
 test('Google Play versionCode must be exceeded and absent record is explicit', () => {
   const evidence = { schemaVersion: 1, package: 'com.kurioticket.app', verifiedAt: new Date().toISOString(), evidenceReference: 'approved-audit' };
@@ -341,6 +395,10 @@ test('uncertain or native-sensitive classification requires a build', () => {
   const common = { expectedRuntime: 'preview-0.3.0', actualRuntime: 'preview-0.3.0', expectedChannel: 'preview', actualChannel: 'preview' };
   assert.equal(classifyRelease({ files: ['apps/mobile/src/a.ts'], baselineFingerprint: '', currentFingerprint: '', ...common }).classification, 'native-build-required');
   assert.equal(classifyRelease({ files: ['apps/mobile/app.config.ts'], baselineFingerprint: 'a', currentFingerprint: 'a', ...common }).classification, 'native-build-required');
+  assert.equal(classifyRelease({ files: ['apps/mobile/android/app/src/main/AndroidManifest.xml'], baselineFingerprint: 'a', currentFingerprint: 'a', ...common }).classification, 'native-build-required');
+  assert.equal(classifyRelease({ files: ['apps/mobile/ios/Kurioticket/Info.plist'], baselineFingerprint: 'a', currentFingerprint: 'a', ...common }).classification, 'native-build-required');
+  assert.equal(classifyRelease({ files: ['apps/mobile/release-baselines/android/preview.json'], baselineFingerprint: 'a', currentFingerprint: 'a', ...common }).classification, 'ota-compatible');
+  assert.equal(classifyRelease({ files: ['apps/mobile/release-baselines/android/binary-manifest.example.json'], baselineFingerprint: 'a', currentFingerprint: 'a', ...common }).classification, 'ota-compatible');
   assert.equal(classifyRelease({ files: ['apps/mobile/src/a.ts'], baselineFingerprint: 'a', currentFingerprint: 'a', ...common }).classification, 'ota-compatible');
 });
 test('EXPO_TOKEN is step scoped and updates publish through channels', () => {
