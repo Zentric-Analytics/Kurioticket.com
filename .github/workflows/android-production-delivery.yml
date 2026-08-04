@@ -98,10 +98,11 @@ jobs:
           set -e
           PREVIOUS_HISTORY_ARGS=()
           HISTORY_PATH=apps/mobile/release-baselines/android/production-play-history.json
-          if git cat-file -e "$APPROVED_SHA^:$HISTORY_PATH" 2>/dev/null; then
-            git show "$APPROVED_SHA^:$HISTORY_PATH" > "$RUNNER_TEMP/previous-production-play-history.json"
-            PREVIOUS_HISTORY_ARGS=(--previous-play-history "$RUNNER_TEMP/previous-production-play-history.json")
-          fi
+          node scripts/resolve-production-play-history-lineage.mjs \
+            --approved-sha "$APPROVED_SHA" \
+            --history-path "$HISTORY_PATH" \
+            --output "$RUNNER_TEMP/previous-production-play-history.json"
+          PREVIOUS_HISTORY_ARGS=(--previous-play-history "$RUNNER_TEMP/previous-production-play-history.json")
           node scripts/resolve-production-version-code.mjs \
             --version-output "$RUNNER_TEMP/production-version.txt" \
             --version-exit-code "$VERSION_EXIT" \
