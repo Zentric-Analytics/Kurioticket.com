@@ -5,7 +5,6 @@ import {
 } from "./destinationCatalogue";
 import { INTEREST_DESTINATIONS } from "./interestMappings";
 
-export const EXPLORE_TABS = ["Destinations", "Inspiration"] as const;
 export const ALL_DESTINATIONS = destinations;
 export type ExploreSearchResult = {
   destination: Destination;

@@ -2,17 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AccessibilityInfo,
   Image,
-  ImageBackground,
   Keyboard,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
-  ScrollView,
   FlatList,
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { router } from "expo-router";
@@ -22,10 +17,9 @@ import {
 } from "react-native-safe-area-context";
 import { destinationById, type Destination } from "./destinationCatalogue";
 import { FlowIcon } from "../flow/FlowIcon";
-import { HERO_SLIDES, INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
+import { INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
 import {
   exactExploreResult,
-  EXPLORE_TABS,
   exploreBottomPadding,
   searchExplore,
 } from "./exploreModels";
@@ -36,11 +30,6 @@ const NAVY = "#071A48",
   BLUE = "#0754F7",
   MUTED = "#56658E",
   BORDER = "#E7ECF5";
-type Tab = (typeof EXPLORE_TABS)[number];
-const INSPIRATION_SLIDES = HERO_SLIDES.map((slide) => ({
-  ...slide,
-  destination: destinationById.get(slide.destinationId)!,
-}));
 const RESOLVED_INTERESTS = INTERESTS.map((interest) => ({
   ...interest,
   destination: destinationById.get(interest.destinationId)!,
@@ -140,15 +129,11 @@ function ExploreHeader({
   query,
   setQuery,
   input,
-  tab,
-  setTab,
   submit,
 }: {
   query: string;
   setQuery: (value: string) => void;
   input: React.RefObject<TextInput | null>;
-  tab: Tab;
-  setTab: (tab: Tab) => void;
   submit: () => void;
 }) {
   return (
@@ -168,42 +153,28 @@ function ExploreHeader({
           placeholderTextColor="#7B849F"
           style={s.searchInput}
         />
-        {query ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Clear Explore search"
-            onPress={() => {
-              setQuery("");
-              input.current?.focus();
-            }}
-            style={s.clear}
-          >
-            <Text style={s.clearText}>Clear</Text>
-          </Pressable>
-        ) : null}
-      </View>
-      <View accessibilityRole="tablist" style={s.tabs}>
-        {EXPLORE_TABS.map((t) => (
-          <Pressable
-            key={t}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: tab === t }}
-            onPress={() => setTab(t)}
-            style={[s.tab, tab === t && s.tabActive]}
-          >
-            <Text style={[s.tabText, tab === t && s.tabTextActive]}>{t}</Text>
-          </Pressable>
-        ))}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Clear Explore search"
+          accessibilityElementsHidden={!query}
+          importantForAccessibility={query ? "auto" : "no-hide-descendants"}
+          disabled={!query}
+          onPress={() => {
+            setQuery("");
+            input.current?.focus();
+          }}
+          style={[s.clear, !query && s.clearHidden]}
+        >
+          <Text style={s.clearText}>Clear</Text>
+        </Pressable>
       </View>
     </>
   );
 }
 
 export function ExploreScreen() {
-  const [tab, setTab] = useState<Tab>("Destinations"),
-    [query, setQuery] = useState("");
+  const [query, setQuery] = useState("");
   const { savedIds, toggle } = useSavedDestinations();
-  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const input = useRef<TextInput>(null);
   const results = useMemo(() => searchExplore(query), [query]);
@@ -222,31 +193,19 @@ export function ExploreScreen() {
         `${results.length} ${results.length === 1 ? "result" : "results"}`,
       );
   }, [query, results.length]);
-  const header = (
-    <ExploreHeader
-      query={query}
-      setQuery={setQuery}
-      input={input}
-      tab={tab}
-      setTab={setTab}
-      submit={submit}
-    />
-  );
-  if (!query.trim() && tab === "Destinations")
-    return (
-      <SafeAreaView style={s.safe} edges={["top"]}>
-        <Destinations
-          header={header}
-          bottomPadding={exploreBottomPadding(65, insets.bottom)}
-          saved={savedIds}
-          select={select}
-          toggle={toggle}
+  const bottomPadding = exploreBottomPadding(65, insets.bottom);
+  const isSearching = Boolean(query.trim());
+  return (
+    <SafeAreaView style={s.safe} edges={["top"]}>
+      <View style={s.stableHeader}>
+        <ExploreHeader
+          query={query}
+          setQuery={setQuery}
+          input={input}
+          submit={submit}
         />
-      </SafeAreaView>
-    );
-  if (query.trim())
-    return (
-      <SafeAreaView style={s.safe} edges={["top"]}>
+      </View>
+      {isSearching ? (
         <FlatList
           data={results}
           keyExtractor={(item) => item.destination.id}
@@ -254,8 +213,8 @@ export function ExploreScreen() {
           initialNumToRender={10}
           maxToRenderPerBatch={8}
           windowSize={7}
-          contentContainerStyle={[s.page, { paddingBottom: exploreBottomPadding(65, insets.bottom) }]}
-          ListHeaderComponent={<View>{header}<Section title={`${results.length} result${results.length === 1 ? "" : "s"}`} /></View>}
+          contentContainerStyle={[s.content, { paddingBottom: bottomPadding }]}
+          ListHeaderComponent={<Section title={`${results.length} result${results.length === 1 ? "" : "s"}`} />}
           ListEmptyComponent={<Text style={s.empty}>No destinations or maintained interests match “{query.trim()}”. Try a city, destination code, or country.</Text>}
           renderItem={({ item: r }) => (
             <View>
@@ -264,20 +223,14 @@ export function ExploreScreen() {
             </View>
           )}
         />
-      </SafeAreaView>
-    );
-  return (
-    <SafeAreaView style={s.safe} edges={["top"]}>
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[
-          s.page,
-          { paddingBottom: exploreBottomPadding(65, insets.bottom) },
-        ]}
-      >
-        {header}
-        <Inspiration width={width} select={select} />
-      </ScrollView>
+      ) : (
+        <Destinations
+          bottomPadding={bottomPadding}
+          saved={savedIds}
+          select={select}
+          toggle={toggle}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -362,13 +315,11 @@ function PopularDestinationCard({
 }
 
 function Destinations({
-  header,
   bottomPadding,
   saved,
   select,
   toggle,
 }: {
-  header: React.ReactElement;
   bottomPadding: number;
   saved: ReadonlySet<string>;
   select: (a: Destination) => void;
@@ -381,13 +332,9 @@ function Destinations({
       initialNumToRender={4}
       maxToRenderPerBatch={4}
       windowSize={5}
-      contentContainerStyle={[s.page, { paddingBottom: bottomPadding }]}
-      ListHeaderComponent={
-        <View>
-          {header}
-          <Section title="Popular destinations" />
-        </View>
-      }
+      contentContainerStyle={[s.content, { paddingBottom: bottomPadding }]}
+      ListHeaderComponent={<Section title="Popular destinations" />}
+      ListFooterComponent={<Interests select={select} />}
       ItemSeparatorComponent={() => <View style={s.popularSeparator} />}
       renderItem={({ item }) => (
         <PopularDestinationCard
@@ -400,59 +347,9 @@ function Destinations({
     />
   );
 }
-function Inspiration({
-  width,
-  select,
-}: {
-  width: number;
-  select: (a: Destination) => void;
-}) {
-  const [active, setActive] = useState(0);
-  const cardWidth = width - 36;
-  const end = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
-    setActive(Math.round(e.nativeEvent.contentOffset.x / cardWidth));
+function Interests({ select }: { select: (destination: Destination) => void }) {
   return (
-    <>
-      <View style={s.heroShell}>
-        <ScrollView
-          horizontal
-          pagingEnabled
-          decelerationRate="fast"
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={end}
-        >
-          {INSPIRATION_SLIDES.map((slide) => {
-            const media = destinationMedia(slide.destination.id);
-            return (
-            <Pressable
-              key={slide.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Open details for ${slide.destination.name}, ${slide.label}`}
-              onPress={() => select(slide.destination)}
-            >
-              <ImageBackground
-                source={media?.source ?? FALLBACK_SOURCE}
-                style={[s.hero, { width: cardWidth }]}
-                imageStyle={s.cardRadius}
-              >
-                <View style={s.overlay} />
-                <Text style={s.heroLabel}>{slide.label}</Text>
-                <Text style={s.heroTitle}>{slide.destination.name}</Text>
-                <View style={s.heroCta}>
-                  <Text style={s.heroCtaText}>Explore {slide.destination.name}</Text>
-                </View>
-              </ImageBackground>
-            </Pressable>
-            );
-          })}
-        </ScrollView>
-        <View style={s.dots}>
-          {HERO_SLIDES.map((x, i) => (
-            <View key={x.id} style={[s.dot, i === active && s.dotActive]} />
-          ))}
-        </View>
-      </View>
-      <View>
+      <View style={s.interestSection}>
         <Section title="Explore by interest" />
         <View style={s.interests}>
           {RESOLVED_INTERESTS.map((item) => (
@@ -472,7 +369,6 @@ function Inspiration({
           ))}
         </View>
       </View>
-    </>
   );
 }
 const shadow = {
@@ -484,7 +380,8 @@ const shadow = {
 };
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#FAFBFF" },
-  page: { paddingHorizontal: 18, gap: 15 },
+  stableHeader: { paddingHorizontal: 18, paddingBottom: 8 },
+  content: { paddingHorizontal: 18 },
   header: { minHeight: 58, justifyContent: "center" },
   title: { color: NAVY, fontSize: 30, lineHeight: 38, fontWeight: "800" },
   iconButton: {
@@ -507,23 +404,8 @@ const s = StyleSheet.create({
   },
   searchInput: { flex: 1, minHeight: 50, color: NAVY, fontSize: 13 },
   clear: { minHeight: 44, justifyContent: "center" },
+  clearHidden: { opacity: 0 },
   clearText: { color: BLUE, fontWeight: "700" },
-  tabs: {
-    height: 48,
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER,
-  },
-  tab: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-  },
-  tabActive: { borderBottomColor: BLUE },
-  tabText: { color: NAVY, fontSize: 14, fontWeight: "700" },
-  tabTextActive: { color: BLUE },
   sectionHeader: {
     minHeight: 44,
     flexDirection: "row",
@@ -539,12 +421,6 @@ const s = StyleSheet.create({
   link: { minHeight: 44, flexDirection: "row", alignItems: "center" },
   linkText: { color: BLUE, fontSize: 13, fontWeight: "700" },
   popularSeparator: { height: 15 },
-  cardRadius: { borderRadius: 16 },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(2,15,42,.46)",
-    borderRadius: 16,
-  },
   heart: {
     position: "absolute",
     right: 10,
@@ -599,47 +475,7 @@ const s = StyleSheet.create({
     padding: 14,
   },
   matchLabel: { color: BLUE, fontSize: 12, fontWeight: "700", marginBottom: 4 },
-  heroShell: { height: 290, borderRadius: 14, overflow: "hidden" },
-  hero: {
-    height: 290,
-    justifyContent: "flex-end",
-    padding: 24,
-    paddingBottom: 42,
-  },
-  heroLabel: { color: "white", fontSize: 14, fontWeight: "700", zIndex: 1 },
-  heroTitle: {
-    color: "white",
-    fontSize: 30,
-    fontWeight: "800",
-    zIndex: 1,
-    marginTop: 3,
-  },
-  heroCta: {
-    alignSelf: "flex-start",
-    backgroundColor: "white",
-    borderRadius: 9,
-    paddingHorizontal: 15,
-    minHeight: 42,
-    justifyContent: "center",
-    marginTop: 14,
-    zIndex: 1,
-  },
-  heroCtaText: { color: NAVY, fontWeight: "800" },
-  dots: {
-    position: "absolute",
-    bottom: 13,
-    alignSelf: "center",
-    flexDirection: "row",
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "white",
-  },
-  dotActive: { backgroundColor: "white" },
+  interestSection: { paddingTop: 15 },
   interests: { gap: 8 },
   interest: {
     minHeight: 66,
