@@ -17,6 +17,7 @@ import {
 } from "react-native-safe-area-context";
 import { destinationById, type Destination } from "./destinationCatalogue";
 import { FlowIcon } from "../flow/FlowIcon";
+import { FavoriteButton } from "../../components/FavoriteButton";
 import { INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
 import {
   exactExploreResult,
@@ -113,14 +114,12 @@ function Row({
           </Text>
         </View>
       </Pressable>
-      <Pressable
-        accessibilityRole="button"
+      <FavoriteButton
+        saved={saved}
         accessibilityLabel={`${saved ? "Remove" : "Save"} ${destination.name}`}
         onPress={onToggle}
         style={s.rowHeart}
-      >
-        <FlowIcon name="heart" color={saved ? "#E92D55" : MUTED} />
-      </Pressable>
+      />
     </View>
   );
 }
@@ -300,14 +299,12 @@ function PopularDestinationCard({
           style={s.popularImage}
         />
       </Pressable>
-      <Pressable
-        accessibilityRole="button"
+      <FavoriteButton
+        saved={saved}
         accessibilityLabel={`${saved ? "Remove" : "Save"} ${destination.name}`}
         onPress={onToggle}
         style={s.heart}
-      >
-        <FlowIcon name="heart" color={saved ? "#E92D55" : "white"} />
-      </Pressable>
+      />
       <View style={s.popularCopy}>
         <Text style={s.popularCardTitle}>{destination.name}</Text>
         <Text style={s.countryName}>{destination.country}</Text>
@@ -481,10 +478,7 @@ const s = StyleSheet.create({
   resultTitle: { color: NAVY, fontSize: 15, fontWeight: "800" },
   resultMeta: { color: MUTED, fontSize: 12, lineHeight: 18, marginTop: 2 },
   rowHeart: {
-    width: 52,
-    minHeight: 52,
-    alignItems: "center",
-    justifyContent: "center",
+    marginHorizontal: 4,
   },
   empty: {
     color: MUTED,

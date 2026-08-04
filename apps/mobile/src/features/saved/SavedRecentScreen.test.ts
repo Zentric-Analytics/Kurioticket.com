@@ -57,7 +57,8 @@ test("saved destination media keeps catalogue resolution and a loop-safe fallbac
 test("Saved favorites uses the close icon only for saved-list removal while other favorite surfaces keep hearts", () => {
   const saved = source("src/features/saved/SavedRecentScreen.tsx");
   const flowIcon = source("src/features/flow/FlowIcon.tsx");
-  const homeFavorite = source("src/features/home/HomepageFavoriteButton.tsx");
+  const sharedFavorite = source("src/components/FavoriteButton.tsx");
+  const homeFavorite = source("src/features/home/PopularDestinationStays.tsx");
   const explore = source("src/features/explore/ExploreScreen.tsx");
   const details = source("src/features/explore/DestinationDetailsScreen.tsx");
 
@@ -67,10 +68,10 @@ test("Saved favorites uses the close icon only for saved-list removal while othe
   assert.match(saved, /accessibilityLabel=\{`Remove \$\{item\.name\} from favorites`\}/);
   assert.match(saved, /toggle\(item\.id\)/);
   assert.match(saved, /No saved favorites yet/);
-  assert.match(homeFavorite, /<FlowIcon name="heart"/);
-  assert.match(homeFavorite, /onPress=\{onPress\}/);
-  assert.match(explore, /<FlowIcon name="heart"/);
-  assert.match(details, /<FlowIcon name="heart"/);
+  assert.match(sharedFavorite, /<FlowIcon\s+name="heart"/);
+  assert.match(homeFavorite, /<FavoriteButton/);
+  assert.match(explore, /<FavoriteButton/);
+  assert.match(details, /<FavoriteButton/);
   assert.doesNotMatch(`${homeFavorite}\n${explore}\n${details}`, /name="close"/);
 });
 
