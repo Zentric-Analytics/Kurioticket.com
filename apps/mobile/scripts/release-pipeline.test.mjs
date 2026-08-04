@@ -506,7 +506,9 @@ test('Production Play history is internally consistent, normalized, and monotoni
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ versionOutput: '{"versionCode":"4"}', history: present, previousHistory: previous })), /cannot decrease|cannot remove/);
 });
 test('Production first-binary handling rejects existing builds, Preview, and legacy identities', () => {
-  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ buildsOutput: '[{"id":"existing","platform":"ANDROID","buildProfile":"production","runtimeVersion":"production-0.3.0","project":{"id":"89f6fd88-c0d7-495a-9e2b-8301b09f407d"}}]' })), /existing build/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ buildsOutput: '[{"id":"existing","platform":"ANDROID","buildProfile":"production","applicationIdentifier":"com.kurioticket.app","runtimeVersion":"production-0.3.0","project":{"id":"89f6fd88-c0d7-495a-9e2b-8301b09f407d"}}]' })), /existing build/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ buildsOutput: '[{"id":"existing","platform":"ANDROID","buildProfile":"production","runtimeVersion":"production-0.3.0","project":{"id":"89f6fd88-c0d7-495a-9e2b-8301b09f407d"}}]' })), /identity metadata/);
+  assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ buildsOutput: '[{"id":"existing","platform":"ANDROID","buildProfile":"production","applicationIdentifier":"com.kurioticket.app.preview","runtimeVersion":"production-0.3.0","project":{"id":"89f6fd88-c0d7-495a-9e2b-8301b09f407d"}}]' })), /identity metadata/);
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ packageName: policy.preview.androidPackage, profile: 'preview', runtime: 'preview-0.3.0' })), /restricted/);
   assert.throws(() => resolveProductionVersionEvidence(productionVersionInput({ packageName: 'com.kurioticket.mobile' })), /restricted/);
 });
@@ -582,7 +584,9 @@ test('Production EAS fixtures enforce finished AAB identity and source attestati
   assert.throws(() => verifyProductionBuildResult({ source: mutate((build) => { build.status = 'ERRORED'; }), approvedSha: verified.commitSha, proposedVersionCode: 1 }), /not FINISHED/);
   assert.throws(() => verifyProductionBuildResult({ source: mutate((build) => { build.status = 'CANCELED'; }), approvedSha: verified.commitSha, proposedVersionCode: 1 }), /not FINISHED/);
   assert.throws(() => verifyProductionBuildResult({ source: mutate((build) => { delete build.artifacts; }), approvedSha: verified.commitSha, proposedVersionCode: 1 }), /AAB/);
+  assert.throws(() => verifyProductionBuildResult({ source: mutate((build) => { delete build.applicationIdentifier; }), approvedSha: verified.commitSha, proposedVersionCode: 1 }), /package/);
   assert.throws(() => verifyProductionBuildResult({ source: mutate((build) => { build.applicationIdentifier = 'com.kurioticket.app.preview'; }), approvedSha: verified.commitSha, proposedVersionCode: 1 }), /package/);
+  assert.throws(() => verifyProductionBuildResult({ source: mutate((build) => { build.distribution = 'INTERNAL'; }), approvedSha: verified.commitSha, proposedVersionCode: 1 }), /distribution/);
   assert.throws(() => verifyProductionBuildResult({ source: mutate((build) => { delete build.gitCommitHash; }), approvedSha: verified.commitSha, proposedVersionCode: 1 }), /Git commit/);
 });
 test('Production update JSON is strictly bound to Android Production runtime and source', () => {

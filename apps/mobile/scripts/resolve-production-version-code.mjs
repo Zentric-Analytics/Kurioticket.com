@@ -37,7 +37,8 @@ function parseBuilds(output, expected) {
   }
   if (!Array.isArray(builds)) throw new Error('EAS Production build history must be a JSON array.');
   for (const build of builds) {
-    if (!build || typeof build !== 'object' || build.platform !== 'ANDROID' || build.buildProfile !== expected.profile || build.runtimeVersion !== expected.runtime || build.project?.id !== expected.projectId) {
+    const applicationIdentifier = build?.applicationIdentifier ?? build?.appIdentifier;
+    if (!build || typeof build !== 'object' || build.platform !== 'ANDROID' || build.buildProfile !== expected.profile || applicationIdentifier !== expected.packageName || build.runtimeVersion !== expected.runtime || build.project?.id !== expected.projectId) {
       throw new Error('EAS Production build history contains mismatched or incomplete identity metadata.');
     }
   }
@@ -135,7 +136,7 @@ export function resolveProductionVersionEvidence({
   }
 
   if (buildsExitCode !== 0) throw new Error('Filtered EAS Production build-history query failed.');
-  const builds = parseBuilds(buildsOutput, { profile, runtime, projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' });
+  const builds = parseBuilds(buildsOutput, { packageName, profile, runtime, projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' });
   if (builds.length !== 0) throw new Error('Cannot initialize Production versionCode because an existing build uses this package/profile.');
   if (play.uploadedVersionCodes.length !== 0 || play.highestUploadedVersionCode !== null) {
     throw new Error('Cannot initialize Production versionCode because Google Play history is not empty.');
