@@ -20,6 +20,9 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
     classifier: read(env.CLASSIFIER_PATH),
     versionCode: read(env.VERSION_EVIDENCE_PATH),
     deliveryResult: read(env.DELIVERY_RESULT_PATH),
+    trigger: read(env.TRIGGER_EVIDENCE_PATH),
+    replay: read(env.REPLAY_EVIDENCE_PATH),
+    stagingReadiness: read(env.STAGING_EVIDENCE_PATH),
   };
   const deliveryResult = evidence.deliveryResult.value;
   const easBuildId = deliveryResult?.id ?? (Array.isArray(deliveryResult) ? deliveryResult[0]?.id : null) ?? null;
@@ -44,6 +47,9 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
     classifier: evidence.classifier.value,
     versionCode: evidence.versionCode.value,
     deliveryResult: evidence.deliveryResult.value,
+    trigger: evidence.trigger.value,
+    replay: evidence.replay.value,
+    stagingReadiness: evidence.stagingReadiness.value,
     evidenceStatus: Object.fromEntries(Object.entries(evidence).map(([name, result]) => [name, result.status])),
     startedAt: env.WORKFLOW_STARTED_AT,
     completedAt,
