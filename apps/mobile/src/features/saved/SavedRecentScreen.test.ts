@@ -11,7 +11,7 @@ test("Profile exposes Saved & recent without changing the bottom tabs", () => {
   assert.doesNotMatch(source("app/(tabs)/_layout.tsx"), /name="saved"/);
 });
 
-test("Saved & recent resolves existing records, protects guests, and supports removal and empty state", () => {
+test("Saved & recent resolves existing records, protects guests, and supports close removal and empty state", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
   assert.match(screen, /useSavedDestinations\(\)/);
   assert.match(screen, /popularDestinationStays\.find/);
@@ -22,6 +22,12 @@ test("Saved & recent resolves existing records, protects guests, and supports re
   assert.match(screen, /No saved favorites yet/);
   assert.match(screen, /Tap the heart on a destination to save it here\./);
   assert.match(screen, /event\.stopPropagation\(\); toggle\(item\.id\)/);
+  assert.match(screen, /<FlowIcon name="close" color="#10254D" size=\{22\} \/>/);
+  assert.doesNotMatch(screen, /<FlowIcon name="heart" color="#E11D48" size=\{22\} \/>/);
+  assert.match(screen, /styles\.remove/);
+  assert.match(screen, /remove: \{ width: 52, height: 52, flexShrink: 0, borderRadius: 26, backgroundColor: "#FFFFFF"/);
+  assert.match(screen, /shadowOpacity: 0\.16/);
+  assert.match(screen, /removePressed: \{ opacity: 0\.76, transform: \[\{ scale: 0\.94 \}\] \}/);
   assert.match(screen, /destinationMedia\(id\)\?\.source \?\? FALLBACK_SOURCE/);
   assert.match(screen, /failed \? FALLBACK_SOURCE : item\.image/);
   assert.match(screen, /onError=\{\(\) => \{ if \(!failed\) setFailed\(true\); \}\}/);
@@ -47,6 +53,27 @@ test("saved destination media keeps catalogue resolution and a loop-safe fallbac
   assert.match(screen, /source=\{failed \? FALLBACK_SOURCE : item\.image\}/);
   assert.match(screen, /if \(!failed\) setFailed\(true\)/);
 });
+
+test("Saved favorites uses the close icon only for saved-list removal while other favorite surfaces keep hearts", () => {
+  const saved = source("src/features/saved/SavedRecentScreen.tsx");
+  const flowIcon = source("src/features/flow/FlowIcon.tsx");
+  const homeFavorite = source("src/features/home/HomepageFavoriteButton.tsx");
+  const explore = source("src/features/explore/ExploreScreen.tsx");
+  const details = source("src/features/explore/DestinationDetailsScreen.tsx");
+
+  assert.match(flowIcon, /\| "close" \| "compass"/);
+  assert.match(flowIcon, /close: <Path \{\.\.\.line\} d="M6 6l12 12M18 6 6 18" \/>/);
+  assert.match(saved, /<FlowIcon name="close"/);
+  assert.match(saved, /accessibilityLabel=\{`Remove \$\{item\.name\} from favorites`\}/);
+  assert.match(saved, /toggle\(item\.id\)/);
+  assert.match(saved, /No saved favorites yet/);
+  assert.match(homeFavorite, /<FlowIcon name="heart"/);
+  assert.match(homeFavorite, /onPress=\{onPress\}/);
+  assert.match(explore, /<FlowIcon name="heart"/);
+  assert.match(details, /<FlowIcon name="heart"/);
+  assert.doesNotMatch(`${homeFavorite}\n${explore}\n${details}`, /name="close"/);
+});
+
 
 test("Explore and Profile share saved destination IDs, including search-only destinations", () => {
   const explore = source("src/features/explore/ExploreScreen.tsx");
