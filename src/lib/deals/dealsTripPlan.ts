@@ -14,6 +14,17 @@ export function createDealsTripPlan(input: Pick<DealsTripPlan, "mode" | "searchF
   return { version: 1, ...input, createdAt: now, updatedAt: now, expiresAt: now + DEALS_TRIP_PLAN_TTL_MS, opened: {} };
 }
 export function updateDealsTripPlan(plan: DealsTripPlan, patch: Partial<Pick<DealsTripPlan, "flight" | "hotel" | "car">>, now = Date.now()): DealsTripPlan { return { ...plan, ...patch, updatedAt: now, expiresAt: Math.min(plan.createdAt + DEALS_TRIP_PLAN_TTL_MS, now + DEALS_TRIP_PLAN_TTL_MS) }; }
+function withoutSelections(plan: DealsTripPlan, products: readonly DealsTripPlanProduct[], now: number): DealsTripPlan {
+  const next = { ...plan, opened: { ...plan.opened }, updatedAt: now };
+  for (const product of products) { delete next[product]; delete next.opened[product]; }
+  return next;
+}
+export function replaceDealsHotelSelection(plan: DealsTripPlan, hotel: DealsTripPlanHotel, now = Date.now()): DealsTripPlan { return { ...withoutSelections(plan, ["flight", "hotel", "car"], now), hotel }; }
+export const clearDealsTripPlanFromHotel = (plan: DealsTripPlan, now = Date.now()) => withoutSelections(plan, ["hotel", "flight", "car"], now);
+export function replaceDealsFlightSelection(plan: DealsTripPlan, flight: DealsTripPlanFlight, now = Date.now()): DealsTripPlan { return { ...withoutSelections(plan, ["flight", "car"], now), flight }; }
+export const clearDealsTripPlanFromFlight = (plan: DealsTripPlan, now = Date.now()) => withoutSelections(plan, ["flight", "car"], now);
+export function replaceDealsCarSelection(plan: DealsTripPlan, car: DealsTripPlanCar, now = Date.now()): DealsTripPlan { return { ...withoutSelections(plan, ["car"], now), car }; }
+export const clearDealsTripPlanFromCar = (plan: DealsTripPlan, now = Date.now()) => withoutSelections(plan, ["car"], now);
 export function clearDealsTripPlan(plan: DealsTripPlan, now = Date.now()): DealsTripPlan { const rest = { ...plan }; delete rest.flight; delete rest.hotel; delete rest.car; return { ...rest, opened: {}, updatedAt: now }; }
 export function markDealsProviderOpened(plan: DealsTripPlan, product: DealsTripPlanProduct, now = Date.now()): DealsTripPlan { return { ...plan, updatedAt: now, opened: { ...plan.opened, [product]: now } }; }
 export const isDealsTripPlanExpired = (plan: DealsTripPlan, now = Date.now()) => plan.expiresAt <= now;

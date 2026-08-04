@@ -13,6 +13,10 @@ import {
 
 export const DEALS_TRIP_PLAN_STORAGE_KEY = "kurioticket_deals_trip_plan_v1";
 export const DEALS_STAGED_JOURNEY_STORAGE_KEY = "kurioticket_deals_staged_journey_v1";
+export type DealsPlanScope = "legacy" | "guided";
+export const buildDealsPlanContextKey = (scope: DealsPlanScope, fingerprint: string) => `${scope}:${fingerprint}`;
+export type DealsPlanPersistence = "idle" | "saving" | "saved" | "unavailable";
+export type ResolvedDealsPlanState = { plan: DealsTripPlan | null; storedContextKey: string | null; resolvedContextKey: string | null; persistence: DealsPlanPersistence };
 
 export type DealsTripPlanReadResult =
   | { status: "valid"; plan: DealsTripPlan }
@@ -21,6 +25,18 @@ export type DealsTripPlanReadResult =
   | { status: "invalid" }
   | { status: "fingerprint_mismatch" }
   | { status: "storage_unavailable" };
+
+export const unresolvedDealsPlanState = (): ResolvedDealsPlanState => ({ plan: null, storedContextKey: null, resolvedContextKey: null, persistence: "idle" });
+
+export function applyDealsPlanReadResult(currentContextKey: string, readContextKey: string, previous: ResolvedDealsPlanState, result: DealsTripPlanReadResult): ResolvedDealsPlanState {
+  if (readContextKey !== currentContextKey) return previous;
+  if (result.status === "valid") return { plan: result.plan, storedContextKey: readContextKey, resolvedContextKey: readContextKey, persistence: "saved" };
+  return { plan: null, storedContextKey: null, resolvedContextKey: readContextKey, persistence: result.status === "storage_unavailable" ? "unavailable" : "idle" };
+}
+
+export function getVisibleDealsPlan(state: ResolvedDealsPlanState, currentContextKey: string): DealsTripPlan | null {
+  return state.resolvedContextKey === currentContextKey && state.storedContextKey === currentContextKey ? state.plan : null;
+}
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const record = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === "object" && !Array.isArray(value));
