@@ -29,11 +29,11 @@ test("Discover cards use the compact editorial card layout with horizontal scrol
   assert.match(adventure, /<ScrollView[\s\S]*horizontal[\s\S]*contentContainerStyle=\{styles\.carousel\}/);
 });
 
-test("favorite buttons continue to function and card navigation is unchanged", () => {
+test("favorite buttons continue to function and card navigation uses scoped helpers", () => {
   assert.match(popular, /event\.stopPropagation\(\);\s*toggle\(destination\.id\);/);
   assert.match(adventure, /event\.stopPropagation\(\);\s*toggle\(card\.id\);/);
-  assert.match(popular, /pathname:\s*"\/hotels",\s*params:\s*\{ destination:\s*destination\.city \}/);
-  assert.match(adventure, /pathname:\s*"\/flights", params:\s*\{ from:\s*card\.originCode, to:\s*card\.destinationCode \}/);
+  assert.match(popular, /router\.push\(popularDestinationStayNavigation\(destination\)\)/);
+  assert.match(adventure, /router\.push\(discoverAdventureNavigation\(card\)\)/);
 });
 
 test("homepage sections outside popular stays and discovery remain in the same order", () => {
