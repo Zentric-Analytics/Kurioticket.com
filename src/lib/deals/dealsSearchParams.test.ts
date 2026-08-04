@@ -439,3 +439,30 @@ test("explicit detached legacy fields survive hydration and blank custom returns
     [false, ""],
   );
 });
+
+test("canonical cars results URL preserves all guided car search facts", () => {
+  const search = {
+    ...valid(),
+    carPickupLocation: "Los Angeles Union Station",
+    carReturnToDifferentLocation: true,
+    carReturnLocation: "LAX Airport",
+    carPickupDate: "2099-02-04",
+    carPickupTime: "09:30",
+    carReturnDate: "2099-02-06",
+    carReturnTime: "18:45",
+    carDriverAge: "42",
+  };
+  const url = buildCarResultsUrl(search);
+  assert.equal(
+    url,
+    "/cars/results?pickupLocation=Los+Angeles+Union+Station&dropoffLocation=LAX+Airport&pickupDate=2099-02-04&pickupTime=09%3A30&dropoffDate=2099-02-06&dropoffTime=18%3A45&driverAge=42",
+  );
+  const params = new URL(url, "https://example.test").searchParams;
+  assert.equal(params.get("pickupLocation"), "Los Angeles Union Station");
+  assert.equal(params.get("dropoffLocation"), "LAX Airport");
+  assert.equal(params.get("pickupDate"), "2099-02-04");
+  assert.equal(params.get("dropoffDate"), "2099-02-06");
+  assert.equal(params.get("pickupTime"), "09:30");
+  assert.equal(params.get("dropoffTime"), "18:45");
+  assert.equal(params.get("driverAge"), "42");
+});
