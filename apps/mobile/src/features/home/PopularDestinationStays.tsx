@@ -79,7 +79,7 @@ export function PopularDestinationStays() {
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const cardWidth = Math.min(280, Math.max(230, width * 0.7));
+  const cardWidth = Math.min(230, Math.max(190, width * 0.58));
 
   return (
     <View
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   },
   carousel: { gap: 14, paddingBottom: 8, paddingRight: 34 },
   card: {
-    height: 350,
+    height: 290,
     borderRadius: 20,
     backgroundColor: "#DCE5F3",
     shadowColor: "#10254D",
@@ -187,21 +187,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
   },
-  image: { flex: 1, justifyContent: "flex-end", padding: 16 },
+  image: { flex: 1, justifyContent: "flex-end", padding: 14 },
   imageCorners: { borderRadius: 20 },
   heart: { position: "absolute", top: 14, right: 14 },
   copy: {
     zIndex: 1,
     alignSelf: "flex-start",
     backgroundColor: "rgba(2, 15, 42, 0.55)",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: 13,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   city: {
     color: flowColors.white,
-    fontSize: 25,
-    lineHeight: 30,
+    fontSize: 22,
+    lineHeight: 27,
     fontWeight: "900",
     letterSpacing: -0.35,
     textShadowColor: "rgba(0,0,0,0.75)",
@@ -210,8 +210,8 @@ const styles = StyleSheet.create({
   },
   country: {
     color: flowColors.white,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 17,
     fontWeight: "600",
     letterSpacing: 0.15,
     textShadowColor: "rgba(0,0,0,0.75)",
