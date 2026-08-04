@@ -5,6 +5,8 @@ import { Footer } from "@/components/layout/Footer";
 import { DealsJourneyShell } from "@/components/results/deals/DealsJourneyShell";
 import { parseDealsSearchParams, validateDealsSearch } from "@/lib/deals/dealsSearchParams";
 import { isDealsJourneyStage } from "@/lib/deals/dealsJourneyRoutes";
+import { buildDealsSearchFingerprint } from "@/lib/deals/dealsTripPlan";
+import { buildDealsPlanContextKey } from "@/lib/deals/dealsTripPlanStorage";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 type Query = Record<string, string | string[] | undefined>;
@@ -13,5 +15,6 @@ export default async function DealsJourneyPage({ params, searchParams }: { param
   const [{ stage }, query] = await Promise.all([params, searchParams]);
   if (!isDealsJourneyStage(stage)) notFound();
   const search = parseDealsSearchParams(query); const invalid = Object.keys(validateDealsSearch(search)).length > 0;
-  return <><AppHeader flushDesktopBottom hideDesktopTravelNav /><DealsJourneyShell stage={stage} search={search} invalid={invalid} /><Footer /></>;
+  const contextKey = buildDealsPlanContextKey("guided", buildDealsSearchFingerprint(search));
+  return <><AppHeader flushDesktopBottom hideDesktopTravelNav /><DealsJourneyShell key={contextKey} stage={stage} search={search} invalid={invalid} /><Footer /></>;
 }

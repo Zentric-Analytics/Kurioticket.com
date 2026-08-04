@@ -7,8 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { translations as en } from "@/lib/i18n/en";
-import { buildDealsSearchFingerprint, type DealsTripPlan } from "@/lib/deals/dealsTripPlan";
-import { buildDealsPlanContextKey, getVisibleDealsPlan, readDealsStagedJourneyPlan, removeDealsStagedJourneyPlan } from "@/lib/deals/dealsTripPlanStorage";
+import { buildDealsSearchFingerprint } from "@/lib/deals/dealsTripPlan";
+import { applyDealsPlanReadResult, buildDealsPlanContextKey, getVisibleDealsPlan, readDealsStagedJourneyPlan, removeDealsStagedJourneyPlan, unresolvedDealsPlanState } from "@/lib/deals/dealsTripPlanStorage";
 import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import { getGuidedDealsJourneyProgress } from "@/lib/deals/dealsJourneyProgress";
 import { buildDealsJourneyUrl, buildLegacyDealsResultsUrl, getFirstDealsJourneyStage, getPreviousDealsJourneyStage, getRequiredDealsJourneyStage, type DealsJourneyStage } from "@/lib/deals/dealsJourneyRoutes";
@@ -22,19 +22,17 @@ export function DealsJourneyShell({ stage, search, invalid }: { stage: DealsJour
   const router = useRouter(); const { start } = useRouteProgress(); const { t: dictionary, locale } = useLocale();
   const t = useCallback((key: string) => dictionary[key] ?? en[key] ?? key, [dictionary]);
   const fingerprint = buildDealsSearchFingerprint(search); const contextKey = buildDealsPlanContextKey("guided", fingerprint);
-  const [storedPlan, setStoredPlan] = useState<DealsTripPlan | null>(null); const [storedContextKey, setStoredContextKey] = useState<string | null>(null);
-  const [resolvedContextKey, setResolvedContextKey] = useState<string | null>(null); const resolved = resolvedContextKey === contextKey;
+  const [planState, setPlanState] = useState(unresolvedDealsPlanState); const resolved = planState.resolvedContextKey === contextKey;
   const [editorOpen, setEditorOpen] = useState(invalid); const [announcement, setAnnouncement] = useState("");
   const modifyButtonRef = useRef<HTMLButtonElement>(null); const headingRef = useRef<HTMLHeadingElement>(null);
-  const plan = getVisibleDealsPlan(storedPlan, storedContextKey, contextKey);
+  const plan = getVisibleDealsPlan(planState, contextKey);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
+    let active = true; const timer = window.setTimeout(() => {
       const result = readDealsStagedJourneyPlan(fingerprint);
-      if (result.status === "valid") { setStoredPlan(result.plan); setStoredContextKey(contextKey); }
-      setResolvedContextKey(contextKey);
+      if (active) setPlanState(previous => applyDealsPlanReadResult(contextKey, contextKey, previous, result));
     }, 0);
-    return () => window.clearTimeout(timer);
+    return () => { active = false; window.clearTimeout(timer); };
   }, [contextKey, fingerprint]);
 
   const requiredStage = resolved ? getRequiredDealsJourneyStage(stage, search.mode, plan) : stage;
@@ -49,10 +47,10 @@ export function DealsJourneyShell({ stage, search, invalid }: { stage: DealsJour
   const submitSearch = (draft: DealsSearch) => {
     const nextFingerprint = buildDealsSearchFingerprint(draft);
     if (nextFingerprint === fingerprint) { setAnnouncement(t("deals.results.editor.unchanged")); closeEditor(); return; }
-    removeDealsStagedJourneyPlan(); setStoredPlan(null); setStoredContextKey(null); setEditorOpen(false);
+    removeDealsStagedJourneyPlan(); setPlanState(previous => ({ ...previous, plan: null, storedContextKey: null, persistence: "idle" })); setEditorOpen(false);
     setAnnouncement(t("deals.results.editor.updatedAnnouncement")); start(); router.push(buildDealsJourneyUrl(getFirstDealsJourneyStage(draft.mode), draft));
   };
-  const progress = useMemo(() => getGuidedDealsJourneyProgress(stage, search.mode, plan), [plan, search.mode, stage]);
+  const progress = useMemo(() => getGuidedDealsJourneyProgress(stage, search.mode, resolved ? plan : null), [plan, resolved, search.mode, stage]);
   const previous = getPreviousDealsJourneyStage(stage, search.mode);
   const backHref = previous ? buildDealsJourneyUrl(previous, search) : buildLegacyDealsResultsUrl(search);
   const firstStage = getFirstDealsJourneyStage(search.mode);
@@ -65,7 +63,7 @@ export function DealsJourneyShell({ stage, search, invalid }: { stage: DealsJour
         <Link href={backHref} className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-bold text-[#004BB8]"><ArrowLeft aria-hidden className="size-4 rtl:rotate-180" />{t("deals.guided.back")}</Link>
         <Link href={buildLegacyDealsResultsUrl(search)} className="focus-ring inline-flex min-h-11 items-center rounded-lg px-3 font-bold text-slate-700 underline decoration-slate-300 underline-offset-4">{t("deals.guided.escape")}</Link>
       </div>
-      <DealsJourneyProgress progress={progress} t={t} />
+      {resolved && <DealsJourneyProgress progress={progress} t={t} />}
       <section className="mt-7 min-w-0">
         <h1 ref={headingRef} tabIndex={-1} className="scroll-mt-24 text-balance text-2xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-3xl">{t(`deals.guided.heading.${stage}`)}</h1>
         {!resolved ? <div role="status" className="mt-6 min-h-36 animate-pulse rounded-2xl border border-slate-200 bg-white" aria-label={t("deals.guided.loading")} /> : requiredStage === stage && stage === firstStage ? <div data-deals-guided-journey-foundation className="mt-6 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm sm:p-8"><p className="text-lg font-extrabold text-slate-950">{t("deals.guided.foundationTitle")}</p><p className="mt-2 max-w-2xl leading-7 text-slate-600">{t("deals.guided.foundationBody")}</p></div> : null}
