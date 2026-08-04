@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
-import { LinkButton } from "@/components/ui/Button";
+import { Button, LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -253,21 +253,25 @@ type HotelSortBadge = "cheapest" | "bestValue" | "topRated";
 
 type HotelCardProps = {
   hotel: PublicHotelResult;
-  detailsHref?: string;
+  detailsHref?: string | null;
   sortBadge?: HotelSortBadge;
   actionLabel?: string;
+  actionAriaLabel?: string;
+  unavailableActionLabel?: string;
+  unavailableActionAriaLabel?: string;
   allowExternalAttribution?: boolean;
   allowSave?: boolean;
 };
 
-export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, allowExternalAttribution = true, allowSave = true }: HotelCardProps) {
+export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, actionAriaLabel, unavailableActionLabel, unavailableActionAriaLabel, allowExternalAttribution = true, allowSave = true }: HotelCardProps) {
   const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const starRating = normalizeHotelClassificationStars(hotel.classificationStars);
-  const resolvedDetailsHref =
-    detailsHref || `/hotels/details/${encodeURIComponent(hotel.id)}`;
+  const resolvedDetailsHref = detailsHref === undefined
+    ? `/hotels/details/${encodeURIComponent(hotel.id)}`
+    : detailsHref;
   const explicitGalleryImages = useMemo(
     () => buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl),
     [hotel.imageUrl, hotel.imageUrls],
@@ -405,6 +409,10 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, allowExt
     : null;
 
   function getHotelSnapshot(): SavedHotelSnapshot {
+    if (resolvedDetailsHref === null) {
+      throw new Error("Unavailable Hotel actions cannot be saved.");
+    }
+
     const snapshotPrice = getHotelPriceDetails(hotel);
     if (!snapshotPrice) {
       throw new Error("Cannot save a hotel without a valid live room rate.");
@@ -703,14 +711,28 @@ export function HotelCard({ hotel, detailsHref, sortBadge, actionLabel, allowExt
                   )}
                 </div>
                 <div className="mt-3 text-end">
-                  <LinkButton
-                    href={resolvedDetailsHref}
-                    variant="accent"
-                    size="sm"
-                    className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] md:px-3"
-                  >
-                    {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
-                  </LinkButton>
+                  {resolvedDetailsHref === null ? (
+                    <Button
+                      type="button"
+                      disabled
+                      aria-label={unavailableActionAriaLabel}
+                      variant="secondary"
+                      size="sm"
+                      className="w-full whitespace-normal rounded-lg px-2 text-sm font-semibold md:px-3"
+                    >
+                      {unavailableActionLabel || t("deals.guided.hotelResults.roomsUnavailable")}
+                    </Button>
+                  ) : (
+                    <LinkButton
+                      href={resolvedDetailsHref}
+                      aria-label={actionAriaLabel}
+                      variant="accent"
+                      size="sm"
+                      className="w-full whitespace-nowrap rounded-lg border border-[#004BB8] bg-[#004BB8] px-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] hover:border-[#021C2B] hover:bg-[#021C2B] md:px-3"
+                    >
+                      {actionLabel || t("hotelResults.viewHotel") || "View hotel"}
+                    </LinkButton>
+                  )}
                 </div>
               </div>
             </div>
