@@ -31,7 +31,7 @@ function imageUri(value?: string) {
 export function TravelResultsScreen({ product }: { product: Product }) {
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const primitives = [
-    one(params.tripType), one(params.from), one(params.to), one(params.departureDate), one(params.returnDate), one(params.travelers), one(params.adults), one(params.children), one(params.infants), one(params.cabin),
+    one(params.tripType), one(params.origin), one(params.destination), one(params.from), one(params.to), one(params.departureDate), one(params.returnDate), one(params.travelers), one(params.adults), one(params.children), one(params.infants), one(params.cabin), one(params.cabinClass), one(params.currency), one(params.market),
     one(params.destination), one(params.checkIn), one(params.checkOut), one(params.guests), one(params.rooms),
     one(params.pickupLocation), one(params.dropoffLocation), one(params.pickupDate), one(params.pickupTime), one(params.dropoffDate), one(params.dropoffTime), one(params.driverAge),
   ];

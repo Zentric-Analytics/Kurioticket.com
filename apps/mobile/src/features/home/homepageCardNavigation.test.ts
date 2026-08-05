@@ -10,13 +10,16 @@ const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8")
 const popular = source("src/features/home/PopularDestinationStays.tsx");
 const adventure = source("src/features/home/DiscoverNextAdventure.tsx");
 const helper = source("src/features/home/homepageCardNavigation.ts");
+const websiteHomepage = source("../../src/app/page.tsx");
+const websiteRouteHelper = source("../../src/lib/home/homepageRouteCardLinks.ts");
 
 test("Popular destination stay cards open the website hotel-results destination-only contract", () => {
   const params = homepageHotelDestinationParams({ city: "Dubai" });
   assert.deepEqual(params, { destination: "Dubai" });
-  assert.equal(buildSearchPlan("hotel", params).plan, undefined);
+  assert.deepEqual(buildSearchPlan("hotel", params).plan?.payload, { destination: "Dubai" });
   assert.deepEqual(popularDestinationStayNavigation({ city: "Dubai" }), { pathname: "/hotel-results", params });
   assert.doesNotMatch(helper, /checkIn|checkOut|guests|rooms/);
+  assert.match(websiteHomepage, /function buildDestinationCardHref[\s\S]*pathname: "\/hotels\/results"[\s\S]*destination: options\.city/);
   assert.doesNotMatch(popular, /pathname:\s*"\/(?:flights|flight-results)"/);
 });
 
@@ -24,6 +27,8 @@ test("Discover adventure cards open the website flight-results route search cont
   const params = homepageAdventureRouteParams({ originCode: "LOS", destinationCode: "LHR" }, new Date("2026-06-09T00:00:00.000Z"));
   assert.deepEqual(params, { tripType: "one-way", origin: "LOS", destination: "LHR", departureDate: "2026-07-24", travelers: "1", adults: "1", children: "0", infants: "0", cabinClass: "economy", currency: "USD", market: "NG" });
   assert.ok(buildSearchPlan("flight", params, new Date("2026-06-09T00:00:00.000Z")).plan);
+  assert.match(websiteHomepage, /function buildDiscoveryCardHref[\s\S]*return buildRouteCardHref\(price, options\)/);
+  assert.match(websiteRouteHelper, /pathname: "\/flights\/results"/);
   assert.deepEqual(discoverAdventureNavigation({ originCode: "LOS", destinationCode: "LHR" }), { pathname: "/flight-results", params: homepageAdventureRouteParams({ originCode: "LOS", destinationCode: "LHR" }) });
   assert.equal(getDefaultHomepageRouteCardDepartureDate(new Date("2026-06-09T00:00:00.000Z")), "2026-07-24");
   assert.doesNotMatch(helper, /returnDate|cabin:\s|from:|to:/);
