@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "builds": [
+    {
+      "platform": "android",
+      "easBuildId": "179ae3b8-3e7a-404c-bcf0-44cbdc759cff",
+      "commitSha": "34fa29bbfe3b969051f009c59643b2b8e3680507",
+      "nativeFingerprint": "25d1251ee757ccadc9ec1be5026c9bcac849fc92"
+    },
+    {
+      "platform": "ios",
+      "easBuildId": "5f537da8-356d-453b-9bf8-47623286657c",
+      "commitSha": "6bbef26ac6a3abd4652bc7d9d974bf21b6dd315e",
+      "nativeFingerprint": "025c15ba554e644a51c68db62beeee9957afac4e"
+    }
+  ]
+}

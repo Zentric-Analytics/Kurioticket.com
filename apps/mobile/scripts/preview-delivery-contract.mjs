@@ -54,30 +54,43 @@ function artifactUrl(build) {
   return build?.artifacts?.applicationArchiveUrl ?? build?.artifacts?.buildUrl ?? null;
 }
 
-export function resolveLatestPreviewBaseline({ builds, platform, targetSha, isAncestor = () => true }) {
+export function resolveLatestPreviewBaseline({ builds, platform, targetSha, reviewedBuilds = [], isAncestor = () => true }) {
   const rules = PLATFORM_RULES[platform];
   requireValue(rules, "Preview platform is unsupported.");
   requireValue(FULL_SHA.test(targetSha ?? ""), "Preview target SHA is malformed.");
   requireValue(Array.isArray(builds), "EAS Preview build history must be an array.");
+  requireValue(Array.isArray(reviewedBuilds), "Reviewed Preview baseline registry must be an array.");
+
+  const reviewedById = new Map();
+  for (const entry of reviewedBuilds) {
+    requireValue(entry && typeof entry === "object" && !Array.isArray(entry), "Reviewed Preview baseline entry is malformed.");
+    requireValue(entry.platform === "android" || entry.platform === "ios", "Reviewed Preview baseline platform is malformed.");
+    requireValue(typeof entry.easBuildId === "string" && entry.easBuildId.length > 0, "Reviewed Preview baseline build ID is malformed.");
+    requireValue(FULL_SHA.test(entry.commitSha ?? ""), "Reviewed Preview baseline commit is malformed.");
+    requireValue(typeof entry.nativeFingerprint === "string" && /^[0-9a-f]{40}$/.test(entry.nativeFingerprint), "Reviewed Preview baseline fingerprint is malformed.");
+    requireValue(!reviewedById.has(entry.easBuildId), "Reviewed Preview baseline build ID is duplicated.");
+    reviewedById.set(entry.easBuildId, entry);
+  }
 
   const candidates = builds.filter((build) => {
     requireValue(build && typeof build === "object" && !Array.isArray(build), "EAS Preview build entry is malformed.");
     if (build.platform !== rules.easPlatform || build.buildProfile !== "preview") return false;
-    if (build.status !== "FINISHED") return false;
     const identifier = build.applicationIdentifier ?? build.appIdentifier;
+    if (identifier !== APP_ID || build.runtimeVersion !== RUNTIME || build.channel !== CHANNEL || build.appVersion !== VERSION) return false;
     const url = artifactUrl(build);
-    const valid = build.project?.id === PROJECT_ID
-      && identifier === APP_ID
-      && build.runtimeVersion === RUNTIME
-      && build.channel === CHANNEL
-      && build.appVersion === VERSION
+    const reviewed = reviewedById.get(build.id);
+    const commitSha = build.gitCommitHash ?? reviewed?.commitSha;
+    const valid = build.status === "FINISHED"
+      && build.project?.id === PROJECT_ID
       && build.distribution === rules.distribution
-      && FULL_SHA.test(build.gitCommitHash ?? "")
+      && FULL_SHA.test(commitSha ?? "")
+      && (!reviewed || reviewed.platform === platform)
       && typeof url === "string"
       && /^https:\/\//.test(url)
       && rules.artifact.test(url);
     requireValue(valid, `Matching ${platform} Preview build metadata is malformed or identity-mismatched.`);
-    return isAncestor(build.gitCommitHash, targetSha);
+    build.resolvedCommitSha = commitSha;
+    return isAncestor(commitSha, targetSha);
   });
 
   requireValue(candidates.length > 0, `No finished ${platform} Preview baseline is an ancestor of the target dev SHA.`);
@@ -88,7 +101,7 @@ export function resolveLatestPreviewBaseline({ builds, platform, targetSha, isAn
   return {
     platform,
     easBuildId: selected.id,
-    commitSha: selected.gitCommitHash,
+    commitSha: selected.resolvedCommitSha,
     buildNumber: Number(selected.appBuildVersion),
     runtime: selected.runtimeVersion,
     channel: selected.channel,
@@ -134,7 +147,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (command === "baseline") {
     const builds = JSON.parse(readFileSync(options.input, "utf8"));
     const ancestors = new Set(JSON.parse(readFileSync(options.ancestors, "utf8")));
-    const result = resolveLatestPreviewBaseline({ builds, platform: options.platform, targetSha: options.target, isAncestor: (sha) => ancestors.has(sha) });
+    const registry = JSON.parse(readFileSync(options.registry, "utf8"));
+    requireValue(registry.schemaVersion === 1 && Array.isArray(registry.builds), "Reviewed Preview baseline registry schema is unsupported.");
+    const result = resolveLatestPreviewBaseline({ builds, platform: options.platform, targetSha: options.target, reviewedBuilds: registry.builds, isAncestor: (sha) => ancestors.has(sha) });
     writeFileSync(options.output, `${JSON.stringify(result, null, 2)}\n`);
   } else if (command === "classify") {
     const files = JSON.parse(readFileSync(options.files, "utf8"));
