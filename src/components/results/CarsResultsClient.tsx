@@ -32,12 +32,6 @@ import { CarCardSkeleton } from "@/components/ui/Skeleton";
 import { assignCarBadges, buildCarDetailsHref, filterCarResults, sortCarResults, type CarSort, type SelectedCarFilters } from "@/lib/cars/carResults";
 import type { CarInventoryStatus, CarSearchParams, NormalizedCarResult } from "@/lib/cars/types";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
-import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
-import {
-  calculateCompactFilterPlacement,
-  shouldShowDesktopCompactFilter,
-  type DesktopCompactFilterPlacementState,
-} from "@/lib/flights/desktopCompactFilter";
 
 type CarsResultsValues = CarSearchParams & {
   pickupLocation: string;
@@ -136,6 +130,15 @@ function lockBodyScroll() {
       window.scrollTo(0, scrollY);
     },
   };
+}
+
+function isSafelyFocusableElement(element: HTMLElement | null) {
+  if (!element?.isConnected) return false;
+  if (element.hidden || element.getAttribute("aria-hidden") === "true") return false;
+  const rects = element.getClientRects();
+  if (rects.length === 0) return false;
+  const style = window.getComputedStyle(element);
+  return style.display !== "none" && style.visibility !== "hidden";
 }
 
 const driverAgeOptions = [
@@ -481,9 +484,6 @@ const fieldShellClass =
 
 const searchFormGridClass =
   "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,1.08fr)_minmax(0,1.48fr)_minmax(0,1.06fr)_118px_116px] lg:items-stretch lg:gap-0";
-const desktopCompactFilterTopOffset = 116;
-const desktopCompactFilterBottomGap = 16;
-
 const compactFieldShellClass =
   "min-h-[46px] py-1 lg:min-h-[54px] lg:py-1.5";
 
@@ -497,24 +497,11 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [selectedCarFilters, setSelectedCarFilters] =
-    useState<SelectedCarFilters>({});
-  const [sort, setSort] = useState<CarSort>("recommended");
-  const [carsSortOpen, setCarsSortOpen] = useState(false);
-  const [resultsTransitioning, setResultsTransitioning] = useState(false);
-  const resultsTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const carsSortRef = useRef<HTMLDivElement | null>(null);
-  const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [desktopStickySearchSection, setDesktopStickySearchSection] = useState<
     "locations" | "dates" | "times" | "driverAge" | null
   >(null);
-  const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
-    useState<DesktopCompactFilterPlacementState>("hidden");
-  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] = useState({ left: 0, width: 0 });
-  const [desktopCompactFilterMaxHeight, setDesktopCompactFilterMaxHeight] = useState(0);
   const [pickupLocation, setPickupLocation] = useState(values.pickupLocation);
   const [dropoffLocation, setDropoffLocation] = useState(
     values.dropoffLocation || values.pickupLocation,
@@ -533,16 +520,10 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
   const desktopStickySearchRefs = useSearchSurfaceRefs();
   const mobileSearchRefs = useSearchSurfaceRefs();
   const searchFormRef = useRef<HTMLFormElement | null>(null);
-  const desktopFilterSidebarRef = useRef<HTMLDivElement | null>(null);
-  const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
-  const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
   const stickyDialogRef = useRef<HTMLDivElement | null>(null);
   const stickyLauncherRef = useRef<HTMLButtonElement | null>(null);
   const stickyScrollLockRef = useRef<{ restore: () => void } | null>(null);
-  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
-    null,
-  );
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const parsedPickup = parseIsoDate(values.pickupDate);
 
@@ -561,35 +542,6 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
     trimmedDropoffLocation,
     t,
   );
-  const locationSummary = trimmedPickupLocation
-    ? trimmedDropoffLocation && trimmedDropoffLocation !== trimmedPickupLocation
-      ? interpolate(t("carsResults.pickupToReturn"), {
-          pickup: pickupLocationLabel,
-          return: dropoffLocationLabel,
-        })
-      : pickupLocationLabel
-    : t("carsResults.pickupLocationNeeded");
-  const activeFilterCount = useMemo(
-    () =>
-      Object.values(selectedCarFilters).reduce(
-        (count, selectedOptions) => count + selectedOptions.length,
-        0,
-      ),
-    [selectedCarFilters],
-  );
-  const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
-    count: String(activeFilterCount),
-  });
-  const carSortOptions: { value: CarSort; label: string }[] = [
-    { value: "recommended", label: t("carsResults.recommended") },
-    { value: "lowestTotal", label: t("carsResults.lowestTotal") },
-    { value: "topRated", label: t("carsResults.topRated") },
-  ];
-  const selectedCarSortLabel =
-    carSortOptions.find((option) => option.value === sort)?.label ??
-    carSortOptions[0].label;
-  const badges = useMemo(() => assignCarBadges(initialResults), [initialResults]);
-  const visibleResults = useMemo(() => sortCarResults(filterCarResults(initialResults, selectedCarFilters), sort), [initialResults, selectedCarFilters, sort]);
   const showCompactSearchSummary = isSearchBarCompact && desktopStickySearchSection === null;
   const desktopStickySearchOpen = desktopStickySearchSection !== null;
   const pickupSummary = pickupLocationLabel || t("carsResults.pickupLocation");
@@ -619,94 +571,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
     setTimesOpen(false);
     setDriverAgeOpen(false);
     requestAnimationFrame(() => stickyLauncherRef.current?.focus({ preventScroll: true }));
-  }, []);
-
-  const toggleCarFilter = (groupId: string, option: string) => {
-    setResultsTransitioning(true);
-    if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current);
-    resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160);
-    setSelectedCarFilters((current) => {
-      const currentGroupSelections = current[groupId] ?? [];
-      const isSelected = currentGroupSelections.includes(option);
-      const nextGroupSelections = isSelected
-        ? currentGroupSelections.filter((selected) => selected !== option)
-        : [...currentGroupSelections, option];
-      const nextFilters = { ...current };
-
-      if (nextGroupSelections.length > 0) {
-        nextFilters[groupId] = nextGroupSelections;
-      } else {
-        delete nextFilters[groupId];
-      }
-
-      return nextFilters;
-    });
-  };
-
-  const clearCarFilters = () => {
-    setResultsTransitioning(true);
-    setSelectedCarFilters({});
-    if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current);
-    resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160);
-  };
-
-  useEffect(() => {
-    if (!carsSortOpen) return;
-
-    const handleOutsideClick = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (carsSortRef.current?.contains(target)) return;
-      setCarsSortOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setCarsSortOpen(false);
-        carsSortButtonRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [carsSortOpen]);
-
-  useEffect(() => {
-    const releaseExistingLock = () => {
-      mobileFiltersScrollLockRef.current?.restore();
-      mobileFiltersScrollLockRef.current = null;
-    };
-
-    if (!filtersOpen || typeof window === "undefined") {
-      releaseExistingLock();
-      return releaseExistingLock;
-    }
-
-    const mobileQuery = window.matchMedia("(max-width: 1023px)");
-
-    if (!mobileQuery.matches) {
-      releaseExistingLock();
-      return releaseExistingLock;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setFiltersOpen(false);
-      }
-    };
-
-    mobileFiltersScrollLockRef.current = lockBodyScroll();
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      releaseExistingLock();
-    };
-  }, [filtersOpen]);
+  }, [setDesktopStickySearchSection, setDatesOpen, setTimesOpen, setDriverAgeOpen]);
 
   useEffect(() => {
     const form = searchFormRef.current;
@@ -773,7 +638,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
         return;
       }
       if (event.key === "Tab" && stickyDialogRef.current) {
-        const focusable = [...stickyDialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter((node) => !node.hidden);
+        const focusable = [...stickyDialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(isSafelyFocusableElement);
         if (!focusable.length) return;
         const first = focusable[0], last = focusable[focusable.length - 1];
         if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus({ preventScroll: true }); }
@@ -784,30 +649,7 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
     return () => document.removeEventListener("keydown", handleKey);
   }, [desktopStickySearchOpen, closeDesktopStickySearch, datesOpen, timesOpen, driverAgeOpen]);
 
-  useEffect(() => {
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      const sentinel = desktopFilterSentinelRef.current;
-      const sidebar = desktopFilterSidebarRef.current;
-      const body = resultsGridRef.current;
-      if (!sentinel || !sidebar || !body) return;
-      const enabled = shouldShowDesktopCompactFilter({ viewportWidth: window.innerWidth, sentinelTop: sentinel.getBoundingClientRect().top, topOffset: desktopCompactFilterTopOffset });
-      const maxHeight = calculateCompactFilterMaxHeight({ viewportHeight: window.innerHeight, topOffset: desktopCompactFilterTopOffset, bottomGap: desktopCompactFilterBottomGap });
-      setDesktopCompactFilterMaxHeight(maxHeight);
-      const sidebarRect = sidebar.getBoundingClientRect();
-      setDesktopCompactFilterFrame({ left: sidebarRect.left, width: sidebarRect.width });
-      const panelHeight = Math.min(desktopCompactFilterRef.current?.scrollHeight ?? maxHeight, maxHeight);
-      const placement = calculateCompactFilterPlacement({ enabled, scrollY: window.scrollY, desiredTop: desktopCompactFilterTopOffset, panelHeight, bodyBottomDocument: body.getBoundingClientRect().bottom + window.scrollY, currentState: desktopCompactFilterPlacement, bottomGap: desktopCompactFilterBottomGap });
-      setDesktopCompactFilterPlacement(placement.state);
-    };
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
-    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
-    if (desktopFilterSidebarRef.current) resizeObserver?.observe(desktopFilterSidebarRef.current);
-    if (resultsGridRef.current) resizeObserver?.observe(resultsGridRef.current);
-    window.addEventListener("scroll", schedule, { passive: true }); window.addEventListener("resize", schedule); schedule();
-    return () => { resizeObserver?.disconnect(); window.removeEventListener("scroll", schedule); window.removeEventListener("resize", schedule); if (frame) cancelAnimationFrame(frame); };
-  }, [desktopCompactFilterPlacement]);
+
 
   useEffect(() => {
     const activeSearchRefs = desktopStickySearchOpen
@@ -877,41 +719,17 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
-  }, []);
+  }, [setMobileSearchOpen, setDesktopStickySearchSection, setDatesOpen, setTimesOpen, setDriverAgeOpen]);
 
   const closeMobileSearchDrawer = useCallback(() => {
     setMobileSearchOpen(false);
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
-  }, []);
+  }, [setMobileSearchOpen, setDatesOpen, setTimesOpen, setDriverAgeOpen]);
 
   const renderMobileControlsRow = () => (
     <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
-      <Button
-        type="button"
-        variant="secondary"
-        aria-label={
-          activeFilterCount > 0
-            ? interpolate(t("carsResults.openFiltersWithCount"), {
-                count: String(activeFilterCount),
-              })
-            : t("carsResults.openFilters")
-        }
-        className="relative h-14 w-[68px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-        onClick={() => setFiltersOpen(true)}
-      >
-        <span className="flex flex-col items-center justify-center gap-1 leading-none">
-          <SlidersHorizontal size={17} strokeWidth={2.3} aria-hidden="true" />
-          <span>{t("filters")}</span>
-        </span>
-        {activeFilterCount > 0 ? (
-          <span className="absolute end-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-[#004BB8]/8 px-1.5 text-[11px] font-semibold leading-none text-[#004BB8] shadow-sm ring-2 ring-white">
-            {activeFilterCount}
-          </span>
-        ) : null}
-      </Button>
-
       <button
         type="button"
         onClick={openMobileSearchDrawer}
@@ -1213,218 +1031,133 @@ export function CarsResultsClient({ values, initialResults, inventoryStatus }: {
         </ol>
       </nav>
 
-      <div ref={resultsGridRef} className="page-shell relative grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
-        <aside ref={desktopFilterSidebarRef} className="relative hidden lg:block lg:self-stretch">
-              <div ref={desktopFilterSentinelRef} className="h-px" aria-hidden="true" />
-              <div className={desktopCompactFilterPlacement === "hidden" ? "block" : "invisible"}>
-                <CarFilters
-                  activeFilterCount={activeFilterCount}
-                  layout="desktop"
-                  onClear={clearCarFilters}
-                  onToggle={toggleCarFilter}
-                  selectedFilters={selectedCarFilters}
-                  t={t}
-                />
-              </div>
-              {desktopCompactFilterPlacement !== "hidden" ? (
-                <div ref={desktopCompactFilterRef} className={cn(desktopCompactFilterPlacement === "fixed" ? "fixed" : "absolute inset-x-0 bottom-0 w-full")} style={desktopCompactFilterPlacement === "fixed" ? { top: desktopCompactFilterTopOffset, left: desktopCompactFilterFrame.left, width: desktopCompactFilterFrame.width, maxHeight: desktopCompactFilterMaxHeight } : { maxHeight: desktopCompactFilterMaxHeight }}>
-                  <CarFilters activeFilterCount={activeFilterCount} layout="compact" onClear={clearCarFilters} onToggle={toggleCarFilter} selectedFilters={selectedCarFilters} t={t} />
-                </div>
-              ) : null}
-        </aside>
-
-        <section
-          className="min-w-0 space-y-4"
-          aria-label={t("carsResults.carResultsAria")}
-        >
-          <h1 id="cars-results-heading" className="sr-only">
-            {interpolate(t("carsResults.resultsFor"), {
-              location: locationSummary,
-            })}
-          </h1>
-
-          <div className="w-full min-w-0 xl:max-w-[840px]">
-            {initialResults.length > 0 ? (
-              <>
-                <div className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2 py-1 sm:flex-wrap sm:gap-3">
-                <p className="min-w-0 flex-1 truncate whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033]">
-                  {t(
-                    visibleResults.length === 1
-                      ? "resultFound"
-                      : "resultsFound",
-                  ).replace(
-                    "{{count}}",
-                    new Intl.NumberFormat(intlLocale, {
-                      maximumFractionDigits: 0,
-                    }).format(visibleResults.length),
-                  )}
-                </p>
-                <div className="flex min-w-0 max-w-[68%] flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:max-w-none sm:shrink-0 sm:gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="hidden h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:border-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:inline-flex lg:hidden"
-                    onClick={() => setFiltersOpen(true)}
-                  >
-                    <SlidersHorizontal size={17} aria-hidden="true" />
-                    {activeFilterCount > 0
-                      ? t("filtersWithCount").replace(
-                          "{{count}}",
-                          String(activeFilterCount),
-                        )
-                      : t("filters")}
-                  </Button>
-                  <div className="flex min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
-                    <span className="shrink-0 whitespace-nowrap text-[clamp(0.68rem,3vw,0.875rem)] font-semibold text-slate-700 sm:text-base">
-                      {t("carsResults.sortBy")}:
-                    </span>
-                    <div
-                      ref={carsSortRef}
-                      className="relative inline-flex min-w-0 max-w-full shrink items-center whitespace-nowrap"
-                    >
-                      <button
-                        ref={carsSortButtonRef}
-                        type="button"
-                        aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
-                        aria-haspopup="menu"
-                        aria-expanded={carsSortOpen}
-                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25"
-                        onClick={() => setCarsSortOpen((open) => !open)}
-                      >
-                        <span className="min-w-0 truncate whitespace-nowrap">
-                          {selectedCarSortLabel}
-                        </span>
-                        <ChevronDown
-                          size={16}
-                          className={cn(
-                            "shrink-0 transition-transform duration-150",
-                            carsSortOpen && "rotate-180",
-                          )}
-                          aria-hidden="true"
-                        />
-                      </button>
-                      <div
-                        role="menu"
-                        aria-hidden={!carsSortOpen}
-                        className={cn(
-                          "absolute end-0 top-11 z-40 w-56 max-w-[calc(100vw-2rem)] origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150",
-                          carsSortOpen
-                            ? "translate-y-0 scale-100 opacity-100"
-                            : "pointer-events-none -translate-y-1 scale-95 opacity-0",
-                        )}
-                      >
-                        {carSortOptions.map((option) => {
-                          const isSelected = sort === option.value;
-
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              role="menuitemradio"
-                              aria-checked={isSelected}
-                              tabIndex={carsSortOpen ? 0 : -1}
-                              className={cn(
-                                "flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25",
-                                isSelected
-                                  ? "bg-[#004BB8]/[0.06] text-[#004BB8]"
-                                  : "text-slate-700 hover:bg-slate-50 hover:text-slate-950",
-                              )}
-                              onClick={() => {
-                                setResultsTransitioning(true);
-                                setSort(option.value);
-                                if (resultsTransitionTimerRef.current)
-                                  clearTimeout(resultsTransitionTimerRef.current);
-                                resultsTransitionTimerRef.current = setTimeout(
-                                  () => setResultsTransitioning(false),
-                                  160,
-                                );
-                                setCarsSortOpen(false);
-                              }}
-                            >
-                              <span className="w-4 shrink-0 text-[#004BB8]">
-                                {isSelected ? "✓" : ""}
-                              </span>
-                              <span className="whitespace-nowrap">
-                                {option.label}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                </div>
-                {resultsTransitioning ? <div className="w-full space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="w-full space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={buildCarDetailsHref(car.id, values)} />)}</div> : <div role="status" className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">No cars match these filters.</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>Clear filters</Button></div>}
-              </>
-            ) : <CarsResultsShell hasSearchContext={hasSearchContext} inventoryStatus={inventoryStatus} t={t} />}
-          </div>
-        </section>
+      <div ref={resultsGridRef} className="page-shell pb-6 pt-5 sm:pt-6">
+        <CarsResultsExperience
+          results={initialResults}
+          inventoryStatus={inventoryStatus}
+          hasSearchContext={hasSearchContext}
+          resultHeadingId="cars-results-heading"
+          detailsHrefForCar={(car) => buildCarDetailsHref(car.id, values)}
+        />
       </div>
-
-      <aside
-        className={cn(
-          "fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-white transition-transform duration-200 ease-out lg:hidden",
-          filtersOpen ? "translate-y-0" : "translate-y-full",
-        )}
-        aria-label={t("carsResults.carFiltersAria")}
-      >
-        <div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-bold leading-6 text-slate-950">
-                {t("filters")}
-              </h2>
-              {activeFilterCount > 0 ? (
-                <p className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8] ring-1 ring-[#004BB8]/10">
-                  {activeFilterLabel}
-                </p>
-              ) : null}
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-10 w-10 shrink-0 rounded-full border border-slate-200 bg-white px-0 text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
-              aria-label={t("carsResults.closeFilters")}
-              onClick={() => setFiltersOpen(false)}
-            >
-              <X size={20} />
-            </Button>
-          </div>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
-          <CarFilters
-            activeFilterCount={activeFilterCount}
-            layout="mobile"
-            onClear={clearCarFilters}
-            onToggle={toggleCarFilter}
-            selectedFilters={selectedCarFilters}
-            t={t}
-          />
-        </div>
-
-        <div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-8px_20px_rgba(15,23,42,0.06)]">
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={activeFilterCount === 0}
-            className="h-12 min-w-0 rounded-xl px-0 text-sm font-bold text-[#004BB8] transition hover:bg-transparent hover:text-[#003f9c] disabled:pointer-events-none disabled:text-slate-400"
-            onClick={clearCarFilters}
-          >
-            {t("clearAll")}
-          </Button>
-          <Button
-            type="button"
-            className="h-12 min-w-[8.75rem] rounded-xl bg-[#004BB8] px-7 text-base font-bold text-white shadow-md shadow-[#004BB8]/12 transition hover:bg-[#003f9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-2"
-            onClick={() => setFiltersOpen(false)}
-          >
-            {t("done")}
-          </Button>
-        </div>
-      </aside>
     </main>
   );
+}
+
+
+export function CarsResultsExperience({
+  results,
+  inventoryStatus,
+  hasSearchContext,
+  resultHeadingId = "cars-results-experience-heading",
+  resultHeading,
+  embedded = false,
+  detailsHrefForCar,
+  actionLabel,
+  actionAriaLabelForCar,
+  resultHeadingRef,
+}: {
+  results: NormalizedCarResult[];
+  inventoryStatus: CarInventoryStatus;
+  hasSearchContext: boolean;
+  resultHeadingId?: string;
+  resultHeading?: string;
+  resultHeadingRef?: RefObject<HTMLHeadingElement | null>;
+  embedded?: boolean;
+  detailsHrefForCar: (car: NormalizedCarResult) => string | null;
+  actionLabel?: string;
+  actionAriaLabelForCar?: (car: NormalizedCarResult) => string;
+}) {
+  const { locale, t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const intlLocale = getCarsResultsIntlLocale(locale);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
+  const filtersDialogRef = useRef<HTMLElement | null>(null);
+  const filtersCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(null);
+  const [selectedCarFilters, setSelectedCarFilters] = useState<SelectedCarFilters>({});
+  const [sort, setSort] = useState<CarSort>("recommended");
+  const [carsSortOpen, setCarsSortOpen] = useState(false);
+  const [resultsTransitioning, setResultsTransitioning] = useState(false);
+  const resultsTransitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const carsSortRef = useRef<HTMLDivElement | null>(null);
+  const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
+  const activeFilterCount = useMemo(() => Object.values(selectedCarFilters).reduce((count, selectedOptions) => count + selectedOptions.length, 0), [selectedCarFilters]);
+  const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), { count: String(activeFilterCount) });
+  const carSortOptions: { value: CarSort; label: string }[] = [
+    { value: "recommended", label: t("carsResults.recommended") },
+    { value: "lowestTotal", label: t("carsResults.lowestTotal") },
+    { value: "topRated", label: t("carsResults.topRated") },
+  ];
+  const selectedCarSortLabel = carSortOptions.find((option) => option.value === sort)?.label ?? carSortOptions[0].label;
+  const badges = useMemo(() => assignCarBadges(results), [results]);
+  const visibleResults = useMemo(() => sortCarResults(filterCarResults(results, selectedCarFilters), sort), [results, selectedCarFilters, sort]);
+  const setTransition = () => {
+    setResultsTransitioning(true);
+    if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current);
+    resultsTransitionTimerRef.current = setTimeout(() => setResultsTransitioning(false), 160);
+  };
+  const toggleCarFilter = (groupId: string, option: string) => {
+    setTransition();
+    setSelectedCarFilters((current) => {
+      const currentGroupSelections = current[groupId] ?? [];
+      const nextGroupSelections = currentGroupSelections.includes(option) ? currentGroupSelections.filter((selected) => selected !== option) : [...currentGroupSelections, option];
+      const nextFilters = { ...current };
+      if (nextGroupSelections.length > 0) nextFilters[groupId] = nextGroupSelections;
+      else delete nextFilters[groupId];
+      return nextFilters;
+    });
+  };
+  const clearCarFilters = () => { setTransition(); setSelectedCarFilters({}); };
+  useEffect(() => () => { if (resultsTransitionTimerRef.current) clearTimeout(resultsTransitionTimerRef.current); }, []);
+  useEffect(() => {
+    if (!carsSortOpen) return;
+    const handleOutsideClick = (event: MouseEvent) => { if (!carsSortRef.current?.contains(event.target as Node)) setCarsSortOpen(false); };
+    const handleKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") { setCarsSortOpen(false); carsSortButtonRef.current?.focus(); } };
+    document.addEventListener("mousedown", handleOutsideClick); document.addEventListener("keydown", handleKeyDown);
+    return () => { document.removeEventListener("mousedown", handleOutsideClick); document.removeEventListener("keydown", handleKeyDown); };
+  }, [carsSortOpen]);
+  useEffect(() => {
+    const releaseExistingLock = () => { mobileFiltersScrollLockRef.current?.restore(); mobileFiltersScrollLockRef.current = null; };
+    if (!filtersOpen || typeof window === "undefined") { releaseExistingLock(); return releaseExistingLock; }
+    const media = window.matchMedia("(max-width: 1023px)");
+    if (!media.matches) { releaseExistingLock(); return releaseExistingLock; }
+    let shouldRestoreFocus = true;
+    const focusDrawer = requestAnimationFrame(() => filtersCloseButtonRef.current?.focus({ preventScroll: true }));
+    const closeForDesktop = () => { if (!media.matches) { shouldRestoreFocus = false; setFiltersOpen(false); } };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFiltersOpen(false);
+      if (event.key === "Tab" && filtersDialogRef.current) {
+        const focusable = [...filtersDialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(isSafelyFocusableElement);
+        if (!focusable.length) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus({ preventScroll: true }); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus({ preventScroll: true }); }
+      }
+    };
+    mobileFiltersScrollLockRef.current = lockBodyScroll();
+    window.addEventListener("keydown", handleKeyDown); media.addEventListener("change", closeForDesktop);
+    const launcher = filtersButtonRef.current;
+    return () => { cancelAnimationFrame(focusDrawer); window.removeEventListener("keydown", handleKeyDown); media.removeEventListener("change", closeForDesktop); releaseExistingLock(); if (shouldRestoreFocus && launcher && isSafelyFocusableElement(launcher)) launcher.focus({ preventScroll: true }); };
+  }, [filtersOpen]);
+
+  return <section className={cn("min-w-0", embedded ? "mt-6" : "w-full")} aria-labelledby={resultHeadingId} data-cars-results-experience>
+    <div className="grid gap-5 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
+      {results.length > 0 ? <aside className="relative hidden lg:block"><CarFilters activeFilterCount={activeFilterCount} layout="desktop" onClear={clearCarFilters} onToggle={toggleCarFilter} selectedFilters={selectedCarFilters} t={t} /></aside> : null}
+      <div className="min-w-0 space-y-4">
+        {results.length > 0 ? <>
+          <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2 py-1 sm:gap-3">
+            <h2 ref={resultHeadingRef} id={resultHeadingId} tabIndex={-1} className={cn("min-w-0 flex-1 truncate whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]", !embedded && "sr-only")}>{resultHeading ?? t(visibleResults.length === 1 ? "resultFound" : "resultsFound").replace("{{count}}", new Intl.NumberFormat(intlLocale, { maximumFractionDigits: 0 }).format(visibleResults.length))}</h2>
+            <button ref={filtersButtonRef} type="button" className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={17} aria-hidden="true" />{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</button>
+            <div className="flex min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2"><span className="shrink-0 whitespace-nowrap text-sm font-semibold text-slate-700">{t("carsResults.sortBy")}:</span><div ref={carsSortRef} className="relative inline-flex min-w-0 max-w-full shrink items-center whitespace-nowrap"><button ref={carsSortButtonRef} type="button" aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`} aria-haspopup="menu" aria-expanded={carsSortOpen} className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033]" onClick={() => setCarsSortOpen((open) => !open)}><span className="min-w-0 truncate whitespace-nowrap">{selectedCarSortLabel}</span><ChevronDown size={16} className={cn("shrink-0 transition-transform duration-150", carsSortOpen && "rotate-180")} aria-hidden="true" /></button><div role="menu" aria-hidden={!carsSortOpen} className={cn("absolute end-0 top-11 z-40 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg", carsSortOpen ? "opacity-100" : "pointer-events-none opacity-0")}>{carSortOptions.map((option) => <button key={option.value} type="button" role="menuitemradio" aria-checked={sort === option.value} tabIndex={carsSortOpen ? 0 : -1} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold" onClick={() => { setTransition(); setSort(option.value); setCarsSortOpen(false); }}><span className="w-4 shrink-0 text-[#004BB8]">{sort === option.value ? "✓" : ""}</span><span>{option.label}</span></button>)}</div></div></div>
+          </div>
+          {resultsTransitioning ? <div className="w-full space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="w-full space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={detailsHrefForCar(car)} actionLabel={actionLabel} actionAriaLabel={actionAriaLabelForCar?.(car)} headingLevel={embedded ? "h3" : "h2"} />)}</div> : <div role="status" className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">{t("carsResults.filteredEmpty") || "No cars match these filters."}</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>{t("carsResults.clearFilters") || "Clear filters"}</Button></div>}
+        </> : <><h2 id={resultHeadingId} tabIndex={-1} className="text-xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]">{resultHeading ?? t("deals.guided.carResults.emptyTitle")}</h2><CarsResultsShell hasSearchContext={hasSearchContext} inventoryStatus={inventoryStatus} t={t} /></>}
+      </div>
+    </div>
+    {filtersOpen ? <aside ref={filtersDialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="cars-guided-filters-title" className="fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden bg-white lg:hidden"><div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))]"><div className="flex items-center justify-between gap-3"><div><h2 id="cars-guided-filters-title" className="text-lg font-bold leading-6 text-slate-950">{t("filters")}</h2>{activeFilterCount > 0 ? <p className="mt-1 inline-flex rounded-full bg-[#004BB8]/8 px-2.5 py-1 text-xs font-bold text-[#004BB8]">{activeFilterLabel}</p> : null}</div><button ref={filtersCloseButtonRef} type="button" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35" aria-label={t("carsResults.closeFilters")} onClick={() => setFiltersOpen(false)}><X size={20} /></button></div></div><div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4"><CarFilters activeFilterCount={activeFilterCount} layout="mobile" onClear={clearCarFilters} onToggle={toggleCarFilter} selectedFilters={selectedCarFilters} t={t} /></div><div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4"><Button type="button" variant="ghost" disabled={activeFilterCount === 0} className="h-12" onClick={clearCarFilters}>{t("clearAll")}</Button><Button type="button" className="h-12 min-w-[8.75rem] bg-[#004BB8] text-white" onClick={() => setFiltersOpen(false)}>{t("done")}</Button></div></aside> : null}
+  </section>;
 }
 
 function SearchInputCell({

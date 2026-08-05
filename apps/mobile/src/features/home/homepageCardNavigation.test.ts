@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { buildSearchPlan } from "../flow/travelSearchModel";
-import { discoverAdventureNavigation, homepageAdventureRouteParams, homepageHotelDestinationParams, popularDestinationStayNavigation } from "./homepageCardNavigation";
+import { discoverAdventureNavigation, getDefaultHomepageRouteCardDepartureDate, homepageAdventureRouteParams, homepageHotelDestinationParams, popularDestinationStayNavigation } from "./homepageCardNavigation";
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
@@ -11,21 +11,22 @@ const popular = source("src/features/home/PopularDestinationStays.tsx");
 const adventure = source("src/features/home/DiscoverNextAdventure.tsx");
 const helper = source("src/features/home/homepageCardNavigation.ts");
 
-test("Popular destination stay cards use the existing hotel search contract or safe form-prefill fallback", () => {
+test("Popular destination stay cards open the website hotel-results destination-only contract", () => {
   const params = homepageHotelDestinationParams({ city: "Dubai" });
   assert.deepEqual(params, { destination: "Dubai" });
   assert.equal(buildSearchPlan("hotel", params).plan, undefined);
-  assert.deepEqual(popularDestinationStayNavigation({ city: "Dubai" }), { pathname: "/hotels", params });
+  assert.deepEqual(popularDestinationStayNavigation({ city: "Dubai" }), { pathname: "/hotel-results", params });
   assert.doesNotMatch(helper, /checkIn|checkOut|guests|rooms/);
   assert.doesNotMatch(popular, /pathname:\s*"\/(?:flights|flight-results)"/);
 });
 
-test("Discover adventure cards use the existing flight search contract or safe form-prefill fallback", () => {
-  const params = homepageAdventureRouteParams({ originCode: "LOS", destinationCode: "LHR" });
-  assert.deepEqual(params, { from: "LOS", to: "LHR" });
-  assert.equal(buildSearchPlan("flight", params).plan, undefined);
-  assert.deepEqual(discoverAdventureNavigation({ originCode: "LOS", destinationCode: "LHR" }), { pathname: "/flights", params });
-  assert.doesNotMatch(helper, /departureDate|returnDate|travelers|adults|children|infants|cabin/);
+test("Discover adventure cards open the website flight-results route search contract", () => {
+  const params = homepageAdventureRouteParams({ originCode: "LOS", destinationCode: "LHR" }, new Date("2026-06-09T00:00:00.000Z"));
+  assert.deepEqual(params, { tripType: "one-way", origin: "LOS", destination: "LHR", departureDate: "2026-07-24", travelers: "1", adults: "1", children: "0", infants: "0", cabinClass: "economy", currency: "USD", market: "NG" });
+  assert.ok(buildSearchPlan("flight", params, new Date("2026-06-09T00:00:00.000Z")).plan);
+  assert.deepEqual(discoverAdventureNavigation({ originCode: "LOS", destinationCode: "LHR" }), { pathname: "/flight-results", params: homepageAdventureRouteParams({ originCode: "LOS", destinationCode: "LHR" }) });
+  assert.equal(getDefaultHomepageRouteCardDepartureDate(new Date("2026-06-09T00:00:00.000Z")), "2026-07-24");
+  assert.doesNotMatch(helper, /returnDate|cabin:\s|from:|to:/);
   assert.doesNotMatch(adventure, /pathname:\s*"\/(?:hotels|hotel-results)"/);
 });
 
