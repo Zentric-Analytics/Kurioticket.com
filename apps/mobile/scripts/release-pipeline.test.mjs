@@ -19,7 +19,7 @@ import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verif
 import { buildReleaseAudit } from './write-release-audit.mjs';
 import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
 import { classifyReplayLookupFailure, inspectPreviewUpdateHistory, normalizePreviewUpdatePage, resolveTrustedPreviewTarget, validateStagingReadiness, waitForStaging } from './preview-ota-automation.mjs';
-import { classifyPreviewPlatform, combinePreviewDecisions, resolveLatestPreviewBaseline } from './preview-delivery-contract.mjs';
+import { classifyPreviewPlatform, combinePreviewDecisions, resolveLatestPreviewBaseline, selectReviewedPreviewBuild } from './preview-delivery-contract.mjs';
 
 const { policy, eas, root } = loadReleaseFiles();
 
@@ -1008,6 +1008,17 @@ test('reviewed Preview baseline registry records both finished build 4 artifacts
     assert.equal(build.buildNumber, 4);
     assert.match(build.nativeFingerprint, /^[0-9a-f]{40}$/);
   }
+});
+
+test('reviewed Preview baseline selection chooses the newest build in target ancestry', () => {
+  const registry = JSON.parse(readFileSync(resolve(root, 'release-baselines/preview-builds.json'), 'utf8'));
+  const targetAncestors = new Set(['baab5b0565383ae6c9d0799f8796b3f0dd18174c', '34fa29bbfe3b969051f009c59643b2b8e3680507', '6bbef26ac6a3abd4652bc7d9d974bf21b6dd315e']);
+  assert.equal(selectReviewedPreviewBuild({ reviewedBuilds: registry.builds, platform: 'android', ancestors: targetAncestors }).easBuildId, 'f545df86-7e9a-44f4-964f-f9e7ebee6743');
+  assert.equal(selectReviewedPreviewBuild({ reviewedBuilds: registry.builds, platform: 'ios', ancestors: targetAncestors }).easBuildId, '5664863d-0831-4fae-82b4-3279cf70d1e4');
+
+  const conflicting = [...registry.builds, { ...registry.builds.find((entry) => entry.platform === 'android' && entry.buildNumber === 4), easBuildId: 'conflicting-build' }];
+  assert.throws(() => selectReviewedPreviewBuild({ reviewedBuilds: conflicting, platform: 'android', ancestors: targetAncestors }), /ambiguous/);
+  assert.throws(() => selectReviewedPreviewBuild({ reviewedBuilds: registry.builds, platform: 'android', ancestors: new Set(['f'.repeat(40)]) }), /No reviewed/);
 });
 
 test('Preview baseline selection ignores valid unrelated history and resolves reviewed no-VCS evidence', () => {
