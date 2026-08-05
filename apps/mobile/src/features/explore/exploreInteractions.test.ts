@@ -312,6 +312,52 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.match(source, /Search flights to/);
 });
 
+
+test("popular destination flight action is compact while preserving navigation", () => {
+  const source = screen();
+  const card = source.slice(
+    source.indexOf("function PopularDestinationCard"),
+    source.indexOf("function ExploreDiscoveryContent"),
+  );
+  const styles = source.slice(source.indexOf("  flightButton: {"));
+  const flightButtonStyle = styles.slice(0, styles.indexOf("  flightButtonText:"));
+
+  assert.match(card, /<Pressable[\s\S]*?accessibilityLabel=\{`Search flights to \$\{destination\.name\}`\}/);
+  assert.match(card, /<Text style=\{s\.flightButtonText\}>Search flights<\/Text>/);
+  assert.match(card, /<FlowIcon name="flight" color="white" size=\{16\} \/>/);
+  assert.match(card, /router\.push\(\{[\s\S]*?pathname: `\/\$\{route\}`[\s\S]*?destination: name[\s\S]*?destinationId: handoff\.destinationId[\s\S]*?airportCodes: handoff\.airportCodes\.join\(","\)[\s\S]*?to: handoff\.primaryAirportCode/);
+  assert.match(card, /hitSlop=\{\{ top: 2, bottom: 2 \}\}/);
+
+  assert.match(flightButtonStyle, /alignSelf: "flex-start"/);
+  assert.match(flightButtonStyle, /minHeight: 40/);
+  assert.match(flightButtonStyle, /minWidth: 44/);
+  assert.match(flightButtonStyle, /paddingHorizontal: 14/);
+  assert.match(flightButtonStyle, /gap: 6/);
+  assert.doesNotMatch(flightButtonStyle, /width: "100%"|alignSelf: "stretch"|flex: 1/);
+  assert.match(styles, /flightButtonText: \{ color: "white", fontSize: 13, fontWeight: "800" \}/);
+});
+
+test("popular destination flight action does not replace card details or save actions", () => {
+  const source = screen();
+  const card = source.slice(
+    source.indexOf("function PopularDestinationCard"),
+    source.indexOf("function ExploreDiscoveryContent"),
+  );
+
+  assert.match(card, /accessibilityLabel=\{`Open details for \$\{destination\.name\}, \$\{destination\.country\}`\}/);
+  assert.match(card, /onPress=\{onSelect\}/);
+  assert.match(card, /label=\{`\$\{saved \? "Remove" : "Save"\} \$\{destination\.name\}`\}/);
+  assert.match(card, /onPress=\{onToggle\}/);
+  assert.doesNotMatch(card, /onPress=\{searchFlights\}[\s\S]*?destinationDetailsRoute/);
+});
+
+test("destination detail action buttons stay on their existing shared styles", () => {
+  const details = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
+  assert.match(details, /<Action label="Search flights" icon="flight" onPress=\{searchFlights\} \/>/);
+  assert.match(details, /<Action label="Search hotels" icon="hotel" onPress=\{searchHotels\} secondary \/>/);
+  assert.match(details, /primaryButton: \{ minHeight: 52/);
+});
+
 test("Explore has no saved destinations section or saved empty state", () => {
   const source = screen();
   assert.doesNotMatch(source, /Saved destinations/);
