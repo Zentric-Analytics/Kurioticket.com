@@ -889,7 +889,7 @@ test('automatic Preview workflow is cross-platform and structurally isolated fro
   assert.doesNotMatch(production, /workflow_call|(?:^|\n)\s*push:/);
 });
 test('automatic Preview delivery orders exact staging, baselines, fingerprints, and selected actions', () => {
-  const workflow = readFileSync(resolve(root, '../../.github/workflows/preview-dev-delivery.yml'), 'utf8');
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/preview-dev-delivery.yml'), 'utf8').replaceAll('\r\n', '\n');
   const staging = workflow.indexOf('Wait for exact staging deployment and safety');
   const baseline = workflow.indexOf('Resolve latest finished Preview baselines');
   const fingerprint = workflow.indexOf('Generate baseline and target native fingerprints');
@@ -958,8 +958,21 @@ test('Preview baselines resolve from the latest exact finished EAS build on dev 
   const ios = previewBuild('ios');
   assert.equal(resolveLatestPreviewBaseline({ builds: [android], platform: 'android', targetSha: target, isAncestor: () => true }).easBuildId, android.id);
   assert.equal(resolveLatestPreviewBaseline({ builds: [ios], platform: 'ios', targetSha: target, isAncestor: () => true }).easBuildId, ios.id);
-  assert.throws(() => resolveLatestPreviewBaseline({ builds: [{ ...android, applicationIdentifier: 'com.kurioticket.app' }], platform: 'android', targetSha: target, isAncestor: () => true }), /identity-mismatched/);
+  assert.throws(() => resolveLatestPreviewBaseline({ builds: [{ ...android, applicationIdentifier: 'com.kurioticket.app' }], platform: 'android', targetSha: target, isAncestor: () => true }), /No finished/);
   assert.throws(() => resolveLatestPreviewBaseline({ builds: [android], platform: 'android', targetSha: target, isAncestor: () => false }), /No finished/);
+});
+
+test('Preview baseline selection ignores valid unrelated history and resolves reviewed no-VCS evidence', () => {
+  const target = 'f'.repeat(40);
+  const reviewedCommit = 'c'.repeat(40);
+  const legacy = previewBuild('android', { id: '179ae3b8-3e7a-404c-bcf0-44cbdc759cff', gitCommitHash: null });
+  const unrelated = previewBuild('android', { id: '44444444-4444-4444-8444-444444444444', runtimeVersion: 'preview-0.2.0', appVersion: '0.2.0' });
+  const reviewedBuilds = [{ platform: 'android', easBuildId: legacy.id, commitSha: reviewedCommit, nativeFingerprint: 'd'.repeat(40) }];
+  const result = resolveLatestPreviewBaseline({ builds: [unrelated, legacy], platform: 'android', targetSha: target, reviewedBuilds, isAncestor: (sha) => sha === reviewedCommit });
+  assert.equal(result.easBuildId, legacy.id);
+  assert.equal(result.commitSha, reviewedCommit);
+  assert.throws(() => resolveLatestPreviewBaseline({ builds: [legacy], platform: 'android', targetSha: target, isAncestor: () => true }), /identity-mismatched/);
+  assert.throws(() => resolveLatestPreviewBaseline({ builds: [legacy], platform: 'android', targetSha: target, reviewedBuilds: [...reviewedBuilds, ...reviewedBuilds], isAncestor: () => true }), /duplicated/);
 });
 
 test('Preview baseline selection fails closed on ambiguous newest builds', () => {

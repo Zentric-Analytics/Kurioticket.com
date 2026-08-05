@@ -79,8 +79,8 @@ jobs:
           npx eas-cli@16.17.4 build:list --platform android --build-profile preview --app-identifier com.kurioticket.app.preview --limit 50 --json --non-interactive > "$RUNNER_TEMP/android-builds.json"
           npx eas-cli@16.17.4 build:list --platform ios --build-profile preview --app-identifier com.kurioticket.app.preview --limit 50 --json --non-interactive > "$RUNNER_TEMP/ios-builds.json"
           git rev-list "$TARGET_SHA" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.stringify(s.trim().split(/\\r?\\n/).filter(Boolean))))" > "$RUNNER_TEMP/ancestors.json"
-          node scripts/preview-delivery-contract.mjs baseline --input "$RUNNER_TEMP/android-builds.json" --ancestors "$RUNNER_TEMP/ancestors.json" --platform android --target "$TARGET_SHA" --output "$RUNNER_TEMP/android-baseline.json"
-          node scripts/preview-delivery-contract.mjs baseline --input "$RUNNER_TEMP/ios-builds.json" --ancestors "$RUNNER_TEMP/ancestors.json" --platform ios --target "$TARGET_SHA" --output "$RUNNER_TEMP/ios-baseline.json"
+          node scripts/preview-delivery-contract.mjs baseline --input "$RUNNER_TEMP/android-builds.json" --registry release-baselines/preview-builds.json --ancestors "$RUNNER_TEMP/ancestors.json" --platform android --target "$TARGET_SHA" --output "$RUNNER_TEMP/android-baseline.json"
+          node scripts/preview-delivery-contract.mjs baseline --input "$RUNNER_TEMP/ios-builds.json" --registry release-baselines/preview-builds.json --ancestors "$RUNNER_TEMP/ancestors.json" --platform ios --target "$TARGET_SHA" --output "$RUNNER_TEMP/ios-baseline.json"
       - name: Generate baseline and target native fingerprints
         if: inputs.mobile_relevant
         run: |
