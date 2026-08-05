@@ -152,12 +152,27 @@ jobs:
         run: |
           set -euo pipefail
           BUILD_ID=$(node -e "const x=require(process.env.RUNNER_TEMP+'/ios-build-result.json');if(!Array.isArray(x)||x.length!==1||!x[0]?.id)throw Error('iOS Preview build submission result is malformed');process.stdout.write(x[0].id)")
+          export BUILD_ID
           npx eas-cli@16.17.4 build:view "$BUILD_ID" --json > "$RUNNER_TEMP/finished-ios-preview-build.json"
           node - <<'NODE'
           const fs = require('fs');
           const b = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/finished-ios-preview-build.json', 'utf8'));
-          if (b?.status !== 'FINISHED' || b?.platform !== 'IOS' || b?.gitCommitHash !== process.env.TARGET_SHA) throw new Error('iOS Preview build result is incomplete or identity-mismatched.');
-          if ((b.applicationIdentifier ?? b.appIdentifier) !== 'com.kurioticket.app.preview' || b.runtimeVersion !== 'preview-0.3.0' || b.channel !== 'preview' || b.buildProfile !== 'preview') throw new Error('iOS Preview build identity mismatch.');
+          const artifactUrl = b?.artifacts?.buildUrl ?? b?.artifacts?.applicationArchiveUrl;
+          const ok = b?.id === process.env.BUILD_ID
+            && b?.status === 'FINISHED'
+            && b?.platform === 'IOS'
+            && b?.project?.id === '89f6fd88-c0d7-495a-9e2b-8301b09f407d'
+            && b?.buildProfile === 'preview'
+            && b?.runtimeVersion === 'preview-0.3.0'
+            && b?.channel === 'preview'
+            && b?.appVersion === '0.3.0'
+            && b?.distribution === 'STORE'
+            && b?.gitCommitHash === process.env.TARGET_SHA
+            && typeof b?.appBuildVersion === 'string'
+            && /^\d+$/.test(b.appBuildVersion)
+            && typeof artifactUrl === 'string'
+            && artifactUrl.startsWith('https://');
+          if (!ok) throw new Error('iOS Preview build result is incomplete or identity-mismatched.');
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `eas_build_id=${b.id}\n`);
           NODE
       - name: Upload automatic iOS Preview build to TestFlight
