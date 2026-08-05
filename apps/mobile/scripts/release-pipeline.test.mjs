@@ -520,9 +520,13 @@ test('iOS Preview TestFlight submission is manual, identity-locked, and build-fr
   assert.match(workflow, /workflow_dispatch:/);
   assert.doesNotMatch(workflow, /(?:^|\n)\s*(?:push|pull_request|schedule|workflow_run):/);
   assert.match(workflow, /environment: mobile-preview-build/);
-  assert.match(workflow, /git merge-base --is-ancestor "\$APPROVED_SHA" origin\/dev/);
+  assert.match(workflow, /with: \{ fetch-depth: 0 \}/);
+  assert.doesNotMatch(workflow, /with: \{ ref: "\$\{\{ inputs\.commit_sha \}\}"/);
+  assert.match(workflow, /test "\$\(git rev-parse HEAD\)" = "\$WORKFLOW_SHA"/);
+  assert.match(workflow, /git merge-base --is-ancestor "\$APPROVED_SHA" "\$WORKFLOW_SHA"/);
   assert.match(workflow, /com\.kurioticket\.app\.preview/);
   assert.match(workflow, /preview-0\.3\.0/);
+  assert.match(workflow, /eas\.submit\?\.preview\?\.ios\?\.ascAppId === '6797447471'/);
   assert.match(workflow, /build:view "\$EAS_BUILD_ID" --json/);
   assert.doesNotMatch(workflow, /build:view[^\n]*--non-interactive/);
   const buildValidation = workflow.slice(
