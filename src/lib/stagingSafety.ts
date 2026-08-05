@@ -36,6 +36,7 @@ export function getStagingReleaseReadiness() {
     commitSha: /^[a-f0-9]{40}$/.test(commitSha) ? commitSha : null,
     releaseTimestamp: SERVICE_STARTED_AT,
     applicationVersion: process.env.npm_package_version?.trim() || null,
+    serviceId: process.env.RENDER_SERVICE_ID?.trim() || null,
     sandboxTravelSafe: getStagingProviderSafety().safe,
     emailPolicyRestricted: true,
   } as const;
