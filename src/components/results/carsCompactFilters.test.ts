@@ -44,26 +44,13 @@ test("source-contract: full desktop and mobile filter styling remain separate", 
   assert.match(source, /layout === "compact" \? "mt-0\.5 h-3\.5 w-3\.5.*" : "h-4 w-4 rounded border-slate-300 accent-blue"/);
 });
 
-test("source-contract: Cars compact filters use shared fixed and docked lifecycle", () => {
+test("source-contract: Cars filters use shared desktop/mobile lifecycle", () => {
   assert.doesNotMatch(source, /useDesktopFilterShortcut|DesktopFilterShortcut|Edit filters/);
-  assert.match(source, /desktopCompactFilterTopOffset = 116/);
-  assert.match(source, /desktopCompactFilterBottomGap = 16/);
-  assert.match(source, /shouldShowDesktopCompactFilter/);
-  assert.match(source, /calculateCompactFilterPlacement/);
-  assert.match(source, /calculateCompactFilterMaxHeight/);
-  assert.match(source, /"fixed" : "absolute inset-x-0 bottom-0 w-full"/);
   assert.match(source, /layout: "desktop" \| "compact" \| "mobile"/);
-  assert.match(source, /aria-expanded=\{compactOpen\} aria-controls=\{panelId\}/);
+  assert.match(source, /<aside className="relative hidden lg:block"><CarFilters/);
+  assert.match(source, /filtersOpen \? <aside ref=\{filtersDialogRef\}/);
   assert.match(source, /hidden=\{layout === "compact" && !compactOpen\}/);
   assert.match(source, /aria-hidden=\{layout === "compact" && !compactOpen\}/);
   assert.match(source, /setOpenCompactSection\(\(current\) => current === group\.id \? null : group\.id\)/);
   assert.equal((source.match(/id: "(?:vehicleType|transmission|seats|bags|fuelPolicy|mileagePolicy|cancellation|pickupLocationType)"/g) ?? []).length, 8);
-});
-
-test("source-contract: compact filter handoff starts at the top of the sidebar", () => {
-  const aside = source.slice(source.indexOf('<aside ref={desktopFilterSidebarRef}'), source.indexOf("</aside>"));
-  assert.ok(aside.indexOf("desktopFilterSentinelRef") < aside.indexOf("<CarFilters"));
-  assert.match(aside, /desktopCompactFilterPlacement === "hidden" \? "block" : "invisible"/);
-  assert.match(aside, /desktopCompactFilterPlacement !== "hidden"/);
-  assert.match(aside, /desktopCompactFilterPlacement === "fixed" \? "fixed" : "absolute inset-x-0 bottom-0 w-full"/);
 });
