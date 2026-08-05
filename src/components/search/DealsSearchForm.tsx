@@ -30,6 +30,10 @@ import {
 } from "lucide-react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import {
+  buildDealsJourneyUrl,
+  getFirstDealsJourneyStage,
+} from "@/lib/deals/dealsJourneyRoutes";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
@@ -540,6 +544,9 @@ export function DealsSearchForm({
     (key: string) => dictionary[key] ?? en[key] ?? key,
     [dictionary],
   );
+  const isLandingVariant = variant === "landing";
+  const guidedPreviewEnabled =
+    isLandingVariant && params.get("guidedPreview") === "1";
   const [search, setSearch] = useState<DealsSearch>(
     () =>
       initialSearch ??
@@ -1844,9 +1851,7 @@ export function DealsSearchForm({
     if (kind === "origin") setFlightOriginHighlight(0);
     else setFlightDestinationHighlight(0);
   };
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    if (submitting) return;
+  const validateCurrentDealsSearch = () => {
     const found = validateDealsSearch(search);
     setErrors(found);
     if (Object.keys(found).length) {
@@ -1860,8 +1865,15 @@ export function DealsSearchForm({
         });
         firstError.current?.focus({ preventScroll: true });
       });
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (submitting) return;
+    if (!validateCurrentDealsSearch()) return;
     if (variant === "results" && onSubmitSearch) {
       onSubmitSearch(search);
       return;
@@ -1869,6 +1881,16 @@ export function DealsSearchForm({
     setSubmitting(true);
     start();
     router.push(buildDealsResultsUrl(search));
+  };
+
+  const previewGuidedJourney = () => {
+    if (submitting || pending) return;
+    if (!validateCurrentDealsSearch()) return;
+    const firstStage = getFirstDealsJourneyStage(search.mode);
+    const destination = buildDealsJourneyUrl(firstStage, search);
+    setSubmitting(true);
+    start();
+    router.push(destination);
   };
   const errorBlock = (product: DealsProduct) =>
     errors[product] ? (
@@ -2570,6 +2592,67 @@ export function DealsSearchForm({
       )}
     </>
   );
+
+  const guidedPreviewPanel = guidedPreviewEnabled ? (
+    <section
+      aria-labelledby="deals-guided-preview-title"
+      aria-describedby="deals-guided-preview-description"
+      aria-label={t("deals.guidedPreview.accessibleName")}
+      data-deals-guided-preview
+      className="mt-3 w-full rounded-2xl border border-blue-200 bg-blue-50/80 p-4 text-start text-sm text-slate-800 shadow-sm"
+    >
+      <p className="mb-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-[#004BB8] ring-1 ring-blue-200">
+        {t("deals.guidedPreview.badge")}
+      </p>
+      <h2
+        id="deals-guided-preview-title"
+        className="text-lg font-extrabold text-[#021C2B]"
+      >
+        {t("deals.guidedPreview.title")}
+      </h2>
+      <p
+        id="deals-guided-preview-description"
+        className="mt-2 max-w-3xl leading-6 text-slate-700"
+      >
+        {t("deals.guidedPreview.description")}
+      </p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="rounded-xl bg-white/80 p-3 ring-1 ring-blue-100">
+          <p className="font-extrabold text-[#021C2B]">
+            {t("deals.guidedPreview.availableTitle")}
+          </p>
+          <ul className="mt-2 list-disc space-y-1 ps-5 text-slate-700">
+            <li>{t("deals.guidedPreview.availableHotel")}</li>
+            <li>{t("deals.guidedPreview.availableFlight")}</li>
+            <li>{t("deals.guidedPreview.availableCar")}</li>
+          </ul>
+        </div>
+        <div className="rounded-xl bg-white/80 p-3 ring-1 ring-amber-100">
+          <p className="font-extrabold text-[#021C2B]">
+            {t("deals.guidedPreview.inProgressTitle")}
+          </p>
+          <ul className="mt-2 list-disc space-y-1 ps-5 text-slate-700">
+            <li>{t("deals.guidedPreview.inProgressCar")}</li>
+            <li>{t("deals.guidedPreview.inProgressReview")}</li>
+          </ul>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs font-semibold text-slate-600">
+          {t("deals.guidedPreview.normalSearchNote")}
+        </p>
+        <button
+          type="button"
+          disabled={submitting || pending}
+          onClick={previewGuidedJourney}
+          className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-[#004BB8] bg-white px-5 py-2 text-sm font-extrabold text-[#004BB8] hover:bg-blue-50 disabled:opacity-70 sm:w-auto"
+        >
+          {t("deals.guidedPreview.action")}
+        </button>
+      </div>
+    </section>
+  ) : null;
+
   const searchDealsButton = (
     <div className="flex w-full sm:w-auto">
       <button
@@ -3367,6 +3450,7 @@ export function DealsSearchForm({
           </div>
           {searchDealsButton}
         </div>
+        {guidedPreviewPanel}
       </section>
       {warning}
       {(["origin", "destination"] as const).map((kind) => {
