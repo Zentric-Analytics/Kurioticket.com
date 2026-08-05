@@ -3766,6 +3766,7 @@ export const translations: TranslationDictionary = {
   "deals.guided.flightDetails.confirmReviewA11y": "Choose {airline} flight from {origin} to {destination} and review trip",
   "deals.guided.flightDetails.unavailableConfirm": "This flight cannot be confirmed until current details and source fare are available.",
   "deals.guided.flightDetails.saving": "Saving flight...",
+  "deals.guided.flightDetails.retry": "Retry Flight details",
   "deals.guided.flightDetails.saveError": "We could not save this flight. Please try again.",
   "deals.guided.flightDetails.confirmed": "Your flight is saved.",
   "deals.guided.carResults.pendingTitle": "Your flight is saved",

@@ -63,7 +63,7 @@ export function FlightDetailsExperience({ id, mode = "standalone", backHref, pri
   const { selectedOption } = useRegion();
   const { locale, t } = useLocale();
   const currencyRates = useCurrencyRates();
-  const [flight, setFlight] = useState<PublicFlightResult | null>(null);
+  const [loadedFlight, setFlight] = useState<PublicFlightResult | null>(null);
   const [detailsError, setDetailsError] = useState("");
   const [loading, setLoading] = useState(true);
   const [resultReceivedAt, setResultReceivedAt] = useState<number | null>(null);
@@ -72,16 +72,22 @@ export function FlightDetailsExperience({ id, mode = "standalone", backHref, pri
   const headingRef = useRef<HTMLHeadingElement>(null);
   const errorHeadingRef = useRef<HTMLHeadingElement>(null);
   const retryFocusRef = useRef(false);
+  const onFlightLoadedRef = useRef(onFlightLoaded);
   const standalone = mode === "standalone";
+  const currentFlight = id && loadedFlight?.id.trim() === id.trim() ? loadedFlight : null;
+
+  useEffect(() => {
+    onFlightLoadedRef.current = onFlightLoaded;
+  }, [onFlightLoaded]);
 
   useEffect(() => {
     if (!id) {
-      const timer = window.setTimeout(() => { setFlight(null); setResultReceivedAt(null); setDetailsError(enTranslations.flightQuoteUnavailable); setLoading(false); onFlightLoaded?.(null, null); }, 0);
+      const timer = window.setTimeout(() => { setFlight(null); setResultReceivedAt(null); setDetailsError(enTranslations.flightQuoteUnavailable); setLoading(false); onFlightLoadedRef.current?.(null, null); }, 0);
       return () => window.clearTimeout(timer);
     }
     const controller = new AbortController();
     let active = true;
-    const startTimer = window.setTimeout(() => { if (active) { setLoading(true); setDetailsError(""); setFlight(null); setResultReceivedAt(null); onFlightLoaded?.(null, null); } }, 0);
+    const startTimer = window.setTimeout(() => { if (active) { setLoading(true); setDetailsError(""); setFlight(null); setResultReceivedAt(null); onFlightLoadedRef.current?.(null, null); } }, 0);
     // Source-contract compatibility: fetch(`/api/flights/details?id=${encodeURIComponent(id)}`)
     fetch(`/api/flights/details?id=${encodeURIComponent(id)}`, { signal: controller.signal })
       .then(async (response) => {
@@ -94,41 +100,44 @@ export function FlightDetailsExperience({ id, mode = "standalone", backHref, pri
       .then((candidate) => {
         if (!active || controller.signal.aborted) return;
         const receivedAt = Date.now();
-        setFlight(candidate); setResultReceivedAt(receivedAt); setDetailsError(""); onFlightLoaded?.(candidate, receivedAt);
+        setFlight(candidate); setResultReceivedAt(receivedAt); setDetailsError(""); onFlightLoadedRef.current?.(candidate, receivedAt);
       })
       .catch((detailsLoadError) => {
         if (!active || controller.signal.aborted) return;
         setDetailsError(detailsLoadError instanceof Error ? detailsLoadError.message : enTranslations.flightQuoteUnavailable);
-        onFlightLoaded?.(null, null);
+        onFlightLoadedRef.current?.(null, null);
       })
       .finally(() => { if (active && !controller.signal.aborted) setLoading(false); });
     return () => { active = false; window.clearTimeout(startTimer); controller.abort(); };
-  }, [id, retryToken, onFlightLoaded]);
+  }, [id, retryToken]);
 
   useEffect(() => {
     if (!retryFocusRef.current) return;
     if (loading) loadingRef.current?.focus({ preventScroll: true });
-    else if (flight) { headingRef.current?.focus({ preventScroll: true }); retryFocusRef.current = false; }
+    else if (currentFlight) { headingRef.current?.focus({ preventScroll: true }); retryFocusRef.current = false; }
     else if (detailsError) { errorHeadingRef.current?.focus({ preventScroll: true }); retryFocusRef.current = false; }
-  }, [loading, flight, detailsError]);
+  }, [loading, currentFlight, detailsError]);
 
-  const retry = () => { retryFocusRef.current = true; setRetryToken((value) => value + 1); };
+  const retry = () => { retryFocusRef.current = true; setLoading(true); setDetailsError(""); setFlight(null); setResultReceivedAt(null); onFlightLoadedRef.current?.(null, null); setRetryToken((value) => value + 1); };
   const itineraryLegs = useMemo(() => {
-    if (!flight) return [];
-    if (flight.legs?.length) return flight.legs;
-    return [{ direction: "leg", originAirport: flight.originAirport, destinationAirport: flight.destinationAirport, departureTime: flight.departureTime, arrivalTime: flight.arrivalTime, duration: flight.duration, durationMinutes: flight.durationMinutes, stops: flight.stops, layovers: flight.layovers, segments: [] } satisfies FlightLeg];
-  }, [flight]);
+    if (!currentFlight) return [];
+    if (currentFlight.legs?.length) return currentFlight.legs;
+    return [{ direction: "leg", originAirport: currentFlight.originAirport, destinationAirport: currentFlight.destinationAirport, departureTime: currentFlight.departureTime, arrivalTime: currentFlight.arrivalTime, duration: currentFlight.duration, durationMinutes: currentFlight.durationMinutes, stops: currentFlight.stops, layovers: currentFlight.layovers, segments: [] } satisfies FlightLeg];
+  }, [currentFlight]);
 
   const loadingCard = <Card className="p-6 text-muted"><div ref={loadingRef} tabIndex={-1} role="status" className="outline-none">{t.flightDetailsLoading || enTranslations.flightDetailsLoading}<div className="mt-4 h-24 animate-pulse rounded-xl bg-slate-100" /></div></Card>;
   if (loading) return standalone ? <main className="page-shell flex-1 py-10"><div className="mb-4"><DetailsBackLink href={backHref ?? "/flights"}>Back to Flights results</DetailsBackLink></div>{loadingCard}</main> : <div className="mt-6">{loadingCard}</div>;
 
   const combinedError = providerError || detailsError;
   const unavailableBodyMessage = detailsError === FLIGHT_QUOTE_UNAVAILABLE_MESSAGE ? t.flightSearchAgainCurrentPrices : detailsError || t.flightSearchAgainCurrentPrices;
-  if (detailsError || !flight) {
-    const card = <Card className="p-6"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-xl font-bold text-navy outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]">{t.flightQuoteUnavailable || enTranslations.flightQuoteUnavailable}</h2><p className="mt-2 text-muted">{unavailableBodyMessage || enTranslations.flightSearchAgainCurrentPrices}</p>{!standalone ? <Button type="button" className="mt-4 min-h-11" onClick={retry}>Retry Flight details</Button> : null}</Card>;
+  if (detailsError || !currentFlight) {
+    const errorTitleClassName = "text-xl font-bold text-navy outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]";
+    const errorTitle = standalone ? <h1 ref={errorHeadingRef} tabIndex={-1} className={errorTitleClassName}>{t.flightQuoteUnavailable || enTranslations.flightQuoteUnavailable}</h1> : <h2 ref={errorHeadingRef} tabIndex={-1} className={errorTitleClassName}>{t.flightQuoteUnavailable || enTranslations.flightQuoteUnavailable}</h2>;
+    const card = <Card className="p-6">{errorTitle}<p className="mt-2 text-muted">{unavailableBodyMessage || enTranslations.flightSearchAgainCurrentPrices}</p>{!standalone ? <Button type="button" className="mt-4 min-h-11" onClick={retry}>{t["deals.guided.flightDetails.retry"] || enTranslations["deals.guided.flightDetails.retry"]}</Button> : null}</Card>;
     return standalone ? <main className="page-shell flex-1 py-10"><div className="mb-4"><DetailsBackLink href={backHref ?? "/flights"}>Back to Flights results</DetailsBackLink></div>{card}</main> : <div className="mt-6">{card}</div>;
   }
 
+  const flight = currentFlight;
   const displayPrice = formatDisplayPrice({ amount: flight.price, sourceCurrency: flight.currency, displayCurrency: selectedOption.currency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
   const heroDetails = buildHeroDetails(flight, t);
   const routeHeading = buildRouteHeading(flight, t);
@@ -146,13 +155,13 @@ export function FlightDetailsExperience({ id, mode = "standalone", backHref, pri
           <div className="mt-4 grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-5">
             <div className="min-w-0 lg:col-start-1 lg:row-start-1">
               <Card className="min-w-0 rounded-2xl border-slate-200/80 bg-white p-4 shadow-none sm:p-5 lg:p-6">
-                <SelectedFlightSummary itineraryLegs={itineraryLegs} fallbackAirlineName={flight.airlineName} fallbackAirlineLogo={getAirlineLogo(flight)} fallbackFlightNumber={flight.flightNumber} routeHeading={routeHeading} selectedFlightsLabel={t.selectedFlights} selectedFlightItineraryLabel={t.selectedFlightItinerary || enTranslations.selectedFlightItinerary} outboundLabel={t.outbound || enTranslations.outbound} returnLabel={t.return || enTranslations.return} itineraryLabel={t.itinerary || enTranslations.itinerary} legLabel={t.leg || enTranslations.leg} nonstopLabel={t.nonstop || enTranslations.nonstop} stopSingularLabel={t.stopSingular || enTranslations.stopSingular} stopPluralLabel={t.stopPlural || enTranslations.stopPlural} stopDualLabel={t.stopDual} stopCountTemplate={t.stopCount} layoverInLabel={t.layoverIn || enTranslations.layoverIn} layoverConnectorLabel={t.layoverConnector} layoverTemplate={t.layoverTemplate} connectionLabels={buildConnectionLabels(t)} locale={locale} headingLevel={standalone ? "h2" : "h3"} routeHeadingLevel={standalone ? "h2" : "h3"} />
-                <Card className="mt-5 overflow-hidden border-slate-200/80 bg-white p-0 shadow-none">
+                <Card className="overflow-hidden border-slate-200/80 bg-white p-0 shadow-none">
                   <div className="grid grid-cols-1 items-stretch gap-0 md:grid-cols-[minmax(0,1fr)_minmax(14rem,16rem)]">
                     <div className="min-w-0 bg-slate-50/70 p-3 sm:p-3.5 lg:p-4"><div className="flex min-w-0 flex-col gap-3 sm:gap-4"><div className="min-w-0 space-y-1"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><AirlineNameWithLogo airlineName={flight.airlineName} airlineLogoUrl={getAirlineLogo(flight)} className="text-sm font-medium text-slate-700" logoClassName="h-6 w-6" />{flight.flightNumber ? <><span className="h-1 w-1 rounded-full bg-slate-300" aria-hidden="true" /><span className="text-sm font-medium text-slate-700">{t.flightNumberLabel || enTranslations.flightNumberLabel} {flight.flightNumber}</span></> : null}</div>{titleTag === "h1" ? <h1 ref={headingRef} tabIndex={-1} className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-medium leading-tight tracking-tight text-slate-900 outline-none sm:text-3xl lg:text-2xl lg:font-semibold"><span>{flight.originAirport}</span><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#004BB8]/10 bg-white text-blue shadow-sm sm:h-8 sm:w-8"><ArrowRight size={16} aria-hidden="true" /></span><span>{flight.destinationAirport}</span></h1> : <h2 ref={headingRef} tabIndex={-1} className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-medium leading-tight tracking-tight text-slate-900 outline-none sm:text-3xl lg:text-2xl lg:font-semibold"><span>{flight.originAirport}</span><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#004BB8]/10 bg-white text-blue shadow-sm sm:h-8 sm:w-8"><ArrowRight size={16} aria-hidden="true" /></span><span>{flight.destinationAirport}</span></h2>}</div><div className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium leading-5 text-slate-600">{heroDetails.map((detail) => { const Icon = detail.icon; return <span key={detail.label} className="inline-flex min-w-0 items-center gap-1.5"><Icon className="h-3.5 w-3.5 shrink-0 text-[#004BB8]" aria-hidden="true" /><span className="min-w-0"><span className="font-semibold text-slate-800">{detail.label}:</span> <span className="font-medium text-slate-600">{detail.value}</span></span></span>; })}</div><p className="flex max-w-2xl items-start gap-1.5 text-xs font-medium leading-5 text-slate-600"><Info size={14} className="mt-0.5 shrink-0 text-blue" aria-hidden="true" /><span className="min-w-0">{providerDisclaimer}</span></p></div></div>
                     <aside className="flex items-center justify-center border-t border-slate-200/80 bg-white px-3 py-3 sm:px-3 sm:py-3 md:border-s md:border-t-0 lg:px-3.5 lg:py-4"><div className="mx-auto flex w-full max-w-[20rem] flex-col items-stretch gap-2 text-center sm:max-w-[320px] md:max-w-[15rem] lg:max-w-[15.5rem]"><div className="w-full rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-center shadow-sm sm:px-3 sm:py-2"><p className="text-[10px] font-semibold uppercase leading-3 tracking-wide text-slate-500">{t.fromPrice || enTranslations.fromPrice}</p><div className="whitespace-nowrap text-center text-[1.125rem] font-medium leading-5 tracking-tight text-slate-900 sm:text-[1.2rem] sm:leading-6 lg:font-semibold" aria-label={displayPrice.ariaLabel} title={displayPrice.title}>{displayPrice.formatted}</div>{displayPrice.isConvertedEstimate ? <p className="mx-auto mt-1 max-w-[17rem] text-center text-[11px] font-medium leading-[0.95rem] text-slate-600 sm:mt-0.5">{t.estimateShownProviderPrice || enTranslations.estimateShownProviderPrice} {displayPrice.providerFormatted}.</p> : null}</div>{primaryAction.kind === "provider" ? <Button variant="accent" size="lg" className="min-h-11 w-full justify-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm font-semibold sm:text-[13px]" onClick={primaryAction.onActivate} disabled={actionDisabled}>{t.continueToProvider} <ArrowRight size={16} /></Button> : <><Button type="button" variant="accent" size="lg" className="min-h-11 w-full justify-center gap-1.5 rounded-md px-2.5 text-sm font-semibold sm:text-[13px]" onClick={() => resultReceivedAt !== null ? primaryAction.onActivate(flight, resultReceivedAt) : undefined} disabled={actionDisabled} aria-label={primaryAction.accessibleLabel}>{primaryAction.pending ? (t["deals.guided.flightDetails.saving"] || enTranslations["deals.guided.flightDetails.saving"]) : primaryAction.label}</Button>{!primaryAction.enabled ? <p className="text-xs leading-5 text-slate-600">{primaryAction.unavailableMessage}</p> : null}{primaryAction.error ? <p role="alert" className="text-xs font-semibold leading-5 text-red-700">{primaryAction.error}</p> : null}</>}</div></aside>
                   </div>
                 </Card>
+                <div className="mt-5"><SelectedFlightSummary itineraryLegs={itineraryLegs} fallbackAirlineName={flight.airlineName} fallbackAirlineLogo={getAirlineLogo(flight)} fallbackFlightNumber={flight.flightNumber} routeHeading={routeHeading} selectedFlightsLabel={t.selectedFlights} selectedFlightItineraryLabel={t.selectedFlightItinerary || enTranslations.selectedFlightItinerary} outboundLabel={t.outbound || enTranslations.outbound} returnLabel={t.return || enTranslations.return} itineraryLabel={t.itinerary || enTranslations.itinerary} legLabel={t.leg || enTranslations.leg} nonstopLabel={t.nonstop || enTranslations.nonstop} stopSingularLabel={t.stopSingular || enTranslations.stopSingular} stopPluralLabel={t.stopPlural || enTranslations.stopPlural} stopDualLabel={t.stopDual} stopCountTemplate={t.stopCount} layoverInLabel={t.layoverIn || enTranslations.layoverIn} layoverConnectorLabel={t.layoverConnector} layoverTemplate={t.layoverTemplate} connectionLabels={buildConnectionLabels(t)} locale={locale} headingLevel={standalone ? "h2" : "h3"} routeHeadingLevel={standalone ? "h2" : "h3"} /></div>
               </Card>
             </div>
             {standalone ? <div className="min-w-0 lg:col-start-2 lg:row-start-1"><ProviderComparisonPanel offers={providerOffers} selectedCurrency={selectedOption.currency} currencyRates={currencyRates.rates} isFallbackRate={currencyRates.isFallback} onContinueToProvider={primaryAction.kind === "provider" ? primaryAction.onActivate : () => undefined} labels={{ compareMoreProviders: t.compareMoreProviders, providerComparisonIntro: t.providerComparisonIntro || enTranslations.providerComparisonIntro, noAdditionalLiveProviderOptions: t.noAdditionalLiveProviderOptions || enTranslations.noAdditionalLiveProviderOptions, continueToProvider: t.continueToProvider, confirmedByProvider: t.confirmedByProvider || enTranslations.confirmedByProvider, nonstop: t.nonstop || enTranslations.nonstop, stopSingular: t.stopSingular || enTranslations.stopSingular, stopPlural: t.stopPlural || enTranslations.stopPlural, stopDual: t.stopDual, providedBy: t.providedBy || enTranslations.providedBy, ...buildLocalizedDisplayLabels(t) }} /></div> : null}
