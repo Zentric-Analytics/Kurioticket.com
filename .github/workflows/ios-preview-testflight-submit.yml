@@ -76,7 +76,6 @@ jobs:
             && b.platform === 'IOS'
             && b.buildProfile === 'preview'
             && b.project?.id === '89f6fd88-c0d7-495a-9e2b-8301b09f407d'
-            && b.applicationIdentifier === 'com.kurioticket.app.preview'
             && b.appVersion === '0.3.0'
             && b.appBuildVersion === '3'
             && b.runtimeVersion === 'preview-0.3.0'
