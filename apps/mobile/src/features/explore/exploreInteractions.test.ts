@@ -373,10 +373,21 @@ test("destination details render shared records and omit absent optional content
   assert.match(source, /destination\.highlights\?\.length \?/);
   assert.match(source, /destinationMedia\(destination\.id\)/);
   assert.doesNotMatch(source, /Coming soon/);
-  for (const destination of destinations) {
-    assert.equal("description" in destination, false);
-    assert.equal("highlights" in destination, false);
-  }
+  const london = destinationById.get("gb-london")!;
+  assert.ok(london.summary);
+  assert.ok(london.description);
+  assert.ok(london.highlights?.length);
+  assert.equal(london.relatedDestinationIds, undefined);
+  const nonEditorial = destinations.find(
+    (destination) => !CURATED_POPULAR_DESTINATION_IDS.includes(
+      destination.id as (typeof CURATED_POPULAR_DESTINATION_IDS)[number],
+    ),
+  )!;
+  assert.equal(nonEditorial.summary, undefined);
+  assert.equal(nonEditorial.description, undefined);
+  assert.equal(nonEditorial.highlights, undefined);
+  assert.equal(nonEditorial.relatedDestinationIds, undefined);
+  assert.doesNotMatch(source, /editorialProvenance|sourceReferences|lastVerifiedAt/);
 });
 
 test("all Explore destination entry points use the ID-only details route without the old sheet", () => {
