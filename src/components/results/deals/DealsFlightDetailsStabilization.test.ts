@@ -58,6 +58,6 @@ test("guided Flight details provider and confirmation regressions stay source-su
   assert.doesNotMatch(stage, /api\/redirect|writeDealsStagedJourneyPlan|replaceDealsFlightSelection/);
   assert.match(shell, /confirmGuidedFlightSelection/);
   assert.match(shell, /writeDealsStagedJourneyPlan\(nextPlan\)[\s\S]*setPlanState[\s\S]*router\.push/);
-  assert.match(shell, /data-deals-guided-car-results-pending/);
-  assert.match(shell, /data-deals-guided-review-pending/);
+  assert.match(shell, /<DealsCarResultsStage/);
+  assert.match(shell, /<DealsReviewStage/);
 });
