@@ -18,7 +18,6 @@ import {
   BedDouble,
   Calendar,
   Car,
-  Check,
   ChevronDown,
   MapPin,
   Minus,
@@ -2698,9 +2697,6 @@ export function DealsSearchForm({
               >
                 <Icon aria-hidden="true" className="size-5 shrink-0" />
                 <span className="min-w-0 break-words">{t(productLabel)}</span>
-                {selected && (
-                  <Check aria-hidden="true" className="size-4 shrink-0" />
-                )}
               </button>
             );
           })}
