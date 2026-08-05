@@ -19,12 +19,13 @@ import { DealsHotelResultsStage } from "./DealsHotelResultsStage";
 import { DealsHotelDetailsStage } from "./DealsHotelDetailsStage";
 import { DealsFlightResultsStage } from "./DealsFlightResultsStage";
 import { DealsFlightDetailsStage } from "./DealsFlightDetailsStage";
+import { DealsCarResultsStage } from "./DealsCarResultsStage";
 import { areDealsHotelSelectionsMateriallyEqual } from "@/lib/deals/dealsHotelDetails";
 import { areDealsFlightSelectionsMateriallyEqual, buildGuidedDealsBaseTripPlan } from "@/lib/deals/dealsFlightDetails";
 
 const modeKeys = { "hotel-flight": "deals.package.hotelFlight", "hotel-flight-car": "deals.package.hotelFlightCar", "flight-car": "deals.package.flightCar", "hotel-car": "deals.package.hotelCar" } as const;
 
-export function DealsJourneyShell({ stage, search, invalid, hotelId, flightId }: { stage: DealsJourneyStage; search: DealsSearch; invalid: boolean; hotelId: string | null; flightId: string | null }) {
+export function DealsJourneyShell({ stage, search, invalid, hotelId, flightId, carId }: { stage: DealsJourneyStage; search: DealsSearch; invalid: boolean; hotelId: string | null; flightId: string | null; carId: string | null }) {
   const router = useRouter(); const { start } = useRouteProgress(); const { t: dictionary, locale } = useLocale();
   const t = useCallback((key: string) => dictionary[key] ?? en[key] ?? key, [dictionary]);
   const fingerprint = buildDealsSearchFingerprint(search); const contextKey = buildDealsPlanContextKey("guided", fingerprint);
@@ -43,7 +44,7 @@ export function DealsJourneyShell({ stage, search, invalid, hotelId, flightId }:
     return () => { active = false; window.clearTimeout(timer); };
   }, [contextKey, fingerprint]);
 
-  const requiredStage = resolved ? getRequiredDealsJourneyStage(stage, search.mode, plan, hotelId, flightId) : stage;
+  const requiredStage = resolved ? getRequiredDealsJourneyStage(stage, search.mode, plan, hotelId, flightId, carId) : stage;
   useEffect(() => {
     if (!resolved || requiredStage === stage) return;
     const timer = window.setTimeout(() => { setAnnouncement(t("deals.guided.routeCorrected")); start(); router.replace(buildDealsJourneyUrl(requiredStage, search)); }, 0);
@@ -110,7 +111,7 @@ export function DealsJourneyShell({ stage, search, invalid, hotelId, flightId }:
   }, [contextKey, fingerprint, plan, router, search, setAnnouncement, setConfirmingFlight, setFlightConfirmationError, setPlanState, start, t]);
   const progress = useMemo(() => getGuidedDealsJourneyProgress(stage, search.mode, resolved ? plan : null), [plan, resolved, search.mode, stage]);
   const previous = getPreviousDealsJourneyStage(stage, search.mode);
-  const backHref = stage === "flight-details" ? buildDealsJourneyUrl("flight-results", search) : previous ? buildDealsJourneyUrl(previous, search) : buildLegacyDealsResultsUrl(search);
+  const backHref = stage === "flight-details" ? buildDealsJourneyUrl("flight-results", search) : stage === "car-details" ? buildDealsJourneyUrl("car-results", search) : previous ? buildDealsJourneyUrl(previous, search) : buildLegacyDealsResultsUrl(search);
   const firstStage = getFirstDealsJourneyStage(search.mode);
 
   return <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-12">
@@ -124,7 +125,7 @@ export function DealsJourneyShell({ stage, search, invalid, hotelId, flightId }:
       {resolved && <DealsJourneyProgress progress={progress} t={t} />}
       <section className="mt-7 min-w-0">
         <h1 ref={headingRef} tabIndex={-1} className="scroll-mt-24 text-balance text-2xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-3xl">{t(`deals.guided.heading.${stage}`)}</h1>
-        {!resolved ? <div role="status" className="mt-6 min-h-36 animate-pulse rounded-2xl border border-slate-200 bg-white" aria-label={t("deals.guided.loading")} /> : requiredStage === stage && stage === "hotel-results" ? <DealsHotelResultsStage search={search} /> : requiredStage === stage && stage === "hotel-details" ? <DealsHotelDetailsStage search={search} hotelId={hotelId} plan={plan} confirming={confirmingHotel} confirmationError={confirmationError} onConfirm={confirmGuidedHotelSelection} /> : requiredStage === stage && stage === "flight-results" ? <DealsFlightResultsStage search={search} /> : requiredStage === stage && stage === "flight-details" ? <DealsFlightDetailsStage search={search} flightId={flightId} plan={plan} confirming={confirmingFlight} confirmationError={flightConfirmationError} onConfirm={confirmGuidedFlightSelection} /> : requiredStage === stage && stage === "car-results" ? <div data-deals-guided-car-results-pending className="mt-6 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm sm:p-8"><h2 className="text-xl font-extrabold text-slate-950">{t("deals.guided.carResults.pendingTitle")}</h2><p className="mt-2 max-w-2xl leading-7 text-slate-600">{t("deals.guided.carResults.pendingBody")}</p></div> : requiredStage === stage && stage === "review" ? <div data-deals-guided-review-pending className="mt-6 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm sm:p-8"><h2 className="text-xl font-extrabold text-slate-950">{t("deals.guided.review.pendingTitle")}</h2><p className="mt-2 max-w-2xl leading-7 text-slate-600">{t("deals.guided.review.pendingBody")}</p></div> : requiredStage === stage && stage === firstStage ? <div data-deals-guided-journey-foundation className="mt-6 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm sm:p-8"><p className="text-lg font-extrabold text-slate-950">{t("deals.guided.foundationTitle")}</p><p className="mt-2 max-w-2xl leading-7 text-slate-600">{t("deals.guided.foundationBody")}</p></div> : null}
+        {!resolved ? <div role="status" className="mt-6 min-h-36 animate-pulse rounded-2xl border border-slate-200 bg-white" aria-label={t("deals.guided.loading")} /> : requiredStage === stage && stage === "hotel-results" ? <DealsHotelResultsStage search={search} /> : requiredStage === stage && stage === "hotel-details" ? <DealsHotelDetailsStage search={search} hotelId={hotelId} plan={plan} confirming={confirmingHotel} confirmationError={confirmationError} onConfirm={confirmGuidedHotelSelection} /> : requiredStage === stage && stage === "flight-results" ? <DealsFlightResultsStage search={search} /> : requiredStage === stage && stage === "flight-details" ? <DealsFlightDetailsStage search={search} flightId={flightId} plan={plan} confirming={confirmingFlight} confirmationError={flightConfirmationError} onConfirm={confirmGuidedFlightSelection} /> : requiredStage === stage && stage === "car-results" ? <DealsCarResultsStage search={search} /> : requiredStage === stage && stage === "car-details" ? <div data-deals-guided-car-details-pending className="mt-6 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm sm:p-8"><h2 className="text-xl font-extrabold text-slate-950">{t("deals.guided.carDetails.pendingTitle")}</h2><p className="mt-2 max-w-2xl leading-7 text-slate-600">{t("deals.guided.carDetails.pendingBody")}</p></div> : requiredStage === stage && stage === "review" ? <div data-deals-guided-review-pending className="mt-6 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm sm:p-8"><h2 className="text-xl font-extrabold text-slate-950">{t("deals.guided.review.pendingTitle")}</h2><p className="mt-2 max-w-2xl leading-7 text-slate-600">{t("deals.guided.review.pendingBody")}</p></div> : requiredStage === stage && stage === firstStage ? <div data-deals-guided-journey-foundation className="mt-6 rounded-2xl border border-blue-200 bg-white p-5 shadow-sm sm:p-8"><p className="text-lg font-extrabold text-slate-950">{t("deals.guided.foundationTitle")}</p><p className="mt-2 max-w-2xl leading-7 text-slate-600">{t("deals.guided.foundationBody")}</p></div> : null}
       </section>
     </div>
     <p className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</p>
