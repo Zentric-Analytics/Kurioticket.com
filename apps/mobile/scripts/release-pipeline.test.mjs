@@ -562,6 +562,9 @@ test('iOS Preview TestFlight submission is manual, identity-locked, and build-fr
   );
   assert.match(buildValidation, /b\.project\?\.id === '89f6fd88-c0d7-495a-9e2b-8301b09f407d'/);
   assert.match(buildValidation, /b\.gitCommitHash === process\.env\.APPROVED_SHA/);
+  assert.match(buildValidation, /typeof b\.appBuildVersion === 'string'/);
+  assert.match(buildValidation, /\^\[1-9\]\\d\*\$/);
+  assert.doesNotMatch(buildValidation, /b\.appBuildVersion === '[0-9]+'/);
   assert.doesNotMatch(buildValidation, /applicationIdentifier/);
   assert.match(workflow, /submit --platform ios --id "\$\{\{ inputs\.eas_build_id \}\}" --profile preview --non-interactive --no-wait/);
   assert.doesNotMatch(workflow, /eas-cli@[^\n]*\sbuild\s|eas-cli@[^\n]*\supdate\s|--auto-submit|production-0\.3\.0|com\.kurioticket\.app(?!\.preview)/);
