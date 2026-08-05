@@ -8,6 +8,8 @@ export const androidFavoriteColors = {
   background: "rgba(2,15,42,.62)",
 } as const;
 
+export const androidFavoriteHitSlop = { top: 2, bottom: 2, left: 2, right: 2 } as const;
+
 export function AndroidFavoriteButton({
   saved,
   label,
@@ -25,18 +27,19 @@ export function AndroidFavoriteButton({
       accessibilityLabel={label}
       accessibilityState={{ selected: saved }}
       onPress={onPress}
+      hitSlop={androidFavoriteHitSlop}
       style={[styles.button, style]}
     >
-      <FlowIcon name="heart" color={saved ? androidFavoriteColors.active : androidFavoriteColors.inactive} />
+      <FlowIcon name="heart" size={18} color={saved ? androidFavoriteColors.active : androidFavoriteColors.inactive} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: androidFavoriteColors.background,
     alignItems: "center",
     justifyContent: "center",

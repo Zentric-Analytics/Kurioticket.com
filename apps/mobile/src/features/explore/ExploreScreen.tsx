@@ -444,12 +444,6 @@ const s = StyleSheet.create({
     position: "absolute",
     right: 10,
     top: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(2,15,42,.62)",
-    alignItems: "center",
-    justifyContent: "center",
   },
   resultRow: {
     minHeight: 68,
