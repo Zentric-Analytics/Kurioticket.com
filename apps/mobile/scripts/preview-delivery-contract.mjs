@@ -68,6 +68,10 @@ export function resolveLatestPreviewBaseline({ builds, platform, targetSha, revi
     requireValue(typeof entry.easBuildId === "string" && entry.easBuildId.length > 0, "Reviewed Preview baseline build ID is malformed.");
     requireValue(FULL_SHA.test(entry.commitSha ?? ""), "Reviewed Preview baseline commit is malformed.");
     requireValue(typeof entry.nativeFingerprint === "string" && /^[0-9a-f]{40}$/.test(entry.nativeFingerprint), "Reviewed Preview baseline fingerprint is malformed.");
+    requireValue(entry.projectId === PROJECT_ID && entry.package === APP_ID && entry.profile === "preview", "Reviewed Preview baseline identity is mismatched.");
+    requireValue(entry.runtime === RUNTIME && entry.channel === CHANNEL && entry.appVersion === VERSION, "Reviewed Preview baseline release identity is mismatched.");
+    requireValue(Number.isInteger(entry.buildNumber) && entry.buildNumber > 0, "Reviewed Preview baseline build number is malformed.");
+    requireValue(entry.distribution === PLATFORM_RULES[entry.platform].distribution, "Reviewed Preview baseline distribution is mismatched.");
     requireValue(!reviewedById.has(entry.easBuildId), "Reviewed Preview baseline build ID is duplicated.");
     reviewedById.set(entry.easBuildId, entry);
   }
@@ -75,16 +79,28 @@ export function resolveLatestPreviewBaseline({ builds, platform, targetSha, revi
   const candidates = builds.filter((build) => {
     requireValue(build && typeof build === "object" && !Array.isArray(build), "EAS Preview build entry is malformed.");
     if (build.platform !== rules.easPlatform || build.buildProfile !== "preview") return false;
-    const identifier = build.applicationIdentifier ?? build.appIdentifier;
-    if (identifier !== APP_ID || build.runtimeVersion !== RUNTIME || build.channel !== CHANNEL || build.appVersion !== VERSION) return false;
-    const url = artifactUrl(build);
     const reviewed = reviewedById.get(build.id);
+    const identifier = build.applicationIdentifier ?? build.appIdentifier ?? reviewed?.package;
+    const runtime = build.runtimeVersion ?? reviewed?.runtime;
+    const channel = build.channel ?? reviewed?.channel;
+    const appVersion = build.appVersion ?? reviewed?.appVersion;
+    if (identifier !== APP_ID || runtime !== RUNTIME || channel !== CHANNEL || appVersion !== VERSION) return false;
+    const url = artifactUrl(build);
     const commitSha = build.gitCommitHash ?? reviewed?.commitSha;
     const valid = build.status === "FINISHED"
-      && build.project?.id === PROJECT_ID
-      && build.distribution === rules.distribution
+      && (build.project?.id ?? reviewed?.projectId) === PROJECT_ID
+      && (build.distribution ?? reviewed?.distribution) === rules.distribution
       && FULL_SHA.test(commitSha ?? "")
       && (!reviewed || reviewed.platform === platform)
+      && (!reviewed || [
+        [build.applicationIdentifier ?? build.appIdentifier, reviewed.package],
+        [build.runtimeVersion, reviewed.runtime],
+        [build.channel, reviewed.channel],
+        [build.appVersion, reviewed.appVersion],
+        [build.project?.id, reviewed.projectId],
+        [build.distribution, reviewed.distribution],
+        [build.appBuildVersion, String(reviewed.buildNumber)],
+      ].every(([actual, expected]) => actual == null || String(actual) === String(expected)))
       && typeof url === "string"
       && /^https:\/\//.test(url)
       && rules.artifact.test(url);
@@ -102,9 +118,9 @@ export function resolveLatestPreviewBaseline({ builds, platform, targetSha, revi
     platform,
     easBuildId: selected.id,
     commitSha: selected.resolvedCommitSha,
-    buildNumber: Number(selected.appBuildVersion),
-    runtime: selected.runtimeVersion,
-    channel: selected.channel,
+    buildNumber: Number(selected.appBuildVersion ?? reviewedById.get(selected.id)?.buildNumber),
+    runtime: selected.runtimeVersion ?? reviewedById.get(selected.id)?.runtime,
+    channel: selected.channel ?? reviewedById.get(selected.id)?.channel,
     artifactUrlPresent: true,
   };
 }
