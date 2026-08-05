@@ -57,6 +57,8 @@ test("iOS Preview delivery is identity-locked, frozen, and build-only", () => {
   assert.match(workflow, /https:\/\/staging\.kurioticket\.com/);
   assert.match(workflow, /build:version:get --platform ios --profile preview --json --non-interactive/);
   assert.match(workflow, /build --platform ios --profile preview --non-interactive --freeze-credentials --json/);
+  assert.match(workflow, /env:list preview --format short/);
+  assert.match(workflow, /EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID/);
   assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|app review|external testing/i);
 });
 
@@ -64,11 +66,35 @@ test("Preview iOS configuration declares truthful export compliance", async () =
   process.env.APP_VARIANT = "preview";
   process.env.APP_BUILD_MODE = "release";
   process.env.EXPO_PUBLIC_API_BASE_URL = "https://staging.kurioticket.com";
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "123456-preview.apps.googleusercontent.com";
   const { default: createAppConfig } = await import("../../app.config");
   const config = createAppConfig({ config: {} } as never);
   assert.equal(config.ios?.infoPlist?.ITSAppUsesNonExemptEncryption, false);
   assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app.preview");
   assert.equal(config.runtimeVersion, "preview-0.3.0");
+  assert.deepEqual(config.plugins?.[1], ["react-native-nitro-google-signin", { iosUrlScheme: "com.googleusercontent.apps.123456-preview" }]);
+});
+
+test("Preview EAS builds fail closed without an iOS OAuth client", async () => {
+  process.env.APP_VARIANT = "preview";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://staging.kurioticket.com";
+  process.env.EAS_BUILD = "true";
+  delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  const { default: createAppConfig } = await import("../../app.config");
+  assert.throws(() => createAppConfig({ config: {} } as never), /require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID/);
+  delete process.env.EAS_BUILD;
+});
+
+test("Production configuration never selects the Preview iOS OAuth plugin", async () => {
+  process.env.APP_VARIANT = "production";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://kurioticket.com";
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "123456-preview.apps.googleusercontent.com";
+  const { default: createAppConfig } = await import("../../app.config");
+  const config = createAppConfig({ config: {} } as never);
+  assert.deepEqual(config.plugins, ["expo-router"]);
+  delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 });
 
 test("Preview OTA is reusable only after validation and retains a protected manual break-glass path", () => {

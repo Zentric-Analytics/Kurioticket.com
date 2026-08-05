@@ -112,6 +112,16 @@ jobs:
           fs.writeFileSync(process.env.RUNNER_TEMP + '/ios-version-evidence.json', JSON.stringify(evidence, null, 2) + '\n');
           console.log(`Current remote iOS build number: ${current}; proposed next build number: ${current + 1}`);
           NODE
+      - name: Verify Preview iOS OAuth configuration
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          set -euo pipefail
+          npx eas-cli@16.17.4 env:list preview --format short > "$RUNNER_TEMP/ios-preview-environment.txt"
+          grep -q '^EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=' "$RUNNER_TEMP/ios-preview-environment.txt" || {
+            echo 'Preview iOS OAuth client ID is not configured in the EAS Preview environment.' >&2
+            exit 1
+          }
       - name: Report non-mutating dry-run result
         if: inputs.action == 'dry-run'
         run: |
