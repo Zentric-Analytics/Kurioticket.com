@@ -59,6 +59,7 @@ test("iOS Preview delivery is identity-locked, frozen, and build-only", () => {
   assert.match(workflow, /build --platform ios --profile preview --non-interactive --freeze-credentials --json/);
   assert.match(workflow, /env:list preview --format short/);
   assert.match(workflow, /EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID/);
+  assert.equal(eas.submit.preview.ios.ascAppId, "6797447471");
   assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|app review|external testing/i);
 });
 
