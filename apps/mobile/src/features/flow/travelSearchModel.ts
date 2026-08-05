@@ -17,14 +17,14 @@ const future = (value: string, now = new Date()) => isoDate(value) && value >= n
 export function buildSearchPlan(product: Product, params: Record<string, string | string[] | undefined>, now = new Date()): { plan?: SearchPlan; error?: string } {
   if (product === "flight") {
     const tripType = text(params.tripType) || "round-trip";
-    const origin = text(params.from).toUpperCase();
-    const destination = text(params.to).toUpperCase();
+    const origin = (text(params.origin) || text(params.from)).toUpperCase();
+    const destination = (text(params.destination) || text(params.to)).toUpperCase();
     const departureDate = text(params.departureDate);
     const returnDate = text(params.returnDate);
     const adults = integer(text(params.adults) || text(params.travelers), 1);
     const children = integer(text(params.children), 0);
     const infants = integer(text(params.infants), 0);
-    const cabinClass = (text(params.cabin) || "economy").toLowerCase().replace(/\s+/g, "-");
+    const cabinClass = (text(params.cabinClass) || text(params.cabin) || "economy").toLowerCase().replace(/_/g, "-").replace(/\s+/g, "-");
     if (!["round-trip", "one-way"].includes(tripType)) return { error: "Choose a supported trip type." };
     if (!/^[A-Z]{3}$/.test(origin) || !/^[A-Z]{3}$/.test(destination) || origin === destination) return { error: "Choose different valid origin and destination airports." };
     if (!future(departureDate, now)) return { error: "Choose a valid future departure date." };
