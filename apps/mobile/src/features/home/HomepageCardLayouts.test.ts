@@ -9,11 +9,6 @@ const popular = source("src/features/home/PopularDestinationStays.tsx");
 const adventure = source("src/features/home/DiscoverNextAdventure.tsx");
 const home = source("src/features/flow/HomeFlowScreen.tsx");
 
-test("the temporary development-loop marker is visible without changing native configuration", () => {
-  assert.match(home, /DEV LOOP TEST — LOOP-01/);
-  assert.match(home, /accessibilityRole="text"/);
-});
-
 test("Popular destination cards render at reduced dimensions while preserving horizontal scrolling", () => {
   assert.match(popular, /const cardWidth = Math\.min\(230, Math\.max\(190, width \* 0\.58\)\)/);
   assert.match(popular, /height:\s*290/);
