@@ -1,5 +1,5 @@
-import { buildCarDetailsHref } from "@/lib/cars/carResults";
-import type { NormalizedCarResult } from "@/lib/cars/types";
+import { buildCarDetailsHref, getPrimaryCarOffer } from "@/lib/cars/carResults";
+import type { CarOffer, NormalizedCarResult } from "@/lib/cars/types";
 import { buildCarApiPayload, type DealsSearch } from "./dealsSearchParams";
 import { normalizeDealsJourneyCarId } from "./dealsJourneyRoutes";
 import { validateDealsCarDetailsPath, type DealsTripPlanCar } from "./dealsTripPlan";
@@ -23,10 +23,11 @@ export function buildDealsCarInternalDetailsPath(carId: string, search: DealsSea
 
 const clean = (value: unknown) => typeof value === "string" ? value.trim() : "";
 
-export function buildDealsCarDetailsSelection({ car, requestedCarId, search, resultReceivedAt }: { car: NormalizedCarResult; requestedCarId: string; search: DealsSearch; resultReceivedAt: number }): DealsTripPlanCar | null {
+export function buildDealsCarDetailsSelection({ car, primaryOffer: suppliedPrimaryOffer, requestedCarId, search, resultReceivedAt }: { car: NormalizedCarResult; primaryOffer?: CarOffer | null; requestedCarId: string; search: DealsSearch; resultReceivedAt: number }): DealsTripPlanCar | null {
   const id = normalizeDealsJourneyCarId(requestedCarId);
   if (!id || car.id !== id) return null;
-  const primaryOffer = car.offers.filter((offer) => Number.isFinite(offer.totalPrice) && offer.totalPrice > 0).sort((a, b) => a.totalPrice - b.totalPrice || a.pricePerDay - b.pricePerDay || a.id.localeCompare(b.id))[0];
+  const primaryOffer = suppliedPrimaryOffer ?? getPrimaryCarOffer(car);
+  if (primaryOffer && !car.offers.some((offer) => offer.id === primaryOffer.id)) return null;
   if (!primaryOffer) return null;
   const provider = clean(primaryOffer.bookingProviderName) || clean(car.rentalCompanyName);
   const rentalCompany = clean(car.rentalCompanyName);
