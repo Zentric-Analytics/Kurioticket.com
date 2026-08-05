@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors, flowStyles, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
@@ -22,6 +23,7 @@ type AdventureCard = {
   destinationCode: string;
   image: { uri: string };
   imageAlt: string;
+  category?: string;
 };
 
 // Keep this order aligned with the website's current Nigeria discovery board.
@@ -93,6 +95,7 @@ export const nextAdventureCards: readonly AdventureCard[] = [
 ] as const;
 
 function AdventureCardView({ card, width }: { card: AdventureCard; width: number }) {
+  const ft = useFlowTheme();
   const { savedIds, toggle } = useSavedDestinations();
   const [imageFailed, setImageFailed] = useState(false);
   const saved = savedIds.has(card.id);
@@ -102,7 +105,7 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
       accessibilityRole="button"
       accessibilityLabel={`${card.title}. ${card.originCode} to ${card.destinationCode}.`}
       onPress={() => router.push(discoverAdventureNavigation(card))}
-      style={({ pressed }) => [styles.card, flowStyles.shadow, { width }, pressed && flowStyles.pressed]}
+      style={({ pressed }) => [styles.card, { width }, pressed && flowStyles.pressed]}
     >
       <View style={styles.imageFrame}>
         {imageFailed ? (
@@ -121,6 +124,21 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
             style={styles.image}
           />
         )}
+        <Svg pointerEvents="none" style={styles.gradientOverlay} preserveAspectRatio="none" viewBox="0 0 100 100">
+          <Defs>
+            <LinearGradient id={`discover-overlay-${ft.theme.dark ? "dark" : "light"}`} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={ft.theme.dark ? "#020617" : "#071A48"} stopOpacity="0" />
+              <Stop offset="0.44" stopColor={ft.theme.dark ? "#020617" : "#071A48"} stopOpacity={ft.theme.dark ? "0.42" : "0.32"} />
+              <Stop offset="1" stopColor={ft.theme.dark ? "#020617" : "#071A48"} stopOpacity={ft.theme.dark ? "0.86" : "0.72"} />
+            </LinearGradient>
+          </Defs>
+          <Rect width="100" height="100" fill={`url(#discover-overlay-${ft.theme.dark ? "dark" : "light"})`} />
+        </Svg>
+        <View style={styles.cardCopy}>
+          {card.category ? <Text numberOfLines={1} style={[styles.categoryPill, ft.theme.dark && styles.categoryPillDark]}>{card.category}</Text> : null}
+          <Text numberOfLines={2} style={styles.cardTitle}>{card.title}</Text>
+          <Text numberOfLines={1} style={styles.route}>{card.originCode} → {card.destinationCode}</Text>
+        </View>
         <AndroidFavoriteButton
           saved={saved}
           label={saved ? "Remove from saved routes" : "Save route"}
@@ -130,10 +148,6 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
           }}
           style={styles.heart}
         />
-      </View>
-      <View style={styles.cardCopy}>
-        <Text numberOfLines={2} style={styles.cardTitle}>{card.title}</Text>
-        <Text numberOfLines={1} style={styles.route}>{card.originCode} → {card.destinationCode}</Text>
       </View>
     </Pressable>
   );
@@ -169,14 +183,17 @@ const styles = StyleSheet.create({
   heading: { fontSize: 21, lineHeight: 27, fontWeight: "600", letterSpacing: -0.25 },
   subtitle: { fontSize: 14, lineHeight: 24, fontWeight: "400" },
   carousel: { gap: 12, paddingBottom: 4, paddingRight: 40 },
-  card: { height: 220, borderRadius: 18, borderWidth: 1, borderColor: "rgba(226,232,240,0.8)", backgroundColor: "white", overflow: "hidden" },
-  imageFrame: { height: 108, borderBottomLeftRadius: 18, borderBottomRightRadius: 18, backgroundColor: "#EAF2FF", overflow: "hidden" },
+  card: { height: 187, borderRadius: 18, overflow: "hidden" },
+  imageFrame: { flex: 1, borderRadius: 18, backgroundColor: "#EAF2FF", overflow: "hidden" },
   image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4, backgroundColor: "#EAF2FF" },
   fallbackLabel: { color: "#475569", fontSize: 10, fontWeight: "600", letterSpacing: 1.4 },
   fallbackCode: { color: flowColors.navy, fontSize: 12, fontWeight: "900", letterSpacing: 1.4 },
+  gradientOverlay: { ...StyleSheet.absoluteFillObject },
   heart: { position: "absolute", right: 12, top: 12 },
-  cardCopy: { flex: 1, justifyContent: "center", paddingHorizontal: 12, paddingVertical: 10, gap: 6 },
-  cardTitle: { color: "#020617", fontSize: 14, lineHeight: 18, fontWeight: "700", letterSpacing: -0.1 },
-  route: { color: "#334155", fontSize: 12, lineHeight: 16, fontWeight: "600" },
+  cardCopy: { position: "absolute", left: 12, right: 12, bottom: 13, gap: 5 },
+  categoryPill: { alignSelf: "flex-start", overflow: "hidden", borderRadius: 999, backgroundColor: "rgba(219,234,254,0.92)", color: flowColors.blue, paddingHorizontal: 9, paddingVertical: 4, fontSize: 10, lineHeight: 13, fontWeight: "800", letterSpacing: 0.2 },
+  categoryPillDark: { backgroundColor: "rgba(29,78,216,0.58)", color: "#DBEAFE" },
+  cardTitle: { color: "white", fontSize: 15, lineHeight: 19, fontWeight: "800", letterSpacing: -0.12 },
+  route: { color: "rgba(255,255,255,0.84)", fontSize: 12, lineHeight: 16, fontWeight: "700", letterSpacing: 0.35 },
 });

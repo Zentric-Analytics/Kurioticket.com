@@ -20,9 +20,10 @@ test("Popular destination cards render at reduced dimensions while preserving ho
 
 test("Discover cards use the compact editorial card layout with horizontal scrolling", () => {
   assert.match(adventure, /const cardWidth = Math\.min\(190, Math\.max\(160, width \* 0\.42\)\)/);
-  assert.match(adventure, /card:\s*\{ height:\s*220/);
-  assert.match(adventure, /imageFrame:\s*\{ height:\s*108/);
+  assert.match(adventure, /card:\s*\{ height:\s*187/);
+  assert.match(adventure, /imageFrame:\s*\{ flex:\s*1, borderRadius:\s*18/);
   assert.match(adventure, /<Image[\s\S]*resizeMode="cover"[\s\S]*style=\{styles\.image\}/);
+  assert.match(adventure, /<Svg pointerEvents="none" style=\{styles\.gradientOverlay\}/);
   assert.match(adventure, /<Text numberOfLines=\{2\} style=\{styles\.cardTitle\}>\{card\.title\}<\/Text>/);
   assert.match(adventure, /<Text numberOfLines=\{1\} style=\{styles\.route\}>\{card\.originCode\} → \{card\.destinationCode\}<\/Text>/);
   assert.doesNotMatch(adventure, /tripSummary|ONE WAY|from:\s*\{/);
