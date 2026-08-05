@@ -19,7 +19,7 @@ const carResultBadgeIcons: Record<CarResultBadge, LucideIcon> = {
   "Top rated": Star,
 };
 
-export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarResult; badge?: CarResultBadge; detailsHref: string }) {
+export function CarResultCard({ car, badge, detailsHref, actionLabel = "View car", actionAriaLabel, headingLevel = "h2" }: { car: NormalizedCarResult; badge?: CarResultBadge; detailsHref: string | null; actionLabel?: string; actionAriaLabel?: string; headingLevel?: "h2" | "h3" }) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const offer = getPrimaryCarOffer(car);
@@ -64,9 +64,7 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
           <header className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#004BB8]">{car.categoryLabel}</p>
-              <h2 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">
-                {car.modelName}
-              </h2>
+              {headingLevel === "h3" ? <h3 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">{car.modelName}</h3> : <h2 className="mt-0.5 break-words text-[22px] font-extrabold leading-tight text-[#102A43]">{car.modelName}</h2>}
             </div>
             {badge && BadgeIcon && (
               <span className="inline-flex min-h-6 shrink-0 items-center gap-1 rounded-md bg-[#EAF2FB] px-2 py-0.5 text-xs font-semibold text-[#004BB8]">
@@ -111,7 +109,7 @@ export function CarResultCard({ car, badge, detailsHref }: { car: NormalizedCarR
             <div className="order-1 md:order-2"><p className="break-words text-lg font-bold leading-7 tracking-[-0.01em] text-[#102A43] tabular-nums min-[380px]:whitespace-nowrap lg:text-xl" dir="ltr" title={totalDisplayPrice.title} aria-label={totalDisplayPrice.ariaLabel}>{totalDisplayPrice.formatted}</p><p className="text-xs font-medium text-slate-500">Total</p>{offer.taxesAndFeesIncluded && <p className="mt-1 text-xs leading-4 text-slate-500">Taxes and fees included</p>}</div>
             <div className="order-2 md:order-1"><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 break-words text-sm font-semibold leading-5 text-slate-700 tabular-nums min-[380px]:whitespace-nowrap" dir="ltr" title={dailyDisplayPrice.title} aria-label={dailyDisplayPrice.ariaLabel}>{dailyDisplayPrice.formatted}</p></div>
           </div>
-          <Link href={detailsHref} className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5 lg:mt-auto">View car</Link>
+          {detailsHref ? <Link href={detailsHref} aria-label={actionAriaLabel} className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5 lg:mt-auto">{actionLabel}</Link> : <button type="button" disabled aria-label={actionAriaLabel} className="mt-3 inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-lg bg-slate-300 px-2 text-sm font-bold text-white md:px-5 lg:mt-auto">{actionLabel}</button>}
         </div>
       </div>
     </article>

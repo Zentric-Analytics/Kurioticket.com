@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
-const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
+const source = (path: string) =>
+  readFileSync(join(process.cwd(), path), "utf8");
 
 test("homepage section headings and supporting copy use semantic theme text colors", () => {
   const popular = source("src/features/home/PopularDestinationStays.tsx");
@@ -26,10 +27,16 @@ test("flight-form captions and helper text stay theme-aware in dark mode", () =>
   const primitives = source("src/features/flow/FlowPrimitives.tsx");
   const flight = source("src/features/flow/FlightSearchPanel.tsx");
 
-  assert.match(primitives, /<Text style=\{ft\.styles\.label\}>\{label\}<\/Text>/);
+  assert.match(
+    primitives,
+    /<Text style=\{ft\.styles\.label\}>\{label\}<\/Text>/,
+  );
   assert.match(primitives, /<Text style=\{ft\.styles\.meta\}>\{meta\}<\/Text>/);
   assert.match(flight, /placeholderTextColor=\{ft\.colors\.placeholder\}/);
-  assert.match(flight, /trailing=\{<FlowIcon name="chevron" color=\{ft\.colors\.icon\} size=\{18\}\/>\}/);
+  assert.match(
+    flight,
+    /trailing=\{<FlowIcon name="chevron" color=\{ft\.colors\.icon\} size=\{18\}\/>\}/,
+  );
 });
 
 test("bottom navigation inactive labels and promo cards keep readable themed contrast", () => {
@@ -39,9 +46,18 @@ test("bottom navigation inactive labels and promo cards keep readable themed con
   assert.match(tabs, /useAppTheme/);
   assert.match(tabs, /\{ color: theme\.muted \}/);
   assert.match(promos, /useFlowTheme/);
-  assert.match(promos, /ft\.theme\.dark \? ft\.colors\.surface : promo\.backgroundColor/);
-  assert.match(promos, /color: ft\.colors\.textPrimary/);
-  assert.match(promos, /color: ft\.colors\.textSecondary/);
+  assert.match(
+    promos,
+    /\? promo\.darkBackgroundColor\s*: promo\.lightBackgroundColor/s,
+  );
+  assert.match(
+    promos,
+    /const titleColor = ft\.theme\.dark \? "#F4F7FF" : ft\.colors\.textPrimary/,
+  );
+  assert.match(
+    promos,
+    /const descriptionColor = ft\.theme\.dark \? "#C8D2E6" : ft\.colors\.textSecondary/,
+  );
 });
 
 test("app theme exposes semantic text tokens without changing light-mode colors", () => {
