@@ -8,7 +8,11 @@ type DealPromo = {
   description: string;
   buttonLabel: string;
   icon: FlowIconName;
-  backgroundColor: string;
+  lightBackgroundColor: string;
+  darkBackgroundColor: string;
+  lightBorderColor: string;
+  darkBorderColor: string;
+  darkIconBackgroundColor: string;
   route: "/flights" | "/hotels";
 };
 
@@ -18,7 +22,11 @@ const homepageDealPromos: readonly DealPromo[] = [
     description: "Discover limited-time fares and compare options instantly.",
     buttonLabel: "Explore flight deals",
     icon: "flight",
-    backgroundColor: "#EAF2FF",
+    lightBackgroundColor: "#EAF2FF",
+    darkBackgroundColor: "#102A56",
+    lightBorderColor: "rgba(6,76,247,0.08)",
+    darkBorderColor: "rgba(91,141,255,0.38)",
+    darkIconBackgroundColor: "#193B74",
     route: "/flights",
   },
   {
@@ -27,13 +35,19 @@ const homepageDealPromos: readonly DealPromo[] = [
       "Browse stays from boutique hotels to global chains with price transparency.",
     buttonLabel: "Explore hotel deals",
     icon: "hotel",
-    backgroundColor: "#E5F7F5",
+    lightBackgroundColor: "#E5F7F5",
+    darkBackgroundColor: "#123A35",
+    lightBorderColor: "rgba(6,76,247,0.08)",
+    darkBorderColor: "rgba(64,196,176,0.36)",
+    darkIconBackgroundColor: "#1A514A",
     route: "/hotels",
   },
 ] as const;
 
 export function HomepageDealPromos() {
   const ft = useFlowTheme();
+  const titleColor = ft.theme.dark ? "#F4F7FF" : ft.colors.textPrimary;
+  const descriptionColor = ft.theme.dark ? "#C8D2E6" : ft.colors.textSecondary;
   return (
     <View testID="homepage-deal-promos" style={styles.section}>
       {homepageDealPromos.map((promo) => (
@@ -42,14 +56,26 @@ export function HomepageDealPromos() {
           style={[
             styles.card,
             flowStyles.shadow,
-            { backgroundColor: ft.theme.dark ? ft.colors.surface : promo.backgroundColor, borderColor: ft.theme.dark ? ft.colors.border : "rgba(6,76,247,0.08)" },
+            {
+              backgroundColor: ft.theme.dark
+                ? promo.darkBackgroundColor
+                : promo.lightBackgroundColor,
+              borderColor: ft.theme.dark
+                ? promo.darkBorderColor
+                : promo.lightBorderColor,
+            },
           ]}
         >
           <View style={styles.copy}>
-            <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>
+            <Text
+              accessibilityRole="header"
+              style={[styles.heading, { color: titleColor }]}
+            >
               {promo.title}
             </Text>
-            <Text style={[styles.description, { color: ft.colors.textSecondary }]}>{promo.description}</Text>
+            <Text style={[styles.description, { color: descriptionColor }]}>
+              {promo.description}
+            </Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={promo.buttonLabel}
@@ -62,7 +88,15 @@ export function HomepageDealPromos() {
               <Text style={styles.buttonText}>{promo.buttonLabel}</Text>
             </Pressable>
           </View>
-          <View pointerEvents="none" style={styles.icon}>
+          <View
+            pointerEvents="none"
+            style={[
+              styles.icon,
+              ft.theme.dark && {
+                backgroundColor: promo.darkIconBackgroundColor,
+              },
+            ]}
+          >
             <FlowIcon name={promo.icon} color={flowColors.blue} size={38} />
           </View>
         </View>
