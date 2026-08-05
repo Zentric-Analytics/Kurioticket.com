@@ -79,8 +79,9 @@ test("mobile config disables response caching", async () => {
 test("mobile config reports only staging and disables provider checkout", async () => {
   process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
   process.env.RENDER_GIT_COMMIT = "b".repeat(40);
-  const payload = await (await GET()).json() as { data: { environment: string; releaseReadiness: { commitSha: string | null }; features: { externalCheckout: boolean } } };
+  const payload = await (await GET()).json() as { data: { environment: string; releaseReadiness: { commitSha: string | null; releaseTimestamp: string; applicationVersion: string | null }; features: { externalCheckout: boolean } } };
   assert.equal(payload.data.environment, "staging");
   assert.equal(payload.data.releaseReadiness.commitSha, "b".repeat(40));
+  assert.match(payload.data.releaseReadiness.releaseTimestamp, /^\d{4}-\d{2}-\d{2}T/);
   assert.equal(payload.data.features.externalCheckout, false);
 });

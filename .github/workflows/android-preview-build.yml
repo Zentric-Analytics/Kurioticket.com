@@ -1,6 +1,14 @@
 name: Android Preview Build
 
 on:
+  workflow_call:
+    inputs:
+      target_sha: { description: "Trusted validated dev SHA", required: true, type: string }
+      trigger_mode: { description: "Must be automatic", required: true, type: string }
+    outputs:
+      eas_build_id:
+        description: "Finished Android Preview build ID"
+        value: ${{ jobs.build.outputs.eas_build_id }}
   workflow_dispatch:
     inputs:
       commit_sha: { description: "Exact approved dev commit SHA", required: true, type: string }
@@ -18,13 +26,17 @@ jobs:
   build:
     environment: mobile-preview-build
     runs-on: ubuntu-latest
+    outputs:
+      eas_build_id: ${{ steps.result.outputs.eas_build_id }}
     env:
       APP_VARIANT: preview
       APP_BUILD_MODE: release
       EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+      TARGET_SHA: ${{ github.event_name == 'workflow_call' && inputs.target_sha || inputs.commit_sha }}
+      TRIGGER_MODE: ${{ github.event_name == 'workflow_call' && inputs.trigger_mode || 'manual' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
-        with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
+        with: { ref: "${{ github.event_name == 'workflow_call' && inputs.target_sha || inputs.commit_sha }}", fetch-depth: 0 }
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
         with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
       - name: Install mobile dependencies
@@ -33,18 +45,25 @@ jobs:
       - name: Validate immutable Preview build inputs
         working-directory: apps/mobile
         env:
-          APPROVED_SHA: "${{ inputs.commit_sha }}"
-          APPROVED_RUNTIME: "${{ inputs.runtime_version }}"
-          APPROVED_PACKAGE: "${{ inputs.expected_package }}"
-          APPROVED_CHANNEL: "${{ inputs.expected_channel }}"
           APPROVED_CONFIRMATION: "${{ inputs.confirmation_phrase }}"
           RELEASE_REASON: "${{ inputs.release_reason }}"
         run: |
+          set -euo pipefail
           ACTUAL_SHA=$(git rev-parse HEAD)
-          test "$ACTUAL_SHA" = "$APPROVED_SHA" || { echo 'Checked-out SHA does not match approval.' >&2; exit 1; }
-          test "$GITHUB_SHA" = "$APPROVED_SHA" || { echo 'Workflow dispatch SHA does not match approval.' >&2; exit 1; }
+          test "$ACTUAL_SHA" = "$TARGET_SHA" || { echo 'Checked-out SHA does not match the Preview target.' >&2; exit 1; }
+          git fetch origin dev --no-tags
+          test "$(git rev-parse origin/dev)" = "$TARGET_SHA" || { echo 'Preview build target is no longer current dev.' >&2; exit 1; }
+          if [ "$TRIGGER_MODE" = automatic ]; then
+            test "${{ github.event_name }}" = workflow_call || { echo 'Automatic Preview build requires the trusted reusable workflow.' >&2; exit 1; }
+          else
+            test "$TRIGGER_MODE" = manual || { echo 'Unsupported Preview build trigger.' >&2; exit 1; }
+            test "${{ inputs.runtime_version }}" = preview-0.3.0
+            test "${{ inputs.expected_package }}" = com.kurioticket.app.preview
+            test "${{ inputs.expected_channel }}" = preview
+            test "$APPROVED_CONFIRMATION" = 'DELIVER ANDROID PREVIEW'
+            test -n "${RELEASE_REASON//[[:space:]]/}"
+          fi
           echo "CHECKED_OUT_SHA=$ACTUAL_SHA" >> "$GITHUB_ENV"
-          node scripts/validate-delivery-inputs.mjs preview "$APPROVED_SHA" "$APPROVED_RUNTIME" "$APPROVED_PACKAGE" "$APPROVED_CHANNEL" preview https://staging.kurioticket.com "$APPROVED_CONFIRMATION" branch build "$RELEASE_REASON" NONE
       - name: Validate release matrix and resolved config
         working-directory: apps/mobile
         run: |
@@ -64,11 +83,10 @@ jobs:
           NODE
       - name: Classify as native build or explicit first binary
         working-directory: apps/mobile
-        env: { APPROVED_SHA: "${{ inputs.commit_sha }}" }
         run: |
           npx fingerprint fingerprint:generate --platform android > "$RUNNER_TEMP/current-fingerprint.json"
           CURRENT_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/current-fingerprint.json');process.stdout.write(x.hash)")
-          node scripts/classify-release.mjs --variant preview --base "$APPROVED_SHA" --head "$APPROVED_SHA" --baseline-fingerprint FIRST_BINARY --current-fingerprint "$CURRENT_FP" --runtime preview-0.3.0 --channel preview --action build | tee "$RUNNER_TEMP/release-classification.json"
+          node scripts/classify-release.mjs --variant preview --base "$TARGET_SHA" --head "$TARGET_SHA" --baseline-fingerprint FIRST_BINARY --current-fingerprint "$CURRENT_FP" --runtime preview-0.3.0 --channel preview --action build | tee "$RUNNER_TEMP/release-classification.json"
           node -e "const x=require(process.env.RUNNER_TEMP+'/release-classification.json');if(x.classification!=='native-build-required')throw Error('Preview build must be classified as native-build-required or first-binary')"
       - name: Report proposed remote Android version code
         working-directory: apps/mobile
@@ -97,6 +115,21 @@ jobs:
           set -o pipefail
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
           npx eas-cli@16.17.4 build --platform android --profile preview --freeze-credentials --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.json"
+      - name: Verify finished Preview APK result
+        id: result
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          set -euo pipefail
+          BUILD_ID=$(node -e "const x=require(process.env.RUNNER_TEMP+'/delivery-result.json');if(!Array.isArray(x)||x.length!==1||!x[0]?.id)throw Error('Android Preview build submission result is malformed');process.stdout.write(x[0].id)")
+          npx eas-cli@16.17.4 build:view "$BUILD_ID" --json > "$RUNNER_TEMP/finished-preview-build.json"
+          node - <<'NODE'
+          const fs = require('fs');
+          const b = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/finished-preview-build.json', 'utf8'));
+          if (b?.status !== 'FINISHED' || b?.platform !== 'ANDROID' || b?.gitCommitHash !== process.env.TARGET_SHA) throw new Error('Android Preview build result is incomplete or identity-mismatched.');
+          if ((b.applicationIdentifier ?? b.appIdentifier) !== 'com.kurioticket.app.preview' || b.runtimeVersion !== 'preview-0.3.0' || b.channel !== 'preview' || b.buildProfile !== 'preview') throw new Error('Android Preview build identity mismatch.');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `eas_build_id=${b.id}\n`);
+          NODE
       - name: Write consolidated release audit
         if: always()
         working-directory: apps/mobile
@@ -106,8 +139,8 @@ jobs:
           RELEASE_ACTOR: "${{ github.actor }}"
           RELEASE_ENVIRONMENT: preview
           RELEASE_ACTION: build
-          RELEASE_REASON: "${{ inputs.release_reason }}"
-          RELEASE_COMMIT: "${{ inputs.commit_sha }}"
+          RELEASE_REASON: "${{ github.event_name == 'workflow_call' && 'Automatic native baseline refresh' || inputs.release_reason }}"
+          RELEASE_COMMIT: "${{ env.TARGET_SHA }}"
           RELEASE_PACKAGE: com.kurioticket.app.preview
           RELEASE_PROFILE: preview
           RELEASE_RUNTIME: preview-0.3.0
@@ -120,7 +153,13 @@ jobs:
           AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
           WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
           FINAL_STATUS: "${{ job.status }}"
-        run: node scripts/write-release-audit.mjs
+          PRIOR_JOB_STATUS: "${{ job.status }}"
+        run: |
+          set +e
+          node scripts/write-release-audit.mjs
+          AUDIT_EXIT=$?
+          set -e
+          if [ "$AUDIT_EXIT" -ne 0 ] && [ "$PRIOR_JOB_STATUS" != failure ]; then exit "$AUDIT_EXIT"; fi
       - name: Preserve non-secret release evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -128,4 +167,4 @@ jobs:
           name: android-preview-build-evidence-${{ github.run_id }}
           path: ${{ runner.temp }}/release-audit.json
           if-no-files-found: warn
-          retention-days: 365
+          retention-days: 90

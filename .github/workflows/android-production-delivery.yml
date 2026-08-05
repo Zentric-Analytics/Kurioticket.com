@@ -4,7 +4,7 @@ on:
     inputs:
       commit_sha: { description: "Exact approved full commit SHA reachable from protected main", required: true, type: string }
       platform: { description: "Must be android", required: true, type: choice, options: [android] }
-      action: { description: "Approved delivery action", required: true, type: choice, options: [build, update] }
+      action: { description: "Approved delivery action", required: true, type: choice, options: [build, update, dry-run] }
       runtime_version: { description: "Expected runtime", required: true, type: string }
       release_reason: { description: "Approval or release reference", required: true, type: string }
       confirmation_phrase: { description: "Type DELIVER ANDROID PRODUCTION", required: true, type: string }
@@ -67,10 +67,10 @@ jobs:
         run: |
           set -o pipefail
           npx fingerprint fingerprint:generate --platform android > "$RUNNER_TEMP/current-fingerprint.json"
-          if [ "$DELIVERY_ACTION" = update ]; then BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)"); BASE_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.nativeFingerprint)"); else BASE="$APPROVED_SHA"; BASE_FP=BUILD_ACTION; fi
+          if [ "$DELIVERY_ACTION" = update ]; then BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)"); BASE_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.nativeFingerprint)"); CLASSIFIER_ACTION=update; else BASE="$APPROVED_SHA"; BASE_FP=BUILD_ACTION; CLASSIFIER_ACTION=build; fi
           CURRENT_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/current-fingerprint.json');process.stdout.write(x.hash)")
           set +e
-          node scripts/classify-release.mjs --variant production --base "$BASE" --head "$APPROVED_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime production-0.3.0 --channel production --action "$DELIVERY_ACTION" | tee "$RUNNER_TEMP/release-classification.json"
+          node scripts/classify-release.mjs --variant production --base "$BASE" --head "$APPROVED_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime production-0.3.0 --channel production --action "$CLASSIFIER_ACTION" | tee "$RUNNER_TEMP/release-classification.json"
           CLASSIFIER_PIPE_STATUS=("${PIPESTATUS[@]}")
           set -e
           if [ "${CLASSIFIER_PIPE_STATUS[0]}" -ne 0 ]; then exit "${CLASSIFIER_PIPE_STATUS[0]}"; fi
@@ -84,26 +84,27 @@ jobs:
           npx eas-cli@16.17.4 channel:view production --json --non-interactive > "$RUNNER_TEMP/channel.json"
           node scripts/verify-release-evidence.mjs --kind channel --variant production --input "$RUNNER_TEMP/channel.json" --output "$RUNNER_TEMP/channel-evidence.json"
       - name: Verify proposed versionCode against EAS and Play history
-        if: inputs.action == 'build'
+        if: inputs.action == 'build' || inputs.action == 'dry-run'
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", APPROVED_SHA: "${{ inputs.commit_sha }}" }
         run: |
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
           test -f release-baselines/android/production-play-history.json || { echo 'Reviewed Google Play version history is missing.' >&2; exit 1; }
           set +e
-          npx eas-cli@16.17.4 build:version:get --platform android --profile production --non-interactive > "$RUNNER_TEMP/production-version.txt" 2>&1
+          npx eas-cli@16.17.4 build:version:get --platform android --profile production --json --non-interactive > "$RUNNER_TEMP/production-version.json" 2> "$RUNNER_TEMP/production-version.stderr"
           VERSION_EXIT=$?
           npx eas-cli@16.17.4 build:list --platform android --build-profile production --app-identifier com.kurioticket.app --limit 1 --json --non-interactive > "$RUNNER_TEMP/production-builds.json" 2> "$RUNNER_TEMP/production-builds-error.txt"
           BUILDS_EXIT=$?
           set -e
           PREVIOUS_HISTORY_ARGS=()
           HISTORY_PATH=apps/mobile/release-baselines/android/production-play-history.json
-          if git cat-file -e "$APPROVED_SHA^:$HISTORY_PATH" 2>/dev/null; then
-            git show "$APPROVED_SHA^:$HISTORY_PATH" > "$RUNNER_TEMP/previous-production-play-history.json"
-            PREVIOUS_HISTORY_ARGS=(--previous-play-history "$RUNNER_TEMP/previous-production-play-history.json")
-          fi
+          node scripts/resolve-production-play-history-lineage.mjs \
+            --approved-sha "$APPROVED_SHA" \
+            --history-path "$HISTORY_PATH" \
+            --output "$RUNNER_TEMP/previous-production-play-history.json"
+          PREVIOUS_HISTORY_ARGS=(--previous-play-history "$RUNNER_TEMP/previous-production-play-history.json")
           node scripts/resolve-production-version-code.mjs \
-            --version-output "$RUNNER_TEMP/production-version.txt" \
+            --version-output "$RUNNER_TEMP/production-version.json" \
             --version-exit-code "$VERSION_EXIT" \
             --builds-output "$RUNNER_TEMP/production-builds.json" \
             --builds-exit-code "$BUILDS_EXIT" \
@@ -113,6 +114,13 @@ jobs:
             --runtime production-0.3.0 \
             "${PREVIOUS_HISTORY_ARGS[@]}" \
             --output "$RUNNER_TEMP/version-evidence.json"
+      - name: Complete non-mutating Production dry run
+        if: inputs.action == 'dry-run'
+        working-directory: apps/mobile
+        env: { APPROVED_SHA: "${{ inputs.commit_sha }}", EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          node scripts/dry-run-production-delivery.mjs --approved-sha "$APPROVED_SHA" --version-evidence "$RUNNER_TEMP/version-evidence.json" --credential release-baselines/android/production-credential.json --workflow ../../.github/workflows/android-production-delivery.yml --output "$RUNNER_TEMP/delivery-result.json"
       - name: Build approved Production AAB
         if: inputs.action == 'build'
         working-directory: apps/mobile
@@ -120,7 +128,23 @@ jobs:
         run: |
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
           set -o pipefail
-          npx eas-cli@16.17.4 build --platform android --profile production --non-interactive --freeze-credentials --json | tee "$RUNNER_TEMP/delivery-result.json"
+          npx eas-cli@16.17.4 build --platform android --profile production --non-interactive --freeze-credentials --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
+          PROPOSED_VERSION=$(node -e "const x=require(process.env.RUNNER_TEMP+'/version-evidence.json');process.stdout.write(String(x.proposedVersionCode))")
+          VERSION_STATUS=$(node -e "const x=require(process.env.RUNNER_TEMP+'/version-evidence.json');process.stdout.write(x.remoteVersionStatus)")
+          EXPECTED_BUILT_VERSION=$(node -e "const x=require(process.env.RUNNER_TEMP+'/version-evidence.json');process.stdout.write(String(x.remoteVersionStatus==='uninitialized'?x.proposedVersionCode+1:x.proposedVersionCode))")
+          BUILD_ID=$(node -e "const x=require(process.env.RUNNER_TEMP+'/delivery-result.raw.json');if(!Array.isArray(x)||x.length!==1||typeof x[0]?.id!=='string')throw Error('Build submission result is missing one exact ID');process.stdout.write(x[0].id)")
+          export BUILD_ID
+          npx eas-cli@16.17.4 build:list --platform android --build-profile production --app-identifier com.kurioticket.app --app-version 0.3.0 --app-build-version "$EXPECTED_BUILT_VERSION" --runtime-version production-0.3.0 --channel production --git-commit-hash "$CHECKED_OUT_SHA" --status finished --limit 2 --json --non-interactive > "$RUNNER_TEMP/production-built-history.json"
+          AAB_URL=$(node -e "const x=require(process.env.RUNNER_TEMP+'/production-built-history.json');if(!Array.isArray(x)||x.length!==1||x[0]?.id!==process.env.BUILD_ID)throw Error('Filtered build history is missing or ambiguous');const u=x[0].artifacts?.applicationArchiveUrl??x[0].artifacts?.buildUrl;if(typeof u!=='string'||!/^https:\/\//.test(u)||!/.aab(?:\?|$)/i.test(u))throw Error('AAB URL is missing');process.stdout.write(u)")
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --output "$RUNNER_TEMP/production.aab" "$AAB_URL"
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --output "$RUNNER_TEMP/bundletool.jar" https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
+          echo 'a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29  '"$RUNNER_TEMP/bundletool.jar" | sha256sum --check --strict
+          java -jar "$RUNNER_TEMP/bundletool.jar" validate --bundle="$RUNNER_TEMP/production.aab" > "$RUNNER_TEMP/aab-validation.txt"
+          java -jar "$RUNNER_TEMP/bundletool.jar" dump manifest --bundle="$RUNNER_TEMP/production.aab" --module=base > "$RUNNER_TEMP/aab-manifest.xml"
+          jarsigner -verify "$RUNNER_TEMP/production.aab" > "$RUNNER_TEMP/aab-signing.txt" 2>&1
+          unzip -p "$RUNNER_TEMP/production.aab" base/assets/index.android.bundle base/assets/app.config base/assets/app.manifest > "$RUNNER_TEMP/aab-contents.txt"
+          node scripts/verify-production-aab.mjs --manifest "$RUNNER_TEMP/aab-manifest.xml" --validation "$RUNNER_TEMP/aab-validation.txt" --signing "$RUNNER_TEMP/aab-signing.txt" --contents "$RUNNER_TEMP/aab-contents.txt" --output "$RUNNER_TEMP/aab-evidence.json"
+          node scripts/verify-production-eas-result.mjs --kind build --input "$RUNNER_TEMP/delivery-result.raw.json" --history "$RUNNER_TEMP/production-built-history.json" --aab-evidence "$RUNNER_TEMP/aab-evidence.json" --sha "$CHECKED_OUT_SHA" --version-code "$PROPOSED_VERSION" --version-status "$VERSION_STATUS" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Publish approved Production OTA through verified channel
         if: inputs.action == 'update'
         working-directory: apps/mobile
@@ -128,7 +152,8 @@ jobs:
         run: |
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
           set -o pipefail
-          npx eas-cli@16.17.4 update --channel production --platform android --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.json"
+          npx eas-cli@16.17.4 update --channel production --platform android --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
+          node scripts/verify-production-eas-result.mjs --kind update --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Write consolidated release audit
         if: always()
         working-directory: apps/mobile
@@ -154,8 +179,16 @@ jobs:
           AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
           WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
           FINAL_STATUS: "${{ job.status }}"
-        run: node scripts/write-release-audit.mjs
+          PRIOR_JOB_STATUS: "${{ job.status }}"
+        run: |
+          set +e
+          node scripts/write-release-audit.mjs
+          AUDIT_EXIT=$?
+          set -e
+          if [ "$AUDIT_EXIT" -ne 0 ] && [ "$PRIOR_JOB_STATUS" != failure ]; then exit "$AUDIT_EXIT"; fi
+          if [ "$AUDIT_EXIT" -ne 0 ]; then echo 'Release audit generation also failed after the authoritative delivery failure.' >&2; fi
       - name: Preserve non-secret release evidence
         if: always()
+        continue-on-error: ${{ job.status == 'failure' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with: { name: "android-production-release-evidence-${{ github.run_id }}", path: "${{ runner.temp }}/release-audit.json", if-no-files-found: warn, retention-days: 365 }

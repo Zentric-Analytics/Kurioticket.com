@@ -26,7 +26,9 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
   };
   const deliveryResult = evidence.deliveryResult.value;
   const easBuildId = deliveryResult?.id ?? (Array.isArray(deliveryResult) ? deliveryResult[0]?.id : null) ?? null;
-  const publicationDecision = easBuildId
+  const publicationDecision = deliveryResult?.kind === 'dry-run'
+    ? 'ready-not-submitted'
+    : deliveryResult?.kind === 'update' || easBuildId
     ? 'published'
     : evidence.replay.value?.alreadyPublished === true
       ? 'already-published'
