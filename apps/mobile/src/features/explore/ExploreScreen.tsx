@@ -319,10 +319,11 @@ function PopularDestinationCard({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Search flights to ${destination.name}`}
+          hitSlop={{ top: 2, bottom: 2 }}
           onPress={searchFlights}
           style={s.flightButton}
         >
-          <FlowIcon name="flight" color="white" size={18} />
+          <FlowIcon name="flight" color="white" size={16} />
           <Text style={s.flightButtonText}>Search flights</Text>
         </Pressable>
       </View>
@@ -519,14 +520,17 @@ const s = StyleSheet.create({
   countryName: { color: MUTED, fontSize: 14, fontWeight: "600" },
   airportMeta: { color: MUTED, fontSize: 12, lineHeight: 18, minHeight: 36 },
   flightButton: {
+    alignSelf: "flex-start",
     marginTop: 8,
-    minHeight: 44,
+    minHeight: 40,
+    minWidth: 44,
     borderRadius: 10,
     backgroundColor: BLUE,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    paddingHorizontal: 14,
+    gap: 6,
   },
-  flightButtonText: { color: "white", fontSize: 14, fontWeight: "800" },
+  flightButtonText: { color: "white", fontSize: 13, fontWeight: "800" },
 });
