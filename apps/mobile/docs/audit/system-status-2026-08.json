@@ -1,0 +1,25 @@
+{
+  "auditDate": "2026-08-04",
+  "source": {"dev":"3495609287678a3659f43b65c4978ec2c92579a9","main":"b061e1e0a33b8aac96e8e24a704baafbbcad213e"},
+  "status": [
+    {"system":"Web staging","classification":"VERIFIED_WORKING","evidence":"Render LIVE at exact dev SHA"},
+    {"system":"Android Production Internal testing","classification":"VERIFIED_WORKING","evidence":"EAS finished AAB and Play internal release versionCode 2"},
+    {"system":"iOS Preview TestFlight Internal","classification":"VERIFIED_WORKING","evidence":"EAS finished build/submission plus owner installation and QA attestation"},
+    {"system":"Android Preview current dev","classification":"BLOCKED","evidence":"automatic evaluator returned PREVIEW_BUILD_REQUIRED; no OTA published"},
+    {"system":"Production Android OTA","classification":"IMPLEMENTED_NOT_PROVEN","evidence":"manual baseline-bound workflow contract"},
+    {"system":"iOS Production","classification":"ABSENT_DEFERRED","evidence":"no dedicated workflow or EAS credential verified"},
+    {"system":"Native push notifications","classification":"ABSENT_DEFERRED","evidence":"no Expo notifications dependency or active push delivery"},
+    {"system":"Crash reporting","classification":"ABSENT_DEFERRED","evidence":"no dedicated SDK found"},
+    {"system":"Legacy Android com.kurioticket.mobile","classification":"LEGACY_PRESERVED","evidence":"EAS credential and Play draft remain"}
+  ],
+  "validation": {
+    "nextProductionBuild":"passed",
+    "lint":"passed with 4 warnings",
+    "secretScan":"passed",
+    "mobileTypeScript":"passed",
+    "mobileTests":"234/235",
+    "releasePipelineTests":"59/60",
+    "repositoryTests":"1381/1403",
+    "expoDoctor":"16/18; network/service metadata checks inconclusive"
+  }
+}

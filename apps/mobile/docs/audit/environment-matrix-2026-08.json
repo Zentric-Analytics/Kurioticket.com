@@ -1,0 +1,16 @@
+{
+  "auditDate": "2026-08-04",
+  "environments": [
+    {"name":"web-staging","identity":"kurioticket.com staging","source":"dev","api":"https://staging.kurioticket.com","status":"LIVE at audited dev SHA according to Render; fresh endpoint payload unknown"},
+    {"name":"web-production","identity":"kurioticket.com","source":"main","api":"https://kurioticket.com","status":"repository configured; hosting inventory not freshly verified"},
+    {"name":"android-preview","package":"com.kurioticket.app.preview","version":"0.3.0","versionCode":3,"runtime":"preview-0.3.0","channel":"preview","api":"https://staging.kurioticket.com","status":"historically verified; current dev requires native build"},
+    {"name":"android-production","package":"com.kurioticket.app","version":"0.3.0","versionCode":2,"runtime":"production-0.3.0","channel":"production","api":"https://kurioticket.com","status":"Play Internal testing; no public rollout"},
+    {"name":"ios-preview","bundle":"com.kurioticket.app.preview","version":"0.3.0","buildNumber":3,"runtime":"preview-0.3.0","channel":"preview","api":"https://staging.kurioticket.com","status":"TestFlight Internal verified by build/submission evidence and owner QA"},
+    {"name":"ios-production","bundle":"com.kurioticket.app","runtime":"production-0.3.0","channel":"production","api":"https://kurioticket.com","status":"repository identity only; external delivery path absent or unknown"}
+  ],
+  "githubEnvironments": [
+    {"name":"mobile-preview-build","branch":"dev","reviewer":"ZentricAnalytics","secrets":["EXPO_TOKEN"]},
+    {"name":"mobile-preview-ota","branch":"dev","reviewer":null,"secrets":["EXPO_TOKEN"]},
+    {"name":"mobile-production","branch":"main","reviewer":"ZentricAnalytics","secrets":["EXPO_TOKEN"]}
+  ]
+}

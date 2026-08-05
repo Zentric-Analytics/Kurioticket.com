@@ -1,0 +1,16 @@
+{
+  "auditDate": "2026-08-04",
+  "risks": [
+    {"id":"R1","severity":"HIGH","title":"main/dev ancestry divergence","ownerAction":"reviewed normal-merge reconciliation before promotion"},
+    {"id":"R2","severity":"HIGH","title":"account erasure lifecycle not verified","ownerAction":"policy decision and backend deletion/anonymization implementation"},
+    {"id":"R3","severity":"HIGH","title":"41 dependency alerts including one critical","ownerAction":"exploitability triage and upgrades"},
+    {"id":"R4","severity":"HIGH","title":"Apple credential backup/expiry/superseded state unknown","ownerAction":"owner-controlled inventory and recovery drill"},
+    {"id":"R5","severity":"MEDIUM","title":"current dev not eligible for Android Preview OTA","ownerAction":"protected Preview native build after governance gates"},
+    {"id":"R6","severity":"MEDIUM","title":"named test debt","ownerAction":"behavioral triage and replacement of brittle source-text tests"},
+    {"id":"R7","severity":"MEDIUM","title":"no crash diagnostics SDK","ownerAction":"privacy-reviewed observability decision"},
+    {"id":"R8","severity":"MEDIUM","title":"Production API www-origin drift","ownerAction":"verify canonical origin and normalize EAS environment"},
+    {"id":"R9","severity":"MEDIUM","title":"Production iOS delivery absent","ownerAction":"separate future Production iOS approval"},
+    {"id":"R10","severity":"LOW","title":"artifact retention capped at 90 days","ownerAction":"align workflow documentation and evidence retention"},
+    {"id":"R11","severity":"LOW","title":"internal tester list naming/store setup cleanup","ownerAction":"correct during listing readiness"}
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "auditDate": "2026-08-04",
+  "sourceSha": "3495609287678a3659f43b65c4978ec2c92579a9",
+  "workflows": [
+    {"file":"security.yml","name":"Security Checks","triggers":["pull_request","push"],"delivery":false,"environment":null,"status":"verified"},
+    {"file":"migration-validation.yml","name":"Migration validation","triggers":["pull_request","push","workflow_dispatch"],"delivery":false,"environment":null,"status":"verified"},
+    {"file":"mobile-preview-update.yml","name":"Validate mobile preview","triggers":["pull_request","push","workflow_dispatch"],"delivery":"guarded automatic Preview OTA evaluation after successful dev push","environment":null,"status":"verified; latest dev classified PREVIEW_BUILD_REQUIRED"},
+    {"file":"mobile-production-update.yml","name":"Validate mobile production","triggers":["push","workflow_dispatch"],"delivery":false,"environment":null,"status":"verified validation-only"},
+    {"file":"android-preview-build.yml","name":"Android Preview Build","triggers":["workflow_dispatch"],"delivery":"native build","environment":"mobile-preview-build","status":"historically verified"},
+    {"file":"android-preview-ota.yml","name":"Android Preview OTA","triggers":["workflow_call","workflow_dispatch"],"delivery":"Preview OTA only","environment":"mobile-preview-ota","status":"historically verified; break-glass manual path retained"},
+    {"file":"android-production-delivery.yml","name":"Android Production Delivery","triggers":["workflow_dispatch"],"delivery":"manual build or baseline-bound OTA","environment":"mobile-production","status":"Production AAB verified; main contains newer hardening than dev"},
+    {"file":"ios-preview-build.yml","name":"iOS Preview Build","triggers":["workflow_dispatch"],"delivery":"iOS Preview native build","environment":"mobile-preview-build","status":"verified"},
+    {"file":"ios-preview-testflight-submit.yml","name":"iOS Preview TestFlight Submit","triggers":["workflow_dispatch"],"delivery":"App Store Connect/TestFlight submit","environment":"mobile-preview-build","status":"verified"}
+  ],
+  "invariants": [
+    "No push-to-main native build, store upload, or OTA publication",
+    "Native-sensitive Preview changes publish no OTA and start no automatic build",
+    "Production delivery requires mobile-production environment approval",
+    "iOS Preview build and submission are separate manual actions",
+    "Production iOS delivery workflow is absent"
+  ]
+}
