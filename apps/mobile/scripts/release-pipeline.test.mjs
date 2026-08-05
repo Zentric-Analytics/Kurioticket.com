@@ -968,14 +968,17 @@ test('Preview baselines resolve from the latest exact finished EAS build on dev 
 test('Preview baseline selection ignores valid unrelated history and resolves reviewed no-VCS evidence', () => {
   const target = 'f'.repeat(40);
   const reviewedCommit = 'c'.repeat(40);
-  const legacy = previewBuild('android', { id: '179ae3b8-3e7a-404c-bcf0-44cbdc759cff', gitCommitHash: null });
+  const legacy = previewBuild('android', { id: '179ae3b8-3e7a-404c-bcf0-44cbdc759cff', gitCommitHash: null, appBuildVersion: '3' });
   const unrelated = previewBuild('android', { id: '44444444-4444-4444-8444-444444444444', runtimeVersion: 'preview-0.2.0', appVersion: '0.2.0' });
-  const reviewedBuilds = [{ platform: 'android', easBuildId: legacy.id, commitSha: reviewedCommit, nativeFingerprint: 'd'.repeat(40) }];
+  const reviewedBuilds = [{ platform: 'android', easBuildId: legacy.id, commitSha: reviewedCommit, nativeFingerprint: 'd'.repeat(40), projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d', package: 'com.kurioticket.app.preview', profile: 'preview', runtime: 'preview-0.3.0', channel: 'preview', appVersion: '0.3.0', buildNumber: 3, distribution: 'INTERNAL' }];
   const result = resolveLatestPreviewBaseline({ builds: [unrelated, legacy], platform: 'android', targetSha: target, reviewedBuilds, isAncestor: (sha) => sha === reviewedCommit });
   assert.equal(result.easBuildId, legacy.id);
   assert.equal(result.commitSha, reviewedCommit);
   assert.throws(() => resolveLatestPreviewBaseline({ builds: [legacy], platform: 'android', targetSha: target, isAncestor: () => true }), /identity-mismatched/);
   assert.throws(() => resolveLatestPreviewBaseline({ builds: [legacy], platform: 'android', targetSha: target, reviewedBuilds: [...reviewedBuilds, ...reviewedBuilds], isAncestor: () => true }), /duplicated/);
+  const sparseLegacy = { id: legacy.id, status: 'FINISHED', platform: 'ANDROID', buildProfile: 'preview', artifacts: legacy.artifacts, completedAt: legacy.completedAt };
+  assert.equal(resolveLatestPreviewBaseline({ builds: [sparseLegacy], platform: 'android', targetSha: target, reviewedBuilds, isAncestor: () => true }).commitSha, reviewedCommit);
+  assert.throws(() => resolveLatestPreviewBaseline({ builds: [{ ...sparseLegacy, runtimeVersion: 'production-0.3.0' }], platform: 'android', targetSha: target, reviewedBuilds, isAncestor: () => true }), /No finished/);
 });
 
 test('Preview baseline selection fails closed on ambiguous newest builds', () => {
