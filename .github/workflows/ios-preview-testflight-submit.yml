@@ -21,7 +21,7 @@ jobs:
       EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
-        with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
+        with: { fetch-depth: 0 }
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
         with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
       - name: Install mobile dependencies
@@ -33,12 +33,13 @@ jobs:
           EAS_BUILD_ID: "${{ inputs.eas_build_id }}"
           RELEASE_REASON: "${{ inputs.release_reason }}"
           CONFIRMATION: "${{ inputs.confirmation_phrase }}"
+          WORKFLOW_SHA: "${{ github.sha }}"
         run: |
           set -euo pipefail
           [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo 'A full commit SHA is required.' >&2; exit 1; }
           [[ "$EAS_BUILD_ID" =~ ^[0-9a-f-]{36}$ ]] || { echo 'A canonical EAS build ID is required.' >&2; exit 1; }
-          test "$(git rev-parse HEAD)" = "$APPROVED_SHA" || { echo 'Checked-out SHA does not match approval.' >&2; exit 1; }
-          git merge-base --is-ancestor "$APPROVED_SHA" origin/dev || { echo 'Approved SHA is not reachable from dev.' >&2; exit 1; }
+          test "$(git rev-parse HEAD)" = "$WORKFLOW_SHA" || { echo 'Workflow checkout does not match the immutable dispatch SHA.' >&2; exit 1; }
+          git merge-base --is-ancestor "$APPROVED_SHA" "$WORKFLOW_SHA" || { echo 'Approved build SHA is not reachable from the workflow dev SHA.' >&2; exit 1; }
           test -n "${RELEASE_REASON//[[:space:]]/}" || { echo 'Release reason is required.' >&2; exit 1; }
           test "$CONFIRMATION" = 'UPLOAD IOS PREVIEW TO TESTFLIGHT' || { echo 'Confirmation phrase mismatch.' >&2; exit 1; }
       - name: Validate Preview identity and release policy
@@ -49,13 +50,15 @@ jobs:
           npx expo config --type public --json > "$RUNNER_TEMP/ios-preview-submit-config.json"
           node - <<'NODE'
           const c = require(process.env.RUNNER_TEMP + '/ios-preview-submit-config.json');
+          const eas = require('./eas.json');
           const ok = c.name === 'Kurioticket Preview'
             && c.ios?.bundleIdentifier === 'com.kurioticket.app.preview'
             && c.version === '0.3.0'
             && c.runtimeVersion === 'preview-0.3.0'
             && c.extra?.environment?.channel === 'preview'
             && c.extra?.environment?.apiBaseUrl === 'https://staging.kurioticket.com'
-            && c.ios?.infoPlist?.ITSAppUsesNonExemptEncryption === false;
+            && c.ios?.infoPlist?.ITSAppUsesNonExemptEncryption === false
+            && eas.submit?.preview?.ios?.ascAppId === '6797447471';
           if (!ok) throw new Error('Resolved iOS Preview submission identity mismatch');
           NODE
       - name: Verify the exact finished iOS Preview build
