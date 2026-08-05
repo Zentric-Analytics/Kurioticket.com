@@ -28,6 +28,34 @@
       "appVersion": "0.3.0",
       "buildNumber": 3,
       "distribution": "STORE"
+    },
+    {
+      "platform": "android",
+      "easBuildId": "f545df86-7e9a-44f4-964f-f9e7ebee6743",
+      "commitSha": "baab5b0565383ae6c9d0799f8796b3f0dd18174c",
+      "nativeFingerprint": "49c04dbd1c9084660eba26c3d580ca21672e9e80",
+      "projectId": "89f6fd88-c0d7-495a-9e2b-8301b09f407d",
+      "package": "com.kurioticket.app.preview",
+      "profile": "preview",
+      "runtime": "preview-0.3.0",
+      "channel": "preview",
+      "appVersion": "0.3.0",
+      "buildNumber": 4,
+      "distribution": "INTERNAL"
+    },
+    {
+      "platform": "ios",
+      "easBuildId": "5664863d-0831-4fae-82b4-3279cf70d1e4",
+      "commitSha": "baab5b0565383ae6c9d0799f8796b3f0dd18174c",
+      "nativeFingerprint": "bcca19923ad2836700307dce7568f667909d21d9",
+      "projectId": "89f6fd88-c0d7-495a-9e2b-8301b09f407d",
+      "package": "com.kurioticket.app.preview",
+      "profile": "preview",
+      "runtime": "preview-0.3.0",
+      "channel": "preview",
+      "appVersion": "0.3.0",
+      "buildNumber": 4,
+      "distribution": "STORE"
     }
   ]
 }

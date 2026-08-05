@@ -974,6 +974,42 @@ test('reusable Preview builds bind automation to the trusted target input, not t
   }
 });
 
+test('Preview native build verification matches authoritative EAS build:view metadata', () => {
+  for (const [name, platform, distribution] of [
+    ['android-preview-build.yml', 'ANDROID', 'INTERNAL'],
+    ['ios-preview-build.yml', 'IOS', 'STORE'],
+  ]) {
+    const workflow = readFileSync(resolve(root, '../../.github/workflows', name), 'utf8');
+    const start = workflow.indexOf(platform === 'IOS' ? '- name: Verify finished iOS Preview result' : '- name: Verify finished Preview APK result');
+    const end = workflow.indexOf(platform === 'IOS' ? '- name: Upload automatic iOS Preview build to TestFlight' : '- name: Write consolidated release audit', start);
+    const verification = workflow.slice(start, end);
+    assert.match(verification, /b\?\.id === process\.env\.BUILD_ID/);
+    assert.match(verification, new RegExp(`b\\?\\.platform === '${platform}'`));
+    assert.match(verification, /b\?\.project\?\.id === '89f6fd88-c0d7-495a-9e2b-8301b09f407d'/);
+    assert.match(verification, /b\?\.runtimeVersion === 'preview-0\.3\.0'/);
+    assert.match(verification, /b\?\.channel === 'preview'/);
+    assert.match(verification, /b\?\.appVersion === '0\.3\.0'/);
+    assert.match(verification, new RegExp(`b\\?\\.distribution === '${distribution}'`));
+    assert.match(verification, /artifactUrl\.startsWith\('https:\/\/'\)/);
+    assert.doesNotMatch(verification, /applicationIdentifier|appIdentifier/);
+  }
+});
+
+test('reviewed Preview baseline registry records both finished build 4 artifacts', () => {
+  const registry = JSON.parse(readFileSync(resolve(root, 'release-baselines/preview-builds.json'), 'utf8'));
+  const current = registry.builds.filter((build) => build.commitSha === 'baab5b0565383ae6c9d0799f8796b3f0dd18174c');
+  assert.deepEqual(current.map((build) => build.platform).sort(), ['android', 'ios']);
+  for (const build of current) {
+    assert.equal(build.package, 'com.kurioticket.app.preview');
+    assert.equal(build.runtime, 'preview-0.3.0');
+    assert.equal(build.channel, 'preview');
+    assert.equal(build.profile, 'preview');
+    assert.equal(build.appVersion, '0.3.0');
+    assert.equal(build.buildNumber, 4);
+    assert.match(build.nativeFingerprint, /^[0-9a-f]{40}$/);
+  }
+});
+
 test('Preview baseline selection ignores valid unrelated history and resolves reviewed no-VCS evidence', () => {
   const target = 'f'.repeat(40);
   const reviewedCommit = 'c'.repeat(40);
