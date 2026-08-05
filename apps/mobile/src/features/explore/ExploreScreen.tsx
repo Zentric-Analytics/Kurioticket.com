@@ -520,7 +520,7 @@ const s = StyleSheet.create({
   countryName: { color: MUTED, fontSize: 14, fontWeight: "600" },
   airportMeta: { color: MUTED, fontSize: 12, lineHeight: 18, minHeight: 36 },
   flightButton: {
-    alignSelf: "flex-start",
+    alignSelf: "flex-end",
     marginTop: 8,
     minHeight: 40,
     minWidth: 44,
