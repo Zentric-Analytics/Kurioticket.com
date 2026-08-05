@@ -13,8 +13,9 @@ export function StagingDeploymentBadge() {
     >
       <strong className="block font-bold">Staging build</strong>
       <span className="font-mono">{release.commitSha.slice(0, 12)}</span>
-      <span className="mx-1" aria-hidden="true">Â·</span>
+      <span className="mx-1" aria-hidden="true">·</span>
       <span>{release.applicationVersion ?? "unversioned"}</span>
+      <span className="mt-1 block font-semibold">WEB DELIVERY VERIFY — WDV-20260805-1</span>
     </aside>
   );
 }
