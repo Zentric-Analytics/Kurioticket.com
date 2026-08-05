@@ -1,5 +1,8 @@
 import { airports, type AirportOption } from "../airports";
 import { curatedDestinationImage } from "../../data/destinationImages";
+import { exploreDestinationEditorialById, type ExploreDestinationEditorialProvenance } from "./exploreDestinationEditorial";
+import { CURATED_POPULAR_EXPLORE_DESTINATION_IDS } from "./exploreDestinationPopularIds";
+export { CURATED_POPULAR_EXPLORE_DESTINATION_IDS } from "./exploreDestinationPopularIds";
 
 export type ExploreDestinationProvenance = {
   airports: "shared-airport-catalogue";
@@ -21,6 +24,7 @@ export type ExploreDestination = {
   summary?: string;
   highlights?: readonly string[];
   relatedDestinationIds?: readonly string[];
+  editorialProvenance?: ExploreDestinationEditorialProvenance;
 };
 
 type DestinationOverride = {
@@ -102,7 +106,16 @@ export function buildExploreDestinations(
     if (ids.has(record.id)) throw new Error(`Duplicate Explore destination ID: ${record.id}`);
     ids.add(record.id);
   }
-  return records.sort(compareExploreDestinations);
+  return records.map((record) => {
+    const editorial = exploreDestinationEditorialById.get(record.id as (typeof CURATED_POPULAR_EXPLORE_DESTINATION_IDS)[number]);
+    return editorial ? {
+      ...record,
+      summary: editorial.summary,
+      description: editorial.description,
+      highlights: editorial.highlights,
+      editorialProvenance: editorial.editorialProvenance,
+    } : record;
+  }).sort(compareExploreDestinations);
 }
 
 export function compareExploreDestinations(
@@ -141,16 +154,6 @@ export function requireExploreDestination(id: string): ExploreDestination {
   if (!destination) throw new Error(`Unknown Explore destination ID: ${id}`);
   return destination;
 }
-
-/** Maintained default Explore stack. The full catalogue remains searchable. */
-export const CURATED_POPULAR_EXPLORE_DESTINATION_IDS = [
-  "fr-paris", "gb-london", "us-new-york", "id-bali", "ng-lagos",
-  "ae-dubai", "jp-tokyo", "za-cape-town", "it-rome", "tr-istanbul",
-  "th-bangkok", "es-barcelona", "eg-cairo", "ma-marrakesh", "sg-singapore",
-  "nl-amsterdam", "ca-toronto", "us-los-angeles", "ng-abuja", "gh-accra",
-  "za-johannesburg", "ke-nairobi", "pt-lisbon", "au-sydney",
-  "br-rio-de-janeiro",
-] as const;
 
 export const popularExploreDestinations =
   CURATED_POPULAR_EXPLORE_DESTINATION_IDS.map(requireExploreDestination);
