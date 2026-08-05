@@ -1056,6 +1056,10 @@ export default function Home() {
     <>
       <AppHeader hideMobileSecondaryNavLinks />
 
+      <p className="bg-violet-900 px-4 py-2 text-center text-xs font-extrabold tracking-[0.08em] text-white">
+        DEV LOOP TEST — LOOP-01
+      </p>
+
       <main className="flex-1 bg-white">
         <section className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
           <div className="absolute inset-0">

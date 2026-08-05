@@ -99,6 +99,9 @@ export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
           <FlowIcon name="bell" color={ft.colors.icon} />
         </Pressable>
       </View>
+      <Text accessibilityRole="text" style={styles.devLoopMarker}>
+        DEV LOOP TEST — LOOP-01
+      </Text>
     </View>
   );
 }
@@ -193,6 +196,16 @@ const styles = StyleSheet.create({
   homeLogo: {
     width: 130,
     height: 32,
+  },
+  devLoopMarker: {
+    backgroundColor: "#4C1D95",
+    color: "white",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    textAlign: "center",
   },
   products: {
     marginTop: -34,
