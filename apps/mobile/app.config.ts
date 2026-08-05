@@ -96,6 +96,11 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       package: environment.androidPackage,
+      blockedPermissions: [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+      ],
       icon: "./assets/kurioticket-icon-blue.png",
       splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: "#F7FAFF" },
       adaptiveIcon: { foregroundImage: "./assets/kurioticket-adaptive-foreground.png", backgroundColor: "#F2F6FA" },

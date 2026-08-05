@@ -10,12 +10,15 @@ import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { membershipLabel, profileIdentity } from "./profileModel";
 import { useAppTheme } from "../../theme/AppTheme";
+import { travelApi, TravelApiError } from "../../api/travelApi";
 
 type Route = "/personal-information" | "/saved-travelers" | "/price-alerts" | "/settings" | "/currency" | "/saved";
 type Row = { title: string; description?: string; icon: FlowIconName; route?: Route; value?: string; action?: () => void };
 
 const TERMS_URL = "https://kurioticket.com/terms";
 const PRIVACY_URL = "https://kurioticket.com/privacy";
+const SUPPORT_URL = "https://kurioticket.com/support";
+const DELETION_INFO_URL = "https://kurioticket.com/legal/data-deletion-policy";
 
 function unavailable(feature: string) {
   Alert.alert(feature, `${feature} is not available in this version of Kurioticket.`);
@@ -85,6 +88,7 @@ export function AuthenticatedProfileScreen() {
   const { theme, darkMode, setDarkMode } = useAppTheme();
   const [identity, setIdentity] = useState(profileIdentity(null));
   const [currency, setCurrency] = useState("USD");
+  const [deleting, setDeleting] = useState(false);
   const load = useCallback(() => {
     void readSession().then((session) => setIdentity(profileIdentity(session?.user || null))).catch(() => setIdentity(profileIdentity(null)));
     void readCurrency().then(setCurrency).catch(() => undefined);
@@ -101,7 +105,8 @@ export function AuthenticatedProfileScreen() {
   ], []);
   const support = useMemo<Row[]>(() => [
     { title: "Help center", description: "Find answers to common questions", icon: "help", action: () => unavailable("Help center") },
-    { title: "Contact us", description: "Get in touch with our support team", icon: "headset", action: () => unavailable("Contact us") },
+    { title: "Contact us", description: "Get in touch with our support team", icon: "headset", action: () => void openApprovedUrl(SUPPORT_URL, "Support") },
+    { title: "Account deletion information", description: "Review the deletion process and retention notice", icon: "document", action: () => void openApprovedUrl(DELETION_INFO_URL, "account deletion information") },
     { title: "Terms of Service", description: "Read our terms and conditions", icon: "document", action: () => void openApprovedUrl(TERMS_URL, "Terms of Service") },
     { title: "Privacy Policy", description: "Learn how we protect your data", icon: "shield", action: () => void openApprovedUrl(PRIVACY_URL, "Privacy Policy") },
   ], []);
@@ -118,6 +123,28 @@ export function AuthenticatedProfileScreen() {
   const toggleDarkMode = (enabled: boolean) => {
     void setDarkMode(enabled).catch(() => Alert.alert("Unable to update dark mode", "Your previous appearance setting was restored. Please try again."));
   };
+
+  const requestDeletion = () => Alert.alert(
+    "Delete your account?",
+    "Your account will be disabled immediately. After 7 days, the request becomes eligible for review and some records may be retained where legally required.",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Request deletion",
+        style: "destructive",
+        onPress: () => {
+          setDeleting(true);
+          void travelApi.requestAccountDeletion()
+            .then(async ({ message }) => {
+              await clearSession();
+              Alert.alert("Deletion requested", message, [{ text: "OK", onPress: () => router.replace("/email-auth") }]);
+            })
+            .catch((error) => Alert.alert("Unable to request deletion", error instanceof TravelApiError ? error.message : "Please try again."))
+            .finally(() => setDeleting(false));
+        },
+      },
+    ],
+  );
 
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
@@ -140,6 +167,9 @@ export function AuthenticatedProfileScreen() {
         <FlowIcon name="logout" color={flowColors.red} size={27} /><Text style={styles.logoutText}>Log out</Text>
       </Pressable> : null}
       {identity.email ? <Text style={[styles.logoutHelp, { color: theme.muted }]}>You will be signed out of your account</Text> : null}
+      {identity.email ? <Pressable accessibilityRole="button" accessibilityLabel="Delete account" accessibilityHint="Opens account deletion confirmation" accessibilityState={{ disabled: deleting }} disabled={deleting} onPress={requestDeletion} style={({ pressed }) => [styles.deleteAccount, pressed && styles.pressed]}>
+        <Text style={styles.deleteAccountText}>{deleting ? "Requesting deletion…" : "Delete account"}</Text>
+      </Pressable> : null}
     </ScrollView>
   </SafeAreaView>;
 }
@@ -172,5 +202,7 @@ const styles = StyleSheet.create({
   logout: { minHeight: 64, marginTop: 20, borderRadius: 17, borderWidth: 1, borderColor: "#EDF0F7", backgroundColor: "#FFFFFF", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, elevation: 2 },
   logoutText: { color: flowColors.red, fontSize: 16, fontWeight: "800" },
   logoutHelp: { color: flowColors.muted, textAlign: "center", fontSize: 11, lineHeight: 16, marginTop: 7 },
+  deleteAccount: { minHeight: 48, alignItems: "center", justifyContent: "center", marginTop: 10 },
+  deleteAccountText: { color: flowColors.red, fontSize: 14, lineHeight: 20, fontWeight: "800", textDecorationLine: "underline" },
   pressed: { opacity: .68 },
 });

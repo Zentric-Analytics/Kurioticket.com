@@ -98,6 +98,19 @@ test("Production configuration never selects the Preview iOS OAuth plugin", asyn
   delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 });
 
+test("release configuration removes storage and overlay permissions not used by the app", async () => {
+  process.env.APP_VARIANT = "production";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://kurioticket.com";
+  const { default: createAppConfig } = await import("../../app.config");
+  const config = createAppConfig({ config: {} } as never);
+  assert.deepEqual(config.android?.blockedPermissions, [
+    "android.permission.READ_EXTERNAL_STORAGE",
+    "android.permission.WRITE_EXTERNAL_STORAGE",
+    "android.permission.SYSTEM_ALERT_WINDOW",
+  ]);
+});
+
 test("Preview OTA is reusable only after validation and retains a protected manual break-glass path", () => {
   const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/android-preview-ota.yml"), "utf8");
   assert.match(workflow, /^\s*workflow_call:/m);

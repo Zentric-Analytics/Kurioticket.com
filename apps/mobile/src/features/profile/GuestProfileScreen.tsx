@@ -10,6 +10,7 @@ import { TravelIllustration } from "./TravelIllustration";
 const BLUE = "#0754F7";
 const TERMS = "https://kurioticket.com/terms";
 const PRIVACY = "https://kurioticket.com/privacy";
+const SUPPORT = "https://kurioticket.com/support";
 
 type Row = { title: string; description?: string; icon: FlowIconName; value?: string; action: () => void };
 function unavailable(name: string) { Alert.alert(name, `${name} is not available in this version of Kurioticket.`); }
@@ -35,7 +36,7 @@ export function GuestProfileScreen() {
   useEffect(loadCurrency, [loadCurrency]); useFocusEffect(loadCurrency);
   const support: Row[] = [
     { title: "Help center", description: "Find answers to common questions", icon: "help", action: () => unavailable("Help center") },
-    { title: "Contact us", description: "Get in touch with our support team", icon: "headset", action: () => unavailable("Contact us") },
+    { title: "Contact us", description: "Get in touch with our support team", icon: "headset", action: () => void openUrl(SUPPORT, "Support") },
     { title: "Terms of Service", description: "Read our terms and conditions", icon: "document", action: () => void openUrl(TERMS, "Terms of Service") },
     { title: "Privacy Policy", description: "Learn how we protect your data", icon: "shield", action: () => void openUrl(PRIVACY, "Privacy Policy") },
   ];

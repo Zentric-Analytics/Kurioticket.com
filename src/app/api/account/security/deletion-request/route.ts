@@ -24,7 +24,7 @@ export async function POST() {
 
   try {
     const { request, created } = await requestAccountDeletion({ userId, email });
-    return NextResponse.json({ request: serialize(request), message: "Your account deletion request is under review. Your account is scheduled for permanent deletion in 7 days.", created }, { status: created ? 201 : 200 });
+    return NextResponse.json({ request: serialize(request), message: "Your account is disabled and will be eligible for deletion review after the 7-day cancellation period. Records that must be retained will be reviewed before completion.", created }, { status: created ? 201 : 200 });
   } catch (error) {
     console.error("[account-security-deletion-request:post]", error);
     const message = error instanceof Error && error.message === "AdminDeletionBlocked" ? "Admin accounts cannot use self-service deletion." : "Unable to request account deletion.";

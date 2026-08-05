@@ -18,6 +18,7 @@ export type MobilePriceAlertStatus = "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRE
 export type MobilePriceAlert = { id: string; type: "FLIGHT" | "HOTEL"; origin: string | null; destination: string; targetPrice: string | null; currency: string | null; status: MobilePriceAlertStatus; createdAt: string; updatedAt: string; lastSeenPrice: string | null; lastCheckedAt: string | null; query: Record<string, unknown> };
 export type CreateFlightPriceAlert = { type: "FLIGHT"; origin: string; destination: string; targetPrice: number; currency: string; query: Record<string, unknown> };
 export type CurrencyRates = { base: string; rates: Record<string, number>; fetchedAt: string; source: string; stale?: boolean };
+export type MobileAccountDeletionRequest = { id: string; status: string; requestedAt: string; deletionScheduledAt: string; cancelledAt: string | null; completedAt: string | null; supportTicketId: string | null };
 
 async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string } = {}) {
   const base = getApiBaseUrl(Platform.OS, __DEV__);
@@ -69,4 +70,5 @@ export const travelApi = {
   updatePriceAlertStatus: (id: string, status: "ACTIVE" | "PAUSED") => request<{ alert: MobilePriceAlert }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ status }) }),
   deletePriceAlert: (id: string) => request<{ deleted: true; id: string }>(`/api/mobile/v1/price-alerts/${encodeURIComponent(id)}`, { method: "DELETE" }),
   currencyRates: () => request<CurrencyRates>("/api/currency/rates"),
+  requestAccountDeletion: () => request<{ request: MobileAccountDeletionRequest; message: string; created: boolean }>("/api/mobile/v1/account/deletion-request", { method: "POST" }),
 };
