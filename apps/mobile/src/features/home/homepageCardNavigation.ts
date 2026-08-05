@@ -1,51 +1,54 @@
 import type { Href } from "expo-router";
-import { buildSearchPlan } from "../flow/travelSearchModel";
 
 export type HomepageHotelCard = { city: string };
 export type HomepageAdventureCard = { originCode: string; destinationCode: string };
+
+const DEFAULT_ROUTE_CARD_CURRENCY = "USD";
+const DEFAULT_ROUTE_CARD_MARKET = "NG";
 
 export const homepageHotelDestinationParams = (card: HomepageHotelCard) => ({
   destination: card.city,
 });
 
-export const homepageAdventureRouteParams = (card: HomepageAdventureCard) => ({
-  from: card.originCode,
-  to: card.destinationCode,
+export const homepageAdventureRouteParams = (card: HomepageAdventureCard, now = new Date()) => ({
+  tripType: "one-way",
+  origin: card.originCode.trim().toUpperCase(),
+  destination: card.destinationCode.trim().toUpperCase(),
+  departureDate: getDefaultHomepageRouteCardDepartureDate(now),
+  travelers: "1",
+  adults: "1",
+  children: "0",
+  infants: "0",
+  cabinClass: "economy",
+  currency: DEFAULT_ROUTE_CARD_CURRENCY,
+  market: DEFAULT_ROUTE_CARD_MARKET,
 });
 
 export function popularDestinationStayNavigation(card: HomepageHotelCard): Href {
-  const params = homepageHotelDestinationParams(card);
-  const directResults = buildSearchPlan("hotel", params);
-
-  if (directResults.plan) {
-    return { pathname: "/hotel-results", params };
-  }
-
-  if (typeof __DEV__ !== "undefined" && __DEV__) {
-    console.info("[homepage-card-navigation] Hotel results require more than destination-only params; opening Hotels with destination prefilled.", {
-      destination: params.destination,
-      reason: directResults.error,
-    });
-  }
-
-  return { pathname: "/hotels", params };
+  return { pathname: "/hotel-results", params: homepageHotelDestinationParams(card) };
 }
 
 export function discoverAdventureNavigation(card: HomepageAdventureCard): Href {
-  const params = homepageAdventureRouteParams(card);
-  const directResults = buildSearchPlan("flight", params);
+  return { pathname: "/flight-results", params: homepageAdventureRouteParams(card) };
+}
 
-  if (directResults.plan) {
-    return { pathname: "/flight-results", params };
-  }
+export function getDefaultHomepageRouteCardDepartureDate(now = new Date()) {
+  const target = addUtcDays(getUtcDateStart(now), 45);
+  const day = target.getUTCDay();
+  const daysUntilFriday = (5 - day + 7) % 7;
+  const daysUntilSaturday = (6 - day + 7) % 7;
+  const daysToAdd = daysUntilFriday <= daysUntilSaturday ? daysUntilFriday : daysUntilSaturday;
+  return formatDateKey(addUtcDays(target, daysToAdd));
+}
 
-  if (typeof __DEV__ !== "undefined" && __DEV__) {
-    console.info("[homepage-card-navigation] Flight results require more than route-only params; opening Flights with route prefilled.", {
-      from: params.from,
-      to: params.to,
-      reason: directResults.error,
-    });
-  }
-
-  return { pathname: "/flights", params };
+function getUtcDateStart(value: Date) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+}
+function addUtcDays(value: Date, days: number) {
+  const next = new Date(value);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+function formatDateKey(value: Date) {
+  return value.toISOString().slice(0, 10);
 }

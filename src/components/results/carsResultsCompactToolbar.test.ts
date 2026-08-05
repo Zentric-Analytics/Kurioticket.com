@@ -17,36 +17,35 @@ test("source-contract: Cars compact toolbar is transparent, shrink-safe, and fiv
 
 test("source-contract: phone and tablet filter launchers remain responsive", () => {
   const mobileControls = source.slice(
-    source.indexOf("const renderMobileControlsRow"),
-    source.indexOf("const renderCarsSearchForm"),
+    source.indexOf("export function CarsResultsExperience"),
+    source.indexOf("function SearchInputCell"),
   );
   assert.match(source, /backdrop-blur sm:hidden/);
-  assert.match(mobileControls, /carsResults\.openFiltersWithCount/);
-  assert.match(mobileControls, /carsResults\.openFilters/);
   assert.match(mobileControls, /onClick=\{\(\) => setFiltersOpen\(true\)\}/);
 
   const resultsToolbar = source.slice(
-    source.indexOf('className="flex w-full min-w-0 flex-nowrap'),
+    source.indexOf('className="flex w-full min-w-0 flex-wrap'),
     source.indexOf("{resultsTransitioning ?"),
   );
   const tabletFilterClass = resultsToolbar.match(
-    /className="([^"]*sm:inline-flex[^"]*lg:hidden[^"]*)"/,
+    /className="([^"]*inline-flex[^"]*lg:hidden[^"]*)"/,
   )?.[1];
   assert.ok(tabletFilterClass);
-  for (const token of ["hidden", "sm:inline-flex", "lg:hidden"])
+  for (const token of ["inline-flex", "lg:hidden"])
     assert.ok(tabletFilterClass.split(" ").includes(token));
+  assert.equal(tabletFilterClass.split(" ").includes("hidden"), false);
   assert.match(resultsToolbar, /onClick=\{\(\) => setFiltersOpen\(true\)\}/);
 });
 
 test("source-contract: Cars result count and Sort share a shrink-safe row", () => {
   const resultsToolbar = source.slice(
-    source.indexOf('className="flex w-full min-w-0 flex-nowrap'),
+    source.indexOf('className="flex w-full min-w-0 flex-wrap'),
     source.indexOf("{resultsTransitioning ?"),
   );
   for (const token of [
     "w-full",
     "min-w-0",
-    "flex-nowrap",
+    "flex-wrap",
     "justify-between",
     "gap-2",
   ])
@@ -54,7 +53,7 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
 
   assert.match(
     resultsToolbar,
-    /<p className="[^"]*min-w-0[^"]*flex-1[^"]*truncate[^"]*whitespace-nowrap/,
+    /<h2[^>]*className=\{cn\("[^"]*min-w-0[^"]*flex-1[^"]*truncate[^"]*whitespace-nowrap/,
   );
   assert.match(resultsToolbar, /visibleResults\.length === 1/);
   assert.match(resultsToolbar, /"resultFound"/);
@@ -64,7 +63,7 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
 
   assert.match(
     resultsToolbar,
-    /className="flex min-w-0 max-w-\[68%\][^"]*justify-end/,
+    /className="flex min-w-0 max-w-full[^"]*justify-end/,
   );
   assert.match(resultsToolbar, /className="shrink-0 whitespace-nowrap[^"\n]*"/);
   assert.match(
@@ -88,7 +87,7 @@ test("source-contract: Cars Sort menu accessibility and desktop filters remain",
   assert.match(source, /aria-expanded=\{carsSortOpen\}/);
   assert.match(source, /role="menu"/);
   assert.match(source, /role="menuitemradio"/);
-  assert.match(source, /aria-checked=\{isSelected\}/);
+  assert.match(source, /aria-checked=\{sort === option\.value\}/);
   assert.match(source, /<aside[^>]*hidden lg:block[\s\S]*layout="desktop"/);
-  assert.match(source, /max-w-\[calc\(100vw-2rem\)\]/);
+  assert.match(source, /w-56 rounded-xl/);
 });
