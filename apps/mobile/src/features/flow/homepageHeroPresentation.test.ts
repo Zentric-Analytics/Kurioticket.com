@@ -38,12 +38,16 @@ test("homepage hero image asset, dimensions, crop, logo, and notification stay u
 test("homepage hero overlay is lighter but remains subtle for content contrast", () => {
   const screen = home();
 
-  assert.match(screen, /<Stop offset="0" stopColor="#020617" stopOpacity=\{0\.18\} \/>/);
-  assert.match(screen, /<Stop offset="0\.5" stopColor="#020617" stopOpacity=\{0\.04\} \/>/);
+  assert.match(screen, /const HOME_HERO_HORIZONTAL_OVERLAY_START_OPACITY = 0\.16;/);
+  assert.match(screen, /const HOME_HERO_HORIZONTAL_OVERLAY_MID_OPACITY = 0\.035;/);
+  assert.match(screen, /const HOME_HERO_VERTICAL_OVERLAY_START_OPACITY = 0\.035;/);
+  assert.match(screen, /const HOME_HERO_VERTICAL_OVERLAY_END_OPACITY = 0\.055;/);
+  assert.match(screen, /<Stop offset="0" stopColor="#020617" stopOpacity=\{HOME_HERO_HORIZONTAL_OVERLAY_START_OPACITY\} \/>/);
+  assert.match(screen, /<Stop offset="0\.5" stopColor="#020617" stopOpacity=\{HOME_HERO_HORIZONTAL_OVERLAY_MID_OPACITY\} \/>/);
   assert.match(screen, /<Stop offset="1" stopColor="#020617" stopOpacity=\{0\} \/>/);
-  assert.match(screen, /<Stop offset="0" stopColor="#020617" stopOpacity=\{0\.04\} \/>/);
-  assert.match(screen, /<Stop offset="1" stopColor="#020617" stopOpacity=\{0\.06\} \/>/);
-  assert.doesNotMatch(screen, /stopOpacity=\{0\.28\}|stopOpacity=\{0\.1\}/);
+  assert.match(screen, /<Stop offset="0" stopColor="#020617" stopOpacity=\{HOME_HERO_VERTICAL_OVERLAY_START_OPACITY\} \/>/);
+  assert.match(screen, /<Stop offset="1" stopColor="#020617" stopOpacity=\{HOME_HERO_VERTICAL_OVERLAY_END_OPACITY\} \/>/);
+  assert.doesNotMatch(screen, /stopOpacity=\{0\.18\}|stopOpacity=\{0\.04\}|stopOpacity=\{0\.06\}/);
   assert.doesNotMatch(screen, /tintColor|opacity:\s*0\.[0-9]/);
 });
 

@@ -24,6 +24,10 @@ const homeHeroSource = {
 const HOME_HERO_WIDTH = 2047;
 const HOME_HERO_HEIGHT = 1380;
 const HOME_HERO_DISPLAY_HEIGHT = 300;
+const HOME_HERO_HORIZONTAL_OVERLAY_START_OPACITY = 0.16;
+const HOME_HERO_HORIZONTAL_OVERLAY_MID_OPACITY = 0.035;
+const HOME_HERO_VERTICAL_OVERLAY_START_OPACITY = 0.035;
+const HOME_HERO_VERTICAL_OVERLAY_END_OPACITY = 0.055;
 
 function HomeHero() {
   const { width } = useWindowDimensions();
@@ -58,14 +62,14 @@ function HomeHero() {
       <Svg pointerEvents="none" style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="horizontalOverlay" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#020617" stopOpacity={0.18} />
-            <Stop offset="0.5" stopColor="#020617" stopOpacity={0.04} />
+            <Stop offset="0" stopColor="#020617" stopOpacity={HOME_HERO_HORIZONTAL_OVERLAY_START_OPACITY} />
+            <Stop offset="0.5" stopColor="#020617" stopOpacity={HOME_HERO_HORIZONTAL_OVERLAY_MID_OPACITY} />
             <Stop offset="1" stopColor="#020617" stopOpacity={0} />
           </LinearGradient>
           <LinearGradient id="verticalOverlay" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#020617" stopOpacity={0.04} />
+            <Stop offset="0" stopColor="#020617" stopOpacity={HOME_HERO_VERTICAL_OVERLAY_START_OPACITY} />
             <Stop offset="0.5" stopColor="#020617" stopOpacity={0} />
-            <Stop offset="1" stopColor="#020617" stopOpacity={0.06} />
+            <Stop offset="1" stopColor="#020617" stopOpacity={HOME_HERO_VERTICAL_OVERLAY_END_OPACITY} />
           </LinearGradient>
         </Defs>
         <Rect width="88%" height="100%" fill="url(#horizontalOverlay)" />
