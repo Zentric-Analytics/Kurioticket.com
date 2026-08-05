@@ -1,0 +1,12 @@
+flowchart TD
+  GIT[GitHub repository] -->|dev branch| STAGE[staging.kurioticket.com]
+  GIT -->|main branch| PRODWEB[Render production]
+  GIT -->|release artifacts| EAS[EAS project 89f6fd88...]
+  EAS -->|Android APK/AAB| GP[Google Play]
+  EAS -->|iOS build + IPA| ASC[App Store Connect]
+  STAGE -->|API base| API[staging backend API]
+  PRODWEB -->|API base| PRODAPI[production backend API]
+  GP -->|Internal Testing| ANDROID_T[Android testers]
+  ASC -->|TestFlight| IOS_T[iOS testers]
+  DUFFEL[Travel supplier APIs] --> API
+  RESEND[Email provider] --> API

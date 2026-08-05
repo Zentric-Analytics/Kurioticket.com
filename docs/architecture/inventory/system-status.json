@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-08-05T20:00:00Z",
+  "repository": "Zentric-Analytics/Kurioticket.com",
+  "systems": [
+    {
+      "name": "Web staging",
+      "status": "VERIFIED",
+      "verificationLevel": "external-live",
+      "notes": "Staging auto-deploy from dev with SHA marker and health/config checks has been verified."
+    },
+    {
+      "name": "Web production",
+      "status": "RELEASED_DEFERRED",
+      "verificationLevel": "historical-policy",
+      "notes": "Production web path is tracked by branch control; no public rollout action is active in this phase."
+    },
+    {
+      "name": "Android preview OTA",
+      "status": "VERIFIED",
+      "verificationLevel": "external-live",
+      "notes": "Automatic OTA compatibility classification and publish path are operational for compatible changes."
+    },
+    {
+      "name": "Android preview native build",
+      "status": "IMPLEMENTED",
+      "verificationLevel": "repository-verified",
+      "notes": "Native-preview build tooling and checks are preserved as controlled fallback."
+    },
+    {
+      "name": "Android production workflow",
+      "status": "IMPLEMENTED",
+      "verificationLevel": "repository-verified",
+      "notes": "Owner-authorized production path and evidence gates are present and enforced before submissions."
+    },
+    {
+      "name": "iOS preview build/upload",
+      "status": "VERIFIED",
+      "verificationLevel": "external-live",
+      "notes": "TestFlight internal delivery evidence is present for iOS Preview identity."
+    },
+    {
+      "name": "iOS production",
+      "status": "ABSENT",
+      "verificationLevel": "repository-verified",
+      "notes": "No active production iOS build/upload path or public App Store release config exists in repository."
+    },
+    {
+      "name": "Credentials isolation",
+      "status": "IMPLEMENTED",
+      "verificationLevel": "repository-verified",
+      "notes": "Preview and Production Android identities, channels, and package scopes are separated in policy and delivery contracts."
+    }
+  ],
+  "knownConstraints": [
+    "Live checks must be revalidated before any owner-authorized production action."
+  ]
+}

@@ -1,0 +1,10 @@
+flowchart LR
+  A[preview-dev-delivery.yml] --> B[android-preview-build.yml]
+  A --> C[android-preview-ota.yml]
+  A --> D[ios-preview-build.yml]
+  A --> E[ios-preview-testflight-submit.yml]
+  F[mobile-preview-update.yml] --> A
+  G[migration-validation.yml] --> H[main required checks]
+  I[mobile-production-update.yml] --> J[main post-merge guards]
+  K[android-production-delivery.yml] --> L[dry run + version/query]
+  K --> M[resolve-production-play-history-lineage]

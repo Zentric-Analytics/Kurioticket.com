@@ -1,0 +1,24 @@
+flowchart LR
+  subgraph Repo[Repository]
+    DEV[dev branch]
+    MAIN[main branch]
+    PR[feature branches + PRs]
+  end
+
+  DEV -->|merge| WD[Web staging preview]
+  MAIN -->|release path| WP[Web production]
+  DEV -->|trusted SHA| PA[Android Preview lane]
+  DEV -->|trusted SHA| PI[iOS Preview lane]
+  MAIN -->|owner dispatch| PP[Android Production lane]
+
+  WD -->|Render health + checks| STAGING[(staging.kurioticket.com)]
+  WP -->|Render deploy| PROD_WEB[(kurioticket.com)]
+
+  PA -->|OTA / native baseline| AN[Android APK/AAB]
+  PI -->|build + TestFlight submit| IOS[App Store Connect / TestFlight]
+  PP -->|AAB + Play evidence| PG[Google Play Internal Testing]
+
+  STAGING -->|manual QA| TEAM[Team]
+  TEAM -->|feedback| DEV
+  AN -->|Tester install| TEAM
+  IOS -->|QA| TEAM

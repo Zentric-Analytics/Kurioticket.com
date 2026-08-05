@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-08-05T20:00:00Z",
+  "repository": "Zentric-Analytics/Kurioticket.com",
+  "risks": [
+    {
+      "id": "R-01",
+      "category": "High",
+      "title": "Live platform evidence gaps",
+      "description": "This environment cannot query live Render, GitHub API, Google Play, or App Store Connect; status can drift without immediate detection.",
+      "impact": "Could miss regression in staging or store-side readiness.",
+      "mitigation": "Perform periodic manual platform checks before each release."
+    },
+    {
+      "id": "R-02",
+      "category": "High",
+      "title": "iOS production readiness gap",
+      "description": "Production iOS app record and release path are not active.",
+      "impact": "Cannot release iOS to production from current code-path.",
+      "mitigation": "Maintain explicit future-state plan before feature freeze."
+    },
+    {
+      "id": "R-03",
+      "category": "Medium",
+      "title": "Legacy Android identity",
+      "description": "Legacy package com.kurioticket.mobile remains documented for historical reasons.",
+      "impact": "Risk of accidental routing/confusion if build scripts are mis-targeted.",
+      "mitigation": "Keep explicit identity gating in workflows and scripts."
+    },
+    {
+      "id": "R-04",
+      "category": "Medium",
+      "title": "Inherited test debt",
+      "description": "A small set of stable test failures persists from unrelated baseline behavior.",
+      "impact": "Reduces confidence in full verification signal and can mask new regressions.",
+      "mitigation": "Track as technical debt; resolve before freeze."
+    },
+    {
+      "id": "R-05",
+      "category": "Low",
+      "title": "Complex automation graph",
+      "description": "Multiple workflow entry points (preview/dev/prod) increase operational complexity.",
+      "impact": "Higher cognitive load for onboarding and troubleshooting.",
+      "mitigation": "Use this handbook as source of truth and runbook entries."
+    },
+    {
+      "id": "R-06",
+      "category": "Medium",
+      "title": "Required-check availability",
+      "description": "Conclusive required checks depend on workflow applicability logic and branch changes.",
+      "impact": "A path-filter mistake can mask incomplete validation.",
+      "mitigation": "Use always-created checks with explicit non-applicable success paths."
+    }
+  ]
+}
