@@ -8,6 +8,7 @@ const eas = JSON.parse(readFileSync(resolve(process.cwd(), "eas.json"), "utf8"))
 test("Preview uses platform-specific TestFlight and Android internal distribution", () => {
   assert.deepEqual(Object.keys(eas.build).sort(), ["preview", "production"]);
   assert.equal(eas.build.preview.ios.distribution, "store");
+  assert.equal(eas.build.preview.ios.autoIncrement, true);
   assert.equal(eas.build.preview.android.distribution, "internal");
   assert.equal(eas.build.preview.android.buildType, "apk");
   assert.equal(eas.build.preview.android.autoIncrement, true);
@@ -44,6 +45,30 @@ test("native and Production delivery workflows are manual-only, protected, and n
     assert.match(workflow, /classify-release\.mjs/);
     assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|upload.*google play/i);
   }
+});
+
+test("iOS Preview delivery is identity-locked, frozen, and build-only", () => {
+  const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/ios-preview-build.yml"), "utf8");
+  assert.match(workflow, /^\s*workflow_dispatch:/m);
+  assert.doesNotMatch(workflow, /^\s*(?:push|pull_request|schedule):/m);
+  assert.match(workflow, /environment: mobile-preview-build/);
+  assert.match(workflow, /com\.kurioticket\.app\.preview/);
+  assert.match(workflow, /preview-0\.3\.0/);
+  assert.match(workflow, /https:\/\/staging\.kurioticket\.com/);
+  assert.match(workflow, /build:version:get --platform ios --profile preview --json --non-interactive/);
+  assert.match(workflow, /build --platform ios --profile preview --non-interactive --freeze-credentials --json/);
+  assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|app review|external testing/i);
+});
+
+test("Preview iOS configuration declares truthful export compliance", async () => {
+  process.env.APP_VARIANT = "preview";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://staging.kurioticket.com";
+  const { default: createAppConfig } = await import("../../app.config");
+  const config = createAppConfig({ config: {} } as never);
+  assert.equal(config.ios?.infoPlist?.ITSAppUsesNonExemptEncryption, false);
+  assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app.preview");
+  assert.equal(config.runtimeVersion, "preview-0.3.0");
 });
 
 test("Preview OTA is reusable only after validation and retains a protected manual break-glass path", () => {
