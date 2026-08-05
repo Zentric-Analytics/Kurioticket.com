@@ -25,16 +25,16 @@ const Heading = ({ level, className, children, headingRef }: { level: HeadingLev
   return <Tag ref={headingRef} tabIndex={headingRef ? -1 : undefined} className={className}>{children}</Tag>;
 };
 
-export function CarDetailsExperience({ car, search, primaryAction, embedded = false, modelHeadingLevel = 1, sectionHeadingLevel = 2, itemHeadingLevel = 3, modelHeadingRef }: { car: NormalizedCarResult; search: CarSearchParams; primaryAction: CarDetailsPrimaryAction; embedded?: boolean; modelHeadingLevel?: HeadingLevel; sectionHeadingLevel?: HeadingLevel; itemHeadingLevel?: HeadingLevel; modelHeadingRef?: Ref<HTMLHeadingElement> }) {
+export function CarDetailsExperience({ car, search, primaryAction, presentation, primaryOffer: suppliedPrimaryOffer, modelHeadingLevel = 1, sectionHeadingLevel = 2, itemHeadingLevel = 3, modelHeadingRef }: { car: NormalizedCarResult; search: CarSearchParams; primaryAction: CarDetailsPrimaryAction; presentation: "standalone-content" | "guided-content"; primaryOffer?: CarOffer | null; modelHeadingLevel?: HeadingLevel; sectionHeadingLevel?: HeadingLevel; itemHeadingLevel?: HeadingLevel; modelHeadingRef?: Ref<HTMLHeadingElement> }) {
   const { locale, t } = useLocale();
   const { selectedOption } = useRegion();
   const rates = useCurrencyRates();
   const copy = (key: string) => t[key] || enTranslations[key] || key;
   const text = { passengers: copy("carsResults.passengers").toLowerCase(), bags: copy("carDetails.bags"), doors: copy("carsResults.doors").toLowerCase(), airConditioning: copy("carsResults.airConditioning"), unlimitedMileage: copy("carDetails.unlimitedMileage"), included: copy("carDetails.includedShort"), cancellation: copy("carDetails.cancellation"), freeCancellation: copy("carDetails.freeCancellation"), nonRefundable: copy("carDetails.nonRefundable"), taxesFees: copy("carDetails.taxesFees"), includedShort: copy("carDetails.includedShort"), notIncluded: copy("carDetails.notIncluded") };
-  const primaryOffer = getPrimaryCarOffer(car);
+  const primaryOffer = suppliedPrimaryOffer ?? getPrimaryCarOffer(car);
   const days = calculateRentalDays(search.pickupDate, search.dropoffDate);
   const price = (amount: number, currency: string) => formatDisplayPrice({ amount, sourceCurrency: currency, displayCurrency: selectedOption.currency, convertSourceEstimate: true, maximumFractionDigits: 0, rates: rates.rates, isFallbackRate: rates.isFallback });
-  return <section className={embedded ? "mt-6" : "border-b border-border bg-white lg:pb-14"} data-car-details-experience><div className={embedded ? "" : "page-shell py-5 sm:py-7"}>
+  return <div className={presentation === "guided-content" ? "mt-6" : ""} data-car-details-experience>
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0 space-y-5">
         <CarDetailsHero car={car} offer={primaryOffer} text={text} headingLevel={modelHeadingLevel} headingRef={modelHeadingRef} />
@@ -43,12 +43,12 @@ export function CarDetailsExperience({ car, search, primaryAction, embedded = fa
         </div><p className="mt-4 text-sm font-medium">{pickupTypeLabels[car.pickupType]}{car.shuttleRequired ? ` · ${copy("carDetails.shuttleRequired")}` : ""}</p>{car.pickupInstructions && <p className="mt-2 text-sm"><strong>{copy("carDetails.pickupInstructions")}:</strong> {car.pickupInstructions}</p>}</section>
       </div>
       {primaryOffer && <aside className="self-start lg:sticky lg:top-24"><BookingSummary offer={primaryOffer} days={days} price={price} copy={copy} action={primaryAction}/></aside>}
-    </div></div></section>;
+    </div></div>;
 }
 
 export function CarDetailsClient({ car, search, resultsHref }: { car: NormalizedCarResult; search: CarSearchParams; resultsHref: string }) {
   const { t } = useLocale(); const copy = (key: string) => t[key] || enTranslations[key] || key;
-  return <main className="flex-1 bg-surface-muted/40"><section className="border-b border-border bg-white"><div className="page-shell py-5 sm:py-7"><DetailsBackLink href={resultsHref}>{copy("carDetails.backToResults")}</DetailsBackLink><div className="mt-5"><CarDetailsExperience car={car} search={search} primaryAction={{ kind: "standalone-disabled-provider", label: copy("continueToProvider") }} /></div></div></section></main>;
+  return <main className="flex-1 bg-surface-muted/40"><section className="border-b border-border bg-white lg:pb-14"><div className="page-shell py-5 sm:py-7"><DetailsBackLink href={resultsHref}>{copy("carDetails.backToResults")}</DetailsBackLink><div className="mt-5"><CarDetailsExperience car={car} search={search} presentation="standalone-content" primaryAction={{ kind: "standalone-disabled-provider", label: copy("continueToProvider") }} /></div></div></section></main>;
 }
 
 function BookingSummary({ offer, days, price, copy, action }: { offer: CarOffer; days: number; price: PriceFn; copy: (k: string) => string; action: CarDetailsPrimaryAction }) {
