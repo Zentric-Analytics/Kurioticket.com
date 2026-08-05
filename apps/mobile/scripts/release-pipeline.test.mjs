@@ -515,6 +515,19 @@ test('Production build freezes credentials, propagates CLI failure, and retains 
     assert.equal(audit.evidenceStatus.deliveryResult, 'empty');
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+test('iOS Preview TestFlight submission is manual, identity-locked, and build-free', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/ios-preview-testflight-submit.yml'), 'utf8');
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /(?:^|\n)\s*(?:push|pull_request|schedule|workflow_run):/);
+  assert.match(workflow, /environment: mobile-preview-build/);
+  assert.match(workflow, /git merge-base --is-ancestor "\$APPROVED_SHA" origin\/dev/);
+  assert.match(workflow, /com\.kurioticket\.app\.preview/);
+  assert.match(workflow, /preview-0\.3\.0/);
+  assert.match(workflow, /build:view "\$EAS_BUILD_ID" --json/);
+  assert.doesNotMatch(workflow, /build:view[^\n]*--non-interactive/);
+  assert.match(workflow, /submit --platform ios --id "\$\{\{ inputs\.eas_build_id \}\}" --profile preview --non-interactive --no-wait/);
+  assert.doesNotMatch(workflow, /eas-cli@[^\n]*\sbuild\s|eas-cli@[^\n]*\supdate\s|--auto-submit|production-0\.3\.0|com\.kurioticket\.app(?!\.preview)/);
+});
 test('Production classifier preserves every nonzero exit through tee and blocks downstream OTA work', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
   const classifierStart = workflow.indexOf('- name: Classify native versus OTA delivery');
