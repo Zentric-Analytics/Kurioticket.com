@@ -48,6 +48,7 @@ function normalizeDealsJourneyProductId(value: unknown): string | null {
 
 export function normalizeDealsJourneyHotelId(value: unknown): string | null { return normalizeDealsJourneyProductId(value); }
 export function normalizeDealsJourneyFlightId(value: unknown): string | null { return normalizeDealsJourneyProductId(value); }
+export function normalizeDealsJourneyCarId(value: unknown): string | null { return normalizeDealsJourneyProductId(value); }
 
 export function buildDealsHotelDetailsJourneyUrl(search: DealsSearch, hotelId: unknown): string | null {
   const normalizedHotelId = normalizeDealsJourneyHotelId(hotelId);
@@ -55,6 +56,13 @@ export function buildDealsHotelDetailsJourneyUrl(search: DealsSearch, hotelId: u
   const params = serializeDealsSearchParams(search);
   params.set("hotelId", normalizedHotelId);
   return `/deals/journey/hotel-details?${params.toString()}`;
+}
+export function buildDealsCarDetailsJourneyUrl(search: DealsSearch, carId: unknown): string | null {
+  const normalizedCarId = normalizeDealsJourneyCarId(carId);
+  if (!normalizedCarId || !isStageInDealsMode("car-details", search.mode)) return null;
+  const params = serializeDealsSearchParams(search);
+  params.append("carId", normalizedCarId);
+  return `/deals/journey/car-details?${params.toString()}`;
 }
 export const buildLegacyDealsResultsUrl = (search: DealsSearch) => buildDealsResultsUrl(search);
 
@@ -78,7 +86,7 @@ export function getEarliestIncompleteDealsJourneyStage(mode: DealsPackageMode, p
   return "review";
 }
 
-export function getRequiredDealsJourneyStage(stage: DealsJourneyStage, mode: DealsPackageMode, plan: Pick<DealsTripPlan, "hotel" | "flight" | "car"> | null, transientHotelId?: unknown, transientFlightId?: unknown): DealsJourneyStage {
+export function getRequiredDealsJourneyStage(stage: DealsJourneyStage, mode: DealsPackageMode, plan: Pick<DealsTripPlan, "hotel" | "flight" | "car"> | null, transientHotelId?: unknown, transientFlightId?: unknown, transientCarId?: unknown): DealsJourneyStage {
   if (!isStageInDealsMode(stage, mode)) return getFirstDealsJourneyStage(mode);
   const included = getIncludedProducts(mode);
   if (stage === "hotel-results") return "hotel-results";
@@ -88,7 +96,7 @@ export function getRequiredDealsJourneyStage(stage: DealsJourneyStage, mode: Dea
   if (stage === "flight-details") return has(plan, "flight") || normalizeDealsJourneyFlightId(transientFlightId) ? stage : "flight-results";
   if (included.flight && !has(plan, "flight")) return "flight-results";
   if (stage === "car-results") return stage;
-  if (stage === "car-details") return has(plan, "car") ? stage : "car-results";
+  if (stage === "car-details") return has(plan, "car") || normalizeDealsJourneyCarId(transientCarId) ? stage : "car-results";
   if (included.car && !has(plan, "car")) return "car-results";
   return stage;
 }
