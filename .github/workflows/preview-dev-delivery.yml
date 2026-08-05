@@ -23,6 +23,8 @@ jobs:
       outcome: ${{ steps.combine.outputs.outcome }}
       android: ${{ steps.combine.outputs.android }}
       ios: ${{ steps.combine.outputs.ios }}
+      web_attempt: ${{ steps.staging.outputs.attempt }}
+      web_visual: ${{ steps.staging.outputs.visual }}
     env:
       APP_VARIANT: preview
       APP_BUILD_MODE: release
@@ -46,11 +48,18 @@ jobs:
         working-directory: apps/mobile
         run: npm ci
       - name: Wait for exact staging deployment and safety
+        id: staging
         working-directory: apps/mobile
         env:
           PREVIEW_TARGET_SHA: ${{ inputs.target_sha }}
           PREVIEW_STAGING_OUTPUT: ${{ runner.temp }}/staging-readiness.json
-        run: node scripts/preview-ota-automation.mjs wait-staging
+        run: |
+          node scripts/preview-ota-automation.mjs wait-staging
+          node - <<'NODE'
+          const fs = require('fs');
+          const result = JSON.parse(fs.readFileSync(process.env.PREVIEW_STAGING_OUTPUT, 'utf8'));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `attempt=${result.attempt}\nvisual=${result.visual?.desktop?.rendered === true && result.visual?.mobile?.rendered === true ? 'desktop-and-mobile-rendered' : 'failed'}\n`);
+          NODE
       - name: Record web-only success
         if: ${{ !inputs.mobile_relevant }}
         run: |
@@ -128,7 +137,11 @@ jobs:
           ## Preview delivery status
 
           - Target dev SHA: \`$TARGET_SHA\`
-          - Render staging: exact SHA verified
+          - Web staging: LIVE
+          - Web expected/live SHA: \`$TARGET_SHA\`
+          - Web visual probe: \`${{ steps.staging.outputs.visual }}\`
+          - Web readiness attempt: \`${{ steps.staging.outputs.attempt }}\`
+          - Web URL: https://staging.kurioticket.com
           - Outcome: \`${{ steps.combine.outputs.outcome }}\`
           - Android action: \`${{ steps.combine.outputs.android }}\`
           - iOS action: \`${{ steps.combine.outputs.ios }}\`
@@ -278,7 +291,11 @@ jobs:
           echo "## Team Preview availability" >> "$GITHUB_STEP_SUMMARY"
 
           echo "- Dev SHA: `${{ inputs.target_sha }}`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Web staging: exact SHA verified" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web staging: LIVE" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web expected/live SHA: \`${{ inputs.target_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web visual probe: \`${{ needs.evaluate.outputs.web_visual }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web readiness attempt: \`${{ needs.evaluate.outputs.web_attempt }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web URL: https://staging.kurioticket.com" >> "$GITHUB_STEP_SUMMARY"
           echo "- Evaluate result: `${{ needs.evaluate.result }}`" >> "$GITHUB_STEP_SUMMARY"
 
           echo "- Android Preview lane: `${{ needs.evaluate.outputs.android }}` (ota: ${{ needs.android-ota.result }}, build: ${{ needs.android-build.result }})" >> "$GITHUB_STEP_SUMMARY"
@@ -296,6 +313,7 @@ jobs:
           cat > "$RUNNER_TEMP/preview-summary/preview-delivery-status.json" <<EOF
           {
             "targetSha": "${{ inputs.target_sha }}",
+            "web": { "status": "LIVE", "liveSha": "${{ inputs.target_sha }}", "visual": "${{ needs.evaluate.outputs.web_visual }}", "attempt": "${{ needs.evaluate.outputs.web_attempt }}", "url": "https://staging.kurioticket.com" },
             "evaluateResult": "${{ needs.evaluate.result }}",
             "evaluateOutcome": "${{ needs.evaluate.outputs.outcome }}",
             "android": { "action": "${{ needs.evaluate.outputs.android }}", "otaResult": "${{ needs.android-ota.result }}", "buildResult": "${{ needs.android-build.result }}" },
@@ -310,4 +328,3 @@ jobs:
           path: ${{ runner.temp }}/preview-summary/preview-delivery-status.json
           if-no-files-found: warn
           retention-days: 90
-

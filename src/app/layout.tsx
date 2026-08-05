@@ -9,6 +9,7 @@ import { LocaleProvider } from "@/components/layout/LocaleProvider";
 import { NewsletterSessionBridge } from "@/components/newsletter/NewsletterSessionBridge";
 import { RegionProvider } from "@/components/region/RegionProvider";
 import { RouteProgressProvider } from "@/components/layout/RouteProgress";
+import { StagingDeploymentBadge } from "@/components/layout/StagingDeploymentBadge";
 
 import { REGION_COOKIE_KEY, REGION_OVERRIDE_COOKIE_KEY } from "@/config/regionConfig";
 
@@ -122,6 +123,7 @@ export default async function RootLayout({
                 <RouteProgressProvider>
                   <NewsletterSessionBridge />
                   {children}
+                  <StagingDeploymentBadge />
                 </RouteProgressProvider>
               </CurrencyRatesProvider>
             </RegionProvider>

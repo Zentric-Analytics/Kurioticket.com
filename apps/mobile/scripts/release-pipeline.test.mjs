@@ -18,7 +18,7 @@ import { verifyProductionAab } from './verify-production-aab.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
 import { buildReleaseAudit } from './write-release-audit.mjs';
 import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
-import { classifyReplayLookupFailure, inspectPreviewUpdateHistory, normalizePreviewUpdatePage, resolveTrustedPreviewTarget, validateStagingReadiness, waitForStaging } from './preview-ota-automation.mjs';
+import { classifyReplayLookupFailure, inspectPreviewUpdateHistory, normalizePreviewUpdatePage, resolveTrustedPreviewTarget, validateStagingReadiness, validateStagingVisualResponse, waitForStaging } from './preview-ota-automation.mjs';
 import { classifyPreviewPlatform, combinePreviewDecisions, resolveLatestPreviewBaseline, selectReviewedPreviewBuild } from './preview-delivery-contract.mjs';
 
 const { policy, eas, root } = loadReleaseFiles();
@@ -872,13 +872,23 @@ test('staging readiness requires exact deployed SHA and every public safety gate
   assert.throws(() => validateStagingReadiness({ health, config: { data: { ...config.data, features: { externalCheckout: true } } }, targetSha }), /checkout/);
   assert.throws(() => validateStagingReadiness({ health, config: { data: { ...config.data, releaseReadiness: { ...readiness, sandboxTravelSafe: false } } }, targetSha }), /travel safety/);
   let calls = 0;
+  const html = `<aside data-staging-commit="${targetSha}">Staging build</aside>`;
   const fetchImpl = async (url) => {
     calls += 1;
-    const stale = calls <= 2;
+    const stale = calls <= 4;
+    if (url === 'https://staging.kurioticket.com/') return { ok: true, status: 200, headers: { get: () => 'no-store, max-age=0' }, text: async () => stale ? '<p>old</p>' : html };
     const body = url.endsWith('/health') ? health : config;
     return { ok: true, status: 200, json: async () => stale ? { ...body, data: { ...body.data, releaseReadiness: { ...readiness, commitSha: 'b'.repeat(40) } } } : body };
   };
   assert.equal((await waitForStaging({ origin: 'https://staging.kurioticket.com', targetSha, attempts: 2, delayMs: 0, fetchImpl, sleep: async () => {} })).attempt, 2);
+});
+test('staging visual probe rejects stale, cacheable, or viewport-incomplete HTML', () => {
+  const targetSha = 'd'.repeat(40);
+  const response = { ok: true, status: 200, headers: { get: () => 'no-store, max-age=0' } };
+  const html = `<aside data-staging-commit="${targetSha}">Staging build</aside>`;
+  assert.equal(validateStagingVisualResponse({ response, html, targetSha, viewport: 'desktop' }).rendered, true);
+  assert.throws(() => validateStagingVisualResponse({ response: { ...response, headers: { get: () => 'public, max-age=3600' } }, html, targetSha, viewport: 'mobile' }), /cacheable/);
+  assert.throws(() => validateStagingVisualResponse({ response, html: '<p>old deployment</p>', targetSha, viewport: 'desktop' }), /target SHA/);
 });
 test('automatic Preview workflow is cross-platform and structurally isolated from Production delivery', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/preview-dev-delivery.yml'), 'utf8');
@@ -901,7 +911,10 @@ test('automatic Preview delivery orders exact staging, baselines, fingerprints, 
   const iosUpdate = workflow.indexOf('Publish exact iOS Preview update');
   assert.ok(staging >= 0 && staging < baseline && baseline < fingerprint && fingerprint < combine);
   assert.ok(androidUpdate > combine && iosUpdate > combine);
-  assert.match(workflow, /group: preview-dev-delivery\n\s+cancel-in-progress: true/);\n  assert.match(workflow, /summary:\n\s+name: Preview visual availability\n\s+if: always\(\)/);\n  assert.doesNotMatch(workflow, /Require every selected delivery action to succeed/);\n  assert.match(workflow, /Preview lane issue detected/);
+  assert.match(workflow, /group: preview-dev-delivery\n\s+cancel-in-progress: true/);
+  assert.match(workflow, /summary:\n\s+name: Preview visual availability\n\s+if: always\(\)/);
+  assert.doesNotMatch(workflow, /Require every selected delivery action to succeed/);
+  assert.match(workflow, /Preview lane issue detected/);
   assert.match(workflow, /if: needs\.evaluate\.outputs\.android == 'OTA'/);
   assert.match(workflow, /if: needs\.evaluate\.outputs\.ios == 'BUILD'/);
   assert.match(workflow, /update:list --branch preview --limit 50 --offset "\$offset" --json --non-interactive/g);
