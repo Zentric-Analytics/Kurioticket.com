@@ -32,13 +32,14 @@ jobs:
       APP_VARIANT: preview
       APP_BUILD_MODE: release
       EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
-      TARGET_SHA: ${{ github.event_name == 'workflow_call' && inputs.target_sha || inputs.commit_sha }}
-      TRIGGER_MODE: ${{ github.event_name == 'workflow_call' && inputs.trigger_mode || 'manual' }}
+      TARGET_SHA: ${{ inputs.target_sha || inputs.commit_sha }}
+      TRIGGER_MODE: ${{ inputs.target_sha && inputs.trigger_mode || 'manual' }}
+      REUSABLE_TARGET_PRESENT: ${{ inputs.target_sha != '' }}
     steps:
       - name: Capture audit start time
         run: echo "WORKFLOW_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
-        with: { ref: "${{ github.event_name == 'workflow_call' && inputs.target_sha || inputs.commit_sha }}", fetch-depth: 0 }
+        with: { ref: "${{ inputs.target_sha || inputs.commit_sha }}", fetch-depth: 0 }
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
         with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
       - name: Install mobile dependencies
@@ -56,7 +57,7 @@ jobs:
           git fetch origin dev --no-tags
           test "$(git rev-parse origin/dev)" = "$TARGET_SHA" || { echo 'Preview build target is no longer current dev.' >&2; exit 1; }
           if [ "$TRIGGER_MODE" = automatic ]; then
-            test "${{ github.event_name }}" = workflow_call || { echo 'Automatic Preview build requires the trusted reusable workflow.' >&2; exit 1; }
+            test "$REUSABLE_TARGET_PRESENT" = true || { echo 'Automatic Preview build requires the trusted reusable target.' >&2; exit 1; }
           elif [ "${{ inputs.action }}" = build ]; then
             test "$APPROVED_CONFIRMATION" = 'DELIVER IOS PREVIEW' || { echo 'Confirmation phrase mismatch.' >&2; exit 1; }
             test "${{ inputs.runtime_version }}" = preview-0.3.0
@@ -137,7 +138,7 @@ jobs:
           echo 'READY TO SUBMIT IOS PREVIEW BUILD'
           echo 'submissionPerformed: false'
       - name: Build approved iOS Preview IPA
-        if: github.event_name == 'workflow_call' || inputs.action == 'build'
+        if: inputs.target_sha != '' || inputs.action == 'build'
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
         run: |
@@ -145,7 +146,7 @@ jobs:
           npx eas-cli@16.17.4 build --platform ios --profile preview --non-interactive --freeze-credentials --json 2> >(tee "$RUNNER_TEMP/ios-build-error.txt" >&2) | tee "$RUNNER_TEMP/ios-build-result.json"
       - name: Verify finished iOS Preview result
         id: result
-        if: github.event_name == 'workflow_call' || inputs.action == 'build'
+        if: inputs.target_sha != '' || inputs.action == 'build'
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
         run: |
@@ -160,7 +161,7 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `eas_build_id=${b.id}\n`);
           NODE
       - name: Upload automatic iOS Preview build to TestFlight
-        if: github.event_name == 'workflow_call'
+        if: inputs.target_sha != ''
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
         run: npx eas-cli@16.17.4 submit --platform ios --id "${{ steps.result.outputs.eas_build_id }}" --profile preview --non-interactive --no-wait | tee "$RUNNER_TEMP/ios-submit-result.txt"
