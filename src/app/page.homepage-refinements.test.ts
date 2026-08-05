@@ -11,11 +11,6 @@ const hotelsPageSource = readFileSync(
   "utf8",
 );
 
-test("the temporary development-loop marker is visible on staging web", () => {
-  assert.match(pageSource, /DEV LOOP TEST — LOOP-01/);
-  assert.match(pageSource, /bg-violet-900/);
-});
-
 test("regional image cards keep start-search copy out of visible overlay", () => {
   const cardSource = pageSource.slice(
     pageSource.indexOf("function RegionalRouteCard"),
