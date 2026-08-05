@@ -901,7 +901,7 @@ test('automatic Preview delivery orders exact staging, baselines, fingerprints, 
   const iosUpdate = workflow.indexOf('Publish exact iOS Preview update');
   assert.ok(staging >= 0 && staging < baseline && baseline < fingerprint && fingerprint < combine);
   assert.ok(androidUpdate > combine && iosUpdate > combine);
-  assert.match(workflow, /group: preview-dev-delivery\n\s+cancel-in-progress: false/);
+  assert.match(workflow, /group: preview-dev-delivery\n\s+cancel-in-progress: true/);\n  assert.match(workflow, /summary:\n\s+name: Preview visual availability\n\s+if: always\(\)/);\n  assert.doesNotMatch(workflow, /Require every selected delivery action to succeed/);\n  assert.match(workflow, /Preview lane issue detected/);
   assert.match(workflow, /if: needs\.evaluate\.outputs\.android == 'OTA'/);
   assert.match(workflow, /if: needs\.evaluate\.outputs\.ios == 'BUILD'/);
   assert.match(workflow, /update:list --branch preview --limit 50 --offset "\$offset" --json --non-interactive/g);

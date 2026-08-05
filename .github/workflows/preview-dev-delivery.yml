@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: preview-dev-delivery
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   evaluate:
@@ -272,19 +272,42 @@ jobs:
     needs: [evaluate, android-ota, ios-ota, android-build, ios-build]
     runs-on: ubuntu-latest
     steps:
-      - name: Require every selected delivery action to succeed
+      - name: Publish lane availability summary
         run: |
           set -euo pipefail
-          test "${{ needs.evaluate.result }}" = success
-          for result in "${{ needs.android-ota.result }}" "${{ needs.ios-ota.result }}" "${{ needs.android-build.result }}" "${{ needs.ios-build.result }}"; do
-            test "$result" = success || test "$result" = skipped
-          done
-          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
-          ## Team Preview availability
+          echo "## Team Preview availability" >> "$GITHUB_STEP_SUMMARY"
 
-          - Dev SHA: \`${{ inputs.target_sha }}\`
-          - Web staging: exact SHA verified
-          - Android: \`${{ needs.evaluate.outputs.android }}\` completed
-          - iOS: \`${{ needs.evaluate.outputs.ios }}\` completed
-          - Production: unchanged
+          echo "- Dev SHA: `${{ inputs.target_sha }}`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web staging: exact SHA verified" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Evaluate result: `${{ needs.evaluate.result }}`" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "- Android Preview lane: `${{ needs.evaluate.outputs.android }}` (ota: ${{ needs.android-ota.result }}, build: ${{ needs.android-build.result }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- iOS Preview lane: `${{ needs.evaluate.outputs.ios }}` (ota: ${{ needs.ios-ota.result }}, build: ${{ needs.ios-build.result }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Production: unchanged" >> "$GITHUB_STEP_SUMMARY"
+
+          for result in "${{ needs.android-ota.result }}" "${{ needs.ios-ota.result }}" "${{ needs.android-build.result }}" "${{ needs.ios-build.result }}"; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ] && [ "$result" != "cancelled" ] && [ "$result" != "neutral" ]; then
+              echo "- Preview lane issue detected: \"$result\"" >> "$GITHUB_STEP_SUMMARY"
+              break
+            fi
+          done
+
+          mkdir -p "$RUNNER_TEMP/preview-summary"
+          cat > "$RUNNER_TEMP/preview-summary/preview-delivery-status.json" <<EOF
+          {
+            "targetSha": "${{ inputs.target_sha }}",
+            "evaluateResult": "${{ needs.evaluate.result }}",
+            "evaluateOutcome": "${{ needs.evaluate.outputs.outcome }}",
+            "android": { "action": "${{ needs.evaluate.outputs.android }}", "otaResult": "${{ needs.android-ota.result }}", "buildResult": "${{ needs.android-build.result }}" },
+            "ios": { "action": "${{ needs.evaluate.outputs.ios }}", "otaResult": "${{ needs.ios-ota.result }}", "buildResult": "${{ needs.ios-build.result }}" }
+          }
           EOF
+
+      - name: Preserve preview lane status artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: preview-delivery-status-${{ github.run_id }}
+          path: ${{ runner.temp }}/preview-summary/preview-delivery-status.json
+          if-no-files-found: warn
+          retention-days: 90
+
