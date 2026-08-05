@@ -9,6 +9,7 @@ test("Google sign-in uses native Credential Manager with nonce and server exchan
   const apiSource = readFileSync(join(process.cwd(), "src/features/auth/authApi.ts"), "utf8");
   assert.match(nativeSource, /GoogleOneTapSignIn\.checkPlayServices/);
   assert.match(nativeSource, /nonce/);
+  assert.match(nativeSource, /iosClientId/);
   assert.match(nativeSource, /isCancelledResponse/);
   assert.match(flowSource, /startNativeGoogleSignIn/);
   assert.match(apiSource, /"google"/);
