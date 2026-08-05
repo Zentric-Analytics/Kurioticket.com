@@ -328,7 +328,8 @@ test("popular destination flight action is compact while preserving navigation",
   assert.match(card, /router\.push\(\{[\s\S]*?pathname: `\/\$\{route\}`[\s\S]*?destination: name[\s\S]*?destinationId: handoff\.destinationId[\s\S]*?airportCodes: handoff\.airportCodes\.join\(","\)[\s\S]*?to: handoff\.primaryAirportCode/);
   assert.match(card, /hitSlop=\{\{ top: 2, bottom: 2 \}\}/);
 
-  assert.match(flightButtonStyle, /alignSelf: "flex-start"/);
+  assert.match(flightButtonStyle, /alignSelf: "flex-end"/);
+  assert.doesNotMatch(flightButtonStyle, /alignSelf: "flex-start"/);
   assert.match(flightButtonStyle, /minHeight: 40/);
   assert.match(flightButtonStyle, /minWidth: 44/);
   assert.match(flightButtonStyle, /paddingHorizontal: 14/);
