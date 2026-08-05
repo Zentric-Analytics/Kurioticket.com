@@ -902,6 +902,9 @@ test('automatic Preview delivery orders exact staging, baselines, fingerprints, 
   assert.match(workflow, /if: needs\.evaluate\.outputs\.android == 'OTA'/);
   assert.match(workflow, /if: needs\.evaluate\.outputs\.ios == 'BUILD'/);
   assert.match(workflow, /update:list --branch preview --limit 50 --offset "\$offset" --json --non-interactive/g);
+  assert.match(workflow, /build:view "\$reviewed_id" --json/);
+  assert.doesNotMatch(workflow, /build:view "\$reviewed_id" --json --non-interactive/);
+  assert.match(workflow, /release-baselines\/preview-builds\.json/);
   assert.match(workflow, /PREVIEW_PLATFORM: android/);
   assert.match(workflow, /PREVIEW_PLATFORM: ios/);
   assert.match(workflow, /if: steps\.replay\.outputs\.already_published != 'true'/g);
