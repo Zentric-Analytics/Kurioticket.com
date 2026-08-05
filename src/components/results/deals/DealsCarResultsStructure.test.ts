@@ -29,7 +29,7 @@ test("guided structure provides h2 region, h3 cards, filters, sorting, disabled 
   assert.match(card, /detailsHref \? <Link/);
   assert.match(card, /<button type="button" disabled/);
   assert.match(card, /min-h-11/);
-  assert.match(shell, /data-deals-guided-car-details-pending/);
+  assert.match(shell, /<DealsCarDetailsStage/);
   assert.doesNotMatch(shell, /data-deals-guided-car-results-pending className/);
 });
 

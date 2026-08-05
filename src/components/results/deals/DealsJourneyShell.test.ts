@@ -7,12 +7,12 @@ test("public Deals and package results contracts remain active", async () => { c
 test("server client boundaries are keyed by scope and search fingerprint, not stage", async () => { const [guided, results] = await Promise.all([readFile(new URL("../../../app/deals/journey/[stage]/page.tsx", import.meta.url), "utf8"), readFile(new URL("../../../app/deals/results/page.tsx", import.meta.url), "utf8")]); for (const source of [guided, results]) { assert.match(source, /buildDealsSearchFingerprint\(search\)/); assert.match(source, /buildDealsPlanContextKey/); assert.match(source, /key=\{contextKey\}/); } assert.doesNotMatch(guided, /buildDealsPlanContextKey\([^\n]*stage/); });
 
 test("guided hotel confirmation creates only canonical validated base Trip Plan paths", async () => {
-  const source = await readFile(new URL("./DealsJourneyShell.tsx", import.meta.url), "utf8");
-  assert.match(source, /buildCarResultsUrl\(search\)/);
-  assert.match(source, /const resultsPath = validateDealsInternalPath\(buildDealsResultsUrl\(search\)\)/);
-  assert.match(source, /const carsResultsPath = included\.car[\s\S]*validateDealsInternalPath\([\s\S]*buildCarResultsUrl\(search\),[\s\S]*"\/cars\/results"/);
-  assert.match(source, /if \(!resultsPath \|\| \(included\.car && !carsResultsPath\)\) \{[\s\S]*setConfirmingHotel\(false\);[\s\S]*setConfirmationError\(t\("deals\.guided\.hotelDetails\.saveError"\)\);[\s\S]*return;/);
-  assert.match(source, /createDealsTripPlan\(\{ mode: search\.mode, searchFingerprint: fingerprint, resultsPath, \.\.\.\(included\.car && carsResultsPath \? \{ carsResultsPath \} : \{\}\) \}\)/);
+  const [source, helper] = await Promise.all([readFile(new URL("./DealsJourneyShell.tsx", import.meta.url), "utf8"), readFile(new URL("../../../lib/deals/dealsFlightDetails.ts", import.meta.url), "utf8")]);
+  assert.match(helper, /buildCarResultsUrl\(search\)/);
+  assert.match(helper, /const resultsPath = validateDealsInternalPath\(buildDealsResultsUrl\(search\)\)/);
+  assert.match(helper, /const carsResultsPath = included\.car[\s\S]*validateDealsInternalPath\([\s\S]*buildCarResultsUrl\(search\),[\s\S]*"\/cars\/results"/);
+  assert.match(helper, /if \(!resultsPath \|\| \(included\.car && !carsResultsPath\)\) return null;/);
+  assert.match(helper, /createDealsTripPlan\(\{ mode: search\.mode, searchFingerprint: fingerprint, resultsPath, \.\.\.\(included\.car && carsResultsPath \? \{ carsResultsPath \} : \{\}\) \}/);
   const baseCreation = source.slice(source.indexOf("if (!base)"), source.indexOf("const nextPlan = replaceDealsHotelSelection"));
   assert.doesNotMatch(baseCreation, /\|\|\s*"\/deals\/results"/);
   assert.doesNotMatch(baseCreation, /\|\|\s*"\/cars\/results"/);

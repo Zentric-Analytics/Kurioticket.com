@@ -28,7 +28,9 @@ test("builds structured localized flight, hotel, and car steps without mutating 
 });
 
 test("keeps cars without a details path classified as internal details", () => {
-  const steps = getDealsHandoffSteps({ ...plan, car: { ...plan.car!, detailsPath: undefined } }, now, "en-US");
+  const carWithoutDetails = { ...plan.car! };
+  delete (carWithoutDetails as Partial<typeof carWithoutDetails>).detailsPath;
+  const steps = getDealsHandoffSteps({ ...plan, car: carWithoutDetails as DealsTripPlan["car"] }, now, "en-US");
   const car = steps[2];
   assert.equal(car.product, "car");
   assert.equal(car.actionKind, "internal-details");
