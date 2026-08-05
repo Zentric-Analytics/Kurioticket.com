@@ -120,20 +120,33 @@ export function validateStagingReadiness({ health, config, targetSha }) {
   return { ready: true, commitSha: targetSha, externalCheckoutDisabled: true, sandboxTravelSafe: true, emailPolicyRestricted: true };
 }
 
+export function validateStagingVisualResponse({ response, html, targetSha, viewport }) {
+  requireValue(response?.ok === true, `Staging ${viewport} page returned HTTP ${response?.status ?? "unknown"}.`);
+  requireValue(typeof html === "string" && html.length > 0, `Staging ${viewport} page response is empty.`);
+  requireValue(response.headers?.get?.("cache-control")?.toLowerCase().includes("no-store"), `Staging ${viewport} HTML is cacheable across deployments.`);
+  requireValue(html.includes(`data-staging-commit="${targetSha}"`), `Staging ${viewport} page does not render the target SHA.`);
+  requireValue(html.includes("Staging build"), `Staging ${viewport} page is missing the developer build marker.`);
+  return { viewport, rendered: true, cacheSafe: true };
+}
+
 export async function waitForStaging({ origin, targetSha, attempts = 20, delayMs = 30000, fetchImpl = fetch, sleep = (ms) => new Promise((done) => setTimeout(done, ms)) }) {
   requireValue(origin === "https://staging.kurioticket.com", "Unexpected staging origin.");
   requireValue(Number.isInteger(attempts) && attempts > 0 && attempts <= 30, "Staging retry count is invalid.");
   let lastError = new Error("Staging readiness was not checked.");
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const [healthResponse, configResponse] = await Promise.all([
+      const [healthResponse, configResponse, desktopResponse, mobileResponse] = await Promise.all([
         fetchImpl(`${origin}/api/mobile/v1/health`, { cache: "no-store" }),
         fetchImpl(`${origin}/api/mobile/v1/config`, { cache: "no-store" }),
+        fetchImpl(`${origin}/`, { cache: "no-store", headers: { "user-agent": "Kurioticket-Web-Delivery-Probe/Desktop" } }),
+        fetchImpl(`${origin}/`, { cache: "no-store", headers: { "user-agent": "Kurioticket-Web-Delivery-Probe/Mobile" } }),
       ]);
       requireValue(healthResponse.ok, `Staging health returned HTTP ${healthResponse.status}.`);
       requireValue(configResponse.ok, `Staging config returned HTTP ${configResponse.status}.`);
       const result = validateStagingReadiness({ health: await healthResponse.json(), config: await configResponse.json(), targetSha });
-      return { ...result, attempt };
+      const desktop = validateStagingVisualResponse({ response: desktopResponse, html: await desktopResponse.text(), targetSha, viewport: "desktop" });
+      const mobile = validateStagingVisualResponse({ response: mobileResponse, html: await mobileResponse.text(), targetSha, viewport: "mobile" });
+      return { ...result, attempt, visual: { desktop, mobile } };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       if (attempt < attempts) await sleep(delayMs);
