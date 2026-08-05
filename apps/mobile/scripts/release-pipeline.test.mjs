@@ -19,6 +19,7 @@ import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verif
 import { buildReleaseAudit } from './write-release-audit.mjs';
 import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
 import { classifyReplayLookupFailure, inspectPreviewUpdateHistory, normalizePreviewUpdatePage, resolveTrustedPreviewTarget, validateStagingReadiness, waitForStaging } from './preview-ota-automation.mjs';
+import { classifyPreviewPlatform, combinePreviewDecisions, resolveLatestPreviewBaseline } from './preview-delivery-contract.mjs';
 
 const { policy, eas, root } = loadReleaseFiles();
 
@@ -50,7 +51,7 @@ test('uncertain mobile path classification fails closed to the full suite', () =
   assert.equal(classifyMobileValidationPaths(['']).mobileRelevant, true);
 });
 
-test('required Preview validation always concludes and gates automatic OTA after a successful dev push', () => {
+test('required Preview validation always concludes and gates cross-platform delivery after a successful dev push', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/mobile-preview-update.yml'), 'utf8');
   assert.match(workflow, /^name: Validate mobile preview$/m);
   assert.doesNotMatch(workflow, /^\s+paths:/m);
@@ -62,8 +63,9 @@ test('required Preview validation always concludes and gates automatic OTA after
   assert.doesNotMatch(workflow, /continue-on-error|\beas(?:-cli@[^\s]+)?\s+(?:build|update|submit)\b/i);
   assert.match(workflow, /automatic-preview-ota:[\s\S]*needs: validate-preview/);
   assert.match(workflow, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev' && needs\.validate-preview\.result == 'success'/);
-  assert.match(workflow, /uses: \.\/\.github\/workflows\/android-preview-ota\.yml/);
+  assert.match(workflow, /uses: \.\/\.github\/workflows\/preview-dev-delivery\.yml/);
   assert.match(workflow, /target_sha: \$\{\{ github\.sha \}\}/);
+  assert.match(workflow, /mobile_relevant: \$\{\{ needs\.validate-preview\.outputs\.mobile_relevant == 'true' \}\}/);
 });
 const valid = (variant = 'preview', overrides = {}) => ({ variant, sha: 'a'.repeat(40), runtime: policy[variant].runtimeVersion, packageName: policy[variant].androidPackage, channel: policy[variant].channel, profile: policy[variant].profile, apiBaseUrl: policy[variant].apiBaseUrl, confirmation: variant === 'preview' ? 'DELIVER ANDROID PREVIEW' : 'DELIVER ANDROID PRODUCTION', action: 'build', releaseReason: 'approved release', baselineBuildId: 'NONE', policy, eas, ...overrides });
 
@@ -126,7 +128,7 @@ test('dispatcher has no baseline fingerprint or SHA inputs', () => {
     }
   }
 });
-test('Preview OTA and native build are separate manual-only approval paths', () => {
+test('Preview break-glass remains manual while trusted dev delivery may call native builds', () => {
   const ota = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
   const build = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
   for (const workflow of [ota, build]) {
@@ -141,6 +143,7 @@ test('Preview OTA and native build are separate manual-only approval paths', () 
   assert.doesNotMatch(ota, /eas-cli@16\.17\.4 build --platform/);
   assert.doesNotMatch(ota, /action:\s*\{/);
   assert.match(build, /environment:\s*mobile-preview-build/);
+  assert.match(build, /workflow_call:/);
   assert.match(build, /eas-cli@16\.17\.4 build --platform android --profile preview/);
   assert.doesNotMatch(build, /eas-cli@16\.17\.4 update/);
   assert.doesNotMatch(build, /action:\s*\{/);
@@ -371,10 +374,10 @@ test('Preview update command construction is fixed to Preview Android and reject
 });
 test('future Preview builds preserve exact checkout and do not suppress EAS VCS metadata', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
-  assert.match(workflow, /actions\/checkout[^\n]*[\s\S]*ref: "\$\{\{ inputs\.commit_sha \}\}"/);
+  assert.match(workflow, /actions\/checkout[^\n]*[\s\S]*ref: "\$\{\{ github\.event_name == 'workflow_call' && inputs\.target_sha \|\| inputs\.commit_sha \}\}"/);
   assert.doesNotMatch(workflow, /EAS_NO_VCS|--no-vcs/);
-  assert.match(workflow, /test "\$ACTUAL_SHA" = "\$APPROVED_SHA"/);
-  assert.match(workflow, /test "\$GITHUB_SHA" = "\$APPROVED_SHA"/);
+  assert.match(workflow, /test "\$ACTUAL_SHA" = "\$TARGET_SHA"/);
+  assert.match(workflow, /test "\$\(git rev-parse origin\/dev\)" = "\$TARGET_SHA"/);
   assert.match(workflow, /WORKFLOW_HEAD_SHA: "\$\{\{ env\.CHECKED_OUT_SHA \}\}"/);
 });
 test('Production build preserves exact main checkout and normal EAS VCS metadata', () => {
@@ -593,8 +596,8 @@ test('Production delivery is manual-only, main-only, and requires the reviewed P
   assert.equal(history.package, policy.production.androidPackage);
   assert.equal(history.recordStatus, 'present');
   assert.equal(history.playApplicationRecord, 'present');
-  assert.deepEqual(history.uploadedBundles, []);
-  assert.equal(history.highestUploadedVersionCode, null);
+  assert.deepEqual(history.uploadedBundles, [2]);
+  assert.equal(history.highestUploadedVersionCode, 2);
   assert.ok(Date.parse(history.verifiedAt));
   assert.ok(history.evidenceReference.includes('9106799153088925304'));
 });
@@ -832,6 +835,18 @@ test('mixed valid Preview history ignores unrelated entries and detects only the
   assert.equal(inspectPreviewUpdateHistory(history, targetSha).alreadyPublished, true);
 });
 
+test('cross-platform Preview replay protection isolates Android and iOS publications', () => {
+  const targetSha = 'c'.repeat(40);
+  const history = normalizePreviewUpdatePage(previewUpdatePage([
+    previewUpdate({ platforms: 'android', message: `"Automatic Preview Android OTA for ${targetSha}; audit run 456" (Aug 5, 2026 by CI)` }),
+    previewUpdate({ platforms: 'ios', message: `"Automatic Preview iOS OTA for ${targetSha}; audit run 457" (Aug 5, 2026 by CI)` }),
+  ]));
+  assert.equal(inspectPreviewUpdateHistory(history, targetSha, 'android').alreadyPublished, true);
+  assert.equal(inspectPreviewUpdateHistory(history, targetSha, 'ios').alreadyPublished, true);
+  assert.equal(inspectPreviewUpdateHistory(history.slice(0, 1), targetSha, 'ios').alreadyPublished, false);
+  assert.throws(() => inspectPreviewUpdateHistory(history, targetSha, 'web'), /platform is invalid/);
+});
+
 test('Preview replay JSON and CLI failures fail closed with safe classifications', () => {
   assert.throws(() => normalizePreviewUpdatePage([]), /page is malformed/);
   assert.throws(() => normalizePreviewUpdatePage({ name: 'preview', currentPage: 'not-an-array' }), /currentPage/);
@@ -862,38 +877,35 @@ test('staging readiness requires exact deployed SHA and every public safety gate
   };
   assert.equal((await waitForStaging({ origin: 'https://staging.kurioticket.com', targetSha, attempts: 2, delayMs: 0, fetchImpl, sleep: async () => {} })).attempt, 2);
 });
-test('automatic Preview workflow is Android-only and structurally isolated from Production delivery', () => {
-  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
+test('automatic Preview workflow is cross-platform and structurally isolated from Production delivery', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/preview-dev-delivery.yml'), 'utf8');
   assert.match(workflow, /environment: mobile-preview-ota/);
   assert.match(workflow, /update --channel preview --platform android/);
-  assert.match(workflow, /runtimeVersion!=='preview-0\.3\.0'/);
-  assert.match(workflow, /android\.package!=='com\.kurioticket\.app\.preview'/);
-  assert.match(workflow, /apiBaseUrl!=='https:\/\/staging\.kurioticket\.com'/);
-  assert.doesNotMatch(workflow, /mobile-production|com\.kurioticket\.mobile|production-0\.3\.0|--channel production|eas-cli@[^\n]* (?:build|submit)(?:\s|$)|--auto-submit|google play/i);
+  assert.match(workflow, /update --channel preview --platform ios/);
+  assert.match(workflow, /uses: \.\/\.github\/workflows\/android-preview-build\.yml/);
+  assert.match(workflow, /uses: \.\/\.github\/workflows\/ios-preview-build\.yml/);
+  assert.doesNotMatch(workflow, /mobile-production|com\.kurioticket\.mobile|production-0\.3\.0|--channel production|google play/i);
   const production = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
   assert.doesNotMatch(production, /workflow_call|(?:^|\n)\s*push:/);
 });
-test('automatic Preview publication remains ordered and every failed gate blocks update', () => {
-  const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-ota.yml'), 'utf8');
-  const baseline = workflow.indexOf('Resolve approved binary baseline');
-  const replay = workflow.indexOf('Prevent duplicate publication');
-  const classifier = workflow.indexOf('Classify complete baseline-to-target range');
-  const channel = workflow.indexOf('Verify live Preview channel mapping');
+test('automatic Preview delivery orders exact staging, baselines, fingerprints, and selected actions', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/preview-dev-delivery.yml'), 'utf8');
   const staging = workflow.indexOf('Wait for exact staging deployment and safety');
-  const publish = workflow.indexOf('Publish one verified Android Preview OTA');
-  assert.ok(baseline >= 0 && baseline < replay && replay < classifier && classifier < channel && channel < staging && staging < publish);
-  assert.match(workflow, /update:list --branch preview --limit 50 --offset "\$offset" --json --non-interactive/);
-  assert.doesNotMatch(workflow, /update:list[^\n]*(?:--platform|--runtime-version)/);
-  const replayStep = workflow.slice(replay, classifier);
-  assert.match(replayStep, /lookup_status=\$\?/);
-  assert.match(replayStep, /diagnose-replay-failure/);
-  assert.match(replayStep, /exit "\$lookup_status"/);
-  assert.doesNotMatch(replayStep, /\|\|\s*true|continue-on-error/);
-  assert.match(workflow, /group: android-preview-ota\n\s+cancel-in-progress: false/);
-  assert.doesNotMatch(workflow, /group: android-preview-ota-\$\{\{/);
-  assert.match(workflow, /set -euo pipefail[\s\S]*update --channel preview[\s\S]*\| tee/);
-  assert.doesNotMatch(workflow.slice(0, publish), /continue-on-error/);
-  assert.match(workflow.slice(channel, publish), /steps\.replay\.outputs\.already_published != 'true' && steps\.classify\.outputs\.decision == 'OTA_SAFE'/);
+  const baseline = workflow.indexOf('Resolve latest finished Preview baselines');
+  const fingerprint = workflow.indexOf('Generate baseline and target native fingerprints');
+  const combine = workflow.indexOf('Combine platform decisions');
+  const androidUpdate = workflow.indexOf('Publish exact Android Preview update');
+  const iosUpdate = workflow.indexOf('Publish exact iOS Preview update');
+  assert.ok(staging >= 0 && staging < baseline && baseline < fingerprint && fingerprint < combine);
+  assert.ok(androidUpdate > combine && iosUpdate > combine);
+  assert.match(workflow, /group: preview-dev-delivery\n\s+cancel-in-progress: false/);
+  assert.match(workflow, /if: needs\.evaluate\.outputs\.android == 'OTA'/);
+  assert.match(workflow, /if: needs\.evaluate\.outputs\.ios == 'BUILD'/);
+  assert.match(workflow, /update:list --branch preview --limit 50 --offset "\$offset" --json --non-interactive/g);
+  assert.match(workflow, /PREVIEW_PLATFORM: android/);
+  assert.match(workflow, /PREVIEW_PLATFORM: ios/);
+  assert.match(workflow, /if: steps\.replay\.outputs\.already_published != 'true'/g);
+  assert.doesNotMatch(workflow, /continue-on-error/);
 });
 test('Preview evaluation audit includes trigger, replay, staging, classifier, and delivery evidence', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-preview-auto-audit-'));
@@ -917,4 +929,61 @@ test('EXPO_TOKEN is step scoped and updates publish through channels', () => {
     assert.match(workflow, /eas-cli@16\.17\.4 update --channel/);
     assert.doesNotMatch(workflow, /update --branch/);
   }
+});
+
+function previewBuild(platform, overrides = {}) {
+  const android = platform === 'android';
+  return {
+    id: android ? '11111111-1111-4111-8111-111111111111' : '22222222-2222-4222-8222-222222222222',
+    status: 'FINISHED',
+    platform: android ? 'ANDROID' : 'IOS',
+    project: { id: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' },
+    buildProfile: 'preview',
+    applicationIdentifier: 'com.kurioticket.app.preview',
+    runtimeVersion: 'preview-0.3.0',
+    channel: 'preview',
+    appVersion: '0.3.0',
+    appBuildVersion: android ? '4' : '3',
+    distribution: android ? 'INTERNAL' : 'STORE',
+    gitCommitHash: android ? 'a'.repeat(40) : 'b'.repeat(40),
+    completedAt: android ? '2026-08-05T01:00:00Z' : '2026-08-05T02:00:00Z',
+    artifacts: { applicationArchiveUrl: `https://example.invalid/app.${android ? 'apk' : 'ipa'}` },
+    ...overrides,
+  };
+}
+
+test('Preview baselines resolve from the latest exact finished EAS build on dev ancestry', () => {
+  const target = 'f'.repeat(40);
+  const android = previewBuild('android');
+  const ios = previewBuild('ios');
+  assert.equal(resolveLatestPreviewBaseline({ builds: [android], platform: 'android', targetSha: target, isAncestor: () => true }).easBuildId, android.id);
+  assert.equal(resolveLatestPreviewBaseline({ builds: [ios], platform: 'ios', targetSha: target, isAncestor: () => true }).easBuildId, ios.id);
+  assert.throws(() => resolveLatestPreviewBaseline({ builds: [{ ...android, applicationIdentifier: 'com.kurioticket.app' }], platform: 'android', targetSha: target, isAncestor: () => true }), /identity-mismatched/);
+  assert.throws(() => resolveLatestPreviewBaseline({ builds: [android], platform: 'android', targetSha: target, isAncestor: () => false }), /No finished/);
+});
+
+test('Preview baseline selection fails closed on ambiguous newest builds', () => {
+  const build = previewBuild('android');
+  assert.throws(() => resolveLatestPreviewBaseline({ builds: [build, { ...build, id: '33333333-3333-4333-8333-333333333333' }], platform: 'android', targetSha: 'f'.repeat(40), isAncestor: () => true }), /ambiguous/);
+});
+
+test('cross-platform Preview classifier produces OTA, single-platform, and dual-native outcomes', () => {
+  const compatible = (platform) => classifyPreviewPlatform({ platform, files: ['apps/mobile/src/app.tsx'], baselineFingerprint: 'same', targetFingerprint: 'same' });
+  const androidNative = classifyPreviewPlatform({ platform: 'android', files: ['apps/mobile/android/app/build.gradle'], baselineFingerprint: 'old', targetFingerprint: 'new' });
+  const iosNative = classifyPreviewPlatform({ platform: 'ios', files: ['apps/mobile/ios/App/Info.plist'], baselineFingerprint: 'old', targetFingerprint: 'new' });
+  assert.equal(combinePreviewDecisions({ mobileRelevant: false }).outcome, 'WEB_ONLY_SUCCESS');
+  assert.deepEqual(combinePreviewDecisions({ mobileRelevant: true, android: compatible('android'), ios: compatible('ios') }), { outcome: 'OTA_SUCCESS', android: 'OTA', ios: 'OTA' });
+  assert.deepEqual(combinePreviewDecisions({ mobileRelevant: true, android: androidNative, ios: compatible('ios') }), { outcome: 'ANDROID_NATIVE_BUILD_REQUIRED', android: 'BUILD', ios: 'OTA' });
+  assert.deepEqual(combinePreviewDecisions({ mobileRelevant: true, android: compatible('android'), ios: iosNative }), { outcome: 'IOS_NATIVE_BUILD_REQUIRED', android: 'OTA', ios: 'BUILD' });
+  assert.deepEqual(combinePreviewDecisions({ mobileRelevant: true, android: androidNative, ios: iosNative }), { outcome: 'BOTH_NATIVE_BUILDS_REQUIRED', android: 'BUILD', ios: 'BUILD' });
+});
+
+test('platform-specific and shared native paths fail closed without cross-platform overclassification', () => {
+  const androidOnly = classifyPreviewPlatform({ platform: 'android', files: ['apps/mobile/android/app/src/main/AndroidManifest.xml'], baselineFingerprint: 'same', targetFingerprint: 'same' });
+  const iosForAndroid = classifyPreviewPlatform({ platform: 'android', files: ['apps/mobile/ios/App/Info.plist'], baselineFingerprint: 'same', targetFingerprint: 'same' });
+  const shared = classifyPreviewPlatform({ platform: 'ios', files: ['apps/mobile/app.config.ts'], baselineFingerprint: 'same', targetFingerprint: 'same' });
+  assert.equal(androidOnly.decision, 'NATIVE_BUILD_REQUIRED');
+  assert.equal(iosForAndroid.decision, 'OTA_COMPATIBLE');
+  assert.equal(shared.decision, 'NATIVE_BUILD_REQUIRED');
+  assert.equal(classifyPreviewPlatform({ platform: 'ios', files: ['apps/mobile/src/app.tsx'], baselineFingerprint: '', targetFingerprint: 'same' }).decision, 'INVALID');
 });

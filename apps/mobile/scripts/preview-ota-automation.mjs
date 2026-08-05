@@ -7,6 +7,8 @@ const FULL_SHA = /^[a-f0-9]{40}$/;
 const REPOSITORY = "Zentric-Analytics/Kurioticket.com";
 const PREVIEW_MESSAGE = /^Automated safe Preview OTA for ([a-f0-9]{40}); audit run ([0-9]+)$/;
 const FORMATTED_PREVIEW_MESSAGE = /^"Automated safe Preview OTA for ([a-f0-9]{40}); audit run ([0-9]+)" \(.+\)$/;
+const CROSS_PLATFORM_PREVIEW_MESSAGE = /^Automatic Preview (Android|iOS) OTA for ([a-f0-9]{40}); audit run ([0-9]+)$/;
+const FORMATTED_CROSS_PLATFORM_PREVIEW_MESSAGE = /^"Automatic Preview (Android|iOS) OTA for ([a-f0-9]{40}); audit run ([0-9]+)" \(.+\)$/;
 const PREVIEW_BRANCH = "preview";
 const PREVIEW_RUNTIME = "preview-0.3.0";
 
@@ -42,8 +44,14 @@ function parseGeneratedMessage(value) {
   requireValue(typeof value === "string", "EAS update message is malformed.");
   const raw = PREVIEW_MESSAGE.exec(value);
   const formatted = FORMATTED_PREVIEW_MESSAGE.exec(value);
-  if (raw || formatted) return { targetSha: (raw ?? formatted)[1], auditRunId: (raw ?? formatted)[2] };
-  requireValue(!value.includes("Automated safe Preview OTA"), "Generated Preview update message is malformed.");
+  if (raw || formatted) return { platform: "android", targetSha: (raw ?? formatted)[1], auditRunId: (raw ?? formatted)[2] };
+  const crossPlatform = CROSS_PLATFORM_PREVIEW_MESSAGE.exec(value);
+  const formattedCrossPlatform = FORMATTED_CROSS_PLATFORM_PREVIEW_MESSAGE.exec(value);
+  if (crossPlatform || formattedCrossPlatform) {
+    const match = crossPlatform ?? formattedCrossPlatform;
+    return { platform: match[1].toLowerCase(), targetSha: match[2], auditRunId: match[3] };
+  }
+  requireValue(!value.includes("Preview") || !value.includes("OTA for"), "Generated Preview update message is malformed.");
   return null;
 }
 
@@ -67,22 +75,24 @@ export function normalizePreviewUpdatePage(value) {
   });
 }
 
-export function inspectPreviewUpdateHistory(value, targetSha) {
+export function inspectPreviewUpdateHistory(value, targetSha, platform = "android") {
   requireValue(FULL_SHA.test(targetSha ?? ""), "Replay target SHA is invalid.");
+  requireValue(platform === "android" || platform === "ios", "Replay platform is invalid.");
   requireValue(Array.isArray(value), "EAS update history is malformed.");
   const matching = value.filter((entry) => {
     requireValue(entry && typeof entry === "object" && !Array.isArray(entry), "Normalized EAS update history entry is malformed.");
     requireValue(typeof entry.branch === "string" && typeof entry.runtimeVersion === "string", "Normalized EAS update identity is malformed.");
     requireValue(Array.isArray(entry.platforms), "Normalized EAS update platforms are malformed.");
-    if (entry.branch !== PREVIEW_BRANCH || entry.runtimeVersion !== PREVIEW_RUNTIME || !entry.platforms.includes("android")) return false;
-    return parseGeneratedMessage(entry.message)?.targetSha === targetSha;
+    if (entry.branch !== PREVIEW_BRANCH || entry.runtimeVersion !== PREVIEW_RUNTIME || !entry.platforms.includes(platform)) return false;
+    const generated = parseGeneratedMessage(entry.message);
+    return generated?.targetSha === targetSha && generated.platform === platform;
   });
   return {
     alreadyPublished: matching.length > 0,
     matchingUpdates: matching.length,
     branch: PREVIEW_BRANCH,
     runtimeVersion: PREVIEW_RUNTIME,
-    platform: "android",
+    platform,
     historyState: value.length === 0 ? "empty" : "queried",
   };
 }
@@ -154,7 +164,7 @@ async function main() {
   }
   if (command === "replay") {
     const history = JSON.parse(readFileSync(process.env.PREVIEW_UPDATE_HISTORY, "utf8"));
-    const result = inspectPreviewUpdateHistory(history, targetSha);
+    const result = inspectPreviewUpdateHistory(history, targetSha, process.env.PREVIEW_PLATFORM ?? "android");
     writeFileSync(process.env.PREVIEW_REPLAY_OUTPUT, `${JSON.stringify(result, null, 2)}\n`);
     if (process.env.GITHUB_OUTPUT) writeFileSync(process.env.GITHUB_OUTPUT, `already_published=${result.alreadyPublished}\n`, { flag: "a" });
     return;

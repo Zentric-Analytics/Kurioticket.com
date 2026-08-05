@@ -2,6 +2,7 @@ export type PublicEnvironment = "staging" | "production";
 
 const STAGING_HOST = "staging.kurioticket.com";
 const EMAIL_ADDRESS = /^[^\s,@<>]+@[^\s,@<>]+\.[^\s,@<>]+$/;
+const SERVICE_STARTED_AT = new Date().toISOString();
 
 function normalized(value: string | undefined) {
   return value?.trim().toLowerCase() || "";
@@ -33,6 +34,8 @@ export function getStagingReleaseReadiness() {
   const commitSha = process.env.RENDER_GIT_COMMIT?.trim().toLowerCase() || "";
   return {
     commitSha: /^[a-f0-9]{40}$/.test(commitSha) ? commitSha : null,
+    releaseTimestamp: SERVICE_STARTED_AT,
+    applicationVersion: process.env.npm_package_version?.trim() || null,
     sandboxTravelSafe: getStagingProviderSafety().safe,
     emailPolicyRestricted: true,
   } as const;

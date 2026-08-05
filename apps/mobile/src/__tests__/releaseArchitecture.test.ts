@@ -35,19 +35,27 @@ test("repository workflows cannot build, update, submit, or upload mobile artifa
   }
 });
 
-test("native and Production delivery workflows are manual-only, protected, and never submit", () => {
-  for (const [name, environment] of [["android-preview-build.yml", "mobile-preview-build"], ["android-production-delivery.yml", "mobile-production"]]) {
-    const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
-    assert.match(workflow, /^\s*workflow_dispatch:/m);
-    assert.doesNotMatch(workflow, /^\s*(?:push|pull_request|schedule):/m);
-    assert.match(workflow, new RegExp(`environment: ${environment}`));
-    assert.match(workflow, /validate-delivery-inputs\.mjs/);
-    assert.match(workflow, /classify-release\.mjs/);
-    assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|upload.*google play/i);
-  }
+test("Production delivery remains manual-only while Android Preview build is trusted and reusable", () => {
+  const production = readFileSync(resolve(process.cwd(), "../../.github/workflows/android-production-delivery.yml"), "utf8");
+  assert.match(production, /^\s*workflow_dispatch:/m);
+  assert.doesNotMatch(production, /^\s*(?:workflow_call|push|pull_request|schedule):/m);
+  assert.match(production, /environment: mobile-production/);
+  assert.match(production, /validate-delivery-inputs\.mjs/);
+  assert.match(production, /classify-release\.mjs/);
+  assert.doesNotMatch(production, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|upload.*google play/i);
+
+  const preview = readFileSync(resolve(process.cwd(), "../../.github/workflows/android-preview-build.yml"), "utf8");
+  assert.match(preview, /^\s*workflow_call:/m);
+  assert.match(preview, /^\s*workflow_dispatch:/m);
+  assert.doesNotMatch(preview, /^\s*(?:push|pull_request|schedule):/m);
+  assert.match(preview, /environment: mobile-preview-build/);
+  assert.match(preview, /trigger_mode/);
+  assert.match(preview, /build --platform android --profile preview/);
+  assert.match(preview, /--freeze-credentials --non-interactive --json/);
+  assert.doesNotMatch(preview, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|upload.*google play/i);
 });
 
-test("iOS Preview delivery is identity-locked, frozen, and build-only", () => {
+test("iOS Preview delivery is identity-locked, frozen, and TestFlight-internal only", () => {
   const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/ios-preview-build.yml"), "utf8");
   assert.match(workflow, /^\s*workflow_dispatch:/m);
   assert.doesNotMatch(workflow, /^\s*(?:push|pull_request|schedule):/m);
@@ -60,7 +68,9 @@ test("iOS Preview delivery is identity-locked, frozen, and build-only", () => {
   assert.match(workflow, /env:list preview --format short/);
   assert.match(workflow, /EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID/);
   assert.equal(eas.submit.preview.ios.ascAppId, "6797447471");
-  assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|app review|external testing/i);
+  assert.match(workflow, /submit --platform ios --id/);
+  assert.match(workflow, /--profile preview --non-interactive --no-wait/);
+  assert.doesNotMatch(workflow, /app review|external testing|production/i);
 });
 
 test("Preview iOS configuration declares truthful export compliance", async () => {
@@ -125,7 +135,7 @@ test("required Preview validation is always conclusive and conditionally runs th
   assert.match(workflow, /name: Classify mobile-relevant changes/);
   assert.match(workflow, /name: Mobile validation not applicable/);
   assert.match(workflow, /if: steps\.changes\.outputs\.mobile_relevant == 'false'/);
-  assert.match(workflow, /name: Evaluate automatic Android Preview OTA/);
+  assert.match(workflow, /name: Deliver validated dev to Preview/);
   assert.match(workflow, /needs: validate-preview/);
   assert.match(workflow, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev' && needs\.validate-preview\.result == 'success'/);
   assert.match(workflow, /target_sha: \$\{\{ github\.sha \}\}/);

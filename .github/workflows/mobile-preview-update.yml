@@ -21,6 +21,8 @@ jobs:
   validate-preview:
     name: Validate mobile preview
     runs-on: ubuntu-latest
+    outputs:
+      mobile_relevant: ${{ steps.changes.outputs.mobile_relevant }}
     env:
       APP_VARIANT: preview
       APP_BUILD_MODE: release
@@ -136,12 +138,11 @@ jobs:
         run: echo "Validation complete. EAS Updates and native builds require a separately approved workflow."
 
   automatic-preview-ota:
-    name: Evaluate automatic Android Preview OTA
+    name: Deliver validated dev to Preview
     needs: validate-preview
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.validate-preview.result == 'success'
-    uses: ./.github/workflows/android-preview-ota.yml
+    uses: ./.github/workflows/preview-dev-delivery.yml
     with:
       target_sha: ${{ github.sha }}
-      trigger_mode: automatic
-      release_reason: Automated safe Preview OTA evaluation for validated dev integration
+      mobile_relevant: ${{ needs.validate-preview.outputs.mobile_relevant == 'true' }}
     secrets: inherit
