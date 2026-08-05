@@ -78,8 +78,9 @@ jobs:
           set -euo pipefail
           npx eas-cli@16.17.4 build:list --platform android --build-profile preview --app-identifier com.kurioticket.app.preview --limit 50 --json --non-interactive > "$RUNNER_TEMP/android-builds.json"
           npx eas-cli@16.17.4 build:list --platform ios --build-profile preview --app-identifier com.kurioticket.app.preview --limit 50 --json --non-interactive > "$RUNNER_TEMP/ios-builds.json"
+          git rev-list "$TARGET_SHA" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.stringify(s.trim().split(/\\r?\\n/).filter(Boolean))))" > "$RUNNER_TEMP/ancestors.json"
           for platform in android ios; do
-            reviewed_id=$(PLATFORM="$platform" node -e "const r=require('./release-baselines/preview-builds.json');const matches=r.builds.filter(x=>x.platform===process.env.PLATFORM);if(matches.length!==1)throw Error('Reviewed Preview baseline registry is ambiguous.');process.stdout.write(matches[0].easBuildId)")
+            reviewed_id=$(node scripts/preview-delivery-contract.mjs reviewed-id --registry release-baselines/preview-builds.json --ancestors "$RUNNER_TEMP/ancestors.json" --platform "$platform")
             npx eas-cli@16.17.4 build:view "$reviewed_id" --json > "$RUNNER_TEMP/$platform-reviewed-build.json"
             PLATFORM="$platform" node - <<'NODE'
           const fs = require('fs');
@@ -92,7 +93,6 @@ jobs:
           fs.writeFileSync(historyPath, `${JSON.stringify([reviewed, ...history.filter((entry) => entry?.id !== reviewed.id)])}\n`);
           NODE
           done
-          git rev-list "$TARGET_SHA" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.stringify(s.trim().split(/\\r?\\n/).filter(Boolean))))" > "$RUNNER_TEMP/ancestors.json"
           node scripts/preview-delivery-contract.mjs baseline --input "$RUNNER_TEMP/android-builds.json" --registry release-baselines/preview-builds.json --ancestors "$RUNNER_TEMP/ancestors.json" --platform android --target "$TARGET_SHA" --output "$RUNNER_TEMP/android-baseline.json"
           node scripts/preview-delivery-contract.mjs baseline --input "$RUNNER_TEMP/ios-builds.json" --registry release-baselines/preview-builds.json --ancestors "$RUNNER_TEMP/ancestors.json" --platform ios --target "$TARGET_SHA" --output "$RUNNER_TEMP/ios-baseline.json"
       - name: Generate baseline and target native fingerprints

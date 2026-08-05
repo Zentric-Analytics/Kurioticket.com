@@ -54,6 +54,33 @@ function artifactUrl(build) {
   return build?.artifacts?.applicationArchiveUrl ?? build?.artifacts?.buildUrl ?? null;
 }
 
+export function selectReviewedPreviewBuild({ reviewedBuilds, platform, ancestors }) {
+  const rules = PLATFORM_RULES[platform];
+  requireValue(rules, "Preview platform is unsupported.");
+  requireValue(Array.isArray(reviewedBuilds), "Reviewed Preview baseline registry must be an array.");
+  requireValue(ancestors instanceof Set && ancestors.size > 0, "Preview target ancestry is missing.");
+
+  const ids = new Set();
+  for (const entry of reviewedBuilds) {
+    requireValue(entry && typeof entry === "object" && !Array.isArray(entry), "Reviewed Preview baseline entry is malformed.");
+    requireValue(entry.platform === "android" || entry.platform === "ios", "Reviewed Preview baseline platform is malformed.");
+    requireValue(typeof entry.easBuildId === "string" && entry.easBuildId.length > 0 && !ids.has(entry.easBuildId), "Reviewed Preview baseline build ID is malformed or duplicated.");
+    requireValue(FULL_SHA.test(entry.commitSha ?? "") && /^[0-9a-f]{40}$/.test(entry.nativeFingerprint ?? ""), "Reviewed Preview baseline source evidence is malformed.");
+    requireValue(entry.projectId === PROJECT_ID && entry.package === APP_ID && entry.profile === "preview", "Reviewed Preview baseline identity is mismatched.");
+    requireValue(entry.runtime === RUNTIME && entry.channel === CHANNEL && entry.appVersion === VERSION, "Reviewed Preview baseline release identity is mismatched.");
+    requireValue(Number.isInteger(entry.buildNumber) && entry.buildNumber > 0, "Reviewed Preview baseline build number is malformed.");
+    requireValue(entry.distribution === PLATFORM_RULES[entry.platform].distribution, "Reviewed Preview baseline distribution is mismatched.");
+    ids.add(entry.easBuildId);
+  }
+
+  const candidates = reviewedBuilds.filter((entry) => entry.platform === platform && ancestors.has(entry.commitSha));
+  requireValue(candidates.length > 0, `No reviewed ${platform} Preview baseline is in the target ancestry.`);
+  const newestBuildNumber = Math.max(...candidates.map((entry) => entry.buildNumber));
+  const newest = candidates.filter((entry) => entry.buildNumber === newestBuildNumber);
+  requireValue(newest.length === 1, `Latest reviewed ${platform} Preview baseline is ambiguous.`);
+  return newest[0];
+}
+
 export function resolveLatestPreviewBaseline({ builds, platform, targetSha, reviewedBuilds = [], isAncestor = () => true }) {
   const rules = PLATFORM_RULES[platform];
   requireValue(rules, "Preview platform is unsupported.");
@@ -167,6 +194,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     requireValue(registry.schemaVersion === 1 && Array.isArray(registry.builds), "Reviewed Preview baseline registry schema is unsupported.");
     const result = resolveLatestPreviewBaseline({ builds, platform: options.platform, targetSha: options.target, reviewedBuilds: registry.builds, isAncestor: (sha) => ancestors.has(sha) });
     writeFileSync(options.output, `${JSON.stringify(result, null, 2)}\n`);
+  } else if (command === "reviewed-id") {
+    const ancestors = new Set(JSON.parse(readFileSync(options.ancestors, "utf8")));
+    const registry = JSON.parse(readFileSync(options.registry, "utf8"));
+    requireValue(registry.schemaVersion === 1 && Array.isArray(registry.builds), "Reviewed Preview baseline registry schema is unsupported.");
+    process.stdout.write(selectReviewedPreviewBuild({ reviewedBuilds: registry.builds, platform: options.platform, ancestors }).easBuildId);
   } else if (command === "classify") {
     const files = JSON.parse(readFileSync(options.files, "utf8"));
     const baseline = JSON.parse(readFileSync(options.baseline, "utf8"));
