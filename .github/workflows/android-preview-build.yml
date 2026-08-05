@@ -32,11 +32,12 @@ jobs:
       APP_VARIANT: preview
       APP_BUILD_MODE: release
       EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
-      TARGET_SHA: ${{ github.event_name == 'workflow_call' && inputs.target_sha || inputs.commit_sha }}
-      TRIGGER_MODE: ${{ github.event_name == 'workflow_call' && inputs.trigger_mode || 'manual' }}
+      TARGET_SHA: ${{ inputs.target_sha || inputs.commit_sha }}
+      TRIGGER_MODE: ${{ inputs.target_sha && inputs.trigger_mode || 'manual' }}
+      REUSABLE_TARGET_PRESENT: ${{ inputs.target_sha != '' }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
-        with: { ref: "${{ github.event_name == 'workflow_call' && inputs.target_sha || inputs.commit_sha }}", fetch-depth: 0 }
+        with: { ref: "${{ inputs.target_sha || inputs.commit_sha }}", fetch-depth: 0 }
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
         with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
       - name: Install mobile dependencies
@@ -54,7 +55,7 @@ jobs:
           git fetch origin dev --no-tags
           test "$(git rev-parse origin/dev)" = "$TARGET_SHA" || { echo 'Preview build target is no longer current dev.' >&2; exit 1; }
           if [ "$TRIGGER_MODE" = automatic ]; then
-            test "${{ github.event_name }}" = workflow_call || { echo 'Automatic Preview build requires the trusted reusable workflow.' >&2; exit 1; }
+            test "$REUSABLE_TARGET_PRESENT" = true || { echo 'Automatic Preview build requires the trusted reusable target.' >&2; exit 1; }
           else
             test "$TRIGGER_MODE" = manual || { echo 'Unsupported Preview build trigger.' >&2; exit 1; }
             test "${{ inputs.runtime_version }}" = preview-0.3.0
@@ -139,7 +140,7 @@ jobs:
           RELEASE_ACTOR: "${{ github.actor }}"
           RELEASE_ENVIRONMENT: preview
           RELEASE_ACTION: build
-          RELEASE_REASON: "${{ github.event_name == 'workflow_call' && 'Automatic native baseline refresh' || inputs.release_reason }}"
+          RELEASE_REASON: "${{ inputs.target_sha && 'Automatic native baseline refresh' || inputs.release_reason }}"
           RELEASE_COMMIT: "${{ env.TARGET_SHA }}"
           RELEASE_PACKAGE: com.kurioticket.app.preview
           RELEASE_PROFILE: preview

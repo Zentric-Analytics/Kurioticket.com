@@ -374,7 +374,7 @@ test('Preview update command construction is fixed to Preview Android and reject
 });
 test('future Preview builds preserve exact checkout and do not suppress EAS VCS metadata', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
-  assert.match(workflow, /actions\/checkout[^\n]*[\s\S]*ref: "\$\{\{ github\.event_name == 'workflow_call' && inputs\.target_sha \|\| inputs\.commit_sha \}\}"/);
+  assert.match(workflow, /actions\/checkout[^\n]*[\s\S]*ref: "\$\{\{ inputs\.target_sha \|\| inputs\.commit_sha \}\}"/);
   assert.doesNotMatch(workflow, /EAS_NO_VCS|--no-vcs/);
   assert.match(workflow, /test "\$ACTUAL_SHA" = "\$TARGET_SHA"/);
   assert.match(workflow, /test "\$\(git rev-parse origin\/dev\)" = "\$TARGET_SHA"/);
@@ -963,6 +963,15 @@ test('Preview baselines resolve from the latest exact finished EAS build on dev 
   assert.equal(resolveLatestPreviewBaseline({ builds: [ios], platform: 'ios', targetSha: target, isAncestor: () => true }).easBuildId, ios.id);
   assert.throws(() => resolveLatestPreviewBaseline({ builds: [{ ...android, applicationIdentifier: 'com.kurioticket.app' }], platform: 'android', targetSha: target, isAncestor: () => true }), /No finished/);
   assert.throws(() => resolveLatestPreviewBaseline({ builds: [android], platform: 'android', targetSha: target, isAncestor: () => false }), /No finished/);
+});
+
+test('reusable Preview builds bind automation to the trusted target input, not the inherited event name', () => {
+  for (const name of ['android-preview-build.yml', 'ios-preview-build.yml']) {
+    const workflow = readFileSync(resolve(root, '../../.github/workflows', name), 'utf8');
+    assert.match(workflow, /TARGET_SHA: \$\{\{ inputs\.target_sha \|\| inputs\.commit_sha \}\}/);
+    assert.match(workflow, /REUSABLE_TARGET_PRESENT: \$\{\{ inputs\.target_sha != '' \}\}/);
+    assert.doesNotMatch(workflow, /github\.event_name == 'workflow_call'/);
+  }
 });
 
 test('Preview baseline selection ignores valid unrelated history and resolves reviewed no-VCS evidence', () => {
