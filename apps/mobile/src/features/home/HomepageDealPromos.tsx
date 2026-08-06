@@ -2,6 +2,10 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { flowColors, flowStyles, useFlowTheme } from "../flow/flowStyles";
+import {
+  buildHomepageHotelPromoRoute,
+  HOMEPAGE_FLIGHT_PROMO_ROUTE,
+} from "./homepagePromoNavigation";
 
 type DealPromo = {
   title: string;
@@ -13,7 +17,7 @@ type DealPromo = {
   lightBorderColor: string;
   darkBorderColor: string;
   darkIconBackgroundColor: string;
-  route: "/flights" | "/hotels";
+  onPress: () => void;
 };
 
 const homepageDealPromos: readonly DealPromo[] = [
@@ -27,7 +31,7 @@ const homepageDealPromos: readonly DealPromo[] = [
     lightBorderColor: "rgba(6,76,247,0.08)",
     darkBorderColor: "rgba(91,141,255,0.38)",
     darkIconBackgroundColor: "#193B74",
-    route: "/flights",
+    onPress: () => router.push(HOMEPAGE_FLIGHT_PROMO_ROUTE),
   },
   {
     title: "Hotel savings worldwide",
@@ -40,7 +44,7 @@ const homepageDealPromos: readonly DealPromo[] = [
     lightBorderColor: "rgba(6,76,247,0.08)",
     darkBorderColor: "rgba(64,196,176,0.36)",
     darkIconBackgroundColor: "#1A514A",
-    route: "/hotels",
+    onPress: () => router.push(buildHomepageHotelPromoRoute()),
   },
 ] as const;
 
@@ -79,7 +83,7 @@ export function HomepageDealPromos() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={promo.buttonLabel}
-              onPress={() => router.push(promo.route)}
+              onPress={promo.onPress}
               style={({ pressed }) => [
                 styles.button,
                 pressed && flowStyles.pressed,

@@ -7,6 +7,7 @@ const source = (path: string) =>
   readFileSync(join(process.cwd(), path), "utf8");
 const promo = source("src/features/home/HomepageDealPromos.tsx");
 const home = source("src/features/flow/HomeFlowScreen.tsx");
+const navigation = source("src/features/home/homepagePromoNavigation.ts");
 
 test("both homepage deal cards render their complete promotional copy", () => {
   assert.match(promo, /Flight deals from top airlines/);
@@ -73,26 +74,26 @@ test("dark-mode promo icon circles are category aware", () => {
   assert.match(promo, /backgroundColor: "rgba\(255,255,255,0\.7\)"/);
 });
 
-test("promo buttons keep labels, styling, and routes unchanged", () => {
+test("promo buttons keep labels and styling while using the website routes", () => {
   assert.match(
     promo,
-    /buttonLabel: "Explore flight deals"[\s\S]*?route: "\/flights"/,
+    /buttonLabel: "Explore flight deals"[\s\S]*?router\.push\(HOMEPAGE_FLIGHT_PROMO_ROUTE\)/,
   );
   assert.match(
     promo,
-    /buttonLabel: "Explore hotel deals"[\s\S]*?route: "\/hotels"/,
+    /buttonLabel: "Explore hotel deals"[\s\S]*?router\.push\(buildHomepageHotelPromoRoute\(\)\)/,
   );
-  assert.match(promo, /onPress=\{\(\) => router\.push\(promo\.route\)\}/);
+  assert.match(promo, /onPress=\{promo\.onPress\}/);
   assert.match(promo, /backgroundColor: flowColors\.blue/);
   assert.match(promo, /minHeight: 48/);
 });
 
-test("deal cards reuse vector icons and navigate only to supported product routes", () => {
+test("deal cards reuse vector icons and navigate through shared handlers", () => {
   assert.match(promo, /icon: "flight"/);
   assert.match(promo, /icon: "hotel"/);
   assert.match(promo, /<FlowIcon name=\{promo\.icon\}/);
-  assert.match(promo, /route: "\/flights"/);
-  assert.match(promo, /route: "\/hotels"/);
+  assert.match(navigation, /HOMEPAGE_FLIGHT_PROMO_ROUTE = "\/deals"/);
+  assert.match(navigation, /pathname: "\/hotel-results"/);
   assert.doesNotMatch(promo, /require\(|\.(?:png|jpe?g|gif|webp)/i);
 });
 
