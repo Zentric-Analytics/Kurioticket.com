@@ -3,7 +3,7 @@ import { buildDealsJourneyUrl, type DealsJourneyStage } from "./dealsJourneyRout
 import { isDealsTripPlanProductExpired, type DealsTripPlan, type DealsTripPlanProduct } from "./dealsTripPlan";
 import { formatDealsDate, getDealsRentalDays, getDealsStayNights, titleCaseDealsLabel } from "./dealsTripPresentation";
 
-export type DealsReviewItem = Readonly<{ product: DealsTripPlanProduct; labelKey: string; title: string; subtitle: string; provider: string; details: readonly Readonly<{ label: string; value: string; dir?: "ltr" }>[]; sourcePrice: number; sourceCurrency: string; expired: boolean; changeHref: string; changeLabelKey: string }>;
+export type DealsReviewItem = Readonly<{ product: DealsTripPlanProduct; labelKey: string; title: string; subtitle: string; provider: string; details: readonly Readonly<{ labelKey: string; value: string; dir?: "ltr" }>[]; sourcePrice: number; sourceCurrency: string; expired: boolean; changeHref: string; changeLabelKey: string }>;
 export type DealsReviewStatus = Readonly<{ complete: boolean; missing: DealsTripPlanProduct[]; expired: DealsTripPlanProduct[]; canContinue: boolean }>;
 
 const productLabelKeys: Record<DealsTripPlanProduct, string> = { hotel: "deals.guided.review.stay", flight: "deals.guided.review.flight", car: "deals.guided.review.car" };
@@ -20,7 +20,7 @@ export function buildGuidedDealsHandoffPendingUrl(search: DealsSearch): string {
   return `/deals/handoff?${params.toString()}`;
 }
 
-export function getDealsReviewStatus(plan: Pick<DealsTripPlan, "mode" | "hotel" | "flight" | "car"> | null, now: number, contextVisible = true, correctionPending = false): DealsReviewStatus {
+export function getDealsReviewStatus(plan: Pick<DealsTripPlan, "mode" | "hotel" | "flight" | "car"> | null, now: number, contextVisible = true): DealsReviewStatus {
   const included = plan ? getIncludedProductList(plan.mode) as DealsTripPlanProduct[] : [];
   const missing = included.filter(product => !plan?.[product]);
   const expired = included.filter(product => {
@@ -28,7 +28,16 @@ export function getDealsReviewStatus(plan: Pick<DealsTripPlan, "mode" | "hotel" 
     return Boolean(selection && isDealsTripPlanProductExpired(selection.resultReceivedAt, now));
   });
   const complete = included.length > 0 && missing.length === 0;
-  return { complete, missing, expired, canContinue: complete && expired.length === 0 && contextVisible && !correctionPending };
+  return { complete, missing, expired, canContinue: complete && expired.length === 0 && contextVisible };
+}
+
+export function getDealsReviewTotalPlan(plan: DealsTripPlan): Pick<DealsTripPlan, "hotel" | "flight" | "car"> {
+  const included = new Set(getIncludedProductList(plan.mode));
+  return {
+    ...(included.has("hotel") && plan.hotel ? { hotel: plan.hotel } : {}),
+    ...(included.has("flight") && plan.flight ? { flight: plan.flight } : {}),
+    ...(included.has("car") && plan.car ? { car: plan.car } : {}),
+  };
 }
 
 export function getDealsReviewItems(plan: DealsTripPlan, search: DealsSearch, now: number, locale: string): DealsReviewItem[] {
@@ -40,31 +49,31 @@ export function getDealsReviewItems(plan: DealsTripPlan, search: DealsSearch, no
       const hotel = plan.hotel!;
       const nights = getDealsStayNights(hotel.checkIn, hotel.checkOut);
       return [{ ...common, title: hotel.name, subtitle: hotel.location, details: [
-        { label: "Location", value: hotel.location },
-        { label: "Check-in", value: formatDealsDate(hotel.checkIn, locale, false) },
-        { label: "Check-out", value: formatDealsDate(hotel.checkOut, locale, false) },
-        ...(nights === null ? [] : [{ label: "Nights", value: String(nights) }]),
-        ...(hotel.roomType ? [{ label: "Room", value: titleCaseDealsLabel(hotel.roomType) ?? hotel.roomType }] : []),
+        { labelKey: "deals.guided.review.location", value: hotel.location },
+        { labelKey: "deals.guided.review.checkIn", value: formatDealsDate(hotel.checkIn, locale, false) },
+        { labelKey: "deals.guided.review.checkOut", value: formatDealsDate(hotel.checkOut, locale, false) },
+        ...(nights === null ? [] : [{ labelKey: "deals.guided.review.nightsLabel", value: String(nights) }]),
+        ...(hotel.roomType ? [{ labelKey: "deals.guided.review.room", value: titleCaseDealsLabel(hotel.roomType) ?? hotel.roomType }] : []),
       ] }];
     }
     if (product === "flight") {
       const flight = plan.flight!;
       return [{ ...common, title: flight.airline, subtitle: `${flight.origin} → ${flight.destination}`, details: [
-        ...(flight.flightNumber ? [{ label: "Flight", value: flight.flightNumber, dir: "ltr" as const }] : []),
-        { label: "Route", value: `${flight.origin} → ${flight.destination}`, dir: "ltr" },
-        { label: "Departure", value: formatDealsDate(flight.departure, locale, true) },
-        { label: "Arrival", value: formatDealsDate(flight.arrival, locale, true) },
-        { label: "Duration", value: flight.duration },
+        ...(flight.flightNumber ? [{ labelKey: "deals.guided.review.flightNumber", value: flight.flightNumber, dir: "ltr" as const }] : []),
+        { labelKey: "deals.guided.review.route", value: `${flight.origin} → ${flight.destination}`, dir: "ltr" },
+        { labelKey: "deals.guided.review.departure", value: formatDealsDate(flight.departure, locale, true) },
+        { labelKey: "deals.guided.review.arrival", value: formatDealsDate(flight.arrival, locale, true) },
+        { labelKey: "deals.guided.review.duration", value: flight.duration },
       ] }];
     }
     const car = plan.car!;
     const rentalDays = getDealsRentalDays(car.pickupDate, car.dropoffDate);
     return [{ ...common, title: car.rentalCompany, subtitle: `${car.modelName} · ${titleCaseDealsLabel(car.categoryLabel) ?? car.categoryLabel}`, details: [
-      { label: "Model", value: car.modelName },
-      { label: "Category", value: titleCaseDealsLabel(car.categoryLabel) ?? car.categoryLabel },
-      { label: "Pickup", value: `${car.pickupLocation} · ${formatDealsDate(`${car.pickupDate}T${car.pickupTime}`, locale, true)}` },
-      { label: "Return", value: `${car.returnLocation} · ${formatDealsDate(`${car.dropoffDate}T${car.dropoffTime}`, locale, true)}` },
-      ...(rentalDays === null ? [] : [{ label: "Rental days", value: String(rentalDays) }]),
+      { labelKey: "deals.guided.review.model", value: car.modelName },
+      { labelKey: "deals.guided.review.category", value: titleCaseDealsLabel(car.categoryLabel) ?? car.categoryLabel },
+      { labelKey: "deals.guided.review.pickup", value: `${car.pickupLocation} · ${formatDealsDate(`${car.pickupDate}T${car.pickupTime}`, locale, true)}` },
+      { labelKey: "deals.guided.review.return", value: `${car.returnLocation} · ${formatDealsDate(`${car.dropoffDate}T${car.dropoffTime}`, locale, true)}` },
+      ...(rentalDays === null ? [] : [{ labelKey: "deals.guided.review.rentalDaysLabel", value: String(rentalDays) }]),
     ] }];
   });
 }

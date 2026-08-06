@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEALS_TRIP_PLAN_TTL_MS, getDealsTripPlanEstimatedTotal, type DealsTripPlan } from "./dealsTripPlan";
-import { buildGuidedDealsHandoffPendingUrl, getDealsReviewChangeHref, getDealsReviewItems, getDealsReviewStatus } from "./dealsReviewPresentation";
+import { buildGuidedDealsHandoffPendingUrl, getDealsReviewChangeHref, getDealsReviewItems, getDealsReviewStatus, getDealsReviewTotalPlan } from "./dealsReviewPresentation";
 import { createDefaultDealsSearch, type DealsSearch } from "./dealsSearchParams";
 
 const now = 1_000_000;
@@ -24,12 +24,43 @@ test("preserves stored product facts, prices, currencies, durations, and provide
 });
 
 test("computes completeness, freshness, change URLs, and handoff URL safely", () => {
-  assert.equal(getDealsReviewStatus(plan, now, true, false).canContinue, true);
-  assert.equal(getDealsReviewStatus({ ...plan, flight: { ...plan.flight!, resultReceivedAt: now - DEALS_TRIP_PLAN_TTL_MS } }, now, true, false).canContinue, false);
-  assert.deepEqual(getDealsReviewStatus({ ...plan, car: undefined }, now, true, false).missing, ["car"]);
-  assert.equal(getDealsReviewStatus(plan, now, true, false).canContinue, getDealsTripPlanEstimatedTotal(plan, "GBP", {}) === null ? true : true);
+  assert.equal(getDealsReviewStatus(plan, now).canContinue, true);
+  assert.equal(getDealsReviewStatus({ ...plan, flight: { ...plan.flight!, resultReceivedAt: now - DEALS_TRIP_PLAN_TTL_MS } }, now).canContinue, false);
+  assert.deepEqual(getDealsReviewStatus({ ...plan, car: undefined }, now).missing, ["car"]);
   assert.match(getDealsReviewChangeHref("hotel", search), /^\/deals\/journey\/hotel-results\?/); assert.doesNotMatch(getDealsReviewChangeHref("hotel", search), /hotelId=/);
   assert.match(getDealsReviewChangeHref("flight", search), /^\/deals\/journey\/flight-results\?/); assert.doesNotMatch(getDealsReviewChangeHref("flight", search), /flightId=/);
   assert.match(getDealsReviewChangeHref("car", search), /^\/deals\/journey\/car-results\?/); assert.doesNotMatch(getDealsReviewChangeHref("car", search), /carId=/);
   const href = buildGuidedDealsHandoffPendingUrl(search); assert.equal((href.match(/journey=guided/g) ?? []).length, 1); assert.doesNotMatch(href, /hotelId=|flightId=|carId=|redirect|bookingUrl/);
+});
+
+
+test("filters totals and freshness to the current package without mutating the plan", () => {
+  for (const [mode, products] of [["hotel-flight", ["hotel", "flight"]], ["hotel-car", ["hotel", "car"]], ["flight-car", ["flight", "car"]], ["hotel-flight-car", ["hotel", "flight", "car"]]] as const) {
+    const modePlan = { ...plan, mode };
+    const snapshot = JSON.stringify(modePlan);
+    assert.deepEqual(Object.keys(getDealsReviewTotalPlan(modePlan)), products);
+    assert.deepEqual(getDealsReviewItems(modePlan, { ...search, mode }, now, "en-US").map(item => item.product), products);
+    assert.equal(JSON.stringify(modePlan), snapshot);
+  }
+  const staleExtraCar = { ...plan, mode: "hotel-flight" as const, car: { ...plan.car!, resultReceivedAt: now - DEALS_TRIP_PLAN_TTL_MS } };
+  assert.equal(getDealsReviewStatus(staleExtraCar, now).canContinue, true);
+  assert.notEqual(getDealsTripPlanEstimatedTotal(getDealsReviewTotalPlan(staleExtraCar), "USD", { EUR: 1.1, USD: 1 }), null);
+  const staleIncluded = { ...plan, flight: { ...plan.flight!, resultReceivedAt: now - DEALS_TRIP_PLAN_TTL_MS } };
+  assert.equal(getDealsReviewStatus(staleIncluded, now).canContinue, false);
+  const missingIncluded = { ...plan, flight: undefined };
+  assert.equal(getDealsReviewStatus(missingIncluded, now).complete, false);
+  assert.equal(getDealsReviewStatus(missingIncluded, now).canContinue, false);
+});
+
+test("conversion availability never changes continuation eligibility", () => {
+  const included = { ...plan, mode: "hotel-flight" as const };
+  const available = getDealsTripPlanEstimatedTotal(getDealsReviewTotalPlan(included), "GBP", { USD: 1, EUR: 1.1, GBP: 0.8 });
+  assert.notEqual(available, null);
+  assert.equal(getDealsReviewStatus(included, now).canContinue, true);
+  assert.equal(getDealsTripPlanEstimatedTotal(getDealsReviewTotalPlan(included), "GBP", {}), null);
+  assert.equal(getDealsReviewStatus(included, now).canContinue, true);
+  const excludedRateMissing = { ...plan, mode: "hotel-flight" as const, car: { ...plan.car!, sourceCurrency: "XYZ" } };
+  assert.notEqual(getDealsTripPlanEstimatedTotal(getDealsReviewTotalPlan(excludedRateMissing), "USD", { USD: 1, EUR: 1.1 }), null);
+  const includedRateMissing = { ...included, flight: { ...plan.flight!, sourceCurrency: "XYZ" } };
+  assert.equal(getDealsTripPlanEstimatedTotal(getDealsReviewTotalPlan(includedRateMissing), "USD", { USD: 1 }), null);
 });
