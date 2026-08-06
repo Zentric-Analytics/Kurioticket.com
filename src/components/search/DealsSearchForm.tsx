@@ -2624,15 +2624,17 @@ export function DealsSearchForm({
             <li>{t("deals.guidedPreview.availableHotel")}</li>
             <li>{t("deals.guidedPreview.availableFlight")}</li>
             <li>{t("deals.guidedPreview.availableCar")}</li>
+            <li>{t("deals.guidedPreview.availableReview")}</li>
+            <li>{t("deals.guidedPreview.availableHandoff")}</li>
           </ul>
         </div>
         <div className="rounded-xl bg-white/80 p-3 ring-1 ring-amber-100">
           <p className="font-extrabold text-[#021C2B]">
-            {t("deals.guidedPreview.inProgressTitle")}
+            {t("deals.guidedPreview.previewOnlyTitle")}
           </p>
           <ul className="mt-2 list-disc space-y-1 ps-5 text-slate-700">
-            <li>{t("deals.guidedPreview.inProgressCar")}</li>
-            <li>{t("deals.guidedPreview.inProgressReview")}</li>
+            <li>{t("deals.guidedPreview.previewOnlyPublicLaunch")}</li>
+            <li>{t("deals.guidedPreview.previewOnlyBooking")}</li>
           </ul>
         </div>
       </div>

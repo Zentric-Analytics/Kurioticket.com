@@ -9,12 +9,13 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useRegion } from "@/components/region/RegionProvider";
 import { DealsHandoffExperience } from "./DealsHandoffExperience";
 import { DealsHandoffSkeleton } from "./DealsHandoffSkeleton";
+import { useDealsStagedJourneyLifecycle } from "./useDealsStagedJourneyLifecycle";
 import { attemptGuidedHandoffActivation, getDealsGuidedEstimatedTotal, getDealsGuidedOpenedCount, getDealsGuidedProducts, validateDealsGuidedHandoffPlan, type GuidedActivationFailure } from "@/lib/deals/dealsGuidedHandoff";
 import { buildDealsJourneyUrl, buildLegacyDealsResultsUrl, getEarliestIncompleteDealsJourneyStage, getFirstDealsJourneyStage } from "@/lib/deals/dealsJourneyRoutes";
 import { getDealsHandoffActionId } from "@/lib/deals/dealsHandoffIds";
 import { getDealsReviewChangeHref } from "@/lib/deals/dealsReviewPresentation";
 import { buildDealsSearchFingerprint, type DealsTripPlan, type DealsTripPlanProduct } from "@/lib/deals/dealsTripPlan";
-import { readDealsStagedJourneyPlan, writeDealsStagedJourneyPlan, type DealsTripPlanReadResult } from "@/lib/deals/dealsTripPlanStorage";
+import { readDealsStagedJourneyPlan, writeDealsStagedJourneyPlan, type DealsStagedSnapshotResult, type DealsTripPlanReadResult } from "@/lib/deals/dealsTripPlanStorage";
 import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import { translations as en } from "@/lib/i18n/en";
 
@@ -27,7 +28,6 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
   const fingerprint = buildDealsSearchFingerprint(search);
   const [readResult, setReadResult] = useState<DealsTripPlanReadResult | null>(null);
   const [plan, setPlan] = useState<DealsTripPlan | null>(null);
-  const [now, setNow] = useState<number | null>(null);
   const [activationFailure, setActivationFailure] = useState<GuidedActivationFailure | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const activationAlertRef = useRef<HTMLDivElement>(null);
@@ -37,11 +37,18 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
     const timer = window.setTimeout(() => {
       const loadedAt = Date.now();
       const result = readDealsStagedJourneyPlan(fingerprint, loadedAt);
-      setReadResult(result); setNow(loadedAt);
+      setReadResult(result);
       if (result.status === "valid") setPlan(result.plan);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [fingerprint]);
+
+  const installLifecycle = (result: DealsStagedSnapshotResult | DealsTripPlanReadResult) => {
+    setReadResult(result); setActivationFailure(null);
+    setPlan(result.status === "valid" ? result.plan : null);
+    if (result.status === "valid") setAnnouncement(t("deals.guided.crossTabUpdated"));
+  };
+  const now = useDealsStagedJourneyLifecycle({ fingerprint, plan, onSnapshot: installLifecycle, onRefresh: installLifecycle });
 
   useEffect(() => {
     if (!activationFailure) return;
@@ -55,10 +62,10 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
     const activatedAt = Date.now();
     const result = attemptGuidedHandoffActivation({ renderedPlan: plan, product, search, fingerprint, now: activatedAt, locale, read: readDealsStagedJourneyPlan, write: writeDealsStagedJourneyPlan });
     if (!result.ok) {
-      if (result.currentPlan) { setPlan(result.currentPlan); setNow(activatedAt); }
+      if (result.currentPlan) { setPlan(result.currentPlan); }
       setActivationFailure(result.failure); return false;
     }
-    setPlan(result.plan); setNow(activatedAt);
+    setPlan(result.plan);
     setAnnouncement(t("deals.handoff.openedAnnouncement").replace("{{product}}", t(`deals.tripPlan.${product === "hotel" ? "stay" : product}`)).replace("{{opened}}", String(getDealsGuidedOpenedCount(result.plan))).replace("{{total}}", String(getDealsGuidedProducts(result.plan).length)));
     return true;
   };
@@ -66,7 +73,7 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
   let content;
   let state = "loading";
   let ready = false;
-  if (!readResult || now === null) content = <DealsHandoffSkeleton label={t("deals.guided.handoff.loading")} />;
+  if (!readResult) content = <DealsHandoffSkeleton label={t("deals.guided.handoff.loading")} />;
   else if (readResult.status === "storage_unavailable") { state = "storage-unavailable"; content = <State kind="storage" title={t("deals.guided.handoff.storageTitle")} body={t("deals.guided.handoff.storageBody")} action={t("deals.guided.handoff.returnDeals")} href="/deals" start={start} />; }
   else if (readResult.status === "expired") { state = "expired"; content = <State kind="warning" title={t("deals.guided.handoff.expiredTitle")} body={t("deals.guided.handoff.expiredBody")} action={t("deals.guided.handoff.refresh")} href={buildDealsJourneyUrl(getFirstDealsJourneyStage(search.mode), search)} start={start} />; }
   else if (readResult.status !== "valid" || !plan) { state = readResult.status === "fingerprint_mismatch" ? "fingerprint-mismatch" : readResult.status; content = <State kind="missing" title={t("deals.guided.handoff.missingTitle")} body={t("deals.guided.handoff.missingBody")} action={t("deals.guided.handoff.returnDeals")} href="/deals" start={start} />; }

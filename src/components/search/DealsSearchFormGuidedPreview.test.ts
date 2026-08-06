@@ -26,8 +26,11 @@ test("guided preview copy is translated and truthful about status", () => {
     "deals.guidedPreview.availableHotel",
     "deals.guidedPreview.availableFlight",
     "deals.guidedPreview.availableCar",
-    "deals.guidedPreview.inProgressCar",
-    "deals.guidedPreview.inProgressReview",
+    "deals.guidedPreview.availableReview",
+    "deals.guidedPreview.availableHandoff",
+    "deals.guidedPreview.previewOnlyTitle",
+    "deals.guidedPreview.previewOnlyPublicLaunch",
+    "deals.guidedPreview.previewOnlyBooking",
     "deals.guidedPreview.action",
     "deals.guidedPreview.accessibleName",
   ]) {
