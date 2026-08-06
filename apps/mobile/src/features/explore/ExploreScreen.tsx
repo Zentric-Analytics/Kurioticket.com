@@ -15,10 +15,10 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { destinationById, type Destination } from "./destinationCatalogue";
+import type { Destination } from "./destinationCatalogue";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
-import { INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
+import { POPULAR_DESTINATIONS } from "./exploreData";
 import {
   exactExploreResult,
   exploreBottomPadding,
@@ -32,11 +32,6 @@ const NAVY = "#071A48",
   BLUE = "#0754F7",
   MUTED = "#56658E",
   BORDER = "#E7ECF5";
-const RESOLVED_INTERESTS = INTERESTS.map((interest) => ({
-  ...interest,
-  destination: destinationById.get(interest.destinationId)!,
-}));
-
 function Header() {
   return (
     <View style={s.header}>
@@ -146,12 +141,12 @@ function ExploreHeader({
         <TextInput
           ref={input}
           accessibilityLabel="Explore search"
-          accessibilityHint="Search destinations, countries or interests"
+          accessibilityHint="Search destinations, countries or airports"
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={submit}
           returnKeyType="search"
-          placeholder="Search destinations, countries or interests"
+          placeholder="Search destinations, countries or airports"
           placeholderTextColor="#7B849F"
           style={s.searchInput}
         />
@@ -224,22 +219,17 @@ export function ExploreScreen() {
           }
           ListEmptyComponent={
             <Text style={s.empty}>
-              No destinations or maintained interests match “{query.trim()}”.
-              Try a city, destination code, or country.
+              No destinations, countries or airports match “{query.trim()}”.
+              Try a city, airport code, or country.
             </Text>
           }
           renderItem={({ item: r }) => (
-            <View>
-              {r.match === "interest" ? (
-                <Text style={s.matchLabel}>Interest match: {r.interest}</Text>
-              ) : null}
-              <Row
-                destination={r.destination}
-                saved={savedIds.has(r.destination.id)}
-                onSelect={() => select(r.destination)}
-                onToggle={() => toggle(r.destination.id)}
-              />
-            </View>
+            <Row
+              destination={r.destination}
+              saved={savedIds.has(r.destination.id)}
+              onSelect={() => select(r.destination)}
+              onToggle={() => toggle(r.destination.id)}
+            />
           )}
         />
       ) : (
@@ -363,7 +353,6 @@ function ExploreDiscoveryContent({
       windowSize={5}
       contentContainerStyle={[s.content, { paddingBottom: bottomPadding }]}
       ListHeaderComponent={<Section title="Popular destinations" />}
-      ListFooterComponent={<Interests select={select} />}
       ItemSeparatorComponent={() => <View style={s.popularSeparator} />}
       renderItem={({ item }) => (
         <PopularDestinationCard
@@ -374,30 +363,6 @@ function ExploreDiscoveryContent({
         />
       )}
     />
-  );
-}
-function Interests({ select }: { select: (destination: Destination) => void }) {
-  return (
-    <View style={s.interestSection}>
-      <Section title="Explore by interest" />
-      <View style={s.interests}>
-        {RESOLVED_INTERESTS.map((item) => (
-          <Pressable
-            key={item.name}
-            accessibilityRole="button"
-            accessibilityLabel={`${item.name}, mapped to ${item.destination.name}`}
-            onPress={() => select(item.destination)}
-            style={s.interest}
-          >
-            <FlowIcon name={item.icon} color={BLUE} />
-            <View>
-              <Text style={s.resultTitle}>{item.name}</Text>
-              <Text style={s.resultMeta}>{item.destination.name}</Text>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-    </View>
   );
 }
 const shadow = {
@@ -496,20 +461,6 @@ const s = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 12,
     padding: 14,
-  },
-  matchLabel: { color: BLUE, fontSize: 12, fontWeight: "700", marginBottom: 4 },
-  interestSection: { paddingTop: 15 },
-  interests: { gap: 8 },
-  interest: {
-    minHeight: 66,
-    backgroundColor: "white",
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 13,
   },
   popularCard: {
     borderRadius: 16,
