@@ -115,26 +115,27 @@ export function PopularDestinationStays() {
               ]}
             >
               <View style={styles.cardSurface}>
-                <ImageBackground
-                  accessibilityIgnoresInvertColors
-                  accessibilityLabel={`${destination.city}, ${destination.country}`}
-                  resizeMode="cover"
-                  source={imageFailed ? undefined : destination.image}
-                  onError={() => {
-                    if (__DEV__) {
-                      console.warn(
-                        `[Popular destination stays] Image failed for ${destination.city}: ${destination.image.uri}`,
-                      );
-                    }
-                    setFailedImageIds((current) => {
-                      const next = new Set(current);
-                      next.add(destination.id);
-                      return next;
-                    });
-                  }}
-                  style={styles.image}
-                  imageStyle={styles.imageCorners}
-                >
+                <View style={styles.imageFrame}>
+                  <ImageBackground
+                    accessibilityIgnoresInvertColors
+                    accessibilityLabel={`${destination.city}, ${destination.country}`}
+                    resizeMode="cover"
+                    source={imageFailed ? undefined : destination.image}
+                    onError={() => {
+                      if (__DEV__) {
+                        console.warn(
+                          `[Popular destination stays] Image failed for ${destination.city}: ${destination.image.uri}`,
+                        );
+                      }
+                      setFailedImageIds((current) => {
+                        const next = new Set(current);
+                        next.add(destination.id);
+                        return next;
+                      });
+                    }}
+                    style={styles.image}
+                    imageStyle={styles.imageCorners}
+                  />
                   <AndroidFavoriteButton
                     saved={saved}
                     label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
@@ -148,7 +149,7 @@ export function PopularDestinationStays() {
                     <Text style={styles.city}>{destination.city}</Text>
                     <Text style={styles.country}>{destination.country}</Text>
                   </View>
-                </ImageBackground>
+                </View>
                 <View style={styles.ctaSection}>
                   <View style={styles.ctaPill}>
                     <Text style={styles.ctaText}>Explore stays</Text>
@@ -192,11 +193,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
   },
-  image: {
+  imageFrame: {
     width: "100%",
     height: IMAGE_HEIGHT,
     justifyContent: "flex-end",
     padding: 16,
+  },
+  image: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
   },
   imageCorners: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
   heart: { position: "absolute", top: 14, right: 14 },
