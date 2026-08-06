@@ -31,15 +31,16 @@ export const isDealsTripPlanExpired = (plan: DealsTripPlan, now = Date.now()) =>
 export const isDealsTripPlanProductExpired = (receivedAt: number, now = Date.now()) => now - receivedAt >= DEALS_TRIP_PLAN_TTL_MS;
 
 /** Earliest plan or included-product deadline used by the guided lifecycle timer. */
-export function getDealsGuidedNextExpiryAt(plan: DealsTripPlan): number {
+export function getDealsGuidedNextExpiryAt(plan: DealsTripPlan, now: number): number | null {
   const included = plan.mode === "hotel-flight" ? ["hotel", "flight"] as const
     : plan.mode === "hotel-car" ? ["hotel", "car"] as const
     : plan.mode === "flight-car" ? ["flight", "car"] as const
     : ["hotel", "flight", "car"] as const;
-  return Math.min(plan.expiresAt, ...included.flatMap(product => {
+  const deadlines = [plan.expiresAt, ...included.flatMap(product => {
     const selection = plan[product];
     return selection ? [selection.resultReceivedAt + DEALS_TRIP_PLAN_TTL_MS] : [];
-  }));
+  })].filter(deadline => deadline > now);
+  return deadlines.length ? Math.min(...deadlines) : null;
 }
 
 export type DealsNextProviderStep = { product: DealsTripPlanProduct | null; href: string | null; allOpened: boolean };

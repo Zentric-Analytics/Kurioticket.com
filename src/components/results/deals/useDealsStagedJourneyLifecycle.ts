@@ -2,30 +2,33 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getDealsGuidedNextExpiryAt, type DealsTripPlan } from "@/lib/deals/dealsTripPlan";
+import type { DealsLifecycleSource } from "@/lib/deals/dealsGuidedJourneyLifecycle";
 import { classifyDealsStagedJourneySnapshot, DEALS_STAGED_JOURNEY_STORAGE_KEY, readDealsStagedJourneyPlan, type DealsStagedSnapshotResult, type DealsTripPlanReadResult } from "@/lib/deals/dealsTripPlanStorage";
 
-export function useDealsStagedJourneyLifecycle({ fingerprint, plan, active = true, onSnapshot, onRefresh }: {
+export function useDealsStagedJourneyLifecycle({ fingerprint, plan, active = true, onSnapshot, onRefresh, onDeadline }: {
   fingerprint: string; plan: DealsTripPlan | null; active?: boolean;
-  onSnapshot: (result: DealsStagedSnapshotResult, observedAt: number) => void;
-  onRefresh: (result: DealsTripPlanReadResult, observedAt: number) => void;
+  onSnapshot: (result: DealsStagedSnapshotResult, observedAt: number, source: DealsLifecycleSource) => void;
+  onRefresh: (result: DealsTripPlanReadResult, observedAt: number, source: DealsLifecycleSource) => void;
+  onDeadline?: (observedAt: number, source: "deadline") => void;
 }) {
   const [now, setNow] = useState(() => Date.now());
-  const snapshotRef = useRef(onSnapshot); const refreshRef = useRef(onRefresh);
-  useEffect(() => { snapshotRef.current = onSnapshot; refreshRef.current = onRefresh; }, [onRefresh, onSnapshot]);
+  const snapshotRef = useRef(onSnapshot); const refreshRef = useRef(onRefresh); const deadlineRef = useRef(onDeadline);
+  useEffect(() => { snapshotRef.current = onSnapshot; refreshRef.current = onRefresh; deadlineRef.current = onDeadline; }, [onDeadline, onRefresh, onSnapshot]);
   useEffect(() => {
     if (!active) return;
-    const refresh = () => { const observedAt = Date.now(); setNow(observedAt); refreshRef.current(readDealsStagedJourneyPlan(fingerprint, observedAt), observedAt); };
+    const refresh = (source: "focus" | "visibility") => { const observedAt = Date.now(); setNow(observedAt); refreshRef.current(readDealsStagedJourneyPlan(fingerprint, observedAt), observedAt, source); };
     const storage = (event: StorageEvent) => {
       if (event.key !== DEALS_STAGED_JOURNEY_STORAGE_KEY) return;
       const observedAt = Date.now(); setNow(observedAt);
-      snapshotRef.current(classifyDealsStagedJourneySnapshot(event.newValue, fingerprint, observedAt), observedAt);
+      snapshotRef.current(classifyDealsStagedJourneySnapshot(event.newValue, fingerprint, observedAt), observedAt, "storage");
     };
-    const visibility = () => { if (document.visibilityState === "visible") refresh(); };
-    window.addEventListener("storage", storage); window.addEventListener("focus", refresh); document.addEventListener("visibilitychange", visibility);
-    const deadline = plan ? getDealsGuidedNextExpiryAt(plan) : null;
-    const timer = deadline === null ? null : window.setTimeout(refresh, Math.max(0, deadline - Date.now()));
+    const focus = () => refresh("focus");
+    const visibility = () => { if (document.visibilityState === "visible") refresh("visibility"); };
+    window.addEventListener("storage", storage); window.addEventListener("focus", focus); document.addEventListener("visibilitychange", visibility);
+    const scheduledAt = Date.now(); const deadline = plan ? getDealsGuidedNextExpiryAt(plan, scheduledAt) : null;
+    const timer = deadline === null ? null : window.setTimeout(() => { const observedAt = Date.now(); setNow(observedAt); deadlineRef.current?.(observedAt, "deadline"); }, deadline - scheduledAt);
     return () => {
-      window.removeEventListener("storage", storage); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", visibility);
+      window.removeEventListener("storage", storage); window.removeEventListener("focus", focus); document.removeEventListener("visibilitychange", visibility);
       if (timer !== null) window.clearTimeout(timer);
     };
   }, [active, fingerprint, plan]);

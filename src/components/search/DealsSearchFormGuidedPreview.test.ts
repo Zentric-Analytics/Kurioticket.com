@@ -19,6 +19,9 @@ test("guided preview is query gated to the landing variant only", () => {
 });
 
 test("guided preview copy is translated and truthful about status", () => {
+  assert.match(en, /"deals\.guidedPreview\.description": "[^"]*Hotel[^"]*Flight[^"]*Car[^"]*Review[^"]*handoff/i);
+  assert.match(en, /"deals\.guidedPreview\.availableCar": "[^"]*results[^"]*filters[^"]*sorting[^"]*details[^"]*confirmation/i);
+  assert.doesNotMatch(en, /"deals\.guidedPreview\.description": "[^"]*still in progress/i);
   for (const key of [
     "deals.guidedPreview.badge",
     "deals.guidedPreview.title",
@@ -39,9 +42,9 @@ test("guided preview copy is translated and truthful about status", () => {
   }
   assert.match(en, /Hotel results, room selection, details, and confirmation/);
   assert.match(en, /Flight results, filters, sorting, details, and confirmation/);
-  assert.match(en, /Car results, filters, and sorting/);
-  assert.match(en, /Car details and confirmation/);
-  assert.match(en, /Review and final handoff/);
+  assert.match(en, /Car results, filters, sorting, details, and confirmation/);
+  assert.match(en, /Trip Review with persisted opened-step progress/);
+  assert.match(en, /Final booking-partner handoff/);
   assert.doesNotMatch(en, /Car results[^"\n]*(?:in progress|incomplete|unfinished)/i);
 });
 

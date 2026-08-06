@@ -44,3 +44,14 @@ test("a transient Hotel ID unlocks Hotel details only", () => {
   assert.equal(getRequiredDealsJourneyStage("flight-results", "hotel-flight", null, "transient"), "hotel-results");
   assert.equal(getRequiredDealsJourneyStage("hotel-details", "flight-car", null, "transient"), "flight-results");
 });
+
+test("expiry-aware correction chooses earliest included expired product but keeps Review", async () => {
+  const { getRequiredDealsJourneyStageAt } = await import("./dealsJourneyRoutes");
+  const { createDealsTripPlan, DEALS_TRIP_PLAN_TTL_MS } = await import("./dealsTripPlan");
+  const base = createDealsTripPlan({ mode: "hotel-flight-car", searchFingerprint: "x", resultsPath: "/deals/results" }, 0);
+  const plan = { ...base, hotel: { id: "h", provider: "p", name: "h", location: "l", checkIn: "i", checkOut: "o", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 1 }, flight: { id: "f", provider: "p", airline: "a", origin: "o", destination: "d", departure: "d", arrival: "a", duration: "1h", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 2 }, car: { id: "c", provider: "p", rentalCompany: "r", modelName: "m", categoryLabel: "c", pickupLocation: "p", returnLocation: "r", pickupDate: "d", pickupTime: "t", dropoffDate: "d", dropoffTime: "t", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 3, detailsPath: "/cars/details/c?pickupLocation=p&dropoffLocation=r&pickupDate=d&pickupTime=t&dropoffDate=d&dropoffTime=t&driverAge=30" } };
+  const ids = { hotelId: null, flightId: null, carId: null };
+  assert.equal(getRequiredDealsJourneyStageAt("car-results", plan.mode, plan, ids, DEALS_TRIP_PLAN_TTL_MS + 4), "hotel-results");
+  assert.equal(getRequiredDealsJourneyStageAt("review", plan.mode, plan, ids, DEALS_TRIP_PLAN_TTL_MS + 4), "review");
+  assert.equal(getRequiredDealsJourneyStageAt("flight-results", "flight-car", { ...plan, mode: "flight-car" }, ids, DEALS_TRIP_PLAN_TTL_MS + 2), "flight-results");
+});
