@@ -35,6 +35,9 @@ test('mobile code, workflows, dependencies, configs, and shared imports require 
     'apps/mobile/src/api/travelApi.ts',
     '.github/workflows/mobile-preview-update.yml',
     '.github/workflows/android-preview-ota.yml',
+    '.github/workflows/ios-preview-build.yml',
+    '.github/workflows/pr-required-gates.yml',
+    '.github/workflows/security.yml',
     '.github/actions/mobile-helper/action.yml',
     'package.json',
     'package-lock.json',
@@ -51,21 +54,40 @@ test('uncertain mobile path classification fails closed to the full suite', () =
   assert.equal(classifyMobileValidationPaths(['']).mobileRelevant, true);
 });
 
-test('required Preview validation always concludes and gates cross-platform delivery after a successful dev push', () => {
-  const workflow = readFileSync(resolve(root, '../../.github/workflows/mobile-preview-update.yml'), 'utf8');
-  assert.match(workflow, /^name: Validate mobile preview$/m);
-  assert.doesNotMatch(workflow, /^\s+paths:/m);
+test('required PR gateway always schedules exact protected contexts and classifies internally', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/pr-required-gates.yml'), 'utf8');
+  assert.match(workflow, /^name: Required PR gates$/m);
+  assert.match(workflow, /pull_request:\s*\n\s+branches:\s*\n\s+- dev/);
+  assert.match(workflow, /types: \[opened, synchronize, reopened, ready_for_review\]/);
+  assert.doesNotMatch(workflow, /^\s+paths(?:-ignore)?:/m);
+  assert.match(workflow, /^\s+name: Validate mobile preview$/m);
+  assert.match(workflow, /^\s+name: secret-scan$/m);
   assert.match(workflow, /Mobile validation not applicable/);
   assert.match(workflow, /permissions:\s*\n\s+contents: read\s*\n\s+actions: read/);
   assert.match(workflow, /github\.event\.pull_request\.base\.sha/);
   assert.match(workflow, /github\.event\.pull_request\.head\.sha/);
-  assert.doesNotMatch(workflow, /pull_request_target|inputs\.(?:changed|path|mobile)/);
+  assert.match(workflow, /classify-mobile-validation-paths\.mjs --stdin-null/);
+  assert.match(workflow, /secret-scan:[\s\S]*npm run security:secrets/);
+  assert.doesNotMatch(workflow, /secret-scan:[\s\S]*?\n\s+if:/);
+  assert.doesNotMatch(workflow, /pull_request_target|workflow_dispatch|inputs\.(?:changed|path|mobile)/);
   assert.doesNotMatch(workflow, /continue-on-error|\beas(?:-cli@[^\s]+)?\s+(?:build|update|submit)\b/i);
+});
+
+test('dev validation and automatic Preview delivery remain push-only after the PR gateway split', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/mobile-preview-update.yml'), 'utf8');
+  assert.match(workflow, /^name: Validate mobile preview$/m);
+  assert.doesNotMatch(workflow, /^\s+pull_request:/m);
   assert.match(workflow, /automatic-preview-ota:[\s\S]*needs: validate-preview/);
   assert.match(workflow, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev' && needs\.validate-preview\.result == 'success'/);
   assert.match(workflow, /uses: \.\/\.github\/workflows\/preview-dev-delivery\.yml/);
   assert.match(workflow, /target_sha: \$\{\{ github\.sha \}\}/);
   assert.match(workflow, /mobile_relevant: \$\{\{ needs\.validate-preview\.outputs\.mobile_relevant == 'true' \}\}/);
+});
+
+test('legacy security workflow no longer competes for the required PR context', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/security.yml'), 'utf8');
+  assert.doesNotMatch(workflow, /^\s+pull_request:/m);
+  assert.match(workflow, /^\s+push:/m);
 });
 const valid = (variant = 'preview', overrides = {}) => ({ variant, sha: 'a'.repeat(40), runtime: policy[variant].runtimeVersion, packageName: policy[variant].androidPackage, channel: policy[variant].channel, profile: policy[variant].profile, apiBaseUrl: policy[variant].apiBaseUrl, confirmation: variant === 'preview' ? 'DELIVER ANDROID PREVIEW' : 'DELIVER ANDROID PRODUCTION', action: 'build', releaseReason: 'approved release', baselineBuildId: 'NONE', policy, eas, ...overrides });
 
