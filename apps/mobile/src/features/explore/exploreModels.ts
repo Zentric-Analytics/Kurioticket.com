@@ -106,3 +106,18 @@ export function destinationCardLayout(screenWidth: number) {
 export function exploreBottomPadding(tabBarHeight: number, safeBottom: number) {
   return tabBarHeight + Math.max(safeBottom, 10) + 18;
 }
+
+export function formatFlightAccess(
+  primaryAirportCode: string,
+  airportCodes: readonly string[],
+) {
+  const codes = [primaryAirportCode, ...airportCodes].filter(
+    (code, index, allCodes) =>
+      allCodes.findIndex(
+        (candidate) => candidate.toUpperCase() === code.toUpperCase(),
+      ) === index,
+  );
+  if (codes.length === 1) return `Flights via ${codes[0]}`;
+  if (codes.length === 2) return `Flights via ${codes[0]} and ${codes[1]}`;
+  return `Flights via ${codes[0]} + ${codes.length - 1} more`;
+}

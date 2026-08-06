@@ -22,6 +22,7 @@ import { INTERESTS, POPULAR_DESTINATIONS } from "./exploreData";
 import {
   exactExploreResult,
   exploreBottomPadding,
+  formatFlightAccess,
   searchExplore,
 } from "./exploreModels";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
@@ -310,11 +311,20 @@ function PopularDestinationCard({
       <View style={s.popularCopy}>
         <Text style={s.popularCardTitle}>{destination.name}</Text>
         <Text style={s.countryName}>{destination.country}</Text>
-        <Text style={s.airportMeta}>
-          {destination.primaryAirportCode} · {destination.airportNames[0]}
-          {destination.airportCodes.length > 1
-            ? ` + ${destination.airportCodes.length - 1} airports`
-            : ""}
+        {destination.summary ? (
+          <Text
+            style={s.destinationSummary}
+            numberOfLines={3}
+            ellipsizeMode="tail"
+          >
+            {destination.summary}
+          </Text>
+        ) : null}
+        <Text style={s.airportMeta} numberOfLines={2} ellipsizeMode="tail">
+          {formatFlightAccess(
+            destination.primaryAirportCode,
+            destination.airportCodes,
+          )}
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -518,7 +528,21 @@ const s = StyleSheet.create({
     fontWeight: "800",
   },
   countryName: { color: MUTED, fontSize: 14, fontWeight: "600" },
-  airportMeta: { color: MUTED, fontSize: 12, lineHeight: 18, minHeight: 36 },
+  destinationSummary: {
+    color: NAVY,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "400",
+    marginTop: 5,
+    marginBottom: 4,
+    flexShrink: 1,
+  },
+  airportMeta: {
+    color: MUTED,
+    fontSize: 12,
+    lineHeight: 18,
+    flexShrink: 1,
+  },
   flightButton: {
     alignSelf: "flex-end",
     marginTop: 8,

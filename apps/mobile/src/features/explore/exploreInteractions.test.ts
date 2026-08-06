@@ -14,6 +14,7 @@ import {
   destinationCardLayout,
   exactExploreResult,
   exploreBottomPadding,
+  formatFlightAccess,
   searchExplore,
 } from "./exploreModels";
 import { POPULAR_DESTINATIONS } from "./exploreData";
@@ -336,6 +337,46 @@ test("popular destination flight action is compact while preserving navigation",
   assert.match(flightButtonStyle, /gap: 6/);
   assert.doesNotMatch(flightButtonStyle, /width: "100%"|alignSelf: "stretch"|flex: 1/);
   assert.match(styles, /flightButtonText: \{ color: "white", fontSize: 13, fontWeight: "800" \}/);
+});
+
+test("popular destination cards present shared summaries before concise flight access", () => {
+  const source = screen();
+  const card = source.slice(
+    source.indexOf("function PopularDestinationCard"),
+    source.indexOf("function ExploreDiscoveryContent"),
+  );
+
+  assert.match(card, /destination\.summary \? \(/);
+  assert.match(card, /numberOfLines=\{3\}/);
+  assert.match(card, /ellipsizeMode="tail"/);
+  assert.match(card, /\{destination\.summary\}/);
+  assert.ok(
+    card.indexOf("{destination.summary}") <
+      card.indexOf("formatFlightAccess("),
+  );
+  assert.doesNotMatch(card, /destination\.airportNames/);
+  assert.doesNotMatch(card, /landmark architecture|major museums|food traditions/);
+
+  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
+  assert.match(styles, /destinationSummary:[\s\S]*?fontSize: 14[\s\S]*?lineHeight: 20[\s\S]*?flexShrink: 1/);
+  assert.match(styles, /airportMeta:[\s\S]*?fontSize: 12[\s\S]*?flexShrink: 1/);
+  assert.doesNotMatch(source, /Platform\.OS/);
+});
+
+test("flight access formatter keeps the primary first and removes duplicate codes", () => {
+  assert.equal(formatFlightAccess("CDG", ["CDG"]), "Flights via CDG");
+  assert.equal(
+    formatFlightAccess("CDG", ["ORY", "CDG"]),
+    "Flights via CDG and ORY",
+  );
+  assert.equal(
+    formatFlightAccess("LHR", ["LGW", "LHR", "STN", "LGW", "LTN"]),
+    "Flights via LHR + 3 more",
+  );
+  assert.equal(
+    formatFlightAccess("CDG", ["cdg", "ORY"]),
+    "Flights via CDG and ORY",
+  );
 });
 
 test("popular destination flight action does not replace card details or save actions", () => {
