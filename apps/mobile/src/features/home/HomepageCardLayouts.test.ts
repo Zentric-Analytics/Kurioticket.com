@@ -67,12 +67,11 @@ test("Popular destination cards match the mobile website dimensions and layout",
 });
 
 test("Discover cards use the compact editorial card layout with horizontal scrolling", () => {
-  assert.match(
-    adventure,
-    /const cardWidth = Math\.min\(190, Math\.max\(160, width \* 0\.42\)\)/,
-  );
-  assert.match(adventure, /card:\s*\{ height:\s*187/);
-  assert.match(adventure, /imageFrame:\s*\{ flex:\s*1, borderRadius:\s*18/);
+  assert.match(adventure, /viewportWidthRatio: 0\.44/);
+  assert.match(adventure, /minWidth: 170/);
+  assert.match(adventure, /maxWidth: 210/);
+  assert.match(adventure, /height: 300/);
+  assert.match(adventure, /imageFrame:\s*\{ flex:\s*1, borderRadius:\s*WEBSITE_DISCOVERY_CARD\.radius/);
   assert.match(
     adventure,
     /<Image[\s\S]*resizeMode="cover"[\s\S]*style=\{styles\.image\}/,

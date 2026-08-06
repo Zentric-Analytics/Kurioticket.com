@@ -1,4 +1,4 @@
-type Props = { modeLabel: string; opened: number; total: number; totalLabel: string | null; progressLabel: string; allOpened: boolean; hasExpired: boolean; t: (key: string) => string };
+type Props = { modeLabel: string; opened: number; total: number; totalLabel: string | null; progressLabel: string; allOpened: boolean; hasExpired: boolean; hasUnavailableAction?: boolean; t: (key: string) => string };
 
 type OpenLineSide = "left" | "right";
 type OpenLineTurn = "top" | "bottom";
@@ -16,7 +16,7 @@ function OpenSectionLine({ side, turn }: { side: OpenLineSide; turn: OpenLineTur
   </div>;
 }
 
-export function DealsHandoffSummary({ modeLabel, opened, total, totalLabel, progressLabel, allOpened, hasExpired, t }: Props) {
+export function DealsHandoffSummary({ modeLabel, opened, total, totalLabel, progressLabel, allOpened, hasExpired, hasUnavailableAction = false, t }: Props) {
   const percent = total ? Math.round(opened / total * 100) : 0;
   return <aside aria-labelledby="trip-summary-title" className="order-1 min-w-0 xl:order-2 xl:sticky xl:top-24">
     <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-none">
@@ -39,7 +39,7 @@ export function DealsHandoffSummary({ modeLabel, opened, total, totalLabel, prog
       </div>
       <OpenSectionLine side="right" turn="top" />
       <div className="space-y-4 p-5 pt-3 sm:p-6 sm:pt-4">
-        <p className={hasExpired ? "text-sm font-medium leading-6 text-amber-800" : "text-sm leading-6 text-slate-600"}>{hasExpired ? t("deals.handoff.summaryRefreshRequired") : t("deals.handoff.openingDoesNotBook")}</p>
+        <p className={hasExpired || hasUnavailableAction ? "text-sm font-medium leading-6 text-amber-800" : "text-sm leading-6 text-slate-600"}>{hasExpired ? t("deals.handoff.summaryRefreshRequired") : hasUnavailableAction ? t("deals.guided.handoff.summaryActionUnavailable") : t("deals.handoff.openingDoesNotBook")}</p>
       </div>
     </div>
   </aside>;
