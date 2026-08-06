@@ -14,3 +14,7 @@ export function requireGoogleWebClientId() {
   if (!clientId) throw new GoogleSignInConfigurationError();
   return clientId;
 }
+
+export function getGoogleIosClientId() {
+  return process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() || "";
+}

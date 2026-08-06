@@ -3,10 +3,14 @@ import test, { afterEach } from "node:test";
 
 import { GET } from "./route";
 
-const originalUrl = process.env.NEXT_PUBLIC_APP_URL;
+const environmentKeys = ["NEXT_PUBLIC_APP_URL", "RENDER_GIT_COMMIT"] as const;
+const originalEnvironment = Object.fromEntries(environmentKeys.map((key) => [key, process.env[key]]));
 afterEach(() => {
-  if (originalUrl === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
-  else process.env.NEXT_PUBLIC_APP_URL = originalUrl;
+  for (const key of environmentKeys) {
+    const value = originalEnvironment[key];
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
 });
 
 const expectedConfig = {
@@ -74,7 +78,10 @@ test("mobile config disables response caching", async () => {
 
 test("mobile config reports only staging and disables provider checkout", async () => {
   process.env.NEXT_PUBLIC_APP_URL = "https://staging.kurioticket.com";
-  const payload = await (await GET()).json() as { data: { environment: string; features: { externalCheckout: boolean } } };
+  process.env.RENDER_GIT_COMMIT = "b".repeat(40);
+  const payload = await (await GET()).json() as { data: { environment: string; releaseReadiness: { commitSha: string | null; releaseTimestamp: string; applicationVersion: string | null }; features: { externalCheckout: boolean } } };
   assert.equal(payload.data.environment, "staging");
+  assert.equal(payload.data.releaseReadiness.commitSha, "b".repeat(40));
+  assert.match(payload.data.releaseReadiness.releaseTimestamp, /^\d{4}-\d{2}-\d{2}T/);
   assert.equal(payload.data.features.externalCheckout, false);
 });

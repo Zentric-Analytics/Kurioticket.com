@@ -10,8 +10,9 @@ import {
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { FlowIcon } from "../flow/FlowIcon";
-import { flowColors } from "../flow/flowStyles";
+import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
+import { flowColors, useFlowTheme } from "../flow/flowStyles";
+import { popularDestinationStayNavigation } from "./homepageCardNavigation";
 
 export const popularDestinationStays = [
   {
@@ -73,12 +74,13 @@ export const popularDestinationStays = [
 ] as const;
 
 export function PopularDestinationStays() {
+  const ft = useFlowTheme();
   const { width } = useWindowDimensions();
   const { savedIds, toggle } = useSavedDestinations();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const cardWidth = Math.min(280, Math.max(230, width * 0.7));
+  const cardWidth = Math.min(230, Math.max(190, width * 0.58));
 
   return (
     <View
@@ -86,7 +88,7 @@ export function PopularDestinationStays() {
       testID="popular-destination-stays"
       style={styles.section}
     >
-      <Text accessibilityRole="header" style={styles.heading}>
+      <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>
         Popular destination stays
       </Text>
       <ScrollView
@@ -104,12 +106,7 @@ export function PopularDestinationStays() {
               key={destination.id}
               accessibilityRole="button"
               accessibilityLabel={`Explore hotel stays in ${destination.city}, ${destination.country}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/hotels",
-                  params: { destination: destination.city },
-                })
-              }
+              onPress={() => router.push(popularDestinationStayNavigation(destination))}
               style={({ pressed }) => [
                 styles.card,
                 { width: cardWidth },
@@ -137,23 +134,15 @@ export function PopularDestinationStays() {
                   style={styles.image}
                   imageStyle={styles.imageCorners}
                 >
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
-                    accessibilityState={{ selected: saved }}
-                    hitSlop={8}
+                  <AndroidFavoriteButton
+                    saved={saved}
+                    label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
                     onPress={(event) => {
                       event.stopPropagation();
                       toggle(destination.id);
                     }}
-                    style={({ pressed }) => [
-                      styles.heart,
-                      saved && styles.heartSaved,
-                      pressed && styles.heartPressed,
-                    ]}
-                  >
-                    <FlowIcon name="heart" color="white" size={22} />
-                  </Pressable>
+                    style={styles.heart}
+                  />
                   <View pointerEvents="none" style={styles.copy}>
                     <Text style={styles.city}>{destination.city}</Text>
                     <Text style={styles.country}>{destination.country}</Text>
@@ -171,14 +160,13 @@ export function PopularDestinationStays() {
 const styles = StyleSheet.create({
   section: { gap: 14, marginTop: 4 },
   heading: {
-    color: flowColors.navy,
     fontSize: 21,
     lineHeight: 27,
     fontWeight: "800",
   },
   carousel: { gap: 14, paddingBottom: 8, paddingRight: 34 },
   card: {
-    height: 350,
+    height: 290,
     borderRadius: 20,
     backgroundColor: "#DCE5F3",
     shadowColor: "#10254D",
@@ -195,38 +183,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
   },
-  image: { flex: 1, justifyContent: "flex-end", padding: 16 },
+  image: { flex: 1, justifyContent: "flex-end", padding: 14 },
   imageCorners: { borderRadius: 20 },
-  heart: {
-    position: "absolute",
-    top: 14,
-    right: 14,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.46)",
-    backgroundColor: "rgba(255,255,255,0.24)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heartSaved: {
-    borderColor: "rgba(255,255,255,0.72)",
-    backgroundColor: "rgba(6,76,247,0.92)",
-  },
-  heartPressed: { opacity: 0.76, transform: [{ scale: 0.94 }] },
+  heart: { position: "absolute", top: 14, right: 14 },
   copy: {
     zIndex: 1,
     alignSelf: "flex-start",
     backgroundColor: "rgba(2, 15, 42, 0.55)",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderRadius: 13,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   city: {
-    color: "white",
-    fontSize: 25,
-    lineHeight: 30,
+    color: flowColors.white,
+    fontSize: 22,
+    lineHeight: 27,
     fontWeight: "900",
     letterSpacing: -0.35,
     textShadowColor: "rgba(0,0,0,0.75)",
@@ -234,9 +205,9 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   country: {
-    color: "white",
-    fontSize: 13,
-    lineHeight: 19,
+    color: flowColors.white,
+    fontSize: 12,
+    lineHeight: 17,
     fontWeight: "600",
     letterSpacing: 0.15,
     textShadowColor: "rgba(0,0,0,0.75)",

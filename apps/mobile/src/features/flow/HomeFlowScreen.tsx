@@ -10,12 +10,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
-import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
-import { flowColors, flowStyles } from "./flowStyles";
+import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
 import { DiscoverNextAdventure } from "../home/DiscoverNextAdventure";
 import { HomepageDealPromos } from "../home/HomepageDealPromos";
@@ -26,6 +24,10 @@ const homeHeroSource = {
 const HOME_HERO_WIDTH = 2047;
 const HOME_HERO_HEIGHT = 1380;
 const HOME_HERO_DISPLAY_HEIGHT = 300;
+const HOME_HERO_HORIZONTAL_OVERLAY_START_OPACITY = 0.16;
+const HOME_HERO_HORIZONTAL_OVERLAY_MID_OPACITY = 0.035;
+const HOME_HERO_VERTICAL_OVERLAY_START_OPACITY = 0.035;
+const HOME_HERO_VERTICAL_OVERLAY_END_OPACITY = 0.055;
 
 function HomeHero() {
   const { width } = useWindowDimensions();
@@ -60,14 +62,14 @@ function HomeHero() {
       <Svg pointerEvents="none" style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id="horizontalOverlay" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor="#020617" stopOpacity={0.28} />
-            <Stop offset="0.5" stopColor="#020617" stopOpacity={0.08} />
+            <Stop offset="0" stopColor="#020617" stopOpacity={HOME_HERO_HORIZONTAL_OVERLAY_START_OPACITY} />
+            <Stop offset="0.5" stopColor="#020617" stopOpacity={HOME_HERO_HORIZONTAL_OVERLAY_MID_OPACITY} />
             <Stop offset="1" stopColor="#020617" stopOpacity={0} />
           </LinearGradient>
           <LinearGradient id="verticalOverlay" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#020617" stopOpacity={0.08} />
+            <Stop offset="0" stopColor="#020617" stopOpacity={HOME_HERO_VERTICAL_OVERLAY_START_OPACITY} />
             <Stop offset="0.5" stopColor="#020617" stopOpacity={0} />
-            <Stop offset="1" stopColor="#020617" stopOpacity={0.1} />
+            <Stop offset="1" stopColor="#020617" stopOpacity={HOME_HERO_VERTICAL_OVERLAY_END_OPACITY} />
           </LinearGradient>
         </Defs>
         <Rect width="88%" height="100%" fill="url(#horizontalOverlay)" />
@@ -78,8 +80,9 @@ function HomeHero() {
 }
 
 export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
+  const ft = useFlowTheme();
   return (
-    <View pointerEvents="box-none" style={styles.homeTopNavigation}>
+    <View pointerEvents="box-none" style={[styles.homeTopNavigation, { backgroundColor: ft.colors.surface, borderBottomColor: ft.colors.border }]}>
       <View style={{ height: safeAreaTop }} />
       <View
         pointerEvents="box-none"
@@ -95,9 +98,9 @@ export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
           accessibilityRole="button"
           accessibilityLabel="Notifications"
           onPress={() => router.push("/notifications")}
-          style={flowStyles.iconButton}
+          style={ft.styles.iconButton}
         >
-          <FlowIcon name="bell" />
+          <FlowIcon name="bell" color={ft.colors.icon} />
         </Pressable>
       </View>
     </View>
@@ -115,18 +118,12 @@ const products: {
   { label: "Deals", route: "/deals", icon: "deal" },
 ];
 export function SharedHomePage() {
+  const ft = useFlowTheme();
   const insets = useSafeAreaInsets();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    void readSession()
-      .then((session) => setIsAuthenticated(session !== null))
-      .catch(() => setIsAuthenticated(false));
-  }, []);
 
   return (
-    <View style={flowStyles.safe}>
-      <StatusBar style="dark" translucent backgroundColor="white" />
+    <View style={ft.styles.safe}>
+      <StatusBar style={ft.theme.dark ? "light" : "dark"} translucent backgroundColor={ft.colors.page} />
       <ScrollView
         style={styles.homeScroll}
         contentContainerStyle={styles.content}
@@ -136,7 +133,7 @@ export function SharedHomePage() {
           <HomeTopNavigation safeAreaTop={insets.top} />
           <HomeHero />
         </View>
-        <View style={[styles.products, flowStyles.shadow]}>
+        <View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>
           {products.map((product, index) => (
             <Pressable
               key={product.label}
@@ -145,17 +142,17 @@ export function SharedHomePage() {
               onPress={() => router.push(product.route)}
               style={({ pressed }) => [
                 styles.product,
-                index === 0 && styles.productActive,
-                pressed && flowStyles.pressed,
+                index === 0 && [styles.productActive, { backgroundColor: ft.colors.selected }],
+                pressed && ft.styles.pressed,
               ]}
             >
               <FlowIcon
                 name={product.icon}
-                color={index === 0 ? flowColors.blue : flowColors.navy}
+                color={index === 0 ? flowColors.blue : ft.colors.icon}
               />
               <Text
                 style={[
-                  styles.productText,
+                  styles.productText, { color: ft.colors.text },
                   index === 0 && styles.productTextActive,
                 ]}
               >
@@ -165,27 +162,6 @@ export function SharedHomePage() {
           ))}
         </View>
         <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Track prices and save"
-          onPress={() => router.push("/price-alerts")}
-          style={({ pressed }) => [
-            styles.alert,
-            flowStyles.shadow,
-            pressed && flowStyles.pressed,
-          ]}
-        >
-          <View style={styles.alertIcon}>
-            <FlowIcon name="bell" color={flowColors.blue} />
-          </View>
-          <View style={styles.grow}>
-            <Text style={flowStyles.value}>Track prices & save</Text>
-            <Text style={flowStyles.meta}>
-              Get alerts when prices drop{"\n"}for your favorite trips.
-            </Text>
-          </View>
-          <FlowIcon name="chevron" />
-        </Pressable>
         <PopularDestinationStays />
         <DiscoverNextAdventure />
         <HomepageDealPromos />
@@ -244,24 +220,4 @@ const styles = StyleSheet.create({
   },
   productText: { color: flowColors.navy, fontSize: 11, fontWeight: "700" },
   productTextActive: { color: flowColors.blue },
-  alert: {
-    minHeight: 82,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: flowColors.border,
-    backgroundColor: "white",
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    gap: 12,
-  },
-  alertIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "#EEF4FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  grow: { flex: 1 },
 });

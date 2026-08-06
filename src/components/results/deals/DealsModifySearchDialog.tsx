@@ -7,6 +7,7 @@ import { getIncludedProducts, type DealsSearch } from "@/lib/deals/dealsSearchPa
 import { getOverviewData } from "@/lib/deals/dealsResultsPresentation";
 
 const focusable = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+const dealsChildOverlaySelector = '[data-deals-destination-popover],[data-deals-flight-dates-popover],[data-deals-flight-travellers-popover],[data-deals-hotel-dates-popover],[data-deals-hotel-guests-popover],[data-deals-car-dates-popover],[data-deals-car-times-popover],[data-deals-car-return-location-popover]';
 
 function lockBodyScroll() {
   const body = document.body; const root = document.documentElement; const scrollY = window.scrollY;
@@ -22,11 +23,11 @@ export function DealsModifySearchDialog({ search, locale, t, onSubmit, onClose, 
   const title = included.flight ? overview.flight.title : `${overview.hotel.title} ${t("deals.results.editor.tripSuffix")}`;
   const details = [included.flight && `${overview.flight.dates} · ${overview.flight.travelers} ${t(overview.flight.travelers === 1 ? "deals.results.traveler" : "deals.results.travelers")}`, included.hotel && `${overview.hotel.guests} ${t("deals.results.guests")} · ${overview.hotel.rooms} ${t("deals.results.rooms")}`, included.car && t("deals.results.editor.carIncluded")].filter(Boolean).join(" · ");
   useEffect(() => { const restore = lockBodyScroll(); requestAnimationFrame(() => closeRef.current?.focus()); return restore; }, []);
-  const hasOpenChild = useCallback(() => Boolean(document.querySelector('[data-deals-destination-popover],[data-deals-flight-dates-popover],[data-deals-flight-travellers-popover],[data-deals-hotel-dates-popover],[data-deals-hotel-guests-popover],[data-deals-car-dates-popover],[data-deals-car-times-popover]') || panelRef.current?.querySelector('[aria-expanded="true"][aria-haspopup]')), []);
+  const hasOpenChild = useCallback(() => Boolean(document.querySelector(dealsChildOverlaySelector) || panelRef.current?.querySelector('[aria-expanded="true"][aria-haspopup]')), []);
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Escape") { if (hasOpenChild()) return; event.preventDefault(); event.stopPropagation(); onClose(); return; }
     if (event.key !== "Tab") return;
-    const nodes = Array.from(document.querySelectorAll<HTMLElement>(focusable)).filter((node) => (panelRef.current?.contains(node) || node.closest('[data-deals-destination-popover],[data-deals-flight-dates-popover],[data-deals-flight-travellers-popover],[data-deals-hotel-dates-popover],[data-deals-hotel-guests-popover],[data-deals-car-dates-popover],[data-deals-car-times-popover]')) && !node.closest('[aria-hidden="true"]'));
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>(focusable)).filter((node) => (panelRef.current?.contains(node) || node.closest(dealsChildOverlaySelector)) && !node.closest('[aria-hidden="true"]'));
     if (!nodes.length) return; const first = nodes[0]; const last = nodes[nodes.length - 1];
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   };

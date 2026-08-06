@@ -1,0 +1,14 @@
+[
+  {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "createdAt": "2026-08-04T20:00:00.000Z",
+    "group": "33333333-3333-4333-8333-333333333333",
+    "branch": "production",
+    "message": "sanitized fixture",
+    "runtimeVersion": "production-0.3.0",
+    "platform": "ANDROID",
+    "manifestPermalink": "https://u.expo.dev/sanitized",
+    "isRollBackToEmbedded": false,
+    "gitCommitHash": "d97d8e01245a1b77c77d3499d02d5f355b885025"
+  }
+]

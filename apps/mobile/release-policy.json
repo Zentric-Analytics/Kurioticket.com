@@ -1,0 +1,31 @@
+{
+  "legacyRuntime": "0.2.0",
+  "preview": {
+    "displayName": "Kurioticket Preview",
+    "bundleIdentifier": "com.kurioticket.app.preview",
+    "androidPackage": "com.kurioticket.app.preview",
+    "scheme": "kurioticket-preview",
+    "apiBaseUrl": "https://staging.kurioticket.com",
+    "channel": "preview",
+    "profile": "preview",
+    "distribution": "internal",
+    "androidBuildType": "apk",
+    "appVersion": "0.3.0",
+    "runtimeVersion": "preview-0.3.0",
+    "sourceBranch": "dev"
+  },
+  "production": {
+    "displayName": "Kurioticket",
+    "bundleIdentifier": "com.kurioticket.app",
+    "androidPackage": "com.kurioticket.app",
+    "scheme": "kurioticket",
+    "apiBaseUrl": "https://kurioticket.com",
+    "channel": "production",
+    "profile": "production",
+    "distribution": "store",
+    "androidBuildType": "app-bundle",
+    "appVersion": "0.3.0",
+    "runtimeVersion": "production-0.3.0",
+    "sourceBranch": "main"
+  }
+}

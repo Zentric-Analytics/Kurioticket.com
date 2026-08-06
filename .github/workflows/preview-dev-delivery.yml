@@ -1,0 +1,330 @@
+name: Preview dev delivery
+
+on:
+  workflow_call:
+    inputs:
+      target_sha: { description: "Immutable validated dev SHA", required: true, type: string }
+      mobile_relevant: { description: "Whether the validated change affects mobile", required: true, type: boolean }
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: preview-dev-delivery
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    name: Resolve Preview delivery outcome
+    environment: mobile-preview-ota
+    runs-on: ubuntu-latest
+    outputs:
+      outcome: ${{ steps.combine.outputs.outcome }}
+      android: ${{ steps.combine.outputs.android }}
+      ios: ${{ steps.combine.outputs.ios }}
+      web_attempt: ${{ steps.staging.outputs.attempt }}
+      web_visual: ${{ steps.staging.outputs.visual }}
+    env:
+      APP_VARIANT: preview
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+      TARGET_SHA: ${{ inputs.target_sha }}
+      MOBILE_RELEVANT: ${{ inputs.mobile_relevant }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with: { ref: "${{ inputs.target_sha }}", fetch-depth: 0 }
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
+      - name: Verify immutable trusted dev source
+        run: |
+          set -euo pipefail
+          [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo 'Preview target must be a full SHA.' >&2; exit 1; }
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA" || { echo 'Preview checkout SHA mismatch.' >&2; exit 1; }
+          git fetch origin dev --no-tags
+          test "$(git rev-parse origin/dev)" = "$TARGET_SHA" || { echo 'Preview target is no longer the current dev head.' >&2; exit 1; }
+      - name: Install target mobile dependencies
+        if: inputs.mobile_relevant
+        working-directory: apps/mobile
+        run: npm ci
+      - name: Wait for exact staging deployment and safety
+        id: staging
+        working-directory: apps/mobile
+        env:
+          PREVIEW_TARGET_SHA: ${{ inputs.target_sha }}
+          PREVIEW_STAGING_OUTPUT: ${{ runner.temp }}/staging-readiness.json
+        run: |
+          node scripts/preview-ota-automation.mjs wait-staging
+          node - <<'NODE'
+          const fs = require('fs');
+          const result = JSON.parse(fs.readFileSync(process.env.PREVIEW_STAGING_OUTPUT, 'utf8'));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `attempt=${result.attempt}\nvisual=${result.visual?.desktop?.rendered === true && result.visual?.mobile?.rendered === true ? 'desktop-and-mobile-rendered' : 'failed'}\n`);
+          NODE
+      - name: Record web-only success
+        if: ${{ !inputs.mobile_relevant }}
+        run: |
+          printf '{"platform":"android","decision":"NOT_APPLICABLE"}\n' > "$RUNNER_TEMP/android-classification.json"
+          printf '{"platform":"ios","decision":"NOT_APPLICABLE"}\n' > "$RUNNER_TEMP/ios-classification.json"
+      - name: Resolve Preview environment for fingerprinting
+        if: inputs.mobile_relevant
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_TOKEN" || { echo 'Preview EXPO_TOKEN is missing.' >&2; exit 1; }
+          npx eas-cli@16.17.4 env:list preview --format short > "$RUNNER_TEMP/preview-environment.txt"
+          node - <<'NODE'
+          const fs = require('fs');
+          const line = fs.readFileSync(process.env.RUNNER_TEMP + '/preview-environment.txt', 'utf8').split(/\r?\n/).find((value) => value.startsWith('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID='));
+          if (!line || line.slice(line.indexOf('=') + 1).trim().length === 0) throw new Error('Preview iOS OAuth environment is incomplete.');
+          fs.appendFileSync(process.env.GITHUB_ENV, `${line}\n`);
+          NODE
+      - name: Resolve latest finished Preview baselines
+        if: inputs.mobile_relevant
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          set -euo pipefail
+          npx eas-cli@16.17.4 build:list --platform android --build-profile preview --app-identifier com.kurioticket.app.preview --limit 50 --json --non-interactive > "$RUNNER_TEMP/android-builds.json"
+          npx eas-cli@16.17.4 build:list --platform ios --build-profile preview --app-identifier com.kurioticket.app.preview --limit 50 --json --non-interactive > "$RUNNER_TEMP/ios-builds.json"
+          git rev-list "$TARGET_SHA" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.stringify(s.trim().split(/\\r?\\n/).filter(Boolean))))" > "$RUNNER_TEMP/ancestors.json"
+          for platform in android ios; do
+            reviewed_id=$(node scripts/preview-delivery-contract.mjs reviewed-id --registry release-baselines/preview-builds.json --ancestors "$RUNNER_TEMP/ancestors.json" --platform "$platform")
+            npx eas-cli@16.17.4 build:view "$reviewed_id" --json > "$RUNNER_TEMP/$platform-reviewed-build.json"
+            PLATFORM="$platform" node - <<'NODE'
+          const fs = require('fs');
+          const platform = process.env.PLATFORM;
+          const historyPath = `${process.env.RUNNER_TEMP}/${platform}-builds.json`;
+          const reviewedPath = `${process.env.RUNNER_TEMP}/${platform}-reviewed-build.json`;
+          const history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+          const reviewed = JSON.parse(fs.readFileSync(reviewedPath, 'utf8'));
+          if (!Array.isArray(history) || !reviewed || Array.isArray(reviewed) || typeof reviewed !== 'object') throw new Error('EAS Preview build response schema is invalid.');
+          fs.writeFileSync(historyPath, `${JSON.stringify([reviewed, ...history.filter((entry) => entry?.id !== reviewed.id)])}\n`);
+          NODE
+          done
+          node scripts/preview-delivery-contract.mjs baseline --input "$RUNNER_TEMP/android-builds.json" --registry release-baselines/preview-builds.json --ancestors "$RUNNER_TEMP/ancestors.json" --platform android --target "$TARGET_SHA" --output "$RUNNER_TEMP/android-baseline.json"
+          node scripts/preview-delivery-contract.mjs baseline --input "$RUNNER_TEMP/ios-builds.json" --registry release-baselines/preview-builds.json --ancestors "$RUNNER_TEMP/ancestors.json" --platform ios --target "$TARGET_SHA" --output "$RUNNER_TEMP/ios-baseline.json"
+      - name: Generate baseline and target native fingerprints
+        if: inputs.mobile_relevant
+        run: |
+          set -euo pipefail
+          for platform in android ios; do
+            baseline_sha=$(node -e "process.stdout.write(require(process.env.RUNNER_TEMP+'/${platform}-baseline.json').commitSha)")
+            git diff --name-only "$baseline_sha".."$TARGET_SHA" -- apps/mobile > "$RUNNER_TEMP/${platform}-changed-files.txt"
+            PLATFORM="$platform" node -e "const fs=require('fs');const p=process.env.RUNNER_TEMP+'/'+process.env.PLATFORM+'-changed-files';fs.writeFileSync(p+'.json',JSON.stringify(fs.readFileSync(p+'.txt','utf8').split(/\r?\n/).filter(Boolean)))"
+            worktree="$RUNNER_TEMP/${platform}-baseline-source"
+            git worktree add --detach "$worktree" "$baseline_sha"
+            (cd "$worktree/apps/mobile" && npm ci && EAS_BUILD=true APP_VARIANT=preview APP_BUILD_MODE=release EXPO_PUBLIC_API_BASE_URL=https://staging.kurioticket.com EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID="$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" npx fingerprint fingerprint:generate --platform "$platform" > "$RUNNER_TEMP/${platform}-baseline-fingerprint.json")
+            (cd apps/mobile && EAS_BUILD=true APP_VARIANT=preview APP_BUILD_MODE=release EXPO_PUBLIC_API_BASE_URL=https://staging.kurioticket.com EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID="$EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID" npx fingerprint fingerprint:generate --platform "$platform" > "$RUNNER_TEMP/${platform}-target-fingerprint.json")
+            node apps/mobile/scripts/preview-delivery-contract.mjs classify --platform "$platform" --files "$RUNNER_TEMP/${platform}-changed-files.json" --baseline "$RUNNER_TEMP/${platform}-baseline-fingerprint.json" --target "$RUNNER_TEMP/${platform}-target-fingerprint.json" --output "$RUNNER_TEMP/${platform}-classification.json"
+            git worktree remove --force "$worktree"
+          done
+      - name: Combine platform decisions
+        id: combine
+        working-directory: apps/mobile
+        run: |
+          set -euo pipefail
+          if [ "$MOBILE_RELEVANT" != true ]; then
+            echo 'outcome=WEB_ONLY_SUCCESS' >> "$GITHUB_OUTPUT"
+            echo 'android=NOT_APPLICABLE' >> "$GITHUB_OUTPUT"
+            echo 'ios=NOT_APPLICABLE' >> "$GITHUB_OUTPUT"
+          else
+            node scripts/preview-delivery-contract.mjs combine --mobile-relevant true --android "$RUNNER_TEMP/android-classification.json" --ios "$RUNNER_TEMP/ios-classification.json" --output "$RUNNER_TEMP/preview-outcome.json"
+          fi
+      - name: Publish team-visible delivery decision
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Preview delivery status
+
+          - Target dev SHA: \`$TARGET_SHA\`
+          - Web staging: LIVE
+          - Web expected/live SHA: \`$TARGET_SHA\`
+          - Web visual probe: \`${{ steps.staging.outputs.visual }}\`
+          - Web readiness attempt: \`${{ steps.staging.outputs.attempt }}\`
+          - Web URL: https://staging.kurioticket.com
+          - Outcome: \`${{ steps.combine.outputs.outcome }}\`
+          - Android action: \`${{ steps.combine.outputs.android }}\`
+          - iOS action: \`${{ steps.combine.outputs.ios }}\`
+          - Production impact: none
+          EOF
+      - name: Preserve Preview decision evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: preview-delivery-decision-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/staging-readiness.json
+            ${{ runner.temp }}/*-baseline.json
+            ${{ runner.temp }}/*-fingerprint.json
+            ${{ runner.temp }}/*-classification.json
+            ${{ runner.temp }}/preview-outcome.json
+          if-no-files-found: warn
+          retention-days: 90
+
+  android-ota:
+    name: Publish Android Preview OTA
+    needs: evaluate
+    if: needs.evaluate.outputs.android == 'OTA'
+    environment: mobile-preview-ota
+    runs-on: ubuntu-latest
+    env:
+      APP_VARIANT: preview
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with: { ref: "${{ inputs.target_sha }}", fetch-depth: 0 }
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
+      - run: npm ci
+        working-directory: apps/mobile
+      - name: Reject duplicate Android Preview publication
+        id: replay
+        working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}"
+          PREVIEW_TARGET_SHA: ${{ inputs.target_sha }}
+          PREVIEW_PLATFORM: android
+          PREVIEW_UPDATE_HISTORY: ${{ runner.temp }}/android-update-history.json
+          PREVIEW_REPLAY_OUTPUT: ${{ runner.temp }}/android-replay.json
+        run: |
+          set -euo pipefail
+          printf '[]\n' > "$PREVIEW_UPDATE_HISTORY"
+          for offset in 0 50 100 150 200; do
+            page="$RUNNER_TEMP/android-update-page-$offset.json"
+            npx eas-cli@16.17.4 update:list --branch preview --limit 50 --offset "$offset" --json --non-interactive > "$page"
+            PREVIEW_UPDATE_PAGE="$page" node scripts/preview-ota-automation.mjs merge-history-page
+            count=$(node -e "process.stdout.write(String(require(process.argv[1]).currentPage.length))" "$page")
+            test "$count" -eq 50 || break
+          done
+          node scripts/preview-ota-automation.mjs replay
+      - name: Publish exact Android Preview update
+        if: steps.replay.outputs.already_published != 'true'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: npx eas-cli@16.17.4 update --channel preview --platform android --message "Automatic Preview Android OTA for ${{ inputs.target_sha }}; audit run $GITHUB_RUN_ID" --non-interactive --json | tee "$RUNNER_TEMP/android-update.json"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: preview-android-ota-${{ github.run_id }}
+          path: ${{ runner.temp }}/android-update.json
+          if-no-files-found: warn
+          retention-days: 90
+
+  ios-ota:
+    name: Publish iOS Preview OTA
+    needs: evaluate
+    if: needs.evaluate.outputs.ios == 'OTA'
+    environment: mobile-preview-ota
+    runs-on: ubuntu-latest
+    env:
+      APP_VARIANT: preview
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with: { ref: "${{ inputs.target_sha }}", fetch-depth: 0 }
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
+      - run: npm ci
+        working-directory: apps/mobile
+      - name: Reject duplicate iOS Preview publication
+        id: replay
+        working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}"
+          PREVIEW_TARGET_SHA: ${{ inputs.target_sha }}
+          PREVIEW_PLATFORM: ios
+          PREVIEW_UPDATE_HISTORY: ${{ runner.temp }}/ios-update-history.json
+          PREVIEW_REPLAY_OUTPUT: ${{ runner.temp }}/ios-replay.json
+        run: |
+          set -euo pipefail
+          printf '[]\n' > "$PREVIEW_UPDATE_HISTORY"
+          for offset in 0 50 100 150 200; do
+            page="$RUNNER_TEMP/ios-update-page-$offset.json"
+            npx eas-cli@16.17.4 update:list --branch preview --limit 50 --offset "$offset" --json --non-interactive > "$page"
+            PREVIEW_UPDATE_PAGE="$page" node scripts/preview-ota-automation.mjs merge-history-page
+            count=$(node -e "process.stdout.write(String(require(process.argv[1]).currentPage.length))" "$page")
+            test "$count" -eq 50 || break
+          done
+          node scripts/preview-ota-automation.mjs replay
+      - name: Publish exact iOS Preview update
+        if: steps.replay.outputs.already_published != 'true'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: npx eas-cli@16.17.4 update --channel preview --platform ios --message "Automatic Preview iOS OTA for ${{ inputs.target_sha }}; audit run $GITHUB_RUN_ID" --non-interactive --json | tee "$RUNNER_TEMP/ios-update.json"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: preview-ios-ota-${{ github.run_id }}
+          path: ${{ runner.temp }}/ios-update.json
+          if-no-files-found: warn
+          retention-days: 90
+
+  android-build:
+    name: Refresh Android Preview baseline
+    needs: evaluate
+    if: needs.evaluate.outputs.android == 'BUILD'
+    uses: ./.github/workflows/android-preview-build.yml
+    with:
+      target_sha: ${{ inputs.target_sha }}
+      trigger_mode: automatic
+    secrets: inherit
+
+  ios-build:
+    name: Refresh iOS Preview baseline
+    needs: evaluate
+    if: needs.evaluate.outputs.ios == 'BUILD'
+    uses: ./.github/workflows/ios-preview-build.yml
+    with:
+      target_sha: ${{ inputs.target_sha }}
+      trigger_mode: automatic
+    secrets: inherit
+
+  summary:
+    name: Preview visual availability
+    if: always()
+    needs: [evaluate, android-ota, ios-ota, android-build, ios-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish lane availability summary
+        run: |
+          set -euo pipefail
+          echo "## Team Preview availability" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "- Dev SHA: `${{ inputs.target_sha }}`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web staging: LIVE" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web expected/live SHA: \`${{ inputs.target_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web visual probe: \`${{ needs.evaluate.outputs.web_visual }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web readiness attempt: \`${{ needs.evaluate.outputs.web_attempt }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web URL: https://staging.kurioticket.com" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Evaluate result: `${{ needs.evaluate.result }}`" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "- Android Preview lane: `${{ needs.evaluate.outputs.android }}` (ota: ${{ needs.android-ota.result }}, build: ${{ needs.android-build.result }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- iOS Preview lane: `${{ needs.evaluate.outputs.ios }}` (ota: ${{ needs.ios-ota.result }}, build: ${{ needs.ios-build.result }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Production: unchanged" >> "$GITHUB_STEP_SUMMARY"
+
+          for result in "${{ needs.android-ota.result }}" "${{ needs.ios-ota.result }}" "${{ needs.android-build.result }}" "${{ needs.ios-build.result }}"; do
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ] && [ "$result" != "cancelled" ] && [ "$result" != "neutral" ]; then
+              echo "- Preview lane issue detected: \"$result\"" >> "$GITHUB_STEP_SUMMARY"
+              break
+            fi
+          done
+
+          mkdir -p "$RUNNER_TEMP/preview-summary"
+          cat > "$RUNNER_TEMP/preview-summary/preview-delivery-status.json" <<EOF
+          {
+            "targetSha": "${{ inputs.target_sha }}",
+            "web": { "status": "LIVE", "liveSha": "${{ inputs.target_sha }}", "visual": "${{ needs.evaluate.outputs.web_visual }}", "attempt": "${{ needs.evaluate.outputs.web_attempt }}", "url": "https://staging.kurioticket.com" },
+            "evaluateResult": "${{ needs.evaluate.result }}",
+            "evaluateOutcome": "${{ needs.evaluate.outputs.outcome }}",
+            "android": { "action": "${{ needs.evaluate.outputs.android }}", "otaResult": "${{ needs.android-ota.result }}", "buildResult": "${{ needs.android-build.result }}" },
+            "ios": { "action": "${{ needs.evaluate.outputs.ios }}", "otaResult": "${{ needs.ios-ota.result }}", "buildResult": "${{ needs.ios-build.result }}" }
+          }
+          EOF
+
+      - name: Preserve preview lane status artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: preview-delivery-status-${{ github.run_id }}
+          path: ${{ runner.temp }}/preview-summary/preview-delivery-status.json
+          if-no-files-found: warn
+          retention-days: 90

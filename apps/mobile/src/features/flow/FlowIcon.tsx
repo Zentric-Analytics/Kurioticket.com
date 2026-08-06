@@ -3,15 +3,16 @@ import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
 
 export type FlowIconName =
   | "back" | "bell" | "calendar" | "car" | "card" | "check" | "chevron"
-  | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
+  | "close" | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
   | "person" | "plus" | "search" | "settings" | "share" | "swap" | "trip"
   | "people" | "sliders" | "help" | "headset" | "document" | "shield"
   | "globe" | "currency" | "moon" | "logout"
   | "heart" | "trending" | "map" | "beach" | "city" | "adventure"
   | "nature" | "culture" | "family";
 
-export function FlowIcon({ name, size = 24, color = "#071A48" }: { name: FlowIconName; size?: number; color?: string }) {
+export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none" }: { name: FlowIconName; size?: number; color?: string; fill?: string }) {
   const line = { fill: "none", stroke: color, strokeWidth: 2.1, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const filledLine = { ...line, fill };
   const icons: Record<FlowIconName, ReactNode> = {
     back: <Path {...line} d="m15 5-7 7 7 7M8 12h12" />,
     bell: <><Path {...line} d="M6.5 17.5h11l-1.5-2.3v-4.1a4 4 0 0 0-8 0v4.1l-1.5 2.3Z" /><Path {...line} d="M10 20h4" /></>,
@@ -20,6 +21,7 @@ export function FlowIcon({ name, size = 24, color = "#071A48" }: { name: FlowIco
     card: <><Rect {...line} x="3" y="6" width="18" height="13" rx="2" /><Path {...line} d="M3 10h18M7 15h4" /></>,
     check: <Path {...line} d="m5 12 4 4L19 6" />,
     chevron: <Path {...line} d="m9 6 6 6-6 6" />,
+    close: <Path {...line} d="M6 6l12 12M18 6 6 18" />,
     compass: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="m15.5 8.5-2 5-5 2 2-5 5-2Z" /></>,
     deal: <><Path {...line} d="M4 11V5h6l10 10-6 6L4 11Z" /><Circle {...line} cx="8" cy="8.5" r="1" /></>,
     flight: <Path {...line} d="m3 13 7.5-2.5L8 4l2-1 5 6 5-1.5c1.5-.4 2.4.2 2.6 1 .2.9-.6 1.7-1.8 2.2L15 13l-2 7-2 .7.2-6L5 17l-2-4Z" />,
@@ -44,7 +46,7 @@ export function FlowIcon({ name, size = 24, color = "#071A48" }: { name: FlowIco
     currency: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M15 8.5c-.7-.7-1.7-1-3-1-1.7 0-3 .8-3 2s1 1.8 3 2.3 3 1.1 3 2.4-1.3 2.3-3 2.3c-1.3 0-2.5-.4-3.2-1.2M12 5.5v13" /></>,
     moon: <Path {...line} d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z" />,
     logout: <><Path {...line} d="M10 5H5v14h5M13 8l4 4-4 4M8 12h9" /></>,
-    heart: <Path {...line} d="M20.5 9c0 5-8.5 10-8.5 10S3.5 14 3.5 9A4.5 4.5 0 0 1 12 6.8 4.5 4.5 0 0 1 20.5 9Z" />,
+    heart: <Path {...(fill === "none" ? line : filledLine)} d="M20.5 9c0 5-8.5 10-8.5 10S3.5 14 3.5 9A4.5 4.5 0 0 1 12 6.8 4.5 4.5 0 0 1 20.5 9Z" />,
     trending: <Path {...line} d="m4 17 5-5 4 4 7-8M15 8h5v5" />,
     map: <Path {...line} d="m4 6 5-2 6 2 5-2v14l-5 2-6-2-5 2V6Zm5-2v14M15 6v14" />,
     beach: <><Path {...line} d="M4 13c3-6 8-8 15-4M12 8l-2 12M5 20h14" /><Path {...line} d="M8 10c0-3-2-4-4-4M12 8c1-3 4-4 6-2" /></>,

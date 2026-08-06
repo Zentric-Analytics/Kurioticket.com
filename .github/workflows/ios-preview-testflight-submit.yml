@@ -1,0 +1,108 @@
+name: iOS Preview TestFlight Submit
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha: { description: "Exact approved dev commit SHA embedded in the build", required: true, type: string }
+      eas_build_id: { description: "Exact verified iOS Preview EAS build ID", required: true, type: string }
+      release_reason: { description: "Approval or change reference", required: true, type: string }
+      confirmation_phrase: { description: "Type UPLOAD IOS PREVIEW TO TESTFLIGHT", required: true, type: string }
+
+permissions: { contents: read }
+concurrency: { group: ios-preview-testflight-submit, cancel-in-progress: false }
+
+jobs:
+  submit:
+    environment: mobile-preview-build
+    runs-on: ubuntu-latest
+    env:
+      APP_VARIANT: preview
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+      - name: Validate immutable TestFlight submission inputs
+        env:
+          APPROVED_SHA: "${{ inputs.commit_sha }}"
+          EAS_BUILD_ID: "${{ inputs.eas_build_id }}"
+          RELEASE_REASON: "${{ inputs.release_reason }}"
+          CONFIRMATION: "${{ inputs.confirmation_phrase }}"
+          WORKFLOW_SHA: "${{ github.sha }}"
+        run: |
+          set -euo pipefail
+          [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo 'A full commit SHA is required.' >&2; exit 1; }
+          [[ "$EAS_BUILD_ID" =~ ^[0-9a-f-]{36}$ ]] || { echo 'A canonical EAS build ID is required.' >&2; exit 1; }
+          test "$(git rev-parse HEAD)" = "$WORKFLOW_SHA" || { echo 'Workflow checkout does not match the immutable dispatch SHA.' >&2; exit 1; }
+          git merge-base --is-ancestor "$APPROVED_SHA" "$WORKFLOW_SHA" || { echo 'Approved build SHA is not reachable from the workflow dev SHA.' >&2; exit 1; }
+          test -n "${RELEASE_REASON//[[:space:]]/}" || { echo 'Release reason is required.' >&2; exit 1; }
+          test "$CONFIRMATION" = 'UPLOAD IOS PREVIEW TO TESTFLIGHT' || { echo 'Confirmation phrase mismatch.' >&2; exit 1; }
+      - name: Validate Preview identity and release policy
+        working-directory: apps/mobile
+        run: |
+          set -euo pipefail
+          npm run release:validate
+          npx expo config --type public --json > "$RUNNER_TEMP/ios-preview-submit-config.json"
+          node - <<'NODE'
+          const c = require(process.env.RUNNER_TEMP + '/ios-preview-submit-config.json');
+          const eas = require('./eas.json');
+          const ok = c.name === 'Kurioticket Preview'
+            && c.ios?.bundleIdentifier === 'com.kurioticket.app.preview'
+            && c.version === '0.3.0'
+            && c.runtimeVersion === 'preview-0.3.0'
+            && c.extra?.environment?.channel === 'preview'
+            && c.extra?.environment?.apiBaseUrl === 'https://staging.kurioticket.com'
+            && c.ios?.infoPlist?.ITSAppUsesNonExemptEncryption === false
+            && eas.submit?.preview?.ios?.ascAppId === '6797447471';
+          if (!ok) throw new Error('Resolved iOS Preview submission identity mismatch');
+          NODE
+      - name: Verify the exact finished iOS Preview build
+        working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}"
+          APPROVED_SHA: "${{ inputs.commit_sha }}"
+          EAS_BUILD_ID: "${{ inputs.eas_build_id }}"
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          npx eas-cli@16.17.4 build:view "$EAS_BUILD_ID" --json > "$RUNNER_TEMP/ios-preview-submit-build.json" 2> "$RUNNER_TEMP/ios-preview-submit-build-error.txt"
+          node - <<'NODE'
+          const fs = require('fs');
+          const b = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/ios-preview-submit-build.json', 'utf8'));
+          const ok = b.id === process.env.EAS_BUILD_ID
+            && b.status === 'FINISHED'
+            && b.platform === 'IOS'
+            && b.buildProfile === 'preview'
+            && b.project?.id === '89f6fd88-c0d7-495a-9e2b-8301b09f407d'
+            && b.appVersion === '0.3.0'
+            && typeof b.appBuildVersion === 'string'
+            && /^[1-9]\d*$/.test(b.appBuildVersion)
+            && b.runtimeVersion === 'preview-0.3.0'
+            && b.channel === 'preview'
+            && b.distribution === 'STORE'
+            && b.gitCommitHash === process.env.APPROVED_SHA;
+          if (!ok) throw new Error('EAS iOS Preview build identity or status mismatch');
+          NODE
+      - name: Submit verified IPA to App Store Connect
+        working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}"
+        run: |
+          set -euo pipefail
+          npx eas-cli@16.17.4 submit --platform ios --id "${{ inputs.eas_build_id }}" --profile preview --non-interactive --no-wait 2> >(tee "$RUNNER_TEMP/ios-preview-submit-error.txt" >&2) | tee "$RUNNER_TEMP/ios-preview-submit-result.txt"
+      - name: Preserve non-secret TestFlight submission evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ios-preview-testflight-submit-evidence-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/ios-preview-submit-config.json
+            ${{ runner.temp }}/ios-preview-submit-build.json
+            ${{ runner.temp }}/ios-preview-submit-result.txt
+          if-no-files-found: warn
+          retention-days: 365

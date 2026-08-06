@@ -34,11 +34,17 @@ export function FlightCard({
   isAccented = false,
   resultBadge,
   detailsHref,
+  actionLabel,
+  actionAriaLabel,
+  showProviderHandoffCopy = true,
 }: {
   flight: PublicFlightResult;
   isAccented?: boolean;
   resultBadge?: ResultBadge;
-  detailsHref?: string;
+  detailsHref?: string | null;
+  actionLabel?: string;
+  actionAriaLabel?: string;
+  showProviderHandoffCopy?: boolean;
 }) {
   const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -74,7 +80,8 @@ export function FlightCard({
     : t("providerPrice");
   const providerHandoffCopy = t("flightCardProviderHandoff");
   const resolvedDetailsHref =
-    detailsHref || `/flights/details/${encodeURIComponent(flight.id)}`;
+    detailsHref === undefined ? `/flights/details/${encodeURIComponent(flight.id)}` : detailsHref;
+  const resolvedActionLabel = actionLabel ?? t("viewFlight");
 
   const mobileCard = (
     <div className="p-2.5 sm:p-3 lg:hidden">
@@ -116,15 +123,18 @@ export function FlightCard({
               showConvertedProviderPrice={displayPrice.isConvertedEstimate}
               providerPrice={providerPrice}
               providerPriceLabel={t("providerPrice")}
-              viewFlightLabel={t("viewFlight")}
+              viewFlightLabel={resolvedActionLabel}
+              viewFlightAriaLabel={actionAriaLabel}
             />
           </div>
         </div>
       </div>
 
-      <div className="mt-3 rounded-lg border border-[#D8E1EC]/70 bg-[#F8FAFC]/80 px-3 py-2.5 text-xs font-medium leading-5 text-slate-600">
-        {providerHandoffCopy}
-      </div>
+      {showProviderHandoffCopy ? (
+        <div className="mt-3 rounded-lg border border-[#D8E1EC]/70 bg-[#F8FAFC]/80 px-3 py-2.5 text-xs font-medium leading-5 text-slate-600">
+          {providerHandoffCopy}
+        </div>
+      ) : null}
     </div>
   );
 
@@ -182,7 +192,8 @@ export function FlightCard({
               showConvertedProviderPrice={displayPrice.isConvertedEstimate}
               providerPrice={providerPrice}
               providerPriceLabel={t("providerPrice")}
-              viewFlightLabel={t("viewFlight")}
+              viewFlightLabel={resolvedActionLabel}
+              viewFlightAriaLabel={actionAriaLabel}
               desktop
             />
           </div>
@@ -483,10 +494,11 @@ function FlightFareAction({
   providerPrice,
   providerPriceLabel,
   viewFlightLabel,
+  viewFlightAriaLabel,
   className,
   desktop = false,
 }: {
-  detailsHref: string;
+  detailsHref: string | null;
   formattedPrice: string;
   priceAriaLabel: string;
   priceTitle: string | undefined;
@@ -495,6 +507,7 @@ function FlightFareAction({
   providerPrice: string;
   providerPriceLabel: string;
   viewFlightLabel: string;
+  viewFlightAriaLabel?: string;
   className?: string;
   desktop?: boolean;
 }) {
@@ -538,8 +551,9 @@ function FlightFareAction({
           </div>
         ) : null}
       </div>
-      <LinkButton
+      {detailsHref ? <LinkButton
         href={detailsHref}
+        aria-label={viewFlightAriaLabel}
         variant="primary"
         size="sm"
         className={cn(
@@ -550,7 +564,7 @@ function FlightFareAction({
         )}
       >
         {viewFlightLabel}
-      </LinkButton>
+      </LinkButton> : <button type="button" disabled aria-disabled="true" aria-label={viewFlightAriaLabel} className={cn("inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500", desktop ? "flight-card-view-button rounded-md" : "min-w-[104px]")}>{viewFlightLabel}</button>}
     </div>
   );
 }

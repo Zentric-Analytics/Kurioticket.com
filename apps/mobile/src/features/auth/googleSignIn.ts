@@ -7,7 +7,7 @@ import {
   statusCodes,
   type OneTapResponse,
 } from "react-native-nitro-google-signin";
-import { requireGoogleWebClientId } from "./googleConfig";
+import { getGoogleIosClientId, requireGoogleWebClientId } from "./googleConfig";
 
 export type NativeGoogleResult =
   | { status: "cancelled" }
@@ -34,10 +34,12 @@ async function resolveInteractiveResponse(response: OneTapResponse) {
 
 export async function startNativeGoogleSignIn(): Promise<NativeGoogleResult> {
   const webClientId = requireGoogleWebClientId();
+  const iosClientId = getGoogleIosClientId();
 
   const nonce = await createNonce();
   GoogleOneTapSignIn.configure({
     webClientId,
+    iosClientId: iosClientId || undefined,
     nonce,
     autoSelectOnSignIn: false,
     offlineAccess: false,

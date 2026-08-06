@@ -12,16 +12,17 @@
         "EXPO_PUBLIC_API_BASE_URL": "https://staging.kurioticket.com"
       },
       "android": {
+        "autoIncrement": true,
         "distribution": "internal",
         "buildType": "apk"
       },
       "ios": {
-        "distribution": "store"
+        "distribution": "store",
+        "autoIncrement": true
       },
       "channel": "preview"
     },
     "production": {
-      "autoIncrement": true,
       "channel": "production",
       "environment": "production",
       "distribution": "store",
@@ -29,10 +30,20 @@
         "APP_VARIANT": "production",
         "APP_BUILD_MODE": "release",
         "EXPO_PUBLIC_API_BASE_URL": "https://kurioticket.com"
+      },
+      "android": {
+        "autoIncrement": true,
+        "distribution": "store",
+        "buildType": "app-bundle"
       }
     }
   },
   "submit": {
+    "preview": {
+      "ios": {
+        "ascAppId": "6797447471"
+      }
+    },
     "production": {}
   }
 }

@@ -1,26 +1,8 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 import type { AppBuildMode, AppVariant, MobileEnvironment, MobileEnvironmentInput } from "./src/config/environment.schema";
+import releasePolicy from "./release-policy.json";
 
-const RELEASES = {
-  preview: {
-    displayName: "Kurioticket Preview",
-    bundleIdentifier: "com.kurioticket.app.preview",
-    androidPackage: "com.kurioticket.app.preview",
-    scheme: "kurioticket-preview",
-    apiBaseUrl: "https://staging.kurioticket.com",
-    channel: "preview",
-    appVersion: "0.3.0",
-  },
-  production: {
-    displayName: "Kurioticket",
-    bundleIdentifier: "com.kurioticket.app",
-    androidPackage: "com.kurioticket.app",
-    scheme: "kurioticket",
-    apiBaseUrl: "https://kurioticket.com",
-    channel: "production",
-    appVersion: "0.2.0",
-  },
-} as const;
+const RELEASES = releasePolicy;
 
 function required(input: MobileEnvironmentInput, name: string): string {
   const value = input[name]?.trim();
@@ -42,6 +24,14 @@ function parseUrl(value: string): URL {
     throw new Error("[mobile-environment] API base URL must be an origin without a path.");
   }
   return url;
+}
+
+export function googleIosUrlScheme(clientId: string): string {
+  const match = /^(?<identifier>[A-Za-z0-9-]+)\.apps\.googleusercontent\.com$/.exec(clientId.trim());
+  if (!match?.groups?.identifier) {
+    throw new Error("[mobile-environment] EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID must be a valid Google iOS OAuth client ID.");
+  }
+  return `com.googleusercontent.apps.${match.groups.identifier}`;
 }
 
 export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileEnvironment {
@@ -71,12 +61,20 @@ export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileE
   }
 
   return { variant, buildMode, displayName: release.displayName, bundleIdentifier: release.bundleIdentifier,
-    androidPackage: release.androidPackage, scheme: release.scheme, apiBaseUrl, channel: release.channel,
+    androidPackage: release.androidPackage, scheme: release.scheme, apiBaseUrl, channel: release.channel as AppVariant,
     appVersion: release.appVersion, isPreview: variant === "preview" };
 }
 
-export default ({ config }: ConfigContext): ExpoConfig => {
+const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   const environment = resolveMobileEnvironment(process.env);
+  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
+  if (process.env.EAS_BUILD === "true" && environment.variant === "preview" && !googleIosClientId) {
+    throw new Error("[mobile-environment] Preview EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.");
+  }
+  const plugins: NonNullable<ExpoConfig["plugins"]> = ["expo-router"];
+  if (environment.variant === "preview" && googleIosClientId) {
+    plugins.push(["react-native-nitro-google-signin", { iosUrlScheme: googleIosUrlScheme(googleIosClientId) }]);
+  }
   return {
     ...config,
     name: environment.displayName,
@@ -94,6 +92,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       supportsTablet: true,
       bundleIdentifier: environment.bundleIdentifier,
       icon: "./assets/kurioticket-icon-ios.png",
+      infoPlist: { ITSAppUsesNonExemptEncryption: false },
     },
     android: {
       package: environment.androidPackage,
@@ -101,7 +100,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: "#F7FAFF" },
       adaptiveIcon: { foregroundImage: "./assets/kurioticket-adaptive-foreground.png", backgroundColor: "#F2F6FA" },
     },
-    plugins: ["expo-router"],
+    plugins,
     extra: {
       router: {},
       eas: { projectId: "89f6fd88-c0d7-495a-9e2b-8301b09f407d" },
@@ -113,7 +112,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         isPreview: environment.isPreview,
       },
     },
-    runtimeVersion: environment.isPreview ? environment.appVersion : { policy: "appVersion" },
+    runtimeVersion: RELEASES[environment.variant].runtimeVersion,
     updates: {
       url: "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d",
       checkAutomatically: "ON_LOAD",
@@ -121,3 +120,5 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
   };
 };
+
+export default createAppConfig;

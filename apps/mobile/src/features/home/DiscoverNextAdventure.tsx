@@ -10,8 +10,11 @@ import {
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { FlowIcon } from "../flow/FlowIcon";
-import { flowColors, flowStyles } from "../flow/flowStyles";
+import { flowColors, flowStyles, useFlowTheme } from "../flow/flowStyles";
+import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
+import { discoverAdventureNavigation } from "./homepageCardNavigation";
 
 type AdventureCard = {
   id: string;
@@ -20,6 +23,7 @@ type AdventureCard = {
   destinationCode: string;
   image: { uri: string };
   imageAlt: string;
+  category?: string;
 };
 
 // Keep this order aligned with the website's current Nigeria discovery board.
@@ -91,6 +95,7 @@ export const nextAdventureCards: readonly AdventureCard[] = [
 ] as const;
 
 function AdventureCardView({ card, width }: { card: AdventureCard; width: number }) {
+  const ft = useFlowTheme();
   const { savedIds, toggle } = useSavedDestinations();
   const [imageFailed, setImageFailed] = useState(false);
   const saved = savedIds.has(card.id);
@@ -99,8 +104,8 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${card.title}. ${card.originCode} to ${card.destinationCode}.`}
-      onPress={() => router.push({ pathname: "/flights", params: { from: card.originCode, to: card.destinationCode } })}
-      style={({ pressed }) => [styles.card, flowStyles.shadow, { width }, pressed && flowStyles.pressed]}
+      onPress={() => router.push(discoverAdventureNavigation(card))}
+      style={({ pressed }) => [styles.card, { width }, pressed && flowStyles.pressed]}
     >
       <View style={styles.imageFrame}>
         {imageFailed ? (
@@ -119,58 +124,55 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
             style={styles.image}
           />
         )}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={saved ? "Remove from saved routes" : "Save route"}
-          accessibilityState={{ selected: saved }}
-          hitSlop={8}
+        <Svg pointerEvents="none" style={styles.gradientOverlay} preserveAspectRatio="none" viewBox="0 0 100 100">
+          <Defs>
+            <LinearGradient id={`discover-overlay-${ft.theme.dark ? "dark" : "light"}`} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={ft.theme.dark ? "#020617" : "#071A48"} stopOpacity="0" />
+              <Stop offset="0.44" stopColor={ft.theme.dark ? "#020617" : "#071A48"} stopOpacity={ft.theme.dark ? "0.42" : "0.32"} />
+              <Stop offset="1" stopColor={ft.theme.dark ? "#020617" : "#071A48"} stopOpacity={ft.theme.dark ? "0.86" : "0.72"} />
+            </LinearGradient>
+          </Defs>
+          <Rect width="100" height="100" fill={`url(#discover-overlay-${ft.theme.dark ? "dark" : "light"})`} />
+        </Svg>
+        <View style={styles.cardCopy}>
+          {card.category ? <Text numberOfLines={1} style={[styles.categoryPill, ft.theme.dark && styles.categoryPillDark]}>{card.category}</Text> : null}
+          <Text numberOfLines={2} style={styles.cardTitle}>{card.title}</Text>
+          <Text numberOfLines={1} style={styles.route}>{card.originCode} → {card.destinationCode}</Text>
+        </View>
+        <AndroidFavoriteButton
+          saved={saved}
+          label={saved ? "Remove from saved routes" : "Save route"}
           onPress={(event) => {
             event.stopPropagation();
             toggle(card.id);
           }}
-          style={[styles.heart, saved && styles.heartSaved]}
-        >
-          <FlowIcon name="heart" color={saved ? "#E11D48" : "#64748B"} size={17} />
-        </Pressable>
-      </View>
-      <View style={styles.cardCopy}>
-        <Text numberOfLines={2} style={styles.cardTitle}>{card.title}</Text>
-        <Text style={styles.route}>{card.originCode} → {card.destinationCode}</Text>
-        <Text style={styles.tripSummary}>ONE WAY · ECONOMY · 1 TRAVELER</Text>
-        <Text style={styles.from}>From</Text>
+          style={styles.heart}
+        />
       </View>
     </Pressable>
   );
 }
 
 export function DiscoverNextAdventure() {
+  const ft = useFlowTheme();
   const { width } = useWindowDimensions();
-  const cardWidth = Math.min(210, Math.max(170, width * 0.44));
-  const rows = [
-    nextAdventureCards.filter((_, index) => index % 2 === 0),
-    nextAdventureCards.filter((_, index) => index % 2 === 1),
-  ];
+  const cardWidth = Math.min(190, Math.max(160, width * 0.42));
 
   return (
     <View collapsable={false} testID="discover-next-adventure" style={styles.section}>
       <View style={styles.headingCopy}>
-        <Text accessibilityRole="header" style={styles.heading}>Discover your next adventure here</Text>
-        <Text style={styles.subtitle}>Compare smart route ideas, flexible fares, and destinations picked for your region.</Text>
+        <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>Discover your next adventure here</Text>
+        <Text style={[styles.subtitle, { color: ft.colors.textSecondary }]}>Compare smart route ideas, flexible fares, and destinations picked for your region.</Text>
       </View>
-      <View style={styles.rows}>
-        {rows.map((cards, rowIndex) => (
-          <ScrollView
-            key={rowIndex === 0 ? "top-row" : "bottom-row"}
-            horizontal
-            nestedScrollEnabled
-            removeClippedSubviews={false}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carousel}
-          >
-            {cards.map((card) => <AdventureCardView key={card.id} card={card} width={cardWidth} />)}
-          </ScrollView>
-        ))}
-      </View>
+      <ScrollView
+        horizontal
+        nestedScrollEnabled
+        removeClippedSubviews={false}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.carousel}
+      >
+        {nextAdventureCards.map((card) => <AdventureCardView key={card.id} card={card} width={cardWidth} />)}
+      </ScrollView>
     </View>
   );
 }
@@ -178,21 +180,20 @@ export function DiscoverNextAdventure() {
 const styles = StyleSheet.create({
   section: { gap: 12, marginTop: 4 },
   headingCopy: { gap: 8 },
-  heading: { color: flowColors.navy, fontSize: 21, lineHeight: 27, fontWeight: "600", letterSpacing: -0.25 },
-  subtitle: { color: "#475569", fontSize: 14, lineHeight: 24, fontWeight: "400" },
-  rows: { gap: 12 },
+  heading: { fontSize: 21, lineHeight: 27, fontWeight: "600", letterSpacing: -0.25 },
+  subtitle: { fontSize: 14, lineHeight: 24, fontWeight: "400" },
   carousel: { gap: 12, paddingBottom: 4, paddingRight: 40 },
-  card: { height: 300, borderRadius: 16, borderWidth: 1, borderColor: "rgba(226,232,240,0.8)", backgroundColor: "white", overflow: "hidden" },
-  imageFrame: { height: 135, backgroundColor: "#EAF2FF", overflow: "hidden" },
+  card: { height: 187, borderRadius: 18, overflow: "hidden" },
+  imageFrame: { flex: 1, borderRadius: 18, backgroundColor: "#EAF2FF", overflow: "hidden" },
   image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4, backgroundColor: "#EAF2FF" },
   fallbackLabel: { color: "#475569", fontSize: 10, fontWeight: "600", letterSpacing: 1.4 },
   fallbackCode: { color: flowColors.navy, fontSize: 12, fontWeight: "900", letterSpacing: 1.4 },
-  heart: { position: "absolute", right: 12, top: 12, width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: "rgba(255,255,255,0.8)", backgroundColor: "rgba(255,255,255,0.92)", alignItems: "center", justifyContent: "center" },
-  heartSaved: { borderColor: "#FECDD3", backgroundColor: "#FFF1F2" },
-  cardCopy: { flex: 1, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 12 },
-  cardTitle: { minHeight: 36, color: "#020617", fontSize: 14, lineHeight: 18, fontWeight: "600", letterSpacing: -0.1 },
-  route: { color: "#334155", fontSize: 12, lineHeight: 20, fontWeight: "600" },
-  tripSummary: { color: "#64748B", fontSize: 10, lineHeight: 16, fontWeight: "600", letterSpacing: 0.8 },
-  from: { marginTop: "auto", paddingTop: 8, color: "#334155", fontSize: 14, lineHeight: 20, fontWeight: "600" },
+  gradientOverlay: { ...StyleSheet.absoluteFillObject },
+  heart: { position: "absolute", right: 12, top: 12 },
+  cardCopy: { position: "absolute", left: 12, right: 12, bottom: 13, gap: 5 },
+  categoryPill: { alignSelf: "flex-start", overflow: "hidden", borderRadius: 999, backgroundColor: "rgba(219,234,254,0.92)", color: flowColors.blue, paddingHorizontal: 9, paddingVertical: 4, fontSize: 10, lineHeight: 13, fontWeight: "800", letterSpacing: 0.2 },
+  categoryPillDark: { backgroundColor: "rgba(29,78,216,0.58)", color: "#DBEAFE" },
+  cardTitle: { color: "white", fontSize: 15, lineHeight: 19, fontWeight: "800", letterSpacing: -0.12 },
+  route: { color: "rgba(255,255,255,0.84)", fontSize: 12, lineHeight: 16, fontWeight: "700", letterSpacing: 0.35 },
 });

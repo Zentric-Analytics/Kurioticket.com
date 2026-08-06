@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "package": "com.kurioticket.app",
+  "recordStatus": "absent",
+  "playApplicationRecord": "absent",
+  "uploadedBundles": [],
+  "highestUploadedVersionCode": null,
+  "verifiedAt": "YYYY-MM-DDTHH:mm:ssZ",
+  "evidenceReference": "reviewed-read-only-Play-audit-reference"
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 2,
+  "package": "com.kurioticket.app",
+  "recordStatus": "present",
+  "playApplicationRecord": "present",
+  "uploadedBundles": [
+    2
+  ],
+  "highestUploadedVersionCode": 2,
+  "verifiedAt": "2026-08-05T00:15:11Z",
+  "evidenceReference": "Google Play Console account 9106799153088925304 post-release audit: EAS build c84c196e-7928-4f26-8b7c-a15f37f031db from main source 20e3f10baf7fa1e9bb85df81dedaff964e4da043; accepted AAB SHA-256 01f5a4b97264100169d9d942bb7647c95dd96322f586b7d9f697446de6300e7a; package com.kurioticket.app; versionName 0.3.0; versionCode 2; Google Play App Signing active; app-signing certificate SHA-1 97:E5:7C:AF:A9:47:BF:11:02:05:B2:80:18:61:81:95:C5:D7:96:3D and SHA-256 1C:B7:A0:7D:3F:A4:ED:EB:E5:56:7C:06:BA:ED:60:E2:F2:12:05:A9:1A:FB:F1:9F:63:D2:08:24:08:3D:BF:41; upload certificate SHA-1 DC:17:A7:76:11:D4:BA:7C:E5:75:8A:90:B3:AD:2E:9E:F5:2E:87:CD and SHA-256 1D:A3:4F:2F:F8:45:4F:5C:9B:25:0B:EC:69:DE:14:3F:B8:C7:1B:8C:5D:19:30:CE:48:5F:EF:31:C0:44:C8:F4; Internal testing track 4701529328209310489 release 1 'Kurioticket 0.3.0 (2) - Internal' active and available to approved 3-user list; Motorola Moto G Play - 2023 Play install succeeded; owner-confirmed controlled Production QA passed; no public, open, closed, OTA, Preview, or iOS delivery"
+}

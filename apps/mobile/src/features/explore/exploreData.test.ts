@@ -2,14 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { destinationById } from "./destinationCatalogue";
-import { POPULAR_DESTINATIONS, HERO_SLIDES, INTERESTS } from "./exploreData";
+import { POPULAR_DESTINATIONS, INTERESTS } from "./exploreData";
 import { CURATED_POPULAR_DESTINATION_IDS } from "../flow/locationCatalogue";
 
 const mediaSource = () => readFileSync("src/features/explore/destinationMedia.ts", "utf8");
 
 test("popular destinations use the curated 25-item catalogue in maintained order", () => {
   assert.equal(POPULAR_DESTINATIONS.length, 25);
-  assert.equal(HERO_SLIDES.length, 4);
   assert.equal(INTERESTS.length, 4);
   assert.deepEqual(
     POPULAR_DESTINATIONS.map((item) => item.destination.id),
@@ -18,19 +17,22 @@ test("popular destinations use the curated 25-item catalogue in maintained order
   assert.equal(new Set(POPULAR_DESTINATIONS.map((item) => item.destination.id)).size, 25);
 });
 
-test("every visible inspiration target resolves to one catalogue destination", () => {
-  for (const item of [...HERO_SLIDES, ...INTERESTS]) {
-    assert.ok(destinationById.get(item.destinationId), `Unsupported inspiration destination: ${item.destinationId}`);
+test("every visible interest resolves to one catalogue destination", () => {
+  for (const item of INTERESTS) {
+    assert.ok(destinationById.get(item.destinationId), `Unsupported interest destination: ${item.destinationId}`);
   }
 });
 
 test("visible interests use the same maintained destination mappings", () => {
-  assert.deepEqual(INTERESTS.map((item) => item.name), [
-    "Beach escapes",
-    "City breaks",
-    "Culture and landmarks",
-    "City skylines",
-  ]);
+  assert.deepEqual(
+    INTERESTS.map(({ name, destinationId }) => [name, destinationId]),
+    [
+      ["Beach escapes", "id-bali"],
+      ["City breaks", "fr-paris"],
+      ["Culture and landmarks", "gb-london"],
+      ["City skylines", "us-new-york"],
+    ],
+  );
 });
 
 test("approved Bali destination asset is registered in the destination media manifest", () => {
