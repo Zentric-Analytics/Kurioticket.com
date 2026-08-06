@@ -66,33 +66,17 @@ test("Popular destination cards match the mobile website dimensions and layout",
   assert.equal(mobileViewport - sideInset - cardWidth - gap, 67);
 });
 
-test("Discover cards use the compact editorial card layout with horizontal scrolling", () => {
-  assert.match(adventure, /viewportWidthRatio: 0\.44/);
-  assert.match(adventure, /minWidth: 170/);
-  assert.match(adventure, /maxWidth: 210/);
+test("Discover cards use the website two-column content-card layout", () => {
+  assert.match(adventure, /imageHeight: 135/);
   assert.match(adventure, /height: 300/);
-  assert.match(adventure, /imageFrame:\s*\{ flex:\s*1, borderRadius:\s*WEBSITE_DISCOVERY_CARD\.radius/);
-  assert.match(
-    adventure,
-    /<Image[\s\S]*resizeMode="cover"[\s\S]*style=\{styles\.image\}/,
-  );
-  assert.match(
-    adventure,
-    /<Svg pointerEvents="none" style=\{styles\.gradientOverlay\}/,
-  );
-  assert.match(
-    adventure,
-    /<Text numberOfLines=\{2\} style=\{styles\.cardTitle\}>\{card\.title\}<\/Text>/,
-  );
-  assert.match(
-    adventure,
-    /<Text numberOfLines=\{1\} style=\{styles\.route\}>\{card\.originCode\} → \{card\.destinationCode\}<\/Text>/,
-  );
-  assert.doesNotMatch(adventure, /tripSummary|ONE WAY|from:\s*\{/);
-  assert.match(
-    adventure,
-    /<ScrollView[\s\S]*horizontal[\s\S]*contentContainerStyle=\{styles\.carousel\}/,
-  );
+  assert.match(adventure, /imageFrame:\s*\{ width:\s*"100%", height:\s*WEBSITE_DISCOVERY_CARD\.imageHeight/);
+  assert.match(adventure, /<View style=\{styles\.contentPanel\}>/);
+  assert.match(adventure, /<Text numberOfLines=\{2\} style=\{styles\.cardTitle\}>\{card\.title\}<\/Text>/);
+  assert.match(adventure, /<Text numberOfLines=\{1\} style=\{styles\.route\}>\{card\.originCode\} → \{card\.destinationCode\}<\/Text>/);
+  assert.match(adventure, /ONE WAY · ECONOMY · 1 TRAVELER/);
+  assert.match(adventure, /<Text style=\{styles\.from\}>From<\/Text>/);
+  assert.match(adventure, /flexWrap: "wrap"/);
+  assert.doesNotMatch(adventure, /<ScrollView[\s\S]*horizontal|Platform\.OS/);
 });
 
 test("favorite buttons continue to function and card navigation uses scoped helpers", () => {

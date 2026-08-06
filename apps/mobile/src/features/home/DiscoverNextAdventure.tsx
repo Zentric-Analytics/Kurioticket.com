@@ -3,14 +3,11 @@ import { useState } from "react";
 import {
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors, flowStyles, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
@@ -25,18 +22,13 @@ type AdventureCard = {
   imageAlt: string;
 };
 
-// Mirrored from the mobile `DiscoverySuggestionCard` board in src/app/page.tsx:
-// w-[44vw] min-w-[170px] max-w-[210px], h-[300px], rounded-2xl,
-// gap-3, and the rail's -mx-4/px-4/pr-10 geometry.
+// Mirrored from the mobile `DiscoverySuggestionCard` in src/app/page.tsx.
 export const WEBSITE_DISCOVERY_CARD = {
-  viewportWidthRatio: 0.44,
-  minWidth: 170,
-  maxWidth: 210,
   height: 300,
+  imageHeight: 135,
   radius: 16,
   gap: 12,
   sideInset: 16,
-  trailingInset: 40,
 } as const;
 
 // Keep this order aligned with the website's current Nigeria discovery board.
@@ -107,7 +99,7 @@ export const nextAdventureCards: readonly AdventureCard[] = [
   },
 ] as const;
 
-function AdventureCardView({ card, width }: { card: AdventureCard; width: number }) {
+function AdventureCardView({ card }: { card: AdventureCard }) {
   const { savedIds, toggle } = useSavedDestinations();
   const [imageFailed, setImageFailed] = useState(false);
   const saved = savedIds.has(card.id);
@@ -117,7 +109,7 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
       accessibilityRole="button"
       accessibilityLabel={`${card.title}. ${card.originCode} to ${card.destinationCode}.`}
       onPress={() => router.push(discoverAdventureNavigation(card))}
-      style={({ pressed }) => [styles.card, { width }, pressed && flowStyles.pressed]}
+      style={({ pressed }) => [styles.card, pressed && flowStyles.pressed]}
     >
       <View style={styles.imageFrame}>
         {imageFailed ? (
@@ -136,20 +128,6 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
             style={styles.image}
           />
         )}
-        <Svg pointerEvents="none" style={styles.gradientOverlay} preserveAspectRatio="none" viewBox="0 0 100 100">
-          <Defs>
-            <LinearGradient id="discover-overlay" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#020617" stopOpacity="0" />
-              <Stop offset="0.44" stopColor="#020617" stopOpacity="0.34" />
-              <Stop offset="1" stopColor="#020617" stopOpacity="0.78" />
-            </LinearGradient>
-          </Defs>
-          <Rect width="100" height="100" fill="url(#discover-overlay)" />
-        </Svg>
-        <View style={styles.cardCopy}>
-          <Text numberOfLines={2} style={styles.cardTitle}>{card.title}</Text>
-          <Text numberOfLines={1} style={styles.route}>{card.originCode} → {card.destinationCode}</Text>
-        </View>
         <AndroidFavoriteButton
           saved={saved}
           label={saved ? "Remove from saved routes" : "Save route"}
@@ -160,17 +138,20 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
           style={styles.heart}
         />
       </View>
+      <View style={styles.contentPanel}>
+        <Text numberOfLines={2} style={styles.cardTitle}>{card.title}</Text>
+        <Text numberOfLines={1} style={styles.route}>{card.originCode} → {card.destinationCode}</Text>
+        <Text numberOfLines={1} style={styles.tripSummary}>ONE WAY · ECONOMY · 1 TRAVELER</Text>
+        <View style={styles.fromRow}>
+          <Text style={styles.from}>From</Text>
+        </View>
+      </View>
     </Pressable>
   );
 }
 
 export function DiscoverNextAdventure() {
   const ft = useFlowTheme();
-  const { width } = useWindowDimensions();
-  const cardWidth = Math.min(
-    WEBSITE_DISCOVERY_CARD.maxWidth,
-    Math.max(WEBSITE_DISCOVERY_CARD.minWidth, width * WEBSITE_DISCOVERY_CARD.viewportWidthRatio),
-  );
 
   return (
     <View collapsable={false} testID="discover-next-adventure" style={styles.section}>
@@ -178,15 +159,9 @@ export function DiscoverNextAdventure() {
         <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>Discover your next adventure here</Text>
         <Text style={[styles.subtitle, { color: ft.colors.textSecondary }]}>Compare smart route ideas, flexible fares, and destinations picked for your region.</Text>
       </View>
-      <ScrollView
-        horizontal
-        nestedScrollEnabled
-        removeClippedSubviews={false}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.carousel}
-      >
-        {nextAdventureCards.map((card) => <AdventureCardView key={card.id} card={card} width={cardWidth} />)}
-      </ScrollView>
+      <View style={styles.grid}>
+        {nextAdventureCards.map((card) => <AdventureCardView key={card.id} card={card} />)}
+      </View>
     </View>
   );
 }
@@ -196,16 +171,18 @@ const styles = StyleSheet.create({
   headingCopy: { gap: 8, paddingHorizontal: WEBSITE_DISCOVERY_CARD.sideInset },
   heading: { fontSize: 20, lineHeight: 28, fontWeight: "600", letterSpacing: -0.25 },
   subtitle: { fontSize: 14, lineHeight: 24, fontWeight: "400" },
-  carousel: { gap: WEBSITE_DISCOVERY_CARD.gap, paddingBottom: 4, paddingLeft: WEBSITE_DISCOVERY_CARD.sideInset, paddingRight: WEBSITE_DISCOVERY_CARD.trailingInset },
-  card: { height: WEBSITE_DISCOVERY_CARD.height, borderRadius: WEBSITE_DISCOVERY_CARD.radius, overflow: "hidden" },
-  imageFrame: { flex: 1, borderRadius: WEBSITE_DISCOVERY_CARD.radius, backgroundColor: "#EAF2FF", overflow: "hidden" },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: WEBSITE_DISCOVERY_CARD.gap, paddingBottom: 4, paddingHorizontal: WEBSITE_DISCOVERY_CARD.sideInset },
+  card: { flexBasis: "47%", flexGrow: 1, height: WEBSITE_DISCOVERY_CARD.height, maxWidth: "50%", borderWidth: 1, borderColor: "rgba(226,232,240,0.8)", borderRadius: WEBSITE_DISCOVERY_CARD.radius, backgroundColor: "white", overflow: "hidden", shadowColor: "#0F172A", shadowOffset: { width: 0, height: 18 }, shadowOpacity: 0.18, shadowRadius: 17.5, elevation: 4 },
+  imageFrame: { width: "100%", height: WEBSITE_DISCOVERY_CARD.imageHeight, backgroundColor: "#EAF2FF", overflow: "hidden" },
   image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4, backgroundColor: "#EAF2FF" },
   fallbackLabel: { color: "#475569", fontSize: 10, fontWeight: "600", letterSpacing: 1.4 },
   fallbackCode: { color: flowColors.navy, fontSize: 12, fontWeight: "900", letterSpacing: 1.4 },
-  gradientOverlay: { ...StyleSheet.absoluteFillObject },
   heart: { position: "absolute", right: 12, top: 12, width: 32, height: 32, borderRadius: 16 },
-  cardCopy: { position: "absolute", left: 12, right: 12, bottom: 12, gap: 4 },
-  cardTitle: { color: "white", fontSize: 14, lineHeight: 18, fontWeight: "600", letterSpacing: -0.14 },
-  route: { color: "rgba(255,255,255,0.88)", fontSize: 12, lineHeight: 20, fontWeight: "600" },
+  contentPanel: { flex: 1, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 12 },
+  cardTitle: { color: "#020617", fontSize: 14, lineHeight: 18, fontWeight: "600", letterSpacing: -0.14 },
+  route: { color: "#334155", fontSize: 12, lineHeight: 20, fontWeight: "600" },
+  tripSummary: { color: "#64748B", fontSize: 10, lineHeight: 16, fontWeight: "600", letterSpacing: 0.8 },
+  fromRow: { marginTop: "auto", paddingTop: 8, flexDirection: "row", alignItems: "baseline", gap: 6 },
+  from: { color: "#334155", fontSize: 14, lineHeight: 20, fontWeight: "600" },
 });
