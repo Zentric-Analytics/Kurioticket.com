@@ -1,32 +1,29 @@
-name: Validate mobile preview
+name: Required PR gates
 
 on:
-  push:
+  pull_request:
     branches:
       - dev
-  workflow_dispatch:
-
-concurrency:
-  group: mobile-preview-update-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
   actions: read
 
+concurrency:
+  group: pr-required-gates-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  validate-preview:
+  validate-mobile-preview:
     name: Validate mobile preview
     runs-on: ubuntu-latest
-    outputs:
-      mobile_relevant: ${{ steps.changes.outputs.mobile_relevant }}
     env:
       APP_VARIANT: preview
       APP_BUILD_MODE: release
       EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
-
     steps:
-      - name: Checkout repository
+      - name: Checkout proposed merge
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
@@ -35,36 +32,15 @@ jobs:
         id: changes
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PUSH_BEFORE_SHA: ${{ github.event.before }}
-          PUSH_AFTER_SHA: ${{ github.event.after }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            printf '%s\n' 'mobile_relevant=true' 'classification=manual-full-validation' >> "$GITHUB_OUTPUT"
+          if ! [[ "$PR_BASE_SHA" =~ ^[0-9a-f]{40}$ && "$PR_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            printf '%s\n' 'mobile_relevant=true' 'classification=uncertain-invalid-pr-range' >> "$GITHUB_OUTPUT"
             exit 0
           fi
-
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            if ! [[ "$PR_BASE_SHA" =~ ^[0-9a-f]{40}$ && "$PR_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
-              printf '%s\n' 'mobile_relevant=true' 'classification=uncertain-invalid-pr-range' >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            git diff --name-only -z "$PR_BASE_SHA...$PR_HEAD_SHA" > /tmp/mobile-validation-paths
-          elif [ "$EVENT_NAME" = "push" ]; then
-            if ! [[ "$PUSH_BEFORE_SHA" =~ ^[0-9a-f]{40}$ && "$PUSH_AFTER_SHA" =~ ^[0-9a-f]{40}$ ]] ||
-               [ "$PUSH_BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
-              printf '%s\n' 'mobile_relevant=true' 'classification=uncertain-invalid-push-range' >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            git diff --name-only -z "$PUSH_BEFORE_SHA..$PUSH_AFTER_SHA" > /tmp/mobile-validation-paths
-          else
-            printf '%s\n' 'mobile_relevant=true' 'classification=uncertain-event' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
+          git diff --name-only -z "$PR_BASE_SHA...$PR_HEAD_SHA" > /tmp/mobile-validation-paths
           node apps/mobile/scripts/classify-mobile-validation-paths.mjs --stdin-null < /tmp/mobile-validation-paths >> "$GITHUB_OUTPUT"
 
       - name: Mobile validation not applicable
@@ -130,16 +106,22 @@ jobs:
           CI: "1"
         run: npx expo export --platform all --output-dir /tmp/kurioticket-mobile-export --clear
 
-      - name: Confirm delivery remains gated
-        if: steps.changes.outputs.mobile_relevant == 'true'
-        run: echo "Validation complete. EAS Updates and native builds require a separately approved workflow."
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout proposed merge
+        uses: actions/checkout@v5
 
-  automatic-preview-ota:
-    name: Deliver validated dev to Preview
-    needs: validate-preview
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && needs.validate-preview.result == 'success'
-    uses: ./.github/workflows/preview-dev-delivery.yml
-    with:
-      target_sha: ${{ github.sha }}
-      mobile_relevant: ${{ needs.validate-preview.outputs.mobile_relevant == 'true' }}
-    secrets: inherit
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify no committed secrets
+        run: npm run security:secrets
+
