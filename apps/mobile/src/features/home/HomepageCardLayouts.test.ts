@@ -9,11 +9,17 @@ const popular = source("src/features/home/PopularDestinationStays.tsx");
 const adventure = source("src/features/home/DiscoverNextAdventure.tsx");
 const home = source("src/features/flow/HomeFlowScreen.tsx");
 
-test("Popular destination cards render at reduced dimensions while preserving horizontal scrolling", () => {
-  assert.match(popular, /const cardWidth = Math\.min\(230, Math\.max\(190, width \* 0\.58\)\)/);
-  assert.match(popular, /height:\s*290/);
-  assert.match(popular, /image:\s*\{ flex:\s*1, justifyContent:\s*"flex-end", padding:\s*14 \}/);
-  assert.match(popular, /paddingVertical:\s*8/);
+test("Popular destination cards match the mobile website dimensions and layout", () => {
+  assert.match(popular, /const CARD_WIDTH = 276/);
+  assert.match(popular, /const IMAGE_HEIGHT = 288/);
+  assert.match(popular, /const CTA_HEIGHT = 72/);
+  assert.match(popular, /width:\s*CARD_WIDTH/);
+  assert.match(popular, /height:\s*IMAGE_HEIGHT \+ CTA_HEIGHT/);
+  assert.match(popular, /carousel:\s*\{ gap:\s*16/);
+  assert.match(popular, /borderRadius:\s*16/);
+  assert.match(popular, /paddingHorizontal:\s*16/);
+  assert.match(popular, /<Text style=\{styles\.city\}>\{destination\.city\}<\/Text>[\s\S]*<Text style=\{styles\.country\}>\{destination\.country\}<\/Text>/);
+  assert.match(popular, /<View style=\{styles\.ctaSection\}>[\s\S]*<Text style=\{styles\.ctaText\}>Explore stays<\/Text>/);
   assert.match(popular, /<ScrollView[\s\S]*horizontal[\s\S]*contentContainerStyle=\{styles\.carousel\}/);
   assert.match(popular, /<AndroidFavoriteButton[\s\S]*style=\{styles\.heart\}/);
 });
