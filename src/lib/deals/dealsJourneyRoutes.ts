@@ -5,7 +5,7 @@ import {
   type DealsPackageMode,
   type DealsSearch,
 } from "./dealsSearchParams";
-import type { DealsTripPlan } from "./dealsTripPlan";
+import { isDealsTripPlanExpired, isDealsTripPlanProductExpired, type DealsTripPlan } from "./dealsTripPlan";
 
 export const dealsJourneyStages = [
   "hotel-results", "hotel-details", "flight-results", "flight-details",
@@ -99,4 +99,16 @@ export function getRequiredDealsJourneyStage(stage: DealsJourneyStage, mode: Dea
   if (stage === "car-details") return has(plan, "car") || normalizeDealsJourneyCarId(transientCarId) ? stage : "car-results";
   if (included.car && !has(plan, "car")) return "car-results";
   return stage;
+}
+
+export function getRequiredDealsJourneyStageAt(requestedStage: DealsJourneyStage, mode: DealsPackageMode, plan: DealsTripPlan | null, ids: { hotelId: string | null; flightId: string | null; carId: string | null }, now: number): DealsJourneyStage {
+  const completeness = getRequiredDealsJourneyStage(requestedStage, mode, plan, ids.hotelId, ids.flightId, ids.carId);
+  if (completeness !== requestedStage || !plan) return completeness;
+  if (isDealsTripPlanExpired(plan, now)) return getFirstDealsJourneyStage(mode);
+  if (requestedStage === "review") return requestedStage;
+  const included = getIncludedProducts(mode);
+  if (included.hotel && plan.hotel && isDealsTripPlanProductExpired(plan.hotel.resultReceivedAt, now)) return "hotel-results";
+  if (included.flight && plan.flight && isDealsTripPlanProductExpired(plan.flight.resultReceivedAt, now)) return "flight-results";
+  if (included.car && plan.car && isDealsTripPlanProductExpired(plan.car.resultReceivedAt, now)) return "car-results";
+  return requestedStage;
 }

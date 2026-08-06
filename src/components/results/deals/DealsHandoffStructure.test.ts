@@ -186,3 +186,10 @@ test("handoff shell and navigation remain free of unsafe back fallbacks", () => 
   assert.doesNotMatch(page + client + summary, /router\.back|history\.back|document\.referrer/);
   assert.doesNotMatch(client + summary, /ArrowLeft/);
 });
+
+test("guided plan and click-time fingerprint conflicts share the action-free conflict state", () => {
+  assert.match(guided, /readResult\.status === "fingerprint_mismatch"[\s\S]*<DealsGuidedConflictState/);
+  assert.match(guided, /failure === "fingerprint-mismatch"[\s\S]*<DealsGuidedConflictState/);
+  assert.match(guided, /result\.currentPlan\?\.searchFingerprint === fingerprint/);
+  assert.match(guided, /data-deals-guided-handoff-ready/);
+});

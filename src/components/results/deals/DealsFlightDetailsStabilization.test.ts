@@ -57,7 +57,7 @@ test("guided Flight details provider and confirmation regressions stay source-su
   assert.match(client, /\{standalone \? <div className="min-w-0 lg:col-start-2 lg:row-start-1"><ProviderComparisonPanel/);
   assert.doesNotMatch(stage, /api\/redirect|writeDealsStagedJourneyPlan|replaceDealsFlightSelection/);
   assert.match(shell, /confirmGuidedFlightSelection/);
-  assert.match(shell, /writeDealsStagedJourneyPlan\(nextPlan\)[\s\S]*setPlanState[\s\S]*router\.push/);
+  assert.match(shell, /attemptGuidedConfirmation\([\s\S]*write: writeDealsStagedJourneyPlan[\s\S]*if \(!result\.ok\)[\s\S]*setPlanState[\s\S]*router\.push/);
   assert.match(shell, /<DealsCarResultsStage/);
   assert.match(shell, /<DealsReviewStage/);
 });

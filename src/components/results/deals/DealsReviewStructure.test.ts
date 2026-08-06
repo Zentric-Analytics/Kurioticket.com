@@ -40,3 +40,9 @@ test("Review detail labels are translated keys rather than hard-coded English", 
     assert.doesNotMatch(stage + card + summary + presentation, new RegExp(`(?:label:|>)[^\\n]*${label}`));
   }
 });
+
+test("Review distinguishes plan expiry from corrective product expiry", () => {
+  assert.match(stage, /planExpired \? "plan-expired" : status\.canContinue \? "ready" : "product-expired"/);
+  assert.match(stage, /canContinue=\{!planExpired && status\.canContinue\}/);
+  assert.match(stage, /data-deals-guided-review-state=\{reviewState\}/);
+});
