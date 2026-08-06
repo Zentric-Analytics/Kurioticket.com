@@ -11,7 +11,8 @@
     "web": "node ./scripts/start-local-preview.mjs --web",
     "typecheck": "tsc --noEmit",
     "test": "node --test --require ./testAssetSetup.cjs --import jiti/register \"src/**/*.test.ts\"",
-    "expo:doctor": "expo-doctor"
+    "expo:doctor": "expo-doctor",
+    "verify:ios-icon": "node ./scripts/verify-ios-icon-contract.mjs"
   },
   "dependencies": {
     "expo": "^54.0.0",
