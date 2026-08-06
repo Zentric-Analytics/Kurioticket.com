@@ -20,3 +20,18 @@ test("guided hotel confirmation creates only canonical validated base Trip Plan 
   assert.ok(baseCreation.indexOf("writeDealsStagedJourneyPlan") === -1);
   assert.ok(baseCreation.indexOf("router.push") === -1);
 });
+
+test("confirmation failures retain details and Retry only restores real Confirm focus", async () => {
+  const shellSource = await readFile(new URL("./DealsJourneyShell.tsx", import.meta.url), "utf8");
+  assert.match(shellSource, /confirmation-read-failure/); assert.match(shellSource, /confirmation-persistence-failure/);
+  assert.match(shellSource, /role="alert"/); assert.match(shellSource, /getDealsGuidedConfirmationActionId\(product\)/);
+  assert.match(shellSource, /setConfirmationFailure\(null\)[\s\S]*\.focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(shellSource, /clearConfirmationFailure[\s\S]{0,250}attemptGuidedConfirmation/);
+});
+
+test("safe plan states replace interactive stages with reachable recovery", async () => {
+  const shellSource = await readFile(new URL("./DealsJourneyShell.tsx", import.meta.url), "utf8");
+  for (const state of ["storage-unavailable", "invalid", "fingerprint-mismatch", "expired"]) assert.match(shellSource, new RegExp(`displayPlanStatus === "${state}"`));
+  assert.match(shellSource, /GuidedSafeState[\s\S]*onAction=\{restartCurrentPreview\}/);
+  assert.match(shellSource, /router\.replace/);
+});

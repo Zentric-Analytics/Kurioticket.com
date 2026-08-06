@@ -1,6 +1,7 @@
 import { CalendarDays, Moon, Users } from "lucide-react";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmationIds";
 
 type DisplayPrice = {
   formatted: string;
@@ -241,7 +242,7 @@ export function HotelDetailsBookingPanel({
               ) : null}
               {action.enabled ? (
                 <div aria-busy={action.pending}>
-                  <Button type="button" variant="accent" size="lg" className="w-full" disabled={action.pending} onClick={action.onActivate} aria-label={action.kind === "guided-room" ? action.accessibleLabel : undefined}>
+                  <Button id={action.kind === "guided-room" ? getDealsGuidedConfirmationActionId("hotel") : undefined} type="button" variant="accent" size="lg" className="w-full" disabled={action.pending} onClick={action.onActivate} aria-label={action.kind === "guided-room" ? action.accessibleLabel : undefined}>
                     {action.pending ? `${action.label}...` : action.label}
                   </Button>
                 </div>

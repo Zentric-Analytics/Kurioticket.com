@@ -23,7 +23,7 @@ export type DealsTripPlanReadResult =
   | { status: "expired"; plan: DealsTripPlan }
   | { status: "missing" }
   | { status: "invalid" }
-  | { status: "fingerprint_mismatch" }
+  | { status: "fingerprint_mismatch"; plan: DealsTripPlan }
   | { status: "storage_unavailable" };
 
 export const unresolvedDealsPlanState = (): ResolvedDealsPlanState => ({ plan: null, storedContextKey: null, resolvedContextKey: null, persistence: "idle" });
@@ -118,7 +118,19 @@ function safelyRemove(storage: StorageLike, key: string): boolean {
   try { storage.removeItem(key); return true; } catch { return false; }
 }
 
-function readPlan(key: string, fingerprint?: string, now = Date.now(), providedStorage?: StorageLike | null): DealsTripPlanReadResult {
+export type DealsStagedSnapshotResult = Exclude<DealsTripPlanReadResult, { status: "storage_unavailable" }>;
+
+/** Classifies an event snapshot without consulting or mutating browser storage. */
+export function classifyDealsStagedJourneySnapshot(raw: string | null, fingerprint: string, now: number): DealsStagedSnapshotResult {
+  if (raw === null) return { status: "missing" };
+  const plan = parseDealsTripPlan(raw);
+  if (!plan) return { status: "invalid" };
+  if (isDealsTripPlanExpired(plan, now)) return { status: "expired", plan };
+  if (plan.searchFingerprint !== fingerprint) return { status: "fingerprint_mismatch", plan };
+  return { status: "valid", plan };
+}
+
+function readPlan(key: string, fingerprint?: string, now = Date.now(), providedStorage?: StorageLike | null, preserveMismatch = false): DealsTripPlanReadResult {
   const storage = providedStorage === undefined ? browserStorage() : providedStorage;
   if (!storage) return { status: "storage_unavailable" };
   let raw: string | null;
@@ -127,7 +139,10 @@ function readPlan(key: string, fingerprint?: string, now = Date.now(), providedS
   const plan = parseDealsTripPlan(raw);
   if (!plan) { safelyRemove(storage, key); return { status: "invalid" }; }
   if (isDealsTripPlanExpired(plan, now)) { safelyRemove(storage, key); return { status: "expired", plan }; }
-  if (fingerprint && plan.searchFingerprint !== fingerprint) { safelyRemove(storage, key); return { status: "fingerprint_mismatch" }; }
+  if (fingerprint && plan.searchFingerprint !== fingerprint) {
+    if (!preserveMismatch) safelyRemove(storage, key);
+    return { status: "fingerprint_mismatch", plan };
+  }
   return { status: "valid", plan };
 }
 
@@ -145,6 +160,6 @@ function removePlan(key: string, providedStorage?: StorageLike | null): boolean 
 export const readDealsTripPlan = (fingerprint?: string, now = Date.now(), storage?: StorageLike | null) => readPlan(DEALS_TRIP_PLAN_STORAGE_KEY, fingerprint, now, storage);
 export const writeDealsTripPlan = (plan: DealsTripPlan, storage?: StorageLike | null) => writePlan(DEALS_TRIP_PLAN_STORAGE_KEY, plan, storage);
 export const removeDealsTripPlan = (storage?: StorageLike | null) => removePlan(DEALS_TRIP_PLAN_STORAGE_KEY, storage);
-export const readDealsStagedJourneyPlan = (fingerprint?: string, now = Date.now(), storage?: StorageLike | null) => readPlan(DEALS_STAGED_JOURNEY_STORAGE_KEY, fingerprint, now, storage);
+export const readDealsStagedJourneyPlan = (fingerprint?: string, now = Date.now(), storage?: StorageLike | null) => readPlan(DEALS_STAGED_JOURNEY_STORAGE_KEY, fingerprint, now, storage, true);
 export const writeDealsStagedJourneyPlan = (plan: DealsTripPlan, storage?: StorageLike | null) => writePlan(DEALS_STAGED_JOURNEY_STORAGE_KEY, plan, storage);
 export const removeDealsStagedJourneyPlan = (storage?: StorageLike | null) => removePlan(DEALS_STAGED_JOURNEY_STORAGE_KEY, storage);
