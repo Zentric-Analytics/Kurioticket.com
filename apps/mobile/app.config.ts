@@ -91,7 +91,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: environment.bundleIdentifier,
-      icon: "./assets/kurioticket-icon-blue.png",
+      icon: "./assets/kurioticket-icon-ios.png",
       infoPlist: { ITSAppUsesNonExemptEncryption: false },
     },
     android: {
