@@ -124,7 +124,7 @@ test("maintained naming is correct in the shared catalogue", () => {
   assert.notEqual(destinationByAirportCode.get("IST")?.name, "Cappadocia");
 });
 
-test("search covers names, countries, ISO codes, airport codes, airport names, aliases and interests", () => {
+test("search covers names, countries, ISO codes, airport codes, airport names and aliases", () => {
   for (const [query, id] of [
     ["London", "gb-london"],
     ["LHR", "gb-london"],
@@ -133,8 +133,6 @@ test("search covers names, countries, ISO codes, airport codes, airport names, a
     ["Bali", "id-bali"],
     ["DPS", "id-bali"],
     ["IST", "tr-istanbul"],
-    ["Beach escapes", "id-bali"],
-    ["City skylines", "us-new-york"],
   ]) {
     assert.equal(result(query)[0]?.id, id);
   }
@@ -153,6 +151,7 @@ test("search covers names, countries, ISO codes, airport codes, airport names, a
     [...ranks].sort((a, b) => a - b),
   );
   assert.equal(exactExploreResult(searchExplore("LHR"))?.id, "gb-london");
+  assert.deepEqual(searchExplore("Beach escapes"), []);
 });
 
 test("destinations outside the popular list remain searchable and saveable", async () => {
@@ -304,7 +303,7 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.doesNotMatch(source, /<SectionList|COUNTRY_DESTINATION_GROUPS/);
   const discoveryView = source.slice(
     source.indexOf("function ExploreDiscoveryContent"),
-    source.indexOf("function Interests"),
+    source.indexOf("const shadow"),
   );
   assert.doesNotMatch(discoveryView, /horizontal/);
   assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
@@ -420,7 +419,7 @@ test("default destinations use only the curated list without a featured carousel
   assert.doesNotMatch(source, /Browse all destinations/);
   assert.doesNotMatch(source, /FEATURED_DESTINATIONS/);
   assert.match(source, /ListHeaderComponent=\{<Section title="Popular destinations"/);
-  assert.match(source, /ListFooterComponent=\{<Interests select=\{select\} \/>\}/);
+  assert.doesNotMatch(source, /ListFooterComponent|Explore by interest|function Interests/);
 });
 
 test("Explore keeps one controlled search input mounted above changing content", () => {
@@ -445,11 +444,13 @@ test("Explore search preserves successive characters and clearing restores disco
   assert.match(source, /isSearching \? \([\s\S]*?data=\{results\}[\s\S]*?: \([\s\S]*?<ExploreDiscoveryContent/);
 });
 
-test("the one-page discovery order and maintained interest navigation stay explicit", () => {
+test("Explore omits interest discovery and uses destination-only search copy", () => {
   const source = screen();
-  assert.ok(source.indexOf('title="Popular destinations"') < source.indexOf('title="Explore by interest"'));
-  assert.match(source, /RESOLVED_INTERESTS\.map/);
-  assert.match(source, /onPress=\{\(\) => select\(item\.destination\)\}/);
+  assert.doesNotMatch(source, /interest/i);
+  assert.equal(
+    source.match(/Search destinations, countries or airports/g)?.length,
+    2,
+  );
 });
 
 

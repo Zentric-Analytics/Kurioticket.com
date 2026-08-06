@@ -3,13 +3,9 @@ import {
   normalizeDestinationText,
   type Destination,
 } from "./destinationCatalogue";
-import { INTEREST_DESTINATIONS } from "./interestMappings";
-
 export const ALL_DESTINATIONS = destinations;
 export type ExploreSearchResult = {
   destination: Destination;
-  match: "destination" | "interest";
-  interest?: string;
   rank: number;
 };
 
@@ -18,7 +14,7 @@ const exact = (values: readonly string[], query: string) =>
 const includes = (values: readonly string[], query: string) =>
   values.some((value) => normalizeDestinationText(value).includes(query));
 
-/** Deterministic factual ranking: name, code, alias/city, name prefix, country, general, interest. */
+/** Deterministic factual ranking: name, code, alias/city, name prefix, country, general. */
 export function searchExplore(queryValue: string): ExploreSearchResult[] {
   const query = normalizeDestinationText(queryValue);
   if (!query) return [];
@@ -30,7 +26,6 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
   if (exactCountryMatches.length) {
     return exactCountryMatches.map((destination) => ({
       destination,
-      match: "destination",
       rank: 4,
     }));
   }
@@ -47,11 +42,7 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
         ...aliases,
         ...countries,
       ];
-      const interests = INTEREST_DESTINATIONS.filter(
-        ([, id]) => id === destination.id,
-      ).map(([name]) => name);
       let rank = 99;
-      let interest: string | undefined;
       if (exact(names, query)) rank = 0;
       else if (exact(codes, query)) rank = 1;
       else if (exact(aliases, query)) rank = 2;
@@ -61,20 +52,10 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
         rank = 3;
       else if (includes(countries, query)) rank = 4;
       else if (includes(general, query)) rank = 5;
-      else if (includes(interests, query)) {
-        rank = 6;
-        interest = interests.find((name) =>
-          normalizeDestinationText(name).includes(query),
-        );
-      }
       return rank < 99
         ? [
             {
               destination,
-              match: interest
-                ? ("interest" as const)
-                : ("destination" as const),
-              interest,
               rank,
             },
           ]
