@@ -3,10 +3,10 @@ import { ArrowUpRight, CalendarDays, Car, Check, Hotel, MapPin, Plane } from "lu
 import type { DisplayPrice } from "@/lib/currency/formatCurrency";
 import type { DealsHandoffStepView } from "@/lib/deals/dealsHandoffPresentation";
 
-type Props = { step: DealsHandoffStepView; price: DisplayPrice | null; displayCurrency: string; resultsPath: string; onOpen: () => void; t: (key: string) => string };
+type Props = { step: DealsHandoffStepView; price: DisplayPrice | null; displayCurrency: string; resultsPath: string; onOpen: () => boolean | void; t: (key: string) => string; unavailableHref?: string; unavailableLabel?: string; unavailableBody?: string };
 const icon = { flight: Plane, hotel: Hotel, car: Car };
 
-export function DealsHandoffStepCard({ step, price, displayCurrency, resultsPath, onOpen, t }: Props) {
+export function DealsHandoffStepCard({ step, price, displayCurrency, resultsPath, onOpen, t, unavailableHref, unavailableLabel, unavailableBody }: Props) {
   const Icon = icon[step.product];
   const title = t(`deals.tripPlan.${step.product === "hotel" ? "stay" : step.product}`);
   const statusKey = step.status === "next" ? "nextToReview" : step.status === "pending" ? "pending" : step.status === "opened" ? "opened" : "refreshRequired";
@@ -53,7 +53,7 @@ export function DealsHandoffStepCard({ step, price, displayCurrency, resultsPath
           <p aria-label={price.ariaLabel} className="mt-1 text-xl font-semibold leading-7 tracking-tight tabular-nums text-slate-950"><span dir="ltr" className="inline-block whitespace-nowrap">{price.formatted}</span></p>
           {price.isConvertedEstimate && <p className="mt-2 text-sm leading-5 text-slate-600">{t("deals.handoff.sourcePrice")}: {" "}<span dir="ltr" className="whitespace-nowrap font-medium tabular-nums">{price.providerFormatted}</span></p>}
         </> : <p className="text-slate-600">{t("deals.handoff.priceUnavailable")}</p>}
-        {step.status === "expired" || !step.href ? <div className="mt-5"><p className="text-sm leading-6 text-amber-900">{t(`deals.handoff.${step.product === "hotel" ? "stay" : step.product}Expired`)}</p><Link href={resultsPath} className="mt-3 inline-flex min-h-11 items-center font-semibold text-[#004BB8] underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">{t("deals.handoff.refresh")}</Link></div> : <a href={step.href} target="_blank" rel="noopener noreferrer" onClick={onOpen} className={`mt-5 inline-flex min-h-11 w-full whitespace-nowrap items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${step.status === "next" ? "bg-[#004BB8] text-white" : "border border-[#004BB8] text-[#004BB8]"}`}>{cta}<ArrowUpRight aria-hidden className="size-4 shrink-0" /><span className="sr-only">({t("deals.handoff.newTab")})</span></a>}
+        {step.status === "expired" || !step.href ? <div className="mt-5"><p className="text-sm leading-6 text-amber-900">{!step.href && unavailableBody ? unavailableBody : t(`deals.handoff.${step.product === "hotel" ? "stay" : step.product}Expired`)}</p><Link href={unavailableHref ?? resultsPath} className="mt-3 inline-flex min-h-11 items-center font-semibold text-[#004BB8] underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">{unavailableLabel ?? t("deals.handoff.refresh")}</Link></div> : <a href={step.href} target="_blank" rel="noopener noreferrer" onClick={(event) => { if (onOpen() === false) event.preventDefault(); }} className={`mt-5 inline-flex min-h-11 w-full whitespace-nowrap items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${step.status === "next" ? "bg-[#004BB8] text-white" : "border border-[#004BB8] text-[#004BB8]"}`}>{cta}<ArrowUpRight aria-hidden className="size-4 shrink-0" /><span className="sr-only">({t("deals.handoff.newTab")})</span></a>}
       </div>
     </div>
   </article>;

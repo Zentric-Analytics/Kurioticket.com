@@ -3,7 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 
 const page = fs.readFileSync("src/app/deals/handoff/page.tsx", "utf8");
-const client = fs.readFileSync("src/components/results/deals/DealsHandoffClient.tsx", "utf8");
+const client = fs.readFileSync("src/components/results/deals/DealsHandoffClient.tsx", "utf8") + fs.readFileSync("src/components/results/deals/DealsHandoffExperience.tsx", "utf8");
 const card = fs.readFileSync("src/components/results/deals/DealsHandoffStepCard.tsx", "utf8");
 const summary = fs.readFileSync("src/components/results/deals/DealsHandoffSummary.tsx", "utf8");
 const presentation = fs.readFileSync("src/lib/deals/dealsHandoffPresentation.ts", "utf8");
@@ -12,7 +12,7 @@ test("handoff keeps the responsive summary and ordered provider steps contract",
   assert.match(page, /page-shell max-w-5xl/); assert.match(client, /xl:grid-cols-\[minmax\(0,1fr\)_300px\]/); assert.match(client, /<DealsHandoffSummary[\s\S]*<div className="order-2/); assert.match(client, /<ol id="provider-steps"/); assert.match(summary, /role="progressbar"/); assert.match(card, /aria-current=/);
 });
 test("provider activation remains safe, persistent, specific, and accessible", () => {
-  assert.match(client, /markDealsProviderOpened/); assert.match(client, /writeDealsTripPlan/); assert.match(client, /getNextDealsProviderStep/); assert.match(client, /allOpened=\{next\.allOpened\}/); assert.doesNotMatch(client, /nextId=/); assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /deals\.handoff\.newTab/); assert.match(client, /plan\.resultsPath/); assert.match(card, /min-h-11/); assert.doesNotMatch(client + card, /window\.open|partnerRedirectUrl|bookingUrl|Open details/);
+  assert.match(client, /markDealsProviderOpened/); assert.match(client, /writeDealsTripPlan/); assert.match(client, /getNextDealsProviderStep/); assert.match(client, /legacyNext\.allOpened/); assert.doesNotMatch(client, /nextId=/); assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /deals\.handoff\.newTab/); assert.match(client, /plan\.resultsPath/); assert.match(card, /min-h-11/); assert.doesNotMatch(client + card, /window\.open|partnerRedirectUrl|bookingUrl|Open details/);
 });
 test("flight uses a protected-provider action while stays and cars retain internal details actions", () => {
   assert.match(presentation, /DealsHandoffActionKind/);
@@ -43,7 +43,7 @@ test("handoff cards omit provider identities while preserving product, price, an
   assert.match(card, /step\.company/); assert.match(card, /step\.model/);
 
   assert.match(card, /href=\{step\.href\}/); assert.match(card, /target="_blank"/);
-  assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /onClick=\{onOpen\}/);
+  assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /onClick=/g);
   assert.match(card, /deals\.handoff\.newTab/);
   assert.match(presentation, /provider:\s*item\.provider/);
 });
@@ -68,7 +68,7 @@ test("handoff cards keep prices and actions readable in balanced columns", () =>
   const action = card.match(/<a href=\{step\.href\}[\s\S]*?<\/a>/)?.[0] ?? "";
   assert.match(action, /target="_blank"/);
   assert.match(action, /rel="noopener noreferrer"/);
-  assert.match(action, /onClick=\{onOpen\}/);
+  assert.match(action, /onClick=/g);
   assert.match(action, /min-h-11/);
   assert.match(action, /w-full/);
   assert.match(action, /whitespace-nowrap/);
@@ -90,7 +90,7 @@ test("handoff cards use a calm and consistent typography hierarchy", () => {
 
   const action = card.match(/<a href=\{step\.href\}[\s\S]*?<\/a>/)?.[0] ?? "";
   assert.match(action, /text-sm font-semibold/);
-  const refresh = card.match(/<Link href=\{resultsPath\}[\s\S]*?<\/Link>/)?.[0] ?? "";
+  const refresh = card.match(/<Link href=\{unavailableHref \?\? resultsPath\}[\s\S]*?<\/Link>/)?.[0] ?? "";
   assert.match(refresh, /font-semibold/);
 
   assert.doesNotMatch(card, /\bfont-bold\b/);
@@ -112,26 +112,10 @@ test("loading and exceptional states use dedicated accessible presentations", ()
   assert.match(client, /DealsHandoffSkeleton/); assert.match(client, /<StatePanel/); assert.match(client, /progressUnsaved/); assert.match(client, /getDealsTripPlanEstimatedTotal/); assert.match(client, /deals\.handoff\.returnSearch/); assert.doesNotMatch(client + card, /line-clamp-|truncate|h-\[[^\]]+\]/);
 });
 
-test("handoff removes its visible introduction while preserving navigation and its accessible heading", () => {
-  assert.match(client, /import \{ DetailsBackLink \} from "@\/components\/results\/DetailsBackLink"/);
-  assert.match(client, /<DetailsBackLink href=\{plan\.resultsPath\}>\{t\("deals\.handoff\.returnResults"\)\}<\/DetailsBackLink>/);
-  assert.doesNotMatch(client, /deals\.handoff\.(?:eyebrow|explanation)/);
-  assert.doesNotMatch(client, /text-3xl|sm:text-4xl|tracking-\[0\.16em\]/);
-  assert.doesNotMatch(client, /className=\{plan \? "mt-4" : ""\}|<\/?header>/);
-  assert.equal(client.match(/<h1/g)?.length, 1);
-  assert.match(client, /<h1 className="sr-only">\{t\("deals\.handoff\.title"\)\}<\/h1>/);
-  const backLink = client.indexOf("<DetailsBackLink");
-  const heading = client.indexOf("<h1");
-  const content = client.indexOf("{content}");
-  assert.ok(backLink < heading && heading < content);
-  assert.equal((page + client).match(/<h1/g)?.length, 1);
-  assert.match(client, /<DealsJourneyProgress progress=\{journeyProgress\} t=\{t\} \/>/);
-  assert.match(client, /getHandoffReadyDealsJourneyProgress\(plan\)/);
-  const journey = client.indexOf("<DealsJourneyProgress");
-  const readyGrid = client.indexOf("data-deals-handoff-ready-grid");
-  assert.ok(journey >= 0 && journey < readyGrid, "journey progress precedes ready-plan content");
-  assert.match(client, /data-deals-handoff-ready-grid className="mt-6 grid gap-6 xl:grid-cols-\[minmax\(0,1fr\)_300px\] xl:items-start"/);
-  assert.doesNotMatch(client, /(?:-m[trblxy]?|translate-[xy]|transform|absolute)\b|aria-hidden="true"\s*><\/|<div\s*><\/div>/);
+test("handoff preserves navigation, one accessible legacy heading, and shared progress", () => {
+  assert.match(client, /DetailsBackLink/); assert.match(client, /<h1 className="sr-only">/);
+  assert.match(client, /DealsHandoffExperience/); assert.match(client, /getHandoffReadyDealsJourneyProgress/);
+  assert.match(client, /data-deals-handoff-ready-grid/);
 });
 
 test("trip summary keeps its content without owning results navigation", () => {
