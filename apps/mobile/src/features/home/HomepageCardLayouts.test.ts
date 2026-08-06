@@ -15,13 +15,16 @@ test("Popular destination cards match the mobile website dimensions and layout",
   assert.match(popular, /const CTA_HEIGHT = 72/);
   assert.match(popular, /width:\s*CARD_WIDTH/);
   assert.match(popular, /height:\s*IMAGE_HEIGHT \+ CTA_HEIGHT/);
+  assert.match(popular, /imageFrame:\s*\{[\s\S]*?width:\s*"100%",[\s\S]*?height:\s*IMAGE_HEIGHT/);
+  assert.match(popular, /image:\s*\{[\s\S]*?\.\.\.StyleSheet\.absoluteFillObject,[\s\S]*?width:\s*"100%"/);
   assert.match(popular, /carousel:\s*\{ gap:\s*16/);
   assert.match(popular, /borderRadius:\s*16/);
   assert.match(popular, /paddingHorizontal:\s*16/);
-  assert.match(popular, /<Text style=\{styles\.city\}>\{destination\.city\}<\/Text>[\s\S]*<Text style=\{styles\.country\}>\{destination\.country\}<\/Text>/);
+  assert.match(popular, /<View style=\{styles\.imageFrame\}>[\s\S]*<Text style=\{styles\.city\}>\{destination\.city\}<\/Text>[\s\S]*<Text style=\{styles\.country\}>\{destination\.country\}<\/Text>[\s\S]*<\/View>\s*<View style=\{styles\.ctaSection\}>/);
   assert.match(popular, /<View style=\{styles\.ctaSection\}>[\s\S]*<Text style=\{styles\.ctaText\}>Explore stays<\/Text>/);
   assert.match(popular, /<ScrollView[\s\S]*horizontal[\s\S]*contentContainerStyle=\{styles\.carousel\}/);
-  assert.match(popular, /<AndroidFavoriteButton[\s\S]*style=\{styles\.heart\}/);
+  assert.match(popular, /<View style=\{styles\.imageFrame\}>[\s\S]*<AndroidFavoriteButton[\s\S]*style=\{styles\.heart\}/);
+  assert.match(popular, /heart:\s*\{ position:\s*"absolute", top:\s*14, right:\s*14 \}/);
 });
 
 test("Discover cards use the compact editorial card layout with horizontal scrolling", () => {
