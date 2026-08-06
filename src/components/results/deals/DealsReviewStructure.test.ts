@@ -31,3 +31,11 @@ test("guided handoff-pending marker and provider suppression remain explicit", (
   assert.match(handoff, /readDealsStagedJourneyPlan/);
   assert.doesNotMatch(handoff, /readDealsTripPlan|writeDealsTripPlan|markDealsProviderOpened|DealsHandoffStepCard|target="_blank"|\/api\/redirect|buildDealsInternalRedirectHref/);
 });
+
+test("Review detail labels are translated keys rather than hard-coded English", () => {
+  assert.match(presentation, /labelKey:/);
+  assert.match(card, /t\(detail\.labelKey\)/);
+  for (const label of ["Package", "Included options", "Location", "Check-in", "Check-out", "Route", "Departure", "Arrival", "Model", "Pickup", "Return"]) {
+    assert.doesNotMatch(stage + card + summary + presentation, new RegExp(`(?:label:|>)[^\\n]*${label}`));
+  }
+});

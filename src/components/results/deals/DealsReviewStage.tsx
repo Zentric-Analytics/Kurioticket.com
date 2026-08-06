@@ -10,19 +10,19 @@ import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import { translations as en } from "@/lib/i18n/en";
 import { DealsReviewItemCard } from "./DealsReviewItemCard";
 import { DealsReviewSummary } from "./DealsReviewSummary";
-import { buildGuidedDealsHandoffPendingUrl, getDealsReviewItems, getDealsReviewStatus } from "@/lib/deals/dealsReviewPresentation";
+import { buildGuidedDealsHandoffPendingUrl, getDealsReviewItems, getDealsReviewStatus, getDealsReviewTotalPlan } from "@/lib/deals/dealsReviewPresentation";
 
 const modeKeys = { "hotel-flight": "deals.package.hotelFlight", "hotel-flight-car": "deals.package.hotelFlightCar", "flight-car": "deals.package.flightCar", "hotel-car": "deals.package.hotelCar" } as const;
 
-export function DealsReviewStage({ plan, search, correctionPending }: { plan: DealsTripPlan; search: DealsSearch; correctionPending: boolean }) {
+export function DealsReviewStage({ plan, search }: { plan: DealsTripPlan; search: DealsSearch }) {
   const { t: dictionary, locale } = useLocale();
   const { selectedCurrency } = useRegion();
   const rates = useCurrencyRates();
   const [reviewedAt] = useState(() => Date.now());
   const t = useCallback((key: string) => dictionary[key] ?? en[key] ?? key, [dictionary]);
   const items = useMemo(() => getDealsReviewItems(plan, search, reviewedAt, locale), [plan, search, reviewedAt, locale]);
-  const status = useMemo(() => getDealsReviewStatus(plan, reviewedAt, true, correctionPending), [plan, reviewedAt, correctionPending]);
-  const total = getDealsTripPlanEstimatedTotal(plan, selectedCurrency, rates.rates);
+  const status = useMemo(() => getDealsReviewStatus(plan, reviewedAt), [plan, reviewedAt]);
+  const total = getDealsTripPlanEstimatedTotal(getDealsReviewTotalPlan(plan), selectedCurrency, rates.rates);
   const prices = new Map(items.map(item => [item.product, formatDisplayPrice({ amount: item.sourcePrice, sourceCurrency: item.sourceCurrency, displayCurrency: selectedCurrency, convertSourceEstimate: true, rates: rates.rates, isFallbackRate: rates.isFallback })]));
   return <div data-deals-guided-review-stage className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
     <div className="min-w-0 space-y-4">
