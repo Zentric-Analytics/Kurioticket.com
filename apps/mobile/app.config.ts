@@ -93,7 +93,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: environment.bundleIdentifier,
-      icon: "./assets/kurioticket-icon-blue.png",
+      icon: "./assets/kurioticket-icon-ios.png",
     },
     android: {
       package: environment.androidPackage,
