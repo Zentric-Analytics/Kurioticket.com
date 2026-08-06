@@ -73,11 +73,22 @@ export const popularDestinationStays = [
   },
 ] as const;
 
-// Mobile website source: min-width/flex-basis 17.25rem, h-72 image and a
-// min-h-[4.5rem] CTA. React Native density-independent pixels map to CSS px.
-const CARD_WIDTH = 276;
-const IMAGE_HEIGHT = 288;
-const CTA_HEIGHT = 72;
+// src/app/page.tsx DestinationCard, measured at the 375px mobile breakpoint.
+export const POPULAR_STAY_LAYOUT = {
+  cardWidth: 276,
+  imageHeight: 288,
+  ctaHeight: 72,
+  gap: 16,
+  radius: 16,
+  sideInset: 16,
+  nextCardVisible: 67,
+} as const;
+
+const {
+  cardWidth: CARD_WIDTH,
+  imageHeight: IMAGE_HEIGHT,
+  ctaHeight: CTA_HEIGHT,
+} = POPULAR_STAY_LAYOUT;
 const IMAGE_OVERLAY_HEIGHT = 112;
 
 export function PopularDestinationStays() {
@@ -92,7 +103,10 @@ export function PopularDestinationStays() {
       testID="popular-destination-stays"
       style={styles.section}
     >
-      <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>
+      <Text
+        accessibilityRole="header"
+        style={[styles.heading, { color: ft.colors.textPrimary }]}
+      >
         Popular destination stays
       </Text>
       <ScrollView
@@ -110,67 +124,87 @@ export function PopularDestinationStays() {
               key={destination.id}
               accessibilityRole="button"
               accessibilityLabel={`Explore hotel stays in ${destination.city}, ${destination.country}`}
-              onPress={() => router.push(popularDestinationStayNavigation(destination))}
+              onPress={() =>
+                router.push(popularDestinationStayNavigation(destination))
+              }
               style={({ pressed }) => [
                 styles.card,
                 pressed && styles.cardPressed,
               ]}
             >
-              <View style={styles.cardSurface}>
-                <View style={styles.imageFrame}>
-                  <ImageBackground
-                    accessibilityIgnoresInvertColors
-                    accessibilityLabel={`${destination.city}, ${destination.country}`}
-                    resizeMode="cover"
-                    source={imageFailed ? undefined : destination.image}
-                    onError={() => {
-                      if (__DEV__) {
-                        console.warn(
-                          `[Popular destination stays] Image failed for ${destination.city}: ${destination.image.uri}`,
-                        );
-                      }
-                      setFailedImageIds((current) => {
-                        const next = new Set(current);
-                        next.add(destination.id);
-                        return next;
-                      });
-                    }}
-                    style={styles.image}
-                    imageStyle={styles.imageCorners}
-                  />
-                  <Svg
-                    pointerEvents="none"
-                    style={styles.imageOverlay}
+              <View
+                style={styles.imageFrame}
+                testID={`popular-stay-image-${destination.id}`}
+              >
+                <ImageBackground
+                  accessibilityIgnoresInvertColors
+                  accessibilityLabel={`${destination.city}, ${destination.country}`}
+                  resizeMode="cover"
+                  source={imageFailed ? undefined : destination.image}
+                  onError={() => {
+                    if (__DEV__) {
+                      console.warn(
+                        `[Popular destination stays] Image failed for ${destination.city}: ${destination.image.uri}`,
+                      );
+                    }
+                    setFailedImageIds((current) => {
+                      const next = new Set(current);
+                      next.add(destination.id);
+                      return next;
+                    });
+                  }}
+                  style={styles.image}
+                  imageStyle={styles.imageCorners}
+                />
+                <Svg
+                  pointerEvents="none"
+                  style={styles.imageOverlay}
+                  width="100%"
+                  height={IMAGE_OVERLAY_HEIGHT}
+                >
+                  <Defs>
+                    <LinearGradient
+                      id="destinationOverlay"
+                      x1="0"
+                      y1="1"
+                      x2="0"
+                      y2="0"
+                    >
+                      <Stop offset="0" stopColor="#020617" stopOpacity={0.55} />
+                      <Stop
+                        offset="0.57"
+                        stopColor="#020617"
+                        stopOpacity={0.16}
+                      />
+                      <Stop offset="1" stopColor="#020617" stopOpacity={0} />
+                    </LinearGradient>
+                  </Defs>
+                  <Rect
                     width="100%"
-                    height={IMAGE_OVERLAY_HEIGHT}
-                  >
-                    <Defs>
-                      <LinearGradient id="destinationOverlay" x1="0" y1="1" x2="0" y2="0">
-                        <Stop offset="0" stopColor="#020617" stopOpacity={0.55} />
-                        <Stop offset="0.57" stopColor="#020617" stopOpacity={0.16} />
-                        <Stop offset="1" stopColor="#020617" stopOpacity={0} />
-                      </LinearGradient>
-                    </Defs>
-                    <Rect width="100%" height="100%" fill="url(#destinationOverlay)" />
-                  </Svg>
-                  <AndroidFavoriteButton
-                    saved={saved}
-                    label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
-                    onPress={(event) => {
-                      event.stopPropagation();
-                      toggle(destination.id);
-                    }}
-                    style={styles.heart}
+                    height="100%"
+                    fill="url(#destinationOverlay)"
                   />
-                  <View pointerEvents="none" style={styles.copy}>
-                    <Text style={styles.city}>{destination.city}</Text>
-                    <Text style={styles.country}>{destination.country}</Text>
-                  </View>
+                </Svg>
+                <AndroidFavoriteButton
+                  saved={saved}
+                  label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    toggle(destination.id);
+                  }}
+                  style={styles.heart}
+                />
+                <View pointerEvents="none" style={styles.copy}>
+                  <Text style={styles.city}>{destination.city}</Text>
+                  <Text style={styles.country}>{destination.country}</Text>
                 </View>
-                <View style={styles.ctaSection}>
-                  <View style={styles.ctaPill}>
-                    <Text style={styles.ctaText}>Explore stays</Text>
-                  </View>
+              </View>
+              <View
+                style={styles.ctaSection}
+                testID={`popular-stay-cta-${destination.id}`}
+              >
+                <View style={styles.ctaPill}>
+                  <Text style={styles.ctaText}>Explore stays</Text>
                 </View>
               </View>
             </Pressable>
@@ -188,11 +222,16 @@ const styles = StyleSheet.create({
     lineHeight: 27,
     fontWeight: "800",
   },
-  carousel: { gap: 16, paddingBottom: 8, paddingLeft: 2, paddingRight: 34 },
+  carousel: {
+    gap: POPULAR_STAY_LAYOUT.gap,
+    paddingBottom: 8,
+    paddingLeft: 2,
+    paddingRight: 34,
+  },
   card: {
     width: CARD_WIDTH,
     height: IMAGE_HEIGHT + CTA_HEIGHT,
-    borderRadius: 16,
+    borderRadius: POPULAR_STAY_LAYOUT.radius,
     borderColor: "rgba(203, 213, 225, 0.9)",
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: flowColors.white,
@@ -201,14 +240,10 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 7 },
     elevation: 4,
+    overflow: "hidden",
   },
   cardPressed: {
     transform: [{ scale: 0.985 }],
-  },
-  cardSurface: {
-    flex: 1,
-    borderRadius: 16,
-    overflow: "hidden",
   },
   imageFrame: {
     width: "100%",
