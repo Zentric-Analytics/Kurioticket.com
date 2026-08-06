@@ -14,6 +14,18 @@ test("handoff keeps the responsive summary and ordered provider steps contract",
 test("provider activation remains safe, persistent, specific, and accessible", () => {
   assert.match(client, /markDealsProviderOpened/); assert.match(client, /writeDealsTripPlan/); assert.match(client, /getNextDealsProviderStep/); assert.match(client, /legacyNext\.allOpened/); assert.doesNotMatch(client, /nextId=/); assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/); assert.match(card, /deals\.handoff\.newTab/); assert.match(client, /plan\.resultsPath/); assert.match(card, /min-h-11/); assert.doesNotMatch(client + card, /window\.open|partnerRedirectUrl|bookingUrl|Open details/);
 });
+test("shared experience restores legacy actionable totals and separates guided unavailable actions", () => {
+  assert.match(client, /const total = guided \? steps\.length : actionable\.length/);
+  assert.match(client, /hasExpired=\{hasExpired\}/); assert.match(client, /hasUnavailableAction=\{guided && hasUnavailableAction\}/);
+  assert.match(summary, /summaryActionUnavailable/); assert.match(summary, /hasExpired \?[^:]+summaryRefreshRequired/);
+});
+test("step activation cancellation and guided recovery progress remain isolated", () => {
+  assert.match(card, /if \(onOpen\(\) === false\) event\.preventDefault\(\)/);
+  assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/);
+  assert.match(card, /<Link href=\{unavailableHref \?\? resultsPath\} onClick=\{onRecoveryNavigation\}/);
+  const active = card.match(/<a href=\{step\.href\} id=\{`\$\{step\.id\}-action`\}[\s\S]*?<\/a>/)?.[0] ?? "";
+  assert.doesNotMatch(active, /onRecoveryNavigation|useRouteProgress/);
+});
 test("flight uses a protected-provider action while stays and cars retain internal details actions", () => {
   assert.match(presentation, /DealsHandoffActionKind/);
   assert.match(presentation, /"provider-handoff"/);
