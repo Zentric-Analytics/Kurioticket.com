@@ -20,7 +20,7 @@ on:
       confirmation_phrase: { description: "Type DELIVER IOS PREVIEW", required: true, type: string }
 
 permissions: { contents: read }
-concurrency: { group: ios-preview-build, cancel-in-progress: false }
+concurrency: { group: ios-preview-build, cancel-in-progress: true }
 
 jobs:
   build:
