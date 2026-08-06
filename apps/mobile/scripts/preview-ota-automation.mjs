@@ -9,6 +9,7 @@ const PREVIEW_MESSAGE = /^Automated safe Preview OTA for ([a-f0-9]{40}); audit r
 const FORMATTED_PREVIEW_MESSAGE = /^"Automated safe Preview OTA for ([a-f0-9]{40}); audit run ([0-9]+)" \(.+\)$/;
 const CROSS_PLATFORM_PREVIEW_MESSAGE = /^Automatic Preview (Android|iOS) OTA for ([a-f0-9]{40}); audit run ([0-9]+)$/;
 const FORMATTED_CROSS_PLATFORM_PREVIEW_MESSAGE = /^"Automatic Preview (Android|iOS) OTA for ([a-f0-9]{40}); audit run ([0-9]+)" \(.+\)$/;
+const INDEPENDENT_PREVIEW_MESSAGE = /^Independent Preview all OTA for ([a-f0-9]{40})$/;
 const PREVIEW_BRANCH = "preview";
 const PREVIEW_RUNTIME = "preview-0.3.0";
 
@@ -51,6 +52,8 @@ function parseGeneratedMessage(value) {
     const match = crossPlatform ?? formattedCrossPlatform;
     return { platform: match[1].toLowerCase(), targetSha: match[2], auditRunId: match[3] };
   }
+  const independent = INDEPENDENT_PREVIEW_MESSAGE.exec(value);
+  if (independent) return { platform: "all", targetSha: independent[1], auditRunId: null };
   requireValue(!value.includes("Preview") || !value.includes("OTA for"), "Generated Preview update message is malformed.");
   return null;
 }
@@ -85,7 +88,7 @@ export function inspectPreviewUpdateHistory(value, targetSha, platform = "androi
     requireValue(Array.isArray(entry.platforms), "Normalized EAS update platforms are malformed.");
     if (entry.branch !== PREVIEW_BRANCH || entry.runtimeVersion !== PREVIEW_RUNTIME || !entry.platforms.includes(platform)) return false;
     const generated = parseGeneratedMessage(entry.message);
-    return generated?.targetSha === targetSha && generated.platform === platform;
+    return generated?.targetSha === targetSha && (generated.platform === platform || generated.platform === "all");
   });
   return {
     alreadyPublished: matching.length > 0,

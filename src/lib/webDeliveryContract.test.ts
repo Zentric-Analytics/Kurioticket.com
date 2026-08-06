@@ -6,7 +6,8 @@ test("Render staging uses deterministic build, pre-deploy migration, dev, and he
   const render = readFileSync("render.yaml", "utf8");
   const staging = render.slice(render.indexOf("name: kurioticket-web-staging"));
   assert.match(staging, /branch: dev/);
-  assert.match(staging, /autoDeploy: true/);
+  assert.match(staging, /Preview delivery is owned exclusively by kurioticket-preview-release/);
+  assert.match(staging, /autoDeploy: false/);
   assert.match(staging, /buildCommand: npm ci && npm run build/);
   assert.match(staging, /preDeployCommand: npm run db:deploy:render/);
   assert.match(staging, /startCommand: npm run start/);

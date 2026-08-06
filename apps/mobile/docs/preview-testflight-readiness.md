@@ -15,7 +15,7 @@ Production iOS remained untouched and no public App Store or Beta App Review sub
 - The live EAS build inventory contained Android `0.2.0 (8)` Preview and Production builds and no iOS build. No build or runtime using `0.3.0` was present.
 - The `preview` channel and branch contain historical runtime `0.2.0` updates with messages beginning `Automated preview update from dev`.
 - Git history identifies the former Preview GitHub Actions workflow as their source. Commit `e25b6d9` removed its `eas update` and Android `eas build` steps.
-- Current mobile GitHub Actions workflows are validation-only. The EAS Workflows page is unconfigured. No remaining repository or EAS server-side workflow capable of automatic mobile delivery was found.
+- Preview delivery has since moved to the independent Render Preview Release Service. GitHub Actions remains validation/Production governance only; TestFlight operations are reconciled by exact SHA and EAS build ID in the durable release ledger.
 
 Preview keeps marketing version `0.3.0` and uses isolated runtime `preview-0.3.0`. Production marketing version is also `0.3.0`, with isolated runtime `production-0.3.0`; neither can receive legacy runtime `0.2.0` updates.
 

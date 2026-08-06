@@ -86,7 +86,7 @@
     "easConfigPath": "apps/mobile/eas.json",
     "workflowPaths": [
       ".github/workflows/migration-validation.yml",
-      ".github/workflows/mobile-preview-update.yml",
+      ".github/workflows/pr-required-gates.yml",
       ".github/workflows/mobile-production-update.yml",
       ".github/workflows/security.yml"
     ]

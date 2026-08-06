@@ -20,6 +20,7 @@
     "prebuild": "npm run check:conflicts && npm run check:migration-timestamps",
     "check:homepage-destination-prices": "node scripts/check-homepage-destination-prices.mjs",
     "verify:currencies": "node scripts/verify-currency-coverage.mjs",
+    "test:preview-release": "node --test services/preview-release/*.test.mjs",
     "audit:i18n": "JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v2.mjs",
     "audit:images": "node scripts/audit-images.mjs",
     "audit:market-images": "node scripts/audit-market-images.mjs"

@@ -1,10 +1,8 @@
 flowchart LR
-  A[preview-dev-delivery.yml] --> B[android-preview-build.yml]
-  A --> C[android-preview-ota.yml]
-  A --> D[ios-preview-build.yml]
-  A --> E[ios-preview-testflight-submit.yml]
-  F[mobile-preview-update.yml] --> A
-  G[migration-validation.yml] --> H[main required checks]
-  I[mobile-production-update.yml] --> J[main post-merge guards]
-  K[android-production-delivery.yml] --> L[dry run + version/query]
-  K --> M[resolve-production-play-history-lineage]
+  A[pr-required-gates.yml] --> B[Validate mobile preview]
+  A --> C[secret-scan]
+  D[migration-validation.yml] --> E[Migration validation]
+  F[security.yml] --> G[Security validation]
+  H[mobile-production-update.yml] --> I[Production readiness]
+  J[android-production-delivery.yml] --> K[Owner-gated Production delivery]
+  L[Render Preview release worker] --> M[Preview web OTA and native delivery]
