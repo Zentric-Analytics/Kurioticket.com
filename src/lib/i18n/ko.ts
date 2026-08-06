@@ -2232,6 +2232,7 @@ export const translations: TranslationDictionary = {
   "deals.guided.handoff.useCurrentOptions": "Use current trip options",
   "deals.guided.handoff.activationFailedTitle": "This step could not be opened safely",
   "deals.guided.handoff.activationFailedBody": "We could not save your handoff progress, so the booking-partner page was not opened. Try again.",
+  "deals.guided.handoff.storageReadFailedBody": "저장된 여행을 다시 확인할 수 없어 이 단계가 열리지 않았습니다. 다시 시도해 주세요.",
   "deals.guided.handoff.retry": "Try again",
   "deals.guided.handoff.actionUnavailable": "This option does not currently have a safe handoff action.",
   "deals.guided.handoff.summaryActionUnavailable": "One or more steps need a different trip option before they can be opened.",
