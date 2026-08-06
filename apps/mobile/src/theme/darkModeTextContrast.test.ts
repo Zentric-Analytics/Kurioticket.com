@@ -19,9 +19,10 @@ test("homepage section headings and supporting copy use semantic theme text colo
   assert.match(discovery, /Discover your next adventure here/);
   assert.match(discovery, /color: ft\.colors\.textPrimary/);
   assert.match(discovery, /color: ft\.colors\.textSecondary/);
-  assert.match(discovery, /cardTitle: \{[^}]*color: "white"/);
-  assert.match(discovery, /route: \{[^}]*color: "rgba\(255,255,255,0\.88\)"/);
-  assert.match(discovery, /stopColor="#020617" stopOpacity="0\.78"/);
+  assert.match(discovery, /contentPanel: \{[^}]*flex: 1/);
+  assert.match(discovery, /cardTitle: \{[^}]*color: "#020617"/);
+  assert.match(discovery, /route: \{[^}]*color: "#334155"/);
+  assert.match(discovery, /tripSummary: \{[^}]*color: "#64748B"/);
   assert.doesNotMatch(discovery, /categoryPill/);
 });
 
