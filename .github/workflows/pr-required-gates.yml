@@ -1,5 +1,6 @@
 name: Required PR gates
 
+# Governance proof: registered required contexts must attach to workflow-only pull requests.
 on:
   pull_request:
     branches:
