@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
@@ -73,15 +72,18 @@ export const popularDestinationStays = [
   },
 ] as const;
 
+// Mobile web uses 17.25rem cards: 276px wide with a 288px image and 72px CTA.
+// Keeping these dimensions fixed also gives Android and iOS the same proportions.
+const CARD_WIDTH = 276;
+const IMAGE_HEIGHT = 288;
+const CTA_HEIGHT = 72;
+
 export function PopularDestinationStays() {
   const ft = useFlowTheme();
-  const { width } = useWindowDimensions();
   const { savedIds, toggle } = useSavedDestinations();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const cardWidth = Math.min(230, Math.max(190, width * 0.58));
-
   return (
     <View
       collapsable={false}
@@ -109,7 +111,6 @@ export function PopularDestinationStays() {
               onPress={() => router.push(popularDestinationStayNavigation(destination))}
               style={({ pressed }) => [
                 styles.card,
-                { width: cardWidth },
                 pressed && styles.cardPressed,
               ]}
             >
@@ -148,6 +149,11 @@ export function PopularDestinationStays() {
                     <Text style={styles.country}>{destination.country}</Text>
                   </View>
                 </ImageBackground>
+                <View style={styles.ctaSection}>
+                  <View style={styles.ctaPill}>
+                    <Text style={styles.ctaText}>Explore stays</Text>
+                  </View>
+                </View>
               </View>
             </Pressable>
           );
@@ -164,11 +170,14 @@ const styles = StyleSheet.create({
     lineHeight: 27,
     fontWeight: "800",
   },
-  carousel: { gap: 14, paddingBottom: 8, paddingRight: 34 },
+  carousel: { gap: 16, paddingBottom: 8, paddingLeft: 2, paddingRight: 34 },
   card: {
-    height: 290,
-    borderRadius: 20,
-    backgroundColor: "#DCE5F3",
+    width: CARD_WIDTH,
+    height: IMAGE_HEIGHT + CTA_HEIGHT,
+    borderRadius: 16,
+    borderColor: "rgba(203, 213, 225, 0.9)",
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: flowColors.white,
     shadowColor: "#10254D",
     shadowOpacity: 0.18,
     shadowRadius: 16,
@@ -180,11 +189,16 @@ const styles = StyleSheet.create({
   },
   cardSurface: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 16,
     overflow: "hidden",
   },
-  image: { flex: 1, justifyContent: "flex-end", padding: 14 },
-  imageCorners: { borderRadius: 20 },
+  image: {
+    width: "100%",
+    height: IMAGE_HEIGHT,
+    justifyContent: "flex-end",
+    padding: 16,
+  },
+  imageCorners: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
   heart: { position: "absolute", top: 14, right: 14 },
   copy: {
     zIndex: 1,
@@ -213,5 +227,29 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.75)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  ctaSection: {
+    width: "100%",
+    minHeight: CTA_HEIGHT,
+    alignItems: "flex-start",
+    justifyContent: "flex-end",
+    backgroundColor: flowColors.white,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 12,
+  },
+  ctaPill: {
+    borderRadius: 999,
+    borderColor: "#CBD5E1",
+    borderWidth: 1,
+    backgroundColor: flowColors.white,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  ctaText: {
+    color: "#1E293B",
+    fontSize: 15,
+    lineHeight: 18,
+    fontWeight: "700",
   },
 });
