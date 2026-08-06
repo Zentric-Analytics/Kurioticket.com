@@ -20,8 +20,9 @@ test("homepage section headings and supporting copy use semantic theme text colo
   assert.match(discovery, /color: ft\.colors\.textPrimary/);
   assert.match(discovery, /color: ft\.colors\.textSecondary/);
   assert.match(discovery, /cardTitle: \{[^}]*color: "white"/);
-  assert.match(discovery, /route: \{[^}]*color: "rgba\(255,255,255,0\.84\)"/);
-  assert.match(discovery, /categoryPillDark/);
+  assert.match(discovery, /route: \{[^}]*color: "rgba\(255,255,255,0\.88\)"/);
+  assert.match(discovery, /stopColor="#020617" stopOpacity="0\.78"/);
+  assert.doesNotMatch(discovery, /categoryPill/);
 });
 
 test("flight-form captions and helper text stay theme-aware in dark mode", () => {
