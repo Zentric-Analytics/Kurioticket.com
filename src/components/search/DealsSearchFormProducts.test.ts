@@ -39,7 +39,9 @@ test("blocked toggles announce the minimum and successful hiding closes pickers 
 
 
 test("product selector keeps pressed blue pills without selected check marks", () => {
-  const selector = form.match(/<div data-deals-product-selector[\s\S]*?<\/div>\n        <p/)?.[0] ?? "";
+  const selector =
+    form.match(/<div\s+data-deals-product-selector[\s\S]*?<\/div>\n        <p/)?.[0] ??
+    "";
   assert.match(selector, /dealsProductOrder\.map/);
   assert.match(selector, /data-deals-product=\{product\}/);
   assert.match(selector, /type="button"[\s\S]*aria-pressed=\{selected\}/);
