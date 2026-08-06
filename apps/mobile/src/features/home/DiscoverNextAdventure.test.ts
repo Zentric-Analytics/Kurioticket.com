@@ -9,29 +9,38 @@ const websiteSource = (path: string) => readFileSync(join(process.cwd(), "../.."
 const discovery = mobileSource("src/features/home/DiscoverNextAdventure.tsx");
 const websiteHome = websiteSource("src/app/page.tsx");
 
-test("the discovery cards use the website card measurements", () => {
+test("the exact website DiscoverySuggestionCard mobile board is the measurement source", () => {
   assert.match(websiteHome, /function DiscoverySuggestionCard\(/);
+  assert.match(websiteHome, /className="w-\[44vw\] min-w-\[170px\] max-w-\[210px\] shrink-0"/);
+  assert.match(websiteHome, /mobileBoardCard \? "h-\[300px\] rounded-2xl/);
+  assert.match(websiteHome, /className="flex w-max gap-3 pr-10"/);
+  assert.match(websiteHome, /className=\{`-mx-4 overflow-x-auto px-4/);
+  assert.match(discovery, /viewportWidthRatio: 0\.44/);
+  assert.match(discovery, /minWidth: 170/);
+  assert.match(discovery, /maxWidth: 210/);
   assert.match(discovery, /height: 300/);
-  assert.match(discovery, /imageHeight: 135/);
   assert.match(discovery, /radius: 16/);
   assert.match(discovery, /gap: 12/);
   assert.match(discovery, /sideInset: 16/);
+  assert.match(discovery, /trailingInset: 40/);
 });
 
-test("the shared Android and iOS card uses the website image and white content structure", () => {
-  assert.match(discovery, /imageFrame: \{ width: "100%", height: WEBSITE_DISCOVERY_CARD\.imageHeight/);
+test("the shared Android and iOS card is a full-bleed image with bottom-left overlay copy", () => {
+  assert.match(discovery, /card: \{ height: WEBSITE_DISCOVERY_CARD\.height, borderRadius: WEBSITE_DISCOVERY_CARD\.radius, overflow: "hidden" \}/);
+  assert.match(discovery, /image: \{ width: "100%", height: "100%" \}/);
   assert.match(discovery, /resizeMode="cover"/);
-  assert.match(discovery, /<View style=\{styles\.contentPanel\}>[\s\S]*cardTitle[\s\S]*styles\.route[\s\S]*styles\.tripSummary[\s\S]*styles\.from/);
-  assert.match(discovery, /ONE WAY · ECONOMY · 1 TRAVELER/);
-  assert.match(discovery, /<Text style=\{styles\.from\}>From<\/Text>/);
-  assert.doesNotMatch(discovery, /gradientOverlay|Platform\.OS/);
+  assert.match(discovery, /<Svg pointerEvents="none" style=\{styles\.gradientOverlay\}/);
+  assert.match(discovery, /<Stop offset="0\.44" stopColor="#020617" stopOpacity="0\.34" \/>/);
+  assert.match(discovery, /<Stop offset="1" stopColor="#020617" stopOpacity="0\.78" \/>/);
+  assert.match(discovery, /cardCopy: \{ position: "absolute", left: 12, right: 12, bottom: 12, gap: 4 \}/);
+  assert.match(discovery, /<View style=\{styles\.cardCopy\}>\s*<Text numberOfLines=\{2\} style=\{styles\.cardTitle\}>\{card\.title\}<\/Text>\s*<Text numberOfLines=\{1\} style=\{styles\.route\}>/);
+  assert.doesNotMatch(discovery, /categoryPill|bg-white|contentPanel|Platform\.OS/);
 });
 
-test("the discovery board is a responsive two-column vertical grid", () => {
-  assert.match(discovery, /<View style=\{styles\.grid\}>/);
-  assert.match(discovery, /grid: \{ flexDirection: "row", flexWrap: "wrap", gap: WEBSITE_DISCOVERY_CARD\.gap/);
-  assert.match(discovery, /card: \{ flexBasis: "47%", flexGrow: 1,[\s\S]*maxWidth: "50%"/);
-  assert.doesNotMatch(discovery, /<ScrollView|horizontal|FlatList/);
+test("website rail geometry preserves horizontal scrolling, inset, gap, and next-card visibility", () => {
+  assert.match(discovery, /<ScrollView\s+horizontal[\s\S]*contentContainerStyle=\{styles\.carousel\}/);
+  assert.match(discovery, /width \* WEBSITE_DISCOVERY_CARD\.viewportWidthRatio/);
+  assert.match(discovery, /carousel: \{ gap: WEBSITE_DISCOVERY_CARD\.gap,[\s\S]*paddingLeft: WEBSITE_DISCOVERY_CARD\.sideInset,[\s\S]*paddingRight: WEBSITE_DISCOVERY_CARD\.trailingInset/);
 });
 
 test("card navigation and shared favorite behavior remain isolated and unchanged", () => {
