@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
@@ -72,11 +73,12 @@ export const popularDestinationStays = [
   },
 ] as const;
 
-// Mobile web uses 17.25rem cards: 276px wide with a 288px image and 72px CTA.
-// Keeping these dimensions fixed also gives Android and iOS the same proportions.
+// Mobile website source: min-width/flex-basis 17.25rem, h-72 image and a
+// min-h-[4.5rem] CTA. React Native density-independent pixels map to CSS px.
 const CARD_WIDTH = 276;
 const IMAGE_HEIGHT = 288;
 const CTA_HEIGHT = 72;
+const IMAGE_OVERLAY_HEIGHT = 112;
 
 export function PopularDestinationStays() {
   const ft = useFlowTheme();
@@ -136,6 +138,21 @@ export function PopularDestinationStays() {
                     style={styles.image}
                     imageStyle={styles.imageCorners}
                   />
+                  <Svg
+                    pointerEvents="none"
+                    style={styles.imageOverlay}
+                    width="100%"
+                    height={IMAGE_OVERLAY_HEIGHT}
+                  >
+                    <Defs>
+                      <LinearGradient id="destinationOverlay" x1="0" y1="1" x2="0" y2="0">
+                        <Stop offset="0" stopColor="#020617" stopOpacity={0.55} />
+                        <Stop offset="0.57" stopColor="#020617" stopOpacity={0.16} />
+                        <Stop offset="1" stopColor="#020617" stopOpacity={0} />
+                      </LinearGradient>
+                    </Defs>
+                    <Rect width="100%" height="100%" fill="url(#destinationOverlay)" />
+                  </Svg>
                   <AndroidFavoriteButton
                     saved={saved}
                     label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
@@ -165,7 +182,7 @@ export function PopularDestinationStays() {
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 14, marginTop: 4 },
+  section: { gap: 24, marginTop: 4 },
   heading: {
     fontSize: 21,
     lineHeight: 27,
@@ -179,11 +196,11 @@ const styles = StyleSheet.create({
     borderColor: "rgba(203, 213, 225, 0.9)",
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: flowColors.white,
-    shadowColor: "#10254D",
-    shadowOpacity: 0.18,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.12,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 7 },
-    elevation: 6,
+    elevation: 4,
   },
   cardPressed: {
     transform: [{ scale: 0.985 }],
@@ -204,34 +221,45 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   imageCorners: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  heart: { position: "absolute", top: 14, right: 14 },
+  imageOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: IMAGE_OVERLAY_HEIGHT,
+  },
+  heart: {
+    position: "absolute",
+    zIndex: 2,
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
   copy: {
     zIndex: 1,
     alignSelf: "flex-start",
-    backgroundColor: "rgba(2, 15, 42, 0.55)",
-    borderRadius: 13,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
   city: {
     color: flowColors.white,
-    fontSize: 22,
-    lineHeight: 27,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: "900",
-    letterSpacing: -0.35,
-    textShadowColor: "rgba(0,0,0,0.75)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    letterSpacing: -0.25,
+    textShadowColor: "rgba(15, 23, 42, 0.55)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12,
   },
   country: {
     color: flowColors.white,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: "600",
-    letterSpacing: 0.15,
-    textShadowColor: "rgba(0,0,0,0.75)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    opacity: 0.95,
+    textShadowColor: "rgba(15, 23, 42, 0.55)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12,
   },
   ctaSection: {
     width: "100%",
@@ -250,6 +278,11 @@ const styles = StyleSheet.create({
     backgroundColor: flowColors.white,
     paddingHorizontal: 16,
     paddingVertical: 8,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.1,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
   },
   ctaText: {
     color: "#1E293B",

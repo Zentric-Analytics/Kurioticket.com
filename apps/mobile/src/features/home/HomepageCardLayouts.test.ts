@@ -13,6 +13,7 @@ test("Popular destination cards match the mobile website dimensions and layout",
   assert.match(popular, /const CARD_WIDTH = 276/);
   assert.match(popular, /const IMAGE_HEIGHT = 288/);
   assert.match(popular, /const CTA_HEIGHT = 72/);
+  assert.match(popular, /const IMAGE_OVERLAY_HEIGHT = 112/);
   assert.match(popular, /width:\s*CARD_WIDTH/);
   assert.match(popular, /height:\s*IMAGE_HEIGHT \+ CTA_HEIGHT/);
   assert.match(popular, /imageFrame:\s*\{[\s\S]*?width:\s*"100%",[\s\S]*?height:\s*IMAGE_HEIGHT/);
@@ -24,7 +25,10 @@ test("Popular destination cards match the mobile website dimensions and layout",
   assert.match(popular, /<View style=\{styles\.ctaSection\}>[\s\S]*<Text style=\{styles\.ctaText\}>Explore stays<\/Text>/);
   assert.match(popular, /<ScrollView[\s\S]*horizontal[\s\S]*contentContainerStyle=\{styles\.carousel\}/);
   assert.match(popular, /<View style=\{styles\.imageFrame\}>[\s\S]*<AndroidFavoriteButton[\s\S]*style=\{styles\.heart\}/);
-  assert.match(popular, /heart:\s*\{ position:\s*"absolute", top:\s*14, right:\s*14 \}/);
+  assert.match(popular, /<LinearGradient id="destinationOverlay"[\s\S]*stopOpacity=\{0\.55\}/);
+  assert.doesNotMatch(popular, /copy:\s*\{[^}]*backgroundColor/);
+  assert.match(popular, /heart:\s*\{[\s\S]*?top:\s*12,[\s\S]*?right:\s*12,[\s\S]*?width:\s*36,[\s\S]*?height:\s*36/);
+  assert.match(popular, /style=\{styles\.heart\}/);
 });
 
 test("Discover cards use the compact editorial card layout with horizontal scrolling", () => {
@@ -44,6 +48,12 @@ test("favorite buttons continue to function and card navigation uses scoped help
   assert.match(adventure, /event\.stopPropagation\(\);\s*toggle\(card\.id\);/);
   assert.match(popular, /router\.push\(popularDestinationStayNavigation\(destination\)\)/);
   assert.match(adventure, /router\.push\(discoverAdventureNavigation\(card\)\)/);
+});
+
+test("Popular destination stays is one shared Android and iOS implementation", () => {
+  assert.match(home, /import \{ PopularDestinationStays \} from "\.\.\/home\/PopularDestinationStays"/);
+  assert.match(home, /<PopularDestinationStays \/>/);
+  assert.doesNotMatch(popular, /Platform|android|ios/);
 });
 
 test("homepage sections outside popular stays and discovery remain in the same order", () => {
