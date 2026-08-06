@@ -35,6 +35,19 @@ test("Discover adventure cards open the website flight-results route search cont
   assert.doesNotMatch(adventure, /pathname:\s*"\/(?:hotels|hotel-results)"/);
 });
 
+test("Discover adventure uses the website fallback instead of entering results with an invalid route", () => {
+  assert.equal(discoverAdventureNavigation({ originCode: "LOS", destinationCode: "LOS" }), "/flights");
+  assert.equal(discoverAdventureNavigation({ originCode: "Lagos", destinationCode: "LHR" }), "/flights");
+  assert.deepEqual(
+    discoverAdventureNavigation({ originCode: " los ", destinationCode: " lhr " }),
+    {
+      pathname: "/flight-results",
+      params: homepageAdventureRouteParams({ originCode: "LOS", destinationCode: "LHR" }),
+    },
+  );
+  assert.match(websiteHomepage, /buildHomepageRouteCardFlightHref[\s\S]*\?\? "\/flights"/);
+});
+
 test("homepage card navigation preserves favorites, auth-neutral taps, and loop-safe back stacks", () => {
   assert.match(popular, /router\.push\(popularDestinationStayNavigation\(destination\)\)/);
   assert.match(adventure, /router\.push\(discoverAdventureNavigation\(card\)\)/);
@@ -42,4 +55,18 @@ test("homepage card navigation preserves favorites, auth-neutral taps, and loop-
   assert.match(adventure, /event\.stopPropagation\(\);\s*toggle\(card\.id\);/);
   assert.doesNotMatch(popular + adventure, /router\.replace|router\.back|isAuthenticated\s*\?/);
   assert.match(popular + adventure, /useSavedDestinations\(\)/);
+});
+
+test("Android and iOS share the same card, results, loading, and back-stack implementation", () => {
+  const flightRoute = source("app/flight-results.tsx");
+  const hotelRoute = source("app/hotel-results.tsx");
+  const results = source("src/features/flow/TravelResultsScreen.tsx");
+
+  assert.doesNotMatch(popular + adventure + helper, /Platform\.OS/);
+  assert.match(flightRoute, /TravelResultsScreen product="flight"/);
+  assert.match(hotelRoute, /TravelResultsScreen product="hotel"/);
+  assert.match(results, /setStatus\("loading"\)/);
+  assert.match(results, /travelApi\.searchFlights\(payload/);
+  assert.match(results, /travelApi\.searchHotels\(payload/);
+  assert.match(results, /accessibilityLabel="Go back"[\s\S]*router\.back\(\)/);
 });

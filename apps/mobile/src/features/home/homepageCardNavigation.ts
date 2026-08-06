@@ -29,7 +29,17 @@ export function popularDestinationStayNavigation(card: HomepageHotelCard): Href 
 }
 
 export function discoverAdventureNavigation(card: HomepageAdventureCard): Href {
-  return { pathname: "/flight-results", params: homepageAdventureRouteParams(card) };
+  const origin = normalizeAirportOrCityCode(card.originCode);
+  const destination = normalizeAirportOrCityCode(card.destinationCode);
+
+  // This is the Expo Router equivalent of the website helper's `?? "/flights"`.
+  // Never send a malformed or same-airport route into the results/loading flow.
+  if (!origin || !destination || origin === destination) return "/flights";
+
+  return {
+    pathname: "/flight-results",
+    params: homepageAdventureRouteParams({ originCode: origin, destinationCode: destination }),
+  };
 }
 
 export function getDefaultHomepageRouteCardDepartureDate(now = new Date()) {
@@ -51,4 +61,9 @@ function addUtcDays(value: Date, days: number) {
 }
 function formatDateKey(value: Date) {
   return value.toISOString().slice(0, 10);
+}
+
+function normalizeAirportOrCityCode(value: string) {
+  const normalized = value.trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(normalized) ? normalized : undefined;
 }

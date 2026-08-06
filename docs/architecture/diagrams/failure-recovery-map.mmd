@@ -1,0 +1,31 @@
+flowchart TD
+  A[Change committed to feature branch] --> B[Merge to dev]
+  B --> C[Required checks complete]
+  C -->|pass| D[Render + preview delivery]
+  C -->|fail| R1[Required check failure]
+  R1 --> T1[Resolve check failure]
+  D --> E{Web/Preview outcome}
+  E -->|Web healthy| F[Validate SHA + QA]
+  E -->|Web unhealthy| R2[Render deployment failure]
+  R2 --> T2[Rollback to previous deployment / fix root cause]
+  F --> G{Android classifier}
+  G -->|OTA_SAFE| H[OTA publish]
+  G -->|NATIVE_REQUIRED| T3[Queue controlled native build]
+  G -->|UNSUPPORTED/MISMATCH| R3[Gate failure, no publish]
+  G -->|ERROR| R4[Evidence/command failure]
+  H --> I[Install QA]
+  T3 --> I2[Release-specific native follow-up]
+  I --> J{iOS native required?}
+  J -->|yes| K[iOS build + TestFlight]
+  J -->|no| Q1[No iOS change]
+  K --> R5[TestFlight processing]
+  R5 -->|processing| T4[Track and wait]
+  R5 -->|ready| L[Installer QA]
+  R3 --> S1[Owner triage and re-run after remediation]
+  R4 --> S2[Owner review + root-cause fix]
+  I2 --> M{Owner approval}
+  L --> M
+  Q1 --> M
+  M -->|approved| N[Production evaluation or next delivery]
+  M -->|blocked| O[Pause + owner communication]
+  N --> P((Owner/Team closed-loop evidence))

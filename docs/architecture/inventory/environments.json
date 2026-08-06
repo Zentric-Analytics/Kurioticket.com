@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-08-05T20:00:00Z",
+  "repository": "Zentric-Analytics/Kurioticket.com",
+  "environments": [
+    {
+      "surface": "web",
+      "name": "staging",
+      "branch": "dev",
+      "service": "Kurioticket.com-staging",
+      "serviceId": "srv-d86ulfgg4nts73bctt20",
+      "runtime": "Next.js",
+      "apiOrigin": "https://staging.kurioticket.com",
+      "distribution": "Render",
+      "identity": { "title": "Kurioticket Staging" },
+      "status": "VERIFIED",
+      "evidenceStatus": "external-live",
+      "notes": "Auto-deploy from dev; health path and SHA badge are validated in phase-1 evidence."
+    },
+    {
+      "surface": "web",
+      "name": "production",
+      "branch": "main",
+      "service": "kurioticket-web",
+      "runtime": "Next.js",
+      "apiOrigin": "https://kurioticket.com",
+      "distribution": "Render",
+      "identity": { "title": "Kurioticket" },
+      "status": "IMPLEMENTED",
+      "evidenceStatus": "repository-verified",
+      "notes": "Main-hosted production web branch is governed; direct live rollout checks are reviewed separately during release windows."
+    },
+    {
+      "surface": "android",
+      "name": "preview",
+      "branch": "dev",
+      "package": "com.kurioticket.app.preview",
+      "runtime": "preview-0.3.0",
+      "channel": "preview",
+      "distribution": "Android Preview OTA + native build path",
+      "identity": { "displayName": "Kurioticket Preview" },
+      "status": "VERIFIED",
+      "evidenceStatus": "external-live",
+      "notes": "Latest evidence confirms authenticated Preview path and release automation controls."
+    },
+    {
+      "surface": "android",
+      "name": "production",
+      "branch": "main",
+      "package": "com.kurioticket.app",
+      "runtime": "production-0.3.0",
+      "channel": "production",
+      "distribution": "Google Play AAB",
+      "identity": { "displayName": "Kurioticket" },
+      "status": "VERIFIED",
+      "evidenceStatus": "external-live",
+      "notes": "Production build and internal testing path are verified; versionCode currently 2 and Play App Signing active."
+    },
+    {
+      "surface": "ios",
+      "name": "preview",
+      "branch": "dev",
+      "bundle": "com.kurioticket.app.preview",
+      "runtime": "preview-0.3.0",
+      "channel": "preview",
+      "distribution": "TestFlight internal",
+      "identity": { "displayName": "Kurioticket Preview" },
+      "status": "VERIFIED",
+      "evidenceStatus": "external-live",
+      "notes": "TestFlight internal evidence exists for iOS Preview build and processing posture."
+    },
+    {
+      "surface": "ios",
+      "name": "production",
+      "branch": "N/A",
+      "bundle": "N/A",
+      "runtime": "N/A",
+      "channel": "N/A",
+      "distribution": "N/A",
+      "status": "ABSENT",
+      "evidenceStatus": "repository-verified",
+      "notes": "No active iOS production delivery identity or workflow exists in this repo currently."
+    }
+  ],
+  "updatedFrom": {
+    "releasePolicyPath": "apps/mobile/release-policy.json",
+    "easConfigPath": "apps/mobile/eas.json",
+    "workflowPaths": [
+      ".github/workflows/migration-validation.yml",
+      ".github/workflows/mobile-preview-update.yml",
+      ".github/workflows/mobile-production-update.yml",
+      ".github/workflows/security.yml"
+    ]
+  }
+}

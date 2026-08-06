@@ -6,9 +6,9 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
@@ -73,22 +73,40 @@ export const popularDestinationStays = [
   },
 ] as const;
 
+// src/app/page.tsx DestinationCard, measured at the 375px mobile breakpoint.
+export const POPULAR_STAY_LAYOUT = {
+  cardWidth: 276,
+  imageHeight: 288,
+  ctaHeight: 72,
+  gap: 16,
+  radius: 16,
+  sideInset: 16,
+  nextCardVisible: 67,
+} as const;
+
+const {
+  cardWidth: CARD_WIDTH,
+  imageHeight: IMAGE_HEIGHT,
+  ctaHeight: CTA_HEIGHT,
+} = POPULAR_STAY_LAYOUT;
+const IMAGE_OVERLAY_HEIGHT = 112;
+
 export function PopularDestinationStays() {
   const ft = useFlowTheme();
-  const { width } = useWindowDimensions();
   const { savedIds, toggle } = useSavedDestinations();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const cardWidth = Math.min(230, Math.max(190, width * 0.58));
-
   return (
     <View
       collapsable={false}
       testID="popular-destination-stays"
       style={styles.section}
     >
-      <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>
+      <Text
+        accessibilityRole="header"
+        style={[styles.heading, { color: ft.colors.textPrimary }]}
+      >
         Popular destination stays
       </Text>
       <ScrollView
@@ -106,14 +124,18 @@ export function PopularDestinationStays() {
               key={destination.id}
               accessibilityRole="button"
               accessibilityLabel={`Explore hotel stays in ${destination.city}, ${destination.country}`}
-              onPress={() => router.push(popularDestinationStayNavigation(destination))}
+              onPress={() =>
+                router.push(popularDestinationStayNavigation(destination))
+              }
               style={({ pressed }) => [
                 styles.card,
-                { width: cardWidth },
                 pressed && styles.cardPressed,
               ]}
             >
-              <View style={styles.cardSurface}>
+              <View
+                style={styles.imageFrame}
+                testID={`popular-stay-image-${destination.id}`}
+              >
                 <ImageBackground
                   accessibilityIgnoresInvertColors
                   accessibilityLabel={`${destination.city}, ${destination.country}`}
@@ -133,21 +155,57 @@ export function PopularDestinationStays() {
                   }}
                   style={styles.image}
                   imageStyle={styles.imageCorners}
+                />
+                <Svg
+                  pointerEvents="none"
+                  style={styles.imageOverlay}
+                  width="100%"
+                  height={IMAGE_OVERLAY_HEIGHT}
                 >
-                  <AndroidFavoriteButton
-                    saved={saved}
-                    label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
-                    onPress={(event) => {
-                      event.stopPropagation();
-                      toggle(destination.id);
-                    }}
-                    style={styles.heart}
+                  <Defs>
+                    <LinearGradient
+                      id="destinationOverlay"
+                      x1="0"
+                      y1="1"
+                      x2="0"
+                      y2="0"
+                    >
+                      <Stop offset="0" stopColor="#020617" stopOpacity={0.55} />
+                      <Stop
+                        offset="0.57"
+                        stopColor="#020617"
+                        stopOpacity={0.16}
+                      />
+                      <Stop offset="1" stopColor="#020617" stopOpacity={0} />
+                    </LinearGradient>
+                  </Defs>
+                  <Rect
+                    width="100%"
+                    height="100%"
+                    fill="url(#destinationOverlay)"
                   />
-                  <View pointerEvents="none" style={styles.copy}>
-                    <Text style={styles.city}>{destination.city}</Text>
-                    <Text style={styles.country}>{destination.country}</Text>
-                  </View>
-                </ImageBackground>
+                </Svg>
+                <AndroidFavoriteButton
+                  saved={saved}
+                  label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    toggle(destination.id);
+                  }}
+                  style={styles.heart}
+                />
+                <View pointerEvents="none" style={styles.copy}>
+                  <Text style={styles.city}>{destination.city}</Text>
+                  <Text style={styles.country}>{destination.country}</Text>
+                </View>
+              </View>
+              <View
+                style={styles.ctaSection}
+                testID={`popular-stay-cta-${destination.id}`}
+              >
+                <View style={styles.ctaPill}>
+                  <Text style={styles.ctaText}>Explore stays</Text>
+                </View>
               </View>
             </Pressable>
           );
@@ -158,60 +216,113 @@ export function PopularDestinationStays() {
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 14, marginTop: 4 },
+  section: { gap: 24, marginTop: 4 },
   heading: {
     fontSize: 21,
     lineHeight: 27,
     fontWeight: "800",
   },
-  carousel: { gap: 14, paddingBottom: 8, paddingRight: 34 },
+  carousel: {
+    gap: POPULAR_STAY_LAYOUT.gap,
+    paddingBottom: 8,
+    paddingLeft: 2,
+    paddingRight: 34,
+  },
   card: {
-    height: 290,
-    borderRadius: 20,
-    backgroundColor: "#DCE5F3",
-    shadowColor: "#10254D",
-    shadowOpacity: 0.18,
+    width: CARD_WIDTH,
+    height: IMAGE_HEIGHT + CTA_HEIGHT,
+    borderRadius: POPULAR_STAY_LAYOUT.radius,
+    borderColor: "rgba(203, 213, 225, 0.9)",
+    borderWidth: StyleSheet.hairlineWidth,
+    backgroundColor: flowColors.white,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.12,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 7 },
-    elevation: 6,
+    elevation: 4,
+    overflow: "hidden",
   },
   cardPressed: {
     transform: [{ scale: 0.985 }],
   },
-  cardSurface: {
-    flex: 1,
-    borderRadius: 20,
-    overflow: "hidden",
+  imageFrame: {
+    width: "100%",
+    height: IMAGE_HEIGHT,
+    justifyContent: "flex-end",
+    padding: 16,
   },
-  image: { flex: 1, justifyContent: "flex-end", padding: 14 },
-  imageCorners: { borderRadius: 20 },
-  heart: { position: "absolute", top: 14, right: 14 },
+  image: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+  },
+  imageCorners: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  imageOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: IMAGE_OVERLAY_HEIGHT,
+  },
+  heart: {
+    position: "absolute",
+    zIndex: 2,
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
   copy: {
     zIndex: 1,
     alignSelf: "flex-start",
-    backgroundColor: "rgba(2, 15, 42, 0.55)",
-    borderRadius: 13,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
   city: {
     color: flowColors.white,
-    fontSize: 22,
-    lineHeight: 27,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: "900",
-    letterSpacing: -0.35,
-    textShadowColor: "rgba(0,0,0,0.75)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    letterSpacing: -0.25,
+    textShadowColor: "rgba(15, 23, 42, 0.55)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12,
   },
   country: {
     color: flowColors.white,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: "600",
-    letterSpacing: 0.15,
-    textShadowColor: "rgba(0,0,0,0.75)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    opacity: 0.95,
+    textShadowColor: "rgba(15, 23, 42, 0.55)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12,
+  },
+  ctaSection: {
+    width: "100%",
+    minHeight: CTA_HEIGHT,
+    alignItems: "flex-start",
+    justifyContent: "flex-end",
+    backgroundColor: flowColors.white,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 12,
+  },
+  ctaPill: {
+    borderRadius: 999,
+    borderColor: "#CBD5E1",
+    borderWidth: 1,
+    backgroundColor: flowColors.white,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.1,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
+  },
+  ctaText: {
+    color: "#1E293B",
+    fontSize: 15,
+    lineHeight: 18,
+    fontWeight: "700",
   },
 });

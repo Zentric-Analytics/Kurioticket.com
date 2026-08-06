@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-08-05T20:00:00Z",
+  "repository": "Zentric-Analytics/Kurioticket.com",
+  "platforms": [
+    {
+      "name": "GitHub",
+      "role": "source control, PR checks, workflows",
+      "status": "IMPLEMENTED",
+      "lastVerified": "repository-verified",
+      "verification": [
+        "workflow files under .github/workflows",
+        "branch and commit checks in source control"
+      ]
+    },
+    {
+      "name": "Render",
+      "role": "staging web hosting",
+      "status": "EXTERNAL_VERIFIED",
+      "lastVerified": "2026-08-05",
+      "verification": [
+        "service ID and deployment evidence in phase-1 snapshot",
+        "/api/health checks and marker SHA validation references"
+      ]
+    },
+    {
+      "name": "Expo / EAS",
+      "role": "mobile build/update + artifact + attestation",
+      "status": "IMPLEMENTED",
+      "lastVerified": "repository-verified",
+      "verification": [
+        "apps/mobile/eas.json",
+        "release-policy references",
+        "build/attestation evidence in release history"
+      ],
+      "links": ["apps/mobile/eas.json", "apps/mobile/release-policy.json"]
+    },
+    {
+      "name": "Google Play Console",
+      "role": "Android production app record and uploads",
+      "status": "EXTERNAL_VERIFIED",
+      "lastVerified": "2026-08-05",
+      "verification": [
+        "Build c84c196e-7928-4f26-8b7c-a15f37f031db",
+        "versionCode milestone and Play App Signing evidence"
+      ]
+    },
+    {
+      "name": "App Store Connect / TestFlight",
+      "role": "iOS preview TestFlight lane",
+      "status": "EXTERNAL_VERIFIED",
+      "lastVerified": "2026-08-05",
+      "verification": [
+        "ASC app id 6797447471",
+        "internal TestFlight publication history"
+      ]
+    }
+  ],
+  "platformRiskSummary": [
+    {
+      "platform": "GitHub / Render / EAS",
+      "risk": "delivery interruption or schema drift",
+      "severity": "medium",
+      "mitigation": "workflow validations and version-pinned command behavior are enforced by architecture checks."
+    },
+    {
+      "platform": "Google Play / App Store Connect",
+      "risk": "platform-side state drift",
+      "severity": "high",
+      "mitigation": "perform pre-release platform re-verification before any owner approval build/upload actions."
+    }
+  ]
+}
