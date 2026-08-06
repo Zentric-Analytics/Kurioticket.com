@@ -3,6 +3,7 @@ import { getIncludedProductList, type DealsSearch } from "./dealsSearchParams";
 import { getDealsHandoffSteps } from "./dealsHandoffPresentation";
 import { getDealsReviewTotalPlan } from "./dealsReviewPresentation";
 import { getDealsTripPlanEstimatedTotal, getDealsTripPlanReadiness, isDealsTripPlanExpired, isDealsTripPlanProductExpired, markDealsProviderOpened, type DealsTripPlan, type DealsTripPlanProduct } from "./dealsTripPlan";
+import type { DealsTripPlanReadResult } from "./dealsTripPlanStorage";
 
 export type DealsGuidedHandoffValidation =
   | { ok: true; products: readonly DealsTripPlanProduct[] }
@@ -25,6 +26,37 @@ export function validateDealsGuidedHandoffPlan(plan: DealsTripPlan, search: Deal
 
 export type DealsGuidedActivationResult = { ok: true; plan: DealsTripPlan; href: string } | { ok: false; reason: "fingerprint-mismatch" | "mode-mismatch" | "incomplete" | "expired" | "product-expired" | "product-missing" | "selection-changed" | "action-unavailable" };
 
+export type GuidedActivationFailure =
+  | { kind: "storage-unavailable"; product: DealsTripPlanProduct }
+  | { kind: "plan-missing" | "plan-invalid" | "fingerprint-mismatch" | "mode-mismatch" | "incomplete" | "plan-expired" }
+  | { kind: "product-expired" | "selection-changed" | "action-unavailable"; product: DealsTripPlanProduct };
+
+export type AttemptGuidedHandoffActivationResult =
+  | { ok: true; plan: DealsTripPlan; href: string }
+  | { ok: false; failure: GuidedActivationFailure; currentPlan?: DealsTripPlan };
+
+export function attemptGuidedHandoffActivation(input: {
+  renderedPlan: DealsTripPlan; product: DealsTripPlanProduct; search: DealsSearch;
+  fingerprint: string; now: number; locale: string;
+  read: (fingerprint: string, now: number) => DealsTripPlanReadResult;
+  write: (plan: DealsTripPlan) => boolean;
+}): AttemptGuidedHandoffActivationResult {
+  const reread = input.read(input.fingerprint, input.now);
+  if (reread.status === "storage_unavailable") return { ok: false, failure: { kind: "storage-unavailable", product: input.product } };
+  if (reread.status === "missing") return { ok: false, failure: { kind: "plan-missing" } };
+  if (reread.status === "invalid") return { ok: false, failure: { kind: "plan-invalid" } };
+  if (reread.status === "fingerprint_mismatch") return { ok: false, failure: { kind: "fingerprint-mismatch" } };
+  if (reread.status === "expired") return { ok: false, failure: { kind: "plan-expired" }, currentPlan: reread.plan };
+  const prepared = prepareDealsGuidedActivation(reread.plan, input.renderedPlan, input.product, input.search, input.fingerprint, input.now, input.locale);
+  if (!prepared.ok) {
+    const kind = prepared.reason === "expired" ? "plan-expired" : prepared.reason === "product-missing" ? "incomplete" : prepared.reason;
+    const productFailure = kind === "product-expired" || kind === "selection-changed" || kind === "action-unavailable";
+    return { ok: false, failure: productFailure ? { kind, product: input.product } : { kind }, currentPlan: reread.plan };
+  }
+  if (!input.write(prepared.plan)) return { ok: false, failure: { kind: "storage-unavailable", product: input.product } };
+  return prepared;
+}
+
 export function prepareDealsGuidedActivation(currentPlan: DealsTripPlan, renderedPlan: DealsTripPlan, product: DealsTripPlanProduct, search: DealsSearch, fingerprint: string, now: number, locale: string): DealsGuidedActivationResult {
   const validation = validateDealsGuidedHandoffPlan(currentPlan, search, fingerprint, now);
   if (!validation.ok) return validation;
@@ -33,7 +65,8 @@ export function prepareDealsGuidedActivation(currentPlan: DealsTripPlan, rendere
   if (current.id !== rendered.id) return { ok: false, reason: "selection-changed" };
   const currentStep = getDealsHandoffSteps(currentPlan, now, locale, validation.products).find(step => step.product === product);
   const renderedStep = getDealsHandoffSteps(renderedPlan, now, locale, validation.products).find(step => step.product === product);
-  if (!currentStep?.href || currentStep.href !== renderedStep?.href) return { ok: false, reason: "action-unavailable" };
+  if (!currentStep?.href) return { ok: false, reason: "action-unavailable" };
+  if (currentStep.href !== renderedStep?.href) return { ok: false, reason: "selection-changed" };
   return { ok: true, plan: markDealsProviderOpened(currentPlan, product, now), href: currentStep.href };
 }
 
