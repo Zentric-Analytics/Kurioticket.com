@@ -5,6 +5,8 @@ import test from "node:test";
 const page = fs.readFileSync("src/app/deals/handoff/page.tsx", "utf8");
 const client = fs.readFileSync("src/components/results/deals/DealsHandoffClient.tsx", "utf8") + fs.readFileSync("src/components/results/deals/DealsHandoffExperience.tsx", "utf8");
 const card = fs.readFileSync("src/components/results/deals/DealsHandoffStepCard.tsx", "utf8");
+const guided = fs.readFileSync("src/components/results/deals/DealsGuidedHandoffClient.tsx", "utf8");
+const actionIds = fs.readFileSync("src/lib/deals/dealsHandoffIds.ts", "utf8");
 const summary = fs.readFileSync("src/components/results/deals/DealsHandoffSummary.tsx", "utf8");
 const presentation = fs.readFileSync("src/lib/deals/dealsHandoffPresentation.ts", "utf8");
 
@@ -23,8 +25,22 @@ test("step activation cancellation and guided recovery progress remain isolated"
   assert.match(card, /if \(onOpen\(\) === false\) event\.preventDefault\(\)/);
   assert.match(card, /target="_blank"/); assert.match(card, /rel="noopener noreferrer"/);
   assert.match(card, /<Link href=\{unavailableHref \?\? resultsPath\} onClick=\{onRecoveryNavigation\}/);
-  const active = card.match(/<a href=\{step\.href\} id=\{`\$\{step\.id\}-action`\}[\s\S]*?<\/a>/)?.[0] ?? "";
+  const active = card.match(/<a href=\{step\.href\} id=\{getDealsHandoffActionId\(step\.product\)\}[\s\S]*?<\/a>/)?.[0] ?? "";
   assert.doesNotMatch(active, /onRecoveryNavigation|useRouteProgress/);
+});
+test("guided retry focuses the shared real action without activating it", () => {
+  assert.match(actionIds, /`provider-step-\$\{product\}-action`/);
+  assert.match(card, /id=\{getDealsHandoffActionId\(step\.product\)\}/);
+  assert.match(guided, /getElementById\(getDealsHandoffActionId\(product\)\)\?\.focus\(\)/);
+  const retry = guided.match(/retry=\{\(\) => \{[\s\S]*?\}\} \/>/)?.[0] ?? "";
+  assert.match(retry, /setActivationFailure\(null\)/); assert.doesNotMatch(retry, /activate\(|\.click\(|window\.open/);
+});
+test("guided failure copy and mounted focus targets follow failure state", () => {
+  assert.match(guided, /failure\.kind === "persistence-failed" \? "activationFailedBody"/);
+  assert.match(guided, /failure\.kind === "storage-read-unavailable" \? "storageReadFailedBody"/);
+  assert.match(guided, /readyFailure \? activationAlertRef : statePanelRef/);
+  assert.match(guided, /failure === "plan-expired"[\s\S]*getFirstDealsJourneyStage\(search\.mode\)/);
+  assert.match(guided, /failure === "product-expired"[\s\S]*buildDealsJourneyUrl\("review", search\)/);
 });
 test("flight uses a protected-provider action while stays and cars retain internal details actions", () => {
   assert.match(presentation, /DealsHandoffActionKind/);

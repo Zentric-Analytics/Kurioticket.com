@@ -2152,6 +2152,7 @@ export const translations: TranslationDictionary = {
   "deals.guided.handoff.useCurrentOptions": "Use current trip options",
   "deals.guided.handoff.activationFailedTitle": "This step could not be opened safely",
   "deals.guided.handoff.activationFailedBody": "We could not save your handoff progress, so the booking-partner page was not opened. Try again.",
+  "deals.guided.handoff.storageReadFailedBody": "تعذر علينا إعادة التحقق من رحلتك المحفوظة، لذلك لم تُفتح هذه الخطوة. حاول مرة أخرى.",
   "deals.guided.handoff.retry": "Try again",
   "deals.guided.handoff.actionUnavailable": "This option does not currently have a safe handoff action.",
   "deals.guided.handoff.summaryActionUnavailable": "One or more steps need a different trip option before they can be opened.",

@@ -27,7 +27,7 @@ export function validateDealsGuidedHandoffPlan(plan: DealsTripPlan, search: Deal
 export type DealsGuidedActivationResult = { ok: true; plan: DealsTripPlan; href: string } | { ok: false; reason: "fingerprint-mismatch" | "mode-mismatch" | "incomplete" | "expired" | "product-expired" | "product-missing" | "selection-changed" | "action-unavailable" };
 
 export type GuidedActivationFailure =
-  | { kind: "storage-unavailable"; product: DealsTripPlanProduct }
+  | { kind: "storage-read-unavailable" | "persistence-failed"; product: DealsTripPlanProduct }
   | { kind: "plan-missing" | "plan-invalid" | "fingerprint-mismatch" | "mode-mismatch" | "incomplete" | "plan-expired" }
   | { kind: "product-expired" | "selection-changed" | "action-unavailable"; product: DealsTripPlanProduct };
 
@@ -42,7 +42,7 @@ export function attemptGuidedHandoffActivation(input: {
   write: (plan: DealsTripPlan) => boolean;
 }): AttemptGuidedHandoffActivationResult {
   const reread = input.read(input.fingerprint, input.now);
-  if (reread.status === "storage_unavailable") return { ok: false, failure: { kind: "storage-unavailable", product: input.product } };
+  if (reread.status === "storage_unavailable") return { ok: false, failure: { kind: "storage-read-unavailable", product: input.product } };
   if (reread.status === "missing") return { ok: false, failure: { kind: "plan-missing" } };
   if (reread.status === "invalid") return { ok: false, failure: { kind: "plan-invalid" } };
   if (reread.status === "fingerprint_mismatch") return { ok: false, failure: { kind: "fingerprint-mismatch" } };
@@ -53,7 +53,7 @@ export function attemptGuidedHandoffActivation(input: {
     const productFailure = kind === "product-expired" || kind === "selection-changed" || kind === "action-unavailable";
     return { ok: false, failure: productFailure ? { kind, product: input.product } : { kind }, currentPlan: reread.plan };
   }
-  if (!input.write(prepared.plan)) return { ok: false, failure: { kind: "storage-unavailable", product: input.product } };
+  if (!input.write(prepared.plan)) return { ok: false, failure: { kind: "persistence-failed", product: input.product } };
   return prepared;
 }
 
