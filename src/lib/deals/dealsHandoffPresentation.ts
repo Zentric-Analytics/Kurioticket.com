@@ -1,5 +1,5 @@
 import { buildDealsInternalRedirectHref } from "./dealsProviderHandoff";
-import { getNextDealsProviderStep, isDealsTripPlanProductExpired, type DealsTripPlan, type DealsTripPlanProduct } from "./dealsTripPlan";
+import { isDealsTripPlanProductExpired, type DealsTripPlan, type DealsTripPlanProduct } from "./dealsTripPlan";
 import { formatDealsDate, getDealsRentalDays, getDealsStayNights, titleCaseDealsLabel } from "./dealsTripPresentation";
 
 export type DealsHandoffStatus = "next" | "pending" | "opened" | "expired";
@@ -16,9 +16,12 @@ function status(plan: DealsTripPlan, product: DealsTripPlanProduct, expired: boo
   return next === product ? "next" : "pending";
 }
 
-export function getDealsHandoffSteps(plan: DealsTripPlan, now: number, locale: string): readonly DealsHandoffStepView[] {
-  const next = getNextDealsProviderStep(plan, now).product;
-  const products = (["flight", "hotel", "car"] as const).filter(product => Boolean(plan[product]));
+export function getDealsHandoffSteps(plan: DealsTripPlan, now: number, locale: string, orderedProducts: readonly DealsTripPlanProduct[] = ["flight", "hotel", "car"]): readonly DealsHandoffStepView[] {
+  const products = orderedProducts.filter(product => Boolean(plan[product]));
+  const next = products.find(product => {
+    const selection = plan[product];
+    return selection && !isDealsTripPlanProductExpired(selection.resultReceivedAt, now) && !plan.opened[product];
+  }) ?? null;
   return products.map((product, index) => {
     const item = plan[product]!;
     const expired = isDealsTripPlanProductExpired(item.resultReceivedAt, now);
