@@ -23,8 +23,21 @@ type AdventureCard = {
   destinationCode: string;
   image: { uri: string };
   imageAlt: string;
-  category?: string;
 };
+
+// Mirrored from the mobile `DiscoverySuggestionCard` board in src/app/page.tsx:
+// w-[44vw] min-w-[170px] max-w-[210px], h-[300px], rounded-2xl,
+// gap-3, and the rail's -mx-4/px-4/pr-10 geometry.
+export const WEBSITE_DISCOVERY_CARD = {
+  viewportWidthRatio: 0.44,
+  minWidth: 170,
+  maxWidth: 210,
+  height: 300,
+  radius: 16,
+  gap: 12,
+  sideInset: 16,
+  trailingInset: 40,
+} as const;
 
 // Keep this order aligned with the website's current Nigeria discovery board.
 export const nextAdventureCards: readonly AdventureCard[] = [
@@ -95,7 +108,6 @@ export const nextAdventureCards: readonly AdventureCard[] = [
 ] as const;
 
 function AdventureCardView({ card, width }: { card: AdventureCard; width: number }) {
-  const ft = useFlowTheme();
   const { savedIds, toggle } = useSavedDestinations();
   const [imageFailed, setImageFailed] = useState(false);
   const saved = savedIds.has(card.id);
@@ -126,16 +138,15 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
         )}
         <Svg pointerEvents="none" style={styles.gradientOverlay} preserveAspectRatio="none" viewBox="0 0 100 100">
           <Defs>
-            <LinearGradient id={`discover-overlay-${ft.theme.dark ? "dark" : "light"}`} x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={ft.theme.dark ? "#020617" : "#071A48"} stopOpacity="0" />
-              <Stop offset="0.44" stopColor={ft.theme.dark ? "#020617" : "#071A48"} stopOpacity={ft.theme.dark ? "0.42" : "0.32"} />
-              <Stop offset="1" stopColor={ft.theme.dark ? "#020617" : "#071A48"} stopOpacity={ft.theme.dark ? "0.86" : "0.72"} />
+            <LinearGradient id="discover-overlay" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor="#020617" stopOpacity="0" />
+              <Stop offset="0.44" stopColor="#020617" stopOpacity="0.34" />
+              <Stop offset="1" stopColor="#020617" stopOpacity="0.78" />
             </LinearGradient>
           </Defs>
-          <Rect width="100" height="100" fill={`url(#discover-overlay-${ft.theme.dark ? "dark" : "light"})`} />
+          <Rect width="100" height="100" fill="url(#discover-overlay)" />
         </Svg>
         <View style={styles.cardCopy}>
-          {card.category ? <Text numberOfLines={1} style={[styles.categoryPill, ft.theme.dark && styles.categoryPillDark]}>{card.category}</Text> : null}
           <Text numberOfLines={2} style={styles.cardTitle}>{card.title}</Text>
           <Text numberOfLines={1} style={styles.route}>{card.originCode} → {card.destinationCode}</Text>
         </View>
@@ -156,7 +167,10 @@ function AdventureCardView({ card, width }: { card: AdventureCard; width: number
 export function DiscoverNextAdventure() {
   const ft = useFlowTheme();
   const { width } = useWindowDimensions();
-  const cardWidth = Math.min(190, Math.max(160, width * 0.42));
+  const cardWidth = Math.min(
+    WEBSITE_DISCOVERY_CARD.maxWidth,
+    Math.max(WEBSITE_DISCOVERY_CARD.minWidth, width * WEBSITE_DISCOVERY_CARD.viewportWidthRatio),
+  );
 
   return (
     <View collapsable={false} testID="discover-next-adventure" style={styles.section}>
@@ -178,22 +192,20 @@ export function DiscoverNextAdventure() {
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 12, marginTop: 4 },
-  headingCopy: { gap: 8 },
-  heading: { fontSize: 21, lineHeight: 27, fontWeight: "600", letterSpacing: -0.25 },
+  section: { gap: 12, marginHorizontal: -14, marginTop: 4 },
+  headingCopy: { gap: 8, paddingHorizontal: WEBSITE_DISCOVERY_CARD.sideInset },
+  heading: { fontSize: 20, lineHeight: 28, fontWeight: "600", letterSpacing: -0.25 },
   subtitle: { fontSize: 14, lineHeight: 24, fontWeight: "400" },
-  carousel: { gap: 12, paddingBottom: 4, paddingRight: 40 },
-  card: { height: 187, borderRadius: 18, overflow: "hidden" },
-  imageFrame: { flex: 1, borderRadius: 18, backgroundColor: "#EAF2FF", overflow: "hidden" },
+  carousel: { gap: WEBSITE_DISCOVERY_CARD.gap, paddingBottom: 4, paddingLeft: WEBSITE_DISCOVERY_CARD.sideInset, paddingRight: WEBSITE_DISCOVERY_CARD.trailingInset },
+  card: { height: WEBSITE_DISCOVERY_CARD.height, borderRadius: WEBSITE_DISCOVERY_CARD.radius, overflow: "hidden" },
+  imageFrame: { flex: 1, borderRadius: WEBSITE_DISCOVERY_CARD.radius, backgroundColor: "#EAF2FF", overflow: "hidden" },
   image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4, backgroundColor: "#EAF2FF" },
   fallbackLabel: { color: "#475569", fontSize: 10, fontWeight: "600", letterSpacing: 1.4 },
   fallbackCode: { color: flowColors.navy, fontSize: 12, fontWeight: "900", letterSpacing: 1.4 },
   gradientOverlay: { ...StyleSheet.absoluteFillObject },
-  heart: { position: "absolute", right: 12, top: 12 },
-  cardCopy: { position: "absolute", left: 12, right: 12, bottom: 13, gap: 5 },
-  categoryPill: { alignSelf: "flex-start", overflow: "hidden", borderRadius: 999, backgroundColor: "rgba(219,234,254,0.92)", color: flowColors.blue, paddingHorizontal: 9, paddingVertical: 4, fontSize: 10, lineHeight: 13, fontWeight: "800", letterSpacing: 0.2 },
-  categoryPillDark: { backgroundColor: "rgba(29,78,216,0.58)", color: "#DBEAFE" },
-  cardTitle: { color: "white", fontSize: 15, lineHeight: 19, fontWeight: "800", letterSpacing: -0.12 },
-  route: { color: "rgba(255,255,255,0.84)", fontSize: 12, lineHeight: 16, fontWeight: "700", letterSpacing: 0.35 },
+  heart: { position: "absolute", right: 12, top: 12, width: 32, height: 32, borderRadius: 16 },
+  cardCopy: { position: "absolute", left: 12, right: 12, bottom: 12, gap: 4 },
+  cardTitle: { color: "white", fontSize: 14, lineHeight: 18, fontWeight: "600", letterSpacing: -0.14 },
+  route: { color: "rgba(255,255,255,0.88)", fontSize: 12, lineHeight: 20, fontWeight: "600" },
 });
