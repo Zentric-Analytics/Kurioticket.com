@@ -342,6 +342,35 @@ test("completed current SHA can be claimed once for approved iOS native backfill
   assert.equal(processed, 1);
 });
 
+test("approved iOS backfill resumes its exact ancestor after dev advances", async () => {
+  const currentDevSha = "b".repeat(40);
+  const comparisons = [];
+  const record = { source_sha: sha, previous_sha: null, state: "FAILED" };
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: sha, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => ({ source_sha: currentDevSha }),
+      claimIosNativeBackfill: async ({ sourceSha, previousSha }) => {
+        assert.equal(sourceSha, sha);
+        assert.equal(previousSha, currentDevSha);
+        return record;
+      },
+    },
+    github: {
+      latestDevSha: async () => currentDevSha,
+      compare: async (base, head) => { comparisons.push([base, head]); return []; },
+      report: async () => {},
+    },
+    render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async (_record, previous) => {
+    assert.equal(previous, null);
+    return { source_sha: sha, state: "COMPLETE" };
+  };
+  assert.equal((await orchestrator.cycle()).state, "COMPLETE");
+  assert.deepEqual(comparisons, [[sha, currentDevSha]]);
+});
+
 test("existing iOS build action prevents duplicate native backfill processing", async () => {
   let processed = 0;
   const orchestrator = new PreviewOrchestrator({
