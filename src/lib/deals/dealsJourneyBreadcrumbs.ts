@@ -67,7 +67,7 @@ export function getDealsJourneyBreadcrumbs(
         ...(details
           ? { accessibleLabelKey: detailsAccessibleLabel[step.id] }
           : {}),
-        ...(status === "completed"
+        ...(status === "completed" || details
           ? { href: buildDealsJourneyUrl(resultsStage[step.id], search) }
           : {}),
       };
