@@ -187,7 +187,11 @@ export class EasClient {
           APP_VARIANT: "preview",
           APP_BUILD_MODE: "release",
           EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
-          NODE_OPTIONS: `--max-old-space-size=${isUpdatePublish ? 192 : 128}`,
+          // Metro needs more heap than the lightweight EAS inspection commands.
+          // Keep the publish child bounded well below the Standard worker's 2 GB
+          // instance limit while leaving headroom for npm, the worker, and native
+          // allocator overhead.
+          NODE_OPTIONS: `--max-old-space-size=${isUpdatePublish ? 512 : 128}`,
           MALLOC_ARENA_MAX: "2",
         },
       });
