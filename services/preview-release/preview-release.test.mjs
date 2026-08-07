@@ -5,8 +5,7 @@ import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission } from "./eas-state.mjs";
-import { retry } from "./orchestrator.mjs";
-import { PreviewOrchestrator } from "./orchestrator.mjs";
+import { PreviewOrchestrator, maintainLease, retry } from "./orchestrator.mjs";
 import { EasClient, RenderClient, gitAuthEnvironment } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
@@ -148,6 +147,16 @@ test("bounded retry succeeds without infinite looping", async () => {
 });
 test("bounded retry preserves the final error", async () => {
   await assert.rejects(retry(async () => { throw new Error("authoritative"); }, { attempts: 2, sleep: async () => {}, baseMs: 1 }), /authoritative/);
+});
+test("lease keeper renews ownership and fails closed after lease loss", async () => {
+  let calls = 0;
+  const keeper = maintainLease({
+    ledger: { heartbeat: async () => { calls += 1; if (calls === 2) throw new Error("lease lost"); } },
+    sourceSha: sha, workerId: "worker", leaseMs: 60_000,
+  });
+  await keeper.checkpoint();
+  await assert.rejects(keeper.checkpoint(), /lease renewal failed: lease lost/);
+  await keeper.stop();
 });
 test("full SHA validation rejects branch names and short SHAs", () => {
   assert.equal(assertExactSha(sha), sha);

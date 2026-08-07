@@ -17,18 +17,19 @@ export class PreviewOrchestrator {
     if (previous?.source_sha === sourceSha) return { state: "NO_CHANGE", sourceSha };
     const record = await this.ledger.claim({ sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode });
     if (!record) return { state: "LOCKED_OR_COMPLETE", sourceSha };
+    const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
-      return await this.process(record, previous);
+      return await this.process(record, previous, lease);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
       await this.github.report(sourceSha, "failure", `Preview release failed: ${safe}`).catch(() => {});
       throw error;
-    }
+    } finally { await lease.stop(); }
   }
 
-  async process(record, previous) {
+  async process(record, previous, lease) {
     const sha = record.source_sha;
     await this.ledger.transition(sha, this.config.workerId, [record.state], "VALIDATING", { validation_state: "IN_PROGRESS" });
     const checkout = await exactCheckout({ repository: this.config.repository, token: this.config.githubReadToken, sha });
@@ -40,6 +41,7 @@ export class PreviewOrchestrator {
       const identity = await resolvedIdentity(checkout.directory);
       assertPreviewIdentity(identity);
       const fingerprints = await nativeFingerprints(checkout.directory);
+      await lease.checkpoint();
       if (classification.classification.includes("OTA")) {
         const prior = previous?.evidence?.fingerprints;
         if (!prior || prior.ios !== fingerprints.ios || prior.android !== fingerprints.android) {
@@ -54,20 +56,22 @@ export class PreviewOrchestrator {
       }
       await this.ledger.transition(sha, this.config.workerId, [planned.state], "DELIVERING");
       const evidence = { files, identity, fingerprints, classification };
-      if (classification.classification.includes("WEB")) evidence.web = await this.deliverWeb(sha);
-      if (classification.classification.includes("OTA")) evidence.ota = await this.deliverOta(sha, checkout.directory);
-      if (classification.classification.includes("IOS_NATIVE")) evidence.ios = await this.deliverIos(sha, checkout.directory);
-      if (classification.classification.includes("ANDROID_NATIVE")) evidence.android = await this.deliverAndroid(sha, checkout.directory);
+      if (classification.classification.includes("WEB")) evidence.web = await this.deliverWeb(sha, lease);
+      if (classification.classification.includes("OTA")) evidence.ota = await this.deliverOta(sha, checkout.directory, lease);
+      if (classification.classification.includes("IOS_NATIVE")) evidence.ios = await this.deliverIos(sha, checkout.directory, lease);
+      if (classification.classification.includes("ANDROID_NATIVE")) evidence.android = await this.deliverAndroid(sha, checkout.directory, lease);
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
       return complete;
     } finally { await checkout.cleanup(); }
   }
 
-  async deliverWeb(sha) {
+  async deliverWeb(sha, lease) {
+    await lease.checkpoint();
     const deploy = await this.render.createDeploy(sha);
     await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: deploy.status ?? "CREATED", evidence: deploy });
     for (let attempt = 0; attempt < 120; attempt += 1) {
+      await lease.checkpoint();
       const current = await retry(() => this.render.getDeploy(deploy.id), { attempts: 3, sleep: this.sleep });
       const status = String(current.status ?? "").toLowerCase();
       if (["live", "succeeded"].includes(status)) {
@@ -82,7 +86,7 @@ export class PreviewOrchestrator {
     throw new Error(`Render deployment ${deploy.id} exceeded its bounded polling window.`);
   }
 
-  async deliverOta(sha, cwd) {
+  async deliverOta(sha, cwd, lease) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     const message = `Independent Preview all OTA for ${sha}`;
     const history = await eas.listUpdates();
@@ -91,6 +95,7 @@ export class PreviewOrchestrator {
     if (iosReplay.matchingUpdates > 1 || androidReplay.matchingUpdates > 1) throw new Error("EAS update history contains conflicting exact-SHA groups.");
     const alreadyPublished = iosReplay.alreadyPublished && androidReplay.alreadyPublished;
     if (iosReplay.alreadyPublished !== androidReplay.alreadyPublished) throw new Error("EAS update history has an incomplete cross-platform exact-SHA publication.");
+    if (!alreadyPublished) await lease.checkpoint();
     const updates = alreadyPublished ? history.filter((entry) => entry.message.includes(sha)) : await eas.publishUpdate(message);
     const ids = updates.map((entry) => entry.id ?? entry.group);
     const identityKey = `${sha}:${PREVIEW_IDENTITY.runtime}:${PREVIEW_IDENTITY.channel}`;
@@ -98,18 +103,20 @@ export class PreviewOrchestrator {
     return { updateIds: ids, runtime: PREVIEW_IDENTITY.runtime, channel: PREVIEW_IDENTITY.channel };
   }
 
-  async deliverIos(sha, cwd) {
+  async deliverIos(sha, cwd, lease) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     let decision = reconcileBuilds(await eas.listIosBuilds(sha), sha);
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS iOS reconciliation failed closed: ${decision.decision}.`);
     if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`Existing exact-SHA EAS build is ${decision.decision}; explicit retry policy is required.`);
     let build = decision.build;
     if (decision.decision === "NONE") {
+      await lease.checkpoint();
       build = await eas.createIosBuild();
       decision = { decision: "CREATED", build };
     }
     await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_BUILD", identityKey: `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`, remoteId: build.id, state: decision.decision, evidence: build });
     for (let attempt = 0; attempt < 240; attempt += 1) {
+      await lease.checkpoint();
       const current = await eas.viewBuild(build.id);
       const status = String(current.status ?? "").toUpperCase();
       await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_BUILD", identityKey: `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`, remoteId: build.id, state: status, evidence: current });
@@ -119,6 +126,7 @@ export class PreviewOrchestrator {
         if (submission.state === "NOT_CREATED") {
           if (current.autoSubmit !== false) throw new Error("TestFlight submission is absent but auto-submit disposition is not explicitly false; recovery failed closed.");
           const identityKey = `ios-submission:${build.id}`;
+          await lease.checkpoint();
           const recovered = await eas.submitIosBuild(build.id);
           await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_SUBMISSION", identityKey, remoteId: recovered.id, state: "CREATED", evidence: recovered });
           return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: "CREATED", submissionId: recovered.id, recovery: true };
@@ -132,19 +140,21 @@ export class PreviewOrchestrator {
     throw new Error(`EAS iOS build ${build.id} exceeded its bounded monitoring window.`);
   }
 
-  async deliverAndroid(sha, cwd) {
+  async deliverAndroid(sha, cwd, lease) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     let decision = reconcileBuilds(await eas.listAndroidBuilds(sha), sha, "android");
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS Android reconciliation failed closed: ${decision.decision}.`);
     if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`Existing exact-SHA EAS Android build is ${decision.decision}; explicit retry policy is required.`);
     let build = decision.build;
     if (decision.decision === "NONE") {
+      await lease.checkpoint();
       build = await eas.createAndroidBuild();
       decision = { decision: "CREATED", build };
     }
     const identityKey = `${sha}:${PREVIEW_IDENTITY.easProjectId}:android:preview`;
     await this.ledger.recordAction({ sourceSha: sha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: decision.decision, evidence: build });
     for (let attempt = 0; attempt < 240; attempt += 1) {
+      await lease.checkpoint();
       const current = await eas.viewBuild(build.id);
       const status = String(current.status ?? "").toUpperCase();
       await this.ledger.recordAction({ sourceSha: sha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: status, evidence: current });
@@ -168,6 +178,32 @@ export async function retry(operation, { attempts, sleep, baseMs = 1_000 }) {
     try { return await operation(); } catch (error) { last = error; if (attempt + 1 < attempts) await sleep(baseMs * 2 ** attempt); }
   }
   throw last;
+}
+
+export function maintainLease({ ledger, sourceSha, workerId, leaseMs }) {
+  let stopped = false;
+  let lost = null;
+  let renewing = Promise.resolve();
+  const renew = () => {
+    renewing = renewing.then(() => ledger.heartbeat(sourceSha, workerId, leaseMs)).catch((error) => { lost = error; });
+    return renewing;
+  };
+  const timer = setInterval(renew, Math.max(5_000, Math.floor(leaseMs / 3)));
+  timer.unref?.();
+  return {
+    async checkpoint() {
+      if (stopped) throw new Error("Preview release lease keeper is stopped.");
+      if (lost) throw new Error(`Preview release lease renewal failed: ${lost.message ?? lost}`);
+      await renew();
+      if (lost) throw new Error(`Preview release lease renewal failed: ${lost.message ?? lost}`);
+    },
+    async stop() {
+      if (stopped) return;
+      stopped = true;
+      clearInterval(timer);
+      await renewing;
+    },
+  };
 }
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
