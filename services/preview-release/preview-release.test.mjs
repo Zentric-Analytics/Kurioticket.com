@@ -192,10 +192,10 @@ for (const [status, expected] of [["IN_QUEUE", "ACTIVE_MATCH"], ["IN_PROGRESS", 
 }
 test("EAS reconciliation returns NONE for unrelated SHAs", () => assert.equal(reconcileBuilds([build({ gitCommitHash: "b".repeat(40) })], sha).decision, "NONE"));
 test("EAS reconciliation fails closed on identity conflict", () => assert.equal(reconcileBuilds([build({ buildProfile: "production" })], sha).decision, "CONFLICT"));
-test("EAS reconciliation accepts omitted CLI identifier fields only when exact server-side filters are attested", () => {
-  const value = build({ appIdentifier: undefined, runtimeVersion: undefined, channel: undefined, queriedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier, queriedRuntimeVersion: PREVIEW_IDENTITY.runtimeVersion, queriedChannel: PREVIEW_IDENTITY.channel });
+test("EAS reconciliation accepts omitted CLI bundle identity only when immutable source identity is attested", () => {
+  const value = build({ appIdentifier: undefined, sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier });
   assert.equal(reconcileBuilds([value], sha).decision, "ACTIVE_MATCH");
-  assert.equal(reconcileBuilds([{ ...value, queriedAppIdentifier: undefined }], sha).decision, "CONFLICT");
+  assert.equal(reconcileBuilds([{ ...value, sourceAttestedAppIdentifier: undefined }], sha).decision, "CONFLICT");
 });
 test("EAS reconciliation fails closed on duplicate exact matches", () => assert.equal(reconcileBuilds([build(), build({ id: "build-2" })], sha).decision, "CONFLICT"));
 test("EAS reconciliation fails closed on malformed history", () => assert.equal(reconcileBuilds([{ nope: true }], sha).decision, "MALFORMED_RESPONSE"));
@@ -218,12 +218,14 @@ test("submission history fails closed on duplicates, wrong projects, and malform
   assert.equal(reconcileSubmissionHistory([{ id: "sub-1" }], "build-1").state, "UNKNOWN");
 });
 
-test("EAS build history applies exact Preview bundle, runtime, channel, profile, platform, and SHA filters", async () => {
+test("EAS build history uses exact Preview platform, profile, and SHA filters without excluding valid sparse CLI records", async () => {
   const calls = [];
   const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
   client.run = async (args) => { calls.push(args); return []; };
   assert.deepEqual(await client.listIosBuilds(sha), []);
-  assert.deepEqual(calls[0].slice(0, 15), ["eas-cli@16.17.4", "build:list", "--platform", "ios", "--profile", "preview", "--app-identifier", PREVIEW_IDENTITY.bundleIdentifier, "--runtime-version", PREVIEW_IDENTITY.runtimeVersion, "--channel", PREVIEW_IDENTITY.channel, "--git-commit-hash", sha]);
+  assert.deepEqual(calls[0].slice(0, 7), ["eas-cli@16.17.4", "build:list", "--platform", "ios", "--profile", "preview"]);
+  assert.ok(calls[0].includes("--git-commit-hash"));
+  assert.ok(!calls[0].includes("--app-identifier"));
 });
 
 test("EAS submission history uses authenticated bounded GraphQL and exact project identity", async () => {
@@ -406,9 +408,12 @@ test("iOS delivery adopts a finished build and waits for its server-owned auto-s
   const finishedBuild = build({ status: "FINISHED", appBuildVersion: "5" });
   const orchestrator = new PreviewOrchestrator({
     config: {}, github: {}, render: {}, sleep: async () => {},
-    ledger: { recordAction: async (action) => { actions.push(action); return action; } },
+    ledger: {
+      getAction: async () => ({ remote_id: finishedBuild.id }),
+      recordAction: async (action) => { actions.push(action); return action; },
+    },
     easFactory: () => ({
-      listIosBuilds: async () => [finishedBuild],
+      listIosBuilds: async () => { throw new Error("history must not run when the ledger has a build ID"); },
       createIosBuild: async () => { buildCreates += 1; return finishedBuild; },
       viewBuild: async () => finishedBuild,
       listIosSubmissions: async () => {
