@@ -122,9 +122,9 @@ export class EasClient {
     assertExactSha(targetSha);
     const all = [];
     for (let offset = 0; offset < 500; offset += 50) {
-      const page = await this.run(["eas-cli@16.17.4", "build:list", "--platform", platform, "--profile", "preview", "--app-identifier", PREVIEW_IDENTITY.bundleIdentifier, "--runtime-version", PREVIEW_IDENTITY.runtimeVersion, "--channel", PREVIEW_IDENTITY.channel, "--git-commit-hash", targetSha, "--limit", "50", "--offset", String(offset), "--json", "--non-interactive"]);
+      const page = await this.run(["eas-cli@16.17.4", "build:list", "--platform", platform, "--profile", "preview", "--git-commit-hash", targetSha, "--limit", "50", "--offset", String(offset), "--json", "--non-interactive"]);
       if (!Array.isArray(page)) throw new Error("EAS build:list response must be an array.");
-      all.push(...page.map((build) => ({ ...build, queriedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier, queriedRuntimeVersion: PREVIEW_IDENTITY.runtimeVersion, queriedChannel: PREVIEW_IDENTITY.channel })));
+      all.push(...page.map((build) => ({ ...build, sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier })));
       if (page.length < 50) return all;
     }
     throw new Error("EAS build history exceeded the bounded pagination limit.");
@@ -141,7 +141,11 @@ export class EasClient {
     if (builds.length !== 1 || typeof builds[0]?.id !== "string") throw new Error("EAS Android build creation returned an ambiguous build ID.");
     return builds[0];
   }
-  async viewBuild(id) { return this.run(["eas-cli@16.17.4", "build:view", id, "--json"]); }
+  async viewBuild(id) {
+    const build = await this.run(["eas-cli@16.17.4", "build:view", id, "--json"]);
+    if (!build || typeof build !== "object" || Array.isArray(build)) throw new Error("EAS build:view response must be an object.");
+    return { ...build, sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier };
+  }
   async listIosSubmissions() {
     const query = `query PreviewIosSubmissions($appId: String!, $limit: Int!, $offset: Int!) {
       app { byId(appId: $appId) { id submissions(filter: { platform: IOS }, limit: $limit, offset: $offset) {

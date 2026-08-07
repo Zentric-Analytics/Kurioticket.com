@@ -135,7 +135,17 @@ export class PreviewOrchestrator {
 
   async deliverIos(sha, cwd, lease) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
-    let decision = reconcileBuilds(await eas.listIosBuilds(sha), sha);
+    const buildIdentityKey = `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`;
+    const recordedBuildAction = await this.ledger.getAction("IOS_BUILD", buildIdentityKey);
+    let decision;
+    if (recordedBuildAction?.remote_id) {
+      decision = reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], sha);
+      if (!["ACTIVE_MATCH", "FINISHED_MATCH"].includes(decision.decision)) {
+        throw new Error(`Persisted iOS build ${recordedBuildAction.remote_id} failed identity reconciliation: ${decision.decision}.`);
+      }
+    } else {
+      decision = reconcileBuilds(await eas.listIosBuilds(sha), sha);
+    }
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS iOS reconciliation failed closed: ${decision.decision}.`);
     if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`Existing exact-SHA EAS build is ${decision.decision}; explicit retry policy is required.`);
     let build = decision.build;
@@ -144,7 +154,7 @@ export class PreviewOrchestrator {
       build = await eas.createIosBuild();
       decision = { decision: "CREATED", build };
     }
-    await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_BUILD", identityKey: `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`, remoteId: build.id, state: decision.decision, evidence: build });
+    await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_BUILD", identityKey: buildIdentityKey, remoteId: build.id, state: decision.decision, evidence: build });
     for (let attempt = 0; attempt < 240; attempt += 1) {
       await lease.checkpoint();
       const current = await eas.viewBuild(build.id);
