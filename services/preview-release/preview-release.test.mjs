@@ -240,7 +240,6 @@ test("exact-checkout preparation reuses the immutable build dependency trees", a
     commandRunner: async (...args) => { copies.push(args); },
   });
   assert.deepEqual(copies.map(([command, args]) => [command, args]), [
-    ["cp", ["-al", "--", resolve(repositoryRoot, "node_modules"), resolve(repositoryRoot, "node_modules")]],
     ["cp", ["-al", "--", resolve(repositoryRoot, "apps/mobile/node_modules"), resolve(repositoryRoot, "apps/mobile/node_modules")]],
   ]);
 });
@@ -365,5 +364,7 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /APP_VARIANT: "preview"/);
   assert.match(client, /APP_BUILD_MODE: "release"/);
   assert.match(client, /EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY\.apiOrigin/);
+  assert.match(client, /"--concurrent-io-limit", "1"/);
+  assert.match(client, /NODE_OPTIONS: "--max-old-space-size=256"/);
   assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/);
 });
