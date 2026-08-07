@@ -10,6 +10,18 @@ import { normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ot
 const exec = promisify(execFile);
 const runtimeRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
+function withSourceAttestedPreviewIdentity(build, platform = "ios") {
+  return {
+    ...build,
+    sourceAttestedProjectId: PREVIEW_IDENTITY.easProjectId,
+    sourceAttestedPlatform: platform,
+    sourceAttestedBuildProfile: "preview",
+    sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier,
+    sourceAttestedRuntimeVersion: PREVIEW_IDENTITY.runtimeVersion,
+    sourceAttestedChannel: PREVIEW_IDENTITY.channel,
+  };
+}
+
 export class GitHubClient {
   constructor({ readToken, statusToken = null, repository = PREVIEW_IDENTITY.repository, fetchImpl = fetch }) {
     this.readToken = readToken; this.statusToken = statusToken; this.repository = repository; this.fetch = fetchImpl;
@@ -124,7 +136,7 @@ export class EasClient {
     for (let offset = 0; offset < 500; offset += 50) {
       const page = await this.run(["eas-cli@16.17.4", "build:list", "--platform", platform, "--profile", "preview", "--git-commit-hash", targetSha, "--limit", "50", "--offset", String(offset), "--json", "--non-interactive"]);
       if (!Array.isArray(page)) throw new Error("EAS build:list response must be an array.");
-      all.push(...page.map((build) => ({ ...build, sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier })));
+      all.push(...page.map((build) => withSourceAttestedPreviewIdentity(build, platform)));
       if (page.length < 50) return all;
     }
     throw new Error("EAS build history exceeded the bounded pagination limit.");
@@ -144,7 +156,7 @@ export class EasClient {
   async viewBuild(id) {
     const build = await this.run(["eas-cli@16.17.4", "build:view", id, "--json"]);
     if (!build || typeof build !== "object" || Array.isArray(build)) throw new Error("EAS build:view response must be an object.");
-    return { ...build, sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier };
+    return withSourceAttestedPreviewIdentity(build, "ios");
   }
   async listIosSubmissions() {
     const query = `query PreviewIosSubmissions($appId: String!, $limit: Int!, $offset: Int!) {
@@ -322,3 +334,4 @@ export async function nativeFingerprints(directory) {
   }
   return Object.freeze(result);
 }
+

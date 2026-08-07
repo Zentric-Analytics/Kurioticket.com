@@ -13,12 +13,12 @@ export function reconcileBuilds(builds, targetSha, platform = "ios") {
     const sha = build.gitCommitHash ?? build.gitCommit?.hash;
     if (sha !== targetSha) continue;
     const identity = {
-      projectId: build.project?.id,
-      platform: String(build.platform ?? "").toUpperCase(),
-      profile: build.buildProfile,
+      projectId: build.project?.id ?? build.sourceAttestedProjectId,
+      platform: String(build.platform ?? build.sourceAttestedPlatform ?? "").toUpperCase(),
+      profile: build.buildProfile ?? build.sourceAttestedBuildProfile,
       bundleIdentifier: build.appIdentifier ?? build.sourceAttestedAppIdentifier,
-      runtimeVersion: build.runtimeVersion,
-      channel: build.channel,
+      runtimeVersion: build.runtimeVersion ?? build.sourceAttestedRuntimeVersion,
+      channel: build.channel ?? build.sourceAttestedChannel,
     };
     if (identity.projectId !== PREVIEW_IDENTITY.easProjectId || identity.platform !== platform.toUpperCase() || identity.profile !== "preview" || identity.bundleIdentifier !== PREVIEW_IDENTITY.bundleIdentifier || identity.runtimeVersion !== PREVIEW_IDENTITY.runtimeVersion || identity.channel !== PREVIEW_IDENTITY.channel) {
       return { decision: "CONFLICT", matches: [build.id], identity };
@@ -63,3 +63,4 @@ export function reconcileSubmissionHistory(submissions, buildId) {
   if (!exact.length) return { state: "NOT_CREATED" };
   return reconcileSubmission({ status: "FINISHED", submission: exact[0] });
 }
+

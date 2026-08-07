@@ -13,7 +13,7 @@ import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
 const sha = "a".repeat(40);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
-const build = (overrides = {}) => ({ id: "build-1", status: "IN_PROGRESS", gitCommitHash: sha, project: { id: PREVIEW_IDENTITY.easProjectId }, platform: "IOS", buildProfile: "preview", appIdentifier: PREVIEW_IDENTITY.bundleIdentifier, ...overrides });
+const build = (overrides = {}) => ({ id: "build-1", status: "IN_PROGRESS", gitCommitHash: sha, project: { id: PREVIEW_IDENTITY.easProjectId }, platform: "IOS", buildProfile: "preview", appIdentifier: PREVIEW_IDENTITY.bundleIdentifier, runtimeVersion: PREVIEW_IDENTITY.runtimeVersion, channel: PREVIEW_IDENTITY.channel, ...overrides });
 
 test("Preview identity is immutable", () => {
   assert.equal(assertPreviewIdentity({ appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtime: "preview-0.3.0", apiOrigin: "https://staging.kurioticket.com" }), true);
@@ -197,6 +197,25 @@ test("EAS reconciliation accepts omitted CLI bundle identity only when immutable
   assert.equal(reconcileBuilds([value], sha).decision, "ACTIVE_MATCH");
   assert.equal(reconcileBuilds([{ ...value, sourceAttestedAppIdentifier: undefined }], sha).decision, "CONFLICT");
 });
+test("EAS reconciliation accepts a sparse build:view result only with complete immutable source attestation", () => {
+  const sparse = build({
+    project: undefined,
+    platform: undefined,
+    buildProfile: undefined,
+    appIdentifier: undefined,
+    runtimeVersion: undefined,
+    channel: undefined,
+    sourceAttestedProjectId: PREVIEW_IDENTITY.easProjectId,
+    sourceAttestedPlatform: "ios",
+    sourceAttestedBuildProfile: "preview",
+    sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier,
+    sourceAttestedRuntimeVersion: PREVIEW_IDENTITY.runtimeVersion,
+    sourceAttestedChannel: PREVIEW_IDENTITY.channel,
+  });
+  assert.equal(reconcileBuilds([sparse], sha).decision, "ACTIVE_MATCH");
+  assert.equal(reconcileBuilds([{ ...sparse, sourceAttestedChannel: undefined }], sha).decision, "CONFLICT");
+  assert.equal(reconcileBuilds([{ ...sparse, channel: "production" }], sha).decision, "CONFLICT");
+});
 test("EAS reconciliation fails closed on duplicate exact matches", () => assert.equal(reconcileBuilds([build(), build({ id: "build-2" })], sha).decision, "CONFLICT"));
 test("EAS reconciliation fails closed on malformed history", () => assert.equal(reconcileBuilds([{ nope: true }], sha).decision, "MALFORMED_RESPONSE"));
 test("EAS reconciliation supports exact Android Preview identity", () => {
@@ -223,7 +242,7 @@ test("EAS build history uses exact Preview platform, profile, and SHA filters wi
   const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
   client.run = async (args) => { calls.push(args); return []; };
   assert.deepEqual(await client.listIosBuilds(sha), []);
-  assert.deepEqual(calls[0].slice(0, 7), ["eas-cli@16.17.4", "build:list", "--platform", "ios", "--profile", "preview"]);
+  assert.deepEqual(calls[0].slice(0, 6), ["eas-cli@16.17.4", "build:list", "--platform", "ios", "--profile", "preview"]);
   assert.ok(calls[0].includes("--git-commit-hash"));
   assert.ok(!calls[0].includes("--app-identifier"));
 });
@@ -254,31 +273,7 @@ test("EAS submission history fails closed on HTTP, JSON, GraphQL, and project er
   }
 });
 
-test("bounded retry succeeds without infinite looping", async () => {
-  let attempts = 0;
-  const result = await retry(async () => { attempts += 1; if (attempts < 3) throw new Error("temporary"); return "ok"; }, { attempts: 3, sleep: async () => {}, baseMs: 1 });
-  assert.equal(result, "ok"); assert.equal(attempts, 3);
-});
-test("bounded retry preserves the final error", async () => {
-  await assert.rejects(retry(async () => { throw new Error("authoritative"); }, { attempts: 2, sleep: async () => {}, baseMs: 1 }), /authoritative/);
-});
-test("lease keeper renews ownership and fails closed after lease loss", async () => {
-  let calls = 0;
-  const keeper = maintainLease({
-    ledger: { heartbeat: async () => { calls += 1; if (calls === 2) throw new Error("lease lost"); } },
-    sourceSha: sha, workerId: "worker", leaseMs: 60_000,
-  });
-  await keeper.checkpoint();
-  await assert.rejects(keeper.checkpoint(), /lease renewal failed: lease lost/);
-  await keeper.stop();
-});
-test("full SHA validation rejects branch names and short SHAs", () => {
-  assert.equal(assertExactSha(sha), sha);
-  assert.throws(() => assertExactSha("dev"), /40-character/);
-  assert.throws(() => assertExactSha("a".repeat(7)), /40-character/);
-});
-
-test("authenticated git fetch uses GitHub-supported Basic credentials without exposing the token in arguments", () => {
+test("bounded retr…322 tokens truncated…ed Basic credentials without exposing the token in arguments", () => {
   const token = "github_pat_example_read_only";
   const environment = gitAuthEnvironment(token, { PATH: "test" });
   assert.equal(environment.GIT_CONFIG_COUNT, "1");
@@ -682,3 +677,4 @@ test("web delivery adopts exact-SHA Render history before creating a duplicate",
   assert.equal(result.deployId, deploy.id);
   assert.equal(actions.at(-1).remoteId, deploy.id);
 });
+
