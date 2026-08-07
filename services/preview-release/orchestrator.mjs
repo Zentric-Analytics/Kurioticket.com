@@ -8,8 +8,8 @@ import { inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/s
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 
 export class PreviewOrchestrator {
-  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), stagingWait = waitForStaging, sleep = delay }) {
-    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.stagingWait = stagingWait; this.sleep = sleep;
+  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), checkoutFactory = exactCheckout, prepareCheckoutFactory = prepareCheckout, identityFactory = resolvedIdentity, fingerprintsFactory = nativeFingerprints, stagingWait = waitForStaging, sleep = delay }) {
+    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.checkoutFactory = checkoutFactory; this.prepareCheckoutFactory = prepareCheckoutFactory; this.identityFactory = identityFactory; this.fingerprintsFactory = fingerprintsFactory; this.stagingWait = stagingWait; this.sleep = sleep;
   }
 
   async cycle() {
@@ -20,8 +20,8 @@ export class PreviewOrchestrator {
     const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevNeedsEvaluation ? pendingDistribution?.source_sha : null) ?? currentDevSha;
     if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
-    const deliveredNative = iosNativeBackfill ? {} : await this.deliveredNativeBaselines();
     const iosDistributionPending = !iosNativeBackfill && (pendingDistribution?.source_sha === sourceSha || (typeof this.ledger.requiresIosDistribution === "function" && await this.ledger.requiresIosDistribution(sourceSha)));
+    const deliveredNative = iosNativeBackfill || iosDistributionPending ? {} : await this.deliveredNativeBaselines();
     const pendingNative = previous?.source_sha === sourceSha
       ? nativeDriftTargets(previous.evidence?.fingerprints, deliveredNative)
       : [];
@@ -38,8 +38,8 @@ export class PreviewOrchestrator {
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
-      const classificationBaseline = iosNativeBackfill || iosDistributionPending ? null : previous;
-      return await this.process(record, classificationBaseline, lease, deliveredNative, iosDistributionPending);
+      if (iosDistributionPending) return await this.reconcileIosDistribution(record, lease);
+      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
@@ -48,7 +48,7 @@ export class PreviewOrchestrator {
     } finally { await lease.stop(); }
   }
 
-  async process(record, previous, lease, deliveredNative = null, iosDistributionPending = false) {
+  async process(record, previous, lease, deliveredNative = null) {
     const sha = record.source_sha;
     await this.ledger.transition(sha, this.config.workerId, [record.state], "VALIDATING", { validation_state: "IN_PROGRESS" });
     const checkout = await exactCheckout({ repository: this.config.repository, token: this.config.githubReadToken, sha });
@@ -57,7 +57,6 @@ export class PreviewOrchestrator {
       let classification = previous ? classifyChangeSet(files) : { classification: "NO_DELIVERY", reason: "initial-baseline", files: [] };
       classification = applyCutoverBaseline({ classification, files, sha, config: this.config });
       classification = applyIosNativeBackfill({ classification, files, sha, config: this.config });
-      if (iosDistributionPending) classification = { classification: "IOS_NATIVE", reason: "pending-testflight-internal-distribution", files };
       if (classification.classification === "UNSAFE") throw new Error(`Release classification failed closed: ${classification.reason}.`);
       await prepareCheckout(checkout.directory);
       const identity = await resolvedIdentity(checkout.directory);
@@ -98,6 +97,39 @@ export class PreviewOrchestrator {
       if (record) result[platform] = { sourceSha: record.source_sha, buildId: record.native_build_id, fingerprint: record.native_fingerprint };
     }
     return result;
+  }
+
+  async reconcileIosDistribution(record, lease) {
+    const sha = record.source_sha;
+    const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha });
+    try {
+      await this.prepareCheckoutFactory(checkout.directory);
+      assertPreviewIdentity(await this.identityFactory(checkout.directory));
+      await this.fingerprintsFactory(checkout.directory);
+      await lease.checkpoint();
+
+      const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
+      const buildIdentityKey = `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`;
+      const buildAction = await this.ledger.getAction("IOS_BUILD", buildIdentityKey);
+      if (!buildAction?.remote_id) throw new Error("Pending TestFlight distribution is missing its durable iOS build identity.");
+      const buildDecision = reconcileBuilds([await eas.viewBuild(buildAction.remote_id)], sha);
+      if (buildDecision.decision !== "FINISHED_MATCH") {
+        throw new Error(`Pending TestFlight distribution requires one finished exact-SHA iOS build; found ${buildDecision.decision}.`);
+      }
+
+      const build = buildDecision.build;
+      const submissionAction = await this.ledger.getAction("IOS_SUBMISSION", `ios-submission:${build.id}`);
+      if (!submissionAction?.remote_id) throw new Error("Pending TestFlight distribution is missing its durable iOS submission identity.");
+      const submission = reconcileSubmissionHistory(await eas.listIosSubmissions(), build.id);
+      if (submission.state !== "FINISHED" || submission.submission.id !== submissionAction.remote_id) {
+        throw new Error("Pending TestFlight distribution requires its exact finished durable iOS submission.");
+      }
+
+      const distribution = await this.distributeIosToInternalGroup({ sha, build, current: build, submission: submission.submission, lease });
+      const complete = await this.ledger.completeIosDistribution({ sourceSha: sha, workerId: this.config.workerId });
+      await this.github.report(sha, "success", "Preview TestFlight internal distribution reconciliation complete");
+      return { ...complete, distribution };
+    } finally { await checkout.cleanup(); }
   }
 
   async deliverWeb(sha, lease) {

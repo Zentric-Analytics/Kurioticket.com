@@ -510,33 +510,76 @@ test("iOS delivery fails closed on a failed auto-submit and never invokes manual
   assert.equal(manualSubmissions, 0);
 });
 
-test("a submitted but undistributed iOS build resumes after a superseding dev merge is accounted for", async () => {
+test("historical TestFlight recovery remains iOS-only after newer Android native drift", async () => {
   const newerDev = "d".repeat(40);
   const comparisons = [];
-  let processedPending = false;
-  let classificationBaseline = "not-observed";
+  let distributionReconciliations = 0;
+  let ordinaryProcesses = 0;
+  let androidDeliveries = 0;
   const orchestrator = new PreviewOrchestrator({
     config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
     ledger: {
       pendingIosDistribution: async () => ({ source_sha: sha, ios_build_id: "build-1" }),
-      lastSuccessful: async () => ({ source_sha: newerDev, evidence: { fingerprints: {} } }),
-      lastSuccessfulNative: async () => null,
+      lastSuccessful: async () => ({ source_sha: newerDev, evidence: { fingerprints: { android: "new-android" } } }),
+      lastSuccessfulNative: async () => { throw new Error("historical distribution must not read native-drift baselines"); },
       requiresIosDistribution: async () => true,
-      claimIosDistribution: async () => ({ source_sha: sha, state: "COMPLETE" }),
+      claimIosDistribution: async () => ({ source_sha: sha, state: "DETECTED" }),
       transition: async () => {},
     },
     github: { latestDevSha: async () => newerDev, compare: async (...args) => { comparisons.push(args); }, report: async () => {} }, render: {}, sleep: async () => {},
   });
-  orchestrator.process = async (_record, previous, _lease, _delivered, pending) => {
-    classificationBaseline = previous;
-    processedPending = pending;
-    return { state: "COMPLETE" };
-  };
+  orchestrator.reconcileIosDistribution = async () => { distributionReconciliations += 1; return { state: "COMPLETE" }; };
+  orchestrator.process = async () => { ordinaryProcesses += 1; throw new Error("historical distribution entered ordinary release processing"); };
+  orchestrator.deliverAndroid = async () => { androidDeliveries += 1; throw new Error("historical distribution attempted Android delivery"); };
   const result = await orchestrator.cycle();
   assert.equal(result.state, "COMPLETE");
-  assert.equal(processedPending, true);
-  assert.equal(classificationBaseline, null);
+  assert.equal(distributionReconciliations, 1);
+  assert.equal(ordinaryProcesses, 0);
+  assert.equal(androidDeliveries, 0);
   assert.deepEqual(comparisons, [[sha, newerDev]]);
+});
+
+test("historical TestFlight reconciliation adopts only the recorded finished iOS build and submission", async () => {
+  const finishedBuild = build({ status: "FINISHED", appVersion: "0.3.0", appBuildVersion: "9" });
+  const finishedSubmission = submission();
+  const actionKinds = [];
+  let buildCreates = 0;
+  let androidCreates = 0;
+  let completed = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: { repository: "Zentric-Analytics/Kurioticket.com", githubReadToken: "redacted", workerId: "test" },
+    ledger: {
+      getAction: async (kind) => {
+        actionKinds.push(kind);
+        if (kind === "IOS_BUILD") return { remote_id: finishedBuild.id, state: "FINISHED" };
+        if (kind === "IOS_SUBMISSION") return { remote_id: finishedSubmission.id, state: "FINISHED" };
+        return null;
+      },
+      recordAction: async (action) => action,
+      completeIosDistribution: async () => { completed += 1; return { source_sha: sha, state: "COMPLETE" }; },
+    },
+    github: { report: async () => {} }, render: {}, sleep: async () => {},
+    checkoutFactory: async ({ sha: requestedSha }) => {
+      assert.equal(requestedSha, sha);
+      return { directory: repositoryRoot, cleanup: async () => {} };
+    },
+    prepareCheckoutFactory: async () => {},
+    identityFactory: async () => ({ appName: "Kurioticket Preview", bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: PREVIEW_IDENTITY.channel, runtime: PREVIEW_IDENTITY.runtime, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
+    fingerprintsFactory: async () => ({ ios: "i".repeat(40), android: "a".repeat(40) }),
+    easFactory: () => ({
+      viewBuild: async (id) => { assert.equal(id, finishedBuild.id); return finishedBuild; },
+      listIosSubmissions: async () => [finishedSubmission],
+      createIosBuild: async () => { buildCreates += 1; throw new Error("historical reconciliation created an iOS build"); },
+      createAndroidBuild: async () => { androidCreates += 1; throw new Error("historical reconciliation created an Android build"); },
+    }),
+    appleFactory: () => finishedApple(),
+  });
+  const result = await orchestrator.reconcileIosDistribution({ source_sha: sha, state: "DETECTED" }, { checkpoint: async () => {} });
+  assert.equal(result.state, "COMPLETE");
+  assert.deepEqual(actionKinds, ["IOS_BUILD", "IOS_SUBMISSION"]);
+  assert.equal(buildCreates, 0);
+  assert.equal(androidCreates, 0);
+  assert.equal(completed, 1);
 });
 
 test("failed TestFlight distribution is reclaimed through its dedicated lease-safe claim", async () => {
@@ -548,8 +591,28 @@ test("failed TestFlight distribution is reclaimed through its dedicated lease-sa
   assert.equal((await ledger.claimIosDistribution({ sourceSha: sha, workerId: "worker-2", leaseMs: 60_000, mode: "active" })).state, "DETECTED");
   assert.match(queries[0].sql, /'FAILED'/);
   assert.match(queries[0].sql, /lock_expires_at < now\(\)/);
+  assert.doesNotMatch(queries[0].sql, /completed_at\s*=\s*NULL/i);
   assert.match(queries[0].sql, /IOS_BUILD'[\s\S]*IOS_SUBMISSION'[\s\S]*IOS_TESTFLIGHT_DISTRIBUTION'[\s\S]*state='FINISHED'/);
   assert.deepEqual(queries[0].values, [sha, "worker-2", 60_000, "active"]);
+});
+
+test("historical distribution completion preserves the monotonic ordinary progression order", async () => {
+  const queries = [];
+  const older = { source_sha: sha, state: "COMPLETE", progression_order: 7 };
+  const newer = { source_sha: "b".repeat(40), state: "COMPLETE", progression_order: 8 };
+  const ledger = new PreviewLedger("postgres://localhost/test", {
+    pool: { query: async (sql, values) => {
+      queries.push({ sql, values });
+      if (sql.includes("ORDER BY progression_order")) return { rows: [newer], rowCount: 1 };
+      return { rows: [older], rowCount: 1 };
+    } },
+  });
+  assert.equal((await ledger.completeIosDistribution({ sourceSha: sha, workerId: "worker-2" })).source_sha, sha);
+  assert.doesNotMatch(queries[0].sql, /completed_at\s*=/i);
+  assert.doesNotMatch(queries[0].sql, /progression_order\s*=/i);
+  assert.match(queries[0].sql, /IOS_TESTFLIGHT_DISTRIBUTION'[\s\S]*state='FINISHED'/);
+  assert.equal((await ledger.lastSuccessful()).source_sha, newer.source_sha);
+  assert.match(queries[1].sql, /progression_order IS NOT NULL ORDER BY progression_order DESC/);
 });
 
 test("processing timeout retries the same durable TestFlight distribution action", async () => {
@@ -568,7 +631,7 @@ test("processing timeout retries the same durable TestFlight distribution action
     },
     github: { latestDevSha: async () => sha, report: async () => {} }, render: {}, sleep: async () => {},
   });
-  orchestrator.process = async (_record, _previous, _lease, _delivered, pending) => { processed += Number(pending); return { state: "COMPLETE" }; };
+  orchestrator.reconcileIosDistribution = async () => { processed += 1; return { state: "COMPLETE" }; };
   assert.equal((await orchestrator.cycle()).state, "COMPLETE");
   assert.equal(claims, 1);
   assert.equal(processed, 1);
@@ -590,7 +653,7 @@ test("Apple request failure marks the release failed and the next cycle reclaims
     config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
     ledger, github: { latestDevSha: async () => sha, report: async () => {} }, render: {}, sleep: async () => {},
   });
-  orchestrator.process = async () => {
+  orchestrator.reconcileIosDistribution = async () => {
     processAttempts += 1;
     if (processAttempts === 1) throw new Error("Apple HTTP 503");
     return { source_sha: sha, state: "COMPLETE" };
@@ -599,6 +662,39 @@ test("Apple request failure marks the release failed and the next cycle reclaims
   assert.equal(state, "FAILED");
   assert.equal((await orchestrator.cycle()).state, "COMPLETE");
   assert.equal(distributionClaims, 2);
+});
+
+test("delayed distribution for A cannot displace B as the baseline for new SHA C", async () => {
+  const older = sha;
+  const newer = "b".repeat(40);
+  const next = "c".repeat(40);
+  let currentDev = newer;
+  let pending = { source_sha: older, ios_build_id: "build-1" };
+  const ordinaryBaseline = { source_sha: newer, evidence: { fingerprints: {} } };
+  const observedBaselines = [];
+  const claims = [];
+  const ledger = {
+    lastSuccessful: async () => ordinaryBaseline,
+    pendingIosDistribution: async () => pending,
+    requiresIosDistribution: async (sourceSha) => sourceSha === older && pending !== null,
+    lastSuccessfulNative: async () => null,
+    claimIosDistribution: async () => ({ source_sha: older, state: "DETECTED" }),
+    claim: async ({ sourceSha }) => { claims.push(sourceSha); return { source_sha: sourceSha, state: "DETECTED" }; },
+    transition: async () => {},
+  };
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
+    ledger,
+    github: { latestDevSha: async () => currentDev, compare: async () => {}, report: async () => {} }, render: {}, sleep: async () => {},
+  });
+  orchestrator.reconcileIosDistribution = async () => { pending = null; return { source_sha: older, state: "COMPLETE" }; };
+  orchestrator.process = async (record, previous) => { observedBaselines.push(previous?.source_sha); return { source_sha: record.source_sha, state: "COMPLETE" }; };
+
+  assert.equal((await orchestrator.cycle()).source_sha, older);
+  currentDev = next;
+  assert.equal((await orchestrator.cycle()).source_sha, next);
+  assert.deepEqual(observedBaselines, [newer]);
+  assert.deepEqual(claims, [next]);
 });
 
 test("an older failed distribution does not block evaluation of a newer dev SHA", async () => {
@@ -825,6 +921,8 @@ test("ledger schema enforces per-SHA and per-remote-operation uniqueness", () =>
   assert.match(sql, /one_ota_per_sha/);
   assert.match(sql, /one_ios_build_per_sha/);
   assert.match(sql, /one_submission_per_build/);
+  assert.match(sql, /preview_release_progression_order_seq/);
+  assert.match(sql, /progression_order_unique/);
 });
 
 test("new release service pins supported no-wait auto-submit and exact-SHA reconciliation commands", () => {

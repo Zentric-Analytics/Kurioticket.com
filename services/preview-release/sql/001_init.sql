@@ -18,11 +18,27 @@ CREATE TABLE IF NOT EXISTS preview_release (
   started_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now(),
   completed_at timestamptz,
+  progression_order bigint,
   failure_reason text,
   recovery_action text,
   report_url text,
   evidence jsonb NOT NULL DEFAULT '{}'::jsonb
 );
+
+CREATE SEQUENCE IF NOT EXISTS preview_release_progression_order_seq;
+ALTER TABLE preview_release ADD COLUMN IF NOT EXISTS progression_order bigint;
+WITH ordered AS (
+  SELECT source_sha, nextval('preview_release_progression_order_seq') AS progression_order
+  FROM preview_release
+  WHERE state='COMPLETE' AND progression_order IS NULL
+  ORDER BY completed_at ASC NULLS LAST, started_at ASC NULLS LAST, source_sha ASC
+)
+UPDATE preview_release release
+SET progression_order=ordered.progression_order
+FROM ordered
+WHERE release.source_sha=ordered.source_sha;
+CREATE UNIQUE INDEX IF NOT EXISTS preview_release_progression_order_unique
+  ON preview_release(progression_order) WHERE progression_order IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS preview_release_action (
   id bigserial PRIMARY KEY,
