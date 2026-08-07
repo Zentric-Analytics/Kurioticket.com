@@ -23,14 +23,17 @@ test("Deals planner renders coordinated product rows and a final travellers row"
 });
 
 test("the large-screen Deals layout keeps every control in compact heading rails", () => {
-  assert.match(
-    form,
-    /<fieldset[^>]*lg:grid[^>]*lg:grid-cols-\[minmax\(0,1fr\)_auto\]/,
-  );
-  assert.match(
-    form,
-    /data-deals-product-selector[\s\S]{0,120}lg:flex-nowrap[\s\S]{0,120}lg:justify-end/,
-  );
+  const productFieldset =
+    form.match(/<fieldset[\s\S]*?<\/fieldset>/)?.[0] ?? "";
+  const productSelector =
+    productFieldset.match(
+      /<div\s+data-deals-product-selector[\s\S]*?<\/div>/,
+    )?.[0] ?? "";
+
+  assert.doesNotMatch(productFieldset, /lg:grid-cols-\[minmax\(0,1fr\)_auto\]/);
+  assert.doesNotMatch(productFieldset, /lg:grid|lg:col-span-2/);
+  assert.match(productSelector, /className="flex flex-wrap gap-2"/);
+  assert.doesNotMatch(productSelector, /lg:justify-end|justify-(?:start|end)/);
   assert.match(
     form,
     /data-deals-heading-rail="flight"[\s\S]*data-deals-field-content="flight"/,

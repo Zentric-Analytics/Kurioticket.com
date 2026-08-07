@@ -20,6 +20,20 @@ test("one shared selector renders three pressed product buttons rather than pack
   assert.doesNotMatch(form, /type="radio" name="packageMode"/);
   assert.match(modify, /<DealsSearchForm/);
 });
+
+test("product selector keeps its translated fieldset legend for screen readers only", () => {
+  const fieldset = form.match(/<fieldset[\s\S]*?<\/fieldset>/)?.[0] ?? "";
+  const legend = fieldset.match(/<legend[^>]*>[\s\S]*?<\/legend>/)?.[0] ?? "";
+
+  assert.match(fieldset, /data-deals-product-selector/);
+  assert.match(legend, /className="sr-only"/);
+  assert.match(legend, /t\("deals\.productSelector\.instruction"\)/);
+  assert.doesNotMatch(legend, /(?:text-|font-|m[bstxy]?-(?!0\b)|p[bstxy]?-)/);
+  assert.equal(
+    form.match(/t\("deals\.productSelector\.instruction"\)/g)?.length,
+    1,
+  );
+});
 test("blocked toggles announce the minimum and successful hiding closes pickers without clearing values", () => {
   assert.match(form, /tryToggleDealsProduct/);
   assert.match(

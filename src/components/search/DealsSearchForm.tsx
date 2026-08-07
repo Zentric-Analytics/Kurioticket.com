@@ -2680,14 +2680,11 @@ export function DealsSearchForm({
       noValidate
       className={`mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""}`}
     >
-      <fieldset className="pb-3 sm:pb-2 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-x-4 lg:pb-1">
-        <legend className="mb-2 text-sm font-bold text-slate-700 lg:mb-0">
+      <fieldset className="pb-3 sm:pb-2 lg:pb-1">
+        <legend className="sr-only">
           {t("deals.productSelector.instruction")}
         </legend>
-        <div
-          data-deals-product-selector
-          className="flex flex-wrap gap-2 lg:flex-nowrap lg:justify-end"
-        >
+        <div data-deals-product-selector className="flex flex-wrap gap-2">
           {dealsProductOrder.map((product) => {
             const { label: productLabel, Icon } = productOptions[product];
             const selected = included[product];
@@ -2709,7 +2706,7 @@ export function DealsSearchForm({
         <p
           role="status"
           aria-live="polite"
-          className={`mt-2 min-h-5 text-sm font-semibold text-rose-700 lg:col-span-2 ${productSelectionMessage ? "" : "sr-only"}`}
+          className={`mt-2 min-h-5 text-sm font-semibold text-rose-700 ${productSelectionMessage ? "" : "sr-only"}`}
         >
           {productSelectionMessage}
         </p>
