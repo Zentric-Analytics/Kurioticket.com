@@ -23,6 +23,11 @@ export function requirePreviewEnvironment(env = process.env) {
     "RENDER_API_KEY",
     "RENDER_STAGING_SERVICE_ID",
     "EXPO_TOKEN",
+    "APP_STORE_CONNECT_ISSUER_ID",
+    "APP_STORE_CONNECT_KEY_ID",
+    "APP_STORE_CONNECT_PRIVATE_KEY",
+    "APP_STORE_CONNECT_PREVIEW_APP_ID",
+    "APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID",
   ];
   const missing = required.filter((key) => !env[key]?.trim());
   if (missing.length) throw new Error(`Missing Preview release-service environment: ${missing.join(", ")}`);
@@ -36,6 +41,14 @@ export function requirePreviewEnvironment(env = process.env) {
     renderApiKey: env.RENDER_API_KEY,
     renderServiceId: env.RENDER_STAGING_SERVICE_ID,
     expoToken: env.EXPO_TOKEN,
+    appStoreConnect: Object.freeze({
+      issuerId: env.APP_STORE_CONNECT_ISSUER_ID,
+      keyId: env.APP_STORE_CONNECT_KEY_ID,
+      privateKey: env.APP_STORE_CONNECT_PRIVATE_KEY,
+      appId: env.APP_STORE_CONNECT_PREVIEW_APP_ID,
+      betaGroupId: env.APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID,
+      betaGroupName: "Kurioticket Preview Internal",
+    }),
     repository: env.PREVIEW_REPOSITORY || PREVIEW_IDENTITY.repository,
     branch: env.PREVIEW_BRANCH || PREVIEW_IDENTITY.branch,
     pollIntervalMs: parseBoundedInteger(env.PREVIEW_POLL_INTERVAL_MS, 60_000, 15_000, 300_000),

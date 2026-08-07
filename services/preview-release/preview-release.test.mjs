@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { generateKeyPairSync } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -10,10 +11,16 @@ import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from
 import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enforceDeliveredNativeBaseline, maintainLease, nativeDriftTargets, retry } from "./orchestrator.mjs";
 import { createExactCheckoutDirectory, EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
+import { AppStoreConnectClient } from "./app-store-connect.mjs";
 
 const sha = "a".repeat(40);
+const appleEnv = { APP_STORE_CONNECT_ISSUER_ID: "issuer", APP_STORE_CONNECT_KEY_ID: "key", APP_STORE_CONNECT_PRIVATE_KEY: "private-key", APP_STORE_CONNECT_PREVIEW_APP_ID: "6797447471", APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID: "group-preview" };
 const repositoryRoot = resolve(import.meta.dirname, "../..");
 const build = (overrides = {}) => ({ id: "build-1", status: "IN_PROGRESS", gitCommitHash: sha, project: { id: PREVIEW_IDENTITY.easProjectId }, platform: "IOS", buildProfile: "preview", appIdentifier: PREVIEW_IDENTITY.bundleIdentifier, runtimeVersion: PREVIEW_IDENTITY.runtime, channel: PREVIEW_IDENTITY.channel, ...overrides });
+const appleContext = { app: { type: "apps", id: "6797447471", attributes: { bundleId: PREVIEW_IDENTITY.bundleIdentifier } }, group: { type: "betaGroups", id: "group-preview", attributes: { name: "Kurioticket Preview Internal", isInternalGroup: true } } };
+const finishedApple = (overrides = {}) => ({ previewContext: async () => appleContext, resolveBuild: async () => ({ state: "VALID", build: { id: "apple-build-9", attributes: { version: "9", processingState: "VALID" } } }), isAssociated: async () => true, associate: async () => {}, ...overrides });
+const applePrivateKey = generateKeyPairSync("ec", { namedCurve: "P-256" }).privateKey.export({ type: "pkcs8", format: "pem" });
+const appleClient = (fetchImpl) => new AppStoreConnectClient({ issuerId: "issuer", keyId: "key", privateKey: applePrivateKey, appId: "6797447471", betaGroupId: "group-preview", betaGroupName: "Kurioticket Preview Internal", fetchImpl });
 
 test("Preview identity is immutable", () => {
   assert.equal(assertPreviewIdentity({ appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtime: "preview-0.3.0", apiOrigin: "https://staging.kurioticket.com" }), true);
@@ -25,17 +32,17 @@ test("Preview identity is immutable", () => {
 
 test("environment defaults to non-mutating dry-run and rejects missing secrets", () => {
   assert.throws(() => requirePreviewEnvironment({}), /Missing/);
-  const config = requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "z" });
+  const config = requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "z", ...appleEnv });
   assert.equal(config.mode, "dry-run");
   assert.equal(config.cutoverBaselineSha, null);
   assert.equal(config.iosNativeBackfillSha, null);
   assert.equal(config.pollIntervalMs, 60_000);
-  assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: "srv-other", EXPO_TOKEN: "z" }), /approved Preview staging service/);
+  assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: "srv-other", EXPO_TOKEN: "z", ...appleEnv }), /approved Preview staging service/);
 });
 
 test("iOS native backfill is exact-SHA, active-only, and iOS-only", () => {
   const target = "c".repeat(40);
-  const baseEnv = { DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "token-read", RENDER_API_KEY: "render-key", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "expo-token", PREVIEW_RELEASE_MODE: "active", PREVIEW_IOS_NATIVE_BACKFILL_SHA: target };
+  const baseEnv = { DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "token-read", RENDER_API_KEY: "render-key", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "expo-token", PREVIEW_RELEASE_MODE: "active", PREVIEW_IOS_NATIVE_BACKFILL_SHA: target, ...appleEnv };
   const config = requirePreviewEnvironment(baseEnv);
   assert.equal(config.iosNativeBackfillSha, target);
   assert.throws(() => requirePreviewEnvironment({ ...baseEnv, PREVIEW_IOS_NATIVE_BACKFILL_SHA: "dev" }), /iOS native backfill SHA/);
@@ -47,9 +54,9 @@ test("iOS native backfill is exact-SHA, active-only, and iOS-only", () => {
 
 test("cutover baseline is immutable and dry-run only", async () => {
   const baselineSha = "b".repeat(40);
-  const config = requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "token-read", RENDER_API_KEY: "render-key", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "expo-token", PREVIEW_CUTOVER_BASELINE_SHA: baselineSha });
+  const config = requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "token-read", RENDER_API_KEY: "render-key", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "expo-token", PREVIEW_CUTOVER_BASELINE_SHA: baselineSha, ...appleEnv });
   assert.equal(config.cutoverBaselineSha, baselineSha);
-  assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "token-read", RENDER_API_KEY: "render-key", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "expo-token", PREVIEW_CUTOVER_BASELINE_SHA: "dev" }), /Cutover baseline SHA/);
+  assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "token-read", RENDER_API_KEY: "render-key", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "expo-token", PREVIEW_CUTOVER_BASELINE_SHA: "dev", ...appleEnv }), /Cutover baseline SHA/);
   const ordinary = { classification: "OTA", reason: "classified", files: ["apps/mobile/src/a.ts"] };
   assert.deepEqual(applyCutoverBaseline({ classification: ordinary, files: ordinary.files, sha, config: { mode: "dry-run", cutoverBaselineSha: null } }), ordinary);
   assert.deepEqual(applyCutoverBaseline({ classification: ordinary, files: ordinary.files, sha, config: { mode: "dry-run", cutoverBaselineSha: sha } }), { classification: "NO_DELIVERY", reason: "approved-cutover-baseline", files: ordinary.files });
@@ -151,6 +158,7 @@ test("provider preflight validates all read-only identities without mutation in 
       github: { latestDevSha: async () => sha },
       render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
       eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], listUpdates: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
+      apple: { previewContext: async () => ({ app: { id: "6797447471" }, group: { id: "group-preview", attributes: { isInternalGroup: true } } }) },
     });
     assert.equal(result.status, "PASS");
     assert.equal(result.mode, mode);
@@ -458,7 +466,7 @@ test("iOS delivery adopts a finished build and waits for its server-owned auto-s
   let buildCreates = 0;
   let historyReads = 0;
   const actions = [];
-  const finishedBuild = build({ status: "FINISHED", appBuildVersion: "5" });
+  const finishedBuild = build({ status: "FINISHED", appVersion: "0.3.0", appBuildVersion: "5" });
   const orchestrator = new PreviewOrchestrator({
     config: {}, github: {}, render: {}, sleep: async () => {},
     ledger: {
@@ -474,6 +482,7 @@ test("iOS delivery adopts a finished build and waits for its server-owned auto-s
         return historyReads === 1 ? [] : [submission()];
       },
     }),
+    appleFactory: () => finishedApple(),
   });
   const result = await orchestrator.deliverIos(sha, repositoryRoot, { checkpoint: async () => {} });
   assert.equal(buildCreates, 0);
@@ -498,6 +507,83 @@ test("iOS delivery fails closed on a failed auto-submit and never invokes manual
   });
   await assert.rejects(orchestrator.deliverIos(sha, repositoryRoot, { checkpoint: async () => {} }), /state is FAILED/);
   assert.equal(manualSubmissions, 0);
+});
+
+test("a superseding dev merge still resumes the latest submitted but undistributed iOS build", async () => {
+  const newerDev = "d".repeat(40);
+  const comparisons = [];
+  let processedPending = false;
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      pendingIosDistribution: async () => ({ source_sha: sha, ios_build_id: "build-1" }),
+      lastSuccessful: async () => ({ source_sha: sha, evidence: { fingerprints: {} } }),
+      lastSuccessfulNative: async () => null,
+      requiresIosDistribution: async () => true,
+      claimNativeDrift: async () => ({ source_sha: sha, state: "COMPLETE" }),
+      transition: async () => {},
+    },
+    github: { latestDevSha: async () => newerDev, compare: async (...args) => { comparisons.push(args); }, report: async () => {} }, render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async (_record, _previous, _lease, _delivered, pending) => { processedPending = pending; return { state: "COMPLETE" }; };
+  const result = await orchestrator.cycle();
+  assert.equal(result.state, "COMPLETE");
+  assert.equal(processedPending, true);
+  assert.deepEqual(comparisons, [[sha, newerDev]]);
+});
+
+test("App Store Connect resolves the exact Preview app, internal group, and version/build identity", async () => {
+  const responses = [
+    { data: appleContext.app },
+    { data: [appleContext.group] },
+    { data: [{ type: "builds", id: "apple-build-9", attributes: { version: "9", processingState: "VALID" }, relationships: { preReleaseVersion: { data: { type: "preReleaseVersions", id: "pre-1" } } } }], included: [{ type: "preReleaseVersions", id: "pre-1", attributes: { version: "0.3.0", platform: "IOS" } }] },
+  ];
+  const client = appleClient(async () => ({ ok: true, status: 200, text: async () => JSON.stringify(responses.shift()) }));
+  assert.equal((await client.previewContext()).group.id, "group-preview");
+  assert.equal((await client.resolveBuild({ version: "0.3.0", buildNumber: "9" })).build.id, "apple-build-9");
+});
+
+test("App Store Connect fails closed for the wrong group/app and ambiguous exact builds", async () => {
+  const wrongApp = appleClient(async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ data: { ...appleContext.app, attributes: { bundleId: "com.kurioticket.app" } } }) }));
+  await assert.rejects(wrongApp.previewContext(), /identity mismatch/);
+  const responses = [{ data: appleContext.app }, { data: [{ ...appleContext.group, attributes: { ...appleContext.group.attributes, isInternalGroup: false } }] }];
+  const wrongGroup = appleClient(async () => ({ ok: true, status: 200, text: async () => JSON.stringify(responses.shift()) }));
+  await assert.rejects(wrongGroup.previewContext(), /missing, ambiguous, or mismatched/);
+  const duplicate = { type: "builds", id: "one", attributes: { version: "9", processingState: "VALID" }, relationships: { preReleaseVersion: { data: { id: "pre-1" } } } };
+  const ambiguous = appleClient(async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ data: [duplicate, { ...duplicate, id: "two" }], included: [{ type: "preReleaseVersions", id: "pre-1", attributes: { version: "0.3.0", platform: "IOS" } }] }) }));
+  await assert.rejects(ambiguous.resolveBuild({ version: "0.3.0", buildNumber: "9" }), /multiple exact/);
+});
+
+test("processed Apple build missing from the internal group is associated once and verified", async () => {
+  let associated = false;
+  let posts = 0;
+  const actions = [];
+  const orchestrator = new PreviewOrchestrator({ config: {}, ledger: { recordAction: async (action) => { actions.push(action); return action; } }, github: {}, render: {}, sleep: async () => {}, appleFactory: () => finishedApple({ isAssociated: async () => associated, associate: async () => { posts += 1; associated = true; } }) });
+  const result = await orchestrator.distributeIosToInternalGroup({ sha, build: { id: "build-1", appVersion: "0.3.0", appBuildVersion: "9" }, current: { appVersion: "0.3.0", appBuildVersion: "9" }, submission: { id: "sub-1" }, lease: { checkpoint: async () => {} } });
+  assert.equal(posts, 1);
+  assert.equal(result.state, "FINISHED");
+  assert.deepEqual(actions.map(({ state }) => state), ["PLANNED", "FINISHED"]);
+});
+
+test("existing group membership is adopted without a duplicate POST", async () => {
+  let posts = 0;
+  const actions = [];
+  const orchestrator = new PreviewOrchestrator({ config: {}, ledger: { recordAction: async (action) => { actions.push(action); return action; } }, github: {}, render: {}, sleep: async () => {}, appleFactory: () => finishedApple({ associate: async () => { posts += 1; } }) });
+  await orchestrator.distributeIosToInternalGroup({ sha, build: { id: "build-1", appVersion: "0.3.0", appBuildVersion: "9" }, current: { appVersion: "0.3.0", appBuildVersion: "9" }, submission: { id: "sub-1" }, lease: { checkpoint: async () => {} } });
+  assert.equal(posts, 0);
+  assert.deepEqual(actions.map(({ state }) => state), ["FINISHED"]);
+});
+
+test("accepted Apple association with a lost response is reconciled on readback", async () => {
+  let reads = 0;
+  const orchestrator = new PreviewOrchestrator({ config: {}, ledger: { recordAction: async (action) => action }, github: {}, render: {}, sleep: async () => {}, appleFactory: () => finishedApple({ isAssociated: async () => ++reads > 1, associate: async () => { throw new Error("connection reset"); } }) });
+  const result = await orchestrator.distributeIosToInternalGroup({ sha, build: { id: "build-1", appVersion: "0.3.0", appBuildVersion: "9" }, current: { appVersion: "0.3.0", appBuildVersion: "9" }, submission: { id: "sub-1" }, lease: { checkpoint: async () => {} } });
+  assert.equal(result.state, "FINISHED");
+});
+
+test("submission completion alone cannot satisfy the iOS native baseline", () => {
+  const sql = readFileSync(resolve(repositoryRoot, "services/preview-release/ledger.mjs"), "utf8");
+  assert.match(sql, /IOS_TESTFLIGHT_DISTRIBUTION'[\s\S]*?state='FINISHED'/);
 });
 
 test("exact-checkout preparation reuses the immutable build dependency trees", async () => {

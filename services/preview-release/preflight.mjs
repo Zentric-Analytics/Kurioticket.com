@@ -1,6 +1,6 @@
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
 
-export async function runPreviewPreflight({ config, ledger, github, render, eas }) {
+export async function runPreviewPreflight({ config, ledger, github, render, eas, apple }) {
   if (!new Set(["dry-run", "active"]).has(config.mode)) throw new Error("Provider preflight mode is invalid.");
   const sourceSha = await github.latestDevSha();
   const database = await ledger.healthCheck();
@@ -9,6 +9,7 @@ export async function runPreviewPreflight({ config, ledger, github, render, eas 
   const project = await eas.projectInfo();
   const builds = await eas.previewBuildHistory();
   const updates = await eas.listUpdates();
+  const appleContext = await apple.previewContext();
   assertPreviewIdentity({
     appName: PREVIEW_IDENTITY.appName,
     bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier,
@@ -32,6 +33,9 @@ export async function runPreviewPreflight({ config, ledger, github, render, eas 
     easBuildHistoryReadable: Array.isArray(builds),
     easUpdateHistoryReadable: Array.isArray(updates),
     previewIdentityValid: true,
+    appStoreConnectAppId: appleContext.app.id,
+    appStoreConnectBetaGroupId: appleContext.group.id,
+    appStoreConnectBetaGroupInternal: appleContext.group.attributes.isInternalGroup === true,
     submissionPerformed: false,
   });
 }

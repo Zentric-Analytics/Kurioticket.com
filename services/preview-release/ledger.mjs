@@ -61,8 +61,15 @@ export class PreviewLedger {
         );
         if (submissions.rowCount > 1) throw new Error("Ambiguous existing iOS native submission action.");
         if (submissions.rowCount === 1 && submissions.rows[0].state === "FINISHED") {
-          await client.query("COMMIT");
-          return null;
+          const distributions = await client.query(
+            "SELECT state FROM preview_release_action WHERE source_sha=$1 AND kind='IOS_TESTFLIGHT_DISTRIBUTION' LIMIT 2",
+            [sourceSha],
+          );
+          if (distributions.rowCount > 1) throw new Error("Ambiguous existing TestFlight distribution action.");
+          if (distributions.rowCount === 1 && distributions.rows[0].state === "FINISHED") {
+            await client.query("COMMIT");
+            return null;
+          }
         }
       }
       await client.query(
@@ -140,6 +147,11 @@ export class PreviewLedger {
            WHERE submission.source_sha=release.source_sha
              AND submission.kind='IOS_SUBMISSION' AND submission.state='FINISHED'
          ))
+         AND ($1 <> 'ios' OR EXISTS (
+           SELECT 1 FROM preview_release_action distribution
+           WHERE distribution.source_sha=release.source_sha
+             AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+         ))
        ORDER BY build.updated_at DESC LIMIT 1`,
       [platform, buildKind],
     );
@@ -157,6 +169,42 @@ export class PreviewLedger {
          AND (lock_expires_at IS NULL OR lock_expires_at < now() OR lock_owner=$2)
        RETURNING *`,
       [sourceSha, workerId, leaseMs, mode],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async requiresIosDistribution(sourceSha) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `SELECT EXISTS (
+         SELECT 1 FROM preview_release_action build
+         JOIN preview_release_action submission ON submission.source_sha=build.source_sha
+         WHERE build.source_sha=$1 AND build.kind='IOS_BUILD' AND build.state='FINISHED'
+           AND submission.kind='IOS_SUBMISSION' AND submission.state='FINISHED'
+       ) AS submitted,
+       EXISTS (
+         SELECT 1 FROM preview_release_action distribution
+         WHERE distribution.source_sha=$1 AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+       ) AS distributed`,
+      [sourceSha],
+    );
+    return result.rows[0]?.submitted === true && result.rows[0]?.distributed !== true;
+  }
+
+  async pendingIosDistribution() {
+    const result = await this.pool.query(
+      `SELECT release.*, build.remote_id AS ios_build_id
+       FROM preview_release release
+       JOIN preview_release_action build
+         ON build.source_sha=release.source_sha AND build.kind='IOS_BUILD' AND build.state='FINISHED'
+       JOIN preview_release_action submission
+         ON submission.source_sha=release.source_sha AND submission.kind='IOS_SUBMISSION' AND submission.state='FINISHED'
+       WHERE NOT EXISTS (
+         SELECT 1 FROM preview_release_action distribution
+         WHERE distribution.source_sha=release.source_sha
+           AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+       )
+       ORDER BY build.updated_at DESC LIMIT 1`,
     );
     return result.rows[0] ?? null;
   }

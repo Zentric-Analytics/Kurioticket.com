@@ -9,7 +9,7 @@ $env:PREVIEW_RELEASE_MODE='dry-run'
 node services/preview-release/worker.mjs
 ```
 
-Required variables are `DATABASE_URL`, read-only `GITHUB_READ_TOKEN`, `RENDER_API_KEY`, `RENDER_STAGING_SERVICE_ID`, and `EXPO_TOKEN`. Optional `GITHUB_STATUS_TOKEN` is separately scoped only to commit-status write; without it, reporting remains in the durable ledger and Render logs. Use Preview-only credentials. Never reuse a Production credential.
+Required variables are `DATABASE_URL`, read-only `GITHUB_READ_TOKEN`, `RENDER_API_KEY`, `RENDER_STAGING_SERVICE_ID`, `EXPO_TOKEN`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_PRIVATE_KEY`, `APP_STORE_CONNECT_PREVIEW_APP_ID`, and `APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID`. Optional `GITHUB_STATUS_TOKEN` is separately scoped only to commit-status write; without it, reporting remains in the durable ledger and Render logs. The Apple key must be a narrowly scoped App Store Connect API key capable of reading Preview builds/groups and associating a build with the internal group. Store it only in Render. Use Preview-only credentials and resource IDs. Never reuse a Production credential.
 
 For a one-time cutover, set `PREVIEW_CUTOVER_BASELINE_SHA` to the exact 40-character merged `dev` SHA while the worker is still in `dry-run`. That SHA is recorded as an `approved-cutover-baseline` with `NO_DELIVERY`; the worker rejects baseline establishment in active mode. Remove the variable after the baseline is complete.
 
@@ -25,7 +25,7 @@ Exact-checkout preparation installs only the production mobile dependency tree r
 4. Allow the expired lease to be reclaimed or explicitly clear only the stale lease after confirming the former worker is stopped.
 5. Restart the worker. Reconciliation adopts matching remote operations. For web delivery, a recorded Render deploy ID is adopted and monitored before any new deploy may be created. A terminally failed recorded deployment may roll over once through an atomic ledger compare-and-swap after its terminal state is persisted.
 
-Never delete ledger rows to force a retry. Never reset an EAS build number. Never issue a manual TestFlight submission while the ledger reports an existing submission or an unknown state.
+Never delete ledger rows to force a retry. Never reset an EAS build number. Never issue a manual TestFlight submission or manually associate a build with the internal group while the ledger reports an existing or unknown action. An iOS delivery is complete only after the exact processed Apple build is read back in the immutable `Kurioticket Preview Internal` group. If a POST response is lost, the worker reads Apple membership before retrying and adopts the accepted relationship.
 
 For an owner-approved historical native change that is already present in the current completed `dev` SHA, set `PREVIEW_IOS_NATIVE_BACKFILL_SHA` to that exact current SHA while the worker remains in `active` mode. The worker reopens that SHA only when no iOS build action exists, forces an iOS-only native plan, reconciles exact-SHA EAS history before creation, and persists the build/submission identities in the normal ledger. Remove the variable after completion. A malformed SHA, dry-run use, non-current SHA, or existing build action fails closed or performs no work.
 

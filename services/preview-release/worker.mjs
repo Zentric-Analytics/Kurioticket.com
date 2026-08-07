@@ -6,6 +6,7 @@ import { PreviewLedger } from "./ledger.mjs";
 import { PreviewOrchestrator } from "./orchestrator.mjs";
 import { GitHubClient, RenderClient, EasClient } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
+import { AppStoreConnectClient } from "./app-store-connect.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const config = requirePreviewEnvironment();
@@ -14,11 +15,12 @@ await ledger.migrate(await readFile(resolve(root, "services/preview-release/sql/
 const github = new GitHubClient({ readToken: config.githubReadToken, statusToken: config.githubStatusToken, repository: config.repository });
 const render = new RenderClient({ apiKey: config.renderApiKey, serviceId: config.renderServiceId });
 const eas = new EasClient({ expoToken: config.expoToken, cwd: resolve(root, "apps/mobile") });
+const apple = new AppStoreConnectClient(config.appStoreConnect);
 try {
-  const preflight = await runPreviewPreflight({ config, ledger, github, render, eas });
+  const preflight = await runPreviewPreflight({ config, ledger, github, render, eas, apple });
   console.log(JSON.stringify({ event: "preview-release-preflight", ...preflight }));
 } catch (error) {
-  console.error(JSON.stringify({ event: "preview-release-preflight-failed", error: redactPreflightError(error, [config.githubReadToken, config.renderApiKey, config.expoToken, config.databaseUrl]) }));
+  console.error(JSON.stringify({ event: "preview-release-preflight-failed", error: redactPreflightError(error, [config.githubReadToken, config.renderApiKey, config.expoToken, config.databaseUrl, config.appStoreConnect.privateKey, config.appStoreConnect.issuerId, config.appStoreConnect.keyId]) }));
   await ledger.close();
   process.exit(1);
 }
@@ -27,6 +29,7 @@ const orchestrator = new PreviewOrchestrator({
   ledger,
   github,
   render,
+  appleFactory: () => apple,
 });
 
 let stopping = false;

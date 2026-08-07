@@ -29,6 +29,16 @@ services:
         sync: false
       - key: EXPO_TOKEN
         sync: false
+      - key: APP_STORE_CONNECT_ISSUER_ID
+        sync: false
+      - key: APP_STORE_CONNECT_KEY_ID
+        sync: false
+      - key: APP_STORE_CONNECT_PRIVATE_KEY
+        sync: false
+      - key: APP_STORE_CONNECT_PREVIEW_APP_ID
+        sync: false
+      - key: APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID
+        sync: false
 
   - type: cron
     name: kurioticket-price-alerts
