@@ -6,21 +6,29 @@ import {
 import type { DealsSearch } from "./dealsSearchParams";
 
 export type DealsJourneyBreadcrumbProduct = "hotel" | "flight" | "car";
+type DealsJourneyResultsStage = `${DealsJourneyBreadcrumbProduct}-results`;
 export type DealsJourneyBreadcrumbItem = {
-  id: DealsJourneyBreadcrumbProduct | "complete";
-  status: "completed" | "current" | "upcoming";
+  id:
+    | `${DealsJourneyBreadcrumbProduct}-results`
+    | `${DealsJourneyBreadcrumbProduct}-details`
+    | "complete";
+  product?: DealsJourneyBreadcrumbProduct;
+  current: boolean;
   labelKey: string;
   accessibleLabelKey?: string;
   href?: string;
 };
 
-const resultsStage: Record<DealsJourneyBreadcrumbProduct, DealsJourneyStage> = {
+const resultsStage: Record<
+  DealsJourneyBreadcrumbProduct,
+  DealsJourneyResultsStage
+> = {
   hotel: "hotel-results",
   flight: "flight-results",
   car: "car-results",
 };
 
-const completedLabel: Record<DealsJourneyBreadcrumbProduct, string> = {
+const ancestorLabel: Record<DealsJourneyBreadcrumbProduct, string> = {
   hotel: "deals.breadcrumb.stay",
   flight: "deals.breadcrumb.flight",
   car: "deals.breadcrumb.car",
@@ -43,42 +51,59 @@ export function getDealsJourneyBreadcrumbs(
   page: DealsJourneyStage | "complete",
   search: DealsSearch,
 ): DealsJourneyBreadcrumbItem[] {
-  const products = progress.steps
-    .filter(
-      (step): step is typeof step & { id: DealsJourneyBreadcrumbProduct } =>
-        step.id !== "review",
-    )
-    .map((step): DealsJourneyBreadcrumbItem => {
-      const status =
-        page === "complete"
-          ? "completed"
-          : step.status === "completed" || step.status === "current"
-            ? step.status
-            : "upcoming";
-      const details = status === "current" && page === `${step.id}-details`;
-      return {
-        id: step.id,
-        status,
-        labelKey: details
-          ? "deals.breadcrumb.details"
-          : status === "completed"
-            ? completedLabel[step.id]
-            : selectLabel[step.id],
-        ...(details
-          ? { accessibleLabelKey: detailsAccessibleLabel[step.id] }
-          : {}),
-        ...(status === "completed" || details
-          ? { href: buildDealsJourneyUrl(resultsStage[step.id], search) }
-          : {}),
-      };
-    });
+  const products: DealsJourneyBreadcrumbProduct[] = progress.steps.flatMap(
+    (step) => (step.id === "review" ? [] : [step.id]),
+  );
 
-  return [
-    ...products,
-    {
-      id: "complete",
-      status: page === "complete" ? "current" : "upcoming",
-      labelKey: "deals.breadcrumb.complete",
-    },
-  ];
+  if (page === "complete") {
+    return [
+      ...products.map(
+        (product): DealsJourneyBreadcrumbItem => ({
+          id: resultsStage[product],
+          product,
+          current: false,
+          labelKey: ancestorLabel[product],
+          href: buildDealsJourneyUrl(resultsStage[product], search),
+        }),
+      ),
+      {
+        id: "complete",
+        current: true,
+        labelKey: "deals.breadcrumb.complete",
+      },
+    ];
+  }
+
+  if (page === "review") return [];
+
+  const currentProduct = page.split("-")[0] as DealsJourneyBreadcrumbProduct;
+  const currentIndex = products.indexOf(currentProduct);
+  const details = page === `${currentProduct}-details`;
+  const ancestry = products.slice(0, currentIndex + 1).map(
+    (product): DealsJourneyBreadcrumbItem => ({
+      id: resultsStage[product],
+      product,
+      current: product === currentProduct && !details,
+      labelKey:
+        product === currentProduct
+          ? selectLabel[product]
+          : ancestorLabel[product],
+      ...(product !== currentProduct || details
+        ? { href: buildDealsJourneyUrl(resultsStage[product], search) }
+        : {}),
+    }),
+  );
+
+  return details
+    ? [
+        ...ancestry,
+        {
+          id: `${currentProduct}-details`,
+          product: currentProduct,
+          current: true,
+          labelKey: "deals.breadcrumb.details",
+          accessibleLabelKey: detailsAccessibleLabel[currentProduct],
+        },
+      ]
+    : ancestry;
 }
