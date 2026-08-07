@@ -39,8 +39,10 @@ export class GitHubClient {
 
 export class RenderClient {
   constructor({ apiKey, serviceId, fetchImpl = fetch }) { this.apiKey = apiKey; this.serviceId = serviceId; this.fetch = fetchImpl; }
-  async createDeploy(sha) {
+  async createDeploy(sha, { excludeIds = [], attempts = 4, sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = {}) {
     assertExactSha(sha);
+    const excluded = new Set(excludeIds);
+    for (const deploy of await this.findDeploysBySha(sha)) excluded.add(deploy.id);
     try {
       const deploy = await this.request(`/services/${this.serviceId}/deploys`, { method: "POST", body: { commitId: sha, clearCache: "do_not_clear" } });
       if (!deploy?.id) throw new Error("Render create-deploy response has no deployment ID.");
@@ -48,8 +50,12 @@ export class RenderClient {
     } catch (error) {
       // A failed/truncated response does not prove the mutation failed. Reconcile
       // remote history before returning so a later cycle cannot create a duplicate.
-      const matches = await this.findDeploysBySha(sha);
-      if (matches.length) return matches[0];
+      // Only a deployment absent before the POST can prove this mutation was accepted.
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        const matches = (await this.findDeploysBySha(sha)).filter((deploy) => !excluded.has(deploy.id));
+        if (matches.length) return matches[0];
+        if (attempt + 1 < attempts) await sleep(1_000);
+      }
       throw error;
     }
   }

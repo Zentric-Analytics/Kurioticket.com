@@ -71,19 +71,37 @@ test("Render preflight rejects wrong identity, authentication failure, and malfo
 
 test("Render deploy creation reconciles an accepted mutation after an empty response", async () => {
   let requests = 0;
+  let historyReads = 0;
   const deploy = { id: "dep-reconciled", status: "build_in_progress", commit: { id: sha } };
   const client = new RenderClient({
     apiKey: "render-secret",
     serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
     fetchImpl: async (_url, options) => {
       requests += 1;
-      return options.method === "POST"
-        ? { ok: true, text: async () => "" }
-        : { ok: true, text: async () => JSON.stringify([{ deploy }]) };
+      if (options.method === "POST") return { ok: true, text: async () => "" };
+      historyReads += 1;
+      return { ok: true, text: async () => JSON.stringify(historyReads === 1 ? [] : [{ deploy }]) };
     },
   });
-  assert.equal((await client.createDeploy(sha)).id, deploy.id);
-  assert.equal(requests, 2);
+  assert.equal((await client.createDeploy(sha, { sleep: async () => {} })).id, deploy.id);
+  assert.equal(requests, 3);
+});
+
+test("Render deploy reconciliation excludes every deployment that existed before the POST", async () => {
+  const terminal = { id: "dep-terminal", status: "build_failed", commit: { id: sha } };
+  const replacement = { id: "dep-replacement", status: "build_in_progress", commit: { id: sha } };
+  let historyReads = 0;
+  const client = new RenderClient({
+    apiKey: "render-secret",
+    serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
+    fetchImpl: async (_url, options) => {
+      if (options.method === "POST") return { ok: true, text: async () => "" };
+      historyReads += 1;
+      const deploys = historyReads === 1 ? [terminal] : [replacement, terminal];
+      return { ok: true, text: async () => JSON.stringify(deploys.map((deploy) => ({ deploy }))) };
+    },
+  });
+  assert.equal((await client.createDeploy(sha, { excludeIds: [terminal.id], sleep: async () => {} })).id, replacement.id);
 });
 
 test("EAS preflight accepts only the exact Preview project and readable history", async () => {
@@ -331,6 +349,7 @@ test("web recovery replaces one terminal recorded deploy through an atomic ledge
     github: {},
     render: {
       createDeploy: async () => { creates += 1; return replacement; },
+      findDeploysBySha: async () => [recorded],
       getDeploy: async (id) => id === recorded.id ? recorded : replacement,
     },
     stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
