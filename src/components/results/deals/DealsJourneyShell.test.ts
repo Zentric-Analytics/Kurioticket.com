@@ -29,6 +29,7 @@ test("guided shell uses breadcrumbs as primary navigation without changing share
   );
   assert.match(source, /data-deals-guided-journey-foundation/);
   assert.equal((source.match(/<h1/g) ?? []).length, 1);
+  assert.match(source, /<DealsHotelResultsStage search=\{search\} \/>/);
   for (const forbidden of [
     "DealsSearchForm",
     "/api/hotels",
@@ -40,6 +41,31 @@ test("guided shell uses breadcrumbs as primary navigation without changing share
     'target="_blank"',
   ])
     assert.doesNotMatch(source, new RegExp(forbidden));
+});
+
+test("only the hotel results shell heading is visually hidden without changing its accessibility and focus contract", async () => {
+  const source = await readFile(
+    new URL("./DealsJourneyShell.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.equal((source.match(/<h1/g) ?? []).length, 1);
+  assert.match(
+    source,
+    /const visuallyHideStageHeading = stage === "hotel-results";/,
+  );
+  assert.doesNotMatch(source, /stage\.endsWith\(|stage\.includes\(/);
+  assert.match(
+    source,
+    /className=\{\s*visuallyHideStageHeading\s*\? "sr-only"\s*: "scroll-mt-24 text-balance text-2xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-\[#004BB8\] sm:text-3xl"\s*\}/,
+  );
+  assert.match(
+    source,
+    /<h1\s+ref=\{headingRef\}\s+tabIndex=\{-1\}[\s\S]*?\{t\(`deals\.guided\.heading\.\$\{stage\}`\)\}[\s\S]*?<\/h1>/,
+  );
+  assert.match(
+    source,
+    /headingRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
+  );
 });
 test("public Deals and package results contracts remain active", async () => {
   const [landing, results, handoff] = await Promise.all([
