@@ -130,18 +130,33 @@ test("results Car heading and fields use the same plain stacked section layout",
 });
 
 test("results Travellers remains an accessible plain launcher beside the CTA", () => {
-  const travellers = form.slice(form.indexOf("data-deals-results-travellers"));
+  const travellersStart = form.indexOf("data-deals-results-travellers");
+  const travellers = form.slice(
+    travellersStart,
+    form.indexOf("data-deals-search-actions", travellersStart),
+  );
+  assert.ok(travellersStart >= 0);
   assert.match(travellers, /<button[\s\S]*type="button"/);
+  assert.match(travellers, /ref=\{travelersLauncherRef\}/);
   assert.match(travellers, /aria-expanded=/);
   assert.match(travellers, /aria-haspopup="dialog"/);
   assert.match(travellers, /aria-controls=/);
   assert.match(travellers, /data-deals-results-plain-launcher="travellers"/);
   assert.match(travellers, /resultsPlainLauncher/);
+  assert.match(travellers, /\{t\("deals\.travellersRooms"\)\}/);
+  assert.match(travellers, /\{travelerSummary\}/);
+  assert.match(travellers, /<ChevronDown/);
+  assert.match(travellers, /\{searchDealsButton\}/);
+  assert.doesNotMatch(
+    travellers,
+    /<h2[^>]*>[\s\S]*?\{t\("deals\.travellersRooms"\)\}[\s\S]*?<\/h2>/,
+  );
   assert.doesNotMatch(
     travellers.slice(0, travellers.indexOf("searchDealsButton")),
     /className=\{`\$\{field\}/,
   );
   assert.match(form, /type="submit"[\s\S]*rounded-xl bg-\[#004BB8\]/);
+  assert.equal(form.match(/type="submit"/g)?.length, 1);
 });
 
 test("there is exactly one runtime submit action shared by both variants", () => {

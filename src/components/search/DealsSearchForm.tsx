@@ -3561,9 +3561,6 @@ export function DealsSearchForm({
           data-deals-results-travellers
           className="border-t border-slate-200 py-4 sm:py-3"
         >
-          <h2 className="mb-2 text-base font-extrabold text-[#021C2B]">
-            {t("deals.travellersRooms")}
-          </h2>
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-stretch">
             <button
               ref={travelersLauncherRef}
