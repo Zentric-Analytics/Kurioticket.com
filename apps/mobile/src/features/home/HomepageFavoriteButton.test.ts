@@ -9,7 +9,6 @@ const shim = source("src/features/home/HomepageFavoriteButton.tsx");
 const explore = source("src/features/explore/ExploreScreen.tsx");
 const details = source("src/features/explore/DestinationDetailsScreen.tsx");
 const popular = source("src/features/home/PopularDestinationStays.tsx");
-const adventure = source("src/features/home/DiscoverNextAdventure.tsx");
 const savedRecent = source("src/features/saved/SavedRecentScreen.tsx");
 
 test("shared Android favorite button renders smaller visuals while preserving state colors", () => {
@@ -38,9 +37,8 @@ test("Explore keeps the same heart placement while using the shared Android comp
 
 test("all current save-enabled destination cards share one Android favorite component", () => {
   assert.match(popular, /<AndroidFavoriteButton[\s\S]*toggle\(destination\.id\)/);
-  assert.match(adventure, /<AndroidFavoriteButton[\s\S]*toggle\(card\.id\)/);
   assert.match(details, /<AndroidFavoriteButton[\s\S]*onPress=\{onToggle\}/);
-  assert.equal((`${popular}\n${adventure}\n${details}\n${explore}`.match(/<AndroidFavoriteButton/g) ?? []).length, 4);
+  assert.equal((`${popular}\n${details}\n${explore}`.match(/<AndroidFavoriteButton/g) ?? []).length, 3);
 });
 
 test("favorite behavior, navigation, and propagation remain unchanged", () => {
@@ -50,9 +48,7 @@ test("favorite behavior, navigation, and propagation remain unchanged", () => {
   assert.match(hook, /showFavoriteSignInPrompt\(\); return;/);
   assert.match(store, /next\.has\(id\) \? next\.delete\(id\) : next\.add\(id\)/);
   assert.match(popular, /event\.stopPropagation\(\);\s*toggle\(destination\.id\);/);
-  assert.match(adventure, /event\.stopPropagation\(\);\s*toggle\(card\.id\);/);
   assert.match(popular, /router\.push\(popularDestinationStayNavigation\(destination\)\)/);
-  assert.match(adventure, /router\.push\(discoverAdventureNavigation\(card\)\)/);
   assert.match(explore, /onPress=\{onSelect\}/);
 });
 
@@ -64,7 +60,7 @@ test("favorite light and dark mode values remain unchanged", () => {
 });
 
 test("no old blue favorite circle remains and Saved & Recent keeps remove close control", () => {
-  for (const [name, file] of [["popular", popular], ["adventure", adventure], ["button", favorite], ["explore", explore], ["details", details]] as const) {
+  for (const [name, file] of [["popular", popular], ["button", favorite], ["explore", explore], ["details", details]] as const) {
     assert.doesNotMatch(file, /backgroundColor:\s*"rgba\(6,76,247,0\.92\)"/, `${name} removed blue saved background`);
     assert.doesNotMatch(file, /heartSaved/, `${name} does not keep a second heart design`);
   }

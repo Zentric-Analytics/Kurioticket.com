@@ -15,7 +15,6 @@ import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
-import { DiscoverNextAdventure } from "../home/DiscoverNextAdventure";
 import { HomepageDealPromos } from "../home/HomepageDealPromos";
 import { RegionalDestinationRoutes } from "../home/RegionalDestinationRoutes";
 
@@ -164,7 +163,6 @@ export function SharedHomePage() {
         </View>
         <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
         <PopularDestinationStays />
-        <DiscoverNextAdventure />
         <HomepageDealPromos />
         <RegionalDestinationRoutes />
       </ScrollView>

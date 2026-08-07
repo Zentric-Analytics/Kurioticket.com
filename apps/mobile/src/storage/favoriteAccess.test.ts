@@ -19,7 +19,7 @@ test("favorite prompt offers dismissal and the existing sign-in flow", () => {
 });
 
 test("every existing favorite-bearing section uses the protected shared hook", () => {
-  for (const path of ["src/features/home/PopularDestinationStays.tsx", "src/features/home/DiscoverNextAdventure.tsx", "src/features/explore/ExploreScreen.tsx"]) {
+  for (const path of ["src/features/home/PopularDestinationStays.tsx", "src/features/explore/ExploreScreen.tsx"]) {
     const contents = source(path);
     assert.match(contents, /useSavedDestinations\(\)/, path);
     if (path.includes("ExploreScreen")) {
