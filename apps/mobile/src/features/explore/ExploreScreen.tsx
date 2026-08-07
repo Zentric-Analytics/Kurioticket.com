@@ -299,8 +299,15 @@ function PopularDestinationCard({
         style={s.heart}
       />
       <View style={s.popularCopy}>
-        <Text style={s.popularCardTitle}>{destination.name}</Text>
-        <Text style={s.countryName}>{destination.country}</Text>
+        <Text
+          accessibilityLabel={`${destination.name}, ${destination.country}`}
+          style={s.destinationName}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          <Text style={s.popularCardTitle}>{destination.name}</Text>
+          <Text style={s.countryName}> • {destination.country}</Text>
+        </Text>
         {destination.summary ? (
           <Text
             style={s.destinationSummary}
@@ -470,8 +477,9 @@ const s = StyleSheet.create({
     overflow: "hidden",
     ...shadow,
   },
-  popularImage: { width: "100%", height: 190, backgroundColor: "#E7ECF5" },
+  popularImage: { width: "100%", height: 220, backgroundColor: "#E7ECF5" },
   popularCopy: { padding: 14, gap: 3 },
+  destinationName: { color: NAVY, flexShrink: 1 },
   popularCardTitle: {
     color: NAVY,
     fontSize: 21,
