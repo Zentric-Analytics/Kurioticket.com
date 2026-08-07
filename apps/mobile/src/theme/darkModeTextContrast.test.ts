@@ -8,22 +8,12 @@ const source = (path: string) =>
 
 test("homepage section headings and supporting copy use semantic theme text colors", () => {
   const popular = source("src/features/home/PopularDestinationStays.tsx");
-  const discovery = source("src/features/home/DiscoverNextAdventure.tsx");
 
   assert.match(popular, /useFlowTheme/);
   assert.match(popular, /Popular destination stays/);
   assert.match(popular, /color: ft\.colors\.textPrimary/);
   assert.doesNotMatch(popular, /heading:\s*\{\s*color: flowColors\.navy/);
 
-  assert.match(discovery, /useFlowTheme/);
-  assert.match(discovery, /Discover your next adventure here/);
-  assert.match(discovery, /color: ft\.colors\.textPrimary/);
-  assert.match(discovery, /color: ft\.colors\.textSecondary/);
-  assert.match(discovery, /contentPanel: \{[^}]*flex: 1/);
-  assert.match(discovery, /cardTitle: \{[^}]*color: "#020617"/);
-  assert.match(discovery, /route: \{[^}]*color: "#334155"/);
-  assert.match(discovery, /tripSummary: \{[^}]*color: "#64748B"/);
-  assert.doesNotMatch(discovery, /categoryPill/);
 });
 
 test("flight-form captions and helper text stay theme-aware in dark mode", () => {

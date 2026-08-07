@@ -8,7 +8,7 @@ Production is separate from this workflow. Routine development never builds, upd
 2. Open a pull request into `dev`.
 3. Wait for the required checks to conclude successfully.
 4. Resolve every review thread and conflict, then merge into `dev`.
-5. Open the merged commit's **Validate mobile preview** run in GitHub Actions.
+5. Review the independent Preview Release Service record for the merged SHA; required PR checks remain validation-only.
 6. Confirm the **Preview visual availability** summary names the same full dev SHA.
 7. Open <https://staging.kurioticket.com> and verify the web change.
 8. For Android, reopen **Kurioticket Preview**. OTA-compatible changes download on launch. When the summary says `BUILD`, install the new internal Preview APK from the successful build's EAS artifact link.
@@ -29,11 +29,11 @@ The baseline is the newest finished EAS Preview build for the exact package, pro
 ## Visible source confirmation
 
 - Web: `/api/mobile/v1/health` and `/api/mobile/v1/config` return `Cache-Control: no-store` and expose the staging classification, exact deployed commit SHA, service-start release timestamp, application version when available, sandbox safety, email restriction, and checkout state.
-- Mobile: the GitHub Actions summary records the exact dev SHA, selected baseline build, per-platform decision, and resulting EAS action. The launcher name remains **Kurioticket Preview**.
+- Mobile: the Preview Release Service ledger records the exact dev SHA, native fingerprints, per-platform decision, and resulting EAS action. The launcher name remains **Kurioticket Preview**.
 
 ## Access and installation
 
-- Android Preview package: `com.kurioticket.app.preview`; internal APK only. Download only from the successful protected EAS Preview build linked by GitHub Actions.
+- Android Preview package: `com.kurioticket.app.preview`; internal artifact only. Download only from the exact-SHA EAS Preview build recorded by the release ledger.
 - iOS Preview bundle: `com.kurioticket.app.preview`; TestFlight Internal only. Testers need the minimum App Store Connect role and access only to the Preview app/group.
 - Never share signing files, API keys, Expo tokens, private artifact URLs, or tester lists in issues or chat.
 

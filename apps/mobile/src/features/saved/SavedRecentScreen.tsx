@@ -4,14 +4,13 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View, type Image
 import { SafeAreaView } from "react-native-safe-area-context";
 import { destinations } from "../explore/destinationCatalogue";
 import { destinationMedia, FALLBACK_SOURCE } from "../explore/destinationMedia";
-import { nextAdventureCards } from "../home/DiscoverNextAdventure";
 import { popularDestinationStays } from "../home/PopularDestinationStays";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useAppTheme } from "../../theme/AppTheme";
 
-export type SavedCategory = "destinations" | "stays" | "adventures";
+export type SavedCategory = "destinations" | "stays";
 export type SavedItem = { id: string; category: SavedCategory; name: string; country: string; image: ImageSourcePropType; open: () => void };
 
 type SavedSection = { key: SavedCategory; title: string; items: SavedItem[] };
@@ -19,14 +18,11 @@ type SavedSection = { key: SavedCategory; title: string; items: SavedItem[] };
 export const savedCategoryOrder: readonly { key: SavedCategory; title: string }[] = [
   { key: "destinations", title: "Destinations" },
   { key: "stays", title: "Stays" },
-  { key: "adventures", title: "Adventures" },
 ] as const;
 
 export function savedItem(id: string): SavedItem | undefined {
   const stay = popularDestinationStays.find((item) => item.id === id);
   if (stay) return { id, category: "stays", name: stay.city, country: stay.country, image: stay.image, open: () => router.push({ pathname: "/hotels", params: { destination: stay.city } }) };
-  const adventure = nextAdventureCards.find((item) => item.id === id);
-  if (adventure) return { id, category: "adventures", name: adventure.title, country: `${adventure.originCode} → ${adventure.destinationCode}`, image: adventure.image, open: () => router.push({ pathname: "/flights", params: { from: adventure.originCode, to: adventure.destinationCode } }) };
   const destination = destinations.find((item) => item.id === id);
   if (destination) return { id, category: "destinations", name: destination.name, country: destination.country, image: destinationMedia(id)?.source ?? FALLBACK_SOURCE, open: () => router.push({ pathname: "/flights", params: { destination: destination.name, destinationId: destination.id, airportCodes: destination.airportCodes.join(","), to: destination.primaryAirportCode } }) };
 }
