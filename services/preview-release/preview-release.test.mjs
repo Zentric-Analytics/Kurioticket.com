@@ -235,7 +235,7 @@ test("exact-checkout preparation installs only the mobile dependency tree", asyn
   const calls = [];
   await prepareCheckout(repositoryRoot, { commandRunner: async (...args) => { calls.push(args); } });
   assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0][1], ["ci", "--ignore-scripts"]);
+  assert.deepEqual(calls[0][1], ["ci", "--ignore-scripts", "--omit=dev", "--no-audit", "--no-fund"]);
   assert.equal(calls[0][2].cwd, resolve(repositoryRoot, "apps/mobile"));
 });
 
