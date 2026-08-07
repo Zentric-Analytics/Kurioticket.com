@@ -207,10 +207,9 @@ export function gitAuthEnvironment(token, baseEnvironment = process.env) {
   };
 }
 
-export async function prepareCheckout(directory) {
+export async function prepareCheckout(directory, { commandRunner = exec } = {}) {
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-  await exec(npm, ["ci", "--ignore-scripts"], { cwd: directory, maxBuffer: 10 * 1024 * 1024 });
-  await exec(npm, ["ci", "--ignore-scripts"], { cwd: join(directory, "apps/mobile"), maxBuffer: 10 * 1024 * 1024 });
+  await commandRunner(npm, ["ci", "--ignore-scripts"], { cwd: join(directory, "apps/mobile"), maxBuffer: 10 * 1024 * 1024 });
 }
 
 export async function nativeFingerprints(directory) {
