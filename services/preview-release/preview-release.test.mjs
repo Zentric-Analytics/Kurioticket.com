@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { existsSync, readFileSync } from "node:fs";
+import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
@@ -231,12 +233,33 @@ test("polling API failure never becomes a no-change result", async () => {
   await assert.rejects(orchestrator.cycle(), /GitHub unavailable/);
 });
 
-test("exact-checkout preparation installs only the mobile dependency tree", async () => {
-  const calls = [];
-  await prepareCheckout(repositoryRoot, { commandRunner: async (...args) => { calls.push(args); } });
-  assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0][1], ["ci", "--ignore-scripts", "--omit=dev", "--no-audit", "--no-fund"]);
-  assert.equal(calls[0][2].cwd, resolve(repositoryRoot, "apps/mobile"));
+test("exact-checkout preparation reuses the immutable build dependency trees", async () => {
+  const copies = [];
+  await prepareCheckout(repositoryRoot, {
+    dependencyRoot: repositoryRoot,
+    commandRunner: async (...args) => { copies.push(args); },
+  });
+  assert.deepEqual(copies.map(([command, args]) => [command, args]), [
+    ["cp", ["-al", "--", resolve(repositoryRoot, "node_modules"), resolve(repositoryRoot, "node_modules")]],
+    ["cp", ["-al", "--", resolve(repositoryRoot, "apps/mobile/node_modules"), resolve(repositoryRoot, "apps/mobile/node_modules")]],
+  ]);
+});
+
+test("exact-checkout preparation fails closed when dependency manifests differ", async () => {
+  const temporary = await mkdtemp(resolve(tmpdir(), "preview-dependencies-"));
+  try {
+    await mkdir(resolve(temporary, "apps/mobile"), { recursive: true });
+    for (const manifest of ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"]) {
+      await copyFile(resolve(repositoryRoot, manifest), resolve(temporary, manifest));
+    }
+    await writeFile(resolve(temporary, "apps/mobile/package.json"), "{}\n");
+    await assert.rejects(
+      prepareCheckout(temporary, { dependencyRoot: repositoryRoot, commandRunner: async () => {} }),
+      /dependency manifest differs.*apps\/mobile\/package\.json/,
+    );
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
 });
 
 test("web recovery adopts the recorded Render deploy without creating a duplicate", async () => {

@@ -1,12 +1,14 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { fileURLToPath } from "node:url";
 import { PREVIEW_IDENTITY, assertExactSha } from "./config.mjs";
 import { normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 
 const exec = promisify(execFile);
+const runtimeRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 export class GitHubClient {
   constructor({ readToken, statusToken = null, repository = PREVIEW_IDENTITY.repository, fetchImpl = fetch }) {
@@ -207,9 +209,24 @@ export function gitAuthEnvironment(token, baseEnvironment = process.env) {
   };
 }
 
-export async function prepareCheckout(directory, { commandRunner = exec } = {}) {
-  const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-  await commandRunner(npm, ["ci", "--ignore-scripts", "--omit=dev", "--no-audit", "--no-fund"], { cwd: join(directory, "apps/mobile"), maxBuffer: 10 * 1024 * 1024 });
+export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot, commandRunner = exec } = {}) {
+  const manifests = ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"];
+  for (const manifest of manifests) {
+    const [built, target] = await Promise.all([
+      readFile(join(dependencyRoot, manifest)),
+      readFile(join(directory, manifest)),
+    ]);
+    if (!built.equals(target)) throw new Error(`Exact checkout dependency manifest differs from the immutable worker build: ${manifest}.`);
+  }
+  for (const relative of ["node_modules", "apps/mobile/node_modules"]) {
+    const source = join(dependencyRoot, relative);
+    const destination = join(directory, relative);
+    const metadata = await stat(source);
+    if (!metadata.isDirectory()) throw new Error(`Immutable worker dependency tree is missing: ${relative}.`);
+    // Hard-linked files retain checkout-local paths for Expo fingerprint stability while
+    // sharing the immutable Render build artifact's storage and avoiding another npm ci.
+    await commandRunner("cp", ["-al", "--", source, destination], { maxBuffer: 10 * 1024 * 1024 });
+  }
 }
 
 export async function nativeFingerprints(directory) {
