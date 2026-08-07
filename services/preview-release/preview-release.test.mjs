@@ -59,18 +59,19 @@ test("Render preflight rejects wrong identity, authentication failure, and malfo
 test("EAS preflight accepts only the exact Preview project and readable history", async () => {
   const client = new EasClient({ expoToken: "expo-secret", cwd: repositoryRoot, command: "unused" });
   const calls = [];
-  client.run = async (args) => { calls.push(args); return args[1] === "project:info" ? { projectId: PREVIEW_IDENTITY.easProjectId } : []; };
+  client.runText = async (args) => { calls.push(args); return `fullName  ${PREVIEW_IDENTITY.easProjectFullName}\nID        ${PREVIEW_IDENTITY.easProjectId}\n`; };
+  client.run = async (args) => { calls.push(args); return []; };
   assert.equal((await client.projectInfo()).projectId, PREVIEW_IDENTITY.easProjectId);
   assert.deepEqual(await client.previewBuildHistory(), []);
-  assert.deepEqual(calls[0], ["eas-cli@16.17.4", "project:info", "--json"]);
+  assert.deepEqual(calls[0], ["eas-cli@16.17.4", "project:info"]);
   assert.equal(calls.every((args) => !args.includes("build") && !args.includes("update")), true);
 });
 
 test("EAS preflight rejects wrong projects, authentication errors, and malformed history", async () => {
   const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
-  client.run = async () => ({ projectId: "wrong" });
+  client.runText = async () => `fullName  @other/project\nID        ${PREVIEW_IDENTITY.easProjectId}\n`;
   await assert.rejects(client.projectInfo(), /mismatched/);
-  client.run = async () => { throw new Error("Expo authentication failed"); };
+  client.runText = async () => { throw new Error("Expo authentication failed"); };
   await assert.rejects(client.projectInfo(), /authentication failed/);
   client.run = async () => ({ unexpected: true });
   await assert.rejects(client.previewBuildHistory(), /malformed/);

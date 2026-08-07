@@ -7,6 +7,7 @@ export const PREVIEW_IDENTITY = Object.freeze({
   bundleIdentifier: "com.kurioticket.app.preview",
   scheme: "kurioticket-preview",
   easProjectId: "89f6fd88-c0d7-495a-9e2b-8301b09f407d",
+  easProjectFullName: "@zentric-analytics/kurioticket-mobile",
   buildProfile: "preview",
   submitProfile: "preview",
   channel: "preview",

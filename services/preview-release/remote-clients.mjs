@@ -75,10 +75,14 @@ export class EasClient {
     return this.listBuilds("android", targetSha);
   }
   async projectInfo() {
-    const value = await this.run(["eas-cli@16.17.4", "project:info", "--json"]);
-    const projectId = value?.projectId ?? value?.id ?? value?.project?.id;
-    if (projectId !== PREVIEW_IDENTITY.easProjectId) throw new Error("EAS project response is malformed or mismatched.");
-    return { projectId };
+    const raw = await this.runText(["eas-cli@16.17.4", "project:info"]);
+    const text = raw.replace(/\u001b\[[0-9;]*m/g, "");
+    const names = [...text.matchAll(/^fullName\s+(.+)$/gmi)].map((match) => match[1].trim());
+    const ids = [...text.matchAll(/^ID\s+([0-9a-f-]{36})$/gmi)].map((match) => match[1]);
+    if (names.length !== 1 || ids.length !== 1 || names[0] !== PREVIEW_IDENTITY.easProjectFullName || ids[0] !== PREVIEW_IDENTITY.easProjectId) {
+      throw new Error("EAS project response is malformed or mismatched.");
+    }
+    return { projectId: ids[0], fullName: names[0] };
   }
   async previewBuildHistory() {
     const value = await this.run(["eas-cli@16.17.4", "build:list", "--platform", "ios", "--profile", "preview", "--limit", "1", "--json", "--non-interactive"]);
@@ -132,6 +136,11 @@ export class EasClient {
     return Array.isArray(value) ? value[0] : value;
   }
   async run(args) {
+    const raw = await this.runText(args);
+    if (!raw.trim()) throw new Error(`EAS command ${args[1]} returned empty stdout.`);
+    return JSON.parse(raw);
+  }
+  async runText(args) {
     const directory = await mkdtemp(join(tmpdir(), "kurioticket-eas-"));
     try {
       const stdoutPath = join(directory, "stdout.json");
@@ -148,9 +157,7 @@ export class EasClient {
         },
       });
       await import("node:fs/promises").then(({ writeFile }) => writeFile(stdoutPath, stdout, { mode: 0o600 }));
-      const raw = await readFile(stdoutPath, "utf8");
-      if (!raw.trim()) throw new Error(`EAS command ${args[1]} returned empty stdout.`);
-      return JSON.parse(raw);
+      return readFile(stdoutPath, "utf8");
     } finally { await rm(directory, { recursive: true, force: true }); }
   }
 }
