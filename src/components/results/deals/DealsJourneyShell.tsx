@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -30,7 +28,6 @@ import {
   getEarliestIncompleteDealsJourneyStage,
   getFirstDealsJourneyStage,
   getNextDealsJourneyStage,
-  getPreviousDealsJourneyStage,
   getRequiredDealsJourneyStageAt,
   type DealsJourneyStage,
 } from "@/lib/deals/dealsJourneyRoutes";
@@ -371,15 +368,6 @@ export function DealsJourneyShell({
       getGuidedDealsJourneyProgress(stage, search.mode, resolved ? plan : null),
     [plan, resolved, search.mode, stage],
   );
-  const previous = getPreviousDealsJourneyStage(stage, search.mode);
-  const backHref =
-    stage === "flight-details"
-      ? buildDealsJourneyUrl("flight-results", search)
-      : stage === "car-details"
-        ? buildDealsJourneyUrl("car-results", search)
-        : previous
-          ? buildDealsJourneyUrl(previous, search)
-          : "/deals";
   const firstStage = getFirstDealsJourneyStage(search.mode);
   const displayPlanStatus: GuidedPlanState =
     plan && plan.expiresAt <= lifecycleNow ? "expired" : planStatus;
@@ -421,16 +409,6 @@ export function DealsJourneyShell({
             onDraftChange={() => undefined}
           />
         )}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link
-            onClick={start}
-            href={backHref}
-            className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-lg px-2 font-bold text-[#004BB8]"
-          >
-            <ArrowLeft aria-hidden className="size-4 rtl:rotate-180" />
-            {t("deals.guided.back")}
-          </Link>
-        </div>
         {resolved && (
           <DealsJourneyBreadcrumbs
             progress={progress}

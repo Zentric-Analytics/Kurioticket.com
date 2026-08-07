@@ -50,15 +50,19 @@ export function DealsJourneyBreadcrumbs({
               <span>{t(item.labelKey)}</span>
             </>
           );
-          const className = `focus-ring inline-flex min-h-11 items-center gap-1.5 rounded-md px-1.5 ${
+          const className = `inline-flex min-h-11 items-center gap-1.5 rounded-md px-1.5 ${
             item.status === "current"
-              ? "font-semibold text-slate-950"
+              ? `font-semibold text-slate-950 ${item.href ? "focus-ring cursor-pointer hover:text-[#004BB8] hover:underline" : "cursor-default"}`
               : item.status === "completed"
-                ? "font-medium text-slate-700 hover:text-[#004BB8]"
-                : "font-medium text-slate-500"
+                ? "focus-ring cursor-pointer font-medium text-slate-700 hover:text-[#004BB8]"
+                : "cursor-default font-medium text-slate-500"
           }`;
           return (
-            <li key={item.id} className="flex items-center">
+            <li
+              key={item.id}
+              className="flex items-center"
+              aria-current={item.status === "current" ? "page" : undefined}
+            >
               {index > 0 && (
                 <ChevronRight
                   aria-hidden
@@ -80,7 +84,6 @@ export function DealsJourneyBreadcrumbs({
               ) : (
                 <span
                   className={className}
-                  aria-current={item.status === "current" ? "page" : undefined}
                   aria-label={
                     item.accessibleLabelKey
                       ? t(item.accessibleLabelKey)

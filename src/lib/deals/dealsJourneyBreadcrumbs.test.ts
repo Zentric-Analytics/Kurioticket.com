@@ -6,7 +6,10 @@ import {
 } from "./dealsJourneyProgress";
 import { getDealsJourneyBreadcrumbs } from "./dealsJourneyBreadcrumbs";
 import type { DealsPackageMode, DealsSearch } from "./dealsSearchParams";
-import type { DealsJourneyStage } from "./dealsJourneyRoutes";
+import {
+  buildDealsJourneyUrl,
+  type DealsJourneyStage,
+} from "./dealsJourneyRoutes";
 
 const search = (mode: DealsPackageMode) =>
   ({
@@ -103,7 +106,12 @@ for (const [mode, scenarios] of Object.entries(expected) as [
         false,
       );
       for (const item of items) {
-        assert.equal(Boolean(item.href), item.status === "completed");
+        const isCurrentDetails =
+          item.status === "current" && page === `${item.id}-details`;
+        assert.equal(
+          Boolean(item.href),
+          item.status === "completed" || isCurrentDetails,
+        );
         if (item.href) {
           assert.match(
             item.href,
@@ -131,5 +139,30 @@ test("details labels retain accessible product context", () => {
     ).find((item) => item.status === "current");
     assert.equal(current?.labelKey, "deals.breadcrumb.details");
     assert.equal(current?.accessibleLabelKey, `deals.breadcrumb.${accessible}`);
+    assert.equal(
+      current?.href,
+      buildDealsJourneyUrl(`${current?.id}-results`, search(mode)),
+    );
   }
+});
+
+test("current results and future products cannot skip forward", () => {
+  const mode = "hotel-flight-car";
+  const progress = getGuidedDealsJourneyProgress("flight-results", mode, {
+    hotel: {},
+    flight: null,
+    car: null,
+  } as never);
+  const items = getDealsJourneyBreadcrumbs(
+    progress,
+    "flight-results",
+    search(mode),
+  );
+  assert.equal(
+    items.find((item) => item.id === "hotel")?.href,
+    buildDealsJourneyUrl("hotel-results", search(mode)),
+  );
+  assert.equal(items.find((item) => item.id === "flight")?.href, undefined);
+  assert.equal(items.find((item) => item.id === "car")?.href, undefined);
+  assert.equal(items.find((item) => item.id === "complete")?.href, undefined);
 });

@@ -4603,9 +4603,11 @@ export const translations: TranslationDictionary = {
   "deals.breadcrumb.flight": "Flight",
   "deals.breadcrumb.car": "Car",
   "deals.breadcrumb.complete": "Complete",
-  "deals.breadcrumb.hotelDetailsAccessible": "Hotel details",
-  "deals.breadcrumb.flightDetailsAccessible": "Flight details",
-  "deals.breadcrumb.carDetailsAccessible": "Car details",
+  "deals.breadcrumb.hotelDetailsAccessible":
+    "Hotel details — back to hotel results",
+  "deals.breadcrumb.flightDetailsAccessible":
+    "Flight details — back to flight results",
+  "deals.breadcrumb.carDetailsAccessible": "Car details — back to car results",
   "deals.guided.back": "Back",
   "deals.guided.escape": "Use current trip options",
   "deals.guided.loading": "Loading your guided trip",
