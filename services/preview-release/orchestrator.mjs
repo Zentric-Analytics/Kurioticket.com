@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
-import { reconcileBuilds, reconcileSubmission } from "./eas-state.mjs";
+import { reconcileBuilds, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { exactChangeSet, exactCheckout, EasClient, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
 import { inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 
@@ -12,9 +12,11 @@ export class PreviewOrchestrator {
   }
 
   async cycle() {
-    const sourceSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
+    const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
+    const sourceSha = this.config.iosNativeBackfillSha ?? currentDevSha;
+    if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const previous = await this.ledger.lastSuccessful();
-    const iosNativeBackfill = this.config.iosNativeBackfillSha === sourceSha;
+    const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
     if (previous?.source_sha === sourceSha && !iosNativeBackfill) return { state: "NO_CHANGE", sourceSha };
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
     const record = iosNativeBackfill
@@ -24,7 +26,7 @@ export class PreviewOrchestrator {
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
-      return await this.process(record, previous, lease);
+      return await this.process(record, iosNativeBackfill ? null : previous, lease);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
@@ -149,18 +151,16 @@ export class PreviewOrchestrator {
       const status = String(current.status ?? "").toUpperCase();
       await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_BUILD", identityKey: `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`, remoteId: build.id, state: status, evidence: current });
       if (status === "FINISHED") {
-        const submission = reconcileSubmission(current);
-        if (["CONFLICT", "UNKNOWN"].includes(submission.state)) throw new Error(`TestFlight auto-submit state is ${submission.state}; no duplicate recovery submission was attempted.`);
+        const submission = reconcileSubmissionHistory(await eas.listIosSubmissions(), build.id);
+        if (["CONFLICT", "UNKNOWN", "FAILED"].includes(submission.state)) throw new Error(`TestFlight auto-submit state is ${submission.state}; no duplicate recovery submission was attempted.`);
         if (submission.state === "NOT_CREATED") {
-          if (current.autoSubmit !== false) throw new Error("TestFlight submission is absent but auto-submit disposition is not explicitly false; recovery failed closed.");
-          const identityKey = `ios-submission:${build.id}`;
-          await lease.checkpoint();
-          const recovered = await eas.submitIosBuild(build.id);
-          await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_SUBMISSION", identityKey, remoteId: recovered.id, state: "CREATED", evidence: recovered });
-          return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: "CREATED", submissionId: recovered.id, recovery: true };
+          await this.sleep(15_000);
+          continue;
         }
-        await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_SUBMISSION", identityKey: `ios-submission:${build.id}`, remoteId: submission.submission?.id ?? null, state: submission.state, evidence: submission.submission ?? {} });
-        return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission?.id ?? null };
+        await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_SUBMISSION", identityKey: `ios-submission:${build.id}`, remoteId: submission.submission.id, state: submission.state, evidence: submission.submission });
+        if (submission.state === "FINISHED") return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission.id };
+        await this.sleep(15_000);
+        continue;
       }
       if (["ERRORED", "FAILED", "CANCELED"].includes(status)) throw new Error(`EAS iOS build ${build.id} ended in ${status}.`);
       await this.sleep(30_000);

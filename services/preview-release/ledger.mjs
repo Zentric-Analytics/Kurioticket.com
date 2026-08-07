@@ -55,8 +55,15 @@ export class PreviewLedger {
       );
       if (existing.rowCount > 1) throw new Error("Ambiguous existing iOS native backfill action.");
       if (existing.rowCount === 1) {
-        await client.query("COMMIT");
-        return null;
+        const submissions = await client.query(
+          "SELECT state FROM preview_release_action WHERE kind='IOS_SUBMISSION' AND identity_key=$1 LIMIT 2",
+          [`ios-submission:${existing.rows[0].remote_id}`],
+        );
+        if (submissions.rowCount > 1) throw new Error("Ambiguous existing iOS native submission action.");
+        if (submissions.rowCount === 1 && submissions.rows[0].state === "FINISHED") {
+          await client.query("COMMIT");
+          return null;
+        }
       }
       await client.query(
         `INSERT INTO preview_release (source_sha, previous_sha, mode, state)
@@ -70,13 +77,9 @@ export class PreviewLedger {
              lock_owner=$2, lock_expires_at=now()+($3::int * interval '1 millisecond'),
              started_at=coalesce(started_at, now()), updated_at=now()
          WHERE source_sha=$1
-           AND NOT EXISTS (
-             SELECT 1 FROM preview_release_action
-             WHERE kind='IOS_BUILD' AND identity_key=$4
-           )
            AND (lock_expires_at IS NULL OR lock_expires_at < now() OR lock_owner=$2)
          RETURNING *`,
-        [sourceSha, workerId, leaseMs, identityKey],
+        [sourceSha, workerId, leaseMs],
       );
       await client.query("COMMIT");
       return result.rows[0] ?? null;

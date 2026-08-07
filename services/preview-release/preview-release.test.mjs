@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
-import { reconcileBuilds, reconcileSubmission } from "./eas-state.mjs";
+import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, maintainLease, retry } from "./orchestrator.mjs";
 import { createExactCheckoutDirectory, EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
@@ -204,6 +204,40 @@ for (const [status, expected] of [["CREATED", "CREATED"], ["IN_PROGRESS", "IN_PR
 }
 test("finished build without submission is explicit NOT_CREATED", () => assert.equal(reconcileSubmission({ status: "FINISHED" }).state, "NOT_CREATED"));
 test("duplicate submissions fail closed", () => assert.equal(reconcileSubmission({ submissions: [{ id: "1" }, { id: "2" }] }).state, "CONFLICT"));
+const submission = (overrides = {}) => ({ id: "sub-1", status: "FINISHED", platform: "IOS", app: { id: PREVIEW_IDENTITY.easProjectId }, submittedBuild: { id: "build-1" }, ...overrides });
+test("submission history adopts the unique exact-build Preview submission", () => assert.equal(reconcileSubmissionHistory([submission()], "build-1").state, "FINISHED"));
+test("submission history ignores valid submissions for other builds", () => assert.equal(reconcileSubmissionHistory([submission({ submittedBuild: { id: "other-build" } })], "build-1").state, "NOT_CREATED"));
+test("submission history fails closed on duplicates, wrong projects, and malformed entries", () => {
+  assert.equal(reconcileSubmissionHistory([submission(), submission({ id: "sub-2" })], "build-1").state, "CONFLICT");
+  assert.equal(reconcileSubmissionHistory([submission({ app: { id: "wrong-project" } })], "build-1").state, "UNKNOWN");
+  assert.equal(reconcileSubmissionHistory([{ id: "sub-1" }], "build-1").state, "UNKNOWN");
+});
+
+test("EAS submission history uses authenticated bounded GraphQL and exact project identity", async () => {
+  const requests = [];
+  const client = new EasClient({
+    expoToken: "expo-secret", cwd: repositoryRoot, command: "unused",
+    fetchImpl: async (_url, options) => {
+      requests.push(JSON.parse(options.body));
+      return { ok: true, text: async () => JSON.stringify({ data: { app: { byId: { id: PREVIEW_IDENTITY.easProjectId, submissions: [submission()] } } } }) };
+    },
+  });
+  assert.deepEqual(await client.listIosSubmissions(), [submission()]);
+  assert.equal(requests[0].variables.appId, PREVIEW_IDENTITY.easProjectId);
+  assert.equal(requests[0].variables.offset, 0);
+});
+
+test("EAS submission history fails closed on HTTP, JSON, GraphQL, and project errors", async () => {
+  for (const [response, pattern] of [
+    [{ ok: false, status: 503, text: async () => "" }, /HTTP 503/],
+    [{ ok: true, text: async () => "not-json" }, /malformed JSON/],
+    [{ ok: true, text: async () => JSON.stringify({ errors: [{ message: "unauthorized" }] }) }, /returned errors/],
+    [{ ok: true, text: async () => JSON.stringify({ data: { app: { byId: { id: "wrong", submissions: [] } } } }) }, /project-mismatched/],
+  ]) {
+    const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused", fetchImpl: async () => response });
+    await assert.rejects(client.listIosSubmissions(), pattern);
+  }
+});
 
 test("bounded retry succeeds without infinite looping", async () => {
   let attempts = 0;
@@ -308,6 +342,35 @@ test("completed current SHA can be claimed once for approved iOS native backfill
   assert.equal(processed, 1);
 });
 
+test("approved iOS backfill resumes its exact ancestor after dev advances", async () => {
+  const currentDevSha = "b".repeat(40);
+  const comparisons = [];
+  const record = { source_sha: sha, previous_sha: null, state: "FAILED" };
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: sha, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => ({ source_sha: currentDevSha }),
+      claimIosNativeBackfill: async ({ sourceSha, previousSha }) => {
+        assert.equal(sourceSha, sha);
+        assert.equal(previousSha, currentDevSha);
+        return record;
+      },
+    },
+    github: {
+      latestDevSha: async () => currentDevSha,
+      compare: async (base, head) => { comparisons.push([base, head]); return []; },
+      report: async () => {},
+    },
+    render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async (_record, previous) => {
+    assert.equal(previous, null);
+    return { source_sha: sha, state: "COMPLETE" };
+  };
+  assert.equal((await orchestrator.cycle()).state, "COMPLETE");
+  assert.deepEqual(comparisons, [[sha, currentDevSha]]);
+});
+
 test("existing iOS build action prevents duplicate native backfill processing", async () => {
   let processed = 0;
   const orchestrator = new PreviewOrchestrator({
@@ -321,6 +384,49 @@ test("existing iOS build action prevents duplicate native backfill processing", 
   orchestrator.process = async () => { processed += 1; };
   assert.equal((await orchestrator.cycle()).state, "LOCKED_OR_COMPLETE");
   assert.equal(processed, 0);
+});
+
+test("iOS delivery adopts a finished build and waits for its server-owned auto-submit without duplicating either", async () => {
+  let buildCreates = 0;
+  let historyReads = 0;
+  const actions = [];
+  const finishedBuild = build({ status: "FINISHED", appBuildVersion: "5" });
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, github: {}, render: {}, sleep: async () => {},
+    ledger: { recordAction: async (action) => { actions.push(action); return action; } },
+    easFactory: () => ({
+      listIosBuilds: async () => [finishedBuild],
+      createIosBuild: async () => { buildCreates += 1; return finishedBuild; },
+      viewBuild: async () => finishedBuild,
+      listIosSubmissions: async () => {
+        historyReads += 1;
+        return historyReads === 1 ? [] : [submission()];
+      },
+    }),
+  });
+  const result = await orchestrator.deliverIos(sha, repositoryRoot, { checkpoint: async () => {} });
+  assert.equal(buildCreates, 0);
+  assert.equal(historyReads, 2);
+  assert.equal(result.buildId, "build-1");
+  assert.equal(result.submissionId, "sub-1");
+  assert.equal(actions.filter(({ kind }) => kind === "IOS_SUBMISSION").length, 1);
+});
+
+test("iOS delivery fails closed on a failed auto-submit and never invokes manual submission", async () => {
+  let manualSubmissions = 0;
+  const finishedBuild = build({ status: "FINISHED", appBuildVersion: "5" });
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, github: {}, render: {}, sleep: async () => {},
+    ledger: { recordAction: async (action) => action },
+    easFactory: () => ({
+      listIosBuilds: async () => [finishedBuild], createIosBuild: async () => finishedBuild,
+      viewBuild: async () => finishedBuild,
+      listIosSubmissions: async () => [submission({ status: "ERRORED" })],
+      submitIosBuild: async () => { manualSubmissions += 1; },
+    }),
+  });
+  await assert.rejects(orchestrator.deliverIos(sha, repositoryRoot, { checkpoint: async () => {} }), /state is FAILED/);
+  assert.equal(manualSubmissions, 0);
 });
 
 test("exact-checkout preparation reuses the immutable build dependency trees", async () => {
