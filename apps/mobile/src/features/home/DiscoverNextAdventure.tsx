@@ -157,7 +157,7 @@ export function DiscoverNextAdventure() {
     <View collapsable={false} testID="discover-next-adventure" style={styles.section}>
       <View style={styles.headingCopy}>
         <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>Discover your next adventure</Text>
-        <Text style={[styles.subtitle, { color: ft.colors.textSecondary }]}>Compare smart route ideas, flexible fares, and destinations picked for your region.</Text>
+        <Text style={[styles.subtitle, { color: ft.colors.textSecondary }]}>Explore smart route ideas, flexible fares, and destinations picked for your region.</Text>
       </View>
       <View style={styles.grid}>
         {nextAdventureCards.map((card) => <AdventureCardView key={card.id} card={card} />)}
