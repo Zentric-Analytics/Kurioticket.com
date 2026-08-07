@@ -225,7 +225,10 @@ export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot,
     ]);
     if (!built.equals(target)) throw new Error(`Exact checkout dependency manifest differs from the immutable worker build: ${manifest}.`);
   }
-  for (const relative of ["node_modules", "apps/mobile/node_modules"]) {
+  // Exact-checkout validation and delivery execute only mobile tooling. Reusing
+  // the unrelated root dependency tree doubles filesystem traversal pressure on
+  // the 512 MB Starter worker without participating in Expo resolution.
+  for (const relative of ["apps/mobile/node_modules"]) {
     const source = join(dependencyRoot, relative);
     const destination = join(directory, relative);
     const metadata = await stat(source);
@@ -241,7 +244,12 @@ export async function nativeFingerprints(directory) {
   const cwd = join(directory, "apps/mobile");
   const result = {};
   for (const platform of ["ios", "android"]) {
-    const { stdout } = await exec(command, ["fingerprint", "fingerprint:generate", "--platform", platform], { cwd, encoding: "utf8", maxBuffer: 50 * 1024 * 1024 });
+    const { stdout } = await exec(command, ["fingerprint", "fingerprint:generate", "--platform", platform, "--concurrent-io-limit", "1"], {
+      cwd,
+      encoding: "utf8",
+      maxBuffer: 50 * 1024 * 1024,
+      env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=256" },
+    });
     let value;
     try { value = JSON.parse(stdout); } catch { throw new Error(`Expo ${platform} fingerprint output is malformed.`); }
     if (!/^[0-9a-f]{40,128}$/.test(value?.hash ?? "")) throw new Error(`Expo ${platform} fingerprint has no valid hash.`);
