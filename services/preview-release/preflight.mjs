@@ -1,7 +1,7 @@
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
 
 export async function runPreviewPreflight({ config, ledger, github, render, eas }) {
-  if (config.mode !== "dry-run") throw new Error("Provider preflight must run in dry-run mode.");
+  if (!new Set(["dry-run", "active"]).has(config.mode)) throw new Error("Provider preflight mode is invalid.");
   const sourceSha = await github.latestDevSha();
   const database = await ledger.healthCheck();
   const service = await render.getService();
@@ -21,7 +21,7 @@ export async function runPreviewPreflight({ config, ledger, github, render, eas 
   });
   return Object.freeze({
     status: "PASS",
-    mode: "dry-run",
+    mode: config.mode,
     sourceSha,
     databaseConnected: database.connected === true,
     renderServiceId: service.id,
