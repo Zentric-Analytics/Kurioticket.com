@@ -209,6 +209,34 @@ export class PreviewLedger {
     return result.rows[0] ?? null;
   }
 
+  async claimIosDistribution({ sourceSha, workerId, leaseMs, mode }) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `UPDATE preview_release release
+       SET state='DETECTED', mode=$4, completed_at=NULL,
+           lock_owner=$2, lock_expires_at=now()+($3::int * interval '1 millisecond'),
+           updated_at=now()
+       WHERE release.source_sha=$1
+         AND release.state IN ('COMPLETE','FAILED','DETECTED','VALIDATING','PLANNED','DELIVERING')
+         AND (release.lock_expires_at IS NULL OR release.lock_expires_at < now() OR release.lock_owner=$2)
+         AND EXISTS (
+           SELECT 1 FROM preview_release_action build
+           JOIN preview_release_action submission ON submission.source_sha=build.source_sha
+           WHERE build.source_sha=release.source_sha
+             AND build.kind='IOS_BUILD' AND build.state='FINISHED'
+             AND submission.kind='IOS_SUBMISSION' AND submission.state='FINISHED'
+         )
+         AND NOT EXISTS (
+           SELECT 1 FROM preview_release_action distribution
+           WHERE distribution.source_sha=release.source_sha
+             AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+         )
+       RETURNING release.*`,
+      [sourceSha, workerId, leaseMs, mode],
+    );
+    return result.rows[0] ?? null;
+  }
+
   async recordAction({ sourceSha, kind, identityKey, remoteId, state, evidence = {} }) {
     const result = await this.pool.query(
       `INSERT INTO preview_release_action (source_sha, kind, identity_key, remote_id, state, evidence)

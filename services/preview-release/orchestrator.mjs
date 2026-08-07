@@ -14,10 +14,11 @@ export class PreviewOrchestrator {
 
   async cycle() {
     const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
-    const pendingDistribution = !this.config.iosNativeBackfillSha && typeof this.ledger.pendingIosDistribution === "function" ? await this.ledger.pendingIosDistribution() : null;
-    const sourceSha = this.config.iosNativeBackfillSha ?? pendingDistribution?.source_sha ?? currentDevSha;
-    if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const previous = await this.ledger.lastSuccessful();
+    const pendingDistribution = !this.config.iosNativeBackfillSha && typeof this.ledger.pendingIosDistribution === "function" ? await this.ledger.pendingIosDistribution() : null;
+    const currentDevNeedsEvaluation = previous?.source_sha !== currentDevSha;
+    const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevNeedsEvaluation ? pendingDistribution?.source_sha : null) ?? currentDevSha;
+    if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
     const deliveredNative = iosNativeBackfill ? {} : await this.deliveredNativeBaselines();
     const iosDistributionPending = !iosNativeBackfill && (pendingDistribution?.source_sha === sourceSha || (typeof this.ledger.requiresIosDistribution === "function" && await this.ledger.requiresIosDistribution(sourceSha)));
@@ -28,7 +29,9 @@ export class PreviewOrchestrator {
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
     const record = iosNativeBackfill
       ? await this.ledger.claimIosNativeBackfill({ ...claim, identityKey: `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview` })
-      : pendingNative.length || iosDistributionPending
+      : iosDistributionPending
+        ? await this.ledger.claimIosDistribution(claim)
+      : pendingNative.length
         ? await this.ledger.claimNativeDrift(claim)
       : await this.ledger.claim(claim);
     if (!record) return { state: "LOCKED_OR_COMPLETE", sourceSha };

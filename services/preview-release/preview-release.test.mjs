@@ -12,6 +12,7 @@ import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enfo
 import { createExactCheckoutDirectory, EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
+import { PreviewLedger } from "./ledger.mjs";
 
 const sha = "a".repeat(40);
 const appleEnv = { APP_STORE_CONNECT_ISSUER_ID: "issuer", APP_STORE_CONNECT_KEY_ID: "key", APP_STORE_CONNECT_PRIVATE_KEY: "private-key", APP_STORE_CONNECT_PREVIEW_APP_ID: "6797447471", APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID: "group-preview" };
@@ -509,7 +510,7 @@ test("iOS delivery fails closed on a failed auto-submit and never invokes manual
   assert.equal(manualSubmissions, 0);
 });
 
-test("a superseding dev merge still resumes the latest submitted but undistributed iOS build", async () => {
+test("a submitted but undistributed iOS build resumes after a superseding dev merge is accounted for", async () => {
   const newerDev = "d".repeat(40);
   const comparisons = [];
   let processedPending = false;
@@ -517,10 +518,10 @@ test("a superseding dev merge still resumes the latest submitted but undistribut
     config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
     ledger: {
       pendingIosDistribution: async () => ({ source_sha: sha, ios_build_id: "build-1" }),
-      lastSuccessful: async () => ({ source_sha: sha, evidence: { fingerprints: {} } }),
+      lastSuccessful: async () => ({ source_sha: newerDev, evidence: { fingerprints: {} } }),
       lastSuccessfulNative: async () => null,
       requiresIosDistribution: async () => true,
-      claimNativeDrift: async () => ({ source_sha: sha, state: "COMPLETE" }),
+      claimIosDistribution: async () => ({ source_sha: sha, state: "COMPLETE" }),
       transition: async () => {},
     },
     github: { latestDevSha: async () => newerDev, compare: async (...args) => { comparisons.push(args); }, report: async () => {} }, render: {}, sleep: async () => {},
@@ -530,6 +531,91 @@ test("a superseding dev merge still resumes the latest submitted but undistribut
   assert.equal(result.state, "COMPLETE");
   assert.equal(processedPending, true);
   assert.deepEqual(comparisons, [[sha, newerDev]]);
+});
+
+test("failed TestFlight distribution is reclaimed through its dedicated lease-safe claim", async () => {
+  const queries = [];
+  const failed = { source_sha: sha, state: "DETECTED" };
+  const ledger = new PreviewLedger("postgres://localhost/test", {
+    pool: { query: async (sql, values) => { queries.push({ sql, values }); return { rows: [failed], rowCount: 1 }; } },
+  });
+  assert.equal((await ledger.claimIosDistribution({ sourceSha: sha, workerId: "worker-2", leaseMs: 60_000, mode: "active" })).state, "DETECTED");
+  assert.match(queries[0].sql, /'FAILED'/);
+  assert.match(queries[0].sql, /lock_expires_at < now\(\)/);
+  assert.match(queries[0].sql, /IOS_BUILD'[\s\S]*IOS_SUBMISSION'[\s\S]*IOS_TESTFLIGHT_DISTRIBUTION'[\s\S]*state='FINISHED'/);
+  assert.deepEqual(queries[0].values, [sha, "worker-2", 60_000, "active"]);
+});
+
+test("processing timeout retries the same durable TestFlight distribution action", async () => {
+  let claims = 0;
+  let processed = 0;
+  const record = { source_sha: sha, state: "FAILED" };
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => ({ source_sha: sha, evidence: { fingerprints: {} } }),
+      pendingIosDistribution: async () => ({ source_sha: sha, ios_build_id: "build-1" }),
+      lastSuccessfulNative: async () => null,
+      requiresIosDistribution: async () => true,
+      claimIosDistribution: async () => { claims += 1; return record; },
+      transition: async () => {},
+    },
+    github: { latestDevSha: async () => sha, report: async () => {} }, render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async (_record, _previous, _lease, _delivered, pending) => { processed += Number(pending); return { state: "COMPLETE" }; };
+  assert.equal((await orchestrator.cycle()).state, "COMPLETE");
+  assert.equal(claims, 1);
+  assert.equal(processed, 1);
+});
+
+test("Apple request failure marks the release failed and the next cycle reclaims it", async () => {
+  let state = "DELIVERING";
+  let processAttempts = 0;
+  let distributionClaims = 0;
+  const ledger = {
+    lastSuccessful: async () => ({ source_sha: sha, evidence: { fingerprints: {} } }),
+    pendingIosDistribution: async () => ({ source_sha: sha, ios_build_id: "build-1" }),
+    lastSuccessfulNative: async () => null,
+    requiresIosDistribution: async () => true,
+    claimIosDistribution: async () => { distributionClaims += 1; state = "DETECTED"; return { source_sha: sha, state }; },
+    transition: async (_sourceSha, _workerId, _fromStates, next) => { state = next; return { source_sha: sha, state }; },
+  };
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
+    ledger, github: { latestDevSha: async () => sha, report: async () => {} }, render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async () => {
+    processAttempts += 1;
+    if (processAttempts === 1) throw new Error("Apple HTTP 503");
+    return { source_sha: sha, state: "COMPLETE" };
+  };
+  await assert.rejects(orchestrator.cycle(), /Apple HTTP 503/);
+  assert.equal(state, "FAILED");
+  assert.equal((await orchestrator.cycle()).state, "COMPLETE");
+  assert.equal(distributionClaims, 2);
+});
+
+test("an older failed distribution does not block evaluation of a newer dev SHA", async () => {
+  const newerDev = "d".repeat(40);
+  let distributionClaims = 0;
+  let ordinaryClaims = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => ({ source_sha: "b".repeat(40), evidence: { fingerprints: {} } }),
+      pendingIosDistribution: async () => ({ source_sha: sha, ios_build_id: "build-1" }),
+      lastSuccessfulNative: async () => null,
+      requiresIosDistribution: async () => false,
+      claimIosDistribution: async () => { distributionClaims += 1; return null; },
+      claim: async () => { ordinaryClaims += 1; return { source_sha: newerDev, state: "DETECTED" }; },
+      transition: async () => {},
+    },
+    github: { latestDevSha: async () => newerDev, report: async () => {} }, render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async (record) => ({ source_sha: record.source_sha, state: "COMPLETE" });
+  assert.equal((await orchestrator.cycle()).source_sha, newerDev);
+  assert.equal(ordinaryClaims, 1);
+  assert.equal(distributionClaims, 0);
 });
 
 test("App Store Connect resolves the exact Preview app, internal group, and version/build identity", async () => {
@@ -579,6 +665,33 @@ test("accepted Apple association with a lost response is reconciled on readback"
   const orchestrator = new PreviewOrchestrator({ config: {}, ledger: { recordAction: async (action) => action }, github: {}, render: {}, sleep: async () => {}, appleFactory: () => finishedApple({ isAssociated: async () => ++reads > 1, associate: async () => { throw new Error("connection reset"); } }) });
   const result = await orchestrator.distributeIosToInternalGroup({ sha, build: { id: "build-1", appVersion: "0.3.0", appBuildVersion: "9" }, current: { appVersion: "0.3.0", appBuildVersion: "9" }, submission: { id: "sub-1" }, lease: { checkpoint: async () => {} } });
   assert.equal(result.state, "FINISHED");
+});
+
+test("distribution retry keeps one durable action and adopts membership before writing again", async () => {
+  let associated = false;
+  let posts = 0;
+  const durableActions = new Map();
+  const ledger = { recordAction: async (action) => { durableActions.set(`${action.kind}:${action.identityKey}`, action); return action; } };
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, ledger, github: {}, render: {}, sleep: async () => {},
+    appleFactory: () => finishedApple({
+      isAssociated: async () => associated,
+      associate: async () => {
+        posts += 1;
+        if (posts === 1) throw new Error("Apple HTTP 503");
+        associated = true;
+      },
+    }),
+  });
+  const input = { sha, build: { id: "build-1", appVersion: "0.3.0", appBuildVersion: "9" }, current: { appVersion: "0.3.0", appBuildVersion: "9" }, submission: { id: "sub-1" }, lease: { checkpoint: async () => {} } };
+  await assert.rejects(orchestrator.distributeIosToInternalGroup(input), /Apple HTTP 503/);
+  await orchestrator.distributeIosToInternalGroup(input);
+  assert.equal(posts, 2);
+  assert.equal(durableActions.size, 1);
+  assert.equal([...durableActions.values()][0].state, "FINISHED");
+  await orchestrator.distributeIosToInternalGroup(input);
+  assert.equal(posts, 2);
+  assert.equal(durableActions.size, 1);
 });
 
 test("submission completion alone cannot satisfy the iOS native baseline", () => {
