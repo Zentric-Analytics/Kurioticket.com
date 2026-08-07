@@ -135,7 +135,18 @@ export class EasClient {
     const directory = await mkdtemp(join(tmpdir(), "kurioticket-eas-"));
     try {
       const stdoutPath = join(directory, "stdout.json");
-      const { stdout } = await exec(this.command, args, { cwd: this.cwd, encoding: "utf8", maxBuffer: 10 * 1024 * 1024, env: { ...process.env, EXPO_TOKEN: this.expoToken } });
+      const { stdout } = await exec(this.command, args, {
+        cwd: this.cwd,
+        encoding: "utf8",
+        maxBuffer: 10 * 1024 * 1024,
+        env: {
+          ...process.env,
+          EXPO_TOKEN: this.expoToken,
+          APP_VARIANT: "preview",
+          APP_BUILD_MODE: "release",
+          EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
+        },
+      });
       await import("node:fs/promises").then(({ writeFile }) => writeFile(stdoutPath, stdout, { mode: 0o600 }));
       const raw = await readFile(stdoutPath, "utf8");
       if (!raw.trim()) throw new Error(`EAS command ${args[1]} returned empty stdout.`);

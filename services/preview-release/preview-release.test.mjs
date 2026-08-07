@@ -239,5 +239,8 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /"--freeze-credentials", "--no-wait", "--auto-submit-with-profile", "preview"/);
   assert.match(client, /"--platform", "android"[\s\S]*?"--freeze-credentials", "--no-wait"/);
   assert.match(client, /"update:list", "--branch", "preview"/);
+  assert.match(client, /APP_VARIANT: "preview"/);
+  assert.match(client, /APP_BUILD_MODE: "release"/);
+  assert.match(client, /EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY\.apiOrigin/);
   assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/);
 });
