@@ -15,7 +15,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { destinationById, type Destination } from "./destinationCatalogue";
+import type { Destination } from "./destinationCatalogue";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
 import { POPULAR_DESTINATIONS } from "./exploreData";
