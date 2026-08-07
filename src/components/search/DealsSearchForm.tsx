@@ -2079,10 +2079,9 @@ export function DealsSearchForm({
           </div>
           <div
             data-deals-upper-controls
-            className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2 lg:mt-0 lg:w-auto lg:min-w-[22rem]"
+            className="mt-3 flex min-w-0 flex-wrap items-center justify-end gap-x-6 gap-y-1 lg:ms-auto lg:mt-0"
           >
-            <div>
-              <span className={label}>{t("deals.travellersRooms")}</span>
+            <div className="inline-flex">
               <button
                 ref={travelersLauncherRef}
                 type="button"
@@ -2096,15 +2095,23 @@ export function DealsSearchForm({
                 onClick={() =>
                   travelersOpen ? dismissDesktopTravelers() : openTravelers()
                 }
-                className={`${field} flex min-h-11 items-center justify-between text-start`}
+                className="focus-ring inline-flex min-h-11 items-center gap-1.5 border-0 bg-transparent text-start text-sm font-medium text-[#004BB8] shadow-none"
               >
-                <span className="truncate">{travelerSummary}</span>
-                <ChevronDown className="h-4 w-4" />
+                <span>
+                  <span className="sr-only">
+                    {t("deals.travellersRooms")}:{" "}
+                  </span>
+                  {travelerSummary}
+                </span>
+                <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0" />
               </button>
             </div>
             {included.flight ? (
-              <div data-deals-upper-cabin>
-                <label className={label} htmlFor="deals-flight-cabin">
+              <div
+                data-deals-upper-cabin
+                className="relative inline-flex items-center"
+              >
+                <label className="sr-only" htmlFor="deals-flight-cabin">
                   {t("deals.cabinClass")}
                 </label>
                 <select
@@ -2116,12 +2123,16 @@ export function DealsSearchForm({
                       event.target.value as DealsSearch["flightCabinClass"],
                     )
                   }
-                  className={`${field} min-h-11`}
+                  className="focus-ring min-h-11 appearance-none border-0 bg-transparent py-2 ps-0 pe-6 text-sm font-medium text-[#004BB8] shadow-none outline-none"
                 >
                   <option value="economy">{t("economy")}</option>
                   <option value="business">{t("business")}</option>
                   <option value="first">{t("first")}</option>
                 </select>
+                <ChevronDown
+                  aria-hidden="true"
+                  className="pointer-events-none absolute end-0 h-4 w-4 text-[#004BB8]"
+                />
               </div>
             ) : null}
           </div>
