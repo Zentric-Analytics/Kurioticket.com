@@ -122,9 +122,9 @@ export class EasClient {
     assertExactSha(targetSha);
     const all = [];
     for (let offset = 0; offset < 500; offset += 50) {
-      const page = await this.run(["eas-cli@16.17.4", "build:list", "--platform", platform, "--profile", "preview", "--git-commit-hash", targetSha, "--limit", "50", "--offset", String(offset), "--json", "--non-interactive"]);
+      const page = await this.run(["eas-cli@16.17.4", "build:list", "--platform", platform, "--profile", "preview", "--app-identifier", PREVIEW_IDENTITY.bundleIdentifier, "--runtime-version", PREVIEW_IDENTITY.runtimeVersion, "--channel", PREVIEW_IDENTITY.channel, "--git-commit-hash", targetSha, "--limit", "50", "--offset", String(offset), "--json", "--non-interactive"]);
       if (!Array.isArray(page)) throw new Error("EAS build:list response must be an array.");
-      all.push(...page);
+      all.push(...page.map((build) => ({ ...build, queriedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier, queriedRuntimeVersion: PREVIEW_IDENTITY.runtimeVersion, queriedChannel: PREVIEW_IDENTITY.channel })));
       if (page.length < 50) return all;
     }
     throw new Error("EAS build history exceeded the bounded pagination limit.");
