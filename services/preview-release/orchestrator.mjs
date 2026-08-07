@@ -36,6 +36,7 @@ export class PreviewOrchestrator {
     try {
       const files = previous ? await exactChangeSet({ directory: checkout.directory, repository: this.config.repository, token: this.config.githubReadToken, previousSha: previous.source_sha, targetSha: sha }) : [];
       let classification = previous ? classifyChangeSet(files) : { classification: "NO_DELIVERY", reason: "initial-baseline", files: [] };
+      classification = applyCutoverBaseline({ classification, files, sha, config: this.config });
       if (classification.classification === "UNSAFE") throw new Error(`Release classification failed closed: ${classification.reason}.`);
       await prepareCheckout(checkout.directory);
       const identity = await resolvedIdentity(checkout.directory);
@@ -204,6 +205,12 @@ export function maintainLease({ ledger, sourceSha, workerId, leaseMs }) {
       await renewing;
     },
   };
+}
+
+export function applyCutoverBaseline({ classification, files, sha, config }) {
+  if (config.cutoverBaselineSha !== sha) return classification;
+  if (config.mode !== "dry-run") throw new Error("Cutover baseline may only be established in dry-run mode.");
+  return { classification: "NO_DELIVERY", reason: "approved-cutover-baseline", files };
 }
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
