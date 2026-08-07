@@ -11,94 +11,41 @@ const mobilePickerShell = readFileSync(
   "utf8",
 );
 
-test("Deals planner renders coordinated product rows and a final travellers row", () => {
-  assert.match(form, /aria-labelledby="deals-flight-heading"/);
-  assert.match(form, /htmlFor="deals-flight-cabin"/);
-  assert.match(form, /aria-labelledby="deals-hotel-heading"/);
-  assert.match(form, /aria-labelledby="deals-car-heading"/);
-  assert.match(form, /data-deals-travellers-row/);
-  assert.match(form, /\{t\("deals\.travellersRooms"\)\}/);
-  assert.match(form, /data-deals-travellers-row[\s\S]*\{searchDealsButton\}/);
-  assert.doesNotMatch(form, /\{t\("deals\.travelersCabinLabel"\)\}/);
+test("product selection remains one pressed-button multi-selector", () => {
+  assert.equal(form.match(/data-deals-product-selector/g)?.length, 1);
+  assert.match(form, /dealsProductOrder\.map/);
+  assert.match(form, /aria-pressed=\{selected\}/);
+  assert.match(form, /toggleProduct\(product\)/);
+  assert.doesNotMatch(form, /aria-checked=\{selected\}/);
 });
 
-test("the large-screen Deals layout keeps every control in compact heading rails", () => {
-  const productFieldset =
-    form.match(/<fieldset[\s\S]*?<\/fieldset>/)?.[0] ?? "";
-  const productSelector =
-    productFieldset.match(
-      /<div\s+data-deals-product-selector[\s\S]*?<\/div>/,
-    )?.[0] ?? "";
-
-  assert.doesNotMatch(productFieldset, /lg:grid-cols-\[minmax\(0,1fr\)_auto\]/);
-  assert.doesNotMatch(productFieldset, /lg:grid|lg:col-span-2/);
-  assert.match(productSelector, /className="flex flex-wrap gap-2"/);
-  assert.doesNotMatch(productSelector, /lg:justify-end|justify-(?:start|end)/);
-  assert.match(
-    form,
-    /data-deals-heading-rail="flight"[\s\S]*data-deals-field-content="flight"/,
-  );
-  assert.match(
-    form,
-    /data-deals-heading-rail="stay"[\s\S]*data-deals-field-content="stay"/,
-  );
-  assert.match(
-    form,
-    /data-deals-heading-rail="car"[\s\S]*data-deals-field-content="car"/,
-  );
-  assert.match(
-    form,
-    /data-deals-heading-rail="travellers"[\s\S]*data-deals-travellers-actions[\s\S]*\{searchDealsButton\}/,
-  );
+test("shared travellers and Flight-only Cabin Class are upper controls", () => {
+  const upper =
+    form.match(/<div\s+data-deals-upper-controls[\s\S]*?<\/fieldset>/)?.[0] ??
+    "";
+  assert.match(upper, /ref=\{travelersLauncherRef\}/);
+  assert.match(upper, /\{travelerSummary\}/);
+  assert.match(upper, /\{included\.flight \? \(/);
+  assert.match(upper, /data-deals-upper-cabin/);
+  assert.match(upper, /id="deals-flight-cabin"/);
+  assert.equal(form.match(/ref=\{travelersLauncherRef\}/g)?.length, 1);
+  assert.equal(form.match(/id="deals-flight-cabin"/g)?.length, 1);
 });
 
-test("the Flight heading and horizontal trip type share a compact desktop top row", () => {
-  const flightSection =
+test("Flight primary connected row contains airports, swap, and combined dates only", () => {
+  const flightFields =
     form.match(
-      /<section\s+aria-labelledby="deals-flight-heading"[\s\S]*?<\/section>/,
+      /<div\s+data-deals-field-content="flight"[\s\S]*?<div>\{errorBlock\("flight"\)\}<\/div>/,
     )?.[0] ?? "";
-  const headingRail =
-    flightSection.match(
-      /<div\s+data-deals-heading-rail="flight"[\s\S]*?<\/div>\s*<div\s+data-deals-field-content="flight"/,
-    )?.[0] ?? "";
-  const tripType =
-    headingRail.match(/<div\s+role="radiogroup"[\s\S]*?<\/div>/)?.[0] ?? "";
-
-  assert.match(flightSection, /id="deals-flight-heading"/);
-  assert.match(headingRail, /lg:flex/);
-  assert.match(headingRail, /lg:items-center/);
-  assert.match(tripType, /aria-label=\{t\("tripType"\)\}/);
-  assert.match(tripType, /lg:flex-row/);
-  assert.doesNotMatch(tripType, /lg:flex-col|lg:items-stretch/);
-  assert.match(
-    flightSection,
-    /data-deals-heading-rail="flight"[\s\S]*data-deals-field-content="flight"/,
-  );
-  assert.doesNotMatch(flightSection, /lg:grid-cols-\[11rem_minmax\(0,1fr\)\]/);
+  assert.match(flightFields, /\["origin", "destination"\]/);
+  assert.match(flightFields, /swapDealsFlightAirports/);
+  assert.match(flightFields, /ref=\{flightDatesLauncherRef\}/);
+  assert.match(flightFields, /\{t\("travelDates"\)\}/);
+  assert.doesNotMatch(flightFields, /deals-flight-cabin/);
+  assert.doesNotMatch(flightFields, /departing|returning/i);
 });
 
-test("only Flight fields receive the compact large-screen connected-row sizing", () => {
-  const sharedSegment =
-    form.match(/const connectedSegment =\s*\n\s*"([^"]+)"/)?.[1] ?? "";
-  const flightSegment =
-    form.match(
-      /const flightConnectedSegment =\s*`\$\{connectedSegment\} ([^`]+)`/,
-    )?.[1] ?? "";
-  const flightField =
-    form.match(
-      /const flightConnectedField = `\$\{connectedField\} ([^`]+)`/,
-    )?.[1] ?? "";
-
-  assert.match(sharedSegment, /lg:min-h-14/);
-  assert.doesNotMatch(sharedSegment, /lg:min-h-\[54px\]|lg:py-1(?:\s|$)/);
-  assert.match(flightSegment, /lg:min-h-\[54px\]/);
-  assert.match(flightSegment, /lg:py-1/);
-  assert.match(flightField, /lg:min-h-6/);
-  assert.match(form, /data-deals-field-content="flight"[\s\S]{0,160}lg:mt-1/);
-  assert.match(form, /className=\{`\$\{flightConnectedSegment\}/);
-});
-
-test("Flight keeps radio semantics and keyboard trip-type behavior", () => {
+test("Flight trip type retains radio and arrow-key semantics", () => {
   assert.match(form, /role="radiogroup"/);
   assert.match(form, /role="radio"/);
   assert.match(form, /aria-checked=\{search\.flightTripType === value\}/);
@@ -106,86 +53,64 @@ test("Flight keeps radio semantics and keyboard trip-type behavior", () => {
   assert.match(form, /setDealsFlightTripType\(/);
 });
 
-test("the compact layout preserves touch targets and full-width guided preview", () => {
-  const connectedSegmentDeclaration = form.match(
-    /const connectedSegment =\s*\n\s*"([^"]+)"/,
-  );
-
-  assert.ok(connectedSegmentDeclaration);
-  assert.match(connectedSegmentDeclaration[1], /lg:min-h-14/);
-  assert.doesNotMatch(connectedSegmentDeclaration[1], /lg:min-h-\[68px\]/);
+test("linked Flight and Hotel suppress the ordinary Stay row", () => {
   assert.match(
     form,
-    /data-deals-product=\{product\}[\s\S]{0,300}className=\{`[^`]*min-h-11/,
+    /included\.hotel &&\s*!?\s*\(?[\s\S]*?!search\.stayDestinationLinked[\s\S]*?!search\.stayDatesLinked/,
   );
+  assert.match(form, /data-deals-hotel-overrides=\{included\.flight/);
+  assert.match(
+    form,
+    /data-deals-heading-rail="stay"[\s\S]{0,80}className="sr-only"/,
+  );
+});
+
+test("Hotel without Flight uses its existing controls as the primary editor", () => {
+  assert.match(form, /data-deals-hotel-primary=\{!included\.flight/);
+  assert.match(
+    form,
+    /\(!included\.flight \|\| !search\.stayDestinationLinked\)/,
+  );
+  assert.match(form, /ref=\{hotelDestinationInputRef\}/);
+  assert.match(form, /ref=\{hotelDatesLauncherRef\}/);
+  assert.match(
+    form,
+    /applySharedDestination\(current, (?:value|option\.searchValue)\)/,
+  );
+  assert.match(form, /applySharedDates/);
+});
+
+test("detached Hotel fields remain visible and recoverable", () => {
+  assert.match(form, /!search\.stayDestinationLinked/);
+  assert.match(form, /relinkInheritedField\(current, "stayDestination"\)/);
+  assert.match(form, /deals\.useMainDestination/);
+  assert.match(form, /!search\.stayDatesLinked/);
+  assert.match(form, /relinkInheritedField\(current, "stayDates"\)/);
+  assert.match(form, /deals\.useMainTravelDates/);
+});
+
+test("Car controls and one compact search action remain", () => {
+  assert.match(form, /data-deals-field-content="car"/);
+  assert.match(form, /id="deals-car-pickup"/);
+  assert.match(form, /deals\.returnLocation/);
+  assert.match(form, /ref=\{carDatesLauncherRef\}/);
+  assert.match(form, /deals\.carOptions/);
+  assert.equal(form.match(/type="submit"/g)?.length, 1);
+  assert.match(form, /data-deals-search-actions/);
+});
+
+test("mobile touch targets and full-width guided preview remain", () => {
+  assert.match(form, /data-deals-product=\{product\}[\s\S]{0,300}min-h-11/);
   assert.match(form, /type="submit"[\s\S]{0,180}min-h-12/);
+  assert.match(form, /className="w-full">\{guidedPreviewPanel\}<\/div>/);
   assert.match(
     form,
-    /className="w-full lg:col-span-2">\{guidedPreviewPanel\}<\/div>/,
+    /min-h-11[\s\S]*ref=\{travelersLauncherRef\}|ref=\{travelersLauncherRef\}[\s\S]*min-h-11/,
   );
-});
-
-test("the approved primary row field labels are explicit", () => {
-  assert.match(form, /t\(kind\)/);
-  assert.match(form, /\{t\("deals\.cabinClass"\)\}/);
-  assert.match(form, /\{t\("deals\.pickup"\)\}/);
-  assert.match(form, /\{t\("deals\.returnLocation"\)\}/);
-  assert.match(form, /\{t\("deals\.sameAsPickup"\)\}/);
-  assert.match(form, /\{t\("deals\.carOptions"\)\}/);
-});
-
-test("the desktop return-location editor labels and focuses its input", () => {
-  assert.match(
-    form,
-    /const carReturnLocationInputRef = useRef<HTMLInputElement>\(null\)/,
-  );
-  assert.match(
-    form,
-    /htmlFor="deals-car-desktop-return-location-input"[\s\S]{0,100}\{t\("deals\.returnLocation"\)\}/,
-  );
-  assert.match(
-    form,
-    /ref=\{carReturnLocationInputRef\}[\s\S]{0,100}id="deals-car-desktop-return-location-input"/,
-  );
-  assert.match(
-    form,
-    /if \([\s\S]{0,100}!carReturnLocationOpen[\s\S]{0,100}window\.matchMedia\("\(min-width: 640px\)"\)\.matches/,
-  );
-  assert.match(
-    form,
-    /requestAnimationFrame\(\(\) => \{[\s\S]{0,100}carReturnLocationInputRef\.current\?\.focus\(\{ preventScroll: true \}\);[\s\S]{0,100}carReturnLocationInputRef\.current\?\.select\(\)/,
-  );
-});
-
-test("the shared travellers picker keeps its mobile behavior without an unsupported marker", () => {
-  assert.match(
-    form,
-    /onClick=\{\(\) =>[\s\S]{0,80}travelersOpen[\s\S]{0,80}dismissDesktopTravelers\(\)[\s\S]{0,80}openTravelers\(\)/,
-  );
-  assert.match(
-    form,
-    /<FlightMobilePickerShell[\s\S]*?open=\{mobileTravelersOpen\}[\s\S]*?onClose=\{closeMobileTravelers\}[\s\S]*?>[\s\S]*?\{travelersPicker\}[\s\S]*?<\/FlightMobilePickerShell>/,
-  );
-  assert.match(form, /commitTravelers\(true\);[\s\S]{0,40}requestClose\(\);/);
-  assert.match(form, /id="deals-desktop-travellers"/);
-  assert.match(form, /titleId="deals-mobile-travellers-title"/);
-  assert.match(form, /dialogId="deals-mobile-travellers"/);
-  assert.doesNotMatch(form, /hotelGuests(?:Open|Picker|Launcher)/);
-  assert.doesNotMatch(form, /pickerMarker="shared-travellers"/);
-});
-
-test("the mobile picker shell retains only its implemented marker semantics", () => {
   assert.match(
     mobilePickerShell,
     /pickerMarker\?: "flight-date" \| "traveler-cabin";/,
   );
-  assert.match(
-    mobilePickerShell,
-    /pickerMarker === "flight-date" \? "true" : undefined/,
-  );
-  assert.match(
-    mobilePickerShell,
-    /pickerMarker === "traveler-cabin" \? "true" : undefined/,
-  );
-  assert.doesNotMatch(mobilePickerShell, /shared-travellers/);
+  assert.match(form, /dialogId="deals-mobile-travellers"/);
+  assert.match(form, /dialogId="deals-flight-mobile-dates"/);
 });
