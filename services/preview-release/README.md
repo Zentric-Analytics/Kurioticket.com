@@ -1,5 +1,7 @@
 # Preview Release Service
 
+Operational status: **PREVIEW RELEASE CUTOVER VERIFIED**. The Render worker `srv-d9qisaaju40c73bbago0` is the sole approved automatic Preview delivery owner, running on Standard / 2 GB with PostgreSQL `dpg-d9qifcbm8hqs738hg570-a`. Current approved Preview release infrastructure cost is `$35.50/month`. Do not restore the superseded GitHub Actions Preview delivery workflows.
+
 Run locally in non-mutating mode:
 
 ```powershell
@@ -30,3 +32,9 @@ Never delete ledger rows to force a retry. Never reset an EAS build number. Neve
 `npm run preview-release:preflight` validates the GitHub dev ref, PostgreSQL connectivity, the exact approved Render staging service, the current Render deployment, the exact Expo Preview project, and readable Preview build/update history. It remains strictly read-only in both `PREVIEW_RELEASE_MODE=dry-run` and `PREVIEW_RELEASE_MODE=active`, performs no delivery mutation, redacts configured credentials from errors, and exits non-zero on any authentication, schema, or identity mismatch.
 
 The worker runs this same preflight before beginning its polling loop. Active cutover must not be approved unless the preflight reports `PASS` for project `89f6fd88-c0d7-495a-9e2b-8301b09f407d` and Render service `srv-d86ulfgg4nts73bctt20`.
+
+## Accepted delivery evidence
+
+The accepted exact source SHA is `61e42dc6c0cc4952130aacb6e1da1f6bdb9e93f2`. Exact-SHA staging deployment and health verification passed. OTA publication completed once per platform on channel `preview` and runtime `preview-0.3.0`: iOS group `562cc027-a245-495c-b402-f2c596c3f20d` and Android group `a8705971-218e-4e53-bdd6-f6deb832ee49`. The installed Preview client received the update and passed owner visual verification. Durable restart recovery and duplicate prevention passed.
+
+Native iOS/TestFlight proof remains deferred until a legitimate native-impacting Preview change enters `dev`. The worker must then reconcile or create exactly one matching build and one submission through its durable ledger. Do not create a proof-only native change.

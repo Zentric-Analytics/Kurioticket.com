@@ -1,6 +1,6 @@
 # Independent Preview Release Service
 
-Status: proposed replacement, dry-run first. Production delivery is out of scope.
+Status: cutover verified. Production delivery is out of scope.
 
 ## Ownership
 
@@ -75,6 +75,25 @@ iOS build creation uses `--no-wait --auto-submit-with-profile preview`; Android 
 6. Prove web, OTA, and native/TestFlight paths once each.
 
 There must never be two active Preview delivery owners.
+
+## Verified cutover evidence
+
+Owner acceptance recorded on 2026-08-07 establishes the independent Render service as the sole approved automatic Preview delivery owner. The superseded GitHub Actions Preview deployment workflows must not be restored without a separate architecture review and owner approval.
+
+| Evidence | Verified value |
+|---|---|
+| Worker | `srv-d9qisaaju40c73bbago0` |
+| Worker plan | Render Standard, 2 GB |
+| PostgreSQL | `dpg-d9qifcbm8hqs738hg570-a` |
+| Monthly Preview release infrastructure | `$35.50` |
+| Exact delivered `dev` SHA | `61e42dc6c0cc4952130aacb6e1da1f6bdb9e93f2` |
+| iOS EAS Update group | `562cc027-a245-495c-b402-f2c596c3f20d` |
+| Android EAS Update group | `a8705971-218e-4e53-bdd6-f6deb832ee49` |
+| Preview project | `89f6fd88-c0d7-495a-9e2b-8301b09f407d` |
+| Channel / runtime | `preview` / `preview-0.3.0` |
+| Preview API | `https://staging.kurioticket.com` |
+
+The exact-SHA web deployment, OTA publication, installed-device visual check, duplicate prevention, and restart/ledger recovery all passed. No Production delivery or configuration changed. Native iOS/TestFlight cutover proof is deliberately deferred until the next legitimate native-impacting Preview change; do not manufacture a native change or build solely for proof.
 
 ## Rollback
 
