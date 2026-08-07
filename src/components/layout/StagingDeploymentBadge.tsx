@@ -11,7 +11,7 @@ export function StagingDeploymentBadge() {
       data-staging-build="current"
       data-staging-commit={release.commitSha}
     >
-      <strong className="block font-bold">Staging build</strong>
+      <strong className="block font-bold">Kurioticket staging</strong>
       <span className="font-mono">{release.commitSha.slice(0, 12)}</span>
       <span className="mx-1" aria-hidden="true">&middot;</span>
       <span>{release.applicationVersion ?? "unversioned"}</span>
