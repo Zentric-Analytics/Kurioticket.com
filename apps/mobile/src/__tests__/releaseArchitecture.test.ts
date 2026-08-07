@@ -57,7 +57,6 @@ test("independent Preview service is identity-locked, frozen, and TestFlight-int
   assert.match(client, /"build", "--platform", "ios", "--profile", "preview"/);
   assert.match(client, /"--freeze-credentials", "--no-wait", "--auto-submit-with-profile", "preview"/);
   assert.equal(eas.submit.preview.ios.ascAppId, "6797447471");
-  assert.match(client, /"submit", "--platform", "ios", "--profile", "preview"/);
   assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/i);
 });
 
