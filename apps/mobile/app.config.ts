@@ -71,7 +71,20 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   if (process.env.EAS_BUILD === "true" && environment.variant === "preview" && !googleIosClientId) {
     throw new Error("[mobile-environment] Preview EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.");
   }
-  const plugins: NonNullable<ExpoConfig["plugins"]> = ["expo-router"];
+  const plugins: NonNullable<ExpoConfig["plugins"]> = [
+    "expo-router",
+    [
+      "expo-splash-screen",
+      {
+        ios: {
+          image: "./assets/kurioticket-logo-primary-light-bg.png",
+          imageWidth: 200,
+          resizeMode: "contain",
+          backgroundColor: "#F7FAFF",
+        },
+      },
+    ],
+  ];
   if (environment.variant === "preview" && googleIosClientId) {
     plugins.push(["react-native-nitro-google-signin", { iosUrlScheme: googleIosUrlScheme(googleIosClientId) }]);
   }

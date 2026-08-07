@@ -18,7 +18,9 @@ function fail(message) {
 
 function checkConfig() {
   const configText = fs.readFileSync(appConfigPath, "utf8");
-  const iosIcon = configText.match(/ios:\s*{[\s\S]*?icon:\s*"([^"]+)"/);
+  const iosIcon = configText.match(
+    /ios:\s*{\s*supportsTablet:\s*true,\s*bundleIdentifier:\s*environment\.bundleIdentifier,\s*icon:\s*"([^"]+)"/,
+  );
   if (!iosIcon || iosIcon[1] !== expectedIosIcon) {
     fail(`ios.icon must be ${expectedIosIcon}`);
   }
