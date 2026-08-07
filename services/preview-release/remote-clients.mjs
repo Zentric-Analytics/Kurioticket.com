@@ -173,18 +173,20 @@ export class EasClient {
     const directory = await mkdtemp(join(tmpdir(), "kurioticket-eas-"));
     try {
       const stdoutPath = join(directory, "stdout.json");
+      const isUpdatePublish = args[1] === "update";
       console.log(JSON.stringify({ event: "preview-release-eas-command-started", command: args[1], rssBytes: process.memoryUsage().rss }));
       const { stdout } = await exec(this.command, args, {
         cwd: this.cwd,
         encoding: "utf8",
         maxBuffer: 10 * 1024 * 1024,
+        timeout: isUpdatePublish ? 20 * 60 * 1000 : 5 * 60 * 1000,
         env: {
           ...process.env,
           EXPO_TOKEN: this.expoToken,
           APP_VARIANT: "preview",
           APP_BUILD_MODE: "release",
           EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
-          NODE_OPTIONS: "--max-old-space-size=128",
+          NODE_OPTIONS: `--max-old-space-size=${isUpdatePublish ? 256 : 128}`,
           MALLOC_ARENA_MAX: "2",
         },
       });
