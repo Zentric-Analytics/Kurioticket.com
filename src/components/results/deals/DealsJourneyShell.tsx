@@ -369,7 +369,8 @@ export function DealsJourneyShell({
     [plan, resolved, search.mode, stage],
   );
   const firstStage = getFirstDealsJourneyStage(search.mode);
-  const visuallyHideStageHeading = stage === "hotel-results";
+  const visuallyHideStageHeading =
+    stage === "hotel-results" || stage === "hotel-details";
   const displayPlanStatus: GuidedPlanState =
     plan && plan.expiresAt <= lifecycleNow ? "expired" : planStatus;
   const clearConfirmationFailure = () => {

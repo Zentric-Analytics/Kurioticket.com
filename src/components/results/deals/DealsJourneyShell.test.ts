@@ -43,7 +43,7 @@ test("guided shell uses breadcrumbs as primary navigation without changing share
     assert.doesNotMatch(source, new RegExp(forbidden));
 });
 
-test("only the hotel results shell heading is visually hidden without changing its accessibility and focus contract", async () => {
+test("only Hotel results and Hotel details shell headings are visually hidden without changing accessibility or focus", async () => {
   const source = await readFile(
     new URL("./DealsJourneyShell.tsx", import.meta.url),
     "utf8",
@@ -51,9 +51,29 @@ test("only the hotel results shell heading is visually hidden without changing i
   assert.equal((source.match(/<h1/g) ?? []).length, 1);
   assert.match(
     source,
-    /const visuallyHideStageHeading = stage === "hotel-results";/,
+    /const visuallyHideStageHeading =\s*stage === "hotel-results" \|\| stage === "hotel-details";/,
   );
-  assert.doesNotMatch(source, /stage\.endsWith\(|stage\.includes\(/);
+  const hiddenStageRule = source.match(
+    /const visuallyHideStageHeading =([\s\S]*?);/,
+  );
+  assert.ok(hiddenStageRule);
+  assert.deepEqual(
+    [...hiddenStageRule[1].matchAll(/stage === "([^"]+)"/g)].map(
+      ([, stage]) => stage,
+    ),
+    ["hotel-results", "hotel-details"],
+  );
+  for (const visibleStage of [
+    "flight-results",
+    "flight-details",
+    "car-results",
+    "car-details",
+  ])
+    assert.doesNotMatch(hiddenStageRule[1], new RegExp(visibleStage));
+  assert.doesNotMatch(
+    hiddenStageRule[1],
+    /stage\.(?:endsWith|includes|startsWith)\(/,
+  );
   assert.match(
     source,
     /className=\{\s*visuallyHideStageHeading\s*\? "sr-only"\s*: "scroll-mt-24 text-balance text-2xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-\[#004BB8\] sm:text-3xl"\s*\}/,
@@ -66,6 +86,8 @@ test("only the hotel results shell heading is visually hidden without changing i
     source,
     /headingRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
   );
+  assert.match(source, /<DealsHotelResultsStage search=\{search\} \/>/);
+  assert.match(source, /<DealsHotelDetailsStage/);
 });
 test("public Deals and package results contracts remain active", async () => {
   const [landing, results, handoff] = await Promise.all([
