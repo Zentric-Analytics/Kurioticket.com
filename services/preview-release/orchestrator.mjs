@@ -7,8 +7,8 @@ import { exactChangeSet, exactCheckout, EasClient, nativeFingerprints, prepareCh
 import { inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 
 export class PreviewOrchestrator {
-  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), sleep = delay }) {
-    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.sleep = sleep;
+  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), stagingWait = waitForStaging, sleep = delay }) {
+    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.stagingWait = stagingWait; this.sleep = sleep;
   }
 
   async cycle() {
@@ -69,8 +69,22 @@ export class PreviewOrchestrator {
 
   async deliverWeb(sha, lease) {
     await lease.checkpoint();
-    const deploy = await this.render.createDeploy(sha);
-    await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: deploy.status ?? "CREATED", evidence: deploy });
+    const recorded = await this.ledger.getAction("WEB", sha);
+    let deploy = recorded?.remote_id
+      ? await this.render.getDeploy(recorded.remote_id)
+      : await this.render.createDeploy(sha);
+    if (!deploy?.id || (recorded?.remote_id && deploy.id !== recorded.remote_id)) throw new Error("Recorded Render deployment identity is malformed or mismatched.");
+    const initialStatus = String(deploy.status ?? "CREATED").toUpperCase();
+    if (recorded?.remote_id && ["BUILD_FAILED", "UPDATE_FAILED", "CANCELED", "DEACTIVATED"].includes(initialStatus)) {
+      await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: initialStatus, evidence: deploy });
+      await lease.checkpoint();
+      const replacement = await this.render.createDeploy(sha);
+      if (!replacement?.id || replacement.id === deploy.id) throw new Error("Replacement Render deployment identity is malformed or unchanged.");
+      await this.ledger.replaceTerminalAction({ sourceSha: sha, kind: "WEB", identityKey: sha, expectedRemoteId: deploy.id, remoteId: replacement.id, state: replacement.status ?? "CREATED", evidence: replacement });
+      deploy = replacement;
+    } else {
+      await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: initialStatus, evidence: deploy });
+    }
     for (let attempt = 0; attempt < 120; attempt += 1) {
       await lease.checkpoint();
       const current = await retry(() => this.render.getDeploy(deploy.id), { attempts: 3, sleep: this.sleep });
@@ -78,7 +92,8 @@ export class PreviewOrchestrator {
       if (["live", "succeeded"].includes(status)) {
         const deployedSha = current.commit?.id ?? current.commitId;
         if (deployedSha !== sha) throw new Error("Render deployed SHA does not match the requested SHA.");
-        const health = await waitForStaging({ origin: PREVIEW_IDENTITY.apiOrigin, targetSha: sha, attempts: 20, delayMs: 5_000, sleep: this.sleep });
+        const health = await this.stagingWait({ origin: PREVIEW_IDENTITY.apiOrigin, targetSha: sha, attempts: 20, delayMs: 5_000, sleep: this.sleep });
+        await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: status.toUpperCase(), evidence: current });
         return { deployId: deploy.id, deployedSha, status, health };
       }
       if (["build_failed", "update_failed", "canceled", "deactivated"].includes(status)) throw new Error(`Render deployment ${deploy.id} ended in ${status}.`);
