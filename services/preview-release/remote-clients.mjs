@@ -75,7 +75,7 @@ export class EasClient {
     return this.listBuilds("android", targetSha);
   }
   async projectInfo() {
-    const value = await this.run(["eas-cli@16.17.4", "project:info", "--json", "--non-interactive"]);
+    const value = await this.run(["eas-cli@16.17.4", "project:info", "--json"]);
     const projectId = value?.projectId ?? value?.id ?? value?.project?.id;
     if (projectId !== PREVIEW_IDENTITY.easProjectId) throw new Error("EAS project response is malformed or mismatched.");
     return { projectId };

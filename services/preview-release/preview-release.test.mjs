@@ -62,6 +62,7 @@ test("EAS preflight accepts only the exact Preview project and readable history"
   client.run = async (args) => { calls.push(args); return args[1] === "project:info" ? { projectId: PREVIEW_IDENTITY.easProjectId } : []; };
   assert.equal((await client.projectInfo()).projectId, PREVIEW_IDENTITY.easProjectId);
   assert.deepEqual(await client.previewBuildHistory(), []);
+  assert.deepEqual(calls[0], ["eas-cli@16.17.4", "project:info", "--json"]);
   assert.equal(calls.every((args) => !args.includes("build") && !args.includes("update")), true);
 });
 
