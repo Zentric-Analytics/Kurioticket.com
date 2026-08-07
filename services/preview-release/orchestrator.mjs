@@ -106,15 +106,20 @@ export class PreviewOrchestrator {
 
   async deliverOta(sha, cwd, lease) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
-    const message = `Independent Preview all OTA for ${sha}`;
     const history = await eas.listUpdates();
-    const iosReplay = inspectPreviewUpdateHistory(history, sha, "ios");
-    const androidReplay = inspectPreviewUpdateHistory(history, sha, "android");
-    if (iosReplay.matchingUpdates > 1 || androidReplay.matchingUpdates > 1) throw new Error("EAS update history contains conflicting exact-SHA groups.");
-    const alreadyPublished = iosReplay.alreadyPublished && androidReplay.alreadyPublished;
-    if (iosReplay.alreadyPublished !== androidReplay.alreadyPublished) throw new Error("EAS update history has an incomplete cross-platform exact-SHA publication.");
-    if (!alreadyPublished) await lease.checkpoint();
-    const updates = alreadyPublished ? history.filter((entry) => entry.message.includes(sha)) : await eas.publishUpdate(message);
+    const updates = [];
+    for (const platform of ["ios", "android"]) {
+      const replay = inspectPreviewUpdateHistory(history, sha, platform);
+      if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups.`);
+      if (replay.alreadyPublished) {
+        updates.push(...history.filter((entry) => entry.message.includes(sha) && entry.platforms.includes(platform)));
+        continue;
+      }
+      await lease.checkpoint();
+      const message = `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0`;
+      const published = await eas.publishUpdate(message, platform);
+      updates.push(...published);
+    }
     const ids = updates.map((entry) => entry.id ?? entry.group);
     const identityKey = `${sha}:${PREVIEW_IDENTITY.runtime}:${PREVIEW_IDENTITY.channel}`;
     await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: ids.join(","), state: "PUBLISHED", evidence: updates });

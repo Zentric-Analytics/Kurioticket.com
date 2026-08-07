@@ -406,7 +406,7 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /preview-release-fingerprint-started/);
   assert.match(client, /preview-release-fingerprint-complete/);
   assert.match(client, /const isUpdatePublish = args\[1\] === "update"/);
-  assert.match(client, /--max-old-space-size=\$\{isUpdatePublish \? 256 : 128\}/);
+  assert.match(client, /--max-old-space-size=\$\{isUpdatePublish \? 192 : 128\}/);
   assert.match(client, /timeout: isUpdatePublish \? 20 \* 60 \* 1000 : 5 \* 60 \* 1000/);
   assert.match(client, /MALLOC_ARENA_MAX: "2"/);
   assert.match(client, /preview-release-eas-command-started/);
@@ -414,6 +414,39 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /timeout: 5 \* 60 \* 1000/);
   assert.doesNotMatch(client, /exec\(command, \["fingerprint", "fingerprint:generate"/);
   assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/);
+});
+
+test("OTA delivery publishes platforms sequentially and resumes only a missing platform", async () => {
+  const published = [];
+  const actions = [];
+  const iosHistory = { branch: "preview", runtimeVersion: "preview-0.3.0", group: "ios-existing", platforms: ["ios"], message: `Automatic Preview iOS OTA for ${sha}; audit run 0` };
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: { recordAction: async (action) => { actions.push(action); return action; } },
+    github: {}, render: {},
+    easFactory: () => ({
+      listUpdates: async () => [iosHistory],
+      publishUpdate: async (message, platform) => {
+        published.push(platform);
+        return [{ id: `${platform}-new`, branch: "preview", runtimeVersion: "preview-0.3.0", platforms: [platform], message }];
+      },
+    }),
+  });
+  const result = await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} });
+  assert.deepEqual(published, ["android"]);
+  assert.deepEqual(result.updateIds, ["ios-existing", "android-new"]);
+  assert.equal(actions[0].state, "PUBLISHED");
+});
+
+test("OTA client rejects all-platform publication and uses bounded sequential export memory", async () => {
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
+  const calls = [];
+  client.run = async (args) => { calls.push(args); return [{ id: "update-id" }]; };
+  await client.publishUpdate("message", "ios");
+  assert.equal(calls[0][calls[0].indexOf("--platform") + 1], "ios");
+  await assert.rejects(client.publishUpdate("message", "all"), /platform is invalid/);
+  const source = readFileSync(resolve(repositoryRoot, "services/preview-release/remote-clients.mjs"), "utf8");
+  assert.match(source, /isUpdatePublish \? 192 : 128/);
 });
 
 test("web recovery replaces a terminal exact-SHA deploy discovered before the ledger action exists", async () => {

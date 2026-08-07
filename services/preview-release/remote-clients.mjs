@@ -142,8 +142,9 @@ export class EasClient {
     return builds[0];
   }
   async viewBuild(id) { return this.run(["eas-cli@16.17.4", "build:view", id, "--json"]); }
-  async publishUpdate(message) {
-    const value = await this.run(["eas-cli@16.17.4", "update", "--channel", "preview", "--platform", "all", "--message", message, "--non-interactive", "--json"]);
+  async publishUpdate(message, platform) {
+    if (platform !== "ios" && platform !== "android") throw new Error("EAS Update platform is invalid.");
+    const value = await this.run(["eas-cli@16.17.4", "update", "--channel", "preview", "--platform", platform, "--message", message, "--non-interactive", "--json"]);
     const entries = Array.isArray(value) ? value : [value];
     if (!entries.length || entries.some((entry) => !entry?.id && !entry?.group)) throw new Error("EAS Update result is malformed.");
     return entries;
@@ -186,7 +187,7 @@ export class EasClient {
           APP_VARIANT: "preview",
           APP_BUILD_MODE: "release",
           EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
-          NODE_OPTIONS: `--max-old-space-size=${isUpdatePublish ? 256 : 128}`,
+          NODE_OPTIONS: `--max-old-space-size=${isUpdatePublish ? 192 : 128}`,
           MALLOC_ARENA_MAX: "2",
         },
       });
