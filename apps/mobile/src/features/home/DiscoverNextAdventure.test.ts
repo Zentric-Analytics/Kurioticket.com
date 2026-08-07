@@ -9,6 +9,11 @@ const websiteSource = (path: string) => readFileSync(join(process.cwd(), "../.."
 const discovery = mobileSource("src/features/home/DiscoverNextAdventure.tsx");
 const websiteHome = websiteSource("src/app/page.tsx");
 
+test("the discovery heading is concise and visually scannable", () => {
+  assert.match(discovery, />Discover your next adventure<\/Text>/);
+  assert.doesNotMatch(discovery, /Discover your next adventure here/);
+});
+
 test("the discovery cards use the website card measurements", () => {
   assert.match(websiteHome, /function DiscoverySuggestionCard\(/);
   assert.match(discovery, /height: 300/);
