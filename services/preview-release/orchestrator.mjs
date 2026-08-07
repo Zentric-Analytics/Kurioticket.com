@@ -70,9 +70,10 @@ export class PreviewOrchestrator {
   async deliverWeb(sha, lease) {
     await lease.checkpoint();
     const recorded = await this.ledger.getAction("WEB", sha);
+    const remoteMatches = recorded?.remote_id ? [] : await this.render.findDeploysBySha(sha);
     let deploy = recorded?.remote_id
       ? await this.render.getDeploy(recorded.remote_id)
-      : await this.render.createDeploy(sha);
+      : remoteMatches[0] ?? await this.render.createDeploy(sha);
     if (!deploy?.id || (recorded?.remote_id && deploy.id !== recorded.remote_id)) throw new Error("Recorded Render deployment identity is malformed or mismatched.");
     const initialStatus = String(deploy.status ?? "CREATED").toUpperCase();
     if (recorded?.remote_id && ["BUILD_FAILED", "UPDATE_FAILED", "CANCELED", "DEACTIVATED"].includes(initialStatus)) {

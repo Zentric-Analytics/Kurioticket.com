@@ -41,9 +41,17 @@ export class RenderClient {
   constructor({ apiKey, serviceId, fetchImpl = fetch }) { this.apiKey = apiKey; this.serviceId = serviceId; this.fetch = fetchImpl; }
   async createDeploy(sha) {
     assertExactSha(sha);
-    const deploy = await this.request(`/services/${this.serviceId}/deploys`, { method: "POST", body: { commitId: sha, clearCache: "do_not_clear" } });
-    if (!deploy?.id) throw new Error("Render create-deploy response has no deployment ID.");
-    return deploy;
+    try {
+      const deploy = await this.request(`/services/${this.serviceId}/deploys`, { method: "POST", body: { commitId: sha, clearCache: "do_not_clear" } });
+      if (!deploy?.id) throw new Error("Render create-deploy response has no deployment ID.");
+      return deploy;
+    } catch (error) {
+      // A failed/truncated response does not prove the mutation failed. Reconcile
+      // remote history before returning so a later cycle cannot create a duplicate.
+      const matches = await this.findDeploysBySha(sha);
+      if (matches.length) return matches[0];
+      throw error;
+    }
   }
   async getDeploy(id) { return this.request(`/services/${this.serviceId}/deploys/${id}`); }
   async getService() {
@@ -61,10 +69,23 @@ export class RenderClient {
     if (typeof deploy?.id !== "string" || typeof deploy?.status !== "string") throw new Error("Render latest deployment response is malformed.");
     return deploy;
   }
+  async findDeploysBySha(sha) {
+    assertExactSha(sha);
+    const value = await this.request(`/services/${this.serviceId}/deploys?limit=50`);
+    if (!Array.isArray(value)) throw new Error("Render deploy history response is malformed.");
+    return value.map((entry) => entry?.deploy ?? entry).filter((deploy) => {
+      if (!deploy?.id || typeof deploy?.status !== "string") throw new Error("Render deploy history entry is malformed.");
+      const commit = deploy.commit?.id ?? deploy.commitId;
+      if (typeof commit !== "string") throw new Error("Render deploy history entry has no commit identity.");
+      return commit === sha;
+    });
+  }
   async request(path, { method = "GET", body } = {}) {
     const response = await this.fetch(`https://api.render.com/v1${path}`, { method, headers: { Accept: "application/json", Authorization: `Bearer ${this.apiKey}`, "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
     if (!response.ok) throw new Error(`Render API ${method} ${path} failed with HTTP ${response.status}.`);
-    return response.json();
+    const raw = await response.text();
+    if (!raw.trim()) throw new Error(`Render API ${method} ${path} returned empty JSON.`);
+    try { return JSON.parse(raw); } catch { throw new Error(`Render API ${method} ${path} returned malformed JSON.`); }
   }
 }
 
