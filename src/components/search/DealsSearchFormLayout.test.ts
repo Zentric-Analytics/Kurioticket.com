@@ -27,6 +27,13 @@ test("shared travellers and Flight-only Cabin Class are upper controls", () => {
   const upper =
     form.match(/<div\s+data-deals-upper-controls[\s\S]*?<\/fieldset>/)?.[0] ??
     "";
+  const travelersControl =
+    upper.match(
+      /<button\s+ref=\{travelersLauncherRef\}[\s\S]*?<\/button>/,
+    )?.[0] ?? "";
+  const cabinControl =
+    upper.match(/<select\s+id="deals-flight-cabin"[\s\S]*?<\/select>/)?.[0] ??
+    "";
   assert.match(upper, /ref=\{travelersLauncherRef\}/);
   assert.match(upper, /\{travelerSummary\}/);
   assert.match(upper, /\{included\.flight \? \(/);
@@ -34,6 +41,40 @@ test("shared travellers and Flight-only Cabin Class are upper controls", () => {
   assert.match(upper, /id="deals-flight-cabin"/);
   assert.equal(form.match(/ref=\{travelersLauncherRef\}/g)?.length, 1);
   assert.equal(form.match(/id="deals-flight-cabin"/g)?.length, 1);
+  assert.doesNotMatch(travelersControl, /\$\{field\}/);
+  assert.doesNotMatch(cabinControl, /\$\{field\}/);
+  assert.match(
+    travelersControl,
+    /focus-ring[^"]*border-0[^"]*bg-transparent[^"]*text-\[#004BB8\][^"]*shadow-none/,
+  );
+  assert.match(
+    cabinControl,
+    /focus-ring[^"]*appearance-none[^"]*border-0[^"]*bg-transparent[^"]*text-\[#004BB8\][^"]*shadow-none/,
+  );
+  assert.doesNotMatch(
+    upper,
+    /<span className=\{label\}>\{t\("deals\.travellersRooms"\)\}<\/span>/,
+  );
+  assert.match(
+    upper,
+    /<span className="sr-only">[\s\S]*?deals\.travellersRooms/,
+  );
+  assert.match(
+    upper,
+    /<label className="sr-only" htmlFor="deals-flight-cabin">/,
+  );
+  assert.equal(upper.match(/<ChevronDown/g)?.length, 2);
+  assert.equal(upper.match(/aria-hidden="true"/g)?.length, 2);
+  assert.match(
+    upper,
+    /<ChevronDown[\s\S]*?pointer-events-none[\s\S]*?text-\[#004BB8\]/,
+  );
+  assert.match(
+    upper,
+    /className="[^"]*flex[^"]*flex-wrap[^"]*items-center[^"]*justify-end[^"]*gap-x-6/,
+  );
+  assert.match(travelersControl, /min-h-11/);
+  assert.match(cabinControl, /min-h-11/);
 });
 
 test("Flight primary connected row contains airports, swap, and combined dates only", () => {
