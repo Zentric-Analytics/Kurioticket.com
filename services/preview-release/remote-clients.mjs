@@ -164,9 +164,16 @@ export class EasClient {
   }
 }
 
+export function createExactCheckoutDirectory(workspaceRoot = runtimeRoot) {
+  return mkdtemp(join(workspaceRoot, ".kurioticket-preview-"));
+}
+
 export async function exactCheckout({ repository, token, sha }) {
   assertExactSha(sha);
-  const directory = await mkdtemp(join(tmpdir(), "kurioticket-preview-"));
+  // Keep exact checkouts on the immutable worker artifact's filesystem. Render
+  // mounts /tmp separately, which prevents prepareCheckout from hard-linking the
+  // already-built dependency trees without copying their full storage footprint.
+  const directory = await createExactCheckoutDirectory();
   const remote = `https://github.com/${repository}.git`;
   try {
     await exec("git", ["init", "--quiet"], { cwd: directory });
