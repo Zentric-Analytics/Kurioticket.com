@@ -312,6 +312,26 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.match(source, /Search flights to/);
 });
 
+test("popular destination names keep city and country inline and accessible", () => {
+  const source = screen();
+  const card = source.slice(
+    source.indexOf("function PopularDestinationCard"),
+    source.indexOf("function ExploreDiscoveryContent"),
+  );
+  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
+
+  assert.match(card, /accessibilityLabel=\{`\$\{destination\.name\}, \$\{destination\.country\}`\}/);
+  assert.match(card, /numberOfLines=\{1\}/);
+  assert.match(card, /ellipsizeMode="tail"/);
+  assert.match(
+    card,
+    /<Text style=\{s\.popularCardTitle\}>\{destination\.name\}<\/Text>\s*<Text style=\{s\.countryName\}> • \{destination\.country\}<\/Text>/,
+  );
+  assert.match(styles, /popularCardTitle:[\s\S]*?fontWeight: "800"/);
+  assert.match(styles, /countryName: \{ color: MUTED/);
+  assert.match(styles, /popularImage: \{ width: "100%", height: 220/);
+});
+
 
 test("popular destination flight action is compact while preserving navigation", () => {
   const source = screen();
