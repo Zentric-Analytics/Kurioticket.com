@@ -18,21 +18,25 @@ export class PreviewOrchestrator {
     const previous = await this.ledger.lastSuccessful();
     const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
     const deliveredNative = iosNativeBackfill ? {} : await this.deliveredNativeBaselines();
+    const deliveredOta = iosNativeBackfill ? {} : await this.deliveredOtaBaselines();
     const pendingNative = previous?.source_sha === sourceSha
       ? nativeDriftTargets(previous.evidence?.fingerprints, deliveredNative)
       : [];
-    if (previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length) return { state: "NO_CHANGE", sourceSha };
+    const pendingOta = previous?.source_sha === sourceSha
+      ? await this.pendingOtaPlatforms(sourceSha, deliveredOta)
+      : [];
+    if (previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length && !pendingOta.length) return { state: "NO_CHANGE", sourceSha };
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
     const record = iosNativeBackfill
       ? await this.ledger.claimIosNativeBackfill({ ...claim, identityKey: `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview` })
-      : pendingNative.length
-        ? await this.ledger.claimNativeDrift(claim)
+      : pendingNative.length || pendingOta.length
+        ? await (this.ledger.claimDeliveryDrift?.(claim) ?? this.ledger.claimNativeDrift(claim))
       : await this.ledger.claim(claim);
     if (!record) return { state: "LOCKED_OR_COMPLETE", sourceSha };
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
-      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative);
+      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative, pendingOta);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
@@ -41,7 +45,7 @@ export class PreviewOrchestrator {
     } finally { await lease.stop(); }
   }
 
-  async process(record, previous, lease, deliveredNative = null) {
+  async process(record, previous, lease, deliveredNative = null, pendingOta = []) {
     const sha = record.source_sha;
     await this.ledger.transition(sha, this.config.workerId, [record.state], "VALIDATING", { validation_state: "IN_PROGRESS" });
     const checkout = await exactCheckout({ repository: this.config.repository, token: this.config.githubReadToken, sha });
@@ -58,6 +62,7 @@ export class PreviewOrchestrator {
       await lease.checkpoint();
       const nativeBaselines = deliveredNative ?? await this.deliveredNativeBaselines();
       classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines });
+      classification = enforcePendingOta({ classification, pendingOta });
       if (classification.classification.includes("OTA")) {
         const prior = previous?.evidence?.fingerprints;
         if (!prior || prior.ios !== fingerprints.ios || prior.android !== fingerprints.android) {
@@ -90,6 +95,27 @@ export class PreviewOrchestrator {
       if (record) result[platform] = { sourceSha: record.source_sha, buildId: record.native_build_id, fingerprint: record.native_fingerprint };
     }
     return result;
+  }
+
+  async deliveredOtaBaselines() {
+    const result = {};
+    if (typeof this.ledger.lastSuccessfulOta !== "function") return result;
+    for (const platform of ["ios", "android"]) {
+      const record = await this.ledger.lastSuccessfulOta(platform);
+      if (record) result[platform] = { sourceSha: record.source_sha, updateId: record.ota_update_id };
+    }
+    return result;
+  }
+
+  async pendingOtaPlatforms(sourceSha, deliveredOta) {
+    const pending = [];
+    for (const platform of ["ios", "android"]) {
+      const baselineSha = deliveredOta?.[platform]?.sourceSha;
+      if (!baselineSha || baselineSha === sourceSha) continue;
+      const files = await this.github.compare(baselineSha, sourceSha);
+      if (classificationContainsOta(classifyChangeSet(files))) pending.push(platform);
+    }
+    return pending;
   }
 
   async deliverWeb(sha, lease) {
@@ -291,6 +317,17 @@ export function enforceDeliveredNativeBaseline({ classification, fingerprints, d
   const targets = new Set(String(classification.classification).split("+").filter((value) => value && value !== "NO_DELIVERY"));
   for (const target of drift) targets.add(target);
   return { ...classification, classification: [...targets].sort().join("+"), reason: "delivered-native-fingerprint-changed", deliveredNative, nativeDrift: drift };
+}
+
+export function enforcePendingOta({ classification, pendingOta }) {
+  if (!pendingOta?.length) return classification;
+  const targets = new Set(String(classification.classification).split("+").filter((value) => value && value !== "NO_DELIVERY"));
+  targets.add("OTA");
+  return { ...classification, classification: [...targets].sort().join("+"), reason: "delivered-ota-source-behind", pendingOta: [...pendingOta] };
+}
+
+function classificationContainsOta(classification) {
+  return String(classification?.classification).split("+").includes("OTA");
 }
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

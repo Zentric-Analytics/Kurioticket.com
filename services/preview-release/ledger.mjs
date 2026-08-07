@@ -146,7 +146,29 @@ export class PreviewLedger {
     return result.rows[0] ?? null;
   }
 
+  async lastSuccessfulOta(platform) {
+    if (platform !== "ios" && platform !== "android") throw new Error("OTA platform is invalid.");
+    const result = await this.pool.query(
+      `SELECT release.*, ota.remote_id AS ota_update_id
+       FROM preview_release release
+       JOIN preview_release_action ota
+         ON ota.source_sha=release.source_sha AND ota.kind='OTA' AND ota.state='PUBLISHED'
+       WHERE release.state='COMPLETE'
+         AND EXISTS (
+           SELECT 1 FROM jsonb_array_elements(ota.evidence) item
+           WHERE item->'platforms' ? $1
+         )
+       ORDER BY ota.updated_at DESC LIMIT 1`,
+      [platform],
+    );
+    return result.rows[0] ?? null;
+  }
+
   async claimNativeDrift({ sourceSha, workerId, leaseMs, mode }) {
+    return this.claimDeliveryDrift({ sourceSha, workerId, leaseMs, mode });
+  }
+
+  async claimDeliveryDrift({ sourceSha, workerId, leaseMs, mode }) {
     assertExactSha(sourceSha);
     const result = await this.pool.query(
       `UPDATE preview_release

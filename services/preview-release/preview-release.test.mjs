@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
-import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enforceDeliveredNativeBaseline, maintainLease, nativeDriftTargets, retry } from "./orchestrator.mjs";
+import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enforceDeliveredNativeBaseline, enforcePendingOta, maintainLease, nativeDriftTargets, retry } from "./orchestrator.mjs";
 import { createExactCheckoutDirectory, EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
@@ -383,6 +383,43 @@ test("completed latest SHA is reopened when web or OTA completion left native dr
   assert.equal(ordinaryClaims, 0);
 });
 
+test("completed latest SHA is reopened when the delivered Android OTA source is behind", async () => {
+  let driftClaims = 0;
+  const otaSha = "b".repeat(40);
+  const previous = { source_sha: sha, evidence: { fingerprints: { ios: "same-ios", android: "same-android" } } };
+  const record = { source_sha: sha, previous_sha: sha, state: "DETECTED" };
+  const comparisons = [];
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => previous,
+      lastSuccessfulNative: async (platform) => ({ source_sha: otaSha, native_build_id: `${platform}-build`, native_fingerprint: `same-${platform}` }),
+      lastSuccessfulOta: async (platform) => platform === "android" ? { source_sha: otaSha, ota_update_id: "old-android" } : { source_sha: sha, ota_update_id: "current-ios" },
+      claimDeliveryDrift: async () => { driftClaims += 1; return record; },
+    },
+    github: {
+      latestDevSha: async () => sha,
+      compare: async (base, head) => { comparisons.push([base, head]); return ["apps/mobile/src/features/home/DiscoverNextAdventure.tsx"]; },
+      report: async () => {},
+    },
+    render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async (_record, _previous, _lease, _native, pendingOta) => {
+    assert.deepEqual(pendingOta, ["android"]);
+    return { source_sha: sha, state: "COMPLETE" };
+  };
+  assert.equal((await orchestrator.cycle()).state, "COMPLETE");
+  assert.equal(driftClaims, 1);
+  assert.deepEqual(comparisons, [[otaSha, sha]]);
+});
+
+test("pending OTA reconciliation upgrades an incorrect no-delivery plan", () => {
+  const result = enforcePendingOta({ classification: { classification: "NO_DELIVERY", reason: "repository-only" }, pendingOta: ["android"] });
+  assert.equal(result.classification, "OTA");
+  assert.equal(result.reason, "delivered-ota-source-behind");
+  assert.deepEqual(result.pendingOta, ["android"]);
+});
+
 test("completed current SHA can be claimed once for approved iOS native backfill", async () => {
   let ordinaryClaims = 0;
   let backfillClaims = 0;
@@ -735,4 +772,3 @@ test("web delivery adopts exact-SHA Render history before creating a duplicate",
   assert.equal(result.deployId, deploy.id);
   assert.equal(actions.at(-1).remoteId, deploy.id);
 });
-
