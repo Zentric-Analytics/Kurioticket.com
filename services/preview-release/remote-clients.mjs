@@ -267,16 +267,15 @@ export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot,
 }
 
 export async function nativeFingerprints(directory) {
-  const command = process.platform === "win32" ? "npx.cmd" : "npx";
   const cwd = join(directory, "apps/mobile");
+  const command = join(cwd, "node_modules", ".bin", process.platform === "win32" ? "fingerprint.cmd" : "fingerprint");
   const result = {};
   for (const platform of ["ios", "android"]) {
-    const { stdout } = await exec(command, ["fingerprint", "fingerprint:generate", "--platform", platform, "--concurrent-io-limit", "1"], {
+    const { stdout } = await exec(command, ["fingerprint:generate", "--platform", platform, "--concurrent-io-limit", "1"], {
       cwd,
       encoding: "utf8",
       maxBuffer: 50 * 1024 * 1024,
       timeout: 5 * 60 * 1000,
-      killSignal: "SIGKILL",
       env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=160" },
     });
     let value;
