@@ -37,6 +37,7 @@ import {
 import { DealsResultsSearchSummary } from "./DealsResultsSearchSummary";
 import { DealsModifySearchDialog } from "./DealsModifySearchDialog";
 import { DealsJourneyProgress } from "./DealsJourneyProgress";
+import { DealsJourneyBreadcrumbs } from "./DealsJourneyBreadcrumbs";
 import { DealsHotelResultsStage } from "./DealsHotelResultsStage";
 import { DealsHotelDetailsStage } from "./DealsHotelDetailsStage";
 import { DealsFlightResultsStage } from "./DealsFlightResultsStage";
@@ -430,6 +431,14 @@ export function DealsJourneyShell({
             {t("deals.guided.back")}
           </Link>
         </div>
+        {resolved && (
+          <DealsJourneyBreadcrumbs
+            progress={progress}
+            page={stage}
+            search={search}
+            t={t}
+          />
+        )}
         {resolved && <DealsJourneyProgress progress={progress} t={t} />}
         <section className="mt-7 min-w-0">
           <h1
