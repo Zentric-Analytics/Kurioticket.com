@@ -108,7 +108,8 @@ export class PreviewLedger {
     const assignments = keys.map((key, index) => `${key}=$${index + 5}`);
     const result = await this.pool.query(
       `UPDATE preview_release SET state=$4, ${assignments.length ? `${assignments.join(", ")},` : ""}
-         updated_at=now(), completed_at=CASE WHEN $4='COMPLETE' THEN now() ELSE completed_at END
+         updated_at=now(), completed_at=CASE WHEN $4='COMPLETE' THEN now() ELSE completed_at END,
+         progression_order=CASE WHEN $4='COMPLETE' THEN coalesce(progression_order, nextval('preview_release_progression_order_seq')) ELSE progression_order END
        WHERE source_sha=$1 AND lock_owner=$2 AND state = ANY($3::text[]) RETURNING *`,
       [sourceSha, workerId, fromStates, state, ...values],
     );
@@ -126,7 +127,7 @@ export class PreviewLedger {
   }
 
   async lastSuccessful() {
-    const result = await this.pool.query("SELECT * FROM preview_release WHERE state='COMPLETE' ORDER BY completed_at DESC LIMIT 1");
+    const result = await this.pool.query("SELECT * FROM preview_release WHERE state='COMPLETE' AND progression_order IS NOT NULL ORDER BY progression_order DESC LIMIT 1");
     return result.rows[0] ?? null;
   }
 
@@ -213,7 +214,7 @@ export class PreviewLedger {
     assertExactSha(sourceSha);
     const result = await this.pool.query(
       `UPDATE preview_release release
-       SET state='DETECTED', mode=$4, completed_at=NULL,
+       SET state='DETECTED', mode=$4,
            lock_owner=$2, lock_expires_at=now()+($3::int * interval '1 millisecond'),
            updated_at=now()
        WHERE release.source_sha=$1
@@ -235,6 +236,26 @@ export class PreviewLedger {
       [sourceSha, workerId, leaseMs, mode],
     );
     return result.rows[0] ?? null;
+  }
+
+  async completeIosDistribution({ sourceSha, workerId }) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `UPDATE preview_release release
+       SET state='COMPLETE', updated_at=now(), lock_owner=NULL, lock_expires_at=NULL,
+           failure_reason=NULL, recovery_action=NULL
+       WHERE release.source_sha=$1 AND release.lock_owner=$2
+         AND release.state IN ('DETECTED','VALIDATING','PLANNED','DELIVERING')
+         AND EXISTS (
+           SELECT 1 FROM preview_release_action distribution
+           WHERE distribution.source_sha=release.source_sha
+             AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+         )
+       RETURNING release.*`,
+      [sourceSha, workerId],
+    );
+    if (result.rowCount !== 1) throw new Error("Historical TestFlight distribution completion was rejected.");
+    return result.rows[0];
   }
 
   async recordAction({ sourceSha, kind, identityKey, remoteId, state, evidence = {} }) {
