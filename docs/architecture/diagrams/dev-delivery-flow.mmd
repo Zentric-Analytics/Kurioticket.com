@@ -1,19 +1,16 @@
 flowchart TD
-  A[Developer pushes to feature branch] --> B[Open PR to dev]
-  B --> C[GitHub checks]
+  A[Developer pushes feature branch] --> B[Pull request to dev]
+  B --> C[GitHub required validation]
   C -->|pass| D[Merge to dev]
-  C -->|fail| E[fix on feature branch]
-  D --> F[Render auto-deploy from dev]
-  D --> G[preview-dev-delivery workflow]
-  G --> H[Mobile preview automation + config gates]
-  G --> I[Staging SHA check and API environment check]
-  H --> J[Classifier]
-  J -->|ota-compatible| K[Android OTA + duplicate guard]
-  J -->|native-required| L[Manual Native path]
-  J -->|unrelated| M[no Publish]
-  I --> N[iOS preview build gate]
-  K --> O[Android preview publish]
-  L --> P[Owner decides whether to publish native]
-  N --> Q[iOS TestFlight submission path]
-  O --> R[Installed tester + evidence]
-  Q --> R
+  D --> E[Independent Render worker polls dev]
+  E --> F[Exact SHA checkout and Preview identity validation]
+  F --> G[Durable ledger and classifier]
+  G -->|web| H[Render exact-SHA staging deploy]
+  G -->|OTA safe and fingerprint equal| I[EAS Preview OTA]
+  G -->|native iOS| J[EAS iOS Preview build and auto-submit]
+  G -->|native Android| K[EAS Android Preview build]
+  G -->|uncertain| L[Fail closed]
+  H --> M[Evidence and status]
+  I --> M
+  J --> M
+  K --> M

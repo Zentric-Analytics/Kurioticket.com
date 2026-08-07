@@ -1,140 +1,21 @@
-﻿{
-  "generatedAt": "2026-08-05T00:00:00Z",
-  "generatedBy": "docs/finalize-delivery-platform-baseline",
-  "repository": {
-    "owner": "Zentric-Analytics",
-    "name": "Kurioticket.com"
-  },
+{
+  "generatedAt": "2026-08-06T00:00:00Z",
+  "repository": "Zentric-Analytics/Kurioticket.com",
+  "workflowCount": 5,
+  "previewDeliveryOwner": "services/preview-release on Render (not GitHub Actions)",
   "workflows": [
-    {
-      "file": ".github/workflows/android-preview-build.yml",
-      "name": "Android Preview Build",
-      "category": "preview-build",
-      "classifications": ["build", "validation gate"],
-      "triggers": ["workflow_call", "workflow_dispatch"],
-      "targets": ["dev"],
-      "requiredApprovals": [],
-      "publishes": ["AAB"],
-      "mutatesExternalState": true,
-      "notes": "Builds signed Android preview binaries when source and identity checks pass.",
-      "evidence": "repository-verified"
-    },
-    {
-      "file": ".github/workflows/android-preview-ota.yml",
-      "name": "Android Preview OTA",
-      "category": "preview-ota",
-      "classifications": ["delivery", "validation gate"],
-      "triggers": ["workflow_call", "workflow_dispatch"],
-      "targets": ["dev"],
-      "requiredApprovals": [],
-      "publishes": ["EAS Update"],
-      "mutatesExternalState": true,
-      "notes": "Publishes compatible Android preview OTA after classifier, attestation, fingerprint, channel, and duplicate checks.",
-      "evidence": "repository-verified"
-    },
-    {
-      "file": ".github/workflows/android-production-delivery.yml",
-      "name": "Android Production Delivery",
-      "category": "production-delivery",
-      "classifications": ["build", "release-control", "manual dispatch"],
-      "triggers": ["workflow_dispatch"],
-      "targets": ["main"],
-      "requiredApprovals": ["mobile-production environment"],
-      "publishes": ["Play Store AAB", "production OTA action"],
-      "mutatesExternalState": true,
-      "notes": "Owner-gated production entrypoint with dry-run mode and strict validation.",
-      "evidence": "repository-verified"
-    },
-    {
-      "file": ".github/workflows/ios-preview-build.yml",
-      "name": "iOS Preview Build",
-      "category": "preview-build",
-      "classifications": ["build", "validation gate"],
-      "triggers": ["workflow_call", "workflow_dispatch"],
-      "targets": ["dev"],
-      "requiredApprovals": [],
-      "publishes": ["IPA"],
-      "mutatesExternalState": true,
-      "notes": "Builds signed iOS preview binary for internal TestFlight lane.",
-      "evidence": "repository-verified"
-    },
-    {
-      "file": ".github/workflows/ios-preview-testflight-submit.yml",
-      "name": "iOS Preview TestFlight Submit",
-      "category": "preview-submit",
-      "classifications": ["submission", "release-control", "manual dispatch"],
-      "triggers": ["workflow_dispatch"],
-      "targets": ["dev", "main"],
-      "requiredApprovals": [],
-      "publishes": ["TestFlight (internal)"],
-      "mutatesExternalState": true,
-      "notes": "Uploads verified iOS preview IPA to App Store Connect internal testing.",
-      "evidence": "repository-verified"
-    },
-    {
-      "file": ".github/workflows/migration-validation.yml",
-      "name": "Migration Validation",
-      "category": "validation",
-      "classifications": ["validation", "safety"],
-      "triggers": ["pull_request", "push", "workflow_dispatch"],
-      "targets": ["dev", "main"],
-      "requiredApprovals": [],
-      "publishes": ["none"],
-      "mutatesExternalState": false,
-      "notes": "Prisma schema/migration safety validation with path-aware execution.",
-      "evidence": "repository-verified"
-    },
-    {
-      "file": ".github/workflows/mobile-preview-update.yml",
-      "name": "Mobile Preview Update",
-      "category": "orchestration",
-      "classifications": ["orchestration", "validation"],
-      "triggers": ["pull_request", "push", "workflow_dispatch"],
-      "targets": ["dev"],
-      "requiredApprovals": [],
-      "publishes": ["none"],
-      "mutatesExternalState": false,
-      "notes": "Orchestrates preview decisioning and required-check outcome for dev updates.",
-      "evidence": "repository-verified"
-    },
-    {
-      "file": ".github/workflows/mobile-production-update.yml",
-      "name": "Mobile Production Update",
-      "category": "orchestration",
-      "classifications": ["orchestration", "release-control"],
-      "triggers": ["push", "workflow_dispatch"],
-      "targets": ["main"],
-      "requiredApprovals": [],
-      "publishes": ["none"],
-      "mutatesExternalState": false,
-      "notes": "Production readiness and policy gate before owner release action.",
-      "evidence": "repository-verified"
-    },
-    {
-      "file": ".github/workflows/preview-dev-delivery.yml",
-      "name": "Preview Dev Delivery",
-      "category": "orchestration",
-      "classifications": ["orchestration", "validation"],
-      "triggers": ["workflow_call"],
-      "targets": ["dev"],
-      "requiredApprovals": [],
-      "publishes": ["none"],
-      "mutatesExternalState": false,
-      "notes": "Reusable workflow that routes compatible OTA vs controlled native outcomes.",
-      "evidence": "repository-verified"
-    },
-    {
-      "file": ".github/workflows/security.yml",
-      "name": "Security",
-      "category": "security",
-      "classifications": ["validation", "secret-scan"],
-      "triggers": ["pull_request", "push"],
-      "targets": ["dev", "main"],
-      "requiredApprovals": [],
-      "publishes": ["none"],
-      "mutatesExternalState": false,
-      "notes": "Repository secret-scan and policy checks.",
-      "evidence": "repository-verified"
-    }
+    {"file":".github/workflows/pr-required-gates.yml","category":"pull-request-validation","mutatesExternalState":false},
+    {"file":".github/workflows/security.yml","category":"security","mutatesExternalState":false},
+    {"file":".github/workflows/migration-validation.yml","category":"migration-validation","mutatesExternalState":false},
+    {"file":".github/workflows/mobile-production-update.yml","category":"production-validation","mutatesExternalState":false},
+    {"file":".github/workflows/android-production-delivery.yml","category":"owner-gated-production-delivery","mutatesExternalState":true}
+  ],
+  "removedPreviewDeliveryWorkflows": [
+    "android-preview-build.yml",
+    "android-preview-ota.yml",
+    "ios-preview-build.yml",
+    "ios-preview-testflight-submit.yml",
+    "mobile-preview-update.yml",
+    "preview-dev-delivery.yml"
   ]
 }
