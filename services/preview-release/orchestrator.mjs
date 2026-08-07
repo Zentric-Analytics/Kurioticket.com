@@ -70,15 +70,17 @@ export class PreviewOrchestrator {
   async deliverWeb(sha, lease) {
     await lease.checkpoint();
     const recorded = await this.ledger.getAction("WEB", sha);
+    const remoteMatches = recorded?.remote_id ? [] : await this.render.findDeploysBySha(sha);
     let deploy = recorded?.remote_id
       ? await this.render.getDeploy(recorded.remote_id)
-      : await this.render.createDeploy(sha);
+      : remoteMatches[0] ?? await this.render.createDeploy(sha);
     if (!deploy?.id || (recorded?.remote_id && deploy.id !== recorded.remote_id)) throw new Error("Recorded Render deployment identity is malformed or mismatched.");
     const initialStatus = String(deploy.status ?? "CREATED").toUpperCase();
     if (recorded?.remote_id && ["BUILD_FAILED", "UPDATE_FAILED", "CANCELED", "DEACTIVATED"].includes(initialStatus)) {
       await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: initialStatus, evidence: deploy });
       await lease.checkpoint();
-      const replacement = await this.render.createDeploy(sha);
+      const existingReplacements = (await this.render.findDeploysBySha(sha)).filter(({ id }) => id !== deploy.id);
+      const replacement = existingReplacements[0] ?? await this.render.createDeploy(sha, { excludeIds: [deploy.id] });
       if (!replacement?.id || replacement.id === deploy.id) throw new Error("Replacement Render deployment identity is malformed or unchanged.");
       await this.ledger.replaceTerminalAction({ sourceSha: sha, kind: "WEB", identityKey: sha, expectedRemoteId: deploy.id, remoteId: replacement.id, state: replacement.status ?? "CREATED", evidence: replacement });
       deploy = replacement;

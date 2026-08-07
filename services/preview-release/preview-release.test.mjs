@@ -51,7 +51,7 @@ test("Render preflight reads only the approved staging service", async () => {
     fetchImpl: async (url, options) => {
       requests.push({ url, method: options.method });
       const body = url.includes("deploys") ? [{ deploy: { id: "dep-stage", status: "live" } }] : { id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" };
-      return { ok: true, json: async () => body };
+      return { ok: true, text: async () => JSON.stringify(body) };
     },
   });
   assert.equal((await client.getService()).id, PREVIEW_IDENTITY.renderStagingServiceId);
@@ -61,12 +61,47 @@ test("Render preflight reads only the approved staging service", async () => {
 });
 
 test("Render preflight rejects wrong identity, authentication failure, and malformed responses", async () => {
-  const wrong = new RenderClient({ apiKey: "x", serviceId: "srv-other", fetchImpl: async () => ({ ok: true, json: async () => ({}) }) });
+  const wrong = new RenderClient({ apiKey: "x", serviceId: "srv-other", fetchImpl: async () => ({ ok: true, text: async () => "{}" }) });
   await assert.rejects(wrong.getService(), /Unapproved/);
   const unauthorized = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: false, status: 401 }) });
   await assert.rejects(unauthorized.getService(), /HTTP 401/);
-  const malformed = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: true, json: async () => ({ id: "wrong" }) }) });
+  const malformed = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: true, text: async () => JSON.stringify({ id: "wrong" }) }) });
   await assert.rejects(malformed.getService(), /malformed or mismatched/);
+});
+
+test("Render deploy creation reconciles an accepted mutation after an empty response", async () => {
+  let requests = 0;
+  let historyReads = 0;
+  const deploy = { id: "dep-reconciled", status: "build_in_progress", commit: { id: sha } };
+  const client = new RenderClient({
+    apiKey: "render-secret",
+    serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
+    fetchImpl: async (_url, options) => {
+      requests += 1;
+      if (options.method === "POST") return { ok: true, text: async () => "" };
+      historyReads += 1;
+      return { ok: true, text: async () => JSON.stringify(historyReads === 1 ? [] : [{ deploy }]) };
+    },
+  });
+  assert.equal((await client.createDeploy(sha, { sleep: async () => {} })).id, deploy.id);
+  assert.equal(requests, 3);
+});
+
+test("Render deploy reconciliation excludes every deployment that existed before the POST", async () => {
+  const terminal = { id: "dep-terminal", status: "build_failed", commit: { id: sha } };
+  const replacement = { id: "dep-replacement", status: "build_in_progress", commit: { id: sha } };
+  let historyReads = 0;
+  const client = new RenderClient({
+    apiKey: "render-secret",
+    serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
+    fetchImpl: async (_url, options) => {
+      if (options.method === "POST") return { ok: true, text: async () => "" };
+      historyReads += 1;
+      const deploys = historyReads === 1 ? [terminal] : [replacement, terminal];
+      return { ok: true, text: async () => JSON.stringify(deploys.map((deploy) => ({ deploy }))) };
+    },
+  });
+  assert.equal((await client.createDeploy(sha, { excludeIds: [terminal.id], sleep: async () => {} })).id, replacement.id);
 });
 
 test("EAS preflight accepts only the exact Preview project and readable history", async () => {
@@ -314,6 +349,7 @@ test("web recovery replaces one terminal recorded deploy through an atomic ledge
     github: {},
     render: {
       createDeploy: async () => { creates += 1; return replacement; },
+      findDeploysBySha: async () => [recorded],
       getDeploy: async (id) => id === recorded.id ? recorded : replacement,
     },
     stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
@@ -367,4 +403,29 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /"--concurrent-io-limit", "1"/);
   assert.match(client, /NODE_OPTIONS: "--max-old-space-size=256"/);
   assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/);
+});
+
+test("web delivery adopts exact-SHA Render history before creating a duplicate", async () => {
+  let creates = 0;
+  const actions = [];
+  const deploy = { id: "dep-remote", status: "live", commit: { id: sha } };
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => null,
+      recordAction: async (action) => { actions.push(action); return action; },
+    },
+    github: {},
+    render: {
+      findDeploysBySha: async () => [deploy],
+      createDeploy: async () => { creates += 1; return deploy; },
+      getDeploy: async () => deploy,
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+  const result = await orchestrator.deliverWeb(sha, { checkpoint: async () => {} });
+  assert.equal(creates, 0);
+  assert.equal(result.deployId, deploy.id);
+  assert.equal(actions.at(-1).remoteId, deploy.id);
 });
