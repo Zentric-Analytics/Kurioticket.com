@@ -20,7 +20,7 @@ export function reconcileBuilds(builds, targetSha, platform = "ios") {
       runtimeVersion: build.runtimeVersion ?? build.sourceAttestedRuntimeVersion,
       channel: build.channel ?? build.sourceAttestedChannel,
     };
-    if (identity.projectId !== PREVIEW_IDENTITY.easProjectId || identity.platform !== platform.toUpperCase() || identity.profile !== "preview" || identity.bundleIdentifier !== PREVIEW_IDENTITY.bundleIdentifier || identity.runtimeVersion !== PREVIEW_IDENTITY.runtimeVersion || identity.channel !== PREVIEW_IDENTITY.channel) {
+    if (identity.projectId !== PREVIEW_IDENTITY.easProjectId || identity.platform !== platform.toUpperCase() || identity.profile !== "preview" || identity.bundleIdentifier !== PREVIEW_IDENTITY.bundleIdentifier || identity.runtimeVersion !== PREVIEW_IDENTITY.runtime || identity.channel !== PREVIEW_IDENTITY.channel) {
       return { decision: "CONFLICT", matches: [build.id], identity };
     }
     exact.push(build);
