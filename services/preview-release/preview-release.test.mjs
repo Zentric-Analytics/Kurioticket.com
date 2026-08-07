@@ -435,7 +435,7 @@ test("iOS delivery fails closed on a failed auto-submit and never invokes manual
   const finishedBuild = build({ status: "FINISHED", appBuildVersion: "5" });
   const orchestrator = new PreviewOrchestrator({
     config: {}, github: {}, render: {}, sleep: async () => {},
-    ledger: { recordAction: async (action) => action },
+    ledger: { getAction: async () => null, recordAction: async (action) => action },
     easFactory: () => ({
       listIosBuilds: async () => [finishedBuild], createIosBuild: async () => finishedBuild,
       viewBuild: async () => finishedBuild,
