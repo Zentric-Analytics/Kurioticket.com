@@ -446,7 +446,7 @@ test("Explore search preserves successive characters and clearing restores disco
 test("Explore uses destination-only search copy", () => {
   const source = screen();
   assert.equal(
-    source.match(/Search destinations, countries or airports/g)?.length,
+    source.match(/Search cities, countries, or airports/g)?.length,
     2,
   );
 });
