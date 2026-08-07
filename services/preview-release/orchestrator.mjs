@@ -12,9 +12,11 @@ export class PreviewOrchestrator {
   }
 
   async cycle() {
-    const sourceSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
+    const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
+    const sourceSha = this.config.iosNativeBackfillSha ?? currentDevSha;
+    if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const previous = await this.ledger.lastSuccessful();
-    const iosNativeBackfill = this.config.iosNativeBackfillSha === sourceSha;
+    const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
     if (previous?.source_sha === sourceSha && !iosNativeBackfill) return { state: "NO_CHANGE", sourceSha };
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
     const record = iosNativeBackfill
@@ -24,7 +26,7 @@ export class PreviewOrchestrator {
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
-      return await this.process(record, previous, lease);
+      return await this.process(record, iosNativeBackfill ? null : previous, lease);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
