@@ -16,9 +16,9 @@ export function reconcileBuilds(builds, targetSha, platform = "ios") {
       projectId: build.project?.id,
       platform: String(build.platform ?? "").toUpperCase(),
       profile: build.buildProfile,
-      bundleIdentifier: build.appIdentifier ?? build.queriedAppIdentifier,
-      runtimeVersion: build.runtimeVersion ?? build.queriedRuntimeVersion,
-      channel: build.channel ?? build.queriedChannel,
+      bundleIdentifier: build.appIdentifier ?? build.sourceAttestedAppIdentifier,
+      runtimeVersion: build.runtimeVersion,
+      channel: build.channel,
     };
     if (identity.projectId !== PREVIEW_IDENTITY.easProjectId || identity.platform !== platform.toUpperCase() || identity.profile !== "preview" || identity.bundleIdentifier !== PREVIEW_IDENTITY.bundleIdentifier || identity.runtimeVersion !== PREVIEW_IDENTITY.runtimeVersion || identity.channel !== PREVIEW_IDENTITY.channel) {
       return { decision: "CONFLICT", matches: [build.id], identity };
