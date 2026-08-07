@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
-import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, maintainLease, retry } from "./orchestrator.mjs";
+import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enforceDeliveredNativeBaseline, maintainLease, nativeDriftTargets, retry } from "./orchestrator.mjs";
 import { createExactCheckoutDirectory, EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
@@ -333,6 +333,56 @@ test("polling API failure never becomes a no-change result", async () => {
   await assert.rejects(orchestrator.cycle(), /GitHub unavailable/);
 });
 
+test("native splash change remains native when its complete merge range includes mobile tooling and tests", () => {
+  const result = classifyChangeSet([
+    "apps/mobile/app.config.ts",
+    "apps/mobile/scripts/verify-ios-icon-contract.mjs",
+    "apps/mobile/src/__tests__/releaseArchitecture.test.ts",
+    "apps/mobile/src/features/home/DiscoverNextAdventure.tsx",
+  ]);
+  assert.equal(result.classification, "ANDROID_NATIVE+IOS_NATIVE");
+  assert.deepEqual(result.mobileTooling, [
+    "apps/mobile/scripts/verify-ios-icon-contract.mjs",
+    "apps/mobile/src/__tests__/releaseArchitecture.test.ts",
+  ]);
+  assert.equal(classifyChangeSet(["apps/mobile/src/a.test.ts"]).classification, "NO_DELIVERY");
+});
+
+test("last delivered native binary remains authoritative after web or OTA completion", () => {
+  const deliveredNative = { ios: { sourceSha: "a".repeat(40), buildId: "ios-build-5", fingerprint: "old-ios" } };
+  const ota = { classification: "OTA", reason: "classified", files: ["apps/mobile/src/a.ts"] };
+  const result = enforceDeliveredNativeBaseline({ classification: ota, fingerprints: { ios: "new-ios", android: "same" }, deliveredNative });
+  assert.equal(result.classification, "IOS_NATIVE+OTA");
+  assert.deepEqual(result.nativeDrift, ["IOS_NATIVE"]);
+  assert.deepEqual(nativeDriftTargets({ ios: "new-ios" }, deliveredNative), ["IOS_NATIVE"]);
+});
+
+test("completed latest SHA is reopened when web or OTA completion left native drift pending", async () => {
+  let driftClaims = 0;
+  let ordinaryClaims = 0;
+  const previous = { source_sha: sha, evidence: { fingerprints: { ios: "new-ios", android: "same-android" } } };
+  const record = { source_sha: sha, previous_sha: sha, state: "DETECTED" };
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => previous,
+      lastSuccessfulNative: async (platform) => platform === "ios"
+        ? { source_sha: "b".repeat(40), native_build_id: "ios-build-5", native_fingerprint: "old-ios" }
+        : { source_sha: "b".repeat(40), native_build_id: "android-build", native_fingerprint: "same-android" },
+      claimNativeDrift: async () => { driftClaims += 1; return record; },
+      claim: async () => { ordinaryClaims += 1; return record; },
+    },
+    github: { latestDevSha: async () => sha, report: async () => {} }, render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async (_record, _previous, _lease, deliveredNative) => {
+    assert.equal(deliveredNative.ios.buildId, "ios-build-5");
+    return { source_sha: sha, state: "COMPLETE" };
+  };
+  assert.equal((await orchestrator.cycle()).state, "COMPLETE");
+  assert.equal(driftClaims, 1);
+  assert.equal(ordinaryClaims, 0);
+});
+
 test("completed current SHA can be claimed once for approved iOS native backfill", async () => {
   let ordinaryClaims = 0;
   let backfillClaims = 0;
@@ -479,8 +529,7 @@ test("exact-checkout preparation fails closed when dependency manifests differ",
     for (const manifest of ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"]) {
       await copyFile(resolve(repositoryRoot, manifest), resolve(temporary, manifest));
     }
-    await writeFile(resolve(temporary, "apps/mobile/package.json"), "{}
-");
+    await writeFile(resolve(temporary, "apps/mobile/package.json"), "{}\n");
     await assert.rejects(
       prepareCheckout(temporary, { dependencyRoot: repositoryRoot, commandRunner: async () => {} }),
       /dependency manifest differs.*apps\/mobile\/package\.json/,

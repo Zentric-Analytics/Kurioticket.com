@@ -14,6 +14,11 @@ const OTA_SAFE = [
   /^apps\/mobile\/(?:app|src|components|hooks|lib|utils)\//,
   /^apps\/mobile\/assets\/(?!.*(?:icon|splash|adaptive|notification|font))/i,
 ];
+const MOBILE_TOOLING = [
+  /^apps\/mobile\/scripts\//,
+  /^apps\/mobile\/src\/__tests__\//,
+  /^apps\/mobile\/src\/.*\.(?:test|spec)\.[cm]?[jt]sx?$/,
+];
 
 export function classifyChangeSet(files) {
   if (!Array.isArray(files) || files.some((file) => typeof file !== "string" || !file || file.includes("\\"))) {
@@ -27,8 +32,9 @@ export function classifyChangeSet(files) {
   const mobile = unique.filter((file) => file.startsWith(MOBILE_PREFIX));
   const docsOnly = unique.every((file) => DOC_PATTERNS.some((pattern) => pattern.test(file)));
   const web = unique.filter((file) => WEB_PREFIXES.some((prefix) => file.startsWith(prefix)) || ["package.json", "package-lock.json", "next.config.ts"].includes(file));
-  const otaCandidates = mobile.filter((file) => OTA_SAFE.some((pattern) => pattern.test(file)));
-  const uncertainMobile = mobile.filter((file) => !iosNative.includes(file) && !androidNative.includes(file) && !otaCandidates.includes(file) && !DOC_PATTERNS.some((pattern) => pattern.test(file)));
+  const mobileTooling = mobile.filter((file) => MOBILE_TOOLING.some((pattern) => pattern.test(file)));
+  const otaCandidates = mobile.filter((file) => !mobileTooling.includes(file) && OTA_SAFE.some((pattern) => pattern.test(file)));
+  const uncertainMobile = mobile.filter((file) => !iosNative.includes(file) && !androidNative.includes(file) && !otaCandidates.includes(file) && !mobileTooling.includes(file) && !DOC_PATTERNS.some((pattern) => pattern.test(file)));
 
   if (uncertainMobile.length) return result("UNSAFE", "uncertain-mobile-change", unique, { uncertainMobile });
   const targets = new Set();
@@ -38,7 +44,7 @@ export function classifyChangeSet(files) {
   if (otaCandidates.length && !iosNative.length && !androidNative.length) targets.add("OTA");
   if (!targets.size && docsOnly) return result("NO_DELIVERY", "documentation-only", unique);
   if (!targets.size) return result("NO_DELIVERY", "repository-only", unique);
-  return result([...targets].sort().join("+"), "classified", unique, { iosNative, androidNative, otaCandidates, web });
+  return result([...targets].sort().join("+"), "classified", unique, { iosNative, androidNative, otaCandidates, mobileTooling, web });
 }
 
 function result(classification, reason, files, details = {}) {
