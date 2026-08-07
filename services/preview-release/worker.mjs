@@ -4,17 +4,29 @@ import { fileURLToPath } from "node:url";
 import { requirePreviewEnvironment } from "./config.mjs";
 import { PreviewLedger } from "./ledger.mjs";
 import { PreviewOrchestrator } from "./orchestrator.mjs";
-import { GitHubClient, RenderClient } from "./remote-clients.mjs";
+import { GitHubClient, RenderClient, EasClient } from "./remote-clients.mjs";
+import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const config = requirePreviewEnvironment();
 const ledger = new PreviewLedger(config.databaseUrl);
 await ledger.migrate(await readFile(resolve(root, "services/preview-release/sql/001_init.sql"), "utf8"));
+const github = new GitHubClient({ readToken: config.githubReadToken, statusToken: config.githubStatusToken, repository: config.repository });
+const render = new RenderClient({ apiKey: config.renderApiKey, serviceId: config.renderServiceId });
+const eas = new EasClient({ expoToken: config.expoToken, cwd: resolve(root, "apps/mobile") });
+try {
+  const preflight = await runPreviewPreflight({ config, ledger, github, render, eas });
+  console.log(JSON.stringify({ event: "preview-release-preflight", ...preflight }));
+} catch (error) {
+  console.error(JSON.stringify({ event: "preview-release-preflight-failed", error: redactPreflightError(error, [config.githubReadToken, config.renderApiKey, config.expoToken, config.databaseUrl]) }));
+  await ledger.close();
+  process.exit(1);
+}
 const orchestrator = new PreviewOrchestrator({
   config,
   ledger,
-  github: new GitHubClient({ readToken: config.githubReadToken, statusToken: config.githubStatusToken, repository: config.repository }),
-  render: new RenderClient({ apiKey: config.renderApiKey, serviceId: config.renderServiceId }),
+  github,
+  render,
 });
 
 let stopping = false;

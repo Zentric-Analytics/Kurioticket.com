@@ -7,7 +7,8 @@ import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreview
 import { reconcileBuilds, reconcileSubmission } from "./eas-state.mjs";
 import { retry } from "./orchestrator.mjs";
 import { PreviewOrchestrator } from "./orchestrator.mjs";
-import { gitAuthEnvironment } from "./remote-clients.mjs";
+import { EasClient, RenderClient, gitAuthEnvironment } from "./remote-clients.mjs";
+import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
 const sha = "a".repeat(40);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
@@ -23,9 +24,82 @@ test("Preview identity is immutable", () => {
 
 test("environment defaults to non-mutating dry-run and rejects missing secrets", () => {
   assert.throws(() => requirePreviewEnvironment({}), /Missing/);
-  const config = requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: "srv-stage", EXPO_TOKEN: "z" });
+  const config = requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "z" });
   assert.equal(config.mode, "dry-run");
   assert.equal(config.pollIntervalMs, 60_000);
+  assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: "srv-other", EXPO_TOKEN: "z" }), /approved Preview staging service/);
+});
+
+test("Render preflight reads only the approved staging service", async () => {
+  const requests = [];
+  const client = new RenderClient({
+    apiKey: "render-secret",
+    serviceId: PREVIEW_IDENTITY.renderStagingServiceId,
+    fetchImpl: async (url, options) => {
+      requests.push({ url, method: options.method });
+      const body = url.includes("deploys") ? [{ deploy: { id: "dep-stage", status: "live" } }] : { id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" };
+      return { ok: true, json: async () => body };
+    },
+  });
+  assert.equal((await client.getService()).id, PREVIEW_IDENTITY.renderStagingServiceId);
+  assert.equal((await client.latestDeploy()).id, "dep-stage");
+  assert.deepEqual(requests.map(({ method }) => method), ["GET", "GET"]);
+  assert.equal(requests.every(({ url }) => url.includes(PREVIEW_IDENTITY.renderStagingServiceId)), true);
+});
+
+test("Render preflight rejects wrong identity, authentication failure, and malformed responses", async () => {
+  const wrong = new RenderClient({ apiKey: "x", serviceId: "srv-other", fetchImpl: async () => ({ ok: true, json: async () => ({}) }) });
+  await assert.rejects(wrong.getService(), /Unapproved/);
+  const unauthorized = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: false, status: 401 }) });
+  await assert.rejects(unauthorized.getService(), /HTTP 401/);
+  const malformed = new RenderClient({ apiKey: "x", serviceId: PREVIEW_IDENTITY.renderStagingServiceId, fetchImpl: async () => ({ ok: true, json: async () => ({ id: "wrong" }) }) });
+  await assert.rejects(malformed.getService(), /malformed or mismatched/);
+});
+
+test("EAS preflight accepts only the exact Preview project and readable history", async () => {
+  const client = new EasClient({ expoToken: "expo-secret", cwd: repositoryRoot, command: "unused" });
+  const calls = [];
+  client.run = async (args) => { calls.push(args); return args[1] === "project:info" ? { projectId: PREVIEW_IDENTITY.easProjectId } : []; };
+  assert.equal((await client.projectInfo()).projectId, PREVIEW_IDENTITY.easProjectId);
+  assert.deepEqual(await client.previewBuildHistory(), []);
+  assert.equal(calls.every((args) => !args.includes("build") && !args.includes("update")), true);
+});
+
+test("EAS preflight rejects wrong projects, authentication errors, and malformed history", async () => {
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
+  client.run = async () => ({ projectId: "wrong" });
+  await assert.rejects(client.projectInfo(), /mismatched/);
+  client.run = async () => { throw new Error("Expo authentication failed"); };
+  await assert.rejects(client.projectInfo(), /authentication failed/);
+  client.run = async () => ({ unexpected: true });
+  await assert.rejects(client.previewBuildHistory(), /malformed/);
+});
+
+test("provider preflight validates all read-only identities without mutation", async () => {
+  let mutations = 0;
+  const result = await runPreviewPreflight({
+    config: { mode: "dry-run" },
+    ledger: { healthCheck: async () => ({ connected: true }) },
+    github: { latestDevSha: async () => sha },
+    render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
+    eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], listUpdates: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
+  });
+  assert.equal(result.status, "PASS");
+  assert.equal(result.submissionPerformed, false);
+  assert.equal(mutations, 0);
+});
+
+test("provider preflight rejects non-dry-run mode and redacts credentials", async () => {
+  await assert.rejects(runPreviewPreflight({ config: { mode: "active" } }), /dry-run/);
+  assert.equal(redactPreflightError(new Error("failed token-secret database-secret"), ["token-secret", "database-secret"]), "failed [REDACTED] [REDACTED]");
+});
+
+test("worker preflight failure redacts secrets and exits before the polling loop", () => {
+  const worker = readFileSync(resolve(repositoryRoot, "services/preview-release/worker.mjs"), "utf8");
+  assert.match(worker, /preview-release-preflight-failed/);
+  assert.match(worker, /redactPreflightError/);
+  assert.match(worker, /process\.exit\(1\)/);
+  assert.ok(worker.indexOf("runPreviewPreflight") < worker.indexOf("while (!stopping)"));
 });
 
 const classifications = [

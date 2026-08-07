@@ -12,6 +12,7 @@ export const PREVIEW_IDENTITY = Object.freeze({
   channel: "preview",
   runtime: "preview-0.3.0",
   apiOrigin: "https://staging.kurioticket.com",
+  renderStagingServiceId: "srv-d86ulfgg4nts73bctt20",
 });
 
 export function requirePreviewEnvironment(env = process.env) {
@@ -24,7 +25,9 @@ export function requirePreviewEnvironment(env = process.env) {
   ];
   const missing = required.filter((key) => !env[key]?.trim());
   if (missing.length) throw new Error(`Missing Preview release-service environment: ${missing.join(", ")}`);
-  if (/production/i.test(env.RENDER_STAGING_SERVICE_ID)) throw new Error("Production-like Render service identifiers are forbidden.");
+  if (env.RENDER_STAGING_SERVICE_ID !== PREVIEW_IDENTITY.renderStagingServiceId) {
+    throw new Error("Render service identity does not match the approved Preview staging service.");
+  }
   return Object.freeze({
     databaseUrl: env.DATABASE_URL,
     githubReadToken: env.GITHUB_READ_TOKEN,

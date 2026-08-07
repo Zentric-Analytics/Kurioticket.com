@@ -8,6 +8,12 @@ export class PreviewLedger {
 
   async migrate(sql) { await this.pool.query(sql); }
 
+  async healthCheck() {
+    const result = await this.pool.query("SELECT current_database() AS database_name, 1 AS ok");
+    if (result.rows[0]?.ok !== 1) throw new Error("Preview ledger database health check failed.");
+    return { connected: true };
+  }
+
   async claim({ sourceSha, previousSha, workerId, leaseMs, mode }) {
     assertExactSha(sourceSha);
     if (previousSha) assertExactSha(previousSha, "Previous SHA");

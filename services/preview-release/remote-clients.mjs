@@ -44,6 +44,21 @@ export class RenderClient {
     return deploy;
   }
   async getDeploy(id) { return this.request(`/services/${this.serviceId}/deploys/${id}`); }
+  async getService() {
+    if (this.serviceId !== PREVIEW_IDENTITY.renderStagingServiceId) throw new Error("Unapproved Render service identity.");
+    const service = await this.request(`/services/${this.serviceId}`);
+    if (service?.id !== this.serviceId || typeof service?.name !== "string") throw new Error("Render service response is malformed or mismatched.");
+    return service;
+  }
+  async latestDeploy() {
+    if (this.serviceId !== PREVIEW_IDENTITY.renderStagingServiceId) throw new Error("Unapproved Render service identity.");
+    const value = await this.request(`/services/${this.serviceId}/deploys?limit=1`);
+    if (!Array.isArray(value)) throw new Error("Render deploy history response is malformed.");
+    if (!value.length) return null;
+    const deploy = value[0]?.deploy ?? value[0];
+    if (typeof deploy?.id !== "string" || typeof deploy?.status !== "string") throw new Error("Render latest deployment response is malformed.");
+    return deploy;
+  }
   async request(path, { method = "GET", body } = {}) {
     const response = await this.fetch(`https://api.render.com/v1${path}`, { method, headers: { Accept: "application/json", Authorization: `Bearer ${this.apiKey}`, "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
     if (!response.ok) throw new Error(`Render API ${method} ${path} failed with HTTP ${response.status}.`);
@@ -58,6 +73,17 @@ export class EasClient {
   }
   async listAndroidBuilds(targetSha) {
     return this.listBuilds("android", targetSha);
+  }
+  async projectInfo() {
+    const value = await this.run(["eas-cli@16.17.4", "project:info", "--json", "--non-interactive"]);
+    const projectId = value?.projectId ?? value?.id ?? value?.project?.id;
+    if (projectId !== PREVIEW_IDENTITY.easProjectId) throw new Error("EAS project response is malformed or mismatched.");
+    return { projectId };
+  }
+  async previewBuildHistory() {
+    const value = await this.run(["eas-cli@16.17.4", "build:list", "--platform", "ios", "--profile", "preview", "--limit", "1", "--json", "--non-interactive"]);
+    if (!Array.isArray(value)) throw new Error("EAS Preview build history response is malformed.");
+    return value;
   }
   async listBuilds(platform, targetSha) {
     assertExactSha(targetSha);
