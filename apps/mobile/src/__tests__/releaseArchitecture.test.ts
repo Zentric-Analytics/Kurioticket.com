@@ -70,7 +70,24 @@ test("Preview iOS configuration declares truthful export compliance", async () =
   assert.equal(config.ios?.infoPlist?.ITSAppUsesNonExemptEncryption, false);
   assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app.preview");
   assert.equal(config.runtimeVersion, "preview-0.3.0");
-  assert.deepEqual(config.plugins?.[1], ["react-native-nitro-google-signin", { iosUrlScheme: "com.googleusercontent.apps.123456-preview" }]);
+  assert.deepEqual(config.plugins?.[1], ["expo-splash-screen", {
+    ios: {
+      image: "./assets/kurioticket-logo-primary-light-bg.png",
+      imageWidth: 200,
+      resizeMode: "contain",
+      backgroundColor: "#F7FAFF",
+    },
+  }]);
+  assert.deepEqual(config.android?.splash, {
+    image: "./assets/kurioticket-logo-primary-light-bg.png",
+    resizeMode: "contain",
+    backgroundColor: "#F7FAFF",
+  });
+  assert.deepEqual(config.android?.adaptiveIcon, {
+    foregroundImage: "./assets/kurioticket-adaptive-foreground.png",
+    backgroundColor: "#F2F6FA",
+  });
+  assert.deepEqual(config.plugins?.[2], ["react-native-nitro-google-signin", { iosUrlScheme: "com.googleusercontent.apps.123456-preview" }]);
 });
 
 test("Preview EAS builds fail closed without an iOS OAuth client", async () => {
@@ -91,7 +108,14 @@ test("Production configuration never selects the Preview iOS OAuth plugin", asyn
   process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "123456-preview.apps.googleusercontent.com";
   const { default: createAppConfig } = await import("../../app.config");
   const config = createAppConfig({ config: {} } as never);
-  assert.deepEqual(config.plugins, ["expo-router"]);
+  assert.deepEqual(config.plugins, ["expo-router", ["expo-splash-screen", {
+    ios: {
+      image: "./assets/kurioticket-logo-primary-light-bg.png",
+      imageWidth: 200,
+      resizeMode: "contain",
+      backgroundColor: "#F7FAFF",
+    },
+  }]]);
   delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 });
 
