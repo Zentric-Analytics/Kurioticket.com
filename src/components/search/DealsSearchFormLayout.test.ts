@@ -52,6 +52,60 @@ test("the large-screen Deals layout keeps every control in compact heading rails
   );
 });
 
+test("the Flight heading and horizontal trip type share a compact desktop top row", () => {
+  const flightSection =
+    form.match(
+      /<section\s+aria-labelledby="deals-flight-heading"[\s\S]*?<\/section>/,
+    )?.[0] ?? "";
+  const headingRail =
+    flightSection.match(
+      /<div\s+data-deals-heading-rail="flight"[\s\S]*?<\/div>\s*<div\s+data-deals-field-content="flight"/,
+    )?.[0] ?? "";
+  const tripType =
+    headingRail.match(/<div\s+role="radiogroup"[\s\S]*?<\/div>/)?.[0] ?? "";
+
+  assert.match(flightSection, /id="deals-flight-heading"/);
+  assert.match(headingRail, /lg:flex/);
+  assert.match(headingRail, /lg:items-center/);
+  assert.match(tripType, /aria-label=\{t\("tripType"\)\}/);
+  assert.match(tripType, /lg:flex-row/);
+  assert.doesNotMatch(tripType, /lg:flex-col|lg:items-stretch/);
+  assert.match(
+    flightSection,
+    /data-deals-heading-rail="flight"[\s\S]*data-deals-field-content="flight"/,
+  );
+  assert.doesNotMatch(flightSection, /lg:grid-cols-\[11rem_minmax\(0,1fr\)\]/);
+});
+
+test("only Flight fields receive the compact large-screen connected-row sizing", () => {
+  const sharedSegment =
+    form.match(/const connectedSegment =\s*\n\s*"([^"]+)"/)?.[1] ?? "";
+  const flightSegment =
+    form.match(
+      /const flightConnectedSegment =\s*`\$\{connectedSegment\} ([^`]+)`/,
+    )?.[1] ?? "";
+  const flightField =
+    form.match(
+      /const flightConnectedField = `\$\{connectedField\} ([^`]+)`/,
+    )?.[1] ?? "";
+
+  assert.match(sharedSegment, /lg:min-h-14/);
+  assert.doesNotMatch(sharedSegment, /lg:min-h-\[54px\]|lg:py-1(?:\s|$)/);
+  assert.match(flightSegment, /lg:min-h-\[54px\]/);
+  assert.match(flightSegment, /lg:py-1/);
+  assert.match(flightField, /lg:min-h-6/);
+  assert.match(form, /data-deals-field-content="flight"[\s\S]{0,160}lg:mt-1/);
+  assert.match(form, /className=\{`\$\{flightConnectedSegment\}/);
+});
+
+test("Flight keeps radio semantics and keyboard trip-type behavior", () => {
+  assert.match(form, /role="radiogroup"/);
+  assert.match(form, /role="radio"/);
+  assert.match(form, /aria-checked=\{search\.flightTripType === value\}/);
+  assert.match(form, /"ArrowRight",\s*"ArrowLeft",\s*"ArrowDown",\s*"ArrowUp"/);
+  assert.match(form, /setDealsFlightTripType\(/);
+});
+
 test("the compact layout preserves touch targets and full-width guided preview", () => {
   const connectedSegmentDeclaration = form.match(
     /const connectedSegment =\s*\n\s*"([^"]+)"/,
