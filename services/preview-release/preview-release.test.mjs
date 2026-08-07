@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission } from "./eas-state.mjs";
-import { PreviewOrchestrator, applyCutoverBaseline, maintainLease, retry } from "./orchestrator.mjs";
+import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, maintainLease, retry } from "./orchestrator.mjs";
 import { createExactCheckoutDirectory, EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
@@ -28,8 +28,21 @@ test("environment defaults to non-mutating dry-run and rejects missing secrets",
   const config = requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "z" });
   assert.equal(config.mode, "dry-run");
   assert.equal(config.cutoverBaselineSha, null);
+  assert.equal(config.iosNativeBackfillSha, null);
   assert.equal(config.pollIntervalMs, 60_000);
   assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: "srv-other", EXPO_TOKEN: "z" }), /approved Preview staging service/);
+});
+
+test("iOS native backfill is exact-SHA, active-only, and iOS-only", () => {
+  const target = "c".repeat(40);
+  const baseEnv = { DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "token-read", RENDER_API_KEY: "render-key", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "expo-token", PREVIEW_RELEASE_MODE: "active", PREVIEW_IOS_NATIVE_BACKFILL_SHA: target };
+  const config = requirePreviewEnvironment(baseEnv);
+  assert.equal(config.iosNativeBackfillSha, target);
+  assert.throws(() => requirePreviewEnvironment({ ...baseEnv, PREVIEW_IOS_NATIVE_BACKFILL_SHA: "dev" }), /iOS native backfill SHA/);
+  const ordinary = { classification: "NO_DELIVERY", reason: "repository-only", files: [] };
+  assert.deepEqual(applyIosNativeBackfill({ classification: ordinary, files: [], sha, config }), ordinary);
+  assert.deepEqual(applyIosNativeBackfill({ classification: ordinary, files: [], sha: target, config }), { classification: "IOS_NATIVE", reason: "approved-ios-native-backfill", files: [] });
+  assert.throws(() => applyIosNativeBackfill({ classification: ordinary, files: [], sha: target, config: { ...config, mode: "dry-run" } }), /requires active Preview release mode/);
 });
 
 test("cutover baseline is immutable and dry-run only", async () => {
@@ -266,6 +279,48 @@ test("polling API failure never becomes a no-change result", async () => {
     github: { latestDevSha: async () => { throw new Error("GitHub unavailable"); } }, render: {}, sleep: async () => {},
   });
   await assert.rejects(orchestrator.cycle(), /GitHub unavailable/);
+});
+
+test("completed current SHA can be claimed once for approved iOS native backfill", async () => {
+  let ordinaryClaims = 0;
+  let backfillClaims = 0;
+  let processed = 0;
+  const record = { source_sha: sha, previous_sha: sha, state: "DETECTED" };
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: sha, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => ({ source_sha: sha }),
+      claim: async () => { ordinaryClaims += 1; return record; },
+      claimIosNativeBackfill: async ({ identityKey }) => {
+        backfillClaims += 1;
+        assert.equal(identityKey, `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`);
+        return record;
+      },
+    },
+    github: { latestDevSha: async () => sha, report: async () => {} },
+    render: {},
+    sleep: async () => {},
+  });
+  orchestrator.process = async () => { processed += 1; return { source_sha: sha, state: "COMPLETE" }; };
+  assert.equal((await orchestrator.cycle()).state, "COMPLETE");
+  assert.equal(ordinaryClaims, 0);
+  assert.equal(backfillClaims, 1);
+  assert.equal(processed, 1);
+});
+
+test("existing iOS build action prevents duplicate native backfill processing", async () => {
+  let processed = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: sha, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => ({ source_sha: sha }),
+      claimIosNativeBackfill: async () => null,
+    },
+    github: { latestDevSha: async () => sha }, render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async () => { processed += 1; };
+  assert.equal((await orchestrator.cycle()).state, "LOCKED_OR_COMPLETE");
+  assert.equal(processed, 0);
 });
 
 test("exact-checkout preparation reuses the immutable build dependency trees", async () => {
