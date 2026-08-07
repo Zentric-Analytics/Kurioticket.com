@@ -277,7 +277,7 @@ export async function nativeFingerprints(directory) {
       maxBuffer: 50 * 1024 * 1024,
       timeout: 5 * 60 * 1000,
       killSignal: "SIGKILL",
-      env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=256" },
+      env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=160" },
     });
     let value;
     try { value = JSON.parse(stdout); } catch { throw new Error(`Expo ${platform} fingerprint output is malformed.`); }
