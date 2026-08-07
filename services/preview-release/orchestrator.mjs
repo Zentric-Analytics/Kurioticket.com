@@ -14,8 +14,12 @@ export class PreviewOrchestrator {
   async cycle() {
     const sourceSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
     const previous = await this.ledger.lastSuccessful();
-    if (previous?.source_sha === sourceSha) return { state: "NO_CHANGE", sourceSha };
-    const record = await this.ledger.claim({ sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode });
+    const iosNativeBackfill = this.config.iosNativeBackfillSha === sourceSha;
+    if (previous?.source_sha === sourceSha && !iosNativeBackfill) return { state: "NO_CHANGE", sourceSha };
+    const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
+    const record = iosNativeBackfill
+      ? await this.ledger.claimIosNativeBackfill({ ...claim, identityKey: `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview` })
+      : await this.ledger.claim(claim);
     if (!record) return { state: "LOCKED_OR_COMPLETE", sourceSha };
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
     try {
@@ -37,6 +41,7 @@ export class PreviewOrchestrator {
       const files = previous ? await exactChangeSet({ directory: checkout.directory, repository: this.config.repository, token: this.config.githubReadToken, previousSha: previous.source_sha, targetSha: sha }) : [];
       let classification = previous ? classifyChangeSet(files) : { classification: "NO_DELIVERY", reason: "initial-baseline", files: [] };
       classification = applyCutoverBaseline({ classification, files, sha, config: this.config });
+      classification = applyIosNativeBackfill({ classification, files, sha, config: this.config });
       if (classification.classification === "UNSAFE") throw new Error(`Release classification failed closed: ${classification.reason}.`);
       await prepareCheckout(checkout.directory);
       const identity = await resolvedIdentity(checkout.directory);
@@ -233,6 +238,12 @@ export function applyCutoverBaseline({ classification, files, sha, config }) {
   if (config.cutoverBaselineSha !== sha) return classification;
   if (config.mode !== "dry-run") throw new Error("Cutover baseline may only be established in dry-run mode.");
   return { classification: "NO_DELIVERY", reason: "approved-cutover-baseline", files };
+}
+
+export function applyIosNativeBackfill({ classification, files, sha, config }) {
+  if (config.iosNativeBackfillSha !== sha) return classification;
+  if (config.mode !== "active") throw new Error("iOS native backfill requires active Preview release mode.");
+  return { classification: "IOS_NATIVE", reason: "approved-ios-native-backfill", files };
 }
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
