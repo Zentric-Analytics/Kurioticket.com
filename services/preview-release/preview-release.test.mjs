@@ -8,7 +8,7 @@ import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission } from "./eas-state.mjs";
 import { PreviewOrchestrator, applyCutoverBaseline, maintainLease, retry } from "./orchestrator.mjs";
-import { EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
+import { createExactCheckoutDirectory, EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
 const sha = "a".repeat(40);
@@ -243,6 +243,17 @@ test("exact-checkout preparation reuses the immutable build dependency trees", a
     ["cp", ["-al", "--", resolve(repositoryRoot, "node_modules"), resolve(repositoryRoot, "node_modules")]],
     ["cp", ["-al", "--", resolve(repositoryRoot, "apps/mobile/node_modules"), resolve(repositoryRoot, "apps/mobile/node_modules")]],
   ]);
+});
+
+test("exact checkouts are created on the selected worker artifact filesystem", async () => {
+  const workspace = await mkdtemp(resolve(tmpdir(), "preview-workspace-"));
+  try {
+    const checkout = await createExactCheckoutDirectory(workspace);
+    assert.equal(resolve(checkout, ".."), resolve(workspace));
+    assert.match(checkout, /\.kurioticket-preview-/);
+  } finally {
+    await rm(workspace, { recursive: true, force: true });
+  }
 });
 
 test("exact-checkout preparation fails closed when dependency manifests differ", async () => {
