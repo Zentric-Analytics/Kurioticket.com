@@ -105,7 +105,7 @@ const label =
 const connectedShell =
   "grid gap-3 sm:gap-0 sm:rounded-2xl sm:bg-white sm:ring-1 sm:ring-slate-200";
 const connectedSegment =
-  "relative min-w-0 transition-colors sm:min-h-[68px] sm:px-4 sm:py-2 sm:hover:bg-slate-50 sm:focus-within:z-10 sm:focus-within:bg-[#004BB8]/8 sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-[#004BB8]/20";
+  "relative min-w-0 transition-colors sm:min-h-[68px] sm:px-4 sm:py-2 sm:hover:bg-slate-50 sm:focus-within:z-10 sm:focus-within:bg-[#004BB8]/8 sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-[#004BB8]/20 lg:min-h-14 lg:py-1.5";
 const connectedField =
   "sm:min-h-7 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:focus:border-0 sm:focus:ring-0";
 
@@ -2680,11 +2680,14 @@ export function DealsSearchForm({
       noValidate
       className={`mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""}`}
     >
-      <fieldset className="pb-3 sm:pb-2">
-        <legend className="mb-2 text-sm font-bold text-slate-700">
+      <fieldset className="pb-3 sm:pb-2 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-x-4 lg:pb-1">
+        <legend className="mb-2 text-sm font-bold text-slate-700 lg:mb-0">
           {t("deals.productSelector.instruction")}
         </legend>
-        <div data-deals-product-selector className="flex flex-wrap gap-2">
+        <div
+          data-deals-product-selector
+          className="flex flex-wrap gap-2 lg:flex-nowrap lg:justify-end"
+        >
           {dealsProductOrder.map((product) => {
             const { label: productLabel, Icon } = productOptions[product];
             const selected = included[product];
@@ -2706,7 +2709,7 @@ export function DealsSearchForm({
         <p
           role="status"
           aria-live="polite"
-          className={`mt-2 min-h-5 text-sm font-semibold text-rose-700 ${productSelectionMessage ? "" : "sr-only"}`}
+          className={`mt-2 min-h-5 text-sm font-semibold text-rose-700 lg:col-span-2 ${productSelectionMessage ? "" : "sr-only"}`}
         >
           {productSelectionMessage}
         </p>
@@ -2714,9 +2717,9 @@ export function DealsSearchForm({
       {included.flight && (
         <section
           aria-labelledby="deals-flight-heading"
-          className="border-t border-slate-200 py-4 sm:py-3 lg:py-2"
+          className="border-t border-slate-200 py-4 sm:py-3 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-4 lg:py-2"
         >
-          <div>
+          <div data-deals-heading-rail="flight" className="lg:min-w-0">
             <h2
               id="deals-flight-heading"
               className="mb-0.5 flex items-center gap-2 text-base font-extrabold text-[#021C2B]"
@@ -2727,7 +2730,7 @@ export function DealsSearchForm({
             <div
               role="radiogroup"
               aria-label={t("tripType")}
-              className="mb-1 inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5"
+              className="mb-1 inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5 lg:flex lg:flex-col lg:items-stretch lg:gap-0.5"
             >
               {(["round-trip", "one-way"] as const).map((value) => (
                 <button
@@ -2773,6 +2776,7 @@ export function DealsSearchForm({
             </div>
           </div>
           <div
+            data-deals-field-content="flight"
             className={`${connectedShell} lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,0.8fr)]`}
           >
             <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200">
@@ -3014,22 +3018,26 @@ export function DealsSearchForm({
               </select>
             </div>
           </div>
-          {errorBlock("flight")}
+          <div className="lg:col-start-2">{errorBlock("flight")}</div>
         </section>
       )}
       {included.hotel && (
         <section
           aria-labelledby="deals-hotel-heading"
-          className="border-t border-slate-200 py-4 sm:py-3 lg:py-2"
+          className="border-t border-slate-200 py-4 sm:py-3 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-4 lg:py-2"
         >
           <h2
             id="deals-hotel-heading"
-            className="mb-2 flex items-center gap-2 text-base font-extrabold text-[#021C2B] lg:mb-1"
+            data-deals-heading-rail="stay"
+            className="mb-2 flex items-center gap-2 text-base font-extrabold text-[#021C2B] lg:mb-0 lg:self-start lg:pt-2"
           >
             <BedDouble className="h-5 w-5 text-[#004BB8]" />
             {t("deals.stayRow")}
           </h2>
-          <div className={`${connectedShell} sm:grid-cols-2`}>
+          <div
+            data-deals-field-content="stay"
+            className={`${connectedShell} sm:grid-cols-2`}
+          >
             <div
               ref={hotelDestinationWrapRef}
               className={`${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 ${hotelDestinationOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
@@ -3218,22 +3226,26 @@ export function DealsSearchForm({
               ) : null}
             </div>
           </div>
-          {errorBlock("hotel")}
+          <div className="lg:col-start-2">{errorBlock("hotel")}</div>
         </section>
       )}
       {included.car && (
         <section
           aria-labelledby="deals-car-heading"
-          className="border-t border-slate-200 py-4 sm:py-3 lg:py-2"
+          className="border-t border-slate-200 py-4 sm:py-3 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-4 lg:py-2"
         >
           <h2
             id="deals-car-heading"
-            className="mb-2 flex items-center gap-2 text-base font-extrabold text-[#021C2B] lg:mb-1"
+            data-deals-heading-rail="car"
+            className="mb-2 flex items-center gap-2 text-base font-extrabold text-[#021C2B] lg:mb-0 lg:self-start lg:pt-2"
           >
             <Car className="h-5 w-5 text-[#004BB8]" />
             {t("deals.carRow")}
           </h2>
-          <div className={`${connectedShell} sm:grid-cols-2 lg:grid-cols-3`}>
+          <div
+            data-deals-field-content="car"
+            className={`${connectedShell} sm:grid-cols-2 lg:grid-cols-3`}
+          >
             <div className={connectedSegment}>
               <label className={label} htmlFor="deals-car-pickup">
                 {t("deals.pickup")}
@@ -3374,7 +3386,7 @@ export function DealsSearchForm({
               ) : null}
             </div>
           </div>
-          <details className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+          <details className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 lg:col-start-2">
             <summary className="focus-ring cursor-pointer text-sm font-bold text-[#004BB8]">
               {t("deals.carOptions")} · {carTimesSummary} ·{" "}
               {carDriverAgeLabel(search.carDriverAge)}
@@ -3409,22 +3421,26 @@ export function DealsSearchForm({
               </select>
             </div>
           </details>
-          {errorBlock("car")}
+          <div className="lg:col-start-2">{errorBlock("car")}</div>
         </section>
       )}
       <section
         aria-labelledby="deals-travellers-heading"
         data-deals-travellers-row
-        className="border-t border-slate-200 py-4 sm:py-3 lg:py-2"
+        className="border-t border-slate-200 py-4 sm:py-3 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:items-end lg:gap-x-4 lg:py-2"
       >
         <h2
           id="deals-travellers-heading"
-          className="mb-2 flex items-center gap-2 text-base font-extrabold text-[#021C2B]"
+          data-deals-heading-rail="travellers"
+          className="mb-2 flex items-center gap-2 text-base font-extrabold text-[#021C2B] lg:mb-0 lg:min-h-12"
         >
           <UserRound className="h-5 w-5 text-[#004BB8]" aria-hidden="true" />
           {t("deals.travellersRow")}
         </h2>
-        <div className="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div
+          data-deals-travellers-actions
+          className="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]"
+        >
           <div>
             <span className={label}>{t("deals.travellersRooms")}</span>
             <button
@@ -3448,7 +3464,7 @@ export function DealsSearchForm({
           </div>
           {searchDealsButton}
         </div>
-        {guidedPreviewPanel}
+        <div className="w-full lg:col-span-2">{guidedPreviewPanel}</div>
       </section>
       {warning}
       {(["origin", "destination"] as const).map((kind) => {
