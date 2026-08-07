@@ -10,6 +10,7 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { DealsHandoffExperience } from "./DealsHandoffExperience";
 import { DealsHandoffSkeleton } from "./DealsHandoffSkeleton";
 import { DealsGuidedConflictState } from "./DealsGuidedConflictState";
+import { DealsJourneyBreadcrumbs } from "./DealsJourneyBreadcrumbs";
 import { useDealsStagedJourneyLifecycle } from "./useDealsStagedJourneyLifecycle";
 import {
   attemptGuidedHandoffActivation,
@@ -47,6 +48,7 @@ import {
   type DealsLifecycleSource,
 } from "@/lib/deals/dealsGuidedJourneyLifecycle";
 import { useRouter } from "next/navigation";
+import { getHandoffReadyDealsJourneyProgress } from "@/lib/deals/dealsJourneyProgress";
 
 export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
   const { t: dictionary, locale } = useLocale();
@@ -441,7 +443,17 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
       data-deals-guided-handoff-state={state}
       {...(ready ? { "data-deals-guided-handoff-ready": true } : {})}
     >
-      <h1 className="text-2xl font-extrabold text-slate-950">
+      {ready && plan && (
+        <DealsJourneyBreadcrumbs
+          progress={getHandoffReadyDealsJourneyProgress(plan)}
+          page="complete"
+          search={search}
+          t={t}
+        />
+      )}
+      <h1
+        className={`${ready ? "mt-4 " : ""}text-2xl font-extrabold text-slate-950`}
+      >
         {t("deals.guided.handoff.title")}
       </h1>
       <div className="mt-5">{content}</div>
