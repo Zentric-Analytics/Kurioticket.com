@@ -369,6 +369,7 @@ export function DealsJourneyShell({
     [plan, resolved, search.mode, stage],
   );
   const firstStage = getFirstDealsJourneyStage(search.mode);
+  const visuallyHideStageHeading = stage === "hotel-results";
   const displayPlanStatus: GuidedPlanState =
     plan && plan.expiresAt <= lifecycleNow ? "expired" : planStatus;
   const clearConfirmationFailure = () => {
@@ -422,7 +423,11 @@ export function DealsJourneyShell({
           <h1
             ref={headingRef}
             tabIndex={-1}
-            className="scroll-mt-24 text-balance text-2xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-3xl"
+            className={
+              visuallyHideStageHeading
+                ? "sr-only"
+                : "scroll-mt-24 text-balance text-2xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-3xl"
+            }
           >
             {t(`deals.guided.heading.${stage}`)}
           </h1>
