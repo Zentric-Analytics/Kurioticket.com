@@ -17,16 +17,22 @@ export class PreviewOrchestrator {
     if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const previous = await this.ledger.lastSuccessful();
     const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
-    if (previous?.source_sha === sourceSha && !iosNativeBackfill) return { state: "NO_CHANGE", sourceSha };
+    const deliveredNative = iosNativeBackfill ? {} : await this.deliveredNativeBaselines();
+    const pendingNative = previous?.source_sha === sourceSha
+      ? nativeDriftTargets(previous.evidence?.fingerprints, deliveredNative)
+      : [];
+    if (previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length) return { state: "NO_CHANGE", sourceSha };
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
     const record = iosNativeBackfill
       ? await this.ledger.claimIosNativeBackfill({ ...claim, identityKey: `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview` })
+      : pendingNative.length
+        ? await this.ledger.claimNativeDrift(claim)
       : await this.ledger.claim(claim);
     if (!record) return { state: "LOCKED_OR_COMPLETE", sourceSha };
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
-      return await this.process(record, iosNativeBackfill ? null : previous, lease);
+      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
@@ -35,7 +41,7 @@ export class PreviewOrchestrator {
     } finally { await lease.stop(); }
   }
 
-  async process(record, previous, lease) {
+  async process(record, previous, lease, deliveredNative = null) {
     const sha = record.source_sha;
     await this.ledger.transition(sha, this.config.workerId, [record.state], "VALIDATING", { validation_state: "IN_PROGRESS" });
     const checkout = await exactCheckout({ repository: this.config.repository, token: this.config.githubReadToken, sha });
@@ -50,6 +56,8 @@ export class PreviewOrchestrator {
       assertPreviewIdentity(identity);
       const fingerprints = await nativeFingerprints(checkout.directory);
       await lease.checkpoint();
+      const nativeBaselines = deliveredNative ?? await this.deliveredNativeBaselines();
+      classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines });
       if (classification.classification.includes("OTA")) {
         const prior = previous?.evidence?.fingerprints;
         if (!prior || prior.ios !== fingerprints.ios || prior.android !== fingerprints.android) {
@@ -72,6 +80,16 @@ export class PreviewOrchestrator {
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
       return complete;
     } finally { await checkout.cleanup(); }
+  }
+
+  async deliveredNativeBaselines() {
+    const result = {};
+    if (typeof this.ledger.lastSuccessfulNative !== "function") return result;
+    for (const platform of ["ios", "android"]) {
+      const record = await this.ledger.lastSuccessfulNative(platform);
+      if (record) result[platform] = { sourceSha: record.source_sha, buildId: record.native_build_id, fingerprint: record.native_fingerprint };
+    }
+    return result;
   }
 
   async deliverWeb(sha, lease) {
@@ -254,6 +272,25 @@ export function applyIosNativeBackfill({ classification, files, sha, config }) {
   if (config.iosNativeBackfillSha !== sha) return classification;
   if (config.mode !== "active") throw new Error("iOS native backfill requires active Preview release mode.");
   return { classification: "IOS_NATIVE", reason: "approved-ios-native-backfill", files };
+}
+
+export function nativeDriftTargets(fingerprints, deliveredNative) {
+  if (!fingerprints || typeof fingerprints !== "object") return [];
+  const targets = [];
+  for (const [platform, target] of [["ios", "IOS_NATIVE"], ["android", "ANDROID_NATIVE"]]) {
+    const current = fingerprints[platform];
+    const delivered = deliveredNative?.[platform]?.fingerprint;
+    if (current && delivered && current !== delivered) targets.push(target);
+  }
+  return targets;
+}
+
+export function enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative }) {
+  const drift = nativeDriftTargets(fingerprints, deliveredNative);
+  if (!drift.length) return classification;
+  const targets = new Set(String(classification.classification).split("+").filter((value) => value && value !== "NO_DELIVERY"));
+  for (const target of drift) targets.add(target);
+  return { ...classification, classification: [...targets].sort().join("+"), reason: "delivered-native-fingerprint-changed", deliveredNative, nativeDrift: drift };
 }
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

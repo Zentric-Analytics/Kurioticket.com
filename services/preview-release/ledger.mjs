@@ -123,6 +123,44 @@ export class PreviewLedger {
     return result.rows[0] ?? null;
   }
 
+  async lastSuccessfulNative(platform) {
+    if (platform !== "ios" && platform !== "android") throw new Error("Native platform is invalid.");
+    const buildKind = platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD";
+    const result = await this.pool.query(
+      `SELECT release.*,
+              release.evidence->'fingerprints'->>$1 AS native_fingerprint,
+              build.remote_id AS native_build_id
+       FROM preview_release release
+       JOIN preview_release_action build
+         ON build.source_sha=release.source_sha AND build.kind=$2 AND build.state='FINISHED'
+       WHERE release.state='COMPLETE'
+         AND release.evidence->'fingerprints'->>$1 ~ '^[0-9a-f]{40,128}$'
+         AND ($1 <> 'ios' OR EXISTS (
+           SELECT 1 FROM preview_release_action submission
+           WHERE submission.source_sha=release.source_sha
+             AND submission.kind='IOS_SUBMISSION' AND submission.state='FINISHED'
+         ))
+       ORDER BY build.updated_at DESC LIMIT 1`,
+      [platform, buildKind],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async claimNativeDrift({ sourceSha, workerId, leaseMs, mode }) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `UPDATE preview_release
+       SET state='DETECTED', mode=$4, completed_at=NULL,
+           lock_owner=$2, lock_expires_at=now()+($3::int * interval '1 millisecond'),
+           updated_at=now()
+       WHERE source_sha=$1 AND state='COMPLETE'
+         AND (lock_expires_at IS NULL OR lock_expires_at < now() OR lock_owner=$2)
+       RETURNING *`,
+      [sourceSha, workerId, leaseMs, mode],
+    );
+    return result.rows[0] ?? null;
+  }
+
   async recordAction({ sourceSha, kind, identityKey, remoteId, state, evidence = {} }) {
     const result = await this.pool.query(
       `INSERT INTO preview_release_action (source_sha, kind, identity_key, remote_id, state, evidence)
