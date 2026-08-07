@@ -275,6 +275,8 @@ export async function nativeFingerprints(directory) {
       cwd,
       encoding: "utf8",
       maxBuffer: 50 * 1024 * 1024,
+      timeout: 5 * 60 * 1000,
+      killSignal: "SIGKILL",
       env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=256" },
     });
     let value;
