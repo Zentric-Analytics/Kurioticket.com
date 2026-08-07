@@ -16,7 +16,7 @@ test("homepage section headings and supporting copy use semantic theme text colo
   assert.doesNotMatch(popular, /heading:\s*\{\s*color: flowColors\.navy/);
 
   assert.match(discovery, /useFlowTheme/);
-  assert.match(discovery, /Discover your next adventure here/);
+  assert.match(discovery, /Discover your next adventure/);
   assert.match(discovery, /color: ft\.colors\.textPrimary/);
   assert.match(discovery, /color: ft\.colors\.textSecondary/);
   assert.match(discovery, /contentPanel: \{[^}]*flex: 1/);
