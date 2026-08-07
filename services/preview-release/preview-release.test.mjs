@@ -402,7 +402,9 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY\.apiOrigin/);
   assert.match(client, /node_modules", "\.bin"/);
   assert.match(client, /\["fingerprint:generate", "--platform", platform, "--concurrent-io-limit", "1"\]/);
-  assert.match(client, /NODE_OPTIONS: "--max-old-space-size=160"/);
+  assert.match(client, /NODE_OPTIONS: "--max-old-space-size=96", MALLOC_ARENA_MAX: "2"/);
+  assert.match(client, /preview-release-fingerprint-started/);
+  assert.match(client, /preview-release-fingerprint-complete/);
   assert.match(client, /timeout: 5 \* 60 \* 1000/);
   assert.doesNotMatch(client, /exec\(command, \["fingerprint", "fingerprint:generate"/);
   assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/);

@@ -271,17 +271,19 @@ export async function nativeFingerprints(directory) {
   const command = join(cwd, "node_modules", ".bin", process.platform === "win32" ? "fingerprint.cmd" : "fingerprint");
   const result = {};
   for (const platform of ["ios", "android"]) {
+    console.log(JSON.stringify({ event: "preview-release-fingerprint-started", platform, rssBytes: process.memoryUsage().rss }));
     const { stdout } = await exec(command, ["fingerprint:generate", "--platform", platform, "--concurrent-io-limit", "1"], {
       cwd,
       encoding: "utf8",
       maxBuffer: 50 * 1024 * 1024,
       timeout: 5 * 60 * 1000,
-      env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=160" },
+      env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=96", MALLOC_ARENA_MAX: "2" },
     });
     let value;
     try { value = JSON.parse(stdout); } catch { throw new Error(`Expo ${platform} fingerprint output is malformed.`); }
     if (!/^[0-9a-f]{40,128}$/.test(value?.hash ?? "")) throw new Error(`Expo ${platform} fingerprint has no valid hash.`);
     result[platform] = value.hash;
+    console.log(JSON.stringify({ event: "preview-release-fingerprint-complete", platform, rssBytes: process.memoryUsage().rss }));
   }
   return Object.freeze(result);
 }
