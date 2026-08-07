@@ -371,6 +371,7 @@ export function DealsJourneyShell({
   const firstStage = getFirstDealsJourneyStage(search.mode);
   const visuallyHideStageHeading =
     stage === "hotel-results" || stage === "hotel-details";
+  const useHotelDetailsBackground = stage === "hotel-details";
   const displayPlanStatus: GuidedPlanState =
     plan && plan.expiresAt <= lifecycleNow ? "expired" : planStatus;
   const clearConfirmationFailure = () => {
@@ -388,7 +389,9 @@ export function DealsJourneyShell({
       data-deals-guided-journey
       data-deals-guided-stage={stage}
       data-deals-guided-plan-state={displayPlanStatus}
-      className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-12"
+      className={`flex-1 overflow-x-clip pb-12 ${
+        useHotelDetailsBackground ? "bg-white" : "bg-[#f6f8fb]"
+      }`}
     >
       <DealsResultsSearchSummary
         search={search}
