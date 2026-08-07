@@ -88,22 +88,25 @@ test("EAS preflight rejects wrong projects, authentication errors, and malformed
   await assert.rejects(client.previewBuildHistory(), /malformed/);
 });
 
-test("provider preflight validates all read-only identities without mutation", async () => {
-  let mutations = 0;
-  const result = await runPreviewPreflight({
-    config: { mode: "dry-run" },
-    ledger: { healthCheck: async () => ({ connected: true }) },
-    github: { latestDevSha: async () => sha },
-    render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
-    eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], listUpdates: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
-  });
-  assert.equal(result.status, "PASS");
-  assert.equal(result.submissionPerformed, false);
-  assert.equal(mutations, 0);
+test("provider preflight validates all read-only identities without mutation in dry-run and active modes", async () => {
+  for (const mode of ["dry-run", "active"]) {
+    let mutations = 0;
+    const result = await runPreviewPreflight({
+      config: { mode },
+      ledger: { healthCheck: async () => ({ connected: true }) },
+      github: { latestDevSha: async () => sha },
+      render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
+      eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], listUpdates: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
+    });
+    assert.equal(result.status, "PASS");
+    assert.equal(result.mode, mode);
+    assert.equal(result.submissionPerformed, false);
+    assert.equal(mutations, 0);
+  }
 });
 
-test("provider preflight rejects non-dry-run mode and redacts credentials", async () => {
-  await assert.rejects(runPreviewPreflight({ config: { mode: "active" } }), /dry-run/);
+test("provider preflight rejects invalid mode and redacts credentials", async () => {
+  await assert.rejects(runPreviewPreflight({ config: { mode: "invalid" } }), /mode is invalid/);
   assert.equal(redactPreflightError(new Error("failed token-secret database-secret"), ["token-secret", "database-secret"]), "failed [REDACTED] [REDACTED]");
 });
 
