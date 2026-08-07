@@ -141,12 +141,12 @@ function ExploreHeader({
         <TextInput
           ref={input}
           accessibilityLabel="Explore search"
-          accessibilityHint="Search cities, countries, or airports"
+          accessibilityHint="Search destinations or airports"
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={submit}
           returnKeyType="search"
-          placeholder="Search cities, countries, or airports"
+          placeholder="Search destinations or airports"
           placeholderTextColor="#7B849F"
           style={s.searchInput}
         />
