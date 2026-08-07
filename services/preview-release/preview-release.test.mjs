@@ -7,6 +7,7 @@ import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreview
 import { reconcileBuilds, reconcileSubmission } from "./eas-state.mjs";
 import { retry } from "./orchestrator.mjs";
 import { PreviewOrchestrator } from "./orchestrator.mjs";
+import { gitAuthEnvironment } from "./remote-clients.mjs";
 
 const sha = "a".repeat(40);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
@@ -76,6 +77,16 @@ test("full SHA validation rejects branch names and short SHAs", () => {
   assert.equal(assertExactSha(sha), sha);
   assert.throws(() => assertExactSha("dev"), /40-character/);
   assert.throws(() => assertExactSha("a".repeat(7)), /40-character/);
+});
+
+test("authenticated git fetch uses GitHub-supported Basic credentials without exposing the token in arguments", () => {
+  const token = "github_pat_example_read_only";
+  const environment = gitAuthEnvironment(token, { PATH: "test" });
+  assert.equal(environment.GIT_CONFIG_COUNT, "1");
+  assert.equal(environment.GIT_CONFIG_KEY_0, "http.extraHeader");
+  assert.match(environment.GIT_CONFIG_VALUE_0, /^Authorization: Basic [A-Za-z0-9+/=]+$/);
+  assert.equal(Buffer.from(environment.GIT_CONFIG_VALUE_0.replace("Authorization: Basic ", ""), "base64").toString("utf8"), `x-access-token:${token}`);
+  assert.equal(JSON.stringify(["fetch", "--quiet", "origin"]).includes(token), false);
 });
 
 test("dry-run detects exact SHA and crosses no mutation boundary", async () => {

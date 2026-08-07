@@ -127,12 +127,7 @@ export async function exactCheckout({ repository, token, sha }) {
     await exec("git", ["remote", "add", "origin", remote], { cwd: directory });
     await exec("git", ["fetch", "--quiet", "--depth", "1", "origin", sha], {
       cwd: directory,
-      env: {
-        ...process.env,
-        GIT_CONFIG_COUNT: "1",
-        GIT_CONFIG_KEY_0: "http.extraHeader",
-        GIT_CONFIG_VALUE_0: `Authorization: Bearer ${token}`,
-      },
+      env: gitAuthEnvironment(token),
     });
     await exec("git", ["checkout", "--quiet", "--detach", "FETCH_HEAD"], { cwd: directory });
     const { stdout } = await exec("git", ["rev-parse", "HEAD"], { cwd: directory, encoding: "utf8" });
@@ -144,12 +139,7 @@ export async function exactCheckout({ repository, token, sha }) {
 export async function exactChangeSet({ directory, repository, token, previousSha, targetSha }) {
   assertExactSha(previousSha, "Previous SHA");
   assertExactSha(targetSha, "Target SHA");
-  const auth = {
-    ...process.env,
-    GIT_CONFIG_COUNT: "1",
-    GIT_CONFIG_KEY_0: "http.extraHeader",
-    GIT_CONFIG_VALUE_0: `Authorization: Bearer ${token}`,
-  };
+  const auth = gitAuthEnvironment(token);
   await exec("git", ["fetch", "--quiet", "--unshallow", "origin", PREVIEW_IDENTITY.branch], { cwd: directory, env: auth });
   await exec("git", ["cat-file", "-e", `${previousSha}^{commit}`], { cwd: directory });
   const { stdout: ancestor } = await exec("git", ["merge-base", "--is-ancestor", previousSha, targetSha], { cwd: directory, encoding: "utf8" }).catch((error) => {
@@ -160,6 +150,17 @@ export async function exactChangeSet({ directory, repository, token, previousSha
   const files = stdout.split(/\r?\n/).filter(Boolean);
   if (files.some((file) => file.includes("\\"))) throw new Error("Exact change-set output is malformed.");
   return files;
+}
+
+export function gitAuthEnvironment(token, baseEnvironment = process.env) {
+  if (typeof token !== "string" || token.length < 8) throw new Error("GitHub read token is missing or malformed.");
+  const credentials = Buffer.from(`x-access-token:${token}`, "utf8").toString("base64");
+  return {
+    ...baseEnvironment,
+    GIT_CONFIG_COUNT: "1",
+    GIT_CONFIG_KEY_0: "http.extraHeader",
+    GIT_CONFIG_VALUE_0: `Authorization: Basic ${credentials}`,
+  };
 }
 
 export async function prepareCheckout(directory) {
