@@ -7,8 +7,8 @@ import { exactChangeSet, exactCheckout, EasClient, nativeFingerprints, prepareCh
 import { inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 
 export class PreviewOrchestrator {
-  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), sleep = delay }) {
-    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.sleep = sleep;
+  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), stagingWait = waitForStaging, sleep = delay }) {
+    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.stagingWait = stagingWait; this.sleep = sleep;
   }
 
   async cycle() {
@@ -69,7 +69,11 @@ export class PreviewOrchestrator {
 
   async deliverWeb(sha, lease) {
     await lease.checkpoint();
-    const deploy = await this.render.createDeploy(sha);
+    const recorded = await this.ledger.getAction("WEB", sha);
+    const deploy = recorded?.remote_id
+      ? await this.render.getDeploy(recorded.remote_id)
+      : await this.render.createDeploy(sha);
+    if (!deploy?.id || (recorded?.remote_id && deploy.id !== recorded.remote_id)) throw new Error("Recorded Render deployment identity is malformed or mismatched.");
     await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: deploy.status ?? "CREATED", evidence: deploy });
     for (let attempt = 0; attempt < 120; attempt += 1) {
       await lease.checkpoint();
@@ -78,7 +82,8 @@ export class PreviewOrchestrator {
       if (["live", "succeeded"].includes(status)) {
         const deployedSha = current.commit?.id ?? current.commitId;
         if (deployedSha !== sha) throw new Error("Render deployed SHA does not match the requested SHA.");
-        const health = await waitForStaging({ origin: PREVIEW_IDENTITY.apiOrigin, targetSha: sha, attempts: 20, delayMs: 5_000, sleep: this.sleep });
+        const health = await this.stagingWait({ origin: PREVIEW_IDENTITY.apiOrigin, targetSha: sha, attempts: 20, delayMs: 5_000, sleep: this.sleep });
+        await this.ledger.recordAction({ sourceSha: sha, kind: "WEB", identityKey: sha, remoteId: deploy.id, state: status.toUpperCase(), evidence: current });
         return { deployId: deploy.id, deployedSha, status, health };
       }
       if (["build_failed", "update_failed", "canceled", "deactivated"].includes(status)) throw new Error(`Render deployment ${deploy.id} ended in ${status}.`);

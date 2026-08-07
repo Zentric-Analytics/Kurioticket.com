@@ -231,6 +231,32 @@ test("polling API failure never becomes a no-change result", async () => {
   await assert.rejects(orchestrator.cycle(), /GitHub unavailable/);
 });
 
+test("web recovery adopts the recorded Render deploy without creating a duplicate", async () => {
+  let creates = 0;
+  const actions = [];
+  const deploy = { id: "dep-existing", status: "live", commit: { id: sha } };
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => ({ remote_id: deploy.id }),
+      recordAction: async (action) => { actions.push(action); return action; },
+    },
+    github: {},
+    render: {
+      createDeploy: async () => { creates += 1; return deploy; },
+      getDeploy: async (id) => ({ ...deploy, id }),
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+  const result = await orchestrator.deliverWeb(sha, { checkpoint: async () => {} });
+  assert.equal(creates, 0);
+  assert.equal(result.deployId, deploy.id);
+  assert.equal(result.deployedSha, sha);
+  assert.deepEqual(actions.map(({ remoteId }) => remoteId), [deploy.id, deploy.id]);
+  assert.equal(actions.at(-1).state, "LIVE");
+});
+
 test("legacy Preview deployment workflows are absent and Production delivery is preserved", () => {
   const removed = ["preview-dev-delivery.yml", "ios-preview-build.yml", "ios-preview-testflight-submit.yml", "mobile-preview-update.yml", "android-preview-build.yml", "android-preview-ota.yml"];
   for (const file of removed) assert.equal(existsSync(resolve(repositoryRoot, ".github/workflows", file)), false, file);

@@ -93,5 +93,14 @@ export class PreviewLedger {
     return result.rows[0];
   }
 
+  async getAction(kind, identityKey) {
+    const result = await this.pool.query(
+      `SELECT * FROM preview_release_action WHERE kind=$1 AND identity_key=$2 LIMIT 2`,
+      [kind, identityKey],
+    );
+    if (result.rowCount > 1) throw new Error(`Ambiguous remote identity for ${kind}:${identityKey}.`);
+    return result.rows[0] ?? null;
+  }
+
   async close() { await this.pool.end(); }
 }

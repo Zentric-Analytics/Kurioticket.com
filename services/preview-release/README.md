@@ -19,7 +19,7 @@ The worker automatically runs `sql/001_init.sql`, polls once per minute, and wri
 2. Preserve any remote IDs already present.
 3. Correct the root cause.
 4. Allow the expired lease to be reclaimed or explicitly clear only the stale lease after confirming the former worker is stopped.
-5. Restart the worker. Reconciliation adopts matching remote operations.
+5. Restart the worker. Reconciliation adopts matching remote operations. For web delivery, a recorded Render deploy ID is always adopted and monitored before any new deploy may be created.
 
 Never delete ledger rows to force a retry. Never reset an EAS build number. Never issue a manual TestFlight submission while the ledger reports an existing submission or an unknown state.
 
