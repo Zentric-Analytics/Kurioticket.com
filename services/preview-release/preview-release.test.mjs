@@ -6,7 +6,7 @@ import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission } from "./eas-state.mjs";
 import { PreviewOrchestrator, applyCutoverBaseline, maintainLease, retry } from "./orchestrator.mjs";
-import { EasClient, RenderClient, gitAuthEnvironment } from "./remote-clients.mjs";
+import { EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
 const sha = "a".repeat(40);
@@ -229,6 +229,14 @@ test("polling API failure never becomes a no-change result", async () => {
     github: { latestDevSha: async () => { throw new Error("GitHub unavailable"); } }, render: {}, sleep: async () => {},
   });
   await assert.rejects(orchestrator.cycle(), /GitHub unavailable/);
+});
+
+test("exact-checkout preparation installs only the mobile dependency tree", async () => {
+  const calls = [];
+  await prepareCheckout(repositoryRoot, { commandRunner: async (...args) => { calls.push(args); } });
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0][1], ["ci", "--ignore-scripts"]);
+  assert.equal(calls[0][2].cwd, resolve(repositoryRoot, "apps/mobile"));
 });
 
 test("web recovery adopts the recorded Render deploy without creating a duplicate", async () => {
