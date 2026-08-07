@@ -7,7 +7,6 @@ const source = (path: string) =>
   readFileSync(join(process.cwd(), path), "utf8");
 
 const popular = source("src/features/home/PopularDestinationStays.tsx");
-const adventure = source("src/features/home/DiscoverNextAdventure.tsx");
 const home = source("src/features/flow/HomeFlowScreen.tsx");
 
 test("Popular destination cards match the mobile website dimensions and layout", () => {
@@ -66,33 +65,9 @@ test("Popular destination cards match the mobile website dimensions and layout",
   assert.equal(mobileViewport - sideInset - cardWidth - gap, 67);
 });
 
-test("Discover cards use the website two-column content-card layout", () => {
-  assert.match(adventure, /imageHeight: 135/);
-  assert.match(adventure, /height: 300/);
-  assert.match(adventure, /imageFrame:\s*\{ width:\s*"100%", height:\s*WEBSITE_DISCOVERY_CARD\.imageHeight/);
-  assert.match(adventure, /<View style=\{styles\.contentPanel\}>/);
-  assert.match(adventure, /<Text numberOfLines=\{2\} style=\{styles\.cardTitle\}>\{card\.title\}<\/Text>/);
-  assert.match(adventure, /<Text numberOfLines=\{1\} style=\{styles\.route\}>\{card\.originCode\} → \{card\.destinationCode\}<\/Text>/);
-  assert.match(adventure, /ONE WAY · ECONOMY · 1 TRAVELER/);
-  assert.match(adventure, /<Text style=\{styles\.from\}>From<\/Text>/);
-  assert.match(adventure, /flexWrap: "wrap"/);
-  assert.doesNotMatch(adventure, /<ScrollView[\s\S]*horizontal|Platform\.OS/);
-});
-
-test("favorite buttons continue to function and card navigation uses scoped helpers", () => {
-  assert.match(
-    popular,
-    /event\.stopPropagation\(\);\s*toggle\(destination\.id\);/,
-  );
-  assert.match(adventure, /event\.stopPropagation\(\);\s*toggle\(card\.id\);/);
-  assert.match(
-    popular,
-    /router\.push\(popularDestinationStayNavigation\(destination\)\)/,
-  );
-  assert.match(
-    adventure,
-    /router\.push\(discoverAdventureNavigation\(card\)\)/,
-  );
+test("popular stay favorite buttons and navigation use shared helpers", () => {
+  assert.match(popular, /event\.stopPropagation\(\);\s*toggle\(destination\.id\);/);
+  assert.match(popular, /router\.push\(popularDestinationStayNavigation\(destination\)\)/);
 });
 
 test("Popular destination stays is one shared Android and iOS implementation", () => {
@@ -104,12 +79,11 @@ test("Popular destination stays is one shared Android and iOS implementation", (
   assert.doesNotMatch(popular, /Platform|android|ios/);
 });
 
-test("homepage sections outside popular stays and discovery remain in the same order", () => {
+test("homepage sections remain in the same order after popular stays", () => {
   const orderedSections = [
     "<HomeHero />",
     "<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />",
     "<PopularDestinationStays />",
-    "<DiscoverNextAdventure />",
     "<HomepageDealPromos />",
   ];
 

@@ -15,7 +15,6 @@ test("Saved & recent resolves existing records, protects guests, and supports cl
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
   assert.match(screen, /useSavedDestinations\(\)/);
   assert.match(screen, /popularDestinationStays\.find/);
-  assert.match(screen, /nextAdventureCards\.find/);
   assert.match(screen, /destinations\.find/);
   assert.match(screen, /!isAuthenticated/);
   assert.match(screen, /router\.push\("\/\(tabs\)\/profile\/sign-in"\)/);
@@ -88,10 +87,9 @@ test("Explore and Profile share saved destination IDs, including search-only des
 
 test("Saved & recent groups supported saved item categories in a stable non-empty order", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /export type SavedCategory = "destinations" \| "stays" \| "adventures"/);
-  assert.match(screen, /savedCategoryOrder[\s\S]*key: "destinations", title: "Destinations"[\s\S]*key: "stays", title: "Stays"[\s\S]*key: "adventures", title: "Adventures"/);
+  assert.match(screen, /export type SavedCategory = "destinations" \| "stays"/);
+  assert.match(screen, /savedCategoryOrder[\s\S]*key: "destinations", title: "Destinations"[\s\S]*key: "stays", title: "Stays"/);
   assert.match(screen, /category: "stays"/);
-  assert.match(screen, /category: "adventures"/);
   assert.match(screen, /category: "destinations"/);
   assert.match(screen, /savedCategoryOrder\.flatMap/);
   assert.match(screen, /return sectionItems\.length \? \[\{ key, title, items: sectionItems \}\] : \[\]/);

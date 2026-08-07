@@ -8,7 +8,7 @@ import { discoverAdventureNavigation, getDefaultHomepageRouteCardDepartureDate, 
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 const popular = source("src/features/home/PopularDestinationStays.tsx");
-const adventure = source("src/features/home/DiscoverNextAdventure.tsx");
+const regional = source("src/features/home/RegionalDestinationRoutes.tsx");
 const helper = source("src/features/home/homepageCardNavigation.ts");
 const websiteHomepage = source("../../src/app/page.tsx");
 const websiteRouteHelper = source("../../src/lib/home/homepageRouteCardLinks.ts");
@@ -23,7 +23,7 @@ test("Popular destination stay cards open the website hotel-results destination-
   assert.doesNotMatch(popular, /pathname:\s*"\/(?:flights|flight-results)"/);
 });
 
-test("Discover adventure cards open the website flight-results route search contract", () => {
+test("Regional destination route cards open the website flight-results route search contract", () => {
   const params = homepageAdventureRouteParams({ originCode: "LOS", destinationCode: "LHR" }, new Date("2026-06-09T00:00:00.000Z"));
   assert.deepEqual(params, { tripType: "one-way", origin: "LOS", destination: "LHR", departureDate: "2026-07-24", travelers: "1", adults: "1", children: "0", infants: "0", cabinClass: "economy", currency: "USD", market: "NG" });
   assert.ok(buildSearchPlan("flight", params, new Date("2026-06-09T00:00:00.000Z")).plan);
@@ -32,10 +32,10 @@ test("Discover adventure cards open the website flight-results route search cont
   assert.deepEqual(discoverAdventureNavigation({ originCode: "LOS", destinationCode: "LHR" }), { pathname: "/flight-results", params: homepageAdventureRouteParams({ originCode: "LOS", destinationCode: "LHR" }) });
   assert.equal(getDefaultHomepageRouteCardDepartureDate(new Date("2026-06-09T00:00:00.000Z")), "2026-07-24");
   assert.doesNotMatch(helper, /returnDate|cabin:\s|from:|to:/);
-  assert.doesNotMatch(adventure, /pathname:\s*"\/(?:hotels|hotel-results)"/);
+  assert.doesNotMatch(regional, /pathname:\s*"\/(?:hotels|hotel-results)"/);
 });
 
-test("Discover adventure uses the website fallback instead of entering results with an invalid route", () => {
+test("Regional destination navigation uses the website fallback instead of entering results with an invalid route", () => {
   assert.equal(discoverAdventureNavigation({ originCode: "LOS", destinationCode: "LOS" }), "/flights");
   assert.equal(discoverAdventureNavigation({ originCode: "Lagos", destinationCode: "LHR" }), "/flights");
   assert.deepEqual(
@@ -50,11 +50,10 @@ test("Discover adventure uses the website fallback instead of entering results w
 
 test("homepage card navigation preserves favorites, auth-neutral taps, and loop-safe back stacks", () => {
   assert.match(popular, /router\.push\(popularDestinationStayNavigation\(destination\)\)/);
-  assert.match(adventure, /router\.push\(discoverAdventureNavigation\(card\)\)/);
+  assert.match(regional, /router\.push\(discoverAdventureNavigation\(route\)\)/);
   assert.match(popular, /event\.stopPropagation\(\);\s*toggle\(destination\.id\);/);
-  assert.match(adventure, /event\.stopPropagation\(\);\s*toggle\(card\.id\);/);
-  assert.doesNotMatch(popular + adventure, /router\.replace|router\.back|isAuthenticated\s*\?/);
-  assert.match(popular + adventure, /useSavedDestinations\(\)/);
+  assert.doesNotMatch(popular + regional, /router\.replace|router\.back|isAuthenticated\s*\?/);
+  assert.match(popular, /useSavedDestinations\(\)/);
 });
 
 test("Android and iOS share the same card, results, loading, and back-stack implementation", () => {
@@ -62,7 +61,7 @@ test("Android and iOS share the same card, results, loading, and back-stack impl
   const hotelRoute = source("app/hotel-results.tsx");
   const results = source("src/features/flow/TravelResultsScreen.tsx");
 
-  assert.doesNotMatch(popular + adventure + helper, /Platform\.OS/);
+  assert.doesNotMatch(popular + regional + helper, /Platform\.OS/);
   assert.match(flightRoute, /TravelResultsScreen product="flight"/);
   assert.match(hotelRoute, /TravelResultsScreen product="hotel"/);
   assert.match(results, /setStatus\("loading"\)/);
