@@ -40,7 +40,7 @@ test("every card renders a full-width top image followed by its information pane
   assert.match(panel, /adventure\.title/);
   assert.match(panel, /\{route\}/);
   assert.match(panel, /ONE WAY · ECONOMY · 1 TRAVELER/);
-  assert.match(panel, />From</);
+  assert.match(panel, />\s*From\s*</);
   assert.doesNotMatch(component.slice(imageFrame, contentPanel), /ONE WAY|\{route\}|>From</);
 });
 
@@ -49,6 +49,7 @@ test("favorite behavior and card navigation reuse the shared mobile implementati
   const contentPanel = component.indexOf("testID={`discovery-content-panel-${adventure.id}`}");
   const imageContents = component.slice(imageFrame, contentPanel);
   assert.match(imageContents, /<AndroidFavoriteButton/);
+  assert.match(component, /from "\.\/HomepageFavoriteButton"/);
   assert.match(imageContents, /event\.stopPropagation\(\);/);
   assert.match(component, /router\.push\(discoverAdventureNavigation\(adventure\)\)/);
   assert.match(component, /useSavedDestinations\(\)/);
