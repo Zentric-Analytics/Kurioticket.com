@@ -2,6 +2,55 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
+test("only Hotel details uses the white guided journey page background", async () => {
+  const source = await readFile(
+    new URL("./DealsJourneyShell.tsx", import.meta.url),
+    "utf8",
+  );
+  const backgroundRule = source.match(
+    /const useHotelDetailsBackground =([\s\S]*?);/,
+  );
+  assert.ok(backgroundRule);
+  assert.match(backgroundRule[1], /^\s*stage === "hotel-details"$/);
+  assert.deepEqual(
+    [...backgroundRule[1].matchAll(/stage === "([^"]+)"/g)].map(
+      ([, stage]) => stage,
+    ),
+    ["hotel-details"],
+  );
+  for (const grayStage of [
+    "hotel-results",
+    "flight-results",
+    "flight-details",
+    "car-results",
+    "car-details",
+  ])
+    assert.doesNotMatch(backgroundRule[1], new RegExp(grayStage));
+  assert.doesNotMatch(
+    backgroundRule[1],
+    /stage\.(?:endsWith|includes|startsWith)\(/,
+  );
+  assert.match(
+    source,
+    /className=\{`flex-1 overflow-x-clip pb-12 \$\{[\s\S]*?useHotelDetailsBackground \? "bg-white" : "bg-\[#f6f8fb\]"[\s\S]*?\}`\}/,
+  );
+  for (const attribute of [
+    "data-deals-guided-journey",
+    "data-deals-guided-stage",
+    "data-deals-guided-plan-state",
+  ])
+    assert.match(source, new RegExp(attribute));
+  assert.ok(
+    source.indexOf("<DealsJourneyBreadcrumbs") <
+      source.indexOf("<DealsJourneyProgress"),
+  );
+  assert.equal((source.match(/<DealsJourneyProgress/g) ?? []).length, 1);
+  assert.match(
+    source,
+    /requiredStage === stage && stage === "hotel-details"[\s\S]*?<DealsHotelDetailsStage/,
+  );
+});
+
 test("guided shell uses breadcrumbs as primary navigation without changing shared Deals presentation", async () => {
   const source = await readFile(
     new URL("./DealsJourneyShell.tsx", import.meta.url),
