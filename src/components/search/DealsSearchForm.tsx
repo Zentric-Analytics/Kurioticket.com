@@ -109,6 +109,13 @@ const connectedField =
   "sm:min-h-7 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:focus:border-0 sm:focus:ring-0";
 const flightConnectedSegment = `${connectedSegment} lg:min-h-[54px] lg:py-1`;
 const flightConnectedField = `${connectedField} lg:min-h-6`;
+const resultsRow = "grid gap-3 sm:gap-0";
+const resultsSegment =
+  "relative min-w-0 bg-transparent transition-colors hover:bg-slate-50/60 focus-within:bg-[#004BB8]/[0.04] focus-within:ring-1 focus-within:ring-inset focus-within:ring-[#004BB8]/20 sm:min-h-[54px] sm:border-s sm:border-slate-200 sm:px-4 sm:py-1 sm:first:border-s-0";
+const resultsControl =
+  "sm:min-h-6 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:shadow-none sm:focus:border-0 sm:focus:ring-0";
+const resultsPlainLauncher =
+  "focus-ring min-h-12 w-full rounded-xl border border-slate-300 bg-white px-3 text-start transition-colors hover:bg-slate-50/60 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:hover:bg-slate-50/60";
 
 const parseIsoDate = (value: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
@@ -3067,25 +3074,34 @@ export function DealsSearchForm({
               </button>
             </div>
             {variant === "results" ? (
-              <div className="rounded-xl border border-slate-300 bg-white px-3 py-2 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/20">
+              <div
+                data-deals-results-segment="cabin"
+                className={`${resultsSegment} lg:border-s`}
+              >
                 <label className={label} htmlFor="deals-results-flight-cabin">
                   {t("deals.cabinClass")}
                 </label>
-                <select
-                  id="deals-results-flight-cabin"
-                  value={search.flightCabinClass}
-                  onChange={(event) =>
-                    update(
-                      "flightCabinClass",
-                      event.target.value as DealsSearch["flightCabinClass"],
-                    )
-                  }
-                  className="min-h-7 w-full bg-transparent text-base font-medium text-slate-900 outline-none"
-                >
-                  <option value="economy">{t("economy")}</option>
-                  <option value="business">{t("business")}</option>
-                  <option value="first">{t("first")}</option>
-                </select>
+                <div className="relative">
+                  <select
+                    id="deals-results-flight-cabin"
+                    value={search.flightCabinClass}
+                    onChange={(event) =>
+                      update(
+                        "flightCabinClass",
+                        event.target.value as DealsSearch["flightCabinClass"],
+                      )
+                    }
+                    className="min-h-11 w-full appearance-none border-0 bg-transparent pe-7 text-base font-medium text-slate-900 outline-none sm:min-h-7"
+                  >
+                    <option value="economy">{t("economy")}</option>
+                    <option value="business">{t("business")}</option>
+                    <option value="first">{t("first")}</option>
+                  </select>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="pointer-events-none absolute end-0 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                  />
+                </div>
               </div>
             ) : null}
           </div>
@@ -3118,14 +3134,17 @@ export function DealsSearchForm({
             </h2>
             <div
               data-deals-field-content="stay"
-              className={`${connectedShell} sm:grid-cols-2`}
+              data-deals-results-row={
+                variant === "results" ? "stay" : undefined
+              }
+              className={`${variant === "results" ? resultsRow : connectedShell} sm:grid-cols-2`}
             >
               {(variant === "results" ||
                 !included.flight ||
                 !search.stayDestinationLinked) && (
                 <div
                   ref={hotelDestinationWrapRef}
-                  className={`${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 ${hotelDestinationOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
+                  className={`${variant === "results" ? resultsSegment : `${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0`} ${hotelDestinationOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
                   data-deals-hotel-destination
                 >
                   <label className={label} htmlFor="deals-hotel-destination">
@@ -3205,7 +3224,7 @@ export function DealsSearchForm({
                           setHotelDestinationHighlight(0);
                         }
                       }}
-                      className={`${field} ${connectedField} pe-10`}
+                      className={`${field} ${variant === "results" ? resultsControl : connectedField} pe-10`}
                       autoComplete="off"
                     />
                     {search.hotelDestination ? (
@@ -3281,7 +3300,7 @@ export function DealsSearchForm({
                 !included.flight ||
                 !search.stayDatesLinked) && (
                 <div
-                  className={`${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${hotelDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
+                  className={`${variant === "results" ? resultsSegment : `${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0`} ${hotelDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
                 >
                   <span className={label}>{t("deals.travelDates")}</span>
                   <button
@@ -3300,7 +3319,7 @@ export function DealsSearchForm({
                         ? dismissDesktopHotelDates(true)
                         : openHotelDates()
                     }
-                    className={`${field} ${connectedField} flex items-center justify-between gap-2 text-start`}
+                    className={`${field} ${variant === "results" ? resultsControl : connectedField} flex items-center justify-between gap-2 text-start`}
                   >
                     <span className="min-w-0 truncate">
                       {hotelDatesSummary}
@@ -3334,21 +3353,25 @@ export function DealsSearchForm({
         <section
           data-deals-results-car
           aria-labelledby="deals-car-heading"
-          className="border-t border-slate-200 py-4 sm:py-3 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)] lg:gap-4 lg:py-2"
+          className="border-t border-slate-200 py-4 sm:py-3 lg:py-2"
         >
           <h2
             id="deals-car-heading"
             data-deals-heading-rail="car"
-            className="mb-2 flex items-center gap-2 text-base font-extrabold text-[#021C2B] lg:mb-0 lg:self-start lg:pt-2"
+            className="mb-2 flex items-center gap-2 text-base font-extrabold text-[#021C2B]"
           >
             <Car className="h-5 w-5 text-[#004BB8]" />
             {t("deals.carRow")}
           </h2>
           <div
             data-deals-field-content="car"
-            className={`${connectedShell} sm:grid-cols-2 lg:grid-cols-3`}
+            data-deals-results-row="car"
+            className={`${resultsRow} sm:grid-cols-3`}
           >
-            <div className={connectedSegment}>
+            <div
+              data-deals-results-segment="car-pickup"
+              className={resultsSegment}
+            >
               <label className={label} htmlFor="deals-car-pickup">
                 {t("deals.pickup")}
               </label>
@@ -3368,7 +3391,7 @@ export function DealsSearchForm({
                       ),
                     );
                   }}
-                  className={`${field} ${connectedField} truncate pe-10`}
+                  className={`${field} ${resultsControl} truncate pe-10`}
                 />
                 {search.carPickupLocation ? (
                   <button
@@ -3415,7 +3438,10 @@ export function DealsSearchForm({
                 </button>
               ) : null}
             </div>
-            <div className={connectedSegment}>
+            <div
+              data-deals-results-segment="car-return"
+              className={resultsSegment}
+            >
               <span className={label}>{t("deals.returnLocation")}</span>
               <button
                 type="button"
@@ -3430,7 +3456,7 @@ export function DealsSearchForm({
                     : "deals-car-desktop-return-location"
                 }
                 onClick={() => openCarLocation("return")}
-                className={`${field} ${connectedField} flex items-center justify-between text-start`}
+                className={`${field} ${resultsControl} flex items-center justify-between text-start`}
               >
                 <span className="truncate">
                   {search.carReturnToDifferentLocation
@@ -3452,7 +3478,8 @@ export function DealsSearchForm({
               ) : null}
             </div>
             <div
-              className={`${connectedSegment} ${carDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8" : ""}`}
+              data-deals-results-segment="car-dates"
+              className={`${resultsSegment} ${carDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8" : ""}`}
             >
               <span className={label}>{t("deals.travelDates")}</span>
               <button
@@ -3468,7 +3495,7 @@ export function DealsSearchForm({
                 onClick={() =>
                   carDatesOpen ? dismissCarDates(true) : openCarDates()
                 }
-                className={`${field} ${connectedField} flex items-center justify-between text-start`}
+                className={`${field} ${resultsControl} flex items-center justify-between text-start`}
               >
                 <span className="truncate">{carDatesSummary}</span>
                 <Calendar className="h-4 w-4" />
@@ -3488,7 +3515,7 @@ export function DealsSearchForm({
               ) : null}
             </div>
           </div>
-          <div className="lg:col-start-2">{errorBlock("car")}</div>
+          <div>{errorBlock("car")}</div>
         </section>
       )}
       {variant === "landing" &&
@@ -3551,9 +3578,17 @@ export function DealsSearchForm({
               onClick={() =>
                 travelersOpen ? dismissDesktopTravelers() : openTravelers()
               }
-              className={`${field} flex min-h-12 items-center justify-between gap-2 text-start`}
+              data-deals-results-plain-launcher="travellers"
+              className={`${resultsPlainLauncher} flex items-center justify-between gap-2`}
             >
-              <span>{travelerSummary}</span>
+              <span className="min-w-0">
+                <span className={`${label} mb-0.5`}>
+                  {t("deals.travellersRooms")}
+                </span>
+                <span className="block truncate text-base font-medium text-slate-900">
+                  {travelerSummary}
+                </span>
+              </span>
               <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0" />
             </button>
             {searchDealsButton}

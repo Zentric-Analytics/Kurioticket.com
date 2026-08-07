@@ -12,6 +12,14 @@ const page = readFileSync(
 );
 
 const beforeResultsCar = form.slice(0, form.indexOf("data-deals-results-car"));
+const resultsCabin = form.slice(
+  form.indexOf('data-deals-results-segment="cabin"'),
+  form.indexOf("data-deals-results-stay"),
+);
+const resultsStay = form.slice(
+  form.indexOf("data-deals-results-stay"),
+  form.indexOf("data-deals-results-car"),
+);
 const resultsCar = form.slice(
   form.indexOf("data-deals-results-car"),
   form.indexOf("data-deals-results-travellers"),
@@ -69,6 +77,27 @@ test("results Flight exposes airports, swap, dates and shared cabin state", () =
   assert.match(beforeResultsCar, /flightDatesLauncherRef/);
   assert.match(beforeResultsCar, /flightCabinClass/);
   assert.match(beforeResultsCar, /update\(\s*"flightCabinClass"/);
+  assert.match(resultsCabin, /<select/);
+  assert.match(resultsCabin, /data-deals-results-segment="cabin"/);
+  assert.match(resultsCabin, /resultsSegment/);
+  assert.match(resultsCabin, /lg:border-s/);
+  assert.doesNotMatch(
+    resultsCabin,
+    /rounded-xl border border-slate-300 bg-white px-3 py-2/,
+  );
+});
+
+test("results Stay uses a plain segmented row instead of the connected card", () => {
+  assert.match(resultsStay, /data-deals-results-row=/);
+  assert.match(
+    resultsStay,
+    /variant === "results" \? resultsRow : connectedShell/,
+  );
+  assert.match(resultsStay, /variant === "results" \? resultsSegment/);
+  assert.doesNotMatch(
+    resultsStay,
+    /data-deals-results-row[^>]*className=\{`\$\{connectedShell\}/,
+  );
 });
 
 test("results Stay and Car edit and relink inherited shared fields", () => {
@@ -88,6 +117,31 @@ test("normal results Car row does not expose times or driver age", () => {
     resultsCar,
     /carTimesLauncherRef|carDriverAge|carOptions|pickupTime|returnTime/,
   );
+});
+
+test("results Car heading and fields use the same plain stacked section layout", () => {
+  assert.match(resultsCar, /data-deals-heading-rail="car"/);
+  assert.match(resultsCar, /data-deals-results-row="car"/);
+  assert.match(resultsCar, /data-deals-results-segment="car-pickup"/);
+  assert.match(resultsCar, /data-deals-results-segment="car-return"/);
+  assert.match(resultsCar, /data-deals-results-segment="car-dates"/);
+  assert.doesNotMatch(resultsCar, /lg:grid-cols-\[11rem_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(resultsCar, /className=\{`\$\{connectedShell\}/);
+});
+
+test("results Travellers remains an accessible plain launcher beside the CTA", () => {
+  const travellers = form.slice(form.indexOf("data-deals-results-travellers"));
+  assert.match(travellers, /<button[\s\S]*type="button"/);
+  assert.match(travellers, /aria-expanded=/);
+  assert.match(travellers, /aria-haspopup="dialog"/);
+  assert.match(travellers, /aria-controls=/);
+  assert.match(travellers, /data-deals-results-plain-launcher="travellers"/);
+  assert.match(travellers, /resultsPlainLauncher/);
+  assert.doesNotMatch(
+    travellers.slice(0, travellers.indexOf("searchDealsButton")),
+    /className=\{`\$\{field\}/,
+  );
+  assert.match(form, /type="submit"[\s\S]*rounded-xl bg-\[#004BB8\]/);
 });
 
 test("there is exactly one runtime submit action shared by both variants", () => {
