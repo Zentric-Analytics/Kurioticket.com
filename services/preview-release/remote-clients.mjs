@@ -96,7 +96,7 @@ export class RenderClient {
 }
 
 export class EasClient {
-  constructor({ expoToken, cwd, command = process.platform === "win32" ? "npx.cmd" : "npx" }) { this.expoToken = expoToken; this.cwd = cwd; this.command = command; }
+  constructor({ expoToken, cwd, command = process.platform === "win32" ? "npx.cmd" : "npx", fetchImpl = fetch }) { this.expoToken = expoToken; this.cwd = cwd; this.command = command; this.fetch = fetchImpl; }
   async listIosBuilds(targetSha) {
     return this.listBuilds("ios", targetSha);
   }
@@ -142,6 +142,31 @@ export class EasClient {
     return builds[0];
   }
   async viewBuild(id) { return this.run(["eas-cli@16.17.4", "build:view", id, "--json"]); }
+  async listIosSubmissions() {
+    const query = `query PreviewIosSubmissions($appId: String!, $limit: Int!, $offset: Int!) {
+      app { byId(appId: $appId) { id submissions(filter: { platform: IOS }, limit: $limit, offset: $offset) {
+        id status platform createdAt completedAt app { id } submittedBuild { id }
+      } } }
+    }`;
+    const all = [];
+    for (let offset = 0; offset < 500; offset += 50) {
+      const response = await this.fetch("https://api.expo.dev/graphql", {
+        method: "POST",
+        headers: { Accept: "application/json", Authorization: `Bearer ${this.expoToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ query, variables: { appId: PREVIEW_IDENTITY.easProjectId, limit: 50, offset } }),
+      });
+      if (!response.ok) throw new Error(`Expo GraphQL submission history failed with HTTP ${response.status}.`);
+      const raw = await response.text();
+      let value;
+      try { value = JSON.parse(raw); } catch { throw new Error("Expo GraphQL submission history returned malformed JSON."); }
+      if (Array.isArray(value?.errors) && value.errors.length) throw new Error("Expo GraphQL submission history returned errors.");
+      const app = value?.data?.app?.byId;
+      if (app?.id !== PREVIEW_IDENTITY.easProjectId || !Array.isArray(app?.submissions)) throw new Error("Expo GraphQL submission history is malformed or project-mismatched.");
+      all.push(...app.submissions);
+      if (app.submissions.length < 50) return all;
+    }
+    throw new Error("Expo submission history exceeded the bounded pagination limit.");
+  }
   async publishUpdate(message, platform) {
     if (platform !== "ios" && platform !== "android") throw new Error("EAS Update platform is invalid.");
     const value = await this.run(["eas-cli@16.17.4", "update", "--channel", "preview", "--platform", platform, "--message", message, "--non-interactive", "--json"]);
@@ -159,11 +184,6 @@ export class EasClient {
       if (page.length < 50) return all;
     }
     throw new Error("EAS update history exceeded the bounded pagination limit.");
-  }
-  async submitIosBuild(buildId) {
-    const value = await this.run(["eas-cli@16.17.4", "submit", "--platform", "ios", "--profile", "preview", "--id", buildId, "--no-wait", "--non-interactive", "--json"]);
-    if (!value?.id && !Array.isArray(value)) throw new Error("EAS recovery submission response is malformed.");
-    return Array.isArray(value) ? value[0] : value;
   }
   async run(args) {
     const raw = await this.runText(args);

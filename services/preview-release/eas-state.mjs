@@ -47,3 +47,17 @@ export function reconcileSubmission(build) {
   if (["ERRORED", "FAILED", "CANCELED"].includes(raw)) return { state: "FAILED", submission };
   return { state: "UNKNOWN", submission };
 }
+
+export function reconcileSubmissionHistory(submissions, buildId) {
+  if (!Array.isArray(submissions) || typeof buildId !== "string" || !buildId) return { state: "UNKNOWN" };
+  const exact = [];
+  for (const submission of submissions) {
+    if (!submission || typeof submission !== "object" || typeof submission.id !== "string" || typeof submission.status !== "string") return { state: "UNKNOWN" };
+    if (String(submission.platform ?? "").toUpperCase() !== "IOS") return { state: "UNKNOWN" };
+    if (submission.app?.id !== PREVIEW_IDENTITY.easProjectId || typeof submission.submittedBuild?.id !== "string") return { state: "UNKNOWN" };
+    if (submission.submittedBuild.id === buildId) exact.push(submission);
+  }
+  if (exact.length > 1) return { state: "CONFLICT", ids: exact.map(({ id }) => id).sort() };
+  if (!exact.length) return { state: "NOT_CREATED" };
+  return reconcileSubmission({ status: "FINISHED", submission: exact[0] });
+}
