@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS preview_release (
 CREATE TABLE IF NOT EXISTS preview_release_action (
   id bigserial PRIMARY KEY,
   source_sha text NOT NULL REFERENCES preview_release(source_sha) ON DELETE RESTRICT,
-  kind text NOT NULL CHECK (kind IN ('WEB','OTA','IOS_BUILD','ANDROID_BUILD','IOS_SUBMISSION','REPORT')),
+  kind text NOT NULL CHECK (kind IN ('WEB','OTA','IOS_BUILD','ANDROID_BUILD','IOS_SUBMISSION','IOS_TESTFLIGHT_DISTRIBUTION','REPORT')),
   identity_key text NOT NULL,
   remote_id text,
   state text NOT NULL,
@@ -37,7 +37,12 @@ CREATE TABLE IF NOT EXISTS preview_release_action (
   UNIQUE (kind, identity_key)
 );
 
+ALTER TABLE preview_release_action DROP CONSTRAINT IF EXISTS preview_release_action_kind_check;
+ALTER TABLE preview_release_action ADD CONSTRAINT preview_release_action_kind_check
+  CHECK (kind IN ('WEB','OTA','IOS_BUILD','ANDROID_BUILD','IOS_SUBMISSION','IOS_TESTFLIGHT_DISTRIBUTION','REPORT'));
+
 CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_render_per_sha ON preview_release_action(source_sha) WHERE kind='WEB';
 CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_ota_per_sha ON preview_release_action(source_sha) WHERE kind='OTA';
 CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_ios_build_per_sha ON preview_release_action(source_sha) WHERE kind='IOS_BUILD';
 CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_submission_per_build ON preview_release_action(identity_key) WHERE kind='IOS_SUBMISSION';
+CREATE UNIQUE INDEX IF NOT EXISTS preview_release_one_testflight_distribution_per_build_group ON preview_release_action(identity_key) WHERE kind='IOS_TESTFLIGHT_DISTRIBUTION';

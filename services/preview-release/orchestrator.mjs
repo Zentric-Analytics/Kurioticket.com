@@ -5,26 +5,32 @@ import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { exactChangeSet, exactCheckout, EasClient, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
 import { inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
+import { AppStoreConnectClient } from "./app-store-connect.mjs";
 
 export class PreviewOrchestrator {
-  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), stagingWait = waitForStaging, sleep = delay }) {
-    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.stagingWait = stagingWait; this.sleep = sleep;
+  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), stagingWait = waitForStaging, sleep = delay }) {
+    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.stagingWait = stagingWait; this.sleep = sleep;
   }
 
   async cycle() {
     const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
-    const sourceSha = this.config.iosNativeBackfillSha ?? currentDevSha;
-    if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const previous = await this.ledger.lastSuccessful();
+    const pendingDistribution = !this.config.iosNativeBackfillSha && typeof this.ledger.pendingIosDistribution === "function" ? await this.ledger.pendingIosDistribution() : null;
+    const currentDevNeedsEvaluation = previous?.source_sha !== currentDevSha;
+    const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevNeedsEvaluation ? pendingDistribution?.source_sha : null) ?? currentDevSha;
+    if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
     const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
     const deliveredNative = iosNativeBackfill ? {} : await this.deliveredNativeBaselines();
+    const iosDistributionPending = !iosNativeBackfill && (pendingDistribution?.source_sha === sourceSha || (typeof this.ledger.requiresIosDistribution === "function" && await this.ledger.requiresIosDistribution(sourceSha)));
     const pendingNative = previous?.source_sha === sourceSha
       ? nativeDriftTargets(previous.evidence?.fingerprints, deliveredNative)
       : [];
-    if (previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length) return { state: "NO_CHANGE", sourceSha };
+    if (previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length && !iosDistributionPending) return { state: "NO_CHANGE", sourceSha };
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
     const record = iosNativeBackfill
       ? await this.ledger.claimIosNativeBackfill({ ...claim, identityKey: `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview` })
+      : iosDistributionPending
+        ? await this.ledger.claimIosDistribution(claim)
       : pendingNative.length
         ? await this.ledger.claimNativeDrift(claim)
       : await this.ledger.claim(claim);
@@ -32,7 +38,7 @@ export class PreviewOrchestrator {
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
-      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative);
+      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative, iosDistributionPending);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
@@ -41,7 +47,7 @@ export class PreviewOrchestrator {
     } finally { await lease.stop(); }
   }
 
-  async process(record, previous, lease, deliveredNative = null) {
+  async process(record, previous, lease, deliveredNative = null, iosDistributionPending = false) {
     const sha = record.source_sha;
     await this.ledger.transition(sha, this.config.workerId, [record.state], "VALIDATING", { validation_state: "IN_PROGRESS" });
     const checkout = await exactCheckout({ repository: this.config.repository, token: this.config.githubReadToken, sha });
@@ -50,6 +56,7 @@ export class PreviewOrchestrator {
       let classification = previous ? classifyChangeSet(files) : { classification: "NO_DELIVERY", reason: "initial-baseline", files: [] };
       classification = applyCutoverBaseline({ classification, files, sha, config: this.config });
       classification = applyIosNativeBackfill({ classification, files, sha, config: this.config });
+      if (iosDistributionPending) classification = { classification: "IOS_NATIVE", reason: "pending-testflight-internal-distribution", files };
       if (classification.classification === "UNSAFE") throw new Error(`Release classification failed closed: ${classification.reason}.`);
       await prepareCheckout(checkout.directory);
       const identity = await resolvedIdentity(checkout.directory);
@@ -186,7 +193,10 @@ export class PreviewOrchestrator {
           continue;
         }
         await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_SUBMISSION", identityKey: `ios-submission:${build.id}`, remoteId: submission.submission.id, state: submission.state, evidence: submission.submission });
-        if (submission.state === "FINISHED") return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission.id };
+        if (submission.state === "FINISHED") {
+          const distribution = await this.distributeIosToInternalGroup({ sha, build, current, submission: submission.submission, lease });
+          return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission.id, distribution };
+        }
         await this.sleep(15_000);
         continue;
       }
@@ -194,6 +204,31 @@ export class PreviewOrchestrator {
       await this.sleep(30_000);
     }
     throw new Error(`EAS iOS build ${build.id} exceeded its bounded monitoring window.`);
+  }
+
+  async distributeIosToInternalGroup({ sha, build, current, submission, lease }) {
+    const apple = this.appleFactory();
+    const context = await apple.previewContext();
+    const version = String(current.appVersion ?? build.appVersion ?? "");
+    const buildNumber = String(current.appBuildVersion ?? build.appBuildVersion ?? "");
+    for (let attempt = 0; attempt < 240; attempt += 1) {
+      await lease.checkpoint();
+      const resolved = await apple.resolveBuild({ version, buildNumber });
+      if (resolved.state === "PROCESSING") { await this.sleep(30_000); continue; }
+      const appleBuildId = resolved.build.id;
+      const identityKey = `${appleBuildId}:${context.group.id}`;
+      const associated = await apple.isAssociated(appleBuildId);
+      if (!associated) {
+        await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_TESTFLIGHT_DISTRIBUTION", identityKey, remoteId: appleBuildId, state: "PLANNED", evidence: { appleBuildId, betaGroupId: context.group.id, version, buildNumber, processingState: resolved.state, easBuildId: build.id, easSubmissionId: submission.id } });
+        try { await apple.associate(appleBuildId); } catch (error) {
+          if (!await apple.isAssociated(appleBuildId)) throw error;
+        }
+      }
+      if (!await apple.isAssociated(appleBuildId)) throw new Error("Apple accepted TestFlight association but read-back verification failed.");
+      await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_TESTFLIGHT_DISTRIBUTION", identityKey, remoteId: appleBuildId, state: "FINISHED", evidence: { appleBuildId, betaGroupId: context.group.id, betaGroupName: context.group.attributes.name, appId: context.app.id, bundleIdentifier: context.app.attributes.bundleId, version, buildNumber, processingState: resolved.state, easBuildId: build.id, easSubmissionId: submission.id, associated: true } });
+      return { appleBuildId, betaGroupId: context.group.id, state: "FINISHED", associated: true };
+    }
+    throw new Error("Apple build processing exceeded its bounded polling window.");
   }
 
   async deliverAndroid(sha, cwd, lease) {
