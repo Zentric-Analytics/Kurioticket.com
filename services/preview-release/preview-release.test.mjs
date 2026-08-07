@@ -257,6 +257,36 @@ test("web recovery adopts the recorded Render deploy without creating a duplicat
   assert.equal(actions.at(-1).state, "LIVE");
 });
 
+test("web recovery replaces one terminal recorded deploy through an atomic ledger rollover", async () => {
+  let creates = 0;
+  const recorded = { id: "dep-failed", status: "build_failed", commit: { id: sha } };
+  const replacement = { id: "dep-replacement", status: "live", commit: { id: sha } };
+  const actions = [];
+  const replacements = [];
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => ({ remote_id: recorded.id }),
+      recordAction: async (action) => { actions.push(action); return action; },
+      replaceTerminalAction: async (action) => { replacements.push(action); return action; },
+    },
+    github: {},
+    render: {
+      createDeploy: async () => { creates += 1; return replacement; },
+      getDeploy: async (id) => id === recorded.id ? recorded : replacement,
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+  const result = await orchestrator.deliverWeb(sha, { checkpoint: async () => {} });
+  assert.equal(creates, 1);
+  assert.equal(actions[0].state, "BUILD_FAILED");
+  assert.equal(replacements.length, 1);
+  assert.equal(replacements[0].expectedRemoteId, recorded.id);
+  assert.equal(replacements[0].remoteId, replacement.id);
+  assert.equal(result.deployId, replacement.id);
+});
+
 test("legacy Preview deployment workflows are absent and Production delivery is preserved", () => {
   const removed = ["preview-dev-delivery.yml", "ios-preview-build.yml", "ios-preview-testflight-submit.yml", "mobile-preview-update.yml", "android-preview-build.yml", "android-preview-ota.yml"];
   for (const file of removed) assert.equal(existsSync(resolve(repositoryRoot, ".github/workflows", file)), false, file);

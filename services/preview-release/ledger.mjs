@@ -102,5 +102,18 @@ export class PreviewLedger {
     return result.rows[0] ?? null;
   }
 
+  async replaceTerminalAction({ sourceSha, kind, identityKey, expectedRemoteId, remoteId, state, evidence = {} }) {
+    const result = await this.pool.query(
+      `UPDATE preview_release_action
+       SET remote_id=$5, state=$6, evidence=$7::jsonb, updated_at=now()
+       WHERE source_sha=$1 AND kind=$2 AND identity_key=$3 AND remote_id=$4
+         AND state IN ('BUILD_FAILED','UPDATE_FAILED','CANCELED','DEACTIVATED')
+       RETURNING *`,
+      [sourceSha, kind, identityKey, expectedRemoteId, remoteId, state, JSON.stringify(evidence)],
+    );
+    if (result.rowCount !== 1) throw new Error(`Terminal remote replacement for ${kind}:${identityKey} was rejected.`);
+    return result.rows[0];
+  }
+
   async close() { await this.pool.end(); }
 }
