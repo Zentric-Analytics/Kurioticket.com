@@ -192,6 +192,11 @@ for (const [status, expected] of [["IN_QUEUE", "ACTIVE_MATCH"], ["IN_PROGRESS", 
 }
 test("EAS reconciliation returns NONE for unrelated SHAs", () => assert.equal(reconcileBuilds([build({ gitCommitHash: "b".repeat(40) })], sha).decision, "NONE"));
 test("EAS reconciliation fails closed on identity conflict", () => assert.equal(reconcileBuilds([build({ buildProfile: "production" })], sha).decision, "CONFLICT"));
+test("EAS reconciliation accepts omitted CLI identifier fields only when exact server-side filters are attested", () => {
+  const value = build({ appIdentifier: undefined, runtimeVersion: undefined, channel: undefined, queriedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier, queriedRuntimeVersion: PREVIEW_IDENTITY.runtimeVersion, queriedChannel: PREVIEW_IDENTITY.channel });
+  assert.equal(reconcileBuilds([value], sha).decision, "ACTIVE_MATCH");
+  assert.equal(reconcileBuilds([{ ...value, queriedAppIdentifier: undefined }], sha).decision, "CONFLICT");
+});
 test("EAS reconciliation fails closed on duplicate exact matches", () => assert.equal(reconcileBuilds([build(), build({ id: "build-2" })], sha).decision, "CONFLICT"));
 test("EAS reconciliation fails closed on malformed history", () => assert.equal(reconcileBuilds([{ nope: true }], sha).decision, "MALFORMED_RESPONSE"));
 test("EAS reconciliation supports exact Android Preview identity", () => {
@@ -211,6 +216,14 @@ test("submission history fails closed on duplicates, wrong projects, and malform
   assert.equal(reconcileSubmissionHistory([submission(), submission({ id: "sub-2" })], "build-1").state, "CONFLICT");
   assert.equal(reconcileSubmissionHistory([submission({ app: { id: "wrong-project" } })], "build-1").state, "UNKNOWN");
   assert.equal(reconcileSubmissionHistory([{ id: "sub-1" }], "build-1").state, "UNKNOWN");
+});
+
+test("EAS build history applies exact Preview bundle, runtime, channel, profile, platform, and SHA filters", async () => {
+  const calls = [];
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
+  client.run = async (args) => { calls.push(args); return []; };
+  assert.deepEqual(await client.listIosBuilds(sha), []);
+  assert.deepEqual(calls[0].slice(0, 15), ["eas-cli@16.17.4", "build:list", "--platform", "ios", "--profile", "preview", "--app-identifier", PREVIEW_IDENTITY.bundleIdentifier, "--runtime-version", PREVIEW_IDENTITY.runtimeVersion, "--channel", PREVIEW_IDENTITY.channel, "--git-commit-hash", sha]);
 });
 
 test("EAS submission history uses authenticated bounded GraphQL and exact project identity", async () => {
