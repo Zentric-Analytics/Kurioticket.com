@@ -6,6 +6,10 @@ const form = readFileSync(
   new URL("./DealsSearchForm.tsx", import.meta.url),
   "utf8",
 );
+const dealsSearchParams = readFileSync(
+  new URL("../../lib/deals/dealsSearchParams.ts", import.meta.url),
+  "utf8",
+);
 const mobilePickerShell = readFileSync(
   new URL("./FlightMobilePickerShell.tsx", import.meta.url),
   "utf8",
@@ -89,12 +93,44 @@ test("detached Hotel fields remain visible and recoverable", () => {
   assert.match(form, /deals\.useMainTravelDates/);
 });
 
-test("Car controls and one compact search action remain", () => {
-  assert.match(form, /data-deals-field-content="car"/);
-  assert.match(form, /id="deals-car-pickup"/);
-  assert.match(form, /deals\.returnLocation/);
-  assert.match(form, /ref=\{carDatesLauncherRef\}/);
-  assert.match(form, /deals\.carOptions/);
+test("Car stays a package product without rendering a standalone search row", () => {
+  assert.match(form, /dealsProductOrder\.map/);
+  assert.match(dealsSearchParams, /"hotel-flight-car"/);
+  assert.match(dealsSearchParams, /"flight-car"/);
+  assert.match(dealsSearchParams, /"hotel-car"/);
+  assert.doesNotMatch(form, /data-deals-field-content="car"/);
+  assert.doesNotMatch(form, /deals-car-pickup/);
+  assert.doesNotMatch(form, /deals-car-(?:desktop|mobile)/);
+  assert.doesNotMatch(form, /carDatesLauncherRef/);
+  assert.doesNotMatch(form, /deals\.carOptions/);
+  assert.doesNotMatch(form, /carsSearch\.(?:pickup|return)Time/);
+  assert.doesNotMatch(form, /carsSearch\.driverAge/);
+});
+
+test("detached historical Car inputs have compact relink actions only", () => {
+  const recovery =
+    form.match(/<aside[\s\S]*?data-deals-car-recovery[\s\S]*?<\/aside>/)?.[0] ??
+    "";
+  assert.match(recovery, /!search\.carPickupLinked/);
+  assert.match(recovery, /relinkInheritedField\(current, "carPickup"\)/);
+  assert.match(recovery, /!search\.carDatesLinked/);
+  assert.match(recovery, /relinkInheritedField\(current, "carDates"\)/);
+  assert.doesNotMatch(recovery, /<input|<select|DatePicker/);
+});
+
+test("Flight and Hotel primary controls cover every Car package", () => {
+  assert.match(form, /included\.flight/);
+  assert.match(form, /\["origin", "destination"\]/);
+  assert.match(form, /ref=\{flightDatesLauncherRef\}/);
+  assert.match(
+    form,
+    /data-deals-hotel-primary=\{!included\.flight \? "true" : undefined\}/,
+  );
+  assert.match(form, /ref=\{hotelDestinationInputRef\}/);
+  assert.match(form, /ref=\{hotelDatesLauncherRef\}/);
+});
+
+test("exactly one compact search action remains", () => {
   assert.equal(form.match(/type="submit"/g)?.length, 1);
   assert.match(form, /data-deals-search-actions/);
 });
