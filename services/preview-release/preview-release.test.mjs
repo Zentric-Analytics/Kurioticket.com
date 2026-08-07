@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission } from "./eas-state.mjs";
-import { PreviewOrchestrator, maintainLease, retry } from "./orchestrator.mjs";
+import { PreviewOrchestrator, applyCutoverBaseline, maintainLease, retry } from "./orchestrator.mjs";
 import { EasClient, RenderClient, gitAuthEnvironment } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
@@ -25,8 +25,20 @@ test("environment defaults to non-mutating dry-run and rejects missing secrets",
   assert.throws(() => requirePreviewEnvironment({}), /Missing/);
   const config = requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "z" });
   assert.equal(config.mode, "dry-run");
+  assert.equal(config.cutoverBaselineSha, null);
   assert.equal(config.pollIntervalMs, 60_000);
   assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: "srv-other", EXPO_TOKEN: "z" }), /approved Preview staging service/);
+});
+
+test("cutover baseline is immutable and dry-run only", async () => {
+  const baselineSha = "b".repeat(40);
+  const config = requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "token-read", RENDER_API_KEY: "render-key", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "expo-token", PREVIEW_CUTOVER_BASELINE_SHA: baselineSha });
+  assert.equal(config.cutoverBaselineSha, baselineSha);
+  assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "token-read", RENDER_API_KEY: "render-key", RENDER_STAGING_SERVICE_ID: PREVIEW_IDENTITY.renderStagingServiceId, EXPO_TOKEN: "expo-token", PREVIEW_CUTOVER_BASELINE_SHA: "dev" }), /Cutover baseline SHA/);
+  const ordinary = { classification: "OTA", reason: "classified", files: ["apps/mobile/src/a.ts"] };
+  assert.deepEqual(applyCutoverBaseline({ classification: ordinary, files: ordinary.files, sha, config: { mode: "dry-run", cutoverBaselineSha: null } }), ordinary);
+  assert.deepEqual(applyCutoverBaseline({ classification: ordinary, files: ordinary.files, sha, config: { mode: "dry-run", cutoverBaselineSha: sha } }), { classification: "NO_DELIVERY", reason: "approved-cutover-baseline", files: ordinary.files });
+  assert.throws(() => applyCutoverBaseline({ classification: ordinary, files: ordinary.files, sha, config: { mode: "active", cutoverBaselineSha: sha } }), /Cutover baseline may only be established in dry-run mode/);
 });
 
 test("Render preflight reads only the approved staging service", async () => {
