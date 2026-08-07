@@ -13,7 +13,7 @@ For a one-time cutover, set `PREVIEW_CUTOVER_BASELINE_SHA` to the exact 40-chara
 
 The worker automatically runs `sql/001_init.sql`, polls once per minute, and writes one durable row per `dev` SHA. Dry-run performs reads, exact checkout, identity validation, classification, reconciliation planning, and ledger/report generation but creates no Render deploy, EAS Update, EAS build, or TestFlight submission.
 
-Exact-checkout preparation installs only the mobile dependency tree required for Expo fingerprinting and delivery. It does not install the unrelated web dependency tree in the memory-constrained worker runtime.
+Exact-checkout preparation installs only the production mobile dependency tree required for Expo fingerprinting and delivery, with npm audit and funding output disabled. It does not install unrelated web or mobile development tooling in the memory-constrained worker runtime.
 
 ### Recovery
 
