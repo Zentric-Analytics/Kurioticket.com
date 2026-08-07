@@ -56,7 +56,7 @@ export function reconcileSubmissionHistory(submissions, buildId) {
   for (const submission of submissions) {
     if (!submission || typeof submission !== "object" || typeof submission.id !== "string" || typeof submission.status !== "string") return { state: "UNKNOWN" };
     if (String(submission.platform ?? "").toUpperCase() !== "IOS") return { state: "UNKNOWN" };
-    if (submission.app?.id !== PREVIEW_IDENTITY.easProjectId || typeof submission.submittedBuild?.id !== "string") return { state: "UNKNOWN" };
+    if (submission.app?.id !== PREVIEW_IDENTITY.easProjectId) return { state: "UNKNOWN" };\n    if (submission.submittedBuild == null) continue;\n    if (typeof submission.submittedBuild !== "object" || typeof submission.submittedBuild.id !== "string") return { state: "UNKNOWN" };
     if (submission.submittedBuild.id === buildId) exact.push(submission);
   }
   if (exact.length > 1) return { state: "CONFLICT", ids: exact.map(({ id }) => id).sort() };

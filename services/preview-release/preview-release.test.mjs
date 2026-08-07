@@ -230,7 +230,7 @@ test("finished build without submission is explicit NOT_CREATED", () => assert.e
 test("duplicate submissions fail closed", () => assert.equal(reconcileSubmission({ submissions: [{ id: "1" }, { id: "2" }] }).state, "CONFLICT"));
 const submission = (overrides = {}) => ({ id: "sub-1", status: "FINISHED", platform: "IOS", app: { id: PREVIEW_IDENTITY.easProjectId }, submittedBuild: { id: "build-1" }, ...overrides });
 test("submission history adopts the unique exact-build Preview submission", () => assert.equal(reconcileSubmissionHistory([submission()], "build-1").state, "FINISHED"));
-test("submission history ignores valid submissions for other builds", () => assert.equal(reconcileSubmissionHistory([submission({ submittedBuild: { id: "other-build" } })], "build-1").state, "NOT_CREATED"));
+test("submission history ignores valid submissions for other builds", () => assert.equal(reconcileSubmissionHistory([submission({ submittedBuild: { id: "other-build" } })], "build-1").state, "NOT_CREATED"));\ntest("submission history ignores valid legacy rows without a submitted build", () => assert.equal(reconcileSubmissionHistory([\n  submission({ id: "legacy", submittedBuild: null }),\n  submission(),\n], "build-1").state, "FINISHED"));
 test("submission history fails closed on duplicates, wrong projects, and malformed entries", () => {
   assert.equal(reconcileSubmissionHistory([submission(), submission({ id: "sub-2" })], "build-1").state, "CONFLICT");
   assert.equal(reconcileSubmissionHistory([submission({ app: { id: "wrong-project" } })], "build-1").state, "UNKNOWN");
