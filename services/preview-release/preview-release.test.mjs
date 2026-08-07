@@ -13,7 +13,7 @@ import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 
 const sha = "a".repeat(40);
 const repositoryRoot = resolve(import.meta.dirname, "../..");
-const build = (overrides = {}) => ({ id: "build-1", status: "IN_PROGRESS", gitCommitHash: sha, project: { id: PREVIEW_IDENTITY.easProjectId }, platform: "IOS", buildProfile: "preview", appIdentifier: PREVIEW_IDENTITY.bundleIdentifier, runtimeVersion: PREVIEW_IDENTITY.runtimeVersion, channel: PREVIEW_IDENTITY.channel, ...overrides });
+const build = (overrides = {}) => ({ id: "build-1", status: "IN_PROGRESS", gitCommitHash: sha, project: { id: PREVIEW_IDENTITY.easProjectId }, platform: "IOS", buildProfile: "preview", appIdentifier: PREVIEW_IDENTITY.bundleIdentifier, runtimeVersion: PREVIEW_IDENTITY.runtime, channel: PREVIEW_IDENTITY.channel, ...overrides });
 
 test("Preview identity is immutable", () => {
   assert.equal(assertPreviewIdentity({ appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtime: "preview-0.3.0", apiOrigin: "https://staging.kurioticket.com" }), true);
@@ -209,7 +209,7 @@ test("EAS reconciliation accepts a sparse build:view result only with complete i
     sourceAttestedPlatform: "ios",
     sourceAttestedBuildProfile: "preview",
     sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier,
-    sourceAttestedRuntimeVersion: PREVIEW_IDENTITY.runtimeVersion,
+    sourceAttestedRuntimeVersion: PREVIEW_IDENTITY.runtime,
     sourceAttestedChannel: PREVIEW_IDENTITY.channel,
   });
   assert.equal(reconcileBuilds([sparse], sha).decision, "ACTIVE_MATCH");

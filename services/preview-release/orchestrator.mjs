@@ -141,7 +141,7 @@ export class PreviewOrchestrator {
     if (recordedBuildAction?.remote_id) {
       decision = reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], sha);
       if (!["ACTIVE_MATCH", "FINISHED_MATCH"].includes(decision.decision)) {
-        throw new Error(`Persisted iOS build ${recordedBuildAction.remote_id} failed identity reconciliation: ${decision.decision}; identity=${JSON.stringify(decision.identity ?? null)}.`);
+        throw new Error(`Persisted iOS build ${recordedBuildAction.remote_id} failed identity reconciliation: ${decision.decision}.`);
       }
     } else {
       decision = reconcileBuilds(await eas.listIosBuilds(sha), sha);
