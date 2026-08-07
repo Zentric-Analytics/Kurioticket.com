@@ -120,7 +120,9 @@ test("Render deploy reconciliation excludes every deployment that existed before
 test("EAS preflight accepts only the exact Preview project and readable history", async () => {
   const client = new EasClient({ expoToken: "expo-secret", cwd: repositoryRoot, command: "unused" });
   const calls = [];
-  client.runText = async (args) => { calls.push(args); return `fullName  ${PREVIEW_IDENTITY.easProjectFullName}\nID        ${PREVIEW_IDENTITY.easProjectId}\n`; };
+  client.runText = async (args) => { calls.push(args); return `fullName  ${PREVIEW_IDENTITY.easProjectFullName}
+ID        ${PREVIEW_IDENTITY.easProjectId}
+`; };
   client.run = async (args) => { calls.push(args); return []; };
   assert.equal((await client.projectInfo()).projectId, PREVIEW_IDENTITY.easProjectId);
   assert.deepEqual(await client.previewBuildHistory(), []);
@@ -130,7 +132,9 @@ test("EAS preflight accepts only the exact Preview project and readable history"
 
 test("EAS preflight rejects wrong projects, authentication errors, and malformed history", async () => {
   const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
-  client.runText = async () => `fullName  @other/project\nID        ${PREVIEW_IDENTITY.easProjectId}\n`;
+  client.runText = async () => `fullName  @other/project
+ID        ${PREVIEW_IDENTITY.easProjectId}
+`;
   await assert.rejects(client.projectInfo(), /mismatched/);
   client.runText = async () => { throw new Error("Expo authentication failed"); };
   await assert.rejects(client.projectInfo(), /authentication failed/);
@@ -230,7 +234,11 @@ test("finished build without submission is explicit NOT_CREATED", () => assert.e
 test("duplicate submissions fail closed", () => assert.equal(reconcileSubmission({ submissions: [{ id: "1" }, { id: "2" }] }).state, "CONFLICT"));
 const submission = (overrides = {}) => ({ id: "sub-1", status: "FINISHED", platform: "IOS", app: { id: PREVIEW_IDENTITY.easProjectId }, submittedBuild: { id: "build-1" }, ...overrides });
 test("submission history adopts the unique exact-build Preview submission", () => assert.equal(reconcileSubmissionHistory([submission()], "build-1").state, "FINISHED"));
-test("submission history ignores valid submissions for other builds", () => assert.equal(reconcileSubmissionHistory([submission({ submittedBuild: { id: "other-build" } })], "build-1").state, "NOT_CREATED"));\ntest("submission history ignores valid legacy rows without a submitted build", () => assert.equal(reconcileSubmissionHistory([\n  submission({ id: "legacy", submittedBuild: null }),\n  submission(),\n], "build-1").state, "FINISHED"));
+test("submission history ignores valid submissions for other builds", () => assert.equal(reconcileSubmissionHistory([submission({ submittedBuild: { id: "other-build" } })], "build-1").state, "NOT_CREATED"));
+test("submission history ignores valid legacy rows without a submitted build", () => assert.equal(reconcileSubmissionHistory([
+  submission({ id: "legacy", submittedBuild: null }),
+  submission(),
+], "build-1").state, "FINISHED"));
 test("submission history fails closed on duplicates, wrong projects, and malformed entries", () => {
   assert.equal(reconcileSubmissionHistory([submission(), submission({ id: "sub-2" })], "build-1").state, "CONFLICT");
   assert.equal(reconcileSubmissionHistory([submission({ app: { id: "wrong-project" } })], "build-1").state, "UNKNOWN");
@@ -471,7 +479,8 @@ test("exact-checkout preparation fails closed when dependency manifests differ",
     for (const manifest of ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"]) {
       await copyFile(resolve(repositoryRoot, manifest), resolve(temporary, manifest));
     }
-    await writeFile(resolve(temporary, "apps/mobile/package.json"), "{}\n");
+    await writeFile(resolve(temporary, "apps/mobile/package.json"), "{}
+");
     await assert.rejects(
       prepareCheckout(temporary, { dependencyRoot: repositoryRoot, commandRunner: async () => {} }),
       /dependency manifest differs.*apps\/mobile\/package\.json/,
