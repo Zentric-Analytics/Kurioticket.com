@@ -416,6 +416,36 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/);
 });
 
+test("web recovery replaces a terminal exact-SHA deploy discovered before the ledger action exists", async () => {
+  let creates = 0;
+  const deactivated = { id: "dep-deactivated", status: "deactivated", commit: { id: sha } };
+  const replacement = { id: "dep-replacement", status: "live", commit: { id: sha } };
+  const actions = [];
+  const replacements = [];
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => null,
+      recordAction: async (action) => { actions.push(action); return action; },
+      replaceTerminalAction: async (action) => { replacements.push(action); return action; },
+    },
+    github: {},
+    render: {
+      createDeploy: async () => { creates += 1; return replacement; },
+      findDeploysBySha: async () => [deactivated],
+      getDeploy: async (id) => id === deactivated.id ? deactivated : replacement,
+    },
+    stagingWait: async ({ targetSha }) => ({ ready: true, commitSha: targetSha }),
+    sleep: async () => {},
+  });
+  const result = await orchestrator.deliverWeb(sha, { checkpoint: async () => {} });
+  assert.equal(creates, 1);
+  assert.equal(actions[0].state, "DEACTIVATED");
+  assert.equal(replacements.length, 1);
+  assert.equal(replacements[0].expectedRemoteId, deactivated.id);
+  assert.equal(result.deployId, replacement.id);
+});
+
 test("web delivery adopts exact-SHA Render history before creating a duplicate", async () => {
   let creates = 0;
   const actions = [];
