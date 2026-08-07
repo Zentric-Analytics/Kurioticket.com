@@ -14,7 +14,14 @@ export class PreviewOrchestrator {
 
   async cycle() {
     const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
-    const previous = await this.ledger.lastSuccessful();
+    let previous = await this.ledger.lastSuccessful();
+    if (previous?.source_sha !== currentDevSha && typeof this.ledger.reconcileCompletedCurrentDevProgression === "function") {
+      const reconciled = await this.ledger.reconcileCompletedCurrentDevProgression({
+        sourceSha: currentDevSha,
+        previousSha: previous?.source_sha ?? null,
+      });
+      if (reconciled) previous = reconciled;
+    }
     const pendingDistribution = !this.config.iosNativeBackfillSha && typeof this.ledger.pendingIosDistribution === "function" ? await this.ledger.pendingIosDistribution() : null;
     const currentDevNeedsEvaluation = previous?.source_sha !== currentDevSha;
     const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevNeedsEvaluation ? pendingDistribution?.source_sha : null) ?? currentDevSha;

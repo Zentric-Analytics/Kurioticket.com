@@ -615,6 +615,54 @@ test("historical distribution completion preserves the monotonic ordinary progre
   assert.match(queries[1].sql, /progression_order IS NOT NULL ORDER BY progression_order DESC/);
 });
 
+test("mixed-version deploy promotes only the completed current dev row before historical distribution recovery", async () => {
+  const historical = sha;
+  const previousSha = "b".repeat(40);
+  const currentDevSha = "c".repeat(40);
+  let reconciliations = 0;
+  let distributionClaims = 0;
+  const ledger = {
+    lastSuccessful: async () => ({ source_sha: previousSha, progression_order: 20 }),
+    reconcileCompletedCurrentDevProgression: async ({ sourceSha, previousSha: suppliedPrevious }) => {
+      reconciliations += 1;
+      assert.equal(sourceSha, currentDevSha);
+      assert.equal(suppliedPrevious, previousSha);
+      return { source_sha: currentDevSha, previous_sha: previousSha, state: "COMPLETE", progression_order: 21 };
+    },
+    pendingIosDistribution: async () => ({ source_sha: historical, ios_build_id: "build-9" }),
+    requiresIosDistribution: async (sourceSha) => sourceSha === historical,
+    claimIosDistribution: async ({ sourceSha }) => {
+      distributionClaims += 1;
+      assert.equal(sourceSha, historical);
+      return { source_sha: historical, state: "DETECTED" };
+    },
+    transition: async () => {},
+  };
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
+    ledger,
+    github: { latestDevSha: async () => currentDevSha, compare: async () => {}, report: async () => {} },
+    render: {}, sleep: async () => {},
+  });
+  orchestrator.reconcileIosDistribution = async (record) => ({ ...record, state: "COMPLETE" });
+
+  const result = await orchestrator.cycle();
+  assert.equal(result.source_sha, historical);
+  assert.equal(reconciliations, 1);
+  assert.equal(distributionClaims, 1);
+});
+
+test("current-dev progression repair is chain-bound and cannot promote a delayed historical side effect", async () => {
+  const queries = [];
+  const ledger = new PreviewLedger("postgres://localhost/test", {
+    pool: { query: async (sql, values) => { queries.push({ sql, values }); return { rows: [], rowCount: 0 }; } },
+  });
+  assert.equal(await ledger.reconcileCompletedCurrentDevProgression({ sourceSha: "c".repeat(40), previousSha: "b".repeat(40) }), null);
+  assert.match(queries[0].sql, /source_sha=\$1 AND state='COMPLETE' AND progression_order IS NULL/);
+  assert.match(queries[0].sql, /previous_sha IS NOT DISTINCT FROM \$2::text/);
+  assert.deepEqual(queries[0].values, ["c".repeat(40), "b".repeat(40)]);
+});
+
 test("processing timeout retries the same durable TestFlight distribution action", async () => {
   let claims = 0;
   let processed = 0;

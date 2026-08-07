@@ -131,6 +131,20 @@ export class PreviewLedger {
     return result.rows[0] ?? null;
   }
 
+  async reconcileCompletedCurrentDevProgression({ sourceSha, previousSha }) {
+    assertExactSha(sourceSha);
+    if (previousSha) assertExactSha(previousSha, "Previous SHA");
+    const result = await this.pool.query(
+      `UPDATE preview_release
+       SET progression_order=nextval('preview_release_progression_order_seq'), updated_at=now()
+       WHERE source_sha=$1 AND state='COMPLETE' AND progression_order IS NULL
+         AND previous_sha IS NOT DISTINCT FROM $2::text
+       RETURNING *`,
+      [sourceSha, previousSha ?? null],
+    );
+    return result.rows[0] ?? null;
+  }
+
   async lastSuccessfulNative(platform) {
     if (platform !== "ios" && platform !== "android") throw new Error("Native platform is invalid.");
     const buildKind = platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD";
