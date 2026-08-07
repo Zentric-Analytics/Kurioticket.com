@@ -173,6 +173,7 @@ export class EasClient {
     const directory = await mkdtemp(join(tmpdir(), "kurioticket-eas-"));
     try {
       const stdoutPath = join(directory, "stdout.json");
+      console.log(JSON.stringify({ event: "preview-release-eas-command-started", command: args[1], rssBytes: process.memoryUsage().rss }));
       const { stdout } = await exec(this.command, args, {
         cwd: this.cwd,
         encoding: "utf8",
@@ -183,9 +184,12 @@ export class EasClient {
           APP_VARIANT: "preview",
           APP_BUILD_MODE: "release",
           EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
+          NODE_OPTIONS: "--max-old-space-size=128",
+          MALLOC_ARENA_MAX: "2",
         },
       });
       await import("node:fs/promises").then(({ writeFile }) => writeFile(stdoutPath, stdout, { mode: 0o600 }));
+      console.log(JSON.stringify({ event: "preview-release-eas-command-complete", command: args[1], rssBytes: process.memoryUsage().rss }));
       return readFile(stdoutPath, "utf8");
     } finally { await rm(directory, { recursive: true, force: true }); }
   }

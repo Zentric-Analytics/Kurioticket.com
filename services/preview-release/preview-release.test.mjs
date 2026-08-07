@@ -405,6 +405,10 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /NODE_OPTIONS: "--max-old-space-size=96", MALLOC_ARENA_MAX: "2"/);
   assert.match(client, /preview-release-fingerprint-started/);
   assert.match(client, /preview-release-fingerprint-complete/);
+  assert.match(client, /NODE_OPTIONS: "--max-old-space-size=128"/);
+  assert.match(client, /MALLOC_ARENA_MAX: "2"/);
+  assert.match(client, /preview-release-eas-command-started/);
+  assert.match(client, /preview-release-eas-command-complete/);
   assert.match(client, /timeout: 5 \* 60 \* 1000/);
   assert.doesNotMatch(client, /exec\(command, \["fingerprint", "fingerprint:generate"/);
   assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/);
