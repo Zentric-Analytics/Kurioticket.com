@@ -234,14 +234,14 @@ test("polling API failure never becomes a no-change result", async () => {
 });
 
 test("exact-checkout preparation reuses the immutable build dependency trees", async () => {
-  const links = [];
+  const copies = [];
   await prepareCheckout(repositoryRoot, {
     dependencyRoot: repositoryRoot,
-    symlinkImpl: async (...args) => { links.push(args); },
+    commandRunner: async (...args) => { copies.push(args); },
   });
-  assert.deepEqual(links.map(([source, destination]) => [source, destination]), [
-    [resolve(repositoryRoot, "node_modules"), resolve(repositoryRoot, "node_modules")],
-    [resolve(repositoryRoot, "apps/mobile/node_modules"), resolve(repositoryRoot, "apps/mobile/node_modules")],
+  assert.deepEqual(copies.map(([command, args]) => [command, args]), [
+    ["cp", ["-al", "--", resolve(repositoryRoot, "node_modules"), resolve(repositoryRoot, "node_modules")]],
+    ["cp", ["-al", "--", resolve(repositoryRoot, "apps/mobile/node_modules"), resolve(repositoryRoot, "apps/mobile/node_modules")]],
   ]);
 });
 
@@ -254,7 +254,7 @@ test("exact-checkout preparation fails closed when dependency manifests differ",
     }
     await writeFile(resolve(temporary, "apps/mobile/package.json"), "{}\n");
     await assert.rejects(
-      prepareCheckout(temporary, { dependencyRoot: repositoryRoot, symlinkImpl: async () => {} }),
+      prepareCheckout(temporary, { dependencyRoot: repositoryRoot, commandRunner: async () => {} }),
       /dependency manifest differs.*apps\/mobile\/package\.json/,
     );
   } finally {

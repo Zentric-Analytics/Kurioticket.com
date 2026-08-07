@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, rm, stat, symlink } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -209,7 +209,7 @@ export function gitAuthEnvironment(token, baseEnvironment = process.env) {
   };
 }
 
-export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot, symlinkImpl = symlink } = {}) {
+export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot, commandRunner = exec } = {}) {
   const manifests = ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"];
   for (const manifest of manifests) {
     const [built, target] = await Promise.all([
@@ -223,7 +223,9 @@ export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot,
     const destination = join(directory, relative);
     const metadata = await stat(source);
     if (!metadata.isDirectory()) throw new Error(`Immutable worker dependency tree is missing: ${relative}.`);
-    await symlinkImpl(source, destination, process.platform === "win32" ? "junction" : "dir");
+    // Hard-linked files retain checkout-local paths for Expo fingerprint stability while
+    // sharing the immutable Render build artifact's storage and avoiding another npm ci.
+    await commandRunner("cp", ["-al", "--", source, destination], { maxBuffer: 10 * 1024 * 1024 });
   }
 }
 
