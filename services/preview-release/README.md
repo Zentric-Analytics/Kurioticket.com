@@ -27,6 +27,8 @@ Exact-checkout preparation installs only the production mobile dependency tree r
 
 Never delete ledger rows to force a retry. Never reset an EAS build number. Never issue a manual TestFlight submission while the ledger reports an existing submission or an unknown state.
 
+For an owner-approved historical native change that is already present in the current completed `dev` SHA, set `PREVIEW_IOS_NATIVE_BACKFILL_SHA` to that exact current SHA while the worker remains in `active` mode. The worker reopens that SHA only when no iOS build action exists, forces an iOS-only native plan, reconciles exact-SHA EAS history before creation, and persists the build/submission identities in the normal ledger. Remove the variable after completion. A malformed SHA, dry-run use, non-current SHA, or existing build action fails closed or performs no work.
+
 ## Read-only preflight
 
 `npm run preview-release:preflight` validates the GitHub dev ref, PostgreSQL connectivity, the exact approved Render staging service, the current Render deployment, the exact Expo Preview project, and readable Preview build/update history. It remains strictly read-only in both `PREVIEW_RELEASE_MODE=dry-run` and `PREVIEW_RELEASE_MODE=active`, performs no delivery mutation, redacts configured credentials from errors, and exits non-zero on any authentication, schema, or identity mismatch.

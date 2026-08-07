@@ -43,6 +43,49 @@ export class PreviewLedger {
     } finally { client.release(); }
   }
 
+  async claimIosNativeBackfill({ sourceSha, previousSha, workerId, leaseMs, mode, identityKey }) {
+    assertExactSha(sourceSha);
+    if (previousSha) assertExactSha(previousSha, "Previous SHA");
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const existing = await client.query(
+        "SELECT remote_id FROM preview_release_action WHERE kind='IOS_BUILD' AND identity_key=$1 LIMIT 2",
+        [identityKey],
+      );
+      if (existing.rowCount > 1) throw new Error("Ambiguous existing iOS native backfill action.");
+      if (existing.rowCount === 1) {
+        await client.query("COMMIT");
+        return null;
+      }
+      await client.query(
+        `INSERT INTO preview_release (source_sha, previous_sha, mode, state)
+         VALUES ($1, $2, $3, 'DETECTED') ON CONFLICT (source_sha) DO NOTHING`,
+        [sourceSha, previousSha, mode],
+      );
+      const result = await client.query(
+        `UPDATE preview_release
+         SET state=CASE WHEN state IN ('COMPLETE','SUPERSEDED') THEN 'DETECTED' ELSE state END,
+             completed_at=CASE WHEN state IN ('COMPLETE','SUPERSEDED') THEN NULL ELSE completed_at END,
+             lock_owner=$2, lock_expires_at=now()+($3::int * interval '1 millisecond'),
+             started_at=coalesce(started_at, now()), updated_at=now()
+         WHERE source_sha=$1
+           AND NOT EXISTS (
+             SELECT 1 FROM preview_release_action
+             WHERE kind='IOS_BUILD' AND identity_key=$4
+           )
+           AND (lock_expires_at IS NULL OR lock_expires_at < now() OR lock_owner=$2)
+         RETURNING *`,
+        [sourceSha, workerId, leaseMs, identityKey],
+      );
+      await client.query("COMMIT");
+      return result.rows[0] ?? null;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally { client.release(); }
+  }
+
   async transition(sourceSha, workerId, fromStates, state, patch = {}) {
     assertExactSha(sourceSha);
     const allowed = Object.fromEntries(Object.entries(patch).filter(([key]) => [

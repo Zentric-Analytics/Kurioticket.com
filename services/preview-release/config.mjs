@@ -42,6 +42,7 @@ export function requirePreviewEnvironment(env = process.env) {
     leaseMs: parseBoundedInteger(env.PREVIEW_LEASE_MS, 300_000, 60_000, 900_000),
     mode: env.PREVIEW_RELEASE_MODE === "active" ? "active" : "dry-run",
     cutoverBaselineSha: env.PREVIEW_CUTOVER_BASELINE_SHA ? assertExactSha(env.PREVIEW_CUTOVER_BASELINE_SHA, "Cutover baseline SHA") : null,
+    iosNativeBackfillSha: env.PREVIEW_IOS_NATIVE_BACKFILL_SHA ? assertExactSha(env.PREVIEW_IOS_NATIVE_BACKFILL_SHA, "iOS native backfill SHA") : null,
     workerId: env.RENDER_INSTANCE_ID || env.HOSTNAME || `worker-${process.pid}`,
   });
 }
