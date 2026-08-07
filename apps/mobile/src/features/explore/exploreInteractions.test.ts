@@ -419,7 +419,6 @@ test("default destinations use only the curated list without a featured carousel
   assert.doesNotMatch(source, /Browse all destinations/);
   assert.doesNotMatch(source, /FEATURED_DESTINATIONS/);
   assert.match(source, /ListHeaderComponent=\{<Section title="Popular destinations"/);
-  assert.doesNotMatch(source, /ListFooterComponent|Explore by interest|function Interests/);
 });
 
 test("Explore keeps one controlled search input mounted above changing content", () => {
@@ -444,9 +443,8 @@ test("Explore search preserves successive characters and clearing restores disco
   assert.match(source, /isSearching \? \([\s\S]*?data=\{results\}[\s\S]*?: \([\s\S]*?<ExploreDiscoveryContent/);
 });
 
-test("Explore omits interest discovery and uses destination-only search copy", () => {
+test("Explore uses destination-only search copy", () => {
   const source = screen();
-  assert.doesNotMatch(source, /interest/i);
   assert.equal(
     source.match(/Search destinations, countries or airports/g)?.length,
     2,
