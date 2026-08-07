@@ -38,7 +38,8 @@ export class PreviewOrchestrator {
     const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
-      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative, iosDistributionPending);
+      const classificationBaseline = iosNativeBackfill || iosDistributionPending ? null : previous;
+      return await this.process(record, classificationBaseline, lease, deliveredNative, iosDistributionPending);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});

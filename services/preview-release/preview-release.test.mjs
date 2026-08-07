@@ -514,6 +514,7 @@ test("a submitted but undistributed iOS build resumes after a superseding dev me
   const newerDev = "d".repeat(40);
   const comparisons = [];
   let processedPending = false;
+  let classificationBaseline = "not-observed";
   const orchestrator = new PreviewOrchestrator({
     config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
     ledger: {
@@ -526,10 +527,15 @@ test("a submitted but undistributed iOS build resumes after a superseding dev me
     },
     github: { latestDevSha: async () => newerDev, compare: async (...args) => { comparisons.push(args); }, report: async () => {} }, render: {}, sleep: async () => {},
   });
-  orchestrator.process = async (_record, _previous, _lease, _delivered, pending) => { processedPending = pending; return { state: "COMPLETE" }; };
+  orchestrator.process = async (_record, previous, _lease, _delivered, pending) => {
+    classificationBaseline = previous;
+    processedPending = pending;
+    return { state: "COMPLETE" };
+  };
   const result = await orchestrator.cycle();
   assert.equal(result.state, "COMPLETE");
   assert.equal(processedPending, true);
+  assert.equal(classificationBaseline, null);
   assert.deepEqual(comparisons, [[sha, newerDev]]);
 });
 
