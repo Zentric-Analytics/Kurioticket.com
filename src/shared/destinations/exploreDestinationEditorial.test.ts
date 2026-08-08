@@ -51,7 +51,12 @@ const EUROPE_BATCH_2_IDS = [
   "ch-geneva", "de-munich", "de-frankfurt", "gr-athens", "ie-dublin",
 ] as const;
 
-test("the original 25 records and Europe Batch 1 remain intact as coverage expands", () => {
+const EUROPE_BATCH_3_IDS = [
+  "al-tirana", "ba-sarajevo", "bg-sofia", "gr-thessaloniki", "hr-zagreb",
+  "me-podgorica", "mk-skopje", "ro-bucharest", "rs-belgrade", "si-ljubljana",
+] as const;
+
+test("the original 25 records and prior Europe batches remain intact as coverage expands", () => {
   assert.equal(validateExploreDestinationEditorial(exploreDestinationEditorial), exploreDestinationEditorial);
   assert.equal(
     new Set(exploreDestinationEditorial.map(({ id }) => id)).size,
@@ -59,6 +64,40 @@ test("the original 25 records and Europe Batch 1 remain intact as coverage expan
   );
   assert.deepEqual(exploreDestinationEditorial.slice(0, 25).map(({ id }) => id), ORIGINAL_EDITORIAL_IDS);
   assert.deepEqual(exploreDestinationEditorial.slice(25, 35).map(({ id }) => id), EUROPE_BATCH_1_IDS);
+  assert.deepEqual(exploreDestinationEditorial.slice(35, 45).map(({ id }) => id), EUROPE_BATCH_2_IDS);
+});
+
+test("Europe Batch 3 contains 10 new canonical records with reviewed copy and provenance", () => {
+  const priorIds = new Set<string>([
+    ...ORIGINAL_EDITORIAL_IDS, ...EUROPE_BATCH_1_IDS, ...EUROPE_BATCH_2_IDS,
+  ]);
+  const batch = exploreDestinationEditorial.filter(({ id }) =>
+    EUROPE_BATCH_3_IDS.some((batchId) => batchId === id),
+  );
+  assert.deepEqual(batch.map(({ id }) => id), EUROPE_BATCH_3_IDS);
+  assert.ok(EUROPE_BATCH_3_IDS.every((id) => !priorIds.has(id)));
+  for (const record of batch) {
+    const canonical = exploreDestinations.find(({ id }) => id === record.id);
+    const summaryWordCount = record.summary.trim().split(/\s+/).length;
+    const descriptionWordCount = record.description.trim().split(/\s+/).length;
+    assert.ok(canonical);
+    assert.ok(summaryWordCount >= 13 && summaryWordCount <= 18);
+    assert.equal((record.summary.match(/[.!?](?:\s|$)/g) ?? []).length, 1);
+    assert.ok(descriptionWordCount >= 53 && descriptionWordCount <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !highlight.endsWith(".")));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-08");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(
+      new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length,
+    );
+    assert.ok(record.editorialProvenance.sourceReferences.every(
+      ({ title, url }) => title.trim() && url.startsWith("https://"),
+    ));
+  }
 });
 
 test("Europe Batch 1 records meet content and provenance requirements", () => {

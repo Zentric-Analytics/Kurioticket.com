@@ -42,6 +42,13 @@ const europeBatch2SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: EUROPE_BATCH_2_LAST_VERIFIED_AT,
 });
 
+const EUROPE_BATCH_3_LAST_VERIFIED_AT = "2026-08-08";
+const europeBatch3SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: EUROPE_BATCH_3_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -357,6 +364,76 @@ const rawExploreDestinationEditorial = [
     description: "Dublin straddles the River Liffey on Ireland's east coast, with the bay and nearby mountains framing the city. Dublin Castle, Trinity College and Georgian squares trace medieval, academic and eighteenth-century development, while national museums preserve art and archaeology. Literary landmarks, traditional music venues, food markets and coastal villages around Dublin Bay reflect the wider cultural landscape of the Irish capital.",
     highlights: ["River Liffey and Georgian squares", "Dublin Castle", "Trinity College and literary heritage", "National museums and coastal villages"],
     editorialProvenance: europeBatch2SourceReferences([{ title: "Visit Dublin - Official Dublin Tourism Guide", url: "https://www.visitdublin.com/" }, { title: "Dublin Castle - Government of Ireland", url: "https://www.dublincastle.ie/" }]),
+  },
+  {
+    id: "al-tirana",
+    summary: "Tirana centres on Skanderbeg Square, with Ottoman landmarks, civic museums, colourful neighbourhoods and surrounding mountain landscapes.",
+    description: "Tirana lies on Albania's central plain near Mount Dajti, with broad boulevards meeting a compact civic centre. Skanderbeg Square links the National Historical Museum, Et'hem Bey Mosque and clock tower, while the Blloku district reflects the city's later political and social history. Markets, converted bunkers and the Lana river corridor reveal further layers of the Albanian capital's development.",
+    highlights: ["Skanderbeg Square civic centre", "Et'hem Bey Mosque and clock tower", "Blloku neighbourhood", "Mount Dajti landscape"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Municipality of Tirana - Visit Tirana", url: "https://tirana.al/en/" }, { title: "National Tourism Agency of Albania", url: "https://akt.gov.al/en/" }]),
+  },
+  {
+    id: "ba-sarajevo",
+    summary: "Sarajevo follows the Miljacka River through Ottoman quarters, Austro-Hungarian streets, religious landmarks and mountain surroundings.",
+    description: "Sarajevo occupies a valley along the Miljacka River, enclosed by mountains that frame its elongated urban form. Baščaršija preserves Ottoman-era lanes, craft shops and the Gazi Husrev-beg complex, while nearby avenues display Austro-Hungarian architecture. The Latin Bridge, religious buildings and museums document intersecting communities and pivotal twentieth-century events within the capital of Bosnia and Herzegovina.",
+    highlights: ["Baščaršija market quarter", "Gazi Husrev-beg complex", "Latin Bridge and Miljacka riverfront", "Austro-Hungarian civic architecture"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Sarajevo Travel - Official Tourism Website", url: "https://sarajevo.travel/en" }, { title: "City of Sarajevo - Official Website", url: "https://www.sarajevo.ba/en/" }]),
+  },
+  {
+    id: "bg-sofia",
+    summary: "Sofia layers Roman remains, Orthodox landmarks, civic boulevards and museums beneath the slopes of Vitosha Mountain.",
+    description: "Sofia stands in a high basin below Vitosha Mountain, where mineral springs influenced settlement from antiquity onward. Roman Serdica remains appear beside later landmarks including Alexander Nevsky Cathedral, Saint Sofia Church and the former royal palace. Central boulevards, archaeological collections and public gardens connect the Bulgarian capital's Roman, medieval, Ottoman and modern periods within a walkable core.",
+    highlights: ["Roman Serdica remains", "Alexander Nevsky Cathedral", "Saint Sofia Church", "Vitosha Mountain backdrop"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Visit Sofia - Official Tourism Portal", url: "https://visitsofia.bg/en/" }, { title: "Regional History Museum Sofia", url: "https://www.historymuseum.org/" }]),
+  },
+  {
+    id: "gr-thessaloniki",
+    summary: "Thessaloniki faces the Thermaic Gulf with Byzantine monuments, Ottoman traces, market districts and Macedonian food traditions.",
+    description: "Thessaloniki extends around the Thermaic Gulf, rising from a long waterfront toward the walls of the Upper Town. The White Tower, Roman Forum and Rotunda mark different historical periods, while UNESCO-listed churches preserve major examples of early Christian and Byzantine art. Modiano and Kapani markets, museums and neighbourhood kitchens reflect the city's longstanding role as a Macedonian port and trading centre.",
+    highlights: ["White Tower waterfront", "UNESCO-listed Byzantine churches", "Rotunda and Roman Forum", "Modiano and Kapani markets"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Thessaloniki Tourism Organisation", url: "https://thessaloniki.travel/" }, { title: "UNESCO Paleochristian and Byzantine Monuments of Thessalonika", url: "https://whc.unesco.org/en/list/456/" }]),
+  },
+  {
+    id: "hr-zagreb",
+    summary: "Zagreb spreads between Medvednica and the Sava, linking historic hill districts, markets, parks and Croatian institutions.",
+    description: "Zagreb developed between the wooded slopes of Medvednica and the Sava River, with its centre divided historically between hilltop and lower-town districts. Gradec and Kaptol contain St Mark's Church, the cathedral and medieval street patterns, while the Lower Town follows planned squares and parks. Dolac Market, museums and café-lined streets connect civic heritage with everyday Croatian food and social traditions.",
+    highlights: ["Gradec and Kaptol hill districts", "St Mark's Church", "Lower Town parks and squares", "Dolac Market"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Zagreb Tourist Board - InfoZagreb", url: "https://www.infozagreb.hr/en/" }, { title: "Zagreb City Museum", url: "https://mgz.hr/en/" }]),
+  },
+  {
+    id: "me-podgorica",
+    summary: "Podgorica sits between rivers and low hills, with Ottoman remnants, modern civic districts and Montenegrin cultural institutions.",
+    description: "Podgorica occupies a plain where the Morača and Ribnica rivers meet, with nearby hills shaping the Montenegrin capital's setting. Stara Varoš retains Ottoman-period elements such as the clock tower, while the Ribnica bridge and ruins recall earlier settlement. Modern boulevards, galleries, parks and riverside paths reflect the city's postwar rebuilding and its present role as Montenegro's civic centre.",
+    highlights: ["Morača and Ribnica river landscapes", "Stara Varoš clock tower", "Old Ribnica bridge", "Modern civic and gallery districts"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Podgorica Tourism Organisation", url: "https://podgorica.travel/en/" }, { title: "Capital City Podgorica", url: "https://podgorica.me/en/" }]),
+  },
+  {
+    id: "mk-skopje",
+    summary: "Skopje spans the Vardar with an Ottoman bazaar, fortress, civic museums and layered Macedonian neighbourhoods.",
+    description: "Skopje lies in a broad valley along the Vardar River, crossed centrally by the historic Stone Bridge. The Old Bazaar, Kale Fortress and Mustafa Pasha Mosque preserve Ottoman and earlier urban layers north of the river. Museums, modern civic spaces and the Memorial House of Mother Teresa document the city's diverse communities, earthquake reconstruction and role as North Macedonia's capital.",
+    highlights: ["Stone Bridge and Vardar riverfront", "Old Bazaar lanes", "Kale Fortress", "Mustafa Pasha Mosque"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Visit Skopje - Official City Guide", url: "https://visitskopje.mk/" }, { title: "City of Skopje", url: "https://skopje.gov.mk/en_us/" }]),
+  },
+  {
+    id: "ro-bucharest",
+    summary: "Bucharest presents broad boulevards, Belle Époque buildings, historic churches, major museums and distinctive Romanian urban heritage.",
+    description: "Bucharest spreads across the Wallachian plain beside the Dâmbovița River, with boulevards and parks shaping its urban plan. The Old Court, Stavropoleos Church and Lipscani streets preserve older commercial and religious layers, while the Romanian Athenaeum represents nineteenth-century civic culture. Palace architecture, national museums and the Village Museum trace royal, modern and vernacular strands of Romania's capital.",
+    highlights: ["Lipscani historic quarter", "Romanian Athenaeum", "Stavropoleos Church", "Dimitrie Gusti Village Museum"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Municipality of Bucharest", url: "https://www.pmb.ro/en" }, { title: "Bucharest Municipality Museum", url: "https://muzeulbucurestiului.ro/" }]),
+  },
+  {
+    id: "rs-belgrade",
+    summary: "Belgrade overlooks the Danube and Sava confluence through fortress grounds, historic quarters, museums and Serbian cultural institutions.",
+    description: "Belgrade occupies ridges above the meeting of the Sava and Danube, a strategic position visible from Kalemegdan. The fortress complex records Roman, medieval, Ottoman and Habsburg phases, while nearby Knez Mihailova links it to the central city. Skadarlija, national museums and riverside districts add artistic, commercial and social layers to Serbia's long-established capital.",
+    highlights: ["Belgrade Fortress and Kalemegdan", "Danube and Sava confluence", "Knez Mihailova promenade", "Skadarlija historic quarter"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Tourist Organization of Belgrade", url: "https://www.tob.rs/en" }, { title: "National Museum of Serbia", url: "https://www.narodnimuzej.rs/en/" }]),
+  },
+  {
+    id: "si-ljubljana",
+    summary: "Ljubljana follows a green river corridor through baroque streets, Plečnik architecture, markets and hilltop castle grounds.",
+    description: "Ljubljana occupies a basin where the Ljubljanica curves beneath a castle hill and through a compact pedestrian centre. Baroque facades meet Jože Plečnik's bridges, market buildings and civic spaces, several recognised as UNESCO World Heritage. Tivoli Park, riverside cafés and cultural institutions extend the Slovenian capital's public realm beyond Prešeren Square and the Triple Bridge.",
+    highlights: ["Ljubljana Castle hill", "Plečnik's Triple Bridge", "Central Market and river arcades", "Tivoli Park"],
+    editorialProvenance: europeBatch3SourceReferences([{ title: "Visit Ljubljana - Official City Guide", url: "https://www.visitljubljana.com/en/visitors/" }, { title: "UNESCO Works of Jože Plečnik in Ljubljana", url: "https://whc.unesco.org/en/list/1643/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
