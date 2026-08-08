@@ -26,7 +26,7 @@ import {
   searchExplore,
 } from "./exploreModels";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { destinationDetailsRoute, navigateFromDestination } from "./exploreInteractionModels";
+import { destinationDetailsRoute } from "./exploreInteractionModels";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
 const NAVY = "#071A48",
   BLUE = "#0754F7",
@@ -257,23 +257,6 @@ function PopularDestinationCard({
 }) {
   const media = destinationMedia(destination.id);
   const [failed, setFailed] = useState(false);
-  const searchFlights = () =>
-    navigateFromDestination(
-      destination,
-      "flights",
-      () => undefined,
-      (route, name, handoff) =>
-        router.push({
-          pathname: `/${route}`,
-          params: {
-            destination: name,
-            destinationId: handoff.destinationId,
-            airportCodes: handoff.airportCodes.join(","),
-            to: handoff.primaryAirportCode,
-          },
-        }),
-      { current: false },
-    );
   return (
     <View style={s.popularCard}>
       <Pressable
@@ -291,6 +274,32 @@ function PopularDestinationCard({
           resizeMode="cover"
           style={s.popularImage}
         />
+        <View style={s.popularCopy}>
+          <Text
+            accessibilityLabel={`${destination.name}, ${destination.country}`}
+            style={s.destinationName}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            <Text style={s.popularCardTitle}>{destination.name}</Text>
+            <Text style={s.countryName}> • {destination.country}</Text>
+          </Text>
+          {destination.summary ? (
+            <Text
+              style={s.destinationSummary}
+              numberOfLines={3}
+              ellipsizeMode="tail"
+            >
+              {destination.summary}
+            </Text>
+          ) : null}
+          <Text style={s.airportMeta} numberOfLines={2} ellipsizeMode="tail">
+            {formatFlightAccess(
+              destination.primaryAirportCode,
+              destination.airportCodes,
+            )}
+          </Text>
+        </View>
       </Pressable>
       <AndroidFavoriteButton
         saved={saved}
@@ -298,42 +307,6 @@ function PopularDestinationCard({
         onPress={onToggle}
         style={s.heart}
       />
-      <View style={s.popularCopy}>
-        <Text
-          accessibilityLabel={`${destination.name}, ${destination.country}`}
-          style={s.destinationName}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          <Text style={s.popularCardTitle}>{destination.name}</Text>
-          <Text style={s.countryName}> • {destination.country}</Text>
-        </Text>
-        {destination.summary ? (
-          <Text
-            style={s.destinationSummary}
-            numberOfLines={3}
-            ellipsizeMode="tail"
-          >
-            {destination.summary}
-          </Text>
-        ) : null}
-        <Text style={s.airportMeta} numberOfLines={2} ellipsizeMode="tail">
-          {formatFlightAccess(
-            destination.primaryAirportCode,
-            destination.airportCodes,
-          )}
-        </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Search flights to ${destination.name}`}
-          hitSlop={{ top: 2, bottom: 2 }}
-          onPress={searchFlights}
-          style={s.flightButton}
-        >
-          <FlowIcon name="flight" color="white" size={16} />
-          <Text style={s.flightButtonText}>Search flights</Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
@@ -502,18 +475,4 @@ const s = StyleSheet.create({
     lineHeight: 18,
     flexShrink: 1,
   },
-  flightButton: {
-    alignSelf: "flex-end",
-    marginTop: 8,
-    minHeight: 40,
-    minWidth: 44,
-    borderRadius: 10,
-    backgroundColor: BLUE,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 14,
-    gap: 6,
-  },
-  flightButtonText: { color: "white", fontSize: 13, fontWeight: "800" },
 });
