@@ -373,7 +373,8 @@ export function DealsJourneyShell({
     stage === "hotel-results" ||
     stage === "hotel-details" ||
     stage === "flight-results" ||
-    stage === "flight-details";
+    stage === "flight-details" ||
+    stage === "car-results";
   const useHotelDetailsBackground = stage === "hotel-details";
   const displayPlanStatus: GuidedPlanState =
     plan && plan.expiresAt <= lifecycleNow ? "expired" : planStatus;

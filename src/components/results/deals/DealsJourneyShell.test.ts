@@ -92,7 +92,7 @@ test("guided shell uses breadcrumbs as primary navigation without changing share
     assert.doesNotMatch(source, new RegExp(forbidden));
 });
 
-test("Hotel and Flight journey stages hide redundant shell headings without changing accessibility or focus", async () => {
+test("Hotel, Flight, and Car results journey stages hide redundant shell headings without changing accessibility or focus", async () => {
   const source = await readFile(
     new URL("./DealsJourneyShell.tsx", import.meta.url),
     "utf8",
@@ -100,7 +100,7 @@ test("Hotel and Flight journey stages hide redundant shell headings without chan
   assert.equal((source.match(/<h1/g) ?? []).length, 1);
   assert.match(
     source,
-    /const visuallyHideStageHeading =\s*stage === "hotel-results" \|\|\s*stage === "hotel-details" \|\|\s*stage === "flight-results" \|\|\s*stage === "flight-details";/,
+    /const visuallyHideStageHeading =\s*stage === "hotel-results" \|\|\s*stage === "hotel-details" \|\|\s*stage === "flight-results" \|\|\s*stage === "flight-details" \|\|\s*stage === "car-results";/,
   );
   const hiddenStageRule = source.match(
     /const visuallyHideStageHeading =([\s\S]*?);/,
@@ -110,9 +110,15 @@ test("Hotel and Flight journey stages hide redundant shell headings without chan
     [...hiddenStageRule[1].matchAll(/stage === "([^"]+)"/g)].map(
       ([, stage]) => stage,
     ),
-    ["hotel-results", "hotel-details", "flight-results", "flight-details"],
+    [
+      "hotel-results",
+      "hotel-details",
+      "flight-results",
+      "flight-details",
+      "car-results",
+    ],
   );
-  for (const visibleStage of ["car-results", "car-details"])
+  for (const visibleStage of ["car-details"])
     assert.doesNotMatch(hiddenStageRule[1], new RegExp(visibleStage));
   assert.doesNotMatch(
     hiddenStageRule[1],
@@ -133,6 +139,8 @@ test("Hotel and Flight journey stages hide redundant shell headings without chan
   assert.match(source, /<DealsHotelResultsStage search=\{search\} \/>/);
   assert.match(source, /<DealsHotelDetailsStage/);
   assert.match(source, /<DealsFlightDetailsStage/);
+  assert.match(source, /<DealsCarResultsStage search=\{search\} \/>/);
+  assert.match(source, /<DealsCarDetailsStage/);
   assert.match(
     source,
     /const useHotelDetailsBackground = stage === "hotel-details";/,
