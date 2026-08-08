@@ -75,7 +75,7 @@ test("Preview iOS configuration declares truthful export compliance", async () =
       image: "./assets/kurioticket-logo-primary-light-bg.png",
       imageWidth: 200,
       resizeMode: "contain",
-      backgroundColor: "#F7FAFF",
+      backgroundColor: "#EAF4FF",
     },
   }]);
   assert.deepEqual(config.android?.splash, {
