@@ -14,7 +14,24 @@ export class PreviewOrchestrator {
 
   async cycle() {
     const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
-    const previous = await this.ledger.lastSuccessful();
+    let previous = await this.ledger.lastSuccessful();
+    if (previous?.source_sha !== currentDevSha
+      && typeof this.ledger.completedCurrentDevProgressionCandidate === "function"
+      && typeof this.ledger.reconcileCompletedCurrentDevProgression === "function") {
+      const candidate = await this.ledger.completedCurrentDevProgressionCandidate(currentDevSha);
+      if (candidate) {
+        if (!candidate.previous_sha || !previous?.source_sha) throw new Error("Completed current dev progression repair lacks immutable ancestry anchors.");
+        if (candidate.previous_sha === currentDevSha) throw new Error("Completed current dev progression repair has a self-referential stored baseline.");
+        await this.github.compare(candidate.previous_sha, currentDevSha);
+        await this.github.compare(previous.source_sha, currentDevSha);
+        const reconciled = await this.ledger.reconcileCompletedCurrentDevProgression({
+          sourceSha: currentDevSha,
+          storedPreviousSha: candidate.previous_sha,
+          latestProgressionSha: previous.source_sha,
+        });
+        if (reconciled) previous = reconciled;
+      }
+    }
     const pendingDistribution = !this.config.iosNativeBackfillSha && typeof this.ledger.pendingIosDistribution === "function" ? await this.ledger.pendingIosDistribution() : null;
     const currentDevNeedsEvaluation = previous?.source_sha !== currentDevSha;
     const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevNeedsEvaluation ? pendingDistribution?.source_sha : null) ?? currentDevSha;

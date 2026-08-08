@@ -131,6 +131,48 @@ export class PreviewLedger {
     return result.rows[0] ?? null;
   }
 
+  async completedCurrentDevProgressionCandidate(sourceSha) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `SELECT * FROM preview_release release
+       WHERE release.source_sha=$1 AND release.state='COMPLETE'
+         AND release.progression_order IS NULL AND release.completed_at IS NOT NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM preview_release_action distribution
+           WHERE distribution.source_sha=release.source_sha
+             AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+         )
+       LIMIT 1`,
+      [sourceSha],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async reconcileCompletedCurrentDevProgression({ sourceSha, storedPreviousSha, latestProgressionSha }) {
+    assertExactSha(sourceSha);
+    assertExactSha(storedPreviousSha, "Stored previous SHA");
+    assertExactSha(latestProgressionSha, "Latest progression SHA");
+    const result = await this.pool.query(
+      `UPDATE preview_release release
+       SET progression_order=nextval('preview_release_progression_order_seq'), updated_at=now()
+       WHERE release.source_sha=$1 AND release.state='COMPLETE' AND release.progression_order IS NULL
+         AND release.completed_at IS NOT NULL AND release.previous_sha=$2
+         AND $3=(
+           SELECT latest.source_sha FROM preview_release latest
+           WHERE latest.state='COMPLETE' AND latest.progression_order IS NOT NULL
+           ORDER BY latest.progression_order DESC LIMIT 1
+         )
+         AND NOT EXISTS (
+           SELECT 1 FROM preview_release_action distribution
+           WHERE distribution.source_sha=release.source_sha
+             AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+         )
+       RETURNING *`,
+      [sourceSha, storedPreviousSha, latestProgressionSha],
+    );
+    return result.rows[0] ?? null;
+  }
+
   async lastSuccessfulNative(platform) {
     if (platform !== "ios" && platform !== "android") throw new Error("Native platform is invalid.");
     const buildKind = platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD";
