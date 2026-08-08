@@ -145,12 +145,14 @@ export class EasClient {
     const value = await this.run(["eas-cli@16.17.4", "build", "--platform", "ios", "--profile", "preview", "--non-interactive", "--freeze-credentials", "--no-wait", "--auto-submit-with-profile", "preview", "--json"]);
     const builds = Array.isArray(value) ? value : [value];
     if (builds.length !== 1 || typeof builds[0]?.id !== "string") throw new Error("EAS build creation returned an ambiguous build ID.");
+    console.log(JSON.stringify({ event: "preview-release-eas-build-created", platform: "ios", buildId: builds[0].id }));
     return builds[0];
   }
   async createAndroidBuild() {
     const value = await this.run(["eas-cli@16.17.4", "build", "--platform", "android", "--profile", "preview", "--non-interactive", "--freeze-credentials", "--no-wait", "--json"]);
     const builds = Array.isArray(value) ? value : [value];
     if (builds.length !== 1 || typeof builds[0]?.id !== "string") throw new Error("EAS Android build creation returned an ambiguous build ID.");
+    console.log(JSON.stringify({ event: "preview-release-eas-build-created", platform: "android", buildId: builds[0].id }));
     return builds[0];
   }
   async viewBuild(id) {
@@ -211,7 +213,10 @@ export class EasClient {
     try {
       const stdoutPath = join(directory, "stdout.json");
       const isUpdatePublish = args[1] === "update";
-      console.log(JSON.stringify({ event: "preview-release-eas-command-started", command: args[1], rssBytes: process.memoryUsage().rss }));
+      const platformIndex = args.indexOf("--platform");
+      const platform = platformIndex >= 0 ? args[platformIndex + 1] : null;
+      const startedAt = Date.now();
+      console.log(JSON.stringify({ event: "preview-release-eas-command-started", command: args[1], platform, rssBytes: process.memoryUsage().rss }));
       const { stdout } = await exec(this.command, args, {
         cwd: this.cwd,
         encoding: "utf8",
@@ -232,7 +237,7 @@ export class EasClient {
         },
       });
       await import("node:fs/promises").then(({ writeFile }) => writeFile(stdoutPath, stdout, { mode: 0o600 }));
-      console.log(JSON.stringify({ event: "preview-release-eas-command-complete", command: args[1], rssBytes: process.memoryUsage().rss }));
+      console.log(JSON.stringify({ event: "preview-release-eas-command-complete", command: args[1], platform, durationMs: Date.now() - startedAt, rssBytes: process.memoryUsage().rss }));
       return readFile(stdoutPath, "utf8");
     } finally { await rm(directory, { recursive: true, force: true }); }
   }
@@ -313,13 +318,17 @@ export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot,
   }
 }
 
-export async function nativeFingerprints(directory) {
+export async function nativeFingerprints(directory, { commandRunner = exec } = {}) {
   const cwd = join(directory, "apps/mobile");
   const command = join(cwd, "node_modules", ".bin", process.platform === "win32" ? "fingerprint.cmd" : "fingerprint");
-  const result = {};
-  for (const platform of ["ios", "android"]) {
+  const platforms = ["ios", "android"];
+  const batchStartedAt = Date.now();
+  console.log(JSON.stringify({ event: "preview-release-fingerprints-started", platforms, rssBytes: process.memoryUsage().rss }));
+
+  const settled = await Promise.allSettled(platforms.map(async (platform) => {
+    const startedAt = Date.now();
     console.log(JSON.stringify({ event: "preview-release-fingerprint-started", platform, rssBytes: process.memoryUsage().rss }));
-    const { stdout } = await exec(command, ["fingerprint:generate", "--platform", platform, "--concurrent-io-limit", "1"], {
+    const { stdout } = await commandRunner(command, ["fingerprint:generate", "--platform", platform, "--concurrent-io-limit", "1"], {
       cwd,
       encoding: "utf8",
       maxBuffer: 50 * 1024 * 1024,
@@ -329,9 +338,29 @@ export async function nativeFingerprints(directory) {
     let value;
     try { value = JSON.parse(stdout); } catch { throw new Error(`Expo ${platform} fingerprint output is malformed.`); }
     if (!/^[0-9a-f]{40,128}$/.test(value?.hash ?? "")) throw new Error(`Expo ${platform} fingerprint has no valid hash.`);
-    result[platform] = value.hash;
-    console.log(JSON.stringify({ event: "preview-release-fingerprint-complete", platform, rssBytes: process.memoryUsage().rss }));
+    console.log(JSON.stringify({ event: "preview-release-fingerprint-complete", platform, durationMs: Date.now() - startedAt, rssBytes: process.memoryUsage().rss }));
+    return [platform, value.hash];
+  }));
+
+  const result = {};
+  const failures = [];
+  for (let index = 0; index < platforms.length; index += 1) {
+    const platform = platforms[index];
+    const outcome = settled[index];
+    if (outcome.status === "fulfilled") {
+      const [, hash] = outcome.value;
+      result[platform] = hash;
+    } else {
+      failures.push({ platform, error: outcome.reason });
+    }
   }
+
+  if (failures.length === 1) throw failures[0].error;
+  if (failures.length > 1) {
+    const details = failures.map(({ platform, error }) => `${platform}: ${error instanceof Error ? error.message : String(error)}`).join("; ");
+    throw new AggregateError(failures.map(({ error }) => error), `Parallel native fingerprint generation failed for ${failures.map(({ platform }) => platform).join(", ")}: ${details}`);
+  }
+
+  console.log(JSON.stringify({ event: "preview-release-fingerprints-complete", platforms, durationMs: Date.now() - batchStartedAt, rssBytes: process.memoryUsage().rss }));
   return Object.freeze(result);
 }
-
