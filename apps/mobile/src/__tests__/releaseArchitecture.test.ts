@@ -75,13 +75,18 @@ test("Preview iOS configuration declares truthful export compliance", async () =
       image: "./assets/kurioticket-logo-primary-light-bg.png",
       imageWidth: 200,
       resizeMode: "contain",
-      backgroundColor: "#F7FAFF",
+      backgroundColor: "#BFD7FF",
     },
   }]);
+  assert.deepEqual(config.splash, {
+    image: "./assets/kurioticket-logo-primary-light-bg.png",
+    resizeMode: "contain",
+    backgroundColor: "#BFD7FF",
+  });
   assert.deepEqual(config.android?.splash, {
     image: "./assets/kurioticket-logo-primary-light-bg.png",
     resizeMode: "contain",
-    backgroundColor: "#F7FAFF",
+    backgroundColor: "#BFD7FF",
   });
   assert.deepEqual(config.android?.adaptiveIcon, {
     foregroundImage: "./assets/kurioticket-adaptive-foreground.png",
@@ -116,6 +121,16 @@ test("Production configuration never selects the Preview iOS OAuth plugin", asyn
       backgroundColor: "#F7FAFF",
     },
   }]]);
+  assert.deepEqual(config.splash, {
+    image: "./assets/kurioticket-logo-primary-light-bg.png",
+    resizeMode: "contain",
+    backgroundColor: "#F7FAFF",
+  });
+  assert.deepEqual(config.android?.splash, {
+    image: "./assets/kurioticket-logo-primary-light-bg.png",
+    resizeMode: "contain",
+    backgroundColor: "#F7FAFF",
+  });
   delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 });
 
