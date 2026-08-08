@@ -39,21 +39,23 @@ export function DealsJourneyBreadcrumbs({
       <ol className="flex min-w-max items-center whitespace-nowrap text-sm">
         {items.map((item, index) => {
           const Icon =
-            item.id === "complete"
-              ? CheckCircle2
-              : item.status === "completed"
-                ? Check
-                : productIcons[item.id as DealsJourneyBreadcrumbProduct];
+            item.id === "deals"
+              ? null
+              : item.id === "complete"
+                ? CheckCircle2
+                : item.status === "completed"
+                  ? Check
+                  : productIcons[item.id as DealsJourneyBreadcrumbProduct];
           const content = (
             <>
-              <Icon aria-hidden className="size-4 shrink-0" />
+              {Icon && <Icon aria-hidden className="size-4 shrink-0" />}
               <span>{t(item.labelKey)}</span>
             </>
           );
           const className = `inline-flex min-h-11 items-center gap-1.5 rounded-md px-1.5 ${
             item.status === "current"
               ? `font-semibold text-slate-950 ${item.href ? "focus-ring cursor-pointer hover:text-[#004BB8] hover:underline" : "cursor-default"}`
-              : item.status === "completed"
+              : item.status === "completed" || item.status === "ancestor"
                 ? "focus-ring cursor-pointer font-medium text-slate-700 hover:text-[#004BB8]"
                 : "cursor-default font-medium text-slate-500"
           }`;
