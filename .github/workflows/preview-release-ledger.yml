@@ -37,4 +37,5 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm --prefix apps/mobile ci
       - run: npm run test:preview-release
