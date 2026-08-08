@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   ctaSection: {
     width: "100%",
     height: CTA_HEIGHT,
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     backgroundColor: flowColors.white,
     paddingHorizontal: 16,
