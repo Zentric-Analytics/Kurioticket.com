@@ -64,9 +64,24 @@ The second reviewed Europe batch, verified on 2026-08-08, adds 10 more previousl
 9. `gr-athens`
 10. `ie-dublin`
 
+The third reviewed Europe batch, verified on 2026-08-08, adds 10 previously non-editorial canonical destinations from a geographically coherent Balkan and southeastern European group:
+
+1. `al-tirana`
+2. `ba-sarajevo`
+3. `bg-sofia`
+4. `hr-zagreb`
+5. `gr-thessaloniki`
+6. `me-podgorica`
+7. `mk-skopje`
+8. `ro-bucharest`
+9. `rs-belgrade`
+10. `si-ljubljana`
+
+This brings the cumulative rollout to 55 editorial destinations: the original 25 and three reviewed batches of 10. Batch 3 groups neighbouring Balkan and southeastern European capitals with Thessaloniki, using official tourism, municipal, museum and UNESCO sources to support durable geographic, architectural and cultural context.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
-These editorial batches do not change Featured membership or order and include no image work. Related destinations remain deferred until a separate recommendation policy is approved.
+These editorial batches do not change Featured membership or order and include no image or UI work. Related destinations remain deferred until a separate recommendation policy is approved.
 
 ## Content fields
 
