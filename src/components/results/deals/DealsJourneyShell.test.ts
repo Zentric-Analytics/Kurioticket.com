@@ -92,7 +92,7 @@ test("guided shell uses breadcrumbs as primary navigation without changing share
     assert.doesNotMatch(source, new RegExp(forbidden));
 });
 
-test("only Hotel results and Hotel details shell headings are visually hidden without changing accessibility or focus", async () => {
+test("Hotel stages and Flight results hide redundant shell headings without changing accessibility or focus", async () => {
   const source = await readFile(
     new URL("./DealsJourneyShell.tsx", import.meta.url),
     "utf8",
@@ -100,7 +100,7 @@ test("only Hotel results and Hotel details shell headings are visually hidden wi
   assert.equal((source.match(/<h1/g) ?? []).length, 1);
   assert.match(
     source,
-    /const visuallyHideStageHeading =\s*stage === "hotel-results" \|\| stage === "hotel-details";/,
+    /const visuallyHideStageHeading =\s*stage === "hotel-results" \|\|\s*stage === "hotel-details" \|\|\s*stage === "flight-results";/,
   );
   const hiddenStageRule = source.match(
     /const visuallyHideStageHeading =([\s\S]*?);/,
@@ -110,14 +110,9 @@ test("only Hotel results and Hotel details shell headings are visually hidden wi
     [...hiddenStageRule[1].matchAll(/stage === "([^"]+)"/g)].map(
       ([, stage]) => stage,
     ),
-    ["hotel-results", "hotel-details"],
+    ["hotel-results", "hotel-details", "flight-results"],
   );
-  for (const visibleStage of [
-    "flight-results",
-    "flight-details",
-    "car-results",
-    "car-details",
-  ])
+  for (const visibleStage of ["flight-details", "car-results", "car-details"])
     assert.doesNotMatch(hiddenStageRule[1], new RegExp(visibleStage));
   assert.doesNotMatch(
     hiddenStageRule[1],
