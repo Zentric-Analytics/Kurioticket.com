@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
 import { getBuildNotificationRecipients } from "@/lib/teamAccess";
+import { getEmailDeliveryReconciliationState } from "@/services/emailDeliveryReconciliation";
 import { sendTransactionalEmail } from "@/services/emailService";
 
 export const runtime = "nodejs";
@@ -122,16 +123,30 @@ export async function POST(request: Request) {
   }
   const recipients = await getBuildNotificationRecipients(input.platform);
   const message = emailFor(input);
-  const settled = await Promise.allSettled(recipients.map((recipient) => sendTransactionalEmail({
-    to: recipient.emailNormalized,
-    subject: message.subject,
-    html: message.html,
-    text: message.text,
-    template: "notification",
-    requireConfigured: true,
-    idempotencyKey: `preview-build:${input.platform}:${input.buildId}:${input.status.toLowerCase()}:${recipient.id}`,
-    metadata: { type: "preview-build", platform: input.platform, status: input.status, buildId: input.buildId, sourceSha: input.sourceSha, recipientId: recipient.id },
-  })));
-  const failed = settled.filter((result) => result.status === "rejected").length;
-  return NextResponse.json({ recipients: recipients.length, sent: recipients.length - failed, failed }, { status: failed ? 207 : 200 });
+  const outcomes = await Promise.all(recipients.map(async (recipient) => {
+    const idempotencyKey = `preview-build:${input.platform}:${input.buildId}:${input.status.toLowerCase()}:${recipient.id}`;
+    const existing = await getEmailDeliveryReconciliationState(idempotencyKey);
+    if (existing === "accepted") return "accepted" as const;
+    if (existing === "terminal") return "terminal" as const;
+    try {
+      await sendTransactionalEmail({
+        to: recipient.emailNormalized,
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+        template: "notification",
+        requireConfigured: true,
+        idempotencyKey,
+        metadata: { type: "preview-build", platform: input.platform, status: input.status, buildId: input.buildId, sourceSha: input.sourceSha, recipientId: recipient.id },
+      });
+      return "sent" as const;
+    } catch {
+      return "retryable-failure" as const;
+    }
+  }));
+  const sent = outcomes.filter((outcome) => outcome === "sent").length;
+  const alreadyAccepted = outcomes.filter((outcome) => outcome === "accepted").length;
+  const terminal = outcomes.filter((outcome) => outcome === "terminal").length;
+  const failed = outcomes.filter((outcome) => outcome === "retryable-failure").length;
+  return NextResponse.json({ recipients: recipients.length, sent, alreadyAccepted, terminal, failed }, { status: failed ? 207 : 200 });
 }
