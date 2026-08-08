@@ -174,32 +174,79 @@ export class PreviewLedger {
   }
 
   async lastSuccessfulNative(platform) {
+    return this.currentDeliveredNative(platform);
+  }
+
+  async currentDeliveredNative(platform) {
     if (platform !== "ios" && platform !== "android") throw new Error("Native platform is invalid.");
-    const buildKind = platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD";
     const result = await this.pool.query(
-      `SELECT release.*,
-              release.evidence->'fingerprints'->>$1 AS native_fingerprint,
-              build.remote_id AS native_build_id
-       FROM preview_release release
-       JOIN preview_release_action build
-         ON build.source_sha=release.source_sha AND build.kind=$2 AND build.state='FINISHED'
-       LEFT JOIN preview_release_action distribution
-         ON distribution.source_sha=release.source_sha
-        AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
-       WHERE release.evidence->'fingerprints'->>$1 ~ '^[0-9a-f]{40,128}$'
-         AND build.evidence->>'appBuildVersion' ~ '^[0-9]+$'
-         AND ($1 <> 'ios' OR EXISTS (
-           SELECT 1 FROM preview_release_action submission
-           WHERE submission.source_sha=release.source_sha
-             AND submission.kind='IOS_SUBMISSION' AND submission.state='FINISHED'
-         ))
-         AND ($1 <> 'ios' OR distribution.remote_id IS NOT NULL)
-       ORDER BY (build.evidence->>'appBuildVersion')::bigint DESC,
-                CASE WHEN $1='ios' THEN distribution.updated_at ELSE build.updated_at END DESC
-       LIMIT 1`,
-      [platform, buildKind],
+      `SELECT source_sha, fingerprint AS native_fingerprint, eas_build_id AS native_build_id,
+              app_version, build_number, submission_id, apple_build_id,
+              testflight_distribution_id, delivered_at
+       FROM preview_delivered_native_state WHERE platform=$1`,
+      [platform],
     );
     return result.rows[0] ?? null;
+  }
+
+  async advanceDeliveredNative({ platform, sourceSha, fingerprint, buildId, appVersion, buildNumber, submissionId = null, appleBuildId = null, distributionId = null, deliveredAt = new Date() }) {
+    if (platform !== "ios" && platform !== "android") throw new Error("Native platform is invalid.");
+    assertExactSha(sourceSha);
+    if (!/^[0-9a-f]{40,128}$/.test(String(fingerprint ?? ""))) throw new Error("Delivered native fingerprint is malformed.");
+    if (!buildId || !/^\d+$/.test(String(buildNumber ?? "")) || BigInt(buildNumber) <= 0n) throw new Error("Delivered native build identity is malformed.");
+    if (!/^\d+(\.\d+){1,3}$/.test(String(appVersion ?? ""))) throw new Error("Delivered native app version is malformed.");
+    if (platform === "ios" && (!submissionId || !appleBuildId || !distributionId)) throw new Error("Delivered iOS state requires verified submission and TestFlight membership identities.");
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const currentResult = await client.query("SELECT * FROM preview_delivered_native_state WHERE platform=$1 FOR UPDATE", [platform]);
+      const current = currentResult.rows[0] ?? null;
+      const incoming = BigInt(buildNumber);
+      if (current && BigInt(current.build_number) === incoming && current.eas_build_id !== buildId) throw new Error(`Ambiguous ${platform} delivery: build number ${buildNumber} has conflicting build identities.`);
+      if (!current || incoming > BigInt(current.build_number)) {
+        await client.query(
+          `INSERT INTO preview_delivered_native_state
+             (platform,source_sha,fingerprint,eas_build_id,app_version,build_number,submission_id,apple_build_id,testflight_distribution_id,delivered_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+           ON CONFLICT (platform) DO UPDATE SET
+             source_sha=excluded.source_sha, fingerprint=excluded.fingerprint, eas_build_id=excluded.eas_build_id,
+             app_version=excluded.app_version, build_number=excluded.build_number, submission_id=excluded.submission_id,
+             apple_build_id=excluded.apple_build_id, testflight_distribution_id=excluded.testflight_distribution_id,
+             delivered_at=excluded.delivered_at, updated_at=now()`,
+          [platform, sourceSha, fingerprint, buildId, appVersion, String(buildNumber), submissionId, appleBuildId, distributionId, deliveredAt],
+        );
+      }
+      const finalResult = await client.query("SELECT * FROM preview_delivered_native_state WHERE platform=$1", [platform]);
+      await client.query("COMMIT");
+      return { ...finalResult.rows[0], advanced: !current || incoming > BigInt(current.build_number) };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally { client.release(); }
+  }
+
+  async releaseBySha(sourceSha) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query("SELECT * FROM preview_release WHERE source_sha=$1", [sourceSha]);
+    return result.rows[0] ?? null;
+  }
+
+  async claimEligibility(sourceSha, operation) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `SELECT state, lock_owner, lock_expires_at,
+              (lock_expires_at IS NULL OR lock_expires_at < now()) AS lease_available
+       FROM preview_release WHERE source_sha=$1`,
+      [sourceSha],
+    );
+    const row = result.rows[0] ?? null;
+    if (!row) return { eligible: operation === "CURRENT_RELEASE_EVALUATION", reason: "row-not-created" };
+    const stateEligible = operation === "CURRENT_NATIVE_RECONCILIATION"
+      ? row.state === "COMPLETE"
+      : operation === "IOS_DISTRIBUTION_RECONCILIATION"
+        ? ["COMPLETE","FAILED","DETECTED","VALIDATING","PLANNED","DELIVERING"].includes(row.state)
+        : !["COMPLETE","SUPERSEDED"].includes(row.state);
+    return { eligible: stateEligible && row.lease_available, reason: !stateEligible ? `state-${row.state}` : row.lease_available ? "eligible" : "active-lease", state: row.state, lockOwner: row.lock_owner, lockExpiresAt: row.lock_expires_at };
   }
 
   async claimNativeDrift({ sourceSha, workerId, leaseMs, mode }) {

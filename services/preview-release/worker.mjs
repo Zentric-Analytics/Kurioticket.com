@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { requirePreviewEnvironment } from "./config.mjs";
@@ -11,7 +11,9 @@ import { AppStoreConnectClient } from "./app-store-connect.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const config = requirePreviewEnvironment();
 const ledger = new PreviewLedger(config.databaseUrl);
-await ledger.migrate(await readFile(resolve(root, "services/preview-release/sql/001_init.sql"), "utf8"));
+for (const migration of (await readdir(resolve(root, "services/preview-release/sql"))).filter((name) => /^\d+_.+\.sql$/.test(name)).sort()) {
+  await ledger.migrate(await readFile(resolve(root, "services/preview-release/sql", migration), "utf8"));
+}
 const github = new GitHubClient({ readToken: config.githubReadToken, statusToken: config.githubStatusToken, repository: config.repository });
 const render = new RenderClient({ apiKey: config.renderApiKey, serviceId: config.renderServiceId });
 const eas = new EasClient({ expoToken: config.expoToken, cwd: resolve(root, "apps/mobile") });
@@ -34,7 +36,7 @@ const orchestrator = new PreviewOrchestrator({
 
 let stopping = false;
 for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => { stopping = true; });
-console.log(JSON.stringify({ event: "preview-release-worker-started", mode: config.mode, repository: config.repository, branch: config.branch, pollIntervalMs: config.pollIntervalMs }));
+console.log(JSON.stringify({ event: "preview-release-worker-started", mode: config.mode, repository: config.repository, branch: config.branch, sourceSha: await github.latestDevSha(), pollIntervalMs: config.pollIntervalMs }));
 while (!stopping) {
   const started = Date.now();
   try {

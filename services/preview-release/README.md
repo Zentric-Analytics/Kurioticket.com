@@ -13,7 +13,11 @@ Required variables are `DATABASE_URL`, read-only `GITHUB_READ_TOKEN`, `RENDER_AP
 
 For a one-time cutover, set `PREVIEW_CUTOVER_BASELINE_SHA` to the exact 40-character merged `dev` SHA while the worker is still in `dry-run`. That SHA is recorded as an `approved-cutover-baseline` with `NO_DELIVERY`; the worker rejects baseline establishment in active mode. Remove the variable after the baseline is complete.
 
-The worker automatically runs `sql/001_init.sql`, polls once per minute, and writes one durable row per `dev` SHA. Dry-run performs reads, exact checkout, identity validation, classification, reconciliation planning, and ledger/report generation but creates no Render deploy, EAS Update, EAS build, or TestFlight submission.
+The worker automatically runs every ordered numeric migration under `sql/`, polls once per minute, and writes one durable row per `dev` SHA. Dry-run performs reads, exact checkout, identity validation, classification, reconciliation planning, and ledger/report generation but creates no Render deploy, EAS Update, EAS build, or TestFlight submission.
+
+`preview_delivered_native_state` is the canonical per-platform delivery projection. Android advances only after an exact build reaches `FINISHED`; iOS advances only after the exact build, submission, Apple build, and internal-group membership are all verified. Numeric build number is monotonic. A delayed historical side effect may finish without displacing a newer platform pointer. Ordinary release progression, platform delivery, and delayed TestFlight reconciliation are deliberately separate state dimensions.
+
+Run `npm run preview-release:decision-trace` for the shared, read-only decision trace. It uses the same `deriveDecision()` function as the active cycle and performs no claims, ledger writes, status reports, provider writes, or delivery. Every active cycle emits exactly one `PREVIEW_DECISION` event containing ordinary progression, both platform pointers, current fingerprints, source-range impact, the selected operation, and any pending historical distribution. Current-dev delivery requirements always outrank delayed historical reconciliation.
 
 Exact-checkout preparation installs only the production mobile dependency tree required for Expo fingerprinting and delivery, with npm audit and funding output disabled. It does not install unrelated web or mobile development tooling in the memory-constrained worker runtime.
 

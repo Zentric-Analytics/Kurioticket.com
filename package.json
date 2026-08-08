@@ -22,6 +22,7 @@
     "verify:currencies": "node scripts/verify-currency-coverage.mjs",
     "test:preview-release": "node --test services/preview-release/*.test.mjs",
     "preview-release:preflight": "node services/preview-release/preflight-cli.mjs",
+    "preview-release:decision-trace": "node services/preview-release/decision-trace.mjs",
     "audit:i18n": "JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v2.mjs",
     "audit:images": "node scripts/audit-images.mjs",
     "audit:market-images": "node scripts/audit-market-images.mjs"
