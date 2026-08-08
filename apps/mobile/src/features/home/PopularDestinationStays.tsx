@@ -11,21 +11,21 @@ import {
 } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
+import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
 import { popularDestinationStayNavigation } from "./homepageCardNavigation";
 
 export { popularDestinationStays } from "./PopularDestinationStaysData";
 import { popularDestinationStays } from "./PopularDestinationStaysData";
 
-// src/app/page.tsx DestinationCard, measured at the 375px mobile breakpoint.
+// Compact Home-card geometry, scaled from the 375px mobile viewport.
 export const POPULAR_STAY_LAYOUT = {
   cardWidth: 276,
   minCardWidth: 260,
   maxCardWidth: 292,
   viewportReveal: 99,
-  imageHeight: 288,
-  ctaHeight: 72,
+  imageHeight: 224,
+  ctaHeight: 64,
   gap: 16,
   radius: 16,
   sideInset: 16,
@@ -38,8 +38,16 @@ const IMAGE_OVERLAY_HEIGHT = 112;
 export function PopularDestinationStays() {
   const ft = useFlowTheme();
   const { width } = useWindowDimensions();
-  const cardWidth = Math.min(POPULAR_STAY_LAYOUT.maxCardWidth, Math.max(POPULAR_STAY_LAYOUT.minCardWidth, width - POPULAR_STAY_LAYOUT.viewportReveal));
-  const imageHeight = cardWidth * (POPULAR_STAY_LAYOUT.imageHeight / POPULAR_STAY_LAYOUT.cardWidth);
+  const cardWidth = Math.min(
+    POPULAR_STAY_LAYOUT.maxCardWidth,
+    Math.max(
+      POPULAR_STAY_LAYOUT.minCardWidth,
+      width - POPULAR_STAY_LAYOUT.viewportReveal,
+    ),
+  );
+  const imageHeight =
+    cardWidth *
+    (POPULAR_STAY_LAYOUT.imageHeight / POPULAR_STAY_LAYOUT.cardWidth);
   const { savedIds, toggle } = useSavedDestinations();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
@@ -72,7 +80,10 @@ export function PopularDestinationStays() {
             <View
               key={destination.id}
               testID={`popular-stay-card-${destination.id}`}
-              style={[styles.card, { width: cardWidth, height: imageHeight + CTA_HEIGHT }]}
+              style={[
+                styles.card,
+                { width: cardWidth, height: imageHeight + CTA_HEIGHT },
+              ]}
             >
               <View
                 style={[styles.imageFrame, { height: imageHeight }]}
@@ -134,15 +145,28 @@ export function PopularDestinationStays() {
                     fill="url(#destinationOverlay)"
                   />
                 </Svg>
-                <AndroidFavoriteButton
-                  saved={saved}
-                  label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
+                  accessibilityState={{ selected: saved }}
                   onPress={(event) => {
                     event.stopPropagation();
                     toggle(destination.id);
                   }}
-                  style={styles.heart}
-                />
+                  hitSlop={4}
+                  style={({ pressed }) => [
+                    styles.heart,
+                    saved ? styles.heartSaved : styles.heartUnsaved,
+                    pressed && styles.heartPressed,
+                  ]}
+                >
+                  <FlowIcon
+                    name="heart"
+                    size={17}
+                    color={flowColors.white}
+                    fill={flowColors.white}
+                  />
+                </Pressable>
                 <View pointerEvents="none" style={styles.copy}>
                   <Text style={styles.city}>{destination.city}</Text>
                   <Text style={styles.country}>{destination.country}</Text>
@@ -155,8 +179,13 @@ export function PopularDestinationStays() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Explore stays in ${destination.city}, ${destination.country}`}
-                  onPress={() => router.push(popularDestinationStayNavigation(destination))}
-                  style={({ pressed }) => [styles.ctaPill, pressed && styles.ctaPressed]}
+                  onPress={() =>
+                    router.push(popularDestinationStayNavigation(destination))
+                  }
+                  style={({ pressed }) => [
+                    styles.ctaPill,
+                    pressed && styles.ctaPressed,
+                  ]}
                 >
                   <Text style={styles.ctaText}>Explore stays</Text>
                 </Pressable>
@@ -188,10 +217,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     backgroundColor: flowColors.white,
     shadowColor: "#0F172A",
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
     overflow: "hidden",
   },
   imageFrame: {
@@ -203,7 +232,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: "100%",
   },
-  imageFallback: { ...StyleSheet.absoluteFillObject, backgroundColor: "#CBD5E1" },
+  imageFallback: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#CBD5E1",
+  },
   imageCorners: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
   imageOverlay: {
     position: "absolute",
@@ -220,15 +252,23 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.35)",
+    alignItems: "center",
+    justifyContent: "center",
   },
+  heartUnsaved: { backgroundColor: "#F43F5E" },
+  heartSaved: { backgroundColor: "#E11D48" },
+  heartPressed: { transform: [{ scale: 0.94 }] },
   copy: {
     zIndex: 1,
     alignSelf: "flex-start",
+    gap: 1,
   },
   city: {
     color: flowColors.white,
     fontSize: 20,
-    lineHeight: 24,
+    lineHeight: 25,
     fontWeight: "900",
     letterSpacing: -0.25,
     textShadowColor: "rgba(15, 23, 42, 0.55)",
@@ -238,7 +278,7 @@ const styles = StyleSheet.create({
   country: {
     color: flowColors.white,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 19,
     fontWeight: "600",
     opacity: 0.95,
     textShadowColor: "rgba(15, 23, 42, 0.55)",
@@ -247,21 +287,22 @@ const styles = StyleSheet.create({
   },
   ctaSection: {
     width: "100%",
-    minHeight: CTA_HEIGHT,
+    height: CTA_HEIGHT,
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "center",
     backgroundColor: flowColors.white,
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    paddingTop: 12,
   },
   ctaPill: {
+    minWidth: 156,
+    height: 40,
     borderRadius: 999,
     borderColor: "#CBD5E1",
     borderWidth: 1,
     backgroundColor: flowColors.white,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#0F172A",
     shadowOpacity: 0.1,
     shadowRadius: 9,
