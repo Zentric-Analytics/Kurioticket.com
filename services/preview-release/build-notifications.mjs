@@ -7,6 +7,8 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
     console.warn(JSON.stringify({ event: "preview-build-notification-skipped", reason: "secret-not-configured", sourceSha }));
     return [];
   }
+  const release = typeof ledger.releaseBySha === "function" ? await ledger.releaseBySha(sourceSha).catch(() => null) : null;
+  const classification = release?.classification ?? release?.evidence?.classification?.classification ?? null;
   const results = [];
   for (const platform of ["android", "ios"]) {
     const kind = platform === "android" ? "ANDROID_BUILD" : "IOS_BUILD";
@@ -28,6 +30,7 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
       buildNumber: build.appBuildVersion ?? null,
       appVersion: build.appVersion ?? null,
       runtimeVersion: PREVIEW_IDENTITY.runtime,
+      classification,
       buildUrl: platform === "android" ? build.artifacts?.buildUrl ?? null : null,
       buildDetailsUrl: build.buildDetailsPageUrl ?? null,
       submissionId,
@@ -44,13 +47,22 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
 
 export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failureReason, secret = process.env.PREVIEW_BUILD_NOTIFICATION_SECRET, fetchImpl = fetch }) {
   if (!secret) return [];
+  const reason = String(failureReason ?? "Preview native delivery failed").slice(0, 500);
+  const release = typeof ledger.releaseBySha === "function" ? await ledger.releaseBySha(sourceSha).catch(() => null) : null;
+  const classification = release?.classification ?? release?.evidence?.classification?.classification ?? null;
   const results = [];
   for (const platform of ["android", "ios"]) {
     const kind = platform === "android" ? "ANDROID_BUILD" : "IOS_BUILD";
     const identityKey = `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:${platform}:preview`;
     const action = await ledger.getAction(kind, identityKey).catch(() => null);
-    if (!action?.remote_id || !TERMINAL_FAILURES.has(String(action.state).toUpperCase())) continue;
+    if (!action?.remote_id) continue;
+    const terminalBuildFailure = TERMINAL_FAILURES.has(String(action.state).toUpperCase());
+    const platformFailure = failureMentionsPlatform(reason, platform);
+    if (!terminalBuildFailure && !platformFailure) continue;
     const build = await eas.viewBuild(action.remote_id).catch(() => ({ id: action.remote_id }));
+    const submission = platform === "ios"
+      ? await ledger.getAction("IOS_SUBMISSION", `ios-submission:${build.id ?? action.remote_id}`).catch(() => null)
+      : null;
     results.push(await postNotification({
       platform,
       status: "FAILED",
@@ -59,12 +71,20 @@ export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failure
       buildNumber: build.appBuildVersion ?? null,
       appVersion: build.appVersion ?? null,
       runtimeVersion: PREVIEW_IDENTITY.runtime,
+      classification,
       buildDetailsUrl: build.buildDetailsPageUrl ?? null,
-      failureReason: String(failureReason ?? `EAS ${platform} build failed`).slice(0, 500),
+      submissionId: submission?.remote_id ?? null,
+      failureReason: reason,
       completedAt: build.completedAt ?? new Date().toISOString(),
     }, { secret, fetchImpl }));
   }
   return results;
+}
+
+export function failureMentionsPlatform(reason, platform) {
+  const value = String(reason).toLowerCase();
+  if (platform === "android") return /android|\.apk\b|android_native/.test(value);
+  return /\bios\b|testflight|app store|apple|submission|ios_native/.test(value);
 }
 
 async function postNotification(payload, { secret, fetchImpl }) {
