@@ -5,6 +5,7 @@ import {
   buildExploreDestinations,
   exploreDestinationByAlias,
   exploreDestinations,
+  popularExploreDestinations,
 } from "./exploreDestinationContent";
 import {
   exploreDestinationEditorial,
@@ -18,71 +19,25 @@ const clone = (record: ExploreDestinationEditorial): ExploreDestinationEditorial
   highlights: [...record.highlights],
   editorialProvenance: {
     ...record.editorialProvenance,
-    sourceReferences: [...record.editorialProvenance.sourceReferences],
+    sourceReferences: record.editorialProvenance.sourceReferences.map((reference) => ({ ...reference })),
   },
 });
 
-test("Explore editorial dataset exactly covers the curated popular destinations in maintained order", () => {
+const nonFeaturedDestination = exploreDestinations.find(
+  ({ id }) => !CURATED_POPULAR_EXPLORE_DESTINATION_IDS.some((featuredId) => featuredId === id),
+)!;
+const nonFeaturedEditorialFixture: ExploreDestinationEditorial = {
+  ...clone(exploreDestinationEditorial[0]!),
+  id: nonFeaturedDestination.id,
+};
+
+test("existing 25 Explore editorial records validate without defining editorial scope", () => {
   assert.equal(exploreDestinationEditorial.length, 25);
-  assert.deepEqual(exploreDestinationEditorial.map((record) => record.id), CURATED_POPULAR_EXPLORE_DESTINATION_IDS);
-  assert.equal(new Set(exploreDestinationEditorial.map((record) => record.id)).size, CURATED_POPULAR_EXPLORE_DESTINATION_IDS.length);
+  assert.equal(validateExploreDestinationEditorial(exploreDestinationEditorial), exploreDestinationEditorial);
+  assert.equal(new Set(exploreDestinationEditorial.map(({ id }) => id)).size, 25);
 });
 
-test("Explore editorial records carry reusable content and strict HTTPS provenance", () => {
-  for (const record of exploreDestinationEditorial) {
-    assert.ok(record.summary.trim());
-    assert.ok(record.description.trim());
-    assert.ok(record.highlights.length >= 3 && record.highlights.length <= 5);
-    assert.equal(new Set(record.highlights.map((value) => value.trim().toLocaleLowerCase())).size, record.highlights.length);
-    assert.ok(record.highlights.every((value) => value.trim()));
-    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
-    assert.match(record.editorialProvenance.lastVerifiedAt, /^\d{4}-\d{2}-\d{2}$/);
-    assert.ok(!Number.isNaN(Date.parse(`${record.editorialProvenance.lastVerifiedAt}T00:00:00.000Z`)));
-    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
-    assert.equal(new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size, record.editorialProvenance.sourceReferences.length);
-    assert.ok(record.editorialProvenance.sourceReferences.every(({ title, url }) => title.trim() && url.startsWith("https://")));
-  }
-});
-
-test("Explore editorial validation rejects duplicate, missing, unknown and non-HTTPS records", () => {
-  const records = exploreDestinationEditorial.map(clone);
-  assert.throws(() => validateExploreDestinationEditorial([...records, clone(records[0]!)]), /Duplicate Explore editorial destination ID: fr-paris/);
-  assert.throws(() => validateExploreDestinationEditorial(records.slice(1)), /Missing Explore editorial destination ID: fr-paris/);
-  assert.throws(
-    () => validateExploreDestinationEditorial([{ ...clone(records[0]!), id: "xx-atlantis" as ExploreDestinationEditorial["id"] }, ...records.slice(1)]),
-    /Unknown or non-curated Explore editorial destination ID/,
-  );
-  assert.throws(
-    () => validateExploreDestinationEditorial([{ ...clone(records[0]!), editorialProvenance: { ...records[0]!.editorialProvenance, sourceReferences: [{ title: "Bad", url: "http://example.com" as `https://${string}` }, records[0]!.editorialProvenance.sourceReferences[1]!] } }, ...records.slice(1)]),
-    /non-HTTPS source URL/,
-  );
-  assert.throws(
-    () => validateExploreDestinationEditorial([{ ...clone(records[0]!), editorialProvenance: { ...records[0]!.editorialProvenance, lastVerifiedAt: "2026-02-31" } }, ...records.slice(1)]),
-    /invalid verification date/,
-  );
-});
-
-test("shared Explore model attaches editorial fields only to curated destinations", () => {
-  const curated = CURATED_POPULAR_EXPLORE_DESTINATION_IDS.map((id) => exploreDestinations.find((destination) => destination.id === id)!);
-  for (const destination of curated) {
-    assert.ok(destination.summary);
-    assert.ok(destination.description);
-    assert.ok(destination.highlights?.length);
-    assert.ok(destination.editorialProvenance?.sourceReferences.length);
-    assert.equal(destination.relatedDestinationIds, undefined);
-  }
-  const nonCurated = exploreDestinations.find((destination) => !CURATED_POPULAR_EXPLORE_DESTINATION_IDS.includes(destination.id as (typeof CURATED_POPULAR_EXPLORE_DESTINATION_IDS)[number]))!;
-  assert.equal(nonCurated.summary, undefined);
-  assert.equal(nonCurated.description, undefined);
-  assert.equal(nonCurated.highlights, undefined);
-  assert.equal(nonCurated.editorialProvenance, undefined);
-  assert.equal(nonCurated.relatedDestinationIds, undefined);
-});
-
-test("editorial enrichment preserves airport facts, popular order and search behavior", () => {
-  const uneditorialized = buildExploreDestinations(airports).map(({ summary, description, highlights, editorialProvenance, ...facts }) => facts);
-  const currentFacts = exploreDestinations.map(({ summary, description, highlights, editorialProvenance, ...facts }) => facts);
-  assert.deepEqual(currentFacts, uneditorialized);
+test("Featured destinations retain their separately maintained IDs and order", () => {
   assert.deepEqual(CURATED_POPULAR_EXPLORE_DESTINATION_IDS, [
     "fr-paris", "gb-london", "us-new-york", "id-bali", "ng-lagos",
     "ae-dubai", "jp-tokyo", "za-cape-town", "it-rome", "tr-istanbul",
@@ -90,6 +45,72 @@ test("editorial enrichment preserves airport facts, popular order and search beh
     "nl-amsterdam", "ca-toronto", "us-los-angeles", "ng-abuja", "gh-accra",
     "za-johannesburg", "ke-nairobi", "pt-lisbon", "au-sydney", "br-rio-de-janeiro",
   ]);
+  assert.deepEqual(popularExploreDestinations.map(({ id }) => id), CURATED_POPULAR_EXPLORE_DESTINATION_IDS);
+});
+
+test("valid non-Featured canonical editorial records are accepted only as test fixtures", () => {
+  assert.ok(nonFeaturedDestination);
+  assert.doesNotThrow(() => validateExploreDestinationEditorial([nonFeaturedEditorialFixture]));
+  assert.equal(exploreDestinationEditorial.some(({ id }) => id === nonFeaturedEditorialFixture.id), false);
+});
+
+test("editorial validation accepts incremental record counts and Featured-independent ordering", () => {
+  assert.doesNotThrow(() => validateExploreDestinationEditorial([clone(exploreDestinationEditorial[0]!) ]));
+  assert.doesNotThrow(() => validateExploreDestinationEditorial([...exploreDestinationEditorial].reverse()));
+  const featuredOrder = [...CURATED_POPULAR_EXPLORE_DESTINATION_IDS];
+  validateExploreDestinationEditorial([nonFeaturedEditorialFixture]);
+  validateExploreDestinationEditorial(exploreDestinationEditorial.slice(1));
+  assert.deepEqual(CURATED_POPULAR_EXPLORE_DESTINATION_IDS, featuredOrder);
+});
+
+test("editorial validation rejects duplicate and unknown canonical IDs", () => {
+  const first = clone(exploreDestinationEditorial[0]!);
+  assert.throws(
+    () => validateExploreDestinationEditorial([first, clone(first)]),
+    /Duplicate Explore editorial destination ID: fr-paris/,
+  );
+  assert.throws(
+    () => validateExploreDestinationEditorial([{ ...first, id: "xx-atlantis" }]),
+    /Unknown Explore editorial destination ID/,
+  );
+});
+
+test("editorial validation preserves copy, highlight and provenance requirements", () => {
+  const first = clone(exploreDestinationEditorial[0]!);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, summary: " " }]), /empty summary/);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, description: " " }]), /empty description/);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, highlights: ["one", "two"] }]), /3-5 highlights/);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, highlights: ["One", " one ", "three"] }]), /duplicate highlight/);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, highlights: ["one", " ", "three"] }]), /empty highlight/);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, editorialProvenance: { ...first.editorialProvenance, source: "unsupported" as "kurioticket-editorial" } }]), /unsupported editorial provenance source/);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, editorialProvenance: { ...first.editorialProvenance, sourceReferences: first.editorialProvenance.sourceReferences.slice(0, 1) } }]), /at least two source references/);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, editorialProvenance: { ...first.editorialProvenance, sourceReferences: [first.editorialProvenance.sourceReferences[0]!, { ...first.editorialProvenance.sourceReferences[1]!, title: first.editorialProvenance.sourceReferences[0]!.title.toUpperCase() }] } }]), /duplicate source title/);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, editorialProvenance: { ...first.editorialProvenance, sourceReferences: [{ title: "Bad", url: "http:\/\/example.com" as `https://${string}` }, first.editorialProvenance.sourceReferences[1]!] } }]), /non-HTTPS source URL/);
+  assert.throws(() => validateExploreDestinationEditorial([{ ...first, editorialProvenance: { ...first.editorialProvenance, lastVerifiedAt: "2026-02-31" } }]), /invalid verification date/);
+});
+
+test("missing editorial remains valid and related destination IDs remain optional", () => {
+  assert.equal(nonFeaturedDestination.summary, undefined);
+  assert.equal(nonFeaturedDestination.description, undefined);
+  assert.equal(nonFeaturedDestination.highlights, undefined);
+  assert.equal(nonFeaturedDestination.editorialProvenance, undefined);
+  assert.equal(nonFeaturedDestination.relatedDestinationIds, undefined);
+});
+
+test("editorial enrichment preserves canonical names, countries, airports, aliases and search", () => {
+  const canonicalFacts = ({
+    id, name, country, countryCode, primaryAirportCode, airportCodes, airportNames,
+    searchAliases, imageDestinationId, provenance,
+  }: (typeof exploreDestinations)[number]) => ({
+    id, name, country, countryCode, primaryAirportCode, airportCodes, airportNames,
+    searchAliases, imageDestinationId, provenance,
+  });
+  const canonical = buildExploreDestinations(airports).map(canonicalFacts);
+  const enriched = exploreDestinations.map(canonicalFacts);
+  assert.deepEqual(enriched, canonical);
   assert.equal(exploreDestinationByAlias("London")?.id, "gb-london");
   assert.equal(exploreDestinationByAlias("Ngurah Rai")?.id, "id-bali");
+  for (const destination of popularExploreDestinations) {
+    assert.ok(destination.summary && destination.description && destination.highlights?.length);
+  }
 });
