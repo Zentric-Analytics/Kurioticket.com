@@ -46,16 +46,17 @@ while (!stopping) {
     const result = await orchestrator.cycle();
     const sourceSha = result.source_sha ?? result.sourceSha ?? cycleSourceSha;
     console.log(JSON.stringify({ event: "preview-release-cycle", sourceSha, state: result.state }));
-    if (config.mode === "active" && sourceSha && result.state !== "NO_CHANGE" && result.state !== "LOCKED_OR_COMPLETE") {
-      await notifySuccessfulNativeBuilds({ sourceSha, ledger, eas }).catch((error) => {
-        console.error(JSON.stringify({ event: "preview-build-notification-failed", sourceSha, error: String(error?.message ?? error).slice(0, 500) }));
-      });
+    if (config.mode === "active" && sourceSha && result.state !== "LOCKED_OR_COMPLETE") {
+      await reconcileBuildNotifications({ sourceSha });
     }
   } catch (error) {
     const message = String(error?.message ?? error).slice(0, 500);
     console.error(JSON.stringify({ event: "preview-release-cycle-failed", error: message }));
     const sourceSha = cycleSourceSha ?? await github.latestDevSha().catch(() => null);
     if (config.mode === "active" && sourceSha) {
+      await notifySuccessfulNativeBuilds({ sourceSha, ledger, eas }).catch((notifyError) => {
+        console.error(JSON.stringify({ event: "preview-build-notification-failed", sourceSha, error: String(notifyError?.message ?? notifyError).slice(0, 500) }));
+      });
       await notifyFailedNativeBuilds({ sourceSha, ledger, eas, failureReason: message }).catch((notifyError) => {
         console.error(JSON.stringify({ event: "preview-build-failure-notification-failed", sourceSha, error: String(notifyError?.message ?? notifyError).slice(0, 500) }));
       });
@@ -65,3 +66,12 @@ while (!stopping) {
   if (remaining) await new Promise((resolveDelay) => setTimeout(resolveDelay, remaining));
 }
 await ledger.close();
+
+async function reconcileBuildNotifications({ sourceSha }) {
+  await notifySuccessfulNativeBuilds({ sourceSha, ledger, eas }).catch((error) => {
+    console.error(JSON.stringify({ event: "preview-build-notification-failed", sourceSha, error: String(error?.message ?? error).slice(0, 500) }));
+  });
+  await notifyFailedNativeBuilds({ sourceSha, ledger, eas }).catch((error) => {
+    console.error(JSON.stringify({ event: "preview-build-failure-notification-failed", sourceSha, error: String(error?.message ?? error).slice(0, 500) }));
+  });
+}
