@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lightbulb, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { TEAM_ACCESS_ROLE_DEFINITIONS, TEAM_ACCESS_ROLES, effectiveCapabilities, type TeamAccessRole } from "@/lib/teamAccess";
+import { TEAM_ACCESS_ROLE_DEFINITIONS, TEAM_ACCESS_ROLES, effectiveCapabilities, type TeamAccessRole } from "@/lib/teamAccessRoles";
 
 type Actor = { email: string | null; name: string | null } | null;
 type Tester = { id: string; email: string; status: string; roles: TeamAccessRole[]; expiresAt: Date | null; approvedAt: Date | null; suspendedAt: Date | null; revokedAt: Date | null; updatedAt: Date; reason: string | null; approvedByAdmin: Actor; suspendedByAdmin: Actor; revokedByAdmin: Actor };
