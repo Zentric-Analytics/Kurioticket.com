@@ -140,12 +140,12 @@ export class PreviewOrchestrator {
       }
       await this.ledger.transition(sha, this.config.workerId, [planned.state], "DELIVERING");
       const evidence = { files, identity, fingerprints, classification };
-      if (classification.classification.includes("WEB")) evidence.web = await this.deliverWeb(sha, lease);
-      if (classification.classification.includes("OTA")) evidence.ota = await this.deliverOta(sha, checkout.directory, lease);
-      const nativeDeliveries = {};
-      if (classification.classification.includes("IOS_NATIVE")) nativeDeliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
-      if (classification.classification.includes("ANDROID_NATIVE")) nativeDeliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
-      Object.assign(evidence, await runNativeDeliveries(nativeDeliveries));
+      const deliveries = {};
+      if (classification.classification.includes("WEB")) deliveries.web = () => this.deliverWeb(sha, lease);
+      if (classification.classification.includes("OTA")) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease);
+      if (classification.classification.includes("IOS_NATIVE")) deliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
+      if (classification.classification.includes("ANDROID_NATIVE")) deliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
+      Object.assign(evidence, await runDeliveries(deliveries));
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
       return complete;
@@ -387,22 +387,27 @@ async function resolvedIdentity(root) {
   return { appName: policy.preview.displayName, bundleIdentifier: policy.preview.bundleIdentifier, scheme: policy.preview.scheme, projectId: "89f6fd88-c0d7-495a-9e2b-8301b09f407d", profile: "preview", channel: eas.build.preview.channel, runtime: policy.preview.runtimeVersion, apiOrigin: eas.build.preview.env.EXPO_PUBLIC_API_BASE_URL };
 }
 
-export async function runNativeDeliveries(deliveries) {
+export async function runDeliveries(deliveries) {
   const entries = Object.entries(deliveries);
   if (!entries.length) return {};
   const settled = await Promise.allSettled(entries.map(([, deliver]) => Promise.resolve().then(deliver)));
   const results = {};
   const failures = [];
   for (let index = 0; index < entries.length; index += 1) {
-    const [platform] = entries[index];
+    const [target] = entries[index];
     const outcome = settled[index];
-    if (outcome.status === "fulfilled") results[platform] = outcome.value;
-    else failures.push({ platform, error: outcome.reason });
+    if (outcome.status === "fulfilled") results[target] = outcome.value;
+    else failures.push({ target, error: outcome.reason });
   }
   if (failures.length === 1) throw failures[0].error;
-  if (failures.length > 1) throw new AggregateError(failures.map(({ error }) => error), `Parallel native delivery failed for ${failures.map(({ platform }) => platform).join(", ")}.`);
+  if (failures.length > 1) {
+    const details = failures.map(({ target, error }) => `${target}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new AggregateError(failures.map(({ error }) => error), `Parallel Preview delivery failed: ${details.join("; ")}`);
+  }
   return results;
 }
+
+export const runNativeDeliveries = runDeliveries;
 
 export async function retry(operation, { attempts, sleep, baseMs = 1_000 }) {
   let last;
