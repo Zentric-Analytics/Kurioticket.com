@@ -39,8 +39,11 @@ export class PreviewOrchestrator {
     const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
     const iosDistributionPending = !iosNativeBackfill && (pendingDistribution?.source_sha === sourceSha || (typeof this.ledger.requiresIosDistribution === "function" && await this.ledger.requiresIosDistribution(sourceSha)));
     const deliveredNative = iosNativeBackfill || iosDistributionPending ? {} : await this.deliveredNativeBaselines();
+    const deliveredChangeTargets = previous?.source_sha === sourceSha
+      ? await this.nativeChangeTargets(sourceSha, deliveredNative)
+      : [];
     const pendingNative = previous?.source_sha === sourceSha
-      ? nativeDriftTargets(previous.evidence?.fingerprints, deliveredNative)
+      ? [...new Set([...nativeDriftTargets(previous.evidence?.fingerprints, deliveredNative), ...deliveredChangeTargets])]
       : [];
     if (previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length && !iosDistributionPending) return { state: "NO_CHANGE", sourceSha };
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
@@ -56,7 +59,7 @@ export class PreviewOrchestrator {
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
       if (iosDistributionPending) return await this.reconcileIosDistribution(record, lease);
-      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative);
+      return await this.process(record, iosNativeBackfill ? null : previous, lease, deliveredNative, pendingNative);
     } catch (error) {
       const safe = redact(error instanceof Error ? error.message : String(error));
       await this.ledger.transition(sourceSha, this.config.workerId, [record.state, "VALIDATING", "PLANNED", "DELIVERING"], "FAILED", { failure_reason: safe, recovery_action: "Retry the same ledger record after correcting the reported cause." }).catch(() => {});
@@ -65,7 +68,7 @@ export class PreviewOrchestrator {
     } finally { await lease.stop(); }
   }
 
-  async process(record, previous, lease, deliveredNative = null) {
+  async process(record, previous, lease, deliveredNative = null, requiredNativeTargets = []) {
     const sha = record.source_sha;
     await this.ledger.transition(sha, this.config.workerId, [record.state], "VALIDATING", { validation_state: "IN_PROGRESS" });
     const checkout = await exactCheckout({ repository: this.config.repository, token: this.config.githubReadToken, sha });
@@ -81,7 +84,7 @@ export class PreviewOrchestrator {
       const fingerprints = await nativeFingerprints(checkout.directory);
       await lease.checkpoint();
       const nativeBaselines = deliveredNative ?? await this.deliveredNativeBaselines();
-      classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines });
+      classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines, requiredNativeTargets });
       if (classification.classification.includes("OTA")) {
         const prior = previous?.evidence?.fingerprints;
         if (!prior || prior.ios !== fingerprints.ios || prior.android !== fingerprints.android) {
@@ -114,6 +117,19 @@ export class PreviewOrchestrator {
       if (record) result[platform] = { sourceSha: record.source_sha, buildId: record.native_build_id, fingerprint: record.native_fingerprint };
     }
     return result;
+  }
+
+  async nativeChangeTargets(sourceSha, deliveredNative) {
+    const targets = [];
+    for (const [platform, target] of [["ios", "IOS_NATIVE"], ["android", "ANDROID_NATIVE"]]) {
+      const deliveredSha = deliveredNative?.[platform]?.sourceSha;
+      if (!deliveredSha || deliveredSha === sourceSha) continue;
+      const files = await this.github.compare(deliveredSha, sourceSha);
+      const classification = classifyChangeSet(files).classification;
+      if (classification === "UNSAFE") throw new Error(`Native delivery baseline comparison failed closed for ${platform}.`);
+      if (classification.split("+").includes(target)) targets.push(target);
+    }
+    return targets;
   }
 
   async reconcileIosDistribution(record, lease) {
@@ -370,8 +386,8 @@ export function nativeDriftTargets(fingerprints, deliveredNative) {
   return targets;
 }
 
-export function enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative }) {
-  const drift = nativeDriftTargets(fingerprints, deliveredNative);
+export function enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative, requiredNativeTargets = [] }) {
+  const drift = [...new Set([...nativeDriftTargets(fingerprints, deliveredNative), ...requiredNativeTargets])];
   if (!drift.length) return classification;
   const targets = new Set(String(classification.classification).split("+").filter((value) => value && value !== "NO_DELIVERY"));
   for (const target of drift) targets.add(target);
