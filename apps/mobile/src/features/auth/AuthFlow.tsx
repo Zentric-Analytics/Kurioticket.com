@@ -28,7 +28,7 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     try {
       await authApi.google(result.idToken, result.nonce);
     } catch (googleError) {
-      if (googleError instanceof AuthApiError && googleError.status === 403) {
+      if (googleError instanceof AuthApiError && googleError.code === "PREVIEW_ACCESS_REQUIRED") {
         // Preview access rejection is an application-level decision after Google
         // has already selected an account. Clear that native selection and force
         // the next attempt through the explicit chooser so a tester can correct
