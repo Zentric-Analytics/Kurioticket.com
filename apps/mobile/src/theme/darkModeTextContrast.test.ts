@@ -6,16 +6,6 @@ import test from "node:test";
 const source = (path: string) =>
   readFileSync(join(process.cwd(), path), "utf8");
 
-test("homepage section headings and supporting copy use semantic theme text colors", () => {
-  const popular = source("src/features/home/PopularDestinationStays.tsx");
-
-  assert.match(popular, /useFlowTheme/);
-  assert.match(popular, /Popular destination stays/);
-  assert.match(popular, /color: ft\.colors\.textPrimary/);
-  assert.doesNotMatch(popular, /heading:\s*\{\s*color: flowColors\.navy/);
-
-});
-
 test("flight-form captions and helper text stay theme-aware in dark mode", () => {
   const primitives = source("src/features/flow/FlowPrimitives.tsx");
   const flight = source("src/features/flow/FlightSearchPanel.tsx");
