@@ -197,6 +197,7 @@ model PreviewTester {
   email                 String
   emailNormalized       String              @unique
   status                PreviewTesterStatus @default(SUSPENDED)
+  roles                 String[]            @default(["TESTER"])
   allowGoogleSignIn     Boolean             @default(false)
   allowStagingEmail     Boolean             @default(false)
   expiresAt             DateTime?
