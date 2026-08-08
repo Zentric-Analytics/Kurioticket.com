@@ -142,8 +142,10 @@ export class PreviewOrchestrator {
       const evidence = { files, identity, fingerprints, classification };
       if (classification.classification.includes("WEB")) evidence.web = await this.deliverWeb(sha, lease);
       if (classification.classification.includes("OTA")) evidence.ota = await this.deliverOta(sha, checkout.directory, lease);
-      if (classification.classification.includes("IOS_NATIVE")) evidence.ios = await this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
-      if (classification.classification.includes("ANDROID_NATIVE")) evidence.android = await this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
+      const nativeDeliveries = {};
+      if (classification.classification.includes("IOS_NATIVE")) nativeDeliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
+      if (classification.classification.includes("ANDROID_NATIVE")) nativeDeliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
+      Object.assign(evidence, await runNativeDeliveries(nativeDeliveries));
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
       return complete;
@@ -383,6 +385,23 @@ async function resolvedIdentity(root) {
   const policy = JSON.parse(await readFile(join(root, "apps/mobile/release-policy.json"), "utf8"));
   const eas = JSON.parse(await readFile(join(root, "apps/mobile/eas.json"), "utf8"));
   return { appName: policy.preview.displayName, bundleIdentifier: policy.preview.bundleIdentifier, scheme: policy.preview.scheme, projectId: "89f6fd88-c0d7-495a-9e2b-8301b09f407d", profile: "preview", channel: eas.build.preview.channel, runtime: policy.preview.runtimeVersion, apiOrigin: eas.build.preview.env.EXPO_PUBLIC_API_BASE_URL };
+}
+
+export async function runNativeDeliveries(deliveries) {
+  const entries = Object.entries(deliveries);
+  if (!entries.length) return {};
+  const settled = await Promise.allSettled(entries.map(([, deliver]) => Promise.resolve().then(deliver)));
+  const results = {};
+  const failures = [];
+  for (let index = 0; index < entries.length; index += 1) {
+    const [platform] = entries[index];
+    const outcome = settled[index];
+    if (outcome.status === "fulfilled") results[platform] = outcome.value;
+    else failures.push({ platform, error: outcome.reason });
+  }
+  if (failures.length === 1) throw failures[0].error;
+  if (failures.length > 1) throw new AggregateError(failures.map(({ error }) => error), `Parallel native delivery failed for ${failures.map(({ platform }) => platform).join(", ")}.`);
+  return results;
 }
 
 export async function retry(operation, { attempts, sleep, baseMs = 1_000 }) {
