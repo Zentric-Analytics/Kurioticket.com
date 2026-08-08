@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
-import { homepageAdventureDiscoveryItems, readFreshDiscoveryFare } from "./HomepageAdventureDiscoveryData";
+import { homepageAdventureDiscoveryBottomRow, homepageAdventureDiscoveryItems, homepageAdventureDiscoveryTopRow, readFreshDiscoveryFare } from "./HomepageAdventureDiscoveryData";
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 const section = source("src/features/home/HomepageAdventureDiscovery.tsx");
@@ -15,6 +15,7 @@ test("new adventure discovery is independently inserted in the required Home ord
   const promos = home.indexOf("<HomepageDealPromos />");
   const regionalSection = home.indexOf("<RegionalDestinationRoutes />");
   assert.ok(popular < adventure && adventure < promos && promos < regionalSection);
+  assert.match(home, /<PopularDestinationStays \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>/);
   assert.match(section, /Discover your next adventure here/);
   assert.match(section, /Compare smart route ideas, flexible fares, and destinations picked for your region\./);
   assert.match(regional, /Discover destinations from your region/);
@@ -43,10 +44,22 @@ test("only fresh, exact-route, provider-backed fares can be displayed", () => {
   assert.doesNotMatch(section, /priceFromUsd/);
 });
 
-test("cards form a responsive two-column grid with safe image fallback", () => {
-  assert.match(section, /\(width - 28 - GRID_GAP\) \/ 2/);
-  assert.match(section, /flexDirection: "row", flexWrap: "wrap", gap: GRID_GAP/);
-  assert.doesNotMatch(section, /ScrollView|horizontal/);
+test("cards form two independent responsive horizontal rows with safe image fallback", () => {
+  assert.match(section, /Math\.min\(210, Math\.max\(170, width \* 0\.44\)\)/);
+  assert.doesNotMatch(section, /flexWrap|homepage-adventure-grid/);
+  assert.equal(section.match(/<ScrollView/g)?.length, 2);
+  assert.equal(section.match(/\bhorizontal\b/g)?.length, 2);
+  assert.equal(section.match(/\bnestedScrollEnabled\b/g)?.length, 2);
+  assert.equal(section.match(/showsHorizontalScrollIndicator=\{false\}/g)?.length, 2);
+  assert.match(section, /testID="homepage-adventure-row-top"/);
+  assert.match(section, /testID="homepage-adventure-row-bottom"/);
+  assert.match(section, /homepageAdventureDiscoveryTopRow\.map/);
+  assert.match(section, /homepageAdventureDiscoveryBottomRow\.map/);
+  assert.doesNotMatch(section, /\bref=|scrollTo|contentOffset|onScroll/);
+  assert.notStrictEqual(homepageAdventureDiscoveryTopRow, homepageAdventureDiscoveryBottomRow);
+  assert.deepEqual(homepageAdventureDiscoveryTopRow.map(({ id }) => id), homepageAdventureDiscoveryItems.filter((_, index) => index % 2 === 0).map(({ id }) => id));
+  assert.deepEqual(homepageAdventureDiscoveryBottomRow.map(({ id }) => id), homepageAdventureDiscoveryItems.filter((_, index) => index % 2 === 1).map(({ id }) => id));
+  assert.equal(new Set([...homepageAdventureDiscoveryTopRow, ...homepageAdventureDiscoveryBottomRow].map(({ id }) => id)).size, homepageAdventureDiscoveryItems.length);
   assert.match(section, /onError=\{onImageError\}/);
   assert.match(section, /testID=\{`adventure-image-fallback-\$\{item\.id\}`\}/);
   assert.match(section, /accessibilityRole="button"/);
