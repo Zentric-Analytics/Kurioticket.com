@@ -13,6 +13,10 @@ export type NativeGoogleResult =
   | { status: "cancelled" }
   | { status: "success"; idToken: string; nonce: string };
 
+export type NativeGoogleSignInOptions = {
+  forceAccountSelection?: boolean;
+};
+
 export class NativeGoogleSignInError extends Error {
   constructor(message: string, public code = "unknown") {
     super(message);
@@ -32,7 +36,13 @@ async function resolveInteractiveResponse(response: OneTapResponse) {
   return response;
 }
 
-export async function startNativeGoogleSignIn(): Promise<NativeGoogleResult> {
+export async function resetNativeGoogleSignInSelection() {
+  await GoogleOneTapSignIn.signOut();
+}
+
+export async function startNativeGoogleSignIn(
+  { forceAccountSelection = false }: NativeGoogleSignInOptions = {},
+): Promise<NativeGoogleResult> {
   const webClientId = requireGoogleWebClientId();
   const iosClientId = getGoogleIosClientId();
 
@@ -47,7 +57,12 @@ export async function startNativeGoogleSignIn(): Promise<NativeGoogleResult> {
 
   try {
     await GoogleOneTapSignIn.checkPlayServices(true);
-    const response = await resolveInteractiveResponse(await GoogleOneTapSignIn.signIn());
+    const initialResponse = forceAccountSelection
+      ? await GoogleOneTapSignIn.presentExplicitSignIn()
+      : await GoogleOneTapSignIn.signIn();
+    const response = forceAccountSelection
+      ? initialResponse
+      : await resolveInteractiveResponse(initialResponse);
     if (isCancelledResponse(response)) return { status: "cancelled" };
     if (!isSuccessResponse(response) || !response.data.idToken) {
       throw new NativeGoogleSignInError("Google did not return a valid identity token.", "invalid_response");

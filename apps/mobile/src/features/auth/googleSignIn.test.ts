@@ -30,3 +30,18 @@ test("Google configuration is validated before loading the native module", () =>
   assert.notEqual(importIndex, -1);
   assert.ok(guardIndex < importIndex);
 });
+
+test("Preview Google rejection resets native selection and forces an explicit chooser on retry", () => {
+  const nativeSource = readFileSync(join(process.cwd(), "src/features/auth/googleSignIn.ts"), "utf8");
+  const flowSource = readFileSync(join(process.cwd(), "src/features/auth/AuthFlow.tsx"), "utf8");
+  const apiSource = readFileSync(join(process.cwd(), "src/features/auth/authApi.ts"), "utf8");
+
+  assert.match(nativeSource, /forceAccountSelection/);
+  assert.match(nativeSource, /GoogleOneTapSignIn\.presentExplicitSignIn/);
+  assert.match(nativeSource, /resetNativeGoogleSignInSelection/);
+  assert.match(nativeSource, /GoogleOneTapSignIn\.signOut/);
+  assert.match(flowSource, /googleError\.code === "PREVIEW_ACCESS_REQUIRED"/);
+  assert.match(flowSource, /setForceGoogleAccountSelection\(true\)/);
+  assert.match(flowSource, /resetNativeGoogleSignInSelection\(\)/);
+  assert.match(apiSource, /public code = ""/);
+});

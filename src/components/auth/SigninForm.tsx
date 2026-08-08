@@ -437,10 +437,11 @@ export function SigninForm({
             variant="secondary"
             className="w-full focus-visible:ring-blue/30"
             onClick={() =>
-              signIn("google", {
-                callbackUrl: callbackUrl || "/",
-                prompt: "select_account",
-              })
+              signIn(
+                "google",
+                { callbackUrl: callbackUrl || "/" },
+                { prompt: "select_account" },
+              )
             }
             disabled={busy}
           >
