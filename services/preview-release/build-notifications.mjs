@@ -47,8 +47,8 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
 
 export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failureReason, secret = process.env.PREVIEW_BUILD_NOTIFICATION_SECRET, fetchImpl = fetch }) {
   if (!secret) return [];
-  const reason = String(failureReason ?? "Preview native delivery failed").slice(0, 500);
   const release = typeof ledger.releaseBySha === "function" ? await ledger.releaseBySha(sourceSha).catch(() => null) : null;
+  const reason = String(failureReason ?? release?.failure_reason ?? "Preview native delivery failed").slice(0, 500);
   const classification = release?.classification ?? release?.evidence?.classification?.classification ?? null;
   const results = [];
   for (const platform of ["android", "ios"]) {
