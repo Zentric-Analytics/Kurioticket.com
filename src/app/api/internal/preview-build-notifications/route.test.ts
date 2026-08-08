@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { emailFor } from "./route";
 
-test("Android Preview email uses Expo build page as primary install action", () => {
+test("Android Preview email uses only the exact Expo build install page", () => {
   const message = emailFor({
     platform: "android",
     status: "SUCCESS",
@@ -11,14 +11,13 @@ test("Android Preview email uses Expo build page as primary install action", () 
     buildNumber: "42",
     appVersion: "0.3.0",
     runtimeVersion: "preview-0.3.0",
-    buildUrl: "https://expo.dev/artifacts/eas/example.apk",
+    installUrl: "https://expo.dev/accounts/zentric-analytics/projects/kurioticket-mobile/builds/android-build-123",
     buildDetailsUrl: "https://expo.dev/accounts/zentric-analytics/projects/kurioticket-mobile/builds/android-build-123",
   });
 
   assert.match(message.html, /Install Android Preview/);
   assert.match(message.html, /href="https:\/\/expo\.dev\/accounts\/zentric-analytics\/projects\/kurioticket-mobile\/builds\/android-build-123"/);
-  assert.match(message.html, /try the direct APK download/);
-  assert.match(message.html, /href="https:\/\/expo\.dev\/artifacts\/eas\/example\.apk"/);
-  assert.match(message.text, /tap Install to download the APK/);
-  assert.match(message.text, /Direct APK fallback: https:\/\/expo\.dev\/artifacts\/eas\/example\.apk/);
+  assert.doesNotMatch(message.html, /artifacts\/eas/);
+  assert.match(message.text, /verified Expo page/);
+  assert.doesNotMatch(message.text, /Direct APK fallback/);
 });
