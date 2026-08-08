@@ -1,4 +1,5 @@
-import { CURATED_POPULAR_EXPLORE_DESTINATION_IDS } from "./exploreDestinationPopularIds";
+import { airports } from "../airports";
+import { buildCanonicalExploreDestinations } from "./exploreDestinationCatalogue";
 
 export type ExploreDestinationEditorialSourceReference = {
   readonly title: string;
@@ -12,7 +13,8 @@ export type ExploreDestinationEditorialProvenance = {
 };
 
 export type ExploreDestinationEditorial = {
-  readonly id: (typeof CURATED_POPULAR_EXPLORE_DESTINATION_IDS)[number];
+  /** Must resolve to one destination in the canonical Explore catalogue. */
+  readonly id: string;
   readonly summary: string;
   readonly description: string;
   readonly highlights: readonly string[];
@@ -205,18 +207,20 @@ const rawExploreDestinationEditorial = [
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const canonicalDestinationIds = new Set(
+  buildCanonicalExploreDestinations(airports).map(({ id }) => id),
+);
 
 export function validateExploreDestinationEditorial(
   records: readonly ExploreDestinationEditorial[],
 ): readonly ExploreDestinationEditorial[] {
-  const curatedIds = new Set<string>(CURATED_POPULAR_EXPLORE_DESTINATION_IDS);
   const seen = new Set<string>();
   const errors: string[] = [];
 
   records.forEach((record, index) => {
     if (seen.has(record.id)) errors.push(`Duplicate Explore editorial destination ID: ${record.id}`);
     seen.add(record.id);
-    if (!curatedIds.has(record.id)) errors.push(`Unknown or non-curated Explore editorial destination ID at index ${index}: ${record.id}`);
+    if (!canonicalDestinationIds.has(record.id)) errors.push(`Unknown Explore editorial destination ID at index ${index}: ${record.id}`);
     if (!record.summary.trim()) errors.push(`Explore editorial ${record.id} has an empty summary`);
     if (!record.description.trim()) errors.push(`Explore editorial ${record.id} has an empty description`);
     if (record.highlights.length < 3 || record.highlights.length > 5) errors.push(`Explore editorial ${record.id} must have 3-5 highlights`);
@@ -231,8 +235,12 @@ export function validateExploreDestinationEditorial(
     if (!references.length) errors.push(`Explore editorial ${record.id} is missing source references`);
     if (references.length < 2) errors.push(`Explore editorial ${record.id} must have at least two source references`);
     const sourceUrls = new Set<string>();
+    const sourceTitles = new Set<string>();
     for (const reference of references) {
-      if (!reference.title.trim()) errors.push(`Explore editorial ${record.id} has an empty source title`);
+      const normalizedTitle = reference.title.trim().toLocaleLowerCase();
+      if (!normalizedTitle) errors.push(`Explore editorial ${record.id} has an empty source title`);
+      if (sourceTitles.has(normalizedTitle)) errors.push(`Explore editorial ${record.id} has duplicate source title: ${reference.title}`);
+      sourceTitles.add(normalizedTitle);
       if (!reference.url.startsWith("https://")) errors.push(`Explore editorial ${record.id} has a non-HTTPS source URL: ${reference.url}`);
       if (sourceUrls.has(reference.url)) errors.push(`Explore editorial ${record.id} has duplicate source URL: ${reference.url}`);
       sourceUrls.add(reference.url);
@@ -247,12 +255,6 @@ export function validateExploreDestinationEditorial(
     if (record.editorialProvenance.source !== "kurioticket-editorial") errors.push(`Explore editorial ${record.id} has unsupported editorial provenance source`);
   });
 
-  for (const id of CURATED_POPULAR_EXPLORE_DESTINATION_IDS) {
-    if (!seen.has(id)) errors.push(`Missing Explore editorial destination ID: ${id}`);
-  }
-  if (records.length !== CURATED_POPULAR_EXPLORE_DESTINATION_IDS.length) errors.push(`Explore editorial dataset must contain exactly ${CURATED_POPULAR_EXPLORE_DESTINATION_IDS.length} records; received ${records.length}`);
-  const ids = records.map((record) => record.id);
-  if (JSON.stringify(ids) !== JSON.stringify(CURATED_POPULAR_EXPLORE_DESTINATION_IDS)) errors.push("Explore editorial destination IDs must match the curated popular order exactly");
   if (errors.length) throw new Error(`Invalid Explore destination editorial data:\n${errors.join("\n")}`);
   return records;
 }
@@ -264,7 +266,7 @@ export const exploreDestinationEditorialById = new Map(
 );
 
 export function requireExploreDestinationEditorial(id: string): ExploreDestinationEditorial {
-  const editorial = exploreDestinationEditorialById.get(id as ExploreDestinationEditorial["id"]);
+  const editorial = exploreDestinationEditorialById.get(id);
   if (!editorial) throw new Error(`Unknown Explore destination editorial ID: ${id}`);
   return editorial;
 }

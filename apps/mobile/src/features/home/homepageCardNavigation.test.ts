@@ -3,25 +3,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { buildSearchPlan } from "../flow/travelSearchModel";
-import { discoverAdventureNavigation, getDefaultHomepageRouteCardDepartureDate, homepageAdventureRouteParams, homepageHotelDestinationParams, popularDestinationStayNavigation } from "./homepageCardNavigation";
+import { discoverAdventureNavigation, getDefaultHomepageRouteCardDepartureDate, homepageAdventureRouteParams } from "./homepageCardNavigation";
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
-const popular = source("src/features/home/PopularDestinationStays.tsx");
 const regional = source("src/features/home/RegionalDestinationRoutes.tsx");
 const helper = source("src/features/home/homepageCardNavigation.ts");
 const websiteHomepage = source("../../src/app/page.tsx");
 const websiteRouteHelper = source("../../src/lib/home/homepageRouteCardLinks.ts");
-
-test("Popular destination stay cards open the website hotel-results destination-only contract", () => {
-  const params = homepageHotelDestinationParams({ city: "Dubai" });
-  assert.deepEqual(params, { destination: "Dubai" });
-  assert.deepEqual(buildSearchPlan("hotel", params).plan?.payload, { destination: "Dubai" });
-  assert.deepEqual(popularDestinationStayNavigation({ city: "Dubai" }), { pathname: "/hotel-results", params });
-  assert.doesNotMatch(helper, /checkIn|checkOut|guests|rooms/);
-  assert.match(websiteHomepage, /function buildDestinationCardHref[\s\S]*pathname: "\/hotels\/results"[\s\S]*destination: options\.city/);
-  assert.doesNotMatch(popular, /pathname:\s*"\/(?:flights|flight-results)"/);
-});
 
 test("Regional destination route cards open the website flight-results route search contract", () => {
   const params = homepageAdventureRouteParams({ originCode: "LOS", destinationCode: "LHR" }, new Date("2026-06-09T00:00:00.000Z"));
@@ -49,11 +38,8 @@ test("Regional destination navigation uses the website fallback instead of enter
 });
 
 test("homepage card navigation preserves favorites, auth-neutral taps, and loop-safe back stacks", () => {
-  assert.match(popular, /router\.push\(popularDestinationStayNavigation\(destination\)\)/);
   assert.match(regional, /router\.push\(discoverAdventureNavigation\(route\)\)/);
-  assert.match(popular, /event\.stopPropagation\(\);\s*toggle\(destination\.id\);/);
-  assert.doesNotMatch(popular + regional, /router\.replace|router\.back|isAuthenticated\s*\?/);
-  assert.match(popular, /useSavedDestinations\(\)/);
+  assert.doesNotMatch(regional, /router\.replace|router\.back|isAuthenticated\s*\?/);
 });
 
 test("Android and iOS share the same card, results, loading, and back-stack implementation", () => {
@@ -61,7 +47,7 @@ test("Android and iOS share the same card, results, loading, and back-stack impl
   const hotelRoute = source("app/hotel-results.tsx");
   const results = source("src/features/flow/TravelResultsScreen.tsx");
 
-  assert.doesNotMatch(popular + regional + helper, /Platform\.OS/);
+  assert.doesNotMatch(regional + helper, /Platform\.OS/);
   assert.match(flightRoute, /TravelResultsScreen product="flight"/);
   assert.match(hotelRoute, /TravelResultsScreen product="hotel"/);
   assert.match(results, /setStatus\("loading"\)/);
