@@ -70,6 +70,22 @@ test("guided loaded Flight results hide only the redundant heading and preserve 
     loadedBranch,
     /<div className="flex items-center justify-between gap-4"><p className="text-\[16px\] font-semibold text-\[#142033\]">\{formatResultsFound\(sortedResults\.length, t\)\}<\/p>\{renderDesktopSortControl\(\)\}/,
   );
+  assert.match(
+    loadedBranch,
+    /<div className="flex w-full flex-col gap-3 py-1">/,
+  );
+  assert.doesNotMatch(
+    loadedBranch,
+    /flex w-full flex-col gap-3 rounded-2xl border border-\[#D8E1EC\] bg-white p-3 shadow-sm sm:p-4 lg:bg-transparent/,
+  );
+  assert.match(
+    loadedBranch,
+    /<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick=\{\(event\) => openMobileFiltersDrawer\(event\.currentTarget\)\}/,
+  );
+  assert.match(
+    loadedBranch,
+    /<div className="lg:hidden">\{renderMobileSortResultsRow\(\)\}<\/div>/,
+  );
   assert.match(loadedBranch, /<DesktopFlightFilters/);
   assert.match(loadedBranch, /id="flight-mobile-filters-dialog"/);
   assert.match(
