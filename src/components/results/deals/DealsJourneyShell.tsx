@@ -372,7 +372,8 @@ export function DealsJourneyShell({
   const visuallyHideStageHeading =
     stage === "hotel-results" ||
     stage === "hotel-details" ||
-    stage === "flight-results";
+    stage === "flight-results" ||
+    stage === "flight-details";
   const useHotelDetailsBackground = stage === "hotel-details";
   const displayPlanStatus: GuidedPlanState =
     plan && plan.expiresAt <= lifecycleNow ? "expired" : planStatus;

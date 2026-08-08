@@ -92,7 +92,7 @@ test("guided shell uses breadcrumbs as primary navigation without changing share
     assert.doesNotMatch(source, new RegExp(forbidden));
 });
 
-test("Hotel stages and Flight results hide redundant shell headings without changing accessibility or focus", async () => {
+test("Hotel and Flight journey stages hide redundant shell headings without changing accessibility or focus", async () => {
   const source = await readFile(
     new URL("./DealsJourneyShell.tsx", import.meta.url),
     "utf8",
@@ -100,7 +100,7 @@ test("Hotel stages and Flight results hide redundant shell headings without chan
   assert.equal((source.match(/<h1/g) ?? []).length, 1);
   assert.match(
     source,
-    /const visuallyHideStageHeading =\s*stage === "hotel-results" \|\|\s*stage === "hotel-details" \|\|\s*stage === "flight-results";/,
+    /const visuallyHideStageHeading =\s*stage === "hotel-results" \|\|\s*stage === "hotel-details" \|\|\s*stage === "flight-results" \|\|\s*stage === "flight-details";/,
   );
   const hiddenStageRule = source.match(
     /const visuallyHideStageHeading =([\s\S]*?);/,
@@ -110,9 +110,9 @@ test("Hotel stages and Flight results hide redundant shell headings without chan
     [...hiddenStageRule[1].matchAll(/stage === "([^"]+)"/g)].map(
       ([, stage]) => stage,
     ),
-    ["hotel-results", "hotel-details", "flight-results"],
+    ["hotel-results", "hotel-details", "flight-results", "flight-details"],
   );
-  for (const visibleStage of ["flight-details", "car-results", "car-details"])
+  for (const visibleStage of ["car-results", "car-details"])
     assert.doesNotMatch(hiddenStageRule[1], new RegExp(visibleStage));
   assert.doesNotMatch(
     hiddenStageRule[1],
@@ -132,6 +132,16 @@ test("Hotel stages and Flight results hide redundant shell headings without chan
   );
   assert.match(source, /<DealsHotelResultsStage search=\{search\} \/>/);
   assert.match(source, /<DealsHotelDetailsStage/);
+  assert.match(source, /<DealsFlightDetailsStage/);
+  assert.match(
+    source,
+    /const useHotelDetailsBackground = stage === "hotel-details";/,
+  );
+  assert.ok(
+    source.indexOf("<DealsJourneyBreadcrumbs") <
+      source.indexOf("<DealsJourneyProgress"),
+  );
+  assert.equal((source.match(/<DealsJourneyProgress/g) ?? []).length, 1);
 });
 test("public Deals and package results contracts remain active", async () => {
   const [landing, results, handoff] = await Promise.all([
