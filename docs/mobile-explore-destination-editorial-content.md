@@ -38,7 +38,35 @@ The current incremental rollout still contains the original 25 records for these
 24. `au-sydney`
 25. `br-rio-de-janeiro`
 
+The first reviewed Europe batch adds editorial content for 10 previously non-editorial canonical destinations without changing Featured membership or ordering:
+
+1. `dk-copenhagen`
+2. `ee-tallinn`
+3. `fi-helsinki`
+4. `is-reykjavik`
+5. `lv-riga`
+6. `lt-vilnius`
+7. `no-oslo`
+8. `pl-warsaw`
+9. `se-stockholm`
+10. `de-berlin`
+
+The second reviewed Europe batch, verified on 2026-08-08, adds 10 more previously non-editorial canonical destinations:
+
+1. `at-vienna`
+2. `cz-prague`
+3. `hu-budapest`
+4. `be-brussels`
+5. `ch-zurich`
+6. `ch-geneva`
+7. `de-munich`
+8. `de-frankfurt`
+9. `gr-athens`
+10. `ie-dublin`
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
+
+These editorial batches do not change Featured membership or order and include no image work. Related destinations remain deferred until a separate recommendation policy is approved.
 
 ## Content fields
 
