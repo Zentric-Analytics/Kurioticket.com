@@ -24,17 +24,101 @@ const clone = (record: ExploreDestinationEditorial): ExploreDestinationEditorial
 });
 
 const nonFeaturedDestination = exploreDestinations.find(
-  ({ id }) => !CURATED_POPULAR_EXPLORE_DESTINATION_IDS.some((featuredId) => featuredId === id),
+  ({ id, editorialProvenance }) =>
+    !editorialProvenance &&
+    !CURATED_POPULAR_EXPLORE_DESTINATION_IDS.some((featuredId) => featuredId === id),
 )!;
 const nonFeaturedEditorialFixture: ExploreDestinationEditorial = {
   ...clone(exploreDestinationEditorial[0]!),
   id: nonFeaturedDestination.id,
 };
 
-test("existing 25 Explore editorial records validate without defining editorial scope", () => {
-  assert.equal(exploreDestinationEditorial.length, 25);
+const ORIGINAL_EDITORIAL_IDS = [
+  "fr-paris", "gb-london", "us-new-york", "id-bali", "ng-lagos",
+  "ae-dubai", "jp-tokyo", "za-cape-town", "it-rome", "tr-istanbul",
+  "th-bangkok", "es-barcelona", "eg-cairo", "ma-marrakesh", "sg-singapore",
+  "nl-amsterdam", "ca-toronto", "us-los-angeles", "ng-abuja", "gh-accra",
+  "za-johannesburg", "ke-nairobi", "pt-lisbon", "au-sydney", "br-rio-de-janeiro",
+] as const;
+
+const EUROPE_BATCH_1_IDS = [
+  "dk-copenhagen", "ee-tallinn", "fi-helsinki", "is-reykjavik", "lv-riga",
+  "lt-vilnius", "no-oslo", "pl-warsaw", "se-stockholm", "de-berlin",
+] as const;
+
+const EUROPE_BATCH_2_IDS = [
+  "at-vienna", "cz-prague", "hu-budapest", "be-brussels", "ch-zurich",
+  "ch-geneva", "de-munich", "de-frankfurt", "gr-athens", "ie-dublin",
+] as const;
+
+test("the original 25 records and Europe Batch 1 remain intact as coverage expands", () => {
   assert.equal(validateExploreDestinationEditorial(exploreDestinationEditorial), exploreDestinationEditorial);
-  assert.equal(new Set(exploreDestinationEditorial.map(({ id }) => id)).size, 25);
+  assert.equal(
+    new Set(exploreDestinationEditorial.map(({ id }) => id)).size,
+    exploreDestinationEditorial.length,
+  );
+  assert.deepEqual(exploreDestinationEditorial.slice(0, 25).map(({ id }) => id), ORIGINAL_EDITORIAL_IDS);
+  assert.deepEqual(exploreDestinationEditorial.slice(25, 35).map(({ id }) => id), EUROPE_BATCH_1_IDS);
+});
+
+test("Europe Batch 1 records meet content and provenance requirements", () => {
+  const batch = exploreDestinationEditorial.filter(({ id }) =>
+    EUROPE_BATCH_1_IDS.some((batchId) => batchId === id),
+  );
+  assert.equal(batch.length, 10);
+  for (const record of batch) {
+    const summaryWordCount = record.summary.trim().split(/\s+/).length;
+    const descriptionWordCount = record.description.trim().split(/\s+/).length;
+    assert.ok(record.summary.trim());
+    assert.ok(record.description.trim());
+    assert.ok(summaryWordCount >= 13 && summaryWordCount <= 18);
+    assert.equal((record.summary.match(/[.!?](?:\s|$)/g) ?? []).length, 1);
+    assert.ok(descriptionWordCount >= 53 && descriptionWordCount <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !highlight.endsWith(".")));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-08");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(
+      new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length,
+    );
+    assert.ok(record.editorialProvenance.sourceReferences.every(({ url }) => url.startsWith("https://")));
+    assert.ok(exploreDestinations.some(({ id }) => id === record.id));
+  }
+});
+
+test("Europe Batch 2 contains 10 new canonical records with reviewed provenance", () => {
+  const priorIds = new Set<string>([...ORIGINAL_EDITORIAL_IDS, ...EUROPE_BATCH_1_IDS]);
+  const batch = exploreDestinationEditorial.filter(({ id }) =>
+    EUROPE_BATCH_2_IDS.some((batchId) => batchId === id),
+  );
+  assert.equal(batch.length, 10);
+  assert.ok(EUROPE_BATCH_2_IDS.every((id) => !priorIds.has(id)));
+  for (const record of batch) {
+    const summaryWordCount = record.summary.trim().split(/\s+/).length;
+    const descriptionWordCount = record.description.trim().split(/\s+/).length;
+    assert.ok(record.summary.trim());
+    assert.ok(record.description.trim());
+    assert.ok(summaryWordCount >= 13 && summaryWordCount <= 18);
+    assert.equal((record.summary.match(/[.!?](?:\s|$)/g) ?? []).length, 1);
+    assert.ok(descriptionWordCount >= 53 && descriptionWordCount <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !highlight.endsWith(".")));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-08");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(
+      new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length,
+    );
+    assert.ok(record.editorialProvenance.sourceReferences.every(
+      ({ title, url }) => title.trim() && url.startsWith("https://"),
+    ));
+    assert.ok(exploreDestinations.some(({ id }) => id === record.id));
+  }
 });
 
 test("Featured destinations retain their separately maintained IDs and order", () => {
