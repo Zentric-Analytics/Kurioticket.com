@@ -10,7 +10,7 @@ import { requireGoogleWebClientId } from "./googleConfig";
 
 type Step = "welcome" | "email" | "verify" | "password" | "create" | "success";
 export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { initialStep?: "welcome" | "email"; successRoute?: "/" | "/(tabs)/profile" } = {}) {
-  const [step, setStep] = useState<Step>(initialStep); const [email, setEmail] = useState(""); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28);
+  const [step, setStep] = useState<Step>(initialStep); const [email, setEmail] = useState(""); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false);
   const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || (e instanceof Error && e.name === "NativeGoogleSignInError") ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => void run(async () => { const normalized = normalizeEmail(value); const result = await authApi.requestCode(normalized); setEmail(normalized); setCooldown(result.cooldownSeconds || 28); setStep("verify"); });
   const verify = useCallback((code: string) => { void run(async () => { const result = await authApi.verifyCode(email, code); setProof(result.verificationToken); setStep(result.accountType === "existing" ? "password" : "create"); }); }, [email, loading]);
@@ -22,10 +22,23 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     requireGoogleWebClientId();
     // Loading the Nitro module eagerly crashes older OTA-compatible binaries that
     // do not contain its native object. Only resolve it when Google is requested.
-    const { startNativeGoogleSignIn } = await import("./googleSignIn");
-    const result = await startNativeGoogleSignIn();
+    const { resetNativeGoogleSignInSelection, startNativeGoogleSignIn } = await import("./googleSignIn");
+    const result = await startNativeGoogleSignIn({ forceAccountSelection: forceGoogleAccountSelection });
     if (result.status === "cancelled") return;
-    await authApi.google(result.idToken, result.nonce);
+    try {
+      await authApi.google(result.idToken, result.nonce);
+    } catch (googleError) {
+      if (googleError instanceof AuthApiError && googleError.status === 403) {
+        // Preview access rejection is an application-level decision after Google
+        // has already selected an account. Clear that native selection and force
+        // the next attempt through the explicit chooser so a tester can correct
+        // an accidental Gmail choice without weakening the Preview allowlist.
+        await resetNativeGoogleSignInSelection().catch(() => {});
+        setForceGoogleAccountSelection(true);
+      }
+      throw googleError;
+    }
+    setForceGoogleAccountSelection(false);
     setStep("success");
   });
   if (step === "welcome") return <AuthWelcomeScreen busy={loading} error={error} onEmail={() => setStep("email")} onGoogle={continueGoogle} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
