@@ -80,7 +80,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
           image: "./assets/kurioticket-logo-primary-light-bg.png",
           imageWidth: 200,
           resizeMode: "contain",
-          backgroundColor: environment.variant === "preview" ? "#EAF4FF" : "#F7FAFF",
+          backgroundColor: "#F7FAFF",
         },
       },
     ],
