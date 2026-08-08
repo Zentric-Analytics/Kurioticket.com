@@ -2,7 +2,7 @@ import { getApiBaseUrl } from "../../config/apiUrl";
 import { readSession, writeSession } from "../../storage/sessionStorage";
 
 export class AuthApiError extends Error {
-  constructor(message: string, public status = 0) { super(message); }
+  constructor(message: string, public status = 0, public code = "") { super(message); }
 }
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const base = getApiBaseUrl();
@@ -13,8 +13,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const response = await fetch(`${base.baseUrl}/api/mobile/v1/auth/${path}`, {
       ...options, signal: controller.signal, headers: { Accept: "application/json", "Content-Type": "application/json", ...options.headers },
     });
-    const json = await response.json().catch(() => ({})) as { error?: string };
-    if (!response.ok) throw new AuthApiError(json.error || "Something went wrong. Please try again.", response.status);
+    const json = await response.json().catch(() => ({})) as { error?: string; code?: string };
+    if (!response.ok) throw new AuthApiError(json.error || "Something went wrong. Please try again.", response.status, json.code || "");
     return json as T;
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
