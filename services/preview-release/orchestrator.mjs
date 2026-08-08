@@ -72,10 +72,6 @@ export class PreviewOrchestrator {
       : [];
     const pendingDistribution = !this.config.iosNativeBackfillSha && typeof this.ledger.pendingIosDistribution === "function" ? await this.ledger.pendingIosDistribution() : null;
     const currentDevNeedsEvaluation = previous?.source_sha !== currentDevSha;
-    // Current repository progression and its platform-native requirements always
-    // outrank delayed historical side effects. Historical distribution recovery
-    // is selected only when current dev is fully evaluated against both canonical
-    // delivered-platform pointers.
     const currentDevHasPriority = currentDevNeedsEvaluation || pendingNative.length > 0;
     const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevHasPriority ? pendingDistribution?.source_sha : null) ?? currentDevSha;
     if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
@@ -142,8 +138,10 @@ export class PreviewOrchestrator {
       const evidence = { files, identity, fingerprints, classification };
       if (classification.classification.includes("WEB")) evidence.web = await this.deliverWeb(sha, lease);
       if (classification.classification.includes("OTA")) evidence.ota = await this.deliverOta(sha, checkout.directory, lease);
-      if (classification.classification.includes("IOS_NATIVE")) evidence.ios = await this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
-      if (classification.classification.includes("ANDROID_NATIVE")) evidence.android = await this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
+      const nativeDeliveries = {};
+      if (classification.classification.includes("IOS_NATIVE")) nativeDeliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
+      if (classification.classification.includes("ANDROID_NATIVE")) nativeDeliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
+      Object.assign(evidence, await runNativeDeliveries(nativeDeliveries));
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
       return complete;
@@ -181,31 +179,19 @@ export class PreviewOrchestrator {
       assertPreviewIdentity(await this.identityFactory(checkout.directory));
       const fingerprints = await this.fingerprintsFactory(checkout.directory);
       await lease.checkpoint();
-
       const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
       const buildIdentityKey = `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`;
       const buildAction = await this.ledger.getAction("IOS_BUILD", buildIdentityKey);
       if (!buildAction?.remote_id) throw new Error("Pending TestFlight distribution is missing its durable iOS build identity.");
       const buildDecision = reconcileBuilds([await eas.viewBuild(buildAction.remote_id)], sha);
-      if (buildDecision.decision !== "FINISHED_MATCH") {
-        throw new Error(`Pending TestFlight distribution requires one finished exact-SHA iOS build; found ${buildDecision.decision}.`);
-      }
-
+      if (buildDecision.decision !== "FINISHED_MATCH") throw new Error(`Pending TestFlight distribution requires one finished exact-SHA iOS build; found ${buildDecision.decision}.`);
       const build = buildDecision.build;
       const submissionAction = await this.ledger.getAction("IOS_SUBMISSION", `ios-submission:${build.id}`);
       if (!submissionAction?.remote_id) throw new Error("Pending TestFlight distribution is missing its durable iOS submission identity.");
       const submission = reconcileSubmissionHistory(await eas.listIosSubmissions(), build.id);
-      if (submission.state !== "FINISHED" || submission.submission.id !== submissionAction.remote_id) {
-        throw new Error("Pending TestFlight distribution requires its exact finished durable iOS submission.");
-      }
-
+      if (submission.state !== "FINISHED" || submission.submission.id !== submissionAction.remote_id) throw new Error("Pending TestFlight distribution requires its exact finished durable iOS submission.");
       const distribution = await this.distributeIosToInternalGroup({ sha, build, current: build, submission: submission.submission, lease });
-      if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({
-        platform: "ios", sourceSha: sha, fingerprint: fingerprints.ios, buildId: build.id,
-        appVersion: build.appVersion, buildNumber: build.appBuildVersion,
-        submissionId: submission.submission.id, appleBuildId: distribution.appleBuildId,
-        distributionId: `${distribution.appleBuildId}:${distribution.betaGroupId}`,
-      });
+      if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({ platform: "ios", sourceSha: sha, fingerprint: fingerprints.ios, buildId: build.id, appVersion: build.appVersion, buildNumber: build.appBuildVersion, submissionId: submission.submission.id, appleBuildId: distribution.appleBuildId, distributionId: `${distribution.appleBuildId}:${distribution.betaGroupId}` });
       const complete = await this.ledger.completeIosDistribution({ sourceSha: sha, workerId: this.config.workerId });
       await this.github.report(sha, "success", "Preview TestFlight internal distribution reconciliation complete");
       return { ...complete, distribution };
@@ -216,9 +202,7 @@ export class PreviewOrchestrator {
     await lease.checkpoint();
     const recorded = await this.ledger.getAction("WEB", sha);
     const remoteMatches = recorded?.remote_id ? [] : await this.render.findDeploysBySha(sha);
-    let deploy = recorded?.remote_id
-      ? await this.render.getDeploy(recorded.remote_id)
-      : remoteMatches[0] ?? await this.render.createDeploy(sha);
+    let deploy = recorded?.remote_id ? await this.render.getDeploy(recorded.remote_id) : remoteMatches[0] ?? await this.render.createDeploy(sha);
     if (!deploy?.id || (recorded?.remote_id && deploy.id !== recorded.remote_id)) throw new Error("Recorded Render deployment identity is malformed or mismatched.");
     const initialStatus = String(deploy.status ?? "CREATED").toUpperCase();
     if (["BUILD_FAILED", "UPDATE_FAILED", "CANCELED", "DEACTIVATED"].includes(initialStatus)) {
@@ -256,10 +240,7 @@ export class PreviewOrchestrator {
     for (const platform of ["ios", "android"]) {
       const replay = inspectPreviewUpdateHistory(history, sha, platform);
       if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups.`);
-      if (replay.alreadyPublished) {
-        updates.push(...history.filter((entry) => entry.message.includes(sha) && entry.platforms.includes(platform)));
-        continue;
-      }
+      if (replay.alreadyPublished) { updates.push(...history.filter((entry) => entry.message.includes(sha) && entry.platforms.includes(platform))); continue; }
       await lease.checkpoint();
       const message = `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0`;
       const published = await eas.publishUpdate(message, platform);
@@ -278,20 +259,12 @@ export class PreviewOrchestrator {
     let decision;
     if (recordedBuildAction?.remote_id) {
       decision = reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], sha);
-      if (!["ACTIVE_MATCH", "FINISHED_MATCH"].includes(decision.decision)) {
-        throw new Error(`Persisted iOS build ${recordedBuildAction.remote_id} failed identity reconciliation: ${decision.decision}.`);
-      }
-    } else {
-      decision = reconcileBuilds(await eas.listIosBuilds(sha), sha);
-    }
+      if (!["ACTIVE_MATCH", "FINISHED_MATCH"].includes(decision.decision)) throw new Error(`Persisted iOS build ${recordedBuildAction.remote_id} failed identity reconciliation: ${decision.decision}.`);
+    } else decision = reconcileBuilds(await eas.listIosBuilds(sha), sha);
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS iOS reconciliation failed closed: ${decision.decision}.`);
     if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`Existing exact-SHA EAS build is ${decision.decision}; explicit retry policy is required.`);
     let build = decision.build;
-    if (decision.decision === "NONE") {
-      await lease.checkpoint();
-      build = await eas.createIosBuild();
-      decision = { decision: "CREATED", build };
-    }
+    if (decision.decision === "NONE") { await lease.checkpoint(); build = await eas.createIosBuild(); decision = { decision: "CREATED", build }; }
     await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_BUILD", identityKey: buildIdentityKey, remoteId: build.id, state: decision.decision, evidence: build });
     for (let attempt = 0; attempt < 240; attempt += 1) {
       await lease.checkpoint();
@@ -301,19 +274,11 @@ export class PreviewOrchestrator {
       if (status === "FINISHED") {
         const submission = reconcileSubmissionHistory(await eas.listIosSubmissions(), build.id);
         if (["CONFLICT", "UNKNOWN", "FAILED"].includes(submission.state)) throw new Error(`TestFlight auto-submit state is ${submission.state}; no duplicate recovery submission was attempted.`);
-        if (submission.state === "NOT_CREATED") {
-          await this.sleep(15_000);
-          continue;
-        }
+        if (submission.state === "NOT_CREATED") { await this.sleep(15_000); continue; }
         await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_SUBMISSION", identityKey: `ios-submission:${build.id}`, remoteId: submission.submission.id, state: submission.state, evidence: submission.submission });
         if (submission.state === "FINISHED") {
           const distribution = await this.distributeIosToInternalGroup({ sha, build, current, submission: submission.submission, lease });
-          if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({
-            platform: "ios", sourceSha: sha, fingerprint, buildId: build.id,
-            appVersion: current.appVersion, buildNumber: current.appBuildVersion,
-            submissionId: submission.submission.id, appleBuildId: distribution.appleBuildId,
-            distributionId: `${distribution.appleBuildId}:${distribution.betaGroupId}`,
-          });
+          if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({ platform: "ios", sourceSha: sha, fingerprint, buildId: build.id, appVersion: current.appVersion, buildNumber: current.appBuildVersion, submissionId: submission.submission.id, appleBuildId: distribution.appleBuildId, distributionId: `${distribution.appleBuildId}:${distribution.betaGroupId}` });
           return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission.id, distribution };
         }
         await this.sleep(15_000);
@@ -339,9 +304,7 @@ export class PreviewOrchestrator {
       const associated = await apple.isAssociated(appleBuildId);
       if (!associated) {
         await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_TESTFLIGHT_DISTRIBUTION", identityKey, remoteId: appleBuildId, state: "PLANNED", evidence: { appleBuildId, betaGroupId: context.group.id, version, buildNumber, processingState: resolved.state, easBuildId: build.id, easSubmissionId: submission.id } });
-        try { await apple.associate(appleBuildId); } catch (error) {
-          if (!await apple.isAssociated(appleBuildId)) throw error;
-        }
+        try { await apple.associate(appleBuildId); } catch (error) { if (!await apple.isAssociated(appleBuildId)) throw error; }
       }
       if (!await apple.isAssociated(appleBuildId)) throw new Error("Apple accepted TestFlight association but read-back verification failed.");
       await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_TESTFLIGHT_DISTRIBUTION", identityKey, remoteId: appleBuildId, state: "FINISHED", evidence: { appleBuildId, betaGroupId: context.group.id, betaGroupName: context.group.attributes.name, appId: context.app.id, bundleIdentifier: context.app.attributes.bundleId, version, buildNumber, processingState: resolved.state, easBuildId: build.id, easSubmissionId: submission.id, associated: true } });
@@ -356,11 +319,7 @@ export class PreviewOrchestrator {
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS Android reconciliation failed closed: ${decision.decision}.`);
     if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) throw new Error(`Existing exact-SHA EAS Android build is ${decision.decision}; explicit retry policy is required.`);
     let build = decision.build;
-    if (decision.decision === "NONE") {
-      await lease.checkpoint();
-      build = await eas.createAndroidBuild();
-      decision = { decision: "CREATED", build };
-    }
+    if (decision.decision === "NONE") { await lease.checkpoint(); build = await eas.createAndroidBuild(); decision = { decision: "CREATED", build }; }
     const identityKey = `${sha}:${PREVIEW_IDENTITY.easProjectId}:android:preview`;
     await this.ledger.recordAction({ sourceSha: sha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: decision.decision, evidence: build });
     for (let attempt = 0; attempt < 240; attempt += 1) {
@@ -383,6 +342,23 @@ async function resolvedIdentity(root) {
   const policy = JSON.parse(await readFile(join(root, "apps/mobile/release-policy.json"), "utf8"));
   const eas = JSON.parse(await readFile(join(root, "apps/mobile/eas.json"), "utf8"));
   return { appName: policy.preview.displayName, bundleIdentifier: policy.preview.bundleIdentifier, scheme: policy.preview.scheme, projectId: "89f6fd88-c0d7-495a-9e2b-8301b09f407d", profile: "preview", channel: eas.build.preview.channel, runtime: policy.preview.runtimeVersion, apiOrigin: eas.build.preview.env.EXPO_PUBLIC_API_BASE_URL };
+}
+
+export async function runNativeDeliveries(deliveries) {
+  const entries = Object.entries(deliveries);
+  if (!entries.length) return {};
+  const settled = await Promise.allSettled(entries.map(([, deliver]) => Promise.resolve().then(deliver)));
+  const results = {};
+  const failures = [];
+  for (let index = 0; index < entries.length; index += 1) {
+    const [platform] = entries[index];
+    const outcome = settled[index];
+    if (outcome.status === "fulfilled") results[platform] = outcome.value;
+    else failures.push({ platform, error: outcome.reason });
+  }
+  if (failures.length === 1) throw failures[0].error;
+  if (failures.length > 1) throw new AggregateError(failures.map(({ error }) => error), `Parallel native delivery failed for ${failures.map(({ platform }) => platform).join(", ")}.`);
+  return results;
 }
 
 export async function retry(operation, { attempts, sleep, baseMs = 1_000 }) {
