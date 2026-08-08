@@ -19,15 +19,11 @@ test("favorite prompt offers dismissal and the existing sign-in flow", () => {
 });
 
 test("every existing favorite-bearing section uses the protected shared hook", () => {
-  for (const path of ["src/features/home/PopularDestinationStays.tsx", "src/features/explore/ExploreScreen.tsx"]) {
+  for (const path of ["src/features/explore/ExploreScreen.tsx"]) {
     const contents = source(path);
     assert.match(contents, /useSavedDestinations\(\)/, path);
-    if (path.includes("ExploreScreen")) {
-      assert.match(contents, /style=\{s\.rowHeart\}/, `${path} keeps the search heart outside its navigation pressable`);
-      assert.match(contents, /style=\{s\.heart\}/, `${path} keeps the card heart outside its navigation pressable`);
-    } else {
-      assert.match(contents, /stopPropagation\(\)/, `${path} keeps card navigation isolated from heart presses`);
-    }
+    assert.match(contents, /style=\{s\.rowHeart\}/, `${path} keeps the search heart outside its navigation pressable`);
+    assert.match(contents, /style=\{s\.heart\}/, `${path} keeps the card heart outside its navigation pressable`);
   }
 });
 

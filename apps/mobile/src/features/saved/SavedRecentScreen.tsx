@@ -4,7 +4,7 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View, type Image
 import { SafeAreaView } from "react-native-safe-area-context";
 import { destinations } from "../explore/destinationCatalogue";
 import { destinationMedia, FALLBACK_SOURCE } from "../explore/destinationMedia";
-import { popularDestinationStays } from "../home/PopularDestinationStays";
+import { popularDestinationStays } from "../home/PopularDestinationStaysData";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
