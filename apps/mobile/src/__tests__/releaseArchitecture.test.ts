@@ -75,18 +75,18 @@ test("Preview iOS configuration declares truthful export compliance", async () =
       image: "./assets/kurioticket-logo-primary-light-bg.png",
       imageWidth: 200,
       resizeMode: "contain",
-      backgroundColor: "#F7FAFF",
+      backgroundColor: "#D6F5E3",
     },
   }]);
   assert.deepEqual(config.splash, {
     image: "./assets/kurioticket-logo-primary-light-bg.png",
     resizeMode: "contain",
-    backgroundColor: "#F7FAFF",
+    backgroundColor: "#D6F5E3",
   });
   assert.deepEqual(config.android?.splash, {
     image: "./assets/kurioticket-logo-primary-light-bg.png",
     resizeMode: "contain",
-    backgroundColor: "#F7FAFF",
+    backgroundColor: "#D6F5E3",
   });
   assert.deepEqual(config.android?.adaptiveIcon, {
     foregroundImage: "./assets/kurioticket-adaptive-foreground.png",
