@@ -98,9 +98,14 @@ async function postNotification(payload, { secret, fetchImpl }) {
     body: JSON.stringify(payload),
   });
   const body = await response.text();
-  if (!response.ok && response.status !== 207) {
-    throw new Error(`Preview build notification endpoint failed with HTTP ${response.status}: ${body.slice(0, 200)}`);
+  let result = null;
+  try { result = body ? JSON.parse(body) : null; } catch { result = null; }
+  if (!response.ok || response.status === 207 || Number(result?.failed || 0) > 0) {
+    throw new Error(`Preview build notification endpoint remains retryable after HTTP ${response.status}: ${body.slice(0, 200)}`);
   }
-  console.log(JSON.stringify({ event: "preview-build-notification", platform: payload.platform, status: payload.status, buildId: payload.buildId, responseStatus: response.status }));
+  if (Number(result?.terminal || 0) > 0) {
+    console.warn(JSON.stringify({ event: "preview-build-notification-terminal-recipient", platform: payload.platform, status: payload.status, buildId: payload.buildId, terminalRecipients: result.terminal }));
+  }
+  console.log(JSON.stringify({ event: "preview-build-notification", platform: payload.platform, status: payload.status, buildId: payload.buildId, responseStatus: response.status, recipients: result?.recipients ?? null, alreadyAccepted: result?.alreadyAccepted ?? null }));
   return { platform: payload.platform, status: payload.status, buildId: payload.buildId, responseStatus: response.status };
 }
