@@ -4,7 +4,7 @@ import { writeAdminAuditLog } from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
 import { normalizePreviewTesterEmail } from "@/lib/previewTesterAccess";
 import { requirePreviewTesterAdmin } from "@/lib/previewTesterAdmin";
-import { getTeamAccessRoleMap, normalizeTeamAccessRoles, setTeamAccessRoles } from "@/lib/teamAccess";
+import { normalizeTeamAccessRoles } from "@/lib/teamAccessRoles";
 
 export const runtime = "nodejs";
 const EMAIL = /^[^\s,@<>]+@[^\s,@<>]+\.[^\s,@<>]+$/;
@@ -14,8 +14,7 @@ export async function GET(request: Request) {
   if (auth.response) return auth.response;
   const q = new URL(request.url).searchParams.get("q")?.trim().toLowerCase() || "";
   const testers = await getPrisma().previewTester.findMany({ where: q ? { emailNormalized: { contains: q } } : undefined, orderBy: { createdAt: "desc" }, take: 200 });
-  const roles = await getTeamAccessRoleMap(testers.map((tester) => tester.id));
-  return NextResponse.json({ testers: testers.map((tester) => ({ ...tester, roles: roles.get(tester.id) || ["TESTER"] })) });
+  return NextResponse.json({ testers: testers.map((tester) => ({ ...tester, roles: normalizeTeamAccessRoles(tester.roles) })) });
 }
 
 export async function POST(request: Request) {
@@ -38,7 +37,10 @@ export async function POST(request: Request) {
   try {
     tester = await getPrisma().previewTester.create({
       data: {
-        email, emailNormalized, status: "ACTIVE",
+        email,
+        emailNormalized,
+        status: "ACTIVE",
+        roles,
         allowGoogleSignIn: true,
         allowStagingEmail: true,
         expiresAt,
@@ -47,11 +49,10 @@ export async function POST(request: Request) {
         approvedAt: new Date(),
       },
     });
-    await setTeamAccessRoles(tester.id, roles);
   } catch (error) {
     if (error instanceof Error && /P2002|unique/i.test(error.message)) return NextResponse.json({ error: "That team member already exists." }, { status: 409 });
     throw error;
   }
   await writeAdminAuditLog({ adminUserId: auth.session.user.id, adminEmail: auth.session.user.email, action: "TEAM_ACCESS_MEMBER_APPROVED", targetType: "PreviewTester", targetId: tester.id, targetEmail: tester.emailNormalized, metadata: { roles, expiresAt: tester.expiresAt?.toISOString() || null }, request });
-  return NextResponse.json({ tester: { ...tester, roles } }, { status: 201 });
+  return NextResponse.json({ tester: { ...tester, roles: normalizeTeamAccessRoles(tester.roles) } }, { status: 201 });
 }
