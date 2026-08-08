@@ -17,6 +17,7 @@ import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
 import { HomepageDealPromos } from "../home/HomepageDealPromos";
 import { RegionalDestinationRoutes } from "../home/RegionalDestinationRoutes";
+import { HomepageAdventureDiscovery } from "../home/HomepageAdventureDiscovery";
 
 const homeHeroSource = {
   uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
@@ -163,6 +164,7 @@ export function SharedHomePage() {
         </View>
         <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
         <PopularDestinationStays />
+        <HomepageAdventureDiscovery />
         <HomepageDealPromos />
         <RegionalDestinationRoutes />
       </ScrollView>
