@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { failureMentionsPlatform, notifySuccessfulNativeBuilds } from "./build-notifications.mjs";
+import { canonicalExpoBuildPageUrl, failureMentionsPlatform, notifySuccessfulNativeBuilds } from "./build-notifications.mjs";
 
 test("Android failures are routed only to Android notification handling", () => {
   assert.equal(failureMentionsPlatform("EAS Android build abc ended in FAILED.", "android"), true);
@@ -17,6 +17,13 @@ test("parallel native failures can route both platform notifications", () => {
   const reason = "Parallel delivery failed for ios, android: IOS_NATIVE submission failed; ANDROID_NATIVE build failed";
   assert.equal(failureMentionsPlatform(reason, "ios"), true);
   assert.equal(failureMentionsPlatform(reason, "android"), true);
+});
+
+test("canonical Expo build page is derived from Preview project identity and exact build ID", () => {
+  assert.equal(
+    canonicalExpoBuildPageUrl("7666bec3-8c77-4db7-9e50-3e9445977bcf"),
+    "https://expo.dev/accounts/zentric-analytics/projects/kurioticket-mobile/builds/7666bec3-8c77-4db7-9e50-3e9445977bcf",
+  );
 });
 
 test("partial recipient delivery remains retryable", async () => {
@@ -49,12 +56,11 @@ test("partial recipient delivery remains retryable", async () => {
   );
 });
 
-test("a finished Android build can notify independently of another platform", async () => {
+test("finished Android build sends canonical Expo page and never sends raw artifact URL", async () => {
   const ledger = {
-    async releaseBySha() { return { classification: "ANDROID_NATIVE+IOS_NATIVE" }; },
+    async releaseBySha() { return { classification: "ANDROID_NATIVE" }; },
     async getAction(kind) {
-      if (kind === "ANDROID_BUILD") return { remote_id: "android-build-2", state: "FINISHED" };
-      return null;
+      return kind === "ANDROID_BUILD" ? { remote_id: "android-build-2", state: "FINISHED" } : null;
     },
   };
   const eas = {
@@ -62,7 +68,7 @@ test("a finished Android build can notify independently of another platform", as
       return {
         id: "android-build-2",
         artifacts: { buildUrl: "https://expo.dev/artifacts/kurioticket-preview-2.apk" },
-        buildDetailsPageUrl: "https://expo.dev/build/android-build-2",
+        buildDetailsPageUrl: "https://expo.dev/accounts/zentric-analytics/projects/kurioticket-mobile/builds/android-build-2",
       };
     },
   };
@@ -75,4 +81,29 @@ test("a finished Android build can notify independently of another platform", as
   assert.equal(result.length, 1);
   assert.equal(requests[0].platform, "android");
   assert.equal(requests[0].status, "SUCCESS");
+  assert.equal(requests[0].installUrl, "https://expo.dev/accounts/zentric-analytics/projects/kurioticket-mobile/builds/android-build-2");
+  assert.equal(requests[0].buildDetailsUrl, requests[0].installUrl);
+  assert.equal(requests[0].buildUrl, undefined);
+});
+
+test("mismatched Expo build page is rejected instead of emailing a wrong build", async () => {
+  const ledger = {
+    async releaseBySha() { return { classification: "ANDROID_NATIVE" }; },
+    async getAction(kind) {
+      return kind === "ANDROID_BUILD" ? { remote_id: "android-build-3", state: "FINISHED" } : null;
+    },
+  };
+  const eas = {
+    async viewBuild() {
+      return {
+        id: "android-build-3",
+        artifacts: { buildUrl: "https://expo.dev/artifacts/kurioticket-preview-3.apk" },
+        buildDetailsPageUrl: "https://expo.dev/accounts/zentric-analytics/projects/kurioticket-mobile/builds/wrong-build",
+      };
+    },
+  };
+  await assert.rejects(
+    () => notifySuccessfulNativeBuilds({ sourceSha: "c".repeat(40), ledger, eas, secret: "test-secret", fetchImpl: async () => { throw new Error("should not send"); } }),
+    /does not match exact Preview build/,
+  );
 });
