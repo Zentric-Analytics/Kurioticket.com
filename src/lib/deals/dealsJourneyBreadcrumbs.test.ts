@@ -5,7 +5,12 @@ import {
   getHandoffReadyDealsJourneyProgress,
 } from "./dealsJourneyProgress";
 import { getDealsJourneyBreadcrumbs } from "./dealsJourneyBreadcrumbs";
-import type { DealsPackageMode, DealsSearch } from "./dealsSearchParams";
+import {
+  buildDealsModifyUrl,
+  createDefaultDealsSearch,
+  type DealsPackageMode,
+  type DealsSearch,
+} from "./dealsSearchParams";
 import {
   buildDealsJourneyUrl,
   type DealsJourneyStage,
@@ -98,14 +103,25 @@ for (const [mode, scenarios] of Object.entries(expected) as [
           ({ labelKey, status }) =>
             `${labelKey.replace("deals.breadcrumb.", "")}:${status}`,
         ),
-        [...wanted, `complete:${page === "complete" ? "current" : "upcoming"}`],
+        [
+          "deals:ancestor",
+          ...wanted,
+          `complete:${page === "complete" ? "current" : "upcoming"}`,
+        ],
       );
+      assert.deepEqual(items[0], {
+        id: "deals",
+        status: "ancestor",
+        labelKey: "deals",
+        href: buildDealsModifyUrl(search(mode)),
+      });
       assert.equal(items.at(-1)?.id, "complete");
       assert.equal(
         items.some((item) => item.id === ("review" as never)),
         false,
       );
       for (const item of items) {
+        if (item.id === "deals") continue;
         const isCurrentDetails =
           item.status === "current" && page === `${item.id}-details`;
         assert.equal(
@@ -143,6 +159,65 @@ test("details labels retain accessible product context", () => {
       current?.href,
       buildDealsJourneyUrl(`${current?.id}-results`, search(mode)),
     );
+  }
+});
+
+test("Deals root preserves the canonical current search", () => {
+  const currentSearch: DealsSearch = {
+    ...createDefaultDealsSearch(),
+    mode: "hotel-flight-car",
+    flightOriginText: "Lagos",
+    flightOriginCode: "LOS",
+    flightDestinationText: "Paris",
+    flightDestinationCode: "CDG",
+    sharedDestination: "Paris",
+    sharedTravelStartDate: "2026-09-14",
+    sharedTravelEndDate: "2026-09-22",
+    flightDepartureDate: "2026-09-14",
+    flightReturnDate: "2026-09-22",
+    flightAdults: 2,
+    flightChildren: 1,
+    flightCabinClass: "business",
+    hotelDestination: "Versailles",
+    hotelCheckIn: "2026-09-15",
+    hotelCheckOut: "2026-09-21",
+    hotelRooms: 2,
+    carPickupLocation: "CDG Airport",
+    carReturnToDifferentLocation: true,
+    carReturnLocation: "ORY Airport",
+    carPickupDate: "2026-09-16",
+    carReturnDate: "2026-09-20",
+    stayDestinationLinked: false,
+    stayDatesLinked: false,
+    carPickupLinked: false,
+    carDatesLinked: false,
+  };
+  const progress = getGuidedDealsJourneyProgress(
+    "car-details",
+    currentSearch.mode,
+    { hotel: {}, flight: {}, car: null } as never,
+  );
+  const root = getDealsJourneyBreadcrumbs(
+    progress,
+    "car-details",
+    currentSearch,
+  )[0];
+
+  assert.equal(root.href, buildDealsModifyUrl(currentSearch));
+  assert.match(root.href ?? "", /^\/deals\?/);
+  const params = new URL(root.href ?? "", "https://example.test").searchParams;
+  for (const [key, value] of [
+    ["mode", "hotel-flight-car"],
+    ["flightOriginCode", "LOS"],
+    ["flightDestinationCode", "CDG"],
+    ["sharedTravelStartDate", "2026-09-14"],
+    ["sharedTravelEndDate", "2026-09-22"],
+    ["flightCabinClass", "business"],
+    ["hotelRooms", "2"],
+    ["stayDestinationLinked", "false"],
+    ["carReturnToDifferentLocation", "true"],
+  ]) {
+    assert.equal(params.get(key), value);
   }
 });
 

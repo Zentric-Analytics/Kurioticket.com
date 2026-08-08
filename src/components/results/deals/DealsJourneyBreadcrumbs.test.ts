@@ -21,8 +21,41 @@ test("breadcrumb markup is semantic, accessible, compact, and mobile complete", 
   assert.match(source, /rtl:rotate-180/);
   assert.match(source, /overflow-x-auto/);
   assert.match(source, /whitespace-nowrap/);
+  assert.match(source, /item\.id === "deals"[\s\S]*\? null/);
+  assert.match(
+    source,
+    /item\.status === "completed" \|\| item\.status === "ancestor"/,
+  );
+  assert.match(source, /\{Icon && <Icon aria-hidden/);
+  assert.doesNotMatch(source, /href=["']\/deals["']/);
+  assert.doesNotMatch(source, /router\.back|history\.back/);
   assert.doesNotMatch(source, /className="[^"]*(?:sm:)?hidden/);
   assert.doesNotMatch(source, /rounded-2xl|shadow|bg-white|border-slate/);
+});
+
+test("Deals root uses its model URL as a text-only ancestor link", async () => {
+  const source = await readFile(
+    new URL("./DealsJourneyBreadcrumbs.tsx", import.meta.url),
+    "utf8",
+  );
+  const model = await readFile(
+    new URL("../../../lib/deals/dealsJourneyBreadcrumbs.ts", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    model,
+    /id: "deals"[\s\S]*status: "ancestor"[\s\S]*labelKey: "deals"/,
+  );
+  assert.match(model, /href: buildDealsModifyUrl\(search\)/);
+  assert.match(source, /<Link[\s\S]*href=\{item\.href\}/);
+  assert.match(source, /index > 0[\s\S]*<ChevronRight[\s\S]*aria-hidden/);
+  assert.match(source, /aria-current=\{item\.status === "current" \? "page"/);
+  assert.match(source, /item\.id === "complete"[\s\S]*\? CheckCircle2/);
+  assert.match(
+    source,
+    /productIcons\[item\.id as DealsJourneyBreadcrumbProduct\]/,
+  );
 });
 
 test("only model-approved completed and current Details items render as links", async () => {

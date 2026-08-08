@@ -371,3 +371,14 @@ test("guided plan and click-time fingerprint conflicts share the action-free con
   );
   assert.match(guided, /data-deals-guided-handoff-ready/);
 });
+
+test("ready guided handoff inherits the shared Deals-root breadcrumb", () => {
+  assert.match(
+    guided,
+    /\{ready && plan && \([\s\S]*<DealsJourneyBreadcrumbs[\s\S]*page="complete"/,
+  );
+  assert.doesNotMatch(
+    guided,
+    /<DealsJourneyBreadcrumbs[\s\S]*<DealsJourneyBreadcrumbs/,
+  );
+});

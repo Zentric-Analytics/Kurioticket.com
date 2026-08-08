@@ -3,12 +3,12 @@ import {
   buildDealsJourneyUrl,
   type DealsJourneyStage,
 } from "./dealsJourneyRoutes";
-import type { DealsSearch } from "./dealsSearchParams";
+import { buildDealsModifyUrl, type DealsSearch } from "./dealsSearchParams";
 
 export type DealsJourneyBreadcrumbProduct = "hotel" | "flight" | "car";
 export type DealsJourneyBreadcrumbItem = {
-  id: DealsJourneyBreadcrumbProduct | "complete";
-  status: "completed" | "current" | "upcoming";
+  id: "deals" | DealsJourneyBreadcrumbProduct | "complete";
+  status: "ancestor" | "completed" | "current" | "upcoming";
   labelKey: string;
   accessibleLabelKey?: string;
   href?: string;
@@ -74,6 +74,12 @@ export function getDealsJourneyBreadcrumbs(
     });
 
   return [
+    {
+      id: "deals",
+      status: "ancestor",
+      labelKey: "deals",
+      href: buildDealsModifyUrl(search),
+    },
     ...products,
     {
       id: "complete",
