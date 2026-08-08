@@ -75,8 +75,9 @@ test("keeps destination copy over the image and the compact footer separate", ()
   );
   assert.match(
     section,
-    /ctaSection: \{[\s\S]*height: CTA_HEIGHT[\s\S]*alignItems: "center"[\s\S]*justifyContent: "center"/,
+    /ctaSection: \{[\s\S]*height: CTA_HEIGHT[\s\S]*alignItems: "flex-start"[\s\S]*justifyContent: "center"[\s\S]*paddingHorizontal: 16/,
   );
+  assert.doesNotMatch(section, /ctaSection: \{[^}]*alignItems: "center"/);
 });
 
 test("renders the complete web-aligned destination list and safe image fallback", () => {
