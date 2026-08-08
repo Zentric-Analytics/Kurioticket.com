@@ -71,7 +71,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   if (process.env.EAS_BUILD === "true" && environment.variant === "preview" && !googleIosClientId) {
     throw new Error("[mobile-environment] Preview EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.");
   }
-  const splashBackgroundColor = environment.variant === "preview" ? "#FFE0B2" : "#F7FAFF";
+  const splashBackgroundColor = "#F7FAFF";
   const plugins: NonNullable<ExpoConfig["plugins"]> = [
     "expo-router",
     [
