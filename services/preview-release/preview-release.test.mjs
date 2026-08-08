@@ -623,11 +623,16 @@ test("mixed-version deploy promotes only the completed current dev row before hi
   let distributionClaims = 0;
   const ledger = {
     lastSuccessful: async () => ({ source_sha: previousSha, progression_order: 20 }),
-    reconcileCompletedCurrentDevProgression: async ({ sourceSha, previousSha: suppliedPrevious }) => {
+    completedCurrentDevProgressionCandidate: async (sourceSha) => {
+      assert.equal(sourceSha, currentDevSha);
+      return { source_sha: currentDevSha, previous_sha: "a".repeat(40), state: "COMPLETE", progression_order: null };
+    },
+    reconcileCompletedCurrentDevProgression: async ({ sourceSha, storedPreviousSha, latestProgressionSha }) => {
       reconciliations += 1;
       assert.equal(sourceSha, currentDevSha);
-      assert.equal(suppliedPrevious, previousSha);
-      return { source_sha: currentDevSha, previous_sha: previousSha, state: "COMPLETE", progression_order: 21 };
+      assert.equal(storedPreviousSha, "a".repeat(40));
+      assert.equal(latestProgressionSha, previousSha);
+      return { source_sha: currentDevSha, previous_sha: storedPreviousSha, state: "COMPLETE", progression_order: 21 };
     },
     pendingIosDistribution: async () => ({ source_sha: historical, ios_build_id: "build-9" }),
     requiresIosDistribution: async (sourceSha) => sourceSha === historical,
@@ -641,7 +646,15 @@ test("mixed-version deploy promotes only the completed current dev row before hi
   const orchestrator = new PreviewOrchestrator({
     config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
     ledger,
-    github: { latestDevSha: async () => currentDevSha, compare: async () => {}, report: async () => {} },
+    github: {
+      latestDevSha: async () => currentDevSha,
+      compare: async (base, head) => {
+        assert.ok(["a".repeat(40), previousSha].includes(base));
+        assert.equal(head, currentDevSha);
+        return [];
+      },
+      report: async () => {},
+    },
     render: {}, sleep: async () => {},
   });
   orchestrator.reconcileIosDistribution = async (record) => ({ ...record, state: "COMPLETE" });
@@ -657,10 +670,68 @@ test("current-dev progression repair is chain-bound and cannot promote a delayed
   const ledger = new PreviewLedger("postgres://localhost/test", {
     pool: { query: async (sql, values) => { queries.push({ sql, values }); return { rows: [], rowCount: 0 }; } },
   });
-  assert.equal(await ledger.reconcileCompletedCurrentDevProgression({ sourceSha: "c".repeat(40), previousSha: "b".repeat(40) }), null);
-  assert.match(queries[0].sql, /source_sha=\$1 AND state='COMPLETE' AND progression_order IS NULL/);
-  assert.match(queries[0].sql, /previous_sha IS NOT DISTINCT FROM \$2::text/);
-  assert.deepEqual(queries[0].values, ["c".repeat(40), "b".repeat(40)]);
+  assert.equal(await ledger.completedCurrentDevProgressionCandidate("c".repeat(40)), null);
+  assert.match(queries[0].sql, /release\.source_sha=\$1 AND release\.state='COMPLETE'/);
+  assert.match(queries[0].sql, /release\.progression_order IS NULL/);
+  assert.match(queries[0].sql, /IOS_TESTFLIGHT_DISTRIBUTION'[\s\S]*state='FINISHED'/);
+  assert.deepEqual(queries[0].values, ["c".repeat(40)]);
+});
+
+test("current-dev progression repair is atomic against baseline movement and excludes finished distribution rows", async () => {
+  const queries = [];
+  const ledger = new PreviewLedger("postgres://localhost/test", {
+    pool: { query: async (sql, values) => { queries.push({ sql, values }); return { rows: [], rowCount: 0 }; } },
+  });
+  assert.equal(await ledger.reconcileCompletedCurrentDevProgression({
+    sourceSha: "d".repeat(40),
+    storedPreviousSha: "b".repeat(40),
+    latestProgressionSha: "c".repeat(40),
+  }), null);
+  assert.match(queries[0].sql, /release\.source_sha=\$1/);
+  assert.match(queries[0].sql, /release\.previous_sha=\$2/);
+  assert.match(queries[0].sql, /\$3=\([\s\S]*ORDER BY latest\.progression_order DESC LIMIT 1/);
+  assert.match(queries[0].sql, /IOS_TESTFLIGHT_DISTRIBUTION'[\s\S]*state='FINISHED'/);
+  assert.deepEqual(queries[0].values, ["d".repeat(40), "b".repeat(40), "c".repeat(40)]);
+});
+
+test("progression repair rejects a non-ancestor stored baseline before mutating the ledger", async () => {
+  const currentDevSha = "d".repeat(40);
+  let repairs = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => ({ source_sha: "c".repeat(40), progression_order: 21 }),
+      completedCurrentDevProgressionCandidate: async () => ({ source_sha: currentDevSha, previous_sha: "b".repeat(40), state: "COMPLETE" }),
+      reconcileCompletedCurrentDevProgression: async () => { repairs += 1; return null; },
+    },
+    github: {
+      latestDevSha: async () => currentDevSha,
+      compare: async (base) => { if (base === "b".repeat(40)) throw new Error("Target SHA is not a forward dev descendant."); return []; },
+    },
+    render: {}, sleep: async () => {},
+  });
+  await assert.rejects(orchestrator.cycle(), /not a forward dev descendant/);
+  assert.equal(repairs, 0);
+});
+
+test("progression repair rejects a latest ordinary baseline outside current dev ancestry", async () => {
+  const currentDevSha = "d".repeat(40);
+  let repairs = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => ({ source_sha: "c".repeat(40), progression_order: 21 }),
+      completedCurrentDevProgressionCandidate: async () => ({ source_sha: currentDevSha, previous_sha: "b".repeat(40), state: "COMPLETE" }),
+      reconcileCompletedCurrentDevProgression: async () => { repairs += 1; return null; },
+    },
+    github: {
+      latestDevSha: async () => currentDevSha,
+      compare: async (base) => { if (base === "c".repeat(40)) throw new Error("Target SHA is not a forward dev descendant."); return []; },
+    },
+    render: {}, sleep: async () => {},
+  });
+  await assert.rejects(orchestrator.cycle(), /not a forward dev descendant/);
+  assert.equal(repairs, 0);
 });
 
 test("processing timeout retries the same durable TestFlight distribution action", async () => {
