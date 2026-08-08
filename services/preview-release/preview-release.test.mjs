@@ -381,7 +381,7 @@ test("completed latest SHA is reopened when web or OTA completion left native dr
       claimNativeDrift: async () => { driftClaims += 1; return record; },
       claim: async () => { ordinaryClaims += 1; return record; },
     },
-    github: { latestDevSha: async () => sha, report: async () => {} }, render: {}, sleep: async () => {},
+    github: { latestDevSha: async () => sha, compare: async () => [], report: async () => {} }, render: {}, sleep: async () => {},
   });
   orchestrator.process = async (_record, _previous, _lease, deliveredNative) => {
     assert.equal(deliveredNative.ios.buildId, "ios-build-5");
@@ -539,6 +539,75 @@ test("historical TestFlight recovery remains iOS-only after newer Android native
   assert.deepEqual(comparisons, [[sha, newerDev]]);
 });
 
+test("native revert is compared with the latest delivered platform source even when its fingerprint is historical", async () => {
+  const temporarySha = "b".repeat(40);
+  const cleanupSha = "c".repeat(40);
+  const comparisons = [];
+  let claimed = 0;
+  const previous = { source_sha: cleanupSha, evidence: { fingerprints: { ios: "same-ios", android: "same-android" } } };
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => previous,
+      lastSuccessfulNative: async (platform) => ({ source_sha: temporarySha, native_build_id: `${platform}-temporary`, native_fingerprint: `same-${platform}` }),
+      claimNativeDrift: async () => { claimed += 1; return { source_sha: cleanupSha, state: "DETECTED" }; },
+    },
+    github: {
+      latestDevSha: async () => cleanupSha,
+      compare: async (base, head) => { comparisons.push([base, head]); return ["apps/mobile/app.config.ts"]; },
+      report: async () => {},
+    },
+    render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async (_record, _previous, _lease, _baselines, targets) => {
+    assert.deepEqual(targets.sort(), ["ANDROID_NATIVE", "IOS_NATIVE"]);
+    return { source_sha: cleanupSha, state: "COMPLETE" };
+  };
+  assert.equal((await orchestrator.cycle()).state, "COMPLETE");
+  assert.equal(claimed, 1);
+  assert.deepEqual(comparisons, [[temporarySha, cleanupSha], [temporarySha, cleanupSha]]);
+});
+
+test("unchanged delivered native source does not schedule a duplicate build", async () => {
+  const previous = { source_sha: sha, evidence: { fingerprints: { ios: "same-ios", android: "same-android" } } };
+  let claims = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => previous,
+      lastSuccessfulNative: async (platform) => ({ source_sha: sha, native_build_id: `${platform}-build`, native_fingerprint: `same-${platform}` }),
+      claimNativeDrift: async () => { claims += 1; },
+    },
+    github: { latestDevSha: async () => sha }, render: {}, sleep: async () => {},
+  });
+  assert.equal((await orchestrator.cycle()).state, "NO_CHANGE");
+  assert.equal(claims, 0);
+});
+
+test("platform native baselines remain independent for a one-platform revert", async () => {
+  const cleanupSha = "c".repeat(40);
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, ledger: {}, render: {},
+    github: { compare: async (base) => base.startsWith("i") ? ["apps/mobile/app.config.ts"] : ["apps/web/app/page.tsx"] },
+  });
+  const targets = await orchestrator.nativeChangeTargets(cleanupSha, {
+    ios: { sourceSha: `i${"a".repeat(39)}` },
+    android: { sourceSha: `a${"a".repeat(39)}` },
+  });
+  assert.deepEqual(targets, ["IOS_NATIVE"]);
+});
+
+test("required native revert targets augment NO_DELIVERY without weakening same-SHA reconciliation", () => {
+  const result = enforceDeliveredNativeBaseline({
+    classification: { classification: "NO_DELIVERY", reason: "repository-only", files: [] },
+    fingerprints: { ios: "historical", android: "historical" },
+    deliveredNative: { ios: { fingerprint: "historical" }, android: { fingerprint: "historical" } },
+    requiredNativeTargets: ["IOS_NATIVE"],
+  });
+  assert.equal(result.classification, "IOS_NATIVE");
+  assert.deepEqual(result.nativeDrift, ["IOS_NATIVE"]);
+});
+
 test("historical TestFlight reconciliation adopts only the recorded finished iOS build and submission", async () => {
   const finishedBuild = build({ status: "FINISHED", appVersion: "0.3.0", appBuildVersion: "9" });
   const finishedSubmission = submission();
@@ -613,6 +682,20 @@ test("historical distribution completion preserves the monotonic ordinary progre
   assert.match(queries[0].sql, /IOS_TESTFLIGHT_DISTRIBUTION'[\s\S]*state='FINISHED'/);
   assert.equal((await ledger.lastSuccessful()).source_sha, newer.source_sha);
   assert.match(queries[1].sql, /progression_order IS NOT NULL ORDER BY progression_order DESC/);
+});
+
+test("latest delivered native baseline follows platform completion rather than aggregate release completion", async () => {
+  const queries = [];
+  const delivered = { source_sha: "b".repeat(40), state: "DELIVERING", native_build_id: "ios-build-10", native_fingerprint: "f".repeat(40) };
+  const ledger = new PreviewLedger("postgres://localhost/test", {
+    pool: { query: async (sql, values) => { queries.push({ sql, values }); return { rows: [delivered], rowCount: 1 }; } },
+  });
+  assert.equal((await ledger.lastSuccessfulNative("ios")).source_sha, delivered.source_sha);
+  assert.doesNotMatch(queries[0].sql, /release\.state='COMPLETE'/);
+  assert.match(queries[0].sql, /IOS_SUBMISSION' AND submission\.state='FINISHED'/);
+  assert.match(queries[0].sql, /IOS_TESTFLIGHT_DISTRIBUTION/);
+  assert.match(queries[0].sql, /appBuildVersion'\)::bigint DESC/);
+  assert.match(queries[0].sql, /THEN distribution\.updated_at ELSE build\.updated_at/);
 });
 
 test("mixed-version deploy promotes only the completed current dev row before historical distribution recovery", async () => {

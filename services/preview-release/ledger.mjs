@@ -183,19 +183,20 @@ export class PreviewLedger {
        FROM preview_release release
        JOIN preview_release_action build
          ON build.source_sha=release.source_sha AND build.kind=$2 AND build.state='FINISHED'
-       WHERE release.state='COMPLETE'
-         AND release.evidence->'fingerprints'->>$1 ~ '^[0-9a-f]{40,128}$'
+       LEFT JOIN preview_release_action distribution
+         ON distribution.source_sha=release.source_sha
+        AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+       WHERE release.evidence->'fingerprints'->>$1 ~ '^[0-9a-f]{40,128}$'
+         AND build.evidence->>'appBuildVersion' ~ '^[0-9]+$'
          AND ($1 <> 'ios' OR EXISTS (
            SELECT 1 FROM preview_release_action submission
            WHERE submission.source_sha=release.source_sha
              AND submission.kind='IOS_SUBMISSION' AND submission.state='FINISHED'
          ))
-         AND ($1 <> 'ios' OR EXISTS (
-           SELECT 1 FROM preview_release_action distribution
-           WHERE distribution.source_sha=release.source_sha
-             AND distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
-         ))
-       ORDER BY build.updated_at DESC LIMIT 1`,
+         AND ($1 <> 'ios' OR distribution.remote_id IS NOT NULL)
+       ORDER BY (build.evidence->>'appBuildVersion')::bigint DESC,
+                CASE WHEN $1='ios' THEN distribution.updated_at ELSE build.updated_at END DESC
+       LIMIT 1`,
       [platform, buildKind],
     );
     return result.rows[0] ?? null;
