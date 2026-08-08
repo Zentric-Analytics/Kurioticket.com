@@ -56,7 +56,7 @@ export function isAdminNavItemActive(itemHref: string, pathname: string) {
   return pathname === itemHref || pathname.startsWith(`${itemHref}/`);
 }
 
-const previewTesterNavigation: AdminNavDefinition = { href: "/admin/preview-testers", label: "Preview Testers", icon: UserCheck, roles: ["ADMIN"], section: "controls", description: "Manage external staging Preview access." };
+const previewTesterNavigation: AdminNavDefinition = { href: "/admin/preview-testers", label: "Team Access", icon: UserCheck, roles: ["ADMIN"], section: "controls", description: "Manage Preview team roles, access and developer build notifications." };
 
 export function getAdminNavForRole(role: AdminRole, includePreviewTesters = false) {
   return [...adminNavigation, ...(includePreviewTesters ? [previewTesterNavigation] : [])].filter((item) => item.roles.includes(role));

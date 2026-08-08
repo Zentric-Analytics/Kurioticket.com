@@ -39,6 +39,9 @@ services:
         sync: false
       - key: APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID
         sync: false
+      # Must match the same secret on kurioticket-web-staging.
+      - key: PREVIEW_BUILD_NOTIFICATION_SECRET
+        sync: false
 
   - type: cron
     name: kurioticket-price-alerts
@@ -200,6 +203,10 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: STAGING_EMAIL_DELIVERY_ENABLED
+        value: "true"
+      - key: PREVIEW_BUILD_NOTIFICATION_SECRET
         sync: false
       - key: SAVED_TRIP_REMINDERS_CRON_SECRET
         sync: false
