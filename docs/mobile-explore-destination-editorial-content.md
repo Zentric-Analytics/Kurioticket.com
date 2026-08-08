@@ -6,9 +6,11 @@ The shared Explore destination catalogue is derived from the airport catalogue a
 
 `src/shared/destinations/exploreDestinationEditorial.ts` adds a Kurioticket-managed, platform-neutral editorial dataset so mobile can populate those existing fields now and the website can reuse the same source in a later task.
 
-## Covered destination IDs
+## Current rollout and Featured independence
 
-The dataset covers exactly the curated popular Explore destinations, in the maintained order:
+Editorial scope is expanding toward all canonical Explore destinations. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
+
+The current incremental rollout still contains the original 25 records for these Featured destinations, with their copy and provenance unchanged:
 
 1. `fr-paris`
 2. `gb-london`
@@ -36,13 +38,13 @@ The dataset covers exactly the curated popular Explore destinations, in the main
 24. `au-sydney`
 25. `br-rio-de-janeiro`
 
-Do not add non-curated catalogue destinations to this first editorial set.
+This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 ## Content fields
 
 Each editorial record contains:
 
-- `id` matching one curated popular Explore destination ID;
+- `id` resolving to exactly one canonical Explore destination;
 - `summary`, a single neutral sentence;
 - `description`, one concise paragraph of durable destination context;
 - `highlights`, three to five short factual phrases;
@@ -52,13 +54,13 @@ The editorial records deliberately do not populate `relatedDestinationIds`. Rela
 
 ## Source-verification standard
 
-Every destination must have at least two HTTPS source references attached to its typed record. Prefer official city, regional or national tourism organisations. Official government, municipal, UNESCO, cultural-institution or destination-management sources are also acceptable. Airport sources should only be used for airport facts, which are maintained separately.
+Every destination must have at least two distinct, titled HTTPS source references attached to its typed record. Prefer official city, regional or national tourism organisations. Official government, municipal, UNESCO, cultural-institution or destination-management sources are also acceptable. Airport sources should only be used for airport facts, which are maintained separately.
 
 `lastVerifiedAt` is the date Kurioticket checked the factual claims against the listed references. It does not mean the referenced organisations approved or endorsed Kurioticket wording.
 
 ## Airport facts versus editorial content
 
-Airport-derived facts remain in `exploreDestinationContent.ts` and continue to drive search, airport handoffs, IDs, names, country data and image lookup IDs. Editorial copy remains in `exploreDestinationEditorial.ts` and is attached after airport-backed records are constructed, by stable destination ID. Non-curated catalogue destinations remain valid without editorial fields.
+Airport-derived facts remain in the shared canonical catalogue and continue to drive search, airport handoffs, IDs, names, country data, aliases and image lookup IDs. Editorial copy remains in `exploreDestinationEditorial.ts` and is attached after airport-backed records are constructed, by stable destination ID. Airport facts must not be duplicated into or changed for editorial content. Destinations without editorial content remain valid.
 
 ## Original wording requirement
 
@@ -72,12 +74,16 @@ Editorial records must not include flight or hotel prices, availability, discoun
 
 To add a future editorial destination:
 
-1. Confirm the destination ID is intentionally part of the curated editorial scope.
+1. Resolve and use the existing canonical Explore destination ID; never invent an ID or use an arbitrary string.
 2. Research durable destination facts using at least two credible HTTPS references.
 3. Add one typed record with summary, description, highlights and editorial provenance.
 4. Keep airport facts and editorial copy separate; do not change airport mappings for copy reasons.
 5. Run the shared editorial validation and destination tests.
 6. Update this document only for process or scope changes; keep source references attached to the typed records.
+
+`relatedDestinationIds` remains optional and deferred until a separate recommendation policy is approved.
+
+The current 25 records intentionally remain in one source file to avoid a content-only reorganization and unnecessary provenance review noise. When reviewed regional batches make the file unwieldy, split it into typed regional modules with deterministic aggregation (for example, region plus canonical order); that aggregate order must not acquire Featured product semantics.
 
 ## Website integration
 
