@@ -1,6 +1,37 @@
 import { PREVIEW_IDENTITY } from "./config.mjs";
 
 const TERMINAL_FAILURES = new Set(["ERRORED", "FAILED", "CANCELED", "CANCELLED"]);
+const EXPO_ORIGIN = "https://expo.dev";
+
+export function canonicalExpoBuildPageUrl(buildId) {
+  const id = String(buildId ?? "").trim();
+  if (!/^[A-Za-z0-9-]{8,200}$/.test(id)) throw new Error("EAS build ID is malformed for Expo build-page resolution.");
+  const match = /^@([^/]+)\/([^/]+)$/.exec(PREVIEW_IDENTITY.easProjectFullName);
+  if (!match) throw new Error("Preview EAS project full name is malformed.");
+  const [, account, project] = match;
+  return `${EXPO_ORIGIN}/accounts/${encodeURIComponent(account)}/projects/${encodeURIComponent(project)}/builds/${encodeURIComponent(id)}`;
+}
+
+function exactExpoBuildPageUrl(build) {
+  const canonical = canonicalExpoBuildPageUrl(build?.id);
+  const reported = typeof build?.buildDetailsPageUrl === "string" ? build.buildDetailsPageUrl.trim() : "";
+  if (!reported) return canonical;
+
+  let actual;
+  let expected;
+  try {
+    actual = new URL(reported);
+    expected = new URL(canonical);
+  } catch {
+    throw new Error("EAS build details page URL is malformed.");
+  }
+  const actualPath = actual.pathname.replace(/\/$/, "");
+  const expectedPath = expected.pathname.replace(/\/$/, "");
+  if (actual.origin !== expected.origin || actualPath !== expectedPath || actual.search || actual.hash) {
+    throw new Error(`EAS build details page URL does not match exact Preview build ${build.id}.`);
+  }
+  return canonical;
+}
 
 export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, secret = process.env.PREVIEW_BUILD_NOTIFICATION_SECRET, fetchImpl = fetch }) {
   if (!secret) {
@@ -15,13 +46,28 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
     const identityKey = `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:${platform}:preview`;
     const action = await ledger.getAction(kind, identityKey);
     if (!action?.remote_id || String(action.state).toUpperCase() !== "FINISHED") continue;
+
+    // The release ledger owns the exact build ID for this source SHA. Resolve that
+    // build from EAS immediately before notification rather than selecting a generic
+    // "latest" build, which could point developers at an unrelated manual build.
     const build = await eas.viewBuild(action.remote_id);
+    if (build?.id !== action.remote_id) {
+      throw new Error(`EAS build:view returned a different build than the durable ${platform} ledger action.`);
+    }
+    const buildPageUrl = exactExpoBuildPageUrl(build);
+
     let submissionId = null;
     if (platform === "ios") {
       const submission = await ledger.getAction("IOS_SUBMISSION", `ios-submission:${build.id}`);
       if (!submission?.remote_id || String(submission.state).toUpperCase() !== "FINISHED") continue;
       submissionId = submission.remote_id;
     }
+
+    if (platform === "android" && !build.artifacts?.buildUrl) {
+      console.warn(JSON.stringify({ event: "preview-build-notification-skipped", platform, buildId: build.id, reason: "android-apk-artifact-missing" }));
+      continue;
+    }
+
     const payload = {
       platform,
       status: "SUCCESS",
@@ -31,15 +77,13 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
       appVersion: build.appVersion ?? null,
       runtimeVersion: PREVIEW_IDENTITY.runtime,
       classification,
-      buildUrl: platform === "android" ? build.artifacts?.buildUrl ?? null : null,
-      buildDetailsUrl: build.buildDetailsPageUrl ?? null,
+      // Expo's exact build page is the install source of truth. The raw artifact
+      // URL is intentionally not sent to the email service.
+      installUrl: platform === "android" ? buildPageUrl : null,
+      buildDetailsUrl: buildPageUrl,
       submissionId,
       completedAt: build.completedAt ?? new Date().toISOString(),
     };
-    if (platform === "android" && !payload.buildUrl) {
-      console.warn(JSON.stringify({ event: "preview-build-notification-skipped", platform, buildId: build.id, reason: "android-build-url-missing" }));
-      continue;
-    }
     results.push(await postNotification(payload, { secret, fetchImpl }));
   }
   return results;
