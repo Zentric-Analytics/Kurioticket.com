@@ -37,4 +37,4 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: node --test services/preview-release/ledger.integration.test.mjs
+      - run: npm run test:preview-release
