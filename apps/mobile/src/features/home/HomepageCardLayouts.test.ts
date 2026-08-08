@@ -13,6 +13,7 @@ test("mobile Home keeps every remaining section in the required order", () => {
     "<HomeHero />",
     "<View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>",
     "<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />",
+    "<PopularDestinationStays />",
     "<HomepageAdventureDiscovery />",
     "<HomepageDealPromos />",
     "<RegionalDestinationRoutes />",
@@ -27,10 +28,9 @@ test("mobile Home keeps every remaining section in the required order", () => {
   }
 });
 
-test("Popular destination stays is completely absent from mobile Home", () => {
-  assert.doesNotMatch(home, /PopularDestinationStays|Popular destination stays/);
+test("Popular destination stays is directly between flight search and adventure discovery", () => {
   assert.match(
     home,
-    /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>\s*<RegionalDestinationRoutes \/>/,
+    /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<PopularDestinationStays \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>\s*<RegionalDestinationRoutes \/>/,
   );
 });

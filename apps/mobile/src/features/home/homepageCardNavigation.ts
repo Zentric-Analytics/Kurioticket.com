@@ -1,9 +1,16 @@
 import type { Href } from "expo-router";
 
 export type HomepageAdventureCard = { originCode: string; destinationCode: string };
+export type HomepageHotelCard = { city: string };
 
 const DEFAULT_ROUTE_CARD_CURRENCY = "USD";
 const DEFAULT_ROUTE_CARD_MARKET = "NG";
+
+export const homepageHotelDestinationParams = (card: HomepageHotelCard) => ({ destination: card.city });
+
+export function popularDestinationStayNavigation(card: HomepageHotelCard): Href {
+  return { pathname: "/hotel-results", params: homepageHotelDestinationParams(card) };
+}
 
 export const homepageAdventureRouteParams = (card: HomepageAdventureCard, now = new Date()) => ({
   tripType: "one-way",
