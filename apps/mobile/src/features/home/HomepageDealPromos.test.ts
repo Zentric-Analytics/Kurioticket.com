@@ -64,14 +64,14 @@ test("dark-mode promo text uses readable scoped colors", () => {
   assert.match(promo, /styles\.description, \{ color: descriptionColor \}/);
 });
 
-test("dark-mode promo icon circles are category aware", () => {
+test("dark-mode promo illustration circles are category aware", () => {
   assert.match(promo, /darkIconBackgroundColor: "#193B74"/);
   assert.match(promo, /darkIconBackgroundColor: "#1A514A"/);
   assert.match(
     promo,
-    /ft\.theme\.dark && \{\s*backgroundColor: promo\.darkIconBackgroundColor,?\s*\}/s,
+    /dark && \{ backgroundColor: darkBackgroundColor \}/,
   );
-  assert.match(promo, /backgroundColor: "rgba\(255,255,255,0\.7\)"/);
+  assert.match(promo, /backgroundColor: "rgba\(255,255,255,0\.64\)"/);
 });
 
 test("promo buttons keep labels and styling while using the website routes", () => {
@@ -88,13 +88,28 @@ test("promo buttons keep labels and styling while using the website routes", () 
   assert.match(promo, /minHeight: 48/);
 });
 
-test("deal cards reuse vector icons and navigate through shared handlers", () => {
-  assert.match(promo, /icon: "flight"/);
-  assert.match(promo, /icon: "hotel"/);
-  assert.match(promo, /<FlowIcon name=\{promo\.icon\}/);
+test("deal cards use complete vector illustrations and shared navigation handlers", () => {
+  assert.match(promo, /illustration: "flight"/);
+  assert.match(promo, /illustration: "hotel"/);
+  assert.match(promo, /<PromoIllustration/);
+  assert.match(promo, /testID="flight-promo-airplane"/);
+  assert.match(promo, /testID="hotel-promo-building"/);
+  assert.match(promo, /testID=\{`\$\{kind\}-promo-sparkle`\}/);
+  assert.match(promo, /testID=\{`\$\{kind\}-promo-coin`\}/);
   assert.match(navigation, /HOMEPAGE_FLIGHT_PROMO_ROUTE = "\/deals"/);
   assert.match(navigation, /pathname: "\/hotel-results"/);
   assert.doesNotMatch(promo, /require\(|\.(?:png|jpe?g|gif|webp)/i);
+});
+
+test("both illustrations use a large responsive circular container", () => {
+  assert.match(promo, /testID=\{`\$\{kind\}-promo-illustration`\}/);
+  assert.match(promo, /width: "42%"/);
+  assert.match(promo, /minWidth: 120/);
+  assert.match(promo, /maxWidth: 150/);
+  assert.match(promo, /aspectRatio: 1/);
+  assert.match(promo, /borderRadius: 999/);
+  assert.doesNotMatch(promo, /width: 58|height: 58|borderRadius: 29/);
+  assert.doesNotMatch(promo, /<FlowIcon/);
 });
 
 test("promos follow adventure discovery for every home session", () => {
