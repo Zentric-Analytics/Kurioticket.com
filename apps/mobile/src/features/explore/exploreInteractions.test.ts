@@ -311,6 +311,20 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.match(source, /data=\{results\}/);
 });
 
+test("popular destination cards use a narrow responsive gutter without widening the header", () => {
+  const source = screen();
+  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
+
+  assert.match(styles, /stableHeader: \{ paddingHorizontal: 18/);
+  assert.match(styles, /content: \{ paddingHorizontal: 18/);
+  assert.match(styles, /popularCard: \{\s*marginHorizontal: -6,/);
+  assert.equal(18 - 6, 12);
+  assert.match(styles, /popularCard:[\s\S]*?borderRadius: 16/);
+  assert.match(styles, /popularCard:[\s\S]*?overflow: "hidden"/);
+  assert.match(styles, /popularSeparator: \{ height: 15 \}/);
+  assert.match(styles, /popularImage: \{ width: "100%", height: 220/);
+});
+
 test("popular destination names keep city and country inline and accessible", () => {
   const source = screen();
   const card = source.slice(

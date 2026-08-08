@@ -443,6 +443,7 @@ const s = StyleSheet.create({
     padding: 14,
   },
   popularCard: {
+    marginHorizontal: -6,
     borderRadius: 16,
     backgroundColor: "white",
     borderWidth: 1,
