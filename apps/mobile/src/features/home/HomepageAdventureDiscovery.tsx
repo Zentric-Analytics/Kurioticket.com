@@ -1,15 +1,15 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { getApiBaseUrl } from "../../config/apiUrl";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowStyles, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { discoverAdventureNavigation } from "./homepageCardNavigation";
-import { homepageAdventureDiscoveryItems, readFreshDiscoveryFare, type DiscoveryFare, type HomepageAdventureDiscoveryItem } from "./HomepageAdventureDiscoveryData";
+import { homepageAdventureDiscoveryBottomRow, homepageAdventureDiscoveryItems, homepageAdventureDiscoveryTopRow, readFreshDiscoveryFare, type DiscoveryFare, type HomepageAdventureDiscoveryItem } from "./HomepageAdventureDiscoveryData";
 
-const GRID_GAP = 12;
+const ROW_GAP = 12;
 
 export function HomepageAdventureDiscovery() {
   const ft = useFlowTheme();
@@ -17,7 +17,7 @@ export function HomepageAdventureDiscovery() {
   const { savedIds, toggle } = useSavedDestinations();
   const [failedImages, setFailedImages] = useState<Set<string>>(() => new Set());
   const [fares, setFares] = useState<Record<string, DiscoveryFare>>({});
-  const cardWidth = Math.max(0, (width - 28 - GRID_GAP) / 2);
+  const cardWidth = Math.min(210, Math.max(170, width * 0.44));
 
   useEffect(() => {
     const api = getApiBaseUrl(undefined, __DEV__);
@@ -47,11 +47,32 @@ export function HomepageAdventureDiscovery() {
         <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>Discover your next adventure here</Text>
         <Text style={[styles.subtitle, { color: ft.colors.textSecondary }]}>Compare smart route ideas, flexible fares, and destinations picked for your region.</Text>
       </View>
-      <View testID="homepage-adventure-grid" style={styles.grid}>
-        {homepageAdventureDiscoveryItems.map((item) => (
+      <ScrollView
+        horizontal
+        nestedScrollEnabled
+        directionalLockEnabled
+        showsHorizontalScrollIndicator={false}
+        testID="homepage-adventure-row-top"
+        style={styles.rowViewport}
+        contentContainerStyle={styles.rowContent}
+      >
+        {homepageAdventureDiscoveryTopRow.map((item) => (
           <AdventureCard key={item.id} item={item} width={cardWidth} fare={fares[item.id]} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.id)} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => toggle(item.id)} />
         ))}
-      </View>
+      </ScrollView>
+      <ScrollView
+        horizontal
+        nestedScrollEnabled
+        directionalLockEnabled
+        showsHorizontalScrollIndicator={false}
+        testID="homepage-adventure-row-bottom"
+        style={styles.rowViewport}
+        contentContainerStyle={styles.rowContent}
+      >
+        {homepageAdventureDiscoveryBottomRow.map((item) => (
+          <AdventureCard key={item.id} item={item} width={cardWidth} fare={fares[item.id]} imageFailed={failedImages.has(item.id)} saved={savedIds.has(item.id)} onImageError={() => setFailedImages((current) => new Set(current).add(item.id))} onFavorite={() => toggle(item.id)} />
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -77,7 +98,7 @@ function AdventureCard({ item, width, fare, imageFailed, saved, onImageError, on
 
 const styles = StyleSheet.create({
   section: { gap: 16, marginTop: 4 }, header: { gap: 6 }, heading: { fontSize: 21, lineHeight: 27, fontWeight: "800", letterSpacing: -0.25 }, subtitle: { fontSize: 14, lineHeight: 21 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: GRID_GAP }, card: { height: 292, borderRadius: 16, borderWidth: 1, overflow: "hidden" }, imageFrame: { height: 132 }, image: { width: "100%", height: "100%" },
+  rowViewport: { marginHorizontal: -14 }, rowContent: { gap: ROW_GAP, paddingHorizontal: 14, paddingRight: 40 }, card: { height: 292, borderRadius: 16, borderWidth: 1, overflow: "hidden" }, imageFrame: { height: 132 }, image: { width: "100%", height: "100%" },
   imageFallback: { flex: 1, alignItems: "center", justifyContent: "center", gap: 6 }, fallbackCode: { fontSize: 13, fontWeight: "900", letterSpacing: 1.4 }, heart: { position: "absolute", right: 8, top: 8 },
   copy: { flex: 1, padding: 11 }, title: { minHeight: 38, fontSize: 14, lineHeight: 18, fontWeight: "700" }, route: { marginTop: 6, fontSize: 12, lineHeight: 17, fontWeight: "700" }, meta: { marginTop: 5, fontSize: 9, lineHeight: 13, fontWeight: "700", letterSpacing: 0.35 }, fare: { marginTop: "auto", flexDirection: "row", alignItems: "baseline", gap: 5 }, from: { fontSize: 12, fontWeight: "600" }, price: { fontSize: 15, fontWeight: "800" },
 });

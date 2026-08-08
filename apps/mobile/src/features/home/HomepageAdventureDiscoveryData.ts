@@ -24,6 +24,14 @@ export const homepageAdventureDiscoveryItems: readonly HomepageAdventureDiscover
   { id: "ng-los-doh", title: "Doha premium transit", originCode: "LOS", destinationCode: "DOH", routeNote: "Comfort-focused routing with smooth onward global connections.", image: { uri: "https://images.unsplash.com/photo-1578895101408-1a36b834405b?auto=format&fit=crop&w=1200&q=90" }, imageAlt: "Doha skyline and corniche waterfront" },
 ] as const;
 
+// Match the website's mobile board: ordered cards alternate between two rows.
+export const homepageAdventureDiscoveryTopRow = homepageAdventureDiscoveryItems.filter(
+  (_, index) => index % 2 === 0,
+);
+export const homepageAdventureDiscoveryBottomRow = homepageAdventureDiscoveryItems.filter(
+  (_, index) => index % 2 === 1,
+);
+
 export type DiscoveryFare = { price: number; currency: string };
 
 export function readFreshDiscoveryFare(value: unknown, item: HomepageAdventureDiscoveryItem, now = Date.now()): DiscoveryFare | undefined {
