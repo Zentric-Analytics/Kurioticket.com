@@ -521,7 +521,7 @@ test("historical TestFlight recovery remains iOS-only after newer Android native
     ledger: {
       pendingIosDistribution: async () => ({ source_sha: sha, ios_build_id: "build-1" }),
       lastSuccessful: async () => ({ source_sha: newerDev, evidence: { fingerprints: { android: "new-android" } } }),
-      lastSuccessfulNative: async () => { throw new Error("historical distribution must not read native-drift baselines"); },
+      lastSuccessfulNative: async (platform) => ({ source_sha: newerDev, native_build_id: `${platform}-build`, native_fingerprint: `new-${platform}`, build_number: "10" }),
       requiresIosDistribution: async () => true,
       claimIosDistribution: async () => ({ source_sha: sha, state: "DETECTED" }),
       transition: async () => {},
@@ -691,11 +691,35 @@ test("latest delivered native baseline follows platform completion rather than a
     pool: { query: async (sql, values) => { queries.push({ sql, values }); return { rows: [delivered], rowCount: 1 }; } },
   });
   assert.equal((await ledger.lastSuccessfulNative("ios")).source_sha, delivered.source_sha);
-  assert.doesNotMatch(queries[0].sql, /release\.state='COMPLETE'/);
-  assert.match(queries[0].sql, /IOS_SUBMISSION' AND submission\.state='FINISHED'/);
-  assert.match(queries[0].sql, /IOS_TESTFLIGHT_DISTRIBUTION/);
-  assert.match(queries[0].sql, /appBuildVersion'\)::bigint DESC/);
-  assert.match(queries[0].sql, /THEN distribution\.updated_at ELSE build\.updated_at/);
+  assert.match(queries[0].sql, /preview_delivered_native_state/);
+  assert.doesNotMatch(queries[0].sql, /ORDER BY/);
+  assert.deepEqual(queries[0].values, ["ios"]);
+});
+
+test("current dev native drift outranks a stale historical TestFlight distribution", async () => {
+  const current = "c".repeat(40);
+  const historical = "a".repeat(40);
+  let nativeClaims = 0;
+  let distributionClaims = 0;
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", iosNativeBackfillSha: null, workerId: "test", leaseMs: 60_000 },
+    ledger: {
+      lastSuccessful: async () => ({ source_sha: current, evidence: { fingerprints: { ios: "f".repeat(40), android: "e".repeat(40) } } }),
+      releaseBySha: async () => ({ source_sha: current, evidence: { fingerprints: { ios: "f".repeat(40), android: "e".repeat(40) } } }),
+      lastSuccessfulNative: async (platform) => ({ source_sha: "b".repeat(40), native_build_id: `${platform}-10`, native_fingerprint: platform === "ios" ? "d".repeat(40) : "e".repeat(40), build_number: "10" }),
+      pendingIosDistribution: async () => ({ source_sha: historical, ios_build_id: "missing-build-9" }),
+      claimNativeDrift: async ({ sourceSha }) => { nativeClaims += 1; return { source_sha: sourceSha, state: "COMPLETE" }; },
+      claimIosDistribution: async () => { distributionClaims += 1; }, transition: async () => {},
+    },
+    github: { latestDevSha: async () => current, compare: async (base) => base === "b".repeat(40) ? ["apps/mobile/app.config.ts"] : [] , report: async () => {} },
+    render: {}, sleep: async () => {},
+  });
+  orchestrator.process = async (record, previous, lease, delivered, targets) => ({ state: "COMPLETE", source_sha: record.source_sha, targets });
+  const result = await orchestrator.cycle();
+  assert.equal(result.source_sha, current);
+  assert.deepEqual(result.targets, ["IOS_NATIVE", "ANDROID_NATIVE"]);
+  assert.equal(nativeClaims, 1);
+  assert.equal(distributionClaims, 0);
 });
 
 test("mixed-version deploy promotes only the completed current dev row before historical distribution recovery", async () => {

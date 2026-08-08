@@ -13,39 +13,10 @@ export class PreviewOrchestrator {
   }
 
   async cycle() {
-    const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
-    let previous = await this.ledger.lastSuccessful();
-    if (previous?.source_sha !== currentDevSha
-      && typeof this.ledger.completedCurrentDevProgressionCandidate === "function"
-      && typeof this.ledger.reconcileCompletedCurrentDevProgression === "function") {
-      const candidate = await this.ledger.completedCurrentDevProgressionCandidate(currentDevSha);
-      if (candidate) {
-        if (!candidate.previous_sha || !previous?.source_sha) throw new Error("Completed current dev progression repair lacks immutable ancestry anchors.");
-        if (candidate.previous_sha === currentDevSha) throw new Error("Completed current dev progression repair has a self-referential stored baseline.");
-        await this.github.compare(candidate.previous_sha, currentDevSha);
-        await this.github.compare(previous.source_sha, currentDevSha);
-        const reconciled = await this.ledger.reconcileCompletedCurrentDevProgression({
-          sourceSha: currentDevSha,
-          storedPreviousSha: candidate.previous_sha,
-          latestProgressionSha: previous.source_sha,
-        });
-        if (reconciled) previous = reconciled;
-      }
-    }
-    const pendingDistribution = !this.config.iosNativeBackfillSha && typeof this.ledger.pendingIosDistribution === "function" ? await this.ledger.pendingIosDistribution() : null;
-    const currentDevNeedsEvaluation = previous?.source_sha !== currentDevSha;
-    const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevNeedsEvaluation ? pendingDistribution?.source_sha : null) ?? currentDevSha;
-    if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
-    const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
-    const iosDistributionPending = !iosNativeBackfill && (pendingDistribution?.source_sha === sourceSha || (typeof this.ledger.requiresIosDistribution === "function" && await this.ledger.requiresIosDistribution(sourceSha)));
-    const deliveredNative = iosNativeBackfill || iosDistributionPending ? {} : await this.deliveredNativeBaselines();
-    const deliveredChangeTargets = previous?.source_sha === sourceSha
-      ? await this.nativeChangeTargets(sourceSha, deliveredNative)
-      : [];
-    const pendingNative = previous?.source_sha === sourceSha
-      ? [...new Set([...nativeDriftTargets(previous.evidence?.fingerprints, deliveredNative), ...deliveredChangeTargets])]
-      : [];
-    if (previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length && !iosDistributionPending) return { state: "NO_CHANGE", sourceSha };
+    const decision = await this.deriveDecision();
+    console.log(JSON.stringify({ event: "PREVIEW_DECISION", ...decision.trace }));
+    if (decision.noChange) return { state: "NO_CHANGE", sourceSha: decision.sourceSha };
+    const { sourceSha, previous, deliveredNative, pendingNative, iosNativeBackfill, iosDistributionPending } = decision;
     const claim = { sourceSha, previousSha: previous?.source_sha ?? null, workerId: this.config.workerId, leaseMs: this.config.leaseMs, mode: this.config.mode };
     const record = iosNativeBackfill
       ? await this.ledger.claimIosNativeBackfill({ ...claim, identityKey: `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview` })
@@ -66,6 +37,76 @@ export class PreviewOrchestrator {
       await this.github.report(sourceSha, "failure", `Preview release failed: ${safe}`).catch(() => {});
       throw error;
     } finally { await lease.stop(); }
+  }
+
+  async deriveDecision() {
+    const currentDevSha = await retry(() => this.github.latestDevSha(), { attempts: 4, sleep: this.sleep });
+    let previous = await this.ledger.lastSuccessful();
+    if (previous?.source_sha !== currentDevSha
+      && typeof this.ledger.completedCurrentDevProgressionCandidate === "function"
+      && typeof this.ledger.reconcileCompletedCurrentDevProgression === "function") {
+      const candidate = await this.ledger.completedCurrentDevProgressionCandidate(currentDevSha);
+      if (candidate) {
+        if (!candidate.previous_sha || !previous?.source_sha) throw new Error("Completed current dev progression repair lacks immutable ancestry anchors.");
+        if (candidate.previous_sha === currentDevSha) throw new Error("Completed current dev progression repair has a self-referential stored baseline.");
+        await this.github.compare(candidate.previous_sha, currentDevSha);
+        await this.github.compare(previous.source_sha, currentDevSha);
+        const reconciled = await this.ledger.reconcileCompletedCurrentDevProgression({
+          sourceSha: currentDevSha,
+          storedPreviousSha: candidate.previous_sha,
+          latestProgressionSha: previous.source_sha,
+        });
+        if (reconciled) previous = reconciled;
+      }
+    }
+    const deliveredNative = await this.deliveredNativeBaselines();
+    const currentRecord = typeof this.ledger.releaseBySha === "function"
+      ? await this.ledger.releaseBySha(currentDevSha)
+      : previous?.source_sha === currentDevSha ? previous : null;
+    const currentFingerprints = currentRecord?.evidence?.fingerprints ?? null;
+    const deliveredChangeTargets = previous?.source_sha === currentDevSha
+      ? await this.nativeChangeTargets(currentDevSha, deliveredNative)
+      : [];
+    const pendingNative = previous?.source_sha === currentDevSha
+      ? [...new Set([...nativeDriftTargets(currentFingerprints, deliveredNative), ...deliveredChangeTargets])]
+      : [];
+    const pendingDistribution = !this.config.iosNativeBackfillSha && typeof this.ledger.pendingIosDistribution === "function" ? await this.ledger.pendingIosDistribution() : null;
+    const currentDevNeedsEvaluation = previous?.source_sha !== currentDevSha;
+    // Current repository progression and its platform-native requirements always
+    // outrank delayed historical side effects. Historical distribution recovery
+    // is selected only when current dev is fully evaluated against both canonical
+    // delivered-platform pointers.
+    const currentDevHasPriority = currentDevNeedsEvaluation || pendingNative.length > 0;
+    const sourceSha = this.config.iosNativeBackfillSha ?? (!currentDevHasPriority ? pendingDistribution?.source_sha : null) ?? currentDevSha;
+    if (sourceSha !== currentDevSha) await this.github.compare(sourceSha, currentDevSha);
+    const iosNativeBackfill = Boolean(this.config.iosNativeBackfillSha);
+    const iosDistributionPending = !iosNativeBackfill && (pendingDistribution?.source_sha === sourceSha || (typeof this.ledger.requiresIosDistribution === "function" && await this.ledger.requiresIosDistribution(sourceSha)));
+    const noChange = previous?.source_sha === sourceSha && !iosNativeBackfill && !pendingNative.length && !iosDistributionPending;
+    const selectedOperation = noChange ? "NO_CHANGE" : iosDistributionPending ? "IOS_DISTRIBUTION_RECONCILIATION" : pendingNative.length ? "CURRENT_NATIVE_RECONCILIATION" : "CURRENT_RELEASE_EVALUATION";
+    const claimEligibility = !noChange && typeof this.ledger.claimEligibility === "function" ? await this.ledger.claimEligibility(sourceSha, selectedOperation) : null;
+    return {
+      sourceSha, previous, deliveredNative, pendingNative, iosNativeBackfill, iosDistributionPending, noChange,
+      trace: {
+        currentDevSha,
+        ordinaryProgressionSha: previous?.source_sha ?? null,
+        iosDeliveredSha: deliveredNative.ios?.sourceSha ?? null,
+        iosBuildId: deliveredNative.ios?.buildId ?? null,
+        iosBuildNumber: deliveredNative.ios?.buildNumber ?? null,
+        iosFingerprint: deliveredNative.ios?.fingerprint ?? null,
+        androidDeliveredSha: deliveredNative.android?.sourceSha ?? null,
+        androidBuildId: deliveredNative.android?.buildId ?? null,
+        androidBuildNumber: deliveredNative.android?.buildNumber ?? null,
+        androidFingerprint: deliveredNative.android?.fingerprint ?? null,
+        currentFingerprints,
+        sourceRangeNativeTargets: deliveredChangeTargets,
+        fingerprintNativeTargets: nativeDriftTargets(currentFingerprints, deliveredNative),
+        requiredNativeTargets: pendingNative,
+        pendingHistoricalDistributionSha: pendingDistribution?.source_sha ?? null,
+        selectedSourceSha: sourceSha,
+        selectedOperation,
+        claimEligibility,
+      },
+    };
   }
 
   async process(record, previous, lease, deliveredNative = null, requiredNativeTargets = []) {
@@ -101,8 +142,8 @@ export class PreviewOrchestrator {
       const evidence = { files, identity, fingerprints, classification };
       if (classification.classification.includes("WEB")) evidence.web = await this.deliverWeb(sha, lease);
       if (classification.classification.includes("OTA")) evidence.ota = await this.deliverOta(sha, checkout.directory, lease);
-      if (classification.classification.includes("IOS_NATIVE")) evidence.ios = await this.deliverIos(sha, checkout.directory, lease);
-      if (classification.classification.includes("ANDROID_NATIVE")) evidence.android = await this.deliverAndroid(sha, checkout.directory, lease);
+      if (classification.classification.includes("IOS_NATIVE")) evidence.ios = await this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
+      if (classification.classification.includes("ANDROID_NATIVE")) evidence.android = await this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
       return complete;
@@ -114,7 +155,7 @@ export class PreviewOrchestrator {
     if (typeof this.ledger.lastSuccessfulNative !== "function") return result;
     for (const platform of ["ios", "android"]) {
       const record = await this.ledger.lastSuccessfulNative(platform);
-      if (record) result[platform] = { sourceSha: record.source_sha, buildId: record.native_build_id, fingerprint: record.native_fingerprint };
+      if (record) result[platform] = { sourceSha: record.source_sha, buildId: record.native_build_id, buildNumber: String(record.build_number), fingerprint: record.native_fingerprint };
     }
     return result;
   }
@@ -138,7 +179,7 @@ export class PreviewOrchestrator {
     try {
       await this.prepareCheckoutFactory(checkout.directory);
       assertPreviewIdentity(await this.identityFactory(checkout.directory));
-      await this.fingerprintsFactory(checkout.directory);
+      const fingerprints = await this.fingerprintsFactory(checkout.directory);
       await lease.checkpoint();
 
       const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
@@ -159,6 +200,12 @@ export class PreviewOrchestrator {
       }
 
       const distribution = await this.distributeIosToInternalGroup({ sha, build, current: build, submission: submission.submission, lease });
+      if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({
+        platform: "ios", sourceSha: sha, fingerprint: fingerprints.ios, buildId: build.id,
+        appVersion: build.appVersion, buildNumber: build.appBuildVersion,
+        submissionId: submission.submission.id, appleBuildId: distribution.appleBuildId,
+        distributionId: `${distribution.appleBuildId}:${distribution.betaGroupId}`,
+      });
       const complete = await this.ledger.completeIosDistribution({ sourceSha: sha, workerId: this.config.workerId });
       await this.github.report(sha, "success", "Preview TestFlight internal distribution reconciliation complete");
       return { ...complete, distribution };
@@ -224,7 +271,7 @@ export class PreviewOrchestrator {
     return { updateIds: ids, runtime: PREVIEW_IDENTITY.runtime, channel: PREVIEW_IDENTITY.channel };
   }
 
-  async deliverIos(sha, cwd, lease) {
+  async deliverIos(sha, cwd, lease, fingerprint) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     const buildIdentityKey = `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`;
     const recordedBuildAction = await this.ledger.getAction("IOS_BUILD", buildIdentityKey);
@@ -261,6 +308,12 @@ export class PreviewOrchestrator {
         await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_SUBMISSION", identityKey: `ios-submission:${build.id}`, remoteId: submission.submission.id, state: submission.state, evidence: submission.submission });
         if (submission.state === "FINISHED") {
           const distribution = await this.distributeIosToInternalGroup({ sha, build, current, submission: submission.submission, lease });
+          if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({
+            platform: "ios", sourceSha: sha, fingerprint, buildId: build.id,
+            appVersion: current.appVersion, buildNumber: current.appBuildVersion,
+            submissionId: submission.submission.id, appleBuildId: distribution.appleBuildId,
+            distributionId: `${distribution.appleBuildId}:${distribution.betaGroupId}`,
+          });
           return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission.id, distribution };
         }
         await this.sleep(15_000);
@@ -297,7 +350,7 @@ export class PreviewOrchestrator {
     throw new Error("Apple build processing exceeded its bounded polling window.");
   }
 
-  async deliverAndroid(sha, cwd, lease) {
+  async deliverAndroid(sha, cwd, lease, fingerprint) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     let decision = reconcileBuilds(await eas.listAndroidBuilds(sha), sha, "android");
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS Android reconciliation failed closed: ${decision.decision}.`);
@@ -315,7 +368,10 @@ export class PreviewOrchestrator {
       const current = await eas.viewBuild(build.id);
       const status = String(current.status ?? "").toUpperCase();
       await this.ledger.recordAction({ sourceSha: sha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: status, evidence: current });
-      if (status === "FINISHED") return { buildId: build.id, buildNumber: current.appBuildVersion, status };
+      if (status === "FINISHED") {
+        if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({ platform: "android", sourceSha: sha, fingerprint, buildId: build.id, appVersion: current.appVersion, buildNumber: current.appBuildVersion });
+        return { buildId: build.id, buildNumber: current.appBuildVersion, status };
+      }
       if (["ERRORED", "FAILED", "CANCELED"].includes(status)) throw new Error(`EAS Android build ${build.id} ended in ${status}.`);
       await this.sleep(30_000);
     }

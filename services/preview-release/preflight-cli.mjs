@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { requirePreviewEnvironment } from "./config.mjs";
@@ -11,7 +11,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const config = requirePreviewEnvironment();
 const ledger = new PreviewLedger(config.databaseUrl);
 try {
-  await ledger.migrate(await readFile(resolve(root, "services/preview-release/sql/001_init.sql"), "utf8"));
+for (const migration of (await readdir(resolve(root, "services/preview-release/sql"))).filter((name) => /^\d+_.+\.sql$/.test(name)).sort()) {
+  await ledger.migrate(await readFile(resolve(root, "services/preview-release/sql", migration), "utf8"));
+}
   const result = await runPreviewPreflight({
     config,
     ledger,
