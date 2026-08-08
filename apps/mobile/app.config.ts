@@ -68,7 +68,6 @@ export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileE
 const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   const environment = resolveMobileEnvironment(process.env);
   const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
-  const splashBackgroundColor = environment.variant === "preview" ? "#BFD7FF" : "#F7FAFF";
   if (process.env.EAS_BUILD === "true" && environment.variant === "preview" && !googleIosClientId) {
     throw new Error("[mobile-environment] Preview EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.");
   }
@@ -81,7 +80,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
           image: "./assets/kurioticket-logo-primary-light-bg.png",
           imageWidth: 200,
           resizeMode: "contain",
-          backgroundColor: splashBackgroundColor,
+          backgroundColor: "#F7FAFF",
         },
       },
     ],
@@ -101,7 +100,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     icon: "./assets/kurioticket-icon-blue.png",
-    splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: splashBackgroundColor },
+    splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: "#F7FAFF" },
     ios: {
       supportsTablet: true,
       bundleIdentifier: environment.bundleIdentifier,
@@ -111,7 +110,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
     android: {
       package: environment.androidPackage,
       icon: "./assets/kurioticket-icon-blue.png",
-      splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: splashBackgroundColor },
+      splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: "#F7FAFF" },
       adaptiveIcon: { foregroundImage: "./assets/kurioticket-adaptive-foreground.png", backgroundColor: "#F2F6FA" },
     },
     plugins,
