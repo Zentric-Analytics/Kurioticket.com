@@ -9,7 +9,7 @@ import { AppStoreConnectClient } from "./app-store-connect.mjs";
 
 export class PreviewOrchestrator {
   constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), checkoutFactory = exactCheckout, prepareCheckoutFactory = prepareCheckout, identityFactory = resolvedIdentity, fingerprintsFactory = nativeFingerprints, stagingWait = waitForStaging, sleep = delay }) {
-    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.checkoutFactory = checkoutFactory; this.prepareCheckoutFactory = prepareCheckout; this.identityFactory = resolvedIdentity; this.fingerprintsFactory = nativeFingerprints; this.stagingWait = stagingWait; this.sleep = sleep;
+    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.checkoutFactory = checkoutFactory; this.prepareCheckoutFactory = prepareCheckoutFactory; this.identityFactory = identityFactory; this.fingerprintsFactory = fingerprintsFactory; this.stagingWait = stagingWait; this.sleep = sleep;
   }
 
   async cycle() {
