@@ -309,7 +309,6 @@ test("popular destinations are one vertical virtualized stack", () => {
   assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
   assert.match(source, /destinationMedia\(destination.id\)/);
   assert.match(source, /data=\{results\}/);
-  assert.match(source, /Search flights to/);
 });
 
 test("popular destination names keep city and country inline and accessible", () => {
@@ -333,29 +332,18 @@ test("popular destination names keep city and country inline and accessible", ()
 });
 
 
-test("popular destination flight action is compact while preserving navigation", () => {
+test("popular destination cards end after airport access without a flight action", () => {
   const source = screen();
   const card = source.slice(
     source.indexOf("function PopularDestinationCard"),
     source.indexOf("function ExploreDiscoveryContent"),
   );
-  const styles = source.slice(source.indexOf("  flightButton: {"));
-  const flightButtonStyle = styles.slice(0, styles.indexOf("  flightButtonText:"));
+  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
 
-  assert.match(card, /<Pressable[\s\S]*?accessibilityLabel=\{`Search flights to \$\{destination\.name\}`\}/);
-  assert.match(card, /<Text style=\{s\.flightButtonText\}>Search flights<\/Text>/);
-  assert.match(card, /<FlowIcon name="flight" color="white" size=\{16\} \/>/);
-  assert.match(card, /router\.push\(\{[\s\S]*?pathname: `\/\$\{route\}`[\s\S]*?destination: name[\s\S]*?destinationId: handoff\.destinationId[\s\S]*?airportCodes: handoff\.airportCodes\.join\(","\)[\s\S]*?to: handoff\.primaryAirportCode/);
-  assert.match(card, /hitSlop=\{\{ top: 2, bottom: 2 \}\}/);
-
-  assert.match(flightButtonStyle, /alignSelf: "flex-end"/);
-  assert.doesNotMatch(flightButtonStyle, /alignSelf: "flex-start"/);
-  assert.match(flightButtonStyle, /minHeight: 40/);
-  assert.match(flightButtonStyle, /minWidth: 44/);
-  assert.match(flightButtonStyle, /paddingHorizontal: 14/);
-  assert.match(flightButtonStyle, /gap: 6/);
-  assert.doesNotMatch(flightButtonStyle, /width: "100%"|alignSelf: "stretch"|flex: 1/);
-  assert.match(styles, /flightButtonText: \{ color: "white", fontSize: 13, fontWeight: "800" \}/);
+  assert.doesNotMatch(card, /Search flights|searchFlights|name="flight"/);
+  assert.doesNotMatch(card, /Tap to explore|See more|View details|Learn more|Explore more/);
+  assert.doesNotMatch(styles, /flightButton|flightButtonText/);
+  assert.match(styles, /popularCopy: \{ padding: 14, gap: 3 \}/);
 });
 
 test("popular destination cards present shared summaries before concise flight access", () => {
@@ -398,7 +386,7 @@ test("flight access formatter keeps the primary first and removes duplicate code
   );
 });
 
-test("popular destination flight action does not replace card details or save actions", () => {
+test("popular destination card and save heart keep independent actions", () => {
   const source = screen();
   const card = source.slice(
     source.indexOf("function PopularDestinationCard"),
@@ -409,7 +397,10 @@ test("popular destination flight action does not replace card details or save ac
   assert.match(card, /onPress=\{onSelect\}/);
   assert.match(card, /label=\{`\$\{saved \? "Remove" : "Save"\} \$\{destination\.name\}`\}/);
   assert.match(card, /onPress=\{onToggle\}/);
-  assert.doesNotMatch(card, /onPress=\{searchFlights\}[\s\S]*?destinationDetailsRoute/);
+  assert.match(
+    card,
+    /<Pressable[\s\S]*?onPress=\{onSelect\}[\s\S]*?<Image[\s\S]*?<View style=\{s\.popularCopy\}>[\s\S]*?<\/Pressable>\s*<AndroidFavoriteButton[\s\S]*?onPress=\{onToggle\}/,
+  );
 });
 
 test("destination detail action buttons stay on their existing shared styles", () => {
