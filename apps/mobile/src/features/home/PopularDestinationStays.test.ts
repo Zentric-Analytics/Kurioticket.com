@@ -27,8 +27,8 @@ test("uses one unsynchronised horizontal rail without a grid or wrapping", () =>
 
 test("matches the mobile-web portrait card and independent interaction structure", () => {
   assert.match(section, /cardWidth: 276/);
-  assert.match(section, /imageHeight: 224/);
-  assert.match(section, /ctaHeight: 64/);
+  assert.match(section, /imageHeight: 288/);
+  assert.match(section, /ctaHeight: 72/);
   assert.match(section, /useWindowDimensions/);
   assert.match(section, /styles\.copy/);
   assert.match(
@@ -65,6 +65,18 @@ test("keeps destination copy over the image and the compact footer separate", ()
   assert.match(section, /minWidth: 156/);
   assert.match(section, /height: 40/);
   assert.match(section, /justifyContent: "center"/);
+  assert.match(
+    section,
+    /copy: \{[\s\S]*position: "absolute"[\s\S]*bottom: 16[\s\S]*left: 16[\s\S]*right: 16/,
+  );
+  assert.match(
+    section,
+    /heart: \{[\s\S]*position: "absolute"[\s\S]*top: 12[\s\S]*right: 12/,
+  );
+  assert.match(
+    section,
+    /ctaSection: \{[\s\S]*height: CTA_HEIGHT[\s\S]*alignItems: "center"[\s\S]*justifyContent: "center"/,
+  );
 });
 
 test("renders the complete web-aligned destination list and safe image fallback", () => {

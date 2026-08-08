@@ -18,14 +18,15 @@ import { popularDestinationStayNavigation } from "./homepageCardNavigation";
 export { popularDestinationStays } from "./PopularDestinationStaysData";
 import { popularDestinationStays } from "./PopularDestinationStaysData";
 
-// Compact Home-card geometry, scaled from the 375px mobile viewport.
+// src/app/page.tsx DestinationCard at the mobile breakpoint: 17.25rem wide,
+// an 18rem image region, and a 4.5rem footer region.
 export const POPULAR_STAY_LAYOUT = {
   cardWidth: 276,
   minCardWidth: 260,
   maxCardWidth: 292,
   viewportReveal: 99,
-  imageHeight: 224,
-  ctaHeight: 64,
+  imageHeight: 288,
+  ctaHeight: 72,
   gap: 16,
   radius: 16,
   sideInset: 16,
@@ -225,8 +226,7 @@ const styles = StyleSheet.create({
   },
   imageFrame: {
     width: "100%",
-    justifyContent: "flex-end",
-    padding: 16,
+    position: "relative",
   },
   image: {
     ...StyleSheet.absoluteFillObject,
@@ -261,8 +261,11 @@ const styles = StyleSheet.create({
   heartSaved: { backgroundColor: "#E11D48" },
   heartPressed: { transform: [{ scale: 0.94 }] },
   copy: {
+    position: "absolute",
     zIndex: 1,
-    alignSelf: "flex-start",
+    bottom: 16,
+    left: 16,
+    right: 16,
     gap: 1,
   },
   city: {
