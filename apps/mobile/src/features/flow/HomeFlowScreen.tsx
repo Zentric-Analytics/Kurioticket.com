@@ -14,10 +14,10 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
-import { PopularDestinationStays } from "../home/PopularDestinationStays";
 import { HomepageDealPromos } from "../home/HomepageDealPromos";
 import { RegionalDestinationRoutes } from "../home/RegionalDestinationRoutes";
 import { HomepageAdventureDiscovery } from "../home/HomepageAdventureDiscovery";
+import { PopularDestinationStays } from "../home/PopularDestinationStays";
 
 const homeHeroSource = {
   uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",

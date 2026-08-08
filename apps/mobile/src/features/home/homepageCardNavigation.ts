@@ -1,14 +1,16 @@
 import type { Href } from "expo-router";
 
-export type HomepageHotelCard = { city: string };
 export type HomepageAdventureCard = { originCode: string; destinationCode: string };
+export type HomepageHotelCard = { city: string };
 
 const DEFAULT_ROUTE_CARD_CURRENCY = "USD";
 const DEFAULT_ROUTE_CARD_MARKET = "NG";
 
-export const homepageHotelDestinationParams = (card: HomepageHotelCard) => ({
-  destination: card.city,
-});
+export const homepageHotelDestinationParams = (card: HomepageHotelCard) => ({ destination: card.city });
+
+export function popularDestinationStayNavigation(card: HomepageHotelCard): Href {
+  return { pathname: "/hotel-results", params: homepageHotelDestinationParams(card) };
+}
 
 export const homepageAdventureRouteParams = (card: HomepageAdventureCard, now = new Date()) => ({
   tripType: "one-way",
@@ -23,10 +25,6 @@ export const homepageAdventureRouteParams = (card: HomepageAdventureCard, now = 
   currency: DEFAULT_ROUTE_CARD_CURRENCY,
   market: DEFAULT_ROUTE_CARD_MARKET,
 });
-
-export function popularDestinationStayNavigation(card: HomepageHotelCard): Href {
-  return { pathname: "/hotel-results", params: homepageHotelDestinationParams(card) };
-}
 
 export function discoverAdventureNavigation(card: HomepageAdventureCard): Href {
   const origin = normalizeAirportOrCityCode(card.originCode);

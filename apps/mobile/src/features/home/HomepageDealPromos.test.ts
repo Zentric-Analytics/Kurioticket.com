@@ -97,11 +97,11 @@ test("deal cards reuse vector icons and navigate through shared handlers", () =>
   assert.doesNotMatch(promo, /require\(|\.(?:png|jpe?g|gif|webp)/i);
 });
 
-test("promos follow popular destination stays for every home session", () => {
-  const popular = home.indexOf("<PopularDestinationStays />");
+test("promos follow adventure discovery for every home session", () => {
+  const adventure = home.indexOf("<HomepageAdventureDiscovery />");
   const promos = home.indexOf("<HomepageDealPromos />");
 
-  assert.ok(popular !== -1 && popular < promos);
+  assert.ok(adventure !== -1 && adventure < promos);
   assert.equal(home.match(/<HomepageDealPromos \/>/g)?.length, 1);
   assert.doesNotMatch(home, /isAuthenticated\s*\?[^:]*HomepageDealPromos/s);
 });

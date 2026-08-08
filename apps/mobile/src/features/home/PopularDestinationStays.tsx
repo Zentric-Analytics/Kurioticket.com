@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
@@ -14,68 +15,15 @@ import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
 import { popularDestinationStayNavigation } from "./homepageCardNavigation";
 
-export const popularDestinationStays = [
-  {
-    id: "ng-dubai",
-    city: "Dubai",
-    country: "United Arab Emirates",
-    image: {
-      uri: "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    },
-  },
-  {
-    id: "ng-london",
-    city: "London",
-    country: "United Kingdom",
-    image: {
-      uri: "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    },
-  },
-  {
-    id: "ng-johannesburg",
-    city: "Johannesburg",
-    country: "South Africa",
-    image: {
-      uri: "https://images.unsplash.com/photo-1604633193983-5ad0f0f9d4f8?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-accra",
-    city: "Accra",
-    country: "Ghana",
-    image: {
-      uri: "https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-nairobi",
-    city: "Nairobi",
-    country: "Kenya",
-    image: {
-      uri: "https://images.unsplash.com/photo-1611348586804-61bf6c080437?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-istanbul",
-    city: "Istanbul",
-    country: "Türkiye",
-    image: {
-      uri: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-paris",
-    city: "Paris",
-    country: "France",
-    image: {
-      uri: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-] as const;
+export { popularDestinationStays } from "./PopularDestinationStaysData";
+import { popularDestinationStays } from "./PopularDestinationStaysData";
 
 // src/app/page.tsx DestinationCard, measured at the 375px mobile breakpoint.
 export const POPULAR_STAY_LAYOUT = {
   cardWidth: 276,
+  minCardWidth: 260,
+  maxCardWidth: 292,
+  viewportReveal: 99,
   imageHeight: 288,
   ctaHeight: 72,
   gap: 16,
@@ -84,15 +32,14 @@ export const POPULAR_STAY_LAYOUT = {
   nextCardVisible: 67,
 } as const;
 
-const {
-  cardWidth: CARD_WIDTH,
-  imageHeight: IMAGE_HEIGHT,
-  ctaHeight: CTA_HEIGHT,
-} = POPULAR_STAY_LAYOUT;
+const { ctaHeight: CTA_HEIGHT } = POPULAR_STAY_LAYOUT;
 const IMAGE_OVERLAY_HEIGHT = 112;
 
 export function PopularDestinationStays() {
   const ft = useFlowTheme();
+  const { width } = useWindowDimensions();
+  const cardWidth = Math.min(POPULAR_STAY_LAYOUT.maxCardWidth, Math.max(POPULAR_STAY_LAYOUT.minCardWidth, width - POPULAR_STAY_LAYOUT.viewportReveal));
+  const imageHeight = cardWidth * (POPULAR_STAY_LAYOUT.imageHeight / POPULAR_STAY_LAYOUT.cardWidth);
   const { savedIds, toggle } = useSavedDestinations();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
@@ -110,8 +57,10 @@ export function PopularDestinationStays() {
         Popular destination stays
       </Text>
       <ScrollView
+        testID="popular-destination-stays-rail"
         horizontal
         nestedScrollEnabled
+        directionalLockEnabled={false}
         removeClippedSubviews={false}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.carousel}
@@ -120,22 +69,22 @@ export function PopularDestinationStays() {
           const saved = savedIds.has(destination.id);
           const imageFailed = failedImageIds.has(destination.id);
           return (
-            <Pressable
+            <View
               key={destination.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Explore hotel stays in ${destination.city}, ${destination.country}`}
-              onPress={() =>
-                router.push(popularDestinationStayNavigation(destination))
-              }
-              style={({ pressed }) => [
-                styles.card,
-                pressed && styles.cardPressed,
-              ]}
+              testID={`popular-stay-card-${destination.id}`}
+              style={[styles.card, { width: cardWidth, height: imageHeight + CTA_HEIGHT }]}
             >
               <View
-                style={styles.imageFrame}
+                style={[styles.imageFrame, { height: imageHeight }]}
                 testID={`popular-stay-image-${destination.id}`}
               >
+                {imageFailed ? (
+                  <View
+                    accessibilityLabel={`${destination.city} image unavailable`}
+                    testID={`popular-stay-image-fallback-${destination.id}`}
+                    style={styles.imageFallback}
+                  />
+                ) : null}
                 <ImageBackground
                   accessibilityIgnoresInvertColors
                   accessibilityLabel={`${destination.city}, ${destination.country}`}
@@ -203,11 +152,16 @@ export function PopularDestinationStays() {
                 style={styles.ctaSection}
                 testID={`popular-stay-cta-${destination.id}`}
               >
-                <View style={styles.ctaPill}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Explore stays in ${destination.city}, ${destination.country}`}
+                  onPress={() => router.push(popularDestinationStayNavigation(destination))}
+                  style={({ pressed }) => [styles.ctaPill, pressed && styles.ctaPressed]}
+                >
                   <Text style={styles.ctaText}>Explore stays</Text>
-                </View>
+                </Pressable>
               </View>
-            </Pressable>
+            </View>
           );
         })}
       </ScrollView>
@@ -229,8 +183,6 @@ const styles = StyleSheet.create({
     paddingRight: 34,
   },
   card: {
-    width: CARD_WIDTH,
-    height: IMAGE_HEIGHT + CTA_HEIGHT,
     borderRadius: POPULAR_STAY_LAYOUT.radius,
     borderColor: "rgba(203, 213, 225, 0.9)",
     borderWidth: StyleSheet.hairlineWidth,
@@ -242,12 +194,8 @@ const styles = StyleSheet.create({
     elevation: 4,
     overflow: "hidden",
   },
-  cardPressed: {
-    transform: [{ scale: 0.985 }],
-  },
   imageFrame: {
     width: "100%",
-    height: IMAGE_HEIGHT,
     justifyContent: "flex-end",
     padding: 16,
   },
@@ -255,6 +203,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: "100%",
   },
+  imageFallback: { ...StyleSheet.absoluteFillObject, backgroundColor: "#CBD5E1" },
   imageCorners: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
   imageOverlay: {
     position: "absolute",
@@ -299,7 +248,7 @@ const styles = StyleSheet.create({
   ctaSection: {
     width: "100%",
     minHeight: CTA_HEIGHT,
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "flex-end",
     backgroundColor: flowColors.white,
     paddingHorizontal: 16,
@@ -319,6 +268,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 1,
   },
+  ctaPressed: { backgroundColor: "#F8FAFC", transform: [{ scale: 0.98 }] },
   ctaText: {
     color: "#1E293B",
     fontSize: 15,
