@@ -71,6 +71,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   if (process.env.EAS_BUILD === "true" && environment.variant === "preview" && !googleIosClientId) {
     throw new Error("[mobile-environment] Preview EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.");
   }
+  const splashBackgroundColor = environment.variant === "preview" ? "#D6F5E3" : "#F7FAFF";
   const plugins: NonNullable<ExpoConfig["plugins"]> = [
     "expo-router",
     [
@@ -80,7 +81,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
           image: "./assets/kurioticket-logo-primary-light-bg.png",
           imageWidth: 200,
           resizeMode: "contain",
-          backgroundColor: "#F7FAFF",
+          backgroundColor: splashBackgroundColor,
         },
       },
     ],
@@ -100,7 +101,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     icon: "./assets/kurioticket-icon-blue.png",
-    splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: "#F7FAFF" },
+    splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: splashBackgroundColor },
     ios: {
       supportsTablet: true,
       bundleIdentifier: environment.bundleIdentifier,
@@ -110,7 +111,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
     android: {
       package: environment.androidPackage,
       icon: "./assets/kurioticket-icon-blue.png",
-      splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: "#F7FAFF" },
+      splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: splashBackgroundColor },
       adaptiveIcon: { foregroundImage: "./assets/kurioticket-adaptive-foreground.png", backgroundColor: "#F2F6FA" },
     },
     plugins,
