@@ -160,18 +160,18 @@ test("enabled preferences send and trigger", async () => {
   assert.equal(fakeDb.state.snapshots.length, 1);
 });
 
-test("disabled master blocks", async () => {
+test("disabled master skips email but still triggers", async () => {
   const a = alert();
   const { counts } = await run([a], { emailResult: { skipped: true, reason: "preferences_disabled" } });
   assert.equal(counts.skippedByPreferences, 1);
-  assert.equal(a.status, "ACTIVE");
+  assert.equal(a.status, "TRIGGERED");
 });
 
-test("disabled priceAlerts blocks", async () => {
+test("disabled priceAlerts skips email but still triggers", async () => {
   const a = alert();
   const { counts } = await run([a], { emailResult: { skipped: true, reason: "preferences_disabled" } });
   assert.equal(counts.skippedByPreferences, 1);
-  assert.equal(a.status, "ACTIVE");
+  assert.equal(a.status, "TRIGGERED");
 });
 
 test("above-target does not send", async () => {
@@ -199,11 +199,11 @@ test("provider failure retries", async () => {
   assert.ok(fakeDb.state.updateMany.at(-1).data.nextCheckAt > now);
 });
 
-test("email failure does not mark TRIGGERED", async () => {
+test("email failure does not revert TRIGGERED", async () => {
   const a = alert();
   const { counts } = await run([a], { emailThrows: true });
   assert.equal(counts.failed, 1);
-  assert.equal(a.status, "ACTIVE");
+  assert.equal(a.status, "TRIGGERED");
 });
 
 test("duplicate runs do not send twice", async () => {

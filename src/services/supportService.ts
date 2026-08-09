@@ -1,6 +1,7 @@
 import { getPrisma } from "@/lib/prisma";
 import { sendTransactionalEmail, supportTicketEmail, supportTicketReplyEmail } from "@/services/emailService";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
+import { createNotificationEvent } from "@/services/notificationService";
 import type { SupportTicketStatusValue } from "@/lib/supportTickets";
 
 type SupportPrismaClient = {
@@ -22,9 +23,9 @@ type SupportPrismaClient = {
     }): Promise<{ id: string; subject: string }>;
     findUnique(args: {
       where: { id: string };
-      select?: { id?: boolean; email?: boolean; subject?: boolean; status?: boolean };
+      select?: { id?: boolean; userId?: boolean; email?: boolean; subject?: boolean; status?: boolean };
       include?: { messages?: { orderBy: { createdAt: "asc" } } };
-    }): Promise<{ id: string; email: string; subject: string; status: SupportTicketStatusValue; messages?: Array<{ id: string; createdAt: Date }> } | null>;
+    }): Promise<{ id: string; userId?: string | null; email: string; subject: string; status: SupportTicketStatusValue; messages?: Array<{ id: string; createdAt: Date }> } | null>;
     update(args: {
       where: { id: string };
       data: { status: SupportTicketStatusValue };
@@ -97,7 +98,7 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
   const db = getSupportPrisma();
   const ticket = await db.supportTicket.findUnique({
     where: { id: input.ticketId },
-    select: { id: true, email: true, subject: true, status: true },
+    select: { id: true, userId: true, email: true, subject: true, status: true },
   });
   if (!ticket) throw new SupportTicketNotFoundError();
 
@@ -108,6 +109,10 @@ export async function addAdminSupportReply(input: { ticketId: string; body: stri
       body: input.body,
     },
   });
+
+  if (ticket.userId && !prismaClientForTesting) {
+    await createNotificationEvent({ userId: ticket.userId, eventKey: `support-reply:${message.id}`, type: "SUPPORT_UPDATE", title: "Kurioticket Support replied", body: `There is a new reply to “${ticket.subject}”.`, actionPath: "/settings", metadata: { ticketId: ticket.id, supportMessageId: message.id } }).catch((error) => console.error("[support] Failed to persist support reply notification", { ticketId: ticket.id, messageId: message.id, message: error instanceof Error ? error.message : "notification_failed" }));
+  }
 
   try {
     await getSendSupportEmail()({

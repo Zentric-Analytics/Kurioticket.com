@@ -5,6 +5,7 @@ import { parseSavedFlightSearchQuery, type ParsedSavedFlightSearch } from "@/lib
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import { hasSuccessfulEmailDelivery } from "@/services/emailDeliveryService";
 import { routeWatchUpdateEmail, sendOptionalEmail } from "@/services/emailService";
+import { createNotificationEvent } from "@/services/notificationService";
 import { searchFlights } from "@/services/travel/flightAggregator";
 
 export const ROUTE_WATCH_BATCH_SIZE = 50;
@@ -65,6 +66,7 @@ export type RouteWatchProcessingCounts = {
   initialized: number;
   checked: number;
   notified: number;
+  eventsCreated: number;
   skippedPreferences: number;
   skippedSuppressed: number;
   skippedPriceAlert: number;
@@ -191,8 +193,16 @@ export async function processDueRouteWatches(options: {
         continue;
       }
 
+      if (!options.db) {
+        const event = await createNotificationEvent({ userId: watch.userId, eventKey: idempotencyKey, type: "ROUTE_WATCH", title: `${parsed.origin} to ${parsed.destination} fare dropped`, body: `${formatPrice(fare.price, fare.currency)} is ${drop.dropPercent.toFixed(0)}% lower.`, actionPath: "/saved", metadata: { routeWatchId: watch.id, savedSearchId: watch.savedSearchId, currentPrice: fare.price, currency: fare.currency } });
+        if (!event.created) { counts.skippedDuplicate += 1; await db.routeWatchState.update({ where: { id: watch.id }, data: successfulCheckData(fare, now, nextCheckAt, { lastNotifiedPrice: fare.price, lastNotifiedAt: now }) }); continue; }
+        counts.eventsCreated += 1;
+      }
+
+      await db.routeWatchState.update({ where: { id: watch.id }, data: successfulCheckData(fare, now, nextCheckAt, { lastNotifiedPrice: fare.price, lastNotifiedAt: now }) });
+      counts.notified += 1;
+
       if (!watch.user?.email) {
-        await db.routeWatchState.update({ where: { id: watch.id }, data: successfulCheckData(fare, now, nextCheckAt) });
         counts.skippedPreferences += 1;
         continue;
       }
@@ -221,17 +231,11 @@ export async function processDueRouteWatches(options: {
       });
 
       if (result.skipped) {
-        await db.routeWatchState.update({ where: { id: watch.id }, data: successfulCheckData(fare, now, nextCheckAt) });
         if (result.reason === "email_suppressed") counts.skippedSuppressed += 1;
         else counts.skippedPreferences += 1;
         continue;
       }
 
-      await db.routeWatchState.update({
-        where: { id: watch.id },
-        data: successfulCheckData(fare, now, nextCheckAt, { lastNotifiedPrice: fare.price, lastNotifiedAt: now }),
-      });
-      counts.notified += 1;
     } catch (error) {
       console.error("[route-watch:process-failed]", { routeWatchId: watch.id, message: error instanceof Error ? error.message : "Unknown route watch processing error" });
       await failWatch(db, watch, now, classifyRouteWatchError(error));
@@ -433,6 +437,7 @@ function emptyCounts(): RouteWatchProcessingCounts {
     initialized: 0,
     checked: 0,
     notified: 0,
+    eventsCreated: 0,
     skippedPreferences: 0,
     skippedSuppressed: 0,
     skippedPriceAlert: 0,

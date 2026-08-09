@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
+import { recordAccountEventSafely } from "@/services/accountNotificationService";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     data,
     include: { user: { select: { id: true, email: true, role: true, status: true } } },
   });
+
+  if (updated.status !== existing.status && (updated.status === "READY_FOR_REVIEW" || updated.status === "COMPLETED")) {
+    const completed = updated.status === "COMPLETED";
+    await recordAccountEventSafely({ userId: updated.userId, email: updated.email || updated.user.email, eventKey: `account-deletion:${updated.id}:${completed ? "completed" : "ready-for-review"}`, type: "ACCOUNT_UPDATE", title: completed ? "Account deletion review completed" : "Account deletion under final review", body: completed ? "Your Kurioticket account deletion request was marked completed. Contact Support if you have questions." : "Your account deletion grace period ended and the request is under final review.", actionPath: "/settings", metadata: { deletionRequestId: updated.id, status: updated.status } });
+  }
 
   await writeAdminAuditLog({
     adminUserId: admin.session.user.id,

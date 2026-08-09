@@ -121,16 +121,16 @@ test("cooldown blocks unless materially lower than last notified price", async (
   assert.equal(allowedCounts.notified, 1);
 });
 
-test("preferences and suppressions skip without marking notified", async () => {
+test("preferences and suppressions skip email without erasing event state", async () => {
   const pref = dbWith([watch({ baselinePrice: 500, baselineCurrency: "USD" })]);
   const prefCounts = await processDueRouteWatches({ now, db: pref.db, resolveFare: liveFare(400), hasSuccessfulDelivery: async () => false, sendEmail: async () => ({ skipped: true as const, reason: "preferences_disabled" as const }) });
   assert.equal(prefCounts.skippedPreferences, 1);
-  assert.equal(pref.updates.at(-1)?.data.lastNotifiedPrice, undefined);
+  assert.equal(pref.updates.at(-1)?.data.lastNotifiedPrice, 400);
 
   const suppressed = dbWith([watch({ baselinePrice: 500, baselineCurrency: "USD" })]);
   const suppressedCounts = await processDueRouteWatches({ now, db: suppressed.db, resolveFare: liveFare(400), hasSuccessfulDelivery: async () => false, sendEmail: async () => ({ skipped: true as const, reason: "email_suppressed" as const }) });
   assert.equal(suppressedCounts.skippedSuppressed, 1);
-  assert.equal(suppressed.updates.at(-1)?.data.lastNotifiedPrice, undefined);
+  assert.equal(suppressed.updates.at(-1)?.data.lastNotifiedPrice, 400);
 });
 
 test("equivalent active price alert suppresses route watch but unrelated does not", async () => {

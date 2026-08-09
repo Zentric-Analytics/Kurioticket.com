@@ -5,6 +5,7 @@ import { z, ZodError } from "zod";
 import { authOptions } from "@/lib/auth";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getPrisma } from "@/lib/prisma";
+import { recordAccountEventSafely } from "@/services/accountNotificationService";
 
 export const runtime = "nodejs";
 
@@ -75,11 +76,13 @@ export async function PATCH(request: Request) {
 
     const newPasswordHash = await bcrypt.hash(payload.newPassword, 12);
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: { passwordHash: newPasswordHash },
-      select: { id: true },
+      select: { id: true, updatedAt: true },
     });
+
+    await recordAccountEventSafely({ userId: user.id, email: session.user.email, eventKey: `security:password-changed:${user.id}:${updatedUser.updatedAt.toISOString()}`, type: "SECURITY_UPDATE", title: "Password changed", body: "Your Kurioticket password was changed. If this wasn’t you, reset your password and contact Support immediately.", actionPath: "/settings" });
 
     return NextResponse.json({ success: true });
   } catch (error) {
