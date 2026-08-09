@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import { getPrisma } from "@/lib/prisma";
 import { savedTripReminderEmail, sendOptionalEmail } from "@/services/emailService";
+import { createNotificationEvent } from "@/services/notificationService";
 
 export const SAVED_TRIP_REMINDER_BATCH_SIZE = 50;
 export const SAVED_TRIP_REMINDER_LOOKAHEAD_MS = 1000 * 60 * 60 * 24 * 7;
@@ -128,6 +129,7 @@ export async function processDueSavedTripReminders(options: {
   const dueToleranceMs = options.dueToleranceMs ?? SAVED_TRIP_REMINDER_DUE_TOLERANCE_MS;
   const db = options.db ?? (getPrisma() as unknown as SavedTripReminderDb);
   const sendEmail = options.sendEmail ?? sendOptionalEmail;
+  const createEvent = options.db ? null : createNotificationEvent;
   const counts = emptyCounts();
   const candidates = await listSavedTripReminderCandidates({ db, now, batchSize });
 
@@ -139,8 +141,15 @@ export async function processDueSavedTripReminders(options: {
 
     counts.processed += 1;
 
+    const eventKey = buildSavedTripReminderIdempotencyKey(candidate);
+    if (createEvent) {
+      try {
+        const event = await createEvent({ userId: candidate.userId, eventKey, type: "TRIP_REMINDER", title: buildSavedTripReminderSubject(candidate), body: `${candidate.title} in ${candidate.destination} is coming up.`, actionPath: "/saved", metadata: { itemType: candidate.itemType, itemId: candidate.itemId, anchorAt: candidate.anchorAt.toISOString(), reminderWindow: candidate.window } });
+        void event;
+      } catch (error) { counts.failed += 1; console.error("[saved-trip-reminders:event-failed]", safeError(error, candidate)); continue; }
+    }
+
     if (!candidate.user.email) {
-      counts.failed += 1;
       console.warn("[saved-trip-reminders:missing-email]", {
         itemType: candidate.itemType,
         itemId: candidate.itemId,
@@ -166,7 +175,7 @@ export async function processDueSavedTripReminders(options: {
           window: candidate.window,
         }),
         template: "saved_trip_reminder",
-        idempotencyKey: buildSavedTripReminderIdempotencyKey(candidate),
+        idempotencyKey: eventKey,
         metadata: {
           itemType: candidate.itemType,
           itemId: candidate.itemId,

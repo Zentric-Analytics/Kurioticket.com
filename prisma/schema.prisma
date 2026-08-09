@@ -62,7 +62,11 @@ enum SupportPriority {
 
 enum NotificationType {
   PRICE_ALERT
+  ROUTE_WATCH
+  TRIP_REMINDER
   SUPPORT_UPDATE
+  ACCOUNT_UPDATE
+  SECURITY_UPDATE
   SYSTEM
   TRAVEL_INSIGHT
 }
@@ -193,26 +197,26 @@ model User {
 }
 
 model PreviewTester {
-  id                    String              @id @default(cuid())
-  email                 String
-  emailNormalized       String              @unique
-  status                PreviewTesterStatus @default(SUSPENDED)
-  roles                 String[]            @default(["TESTER"])
-  allowGoogleSignIn     Boolean             @default(false)
-  allowStagingEmail     Boolean             @default(false)
-  expiresAt             DateTime?
-  approvedByAdminId     String?
-  approvedAt            DateTime?
-  suspendedByAdminId    String?
-  suspendedAt           DateTime?
-  revokedByAdminId      String?
-  revokedAt             DateTime?
-  reason                String?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  approvedByAdmin       User?               @relation("PreviewTesterApprovedBy", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
-  suspendedByAdmin      User?               @relation("PreviewTesterSuspendedBy", fields: [suspendedByAdminId], references: [id], onDelete: SetNull)
-  revokedByAdmin        User?               @relation("PreviewTesterRevokedBy", fields: [revokedByAdminId], references: [id], onDelete: SetNull)
+  id                 String              @id @default(cuid())
+  email              String
+  emailNormalized    String              @unique
+  status             PreviewTesterStatus @default(SUSPENDED)
+  roles              String[]            @default(["TESTER"])
+  allowGoogleSignIn  Boolean             @default(false)
+  allowStagingEmail  Boolean             @default(false)
+  expiresAt          DateTime?
+  approvedByAdminId  String?
+  approvedAt         DateTime?
+  suspendedByAdminId String?
+  suspendedAt        DateTime?
+  revokedByAdminId   String?
+  revokedAt          DateTime?
+  reason             String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  approvedByAdmin    User?               @relation("PreviewTesterApprovedBy", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
+  suspendedByAdmin   User?               @relation("PreviewTesterSuspendedBy", fields: [suspendedByAdminId], references: [id], onDelete: SetNull)
+  revokedByAdmin     User?               @relation("PreviewTesterRevokedBy", fields: [revokedByAdminId], references: [id], onDelete: SetNull)
 
   @@index([status, expiresAt])
   @@index([approvedByAdminId])
@@ -674,18 +678,22 @@ model AdminAuditLog {
 }
 
 model Notification {
-  id        String              @id @default(cuid())
-  userId    String
-  type      NotificationType
-  channel   NotificationChannel
-  title     String
-  body      String
-  readAt    DateTime?
-  metadata  Json?
-  createdAt DateTime            @default(now())
-  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String              @id @default(cuid())
+  userId     String
+  type       NotificationType
+  // Legacy compatibility only. New rows are canonical events; email delivery lives in EmailDelivery.
+  channel    NotificationChannel @default(IN_APP)
+  title      String
+  body       String
+  eventKey   String?             @unique
+  actionPath String?
+  readAt     DateTime?
+  metadata   Json?
+  createdAt  DateTime            @default(now())
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, readAt, createdAt(sort: Desc)])
   @@index([type])
   @@index([readAt])
   @@index([createdAt])

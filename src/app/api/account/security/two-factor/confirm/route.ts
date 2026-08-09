@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { confirmTotpSetup, getTwoFactorStatus } from "@/services/twoFactorService";
+import { recordAccountEventSafely } from "@/services/accountNotificationService";
 export const runtime = "nodejs";
 const schema = z.object({ code: z.string().regex(/^\d{6}$/) });
 export async function POST(request: Request) {
@@ -15,5 +16,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Enter the 6-digit authenticator code." }, { status: 400 });
   const recoveryCodes = await confirmTotpSetup({ userId: session.user.id, code: parsed.data.code });
   if (!recoveryCodes) return NextResponse.json({ error: "The authenticator code is invalid or setup expired." }, { status: 400 });
-  return NextResponse.json({ ok: true, twoFactor: await getTwoFactorStatus(session.user.id), recoveryCodes });
+  const twoFactor = await getTwoFactorStatus(session.user.id);
+  await recordAccountEventSafely({ userId: session.user.id, email: session.user.email, eventKey: `security:2fa-enabled:${session.user.id}:${twoFactor.enabledAt}`, type: "SECURITY_UPDATE", title: "Two-factor authentication enabled", body: "Two-factor authentication was enabled for your Kurioticket account. If this wasn’t you, secure your account and contact Support immediately.", actionPath: "/settings" });
+  return NextResponse.json({ ok: true, twoFactor, recoveryCodes });
 }
