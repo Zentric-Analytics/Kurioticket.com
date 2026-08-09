@@ -12,6 +12,13 @@ const mobileNotificationSelect = { id: true, type: true, title: true, body: true
 let notificationPrismaForTesting: ReturnType<typeof getPrisma> | null = null;
 function notificationDb() { return notificationPrismaForTesting ?? getPrisma(); }
 
+export type CanonicalNotificationInput = {
+  userId: string; eventKey: string; title: string; body: string; type: CanonicalNotificationType;
+  actionPath?: NotificationActionPath | null; metadata?: Record<string, unknown>; email?: NotificationEmail;
+};
+
+export type NotificationPersistenceClient = Pick<ReturnType<typeof getPrisma>, "notification">;
+
 export function validateNotificationActionPath(value: string | null | undefined): NotificationActionPath | null {
   if (!value) return null;
   return allowedActionPaths.has(value as NotificationActionPath) ? value as NotificationActionPath : null;
@@ -21,36 +28,33 @@ export function escapeNotificationHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 }
 
-export async function createNotificationEvent(input: {
-  userId: string; eventKey: string; title: string; body: string; type: CanonicalNotificationType;
-  actionPath?: NotificationActionPath | null; metadata?: Record<string, unknown>; email?: NotificationEmail;
-}) {
+export async function persistCanonicalNotificationEvent(input: CanonicalNotificationInput, db: NotificationPersistenceClient = notificationDb()) {
   if (!input.eventKey.trim()) throw new Error("Notification eventKey is required.");
   const actionPath = validateNotificationActionPath(input.actionPath);
   if (input.actionPath && !actionPath) throw new Error("Unsafe notification action path.");
-  let notification;
-  try {
-    notification = await notificationDb().notification.create({ data: { userId: input.userId, eventKey: input.eventKey, type: input.type, channel: "IN_APP", title: input.title, body: input.body, actionPath, metadata: input.metadata as Prisma.InputJsonValue | undefined } });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      const existing = await notificationDb().notification.findUnique({ where: { eventKey: input.eventKey } });
-      if (existing?.userId === input.userId) return { notification: existing, created: false, email: { skipped: true, reason: "duplicate_event" } as const };
-    }
-    throw error;
-  }
+  const result = await db.notification.createMany({ data: [{ userId: input.userId, eventKey: input.eventKey, type: input.type, channel: "IN_APP", title: input.title, body: input.body, actionPath, metadata: input.metadata as Prisma.InputJsonValue | undefined }], skipDuplicates: true });
+  const notification = await db.notification.findUnique({ where: { eventKey: input.eventKey } });
+  if (!notification || notification.userId !== input.userId) throw new Error("Canonical notification persistence could not be verified.");
+  return { notification, created: result.count === 1 };
+}
+
+export async function createNotificationEvent(input: CanonicalNotificationInput) {
+  const persisted = await persistCanonicalNotificationEvent(input);
+  const { notification } = persisted;
+  if (!persisted.created) return { ...persisted, email: { skipped: true, reason: "duplicate_event" } as const };
 
   const email = input.email ?? { kind: "none" as const };
-  if (email.kind === "none") return { notification, created: true, email: { skipped: true, reason: "not_requested" } as const };
+  if (email.kind === "none") return { ...persisted, email: { skipped: true, reason: "not_requested" } as const };
   const html = `<div style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.6"><h1>${escapeNotificationHtml(input.title)}</h1><p>${escapeNotificationHtml(input.body)}</p></div>`;
   const common = { to: email.to, subject: input.title, html, template: "notification" as const, idempotencyKey: `notification:${input.eventKey}:email`, metadata: { notificationId: notification.id, eventKey: input.eventKey, notificationType: input.type, ...input.metadata } };
   try {
     const result = email.kind === "optional"
       ? await sendOptionalEmail({ ...common, userId: input.userId, category: email.category })
       : await sendTransactionalEmail(common);
-    return { notification, created: true, email: result };
+    return { ...persisted, email: result };
   } catch (error) {
     console.error("[notification:email-failed]", { notificationId: notification.id, eventKey: input.eventKey, type: input.type, message: error instanceof Error ? error.message : "email_failed" });
-    return { notification, created: true, email: { skipped: true, reason: "delivery_failed" } as const };
+    return { ...persisted, email: { skipped: true, reason: "delivery_failed" } as const };
   }
 }
 
