@@ -76,12 +76,18 @@ export function PopularDestinationStays() {
           const saved = savedIds.has(destination.id);
           const imageFailed = failedImageIds.has(destination.id);
           return (
-            <View
+            <Pressable
               key={destination.id}
               testID={`popular-stay-card-${destination.id}`}
-              style={[
+              accessibilityRole="button"
+              accessibilityLabel={`Explore stays in ${destination.city}, ${destination.country}`}
+              onPress={() =>
+                router.push(popularDestinationStayNavigation(destination))
+              }
+              style={({ pressed }) => [
                 styles.card,
                 { width: cardWidth, height: imageHeight + CTA_HEIGHT },
+                pressed && styles.cardPressed,
               ]}
             >
               <View
@@ -136,9 +142,10 @@ export function PopularDestinationStays() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Explore stays in ${destination.city}, ${destination.country}`}
-                  onPress={() =>
-                    router.push(popularDestinationStayNavigation(destination))
-                  }
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    router.push(popularDestinationStayNavigation(destination));
+                  }}
                   style={({ pressed }) => [
                     styles.ctaPill,
                     pressed && styles.ctaPressed,
@@ -147,7 +154,7 @@ export function PopularDestinationStays() {
                   <Text style={styles.ctaText}>Explore stays</Text>
                 </Pressable>
               </View>
-            </View>
+            </Pressable>
           );
         })}
       </ScrollView>
@@ -180,6 +187,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     overflow: "hidden",
   },
+  cardPressed: { opacity: 0.96 },
   imageFrame: {
     width: "100%",
     position: "relative",
