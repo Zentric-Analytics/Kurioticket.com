@@ -9,7 +9,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
@@ -34,7 +33,6 @@ export const POPULAR_STAY_LAYOUT = {
 } as const;
 
 const { ctaHeight: CTA_HEIGHT } = POPULAR_STAY_LAYOUT;
-const IMAGE_OVERLAY_HEIGHT = 112;
 
 export function PopularDestinationStays() {
   const ft = useFlowTheme();
@@ -117,35 +115,6 @@ export function PopularDestinationStays() {
                   style={styles.image}
                   imageStyle={styles.imageCorners}
                 />
-                <Svg
-                  pointerEvents="none"
-                  style={styles.imageOverlay}
-                  width="100%"
-                  height={IMAGE_OVERLAY_HEIGHT}
-                >
-                  <Defs>
-                    <LinearGradient
-                      id="destinationOverlay"
-                      x1="0"
-                      y1="1"
-                      x2="0"
-                      y2="0"
-                    >
-                      <Stop offset="0" stopColor="#020617" stopOpacity={0.55} />
-                      <Stop
-                        offset="0.57"
-                        stopColor="#020617"
-                        stopOpacity={0.16}
-                      />
-                      <Stop offset="1" stopColor="#020617" stopOpacity={0} />
-                    </LinearGradient>
-                  </Defs>
-                  <Rect
-                    width="100%"
-                    height="100%"
-                    fill="url(#destinationOverlay)"
-                  />
-                </Svg>
                 <AndroidFavoriteButton
                   saved={saved}
                   label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
@@ -224,13 +193,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#CBD5E1",
   },
   imageCorners: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  imageOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: IMAGE_OVERLAY_HEIGHT,
-  },
   heart: {
     position: "absolute",
     zIndex: 2,
