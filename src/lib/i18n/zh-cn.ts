@@ -1406,7 +1406,7 @@ export const translations: TranslationDictionary = {
     "如果你的预订是通过航空公司、酒店、旅行社或外部供应商完成的，该供应商负责预订变更、退款、取消、值机、登机、收据和旅行文件。",
   supportFaqChangeBookingQuestion: "Kurioticket 可以更改我的预订吗？",
   supportFaqChangeBookingAnswer:
-    "Kurioticket 只能在支持直接预订时，协助处理直接通过 Kurioticket 完成的预订。对于通过外部供应商完成的预订，请直接联系该供应商。",
+    "Kurioticket 不管理或更改旅行预订。更改、取消、退款、值机、收据和旅行文件均由外部供应商处理。",
   supportFaqWhyRedirectedQuestion: "为什么我会被跳转到其他供应商？",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket 是一个旅行搜索和比较平台，部分结果会跳转到可信赖的供应商，由你在那里完成预订、付款并获取供应商专属支持。",

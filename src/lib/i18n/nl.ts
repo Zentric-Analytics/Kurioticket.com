@@ -2005,7 +2005,7 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
     "Als je boeking is afgerond bij een luchtvaartmaatschappij, hotel, reisbureau of externe provider, is die provider verantwoordelijk voor boekingswijzigingen, terugbetalingen, annuleringen, inchecken, boarding, betalingsbewijzen en reisdocumenten.",
   supportFaqChangeBookingQuestion: "Kan Kurioticket mijn boeking wijzigen?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket kan alleen helpen met boekingen die rechtstreeks via Kurioticket zijn gemaakt, als en wanneer direct boeken wordt ondersteund. Neem voor boekingen die bij externe providers zijn afgerond rechtstreeks contact op met die provider.",
+    "Kurioticket beheert of wijzigt geen reisboekingen. Heb je een reservering voltooid bij een luchtvaartmaatschappij, hotel, reisbureau of andere aanbieder, neem dan contact op met die aanbieder voor wijzigingen, annuleringen, terugbetalingen, inchecken, ontvangstbewijzen en reisdocumenten.",
   supportFaqWhyRedirectedQuestion: "Waarom ben ik naar een andere provider gestuurd?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket is een reiszoek- en vergelijkingsplatform. Sommige resultaten verwijzen je door naar betrouwbare providers waar je de boeking, betaling en providerspecifieke ondersteuning afrondt.",

@@ -4204,7 +4204,7 @@ test("Turkish lower homepage FAQ and newsletter copy do not fall back to English
       "Rezervasyonunuz bir hava yolu, otel, seyahat acentesi veya harici sağlayıcıyla tamamlandıysa rezervasyon değişiklikleri, iadeler, iptaller, check-in, biniş, makbuzlar ve seyahat belgelerinden o sağlayıcı sorumludur.",
     supportFaqChangeBookingQuestion: "Kurioticket rezervasyonumu değiştirebilir mi?",
     supportFaqChangeBookingAnswer:
-      "Kurioticket yalnızca doğrudan rezervasyon desteklendiği zaman ve destekleniyorsa Kurioticket üzerinden doğrudan yapılan rezervasyonlarda yardımcı olabilir. Harici sağlayıcılarla tamamlanan rezervasyonlar için doğrudan o sağlayıcıyla iletişime geçin.",
+      "Kurioticket seyahat rezervasyonlarını yönetmez veya değiştirmez. Değişiklikler, iptaller, iadeler, check-in, makbuzlar ve seyahat belgeleri harici sağlayıcı tarafından yönetilir.",
     supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya gönderildim?",
     supportFaqWhyRedirectedAnswer:
       "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyonu, ödemeyi ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",
@@ -8326,7 +8326,7 @@ test("Turkish service and support page strings are localized", () => {
       "Rezervasyonunuz bir hava yolu, otel, seyahat acentesi veya harici sağlayıcıyla tamamlandıysa rezervasyon değişiklikleri, iadeler, iptaller, check-in, biniş, makbuzlar ve seyahat belgelerinden o sağlayıcı sorumludur.",
     supportFaqChangeBookingQuestion: "Kurioticket rezervasyonumu değiştirebilir mi?",
     supportFaqChangeBookingAnswer:
-      "Kurioticket yalnızca doğrudan rezervasyon desteklendiği zaman ve destekleniyorsa Kurioticket üzerinden doğrudan yapılan rezervasyonlarda yardımcı olabilir. Harici sağlayıcılarla tamamlanan rezervasyonlar için doğrudan o sağlayıcıyla iletişime geçin.",
+      "Kurioticket seyahat rezervasyonlarını yönetmez veya değiştirmez. Değişiklikler, iptaller, iadeler, check-in, makbuzlar ve seyahat belgeleri harici sağlayıcı tarafından yönetilir.",
     supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya gönderildim?",
     supportFaqWhyRedirectedAnswer:
       "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyonu, ödemeyi ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",
@@ -8787,22 +8787,15 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 
   const tripsManagementSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
-  assert.ok(tripsManagementSource.includes('type TripStatusTab = "upcoming" | "past" | "cancelled"'));
-  assert.ok(tripsManagementSource.includes('{ id: "upcoming", labelKey: "accountDashboard.trips.history.tabs.active", fallback: "Upcoming" }'));
-  assert.ok(tripsManagementSource.includes('{ id: "past", labelKey: "accountDashboard.trips.history.tabs.past", fallback: "Past" }'));
-  assert.ok(tripsManagementSource.includes('labelKey: "accountDashboard.trips.history.tabs.cancelled"'));
-  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.current.empty.title"'));
-  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.current.empty.body"'));
-  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.past.title"'));
-  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.past.body"'));
-  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.cancelled.title"'));
-  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.cancelled.body"'));
-  assert.ok(tripsManagementSource.includes('const activeTrips = useMemo('));
-  assert.ok(tripsManagementSource.includes('() => trips.filter((trip) => trip.status === activeTab)'));
-  assert.ok(tripsManagementSource.includes('id={`${activeTab}-trips-panel`}'));
-  assert.ok(tripsManagementSource.includes('aria-controls={`${tab.id}-trips-panel`}'));
-  assert.ok(tripsManagementSource.includes('fetch("/api/dashboard/trips/lookup"'));
-  assert.ok(!tripsManagementSource.includes('>My Trips<'));
+  assert.ok(tripsManagementSource.includes('type TripStatus = "upcoming" | "past" | "cancelled"'));
+  assert.ok(tripsManagementSource.includes('fetch("/api/dashboard/trips"'));
+  assert.ok(tripsManagementSource.includes('providerConfirmationCode'));
+  assert.ok(tripsManagementSource.includes('providerAction'));
+  assert.ok(tripsManagementSource.includes('useLocale()'));
+  assert.ok(tripsManagementSource.includes('accountDashboard.trips.metasearch.manageWith'));
+  assert.ok(tripsManagementSource.includes('accountDashboard.trips.metasearch.disclaimer'));
+  assert.ok(tripsManagementSource.includes('accountDashboard.trips.metasearch.externalAriaLabel'));
+  assert.ok(!tripsManagementSource.includes('/api/dashboard/trips/lookup'));
   assert.ok(!tripsManagementSource.includes('>Find a reservation<'));
 
   const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
@@ -13764,7 +13757,7 @@ test("Indonesian homepage visible copy and render paths resolve without English 
       "Jika pemesanan Anda diselesaikan dengan maskapai, hotel, agen perjalanan, atau penyedia eksternal, penyedia tersebut bertanggung jawab atas perubahan pemesanan, pengembalian dana, pembatalan, check-in, boarding, tanda terima, dan dokumen perjalanan.",
     supportFaqChangeBookingQuestion: "Bisakah Kurioticket mengubah pemesanan saya?",
     supportFaqChangeBookingAnswer:
-      "Kurioticket hanya dapat membantu pemesanan yang dibuat langsung melalui Kurioticket jika dan ketika pemesanan langsung didukung. Untuk pemesanan yang diselesaikan dengan penyedia eksternal, hubungi penyedia tersebut secara langsung.",
+      "Kurioticket tidak mengelola atau mengubah pemesanan perjalanan. Penyedia eksternal menangani perubahan, pembatalan, pengembalian dana, check-in, tanda terima, dan dokumen perjalanan.",
     supportFaqWhyRedirectedQuestion: "Mengapa saya diarahkan ke penyedia lain?",
     supportFaqWhyRedirectedAnswer:
       "Kurioticket adalah platform pencarian dan perbandingan perjalanan, dan beberapa hasil mengarahkan Anda ke penyedia tepercaya tempat Anda menyelesaikan pemesanan, pembayaran, dan dukungan khusus penyedia.",
@@ -14762,9 +14755,10 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
   assert.equal(`${th["accountDashboard.priceAlerts.tabs.all"]} (0)`, "ทั้งหมด (0)");
   assert.equal(`${th["accountDashboard.priceAlerts.sort.label"]}: ${th["accountDashboard.priceAlerts.sort.newest"]}`, "เรียงตาม: ใหม่ล่าสุด");
 
-  for (const key of Object.keys(tripsCopy)) {
+  for (const key of ["accountDashboard.trips.title", "accountDashboard.trips.metasearch.empty.title", "accountDashboard.trips.metasearch.empty.body", "accountDashboard.trips.metasearch.disclaimer", "accountDashboard.trips.metasearch.manageWith"]) {
     assert.ok(tripsSource.includes(key), `Trips render path should read ${key}`);
   }
+  assert.ok(tripsSource.includes('accountDashboard.trips.metasearch.tabs.${tab}'));
   for (const key of Object.keys(alertsCopy)) {
     assert.ok(alertsSource.includes(key), `Price alerts render path should read ${key}`);
   }
@@ -14777,11 +14771,9 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
   assert.ok(tripsPageSource.includes("<TripsManagementPage />"));
   assert.ok(alertsPageSource.includes("<PriceAlertsContent showAccountLink={showAccountLink} />"));
   assert.ok(tripsSource.includes('fetch("/api/dashboard/trips"'));
-  assert.ok(tripsSource.includes('fetch("/api/dashboard/trips/lookup"'));
-  assert.ok(tripsSource.includes('body: JSON.stringify({ reservationCode, email })'));
-  assert.ok(tripsSource.includes('id: "past"'));
-  assert.ok(tripsSource.includes('id: "cancelled"'));
-  assert.ok(tripsSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
+  assert.ok(!tripsSource.includes('/api/dashboard/trips/lookup'));
+  assert.ok(tripsSource.includes('"past"'));
+  assert.ok(tripsSource.includes('"cancelled"'));
   assert.ok(alertsSource.includes('id: "active"'));
   assert.ok(alertsSource.includes('id: "triggered"'));
   assert.ok(alertsSource.includes('id: "all"'));
@@ -15563,16 +15555,14 @@ test("Vietnamese account trips and price alerts render paths resolve without Eng
   }
 
   assert.ok(tripsPageSource.includes("<TripsManagementPage />"));
-  assert.ok(tripsSource.includes('labelKey: "accountDashboard.trips.history.tabs.past"'));
-  assert.ok(tripsSource.includes('labelKey: "accountDashboard.trips.history.tabs.cancelled"'));
-  assert.ok(tripsSource.includes('titleKey: "accountDashboard.trips.current.empty.title"'));
-  assert.ok(tripsSource.includes('bodyKey: "accountDashboard.trips.current.empty.body"'));
-  assert.ok(tripsSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
-  assert.ok(tripsSource.includes('id={`${tab.id}-history-trips-tab`}'));
-  assert.ok(tripsSource.includes('trips.filter((trip) => trip.status === "upcoming")'));
-  assert.ok(tripsSource.includes('trips.filter((trip) => trip.status === activeHistoryTab)'));
+  assert.ok(tripsSource.includes('accountDashboard.trips.metasearch.tabs.${tab}'));
+  assert.ok(tripsSource.includes('accountDashboard.trips.metasearch.empty.title'));
+  assert.ok(tripsSource.includes('accountDashboard.trips.metasearch.empty.body'));
+  assert.ok(tripsSource.includes('trips.filter((trip) => trip.status === active)'));
   assert.ok(tripsSource.includes('key={trip.id}'));
-  assert.ok(tripsSource.includes('reservationCode'));
+  assert.ok(tripsSource.includes('providerConfirmationCode'));
+  assert.ok(tripsSource.includes('useLocale()'));
+  assert.ok(!tripsSource.includes('/api/dashboard/trips/lookup'));
   assert.ok(accountBackLinkSource.includes('href="/dashboard/account"'));
   assert.ok(accountBackLinkSource.includes('t["accountDashboard.hub.title"]'));
 

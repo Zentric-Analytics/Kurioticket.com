@@ -88,7 +88,7 @@ export const generalFaqs: FaqItem[] = getGeneralFaqs((key) => {
       "If your booking was completed with an airline, hotel, travel agency, or external provider, that provider is responsible for booking changes, refunds, cancellations, check-in, boarding, receipts, and travel documents.",
     supportFaqChangeBookingQuestion: "Can Kurioticket change my booking?",
     supportFaqChangeBookingAnswer:
-      "Kurioticket can only help with bookings made directly through Kurioticket if and when direct booking is supported. For bookings completed with external providers, contact that provider directly.",
+      "Kurioticket does not manage or change travel bookings. If you completed a reservation with an airline, hotel, travel agency, or other provider, contact that provider for changes, cancellations, refunds, check-in, receipts, and travel documents.",
     supportFaqWhyRedirectedQuestion: "Why was I sent to another provider?",
     supportFaqWhyRedirectedAnswer:
       "Kurioticket is a travel search and comparison platform, and some results redirect to trusted providers where you complete booking, payment, and provider-specific support.",

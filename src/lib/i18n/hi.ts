@@ -1558,7 +1558,7 @@ export const translations: TranslationDictionary = {
   supportFaqAlreadyBookedQuestion: "क्या आपने पहले ही किसी प्रदाता के साथ बुकिंग कर ली है?",
   supportFaqAlreadyBookedAnswer: "यदि आपकी बुकिंग किसी एयरलाइन, होटल, यात्रा एजेंसी या बाहरी प्रदाता के साथ पूरी हुई है, तो बुकिंग बदलाव, रिफंड, रद्दीकरण, चेक-इन, बोर्डिंग, रसीदों और यात्रा दस्तावेज़ों के लिए वही प्रदाता ज़िम्मेदार है।",
   supportFaqChangeBookingQuestion: "क्या Kurioticket मेरी बुकिंग बदल सकता है?",
-  supportFaqChangeBookingAnswer: "Kurioticket केवल उन बुकिंग में मदद कर सकता है जो सीधे Kurioticket के माध्यम से की गई हों, यदि और जब सीधी बुकिंग समर्थित हो। बाहरी प्रदाताओं के साथ पूरी हुई बुकिंग के लिए सीधे उसी प्रदाता से संपर्क करें।",
+  supportFaqChangeBookingAnswer: "Kurioticket यात्रा बुकिंग का प्रबंधन या बदलाव नहीं करता। बदलाव, रद्दीकरण, रिफ़ंड, चेक-इन, रसीदें और यात्रा दस्तावेज़ बाहरी प्रदाता संभालता है।",
   supportFaqWhyRedirectedQuestion: "मुझे किसी दूसरे प्रदाता के पास क्यों भेजा गया?",
   supportFaqWhyRedirectedAnswer: "Kurioticket एक यात्रा खोज और तुलना प्लेटफ़ॉर्म है, और कुछ परिणाम आपको विश्वसनीय प्रदाताओं पर भेजते हैं जहाँ आप बुकिंग, भुगतान और प्रदाता-विशिष्ट सहायता पूरी करते हैं।",
 

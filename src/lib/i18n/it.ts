@@ -2539,7 +2539,7 @@ flightLandingRouteAriaLabel: "Cerca voli da {{origin}} a {{destination}}",
   supportFaqChangeBookingQuestion:
     "Kurioticket può modificare la mia prenotazione?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket può aiutare solo con prenotazioni effettuate direttamente tramite Kurioticket, se e quando la prenotazione diretta è supportata. Per prenotazioni completate con fornitori esterni, contatta direttamente quel fornitore.",
+    "Kurioticket non gestisce né modifica le prenotazioni di viaggio. Il fornitore esterno gestisce modifiche, cancellazioni, rimborsi, check-in, ricevute e documenti di viaggio.",
   supportFaqWhyRedirectedQuestion:
     "Perché sono stato reindirizzato a un altro fornitore?",
   supportFaqWhyRedirectedAnswer:

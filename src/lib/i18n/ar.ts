@@ -1491,7 +1491,7 @@ export const translations: TranslationDictionary = {
   supportFaqAlreadyBookedQuestion: "هل حجزت بالفعل مع مزوّد؟",
   supportFaqAlreadyBookedAnswer: "إذا اكتمل حجزك مع شركة طيران أو فندق أو وكالة سفر أو مزوّد خارجي، فهذا المزوّد مسؤول عن تغييرات الحجز والمبالغ المستردة والإلغاءات وتسجيل الوصول والصعود والإيصالات ووثائق السفر.",
   supportFaqChangeBookingQuestion: "هل يمكن لـ Kurioticket تغيير حجزي؟",
-  supportFaqChangeBookingAnswer: "لا يمكن لـ Kurioticket المساعدة إلا في الحجوزات التي تتم مباشرة عبر Kurioticket إذا كان الحجز المباشر مدعومًا. للحجوزات المكتملة مع مزوّدين خارجيين، تواصل مع ذلك المزوّد مباشرة.",
+  supportFaqChangeBookingAnswer: "لا تدير Kurioticket حجوزات السفر ولا تغيّرها. يتولى المزوّد الخارجي التغييرات والإلغاءات والمبالغ المستردة وتسجيل الوصول والإيصالات ووثائق السفر.",
   supportFaqWhyRedirectedQuestion: "لماذا تم توجيهي إلى مزوّد آخر؟",
   supportFaqWhyRedirectedAnswer: "Kurioticket منصة بحث ومقارنة للسفر، وبعض النتائج تحولك إلى مزوّدين موثوقين حيث تكمل الحجز والدفع والدعم الخاص بالمزوّد.",
   footerContactUs: "اتصل بنا",

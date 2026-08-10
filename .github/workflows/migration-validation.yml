@@ -104,6 +104,7 @@ jobs:
                 scripts/migration-validation-workflow.test.mjs|\
                 scripts/run-render-migrations.mjs|\
                 scripts/verify-issue4-security-upgrade.mjs|\
+                scripts/verify-issue5-my-trips-upgrade.mjs|\
                 scripts/verify-production-schema.mjs)
                   applicable=true
                   classification=migration-related-change
@@ -168,6 +169,9 @@ jobs:
 
       - name: Verify Issue 4 security upgrade from representative legacy data
         run: node scripts/verify-issue4-security-upgrade.mjs
+
+      - name: Verify Issue 5 MyTrip upgrade from representative legacy data
+        run: node scripts/verify-issue5-my-trips-upgrade.mjs
 
       - name: Verify deployed schema
         run: node scripts/verify-production-schema.mjs
