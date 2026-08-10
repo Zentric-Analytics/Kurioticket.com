@@ -352,6 +352,31 @@ Repository-derived Asian coverage moves from **37 of 64** canonical destinations
 
 This batch includes no ExploreScreen or DestinationDetailsScreen UI work, images or galleries, maps, search changes, flight, hotel or booking changes, related destinations, or editorial-architecture changes. Canonical IDs, names, countries, airport data, aliases, image identities and image provenance remain unchanged.
 
+### Asia Batch 6 — Central Asia + Caucasus
+
+Asia Batch 6, verified on 2026-08-10, considered these eight canonical candidates:
+
+- `kz-almaty` — Almaty, Kazakhstan
+- `tm-ashgabat` — Ashgabat, Turkmenistan
+- `az-baku` — Baku, Azerbaijan
+- `kg-bishkek` — Bishkek, Kyrgyzstan
+- `tj-dushanbe` — Dushanbe, Tajikistan
+- `uz-tashkent` — Tashkent, Uzbekistan
+- `ge-tbilisi` — Tbilisi, Georgia
+- `am-yerevan` — Yerevan, Armenia
+
+Seven destinations were implemented: Almaty, Baku, Bishkek, Dushanbe, Tashkent, Tbilisi and Yerevan. Ashgabat alone was deferred and remains wholly non-editorial. Its strict source gate was applied conservatively: two exact, durable and authoritative HTTPS references supporting city-specific material could not be established safely without risking fabricated provenance. External access errors were not treated as evidence against a source, and no weak aggregator was substituted.
+
+Implemented records use exact URLs from UNESCO, official national or city tourism bodies, municipal sources, a national museum, an official manuscript institute and an established public reference work. Every implemented record has at least two distinct, titled HTTPS references selected for durable geography, urban history, architecture and cultural institutions; no provenance URL was invented.
+
+Geographic scope remains deliberately narrow. Almaty is framed through its Trans-Ili Alatau setting and city institutions rather than distant lakes, canyons or resorts. Bishkek does not absorb Ala Archa or other excursions outside the city, and Dushanbe does not stand in for the Pamirs or Tajikistan-wide heritage. Tashkent's record uses its own market, religious, museum and planning history rather than monuments in Samarkand, Bukhara or Khiva. Baku remains specific to its Caspian waterfront and walled historic core rather than Azerbaijan-wide attractions.
+
+Baku, Tbilisi and Yerevan use neutral geographic and cultural wording. Tbilisi follows its Mtkvari valley and historic neighbourhoods; Yerevan treats Mount Ararat solely as a distant landscape backdrop and does not relocate it into the city or country. Repository classifications and country assignments for all three remain unchanged, with no transcontinental debate or geopolitical, territorial, border, conflict or current-condition commentary.
+
+Repository-derived Asian coverage moves from **45 of 64** canonical destinations before the batch to **52 of 64** after the seven implemented records, leaving **12** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batches 1–5 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch contains no UI work, image work, gallery work, map work, search changes, flight, hotel or booking changes, related-destination work, or editorial-architecture refactor. Canonical IDs, names, countries, country codes, airport data, aliases, image identities and image provenance remain unchanged.
+
 This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
