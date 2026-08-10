@@ -63,6 +63,13 @@ const europeBatch5SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: EUROPE_BATCH_5_LAST_VERIFIED_AT,
 });
 
+const AFRICA_BATCH_1_LAST_VERIFIED_AT = "2026-08-10";
+const africaBatch1SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: AFRICA_BATCH_1_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -553,6 +560,76 @@ const rawExploreDestinationEditorial = [
     description: "Planned across islands and waterways of the Neva delta, the city gives canals, embankments and bridges a central role. The UNESCO-listed historic centre includes the Winter Palace, Palace Square, Peter and Paul Fortress and monumental avenues shaped during the imperial period. Hermitage collections, cathedrals, theatres and literary museums document its artistic and intellectual traditions across several centuries.",
     highlights: ["Winter Palace and Hermitage", "Neva embankments and canals", "Peter and Paul Fortress", "Palace Square"],
     editorialProvenance: europeBatch5SourceReferences([{ title: "Visit Petersburg", url: "https://visit-petersburg.ru/en/" }, { title: "State Hermitage Museum", url: "https://www.hermitagemuseum.org/wps/portal/hermitage/?lng=en" }, { title: "UNESCO Historic Centre of Saint Petersburg", url: "https://whc.unesco.org/en/list/540/" }]),
+  },
+  {
+    id: "et-addis-ababa",
+    summary: "Addis Ababa occupies a highland plateau, with national museums, historic churches, markets and Entoto foothills.",
+    description: "Addis Ababa spreads across a high plateau beneath the Entoto hills, where eucalyptus woodland borders the northern city. The National Museum and Ethnological Museum interpret Ethiopian archaeology, art and cultural traditions, while Holy Trinity Cathedral records twentieth-century religious and national history. Merkato's trading streets and the Piazza district reflect the capital's commercial growth and varied urban fabric.",
+    highlights: ["Entoto hill landscape", "National Museum of Ethiopia", "Holy Trinity Cathedral", "Merkato trading district"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "Visit Ethiopia - Addis Ababa", url: "https://visitethiopia.et/destinations/addis-ababa/" }, { title: "Addis Ababa City Administration", url: "https://addisababa.gov.et/" }]),
+  },
+  {
+    id: "ke-mombasa",
+    summary: "Mombasa occupies a coral island and mainland coast shaped by Swahili heritage, trade and beaches.",
+    description: "Mombasa's historic centre occupies an island beside the Indian Ocean, linked to mainland districts and a long trading coastline. UNESCO-listed Fort Jesus records Portuguese presence and later contests over the port, while Old Town retains narrow streets, carved doors and Swahili architecture. Markets, mosques and coastal food traditions reflect exchanges among African, Arab, Asian and European communities.",
+    highlights: ["Fort Jesus", "Old Town Swahili architecture", "Mombasa Island waterfront", "Coastal markets and food traditions"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "National Museums of Kenya - Fort Jesus", url: "https://museums.or.ke/fort-jesus/" }, { title: "UNESCO Fort Jesus, Mombasa", url: "https://whc.unesco.org/en/list/1295/" }]),
+  },
+  {
+    id: "tz-dar-es-salaam",
+    summary: "Dar es Salaam extends along the Indian Ocean through historic civic quarters, markets and coastal reserves.",
+    description: "Dar es Salaam lies around a natural harbour on Tanzania's Indian Ocean coast, with a centre shaped by maritime trade and colonial administration. The National Museum presents archaeological and historical collections, while the open-air Village Museum documents building traditions from across Tanzania. Kariakoo Market, waterfront civic buildings and nearby marine reserves place commerce, architecture and coastal ecology within the city's setting.",
+    highlights: ["Indian Ocean harbour", "National Museum of Tanzania", "Village Museum homesteads", "Kariakoo Market"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "Tanzania Tourism - Dar es Salaam", url: "https://www.tanzaniatourism.go.tz/destination/dar-es-salaam" }, { title: "National Museum of Tanzania", url: "https://www.nmt.go.tz/" }]),
+  },
+  {
+    id: "tz-zanzibar",
+    summary: "Zanzibar encompasses an Indian Ocean archipelago where Swahili culture, spice farming and coral-stone heritage meet.",
+    description: "Zanzibar is an Indian Ocean archipelago whose largest islands are Unguja and Pemba; the canonical destination refers to this wider island setting. Stone Town, the historic quarter of Zanzibar City on Unguja, preserves coral-stone buildings shaped by African, Arab, Indian and European exchange. Spice-growing areas, fishing communities and coastal forests provide further context beyond the urban heritage site.",
+    highlights: ["Stone Town of Zanzibar", "Unguja and Pemba islands", "Spice-growing landscapes", "Jozani coastal forest"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "Zanzibar Commission for Tourism", url: "https://zanzibartourism.go.tz/" }, { title: "UNESCO Stone Town of Zanzibar", url: "https://whc.unesco.org/en/list/173/" }]),
+  },
+  {
+    id: "ug-entebbe",
+    summary: "Entebbe occupies a Lake Victoria peninsula with botanical collections, wildlife conservation and lakeshore landscapes.",
+    description: "Entebbe extends along a peninsula on Lake Victoria, giving the town wooded shores and a close relationship with the lake. The National Botanical Gardens conserve tropical plants and bird habitat, while the Uganda Wildlife Conservation Education Centre cares for native wildlife and supports conservation education. Older administrative buildings and lakeside streets reflect Entebbe's distinct civic history apart from Kampala.",
+    highlights: ["Lake Victoria peninsula", "National Botanical Gardens", "Uganda Wildlife Conservation Education Centre", "Lakeside administrative heritage"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "Uganda Wildlife Conservation Education Centre", url: "https://uwec.ug/" }, { title: "National Agricultural Research Organisation", url: "https://www.naro.go.ug/" }]),
+  },
+  {
+    id: "rw-kigali",
+    summary: "Kigali spreads across green hills, linking memorial sites, museums, markets and evolving neighbourhood arts districts.",
+    description: "Kigali is arranged across ridges and valleys, with neighbourhoods extending over the hilly landscape of Rwanda's capital. The Kigali Genocide Memorial documents the 1994 genocide against the Tutsi through remembrance, archives and education, while the Rwanda Art Museum presents national visual culture. Kimironko Market, Nyamirambo streets and local craft centres illustrate everyday commerce and creative life.",
+    highlights: ["Kigali Genocide Memorial", "Rwanda Art Museum", "Kimironko Market", "Nyamirambo neighbourhood"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "Visit Rwanda - Kigali", url: "https://www.visitrwanda.com/destinations/kigali/" }, { title: "Kigali Genocide Memorial", url: "https://kgm.rw/" }]),
+  },
+  {
+    id: "mg-antananarivo",
+    summary: "Antananarivo rises across highland ridges, marked by royal heritage, brick neighbourhoods, markets and urban wetlands.",
+    description: "Antananarivo occupies steep ridges in Madagascar's central highlands, with stairways and brick houses following the slopes. The Upper Town contains the Rova royal complex, Andafiavaratra Palace and historic churches associated with the Merina kingdom and later state history. Analakely Market, Lake Anosy and the Tsimbazaza museum and botanical grounds add commercial, civic and natural-history perspectives within the capital.",
+    highlights: ["Rova of Antananarivo", "Upper Town brick architecture", "Analakely Market", "Lake Anosy"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "UNESCO Upper Town of Antananarivo", url: "https://whc.unesco.org/en/tentativelists/6078/" }, { title: "Madagascar National Tourism Board", url: "https://madagascar-tourisme.com/en/" }]),
+  },
+  {
+    id: "sc-mahe",
+    summary: "Mahé is Seychelles' largest island, defined by granitic peaks, forest reserves, beaches and Creole heritage.",
+    description: "Mahé is a mountainous granitic island whose forested interior rises above narrow coastal settlements and beaches. Morne Seychellois National Park protects the island's highest landscapes and endemic habitats, while Beau Vallon and southern coves show contrasting shorelines. Victoria, situated on Mahé, contributes markets, museums and Creole civic heritage without defining the whole island destination.",
+    highlights: ["Morne Seychellois National Park", "Beau Vallon coastline", "Granitic mountain landscape", "Victoria's Creole market heritage"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "Tourism Seychelles - Mahé", url: "https://www.seychelles.com/destination/mahe" }, { title: "Seychelles Parks and Gardens Authority", url: "https://www.spga.gov.sc/" }]),
+  },
+  {
+    id: "mu-mauritius",
+    summary: "Mauritius is a volcanic Indian Ocean island with multicultural heritage, forested uplands and coral-fringed coasts.",
+    description: "Mauritius is considered at country and island scale, from coral-fringed shores to a volcanic interior of plateaus, gorges and forest. UNESCO sites at Aapravasi Ghat and Le Morne Cultural Landscape preserve histories of indentured labour, slavery and resistance. Markets, religious places, Creole traditions and protected landscapes reflect the island's African, Asian and European cultural connections.",
+    highlights: ["Le Morne Cultural Landscape", "Aapravasi Ghat", "Black River Gorges", "Multicultural market and food traditions"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "Mauritius Tourism Promotion Authority", url: "https://mauritiusnow.com/" }, { title: "UNESCO Aapravasi Ghat", url: "https://whc.unesco.org/en/list/1227/" }, { title: "UNESCO Le Morne Cultural Landscape", url: "https://whc.unesco.org/en/list/1259/" }]),
+  },
+  {
+    id: "re-saint-denis",
+    summary: "Saint-Denis frames Réunion's northern coast with Creole architecture, civic gardens, museums and mountain backdrops.",
+    description: "Saint-Denis stands on Réunion's northern coast between the Indian Ocean and steep volcanic uplands. Rue de Paris is lined with Creole houses and civic buildings, including Villa Déramond-Barre and the former bishop's palace, while the Jardin de l'État anchors a historic public garden. The Léon Dierx Museum, markets and seafront trace the city's artistic, commercial and colonial layers.",
+    highlights: ["Rue de Paris Creole houses", "Jardin de l'État", "Léon Dierx Museum", "Barachois seafront"],
+    editorialProvenance: africaBatch1SourceReferences([{ title: "Île de La Réunion Tourisme - Saint-Denis", url: "https://en.reunion.fr/organize/towns-and-villages/saint-denis/" }, { title: "Musée Léon Dierx", url: "https://museesreunion.fr/musee-leon-dierx/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
