@@ -94,6 +94,11 @@ const AFRICA_BATCH_6_IDS = [
 
 const FINAL_AFRICA_BATCH_IDS = ["gn-conakry", "sd-khartoum", "ly-tripoli"] as const;
 
+const ASIA_BATCH_1_IDS = [
+  "cn-beijing", "cn-guangzhou", "hk-hong-kong", "mo-macau", "jp-osaka",
+  "kr-seoul", "cn-shanghai", "cn-shenzhen", "tw-taipei", "mn-ulaanbaatar",
+] as const;
+
 const ORIGINAL_AFRICAN_EDITORIAL_IDS = [
   "ng-lagos", "za-cape-town", "eg-cairo", "ma-marrakesh", "ng-abuja",
   "gh-accra", "za-johannesburg", "ke-nairobi",
@@ -110,6 +115,14 @@ const AFRICA_COUNTRY_CODES = new Set([
   "ET", "GA", "GH", "GM", "GN", "KE", "LR", "LY", "MA", "MG", "ML", "MU",
   "MZ", "NA", "NE", "NG", "RE", "RW", "SC", "SD", "SL", "SN", "SO", "SS",
   "TG", "TN", "TZ", "UG", "ZA", "ZM", "ZW",
+]);
+
+const ASIA_COUNTRY_CODES = new Set([
+  "AE", "AF", "AM", "AZ", "BD", "BH", "BN", "BT", "CN", "GE", "HK",
+  "ID", "IL", "IN", "IQ", "IR", "JO", "JP", "KG", "KH", "KP", "KR",
+  "KW", "KZ", "LA", "LB", "LK", "MM", "MN", "MO", "MV", "MY", "NP",
+  "OM", "PH", "PK", "PS", "QA", "SA", "SG", "SY", "TH", "TJ", "TL",
+  "TM", "TW", "UZ", "VN", "YE",
 ]);
 
 test("the original 25 records and Europe Batch 1 remain intact as coverage expands", () => {
@@ -570,7 +583,7 @@ test("Africa Batch 6 adds four canonical Horn and Great Lakes destinations", () 
 
 test("the final Africa batch enriches exactly the three previously deferred canonical destinations", () => {
   const priorIds = new Set(exploreDestinationEditorial.slice(0, 113).map(({ id }) => id));
-  assert.deepEqual(exploreDestinationEditorial.slice(113).map(({ id }) => id), FINAL_AFRICA_BATCH_IDS);
+  assert.deepEqual(exploreDestinationEditorial.slice(113, 116).map(({ id }) => id), FINAL_AFRICA_BATCH_IDS);
   assert.ok(FINAL_AFRICA_BATCH_IDS.every((id) => !priorIds.has(id)));
 
   for (const id of FINAL_AFRICA_BATCH_IDS) {
@@ -635,6 +648,89 @@ test("every canonical African destination has editorial content after the final 
   assert.equal(editorialized.length, 54);
   assert.deepEqual(remaining, []);
   assert.ok(canonicalAfricanDestinations.every(({ editorialProvenance }) => editorialProvenance));
+});
+
+test("Asia Batch 1 adds 10 previously non-editorial canonical destinations with reviewed copy", () => {
+  const priorIds = new Set(exploreDestinationEditorial.slice(0, -ASIA_BATCH_1_IDS.length)
+    .map(({ id }) => id));
+  const batch = exploreDestinationEditorial.filter(({ id }) =>
+    ASIA_BATCH_1_IDS.some((batchId) => batchId === id));
+  assert.deepEqual(exploreDestinationEditorial.slice(-10).map(({ id }) => id), ASIA_BATCH_1_IDS);
+  assert.equal(batch.length, 10);
+  assert.ok(ASIA_BATCH_1_IDS.every((id) => !priorIds.has(id)));
+  assert.equal(new Set(exploreDestinationEditorial.map(({ id }) => id)).size,
+    exploreDestinationEditorial.length);
+
+  for (const id of ASIA_BATCH_1_IDS) {
+    const canonical = exploreDestinations.find((destination) => destination.id === id);
+    const record = batch.find((candidate) => candidate.id === id);
+    assert.ok(canonical);
+    assert.ok(record);
+    assert.equal(record.summary.startsWith(canonical.name), true);
+    assert.ok(record.summary.trim().split(/\s+/).length >= 13);
+    assert.ok(record.summary.trim().split(/\s+/).length <= 18);
+    assert.equal((record.summary.match(/[.!?](?:\s|$)/g) ?? []).length, 1);
+    assert.ok(record.description.trim().split(/\s+/).length >= 53);
+    assert.ok(record.description.trim().split(/\s+/).length <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.equal(new Set(record.highlights.map((highlight) =>
+      highlight.trim().toLocaleLowerCase())).size, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !highlight.endsWith(".")));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-10");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length);
+    assert.equal(new Set(record.editorialProvenance.sourceReferences.map(({ title }) => title)).size,
+      record.editorialProvenance.sourceReferences.length);
+    assert.ok(record.editorialProvenance.sourceReferences.every(
+      ({ title, url }) => title.trim() && url.startsWith("https://"),
+    ));
+    assert.equal(canonical.editorialProvenance, record.editorialProvenance);
+    assert.equal(canonical.relatedDestinationIds, undefined);
+  }
+});
+
+test("Asia Batch 1 preserves destination-label and airport identity safeguards", () => {
+  const destination = (id: (typeof ASIA_BATCH_1_IDS)[number]) => {
+    const match = exploreDestinations.find((candidate) => candidate.id === id);
+    assert.ok(match);
+    return match;
+  };
+  assert.equal(destination("hk-hong-kong").country, "Hong Kong SAR China");
+  assert.equal(destination("mo-macau").name, "Macau");
+  assert.equal(destination("mo-macau").country, "Macao SAR China");
+  assert.equal(destination("tw-taipei").country, "Taiwan");
+  assert.deepEqual(destination("cn-beijing").airportCodes, ["PEK", "PKX"]);
+  assert.equal(destination("cn-beijing").primaryAirportCode, "PEK");
+  assert.deepEqual(destination("kr-seoul").airportCodes, ["GMP", "ICN"]);
+  assert.equal(destination("kr-seoul").primaryAirportCode, "GMP");
+  assert.deepEqual({
+    name: destination("jp-osaka").name,
+    country: destination("jp-osaka").country,
+    airportCodes: destination("jp-osaka").airportCodes,
+    searchAliases: destination("jp-osaka").searchAliases,
+    imageDestinationId: destination("jp-osaka").imageDestinationId,
+  }, {
+    name: "Osaka", country: "Japan", airportCodes: ["KIX"],
+    searchAliases: ["Osaka"], imageDestinationId: "jp-osaka",
+  });
+});
+
+test("Asia coverage is derived as 15 of 64 after Batch 1 with 49 remaining", () => {
+  const canonicalAsianDestinations = exploreDestinations.filter(({ countryCode }) =>
+    ASIA_COUNTRY_CODES.has(countryCode));
+  const priorEditorialIds = new Set(exploreDestinationEditorial.slice(0, -10).map(({ id }) => id));
+  const before = canonicalAsianDestinations.filter(({ id }) => priorEditorialIds.has(id));
+  const after = canonicalAsianDestinations.filter(({ editorialProvenance }) => editorialProvenance);
+  const remaining = canonicalAsianDestinations.filter(({ editorialProvenance }) =>
+    !editorialProvenance);
+  assert.equal(canonicalAsianDestinations.length, 64);
+  assert.equal(before.length, 5);
+  assert.equal(after.length, 15);
+  assert.equal(remaining.length, 49);
+  assert.ok(remaining.every(({ id }) => !ASIA_BATCH_1_IDS.some((batchId) => batchId === id)));
 });
 
 test("Featured destinations retain their separately maintained IDs and order", () => {
