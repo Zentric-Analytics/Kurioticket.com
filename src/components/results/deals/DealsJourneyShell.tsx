@@ -414,7 +414,10 @@ export function DealsJourneyShell({
     stage === "flight-results" ||
     stage === "flight-details" ||
     stage === "car-results";
-  const useHotelDetailsBackground = stage === "hotel-details";
+  const useDetailsBackground =
+    stage === "hotel-details" ||
+    stage === "flight-details" ||
+    stage === "car-details";
   const displayPlanStatus: GuidedPlanState =
     plan && plan.expiresAt <= lifecycleNow ? "expired" : planStatus;
   const clearConfirmationFailure = () => {
@@ -433,7 +436,7 @@ export function DealsJourneyShell({
       data-deals-guided-stage={stage}
       data-deals-guided-plan-state={displayPlanStatus}
       className={`flex-1 overflow-x-clip pb-12 ${
-        useHotelDetailsBackground ? "bg-white" : "bg-[#f6f8fb]"
+        useDetailsBackground ? "bg-white" : "bg-[#f6f8fb]"
       }`}
     >
       <DealsResultsSearchSummary
