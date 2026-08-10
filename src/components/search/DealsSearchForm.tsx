@@ -2704,7 +2704,9 @@ export function DealsSearchForm({
   ) : null;
 
   const searchDealsButton = (
-    <div className="flex w-full sm:w-auto">
+    <div
+      className={`flex w-full ${variant === "landing" ? "min-[1050px]:h-full min-[1050px]:min-w-[156px] min-[1050px]:items-center min-[1050px]:border-s min-[1050px]:border-slate-200 min-[1050px]:px-2" : "sm:w-auto"}`}
+    >
       <button
         type="submit"
         disabled={submitting || pending}
@@ -2721,6 +2723,63 @@ export function DealsSearchForm({
         )}
       </button>
     </div>
+  );
+
+  const landingPrimaryControls = (
+    <>
+      <button
+        data-deals-landing-travellers
+        ref={travelersLauncherRef}
+        type="button"
+        aria-expanded={travelersOpen || mobileTravelersOpen}
+        aria-haspopup="dialog"
+        aria-controls={
+          mobileTravelersOpen
+            ? "deals-mobile-travellers"
+            : "deals-desktop-travellers"
+        }
+        onClick={() =>
+          travelersOpen ? dismissDesktopTravelers() : openTravelers()
+        }
+        className={`${landingActionSegment} flex items-center justify-between gap-2 border-b border-slate-200 min-[1050px]:min-h-[54px] min-[1050px]:border-b-0 min-[1050px]:border-s`}
+      >
+        <span className="min-w-0">
+          <span className={`${label} mb-0.5`}>{travelersControlLabel}</span>
+          <span className="block truncate">{travelerSummary}</span>
+        </span>
+        <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0" />
+      </button>
+      {included.flight ? (
+        <div
+          data-deals-landing-cabin
+          className={`${landingActionSegment} border-b border-slate-200 min-[1050px]:min-h-[54px] min-[1050px]:border-b-0 min-[1050px]:border-s`}
+        >
+          <label className={`${label} mb-0.5`} htmlFor="deals-flight-cabin">
+            {t("deals.cabinClass")}
+          </label>
+          <select
+            id="deals-flight-cabin"
+            value={search.flightCabinClass}
+            onChange={(event) =>
+              update(
+                "flightCabinClass",
+                event.target.value as DealsSearch["flightCabinClass"],
+              )
+            }
+            className={`${landingActionControl} appearance-none pe-6`}
+          >
+            <option value="economy">{t("economy")}</option>
+            <option value="business">{t("business")}</option>
+            <option value="first">{t("first")}</option>
+          </select>
+          <ChevronDown
+            aria-hidden="true"
+            className="pointer-events-none absolute end-3 bottom-3 h-4 w-4"
+          />
+        </div>
+      ) : null}
+      {searchDealsButton}
+    </>
   );
 
   return (
@@ -2834,10 +2893,13 @@ export function DealsSearchForm({
           </div>
           <div
             data-deals-field-content="flight"
+            data-deals-landing-main-search-row={
+              variant === "landing" ? "flight" : undefined
+            }
             className={
               variant === "results"
                 ? "mt-2 grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]"
-                : `${connectedShell} lg:mt-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]`
+                : `${connectedShell} lg:mt-1 min-[1050px]:grid-cols-[minmax(0,3fr)_minmax(125px,1.05fr)_minmax(145px,1.15fr)_minmax(105px,0.8fr)_minmax(156px,auto)]`
             }
           >
             <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200">
@@ -3087,6 +3149,7 @@ export function DealsSearchForm({
                 </div>
               </div>
             ) : null}
+            {variant === "landing" ? landingPrimaryControls : null}
           </div>
           <div>{errorBlock("flight")}</div>
         </section>
@@ -3116,10 +3179,13 @@ export function DealsSearchForm({
             </h2>
             <div
               data-deals-field-content="stay"
+              data-deals-landing-main-search-row={
+                variant === "landing" && !included.flight ? "stay" : undefined
+              }
               data-deals-results-row={
                 variant === "results" ? "stay" : undefined
               }
-              className={`${variant === "results" ? resultsRow : connectedShell} sm:grid-cols-2`}
+              className={`${variant === "results" ? resultsRow : connectedShell} sm:grid-cols-2 ${variant === "landing" && !included.flight ? "min-[1050px]:grid-cols-[minmax(0,2fr)_minmax(150px,1fr)_minmax(180px,1fr)_minmax(156px,auto)]" : ""}`}
             >
               {(variant === "results" ||
                 !included.flight ||
@@ -3325,6 +3391,9 @@ export function DealsSearchForm({
                   ) : null}
                 </div>
               )}
+              {variant === "landing" && !included.flight
+                ? landingPrimaryControls
+                : null}
             </div>
             <div>{errorBlock("hotel")}</div>
           </section>
@@ -3572,75 +3641,8 @@ export function DealsSearchForm({
           </div>
         </section>
       ) : (
-        <section
-          data-deals-search-actions
-          className="border-t border-slate-200 py-4 sm:py-3"
-        >
-          <div
-            data-deals-landing-lower-controls
-            className={`grid gap-y-3 border-b border-slate-200 pb-3 ${included.flight ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" : "sm:grid-cols-1"} sm:items-stretch`}
-          >
-            <button
-              data-deals-landing-travellers
-              ref={travelersLauncherRef}
-              type="button"
-              aria-expanded={travelersOpen || mobileTravelersOpen}
-              aria-haspopup="dialog"
-              aria-controls={
-                mobileTravelersOpen
-                  ? "deals-mobile-travellers"
-                  : "deals-desktop-travellers"
-              }
-              onClick={() =>
-                travelersOpen ? dismissDesktopTravelers() : openTravelers()
-              }
-              className={`${landingActionSegment} flex items-center justify-between gap-2`}
-            >
-              <span className="min-w-0">
-                <span className={`${label} mb-0.5`}>
-                  {travelersControlLabel}
-                </span>
-                <span className="block truncate">{travelerSummary}</span>
-              </span>
-              <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0" />
-            </button>
-            {included.flight ? (
-              <div
-                data-deals-landing-cabin
-                className={`${landingActionSegment} sm:border-s sm:border-slate-200`}
-              >
-                <label
-                  className={`${label} mb-0.5`}
-                  htmlFor="deals-flight-cabin"
-                >
-                  {t("deals.cabinClass")}
-                </label>
-                <select
-                  id="deals-flight-cabin"
-                  value={search.flightCabinClass}
-                  onChange={(event) =>
-                    update(
-                      "flightCabinClass",
-                      event.target.value as DealsSearch["flightCabinClass"],
-                    )
-                  }
-                  className={`${landingActionControl} appearance-none pe-6`}
-                >
-                  <option value="economy">{t("economy")}</option>
-                  <option value="business">{t("business")}</option>
-                  <option value="first">{t("first")}</option>
-                </select>
-                <ChevronDown
-                  aria-hidden="true"
-                  className="pointer-events-none absolute end-3 bottom-3 h-4 w-4"
-                />
-              </div>
-            ) : null}
-          </div>
-          <div
-            data-deals-landing-action-row
-            className={`mt-4 flex flex-col gap-3 sm:flex-row sm:items-center ${supportsLandingStayDateOverride ? "sm:justify-between" : "sm:justify-end"}`}
-          >
+        <section data-deals-search-actions className="py-3">
+          <div data-deals-landing-stay-options>
             {supportsLandingStayDateOverride ? (
               <label
                 data-deals-change-stay-dates
@@ -3670,7 +3672,6 @@ export function DealsSearchForm({
                 <span>{t("deals.changeDatesForStay")}</span>
               </label>
             ) : null}
-            {searchDealsButton}
           </div>
           {supportsLandingStayDateOverride && !search.stayDatesLinked ? (
             <div
