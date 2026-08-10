@@ -98,6 +98,13 @@ const africaBatch5SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: AFRICA_BATCH_5_LAST_VERIFIED_AT,
 });
 
+const AFRICA_BATCH_6_LAST_VERIFIED_AT = "2026-08-10";
+const africaBatch6SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: AFRICA_BATCH_6_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -861,6 +868,34 @@ const rawExploreDestinationEditorial = [
     description: "Yaoundé occupies a succession of wooded hills in Cameroon's interior, giving its districts a markedly undulating form. The National Museum, housed in the former presidential palace, interprets national history and artistic traditions within the capital. Reunification monuments, central markets and civic architecture provide durable city landmarks while keeping coastal sites and wildlife destinations outside this specifically Yaoundé-focused record.",
     highlights: ["Wooded seven-hill setting", "Cameroon National Museum", "Reunification Monument", "Central markets and civic architecture"],
     editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Yaoundé", url: "https://www.britannica.com/place/Yaounde" }, { title: "Cameroon Ministry of Arts and Culture", url: "https://www.minculture.gov.cm/" }]),
+  },
+  {
+    id: "bi-bujumbura",
+    summary: "Bujumbura occupies Lake Tanganyika's northeastern shore, with markets, museums and a longstanding commercial waterfront.",
+    description: "Bujumbura extends across low ground beside Lake Tanganyika, where the waterfront and surrounding hills define the city's setting. Its central market districts and civic streets reflect a longstanding role as Burundi's principal commercial centre and former national capital. The Living Museum's cultural and natural-history collections add an institutional perspective to lakeside neighbourhoods and the city's urban history.",
+    highlights: ["Lake Tanganyika waterfront", "Living Museum collections", "Central market districts", "Lakeside urban neighbourhoods"],
+    editorialProvenance: africaBatch6SourceReferences([{ title: "Encyclopaedia Britannica — Bujumbura", url: "https://www.britannica.com/place/Bujumbura" }, { title: "Encyclopaedia Britannica — Lake Tanganyika", url: "https://www.britannica.com/place/Lake-Tanganyika" }]),
+  },
+  {
+    id: "dj-djibouti",
+    summary: "Djibouti occupies a Gulf of Tadjoura peninsula, shaped by port commerce, markets and civic architecture.",
+    description: "Djibouti City stands on a peninsula between the Gulf of Tadjoura and the Gulf of Aden, distinct from the wider Republic of Djibouti. Its port setting shaped commercial streets around Place Menelik, where arcades and colonial-era civic fabric meet market districts. Mosques, waterfront roads and the city's grid provide durable urban context without substituting inland national landscapes for city sites.",
+    highlights: ["Gulf of Tadjoura waterfront", "Place Menelik", "Central market streets", "Port-city civic architecture"],
+    editorialProvenance: africaBatch6SourceReferences([{ title: "Encyclopaedia Britannica — Djibouti", url: "https://www.britannica.com/place/Djibouti-capital-Djibouti" }, { title: "Presidency of the Republic of Djibouti", url: "https://presidence.dj/" }]),
+  },
+  {
+    id: "so-hargeisa",
+    summary: "Hargeisa is a major inland Horn of Africa city and Somaliland's administrative and cultural centre.",
+    description: "Hargeisa occupies an inland valley and plateau setting in the Horn of Africa and serves as Somaliland's administrative centre. Central markets, including livestock and commercial areas, anchor everyday urban activity among broad avenues and low-rise neighbourhoods. The Hargeysa Cultural Centre preserves archives, literature and oral traditions, while Laas Geel's rock-art shelters lie outside the city and provide wider regional context.",
+    highlights: ["Inland valley and plateau", "Hargeisa central markets", "Hargeysa Cultural Centre", "Laas Geel regional rock art"],
+    editorialProvenance: africaBatch6SourceReferences([{ title: "Encyclopaedia Britannica — Hargeysa", url: "https://www.britannica.com/place/Hargeysa" }, { title: "Hargeysa Cultural Centre", url: "https://hargeysaculturalcenter.org/" }]),
+  },
+  {
+    id: "ss-juba",
+    summary: "Juba stands beside the White Nile, with riverfront districts, markets, churches and layered urban history.",
+    description: "Juba extends along the White Nile, whose broad channel and banks give the city its defining geographic setting. Market districts and neighbourhood streets record its growth from a river settlement into South Sudan's principal urban centre. All Saints Cathedral, Saint Teresa Cathedral and University of Juba institutions contribute religious, civic and educational landmarks without extending the record to country-wide attractions.",
+    highlights: ["White Nile riverfront", "Juba market districts", "All Saints Cathedral", "University of Juba institutions"],
+    editorialProvenance: africaBatch6SourceReferences([{ title: "Encyclopaedia Britannica — Juba", url: "https://www.britannica.com/place/Juba" }, { title: "University of Juba", url: "https://uoj.edu.ss/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
