@@ -118,6 +118,10 @@ const connectedField =
   "sm:min-h-7 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:focus:border-0 sm:focus:ring-0";
 const flightConnectedSegment = `${connectedSegment} lg:min-h-[54px] lg:py-1`;
 const flightConnectedField = `${connectedField} lg:min-h-6`;
+const landingActionSegment =
+  "relative min-w-0 min-h-12 border-0 bg-transparent px-3 py-2 text-start transition-colors hover:bg-slate-50/60 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#004BB8]/20 focus-within:bg-[#004BB8]/[0.04] focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/20";
+const landingActionControl =
+  "min-h-6 w-full border-0 bg-transparent px-0 text-base font-medium text-slate-900 shadow-none outline-none focus:ring-0";
 const resultsRow = "grid gap-3 sm:gap-0";
 const resultsSegment =
   "relative min-w-0 bg-transparent transition-colors hover:bg-slate-50/60 focus-within:bg-[#004BB8]/[0.04] focus-within:ring-1 focus-within:ring-inset focus-within:ring-[#004BB8]/20 sm:min-h-[54px] sm:border-s sm:border-slate-200 sm:px-4 sm:py-1 sm:first:border-s-0";
@@ -3610,7 +3614,7 @@ export function DealsSearchForm({
         >
           <div
             data-deals-landing-lower-controls
-            className={`grid gap-3 ${included.flight ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_auto]"} sm:items-stretch`}
+            className={`grid gap-y-3 ${included.flight ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_auto]"} sm:items-stretch sm:[&>div:last-child]:ms-3`}
           >
             <button
               data-deals-landing-travellers
@@ -3626,7 +3630,7 @@ export function DealsSearchForm({
               onClick={() =>
                 travelersOpen ? dismissDesktopTravelers() : openTravelers()
               }
-              className={`${field} flex min-h-12 items-center justify-between gap-2 text-start`}
+              className={`${landingActionSegment} flex items-center justify-between gap-2`}
             >
               <span className="min-w-0">
                 <span className={`${label} mb-0.5`}>
@@ -3637,9 +3641,12 @@ export function DealsSearchForm({
               <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0" />
             </button>
             {included.flight ? (
-              <div data-deals-landing-cabin className="relative min-w-0">
+              <div
+                data-deals-landing-cabin
+                className={`${landingActionSegment} sm:border-s sm:border-slate-200`}
+              >
                 <label
-                  className={`${label} absolute start-3 top-2 z-10`}
+                  className={`${label} mb-0.5`}
                   htmlFor="deals-flight-cabin"
                 >
                   {t("deals.cabinClass")}
@@ -3653,7 +3660,7 @@ export function DealsSearchForm({
                       event.target.value as DealsSearch["flightCabinClass"],
                     )
                   }
-                  className={`${field} min-h-12 appearance-none pb-1 pt-5 pe-9`}
+                  className={`${landingActionControl} appearance-none pe-6`}
                 >
                   <option value="economy">{t("economy")}</option>
                   <option value="business">{t("business")}</option>
@@ -3661,7 +3668,7 @@ export function DealsSearchForm({
                 </select>
                 <ChevronDown
                   aria-hidden="true"
-                  className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                  className="pointer-events-none absolute end-3 bottom-3 h-4 w-4"
                 />
               </div>
             ) : null}
