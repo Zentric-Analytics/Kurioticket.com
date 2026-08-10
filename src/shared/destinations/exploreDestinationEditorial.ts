@@ -91,6 +91,13 @@ const africaBatch4SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: AFRICA_BATCH_4_LAST_VERIFIED_AT,
 });
 
+const AFRICA_BATCH_5_LAST_VERIFIED_AT = "2026-08-10";
+const africaBatch5SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: AFRICA_BATCH_5_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -784,6 +791,76 @@ const rawExploreDestinationEditorial = [
     description: "Port Harcourt occupies low-lying terrain within the Niger Delta's network of rivers and creeks, giving waterways a central geographic role. The city developed as a port and retains planned civic districts alongside older commercial streets. The Rivers State Museum, cultural centres and Mile One Market document local history, arts and everyday trade without treating attractions elsewhere in Rivers State as city sites.",
     highlights: ["Bonny River waterways", "Rivers State Museum", "Mile One Market", "Port Harcourt civic districts"],
     editorialProvenance: africaBatch4SourceReferences([{ title: "Rivers State Government", url: "https://www.riversstate.gov.ng/" }, { title: "National Commission for Museums and Monuments", url: "https://museum.ng/" }]),
+  },
+  {
+    id: "ml-bamako",
+    summary: "Bamako spans both banks of the Niger River, with museums, markets and established musical traditions.",
+    description: "Bamako extends along both banks of the Niger River, with bridges linking its principal urban districts. The National Museum of Mali presents archaeological objects, textiles, masks and other material traditions in a purpose-built cultural setting. Central markets, artisan activity and institutions supporting music and the arts give Mali's capital a city-specific cultural profile grounded in the river corridor.",
+    highlights: ["Niger River banks", "National Museum of Mali", "Bamako central markets", "Music and artisan traditions"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Bamako", url: "https://www.britannica.com/place/Bamako" }, { title: "UNESCO Creative Cities Network — Bamako", url: "https://www.unesco.org/en/creative-cities/bamako" }]),
+  },
+  {
+    id: "ng-kano",
+    summary: "Kano preserves walled-city gateways, palace heritage, historic markets and enduring textile craft traditions.",
+    description: "Kano's historic core developed within defensive walls whose surviving gates still mark routes into the old city. Kurmi Market, the Emir's Palace precinct and narrow commercial streets express its longstanding role in regional trade. Indigo dye pits and other textile crafts remain closely identified with Kano, while museums interpret the city's civic, architectural and commercial history.",
+    highlights: ["Ancient Kano city gates", "Kurmi Market", "Emir's Palace precinct", "Kofar Mata dye pits"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Kano", url: "https://www.britannica.com/place/Kano-Nigeria" }, { title: "National Commission for Museums and Monuments", url: "https://museum.ng/" }]),
+  },
+  {
+    id: "ne-niamey",
+    summary: "Niamey follows the Niger River through civic districts, markets and national cultural institutions.",
+    description: "Niamey stands on the Niger River, which divides central districts from expanding neighbourhoods on the opposite bank. The Boubou Hama National Museum brings archaeological, ethnographic and natural-history collections together within a landscaped cultural complex. Markets, mosques and government institutions trace the capital's urban growth while keeping the record focused on Niamey rather than the wider Sahel.",
+    highlights: ["Niger River waterfront", "Boubou Hama National Museum", "Grand Market district", "Niamey civic quarter"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Niamey", url: "https://www.britannica.com/place/Niamey" }, { title: "UNESCO — Niger", url: "https://www.unesco.org/en/countries/ne" }]),
+  },
+  {
+    id: "bf-ouagadougou",
+    summary: "Ouagadougou centres national museums, craft traditions, markets and institutions devoted to African cinema.",
+    description: "Ouagadougou is an inland capital whose broad avenues connect civic districts, markets and long-established residential quarters. The National Museum and National Museum of Music document material culture and musical heritage, while artisan institutions sustain metalwork, textiles and other crafts. The city's durable association with African cinema is expressed through permanent cultural organisations rather than temporary festival schedules or annual claims.",
+    highlights: ["Burkina Faso National Museum", "National Museum of Music", "Ouagadougou craft institutions", "African cinema heritage"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Ouagadougou", url: "https://www.britannica.com/place/Ouagadougou" }, { title: "UNESCO Creative Cities Network — Ouagadougou", url: "https://www.unesco.org/en/creative-cities/ouagadougou" }]),
+  },
+  {
+    id: "cg-brazzaville",
+    summary: "Brazzaville faces the Congo River through Poto-Poto, civic landmarks and distinctive twentieth-century architecture.",
+    description: "Brazzaville occupies the north bank of the Congo River, directly across the broad Pool Malebo from Kinshasa. Poto-Poto's streets and painting school represent a longstanding urban arts tradition, while the Basilica of Sainte-Anne contributes a recognisable modern architectural landmark. Riverfront viewpoints, markets and civic buildings reflect the history of Congo - Brazzaville without confusing the capital with its larger neighbour.",
+    highlights: ["Congo River and Pool Malebo", "Poto-Poto district", "Poto-Poto School of Painting", "Basilica of Sainte-Anne"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Brazzaville", url: "https://www.britannica.com/place/Brazzaville" }, { title: "UNESCO Creative Cities Network — Brazzaville", url: "https://www.unesco.org/en/creative-cities/brazzaville" }]),
+  },
+  {
+    id: "cm-douala",
+    summary: "Douala occupies the Wouri estuary, shaped by port history, markets and contemporary cultural institutions.",
+    description: "Douala lies beside the Wouri River estuary, where waterways and commercial districts have long shaped Cameroon's principal port city. Historic administrative buildings and the maritime museum interpret trade, navigation and the city's changing architecture. Central markets, public art and cultural spaces such as doual'art provide an urban focus distinct from Cameroon's inland capital and attractions elsewhere in the country.",
+    highlights: ["Wouri River estuary", "Douala Maritime Museum", "Historic port architecture", "doual'art urban culture"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Douala", url: "https://www.britannica.com/place/Douala" }, { title: "doual'art", url: "https://doualart.org/" }]),
+  },
+  {
+    id: "cd-kinshasa",
+    summary: "Kinshasa stretches beside the Congo River, with national collections, markets and influential musical institutions.",
+    description: "Kinshasa extends along the south bank of the Congo River at Pool Malebo, facing Brazzaville across the water. The National Museum of the Democratic Republic of the Congo holds archaeological, historical and ethnographic collections within the capital. Markets, academies and performance spaces support a deeply rooted music culture, while older civic districts preserve landmarks specific to Congo - Kinshasa.",
+    highlights: ["Congo River and Pool Malebo", "DR Congo National Museum", "Kinshasa music culture", "Central markets and civic districts"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Kinshasa", url: "https://www.britannica.com/place/Kinshasa" }, { title: "UNESCO Creative Cities Network — Kinshasa", url: "https://www.unesco.org/en/creative-cities/kinshasa" }]),
+  },
+  {
+    id: "ga-libreville",
+    summary: "Libreville lines the Gabon Estuary with coastal districts, markets, churches and national cultural collections.",
+    description: "Libreville occupies the north shore of the Gabon Estuary, where coastal roads connect civic, commercial and residential districts. The National Museum of Arts, Rites and Traditions preserves collections connected to Gabon's cultural heritage within the capital. Mont-Bouët Market, churches and waterfront public spaces describe Libreville's urban character without substituting rainforest reserves or distant national parks for city content.",
+    highlights: ["Gabon Estuary waterfront", "National Museum collections", "Mont-Bouët Market", "Libreville churches and civic landmarks"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Libreville", url: "https://www.britannica.com/place/Libreville" }, { title: "Gabon Ministry of Culture", url: "https://www.culture.gouv.ga/" }]),
+  },
+  {
+    id: "ao-luanda",
+    summary: "Luanda curves around an Atlantic bay, marked by fortress heritage, museums and the Ilha waterfront.",
+    description: "Luanda occupies a sheltered Atlantic bay, with the Marginal waterfront facing the narrow Ilha de Luanda. Fortaleza de São Miguel and nearby museums preserve material from colonial and postcolonial history while overlooking the old urban centre. Churches, civic architecture and neighbourhood streets reveal successive layers of the Angolan capital beyond its modern shoreline, without relying on current infrastructure claims.",
+    highlights: ["Luanda Bay waterfront", "Ilha de Luanda", "Fortaleza de São Miguel", "Museums of the old centre"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Luanda", url: "https://www.britannica.com/place/Luanda" }, { title: "Angola Ministry of Culture", url: "https://www.mincult.gov.ao/" }]),
+  },
+  {
+    id: "cm-yaounde",
+    summary: "Yaoundé spreads across wooded hills, with national museums, civic monuments, markets and cultural institutions.",
+    description: "Yaoundé occupies a succession of wooded hills in Cameroon's interior, giving its districts a markedly undulating form. The National Museum, housed in the former presidential palace, interprets national history and artistic traditions within the capital. Reunification monuments, central markets and civic architecture provide durable city landmarks while keeping coastal sites and wildlife destinations outside this specifically Yaoundé-focused record.",
+    highlights: ["Wooded seven-hill setting", "Cameroon National Museum", "Reunification Monument", "Central markets and civic architecture"],
+    editorialProvenance: africaBatch5SourceReferences([{ title: "Encyclopaedia Britannica — Yaoundé", url: "https://www.britannica.com/place/Yaounde" }, { title: "Cameroon Ministry of Arts and Culture", url: "https://www.minculture.gov.cm/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 

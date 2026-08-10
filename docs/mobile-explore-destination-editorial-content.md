@@ -195,6 +195,25 @@ After Africa Batch 4, cumulative African coverage is 37 of 54 canonical destinat
 
 Africa Batch 4 changes no images, ExploreScreen or DestinationDetailsScreen UI, maps, search, flight or hotel behaviour, or related destinations. Featured membership and ordering remain unchanged and independent from editorial completeness.
 
+Africa Batch 5, verified on 2026-08-10, covers the planned inland West Africa and Central Africa grouping. All 10 candidates passed the provenance gate and were implemented:
+
+1. `ml-bamako` — Bamako
+2. `ng-kano` — Kano
+3. `ne-niamey` — Niamey
+4. `bf-ouagadougou` — Ouagadougou
+5. `cg-brazzaville` — Brazzaville
+6. `cm-douala` — Douala
+7. `cd-kinshasa` — Kinshasa
+8. `ga-libreville` — Libreville
+9. `ao-luanda` — Luanda
+10. `cm-yaounde` — Yaoundé
+
+No Batch 5 candidate was deferred. Sources were selected from durable reference works and official UNESCO, museum, government and cultural-institution sites, with two distinct titled HTTPS references retained on every record. City copy keeps Bamako and Niamey anchored to their Niger River settings, separates Kano and Ouagadougou from country-wide claims, distinguishes Brazzaville from Kinshasa and Douala from Yaoundé, and treats Libreville and Luanda as their specific estuary and Atlantic capitals.
+
+After Africa Batch 5, cumulative African coverage is 47 of 54 canonical destinations, leaving 7 without editorial content. Conakry, Khartoum and Tripoli continue as documented canonical deferrals, Africa Batches 1–4 remain intact, and Europe remains complete at 52 of 52 destinations.
+
+Africa Batch 5 changes no images, ExploreScreen or DestinationDetailsScreen UI, maps, search, flight or hotel behaviour, booking flows, or related destinations. Featured membership and ordering remain unchanged and independent from editorial completeness.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
