@@ -8,6 +8,7 @@ import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { buildSearchPlan, validBookableCar } from "../flow/travelSearchModel";
 import { Button, Logo, money, shortDate, ui } from "./SearchUi";
 import { useSavedCar } from "./carSavedState";
+import { canBookCarOffer, sortedValidCarOffers } from "./carDetailState";
 
 type Status = "loading" | "ready" | "unavailable";
 const one = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] : value;
@@ -37,11 +38,12 @@ export function ApprovedCarDetailScreen() {
 
 function CarDetailContent({result,params}:{result:CarResult;params:Record<string,string|string[]>}) {
   const inset=useSafeAreaInsets(); const compact=useWindowDimensions().width<430;
-  const offers=useMemo(()=>[...result.offers].filter((offer)=>Number.isFinite(offer.totalPrice)&&offer.totalPrice>=0).sort((a,b)=>a.totalPrice-b.totalPrice||a.id.localeCompare(b.id)),[result.offers]);
+  const offers=useMemo(()=>sortedValidCarOffers(result.offers),[result.offers]);
   const [selectedId,setSelectedId]=useState(offers[0]?.id||""); const selected=offers.find((offer)=>offer.id===selectedId)||offers[0];
+  useEffect(()=>setSelectedId(offers[0]?.id||""),[result.id]);
   const [breakdown,setBreakdown]=useState(false); const saved=useSavedCar(result.id);
   const pickupDate=String(one(params.pickupDate)||""); const dropoffDate=String(one(params.dropoffDate)||""); const days=daysBetween(pickupDate,dropoffDate);
-  const image=resolveImage(result.imageUrl); const bookable=Boolean(result.searchPolicy.bookable&&selected?.bookingUrl&&/^https:\/\//i.test(selected.bookingUrl));
+  const image=resolveImage(result.imageUrl); const bookable=canBookCarOffer(result.searchPolicy.bookable,selected);
   const go=async()=>{if(!bookable||!selected?.bookingUrl)return;await Linking.openURL(selected.bookingUrl);};
   const pickupStatus=result.shuttleRequired?"Shuttle required":result.pickupType==="airport-counter"?"Airport counter":result.pickupType==="meet-and-greet"?"Meet & greet":result.pickupType==="city-location"?"City location":"Pickup details unavailable";
   return <SafeAreaView style={d.safe} edges={["top"]}>

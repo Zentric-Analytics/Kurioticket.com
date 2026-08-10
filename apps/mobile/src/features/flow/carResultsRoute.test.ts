@@ -44,7 +44,10 @@ test("car details retain selected result context and can truthfully recover it",
 
 test("car details only enable external booking for a real HTTPS provider URL", () => {
   const detail = readFileSync("src/features/search/ApprovedCarDetailScreen.tsx", "utf8");
-  assert.match(detail, /result\.searchPolicy\.bookable&&selected\?\.bookingUrl&&\/\^https/);
+  const state = readFileSync("src/features/search/carDetailState.ts", "utf8");
+  assert.match(detail, /canBookCarOffer\(result\.searchPolicy\.bookable,selected\)/);
+  assert.match(state, /url\.protocol === "https:"/);
+  assert.match(state, /Boolean\(url\.hostname\)/);
   assert.match(detail, /disabled=\{!bookable\}/);
   assert.match(detail, /Linking\.openURL\(selected\.bookingUrl\)/);
   assert.match(detail, /No live provider booking link is available/);
