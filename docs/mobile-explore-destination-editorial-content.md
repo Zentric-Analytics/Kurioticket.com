@@ -8,11 +8,23 @@ The shared Explore destination catalogue is derived from the airport catalogue a
 
 ## Regional module architecture
 
-The editorial data is split under `src/shared/destinations/editorial/` to keep regional rollout reviews maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts` and `asia.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in that explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains a compatibility facade containing the single global validation boundary.
+The editorial data is split under `src/shared/destinations/editorial/` to keep regional rollout reviews maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts`, `asia.ts` and `northAmerica.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in that explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains a compatibility facade containing the single global validation boundary.
 
-This architecture-only split changes no editorial copy, provenance, source ordering or verification dates. Europe remains complete at 52/52, Africa at 54/54 and Asia at 64/64; global coverage remains 175/235 with 60 destinations left for the remaining-world rollout. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
+The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Europe remains complete at 52/52, Africa at 54/54 and Asia at 64/64; after North America Batch 1, global coverage is 183/235 with 52 destinations left. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
 
 ## Current rollout and Featured independence
+
+### North America Batch 1 — United States
+
+North America Batch 1, verified on 2026-08-10, adds eight United States records in this rollout order: `us-atlanta` — Atlanta, `us-chicago` — Chicago, `us-dallas-fort-worth` — Dallas-Fort Worth, `us-denver` — Denver, `us-san-francisco` — San Francisco, `us-miami` — Miami, `us-seattle` — Seattle and `us-houston` — Houston. The records live in `src/shared/destinations/editorial/northAmerica.ts` and are appended centrally by `editorial/index.ts` after the historical legacy, Europe, Africa and Asia modules.
+
+Research prioritised official city tourism organisations, municipal and federal sources, official museums and established cultural institutions. Each record carries at least two distinct, titled HTTPS references and uses durable geographic, heritage and cultural themes rather than current operating conditions.
+
+Scope safeguards keep Dallas-Fort Worth explicitly a dual-city metropolitan destination, with Dallas and Fort Worth attractions attributed to their respective cities. Miami remains distinct from the separate City of Miami Beach; San Francisco remains distinct from the wider Bay Area; and Seattle's canonical `SEA` airport mapping remains unchanged even though the airport is in SeaTac. Houston retains grouped airport data with `IAH` primary and `HOU` secondary, while Space Center Houston is placed southeast of central Houston in association with NASA's Johnson Space Center.
+
+Repository-derived North American coverage moves from **3 of 16** canonical destinations before the batch to **11 of 16** afterward. The five remaining North American destinations are `ca-vancouver`, `ca-montreal`, `mx-mexico-city`, `mx-cancun` and `mx-guadalajara`. Global editorial coverage moves from **175 of 235** to **183 of 235**, leaving **52** destinations without editorial content. Europe remains **52/52**, Africa **54/54** and Asia **64/64**; the first 175 records and their exact order remain protected by the historical semantic-payload guard.
+
+Featured membership and its exact order remain independently maintained. This batch includes no UI, image, gallery, map, search, flight or hotel, booking, related-destination or canonical-data changes.
 
 Editorial scope is expanding toward all canonical Explore destinations. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
 
