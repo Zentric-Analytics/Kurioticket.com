@@ -31,6 +31,13 @@ const landingActions = form.slice(
     form.indexOf("data-deals-landing-lower-controls"),
   ),
 );
+const landingLowerControls = form.slice(
+  form.indexOf("data-deals-landing-lower-controls"),
+  form.indexOf(
+    "data-deals-change-stay-dates",
+    form.indexOf("data-deals-landing-lower-controls"),
+  ),
+);
 
 test("LANDING CONTRACT keeps package selection above lower shared controls", () => {
   assert.match(form, /data-deals-layout=\{variant\}/);
@@ -80,6 +87,31 @@ test("landing package modes derive one combination-aware field matrix", () => {
     /isLandingVariant && !included\.hotel[\s\S]*deals\.travellersRow[\s\S]*deals\.travellersRooms/,
   );
   assert.match(form, /if \(!included\.hotel\) return people/);
+});
+
+test("landing lower controls use transparent integrated segments", () => {
+  assert.match(form, /const landingActionSegment =\s*[\s\S]*bg-transparent/);
+  assert.match(form, /const landingActionControl =\s*[\s\S]*border-0/);
+  assert.match(
+    landingLowerControls,
+    /data-deals-landing-travellers[\s\S]*landingActionSegment/,
+  );
+  assert.match(
+    landingLowerControls,
+    /data-deals-landing-cabin[\s\S]*sm:border-s sm:border-slate-200/,
+  );
+  assert.match(
+    landingLowerControls,
+    /id="deals-flight-cabin"[\s\S]*landingActionControl/,
+  );
+  assert.doesNotMatch(
+    landingLowerControls,
+    /data-deals-landing-travellers[\s\S]*className=\{`\$\{field\}/,
+  );
+  assert.doesNotMatch(
+    landingLowerControls,
+    /id="deals-flight-cabin"[\s\S]*className=\{`\$\{field\}/,
+  );
 });
 
 test("landing Stay-date override reuses linked Hotel calendar state", () => {
