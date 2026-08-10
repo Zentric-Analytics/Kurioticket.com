@@ -133,11 +133,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
         href: "/dashboard/alerts?from=account",
         icon: Bell,
       },
-      {
-        labelKey: "accountDashboard.hub.notifications",
-        href: "/notifications",
-        icon: Bell,
-      },
     ],
   },
   {

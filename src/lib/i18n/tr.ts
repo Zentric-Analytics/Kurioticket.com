@@ -1420,8 +1420,8 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "Arama ve sonuçlar yardımı",
   supportFaqSearchAnswer:
     "Kurioticket; uçuş veya otel araması çalışmadığında, sonuçlar yüklenmediğinde, filtreler kafa karıştırdığında ya da fiyatlar ve sağlayıcılar beklendiği gibi görünmediğinde yardımcı olabilir.",
-  supportFaqSavedTripsQuestion: "Kaydedilen seyahatler ve uyarılar",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "Kaydedilen seyahatler ve uyarılar",
+  supportFaqSavedRecentAnswer:
     "Kurioticket kaydedilen seyahatler, son aramalar, fiyat uyarıları, bildirim sorunları ve hesaba bağlı seyahat araçları konusunda yardımcı olabilir.",
   supportFaqRedirectQuestion: "Rezervasyon/sağlayıcı yönlendirme yardımı",
   supportFaqRedirectAnswer:

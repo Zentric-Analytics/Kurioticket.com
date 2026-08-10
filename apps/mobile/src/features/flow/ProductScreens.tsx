@@ -161,7 +161,7 @@ export function FlightsScreen() {
   const panel = useRef<FlightSearchHandle>(null);
   const { availability, loading } = useFeatureAvailability();
   if (loading) return <UnavailableProduct title="Flights" text="Checking flight search availability…" />;
-  if (!loading && !availability.flightSearch) return <UnavailableProduct title="Flights" text="Flight search is temporarily unavailable. Your saved trips and alerts are unchanged." />;
+  if (!loading && !availability.flightSearch) return <UnavailableProduct title="Flights" text="Flight search is temporarily unavailable. Your saved items and alerts are unchanged." />;
   return (
     <Page
       title="Flights"

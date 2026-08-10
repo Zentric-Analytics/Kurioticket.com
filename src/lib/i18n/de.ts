@@ -2601,8 +2601,8 @@ flightLandingRouteAriaLabel:
   supportFaqSearchQuestion: "Hilfe zu Suche und Ergebnissen",
   supportFaqSearchAnswer:
     "Kurioticket kann helfen, wenn die Flug- oder Hotelsuche nicht funktioniert, Ergebnisse nicht geladen werden, Filter unklar sind oder Preise und Anbieter nicht wie erwartet angezeigt werden.",
-  supportFaqSavedTripsQuestion: "Gespeicherte Reisen und Benachrichtigungen",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "Gespeicherte Reisen und Benachrichtigungen",
+  supportFaqSavedRecentAnswer:
     "Kurioticket kann bei gespeicherten Reisen, letzten Suchen, Preisbenachrichtigungen, Benachrichtigungsproblemen und mit dem Konto verknüpften Reisetools helfen.",
   supportFaqRedirectQuestion: "Hilfe zu Buchung und Anbieter-Weiterleitung",
   supportFaqRedirectAnswer:

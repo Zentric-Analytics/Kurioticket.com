@@ -55,16 +55,16 @@ import { applyHomepageRecommendationOrder } from "@/lib/recommendations/homepage
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSession } from "next-auth/react";
 import {
-  readSavedTripIds,
-  toggleSavedTripId,
-  writeSavedTripIds,
+  readSavedItemIds,
+  toggleSavedItemId,
+  writeSavedItemIds,
 } from "@/lib/saved-items-local";
 import {
-  deleteBackendTrip,
-  fetchBackendSavedTrips,
-  getSavedTripLocalId,
-  saveBackendTrip,
-  type SavedTripDisplayDetails,
+  deleteBackendDiscovery,
+  fetchBackendSavedDiscoveries,
+  getSavedDiscoveryLocalId,
+  saveBackendDiscovery,
+  type SavedDiscoveryDisplayDetails,
 } from "@/lib/saved-items-api";
 
 function CompareOffersIllustration() {
@@ -423,11 +423,11 @@ export default function Home() {
     useState<NewsletterStatus>("idle");
   const [newsletterPending, setNewsletterPending] = useState(false);
   const { status: sessionStatus } = useSession();
-  const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
-  const [backendSavedTripIds, setBackendSavedTripIds] = useState<
+  const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
+  const [backendSavedItemIds, setBackendSavedItemIds] = useState<
     Record<string, string>
   >({});
-  const [savedTripError, setSavedTripError] = useState("");
+  const [savedItemError, setSavedItemError] = useState("");
   const [destinationPriceState, setDestinationPriceState] =
     useState<DestinationPriceState>({
       loading: true,
@@ -824,19 +824,19 @@ export default function Home() {
     }
   };
 
-  const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
-    const result = await fetchBackendSavedTrips(signal);
+  const refreshBackendSavedItems = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchBackendSavedDiscoveries(signal);
     if (!result.ok || !result.items) return;
 
     const backendIds: Record<string, string> = {};
     const localIds = result.items.map((item) => {
-      const localId = getSavedTripLocalId(item);
+      const localId = getSavedDiscoveryLocalId(item);
       backendIds[localId] = item.id;
       return localId;
     });
 
-    setBackendSavedTripIds(backendIds);
-    setSavedTripIds(localIds);
+    setBackendSavedItemIds(backendIds);
+    setSavedItemIds(localIds);
   }, []);
 
   useEffect(() => {
@@ -845,7 +845,7 @@ export default function Home() {
     if (sessionStatus === "authenticated") {
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => {
-        void refreshBackendSavedTrips(controller.signal);
+        void refreshBackendSavedItems(controller.signal);
       }, 0);
       return () => {
         window.clearTimeout(timeoutId);
@@ -854,11 +854,11 @@ export default function Home() {
     }
 
     const timeoutId = window.setTimeout(() => {
-      setBackendSavedTripIds({});
-      setSavedTripIds(readSavedTripIds());
+      setBackendSavedItemIds({});
+      setSavedItemIds(readSavedItemIds());
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [refreshBackendSavedTrips, sessionStatus]);
+  }, [refreshBackendSavedItems, sessionStatus]);
 
   useEffect(() => {
     const rail = destinationsRailRef.current;
@@ -1000,55 +1000,55 @@ export default function Home() {
     return () => controller.abort();
   }, [regionCode]);
 
-  const handleSavedTripToggle = async (
+  const handleSavedItemToggle = async (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) => {
     event.preventDefault();
     event.stopPropagation();
 
     if (sessionStatus !== "authenticated") {
-      setSavedTripError("");
-      setSavedTripIds((current) => {
-        const next = toggleSavedTripId(current, itemId);
-        writeSavedTripIds(next);
+      setSavedItemError("");
+      setSavedItemIds((current) => {
+        const next = toggleSavedItemId(current, itemId);
+        writeSavedItemIds(next);
         return next;
       });
       return;
     }
 
-    if (savedTripIds.includes(itemId)) {
-      const backendId = backendSavedTripIds[itemId];
+    if (savedItemIds.includes(itemId)) {
+      const backendId = backendSavedItemIds[itemId];
       if (!backendId) {
-        await refreshBackendSavedTrips();
+        await refreshBackendSavedItems();
         return;
       }
 
-      const result = await deleteBackendTrip(backendId);
+      const result = await deleteBackendDiscovery(backendId);
       if (result.ok) {
-        setSavedTripError("");
-        setSavedTripIds((current) => current.filter((id) => id !== itemId));
-        setBackendSavedTripIds((current) => {
+        setSavedItemError("");
+        setSavedItemIds((current) => current.filter((id) => id !== itemId));
+        setBackendSavedItemIds((current) => {
           const next = { ...current };
           delete next[itemId];
           return next;
         });
       } else {
-        setSavedTripError(
-          result.error ?? "Unable to update saved trips right now.",
+        setSavedItemError(
+          result.error ?? "Unable to update saved items right now.",
         );
-        await refreshBackendSavedTrips();
+        await refreshBackendSavedItems();
       }
       return;
     }
 
-    const result = await saveBackendTrip(itemId, display);
+    const result = await saveBackendDiscovery(itemId, display);
     if (result.ok || result.duplicate) {
-      setSavedTripError("");
-      await refreshBackendSavedTrips();
+      setSavedItemError("");
+      await refreshBackendSavedItems();
     } else {
-      setSavedTripError(result.error ?? "Unable to save trip right now.");
+      setSavedItemError(result.error ?? "Unable to save item right now.");
     }
   };
 
@@ -1175,8 +1175,8 @@ export default function Home() {
                         market: regionCode,
                       })}
                       isPriceLoading={destinationPriceState.loading}
-                      isSaved={savedTripIds.includes(destination.id)}
-                      onHeartToggle={handleSavedTripToggle}
+                      isSaved={savedItemIds.includes(destination.id)}
+                      onHeartToggle={handleSavedItemToggle}
                     />
                   );
                 })}
@@ -1187,7 +1187,7 @@ export default function Home() {
 
         <section className="page-shell bg-white py-7 sm:bg-transparent sm:py-6">
           <p className="sr-only" aria-live="polite">
-            {savedTripError}
+            {savedItemError}
           </p>
           <div className="space-y-3 sm:space-y-5">
             <div className="space-y-2">
@@ -1244,8 +1244,8 @@ export default function Home() {
                                 card.item.destinationCode
                               }
                               isPriceLoading={discoveryFareCardState.loading}
-                              isSaved={savedTripIds.includes(card.item.id)}
-                              onHeartToggle={handleSavedTripToggle}
+                              isSaved={savedItemIds.includes(card.item.id)}
+                              onHeartToggle={handleSavedItemToggle}
                             />
                           </div>
                         );
@@ -1283,8 +1283,8 @@ export default function Home() {
                     expectedOriginCode={card.item.originCode}
                     expectedDestinationCode={card.item.destinationCode}
                     isPriceLoading={discoveryFareCardState.loading}
-                    isSaved={savedTripIds.includes(card.item.id)}
-                    onHeartToggle={handleSavedTripToggle}
+                    isSaved={savedItemIds.includes(card.item.id)}
+                    onHeartToggle={handleSavedItemToggle}
                   />
                 );
               })}
@@ -1944,7 +1944,7 @@ function DiscoverySuggestionCard({
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) => void;
 }) {
   const { t: dictionary } = useLocale();
@@ -2162,7 +2162,7 @@ function DestinationCard({
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) => void;
 }) {
   const { t: dictionary } = useLocale();

@@ -1390,8 +1390,8 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "검색 및 결과 도움말",
   supportFaqSearchAnswer:
     "항공권 또는 호텔 검색이 작동하지 않거나, 결과가 로드되지 않거나, 필터가 혼란스럽거나, 가격과 제공업체가 예상대로 표시되지 않을 때 Kurioticket이 도와드릴 수 있습니다.",
-  supportFaqSavedTripsQuestion: "저장한 여행 및 알림",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "저장한 여행 및 알림",
+  supportFaqSavedRecentAnswer:
     "Kurioticket은 저장한 여행, 최근 검색, 가격 알림, 알림 문제, 계정에 연결된 여행 도구를 도와드릴 수 있습니다.",
   supportFaqAlreadyBookedQuestion: "이미 제공업체에서 예약하셨나요?",
   supportFaqAlreadyBookedAnswer:

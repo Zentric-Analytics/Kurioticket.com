@@ -1173,8 +1173,8 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "Trợ giúp tìm kiếm và kết quả",
   supportFaqSearchAnswer:
     "Kurioticket có thể hỗ trợ khi tìm kiếm chuyến bay hoặc khách sạn không hoạt động, kết quả không tải, bộ lọc khó hiểu hoặc giá và nhà cung cấp không hiển thị như mong đợi.",
-  supportFaqSavedTripsQuestion: "Chuyến đi đã lưu và cảnh báo",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "Chuyến đi đã lưu và cảnh báo",
+  supportFaqSavedRecentAnswer:
     "Kurioticket có thể hỗ trợ chuyến đi đã lưu, tìm kiếm gần đây, cảnh báo giá, sự cố thông báo và các công cụ du lịch liên kết với tài khoản.",
   supportFaqRedirectQuestion: "Trợ giúp chuyển hướng đặt chỗ/nhà cung cấp",
   supportFaqRedirectAnswer:

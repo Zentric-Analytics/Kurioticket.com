@@ -20,7 +20,7 @@
 | Area | Responsibility | Dependency type |
 |---|---|---|
 | `apps/mobile` | App UI, config, release scripts | Imports app-level environment schema and shared types |
-| `src/app/api` | Search, auth, saved-trips, support flows | Backing services for both web and mobile clients |
+| `src/app/api` | Search, auth, saved-and-recent, support flows | Backing services for both web and mobile clients |
 | `prisma/schema.prisma` | Data model, auth/session + travel entities | Required by web API |
 | `apps/mobile/scripts/*.mjs` | Release classification, version/cap, baselines | Called by workflows |
 | `apps/mobile/release-baselines` | Identity/baseline evidence | Required by production and replay safety |

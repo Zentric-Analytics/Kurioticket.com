@@ -2628,8 +2628,8 @@ flightLandingRouteAriaLabel:
   supportFaqSearchQuestion: "Aide sur la recherche et les résultats",
   supportFaqSearchAnswer:
     "Kurioticket peut vous aider lorsque la recherche de vols ou d’hôtels ne fonctionne pas, que les résultats ne se chargent pas, que les filtres prêtent à confusion ou que les prix et fournisseurs ne s’affichent pas comme prévu.",
-  supportFaqSavedTripsQuestion: "Voyages enregistrés et alertes",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "Voyages enregistrés et alertes",
+  supportFaqSavedRecentAnswer:
     "Kurioticket peut vous aider avec les voyages enregistrés, les recherches récentes, les alertes de prix, les problèmes de notification et les outils de voyage liés au compte.",
   supportFaqRedirectQuestion:
     "Aide sur les réservations et les redirections vers les fournisseurs",

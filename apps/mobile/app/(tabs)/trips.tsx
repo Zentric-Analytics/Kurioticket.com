@@ -1,3 +1,3 @@
-import { TripsFlowScreen } from "../../src/features/flow/TabScreens";
+import { MyTripsFlowScreen } from "../../src/features/flow/TabScreens";
 
-export default TripsFlowScreen;
+export default MyTripsFlowScreen;

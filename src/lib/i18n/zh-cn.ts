@@ -1395,8 +1395,8 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "搜索和结果帮助",
   supportFaqSearchAnswer:
     "当航班或酒店搜索无法正常工作、结果无法加载、筛选条件令人困惑，或价格和供应商未按预期显示时，Kurioticket 可以提供帮助。",
-  supportFaqSavedTripsQuestion: "已保存行程和提醒",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "已保存行程和提醒",
+  supportFaqSavedRecentAnswer:
     "Kurioticket 可以协助处理已保存行程、近期搜索、价格提醒、通知问题以及与账户关联的旅行工具。",
   supportFaqRedirectQuestion: "预订和供应商跳转帮助",
   supportFaqRedirectAnswer:

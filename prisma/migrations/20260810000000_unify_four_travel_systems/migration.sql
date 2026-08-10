@@ -54,7 +54,11 @@ UPDATE "Notification" SET "type" = 'PRICE_ALERT',
   "title" = replace("title", 'Route watch', 'Price alert'),
   "body" = replace("body", 'route watch', 'price alert')
 WHERE "type" = 'ROUTE_WATCH';
-DELETE FROM "Notification" WHERE "type" = 'TRIP_REMINDER' AND FALSE; -- document intentional history preservation
+UPDATE "Notification" SET "type" = 'TRAVEL_INSIGHT',
+  "title" = replace("title", 'Saved trip reminder', 'Travel reminder'),
+  "body" = replace("body", 'saved trip', 'saved travel'),
+  "actionPath" = CASE WHEN "actionPath" IN ('/saved', '/price-alerts', '/settings', '/personal-information') THEN "actionPath" ELSE '/saved' END
+WHERE "type" = 'TRIP_REMINDER';
 
 -- One optional email consent. OR retains an explicit opt-in from either predecessor;
 -- removed reminder consent is not reassigned to another category.

@@ -87,7 +87,6 @@ const signedInAccountMenuItems = [
   { href: "/dashboard/trips", labelKey: "accountMenu.myTrips.label", icon: LayoutDashboard },
   { href: "/saved?from=account", labelKey: "accountMenu.savedRecent.label", icon: SavedHeartIcon },
   { href: "/dashboard/alerts?from=account", labelKey: "accountMenu.priceAlerts.label", icon: Tag },
-  { href: "/notifications", labelKey: "accountMenu.notifications.label", icon: Mail },
 ];
 
 const mobileSignedInAccountMenuItems = [

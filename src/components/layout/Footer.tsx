@@ -55,12 +55,8 @@ export function Footer() {
           href: "/destinations",
         },
         {
-          label: t.footerSavedTrips,
+          label: t["accountMenu.savedRecent.label"],
           href: "/saved",
-        },
-        {
-          label: t.footerRecentSearches,
-          href: "/recent-searches",
         },
       ],
     },
