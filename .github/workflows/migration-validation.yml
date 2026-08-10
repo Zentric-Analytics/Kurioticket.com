@@ -103,6 +103,7 @@ jobs:
                 scripts/deploy-render-migrations.mjs|\
                 scripts/migration-validation-workflow.test.mjs|\
                 scripts/run-render-migrations.mjs|\
+                scripts/verify-issue4-security-upgrade.mjs|\
                 scripts/verify-production-schema.mjs)
                   applicable=true
                   classification=migration-related-change
@@ -164,6 +165,9 @@ jobs:
 
       - name: Verify Issue 3 upgrade from representative legacy data
         run: node scripts/validate-four-system-upgrade.mjs
+
+      - name: Verify Issue 4 security upgrade from representative legacy data
+        run: node scripts/verify-issue4-security-upgrade.mjs
 
       - name: Verify deployed schema
         run: node scripts/verify-production-schema.mjs
