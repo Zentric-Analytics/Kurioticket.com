@@ -3578,7 +3578,7 @@ export function DealsSearchForm({
         >
           <div
             data-deals-landing-lower-controls
-            className={`grid gap-y-3 border-b border-slate-200 pb-3 ${included.flight ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_auto]"} sm:items-stretch sm:[&>div:last-child]:ms-3`}
+            className={`grid gap-y-3 border-b border-slate-200 pb-3 ${included.flight ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" : "sm:grid-cols-1"} sm:items-stretch`}
           >
             <button
               data-deals-landing-travellers
@@ -3636,10 +3636,12 @@ export function DealsSearchForm({
                 />
               </div>
             ) : null}
-            {searchDealsButton}
           </div>
-          {supportsLandingStayDateOverride ? (
-            <div className="mt-4 flex flex-col items-start gap-3">
+          <div
+            data-deals-landing-action-row
+            className={`mt-4 flex flex-col gap-3 sm:flex-row sm:items-center ${supportsLandingStayDateOverride ? "sm:justify-between" : "sm:justify-end"}`}
+          >
+            {supportsLandingStayDateOverride ? (
               <label
                 data-deals-change-stay-dates
                 className="focus-within:ring-[#004BB8]/25 flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-1 text-sm font-bold text-slate-800 focus-within:ring-2"
@@ -3667,43 +3669,40 @@ export function DealsSearchForm({
                 />
                 <span>{t("deals.changeDatesForStay")}</span>
               </label>
-              {!search.stayDatesLinked ? (
-                <div
-                  data-deals-landing-stay-dates
-                  className="w-full border-b border-slate-200 pb-3"
-                >
-                  <span className={`${label} px-3`}>
-                    {t("deals.datesForStay")}
-                  </span>
-                  <button
-                    ref={hotelDatesLauncherRef}
-                    type="button"
-                    aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
-                    aria-haspopup="dialog"
-                    aria-controls={
-                      mobileHotelDatesOpen
-                        ? "deals-hotel-mobile-dates"
-                        : "deals-hotel-desktop-dates"
-                    }
-                    aria-label={t("deals.chooseStayDates")}
-                    onClick={() =>
-                      hotelDatesOpen
-                        ? dismissDesktopHotelDates(true)
-                        : openHotelDates()
-                    }
-                    className={`${landingActionSegment} flex w-full max-w-sm items-center justify-between gap-2 text-start`}
-                  >
-                    <span className="min-w-0 truncate">
-                      {hotelDatesSummary}
-                    </span>
-                    <Calendar
-                      aria-hidden="true"
-                      className="h-4 w-4 shrink-0 text-slate-500"
-                    />
-                  </button>
-                  <div>{errorBlock("hotel")}</div>
-                </div>
-              ) : null}
+            ) : null}
+            {searchDealsButton}
+          </div>
+          {supportsLandingStayDateOverride && !search.stayDatesLinked ? (
+            <div
+              data-deals-landing-stay-dates
+              className="mt-3 w-full border-b border-slate-200 pb-3"
+            >
+              <span className={`${label} px-3`}>{t("deals.datesForStay")}</span>
+              <button
+                ref={hotelDatesLauncherRef}
+                type="button"
+                aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
+                aria-haspopup="dialog"
+                aria-controls={
+                  mobileHotelDatesOpen
+                    ? "deals-hotel-mobile-dates"
+                    : "deals-hotel-desktop-dates"
+                }
+                aria-label={t("deals.chooseStayDates")}
+                onClick={() =>
+                  hotelDatesOpen
+                    ? dismissDesktopHotelDates(true)
+                    : openHotelDates()
+                }
+                className={`${landingActionSegment} flex w-full max-w-sm items-center justify-between gap-2 text-start`}
+              >
+                <span className="min-w-0 truncate">{hotelDatesSummary}</span>
+                <Calendar
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-slate-500"
+                />
+              </button>
+              <div>{errorBlock("hotel")}</div>
             </div>
           ) : null}
           <div className="w-full">{guidedPreviewPanel}</div>

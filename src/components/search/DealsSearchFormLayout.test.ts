@@ -33,10 +33,11 @@ const landingActions = form.slice(
 );
 const landingLowerControls = form.slice(
   form.indexOf("data-deals-landing-lower-controls"),
-  form.indexOf(
-    "data-deals-change-stay-dates",
-    form.indexOf("data-deals-landing-lower-controls"),
-  ),
+  form.indexOf("data-deals-landing-action-row"),
+);
+const landingActionRow = form.slice(
+  form.indexOf("data-deals-landing-action-row"),
+  form.indexOf("data-deals-landing-stay-dates"),
 );
 const landingStayDates = form.slice(
   form.indexOf("data-deals-landing-stay-dates"),
@@ -57,22 +58,36 @@ test("LANDING CONTRACT keeps package selection above lower shared controls", () 
     form.indexOf("data-deals-landing-lower-controls") >
       form.indexOf("data-deals-results-car"),
   );
-  const lowerControls = form.slice(
-    form.indexOf("data-deals-landing-lower-controls"),
-    form.indexOf(
-      "guidedPreviewPanel",
-      form.indexOf("data-deals-landing-lower-controls"),
-    ),
+  assert.match(landingLowerControls, /travelersLauncherRef/);
+  assert.match(landingLowerControls, /travelerSummary/);
+  assert.match(landingLowerControls, /search\.flightCabinClass/);
+  assert.match(landingLowerControls, /\{included\.flight \? \(/);
+  assert.doesNotMatch(landingLowerControls, /\{searchDealsButton\}/);
+  assert.doesNotMatch(landingLowerControls, /grid-cols-\[[^\]]*_auto/);
+  assert.doesNotMatch(
+    landingLowerControls,
+    /data-deals-landing-cabin[\s\S]*else/,
   );
-  assert.match(lowerControls, /travelersLauncherRef/);
-  assert.match(lowerControls, /travelerSummary/);
-  assert.match(lowerControls, /search\.flightCabinClass/);
-  assert.match(lowerControls, /\{included\.flight \? \(/);
-  assert.match(lowerControls, /\{searchDealsButton\}/);
-  assert.doesNotMatch(lowerControls, /data-deals-landing-cabin[\s\S]*else/);
   assert.match(form, /guidedPreviewPanel/);
   assert.doesNotMatch(page, /variant="results"/);
   assert.match(page, /<DealsSearchForm/);
+});
+
+test("landing action row follows lower controls and keeps the CTA above Stay dates", () => {
+  const lowerControlsPosition = form.indexOf(
+    "data-deals-landing-lower-controls",
+  );
+  const actionRowPosition = form.indexOf("data-deals-landing-action-row");
+  const stayDatesPosition = form.indexOf("data-deals-landing-stay-dates");
+
+  assert.ok(lowerControlsPosition < actionRowPosition);
+  assert.ok(actionRowPosition < stayDatesPosition);
+  assert.match(landingActionRow, /supportsLandingStayDateOverride \? \(/);
+  assert.match(landingActionRow, /data-deals-change-stay-dates/);
+  assert.match(landingActionRow, /\{searchDealsButton\}/);
+  assert.doesNotMatch(landingActionRow, /data-deals-landing-stay-dates/);
+  assert.match(landingActionRow, /sm:justify-between/);
+  assert.match(landingActionRow, /sm:justify-end/);
 });
 
 test("landing package modes derive one combination-aware field matrix", () => {
