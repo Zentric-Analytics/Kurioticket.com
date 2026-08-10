@@ -276,6 +276,44 @@ test("results Travellers remains an accessible plain launcher beside the CTA", (
   assert.equal(form.match(/type="submit"/g)?.length, 1);
 });
 
+test("desktop Travellers popover stays viewport-aware with contained scrolling", () => {
+  const popover = form.slice(
+    form.indexOf("function DealsFlightPopover"),
+    form.indexOf("function DealsDestinationPopover"),
+  );
+  assert.match(popover, /anchorRef\.current\.getBoundingClientRect\(\)/);
+  assert.match(popover, /window\.innerHeight - rect\.bottom - gap - gutter/);
+  assert.match(popover, /rect\.top - gap - gutter/);
+  assert.match(popover, /openAbove = below < desiredHeight && above > below/);
+  assert.match(popover, /bottom: window\.innerHeight - rect\.top \+ gap/);
+  assert.match(popover, /maxHeight/);
+  assert.match(popover, /addEventListener\("resize", updatePosition\)/);
+  assert.match(popover, /addEventListener\("scroll", updatePosition, true\)/);
+  assert.match(popover, /data-deals-flight-travellers-popover/);
+  assert.match(popover, /overflow-hidden/);
+
+  const desktopPicker = form.slice(
+    form.indexOf('id="deals-desktop-travellers"'),
+    form.indexOf(
+      "<FlightMobilePickerShell",
+      form.indexOf('id="deals-desktop-travellers"'),
+    ),
+  );
+  assert.match(desktopPicker, /overflow-y-auto/);
+  assert.match(desktopPicker, /overflow-x-hidden/);
+  assert.match(desktopPicker, /shrink-0/);
+});
+
+test("shared Travellers picker keeps Hotel rooms and their commit path", () => {
+  assert.match(form, /\{included\.hotel \? \([\s\S]*t\("rooms"\)/);
+  assert.match(form, /draftHotelRooms <= 1/);
+  assert.match(form, /Math\.max\(1, value - 1\)/);
+  assert.match(form, /draftHotelRooms >= 6/);
+  assert.match(form, /Math\.min\(6, value \+ 1\)/);
+  assert.match(form, /rooms: Math\.max\(1, Math\.min\(6, draftHotelRooms\)\)/);
+  assert.match(form, /hotelRooms: normalized\.rooms/);
+});
+
 test("there is exactly one runtime submit action shared by both variants", () => {
   assert.equal(form.match(/type="submit"/g)?.length, 1);
   assert.match(
