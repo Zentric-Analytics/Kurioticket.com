@@ -52,6 +52,9 @@ const airportLabel = (code: unknown) => {
   return airport ? `${airport.city} (${value})` : value;
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
+  const { width } = useWindowDimensions();
+  const narrowHeader = width < 360;
+  const stackedResultsSummary = width < 390;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = useMemo(
@@ -133,20 +136,22 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
       <TopBar />
-      <View style={s0.summary}>
-        <View style={{ flex: 1 }}>
+      <View style={[s0.summary, narrowHeader && s0.summaryNarrow]}>
+        <View style={s0.summaryCopy}>
           <Text style={s0.route}>
             {product === "flight"
               ? `${airportLabel(payload.origin)}  ⇄  ${airportLabel(payload.destination)}`
               : String(payload.destination || "")}
           </Text>
-          <Text style={s0.sub}>
+          <Text style={[s0.sub, s0.summaryMeta]}>
             {product === "flight"
               ? `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}  ·  ${payload.travelers} Traveler${payload.travelers === 1 ? "" : "s"}  ·  ${String(payload.cabinClass || "").replace(/-/g, " ")}`
               : `${shortDate(String(payload.checkIn || ""))} – ${shortDate(String(payload.checkOut || ""))}  ·  ${payload.rooms || 1} Room, ${payload.guests || 2} Guests`}
           </Text>
         </View>
-        <Pill label="Edit search" icon="document" onPress={edit} />
+        <View style={narrowHeader && s0.editNarrow}>
+          <Pill label="Edit search" icon="document" onPress={edit} />
+        </View>
       </View>
       <DateStrip
         date={date}
@@ -218,7 +223,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           />
         ) : null}
         {status === "ready" ? (
-          <View style={s0.found}>
+          <View style={[s0.found, stackedResultsSummary && s0.foundNarrow]}>
             <View style={s0.foundCopy}>
               <Text style={s0.foundTitle}>
                 {results.length}{" "}
@@ -240,7 +245,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 }
               />
             ) : (
-              <View style={s0.foundAside}>
+              <View
+                style={[
+                  s0.foundAside,
+                  stackedResultsSummary && s0.foundAsideNarrow,
+                ]}
+              >
                 <Text style={s0.change}>ⓘ Price may change</Text>
                 <Text style={s0.sub}>Book soon to lock in this price.</Text>
               </View>
@@ -515,16 +525,21 @@ export function BottomNav() {
 const s0 = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "white" },
   summary: {
-    paddingHorizontal: 26,
-    paddingBottom: 14,
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    paddingBottom: 12,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 12,
   },
-  filterRail: { height: 70, flexGrow: 0 },
-  route: { fontSize: 21, fontWeight: "900", color: ui.navy },
+  summaryNarrow: { flexDirection: "column", gap: 8 },
+  summaryCopy: { flex: 1, minWidth: 0 },
+  summaryMeta: { marginTop: 3 },
+  editNarrow: { alignSelf: "flex-start" },
+  filterRail: { height: 64, flexGrow: 0 },
+  route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
-  filters: { paddingHorizontal: 18, paddingVertical: 16, gap: 9 },
+  filters: { paddingHorizontal: 18, paddingVertical: 10, gap: 9, alignItems: "center" },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
   notice: {
     backgroundColor: "#F2F6FF",
@@ -542,9 +557,12 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: "#FAFCFF",
+    gap: 12,
   },
+  foundNarrow: { alignItems: "flex-start", flexDirection: "column", gap: 8 },
   foundCopy: { flex: 1, minWidth: 0 },
   foundAside: { flexShrink: 1, maxWidth: 160 },
+  foundAsideNarrow: { maxWidth: "100%" },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   change: { color: ui.navy, fontSize: 12 },
   card: {

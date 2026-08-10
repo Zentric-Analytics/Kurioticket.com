@@ -50,14 +50,16 @@ export function Logo() {
 export function TopBar({ detail = false }: { detail?: boolean }) {
   return (
     <View style={s.top}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Go back"
-        onPress={() => router.back()}
-        style={s.hit}
-      >
-        <FlowIcon name="back" size={25} />
-      </Pressable>
+      <View style={s.topSide}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          onPress={() => router.back()}
+          style={s.hit}
+        >
+          <FlowIcon name="back" size={25} />
+        </Pressable>
+      </View>
       <Logo />
       <View style={s.topActions}>
         {detail ? (
@@ -239,9 +241,9 @@ export function Empty({
   );
 }
 export const s = StyleSheet.create({
-  logo: { width: 142, height: 34 },
+  logo: { width: 128, height: 30 },
   top: {
-    height: 82,
+    height: 64,
     paddingHorizontal: 18,
     flexDirection: "row",
     alignItems: "center",
@@ -254,6 +256,7 @@ export const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  topSide: { width: 76, alignItems: "flex-start" },
   topActions: {
     width: 76,
     flexDirection: "row",
