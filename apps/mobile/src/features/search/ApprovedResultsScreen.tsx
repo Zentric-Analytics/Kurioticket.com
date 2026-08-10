@@ -277,6 +277,19 @@ function FlightFilterModal({ visible, section, filters, options, onChange, onClo
   const choices = (key: keyof FlightFilters, values: readonly string[], labels?: Record<string, string>) => <View style={s0.choiceRow}>{values.map((value) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: draft[key].includes(value as never) }} onPress={() => toggle(key, value)} style={[s0.choice, draft[key].includes(value as never) && s0.choiceActive]}><Text style={s0.inputLabel}>{labels?.[value] || value}</Text></Pressable>)}</View>;
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal><View style={s0.modalBackdrop}><View style={s0.sheet} accessibilityLabel="Flight filters"><View style={s0.sheetHead}><Text accessibilityRole="header" style={s0.foundTitle}>Filter flights</Text><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose}><FlowIcon name="close" /></Pressable></View>{(section === "all" || section === "stops") && options.stops.length ? <><Text style={s0.inputLabel}>Stops</Text>{choices("stops", options.stops, stopLabels)}</> : null}{(section === "all" || section === "airlines") && options.airlines.length ? <><Text style={s0.inputLabel}>Airlines</Text>{choices("airlines", options.airlines)}</> : null}{(section === "all" || section === "times") && options.times.length ? <><Text style={s0.inputLabel}>Departure time</Text>{choices("times", options.times, timeLabels)}</> : null}<Button label="Apply filters" onPress={() => { onChange(draft); onClose(); }} /><Button label="Clear filters" outline onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} /></View></View></Modal>;
 }
+function FlightBenefitItem({ icon, label, value, wide = false, narrow = false }: { icon: "trip" | "help" | "document"; label: string; value: string; wide?: boolean; narrow?: boolean }) {
+  return (
+    <View style={[s0.flightBenefitItem, wide && s0.flightBenefitWide, narrow && s0.flightBenefitNarrow]}>
+      <View style={s0.flightBenefitIcon}>
+        <FlowIcon name={icon} size={17} color={ui.blue} />
+      </View>
+      <View style={s0.flightBenefitCopy}>
+        <Text style={s0.flightBenefitLabel}>{label}</Text>
+        <Text style={s0.flightBenefitValue}>{value}</Text>
+      </View>
+    </View>
+  );
+}
 function FlightCard({ result, rank, params }: { result: FlightResult; rank: number; params: Record<string, string | string[]> }) {
   const { savedIds, toggle } = useSavedFlights();
   const narrow = useWindowDimensions().width < 400;
@@ -357,27 +370,27 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
           </View>
         </View>
       </View>
-      <View style={s0.benefits}>
-        <Text style={s0.benefit}>
-          ▣ {result.baggageInfo || "Baggage details unavailable"}
-        </Text>
-        <Text style={s0.benefit}>◉ Seat selection unavailable</Text>
-        <Text style={s0.benefit}>
-          ◉ {result.refundInfo || "Fare rules unavailable"}
-        </Text>
-        <Button
-          label="View details"
-          outline={rank !== 0}
-          onPress={() =>
-            router.push({
-              pathname: "/flight-details",
-              params: {
-                result: JSON.stringify(result),
-                ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, one(value) || ""])),
-              },
-            })
-          }
-        />
+      <View style={s0.flightLowerSection}>
+        <View style={s0.flightBenefitsGrid}>
+          <FlightBenefitItem icon="trip" label="Baggage" value={result.baggageInfo || "Baggage details unavailable"} narrow={narrow} />
+          <FlightBenefitItem icon="help" label="Seat selection" value="Information unavailable" narrow={narrow} />
+          <FlightBenefitItem icon="document" label="Changes & refunds" value={result.refundInfo || "Fare rules unavailable"} wide narrow={narrow} />
+        </View>
+        <View style={s0.flightDetailsCta}>
+          <Button
+            label="View details"
+            outline={rank !== 0}
+            onPress={() =>
+              router.push({
+                pathname: "/flight-details",
+                params: {
+                  result: JSON.stringify(result),
+                  ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, one(value) || ""])),
+                },
+              })
+            }
+          />
+        </View>
       </View>
     </View>
   );
@@ -791,15 +804,32 @@ const s0 = StyleSheet.create({
   priceBoxNarrow: { minWidth: 74 },
   bigPrice: { fontSize: 21, lineHeight: 24, fontWeight: "900", color: ui.navy },
   roundTrip: { fontSize: 11, lineHeight: 16, color: ui.muted, textAlign: "right" },
-  benefits: {
+  flightLowerSection: {
     borderTopWidth: 1,
     borderTopColor: "#EDF0F5",
-    paddingTop: 13,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
+    paddingTop: 14,
+    gap: 14,
   },
-  benefit: { fontSize: 11, color: ui.muted, flex: 1 },
+  flightBenefitsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    rowGap: 14,
+    columnGap: 12,
+  },
+  flightBenefitItem: {
+    width: "48%",
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  flightBenefitWide: { width: "100%" },
+  flightBenefitNarrow: { width: "100%" },
+  flightBenefitIcon: { width: 20, paddingTop: 1, alignItems: "center" },
+  flightBenefitCopy: { flex: 1, minWidth: 0, gap: 2 },
+  flightBenefitLabel: { fontSize: 12, lineHeight: 16, fontWeight: "700", color: ui.navy },
+  flightBenefitValue: { fontSize: 12, lineHeight: 17, fontWeight: "400", color: ui.muted },
+  flightDetailsCta: { width: 148, alignSelf: "flex-end" },
   hotelCard: {
     height: 234,
     borderWidth: 1,
