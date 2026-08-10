@@ -8,7 +8,8 @@ const routeSource = readFileSync("src/app/api/price-alerts/route.ts", "utf8");
 const serviceSource = readFileSync("src/services/priceTrackingService.ts", "utf8");
 
 test("price alert API keeps auth, malformed JSON, validation and duplicate handling", () => {
-  assert.match(routeSource, /getServerSession\(authOptions\)/);
+  assert.match(routeSource, /requireWebApiSession\(\)/);
+  assert.doesNotMatch(routeSource, /getServerSession\(authOptions\)/);
   assert.match(routeSource, /status: 401/);
   assert.match(routeSource, /request\.json\(\)/);
   assert.match(routeSource, /status: 400/);

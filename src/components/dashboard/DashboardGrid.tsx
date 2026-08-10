@@ -3074,9 +3074,9 @@ export function SecurityDashboardPage() {
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title="Your devices"
+            title={tx("accountDashboard.security.activeSessions.title", "Your devices")}
             body={tx("accountDashboard.security.activeSessions.description", "Review devices signed in to your account.")}
-            action="Manage devices"
+            action={tx("accountDashboard.security.action.manageSessions", "Manage devices")}
             onAction={handleOpenSessions}
             statusId={securityActionStatusId}
           />
