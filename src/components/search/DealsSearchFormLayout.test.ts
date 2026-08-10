@@ -33,10 +33,11 @@ const landingActions = form.slice(
 );
 const landingLowerControls = form.slice(
   form.indexOf("data-deals-landing-lower-controls"),
-  form.indexOf(
-    "data-deals-change-stay-dates",
-    form.indexOf("data-deals-landing-lower-controls"),
-  ),
+  form.indexOf("data-deals-landing-action-row"),
+);
+const landingActionRow = form.slice(
+  form.indexOf("data-deals-landing-action-row"),
+  form.indexOf("data-deals-landing-stay-dates"),
 );
 const landingStayDates = form.slice(
   form.indexOf("data-deals-landing-stay-dates"),
@@ -57,22 +58,36 @@ test("LANDING CONTRACT keeps package selection above lower shared controls", () 
     form.indexOf("data-deals-landing-lower-controls") >
       form.indexOf("data-deals-results-car"),
   );
-  const lowerControls = form.slice(
-    form.indexOf("data-deals-landing-lower-controls"),
-    form.indexOf(
-      "guidedPreviewPanel",
-      form.indexOf("data-deals-landing-lower-controls"),
-    ),
+  assert.match(landingLowerControls, /travelersLauncherRef/);
+  assert.match(landingLowerControls, /travelerSummary/);
+  assert.match(landingLowerControls, /search\.flightCabinClass/);
+  assert.match(landingLowerControls, /\{included\.flight \? \(/);
+  assert.doesNotMatch(landingLowerControls, /\{searchDealsButton\}/);
+  assert.doesNotMatch(landingLowerControls, /grid-cols-\[[^\]]*_auto/);
+  assert.doesNotMatch(
+    landingLowerControls,
+    /data-deals-landing-cabin[\s\S]*else/,
   );
-  assert.match(lowerControls, /travelersLauncherRef/);
-  assert.match(lowerControls, /travelerSummary/);
-  assert.match(lowerControls, /search\.flightCabinClass/);
-  assert.match(lowerControls, /\{included\.flight \? \(/);
-  assert.match(lowerControls, /\{searchDealsButton\}/);
-  assert.doesNotMatch(lowerControls, /data-deals-landing-cabin[\s\S]*else/);
   assert.match(form, /guidedPreviewPanel/);
   assert.doesNotMatch(page, /variant="results"/);
   assert.match(page, /<DealsSearchForm/);
+});
+
+test("landing action row follows lower controls and keeps the CTA above Stay dates", () => {
+  const lowerControlsPosition = form.indexOf(
+    "data-deals-landing-lower-controls",
+  );
+  const actionRowPosition = form.indexOf("data-deals-landing-action-row");
+  const stayDatesPosition = form.indexOf("data-deals-landing-stay-dates");
+
+  assert.ok(lowerControlsPosition < actionRowPosition);
+  assert.ok(actionRowPosition < stayDatesPosition);
+  assert.match(landingActionRow, /supportsLandingStayDateOverride \? \(/);
+  assert.match(landingActionRow, /data-deals-change-stay-dates/);
+  assert.match(landingActionRow, /\{searchDealsButton\}/);
+  assert.doesNotMatch(landingActionRow, /data-deals-landing-stay-dates/);
+  assert.match(landingActionRow, /sm:justify-between/);
+  assert.match(landingActionRow, /sm:justify-end/);
 });
 
 test("landing package modes derive one combination-aware field matrix", () => {
@@ -274,6 +289,44 @@ test("results Travellers remains an accessible plain launcher beside the CTA", (
   );
   assert.match(form, /type="submit"[\s\S]*rounded-xl bg-\[#004BB8\]/);
   assert.equal(form.match(/type="submit"/g)?.length, 1);
+});
+
+test("desktop Travellers popover stays viewport-aware with contained scrolling", () => {
+  const popover = form.slice(
+    form.indexOf("function DealsFlightPopover"),
+    form.indexOf("function DealsDestinationPopover"),
+  );
+  assert.match(popover, /anchorRef\.current\.getBoundingClientRect\(\)/);
+  assert.match(popover, /window\.innerHeight - rect\.bottom - gap - gutter/);
+  assert.match(popover, /rect\.top - gap - gutter/);
+  assert.match(popover, /openAbove = below < desiredHeight && above > below/);
+  assert.match(popover, /bottom: window\.innerHeight - rect\.top \+ gap/);
+  assert.match(popover, /maxHeight/);
+  assert.match(popover, /addEventListener\("resize", updatePosition\)/);
+  assert.match(popover, /addEventListener\("scroll", updatePosition, true\)/);
+  assert.match(popover, /data-deals-flight-travellers-popover/);
+  assert.match(popover, /overflow-hidden/);
+
+  const desktopPicker = form.slice(
+    form.indexOf('id="deals-desktop-travellers"'),
+    form.indexOf(
+      "<FlightMobilePickerShell",
+      form.indexOf('id="deals-desktop-travellers"'),
+    ),
+  );
+  assert.match(desktopPicker, /overflow-y-auto/);
+  assert.match(desktopPicker, /overflow-x-hidden/);
+  assert.match(desktopPicker, /shrink-0/);
+});
+
+test("shared Travellers picker keeps Hotel rooms and their commit path", () => {
+  assert.match(form, /\{included\.hotel \? \([\s\S]*t\("rooms"\)/);
+  assert.match(form, /draftHotelRooms <= 1/);
+  assert.match(form, /Math\.max\(1, value - 1\)/);
+  assert.match(form, /draftHotelRooms >= 6/);
+  assert.match(form, /Math\.min\(6, value \+ 1\)/);
+  assert.match(form, /rooms: Math\.max\(1, Math\.min\(6, draftHotelRooms\)\)/);
+  assert.match(form, /hotelRooms: normalized\.rooms/);
 });
 
 test("there is exactly one runtime submit action shared by both variants", () => {

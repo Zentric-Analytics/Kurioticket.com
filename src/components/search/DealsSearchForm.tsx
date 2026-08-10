@@ -421,8 +421,10 @@ function DealsFlightPopover({
 }) {
   const [position, setPosition] = useState<{
     left: number;
-    top: number;
     width: number;
+    maxHeight: number;
+    top?: number;
+    bottom?: number;
   } | null>(null);
 
   useEffect(() => {
@@ -431,15 +433,28 @@ function DealsFlightPopover({
     const updatePosition = () => {
       if (!desktop.matches || !anchorRef.current) return setPosition(null);
       const gutter = 16;
+      const gap = 10;
       const rect = anchorRef.current.getBoundingClientRect();
       const width = Math.min(360, window.innerWidth - gutter * 2);
+      const below = window.innerHeight - rect.bottom - gap - gutter;
+      const above = rect.top - gap - gutter;
+      const desiredHeight = 480;
+      const openAbove = below < desiredHeight && above > below;
+      const availableHeight = openAbove ? above : below;
+      const maxHeight = Math.max(
+        1,
+        Math.min(availableHeight, window.innerHeight - gutter * 2),
+      );
       setPosition({
         left: Math.min(
           Math.max(gutter, rect.right - width),
           window.innerWidth - width - gutter,
         ),
-        top: rect.bottom + 10,
         width,
+        maxHeight,
+        ...(openAbove
+          ? { bottom: window.innerHeight - rect.top + gap }
+          : { top: rect.bottom + gap }),
       });
     };
     updatePosition();
@@ -457,7 +472,7 @@ function DealsFlightPopover({
   return createPortal(
     <div
       data-deals-flight-travellers-popover
-      className="fixed z-[1000] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.18)]"
+      className="fixed z-[1000] flex overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.18)]"
       style={position}
     >
       {children}
@@ -3563,7 +3578,7 @@ export function DealsSearchForm({
         >
           <div
             data-deals-landing-lower-controls
-            className={`grid gap-y-3 border-b border-slate-200 pb-3 ${included.flight ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_auto]"} sm:items-stretch sm:[&>div:last-child]:ms-3`}
+            className={`grid gap-y-3 border-b border-slate-200 pb-3 ${included.flight ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" : "sm:grid-cols-1"} sm:items-stretch`}
           >
             <button
               data-deals-landing-travellers
@@ -3621,10 +3636,12 @@ export function DealsSearchForm({
                 />
               </div>
             ) : null}
-            {searchDealsButton}
           </div>
-          {supportsLandingStayDateOverride ? (
-            <div className="mt-4 flex flex-col items-start gap-3">
+          <div
+            data-deals-landing-action-row
+            className={`mt-4 flex flex-col gap-3 sm:flex-row sm:items-center ${supportsLandingStayDateOverride ? "sm:justify-between" : "sm:justify-end"}`}
+          >
+            {supportsLandingStayDateOverride ? (
               <label
                 data-deals-change-stay-dates
                 className="focus-within:ring-[#004BB8]/25 flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-1 text-sm font-bold text-slate-800 focus-within:ring-2"
@@ -3652,43 +3669,40 @@ export function DealsSearchForm({
                 />
                 <span>{t("deals.changeDatesForStay")}</span>
               </label>
-              {!search.stayDatesLinked ? (
-                <div
-                  data-deals-landing-stay-dates
-                  className="w-full border-b border-slate-200 pb-3"
-                >
-                  <span className={`${label} px-3`}>
-                    {t("deals.datesForStay")}
-                  </span>
-                  <button
-                    ref={hotelDatesLauncherRef}
-                    type="button"
-                    aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
-                    aria-haspopup="dialog"
-                    aria-controls={
-                      mobileHotelDatesOpen
-                        ? "deals-hotel-mobile-dates"
-                        : "deals-hotel-desktop-dates"
-                    }
-                    aria-label={t("deals.chooseStayDates")}
-                    onClick={() =>
-                      hotelDatesOpen
-                        ? dismissDesktopHotelDates(true)
-                        : openHotelDates()
-                    }
-                    className={`${landingActionSegment} flex w-full max-w-sm items-center justify-between gap-2 text-start`}
-                  >
-                    <span className="min-w-0 truncate">
-                      {hotelDatesSummary}
-                    </span>
-                    <Calendar
-                      aria-hidden="true"
-                      className="h-4 w-4 shrink-0 text-slate-500"
-                    />
-                  </button>
-                  <div>{errorBlock("hotel")}</div>
-                </div>
-              ) : null}
+            ) : null}
+            {searchDealsButton}
+          </div>
+          {supportsLandingStayDateOverride && !search.stayDatesLinked ? (
+            <div
+              data-deals-landing-stay-dates
+              className="mt-3 w-full border-b border-slate-200 pb-3"
+            >
+              <span className={`${label} px-3`}>{t("deals.datesForStay")}</span>
+              <button
+                ref={hotelDatesLauncherRef}
+                type="button"
+                aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
+                aria-haspopup="dialog"
+                aria-controls={
+                  mobileHotelDatesOpen
+                    ? "deals-hotel-mobile-dates"
+                    : "deals-hotel-desktop-dates"
+                }
+                aria-label={t("deals.chooseStayDates")}
+                onClick={() =>
+                  hotelDatesOpen
+                    ? dismissDesktopHotelDates(true)
+                    : openHotelDates()
+                }
+                className={`${landingActionSegment} flex w-full max-w-sm items-center justify-between gap-2 text-start`}
+              >
+                <span className="min-w-0 truncate">{hotelDatesSummary}</span>
+                <Calendar
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-slate-500"
+                />
+              </button>
+              <div>{errorBlock("hotel")}</div>
             </div>
           ) : null}
           <div className="w-full">{guidedPreviewPanel}</div>
@@ -3887,9 +3901,12 @@ export function DealsSearchForm({
           role="dialog"
           aria-modal="false"
           aria-label={travelersControlLabel}
+          className="flex min-h-0 w-full flex-col"
         >
-          {travelersPicker}
-          <div className="mt-4 flex justify-end border-t border-slate-100 pt-3">
+          <div className="min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain">
+            {travelersPicker}
+          </div>
+          <div className="mt-4 flex shrink-0 justify-end border-t border-slate-100 bg-white pt-3">
             <button
               type="button"
               onClick={() => commitTravelers()}
