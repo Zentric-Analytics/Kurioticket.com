@@ -434,14 +434,14 @@ export class PreviewLedger {
               build.remote_id, build.source_sha,
               CASE WHEN build.state='FINISHED' THEN 'SUCCESS' ELSE 'FAILED' END
        FROM preview_release_action build
-       WHERE build.remote_id IS NOT NULL
-         AND (build.state IN ('ERRORED','FAILED','CANCELED','CANCELLED') OR
-           (build.state='FINISHED' AND (build.kind='ANDROID_BUILD' OR (build.kind='IOS_BUILD' AND EXISTS (
+       WHERE build.remote_id IS NOT NULL AND build.kind IN ('IOS_BUILD','ANDROID_BUILD')
+         AND (build.state IN ('ERRORED','FAILED','CANCELED','CANCELLED')
+           OR build.kind='ANDROID_BUILD' AND build.state='FINISHED'
+           OR build.kind='IOS_BUILD' AND build.state='FINISHED' AND EXISTS (
            SELECT 1 FROM preview_release_action distribution
            WHERE distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
              AND distribution.evidence->>'easBuildId'=build.remote_id
-             AND distribution.evidence->>'associated'='true'))))
-         AND build.kind IN ('IOS_BUILD','ANDROID_BUILD')
+             AND distribution.evidence->>'associated'='true'))
        ON CONFLICT (platform,build_id) DO NOTHING`,
     );
   }

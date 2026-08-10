@@ -26,14 +26,17 @@ SELECT CASE build.kind WHEN 'IOS_BUILD' THEN 'ios' ELSE 'android' END,
        CASE WHEN release.state='COMPLETE' THEN 'COMPLETE' ELSE 'PENDING' END
 FROM preview_release_action build
 JOIN preview_release release ON release.source_sha=build.source_sha
-WHERE build.remote_id IS NOT NULL AND build.kind IN ('IOS_BUILD','ANDROID_BUILD') AND (
-    build.state IN ('ERRORED','FAILED','CANCELED','CANCELLED') OR (build.state='FINISHED' AND (
-    build.kind='ANDROID_BUILD'
-    OR (build.kind='IOS_BUILD' AND EXISTS (
+WHERE build.remote_id IS NOT NULL
+  AND build.kind IN ('IOS_BUILD','ANDROID_BUILD')
+  AND (
+    build.state IN ('ERRORED','FAILED','CANCELED','CANCELLED')
+    OR build.kind='ANDROID_BUILD' AND build.state='FINISHED'
+    OR build.kind='IOS_BUILD' AND build.state='FINISHED' AND EXISTS (
       SELECT 1 FROM preview_release_action distribution
       WHERE distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION'
         AND distribution.state='FINISHED'
         AND distribution.evidence->>'easBuildId'=build.remote_id
         AND distribution.evidence->>'associated'='true'
-    ))))
+    )
+  )
 ON CONFLICT (platform, build_id) DO NOTHING;
