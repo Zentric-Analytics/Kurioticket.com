@@ -65,8 +65,6 @@ const airportLabel = (code: unknown) => {
   return airport ? `${airport.city} (${value})` : value;
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
-  const { width } = useWindowDimensions();
-  const narrowFlightLayout = product === "flight" && width < 400;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = useMemo(
@@ -143,9 +141,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     );
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
-      <TopBar resultsLayout={product === "flight"} />
-      <View style={[s0.summary, product === "flight" && s0.flightSummary, narrowFlightLayout && s0.flightSummaryNarrow]}>
-        <View style={s0.summaryCopy}>
+      <TopBar />
+      <View style={s0.summary}>
+        <View style={{ flex: 1 }}>
           <Text style={s0.route}>
             {product === "flight"
               ? `${airportLabel(payload.origin)}  ⇄  ${airportLabel(payload.destination)}`
@@ -157,12 +155,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               : `${shortDate(String(payload.checkIn || ""))} – ${shortDate(String(payload.checkOut || ""))}  ·  ${payload.rooms || 1} Room, ${payload.guests || 2} Guests`}
           </Text>
         </View>
-        <View style={narrowFlightLayout && s0.editSearchNarrow}>
-          <Pill label="Edit search" icon="document" onPress={edit} resultsLayout={product === "flight"} />
-        </View>
+        <Pill label="Edit search" icon="document" onPress={edit} />
       </View>
       <DateStrip
-        resultsLayout={product === "flight"}
         date={date}
         prices={prices}
         onSelect={(v) =>
@@ -175,22 +170,21 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       />
       <ScrollView
         horizontal
-        style={[s0.filterRail, product === "flight" && s0.flightFilterRail]}
+        style={s0.filterRail}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[s0.filters, product === "flight" && s0.flightFilters]}
+        contentContainerStyle={s0.filters}
       >
-        <Pill label="Filters" icon="sliders" active={hasFilters} onPress={product === "flight" ? () => openFilters("all") : undefined} resultsLayout={product === "flight"} />
+        <Pill label="Filters" icon="sliders" active={hasFilters} onPress={product === "flight" ? () => openFilters("all") : undefined} />
         {(product === "flight" ? ["Stops", "Airlines", "Times"] : ["Price", "Guest rating", "Property type"]).map((x) => (
-          <Pill key={x} label={x} onPress={product === "flight" ? () => openFilters(x.toLowerCase() as typeof filterSection) : undefined} resultsLayout={product === "flight"} />
+          <Pill key={x} label={x} onPress={product === "flight" ? () => openFilters(x.toLowerCase() as typeof filterSection) : undefined} />
         ))}
         <Pill
           label={`Sort: ${sort === "price" ? "Price" : product === "flight" ? "Best" : "Recommended"}`}
           active
           onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
-          resultsLayout={product === "flight"}
         />
       </ScrollView>
-      <ScrollView contentContainerStyle={[s0.body, product === "flight" && s0.flightBody]}>
+      <ScrollView contentContainerStyle={s0.body}>
         {status === "loading" ? <Loading product={product} /> : null}
         {message ? (
           <Text accessibilityRole="alert" style={s0.notice}>
@@ -214,7 +208,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           />
         ) : null}
         {status === "ready" ? (
-          <View style={[s0.found, product === "flight" && s0.flightFound, narrowFlightLayout && s0.flightFoundNarrow]}>
+          <View style={s0.found}>
             <View style={s0.foundCopy}>
               <Text style={s0.foundTitle}>
                 {sorted.length}{" "}
@@ -236,7 +230,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 }
               />
             ) : (
-              <View style={[s0.foundAside, narrowFlightLayout && s0.foundAsideNarrow]}>
+              <View style={s0.foundAside}>
                 <Text style={s0.change}>ⓘ Price may change</Text>
                 <Text style={s0.sub}>Book soon to lock in this price.</Text>
               </View>
@@ -278,24 +272,8 @@ function FlightFilterModal({ visible, section, filters, options, onChange, onClo
   const choices = (key: keyof FlightFilters, values: readonly string[], labels?: Record<string, string>) => <View style={s0.choiceRow}>{values.map((value) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: draft[key].includes(value as never) }} onPress={() => toggle(key, value)} style={[s0.choice, draft[key].includes(value as never) && s0.choiceActive]}><Text style={s0.inputLabel}>{labels?.[value] || value}</Text></Pressable>)}</View>;
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal><View style={s0.modalBackdrop}><View style={s0.sheet} accessibilityLabel="Flight filters"><View style={s0.sheetHead}><Text accessibilityRole="header" style={s0.foundTitle}>Filter flights</Text><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose}><FlowIcon name="close" /></Pressable></View>{(section === "all" || section === "stops") && options.stops.length ? <><Text style={s0.inputLabel}>Stops</Text>{choices("stops", options.stops, stopLabels)}</> : null}{(section === "all" || section === "airlines") && options.airlines.length ? <><Text style={s0.inputLabel}>Airlines</Text>{choices("airlines", options.airlines)}</> : null}{(section === "all" || section === "times") && options.times.length ? <><Text style={s0.inputLabel}>Departure time</Text>{choices("times", options.times, timeLabels)}</> : null}<Button label="Apply filters" onPress={() => { onChange(draft); onClose(); }} /><Button label="Clear filters" outline onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} /></View></View></Modal>;
 }
-function FlightBenefitItem({ icon, label, value, wide = false, narrow = false }: { icon: "trip" | "help" | "document"; label: string; value: string; wide?: boolean; narrow?: boolean }) {
-  return (
-    <View style={[s0.flightBenefitItem, wide && s0.flightBenefitWide, narrow && s0.flightBenefitNarrow]}>
-      <View style={s0.flightBenefitIcon}>
-        <FlowIcon name={icon} size={17} color={ui.blue} />
-      </View>
-      <View style={s0.flightBenefitCopy}>
-        <Text style={s0.flightBenefitLabel}>{label}</Text>
-        <Text style={s0.flightBenefitValue}>{value}</Text>
-      </View>
-    </View>
-  );
-}
 function FlightCard({ result, rank, params }: { result: FlightResult; rank: number; params: Record<string, string | string[]> }) {
   const { savedIds, toggle } = useSavedFlights();
-  const { width } = useWindowDimensions();
-  const narrow = width < 400;
-  const compactItinerary = width < 380;
   const saved = savedIds.has(result.id);
   return (
     <View style={[s0.card, rank === 0 && s0.best]}>
@@ -306,24 +284,19 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
             <Badge green>Great price</Badge>
           </View>
         ) : rank === 1 ? (
-          <View style={s0.badgeRow}>
-            <Badge green>2nd best</Badge>
-          </View>
+          <Badge green>2nd best</Badge>
         ) : (
-          <View style={s0.badgeRow}>
-            <Badge>
-              {result.stops
-                ? `${result.stops} stop${result.stops > 1 ? "s" : ""}`
-                : "Nonstop"}
-            </Badge>
-          </View>
+          <Badge>
+            {result.stops
+              ? `${result.stops} stop${result.stops > 1 ? "s" : ""}`
+              : "Nonstop"}
+          </Badge>
         )}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${saved ? "Remove" : "Save"} ${result.airlineName}`}
           accessibilityState={{ selected: saved }}
           onPress={() => toggle(result.id)}
-          style={s0.favoriteButton}
         >
           <FlowIcon
             name="heart"
@@ -333,67 +306,57 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
         </Pressable>
       </View>
       <View style={s0.flightMain}>
-        <View style={s0.airlineIdentity}>
-          <View style={s0.airlineFrame}>
-            {result.airlineLogo ? (
-              <Image
-                source={{ uri: result.airlineLogo }}
-                resizeMode="contain"
-                style={s0.airline}
-              />
-            ) : (
-              <View style={s0.airlineFallback}>
-                <Text style={s0.airlineInitials}>{result.airlineName.slice(0, 2)}</Text>
-              </View>
-            )}
+        {result.airlineLogo ? (
+          <Image source={{ uri: result.airlineLogo }} style={s0.airline} />
+        ) : (
+          <View style={s0.airlineFallback}>
+            <Text>{result.airlineName.slice(0, 2)}</Text>
           </View>
+        )}
+        <View style={s0.departureBlock}>
           <Text style={s0.nameSmall}>{result.airlineName}</Text>
+          <Text style={s0.time}>{clock(result.departureTime)}</Text>
+          <Text style={s0.sub}>{result.originAirport}</Text>
         </View>
-        <View style={[s0.itineraryRow, narrow && s0.itineraryRowNarrow, compactItinerary && s0.itineraryRowCompact]}>
-          <View style={s0.departureBlock}>
-            <Text style={s0.time}>{clock(result.departureTime)}</Text>
-            <Text style={s0.airportCode}>{result.originAirport}</Text>
-          </View>
-          <View style={[s0.timeline, narrow && s0.timelineNarrow]}>
-            <Text style={s0.duration}>{result.duration}</Text>
-            <View style={s0.line} />
-            <Text style={s0.nonstop}>
-              {result.stops ? `${result.stops} stop` : "Nonstop"}
-            </Text>
-          </View>
-          <View style={s0.arrivalBlock}>
-            <Text style={s0.time}>{clock(result.arrivalTime)}</Text>
-            <Text style={s0.airportCode}>{result.destinationAirport}</Text>
-          </View>
-          <View style={[s0.priceBox, narrow && s0.priceBoxNarrow, compactItinerary && s0.priceBoxCompact]}>
-            <Text numberOfLines={1} style={s0.bigPrice}>
-              {money(result.currency, result.price)}
-            </Text>
-            <Text style={s0.roundTrip}>round trip</Text>
-          </View>
+        <View style={s0.timeline}>
+          <Text style={s0.sub}>{result.duration}</Text>
+          <View style={s0.line} />
+          <Text style={s0.nonstop}>
+            {result.stops ? `${result.stops} stop` : "Nonstop"}
+          </Text>
+        </View>
+        <View style={s0.arrivalBlock}>
+          <Text style={s0.time}>{clock(result.arrivalTime)}</Text>
+          <Text style={s0.sub}>{result.destinationAirport}</Text>
+        </View>
+        <View style={s0.priceBox}>
+          <Text style={s0.bigPrice}>
+            {money(result.currency, result.price)}
+          </Text>
+          <Text style={s0.sub}>round trip</Text>
         </View>
       </View>
-      <View style={s0.flightLowerSection}>
-        <View style={s0.flightBenefitsGrid}>
-          <FlightBenefitItem icon="trip" label="Baggage" value={result.baggageInfo || "Baggage details unavailable"} narrow={narrow} />
-          <FlightBenefitItem icon="help" label="Seat selection" value="Information unavailable" narrow={narrow} />
-          <FlightBenefitItem icon="document" label="Changes & refunds" value={result.refundInfo || "Fare rules unavailable"} wide narrow={narrow} />
-        </View>
-        <View style={[s0.flightDetailsCta, compactItinerary && s0.flightDetailsCtaCompact]}>
-          <Button
-            label="View details"
-            outline={rank !== 0}
-            onPress={() =>
-              router.push({
-                pathname: "/flight-details",
-                params: {
-                  result: JSON.stringify(result),
-                  ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, one(value) || ""])),
-                },
-              })
-            }
-          />
-        </View>
+      <View style={s0.benefits}>
+        <Text style={s0.benefit}>
+          ▣ {result.baggageInfo || "Baggage details unavailable"}
+        </Text>
+        <Text style={s0.benefit}>◉ Seat selection unavailable</Text>
+        <Text style={s0.benefit}>
+          ◉ {result.refundInfo || "Fare rules unavailable"}
+        </Text>
+        <Button
+          label="View details"
+          outline={rank !== 0}
+          onPress={() =>
+            router.push({
+              pathname: "/flight-details",
+              params: {
+                result: JSON.stringify(result),
+                ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, one(value) || ""])),
+              },
+            })
+          }
+        />
       </View>
     </View>
   );
@@ -708,23 +671,11 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  flightSummary: {
-    paddingHorizontal: 22,
-    paddingTop: 4,
-    paddingBottom: 16,
-    alignItems: "center",
-  },
-  flightSummaryNarrow: { alignItems: "flex-start", flexWrap: "wrap", rowGap: 10 },
-  summaryCopy: { flex: 1, minWidth: 0, gap: 4 },
-  editSearchNarrow: { marginLeft: "auto" },
   filterRail: { height: 70, flexGrow: 0 },
-  flightFilterRail: { height: 68 },
   route: { fontSize: 21, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 18, paddingVertical: 16, gap: 9 },
-  flightFilters: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 12, gap: 8 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
-  flightBody: { paddingHorizontal: 22, paddingTop: 8, paddingBottom: 84, gap: 12 },
   notice: {
     backgroundColor: "#F2F6FF",
     color: ui.navy,
@@ -742,11 +693,8 @@ const s0 = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "#FAFCFF",
   },
-  flightFound: { minHeight: 82, paddingHorizontal: 16, paddingVertical: 14, gap: 16 },
-  flightFoundNarrow: { alignItems: "flex-start", flexDirection: "column", gap: 10 },
   foundCopy: { flex: 1, minWidth: 0 },
   foundAside: { flexShrink: 1, maxWidth: 160 },
-  foundAsideNarrow: { maxWidth: "100%" },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   change: { color: ui.navy, fontSize: 12 },
   card: {
@@ -758,84 +706,41 @@ const s0 = StyleSheet.create({
     backgroundColor: "white",
   },
   best: { borderColor: ui.blue },
-  cardTop: { flexDirection: "row", alignItems: "center", gap: 8 },
-  badgeRow: { flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", gap: 7 },
-  favoriteButton: {
-    width: 44,
-    height: 44,
-    flexShrink: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  flightMain: { gap: 12 },
-  airlineIdentity: { flexDirection: "row", alignItems: "center", gap: 10 },
-  airlineFrame: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  airline: { width: 36, height: 36 },
+  cardTop: { flexDirection: "row", justifyContent: "space-between" },
+  badgeRow: { flexDirection: "row", gap: 7 },
+  flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
+  airline: { width: 38, height: 38, resizeMode: "contain" },
   airlineFallback: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: 9,
     backgroundColor: "#EEF2F8",
     alignItems: "center",
     justifyContent: "center",
   },
-  airlineInitials: { color: ui.navy, fontSize: 12, fontWeight: "800" },
-  nameSmall: { flex: 1, fontSize: 13, color: ui.navy, fontWeight: "700" },
-  itineraryRow: { flexDirection: "row", alignItems: "flex-start", gap: 7 },
-  itineraryRowNarrow: { gap: 4 },
-  itineraryRowCompact: { flexWrap: "wrap", rowGap: 10 },
-  departureBlock: { flex: 1, minWidth: 0, gap: 2 },
-  arrivalBlock: { flex: 1, minWidth: 0, gap: 2 },
-  time: { fontSize: 18, lineHeight: 23, fontWeight: "900", color: ui.navy },
-  airportCode: { fontSize: 12, lineHeight: 17, color: ui.muted },
-  timeline: { flex: 0.9, minWidth: 52, maxWidth: 86, alignItems: "center" },
-  timelineNarrow: { minWidth: 46 },
-  duration: { fontSize: 11, lineHeight: 16, color: ui.muted, textAlign: "center" },
+  nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
+  departureBlock: { flex: 1.15, minWidth: 0 },
+  arrivalBlock: { flex: 0.9, minWidth: 0 },
+  time: { fontSize: 17, fontWeight: "900", color: ui.navy },
+  timeline: { flex: 1, minWidth: 56, maxWidth: 95, alignItems: "center" },
   line: {
     width: "100%",
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: ui.blue,
-    marginVertical: 4,
+    height: 1,
+    backgroundColor: ui.muted,
+    marginVertical: 7,
   },
-  nonstop: { fontSize: 11, lineHeight: 16, fontWeight: "700", color: ui.blue, textAlign: "center" },
-  priceBox: { minWidth: 82, flexShrink: 0, alignItems: "flex-end", gap: 2 },
-  priceBoxNarrow: { minWidth: 74 },
-  priceBoxCompact: { width: "100%", minWidth: 0 },
-  bigPrice: { fontSize: 21, lineHeight: 24, fontWeight: "900", color: ui.navy },
-  roundTrip: { fontSize: 11, lineHeight: 16, color: ui.muted, textAlign: "right" },
-  flightLowerSection: {
+  nonstop: { fontSize: 11, color: ui.blue },
+  priceBox: { width: 62, flexShrink: 0, alignItems: "flex-end" },
+  bigPrice: { fontSize: 22, fontWeight: "900", color: ui.navy },
+  benefits: {
     borderTopWidth: 1,
     borderTopColor: "#EDF0F5",
-    paddingTop: 14,
-    gap: 14,
-  },
-  flightBenefitsGrid: {
+    paddingTop: 13,
     flexDirection: "row",
-    flexWrap: "wrap",
-    rowGap: 14,
-    columnGap: 12,
+    alignItems: "center",
+    gap: 12,
   },
-  flightBenefitItem: {
-    width: "48%",
-    minWidth: 0,
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-  },
-  flightBenefitWide: { width: "100%" },
-  flightBenefitNarrow: { width: "100%" },
-  flightBenefitIcon: { width: 20, paddingTop: 1, alignItems: "center" },
-  flightBenefitCopy: { flex: 1, minWidth: 0, gap: 2 },
-  flightBenefitLabel: { fontSize: 12, lineHeight: 16, fontWeight: "700", color: ui.navy },
-  flightBenefitValue: { fontSize: 12, lineHeight: 17, fontWeight: "400", color: ui.muted },
-  flightDetailsCta: { width: 148, alignSelf: "flex-end" },
-  flightDetailsCtaCompact: { width: "100%" },
+  benefit: { fontSize: 11, color: ui.muted, flex: 1 },
   hotelCard: {
     height: 234,
     borderWidth: 1,

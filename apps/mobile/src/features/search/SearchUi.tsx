@@ -47,9 +47,9 @@ export function Logo() {
     />
   );
 }
-export function TopBar({ detail = false, resultsLayout = false, saved = false, onFavorite, onShare }: { detail?: boolean; resultsLayout?: boolean; saved?: boolean; onFavorite?: () => void; onShare?: () => void }) {
+export function TopBar({ detail = false, saved = false, onFavorite, onShare }: { detail?: boolean; saved?: boolean; onFavorite?: () => void; onShare?: () => void }) {
   return (
-    <View style={[s.top, resultsLayout && s.resultsTop]}>
+    <View style={s.top}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Go back"
@@ -58,10 +58,10 @@ export function TopBar({ detail = false, resultsLayout = false, saved = false, o
       >
         <FlowIcon name="back" size={25} />
       </Pressable>
-      <View pointerEvents="none" style={[s.logoCenter, resultsLayout && s.resultsLogoCenter]}>
+      <View pointerEvents="none" style={s.logoCenter}>
         <Logo />
       </View>
-      <View style={[s.topActions, resultsLayout && s.resultsTopActions]}>
+      <View style={s.topActions}>
         {detail ? (
           <>
             <Pressable accessibilityRole="button" accessibilityLabel={saved ? "Remove saved flight" : "Save flight"} accessibilityState={{ selected: saved }} onPress={onFavorite} style={s.hit}><FlowIcon name="heart" fill={saved ? ui.blue : "none"} color={saved ? ui.blue : ui.navy} /></Pressable>
@@ -87,20 +87,18 @@ export function Pill({
   active = false,
   icon,
   onPress,
-  resultsLayout = false,
 }: {
   label: string;
   active?: boolean;
   icon?: FlowIconName;
   onPress?: () => void;
-  resultsLayout?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={[s.pill, resultsLayout && s.resultsPill, active && s.pillActive]}
+      style={[s.pill, active && s.pillActive]}
     >
       {icon ? (
         <FlowIcon name={icon} size={15} color={active ? ui.blue : ui.navy} />
@@ -121,7 +119,6 @@ export function DateStrip({
   date,
   prices,
   currency = "USD",
-  resultsLayout = false,
   onSelect,
   onPrevious,
   onNext,
@@ -129,7 +126,6 @@ export function DateStrip({
   date: string;
   prices: (number | undefined)[];
   currency?: string;
-  resultsLayout?: boolean;
   onSelect: (v: string) => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -138,11 +134,11 @@ export function DateStrip({
   return (
     <ScrollView
       horizontal
-      style={[s.dateRail, resultsLayout && s.resultsDateRail]}
+      style={s.dateRail}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={[s.dates, resultsLayout && s.resultsDates]}
+      contentContainerStyle={s.dates}
     >
-      <Pressable accessibilityRole="button" accessibilityLabel="Previous date" onPress={onPrevious} disabled={!onPrevious} style={[s.arrow, resultsLayout && s.resultsArrow]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Previous date" onPress={onPrevious} disabled={!onPrevious} style={s.arrow}>
         <FlowIcon name="back" size={20} />
       </Pressable>
       {[-2, -1, 0, 1, 2].map((d, i) => {
@@ -154,7 +150,7 @@ export function DateStrip({
           <Pressable
             key={iso}
             onPress={() => onSelect(iso)}
-            style={[s.date, resultsLayout && s.resultsDate, active && s.dateActive]}
+            style={[s.date, active && s.dateActive]}
           >
             <Text style={s.day}>
               {x.toLocaleDateString("en-US", { weekday: "short" })}
@@ -165,19 +161,14 @@ export function DateStrip({
               {shortDate(iso)}
             </Text>
             {prices[i] != null ? (
-              <Text
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-                numberOfLines={1}
-                style={[s.datePrice, active && { color: ui.blue }]}
-              >
+              <Text style={[s.datePrice, active && { color: ui.blue }]}>
                 {money(currency, prices[i])}
               </Text>
             ) : null}
           </Pressable>
         );
       })}
-      <Pressable accessibilityRole="button" accessibilityLabel="Next date" onPress={onNext} disabled={!onNext} style={[s.arrow, resultsLayout && s.resultsArrow]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Next date" onPress={onNext} disabled={!onNext} style={s.arrow}>
         <FlowIcon name="chevron" size={20} />
       </Pressable>
     </ScrollView>
@@ -268,7 +259,6 @@ export const s = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "white",
   },
-  resultsTop: { height: 72, paddingHorizontal: 22 },
   logoCenter: {
     position: "absolute",
     top: 24,
@@ -276,7 +266,6 @@ export const s = StyleSheet.create({
     right: 0,
     alignItems: "center",
   },
-  resultsLogoCenter: { top: 19 },
   hit: {
     width: 44,
     height: 44,
@@ -289,7 +278,6 @@ export const s = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 18,
   },
-  resultsTopActions: { width: 44 },
   alertHit: {
     width: 44,
     height: 44,
@@ -317,13 +305,10 @@ export const s = StyleSheet.create({
     alignItems: "center",
     gap: 7,
   },
-  resultsPill: { height: 44 },
   pillActive: { borderColor: "#B9CBFF", backgroundColor: "#F6F8FF" },
   pillText: { fontSize: 12, fontWeight: "700", color: ui.navy },
   dateRail: { height: 96, flexGrow: 0, flexShrink: 0 },
   dates: { paddingHorizontal: 18, gap: 9, alignItems: "center" },
-  resultsDateRail: { height: 88 },
-  resultsDates: { paddingHorizontal: 22, gap: 8 },
   arrow: {
     width: 40,
     height: 40,
@@ -333,7 +318,6 @@ export const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  resultsArrow: { width: 44, height: 44 },
   date: {
     width: 80,
     height: 78,
@@ -344,10 +328,9 @@ export const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "white",
   },
-  resultsDate: { height: 72 },
   dateActive: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
   day: { fontSize: 12, color: ui.muted },
-  datePrice: { maxWidth: "92%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 3 },
+  datePrice: { fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 3 },
   button: {
     height: 45,
     minWidth: 104,
