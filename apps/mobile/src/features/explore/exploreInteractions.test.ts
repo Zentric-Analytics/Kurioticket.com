@@ -424,12 +424,43 @@ test("Explore defaults to deterministic region discovery instead of Popular", ()
   assert.doesNotMatch(source, /Explore by region/);
   assert.match(source, /data={REGION_DISCOVERY}/);
   assert.match(source, /horizontal data={item.preview}/);
-  assert.match(source, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.84/);
-  assert.match(source, /snapToInterval={previewCardWidth \+ REGION_PREVIEW_GAP}/);
+  assert.match(source, /snapToInterval={previewCardWidth \+ previewGap}/);
   assert.match(source, /decelerationRate="fast"/);
   assert.match(source, /See all destinations in \${item.region}/);
   assert.doesNotMatch(source, /data={POPULAR_DESTINATIONS}|Popular destinations/);
   assert.match(source, /query.trim\(\) \?/);
+});
+
+test("region preview geometry matches the wide Kayak carousel proportions responsively", () => {
+  const source = screen();
+  assert.match(source, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.928/);
+  assert.doesNotMatch(source, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.84/);
+  assert.match(source, /REGION_PREVIEW_INSET_RATIO = 0\.024/);
+  assert.match(source, /REGION_PREVIEW_GAP_RATIO = 0\.024/);
+  assert.match(source, /REGION_PREVIEW_ASPECT_RATIO = 2\.13/);
+  assert.match(source, /REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3\.21/);
+
+  for (const windowWidth of [320, 390, 430, 768]) {
+    const cardWidth = windowWidth * 0.928;
+    const cardHeight = cardWidth / 2.13;
+    const imageHeight = cardWidth / 3.21;
+    const footerHeight = cardHeight - imageHeight;
+    const gap = windowWidth * 0.024;
+    const inset = windowWidth * 0.024;
+    const nextCardPeek = windowWidth - inset - cardWidth - gap;
+
+    assert.ok(cardWidth / windowWidth >= 0.92 && cardWidth / windowWidth <= 0.93);
+    assert.ok(cardWidth / cardHeight > 2);
+    assert.ok(imageHeight / cardHeight > 0.65 && imageHeight / cardHeight < 0.67);
+    assert.ok(footerHeight / cardHeight > 0.33 && footerHeight / cardHeight < 0.35);
+    assert.ok(gap / windowWidth >= 0.02 && gap / windowWidth <= 0.03);
+    assert.ok(nextCardPeek / windowWidth >= 0.02 && nextCardPeek / windowWidth <= 0.03);
+    assert.equal(cardWidth + gap, windowWidth * (0.928 + 0.024));
+  }
+
+  assert.match(source, /horizontal data={item.preview}/);
+  assert.match(source, /snapToInterval={previewCardWidth \+ previewGap}/);
+  assert.match(source, /borderRadius: 6/);
 });
 
 test("region previews remain clean, bounded destination cards", () => {

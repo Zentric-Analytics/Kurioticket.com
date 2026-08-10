@@ -28,9 +28,11 @@ import { destinationDetailsRoute } from "./exploreInteractionModels";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
 
 const NAVY = "#071A48", BLUE = "#0754F7", MUTED = "#56658E", BORDER = "#E7ECF5";
-export const REGION_PREVIEW_CARD_WIDTH_RATIO = 0.84;
-const PAGE_HORIZONTAL_PADDING = 18;
-const REGION_PREVIEW_GAP = 12;
+export const REGION_PREVIEW_CARD_WIDTH_RATIO = 0.928;
+export const REGION_PREVIEW_INSET_RATIO = 0.024;
+export const REGION_PREVIEW_GAP_RATIO = 0.024;
+export const REGION_PREVIEW_ASPECT_RATIO = 2.13;
+export const REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3.21;
 const shadow = { shadowColor: "#18305B", shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 };
 
 export function DestinationThumbnail({ destination }: { destination: Destination }) {
@@ -78,12 +80,12 @@ function SectionHeading({ title }: { title: string }) {
   return <View style={s.sectionHeader}><Text accessibilityRole="header" style={s.sectionTitle}>{title}</Text></View>;
 }
 
-function RegionPreviewCard({ destination, saved, onSelect, onToggle, width }: { destination: Destination; saved: boolean; onSelect: () => void; onToggle: () => void; width: number }) {
+function RegionPreviewCard({ destination, saved, onSelect, onToggle, width, height, imageHeight }: { destination: Destination; saved: boolean; onSelect: () => void; onToggle: () => void; width: number; height: number; imageHeight: number }) {
   const media = destinationMedia(destination.id);
   const [failed, setFailed] = useState(false);
-  return <View style={[s.previewCard, { width }]}><Pressable accessibilityRole="button" accessibilityLabel={`Open details for ${destination.name}, ${destination.country}`} onPress={onSelect}>
-    <Image source={failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)} alt={`${destination.name}, ${destination.country}`} onError={() => setFailed(true)} accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`} resizeMode="cover" style={[s.previewImage, { height: width * 0.58 }]} />
-    <View style={s.previewCopy}><Text numberOfLines={1} style={s.previewName}>{destination.name}</Text><Text numberOfLines={1} style={s.previewCountry}>{destination.country}</Text></View>
+  return <View style={[s.previewCard, { width, height }]}><Pressable accessibilityRole="button" accessibilityLabel={`Open details for ${destination.name}, ${destination.country}`} onPress={onSelect} style={s.previewMain}>
+    <Image source={failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)} alt={`${destination.name}, ${destination.country}`} onError={() => setFailed(true)} accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`} resizeMode="cover" style={[s.previewImage, { height: imageHeight }]} />
+    <View style={[s.previewCopy, { height: height - imageHeight }]}><Text numberOfLines={1} style={s.previewName}>{destination.name}</Text><Text numberOfLines={1} style={s.previewCountry}>{destination.country}</Text></View>
   </Pressable><AndroidFavoriteButton saved={saved} label={`${saved ? "Remove" : "Save"} ${destination.name}`} onPress={onToggle} style={s.heart} />
   </View>;
 }
@@ -91,11 +93,15 @@ function RegionPreviewCard({ destination, saved, onSelect, onToggle, width }: { 
 function ExploreDiscoveryContent({ bottomPadding, select }: { bottomPadding: number; select: (destination: Destination) => void }) {
   const { savedIds, toggle } = useSavedDestinations();
   const { width: windowWidth } = useWindowDimensions();
-  const previewCardWidth = Math.round((windowWidth - (PAGE_HORIZONTAL_PADDING * 2)) * REGION_PREVIEW_CARD_WIDTH_RATIO);
+  const previewCardWidth = windowWidth * REGION_PREVIEW_CARD_WIDTH_RATIO;
+  const previewCardHeight = previewCardWidth / REGION_PREVIEW_ASPECT_RATIO;
+  const previewImageHeight = previewCardWidth / REGION_PREVIEW_IMAGE_ASPECT_RATIO;
+  const previewInset = windowWidth * REGION_PREVIEW_INSET_RATIO;
+  const previewGap = windowWidth * REGION_PREVIEW_GAP_RATIO;
   const openRegion = (region: ExploreRegion) => router.push({ pathname: "/explore/region/[region]", params: { region: exploreRegionSlug(region) } });
   return <FlatList data={REGION_DISCOVERY} keyExtractor={({ region }) => region} contentContainerStyle={[s.discoveryContent, { paddingBottom: bottomPadding }]} renderItem={({ item }) => <View style={s.regionSection}>
-    <View style={s.regionHeader}><View><Text accessibilityRole="header" style={s.regionTitle}>{item.region}</Text><Text style={s.regionCount}>{item.destinations.length} destinations</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`See all destinations in ${item.region}`} onPress={() => openRegion(item.region)} style={s.seeAll}><Text style={s.seeAllText}>See all</Text><FlowIcon name="chevron" color={BLUE} size={16} /></Pressable></View>
-    <FlatList horizontal data={item.preview} keyExtractor={(destination) => destination.id} showsHorizontalScrollIndicator={false} contentContainerStyle={s.previewRow} snapToInterval={previewCardWidth + REGION_PREVIEW_GAP} decelerationRate="fast" renderItem={({ item: destination }) => <RegionPreviewCard destination={destination} saved={savedIds.has(destination.id)} onSelect={() => select(destination)} onToggle={() => toggle(destination.id)} width={previewCardWidth} />} />
+    <View style={[s.regionHeader, { paddingHorizontal: previewInset }]}><View><Text accessibilityRole="header" style={s.regionTitle}>{item.region}</Text><Text style={s.regionCount}>{item.destinations.length} destinations</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`See all destinations in ${item.region}`} onPress={() => openRegion(item.region)} style={s.seeAll}><Text style={s.seeAllText}>See all</Text><FlowIcon name="chevron" color={BLUE} size={16} /></Pressable></View>
+    <FlatList horizontal data={item.preview} keyExtractor={(destination) => destination.id} showsHorizontalScrollIndicator={false} contentContainerStyle={[s.previewRow, { paddingHorizontal: previewInset, gap: previewGap }]} snapToInterval={previewCardWidth + previewGap} decelerationRate="fast" renderItem={({ item: destination }) => <RegionPreviewCard destination={destination} saved={savedIds.has(destination.id)} onSelect={() => select(destination)} onToggle={() => toggle(destination.id)} width={previewCardWidth} height={previewCardHeight} imageHeight={previewImageHeight} />} />
   </View>} />;
 }
 
@@ -105,7 +111,7 @@ export const exploreScreenStyles = StyleSheet.create({
   search: { minHeight: 52, borderRadius: 26, borderWidth: 1, borderColor: BORDER, backgroundColor: "white", flexDirection: "row", alignItems: "center", paddingHorizontal: 15, gap: 8, ...shadow }, searchInput: { flex: 1, minHeight: 50, color: NAVY, fontSize: 13 }, clear: { minHeight: 44, justifyContent: "center" }, clearHidden: { opacity: 0 }, clearText: { color: BLUE, fontWeight: "700" },
   sectionHeader: { minHeight: 44, justifyContent: "center" }, sectionTitle: { color: NAVY, fontSize: 17, lineHeight: 23, fontWeight: "800" },
   resultRow: { minHeight: 68, borderWidth: 1, borderColor: BORDER, borderRadius: 12, backgroundColor: "white", flexDirection: "row", alignItems: "center", marginBottom: 8, ...shadow }, resultMain: { flex: 1, minHeight: 76, paddingLeft: 8, paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 12 }, rowImage: { width: 58, height: 58, borderRadius: 10, backgroundColor: "#E7ECF5" }, resultCopy: { flex: 1 }, resultTitle: { color: NAVY, fontSize: 15, fontWeight: "800" }, resultMeta: { color: MUTED, fontSize: 12, lineHeight: 18, marginTop: 2 }, rowHeart: { width: 52, minHeight: 52, alignItems: "center", justifyContent: "center" }, empty: { color: MUTED, lineHeight: 20, backgroundColor: "white", borderRadius: 12, padding: 14 },
-  regionSection: { marginBottom: 18 }, regionHeader: { minHeight: 58, paddingHorizontal: PAGE_HORIZONTAL_PADDING, paddingBottom: 6, flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }, regionTitle: { color: NAVY, fontSize: 22, lineHeight: 28, fontWeight: "800" }, regionCount: { color: MUTED, fontSize: 13, lineHeight: 18, marginTop: 1 }, seeAll: { minHeight: 44, flexDirection: "row", alignItems: "center", paddingLeft: 12 }, seeAllText: { color: BLUE, fontSize: 13, fontWeight: "700" }, previewRow: { paddingHorizontal: PAGE_HORIZONTAL_PADDING, gap: REGION_PREVIEW_GAP }, previewCard: { borderRadius: 14, backgroundColor: "white", borderWidth: 1, borderColor: BORDER, overflow: "hidden", ...shadow }, previewImage: { width: "100%", backgroundColor: "#E7ECF5" }, previewCopy: { paddingHorizontal: 14, paddingVertical: 11 }, previewName: { color: NAVY, fontSize: 17, lineHeight: 22, fontWeight: "800" }, previewCountry: { color: MUTED, fontSize: 13, lineHeight: 18, marginTop: 2 }, heart: {
+  regionSection: { marginBottom: 18 }, regionHeader: { minHeight: 58, paddingBottom: 6, flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }, regionTitle: { color: NAVY, fontSize: 22, lineHeight: 28, fontWeight: "800" }, regionCount: { color: MUTED, fontSize: 13, lineHeight: 18, marginTop: 1 }, seeAll: { minHeight: 44, flexDirection: "row", alignItems: "center", paddingLeft: 12 }, seeAllText: { color: BLUE, fontSize: 13, fontWeight: "700" }, previewRow: {}, previewCard: { borderRadius: 6, backgroundColor: "white", borderWidth: 1, borderColor: BORDER, overflow: "hidden", ...shadow }, previewMain: { flex: 1 }, previewImage: { width: "100%", backgroundColor: "#E7ECF5" }, previewCopy: { paddingHorizontal: 14, paddingVertical: 4, justifyContent: "center" }, previewName: { color: NAVY, fontSize: 16, lineHeight: 20, fontWeight: "800" }, previewCountry: { color: MUTED, fontSize: 12, lineHeight: 16, marginTop: 2 }, heart: {
     position: "absolute",
     right: 10,
     top: 10,
