@@ -7,6 +7,13 @@ const northAmericaBatch1SourceReferences =
     lastVerifiedAt: "2026-08-10",
   });
 
+const northAmericaBatch2SourceReferences =
+  (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+    source: "kurioticket-editorial" as const,
+    sourceReferences: references,
+    lastVerifiedAt: "2026-08-10",
+  });
+
 /** United States destinations introduced by North America Batch 1, in rollout order. */
 export const northAmericaExploreDestinationEditorial = [
   {
@@ -87,6 +94,56 @@ export const northAmericaExploreDestinationEditorial = [
     editorialProvenance: northAmericaBatch1SourceReferences([
       { title: "Houston Museum District — About", url: "https://houmuse.org/about/" },
       { title: "Space Center Houston — About Us", url: "https://spacecenter.org/about-us/" },
+    ]),
+  },
+  {
+    id: "ca-vancouver",
+    summary: "Vancouver occupies a Pacific waterfront where Stanley Park, Gastown and cultural institutions shape the city.",
+    description: "Vancouver extends across a peninsula beside Burrard Inlet, with a dense centre oriented toward its harbour and False Creek. Stanley Park protects forest, shoreline and cultural sites immediately west of downtown, while Gastown preserves an early commercial streetscape. Museums and public art interpret the city's histories, including the enduring presence of the Musqueam, Squamish and Tsleil-Waututh peoples.",
+    highlights: ["Burrard Inlet waterfront", "Stanley Park seawall and forest", "Gastown historic streetscape", "Coast Salish cultural context"],
+    editorialProvenance: northAmericaBatch2SourceReferences([
+      { title: "City of Vancouver — Stanley Park", url: "https://vancouver.ca/parks-recreation-culture/stanley-park.aspx" },
+      { title: "City of Vancouver — City of Reconciliation", url: "https://vancouver.ca/people-programs/city-of-reconciliation.aspx" },
+    ]),
+  },
+  {
+    id: "ca-montreal",
+    summary: "Montreal spans an island in the Saint Lawrence River, shaped by historic quarters and cultural institutions.",
+    description: "Montreal occupies an island where the Saint Lawrence River, Mount Royal and a gridded urban core define its geography. Old Montreal preserves streets, civic buildings and religious architecture associated with the city's colonial and commercial development. Museums, public markets and established neighbourhoods such as the Plateau interpret a predominantly French-speaking cultural history alongside the city's many immigrant traditions.",
+    highlights: ["Old Montreal streetscapes", "St. Lawrence River setting", "Mount Royal urban landscape", "Plateau neighbourhood heritage"],
+    editorialProvenance: northAmericaBatch2SourceReferences([
+      { title: "Ville de Montréal — Old Montréal heritage site", url: "https://montreal.ca/en/articles/old-montreal-heritage-site-19868" },
+      { title: "Pointe-à-Callière — Montréal Archaeology and History Complex", url: "https://pacmusee.qc.ca/en/" },
+    ]),
+  },
+  {
+    id: "mx-mexico-city",
+    summary: "Mexico City reveals Mexica and colonial layers through its historic centre, museums and expansive public spaces.",
+    description: "Mexico City occupies a high basin where successive Indigenous, colonial and modern plans have shaped a vast urban landscape. Around the Zócalo, the Metropolitan Cathedral and Templo Mayor express overlapping histories in the UNESCO-listed Historic Centre. Chapultepec and the National Museum of Anthropology provide public space and collections that interpret Mexico's archaeology, art and diverse cultural traditions.",
+    highlights: ["Zócalo civic core", "Templo Mayor archaeology", "National Museum of Anthropology", "Chapultepec cultural landscape"],
+    editorialProvenance: northAmericaBatch2SourceReferences([
+      { title: "UNESCO — Historic Centre of Mexico City and Xochimilco", url: "https://whc.unesco.org/en/list/412/" },
+      { title: "National Museum of Anthropology", url: "https://www.mna.inah.gob.mx/" },
+    ]),
+  },
+  {
+    id: "mx-cancun",
+    summary: "Cancún occupies a Caribbean coastal setting defined by its city centre, lagoon and narrow Hotel Zone.",
+    description: "Cancún comprises an inland urban centre and a slender Hotel Zone extending between the Caribbean Sea and Nichupté Lagoon. Within the Hotel Zone, the Museo Maya de Cancún presents regional Maya archaeology and material culture. The adjoining San Miguelito archaeological site preserves residential and ceremonial remains, grounding the planned coastal destination in a much longer history of settlement.",
+    highlights: ["Nichupté Lagoon shoreline", "Cancún Hotel Zone geography", "Museo Maya de Cancún", "San Miguelito archaeological site"],
+    editorialProvenance: northAmericaBatch2SourceReferences([
+      { title: "INAH — Museo Maya de Cancún", url: "https://www.inah.gob.mx/museos/museo-maya-de-cancun" },
+      { title: "INAH — Zona Arqueológica de San Miguelito", url: "https://www.inah.gob.mx/zonas/zona-arqueologica-de-san-miguelito" },
+    ]),
+  },
+  {
+    id: "mx-guadalajara",
+    summary: "Guadalajara centres on civic plazas, religious architecture, markets and institutions preserving western Mexico's cultural history.",
+    description: "Guadalajara's historic centre is organised around linked plazas, the cathedral and civic buildings that record successive phases of urban development. The UNESCO-listed Hospicio Cabañas preserves a monumental charitable complex and murals by José Clemente Orozco. Markets, museums and public spaces also sustain the city's associations with mariachi and the broader cultural traditions of Jalisco without relocating regional destinations into Guadalajara.",
+    highlights: ["Guadalajara Cathedral and plazas", "Hospicio Cabañas murals", "Historic centre civic architecture", "Guadalajara market traditions"],
+    editorialProvenance: northAmericaBatch2SourceReferences([
+      { title: "UNESCO — Hospicio Cabañas, Guadalajara", url: "https://whc.unesco.org/en/list/815/" },
+      { title: "Government of Guadalajara — Tourism", url: "https://turismo.guadalajara.gob.mx/" },
     ]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
