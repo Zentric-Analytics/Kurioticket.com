@@ -140,6 +140,13 @@ const asiaBatch4SourceReferences = (references: readonly ExploreDestinationEdito
   lastVerifiedAt: ASIA_BATCH_4_LAST_VERIFIED_AT,
 });
 
+const ASIA_BATCH_5_LAST_VERIFIED_AT = "2026-08-10";
+const asiaBatch5SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: ASIA_BATCH_5_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -1176,6 +1183,62 @@ const rawExploreDestinationEditorial = [
     description: "New Delhi is the planned capital district laid out south of Old Delhi, rather than a synonym for the entire metropolis. Ceremonial avenues link India Gate with Rashtrapati Bhavan and the government buildings that define its axial civic form. The National Museum and other cultural institutions place archaeology, art and public memory within this deliberately composed urban landscape.",
     highlights: ["India Gate", "Rashtrapati Bhavan", "Ceremonial avenue plan", "National Museum collections"],
     editorialProvenance: asiaBatch4SourceReferences([{ title: "Rashtrapati Bhavan Visitor Portal", url: "https://visit.rashtrapatibhavan.gov.in/" }, { title: "National Museum, New Delhi", url: "https://nationalmuseumindia.gov.in/" }]),
+  },
+  {
+    id: "bd-dhaka",
+    summary: "Dhaka follows the Buriganga River through Mughal landmarks, historic markets and Bengali cultural institutions.",
+    description: "Dhaka developed beside the Buriganga River, with Old Dhaka preserving dense lanes, mosques and long-established commercial quarters. Lalbagh Fort and Ahsan Manzil document Mughal and later civic histories within the city rather than the wider division. The Bangladesh National Museum and traditional markets extend this account through Bengali art, archaeology, crafts and everyday urban culture.",
+    highlights: ["Buriganga River", "Lalbagh Fort", "Ahsan Manzil", "Bangladesh National Museum"],
+    editorialProvenance: asiaBatch5SourceReferences([{ title: "Bangladesh Tourism Board — Dhaka", url: "https://beautifulbangladesh.gov.bd/district-destination/dhaka" }, { title: "Department of Archaeology — Lalbagh Fort", url: "https://archaeology.gov.bd/site/page/0555d1ae-8ef2-4d02-a622-79ce38e8fc1b/Lalbagh-Fort" }]),
+  },
+  {
+    id: "pk-islamabad",
+    summary: "Islamabad's planned avenues frame civic monuments, cultural museums and the wooded Margalla Hills.",
+    description: "Islamabad occupies a planned grid beneath the Margalla Hills, distinct from neighbouring Rawalpindi and its historic core. Faisal Mosque gives the capital a monumental religious landmark, while the Pakistan Monument expresses national history through modern civic architecture. Museums and cultural institutions around the planned sectors interpret archaeology, folk traditions and art without extending the record across the wider metropolitan area.",
+    highlights: ["Margalla Hills", "Faisal Mosque", "Pakistan Monument", "Lok Virsa Museum"],
+    editorialProvenance: asiaBatch5SourceReferences([{ title: "Capital Development Authority — Islamabad", url: "https://www.cda.gov.pk/aboutIslamabad" }, { title: "National Institute of Folk and Traditional Heritage", url: "https://lokvirsa.org.pk/" }]),
+  },
+  {
+    id: "pk-karachi",
+    summary: "Karachi's Arabian Sea setting anchors port-city heritage, monumental architecture and diverse cultural collections.",
+    description: "Karachi developed on the Arabian Sea as a port city whose historic commercial districts face a broad coastal landscape. Mazar-e-Quaid commemorates Pakistan's founder through monumental modern architecture, while Mohatta Palace preserves an earlier residential and artistic setting. Museums, Saddar's streets and traditions shaped by Sindhi and migrant communities reveal cultural layers specific to Karachi rather than the wider province.",
+    highlights: ["Arabian Sea waterfront", "Mazar-e-Quaid", "Mohatta Palace", "Saddar commercial heritage"],
+    editorialProvenance: asiaBatch5SourceReferences([{ title: "Sindh Tourism Development Corporation — Karachi", url: "https://stdc.gos.pk/karachi/" }, { title: "Mohatta Palace Museum", url: "https://www.mohattapalacemuseum.com/" }]),
+  },
+  {
+    id: "np-kathmandu",
+    summary: "Kathmandu preserves Newar urban heritage through palace squares, temples, courtyards and living craft traditions.",
+    description: "Kathmandu occupies a mountain-ringed valley setting, while the canonical destination remains the city rather than the entire Kathmandu Valley. Kathmandu Durbar Square anchors its historic royal and civic core through palaces, temples and courtyards. Swayambhunath, museums and Newar neighbourhood traditions add religious, artistic and social context without assigning every monument in the UNESCO-listed valley to Kathmandu city.",
+    highlights: ["Kathmandu Durbar Square", "Swayambhunath", "Newar courtyard neighbourhoods", "Historic temple architecture"],
+    editorialProvenance: asiaBatch5SourceReferences([{ title: "UNESCO — Kathmandu Valley", url: "https://whc.unesco.org/en/list/121/" }, { title: "Nepal Tourism Board — Kathmandu", url: "https://ntb.gov.np/kathmandu" }]),
+  },
+  {
+    id: "pk-lahore",
+    summary: "Lahore's walled core preserves Mughal monuments, historic markets and enduring Punjabi cultural traditions.",
+    description: "Lahore developed beside the Ravi River, with the Walled City retaining gates, bazaars and tightly patterned historic streets. Lahore Fort, Badshahi Mosque and the nearby Shalimar Gardens express successive achievements of Mughal architecture and landscape design. Museum collections, literary institutions and Punjabi food traditions broaden the city's cultural record without drawing province-wide heritage into the canonical destination.",
+    highlights: ["Lahore Fort", "Badshahi Mosque", "Shalimar Gardens", "Walled City bazaars"],
+    editorialProvenance: asiaBatch5SourceReferences([{ title: "UNESCO — Fort and Shalamar Gardens in Lahore", url: "https://whc.unesco.org/en/list/171/" }, { title: "Walled City of Lahore Authority", url: "https://walledcitylahore.gop.pk/" }]),
+  },
+  {
+    id: "mv-male",
+    summary: "Malé is a compact island capital defined by waterfront streets, mosques, markets and civic institutions.",
+    description: "Malé occupies a compact island in the Maldives, with dense streets meeting seawalls and harbour edges on every side. The Old Friday Mosque preserves coral-stone craftsmanship and religious heritage, while the National Museum interprets the country's material history from the capital. Markets and civic spaces shape everyday city life; MLE airport remains physically separate on neighbouring Hulhulé.",
+    highlights: ["Old Friday Mosque", "National Museum", "Malé waterfront", "Island market streets"],
+    editorialProvenance: asiaBatch5SourceReferences([{ title: "UNESCO — Coral Stone Mosques of Maldives", url: "https://whc.unesco.org/en/tentativelists/5812/" }, { title: "Maldives National Centre for Cultural Heritage", url: "https://ncc.gov.mv/" }]),
+  },
+  {
+    id: "bt-paro",
+    summary: "Paro sits within a river valley of traditional architecture, Buddhist institutions and cultivated landscapes.",
+    description: "Paro town occupies the floor of Paro Valley beside the Paro Chhu, amid cultivated fields and forested slopes. Rinpung Dzong anchors the town's religious and administrative heritage, while the National Museum of Bhutan occupies the watchtower above it. Traditional houses and Buddhist sites frame the wider valley relationship without treating Paro District or Bhutan generally as the canonical destination.",
+    highlights: ["Paro Chhu valley setting", "Rinpung Dzong", "National Museum of Bhutan", "Traditional Bhutanese houses"],
+    editorialProvenance: asiaBatch5SourceReferences([{ title: "Tourism Council of Bhutan — Paro", url: "https://bhutan.travel/destinations/paro" }, { title: "National Museum of Bhutan", url: "https://www.nationalmuseum.gov.bt/" }]),
+  },
+  {
+    id: "ir-tehran",
+    summary: "Tehran rises toward the Alborz foothills through royal palaces, bazaars and major cultural museums.",
+    description: "Tehran spreads southward from the Alborz foothills, with broad avenues linking historic quarters and later civic districts. Golestan Palace preserves Qajar court architecture and gardens near the old bazaar, grounding the capital's royal and commercial history. The National Museum of Iran and other collections interpret archaeology, art and material culture without relying on current political, access or operating conditions.",
+    highlights: ["Alborz foothill setting", "Golestan Palace", "Grand Bazaar", "National Museum of Iran"],
+    editorialProvenance: asiaBatch5SourceReferences([{ title: "UNESCO — Golestan Palace", url: "https://whc.unesco.org/en/list/1422/" }, { title: "National Museum of Iran", url: "https://irannationalmuseum.ir/en/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
