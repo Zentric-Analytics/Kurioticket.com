@@ -33,7 +33,16 @@ test("View details preserves ranking treatment and all existing navigation param
   assert.match(flightCard, /pathname: "\/flight-details"/);
   assert.match(flightCard, /result: JSON\.stringify\(result\)/);
   assert.match(flightCard, /Object\.fromEntries\(Object\.entries\(params\)/);
-  assert.match(flightCard, /<View style=\{s0\.flightDetailsCta\}>[\s\S]*<Button/);
+  assert.match(flightCard, /<View style=\{\[s0\.flightDetailsCta, compactItinerary && s0\.flightDetailsCtaCompact\]\}>[\s\S]*<Button/);
+});
+
+test("narrow flight cards isolate large prices without shrinking itinerary text", () => {
+  assert.match(flightCard, /const compactItinerary = width < 380/);
+  assert.match(flightCard, /compactItinerary && s0\.itineraryRowCompact/);
+  assert.match(flightCard, /compactItinerary && s0\.priceBoxCompact/);
+  assert.match(source, /priceBoxCompact: \{ width: "100%", minWidth: 0 \}/);
+  assert.match(source, /flightDetailsCtaCompact: \{ width: "100%" \}/);
+  assert.doesNotMatch(flightCard, /horizontal/);
 });
 
 test("Step 2 flight top, Step 1 shell, and HotelCard remain present", () => {
