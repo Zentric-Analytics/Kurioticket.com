@@ -58,7 +58,9 @@ export function TopBar({ detail = false }: { detail?: boolean }) {
       >
         <FlowIcon name="back" size={25} />
       </Pressable>
-      <Logo />
+      <View pointerEvents="none" style={s.logoCenter}>
+        <Logo />
+      </View>
       <View style={s.topActions}>
         {detail ? (
           <>
@@ -66,10 +68,15 @@ export function TopBar({ detail = false }: { detail?: boolean }) {
             <FlowIcon name="share" />
           </>
         ) : (
-          <View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Price alerts"
+            onPress={() => router.push("/price-alerts")}
+            style={({ pressed }) => [s.alertHit, pressed && s.pressed]}
+          >
             <FlowIcon name="bell" />
             <View style={s.dot} />
-          </View>
+          </Pressable>
         )}
       </View>
     </View>
@@ -248,6 +255,13 @@ export const s = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "white",
   },
+  logoCenter: {
+    position: "absolute",
+    top: 24,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
   hit: {
     width: 44,
     height: 44,
@@ -260,10 +274,17 @@ export const s = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 18,
   },
+  alertHit: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pressed: { opacity: 0.65 },
   dot: {
     position: "absolute",
-    right: -2,
-    top: -2,
+    right: 7,
+    top: 7,
     width: 8,
     height: 8,
     borderRadius: 4,
