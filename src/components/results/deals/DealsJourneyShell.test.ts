@@ -185,6 +185,22 @@ test("server client boundaries are keyed by scope and search fingerprint, not st
   assert.doesNotMatch(guided, /buildDealsPlanContextKey\([^\n]*stage/);
 });
 
+test("failed guided search navigation only restores the valid rendered plan", async () => {
+  const source = await readFile(
+    new URL("./DealsJourneyShell.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /setTimeout\([\s\S]*?updateFailed[\s\S]*?10000\)/);
+  assert.match(
+    source,
+    /if \(plan\?\.searchFingerprint === fingerprint\)\s*writeDealsStagedJourneyPlan\(plan\)/,
+  );
+  assert.doesNotMatch(
+    source,
+    /updateFailed[\s\S]{0,300}(?:createDealsTripPlan|updateDealsTripPlan)/,
+  );
+});
+
 test("guided hotel confirmation creates only canonical validated base Trip Plan paths", async () => {
   const [source, helper] = await Promise.all([
     readFile(new URL("./DealsJourneyShell.tsx", import.meta.url), "utf8"),

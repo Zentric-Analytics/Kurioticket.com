@@ -66,7 +66,11 @@ test("hotel and car become visible primary shared editors when Flight is removed
   });
   search = transitionDealsMode(search, "hotel-car");
   assert.deepEqual(
-    [search.sharedDestination, search.sharedTravelStartDate, search.sharedTravelEndDate],
+    [
+      search.sharedDestination,
+      search.sharedTravelStartDate,
+      search.sharedTravelEndDate,
+    ],
     ["Sintra", "2099-03-02", "2099-03-08"],
   );
   assert.deepEqual(
@@ -161,7 +165,11 @@ test("removing and re-adding Flight preserves detached Stay and Car values", () 
     start: "2099-05-02",
     end: "2099-05-04",
   });
-  search = { ...search, hotelCheckIn: "2099-05-01", hotelCheckOut: "2099-05-05" };
+  search = {
+    ...search,
+    hotelCheckIn: "2099-05-01",
+    hotelCheckOut: "2099-05-05",
+  };
   search = transitionDealsMode(search, "hotel-car");
   search = transitionDealsMode(search, "hotel-flight-car");
   assert.deepEqual(
