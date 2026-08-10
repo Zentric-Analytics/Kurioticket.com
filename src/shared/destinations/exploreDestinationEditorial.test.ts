@@ -22,6 +22,7 @@ import { caribbeanExploreDestinationEditorial } from "./editorial/caribbean";
 import { europeExploreDestinationEditorial } from "./editorial/europe";
 import { legacyExploreDestinationEditorial } from "./editorial/legacy";
 import { northAmericaExploreDestinationEditorial } from "./editorial/northAmerica";
+import { southAmericaExploreDestinationEditorial } from "./editorial/southAmerica";
 
 const clone = (record: ExploreDestinationEditorial): ExploreDestinationEditorial => ({
   ...record,
@@ -169,6 +170,15 @@ export const CARIBBEAN_BATCH_1_IDS = [
 ] as const;
 
 const CARIBBEAN_COUNTRY_CODES = new Set(["AG", "AW", "BB", "BS", "CU", "DO", "JM", "TT"]);
+
+export const SOUTH_AMERICA_BATCH_1_IDS = [
+  "co-bogota", "co-medellin", "ec-quito", "ec-guayaquil", "pe-lima", "bo-la-paz",
+  "bo-santa-cruz",
+] as const;
+
+const SOUTH_AMERICA_COUNTRY_CODES = new Set([
+  "AR", "BO", "BR", "CL", "CO", "EC", "GY", "PE", "PY", "SR", "UY", "VE",
+]);
 
 const ORIGINAL_AFRICAN_EDITORIAL_IDS = [
   "ng-lagos", "za-cape-town", "eg-cairo", "ma-marrakesh", "ng-abuja",
@@ -1506,7 +1516,8 @@ test("global editorial coverage before Central America Batch 1 remains 188 of 23
     ...EUROPE_COUNTRY_CODES, ...AFRICA_COUNTRY_CODES, ...ASIA_COUNTRY_CODES,
   ]);
   const editorialIds = new Set(exploreDestinationEditorial
-    .slice(0, -(CENTRAL_AMERICA_BATCH_1_IDS.length + CARIBBEAN_BATCH_1_IDS.length))
+    .slice(0, -(CENTRAL_AMERICA_BATCH_1_IDS.length + CARIBBEAN_BATCH_1_IDS.length
+      + SOUTH_AMERICA_BATCH_1_IDS.length))
     .map(({ id }) => id));
   const remaining = exploreDestinations.filter(({ id }) => !editorialIds.has(id));
   const remainingOutsideCoveredRegions = remaining.filter(({ countryCode }) =>
@@ -1540,6 +1551,7 @@ test("regional modules preserve the historical prefix and append rollout modules
       ...NORTH_AMERICA_BATCH_2_IDS,
       ...CENTRAL_AMERICA_BATCH_1_IDS,
       ...CARIBBEAN_BATCH_1_IDS,
+      ...SOUTH_AMERICA_BATCH_1_IDS,
     ],
   );
   assert.equal(new Set(editorialIds).size, editorialIds.length);
@@ -1702,7 +1714,8 @@ test("North America coverage is repository-derived as complete after Batch 2", (
 test("Central America Batch 1 adds five complete, previously non-editorial canonical records", () => {
   const canonicalDestinations = buildExploreDestinations(airports);
   const priorIds = new Set(exploreDestinationEditorial
-    .slice(0, -(CENTRAL_AMERICA_BATCH_1_IDS.length + CARIBBEAN_BATCH_1_IDS.length))
+    .slice(0, -(CENTRAL_AMERICA_BATCH_1_IDS.length + CARIBBEAN_BATCH_1_IDS.length
+      + SOUTH_AMERICA_BATCH_1_IDS.length))
     .map(({ id }) => id));
   assert.deepEqual(centralAmericaExploreDestinationEditorial.map(({ id }) => id),
     CENTRAL_AMERICA_BATCH_1_IDS);
@@ -1772,9 +1785,11 @@ test("Central America Batch 1 preserves high-care city and airport scopes", () =
 test("Central America coverage and global coverage are repository-derived after Batch 1", () => {
   const canonical = exploreDestinations.filter(({ countryCode }) =>
     CENTRAL_AMERICA_COUNTRY_CODES.has(countryCode));
-  const editorialIds = new Set(exploreDestinationEditorial.map(({ id }) => id));
+  const editorialIds = new Set(exploreDestinationEditorial
+    .slice(0, -SOUTH_AMERICA_BATCH_1_IDS.length).map(({ id }) => id));
   const priorIds = new Set(exploreDestinationEditorial
-    .slice(0, -(CENTRAL_AMERICA_BATCH_1_IDS.length + CARIBBEAN_BATCH_1_IDS.length))
+    .slice(0, -(CENTRAL_AMERICA_BATCH_1_IDS.length + CARIBBEAN_BATCH_1_IDS.length
+      + SOUTH_AMERICA_BATCH_1_IDS.length))
     .map(({ id }) => id));
   const before = canonical.filter(({ id }) => priorIds.has(id));
   const after = canonical.filter(({ id }) => editorialIds.has(id));
@@ -1791,7 +1806,8 @@ test("Central America coverage and global coverage are repository-derived after 
 test("Caribbean Batch 1 appends ten complete, previously non-editorial canonical records", () => {
   const canonicalDestinations = buildCanonicalExploreDestinations(airports);
   const priorIds = new Set(exploreDestinationEditorial
-    .slice(0, -CARIBBEAN_BATCH_1_IDS.length).map(({ id }) => id));
+    .slice(0, -(CARIBBEAN_BATCH_1_IDS.length + SOUTH_AMERICA_BATCH_1_IDS.length))
+    .map(({ id }) => id));
   assert.deepEqual(caribbeanExploreDestinationEditorial.map(({ id }) => id), CARIBBEAN_BATCH_1_IDS);
   assert.ok(CARIBBEAN_BATCH_1_IDS.every((id) => !priorIds.has(id)));
 
@@ -1863,9 +1879,11 @@ test("Caribbean Batch 1 preserves high-care canonical and airport scopes", () =>
 test("Caribbean coverage and global coverage are repository-derived after Batch 1", () => {
   const canonical = exploreDestinations.filter(({ countryCode }) =>
     CARIBBEAN_COUNTRY_CODES.has(countryCode));
-  const editorialIds = new Set(exploreDestinationEditorial.map(({ id }) => id));
+  const editorialIds = new Set(exploreDestinationEditorial
+    .slice(0, -SOUTH_AMERICA_BATCH_1_IDS.length).map(({ id }) => id));
   const priorIds = new Set(exploreDestinationEditorial
-    .slice(0, -CARIBBEAN_BATCH_1_IDS.length).map(({ id }) => id));
+    .slice(0, -(CARIBBEAN_BATCH_1_IDS.length + SOUTH_AMERICA_BATCH_1_IDS.length))
+    .map(({ id }) => id));
   const before = canonical.filter(({ id }) => priorIds.has(id));
   const after = canonical.filter(({ id }) => editorialIds.has(id));
   const remaining = canonical.filter(({ id }) => !editorialIds.has(id));
@@ -1877,9 +1895,103 @@ test("Caribbean coverage and global coverage are repository-derived after Batch 
   assert.equal(editorialIds.size, 203);
   assert.equal(globalRemaining.length, 32);
   assert.deepEqual(
-    exploreDestinationEditorial.slice(-CARIBBEAN_BATCH_1_IDS.length).map(({ id }) => id),
+    exploreDestinationEditorial
+      .slice(-(CARIBBEAN_BATCH_1_IDS.length + SOUTH_AMERICA_BATCH_1_IDS.length),
+        -SOUTH_AMERICA_BATCH_1_IDS.length)
+      .map(({ id }) => id),
     CARIBBEAN_BATCH_1_IDS,
   );
+});
+
+test("South America Batch 1 appends seven complete, previously non-editorial canonical records", () => {
+  const canonicalDestinations = buildCanonicalExploreDestinations(airports);
+  const priorIds = new Set(exploreDestinationEditorial
+    .slice(0, -SOUTH_AMERICA_BATCH_1_IDS.length).map(({ id }) => id));
+  assert.deepEqual(southAmericaExploreDestinationEditorial.map(({ id }) => id),
+    SOUTH_AMERICA_BATCH_1_IDS);
+  assert.ok(SOUTH_AMERICA_BATCH_1_IDS.every((id) => !priorIds.has(id)));
+
+  for (const record of southAmericaExploreDestinationEditorial) {
+    const canonical = canonicalDestinations.find(({ id }) => id === record.id);
+    const enriched = exploreDestinations.find(({ id }) => id === record.id);
+    assert.ok(canonical);
+    assert.ok(enriched);
+    assert.equal(canonical.editorialProvenance, undefined);
+    assert.equal(enriched.summary, record.summary);
+    assert.equal(enriched.description, record.description);
+    assert.deepEqual(enriched.highlights, record.highlights);
+    assert.deepEqual(enriched.editorialProvenance, record.editorialProvenance);
+    assert.ok(record.summary.startsWith(enriched.name));
+    assert.ok(record.summary.trim().split(/\s+/).length >= 13);
+    assert.ok(record.summary.trim().split(/\s+/).length <= 18);
+    assert.equal((record.summary.match(/[.!?](?:\s|$)/g) ?? []).length, 1);
+    assert.ok(record.description.trim().split(/\s+/).length >= 53);
+    assert.ok(record.description.trim().split(/\s+/).length <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.equal(new Set(record.highlights.map((highlight) => highlight.toLowerCase())).size, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !/[.!?]$/.test(highlight)));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-10");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length);
+    assert.equal(new Set(record.editorialProvenance.sourceReferences.map(({ title }) => title)).size,
+      record.editorialProvenance.sourceReferences.length);
+    assert.ok(record.editorialProvenance.sourceReferences.every(({ title, url }) =>
+      title.trim() && url.startsWith("https://")));
+    assert.equal("relatedDestinationIds" in record, false);
+    assert.deepEqual({
+      name: enriched.name, country: enriched.country, countryCode: enriched.countryCode,
+      primaryAirportCode: enriched.primaryAirportCode, airportCodes: enriched.airportCodes,
+      airportNames: enriched.airportNames, searchAliases: enriched.searchAliases,
+      imageDestinationId: enriched.imageDestinationId, provenance: enriched.provenance,
+    }, {
+      name: canonical.name, country: canonical.country, countryCode: canonical.countryCode,
+      primaryAirportCode: canonical.primaryAirportCode, airportCodes: canonical.airportCodes,
+      airportNames: canonical.airportNames, searchAliases: canonical.searchAliases,
+      imageDestinationId: canonical.imageDestinationId, provenance: canonical.provenance,
+    });
+  }
+});
+
+test("South America Batch 1 preserves high-care canonical city and airport scopes", () => {
+  const byId = new Map(exploreDestinations.map((destination) => [destination.id, destination]));
+  assert.equal(byId.get("co-bogota")?.name, "Bogotá");
+  assert.equal(byId.get("co-medellin")?.name, "Medellín");
+  assert.equal(byId.get("co-medellin")?.primaryAirportCode, "MDE");
+  assert.deepEqual(byId.get("co-medellin")?.airportCodes, ["MDE"]);
+  assert.equal(byId.get("ec-quito")?.name, "Quito");
+  assert.equal(byId.get("ec-quito")?.primaryAirportCode, "UIO");
+  assert.deepEqual(byId.get("ec-quito")?.airportCodes, ["UIO"]);
+  assert.equal(byId.get("ec-guayaquil")?.name, "Guayaquil");
+  assert.equal(byId.get("pe-lima")?.name, "Lima");
+  assert.equal(byId.get("bo-la-paz")?.name, "La Paz");
+  assert.equal(byId.get("bo-la-paz")?.country, "Bolivia");
+  assert.equal(byId.get("bo-la-paz")?.primaryAirportCode, "LPB");
+  assert.deepEqual(byId.get("bo-la-paz")?.airportCodes, ["LPB"]);
+  assert.equal(byId.get("bo-santa-cruz")?.name, "Santa Cruz");
+  assert.notEqual(byId.get("bo-santa-cruz")?.name, "Santa Cruz de la Sierra");
+});
+
+test("South America and global coverage are repository-derived after Batch 1", () => {
+  const canonical = exploreDestinations.filter(({ countryCode }) =>
+    SOUTH_AMERICA_COUNTRY_CODES.has(countryCode));
+  const editorialIds = new Set(exploreDestinationEditorial.map(({ id }) => id));
+  const priorIds = new Set(exploreDestinationEditorial
+    .slice(0, -SOUTH_AMERICA_BATCH_1_IDS.length).map(({ id }) => id));
+  const before = canonical.filter(({ id }) => priorIds.has(id));
+  const after = canonical.filter(({ id }) => editorialIds.has(id));
+  const remaining = canonical.filter(({ id }) => !editorialIds.has(id));
+  const globalRemaining = exploreDestinations.filter(({ id }) => !editorialIds.has(id));
+  assert.equal(canonical.length, 15);
+  assert.equal(before.length, 1);
+  assert.equal(after.length, 8);
+  assert.equal(remaining.length, 7);
+  assert.equal(editorialIds.size, 210);
+  assert.equal(globalRemaining.length, 25);
+  assert.deepEqual(exploreDestinationEditorial.slice(-SOUTH_AMERICA_BATCH_1_IDS.length)
+    .map(({ id }) => id), SOUTH_AMERICA_BATCH_1_IDS);
 });
 
 test("Featured destinations retain their separately maintained IDs and order", () => {

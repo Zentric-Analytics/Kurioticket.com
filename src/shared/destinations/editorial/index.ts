@@ -5,6 +5,7 @@ import { centralAmericaExploreDestinationEditorial } from "./centralAmerica";
 import { europeExploreDestinationEditorial } from "./europe";
 import { legacyExploreDestinationEditorial } from "./legacy";
 import { northAmericaExploreDestinationEditorial } from "./northAmerica";
+import { southAmericaExploreDestinationEditorial } from "./southAmerica";
 
 /** Explicit aggregation preserves the historical editorial record order. */
 export const rawExploreDestinationEditorial = [
@@ -15,6 +16,7 @@ export const rawExploreDestinationEditorial = [
   ...northAmericaExploreDestinationEditorial,
   ...centralAmericaExploreDestinationEditorial,
   ...caribbeanExploreDestinationEditorial,
+  ...southAmericaExploreDestinationEditorial,
 ] as const;
 
 export type {
