@@ -47,7 +47,7 @@ export function Logo() {
     />
   );
 }
-export function TopBar({ detail = false }: { detail?: boolean }) {
+export function TopBar({ detail = false, saved = false, onFavorite, onShare }: { detail?: boolean; saved?: boolean; onFavorite?: () => void; onShare?: () => void }) {
   return (
     <View style={s.top}>
       <Pressable
@@ -64,8 +64,8 @@ export function TopBar({ detail = false }: { detail?: boolean }) {
       <View style={s.topActions}>
         {detail ? (
           <>
-            <FlowIcon name="heart" />
-            <FlowIcon name="share" />
+            <Pressable accessibilityRole="button" accessibilityLabel={saved ? "Remove saved flight" : "Save flight"} accessibilityState={{ selected: saved }} onPress={onFavorite} style={s.hit}><FlowIcon name="heart" fill={saved ? ui.blue : "none"} color={saved ? ui.blue : ui.navy} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Share flight" onPress={onShare} style={s.hit}><FlowIcon name="share" /></Pressable>
           </>
         ) : (
           <Pressable
@@ -120,11 +120,15 @@ export function DateStrip({
   prices,
   currency = "USD",
   onSelect,
+  onPrevious,
+  onNext,
 }: {
   date: string;
   prices: (number | undefined)[];
   currency?: string;
   onSelect: (v: string) => void;
+  onPrevious?: () => void;
+  onNext?: () => void;
 }) {
   const base = new Date(`${date}T12:00:00`);
   return (
@@ -134,7 +138,7 @@ export function DateStrip({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={s.dates}
     >
-      <Pressable style={s.arrow}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Previous date" onPress={onPrevious} disabled={!onPrevious} style={s.arrow}>
         <FlowIcon name="back" size={20} />
       </Pressable>
       {[-2, -1, 0, 1, 2].map((d, i) => {
@@ -164,7 +168,7 @@ export function DateStrip({
           </Pressable>
         );
       })}
-      <Pressable style={s.arrow}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Next date" onPress={onNext} disabled={!onNext} style={s.arrow}>
         <FlowIcon name="chevron" size={20} />
       </Pressable>
     </ScrollView>

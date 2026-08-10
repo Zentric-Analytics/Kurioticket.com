@@ -53,6 +53,8 @@ import {
   parseTargetPrice,
 } from "../flow/flightPriceAlertModel";
 import type { SearchPlan } from "../flow/travelSearchModel";
+import { emptyFlightFilters, filterAndSortFlights, flightFilterOptions, type FlightFilters } from "./flightFilters";
+import { useSavedFlights } from "../../storage/useSavedFlights";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -74,6 +76,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
   const [sort, setSort] = useState("best");
+  const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterSection, setFilterSection] = useState<"all" | "stops" | "airlines" | "times">("all");
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && one(params.visual) === "1";
   const load = useCallback(async () => {
@@ -115,19 +120,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     router.canGoBack()
       ? router.back()
       : router.replace(product === "flight" ? "/flights" : "/hotels");
-  const sorted = useMemo(
-    () =>
-      [...results].sort((a, b) =>
-        sort === "price"
-          ? product === "flight"
-            ? (a as FlightResult).price - (b as FlightResult).price
-            : (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
-          : product === "flight"
-            ? (b as FlightResult).valueScore - (a as FlightResult).valueScore
-            : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
-      ),
-    [results, sort, product],
-  );
+  const sorted = useMemo(() => product === "flight"
+    ? filterAndSortFlights(results as FlightResult[], filters, sort)
+    : [...results].sort((a, b) => sort === "price" ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice! : (b as HotelResult).valueScore - (a as HotelResult).valueScore), [results, filters, sort, product]);
+  const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[]), [results]);
+  const hasFilters = filters.stops.length + filters.airlines.length + filters.times.length > 0;
+  const openFilters = (section: typeof filterSection) => { setFilterSection(section); setFilterOpen(true); };
   const payload = plan.plan?.payload || {};
   const date = String(
     product === "flight"
@@ -167,6 +165,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             product === "flight" ? { departureDate: v } : { checkIn: v },
           )
         }
+        onPrevious={() => { const next = new Date(`${date}T12:00:00`); next.setDate(next.getDate() - 1); const iso = next.toISOString().slice(0, 10); if (iso >= new Date().toISOString().slice(0, 10)) router.setParams(product === "flight" ? { departureDate: iso } : { checkIn: iso }); }}
+        onNext={() => { const next = new Date(`${date}T12:00:00`); next.setDate(next.getDate() + 1); const iso = next.toISOString().slice(0, 10); router.setParams(product === "flight" ? { departureDate: iso } : { checkIn: iso }); }}
       />
       <ScrollView
         horizontal
@@ -174,30 +174,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={s0.filters}
       >
-        <Pill
-          label="Filters"
-          icon="sliders"
-          onPress={() =>
-            Alert.alert(
-              "Filters",
-              "Filter controls use the current live result set.",
-            )
-          }
-        />
-        {(product === "flight"
-          ? ["Stops", "Airlines", "Times"]
-          : ["Price", "Guest rating", "Property type"]
-        ).map((x) => (
-          <Pill
-            key={x}
-            label={x}
-            onPress={() =>
-              Alert.alert(
-                x,
-                "No additional values are available from this search response.",
-              )
-            }
-          />
+        <Pill label="Filters" icon="sliders" active={hasFilters} onPress={product === "flight" ? () => openFilters("all") : undefined} />
+        {(product === "flight" ? ["Stops", "Airlines", "Times"] : ["Price", "Guest rating", "Property type"]).map((x) => (
+          <Pill key={x} label={x} onPress={product === "flight" ? () => openFilters(x.toLowerCase() as typeof filterSection) : undefined} />
         ))}
         <Pill
           label={`Sort: ${sort === "price" ? "Price" : product === "flight" ? "Best" : "Recommended"}`}
@@ -232,7 +211,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           <View style={s0.found}>
             <View style={s0.foundCopy}>
               <Text style={s0.foundTitle}>
-                {results.length}{" "}
+                {sorted.length}{" "}
                 {product === "flight" ? "flights" : "properties"} found
               </Text>
               <Text style={s0.sub}>
@@ -270,6 +249,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             />
           ),
         )}
+        {status === "ready" && product === "flight" && results.length > 0 && sorted.length === 0 ? <Empty title="No flights match these filters" body="Clear the selected filters to see all loaded flights." retry={() => setFilters(emptyFlightFilters())} retryLabel="Clear filters" edit={edit} /> : null}
         {status === "ready" && availability.priceAlerts ? (
           product === "flight" && plan.plan ? (
             <FlightPriceAlert plan={plan.plan} results={results as FlightResult[]} />
@@ -278,12 +258,23 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           )
         ) : null}
       </ScrollView>
+      {product === "flight" ? <FlightFilterModal visible={filterOpen} section={filterSection} filters={filters} options={flightOptions} onChange={setFilters} onClose={() => setFilterOpen(false)} /> : null}
       <BottomNav />
     </SafeAreaView>
   );
 }
+const stopLabels = { nonstop: "Nonstop", one: "1 stop", twoPlus: "2+ stops" } as const;
+const timeLabels = { morning: "Morning", afternoon: "Afternoon", evening: "Evening", night: "Night" } as const;
+function FlightFilterModal({ visible, section, filters, options, onChange, onClose }: { visible: boolean; section: "all" | "stops" | "airlines" | "times"; filters: FlightFilters; options: ReturnType<typeof flightFilterOptions>; onChange: (filters: FlightFilters) => void; onClose: () => void }) {
+  const [draft, setDraft] = useState(filters);
+  useEffect(() => { if (visible) setDraft(filters); }, [visible, filters]);
+  const toggle = (key: keyof FlightFilters, value: string) => setDraft((current) => ({ ...current, [key]: current[key].includes(value as never) ? current[key].filter((x) => x !== value) : [...current[key], value] } as FlightFilters));
+  const choices = (key: keyof FlightFilters, values: readonly string[], labels?: Record<string, string>) => <View style={s0.choiceRow}>{values.map((value) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: draft[key].includes(value as never) }} onPress={() => toggle(key, value)} style={[s0.choice, draft[key].includes(value as never) && s0.choiceActive]}><Text style={s0.inputLabel}>{labels?.[value] || value}</Text></Pressable>)}</View>;
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal><View style={s0.modalBackdrop}><View style={s0.sheet} accessibilityLabel="Flight filters"><View style={s0.sheetHead}><Text accessibilityRole="header" style={s0.foundTitle}>Filter flights</Text><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose}><FlowIcon name="close" /></Pressable></View>{(section === "all" || section === "stops") && options.stops.length ? <><Text style={s0.inputLabel}>Stops</Text>{choices("stops", options.stops, stopLabels)}</> : null}{(section === "all" || section === "airlines") && options.airlines.length ? <><Text style={s0.inputLabel}>Airlines</Text>{choices("airlines", options.airlines)}</> : null}{(section === "all" || section === "times") && options.times.length ? <><Text style={s0.inputLabel}>Departure time</Text>{choices("times", options.times, timeLabels)}</> : null}<Button label="Apply filters" onPress={() => { onChange(draft); onClose(); }} /><Button label="Clear filters" outline onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} /></View></View></Modal>;
+}
 function FlightCard({ result, rank, params }: { result: FlightResult; rank: number; params: Record<string, string | string[]> }) {
-  const [saved, setSaved] = useState(false);
+  const { savedIds, toggle } = useSavedFlights();
+  const saved = savedIds.has(result.id);
   return (
     <View style={[s0.card, rank === 0 && s0.best]}>
       <View style={s0.cardTop}>
@@ -302,8 +293,10 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
           </Badge>
         )}
         <Pressable
+          accessibilityRole="button"
           accessibilityLabel={`${saved ? "Remove" : "Save"} ${result.airlineName}`}
-          onPress={() => setSaved(!saved)}
+          accessibilityState={{ selected: saved }}
+          onPress={() => toggle(result.id)}
         >
           <FlowIcon
             name="heart"
@@ -822,6 +815,10 @@ const s0 = StyleSheet.create({
   currencySelected: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
   modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(7,21,47,.45)" },
   sheet: { backgroundColor: "white", padding: 24, paddingBottom: 36, gap: 12, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  sheetHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  choiceRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  choice: { minHeight: 44, justifyContent: "center", borderWidth: 1, borderColor: ui.border, borderRadius: 22, paddingHorizontal: 14 },
+  choiceActive: { borderColor: ui.blue, backgroundColor: "#EEF4FF" },
   inputLabel: { fontSize: 13, fontWeight: "700", color: ui.navy },
   input: { height: 48, borderWidth: 1, borderColor: ui.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 16 },
   error: { color: "#B42318", fontSize: 12 },
