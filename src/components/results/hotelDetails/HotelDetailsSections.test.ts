@@ -32,7 +32,7 @@ test("supports embedded and standalone presentations with a flat root", () => {
   assert.match(source, /variant="flat"/);
 });
 
-test("omits empty details and preserves dynamic section order and xl layouts", () => {
+test("omits empty details and uses a two-column xl grid for multiple sections", () => {
   assert.match(
     source,
     /if \(!hasRoom && !hasCancellation && !hasAmenities\) return null/,
@@ -41,15 +41,22 @@ test("omits empty details and preserves dynamic section order and xl layouts", (
   const cancellation = source.indexOf('key: "cancellation"', room);
   const amenities = source.indexOf('key: "amenities"', cancellation);
   assert.ok(room >= 0 && cancellation > room && amenities > cancellation);
-  for (const className of [
-    "xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)]",
-    "xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]",
-    "xl:grid-cols-2",
-    "xl:grid-cols-1",
-  ]) {
+  for (const className of ["xl:grid-cols-2", "xl:grid-cols-1"]) {
     assert.ok(source.includes(className));
   }
+  assert.match(source, /sections\.length > 1 \? "xl:grid-cols-2"/);
+  assert.doesNotMatch(source, /xl:grid-cols-\[minmax/);
   assert.doesNotMatch(source, /lg:grid-cols-(?:\[|1|2)/);
+});
+
+test("gives text equal columns and full-width rows to amenities combinations", () => {
+  assert.match(source, /const hasTwoTextSections = hasRoom && hasCancellation/);
+  assert.match(
+    source,
+    /section\.key === "amenities" \|\|[\s\S]*hasAmenities &&[\s\S]*!hasTwoTextSections &&[\s\S]*section\.kind === "text"/,
+  );
+  assert.match(source, /spansFullDesktopRow \? "xl:col-span-2" : ""/);
+  assert.match(source, /section\.key === "cancellation" && hasTwoTextSections/);
 });
 
 test("uses hidden semantic headings and icon-led semantic lists", () => {
@@ -75,6 +82,7 @@ test("uses flat sections with responsive structural dividers", () => {
     "border-border",
     "xl:border-t-0",
     "xl:border-s",
+    "xl:border-t xl:border-s-0",
   ]) {
     assert.ok(source.includes(token));
   }
@@ -144,10 +152,9 @@ test("selects the complete and missing-section mobile line sequences", () => {
 
 test("keeps custom lines mobile-only and restores standard responsive dividers", () => {
   assert.match(source, /border-t-0 bg-surface sm:border-t sm:border-border/);
-  assert.match(
-    source,
-    /border-t-0 sm:border-t sm:border-border xl:border-t-0 xl:border-s/,
-  );
+  assert.match(source, /border-t-0 sm:border-t sm:border-border/);
+  assert.match(source, /xl:border-t-0 xl:border-s/);
+  assert.match(source, /xl:border-t xl:border-s-0/);
   assert.equal(source.match(/sm:hidden/g)?.length, 1);
   assert.doesNotMatch(
     source,

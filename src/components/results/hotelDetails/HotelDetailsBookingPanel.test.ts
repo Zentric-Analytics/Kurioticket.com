@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { translations } from "../../../lib/i18n/en";
 
 const bookingSource = readFileSync(
   new URL("./HotelDetailsBookingPanel.tsx", import.meta.url),
@@ -10,6 +11,32 @@ const clientSource = readFileSync(
   new URL("../HotelDetailsClient.tsx", import.meta.url),
   "utf8",
 );
+
+test("shortens only the guided Hotel to Flight CTA copy", () => {
+  assert.equal(
+    translations["deals.guided.hotelDetails.continueFlights"],
+    "Choose this room",
+  );
+  assert.equal(
+    translations["deals.guided.hotelDetails.continueCars"],
+    "Choose this room and continue to cars",
+  );
+});
+
+test("preserves guided room selection behavior and accessible labeling", () => {
+  for (const contract of [
+    'guidedSearch?.mode === "hotel-car"',
+    't("deals.guided.hotelDetails.continueCars")',
+    't("deals.guided.hotelDetails.continueFlights")',
+    'kind: "guided-room"',
+    "label: guidedActionLabel",
+    "accessibleLabel: `${guidedActionLabel}:",
+    "if (guidedSelection) onGuidedSelection?.(guidedSelection)",
+  ])
+    assert.ok(clientSource.includes(contract), contract);
+
+  assert.match(bookingSource, /getDealsGuidedConfirmationActionId\("hotel"\)/);
+});
 
 test("renders one restrained flight-style outer booking card", () => {
   assert.match(

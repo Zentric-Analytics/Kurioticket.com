@@ -177,14 +177,8 @@ export function HotelDetailsSections({
     });
   }
 
-  const gridColumns =
-    sections.length === 3
-      ? "xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2fr)]"
-      : sections.length === 2 && hasAmenities
-        ? "xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]"
-        : sections.length === 2
-          ? "xl:grid-cols-2"
-          : "xl:grid-cols-1";
+  const gridColumns = sections.length > 1 ? "xl:grid-cols-2" : "xl:grid-cols-1";
+  const hasTwoTextSections = hasRoom && hasCancellation;
 
   const content = (
     <div
@@ -195,14 +189,24 @@ export function HotelDetailsSections({
           sections.map(({ key }) => key),
           index,
         );
+        const spansFullDesktopRow =
+          sections.length > 1 &&
+          (section.key === "amenities" ||
+            (hasAmenities && !hasTwoTextSections && section.kind === "text"));
+        const hasDesktopStartDivider =
+          section.key === "cancellation" && hasTwoTextSections;
         return (
           <section
             key={section.key}
             aria-labelledby={`hotel-details-${section.key}-heading`}
-            className={`min-w-0 ${
-              index > 0
-                ? "border-t-0 sm:border-t sm:border-border xl:border-t-0 xl:border-s"
-                : ""
+            className={`min-w-0 ${spansFullDesktopRow ? "xl:col-span-2" : ""} ${
+              index > 0 ? "border-t-0 sm:border-t sm:border-border" : ""
+            } ${
+              hasDesktopStartDivider
+                ? "xl:border-t-0 xl:border-s"
+                : index > 0
+                  ? "xl:border-t xl:border-s-0"
+                  : ""
             }`}
           >
             {mobileLines.map((line) => (
