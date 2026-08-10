@@ -24,6 +24,13 @@ const resultsCar = form.slice(
   form.indexOf("data-deals-results-car"),
   form.indexOf("data-deals-results-travellers"),
 );
+const landingActions = form.slice(
+  form.indexOf("data-deals-landing-lower-controls"),
+  form.indexOf(
+    "guidedPreviewPanel",
+    form.indexOf("data-deals-landing-lower-controls"),
+  ),
+);
 
 test("LANDING CONTRACT keeps package selection above lower shared controls", () => {
   assert.match(form, /data-deals-layout=\{variant\}/);
@@ -55,6 +62,50 @@ test("LANDING CONTRACT keeps package selection above lower shared controls", () 
   assert.match(form, /guidedPreviewPanel/);
   assert.doesNotMatch(page, /variant="results"/);
   assert.match(page, /<DealsSearchForm/);
+});
+
+test("landing package modes derive one combination-aware field matrix", () => {
+  assert.match(
+    form,
+    /const supportsLandingStayDateOverride =\s*isLandingVariant && included\.hotel && included\.flight/,
+  );
+  assert.match(beforeResultsCar, /included\.flight && \(/);
+  assert.match(form, /data-deals-hotel-primary=\{!included\.flight \? "true"/);
+  assert.match(form, /included\.car && variant === "results"/);
+  assert.match(landingActions, /\{included\.flight \? \(/);
+  assert.match(landingActions, /data-deals-landing-cabin/);
+  assert.match(landingActions, /travelersControlLabel/);
+  assert.match(
+    form,
+    /isLandingVariant && !included\.hotel[\s\S]*deals\.travellersRow[\s\S]*deals\.travellersRooms/,
+  );
+  assert.match(form, /if \(!included\.hotel\) return people/);
+});
+
+test("landing Stay-date override reuses linked Hotel calendar state", () => {
+  assert.match(landingActions, /data-deals-change-stay-dates/);
+  assert.match(landingActions, /type="checkbox"/);
+  assert.match(landingActions, /checked=\{!search\.stayDatesLinked\}/);
+  assert.match(
+    landingActions,
+    /customizeInheritedField\(current, "stayDates", \{/,
+  );
+  assert.match(landingActions, /relinkInheritedField\(current, "stayDates"\)/);
+  assert.match(landingActions, /data-deals-landing-stay-dates/);
+  assert.match(landingActions, /hotelDatesLauncherRef/);
+  assert.match(landingActions, /hotelDatesOpen \|\| mobileHotelDatesOpen/);
+  assert.match(landingActions, /hotelDatesSummary/);
+  assert.doesNotMatch(form, /useState\([^\n]*changeStayDates/i);
+});
+
+test("landing unlinked Stay dates do not revive the legacy Stay section", () => {
+  const stayRenderCondition = form.slice(
+    form.indexOf("{included.hotel &&"),
+    form.indexOf("data-deals-results-stay"),
+  );
+  assert.doesNotMatch(stayRenderCondition, /!search\.stayDatesLinked/);
+  assert.match(stayRenderCondition, /!search\.stayDestinationLinked/);
+  assert.match(resultsStay, /variant === "results"/);
 });
 
 test("RESULTS MODIFY-SEARCH CONTRACT moves shared controls into full rows", () => {

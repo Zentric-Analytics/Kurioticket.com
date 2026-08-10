@@ -706,6 +706,12 @@ export function DealsSearchForm({
     search.carDriverAge,
   );
   const included = getIncludedProducts(search.mode);
+  const supportsLandingStayDateOverride =
+    isLandingVariant && included.hotel && included.flight;
+  const travelersControlLabel =
+    isLandingVariant && !included.hotel
+      ? t("deals.travellersRow")
+      : t("deals.travellersRooms");
   const update = <K extends keyof DealsSearch>(key: K, value: DealsSearch[K]) =>
     setSearch((current) => ({ ...current, [key]: value }));
   useEffect(() => {
@@ -1678,7 +1684,22 @@ export function DealsSearchForm({
     setMobileTravelersOpen(false);
     resetTravelersDraft();
     setProductSelectionMessage("");
-    setSearch((current) => transitionDealsMode(current, mode));
+    setSearch((current) => {
+      let next = transitionDealsMode(current, mode);
+      const enteringHotelFlight =
+        nextIncluded.hotel &&
+        nextIncluded.flight &&
+        !(included.hotel && included.flight);
+      if (enteringHotelFlight) {
+        next = relinkInheritedField(next, "stayDestination");
+        next = relinkInheritedField(next, "stayDates");
+      }
+      if (nextIncluded.car && !included.car) {
+        next = relinkInheritedField(next, "carPickup");
+        next = relinkInheritedField(next, "carDates");
+      }
+      return next;
+    });
   };
   const openFlightAirport = (
     kind: "origin" | "destination",
@@ -2786,7 +2807,11 @@ export function DealsSearchForm({
           >
             <h2
               id="deals-flight-heading"
-              className="mb-0.5 flex items-center gap-2 text-base font-extrabold text-[#021C2B] lg:mb-0"
+              className={
+                variant === "landing"
+                  ? "sr-only"
+                  : "mb-0.5 flex items-center gap-2 text-base font-extrabold text-[#021C2B] lg:mb-0"
+              }
             >
               <Plane className="h-5 w-5 text-[#004BB8]" />
               {t("deals.flightRow")}
@@ -3101,8 +3126,7 @@ export function DealsSearchForm({
       {included.hotel &&
         (variant === "results" ||
           !included.flight ||
-          !search.stayDestinationLinked ||
-          !search.stayDatesLinked) && (
+          !search.stayDestinationLinked) && (
           <section
             data-deals-results-stay={variant === "results" ? "true" : undefined}
             aria-labelledby="deals-hotel-heading"
@@ -3286,9 +3310,7 @@ export function DealsSearchForm({
                   ) : null}
                 </div>
               )}
-              {(variant === "results" ||
-                !included.flight ||
-                !search.stayDatesLinked) && (
+              {(variant === "results" || !included.flight) && (
                 <div
                   className={`${variant === "results" ? resultsSegment : `${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0`} ${hotelDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
                 >
@@ -3608,7 +3630,7 @@ export function DealsSearchForm({
             >
               <span className="min-w-0">
                 <span className={`${label} mb-0.5`}>
-                  {t("deals.travellersRooms")}
+                  {travelersControlLabel}
                 </span>
                 <span className="block truncate">{travelerSummary}</span>
               </span>
@@ -3645,6 +3667,69 @@ export function DealsSearchForm({
             ) : null}
             {searchDealsButton}
           </div>
+          {supportsLandingStayDateOverride ? (
+            <div className="mt-4 flex flex-col items-start gap-3">
+              <label
+                data-deals-change-stay-dates
+                className="focus-within:ring-[#004BB8]/25 flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-1 text-sm font-bold text-slate-800 focus-within:ring-2"
+              >
+                <input
+                  type="checkbox"
+                  checked={!search.stayDatesLinked}
+                  onChange={(event) => {
+                    const checked = event.currentTarget.checked;
+                    if (!checked) {
+                      dismissDesktopHotelDates();
+                      resetHotelDatesDraft();
+                      setMobileHotelDatesOpen(false);
+                    }
+                    setSearch((current) =>
+                      checked
+                        ? customizeInheritedField(current, "stayDates", {
+                            start: current.sharedTravelStartDate,
+                            end: current.sharedTravelEndDate,
+                          })
+                        : relinkInheritedField(current, "stayDates"),
+                    );
+                  }}
+                  className="size-4 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]"
+                />
+                <span>{t("deals.changeDatesForStay")}</span>
+              </label>
+              {!search.stayDatesLinked ? (
+                <div data-deals-landing-stay-dates className="w-full max-w-sm">
+                  <span className={label}>{t("deals.datesForStay")}</span>
+                  <button
+                    ref={hotelDatesLauncherRef}
+                    type="button"
+                    aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
+                    aria-haspopup="dialog"
+                    aria-controls={
+                      mobileHotelDatesOpen
+                        ? "deals-hotel-mobile-dates"
+                        : "deals-hotel-desktop-dates"
+                    }
+                    aria-label={t("deals.chooseStayDates")}
+                    onClick={() =>
+                      hotelDatesOpen
+                        ? dismissDesktopHotelDates(true)
+                        : openHotelDates()
+                    }
+                    className={`${field} flex min-h-12 items-center justify-between gap-2 text-start`}
+                  >
+                    <span className="min-w-0 truncate">
+                      {hotelDatesSummary}
+                    </span>
+                    <Calendar
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-slate-500"
+                    />
+                  </button>
+                  <div>{errorBlock("hotel")}</div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           <div className="w-full">{guidedPreviewPanel}</div>
         </section>
       )}
@@ -3840,7 +3925,7 @@ export function DealsSearchForm({
           id="deals-desktop-travellers"
           role="dialog"
           aria-modal="false"
-          aria-label={t("deals.travellersRooms")}
+          aria-label={travelersControlLabel}
         >
           {travelersPicker}
           <div className="mt-4 flex justify-end border-t border-slate-100 pt-3">
@@ -3856,7 +3941,7 @@ export function DealsSearchForm({
       </DealsFlightPopover>
       <FlightMobilePickerShell
         open={mobileTravelersOpen}
-        title={t("deals.travellersRooms")}
+        title={travelersControlLabel}
         titleId="deals-mobile-travellers-title"
         dialogId="deals-mobile-travellers"
         launcherRef={travelersLauncherRef}
@@ -3887,7 +3972,11 @@ export function DealsSearchForm({
           id="deals-hotel-desktop-dates"
           role="dialog"
           aria-modal="false"
-          aria-label={t("chooseTravelDates")}
+          aria-label={t(
+            supportsLandingStayDateOverride && !search.stayDatesLinked
+              ? "deals.chooseStayDates"
+              : "chooseTravelDates",
+          )}
         >
           {renderHotelDatesCalendar()}
           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
@@ -3914,7 +4003,11 @@ export function DealsSearchForm({
       </DealsHotelDatesPopover>
       <HotelMobilePickerShell
         open={mobileHotelDatesOpen}
-        title={t("chooseTravelDates")}
+        title={t(
+          supportsLandingStayDateOverride && !search.stayDatesLinked
+            ? "deals.chooseStayDates"
+            : "chooseTravelDates",
+        )}
         titleId="deals-hotel-mobile-dates-title"
         dialogId="deals-hotel-mobile-dates"
         launcherRef={hotelDatesLauncherRef}
