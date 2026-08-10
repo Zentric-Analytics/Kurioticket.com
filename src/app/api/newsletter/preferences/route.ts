@@ -2,10 +2,9 @@ import { createHash, randomBytes } from "node:crypto";
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
+import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { emailSchema } from "@/lib/validation";
 import {
   newsletterUnsubscribedEmail,
@@ -44,7 +43,7 @@ function buildPreferenceUrl(request: NextRequest, email: string, token: string) 
 }
 
 async function getAuthenticatedEmail() {
-  const session = await getServerSession(authOptions);
+  const session = (await resolveOptionalWebApiSession())?.session;
   return session?.user?.email?.toLowerCase().trim() || null;
 }
 

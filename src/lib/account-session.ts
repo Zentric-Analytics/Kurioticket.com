@@ -50,11 +50,11 @@ export async function validateMobileBearer(request: Request) {
   return session;
 }
 
-export async function validateAccountSession(id: string, userId: string) {
+export async function validateAccountSession(id: string, userId: string, options: { requireCompletedTwoFactor?: boolean } = {}) {
   const session = await getPrisma().accountSession.findFirst({ where: { id, userId }, include: { user: { include: { securitySettings: { select: { twoFactorEnabled: true } } } } } });
   if (!session || session.revokedAt || session.expiresAt <= new Date() || session.sessionVersion !== session.user.sessionVersion) return null;
-  if (!(await canAuthenticateAccount(session.user))) return null;
-  if (session.user.securitySettings?.twoFactorEnabled && session.assuranceLevel === "PRIMARY") return null;
+  if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : "credentials"))) return null;
+  if (options.requireCompletedTwoFactor !== false && session.user.securitySettings?.twoFactorEnabled && session.assuranceLevel === "PRIMARY") return null;
   return session;
 }
 

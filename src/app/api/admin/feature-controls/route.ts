@@ -4,6 +4,7 @@ import { getRequestIp, requireAdminApiSession } from "@/lib/admin";
 import { getFeatureControlProductionAdmins } from "@/lib/env";
 import { featureControlKeys } from "@/lib/feature-controls/registry";
 import { getRuntimeFeatureEnvironment, listFeatureControls, mutateFeatureControl } from "@/lib/feature-controls/service";
+import { hasRecentReauthentication } from "@/lib/account-session";
 
 export const featureControlMutationSchema = z.object({ key: z.enum(featureControlKeys as [typeof featureControlKeys[number], ...typeof featureControlKeys[number][]]), enabled: z.boolean(), reason: z.string().trim().max(500).optional() }).strict();
 export function validateFeatureControlMutationAuthorization(environment: "STAGING" | "PRODUCTION", email: string, reason?: string) {
@@ -34,6 +35,9 @@ export async function PATCH(request: Request) {
       console.warn("[feature-controls:production-denied]", { adminUserId: auth.session.user.id });
     }
     return NextResponse.json({ error: authorizationError.error }, { status: authorizationError.status });
+  }
+  if (environment === "PRODUCTION" && !hasRecentReauthentication(auth.accountSession)) {
+    return NextResponse.json({ error: "Recent trusted authentication is required for production changes.", code: "RECENT_REAUTHENTICATION_REQUIRED" }, { status: 403 });
   }
   try {
     const result = await mutateFeatureControl({ ...parsed.data, environment, actor: { id: auth.session.user.id, email, ipAddress: getRequestIp(request), userAgent: request.headers.get("user-agent") || undefined } });

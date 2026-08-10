@@ -62,9 +62,16 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  const user = await getPrisma().user.update({
-    where: { id },
-    data: { status: body.status as never },
+  const user = await getPrisma().$transaction(async tx => {
+    const invalidating = body.status === "SUSPENDED" || body.status === "DELETED";
+    const updated = await tx.user.update({ where: { id }, data: { status: body.status as never, ...(invalidating ? { sessionVersion: { increment: 1 } } : {}) } });
+    if (invalidating) {
+      await tx.accountSession.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: body.status === "DELETED" ? "account_deleted" : "account_suspended" } });
+      await tx.securityEvent.create({ data: { userId: id, type: "ACCOUNT_SUSPENDED", metadata: { nextStatus: body.status } } });
+    } else if (target.status !== "ACTIVE") {
+      await tx.securityEvent.create({ data: { userId: id, type: "ACCOUNT_REACTIVATED" } });
+    }
+    return updated;
   });
   await writeAdminAuditLog({
     adminUserId: auth.session.user.id,

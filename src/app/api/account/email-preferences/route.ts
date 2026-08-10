@@ -1,9 +1,8 @@
 import { createHash } from "node:crypto";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { z, ZodError } from "zod";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import {
   emailPreferenceLabels,
@@ -52,7 +51,8 @@ export const emailPreferencesSchema = z
 
 async function getAuthenticatedUserId() {
   if (authenticatedUserForTesting) return (await authenticatedUserForTesting())?.id || null;
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   return session?.user?.id || null;
 }
 

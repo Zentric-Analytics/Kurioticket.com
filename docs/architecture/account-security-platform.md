@@ -12,6 +12,8 @@ NextAuth keeps its eight-hour JWT strategy. The JWT refers to the canonical web 
 
 Mobile tokens are opaque `ktm1.<session-id>.<secret>` credentials with 256 bits of entropy. Only the secret hash is stored. Legacy raw `c.` and `g.` mobile rows are positively identified and deleted by the forward migration; unrelated adapter session rows remain. Mobile 2FA challenges are hashed, one-use, five-minute, and attempt bounded. SecureStore remains the native credential store, and logout attempts server revocation before local clearing.
 
+Legacy `UserSessionActivity` observations are copied into already-revoked historical `AccountSession` rows and the obsolete table is then removed. Runtime authorization and the Security Center never consult the legacy observation model.
+
 ## Events and notification policy
 
 `SecurityEvent` is the durable security ledger, distinct from delivery/inbox `Notification`. Critical mutations persist their event in the state transaction where practical; notification/email delivery follows and cannot roll back the mutation. Notification integrations use deterministic keys of the form `security:event:<event-id>`. Critical password, 2FA, passkey, and global-sign-out notices are mandatory; `securityEmailAlerts` controls only informational sign-in/device email.

@@ -11,3 +11,8 @@ export async function requireWebApiSession() {
   if (!accountSession) return null;
   return { session, accountSession, userId: session.user.id };
 }
+
+/** Public routes may personalize only when the complete canonical boundary passes. */
+export async function resolveOptionalWebApiSession() {
+  return requireWebApiSession();
+}

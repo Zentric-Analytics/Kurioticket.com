@@ -30,7 +30,6 @@ declare module "next-auth/jwt" {
     role?: string;
     status?: string;
     emailVerified?: boolean;
-    sessionActivityId?: string;
     twoFactorEnabled?: boolean;
     twoFactorVerified?: boolean;
     previewAuthMethod?: "credentials" | "google";

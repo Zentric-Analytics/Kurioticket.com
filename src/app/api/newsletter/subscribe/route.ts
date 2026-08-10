@@ -1,10 +1,9 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import type { NextRequest } from "next/server";
+import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { newsletterSubscribeSchema } from "@/lib/validation";
 import { newsletterWelcomeEmail, sendTransactionalEmail } from "@/services/emailService";
@@ -125,7 +124,7 @@ function buildNewsletterUrl(path: string, request: NextRequest, email: string, t
 }
 
 async function getAuthenticatedEmail() {
-  const session = await getServerSession(authOptions);
+  const session = (await resolveOptionalWebApiSession())?.session;
   return session?.user?.email?.toLowerCase().trim() || null;
 }
 

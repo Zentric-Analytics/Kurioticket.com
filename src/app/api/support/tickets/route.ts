@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { supportTicketSchema } from "@/lib/validation";
 import { createSupportTicket } from "@/services/supportService";
 
@@ -21,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please add a little more support detail.", issues: parsed.error.flatten() }, { status: 400 });
   }
 
-  const session = await getServerSession(authOptions);
+  const session = (await resolveOptionalWebApiSession())?.session;
 
   try {
     const ticket = await createSupportTicket({

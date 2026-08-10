@@ -42,7 +42,7 @@ export async function createTotpSetup(input: { userId: string; email?: string | 
   return { otpauthUri, manualSetupKey: secret, expiresAt: new Date(Date.now() + setupTtlMs).toISOString() };
 }
 
-export async function confirmTotpSetup(input: { userId: string; code: string }) {
+export async function confirmTotpSetup(input: { userId: string; accountSessionId: string; code: string }) {
   const pending = await getPrisma().verificationToken.findFirst({ where: { identifier: setupIdentifier(input.userId) }, orderBy: { expires: "desc" } });
   if (!pending || pending.expires <= new Date()) return null;
   const secret = decryptSecret(pending.token).secret;
@@ -50,15 +50,18 @@ export async function confirmTotpSetup(input: { userId: string; code: string }) 
   if (!result.valid) return null;
   const recoveryCodes = generateRecoveryCodes();
   const now = new Date();
-  await getPrisma().$transaction([
-    getPrisma().userSecuritySettings.upsert({
+  const securityEvent = await getPrisma().$transaction(async (tx) => {
+    await tx.userSecuritySettings.upsert({
       where: { userId: input.userId },
       create: { userId: input.userId, twoFactorEnabled: true, twoFactorMethod: method, twoFactorSecretEncrypted: pending.token, twoFactorLastUsedStep: BigInt(result.step), recoveryCodesHash: JSON.stringify(recoveryCodes.map(hashRecoveryCode)), twoFactorEnabledAt: now, twoFactorDisabledAt: null },
       update: { twoFactorEnabled: true, twoFactorMethod: method, twoFactorSecretEncrypted: pending.token, twoFactorLastUsedStep: BigInt(result.step), recoveryCodesHash: JSON.stringify(recoveryCodes.map(hashRecoveryCode)), twoFactorEnabledAt: now, twoFactorDisabledAt: null },
-    }),
-    getPrisma().verificationToken.deleteMany({ where: { identifier: setupIdentifier(input.userId) } }),
-  ]);
-  return recoveryCodes;
+    });
+    await tx.accountSession.update({ where: { id: input.accountSessionId }, data: { assuranceLevel: "MFA", twoFactorVerifiedAt: now, reauthenticatedAt: now } });
+    await tx.accountSession.updateMany({ where: { userId: input.userId, id: { not: input.accountSessionId }, revokedAt: null }, data: { revokedAt: now, revokeReason: "two_factor_enabled_other_device" } });
+    await tx.verificationToken.deleteMany({ where: { identifier: setupIdentifier(input.userId) } });
+    return tx.securityEvent.create({ data: { userId: input.userId, accountSessionId: input.accountSessionId, type: "TWO_FACTOR_ENABLED", assuranceLevel: "MFA" } });
+  });
+  return { recoveryCodes, securityEvent };
 }
 
 export async function verifySecondFactor(input: { userId: string; code: string; consumeRecoveryCode?: boolean }) {
@@ -69,7 +72,7 @@ export async function verifySecondFactor(input: { userId: string; code: string; 
     const decrypted = decryptSecret(settings.twoFactorSecretEncrypted);
     const result = verifyTotp(decrypted.secret, code);
     if (result.valid && (!settings.twoFactorLastUsedStep || BigInt(result.step) > settings.twoFactorLastUsedStep)) {
-      await getPrisma().userSecuritySettings.update({ where: { userId: input.userId }, data: { twoFactorLastUsedStep: BigInt(result.step), ...(decrypted.legacy ? { twoFactorSecretEncrypted: encryptSecret(decrypted.secret) } : {}) } });
+      await getPrisma().userSecuritySettings.update({ where: { userId: input.userId }, data: { twoFactorLastUsedStep: BigInt(result.step), ...(decrypted.legacy && hasDedicatedEncryptionKey() ? { twoFactorSecretEncrypted: encryptSecret(decrypted.secret) } : {}) } });
       return true;
     }
   }
@@ -95,15 +98,20 @@ export async function disableTwoFactor(userId: string) {
   });
 }
 
-export async function regenerateRecoveryCodes(input: { userId: string; code: string }) {
+export async function regenerateRecoveryCodes(input: { userId: string; accountSessionId: string; code: string }) {
   if (!(await verifySecondFactor({ userId: input.userId, code: input.code, consumeRecoveryCode: false }))) return null;
-  const codes = generateRecoveryCodes();
-  await getPrisma().userSecuritySettings.update({ where: { userId: input.userId }, data: { recoveryCodesHash: JSON.stringify(codes.map(hashRecoveryCode)) } });
-  return codes;
+  const recoveryCodes = generateRecoveryCodes();
+  const securityEvent = await getPrisma().$transaction(async tx => {
+    await tx.userSecuritySettings.update({ where: { userId: input.userId }, data: { recoveryCodesHash: JSON.stringify(recoveryCodes.map(hashRecoveryCode)) } });
+    await tx.accountSession.update({ where: { id: input.accountSessionId }, data: { reauthenticatedAt: new Date(), twoFactorVerifiedAt: new Date(), assuranceLevel: "MFA" } });
+    return tx.securityEvent.create({ data: { userId: input.userId, accountSessionId: input.accountSessionId, type: "RECOVERY_CODES_REGENERATED", assuranceLevel: "MFA" } });
+  });
+  return { recoveryCodes, securityEvent };
 }
 
 function setupIdentifier(userId: string) { return `two-factor:totp-setup:${userId}`; }
 function deriveKey(value: string) { return createHash("sha256").update(value).digest(); }
+function hasDedicatedEncryptionKey() { return Boolean(process.env.ACCOUNT_SECURITY_ENCRYPTION_KEY && process.env.ACCOUNT_SECURITY_ENCRYPTION_KEY.length >= 32); }
 function currentEncryptionKey() {
   const configured = process.env.ACCOUNT_SECURITY_ENCRYPTION_KEY;
   if (configured && configured.length >= 32) return deriveKey(configured);

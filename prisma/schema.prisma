@@ -219,7 +219,6 @@ model User {
   customizationPreferences UserCustomizationPreferences?
   travelPreferences        TravelPreferences?
   tripBookings             TripBooking[]
-  sessionActivities        UserSessionActivity[]
   accountSessions          AccountSession[]
   securityEvents           SecurityEvent[]
   accountDeletionRequests  AccountDeletionRequest[]
@@ -365,26 +364,6 @@ model UserSecuritySettings {
   user                     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
-}
-
-model UserSessionActivity {
-  id               String    @id @default(cuid())
-  userId           String
-  sessionTokenHash String
-  userAgent        String?
-  maskedIp         String?
-  deviceLabel      String
-  browser          String
-  os               String
-  locationLabel    String?
-  lastSeenAt       DateTime  @default(now())
-  createdAt        DateTime  @default(now())
-  revokedAt        DateTime?
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, sessionTokenHash])
-  @@index([userId, lastSeenAt])
-  @@index([revokedAt])
 }
 
 model UserPasskey {

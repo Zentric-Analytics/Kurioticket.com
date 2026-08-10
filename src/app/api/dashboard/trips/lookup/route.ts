@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { z } from "zod";
-import { authOptions } from "@/lib/auth";
 import { emailSchema } from "@/lib/validation";
 import { findUserTripBookingByReference } from "@/services/tripBookingService";
 
@@ -13,7 +12,8 @@ const reservationLookupSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });

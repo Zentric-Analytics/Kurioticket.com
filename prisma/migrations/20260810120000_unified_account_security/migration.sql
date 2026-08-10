@@ -34,6 +34,7 @@ INSERT INTO "AccountSession" ("id", "userId", "client", "authMethod", "assurance
 SELECT 'legacy_' || "id", "userId", 'WEB'::"AccountSessionClient", 'UNKNOWN'::"AuthenticationMethod", 'PRIMARY'::"AuthenticationAssurance", 0,
        "lastSeenAt", "createdAt", "lastSeenAt", COALESCE("revokedAt", CURRENT_TIMESTAMP), 'legacy_activity_import', "deviceLabel", "browser", "os", "userAgent", "maskedIp", "locationLabel"
 FROM "UserSessionActivity";
+DROP TABLE "UserSessionActivity";
 -- Only positively identified legacy Kurioticket mobile bearer rows are removed.
 DELETE FROM "Session" WHERE "sessionToken" LIKE 'c.%' OR "sessionToken" LIKE 'g.%';
 CREATE TABLE "MobileLoginChallenge" (

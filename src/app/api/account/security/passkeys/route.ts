@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { getPrisma } from "@/lib/prisma";
 
 function labelPasskey(passkey: { deviceType: string | null; backedUp: boolean | null; transports: string | null }) {
@@ -11,7 +10,8 @@ function labelPasskey(passkey: { deviceType: string | null; backedUp: boolean | 
 }
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   if (!session?.user?.id) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const passkeys = await getPrisma().userPasskey.findMany({
     where: { userId: session.user.id, revokedAt: null },

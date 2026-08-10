@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
@@ -549,16 +548,14 @@ export const authOptions: NextAuthOptions =
         trigger,
         session,
       }) {
-        if (!token.sessionActivityId) {
-          token.sessionActivityId = randomUUID();
-        }
-
         if (trigger === "update") {
           const updateSession = session as JwtUpdateSession | undefined;
-          if (updateSession?.twoFactorVerified === true) {
-            token.twoFactorVerified = true;
-            token.assuranceLevel = "MFA";
-            if (token.accountSessionId) await getPrisma().accountSession.updateMany({ where: { id: token.accountSessionId, userId: String(token.id), revokedAt: null }, data: { assuranceLevel: "MFA", twoFactorVerifiedAt: new Date(), reauthenticatedAt: new Date() } });
+          if (updateSession?.twoFactorVerified === true && token.accountSessionId) {
+            const verifiedSession = await validateAccountSession(token.accountSessionId, String(token.id), { requireCompletedTwoFactor: false });
+            if (verifiedSession?.assuranceLevel === "MFA" || verifiedSession?.assuranceLevel === "PHISHING_RESISTANT") {
+              token.twoFactorVerified = true;
+              token.assuranceLevel = verifiedSession.assuranceLevel;
+            }
           }
         }
 
@@ -645,12 +642,12 @@ export const authOptions: NextAuthOptions =
               token.twoFactorVerified = true;
             }
 
-            if (!token.accountSessionId && (!token.twoFactorEnabled || token.twoFactorVerified)) {
+            if (!token.accountSessionId) {
               const canonical = await createAccountSession({ userId: dbUser.id, client: "WEB", authMethod: token.authMethod || "UNKNOWN", assuranceLevel: token.assuranceLevel || "PRIMARY" });
               token.accountSessionId = canonical.id;
               token.sessionVersion = canonical.sessionVersion;
             } else if (token.accountSessionId) {
-              const canonical = await validateAccountSession(token.accountSessionId, dbUser.id);
+              const canonical = await validateAccountSession(token.accountSessionId, dbUser.id, { requireCompletedTwoFactor: false });
               if (!canonical) { token.status = "SUSPENDED"; token.twoFactorVerified = false; }
               else token.sessionVersion = canonical.sessionVersion;
             }
