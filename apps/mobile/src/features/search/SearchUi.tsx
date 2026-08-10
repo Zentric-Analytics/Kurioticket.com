@@ -87,18 +87,20 @@ export function Pill({
   active = false,
   icon,
   onPress,
+  resultsLayout = false,
 }: {
   label: string;
   active?: boolean;
   icon?: FlowIconName;
   onPress?: () => void;
+  resultsLayout?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={[s.pill, active && s.pillActive]}
+      style={[s.pill, resultsLayout && s.resultsPill, active && s.pillActive]}
     >
       {icon ? (
         <FlowIcon name={icon} size={15} color={active ? ui.blue : ui.navy} />
@@ -140,7 +142,7 @@ export function DateStrip({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={[s.dates, resultsLayout && s.resultsDates]}
     >
-      <Pressable accessibilityRole="button" accessibilityLabel="Previous date" onPress={onPrevious} disabled={!onPrevious} style={s.arrow}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Previous date" onPress={onPrevious} disabled={!onPrevious} style={[s.arrow, resultsLayout && s.resultsArrow]}>
         <FlowIcon name="back" size={20} />
       </Pressable>
       {[-2, -1, 0, 1, 2].map((d, i) => {
@@ -163,14 +165,19 @@ export function DateStrip({
               {shortDate(iso)}
             </Text>
             {prices[i] != null ? (
-              <Text style={[s.datePrice, active && { color: ui.blue }]}>
+              <Text
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                numberOfLines={1}
+                style={[s.datePrice, active && { color: ui.blue }]}
+              >
                 {money(currency, prices[i])}
               </Text>
             ) : null}
           </Pressable>
         );
       })}
-      <Pressable accessibilityRole="button" accessibilityLabel="Next date" onPress={onNext} disabled={!onNext} style={s.arrow}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Next date" onPress={onNext} disabled={!onNext} style={[s.arrow, resultsLayout && s.resultsArrow]}>
         <FlowIcon name="chevron" size={20} />
       </Pressable>
     </ScrollView>
@@ -310,6 +317,7 @@ export const s = StyleSheet.create({
     alignItems: "center",
     gap: 7,
   },
+  resultsPill: { height: 44 },
   pillActive: { borderColor: "#B9CBFF", backgroundColor: "#F6F8FF" },
   pillText: { fontSize: 12, fontWeight: "700", color: ui.navy },
   dateRail: { height: 96, flexGrow: 0, flexShrink: 0 },
@@ -325,6 +333,7 @@ export const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  resultsArrow: { width: 44, height: 44 },
   date: {
     width: 80,
     height: 78,
@@ -338,7 +347,7 @@ export const s = StyleSheet.create({
   resultsDate: { height: 72 },
   dateActive: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
   day: { fontSize: 12, color: ui.muted },
-  datePrice: { fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 3 },
+  datePrice: { maxWidth: "92%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 3 },
   button: {
     height: 45,
     minWidth: 104,

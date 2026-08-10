@@ -158,7 +158,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           </Text>
         </View>
         <View style={narrowFlightLayout && s0.editSearchNarrow}>
-          <Pill label="Edit search" icon="document" onPress={edit} />
+          <Pill label="Edit search" icon="document" onPress={edit} resultsLayout={product === "flight"} />
         </View>
       </View>
       <DateStrip
@@ -179,14 +179,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[s0.filters, product === "flight" && s0.flightFilters]}
       >
-        <Pill label="Filters" icon="sliders" active={hasFilters} onPress={product === "flight" ? () => openFilters("all") : undefined} />
+        <Pill label="Filters" icon="sliders" active={hasFilters} onPress={product === "flight" ? () => openFilters("all") : undefined} resultsLayout={product === "flight"} />
         {(product === "flight" ? ["Stops", "Airlines", "Times"] : ["Price", "Guest rating", "Property type"]).map((x) => (
-          <Pill key={x} label={x} onPress={product === "flight" ? () => openFilters(x.toLowerCase() as typeof filterSection) : undefined} />
+          <Pill key={x} label={x} onPress={product === "flight" ? () => openFilters(x.toLowerCase() as typeof filterSection) : undefined} resultsLayout={product === "flight"} />
         ))}
         <Pill
           label={`Sort: ${sort === "price" ? "Price" : product === "flight" ? "Best" : "Recommended"}`}
           active
           onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
+          resultsLayout={product === "flight"}
         />
       </ScrollView>
       <ScrollView contentContainerStyle={[s0.body, product === "flight" && s0.flightBody]}>
@@ -292,7 +293,9 @@ function FlightBenefitItem({ icon, label, value, wide = false, narrow = false }:
 }
 function FlightCard({ result, rank, params }: { result: FlightResult; rank: number; params: Record<string, string | string[]> }) {
   const { savedIds, toggle } = useSavedFlights();
-  const narrow = useWindowDimensions().width < 400;
+  const { width } = useWindowDimensions();
+  const narrow = width < 400;
+  const compactItinerary = width < 380;
   const saved = savedIds.has(result.id);
   return (
     <View style={[s0.card, rank === 0 && s0.best]}>
@@ -346,7 +349,7 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
           </View>
           <Text style={s0.nameSmall}>{result.airlineName}</Text>
         </View>
-        <View style={[s0.itineraryRow, narrow && s0.itineraryRowNarrow]}>
+        <View style={[s0.itineraryRow, narrow && s0.itineraryRowNarrow, compactItinerary && s0.itineraryRowCompact]}>
           <View style={s0.departureBlock}>
             <Text style={s0.time}>{clock(result.departureTime)}</Text>
             <Text style={s0.airportCode}>{result.originAirport}</Text>
@@ -362,8 +365,8 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
             <Text style={s0.time}>{clock(result.arrivalTime)}</Text>
             <Text style={s0.airportCode}>{result.destinationAirport}</Text>
           </View>
-          <View style={[s0.priceBox, narrow && s0.priceBoxNarrow]}>
-            <Text style={s0.bigPrice}>
+          <View style={[s0.priceBox, narrow && s0.priceBoxNarrow, compactItinerary && s0.priceBoxCompact]}>
+            <Text numberOfLines={1} style={s0.bigPrice}>
               {money(result.currency, result.price)}
             </Text>
             <Text style={s0.roundTrip}>round trip</Text>
@@ -376,7 +379,7 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
           <FlightBenefitItem icon="help" label="Seat selection" value="Information unavailable" narrow={narrow} />
           <FlightBenefitItem icon="document" label="Changes & refunds" value={result.refundInfo || "Fare rules unavailable"} wide narrow={narrow} />
         </View>
-        <View style={s0.flightDetailsCta}>
+        <View style={[s0.flightDetailsCta, compactItinerary && s0.flightDetailsCtaCompact]}>
           <Button
             label="View details"
             outline={rank !== 0}
@@ -715,7 +718,7 @@ const s0 = StyleSheet.create({
   summaryCopy: { flex: 1, minWidth: 0, gap: 4 },
   editSearchNarrow: { marginLeft: "auto" },
   filterRail: { height: 70, flexGrow: 0 },
-  flightFilterRail: { height: 62 },
+  flightFilterRail: { height: 68 },
   route: { fontSize: 21, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 18, paddingVertical: 16, gap: 9 },
@@ -785,6 +788,7 @@ const s0 = StyleSheet.create({
   nameSmall: { flex: 1, fontSize: 13, color: ui.navy, fontWeight: "700" },
   itineraryRow: { flexDirection: "row", alignItems: "flex-start", gap: 7 },
   itineraryRowNarrow: { gap: 4 },
+  itineraryRowCompact: { flexWrap: "wrap", rowGap: 10 },
   departureBlock: { flex: 1, minWidth: 0, gap: 2 },
   arrivalBlock: { flex: 1, minWidth: 0, gap: 2 },
   time: { fontSize: 18, lineHeight: 23, fontWeight: "900", color: ui.navy },
@@ -802,6 +806,7 @@ const s0 = StyleSheet.create({
   nonstop: { fontSize: 11, lineHeight: 16, fontWeight: "700", color: ui.blue, textAlign: "center" },
   priceBox: { minWidth: 82, flexShrink: 0, alignItems: "flex-end", gap: 2 },
   priceBoxNarrow: { minWidth: 74 },
+  priceBoxCompact: { width: "100%", minWidth: 0 },
   bigPrice: { fontSize: 21, lineHeight: 24, fontWeight: "900", color: ui.navy },
   roundTrip: { fontSize: 11, lineHeight: 16, color: ui.muted, textAlign: "right" },
   flightLowerSection: {
@@ -830,6 +835,7 @@ const s0 = StyleSheet.create({
   flightBenefitLabel: { fontSize: 12, lineHeight: 16, fontWeight: "700", color: ui.navy },
   flightBenefitValue: { fontSize: 12, lineHeight: 17, fontWeight: "400", color: ui.muted },
   flightDetailsCta: { width: 148, alignSelf: "flex-end" },
+  flightDetailsCtaCompact: { width: "100%" },
   hotelCard: {
     height: 234,
     borderWidth: 1,
