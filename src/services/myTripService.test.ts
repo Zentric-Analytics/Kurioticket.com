@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test, { afterEach } from "node:test";
 import { readFileSync } from "node:fs";
+import { Prisma } from "@/generated/prisma/client";
 import {
   __myTripServiceTest,
   listUserMyTrips,
@@ -44,6 +45,60 @@ test("trusted ingestion creates and retries idempotently for the same provider, 
   assert.equal(retry.destination, "SFO");
 });
 
+test("a composite collision from a different user fails closed without updating the winner", async () => {
+  const winner = record({ userId: "user-a", destination: "JFK", providerConfirmationCode: "A-WINS", partnerConversionId: "conversion-x" });
+  const db = memoryClient([winner]);
+  db.collideNextCreate();
+  __myTripServiceTest.setPrismaClientForTesting(db.client);
+
+  await assert.rejects(
+    upsertPartnerConfirmedMyTrip(confirmation({ userId: "user-b", destination: "SFO", providerConfirmationCode: "B-LOSES" })),
+    MyTripIngestionOwnershipError,
+  );
+  assert.equal(db.updateCalls, 0);
+  assert.equal(db.records.length, 1);
+  assert.equal(db.records[0].userId, "user-a");
+  assert.equal(db.records[0].destination, "JFK");
+  assert.equal(db.records[0].providerConfirmationCode, "A-WINS");
+});
+
+test("a composite collision from the same user updates the canonical winning trip", async () => {
+  const winner = record({ id: "canonical-trip", userId: "user-a", destination: "JFK", partnerConversionId: "conversion-x" });
+  const db = memoryClient([winner]);
+  db.collideNextCreate();
+  __myTripServiceTest.setPrismaClientForTesting(db.client);
+
+  const result = await upsertPartnerConfirmedMyTrip(confirmation({ destination: "SFO" }));
+  assert.equal(result.id, "canonical-trip");
+  assert.equal(result.destination, "SFO");
+  assert.equal(db.updateCalls, 1);
+  assert.equal(db.records.length, 1);
+  assert.equal(db.records[0].userId, "user-a");
+});
+
+test("ordinary ingestion creates directly without entering collision recovery", async () => {
+  const db = memoryClient([]); __myTripServiceTest.setPrismaClientForTesting(db.client);
+  const result = await upsertPartnerConfirmedMyTrip(confirmation());
+  assert.equal(result.id, "trip-1");
+  assert.equal(db.createCalls, 1);
+  assert.equal(db.findUniqueCalls, 0);
+  assert.equal(db.updateCalls, 0);
+});
+
+test("ingestion does not swallow a unique collision from another constraint", async () => {
+  const db = memoryClient([]);
+  const error = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+    code: "P2002",
+    clientVersion: "test",
+    meta: { target: ["userId", "providerName", "providerConfirmationCode"] },
+  });
+  db.failNextCreate(error);
+  __myTripServiceTest.setPrismaClientForTesting(db.client);
+  await assert.rejects(upsertPartnerConfirmedMyTrip(confirmation()), (actual) => actual === error);
+  assert.equal(db.findUniqueCalls, 0);
+  assert.equal(db.updateCalls, 0);
+});
+
 test("the same conversion identifier is independent across providers", async () => {
   const db = memoryClient([]); __myTripServiceTest.setPrismaClientForTesting(db.client);
   await upsertPartnerConfirmedMyTrip(confirmation({ providerName: "Provider A", partnerConversionId: "shared" }));
@@ -85,20 +140,53 @@ function record(overrides: Record<string, unknown> = {}) {
 function memoryClient(seed: TripRecord[]) {
   /* eslint-disable @typescript-eslint/no-explicit-any -- deliberately small Prisma test double */
   const records = [...seed];
+  let createCollision = false;
+  let nextCreateError: Error | null = null;
+  let createCalls = 0;
+  let findUniqueCalls = 0;
+  let updateCalls = 0;
   const matches = (item: TripRecord, where: any = {}) => Object.entries(where).every(([key, value]) => key === "providerName_partnerConversionId" ? item.providerName === (value as any).providerName && item.partnerConversionId === (value as any).partnerConversionId : item[key as keyof TripRecord] === value);
   const client = {
     myTrip: {
       async findMany({ where, orderBy }: any) { return records.filter((item) => matches(item, where)).sort((a, b) => (a.departureDate.getTime() - b.departureDate.getTime()) * (orderBy.departureDate === "desc" ? -1 : 1)); },
       async count({ where }: any) { return records.filter((item) => matches(item, where)).length; },
-      async findUnique({ where }: any) { return records.find((item) => matches(item, where)) ?? null; },
-      async upsert({ where, create, update }: any) {
-        const existing = records.find((item) => matches(item, where));
-        if (existing) { Object.assign(existing, update); return existing; }
-        const created = record({ ...create, id: `trip-${records.length + 1}` }); records.push(created); return created;
+      async findUnique({ where }: any) { findUniqueCalls += 1; return records.find((item) => matches(item, where)) ?? null; },
+      async create({ data }: any) {
+        createCalls += 1;
+        if (nextCreateError) {
+          const error = nextCreateError; nextCreateError = null; throw error;
+        }
+        if (createCollision || records.some((item) => item.providerName === data.providerName && item.partnerConversionId === data.partnerConversionId)) {
+          createCollision = false;
+          throw providerConversionCollision();
+        }
+        const created = record({ ...data, id: `trip-${records.length + 1}` }); records.push(created); return created;
+      },
+      async update({ where, data }: any) {
+        updateCalls += 1;
+        const existing = records.find((item) => item.id === where.id);
+        if (!existing) throw new Error("Missing test MyTrip update target.");
+        Object.assign(existing, data); return existing;
       },
     },
     async $transaction(queries: Promise<unknown>[]) { return Promise.all(queries); },
   };
-  return { client: client as any, records };
+  return {
+    client: client as any,
+    records,
+    collideNextCreate() { createCollision = true; },
+    failNextCreate(error: Error) { nextCreateError = error; },
+    get createCalls() { return createCalls; },
+    get findUniqueCalls() { return findUniqueCalls; },
+    get updateCalls() { return updateCalls; },
+  };
   /* eslint-enable @typescript-eslint/no-explicit-any */
+}
+
+function providerConversionCollision() {
+  return new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+    code: "P2002",
+    clientVersion: "test",
+    meta: { target: ["providerName", "partnerConversionId"] },
+  });
 }

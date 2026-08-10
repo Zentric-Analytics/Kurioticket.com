@@ -1,5 +1,6 @@
 import { getPrisma } from "@/lib/prisma";
 import { requireProviderUrl, validateProviderUrl } from "@/lib/provider-url";
+import { Prisma } from "@/generated/prisma/client";
 import type { MyTripSource, MyTripStatus, MyTripType } from "@/generated/prisma/enums";
 
 export const publicMyTripStatuses = ["upcoming", "past", "cancelled"] as const;
@@ -23,7 +24,8 @@ type MyTripClient = {
   myTrip: {
     findMany(args: unknown): Promise<MyTripRecord[]>; count(args: unknown): Promise<number>;
     findUnique(args: unknown): Promise<(MyTripRecord & { userId: string }) | null>;
-    upsert(args: unknown): Promise<MyTripRecord>;
+    create(args: unknown): Promise<MyTripRecord>;
+    update(args: unknown): Promise<MyTripRecord>;
   };
   $transaction<T extends readonly Promise<unknown>[]>(queries: T): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }>;
 };
@@ -64,20 +66,40 @@ export async function upsertPartnerConfirmedMyTrip(input: PartnerConfirmedMyTrip
     providerName: input.providerName,
     partnerConversionId: input.partnerConversionId,
   };
+  const data = { ...input, source: input.source ?? "PARTNER_CONFIRMATION", providerManageUrl };
+  let collision: Prisma.PrismaClientKnownRequestError;
+  try {
+    const created = await getClient().myTrip.create({ data, select });
+    return serializeMyTrip(created);
+  } catch (error) {
+    if (!isProviderConversionCollision(error)) throw error;
+    collision = error;
+  }
   const existing = await getClient().myTrip.findUnique({
     where: { providerName_partnerConversionId: identity },
     select: { ...select, userId: true },
   });
-  if (existing && existing.userId !== input.userId) {
+  if (!existing) {
+    throw collision;
+  }
+  if (existing.userId !== input.userId) {
     throw new MyTripIngestionOwnershipError();
   }
-  const trip = await getClient().myTrip.upsert({
-    where: { providerName_partnerConversionId: identity },
-    create: { ...input, source: input.source ?? "PARTNER_CONFIRMATION", providerManageUrl },
-    update: { providerName: input.providerName, providerConfirmationCode: input.providerConfirmationCode, providerTripId: input.providerTripId, providerManageUrl, tripType: input.tripType, status: input.status, origin: input.origin, destination: input.destination, departureDate: input.departureDate, returnDate: input.returnDate, travelerCount: input.travelerCount, currency: input.currency, totalAmount: input.totalAmount },
+  const trip = await getClient().myTrip.update({
+    where: { id: existing.id },
+    data: { providerName: input.providerName, providerConfirmationCode: input.providerConfirmationCode, providerTripId: input.providerTripId, providerManageUrl, tripType: input.tripType, status: input.status, origin: input.origin, destination: input.destination, departureDate: input.departureDate, returnDate: input.returnDate, travelerCount: input.travelerCount, currency: input.currency, totalAmount: input.totalAmount },
     select,
   });
   return serializeMyTrip(trip);
+}
+
+function isProviderConversionCollision(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") return false;
+  const target = error.meta?.target;
+  if (Array.isArray(target)) {
+    return target.length === 2 && target[0] === "providerName" && target[1] === "partnerConversionId";
+  }
+  return target === "MyTrip_providerName_partnerConversionId_key";
 }
 
 export class MyTripIngestionOwnershipError extends Error {
