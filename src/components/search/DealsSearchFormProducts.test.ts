@@ -11,10 +11,10 @@ const sync = readFileSync(
   "utf8",
 );
 
-test("landing selector exposes the four direct package choices in exact order", () => {
-  assert.equal(form.match(/data-deals-package-selector/g)?.length, 1);
+test("landing and results share the four direct package choices in exact order", () => {
+  assert.equal(form.match(/<div\s+data-deals-package-selector\s/g)?.length, 1);
   const config = form.slice(
-    form.indexOf("const landingPackageOptions"),
+    form.indexOf("const dealsPackageOptions"),
     form.indexOf("const field"),
   );
   const modes = ["hotel-flight", "flight-car", "hotel-car", "hotel-flight-car"];
@@ -24,26 +24,44 @@ test("landing selector exposes the four direct package choices in exact order", 
   );
   assert.match(form, /const selected = search\.mode === option\.mode/);
   assert.match(form, /aria-pressed=\{selected\}/);
-  assert.match(form, /selectLandingPackage\(option\.mode\)/);
+  assert.match(form, /selectPackageMode\(option\.mode\)/);
   assert.match(
     form,
-    /const selectLandingPackage[\s\S]*transitionDealsMode\(current, mode\)/,
+    /const selectPackageMode[\s\S]*transitionDealsMode\(current, mode\)/,
   );
   assert.doesNotMatch(form, /useState<DealsPackageMode>/);
 
   const selector = form.slice(
     form.indexOf("data-deals-package-selector"),
-    form.indexOf(") : (", form.indexOf("data-deals-package-selector")),
+    form.indexOf("<p", form.indexOf("data-deals-package-selector")),
   );
   assert.doesNotMatch(selector, /<BedDouble|<Plane|<Car/);
+  assert.match(selector, /data-deals-package-selector-variant=\{variant\}/);
+  assert.doesNotMatch(form, /data-deals-product-selector/);
+  assert.doesNotMatch(
+    selector,
+    /toggleProduct\(product\)|tryToggleDealsProduct/,
+  );
+  assert.doesNotMatch(form, /tryToggleDealsProduct/);
 });
 
-test("results selector retains accessible independent product toggles", () => {
-  assert.equal(form.match(/data-deals-product-selector/g)?.length, 1);
-  assert.match(form, /dealsProductOrder\.map/);
-  assert.match(form, /aria-pressed=\{selected\}/);
-  assert.match(form, /toggleProduct\(product\)/);
-  assert.match(form, /tryToggleDealsProduct/);
+test("landing-only package normalization remains isolated from results", () => {
+  const handler = form.slice(
+    form.indexOf("const selectPackageMode"),
+    form.indexOf("const openFlightAirport"),
+  );
+  assert.match(handler, /if \(isLandingVariant\) \{/);
+  for (const field of [
+    "stayDestination",
+    "stayDates",
+    "carPickup",
+    "carDates",
+  ]) {
+    assert.match(
+      handler,
+      new RegExp(`relinkInheritedField\\(next, "${field}"\\)`),
+    );
+  }
 });
 
 test("all composition and synchronization transitions remain shared", () => {
