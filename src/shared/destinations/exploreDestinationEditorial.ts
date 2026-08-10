@@ -126,6 +126,13 @@ const asiaBatch2SourceReferences = (references: readonly ExploreDestinationEdito
   lastVerifiedAt: ASIA_BATCH_2_LAST_VERIFIED_AT,
 });
 
+const ASIA_BATCH_3_LAST_VERIFIED_AT = "2026-08-10";
+const asiaBatch3SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: ASIA_BATCH_3_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -1057,6 +1064,55 @@ const rawExploreDestinationEditorial = [
     description: "Yangon developed near the Yangon River, where a gridded historic core contains religious, commercial and civic landmarks. Shwedagon Pagoda anchors the city's Buddhist heritage, while markets and colonial-era public buildings record other layers of urban history. Museums and preserved streetscapes support an evergreen account of the former Rangoon without implying anything about present political or travel conditions.",
     highlights: ["Yangon River setting", "Shwedagon Pagoda", "Colonial-era civic architecture", "Historic market districts"],
     editorialProvenance: asiaBatch2SourceReferences([{ title: "UNESCO — Historic Urban Landscape of Yangon", url: "https://whc.unesco.org/en/tentativelists/6367/" }, { title: "Shwedagon Pagoda Board of Trustees", url: "https://www.shwedagonpagoda.org.mm/" }]),
+  },
+  {
+    id: "bn-bandar-seri-begawan",
+    summary: "Bandar Seri Begawan follows the Brunei River through mosque landmarks, water villages and civic institutions.",
+    description: "Bandar Seri Begawan occupies the Brunei River's banks, where the capital's civic centre faces long-established water settlements. Omar Ali Saifuddien Mosque expresses the city's Malay Islamic architectural identity through its dome, lagoon and ceremonial setting. Kampong Ayer, museums and royal institutions connect river-based community history with the urban fabric, without extending the record across Brunei-Muara District.",
+    highlights: ["Brunei River waterfront", "Omar Ali Saifuddien Mosque", "Kampong Ayer relationship", "Royal and civic museums"],
+    editorialProvenance: asiaBatch3SourceReferences([{ title: "Encyclopaedia Britannica — Bandar Seri Begawan", url: "https://www.britannica.com/place/Bandar-Seri-Begawan" }, { title: "Brunei Tourism", url: "https://www.bruneitourism.com/" }]),
+  },
+  {
+    id: "ph-cebu",
+    summary: "Cebu spans an island and province whose maritime heritage, historic city and food traditions remain intertwined.",
+    description: "Cebu is treated as the wider island and provincial destination, with Cebu City forming its principal historic urban centre. Magellan's Cross and the Basilica Minore del Santo Niño reflect enduring religious and colonial layers in that city. Coastal communities, maritime trade and regional food traditions extend the record beyond the city while keeping neighbouring islands and Mactan's airport geography distinct.",
+    highlights: ["Cebu Island coastline", "Cebu City heritage core", "Magellan's Cross", "Regional food traditions"],
+    editorialProvenance: asiaBatch3SourceReferences([{ title: "Encyclopaedia Britannica — Cebu", url: "https://www.britannica.com/place/Cebu-island-Philippines" }, { title: "UNESCO Creative Cities Network — Cebu City", url: "https://www.unesco.org/en/creative-cities/cebu-city" }]),
+  },
+  {
+    id: "tl-dili",
+    summary: "Dili extends along Timor-Leste's northern coast, shaped by waterfront landmarks, markets and layered civic heritage.",
+    description: "Dili occupies a narrow coastal plain between the mountains and Wetar Strait on Timor-Leste's north shore. Its waterfront and civic streets retain Portuguese architectural traces alongside institutions interpreting Timorese history and culture. The Resistance Museum, traditional markets and religious landmarks provide city-specific context without treating the wider municipality's mountains or the nation's distant sites as parts of central Dili.",
+    highlights: ["Wetar Strait waterfront", "Portuguese civic architecture", "Timorese Resistance Archive and Museum", "Dili market districts"],
+    editorialProvenance: asiaBatch3SourceReferences([{ title: "Encyclopaedia Britannica — Dili", url: "https://www.britannica.com/place/Dili" }, { title: "UNESCO — On the Birth of a Nation: Turning points", url: "https://www.unesco.org/en/memory-world/birth-nation-turning-points" }]),
+  },
+  {
+    id: "id-jakarta",
+    summary: "Jakarta's port heritage, old-town streets, museums and Betawi traditions trace the Indonesian capital's urban history.",
+    description: "Jakarta developed on the northwest coast of Java around river mouths and a long-established maritime trading zone. Kota Tua's colonial civic buildings and museums record successive phases of the city's history, while Sunda Kelapa preserves its port relationship. Markets, neighbourhood foodways and Betawi cultural traditions add local context without expanding the record into Jabodetabek or placing CGK airport within Jakarta.",
+    highlights: ["Kota Tua civic heritage", "Sunda Kelapa harbour", "National Museum collections", "Betawi cultural traditions"],
+    editorialProvenance: asiaBatch3SourceReferences([{ title: "Encyclopaedia Britannica — Jakarta", url: "https://www.britannica.com/place/Jakarta" }, { title: "National Museum of Indonesia", url: "https://www.museumnasional.or.id/" }]),
+  },
+  {
+    id: "my-kuala-lumpur",
+    summary: "Kuala Lumpur's civic architecture, cultural museums, markets and neighbourhood foodways reflect Malaysia's layered capital history.",
+    description: "Kuala Lumpur grew where the Klang and Gombak rivers meet, a setting still visible near its historic civic core. Merdeka Square, former administrative buildings and religious landmarks express successive architectural and community histories. Museums, markets and neighbourhood food traditions broaden the federal territory's cultural landscape without assigning Klang Valley attractions or KUL airport, both outside its boundary, to the city itself.",
+    highlights: ["Klang and Gombak confluence", "Merdeka Square", "Islamic Arts Museum Malaysia", "Historic market neighbourhoods"],
+    editorialProvenance: asiaBatch3SourceReferences([{ title: "Encyclopaedia Britannica — Kuala Lumpur", url: "https://www.britannica.com/place/Kuala-Lumpur" }, { title: "Islamic Arts Museum Malaysia", url: "https://www.iamm.org.my/" }]),
+  },
+  {
+    id: "ph-manila",
+    summary: "Manila faces its namesake bay through historic districts, national museums, markets and enduring port-city heritage.",
+    description: "Manila occupies the eastern shore of Manila Bay around the Pasig River's mouth, distinct from the surrounding metropolitan region. Intramuros and Fort Santiago preserve Spanish colonial fortifications and civic history within the City of Manila. National Museum institutions, Binondo's commercial heritage and market foodways reveal further cultural layers without relocating attractions elsewhere in Metro Manila into the city.",
+    highlights: ["Manila Bay waterfront", "Intramuros walls", "Fort Santiago", "Binondo commercial heritage"],
+    editorialProvenance: asiaBatch3SourceReferences([{ title: "Intramuros Administration", url: "https://intramuros.gov.ph/" }, { title: "National Museum of the Philippines", url: "https://www.nationalmuseum.gov.ph/" }]),
+  },
+  {
+    id: "my-penang",
+    summary: "Penang encompasses island and mainland communities, with George Town heritage, coastal landscapes and multicultural food traditions.",
+    description: "Penang is a Malaysian state spanning Penang Island and a mainland section across the strait, rather than one city alone. George Town, the state capital on the island, preserves UNESCO-recognised streetscapes shaped by Malay, Chinese, Indian and European communities. Clan houses, markets, food traditions and Penang Hill place that urban heritage within the canonical destination's broader coastal and island geography.",
+    highlights: ["George Town UNESCO heritage", "Multicultural clan houses", "Penang Hill", "Island market and food traditions"],
+    editorialProvenance: asiaBatch3SourceReferences([{ title: "UNESCO — Melaka and George Town, Historic Cities of the Straits of Malacca", url: "https://whc.unesco.org/en/list/1223/" }, { title: "Penang Global Tourism", url: "https://mypenang.gov.my/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
