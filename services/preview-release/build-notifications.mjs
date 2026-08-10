@@ -33,7 +33,7 @@ function exactExpoBuildPageUrl(build) {
   return canonical;
 }
 
-export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, secret = process.env.PREVIEW_BUILD_NOTIFICATION_SECRET, fetchImpl = fetch }) {
+export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, onlyBuildId = null, recipientMemberIds = null, secret = process.env.PREVIEW_BUILD_NOTIFICATION_SECRET, fetchImpl = fetch }) {
   if (!secret) {
     console.warn(JSON.stringify({ event: "preview-build-notification-skipped", reason: "secret-not-configured", sourceSha }));
     return [];
@@ -43,9 +43,14 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
   const results = [];
   for (const platform of ["android", "ios"]) {
     const kind = platform === "android" ? "ANDROID_BUILD" : "IOS_BUILD";
-    const identityKey = `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:${platform}:preview`;
-    const action = await ledger.getAction(kind, identityKey);
-    if (!action?.remote_id || String(action.state).toUpperCase() !== "FINISHED") continue;
+    const fingerprint = release?.evidence?.fingerprints?.[platform];
+    const identityKey = fingerprint
+      ? nativeBuildIdentityKey(platform, fingerprint)
+      : `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:${platform}:preview`;
+    let action = typeof ledger.getNativeBuildActionForRelease === "function"
+      ? await ledger.getNativeBuildActionForRelease(sourceSha, platform, fingerprint ?? null)
+      : await ledger.getAction(kind, identityKey);
+    if (!action?.remote_id || (onlyBuildId && action.remote_id !== onlyBuildId)) continue;
 
     // The release ledger owns the exact build ID for this source SHA. Resolve that
     // build from EAS immediately before notification rather than selecting a generic
@@ -54,6 +59,11 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
     if (build?.id !== action.remote_id) {
       throw new Error(`EAS build:view returned a different build than the durable ${platform} ledger action.`);
     }
+    const buildState = String(build.status ?? action.state ?? "").toUpperCase();
+    if (buildState !== "FINISHED") continue;
+    if (String(action.state).toUpperCase() !== "FINISHED" && typeof ledger.recordAction === "function") {
+      action = await ledger.recordAction({ sourceSha: action.source_sha ?? sourceSha, kind, identityKey: action.identity_key ?? identityKey, remoteId: action.remote_id, state: "FINISHED", evidence: build });
+    }
     const buildPageUrl = exactExpoBuildPageUrl(build);
 
     let submissionId = null;
@@ -61,6 +71,10 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
       const submission = await ledger.getAction("IOS_SUBMISSION", `ios-submission:${build.id}`);
       if (!submission?.remote_id || String(submission.state).toUpperCase() !== "FINISHED") continue;
       submissionId = submission.remote_id;
+      const distribution = typeof ledger.getFinishedIosDistributionForBuild === "function"
+        ? await ledger.getFinishedIosDistributionForBuild(build.id)
+        : null;
+      if (!distribution) continue;
     }
 
     if (platform === "android" && !build.artifacts?.buildUrl) {
@@ -83,13 +97,21 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
       buildDetailsUrl: buildPageUrl,
       submissionId,
       completedAt: build.completedAt ?? new Date().toISOString(),
+      recipientMemberIds: Array.isArray(recipientMemberIds) ? recipientMemberIds : undefined,
     };
     results.push(await postNotification(payload, { secret, fetchImpl }));
   }
   return results;
 }
 
-export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failureReason, secret = process.env.PREVIEW_BUILD_NOTIFICATION_SECRET, fetchImpl = fetch }) {
+export function nativeBuildIdentityKey(platform, fingerprint) {
+  if (!['ios', 'android'].includes(platform) || !/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ''))) {
+    throw new Error('Native build fingerprint identity is malformed.');
+  }
+  return `native-build:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
+}
+
+export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failureReason, onlyBuildId = null, recipientMemberIds = null, secret = process.env.PREVIEW_BUILD_NOTIFICATION_SECRET, fetchImpl = fetch }) {
   if (!secret) return [];
   const release = typeof ledger.releaseBySha === "function" ? await ledger.releaseBySha(sourceSha).catch(() => null) : null;
   const reason = String(failureReason ?? release?.failure_reason ?? "Preview native delivery failed").slice(0, 500);
@@ -98,8 +120,10 @@ export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failure
   for (const platform of ["android", "ios"]) {
     const kind = platform === "android" ? "ANDROID_BUILD" : "IOS_BUILD";
     const identityKey = `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:${platform}:preview`;
-    const action = await ledger.getAction(kind, identityKey).catch(() => null);
-    if (!action?.remote_id) continue;
+    const action = typeof ledger.getNativeBuildActionForRelease === "function"
+      ? await ledger.getNativeBuildActionForRelease(sourceSha, platform, release?.evidence?.fingerprints?.[platform] ?? null).catch(() => null)
+      : await ledger.getAction(kind, identityKey).catch(() => null);
+    if (!action?.remote_id || (onlyBuildId && action.remote_id !== onlyBuildId)) continue;
     const terminalBuildFailure = TERMINAL_FAILURES.has(String(action.state).toUpperCase());
     const platformFailure = failureMentionsPlatform(reason, platform);
     if (!terminalBuildFailure && !platformFailure) continue;
@@ -120,6 +144,7 @@ export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failure
       submissionId: submission?.remote_id ?? null,
       failureReason: reason,
       completedAt: build.completedAt ?? new Date().toISOString(),
+      recipientMemberIds: Array.isArray(recipientMemberIds) ? recipientMemberIds : undefined,
     }, { secret, fetchImpl }));
   }
   return results;
@@ -144,12 +169,12 @@ async function postNotification(payload, { secret, fetchImpl }) {
   const body = await response.text();
   let result = null;
   try { result = body ? JSON.parse(body) : null; } catch { result = null; }
-  if (!response.ok || response.status === 207 || Number(result?.failed || 0) > 0) {
+  if (!response.ok && response.status !== 207) {
     throw new Error(`Preview build notification endpoint remains retryable after HTTP ${response.status}: ${body.slice(0, 200)}`);
   }
   if (Number(result?.terminal || 0) > 0) {
     console.warn(JSON.stringify({ event: "preview-build-notification-terminal-recipient", platform: payload.platform, status: payload.status, buildId: payload.buildId, terminalRecipients: result.terminal }));
   }
   console.log(JSON.stringify({ event: "preview-build-notification", platform: payload.platform, status: payload.status, buildId: payload.buildId, responseStatus: response.status, recipients: result?.recipients ?? null, alreadyAccepted: result?.alreadyAccepted ?? null }));
-  return { platform: payload.platform, status: payload.status, buildId: payload.buildId, responseStatus: response.status };
+  return { platform: payload.platform, status: payload.status, buildId: payload.buildId, responseStatus: response.status, ...result };
 }

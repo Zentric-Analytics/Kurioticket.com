@@ -26,7 +26,7 @@ test("canonical Expo build page is derived from Preview project identity and exa
   );
 });
 
-test("partial recipient delivery remains retryable", async () => {
+test("partial recipient delivery returns privacy-safe retryable outcomes", async () => {
   const ledger = {
     async releaseBySha() { return { classification: "ANDROID_NATIVE" }; },
     async getAction(kind) {
@@ -50,10 +50,9 @@ test("partial recipient delivery remains retryable", async () => {
     status: 207,
     async text() { return JSON.stringify({ recipients: 2, sent: 1, failed: 1 }); },
   });
-  await assert.rejects(
-    () => notifySuccessfulNativeBuilds({ sourceSha: "a".repeat(40), ledger, eas, secret: "test-secret", fetchImpl }),
-    /remains retryable/,
-  );
+  const [result] = await notifySuccessfulNativeBuilds({ sourceSha: "a".repeat(40), ledger, eas, secret: "test-secret", fetchImpl });
+  assert.equal(result.responseStatus, 207);
+  assert.equal(result.failed, 1);
 });
 
 test("finished Android build sends canonical Expo page and never sends raw artifact URL", async () => {
@@ -106,4 +105,52 @@ test("mismatched Expo build page is rejected instead of emailing a wrong build",
     () => notifySuccessfulNativeBuilds({ sourceSha: "c".repeat(40), ledger, eas, secret: "test-secret", fetchImpl: async () => { throw new Error("should not send"); } }),
     /does not match exact Preview build/,
   );
+});
+
+test("iOS success waits for verified TestFlight group association", async () => {
+  let distributed = false;
+  const ledger = {
+    async releaseBySha() { return { classification: "IOS_NATIVE" }; },
+    async getAction(kind) {
+      if (kind === "IOS_BUILD") return { remote_id: "ios-build-1", state: "FINISHED" };
+      if (kind === "IOS_SUBMISSION") return { remote_id: "submission-1", state: "FINISHED" };
+      return null;
+    },
+    async getFinishedIosDistributionForBuild() { return distributed ? { state: "FINISHED" } : null; },
+  };
+  const eas = { async viewBuild() { return { id: "ios-build-1", buildDetailsPageUrl: canonicalExpoBuildPageUrl("ios-build-1") }; } };
+  const requests = [];
+  const fetchImpl = async (_url, init) => {
+    requests.push(JSON.parse(init.body));
+    return { ok: true, status: 200, async text() { return JSON.stringify({ recipients: 1, sent: 1, failed: 0 }); } };
+  };
+  assert.deepEqual(await notifySuccessfulNativeBuilds({ sourceSha: "d".repeat(40), ledger, eas, secret: "test-secret", fetchImpl }), []);
+  distributed = true;
+  assert.equal((await notifySuccessfulNativeBuilds({ sourceSha: "d".repeat(40), ledger, eas, secret: "test-secret", fetchImpl })).length, 1);
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].platform, "ios");
+});
+
+test("worker restart reconciles a stale in-progress Android ledger action before notifying", async () => {
+  const writes = [];
+  const ledger = {
+    async releaseBySha() { return { classification: "ANDROID_NATIVE" }; },
+    async getNativeBuildActionForRelease(_sourceSha, platform) {
+      return platform === "android"
+        ? { source_sha: "e".repeat(40), identity_key: "legacy:android:preview", remote_id: "android-build-restart", state: "IN_PROGRESS" }
+        : null;
+    },
+    async recordAction(action) { writes.push(action); return { ...action, remote_id: action.remoteId, identity_key: action.identityKey }; },
+  };
+  const eas = { async viewBuild(id) { return { id, status: "FINISHED", artifacts: { buildUrl: "https://expo.dev/artifacts/restart.apk" }, buildDetailsPageUrl: canonicalExpoBuildPageUrl(id) }; } };
+  const requests = [];
+  const fetchImpl = async (_url, init) => {
+    requests.push(JSON.parse(init.body));
+    return { ok: true, status: 200, async text() { return JSON.stringify({ recipients: 2, sent: 2, failed: 0 }); } };
+  };
+  const result = await notifySuccessfulNativeBuilds({ sourceSha: "e".repeat(40), ledger, eas, secret: "test-secret", fetchImpl });
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].state, "FINISHED");
+  assert.equal(requests.length, 1);
+  assert.equal(result[0].buildId, "android-build-restart");
 });

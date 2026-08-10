@@ -33,20 +33,20 @@ export async function setTeamAccessRoles(memberId: string, input: unknown) {
   return roles;
 }
 
-export async function getBuildNotificationRecipients(platform: "ios" | "android") {
-  const requiredRole: TeamAccessRole = "DEVELOPER";
+export async function getBuildNotificationRecipients(platform: "ios" | "android", memberIds?: string[]) {
   const capability = platform === "android" ? "ANDROID_BUILD_NOTIFICATIONS" : "IOS_BUILD_NOTIFICATIONS";
-  if (!hasTeamAccessCapability([requiredRole], capability)) return [];
   const now = new Date();
   const members = await getPrisma().previewTester.findMany({
     where: {
+      ...(memberIds ? { id: { in: memberIds } } : {}),
       status: "ACTIVE",
       approvedAt: { not: null },
       OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-      roles: { has: requiredRole },
     },
     orderBy: { emailNormalized: "asc" },
     select: { id: true, email: true, emailNormalized: true, roles: true },
   });
-  return members.map((member) => ({ ...member, roles: normalizeTeamAccessRoles(member.roles) }));
+  return members
+    .map((member) => ({ ...member, roles: normalizeTeamAccessRoles(member.roles) }))
+    .filter((member) => hasTeamAccessCapability(member.roles, capability));
 }

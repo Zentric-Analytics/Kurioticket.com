@@ -364,6 +364,126 @@ export class PreviewLedger {
     return result.rows[0];
   }
 
+  async reserveNativeBuild({ sourceSha, platform, identityKey }) {
+    assertExactSha(sourceSha);
+    const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
+    if (!kind) throw new Error("Native build platform is invalid.");
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [kind, identityKey]);
+      let result = await client.query("SELECT * FROM preview_release_action WHERE kind=$1 AND identity_key=$2", [kind, identityKey]);
+      let created = false;
+      if (!result.rowCount) {
+        const fingerprint = identityKey.split(":").at(-1);
+        const legacy = await client.query(
+          `SELECT action.* FROM preview_release_action action
+           JOIN preview_release release ON release.source_sha=action.source_sha
+           WHERE action.kind=$1 AND release.evidence->'fingerprints'->>$2=$3
+             AND action.state NOT IN ('ERRORED','FAILED','CANCELED','CANCELLED')
+           ORDER BY action.created_at ASC LIMIT 2`,
+          [kind, platform, fingerprint],
+        );
+        if (legacy.rowCount > 1) throw new Error(`Multiple active legacy ${platform} builds share one native fingerprint.`);
+        if (legacy.rowCount === 1) {
+          result = await client.query(
+            `UPDATE preview_release_action SET identity_key=$2,
+               evidence=evidence || $3::jsonb, updated_at=now()
+             WHERE id=$1 RETURNING *`,
+            [legacy.rows[0].id, identityKey, JSON.stringify({ nativeArtifactSourceSha: legacy.rows[0].source_sha, latestCompatibleSourceSha: sourceSha })],
+          );
+        }
+      }
+      if (!result.rowCount) {
+        result = await client.query(
+          `INSERT INTO preview_release_action (source_sha,kind,identity_key,state,evidence)
+           VALUES ($1,$2,$3,'RESERVED',$4::jsonb) RETURNING *`,
+          [sourceSha, kind, identityKey, JSON.stringify({ nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha })],
+        );
+        created = true;
+      } else if (result.rows[0].source_sha !== sourceSha) {
+        result = await client.query(
+          `UPDATE preview_release_action SET evidence=evidence || $3::jsonb, updated_at=now()
+           WHERE kind=$1 AND identity_key=$2 RETURNING *`,
+          [kind, identityKey, JSON.stringify({ latestCompatibleSourceSha: sourceSha })],
+        );
+      }
+      await client.query("COMMIT");
+      return { action: result.rows[0], created };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally { client.release(); }
+  }
+
+  async getFinishedIosDistributionForBuild(buildId) {
+    const result = await this.pool.query(
+      `SELECT * FROM preview_release_action
+       WHERE kind='IOS_TESTFLIGHT_DISTRIBUTION' AND state='FINISHED'
+         AND evidence->>'easBuildId'=$1 AND evidence->>'associated'='true'
+       LIMIT 2`, [buildId],
+    );
+    if (result.rowCount > 1) throw new Error("Ambiguous TestFlight distribution identity.");
+    return result.rows[0] ?? null;
+  }
+
+  async syncNativeNotificationCandidates() {
+    await this.pool.query(
+      `INSERT INTO preview_native_notification (platform,build_id,source_sha,outcome)
+       SELECT CASE build.kind WHEN 'IOS_BUILD' THEN 'ios' ELSE 'android' END,
+              build.remote_id, build.source_sha,
+              CASE WHEN build.state='FINISHED' THEN 'SUCCESS' ELSE 'FAILED' END
+       FROM preview_release_action build
+       WHERE build.remote_id IS NOT NULL AND build.kind IN ('IOS_BUILD','ANDROID_BUILD')
+         AND (build.state IN ('ERRORED','FAILED','CANCELED','CANCELLED')
+           OR build.kind='ANDROID_BUILD' AND build.state='FINISHED'
+           OR build.kind='IOS_BUILD' AND build.state='FINISHED' AND EXISTS (
+           SELECT 1 FROM preview_release_action distribution
+           WHERE distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+             AND distribution.evidence->>'easBuildId'=build.remote_id
+             AND distribution.evidence->>'associated'='true'))
+       ON CONFLICT (platform,build_id) DO NOTHING`,
+    );
+  }
+
+  async unresolvedNativeNotificationCandidates() {
+    const result = await this.pool.query(
+      `SELECT * FROM preview_native_notification
+       WHERE state IN ('PENDING','RETRYABLE_FAILURE') AND next_attempt_at <= now()
+       ORDER BY created_at ASC LIMIT 100`,
+    );
+    return result.rows;
+  }
+
+  async recordNativeNotificationAttempt(candidate, response) {
+    const outcomes = Array.isArray(response?.recipientOutcomes) ? response.recipientOutcomes : [];
+    const recipientIds = candidate.recipient_ids ?? outcomes.map((item) => item.memberId);
+    const retryable = outcomes.some((item) => item.state === 'retryable-failure');
+    await this.pool.query(
+      `UPDATE preview_native_notification SET state=$3, recipient_ids=$4::jsonb,
+         attempt_count=attempt_count+1,
+         next_attempt_at=now() + (LEAST(3600, 30 * power(2, LEAST(attempt_count,7)))::text || ' seconds')::interval,
+         last_response=$5::jsonb, updated_at=now()
+       WHERE platform=$1 AND build_id=$2`,
+      [candidate.platform, candidate.build_id, retryable ? 'RETRYABLE_FAILURE' : 'COMPLETE', JSON.stringify(recipientIds), JSON.stringify(response ?? {})],
+    );
+  }
+
+  async getNativeBuildActionForRelease(sourceSha, platform, fingerprint = null) {
+    assertExactSha(sourceSha);
+    const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
+    if (!kind) throw new Error("Native build platform is invalid.");
+    const result = await this.pool.query(
+      `SELECT * FROM preview_release_action
+       WHERE source_sha=$1 AND kind=$2
+         AND ($3::text IS NULL OR evidence->>'nativeFingerprint'=$3 OR identity_key LIKE $4)
+       ORDER BY created_at DESC LIMIT 2`,
+      [sourceSha, kind, fingerprint, `%:${platform}:preview`],
+    );
+    if (result.rowCount > 1) throw new Error(`Ambiguous ${platform} build action for release ${sourceSha}.`);
+    return result.rows[0] ?? null;
+  }
+
   async getAction(kind, identityKey) {
     const result = await this.pool.query(
       `SELECT * FROM preview_release_action WHERE kind=$1 AND identity_key=$2 LIMIT 2`,
@@ -378,7 +498,7 @@ export class PreviewLedger {
       `UPDATE preview_release_action
        SET remote_id=$5, state=$6, evidence=$7::jsonb, updated_at=now()
        WHERE source_sha=$1 AND kind=$2 AND identity_key=$3 AND remote_id=$4
-         AND state IN ('BUILD_FAILED','UPDATE_FAILED','CANCELED','DEACTIVATED')
+         AND state IN ('BUILD_FAILED','UPDATE_FAILED','ERRORED','FAILED','CANCELED','CANCELLED','DEACTIVATED')
        RETURNING *`,
       [sourceSha, kind, identityKey, expectedRemoteId, remoteId, state, JSON.stringify(evidence)],
     );
