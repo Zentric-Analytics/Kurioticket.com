@@ -9,6 +9,8 @@ import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "./flightPriceAlertModel";
 import { getRuntimeDiagnostics } from "../../diagnostics/runtimeDiagnostics";
+import { ApprovedResultsScreen } from "../search/ApprovedResultsScreen";
+import { ApprovedCarResultsScreen } from "../search/ApprovedCarResultsScreen";
 import { isMobileProductAvailable, useFeatureAvailability } from "../availability/FeatureAvailability";
 
 type Result = FlightResult | HotelResult | CarResult;
@@ -30,6 +32,14 @@ function imageUri(value?: string) {
 }
 
 export function TravelResultsScreen({ product }: { product: Product }) {
+  const { availability, loading } = useFeatureAvailability();
+  if (loading || !isMobileProductAvailable(availability, product)) return <LegacyTravelResultsScreen product={product} />;
+  if (product === "flight" || product === "hotel") return <ApprovedResultsScreen product={product} />;
+  if (product === "car") return <ApprovedCarResultsScreen />;
+  return <LegacyTravelResultsScreen product={product} />;
+}
+
+function LegacyTravelResultsScreen({ product }: { product: Product }) {
   const { availability, loading: availabilityLoading } = useFeatureAvailability();
   const productAvailable = isMobileProductAvailable(availability, product);
   const params = useLocalSearchParams<Record<string, string | string[]>>();

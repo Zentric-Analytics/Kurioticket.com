@@ -336,4 +336,3 @@ export async function deleteBackendSavedSearch(
     return { ok: false, status: 0, error: "Unable to remove saved trip." };
   }
 }
-
