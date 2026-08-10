@@ -372,25 +372,9 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
       </View>
       <View style={s0.flightLowerSection}>
         <View style={s0.flightBenefitsGrid}>
-          <FlightBenefitItem
-            icon="trip"
-            label="Baggage"
-            value={result.baggageInfo || "Baggage details unavailable"}
-            narrow={narrow}
-          />
-          <FlightBenefitItem
-            icon="help"
-            label="Seat selection"
-            value="Information unavailable"
-            narrow={narrow}
-          />
-          <FlightBenefitItem
-            icon="document"
-            label="Changes & refunds"
-            value={result.refundInfo || "Fare rules unavailable"}
-            wide
-            narrow={narrow}
-          />
+          <FlightBenefitItem icon="trip" label="Baggage" value={result.baggageInfo || "Baggage details unavailable"} narrow={narrow} />
+          <FlightBenefitItem icon="help" label="Seat selection" value="Information unavailable" narrow={narrow} />
+          <FlightBenefitItem icon="document" label="Changes & refunds" value={result.refundInfo || "Fare rules unavailable"} wide narrow={narrow} />
         </View>
         <View style={s0.flightDetailsCta}>
           <Button
@@ -823,14 +807,14 @@ const s0 = StyleSheet.create({
   flightLowerSection: {
     borderTopWidth: 1,
     borderTopColor: "#EDF0F5",
-    paddingTop: 13,
+    paddingTop: 14,
     gap: 14,
   },
   flightBenefitsGrid: {
     flexDirection: "row",
-    alignItems: "flex-start",
     flexWrap: "wrap",
-    gap: 12,
+    rowGap: 14,
+    columnGap: 12,
   },
   flightBenefitItem: {
     width: "48%",
@@ -841,23 +825,10 @@ const s0 = StyleSheet.create({
   },
   flightBenefitWide: { width: "100%" },
   flightBenefitNarrow: { width: "100%" },
-  flightBenefitIcon: {
-    width: 22,
-    paddingTop: 1,
-    alignItems: "center",
-  },
+  flightBenefitIcon: { width: 20, paddingTop: 1, alignItems: "center" },
   flightBenefitCopy: { flex: 1, minWidth: 0, gap: 2 },
-  flightBenefitLabel: {
-    color: ui.navy,
-    fontSize: 11,
-    lineHeight: 15,
-    fontWeight: "700",
-  },
-  flightBenefitValue: {
-    color: ui.muted,
-    fontSize: 11,
-    lineHeight: 16,
-  },
+  flightBenefitLabel: { fontSize: 12, lineHeight: 16, fontWeight: "700", color: ui.navy },
+  flightBenefitValue: { fontSize: 12, lineHeight: 17, fontWeight: "400", color: ui.muted },
   flightDetailsCta: { width: 148, alignSelf: "flex-end" },
   hotelCard: {
     height: 234,
