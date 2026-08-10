@@ -529,6 +529,28 @@ The records live in `src/shared/destinations/editorial/southAmerica.ts` and aggr
 
 This batch includes no UI, image, gallery, map, search, flight, hotel, booking or related-destination work and no canonical-data changes. It changes no IDs, canonical names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
 
+### South America Batch 2 — Southern Cone + Brazil
+
+South America Batch 2, verified on 2026-08-10, considered and implemented all seven canonical candidates, with no deferrals:
+
+- `cl-santiago` — Santiago, Chile
+- `ar-buenos-aires` — Buenos Aires, Argentina
+- `uy-montevideo` — Montevideo, Uruguay
+- `py-asuncion` — Asunción, Paraguay
+- `br-sao-paulo` — São Paulo, Brazil
+- `br-brasilia` — Brasília, Brazil
+- `br-manaus` — Manaus, Brazil
+
+The source review used exact URLs from official municipal and national tourism bodies, UNESCO, official museums and public cultural institutions. Each record carries at least two distinct, titled authoritative HTTPS references supporting durable city geography, heritage, architecture, museums, markets or cultural traditions. No provenance URL was fabricated. External HTTPS authorization failures were treated as an environment limitation rather than a source failure, and no candidate was weakened or deferred because of that limitation.
+
+Scope safeguards keep Santiago's central municipality and city material distinct from Greater Santiago, the Metropolitan Region, Valparaíso and Chile-wide attractions. Buenos Aires remains the autonomous city rather than Buenos Aires Province or the wider metropolitan area; its canonical AEP primary and EZE secondary airport data remains unchanged. Montevideo stays bounded to its Río de la Plata waterfront, Ciudad Vieja and city institutions rather than absorbing Uruguay's beach or wine destinations.
+
+Asunción remains distinct from Greater Asunción and Paraguay generally; unchanged ASU data is not used to place the airport, which is in Luque, inside the central city. São Paulo remains the city rather than the state or Greater São Paulo, and unchanged GRU data is not used to place the Guarulhos airport within the city. Brasília's planned central ensemble is distinguished from the wider Federal District and its surrounding administrative regions. Manaus is treated as a Rio Negro port city with its own markets, museums and rubber-era architecture, not as a synonym for the entire Amazon or distant rainforest destinations.
+
+The records remain in `src/shared/destinations/editorial/southAmerica.ts` and aggregate centrally in deterministic order after South America Batch 1. Repository-derived South America coverage moves from **8 of 15** to **15 of 15**, leaving **0** canonical South American destinations without editorial content. Global coverage moves from **210 of 235** to **217 of 235**, leaving **18**. Central America remains **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; Caribbean remains **10 of 10**; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic prefix and all North America, Central America, Caribbean and South America Batch 1 records remain unchanged. Featured membership and exact ordering remain independently maintained and unchanged.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no canonical IDs, names, countries, country codes, airport data, aliases, image identities or image provenance.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
