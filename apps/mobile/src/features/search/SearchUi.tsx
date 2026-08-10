@@ -47,9 +47,9 @@ export function Logo() {
     />
   );
 }
-export function TopBar({ detail = false, compact = false, title, saved = false, onFavorite, onShare }: { detail?: boolean; compact?: boolean; title?: string; saved?: boolean; onFavorite?: () => void; onShare?: () => void }) {
+export function TopBar({ detail = false }: { detail?: boolean }) {
   return (
-    <View style={[s.top, compact && s.topCompact]}>
+    <View style={s.top}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Go back"
@@ -58,30 +58,18 @@ export function TopBar({ detail = false, compact = false, title, saved = false, 
       >
         <FlowIcon name="back" size={25} />
       </Pressable>
-      <View pointerEvents="none" style={[s.logoCenter, compact && s.logoCenterCompact]}>
-        {title ? (
-          <View style={s.topIdentity}>
-            <Text numberOfLines={1} style={s.topTitle}>{title}</Text>
-            <Text style={s.topBrand}>Kurioticket</Text>
-          </View>
-        ) : <Logo />}
-      </View>
+      <Logo />
       <View style={s.topActions}>
         {detail ? (
           <>
-            <Pressable accessibilityRole="button" accessibilityLabel={saved ? "Remove saved flight" : "Save flight"} accessibilityState={{ selected: saved }} onPress={onFavorite} style={s.hit}><FlowIcon name="heart" fill={saved ? ui.blue : "none"} color={saved ? ui.blue : ui.navy} /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Share flight" onPress={onShare} style={s.hit}><FlowIcon name="share" /></Pressable>
+            <FlowIcon name="heart" />
+            <FlowIcon name="share" />
           </>
         ) : (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Price alerts"
-            onPress={() => router.push("/price-alerts")}
-            style={({ pressed }) => [s.alertHit, pressed && s.pressed]}
-          >
+          <View>
             <FlowIcon name="bell" />
             <View style={s.dot} />
-          </Pressable>
+          </View>
         )}
       </View>
     </View>
@@ -125,15 +113,11 @@ export function DateStrip({
   prices,
   currency = "USD",
   onSelect,
-  onPrevious,
-  onNext,
 }: {
   date: string;
   prices: (number | undefined)[];
   currency?: string;
   onSelect: (v: string) => void;
-  onPrevious?: () => void;
-  onNext?: () => void;
 }) {
   const base = new Date(`${date}T12:00:00`);
   return (
@@ -143,7 +127,7 @@ export function DateStrip({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={s.dates}
     >
-      <Pressable accessibilityRole="button" accessibilityLabel="Previous date" onPress={onPrevious} disabled={!onPrevious} style={s.arrow}>
+      <Pressable style={s.arrow}>
         <FlowIcon name="back" size={20} />
       </Pressable>
       {[-2, -1, 0, 1, 2].map((d, i) => {
@@ -173,7 +157,7 @@ export function DateStrip({
           </Pressable>
         );
       })}
-      <Pressable accessibilityRole="button" accessibilityLabel="Next date" onPress={onNext} disabled={!onNext} style={s.arrow}>
+      <Pressable style={s.arrow}>
         <FlowIcon name="chevron" size={20} />
       </Pressable>
     </ScrollView>
@@ -264,18 +248,6 @@ export const s = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "white",
   },
-  topCompact: { height: 62 },
-  logoCenter: {
-    position: "absolute",
-    top: 24,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  logoCenterCompact: { top: 8 },
-  topIdentity: { height: 46, alignItems: "center", justifyContent: "center" },
-  topTitle: { maxWidth: 190, fontSize: 16, fontWeight: "900", color: ui.navy },
-  topBrand: { fontSize: 10, fontWeight: "700", color: ui.muted, marginTop: 1 },
   hit: {
     width: 44,
     height: 44,
@@ -288,17 +260,10 @@ export const s = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 18,
   },
-  alertHit: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pressed: { opacity: 0.65 },
   dot: {
     position: "absolute",
-    right: 7,
-    top: 7,
+    right: -2,
+    top: -2,
     width: 8,
     height: 8,
     borderRadius: 4,
