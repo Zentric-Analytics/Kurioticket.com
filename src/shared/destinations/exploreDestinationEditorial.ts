@@ -112,6 +112,13 @@ const finalAfricaBatchSourceReferences = (references: readonly ExploreDestinatio
   lastVerifiedAt: FINAL_AFRICA_BATCH_LAST_VERIFIED_AT,
 });
 
+const ASIA_BATCH_1_LAST_VERIFIED_AT = "2026-08-10";
+const asiaBatch1SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: ASIA_BATCH_1_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -924,6 +931,76 @@ const rawExploreDestinationEditorial = [
     description: "Tripoli stands on Libya's Mediterranean coast, where the Old City preserves a dense urban fabric shaped through successive historical periods. Sayeda Mariam Square forms part of this medina and reflects civic, religious and architectural development associated with the Karamanli era. UNESCO's Libya-specific material places the square within the capital's heritage context without designating Tripoli itself as a World Heritage Site.",
     highlights: ["Mediterranean coastal setting", "Tripoli Old City", "Sayeda Mariam Square", "Karamanli-era urban heritage"],
     editorialProvenance: finalAfricaBatchSourceReferences([{ title: "UNESCO World Heritage Centre — Sayeda Mariam Square, Old City of Tripoli, Libya", url: "https://whc.unesco.org/en/tentativelists/7020/" }, { title: "UNESCO — Libya country profile", url: "https://www.unesco.org/en/countries/ly" }]),
+  },
+  {
+    id: "cn-beijing",
+    summary: "Beijing preserves imperial palace complexes, ceremonial gardens and monumental architecture from China's Ming and Qing dynasties.",
+    description: "Beijing occupies the northern Chinese plain, where imperial planning shaped a capital of monumental axes, walls and ceremonial spaces. The Forbidden City preserves the palace architecture and political setting of the Ming and Qing dynasties. South of the historic core, the Temple of Heaven forms a fifteenth-century ritual landscape of gardens, altars and precisely arranged ceremonial buildings.",
+    highlights: ["Forbidden City palace complex", "Ming and Qing imperial heritage", "Temple of Heaven altars", "Imperial ceremonial gardens"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "UNESCO — Imperial Palaces of the Ming and Qing Dynasties in Beijing and Shenyang", url: "https://whc.unesco.org/en/list/439/" }, { title: "UNESCO — Temple of Heaven: an Imperial Sacrificial Altar in Beijing", url: "https://whc.unesco.org/en/list/881" }]),
+  },
+  {
+    id: "cn-guangzhou",
+    summary: "Guangzhou reflects a long southern Chinese urban history through Lingnan culture, architecture and civic collections.",
+    description: "Guangzhou stands on the Pearl River in southern China, with a long urban history shaped by trade and Lingnan culture. Historic neighbourhoods and regional architectural traditions distinguish the city's cultural identity from the wider Guangdong province. Guangzhou Museum, housed in Zhenhai Tower, presents city-history collections that connect the old fortified landscape with Guangzhou's social and cultural development.",
+    highlights: ["Pearl River urban setting", "Lingnan cultural heritage", "Guangzhou Museum collections", "Zhenhai Tower setting"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "Guangzhou Municipal Government — Culture and History", url: "https://www.gz.gov.cn/guangzhouinternational/visitors/whattosee/cultureandhistory/" }, { title: "Guangzhou Museum", url: "https://www.guangzhoumuseum.cn/website_cn/web/MainPage/Index.aspx" }]),
+  },
+  {
+    id: "hk-hong-kong",
+    summary: "Hong Kong is shaped by Victoria Harbour, dense waterfront districts and conserved civic architecture in Central.",
+    description: "Hong Kong extends around Victoria Harbour, the waterway separating Hong Kong Island from Kowloon and defining its central urban geography. Ferries, promenades and layered waterfront districts reflect the harbour's enduring relationship with the city. In Central, Tai Kwun conserves the former Central Police Station, Central Magistracy and Victoria Prison as an architectural complex devoted to heritage and culture.",
+    highlights: ["Victoria Harbour geography", "Hong Kong Island waterfront", "Kowloon harbour frontage", "Tai Kwun heritage complex"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "Hong Kong Tourism Board — Victoria Harbour", url: "https://www.discoverhongkong.com/eng/place-to-go/travel.guide-victoria-harbour.html" }, { title: "Hong Kong Tourism Board — Tai Kwun", url: "https://www.discoverhongkong.com/eng/place-to-go/travel.guide-tai-kwun.html" }]),
+  },
+  {
+    id: "mo-macau",
+    summary: "Macau preserves a historic port cityscape where Chinese and Portuguese architectural traditions meet across civic squares.",
+    description: "Macau occupies a compact estuarine setting whose historic centre records centuries of maritime exchange between China and Portugal. Streets, squares, religious buildings and fortifications form an urban landscape where Chinese and Portuguese architectural traditions remain closely interwoven. A-Ma Temple anchors the city's maritime heritage, while civic and religious monuments trace the development of this trading settlement.",
+    highlights: ["Historic Centre of Macao", "A-Ma Temple", "Chinese and Portuguese architecture", "Historic squares and fortifications"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "UNESCO — Historic Centre of Macao", url: "https://whc.unesco.org/en/list/1110/" }, { title: "Macao Government Tourism Office — Macao World Heritage", url: "https://www.macaotourism.gov.mo/en/sightseeing/macao-world-heritage" }]),
+  },
+  {
+    id: "jp-osaka",
+    summary: "Osaka's castle heritage and Dotonbori canal landscape express the city's commercial and theatrical history.",
+    description: "Osaka developed around waterways and commercial districts on Japan's main island of Honshu, giving the city a distinct urban identity. Osaka Castle recalls Toyotomi Hideyoshi and the political history associated with the fortified site. In Minami, Dotonbori follows a historic canal whose theatres and entertainment culture became closely linked with Osaka's mercantile growth and street-level character.",
+    highlights: ["Osaka Castle main keep", "Toyotomi Hideyoshi history", "Dotonbori canal", "Minami theatre heritage"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "Osaka Official Tourism Guide — Osaka Castle Museum", url: "https://www.osaka-info.jp/en/spot/osaka-castle-main-keep/" }, { title: "Osaka Official Tourism Guide — Dotonbori", url: "https://osaka-info.jp/en/spot/dotonbori/" }]),
+  },
+  {
+    id: "kr-seoul",
+    summary: "Seoul's Joseon palaces and hanok neighbourhoods reveal the historic structure of Korea's mountain-ringed capital.",
+    description: "Seoul occupies the Han River basin amid surrounding mountains, while its historic core preserves the spatial legacy of Joseon-era Hanyang. Gyeongbokgung served as the dynasty's principal palace and remains central to understanding the capital's royal architecture. Nearby Bukchon retains lanes of traditional hanok residences between palace districts, illustrating the domestic scale of Seoul's architectural and cultural heritage.",
+    highlights: ["Gyeongbokgung Palace", "Joseon capital heritage", "Bukchon Hanok Village", "Historic palace districts"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "Official Travel Guide to Seoul — Gyeongbokgung Palace", url: "https://english.visitseoul.net/attractions/Gyeongbokgung-Palace/ENP000072" }, { title: "Official Travel Guide to Seoul — Bukchon Hanok Village", url: "https://english.visitseoul.net/attractions/bukchon-hanok-village_/263" }]),
+  },
+  {
+    id: "cn-shanghai",
+    summary: "Shanghai's Huangpu waterfront and civic collections trace the municipality's transformation into a modern commercial metropolis.",
+    description: "Shanghai stands beside the Huangpu River, where the Bund forms a defining waterfront of historic commercial and civic architecture. Its streetscape records the municipality's development into modern Shanghai, while nearby Suzhou Creek bridges extend that layered urban landscape. Shanghai History Museum preserves collections documenting the city's social, political and cultural history across successive periods of metropolitan change.",
+    highlights: ["Bund historic waterfront", "Huangpu River setting", "Suzhou Creek bridges", "Shanghai History Museum collections"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "Shanghai Municipal Government — The Bund Historical and Cultural Block", url: "https://english.shanghai.gov.cn/en-HeritageZones/20231208/f2ac293f546a4d32aba936f2e733a47c.html" }, { title: "Shanghai Municipal Government — Shanghai History Museum", url: "https://english.shanghai.gov.cn/en-MuseumsGalleries/20231229/9b40ec60928148cc89066195dedd4395.html" }]),
+  },
+  {
+    id: "cn-shenzhen",
+    summary: "Shenzhen's reform-era cityscape supports a growing network of contemporary art museums and cultural institutions.",
+    description: "Shenzhen occupies China's southern coast beside Hong Kong, with a cityscape strongly shaped by reform-era urban development. Contemporary cultural infrastructure provides a durable lens on this modern metropolis without extending its scope across the wider region. Shenzhen Art Museum, Dafen-related institutions and the Shenzhen International Museum of Art connect visual culture with the city's evolving architecture and urban identity.",
+    highlights: ["Reform-era urban landscape", "Shenzhen Art Museum", "Dafen cultural institutions", "Shenzhen International Museum of Art"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "Shenzhen Government Online — Galleries", url: "https://www.sz.gov.cn/en_szgov/life/cultural/galleries/index.html" }, { title: "Shenzhen Government Online — Shenzhen International Museum of Art", url: "https://www.sz.gov.cn/en_szgov/aboutsz/photos/content/post_12814524.html" }]),
+  },
+  {
+    id: "tw-taipei",
+    summary: "Taipei's basin cityscape encompasses historic landmarks and major institutions preserving Chinese art and cultural collections.",
+    description: "Taipei occupies a river basin in northern Taiwan, where historic districts and cultural landmarks sit within a dense modern cityscape. At Waishuangxi, the National Palace Museum forms a purpose-built complex whose institutional history is closely tied to preserving extensive art and historical collections. Its galleries and architecture provide a focused account of material culture within Taipei's broader civic landscape.",
+    highlights: ["Taipei basin cityscape", "National Palace Museum", "Waishuangxi museum complex", "Historic art collections"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "Taipei City Government — Taipei Travel", url: "https://travel.taipei/en/must-visit/attractions" }, { title: "National Palace Museum — History of NPM", url: "https://www.npm.gov.tw/Articles.aspx?l=2&sno=03012532" }, { title: "National Palace Museum — Architecture", url: "https://www.npm.gov.tw/articles.aspx?l=2&sno=03012533" }]),
+  },
+  {
+    id: "mn-ulaanbaatar",
+    summary: "Ulaanbaatar occupies the Tuul River valley beneath Bogd Khan Uul, with Buddhist and museum heritage.",
+    description: "Ulaanbaatar lies in the Tuul River valley beneath Bogd Khan Uul, a mountain setting that frames Mongolia's capital. Buddhist institutions and Soviet-era planning reflect distinct layers in the city's architectural and urban history. The National Museum of Mongolia preserves archaeological, historical and ethnographic collections that document the country's cultures while anchoring this national narrative within the capital.",
+    highlights: ["Tuul River valley", "Bogd Khan Uul setting", "Buddhist urban heritage", "National Museum of Mongolia"],
+    editorialProvenance: asiaBatch1SourceReferences([{ title: "Official Mongolia Tourism — Ulaanbaatar & Surrounding", url: "https://www.mongolia.travel/" }, { title: "National Museum of Mongolia — About Us", url: "https://en.nationalmuseum.mn/about" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 

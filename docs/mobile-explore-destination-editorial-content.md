@@ -239,6 +239,29 @@ The separate source-resolution pass supplied exact, pre-verified authoritative r
 
 The three temporary deferrals are removed because all three destinations now have complete editorial records. Repository-derived coverage is **54 of 54 canonical African destinations editorialized**, with **0 remaining**. Here, 54/54 means every canonical African destination currently represented by the Explore catalogue has editorial enrichment; it does not imply that the catalogue represents every possible destination in Africa. Europe remains complete at 52 of 52 destinations, and Featured membership and ordering remain independent and unchanged.
 
+### Asia Batch 1 — East Asia
+
+Asia Batch 1, verified on 2026-08-10, adds editorial content for exactly these 10 previously non-editorial canonical destinations:
+
+- `cn-beijing` — Beijing, China
+- `cn-guangzhou` — Guangzhou, China
+- `hk-hong-kong` — Hong Kong, Hong Kong SAR China
+- `mo-macau` — Macau, Macao SAR China
+- `jp-osaka` — Osaka, Japan
+- `kr-seoul` — Seoul, South Korea
+- `cn-shanghai` — Shanghai, China
+- `cn-shenzhen` — Shenzhen, China
+- `tw-taipei` — Taipei, Taiwan
+- `mn-ulaanbaatar` — Ulaanbaatar, Mongolia
+
+The batch represents a separate authoritative-source research pass using exact, pre-verified UNESCO, municipal or national tourism, museum and cultural-institution references. Each record carries at least two distinct titled HTTPS references and durable, destination-specific claims; no fallback URL was invented or substituted. Hong Kong retains the country label `Hong Kong SAR China`, while destination `Macau` retains the distinct country label `Macao SAR China`. Taipei remains `Taipei, Taiwan`, with neutral cultural and geographic treatment and no political-status commentary.
+
+Airport-backed scope and identity remain separate from editorial copy. Seoul retains its GMP/ICN grouping without treating Incheon as part of Seoul, and Osaka remains scoped to Osaka rather than Kyoto, Nara, Kobe or wider Kansai attractions; KIX's airport mapping does not broaden the editorial record. Beijing's PEK/PKX grouping and all other canonical names, countries, airports, aliases, image identities and provenance remain unchanged.
+
+Repository-derived Asian coverage moves from **5 of 64** canonical destinations before the batch to **15 of 64** after it, leaving **49** Asian destinations without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Featured membership and ordering remain independently maintained and unchanged.
+
+This implementation includes no ExploreScreen or DestinationDetailsScreen UI work, image or gallery work, map work, search changes, flight or hotel booking changes, related-destination work, or editorial architecture split. The shared editorial module remains intact for a later dedicated refactor.
+
 This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
