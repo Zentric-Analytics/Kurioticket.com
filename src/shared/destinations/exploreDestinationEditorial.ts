@@ -70,6 +70,13 @@ const africaBatch1SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: AFRICA_BATCH_1_LAST_VERIFIED_AT,
 });
 
+const AFRICA_BATCH_2_LAST_VERIFIED_AT = "2026-08-10";
+const africaBatch2SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: AFRICA_BATCH_2_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -630,6 +637,34 @@ const rawExploreDestinationEditorial = [
     description: "Saint-Denis stands on Réunion's northern coast between the Indian Ocean and steep volcanic uplands. Rue de Paris is lined with Creole houses and civic buildings, including Villa Déramond-Barre and the former bishop's palace, while the Jardin de l'État anchors a historic public garden. The Léon Dierx Museum, markets and seafront trace the city's artistic, commercial and colonial layers.",
     highlights: ["Rue de Paris Creole houses", "Jardin de l'État", "Léon Dierx Museum", "Barachois seafront"],
     editorialProvenance: africaBatch1SourceReferences([{ title: "Île de La Réunion Tourisme - Saint-Denis", url: "https://en.reunion.fr/organize/towns-and-villages/saint-denis/" }, { title: "Musée Léon Dierx", url: "https://museesreunion.fr/musee-leon-dierx/" }]),
+  },
+  {
+    id: "dz-algiers",
+    summary: "Algiers rises above the Mediterranean through white hillside quarters, Ottoman heritage and a historic casbah.",
+    description: "Algiers extends in tiers above a Mediterranean bay, with white buildings giving the capital its long-established visual identity. The UNESCO-listed Casbah preserves a dense historic urban fabric of lanes, houses, mosques and Ottoman palaces descending toward the waterfront. Within its lower edge, the restored Palais des Raïs complex documents domestic architecture and the city's maritime connections.",
+    highlights: ["Casbah of Algiers", "Palais des Raïs", "Ottoman palaces and mosques", "Mediterranean hillside quarters"],
+    editorialProvenance: africaBatch2SourceReferences([{ title: "UNESCO - Kasbah of Algiers", url: "https://whc.unesco.org/en/list/565/" }, { title: "Palais des Raïs - Bastion 23", url: "https://www.musee-palaisdesrais-bastion23.dz/" }]),
+  },
+  {
+    id: "ma-casablanca",
+    summary: "Casablanca faces the Atlantic with twentieth-century boulevards, Art Deco architecture and a working waterfront.",
+    description: "Casablanca developed around its Atlantic port, and broad central avenues record the city's rapid twentieth-century expansion. Art Deco and neo-Moorish buildings shape districts around Mohammed V Square, while the older medina retains a tighter street pattern beside the harbour. The Hassan II Mosque stands partly above the ocean, linking monumental Moroccan craftsmanship with the city's coastal setting.",
+    highlights: ["Hassan II Mosque", "Mohammed V Square", "Art Deco city centre", "Old medina and Atlantic port"],
+    editorialProvenance: africaBatch2SourceReferences([{ title: "Visit Casablanca", url: "https://visitcasablanca.ma/" }, { title: "Hassan II Mosque Foundation", url: "https://www.fmh2.ma/" }]),
+  },
+  {
+    id: "eg-sharm-el-sheikh",
+    summary: "Sharm El Sheikh occupies southern Sinai between Red Sea reefs, desert mountains and protected coastal landscapes.",
+    description: "Sharm El Sheikh lies at the southern end of the Sinai Peninsula, where arid mountains meet the gulfs of Aqaba and Suez. Coral reefs and clear Red Sea waters define its coastal landscape and marine habitats. South of the city, Ras Mohammed National Park protects reef, mangrove, desert and shoreline environments around the peninsula's southernmost headland.",
+    highlights: ["Ras Mohammed National Park", "Red Sea coral reefs", "Southern Sinai mountains", "Gulfs of Aqaba and Suez"],
+    editorialProvenance: africaBatch2SourceReferences([{ title: "Experience Egypt - Sharm El Sheikh", url: "https://www.experienceegypt.eg/en/city/13/sharm-el-sheikh" }, { title: "UNESCO - Ras Mohammed", url: "https://whc.unesco.org/en/tentativelists/182/" }]),
+  },
+  {
+    id: "tn-tunis",
+    summary: "Tunis centres on a historic medina framed by later boulevards, civic architecture and longstanding craft traditions.",
+    description: "Tunis grew from its medina toward a later European-planned quarter, creating contrasting street patterns around the capital's centre. UNESCO recognises the medina for its mosques, madrasas, palaces, houses and souks, with the Zitouna Mosque anchoring its historic fabric. Beyond the old city, Avenue Habib Bourguiba and the Bardo Museum add civic architecture and archaeological collections to the urban context.",
+    highlights: ["Medina of Tunis", "Zitouna Mosque", "Avenue Habib Bourguiba", "Bardo Museum collections"],
+    editorialProvenance: africaBatch2SourceReferences([{ title: "UNESCO - Medina of Tunis", url: "https://whc.unesco.org/en/list/36/" }, { title: "Discover Tunisia - Tunis and its surroundings", url: "https://www.discovertunisia.com/en/discover/around-tunis" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
