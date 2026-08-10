@@ -2431,7 +2431,7 @@ export const translations: TranslationDictionary = {
     "Si tu reserva se completó con una aerolínea, hotel, agencia de viajes o proveedor externo, ese proveedor es responsable de cambios en la reserva, reembolsos, cancelaciones, check-in, embarque, recibos y documentos de viaje.",
   supportFaqChangeBookingQuestion: "¿Kurioticket puede cambiar mi reserva?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket solo puede ayudar con reservas hechas directamente a través de Kurioticket si y cuando se admita la reserva directa. Para reservas completadas con proveedores externos, contacta directamente a ese proveedor.",
+    "Kurioticket no gestiona ni cambia reservas de viaje. El proveedor externo se encarga de cambios, cancelaciones, reembolsos, check-in, recibos y documentos de viaje.",
   supportFaqWhyRedirectedQuestion: "¿Por qué se me envió a otro proveedor?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket es una plataforma de búsqueda y comparación de viajes, y algunos resultados redirigen a proveedores de confianza donde completas la reserva, el pago y el soporte específico del proveedor.",

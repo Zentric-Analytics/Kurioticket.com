@@ -12,7 +12,7 @@ export class TravelApiError extends Error {
 export type FlightResult = ContractResult<PublicFlightResult>;
 export type HotelResult = ContractResult<PublicHotelResult>;
 export type CarResult = ContractResult<NormalizedCarResult>;
-export type MobileTrip = { id: string; bookingReference: string; provider: string; tripType: string; status: "upcoming" | "past" | "cancelled"; origin: string | null; destination: string; departureDate: string; returnDate: string | null; passengerCount: number; currency: string; totalAmount: number | null };
+export type MobileTrip = { id: string; providerConfirmationCode: string; providerName: string; tripType: string; status: "upcoming" | "past" | "cancelled"; origin: string | null; destination: string; departureDate: string; returnDate: string | null; travelerCount: number; currency: string; totalAmount: number | null; providerAction: { url: string; label: string; external: true } | null };
 export type MobileProfile = { fullName?: string | null; phoneNumber?: string | null; phoneCountryCode?: string | null; dateOfBirth?: string | null; gender?: string | null; nationality?: string | null; address?: string | null };
 export type MobilePriceAlertStatus = "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED";
 export type MobilePriceAlert = { id: string; type: "FLIGHT" | "HOTEL"; origin: string | null; destination: string; targetPrice: string | null; currency: string | null; status: MobilePriceAlertStatus; createdAt: string; updatedAt: string; lastSeenPrice: string | null; lastCheckedAt: string | null; query: Record<string, unknown> };
@@ -67,7 +67,6 @@ export const travelApi = {
   searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicHotelResult>>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
   searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),
-  trip: (id: string) => request<{ trip: MobileTrip }>(`/api/mobile/v1/trips/${encodeURIComponent(id)}`),
   profile: () => request<{ profile: MobileProfile | null; user: { id: string; email: string; name?: string | null } }>("/api/mobile/v1/profile"),
   priceAlerts: () => request<{ alerts: MobilePriceAlert[] }>("/api/mobile/v1/price-alerts"),
   createPriceAlert: (body: CreateFlightPriceAlert) => request<{ alert: MobilePriceAlert }>("/api/mobile/v1/price-alerts", { method: "POST", body: JSON.stringify(body) }),

@@ -1,8 +1,12 @@
 # Canonical customer travel systems
 
+> Kurioticket is a metasearch and referral platform. Travel transactions are completed and managed by external providers. Kurioticket does not create, sell, fulfill, modify, cancel, refund, or service travel bookings.
+
 Kurioticket has four canonical travel systems, exposed according to each platform's established capabilities:
 
-1. **My Trips** contains only real partner reservations linked to the signed-in user. Kurioticket does not issue, modify, cancel, or refund them.
+1. **My Trips** is a read-only itinerary/reference system containing only externally completed, partner-confirmed trips linked to the signed-in user. A My Trip is not a Kurioticket booking.
+
+Outbound search or provider clicks never create My Trips. New records enter only through a trusted backend partner confirmation or verified confirmation import, and management actions always lead to a validated external provider destination. Migrated legacy records without a trustworthy destination remain visible without a fake action.
 2. **Saved & Recent** at `/saved` contains intentionally saved flights, hotels, and searches alongside a distinct recent-search history.
 3. **Price Alerts** supports `TARGET` alerts and `AUTOMATIC` meaningful-drop tracking. Both are processed by the single price-alert worker and create `PRICE_ALERT` notification events.
 4. **Notifications** is the authoritative backend and mobile inbox for travel, account, security, support, and system updates.

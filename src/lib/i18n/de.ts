@@ -2612,7 +2612,7 @@ flightLandingRouteAriaLabel:
     "Wenn Ihre Buchung bei einer Fluggesellschaft, einem Hotel, einem Reisebüro oder einem externen Anbieter abgeschlossen wurde, ist dieser Anbieter für Buchungsänderungen, Erstattungen, Stornierungen, Check-in, Boarding, Belege und Reisedokumente verantwortlich.",
   supportFaqChangeBookingQuestion: "Kann Kurioticket meine Buchung ändern?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket kann nur bei Buchungen helfen, die direkt über Kurioticket vorgenommen wurden, sofern direkte Buchungen unterstützt werden. Wenden Sie sich bei Buchungen über externe Anbieter direkt an diesen Anbieter.",
+    "Kurioticket verwaltet oder ändert keine Reisebuchungen. Der externe Anbieter bearbeitet Änderungen, Stornierungen, Erstattungen, Check-in, Belege und Reisedokumente.",
   supportFaqWhyRedirectedQuestion: "Warum wurde ich zu einem anderen Anbieter weitergeleitet?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket ist eine Plattform für Reisesuche und -vergleich. Einige Ergebnisse leiten zu vertrauenswürdigen Anbietern weiter, bei denen Sie Buchung, Zahlung und anbieterspezifischen Support abschließen.",

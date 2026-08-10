@@ -854,7 +854,7 @@ export const translations: TranslationDictionary = {
     "Jika pemesanan Anda diselesaikan dengan maskapai, hotel, agen perjalanan, atau penyedia eksternal, penyedia tersebut bertanggung jawab atas perubahan pemesanan, pengembalian dana, pembatalan, check-in, boarding, tanda terima, dan dokumen perjalanan.",
   supportFaqChangeBookingQuestion: "Bisakah Kurioticket mengubah pemesanan saya?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket hanya dapat membantu pemesanan yang dibuat langsung melalui Kurioticket jika dan ketika pemesanan langsung didukung. Untuk pemesanan yang diselesaikan dengan penyedia eksternal, hubungi penyedia tersebut secara langsung.",
+    "Kurioticket tidak mengelola atau mengubah pemesanan perjalanan. Penyedia eksternal menangani perubahan, pembatalan, pengembalian dana, check-in, tanda terima, dan dokumen perjalanan.",
   supportFaqWhyRedirectedQuestion: "Mengapa saya diarahkan ke penyedia lain?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket adalah platform pencarian dan perbandingan perjalanan, dan beberapa hasil mengarahkan Anda ke penyedia tepercaya tempat Anda menyelesaikan pemesanan, pembayaran, dan dukungan khusus penyedia.",

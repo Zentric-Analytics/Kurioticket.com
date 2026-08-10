@@ -337,6 +337,31 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.card.viewDetails": "View details",
   "accountDashboard.trips.card.unknownDestination": "Unknown destination",
   "accountDashboard.trips.status.upcoming": "Upcoming",
+  "accountDashboard.trips.metasearch.eyebrow": "Read-only partner itineraries",
+  "accountDashboard.trips.metasearch.description":
+    "Trips shown here were completed with external travel providers. Kurioticket does not sell or manage reservations.",
+  "accountDashboard.trips.metasearch.tabsAriaLabel": "Trip status",
+  "accountDashboard.trips.metasearch.tabs.upcoming": "Upcoming",
+  "accountDashboard.trips.metasearch.tabs.past": "Past",
+  "accountDashboard.trips.metasearch.tabs.cancelled": "Cancelled",
+  "accountDashboard.trips.metasearch.loading": "Loading trips…",
+  "accountDashboard.trips.metasearch.error": "We could not load your trips. Please try again.",
+  "accountDashboard.trips.metasearch.retry": "Try again",
+  "accountDashboard.trips.metasearch.empty.title": "No {{status}} trips",
+  "accountDashboard.trips.metasearch.empty.body":
+    "Partner-confirmed trips will appear here after the provider confirms your reservation.",
+  "accountDashboard.trips.metasearch.provider": "Provider",
+  "accountDashboard.trips.metasearch.providerConfirmation": "Provider confirmation",
+  "accountDashboard.trips.metasearch.travelers": "Travelers",
+  "accountDashboard.trips.metasearch.priceSnapshot": "Price snapshot",
+  "accountDashboard.trips.metasearch.priceUnavailable": "Not available",
+  "accountDashboard.trips.metasearch.disclaimer":
+    "Your reservation is managed by {{provider}}. Changes, cancellations, refunds, check-in, receipts and travel documents are handled on the provider's website.",
+  "accountDashboard.trips.metasearch.manageWith": "Manage with {{provider}}",
+  "accountDashboard.trips.metasearch.noProviderUrl":
+    "Manage this trip using your provider confirmation.",
+  "accountDashboard.trips.metasearch.externalAriaLabel":
+    "{{label}}, opens external provider website",
   "accountDashboard.priceAlerts.eyebrow": "Account tools",
   "accountDashboard.priceAlerts.title": "Price alerts",
   "accountDashboard.priceAlerts.description":
@@ -3110,7 +3135,7 @@ export const translations: TranslationDictionary = {
     "If your booking was completed with an airline, hotel, travel agency, or external provider, that provider is responsible for booking changes, refunds, cancellations, check-in, boarding, receipts, and travel documents.",
   supportFaqChangeBookingQuestion: "Can Kurioticket change my booking?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket can only help with bookings made directly through Kurioticket if and when direct booking is supported. For bookings completed with external providers, contact that provider directly.",
+    "Kurioticket does not manage or change travel bookings. If you completed a reservation with an airline, hotel, travel agency, or other provider, contact that provider for changes, cancellations, refunds, check-in, receipts, and travel documents.",
   supportFaqWhyRedirectedQuestion: "Why was I sent to another provider?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket is a travel search and comparison platform, and some results redirect to trusted providers where you complete booking, payment, and provider-specific support.",

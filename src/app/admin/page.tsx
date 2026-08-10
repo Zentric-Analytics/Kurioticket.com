@@ -31,7 +31,7 @@ export default async function AdminPage() {
   ]);
 
   const modules = adminNavigation.filter((item) =>
-    ["/admin/users", "/admin/providers", "/admin/searches", "/admin/bookings", "/admin/content", "/admin/support", "/admin/logs", "/admin/system", "/admin/settings"].includes(item.href),
+    ["/admin/users", "/admin/providers", "/admin/searches", "/admin/content", "/admin/support", "/admin/logs", "/admin/system", "/admin/settings"].includes(item.href),
   );
 
   return (

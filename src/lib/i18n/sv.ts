@@ -1120,7 +1120,7 @@ export const translations: TranslationDictionary = {
   'supportFaqAlreadyBookedQuestion': 'Har du redan bokat hos en leverantör?',
   'supportFaqAlreadyBookedAnswer': 'Om din bokning slutfördes hos ett flygbolag, hotell, en resebyrå eller extern leverantör ansvarar den leverantören för bokningsändringar, återbetalningar, avbokningar, incheckning, ombordstigning, kvitton och resehandlingar.',
   'supportFaqChangeBookingQuestion': 'Kan Kurioticket ändra min bokning?',
-  'supportFaqChangeBookingAnswer': 'Kurioticket kan endast hjälpa till med bokningar som gjorts direkt via Kurioticket om och när direktbokning stöds. För bokningar som slutförts hos externa leverantörer ska du kontakta den leverantören direkt.',
+  'supportFaqChangeBookingAnswer': 'Kurioticket hanterar eller ändrar inte resebokningar. Den externa leverantören hanterar ändringar, avbokningar, återbetalningar, incheckning, kvitton och resedokument.',
   'supportFaqWhyRedirectedQuestion': 'Varför skickades jag till en annan leverantör?',
   'supportFaqWhyRedirectedAnswer': 'Kurioticket är en plattform för resesökning och jämförelse, och vissa resultat omdirigerar till betrodda leverantörer där du slutför bokning, betalning och leverantörsspecifik support.',
   supportEyebrow: 'Kuriotickets hjälpcenter',

@@ -1404,7 +1404,7 @@ export const translations: TranslationDictionary = {
     "파트너 또는 제공업체로의 이동이 실패하거나 잘못된 페이지가 열리거나 선택한 여행 또는 검색 정보가 유지되지 않을 때 Kurioticket이 도와드릴 수 있습니다.",
   supportFaqChangeBookingQuestion: "Kurioticket이 내 예약을 변경할 수 있나요?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket은 직접 예약이 지원되고 Kurioticket을 통해 직접 진행된 예약에 대해서만 도와드릴 수 있습니다. 외부 제공업체에서 완료한 예약은 해당 제공업체에 직접 문의하세요.",
+    "Kurioticket은 여행 예약을 관리하거나 변경하지 않습니다. 변경, 취소, 환불, 체크인, 영수증 및 여행 서류는 외부 제공업체가 처리합니다.",
   footerDiscover: "둘러보기",
   destinations: "목적지",
   explore: "탐색",

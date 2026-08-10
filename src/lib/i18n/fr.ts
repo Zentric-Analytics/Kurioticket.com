@@ -2642,7 +2642,7 @@ flightLandingRouteAriaLabel:
   supportFaqChangeBookingQuestion:
     "Kurioticket peut-il modifier ma réservation ?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket ne peut vous aider que pour les réservations effectuées directement via Kurioticket, si et lorsque la réservation directe est prise en charge. Pour les réservations effectuées auprès de fournisseurs externes, contactez directement ce fournisseur.",
+    "Kurioticket ne gère ni ne modifie les réservations de voyage. Le fournisseur externe gère les modifications, annulations, remboursements, l’enregistrement, les reçus et les documents de voyage.",
   supportFaqWhyRedirectedQuestion:
     "Pourquoi ai-je été redirigé vers un autre fournisseur ?",
   supportFaqWhyRedirectedAnswer:

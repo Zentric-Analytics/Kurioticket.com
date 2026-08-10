@@ -1185,7 +1185,7 @@ export const translations: TranslationDictionary = {
   supportFaqChangeBookingQuestion:
     "Kurioticket có thể thay đổi đặt chỗ của tôi không?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket chỉ có thể hỗ trợ các đặt chỗ được thực hiện trực tiếp qua Kurioticket nếu và khi tính năng đặt trực tiếp được hỗ trợ. Với đặt chỗ hoàn tất qua nhà cung cấp bên ngoài, hãy liên hệ trực tiếp với nhà cung cấp đó.",
+    "Kurioticket không quản lý hoặc thay đổi đặt chỗ du lịch. Nhà cung cấp bên ngoài xử lý thay đổi, hủy, hoàn tiền, check-in, biên lai và giấy tờ du lịch.",
   supportFaqWhyRedirectedQuestion:
     "Vì sao tôi được chuyển đến một nhà cung cấp khác?",
   supportFaqWhyRedirectedAnswer:
