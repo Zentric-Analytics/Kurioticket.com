@@ -84,6 +84,22 @@ test("keeps destination copy over the image and the compact footer separate", ()
   assert.doesNotMatch(section, /ctaSection: \{[^}]*alignItems: "center"/);
 });
 
+test("renders unobstructed destination images without a dark overlay", () => {
+  assert.match(section, /<ImageBackground[\s\S]*style=\{styles\.image\}/);
+  assert.match(
+    section,
+    /<View pointerEvents="none" style=\{styles\.copy\}>[\s\S]*destination\.city[\s\S]*destination\.country/,
+  );
+  assert.doesNotMatch(
+    section,
+    /react-native-svg|<Svg|<Defs|<LinearGradient|<Rect|<Stop/,
+  );
+  assert.doesNotMatch(
+    section,
+    /IMAGE_OVERLAY_HEIGHT|imageOverlay|destinationOverlay|#020617/,
+  );
+});
+
 test("renders the complete web-aligned destination list and safe image fallback", () => {
   assert.equal(popularDestinationStays.length, 7);
   assert.deepEqual(
