@@ -62,7 +62,7 @@ test("retains every booking integration prop and booking-panel contract", () => 
     "changeSearchText=",
     "providerPriceLabel=",
     "providerText=",
-    "providerUnavailableText={providerUnavailableText}",
+    'providerUnavailableText={mode === "guided" ? "" : providerUnavailableText}',
     "redirectError={redirectError}",
     "providerEnabled={providerEnabled}",
     "redirecting={redirecting}",
