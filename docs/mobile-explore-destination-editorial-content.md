@@ -262,6 +262,28 @@ Repository-derived Asian coverage moves from **5 of 64** canonical destinations 
 
 This implementation includes no ExploreScreen or DestinationDetailsScreen UI work, image or gallery work, map work, search changes, flight or hotel booking changes, related-destination work, or editorial architecture split. The shared editorial module remains intact for a later dedicated refactor.
 
+### Asia Batch 2 — Mainland Southeast Asia
+
+Asia Batch 2, verified on 2026-08-10, considered and implemented all seven candidates, with no deferrals:
+
+- `vn-hanoi` — Hanoi, Vietnam
+- `vn-ho-chi-minh-city` — Ho Chi Minh City, Vietnam
+- `kh-phnom-penh` — Phnom Penh, Cambodia
+- `kh-siem-reap` — Siem Reap, Cambodia
+- `th-phuket` — Phuket, Thailand
+- `la-vientiane` — Vientiane, Laos
+- `mm-yangon` — Yangon, Myanmar (Burma)
+
+The research pass uses durable facts supported by national tourism authorities, UNESCO, official museums, heritage authorities and public cultural institutions. Every record carries at least two distinct titled HTTPS references, checked on the verification date; restricted external HTTPS access in the implementation environment did not become a reason to defer otherwise supportable records.
+
+Canonical and geographic scope remains deliberate. `Ho Chi Minh City` stays the canonical name, with `Saigon` used only for historical context. Siem Reap is described as the city and a gateway to the nearby Angkor archaeological landscape, not as though every Angkor monument stands within the city. Phuket retains the catalogue's broader island-destination scope, including province-wide coastlines and communities alongside Phuket City's historic town. Vientiane means the capital city in this editorial record, rather than the wider prefecture or a province.
+
+Yangon retains the country label `Myanmar (Burma)` and uses neutral, evergreen river, religious, architectural, market and museum context. Its copy makes no claims about current safety, political control, demonstrations, borders, transport, airport operations, museum opening, accessibility or tourism normality. Phnom Penh and Siem Reap also retain their repository airport facts unchanged; editorial research does not revise operational airport data.
+
+Repository-derived Asian coverage moves from **15 of 64** canonical destinations before the batch to **22 of 64** after it, leaving **42** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batch 1 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or editorial-architecture changes. It changes only shared editorial content, focused regression tests and this rollout documentation.
+
 This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
