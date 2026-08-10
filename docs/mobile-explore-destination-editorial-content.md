@@ -10,7 +10,7 @@ The shared Explore destination catalogue is derived from the airport catalogue a
 
 The editorial data is split under `src/shared/destinations/editorial/` to keep regional rollout reviews maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts`, `asia.ts` and `northAmerica.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in that explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains a compatibility facade containing the single global validation boundary.
 
-The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Europe remains complete at 52/52, Africa at 54/54 and Asia at 64/64; after North America Batch 1, global coverage is 183/235 with 52 destinations left. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
+The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Europe remains complete at 52/52, Africa at 54/54 and Asia at 64/64; after North America Batch 2, global coverage is 188/235 with 47 destinations left. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
 
 ## Current rollout and Featured independence
 
@@ -25,6 +25,26 @@ Scope safeguards keep Dallas-Fort Worth explicitly a dual-city metropolitan dest
 Repository-derived North American coverage moves from **3 of 16** canonical destinations before the batch to **11 of 16** afterward. The five remaining North American destinations are `ca-vancouver`, `ca-montreal`, `mx-mexico-city`, `mx-cancun` and `mx-guadalajara`. Global editorial coverage moves from **175 of 235** to **183 of 235**, leaving **52** destinations without editorial content. Europe remains **52/52**, Africa **54/54** and Asia **64/64**; the first 175 records and their exact order remain protected by the historical semantic-payload guard.
 
 Featured membership and its exact order remain independently maintained. This batch includes no UI, image, gallery, map, search, flight or hotel, booking, related-destination or canonical-data changes.
+
+### North America Batch 2 — Canada + Mexico
+
+North America Batch 2, verified on 2026-08-10, adds the five remaining canonical North American destinations in deterministic rollout order:
+
+- `ca-vancouver` — Vancouver, Canada
+- `ca-montreal` — Montreal, Canada
+- `mx-mexico-city` — Mexico City, Mexico
+- `mx-cancun` — Cancún, Mexico
+- `mx-guadalajara` — Guadalajara, Mexico
+
+Research prioritised official municipal and tourism sources, government museums, public cultural institutions and UNESCO. Every record has at least two distinct, titled HTTPS references supporting durable geography, heritage, architecture, museums, public spaces and cultural context. Restricted external access was treated as an environment limitation rather than evidence of source failure, and no provenance URL was fabricated.
+
+Geographic safeguards keep Vancouver city distinct from Richmond, Metro Vancouver, North Vancouver, West Vancouver, Vancouver Island and Vancouver, Washington; YVR remains unchanged in canonical airport data and is not described as physically inside Vancouver. Montreal retains its exact canonical unaccented name, while authoritative French-language institution and source titles may use “Montréal”. Mexico City remains distinct from the State of Mexico and the wider Valley of Mexico metropolitan area, and no site outside the city is presented as a city attraction.
+
+Cancún is scoped to its urban centre and Hotel Zone between the Caribbean and Nichupté Lagoon, not the Riviera Maya, wider Quintana Roo or the whole Yucatán Peninsula; Playa del Carmen, Tulum, Cozumel and Chichén Itzá are not imported into its record. Guadalajara remains distinct from its metropolitan area and Jalisco generally, and its copy does not relocate Tequila, Lake Chapala or Puerto Vallarta into the city.
+
+Repository-derived North American coverage moves from **11 of 16** canonical destinations to **16 of 16**, leaving **0** North American canonical destinations without editorial content. Here, 16/16 means every canonical North American destination currently represented by the Explore catalogue is editorialized; it does not mean that the catalogue represents every possible North American destination. Global coverage moves from **183 of 235** to **188 of 235**, leaving **47** destinations. Europe remains **52/52**, Africa **54/54** and Asia **64/64**.
+
+The historical 175-record semantic payload and all eight North America Batch 1 records remain unchanged, while Batch 2 appends after Batch 1. Featured membership and its exact order remain independently maintained. This batch includes no UI, image, gallery, map, search, flight or hotel, booking, related-destination or canonical-data work.
 
 Editorial scope is expanding toward all canonical Explore destinations. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
 
