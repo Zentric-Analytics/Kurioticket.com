@@ -43,7 +43,6 @@ import {
   dealsProductOrder,
   getIncludedProducts,
   parseDealsSearchParams,
-  tryToggleDealsProduct,
   validateDealsSearch,
   type DealsFlightTripType,
   type DealsPackageMode,
@@ -92,12 +91,7 @@ type LocationApiResponse = {
   source?: "ipinfo-lite" | "fallback";
   countryCode?: string | null;
 };
-const productOptions = {
-  hotel: { label: "deals.product.hotel", Icon: BedDouble },
-  flight: { label: "deals.product.flight", Icon: Plane },
-  car: { label: "deals.product.car", Icon: Car },
-} as const;
-const landingPackageOptions = [
+const dealsPackageOptions = [
   { mode: "hotel-flight", label: "deals.package.hotelFlight" },
   { mode: "flight-car", label: "deals.package.flightCar" },
   { mode: "hotel-car", label: "deals.package.hotelCar" },
@@ -1647,29 +1641,7 @@ export function DealsSearchForm({
       setMobileCarDriverAgeOpen(false);
     }
   };
-  const toggleProduct = (product: DealsProduct) => {
-    const wasSelected = included[product];
-    const result = tryToggleDealsProduct(search.mode, product);
-    if (!result.changed) {
-      setProductSelectionMessage(t("deals.productSelector.minimumTwo"));
-      return;
-    }
-    if (
-      !included.flight &&
-      product === "flight" &&
-      search.flightAdults + search.flightChildren + search.flightInfants > 9
-    ) {
-      setProductSelectionMessage(t("deals.error.flightPassengers"));
-      return;
-    }
-    if (wasSelected) closeProductPickers(product);
-    setTravelersOpen(false);
-    setMobileTravelersOpen(false);
-    resetTravelersDraft();
-    setProductSelectionMessage("");
-    setSearch((current) => transitionDealsMode(current, result.mode));
-  };
-  const selectLandingPackage = (mode: DealsPackageMode) => {
+  const selectPackageMode = (mode: DealsPackageMode) => {
     const nextIncluded = getIncludedProducts(mode);
     if (
       !included.flight &&
@@ -1690,17 +1662,19 @@ export function DealsSearchForm({
     setProductSelectionMessage("");
     setSearch((current) => {
       let next = transitionDealsMode(current, mode);
-      const enteringHotelFlight =
-        nextIncluded.hotel &&
-        nextIncluded.flight &&
-        !(included.hotel && included.flight);
-      if (enteringHotelFlight) {
-        next = relinkInheritedField(next, "stayDestination");
-        next = relinkInheritedField(next, "stayDates");
-      }
-      if (nextIncluded.car && !included.car) {
-        next = relinkInheritedField(next, "carPickup");
-        next = relinkInheritedField(next, "carDates");
+      if (isLandingVariant) {
+        const enteringHotelFlight =
+          nextIncluded.hotel &&
+          nextIncluded.flight &&
+          !(included.hotel && included.flight);
+        if (enteringHotelFlight) {
+          next = relinkInheritedField(next, "stayDestination");
+          next = relinkInheritedField(next, "stayDates");
+        }
+        if (nextIncluded.car && !included.car) {
+          next = relinkInheritedField(next, "carPickup");
+          next = relinkInheritedField(next, "carDates");
+        }
       }
       return next;
     });
@@ -2744,53 +2718,28 @@ export function DealsSearchForm({
     >
       <fieldset className="pb-3 sm:pb-2 lg:pb-1">
         <legend className="sr-only">
-          {t(
-            variant === "landing"
-              ? "deals.packageSelector.instruction"
-              : "deals.productSelector.instruction",
-          )}
+          {t("deals.packageSelector.instruction")}
         </legend>
-        {variant === "landing" ? (
-          <div
-            data-deals-package-selector
-            className="flex flex-nowrap gap-2 overflow-x-auto pb-1"
-          >
-            {landingPackageOptions.map((option) => {
-              const selected = search.mode === option.mode;
-              return (
-                <button
-                  key={option.mode}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => selectLandingPackage(option.mode)}
-                  className={`focus-ring min-h-10 shrink-0 rounded-full border-2 px-4 py-2 text-sm font-extrabold transition ${selected ? "border-[#004BB8] bg-blue-50 text-[#004BB8] shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50"}`}
-                >
-                  {t(option.label)}
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <div data-deals-product-selector className="flex flex-wrap gap-2">
-            {dealsProductOrder.map((product) => {
-              const { label: productLabel, Icon } = productOptions[product];
-              const selected = included[product];
-              return (
-                <button
-                  key={product}
-                  data-deals-product={product}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => toggleProduct(product)}
-                  className={`focus-ring flex min-h-11 min-w-0 items-center justify-center gap-2 rounded-full border-2 px-4 py-2.5 text-sm font-extrabold transition ${selected ? "border-[#004BB8] bg-blue-50 text-[#004BB8] shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-slate-400"}`}
-                >
-                  <Icon aria-hidden="true" className="size-5 shrink-0" />
-                  <span className="min-w-0 break-words">{t(productLabel)}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <div
+          data-deals-package-selector
+          data-deals-package-selector-variant={variant}
+          className="flex flex-nowrap gap-2 overflow-x-auto pb-1"
+        >
+          {dealsPackageOptions.map((option) => {
+            const selected = search.mode === option.mode;
+            return (
+              <button
+                key={option.mode}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => selectPackageMode(option.mode)}
+                className={`focus-ring min-h-10 shrink-0 rounded-full border-2 px-4 py-2 text-sm font-extrabold transition ${selected ? "border-[#004BB8] bg-blue-50 text-[#004BB8] shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50"}`}
+              >
+                {t(option.label)}
+              </button>
+            );
+          })}
+        </div>
         <p
           role="status"
           aria-live="polite"
