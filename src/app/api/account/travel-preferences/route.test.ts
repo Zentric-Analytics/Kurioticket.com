@@ -9,8 +9,6 @@ import {
 const nestedEmailPreferences = {
   receiveOptionalEmails: false,
   priceAlerts: true,
-  savedTripReminders: true,
-  routeWatchUpdates: false,
   travelInspiration: false,
   productUpdates: true,
   dealsRecommendations: false,

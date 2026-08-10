@@ -58,14 +58,14 @@ import {
   readSavedTripIds,
   toggleSavedTripId,
   writeSavedTripIds,
-} from "@/lib/saved-trips-local";
+} from "@/lib/saved-items-local";
 import {
   deleteBackendTrip,
   fetchBackendSavedTrips,
   getSavedTripLocalId,
   saveBackendTrip,
   type SavedTripDisplayDetails,
-} from "@/lib/saved-trips-api";
+} from "@/lib/saved-items-api";
 
 function CompareOffersIllustration() {
   return (

@@ -21,7 +21,7 @@ export type CurrencyRates = { base: string; rates: Record<string, number>; fetch
 export type MobileNotificationType = "PRICE_ALERT" | "ROUTE_WATCH" | "TRIP_REMINDER" | "SUPPORT_UPDATE" | "ACCOUNT_UPDATE" | "SECURITY_UPDATE" | "SYSTEM" | "TRAVEL_INSIGHT";
 export type MobileNotification = { id: string; type: MobileNotificationType; title: string; body: string; actionPath: "/price-alerts" | "/saved" | "/settings" | "/personal-information" | null; metadata: Record<string, unknown> | null; readAt: string | null; createdAt: string };
 export type MobileNotificationPage = { items: MobileNotification[]; nextCursor: string | null };
-export type FeatureAvailability = { flightSearch: boolean; hotelSearch: boolean; carSearch: boolean; deals: boolean; priceAlerts: boolean; routeWatch: boolean };
+export type FeatureAvailability = { flightSearch: boolean; hotelSearch: boolean; carSearch: boolean; deals: boolean; priceAlerts: boolean };
 
 async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string } = {}) {
   const base = getApiBaseUrl(Platform.OS, __DEV__);

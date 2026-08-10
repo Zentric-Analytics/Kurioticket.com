@@ -1459,7 +1459,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.mobileMyAccount.description": "Manage account pages",
   "accountMenu.savedTrips.label": "Saved trips",
   "accountMenu.savedTrips.description": "Shortlisted stays and searches",
-  "accountMenu.priceAlerts.label": "Price alerts",
+  "accountMenu.priceAlerts.label": "Price Alerts",
   "accountMenu.recentSearches.label": "Recent searches",
   "accountMenu.priceAlerts.description": "View saved alerts",
   "accountMenu.accountSettings.label": "Account settings",
@@ -4889,4 +4889,9 @@ export const translations: TranslationDictionary = {
   "deals.guided.handoff.refreshTitle": "One or more options need fresh results",
   "deals.guided.handoff.refreshBody":
     "Return to trip review and refresh the expired option before opening a handoff step.",
+  "accountDashboard.hub.savedRecent": "Saved & Recent",
+  "accountDashboard.hub.notifications": "Notifications",
+  "accountMenu.myTrips.label": "My Trips",
+  "accountMenu.savedRecent.label": "Saved & Recent",
+  "accountMenu.notifications.label": "Notifications",
 };

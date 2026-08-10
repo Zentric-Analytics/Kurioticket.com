@@ -1,5 +1,2 @@
 import { redirect } from "next/navigation";
-
-export default function DashboardSavedPage() {
-  redirect("/saved?from=account");
-}
+export default function LegacySavedPage() { redirect("/saved"); }

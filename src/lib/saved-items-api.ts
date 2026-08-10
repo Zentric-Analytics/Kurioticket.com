@@ -26,12 +26,6 @@ export type SavedTripApiItem = {
   detailedSearch?: {
     origin: string; destination: string; tripType: string; departureDate: string; returnDate: string | null; adults: number; children: number; infants: number; travelers: number; cabinClass: string; currency: string | null; href: string;
   } | null;
-  isWatching?: boolean;
-  routeWatchStatus?: "ACTIVE" | "PAUSED" | "EXPIRED" | "ERROR" | null;
-  routeWatchId?: string | null;
-  lastCheckedAt?: string | null;
-  nextCheckAt?: string | null;
-  routeWatchUnavailableReason?: "invalid" | "expired" | null;
 };
 
 export type PublicSavedSearch = {
@@ -45,12 +39,6 @@ export type PublicSavedSearch = {
   checkOut: string | null;
   query: unknown;
   createdAt: string;
-  isWatching?: boolean;
-  routeWatchStatus?: "ACTIVE" | "PAUSED" | "EXPIRED" | "ERROR";
-  routeWatchId?: string;
-  lastCheckedAt?: string | null;
-  nextCheckAt?: string | null;
-  routeWatchUnavailableReason?: "invalid" | "expired";
 };
 
 export type SavedTripApiResult = {
@@ -444,37 +432,3 @@ export async function deleteBackendSavedSearch(
   }
 }
 
-export type RouteWatchSummary = {
-  id: string;
-  savedSearchId: string;
-  status: "ACTIVE" | "PAUSED" | "EXPIRED" | "ERROR";
-  isWatching: boolean;
-  lastCheckedAt: string | null;
-  nextCheckAt: string | null;
-};
-
-export type RouteWatchApiResult = {
-  ok: boolean;
-  status: number;
-  watch?: RouteWatchSummary;
-  error?: string;
-};
-
-export async function updateRouteWatch(
-  savedSearchId: string,
-  enabled: boolean,
-): Promise<RouteWatchApiResult> {
-  try {
-    const response = await fetch(`/api/dashboard/saved/${encodeURIComponent(savedSearchId)}/watch`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ enabled }),
-    });
-    const payload = await readJson(response);
-    if (!response.ok) return { ok: false, status: response.status, error: getError(payload, "We couldn’t update route watching. Please try again.") };
-    const watch = payload && typeof payload === "object" && "watch" in payload ? payload.watch as RouteWatchSummary : undefined;
-    return { ok: true, status: response.status, watch };
-  } catch {
-    return { ok: false, status: 0, error: "We couldn’t update route watching. Please try again." };
-  }
-}

@@ -1,8 +1,6 @@
 export type EditablePreferenceKey =
   | "receiveOptionalEmails"
   | "priceAlerts"
-  | "savedTripReminders"
-  | "routeWatchUpdates"
   | "travelInspiration"
   | "productUpdates"
   | "dealsRecommendations";
@@ -12,8 +10,6 @@ export type EmailPreferences = Record<EditablePreferenceKey, boolean>;
 export const defaultEmailPreferences: EmailPreferences = {
   receiveOptionalEmails: false,
   priceAlerts: false,
-  savedTripReminders: false,
-  routeWatchUpdates: false,
   travelInspiration: false,
   productUpdates: false,
   dealsRecommendations: false,

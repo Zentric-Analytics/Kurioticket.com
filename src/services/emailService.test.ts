@@ -253,7 +253,6 @@ test("sendOptionalEmail skips savedTripReminders when master optional emails are
     email: {
       ...emailPreferenceDefaults,
       receiveOptionalEmails: false,
-      savedTripReminders: true,
     },
   });
 
@@ -286,7 +285,6 @@ test("sendOptionalEmail skips savedTripReminders when category is disabled", asy
     email: {
       ...emailPreferenceDefaults,
       receiveOptionalEmails: true,
-      savedTripReminders: false,
     },
   });
 

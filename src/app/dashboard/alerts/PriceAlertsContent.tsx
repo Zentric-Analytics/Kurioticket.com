@@ -32,6 +32,7 @@ type AccountPriceAlert = {
   origin: string | null;
   destination: string;
   targetPrice: string | null;
+  mode: "AUTOMATIC" | "TARGET";
   currency: string | null;
   status: PriceAlertStatus;
   createdAt: string;
@@ -80,7 +81,7 @@ function AlertCard({ alert, t }: { alert: AccountPriceAlert; t: Record<string, s
       <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
         <div><dt className="font-semibold text-slate-500">Departure date</dt><dd className="mt-1 text-slate-950">{formatDate(dateValue(alert, "departureDate"))}</dd></div>
         {dateValue(alert, "returnDate") && <div><dt className="font-semibold text-slate-500">Return date</dt><dd className="mt-1 text-slate-950">{formatDate(dateValue(alert, "returnDate"))}</dd></div>}
-        <div><dt className="font-semibold text-slate-500">{text(t, "accountDashboard.priceAlerts.alert.targetPrice", "Target price")}</dt><dd className="mt-1 break-words font-bold text-slate-950">{formatMoney(alert.targetPrice, alert.currency)}</dd></div>
+        <div><dt className="font-semibold text-slate-500">Mode</dt><dd className="mt-1 font-bold text-slate-950">{alert.mode === "AUTOMATIC" ? "Automatic" : "Target"}</dd><p className="mt-1 text-xs text-slate-500">{alert.mode === "AUTOMATIC" ? "Notify me about meaningful price drops." : `Notify me when the price reaches ${formatMoney(alert.targetPrice, alert.currency)}.`}</p></div>
         <div><dt className="font-semibold text-slate-500">Current price</dt><dd className="mt-1 break-words font-bold text-slate-950">{formatMoney(alert.lastSeenPrice, alert.currency)}</dd></div>
         <div><dt className="font-semibold text-slate-500">{text(t, "accountDashboard.priceAlerts.alert.created", "Created")}</dt><dd className="mt-1 text-slate-950">{formatDate(alert.createdAt)}</dd></div>
         <div><dt className="font-semibold text-slate-500">Last checked</dt><dd className="mt-1 text-slate-950">{formatDate(alert.lastCheckedAt)}</dd></div>

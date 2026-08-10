@@ -124,13 +124,18 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
         icon: BriefcaseBusiness,
       },
       {
-        labelKey: "accountDashboard.hub.savedTrips",
+        labelKey: "accountDashboard.hub.savedRecent",
         href: "/saved?from=account",
         icon: Bookmark,
       },
       {
         labelKey: "accountDashboard.hub.priceAlerts",
         href: "/dashboard/alerts?from=account",
+        icon: Bell,
+      },
+      {
+        labelKey: "accountDashboard.hub.notifications",
+        href: "/notifications",
         icon: Bell,
       },
     ],

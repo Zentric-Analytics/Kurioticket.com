@@ -92,7 +92,7 @@ import {
   readSavedTripIds,
   toggleSavedTripId,
   writeSavedTripIds,
-} from "@/lib/saved-trips-local";
+} from "@/lib/saved-items-local";
 import {
   deleteBackendTrip,
   fetchBackendSavedTrips,
@@ -100,7 +100,7 @@ import {
   saveBackendTrip,
   type SavedTripDisplayDetails,
   type SavedTripFlightSearch,
-} from "@/lib/saved-trips-api";
+} from "@/lib/saved-items-api";
 import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { FlightSearchParams, PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, getItineraryDateKey } from "@/lib/utils";
