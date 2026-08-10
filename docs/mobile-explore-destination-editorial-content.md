@@ -214,6 +214,19 @@ After Africa Batch 5, cumulative African coverage is 47 of 54 canonical destinat
 
 Africa Batch 5 changes no images, ExploreScreen or DestinationDetailsScreen UI, maps, search, flight or hotel behaviour, booking flows, or related destinations. Featured membership and ordering remain unchanged and independent from editorial completeness.
 
+Africa Batch 6, verified on 2026-08-10, evaluated the four remaining candidates not subject to an earlier source-gate deferral. All four were implemented as a Horn of Africa and Great Lakes grouping:
+
+1. `bi-bujumbura` — Bujumbura
+2. `dj-djibouti` — Djibouti
+3. `so-hargeisa` — Hargeisa
+4. `ss-juba` — Juba
+
+No Batch 6 candidate was deferred. Each record uses two distinct, titled HTTPS references selected from durable institutional or reference sources. Copy keeps Bujumbura at city and Lake Tanganyika scale, distinguishes Djibouti City from the Republic of Djibouti, limits Juba to its White Nile urban setting, and describes Hargeisa neutrally as Somaliland's administrative centre while preserving the canonical `so-hargeisa` country assignment to Somalia.
+
+After Africa Batch 6, cumulative African coverage is 51 of 54 canonical destinations, leaving 3 without editorial content. Those three are the continuing documented source-gate deferrals: `gn-conakry` — Conakry, `sd-khartoum` — Khartoum and `ly-tripoli` — Tripoli. Africa Batches 1–5 remain intact, and Europe remains complete at 52 of 52 destinations.
+
+Africa Batch 6 changes no images, ExploreScreen or DestinationDetailsScreen UI, galleries, maps, search, flight or hotel behaviour, booking flows, or related destinations. Featured membership and ordering remain unchanged and independently maintained.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
