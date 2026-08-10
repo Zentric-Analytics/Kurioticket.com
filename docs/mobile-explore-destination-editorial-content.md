@@ -284,6 +284,28 @@ Repository-derived Asian coverage moves from **15 of 64** canonical destinations
 
 This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or editorial-architecture changes. It changes only shared editorial content, focused regression tests and this rollout documentation.
 
+### Asia Batch 3 — Maritime Southeast Asia
+
+Asia Batch 3, verified on 2026-08-10, considered and implemented all seven candidates, with no individual blockers or deferrals:
+
+- `bn-bandar-seri-begawan` — Bandar Seri Begawan, Brunei
+- `ph-cebu` — Cebu, Philippines
+- `tl-dili` — Dili, Timor-Leste
+- `id-jakarta` — Jakarta, Indonesia
+- `my-kuala-lumpur` — Kuala Lumpur, Malaysia
+- `ph-manila` — Manila, Philippines
+- `my-penang` — Penang, Malaysia
+
+The source pass uses exact URLs from durable reference works, UNESCO, national museums, heritage administrations, official tourism bodies and cultural institutions. Every implemented record has at least two distinct, titled HTTPS references; no URL was invented, and restricted external HTTPS access was not treated as an implementation blocker.
+
+Geographic scope follows each canonical destination carefully. Cebu is the broader island and provincial travel destination, with Cebu City identified as its historic urban centre and CEB's Lapu-Lapu geography left to unchanged canonical airport data. Penang covers the Malaysian state across Penang Island and the mainland, while George Town is identified as the island's state capital rather than a synonym for all Penang. Manila means the City of Manila, not Metro Manila, and its copy does not relocate metropolitan attractions into the city.
+
+Jakarta remains distinct from Jabodetabek, and CGK is not presented as physically within Jakarta. Kuala Lumpur remains the federal territory rather than the wider Klang Valley, with KUL left outside its editorial scope. Dili is described at city scale on Timor-Leste's north coast rather than expanded to Dili municipality or the country, and Bandar Seri Begawan remains distinct from Brunei and Brunei-Muara District generally.
+
+Repository-derived Asian coverage moves from **22 of 64** canonical destinations before the batch to **29 of 64** after it, leaving **35** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batches 1 and 2 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch includes no ExploreScreen or DestinationDetailsScreen UI work, image or gallery work, map work, search changes, flight or hotel booking changes, related-destination work, or editorial-architecture changes. Canonical IDs, names, countries, airport data, aliases, image identities and image provenance remain unchanged.
+
 This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
