@@ -110,6 +110,9 @@ export function DealsJourneyShell({
   const resolved = planState.resolvedContextKey === contextKey;
   const [planStatus, setPlanStatus] = useState<GuidedPlanState>("loading");
   const [editorOpen, setEditorOpen] = useState(invalid);
+  const [pendingSearchFingerprint, setPendingSearchFingerprint] = useState<
+    string | null
+  >(null);
   const [announcement, setAnnouncement] = useState("");
   const [confirmingHotel, setConfirmingHotel] = useState(false);
   const [confirmingFlight, setConfirmingFlight] = useState(false);
@@ -185,7 +188,7 @@ export function DealsJourneyShell({
   const lifecycleNow = useDealsStagedJourneyLifecycle({
     fingerprint,
     plan,
-    active: resolved,
+    active: resolved && !pendingSearchFingerprint,
     onSnapshot,
     onRefresh,
   });
@@ -200,20 +203,31 @@ export function DealsJourneyShell({
       )
     : stage;
   useEffect(() => {
-    if (!resolved || requiredStage === stage) return;
+    if (pendingSearchFingerprint || !resolved || requiredStage === stage)
+      return;
     const timer = window.setTimeout(() => {
       setAnnouncement(t("deals.guided.routeCorrected"));
       start();
       router.replace(buildDealsJourneyUrl(requiredStage, search));
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [requiredStage, resolved, router, search, stage, start, t]);
+  }, [
+    pendingSearchFingerprint,
+    requiredStage,
+    resolved,
+    router,
+    search,
+    stage,
+    start,
+    t,
+  ]);
   useEffect(() => {
     if (resolved && requiredStage === stage)
       headingRef.current?.focus({ preventScroll: true });
   }, [requiredStage, resolved, stage]);
   useEffect(() => {
     if (
+      pendingSearchFingerprint ||
       !resolved ||
       stage !== "review" ||
       !plan ||
@@ -222,13 +236,44 @@ export function DealsJourneyShell({
       return;
     start();
     router.replace(buildGuidedDealsHandoffPendingUrl(search));
-  }, [lifecycleNow, plan, resolved, router, search, stage, start]);
+  }, [
+    lifecycleNow,
+    pendingSearchFingerprint,
+    plan,
+    resolved,
+    router,
+    search,
+    stage,
+    start,
+  ]);
+  useEffect(() => {
+    if (!pendingSearchFingerprint) return;
+    if (fingerprint === pendingSearchFingerprint) {
+      const appliedTimer = window.setTimeout(() => {
+        setPendingSearchFingerprint(null);
+        setEditorOpen(false);
+      }, 0);
+      return () => window.clearTimeout(appliedTimer);
+    }
+    const pendingFingerprint = pendingSearchFingerprint;
+    const timer = window.setTimeout(() => {
+      setPendingSearchFingerprint((current) =>
+        current === pendingFingerprint ? null : current,
+      );
+      setAnnouncement(t("deals.results.editor.updateFailed"));
+      setEditorOpen(true);
+      if (plan?.searchFingerprint === fingerprint)
+        writeDealsStagedJourneyPlan(plan);
+    }, 10000);
+    return () => window.clearTimeout(timer);
+  }, [fingerprint, pendingSearchFingerprint, plan, t]);
   useEffect(() => {
     if (confirmationFailure)
       confirmationAlertRef.current?.focus({ preventScroll: true });
   }, [confirmationFailure]);
 
   const closeEditor = () => {
+    if (pendingSearchFingerprint) return;
     setEditorOpen(false);
     requestAnimationFrame(() => modifyButtonRef.current?.focus());
   };
@@ -239,16 +284,10 @@ export function DealsJourneyShell({
       closeEditor();
       return;
     }
-    removeDealsStagedJourneyPlan();
-    setPlanState((previous) => ({
-      ...previous,
-      plan: null,
-      storedContextKey: null,
-      persistence: "idle",
-    }));
-    setEditorOpen(false);
-    setAnnouncement(t("deals.results.editor.updatedAnnouncement"));
+    setPendingSearchFingerprint(nextFingerprint);
+    setAnnouncement(t("deals.results.editor.updatingAnnouncement"));
     start();
+    removeDealsStagedJourneyPlan();
     router.push(
       buildDealsJourneyUrl(getFirstDealsJourneyStage(draft.mode), draft),
     );
@@ -416,6 +455,7 @@ export function DealsJourneyShell({
             onSubmit={submitSearch}
             onClose={closeEditor}
             onDraftChange={() => undefined}
+            pending={Boolean(pendingSearchFingerprint)}
           />
         )}
         {resolved && (
