@@ -84,6 +84,13 @@ const africaBatch3SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: AFRICA_BATCH_3_LAST_VERIFIED_AT,
 });
 
+const AFRICA_BATCH_4_LAST_VERIFIED_AT = "2026-08-10";
+const africaBatch4SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: AFRICA_BATCH_4_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -714,6 +721,69 @@ const rawExploreDestinationEditorial = [
     description: "Windhoek lies in a central Namibian highland basin, with ridges enclosing the capital's compact civic centre. The Independence Memorial Museum and National Art Gallery interpret national history and visual culture, while the Windhoek City Museum documents local urban development. Christuskirche, Tintenpalast gardens and surviving German colonial-era buildings form part of a complex architectural landscape presented within its historical context.",
     highlights: ["Windhoek City Museum", "Independence Memorial Museum", "Christuskirche", "Tintenpalast gardens"],
     editorialProvenance: africaBatch3SourceReferences([{ title: "City of Windhoek", url: "https://www.windhoekcc.org.na/" }, { title: "Museums Association of Namibia - Windhoek City Museum", url: "https://www.museums.com.na/museums/windhoek/windhoek-city-museum" }]),
+  },
+  {
+    id: "ci-abidjan",
+    summary: "Abidjan extends around the Ébrié Lagoon, with civic architecture, museums, markets and protected forest.",
+    description: "Abidjan occupies peninsulas and islands around the Ébrié Lagoon, with bridges linking its principal districts. Plateau concentrates civic institutions and modern towers, while the Musée des Civilisations de Côte d'Ivoire preserves archaeological, artistic and ethnographic collections. Banco National Park protects tropical forest beside the urban area, adding an ecological counterpoint to markets and lagoon-side neighbourhoods.",
+    highlights: ["Ébrié Lagoon", "Plateau civic district", "Musée des Civilisations", "Banco National Park"],
+    editorialProvenance: africaBatch4SourceReferences([{ title: "Côte d'Ivoire Tourisme", url: "https://www.sublimeci.com/" }, { title: "Office Ivoirien des Parcs et Réserves", url: "https://www.oipr.ci/" }]),
+  },
+  {
+    id: "gm-banjul",
+    summary: "Banjul occupies a low island at the Gambia River mouth, with museums, markets and civic landmarks.",
+    description: "Banjul stands on St Mary's Island where the Gambia River reaches the Atlantic, giving the compact capital a waterfront setting. The National Museum of The Gambia documents archaeology, history and cultural traditions in the city centre. Albert Market, colonial-era civic buildings and Arch 22 trace commercial and political layers within Banjul proper rather than the wider metropolitan area.",
+    highlights: ["Gambia River mouth", "National Museum of The Gambia", "Albert Market", "Arch 22"],
+    editorialProvenance: africaBatch4SourceReferences([{ title: "National Centre for Arts and Culture", url: "https://ncac.gm/" }, { title: "Ministry of Tourism and Culture, The Gambia", url: "https://motc.gov.gm/" }]),
+  },
+  {
+    id: "bj-cotonou",
+    summary: "Cotonou lies between the Gulf of Guinea and Lake Nokoué, centred on markets and civic monuments.",
+    description: "Cotonou occupies a narrow coastal strip between the Gulf of Guinea and Lake Nokoué, crossed by a lagoon channel. Dantokpa Market reflects the city's longstanding commercial role, while the Place de l'Amazone anchors a newer civic landscape. Cultural venues, government buildings and busy central streets distinguish Benin's largest urban centre without extending its scope to Ouidah or Abomey.",
+    highlights: ["Lake Nokoué lagoon setting", "Dantokpa Market", "Place de l'Amazone", "Cotonou civic centre"],
+    editorialProvenance: africaBatch4SourceReferences([{ title: "Benin Tourism", url: "https://benin-tourisme.com/" }, { title: "Government of Benin", url: "https://www.gouv.bj/" }]),
+  },
+  {
+    id: "sn-dakar",
+    summary: "Dakar occupies the Cap-Vert Peninsula, shaped by Atlantic shores, museums, markets and national monuments.",
+    description: "Dakar extends across the Cap-Vert Peninsula, with Atlantic headlands and bays framing Senegal's capital. The IFAN Museum and Museum of Black Civilisations hold major historical and artistic collections, while markets and civic monuments record the city's regional role. Gorée Island, reached offshore from Dakar by ferry, preserves a distinct UNESCO-listed historic settlement rather than a central-city neighbourhood.",
+    highlights: ["Cap-Vert Peninsula", "Museum of Black Civilisations", "IFAN Museum", "Offshore Gorée Island"],
+    editorialProvenance: africaBatch4SourceReferences([{ title: "Senegal Tourism", url: "https://www.visitezlesenegal.com/" }, { title: "UNESCO Island of Gorée", url: "https://whc.unesco.org/en/list/26/" }]),
+  },
+  {
+    id: "ng-enugu",
+    summary: "Enugu rests below wooded hills, with coal-mining history, markets, museums and established civic institutions.",
+    description: "Enugu developed below the Udi hills and became closely associated with coal extraction during the twentieth century. The National Museum presents archaeological and cultural material, while the former colliery landscape records the industrial origins behind the Coal City name. Ogbete Market, civic buildings and neighbourhood streets place that history within a continuing state-capital setting rather than southeastern Nigeria generally.",
+    highlights: ["Udi hill setting", "Coal-mining heritage", "National Museum Enugu", "Ogbete Market"],
+    editorialProvenance: africaBatch4SourceReferences([{ title: "Enugu State Government", url: "https://enugustate.gov.ng/" }, { title: "National Commission for Museums and Monuments", url: "https://museum.ng/" }]),
+  },
+  {
+    id: "sl-freetown",
+    summary: "Freetown rises around a broad natural harbour, with museums, markets and layered settlement heritage.",
+    description: "Freetown occupies steep hills beside one of West Africa's broad natural harbours, with streets descending toward the waterfront. The Sierra Leone National Museum interprets archaeology, history and cultural traditions, while surviving civic and religious buildings reflect the city's settlement history. Markets and designated monuments provide durable points of reference without relying on claims about recently altered landmarks.",
+    highlights: ["Freetown natural harbour", "Sierra Leone National Museum", "Historic civic buildings", "Central markets"],
+    editorialProvenance: africaBatch4SourceReferences([{ title: "Sierra Leone Ministry of Tourism and Cultural Affairs", url: "https://tourism.gov.sl/" }, { title: "Monuments and Relics Commission", url: "https://mrc.gov.sl/" }]),
+  },
+  {
+    id: "tg-lome",
+    summary: "Lomé faces the Gulf of Guinea through markets, museums, civic spaces and colonial-era architecture.",
+    description: "Lomé extends along Togo's Gulf of Guinea coast, where the seafront meets a compact civic and commercial centre. The National Museum interprets the country's archaeology, history and arts, while the restored Palais de Lomé presents exhibitions within a former gubernatorial complex. Market streets, craft traditions and surviving colonial-era buildings give the capital a distinctly urban context separate from Togo-wide attractions.",
+    highlights: ["Gulf of Guinea seafront", "Togo National Museum", "Palais de Lomé", "Grand Market district"],
+    editorialProvenance: africaBatch4SourceReferences([{ title: "Togo Tourism", url: "https://togotourisme.tg/" }, { title: "Palais de Lomé", url: "https://palaisdelome.com/" }]),
+  },
+  {
+    id: "lr-monrovia",
+    summary: "Monrovia occupies an Atlantic peninsula, with national museums, markets and sites connected to Liberia's founding.",
+    description: "Monrovia spreads across a peninsula and adjoining coastal districts between the Atlantic and the Mesurado River. The National Museum of Liberia preserves historical and cultural collections in the city, while Providence Island marks an important site in the settlement narrative of modern Liberia. Waterside Market and civic buildings add commercial and architectural context without extending the record to the distant international airport.",
+    highlights: ["Mesurado River peninsula", "National Museum of Liberia", "Providence Island", "Waterside Market"],
+    editorialProvenance: africaBatch4SourceReferences([{ title: "Liberia Ministry of Information, Cultural Affairs and Tourism", url: "https://www.micat.gov.lr/" }, { title: "UNESCO Providence Island", url: "https://whc.unesco.org/en/tentativelists/6603/" }]),
+  },
+  {
+    id: "ng-port-harcourt",
+    summary: "Port Harcourt developed beside the Bonny River system, with markets, cultural institutions and planned civic districts.",
+    description: "Port Harcourt occupies low-lying terrain within the Niger Delta's network of rivers and creeks, giving waterways a central geographic role. The city developed as a port and retains planned civic districts alongside older commercial streets. The Rivers State Museum, cultural centres and Mile One Market document local history, arts and everyday trade without treating attractions elsewhere in Rivers State as city sites.",
+    highlights: ["Bonny River waterways", "Rivers State Museum", "Mile One Market", "Port Harcourt civic districts"],
+    editorialProvenance: africaBatch4SourceReferences([{ title: "Rivers State Government", url: "https://www.riversstate.gov.ng/" }, { title: "National Commission for Museums and Monuments", url: "https://museum.ng/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 

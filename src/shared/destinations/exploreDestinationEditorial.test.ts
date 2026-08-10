@@ -78,6 +78,13 @@ const AFRICA_BATCH_3_IDS = [
   "za-durban", "bw-gaborone", "zw-harare", "zm-lusaka", "mz-maputo", "na-windhoek",
 ] as const;
 
+const AFRICA_BATCH_4_IDS = [
+  "ci-abidjan", "gm-banjul", "bj-cotonou", "sn-dakar", "ng-enugu",
+  "sl-freetown", "tg-lome", "lr-monrovia", "ng-port-harcourt",
+] as const;
+
+const AFRICA_BATCH_4_DEFERRED_IDS = ["gn-conakry"] as const;
+
 const AFRICA_BATCH_2_DEFERRED_IDS = ["sd-khartoum", "ly-tripoli"] as const;
 
 const ORIGINAL_AFRICAN_EDITORIAL_IDS = [
@@ -368,7 +375,7 @@ test("Africa Batch 3 adds six previously non-editorial canonical Southern Africa
     ...EUROPE_BATCH_3_IDS, ...EUROPE_BATCH_4_IDS, ...EUROPE_BATCH_5_IDS,
     ...AFRICA_BATCH_1_IDS, ...AFRICA_BATCH_2_IDS,
   ]);
-  assert.deepEqual(exploreDestinationEditorial.slice(84).map(({ id }) => id), AFRICA_BATCH_3_IDS);
+  assert.deepEqual(exploreDestinationEditorial.slice(84, 90).map(({ id }) => id), AFRICA_BATCH_3_IDS);
   assert.ok(AFRICA_BATCH_3_IDS.every((id) => !priorIds.has(id)));
 
   for (const id of AFRICA_BATCH_3_IDS) {
@@ -407,6 +414,65 @@ test("Africa Batch 3 adds six previously non-editorial canonical Southern Africa
       AFRICA_BATCH_2_IDS.some((batchId) => batchId === id)).map(({ id }) => id),
     AFRICA_BATCH_2_IDS,
   );
+});
+
+test("Africa Batch 4 adds exactly nine previously non-editorial Atlantic West African destinations", () => {
+  const priorIds = new Set<string>([
+    ...ORIGINAL_EDITORIAL_IDS, ...EUROPE_BATCH_1_IDS, ...EUROPE_BATCH_2_IDS,
+    ...EUROPE_BATCH_3_IDS, ...EUROPE_BATCH_4_IDS, ...EUROPE_BATCH_5_IDS,
+    ...AFRICA_BATCH_1_IDS, ...AFRICA_BATCH_2_IDS, ...AFRICA_BATCH_3_IDS,
+  ]);
+  assert.deepEqual(exploreDestinationEditorial.slice(90).map(({ id }) => id), AFRICA_BATCH_4_IDS);
+  assert.ok(AFRICA_BATCH_4_IDS.every((id) => !priorIds.has(id)));
+
+  for (const id of AFRICA_BATCH_4_IDS) {
+    const canonical = buildExploreDestinations(airports).find((candidate) => candidate.id === id);
+    const enriched = exploreDestinations.find((candidate) => candidate.id === id);
+    const record = exploreDestinationEditorial.find((candidate) => candidate.id === id);
+    assert.ok(canonical);
+    assert.ok(enriched);
+    assert.ok(record);
+    assert.equal(enriched.id, canonical.id);
+    assert.equal(enriched.name, canonical.name);
+    assert.equal(enriched.country, canonical.country);
+    assert.equal(enriched.countryCode, canonical.countryCode);
+    assert.equal(enriched.primaryAirportCode, canonical.primaryAirportCode);
+    assert.deepEqual(enriched.airportCodes, canonical.airportCodes);
+    assert.deepEqual(enriched.searchAliases, canonical.searchAliases);
+    assert.ok(record.summary.startsWith(canonical.name));
+    assert.ok(record.summary.trim().split(/\s+/).length >= 13);
+    assert.ok(record.summary.trim().split(/\s+/).length <= 18);
+    assert.equal((record.summary.match(/[.!?](?:\s|$)/g) ?? []).length, 1);
+    assert.ok(record.description.trim().split(/\s+/).length >= 53);
+    assert.ok(record.description.trim().split(/\s+/).length <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.equal(new Set(record.highlights.map((highlight) => highlight.toLocaleLowerCase())).size, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !highlight.endsWith(".")));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-10");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length);
+    assert.ok(record.editorialProvenance.sourceReferences.every(
+      ({ title, url }) => title.trim().length > 0 && url.startsWith("https://"),
+    ));
+    assert.equal(enriched.summary, record.summary);
+    assert.equal(enriched.editorialProvenance, record.editorialProvenance);
+  }
+});
+
+test("Conakry remains canonical and wholly non-editorial after Africa Batch 4", () => {
+  for (const id of AFRICA_BATCH_4_DEFERRED_IDS) {
+    const canonical = exploreDestinations.find((candidate) => candidate.id === id);
+    assert.ok(canonical);
+    assert.equal(exploreDestinationEditorial.some((record) => record.id === id), false);
+    assert.equal(canonical.summary, undefined);
+    assert.equal(canonical.description, undefined);
+    assert.equal(canonical.highlights, undefined);
+    assert.equal(canonical.editorialProvenance, undefined);
+    assert.equal(canonical.relatedDestinationIds, undefined);
+  }
 });
 
 test("deferred Africa Batch 2 destinations remain canonical and non-editorial", () => {
