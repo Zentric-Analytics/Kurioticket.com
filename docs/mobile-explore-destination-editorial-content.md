@@ -8,11 +8,15 @@ The shared Explore destination catalogue is derived from the airport catalogue a
 
 ## Regional module architecture
 
-The editorial data is split under `src/shared/destinations/editorial/` to keep regional rollout reviews maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts`, `asia.ts` and `northAmerica.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in that explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains a compatibility facade containing the single global validation boundary.
+The editorial data is split under `src/shared/destinations/editorial/` to keep regional ownership maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts`, `asia.ts`, `northAmerica.ts`, `centralAmerica.ts`, `caribbean.ts`, `southAmerica.ts` and `oceania.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains the compatibility facade containing the single global validation boundary.
 
-The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Europe remains complete at 52/52, Africa at 54/54 and Asia at 64/64; after North America Batch 2, global coverage is 188/235 with 47 destinations left. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
+## Current completion state
 
-## Current rollout and Featured independence
+**GLOBAL EDITORIAL COVERAGE: 235/235. REMAINING: 0.** Regional coverage is Central America 6/6, North America 16/16, Caribbean 10/10, South America 15/15, Europe 52/52, Africa 54/54, Asia 64/64 and Oceania/Pacific 18/18. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
+
+The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Its semantic-preservation guard intentionally remains scoped to that historical dataset rather than being regenerated against the completed 235-record aggregate.
+
+## Historical rollout record and Featured independence
 
 ### North America Batch 1 — United States
 
@@ -46,9 +50,9 @@ Repository-derived North American coverage moves from **11 of 16** canonical des
 
 The historical 175-record semantic payload and all eight North America Batch 1 records remain unchanged, while Batch 2 appends after Batch 1. Featured membership and its exact order remain independently maintained. This batch includes no UI, image, gallery, map, search, flight or hotel, booking, related-destination or canonical-data work.
 
-Editorial scope is expanding toward all canonical Explore destinations. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
+Editorial scope expanded to all canonical Explore destinations during the rollout. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
 
-The current incremental rollout still contains the original 25 records for these Featured destinations, with their copy and provenance unchanged:
+The completed rollout retains the original 25 records for these Featured destinations, with their copy and provenance unchanged:
 
 1. `fr-paris`
 2. `gb-london`
@@ -600,7 +604,30 @@ All copy excludes current cyclone or typhoon recovery, earthquakes, tsunami or v
 
 Repository-derived Oceania/Pacific coverage moves from **8 of 18** to **18 of 18**, with no Pacific deferrals. Global editorial coverage moves from **224 of 235** to **234 of 235**, leaving exactly one canonical destination without editorial content: `hn-san-pedro-sula`. Central America remains **5 of 6**, with San Pedro Sula canonical and wholly non-editorial. South America remains **15 of 15**; Caribbean **10 of 10**; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic prefix and every prior regional rollout remain unchanged. Featured membership and exact ordering remain independently maintained and unchanged.
 
-This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
+### Global Editorial Completion — San Pedro Sula
+
+The final completion pass, verified on **2026-08-10**, adds `hn-san-pedro-sula` after resolving its earlier strict-source deferral. Source review established two exact, titled, durable HTTPS references: the Municipality of San Pedro Sula for city geography, civic spaces, landmarks and market context, and the Museum of Anthropology and History of San Pedro Sula for the city's established museum and its interpretive scope. Authorization failures affecting outbound HTTPS inspection were treated as an environment limitation, not as evidence against those institutional sources; no URL was inferred or fabricated.
+
+The record remains bounded to San Pedro Sula. Sula Valley geography is explicitly contextual, and no attraction from Honduras generally, Cortés Department, Puerto Cortés, Omoa, Lake Yojoa, Copán, Tela or La Ceiba is presented as a city attraction. Its copy excludes current safety, crime, politics, demonstrations, weather, flooding, storms, transport, airport or airline operations, opening hours, prices, access, closures, construction, tourism and population conditions.
+
+Repository-derived coverage changes as follows:
+
+- Central America: **5/6 → 6/6**
+- North America: **16/16**
+- Caribbean: **10/10**
+- South America: **15/15**
+- Europe: **52/52**
+- Africa: **54/54**
+- Asia: **64/64**
+- Oceania/Pacific: **18/18**
+- Global: **234/235 → 235/235**
+- Remaining: **1 → 0**
+
+**GLOBAL EDITORIAL COVERAGE: 235/235. REMAINING: 0.** This means every canonical destination currently represented in the Explore catalogue has editorial enrichment; it does not mean that the catalogue represents every possible destination worldwide.
+
+This completion adds no UI, image, gallery, map, search, flight, hotel, booking, related-destination, Featured or canonical-catalogue changes. The historical 175-record semantic guard, every prior editorial payload and prior-record relative order, deterministic regional aggregation, and independently maintained Featured membership and ordering remain preserved.
+
+This historical list records the rollout sequence, not an editorial allowlist or required editorial order. The compatibility facade continues to support missing-editorial fallback behavior for future canonical catalogue changes, so a canonical destination remains valid, searchable and safe to open before any future editorial enrichment is added.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
 
