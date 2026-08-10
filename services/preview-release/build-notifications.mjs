@@ -43,7 +43,10 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
   const results = [];
   for (const platform of ["android", "ios"]) {
     const kind = platform === "android" ? "ANDROID_BUILD" : "IOS_BUILD";
-    const identityKey = `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:${platform}:preview`;
+    const fingerprint = release?.evidence?.fingerprints?.[platform];
+    const identityKey = fingerprint
+      ? nativeBuildIdentityKey(platform, fingerprint)
+      : `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:${platform}:preview`;
     const action = await ledger.getAction(kind, identityKey);
     if (!action?.remote_id || String(action.state).toUpperCase() !== "FINISHED") continue;
 
@@ -61,6 +64,10 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
       const submission = await ledger.getAction("IOS_SUBMISSION", `ios-submission:${build.id}`);
       if (!submission?.remote_id || String(submission.state).toUpperCase() !== "FINISHED") continue;
       submissionId = submission.remote_id;
+      const distribution = typeof ledger.getFinishedIosDistributionForBuild === "function"
+        ? await ledger.getFinishedIosDistributionForBuild(build.id)
+        : null;
+      if (!distribution) continue;
     }
 
     if (platform === "android" && !build.artifacts?.buildUrl) {
@@ -87,6 +94,13 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
     results.push(await postNotification(payload, { secret, fetchImpl }));
   }
   return results;
+}
+
+export function nativeBuildIdentityKey(platform, fingerprint) {
+  if (!['ios', 'android'].includes(platform) || !/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ''))) {
+    throw new Error('Native build fingerprint identity is malformed.');
+  }
+  return `native-build:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
 }
 
 export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failureReason, secret = process.env.PREVIEW_BUILD_NOTIFICATION_SECRET, fetchImpl = fetch }) {

@@ -107,3 +107,27 @@ test("mismatched Expo build page is rejected instead of emailing a wrong build",
     /does not match exact Preview build/,
   );
 });
+
+test("iOS success waits for verified TestFlight group association", async () => {
+  let distributed = false;
+  const ledger = {
+    async releaseBySha() { return { classification: "IOS_NATIVE" }; },
+    async getAction(kind) {
+      if (kind === "IOS_BUILD") return { remote_id: "ios-build-1", state: "FINISHED" };
+      if (kind === "IOS_SUBMISSION") return { remote_id: "submission-1", state: "FINISHED" };
+      return null;
+    },
+    async getFinishedIosDistributionForBuild() { return distributed ? { state: "FINISHED" } : null; },
+  };
+  const eas = { async viewBuild() { return { id: "ios-build-1", buildDetailsPageUrl: canonicalExpoBuildPageUrl("ios-build-1") }; } };
+  const requests = [];
+  const fetchImpl = async (_url, init) => {
+    requests.push(JSON.parse(init.body));
+    return { ok: true, status: 200, async text() { return JSON.stringify({ recipients: 1, sent: 1, failed: 0 }); } };
+  };
+  assert.deepEqual(await notifySuccessfulNativeBuilds({ sourceSha: "d".repeat(40), ledger, eas, secret: "test-secret", fetchImpl }), []);
+  distributed = true;
+  assert.equal((await notifySuccessfulNativeBuilds({ sourceSha: "d".repeat(40), ledger, eas, secret: "test-secret", fetchImpl })).length, 1);
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].platform, "ios");
+});

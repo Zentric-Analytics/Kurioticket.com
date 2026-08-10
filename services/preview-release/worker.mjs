@@ -46,7 +46,7 @@ while (!stopping) {
     const result = await orchestrator.cycle();
     const sourceSha = result.source_sha ?? result.sourceSha ?? cycleSourceSha;
     console.log(JSON.stringify({ event: "preview-release-cycle", sourceSha, state: result.state }));
-    if (config.mode === "active" && sourceSha && result.state !== "LOCKED_OR_COMPLETE") {
+    if (config.mode === "active" && sourceSha) {
       await reconcileBuildNotifications({ sourceSha });
     }
   } catch (error) {

@@ -17,15 +17,21 @@ export const TEAM_ACCESS_ROLE_DEFINITIONS: Record<TeamAccessRole, {
   TESTER: {
     label: "Tester",
     summary: "For people testing Kurioticket Preview before release.",
-    capabilities: ["PREVIEW_ACCESS", "GOOGLE_PREVIEW_LOGIN", "STAGING_EMAIL"],
+    capabilities: [
+      "PREVIEW_ACCESS",
+      "GOOGLE_PREVIEW_LOGIN",
+      "STAGING_EMAIL",
+      "ANDROID_BUILD_NOTIFICATIONS",
+      "IOS_BUILD_NOTIFICATIONS",
+    ],
     grants: [
       "Access to the Kurioticket Preview environment",
       "Approved Google sign-in to Preview",
       "Staging and tester email delivery",
+      "Android Preview build notifications and verified install links",
+      "iOS Preview delivery notifications after verified TestFlight distribution",
     ],
     doesNotGrant: [
-      "Developer build notifications",
-      "Android APK installation links",
       "Production release authority",
       "Kurioticket Admin access",
     ],

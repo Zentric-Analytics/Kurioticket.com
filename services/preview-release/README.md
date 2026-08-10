@@ -44,3 +44,12 @@ The worker runs this same preflight before beginning its polling loop. Active cu
 The accepted exact source SHA is `61e42dc6c0cc4952130aacb6e1da1f6bdb9e93f2`. Exact-SHA staging deployment and health verification passed. OTA publication completed once per platform on channel `preview` and runtime `preview-0.3.0`: iOS group `562cc027-a245-495c-b402-f2c596c3f20d` and Android group `a8705971-218e-4e53-bdd6-f6deb832ee49`. The installed Preview client received the update and passed owner visual verification. Durable restart recovery and duplicate prevention passed.
 
 Native iOS/TestFlight proof remains deferred until a legitimate native-impacting Preview change enters `dev`. The worker must then reconcile or create exactly one matching build and one submission through its durable ledger. Do not create a proof-only native change.
+# Native delivery invariants
+
+Preview identifies a native artifact by platform plus the Expo native fingerprint, not by the moving `dev` SHA. One fingerprint may have at most one queued, building, submitting, or distributing build per platform. A later compatible source SHA records itself as the latest compatible source while retaining the SHA that actually produced the native artifact. Android and iOS fingerprints remain independent.
+
+Android delivery succeeds only after the exact durable EAS build finishes and exposes its verified Expo install page. iOS delivery succeeds only after the EAS build and server-owned submission finish, Apple processing is valid, the configured internal beta group is associated, and association read-back succeeds. Submission completion alone is not TestFlight delivery.
+
+Active, approved, unexpired Team Access members with either the Tester or Developer role receive the separate Android and iOS native notifications. Email delivery uses a per-recipient, per-platform, per-build final-outcome idempotency identity. Notification reconciliation continues after release completion, and accepted email-delivery records are never resent.
+
+Operators must not manually create native builds, manually submit iOS builds, edit release-ledger rows or delivered-native pointers, change build numbers, or alter TestFlight membership during an active release. For an App Store Connect 404, first verify read-only that `APP_STORE_CONNECT_PREVIEW_APP_ID` resolves to the Preview bundle and that `APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID` is the named internal group returned under that app. Never invent or hard-code a replacement identifier.

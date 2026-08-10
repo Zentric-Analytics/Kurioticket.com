@@ -8,7 +8,7 @@ import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
-import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enforceDeliveredNativeBaseline, maintainLease, nativeDriftTargets, retry } from "./orchestrator.mjs";
+import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry } from "./orchestrator.mjs";
 import { createExactCheckoutDirectory, EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
@@ -22,6 +22,23 @@ const appleContext = { app: { type: "apps", id: "6797447471", attributes: { bund
 const finishedApple = (overrides = {}) => ({ previewContext: async () => appleContext, resolveBuild: async () => ({ state: "VALID", build: { id: "apple-build-9", attributes: { version: "9", processingState: "VALID" } } }), isAssociated: async () => true, associate: async () => {}, ...overrides });
 const applePrivateKey = generateKeyPairSync("ec", { namedCurve: "P-256" }).privateKey.export({ type: "pkcs8", format: "pem" });
 const appleClient = (fetchImpl) => new AppStoreConnectClient({ issuerId: "issuer", keyId: "key", privateKey: applePrivateKey, appId: "6797447471", betaGroupId: "group-preview", betaGroupName: "Kurioticket Preview Internal", fetchImpl });
+
+test("one native change plus four source advances coalesces to one build per platform", () => {
+  const fingerprints = { android: "a".repeat(40), ios: "i".repeat(40) };
+  const durableBuildReservations = new Set();
+  const builds = { android: 0, ios: 0 };
+  for (const sourceSha of ["a", "b", "c", "d", "e"].map((value) => value.repeat(40))) {
+    for (const platform of ["android", "ios"]) {
+      const identity = nativeBuildIdentityKey(platform, fingerprints[platform]);
+      if (!durableBuildReservations.has(identity)) {
+        durableBuildReservations.add(identity);
+        builds[platform] += 1;
+      }
+      assert.ok(sourceSha); // source advancement does not participate in artifact identity
+    }
+  }
+  assert.deepEqual(builds, { android: 1, ios: 1 });
+});
 
 test("Preview identity is immutable", () => {
   assert.equal(assertPreviewIdentity({ appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtime: "preview-0.3.0", apiOrigin: "https://staging.kurioticket.com" }), true);

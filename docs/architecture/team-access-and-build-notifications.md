@@ -6,7 +6,7 @@ Kurioticket Team Access is the staging/Preview access registry for people who ne
 
 The initial roles are:
 
-- `TESTER` — Preview access, approved Google sign-in, and staging/tester email delivery.
+- `TESTER` — Preview access, approved Google sign-in, staging/tester email delivery, and Android/iOS Preview build notifications.
 - `DEVELOPER` — Preview access plus Android and iOS native build notifications.
 
 A member may hold more than one role. Role definitions are self-documenting in Admin: the light-bulb control shows what each role grants and explicitly lists sensitive capabilities it does not grant. The member row also shows combined Effective Access.
@@ -15,11 +15,11 @@ A member may hold more than one role. Role definitions are self-documenting in A
 
 Team members remain stored in the existing `PreviewTester` table for a backward-compatible migration. The `roles` string array is the role source of truth. Existing records are migrated to `TESTER` automatically.
 
-Only records that are active, approved, and not expired may receive Developer build notifications. The notification recipient query requires the `DEVELOPER` role. Build recipients are never supplied by an EAS payload, environment email list, or release command.
+Only records that are active, approved, not expired, and capability-eligible may receive build notifications. Both `TESTER` and `DEVELOPER` grant the platform notification capabilities. Build recipients are never supplied by an EAS payload, environment email list, or release command.
 
 The legacy `allowGoogleSignIn` and `allowStagingEmail` columns remain populated during the compatibility period, but role capabilities are authoritative for role-enabled records.
 
-Trusted `kurioticket.com` and `zentricanalytics.com` staging-domain behavior remains unchanged by this migration so existing company access is not unexpectedly locked out. That compatibility rule is separate from Developer build notifications: build notifications still require an active database record with the `DEVELOPER` role.
+Trusted `kurioticket.com` and `zentricanalytics.com` staging-domain behavior remains unchanged. That compatibility rule is separate from build notifications, which require an active, approved, unexpired Team Access record with the relevant capability.
 
 ## Admin management
 
@@ -44,13 +44,13 @@ Notifications are Preview-only and are derived from the existing durable Preview
 
 ### Android success
 
-An Android success notification is eligible only when the exact-SHA `ANDROID_BUILD` ledger action is `FINISHED` and EAS returns an HTTPS APK artifact URL.
+An Android success notification is eligible only when the fingerprint-owned `ANDROID_BUILD` ledger action is `FINISHED` and EAS returns a verified exact-build Expo install page.
 
 The email includes build metadata, the exact source SHA, release classification when available, Expo build details, and a direct **Install Android Preview** action using the exact EAS artifact URL.
 
 ### iOS success
 
-An iOS success notification is eligible only after both the exact-SHA `IOS_BUILD` and its exact `IOS_SUBMISSION` ledger action are `FINISHED`. The existing release flow separately verifies Apple processing and internal TestFlight group association before the native delivery cycle completes.
+An iOS success notification is eligible only after the fingerprint-owned `IOS_BUILD` and its exact `IOS_SUBMISSION` action are `FINISHED`, Apple processing is valid, the required internal TestFlight group association succeeds, and membership read-back is verified.
 
 The iOS email does not expose a direct IPA download. It tells the developer to install/update Kurioticket Preview through TestFlight and includes build/submission metadata and Expo build details.
 
@@ -70,11 +70,11 @@ The Preview release worker calls the staging-only internal endpoint:
 
 The endpoint requires the shared `PREVIEW_BUILD_NOTIFICATION_SECRET` in the `x-kurioticket-preview-build-secret` header and uses a timing-safe comparison.
 
-Each recipient/build/status combination uses a deterministic Resend idempotency key:
+Each recipient/platform/build final outcome uses a deterministic Resend idempotency key:
 
-`preview-build:{platform}:{buildId}:{status}:{memberId}`
+`preview-build-final:{platform}:{buildId}:{memberId}`
 
-This prevents normal worker reconciliation/retry behavior from intentionally sending duplicate messages for the same build event.
+This prevents reconciliation from sending duplicates or contradictory success/failure outcomes. Reconciliation runs even after the release is complete; the durable email delivery record suppresses messages already accepted by Resend.
 
 ## Required Render configuration
 
@@ -105,7 +105,7 @@ The notification endpoint is staging-only. Production web and Production mobile 
 
 To disable build emails without changing native delivery:
 
-1. Remove/unset `PREVIEW_BUILD_NOTIFICATION_SECRET` from the Preview release worker, or remove the Developer role from recipients.
+1. Remove/unset `PREVIEW_BUILD_NOTIFICATION_SECRET` from the Preview release worker, or suspend/revoke the affected Team Access records.
 2. Leave the Preview release ledger and native delivery configuration unchanged.
 
 To roll back Team Access role behavior, revert the application changes and preserve the added database column until a separately reviewed data migration removes it. Do not drop role data as part of an application rollback.
