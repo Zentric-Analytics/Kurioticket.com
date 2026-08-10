@@ -7,6 +7,7 @@ import { hasSuccessfulEmailDelivery } from "@/services/emailDeliveryService";
 import { routeWatchUpdateEmail, sendOptionalEmail } from "@/services/emailService";
 import { createNotificationEvent } from "@/services/notificationService";
 import { searchFlights } from "@/services/travel/flightAggregator";
+import { isFeatureEnabled } from "@/lib/feature-controls/service";
 
 export const ROUTE_WATCH_BATCH_SIZE = 50;
 export const ROUTE_WATCH_CHECK_DELAY_MS = 1000 * 60 * 60 * 24;
@@ -62,6 +63,7 @@ type RouteWatchDb = {
 };
 
 export type RouteWatchProcessingCounts = {
+  disabled?: boolean;
   processed: number;
   initialized: number;
   checked: number;
@@ -94,7 +96,12 @@ export async function processDueRouteWatches(options: {
   resolveFare?: RouteWatchPriceResolver;
   sendEmail?: RouteWatchEmailSender;
   hasSuccessfulDelivery?: SuccessfulDeliveryChecker;
+  featureEnabled?: () => Promise<boolean>;
 } = {}): Promise<RouteWatchProcessingCounts> {
+  if (!(await (options.featureEnabled ?? (() => isFeatureEnabled("ROUTE_WATCH_PROCESSING_ENABLED")))())) {
+    console.info("[feature-controls:processor-disabled]", { processor: "route-watch" });
+    return { disabled: true, ...emptyCounts() };
+  }
   const now = options.now ?? new Date();
   const db = options.db ?? (getPrisma() as unknown as RouteWatchDb);
   const resolveFare = options.resolveFare ?? resolveRouteWatchFare;

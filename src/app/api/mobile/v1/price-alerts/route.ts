@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMobileSession } from "@/lib/mobile-auth";
 import { priceAlertSchema } from "@/lib/validation";
-import { createPriceAlert, DuplicatePriceAlertError, listUserPriceAlerts } from "@/services/priceTrackingService";
+import { createPriceAlert, DuplicatePriceAlertError, listUserPriceAlerts, PriceAlertUnavailableError } from "@/services/priceTrackingService";
 
 export async function GET(request: Request) {
   const session = await getMobileSession(request);
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     const alert = await createPriceAlert({ userId: session.user.id, ...parsed.data });
     return NextResponse.json({ alert }, { status: 201 });
   } catch (error) {
+    if (error instanceof PriceAlertUnavailableError) return NextResponse.json({ error: error.message, code: "FEATURE_DISABLED" }, { status: 503 });
     if (error instanceof DuplicatePriceAlertError) return NextResponse.json({ error: error.message, duplicate: true, alert: error.alert }, { status: 409 });
     return NextResponse.json({ error: "Unable to create price alert." }, { status: 503 });
   }

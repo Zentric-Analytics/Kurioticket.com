@@ -171,3 +171,9 @@ test("cron authorization fails closed and uses timing-safe bearer comparison", (
   assert.equal(isAuthorizedSavedTripReminderCronRequest(new Request("http://test", { method: "POST", headers: { authorization: "Bearer bad" } }), "secret"), false);
   assert.equal(isAuthorizedSavedTripReminderCronRequest(new Request("http://test", { method: "POST", headers: { authorization: "Bearer secret" } }), "secret"), true);
 });
+
+test("processing control disabled returns before saved data queries", async () => {
+  const db = { savedFlight: { findMany: async () => { throw new Error("candidate query must not run"); } } } as never;
+  const result = await processDueSavedTripReminders({ db, featureEnabled: async () => false });
+  assert.deepEqual(result, { disabled: true, processed: 0, sent: 0, skippedByPreferences: 0, notDue: 0, failed: 0 });
+});

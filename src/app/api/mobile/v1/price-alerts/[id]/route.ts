@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getMobileSession } from "@/lib/mobile-auth";
-import { deleteUserPriceAlert, InvalidPriceAlertTransitionError, PriceAlertNotFoundError, updateUserPriceAlertStatus } from "@/services/priceTrackingService";
+import { deleteUserPriceAlert, InvalidPriceAlertTransitionError, PriceAlertNotFoundError, PriceAlertUnavailableError, updateUserPriceAlertStatus } from "@/services/priceTrackingService";
 
 const idSchema = z.string().trim().min(1).max(128);
 const patchSchema = z.object({ status: z.enum(["ACTIVE", "PAUSED"]) }).strict();
@@ -20,6 +20,7 @@ export async function PATCH(request: Request, { params }: Context) {
   if (!id.success || !parsed.success) return NextResponse.json({ error: "Please check the alert update." }, { status: 400 });
   try { return NextResponse.json({ alert: await updateUserPriceAlertStatus({ id: id.data, userId: session.user.id, status: parsed.data.status }) }); }
   catch (error) {
+    if (error instanceof PriceAlertUnavailableError) return NextResponse.json({ error: error.message, code: "FEATURE_DISABLED" }, { status: 503 });
     if (error instanceof PriceAlertNotFoundError) return NextResponse.json({ error: "Price alert not found." }, { status: 404 });
     if (error instanceof InvalidPriceAlertTransitionError) return NextResponse.json({ error: error.message }, { status: 409 });
     return NextResponse.json({ error: "Unable to update price alert." }, { status: 503 });

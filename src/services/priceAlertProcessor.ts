@@ -7,6 +7,7 @@ import { searchFlights } from "@/services/travel/flightAggregator";
 import { searchHotels } from "@/services/travel/hotelAggregator";
 import { priceAlertEmail, sendOptionalEmail } from "@/services/emailService";
 import { persistCanonicalNotificationEvent, type NotificationPersistenceClient } from "@/services/notificationService";
+import { isFeatureEnabled } from "@/lib/feature-controls/service";
 
 export const PRICE_ALERT_BATCH_SIZE = 50;
 const DEFAULT_RETRY_DELAY_MS = 1000 * 60 * 60;
@@ -48,6 +49,7 @@ type PriceAlertDb = {
 };
 
 export type PriceAlertProcessingCounts = {
+  disabled?: boolean;
   processed: number;
   eventsCreated: number;
   sent: number;
@@ -90,7 +92,12 @@ export async function processDuePriceAlerts(options: {
   sendEmail?: OptionalEmailSender;
   checkDelayMs?: number;
   retryDelayMs?: number;
+  featureEnabled?: () => Promise<boolean>;
 } = {}): Promise<PriceAlertProcessingCounts> {
+  if (!(await (options.featureEnabled ?? (() => isFeatureEnabled("PRICE_ALERT_PROCESSING_ENABLED")))())) {
+    console.info("[feature-controls:processor-disabled]", { processor: "price-alerts" });
+    return { disabled: true, ...emptyCounts() };
+  }
   const now = options.now ?? new Date();
   const db = options.db ?? (getPrisma() as unknown as PriceAlertDb);
   const resolvePrice = options.resolvePrice ?? resolveAlertPrice;

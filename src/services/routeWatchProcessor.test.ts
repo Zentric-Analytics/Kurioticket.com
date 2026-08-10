@@ -183,3 +183,11 @@ test("idempotency key and cron authorization are deterministic and safe", () => 
   assert.equal(isAuthorizedRouteWatchCronRequest(new Request("https://example.com", { headers: { authorization: "Bearer bad" } }), "good"), false);
   assert.equal(isAuthorizedRouteWatchCronRequest(new Request("https://example.com"), "good"), false);
 });
+
+test("processing control disabled returns before route or provider work", async () => {
+  const db = { routeWatchState: { findMany: async () => { throw new Error("candidate query must not run"); } } } as never;
+  const result = await processDueRouteWatches({ db, featureEnabled: async () => false });
+  assert.equal(result.disabled, true);
+  assert.equal(result.processed, 0);
+  assert.equal(result.failed, 0);
+});
