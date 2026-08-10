@@ -427,15 +427,46 @@ export class PreviewLedger {
     return result.rows[0] ?? null;
   }
 
-  async notificationCandidateSourceShas() {
-    const result = await this.pool.query(
-      `SELECT DISTINCT release.source_sha, release.started_at
-       FROM preview_release release
-       JOIN preview_release_action action ON action.source_sha=release.source_sha
-       WHERE action.kind IN ('ANDROID_BUILD','IOS_BUILD') AND action.remote_id IS NOT NULL
-       ORDER BY release.started_at ASC NULLS LAST, release.source_sha ASC`,
+  async syncNativeNotificationCandidates() {
+    await this.pool.query(
+      `INSERT INTO preview_native_notification (platform,build_id,source_sha,outcome)
+       SELECT CASE build.kind WHEN 'IOS_BUILD' THEN 'ios' ELSE 'android' END,
+              build.remote_id, build.source_sha,
+              CASE WHEN build.state='FINISHED' THEN 'SUCCESS' ELSE 'FAILED' END
+       FROM preview_release_action build
+       WHERE build.remote_id IS NOT NULL
+         AND (build.state IN ('ERRORED','FAILED','CANCELED','CANCELLED') OR
+           (build.state='FINISHED' AND (build.kind='ANDROID_BUILD' OR (build.kind='IOS_BUILD' AND EXISTS (
+           SELECT 1 FROM preview_release_action distribution
+           WHERE distribution.kind='IOS_TESTFLIGHT_DISTRIBUTION' AND distribution.state='FINISHED'
+             AND distribution.evidence->>'easBuildId'=build.remote_id
+             AND distribution.evidence->>'associated'='true'))))
+         AND build.kind IN ('IOS_BUILD','ANDROID_BUILD')
+       ON CONFLICT (platform,build_id) DO NOTHING`,
     );
-    return result.rows.map((row) => row.source_sha);
+  }
+
+  async unresolvedNativeNotificationCandidates() {
+    const result = await this.pool.query(
+      `SELECT * FROM preview_native_notification
+       WHERE state IN ('PENDING','RETRYABLE_FAILURE') AND next_attempt_at <= now()
+       ORDER BY created_at ASC LIMIT 100`,
+    );
+    return result.rows;
+  }
+
+  async recordNativeNotificationAttempt(candidate, response) {
+    const outcomes = Array.isArray(response?.recipientOutcomes) ? response.recipientOutcomes : [];
+    const recipientIds = candidate.recipient_ids ?? outcomes.map((item) => item.memberId);
+    const retryable = outcomes.some((item) => item.state === 'retryable-failure');
+    await this.pool.query(
+      `UPDATE preview_native_notification SET state=$3, recipient_ids=$4::jsonb,
+         attempt_count=attempt_count+1,
+         next_attempt_at=now() + (LEAST(3600, 30 * power(2, LEAST(attempt_count,7)))::text || ' seconds')::interval,
+         last_response=$5::jsonb, updated_at=now()
+       WHERE platform=$1 AND build_id=$2`,
+      [candidate.platform, candidate.build_id, retryable ? 'RETRYABLE_FAILURE' : 'COMPLETE', JSON.stringify(recipientIds), JSON.stringify(response ?? {})],
+    );
   }
 
   async getNativeBuildActionForRelease(sourceSha, platform, fingerprint = null) {

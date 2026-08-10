@@ -26,7 +26,7 @@ test("canonical Expo build page is derived from Preview project identity and exa
   );
 });
 
-test("partial recipient delivery remains retryable", async () => {
+test("partial recipient delivery returns privacy-safe retryable outcomes", async () => {
   const ledger = {
     async releaseBySha() { return { classification: "ANDROID_NATIVE" }; },
     async getAction(kind) {
@@ -50,10 +50,9 @@ test("partial recipient delivery remains retryable", async () => {
     status: 207,
     async text() { return JSON.stringify({ recipients: 2, sent: 1, failed: 1 }); },
   });
-  await assert.rejects(
-    () => notifySuccessfulNativeBuilds({ sourceSha: "a".repeat(40), ledger, eas, secret: "test-secret", fetchImpl }),
-    /remains retryable/,
-  );
+  const [result] = await notifySuccessfulNativeBuilds({ sourceSha: "a".repeat(40), ledger, eas, secret: "test-secret", fetchImpl });
+  assert.equal(result.responseStatus, 207);
+  assert.equal(result.failed, 1);
 });
 
 test("finished Android build sends canonical Expo page and never sends raw artifact URL", async () => {

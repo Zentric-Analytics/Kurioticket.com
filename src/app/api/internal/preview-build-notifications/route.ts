@@ -22,6 +22,7 @@ type BuildNotification = {
   appleBuildId?: string | null;
   failureReason?: string | null;
   completedAt?: string | null;
+  recipientMemberIds?: string[];
 };
 
 function authorized(request: Request) {
@@ -72,6 +73,9 @@ function parseBody(body: Record<string, unknown>): BuildNotification | null {
     appleBuildId: cleanText(body.appleBuildId, 200),
     failureReason: cleanText(body.failureReason, 500),
     completedAt: cleanText(body.completedAt, 100),
+    recipientMemberIds: Array.isArray(body.recipientMemberIds)
+      ? body.recipientMemberIds.filter((value): value is string => typeof value === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(value)).slice(0, 500)
+      : undefined,
   };
 }
 
@@ -143,15 +147,15 @@ export async function POST(request: Request) {
   if (input.status === "SUCCESS" && input.platform === "android" && !validExpoAndroidInstallUrl(input)) {
     return NextResponse.json({ error: "Successful Android notifications require the exact Expo build install URL." }, { status: 400 });
   }
-  const recipients = await getBuildNotificationRecipients(input.platform);
+  const recipients = await getBuildNotificationRecipients(input.platform, input.recipientMemberIds);
   const message = emailFor(input);
   const outcomes = await Promise.all(recipients.map(async (recipient) => {
     // A delivery identity has one final outcome. Keeping status out of this key
     // prevents a later reconciliation error from sending a contradictory result.
     const idempotencyKey = `preview-build-final:${input.platform}:${input.buildId}:${recipient.id}`;
     const existing = await getEmailDeliveryReconciliationState(idempotencyKey);
-    if (existing === "accepted") return "accepted" as const;
-    if (existing === "terminal") return "terminal" as const;
+    if (existing === "accepted") return { memberId: recipient.id, state: "accepted" as const };
+    if (existing === "terminal") return { memberId: recipient.id, state: "terminal" as const };
     try {
       await sendTransactionalEmail({
         to: recipient.emailNormalized,
@@ -163,14 +167,14 @@ export async function POST(request: Request) {
         idempotencyKey,
         metadata: { type: "preview-build", platform: input.platform, status: input.status, buildId: input.buildId, sourceSha: input.sourceSha, recipientId: recipient.id },
       });
-      return "sent" as const;
+      return { memberId: recipient.id, state: "sent" as const };
     } catch {
-      return "retryable-failure" as const;
+      return { memberId: recipient.id, state: "retryable-failure" as const };
     }
   }));
-  const sent = outcomes.filter((outcome) => outcome === "sent").length;
-  const alreadyAccepted = outcomes.filter((outcome) => outcome === "accepted").length;
-  const terminal = outcomes.filter((outcome) => outcome === "terminal").length;
-  const failed = outcomes.filter((outcome) => outcome === "retryable-failure").length;
-  return NextResponse.json({ recipients: recipients.length, sent, alreadyAccepted, terminal, failed }, { status: failed ? 207 : 200 });
+  const sent = outcomes.filter((outcome) => outcome.state === "sent").length;
+  const alreadyAccepted = outcomes.filter((outcome) => outcome.state === "accepted").length;
+  const terminal = outcomes.filter((outcome) => outcome.state === "terminal").length;
+  const failed = outcomes.filter((outcome) => outcome.state === "retryable-failure").length;
+  return NextResponse.json({ recipients: recipients.length, sent, alreadyAccepted, terminal, failed, recipientOutcomes: outcomes }, { status: failed ? 207 : 200 });
 }

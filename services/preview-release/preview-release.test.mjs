@@ -196,7 +196,8 @@ test("worker preflight failure redacts secrets and exits before the polling loop
   assert.match(worker, /redactPreflightError/);
   assert.match(worker, /process\.exit\(1\)/);
   assert.ok(worker.indexOf("runPreviewPreflight") < worker.indexOf("while (!stopping)"));
-  assert.match(worker, /notificationCandidateSourceShas/);
+  assert.match(worker, /unresolvedNativeNotificationCandidates/);
+  assert.doesNotMatch(worker, /notificationCandidateSourceShas/);
   assert.doesNotMatch(worker, /result\.state\s*!==\s*["']LOCKED_OR_COMPLETE["']/);
 });
 
