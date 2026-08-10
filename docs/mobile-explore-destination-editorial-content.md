@@ -431,3 +431,17 @@ The current 25 records intentionally remain in one source file to avoid a conten
 ## Website integration
 
 Website UI integration is intentionally deferred. The shared module has no React Native, Expo, storage, navigation or mobile-image dependency so website code can import it later without changing the current website destinations page.
+
+### Asia Batch 7 — Gulf + Arabian Peninsula
+
+Asia Batch 7, verified on 2026-08-10, considered and implemented all eight canonical candidates: `ae-abu-dhabi` (Abu Dhabi, United Arab Emirates), `jo-amman` (Amman, Jordan), `qa-doha` (Doha, Qatar), `sa-jeddah` (Jeddah, Saudi Arabia), `kw-kuwait-city` (Kuwait City, Kuwait), `bh-manama` (Manama, Bahrain), `om-muscat` (Muscat, Oman), and `sa-riyadh` (Riyadh, Saudi Arabia). There were no Batch 7 deferrals.
+
+The source pass uses exact, titled HTTPS references from official tourism authorities, government or municipal bodies, UNESCO, national museums, and public cultural institutions. Each record has at least two distinct authoritative references supporting durable geography, urban history, architecture, markets, museums, religious heritage, or maritime culture; no provenance URL was invented.
+
+Canonical scope remains deliberately narrow. Abu Dhabi means the city, not the emirate; Amman does not absorb Jordan-wide sites; and Doha remains distinct from Qatar generally. Historic Jeddah is handled through Al-Balad's UNESCO-supported port, coral-stone and merchant-house heritage without extending the record to Mecca. Kuwait City is distinguished from Kuwait nationally, while Manama remains separate from Bahrain-wide heritage and explicitly locates the UNESCO Pearling Path in Muharraq rather than central Manama.
+
+Muscat's record uses the city's coastline, Mutrah, harbour and civic institutions rather than Muscat Governorate, Greater Muscat or distant Omani destinations. Riyadh remains distinct from Riyadh Province, and Diriyah is identified as a separate historic municipality northwest of the city. Across these fast-changing Gulf destinations, copy excludes mutable openings, construction, events, rankings, superlatives, operating conditions and other current claims in favour of established heritage, geography and cultural institutions.
+
+Repository-derived Asian coverage moves from **52 of 64** canonical destinations before the batch to **60 of 64** after all eight records, leaving **4** without editorial enrichment: `tm-ashgabat`, `iq-baghdad`, `lb-beirut` and `il-tel-aviv`. Ashgabat remains the sole deferred candidate from Batch 6. Europe remains complete at **52 of 52**, Africa remains complete at **54 of 54**, Asia Batches 1–6 and the original 25 remain intact, and Featured membership and ordering remain independently maintained and unchanged.
+
+This batch contains no UI work, image work, gallery work, map work, search changes, flight or hotel changes, booking changes, related-destination work, or editorial-architecture refactor. Canonical IDs, names, countries, country codes, airport data, aliases, image identities and image provenance remain unchanged.
