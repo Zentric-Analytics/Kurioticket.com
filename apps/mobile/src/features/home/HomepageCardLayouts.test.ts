@@ -12,7 +12,7 @@ test("mobile Home keeps every remaining section in the required order", () => {
   const orderedSections = [
     "<HomeHero />",
     "<View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>",
-    "<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />",
+    '{availability.flightSearch ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker /> : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />}',
     "<PopularDestinationStays />",
     "<HomepageAdventureDiscovery />",
     "<HomepageDealPromos />",
@@ -31,6 +31,6 @@ test("mobile Home keeps every remaining section in the required order", () => {
 test("Popular destination stays is directly between flight search and adventure discovery", () => {
   assert.match(
     home,
-    /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<PopularDestinationStays \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>\s*<RegionalDestinationRoutes \/>/,
+    /availability\.flightSearch[\s\S]*<PopularDestinationStays \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>\s*<RegionalDestinationRoutes \/>/,
   );
 });

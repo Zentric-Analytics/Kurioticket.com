@@ -111,6 +111,7 @@ enum FeatureFlagScope {
 }
 
 enum FeatureFlagEnvironment {
+  LEGACY
   STAGING
   PRODUCTION
 }

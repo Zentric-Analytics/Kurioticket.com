@@ -4,11 +4,11 @@ Kurioticket's Phase 1 feature controls are a release and operational safety laye
 
 ## Architecture and environments
 
-`src/lib/feature-controls/registry.ts` is the only authoritative registry. It contains exactly nine registered keys, metadata, and independent STAGING/PRODUCTION defaults. Database rows are state overrides and cannot define executable controls. Unknown legacy rows remain stored but are ignored.
+`src/lib/feature-controls/registry.ts` is the only authoritative registry. It contains exactly nine registered keys, metadata, and independent STAGING/PRODUCTION defaults. Each deployment and its separate database owns only its trusted runtime environment: staging reads and edits STAGING; production reads and edits PRODUCTION. Remote-environment rows are never displayed or mutated. Database rows are state overrides and cannot define executable controls. Unknown legacy rows remain stored but are ignored.
 
 Runtime environment resolution reuses `stagingSafety`: the canonical staging configuration reads STAGING and every other runtime reads PRODUCTION. A public availability endpoint chooses the runtime environment server-side and returns only the six user-facing booleans; clients cannot select another environment.
 
-The migration maps every legacy row to PRODUCTION because the old model represented the live, environment-less application. It then idempotently creates missing registered rows for both environments with defaults ON. `ON CONFLICT DO NOTHING` preserves administrator choices on later deployments.
+SQL cannot safely infer which Render deployment/database is applying a migration, so the migration marks old rows `LEGACY` and creates no environment rows. On first use, an advisory-locked, environment-aware bootstrap claims legacy rows for the trusted runtime environment and upserts only missing registered rows for that same environment. Empty updates and idempotent upserts preserve administrator state on every later deployment. Thus a staging legacy value remains staging state and a production legacy value remains production state, without ghost remote controls.
 
 ## Evaluation and caching
 
@@ -16,7 +16,7 @@ The central service uses a process-local, environment-and-key cache with a 10-se
 
 ## Authorization and audit
 
-All mutations use the existing authenticated, ACTIVE, verified, configured ADMIN check. STAGING is available to those admins. PRODUCTION additionally requires the normalized address to appear explicitly in `FEATURE_CONTROL_PRODUCTION_ADMINS`; an empty/invalid list fails closed and wildcards are rejected. Production requires a trimmed reason of at most 500 characters.
+All mutations use the existing authenticated, ACTIVE, verified, configured ADMIN check. The API rejects any client-supplied environment field and derives ownership from the server runtime. STAGING is available to those admins. PRODUCTION additionally requires the normalized address to appear explicitly in `FEATURE_CONTROL_PRODUCTION_ADMINS`; an empty/invalid list fails closed and wildcards are rejected. Production requires a trimmed reason of at most 500 characters.
 
 The registered key and environment schemas prevent IDOR-style arbitrary row creation. The server derives actor identity, IP, and user agent. A serializable transaction takes a PostgreSQL advisory transaction lock for the key/environment, reads current state, updates the flag, and creates `FEATURE_CONTROL_UPDATED`. Audit metadata records key, environment, actual previous/next values, reason, category, and risk. Audit failure rolls back the flag. A no-op creates no audit record.
 

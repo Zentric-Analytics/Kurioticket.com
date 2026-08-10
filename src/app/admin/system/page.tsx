@@ -10,7 +10,7 @@ import { FeatureControlsPanel } from "@/components/admin/FeatureControlsPanel";
 export const metadata = { title: "Admin System" };
 
 export default async function AdminSystemPage() {
-  const [system, controls, session] = await Promise.all([
+  const [system, featureControls, session] = await Promise.all([
     getSafeSystemStatus(),
     listFeatureControls(),
     getServerSession(authOptions),
@@ -59,9 +59,9 @@ export default async function AdminSystemPage() {
       </AdminSectionCard>
 
       <AdminSectionCard className="p-5">
-        <h2 className="font-semibold text-slate-950">Feature Controls</h2>
+        <h2 className="font-semibold text-slate-950">Feature Controls — {featureControls.environment}</h2>
         <p className="mt-2 text-sm text-slate-600">Authoritative product availability and operational kill switches. Production changes require explicit controller permission and an audited reason.</p>
-        <div className="mt-5"><FeatureControlsPanel initialControls={controls} canControlProduction={getFeatureControlProductionAdmins().includes(session?.user?.email?.trim().toLowerCase() || "")} /></div>
+        <div className="mt-5"><FeatureControlsPanel initialControls={featureControls.controls} environment={featureControls.environment} canControlProduction={getFeatureControlProductionAdmins().includes(session?.user?.email?.trim().toLowerCase() || "")} /></div>
       </AdminSectionCard>
     </AdminPageShell>
   );

@@ -2,17 +2,26 @@ import { Prisma } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/prisma";
 import { getPublicEnvironment } from "@/lib/stagingSafety";
 import { featureControlKeys, featureControlRegistry, isFeatureControlKey, type FeatureControlEnvironment, type FeatureControlKey } from "./registry";
+import { bootstrapFeatureControls } from "./bootstrap";
 
 const TTL_MS = 10_000;
 const cache = new Map<string, { enabled: boolean; expiresAt: number }>();
 const cacheKey = (key: FeatureControlKey, environment: FeatureControlEnvironment) => `${environment}:${key}`;
 export const getRuntimeFeatureEnvironment = (): FeatureControlEnvironment => getPublicEnvironment() === "staging" ? "STAGING" : "PRODUCTION";
+let bootstrapPromise: Promise<void> | undefined;
+async function ensureInitialized() {
+  bootstrapPromise ??= bootstrapFeatureControls(getPrisma(), getRuntimeFeatureEnvironment()).catch((error) => { bootstrapPromise = undefined; throw error; });
+  return bootstrapPromise;
+}
 
 export class UnknownFeatureControlError extends Error { constructor() { super("Unknown feature control."); this.name = "UnknownFeatureControlError"; } }
 export function resetFeatureControlCache() { cache.clear(); }
 export function invalidateFeatureControl(key: FeatureControlKey, environment: FeatureControlEnvironment) { cache.delete(cacheKey(key, environment)); }
 
-export async function isFeatureEnabled(key: FeatureControlKey, environment = getRuntimeFeatureEnvironment()): Promise<boolean> {
+export async function isFeatureEnabled(key: FeatureControlKey): Promise<boolean> {
+  return isFeatureEnabledInEnvironment(key, getRuntimeFeatureEnvironment());
+}
+export async function isFeatureEnabledInEnvironment(key: FeatureControlKey, environment: FeatureControlEnvironment): Promise<boolean> {
   if (!isFeatureControlKey(key)) throw new UnknownFeatureControlError();
   const id = cacheKey(key, environment);
   const hit = cache.get(id);
@@ -20,6 +29,7 @@ export async function isFeatureEnabled(key: FeatureControlKey, environment = get
   const definition = featureControlRegistry[key];
   const fallback = environment === "STAGING" ? definition.defaultStaging : definition.defaultProduction;
   try {
+    await ensureInitialized();
     const row = await getPrisma().featureFlag.findUnique({ where: { key_environment: { key, environment } }, select: { enabled: true } });
     const enabled = row?.enabled ?? fallback;
     cache.set(id, { enabled, expiresAt: Date.now() + TTL_MS });
@@ -32,18 +42,15 @@ export async function isFeatureEnabled(key: FeatureControlKey, environment = get
 }
 
 export async function listFeatureControls() {
-  let rows: Array<{ id: string; key: string; environment: FeatureControlEnvironment; enabled: boolean; updatedAt: Date }> = [];
-  try { rows = await getPrisma().featureFlag.findMany({ where: { key: { in: [...featureControlKeys] } }, select: { id: true, key: true, environment: true, enabled: true, updatedAt: true } }); } catch { /* defaults make the read-only UI safe */ }
-  return featureControlKeys.map((key) => ({ key, ...featureControlRegistry[key], states: Object.fromEntries((["STAGING", "PRODUCTION"] as const).map((environment) => {
-    const row = rows.find((candidate) => candidate.key === key && candidate.environment === environment);
-    return [environment, { enabled: row?.enabled ?? (environment === "STAGING" ? featureControlRegistry[key].defaultStaging : featureControlRegistry[key].defaultProduction), updatedAt: row?.updatedAt?.toISOString() ?? null }];
-  })) as Record<FeatureControlEnvironment, { enabled: boolean; updatedAt: string | null }> }));
+  const environment = getRuntimeFeatureEnvironment();
+  let rows: Array<{ id: string; key: string; enabled: boolean; updatedAt: Date }> = [];
+  try { await ensureInitialized(); rows = await getPrisma().featureFlag.findMany({ where: { environment, key: { in: [...featureControlKeys] } }, select: { id: true, key: true, enabled: true, updatedAt: true } }); } catch { /* defaults make the read-only UI safe */ }
+  return { environment, controls: featureControlKeys.map((key) => { const row = rows.find((candidate) => candidate.key === key); return { key, ...featureControlRegistry[key], state: { enabled: row?.enabled ?? (environment === "STAGING" ? featureControlRegistry[key].defaultStaging : featureControlRegistry[key].defaultProduction), updatedAt: row?.updatedAt?.toISOString() ?? null } }; }) };
 }
 
 export async function getPublicFeatureAvailability() {
-  const environment = getRuntimeFeatureEnvironment();
   const mapping = { flightSearch: "FLIGHT_SEARCH_ENABLED", hotelSearch: "HOTEL_SEARCH_ENABLED", carSearch: "CAR_SEARCH_ENABLED", deals: "DEALS_ENABLED", priceAlerts: "PRICE_ALERTS_ENABLED", routeWatch: "ROUTE_WATCH_ENABLED" } as const;
-  return Object.fromEntries(await Promise.all(Object.entries(mapping).map(async ([name, key]) => [name, await isFeatureEnabled(key, environment)]))) as Record<keyof typeof mapping, boolean>;
+  return Object.fromEntries(await Promise.all(Object.entries(mapping).map(async ([name, key]) => [name, await isFeatureEnabled(key)]))) as Record<keyof typeof mapping, boolean>;
 }
 
 export type FeatureMutationActor = { id: string; email: string; ipAddress?: string; userAgent?: string };

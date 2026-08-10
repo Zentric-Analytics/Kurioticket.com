@@ -20,6 +20,8 @@ import { HomepageDealPromos } from "../home/HomepageDealPromos";
 import { RegionalDestinationRoutes } from "../home/RegionalDestinationRoutes";
 import { HomepageAdventureDiscovery } from "../home/HomepageAdventureDiscovery";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
+import { useFeatureAvailability } from "../availability/FeatureAvailability";
+import { UnavailableNotice } from "./FlowPrimitives";
 
 const homeHeroSource = {
   uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
@@ -126,6 +128,8 @@ const products: {
 export function SharedHomePage() {
   const ft = useFlowTheme();
   const insets = useSafeAreaInsets();
+  const { availability } = useFeatureAvailability();
+  const visibleProducts = products.filter((product) => product.route !== "/deals" || availability.deals);
 
   return (
     <View style={ft.styles.safe}>
@@ -140,7 +144,7 @@ export function SharedHomePage() {
           <HomeHero />
         </View>
         <View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>
-          {products.map((product, index) => (
+          {visibleProducts.map((product, index) => (
             <Pressable
               key={product.label}
               accessibilityRole="button"
@@ -167,7 +171,7 @@ export function SharedHomePage() {
             </Pressable>
           ))}
         </View>
-        <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
+        {availability.flightSearch ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker /> : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />}
         <PopularDestinationStays />
         <HomepageAdventureDiscovery />
         <HomepageDealPromos />
