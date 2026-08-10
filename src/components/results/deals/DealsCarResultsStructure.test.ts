@@ -6,6 +6,7 @@ const shell = readFileSync("src/components/results/deals/DealsJourneyShell.tsx",
 const stage = readFileSync("src/components/results/deals/DealsCarResultsStage.tsx", "utf8");
 const carsClient = readFileSync("src/components/results/CarsResultsClient.tsx", "utf8");
 const card = readFileSync("src/components/results/CarResultCard.tsx", "utf8");
+const translations = readFileSync("src/lib/i18n/en.ts", "utf8");
 
 test("guided Car results use the shared Cars results experience inside the journey shell", () => {
   assert.match(carsClient, /export function CarsResultsExperience/);
@@ -39,6 +40,35 @@ test("guided lifecycle source contract excludes filter and sort from request dep
   assert.doesNotMatch(stage, /selectedCarFilters|setSort\(/);
   assert.match(carsClient, /setSelectedCarFilters/);
   assert.match(carsClient, /setSort\(option.value\)/);
+});
+
+test("guided Car results use the shared dynamic result count and shortened action", () => {
+  assert.doesNotMatch(stage, /const heading = t\("deals\.guided\.carResults\.title"\)/);
+  assert.doesNotMatch(stage, /resultHeading=\{heading\}/);
+  assert.match(stage, /resultHeadingId="guided-car-results-heading"/);
+  assert.match(stage, /resultHeadingRef=\{resultsHeadingRef\}/);
+  assert.match(stage, /embedded/);
+  assert.match(
+    stage,
+    /actionLabel=\{t\("deals\.guided\.carResults\.actionLabel"\)\}/,
+  );
+  assert.match(carsClient, /visibleResults\.length === 1/);
+  assert.match(carsClient, /"resultFound"/);
+  assert.match(carsClient, /"resultsFound"/);
+  assert.match(carsClient, /Intl\.NumberFormat/);
+  assert.match(carsClient, /format\(visibleResults\.length\)/);
+  assert.match(
+    translations,
+    /"deals\.guided\.carResults\.actionLabel": "View car"/,
+  );
+  assert.match(
+    translations,
+    /"deals\.guided\.carResults\.actionAriaLabel":\s*"View details for \{model\} from \{company\}"/,
+  );
+  assert.match(
+    translations,
+    /"deals\.guided\.carResults\.title": "Available cars for your trip"/,
+  );
 });
 
 
