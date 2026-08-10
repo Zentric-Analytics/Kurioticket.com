@@ -4710,8 +4710,7 @@ export const translations: TranslationDictionary = {
     "Your selected hotel is ready for review.",
   "deals.guided.hotelDetails.pendingBody":
     "Hotel details and available room options will appear on this step.",
-  "deals.guided.hotelDetails.continueFlights":
-    "Choose this room and continue to flights",
+  "deals.guided.hotelDetails.continueFlights": "Choose this room",
   "deals.guided.hotelDetails.continueCars":
     "Choose this room and continue to cars",
   "deals.guided.hotelDetails.roomUnavailable":
