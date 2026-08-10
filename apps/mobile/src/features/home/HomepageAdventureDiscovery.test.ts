@@ -44,6 +44,14 @@ test("only fresh, exact-route, provider-backed fares can be displayed", () => {
   assert.doesNotMatch(section, /priceFromUsd/);
 });
 
+test("every discovery card shows From while only valid fares show an amount", () => {
+  assert.match(section, /<View style=\{styles\.fare\}><Text[^>]*>From<\/Text>\{formattedFare \? <Text[^>]*>\{formattedFare\}<\/Text> : null\}<\/View>/);
+  assert.doesNotMatch(section, /formattedFare \? <View style=\{styles\.fare\}>/);
+  assert.match(section, /fare \? new Intl\.NumberFormat\("en", \{ style: "currency", currency: fare\.currency, maximumFractionDigits: 0 \}\)\.format\(fare\.price\) : undefined/);
+  assert.doesNotMatch(section, />\s*(?:\$0|N\/A|--|Unavailable)\s*</i);
+  assert.match(section, /accessibilityLabel=\{`\$\{item\.title\}\. \$\{item\.originCode\} to \$\{item\.destinationCode\}\.\$\{formattedFare \? ` From \$\{formattedFare\}\.` : ""\}`\}/);
+});
+
 test("cards form two independent responsive horizontal rows with safe image fallback", () => {
   assert.match(section, /Math\.min\(210, Math\.max\(170, width \* 0\.44\)\)/);
   assert.doesNotMatch(section, /flexWrap|homepage-adventure-grid/);

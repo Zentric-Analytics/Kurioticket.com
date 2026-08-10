@@ -90,7 +90,7 @@ function AdventureCard({ item, width, fare, imageFailed, saved, onImageError, on
         <Text numberOfLines={2} style={[styles.title, { color: ft.colors.textPrimary }]}>{item.title}</Text>
         <Text style={[styles.route, { color: ft.colors.textPrimary }]}>{item.originCode} → {item.destinationCode}</Text>
         <Text numberOfLines={2} style={[styles.meta, { color: ft.colors.textSecondary }]}>ONE WAY · ECONOMY · 1 TRAVELER</Text>
-        {formattedFare ? <View style={styles.fare}><Text style={[styles.from, { color: ft.colors.textSecondary }]}>From</Text><Text style={[styles.price, { color: ft.colors.textPrimary }]}>{formattedFare}</Text></View> : null}
+        <View style={styles.fare}><Text style={[styles.from, { color: ft.colors.textSecondary }]}>From</Text>{formattedFare ? <Text style={[styles.price, { color: ft.colors.textPrimary }]}>{formattedFare}</Text> : null}</View>
       </View>
     </Pressable>
   );
