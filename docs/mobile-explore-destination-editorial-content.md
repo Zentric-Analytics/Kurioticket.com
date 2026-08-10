@@ -160,6 +160,21 @@ The four READY destinations—Algiers, Casablanca, Sharm El Sheikh and Tunis—w
 
 Featured membership and ordering remain independent from editorial completeness. Africa Batch 2 changes no images, ExploreScreen or DestinationDetailsScreen UI, maps, search, flight or hotel behaviour, and it adds no related destinations; related-destination work remains deferred.
 
+Africa Batch 3, verified on 2026-08-10, adds this Southern Africa grouping of six previously non-editorial canonical destinations:
+
+1. `za-durban` — Durban
+2. `bw-gaborone` — Gaborone
+3. `zw-harare` — Harare
+4. `zm-lusaka` — Lusaka
+5. `mz-maputo` — Maputo
+6. `na-windhoek` — Windhoek
+
+The grouping keeps each record at city scale: Durban and Maputo retain their distinct Indian Ocean and port-city settings, while Gaborone, Harare, Lusaka and Windhoek are grounded in their own civic, museum, landscape and urban-history contexts rather than country-wide safari or nature material. Sources were checked against official tourism, government, municipal, museum, archive and cultural-institution material.
+
+After Africa Batch 3, cumulative African coverage is 28 of 54 canonical destinations, leaving 26 without editorial content. Africa Batches 1 and 2 remain intact, Khartoum and Tripoli continue to be deferred as canonical destinations without editorial content, and Europe remains complete at 52 of 52 destinations.
+
+Africa Batch 3 includes no image, ExploreScreen or DestinationDetailsScreen UI, map, search, flight, hotel or related-destination work. Featured membership and ordering remain unchanged and independent from editorial completeness.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
