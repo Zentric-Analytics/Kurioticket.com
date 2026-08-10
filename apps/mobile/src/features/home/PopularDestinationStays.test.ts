@@ -25,7 +25,7 @@ test("uses one unsynchronised horizontal rail without a grid or wrapping", () =>
   );
 });
 
-test("matches the mobile-web portrait card and independent interaction structure", () => {
+test("matches the mobile-web portrait card geometry", () => {
   assert.match(section, /cardWidth: 276/);
   assert.match(section, /imageHeight: 288/);
   assert.match(section, /ctaHeight: 72/);
@@ -37,9 +37,39 @@ test("matches the mobile-web portrait card and independent interaction structure
   );
   assert.match(section, /style=\{styles\.ctaSection\}/);
   assert.match(section, /height: CTA_HEIGHT/);
-  assert.match(section, /event\.stopPropagation\(\)/);
   assert.match(section, /<Pressable[\s\S]*Explore stays/);
-  assert.doesNotMatch(section, /<Pressable\s+key=\{destination\.id\}/);
+});
+
+test("makes the complete card an accessible destination control", () => {
+  assert.match(
+    section,
+    /<Pressable\s+key=\{destination\.id\}[\s\S]*testID=\{`popular-stay-card-\$\{destination\.id\}`\}[\s\S]*accessibilityRole="button"[\s\S]*accessibilityLabel=\{`Explore stays in \$\{destination\.city\}, \$\{destination\.country\}`\}[\s\S]*router\.push\(popularDestinationStayNavigation\(destination\)\)/,
+  );
+  assert.match(
+    section,
+    /style=\{\(\{ pressed \}\) => \[[\s\S]*styles\.card[\s\S]*width: cardWidth, height: imageHeight \+ CTA_HEIGHT[\s\S]*pressed && styles\.cardPressed/,
+  );
+  assert.match(section, /cardPressed: \{ opacity: 0\.96 \}/);
+
+  const cardStart = section.indexOf("<Pressable\n              key={destination.id}");
+  const cardEnd = section.indexOf(
+    "</Pressable>",
+    section.indexOf("</Pressable>", cardStart) + 1,
+  );
+  const image = section.indexOf("testID={`popular-stay-image-", cardStart);
+  const footer = section.indexOf("testID={`popular-stay-cta-", cardStart);
+  assert.ok(cardStart >= 0 && image > cardStart && footer > image && cardEnd > footer);
+});
+
+test("keeps nested actions independent from card navigation", () => {
+  assert.match(
+    section,
+    /<AndroidFavoriteButton[\s\S]*onPress=\{\(event\) => \{\s*event\.stopPropagation\(\);\s*toggle\(destination\.id\);/,
+  );
+  assert.match(
+    section,
+    /<Pressable[\s\S]*onPress=\{\(event\) => \{\s*event\.stopPropagation\(\);\s*router\.push\(popularDestinationStayNavigation\(destination\)\);\s*\}\}[\s\S]*styles\.ctaPill/,
+  );
 });
 
 test("uses the shared Android favorite button and existing saved state", () => {
