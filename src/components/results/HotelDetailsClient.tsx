@@ -408,6 +408,12 @@ export function HotelDetailsClient({
   const reviewCountText = reviewCount !== null ? (reviewCount === 1 ? t("hotelResults.review.single") || "{{count}} review" : t("hotelResults.review.multiple") || "{{count}} reviews").replace("{{count}}", new Intl.NumberFormat(locale).format(reviewCount)) : "";
   const taxesText = hotel.taxesAndFeesIncluded === true ? t("hotelResults.taxesFeesIncluded") : hotel.taxesAndFeesIncluded === false ? t("hotelResults.taxesFeesNotIncluded") : "";
   const providerEnabled = canUseHotelDetailsProviderLink(hotel);
+  const providerText =
+    hotel.provider &&
+    hotel.dataSource !== "demo" &&
+    hotel.provider !== "Kurioticket static catalogue"
+      ? `${t("providedBy")} ${hotel.provider}`
+      : "";
   const providerUnavailableText = hotel.provider === "Kurioticket static catalogue"
     ? "Prices shown are estimated for trip planning. Live booking availability will be introduced before launch."
     : hotel.dataSource === "demo"
@@ -616,7 +622,7 @@ export function HotelDetailsClient({
             providerPriceLabel={
               t("hotelDetails.providerPrice") || "Provider price"
             }
-            providerText={hotel.provider && hotel.dataSource !== "demo" ? `${t("providedBy")} ${hotel.provider}` : ""}
+            providerText={providerText}
             providerUnavailableText={mode === "guided" ? "" : providerUnavailableText}
             redirectError={redirectError}
             providerEnabled={providerEnabled}

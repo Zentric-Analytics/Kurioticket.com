@@ -238,3 +238,36 @@ test("retains every booking prop at the Hotel Details integration boundary", () 
   ])
     assert.ok(bookingCall.includes(contract), contract);
 });
+
+test("hides only the internal static catalogue provider label", () => {
+  const providerDisplay = clientSource.slice(
+    clientSource.indexOf("const providerText ="),
+    clientSource.indexOf("const providerUnavailableText ="),
+  );
+
+  assert.match(providerDisplay, /hotel\.provider/);
+  assert.match(providerDisplay, /hotel\.dataSource !== "demo"/);
+  assert.match(
+    providerDisplay,
+    /hotel\.provider !== "Kurioticket static catalogue"/,
+  );
+  assert.match(
+    providerDisplay,
+    /`\$\{t\("providedBy"\)\} \$\{hotel\.provider\}`/,
+  );
+  assert.match(providerDisplay, /:\s*"";/);
+  assert.match(clientSource, /providerText=\{providerText\}/);
+  assert.match(bookingSource, /providerText: string;/);
+  assert.match(bookingSource, /\{providerText \? \(/);
+});
+
+test("keeps the static catalogue estimated-price planning warning", () => {
+  assert.match(
+    clientSource,
+    /const providerUnavailableText = hotel\.provider === "Kurioticket static catalogue"\s*\? "Prices shown are estimated for trip planning\. Live booking availability will be introduced before launch\."/,
+  );
+  assert.match(
+    clientSource,
+    /providerUnavailableText=\{mode === "guided" \? "" : providerUnavailableText\}/,
+  );
+});
