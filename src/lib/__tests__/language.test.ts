@@ -755,7 +755,7 @@ test("Vietnamese service and support active render path copy resolves without En
   }
 
   for (const key of [
-    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedRecentAnswer", "supportFaqRedirectAnswer",
     "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
     "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
     "serviceGuaranteeFaqEncounterIssueAnswer", "serviceGuaranteeFaqContactSupportAnswer",
@@ -1836,7 +1836,7 @@ test("Indonesian service and support active render path copy resolves without En
     supportFaqHeading: "Pertanyaan yang sering diajukan",
     supportFaqAccountQuestion: "Bantuan akun dan masuk",
     supportFaqSearchQuestion: "Bantuan pencarian dan hasil",
-    supportFaqSavedTripsQuestion: "Perjalanan tersimpan dan peringatan",
+    supportFaqSavedRecentQuestion: "Perjalanan tersimpan dan peringatan",
     supportFaqRedirectQuestion: "Bantuan pemesanan/pengalihan penyedia",
     supportFaqAlreadyBookedQuestion: "Sudah memesan dengan penyedia?",
     supportFaqChangeBookingQuestion: "Bisakah Kurioticket mengubah pemesanan saya?",
@@ -1910,7 +1910,7 @@ test("Indonesian service and support active render path copy resolves without En
   }
 
   const hiddenAnswerKeys = [
-    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedRecentAnswer", "supportFaqRedirectAnswer",
     "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
     "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
     "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
@@ -4193,8 +4193,8 @@ test("Turkish lower homepage FAQ and newsletter copy do not fall back to English
     supportFaqSearchQuestion: "Arama ve sonuçlar yardımı",
     supportFaqSearchAnswer:
       "Kurioticket; uçuş veya otel araması çalışmadığında, sonuçlar yüklenmediğinde, filtreler kafa karıştırdığında ya da fiyatlar ve sağlayıcılar beklendiği gibi görünmediğinde yardımcı olabilir.",
-    supportFaqSavedTripsQuestion: "Kaydedilen seyahatler ve uyarılar",
-    supportFaqSavedTripsAnswer:
+    supportFaqSavedRecentQuestion: "Kaydedilen seyahatler ve uyarılar",
+    supportFaqSavedRecentAnswer:
       "Kurioticket kaydedilen seyahatler, son aramalar, fiyat uyarıları, bildirim sorunları ve hesaba bağlı seyahat araçları konusunda yardımcı olabilir.",
     supportFaqRedirectQuestion: "Rezervasyon/sağlayıcı yönlendirme yardımı",
     supportFaqRedirectAnswer:
@@ -6935,7 +6935,7 @@ test("Hindi homepage search support newsletter and footer strings are localized"
     destinations: "गंतव्य",
     supportFaqAccountQuestion: "खाता और साइन-इन सहायता",
     supportFaqSearchQuestion: "खोज और परिणाम सहायता",
-    supportFaqSavedTripsQuestion: "सहेजी गई यात्राएँ और अलर्ट",
+    supportFaqSavedRecentQuestion: "सहेजी गई यात्राएँ और अलर्ट",
     supportFaqRedirectQuestion: "बुकिंग/प्रदाता रीडायरेक्ट सहायता",
     supportFaqAlreadyBookedQuestion: "क्या आपने पहले ही किसी प्रदाता के साथ बुकिंग कर ली है?",
     supportFaqChangeBookingQuestion: "क्या Kurioticket मेरी बुकिंग बदल सकता है?",
@@ -8315,8 +8315,8 @@ test("Turkish service and support page strings are localized", () => {
     supportFaqSearchQuestion: "Arama ve sonuçlar yardımı",
     supportFaqSearchAnswer:
       "Kurioticket; uçuş veya otel araması çalışmadığında, sonuçlar yüklenmediğinde, filtreler kafa karıştırdığında ya da fiyatlar ve sağlayıcılar beklendiği gibi görünmediğinde yardımcı olabilir.",
-    supportFaqSavedTripsQuestion: "Kaydedilen seyahatler ve uyarılar",
-    supportFaqSavedTripsAnswer:
+    supportFaqSavedRecentQuestion: "Kaydedilen seyahatler ve uyarılar",
+    supportFaqSavedRecentAnswer:
       "Kurioticket kaydedilen seyahatler, son aramalar, fiyat uyarıları, bildirim sorunları ve hesaba bağlı seyahat araçları konusunda yardımcı olabilir.",
     supportFaqRedirectQuestion: "Rezervasyon/sağlayıcı yönlendirme yardımı",
     supportFaqRedirectAnswer:
@@ -11790,7 +11790,7 @@ test("Swedish service and support active render path copy resolves without Engli
     supportFaqHeading: "Vanliga frågor",
     supportFaqAccountQuestion: "Hjälp med konto och inloggning",
     supportFaqSearchQuestion: "Hjälp med sökning och resultat",
-    supportFaqSavedTripsQuestion: "Sparade resor och aviseringar",
+    supportFaqSavedRecentQuestion: "Sparade resor och aviseringar",
     supportFaqRedirectQuestion: "Hjälp med boknings- och leverantörsomdirigering",
     supportFaqAlreadyBookedQuestion: "Har du redan bokat hos en leverantör?",
     supportFaqChangeBookingQuestion: "Kan Kurioticket ändra min bokning?",
@@ -11856,7 +11856,7 @@ test("Swedish service and support active render path copy resolves without Engli
   }
 
   const hiddenAnswerKeys = [
-    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedRecentAnswer", "supportFaqRedirectAnswer",
     "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
     "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
     "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
@@ -11912,7 +11912,7 @@ test("Polish service and support active render path copy resolves without Englis
     supportFaqHeading: "Często zadawane pytania",
     supportFaqAccountQuestion: "Pomoc dotycząca konta i logowania",
     supportFaqSearchQuestion: "Pomoc dotycząca wyszukiwania i wyników",
-    supportFaqSavedTripsQuestion: "Zapisane podróże i alerty",
+    supportFaqSavedRecentQuestion: "Zapisane podróże i alerty",
     supportFaqRedirectQuestion: "Pomoc dotycząca rezerwacji/przekierowania do dostawcy",
     supportFaqAlreadyBookedQuestion: "Masz już rezerwację u dostawcy?",
     supportFaqChangeBookingQuestion: "Czy Kurioticket może zmienić moją rezerwację?",
@@ -11976,7 +11976,7 @@ test("Polish service and support active render path copy resolves without Englis
   const hiddenAnswerKeys = [
     "supportFaqAccountAnswer",
     "supportFaqSearchAnswer",
-    "supportFaqSavedTripsAnswer",
+    "supportFaqSavedRecentAnswer",
     "supportFaqRedirectAnswer",
     "supportFaqAlreadyBookedAnswer",
     "supportFaqChangeBookingAnswer",
@@ -13474,7 +13474,7 @@ test("Thai homepage visible copy and render paths resolve without English fallba
     faqQuestionManageChanges: "ฉันจะจัดการการเปลี่ยนแปลงหรือการยกเลิกได้ที่ไหน?",
     supportFaqAccountQuestion: "ความช่วยเหลือเกี่ยวกับบัญชีและการเข้าสู่ระบบ",
     supportFaqSearchQuestion: "ความช่วยเหลือเกี่ยวกับการค้นหาและผลลัพธ์",
-    supportFaqSavedTripsQuestion: "ทริปที่บันทึกไว้และการแจ้งเตือน",
+    supportFaqSavedRecentQuestion: "ทริปที่บันทึกไว้และการแจ้งเตือน",
     supportFaqRedirectQuestion: "ความช่วยเหลือเกี่ยวกับการจอง/การเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
     supportFaqAlreadyBookedQuestion: "จองกับผู้ให้บริการแล้วใช่ไหม?",
     supportFaqChangeBookingQuestion: "Kurioticket สามารถเปลี่ยนแปลงการจองของฉันได้หรือไม่?",
@@ -13649,7 +13649,7 @@ test("Thai support, service guarantee, and more service pages resolve localized 
   }
 
   const localizedAnswerKeys = [
-    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedRecentAnswer", "supportFaqRedirectAnswer",
     "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
     "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
     "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
@@ -13753,8 +13753,8 @@ test("Indonesian homepage visible copy and render paths resolve without English 
     supportFaqSearchQuestion: "Bantuan pencarian dan hasil",
     supportFaqSearchAnswer:
       "Kurioticket dapat membantu saat pencarian penerbangan atau hotel tidak berfungsi, hasil tidak dimuat, filter membingungkan, atau harga dan penyedia tidak tampil seperti yang diharapkan.",
-    supportFaqSavedTripsQuestion: "Perjalanan tersimpan dan peringatan",
-    supportFaqSavedTripsAnswer:
+    supportFaqSavedRecentQuestion: "Perjalanan tersimpan dan peringatan",
+    supportFaqSavedRecentAnswer:
       "Kurioticket dapat membantu dengan perjalanan tersimpan, pencarian terbaru, peringatan harga, masalah notifikasi, dan alat perjalanan yang terhubung ke akun.",
     supportFaqRedirectQuestion: "Bantuan pemesanan/pengalihan penyedia",
     supportFaqRedirectAnswer:

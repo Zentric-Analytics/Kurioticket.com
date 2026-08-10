@@ -3013,8 +3013,8 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "Ajuda com pesquisa e resultados",
   supportFaqSearchAnswer:
     "O Kurioticket pode ajudar quando a pesquisa de voos ou hotéis não funciona, os resultados não carregam, os filtros estão confusos ou os preços e provedores não aparecem como esperado.",
-  supportFaqSavedTripsQuestion: "Viagens salvas e alertas",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "Viagens salvas e alertas",
+  supportFaqSavedRecentAnswer:
     "O Kurioticket pode ajudar com viagens salvas, pesquisas recentes, alertas de preço, problemas de notificação e ferramentas de viagem vinculadas à conta.",
   supportFaqRedirectQuestion:
     "Ajuda com reserva e redirecionamento para provedor",

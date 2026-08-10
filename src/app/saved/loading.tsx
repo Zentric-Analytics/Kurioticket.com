@@ -13,7 +13,7 @@ export default function SavedLoading() {
         role="status"
         aria-live="polite"
       >
-        <LocalizedLoadingLabel labelKey="loadingSavedTripsAndRecentSearches" className="sr-only" />
+        <LocalizedLoadingLabel labelKey="loadingSavedAndRecent" className="sr-only" />
         <section className="page-shell space-y-8" aria-hidden="true">
           <div className="rounded-3xl border border-[#004BB8]/10 bg-white/90 p-6 shadow-[0_18px_55px_-34px_rgba(2,28,43,0.28)] md:p-8">
             <div className="h-4 w-36 animate-pulse rounded-full bg-[#5CB6B2]/20 motion-reduce:animate-none" />

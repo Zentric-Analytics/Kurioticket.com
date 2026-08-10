@@ -3,8 +3,8 @@ import test from "node:test";
 
 import {
   buildHomepageRecommendationOrder,
-  getSavedTripHomepageDestinationCodes,
-  reorderHomepageCardsBySavedTripDestinations,
+  getSavedItemHomepageDestinationCodes,
+  reorderHomepageCardsBySavedItemDestinations,
 } from "@/lib/recommendations/homepagePersonalization";
 
 const cards = [
@@ -15,7 +15,7 @@ const cards = [
 ];
 
 test("preference ON style ordering promotes saved trip destination matches", () => {
-  const actual = reorderHomepageCardsBySavedTripDestinations(
+  const actual = reorderHomepageCardsBySavedItemDestinations(
     cards,
     ["NRT"],
     (card) => card.code,
@@ -25,7 +25,7 @@ test("preference ON style ordering promotes saved trip destination matches", () 
 });
 
 test("preference OFF and signed-out users pass no signals and keep generic order", () => {
-  const actual = reorderHomepageCardsBySavedTripDestinations(
+  const actual = reorderHomepageCardsBySavedItemDestinations(
     cards,
     [],
     (card) => card.code,
@@ -34,15 +34,15 @@ test("preference OFF and signed-out users pass no signals and keep generic order
   assert.deepEqual(actual, cards);
 });
 
-test("no Saved Trips and generic fallback keep homepage order unchanged", () => {
-  const signals = getSavedTripHomepageDestinationCodes([]);
-  const actual = reorderHomepageCardsBySavedTripDestinations(cards, signals, (card) => card.code);
+test("no Saved items and generic fallback keep homepage order unchanged", () => {
+  const signals = getSavedItemHomepageDestinationCodes([]);
+  const actual = reorderHomepageCardsBySavedItemDestinations(cards, signals, (card) => card.code);
 
   assert.deepEqual(actual.map((card) => card.id), cards.map((card) => card.id));
 });
 
-test("malformed Saved Trips are ignored", () => {
-  const signals = getSavedTripHomepageDestinationCodes([
+test("malformed Saved items are ignored", () => {
+  const signals = getSavedItemHomepageDestinationCodes([
     { destination: "" },
     { destination: "New York" },
     { destination: null, linkedSearchDestination: "?" },
@@ -52,23 +52,23 @@ test("malformed Saved Trips are ignored", () => {
 });
 
 test("Saved Trip destinations outrank linked Saved Search destinations", () => {
-  const signals = getSavedTripHomepageDestinationCodes([
+  const signals = getSavedItemHomepageDestinationCodes([
     { destination: "CDG", linkedSearchDestination: "LIS" },
     { destination: null, linkedSearchDestination: "NRT" },
   ]);
-  const actual = reorderHomepageCardsBySavedTripDestinations(cards, signals, (card) => card.code);
+  const actual = reorderHomepageCardsBySavedItemDestinations(cards, signals, (card) => card.code);
 
   assert.deepEqual(signals, ["CDG", "LIS", "NRT"]);
   assert.deepEqual(actual.map((card) => card.id), ["paris", "lis", "tokyo", "nyc"]);
 });
 
 test("duplicate destinations are deduplicated and homepage cards are not duplicated", () => {
-  const signals = getSavedTripHomepageDestinationCodes([
+  const signals = getSavedItemHomepageDestinationCodes([
     { destination: "lis" },
     { destination: "LIS", linkedSearchDestination: "NRT" },
     { destination: null, linkedSearchDestination: "NRT" },
   ]);
-  const actual = reorderHomepageCardsBySavedTripDestinations(cards, signals, (card) => card.code);
+  const actual = reorderHomepageCardsBySavedItemDestinations(cards, signals, (card) => card.code);
 
   assert.deepEqual(signals, ["LIS", "NRT"]);
   assert.deepEqual(actual.map((card) => card.id), ["lis", "tokyo", "nyc", "paris"]);
@@ -83,12 +83,12 @@ test("deterministic stable ordering preserves relative order inside priority gro
     { id: "tokyo", code: "NRT" },
   ];
 
-  const first = reorderHomepageCardsBySavedTripDestinations(
+  const first = reorderHomepageCardsBySavedItemDestinations(
     duplicateDestinationCards,
     ["LIS"],
     (card) => card.code,
   );
-  const second = reorderHomepageCardsBySavedTripDestinations(
+  const second = reorderHomepageCardsBySavedItemDestinations(
     duplicateDestinationCards,
     ["LIS"],
     (card) => card.code,

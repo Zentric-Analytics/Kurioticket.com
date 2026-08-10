@@ -49,7 +49,7 @@ export async function listFeatureControls() {
 }
 
 export async function getPublicFeatureAvailability() {
-  const mapping = { flightSearch: "FLIGHT_SEARCH_ENABLED", hotelSearch: "HOTEL_SEARCH_ENABLED", carSearch: "CAR_SEARCH_ENABLED", deals: "DEALS_ENABLED", priceAlerts: "PRICE_ALERTS_ENABLED", routeWatch: "ROUTE_WATCH_ENABLED" } as const;
+  const mapping = { flightSearch: "FLIGHT_SEARCH_ENABLED", hotelSearch: "HOTEL_SEARCH_ENABLED", carSearch: "CAR_SEARCH_ENABLED", deals: "DEALS_ENABLED", priceAlerts: "PRICE_ALERTS_ENABLED" } as const;
   return Object.fromEntries(await Promise.all(Object.entries(mapping).map(async ([name, key]) => [name, await isFeatureEnabled(key)]))) as Record<keyof typeof mapping, boolean>;
 }
 

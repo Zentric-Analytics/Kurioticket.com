@@ -28,6 +28,10 @@ type PriceAlertRecord = {
   origin: string | null;
   destination: string;
   targetPrice: { toString(): string } | number | string | null;
+  mode: "AUTOMATIC" | "TARGET";
+  baselinePrice: { toString(): string } | number | string | null;
+  lastNotifiedPrice: { toString(): string } | number | string | null;
+  lastNotifiedAt: Date | null;
   currency: string;
   status: "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED" | "DELETED";
   query: unknown;
@@ -119,11 +123,14 @@ export async function processDuePriceAlerts(options: {
     try {
       const resolved = await resolvePrice(alert);
       const targetPrice = toFiniteNumber(alert.targetPrice);
-      if (targetPrice === null) {
-        await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs));
+      const baseline = toFiniteNumber(alert.lastNotifiedPrice) ?? toFiniteNumber(alert.baselinePrice);
+      const isAutomatic = alert.mode === "AUTOMATIC";
+      if (isAutomatic && baseline === null) {
+        await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs), { baselinePrice: resolved.price });
         counts.notTriggered += 1;
         continue;
       }
+      const automaticDrop = isAutomatic && baseline !== null && (baseline - resolved.price >= 25 || (baseline - resolved.price) / baseline >= 0.15);
 
       if (resolved.currency.toUpperCase() !== alert.currency.toUpperCase()) {
         await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs));
@@ -132,19 +139,19 @@ export async function processDuePriceAlerts(options: {
         continue;
       }
 
-      if (resolved.price > targetPrice) {
+      if ((!isAutomatic && (targetPrice === null || resolved.price > targetPrice)) || (isAutomatic && !automaticDrop)) {
         await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs));
         counts.notTriggered += 1;
         continue;
       }
 
       const route = alert.type === "FLIGHT" && alert.origin ? `${alert.origin} to ${alert.destination}` : alert.destination;
-      const eventKey = buildPriceAlertIdempotencyKey(alert);
+      const eventKey = isAutomatic ? `price-alert:${alert.id}:automatic:${resolved.currency}:${resolved.price.toFixed(2)}` : buildPriceAlertIdempotencyKey(alert);
       const event = await db.$transaction(async (tx) => {
-        const triggered = await tx.priceAlert.updateMany({ where: { id: alert.id, status: "ACTIVE", nextCheckAt: alert.nextCheckAt }, data: { status: "TRIGGERED", lastSeenPrice: resolved.price, lastCheckedAt: now, nextCheckAt: null } });
+        const triggered = await tx.priceAlert.updateMany({ where: { id: alert.id, status: "ACTIVE", nextCheckAt: alert.nextCheckAt }, data: isAutomatic ? { lastSeenPrice: resolved.price, lastNotifiedPrice: resolved.price, lastNotifiedAt: now, lastCheckedAt: now, nextCheckAt: new Date(now.getTime() + checkDelayMs), consecutiveFailures: 0, lastErrorCode: null } : { status: "TRIGGERED", lastSeenPrice: resolved.price, lastCheckedAt: now, nextCheckAt: null } });
         if (triggered.count === 0) return null;
         await tx.priceSnapshot.create({ data: { priceAlertId: alert.id, provider: resolved.provider, price: resolved.price, currency: resolved.currency, payload: resolved.payload ?? {} } });
-        return persistCanonicalNotificationEvent({ userId: alert.userId, eventKey, type: "PRICE_ALERT", title: `Price target reached for ${route}`, body: `${formatPrice(resolved.price, resolved.currency)} is at or below your target.`, actionPath: "/price-alerts", metadata: { alertId: alert.id, currentPrice: resolved.price, currency: resolved.currency } }, tx);
+        return persistCanonicalNotificationEvent({ userId: alert.userId, eventKey, type: "PRICE_ALERT", title: isAutomatic ? `Price drop detected for ${route}` : `Price target reached for ${route}`, body: isAutomatic ? `${formatPrice(resolved.price, resolved.currency)} is meaningfully lower than the tracked price.` : `${formatPrice(resolved.price, resolved.currency)} is at or below your target.`, actionPath: "/price-alerts", metadata: { alertId: alert.id, mode: alert.mode, currentPrice: resolved.price, currency: resolved.currency } }, tx);
       });
       if (!event) continue;
       if (event.created) counts.eventsCreated += 1;
@@ -200,9 +207,9 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
   return selected;
 }
 
-async function recordSuccessfulCheck(db: PriceAlertDb, alert: PriceAlertRecord, resolved: ResolvedPrice, now: Date, nextCheckAt: Date) {
+async function recordSuccessfulCheck(db: PriceAlertDb, alert: PriceAlertRecord, resolved: ResolvedPrice, now: Date, nextCheckAt: Date, extra: Record<string, unknown> = {}) {
   await db.$transaction(async (tx) => {
-    const updated = await tx.priceAlert.updateMany({ where: { id: alert.id, status: "ACTIVE", nextCheckAt: alert.nextCheckAt }, data: { lastSeenPrice: resolved.price, lastCheckedAt: now, nextCheckAt } });
+    const updated = await tx.priceAlert.updateMany({ where: { id: alert.id, status: "ACTIVE", nextCheckAt: alert.nextCheckAt }, data: { lastSeenPrice: resolved.price, lastProvider: resolved.provider, lastCheckedAt: now, nextCheckAt, consecutiveFailures: 0, lastErrorCode: null, ...extra } });
     if (updated.count > 0) await tx.priceSnapshot.create({ data: { priceAlertId: alert.id, provider: resolved.provider, price: resolved.price, currency: resolved.currency, payload: resolved.payload ?? {} } });
   });
 }

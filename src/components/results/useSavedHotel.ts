@@ -20,7 +20,7 @@ import {
   fetchBackendSavedHotels,
   saveBackendHotel,
   type SavedHotelApiItem,
-} from "@/lib/saved-trips-api";
+} from "@/lib/saved-items-api";
 
 type UseSavedHotelOptions = {
   hotelId: string;

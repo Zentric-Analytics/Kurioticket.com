@@ -214,6 +214,7 @@ const hotelPriceAlertSchema = z.object({
   origin: z.string().trim().max(80).optional(),
   destination: z.string().trim().min(2).max(120),
   targetPrice: z.coerce.number().positive().optional(),
+  mode: z.enum(["AUTOMATIC", "TARGET"]).default("TARGET"),
   currency: z.string().trim().length(3).transform((value) => value.toUpperCase()).default("USD"),
   query: z.record(z.string(), z.unknown()),
 });
@@ -222,12 +223,18 @@ const flightPriceAlertSchema = z.object({
   type: z.literal("FLIGHT"),
   origin: z.string().trim().min(1),
   destination: z.string().trim().min(1),
-  targetPrice: z.coerce.number(),
+  targetPrice: z.coerce.number().positive().optional(),
+  mode: z.enum(["AUTOMATIC", "TARGET"]).default("TARGET"),
   currency: z.string().trim().length(3),
   query: z.record(z.string(), z.unknown()),
 }).transform((value, context) => {
   try {
-    return buildFlightPriceAlertPayload(value);
+    if (value.mode === "TARGET") {
+      if (value.targetPrice === undefined) throw new Error("Target price is required for target alerts.");
+      return { ...buildFlightPriceAlertPayload({ ...value, targetPrice: value.targetPrice }), mode: value.mode };
+    }
+    const targetValidated = buildFlightPriceAlertPayload({ ...value, targetPrice: 1 });
+    return { ...targetValidated, targetPrice: undefined, mode: value.mode };
   } catch (error) {
     context.addIssue({
       code: "custom",

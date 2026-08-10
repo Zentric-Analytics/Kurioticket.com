@@ -3,8 +3,6 @@ import { getPrisma } from "@/lib/prisma";
 export const emailPreferenceDefaults = {
   receiveOptionalEmails: false,
   priceAlerts: false,
-  savedTripReminders: false,
-  routeWatchUpdates: false,
   travelInspiration: false,
   productUpdates: false,
   dealsRecommendations: false,
@@ -23,8 +21,6 @@ export const emailPreferenceKeys = Object.keys(emailPreferenceDefaults) as Array
 export const emailPreferenceLabels = {
   receiveOptionalEmails: "Optional emails",
   priceAlerts: "Price alerts",
-  savedTripReminders: "Saved trip reminders",
-  routeWatchUpdates: "Route watch updates",
   travelInspiration: "Travel inspiration",
   productUpdates: "Product updates",
   dealsRecommendations: "Deals and recommendations",
@@ -32,8 +28,6 @@ export const emailPreferenceLabels = {
 
 export type OptionalEmailCategory =
   | "priceAlerts"
-  | "savedTripReminders"
-  | "routeWatchUpdates"
   | "travelInspiration"
   | "productUpdates"
   | "dealsRecommendations";

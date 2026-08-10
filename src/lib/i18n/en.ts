@@ -405,7 +405,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.emptyDescription":
     "Just click on the heart icon on any trip, route, or stay and you'll save it here for easy reference later.",
   "accountDashboard.saved.explore": "Back",
-  "accountDashboard.saved.openSavedTrips": "Open saved trips",
+  "accountDashboard.saved.openSavedTrips": "Open Saved & Recent",
   "accountDashboard.saved.searchFlights": "Search flights",
   "accountDashboard.saved.searchHotels": "Search hotels",
   "accountSettings.eyebrow": "MY ACCOUNT",
@@ -1330,7 +1330,7 @@ export const translations: TranslationDictionary = {
   savedTripsEmptyDescription:
     "Tap the heart icon on any route to build your personal shortlist and keep your next adventure one click away.",
   savedTripsExploreDestinations: "Explore destinations",
-  savedTripsRemoveSavedTrip: "Remove saved trip",
+  savedTripsRemoveSavedTrip: "Remove saved item",
   savedTripsSavedBadge: "Saved",
   savedTripsSavedRouteBadge: "Saved route",
   savedTripsTrendingBadge: "Trending",
@@ -1459,7 +1459,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.mobileMyAccount.description": "Manage account pages",
   "accountMenu.savedTrips.label": "Saved trips",
   "accountMenu.savedTrips.description": "Shortlisted stays and searches",
-  "accountMenu.priceAlerts.label": "Price alerts",
+  "accountMenu.priceAlerts.label": "Price Alerts",
   "accountMenu.recentSearches.label": "Recent searches",
   "accountMenu.priceAlerts.description": "View saved alerts",
   "accountMenu.accountSettings.label": "Account settings",
@@ -3099,9 +3099,9 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "Search and results help",
   supportFaqSearchAnswer:
     "Kurioticket can help when flight or hotel search is not working, results are not loading, filters are confusing, or prices and providers are not displaying as expected.",
-  supportFaqSavedTripsQuestion: "Saved trips and alerts",
-  supportFaqSavedTripsAnswer:
-    "Kurioticket can help with saved trips, recent searches, price alerts, notification issues, and account-linked travel tools.",
+  supportFaqSavedRecentQuestion: "Saved & Recent and Price Alerts",
+  supportFaqSavedRecentAnswer:
+    "Kurioticket can help with Saved & Recent, Price Alerts, reservation records, notifications, and account-linked travel tools.",
   supportFaqRedirectQuestion: "Booking/provider redirect help",
   supportFaqRedirectAnswer:
     "Kurioticket can help if a redirect to a partner or provider fails, opens the wrong page, or does not preserve the selected trip or search details.",
@@ -3149,7 +3149,7 @@ export const translations: TranslationDictionary = {
   footerMoreServiceInfo: "More Service Info",
   footerDiscover: "Discover",
   footerSavedRecent: "Saved & recent",
-  footerSavedTrips: "Saved trips",
+  footerSavedTrips: "Saved & Recent",
   footerRecentSearches: "Recent searches",
   footerTermsSettings: "Terms & Settings",
   footerPrivacyPolicy: "Privacy Policy",
@@ -3626,7 +3626,7 @@ export const translations: TranslationDictionary = {
   layoverSummaryTemplate: "Layover: {{airport}} {{duration}}",
   moreCount: "{{count}} more",
   loadingCarRentalResults: "Loading car rental results",
-  loadingSavedTripsAndRecentSearches: "Loading saved trips and recent searches",
+  loadingSavedTripsAndRecentSearches: "Loading Saved & Recent",
   loadingHotelSearch: "Loading hotel search...",
   "deals.heroTitle": "Find travel deals for your next trip",
   "deals.heroSubtitle":
@@ -4889,4 +4889,10 @@ export const translations: TranslationDictionary = {
   "deals.guided.handoff.refreshTitle": "One or more options need fresh results",
   "deals.guided.handoff.refreshBody":
     "Return to trip review and refresh the expired option before opening a handoff step.",
+  "accountDashboard.hub.savedRecent": "Saved & Recent",
+  "accountDashboard.hub.notifications": "Notifications",
+  "accountMenu.myTrips.label": "My Trips",
+  "accountMenu.savedRecent.label": "Saved & Recent",
+  "accountMenu.notifications.label": "Notifications",
+  loadingSavedAndRecent: "Loading Saved & Recent",
 };

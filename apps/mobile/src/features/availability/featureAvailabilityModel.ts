@@ -1,6 +1,6 @@
 import type { FeatureAvailability } from "../../api/travelApi";
 
-export const safeFeatureAvailability: FeatureAvailability = Object.freeze({ flightSearch: true, hotelSearch: true, carSearch: true, deals: true, priceAlerts: true, routeWatch: true });
+export const safeFeatureAvailability: FeatureAvailability = Object.freeze({ flightSearch: true, hotelSearch: true, carSearch: true, deals: true, priceAlerts: true });
 const CACHE_TTL_MS = 30_000;
 let cached: { value: FeatureAvailability; expiresAt: number } | undefined;
 export function getCachedFeatureAvailability() { return cached?.value; }
@@ -20,4 +20,3 @@ export function resetFeatureAvailabilityCacheForTests() { cached = undefined; }
 export type MobileProduct = "flight" | "hotel" | "car" | "deals";
 export function isMobileProductAvailable(availability: FeatureAvailability, product: MobileProduct) { return availability[product === "flight" ? "flightSearch" : product === "hotel" ? "hotelSearch" : product === "car" ? "carSearch" : "deals"]; }
 export function canCreateOrReactivatePriceAlert(availability: FeatureAvailability) { return availability.priceAlerts; }
-export function canActivateRouteWatch(availability: FeatureAvailability) { return availability.routeWatch; }

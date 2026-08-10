@@ -5,7 +5,7 @@ import { colors } from "../../theme/tokens";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { useAppTheme } from "../../theme/AppTheme";
 
-const labels: Record<string, string> = { index: "Home", explore: "Explore", trips: "Trips", profile: "Profile" };
+const labels: Record<string, string> = { index: "Home", explore: "Explore", trips: "My Trips", profile: "Profile" };
 const icons: Record<string, FlowIconName> = { index: "home", trips: "trip", explore: "compass", profile: "person" };
 
 export function KurioticketTabBar({ state, descriptors, navigation }: BottomTabBarProps) {

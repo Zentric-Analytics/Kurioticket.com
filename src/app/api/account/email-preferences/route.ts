@@ -44,8 +44,6 @@ export const emailPreferencesSchema = z
   .object({
     receiveOptionalEmails: z.boolean(),
     priceAlerts: z.boolean(),
-    savedTripReminders: z.boolean(),
-    routeWatchUpdates: z.boolean(),
     travelInspiration: z.boolean(),
     productUpdates: z.boolean(),
     dealsRecommendations: z.boolean(),

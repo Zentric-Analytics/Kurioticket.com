@@ -843,8 +843,8 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "Bantuan pencarian dan hasil",
   supportFaqSearchAnswer:
     "Kurioticket dapat membantu saat pencarian penerbangan atau hotel tidak berfungsi, hasil tidak dimuat, filter membingungkan, atau harga dan penyedia tidak tampil seperti yang diharapkan.",
-  supportFaqSavedTripsQuestion: "Perjalanan tersimpan dan peringatan",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "Perjalanan tersimpan dan peringatan",
+  supportFaqSavedRecentAnswer:
     "Kurioticket dapat membantu dengan perjalanan tersimpan, pencarian terbaru, peringatan harga, masalah notifikasi, dan alat perjalanan yang terhubung ke akun.",
   supportFaqRedirectQuestion: "Bantuan pemesanan/pengalihan penyedia",
   supportFaqRedirectAnswer:

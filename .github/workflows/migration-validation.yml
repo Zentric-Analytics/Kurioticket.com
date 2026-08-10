@@ -162,6 +162,9 @@ jobs:
       - name: Deploy migrations to clean PostgreSQL database
         run: npx prisma migrate deploy
 
+      - name: Verify Issue 3 upgrade from representative legacy data
+        run: node scripts/validate-four-system-upgrade.mjs
+
       - name: Verify deployed schema
         run: node scripts/verify-production-schema.mjs
 

@@ -1238,8 +1238,8 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "検索と結果のヘルプ",
   supportFaqSearchAnswer:
     "航空券やホテル検索が機能しない、結果が読み込まれない、フィルターがわかりにくい、料金やプロバイダーが表示されない場合にサポートできます。",
-  supportFaqSavedTripsQuestion: "保存済み旅行とアラート",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "保存済み旅行とアラート",
+  supportFaqSavedRecentAnswer:
     "保存済み旅行、最近の検索、料金アラート、通知の問題、アカウント連携の旅行ツールについてサポートできます。",
   supportFaqRedirectQuestion: "予約・プロバイダーへの移動のヘルプ",
   supportFaqRedirectAnswer:

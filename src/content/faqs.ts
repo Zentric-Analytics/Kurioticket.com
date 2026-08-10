@@ -18,7 +18,7 @@ export const faqItemKeys = [
   ["faqQuestionManageChanges", "faqAnswerManageChanges"],
   ["supportFaqAccountQuestion", "supportFaqAccountAnswer"],
   ["supportFaqSearchQuestion", "supportFaqSearchAnswer"],
-  ["supportFaqSavedTripsQuestion", "supportFaqSavedTripsAnswer"],
+  ["supportFaqSavedRecentQuestion", "supportFaqSavedRecentAnswer"],
   ["supportFaqRedirectQuestion", "supportFaqRedirectAnswer"],
   ["supportFaqAlreadyBookedQuestion", "supportFaqAlreadyBookedAnswer"],
   ["supportFaqChangeBookingQuestion", "supportFaqChangeBookingAnswer"],
@@ -77,9 +77,9 @@ export const generalFaqs: FaqItem[] = getGeneralFaqs((key) => {
     supportFaqSearchQuestion: "Search and results help",
     supportFaqSearchAnswer:
       "Kurioticket can help when flight or hotel search is not working, results are not loading, filters are confusing, or prices and providers are not displaying as expected.",
-    supportFaqSavedTripsQuestion: "Saved trips and alerts",
-    supportFaqSavedTripsAnswer:
-      "Kurioticket can help with saved trips, recent searches, price alerts, notification issues, and account-linked travel tools.",
+    supportFaqSavedRecentQuestion: "Saved & Recent and Price Alerts",
+    supportFaqSavedRecentAnswer:
+      "Kurioticket can help with Saved & Recent, Price Alerts, reservation records, notifications, and account-linked travel tools.",
     supportFaqRedirectQuestion: "Booking/provider redirect help",
     supportFaqRedirectAnswer:
       "Kurioticket can help if a redirect to a partner or provider fails, opens the wrong page, or does not preserve the selected trip or search details.",

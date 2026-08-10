@@ -12,26 +12,15 @@ export type SavedHotelApiItem = {
   createdAt: string;
 };
 
-export type SavedTripApiItem = {
-  type: "trip";
+export type SavedDiscoveryApiItem = {
+  type: "search";
   id: string;
-  name: string;
-  startsAt: string | null;
-  endsAt: string | null;
+  searchType: "flight" | "hotel";
+  label: string | null;
+  origin: string | null;
   destination: string | null;
-  payload: unknown;
+  query: unknown;
   createdAt: string;
-  updatedAt: string;
-  savedSearchId?: string | null;
-  detailedSearch?: {
-    origin: string; destination: string; tripType: string; departureDate: string; returnDate: string | null; adults: number; children: number; infants: number; travelers: number; cabinClass: string; currency: string | null; href: string;
-  } | null;
-  isWatching?: boolean;
-  routeWatchStatus?: "ACTIVE" | "PAUSED" | "EXPIRED" | "ERROR" | null;
-  routeWatchId?: string | null;
-  lastCheckedAt?: string | null;
-  nextCheckAt?: string | null;
-  routeWatchUnavailableReason?: "invalid" | "expired" | null;
 };
 
 export type PublicSavedSearch = {
@@ -45,20 +34,14 @@ export type PublicSavedSearch = {
   checkOut: string | null;
   query: unknown;
   createdAt: string;
-  isWatching?: boolean;
-  routeWatchStatus?: "ACTIVE" | "PAUSED" | "EXPIRED" | "ERROR";
-  routeWatchId?: string;
-  lastCheckedAt?: string | null;
-  nextCheckAt?: string | null;
-  routeWatchUnavailableReason?: "invalid" | "expired";
 };
 
-export type SavedTripApiResult = {
+export type SavedDiscoveryApiResult = {
   ok: boolean;
   status: number;
   duplicate?: boolean;
-  items?: SavedTripApiItem[];
-  item?: SavedTripApiItem;
+  items?: SavedDiscoveryApiItem[];
+  item?: SavedDiscoveryApiItem;
   error?: string;
 };
 
@@ -78,7 +61,7 @@ export type SavedSearchApiResult = {
   error?: string;
 };
 
-export type SavedTripSearchMetadata = {
+export type SavedDiscoverySearchMetadata = {
   tripType?: string;
   cabinClass?: string;
   travelerCount?: number;
@@ -86,7 +69,7 @@ export type SavedTripSearchMetadata = {
   price?: number;
 };
 
-export type SavedTripFlightSearch = {
+export type SavedDiscoveryFlightSearch = {
   tripType: "round-trip" | "one-way";
   origin: string;
   destination: string;
@@ -100,7 +83,7 @@ export type SavedTripFlightSearch = {
   currency?: string;
 };
 
-export type SavedTripDisplayDetails = {
+export type SavedDiscoveryDisplayDetails = {
   title?: string;
   route?: string;
   note?: string;
@@ -111,21 +94,12 @@ export type SavedTripDisplayDetails = {
   image?: string;
   imageAlt?: string;
   href?: string | object;
-  search?: SavedTripSearchMetadata;
+  search?: SavedDiscoverySearchMetadata;
 };
 
-export function getSavedTripLocalId(item: SavedTripApiItem): string {
-  if (
-    item.payload &&
-    typeof item.payload === "object" &&
-    "localId" in item.payload &&
-    typeof item.payload.localId === "string" &&
-    item.payload.localId.trim()
-  ) {
-    return item.payload.localId;
-  }
-
-  return item.name;
+export function getSavedDiscoveryLocalId(item: SavedDiscoveryApiItem): string {
+  if (item.query && typeof item.query === "object" && "localId" in item.query && typeof item.query.localId === "string" && item.query.localId.trim()) return item.query.localId;
+  return item.label || item.id;
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -243,124 +217,43 @@ export async function deleteBackendHotel(backendId: string): Promise<SavedHotelA
   }
 }
 
-export async function fetchBackendSavedTrips(
-  signal?: AbortSignal,
-): Promise<SavedTripApiResult> {
+export async function fetchBackendSavedDiscoveries(signal?: AbortSignal): Promise<SavedDiscoveryApiResult> {
   try {
-    const response = await fetch("/api/dashboard/saved?type=trip", {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      signal,
-    });
+    const response = await fetch("/api/dashboard/saved?type=search", { method: "GET", headers: { Accept: "application/json" }, signal });
     const payload = await readJson(response);
-
-    if (!response.ok) {
-      return {
-        ok: false,
-        status: response.status,
-        error: getError(payload, "Unable to load saved trips."),
-      };
-    }
-
-    const items =
-      payload &&
-      typeof payload === "object" &&
-      "items" in payload &&
-      Array.isArray(payload.items)
-        ? payload.items.filter((item): item is SavedTripApiItem =>
-            Boolean(
-              item &&
-              typeof item === "object" &&
-              "type" in item &&
-              item.type === "trip" &&
-              "id" in item &&
-              typeof item.id === "string" &&
-              "name" in item &&
-              typeof item.name === "string",
-            ),
-          )
-        : [];
-
+    if (!response.ok) return { ok: false, status: response.status, error: getError(payload, "Unable to load saved items.") };
+    const items = payload && typeof payload === "object" && "items" in payload && Array.isArray(payload.items)
+      ? payload.items.filter((item): item is SavedDiscoveryApiItem => Boolean(item && typeof item === "object" && "type" in item && item.type === "search" && "id" in item && typeof item.id === "string"))
+      : [];
     return { ok: true, status: response.status, items };
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError")
-      throw error;
-    return { ok: false, status: 0, error: "Unable to load saved trips." };
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    return { ok: false, status: 0, error: "Unable to load saved items." };
   }
 }
 
-export async function saveBackendTrip(
-  localId: string,
-  display?: SavedTripDisplayDetails,
-  flightSearch?: SavedTripFlightSearch,
-): Promise<SavedTripApiResult> {
+export async function saveBackendDiscovery(localId: string, display?: SavedDiscoveryDisplayDetails, flightSearch?: SavedDiscoveryFlightSearch): Promise<SavedDiscoveryApiResult> {
   try {
+    const origin = flightSearch?.origin ?? display?.originCode ?? null;
+    const destination = flightSearch?.destination ?? display?.destinationCode ?? display?.destinationCity ?? localId;
     const response = await fetch("/api/dashboard/saved", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        type: "trip",
-        name: display?.title ?? localId,
-        destination:
-          display?.destinationCity ?? display?.destinationCode ?? localId,
-        payload: { ...display, localId },
-        ...(flightSearch ? { flightSearch } : {}),
-      }),
+      method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ type: "search", searchType: "flight", label: display?.title ?? localId, origin, destination, query: { ...(flightSearch ?? {}), ...display, localId } }),
     });
     const payload = await readJson(response);
-
-    if (!response.ok) {
-      return {
-        ok: false,
-        status: response.status,
-        duplicate: response.status === 409,
-        error: getError(payload, "Unable to save trip."),
-      };
-    }
-
-    const item =
-      payload && typeof payload === "object" && "item" in payload
-        ? payload.item
-        : undefined;
-    return {
-      ok: true,
-      status: response.status,
-      item: item as SavedTripApiItem | undefined,
-    };
-  } catch {
-    return { ok: false, status: 0, error: "Unable to save trip." };
-  }
+    if (!response.ok) return { ok: false, status: response.status, duplicate: response.status === 409, error: getError(payload, "Unable to save item.") };
+    const item = payload && typeof payload === "object" && "item" in payload ? payload.item : undefined;
+    return { ok: true, status: response.status, item: item as SavedDiscoveryApiItem | undefined };
+  } catch { return { ok: false, status: 0, error: "Unable to save item." }; }
 }
 
-export async function deleteBackendTrip(
-  backendId: string,
-): Promise<SavedTripApiResult> {
+export async function deleteBackendDiscovery(backendId: string): Promise<SavedDiscoveryApiResult> {
   try {
-    const response = await fetch("/api/dashboard/saved", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ type: "trip", id: backendId }),
-    });
+    const response = await fetch("/api/dashboard/saved", { method: "DELETE", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ type: "search", id: backendId }) });
     const payload = await readJson(response);
-
-    if (!response.ok) {
-      return {
-        ok: false,
-        status: response.status,
-        error: getError(payload, "Unable to delete saved trip."),
-      };
-    }
-
+    if (!response.ok) return { ok: false, status: response.status, error: getError(payload, "Unable to delete saved item.") };
     return { ok: true, status: response.status };
-  } catch {
-    return { ok: false, status: 0, error: "Unable to delete saved trip." };
-  }
+  } catch { return { ok: false, status: 0, error: "Unable to delete saved item." }; }
 }
 
 export async function fetchBackendSavedSearches(
@@ -444,37 +337,3 @@ export async function deleteBackendSavedSearch(
   }
 }
 
-export type RouteWatchSummary = {
-  id: string;
-  savedSearchId: string;
-  status: "ACTIVE" | "PAUSED" | "EXPIRED" | "ERROR";
-  isWatching: boolean;
-  lastCheckedAt: string | null;
-  nextCheckAt: string | null;
-};
-
-export type RouteWatchApiResult = {
-  ok: boolean;
-  status: number;
-  watch?: RouteWatchSummary;
-  error?: string;
-};
-
-export async function updateRouteWatch(
-  savedSearchId: string,
-  enabled: boolean,
-): Promise<RouteWatchApiResult> {
-  try {
-    const response = await fetch(`/api/dashboard/saved/${encodeURIComponent(savedSearchId)}/watch`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ enabled }),
-    });
-    const payload = await readJson(response);
-    if (!response.ok) return { ok: false, status: response.status, error: getError(payload, "We couldn’t update route watching. Please try again.") };
-    const watch = payload && typeof payload === "object" && "watch" in payload ? payload.watch as RouteWatchSummary : undefined;
-    return { ok: true, status: response.status, watch };
-  } catch {
-    return { ok: false, status: 0, error: "We couldn’t update route watching. Please try again." };
-  }
-}

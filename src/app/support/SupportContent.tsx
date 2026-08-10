@@ -19,8 +19,8 @@ const supportFaqKeys = [
     answer: "supportFaqSearchAnswer",
   },
   {
-    question: "supportFaqSavedTripsQuestion",
-    answer: "supportFaqSavedTripsAnswer",
+    question: "supportFaqSavedRecentQuestion",
+    answer: "supportFaqSavedRecentAnswer",
   },
   {
     question: "supportFaqRedirectQuestion",

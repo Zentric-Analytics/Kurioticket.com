@@ -65,8 +65,6 @@ function user(overrides: Partial<MockUser> = {}): MockUser {
         email: {
           receiveOptionalEmails: true,
           priceAlerts: false,
-          savedTripReminders: false,
-          routeWatchUpdates: false,
           travelInspiration: true,
           productUpdates: false,
           dealsRecommendations: false,
