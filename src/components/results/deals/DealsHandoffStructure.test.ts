@@ -52,6 +52,20 @@ test("guided handoff omits redundant guidance while preserving the handoff contr
   assert.match(experience, /aria-live="polite"[\s\S]{0,40}\{announcement\}/);
 });
 
+test("guided handoff hides the page title visually while retaining an accessible H1", () => {
+  const guidedHeading =
+    guided.match(
+      /<h1[\s\S]*?deals\.guided\.handoff\.title[\s\S]*?<\/h1>/,
+    )?.[0] ?? "";
+
+  assert.match(guidedHeading, /className="sr-only"/);
+  assert.match(guidedHeading, /deals\.guided\.handoff\.title/);
+  assert.doesNotMatch(
+    guidedHeading,
+    /text-2xl|font-extrabold|text-slate-950|ready \? "mt-4/,
+  );
+});
+
 test("handoff keeps the responsive summary and ordered provider steps contract", () => {
   assert.match(page, /page-shell max-w-5xl/);
   assert.match(client, /xl:grid-cols-\[minmax\(0,1fr\)_300px\]/);
@@ -95,11 +109,11 @@ test("step activation cancellation and guided recovery progress remain isolated"
   assert.match(card, /rel="noopener noreferrer"/);
   assert.match(
     card,
-    /<Link href=\{unavailableHref \?\? resultsPath\} onClick=\{onRecoveryNavigation\}/,
+    /<Link[\s\S]{0,100}href=\{unavailableHref \?\? resultsPath\}[\s\S]{0,100}onClick=\{onRecoveryNavigation\}/,
   );
   const active =
     card.match(
-      /<a href=\{step\.href\} id=\{getDealsHandoffActionId\(step\.product\)\}[\s\S]*?<\/a>/,
+      /<a[\s\S]{0,100}href=\{step\.href\}[\s\S]{0,100}id=\{getDealsHandoffActionId\(step\.product\)\}[\s\S]*?<\/a>/,
     )?.[0] ?? "";
   assert.doesNotMatch(active, /onRecoveryNavigation|useRouteProgress/);
 });
@@ -138,12 +152,15 @@ test("flight uses a protected-provider action while stays and cars retain intern
   assert.match(presentation, /"internal-details"/);
   assert.match(presentation, /buildDealsInternalRedirectHref/);
   assert.match(card, /step\.actionKind === "provider-handoff"/);
+  assert.match(card, /step\.actionKind === "provider-handoff" \|\| opened/);
   assert.match(card, /deals\.handoff\.continueToProvider/);
   assert.match(card, /step\.product === "hotel"/);
-  assert.match(card, /deals\.handoff\.reviewStayAgain/);
   assert.match(card, /deals\.handoff\.openStay/);
-  assert.match(card, /deals\.handoff\.reviewCarAgain/);
   assert.match(card, /deals\.handoff\.openCar/);
+  assert.doesNotMatch(
+    card,
+    /deals\.handoff\.(?:reviewStayAgain|reviewCarAgain)/,
+  );
   assert.doesNotMatch(card, /openFlight|reviewFlightAgain/);
   assert.doesNotMatch(
     card + presentation,
@@ -182,7 +199,9 @@ test("handoff cards keep prices and actions readable in balanced columns", () =>
   assert.match(card, /lg:grid-cols-\[minmax\(0,1fr\)_240px\]/);
 
   const mainPrice =
-    card.match(/<p aria-label=\{price\.ariaLabel\}[\s\S]*?<\/p>/)?.[0] ?? "";
+    card.match(
+      /<p[\s\S]{0,100}aria-label=\{price\.ariaLabel\}[\s\S]*?<\/p>/,
+    )?.[0] ?? "";
   assert.doesNotMatch(mainPrice, /break-words/);
   assert.match(mainPrice, /tabular-nums/);
   assert.match(mainPrice, /dir="ltr"/);
@@ -198,7 +217,8 @@ test("handoff cards keep prices and actions readable in balanced columns", () =>
   assert.match(sourcePrice, /tabular-nums/);
   assert.match(card, /deals\.handoff\.providerPrice/);
 
-  const action = card.match(/<a href=\{step\.href\}[\s\S]*?<\/a>/)?.[0] ?? "";
+  const action =
+    card.match(/<a[\s\S]{0,100}href=\{step\.href\}[\s\S]*?<\/a>/)?.[0] ?? "";
   assert.match(action, /target="_blank"/);
   assert.match(action, /rel="noopener noreferrer"/);
   assert.match(action, /onClick=/g);
@@ -239,11 +259,12 @@ test("handoff cards use a calm and consistent typography hierarchy", () => {
     /mt-1 text-xl font-semibold leading-7 tracking-tight tabular-nums text-slate-950/,
   );
 
-  const action = card.match(/<a href=\{step\.href\}[\s\S]*?<\/a>/)?.[0] ?? "";
+  const action =
+    card.match(/<a[\s\S]{0,100}href=\{step\.href\}[\s\S]*?<\/a>/)?.[0] ?? "";
   assert.match(action, /text-sm font-semibold/);
   const refresh =
     card.match(
-      /<Link href=\{unavailableHref \?\? resultsPath\}[\s\S]*?<\/Link>/,
+      /<Link[\s\S]{0,100}href=\{unavailableHref \?\? resultsPath\}[\s\S]*?<\/Link>/,
     )?.[0] ?? "";
   assert.match(refresh, /font-semibold/);
 
@@ -283,11 +304,11 @@ test("handoff cards retain consistent product details and semantic room grouping
     assert.match(card, new RegExp(field.replace(".", "\\.")));
   assert.match(
     card,
-    /\{step\.roomType && <dl className="mt-4"><Detail label=\{t\("deals\.handoff\.room"\)\} value=\{step\.roomType\} \/><\/dl>\}/,
+    /\{step\.roomType && \([\s\S]*?<dl className="mt-4">[\s\S]*?<Detail[\s\S]*?label=\{t\("deals\.handoff\.room"\)\}[\s\S]*?value=\{step\.roomType\}[\s\S]*?<\/dl>[\s\S]*?\)\}/,
   );
   assert.match(
     card,
-    /dir="ltr" className="mt-2[^"]*"><span className="whitespace-nowrap">\{step\.routeLabel\}<\/span>/,
+    /dir="ltr"[\s\S]{0,100}className="mt-2[^"]*"[\s\S]{0,100}<span className="whitespace-nowrap">\{step\.routeLabel\}<\/span>/,
   );
 });
 

@@ -451,11 +451,7 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
           t={t}
         />
       )}
-      <h1
-        className={`${ready ? "mt-4 " : ""}text-2xl font-extrabold text-slate-950`}
-      >
-        {t("deals.guided.handoff.title")}
-      </h1>
+      <h1 className="sr-only">{t("deals.guided.handoff.title")}</h1>
       <div className="mt-5">{content}</div>
     </section>
   );
