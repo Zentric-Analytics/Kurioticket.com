@@ -25,13 +25,33 @@ const resultsCar = form.slice(
   form.indexOf("data-deals-results-travellers"),
 );
 
-test("LANDING CONTRACT keeps the approved compact composition", () => {
+test("LANDING CONTRACT keeps package selection above lower shared controls", () => {
   assert.match(form, /data-deals-layout=\{variant\}/);
-  assert.match(form, /data-deals-upper-controls/);
-  assert.match(form, /data-deals-upper-cabin/);
+  assert.match(form, /data-deals-package-selector/);
+  assert.match(form, /data-deals-landing-lower-controls/);
+  assert.match(form, /data-deals-landing-travellers/);
+  assert.match(form, /data-deals-landing-cabin/);
+  assert.doesNotMatch(form, /data-deals-upper-controls|data-deals-upper-cabin/);
   assert.match(form, /connectedShell/);
   assert.match(form, /variant === "landing"[\s\S]*data-deals-car-recovery/);
   assert.match(form, /variant === "landing"[\s\S]*data-deals-search-actions/);
+  assert.ok(
+    form.indexOf("data-deals-landing-lower-controls") >
+      form.indexOf("data-deals-results-car"),
+  );
+  const lowerControls = form.slice(
+    form.indexOf("data-deals-landing-lower-controls"),
+    form.indexOf(
+      "guidedPreviewPanel",
+      form.indexOf("data-deals-landing-lower-controls"),
+    ),
+  );
+  assert.match(lowerControls, /travelersLauncherRef/);
+  assert.match(lowerControls, /travelerSummary/);
+  assert.match(lowerControls, /search\.flightCabinClass/);
+  assert.match(lowerControls, /\{included\.flight \? \(/);
+  assert.match(lowerControls, /\{searchDealsButton\}/);
+  assert.doesNotMatch(lowerControls, /data-deals-landing-cabin[\s\S]*else/);
   assert.match(form, /guidedPreviewPanel/);
   assert.doesNotMatch(page, /variant="results"/);
   assert.match(page, /<DealsSearchForm/);
