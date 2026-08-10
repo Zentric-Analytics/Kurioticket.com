@@ -600,6 +600,29 @@ All copy excludes current cyclone or typhoon recovery, earthquakes, tsunami or v
 
 Repository-derived Oceania/Pacific coverage moves from **8 of 18** to **18 of 18**, with no Pacific deferrals. Global editorial coverage moves from **224 of 235** to **234 of 235**, leaving exactly one canonical destination without editorial content: `hn-san-pedro-sula`. Central America remains **5 of 6**, with San Pedro Sula canonical and wholly non-editorial. South America remains **15 of 15**; Caribbean **10 of 10**; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic prefix and every prior regional rollout remain unchanged. Featured membership and exact ordering remain independently maintained and unchanged.
 
+### Global Editorial Completion — San Pedro Sula
+
+The final completion pass, verified on **2026-08-10**, adds `hn-san-pedro-sula` after resolving its earlier strict-source deferral. Source review established two exact, titled, durable HTTPS references: the Municipality of San Pedro Sula for city geography, civic spaces, landmarks and market context, and the Museum of Anthropology and History of San Pedro Sula for the city's established museum and its interpretive scope. Authorization failures affecting outbound HTTPS inspection were treated as an environment limitation, not as evidence against those institutional sources; no URL was inferred or fabricated.
+
+The record remains bounded to San Pedro Sula. Sula Valley geography is explicitly contextual, and no attraction from Honduras generally, Cortés Department, Puerto Cortés, Omoa, Lake Yojoa, Copán, Tela or La Ceiba is presented as a city attraction. Its copy excludes current safety, crime, politics, demonstrations, weather, flooding, storms, transport, airport or airline operations, opening hours, prices, access, closures, construction, tourism and population conditions.
+
+Repository-derived coverage changes as follows:
+
+- Central America: **5/6 → 6/6**
+- North America: **16/16**
+- Caribbean: **10/10**
+- South America: **15/15**
+- Europe: **52/52**
+- Africa: **54/54**
+- Asia: **64/64**
+- Oceania/Pacific: **18/18**
+- Global: **234/235 → 235/235**
+- Remaining: **1 → 0**
+
+**GLOBAL EDITORIAL COVERAGE: 235/235. REMAINING: 0.** This means every canonical destination currently represented in the Explore catalogue has editorial enrichment; it does not mean that the catalogue represents every possible destination worldwide.
+
+This completion adds no UI, image, gallery, map, search, flight, hotel, booking, related-destination, Featured or canonical-catalogue changes. The historical 175-record semantic guard, every prior editorial payload and prior-record relative order, deterministic regional aggregation, and independently maintained Featured membership and ordering remain preserved.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
