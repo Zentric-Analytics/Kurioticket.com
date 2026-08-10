@@ -49,6 +49,13 @@ const europeBatch3SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: EUROPE_BATCH_3_LAST_VERIFIED_AT,
 });
 
+const EUROPE_BATCH_4_LAST_VERIFIED_AT = "2026-08-10";
+const europeBatch4SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: EUROPE_BATCH_4_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -434,6 +441,76 @@ const rawExploreDestinationEditorial = [
     description: "Ljubljana sits in a basin beside the Ljubljanica River, with a castle hill overlooking its compact pedestrian centre. Architect Jože Plečnik reshaped the riverbanks, bridges, market and civic spaces in a body of work recognised by UNESCO. Baroque churches, the Central Market, Tivoli Park and museums connect the Slovenian capital's medieval fabric with later cultural and landscape design.",
     highlights: ["Ljubljanica riverbanks and bridges", "Ljubljana Castle", "Plečnik's Central Market", "Tivoli Park"],
     editorialProvenance: europeBatch3SourceReferences([{ title: "Visit Ljubljana - Official City Guide", url: "https://www.visitljubljana.com/en/visitors/" }, { title: "UNESCO Works of Jože Plečnik in Ljubljana", url: "https://whc.unesco.org/en/list/1643/" }]),
+  },
+  {
+    id: "de-cologne",
+    summary: "Cologne lines the Rhine with a Gothic cathedral, Roman heritage, museums and distinctive historic quarters.",
+    description: "Cologne developed on both banks of the Rhine from the Roman settlement of Colonia, whose remains survive beneath the modern centre. Its UNESCO-listed cathedral dominates a skyline that also includes Romanesque churches, while the Old Town, Museum Ludwig and Romano-Germanic collections trace religious, artistic and archaeological history. Riverside promenades and the Belgian Quarter add contrasting urban settings.",
+    highlights: ["Cologne Cathedral", "Rhine riverfront", "Romanesque churches", "Museum Ludwig"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "Cologne Tourist Board", url: "https://www.cologne-tourism.com/" }, { title: "UNESCO Cologne Cathedral", url: "https://whc.unesco.org/en/list/292/" }]),
+  },
+  {
+    id: "de-dusseldorf",
+    summary: "Düsseldorf stretches beside the Rhine through an old quarter, modern harbour architecture and major art collections.",
+    description: "Düsseldorf occupies a broad bend of the Rhine, with a riverside promenade joining the Altstadt to the redeveloped MedienHafen. The old quarter contains churches, breweries and narrow lanes, while Königsallee follows a landscaped canal through the central shopping district. Collections at K20 and K21, alongside buildings by international architects, reflect the city's established visual-art and design culture.",
+    highlights: ["Rhine promenade", "Altstadt lanes and breweries", "MedienHafen architecture", "K20 and K21 art collections"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "Visit Düsseldorf", url: "https://www.visitduesseldorf.de/en" }, { title: "Kunstsammlung Nordrhein-Westfalen", url: "https://www.kunstsammlung.de/en/" }]),
+  },
+  {
+    id: "de-hamburg",
+    summary: "Hamburg centres on the Elbe and Alster, shaped by port heritage, brick warehouses and maritime culture.",
+    description: "Hamburg grew around the Elbe, Alster lakes and a working port that has long connected the city with maritime trade. UNESCO-listed Speicherstadt preserves red-brick warehouse blocks and canals beside the contemporary HafenCity district and Elbphilharmonie. St Michael's Church, the Kunsthalle and neighbourhoods such as St Pauli broaden the picture beyond the waterfront's commercial and architectural history.",
+    highlights: ["Speicherstadt warehouses", "Elbphilharmonie", "Elbe harbour", "Alster lakes"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "Hamburg Travel", url: "https://www.hamburg-travel.com/" }, { title: "UNESCO Speicherstadt and Kontorhaus District", url: "https://whc.unesco.org/en/list/1467/" }]),
+  },
+  {
+    id: "de-stuttgart",
+    summary: "Stuttgart occupies a vineyard-lined basin with palace squares, modernist landmarks and influential automotive museums.",
+    description: "Stuttgart spreads across a wooded basin and surrounding hills where vineyards reach close to central neighbourhoods. Schlossplatz anchors the civic centre, while the Weissenhof Estate records a significant chapter in modernist housing and architecture. The Mercedes-Benz and Porsche museums interpret regional engineering history, and the State Gallery, market hall and extensive parks add artistic, culinary and landscape context.",
+    highlights: ["Schlossplatz", "Weissenhof Estate", "Automotive museums", "Hillside vineyards"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "Stuttgart Tourist Board", url: "https://www.stuttgart-tourist.de/en" }, { title: "Mercedes-Benz Museum", url: "https://www.mercedes-benz.com/en/art-and-culture/museum/" }]),
+  },
+  {
+    id: "lu-luxembourg",
+    summary: "Luxembourg rises above the Alzette valleys, preserving fortified quarters, bridges and European civic institutions.",
+    description: "Luxembourg City occupies a plateau cut by the Alzette and Pétrusse valleys, creating dramatic levels between the upper town and lower quarters. UNESCO recognises its old town and fortifications, including surviving casemates shaped by successive European powers. The Grund, Grand Ducal Palace and Kirchberg's museums and European institutions connect medieval streets with the capital's contemporary civic role.",
+    highlights: ["UNESCO-listed old quarters", "Bock Casemates", "Grund river district", "Kirchberg cultural institutions"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "Visit Luxembourg", url: "https://www.visitluxembourg.com/" }, { title: "UNESCO City of Luxembourg", url: "https://whc.unesco.org/en/list/699/" }]),
+  },
+  {
+    id: "es-madrid",
+    summary: "Madrid gathers royal architecture, expansive parks, historic neighbourhoods and nationally significant art collections on Spain's plateau.",
+    description: "Madrid stands on Spain's central plateau, with broad boulevards and dense historic districts arranged around royal and civic spaces. The Prado, Reina Sofía and Thyssen-Bornemisza museums form a major art corridor beside Retiro Park, part of a UNESCO-listed cultural landscape. Plaza Mayor, the Royal Palace, neighbourhood markets and traditional food houses reveal further layers of courtly and everyday urban history.",
+    highlights: ["Prado Museum", "Retiro Park", "Royal Palace", "Plaza Mayor"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "Official Tourism Website of Madrid", url: "https://www.esmadrid.com/en" }, { title: "Museo Nacional del Prado", url: "https://www.museodelprado.es/en" }]),
+  },
+  {
+    id: "gb-manchester",
+    summary: "Manchester reflects industrial history through canals, warehouses, civic architecture, music venues and diverse neighbourhoods.",
+    description: "Manchester developed beside the Irwell and a network of canals that supported its growth as a centre of textile manufacturing. Converted warehouses in Castlefield and Ancoats stand near Victorian civic buildings, while the Science and Industry Museum interprets transport and industrial change. Galleries, football heritage, music venues and food districts across the Northern Quarter and Rusholme represent later cultural layers.",
+    highlights: ["Castlefield canals", "Industrial-era warehouses", "Manchester Art Gallery", "Northern Quarter"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "Visit Manchester", url: "https://www.visitmanchester.com/" }, { title: "Science and Industry Museum", url: "https://www.scienceandindustrymuseum.org.uk/" }]),
+  },
+  {
+    id: "it-milan",
+    summary: "Milan unfolds around its cathedral through Renaissance heritage, design districts, galleries and longstanding fashion culture.",
+    description: "Milan lies in the Po Valley, with the Duomo and Galleria Vittorio Emanuele II defining its monumental centre. Leonardo's Last Supper, the Sforza Castle and Brera's gallery and streets preserve Renaissance and later artistic history. Navigli canals, modern architecture and institutions devoted to design and fashion show how craft, commerce and cultural production continue across distinct neighbourhoods.",
+    highlights: ["Milan Cathedral", "Leonardo's Last Supper", "Brera district", "Navigli canals"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "YesMilano Official Tourism Site", url: "https://www.yesmilano.it/en" }, { title: "Duomo di Milano Official Site", url: "https://www.duomomilano.it/en/" }]),
+  },
+  {
+    id: "fr-nice",
+    summary: "Nice follows the Mediterranean beneath coastal hills, with promenades, baroque streets, markets and modern art heritage.",
+    description: "Nice extends around the Bay of Angels between the Mediterranean and the foothills of the Alps. Its UNESCO-listed winter-resort townscape includes the Promenade des Anglais, villas and gardens shaped by international visitors, while Vieux Nice retains baroque churches, narrow lanes and the Cours Saleya market. Museums devoted to Matisse and Chagall connect the coastal setting with twentieth-century artistic heritage.",
+    highlights: ["Promenade des Anglais", "Vieux Nice", "Cours Saleya market", "Matisse Museum"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "Explore Nice Côte d'Azur", url: "https://www.explorenicecotedazur.com/en/" }, { title: "UNESCO Winter Resort Town of the Riviera", url: "https://whc.unesco.org/en/list/1635/" }]),
+  },
+  {
+    id: "pt-porto",
+    summary: "Porto descends to the Douro through tiled streets, historic churches, bridges and riverside mercantile quarters.",
+    description: "Porto rises in steep tiers from the Douro, where Ribeira's lanes and quays face the port-wine lodges of Vila Nova de Gaia. UNESCO recognises the historic centre, Luís I Bridge and Serra do Pilar Monastery as an urban landscape shaped by maritime commerce. São Bento station, tiled churches, markets and contemporary cultural institutions extend that heritage across the hills.",
+    highlights: ["Ribeira riverfront", "Luís I Bridge", "Tiled churches and São Bento", "Port-wine lodge district"],
+    editorialProvenance: europeBatch4SourceReferences([{ title: "Visit Porto", url: "https://visitporto.travel/en-GB" }, { title: "UNESCO Historic Centre of Oporto", url: "https://whc.unesco.org/en/list/755/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 

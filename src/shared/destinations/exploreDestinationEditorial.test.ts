@@ -56,6 +56,15 @@ const EUROPE_BATCH_3_IDS = [
   "me-podgorica", "mk-skopje", "ro-bucharest", "rs-belgrade", "si-ljubljana",
 ] as const;
 
+const EUROPE_BATCH_4_IDS = [
+  "de-cologne", "de-dusseldorf", "de-hamburg", "de-stuttgart", "lu-luxembourg",
+  "es-madrid", "gb-manchester", "it-milan", "fr-nice", "pt-porto",
+] as const;
+
+const REMAINING_EUROPE_EDITORIAL_IDS = [
+  "ua-kyiv", "cy-larnaca", "ru-moscow", "cy-paphos", "ru-st-petersburg",
+] as const;
+
 test("the original 25 records and Europe Batch 1 remain intact as coverage expands", () => {
   assert.equal(validateExploreDestinationEditorial(exploreDestinationEditorial), exploreDestinationEditorial);
   assert.equal(
@@ -158,6 +167,49 @@ test("Europe Batch 3 contains 10 previously non-editorial canonical records", ()
     ));
     assert.ok(exploreDestinations.some(({ id }) => id === record.id));
   }
+});
+
+test("Europe Batch 4 contains 10 new canonical western European records with reviewed copy", () => {
+  const priorIds = new Set<string>([
+    ...ORIGINAL_EDITORIAL_IDS, ...EUROPE_BATCH_1_IDS, ...EUROPE_BATCH_2_IDS, ...EUROPE_BATCH_3_IDS,
+  ]);
+  const batch = exploreDestinationEditorial.filter(({ id }) =>
+    EUROPE_BATCH_4_IDS.some((batchId) => batchId === id),
+  );
+  assert.deepEqual(exploreDestinationEditorial.slice(55, 65).map(({ id }) => id), EUROPE_BATCH_4_IDS);
+  assert.equal(batch.length, 10);
+  assert.ok(EUROPE_BATCH_4_IDS.every((id) => !priorIds.has(id)));
+  for (const record of batch) {
+    const summaryWordCount = record.summary.trim().split(/\s+/).length;
+    const descriptionWordCount = record.description.trim().split(/\s+/).length;
+    assert.ok(summaryWordCount >= 13 && summaryWordCount <= 18);
+    assert.equal((record.summary.match(/[.!?](?:\s|$)/g) ?? []).length, 1);
+    assert.ok(descriptionWordCount >= 53 && descriptionWordCount <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.equal(new Set(record.highlights.map((highlight) => highlight.toLocaleLowerCase())).size, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !highlight.endsWith(".")));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-10");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(
+      new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length,
+    );
+    assert.ok(record.editorialProvenance.sourceReferences.every(
+      ({ title, url }) => title.trim() && url.startsWith("https://"),
+    ));
+    assert.ok(exploreDestinations.some(({ id }) => id === record.id));
+  }
+});
+
+test("the five remaining European destinations stay canonical and valid without editorial content", () => {
+  const remaining = REMAINING_EUROPE_EDITORIAL_IDS.map((id) =>
+    exploreDestinations.find((destination) => destination.id === id),
+  );
+  assert.ok(remaining.every(Boolean));
+  assert.ok(remaining.every((destination) => !destination!.editorialProvenance));
+  assert.ok(remaining.every((destination) => destination!.name && destination!.country));
 });
 
 test("Featured destinations retain their separately maintained IDs and order", () => {
