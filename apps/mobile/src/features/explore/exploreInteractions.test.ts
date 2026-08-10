@@ -439,20 +439,24 @@ test("region preview geometry matches the wide Kayak carousel proportions respon
   assert.match(source, /REGION_PREVIEW_GAP_RATIO = 0\.024/);
   assert.match(source, /REGION_PREVIEW_ASPECT_RATIO = 2\.13/);
   assert.match(source, /REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3\.21/);
+  assert.match(source, /REGION_PREVIEW_IMAGE_HEIGHT_SCALE = 1\.12/);
 
   for (const windowWidth of [320, 390, 430, 768]) {
     const cardWidth = windowWidth * 0.928;
-    const cardHeight = cardWidth / 2.13;
-    const imageHeight = cardWidth / 3.21;
+    const previousCardHeight = cardWidth / 2.13;
+    const previousImageHeight = cardWidth / 3.21;
+    const previousFooterHeight = previousCardHeight - previousImageHeight;
+    const imageHeight = previousImageHeight * 1.12;
+    const cardHeight = previousCardHeight + (imageHeight - previousImageHeight);
     const footerHeight = cardHeight - imageHeight;
     const gap = windowWidth * 0.024;
     const inset = windowWidth * 0.024;
     const nextCardPeek = windowWidth - inset - cardWidth - gap;
 
     assert.ok(cardWidth / windowWidth >= 0.92 && cardWidth / windowWidth <= 0.93);
-    assert.ok(cardWidth / cardHeight > 2);
-    assert.ok(imageHeight / cardHeight > 0.65 && imageHeight / cardHeight < 0.67);
-    assert.ok(footerHeight / cardHeight > 0.33 && footerHeight / cardHeight < 0.35);
+    assert.equal(imageHeight / previousImageHeight, 1.12);
+    assert.ok(cardWidth / imageHeight > 1);
+    assert.ok(Math.abs(footerHeight - previousFooterHeight) < Number.EPSILON * cardHeight);
     assert.ok(gap / windowWidth >= 0.02 && gap / windowWidth <= 0.03);
     assert.ok(nextCardPeek / windowWidth >= 0.02 && nextCardPeek / windowWidth <= 0.03);
     assert.equal(cardWidth + gap, windowWidth * (0.928 + 0.024));
