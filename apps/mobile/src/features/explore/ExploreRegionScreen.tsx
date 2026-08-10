@@ -1,0 +1,43 @@
+import { useMemo, useRef, useState } from "react";
+import { FlatList, Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { exploreRegionFromSlug, type Destination } from "./destinationCatalogue";
+import { DESTINATIONS_BY_REGION, exactExploreResult, exploreBottomPadding, searchExploreRegion } from "./exploreModels";
+import { destinationDetailsRoute } from "./exploreInteractionModels";
+import { DestinationResultRow } from "./ExploreScreen";
+import { FlowIcon } from "../flow/FlowIcon";
+import { useSavedDestinations } from "../../storage/useSavedDestinations";
+
+const EMPTY_DESTINATIONS: readonly Destination[] = [];
+const NAVY = "#071A48", BLUE = "#0754F7", MUTED = "#56658E", BORDER = "#E7ECF5";
+
+export function ExploreRegionScreen() {
+  const { region: slug } = useLocalSearchParams<{ region?: string }>();
+  const region = exploreRegionFromSlug(slug ?? "");
+  const [query, setQuery] = useState("");
+  const input = useRef<TextInput>(null);
+  const insets = useSafeAreaInsets();
+  const { savedIds, toggle } = useSavedDestinations();
+  const allDestinations = region ? DESTINATIONS_BY_REGION.get(region)! : EMPTY_DESTINATIONS;
+  const results = useMemo(() => region && query.trim() ? searchExploreRegion(query, region).map(({ destination }) => destination) : allDestinations, [allDestinations, query, region]);
+  const select = (destination: Destination) => { Keyboard.dismiss(); router.push(destinationDetailsRoute(destination.id)); };
+  const submit = () => { if (!region) return; const exact = exactExploreResult(searchExploreRegion(query, region)); if (exact) select(exact); };
+
+  if (!region) return <SafeAreaView style={s.safe}><Pressable accessibilityRole="button" accessibilityLabel="Back to Explore" onPress={() => router.back()} style={s.back}><FlowIcon name="back" color={NAVY} /><Text style={s.backText}>Explore</Text></Pressable><Text style={s.invalid}>Region not found.</Text></SafeAreaView>;
+
+  return <SafeAreaView style={s.safe} edges={["top"]}>
+    <View style={s.header}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Back to Explore" onPress={() => router.back()} style={s.back}><FlowIcon name="back" color={NAVY} /><Text style={s.backText}>Explore</Text></Pressable>
+      <Text accessibilityRole="header" style={s.title}>{region}</Text>
+      <View style={s.search}><FlowIcon name="search" size={22} /><TextInput ref={input} accessibilityLabel={`Search ${region}`} accessibilityHint={`Search destinations or airports in ${region}`} value={query} onChangeText={setQuery} onSubmitEditing={submit} returnKeyType="search" placeholder={`Search ${region}`} placeholderTextColor="#7B849F" style={s.searchInput} />{query ? <Pressable accessibilityRole="button" accessibilityLabel={`Clear ${region} search`} onPress={() => { setQuery(""); input.current?.focus(); }} style={s.clear}><Text style={s.clearText}>Clear</Text></Pressable> : null}</View>
+      <Text style={s.count}>{allDestinations.length} destinations</Text>
+    </View>
+    <FlatList data={results} keyExtractor={(destination) => destination.id} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.list, { paddingBottom: exploreBottomPadding(20, insets.bottom) }]} ListEmptyComponent={<Text style={s.empty}>No destinations found in {region}</Text>} renderItem={({ item }) => <DestinationResultRow destination={item} saved={savedIds.has(item.id)} onSelect={() => select(item)} onToggle={() => toggle(item.id)} />} />
+  </SafeAreaView>;
+}
+
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "#FAFBFF" }, header: { paddingHorizontal: 18 }, back: { minHeight: 48, flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 4 }, backText: { color: NAVY, fontSize: 14, fontWeight: "700" }, title: { color: NAVY, fontSize: 28, lineHeight: 36, fontWeight: "800", marginBottom: 12 },
+  search: { minHeight: 52, borderRadius: 26, borderWidth: 1, borderColor: BORDER, backgroundColor: "white", flexDirection: "row", alignItems: "center", paddingHorizontal: 15, gap: 8 }, searchInput: { flex: 1, minHeight: 50, color: NAVY, fontSize: 13 }, clear: { minHeight: 44, justifyContent: "center" }, clearText: { color: BLUE, fontWeight: "700" }, count: { color: MUTED, fontSize: 13, fontWeight: "600", paddingVertical: 14 }, list: { paddingHorizontal: 18 }, empty: { color: MUTED, paddingVertical: 18 }, invalid: { color: MUTED, padding: 18 },
+});

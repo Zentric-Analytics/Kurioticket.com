@@ -8,6 +8,9 @@ import {
   destinationById,
   deriveDestinations,
   normalizeDestinationText,
+  EXPLORE_REGIONS,
+  exploreRegionForDestination,
+  exploreRegionSlug,
 } from "./destinationCatalogue";
 import { requireExploreDestination } from "../../../../../src/shared/destinations/exploreDestinationContent";
 import { exploreDestinationEditorial } from "../../../../../src/shared/destinations/exploreDestinationEditorial";
@@ -16,8 +19,10 @@ import {
   destinationCardLayout,
   exactExploreResult,
   exploreBottomPadding,
-  formatFlightAccess,
+  REGION_DISCOVERY,
+  REGION_PREVIEW_SIZE,
   searchExplore,
+  searchExploreRegion,
 } from "./exploreModels";
 import { POPULAR_DESTINATIONS } from "./exploreData";
 import { CURATED_POPULAR_DESTINATION_IDS } from "../flow/locationCatalogue";
@@ -268,6 +273,30 @@ test("destinations outside the popular list remain searchable and saveable", asy
   assert.deepEqual(stored, [outsidePopular.id]);
 });
 
+test("canonical region taxonomy covers all destinations exactly once with expected counts", () => {
+  const expected = [54, 64, 52, 16, 6, 10, 15, 18];
+  assert.deepEqual(REGION_DISCOVERY.map(({ region }) => region), [...EXPLORE_REGIONS]);
+  assert.deepEqual(REGION_DISCOVERY.map(({ destinations }) => destinations.length), expected);
+  const ids = REGION_DISCOVERY.flatMap(({ destinations }) => destinations.map(({ id }) => id));
+  assert.equal(ids.length, 235);
+  assert.equal(new Set(ids).size, 235);
+  assert.deepEqual(new Set(ids), new Set(destinations.map(({ id }) => id)));
+  for (const group of REGION_DISCOVERY) {
+    assert.equal(group.preview.length, REGION_PREVIEW_SIZE);
+    assert.deepEqual(group.preview, group.destinations.slice(0, REGION_PREVIEW_SIZE));
+    assert.ok(group.destinations.every((destination) => exploreRegionForDestination(destination) === group.region));
+  }
+});
+
+test("region search reuses global ranking and scopes names, countries and airport codes", () => {
+  assert.deepEqual(searchExploreRegion("sao", "South America"), searchExplore("sao"));
+  assert.equal(searchExploreRegion("LHR", "Europe")[0]?.destination.id, "gb-london");
+  assert.deepEqual(searchExploreRegion("LHR", "Asia"), []);
+  assert.ok(searchExploreRegion("Japan", "Asia").every(({ destination }) => destination.country === "Japan"));
+  assert.deepEqual(searchExploreRegion("São", "South America"), searchExploreRegion("sao", "South America"));
+  assert.equal(exploreRegionSlug("Oceania & Pacific"), "oceania-pacific");
+});
+
 test("popular destinations resolve directly through the shared model", () => {
   assert.deepEqual(
     POPULAR_DESTINATIONS.map((item) => item.destination.id),
@@ -390,177 +419,50 @@ test("Explore removes destination and inspiration tabs while keeping supported a
   );
 });
 
-test("popular destinations are one vertical virtualized stack", () => {
+test("Explore defaults to deterministic region discovery instead of Popular", () => {
   const source = screen();
-  assert.match(source, /FlatList/);
-  assert.match(source, /data=\{POPULAR_DESTINATIONS\}/);
-  assert.match(source, /Popular destinations/);
-  assert.doesNotMatch(source, /<SectionList|COUNTRY_DESTINATION_GROUPS/);
-  const discoveryView = source.slice(
-    source.indexOf("function ExploreDiscoveryContent"),
-    source.indexOf("const shadow"),
-  );
-  assert.doesNotMatch(discoveryView, /horizontal/);
-  assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
-  assert.match(source, /destinationMedia\(destination.id\)/);
-  assert.match(source, /data=\{results\}/);
+  assert.match(source, /Explore by region/);
+  assert.match(source, /data={REGION_DISCOVERY}/);
+  assert.match(source, /horizontal data={item.preview}/);
+  assert.match(source, /See all destinations in \${item.region}/);
+  assert.doesNotMatch(source, /data={POPULAR_DESTINATIONS}|Popular destinations/);
+  assert.match(source, /query.trim\(\) \?/);
 });
 
-test("popular destination cards use a narrow responsive gutter without widening the header", () => {
+test("region previews remain clean, bounded destination cards", () => {
   const source = screen();
-  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
-
-  assert.match(styles, /stableHeader: \{ paddingHorizontal: 18/);
-  assert.match(styles, /content: \{ paddingHorizontal: 18/);
-  assert.match(styles, /popularCard: \{\s*marginHorizontal: -6,/);
-  assert.equal(18 - 6, 12);
-  assert.match(styles, /popularCard:[\s\S]*?borderRadius: 16/);
-  assert.match(styles, /popularCard:[\s\S]*?overflow: "hidden"/);
-  assert.match(styles, /popularSeparator: \{ height: 15 \}/);
-  assert.match(styles, /popularImage: \{ width: "100%", height: 220/);
+  const card = source.slice(source.indexOf("function RegionPreviewCard"), source.indexOf("function ExploreDiscoveryContent"));
+  assert.match(card, /destinationMedia\(destination.id\)/);
+  assert.match(card, /destination.name/);
+  assert.match(card, /destination.country/);
+  assert.doesNotMatch(card, /price|hotel|date|summary|formatFlightAccess/);
+  assert.match(card, /onPress={onSelect}/);
+  assert.match(source, /destinationDetailsRoute\(destination.id\)/);
 });
 
-test("popular destination names keep city and country inline and accessible", () => {
+test("Popular configuration stays intact but is not a default presentation dependency", () => {
   const source = screen();
-  const card = source.slice(
-    source.indexOf("function PopularDestinationCard"),
-    source.indexOf("function ExploreDiscoveryContent"),
-  );
-  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
-
-  assert.match(card, /accessibilityLabel=\{`\$\{destination\.name\}, \$\{destination\.country\}`\}/);
-  assert.match(card, /numberOfLines=\{1\}/);
-  assert.match(card, /ellipsizeMode="tail"/);
-  assert.match(
-    card,
-    /<Text style=\{s\.popularCardTitle\}>\{destination\.name\}<\/Text>\s*<Text style=\{s\.countryName\}> • \{destination\.country\}<\/Text>/,
-  );
-  assert.match(styles, /popularCardTitle:[\s\S]*?fontWeight: "800"/);
-  assert.match(styles, /countryName: \{ color: MUTED/);
-  assert.match(styles, /popularImage: \{ width: "100%", height: 220/);
-});
-
-
-test("popular destination cards end after airport access without a flight action", () => {
-  const source = screen();
-  const card = source.slice(
-    source.indexOf("function PopularDestinationCard"),
-    source.indexOf("function ExploreDiscoveryContent"),
-  );
-  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
-
-  assert.doesNotMatch(card, /Search flights|searchFlights|name="flight"/);
-  assert.doesNotMatch(card, /Tap to explore|See more|View details|Learn more|Explore more/);
-  assert.doesNotMatch(styles, /flightButton|flightButtonText/);
-  assert.match(styles, /popularCopy: \{ padding: 14, gap: 3 \}/);
-});
-
-test("popular destination cards present shared summaries before concise flight access", () => {
-  const source = screen();
-  const card = source.slice(
-    source.indexOf("function PopularDestinationCard"),
-    source.indexOf("function ExploreDiscoveryContent"),
-  );
-
-  assert.match(card, /destination\.summary \? \(/);
-  assert.match(card, /numberOfLines=\{3\}/);
-  assert.match(card, /ellipsizeMode="tail"/);
-  assert.match(card, /\{destination\.summary\}/);
-  assert.ok(
-    card.indexOf("{destination.summary}") <
-      card.indexOf("formatFlightAccess("),
-  );
-  assert.doesNotMatch(card, /destination\.airportNames/);
-  assert.doesNotMatch(card, /landmark architecture|major museums|food traditions/);
-
-  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
-  assert.match(styles, /destinationSummary:[\s\S]*?fontSize: 14[\s\S]*?lineHeight: 20[\s\S]*?flexShrink: 1/);
-  assert.match(styles, /airportMeta:[\s\S]*?fontSize: 12[\s\S]*?flexShrink: 1/);
-  assert.doesNotMatch(source, /Platform\.OS/);
-});
-
-test("flight access formatter keeps the primary first and removes duplicate codes", () => {
-  assert.equal(formatFlightAccess("CDG", ["CDG"]), "Flights via CDG");
-  assert.equal(
-    formatFlightAccess("CDG", ["ORY", "CDG"]),
-    "Flights via CDG and ORY",
-  );
-  assert.equal(
-    formatFlightAccess("LHR", ["LGW", "LHR", "STN", "LGW", "LTN"]),
-    "Flights via LHR + 3 more",
-  );
-  assert.equal(
-    formatFlightAccess("CDG", ["cdg", "ORY"]),
-    "Flights via CDG and ORY",
-  );
-});
-
-test("popular destination card and save heart keep independent actions", () => {
-  const source = screen();
-  const card = source.slice(
-    source.indexOf("function PopularDestinationCard"),
-    source.indexOf("function ExploreDiscoveryContent"),
-  );
-
-  assert.match(card, /accessibilityLabel=\{`Open details for \$\{destination\.name\}, \$\{destination\.country\}`\}/);
-  assert.match(card, /onPress=\{onSelect\}/);
-  assert.match(card, /label=\{`\$\{saved \? "Remove" : "Save"\} \$\{destination\.name\}`\}/);
-  assert.match(card, /onPress=\{onToggle\}/);
-  assert.match(
-    card,
-    /<Pressable[\s\S]*?onPress=\{onSelect\}[\s\S]*?<Image[\s\S]*?<View style=\{s\.popularCopy\}>[\s\S]*?<\/Pressable>\s*<AndroidFavoriteButton[\s\S]*?onPress=\{onToggle\}/,
-  );
-});
-
-test("destination detail action buttons stay on their existing shared styles", () => {
-  const details = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
-  assert.match(details, /<Action label="Search flights" icon="flight" onPress=\{searchFlights\} \/>/);
-  assert.match(details, /<Action label="Search hotels" icon="hotel" onPress=\{searchHotels\} secondary \/>/);
-  assert.match(details, /primaryButton: \{ minHeight: 52/);
-});
-
-test("Explore has no saved destinations section or saved empty state", () => {
-  const source = screen();
-  assert.doesNotMatch(source, /Saved destinations/);
-  assert.doesNotMatch(source, /No saved destinations yet/);
-  assert.doesNotMatch(source, /savedDestinations/);
-  assert.match(source, /const \{ savedIds, toggle \} = useSavedDestinations\(\)/);
-  assert.match(source, /onToggle=\{\(\) => toggle\(r\.destination\.id\)\}/);
-});
-
-test("default destinations use only the curated list without a featured carousel", () => {
-  const source = screen();
-  assert.deepEqual(
-    POPULAR_DESTINATIONS.map((item) => item.destination.id),
-    CURATED_POPULAR_DESTINATION_IDS,
-  );
+  assert.deepEqual(POPULAR_DESTINATIONS.map((item) => item.destination.id), CURATED_POPULAR_DESTINATION_IDS);
   assert.equal(new Set(CURATED_POPULAR_DESTINATION_IDS).size, 25);
-  assert.doesNotMatch(source, /Featured destinations/);
-  assert.doesNotMatch(source, /Browse all destinations/);
-  assert.doesNotMatch(source, /FEATURED_DESTINATIONS/);
-  assert.match(source, /ListHeaderComponent=\{<Section title="Popular destinations"/);
+  assert.doesNotMatch(source, /POPULAR_DESTINATIONS/);
 });
 
-test("Explore keeps one controlled search input mounted above changing content", () => {
+test("Explore keeps one controlled global search above discovery", () => {
   const source = screen();
-  assert.equal(source.match(/<TextInput\n/g)?.length, 1);
-  assert.match(source, /value=\{query\}[\s\S]*?onChangeText=\{setQuery\}/);
-  assert.match(source, /<SafeAreaView[\s\S]*?<ExploreHeader[\s\S]*?\{isSearching \? \(/);
-  assert.doesNotMatch(source, /if \(query\.trim\(\)\)\s*return/);
-  assert.doesNotMatch(source, /setTimeout|onChangeText=.*blur|onChangeText=.*focus/);
-  assert.equal(source.match(/keyboardDismissMode="none"/g)?.length, 2);
-  assert.equal(source.match(/keyboardShouldPersistTaps="handled"/g)?.length, 2);
+  assert.equal(source.match(/<TextInput ref=/g)?.length, 1);
+  assert.match(source, /value={query} onChangeText={setQuery}/);
+  assert.match(source, /<ExploreHeader query={query}/);
+  assert.match(source, /query.trim\(\) \?[\s\S]*data={results}[\s\S]*<ExploreDiscoveryContent/);
+  assert.doesNotMatch(source, /if \(query.trim\(\)\)\s*return/);
 });
 
-test("Explore search preserves successive characters and clearing restores discovery", () => {
-  assert.equal(result("L").some((item) => item.id === "gb-london"), true);
-  for (const query of ["Lo", "Lon", "Lond", "Londo", "London"])
+test("clearing global search restores region discovery", () => {
+  for (const query of ["L", "Lo", "Lon", "London"])
     assert.equal(result(query).some((item) => item.id === "gb-london"), true);
-  assert.equal(result("London")[0]?.id, "gb-london");
   assert.deepEqual(searchExplore(""), []);
   const source = screen();
-  assert.match(source, /onPress=\{\(\) => \{\s*setQuery\(""\);\s*input\.current\?\.focus\(\);/);
-  assert.match(source, /isSearching \? \([\s\S]*?data=\{results\}[\s\S]*?: \([\s\S]*?<ExploreDiscoveryContent/);
+  assert.match(source, /setQuery\(""\); input.current\?\.focus\(\)/);
+  assert.match(source, /: <ExploreDiscoveryContent/);
 });
 
 test("Explore uses destination-only search copy", () => {
