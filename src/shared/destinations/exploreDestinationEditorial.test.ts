@@ -74,6 +74,10 @@ const AFRICA_BATCH_2_IDS = [
   "dz-algiers", "ma-casablanca", "eg-sharm-el-sheikh", "tn-tunis",
 ] as const;
 
+const AFRICA_BATCH_3_IDS = [
+  "za-durban", "bw-gaborone", "zw-harare", "zm-lusaka", "mz-maputo", "na-windhoek",
+] as const;
+
 const AFRICA_BATCH_2_DEFERRED_IDS = ["sd-khartoum", "ly-tripoli"] as const;
 
 const ORIGINAL_AFRICAN_EDITORIAL_IDS = [
@@ -333,7 +337,7 @@ test("Africa Batch 1 enrichment leaves other non-editorial destinations valid", 
 });
 
 test("Africa Batch 2 adds only the four North African destinations that passed the source gate", () => {
-  assert.deepEqual(exploreDestinationEditorial.slice(80).map(({ id }) => id), AFRICA_BATCH_2_IDS);
+  assert.deepEqual(exploreDestinationEditorial.slice(80, 84).map(({ id }) => id), AFRICA_BATCH_2_IDS);
 
   for (const id of AFRICA_BATCH_2_IDS) {
     const record = exploreDestinationEditorial.find((candidate) => candidate.id === id)!;
@@ -356,6 +360,53 @@ test("Africa Batch 2 adds only the four North African destinations that passed t
       ({ title, url }) => title.trim().length > 0 && url.startsWith("https://"),
     ));
   }
+});
+
+test("Africa Batch 3 adds six previously non-editorial canonical Southern African destinations", () => {
+  const priorIds = new Set<string>([
+    ...ORIGINAL_EDITORIAL_IDS, ...EUROPE_BATCH_1_IDS, ...EUROPE_BATCH_2_IDS,
+    ...EUROPE_BATCH_3_IDS, ...EUROPE_BATCH_4_IDS, ...EUROPE_BATCH_5_IDS,
+    ...AFRICA_BATCH_1_IDS, ...AFRICA_BATCH_2_IDS,
+  ]);
+  assert.deepEqual(exploreDestinationEditorial.slice(84).map(({ id }) => id), AFRICA_BATCH_3_IDS);
+  assert.ok(AFRICA_BATCH_3_IDS.every((id) => !priorIds.has(id)));
+
+  for (const id of AFRICA_BATCH_3_IDS) {
+    const record = exploreDestinationEditorial.find((candidate) => candidate.id === id)!;
+    const canonical = exploreDestinations.find((candidate) => candidate.id === id);
+    assert.ok(canonical);
+    assert.equal(canonical.id, id);
+    assert.ok(record);
+    assert.ok(record.summary.startsWith(canonical.name));
+    assert.ok(record.summary.trim().split(/\s+/).length >= 13);
+    assert.ok(record.summary.trim().split(/\s+/).length <= 18);
+    assert.equal((record.summary.match(/[.!?](?:\s|$)/g) ?? []).length, 1);
+    assert.ok(record.description.trim().split(/\s+/).length >= 53);
+    assert.ok(record.description.trim().split(/\s+/).length <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.equal(new Set(record.highlights.map((highlight) => highlight.toLocaleLowerCase())).size, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !highlight.endsWith(".")));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-10");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length);
+    assert.ok(record.editorialProvenance.sourceReferences.every(
+      ({ title, url }) => title.trim().length > 0 && url.startsWith("https://"),
+    ));
+  }
+
+  assert.deepEqual(
+    exploreDestinationEditorial.filter(({ id }) =>
+      AFRICA_BATCH_1_IDS.some((batchId) => batchId === id)).map(({ id }) => id),
+    AFRICA_BATCH_1_IDS,
+  );
+  assert.deepEqual(
+    exploreDestinationEditorial.filter(({ id }) =>
+      AFRICA_BATCH_2_IDS.some((batchId) => batchId === id)).map(({ id }) => id),
+    AFRICA_BATCH_2_IDS,
+  );
 });
 
 test("deferred Africa Batch 2 destinations remain canonical and non-editorial", () => {
