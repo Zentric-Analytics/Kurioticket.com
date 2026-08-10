@@ -2703,9 +2703,16 @@ export function DealsSearchForm({
     </section>
   ) : null;
 
+  const landingTravellersDesktopClasses = included.flight
+    ? "min-[1050px]:min-h-[54px] min-[1050px]:border-b-0 min-[1050px]:border-s"
+    : "lg:min-h-[54px] lg:border-b-0 lg:border-s";
+  const landingSearchDesktopClasses = included.flight
+    ? "min-[1050px]:h-full min-[1050px]:min-w-[156px] min-[1050px]:items-center min-[1050px]:border-s min-[1050px]:border-slate-200 min-[1050px]:px-2"
+    : "lg:h-full lg:min-w-[156px] lg:items-center lg:border-s lg:border-slate-200 lg:px-2";
+
   const searchDealsButton = (
     <div
-      className={`flex w-full ${variant === "landing" ? "min-[1050px]:h-full min-[1050px]:min-w-[156px] min-[1050px]:items-center min-[1050px]:border-s min-[1050px]:border-slate-200 min-[1050px]:px-2" : "sm:w-auto"}`}
+      className={`flex w-full ${variant === "landing" ? landingSearchDesktopClasses : "sm:w-auto"}`}
     >
       <button
         type="submit"
@@ -2741,7 +2748,7 @@ export function DealsSearchForm({
         onClick={() =>
           travelersOpen ? dismissDesktopTravelers() : openTravelers()
         }
-        className={`${landingActionSegment} flex items-center justify-between gap-2 border-b border-slate-200 min-[1050px]:min-h-[54px] min-[1050px]:border-b-0 min-[1050px]:border-s`}
+        className={`${landingActionSegment} ${landingTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200`}
       >
         <span className="min-w-0">
           <span className={`${label} mb-0.5`}>{travelersControlLabel}</span>
@@ -3185,7 +3192,7 @@ export function DealsSearchForm({
               data-deals-results-row={
                 variant === "results" ? "stay" : undefined
               }
-              className={`${variant === "results" ? resultsRow : connectedShell} sm:grid-cols-2 ${variant === "landing" && !included.flight ? "min-[1050px]:grid-cols-[minmax(0,2fr)_minmax(150px,1fr)_minmax(180px,1fr)_minmax(156px,auto)]" : ""}`}
+              className={`${variant === "results" ? resultsRow : connectedShell} sm:grid-cols-2 ${variant === "landing" && !included.flight ? "lg:grid-cols-[minmax(0,2fr)_minmax(150px,1fr)_minmax(180px,1fr)_minmax(156px,auto)]" : ""}`}
             >
               {(variant === "results" ||
                 !included.flight ||

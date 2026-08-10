@@ -84,16 +84,31 @@ test("Flight landing row keeps route, dates, shared controls, and CTA in order",
 });
 
 test("Hotel and Car landing row has no empty Flight or Cabin tracks", () => {
+  const positions = [
+    "data-deals-hotel-destination",
+    "hotelDatesLauncherRef",
+    "landingPrimaryControls",
+  ].map((value) => stayLandingRow.indexOf(value));
+
   assert.match(stayLandingRow, /data-deals-landing-main-search-row/);
-  assert.match(stayLandingRow, /data-deals-hotel-destination/);
-  assert.match(stayLandingRow, /hotelDatesLauncherRef/);
+  assert.ok(positions.every((position) => position >= 0));
+  assert.deepEqual(
+    [...positions].sort((a, b) => a - b),
+    positions,
+  );
   assert.match(
     stayLandingRow,
     /!included\.flight[\s\S]*landingPrimaryControls/,
   );
   assert.match(
     stayLandingRow,
-    /grid-cols-\[minmax\(0,2fr\)_minmax\(150px,1fr\)_minmax\(180px,1fr\)_minmax\(156px,auto\)\]/,
+    /lg:grid-cols-\[minmax\(0,2fr\)_minmax\(150px,1fr\)_minmax\(180px,1fr\)_minmax\(156px,auto\)\]/,
+  );
+  assert.doesNotMatch(stayLandingRow, /data-deals-flight-destination/);
+  assert.doesNotMatch(stayLandingRow, /data-deals-landing-cabin/);
+  assert.doesNotMatch(
+    stayLandingRow,
+    /min-\[1050px\]:grid-cols-\[minmax\(0,2fr\)/,
   );
 });
 
@@ -114,6 +129,18 @@ test("landing controls use transparent, collision-safe integrated segments", () 
   );
   assert.match(landingPrimaryControls, /min-\[1050px\]:border-s/);
   assert.match(landingPrimaryControls, /min-w-0/);
+  assert.match(
+    form,
+    /const landingTravellersDesktopClasses = included\.flight[\s\S]*lg:min-h-\[54px\] lg:border-b-0 lg:border-s/,
+  );
+  assert.match(
+    form,
+    /const landingSearchDesktopClasses = included\.flight[\s\S]*lg:h-full lg:min-w-\[156px\] lg:items-center lg:border-s lg:border-slate-200 lg:px-2/,
+  );
+  assert.match(
+    landingPrimaryControls,
+    /landingTravellersDesktopClasses[\s\S]*\{searchDealsButton\}/,
+  );
 });
 
 test("Stay options follow the main row and never contain the CTA", () => {
