@@ -227,6 +227,20 @@ After Africa Batch 6, cumulative African coverage is 51 of 54 canonical destinat
 
 Africa Batch 6 changes no images, ExploreScreen or DestinationDetailsScreen UI, galleries, maps, search, flight or hotel behaviour, booking flows, or related destinations. Featured membership and ordering remain unchanged and independently maintained.
 
+### Final Africa batch
+
+The final Africa batch, verified on 2026-08-10, implements the three canonical destinations that had been temporarily deferred while stronger source resolution was completed:
+
+1. `gn-conakry` — Conakry
+2. `sd-khartoum` — Khartoum
+3. `ly-tripoli` — Tripoli
+
+The separate source-resolution pass supplied exact, pre-verified authoritative references, which were represented directly in editorial provenance without substituting or inventing URLs. Conakry uses official Guinea Ministry of Culture material about the national museum and Sandervalia cultural context. Khartoum uses UNESCO material only for durable geography, archaeological collections and institutional history; its copy makes no claim that the Sudan National Museum is currently open, intact, accessible or operating. Tripoli is explicitly disambiguated as Tripoli, Libya, and its UNESCO references and copy concern Libya rather than Tripoli, Lebanon; the record does not describe Tripoli itself as a UNESCO World Heritage Site.
+
+The three temporary deferrals are removed because all three destinations now have complete editorial records. Repository-derived coverage is **54 of 54 canonical African destinations editorialized**, with **0 remaining**. Here, 54/54 means every canonical African destination currently represented by the Explore catalogue has editorial enrichment; it does not imply that the catalogue represents every possible destination in Africa. Europe remains complete at 52 of 52 destinations, and Featured membership and ordering remain independent and unchanged.
+
+This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.

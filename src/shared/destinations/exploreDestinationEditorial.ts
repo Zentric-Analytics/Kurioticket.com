@@ -105,6 +105,13 @@ const africaBatch6SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: AFRICA_BATCH_6_LAST_VERIFIED_AT,
 });
 
+const FINAL_AFRICA_BATCH_LAST_VERIFIED_AT = "2026-08-10";
+const finalAfricaBatchSourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: FINAL_AFRICA_BATCH_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -896,6 +903,27 @@ const rawExploreDestinationEditorial = [
     description: "Juba extends along the White Nile, whose broad channel and banks give the city its defining geographic setting. Market districts and neighbourhood streets record its growth from a river settlement into South Sudan's principal urban centre. All Saints Cathedral, Saint Teresa Cathedral and University of Juba institutions contribute religious, civic and educational landmarks without extending the record to country-wide attractions.",
     highlights: ["White Nile riverfront", "Juba market districts", "All Saints Cathedral", "University of Juba institutions"],
     editorialProvenance: africaBatch6SourceReferences([{ title: "Encyclopaedia Britannica — Juba", url: "https://www.britannica.com/place/Juba" }, { title: "University of Juba", url: "https://uoj.edu.ss/" }]),
+  },
+  {
+    id: "gn-conakry",
+    summary: "Conakry occupies a coastal peninsula where Kaloum, national institutions and cultural heritage shape Guinea's capital.",
+    description: "Conakry extends along a peninsula on Guinea's Atlantic coast, with Kaloum forming its historic civic and administrative core. The Musée national de Guinée, also associated with Sandervalia, has held collections representing the country's archaeological, artistic and ethnographic heritage. Official cultural institutions place conservation and public memory within the capital's urban history rather than presenting distant Guinean sites as city attractions.",
+    highlights: ["Conakry coastal peninsula", "Kaloum civic core", "Musée national de Guinée", "Sandervalia cultural heritage"],
+    editorialProvenance: finalAfricaBatchSourceReferences([{ title: "Ministère de la Culture, du Tourisme et de l’Artisanat — Directions et services", url: "https://mcta.gov.gn/les-directions-et-services/" }, { title: "Ministère de la Culture, du Tourisme et de l’Artisanat — Musée national de Guinée", url: "https://mcta.gov.gn/patrimoine-culturel-16-millions-deuros-pour-la-renaissance-du-musee-national-de-guinee/" }]),
+  },
+  {
+    id: "sd-khartoum",
+    summary: "Khartoum developed around the Blue and White Nile confluence, with national institutions reflecting Sudan's archaeological heritage.",
+    description: "Khartoum developed where the Blue Nile and White Nile meet, a geography that shaped the Sudanese capital and its metropolitan form. The Sudan National Museum has served as a major repository for archaeological material and collections connected with Sudan's long cultural history. UNESCO documentation records safeguarding and rehabilitation initiatives for this heritage without establishing current access, condition or operating status.",
+    highlights: ["Blue and White Nile confluence", "Sudan National Museum heritage", "Sudanese archaeological collections", "Khartoum metropolitan geography"],
+    editorialProvenance: finalAfricaBatchSourceReferences([{ title: "UNESCO — Rehabilitating the Sudanese National Museum in Khartoum", url: "https://www.unesco.org/en/articles/launching-project-rehabilitating-sudanese-national-museum-khartoum-sudan" }, { title: "UNESCO Heritage Emergency Fund — Sudan National Museum", url: "https://www.unesco.org/en/culture-emergencies/heritage-emergency-fund/urgent-safeguarding-response-damaged-collections-sudan-national-museum" }]),
+  },
+  {
+    id: "ly-tripoli",
+    summary: "Tripoli faces the Mediterranean, with an old medina, civic squares and architecture reflecting Libya's layered history.",
+    description: "Tripoli stands on Libya's Mediterranean coast, where the Old City preserves a dense urban fabric shaped through successive historical periods. Sayeda Mariam Square forms part of this medina and reflects civic, religious and architectural development associated with the Karamanli era. UNESCO's Libya-specific material places the square within the capital's heritage context without designating Tripoli itself as a World Heritage Site.",
+    highlights: ["Mediterranean coastal setting", "Tripoli Old City", "Sayeda Mariam Square", "Karamanli-era urban heritage"],
+    editorialProvenance: finalAfricaBatchSourceReferences([{ title: "UNESCO World Heritage Centre — Sayeda Mariam Square, Old City of Tripoli, Libya", url: "https://whc.unesco.org/en/tentativelists/7020/" }, { title: "UNESCO — Libya country profile", url: "https://www.unesco.org/en/countries/ly" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
