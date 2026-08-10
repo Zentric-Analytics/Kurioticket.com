@@ -8,6 +8,7 @@ import {
   isDatabaseConfigured,
 } from "@/lib/prisma";
 import { getEmailVerificationRedirect } from "@/services/emailVerificationService";
+import { validateAccountSession } from "@/lib/account-session";
 
 export function getLoginRedirect(
   pathname = "/dashboard",
@@ -33,6 +34,10 @@ export async function requireUserSession(
 
   if (session.user.twoFactorEnabled && !session.user.twoFactorVerified) {
     redirect(`/auth/two-factor?callbackUrl=${encodeURIComponent(pathname)}`);
+  }
+
+  if (!session.user.accountSessionId || !(await validateAccountSession(session.user.accountSessionId, session.user.id))) {
+    redirect(`${getLoginRedirect(pathname)}&error=SessionExpired`);
   }
 
   if (session.user.status === "PENDING_DELETION") {

@@ -41,6 +41,7 @@ import {
 } from "@/services/emailVerificationService";
 
 import { logAuthEvent } from "@/services/authService";
+import { createAccountSession, validateAccountSession } from "@/lib/account-session";
 
 assertStagingAuthenticationSafety();
 
@@ -556,6 +557,8 @@ export const authOptions: NextAuthOptions =
           const updateSession = session as JwtUpdateSession | undefined;
           if (updateSession?.twoFactorVerified === true) {
             token.twoFactorVerified = true;
+            token.assuranceLevel = "MFA";
+            if (token.accountSessionId) await getPrisma().accountSession.updateMany({ where: { id: token.accountSessionId, userId: String(token.id), revokedAt: null }, data: { assuranceLevel: "MFA", twoFactorVerifiedAt: new Date(), reauthenticatedAt: new Date() } });
           }
         }
 
@@ -580,6 +583,8 @@ export const authOptions: NextAuthOptions =
             );
 
           token.twoFactorVerified = true;
+          token.authMethod = authUser.passkeyStrongAuth ? "PASSKEY" : account?.provider === "google" ? "GOOGLE" : "PASSWORD";
+          token.assuranceLevel = authUser.passkeyStrongAuth ? "PHISHING_RESISTANT" : "PRIMARY";
         }
 
         if (
@@ -639,6 +644,16 @@ export const authOptions: NextAuthOptions =
             if (!token.twoFactorEnabled) {
               token.twoFactorVerified = true;
             }
+
+            if (!token.accountSessionId && (!token.twoFactorEnabled || token.twoFactorVerified)) {
+              const canonical = await createAccountSession({ userId: dbUser.id, client: "WEB", authMethod: token.authMethod || "UNKNOWN", assuranceLevel: token.assuranceLevel || "PRIMARY" });
+              token.accountSessionId = canonical.id;
+              token.sessionVersion = canonical.sessionVersion;
+            } else if (token.accountSessionId) {
+              const canonical = await validateAccountSession(token.accountSessionId, dbUser.id);
+              if (!canonical) { token.status = "SUSPENDED"; token.twoFactorVerified = false; }
+              else token.sessionVersion = canonical.sessionVersion;
+            }
           }
         }
 
@@ -686,6 +701,8 @@ export const authOptions: NextAuthOptions =
             Boolean(
               token.twoFactorVerified
             );
+          session.user.accountSessionId = token.accountSessionId;
+          session.user.assuranceLevel = token.assuranceLevel;
         }
 
         return session;

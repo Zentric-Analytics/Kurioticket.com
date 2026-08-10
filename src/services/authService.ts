@@ -316,17 +316,12 @@ export async function resetPasswordWithToken(input: { token: string; password: s
     return false;
   }
   const passwordHash = await bcrypt.hash(password, 12);
-  const updateResult = await getPrisma().user.updateMany({
-    where: { email, status: "ACTIVE" },
-    data: { passwordHash },
+  await getPrisma().$transaction(async (tx) => {
+    await tx.user.update({ where: { id: user.id }, data: { passwordHash, sessionVersion: { increment: 1 } } });
+    await tx.accountSession.updateMany({ where: { userId: user.id, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: "password_reset" } });
+    await tx.securityEvent.create({ data: { userId: user.id, type: "PASSWORD_RESET" } });
+    await tx.verificationToken.delete({ where: { token: tokenHash } });
   });
-
-  await getPrisma().verificationToken.deleteMany({ where: { token: tokenHash } });
-
-  if (updateResult.count < 1) {
-    logAuthEvent("password-reset-failed", { email, reason: "user-not-found" });
-    return false;
-  }
 
   logAuthEvent("password-reset-succeeded", { email });
   return { userId: user.id, email, transitionId: tokenHash.slice(0, 24) };

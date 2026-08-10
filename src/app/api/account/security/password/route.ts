@@ -1,8 +1,7 @@
 import bcrypt from "bcryptjs";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
-import { authOptions } from "@/lib/auth";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getPrisma } from "@/lib/prisma";
 import { recordAccountEventSafely } from "@/services/accountNotificationService";
@@ -29,8 +28,9 @@ const passwordChangeSchema = z
   });
 
 export async function PATCH(request: Request) {
-  const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  const auth = await requireWebApiSession();
+  const session = auth?.session;
+  const userId = auth?.userId;
 
   if (!userId) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -76,10 +76,11 @@ export async function PATCH(request: Request) {
 
     const newPasswordHash = await bcrypt.hash(payload.newPassword, 12);
 
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: newPasswordHash },
-      select: { id: true, updatedAt: true },
+    const updatedUser = await prisma.$transaction(async tx => {
+      const changed = await tx.user.update({ where: { id: user.id }, data: { passwordHash: newPasswordHash }, select: { id: true, updatedAt: true } });
+      await tx.accountSession.updateMany({ where: { userId: user.id, id: { not: auth!.accountSession.id }, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: "password_changed_other_device" } });
+      await tx.securityEvent.create({ data: { userId: user.id, accountSessionId: auth!.accountSession.id, type: "PASSWORD_CHANGED" } });
+      return changed;
     });
 
     await recordAccountEventSafely({ userId: user.id, email: session.user.email, eventKey: `security:password-changed:${user.id}:${updatedUser.updatedAt.toISOString()}`, type: "SECURITY_UPDATE", title: "Password changed", body: "Your Kurioticket password was changed. If this wasn’t you, reset your password and contact Support immediately.", actionPath: "/settings" });

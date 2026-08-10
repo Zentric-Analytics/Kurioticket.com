@@ -20,6 +20,42 @@ enum UserStatus {
   DELETED
 }
 
+enum AccountSessionClient {
+  WEB
+  MOBILE
+}
+
+enum AuthenticationMethod {
+  PASSWORD
+  EMAIL_CODE
+  GOOGLE
+  PASSKEY
+  UNKNOWN
+}
+
+enum AuthenticationAssurance {
+  PRIMARY
+  MFA
+  PHISHING_RESISTANT
+}
+
+enum SecurityEventType {
+  SIGN_IN
+  MOBILE_SESSION_CREATED
+  PASSWORD_CHANGED
+  PASSWORD_RESET
+  TWO_FACTOR_ENABLED
+  TWO_FACTOR_DISABLED
+  RECOVERY_CODES_REGENERATED
+  PASSKEY_ADDED
+  PASSKEY_REMOVED
+  SESSION_REVOKED
+  ALL_SESSIONS_REVOKED
+  ACCOUNT_SUSPENDED
+  ACCOUNT_REACTIVATED
+  ACCOUNT_DELETION_REQUESTED
+}
+
 enum PreviewTesterStatus {
   ACTIVE
   SUSPENDED
@@ -165,6 +201,7 @@ model User {
   onboardedAt              DateTime?
   createdAt                DateTime                      @default(now())
   updatedAt                DateTime                      @updatedAt
+  sessionVersion           Int                           @default(0)
   accounts                 Account[]
   sessions                 Session[]
   savedFlights             SavedFlight[]
@@ -183,9 +220,12 @@ model User {
   travelPreferences        TravelPreferences?
   tripBookings             TripBooking[]
   sessionActivities        UserSessionActivity[]
+  accountSessions          AccountSession[]
+  securityEvents           SecurityEvent[]
   accountDeletionRequests  AccountDeletionRequest[]
   passkeys                 UserPasskey[]
   webAuthnChallenges       WebAuthnChallenge[]
+  mobileLoginChallenges    MobileLoginChallenge[]
   previewTestersApproved   PreviewTester[]               @relation("PreviewTesterApprovedBy")
   previewTestersSuspended  PreviewTester[]               @relation("PreviewTesterSuspendedBy")
   previewTestersRevoked    PreviewTester[]               @relation("PreviewTesterRevokedBy")
@@ -193,6 +233,75 @@ model User {
   @@index([role])
   @@index([status])
   @@index([createdAt])
+}
+
+model MobileLoginChallenge {
+  id         String               @id @default(cuid())
+  userId     String
+  proofHash  String               @unique
+  authMethod AuthenticationMethod
+  expiresAt  DateTime
+  attempts   Int                  @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime             @default(now())
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt, consumedAt])
+}
+
+model AccountSession {
+  id                  String                  @id @default(cuid())
+  userId              String
+  client              AccountSessionClient
+  platform            String?
+  authMethod          AuthenticationMethod
+  assuranceLevel      AuthenticationAssurance
+  sessionVersion      Int
+  tokenHash           String?                 @unique
+  expiresAt           DateTime
+  createdAt           DateTime                @default(now())
+  lastSeenAt          DateTime                @default(now())
+  reauthenticatedAt   DateTime?
+  twoFactorVerifiedAt DateTime?
+  revokedAt           DateTime?
+  revokeReason        String?
+  deviceLabel         String?
+  browser             String?
+  os                  String?
+  appVersion          String?
+  userAgent           String?
+  maskedIp            String?
+  locationLabel       String?
+  user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  securityEvents      SecurityEvent[]
+
+  @@index([userId, revokedAt, expiresAt])
+  @@index([userId, lastSeenAt])
+  @@index([expiresAt])
+}
+
+model SecurityEvent {
+  id               String                   @id @default(cuid())
+  userId           String
+  type             SecurityEventType
+  accountSessionId String?
+  client           AccountSessionClient?
+  authMethod       AuthenticationMethod?
+  assuranceLevel   AuthenticationAssurance?
+  deviceLabel      String?
+  browser          String?
+  os               String?
+  maskedIp         String?
+  metadata         Json?
+  occurredAt       DateTime                 @default(now())
+  createdAt        DateTime                 @default(now())
+  user             User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountSession   AccountSession?          @relation(fields: [accountSessionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt])
+  @@index([accountSessionId])
+  @@index([type, occurredAt])
 }
 
 model PreviewTester {

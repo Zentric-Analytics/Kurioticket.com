@@ -45,7 +45,7 @@ export async function createTotpSetup(input: { userId: string; email?: string | 
 export async function confirmTotpSetup(input: { userId: string; code: string }) {
   const pending = await getPrisma().verificationToken.findFirst({ where: { identifier: setupIdentifier(input.userId) }, orderBy: { expires: "desc" } });
   if (!pending || pending.expires <= new Date()) return null;
-  const secret = decryptSecret(pending.token);
+  const secret = decryptSecret(pending.token).secret;
   const result = verifyTotp(secret, input.code);
   if (!result.valid) return null;
   const recoveryCodes = generateRecoveryCodes();
@@ -66,9 +66,10 @@ export async function verifySecondFactor(input: { userId: string; code: string; 
   const settings = await getPrisma().userSecuritySettings.findUnique({ where: { userId: input.userId }, select: { twoFactorEnabled: true, twoFactorSecretEncrypted: true, twoFactorLastUsedStep: true, recoveryCodesHash: true } });
   if (!settings?.twoFactorEnabled) return false;
   if (/^\d{6}$/.test(code) && settings.twoFactorSecretEncrypted) {
-    const result = verifyTotp(decryptSecret(settings.twoFactorSecretEncrypted), code);
+    const decrypted = decryptSecret(settings.twoFactorSecretEncrypted);
+    const result = verifyTotp(decrypted.secret, code);
     if (result.valid && (!settings.twoFactorLastUsedStep || BigInt(result.step) > settings.twoFactorLastUsedStep)) {
-      await getPrisma().userSecuritySettings.update({ where: { userId: input.userId }, data: { twoFactorLastUsedStep: BigInt(result.step) } });
+      await getPrisma().userSecuritySettings.update({ where: { userId: input.userId }, data: { twoFactorLastUsedStep: BigInt(result.step), ...(decrypted.legacy ? { twoFactorSecretEncrypted: encryptSecret(decrypted.secret) } : {}) } });
       return true;
     }
   }
@@ -102,9 +103,26 @@ export async function regenerateRecoveryCodes(input: { userId: string; code: str
 }
 
 function setupIdentifier(userId: string) { return `two-factor:totp-setup:${userId}`; }
-function getEncryptionKey() { return createHash("sha256").update(process.env.ACCOUNT_SECURITY_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || "development-account-security-key").digest(); }
-function encryptSecret(value: string) { const iv=randomBytes(12); const cipher=createCipheriv("aes-256-gcm", getEncryptionKey(), iv); const encrypted=Buffer.concat([cipher.update(value,"utf8"), cipher.final()]); const tag=cipher.getAuthTag(); return `v1:${iv.toString("base64url")}:${tag.toString("base64url")}:${encrypted.toString("base64url")}`; }
-function decryptSecret(value: string) { const [,iv,tag,data]=value.split(":"); const decipher=createDecipheriv("aes-256-gcm", getEncryptionKey(), Buffer.from(iv,"base64url")); decipher.setAuthTag(Buffer.from(tag,"base64url")); return Buffer.concat([decipher.update(Buffer.from(data,"base64url")), decipher.final()]).toString("utf8"); }
+function deriveKey(value: string) { return createHash("sha256").update(value).digest(); }
+function currentEncryptionKey() {
+  const configured = process.env.ACCOUNT_SECURITY_ENCRYPTION_KEY;
+  if (configured && configured.length >= 32) return deriveKey(configured);
+  if (process.env.NODE_ENV === "production") throw new Error("Account security encryption is unavailable.");
+  return deriveKey("development-account-security-key");
+}
+function legacyKeys() {
+  const values = [process.env.ACCOUNT_SECURITY_ENCRYPTION_KEY, process.env.ACCOUNT_SECURITY_LEGACY_ENCRYPTION_KEY, process.env.NEXTAUTH_SECRET, process.env.AUTH_SECRET];
+  if (process.env.NODE_ENV !== "production") values.push("development-account-security-key");
+  return [...new Set(values.filter((value): value is string => Boolean(value)))].map(deriveKey);
+}
+export function encryptSecret(value: string) { const iv=randomBytes(12); const cipher=createCipheriv("aes-256-gcm", currentEncryptionKey(), iv); const encrypted=Buffer.concat([cipher.update(value,"utf8"), cipher.final()]); const tag=cipher.getAuthTag(); return `v2:${iv.toString("base64url")}:${tag.toString("base64url")}:${encrypted.toString("base64url")}`; }
+export function decryptSecret(value: string) {
+  const [version,iv,tag,data]=value.split(":");
+  if (!iv || !tag || !data || !["v1","v2"].includes(version)) throw new Error("Invalid encrypted account security data.");
+  const keys = version === "v2" ? [currentEncryptionKey()] : legacyKeys();
+  for (const key of keys) { try { const decipher=createDecipheriv("aes-256-gcm", key, Buffer.from(iv,"base64url")); decipher.setAuthTag(Buffer.from(tag,"base64url")); return { secret: Buffer.concat([decipher.update(Buffer.from(data,"base64url")), decipher.final()]).toString("utf8"), legacy: version === "v1" }; } catch {} }
+  throw new Error("Unable to decrypt account security data.");
+}
 function toBase32(buf: Buffer) { let bits="", out=""; for (const b of buf) bits += b.toString(2).padStart(8,"0"); for (let i=0;i<bits.length;i+=5) out += base32Alphabet[parseInt(bits.slice(i,i+5).padEnd(5,"0"),2)]; return out; }
 function fromBase32(input: string) { let bits=""; for (const c of input.replace(/=+$/,"")) bits += base32Alphabet.indexOf(c).toString(2).padStart(5,"0"); const bytes=[]; for (let i=0;i+8<=bits.length;i+=8) bytes.push(parseInt(bits.slice(i,i+8),2)); return Buffer.from(bytes); }
 function verifyTotp(secret: string, code: string) { if (!/^\d{6}$/.test(code)) return { valid:false, step:0 }; const current=Math.floor(Date.now()/1000/period); for (const step of [current-1,current,current+1]) if (safeEqual(totpAt(secret, step), code)) return { valid:true, step }; return { valid:false, step:0 }; }
