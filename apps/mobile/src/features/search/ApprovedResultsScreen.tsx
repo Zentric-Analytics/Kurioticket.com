@@ -279,6 +279,7 @@ function FlightFilterModal({ visible, section, filters, options, onChange, onClo
 }
 function FlightCard({ result, rank, params }: { result: FlightResult; rank: number; params: Record<string, string | string[]> }) {
   const { savedIds, toggle } = useSavedFlights();
+  const narrow = useWindowDimensions().width < 400;
   const saved = savedIds.has(result.id);
   return (
     <View style={[s0.card, rank === 0 && s0.best]}>
@@ -289,19 +290,24 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
             <Badge green>Great price</Badge>
           </View>
         ) : rank === 1 ? (
-          <Badge green>2nd best</Badge>
+          <View style={s0.badgeRow}>
+            <Badge green>2nd best</Badge>
+          </View>
         ) : (
-          <Badge>
-            {result.stops
-              ? `${result.stops} stop${result.stops > 1 ? "s" : ""}`
-              : "Nonstop"}
-          </Badge>
+          <View style={s0.badgeRow}>
+            <Badge>
+              {result.stops
+                ? `${result.stops} stop${result.stops > 1 ? "s" : ""}`
+                : "Nonstop"}
+            </Badge>
+          </View>
         )}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${saved ? "Remove" : "Save"} ${result.airlineName}`}
           accessibilityState={{ selected: saved }}
           onPress={() => toggle(result.id)}
+          style={s0.favoriteButton}
         >
           <FlowIcon
             name="heart"
@@ -311,34 +317,44 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
         </Pressable>
       </View>
       <View style={s0.flightMain}>
-        {result.airlineLogo ? (
-          <Image source={{ uri: result.airlineLogo }} style={s0.airline} />
-        ) : (
-          <View style={s0.airlineFallback}>
-            <Text>{result.airlineName.slice(0, 2)}</Text>
+        <View style={s0.airlineIdentity}>
+          <View style={s0.airlineFrame}>
+            {result.airlineLogo ? (
+              <Image
+                source={{ uri: result.airlineLogo }}
+                resizeMode="contain"
+                style={s0.airline}
+              />
+            ) : (
+              <View style={s0.airlineFallback}>
+                <Text style={s0.airlineInitials}>{result.airlineName.slice(0, 2)}</Text>
+              </View>
+            )}
           </View>
-        )}
-        <View style={s0.departureBlock}>
           <Text style={s0.nameSmall}>{result.airlineName}</Text>
-          <Text style={s0.time}>{clock(result.departureTime)}</Text>
-          <Text style={s0.sub}>{result.originAirport}</Text>
         </View>
-        <View style={s0.timeline}>
-          <Text style={s0.sub}>{result.duration}</Text>
-          <View style={s0.line} />
-          <Text style={s0.nonstop}>
-            {result.stops ? `${result.stops} stop` : "Nonstop"}
-          </Text>
-        </View>
-        <View style={s0.arrivalBlock}>
-          <Text style={s0.time}>{clock(result.arrivalTime)}</Text>
-          <Text style={s0.sub}>{result.destinationAirport}</Text>
-        </View>
-        <View style={s0.priceBox}>
-          <Text style={s0.bigPrice}>
-            {money(result.currency, result.price)}
-          </Text>
-          <Text style={s0.sub}>round trip</Text>
+        <View style={[s0.itineraryRow, narrow && s0.itineraryRowNarrow]}>
+          <View style={s0.departureBlock}>
+            <Text style={s0.time}>{clock(result.departureTime)}</Text>
+            <Text style={s0.airportCode}>{result.originAirport}</Text>
+          </View>
+          <View style={[s0.timeline, narrow && s0.timelineNarrow]}>
+            <Text style={s0.duration}>{result.duration}</Text>
+            <View style={s0.line} />
+            <Text style={s0.nonstop}>
+              {result.stops ? `${result.stops} stop` : "Nonstop"}
+            </Text>
+          </View>
+          <View style={s0.arrivalBlock}>
+            <Text style={s0.time}>{clock(result.arrivalTime)}</Text>
+            <Text style={s0.airportCode}>{result.destinationAirport}</Text>
+          </View>
+          <View style={[s0.priceBox, narrow && s0.priceBoxNarrow]}>
+            <Text style={s0.bigPrice}>
+              {money(result.currency, result.price)}
+            </Text>
+            <Text style={s0.roundTrip}>round trip</Text>
+          </View>
         </View>
       </View>
       <View style={s0.benefits}>
@@ -726,32 +742,55 @@ const s0 = StyleSheet.create({
     backgroundColor: "white",
   },
   best: { borderColor: ui.blue },
-  cardTop: { flexDirection: "row", justifyContent: "space-between" },
-  badgeRow: { flexDirection: "row", gap: 7 },
-  flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
-  airline: { width: 38, height: 38, resizeMode: "contain" },
+  cardTop: { flexDirection: "row", alignItems: "center", gap: 8 },
+  badgeRow: { flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  favoriteButton: {
+    width: 44,
+    height: 44,
+    flexShrink: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  flightMain: { gap: 12 },
+  airlineIdentity: { flexDirection: "row", alignItems: "center", gap: 10 },
+  airlineFrame: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  airline: { width: 36, height: 36 },
   airlineFallback: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: 9,
     backgroundColor: "#EEF2F8",
     alignItems: "center",
     justifyContent: "center",
   },
-  nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
-  departureBlock: { flex: 1.15, minWidth: 0 },
-  arrivalBlock: { flex: 0.9, minWidth: 0 },
-  time: { fontSize: 17, fontWeight: "900", color: ui.navy },
-  timeline: { flex: 1, minWidth: 56, maxWidth: 95, alignItems: "center" },
+  airlineInitials: { color: ui.navy, fontSize: 12, fontWeight: "800" },
+  nameSmall: { flex: 1, fontSize: 13, color: ui.navy, fontWeight: "700" },
+  itineraryRow: { flexDirection: "row", alignItems: "flex-start", gap: 7 },
+  itineraryRowNarrow: { gap: 4 },
+  departureBlock: { flex: 1, minWidth: 0, gap: 2 },
+  arrivalBlock: { flex: 1, minWidth: 0, gap: 2 },
+  time: { fontSize: 18, lineHeight: 23, fontWeight: "900", color: ui.navy },
+  airportCode: { fontSize: 12, lineHeight: 17, color: ui.muted },
+  timeline: { flex: 0.9, minWidth: 52, maxWidth: 86, alignItems: "center" },
+  timelineNarrow: { minWidth: 46 },
+  duration: { fontSize: 11, lineHeight: 16, color: ui.muted, textAlign: "center" },
   line: {
     width: "100%",
-    height: 1,
-    backgroundColor: ui.muted,
-    marginVertical: 7,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: ui.blue,
+    marginVertical: 4,
   },
-  nonstop: { fontSize: 11, color: ui.blue },
-  priceBox: { width: 62, flexShrink: 0, alignItems: "flex-end" },
-  bigPrice: { fontSize: 22, fontWeight: "900", color: ui.navy },
+  nonstop: { fontSize: 11, lineHeight: 16, fontWeight: "700", color: ui.blue, textAlign: "center" },
+  priceBox: { minWidth: 82, flexShrink: 0, alignItems: "flex-end", gap: 2 },
+  priceBoxNarrow: { minWidth: 74 },
+  bigPrice: { fontSize: 21, lineHeight: 24, fontWeight: "900", color: ui.navy },
+  roundTrip: { fontSize: 11, lineHeight: 16, color: ui.muted, textAlign: "right" },
   benefits: {
     borderTopWidth: 1,
     borderTopColor: "#EDF0F5",
