@@ -16,6 +16,31 @@ test("guided and standalone Flights reuse FlightResultsClient in a presentation 
   );
 });
 
+test("guided Flight results use shortened visible copy and retain detailed accessible copy", async () => {
+  const [stage, client, card, translations] = await Promise.all([
+    readFile(new URL("./DealsFlightResultsStage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../FlightResultsClient.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../FlightCard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../../../lib/i18n/en.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(
+    translations,
+    /"deals\.guided\.flightResults\.viewDetails": "View flight"/,
+  );
+  assert.match(
+    translations,
+    /"deals\.guided\.flightResults\.viewDetailsAria":\s*"View flight details for \{\{airline\}\}, \{\{origin\}\} to \{\{destination\}\}"/,
+  );
+  assert.match(
+    stage,
+    /actionLabel=\{t\("deals\.guided\.flightResults\.viewDetails"\)\}/,
+  );
+  assert.match(stage, /t\("deals\.guided\.flightResults\.viewDetailsAria"\)/);
+  assert.doesNotMatch(client, /View flight/);
+  assert.doesNotMatch(card, /View flight/);
+});
+
 test("guided Flight results suppress standalone-only UI and provider exits", async () => {
   const stage = await readFile(
     new URL("./DealsFlightResultsStage.tsx", import.meta.url),
