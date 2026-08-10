@@ -480,6 +480,33 @@ Repository-derived Central America coverage moves from **0 of 6** canonical dest
 
 This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no IDs, names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
 
+### Caribbean Batch 1
+
+Caribbean Batch 1, verified on 2026-08-10, considered and implemented all ten canonical candidates, with no deferrals:
+
+- `cu-havana` — Havana, Cuba
+- `do-santo-domingo` — Santo Domingo, Dominican Republic
+- `do-punta-cana` — Punta Cana, Dominican Republic
+- `jm-kingston` — Kingston, Jamaica
+- `jm-montego-bay` — Montego Bay, Jamaica
+- `tt-port-of-spain` — Port of Spain, Trinidad & Tobago
+- `bb-bridgetown` — Bridgetown, Barbados
+- `bs-nassau` — Nassau, Bahamas
+- `ag-st-john-s` — St. John's, Antigua & Barbuda
+- `aw-oranjestad` — Oranjestad, Aruba
+
+The source review used exact URLs from UNESCO, national tourism authorities, national heritage bodies, official museums, public cultural institutions and a conservation foundation. Every record has at least two distinct, titled HTTPS references supporting durable city geography, architecture, history, civic spaces, museums or ecological context. No source URL was fabricated, and external-network limitations were not treated as destination-source failures.
+
+Scope safeguards are destination-specific. Havana uses Old Havana, its fortifications, harbour and Malecón without current travel, currency, political or transport claims. Santo Domingo's Colonial City is treated as a bounded historic core beside the Ozama, and unchanged SDQ airport data is not used to place the airport inside the centre. Punta Cana is limited to the named destination, its relationship with Bávaro and its Caribbean–Atlantic coastal and ecological setting; it does not stand in for Higüey, the province or the entire eastern Dominican Republic resort region.
+
+Kingston remains the harbour capital rather than shorthand for Jamaica, and Montego Bay is distinguished from Saint James Parish and the wider north-coast resort corridor. Port of Spain retains the exact `Trinidad & Tobago` label, while unchanged POS data is not used to place the airport—located at Piarco—inside the city. Bridgetown's copy distinguishes the UNESCO property of Historic Bridgetown and its Garrison from the whole modern city.
+
+Nassau is described on New Providence, with separate Paradise Island identified across the harbour rather than absorbed into Nassau city proper. St. John's is the Antiguan capital, not the Canadian city; its existing canonical punctuation and exact `Antigua & Barbuda` country label remain unchanged. Oranjestad retains its canonical Aruba assignment and does not import Aruba-wide beaches or resort zones into the capital.
+
+The records live in `src/shared/destinations/editorial/caribbean.ts` and aggregate centrally, deterministically after Central America. Repository-derived Caribbean coverage moves from **0 of 10** to **10 of 10**, leaving **0**. Global coverage moves from **193 of 235** to **203 of 235**, leaving **32**. Central America remains **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; North America remains **16 of 16**, Europe **52 of 52**, Africa **54 of 54** and Asia **64 of 64**. The historical 175-record semantic prefix and all North America and Central America rollout records remain unchanged. Featured membership and exact order remain independently maintained.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data changes. It changes no IDs, names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
