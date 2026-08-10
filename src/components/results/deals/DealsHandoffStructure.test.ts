@@ -12,6 +12,10 @@ const client =
     "src/components/results/deals/DealsHandoffExperience.tsx",
     "utf8",
   );
+const experience = fs.readFileSync(
+  "src/components/results/deals/DealsHandoffExperience.tsx",
+  "utf8",
+);
 const card = fs.readFileSync(
   "src/components/results/deals/DealsHandoffStepCard.tsx",
   "utf8",
@@ -30,11 +34,29 @@ const presentation = fs.readFileSync(
   "utf8",
 );
 
+test("guided handoff omits redundant guidance while preserving the handoff contract", () => {
+  assert.doesNotMatch(experience, /deals\.guided\.handoff\.introduction/);
+  assert.doesNotMatch(experience, /deals\.guided\.handoff\.openedDisclosure/);
+  assert.match(
+    experience,
+    /guided && allOpened && \(\s*<div\s+role="status"[\s\S]*deals\.guided\.handoff\.allOpened[\s\S]*deals\.guided\.handoff\.allOpenedBody/,
+  );
+  assert.match(experience, /<DealsJourneyProgress/);
+  assert.match(
+    experience,
+    /progress=\{getHandoffReadyDealsJourneyProgress\(plan\)\}/,
+  );
+  assert.match(experience, /<ol\s+id="provider-steps"/);
+  assert.match(experience, /<DealsHandoffStepCard/);
+  assert.match(experience, /onOpen=\{\(\) => onOpen\(step\.product\)\}/);
+  assert.match(experience, /aria-live="polite"[\s\S]{0,40}\{announcement\}/);
+});
+
 test("handoff keeps the responsive summary and ordered provider steps contract", () => {
   assert.match(page, /page-shell max-w-5xl/);
   assert.match(client, /xl:grid-cols-\[minmax\(0,1fr\)_300px\]/);
   assert.match(client, /<DealsHandoffSummary[\s\S]*<div className="order-2/);
-  assert.match(client, /<ol id="provider-steps"/);
+  assert.match(client, /<ol\s+id="provider-steps"/);
   assert.match(summary, /role="progressbar"/);
   assert.match(card, /aria-current=/);
 });
