@@ -4,7 +4,13 @@
 
 The shared Explore destination catalogue is derived from the airport catalogue and is intentionally factual: stable destination IDs, names, countries, airport mappings, search aliases, image lookup IDs and provenance. The mobile destination-details screen already supports optional summary, description and highlights fields, but the repository did not have a maintained destination-keyed editorial source for those fields.
 
-`src/shared/destinations/exploreDestinationEditorial.ts` adds a Kurioticket-managed, platform-neutral editorial dataset so mobile can populate those existing fields now and the website can reuse the same source in a later task.
+`src/shared/destinations/exploreDestinationEditorial.ts` exposes a Kurioticket-managed, platform-neutral editorial dataset so mobile can populate those existing fields now and the website can reuse the same source in a later task.
+
+## Regional module architecture
+
+The editorial data is split under `src/shared/destinations/editorial/` to keep regional rollout reviews maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts` and `asia.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in that explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains a compatibility facade containing the single global validation boundary.
+
+This architecture-only split changes no editorial copy, provenance, source ordering or verification dates. Europe remains complete at 52/52, Africa at 54/54 and Asia at 64/64; global coverage remains 175/235 with 60 destinations left for the remaining-world rollout. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
 
 ## Current rollout and Featured independence
 
@@ -443,7 +449,7 @@ Every destination must have at least two distinct, titled HTTPS source reference
 
 ## Airport facts versus editorial content
 
-Airport-derived facts remain in the shared canonical catalogue and continue to drive search, airport handoffs, IDs, names, country data, aliases and image lookup IDs. Editorial copy remains in `exploreDestinationEditorial.ts` and is attached after airport-backed records are constructed, by stable destination ID. Airport facts must not be duplicated into or changed for editorial content. Destinations without editorial content remain valid.
+Airport-derived facts remain in the shared canonical catalogue and continue to drive search, airport handoffs, IDs, names, country data, aliases and image lookup IDs. Editorial copy remains in the regional editorial modules, is exposed through the `exploreDestinationEditorial.ts` compatibility facade and is attached after airport-backed records are constructed, by stable destination ID. Airport facts must not be duplicated into or changed for editorial content. Destinations without editorial content remain valid.
 
 ## Original wording requirement
 
@@ -466,7 +472,7 @@ To add a future editorial destination:
 
 `relatedDestinationIds` remains optional and deferred until a separate recommendation policy is approved.
 
-The current 25 records intentionally remain in one source file to avoid a content-only reorganization and unnecessary provenance review noise. When reviewed regional batches make the file unwieldy, split it into typed regional modules with deterministic aggregation (for example, region plus canonical order); that aggregate order must not acquire Featured product semantics.
+Regional records use deterministic historical aggregation; aggregate order does not acquire Featured product semantics.
 
 ## Website integration
 
