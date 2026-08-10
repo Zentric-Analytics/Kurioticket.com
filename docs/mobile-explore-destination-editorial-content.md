@@ -507,6 +507,28 @@ The records live in `src/shared/destinations/editorial/caribbean.ts` and aggrega
 
 This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data changes. It changes no IDs, names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
 
+### South America Batch 1 — Northern + Andean cities
+
+South America Batch 1, verified on 2026-08-10, considered and implemented all seven canonical candidates, with no deferrals:
+
+- `co-bogota` — Bogotá, Colombia
+- `co-medellin` — Medellín, Colombia
+- `ec-quito` — Quito, Ecuador
+- `ec-guayaquil` — Guayaquil, Ecuador
+- `pe-lima` — Lima, Peru
+- `bo-la-paz` — La Paz, Bolivia
+- `bo-santa-cruz` — Santa Cruz, Bolivia
+
+The source review used exact URLs from UNESCO, municipal and national government bodies, official city tourism portals, central-bank cultural museums and public cultural institutions. Every record has at least two distinct, titled HTTPS references supporting durable city geography, heritage, architecture, archaeology, museums or civic spaces. No source URL was fabricated; external-network authorization failures were treated as an environment limitation rather than a destination-source failure.
+
+Scope safeguards keep each record city-specific. Bogotá retains its accented canonical name and focuses on its Andean plateau, La Candelaria, Plaza de Bolívar and city museums. Medellín retains its accent and Aburrá Valley city setting; unchanged MDE data is not used to place the Rionegro airport inside Medellín. Quito remains bounded to the city and its historic core, without importing Cotopaxi or Otavalo, and unchanged UIO data is not used as city-centre geography. Guayaquil is treated through its Guayas waterfront, Malecón and Las Peñas rather than as shorthand for Ecuador's coast or the Galápagos.
+
+Lima remains distinct from Callao, the wider metropolitan area and Lima Region; its record uses the historic centre and archaeology within Lima. La Paz is accurately described as Bolivia's seat of government rather than its constitutional capital, and it remains separate from El Alto, where LPB is located. Santa Cruz retains the exact canonical short name while its copy identifies the urban history of Santa Cruz de la Sierra; it does not absorb the department, Jesuit Missions or wider lowlands.
+
+The records live in `src/shared/destinations/editorial/southAmerica.ts` and aggregate centrally and deterministically after the Caribbean module. Repository-derived South America coverage moves from **1 of 15** to **8 of 15**, leaving **7**. Global coverage moves from **203 of 235** to **210 of 235**, leaving **25**. Caribbean remains complete at **10 of 10**; Central America remains **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; North America remains **16 of 16**, Europe **52 of 52**, Africa **54 of 54** and Asia **64 of 64**. The historical 175-record semantic prefix and all North America, Central America and Caribbean rollout records remain unchanged. Featured membership and exact order remain independently maintained.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking or related-destination work and no canonical-data changes. It changes no IDs, canonical names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
