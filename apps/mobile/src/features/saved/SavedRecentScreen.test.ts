@@ -79,7 +79,7 @@ test("Explore and Profile share saved destination IDs, including search-only des
   const saved = source("src/features/saved/SavedRecentScreen.tsx");
   assert.match(explore, /useSavedDestinations\(\)/);
   assert.match(saved, /useSavedDestinations\(\)/);
-  assert.match(explore, /onToggle=\{\(\) => toggle\(r\.destination\.id\)\}/);
+  assert.match(explore, /onToggle=\{\(\) => toggle\(item\.destination\.id\)\}/);
   assert.match(saved, /\[\.\.\.savedIds\]\.map\(savedItem\)/);
   assert.match(saved, /destinations\.find\(\(item\) => item\.id === id\)/);
   assert.match(saved, /onPress: \(\) => toggle\(item\.id\)/);

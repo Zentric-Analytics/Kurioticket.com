@@ -3563,7 +3563,7 @@ export function DealsSearchForm({
         >
           <div
             data-deals-landing-lower-controls
-            className={`grid gap-y-3 ${included.flight ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_auto]"} sm:items-stretch sm:[&>div:last-child]:ms-3`}
+            className={`grid gap-y-3 border-b border-slate-200 pb-3 ${included.flight ? "sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_auto]"} sm:items-stretch sm:[&>div:last-child]:ms-3`}
           >
             <button
               data-deals-landing-travellers
@@ -3653,8 +3653,13 @@ export function DealsSearchForm({
                 <span>{t("deals.changeDatesForStay")}</span>
               </label>
               {!search.stayDatesLinked ? (
-                <div data-deals-landing-stay-dates className="w-full max-w-sm">
-                  <span className={label}>{t("deals.datesForStay")}</span>
+                <div
+                  data-deals-landing-stay-dates
+                  className="w-full border-b border-slate-200 pb-3"
+                >
+                  <span className={`${label} px-3`}>
+                    {t("deals.datesForStay")}
+                  </span>
                   <button
                     ref={hotelDatesLauncherRef}
                     type="button"
@@ -3671,7 +3676,7 @@ export function DealsSearchForm({
                         ? dismissDesktopHotelDates(true)
                         : openHotelDates()
                     }
-                    className={`${field} flex min-h-12 items-center justify-between gap-2 text-start`}
+                    className={`${landingActionSegment} flex w-full max-w-sm items-center justify-between gap-2 text-start`}
                   >
                     <span className="min-w-0 truncate">
                       {hotelDatesSummary}

@@ -38,6 +38,10 @@ const landingLowerControls = form.slice(
     form.indexOf("data-deals-landing-lower-controls"),
   ),
 );
+const landingStayDates = form.slice(
+  form.indexOf("data-deals-landing-stay-dates"),
+  form.indexOf(") : null}", form.indexOf("data-deals-landing-stay-dates")),
+);
 
 test("LANDING CONTRACT keeps package selection above lower shared controls", () => {
   assert.match(form, /data-deals-layout=\{variant\}/);
@@ -112,6 +116,8 @@ test("landing lower controls use transparent integrated segments", () => {
     landingLowerControls,
     /id="deals-flight-cabin"[\s\S]*className=\{`\$\{field\}/,
   );
+  assert.match(landingLowerControls, /border-b/);
+  assert.match(landingLowerControls, /border-slate-200/);
 });
 
 test("landing Stay-date override reuses linked Hotel calendar state", () => {
@@ -128,6 +134,14 @@ test("landing Stay-date override reuses linked Hotel calendar state", () => {
   assert.match(landingActions, /hotelDatesOpen \|\| mobileHotelDatesOpen/);
   assert.match(landingActions, /hotelDatesSummary/);
   assert.doesNotMatch(form, /useState\([^\n]*changeStayDates/i);
+});
+
+test("landing Stay-date launcher uses an integrated line-based treatment", () => {
+  assert.match(landingStayDates, /border-b/);
+  assert.match(landingStayDates, /border-slate-200/);
+  assert.match(landingStayDates, /landingActionSegment/);
+  assert.doesNotMatch(landingStayDates, /\$\{field\}/);
+  assert.doesNotMatch(landingStayDates, /rounded-xl/);
 });
 
 test("landing unlinked Stay dates do not revive the legacy Stay section", () => {
