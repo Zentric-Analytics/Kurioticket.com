@@ -15,7 +15,7 @@ test("TopBar centers its unchanged logo independently of side actions", () => {
     ui,
     /logoCenter: \{[\s\S]*position: "absolute"[\s\S]*top: 24[\s\S]*left: 0[\s\S]*right: 0[\s\S]*alignItems: "center"/,
   );
-  assert.match(ui, /pointerEvents="none" style=\{s\.logoCenter\}/);
+  assert.match(ui, /pointerEvents="none" style=\{\[s\.logoCenter, compact && s\.logoCenterCompact\]\}/);
   assert.doesNotMatch(ui, /translateX/);
 });
 
@@ -57,4 +57,22 @@ test("hotels truthfully offer management only and availability gates all result 
   assert.match(results, /label="View price alerts"/);
   assert.match(results, /status === "ready" && availability\.priceAlerts/);
   assert.doesNotMatch(results, /buildHotelPriceAlert|createHotelPriceAlert/);
+});
+
+test("flight cards preserve ranking, persistent favorites, provider data, and detail navigation", () => {
+  assert.match(results, /rank === 0[\s\S]*Best overall[\s\S]*Great price/);
+  assert.match(results, /useSavedFlights\(\)/);
+  assert.match(results, /toggle\(result\.id\)/);
+  assert.match(results, /money\(result\.currency, result\.price\)/);
+  assert.match(results, /result\.baggageInfo/);
+  assert.match(results, /result\.refundInfo/);
+  assert.match(results, /pathname: "\/flight-details"[\s\S]*result: JSON\.stringify\(result\)/);
+});
+
+test("flight-only redesign keeps filters, sorting, dates, and HotelCard implementation", () => {
+  assert.match(results, /filterAndSortFlights\(results as FlightResult\[\], filters, sort\)/);
+  assert.match(results, /router\.setParams[\s\S]*departureDate: v/);
+  assert.match(results, /setSort\(\(x\) => \(x === "best" \? "price" : "best"\)\)/);
+  assert.match(results, /function HotelCard\(/);
+  assert.doesNotMatch(results, /displayFlightLegs\(result\)[\s\S]*function HotelCard[\s\S]*displayFlightLegs/);
 });
