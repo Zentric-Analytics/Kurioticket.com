@@ -33,6 +33,7 @@ export const REGION_PREVIEW_INSET_RATIO = 0.024;
 export const REGION_PREVIEW_GAP_RATIO = 0.024;
 export const REGION_PREVIEW_ASPECT_RATIO = 2.13;
 export const REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3.21;
+export const REGION_PREVIEW_IMAGE_HEIGHT_SCALE = 1.12;
 const shadow = { shadowColor: "#18305B", shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 };
 
 export function DestinationThumbnail({ destination }: { destination: Destination }) {
@@ -94,8 +95,10 @@ function ExploreDiscoveryContent({ bottomPadding, select }: { bottomPadding: num
   const { savedIds, toggle } = useSavedDestinations();
   const { width: windowWidth } = useWindowDimensions();
   const previewCardWidth = windowWidth * REGION_PREVIEW_CARD_WIDTH_RATIO;
-  const previewCardHeight = previewCardWidth / REGION_PREVIEW_ASPECT_RATIO;
-  const previewImageHeight = previewCardWidth / REGION_PREVIEW_IMAGE_ASPECT_RATIO;
+  const previousCardHeight = previewCardWidth / REGION_PREVIEW_ASPECT_RATIO;
+  const previousImageHeight = previewCardWidth / REGION_PREVIEW_IMAGE_ASPECT_RATIO;
+  const previewImageHeight = previousImageHeight * REGION_PREVIEW_IMAGE_HEIGHT_SCALE;
+  const previewCardHeight = previousCardHeight + (previewImageHeight - previousImageHeight);
   const previewInset = windowWidth * REGION_PREVIEW_INSET_RATIO;
   const previewGap = windowWidth * REGION_PREVIEW_GAP_RATIO;
   const openRegion = (region: ExploreRegion) => router.push({ pathname: "/explore/region/[region]", params: { region: exploreRegionSlug(region) } });
