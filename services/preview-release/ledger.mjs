@@ -427,6 +427,32 @@ export class PreviewLedger {
     return result.rows[0] ?? null;
   }
 
+  async notificationCandidateSourceShas() {
+    const result = await this.pool.query(
+      `SELECT DISTINCT release.source_sha, release.started_at
+       FROM preview_release release
+       JOIN preview_release_action action ON action.source_sha=release.source_sha
+       WHERE action.kind IN ('ANDROID_BUILD','IOS_BUILD') AND action.remote_id IS NOT NULL
+       ORDER BY release.started_at ASC NULLS LAST, release.source_sha ASC`,
+    );
+    return result.rows.map((row) => row.source_sha);
+  }
+
+  async getNativeBuildActionForRelease(sourceSha, platform, fingerprint = null) {
+    assertExactSha(sourceSha);
+    const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
+    if (!kind) throw new Error("Native build platform is invalid.");
+    const result = await this.pool.query(
+      `SELECT * FROM preview_release_action
+       WHERE source_sha=$1 AND kind=$2
+         AND ($3::text IS NULL OR evidence->>'nativeFingerprint'=$3 OR identity_key LIKE $4)
+       ORDER BY created_at DESC LIMIT 2`,
+      [sourceSha, kind, fingerprint, `%:${platform}:preview`],
+    );
+    if (result.rowCount > 1) throw new Error(`Ambiguous ${platform} build action for release ${sourceSha}.`);
+    return result.rows[0] ?? null;
+  }
+
   async getAction(kind, identityKey) {
     const result = await this.pool.query(
       `SELECT * FROM preview_release_action WHERE kind=$1 AND identity_key=$2 LIMIT 2`,

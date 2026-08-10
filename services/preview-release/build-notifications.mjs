@@ -47,8 +47,10 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
     const identityKey = fingerprint
       ? nativeBuildIdentityKey(platform, fingerprint)
       : `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:${platform}:preview`;
-    const action = await ledger.getAction(kind, identityKey);
-    if (!action?.remote_id || String(action.state).toUpperCase() !== "FINISHED") continue;
+    let action = typeof ledger.getNativeBuildActionForRelease === "function"
+      ? await ledger.getNativeBuildActionForRelease(sourceSha, platform, fingerprint ?? null)
+      : await ledger.getAction(kind, identityKey);
+    if (!action?.remote_id) continue;
 
     // The release ledger owns the exact build ID for this source SHA. Resolve that
     // build from EAS immediately before notification rather than selecting a generic
@@ -56,6 +58,11 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, sec
     const build = await eas.viewBuild(action.remote_id);
     if (build?.id !== action.remote_id) {
       throw new Error(`EAS build:view returned a different build than the durable ${platform} ledger action.`);
+    }
+    const buildState = String(build.status ?? action.state ?? "").toUpperCase();
+    if (buildState !== "FINISHED") continue;
+    if (String(action.state).toUpperCase() !== "FINISHED" && typeof ledger.recordAction === "function") {
+      action = await ledger.recordAction({ sourceSha: action.source_sha ?? sourceSha, kind, identityKey: action.identity_key ?? identityKey, remoteId: action.remote_id, state: "FINISHED", evidence: build });
     }
     const buildPageUrl = exactExpoBuildPageUrl(build);
 
@@ -112,7 +119,9 @@ export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failure
   for (const platform of ["android", "ios"]) {
     const kind = platform === "android" ? "ANDROID_BUILD" : "IOS_BUILD";
     const identityKey = `${sourceSha}:${PREVIEW_IDENTITY.easProjectId}:${platform}:preview`;
-    const action = await ledger.getAction(kind, identityKey).catch(() => null);
+    const action = typeof ledger.getNativeBuildActionForRelease === "function"
+      ? await ledger.getNativeBuildActionForRelease(sourceSha, platform, release?.evidence?.fingerprints?.[platform] ?? null).catch(() => null)
+      : await ledger.getAction(kind, identityKey).catch(() => null);
     if (!action?.remote_id) continue;
     const terminalBuildFailure = TERMINAL_FAILURES.has(String(action.state).toUpperCase());
     const platformFailure = failureMentionsPlatform(reason, platform);

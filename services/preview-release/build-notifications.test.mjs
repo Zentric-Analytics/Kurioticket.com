@@ -131,3 +131,27 @@ test("iOS success waits for verified TestFlight group association", async () => 
   assert.equal(requests.length, 1);
   assert.equal(requests[0].platform, "ios");
 });
+
+test("worker restart reconciles a stale in-progress Android ledger action before notifying", async () => {
+  const writes = [];
+  const ledger = {
+    async releaseBySha() { return { classification: "ANDROID_NATIVE" }; },
+    async getNativeBuildActionForRelease(_sourceSha, platform) {
+      return platform === "android"
+        ? { source_sha: "e".repeat(40), identity_key: "legacy:android:preview", remote_id: "android-build-restart", state: "IN_PROGRESS" }
+        : null;
+    },
+    async recordAction(action) { writes.push(action); return { ...action, remote_id: action.remoteId, identity_key: action.identityKey }; },
+  };
+  const eas = { async viewBuild(id) { return { id, status: "FINISHED", artifacts: { buildUrl: "https://expo.dev/artifacts/restart.apk" }, buildDetailsPageUrl: canonicalExpoBuildPageUrl(id) }; } };
+  const requests = [];
+  const fetchImpl = async (_url, init) => {
+    requests.push(JSON.parse(init.body));
+    return { ok: true, status: 200, async text() { return JSON.stringify({ recipients: 2, sent: 2, failed: 0 }); } };
+  };
+  const result = await notifySuccessfulNativeBuilds({ sourceSha: "e".repeat(40), ledger, eas, secret: "test-secret", fetchImpl });
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].state, "FINISHED");
+  assert.equal(requests.length, 1);
+  assert.equal(result[0].buildId, "android-build-restart");
+});
