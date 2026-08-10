@@ -400,6 +400,23 @@ Repository-derived Asian coverage moves from **52 of 64** canonical destinations
 
 This batch contains no UI work, image work, gallery work, map work, search changes, flight or hotel changes, booking changes, related-destination work, or editorial-architecture refactor. Canonical IDs, names, countries, country codes, airport data, aliases, image identities and image provenance remain unchanged.
 
+### Final Asia source-resolution batch
+
+The final Asia source-resolution pass, verified on 2026-08-10, adds complete editorial records for the four remaining canonical Asian destinations:
+
+- `tm-ashgabat` — Ashgabat, Turkmenistan
+- `iq-baghdad` — Baghdad, Iraq
+- `lb-beirut` — Beirut, Lebanon
+- `il-tel-aviv` — Tel Aviv, Israel
+
+This pass used exact, separately pre-verified URLs from government, UNESCO, a national culture ministry, a university museum and a municipality. Ashgabat's historical Batch 6 deferral is now cleared by two Government of Turkmenistan references covering the city's development and museum institutions. Baghdad uses UNESCO references for the National Museum of Iraq and the historic Tigris riverfront from Al-Mustansiriya to the Abbasid Palace; its copy makes no claims about current security, conflict, museum opening or visitor access.
+
+Beirut uses the Lebanon Ministry of Culture and American University of Beirut for durable museum, collection and city-centre archaeological context. It does not import Lebanon-wide heritage or make claims about current conflict, port operations, reconstruction, damage, opening or access. Tel Aviv retains the canonical country assignment to Israel and uses UNESCO and Tel Aviv–Yafo municipal material for the bounded White City property, Geddes plan and Modern Movement architecture; the copy does not treat all Tel Aviv as World Heritage, merge Jaffa into its highlights or introduce current political, conflict, border, security or sovereignty commentary.
+
+Repository-derived Asian coverage therefore moves from **60 of 64** to **64 of 64**, leaving **0** canonical Asian destinations without editorial enrichment. Here, 64/64 means every canonical Asian destination currently represented by the Explore catalogue has editorial content; it does not imply that the catalogue represents every possible destination in Asia. Europe remains complete at **52 of 52**, Africa remains complete at **54 of 54**, and Featured membership and ordering remain independently maintained and unchanged.
+
+The final batch changes no UI, images, galleries, maps, search, flight or hotel behaviour, booking flows, related destinations or editorial architecture. Canonical IDs, names, countries, country codes, airports, aliases, image identities and image provenance remain unchanged.
+
 This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.

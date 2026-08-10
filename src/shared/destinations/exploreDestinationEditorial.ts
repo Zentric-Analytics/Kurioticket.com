@@ -161,6 +161,13 @@ const asiaBatch7SourceReferences = (references: readonly ExploreDestinationEdito
   lastVerifiedAt: ASIA_BATCH_7_LAST_VERIFIED_AT,
 });
 
+const ASIA_FINAL_BATCH_LAST_VERIFIED_AT = "2026-08-10";
+const asiaFinalBatchSourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: ASIA_FINAL_BATCH_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -1358,6 +1365,34 @@ const rawExploreDestinationEditorial = [
     description: "Riyadh developed on the Najd plateau around an oasis settlement, later expanding beyond its mud-brick historic core. Masmak Fort and the adjoining market quarter recall the city's earlier political and commercial landscape, while the National Museum interprets Arabian history. Nearby Diriyah is a separate municipality with a connected Najdi legacy, not a neighbourhood or monument within Riyadh city.",
     highlights: ["Masmak Fort", "Najdi urban heritage", "National Museum", "Historic market quarter"],
     editorialProvenance: asiaBatch7SourceReferences([{ title: "Royal Commission for Riyadh City — Riyadh History", url: "https://www.rcrc.gov.sa/en/riyadh/history" }, { title: "UNESCO — At-Turaif District in ad-Dir'iyah", url: "https://whc.unesco.org/en/list/1329/" }]),
+  },
+  {
+    id: "tm-ashgabat",
+    summary: "Ashgabat traces its urban history through longstanding museums, fine arts collections and civic cultural institutions.",
+    description: "Ashgabat's documented development includes an early twentieth-century urban community and the growth of public cultural life. Museum traditions established in the city developed through historical collections and institutions now associated with the State Cultural Center. The State Museum and Museum of Fine Arts preserve distinct strands of Ashgabat's archaeological, historical and artistic heritage.",
+    highlights: ["State Museum collections", "Museum of Fine Arts", "State Cultural Center", "Early urban history"],
+    editorialProvenance: asiaFinalBatchSourceReferences([{ title: "Government of Turkmenistan — From the history of museums of Turkmenistan", url: "https://turkmenistan.gov.tm/en/post/54439/history-museums-turkmenistan" }, { title: "Government of Turkmenistan — History of Ashgabat: At the dawn of the XX century", url: "https://www.turkmenistan.gov.tm/en/post/54136/history-ashgabat-dawn-xx-century" }]),
+  },
+  {
+    id: "iq-baghdad",
+    summary: "Baghdad's Tigris riverfront links Abbasid architectural heritage, historic scholarship and national archaeological collections.",
+    description: "Baghdad extends along the Tigris, where Rusafa retains a historic riverfront sequence of civic and scholarly landmarks. Al-Mustansiriya and the Abbasid Palace represent enduring architectural connections to the city's intellectual and political history. The National Museum of Iraq preserves archaeological collections that place Baghdad at the centre of the country's institutional stewardship of ancient heritage.",
+    highlights: ["Tigris riverfront", "Al-Mustansiriya", "Abbasid Palace", "National Museum of Iraq"],
+    editorialProvenance: asiaFinalBatchSourceReferences([{ title: "UNESCO — Archaeological museums in Iraq", url: "https://www.unesco.org/en/museums/iraq" }, { title: "UNESCO — Historical Features of the Tigris River in Baghdad Rusafa", url: "https://whc.unesco.org/en/tentativelists/5880" }]),
+  },
+  {
+    id: "lb-beirut",
+    summary: "Beirut's cultural landscape is grounded in archaeological collections, historic urban layers and longstanding museum institutions.",
+    description: "Beirut's Mediterranean setting holds archaeological layers shaped by successive periods of urban life in its historic centre. The National Museum presents material from Lebanon's archaeological heritage through a major institution located in the capital. At the American University of Beirut, the Archaeological Museum has maintained Near Eastern collections since 1868, extending the city's longstanding scholarly and cultural record.",
+    highlights: ["National Museum of Beirut", "AUB Archaeological Museum", "Historic-centre archaeology", "Near Eastern collections"],
+    editorialProvenance: asiaFinalBatchSourceReferences([{ title: "Lebanon Ministry of Culture — National Museum", url: "https://culture.gov.lb/en/Affiliates/National-Museum" }, { title: "American University of Beirut — Archaeological Museum", url: "https://www.aub.edu.lb/museum_archeo/Pages/default.aspx" }, { title: "American University of Beirut — Archaeological Fieldwork", url: "https://www.aub.edu.lb/fas/histarc/Archaeological-Fieldwork/Pages/default.aspx" }]),
+  },
+  {
+    id: "il-tel-aviv",
+    summary: "Tel Aviv's Mediterranean urban identity is closely associated with the White City's Modern Movement architecture.",
+    description: "Tel Aviv was founded in 1909 on the Mediterranean coast and developed through a planned twentieth-century urban framework. Sir Patrick Geddes's plan shaped districts containing a notable concentration of Modern Movement buildings adapted to local conditions. The bounded White City World Heritage property preserves this International Style legacy within Tel Aviv rather than designating the entire city.",
+    highlights: ["White City heritage", "Geddes urban plan", "Modern Movement architecture", "International Style conservation"],
+    editorialProvenance: asiaFinalBatchSourceReferences([{ title: "UNESCO — White City of Tel-Aviv – the Modern Movement", url: "https://whc.unesco.org/en/list/1096/" }, { title: "Tel Aviv–Yafo Municipality — White City", url: "https://www.tel-aviv.gov.il/en/Visit/WhiteCity/Pages/default.aspx" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
