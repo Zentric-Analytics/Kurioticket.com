@@ -42,15 +42,19 @@ test("matches the mobile-web portrait card and independent interaction structure
   assert.doesNotMatch(section, /<Pressable\s+key=\{destination\.id\}/);
 });
 
-test("uses the compact pink favorite treatment without the old dark circle", () => {
-  assert.match(section, /heartUnsaved: \{ backgroundColor: "#F43F5E" \}/);
-  assert.match(section, /heartSaved: \{ backgroundColor: "#E11D48" \}/);
+test("uses the shared Android favorite button and existing saved state", () => {
   assert.match(
     section,
-    /name="heart"[\s\S]*size=\{17\}[\s\S]*color=\{flowColors\.white\}[\s\S]*fill=\{flowColors\.white\}/,
+    /import \{ AndroidFavoriteButton \} from "\.\/AndroidFavoriteButton"/,
   );
-  assert.match(section, /accessibilityState=\{\{ selected: saved \}\}/);
-  assert.doesNotMatch(section, /rgba\(2,\s*15,\s*42|AndroidFavoriteButton/);
+  assert.match(section, /const \{ savedIds, toggle \} = useSavedDestinations\(\)/);
+  assert.match(section, /const saved = savedIds\.has\(destination\.id\)/);
+  assert.match(
+    section,
+    /<AndroidFavoriteButton[\s\S]*saved=\{saved\}[\s\S]*label=\{`\$\{saved \? "Remove" : "Add"\} \$\{destination\.city\} \$\{saved \? "from" : "to"\} favorites`\}[\s\S]*event\.stopPropagation\(\);[\s\S]*toggle\(destination\.id\);[\s\S]*style=\{styles\.heart\}[\s\S]*\/>/,
+  );
+  assert.doesNotMatch(section, /<FlowIcon|heartUnsaved|heartSaved|heartPressed/);
+  assert.doesNotMatch(section, /#F43F5E|#E11D48|fill=\{flowColors\.white\}/);
 });
 
 test("keeps destination copy over the image and the compact footer separate", () => {

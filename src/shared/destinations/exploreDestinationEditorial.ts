@@ -77,6 +77,13 @@ const africaBatch2SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: AFRICA_BATCH_2_LAST_VERIFIED_AT,
 });
 
+const AFRICA_BATCH_3_LAST_VERIFIED_AT = "2026-08-10";
+const africaBatch3SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: AFRICA_BATCH_3_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -665,6 +672,48 @@ const rawExploreDestinationEditorial = [
     description: "Tunis grew from its medina toward a later European-planned quarter, creating contrasting street patterns around the capital's centre. UNESCO recognises the medina for its mosques, madrasas, palaces, houses and souks, with the Zitouna Mosque anchoring its historic fabric. Beyond the old city, Avenue Habib Bourguiba and the Bardo Museum add civic architecture and archaeological collections to the urban context.",
     highlights: ["Medina of Tunis", "Zitouna Mosque", "Avenue Habib Bourguiba", "Bardo Museum collections"],
     editorialProvenance: africaBatch2SourceReferences([{ title: "UNESCO - Medina of Tunis", url: "https://whc.unesco.org/en/list/36/" }, { title: "Discover Tunisia - Tunis and its surroundings", url: "https://www.discovertunisia.com/en/discover/around-tunis" }]),
+  },
+  {
+    id: "za-durban",
+    summary: "Durban follows the Indian Ocean through subtropical gardens, beaches, markets and layered port-city heritage.",
+    description: "Durban extends around a major Indian Ocean harbour, with the beachfront and central districts reflecting its maritime setting. The Durban Botanic Gardens preserves subtropical plant collections in a historic civic landscape, while markets and museums document Zulu, Indian and colonial influences. Art Deco buildings, harbour views and the KwaMuhle Museum add architectural and social-history context within the city.",
+    highlights: ["Indian Ocean beachfront", "Durban Botanic Gardens", "KwaMuhle Museum", "Victoria Street Market"],
+    editorialProvenance: africaBatch3SourceReferences([{ title: "Durban Tourism", url: "https://visitdurban.travel/" }, { title: "Durban Botanic Gardens", url: "https://durbanbotanicgardens.org.za/" }]),
+  },
+  {
+    id: "bw-gaborone",
+    summary: "Gaborone combines a planned capital centre, cultural collections, public monuments and nearby hill landscapes.",
+    description: "Gaborone developed as Botswana's capital beside the Notwane River, with broad roads and government precincts shaping its urban plan. The National Museum and Art Gallery interprets archaeology, ethnography and visual culture, while the Three Dikgosi Monument commemorates a defining episode in national history. Kgale Hill and the Gaborone Dam place rocky terrain and water landscapes close to the city.",
+    highlights: ["National Museum and Art Gallery", "Three Dikgosi Monument", "Kgale Hill", "Gaborone Dam"],
+    editorialProvenance: africaBatch3SourceReferences([{ title: "Botswana Tourism Organisation", url: "https://www.botswanatourism.co.bw/" }, { title: "Botswana Government - National Museum and Art Gallery", url: "https://www.gov.bw/ministries/national-museum-and-art-gallery" }]),
+  },
+  {
+    id: "zw-harare",
+    summary: "Harare spreads across a highveld setting with galleries, archives, civic gardens and modern urban architecture.",
+    description: "Harare occupies Zimbabwe's highveld, where broad avenues and jacaranda-lined streets frame its central civic districts. The National Gallery of Zimbabwe presents local and regional visual art, while the National Archives preserves documentary records, photographs and historical collections. Harare Gardens, the Kopje and early twentieth-century buildings provide further perspectives on the capital's landscape and urban development.",
+    highlights: ["National Gallery of Zimbabwe", "National Archives collections", "Harare Gardens", "The Kopje"],
+    editorialProvenance: africaBatch3SourceReferences([{ title: "National Gallery of Zimbabwe", url: "https://nationalgallery.co.zw/" }, { title: "National Archives of Zimbabwe", url: "https://www.archives.gov.zw/" }]),
+  },
+  {
+    id: "zm-lusaka",
+    summary: "Lusaka is a plateau capital shaped by civic institutions, markets, museums and urban nature reserves.",
+    description: "Lusaka stands on a broad plateau, with government avenues, commercial districts and residential neighbourhoods forming Zambia's capital. The Lusaka National Museum presents archaeology, ethnography, history and contemporary art, while Kabwata Cultural Village supports craft traditions in an urban setting. Markets and the nearby Munda Wanga environmental park add everyday commercial life and conservation context to the city.",
+    highlights: ["Lusaka National Museum", "Kabwata Cultural Village", "City Market", "Munda Wanga environmental park"],
+    editorialProvenance: africaBatch3SourceReferences([{ title: "National Museums Board of Zambia", url: "https://www.museumszambia.org/" }, { title: "Zambia Ministry of Tourism", url: "https://www.mot.gov.zm/" }]),
+  },
+  {
+    id: "mz-maputo",
+    summary: "Maputo faces its bay through railway heritage, markets, tropical avenues and distinctive architectural layers.",
+    description: "Maputo occupies a broad bay on the Indian Ocean, with acacia-lined avenues connecting its centre to waterfront districts. The landmark railway station and CFM museum interpret transport history, while the Central Market reflects the capital's long commercial role. Portuguese-era civic buildings, Mozambican art institutions and the iron Casa de Ferro reveal varied architectural and cultural layers across the city.",
+    highlights: ["Maputo railway station", "CFM railway museum", "Mercado Central", "Casa de Ferro"],
+    editorialProvenance: africaBatch3SourceReferences([{ title: "Visit Mozambique", url: "https://www.visitmozambique.gov.mz/" }, { title: "Portos e Caminhos de Ferro de Moçambique", url: "https://www.cfm.co.mz/" }]),
+  },
+  {
+    id: "na-windhoek",
+    summary: "Windhoek occupies a central highland basin with civic landmarks, museums and layered architectural heritage.",
+    description: "Windhoek lies in a central Namibian highland basin, with ridges enclosing the capital's compact civic centre. The Independence Memorial Museum and National Art Gallery interpret national history and visual culture, while the Windhoek City Museum documents local urban development. Christuskirche, Tintenpalast gardens and surviving German colonial-era buildings form part of a complex architectural landscape presented within its historical context.",
+    highlights: ["Windhoek City Museum", "Independence Memorial Museum", "Christuskirche", "Tintenpalast gardens"],
+    editorialProvenance: africaBatch3SourceReferences([{ title: "City of Windhoek", url: "https://www.windhoekcc.org.na/" }, { title: "Museums Association of Namibia - Windhoek City Museum", url: "https://www.museums.com.na/museums/windhoek/windhoek-city-museum" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
