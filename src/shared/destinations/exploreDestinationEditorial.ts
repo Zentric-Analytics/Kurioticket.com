@@ -147,6 +147,13 @@ const asiaBatch5SourceReferences = (references: readonly ExploreDestinationEdito
   lastVerifiedAt: ASIA_BATCH_5_LAST_VERIFIED_AT,
 });
 
+const ASIA_BATCH_6_LAST_VERIFIED_AT = "2026-08-10";
+const asiaBatch6SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: ASIA_BATCH_6_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -1239,6 +1246,55 @@ const rawExploreDestinationEditorial = [
     description: "Tehran spreads southward from the Alborz foothills, with broad avenues linking historic quarters and later civic districts. Golestan Palace preserves Qajar court architecture and gardens near the old bazaar, grounding the capital's royal and commercial history. The National Museum of Iran and other collections interpret archaeology, art and material culture without relying on current political, access or operating conditions.",
     highlights: ["Alborz foothill setting", "Golestan Palace", "Grand Bazaar", "National Museum of Iran"],
     editorialProvenance: asiaBatch5SourceReferences([{ title: "UNESCO — Golestan Palace", url: "https://whc.unesco.org/en/list/1422/" }, { title: "National Museum of Iran", url: "https://irannationalmuseum.ir/en/" }]),
+  },
+  {
+    id: "kz-almaty",
+    summary: "Almaty sits below the Trans-Ili Alatau amid parks, cultural institutions and distinctive civic architecture.",
+    description: "Almaty occupies Kazakhstan's southeastern foothills, where broad streets and parkland face the Trans-Ili Alatau. Panfilov Park contains the timber Ascension Cathedral, a landmark of the city's late-imperial architectural history. Museum collections, markets and buildings from Soviet and post-Soviet periods document Almaty's development without extending its identity to the region's distant canyons, lakes or mountain resorts.",
+    highlights: ["Trans-Ili Alatau setting", "Panfilov Park", "Ascension Cathedral", "Central State Museum collections"],
+    editorialProvenance: asiaBatch6SourceReferences([{ title: "UNESCO Creative Cities Network — Almaty", url: "https://www.unesco.org/en/creative-cities/almaty" }, { title: "Kazakhstan Travel — Almaty", url: "https://kazakhstan.travel/tourist-spot/en/14/almaty-city" }]),
+  },
+  {
+    id: "az-baku",
+    summary: "Baku faces the Caspian Sea through a fortified old city and oil-era architectural districts.",
+    description: "Baku rises from the Caspian shore around Icherisheher, the fortified inner city at its historic core. Within the walls, the Maiden Tower and Palace of the Shirvanshahs record medieval urban and dynastic history. Nineteenth- and early-twentieth-century buildings beyond the walls reflect the oil boom, while museums and the waterfront trace later layers of the city's civic development.",
+    highlights: ["Caspian Sea waterfront", "Icherisheher walls", "Maiden Tower", "Palace of the Shirvanshahs"],
+    editorialProvenance: asiaBatch6SourceReferences([{ title: "UNESCO — Walled City of Baku with the Shirvanshah's Palace and Maiden Tower", url: "https://whc.unesco.org/en/list/958/" }, { title: "Icherisheher State Historical-Architectural Reserve", url: "https://icherisheher.gov.az/en" }]),
+  },
+  {
+    id: "kg-bishkek",
+    summary: "Bishkek is a tree-lined planned capital with civic squares, museums and an Ala-Too mountain backdrop.",
+    description: "Bishkek occupies the Chüy Valley beneath the Kyrgyz Ala-Too range, whose ridgeline frames the city's southern horizon. Its broad, tree-lined avenues and formal squares reflect successive phases of planned development during the Soviet period. Ala-Too Square, museum collections and market districts provide civic and cultural context within Bishkek, distinct from mountain destinations such as Ala Archa outside the city.",
+    highlights: ["Kyrgyz Ala-Too backdrop", "Ala-Too Square", "Soviet-era avenue plan", "Osh Bazaar"],
+    editorialProvenance: asiaBatch6SourceReferences([{ title: "Encyclopaedia Britannica — Bishkek", url: "https://www.britannica.com/place/Bishkek" }, { title: "UNESCO Creative Cities Network — Bishkek", url: "https://www.unesco.org/en/creative-cities/bishkek" }]),
+  },
+  {
+    id: "tj-dushanbe",
+    summary: "Dushanbe occupies the Hissar Valley through landscaped avenues, civic architecture and Tajik cultural institutions.",
+    description: "Dushanbe stands in the Hissar Valley where the Varzob River descends from mountain terrain north of the capital. Rudaki Avenue forms a principal civic axis, connecting landscaped public spaces with monumental architecture and cultural institutions. The National Museum and institutions devoted to Tajik history, literature and material culture keep the record city-focused rather than extending it to the Pamirs or distant archaeological sites.",
+    highlights: ["Hissar Valley setting", "Rudaki Avenue", "National Museum of Tajikistan", "Landscaped civic spaces"],
+    editorialProvenance: asiaBatch6SourceReferences([{ title: "Encyclopaedia Britannica — Dushanbe", url: "https://www.britannica.com/place/Dushanbe" }, { title: "UNESCO Creative Cities Network — Dushanbe", url: "https://www.unesco.org/en/creative-cities/dushanbe" }]),
+  },
+  {
+    id: "uz-tashkent",
+    summary: "Tashkent preserves market, religious and museum districts within a capital reshaped by modern planning.",
+    description: "Tashkent developed as an oasis settlement and trading centre on routes linking Central Asian regions. Chorsu Bazaar and the Hazrati Imam complex retain commercial and religious landmarks within the older urban fabric. Museums, broad Soviet-era avenues and the metro's architectural design document later civic development without substituting the celebrated monuments of Samarkand, Bukhara or Khiva for Tashkent's own history.",
+    highlights: ["Chorsu Bazaar", "Hazrati Imam complex", "Tashkent museum collections", "Metro architectural design"],
+    editorialProvenance: asiaBatch6SourceReferences([{ title: "Uzbekistan Travel — Tashkent", url: "https://uzbekistan.travel/en/i/tashkent/" }, { title: "Encyclopaedia Britannica — Tashkent", url: "https://www.britannica.com/place/Tashkent" }]),
+  },
+  {
+    id: "ge-tbilisi",
+    summary: "Tbilisi follows the Mtkvari River between steep hills, historic quarters and Georgian cultural institutions.",
+    description: "Tbilisi occupies a narrow Mtkvari River valley, with neighbourhoods climbing slopes on both sides of the water. Old Tbilisi's lanes, religious buildings and Abanotubani sulfur-bath district preserve layers associated with the city's long role as Georgia's capital. Narikala overlooks this historic fabric, while museums and nineteenth-century civic architecture extend the account through material culture and planned urban growth.",
+    highlights: ["Mtkvari River valley", "Old Tbilisi lanes", "Abanotubani sulfur baths", "Narikala context"],
+    editorialProvenance: asiaBatch6SourceReferences([{ title: "Georgia Travel — Tbilisi", url: "https://georgia.travel/cities-towns/tbilisi" }, { title: "Georgian National Museum", url: "https://museum.ge/" }]),
+  },
+  {
+    id: "am-yerevan",
+    summary: "Yerevan's tuff-stone civic centre contains museums, public squares and institutions preserving Armenian cultural history.",
+    description: "Yerevan spreads across the Hrazdan River's eastern terrain, with distant Mount Ararat forming a landscape backdrop beyond the city. Republic Square anchors a planned civic centre whose buildings use locally characteristic pink tuff stone. The Cascade, History Museum and Matenadaran contribute modern public space, archaeological collections and manuscript heritage without drawing Armenia's distant monasteries into the capital's identity.",
+    highlights: ["Republic Square", "Pink tuff architecture", "Cascade complex", "Matenadaran manuscripts"],
+    editorialProvenance: asiaBatch6SourceReferences([{ title: "Yerevan Municipality — Tourism", url: "https://www.yerevan.am/en/tourism/" }, { title: "Matenadaran — Mesrop Mashtots Institute of Ancient Manuscripts", url: "https://matenadaran.am/en/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
