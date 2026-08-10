@@ -3,14 +3,10 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -21,7 +17,6 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import {
   travelApi,
-  TravelApiError,
   type FlightResult,
   type HotelResult,
 } from "../../api/travelApi";
@@ -47,15 +42,6 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
-import {
-  buildFlightPriceAlertPayload,
-  flightAlertPresentation,
-  parseTargetPrice,
-} from "../flow/flightPriceAlertModel";
-import type { SearchPlan } from "../flow/travelSearchModel";
-import { emptyFlightFilters, filterAndSortFlights, flightFilterOptions, type FlightFilters } from "./flightFilters";
-import { useSavedFlights } from "../../storage/useSavedFlights";
-import { displayFlightLegs, stopLabel, type DisplayFlightLeg } from "./flightCardPresentation";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -77,9 +63,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
   const [sort, setSort] = useState("best");
-  const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [filterSection, setFilterSection] = useState<"all" | "stops" | "airlines" | "times">("all");
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && one(params.visual) === "1";
   const load = useCallback(async () => {
@@ -121,12 +104,19 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     router.canGoBack()
       ? router.back()
       : router.replace(product === "flight" ? "/flights" : "/hotels");
-  const sorted = useMemo(() => product === "flight"
-    ? filterAndSortFlights(results as FlightResult[], filters, sort)
-    : [...results].sort((a, b) => sort === "price" ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice! : (b as HotelResult).valueScore - (a as HotelResult).valueScore), [results, filters, sort, product]);
-  const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[]), [results]);
-  const hasFilters = filters.stops.length + filters.airlines.length + filters.times.length > 0;
-  const openFilters = (section: typeof filterSection) => { setFilterSection(section); setFilterOpen(true); };
+  const sorted = useMemo(
+    () =>
+      [...results].sort((a, b) =>
+        sort === "price"
+          ? product === "flight"
+            ? (a as FlightResult).price - (b as FlightResult).price
+            : (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
+          : product === "flight"
+            ? (b as FlightResult).valueScore - (a as FlightResult).valueScore
+            : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
+      ),
+    [results, sort, product],
+  );
   const payload = plan.plan?.payload || {};
   const date = String(
     product === "flight"
@@ -142,8 +132,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     );
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
-      <TopBar compact={product === "flight"} title={product === "flight" ? `${String(payload.origin || "")}  ⇄  ${String(payload.destination || "")}` : undefined} />
-      <View style={[s0.summary, product === "flight" && s0.flightSummary]}>
+      <TopBar />
+      <View style={s0.summary}>
         <View style={{ flex: 1 }}>
           <Text style={s0.route}>
             {product === "flight"
@@ -166,8 +156,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             product === "flight" ? { departureDate: v } : { checkIn: v },
           )
         }
-        onPrevious={() => { const next = new Date(`${date}T12:00:00`); next.setDate(next.getDate() - 1); const iso = next.toISOString().slice(0, 10); if (iso >= new Date().toISOString().slice(0, 10)) router.setParams(product === "flight" ? { departureDate: iso } : { checkIn: iso }); }}
-        onNext={() => { const next = new Date(`${date}T12:00:00`); next.setDate(next.getDate() + 1); const iso = next.toISOString().slice(0, 10); router.setParams(product === "flight" ? { departureDate: iso } : { checkIn: iso }); }}
       />
       <ScrollView
         horizontal
@@ -175,9 +163,30 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={s0.filters}
       >
-        <Pill label="Filters" icon="sliders" active={hasFilters} onPress={product === "flight" ? () => openFilters("all") : undefined} />
-        {(product === "flight" ? ["Stops", "Airlines", "Times"] : ["Price", "Guest rating", "Property type"]).map((x) => (
-          <Pill key={x} label={x} onPress={product === "flight" ? () => openFilters(x.toLowerCase() as typeof filterSection) : undefined} />
+        <Pill
+          label="Filters"
+          icon="sliders"
+          onPress={() =>
+            Alert.alert(
+              "Filters",
+              "Filter controls use the current live result set.",
+            )
+          }
+        />
+        {(product === "flight"
+          ? ["Stops", "Airlines", "Times"]
+          : ["Price", "Guest rating", "Property type"]
+        ).map((x) => (
+          <Pill
+            key={x}
+            label={x}
+            onPress={() =>
+              Alert.alert(
+                x,
+                "No additional values are available from this search response.",
+              )
+            }
+          />
         ))}
         <Pill
           label={`Sort: ${sort === "price" ? "Price" : product === "flight" ? "Best" : "Recommended"}`}
@@ -209,10 +218,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           />
         ) : null}
         {status === "ready" ? (
-          <View style={[s0.found, product === "flight" && s0.flightFound]}>
+          <View style={s0.found}>
             <View style={s0.foundCopy}>
               <Text style={s0.foundTitle}>
-                {sorted.length}{" "}
+                {results.length}{" "}
                 {product === "flight" ? "flights" : "properties"} found
               </Text>
               <Text style={s0.sub}>
@@ -250,34 +259,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             />
           ),
         )}
-        {status === "ready" && product === "flight" && results.length > 0 && sorted.length === 0 ? <Empty title="No flights match these filters" body="Clear the selected filters to see all loaded flights." retry={() => setFilters(emptyFlightFilters())} retryLabel="Clear filters" edit={edit} /> : null}
-        {status === "ready" && availability.priceAlerts ? (
-          product === "flight" && plan.plan ? (
-            <FlightPriceAlert plan={plan.plan} results={results as FlightResult[]} />
-          ) : (
-            <HotelPriceAlerts />
-          )
-        ) : null}
+        {status === "ready" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
       </ScrollView>
-      {product === "flight" ? <FlightFilterModal visible={filterOpen} section={filterSection} filters={filters} options={flightOptions} onChange={setFilters} onClose={() => setFilterOpen(false)} /> : null}
       <BottomNav />
     </SafeAreaView>
   );
 }
-const stopLabels = { nonstop: "Nonstop", one: "1 stop", twoPlus: "2+ stops" } as const;
-const timeLabels = { morning: "Morning", afternoon: "Afternoon", evening: "Evening", night: "Night" } as const;
-function FlightFilterModal({ visible, section, filters, options, onChange, onClose }: { visible: boolean; section: "all" | "stops" | "airlines" | "times"; filters: FlightFilters; options: ReturnType<typeof flightFilterOptions>; onChange: (filters: FlightFilters) => void; onClose: () => void }) {
-  const [draft, setDraft] = useState(filters);
-  useEffect(() => { if (visible) setDraft(filters); }, [visible, filters]);
-  const toggle = (key: keyof FlightFilters, value: string) => setDraft((current) => ({ ...current, [key]: current[key].includes(value as never) ? current[key].filter((x) => x !== value) : [...current[key], value] } as FlightFilters));
-  const choices = (key: keyof FlightFilters, values: readonly string[], labels?: Record<string, string>) => <View style={s0.choiceRow}>{values.map((value) => <Pressable key={value} accessibilityRole="button" accessibilityState={{ selected: draft[key].includes(value as never) }} onPress={() => toggle(key, value)} style={[s0.choice, draft[key].includes(value as never) && s0.choiceActive]}><Text style={s0.inputLabel}>{labels?.[value] || value}</Text></Pressable>)}</View>;
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal><View style={s0.modalBackdrop}><View style={s0.sheet} accessibilityLabel="Flight filters"><View style={s0.sheetHead}><Text accessibilityRole="header" style={s0.foundTitle}>Filter flights</Text><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose}><FlowIcon name="close" /></Pressable></View>{(section === "all" || section === "stops") && options.stops.length ? <><Text style={s0.inputLabel}>Stops</Text>{choices("stops", options.stops, stopLabels)}</> : null}{(section === "all" || section === "airlines") && options.airlines.length ? <><Text style={s0.inputLabel}>Airlines</Text>{choices("airlines", options.airlines)}</> : null}{(section === "all" || section === "times") && options.times.length ? <><Text style={s0.inputLabel}>Departure time</Text>{choices("times", options.times, timeLabels)}</> : null}<Button label="Apply filters" onPress={() => { onChange(draft); onClose(); }} /><Button label="Clear filters" outline onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} /></View></View></Modal>;
-}
 function FlightCard({ result, rank, params }: { result: FlightResult; rank: number; params: Record<string, string | string[]> }) {
-  const { savedIds, toggle } = useSavedFlights();
-  const saved = savedIds.has(result.id);
-  const legs = displayFlightLegs(result);
-  const flightNumber = result.flightNumber || result.legs?.[0]?.segments?.[0]?.flightNumber;
+  const [saved, setSaved] = useState(false);
   return (
     <View style={[s0.card, rank === 0 && s0.best]}>
       <View style={s0.cardTop}>
@@ -296,11 +285,8 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
           </Badge>
         )}
         <Pressable
-          accessibilityRole="button"
           accessibilityLabel={`${saved ? "Remove" : "Save"} ${result.airlineName}`}
-          accessibilityState={{ selected: saved }}
-          onPress={() => toggle(result.id)}
-          style={s0.favoriteHit}
+          onPress={() => setSaved(!saved)}
         >
           <FlowIcon
             name="heart"
@@ -309,7 +295,7 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
           />
         </Pressable>
       </View>
-      <View style={s0.airlineIdentity}>
+      <View style={s0.flightMain}>
         {result.airlineLogo ? (
           <Image source={{ uri: result.airlineLogo }} style={s0.airline} />
         ) : (
@@ -317,25 +303,37 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
             <Text>{result.airlineName.slice(0, 2)}</Text>
           </View>
         )}
-        <View style={s0.airlineCopy}>
-          <Text style={s0.airlineName}>{result.airlineName}</Text>
-          {flightNumber ? <Text style={s0.sub}>{flightNumber}</Text> : null}
+        <View style={s0.departureBlock}>
+          <Text style={s0.nameSmall}>{result.airlineName}</Text>
+          <Text style={s0.time}>{clock(result.departureTime)}</Text>
+          <Text style={s0.sub}>{result.originAirport}</Text>
+        </View>
+        <View style={s0.timeline}>
+          <Text style={s0.sub}>{result.duration}</Text>
+          <View style={s0.line} />
+          <Text style={s0.nonstop}>
+            {result.stops ? `${result.stops} stop` : "Nonstop"}
+          </Text>
+        </View>
+        <View style={s0.arrivalBlock}>
+          <Text style={s0.time}>{clock(result.arrivalTime)}</Text>
+          <Text style={s0.sub}>{result.destinationAirport}</Text>
+        </View>
+        <View style={s0.priceBox}>
+          <Text style={s0.bigPrice}>
+            {money(result.currency, result.price)}
+          </Text>
+          <Text style={s0.sub}>round trip</Text>
         </View>
       </View>
-      <View style={s0.journeyList}>
-        {legs.map((leg, index) => <FlightLeg key={`${leg.direction}-${index}`} leg={leg} index={index} />)}
-      </View>
-      <View style={s0.cardLower}>
-        <View style={s0.detailList}>
-          <TripDetail icon="trip" label="Baggage" value={result.baggageInfo || "Information unavailable"} />
-          <TripDetail icon="flight" label="Cabin" value={result.cabinClass || "Information unavailable"} />
-          <TripDetail icon="person" label="Seat selection" value="Information unavailable" />
-          <TripDetail icon="document" label="Fare rules" value={result.refundInfo || "Information unavailable"} />
-        </View>
-        <View style={s0.priceSection}>
-          <Text style={s0.bigPrice}>{money(result.currency, result.price)}</Text>
-          <Text style={s0.sub}>{legs.some((leg) => leg.direction === "return") ? "round trip" : "total price"}</Text>
-        </View>
+      <View style={s0.benefits}>
+        <Text style={s0.benefit}>
+          ▣ {result.baggageInfo || "Baggage details unavailable"}
+        </Text>
+        <Text style={s0.benefit}>◉ Seat selection unavailable</Text>
+        <Text style={s0.benefit}>
+          ◉ {result.refundInfo || "Fare rules unavailable"}
+        </Text>
         <Button
           label="View details"
           outline={rank !== 0}
@@ -352,20 +350,6 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
       </View>
     </View>
   );
-}
-function FlightLeg({ leg, index }: { leg: DisplayFlightLeg; index: number }) {
-  const label = leg.direction === "return" ? "RETURN" : leg.direction === "outbound" ? "OUTBOUND" : `LEG ${index + 1}`;
-  return <View style={s0.flightLeg}>
-    <View style={s0.legHeading}><Text style={s0.legLabel}>{label}</Text><Text style={s0.legRoute}>{leg.originAirport}  →  {leg.destinationAirport}</Text></View>
-    <View style={s0.legTimes}>
-      <View style={s0.legEndpoint}><Text style={s0.time}>{clock(leg.departureTime)}</Text><Text style={s0.airportCode}>{leg.originAirport}</Text></View>
-      <View style={s0.legMiddle}><Text style={s0.duration}>{leg.duration}</Text><View style={s0.line} /><Text style={s0.nonstop}>{stopLabel(leg.stops)}</Text></View>
-      <View style={[s0.legEndpoint, s0.legArrival]}><Text style={s0.time}>{clock(leg.arrivalTime)}</Text><Text style={s0.airportCode}>{leg.destinationAirport}</Text></View>
-    </View>
-  </View>;
-}
-function TripDetail({ icon, label, value }: { icon: "trip" | "flight" | "person" | "document"; label: string; value: string }) {
-  return <View style={s0.tripDetail}><View style={s0.detailIcon}><FlowIcon name={icon} size={17} color={ui.blue} /></View><View style={s0.detailCopy}><Text style={s0.detailLabel}>{label}</Text><Text style={s0.detailValue}>{value}</Text></View></View>;
 }
 function HotelCard({
   result,
@@ -483,7 +467,7 @@ function Loading({ product }: { product: Product }) {
     </View>
   );
 }
-function AlertShell({ children }: { children: React.ReactNode }) {
+function PriceAlert({ product }: { product: Product }) {
   return (
     <View style={s0.alert}>
       <View style={s0.alertIcon}>
@@ -491,157 +475,17 @@ function AlertShell({ children }: { children: React.ReactNode }) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s0.foundTitle}>Price alerts</Text>
-        {children}
+        <Text style={s0.sub}>
+          Track this {product === "flight" ? "route" : "search"} and get
+          notified when prices drop.
+        </Text>
       </View>
-    </View>
-  );
-}
-function HotelPriceAlerts() {
-  return (
-    <AlertShell>
-      <Text style={s0.sub}>
-        Hotel alert creation is not currently supported. Manage your existing
-        price alerts instead.
-      </Text>
       <Button
-        label="View price alerts"
+        label="Track prices"
         outline
         onPress={() => router.push("/price-alerts")}
       />
-    </AlertShell>
-  );
-}
-function FlightPriceAlert({ plan, results }: { plan: SearchPlan; results: FlightResult[] }) {
-  const presentation = flightAlertPresentation("flight", true, results);
-  const [selectedCurrency, setSelectedCurrency] = useState("");
-  const [open, setOpen] = useState(false);
-  const [targetDraft, setTargetDraft] = useState("");
-  const [targetError, setTargetError] = useState("");
-  const [creating, setCreating] = useState(false);
-  const currency = presentation.currencies.includes(selectedCurrency)
-    ? selectedCurrency
-    : presentation.currencies.length === 1
-      ? presentation.currencies[0]
-      : "";
-  const createAlert = async () => {
-    if (creating || !currency || !presentation.enabled) return;
-    const parsed = parseTargetPrice(targetDraft);
-    if (parsed.error || parsed.value === undefined) {
-      setTargetError(parsed.error || "Enter a target price.");
-      return;
-    }
-    setCreating(true);
-    setTargetError("");
-    try {
-      await travelApi.createPriceAlert(
-        buildFlightPriceAlertPayload(plan, parsed.value, currency),
-      );
-      setOpen(false);
-      setTargetDraft("");
-      Alert.alert(
-        "Price alert created",
-        "We’ll track this flight search against your target price.",
-        [
-          { text: "View price alerts", onPress: () => router.push("/price-alerts") },
-          { text: "Stay here" },
-        ],
-      );
-    } catch (error) {
-      if (error instanceof TravelApiError && error.status === 401) {
-        setOpen(false);
-        Alert.alert("Sign in required", "Sign in to create a price alert.", [
-          { text: "Sign in", onPress: () => router.push("/email-auth") },
-          { text: "Cancel" },
-        ]);
-      } else if (
-        error instanceof TravelApiError &&
-        error.status === 409 &&
-        error.details?.duplicate === true
-      ) {
-        setTargetError("This alert already exists. Open Price alerts to manage it.");
-      } else {
-        setTargetError(
-          error instanceof TravelApiError
-            ? error.message
-            : "Unable to create price alert. Try again.",
-        );
-      }
-    } finally {
-      setCreating(false);
-    }
-  };
-  return (
-    <>
-      <AlertShell>
-        <Text style={s0.sub}>
-          Get notified when this flight search reaches your target price.
-        </Text>
-        {presentation.currencies.length > 1 ? (
-          <View accessibilityLabel="Choose alert currency" style={s0.currencyRow}>
-            {presentation.currencies.map((item) => (
-              <Pressable
-                key={item}
-                accessibilityRole="button"
-                accessibilityState={{ selected: currency === item }}
-                onPress={() => setSelectedCurrency(item)}
-                style={[s0.currency, currency === item && s0.currencySelected]}
-              >
-                <Text>{item}</Text>
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
-        <Button
-          label="Create price alert"
-          outline
-          disabled={!presentation.enabled || !currency}
-          onPress={() => {
-            setTargetError("");
-            setOpen(true);
-          }}
-        />
-        {!presentation.enabled ? (
-          <Text accessibilityRole="alert" style={s0.sub}>
-            {presentation.liveResults.length
-              ? "A supported result currency was not available for this search."
-              : "Price alerts require a valid live flight result."}
-          </Text>
-        ) : null}
-      </AlertShell>
-      <Modal
-        visible={open}
-        transparent
-        animationType="slide"
-        onRequestClose={() => !creating && setOpen(false)}
-        accessibilityViewIsModal
-      >
-        <KeyboardAvoidingView
-          style={s0.modalBackdrop}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <View style={s0.sheet} accessibilityLabel="Create flight price alert">
-            <Text accessibilityRole="header" style={s0.foundTitle}>Create price alert</Text>
-            <Text style={s0.route}>{plan.summary}</Text>
-            <Text style={s0.sub}>
-              {String(plan.payload.tripType)} · {String(plan.payload.travelers)} travelers · {String(plan.payload.cabinClass)} · {currency}
-            </Text>
-            <Text style={s0.inputLabel}>Target price ({currency})</Text>
-            <TextInput
-              autoFocus
-              accessibilityLabel={`Target price in ${currency}`}
-              value={targetDraft}
-              onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }}
-              keyboardType="decimal-pad"
-              editable={!creating}
-              style={s0.input}
-            />
-            {targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s0.error}>{targetError}</Text> : null}
-            <Button label={creating ? "Creating…" : "Create price alert"} disabled={creating} onPress={() => void createAlert()} />
-            <Button label="Cancel" outline disabled={creating} onPress={() => setOpen(false)} />
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    </>
+    </View>
   );
 }
 export function BottomNav() {
@@ -677,7 +521,6 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  flightSummary: { paddingHorizontal: 18, paddingBottom: 10 },
   filterRail: { height: 70, flexGrow: 0 },
   route: { fontSize: 21, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
@@ -700,7 +543,6 @@ const s0 = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "#FAFCFF",
   },
-  flightFound: { minHeight: 64, paddingVertical: 10 },
   foundCopy: { flex: 1, minWidth: 0 },
   foundAside: { flexShrink: 1, maxWidth: 160 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
@@ -714,10 +556,9 @@ const s0 = StyleSheet.create({
     backgroundColor: "white",
   },
   best: { borderColor: ui.blue },
-  cardTop: { minHeight: 44, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  badgeRow: { flexDirection: "row", flexWrap: "wrap", gap: 7, flex: 1 },
-  favoriteHit: { width: 44, height: 44, alignItems: "center", justifyContent: "center", marginRight: -8 },
-  airlineIdentity: { flexDirection: "row", alignItems: "center", gap: 11 },
+  cardTop: { flexDirection: "row", justifyContent: "space-between" },
+  badgeRow: { flexDirection: "row", gap: 7 },
+  flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
   airline: { width: 38, height: 38, resizeMode: "contain" },
   airlineFallback: {
     width: 38,
@@ -727,20 +568,11 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  airlineCopy: { flex: 1 },
-  airlineName: { fontSize: 16, color: ui.navy, fontWeight: "800" },
+  nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
+  departureBlock: { flex: 1.15, minWidth: 0 },
+  arrivalBlock: { flex: 0.9, minWidth: 0 },
   time: { fontSize: 17, fontWeight: "900", color: ui.navy },
-  journeyList: { gap: 9 },
-  flightLeg: { backgroundColor: ui.pale, borderRadius: 10, padding: 12, gap: 11 },
-  legHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  legLabel: { fontSize: 10, fontWeight: "900", letterSpacing: 0.8, color: ui.blue },
-  legRoute: { fontSize: 13, fontWeight: "800", color: ui.navy },
-  legTimes: { flexDirection: "row", alignItems: "center" },
-  legEndpoint: { flex: 1, minWidth: 72 },
-  legArrival: { alignItems: "flex-end" },
-  airportCode: { marginTop: 2, fontSize: 12, fontWeight: "700", color: ui.muted },
-  legMiddle: { flex: 1.2, minWidth: 82, alignItems: "center", paddingHorizontal: 6 },
-  duration: { fontSize: 12, fontWeight: "700", color: ui.muted },
+  timeline: { flex: 1, minWidth: 56, maxWidth: 95, alignItems: "center" },
   line: {
     width: "100%",
     height: 1,
@@ -748,20 +580,17 @@ const s0 = StyleSheet.create({
     marginVertical: 7,
   },
   nonstop: { fontSize: 11, color: ui.blue },
+  priceBox: { width: 62, flexShrink: 0, alignItems: "flex-end" },
   bigPrice: { fontSize: 22, fontWeight: "900", color: ui.navy },
-  cardLower: {
+  benefits: {
     borderTopWidth: 1,
     borderTopColor: "#EDF0F5",
     paddingTop: 13,
-    gap: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  detailList: { gap: 11 },
-  tripDetail: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  detailIcon: { width: 26, height: 26, borderRadius: 7, backgroundColor: "#EEF4FF", alignItems: "center", justifyContent: "center" },
-  detailCopy: { flex: 1, minWidth: 0 },
-  detailLabel: { fontSize: 11, fontWeight: "800", color: ui.navy },
-  detailValue: { fontSize: 12, color: ui.muted, lineHeight: 17 },
-  priceSection: { alignItems: "flex-end", paddingTop: 2 },
+  benefit: { fontSize: 11, color: ui.muted, flex: 1 },
   hotelCard: {
     height: 234,
     borderWidth: 1,
@@ -831,18 +660,6 @@ const s0 = StyleSheet.create({
     gap: 13,
     backgroundColor: "#FAFCFF",
   },
-  currencyRow: { flexDirection: "row", gap: 8, marginTop: 8 },
-  currency: { borderWidth: 1, borderColor: ui.border, borderRadius: 8, padding: 8 },
-  currencySelected: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
-  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(7,21,47,.45)" },
-  sheet: { backgroundColor: "white", padding: 24, paddingBottom: 36, gap: 12, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
-  sheetHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  choiceRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  choice: { minHeight: 44, justifyContent: "center", borderWidth: 1, borderColor: ui.border, borderRadius: 22, paddingHorizontal: 14 },
-  choiceActive: { borderColor: ui.blue, backgroundColor: "#EEF4FF" },
-  inputLabel: { fontSize: 13, fontWeight: "700", color: ui.navy },
-  input: { height: 48, borderWidth: 1, borderColor: ui.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 16 },
-  error: { color: "#B42318", fontSize: 12 },
   alertIcon: {
     width: 46,
     height: 46,
