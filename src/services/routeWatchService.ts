@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getPrisma } from "@/lib/prisma";
 import { parseSavedFlightSearchQuery } from "@/lib/saved-searches";
 import type { RouteWatchStatus } from "@/generated/prisma/enums";
+import { isFeatureEnabled } from "@/lib/feature-controls/service";
 
 type SavedSearchRecord = {
   id: string;
@@ -98,6 +99,7 @@ export async function listRouteWatchSummariesForSavedSearches(userId: string, sa
 }
 
 export async function enableRouteWatch(userId: string, savedSearchId: string) {
+  if (!(await isFeatureEnabled("ROUTE_WATCH_ENABLED"))) throw new RouteWatchValidationError("FEATURE_DISABLED", "Route Watch is temporarily unavailable.");
   const search = await getOwnedSavedSearch(userId, savedSearchId);
   validateSavedSearchForRouteWatch(search);
   const existing = await getRouteWatchPrisma().routeWatchState.findUnique({ where: { savedSearchId }, select: selectRouteWatch });

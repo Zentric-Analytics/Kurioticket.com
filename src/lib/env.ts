@@ -52,6 +52,13 @@ export function getAdminEmails() {
     .filter(Boolean);
 }
 
+export function getFeatureControlProductionAdmins() {
+  const email = /^[^\s,@<>]+@[^\s,@<>]+\.[^\s,@<>]+$/;
+  return (process.env.FEATURE_CONTROL_PRODUCTION_ADMINS || "").split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter((value, index, all) => email.test(value) && !value.includes("*") && all.indexOf(value) === index);
+}
+
 export function requireServerEnv(
   name: string
 ) {

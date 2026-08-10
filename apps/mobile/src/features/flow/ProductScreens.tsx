@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Image,
@@ -28,6 +28,11 @@ import {
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { ResponsiveHero } from "./ResponsiveHero";
+import { useFeatureAvailability } from "../availability/FeatureAvailability";
+
+function UnavailableProduct({ title, text }: { title: string; text: string }) {
+  return <SafeAreaView style={flowStyles.safe}><View style={flowStyles.scroll}><Text accessibilityRole="header" style={flowStyles.title}>{title}</Text><UnavailableNotice text={text} /></View></SafeAreaView>;
+}
 
 function Page({
   title,
@@ -154,6 +159,9 @@ function Cards({
 export function FlightsScreen() {
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const panel = useRef<FlightSearchHandle>(null);
+  const { availability, loading } = useFeatureAvailability();
+  if (loading) return <UnavailableProduct title="Flights" text="Checking flight search availability…" />;
+  if (!loading && !availability.flightSearch) return <UnavailableProduct title="Flights" text="Flight search is temporarily unavailable. Your saved trips and alerts are unchanged." />;
   return (
     <Page
       title="Flights"
@@ -182,6 +190,9 @@ export function HotelsScreen() {
     rooms?: string | string[];
   }>();
   const panel = useRef<HotelSearchHandle>(null);
+  const { availability, loading } = useFeatureAvailability();
+  if (loading) return <UnavailableProduct title="Hotels" text="Checking hotel search availability…" />;
+  if (!loading && !availability.hotelSearch) return <UnavailableProduct title="Hotels" text="Hotel search is temporarily unavailable. Flights and cars remain available." />;
   return (
     <ThemedHotelsRoot>
       <StatusBar
@@ -245,6 +256,9 @@ export function CarsScreen() {
     dropoffTime?: string | string[];
     driverAge?: string | string[];
   }>();
+  const { availability, loading } = useFeatureAvailability();
+  if (loading) return <UnavailableProduct title="Cars" text="Checking car search availability…" />;
+  if (!loading && !availability.carSearch) return <UnavailableProduct title="Cars" text="Car search is temporarily unavailable. Flights and hotels remain available." />;
   return (
     <Page
       title="Cars"
@@ -274,10 +288,18 @@ const dealTabs: { value: DealTab; label: string }[] = [
   { value: "hotel-car", label: "Hotel + Car" },
   { value: "flight-car", label: "Flight + Car" },
 ];
+function dealTabAvailable(tab: DealTab, availability: ReturnType<typeof useFeatureAvailability>["availability"]) {
+  const flight = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "flight-car";
+  const hotel = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "hotel-car";
+  const car = tab === "hotel-flight-car" || tab === "hotel-car" || tab === "flight-car";
+  return (!flight || availability.flightSearch) && (!hotel || availability.hotelSearch) && (!car || availability.carSearch);
+}
 
 export function DealsScreen() {
   const ft = useFlowTheme();
+  const { availability, loading } = useFeatureAvailability();
   const [tab, setTab] = useState<DealTab>("hotel-flight");
+  const availableDealTabs = useMemo(() => dealTabs.filter((option) => dealTabAvailable(option.value, availability)), [availability]);
   const fade = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     fade.setValue(0);
@@ -287,9 +309,12 @@ export function DealsScreen() {
       useNativeDriver: true,
     }).start();
   }, [fade, tab]);
+  useEffect(() => { if (!availableDealTabs.some((option) => option.value === tab) && availableDealTabs[0]) setTab(availableDealTabs[0].value); }, [availableDealTabs, tab]);
   const includesFlight = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "flight-car";
   const includesHotel = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "hotel-car";
   const includesCar = tab === "hotel-flight-car" || tab === "hotel-car" || tab === "flight-car";
+  if (loading) return <UnavailableProduct title="Deals" text="Checking Deals availability…" />;
+  if (!availability.deals || availableDealTabs.length === 0) return <UnavailableProduct title="Deals" text="Deals are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
   return (
     <Page
       title="Deals"
@@ -303,7 +328,7 @@ export function DealsScreen() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.dealTabs}
       >
-        {dealTabs.map((option) => (
+        {availableDealTabs.map((option) => (
           <Pressable
             key={option.value}
             accessibilityRole="tab"

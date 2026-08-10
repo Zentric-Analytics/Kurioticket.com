@@ -1,6 +1,7 @@
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { flightPriceAlertDuplicateKey } from "@/lib/price-alerts/flightPriceAlerts";
+import { isFeatureEnabled } from "@/lib/feature-controls/service";
 
 export type AccountPriceAlert = {
   id: string;
@@ -126,6 +127,7 @@ export async function createPriceAlert(input: {
   currency: string;
   query: Record<string, unknown>;
 }) {
+  if (!(await isFeatureEnabled("PRICE_ALERTS_ENABLED"))) throw new PriceAlertUnavailableError();
   try {
     const db = getPrisma();
     if (input.type === "FLIGHT") {
@@ -204,6 +206,7 @@ const alertSelect = {
 } as const;
 
 export async function updateUserPriceAlertStatus(input: { id: string; userId: string; status: "ACTIVE" | "PAUSED" }) {
+  if (input.status === "ACTIVE" && !(await isFeatureEnabled("PRICE_ALERTS_ENABLED"))) throw new PriceAlertUnavailableError();
   try {
     const db = getPrisma();
     const current = input.status === "PAUSED" ? "ACTIVE" : "PAUSED";

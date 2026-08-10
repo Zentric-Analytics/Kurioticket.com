@@ -372,3 +372,9 @@ test("cron route authorization fails closed", () => {
   assert.equal(isAuthorizedCronRequest(new Request("https://example.com", { headers: { authorization: "Bearer nope" } }), "secret"), false);
   assert.equal(isAuthorizedCronRequest(new Request("https://example.com", { headers: { authorization: "Bearer secret" } }), "secret"), true);
 });
+
+test("processing control disabled returns zero work before touching candidates", async () => {
+  const db = { priceAlert: { findMany: async () => { throw new Error("candidate query must not run"); } } } as never;
+  const result = await processDuePriceAlerts({ db, featureEnabled: async () => false });
+  assert.deepEqual(result, { disabled: true, processed: 0, eventsCreated: 0, sent: 0, skippedByPreferences: 0, notTriggered: 0, failed: 0 });
+});

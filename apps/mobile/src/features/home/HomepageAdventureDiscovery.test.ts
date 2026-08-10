@@ -10,12 +10,12 @@ const home = source("src/features/flow/HomeFlowScreen.tsx");
 const regional = source("src/features/home/RegionalDestinationRoutes.tsx");
 
 test("new adventure discovery is independently inserted in the required Home order", () => {
-  const flightSearch = home.indexOf("<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />");
+  const flightSearch = home.indexOf('{availability.flightSearch ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker /> : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />}');
   const adventure = home.indexOf("<HomepageAdventureDiscovery />");
   const promos = home.indexOf("<HomepageDealPromos />");
   const regionalSection = home.indexOf("<RegionalDestinationRoutes />");
   assert.ok(flightSearch < adventure && adventure < promos && promos < regionalSection);
-  assert.match(home, /<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>\s*<PopularDestinationStays \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>/);
+  assert.match(home, /availability\.flightSearch[\s\S]*<PopularDestinationStays \/>\s*<HomepageAdventureDiscovery \/>\s*<HomepageDealPromos \/>/);
   assert.match(section, /Discover your next adventure here/);
   assert.match(section, /Compare smart route ideas, flexible fares, and destinations picked for your region\./);
   assert.match(regional, /Discover destinations from your region/);

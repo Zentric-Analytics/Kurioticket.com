@@ -5,6 +5,7 @@ import { priceAlertSchema } from "@/lib/validation";
 import {
   createPriceAlert,
   DuplicatePriceAlertError,
+  PriceAlertUnavailableError,
   listUserPriceAlerts,
 } from "@/services/priceTrackingService";
 
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ alert }, { status: 201 });
   } catch (error) {
+    if (error instanceof PriceAlertUnavailableError) return NextResponse.json({ error: error.message, code: "FEATURE_DISABLED" }, { status: 503 });
     if (error instanceof DuplicatePriceAlertError) {
       return NextResponse.json({ error: error.message, duplicate: true, alert: error.alert }, { status: 409 });
     }

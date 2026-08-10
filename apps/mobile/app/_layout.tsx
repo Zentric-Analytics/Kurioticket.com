@@ -5,10 +5,11 @@ import { useEffect } from "react";
 import { buildStartupLog } from "../src/diagnostics/buildDiagnostics";
 import { getRuntimeDiagnostics } from "../src/diagnostics/runtimeDiagnostics";
 import { View } from "react-native";
+import { FeatureAvailabilityProvider } from "../src/features/availability/FeatureAvailability";
 
 export default function RootLayout() {
   useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
-  return <AppThemeProvider><ThemedRootLayout /></AppThemeProvider>;
+  return <AppThemeProvider><FeatureAvailabilityProvider><ThemedRootLayout /></FeatureAvailabilityProvider></AppThemeProvider>;
 }
 
 function ThemedRootLayout() {

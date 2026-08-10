@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { getPrisma } from "@/lib/prisma";
 import { savedTripReminderEmail, sendOptionalEmail } from "@/services/emailService";
 import { createNotificationEvent } from "@/services/notificationService";
+import { isFeatureEnabled } from "@/lib/feature-controls/service";
 
 export const SAVED_TRIP_REMINDER_BATCH_SIZE = 50;
 export const SAVED_TRIP_REMINDER_LOOKAHEAD_MS = 1000 * 60 * 60 * 24 * 7;
@@ -71,6 +72,7 @@ export type SavedTripReminderCandidate = {
 };
 
 export type SavedTripReminderProcessingCounts = {
+  disabled?: boolean;
   processed: number;
   sent: number;
   skippedByPreferences: number;
@@ -123,7 +125,12 @@ export async function processDueSavedTripReminders(options: {
   dueToleranceMs?: number;
   db?: SavedTripReminderDb;
   sendEmail?: SavedTripReminderEmailSender;
+  featureEnabled?: () => Promise<boolean>;
 } = {}): Promise<SavedTripReminderProcessingCounts> {
+  if (!(await (options.featureEnabled ?? (() => isFeatureEnabled("SAVED_TRIP_REMINDERS_ENABLED")))())) {
+    console.info("[feature-controls:processor-disabled]", { processor: "saved-trip-reminders" });
+    return { disabled: true, processed: 0, sent: 0, skippedByPreferences: 0, notDue: 0, failed: 0 };
+  }
   const now = options.now ?? new Date();
   const batchSize = options.batchSize ?? SAVED_TRIP_REMINDER_BATCH_SIZE;
   const dueToleranceMs = options.dueToleranceMs ?? SAVED_TRIP_REMINDER_DUE_TOLERANCE_MS;

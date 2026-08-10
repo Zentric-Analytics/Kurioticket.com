@@ -110,6 +110,12 @@ enum FeatureFlagScope {
   ADMIN
 }
 
+enum FeatureFlagEnvironment {
+  LEGACY
+  STAGING
+  PRODUCTION
+}
+
 enum HomepageFareSnapshotStatus {
   ACTIVE
   STALE
@@ -801,16 +807,18 @@ model LegalDocument {
 }
 
 model FeatureFlag {
-  id          String           @id @default(cuid())
-  key         String           @unique
+  id          String                 @id @default(cuid())
+  key         String
+  environment FeatureFlagEnvironment @default(PRODUCTION)
   name        String
   description String?
-  enabled     Boolean          @default(false)
-  scope       FeatureFlagScope @default(GLOBAL)
+  enabled     Boolean                @default(false)
+  scope       FeatureFlagScope       @default(GLOBAL)
   payload     Json?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
 
+  @@unique([key, environment])
   @@index([enabled])
   @@index([scope])
 }

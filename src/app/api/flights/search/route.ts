@@ -7,9 +7,11 @@ import { flightSearchSchema } from "@/lib/validation";
 import { classifyFlights } from "@/lib/travel/searchContract";
 import { logProviderCall, logSearchHistory, trackAnalyticsEvent } from "@/services/analyticsService";
 import { searchFlights } from "@/services/travel/flightAggregator";
+import { isFeatureEnabled } from "@/lib/feature-controls/service";
 
 export async function POST(request: Request) {
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
+  if (!(await isFeatureEnabled("FLIGHT_SEARCH_ENABLED"))) return NextResponse.json({ error: "Flight search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
   const rate = checkRateLimit(`flight-search:${ip}`, 35, 60_000);
   if (!rate.allowed) {
