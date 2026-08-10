@@ -119,6 +119,13 @@ const asiaBatch1SourceReferences = (references: readonly ExploreDestinationEdito
   lastVerifiedAt: ASIA_BATCH_1_LAST_VERIFIED_AT,
 });
 
+const ASIA_BATCH_2_LAST_VERIFIED_AT = "2026-08-10";
+const asiaBatch2SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: ASIA_BATCH_2_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -1001,6 +1008,55 @@ const rawExploreDestinationEditorial = [
     description: "Ulaanbaatar lies in the Tuul River valley beneath Bogd Khan Uul, a mountain setting that frames Mongolia's capital. Buddhist institutions and Soviet-era planning reflect distinct layers in the city's architectural and urban history. The National Museum of Mongolia preserves archaeological, historical and ethnographic collections that document the country's cultures while anchoring this national narrative within the capital.",
     highlights: ["Tuul River valley", "Bogd Khan Uul setting", "Buddhist urban heritage", "National Museum of Mongolia"],
     editorialProvenance: asiaBatch1SourceReferences([{ title: "Official Mongolia Tourism — Ulaanbaatar & Surrounding", url: "https://www.mongolia.travel/" }, { title: "National Museum of Mongolia — About Us", url: "https://en.nationalmuseum.mn/about" }]),
+  },
+  {
+    id: "vn-hanoi",
+    summary: "Hanoi's lakes, historic quarters and scholarly monuments reflect the layered heritage of Vietnam's capital.",
+    description: "Hanoi stands in the Red River delta, with Hoàn Kiếm Lake and the Old Quarter shaping its historic centre. The Temple of Literature preserves an enduring association with scholarship, ceremonial courtyards and traditional architecture. Beyond these landmarks, museums and French-colonial civic buildings document successive chapters in the capital's cultural, political and urban history.",
+    highlights: ["Hoàn Kiếm Lake", "Old Quarter streets", "Temple of Literature", "French-colonial civic architecture"],
+    editorialProvenance: asiaBatch2SourceReferences([{ title: "Vietnam National Authority of Tourism — Ha Noi", url: "https://vietnam.travel/places-to-go/northern-vietnam/ha-noi" }, { title: "UNESCO — Central Sector of the Imperial Citadel of Thang Long - Hanoi", url: "https://whc.unesco.org/en/list/1328/" }]),
+  },
+  {
+    id: "vn-ho-chi-minh-city",
+    summary: "Ho Chi Minh City traces southern Vietnamese urban history through riverfront districts, markets and civic architecture.",
+    description: "Ho Chi Minh City developed beside the Saigon River, where commercial streets and civic landmarks frame its historic urban core. Colonial-era architecture and museums record periods when the city was widely known as Saigon, without displacing its canonical name. Chợ Lớn's temples, shophouses and markets preserve a distinct Chinese Vietnamese layer within the wider metropolis.",
+    highlights: ["Saigon River setting", "Colonial-era civic landmarks", "Chợ Lớn historic quarter", "City history museums"],
+    editorialProvenance: asiaBatch2SourceReferences([{ title: "Vietnam National Authority of Tourism — Ho Chi Minh City", url: "https://vietnam.travel/places-to-go/southern-vietnam/ho-chi-minh-city" }, { title: "Ho Chi Minh City Museum", url: "https://hcmc-museum.edu.vn/" }]),
+  },
+  {
+    id: "kh-phnom-penh",
+    summary: "Phnom Penh's riverfront, royal institutions and historic markets express the Cambodian capital's civic heritage.",
+    description: "Phnom Penh occupies the meeting place of the Mekong, Tonlé Sap and Bassac rivers, a confluence central to its urban geography. The Royal Palace and National Museum establish a cultural precinct of royal architecture and Khmer collections near the riverfront. Wat Phnom and long-established markets add religious and commercial landmarks to the capital's layered civic history.",
+    highlights: ["Three-river confluence", "Royal Palace precinct", "National Museum collections", "Wat Phnom"],
+    editorialProvenance: asiaBatch2SourceReferences([{ title: "Cambodia Ministry of Tourism — Phnom Penh", url: "https://www.tourismcambodia.org/provinces/60/phnom-penh" }, { title: "National Museum of Cambodia", url: "https://www.cambodiamuseum.info/" }]),
+  },
+  {
+    id: "kh-siem-reap",
+    summary: "Siem Reap links a riverside Cambodian city, living arts and museums with the nearby Angkor landscape.",
+    description: "Siem Reap grew along its namesake river as an urban gateway to the Angkor archaeological landscape nearby. The city's museums and cultural institutions interpret Khmer history without placing every Angkor monument within the city itself. Workshops, performance traditions and historic neighbourhoods provide a living-arts context distinct from, yet closely connected to, the region's monumental heritage.",
+    highlights: ["Siem Reap River", "Angkor gateway relationship", "Khmer cultural museums", "Traditional arts workshops"],
+    editorialProvenance: asiaBatch2SourceReferences([{ title: "UNESCO — Angkor", url: "https://whc.unesco.org/en/list/668/" }, { title: "APSARA National Authority", url: "https://apsaraauthority.gov.kh/" }]),
+  },
+  {
+    id: "th-phuket",
+    summary: "Phuket encompasses Andaman Sea coastlines, island communities and Sino-Portuguese heritage centred in its historic town.",
+    description: "Phuket is an island and province in the Andaman Sea, with coastal landscapes extending well beyond Phuket City. Its travel-facing identity includes beaches, headlands and long-established communities as well as the historic streets of Old Phuket Town. Sino-Portuguese shophouses and local food traditions reveal cultural connections shaped by maritime trade across the broader island destination.",
+    highlights: ["Andaman Sea coastline", "Old Phuket Town", "Sino-Portuguese shophouses", "Island food heritage"],
+    editorialProvenance: asiaBatch2SourceReferences([{ title: "Tourism Authority of Thailand — Phuket", url: "https://www.tourismthailand.org/Destinations/Provinces/Phuket/350" }, { title: "UNESCO Creative Cities Network — Phuket", url: "https://www.unesco.org/en/creative-cities/phuket" }]),
+  },
+  {
+    id: "la-vientiane",
+    summary: "Vientiane's Mekong riverfront, Buddhist monuments and civic landmarks define the historic character of Laos's capital.",
+    description: "Vientiane is the Lao capital on the Mekong River, treated here as the city rather than the wider prefecture or province. Pha That Luang anchors its Buddhist and national architectural heritage, while historic temples preserve distinct religious settings. Patuxai and the city's museums add twentieth-century civic history and curated Lao culture to the riverside urban landscape.",
+    highlights: ["Mekong riverfront", "Pha That Luang", "Historic Buddhist temples", "Patuxai monument"],
+    editorialProvenance: asiaBatch2SourceReferences([{ title: "Lao National Tourism Administration — Vientiane Capital", url: "https://www.tourismlaos.org/vientiane-capital/" }, { title: "UNESCO — That Luang de Vientiane", url: "https://whc.unesco.org/en/tentativelists/3912/" }]),
+  },
+  {
+    id: "mm-yangon",
+    summary: "Yangon's river-oriented historic core encompasses Buddhist monuments, traditional markets and colonial-era civic architecture.",
+    description: "Yangon developed near the Yangon River, where a gridded historic core contains religious, commercial and civic landmarks. Shwedagon Pagoda anchors the city's Buddhist heritage, while markets and colonial-era public buildings record other layers of urban history. Museums and preserved streetscapes support an evergreen account of the former Rangoon without implying anything about present political or travel conditions.",
+    highlights: ["Yangon River setting", "Shwedagon Pagoda", "Colonial-era civic architecture", "Historic market districts"],
+    editorialProvenance: asiaBatch2SourceReferences([{ title: "UNESCO — Historic Urban Landscape of Yangon", url: "https://whc.unesco.org/en/tentativelists/6367/" }, { title: "Shwedagon Pagoda Board of Trustees", url: "https://www.shwedagonpagoda.org.mm/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
