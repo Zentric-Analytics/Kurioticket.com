@@ -2,28 +2,26 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-test("only Hotel details uses the white guided journey page background", async () => {
+test("Hotel, Flight, and Car details use the white guided journey page background", async () => {
   const source = await readFile(
     new URL("./DealsJourneyShell.tsx", import.meta.url),
     "utf8",
   );
   const backgroundRule = source.match(
-    /const useHotelDetailsBackground =([\s\S]*?);/,
+    /const useDetailsBackground =([\s\S]*?);/,
   );
   assert.ok(backgroundRule);
-  assert.match(backgroundRule[1], /^\s*stage === "hotel-details"$/);
   assert.deepEqual(
     [...backgroundRule[1].matchAll(/stage === "([^"]+)"/g)].map(
       ([, stage]) => stage,
     ),
-    ["hotel-details"],
+    ["hotel-details", "flight-details", "car-details"],
   );
   for (const grayStage of [
     "hotel-results",
     "flight-results",
-    "flight-details",
     "car-results",
-    "car-details",
+    "review",
   ])
     assert.doesNotMatch(backgroundRule[1], new RegExp(grayStage));
   assert.doesNotMatch(
@@ -32,7 +30,7 @@ test("only Hotel details uses the white guided journey page background", async (
   );
   assert.match(
     source,
-    /className=\{`flex-1 overflow-x-clip pb-12 \$\{[\s\S]*?useHotelDetailsBackground \? "bg-white" : "bg-\[#f6f8fb\]"[\s\S]*?\}`\}/,
+    /className=\{`flex-1 overflow-x-clip pb-12 \$\{[\s\S]*?useDetailsBackground \? "bg-white" : "bg-\[#f6f8fb\]"[\s\S]*?\}`\}/,
   );
   for (const attribute of [
     "data-deals-guided-journey",
@@ -49,6 +47,8 @@ test("only Hotel details uses the white guided journey page background", async (
     source,
     /requiredStage === stage && stage === "hotel-details"[\s\S]*?<DealsHotelDetailsStage/,
   );
+  assert.match(source, /<DealsFlightDetailsStage/);
+  assert.match(source, /<DealsCarDetailsStage/);
 });
 
 test("guided shell uses breadcrumbs as primary navigation without changing shared Deals presentation", async () => {
@@ -141,9 +141,15 @@ test("Hotel, Flight, and Car results journey stages hide redundant shell heading
   assert.match(source, /<DealsFlightDetailsStage/);
   assert.match(source, /<DealsCarResultsStage search=\{search\} \/>/);
   assert.match(source, /<DealsCarDetailsStage/);
-  assert.match(
-    source,
-    /const useHotelDetailsBackground = stage === "hotel-details";/,
+  const backgroundRule = source.match(
+    /const useDetailsBackground =([\s\S]*?);/,
+  );
+  assert.ok(backgroundRule);
+  assert.deepEqual(
+    [...backgroundRule[1].matchAll(/stage === "([^"]+)"/g)].map(
+      ([, stage]) => stage,
+    ),
+    ["hotel-details", "flight-details", "car-details"],
   );
   assert.ok(
     source.indexOf("<DealsJourneyBreadcrumbs") <
