@@ -9,6 +9,8 @@ import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "./flightPriceAlertModel";
 import { getRuntimeDiagnostics } from "../../diagnostics/runtimeDiagnostics";
+import { ApprovedResultsScreen } from "../search/ApprovedResultsScreen";
+import { ApprovedCarResultsScreen } from "../search/ApprovedCarResultsScreen";
 
 type Result = FlightResult | HotelResult | CarResult;
 type Status = "validating" | "loading" | "partial" | "ready" | "empty" | "unavailable" | "error";
@@ -29,6 +31,12 @@ function imageUri(value?: string) {
 }
 
 export function TravelResultsScreen({ product }: { product: Product }) {
+  if (product === "flight" || product === "hotel") return <ApprovedResultsScreen product={product} />;
+  if (product === "car") return <ApprovedCarResultsScreen />;
+  return <LegacyTravelResultsScreen product={product} />;
+}
+
+function LegacyTravelResultsScreen({ product }: { product: Product }) {
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const primitives = [
     one(params.tripType), one(params.origin), one(params.destination), one(params.from), one(params.to), one(params.departureDate), one(params.returnDate), one(params.travelers), one(params.adults), one(params.children), one(params.infants), one(params.cabin), one(params.cabinClass), one(params.currency), one(params.market),
