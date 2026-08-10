@@ -34,14 +34,23 @@ export const EXPLORE_DESTINATION_OVERRIDES: Readonly<Record<string, DestinationO
   },
 };
 
+const normalizeCanonicalDestinationText = (value: string) =>
+  value
+    .trim()
+    .replace(/\s+/g, " ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase();
+
+/** Search normalization only; canonical grouping and IDs retain their established punctuation. */
 export const normalizeExploreDestinationText = (value: string) =>
-  value.trim().replace(/\s+/g, " ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
+  normalizeCanonicalDestinationText(value).replace(/[.'’ʻ]/g, "");
 
 const slugify = (value: string) =>
-  normalizeExploreDestinationText(value).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  normalizeCanonicalDestinationText(value).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 const sourceKey = (airport: AirportOption) =>
-  `${airport.countryCode?.toUpperCase()}|${normalizeExploreDestinationText(airport.city)}`;
+  `${airport.countryCode?.toUpperCase()}|${normalizeCanonicalDestinationText(airport.city)}`;
 
 /** Constructs the canonical, airport-backed catalogue without editorial enrichment. */
 export function buildCanonicalExploreDestinations(

@@ -7,8 +7,10 @@ import {
   destinationByAirportCode,
   destinationById,
   deriveDestinations,
+  normalizeDestinationText,
 } from "./destinationCatalogue";
 import { requireExploreDestination } from "../../../../../src/shared/destinations/exploreDestinationContent";
+import { exploreDestinationEditorial } from "../../../../../src/shared/destinations/exploreDestinationEditorial";
 import {
   ALL_DESTINATIONS,
   destinationCardLayout,
@@ -152,6 +154,99 @@ test("search covers names, countries, ISO codes, airport codes, airport names an
   );
   assert.equal(exactExploreResult(searchExplore("LHR"))?.id, "gb-london");
   assert.deepEqual(searchExplore("Beach escapes"), []);
+});
+
+test("search normalization preserves accents and accepts punctuation variants", () => {
+  for (const [canonical, variant, id] of [
+    ["Montréal", "Montreal", "ca-montreal"],
+    ["Bogotá", "Bogota", "co-bogota"],
+    ["São Paulo", "Sao Paulo", "br-sao-paulo"],
+    ["Asunción", "Asuncion", "py-asuncion"],
+    ["Brasília", "Brasilia", "br-brasilia"],
+    ["Cancún", "Cancun", "mx-cancun"],
+    ["Nukuʻalofa", "Nukualofa", "to-nuku-alofa"],
+    ["Nukuʻalofa", "Nuku'alofa", "to-nuku-alofa"],
+    ["St. John's", "St. John’s", "ag-st-john-s"],
+    ["St. John's", "St Johns", "ag-st-john-s"],
+  ] as const) {
+    assert.equal(result(canonical)[0]?.id, id);
+    assert.equal(result(variant)[0]?.id, id);
+    assert.equal(normalizeDestinationText(canonical), normalizeDestinationText(variant));
+  }
+  assert.equal(result("   HO   CHI   MINH   CITY   ")[0]?.id, "vn-ho-chi-minh-city");
+});
+
+test("search ranking contract and alphabetical ties remain explicit", () => {
+  assert.equal(searchExplore("Paris")[0]?.rank, 0);
+  assert.equal(searchExplore("LHR")[0]?.rank, 1);
+  assert.equal(searchExplore("Denpasar")[0]?.rank, 2);
+  assert.equal(searchExplore("San")[0]?.rank, 3);
+  assert.ok(searchExplore("Japan").every(({ rank }) => rank === 4));
+  assert.equal(searchExplore("Heathrow")[0]?.rank, 5);
+  assert.deepEqual(result("Japan").map(({ name }) => name), ["Osaka", "Tokyo"]);
+  assert.deepEqual(searchExplore("gua").slice(0, 5).map(({ rank }) => rank), [1, 3, 3, 3, 3]);
+});
+
+test("exact member airport codes retain rank one canonical resolution", () => {
+  for (const [code, id] of [
+    ["PEK", "cn-beijing"], ["PKX", "cn-beijing"],
+    ["ICN", "kr-seoul"], ["GMP", "kr-seoul"],
+    ["AEP", "ar-buenos-aires"], ["EZE", "ar-buenos-aires"],
+    ["IAH", "us-houston"], ["HOU", "us-houston"],
+    ["SEA", "us-seattle"], ["MDE", "co-medellin"],
+    ["UIO", "ec-quito"], ["GRU", "br-sao-paulo"],
+    ["ASU", "py-asuncion"], ["PPT", "pf-papeete"],
+  ] as const) {
+    const match = searchExplore(code)[0];
+    assert.equal(match?.destination.id, id);
+    assert.equal(match?.rank, 1);
+  }
+});
+
+test("airport-name search uses meaningful token prefixes without generic noise", () => {
+  for (const [query, id] of [
+    ["Heathrow", "gb-london"],
+    ["Gatwick", "gb-london"],
+    ["Narita", "jp-tokyo"],
+    ["Haneda", "jp-tokyo"],
+    ["Schiphol", "nl-amsterdam"],
+    ["Changi", "sg-singapore"],
+    ["Bandaranaike", "lk-colombo"],
+    ["Velana", "mv-male"],
+  ] as const) {
+    assert.equal(result(query)[0]?.id, id);
+  }
+  assert.ok(result("port").length < destinations.length);
+  assert.deepEqual(result("port").map(({ name }) => name), [
+    "Port Harcourt", "Port Moresby", "Port of Spain", "Port Vila", "Porto", "Lisbon",
+  ]);
+  assert.equal(result("SEA")[0]?.id, "us-seattle");
+  assert.equal(result("HOU")[0]?.id, "us-houston");
+  assert.equal(result("lon")[0]?.id, "gb-london");
+  assert.equal(result("rio")[0]?.id, "br-rio-de-janeiro");
+  assert.equal(result("del")[0]?.id, "in-new-delhi");
+  assert.equal(result("gua")[0]?.id, "gt-guatemala-city");
+});
+
+test("search keeps country, empty, no-result, editorial and catalogue contracts", () => {
+  for (const country of [
+    "Japan", "Brazil", "Australia", "New Zealand", "Mexico", "India", "Fiji",
+    "Hong Kong SAR China", "Macao SAR China", "French Polynesia", "Cook Islands",
+    "Guam", "Northern Mariana Islands",
+  ]) {
+    const matches = searchExplore(country);
+    assert.ok(matches.length > 0);
+    assert.ok(matches.every(({ rank }) => rank === 4));
+  }
+  assert.deepEqual(searchExplore(""), []);
+  assert.deepEqual(searchExplore("   "), []);
+  assert.deepEqual(searchExplore("Christchruch"), []);
+  for (const term of [
+    "temples", "beaches", "museums", "markets", "architecture", "waterfront", "heritage",
+  ]) assert.deepEqual(searchExplore(term), []);
+  assert.equal(destinations.length, 235);
+  assert.equal(exploreDestinationEditorial.length, 235);
+  assert.deepEqual(POPULAR_DESTINATIONS.map(({ destination }) => destination.id), APPROVED_FEATURED_IDS);
 });
 
 test("destinations outside the popular list remain searchable and saveable", async () => {

@@ -14,6 +14,23 @@ const exact = (values: readonly string[], query: string) =>
 const includes = (values: readonly string[], query: string) =>
   values.some((value) => normalizeDestinationText(value).includes(query));
 
+const GENERIC_AIRPORT_TOKENS = new Set(["airport", "international"]);
+
+const airportNameMatches = (values: readonly string[], query: string) => {
+  const queryTokens = query.split(" ").filter(Boolean);
+  return values.some((value) => {
+    const meaningfulTokens = normalizeDestinationText(value)
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token && !GENERIC_AIRPORT_TOKENS.has(token));
+    return (
+      queryTokens.length > 0 &&
+      queryTokens.every((queryToken) =>
+        meaningfulTokens.some((token) => token.startsWith(queryToken)),
+      )
+    );
+  });
+};
+
 /** Deterministic factual ranking: name, code, alias/city, name prefix, country, general. */
 export function searchExplore(queryValue: string): ExploreSearchResult[] {
   const query = normalizeDestinationText(queryValue);
@@ -36,7 +53,6 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
       const aliases = destination.searchAliases;
       const countries = [destination.country, destination.countryCode];
       const general = [
-        ...destination.airportNames,
         ...names,
         ...codes,
         ...aliases,
@@ -51,7 +67,11 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
       )
         rank = 3;
       else if (includes(countries, query)) rank = 4;
-      else if (includes(general, query)) rank = 5;
+      else if (
+        includes(general, query) ||
+        airportNameMatches(destination.airportNames, query)
+      )
+        rank = 5;
       return rank < 99
         ? [
             {
