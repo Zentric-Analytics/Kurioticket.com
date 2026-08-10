@@ -11,8 +11,8 @@ import {
 } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
+import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { popularDestinationStayNavigation } from "./homepageCardNavigation";
 
 export { popularDestinationStays } from "./PopularDestinationStaysData";
@@ -146,28 +146,15 @@ export function PopularDestinationStays() {
                     fill="url(#destinationOverlay)"
                   />
                 </Svg>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
-                  accessibilityState={{ selected: saved }}
+                <AndroidFavoriteButton
+                  saved={saved}
+                  label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
                   onPress={(event) => {
                     event.stopPropagation();
                     toggle(destination.id);
                   }}
-                  hitSlop={4}
-                  style={({ pressed }) => [
-                    styles.heart,
-                    saved ? styles.heartSaved : styles.heartUnsaved,
-                    pressed && styles.heartPressed,
-                  ]}
-                >
-                  <FlowIcon
-                    name="heart"
-                    size={17}
-                    color={flowColors.white}
-                    fill={flowColors.white}
-                  />
-                </Pressable>
+                  style={styles.heart}
+                />
                 <View pointerEvents="none" style={styles.copy}>
                   <Text style={styles.city}>{destination.city}</Text>
                   <Text style={styles.country}>{destination.country}</Text>
@@ -249,17 +236,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
     top: 12,
     right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.35)",
-    alignItems: "center",
-    justifyContent: "center",
   },
-  heartUnsaved: { backgroundColor: "#F43F5E" },
-  heartSaved: { backgroundColor: "#E11D48" },
-  heartPressed: { transform: [{ scale: 0.94 }] },
   copy: {
     position: "absolute",
     zIndex: 1,
