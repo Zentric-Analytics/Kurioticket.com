@@ -42,6 +42,7 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
+import { flightEditSearchParams } from "../flow/flightSearchModel";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -103,10 +104,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   useEffect(() => {
     void load();
   }, [load]);
-  const edit = () =>
-    router.canGoBack()
-      ? router.back()
-      : router.replace(product === "flight" ? "/flights" : "/hotels");
+  const edit = () => {
+    if (product === "flight") {
+      router.push({ pathname: "/flights", params: flightEditSearchParams(params) });
+      return;
+    }
+    router.canGoBack() ? router.back() : router.replace("/hotels");
+  };
   const sorted = useMemo(
     () =>
       [...results].sort((a, b) =>

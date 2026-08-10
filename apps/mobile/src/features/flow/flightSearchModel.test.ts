@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, defaultFlightForm, FLIGHT_CABINS, FLIGHT_TRIP_TYPES, flightSearchParams, initializeFlightForm, searchAirports, totalTravelers, validateFlightForm } from "./flightSearchModel";
+import { adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, defaultFlightForm, flightEditSearchParams, FLIGHT_CABINS, FLIGHT_TRIP_TYPES, flightSearchParams, initializeFlightForm, searchAirports, totalTravelers, validateFlightForm } from "./flightSearchModel";
 const today = new Date(2026, 7, 1, 12);
 
 test("a fresh form has no preselected search values", () => {
@@ -21,6 +21,22 @@ test("initialization restores only valid, explicitly supplied selections", () =>
 test("only supported trip types and cabins are modeled",()=>{ assert.deepEqual(FLIGHT_TRIP_TYPES,["round-trip","one-way"]); assert.deepEqual(FLIGHT_CABINS,["Economy","Premium Economy","Business","First"]); });
 test("airport search ranks the shared catalogue deterministically",()=>{ assert.equal(searchAirports(" jFk ")[0].code,"JFK"); assert.equal(searchAirports("Paris")[0].code,"CDG"); assert.equal(searchAirports("france")[0].code,"CDG"); assert.equal(searchAirports("los")[0].code,"LOS"); assert.equal(searchAirports("Los Angeles")[0].code,"LAX"); assert.ok(searchAirports("Heathrow").some((airport)=>airport.code==="LHR")); assert.deepEqual(searchAirports("unknown"),[]); assert.equal(new Set(searchAirports("").map(x=>x.code)).size,searchAirports("").length); });
 test("validation and serialization align round trip and one way",()=>{ const form={...defaultFlightForm(),from:airportByCode("JFK"),to:airportByCode("LAX"),departureDate:"2026-08-15",returnDate:"2026-08-22",adults:2,children:1,infants:1,cabin:"Business" as const}; assert.deepEqual(validateFlightForm(form,today),{}); const params=flightSearchParams(form); assert.equal(params.travelers,"4"); assert.equal(params.from,"JFK"); assert.equal(params.returnDate,form.returnDate); const one=flightSearchParams({...form,tripType:"one-way"}); assert.equal("returnDate" in one,false); assert.equal(validateFlightForm({...form,to:form.from},today).to,"Origin and destination must be different."); assert.ok(validateFlightForm({...form,departureDate:"2026-07-31"},today).departureDate); assert.ok(validateFlightForm({...form,returnDate:form.departureDate},today).returnDate); });
+
+test("edit-search params normalize result aliases and restore a round trip", () => {
+  const params = flightEditSearchParams({ tripType: "round-trip", origin: "LOS", destination: "JFK", departureDate: "2026-08-15", returnDate: "2026-08-22", adults: "2", children: "1", infants: "1", travelers: "4", cabinClass: "premium-economy" });
+  assert.deepEqual(params, { tripType: "round-trip", from: "LOS", to: "JFK", departureDate: "2026-08-15", returnDate: "2026-08-22", adults: "2", children: "1", infants: "1", travelers: "4", cabin: "premium-economy" });
+  const restored = initializeFlightForm(params, today).form;
+  assert.equal(restored.from?.code, "LOS"); assert.equal(restored.to?.code, "JFK");
+  assert.equal(restored.returnDate, "2026-08-22"); assert.equal(restored.cabin, "Premium Economy");
+  assert.deepEqual([restored.adults, restored.children, restored.infants], [2, 1, 1]);
+});
+
+test("edit-search params do not introduce a return date for one-way searches", () => {
+  const params = flightEditSearchParams({ tripType: "one-way", origin: "LOS", destination: "JFK", departureDate: "2026-08-15", returnDate: "2026-08-22", travelers: "3", cabinClass: "economy" });
+  assert.equal("returnDate" in params, false);
+  const restored = initializeFlightForm(params, today).form;
+  assert.equal(restored.tripType, "one-way"); assert.equal(restored.returnDate, ""); assert.equal(restored.adults, 3);
+});
 test("departure selection never invents a return date and traveler bounds preserve contract",()=>{ const form=defaultFlightForm(); const adjusted=adjustFlightDeparture(form,"2026-08-25"); assert.equal(adjusted.form.returnDate,""); let travelers={...form,adults:8,children:1}; travelers=changeTraveler(travelers,"infants",1); assert.equal(totalTravelers(travelers),9); assert.equal(changeTraveler({...form,adults:1},"adults",-1).adults,1); });
 
 test("fresh homepage dates use the local calendar while non-homepage defaults stay empty", () => {
