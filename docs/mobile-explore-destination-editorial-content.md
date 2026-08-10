@@ -77,11 +77,52 @@ The third reviewed Europe batch, verified on 2026-08-08, adds 10 previously non-
 9. `rs-belgrade`
 10. `si-ljubljana`
 
-This brings the cumulative rollout to 55 editorial destinations: the original 25 and three reviewed batches of 10. Batch 3 groups neighbouring Balkan and southeastern European capitals with Thessaloniki, using official tourism, municipal, museum and UNESCO sources to support durable geographic, architectural and cultural context.
+Before Batch 4 selection, the latest canonical catalogue contained these 15 European destinations without editorial content:
+
+1. `de-cologne` — Cologne
+2. `de-dusseldorf` — Düsseldorf
+3. `de-hamburg` — Hamburg
+4. `ua-kyiv` — Kyiv
+5. `cy-larnaca` — Larnaca
+6. `lu-luxembourg` — Luxembourg
+7. `es-madrid` — Madrid
+8. `gb-manchester` — Manchester
+9. `it-milan` — Milan
+10. `ru-moscow` — Moscow
+11. `fr-nice` — Nice
+12. `cy-paphos` — Paphos
+13. `pt-porto` — Porto
+14. `ru-st-petersburg` — St. Petersburg
+15. `de-stuttgart` — Stuttgart
+
+The fourth reviewed Europe batch, verified on 2026-08-10, adds this western European group of 10 previously non-editorial canonical destinations:
+
+1. `de-cologne`
+2. `de-dusseldorf`
+3. `de-hamburg`
+4. `de-stuttgart`
+5. `lu-luxembourg`
+6. `es-madrid`
+7. `gb-manchester`
+8. `it-milan`
+9. `fr-nice`
+10. `pt-porto`
+
+Four German cities form the geographic core, joined by nearby western and southern European cities with strong official tourism, UNESCO, museum or cultural-institution coverage. The grouping leaves the two Cypriot, two Russian and one Ukrainian destinations together for the final Europe batch rather than switching regions.
+
+After Batch 4, these five European canonical destinations remain without editorial content:
+
+1. `ua-kyiv` — Kyiv
+2. `cy-larnaca` — Larnaca
+3. `ru-moscow` — Moscow
+4. `cy-paphos` — Paphos
+5. `ru-st-petersburg` — St. Petersburg
+
+This brings the cumulative rollout to 65 editorial destinations: the original 25 and four reviewed Europe batches of 10. The original 25 and Batches 1–3 remain intact.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
-These editorial batches do not change Featured membership or order and include no image or UI work. Related destinations remain deferred until a separate recommendation policy is approved.
+These editorial batches do not change Featured membership or order and include no image or UI work. Batch 4 likewise includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes. Related destinations remain deferred until a separate recommendation policy is approved.
 
 ## Content fields
 
