@@ -135,7 +135,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     );
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
-      <TopBar />
+      <TopBar flightResults={product === "flight"} />
       <View style={[s0.summary, narrowHeader && s0.summaryNarrow]}>
         <View style={s0.summaryCopy}>
           <Text style={s0.route}>
@@ -150,12 +150,18 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           </Text>
         </View>
         <View style={narrowHeader && s0.editNarrow}>
-          <Pill label="Edit search" icon="document" onPress={edit} />
+          <Pill
+            label="Edit search"
+            icon={product === "flight" ? undefined : "document"}
+            flightResultsIcon={product === "flight" ? "edit" : undefined}
+            onPress={edit}
+          />
         </View>
       </View>
       <DateStrip
         date={date}
         prices={prices}
+        flightResults={product === "flight"}
         onSelect={(v) =>
           router.setParams(
             product === "flight" ? { departureDate: v } : { checkIn: v },
@@ -170,7 +176,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       >
         <Pill
           label="Filters"
-          icon="sliders"
+          icon={product === "flight" ? undefined : "sliders"}
+          flightResultsIcon={product === "flight" ? "filters" : undefined}
           onPress={() =>
             Alert.alert(
               "Filters",
@@ -185,6 +192,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           <Pill
             key={x}
             label={x}
+            flightResultsChevron={product === "flight"}
             onPress={() =>
               Alert.alert(
                 x,
@@ -196,6 +204,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <Pill
           label={`Sort: ${sort === "price" ? "Price" : product === "flight" ? "Best" : "Recommended"}`}
           active
+          flightResultsChevron={product === "flight"}
           onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
         />
       </ScrollView>
