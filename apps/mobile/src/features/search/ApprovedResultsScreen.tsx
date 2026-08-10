@@ -65,8 +65,6 @@ const airportLabel = (code: unknown) => {
   return airport ? `${airport.city} (${value})` : value;
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
-  const { width } = useWindowDimensions();
-  const narrowFlightLayout = product === "flight" && width < 400;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = useMemo(
@@ -143,9 +141,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     );
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
-      <TopBar resultsLayout={product === "flight"} />
-      <View style={[s0.summary, product === "flight" && s0.flightSummary, narrowFlightLayout && s0.flightSummaryNarrow]}>
-        <View style={s0.summaryCopy}>
+      <TopBar />
+      <View style={s0.summary}>
+        <View style={{ flex: 1 }}>
           <Text style={s0.route}>
             {product === "flight"
               ? `${airportLabel(payload.origin)}  ⇄  ${airportLabel(payload.destination)}`
@@ -157,12 +155,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               : `${shortDate(String(payload.checkIn || ""))} – ${shortDate(String(payload.checkOut || ""))}  ·  ${payload.rooms || 1} Room, ${payload.guests || 2} Guests`}
           </Text>
         </View>
-        <View style={narrowFlightLayout && s0.editSearchNarrow}>
-          <Pill label="Edit search" icon="document" onPress={edit} />
-        </View>
+        <Pill label="Edit search" icon="document" onPress={edit} />
       </View>
       <DateStrip
-        resultsLayout={product === "flight"}
         date={date}
         prices={prices}
         onSelect={(v) =>
@@ -175,9 +170,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       />
       <ScrollView
         horizontal
-        style={[s0.filterRail, product === "flight" && s0.flightFilterRail]}
+        style={s0.filterRail}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[s0.filters, product === "flight" && s0.flightFilters]}
+        contentContainerStyle={s0.filters}
       >
         <Pill label="Filters" icon="sliders" active={hasFilters} onPress={product === "flight" ? () => openFilters("all") : undefined} />
         {(product === "flight" ? ["Stops", "Airlines", "Times"] : ["Price", "Guest rating", "Property type"]).map((x) => (
@@ -189,7 +184,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
         />
       </ScrollView>
-      <ScrollView contentContainerStyle={[s0.body, product === "flight" && s0.flightBody]}>
+      <ScrollView contentContainerStyle={s0.body}>
         {status === "loading" ? <Loading product={product} /> : null}
         {message ? (
           <Text accessibilityRole="alert" style={s0.notice}>
@@ -213,7 +208,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           />
         ) : null}
         {status === "ready" ? (
-          <View style={[s0.found, product === "flight" && s0.flightFound, narrowFlightLayout && s0.flightFoundNarrow]}>
+          <View style={s0.found}>
             <View style={s0.foundCopy}>
               <Text style={s0.foundTitle}>
                 {sorted.length}{" "}
@@ -235,7 +230,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 }
               />
             ) : (
-              <View style={[s0.foundAside, narrowFlightLayout && s0.foundAsideNarrow]}>
+              <View style={s0.foundAside}>
                 <Text style={s0.change}>ⓘ Price may change</Text>
                 <Text style={s0.sub}>Book soon to lock in this price.</Text>
               </View>
@@ -676,23 +671,11 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  flightSummary: {
-    paddingHorizontal: 22,
-    paddingTop: 4,
-    paddingBottom: 16,
-    alignItems: "center",
-  },
-  flightSummaryNarrow: { alignItems: "flex-start", flexWrap: "wrap", rowGap: 10 },
-  summaryCopy: { flex: 1, minWidth: 0, gap: 4 },
-  editSearchNarrow: { marginLeft: "auto" },
   filterRail: { height: 70, flexGrow: 0 },
-  flightFilterRail: { height: 62 },
   route: { fontSize: 21, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 18, paddingVertical: 16, gap: 9 },
-  flightFilters: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 12, gap: 8 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
-  flightBody: { paddingHorizontal: 22, paddingTop: 8, paddingBottom: 84, gap: 12 },
   notice: {
     backgroundColor: "#F2F6FF",
     color: ui.navy,
@@ -710,11 +693,8 @@ const s0 = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "#FAFCFF",
   },
-  flightFound: { minHeight: 82, paddingHorizontal: 16, paddingVertical: 14, gap: 16 },
-  flightFoundNarrow: { alignItems: "flex-start", flexDirection: "column", gap: 10 },
   foundCopy: { flex: 1, minWidth: 0 },
   foundAside: { flexShrink: 1, maxWidth: 160 },
-  foundAsideNarrow: { maxWidth: "100%" },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   change: { color: ui.navy, fontSize: 12 },
   card: {

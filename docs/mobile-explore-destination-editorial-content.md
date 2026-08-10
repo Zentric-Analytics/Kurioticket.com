@@ -8,11 +8,15 @@ The shared Explore destination catalogue is derived from the airport catalogue a
 
 ## Regional module architecture
 
-The editorial data is split under `src/shared/destinations/editorial/` to keep regional rollout reviews maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts`, `asia.ts` and `northAmerica.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in that explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains a compatibility facade containing the single global validation boundary.
+The editorial data is split under `src/shared/destinations/editorial/` to keep regional ownership maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts`, `asia.ts`, `northAmerica.ts`, `centralAmerica.ts`, `caribbean.ts`, `southAmerica.ts` and `oceania.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains the compatibility facade containing the single global validation boundary.
 
-The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Europe remains complete at 52/52, Africa at 54/54 and Asia at 64/64; after North America Batch 2, global coverage is 188/235 with 47 destinations left. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
+## Current completion state
 
-## Current rollout and Featured independence
+**GLOBAL EDITORIAL COVERAGE: 235/235. REMAINING: 0.** Regional coverage is Central America 6/6, North America 16/16, Caribbean 10/10, South America 15/15, Europe 52/52, Africa 54/54, Asia 64/64 and Oceania/Pacific 18/18. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
+
+The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Its semantic-preservation guard intentionally remains scoped to that historical dataset rather than being regenerated against the completed 235-record aggregate.
+
+## Historical rollout record and Featured independence
 
 ### North America Batch 1 — United States
 
@@ -46,9 +50,9 @@ Repository-derived North American coverage moves from **11 of 16** canonical des
 
 The historical 175-record semantic payload and all eight North America Batch 1 records remain unchanged, while Batch 2 appends after Batch 1. Featured membership and its exact order remain independently maintained. This batch includes no UI, image, gallery, map, search, flight or hotel, booking, related-destination or canonical-data work.
 
-Editorial scope is expanding toward all canonical Explore destinations. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
+Editorial scope expanded to all canonical Explore destinations during the rollout. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
 
-The current incremental rollout still contains the original 25 records for these Featured destinations, with their copy and provenance unchanged:
+The completed rollout retains the original 25 records for these Featured destinations, with their copy and provenance unchanged:
 
 1. `fr-paris`
 2. `gb-london`
@@ -507,7 +511,123 @@ The records live in `src/shared/destinations/editorial/caribbean.ts` and aggrega
 
 This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data changes. It changes no IDs, names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
 
-This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
+### South America Batch 1 — Northern + Andean cities
+
+South America Batch 1, verified on 2026-08-10, considered and implemented all seven canonical candidates, with no deferrals:
+
+- `co-bogota` — Bogotá, Colombia
+- `co-medellin` — Medellín, Colombia
+- `ec-quito` — Quito, Ecuador
+- `ec-guayaquil` — Guayaquil, Ecuador
+- `pe-lima` — Lima, Peru
+- `bo-la-paz` — La Paz, Bolivia
+- `bo-santa-cruz` — Santa Cruz, Bolivia
+
+The source review used exact URLs from UNESCO, municipal and national government bodies, official city tourism portals, central-bank cultural museums and public cultural institutions. Every record has at least two distinct, titled HTTPS references supporting durable city geography, heritage, architecture, archaeology, museums or civic spaces. No source URL was fabricated; external-network authorization failures were treated as an environment limitation rather than a destination-source failure.
+
+Scope safeguards keep each record city-specific. Bogotá retains its accented canonical name and focuses on its Andean plateau, La Candelaria, Plaza de Bolívar and city museums. Medellín retains its accent and Aburrá Valley city setting; unchanged MDE data is not used to place the Rionegro airport inside Medellín. Quito remains bounded to the city and its historic core, without importing Cotopaxi or Otavalo, and unchanged UIO data is not used as city-centre geography. Guayaquil is treated through its Guayas waterfront, Malecón and Las Peñas rather than as shorthand for Ecuador's coast or the Galápagos.
+
+Lima remains distinct from Callao, the wider metropolitan area and Lima Region; its record uses the historic centre and archaeology within Lima. La Paz is accurately described as Bolivia's seat of government rather than its constitutional capital, and it remains separate from El Alto, where LPB is located. Santa Cruz retains the exact canonical short name while its copy identifies the urban history of Santa Cruz de la Sierra; it does not absorb the department, Jesuit Missions or wider lowlands.
+
+The records live in `src/shared/destinations/editorial/southAmerica.ts` and aggregate centrally and deterministically after the Caribbean module. Repository-derived South America coverage moves from **1 of 15** to **8 of 15**, leaving **7**. Global coverage moves from **203 of 235** to **210 of 235**, leaving **25**. Caribbean remains complete at **10 of 10**; Central America remains **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; North America remains **16 of 16**, Europe **52 of 52**, Africa **54 of 54** and Asia **64 of 64**. The historical 175-record semantic prefix and all North America, Central America and Caribbean rollout records remain unchanged. Featured membership and exact order remain independently maintained.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking or related-destination work and no canonical-data changes. It changes no IDs, canonical names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
+
+### South America Batch 2 — Southern Cone + Brazil
+
+South America Batch 2, verified on 2026-08-10, considered and implemented all seven canonical candidates, with no deferrals:
+
+- `cl-santiago` — Santiago, Chile
+- `ar-buenos-aires` — Buenos Aires, Argentina
+- `uy-montevideo` — Montevideo, Uruguay
+- `py-asuncion` — Asunción, Paraguay
+- `br-sao-paulo` — São Paulo, Brazil
+- `br-brasilia` — Brasília, Brazil
+- `br-manaus` — Manaus, Brazil
+
+The source review used exact URLs from official municipal and national tourism bodies, UNESCO, official museums and public cultural institutions. Each record carries at least two distinct, titled authoritative HTTPS references supporting durable city geography, heritage, architecture, museums, markets or cultural traditions. No provenance URL was fabricated. External HTTPS authorization failures were treated as an environment limitation rather than a source failure, and no candidate was weakened or deferred because of that limitation.
+
+Scope safeguards keep Santiago's central municipality and city material distinct from Greater Santiago, the Metropolitan Region, Valparaíso and Chile-wide attractions. Buenos Aires remains the autonomous city rather than Buenos Aires Province or the wider metropolitan area; its canonical AEP primary and EZE secondary airport data remains unchanged. Montevideo stays bounded to its Río de la Plata waterfront, Ciudad Vieja and city institutions rather than absorbing Uruguay's beach or wine destinations.
+
+Asunción remains distinct from Greater Asunción and Paraguay generally; unchanged ASU data is not used to place the airport, which is in Luque, inside the central city. São Paulo remains the city rather than the state or Greater São Paulo, and unchanged GRU data is not used to place the Guarulhos airport within the city. Brasília's planned central ensemble is distinguished from the wider Federal District and its surrounding administrative regions. Manaus is treated as a Rio Negro port city with its own markets, museums and rubber-era architecture, not as a synonym for the entire Amazon or distant rainforest destinations.
+
+The records remain in `src/shared/destinations/editorial/southAmerica.ts` and aggregate centrally in deterministic order after South America Batch 1. Repository-derived South America coverage moves from **8 of 15** to **15 of 15**, leaving **0** canonical South American destinations without editorial content. Global coverage moves from **210 of 235** to **217 of 235**, leaving **18**. Central America remains **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; Caribbean remains **10 of 10**; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic prefix and all North America, Central America, Caribbean and South America Batch 1 records remain unchanged. Featured membership and exact ordering remain independently maintained and unchanged.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no canonical IDs, names, countries, country codes, airport data, aliases, image identities or image provenance.
+
+### Oceania Batch 1 — Australia + New Zealand
+
+Oceania Batch 1, verified on 2026-08-10, considered and implemented all seven canonical candidates, with no deferrals:
+
+- `au-melbourne` — Melbourne, Australia
+- `au-brisbane` — Brisbane, Australia
+- `au-perth` — Perth, Australia
+- `au-adelaide` — Adelaide, Australia
+- `nz-auckland` — Auckland, New Zealand
+- `nz-wellington` — Wellington, New Zealand
+- `nz-christchurch` — Christchurch, New Zealand
+
+The source review used exact URLs from municipal and state authorities, official museums, public galleries, botanic-garden authorities and other public cultural institutions. Every record has at least two distinct, titled authoritative HTTPS references supporting durable geography, urban form, heritage and cultural context. Indigenous and Māori terms appear only where supported by authoritative local sources, with established spelling and macrons preserved.
+
+Melbourne remains the city on the Yarra River rather than Greater Melbourne or Victoria; the record does not absorb the Great Ocean Road, Phillip Island or Yarra Valley. Brisbane stays within the city and its river, South Bank and civic institutions rather than Greater Brisbane, South East Queensland, the Gold Coast or Sunshine Coast. Perth is the Australian city on the Swan River, not Perth in Scotland; Fremantle is not presented as central Perth, and wider Western Australian destinations remain outside its scope. Adelaide's planned centre, Park Lands and North Terrace remain distinct from Greater Adelaide, South Australia and surrounding wine regions.
+
+Auckland's isthmus, central waterfront and immediate volcanic landscape are distinguished from the wider Auckland Region; Tāmaki Makaurau and other Māori naming is used only in supported local context. Wellington remains the harbour city rather than the wider Wellington Region or Wairarapa, with Māori institutional naming retained accurately. Christchurch copy uses durable geography, architectural history, gardens, institutions and Ngāi Tahu context; it makes no claim that earthquake reconstruction or restoration is complete and no claim about current building access, reopenings, temporary museum locations or construction.
+
+The records live in `src/shared/destinations/editorial/oceania.ts` and aggregate centrally and deterministically after the complete South America module. Repository-derived Oceania/Pacific coverage moves from **1 of 18** to **8 of 18**, leaving **10**. Global coverage moves from **217 of 235** to **224 of 235**, leaving **11**: `hn-san-pedro-sula` plus the ten final Pacific candidates (`fj-nadi`, `pf-papeete`, `pg-port-moresby`, `sb-honiara`, `vu-port-vila`, `ws-apia`, `to-nuku-alofa`, `ck-rarotonga`, `gu-guam` and `mp-saipan`).
+
+South America remains complete at **15 of 15**; Caribbean **10 of 10**; Central America **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic guard and every prior regional rollout remain unchanged. Featured membership and exact order remain independently maintained.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no canonical IDs, names, countries, country codes, airport data, aliases, image identities or image provenance.
+
+### Pacific Final Batch — Islands + Territories
+
+The Pacific final batch, verified on 2026-08-10, considered and implemented all ten canonical candidates, with no deferrals:
+
+- `fj-nadi` — Nadi, Fiji
+- `pf-papeete` — Papeete, French Polynesia
+- `pg-port-moresby` — Port Moresby, Papua New Guinea
+- `sb-honiara` — Honiara, Solomon Islands
+- `vu-port-vila` — Port Vila, Vanuatu
+- `ws-apia` — Apia, Samoa
+- `to-nuku-alofa` — Nukuʻalofa, Tonga
+- `ck-rarotonga` — Rarotonga, Cook Islands
+- `gu-guam` — Guam, Guam
+- `mp-saipan` — Saipan, Northern Mariana Islands
+
+The source review used exact, titled HTTPS references from official tourism authorities, national and municipal government bodies, official museums and cultural centres, and the United States National Park Service. Each destination has at least two distinct authoritative references supporting durable destination geography, heritage, institutions, markets or historic landscapes. External HTTPS requests in the working environment returned authorization failures; those failures were treated as an environment limitation rather than evidence of weak sources, and no provenance URL was fabricated.
+
+Scope safeguards distinguish city destinations from their surrounding islands and countries. Nadi remains within western Viti Levu and does not absorb Denarau, the Coral Coast or offshore island groups. Papeete remains the Tahiti harbour city, not Tahiti or French Polynesia generally, and unchanged PPT data is not used to place the Faaʻa airport in Papeete. Port Moresby is limited to its Gulf of Papua, Motu-Koitabu and Waigani contexts; Honiara's city institutions remain distinct from wider Guadalcanal battlefield landscapes; and Port Vila does not stand in for Efate or Vanuatu nationally. Apia remains a north-coast Upolu city, and unchanged APW data is not used to place Faleolo airport inside it. Nukuʻalofa retains its exact ʻokina and is not expanded across Tongatapu; unchanged TBU data is not used to place Fuaʻamotu airport in the central city.
+
+Rarotonga is correctly treated as an island destination, with Avarua identified only as its principal settlement and the outer Cook Islands excluded. Guam is also treated at island scope rather than as one city: Hagåtña appears as a settlement within Guam, while the canonical destination and country both remain exactly `Guam`. Saipan remains an island and municipality within the Northern Mariana Islands, not shorthand for the entire archipelago. CHamoru, Chamorro, Carolinian, Motu-Koitabu, iTaukei and other local or Indigenous naming appears only in bounded, authoritatively supported contexts; canonical diacritics, territorial labels and local spellings are preserved.
+
+All copy excludes current cyclone or typhoon recovery, earthquakes, tsunami or volcanic status, reconstruction, schedules, airport or ferry operations, entry rules, resort openings, beach or lagoon conditions, safety rankings, political conditions, institutional opening status and temporary events. The records add no related destinations and make no UI, image, gallery, map, search, flight, hotel or booking changes.
+
+Repository-derived Oceania/Pacific coverage moves from **8 of 18** to **18 of 18**, with no Pacific deferrals. Global editorial coverage moves from **224 of 235** to **234 of 235**, leaving exactly one canonical destination without editorial content: `hn-san-pedro-sula`. Central America remains **5 of 6**, with San Pedro Sula canonical and wholly non-editorial. South America remains **15 of 15**; Caribbean **10 of 10**; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic prefix and every prior regional rollout remain unchanged. Featured membership and exact ordering remain independently maintained and unchanged.
+
+### Global Editorial Completion — San Pedro Sula
+
+The final completion pass, verified on **2026-08-10**, adds `hn-san-pedro-sula` after resolving its earlier strict-source deferral. Source review established two exact, titled, durable HTTPS references: the Municipality of San Pedro Sula for city geography, civic spaces, landmarks and market context, and the Museum of Anthropology and History of San Pedro Sula for the city's established museum and its interpretive scope. Authorization failures affecting outbound HTTPS inspection were treated as an environment limitation, not as evidence against those institutional sources; no URL was inferred or fabricated.
+
+The record remains bounded to San Pedro Sula. Sula Valley geography is explicitly contextual, and no attraction from Honduras generally, Cortés Department, Puerto Cortés, Omoa, Lake Yojoa, Copán, Tela or La Ceiba is presented as a city attraction. Its copy excludes current safety, crime, politics, demonstrations, weather, flooding, storms, transport, airport or airline operations, opening hours, prices, access, closures, construction, tourism and population conditions.
+
+Repository-derived coverage changes as follows:
+
+- Central America: **5/6 → 6/6**
+- North America: **16/16**
+- Caribbean: **10/10**
+- South America: **15/15**
+- Europe: **52/52**
+- Africa: **54/54**
+- Asia: **64/64**
+- Oceania/Pacific: **18/18**
+- Global: **234/235 → 235/235**
+- Remaining: **1 → 0**
+
+**GLOBAL EDITORIAL COVERAGE: 235/235. REMAINING: 0.** This means every canonical destination currently represented in the Explore catalogue has editorial enrichment; it does not mean that the catalogue represents every possible destination worldwide.
+
+This completion adds no UI, image, gallery, map, search, flight, hotel, booking, related-destination, Featured or canonical-catalogue changes. The historical 175-record semantic guard, every prior editorial payload and prior-record relative order, deterministic regional aggregation, and independently maintained Featured membership and ordering remain preserved.
+
+This historical list records the rollout sequence, not an editorial allowlist or required editorial order. The compatibility facade continues to support missing-editorial fallback behavior for future canonical catalogue changes, so a canonical destination remains valid, searchable and safe to open before any future editorial enrichment is added.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
 

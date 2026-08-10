@@ -3636,6 +3636,7 @@ export const translations: TranslationDictionary = {
   "deals.package.hotelFlightCar": "Hotel + Flight + Car",
   "deals.package.flightCar": "Flight + Car",
   "deals.package.hotelCar": "Hotel + Car",
+  "deals.packageSelector.instruction": "Choose a package",
   "deals.originLabel": "Where from?",
   "deals.destinationLabel": "Where to?",
   "deals.datesLabel": "Travel dates",
@@ -3718,6 +3719,9 @@ export const translations: TranslationDictionary = {
   "deals.carRow": "Car",
   "deals.travellersRow": "Travellers",
   "deals.travellersRooms": "Travellers / rooms",
+  "deals.changeDatesForStay": "Change dates for stay",
+  "deals.datesForStay": "Dates for stay",
+  "deals.chooseStayDates": "Choose dates for stay",
   "deals.pickup": "Pick-up",
   "deals.returnLocation": "Return location",
   "deals.sameAsPickup": "Same as pick-up",
@@ -4620,7 +4624,7 @@ export const translations: TranslationDictionary = {
   "deals.guided.heading.hotel-details": "Choose your room",
   "deals.guided.heading.flight-results": "Choose your flight",
   "deals.guided.heading.flight-details": "Confirm your flight",
-  "deals.guided.flightResults.viewDetails": "View flight details",
+  "deals.guided.flightResults.viewDetails": "View flight",
   "deals.guided.flightResults.viewDetailsAria":
     "View flight details for {{airline}}, {{origin}} to {{destination}}",
   "deals.guided.flightResults.loadingTitle": "Loading flight results",
@@ -4664,7 +4668,7 @@ export const translations: TranslationDictionary = {
   "deals.guided.carResults.emptyBody":
     "No car inventory is currently available for this search. You can retry or modify your search.",
   "deals.guided.carResults.retry": "Retry Cars",
-  "deals.guided.carResults.actionLabel": "View car details",
+  "deals.guided.carResults.actionLabel": "View car",
   "deals.guided.carResults.actionAriaLabel":
     "View details for {model} from {company}",
   "deals.guided.carDetails.pendingTitle":

@@ -477,7 +477,7 @@ test("Explore uses destination-only search copy", () => {
 });
 
 
-test("destination details render shared records and omit absent optional content", () => {
+test("destination details render complete shared editorial while keeping related content optional", () => {
   const source = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
   assert.match(source, /destination\.airportCodes\.map/);
   assert.match(source, /destination\.summary \?/);
@@ -490,16 +490,15 @@ test("destination details render shared records and omit absent optional content
   assert.ok(london.description);
   assert.ok(london.highlights?.length);
   assert.equal(london.relatedDestinationIds, undefined);
-  const nonEditorial = destinations.find(
-    (destination) => destination.summary === undefined &&
-      !CURATED_POPULAR_DESTINATION_IDS.includes(
+  const nonFeatured = destinations.find(
+    (destination) => !CURATED_POPULAR_DESTINATION_IDS.includes(
         destination.id as (typeof CURATED_POPULAR_DESTINATION_IDS)[number],
       ),
   )!;
-  assert.equal(nonEditorial.summary, undefined);
-  assert.equal(nonEditorial.description, undefined);
-  assert.equal(nonEditorial.highlights, undefined);
-  assert.equal(nonEditorial.relatedDestinationIds, undefined);
+  assert.ok(nonFeatured.summary);
+  assert.ok(nonFeatured.description);
+  assert.ok(nonFeatured.highlights?.length);
+  assert.equal(nonFeatured.relatedDestinationIds, undefined);
   assert.doesNotMatch(source, /editorialProvenance|sourceReferences|lastVerifiedAt/);
 });
 
