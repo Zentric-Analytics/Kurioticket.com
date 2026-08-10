@@ -808,7 +808,7 @@ model MyTrip {
   providerTripId           String?
   providerManageUrl        String?
   source                   MyTripSource
-  partnerConversionId      String?      @unique
+  partnerConversionId      String?
   origin                   String?
   destination              String
   departureDate            DateTime
@@ -821,6 +821,7 @@ model MyTrip {
   user                     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, providerName, providerConfirmationCode])
+  @@unique([providerName, partnerConversionId])
   @@index([userId])
   @@index([userId, status, departureDate])
   @@index([providerConfirmationCode])

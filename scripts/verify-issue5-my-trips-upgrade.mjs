@@ -39,8 +39,20 @@ try {
   const oldTable = Number((await db.query(`SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name='TripBooking'`)).rows[0].count);
   const oldEnums = Number((await db.query(`SELECT count(*) FROM pg_type WHERE typname IN ('TripBookingType','TripBookingStatus')`)).rows[0].count);
   assert.equal(oldTable, 0); assert.equal(oldEnums, 0);
+  await db.query(`
+    INSERT INTO "MyTrip" ("id","userId","providerName","providerConfirmationCode","tripType","status","source","partnerConversionId","destination","departureDate","travelerCount","currency","createdAt","updatedAt") VALUES
+      ('provider-a-shared','issue5-a','Provider A','A-SHARED','FLIGHT','UPCOMING','PARTNER_CONFIRMATION','shared-conversion','JFK','2026-11-01',1,'USD',now(),now()),
+      ('provider-b-shared','issue5-b','Provider B','B-SHARED','HOTEL','UPCOMING','PARTNER_CONFIRMATION','shared-conversion','Paris','2026-11-02',1,'EUR',now(),now());
+  `);
+  await assert.rejects(
+    db.query(`INSERT INTO "MyTrip" ("id","userId","providerName","providerConfirmationCode","tripType","status","source","partnerConversionId","destination","departureDate","travelerCount","currency","createdAt","updatedAt") VALUES ('provider-a-duplicate','issue5-a','Provider A','A-DUP','FLIGHT','UPCOMING','PARTNER_CONFIRMATION','shared-conversion','LAX','2026-11-03',1,'USD',now(),now())`),
+    /duplicate key value violates unique constraint/,
+  );
+  const scopedIndex = Number((await db.query(`SELECT count(*) FROM pg_indexes WHERE schemaname='public' AND indexname='MyTrip_providerName_partnerConversionId_key'`)).rows[0].count);
+  assert.equal(scopedIndex, 1);
   console.log(`legacy TripBooking rows: ${before}`); console.log(`MyTrip rows after upgrade: ${after}`);
   console.log("Issue 5 MyTrip upgrade verified: 4 -> 4 rows; IDs, owners, confirmations, provider IDs, itinerary data, and timestamps preserved; URLs remain null.");
+  console.log("Provider-scoped conversion identity verified: shared IDs across providers succeed; duplicates within one provider fail.");
 } finally {
   if (db) await db.end().catch(() => {});
   await admin.query(`DROP DATABASE IF EXISTS "${databaseName}" WITH (FORCE)`).catch(() => {});

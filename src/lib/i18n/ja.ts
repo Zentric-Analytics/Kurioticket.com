@@ -1249,7 +1249,7 @@ export const translations: TranslationDictionary = {
     "航空会社、ホテル、旅行会社、外部プロバイダーで予約が完了している場合、予約変更、返金、キャンセル、チェックイン、搭乗、領収書、旅行書類はそのプロバイダーが対応します。",
   supportFaqChangeBookingQuestion: "Kurioticket は予約を変更できますか？",
   supportFaqChangeBookingAnswer:
-    "Kurioticket が直接予約に対応している場合に限り、Kurioticket で行った予約をサポートできます。外部プロバイダーで完了した予約については、そのプロバイダーへ直接お問い合わせください。",
+    "Kurioticket は旅行予約の管理や変更を行いません。変更、キャンセル、返金、チェックイン、領収書、旅行書類は外部プロバイダーが対応します。",
   supportFaqWhyRedirectedQuestion: "なぜ別のプロバイダーに移動したのですか？",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket は旅行検索・比較プラットフォームであり、一部の結果では、予約、支払い、プロバイダー固有のサポートを完了するため信頼できるプロバイダーへ移動します。",

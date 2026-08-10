@@ -1092,7 +1092,7 @@ export const translations: TranslationDictionary = {
   supportFaqChangeBookingQuestion:
     "Czy Kurioticket może zmienić moją rezerwację?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket może pomagać tylko przy rezerwacjach dokonanych bezpośrednio przez Kurioticket, jeśli i kiedy bezpośrednia rezerwacja jest obsługiwana. W przypadku rezerwacji u zewnętrznych dostawców skontaktuj się bezpośrednio z tym dostawcą.",
+    "Kurioticket nie zarządza rezerwacjami podróży ani ich nie zmienia. Zewnętrzny dostawca obsługuje zmiany, anulowania, zwroty, odprawę, rachunki i dokumenty podróży.",
   supportFaqWhyRedirectedQuestion:
     "Dlaczego przekierowano mnie do innego dostawcy?",
   supportFaqWhyRedirectedAnswer:

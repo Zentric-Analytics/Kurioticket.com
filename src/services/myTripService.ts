@@ -22,6 +22,7 @@ type MyTripRecord = {
 type MyTripClient = {
   myTrip: {
     findMany(args: unknown): Promise<MyTripRecord[]>; count(args: unknown): Promise<number>;
+    findUnique(args: unknown): Promise<(MyTripRecord & { userId: string }) | null>;
     upsert(args: unknown): Promise<MyTripRecord>;
   };
   $transaction<T extends readonly Promise<unknown>[]>(queries: T): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }>;
@@ -59,13 +60,29 @@ export type PartnerConfirmedMyTripInput = {
 export async function upsertPartnerConfirmedMyTrip(input: PartnerConfirmedMyTripInput) {
   if (!input.userId || !input.partnerConversionId || !input.providerName || !input.providerConfirmationCode || !input.destination || input.travelerCount < 1) throw new Error("Trusted trip confirmation is incomplete.");
   const providerManageUrl = requireProviderUrl(input.providerManageUrl);
+  const identity = {
+    providerName: input.providerName,
+    partnerConversionId: input.partnerConversionId,
+  };
+  const existing = await getClient().myTrip.findUnique({
+    where: { providerName_partnerConversionId: identity },
+    select: { ...select, userId: true },
+  });
+  if (existing && existing.userId !== input.userId) {
+    throw new MyTripIngestionOwnershipError();
+  }
   const trip = await getClient().myTrip.upsert({
-    where: { partnerConversionId: input.partnerConversionId },
+    where: { providerName_partnerConversionId: identity },
     create: { ...input, source: input.source ?? "PARTNER_CONFIRMATION", providerManageUrl },
     update: { providerName: input.providerName, providerConfirmationCode: input.providerConfirmationCode, providerTripId: input.providerTripId, providerManageUrl, tripType: input.tripType, status: input.status, origin: input.origin, destination: input.destination, departureDate: input.departureDate, returnDate: input.returnDate, travelerCount: input.travelerCount, currency: input.currency, totalAmount: input.totalAmount },
     select,
   });
   return serializeMyTrip(trip);
+}
+
+export class MyTripIngestionOwnershipError extends Error {
+  readonly code = "MY_TRIP_INGESTION_OWNERSHIP_MISMATCH";
+  constructor() { super("Trusted trip confirmation belongs to another user."); this.name = "MyTripIngestionOwnershipError"; }
 }
 
 function serializeMyTrip(trip: MyTripRecord): PublicMyTrip {

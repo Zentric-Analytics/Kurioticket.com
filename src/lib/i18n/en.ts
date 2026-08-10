@@ -337,6 +337,31 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.card.viewDetails": "View details",
   "accountDashboard.trips.card.unknownDestination": "Unknown destination",
   "accountDashboard.trips.status.upcoming": "Upcoming",
+  "accountDashboard.trips.metasearch.eyebrow": "Read-only partner itineraries",
+  "accountDashboard.trips.metasearch.description":
+    "Trips shown here were completed with external travel providers. Kurioticket does not sell or manage reservations.",
+  "accountDashboard.trips.metasearch.tabsAriaLabel": "Trip status",
+  "accountDashboard.trips.metasearch.tabs.upcoming": "Upcoming",
+  "accountDashboard.trips.metasearch.tabs.past": "Past",
+  "accountDashboard.trips.metasearch.tabs.cancelled": "Cancelled",
+  "accountDashboard.trips.metasearch.loading": "Loading trips…",
+  "accountDashboard.trips.metasearch.error": "We could not load your trips. Please try again.",
+  "accountDashboard.trips.metasearch.retry": "Try again",
+  "accountDashboard.trips.metasearch.empty.title": "No {{status}} trips",
+  "accountDashboard.trips.metasearch.empty.body":
+    "Partner-confirmed trips will appear here after the provider confirms your reservation.",
+  "accountDashboard.trips.metasearch.provider": "Provider",
+  "accountDashboard.trips.metasearch.providerConfirmation": "Provider confirmation",
+  "accountDashboard.trips.metasearch.travelers": "Travelers",
+  "accountDashboard.trips.metasearch.priceSnapshot": "Price snapshot",
+  "accountDashboard.trips.metasearch.priceUnavailable": "Not available",
+  "accountDashboard.trips.metasearch.disclaimer":
+    "Your reservation is managed by {{provider}}. Changes, cancellations, refunds, check-in, receipts and travel documents are handled on the provider's website.",
+  "accountDashboard.trips.metasearch.manageWith": "Manage with {{provider}}",
+  "accountDashboard.trips.metasearch.noProviderUrl":
+    "Manage this trip using your provider confirmation.",
+  "accountDashboard.trips.metasearch.externalAriaLabel":
+    "{{label}}, opens external provider website",
   "accountDashboard.priceAlerts.eyebrow": "Account tools",
   "accountDashboard.priceAlerts.title": "Price alerts",
   "accountDashboard.priceAlerts.description":

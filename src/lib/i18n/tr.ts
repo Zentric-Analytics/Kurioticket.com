@@ -1431,7 +1431,7 @@ export const translations: TranslationDictionary = {
     "Rezervasyonunuz bir hava yolu, otel, seyahat acentesi veya harici sağlayıcıyla tamamlandıysa rezervasyon değişiklikleri, iadeler, iptaller, check-in, biniş, makbuzlar ve seyahat belgelerinden o sağlayıcı sorumludur.",
   supportFaqChangeBookingQuestion: "Kurioticket rezervasyonumu değiştirebilir mi?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket yalnızca doğrudan rezervasyon desteklendiği zaman ve destekleniyorsa Kurioticket üzerinden doğrudan yapılan rezervasyonlarda yardımcı olabilir. Harici sağlayıcılarla tamamlanan rezervasyonlar için doğrudan o sağlayıcıyla iletişime geçin.",
+    "Kurioticket seyahat rezervasyonlarını yönetmez veya değiştirmez. Değişiklikler, iptaller, iadeler, check-in, makbuzlar ve seyahat belgeleri harici sağlayıcı tarafından yönetilir.",
   supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya gönderildim?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyonu, ödemeyi ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",

@@ -143,8 +143,8 @@ function TripCard({ trip }: { trip: MobileTrip }) {
         </View>
       </View>
       {trip.providerAction ? (
-        <Pressable accessibilityRole="link" accessibilityLabel={`${trip.providerAction.label}, opens external website`} onPress={() => void Linking.openURL(trip.providerAction!.url)} style={flowStyles.primaryButton}>
-          <Text style={flowStyles.primaryButtonText}>{trip.providerAction.label} ↗</Text>
+        <Pressable accessibilityRole="link" accessibilityLabel={`${trip.providerAction.label}, opens external website`} onPress={() => void Linking.openURL(trip.providerAction!.url)} style={flowStyles.primary}>
+          <Text style={flowStyles.primaryText}>{trip.providerAction.label} ↗</Text>
         </Pressable>
       ) : <Text style={ft.styles.meta}>Manage this trip using your provider confirmation.</Text>}
       <Text style={ft.styles.meta}>Your reservation is managed by {trip.providerName}. Changes, cancellations, refunds, check-in and travel documents are handled by the provider.</Text>
