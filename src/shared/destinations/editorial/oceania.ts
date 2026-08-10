@@ -76,4 +76,104 @@ export const oceaniaExploreDestinationEditorial = [
       { title: "Canterbury Museum", url: "https://www.canterburymuseum.com/" },
     ]),
   },
+  {
+    id: "fj-nadi",
+    summary: "Nadi occupies western Viti Levu, centred on a market town shaped by Fiji's diverse communities.",
+    description: "Nadi lies on western Viti Levu, where the town developed inland from Nadi Bay amid the island's sugar-growing lowlands. Its central market gathers produce and everyday commerce from surrounding communities. The Sri Siva Subramaniya Temple and the town's iTaukei and Indo-Fijian cultural setting provide a distinct local identity without extending Nadi to Denarau or the offshore island groups.",
+    highlights: ["Western Viti Levu setting", "Nadi municipal market", "Sri Siva Subramaniya Temple", "iTaukei and Indo-Fijian heritage"],
+    editorialProvenance: provenance([
+      { title: "Tourism Fiji — Nadi", url: "https://www.fiji.travel/places-to-go/nadi" },
+      { title: "Nadi Town Council", url: "https://naditowncouncil.com.fj/" },
+    ]),
+  },
+  {
+    id: "pf-papeete",
+    summary: "Papeete faces Tahiti's harbour through a civic centre of markets, gardens and Polynesian urban history.",
+    description: "Papeete stands on Tahiti's northwestern shore, where its harbour and waterfront frame French Polynesia's principal urban centre. The municipal market sustains established trades in produce, flowers, food and handicrafts within the city. Bougainville Park, civic buildings and the Maison de la Culture reflect Papeete's public life and Polynesian cultural context without absorbing the attractions of Tahiti's other districts or islands.",
+    highlights: ["Papeete harbour waterfront", "Papeete municipal market", "Bougainville Park", "Maison de la Culture"],
+    editorialProvenance: provenance([
+      { title: "Tahiti Tourisme — Papeete", url: "https://www.tahititourisme.com/islands/tahiti/papeete/" },
+      { title: "City of Papeete", url: "https://www.papeete.pf/" },
+    ]),
+  },
+  {
+    id: "pg-port-moresby",
+    summary: "Port Moresby overlooks the Gulf of Papua through Motu-Koitabu country and national civic institutions.",
+    description: "Port Moresby extends along the Gulf of Papua within the traditional lands of the Motu and Koitabu peoples. The National Museum and Art Gallery interprets Papua New Guinea's cultural and natural heritage from its Waigani setting. Parliament House and the National Capital Botanical Gardens anchor a civic and institutional district distinct from the country's distant highlands, islands and other cultural landscapes.",
+    highlights: ["Gulf of Papua shoreline", "Motu-Koitabu cultural context", "National Museum and Art Gallery", "Waigani civic precinct"],
+    editorialProvenance: provenance([
+      { title: "National Museum and Art Gallery of Papua New Guinea", url: "https://www.museumpng.gov.pg/" },
+      { title: "National Capital District Commission — Amazing Port Moresby", url: "https://www.amazingportmoresby.com/" },
+    ]),
+  },
+  {
+    id: "sb-honiara",
+    summary: "Honiara follows Guadalcanal's northern coast through a waterfront capital shaped by national cultural institutions.",
+    description: "Honiara stretches along Guadalcanal's north coast, facing Iron Bottom Sound and centred on a compact administrative waterfront. The Solomon Islands National Museum preserves archaeological, historical and cultural collections in the city. Central Market and the National Art Gallery express Honiara's continuing civic and commercial role, while Guadalcanal's more distant wartime landscapes remain outside the central destination's boundaries.",
+    highlights: ["Iron Bottom Sound waterfront", "Solomon Islands National Museum", "Honiara Central Market", "National Art Gallery"],
+    editorialProvenance: provenance([
+      { title: "Solomon Islands National Museum", url: "https://solomons.gov.sb/ministry-of-culture-and-tourism/national-museum/" },
+      { title: "Tourism Solomons — Honiara", url: "https://www.visitsolomons.com.sb/where-to-go/honiara/" },
+    ]),
+  },
+  {
+    id: "vu-port-vila",
+    summary: "Port Vila curves around Efate's southwestern harbour beside markets and Vanuatu's principal cultural institutions.",
+    description: "Port Vila occupies a sheltered harbour on Efate's southwestern coast, with civic and commercial districts following the waterfront. The Vanuatu Cultural Centre and National Museum document the archipelago's archaeology, customary knowledge, art and languages from the capital. Markets, public spaces and surviving colonial-era layers define the city's own history without turning wider Efate or other Vanuatu islands into Port Vila attractions.",
+    highlights: ["Port Vila harbour", "Vanuatu Cultural Centre", "National Museum of Vanuatu", "Port Vila market"],
+    editorialProvenance: provenance([
+      { title: "Vanuatu Tourism Office — Port Vila", url: "https://www.vanuatu.travel/en/provinces/shefa-province/port-vila" },
+      { title: "Vanuatu Cultural Centre", url: "https://vanuatuculturalcentre.vu/" },
+    ]),
+  },
+  {
+    id: "ws-apia",
+    summary: "Apia lines Upolu's northern coast with a harbour, markets and institutions central to Samoan history.",
+    description: "Apia occupies a natural harbour on Upolu's northern coast, where the waterfront meets the country's principal civic and commercial centre. The Museum of Samoa interprets archaeology, material culture and national history from within the capital. Fugalei Market and the Mulinuʻu peninsula's historic and ceremonial landscape give Apia a specific sense of place distinct from Upolu's villages, mountains and wider coastline.",
+    highlights: ["Apia harbour waterfront", "Museum of Samoa", "Fugalei Market", "Mulinuʻu historic peninsula"],
+    editorialProvenance: provenance([
+      { title: "Samoa Tourism Authority — Apia", url: "https://www.samoa.travel/discover/our-regions/upolu/apia/" },
+      { title: "Ministry of Education and Culture — Museum of Samoa", url: "https://www.mesc.gov.ws/museum-of-samoa/" },
+    ]),
+  },
+  {
+    id: "to-nuku-alofa",
+    summary: "Nukuʻalofa faces the Fangaʻuta Lagoon waterfront through markets, royal landmarks and Tongan civic history.",
+    description: "Nukuʻalofa occupies northern Tongatapu beside Fangaʻuta Lagoon, with its waterfront defining the capital's compact urban form. The Royal Palace and royal tombs record enduring dimensions of Tonga's constitutional and chiefly history. Talamahu Market and national cultural collections ground the city in everyday trade and Tongan heritage without extending its scope across Tongatapu or the kingdom's other island groups.",
+    highlights: ["Fangaʻuta Lagoon waterfront", "Nukuʻalofa Royal Palace", "Royal Tombs", "Talamahu Market"],
+    editorialProvenance: provenance([
+      { title: "Tonga Tourism — Nukuʻalofa", url: "https://tongatourism.travel/destinations/nukualofa/" },
+      { title: "Tonga Ministry of Tourism", url: "https://tourismtonga.gov.to/" },
+    ]),
+  },
+  {
+    id: "ck-rarotonga",
+    summary: "Rarotonga is a volcanic island encircled by lagoon, coastal settlements and Cook Islands cultural landmarks.",
+    description: "Rarotonga rises from a mountainous volcanic interior, with settlements and a reef-fringed lagoon circling its narrow coastal plain. Avarua, the principal settlement, contains the Cook Islands Library and Museum and historic civic and mission landmarks. Marae, cultural institutions and the island's interior tracks convey Polynesian histories within Rarotonga, without importing the landscapes or traditions of the outer Cook Islands.",
+    highlights: ["Volcanic mountain interior", "Rarotonga lagoon and reef", "Avarua historic centre", "Cook Islands Library and Museum"],
+    editorialProvenance: provenance([
+      { title: "Cook Islands Tourism — Rarotonga", url: "https://cookislands.travel/islands/rarotonga" },
+      { title: "Cook Islands Library and Museum Society", url: "https://cook-islands-library-museum.org/" },
+    ]),
+  },
+  {
+    id: "gu-guam",
+    summary: "Guam is a limestone and volcanic island whose historic places sustain layered CHamoru cultural heritage.",
+    description: "Guam is the largest island in Micronesia, with limestone plateaus, volcanic hills and a coastline of bays and reefs. Hagåtña's museums and historic sites interpret CHamoru life alongside Spanish and later American periods. The island-wide scope also includes ancient latte stone sites and War in the Pacific memorial landscapes, while keeping Guam's distinct settlements and their histories geographically clear.",
+    highlights: ["CHamoru cultural heritage", "Hagåtña historic sites", "Ancient latte stone places", "War in the Pacific memorial landscapes"],
+    editorialProvenance: provenance([
+      { title: "Guam Visitors Bureau — History and culture", url: "https://www.visitguam.com/about-guam/history-culture/" },
+      { title: "National Park Service — War in the Pacific National Historical Park", url: "https://www.nps.gov/wapa/index.htm" },
+    ]),
+  },
+  {
+    id: "mp-saipan",
+    summary: "Saipan's limestone island landscape holds Chamorro and Carolinian heritage alongside layered twentieth-century history.",
+    description: "Saipan is a raised limestone island in the Northern Mariana Islands, bordered by western lagoons and an eastern coastal escarpment. Chamorro and Carolinian histories remain present in cultural collections, community traditions and settlement landscapes. The Northern Mariana Islands Museum and American Memorial Park interpret island history and the Second World War without treating the rest of the archipelago as part of Saipan.",
+    highlights: ["Saipan limestone landscape", "Chamorro and Carolinian heritage", "Northern Mariana Islands Museum", "American Memorial Park"],
+    editorialProvenance: provenance([
+      { title: "Marianas Visitors Authority — Saipan", url: "https://www.mymarianas.com/saipan/" },
+      { title: "National Park Service — American Memorial Park", url: "https://www.nps.gov/amme/index.htm" },
+    ]),
+  },
 ] as const satisfies readonly ExploreDestinationEditorial[];

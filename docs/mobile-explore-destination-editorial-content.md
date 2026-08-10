@@ -575,6 +575,31 @@ South America remains complete at **15 of 15**; Caribbean **10 of 10**; Central 
 
 This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no canonical IDs, names, countries, country codes, airport data, aliases, image identities or image provenance.
 
+### Pacific Final Batch — Islands + Territories
+
+The Pacific final batch, verified on 2026-08-10, considered and implemented all ten canonical candidates, with no deferrals:
+
+- `fj-nadi` — Nadi, Fiji
+- `pf-papeete` — Papeete, French Polynesia
+- `pg-port-moresby` — Port Moresby, Papua New Guinea
+- `sb-honiara` — Honiara, Solomon Islands
+- `vu-port-vila` — Port Vila, Vanuatu
+- `ws-apia` — Apia, Samoa
+- `to-nuku-alofa` — Nukuʻalofa, Tonga
+- `ck-rarotonga` — Rarotonga, Cook Islands
+- `gu-guam` — Guam, Guam
+- `mp-saipan` — Saipan, Northern Mariana Islands
+
+The source review used exact, titled HTTPS references from official tourism authorities, national and municipal government bodies, official museums and cultural centres, and the United States National Park Service. Each destination has at least two distinct authoritative references supporting durable destination geography, heritage, institutions, markets or historic landscapes. External HTTPS requests in the working environment returned authorization failures; those failures were treated as an environment limitation rather than evidence of weak sources, and no provenance URL was fabricated.
+
+Scope safeguards distinguish city destinations from their surrounding islands and countries. Nadi remains within western Viti Levu and does not absorb Denarau, the Coral Coast or offshore island groups. Papeete remains the Tahiti harbour city, not Tahiti or French Polynesia generally, and unchanged PPT data is not used to place the Faaʻa airport in Papeete. Port Moresby is limited to its Gulf of Papua, Motu-Koitabu and Waigani contexts; Honiara's city institutions remain distinct from wider Guadalcanal battlefield landscapes; and Port Vila does not stand in for Efate or Vanuatu nationally. Apia remains a north-coast Upolu city, and unchanged APW data is not used to place Faleolo airport inside it. Nukuʻalofa retains its exact ʻokina and is not expanded across Tongatapu; unchanged TBU data is not used to place Fuaʻamotu airport in the central city.
+
+Rarotonga is correctly treated as an island destination, with Avarua identified only as its principal settlement and the outer Cook Islands excluded. Guam is also treated at island scope rather than as one city: Hagåtña appears as a settlement within Guam, while the canonical destination and country both remain exactly `Guam`. Saipan remains an island and municipality within the Northern Mariana Islands, not shorthand for the entire archipelago. CHamoru, Chamorro, Carolinian, Motu-Koitabu, iTaukei and other local or Indigenous naming appears only in bounded, authoritatively supported contexts; canonical diacritics, territorial labels and local spellings are preserved.
+
+All copy excludes current cyclone or typhoon recovery, earthquakes, tsunami or volcanic status, reconstruction, schedules, airport or ferry operations, entry rules, resort openings, beach or lagoon conditions, safety rankings, political conditions, institutional opening status and temporary events. The records add no related destinations and make no UI, image, gallery, map, search, flight, hotel or booking changes.
+
+Repository-derived Oceania/Pacific coverage moves from **8 of 18** to **18 of 18**, with no Pacific deferrals. Global editorial coverage moves from **224 of 235** to **234 of 235**, leaving exactly one canonical destination without editorial content: `hn-san-pedro-sula`. Central America remains **5 of 6**, with San Pedro Sula canonical and wholly non-editorial. South America remains **15 of 15**; Caribbean **10 of 10**; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic prefix and every prior regional rollout remain unchanged. Featured membership and exact ordering remain independently maintained and unchanged.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
