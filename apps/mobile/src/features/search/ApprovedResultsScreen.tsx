@@ -3,10 +3,14 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -17,6 +21,7 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import {
   travelApi,
+  TravelApiError,
   type FlightResult,
   type HotelResult,
 } from "../../api/travelApi";
@@ -42,6 +47,12 @@ import {
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
+import {
+  buildFlightPriceAlertPayload,
+  flightAlertPresentation,
+  parseTargetPrice,
+} from "../flow/flightPriceAlertModel";
+import type { SearchPlan } from "../flow/travelSearchModel";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -259,7 +270,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             />
           ),
         )}
-        {status === "ready" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
+        {status === "ready" && availability.priceAlerts ? (
+          product === "flight" && plan.plan ? (
+            <FlightPriceAlert plan={plan.plan} results={results as FlightResult[]} />
+          ) : (
+            <HotelPriceAlerts />
+          )
+        ) : null}
       </ScrollView>
       <BottomNav />
     </SafeAreaView>
@@ -467,7 +484,7 @@ function Loading({ product }: { product: Product }) {
     </View>
   );
 }
-function PriceAlert({ product }: { product: Product }) {
+function AlertShell({ children }: { children: React.ReactNode }) {
   return (
     <View style={s0.alert}>
       <View style={s0.alertIcon}>
@@ -475,17 +492,157 @@ function PriceAlert({ product }: { product: Product }) {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s0.foundTitle}>Price alerts</Text>
-        <Text style={s0.sub}>
-          Track this {product === "flight" ? "route" : "search"} and get
-          notified when prices drop.
-        </Text>
+        {children}
       </View>
+    </View>
+  );
+}
+function HotelPriceAlerts() {
+  return (
+    <AlertShell>
+      <Text style={s0.sub}>
+        Hotel alert creation is not currently supported. Manage your existing
+        price alerts instead.
+      </Text>
       <Button
-        label="Track prices"
+        label="View price alerts"
         outline
         onPress={() => router.push("/price-alerts")}
       />
-    </View>
+    </AlertShell>
+  );
+}
+function FlightPriceAlert({ plan, results }: { plan: SearchPlan; results: FlightResult[] }) {
+  const presentation = flightAlertPresentation("flight", true, results);
+  const [selectedCurrency, setSelectedCurrency] = useState("");
+  const [open, setOpen] = useState(false);
+  const [targetDraft, setTargetDraft] = useState("");
+  const [targetError, setTargetError] = useState("");
+  const [creating, setCreating] = useState(false);
+  const currency = presentation.currencies.includes(selectedCurrency)
+    ? selectedCurrency
+    : presentation.currencies.length === 1
+      ? presentation.currencies[0]
+      : "";
+  const createAlert = async () => {
+    if (creating || !currency || !presentation.enabled) return;
+    const parsed = parseTargetPrice(targetDraft);
+    if (parsed.error || parsed.value === undefined) {
+      setTargetError(parsed.error || "Enter a target price.");
+      return;
+    }
+    setCreating(true);
+    setTargetError("");
+    try {
+      await travelApi.createPriceAlert(
+        buildFlightPriceAlertPayload(plan, parsed.value, currency),
+      );
+      setOpen(false);
+      setTargetDraft("");
+      Alert.alert(
+        "Price alert created",
+        "We’ll track this flight search against your target price.",
+        [
+          { text: "View price alerts", onPress: () => router.push("/price-alerts") },
+          { text: "Stay here" },
+        ],
+      );
+    } catch (error) {
+      if (error instanceof TravelApiError && error.status === 401) {
+        setOpen(false);
+        Alert.alert("Sign in required", "Sign in to create a price alert.", [
+          { text: "Sign in", onPress: () => router.push("/email-auth") },
+          { text: "Cancel" },
+        ]);
+      } else if (
+        error instanceof TravelApiError &&
+        error.status === 409 &&
+        error.details?.duplicate === true
+      ) {
+        setTargetError("This alert already exists. Open Price alerts to manage it.");
+      } else {
+        setTargetError(
+          error instanceof TravelApiError
+            ? error.message
+            : "Unable to create price alert. Try again.",
+        );
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
+  return (
+    <>
+      <AlertShell>
+        <Text style={s0.sub}>
+          Get notified when this flight search reaches your target price.
+        </Text>
+        {presentation.currencies.length > 1 ? (
+          <View accessibilityLabel="Choose alert currency" style={s0.currencyRow}>
+            {presentation.currencies.map((item) => (
+              <Pressable
+                key={item}
+                accessibilityRole="button"
+                accessibilityState={{ selected: currency === item }}
+                onPress={() => setSelectedCurrency(item)}
+                style={[s0.currency, currency === item && s0.currencySelected]}
+              >
+                <Text>{item}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+        <Button
+          label="Create price alert"
+          outline
+          disabled={!presentation.enabled || !currency}
+          onPress={() => {
+            setTargetError("");
+            setOpen(true);
+          }}
+        />
+        {!presentation.enabled ? (
+          <Text accessibilityRole="alert" style={s0.sub}>
+            {presentation.liveResults.length
+              ? "A supported result currency was not available for this search."
+              : "Price alerts require a valid live flight result."}
+          </Text>
+        ) : null}
+      </AlertShell>
+      <Modal
+        visible={open}
+        transparent
+        animationType="slide"
+        onRequestClose={() => !creating && setOpen(false)}
+        accessibilityViewIsModal
+      >
+        <KeyboardAvoidingView
+          style={s0.modalBackdrop}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <View style={s0.sheet} accessibilityLabel="Create flight price alert">
+            <Text accessibilityRole="header" style={s0.foundTitle}>Create price alert</Text>
+            <Text style={s0.route}>{plan.summary}</Text>
+            <Text style={s0.sub}>
+              {String(plan.payload.tripType)} · {String(plan.payload.travelers)} travelers · {String(plan.payload.cabinClass)} · {currency}
+            </Text>
+            <Text style={s0.inputLabel}>Target price ({currency})</Text>
+            <TextInput
+              autoFocus
+              accessibilityLabel={`Target price in ${currency}`}
+              value={targetDraft}
+              onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }}
+              keyboardType="decimal-pad"
+              editable={!creating}
+              style={s0.input}
+            />
+            {targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s0.error}>{targetError}</Text> : null}
+            <Button label={creating ? "Creating…" : "Create price alert"} disabled={creating} onPress={() => void createAlert()} />
+            <Button label="Cancel" outline disabled={creating} onPress={() => setOpen(false)} />
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    </>
   );
 }
 export function BottomNav() {
@@ -660,6 +817,14 @@ const s0 = StyleSheet.create({
     gap: 13,
     backgroundColor: "#FAFCFF",
   },
+  currencyRow: { flexDirection: "row", gap: 8, marginTop: 8 },
+  currency: { borderWidth: 1, borderColor: ui.border, borderRadius: 8, padding: 8 },
+  currencySelected: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
+  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(7,21,47,.45)" },
+  sheet: { backgroundColor: "white", padding: 24, paddingBottom: 36, gap: 12, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  inputLabel: { fontSize: 13, fontWeight: "700", color: ui.navy },
+  input: { height: 48, borderWidth: 1, borderColor: ui.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 16 },
+  error: { color: "#B42318", fontSize: 12 },
   alertIcon: {
     width: 46,
     height: 46,
