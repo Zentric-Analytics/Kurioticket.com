@@ -4,6 +4,11 @@ import {
   Image,
   Linking,
   Pressable,
+  Share,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  TextInput,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,11 +20,14 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
-import type { FlightResult, HotelResult } from "../../api/travelApi";
+import { travelApi, TravelApiError, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
+import { useSavedFlights } from "../../storage/useSavedFlights";
+import { buildSearchPlan } from "../flow/travelSearchModel";
+import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "../flow/flightPriceAlertModel";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -50,7 +58,7 @@ export function ApprovedDetailScreen({
   if (!value)
     return (
       <SafeAreaView style={d.safe}>
-        <TopBar detail />
+        <TopBar />
         <View style={d.missing}>
           <Text style={d.h2}>This offer is no longer available</Text>
           <Text style={d.meta}>Return to results and refresh the search.</Text>
@@ -66,6 +74,24 @@ export function ApprovedDetailScreen({
 }
 function FlightDetail({ result, params }: { result: FlightResult; params: Record<string, string | string[]> }) {
   const inset = useSafeAreaInsets();
+  const { savedIds, toggle } = useSavedFlights();
+  const saved = savedIds.has(result.id);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [target, setTarget] = useState(String(Math.round(result.price)));
+  const [alertError, setAlertError] = useState("");
+  const [creating, setCreating] = useState(false);
+  const plan = buildSearchPlan("flight", params).plan;
+  const alertState = flightAlertPresentation("flight", Boolean(plan), [result]);
+  const currency = alertState.currencies[0] || "";
+  const share = () => Share.share({ message: `${result.airlineName} flight ${result.originAirport} to ${result.destinationAirport}, departing ${result.departureTime}. ${money(result.currency, result.price)}.` });
+  const createAlert = async () => {
+    if (!plan || !currency || creating) return;
+    const parsed = parseTargetPrice(target); if (parsed.error || parsed.value === undefined) { setAlertError(parsed.error || "Enter a target price."); return; }
+    setCreating(true); setAlertError("");
+    try { await travelApi.createPriceAlert(buildFlightPriceAlertPayload(plan, parsed.value, currency)); setAlertOpen(false); Alert.alert("Price alert created", "We’ll track this flight search against your target price."); }
+    catch (error) { if (error instanceof TravelApiError && error.status === 401) { setAlertOpen(false); Alert.alert("Sign in required", "Sign in to create a price alert.", [{ text: "Sign in", onPress: () => router.push("/email-auth") }, { text: "Cancel" }]); } else if (error instanceof TravelApiError && error.status === 409 && error.details?.duplicate === true) setAlertError("This alert already exists. Open Price alerts to manage it."); else setAlertError(error instanceof TravelApiError ? error.message : "Unable to create price alert. Try again."); }
+    finally { setCreating(false); }
+  };
   const legs = result.legs?.length
     ? result.legs
     : [
@@ -101,7 +127,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
   };
   return (
     <SafeAreaView style={d.safe} edges={["top"]}>
-      <TopBar detail />
+      <TopBar detail saved={saved} onFavorite={() => toggle(result.id)} onShare={() => void share()} />
       <View style={d.routeRow}>
         <View style={d.routeCopy}>
           <Text style={d.route}>
@@ -225,19 +251,20 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
           <Text style={d.price}>{money(result.currency, result.price)}</Text>
           <Text style={d.meta}>Round trip</Text>
         </View>
-        <View style={d.stickyAction}>
-          <FlowIcon name="heart" color={ui.muted} />
-          <Text style={d.meta}>Save</Text>
-        </View>
-        <View style={d.stickyAction}>
+        <Pressable accessibilityRole="button" accessibilityState={{ selected: saved }} accessibilityLabel={saved ? "Remove saved flight" : "Save flight"} onPress={() => toggle(result.id)} style={({ pressed }) => [d.stickyAction, pressed && d.pressed]}>
+          <FlowIcon name="heart" fill={saved ? ui.blue : "none"} color={saved ? ui.blue : ui.muted} />
+          <Text style={d.meta}>{saved ? "Saved" : "Save"}</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Create price alert" accessibilityState={{ disabled: !alertState.enabled }} disabled={!alertState.enabled} onPress={() => setAlertOpen(true)} style={({ pressed }) => [d.stickyAction, !alertState.enabled && d.disabled, pressed && d.pressed]}>
           <FlowIcon name="bell" color={ui.muted} />
           <Text style={d.meta}>Price alert</Text>
-        </View>
+        </Pressable>
         <View>
           <Button label={`Continue to ${provider}`} onPress={() => void go()} />
           <Text style={d.redirect}>You’ll be redirected to {provider}’s site</Text>
         </View>
       </View>
+      <Modal visible={alertOpen} transparent animationType="slide" onRequestClose={() => !creating && setAlertOpen(false)} accessibilityViewIsModal><KeyboardAvoidingView style={d.modalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}><View style={d.sheet}><Text accessibilityRole="header" style={d.h2}>Create price alert</Text><Text style={d.meta}>{result.originAirport} to {result.destinationAirport} · {currency}</Text><TextInput accessibilityLabel={`Target price in ${currency}`} keyboardType="decimal-pad" value={target} onChangeText={(value) => { setTarget(value); setAlertError(""); }} editable={!creating} style={d.input} />{alertError ? <Text accessibilityRole="alert" style={d.error}>{alertError}</Text> : null}<Button label={creating ? "Creating…" : "Create price alert"} disabled={creating} onPress={() => void createAlert()} /><Button label="Cancel" outline disabled={creating} onPress={() => setAlertOpen(false)} /></View></KeyboardAvoidingView></Modal>
     </SafeAreaView>
   );
 }
@@ -606,6 +633,12 @@ const d = StyleSheet.create({
   },
   redirect: { fontSize: 9, color: ui.muted, textAlign: "center", marginTop: 4 },
   stickyAction: { alignItems: "center", justifyContent: "center", gap: 3 },
+  pressed: { opacity: 0.55 },
+  disabled: { opacity: 0.4 },
+  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(7,21,47,.45)" },
+  sheet: { backgroundColor: "white", padding: 24, paddingBottom: 36, gap: 12, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  input: { height: 48, borderWidth: 1, borderColor: ui.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 16 },
+  error: { color: "#B42318", fontSize: 12 },
   gallery: { height: 241, flexDirection: "row", backgroundColor: "#E7EBF2" },
   hero: { width: "77%", height: "100%", backgroundColor: "#E7EBF2" },
   thumbs: { width: "23%", gap: 3, paddingLeft: 3 },
