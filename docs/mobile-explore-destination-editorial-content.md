@@ -8,11 +8,15 @@ The shared Explore destination catalogue is derived from the airport catalogue a
 
 ## Regional module architecture
 
-The editorial data is split under `src/shared/destinations/editorial/` to keep regional rollout reviews maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts`, `asia.ts` and `northAmerica.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in that explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains a compatibility facade containing the single global validation boundary.
+The editorial data is split under `src/shared/destinations/editorial/` to keep regional ownership maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts`, `asia.ts`, `northAmerica.ts`, `centralAmerica.ts`, `caribbean.ts`, `southAmerica.ts` and `oceania.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains the compatibility facade containing the single global validation boundary.
 
-The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Europe remains complete at 52/52, Africa at 54/54 and Asia at 64/64; after North America Batch 2, global coverage is 188/235 with 47 destinations left. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
+## Current completion state
 
-## Current rollout and Featured independence
+**GLOBAL EDITORIAL COVERAGE: 235/235. REMAINING: 0.** Regional coverage is Central America 6/6, North America 16/16, Caribbean 10/10, South America 15/15, Europe 52/52, Africa 54/54, Asia 64/64 and Oceania/Pacific 18/18. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
+
+The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Its semantic-preservation guard intentionally remains scoped to that historical dataset rather than being regenerated against the completed 235-record aggregate.
+
+## Historical rollout record and Featured independence
 
 ### North America Batch 1 — United States
 
@@ -46,9 +50,9 @@ Repository-derived North American coverage moves from **11 of 16** canonical des
 
 The historical 175-record semantic payload and all eight North America Batch 1 records remain unchanged, while Batch 2 appends after Batch 1. Featured membership and its exact order remain independently maintained. This batch includes no UI, image, gallery, map, search, flight or hotel, booking, related-destination or canonical-data work.
 
-Editorial scope is expanding toward all canonical Explore destinations. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
+Editorial scope expanded to all canonical Explore destinations during the rollout. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
 
-The current incremental rollout still contains the original 25 records for these Featured destinations, with their copy and provenance unchanged:
+The completed rollout retains the original 25 records for these Featured destinations, with their copy and provenance unchanged:
 
 1. `fr-paris`
 2. `gb-london`
@@ -623,7 +627,7 @@ Repository-derived coverage changes as follows:
 
 This completion adds no UI, image, gallery, map, search, flight, hotel, booking, related-destination, Featured or canonical-catalogue changes. The historical 175-record semantic guard, every prior editorial payload and prior-record relative order, deterministic regional aggregation, and independently maintained Featured membership and ordering remain preserved.
 
-This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
+This historical list records the rollout sequence, not an editorial allowlist or required editorial order. The compatibility facade continues to support missing-editorial fallback behavior for future canonical catalogue changes, so a canonical destination remains valid, searchable and safe to open before any future editorial enrichment is added.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
 
