@@ -47,9 +47,9 @@ export function Logo() {
     />
   );
 }
-export function TopBar({ detail = false, saved = false, onFavorite, onShare }: { detail?: boolean; saved?: boolean; onFavorite?: () => void; onShare?: () => void }) {
+export function TopBar({ detail = false, compact = false, title, saved = false, onFavorite, onShare }: { detail?: boolean; compact?: boolean; title?: string; saved?: boolean; onFavorite?: () => void; onShare?: () => void }) {
   return (
-    <View style={s.top}>
+    <View style={[s.top, compact && s.topCompact]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Go back"
@@ -58,8 +58,13 @@ export function TopBar({ detail = false, saved = false, onFavorite, onShare }: {
       >
         <FlowIcon name="back" size={25} />
       </Pressable>
-      <View pointerEvents="none" style={s.logoCenter}>
-        <Logo />
+      <View pointerEvents="none" style={[s.logoCenter, compact && s.logoCenterCompact]}>
+        {title ? (
+          <View style={s.topIdentity}>
+            <Text numberOfLines={1} style={s.topTitle}>{title}</Text>
+            <Text style={s.topBrand}>Kurioticket</Text>
+          </View>
+        ) : <Logo />}
       </View>
       <View style={s.topActions}>
         {detail ? (
@@ -259,6 +264,7 @@ export const s = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "white",
   },
+  topCompact: { height: 62 },
   logoCenter: {
     position: "absolute",
     top: 24,
@@ -266,6 +272,10 @@ export const s = StyleSheet.create({
     right: 0,
     alignItems: "center",
   },
+  logoCenterCompact: { top: 8 },
+  topIdentity: { height: 46, alignItems: "center", justifyContent: "center" },
+  topTitle: { maxWidth: 190, fontSize: 16, fontWeight: "900", color: ui.navy },
+  topBrand: { fontSize: 10, fontWeight: "700", color: ui.muted, marginTop: 1 },
   hit: {
     width: 44,
     height: 44,
