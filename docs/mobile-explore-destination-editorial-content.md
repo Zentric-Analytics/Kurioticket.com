@@ -110,7 +110,7 @@ The fourth reviewed Europe batch, verified on 2026-08-10, adds this western Euro
 
 Four German cities form the geographic core, joined by nearby western and southern European cities with strong official tourism, UNESCO, museum or cultural-institution coverage. The grouping leaves the two Cypriot, two Russian and one Ukrainian destinations together for the final Europe batch rather than switching regions.
 
-After Batch 4, these five European canonical destinations remain without editorial content:
+After Batch 4, these five European canonical destinations remained without editorial content:
 
 1. `ua-kyiv` — Kyiv
 2. `cy-larnaca` — Larnaca
@@ -118,11 +118,19 @@ After Batch 4, these five European canonical destinations remain without editori
 4. `cy-paphos` — Paphos
 5. `ru-st-petersburg` — St. Petersburg
 
-This brings the cumulative rollout to 65 editorial destinations: the original 25 and four reviewed Europe batches of 10. The original 25 and Batches 1–3 remain intact.
+The final Europe Batch 5, verified on 2026-08-10, adds all five of those destinations:
+
+1. `ua-kyiv` — Kyiv
+2. `cy-larnaca` — Larnaca
+3. `ru-moscow` — Moscow
+4. `cy-paphos` — Paphos
+5. `ru-st-petersburg` — St. Petersburg
+
+Batch 5 brings European coverage to 52 of 52 canonical European destinations and confirms that European editorial coverage is complete. It brings the cumulative global rollout to 70 editorial destinations: the original 25, four reviewed Europe batches of 10 and the final Europe batch of five. The original 25 and Europe Batches 1–4 remain intact, while the global editorial rollout remains incomplete for regions outside Europe.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
-These editorial batches do not change Featured membership or order and include no image or UI work. Batch 4 likewise includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes. Related destinations remain deferred until a separate recommendation policy is approved.
+These editorial batches do not change Featured membership or order and include no image or UI work. Batch 5 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
 
 ## Content fields
 
