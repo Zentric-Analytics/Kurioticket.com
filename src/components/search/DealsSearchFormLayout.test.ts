@@ -24,130 +24,152 @@ const resultsCar = form.slice(
   form.indexOf("data-deals-results-car"),
   form.indexOf("data-deals-results-travellers"),
 );
-const landingActions = form.slice(
-  form.indexOf("data-deals-landing-lower-controls"),
-  form.indexOf(
-    "guidedPreviewPanel",
-    form.indexOf("data-deals-landing-lower-controls"),
-  ),
+const landingPrimaryControls = form.slice(
+  form.indexOf("const landingPrimaryControls"),
+  form.indexOf("return (", form.indexOf("const landingPrimaryControls")),
 );
-const landingLowerControls = form.slice(
-  form.indexOf("data-deals-landing-lower-controls"),
-  form.indexOf("data-deals-landing-action-row"),
-);
-const landingActionRow = form.slice(
-  form.indexOf("data-deals-landing-action-row"),
+const landingStayOptions = form.slice(
+  form.indexOf("data-deals-landing-stay-options"),
   form.indexOf("data-deals-landing-stay-dates"),
 );
 const landingStayDates = form.slice(
   form.indexOf("data-deals-landing-stay-dates"),
   form.indexOf(") : null}", form.indexOf("data-deals-landing-stay-dates")),
 );
+const flightLandingRow = form.slice(
+  form.indexOf('data-deals-field-content="flight"'),
+  form.indexOf("data-deals-results-stay"),
+);
+const stayLandingRow = form.slice(
+  form.indexOf('data-deals-field-content="stay"'),
+  form.indexOf("data-deals-results-car"),
+);
 
-test("LANDING CONTRACT keeps package selection above lower shared controls", () => {
+test("LANDING CONTRACT integrates shared controls into the primary row", () => {
   assert.match(form, /data-deals-layout=\{variant\}/);
   assert.match(form, /data-deals-package-selector/);
-  assert.match(form, /data-deals-landing-lower-controls/);
-  assert.match(form, /data-deals-landing-travellers/);
-  assert.match(form, /data-deals-landing-cabin/);
-  assert.doesNotMatch(form, /data-deals-upper-controls|data-deals-upper-cabin/);
-  assert.match(form, /connectedShell/);
-  assert.match(form, /variant === "landing"[\s\S]*data-deals-car-recovery/);
-  assert.match(form, /variant === "landing"[\s\S]*data-deals-search-actions/);
-  assert.ok(
-    form.indexOf("data-deals-landing-lower-controls") >
-      form.indexOf("data-deals-results-car"),
-  );
-  assert.match(landingLowerControls, /travelersLauncherRef/);
-  assert.match(landingLowerControls, /travelerSummary/);
-  assert.match(landingLowerControls, /search\.flightCabinClass/);
-  assert.match(landingLowerControls, /\{included\.flight \? \(/);
-  assert.doesNotMatch(landingLowerControls, /\{searchDealsButton\}/);
-  assert.doesNotMatch(landingLowerControls, /grid-cols-\[[^\]]*_auto/);
-  assert.doesNotMatch(
-    landingLowerControls,
-    /data-deals-landing-cabin[\s\S]*else/,
-  );
+  assert.match(form, /data-deals-landing-main-search-row/);
+  assert.match(landingPrimaryControls, /data-deals-landing-travellers/);
+  assert.match(landingPrimaryControls, /travelersLauncherRef/);
+  assert.match(landingPrimaryControls, /travelerSummary/);
+  assert.match(landingPrimaryControls, /data-deals-landing-cabin/);
+  assert.match(landingPrimaryControls, /search\.flightCabinClass/);
+  assert.match(landingPrimaryControls, /\{searchDealsButton\}/);
+  assert.doesNotMatch(form, /data-deals-landing-lower-controls/);
+  assert.doesNotMatch(form, /data-deals-landing-action-row/);
   assert.match(form, /guidedPreviewPanel/);
   assert.doesNotMatch(page, /variant="results"/);
   assert.match(page, /<DealsSearchForm/);
 });
 
-test("landing action row follows lower controls and keeps the CTA above Stay dates", () => {
-  const lowerControlsPosition = form.indexOf(
-    "data-deals-landing-lower-controls",
+test("Flight landing row keeps route, dates, shared controls, and CTA in order", () => {
+  const positions = [
+    "data-deals-flight-destination",
+    "flightDatesLauncherRef",
+    "landingPrimaryControls",
+  ].map((value) => flightLandingRow.indexOf(value));
+  assert.ok(positions.every((position) => position >= 0));
+  assert.deepEqual(
+    [...positions].sort((a, b) => a - b),
+    positions,
   );
-  const actionRowPosition = form.indexOf("data-deals-landing-action-row");
-  const stayDatesPosition = form.indexOf("data-deals-landing-stay-dates");
-
-  assert.ok(lowerControlsPosition < actionRowPosition);
-  assert.ok(actionRowPosition < stayDatesPosition);
-  assert.match(landingActionRow, /supportsLandingStayDateOverride \? \(/);
-  assert.match(landingActionRow, /data-deals-change-stay-dates/);
-  assert.match(landingActionRow, /\{searchDealsButton\}/);
-  assert.doesNotMatch(landingActionRow, /data-deals-landing-stay-dates/);
-  assert.match(landingActionRow, /sm:justify-between/);
-  assert.match(landingActionRow, /sm:justify-end/);
+  assert.match(
+    flightLandingRow,
+    /min-\[1050px\]:grid-cols-\[minmax\(0,3fr\)[\s\S]*minmax\(156px,auto\)\]/,
+  );
+  assert.match(
+    landingPrimaryControls,
+    /data-deals-landing-travellers[\s\S]*data-deals-landing-cabin[\s\S]*\{searchDealsButton\}/,
+  );
 });
 
-test("landing package modes derive one combination-aware field matrix", () => {
-  assert.match(
-    form,
-    /const supportsLandingStayDateOverride =\s*isLandingVariant && included\.hotel && included\.flight/,
+test("Hotel and Car landing row has no empty Flight or Cabin tracks", () => {
+  const positions = [
+    "data-deals-hotel-destination",
+    "hotelDatesLauncherRef",
+    "landingPrimaryControls",
+  ].map((value) => stayLandingRow.indexOf(value));
+
+  assert.match(stayLandingRow, /data-deals-landing-main-search-row/);
+  assert.ok(positions.every((position) => position >= 0));
+  assert.deepEqual(
+    [...positions].sort((a, b) => a - b),
+    positions,
   );
-  assert.match(beforeResultsCar, /included\.flight && \(/);
-  assert.match(form, /data-deals-hotel-primary=\{!included\.flight \? "true"/);
-  assert.match(form, /included\.car && variant === "results"/);
-  assert.match(landingActions, /\{included\.flight \? \(/);
-  assert.match(landingActions, /data-deals-landing-cabin/);
-  assert.match(landingActions, /travelersControlLabel/);
   assert.match(
-    form,
-    /isLandingVariant && !included\.hotel[\s\S]*deals\.travellersRow[\s\S]*deals\.travellersRooms/,
+    stayLandingRow,
+    /!included\.flight[\s\S]*landingPrimaryControls/,
   );
-  assert.match(form, /if \(!included\.hotel\) return people/);
+  assert.match(
+    stayLandingRow,
+    /lg:grid-cols-\[minmax\(0,2fr\)_minmax\(150px,1fr\)_minmax\(180px,1fr\)_minmax\(156px,auto\)\]/,
+  );
+  assert.doesNotMatch(stayLandingRow, /data-deals-flight-destination/);
+  assert.doesNotMatch(stayLandingRow, /data-deals-landing-cabin/);
+  assert.doesNotMatch(
+    stayLandingRow,
+    /min-\[1050px\]:grid-cols-\[minmax\(0,2fr\)/,
+  );
 });
 
-test("landing lower controls use transparent integrated segments", () => {
+test("landing controls use transparent, collision-safe integrated segments", () => {
   assert.match(form, /const landingActionSegment =\s*[\s\S]*bg-transparent/);
   assert.match(form, /const landingActionControl =\s*[\s\S]*border-0/);
   assert.match(
-    landingLowerControls,
+    landingPrimaryControls,
     /data-deals-landing-travellers[\s\S]*landingActionSegment/,
   );
   assert.match(
-    landingLowerControls,
-    /data-deals-landing-cabin[\s\S]*sm:border-s sm:border-slate-200/,
+    landingPrimaryControls,
+    /data-deals-landing-cabin[\s\S]*landingActionSegment/,
   );
   assert.match(
-    landingLowerControls,
+    landingPrimaryControls,
     /id="deals-flight-cabin"[\s\S]*landingActionControl/,
   );
-  assert.doesNotMatch(
-    landingLowerControls,
-    /data-deals-landing-travellers[\s\S]*className=\{`\$\{field\}/,
+  assert.match(landingPrimaryControls, /min-\[1050px\]:border-s/);
+  assert.match(landingPrimaryControls, /min-w-0/);
+  assert.match(
+    form,
+    /const landingTravellersDesktopClasses = included\.flight[\s\S]*lg:min-h-\[54px\] lg:border-b-0 lg:border-s/,
   );
-  assert.doesNotMatch(
-    landingLowerControls,
-    /id="deals-flight-cabin"[\s\S]*className=\{`\$\{field\}/,
+  assert.match(
+    form,
+    /const landingSearchDesktopClasses = included\.flight[\s\S]*lg:h-full lg:min-w-\[156px\] lg:items-center lg:border-s lg:border-slate-200 lg:px-2/,
   );
-  assert.match(landingLowerControls, /border-b/);
-  assert.match(landingLowerControls, /border-slate-200/);
+  assert.match(
+    landingPrimaryControls,
+    /landingTravellersDesktopClasses[\s\S]*\{searchDealsButton\}/,
+  );
+});
+
+test("Stay options follow the main row and never contain the CTA", () => {
+  assert.ok(
+    form.indexOf("data-deals-landing-main-search-row") <
+      form.indexOf("data-deals-change-stay-dates"),
+  );
+  assert.ok(
+    form.indexOf("data-deals-change-stay-dates") <
+      form.indexOf("data-deals-landing-stay-dates"),
+  );
+  assert.match(landingStayOptions, /data-deals-change-stay-dates/);
+  assert.doesNotMatch(landingStayOptions, /searchDealsButton/);
 });
 
 test("landing Stay-date override reuses linked Hotel calendar state", () => {
-  assert.match(landingActions, /data-deals-change-stay-dates/);
-  assert.match(landingActions, /type="checkbox"/);
-  assert.match(landingActions, /checked=\{!search\.stayDatesLinked\}/);
+  assert.match(landingStayOptions, /type="checkbox"/);
+  assert.match(landingStayOptions, /checked=\{!search\.stayDatesLinked\}/);
   assert.match(
-    landingActions,
+    landingStayOptions,
     /customizeInheritedField\(current, "stayDates", \{/,
   );
-  assert.match(landingActions, /relinkInheritedField\(current, "stayDates"\)/);
-  assert.match(landingActions, /data-deals-landing-stay-dates/);
-  assert.match(landingActions, /hotelDatesLauncherRef/);
-  assert.match(landingActions, /hotelDatesOpen \|\| mobileHotelDatesOpen/);
-  assert.match(landingActions, /hotelDatesSummary/);
+  assert.match(
+    landingStayOptions,
+    /relinkInheritedField\(current, "stayDates"\)/,
+  );
+  assert.match(landingStayDates, /hotelDatesLauncherRef/);
+  assert.match(landingStayDates, /hotelDatesOpen \|\| mobileHotelDatesOpen/);
+  assert.match(landingStayDates, /hotelDatesSummary/);
   assert.doesNotMatch(form, /useState\([^\n]*changeStayDates/i);
 });
 

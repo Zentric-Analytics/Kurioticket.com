@@ -16,11 +16,42 @@ export const totalTravelers = (form: Pick<FlightForm, "adults" | "children" | "i
 const count = (value: string) => /^\d+$/.test(value) ? Number(value) : undefined;
 export const normalizeCabin = (value: string): FlightCabin | undefined => FLIGHT_CABINS.find((cabin) => cabin.toLowerCase().replace(/\s+/g, "-") === value.trim().toLowerCase().replace(/\s+/g, "-"));
 
+/** Canonical route parameters understood by the existing flight search form. */
+export function flightEditSearchParams(params: Record<string, RouteValue>) {
+  const tripType = firstFlightParam(params.tripType);
+  const from = firstFlightParam(params.from) || firstFlightParam(params.origin);
+  const to = firstFlightParam(params.to) || firstFlightParam(params.destination);
+  const departureDate = firstFlightParam(params.departureDate);
+  const returnDate = firstFlightParam(params.returnDate);
+  const adults = firstFlightParam(params.adults);
+  const children = firstFlightParam(params.children);
+  const infants = firstFlightParam(params.infants);
+  const travelers = firstFlightParam(params.travelers);
+  const cabin = firstFlightParam(params.cabin) || firstFlightParam(params.cabinClass);
+  return Object.fromEntries(Object.entries({
+    tripType,
+    from,
+    to,
+    departureDate,
+    ...(tripType !== "one-way" ? { returnDate } : {}),
+    adults,
+    children,
+    infants,
+    travelers,
+    cabin,
+  }).filter(([, value]) => value !== ""));
+}
+
 export function defaultFlightForm(): FlightForm {
   return { tripType: "round-trip", departureDate: "", returnDate: "", adults: 0, children: 0, infants: 0 };
 }
 
 export function initializeFlightForm(params: Record<string, RouteValue>, today = new Date(), initializeHomepageDates = false): { form: FlightForm; notice?: string } {
+  params = {
+    ...params,
+    from: firstFlightParam(params.from) || firstFlightParam(params.origin),
+    cabin: firstFlightParam(params.cabin) || firstFlightParam(params.cabinClass),
+  };
   const defaults = defaultFlightForm(); const notices: string[] = [];
   const explicitToText = firstFlightParam(params.to); const destinationText = firstFlightParam(params.destination);
   const explicitTo = airportByCode(explicitToText); const explored = destinationText ? findAirportByDestination(destinationText) : undefined;
