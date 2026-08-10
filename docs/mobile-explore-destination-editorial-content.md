@@ -377,6 +377,29 @@ Repository-derived Asian coverage moves from **45 of 64** canonical destinations
 
 This batch contains no UI work, image work, gallery work, map work, search changes, flight, hotel or booking changes, related-destination work, or editorial-architecture refactor. Canonical IDs, names, countries, country codes, airport data, aliases, image identities and image provenance remain unchanged.
 
+### Asia Batch 7 — Gulf + Arabian Peninsula
+
+Asia Batch 7, verified on 2026-08-10, considered and implemented all eight candidates, with no deferrals:
+
+- `ae-abu-dhabi` — Abu Dhabi, United Arab Emirates
+- `jo-amman` — Amman, Jordan
+- `qa-doha` — Doha, Qatar
+- `sa-jeddah` — Jeddah, Saudi Arabia
+- `kw-kuwait-city` — Kuwait City, Kuwait
+- `bh-manama` — Manama, Bahrain
+- `om-muscat` — Muscat, Oman
+- `sa-riyadh` — Riyadh, Saudi Arabia
+
+The source pass uses exact URLs from official tourism authorities, government and public cultural bodies, UNESCO, and official museums. Every record has at least two distinct, titled HTTPS references supporting durable geography, urban history, architecture, markets, heritage and cultural institutions; no provenance URL was invented. Fast-changing Gulf claims were excluded: the copy makes no newest, largest, tallest, popularity, development, event, operating-status or other mutable claims.
+
+Geographic scope remains city-specific. Abu Dhabi city is not treated as the emirate, and its record does not import emirate-wide desert or oasis attractions. Amman does not absorb Petra, Wadi Rum, Jerash or the Dead Sea, while Doha does not stand in for Qatar. Historic Jeddah is handled through UNESCO-listed Al-Balad, its coral-stone architecture and Red Sea port history without drawing Mecca into the city.
+
+Kuwait City remains distinct from Kuwait nationally and does not acquire island or desert attractions. Manama is distinguished from Bahrain island and the country; its wording explicitly locates the UNESCO Pearling Path in separate Muharraq rather than central Manama. Muscat city is distinguished from its governorate, Greater Muscat and Oman-wide destinations. Riyadh remains distinct from Riyadh Province, and nearby Diriyah is accurately identified as a separate municipality with a connected Najdi history.
+
+Repository-derived Asian coverage moves from **52 of 64** canonical destinations before the batch to **60 of 64** after it, leaving **4** without editorial enrichment: `tm-ashgabat`, `iq-baghdad`, `lb-beirut` and `il-tel-aviv`. Ashgabat remains the sole deferred candidate from Batch 6. Europe remains complete at **52 of 52**, Africa remains complete at **54 of 54**, Asia Batches 1–6 and the original 25 remain intact, and Featured membership and ordering remain independently maintained and unchanged.
+
+This batch contains no UI work, image work, gallery work, map work, search changes, flight or hotel changes, booking changes, related-destination work, or editorial-architecture refactor. Canonical IDs, names, countries, country codes, airport data, aliases, image identities and image provenance remain unchanged.
+
 This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.

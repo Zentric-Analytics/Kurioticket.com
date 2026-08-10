@@ -154,6 +154,13 @@ const asiaBatch6SourceReferences = (references: readonly ExploreDestinationEdito
   lastVerifiedAt: ASIA_BATCH_6_LAST_VERIFIED_AT,
 });
 
+const ASIA_BATCH_7_LAST_VERIFIED_AT = "2026-08-10";
+const asiaBatch7SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: ASIA_BATCH_7_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -1295,6 +1302,62 @@ const rawExploreDestinationEditorial = [
     description: "Yerevan spreads across the Hrazdan River's eastern terrain, with distant Mount Ararat forming a landscape backdrop beyond the city. Republic Square anchors a planned civic centre whose buildings use locally characteristic pink tuff stone. The Cascade, History Museum and Matenadaran contribute modern public space, archaeological collections and manuscript heritage without drawing Armenia's distant monasteries into the capital's identity.",
     highlights: ["Republic Square", "Pink tuff architecture", "Cascade complex", "Matenadaran manuscripts"],
     editorialProvenance: asiaBatch6SourceReferences([{ title: "Yerevan Municipality — Tourism", url: "https://www.yerevan.am/en/tourism/" }, { title: "Matenadaran — Mesrop Mashtots Institute of Ancient Manuscripts", url: "https://matenadaran.am/en/" }]),
+  },
+  {
+    id: "ae-abu-dhabi",
+    summary: "Abu Dhabi follows an island waterfront through civic landmarks, museums and sites recalling its early settlement.",
+    description: "Abu Dhabi city occupies an island and adjoining mainland beside the Arabian Gulf, with the Corniche defining its public waterfront. Qasr Al Hosn records the settlement's development from a watchtower and fortified residence into a civic centre. Louvre Abu Dhabi and Sheikh Zayed Grand Mosque contribute established cultural and religious architecture without extending the account across the wider emirate.",
+    highlights: ["Abu Dhabi Corniche", "Qasr Al Hosn", "Louvre Abu Dhabi", "Sheikh Zayed Grand Mosque"],
+    editorialProvenance: asiaBatch7SourceReferences([{ title: "Experience Abu Dhabi — Qasr Al Hosn", url: "https://visitabudhabi.ae/en/where-to-go/cultural-attractions/qasr-al-hosn" }, { title: "Louvre Abu Dhabi", url: "https://www.louvreabudhabi.ae/" }, { title: "Sheikh Zayed Grand Mosque Centre", url: "https://www.szgmc.gov.ae/en/" }]),
+  },
+  {
+    id: "jo-amman",
+    summary: "Amman spreads across steep hills around a historic centre of archaeological sites, markets and museums.",
+    description: "Amman rises over a series of hills, with dense neighbourhoods surrounding the downtown district of Al-Balad. The Citadel preserves Roman, Byzantine and Islamic remains above the city, while the Roman Theatre marks ancient Philadelphia's lower civic centre. The Jordan Museum and traditional market streets connect those archaeological layers with the capital's modern cultural life without drawing in Jordan-wide attractions.",
+    highlights: ["Amman Citadel", "Roman Theatre", "Al-Balad market streets", "Jordan Museum"],
+    editorialProvenance: asiaBatch7SourceReferences([{ title: "Visit Jordan — Amman", url: "https://international.visitjordan.com/Wheretogo/Amman" }, { title: "The Jordan Museum", url: "https://www.jordanmuseum.jo/" }]),
+  },
+  {
+    id: "qa-doha",
+    summary: "Doha curves around its namesake bay, linking a long waterfront with markets and national museums.",
+    description: "Doha occupies the shore of Doha Bay, where the Corniche traces the city's relationship with the Arabian Gulf. Souq Waqif retains a market setting near the historic waterfront, while the Museum of Islamic Art anchors a purpose-built cultural precinct. The National Museum of Qatar interprets the peninsula's history from within the capital without making countrywide sites part of Doha itself.",
+    highlights: ["Doha Corniche", "Souq Waqif", "Museum of Islamic Art", "National Museum of Qatar"],
+    editorialProvenance: asiaBatch7SourceReferences([{ title: "Visit Qatar — Doha", url: "https://visitqatar.com/intl-en/about-qatar/doha" }, { title: "Museum of Islamic Art", url: "https://mia.org.qa/en/" }, { title: "National Museum of Qatar", url: "https://nmoq.org.qa/en/" }]),
+  },
+  {
+    id: "sa-jeddah",
+    summary: "Jeddah's Red Sea port heritage survives in Al-Balad's coral-stone houses, markets and merchant traditions.",
+    description: "Jeddah developed as a Red Sea port and gateway for pilgrimage, with maritime commerce shaping its historic urban core. UNESCO-listed Historic Jeddah, known as Al-Balad, preserves coral-stone tower houses, shaded streets and markets associated with merchant families. Museums and cultural institutions interpret this port-city inheritance without relocating Mecca or other western Saudi heritage into Jeddah.",
+    highlights: ["Historic Jeddah — Al-Balad", "Coral-stone tower houses", "Red Sea port heritage", "Traditional market lanes"],
+    editorialProvenance: asiaBatch7SourceReferences([{ title: "UNESCO — Historic Jeddah, the Gate to Makkah", url: "https://whc.unesco.org/en/list/1361/" }, { title: "Saudi Tourism Authority — Jeddah", url: "https://www.visitsaudi.com/en/jeddah" }]),
+  },
+  {
+    id: "kw-kuwait-city",
+    summary: "Kuwait City faces the Arabian Gulf through landmark towers, museums, markets and maritime cultural institutions.",
+    description: "Kuwait City extends along the Arabian Gulf, where waterfront roads and civic architecture frame the national capital. Kuwait Towers form an established element of the shoreline, while Souq Al-Mubarakiya recalls the commercial patterns of the older city. Museum collections and maritime institutions preserve archaeological, trading and seafaring histories without assigning Kuwait's islands or desert landscapes to the city.",
+    highlights: ["Kuwait Towers", "Souq Al-Mubarakiya", "Arabian Gulf waterfront", "Maritime heritage collections"],
+    editorialProvenance: asiaBatch7SourceReferences([{ title: "State of Kuwait — Kuwait Towers", url: "https://e.gov.kw/sites/kgoenglish/Pages/Visitors/TourismInKuwait/PlanningYourTripInKuwaitTowers.aspx" }, { title: "Dar al Athar al Islamiyyah", url: "https://darmuseum.org.kw/" }]),
+  },
+  {
+    id: "bh-manama",
+    summary: "Manama's historic commercial centre preserves market lanes, civic gateways and institutions interpreting Bahrain's trading heritage.",
+    description: "Manama developed on Bahrain's northern coast as a port and commercial centre linked to Gulf trade and pearling. Bab Al Bahrain opens into the lanes of Manama Souq, where the older business district remains legible amid later civic growth. The Bahrain National Museum presents archaeology, crafts and social history without implying that Muharraq's UNESCO Pearling Path lies in central Manama.",
+    highlights: ["Bab Al Bahrain", "Manama Souq", "Bahrain National Museum", "Northern waterfront setting"],
+    editorialProvenance: asiaBatch7SourceReferences([{ title: "Bahrain Authority for Culture and Antiquities — Bab Al Bahrain", url: "https://culture.gov.bh/en/authority/cultural_sites/BabAlBahrain/" }, { title: "Bahrain National Museum", url: "https://culture.gov.bh/en/authority/cultural_sites/BahrainNationalMuseum/" }]),
+  },
+  {
+    id: "om-muscat",
+    summary: "Muscat follows the Gulf of Oman through harbour districts, forts, markets and national cultural institutions.",
+    description: "Muscat occupies a narrow coastal setting between the Gulf of Oman and rugged mountains, with distinct harbour and civic districts. Mutrah's corniche and souq retain the city's mercantile relationship with its port, overlooked by historic fortifications. The Al Alam Palace precinct and National Museum present architectural and material heritage specific to the capital rather than to Muscat Governorate or Oman broadly.",
+    highlights: ["Mutrah Corniche", "Mutrah Souq", "Al Alam Palace precinct", "National Museum of Oman"],
+    editorialProvenance: asiaBatch7SourceReferences([{ title: "Experience Oman — Muscat", url: "https://experienceoman.om/destinations/muscat/" }, { title: "The National Museum — Sultanate of Oman", url: "https://www.nm.gov.om/" }]),
+  },
+  {
+    id: "sa-riyadh",
+    summary: "Riyadh's Najdi heritage appears through a historic fortress, market quarter and national cultural institutions.",
+    description: "Riyadh developed on the Najd plateau around an oasis settlement, later expanding beyond its mud-brick historic core. Masmak Fort and the adjoining market quarter recall the city's earlier political and commercial landscape, while the National Museum interprets Arabian history. Nearby Diriyah is a separate municipality with a connected Najdi legacy, not a neighbourhood or monument within Riyadh city.",
+    highlights: ["Masmak Fort", "Najdi urban heritage", "National Museum", "Historic market quarter"],
+    editorialProvenance: asiaBatch7SourceReferences([{ title: "Royal Commission for Riyadh City — Riyadh History", url: "https://www.rcrc.gov.sa/en/riyadh/history" }, { title: "UNESCO — At-Turaif District in ad-Dir'iyah", url: "https://whc.unesco.org/en/list/1329/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
