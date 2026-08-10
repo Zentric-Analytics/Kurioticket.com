@@ -421,9 +421,12 @@ test("Explore removes destination and inspiration tabs while keeping supported a
 
 test("Explore defaults to deterministic region discovery instead of Popular", () => {
   const source = screen();
-  assert.match(source, /Explore by region/);
+  assert.doesNotMatch(source, /Explore by region/);
   assert.match(source, /data={REGION_DISCOVERY}/);
   assert.match(source, /horizontal data={item.preview}/);
+  assert.match(source, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.84/);
+  assert.match(source, /snapToInterval={previewCardWidth \+ REGION_PREVIEW_GAP}/);
+  assert.match(source, /decelerationRate="fast"/);
   assert.match(source, /See all destinations in \${item.region}/);
   assert.doesNotMatch(source, /data={POPULAR_DESTINATIONS}|Popular destinations/);
   assert.match(source, /query.trim\(\) \?/);
