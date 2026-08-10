@@ -453,12 +453,15 @@ test("region preview geometry matches the wide Kayak carousel proportions respon
     const inset = windowWidth * 0.024;
     const nextCardPeek = windowWidth - inset - cardWidth - gap;
 
-    assert.ok(cardWidth / windowWidth >= 0.92 && cardWidth / windowWidth <= 0.93);
+    assert.equal(cardWidth, windowWidth * 0.928);
+    assert.equal(inset, windowWidth * 0.024);
+    assert.equal(gap, windowWidth * 0.024);
     assert.equal(imageHeight / previousImageHeight, 1.12);
-    assert.ok(cardWidth / imageHeight > 1);
+    assert.ok(Math.abs(cardWidth / imageHeight - 3.21 / 1.12) < 1e-12);
+    assert.ok(Math.abs(cardWidth / imageHeight - 2.87) < 0.01);
+    assert.ok(Math.abs((cardHeight - previousCardHeight) - (imageHeight - previousImageHeight)) < Number.EPSILON * cardHeight);
     assert.ok(Math.abs(footerHeight - previousFooterHeight) < Number.EPSILON * cardHeight);
-    assert.ok(gap / windowWidth >= 0.02 && gap / windowWidth <= 0.03);
-    assert.ok(nextCardPeek / windowWidth >= 0.02 && nextCardPeek / windowWidth <= 0.03);
+    assert.ok(Math.abs(nextCardPeek - windowWidth * 0.024) < Number.EPSILON * windowWidth);
     assert.equal(cardWidth + gap, windowWidth * (0.928 + 0.024));
   }
 
