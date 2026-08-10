@@ -145,6 +145,21 @@ The batch groups eastern African highland and coastal cities with western Indian
 
 After Africa Batch 1, 18 of 54 canonical African destinations have editorial content and 36 remain without it. The eight existing African editorial records remain unchanged, and Europe remains complete at 52 of 52 destinations. Featured membership and ordering remain independently maintained; this batch includes no image, mobile UI, map or related-destination work.
 
+Africa Batch 2 evaluated the six remaining North African destinations identified during catalogue inspection. The source gate, applied on 2026-08-10, produced these outcomes:
+
+| Destination | Outcome | Rationale |
+| --- | --- | --- |
+| `dz-algiers` — Algiers | READY | UNESCO and an official city museum support city-specific Casbah, architectural and coastal context. |
+| `ma-casablanca` — Casablanca | READY | Official regional tourism and Hassan II Mosque foundation material support durable urban, architectural and Atlantic context. |
+| `sd-khartoum` — Khartoum | DEFER | Two durable, destination-specific authoritative references could not be verified without relying on unstable current institutional or visitor information. |
+| `eg-sharm-el-sheikh` — Sharm El Sheikh | READY | Official Egyptian destination and protected-landscape material support Red Sea, Sinai, reef and Ras Mohammed context. |
+| `ly-tripoli` — Tripoli | DEFER | Two durable, Tripoli-Libya-specific authoritative references meeting the editorial standard could not be verified. |
+| `tn-tunis` — Tunis | READY | UNESCO and Tunisia's official destination organisation support precise medina, city and nearby museum context. |
+
+The four READY destinations—Algiers, Casablanca, Sharm El Sheikh and Tunis—were added as the North Africa grouping. Khartoum and Tripoli remain valid canonical destinations without editorial content; no weaker sources or substitute destinations were used. Cumulative African coverage is now 22 of 54 destinations, leaving 32 without editorial content, while all 10 Africa Batch 1 records remain intact and Europe remains complete at 52 of 52.
+
+Featured membership and ordering remain independent from editorial completeness. Africa Batch 2 changes no images, ExploreScreen or DestinationDetailsScreen UI, maps, search, flight or hotel behaviour, and it adds no related destinations; related-destination work remains deferred.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
