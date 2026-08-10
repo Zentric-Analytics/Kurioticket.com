@@ -128,9 +128,26 @@ The final Europe Batch 5, verified on 2026-08-10, adds all five of those destina
 
 Batch 5 brings European coverage to 52 of 52 canonical European destinations and confirms that European editorial coverage is complete. It brings the cumulative global rollout to 70 editorial destinations: the original 25, four reviewed Europe batches of 10 and the final Europe batch of five. The original 25 and Europe Batches 1–4 remain intact, while the global editorial rollout remains incomplete for regions outside Europe.
 
+Africa Batch 1, verified on 2026-08-10, adds these 10 previously non-editorial canonical destinations:
+
+1. `et-addis-ababa` — Addis Ababa
+2. `ke-mombasa` — Mombasa
+3. `tz-dar-es-salaam` — Dar es Salaam
+4. `tz-zanzibar` — Zanzibar
+5. `ug-entebbe` — Entebbe
+6. `rw-kigali` — Kigali
+7. `mg-antananarivo` — Antananarivo
+8. `sc-mahe` — Mahé
+9. `mu-mauritius` — Mauritius
+10. `re-saint-denis` — Saint-Denis
+
+The batch groups eastern African highland and coastal cities with western Indian Ocean islands. These destinations were selected first after catalogue inspection because their city, heritage, museum, conservation and official destination sources could support specific, durable copy while maintaining clear canonical scope. Entebbe remains separate from Kampala; Mauritius is covered at country and island scale; Mahé remains an island destination with Victoria clearly scoped within it; Zanzibar distinguishes the archipelago, Unguja and Zanzibar City's Stone Town; and Saint-Denis uses Réunion-specific context.
+
+After Africa Batch 1, 18 of 54 canonical African destinations have editorial content and 36 remain without it. The eight existing African editorial records remain unchanged, and Europe remains complete at 52 of 52 destinations. Featured membership and ordering remain independently maintained; this batch includes no image, mobile UI, map or related-destination work.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
-These editorial batches do not change Featured membership or order and include no image or UI work. Batch 5 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
+These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
 
 ## Content fields
 

@@ -65,6 +65,16 @@ const EUROPE_BATCH_5_IDS = [
   "ua-kyiv", "cy-larnaca", "ru-moscow", "cy-paphos", "ru-st-petersburg",
 ] as const;
 
+const AFRICA_BATCH_1_IDS = [
+  "et-addis-ababa", "ke-mombasa", "tz-dar-es-salaam", "tz-zanzibar", "ug-entebbe",
+  "rw-kigali", "mg-antananarivo", "sc-mahe", "mu-mauritius", "re-saint-denis",
+] as const;
+
+const ORIGINAL_AFRICAN_EDITORIAL_IDS = [
+  "ng-lagos", "za-cape-town", "eg-cairo", "ma-marrakesh", "ng-abuja",
+  "gh-accra", "za-johannesburg", "ke-nairobi",
+] as const;
+
 const EUROPE_COUNTRY_CODES = new Set([
   "AL", "AT", "BA", "BE", "BG", "CH", "CY", "CZ", "DE", "DK", "EE", "ES", "FI",
   "FR", "GB", "GR", "HR", "HU", "IE", "IS", "IT", "LT", "LU", "LV", "ME", "MK",
@@ -259,6 +269,61 @@ test("every canonical European destination has editorial content after Batch 5",
     [],
   );
   assert.ok(canonicalEuropeanDestinations.every(({ editorialProvenance }) => editorialProvenance));
+});
+
+test("Africa Batch 1 contains exactly 10 previously non-editorial canonical records", () => {
+  const priorIds = new Set<string>([
+    ...ORIGINAL_EDITORIAL_IDS, ...EUROPE_BATCH_1_IDS, ...EUROPE_BATCH_2_IDS,
+    ...EUROPE_BATCH_3_IDS, ...EUROPE_BATCH_4_IDS, ...EUROPE_BATCH_5_IDS,
+  ]);
+  const batch = exploreDestinationEditorial.filter(({ id }) =>
+    AFRICA_BATCH_1_IDS.some((batchId) => batchId === id),
+  );
+
+  assert.deepEqual(exploreDestinationEditorial.slice(70).map(({ id }) => id), AFRICA_BATCH_1_IDS);
+  assert.equal(batch.length, 10);
+  assert.ok(AFRICA_BATCH_1_IDS.every((id) => !priorIds.has(id)));
+  assert.deepEqual(
+    exploreDestinationEditorial
+      .filter(({ id }) => ORIGINAL_AFRICAN_EDITORIAL_IDS.some((originalId) => originalId === id))
+      .map(({ id }) => id),
+    ORIGINAL_AFRICAN_EDITORIAL_IDS,
+  );
+
+  for (const record of batch) {
+    const canonical = exploreDestinations.find(({ id }) => id === record.id);
+    const summaryWordCount = record.summary.trim().split(/\s+/).length;
+    const descriptionWordCount = record.description.trim().split(/\s+/).length;
+    assert.ok(canonical);
+    assert.ok(record.summary.startsWith(canonical.name));
+    assert.ok(summaryWordCount >= 13 && summaryWordCount <= 18);
+    assert.ok(record.summary.endsWith("."));
+    assert.equal((record.summary.match(/[!?]/g) ?? []).length, 0);
+    assert.ok(descriptionWordCount >= 53 && descriptionWordCount <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.equal(new Set(record.highlights.map((highlight) => highlight.toLocaleLowerCase())).size, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !highlight.endsWith(".")));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-10");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(
+      new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length,
+    );
+    assert.ok(record.editorialProvenance.sourceReferences.every(
+      ({ title, url }) => title.trim() && url.startsWith("https://"),
+    ));
+  }
+});
+
+test("Africa Batch 1 enrichment leaves other non-editorial destinations valid", () => {
+  const editorialIds = new Set(exploreDestinationEditorial.map(({ id }) => id));
+  const remaining = exploreDestinations.filter(({ id }) => !editorialIds.has(id));
+  assert.ok(remaining.length > 0);
+  assert.ok(remaining.every(({ summary, description, highlights, editorialProvenance }) =>
+    summary === undefined && description === undefined && highlights === undefined &&
+    editorialProvenance === undefined));
 });
 
 test("Featured destinations retain their separately maintained IDs and order", () => {
