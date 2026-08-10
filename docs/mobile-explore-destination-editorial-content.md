@@ -457,6 +457,29 @@ The final batch changes no UI, images, galleries, maps, search, flight or hotel 
 
 This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
 
+### Central America Batch 1
+
+Central America Batch 1, verified on 2026-08-10, considered these six canonical candidates:
+
+- `gt-guatemala-city` — Guatemala City, Guatemala
+- `sv-san-salvador` — San Salvador, El Salvador
+- `hn-san-pedro-sula` — San Pedro Sula, Honduras
+- `ni-managua` — Managua, Nicaragua
+- `cr-san-jose` — San José, Costa Rica
+- `pa-panama-city` — Panama City, Panama
+
+Five records were implemented: Guatemala City, San Salvador, Managua, San José and Panama City. San Pedro Sula was the only deferral. The strict city-specific source gate could not be cleared with two exact, durable authoritative HTTPS references supporting enough material for a summary, three-sentence description and four meaningful highlights; unavailable external HTTPS verification in the working environment was treated as an environment limitation, not as evidence that weaker sources were acceptable. San Pedro Sula therefore remains wholly non-editorial rather than receiving Honduras-wide or weakly sourced copy.
+
+The implemented records use exact URLs from national culture bodies, official museums, UNESCO and public heritage institutions. Each has at least two distinct, titled HTTPS references and limits its wording to durable geography, architecture, archaeology, museums, civic spaces and cultural history. The records live in `src/shared/destinations/editorial/centralAmerica.ts` and are appended by the central regional aggregator after the complete North America module; validation remains in the compatibility façade.
+
+Geographic safeguards remain city-specific. Guatemala City is not treated as Guatemala nationally and does not import Antigua Guatemala, Lake Atitlán or Tikal. San Salvador does not import country-wide beaches, volcanoes or archaeological sites, and SAL is not described as being inside the city. Managua uses Lake Managua, civic landmarks and cultural institutions without claims about current politics, demonstrations, security, access or institutional opening.
+
+San José retains its accented canonical name, remains distinct from its province and Greater San José, and does not place SJO airport—which is in Alajuela—inside the city. Panama City remains distinct from Panama nationally; Panamá Viejo and Casco Antiguo are treated within their accurate UNESCO context, while the Panama Canal is described as a wider regional system rather than infrastructure wholly contained in the central city. No record makes current-condition claims about transport, airports, politics, safety, events, opening, restoration or access.
+
+Repository-derived Central America coverage moves from **0 of 6** canonical destinations before the batch to **5 of 6**, leaving only `hn-san-pedro-sula`. Global coverage moves from **188 of 235** to **193 of 235**, leaving **42** canonical destinations without editorial enrichment. North America remains complete at **16 of 16**, Europe at **52 of 52**, Africa at **54 of 54** and Asia at **64 of 64**. The historical 175-record prefix and all 13 post-refactor North America records remain semantically unchanged. Featured membership and its exact ordering remain independently maintained and unchanged.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no IDs, names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
