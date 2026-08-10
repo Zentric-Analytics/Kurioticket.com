@@ -4701,8 +4701,8 @@ export const translations: TranslationDictionary = {
   "deals.guided.hotelResults.loading": "Searching for hotels",
   "deals.guided.hotelResults.retry": "Retry hotel search",
   "deals.guided.hotelResults.empty": "No hotels were found for this search.",
-  "deals.guided.hotelResults.viewRooms": "View rooms",
-  "deals.guided.hotelResults.viewRoomsFor": "View rooms for {{hotelName}}",
+  "deals.guided.hotelResults.viewRooms": "View room",
+  "deals.guided.hotelResults.viewRoomsFor": "View room for {{hotelName}}",
   "deals.guided.hotelResults.roomsUnavailable": "Room options unavailable",
   "deals.guided.hotelResults.roomsUnavailableFor":
     "Room options unavailable for {{hotelName}}",
