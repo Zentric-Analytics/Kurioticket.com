@@ -133,6 +133,13 @@ const asiaBatch3SourceReferences = (references: readonly ExploreDestinationEdito
   lastVerifiedAt: ASIA_BATCH_3_LAST_VERIFIED_AT,
 });
 
+const ASIA_BATCH_4_LAST_VERIFIED_AT = "2026-08-10";
+const asiaBatch4SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: ASIA_BATCH_4_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -1113,6 +1120,62 @@ const rawExploreDestinationEditorial = [
     description: "Penang is a Malaysian state spanning Penang Island and a mainland section across the strait, rather than one city alone. George Town, the state capital on the island, preserves UNESCO-recognised streetscapes shaped by Malay, Chinese, Indian and European communities. Clan houses, markets, food traditions and Penang Hill place that urban heritage within the canonical destination's broader coastal and island geography.",
     highlights: ["George Town UNESCO heritage", "Multicultural clan houses", "Penang Hill", "Island market and food traditions"],
     editorialProvenance: asiaBatch3SourceReferences([{ title: "UNESCO — Melaka and George Town, Historic Cities of the Straits of Malacca", url: "https://whc.unesco.org/en/list/1223/" }, { title: "Penang Global Tourism", url: "https://mypenang.gov.my/" }]),
+  },
+  {
+    id: "in-bengaluru",
+    summary: "Bengaluru preserves garden landscapes, civic architecture and historic neighbourhoods shaped by Kannada cultural traditions.",
+    description: "Bengaluru occupies the elevated Deccan Plateau, where the historic pete and former cantonment created distinct urban layers. Cubbon Park, Bengaluru Palace and the monumental Vidhana Soudha mark the city through landscaped, royal and civic architecture. Museums and Kannada cultural institutions add artistic and historical context to a capital long known in English as Bangalore.",
+    highlights: ["Cubbon Park", "Bengaluru Palace", "Vidhana Soudha", "Historic pete and cantonment layers"],
+    editorialProvenance: asiaBatch4SourceReferences([{ title: "Karnataka Tourism — Bengaluru", url: "https://karnatakatourism.org/tour-item/bengaluru/" }, { title: "Encyclopaedia Britannica — Bengaluru", url: "https://www.britannica.com/place/Bangalore-India" }]),
+  },
+  {
+    id: "in-chennai",
+    summary: "Chennai extends along the Bay of Bengal through temple districts, museums and colonial civic landmarks.",
+    description: "Chennai stretches along the Bay of Bengal, with historic Mylapore and the colonial core recording different periods of urban growth. Kapaleeshwarar Temple anchors a longstanding religious neighbourhood, while Fort St George reflects the city's history under the name Madras. Government Museum collections and institutions devoted to Carnatic music and Bharatanatyam broaden its cultural landscape.",
+    highlights: ["Mylapore temple district", "Kapaleeshwarar Temple", "Fort St George", "Government Museum collections"],
+    editorialProvenance: asiaBatch4SourceReferences([{ title: "Tamil Nadu Tourism — Chennai", url: "https://www.tamilnadutourism.tn.gov.in/destinations/chennai" }, { title: "Government Museum Chennai", url: "https://govtmuseumchennai.org/" }]),
+  },
+  {
+    id: "lk-colombo",
+    summary: "Colombo faces the Indian Ocean through waterfront districts, historic markets and national cultural institutions.",
+    description: "Colombo occupies Sri Lanka's western coast, where the Indian Ocean waterfront meets the commercial districts of Fort and Pettah. Colonial and postcolonial civic buildings record successive phases in the capital's architectural development. The National Museum of Colombo, Gangaramaya Temple and Pettah's market streets present archaeological, religious and mercantile traditions specific to the city.",
+    highlights: ["Indian Ocean waterfront", "Colombo Fort", "Pettah market streets", "National Museum of Colombo"],
+    editorialProvenance: asiaBatch4SourceReferences([{ title: "Encyclopaedia Britannica — Colombo", url: "https://www.britannica.com/place/Colombo" }, { title: "Department of National Museums Sri Lanka", url: "https://museum.gov.lk/" }]),
+  },
+  {
+    id: "in-hyderabad",
+    summary: "Hyderabad preserves Deccani courtly heritage through fortified architecture, old-city markets and extensive museum collections.",
+    description: "Hyderabad, India, developed on the Deccan Plateau around a walled old city and later urban districts. Charminar and nearby markets express the Qutb Shahi city's ceremonial and commercial life, while Golconda Fort recalls its earlier fortified centre. Salar Jung Museum collections and Deccani food traditions extend this history through material culture and distinctive regional cuisine.",
+    highlights: ["Charminar", "Golconda Fort", "Qutb Shahi heritage", "Salar Jung Museum collections"],
+    editorialProvenance: asiaBatch4SourceReferences([{ title: "Telangana Tourism — Hyderabad", url: "https://tourism.telangana.gov.in/destinations/hyderabad" }, { title: "Salar Jung Museum", url: "https://www.salarjungmuseum.in/" }]),
+  },
+  {
+    id: "in-kochi",
+    summary: "Kochi reflects an Indian Ocean trading history through waterfront quarters, religious heritage and spice-market traditions.",
+    description: "Kochi developed as a port on India's Malabar Coast, with waterways and islands shaping its dispersed urban form. Fort Kochi and Mattancherry preserve churches, synagogues, warehouses and houses connected with successive trading communities and the city's former name, Cochin. The Mattancherry Palace, Paradesi Synagogue and spice-market streets document royal, Jewish and maritime cultural histories.",
+    highlights: ["Fort Kochi waterfront", "Mattancherry Palace", "Paradesi Synagogue", "Historic spice-market streets"],
+    editorialProvenance: asiaBatch4SourceReferences([{ title: "Kerala Tourism — Fort Kochi", url: "https://www.keralatourism.org/destination/fort-kochi/422/" }, { title: "Kerala Tourism — Mattancherry Palace", url: "https://www.keralatourism.org/destination/mattancherry-palace/178/" }]),
+  },
+  {
+    id: "in-kolkata",
+    summary: "Kolkata follows the Hooghly River through monumental civic architecture, historic neighbourhoods and major cultural collections.",
+    description: "Kolkata developed beside the Hooghly River, with colonial civic precincts and North Kolkata neighbourhoods expressing contrasting urban forms. Victoria Memorial and the Indian Museum hold prominent places in the city's architectural and collecting history. Markets, literary institutions and houses associated with Bengali cultural life preserve further layers from the period when the city was called Calcutta.",
+    highlights: ["Hooghly River setting", "Victoria Memorial", "Indian Museum collections", "North Kolkata neighbourhoods"],
+    editorialProvenance: asiaBatch4SourceReferences([{ title: "Victoria Memorial Hall", url: "https://victoriamemorial-cal.org/" }, { title: "Indian Museum Kolkata", url: "https://indianmuseumkolkata.org/" }]),
+  },
+  {
+    id: "in-mumbai",
+    summary: "Mumbai's harbour setting frames monumental railway architecture, waterfront landmarks, museums and Art Deco precincts.",
+    description: "Mumbai occupies islands and reclaimed shores around a natural harbour on India's western coast. The Gateway of India and Chhatrapati Shivaji Maharaj Terminus represent waterfront ceremony and Victorian railway architecture from the city's Bombay period. Museums, markets and the UNESCO-recognised Art Deco ensembles around the Oval Maidan reveal additional civic and residential layers.",
+    highlights: ["Mumbai Harbour", "Gateway of India", "Chhatrapati Shivaji Maharaj Terminus", "Oval Maidan Art Deco ensembles"],
+    editorialProvenance: asiaBatch4SourceReferences([{ title: "UNESCO — Chhatrapati Shivaji Terminus", url: "https://whc.unesco.org/en/list/945/" }, { title: "UNESCO — Victorian Gothic and Art Deco Ensembles of Mumbai", url: "https://whc.unesco.org/en/list/1480/" }]),
+  },
+  {
+    id: "in-new-delhi",
+    summary: "New Delhi's planned avenues connect national civic monuments, government architecture, museums and landscaped public spaces.",
+    description: "New Delhi is the planned capital district laid out south of Old Delhi, rather than a synonym for the entire metropolis. Ceremonial avenues link India Gate with Rashtrapati Bhavan and the government buildings that define its axial civic form. The National Museum and other cultural institutions place archaeology, art and public memory within this deliberately composed urban landscape.",
+    highlights: ["India Gate", "Rashtrapati Bhavan", "Ceremonial avenue plan", "National Museum collections"],
+    editorialProvenance: asiaBatch4SourceReferences([{ title: "Rashtrapati Bhavan Visitor Portal", url: "https://visit.rashtrapatibhavan.gov.in/" }, { title: "National Museum, New Delhi", url: "https://nationalmuseumindia.gov.in/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 
