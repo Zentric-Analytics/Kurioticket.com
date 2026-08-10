@@ -5,12 +5,12 @@ import { writeOnboardingCompleted } from "../../storage/onboardingStorage";
 import { authApi, AuthApiError } from "./authApi";
 import { normalizeEmail } from "./authUtils";
 import { AuthWelcomeScreen } from "./AuthWelcomeScreen";
-import { CreateAccountScreen, EmailScreen, PasswordScreen, SuccessScreen, VerificationScreen } from "./AuthFormScreens";
+import { CreateAccountScreen, EmailScreen, PasswordScreen, SuccessScreen, TwoFactorLoginScreen, VerificationScreen } from "./AuthFormScreens";
 import { requireGoogleWebClientId } from "./googleConfig";
 
-type Step = "welcome" | "email" | "verify" | "password" | "create" | "success";
+type Step = "welcome" | "email" | "verify" | "password" | "twoFactor" | "create" | "success";
 export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { initialStep?: "welcome" | "email"; successRoute?: "/" | "/(tabs)/profile" } = {}) {
-  const [step, setStep] = useState<Step>(initialStep); const [email, setEmail] = useState(""); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false);
+  const [step, setStep] = useState<Step>(initialStep); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false);
   const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || (e instanceof Error && e.name === "NativeGoogleSignInError") ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => void run(async () => { const normalized = normalizeEmail(value); const result = await authApi.requestCode(normalized); setEmail(normalized); setCooldown(result.cooldownSeconds || 28); setStep("verify"); });
   const verify = useCallback((code: string) => { void run(async () => { const result = await authApi.verifyCode(email, code); setProof(result.verificationToken); setStep(result.accountType === "existing" ? "password" : "create"); }); }, [email, loading]);
@@ -26,7 +26,8 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
     const result = await startNativeGoogleSignIn({ forceAccountSelection: forceGoogleAccountSelection });
     if (result.status === "cancelled") return;
     try {
-      await authApi.google(result.idToken, result.nonce);
+      const authResult = await authApi.google(result.idToken, result.nonce);
+      if ("requiresTwoFactor" in authResult) { setChallengeToken(authResult.challengeToken); setStep("twoFactor"); return; }
     } catch (googleError) {
       if (googleError instanceof AuthApiError && googleError.code === "PREVIEW_ACCESS_REQUIRED") {
         // Preview access rejection is an application-level decision after Google
@@ -44,7 +45,8 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
   if (step === "welcome") return <AuthWelcomeScreen busy={loading} error={error} onEmail={() => setStep("email")} onGoogle={continueGoogle} onGuest={() => void writeOnboardingCompleted().then(() => router.replace("/"))} />;
   if (step === "email") return <EmailScreen initialEmail={email} onBack={() => initialStep === "email" ? router.back() : setStep("welcome")} onContinue={requestCode} loading={loading} error={error} />;
   if (step === "verify") return <VerificationScreen email={email} onBack={() => setStep("email")} onDifferentEmail={() => setStep("email")} onVerify={verify} onResend={() => requestCode(email)} loading={loading} error={error} initialCooldown={cooldown} />;
-  if (step === "password") return <PasswordScreen onBack={() => { setProof(""); setStep("verify"); }} onSubmit={(password) => void run(async () => { await authApi.password(email, password); setStep("success"); })} onForgot={() => void run(async () => { await authApi.forgotPassword(email); Alert.alert("Check your email", "If an account exists, we sent password reset instructions."); })} loading={loading} error={error} />;
+  if (step === "password") return <PasswordScreen onBack={() => { setProof(""); setStep("verify"); }} onSubmit={(password) => void run(async () => { const result = await authApi.password(email, password); if ("requiresTwoFactor" in result) { setChallengeToken(result.challengeToken); setStep("twoFactor"); } else setStep("success"); })} onForgot={() => void run(async () => { await authApi.forgotPassword(email); Alert.alert("Check your email", "If an account exists, we sent password reset instructions."); })} loading={loading} error={error} />;
+  if (step === "twoFactor") return <TwoFactorLoginScreen onBack={() => { setChallengeToken(""); setStep("password"); }} onVerify={(code) => void run(async () => { await authApi.twoFactor(challengeToken, code); setStep("success"); })} loading={loading} error={error} />;
   if (step === "create") return <CreateAccountScreen onBack={() => { setProof(""); setStep("verify"); }} onSubmit={(name, phone) => void run(async () => { await authApi.register({ email, name, phone, verificationToken: proof }); setStep("success"); })} loading={loading} error={error} />;
   return <SuccessScreen onDone={done} />;
 }

@@ -17,10 +17,11 @@ test("Preview tester admin APIs and UI fail closed outside staging", () => {
 
 test("Preview tester mutations are rate limited, audited, and revoke sessions", () => {
   assert.match(api, /checkAuthRateLimit/);
-  assert.match(api, /PREVIEW_TESTER_APPROVED/);
+  assert.match(api, /TEAM_ACCESS_MEMBER_APPROVED/);
   assert.match(mutationApi, /checkAuthRateLimit/);
   assert.match(mutationApi, /writeAdminAuditLog/);
-  assert.match(mutationApi, /userSessionActivity\.updateMany/);
+  assert.match(mutationApi, /accountSession\.updateMany/);
+  assert.match(mutationApi, /sessionVersion: \{ increment: 1 \}/);
   assert.match(mutationApi, /updatedAt: expectedUpdatedAt/);
   assert.match(mutationApi, /updateResult\.count !== 1/);
 });
@@ -28,8 +29,13 @@ test("Preview tester mutations are rate limited, audited, and revoke sessions", 
 test("session rechecks retain the actual authentication method", () => {
   assert.match(auth, /previewAuthMethod = account\?\.provider === "google"/);
   assert.match(auth, /previewAuthMethod === "google"/);
-  assert.match(mobileAuth, /authMethod === "google" \? "g" : "c"/);
-  assert.match(mobileAuth, /token\.startsWith\("g\."\)/);
+  const accountSession = readFileSync("src/lib/account-session.ts", "utf8");
+  const securityMigration = readFileSync("prisma/migrations/20260810120000_unified_account_security/migration.sql", "utf8");
+  assert.match(accountSession, /`ktm1\.\$\{session\.id\}\.\$\{secret\}`/);
+  assert.match(accountSession, /tokenHash: hash\(secret\)/);
+  assert.doesNotMatch(mobileAuth, /randomBytes\(32\)[\s\S]*\? "g" : "c"/);
+  assert.match(securityMigration, /sessionToken" LIKE 'c\.%'/);
+  assert.match(securityMigration, /sessionToken" LIKE 'g\.%'/);
 });
 
 test("Preview tester migration is additive and has no destructive statements", () => {

@@ -1,12 +1,12 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { getPrisma } from "@/lib/prisma";
 import { getWebAuthnConfig, newChallenge, userHandle } from "@/lib/passkeys";
 import { consumePasskeyReauthToken } from "@/lib/passkey-reauth";
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   if (!session?.user?.id || !session.user.email) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));

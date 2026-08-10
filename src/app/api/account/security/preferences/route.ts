@@ -1,7 +1,6 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { z, ZodError } from "zod";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -11,7 +10,8 @@ const securityPreferencesSchema = z.object({
 });
 
 async function getAuthenticatedUserId() {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   return session?.user?.id || null;
 }
 

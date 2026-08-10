@@ -45,7 +45,11 @@ export async function PATCH(request: Request, context: Context) {
   const tester = await getPrisma().previewTester.findUniqueOrThrow({ where: { id } });
   if (action === "suspend" || action === "revoke") {
     const user = await getPrisma().user.findUnique({ where: { email: tester.emailNormalized }, select: { id: true } });
-    if (user) await getPrisma().userSessionActivity.updateMany({ where: { userId: user.id, revokedAt: null }, data: { revokedAt: now } });
+    if (user) await getPrisma().$transaction(async tx => {
+      await tx.user.update({ where: { id: user.id }, data: { sessionVersion: { increment: 1 } } });
+      await tx.accountSession.updateMany({ where: { userId: user.id, revokedAt: null }, data: { revokedAt: now, revokeReason: `preview_tester_${action}` } });
+      await tx.securityEvent.create({ data: { userId: user.id, type: "ACCOUNT_SUSPENDED", metadata: { source: "preview_tester", action } } });
+    });
   }
   const nextRoles = normalizeTeamAccessRoles(tester.roles);
   await writeAdminAuditLog({

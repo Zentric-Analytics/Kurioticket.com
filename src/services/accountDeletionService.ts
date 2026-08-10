@@ -34,12 +34,16 @@ export async function requestAccountDeletion(input: { userId: string; email: str
     sourceContext: { source: "dashboard-security", action: "account-deletion-request", deletionScheduledAt: deletionScheduledAt.toISOString() },
   });
 
-  const request = await db.$transaction(async (tx) => {
-    await tx.user.update({ where: { id: input.userId }, data: { status: "PENDING_DELETION" } });
-    return tx.accountDeletionRequest.create({
+  const mutation = await db.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: input.userId }, data: { status: "PENDING_DELETION", sessionVersion: { increment: 1 } } });
+    await tx.accountSession.updateMany({ where: { userId: input.userId, revokedAt: null }, data: { revokedAt: requestedAt, revokeReason: "account_deletion_requested" } });
+    const request = await tx.accountDeletionRequest.create({
       data: { userId: input.userId, email: input.email, requestedAt, deletionScheduledAt, supportTicketId: ticket.id, userReason: input.reason || null },
     });
+    const securityEvent = await tx.securityEvent.create({ data: { userId: input.userId, type: "ACCOUNT_DELETION_REQUESTED", metadata: { deletionRequestId: request.id } } });
+    return { request, securityEvent };
   });
+  const { request } = mutation;
 
   await recordAccountEventSafely({ userId: input.userId, email: null, eventKey: `account-deletion:${request.id}:requested`, type: "ACCOUNT_UPDATE", title: "Account deletion requested", body: "Your Kurioticket account deletion request was received. You can reactivate during the grace period.", actionPath: "/settings", metadata: { deletionRequestId: request.id, status: "PENDING" } });
 

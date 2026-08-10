@@ -2524,6 +2524,7 @@ export function SecurityDashboardPage() {
   const [sessionsModalOpen, setSessionsModalOpen] = useState(false);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessions, setSessions] = useState<AccountSessionActivity[]>([]);
+  const [securityEvents, setSecurityEvents] = useState<Array<{ id: string; type: string; occurredAt: string }>>([]);
   const [sessionNotice] = useState(
     "Review devices that have recently accessed your account.",
   );
@@ -2869,6 +2870,8 @@ export function SecurityDashboardPage() {
     }
   };
 
+  useEffect(() => { void fetch("/api/account/security/activity", { credentials: "same-origin" }).then(async response => response.ok ? response.json() : { events: [] }).then(data => setSecurityEvents(Array.isArray(data.events) ? data.events : [])).catch(() => setSecurityEvents([])); }, []);
+
   const handleOpenSessions = () => {
     setConfirmingSessionRemovalId(null);
     setSessions([]);
@@ -2902,6 +2905,13 @@ export function SecurityDashboardPage() {
     } finally {
       setRemovingSessionId(null);
     }
+  };
+
+  const handleSignOutEverywhere = async () => {
+    if (!window.confirm("Sign out everywhere, including this device?")) return;
+    const response = await fetch("/api/account/security/sessions/revoke-all", { method: "POST", credentials: "same-origin" });
+    if (!response.ok) { setActionMessage("Unable to sign out everywhere."); return; }
+    window.location.assign("/api/auth/signout?callbackUrl=/auth/signin");
   };
 
 
@@ -3064,12 +3074,14 @@ export function SecurityDashboardPage() {
             statusId={securityActionStatusId}
           />
           <SecuritySettingRow
-            title={tx("accountDashboard.security.activeSessions.title", "Active sessions")}
+            title={tx("accountDashboard.security.activeSessions.title", "Your devices")}
             body={tx("accountDashboard.security.activeSessions.description", "Review devices signed in to your account.")}
-            action={tx("accountDashboard.security.action.manageSessions", "Manage sessions")}
+            action={tx("accountDashboard.security.action.manageSessions", "Manage devices")}
             onAction={handleOpenSessions}
             statusId={securityActionStatusId}
           />
+          <div className="border-b border-slate-200 py-5"><h2 className="text-base font-semibold text-slate-900">Security activity</h2><div className="mt-3 space-y-2">{securityEvents.length ? securityEvents.map((event) => <p key={event.id} className="text-sm text-slate-600">{event.type.toLowerCase().replaceAll("_", " ")} · {formatSessionTime(event.occurredAt)}</p>) : <p className="text-sm text-slate-500">No recent security activity.</p>}</div></div>
+          <SecuritySettingRow title="Sign out everywhere" body="End every web and mobile session connected to your account." action="Sign out everywhere" onAction={() => void handleSignOutEverywhere()} statusId={securityActionStatusId} />
           <div className="grid min-w-0 grid-cols-1 gap-3 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:py-5">
             <div className="min-w-0">
               <h2 className="text-base font-semibold leading-6 text-slate-900">
@@ -3179,7 +3191,7 @@ export function SecurityDashboardPage() {
           <div data-security-modal-content className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 id="active-sessions-title" className="text-xl font-semibold text-slate-950">Active sessions</h2>
+                <h2 id="active-sessions-title" className="text-xl font-semibold text-slate-950">Your devices</h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{sessionNotice}</p>
               </div>
               <button type="button" onClick={loadSessionActivities} disabled={sessionsLoading} className="focus-ring hidden rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60 sm:inline-flex">
@@ -3222,7 +3234,7 @@ export function SecurityDashboardPage() {
                                 onClick={() => void handleRemoveSessionRecord(session.id)}
                                 className="focus-ring rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
                               >
-                                {removingSessionId === session.id ? "Deleting…" : "Delete"}
+                                {removingSessionId === session.id ? "Signing out…" : "Sign out"}
                               </button>
                             </div>
                           </div>
@@ -3236,7 +3248,7 @@ export function SecurityDashboardPage() {
                             onClick={() => setConfirmingSessionRemovalId(session.id)}
                             className="focus-ring hidden min-h-10 w-full shrink-0 items-center justify-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60 sm:inline-flex sm:w-auto"
                           >
-                            {removingSessionId === session.id ? "Removing…" : "Remove device record"}
+                            {removingSessionId === session.id ? "Signing out…" : "Sign out"}
                           </button>
                           <button
                             type="button"

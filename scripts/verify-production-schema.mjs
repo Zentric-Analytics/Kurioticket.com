@@ -30,10 +30,8 @@ const requiredColumns = new Map([
   ],
   ["Account", ["id", "userId", "provider", "providerAccountId"]],
   ["Session", ["id", "sessionToken", "userId", "expires"]],
-  [
-    "UserSessionActivity",
-    ["id", "userId", "sessionTokenHash", "lastSeenAt", "createdAt"],
-  ],
+  ["AccountSession", ["id", "userId", "client", "sessionVersion", "expiresAt", "revokedAt"]],
+  ["SecurityEvent", ["id", "userId", "type", "occurredAt"]],
   ["UserPasskey", ["id", "userId", "credentialId", "publicKey"]],
   ["WebAuthnChallenge", ["id", "challenge", "type", "expiresAt"]],
 ]);

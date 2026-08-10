@@ -5,6 +5,7 @@ import { getGoogleClientId } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
 import { createMobileSession } from "@/lib/mobile-auth";
 import { canUseStagingGoogle } from "@/lib/previewTesterAccess";
+import { createMobileTwoFactorChallenge } from "@/lib/mobile-two-factor";
 
 export const runtime = "nodejs";
 
@@ -57,10 +58,14 @@ export async function POST(request: Request) {
       name: payload.name || null,
       image: payload.picture || null,
     });
-    if (!user || user.status !== "ACTIVE") {
+    if (!user || !user.emailVerified || user.status !== "ACTIVE") {
       return NextResponse.json({ error: "This account is not available. Please contact support." }, { status: 403 });
     }
 
+    const settings = await getPrisma().userSecuritySettings.findUnique({ where: { userId: user.id }, select: { twoFactorEnabled: true } });
+    if (settings?.twoFactorEnabled) {
+      return NextResponse.json(await createMobileTwoFactorChallenge(user.id, "GOOGLE"), { status: 202 });
+    }
     const session = await createMobileSession(user.id, "google");
     return NextResponse.json({
       session,

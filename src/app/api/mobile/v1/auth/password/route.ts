@@ -5,6 +5,7 @@ import { signinSchema } from "@/lib/validation";
 import { getPrisma } from "@/lib/prisma";
 import { createMobileSession } from "@/lib/mobile-auth";
 import { canUseStagingCredentials } from "@/lib/previewTesterAccess";
+import { createMobileTwoFactorChallenge } from "@/lib/mobile-two-factor";
 
 export const runtime = "nodejs";
 
@@ -15,9 +16,12 @@ export async function POST(request: Request) {
   if (!(await canUseStagingCredentials(parsed.data.email))) return NextResponse.json({ error: "Preview access is restricted." }, { status: 403 });
   try {
     checkAuthRateLimit({ action: "mobile-password", email: parsed.data.email, request, limit: 8, windowMs: 15 * 60_000 });
-    const user = await getPrisma().user.findUnique({ where: { email: parsed.data.email } });
-    if (!user?.passwordHash || user.status !== "ACTIVE" || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
+    const user = await getPrisma().user.findUnique({ where: { email: parsed.data.email }, include: { securitySettings: { select: { twoFactorEnabled: true } } } });
+    if (!user?.passwordHash || !user.emailVerified || user.status !== "ACTIVE" || !(await bcrypt.compare(parsed.data.password, user.passwordHash))) {
       return NextResponse.json({ error: "Check your password and try again." }, { status: 401 });
+    }
+    if (user.securitySettings?.twoFactorEnabled) {
+      return NextResponse.json(await createMobileTwoFactorChallenge(user.id, "PASSWORD"), { status: 202 });
     }
     const session = await createMobileSession(user.id);
     return NextResponse.json({ session, user: { id: user.id, email: user.email, name: user.name } });

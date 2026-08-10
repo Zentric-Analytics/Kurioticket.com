@@ -5,7 +5,8 @@ import {
 import { router, useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { readCurrency } from "../../storage/preferenceStorage";
-import { clearSession, readSession } from "../../storage/sessionStorage";
+import { readSession } from "../../storage/sessionStorage";
+import { authApi } from "../auth/authApi";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { membershipLabel, profileIdentity } from "./profileModel";
@@ -114,7 +115,7 @@ export function AuthenticatedProfileScreen() {
 
   const logout = () => Alert.alert("Log out?", "You will be signed out of your account.", [
     { text: "Cancel", style: "cancel" },
-    { text: "Log out", style: "destructive", onPress: () => void clearSession().then(() => router.replace("/email-auth")).catch(() => Alert.alert("Unable to log out", "Please try again.")) },
+    { text: "Log out", style: "destructive", onPress: () => void authApi.logout().then(() => router.replace("/email-auth")).catch(() => Alert.alert("Unable to log out", "Please try again.")) },
   ]);
 
   const toggleDarkMode = (enabled: boolean) => {

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { ZodError } from "zod";
 
-import { authOptions } from "@/lib/auth";
 import {
   createSavedItemInputSchema,
   createUserSavedItem,
@@ -17,7 +16,8 @@ import {
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -45,7 +45,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -81,7 +82,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });

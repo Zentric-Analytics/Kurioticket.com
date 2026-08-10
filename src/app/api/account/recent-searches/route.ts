@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 
-import { authOptions } from "@/lib/auth";
 import {
   clearUserRecentSearches,
   deleteRecentSearchInputSchema,
@@ -14,7 +13,8 @@ import {
 export const runtime = "nodejs";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -30,7 +30,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -62,7 +63,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });

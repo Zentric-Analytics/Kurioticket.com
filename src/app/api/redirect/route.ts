@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { getFlightFromCache, getHotelFromCache } from "@/lib/searchCache";
 import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unsafe redirect target." }, { status: 400 });
   }
 
-  const session = await getServerSession(authOptions);
+  const session = (await resolveOptionalWebApiSession())?.session;
   const route =
     body.type === "flight" && "originAirport" in target
       ? `${target.originAirport}-${target.destinationAirport}`

@@ -1,8 +1,7 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { z } from "zod";
 
-import { authOptions } from "@/lib/auth";
 import { buildHomepageRecommendationOrder } from "@/lib/recommendations/homepagePersonalization";
 import { getHomepagePersonalizationSignals } from "@/services/homepageRecommendationService";
 
@@ -21,7 +20,7 @@ const homepageRecommendationRequestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = (await resolveOptionalWebApiSession())?.session;
 
   let payload: unknown;
   try {

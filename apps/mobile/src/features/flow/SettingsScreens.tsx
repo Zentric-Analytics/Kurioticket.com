@@ -3,7 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { travelApi } from "../../api/travelApi";
-import { clearSession, readSession } from "../../storage/sessionStorage";
+import { readSession } from "../../storage/sessionStorage";
+import { authApi } from "../auth/authApi";
 import { readCurrency, writeCurrency } from "../../storage/preferenceStorage";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
@@ -26,7 +27,7 @@ export function SettingsScreen() {
   const diagnostics = getRuntimeDiagnostics();
   useEffect(() => { void readSession().then((session) => setEmail(session?.user.email || "")); }, []);
   const signOut = async () => {
-    await clearSession();
+    await authApi.logout();
     router.replace("/email-auth");
   };
   return (

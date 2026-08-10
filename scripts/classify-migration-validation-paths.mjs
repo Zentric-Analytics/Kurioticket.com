@@ -11,6 +11,7 @@ const EXACT_MIGRATION_PATHS = new Set([
   "scripts/deploy-render-migrations.mjs",
   "scripts/migration-validation-workflow.test.mjs",
   "scripts/run-render-migrations.mjs",
+  "scripts/verify-issue4-security-upgrade.mjs",
   "scripts/verify-production-schema.mjs",
 ]);
 

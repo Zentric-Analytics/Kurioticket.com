@@ -1,7 +1,6 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { ZodError, z } from "zod";
-import { authOptions } from "@/lib/auth";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getPrisma } from "@/lib/prisma";
 import { emailSchema } from "@/lib/validation";
@@ -18,7 +17,8 @@ const requestEmailChangeSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   const userId = session?.user?.id;
 
   if (!userId) {

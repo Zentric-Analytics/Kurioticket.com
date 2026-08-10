@@ -40,6 +40,15 @@ export function PasswordScreen({ onBack, onSubmit, onForgot, loading, error }: {
   </FormShell>;
 }
 
+export function TwoFactorLoginScreen({ onBack, onVerify, loading, error }: { onBack: () => void; onVerify: (code: string) => void; loading: boolean; error?: string }) {
+  const [code, setCode] = useState(""); const [recovery, setRecovery] = useState(false);
+  return <FormShell onBack={onBack}><FormHeading icon="lock" title="Two-factor authentication" body={recovery ? "Enter one of your recovery codes." : "Enter the 6-digit code from your\nauthenticator app."} />
+    <Field autoFocus label={recovery ? "Recovery code" : "Authenticator code"} value={code} onChangeText={(value) => setCode(recovery ? value.toUpperCase() : sanitizeCode(value))} keyboardType={recovery ? "default" : "number-pad"} autoCapitalize="characters" autoComplete="one-time-code" textContentType="oneTimeCode" returnKeyType="go" onSubmitEditing={() => code && onVerify(code)} />
+    <ErrorText>{error}</ErrorText><AuthButton label="Verify" onPress={() => onVerify(code)} loading={loading} disabled={recovery ? code.trim().length < 8 : code.length !== 6} />
+    <Pressable accessibilityRole="button" onPress={() => { setRecovery(!recovery); setCode(""); }}><Text style={styles.action}>{recovery ? "Use an authenticator code" : "Use a recovery code"}</Text></Pressable>
+  </FormShell>;
+}
+
 export function CreateAccountScreen({ onBack, onSubmit, loading, error }: { onBack: () => void; onSubmit: (name: string, phone?: string) => void; loading: boolean; error?: string }) {
   const [name, setName] = useState(""); const [phone, setPhone] = useState("");
   return <FormShell onBack={onBack}><FormHeading icon="userPlus" title="Create your account" body="Complete a few details to get started." />

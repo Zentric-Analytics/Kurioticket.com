@@ -1,12 +1,11 @@
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes, randomInt } from "node:crypto";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { authOptions } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/env";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getPrisma } from "@/lib/prisma";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { sendTransactionalEmail, verificationCodeEmail } from "@/services/emailService";
 import { verifySecondFactor } from "@/services/twoFactorService";
 
@@ -26,16 +25,20 @@ const reauthIdentifier = (userId: string, purpose: string) => `passkey-reauth:${
 function hashToken(token: string) { return createHash("sha256").update(`passkey-reauth:${token}`).digest("hex"); }
 function hashEmailCode(userId: string, purpose: string, code: string) { return createHash("sha256").update(`passkey-email-reauth:${purpose}:${userId}:${code}`).digest("hex"); }
 
-async function mintReauthToken(userId: string, purpose: string, method: string) {
+async function mintReauthToken(userId: string, accountSessionId: string, purpose: string, method: string) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + reauthTtlMs);
-  await getPrisma().verificationToken.create({ data: { identifier: reauthIdentifier(userId, purpose), token: hashToken(token), expires: expiresAt } });
+  await getPrisma().$transaction([
+    getPrisma().verificationToken.create({ data: { identifier: reauthIdentifier(userId, purpose), token: hashToken(token), expires: expiresAt } }),
+    getPrisma().accountSession.update({ where: { id: accountSessionId }, data: { reauthenticatedAt: new Date(), ...(method === "totp" ? { assuranceLevel: "MFA" as const, twoFactorVerifiedAt: new Date() } : {}) } }),
+  ]);
   return NextResponse.json({ reauthToken: token, expiresAt: expiresAt.toISOString(), method, purpose });
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
+  if (!canonical || !session?.user?.id) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
   const parsed = schema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Enter your authenticator code, recovery code, email code, or password." }, { status: 400 });
@@ -72,19 +75,19 @@ export async function POST(request: Request) {
 
   const code = parsed.data.code || "";
   if (!code) return NextResponse.json({ error: "Enter a verification code." }, { status: 400 });
-  if (user.securitySettings?.twoFactorEnabled && await verifySecondFactor({ userId: session.user.id, code, consumeRecoveryCode: true })) return mintReauthToken(session.user.id, purpose, "totp");
+  if (user.securitySettings?.twoFactorEnabled && await verifySecondFactor({ userId: session.user.id, code, consumeRecoveryCode: true })) return mintReauthToken(session.user.id, canonical.accountSession.id, purpose, "totp");
   if (!user.securitySettings?.twoFactorEnabled && /^\d{6}$/.test(code)) {
     const challenge = await prisma.webAuthnChallenge.findFirst({ where: { userId: session.user.id, type: emailChallengeType(purpose), consumedAt: null }, orderBy: { createdAt: "desc" } });
     const attempts = typeof (challenge?.metadata as { attempts?: unknown } | null)?.attempts === "number" ? Number((challenge?.metadata as { attempts?: number }).attempts) : 0;
     if (!challenge || challenge.expiresAt <= new Date() || attempts >= maxEmailCodeAttempts) return NextResponse.json({ error: "That code is incorrect or expired. Try again." }, { status: 400 });
     if (challenge.loginToken === hashEmailCode(session.user.id, purpose, code)) {
       await prisma.webAuthnChallenge.update({ where: { id: challenge.id }, data: { consumedAt: new Date(), metadata: { attempts, purpose, verifiedAt: new Date().toISOString() } } });
-      return mintReauthToken(session.user.id, purpose, "email");
+      return mintReauthToken(session.user.id, canonical.accountSession.id, purpose, "email");
     }
     await prisma.webAuthnChallenge.update({ where: { id: challenge.id }, data: { consumedAt: attempts + 1 >= maxEmailCodeAttempts ? new Date() : null, metadata: { attempts: attempts + 1, purpose } } });
     return NextResponse.json({ error: "That code is incorrect or expired. Try again." }, { status: 400 });
   }
-  if (!user.securitySettings?.twoFactorEnabled && user.passwordHash && parsed.data.password && await bcrypt.compare(parsed.data.password, user.passwordHash)) return mintReauthToken(session.user.id, purpose, "password");
+  if (!user.securitySettings?.twoFactorEnabled && user.passwordHash && parsed.data.password && await bcrypt.compare(parsed.data.password, user.passwordHash)) return mintReauthToken(session.user.id, canonical.accountSession.id, purpose, "password");
 
   return NextResponse.json({ error: "That code is incorrect or expired. Try again." }, { status: 400 });
 }

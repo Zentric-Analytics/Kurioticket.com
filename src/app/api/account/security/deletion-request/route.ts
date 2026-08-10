@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/lib/auth";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { getCurrentDeletionRequest, requestAccountDeletion } from "@/services/accountDeletionService";
 
 export const runtime = "nodejs";
@@ -10,14 +9,16 @@ function serialize(request: { id: string; status: string; requestedAt: Date; del
 }
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   if (!session?.user?.id) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const request = await getCurrentDeletionRequest(session.user.id);
   return NextResponse.json({ request: request ? serialize(request) : null });
 }
 
 export async function POST() {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   const userId = session?.user?.id;
   const email = session?.user?.email;
   if (!userId || !email) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
