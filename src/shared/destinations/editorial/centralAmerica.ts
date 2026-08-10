@@ -59,4 +59,14 @@ export const centralAmericaExploreDestinationEditorial = [
       { title: "Patronato Panamá Viejo — Monumental Complex", url: "https://www.patronatopanamaviejo.org/" },
     ]),
   },
+  {
+    id: "hn-san-pedro-sula",
+    summary: "San Pedro Sula is a northwestern Honduran city shaped by civic spaces, markets and cultural institutions.",
+    description: "San Pedro Sula occupies the Sula Valley in northwestern Honduras, with its central district organized around long-established civic and commercial spaces. Parque Central and the Cathedral of San Pedro Apóstol form prominent landmarks in the urban core, while Guamilito Market reflects the city's commercial traditions. The Museum of Anthropology and History interprets local and regional archaeology, history and cultural life.",
+    highlights: ["Parque Central", "Cathedral of San Pedro Apóstol", "Guamilito Market", "Museum of Anthropology and History"],
+    editorialProvenance: centralAmericaBatch1SourceReferences([
+      { title: "Municipality of San Pedro Sula", url: "https://www.sanpedrosula.hn/" },
+      { title: "Museum of Anthropology and History of San Pedro Sula", url: "https://museosps.org/" },
+    ]),
+  },
 ] as const satisfies readonly ExploreDestinationEditorial[];
