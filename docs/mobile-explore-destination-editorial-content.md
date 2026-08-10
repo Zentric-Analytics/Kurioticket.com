@@ -551,6 +551,30 @@ The records remain in `src/shared/destinations/editorial/southAmerica.ts` and ag
 
 This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no canonical IDs, names, countries, country codes, airport data, aliases, image identities or image provenance.
 
+### Oceania Batch 1 — Australia + New Zealand
+
+Oceania Batch 1, verified on 2026-08-10, considered and implemented all seven canonical candidates, with no deferrals:
+
+- `au-melbourne` — Melbourne, Australia
+- `au-brisbane` — Brisbane, Australia
+- `au-perth` — Perth, Australia
+- `au-adelaide` — Adelaide, Australia
+- `nz-auckland` — Auckland, New Zealand
+- `nz-wellington` — Wellington, New Zealand
+- `nz-christchurch` — Christchurch, New Zealand
+
+The source review used exact URLs from municipal and state authorities, official museums, public galleries, botanic-garden authorities and other public cultural institutions. Every record has at least two distinct, titled authoritative HTTPS references supporting durable geography, urban form, heritage and cultural context. Indigenous and Māori terms appear only where supported by authoritative local sources, with established spelling and macrons preserved.
+
+Melbourne remains the city on the Yarra River rather than Greater Melbourne or Victoria; the record does not absorb the Great Ocean Road, Phillip Island or Yarra Valley. Brisbane stays within the city and its river, South Bank and civic institutions rather than Greater Brisbane, South East Queensland, the Gold Coast or Sunshine Coast. Perth is the Australian city on the Swan River, not Perth in Scotland; Fremantle is not presented as central Perth, and wider Western Australian destinations remain outside its scope. Adelaide's planned centre, Park Lands and North Terrace remain distinct from Greater Adelaide, South Australia and surrounding wine regions.
+
+Auckland's isthmus, central waterfront and immediate volcanic landscape are distinguished from the wider Auckland Region; Tāmaki Makaurau and other Māori naming is used only in supported local context. Wellington remains the harbour city rather than the wider Wellington Region or Wairarapa, with Māori institutional naming retained accurately. Christchurch copy uses durable geography, architectural history, gardens, institutions and Ngāi Tahu context; it makes no claim that earthquake reconstruction or restoration is complete and no claim about current building access, reopenings, temporary museum locations or construction.
+
+The records live in `src/shared/destinations/editorial/oceania.ts` and aggregate centrally and deterministically after the complete South America module. Repository-derived Oceania/Pacific coverage moves from **1 of 18** to **8 of 18**, leaving **10**. Global coverage moves from **217 of 235** to **224 of 235**, leaving **11**: `hn-san-pedro-sula` plus the ten final Pacific candidates (`fj-nadi`, `pf-papeete`, `pg-port-moresby`, `sb-honiara`, `vu-port-vila`, `ws-apia`, `to-nuku-alofa`, `ck-rarotonga`, `gu-guam` and `mp-saipan`).
+
+South America remains complete at **15 of 15**; Caribbean **10 of 10**; Central America **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic guard and every prior regional rollout remain unchanged. Featured membership and exact order remain independently maintained.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no canonical IDs, names, countries, country codes, airport data, aliases, image identities or image provenance.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
