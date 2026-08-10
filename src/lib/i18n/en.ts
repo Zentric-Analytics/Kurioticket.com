@@ -4635,12 +4635,11 @@ export const translations: TranslationDictionary = {
     "Your selected flight is ready for review",
   "deals.guided.flightDetails.pendingBody":
     "Flight details and fare confirmation will appear on this step.",
-  "deals.guided.flightDetails.confirmCars":
-    "Choose this flight and continue to cars",
+  "deals.guided.flightDetails.confirmCars": "Choose this flight",
   "deals.guided.flightDetails.confirmReview":
     "Choose this flight and review trip",
   "deals.guided.flightDetails.confirmCarsA11y":
-    "Choose {airline} flight from {origin} to {destination} and continue to cars",
+    "Choose {airline} flight from {origin} to {destination}",
   "deals.guided.flightDetails.confirmReviewA11y":
     "Choose {airline} flight from {origin} to {destination} and review trip",
   "deals.guided.flightDetails.choose": "Choose flight",
