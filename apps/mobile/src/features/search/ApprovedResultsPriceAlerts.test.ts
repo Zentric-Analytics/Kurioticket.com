@@ -15,8 +15,20 @@ test("TopBar centers its unchanged logo independently of side actions", () => {
     ui,
     /logoCenter: \{[\s\S]*position: "absolute"[\s\S]*top: 24[\s\S]*left: 0[\s\S]*right: 0[\s\S]*alignItems: "center"/,
   );
-  assert.match(ui, /pointerEvents="none" style=\{s\.logoCenter\}/);
+  assert.match(
+    ui,
+    /pointerEvents="none" style=\{\[s\.logoCenter, resultsLayout && s\.resultsLogoCenter\]\}/,
+  );
   assert.doesNotMatch(ui, /translateX/);
+});
+
+test("flight results opt into a consistent responsive results-page grid", () => {
+  assert.match(results, /<TopBar resultsLayout=\{product === "flight"\}/);
+  assert.match(results, /<DateStrip[\s\S]*resultsLayout=\{product === "flight"\}/);
+  assert.match(results, /const narrowFlightLayout = product === "flight" && width < 400/);
+  assert.match(results, /flightSummary: \{[\s\S]*paddingHorizontal: 22/);
+  assert.match(results, /flightFilters: \{ paddingHorizontal: 22/);
+  assert.match(results, /flightBody: \{ paddingHorizontal: 22/);
 });
 
 test("TopBar keeps back behavior and exposes a functional alert button and dot", () => {

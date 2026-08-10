@@ -47,9 +47,9 @@ export function Logo() {
     />
   );
 }
-export function TopBar({ detail = false, saved = false, onFavorite, onShare }: { detail?: boolean; saved?: boolean; onFavorite?: () => void; onShare?: () => void }) {
+export function TopBar({ detail = false, resultsLayout = false, saved = false, onFavorite, onShare }: { detail?: boolean; resultsLayout?: boolean; saved?: boolean; onFavorite?: () => void; onShare?: () => void }) {
   return (
-    <View style={s.top}>
+    <View style={[s.top, resultsLayout && s.resultsTop]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Go back"
@@ -58,10 +58,10 @@ export function TopBar({ detail = false, saved = false, onFavorite, onShare }: {
       >
         <FlowIcon name="back" size={25} />
       </Pressable>
-      <View pointerEvents="none" style={s.logoCenter}>
+      <View pointerEvents="none" style={[s.logoCenter, resultsLayout && s.resultsLogoCenter]}>
         <Logo />
       </View>
-      <View style={s.topActions}>
+      <View style={[s.topActions, resultsLayout && s.resultsTopActions]}>
         {detail ? (
           <>
             <Pressable accessibilityRole="button" accessibilityLabel={saved ? "Remove saved flight" : "Save flight"} accessibilityState={{ selected: saved }} onPress={onFavorite} style={s.hit}><FlowIcon name="heart" fill={saved ? ui.blue : "none"} color={saved ? ui.blue : ui.navy} /></Pressable>
@@ -119,6 +119,7 @@ export function DateStrip({
   date,
   prices,
   currency = "USD",
+  resultsLayout = false,
   onSelect,
   onPrevious,
   onNext,
@@ -126,6 +127,7 @@ export function DateStrip({
   date: string;
   prices: (number | undefined)[];
   currency?: string;
+  resultsLayout?: boolean;
   onSelect: (v: string) => void;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -134,9 +136,9 @@ export function DateStrip({
   return (
     <ScrollView
       horizontal
-      style={s.dateRail}
+      style={[s.dateRail, resultsLayout && s.resultsDateRail]}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={s.dates}
+      contentContainerStyle={[s.dates, resultsLayout && s.resultsDates]}
     >
       <Pressable accessibilityRole="button" accessibilityLabel="Previous date" onPress={onPrevious} disabled={!onPrevious} style={s.arrow}>
         <FlowIcon name="back" size={20} />
@@ -150,7 +152,7 @@ export function DateStrip({
           <Pressable
             key={iso}
             onPress={() => onSelect(iso)}
-            style={[s.date, active && s.dateActive]}
+            style={[s.date, resultsLayout && s.resultsDate, active && s.dateActive]}
           >
             <Text style={s.day}>
               {x.toLocaleDateString("en-US", { weekday: "short" })}
@@ -259,6 +261,7 @@ export const s = StyleSheet.create({
     justifyContent: "space-between",
     backgroundColor: "white",
   },
+  resultsTop: { height: 72, paddingHorizontal: 22 },
   logoCenter: {
     position: "absolute",
     top: 24,
@@ -266,6 +269,7 @@ export const s = StyleSheet.create({
     right: 0,
     alignItems: "center",
   },
+  resultsLogoCenter: { top: 19 },
   hit: {
     width: 44,
     height: 44,
@@ -278,6 +282,7 @@ export const s = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 18,
   },
+  resultsTopActions: { width: 44 },
   alertHit: {
     width: 44,
     height: 44,
@@ -309,6 +314,8 @@ export const s = StyleSheet.create({
   pillText: { fontSize: 12, fontWeight: "700", color: ui.navy },
   dateRail: { height: 96, flexGrow: 0, flexShrink: 0 },
   dates: { paddingHorizontal: 18, gap: 9, alignItems: "center" },
+  resultsDateRail: { height: 88 },
+  resultsDates: { paddingHorizontal: 22, gap: 8 },
   arrow: {
     width: 40,
     height: 40,
@@ -328,6 +335,7 @@ export const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "white",
   },
+  resultsDate: { height: 72 },
   dateActive: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
   day: { fontSize: 12, color: ui.muted },
   datePrice: { fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 3 },
