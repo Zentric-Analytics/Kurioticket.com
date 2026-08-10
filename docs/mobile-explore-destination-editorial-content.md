@@ -175,6 +175,26 @@ After Africa Batch 3, cumulative African coverage is 28 of 54 canonical destinat
 
 Africa Batch 3 includes no image, ExploreScreen or DestinationDetailsScreen UI, map, search, flight, hotel or related-destination work. Featured membership and ordering remain unchanged and independent from editorial completeness.
 
+Africa Batch 4, verified on 2026-08-10, applies the authoritative-source gate to the Atlantic West Africa grouping. Nine READY destinations were implemented:
+
+1. `ci-abidjan` — Abidjan
+2. `gm-banjul` — Banjul
+3. `bj-cotonou` — Cotonou
+4. `sn-dakar` — Dakar
+5. `ng-enugu` — Enugu
+6. `sl-freetown` — Freetown
+7. `tg-lome` — Lomé
+8. `lr-monrovia` — Monrovia
+9. `ng-port-harcourt` — Port Harcourt
+
+`gn-conakry` — Conakry remains deferred pending stronger destination-specific authoritative provenance. It remains a canonical, searchable destination without editorial or partial enrichment, and no substitute destination was added.
+
+The batch uses official national and state tourism, government, museum, cultural-authority and UNESCO material. Copy remains scoped to each canonical city: offshore Gorée retains its correct relationship to Dakar, Banjul is not expanded to Greater Banjul, and country- or state-wide attractions are not presented as sites within Cotonou, Enugu, Lomé or Port Harcourt.
+
+After Africa Batch 4, cumulative African coverage is 37 of 54 canonical destinations, leaving 17 without editorial content. Africa Batches 1–3 remain intact; Khartoum, Tripoli and Conakry continue as documented deferrals; and Europe remains complete at 52 of 52 destinations.
+
+Africa Batch 4 changes no images, ExploreScreen or DestinationDetailsScreen UI, maps, search, flight or hotel behaviour, or related destinations. Featured membership and ordering remain unchanged and independent from editorial completeness.
+
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
 
 These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.

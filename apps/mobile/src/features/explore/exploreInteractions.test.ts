@@ -491,9 +491,10 @@ test("destination details render shared records and omit absent optional content
   assert.ok(london.highlights?.length);
   assert.equal(london.relatedDestinationIds, undefined);
   const nonEditorial = destinations.find(
-    (destination) => !CURATED_POPULAR_DESTINATION_IDS.includes(
-      destination.id as (typeof CURATED_POPULAR_DESTINATION_IDS)[number],
-    ),
+    (destination) => destination.summary === undefined &&
+      !CURATED_POPULAR_DESTINATION_IDS.includes(
+        destination.id as (typeof CURATED_POPULAR_DESTINATION_IDS)[number],
+      ),
   )!;
   assert.equal(nonEditorial.summary, undefined);
   assert.equal(nonEditorial.description, undefined);
