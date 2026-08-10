@@ -390,95 +390,6 @@ test("Explore removes destination and inspiration tabs while keeping supported a
   );
 });
 
-test("popular destinations are one vertical virtualized stack", () => {
-  const source = screen();
-  assert.match(source, /FlatList/);
-  assert.match(source, /data=\{POPULAR_DESTINATIONS\}/);
-  assert.match(source, /Popular destinations/);
-  assert.doesNotMatch(source, /<SectionList|COUNTRY_DESTINATION_GROUPS/);
-  const discoveryView = source.slice(
-    source.indexOf("function ExploreDiscoveryContent"),
-    source.indexOf("const shadow"),
-  );
-  assert.doesNotMatch(discoveryView, /horizontal/);
-  assert.doesNotMatch(source, /See all destinations in|countryCount|countryHeader/);
-  assert.match(source, /destinationMedia\(destination.id\)/);
-  assert.match(source, /data=\{results\}/);
-});
-
-test("popular destination cards use a narrow responsive gutter without widening the header", () => {
-  const source = screen();
-  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
-
-  assert.match(styles, /stableHeader: \{ paddingHorizontal: 18/);
-  assert.match(styles, /content: \{ paddingHorizontal: 18/);
-  assert.match(styles, /popularCard: \{\s*marginHorizontal: -6,/);
-  assert.equal(18 - 6, 12);
-  assert.match(styles, /popularCard:[\s\S]*?borderRadius: 16/);
-  assert.match(styles, /popularCard:[\s\S]*?overflow: "hidden"/);
-  assert.match(styles, /popularSeparator: \{ height: 15 \}/);
-  assert.match(styles, /popularImage: \{ width: "100%", height: 220/);
-});
-
-test("popular destination names keep city and country inline and accessible", () => {
-  const source = screen();
-  const card = source.slice(
-    source.indexOf("function PopularDestinationCard"),
-    source.indexOf("function ExploreDiscoveryContent"),
-  );
-  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
-
-  assert.match(card, /accessibilityLabel=\{`\$\{destination\.name\}, \$\{destination\.country\}`\}/);
-  assert.match(card, /numberOfLines=\{1\}/);
-  assert.match(card, /ellipsizeMode="tail"/);
-  assert.match(
-    card,
-    /<Text style=\{s\.popularCardTitle\}>\{destination\.name\}<\/Text>\s*<Text style=\{s\.countryName\}> • \{destination\.country\}<\/Text>/,
-  );
-  assert.match(styles, /popularCardTitle:[\s\S]*?fontWeight: "800"/);
-  assert.match(styles, /countryName: \{ color: MUTED/);
-  assert.match(styles, /popularImage: \{ width: "100%", height: 220/);
-});
-
-
-test("popular destination cards end after airport access without a flight action", () => {
-  const source = screen();
-  const card = source.slice(
-    source.indexOf("function PopularDestinationCard"),
-    source.indexOf("function ExploreDiscoveryContent"),
-  );
-  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
-
-  assert.doesNotMatch(card, /Search flights|searchFlights|name="flight"/);
-  assert.doesNotMatch(card, /Tap to explore|See more|View details|Learn more|Explore more/);
-  assert.doesNotMatch(styles, /flightButton|flightButtonText/);
-  assert.match(styles, /popularCopy: \{ padding: 14, gap: 3 \}/);
-});
-
-test("popular destination cards present shared summaries before concise flight access", () => {
-  const source = screen();
-  const card = source.slice(
-    source.indexOf("function PopularDestinationCard"),
-    source.indexOf("function ExploreDiscoveryContent"),
-  );
-
-  assert.match(card, /destination\.summary \? \(/);
-  assert.match(card, /numberOfLines=\{3\}/);
-  assert.match(card, /ellipsizeMode="tail"/);
-  assert.match(card, /\{destination\.summary\}/);
-  assert.ok(
-    card.indexOf("{destination.summary}") <
-      card.indexOf("formatFlightAccess("),
-  );
-  assert.doesNotMatch(card, /destination\.airportNames/);
-  assert.doesNotMatch(card, /landmark architecture|major museums|food traditions/);
-
-  const styles = source.slice(source.indexOf("const s = StyleSheet.create"));
-  assert.match(styles, /destinationSummary:[\s\S]*?fontSize: 14[\s\S]*?lineHeight: 20[\s\S]*?flexShrink: 1/);
-  assert.match(styles, /airportMeta:[\s\S]*?fontSize: 12[\s\S]*?flexShrink: 1/);
-  assert.doesNotMatch(source, /Platform\.OS/);
-});
-
 test("flight access formatter keeps the primary first and removes duplicate codes", () => {
   assert.equal(formatFlightAccess("CDG", ["CDG"]), "Flights via CDG");
   assert.equal(
@@ -492,23 +403,6 @@ test("flight access formatter keeps the primary first and removes duplicate code
   assert.equal(
     formatFlightAccess("CDG", ["cdg", "ORY"]),
     "Flights via CDG and ORY",
-  );
-});
-
-test("popular destination card and save heart keep independent actions", () => {
-  const source = screen();
-  const card = source.slice(
-    source.indexOf("function PopularDestinationCard"),
-    source.indexOf("function ExploreDiscoveryContent"),
-  );
-
-  assert.match(card, /accessibilityLabel=\{`Open details for \$\{destination\.name\}, \$\{destination\.country\}`\}/);
-  assert.match(card, /onPress=\{onSelect\}/);
-  assert.match(card, /label=\{`\$\{saved \? "Remove" : "Save"\} \$\{destination\.name\}`\}/);
-  assert.match(card, /onPress=\{onToggle\}/);
-  assert.match(
-    card,
-    /<Pressable[\s\S]*?onPress=\{onSelect\}[\s\S]*?<Image[\s\S]*?<View style=\{s\.popularCopy\}>[\s\S]*?<\/Pressable>\s*<AndroidFavoriteButton[\s\S]*?onPress=\{onToggle\}/,
   );
 });
 
@@ -528,17 +422,16 @@ test("Explore has no saved destinations section or saved empty state", () => {
   assert.match(source, /onToggle=\{\(\) => toggle\(r\.destination\.id\)\}/);
 });
 
-test("default destinations use only the curated list without a featured carousel", () => {
+test("default discovery uses regional previews while preserving curated Popular data", () => {
   const source = screen();
   assert.deepEqual(
     POPULAR_DESTINATIONS.map((item) => item.destination.id),
     CURATED_POPULAR_DESTINATION_IDS,
   );
   assert.equal(new Set(CURATED_POPULAR_DESTINATION_IDS).size, 25);
-  assert.doesNotMatch(source, /Featured destinations/);
-  assert.doesNotMatch(source, /Browse all destinations/);
-  assert.doesNotMatch(source, /FEATURED_DESTINATIONS/);
-  assert.match(source, /ListHeaderComponent=\{<Section title="Popular destinations"/);
+  assert.match(source, /data=\{EXPLORE_REGION_SECTIONS\}/);
+  assert.match(source, /Explore by region/);
+  assert.doesNotMatch(source, /POPULAR_DESTINATIONS|Popular destinations/);
 });
 
 test("Explore keeps one controlled search input mounted above changing content", () => {

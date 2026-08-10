@@ -17,16 +17,17 @@ import {
 } from "react-native-safe-area-context";
 import type { Destination } from "./destinationCatalogue";
 import { FlowIcon } from "../flow/FlowIcon";
-import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
-import { POPULAR_DESTINATIONS } from "./exploreData";
 import {
+  EXPLORE_REGION_SECTIONS,
   exactExploreResult,
   exploreBottomPadding,
-  formatFlightAccess,
   searchExplore,
 } from "./exploreModels";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { destinationDetailsRoute } from "./exploreInteractionModels";
+import {
+  destinationDetailsRoute,
+  exploreRegionRoute,
+} from "./exploreInteractionModels";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
 const NAVY = "#071A48",
   BLUE = "#0754F7",
@@ -45,10 +46,12 @@ function Section({
   title,
   action,
   onAction,
+  actionLabel,
 }: {
   title: string;
   action?: string;
   onAction?: () => void;
+  actionLabel?: string;
 }) {
   return (
     <View style={s.sectionHeader}>
@@ -56,7 +59,12 @@ function Section({
         {title}
       </Text>
       {onAction ? (
-        <Pressable accessibilityRole="button" onPress={onAction} style={s.link}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={actionLabel}
+          onPress={onAction}
+          style={s.link}
+        >
           <Text style={s.linkText}>{action ?? "View all"}</Text>
           <FlowIcon name="chevron" color={BLUE} size={16} />
         </Pressable>
@@ -69,6 +77,7 @@ function DestinationThumbnail({ destination }: { destination: Destination }) {
   const [failed, setFailed] = useState(false);
   return (
     <Image
+      alt={`${destination.name}, ${destination.country} travel landscape`}
       source={failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)}
       accessibilityLabel={
         media?.accessibilityLabel ??
@@ -235,36 +244,31 @@ export function ExploreScreen() {
       ) : (
         <ExploreDiscoveryContent
           bottomPadding={bottomPadding}
-          saved={savedIds}
           select={select}
-          toggle={toggle}
         />
       )}
     </SafeAreaView>
   );
 }
 
-function PopularDestinationCard({
+function RegionDestinationCard({
   destination,
-  saved,
   onSelect,
-  onToggle,
 }: {
   destination: Destination;
-  saved: boolean;
   onSelect: () => void;
-  onToggle: () => void;
 }) {
   const media = destinationMedia(destination.id);
   const [failed, setFailed] = useState(false);
   return (
-    <View style={s.popularCard}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Open details for ${destination.name}, ${destination.country}`}
-        onPress={onSelect}
-      >
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Open details for ${destination.name}, ${destination.country}`}
+      onPress={onSelect}
+      style={s.regionCard}
+    >
         <Image
+          alt={`${destination.name}, ${destination.country} travel landscape`}
           source={failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)}
           onError={() => setFailed(true)}
           accessibilityLabel={
@@ -272,75 +276,65 @@ function PopularDestinationCard({
             `${destination.name}, ${destination.country} travel landscape`
           }
           resizeMode="cover"
-          style={s.popularImage}
+          style={s.regionImage}
         />
-        <View style={s.popularCopy}>
+        <View style={s.regionCopy}>
           <Text
             accessibilityLabel={`${destination.name}, ${destination.country}`}
             style={s.destinationName}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            <Text style={s.popularCardTitle}>{destination.name}</Text>
-            <Text style={s.countryName}> • {destination.country}</Text>
+            <Text style={s.regionCardTitle}>{destination.name}</Text>
           </Text>
-          {destination.summary ? (
-            <Text
-              style={s.destinationSummary}
-              numberOfLines={3}
-              ellipsizeMode="tail"
-            >
-              {destination.summary}
-            </Text>
-          ) : null}
-          <Text style={s.airportMeta} numberOfLines={2} ellipsizeMode="tail">
-            {formatFlightAccess(
-              destination.primaryAirportCode,
-              destination.airportCodes,
-            )}
-          </Text>
+          <Text style={s.countryName} numberOfLines={1}>{destination.country}</Text>
         </View>
-      </Pressable>
-      <AndroidFavoriteButton
-        saved={saved}
-        label={`${saved ? "Remove" : "Save"} ${destination.name}`}
-        onPress={onToggle}
-        style={s.heart}
-      />
-    </View>
+    </Pressable>
   );
 }
 
 function ExploreDiscoveryContent({
   bottomPadding,
-  saved,
   select,
-  toggle,
 }: {
   bottomPadding: number;
-  saved: ReadonlySet<string>;
   select: (a: Destination) => void;
-  toggle: (id: string) => void;
 }) {
   return (
     <FlatList
-      data={POPULAR_DESTINATIONS}
-      keyExtractor={(item) => item.destination.id}
+      data={EXPLORE_REGION_SECTIONS}
+      keyExtractor={(item) => item.name}
       keyboardDismissMode="none"
       keyboardShouldPersistTaps="handled"
       initialNumToRender={4}
       maxToRenderPerBatch={4}
       windowSize={5}
       contentContainerStyle={[s.content, { paddingBottom: bottomPadding }]}
-      ListHeaderComponent={<Section title="Popular destinations" />}
-      ItemSeparatorComponent={() => <View style={s.popularSeparator} />}
-      renderItem={({ item }) => (
-        <PopularDestinationCard
-          destination={item.destination}
-          saved={saved.has(item.destination.id)}
-          onSelect={() => select(item.destination)}
-          onToggle={() => toggle(item.destination.id)}
-        />
+      ListHeaderComponent={<Text accessibilityRole="header" style={s.discoveryTitle}>Explore by region</Text>}
+      ItemSeparatorComponent={() => <View style={s.regionSeparator} />}
+      renderItem={({ item: region }) => (
+        <View accessibilityLabel={`${region.name}, ${region.destinations.length} destinations`}>
+          <Section
+            title={region.name}
+            action="See all"
+            actionLabel={`See all destinations in ${region.name}`}
+            onAction={() => router.push(exploreRegionRoute(region.name))}
+          />
+          <Text style={s.regionCount}>{region.destinations.length} destinations</Text>
+          <FlatList
+            horizontal
+            data={region.previewDestinations}
+            keyExtractor={(destination) => destination.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.regionRow}
+            renderItem={({ item: destination }) => (
+              <RegionDestinationCard
+                destination={destination}
+                onSelect={() => select(destination)}
+              />
+            )}
+          />
+        </View>
       )}
     />
   );
@@ -394,12 +388,10 @@ const s = StyleSheet.create({
   },
   link: { minHeight: 44, flexDirection: "row", alignItems: "center" },
   linkText: { color: BLUE, fontSize: 13, fontWeight: "700" },
-  popularSeparator: { height: 15 },
-  heart: {
-    position: "absolute",
-    right: 10,
-    top: 10,
-  },
+  discoveryTitle: { color: NAVY, fontSize: 21, lineHeight: 28, fontWeight: "800", marginTop: 10, marginBottom: 8 },
+  regionCount: { color: MUTED, fontSize: 12, marginTop: -7, marginBottom: 10 },
+  regionSeparator: { height: 18 },
+  regionRow: { gap: 12, paddingRight: 18 },
   resultRow: {
     minHeight: 68,
     borderWidth: 1,
@@ -442,8 +434,8 @@ const s = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
   },
-  popularCard: {
-    marginHorizontal: -6,
+  regionCard: {
+    width: 190,
     borderRadius: 16,
     backgroundColor: "white",
     borderWidth: 1,
@@ -451,29 +443,14 @@ const s = StyleSheet.create({
     overflow: "hidden",
     ...shadow,
   },
-  popularImage: { width: "100%", height: 220, backgroundColor: "#E7ECF5" },
-  popularCopy: { padding: 14, gap: 3 },
+  regionImage: { width: "100%", height: 120, backgroundColor: "#E7ECF5" },
+  regionCopy: { padding: 12, gap: 3 },
   destinationName: { color: NAVY, flexShrink: 1 },
-  popularCardTitle: {
+  regionCardTitle: {
     color: NAVY,
-    fontSize: 21,
-    lineHeight: 27,
+    fontSize: 16,
+    lineHeight: 22,
     fontWeight: "800",
   },
   countryName: { color: MUTED, fontSize: 14, fontWeight: "600" },
-  destinationSummary: {
-    color: NAVY,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "400",
-    marginTop: 5,
-    marginBottom: 4,
-    flexShrink: 1,
-  },
-  airportMeta: {
-    color: MUTED,
-    fontSize: 12,
-    lineHeight: 18,
-    flexShrink: 1,
-  },
 });

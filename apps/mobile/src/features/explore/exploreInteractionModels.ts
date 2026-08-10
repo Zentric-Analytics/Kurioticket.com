@@ -7,6 +7,9 @@ export function destinationHandoff(destination: Destination): DestinationHandoff
 export function destinationDetailsRoute(destinationId: string) {
   return { pathname: "/explore/destination/[id]" as const, params: { id: destinationId } };
 }
+export function exploreRegionRoute(region: string) {
+  return { pathname: "/explore/region/[region]" as const, params: { region } };
+}
 export function navigateFromDestination(destination: Destination, product: DestinationProduct, close: () => void, navigate: (product: DestinationProduct, destination: string, handoff: DestinationHandoff) => void, navigationLock?: { current: boolean }) {
   if (navigationLock?.current) return false;
   if (navigationLock) navigationLock.current = true;

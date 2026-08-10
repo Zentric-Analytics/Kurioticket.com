@@ -23,7 +23,6 @@ test("every existing favorite-bearing section uses the protected shared hook", (
     const contents = source(path);
     assert.match(contents, /useSavedDestinations\(\)/, path);
     assert.match(contents, /style=\{s\.rowHeart\}/, `${path} keeps the search heart outside its navigation pressable`);
-    assert.match(contents, /style=\{s\.heart\}/, `${path} keeps the card heart outside its navigation pressable`);
   }
 });
 

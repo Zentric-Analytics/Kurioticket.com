@@ -68,7 +68,7 @@ test("Saved favorites uses the close icon only for saved-list removal while othe
   assert.match(homeFavorite, /<FlowIcon name="heart"/);
   assert.match(homeFavorite, /onPress=\{onPress\}/);
   assert.match(homeFavorite, /androidFavoriteColors\.inactive/);
-  assert.match(explore, /<AndroidFavoriteButton/);
+  assert.match(explore, /<FlowIcon name="heart"/);
   assert.match(details, /<AndroidFavoriteButton/);
   assert.doesNotMatch(`${homeFavorite}\n${explore}\n${details}`, /name="close"/);
 });
@@ -131,7 +131,7 @@ test("Saved & recent access rules and other favorite surfaces keep normal heart 
   assert.match(saved, /authResolved/);
   assert.match(access, /"toggle" \| "sign-in"/);
   assert.match(homeFavorite, /<FlowIcon name="heart"/);
-  assert.match(explore, /<AndroidFavoriteButton/);
+  assert.match(explore, /<FlowIcon name="heart"/);
   assert.match(details, /<AndroidFavoriteButton/);
   assert.doesNotMatch(`${homeFavorite}\n${explore}\n${details}`, /Alert\.alert\("Remove from saved\?"|confirmRemove/);
 });

@@ -3,7 +3,14 @@ import {
   normalizeDestinationText,
   type Destination,
 } from "./destinationCatalogue";
+import {
+  EXPLORE_REGION_NAMES,
+  groupExploreDestinationsByRegion,
+  type ExploreRegionName,
+} from "../../../../../src/shared/destinations/exploreDestinationRegions";
 export const ALL_DESTINATIONS = destinations;
+export { EXPLORE_REGION_NAMES };
+export type { ExploreRegionName };
 export type ExploreSearchResult = {
   destination: Destination;
   rank: number;
@@ -32,10 +39,13 @@ const airportNameMatches = (values: readonly string[], query: string) => {
 };
 
 /** Deterministic factual ranking: name, code, alias/city, name prefix, country, general. */
-export function searchExplore(queryValue: string): ExploreSearchResult[] {
+export function searchExploreDestinations(
+  queryValue: string,
+  catalogue: readonly Destination[],
+): ExploreSearchResult[] {
   const query = normalizeDestinationText(queryValue);
   if (!query) return [];
-  const exactCountryMatches = destinations.filter((destination) =>
+  const exactCountryMatches = catalogue.filter((destination) =>
     [destination.country, destination.countryCode].some(
       (value) => normalizeDestinationText(value) === query,
     ),
@@ -46,7 +56,7 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
       rank: 4,
     }));
   }
-  return destinations
+  return catalogue
     .flatMap((destination) => {
       const names = [destination.name];
       const codes = destination.airportCodes;
@@ -88,6 +98,29 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
         a.destination.countryCode.localeCompare(b.destination.countryCode) ||
         a.destination.id.localeCompare(b.destination.id),
     );
+}
+
+export function searchExplore(queryValue: string): ExploreSearchResult[] {
+  return searchExploreDestinations(queryValue, destinations);
+}
+
+const destinationsByRegion = groupExploreDestinationsByRegion(destinations);
+
+export const EXPLORE_REGION_SECTIONS = EXPLORE_REGION_NAMES.map((name) => ({
+  name,
+  destinations: destinationsByRegion.get(name)!,
+  previewDestinations: destinationsByRegion.get(name)!.slice(0, 3),
+}));
+
+export function destinationsForExploreRegion(region: ExploreRegionName) {
+  return destinationsByRegion.get(region)!;
+}
+
+export function searchExploreRegion(region: ExploreRegionName, query: string) {
+  const regionalDestinations = destinationsForExploreRegion(region);
+  return query.trim()
+    ? searchExploreDestinations(query, regionalDestinations)
+    : regionalDestinations.map((destination) => ({ destination, rank: 0 }));
 }
 
 export function exactExploreResult(

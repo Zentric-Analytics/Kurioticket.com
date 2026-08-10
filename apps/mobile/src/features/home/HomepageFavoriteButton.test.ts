@@ -28,15 +28,9 @@ test("shared Android favorite button keeps a minimum 44 by 44 touch target", () 
   assert.match(favorite, /hitSlop=\{androidFavoriteHitSlop\}/);
 });
 
-test("Explore keeps the same heart placement while using the shared Android component", () => {
-  assert.match(explore, /<AndroidFavoriteButton[\s\S]*label=\{`\$\{saved \? "Remove" : "Save"\} \$\{destination\.name\}`\}[\s\S]*style=\{s\.heart\}/);
-  assert.match(explore, /heart:\s*\{[\s\S]*position:\s*"absolute",[\s\S]*right:\s*10,[\s\S]*top:\s*10,[\s\S]*\}/);
-  assert.doesNotMatch(explore, /heart:\s*\{[\s\S]*width:\s*44[\s\S]*height:\s*44[\s\S]*borderRadius:\s*22[\s\S]*backgroundColor:\s*"rgba\(2,15,42,\.62\)"/);
-});
-
-test("all current save-enabled destination cards share one Android favorite component", () => {
+test("destination details retains the shared Android favorite component", () => {
   assert.match(details, /<AndroidFavoriteButton[\s\S]*onPress=\{onToggle\}/);
-  assert.equal((`${details}\n${explore}`.match(/<AndroidFavoriteButton/g) ?? []).length, 2);
+  assert.equal((details.match(/<AndroidFavoriteButton/g) ?? []).length, 1);
 });
 
 test("favorite behavior, navigation, and propagation remain unchanged", () => {
