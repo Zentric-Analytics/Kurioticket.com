@@ -56,7 +56,7 @@ test("guided loaded Flight results hide only the redundant heading and preserve 
   );
   assert.match(
     loadedBranch,
-    /<section aria-labelledby="deals-guided-flight-results-heading" className="mt-0" data-flight-results-experience="deals-guided">/,
+    /<section aria-labelledby="deals-guided-flight-results-heading" className="mt-0 lg:relative lg:left-1\/2 lg:w-\[min\(1180px,calc\(100vw-32px\)\)\] lg:-translate-x-1\/2" data-flight-results-experience="deals-guided">/,
   );
   assert.doesNotMatch(
     loadedBranch,
@@ -74,6 +74,15 @@ test("guided loaded Flight results hide only the redundant heading and preserve 
     loadedBranch,
     /<div className="flex w-full flex-col gap-3 py-1">/,
   );
+  assert.match(
+    loadedBranch,
+    /lg:grid-cols-\[260px_minmax\(0,1fr\)\] lg:gap-x-6/,
+  );
+  const guidedResultsGrid = loadedBranch.match(
+    /<div ref=\{resultsGridRef\} className="[^"]+">/,
+  )?.[0];
+  assert.ok(guidedResultsGrid);
+  assert.doesNotMatch(guidedResultsGrid, /lg:gap-x-9/);
   assert.doesNotMatch(
     loadedBranch,
     /flex w-full flex-col gap-3 rounded-2xl border border-\[#D8E1EC\] bg-white p-3 shadow-sm sm:p-4 lg:bg-transparent/,
