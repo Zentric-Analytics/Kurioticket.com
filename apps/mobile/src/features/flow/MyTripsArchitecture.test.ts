@@ -14,13 +14,15 @@ test("mobile reservation navigation consistently uses My Trips", () => {
   assert.match(layout, /tabBarAccessibilityLabel: "My Trips"/);
 });
 
-test("My Trips exposes upcoming, past, and cancelled TripBooking states", () => {
+test("My Trips exposes upcoming, past, and cancelled read-only MyTrip states", () => {
   for (const state of ["upcoming", "past", "cancelled"]) {
     assert.match(screen, new RegExp(`value: "${state}"`));
     assert.match(api, new RegExp(`"${state}"`));
   }
   assert.match(screen, /travelApi\s*\.trips\(tab\)/);
-  assert.match(screen, /provider-backed bookings will appear here/);
+  assert.match(screen, /Partner-confirmed trips will appear here/);
+  assert.match(screen, /Linking\.openURL/);
+  assert.doesNotMatch(screen, /trips\/\[id\]|Open reservation/);
 });
 
 test("My Trips has no planning or add-trip mutation", () => {

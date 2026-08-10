@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { adminNavigation, adminNavigationGroups, getAdminNavForRole, isAdminNavItemActive } from "@/lib/adminNavigation";
 
-const originalLabels = ["Overview", "Users", "Providers", "Searches", "Bookings", "Content", "Flights", "Hotels", "Cars", "Support", "Logs", "System", "Settings"];
+const originalLabels = ["Overview", "Users", "Providers", "Searches", "Content", "Flights", "Hotels", "Cars", "Support", "Logs", "System", "Settings"];
 
 test("admin navigation restores the original flat module order", () => {
   assert.deepEqual(adminNavigation.map((item) => item.label), originalLabels);
@@ -12,7 +12,7 @@ test("admin navigation restores the original flat module order", () => {
 
 test("admin navigation uses the exact original section labels and grouping", () => {
   assert.deepEqual(adminNavigationGroups, [
-    { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/bookings", "/admin/support"] },
+    { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/support"] },
     { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/flights", "/admin/hotels", "/admin/cars"] },
     { label: "Website content", hrefs: ["/admin/content"] },
     { label: "System & security", hrefs: ["/admin/logs", "/admin/system", "/admin/settings"] },
@@ -23,7 +23,7 @@ test("admin navigation uses the exact original section labels and grouping", () 
 });
 
 test("admin navigation preserves role restrictions", () => {
-  assert.deepEqual(getAdminNavForRole("SUPPORT").map((item) => item.label), ["Overview", "Users", "Searches", "Bookings", "Support"]);
+  assert.deepEqual(getAdminNavForRole("SUPPORT").map((item) => item.label), ["Overview", "Users", "Searches", "Support"]);
   assert.deepEqual(getAdminNavForRole("USER"), []);
 });
 

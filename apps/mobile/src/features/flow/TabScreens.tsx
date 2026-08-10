@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Image,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -38,7 +39,7 @@ export function MyTripsFlowScreen() {
           if (!session) router.replace("/email-auth");
           else
             setError(
-              "Unable to load reservations. Check your connection and try again.",
+              "Unable to load trips. Check your connection and try again.",
             );
         });
       })
@@ -66,10 +67,10 @@ export function MyTripsFlowScreen() {
         </View>
         <Text style={ft.styles.sectionTitle}>
           {tab === "upcoming"
-            ? "Upcoming reservations"
+            ? "Upcoming trips"
             : tab === "past"
-              ? "Past reservations"
-              : "Cancelled reservations"}
+              ? "Past trips"
+              : "Cancelled trips"}
         </Text>
         {loading ? <Text style={ft.styles.meta}>Loading reservations…</Text> : null}
         {error ? (
@@ -80,9 +81,9 @@ export function MyTripsFlowScreen() {
         {!loading && !error && !trips.length ? (
           <View style={styles.empty}>
             <FlowIcon name="calendar" color={flowColors.blue} size={36} />
-            <Text style={ft.styles.value}>No {tab} reservations</Text>
+            <Text style={ft.styles.value}>No {tab} trips</Text>
             <Text style={ft.styles.meta}>
-              Your provider-backed bookings will appear here.
+              Partner-confirmed trips will appear here.
             </Text>
           </View>
         ) : null}
@@ -97,17 +98,11 @@ function TripCard({ trip }: { trip: MobileTrip }) {
   const ft = useFlowTheme();
   const image = locationImageByCity(trip.destination);
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Open reservation ${trip.origin ? `${trip.origin} to ` : ""}${trip.destination}`}
-      onPress={() =>
-        router.push({ pathname: "/trips/[id]", params: { id: trip.id } })
-      }
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.trip,
         { backgroundColor: ft.colors.card, borderColor: ft.colors.border },
         ft.styles.shadow,
-        pressed && ft.styles.pressed,
       ]}
     >
       {image ? (
@@ -126,6 +121,9 @@ function TripCard({ trip }: { trip: MobileTrip }) {
           {trip.origin ? `${trip.origin} → ` : ""}
           {trip.destination}
         </Text>
+        <Text style={ft.styles.meta}>Provider: {trip.providerName}</Text>
+        <Text style={ft.styles.meta}>Confirmation: {trip.providerConfirmationCode}</Text>
+        <Text style={ft.styles.meta}>{trip.travelerCount} traveler{trip.travelerCount === 1 ? "" : "s"}</Text>
         <Text style={ft.styles.meta}>
           {new Date(trip.departureDate).toLocaleDateString()}{" "}
           {trip.returnDate
@@ -144,8 +142,13 @@ function TripCard({ trip }: { trip: MobileTrip }) {
           </Text>
         </View>
       </View>
-      <FlowIcon name="chevron" size={18} color={ft.colors.icon} />
-    </Pressable>
+      {trip.providerAction ? (
+        <Pressable accessibilityRole="link" accessibilityLabel={`${trip.providerAction.label}, opens external website`} onPress={() => void Linking.openURL(trip.providerAction!.url)} style={flowStyles.primaryButton}>
+          <Text style={flowStyles.primaryButtonText}>{trip.providerAction.label} ↗</Text>
+        </Pressable>
+      ) : <Text style={ft.styles.meta}>Manage this trip using your provider confirmation.</Text>}
+      <Text style={ft.styles.meta}>Your reservation is managed by {trip.providerName}. Changes, cancellations, refunds, check-in and travel documents are handled by the provider.</Text>
+    </View>
   );
 }
 

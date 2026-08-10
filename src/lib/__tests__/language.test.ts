@@ -8787,22 +8787,11 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 
   const tripsManagementSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
-  assert.ok(tripsManagementSource.includes('type TripStatusTab = "upcoming" | "past" | "cancelled"'));
-  assert.ok(tripsManagementSource.includes('{ id: "upcoming", labelKey: "accountDashboard.trips.history.tabs.active", fallback: "Upcoming" }'));
-  assert.ok(tripsManagementSource.includes('{ id: "past", labelKey: "accountDashboard.trips.history.tabs.past", fallback: "Past" }'));
-  assert.ok(tripsManagementSource.includes('labelKey: "accountDashboard.trips.history.tabs.cancelled"'));
-  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.current.empty.title"'));
-  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.current.empty.body"'));
-  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.past.title"'));
-  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.past.body"'));
-  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.cancelled.title"'));
-  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.cancelled.body"'));
-  assert.ok(tripsManagementSource.includes('const activeTrips = useMemo('));
-  assert.ok(tripsManagementSource.includes('() => trips.filter((trip) => trip.status === activeTab)'));
-  assert.ok(tripsManagementSource.includes('id={`${activeTab}-trips-panel`}'));
-  assert.ok(tripsManagementSource.includes('aria-controls={`${tab.id}-trips-panel`}'));
-  assert.ok(tripsManagementSource.includes('fetch("/api/dashboard/trips/lookup"'));
-  assert.ok(!tripsManagementSource.includes('>My Trips<'));
+  assert.ok(tripsManagementSource.includes('type TripStatus = "upcoming" | "past" | "cancelled"'));
+  assert.ok(tripsManagementSource.includes('fetch("/api/dashboard/trips"'));
+  assert.ok(tripsManagementSource.includes('providerConfirmationCode'));
+  assert.ok(tripsManagementSource.includes('providerAction'));
+  assert.ok(!tripsManagementSource.includes('/api/dashboard/trips/lookup'));
   assert.ok(!tripsManagementSource.includes('>Find a reservation<'));
 
   const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
@@ -14777,11 +14766,9 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
   assert.ok(tripsPageSource.includes("<TripsManagementPage />"));
   assert.ok(alertsPageSource.includes("<PriceAlertsContent showAccountLink={showAccountLink} />"));
   assert.ok(tripsSource.includes('fetch("/api/dashboard/trips"'));
-  assert.ok(tripsSource.includes('fetch("/api/dashboard/trips/lookup"'));
-  assert.ok(tripsSource.includes('body: JSON.stringify({ reservationCode, email })'));
-  assert.ok(tripsSource.includes('id: "past"'));
-  assert.ok(tripsSource.includes('id: "cancelled"'));
-  assert.ok(tripsSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
+  assert.ok(!tripsSource.includes('/api/dashboard/trips/lookup'));
+  assert.ok(tripsSource.includes('"past"'));
+  assert.ok(tripsSource.includes('"cancelled"'));
   assert.ok(alertsSource.includes('id: "active"'));
   assert.ok(alertsSource.includes('id: "triggered"'));
   assert.ok(alertsSource.includes('id: "all"'));

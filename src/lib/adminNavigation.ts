@@ -4,7 +4,6 @@ import {
   Activity,
   BookOpen,
   Car,
-  ClipboardList,
   FileText,
   Headphones,
   Hotel,
@@ -29,7 +28,7 @@ export type AdminNavDefinition = {
 };
 
 export const adminNavigationGroups = [
-  { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/bookings", "/admin/support"] },
+  { label: "Operations", hrefs: ["/admin", "/admin/users", "/admin/searches", "/admin/support"] },
   { label: "Provider readiness", hrefs: ["/admin/providers", "/admin/flights", "/admin/hotels", "/admin/cars"] },
   { label: "Website content", hrefs: ["/admin/content"] },
   { label: "System & security", hrefs: ["/admin/logs", "/admin/system", "/admin/settings"] },
@@ -40,7 +39,6 @@ export const adminNavigation: AdminNavDefinition[] = [
   { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN", "SUPPORT"], section: "operations", description: "Manage customer accounts, roles and status." },
   { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness", description: "Monitor provider configuration and health." },
   { href: "/admin/searches", label: "Searches", icon: Search, roles: ["ADMIN", "SUPPORT"], section: "operations", description: "Review recent search activity and request metadata." },
-  { href: "/admin/bookings", label: "Bookings", icon: ClipboardList, roles: ["ADMIN", "SUPPORT"], section: "operations", description: "Review booking readiness and operations." },
   { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content", description: "Review admin-managed site content." },
   { href: "/admin/flights", label: "Flights", icon: Plane, roles: ["ADMIN"], section: "readiness", description: "Review flight administration readiness." },
   { href: "/admin/hotels", label: "Hotels", icon: Hotel, roles: ["ADMIN"], section: "readiness", description: "Review hotel administration readiness." },
