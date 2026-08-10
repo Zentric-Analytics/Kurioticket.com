@@ -1,9 +1,19 @@
 import {
   destinations,
+  EXPLORE_REGIONS,
+  groupExploreDestinationsByRegion,
   normalizeDestinationText,
   type Destination,
+  type ExploreRegion,
 } from "./destinationCatalogue";
 export const ALL_DESTINATIONS = destinations;
+export const REGION_PREVIEW_SIZE = 3;
+export const DESTINATIONS_BY_REGION = groupExploreDestinationsByRegion(destinations);
+export const REGION_DISCOVERY = EXPLORE_REGIONS.map((region) => ({
+  region,
+  destinations: DESTINATIONS_BY_REGION.get(region)!,
+  preview: DESTINATIONS_BY_REGION.get(region)!.slice(0, REGION_PREVIEW_SIZE),
+}));
 export type ExploreSearchResult = {
   destination: Destination;
   rank: number;
@@ -88,6 +98,19 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
         a.destination.countryCode.localeCompare(b.destination.countryCode) ||
         a.destination.id.localeCompare(b.destination.id),
     );
+}
+
+/** Reuses global matching and ranking, then limits the already-ranked results. */
+export function searchExploreRegion(
+  queryValue: string,
+  region: ExploreRegion,
+): ExploreSearchResult[] {
+  const regionalIds = new Set(
+    DESTINATIONS_BY_REGION.get(region)!.map((destination) => destination.id),
+  );
+  return searchExplore(queryValue).filter(({ destination }) =>
+    regionalIds.has(destination.id),
+  );
 }
 
 export function exactExploreResult(
