@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { airports } from "../airports";
 import {
@@ -14,6 +15,10 @@ import {
 } from "./exploreDestinationEditorial";
 import { CURATED_POPULAR_EXPLORE_DESTINATION_IDS } from "./exploreDestinationPopularIds";
 import { buildCanonicalExploreDestinations } from "./exploreDestinationCatalogue";
+import { africaExploreDestinationEditorial } from "./editorial/africa";
+import { asiaExploreDestinationEditorial } from "./editorial/asia";
+import { europeExploreDestinationEditorial } from "./editorial/europe";
+import { legacyExploreDestinationEditorial } from "./editorial/legacy";
 
 const clone = (record: ExploreDestinationEditorial): ExploreDestinationEditorial => ({
   ...record,
@@ -1479,6 +1484,30 @@ test("global editorial coverage is derived after Asia completion", () => {
   assert.equal(remainingOutsideCoveredRegions.length, 60);
 });
 
+test("regional modules preserve the complete pre-refactor editorial payload and order", () => {
+  const explicitlyAggregated = [
+    ...legacyExploreDestinationEditorial,
+    ...europeExploreDestinationEditorial,
+    ...africaExploreDestinationEditorial,
+    ...asiaExploreDestinationEditorial,
+  ];
+  const canonicalIds = new Set(buildCanonicalExploreDestinations(airports).map(({ id }) => id));
+  const editorialIds = explicitlyAggregated.map(({ id }) => id);
+  const semanticPayloadHash = createHash("sha256")
+    .update(JSON.stringify(explicitlyAggregated))
+    .digest("hex");
+
+  assert.equal(explicitlyAggregated.length, 175);
+  assert.deepEqual(explicitlyAggregated, exploreDestinationEditorial);
+  assert.deepEqual(editorialIds, exploreDestinationEditorial.map(({ id }) => id));
+  assert.equal(new Set(editorialIds).size, editorialIds.length);
+  assert.ok(editorialIds.every((id) => canonicalIds.has(id)));
+  assert.equal(
+    semanticPayloadHash,
+    "7369b6c921ca6a79077d3948f061de6cfa96bc7e6380a175b7a9d9e5ae5df847",
+  );
+});
+
 test("Featured destinations retain their separately maintained IDs and order", () => {
   assert.deepEqual(CURATED_POPULAR_EXPLORE_DESTINATION_IDS, [
     "fr-paris", "gb-london", "us-new-york", "id-bali", "ng-lagos",
@@ -1488,6 +1517,8 @@ test("Featured destinations retain their separately maintained IDs and order", (
     "za-johannesburg", "ke-nairobi", "pt-lisbon", "au-sydney", "br-rio-de-janeiro",
   ]);
   assert.deepEqual(popularExploreDestinations.map(({ id }) => id), CURATED_POPULAR_EXPLORE_DESTINATION_IDS);
+  assert.equal(CURATED_POPULAR_EXPLORE_DESTINATION_IDS.length, 25);
+  assert.ok(popularExploreDestinations.every(({ editorialProvenance }) => editorialProvenance));
 });
 
 test("valid non-Featured canonical editorial records are accepted only as test fixtures", () => {
