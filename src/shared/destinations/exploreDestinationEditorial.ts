@@ -56,6 +56,13 @@ const europeBatch4SourceReferences = (references: readonly ExploreDestinationEdi
   lastVerifiedAt: EUROPE_BATCH_4_LAST_VERIFIED_AT,
 });
 
+const EUROPE_BATCH_5_LAST_VERIFIED_AT = "2026-08-10";
+const europeBatch5SourceReferences = (references: readonly ExploreDestinationEditorialSourceReference[]) => ({
+  source: "kurioticket-editorial" as const,
+  sourceReferences: references,
+  lastVerifiedAt: EUROPE_BATCH_5_LAST_VERIFIED_AT,
+});
+
 const rawExploreDestinationEditorial = [
   {
     id: "fr-paris",
@@ -511,6 +518,41 @@ const rawExploreDestinationEditorial = [
     description: "Porto rises in steep tiers from the Douro, where Ribeira's lanes and quays face the port-wine lodges of Vila Nova de Gaia. UNESCO recognises the historic centre, Luís I Bridge and Serra do Pilar Monastery as an urban landscape shaped by maritime commerce. São Bento station, tiled churches, markets and contemporary cultural institutions extend that heritage across the hills.",
     highlights: ["Ribeira riverfront", "Luís I Bridge", "Tiled churches and São Bento", "Port-wine lodge district"],
     editorialProvenance: europeBatch4SourceReferences([{ title: "Visit Porto", url: "https://visitporto.travel/en-GB" }, { title: "UNESCO Historic Centre of Oporto", url: "https://whc.unesco.org/en/list/755/" }]),
+  },
+  {
+    id: "ua-kyiv",
+    summary: "Kyiv rises along the Dnipro with medieval monasteries, broad boulevards, museums and layered urban history.",
+    description: "Kyiv occupies wooded hills on both banks of the Dnipro, with the historic upper city overlooking the river. Saint Sophia Cathedral and the Kyiv-Pechersk Lavra preserve outstanding medieval architecture, mosaics, monastic traditions and archaeological evidence recognised by UNESCO. Podil's streets, the Golden Gate and national museums trace the capital's development through princely, commercial and later civic eras.",
+    highlights: ["Saint Sophia Cathedral", "Kyiv-Pechersk Lavra", "Podil historic district", "Dnipro riverbanks"],
+    editorialProvenance: europeBatch5SourceReferences([{ title: "Kyiv City Official Travel Guide", url: "https://guide.kyivcity.gov.ua/en" }, { title: "UNESCO Kyiv: Saint-Sophia Cathedral and Kyiv-Pechersk Lavra", url: "https://whc.unesco.org/en/list/527/" }]),
+  },
+  {
+    id: "cy-larnaca",
+    summary: "Larnaca extends beside Cyprus's southern coast, linking a palm-lined seafront with churches, archaeology and salt-lake landscapes.",
+    description: "Larnaca occupies a low coastal plain in southern Cyprus, where the Finikoudes promenade borders the Mediterranean beside the historic centre. The Church of Saint Lazarus, medieval fort and Pierides Museum reflect Byzantine, Ottoman and archaeological layers associated with ancient Kition. West of the city, Larnaca Salt Lake and Hala Sultan Tekke form a distinctive wetland and religious landscape.",
+    highlights: ["Finikoudes promenade", "Church of Saint Lazarus", "Ancient Kition", "Larnaca Salt Lake"],
+    editorialProvenance: europeBatch5SourceReferences([{ title: "Larnaka Tourism Board", url: "https://larnakaregion.com/en/" }, { title: "Visit Cyprus - Larnaka", url: "https://www.visitcyprus.com/discover-cyprus/cities-regions/larnaka/" }]),
+  },
+  {
+    id: "ru-moscow",
+    summary: "Moscow developed around the Moskva River, with fortified landmarks, radial streets, galleries and distinctive architectural layers.",
+    description: "Moscow grew around the Kremlin beside the Moskva River, and successive ring roads and radial avenues still structure the capital. Red Square, Saint Basil's Cathedral and the Kremlin ensemble represent medieval and imperial history recognised by UNESCO. The Tretyakov Gallery, Bolshoi Theatre, Metro architecture and preserved districts such as Zamoskvorechye broaden its cultural and urban record.",
+    highlights: ["Kremlin and Red Square", "Saint Basil's Cathedral", "Tretyakov Gallery", "Moscow Metro architecture"],
+    editorialProvenance: europeBatch5SourceReferences([{ title: "Discover Moscow", url: "https://discover.moscow/en/" }, { title: "UNESCO Kremlin and Red Square, Moscow", url: "https://whc.unesco.org/en/list/545/" }]),
+  },
+  {
+    id: "cy-paphos",
+    summary: "Paphos spans a Cypriot harbour and inland hills rich in classical archaeology, mosaics and early Christian heritage.",
+    description: "Paphos lies on Cyprus's southwest coast, with a harbour district below the older inland town of Pano Paphos. Its UNESCO archaeological complex encompasses Roman villas with mosaic floors, the Tombs of the Kings and remains linked to ancient religious traditions. The medieval castle, Agia Kyriaki Chrysopolitissa and surrounding coastal landscapes connect later Christian history with the city's classical foundations.",
+    highlights: ["Paphos Archaeological Park", "Tombs of the Kings", "Roman villa mosaics", "Medieval harbour castle"],
+    editorialProvenance: europeBatch5SourceReferences([{ title: "Pafos Regional Board of Tourism", url: "https://www.visitpafos.org.cy/" }, { title: "UNESCO Paphos", url: "https://whc.unesco.org/en/list/79/" }]),
+  },
+  {
+    id: "ru-st-petersburg",
+    summary: "St. Petersburg lines the Neva delta with imperial palaces, canals, formal squares and major art collections.",
+    description: "Planned across islands and waterways of the Neva delta, the city gives canals, embankments and bridges a central role. The UNESCO-listed historic centre includes the Winter Palace, Palace Square, Peter and Paul Fortress and monumental avenues shaped during the imperial period. Hermitage collections, cathedrals, theatres and literary museums document its artistic and intellectual traditions across several centuries.",
+    highlights: ["Winter Palace and Hermitage", "Neva embankments and canals", "Peter and Paul Fortress", "Palace Square"],
+    editorialProvenance: europeBatch5SourceReferences([{ title: "Visit Petersburg", url: "https://visit-petersburg.ru/en/" }, { title: "State Hermitage Museum", url: "https://www.hermitagemuseum.org/wps/portal/hermitage/?lng=en" }, { title: "UNESCO Historic Centre of Saint Petersburg", url: "https://whc.unesco.org/en/list/540/" }]),
   },
 ] as const satisfies readonly ExploreDestinationEditorial[];
 

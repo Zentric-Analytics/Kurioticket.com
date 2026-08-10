@@ -61,9 +61,15 @@ const EUROPE_BATCH_4_IDS = [
   "es-madrid", "gb-manchester", "it-milan", "fr-nice", "pt-porto",
 ] as const;
 
-const REMAINING_EUROPE_EDITORIAL_IDS = [
+const EUROPE_BATCH_5_IDS = [
   "ua-kyiv", "cy-larnaca", "ru-moscow", "cy-paphos", "ru-st-petersburg",
 ] as const;
+
+const EUROPE_COUNTRY_CODES = new Set([
+  "AL", "AT", "BA", "BE", "BG", "CH", "CY", "CZ", "DE", "DK", "EE", "ES", "FI",
+  "FR", "GB", "GR", "HR", "HU", "IE", "IS", "IT", "LT", "LU", "LV", "ME", "MK",
+  "NL", "NO", "PL", "PT", "RO", "RS", "RU", "SE", "SI", "TR", "UA",
+]);
 
 test("the original 25 records and Europe Batch 1 remain intact as coverage expands", () => {
   assert.equal(validateExploreDestinationEditorial(exploreDestinationEditorial), exploreDestinationEditorial);
@@ -203,13 +209,56 @@ test("Europe Batch 4 contains 10 new canonical western European records with rev
   }
 });
 
-test("the five remaining European destinations stay canonical and valid without editorial content", () => {
-  const remaining = REMAINING_EUROPE_EDITORIAL_IDS.map((id) =>
-    exploreDestinations.find((destination) => destination.id === id),
+test("Europe Batch 5 completes the five previously non-editorial canonical records", () => {
+  const priorIds = new Set<string>([
+    ...ORIGINAL_EDITORIAL_IDS, ...EUROPE_BATCH_1_IDS, ...EUROPE_BATCH_2_IDS,
+    ...EUROPE_BATCH_3_IDS, ...EUROPE_BATCH_4_IDS,
+  ]);
+  const batch = exploreDestinationEditorial.filter(({ id }) =>
+    EUROPE_BATCH_5_IDS.some((batchId) => batchId === id),
   );
-  assert.ok(remaining.every(Boolean));
-  assert.ok(remaining.every((destination) => !destination!.editorialProvenance));
-  assert.ok(remaining.every((destination) => destination!.name && destination!.country));
+  assert.deepEqual(exploreDestinationEditorial.slice(65, 70).map(({ id }) => id), EUROPE_BATCH_5_IDS);
+  assert.equal(batch.length, 5);
+  assert.ok(EUROPE_BATCH_5_IDS.every((id) => !priorIds.has(id)));
+  for (const record of batch) {
+    const canonical = exploreDestinations.find(({ id }) => id === record.id);
+    const summaryWordCount = record.summary.trim().split(/\s+/).length;
+    const descriptionWordCount = record.description.trim().split(/\s+/).length;
+    assert.ok(canonical);
+    assert.ok(EUROPE_COUNTRY_CODES.has(canonical.countryCode));
+    assert.ok(record.summary.startsWith(canonical.name));
+    assert.ok(summaryWordCount >= 13 && summaryWordCount <= 18);
+    assert.ok(record.summary.endsWith("."));
+    assert.equal((record.summary.match(/[!?]/g) ?? []).length, 0);
+    assert.ok(descriptionWordCount >= 53 && descriptionWordCount <= 66);
+    assert.equal((record.description.match(/[.!?](?:\s|$)/g) ?? []).length, 3);
+    assert.equal(record.highlights.length, 4);
+    assert.equal(new Set(record.highlights.map((highlight) => highlight.toLocaleLowerCase())).size, 4);
+    assert.ok(record.highlights.every((highlight) => highlight.trim() && !highlight.endsWith(".")));
+    assert.equal(record.editorialProvenance.source, "kurioticket-editorial");
+    assert.equal(record.editorialProvenance.lastVerifiedAt, "2026-08-10");
+    assert.ok(record.editorialProvenance.sourceReferences.length >= 2);
+    assert.equal(
+      new Set(record.editorialProvenance.sourceReferences.map(({ url }) => url)).size,
+      record.editorialProvenance.sourceReferences.length,
+    );
+    assert.ok(record.editorialProvenance.sourceReferences.every(
+      ({ title, url }) => title.trim() && url.startsWith("https://"),
+    ));
+  }
+});
+
+test("every canonical European destination has editorial content after Batch 5", () => {
+  const canonicalEuropeanDestinations = exploreDestinations.filter(({ countryCode }) =>
+    EUROPE_COUNTRY_CODES.has(countryCode),
+  );
+  const editorialIds = new Set(exploreDestinationEditorial.map(({ id }) => id));
+  assert.ok(canonicalEuropeanDestinations.length > 0);
+  assert.deepEqual(
+    canonicalEuropeanDestinations.filter(({ id }) => !editorialIds.has(id)).map(({ id }) => id),
+    [],
+  );
+  assert.ok(canonicalEuropeanDestinations.every(({ editorialProvenance }) => editorialProvenance));
 });
 
 test("Featured destinations retain their separately maintained IDs and order", () => {
