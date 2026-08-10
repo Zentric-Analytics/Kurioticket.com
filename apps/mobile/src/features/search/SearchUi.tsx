@@ -7,6 +7,14 @@ import {
   View,
 } from "react-native";
 import { router } from "expo-router";
+import {
+  ArrowLeft,
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  FilePenLine,
+  SlidersHorizontal,
+} from "lucide-react-native";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
 
 export const ui = {
@@ -47,7 +55,13 @@ export function Logo() {
     />
   );
 }
-export function TopBar({ detail = false }: { detail?: boolean }) {
+export function TopBar({
+  detail = false,
+  flightResults = false,
+}: {
+  detail?: boolean;
+  flightResults?: boolean;
+}) {
   return (
     <View style={s.top}>
       <View style={s.topSide}>
@@ -57,7 +71,11 @@ export function TopBar({ detail = false }: { detail?: boolean }) {
           onPress={() => router.back()}
           style={s.hit}
         >
-          <FlowIcon name="back" size={25} />
+          {flightResults ? (
+            <ArrowLeft size={25} strokeWidth={2} color={ui.navy} />
+          ) : (
+            <FlowIcon name="back" size={25} />
+          )}
         </Pressable>
       </View>
       <Logo />
@@ -69,7 +87,11 @@ export function TopBar({ detail = false }: { detail?: boolean }) {
           </>
         ) : (
           <View>
-            <FlowIcon name="bell" />
+            {flightResults ? (
+              <Bell size={24} strokeWidth={2} color={ui.navy} />
+            ) : (
+              <FlowIcon name="bell" />
+            )}
             <View style={s.dot} />
           </View>
         )}
@@ -81,22 +103,32 @@ export function Pill({
   label,
   active = false,
   icon,
+  flightResultsIcon,
+  flightResultsChevron = false,
   onPress,
 }: {
   label: string;
   active?: boolean;
   icon?: FlowIconName;
+  flightResultsIcon?: "edit" | "filters";
+  flightResultsChevron?: boolean;
   onPress?: () => void;
 }) {
+  const iconColor = active ? ui.blue : ui.navy;
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       onPress={onPress}
       style={[s.pill, active && s.pillActive]}
     >
-      {icon ? (
-        <FlowIcon name={icon} size={15} color={active ? ui.blue : ui.navy} />
+      {flightResultsIcon === "edit" ? (
+        <FilePenLine size={18} strokeWidth={2} color={iconColor} />
+      ) : flightResultsIcon === "filters" ? (
+        <SlidersHorizontal size={18} strokeWidth={2} color={iconColor} />
+      ) : icon ? (
+        <FlowIcon name={icon} size={15} color={iconColor} />
       ) : null}
       <Text
         numberOfLines={1}
@@ -104,8 +136,10 @@ export function Pill({
       >
         {label}
       </Text>
-      {!icon ? (
-        <FlowIcon name="chevron" size={12} color={active ? ui.blue : ui.navy} />
+      {flightResultsChevron ? (
+        <ChevronRight size={17} strokeWidth={2} color={iconColor} />
+      ) : !icon && !flightResultsIcon ? (
+        <FlowIcon name="chevron" size={12} color={iconColor} />
       ) : null}
     </Pressable>
   );
@@ -114,11 +148,13 @@ export function DateStrip({
   date,
   prices,
   currency = "USD",
+  flightResults = false,
   onSelect,
 }: {
   date: string;
   prices: (number | undefined)[];
   currency?: string;
+  flightResults?: boolean;
   onSelect: (v: string) => void;
 }) {
   const base = new Date(`${date}T12:00:00`);
@@ -130,7 +166,11 @@ export function DateStrip({
       contentContainerStyle={s.dates}
     >
       <Pressable style={s.arrow}>
-        <FlowIcon name="back" size={20} />
+        {flightResults ? (
+          <ChevronLeft size={20} strokeWidth={2} color={ui.navy} />
+        ) : (
+          <FlowIcon name="back" size={20} />
+        )}
       </Pressable>
       {[-2, -1, 0, 1, 2].map((d, i) => {
         const x = new Date(base);
@@ -160,7 +200,11 @@ export function DateStrip({
         );
       })}
       <Pressable style={s.arrow}>
-        <FlowIcon name="chevron" size={20} />
+        {flightResults ? (
+          <ChevronRight size={20} strokeWidth={2} color={ui.navy} />
+        ) : (
+          <FlowIcon name="chevron" size={20} />
+        )}
       </Pressable>
     </ScrollView>
   );
