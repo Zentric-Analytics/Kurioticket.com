@@ -309,6 +309,12 @@ export async function resetPasswordWithToken(input: { token: string; password: s
   }
 
   const email = identifier.slice("password-reset:".length);
+  const user = await getPrisma().user.findFirst({ where: { email, status: "ACTIVE" }, select: { id: true } });
+  if (!user) {
+    await getPrisma().verificationToken.deleteMany({ where: { token: tokenHash } });
+    logAuthEvent("password-reset-failed", { email, reason: "user-not-found" });
+    return false;
+  }
   const passwordHash = await bcrypt.hash(password, 12);
   const updateResult = await getPrisma().user.updateMany({
     where: { email, status: "ACTIVE" },
@@ -323,7 +329,7 @@ export async function resetPasswordWithToken(input: { token: string; password: s
   }
 
   logAuthEvent("password-reset-succeeded", { email });
-  return true;
+  return { userId: user.id, email, transitionId: tokenHash.slice(0, 24) };
 }
 
 function getPasswordResetIdentifier(email: string) {

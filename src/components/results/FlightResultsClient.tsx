@@ -89,18 +89,18 @@ import {
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
 import {
-  readSavedTripIds,
-  toggleSavedTripId,
-  writeSavedTripIds,
-} from "@/lib/saved-trips-local";
+  readSavedItemIds,
+  toggleSavedItemId,
+  writeSavedItemIds,
+} from "@/lib/saved-items-local";
 import {
-  deleteBackendTrip,
-  fetchBackendSavedTrips,
-  getSavedTripLocalId,
-  saveBackendTrip,
-  type SavedTripDisplayDetails,
-  type SavedTripFlightSearch,
-} from "@/lib/saved-trips-api";
+  deleteBackendDiscovery,
+  fetchBackendSavedDiscoveries,
+  getSavedDiscoveryLocalId,
+  saveBackendDiscovery,
+  type SavedDiscoveryDisplayDetails,
+  type SavedDiscoveryFlightSearch,
+} from "@/lib/saved-items-api";
 import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { FlightSearchParams, PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, getItineraryDateKey } from "@/lib/utils";
@@ -600,7 +600,7 @@ function SavedRouteCard({
   onHeartToggle: (
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) => void;
 }) {
   const { t: dictionary } = useLocale();
@@ -1099,11 +1099,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     useState(false);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
   const { status: sessionStatus } = useSession();
-  const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
-  const [backendSavedTripIds, setBackendSavedTripIds] = useState<
+  const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
+  const [backendSavedItemIds, setBackendSavedItemIds] = useState<
     Record<string, string>
   >({});
-  const [savedTripError, setSavedTripError] = useState("");
+  const [savedItemError, setSavedItemError] = useState("");
   const [priceAlertDialogOpen, setPriceAlertDialogOpen] = useState(false);
   const [priceAlertTarget, setPriceAlertTarget] = useState("");
   const [priceAlertError, setPriceAlertError] = useState("");
@@ -1222,10 +1222,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     !isSearchExpandedWhileSticky;
   const savedRoutes = useMemo(
     () =>
-      savedTripIds
+      savedItemIds
         .map((id) => discoveryById.get(id))
         .filter((item): item is HomeDiscoveryItem => Boolean(item)),
-    [savedTripIds],
+    [savedItemIds],
   );
 
   const markExpandedSearchInteraction = useCallback(() => {}, []);
@@ -1547,19 +1547,19 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     };
   }, [loading]);
 
-  const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
-    const result = await fetchBackendSavedTrips(signal);
+  const refreshBackendSavedItems = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchBackendSavedDiscoveries(signal);
     if (!result.ok || !result.items) return;
 
     const backendIds: Record<string, string> = {};
     const localIds = result.items.map((item) => {
-      const localId = getSavedTripLocalId(item);
+      const localId = getSavedDiscoveryLocalId(item);
       backendIds[localId] = item.id;
       return localId;
     });
 
-    setBackendSavedTripIds(backendIds);
-    setSavedTripIds(localIds);
+    setBackendSavedItemIds(backendIds);
+    setSavedItemIds(localIds);
   }, []);
 
   useEffect(() => {
@@ -1590,8 +1590,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   useEffect(() => {
     if (guidedMode) {
       const timer = window.setTimeout(() => {
-        setBackendSavedTripIds({});
-        setSavedTripIds([]);
+        setBackendSavedItemIds({});
+        setSavedItemIds([]);
       }, 0);
       return () => window.clearTimeout(timer);
     }
@@ -1600,7 +1600,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     if (sessionStatus === "authenticated") {
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => {
-        void refreshBackendSavedTrips(controller.signal);
+        void refreshBackendSavedItems(controller.signal);
       }, 0);
       return () => {
         window.clearTimeout(timeoutId);
@@ -1609,11 +1609,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
 
     const timeoutId = window.setTimeout(() => {
-      setBackendSavedTripIds({});
-      setSavedTripIds(readSavedTripIds());
+      setBackendSavedItemIds({});
+      setSavedItemIds(readSavedItemIds());
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [guidedMode, refreshBackendSavedTrips, sessionStatus]);
+  }, [guidedMode, refreshBackendSavedItems, sessionStatus]);
 
   useEffect(() => {
     return () => {
@@ -2196,7 +2196,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
 
-  function getCurrentFlightSearchForSavedTrip(): SavedTripFlightSearch | undefined {
+  function getCurrentFlightSearchForSavedItem(): SavedDiscoveryFlightSearch | undefined {
     if (!body) return undefined;
     const tripType = body.tripType === "one-way" ? "one-way" : "round-trip";
     const cabinClass = body.cabinClass === "business" || body.cabinClass === "first" ? body.cabinClass : "economy";
@@ -2220,52 +2220,52 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   async function handleSavedRouteToggle(
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) {
     event.preventDefault();
     event.stopPropagation();
 
     if (sessionStatus !== "authenticated") {
-      setSavedTripError("");
-      setSavedTripIds((current) => {
-        const next = toggleSavedTripId(current, itemId);
-        writeSavedTripIds(next);
+      setSavedItemError("");
+      setSavedItemIds((current) => {
+        const next = toggleSavedItemId(current, itemId);
+        writeSavedItemIds(next);
         return next;
       });
       return;
     }
 
-    if (savedTripIds.includes(itemId)) {
-      const backendId = backendSavedTripIds[itemId];
+    if (savedItemIds.includes(itemId)) {
+      const backendId = backendSavedItemIds[itemId];
       if (!backendId) {
-        await refreshBackendSavedTrips();
+        await refreshBackendSavedItems();
         return;
       }
 
-      const result = await deleteBackendTrip(backendId);
+      const result = await deleteBackendDiscovery(backendId);
       if (result.ok) {
-        setSavedTripError("");
-        setSavedTripIds((current) => current.filter((id) => id !== itemId));
-        setBackendSavedTripIds((current) => {
+        setSavedItemError("");
+        setSavedItemIds((current) => current.filter((id) => id !== itemId));
+        setBackendSavedItemIds((current) => {
           const next = { ...current };
           delete next[itemId];
           return next;
         });
       } else {
-        setSavedTripError(
-          result.error ?? "Unable to update saved trips right now.",
+        setSavedItemError(
+          result.error ?? "Unable to update saved items right now.",
         );
-        await refreshBackendSavedTrips();
+        await refreshBackendSavedItems();
       }
       return;
     }
 
-    const result = await saveBackendTrip(itemId, display, getCurrentFlightSearchForSavedTrip());
+    const result = await saveBackendDiscovery(itemId, display, getCurrentFlightSearchForSavedItem());
     if (result.ok || result.duplicate) {
-      setSavedTripError("");
-      await refreshBackendSavedTrips();
+      setSavedItemError("");
+      await refreshBackendSavedItems();
     } else {
-      setSavedTripError(result.error ?? "Unable to save trip right now.");
+      setSavedItemError(result.error ?? "Unable to save item right now.");
     }
   }
 
@@ -7337,7 +7337,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
         <section className="min-w-0 space-y-4 lg:space-y-0">
           <p className="sr-only" aria-live="polite">
-            {savedTripError}
+            {savedItemError}
           </p>
           <p className="sr-only" aria-live="polite">
             {priceAlertStatusMessage || priceAlertError}

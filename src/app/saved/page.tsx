@@ -1,7 +1,7 @@
 import { AccountDetailShell } from "@/components/dashboard/AccountDetailShell";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
-import { SavedTripsAndRecentSearches } from "@/components/saved/SavedTripsAndRecentSearches";
+import { SavedRecentContent } from "@/components/saved/SavedRecentContent";
 
 type SavedPageProps = {
   searchParams?: Promise<{ from?: string | string[] }>;
@@ -22,13 +22,10 @@ export default async function SavedPage({ searchParams }: SavedPageProps) {
       <main className="flex-1 bg-[#f3f7fc] pb-16 lg:pb-20">
         {showAccountLink ? (
           <AccountDetailShell className="saved-account-shell-mobile">
-            <SavedTripsAndRecentSearches
-              compactTopSpacing
-              compactTopSpacingMobile={false}
-            />
+            <SavedRecentContent />
           </AccountDetailShell>
         ) : (
-          <SavedTripsAndRecentSearches />
+          <SavedRecentContent />
         )}
       </main>
       <Footer />

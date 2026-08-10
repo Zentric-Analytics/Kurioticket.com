@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getPrisma } from "@/lib/prisma";
 import { disableTwoFactor, getTwoFactorStatus, verifySecondFactor } from "@/services/twoFactorService";
+import { recordAccountEventSafely } from "@/services/accountNotificationService";
 export const runtime = "nodejs";
 const schema = z.object({ code: z.string().min(6).optional(), password: z.string().min(1).optional() });
 export async function POST(request: Request) {
@@ -22,5 +23,7 @@ export async function POST(request: Request) {
   }
   if (!verified) return NextResponse.json({ error: "Unable to verify that request." }, { status: 400 });
   await disableTwoFactor(session.user.id);
-  return NextResponse.json({ ok: true, twoFactor: await getTwoFactorStatus(session.user.id) });
+  const twoFactor = await getTwoFactorStatus(session.user.id);
+  await recordAccountEventSafely({ userId: session.user.id, email: session.user.email, eventKey: `security:2fa-disabled:${session.user.id}:${twoFactor.disabledAt}`, type: "SECURITY_UPDATE", title: "Two-factor authentication disabled", body: "Two-factor authentication was disabled for your Kurioticket account. If this wasn’t you, reset your password and contact Support immediately.", actionPath: "/settings" });
+  return NextResponse.json({ ok: true, twoFactor });
 }

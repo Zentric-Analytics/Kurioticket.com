@@ -23,8 +23,6 @@ import {
 type PreferenceCopyKey =
   | "travelAlerts"
   | "priceAlerts"
-  | "savedTripReminders"
-  | "routeWatchUpdates"
   | "inspirationUpdates"
   | "travelInspiration"
   | "productUpdates"
@@ -48,8 +46,6 @@ const preferenceSections: PreferenceSection[] = [
     copyKey: "travelAlerts",
     editableRows: [
       { id: "priceAlerts", copyKey: "priceAlerts" },
-      { id: "savedTripReminders", copyKey: "savedTripReminders" },
-      { id: "routeWatchUpdates", copyKey: "routeWatchUpdates" },
     ],
   },
   {

@@ -1,4 +1,4 @@
-export type HomepageSavedTripSignal = {
+export type HomepageSavedItemSignal = {
   destination?: string | null;
   linkedSearchDestination?: string | null;
 };
@@ -8,19 +8,19 @@ function normalizeDestinationCode(value: string | null | undefined) {
   return /^[A-Z0-9]{2,8}$/.test(normalized) ? normalized : null;
 }
 
-export function getSavedTripHomepageDestinationCodes(
-  savedTrips: readonly HomepageSavedTripSignal[],
+export function getSavedItemHomepageDestinationCodes(
+  savedItems: readonly HomepageSavedItemSignal[],
 ) {
-  const savedTripDestinations: string[] = [];
+  const savedItemDestinations: string[] = [];
   const linkedSearchDestinations: string[] = [];
-  const seenSavedTripDestinations = new Set<string>();
+  const seenSavedItemDestinations = new Set<string>();
   const seenLinkedSearchDestinations = new Set<string>();
 
-  for (const trip of savedTrips) {
+  for (const trip of savedItems) {
     const destination = normalizeDestinationCode(trip.destination);
-    if (destination && !seenSavedTripDestinations.has(destination)) {
-      seenSavedTripDestinations.add(destination);
-      savedTripDestinations.push(destination);
+    if (destination && !seenSavedItemDestinations.has(destination)) {
+      seenSavedItemDestinations.add(destination);
+      savedItemDestinations.push(destination);
     }
 
     const linkedSearchDestination = normalizeDestinationCode(
@@ -28,7 +28,7 @@ export function getSavedTripHomepageDestinationCodes(
     );
     if (
       linkedSearchDestination &&
-      !seenSavedTripDestinations.has(linkedSearchDestination) &&
+      !seenSavedItemDestinations.has(linkedSearchDestination) &&
       !seenLinkedSearchDestinations.has(linkedSearchDestination)
     ) {
       seenLinkedSearchDestinations.add(linkedSearchDestination);
@@ -36,10 +36,10 @@ export function getSavedTripHomepageDestinationCodes(
     }
   }
 
-  return [...savedTripDestinations, ...linkedSearchDestinations];
+  return [...savedItemDestinations, ...linkedSearchDestinations];
 }
 
-export function reorderHomepageCardsBySavedTripDestinations<T>(
+export function reorderHomepageCardsBySavedItemDestinations<T>(
   cards: readonly T[],
   destinationCodes: readonly string[],
   getDestinationCode: (card: T) => string | null | undefined,
@@ -114,7 +114,7 @@ export function buildHomepageRecommendationOrder(
   return Object.fromEntries(
     Object.entries(surfaces).map(([surface, cards]) => [
       surface,
-      reorderHomepageCardsBySavedTripDestinations(
+      reorderHomepageCardsBySavedItemDestinations(
         cards,
         destinationCodes,
         (card) => card.destinationCode,

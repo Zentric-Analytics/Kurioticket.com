@@ -120,7 +120,7 @@ function SearchIcon({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function SavedTripIcon({ compact = false }: { compact?: boolean }) {
+function SavedItemIcon({ compact = false }: { compact?: boolean }) {
   const size = compact ? 38 : 44;
   return (
     <Svg width={size} height={size} viewBox="0 0 48 48">
@@ -394,7 +394,7 @@ export function OnboardingScreen() {
               title="Save your trips"
               description="Keep searches and travel plans organized across devices."
               tileStyle={styles.mintTile}
-              icon={<SavedTripIcon compact={compact} />}
+              icon={<SavedItemIcon compact={compact} />}
               compact={compact}
             />
             <BenefitCard

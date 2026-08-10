@@ -27,14 +27,14 @@ test("public content management preserves the restored read-only inventory secti
   assert.doesNotMatch(contentPage, /Create content|Edit content|Delete content|Upload image|Approve content/i);
 });
 
-test("settings remains the canonical homepage fare and feature-flag workspace", () => {
+test("system owns feature controls while settings retains homepage fares", () => {
   assert.doesNotMatch(systemPage, /HomepageFaresRefreshCard/);
   assert.match(systemPage, /Admin Configuration/);
-  assert.match(systemPage, /Feature Flags/);
+  assert.match(systemPage, /Feature Controls/);
   assert.doesNotMatch(systemPage, /homepage fare/i);
   assert.match(settingsPage, /title="Settings"/);
   assert.match(settingsPage, /HomepageFaresRefreshCard/);
-  assert.match(settingsPage, /Feature flags/);
+  assert.doesNotMatch(settingsPage, /Feature flags/i);
 });
 
 test("homepage fare refresh component keeps existing client APIs, scopes, and status messaging", () => {

@@ -33,7 +33,6 @@ import {
   Plane,
   Scale,
   Search,
-  Clock,
   ShieldCheck,
   Tag,
   UserCircle,
@@ -85,26 +84,9 @@ type AppHeaderProps = {
 };
 
 const signedInAccountMenuItems = [
-  {
-    href: "/dashboard/account",
-    labelKey: "accountMenu.myAccount.label",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/saved?from=account",
-    labelKey: "accountMenu.savedTrips.label",
-    icon: SavedHeartIcon,
-  },
-  {
-    href: "/dashboard/alerts?from=account",
-    labelKey: "accountMenu.priceAlerts.label",
-    icon: Tag,
-  },
-  {
-    href: "/recent-searches",
-    labelKey: "accountMenu.recentSearches.label",
-    icon: Clock,
-  },
+  { href: "/dashboard/trips", labelKey: "accountMenu.myTrips.label", icon: LayoutDashboard },
+  { href: "/saved?from=account", labelKey: "accountMenu.savedRecent.label", icon: SavedHeartIcon },
+  { href: "/dashboard/alerts?from=account", labelKey: "accountMenu.priceAlerts.label", icon: Tag },
 ];
 
 const mobileSignedInAccountMenuItems = [

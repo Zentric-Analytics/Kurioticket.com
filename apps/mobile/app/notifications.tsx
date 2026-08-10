@@ -1,1 +1,1 @@
-export { PriceAlertsScreen as default } from "../src/features/flow/AccountDataScreens";
+export { NotificationsScreen as default } from "../src/features/notifications/NotificationsScreen";

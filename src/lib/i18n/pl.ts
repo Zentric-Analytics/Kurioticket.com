@@ -1079,8 +1079,8 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "Pomoc dotycząca wyszukiwania i wyników",
   supportFaqSearchAnswer:
     "Kurioticket może pomóc, gdy wyszukiwanie lotów lub hoteli nie działa, wyniki się nie ładują, filtry są niejasne albo ceny i dostawcy nie wyświetlają się zgodnie z oczekiwaniami.",
-  supportFaqSavedTripsQuestion: "Zapisane podróże i alerty",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "Zapisane podróże i alerty",
+  supportFaqSavedRecentAnswer:
     "Kurioticket może pomóc w sprawach zapisanych podróży, ostatnich wyszukiwań, alertów cenowych, problemów z powiadomieniami i narzędzi podróży powiązanych z kontem.",
   supportFaqRedirectQuestion:
     "Pomoc dotycząca rezerwacji/przekierowania do dostawcy",

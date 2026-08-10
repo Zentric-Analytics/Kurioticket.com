@@ -16,8 +16,8 @@ import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { ScreenHeader, Segments } from "./FlowPrimitives";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 
-type TripTab = "upcoming" | "past";
-export function TripsFlowScreen() {
+type TripTab = "upcoming" | "past" | "cancelled";
+export function MyTripsFlowScreen() {
   const ft = useFlowTheme();
   const [tab, setTab] = useState<TripTab>("upcoming");
   const [trips, setTrips] = useState<MobileTrip[]>([]);
@@ -38,7 +38,7 @@ export function TripsFlowScreen() {
           if (!session) router.replace("/email-auth");
           else
             setError(
-              "Unable to load trips. Check your connection and try again.",
+              "Unable to load reservations. Check your connection and try again.",
             );
         });
       })
@@ -52,7 +52,7 @@ export function TripsFlowScreen() {
   return (
     <SafeAreaView style={ft.styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={ft.styles.scroll}>
-        <ScreenHeader title="Trips" />
+        <ScreenHeader title="My Trips" />
         <View style={[ft.styles.card, ft.styles.shadow]}>
           <Segments
             value={tab}
@@ -60,13 +60,18 @@ export function TripsFlowScreen() {
             options={[
               { value: "upcoming", label: "Upcoming" },
               { value: "past", label: "Past" },
+              { value: "cancelled", label: "Cancelled" },
             ]}
           />
         </View>
         <Text style={ft.styles.sectionTitle}>
-          {tab === "upcoming" ? "Upcoming trips" : "Past trips"}
+          {tab === "upcoming"
+            ? "Upcoming reservations"
+            : tab === "past"
+              ? "Past reservations"
+              : "Cancelled reservations"}
         </Text>
-        {loading ? <Text style={ft.styles.meta}>Loading trips…</Text> : null}
+        {loading ? <Text style={ft.styles.meta}>Loading reservations…</Text> : null}
         {error ? (
           <Text accessibilityRole="alert" style={ft.styles.meta}>
             {error}
@@ -75,7 +80,7 @@ export function TripsFlowScreen() {
         {!loading && !error && !trips.length ? (
           <View style={styles.empty}>
             <FlowIcon name="calendar" color={flowColors.blue} size={36} />
-            <Text style={ft.styles.value}>No {tab} trips</Text>
+            <Text style={ft.styles.value}>No {tab} reservations</Text>
             <Text style={ft.styles.meta}>
               Your provider-backed bookings will appear here.
             </Text>
@@ -85,14 +90,6 @@ export function TripsFlowScreen() {
           <TripCard key={trip.id} trip={trip} />
         ))}
       </ScrollView>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Add a trip"
-        onPress={() => router.push("/explore-trip")}
-        style={styles.fab}
-      >
-        <FlowIcon name="plus" color="white" />
-      </Pressable>
     </SafeAreaView>
   );
 }
@@ -102,7 +99,7 @@ function TripCard({ trip }: { trip: MobileTrip }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Open trip ${trip.origin ? `${trip.origin} to ` : ""}${trip.destination}`}
+      accessibilityLabel={`Open reservation ${trip.origin ? `${trip.origin} to ` : ""}${trip.destination}`}
       onPress={() =>
         router.push({ pathname: "/trips/[id]", params: { id: trip.id } })
       }
@@ -255,18 +252,6 @@ const styles = StyleSheet.create({
   },
   confirmed: { backgroundColor: flowColors.paleGreen },
   statusText: { color: flowColors.navy, fontSize: 9, fontWeight: "700" },
-  fab: {
-    position: "absolute",
-    right: 18,
-    bottom: 18,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: flowColors.blue,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
-  },
   destinations: { flexDirection: "row", gap: 7 },
   destination: {
     flex: 1,

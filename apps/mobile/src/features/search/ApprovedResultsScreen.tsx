@@ -41,6 +41,7 @@ import {
 } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
+import { useFeatureAvailability } from "../availability/FeatureAvailability";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -51,6 +52,7 @@ const airportLabel = (code: unknown) => {
   return airport ? `${airport.city} (${value})` : value;
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
+  const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = useMemo(
     () => buildSearchPlan(product, params),
@@ -257,7 +259,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             />
           ),
         )}
-        {status === "ready" ? <PriceAlert product={product} /> : null}
+        {status === "ready" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
       </ScrollView>
       <BottomNav />
     </SafeAreaView>

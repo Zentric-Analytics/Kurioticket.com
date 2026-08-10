@@ -2526,8 +2526,8 @@ flightLandingRouteAriaLabel: "Cerca voli da {{origin}} a {{destination}}",
   supportFaqSearchQuestion: "Aiuto per ricerca e risultati",
   supportFaqSearchAnswer:
     "Kurioticket può aiutarti quando la ricerca di voli o hotel non funziona, i risultati non si caricano, i filtri sono poco chiari oppure prezzi e fornitori non vengono visualizzati come previsto.",
-  supportFaqSavedTripsQuestion: "Viaggi salvati e avvisi",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "Viaggi salvati e avvisi",
+  supportFaqSavedRecentAnswer:
     "Kurioticket può aiutarti con viaggi salvati, ricerche recenti, avvisi sui prezzi, problemi di notifica e strumenti di viaggio collegati all’account.",
   supportFaqRedirectQuestion:
     "Aiuto per prenotazioni e reindirizzamenti ai fornitori",

@@ -1994,8 +1994,8 @@ flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}
   supportFaqSearchQuestion: "Hulp bij zoeken en resultaten",
   supportFaqSearchAnswer:
     "Kurioticket kan helpen wanneer zoeken naar vluchten of hotels niet werkt, resultaten niet laden, filters verwarrend zijn of prijzen en providers niet worden weergegeven zoals verwacht.",
-  supportFaqSavedTripsQuestion: "Opgeslagen reizen en alerts",
-  supportFaqSavedTripsAnswer:
+  supportFaqSavedRecentQuestion: "Opgeslagen reizen en alerts",
+  supportFaqSavedRecentAnswer:
     "Kurioticket kan helpen met opgeslagen reizen, recente zoekopdrachten, prijsalerts, meldingsproblemen en reisfuncties die aan je account zijn gekoppeld.",
   supportFaqRedirectQuestion: "Hulp bij boeking of provider-doorverwijzing",
   supportFaqRedirectAnswer:

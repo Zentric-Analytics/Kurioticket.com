@@ -7,9 +7,11 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useCallback, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import { travelApi } from "../../api/travelApi";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
@@ -18,6 +20,8 @@ import { HomepageDealPromos } from "../home/HomepageDealPromos";
 import { RegionalDestinationRoutes } from "../home/RegionalDestinationRoutes";
 import { HomepageAdventureDiscovery } from "../home/HomepageAdventureDiscovery";
 import { PopularDestinationStays } from "../home/PopularDestinationStays";
+import { useFeatureAvailability } from "../availability/FeatureAvailability";
+import { UnavailableNotice } from "./FlowPrimitives";
 
 const homeHeroSource = {
   uri: "https://kurioticket.com/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
@@ -82,6 +86,8 @@ function HomeHero() {
 
 export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
   const ft = useFlowTheme();
+  const [unreadCount, setUnreadCount] = useState(0);
+  useFocusEffect(useCallback(() => { let active = true; void travelApi.notificationUnreadCount().then(({ count }) => { if (active) setUnreadCount(count); }).catch(() => { if (active) setUnreadCount(0); }); return () => { active = false; }; }, []));
   return (
     <View pointerEvents="box-none" style={[styles.homeTopNavigation, { backgroundColor: ft.colors.surface, borderBottomColor: ft.colors.border }]}>
       <View style={{ height: safeAreaTop }} />
@@ -102,6 +108,7 @@ export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
           style={ft.styles.iconButton}
         >
           <FlowIcon name="bell" color={ft.colors.icon} />
+          {unreadCount > 0 ? <View accessibilityLabel={`${unreadCount} unread notifications`} style={styles.notificationBadge}><Text style={styles.notificationBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text></View> : null}
         </Pressable>
       </View>
     </View>
@@ -121,6 +128,8 @@ const products: {
 export function SharedHomePage() {
   const ft = useFlowTheme();
   const insets = useSafeAreaInsets();
+  const { availability } = useFeatureAvailability();
+  const visibleProducts = products.filter((product) => product.route !== "/deals" || availability.deals);
 
   return (
     <View style={ft.styles.safe}>
@@ -135,7 +144,7 @@ export function SharedHomePage() {
           <HomeHero />
         </View>
         <View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>
-          {products.map((product, index) => (
+          {visibleProducts.map((product, index) => (
             <Pressable
               key={product.label}
               accessibilityRole="button"
@@ -162,7 +171,7 @@ export function SharedHomePage() {
             </Pressable>
           ))}
         </View>
-        <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
+        {availability.flightSearch ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker /> : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />}
         <PopularDestinationStays />
         <HomepageAdventureDiscovery />
         <HomepageDealPromos />
@@ -200,6 +209,8 @@ const styles = StyleSheet.create({
     width: 130,
     height: 32,
   },
+  notificationBadge: { position: "absolute", right: -5, top: -5, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: "#D92D20" },
+  notificationBadgeText: { color: "white", fontSize: 10, fontWeight: "800" },
   products: {
     marginTop: -34,
     minHeight: 78,

@@ -40,7 +40,7 @@ export function GuestProfileScreen() {
     { title: "Privacy Policy", description: "Learn how we protect your data", icon: "shield", action: () => void openUrl(PRIVACY, "Privacy Policy") },
   ];
   const saved: Row[] = [
-    { title: "Saved & recent", description: "Sign in to view saved favorites", icon: "heart", action: () => router.push("/saved") },
+    { title: "Saved & Recent", description: "Sign in to view saved favorites", icon: "heart", action: () => router.push("/saved") },
   ];
   const appSettings: Row[] = [
     { title: "Language", icon: "globe", value: "English", action: () => unavailable("Language selection") },

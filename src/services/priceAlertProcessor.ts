@@ -6,6 +6,8 @@ import type { FlightSearchParams, HotelSearchParams, NormalizedHotelResult } fro
 import { searchFlights } from "@/services/travel/flightAggregator";
 import { searchHotels } from "@/services/travel/hotelAggregator";
 import { priceAlertEmail, sendOptionalEmail } from "@/services/emailService";
+import { persistCanonicalNotificationEvent, type NotificationPersistenceClient } from "@/services/notificationService";
+import { isFeatureEnabled } from "@/lib/feature-controls/service";
 
 export const PRICE_ALERT_BATCH_SIZE = 50;
 const DEFAULT_RETRY_DELAY_MS = 1000 * 60 * 60;
@@ -26,6 +28,10 @@ type PriceAlertRecord = {
   origin: string | null;
   destination: string;
   targetPrice: { toString(): string } | number | string | null;
+  mode: "AUTOMATIC" | "TARGET";
+  baselinePrice: { toString(): string } | number | string | null;
+  lastNotifiedPrice: { toString(): string } | number | string | null;
+  lastNotifiedAt: Date | null;
   currency: string;
   status: "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED" | "DELETED";
   query: unknown;
@@ -42,10 +48,14 @@ type PriceAlertDb = {
   priceSnapshot: {
     create(args: { data: Record<string, unknown> }): Promise<unknown>;
   };
+  notification: NotificationPersistenceClient["notification"];
+  $transaction<T>(fn: (tx: PriceAlertDb) => Promise<T>): Promise<T>;
 };
 
 export type PriceAlertProcessingCounts = {
+  disabled?: boolean;
   processed: number;
+  eventsCreated: number;
   sent: number;
   skippedByPreferences: number;
   notTriggered: number;
@@ -86,7 +96,12 @@ export async function processDuePriceAlerts(options: {
   sendEmail?: OptionalEmailSender;
   checkDelayMs?: number;
   retryDelayMs?: number;
+  featureEnabled?: () => Promise<boolean>;
 } = {}): Promise<PriceAlertProcessingCounts> {
+  if (!(await (options.featureEnabled ?? (() => isFeatureEnabled("PRICE_ALERT_PROCESSING_ENABLED")))())) {
+    console.info("[feature-controls:processor-disabled]", { processor: "price-alerts" });
+    return { disabled: true, ...emptyCounts() };
+  }
   const now = options.now ?? new Date();
   const db = options.db ?? (getPrisma() as unknown as PriceAlertDb);
   const resolvePrice = options.resolvePrice ?? resolveAlertPrice;
@@ -107,37 +122,48 @@ export async function processDuePriceAlerts(options: {
     counts.processed += 1;
     try {
       const resolved = await resolvePrice(alert);
-      const nextCheckAt = new Date(now.getTime() + checkDelayMs);
-      await recordSuccessfulCheck(db, alert, resolved, now, nextCheckAt);
-
       const targetPrice = toFiniteNumber(alert.targetPrice);
-      if (targetPrice === null) {
+      const baseline = toFiniteNumber(alert.lastNotifiedPrice) ?? toFiniteNumber(alert.baselinePrice);
+      const isAutomatic = alert.mode === "AUTOMATIC";
+      if (isAutomatic && baseline === null) {
+        await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs), { baselinePrice: resolved.price });
         counts.notTriggered += 1;
         continue;
       }
+      const automaticDrop = isAutomatic && baseline !== null && (baseline - resolved.price >= 25 || (baseline - resolved.price) / baseline >= 0.15);
 
       if (resolved.currency.toUpperCase() !== alert.currency.toUpperCase()) {
+        await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs));
         console.warn("[price-alerts:currency-mismatch]", { alertId: alert.id, expected: alert.currency, actual: resolved.currency });
         counts.notTriggered += 1;
         continue;
       }
 
-      if (resolved.price > targetPrice) {
+      if ((!isAutomatic && (targetPrice === null || resolved.price > targetPrice)) || (isAutomatic && !automaticDrop)) {
+        await recordSuccessfulCheck(db, alert, resolved, now, new Date(now.getTime() + checkDelayMs));
         counts.notTriggered += 1;
         continue;
       }
 
+      const route = alert.type === "FLIGHT" && alert.origin ? `${alert.origin} to ${alert.destination}` : alert.destination;
+      const eventKey = isAutomatic ? `price-alert:${alert.id}:automatic:${resolved.currency}:${resolved.price.toFixed(2)}` : buildPriceAlertIdempotencyKey(alert);
+      const event = await db.$transaction(async (tx) => {
+        const triggered = await tx.priceAlert.updateMany({ where: { id: alert.id, status: "ACTIVE", nextCheckAt: alert.nextCheckAt }, data: isAutomatic ? { lastSeenPrice: resolved.price, lastNotifiedPrice: resolved.price, lastNotifiedAt: now, lastCheckedAt: now, nextCheckAt: new Date(now.getTime() + checkDelayMs), consecutiveFailures: 0, lastErrorCode: null } : { status: "TRIGGERED", lastSeenPrice: resolved.price, lastCheckedAt: now, nextCheckAt: null } });
+        if (triggered.count === 0) return null;
+        await tx.priceSnapshot.create({ data: { priceAlertId: alert.id, provider: resolved.provider, price: resolved.price, currency: resolved.currency, payload: resolved.payload ?? {} } });
+        return persistCanonicalNotificationEvent({ userId: alert.userId, eventKey, type: "PRICE_ALERT", title: isAutomatic ? `Price drop detected for ${route}` : `Price target reached for ${route}`, body: isAutomatic ? `${formatPrice(resolved.price, resolved.currency)} is meaningfully lower than the tracked price.` : `${formatPrice(resolved.price, resolved.currency)} is at or below your target.`, actionPath: "/price-alerts", metadata: { alertId: alert.id, mode: alert.mode, currentPrice: resolved.price, currency: resolved.currency } }, tx);
+      });
+      if (!event) continue;
+      if (event.created) counts.eventsCreated += 1;
+      if (!event.created) continue;
+
       if (!alert.user?.email) {
         console.warn("[price-alerts:missing-email]", { alertId: alert.id });
-        counts.failed += 1;
-        await scheduleRetry(db, alert.id, now, retryDelayMs);
         continue;
       }
 
-      const route = alert.type === "FLIGHT" && alert.origin ? `${alert.origin} to ${alert.destination}` : alert.destination;
       const url = resolved.url || `${process.env.NEXT_PUBLIC_APP_URL || "https://kurioticket.com"}/dashboard/alerts`;
       const html = priceAlertEmail({ name: alert.user.name, route, price: formatPrice(resolved.price, resolved.currency), url });
-      const idempotencyKey = buildPriceAlertIdempotencyKey(alert);
       const result = await sendEmail({
         userId: alert.userId,
         category: "priceAlerts",
@@ -145,7 +171,7 @@ export async function processDuePriceAlerts(options: {
         subject: `Price alert: ${route} reached ${formatPrice(resolved.price, resolved.currency)}`,
         html,
         template: "price_alert",
-        idempotencyKey,
+        idempotencyKey: eventKey,
         metadata: { alertId: alert.id, currentPrice: resolved.price, currency: resolved.currency },
       });
 
@@ -154,11 +180,7 @@ export async function processDuePriceAlerts(options: {
         continue;
       }
 
-      const triggered = await db.priceAlert.updateMany({
-        where: { id: alert.id, status: "ACTIVE", nextCheckAt },
-        data: { status: "TRIGGERED", nextCheckAt: null },
-      });
-      if (triggered.count > 0) counts.sent += 1;
+      counts.sent += 1;
     } catch (error) {
       counts.failed += 1;
       console.error("[price-alerts:process-failed]", safeError(error, alert.id));
@@ -185,16 +207,18 @@ export async function resolveAlertPrice(alert: PriceAlertRecord): Promise<Resolv
   return selected;
 }
 
-async function recordSuccessfulCheck(db: PriceAlertDb, alert: PriceAlertRecord, resolved: ResolvedPrice, now: Date, nextCheckAt: Date) {
-  await db.priceSnapshot.create({ data: { priceAlertId: alert.id, provider: resolved.provider, price: resolved.price, currency: resolved.currency, payload: resolved.payload ?? {} } });
-  await db.priceAlert.update({ where: { id: alert.id }, data: { lastSeenPrice: resolved.price, lastCheckedAt: now, nextCheckAt } });
+async function recordSuccessfulCheck(db: PriceAlertDb, alert: PriceAlertRecord, resolved: ResolvedPrice, now: Date, nextCheckAt: Date, extra: Record<string, unknown> = {}) {
+  await db.$transaction(async (tx) => {
+    const updated = await tx.priceAlert.updateMany({ where: { id: alert.id, status: "ACTIVE", nextCheckAt: alert.nextCheckAt }, data: { lastSeenPrice: resolved.price, lastProvider: resolved.provider, lastCheckedAt: now, nextCheckAt, consecutiveFailures: 0, lastErrorCode: null, ...extra } });
+    if (updated.count > 0) await tx.priceSnapshot.create({ data: { priceAlertId: alert.id, provider: resolved.provider, price: resolved.price, currency: resolved.currency, payload: resolved.payload ?? {} } });
+  });
 }
 
 async function scheduleRetry(db: PriceAlertDb, alertId: string, now: Date, retryDelayMs: number) {
   await db.priceAlert.updateMany({ where: { id: alertId, status: "ACTIVE" }, data: { nextCheckAt: new Date(now.getTime() + retryDelayMs) } });
 }
 
-function emptyCounts(): PriceAlertProcessingCounts { return { processed: 0, sent: 0, skippedByPreferences: 0, notTriggered: 0, failed: 0 }; }
+function emptyCounts(): PriceAlertProcessingCounts { return { processed: 0, eventsCreated: 0, sent: 0, skippedByPreferences: 0, notTriggered: 0, failed: 0 }; }
 function toFiniteNumber(value: PriceAlertRecord["targetPrice"]) { const n = value === null ? NaN : Number(value.toString()); return Number.isFinite(n) ? n : null; }
 export function buildPriceAlertIdempotencyKey(alert: Pick<PriceAlertRecord, "id" | "targetPrice" | "currency">) { return `price-alert:${alert.id}:${alert.targetPrice?.toString() ?? "none"}:${alert.currency}`; }
 function formatPrice(price: number, currency: string) { return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(price); }
