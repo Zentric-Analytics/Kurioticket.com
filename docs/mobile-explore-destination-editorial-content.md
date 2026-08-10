@@ -329,6 +329,29 @@ Repository-derived Asian coverage moves from **29 of 64** canonical destinations
 
 This batch includes no ExploreScreen or DestinationDetailsScreen UI work, images or galleries, maps, search changes, flight, hotel or booking changes, related destinations, or editorial-architecture changes. Canonical IDs, names, countries, airport data, aliases, image identities and image provenance remain unchanged.
 
+### Asia Batch 5 — South Asia + Tehran
+
+Asia Batch 5, verified on 2026-08-10, considered and implemented all eight candidates, with no deferrals:
+
+- `bd-dhaka` — Dhaka, Bangladesh
+- `pk-islamabad` — Islamabad, Pakistan
+- `pk-karachi` — Karachi, Pakistan
+- `np-kathmandu` — Kathmandu, Nepal
+- `pk-lahore` — Lahore, Pakistan
+- `mv-male` — Malé, Maldives
+- `bt-paro` — Paro, Bhutan
+- `ir-tehran` — Tehran, Iran
+
+The source pass uses exact URLs from government tourism and heritage bodies, national museums, UNESCO and established cultural institutions. Every record has at least two distinct, titled HTTPS references selected to support durable geography, architecture, history and institutional heritage. Tehran passed the stricter gate through exact UNESCO Golestan Palace and National Museum of Iran references; its copy excludes current political conditions, demonstrations, sanctions, safety, visas, transport, airport operations and institutional accessibility.
+
+Geographic scope remains destination-specific. Dhaka is the city beside the Buriganga, not Dhaka Division or every site in its metropolitan area. Islamabad remains distinct from Rawalpindi, and Karachi does not absorb Sindh-wide heritage. Kathmandu's record distinguishes the city from the wider Kathmandu Valley, while Lahore remains city-specific rather than province-wide.
+
+Malé retains its accented canonical name and compact island-city scope; its unchanged MLE airport is correctly understood to be on neighbouring Hulhulé, not Malé island. Paro town is placed accurately within Paro Valley without treating Paro District or Bhutan as the town. Tehran remains the canonical Iranian capital and is presented solely through durable geographic, historical, architectural and cultural context.
+
+Repository-derived Asian coverage moves from **37 of 64** canonical destinations before the batch to **45 of 64** after it, leaving **19** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batches 1–4 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch includes no ExploreScreen or DestinationDetailsScreen UI work, images or galleries, maps, search changes, flight, hotel or booking changes, related destinations, or editorial-architecture changes. Canonical IDs, names, countries, airport data, aliases, image identities and image provenance remain unchanged.
+
 This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
