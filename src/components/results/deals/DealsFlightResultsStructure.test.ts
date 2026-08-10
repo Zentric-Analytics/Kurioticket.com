@@ -35,9 +35,10 @@ test("guided Flight results suppress standalone-only UI and provider exits", asy
 });
 
 test("guided loaded Flight results hide only the redundant heading and preserve result controls and focus", async () => {
-  const [client, stage] = await Promise.all([
+  const [client, stage, globals] = await Promise.all([
     readFile(new URL("../FlightResultsClient.tsx", import.meta.url), "utf8"),
     readFile(new URL("./DealsFlightResultsStage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../../../app/globals.css", import.meta.url), "utf8"),
   ]);
   assert.match(
     stage,
@@ -56,7 +57,7 @@ test("guided loaded Flight results hide only the redundant heading and preserve 
   );
   assert.match(
     loadedBranch,
-    /<section aria-labelledby="deals-guided-flight-results-heading" className="mt-0" data-flight-results-experience="deals-guided">/,
+    /<section aria-labelledby="deals-guided-flight-results-heading" className="mt-0 lg:relative lg:left-1\/2 lg:w-\[min\(1180px,calc\(100vw-32px\)\)\] lg:-translate-x-1\/2" data-flight-results-experience="deals-guided">/,
   );
   assert.doesNotMatch(
     loadedBranch,
@@ -73,6 +74,22 @@ test("guided loaded Flight results hide only the redundant heading and preserve 
   assert.match(
     loadedBranch,
     /<div className="flex w-full flex-col gap-3 py-1">/,
+  );
+  const guidedGridOpeningTag = loadedBranch.match(
+    /<div ref=\{resultsGridRef\} className="[^"]+">/,
+  )?.[0];
+  assert.ok(guidedGridOpeningTag, "guided results grid opening tag is present");
+  assert.match(guidedGridOpeningTag, /className="grid /);
+  assert.match(guidedGridOpeningTag, /lg:grid-cols-\[260px_minmax\(0,1fr\)\]/);
+  assert.match(guidedGridOpeningTag, /lg:gap-x-6/);
+  assert.doesNotMatch(guidedGridOpeningTag, /flight-results-grid/);
+  assert.doesNotMatch(guidedGridOpeningTag, /lg:gap-x-9/);
+  assert.match(globals, /\.flight-results-grid/);
+  assert.match(
+    client.slice(
+      client.indexOf("return (", client.indexOf("if (!hasSearched)")),
+    ),
+    /ref=\{resultsGridRef\}[\s\S]*?className="flight-results-grid page-shell grid/,
   );
   assert.doesNotMatch(
     loadedBranch,
