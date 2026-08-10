@@ -306,6 +306,29 @@ Repository-derived Asian coverage moves from **22 of 64** canonical destinations
 
 This batch includes no ExploreScreen or DestinationDetailsScreen UI work, image or gallery work, map work, search changes, flight or hotel booking changes, related-destination work, or editorial-architecture changes. Canonical IDs, names, countries, airport data, aliases, image identities and image provenance remain unchanged.
 
+### Asia Batch 4 — India + Colombo
+
+Asia Batch 4, verified on 2026-08-10, considered and implemented all eight candidates, with no individual blockers or deferrals:
+
+- `in-bengaluru` — Bengaluru, India
+- `in-chennai` — Chennai, India
+- `lk-colombo` — Colombo, Sri Lanka
+- `in-hyderabad` — Hyderabad, India
+- `in-kochi` — Kochi, India
+- `in-kolkata` — Kolkata, India
+- `in-mumbai` — Mumbai, India
+- `in-new-delhi` — New Delhi, India
+
+The source pass uses exact URLs from official tourism bodies, government museums, cultural institutions, UNESCO and a durable reference work. Every record has at least two distinct, titled HTTPS references. Sources were selected for stable geography, urban history, architecture and institutional heritage; no URL was fabricated, and restricted external HTTPS access was not treated as a batch blocker.
+
+Canonical naming and historical terminology remain deliberate. Bengaluru, Chennai, Kochi, Kolkata and Mumbai lead every record by their canonical names; Bangalore, Madras, Cochin, Calcutta and Bombay appear only where useful historical context supports them. Hyderabad is explicitly scoped to India. New Delhi remains the planned capital district rather than a synonym for Delhi, the National Capital Territory or Old Delhi.
+
+Colombo remains specific to the Indian Ocean city rather than Sri Lanka generally. Its CMB airport data remains unchanged, and the editorial copy does not place the airport at Katunayake in central Colombo. Mumbai likewise retains BOM unchanged. No airport geography or other canonical airport fact was modified.
+
+Repository-derived Asian coverage moves from **29 of 64** canonical destinations before the batch to **37 of 64** after it, leaving **27** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batches 1–3 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch includes no ExploreScreen or DestinationDetailsScreen UI work, images or galleries, maps, search changes, flight, hotel or booking changes, related destinations, or editorial-architecture changes. Canonical IDs, names, countries, airport data, aliases, image identities and image provenance remain unchanged.
+
 This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
 
 This list describes the current rollout, not an editorial allowlist or required editorial order. Missing editorial data leaves every other canonical destination valid, searchable and safe to open. Add future content in small reviewed batches rather than adding all remaining destinations at once.
