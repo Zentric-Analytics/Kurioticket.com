@@ -62,11 +62,15 @@ test("admin navigation restores Providers and the original product destinations"
   assert.equal(adminNavigation.some((item) => item.href === "/admin/cars" && item.label === "Cars"), true);
 });
 
-test("restored product operations pages retain their product-specific readiness views", () => {
-  assert.match(flightsPage, /title="Flight Operations"/);
-  assert.match(hotelsPage, /title="Hotel Operations"/);
-  assert.match(carsPage, /title="Car Operations"/);
+test("product pages retain truthful metasearch readiness views", () => {
+  assert.match(flightsPage, /title="Flight Search Readiness"/);
+  assert.match(hotelsPage, /title="Hotel Search Readiness"/);
+  assert.match(carsPage, /title="Car Search Readiness"/);
   for (const source of [flightsPage, hotelsPage, carsPage]) assert.match(source, /AdminProviderStatusCard/);
+  for (const source of [flightsPage, hotelsPage, carsPage]) {
+    assert.match(source, /provider-owned/i);
+    assert.doesNotMatch(source, /Booking not live|production booking workflow|booking actions/i);
+  }
 });
 
 test("provider APIs, retest API, and unrelated admin pages are not edited by provider page consolidation", () => {

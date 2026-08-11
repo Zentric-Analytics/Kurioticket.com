@@ -16,15 +16,14 @@ test("public content management preserves the restored read-only inventory secti
     "Homepage destination cards",
     "Flight route cards",
     "Hotel destination cards",
-    "Car pickup cards",
     "FAQs",
-    "Trust messages",
   ]) {
     assert.match(contentPage, new RegExp(section));
   }
 
   assert.doesNotMatch(contentPage, /HomepageFaresRefreshCard/);
   assert.doesNotMatch(contentPage, /Create content|Edit content|Delete content|Upload image|Approve content/i);
+  assert.doesNotMatch(contentPage, /Not live yet|Placeholder|future/i);
 });
 
 test("system owns feature controls while settings retains homepage fares", () => {

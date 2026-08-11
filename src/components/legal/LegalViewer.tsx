@@ -6,7 +6,6 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { getTranslations } from "@/lib/i18n";
 import type { LegalDocument } from "@/lib/types";
 import type { TranslationDictionary } from "@/lib/i18n/types";
-import { legalDeveloperNote } from "@/data/legalDocuments";
 
 const englishTranslations = getTranslations("en-us");
 
@@ -110,13 +109,6 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
     englishTranslations["legal.lastUpdated"],
   );
   const lastUpdatedText = `${lastUpdatedLabel}: ${formattedLastUpdated}`;
-  const developerNote = legalDocumentTranslationNamespace
-    ? getTranslation(
-        t,
-        `${legalDocumentTranslationNamespace}.developerNote`,
-        legalDeveloperNote,
-      )
-    : legalDeveloperNote;
   const sharedTableOfContentsLabel = getTranslation(
     t,
     "legal.tableOfContents",
@@ -196,9 +188,6 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
                 </div>
               </section>
             ))}
-            <div className="rounded-md border border-amber/30 bg-amber/10 p-4 text-sm leading-6 text-amber">
-              {developerNote}
-            </div>
           </article>
         </div>
       </div>
