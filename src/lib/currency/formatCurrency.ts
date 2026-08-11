@@ -56,6 +56,7 @@ export function formatCurrencyFromUsd(amountUsd: number, currency: string, rates
 }
 
 export type DisplayPrice = {
+  amount: number;
   formatted: string;
   currency: string;
   sourceCurrency: string;
@@ -116,6 +117,7 @@ export function formatDisplayPrice({
   const estimateCopy = `Display estimate. Final provider price may differ.${rateCopy}`;
 
   return {
+    amount: displayAmount,
     formatted,
     currency,
     sourceCurrency: normalizedSourceCurrency,
