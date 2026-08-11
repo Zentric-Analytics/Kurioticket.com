@@ -64,7 +64,13 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <View style={styles.topBar}><BackButton /><Text numberOfLines={1} style={styles.topTitle}>{destination.name}</Text><View style={styles.topSpacer} /></View>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        alwaysBounceVertical={false}
+        bounces={false}
+        contentContainerStyle={styles.content}
+        overScrollMode="never"
+        showsVerticalScrollIndicator={false}
+      >
         <Image
           source={resolvedDestinationHeroSource(media, imageFailed)}
           accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`}
