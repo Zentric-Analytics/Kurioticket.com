@@ -2753,11 +2753,23 @@ export function DealsSearchForm({
       ? search.sharedDestination
       : search.hotelDestination;
 
+  const flightRowDesktopClasses =
+    variant === "results"
+      ? "min-[1180px]:grid-cols-[minmax(0,2.6fr)_minmax(150px,1fr)_minmax(185px,1.15fr)_minmax(135px,0.8fr)_minmax(165px,auto)]"
+      : "min-[1050px]:grid-cols-[minmax(0,3fr)_minmax(125px,1.05fr)_minmax(145px,1.15fr)_minmax(105px,0.8fr)_minmax(156px,auto)]";
   const packageTravellersDesktopClasses = included.flight
-    ? "min-[1050px]:min-h-[54px] min-[1050px]:border-b-0 min-[1050px]:border-s"
+    ? variant === "results"
+      ? "min-[1180px]:min-h-[54px] min-[1180px]:border-b-0 min-[1180px]:border-s"
+      : "min-[1050px]:min-h-[54px] min-[1050px]:border-b-0 min-[1050px]:border-s"
     : "lg:min-h-[54px] lg:border-b-0 lg:border-s";
+  const packageCabinDesktopClasses =
+    variant === "results"
+      ? "min-[1180px]:min-h-[54px] min-[1180px]:border-b-0 min-[1180px]:border-s"
+      : "min-[1050px]:min-h-[54px] min-[1050px]:border-b-0 min-[1050px]:border-s";
   const packageSearchDesktopClasses = included.flight
-    ? "min-[1050px]:h-full min-[1050px]:min-w-[156px] min-[1050px]:items-center min-[1050px]:border-s min-[1050px]:border-slate-200 min-[1050px]:px-2"
+    ? variant === "results"
+      ? "min-[1180px]:h-full min-[1180px]:min-w-[165px] min-[1180px]:items-center min-[1180px]:border-s min-[1180px]:border-slate-200 min-[1180px]:px-2"
+      : "min-[1050px]:h-full min-[1050px]:min-w-[156px] min-[1050px]:items-center min-[1050px]:border-s min-[1050px]:border-slate-200 min-[1050px]:px-2"
     : "lg:h-full lg:min-w-[156px] lg:items-center lg:border-s lg:border-slate-200 lg:px-2";
 
   const searchDealsButton = (
@@ -2799,7 +2811,9 @@ export function DealsSearchForm({
         className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200`}
       >
         <span className="min-w-0">
-          <span className={`${label} mb-0.5`}>{travelersControlLabel}</span>
+          <span className={`${label} mb-0.5 whitespace-nowrap`}>
+            {travelersControlLabel}
+          </span>
           <span className="block truncate">{travelerSummary}</span>
         </span>
         <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0" />
@@ -2807,9 +2821,12 @@ export function DealsSearchForm({
       {included.flight ? (
         <div
           data-deals-package-cabin
-          className={`${packageActionSegment} border-b border-slate-200 min-[1050px]:min-h-[54px] min-[1050px]:border-b-0 min-[1050px]:border-s`}
+          className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200`}
         >
-          <label className={`${label} mb-0.5`} htmlFor="deals-flight-cabin">
+          <label
+            className={`${label} mb-0.5 whitespace-nowrap`}
+            htmlFor="deals-flight-cabin"
+          >
             {t("deals.cabinClass")}
           </label>
           <select
@@ -2942,7 +2959,7 @@ export function DealsSearchForm({
             {...(variant === "results"
               ? { "data-deals-results-main-search-row": "flight" }
               : {})}
-            className={`${connectedShell} lg:mt-1 min-[1050px]:grid-cols-[minmax(0,3fr)_minmax(125px,1.05fr)_minmax(145px,1.15fr)_minmax(105px,0.8fr)_minmax(156px,auto)]`}
+            className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1`}
           >
             <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200">
               {(["origin", "destination"] as const).map((kind, index) => {
