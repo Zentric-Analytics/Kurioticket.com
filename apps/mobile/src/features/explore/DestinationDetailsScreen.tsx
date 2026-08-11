@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,7 +22,7 @@ export function DestinationDetailsScreen() {
   const { savedIds, toggle } = useSavedDestinations();
 
   if (!destination) return <InvalidDestination />;
-  return <DestinationPage destination={destination} saved={savedIds.has(destination.id)} onToggle={() => toggle(destination.id)} />;
+  return <DestinationPage key={destination.id} destination={destination} saved={savedIds.has(destination.id)} onToggle={() => toggle(destination.id)} />;
 }
 
 function BackButton() {
@@ -51,7 +51,13 @@ function InvalidDestination() {
 function DestinationPage({ destination, saved, onToggle }: { destination: Destination; saved: boolean; onToggle: () => void }) {
   const media = destinationMedia(destination.id);
   const [imageFailed, setImageFailed] = useState(false);
+  const scrollRef = useRef(null as ScrollView | null);
   const handoff = destinationHandoff(destination);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [destination.id]);
+
   const searchFlights = () => router.push({
     pathname: "/flights",
     params: { destinationId: destination.id, destination: destination.name, to: handoff.primaryAirportCode, airportCodes: handoff.airportCodes.join(",") },
@@ -66,6 +72,7 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <View style={styles.topBar}><BackButton /><Text numberOfLines={1} style={styles.topTitle}>{destination.name}</Text><View style={styles.topSpacer} /></View>
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         alwaysBounceVertical={false}
         bounces={false}
