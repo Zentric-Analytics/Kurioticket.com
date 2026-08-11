@@ -39,6 +39,7 @@ import { DealsHotelResultsStage } from "./DealsHotelResultsStage";
 import { DealsHotelDetailsStage } from "./DealsHotelDetailsStage";
 import { DealsFlightResultsStage } from "./DealsFlightResultsStage";
 import { DealsFlightDetailsStage } from "./DealsFlightDetailsStage";
+import { DealsFlightJourneyV2 } from "./DealsFlightJourneyV2";
 import { DealsCarResultsStage } from "./DealsCarResultsStage";
 import { DealsCarDetailsStage } from "./DealsCarDetailsStage";
 import { DealsReviewStage } from "./DealsReviewStage";
@@ -89,6 +90,7 @@ export function DealsJourneyShell({
   hotelId,
   flightId,
   carId,
+  flightV2Enabled,
 }: {
   stage: DealsJourneyStage;
   search: DealsSearch;
@@ -96,6 +98,7 @@ export function DealsJourneyShell({
   hotelId: string | null;
   flightId: string | null;
   carId: string | null;
+  flightV2Enabled: boolean;
 }) {
   const router = useRouter();
   const { start } = useRouteProgress();
@@ -540,7 +543,11 @@ export function DealsJourneyShell({
               onConfirm={confirmGuidedHotelSelection}
             />
           ) : requiredStage === stage && stage === "flight-results" ? (
-            <DealsFlightResultsStage search={search} />
+            flightV2Enabled ? (
+              <DealsFlightJourneyV2 search={search} upstreamPlan={plan} />
+            ) : (
+              <DealsFlightResultsStage search={search} />
+            )
           ) : requiredStage === stage && stage === "flight-details" ? (
             <DealsFlightDetailsStage
               search={search}
