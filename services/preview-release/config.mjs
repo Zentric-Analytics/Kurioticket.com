@@ -14,6 +14,7 @@ export const PREVIEW_IDENTITY = Object.freeze({
   runtime: "preview-0.3.0",
   apiOrigin: "https://staging.kurioticket.com",
   renderStagingServiceId: "srv-d86ulfgg4nts73bctt20",
+  renderWorkerServiceId: "srv-d9qisaaju40c73bbago0",
 });
 
 export function requirePreviewEnvironment(env = process.env) {

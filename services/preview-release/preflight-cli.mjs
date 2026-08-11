@@ -1,7 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { requirePreviewEnvironment } from "./config.mjs";
+import { PREVIEW_IDENTITY, requirePreviewEnvironment } from "./config.mjs";
 import { PreviewLedger } from "./ledger.mjs";
 import { GitHubClient, RenderClient, EasClient } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
@@ -19,6 +19,7 @@ for (const migration of (await readdir(resolve(root, "services/preview-release/s
     ledger,
     github: new GitHubClient({ readToken: config.githubReadToken, repository: config.repository }),
     render: new RenderClient({ apiKey: config.renderApiKey, serviceId: config.renderServiceId }),
+    renderWorker: new RenderClient({ apiKey: config.renderApiKey, serviceId: PREVIEW_IDENTITY.renderWorkerServiceId }),
     eas: new EasClient({ expoToken: config.expoToken, cwd: resolve(root, "apps/mobile") }),
     apple: new AppStoreConnectClient(config.appStoreConnect),
   });

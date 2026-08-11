@@ -78,6 +78,23 @@ export class RenderClient {
     if (service?.id !== this.serviceId || typeof service?.name !== "string") throw new Error("Render service response is malformed or mismatched.");
     return service;
   }
+  async getPreviewWorkerService() {
+    if (this.serviceId !== PREVIEW_IDENTITY.renderWorkerServiceId) throw new Error("Unapproved Render worker identity.");
+    const service = await this.request(`/services/${this.serviceId}`);
+    const repository = String(service?.repo ?? "").replace(/\.git$/, "").replace(/^https?:\/\//, "");
+    const expectedRepository = `github.com/${PREVIEW_IDENTITY.repository}`;
+    const autoDeployOnCommit = service?.autoDeployTrigger === "commit"
+      || (service?.autoDeployTrigger === undefined && service?.autoDeploy === true);
+    const checks = [
+      [service?.id === this.serviceId, "Render Preview worker ID mismatch."],
+      [service?.type === "background_worker", "Render Preview worker type mismatch."],
+      [service?.branch === PREVIEW_IDENTITY.branch, "Render Preview worker branch mismatch."],
+      [repository === expectedRepository, "Render Preview worker repository mismatch."],
+      [autoDeployOnCommit, "Render Preview worker auto-deploy must be On Commit."],
+    ];
+    for (const [passes, message] of checks) if (!passes) throw new Error(message);
+    return { ...service, autoDeployOnCommit };
+  }
   async latestDeploy() {
     if (this.serviceId !== PREVIEW_IDENTITY.renderStagingServiceId) throw new Error("Unapproved Render service identity.");
     const value = await this.request(`/services/${this.serviceId}/deploys?limit=1`);
