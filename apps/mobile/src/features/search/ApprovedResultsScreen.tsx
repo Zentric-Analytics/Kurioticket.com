@@ -4,6 +4,7 @@ import {
   Alert,
   Animated,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -46,6 +47,13 @@ import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
 import { resolveDateHeaderCollapsed } from "./resultsHeaderModel";
 import { useUnreadNotifications } from "../notifications/useUnreadNotifications";
+import {
+  activeFlightFilterCount,
+  emptyFlightFilters,
+  filterAndSortFlights,
+  flightFilterOptions,
+  type FlightFilters,
+} from "./flightFilters";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -70,6 +78,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
   const [sort, setSort] = useState("best");
+  const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterSection, setFilterSection] = useState<
+    "all" | "stops" | "airlines" | "times"
+  >("all");
   const hasUnreadNotifications = useUnreadNotifications(product === "flight");
   const [dateHeaderCollapsed, setDateHeaderCollapsed] = useState(false);
   const dateHeaderProgress = useRef(new Animated.Value(0)).current;
@@ -132,19 +145,27 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     }
     router.canGoBack() ? router.back() : router.replace("/hotels");
   };
-  const sorted = useMemo(
-    () =>
-      [...results].sort((a, b) =>
+  const sorted = useMemo(() => {
+    if (product === "flight") {
+      return filterAndSortFlights(results as FlightResult[], filters, sort);
+    }
+    return [...results].sort((a, b) =>
         sort === "price"
-          ? product === "flight"
-            ? (a as FlightResult).price - (b as FlightResult).price
-            : (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
-          : product === "flight"
-            ? (b as FlightResult).valueScore - (a as FlightResult).valueScore
-            : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
-      ),
-    [results, sort, product],
+          ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
+          : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
+      );
+  }, [results, filters, sort, product]);
+  const flightOptions = useMemo(
+    () => flightFilterOptions(results as FlightResult[]),
+    [results],
   );
+  const activeFilterCount = activeFlightFilterCount(filters);
+  const openFlightFilters = (
+    section: "all" | "stops" | "airlines" | "times",
+  ) => {
+    setFilterSection(section);
+    setFilterOpen(true);
+  };
   const payload = plan.plan?.payload || {};
   const date = String(
     product === "flight"
@@ -188,6 +209,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         </View>
       </View>
       <Animated.View
+        pointerEvents={product === "flight" && dateHeaderCollapsed ? "none" : "auto"}
         accessibilityElementsHidden={product === "flight" && dateHeaderCollapsed}
         importantForAccessibility={product === "flight" && dateHeaderCollapsed ? "no-hide-descendants" : "auto"}
         style={product === "flight" ? {
@@ -215,10 +237,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         contentContainerStyle={s0.filters}
       >
         <Pill
-          label="Filters"
+          label={product === "flight" && activeFilterCount ? `Filters (${activeFilterCount})` : "Filters"}
+          active={product === "flight" && activeFilterCount > 0}
           icon={product === "flight" ? undefined : "sliders"}
           flightResultsIcon={product === "flight" ? "filters" : undefined}
-          onPress={() =>
+          onPress={() => product === "flight" ? openFlightFilters("all") :
             Alert.alert(
               "Filters",
               "Filter controls use the current live result set.",
@@ -232,8 +255,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           <Pill
             key={x}
             label={x}
+            active={product === "flight" && (
+              x === "Stops" ? filters.stops.length > 0 :
+              x === "Airlines" ? filters.airlines.length > 0 :
+              x === "Times" ? filters.times.length > 0 : false
+            )}
             flightResultsChevron={product === "flight"}
-            onPress={() =>
+            onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines" | "times") :
               Alert.alert(
                 x,
                 "No additional values are available from this search response.",
@@ -279,7 +307,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           <View style={[s0.found, stackedResultsSummary && s0.foundNarrow]}>
             <View style={s0.foundCopy}>
               <Text style={s0.foundTitle}>
-                {results.length}{" "}
+                {sorted.length}{" "}
                 {product === "flight" ? "flights" : "properties"} found
               </Text>
               <Text style={s0.sub}>
@@ -322,10 +350,116 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             />
           ),
         )}
+        {status === "ready" && product === "flight" && results.length > 0 && sorted.length === 0 ? (
+          <Empty
+            title="No flights match these filters"
+            body="Clear the selected filters to see all loaded flights."
+            retry={() => setFilters(emptyFlightFilters())}
+            retryLabel="Clear filters"
+            edit={edit}
+          />
+        ) : null}
         {status === "ready" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
       </ScrollView>
+      {product === "flight" ? (
+        <FlightFilterModal
+          visible={filterOpen}
+          section={filterSection}
+          filters={filters}
+          options={flightOptions}
+          onChange={setFilters}
+          onClose={() => setFilterOpen(false)}
+        />
+      ) : null}
       <BottomNav />
     </SafeAreaView>
+  );
+}
+const stopLabels = {
+  nonstop: "Nonstop",
+  one: "1 stop",
+  twoPlus: "2+ stops",
+} as const;
+const timeLabels = {
+  morning: "Morning",
+  afternoon: "Afternoon",
+  evening: "Evening",
+  night: "Night",
+} as const;
+
+function FlightFilterModal({
+  visible,
+  section,
+  filters,
+  options,
+  onChange,
+  onClose,
+}: {
+  visible: boolean;
+  section: "all" | "stops" | "airlines" | "times";
+  filters: FlightFilters;
+  options: ReturnType<typeof flightFilterOptions>;
+  onChange: (filters: FlightFilters) => void;
+  onClose: () => void;
+}) {
+  const inset = useSafeAreaInsets();
+  const [draft, setDraft] = useState(filters);
+  useEffect(() => {
+    if (visible) setDraft(filters);
+  }, [visible, filters]);
+  const toggle = (key: keyof FlightFilters, value: string) =>
+    setDraft((current) => ({
+      ...current,
+      [key]: current[key].includes(value as never)
+        ? current[key].filter((item) => item !== value)
+        : [...current[key], value],
+    }) as FlightFilters);
+  const choices = (
+    key: keyof FlightFilters,
+    values: readonly string[],
+    labels?: Record<string, string>,
+  ) => values.length ? (
+    <View style={s0.choiceRow}>
+      {values.map((value) => {
+        const selected = draft[key].includes(value as never);
+        return (
+          <Pressable
+            key={value}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: selected }}
+            onPress={() => toggle(key, value)}
+            style={[s0.choice, selected && s0.choiceActive]}
+          >
+            <Text style={[s0.choiceText, selected && s0.choiceTextActive]}>
+              {labels?.[value] || value}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  ) : <Text style={s0.noChoices}>No additional values are available in these results.</Text>;
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
+      <View style={s0.modalBackdrop}>
+        <View style={[s0.sheet, { paddingBottom: Math.max(inset.bottom, 18) }]} accessibilityLabel="Flight filters">
+          <View style={s0.sheetHead}>
+            <Text accessibilityRole="header" style={s0.foundTitle}>Filter flights</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={s0.closeButton}>
+              <FlowIcon name="close" />
+            </Pressable>
+          </View>
+          <ScrollView style={s0.sheetScroll} contentContainerStyle={s0.sheetContent} showsVerticalScrollIndicator={false}>
+            {section === "all" || section === "stops" ? <View style={s0.filterSection}><Text style={s0.filterSectionTitle}>Stops</Text>{choices("stops", options.stops, stopLabels)}</View> : null}
+            {section === "all" || section === "airlines" ? <View style={s0.filterSection}><Text style={s0.filterSectionTitle}>Airlines</Text>{choices("airlines", options.airlines)}</View> : null}
+            {section === "all" || section === "times" ? <View style={s0.filterSection}><Text style={s0.filterSectionTitle}>Departure time</Text>{choices("times", options.times, timeLabels)}</View> : null}
+          </ScrollView>
+          <View style={s0.sheetActions}>
+            <Button label="Apply filters" onPress={() => { onChange(draft); onClose(); }} />
+            <Button label="Clear filters" outline onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} />
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 function FlightCard({ result, rank, params }: { result: FlightResult; rank: number; params: Record<string, string | string[]> }) {
@@ -686,6 +820,21 @@ const s0 = StyleSheet.create({
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 18, paddingVertical: 10, gap: 9, alignItems: "center" },
+  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
+  sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
+  sheetHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  sheetScroll: { flexGrow: 0 },
+  sheetContent: { gap: 22, paddingBottom: 4 },
+  filterSection: { gap: 10 },
+  filterSectionTitle: { fontSize: 14, fontWeight: "800", color: ui.navy },
+  choiceRow: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
+  choice: { minHeight: 42, justifyContent: "center", borderWidth: 1, borderColor: ui.border, borderRadius: 21, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "white" },
+  choiceActive: { borderColor: ui.blue, backgroundColor: "#EEF4FF" },
+  choiceText: { color: ui.navy, fontSize: 13, fontWeight: "600" },
+  choiceTextActive: { color: ui.blue },
+  noChoices: { color: ui.muted, fontSize: 13, lineHeight: 19 },
+  sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
   notice: {
     backgroundColor: "#F2F6FF",
