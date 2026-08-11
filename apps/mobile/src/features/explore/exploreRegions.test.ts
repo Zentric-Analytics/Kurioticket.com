@@ -67,6 +67,12 @@ test("region screen browses the canonical regional order without country section
 
 test("empty regional browsing uses responsive Popular-style destination cards", () => {
   const source = screenSource();
+  const originalInset = Number(
+    source.match(/REGION_BROWSE_HORIZONTAL_INSET = ([\d.]+);/)?.[1],
+  );
+  const cardInset = Number(
+    source.match(/REGION_BROWSE_CARD_HORIZONTAL_INSET = ([\d.]+);/)?.[1],
+  );
   const aspectRatio = Number(
     source.match(/REGION_BROWSE_IMAGE_ASPECT_RATIO = ([\d.]+);/)?.[1],
   );
@@ -77,20 +83,33 @@ test("empty regional browsing uses responsive Popular-style destination cards", 
   assert.ok(aspectRatio > 1 && aspectRatio < 2);
   assert.ok(imageHeightRatio >= 0.58 && imageHeightRatio <= 0.62);
   assert.ok(Math.abs(1 - imageHeightRatio - 0.4) < Number.EPSILON);
+  assert.equal(originalInset, 18);
+  assert.equal(cardInset, 8);
+  assert.ok(cardInset < originalInset);
   assert.match(
     source,
-    /screenWidth - REGION_BROWSE_HORIZONTAL_INSET \* 2/,
+    /screenWidth - REGION_BROWSE_CARD_HORIZONTAL_INSET \* 2/,
+  );
+  assert.match(source, /header: \{ paddingHorizontal: 18 \}/);
+  assert.match(
+    source,
+    /list: \{ paddingHorizontal: REGION_BROWSE_HORIZONTAL_INSET \}/,
+  );
+  assert.match(
+    source,
+    /browseList: \{ paddingHorizontal: REGION_BROWSE_CARD_HORIZONTAL_INSET \}/,
   );
   assert.match(source, /const imageHeight = width \/ REGION_BROWSE_IMAGE_ASPECT_RATIO/);
   assert.match(source, /const height = imageHeight \/ REGION_BROWSE_IMAGE_HEIGHT_RATIO/);
   assert.match(source, /informationHeight: height - imageHeight/);
   for (const screenWidth of [320, 360, 390, 430]) {
-    const width = Math.max(240, screenWidth - 36);
+    const width = Math.max(240, screenWidth - cardInset * 2);
     const imageHeight = width / aspectRatio;
     const height = imageHeight / imageHeightRatio;
     assert.equal(imageHeight / height, 0.6);
     assert.ok(Math.abs((height - imageHeight) / height - 0.4) < 1e-10);
-    assert.equal(width, screenWidth - 36);
+    assert.equal(width, screenWidth - cardInset * 2);
+    assert.equal(width - (screenWidth - originalInset * 2), 20);
   }
   assert.match(source, /browseCard:[\s\S]*?borderRadius: 16/);
   assert.match(source, /browseImage: {[\s\S]*?width: "100%"/);
