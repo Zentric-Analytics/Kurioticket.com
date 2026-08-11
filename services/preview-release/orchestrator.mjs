@@ -280,7 +280,7 @@ export class PreviewOrchestrator {
     const sha = record.source_sha;
     const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha });
     try {
-      await this.prepareCheckoutFactory(checkout.directory);
+      await this.prepareCheckoutFactory(checkout.directory, { allowRootScriptDrift: true });
       assertPreviewIdentity(await this.identityFactory(checkout.directory));
       const fingerprints = await this.fingerprintsFactory(checkout.directory);
       await lease.checkpoint();
