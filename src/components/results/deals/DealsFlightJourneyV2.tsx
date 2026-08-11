@@ -14,6 +14,7 @@ import {
   DealsFlightInventoryClientError,
   getFlightFareChoices,
   getFlightReturnChoices,
+  revalidateFlightOfferV2,
   type DealsFlightInventoryErrorCode,
 } from "@/lib/deals/dealsFlightInventoryClientV2";
 import {
@@ -28,6 +29,15 @@ import {
   shouldRenderDownstreamEmpty,
   type DownstreamLoadState,
 } from "@/lib/deals/dealsFlightRuntimeOrchestratorV2";
+import {
+  buildDealsFlightSelectionSnapshotV2,
+  canonicalOfferForSnapshotV2,
+  fareFromConfirmedOfferV2,
+  getDealsFlightMaterialChangesV2,
+  sameDealsFlightSelectionSnapshotV2,
+  type DealsFlightSelectionSnapshotV2,
+} from "@/lib/deals/dealsFlightRevalidationV2";
+import type { DealsConfirmedFlightOfferV2 } from "@/lib/deals/dealsTripPlanV2";
 
 type Status = "initial" | "loading" | "success" | "empty" | "error";
 const messages: Record<DealsFlightInventoryErrorCode, string> = {
@@ -77,12 +87,21 @@ export function DealsFlightJourneyV2({
   const [error, setError] = useState<DealsFlightInventoryErrorCode | null>(
     null,
   );
+  const [revalidationMessage, setRevalidationMessage] = useState<string | null>(
+    null,
+  );
+  const [pendingChange, setPendingChange] = useState<{
+    snapshot: DealsFlightSelectionSnapshotV2;
+    offer: DealsConfirmedFlightOfferV2;
+  } | null>(null);
   const generation = useRef(0);
   const controllers = useRef(new Set<AbortController>());
   const cancel = useCallback(() => {
     generation.current += 1;
     controllers.current.forEach((controller) => controller.abort());
     controllers.current.clear();
+    setPendingChange(null);
+    setRevalidationMessage(null);
   }, []);
   const request = useCallback(() => {
     const controller = new AbortController();
@@ -410,6 +429,201 @@ export function DealsFlightJourneyV2({
     setPlan(applied.plan);
   };
 
+  const resetInvalidFlight = (
+    message: string,
+    event: "FLIGHT_OFFER_EXPIRED" | "FLIGHT_OFFER_UNAVAILABLE",
+  ) => {
+    const applied = applyDealsJourneyEventV2(plan, search, {
+      type: event,
+      expectedRevision: plan.revision,
+    });
+    if (!applied.ok)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    const cleared = clearDealsFlightRuntimeV2(sessionStorage);
+    if (!cleared.ok)
+      return fail(new DealsFlightInventoryClientError(cleared.code, true));
+    cancel();
+    setRuntime(null);
+    setPlan(applied.plan);
+    setStatus("initial");
+    setRevalidationMessage(message);
+  };
+
+  const confirmFlight = async () => {
+    if (status === "loading") return;
+    const snapshot = buildDealsFlightSelectionSnapshotV2(runtime, plan);
+    if (!snapshot)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    const started = applyDealsJourneyEventV2(plan, search, {
+      type: "FLIGHT_REVALIDATION_STARTED",
+      expectedRevision: plan.revision,
+    });
+    if (!started.ok)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    setPlan(started.plan);
+    setPendingChange(null);
+    setRevalidationMessage(null);
+    setError(null);
+    setStatus("loading");
+    const pending = request();
+    try {
+      const result = await revalidateFlightOfferV2(
+        snapshot,
+        pending.controller.signal,
+      );
+      if (!current(pending)) return;
+      const currentSnapshot = buildDealsFlightSelectionSnapshotV2(
+        runtime,
+        started.plan,
+      );
+      if (!sameDealsFlightSelectionSnapshotV2(snapshot, currentSnapshot))
+        return;
+      if (result.status === "confirmed" || result.status === "changed") {
+        const offer = canonicalOfferForSnapshotV2(result.offer, snapshot);
+        if (!offer)
+          throw new DealsFlightInventoryClientError("INVALID_SELECTION", false);
+        if (result.status === "changed") {
+          setPendingChange({ snapshot, offer });
+          setStatus("success");
+          return;
+        }
+        const fare = fareFromConfirmedOfferV2(offer);
+        if (!fare || !runtime)
+          throw new DealsFlightInventoryClientError(
+            "MALFORMED_RESPONSE",
+            false,
+          );
+        const updatedRuntime = {
+          ...runtime,
+          fareChoices: runtime.fareChoices.map((item) =>
+            item.fareKey === fare.fareKey ? fare : item,
+          ),
+        };
+        if (!commitRuntime(updatedRuntime)) return;
+        const succeeded = applyDealsJourneyEventV2(started.plan, search, {
+          type: "FLIGHT_REVALIDATION_SUCCEEDED",
+          offer,
+          expectedRevision: started.plan.revision,
+        });
+        if (!succeeded.ok)
+          throw new DealsFlightInventoryClientError("INVALID_SELECTION", false);
+        setPlan(succeeded.plan);
+        setStatus("success");
+        return;
+      }
+      if (result.status === "temporary-failure") {
+        setRevalidationMessage(
+          "We couldn't refresh this flight right now. Try again.",
+        );
+        setStatus("success");
+      } else if (result.status === "expired") {
+        resetInvalidFlight(
+          "This flight offer expired. Refresh flight availability.",
+          "FLIGHT_OFFER_EXPIRED",
+        );
+      } else if (result.status === "unavailable") {
+        resetInvalidFlight(
+          "This flight is no longer available. Refresh flight availability.",
+          "FLIGHT_OFFER_UNAVAILABLE",
+        );
+      } else {
+        resetInvalidFlight(
+          "This flight selection is no longer valid. Refresh availability.",
+          "FLIGHT_OFFER_UNAVAILABLE",
+        );
+      }
+    } catch (caught) {
+      if (current(pending)) {
+        setStatus("success");
+        fail(caught);
+      }
+    } finally {
+      controllers.current.delete(pending.controller);
+    }
+  };
+
+  const acceptChangedFlight = () => {
+    if (
+      !pendingChange ||
+      !runtime ||
+      pendingChange.offer.offerExpiresAt <= Date.now()
+    ) {
+      setPendingChange(null);
+      setRevalidationMessage(
+        "The refreshed flight expired. Confirm the fare again.",
+      );
+      return;
+    }
+    const snapshot = buildDealsFlightSelectionSnapshotV2(runtime, plan);
+    if (!sameDealsFlightSelectionSnapshotV2(pendingChange.snapshot, snapshot)) {
+      setPendingChange(null);
+      return;
+    }
+    const offer = canonicalOfferForSnapshotV2(
+      pendingChange.offer,
+      pendingChange.snapshot,
+    );
+    const fare = fareFromConfirmedOfferV2(offer);
+    if (!offer || !fare)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    const selected = applyDealsJourneyEventV2(plan, search, {
+      type: "FLIGHT_FARE_SELECTED",
+      fare,
+      sourceSearchKey: searchKey,
+      expectedRevision: plan.revision,
+    });
+    if (!selected.ok)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    const nextRuntime = {
+      ...runtime,
+      fareChoices: runtime.fareChoices.map((item) =>
+        item.fareKey === fare.fareKey ? fare : item,
+      ),
+    };
+    if (!commitRuntime(nextRuntime)) return;
+    const started = applyDealsJourneyEventV2(selected.plan, search, {
+      type: "FLIGHT_REVALIDATION_STARTED",
+      expectedRevision: selected.plan.revision,
+    });
+    if (!started.ok)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    const succeeded = applyDealsJourneyEventV2(started.plan, search, {
+      type: "FLIGHT_REVALIDATION_SUCCEEDED",
+      offer,
+      expectedRevision: started.plan.revision,
+    });
+    if (!succeeded.ok)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    setPendingChange(null);
+    setPlan(succeeded.plan);
+  };
+
+  const declineChangedFlight = () => {
+    if (!plan.flightJourney?.fare) return setPendingChange(null);
+    const applied = applyDealsJourneyEventV2(plan, search, {
+      type: "FLIGHT_FARE_SELECTED",
+      fare: plan.flightJourney.fare,
+      sourceSearchKey: searchKey,
+      expectedRevision: plan.revision,
+    });
+    setPendingChange(null);
+    if (applied.ok) setPlan(applied.plan);
+  };
+
   if (!runtime && status === "loading")
     return (
       <div role="status" className="rounded-2xl bg-white p-8">
@@ -420,7 +634,10 @@ export function DealsFlightJourneyV2({
     return (
       <SafeState
         message={
-          error ? messages[error] : "No flights are available for this search."
+          revalidationMessage ||
+          (error
+            ? messages[error]
+            : "No flights are available for this search.")
         }
         onRetry={create}
       />
@@ -500,7 +717,136 @@ export function DealsFlightJourneyV2({
               fareState,
               runtime.fareChoices.length,
             ) && <p>No fares are currently available for this itinerary.</p>}
+            {runtime.selectedFareKey && !pendingChange && (
+              <button
+                type="button"
+                onClick={() => void confirmFlight()}
+                disabled={status === "loading"}
+                aria-busy={status === "loading"}
+                className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-60"
+              >
+                {status === "loading" ? "Refreshing flight…" : "Confirm flight"}
+              </button>
+            )}
+            {revalidationMessage && (
+              <div
+                role="alert"
+                className="rounded-xl border border-amber-300 bg-amber-50 p-4"
+              >
+                <p className="font-semibold">{revalidationMessage}</p>
+                <button
+                  type="button"
+                  onClick={() => void confirmFlight()}
+                  className="focus-ring mt-3 min-h-11 rounded-xl border border-blue-700 px-4 font-bold text-blue-800"
+                >
+                  Try again
+                </button>
+              </div>
+            )}
+            {pendingChange &&
+              (() => {
+                const selectedFare = runtime.fareChoices.find(
+                  (item) => item.fareKey === pendingChange.snapshot.fareKey,
+                );
+                const changes = selectedFare
+                  ? getDealsFlightMaterialChangesV2(
+                      selectedFare,
+                      pendingChange.offer,
+                    )
+                  : [];
+                return (
+                  <section
+                    role="alertdialog"
+                    aria-labelledby="changed-flight-heading"
+                    className="rounded-2xl border-2 border-amber-400 bg-amber-50 p-5"
+                    tabIndex={-1}
+                  >
+                    <h3
+                      id="changed-flight-heading"
+                      className="text-lg font-extrabold"
+                    >
+                      Your flight details changed
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-700">
+                      The provider refreshed your exact selected offer. Review
+                      the updated Flight terms before continuing.
+                    </p>
+                    <dl className="mt-4 grid gap-3">
+                      {changes.map((change) => (
+                        <div
+                          key={change.field}
+                          className="rounded-xl bg-white p-3"
+                        >
+                          <dt className="font-bold">{change.field}</dt>
+                          <dd>
+                            <span
+                              className="line-through"
+                              aria-label={`Previous ${change.field}: ${change.before}`}
+                            >
+                              {change.before}
+                            </span>
+                            <span aria-hidden="true"> → </span>
+                            <strong
+                              aria-label={`Updated ${change.field}: ${change.after}`}
+                            >
+                              {change.after}
+                            </strong>
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={acceptChangedFlight}
+                        className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-5 font-bold text-white"
+                      >
+                        Accept updated flight
+                      </button>
+                      <button
+                        type="button"
+                        onClick={declineChangedFlight}
+                        className="focus-ring min-h-11 rounded-xl border border-slate-500 bg-white px-5 font-bold"
+                      >
+                        Choose another fare
+                      </button>
+                    </div>
+                  </section>
+                );
+              })()}
           </ChoiceSection>
+        )}
+      {plan.flightJourney?.phase === "confirmed" &&
+        plan.flightJourney.confirmedOffer && (
+          <section
+            aria-labelledby="confirmed-flight-heading"
+            className="rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-6"
+          >
+            <h2
+              id="confirmed-flight-heading"
+              className="text-xl font-extrabold"
+            >
+              Flight confirmed
+            </h2>
+            <p className="mt-2 font-semibold">
+              {plan.flightJourney.confirmedOffer.airline}
+              {plan.flightJourney.confirmedOffer.flightNumber
+                ? ` · ${plan.flightJourney.confirmedOffer.flightNumber}`
+                : ""}
+            </p>
+            <p className="mt-1 capitalize">
+              {plan.flightJourney.confirmedOffer.cabinClass} ·{" "}
+              {plan.flightJourney.confirmedOffer.baggageInfo ||
+                "Baggage details unavailable"}{" "}
+              ·{" "}
+              {plan.flightJourney.confirmedOffer.refundInfo ||
+                "Refund terms unavailable"}
+            </p>
+            <p className="mt-2 text-lg font-extrabold">
+              {plan.flightJourney.confirmedOffer.sourceCurrency}{" "}
+              {plan.flightJourney.confirmedOffer.sourcePrice}
+            </p>
+          </section>
         )}
     </div>
   );
