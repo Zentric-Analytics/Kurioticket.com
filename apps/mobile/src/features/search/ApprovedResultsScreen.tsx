@@ -17,7 +17,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { Info } from "lucide-react-native";
+import { Bell, Info } from "lucide-react-native";
 import {
   travelApi,
   type FlightResult,
@@ -355,6 +355,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             edit={edit}
           />
         ) : null}
+        {status === "ready" && product === "flight" && availability.priceAlerts ? (
+          <PriceAlert product={product} />
+        ) : null}
         {status === "ready" ? (
           <View style={[s0.found, stackedResultsSummary && s0.foundNarrow]}>
             <View style={s0.foundCopy}>
@@ -420,7 +423,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             edit={edit}
           />
         ) : null}
-        {status === "ready" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
+        {status === "ready" && product === "hotel" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
       </ScrollView>
       {product === "flight" ? (
         <FlightFilterModal
@@ -819,23 +822,26 @@ function HotelLoadingSkeleton() {
   );
 }
 function PriceAlert({ product }: { product: Product }) {
+  const flight = product === "flight";
   return (
     <View style={s0.alert}>
-      <View style={s0.alertIcon}>
-        <FlowIcon name="bell" color="white" />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={s0.foundTitle}>Price alerts</Text>
+      <View style={s0.alertCopy}>
+        <Text style={s0.foundTitle}>{flight ? "Track this route" : "Price alerts"}</Text>
         <Text style={s0.sub}>
-          Track this {product === "flight" ? "route" : "search"} and get
-          notified when prices drop.
+          {flight
+            ? "Create a one-time email alert when the fare for this route reaches your target."
+            : "Track this search and get notified when prices drop."}
         </Text>
       </View>
-      <Button
-        label="Track prices"
-        outline
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={flight ? "Create price alert" : "Track prices"}
         onPress={() => router.push("/price-alerts")}
-      />
+        style={({ pressed }) => [s0.alertButton, pressed && s0.alertButtonPressed]}
+      >
+        <Bell accessibilityElementsHidden accessible={false} color={ui.blue} size={18} strokeWidth={2.25} />
+        <Text style={s0.alertButtonText}>{flight ? "Create price alert" : "Track prices"}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -1089,24 +1095,28 @@ const s0 = StyleSheet.create({
   },
   hotelSkeletonPrice: { width: 58, height: 16 },
   alert: {
-    minHeight: 88,
     borderWidth: 1,
     borderColor: ui.border,
-    borderRadius: 13,
-    padding: 13,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 13,
+    borderRadius: 14,
+    padding: 15,
+    gap: 14,
     backgroundColor: "#FAFCFF",
   },
-  alertIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: ui.blue,
+  alertCopy: { gap: 4 },
+  alertButton: {
+    width: "100%",
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: ui.blue,
+    borderRadius: 11,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+    backgroundColor: "white",
   },
+  alertButtonPressed: { backgroundColor: "#EEF4FF" },
+  alertButtonText: { color: ui.blue, fontSize: 14, fontWeight: "800" },
   nav: {
     position: "absolute",
     left: 0,
