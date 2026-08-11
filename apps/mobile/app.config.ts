@@ -65,8 +65,16 @@ export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileE
     appVersion: release.appVersion, isPreview: variant === "preview" };
 }
 
+export function assertEasPlatformSupported(environment: MobileEnvironment, input: MobileEnvironmentInput) {
+  const easBuildPlatform = input.EAS_BUILD_PLATFORM?.trim().toLowerCase();
+  if (input.EAS_BUILD === "true" && environment.variant === "production" && easBuildPlatform !== "android") {
+    throw new Error("[mobile-environment] iOS Production is deferred; Production EAS builds must target Android.");
+  }
+}
+
 const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   const environment = resolveMobileEnvironment(process.env);
+  assertEasPlatformSupported(environment, process.env);
   const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
   if (process.env.EAS_BUILD === "true" && environment.variant === "preview" && !googleIosClientId) {
     throw new Error("[mobile-environment] Preview EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.");

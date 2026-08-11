@@ -18,6 +18,8 @@ export function assertReleasePolicy(policy, eas) {
   const require = (condition, message) => { if (!condition) failures.push(message); };
 
   require(preview.androidPackage === "com.kurioticket.app.preview", "Preview package is not approved.");
+  require(JSON.stringify(preview.supportedPlatforms) === JSON.stringify(["android", "ios"]), "Preview must support Android and iOS.");
+  require(JSON.stringify(production.supportedPlatforms) === JSON.stringify(["android"]), "Production must support Android only; iOS Production is deferred.");
   require(production.androidPackage === "com.kurioticket.app", "Production package is not approved.");
   require(![preview.androidPackage, production.androidPackage].includes("com.kurioticket.mobile"), "Legacy package is forbidden.");
   require(preview.androidPackage !== production.androidPackage, "Preview and Production packages must differ.");

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { resolveMobileEnvironment } from "../../app.config";
+import { assertEasPlatformSupported, resolveMobileEnvironment } from "../../app.config";
 
 const preview = {
   APP_VARIANT: "preview",
@@ -50,4 +50,14 @@ test("local development requires an explicit flag and reuses Preview", () => {
 test("missing or unknown configuration never falls back", () => {
   assert.throws(() => resolveMobileEnvironment({}), /APP_VARIANT is required/);
   assert.throws(() => resolveMobileEnvironment({ APP_VARIANT: "staging", APP_BUILD_MODE: "release", EXPO_PUBLIC_API_BASE_URL: "https://staging.kurioticket.com" }), /preview or production/);
+});
+
+test("release platform matrix allows Android Preview/Production and iOS Preview but rejects iOS Production", () => {
+  const previewEnvironment = resolveMobileEnvironment(preview);
+  const productionEnvironment = resolveMobileEnvironment(production);
+  assert.doesNotThrow(() => assertEasPlatformSupported(previewEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "android" }));
+  assert.doesNotThrow(() => assertEasPlatformSupported(previewEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "ios" }));
+  assert.doesNotThrow(() => assertEasPlatformSupported(productionEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "android" }));
+  assert.throws(() => assertEasPlatformSupported(productionEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "ios" }), /iOS Production is deferred/);
+  assert.throws(() => assertEasPlatformSupported(productionEnvironment, { EAS_BUILD: "true" }), /Production EAS builds must target Android/);
 });
