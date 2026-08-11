@@ -17,6 +17,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
+import { Info } from "lucide-react-native";
 import {
   travelApi,
   type FlightResult,
@@ -66,7 +67,7 @@ const airportLabel = (code: unknown) => {
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { width } = useWindowDimensions();
   const narrowHeader = width < 360;
-  const stackedResultsSummary = width < 390;
+  const stackedResultsSummary = width < 430;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = useMemo(
@@ -332,7 +333,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   stackedResultsSummary && s0.foundAsideNarrow,
                 ]}
               >
-                <Text style={s0.change}>ⓘ Price may change</Text>
+                <View style={s0.priceNoticeTitle}>
+                  <Info
+                    accessibilityElementsHidden
+                    accessible={false}
+                    color={ui.muted}
+                    size={16}
+                    strokeWidth={2}
+                  />
+                  <Text style={s0.change}>Price may change</Text>
+                </View>
                 <Text style={s0.sub}>Book soon to lock in this price.</Text>
               </View>
             )}
@@ -843,23 +853,24 @@ const s0 = StyleSheet.create({
     borderRadius: 8,
   },
   found: {
-    minHeight: 78,
     borderWidth: 1,
     borderColor: ui.border,
     borderRadius: 12,
-    padding: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     backgroundColor: "#FAFCFF",
     gap: 12,
   },
   foundNarrow: { alignItems: "flex-start", flexDirection: "column", gap: 8 },
-  foundCopy: { flex: 1, minWidth: 0 },
-  foundAside: { flexShrink: 1, maxWidth: 160 },
+  foundCopy: { flex: 1, minWidth: 0, gap: 2 },
+  foundAside: { flexShrink: 1, maxWidth: 170, gap: 2 },
   foundAsideNarrow: { maxWidth: "100%" },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  change: { color: ui.navy, fontSize: 12 },
+  priceNoticeTitle: { flexDirection: "row", alignItems: "center", gap: 5 },
+  change: { color: ui.navy, fontSize: 12, fontWeight: "600" },
   card: {
     borderWidth: 1,
     borderColor: ui.border,
