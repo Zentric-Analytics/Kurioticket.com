@@ -319,14 +319,23 @@ export function gitAuthEnvironment(token, baseEnvironment = process.env) {
   };
 }
 
-export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot, commandRunner = exec } = {}) {
+export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot, commandRunner = exec, allowRootScriptDrift = false } = {}) {
   const manifests = ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"];
   for (const manifest of manifests) {
     const [built, target] = await Promise.all([
       readFile(join(dependencyRoot, manifest)),
       readFile(join(directory, manifest)),
     ]);
-    if (!built.equals(target)) throw new Error(`Exact checkout dependency manifest differs from the immutable worker build: ${manifest}.`);
+    if (built.equals(target)) continue;
+    if (manifest === "package.json" && allowRootScriptDrift) {
+      const dependencyFields = ["packageManager", "engines", "workspaces", "dependencies", "devDependencies", "optionalDependencies", "peerDependencies", "overrides"];
+      const builtPackage = JSON.parse(built.toString("utf8"));
+      const targetPackage = JSON.parse(target.toString("utf8"));
+      const builtDependencies = Object.fromEntries(dependencyFields.map((field) => [field, builtPackage[field] ?? null]));
+      const targetDependencies = Object.fromEntries(dependencyFields.map((field) => [field, targetPackage[field] ?? null]));
+      if (JSON.stringify(builtDependencies) === JSON.stringify(targetDependencies)) continue;
+    }
+    throw new Error(`Exact checkout dependency manifest differs from the immutable worker build: ${manifest}.`);
   }
   // Exact-checkout validation and delivery execute only mobile tooling. Reusing
   // the unrelated root dependency tree doubles filesystem traversal pressure on

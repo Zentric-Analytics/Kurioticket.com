@@ -110,7 +110,7 @@ export class PreviewOrchestrator {
 
     const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha: sourceSha });
     try {
-      await this.prepareCheckoutFactory(checkout.directory);
+      await this.prepareCheckoutFactory(checkout.directory, { allowRootScriptDrift: true });
       assertPreviewIdentity(await this.identityFactory(checkout.directory));
       const currentFingerprints = await this.fingerprintsFactory(checkout.directory);
       if (currentFingerprints[platform] !== plannedFingerprint) {

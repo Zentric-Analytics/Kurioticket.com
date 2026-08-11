@@ -1286,6 +1286,27 @@ test("web delivery adopts exact-SHA Render history before creating a duplicate",
   assert.equal(actions.at(-1).remoteId, deploy.id);
 });
 
+test("canonical recovery may reuse dependencies when only root operator scripts differ", async () => {
+  const temporary = await mkdtemp(resolve(tmpdir(), "preview-recovery-dependencies-"));
+  try {
+    await mkdir(resolve(temporary, "apps/mobile"), { recursive: true });
+    for (const manifest of ["package.json", "package-lock.json", "apps/mobile/package.json", "apps/mobile/package-lock.json"]) {
+      await copyFile(resolve(repositoryRoot, manifest), resolve(temporary, manifest));
+    }
+    const rootPackagePath = resolve(temporary, "package.json");
+    const rootPackage = JSON.parse(readFileSync(rootPackagePath, "utf8"));
+    delete rootPackage.scripts["preview-release:recover-native"];
+    await writeFile(rootPackagePath, `${JSON.stringify(rootPackage, null, 2)}\n`);
+    await prepareCheckout(temporary, {
+      dependencyRoot: repositoryRoot,
+      allowRootScriptDrift: true,
+      commandRunner: async () => {},
+    });
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
 test("permanent historical iOS absence is isolated while Android recipients and newer iOS remain eligible", async () => {
   const oldBuildId = "0c750d4a-79e1-42fe-8d1d-6f16e5dab1f6";
   let unavailable = false;
