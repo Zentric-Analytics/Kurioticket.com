@@ -540,6 +540,19 @@ test("destination details render complete shared editorial while keeping related
   assert.doesNotMatch(source, /editorialProvenance|sourceReferences|lastVerifiedAt/);
 });
 
+test("destination details clamp native overscroll without changing content spacing", () => {
+  const source = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
+  const page = source.slice(source.indexOf("function DestinationPage"), source.indexOf("function Section"));
+  const scrollView = page.slice(page.indexOf("<ScrollView"), page.indexOf(">", page.indexOf("<ScrollView")) + 1);
+
+  assert.match(scrollView, /alwaysBounceVertical={false}/);
+  assert.match(scrollView, /bounces={false}/);
+  assert.match(scrollView, /overScrollMode="never"/);
+  assert.match(scrollView, /contentContainerStyle={styles\.content}/);
+  assert.match(source, /content: \{ paddingBottom: 36 \}/);
+  assert.doesNotMatch(page, /destination\.id\s*===|switch\s*\(destination|Platform\./);
+});
+
 test("destination details follow the destination-first hierarchy without duplicating airports", () => {
   const source = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
   const page = source.slice(source.indexOf("function DestinationPage"), source.indexOf("function Section"));
