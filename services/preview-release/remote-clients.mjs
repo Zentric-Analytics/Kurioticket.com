@@ -325,7 +325,11 @@ export async function exactChangeSet({ directory, repository, token, previousSha
   assertExactSha(previousSha, "Previous SHA");
   assertExactSha(targetSha, "Target SHA");
   const auth = gitAuthEnvironment(token);
-  await exec("git", ["fetch", "--quiet", "--unshallow", "origin", PREVIEW_IDENTITY.branch], { cwd: directory, env: auth });
+  const { stdout: shallowOutput } = await exec("git", ["rev-parse", "--is-shallow-repository"], { cwd: directory, encoding: "utf8" });
+  const fetchArgs = shallowOutput.trim() === "true"
+    ? ["fetch", "--quiet", "--unshallow", "origin", PREVIEW_IDENTITY.branch]
+    : ["fetch", "--quiet", "origin", PREVIEW_IDENTITY.branch];
+  await exec("git", fetchArgs, { cwd: directory, env: auth });
   await exec("git", ["cat-file", "-e", `${previousSha}^{commit}`], { cwd: directory });
   const { stdout: ancestor } = await exec("git", ["merge-base", "--is-ancestor", previousSha, targetSha], { cwd: directory, encoding: "utf8" }).catch((error) => {
     throw new Error(`Previous completed SHA is not an ancestor of target SHA: ${error.code ?? "unknown"}.`);
