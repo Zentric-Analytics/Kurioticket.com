@@ -73,6 +73,7 @@ import {
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
+import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -586,7 +587,7 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
         )}
         <View style={s0.departureBlock}>
           <Text style={s0.nameSmall} numberOfLines={1}>
-            {result.airlineName}{result.flightNumber ? ` · ${result.flightNumber}` : ""}
+            {result.airlineName}
           </Text>
           <Text style={s0.time}>{clock(result.departureTime)}</Text>
           <Text style={s0.sub}>{result.originAirport}</Text>
@@ -615,20 +616,21 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
         <View style={s0.benefitList}>
           <View style={s0.benefitItem}>
             <Luggage size={15} strokeWidth={1.9} color={ui.muted} />
-            <Text style={s0.benefit} numberOfLines={1}>{result.baggageInfo || "Baggage details unavailable"}</Text>
+            <Text style={s0.benefit} numberOfLines={1}>{summarizeBaggage(result.baggageInfo)}</Text>
           </View>
           <View style={s0.benefitItem}>
             <Armchair size={15} strokeWidth={1.9} color={ui.muted} />
-            <Text style={s0.benefit} numberOfLines={1}>Seat selection unavailable</Text>
+            <Text style={s0.benefit} numberOfLines={1}>Seat unavailable</Text>
           </View>
           <View style={s0.benefitItem}>
             <ShieldCheck size={15} strokeWidth={1.9} color={ui.muted} />
-            <Text style={s0.benefit} numberOfLines={1}>{result.refundInfo || "Fare rules unavailable"}</Text>
+            <Text style={s0.benefit} numberOfLines={1}>{summarizeFareRules(result.refundInfo)}</Text>
           </View>
         </View>
-        <Button
-          label="View details"
-          outline={rank !== 0}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="View details"
+          style={[s0.detailsButton, rank !== 0 && s0.detailsButtonOutline]}
           onPress={() =>
             router.push({
               pathname: "/flight-details",
@@ -638,7 +640,9 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
               },
             })
           }
-        />
+        >
+          <Text style={[s0.detailsButtonText, rank !== 0 && s0.detailsButtonTextOutline]} numberOfLines={1}>View details</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -974,11 +978,11 @@ const s0 = StyleSheet.create({
   resultBadgeGreen: { backgroundColor: "#EAF8ED" },
   resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
   resultBadgeTextGreen: { color: ui.green },
-  flightMain: { flexDirection: "row", alignItems: "center", gap: 5 },
-  airline: { width: 38, height: 38, resizeMode: "contain" },
+  flightMain: { flexDirection: "row", alignItems: "center", gap: 3 },
+  airline: { width: 32, height: 32, resizeMode: "contain" },
   airlineFallback: {
-    width: 38,
-    height: 38,
+    width: 32,
+    height: 32,
     borderRadius: 9,
     backgroundColor: "#EEF2F8",
     alignItems: "center",
@@ -986,30 +990,34 @@ const s0 = StyleSheet.create({
   },
   airlineFallbackText: { color: ui.navy, fontSize: 12, fontWeight: "800" },
   nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
-  departureBlock: { flex: 1.15, minWidth: 0 },
-  arrivalBlock: { flex: 0.9, minWidth: 0 },
-  time: { fontSize: 17, fontWeight: "900", color: ui.navy },
-  timeline: { flex: 1, minWidth: 48, maxWidth: 95, alignItems: "center" },
-  timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 3, marginVertical: 3 },
+  departureBlock: { flex: 1.35, minWidth: 0 },
+  arrivalBlock: { flex: 0.75, minWidth: 0 },
+  time: { fontSize: 15, fontWeight: "900", color: ui.navy },
+  timeline: { flex: 0.85, minWidth: 42, maxWidth: 82, alignItems: "center" },
+  timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 2, marginVertical: 1 },
   line: {
     flex: 1,
     height: 1,
     backgroundColor: ui.muted,
   },
   nonstop: { fontSize: 11, color: ui.blue },
-  priceBox: { maxWidth: 82, flexShrink: 1, alignItems: "flex-end" },
-  bigPrice: { fontSize: 22, fontWeight: "900", color: ui.navy, textAlign: "right" },
+  priceBox: { maxWidth: 72, minWidth: 0, flexShrink: 1, alignItems: "flex-end" },
+  bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   benefits: {
     borderTopWidth: 1,
     borderTopColor: "#EDF0F5",
-    paddingTop: 10,
+    paddingTop: 8,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
-  benefitList: { flex: 1, minWidth: 0, flexDirection: "row", gap: 6 },
-  benefitItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
-  benefit: { minWidth: 0, fontSize: 10, color: ui.muted, flex: 1 },
+  benefitList: { flex: 1, minWidth: 0, flexDirection: "row", gap: 4 },
+  benefitItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 2 },
+  benefit: { minWidth: 0, fontSize: 9, color: ui.muted, flex: 1 },
+  detailsButton: { width: 88, minHeight: 44, paddingHorizontal: 8, borderRadius: 8, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
+  detailsButtonOutline: { backgroundColor: "white", borderWidth: 1, borderColor: ui.blue },
+  detailsButtonText: { color: "white", fontWeight: "800", fontSize: 12 },
+  detailsButtonTextOutline: { color: ui.blue },
   hotelCard: {
     height: 234,
     borderWidth: 1,
