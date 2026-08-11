@@ -303,7 +303,6 @@ export class PreviewOrchestrator {
       ? await this.ledger.getNativeBuildActionForRelease(sha, "ios")
       : await this.ledger.getAction("IOS_BUILD", `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`);
       if (!buildAction?.remote_id) throw new Error("Pending TestFlight distribution is missing its durable iOS build identity.");
-      const fingerprint = nativeFingerprintFromAction(buildAction);
       let remoteBuild;
       try { remoteBuild = await eas.viewBuild(buildAction.remote_id); }
       catch (error) {
@@ -314,6 +313,7 @@ export class PreviewOrchestrator {
         console.warn(JSON.stringify({ event: "historical-action-isolated", platform: "ios", sourceSha: sha, buildId: buildAction.remote_id }));
         return { state: "OPERATOR_ATTENTION_REQUIRED", sourceSha: sha, buildId: buildAction.remote_id };
       }
+      const fingerprint = nativeFingerprintFromAction(buildAction);
       const buildDecision = reconcileBuilds([remoteBuild], sha, "ios", fingerprint);
       if (buildDecision.decision !== "FINISHED_MATCH") {
         throw new Error(`Pending TestFlight distribution requires one finished exact-SHA iOS build; found ${buildDecision.decision}.`);
