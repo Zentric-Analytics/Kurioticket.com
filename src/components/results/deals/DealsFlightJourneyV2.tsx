@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import { buildDealsProductSearchKeys } from "@/lib/deals/dealsProductSearchKeys";
-import { applyDealsJourneyEventV2 } from "@/lib/deals/dealsJourneyEngineV2";
+import {
+  applyDealsJourneyEventV2,
+  getRequiredDealsJourneyStateV2,
+} from "@/lib/deals/dealsJourneyEngineV2";
 import {
   createDealsTripPlanV2ForRestart,
   type DealsTripPlanV2,
@@ -40,6 +43,7 @@ import {
 } from "@/lib/deals/dealsFlightRevalidationV2";
 import type { DealsConfirmedFlightOfferV2 } from "@/lib/deals/dealsTripPlanV2";
 import { DealsCarJourneyV2 } from "./DealsCarJourneyV2";
+import { DealsReviewJourneyV2 } from "./DealsReviewJourneyV2";
 
 type Status = "initial" | "loading" | "success" | "empty" | "error";
 const messages: Record<DealsFlightInventoryErrorCode, string> = {
@@ -95,6 +99,8 @@ export function DealsFlightJourneyV2({
     offer: DealsConfirmedFlightOfferV2;
     generation: number;
   } | null>(null);
+  const [editingCar, setEditingCar] = useState(false);
+  const [journeyNow, setJourneyNow] = useState(() => Date.now());
   const coordinator = useRef(createDealsFlightRevalidationCoordinatorV2());
   const cancel = useCallback(() => {
     coordinator.current.cancel();
@@ -211,7 +217,8 @@ export function DealsFlightJourneyV2({
   ]);
 
   const hotelPrerequisiteMissing =
-    search.mode === "hotel-flight-car" && !plan.hotel;
+    (search.mode === "hotel-flight-car" || search.mode === "hotel-flight") &&
+    !plan.hotel;
 
   const commitRuntime = (next: DealsFlightRuntimeV2) => {
     const written = writeDealsFlightRuntimeV2(sessionStorage, next);
@@ -635,6 +642,49 @@ export function DealsFlightJourneyV2({
     if (applied.ok) setPlan(applied.plan);
   };
 
+  const changeFlightFromReview = (reviewPlan: DealsTripPlanV2) => {
+    const fare = reviewPlan.flightJourney?.fare;
+    if (!fare) return;
+    cancel();
+    setEditingCar(false);
+    const applied = applyDealsJourneyEventV2(reviewPlan, search, {
+      type: "FLIGHT_FARE_SELECTED",
+      fare,
+      sourceSearchKey: searchKey,
+      expectedRevision: reviewPlan.revision,
+    });
+    if (applied.ok) setPlan(applied.plan);
+  };
+
+  const invalidateReview = useCallback(
+    (
+      kind: import("@/lib/deals/dealsTripPlanV2").DealsV2DeadlineKind,
+      reviewPlan: DealsTripPlanV2,
+    ) => {
+      setJourneyNow(Date.now());
+      if (kind === "plan") return void create();
+      if (kind === "flight-offer") {
+        const applied = applyDealsJourneyEventV2(reviewPlan, search, {
+          type: "FLIGHT_OFFER_EXPIRED",
+          expectedRevision: reviewPlan.revision,
+        });
+        if (applied.ok) {
+          cancel();
+          clearDealsFlightRuntimeV2(sessionStorage);
+          setRuntime(null);
+          setPlan(applied.plan);
+          setStatus("initial");
+          setRevalidationMessage(
+            "This flight offer expired. Refresh flight availability.",
+          );
+        }
+        return;
+      }
+      setPlan({ ...reviewPlan });
+    },
+    [cancel, create, search],
+  );
+
   if (hotelPrerequisiteMissing)
     return (
       <SafeState message="Your hotel selection expired. Return to the hotel step to choose it again." />
@@ -655,6 +705,38 @@ export function DealsFlightJourneyV2({
             : "No flights are available for this search.")
         }
         onRetry={create}
+      />
+    );
+  const requiredState = getRequiredDealsJourneyStateV2(
+    plan,
+    Math.max(journeyNow, plan.updatedAt),
+  );
+  if (requiredState === "review" && !editingCar)
+    return (
+      <DealsReviewJourneyV2
+        key={`${plan.searchFingerprint}:${plan.revision}`}
+        search={search}
+        plan={plan}
+        onPlanChange={setPlan}
+        onChangeFlight={changeFlightFromReview}
+        onChangeCar={() => setEditingCar(true)}
+        onSessionExpired={() => void create()}
+        onLifecycleInvalidated={invalidateReview}
+      />
+    );
+  if (editingCar && requiredState === "review")
+    return (
+      <DealsCarJourneyV2
+        search={search}
+        plan={plan}
+        editing
+        onBackToReview={() => setEditingCar(false)}
+        onPlanChange={(next) => {
+          setPlan(next);
+          setEditingCar(false);
+        }}
+        onSessionExpired={() => void create()}
+        onFlightExpired={() => invalidateReview("flight-offer", plan)}
       />
     );
   return (
