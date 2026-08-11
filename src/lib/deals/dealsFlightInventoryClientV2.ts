@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
+  canonicalizeDealsConfirmedFlightOfferV2,
   canonicalizeDealsFlightItineraryV2,
+  type DealsConfirmedFlightOfferV2,
   type DealsFlightItineraryV2,
 } from "./dealsTripPlanV2";
 import type { DealsFlightFareChoiceV2 } from "@/services/travel/dealsFlightInventoryV2";
@@ -183,4 +185,77 @@ export async function getFlightFareChoices(
   if (value.status !== "success" || !parsed.success)
     throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
   return parsed.data as DealsFlightFareChoiceV2[];
+}
+
+export type DealsFlightRevalidationRequestV2 = Selection & {
+  returnItineraryKey?: string;
+  fareKey: string;
+};
+export type DealsFlightRevalidationOutcomeV2 =
+  | { status: "confirmed" | "changed"; offer: DealsConfirmedFlightOfferV2 }
+  | {
+      status:
+        | "expired"
+        | "unavailable"
+        | "temporary-failure"
+        | "invalid-selection";
+    };
+
+/** Revalidates only the exact staged offer and returns a newly canonicalized browser-safe result. */
+export async function revalidateFlightOfferV2(
+  request: DealsFlightRevalidationRequestV2,
+  signal?: AbortSignal,
+): Promise<DealsFlightRevalidationOutcomeV2> {
+  let response: Response;
+  try {
+    response = await fetch("/api/deals/v2/flights/inventory/revalidate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+      cache: "no-store",
+      signal,
+    });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw new DealsFlightInventoryClientError("NETWORK_FAILURE", true);
+  }
+  let value: unknown;
+  try {
+    value = await response.json();
+  } catch {
+    throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+  }
+  const parsed = record.safeParse(value);
+  if (!parsed.success || typeof parsed.data.status !== "string")
+    throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+  const status = parsed.data.status;
+  // invalid-selection is the route's intentional semantic 422 outcome.
+  if (status === "invalid-selection") {
+    if (response.status !== 200 && response.status !== 422)
+      throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+    return { status };
+  }
+  if (!response.ok || status === "error") {
+    const code = parsed.data.code;
+    const normalized = knownCodes.has(code as DealsFlightInventoryErrorCode)
+      ? (code as DealsFlightInventoryErrorCode)
+      : "MALFORMED_RESPONSE";
+    throw new DealsFlightInventoryClientError(
+      normalized,
+      retryableCodes.has(normalized),
+    );
+  }
+  if (
+    status === "expired" ||
+    status === "unavailable" ||
+    status === "temporary-failure"
+  )
+    return { status };
+  if (status === "confirmed" || status === "changed") {
+    const offer = canonicalizeDealsConfirmedFlightOfferV2(parsed.data.offer);
+    if (!offer)
+      throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+    return { status, offer };
+  }
+  throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
 }
