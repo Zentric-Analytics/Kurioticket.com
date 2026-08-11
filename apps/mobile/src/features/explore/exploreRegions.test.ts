@@ -105,10 +105,65 @@ test("country groups retain canonical labels, derived counts, and representative
 
 test("region screen groups empty browsing and keeps active search flat", () => {
   const source = screenSource();
-  assert.match(source, /searchActive \? \(\s*<FlatList/);
-  assert.match(source, /:\s*\(\s*<SectionList\s+sections={countrySections}/);
+  assert.match(
+    source,
+    /searchActive \? \(\s*<FlatList[\s\S]*?renderItem={[\s\S]*?<DestinationResultRow[\s\S]*?\/>\s*\)}\s*\/>\s*\) : \(/,
+  );
+  assert.match(
+    source,
+    /<SectionList\s+sections={countrySections}[\s\S]*?renderItem={[\s\S]*?<RegionBrowseDestinationCard/,
+  );
   assert.match(source, /accessibilityRole="header"/);
   assert.match(source, /destinationDetailsRoute\(destination\.id\)/);
+});
+
+test("empty regional browsing uses responsive image-led destination cards", () => {
+  const source = screenSource();
+  const aspectRatio = Number(
+    source.match(/REGION_BROWSE_IMAGE_ASPECT_RATIO = ([\d.]+);/)?.[1],
+  );
+  const footerMinHeight = Number(
+    source.match(/browseFooter: {[\s\S]*?minHeight: (\d+),/)?.[1],
+  );
+  const representativeContentWidth = 360;
+  const imageHeight = representativeContentWidth / aspectRatio;
+
+  assert.ok(aspectRatio >= 2 && aspectRatio <= 2.3);
+  assert.ok(
+    imageHeight / (imageHeight + footerMinHeight) >= 0.65 &&
+      imageHeight / (imageHeight + footerMinHeight) <= 0.75,
+  );
+  assert.match(source, /browseCard: {[\s\S]*?width: "100%"/);
+  assert.match(source, /browseImage: {[\s\S]*?width: "100%"/);
+  assert.match(
+    source,
+    /browseImage: {[\s\S]*?aspectRatio: REGION_BROWSE_IMAGE_ASPECT_RATIO/,
+  );
+  assert.match(
+    source,
+    /<Image[\s\S]*?source={[\s\S]*?media\?\.source[\s\S]*?resizeMode="cover"/,
+  );
+  assert.match(
+    source,
+    /<AndroidFavoriteButton[\s\S]*?style={s\.browseHeart}/,
+  );
+  assert.match(
+    source,
+    /browseHeart: { position: "absolute", right: 10, top: 10 }/,
+  );
+});
+
+test("browse card footer keeps canonical names and airport summaries without country metadata", () => {
+  const source = screenSource();
+  const browseCard = source.slice(
+    source.indexOf("function RegionBrowseDestinationCard"),
+    source.indexOf("export function ExploreRegionScreen"),
+  );
+
+  assert.match(browseCard, /{destination\.name}/);
+  assert.match(browseCard, /destination\.primaryAirportCode/);
+  assert.match(browseCard, /destination\.airportCodes\.length - 1/);
+  assert.doesNotMatch(browseCard, /{destination\.country} ·/);
 });
 
 test("regional search continues to reuse unchanged global ranking and scope", () => {
