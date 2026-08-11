@@ -86,16 +86,16 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
             />
           </View>
           {destination.summary ? <Text style={styles.summary}>{destination.summary}</Text> : null}
-          <View style={styles.actions}>
-            <Action label="Search flights" icon="flight" onPress={searchFlights} />
-            <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
-          </View>
           {destination.description ? <Section title="About"><Text style={styles.paragraph}>{destination.description}</Text></Section> : null}
           {destination.highlights?.length ? <Section title="Highlights">{destination.highlights.map((highlight) => <View key={highlight} style={styles.highlight}><View style={styles.bullet} /><Text style={styles.highlightText}>{highlight}</Text></View>)}</Section> : null}
           <Section title="Getting there">
             {destination.airportCodes.map((code, index) => <View key={code} style={styles.airportRow}><Text style={styles.airportRowCode}>{code}</Text><Text style={styles.airportRowName}>{destination.airportNames[index]}</Text></View>)}
           </Section>
           {related?.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={styles.related}><Text style={styles.relatedName}>{item.name}</Text><Text style={styles.relatedCountry}>{item.country}</Text></Pressable>)}</Section> : null}
+          <View style={styles.actions}>
+            <Action label="Search flights" icon="flight" onPress={searchFlights} />
+            <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -107,7 +107,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Action({ label, icon, onPress, secondary = false }: { label: string; icon: "flight" | "hotel"; onPress: () => void; secondary?: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={[styles.primaryButton, secondary && styles.secondaryButton]}><FlowIcon name={icon} color={secondary ? BLUE : "white"} size={20} /><Text style={[styles.primaryButtonText, secondary && styles.secondaryButtonText]}>{label}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={[styles.primaryButton, styles.actionButton, secondary && styles.secondaryButton]}><FlowIcon name={icon} color={secondary ? BLUE : "white"} size={20} /><Text style={[styles.primaryButtonText, secondary && styles.secondaryButtonText]}>{label}</Text></Pressable>;
 }
 
 const styles = StyleSheet.create({
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   airportRowCode: { width: 48, color: BLUE, fontSize: 16, fontWeight: "800" }, airportRowName: { flex: 1, color: NAVY, fontSize: 14, lineHeight: 20 },
   highlight: { flexDirection: "row", alignItems: "flex-start", gap: 10 }, bullet: { width: 7, height: 7, borderRadius: 4, backgroundColor: BLUE, marginTop: 7 }, highlightText: { flex: 1, color: MUTED, fontSize: 15, lineHeight: 22 },
   related: { minHeight: 58, justifyContent: "center", borderBottomWidth: 1, borderBottomColor: BORDER }, relatedName: { color: NAVY, fontSize: 15, fontWeight: "800" }, relatedCountry: { color: MUTED, fontSize: 13 },
-  actions: { gap: 10, marginTop: 4 }, primaryButton: { minHeight: 52, borderRadius: 12, backgroundColor: BLUE, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 18 }, primaryButtonText: { color: "white", fontSize: 15, fontWeight: "800" },
+  actions: { flexDirection: "row", gap: 10, marginTop: 4 }, actionButton: { flex: 1 }, primaryButton: { minHeight: 52, borderRadius: 12, backgroundColor: BLUE, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 18 }, primaryButtonText: { color: "white", fontSize: 15, fontWeight: "800" },
   secondaryButton: { backgroundColor: "white", borderWidth: 1, borderColor: BLUE }, secondaryButtonText: { color: BLUE },
   invalidHeader: { paddingHorizontal: 10 }, invalidBody: { flex: 1, padding: 24, justifyContent: "center", alignItems: "center", gap: 14 }, invalidTitle: { color: NAVY, fontSize: 25, fontWeight: "800", textAlign: "center" }, invalidText: { color: MUTED, fontSize: 15, lineHeight: 22, textAlign: "center", marginBottom: 8 },
 });
