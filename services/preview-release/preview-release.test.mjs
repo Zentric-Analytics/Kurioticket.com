@@ -9,7 +9,7 @@ import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry } from "./orchestrator.mjs";
-import { createExactCheckoutDirectory, EasClient, EasRemoteObjectUnavailableError, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
+import { createExactCheckoutDirectory, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { PreviewLedger } from "./ledger.mjs";
@@ -1298,9 +1298,9 @@ test("OTA delivery publishes platforms sequentially and resumes only a missing p
     github: {}, render: {},
     easFactory: () => ({
       listUpdates: async () => [iosHistory],
-      publishUpdate: async (message, platform) => {
+      publishUpdate: async (message, platform, expectedRuntime) => {
         published.push(platform);
-        return [{ id: `${platform}-new`, branch: "preview", runtimeVersion: "preview-0.3.0", platforms: [platform], message }];
+        return [{ id: `${platform}-new`, branch: "preview", runtimeVersion: expectedRuntime, platforms: [platform], message }];
       },
     }),
   });
@@ -1318,9 +1318,9 @@ test("coalesced native delivery can publish an OTA overlay only to affected plat
     github: {}, render: {},
     easFactory: () => ({
       listUpdates: async () => [],
-      publishUpdate: async (_message, platform) => {
+      publishUpdate: async (_message, platform, expectedRuntime) => {
         published.push(platform);
-        return [{ id: `${platform}-overlay`, branch: "preview", runtimeVersion: "preview-0.3.0", platforms: [platform], message: `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0` }];
+        return [{ id: `${platform}-overlay`, branch: "preview", runtimeVersion: expectedRuntime, platforms: [platform], message: `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0` }];
       },
     }),
   });
@@ -1332,12 +1332,51 @@ test("coalesced native delivery can publish an OTA overlay only to affected plat
 test("OTA client rejects all-platform publication and uses bounded sequential export memory", async () => {
   const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
   const calls = [];
-  client.run = async (args) => { calls.push(args); return [{ id: "update-id" }]; };
-  await client.publishUpdate("message", "ios");
+  client.run = async (args) => { calls.push(args); return [{ id: "update-id", runtimeVersion: "a".repeat(40) }]; };
+  await client.publishUpdate("message", "ios", "a".repeat(40));
   assert.equal(calls[0][calls[0].indexOf("--platform") + 1], "ios");
-  await assert.rejects(client.publishUpdate("message", "all"), /platform is invalid/);
+  assert.equal(calls[0][calls[0].indexOf("--environment") + 1], "preview");
+  await assert.rejects(client.publishUpdate("message", "all", "a".repeat(40)), /platform is invalid/);
+  client.run = async () => [{ id: "wrong-runtime", runtimeVersion: "b".repeat(40) }];
+  await assert.rejects(client.publishUpdate("message", "ios", "a".repeat(40)), /runtime does not match/);
   const source = readFileSync(resolve(repositoryRoot, "services/preview-release/remote-clients.mjs"), "utf8");
   assert.match(source, /isUpdatePublish \? 512 : 128/);
+});
+
+test("OTA runtime mismatch is recorded once and blocks automatic republication", async () => {
+  let action = null;
+  let publishes = 0;
+  const expectedRuntime = "a".repeat(40);
+  const mismatched = { id: "wrong-runtime", runtimeVersion: "b".repeat(40) };
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: {
+      getAction: async () => action,
+      recordAction: async (value) => { action = value; return value; },
+    },
+    github: {}, render: {},
+    easFactory: () => ({
+      listUpdates: async () => [],
+      publishUpdate: async () => {
+        publishes += 1;
+        throw new EasUpdateRuntimeMismatchError("ios", expectedRuntime, [mismatched]);
+      },
+    }),
+  });
+
+  await assert.rejects(
+    orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["ios"], { ios: expectedRuntime }),
+    /runtime does not match/,
+  );
+  assert.equal(action.state, "RUNTIME_MISMATCH");
+  assert.equal(action.remoteId, "wrong-runtime");
+  assert.deepEqual(action.evidence.updates, [mismatched]);
+
+  await assert.rejects(
+    orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["ios"], { ios: expectedRuntime }),
+    /automatic republication is blocked/,
+  );
+  assert.equal(publishes, 1);
 });
 
 test("web recovery replaces a terminal exact-SHA deploy discovered before the ledger action exists", async () => {
