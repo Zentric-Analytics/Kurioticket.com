@@ -14,6 +14,7 @@ const NAVY = "#071A48";
 const BLUE = "#0754F7";
 const MUTED = "#56658E";
 const BORDER = "#E7ECF5";
+const DESTINATION_DETAILS_BOTTOM_PADDING = 36;
 
 export function DestinationDetailsScreen() {
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
@@ -122,9 +123,9 @@ const styles = StyleSheet.create({
   backButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 24 },
   topTitle: { flex: 1, color: NAVY, textAlign: "center", fontSize: 16, fontWeight: "800" },
   topSpacer: { width: 48 },
-  content: { paddingBottom: 36 },
+  content: { paddingBottom: DESTINATION_DETAILS_BOTTOM_PADDING },
   hero: { width: "100%", aspectRatio: 4 / 3, maxHeight: 360, minHeight: 240, backgroundColor: "#E7ECF5" },
-  body: { padding: 18, gap: 20 },
+  body: { paddingHorizontal: 18, paddingTop: 18, gap: 20 },
   titleRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   titleCopy: { flex: 1 }, title: { color: NAVY, fontSize: 30, lineHeight: 38, fontWeight: "800" },
   country: { color: MUTED, fontSize: 16, marginTop: 2 },
