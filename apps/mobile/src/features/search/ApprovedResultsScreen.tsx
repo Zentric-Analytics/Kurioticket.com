@@ -106,7 +106,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   }, [load]);
   const edit = () => {
     if (product === "flight") {
-      router.push({ pathname: "/flights", params: flightEditSearchParams(params) });
+      router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) });
       return;
     }
     router.canGoBack() ? router.back() : router.replace("/hotels");
