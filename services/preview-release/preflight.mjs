@@ -31,7 +31,7 @@ export async function runPreviewPreflight({ config, ledger, github, render, rend
     renderDeployId: deploy?.id ?? null,
     renderDeployStatus: deploy?.status ?? "none",
     renderWorkerServiceId: workerService.id,
-    renderWorkerAutoDeploy: workerService.autoDeploy === true,
+    renderWorkerAutoDeploy: workerService.autoDeployOnCommit === true,
     renderWorkerBranch: workerService.branch,
     easProjectId: project.projectId,
     easBuildHistoryReadable: Array.isArray(builds),
