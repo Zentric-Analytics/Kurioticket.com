@@ -243,7 +243,7 @@ export class PreviewOrchestrator {
       const evidence = { files, identity, fingerprints, classification };
       const deliveries = {};
       if (classification.classification.includes("WEB")) deliveries.web = () => this.deliverWeb(sha, lease);
-      if (classification.classification.includes("OTA")) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease);
+      if (classification.classification.includes("OTA")) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease, ["ios", "android"], fingerprints);
       if (classification.classification.includes("IOS_NATIVE")) deliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
       if (classification.classification.includes("ANDROID_NATIVE")) deliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
       const deliveryResults = await runDeliveries(deliveries);
@@ -261,7 +261,7 @@ export class PreviewOrchestrator {
             throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} cannot receive a safe OTA overlay for ${sha}.`);
           }
         }
-        evidence.ota = await this.deliverOta(sha, checkout.directory, lease, coalescedPlatforms);
+        evidence.ota = await this.deliverOta(sha, checkout.directory, lease, coalescedPlatforms, fingerprints);
         evidence.coalescedOtaPlatforms = coalescedPlatforms;
       }
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
@@ -317,7 +317,7 @@ export class PreviewOrchestrator {
         console.warn(JSON.stringify({ event: "historical-action-isolated", platform: "ios", sourceSha: sha, buildId: buildAction.remote_id }));
         return { state: "OPERATOR_ATTENTION_REQUIRED", sourceSha: sha, buildId: buildAction.remote_id };
       }
-      const buildDecision = reconcileBuilds([remoteBuild], sha);
+      const buildDecision = reconcileBuilds([remoteBuild], sha, "ios", fingerprints.ios);
       if (buildDecision.decision !== "FINISHED_MATCH") {
         throw new Error(`Pending TestFlight distribution requires one finished exact-SHA iOS build; found ${buildDecision.decision}.`);
       }
@@ -380,12 +380,13 @@ export class PreviewOrchestrator {
     throw new Error(`Render deployment ${deploy.id} exceeded its bounded polling window.`);
   }
 
-  async deliverOta(sha, cwd, lease, platforms = ["ios", "android"]) {
+  async deliverOta(sha, cwd, lease, platforms = ["ios", "android"], runtimeByPlatform = null) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     const history = await eas.listUpdates();
     const updates = [];
     for (const platform of platforms) {
-      const replay = inspectPreviewUpdateHistory(history, sha, platform);
+      const expectedRuntime = runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime;
+      const replay = inspectPreviewUpdateHistory(history, sha, platform, expectedRuntime);
       if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups.`);
       if (replay.alreadyPublished) {
         updates.push(...history.filter((entry) => entry.message.includes(sha) && entry.platforms.includes(platform)));
@@ -397,9 +398,10 @@ export class PreviewOrchestrator {
       updates.push(...published);
     }
     const ids = updates.map((entry) => entry.id ?? entry.group);
-    const identityKey = `${sha}:${PREVIEW_IDENTITY.runtime}:${PREVIEW_IDENTITY.channel}`;
+    const runtimes = Object.fromEntries(platforms.map((platform) => [platform, runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime]));
+    const identityKey = `${sha}:${platforms.map((platform) => `${platform}=${runtimes[platform]}`).join(",")}:${PREVIEW_IDENTITY.channel}`;
     await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: ids.join(","), state: "PUBLISHED", evidence: updates });
-    return { updateIds: ids, runtime: PREVIEW_IDENTITY.runtime, channel: PREVIEW_IDENTITY.channel };
+    return { updateIds: ids, runtimes, channel: PREVIEW_IDENTITY.channel };
   }
 
   async deliverIos(sha, cwd, lease, fingerprint) {
@@ -421,12 +423,12 @@ export class PreviewOrchestrator {
     }
     let decision;
     if (recordedBuildAction?.remote_id) {
-      decision = reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha);
+      decision = reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha, "ios", fingerprint ?? PREVIEW_IDENTITY.runtime);
       if (!["ACTIVE_MATCH", "FINISHED_MATCH"].includes(decision.decision)) {
         throw new Error(`Persisted iOS build ${recordedBuildAction.remote_id} failed identity reconciliation: ${decision.decision}.`);
       }
     } else {
-      decision = reconcileBuilds(await eas.listIosBuilds(artifactSourceSha), artifactSourceSha);
+      decision = reconcileBuilds(await eas.listIosBuilds(artifactSourceSha), artifactSourceSha, "ios", fingerprint ?? PREVIEW_IDENTITY.runtime);
     }
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS iOS reconciliation failed closed: ${decision.decision}.`);
     if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) {
@@ -519,8 +521,8 @@ export class PreviewOrchestrator {
       if (!recordedBuildAction?.remote_id) throw new Error("Equivalent Android native build reservation has not published its durable EAS build ID yet.");
     }
     let decision = recordedBuildAction?.remote_id
-      ? reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha, "android")
-      : reconcileBuilds(await eas.listAndroidBuilds(artifactSourceSha), artifactSourceSha, "android");
+      ? reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha, "android", fingerprint ?? PREVIEW_IDENTITY.runtime)
+      : reconcileBuilds(await eas.listAndroidBuilds(artifactSourceSha), artifactSourceSha, "android", fingerprint ?? PREVIEW_IDENTITY.runtime);
     if (["CONFLICT", "MALFORMED_RESPONSE"].includes(decision.decision)) throw new Error(`EAS Android reconciliation failed closed: ${decision.decision}.`);
     if (["FAILED_MATCH", "CANCELED_MATCH"].includes(decision.decision)) {
       await lease.checkpoint();
@@ -561,7 +563,7 @@ export function nativeBuildIdentityKey(platform, fingerprint) {
 async function resolvedIdentity(root) {
   const policy = JSON.parse(await readFile(join(root, "apps/mobile/release-policy.json"), "utf8"));
   const eas = JSON.parse(await readFile(join(root, "apps/mobile/eas.json"), "utf8"));
-  return { appName: policy.preview.displayName, bundleIdentifier: policy.preview.bundleIdentifier, scheme: policy.preview.scheme, projectId: "89f6fd88-c0d7-495a-9e2b-8301b09f407d", profile: "preview", channel: eas.build.preview.channel, runtime: policy.preview.runtimeVersion, apiOrigin: eas.build.preview.env.EXPO_PUBLIC_API_BASE_URL };
+  return { appName: policy.preview.displayName, bundleIdentifier: policy.preview.bundleIdentifier, scheme: policy.preview.scheme, projectId: "89f6fd88-c0d7-495a-9e2b-8301b09f407d", profile: "preview", channel: eas.build.preview.channel, runtimePolicy: "fingerprint", apiOrigin: eas.build.preview.env.EXPO_PUBLIC_API_BASE_URL };
 }
 
 export async function runDeliveries(deliveries) {

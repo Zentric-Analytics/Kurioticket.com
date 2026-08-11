@@ -18,7 +18,7 @@ export async function runPreviewPreflight({ config, ledger, github, render, rend
     projectId: project.projectId,
     profile: PREVIEW_IDENTITY.buildProfile,
     channel: PREVIEW_IDENTITY.channel,
-    runtime: PREVIEW_IDENTITY.runtime,
+    runtimePolicy: PREVIEW_IDENTITY.runtimePolicy,
     apiOrigin: PREVIEW_IDENTITY.apiOrigin,
   });
   return Object.freeze({

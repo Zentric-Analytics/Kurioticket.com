@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { PREVIEW_IDENTITY, requirePreviewEnvironment } from "./config.mjs";
 import { PreviewLedger } from "./ledger.mjs";
 import { PreviewOrchestrator } from "./orchestrator.mjs";
-import { GitHubClient, RenderClient, EasClient } from "./remote-clients.mjs";
+import { GitHubClient, RenderClient, EasClient, EasRemoteObjectUnavailableError } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { notifyFailedNativeBuilds, notifySuccessfulNativeBuilds } from "./build-notifications.mjs";
@@ -59,7 +59,11 @@ async function reconcileAllBuildNotifications() {
       recipientMemberIds: candidate.recipient_ids,
     }).catch(async (error) => {
       console.error(JSON.stringify({ event: "preview-build-notification-failed", sourceSha: candidate.source_sha, buildId: candidate.build_id, error: String(error?.message ?? error).slice(0, 500) }));
-      await ledger.recordNativeNotificationAttempt(candidate, { recipientOutcomes: [{ memberId: "transport", state: "retryable-failure" }], error: String(error?.message ?? error).slice(0, 500) });
+      if (error instanceof EasRemoteObjectUnavailableError) {
+        await ledger.markNativeNotificationTerminalUnavailable(candidate, error.message);
+      } else {
+        await ledger.recordNativeNotificationAttempt(candidate, { recipientOutcomes: [{ memberId: "transport", state: "retryable-failure" }], error: String(error?.message ?? error).slice(0, 500) });
+      }
       return [];
     });
     if (results[0]) await ledger.recordNativeNotificationAttempt(candidate, results[0]);

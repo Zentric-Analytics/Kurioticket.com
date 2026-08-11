@@ -2,7 +2,7 @@ import { PREVIEW_IDENTITY, assertExactSha } from "./config.mjs";
 
 const ACTIVE = new Set(["NEW", "IN_QUEUE", "IN_PROGRESS", "PENDING_CANCEL"]);
 
-export function reconcileBuilds(builds, targetSha, platform = "ios") {
+export function reconcileBuilds(builds, targetSha, platform = "ios", expectedRuntime = PREVIEW_IDENTITY.runtime) {
   assertExactSha(targetSha, "EAS target SHA");
   if (!Array.isArray(builds)) return { decision: "MALFORMED_RESPONSE", matches: [] };
   const exact = [];
@@ -20,7 +20,7 @@ export function reconcileBuilds(builds, targetSha, platform = "ios") {
       runtimeVersion: build.runtimeVersion ?? build.sourceAttestedRuntimeVersion,
       channel: build.channel ?? build.sourceAttestedChannel,
     };
-    if (identity.projectId !== PREVIEW_IDENTITY.easProjectId || identity.platform !== platform.toUpperCase() || identity.profile !== "preview" || identity.bundleIdentifier !== PREVIEW_IDENTITY.bundleIdentifier || identity.runtimeVersion !== PREVIEW_IDENTITY.runtime || identity.channel !== PREVIEW_IDENTITY.channel) {
+    if (identity.projectId !== PREVIEW_IDENTITY.easProjectId || identity.platform !== platform.toUpperCase() || identity.profile !== "preview" || identity.bundleIdentifier !== PREVIEW_IDENTITY.bundleIdentifier || identity.runtimeVersion !== expectedRuntime || identity.channel !== PREVIEW_IDENTITY.channel) {
       return { decision: "CONFLICT", matches: [build.id], identity };
     }
     exact.push(build);

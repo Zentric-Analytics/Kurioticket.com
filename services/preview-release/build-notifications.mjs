@@ -89,7 +89,7 @@ export async function notifySuccessfulNativeBuilds({ sourceSha, ledger, eas, onl
       buildId: build.id,
       buildNumber: build.appBuildVersion ?? null,
       appVersion: build.appVersion ?? null,
-      runtimeVersion: PREVIEW_IDENTITY.runtime,
+      runtimeVersion: build.runtimeVersion ?? PREVIEW_IDENTITY.runtime,
       classification,
       // Expo's exact build page is the install source of truth. The raw artifact
       // URL is intentionally not sent to the email service.
@@ -138,7 +138,7 @@ export async function notifyFailedNativeBuilds({ sourceSha, ledger, eas, failure
       buildId: build.id ?? action.remote_id,
       buildNumber: build.appBuildVersion ?? null,
       appVersion: build.appVersion ?? null,
-      runtimeVersion: PREVIEW_IDENTITY.runtime,
+      runtimeVersion: build.runtimeVersion ?? PREVIEW_IDENTITY.runtime,
       classification,
       buildDetailsUrl: build.buildDetailsPageUrl ?? null,
       submissionId: submission?.remote_id ?? null,

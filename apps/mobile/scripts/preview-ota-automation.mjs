@@ -78,7 +78,7 @@ export function normalizePreviewUpdatePage(value) {
   });
 }
 
-export function inspectPreviewUpdateHistory(value, targetSha, platform = "android") {
+export function inspectPreviewUpdateHistory(value, targetSha, platform = "android", expectedRuntime = PREVIEW_RUNTIME) {
   requireValue(FULL_SHA.test(targetSha ?? ""), "Replay target SHA is invalid.");
   requireValue(platform === "android" || platform === "ios", "Replay platform is invalid.");
   requireValue(Array.isArray(value), "EAS update history is malformed.");
@@ -86,7 +86,7 @@ export function inspectPreviewUpdateHistory(value, targetSha, platform = "androi
     requireValue(entry && typeof entry === "object" && !Array.isArray(entry), "Normalized EAS update history entry is malformed.");
     requireValue(typeof entry.branch === "string" && typeof entry.runtimeVersion === "string", "Normalized EAS update identity is malformed.");
     requireValue(Array.isArray(entry.platforms), "Normalized EAS update platforms are malformed.");
-    if (entry.branch !== PREVIEW_BRANCH || entry.runtimeVersion !== PREVIEW_RUNTIME || !entry.platforms.includes(platform)) return false;
+    if (entry.branch !== PREVIEW_BRANCH || entry.runtimeVersion !== expectedRuntime || !entry.platforms.includes(platform)) return false;
     const generated = parseGeneratedMessage(entry.message);
     return generated?.targetSha === targetSha && (generated.platform === platform || generated.platform === "all");
   });

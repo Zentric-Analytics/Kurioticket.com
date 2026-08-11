@@ -134,7 +134,9 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
         isPreview: environment.isPreview,
       },
     },
-    runtimeVersion: RELEASES[environment.variant].runtimeVersion,
+    runtimeVersion: environment.variant === "preview"
+      ? { policy: "fingerprint" }
+      : RELEASES.production.runtimeVersion,
     updates: {
       url: "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d",
       checkAutomatically: "ON_LOAD",
