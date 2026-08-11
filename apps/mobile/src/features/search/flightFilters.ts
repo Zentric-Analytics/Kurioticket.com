@@ -52,6 +52,7 @@ export function filterAndSortFlights(
   results: readonly FlightResult[],
   filters: FlightFilters,
   sort: string,
+  normalizePrice?: (result: FlightResult) => number | null,
 ) {
   return results
     .filter((result) => {
@@ -65,7 +66,12 @@ export function filterAndSortFlights(
           Boolean(departureBucket && filters.times.includes(departureBucket)))
       );
     })
-    .sort((a, b) =>
-      sort === "price" ? a.price - b.price : b.valueScore - a.valueScore,
-    );
+    .sort((a, b) => {
+      if (sort !== "price") return b.valueScore - a.valueScore;
+      const normalizedA = normalizePrice?.(a);
+      const normalizedB = normalizePrice?.(b);
+      return normalizedA != null && normalizedB != null
+        ? normalizedA - normalizedB
+        : a.price - b.price;
+    });
 }

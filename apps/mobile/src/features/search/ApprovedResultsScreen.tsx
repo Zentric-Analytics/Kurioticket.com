@@ -55,6 +55,15 @@ import {
   flightFilterOptions,
   type FlightFilters,
 } from "./flightFilters";
+import { readCurrencyPreference } from "../../storage/preferenceStorage";
+import {
+  countryCodeFromLocale,
+  convertAmount,
+  displayPrice,
+  resolveDisplayCurrency,
+  type DisplayPrice,
+  type ExchangeRates,
+} from "../currency/displayCurrency";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -86,6 +95,24 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   >("all");
   const hasUnreadNotifications = useUnreadNotifications(product === "flight");
   const [dateHeaderCollapsed, setDateHeaderCollapsed] = useState(false);
+  const [currencyState, setCurrencyState] = useState<{ currency: string; rates: ExchangeRates } | null>(null);
+  useEffect(() => {
+    let active = true;
+    void Promise.all([readCurrencyPreference(), travelApi.currencyRates()])
+      .then(([preferredCurrency, payload]) => {
+        if (!active) return;
+        const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+        setCurrencyState({
+          currency: resolveDisplayCurrency({ preferredCurrency, countryCode: countryCodeFromLocale(locale) }),
+          rates: payload.rates,
+        });
+      })
+      .catch(() => {
+        // A missing rate must fall back to each result's accurate provider price.
+        if (active) setCurrencyState({ currency: "USD", rates: {} });
+      });
+    return () => { active = false; };
+  }, []);
   const dateHeaderProgress = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(dateHeaderProgress, {
@@ -148,14 +175,21 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   };
   const sorted = useMemo(() => {
     if (product === "flight") {
-      return filterAndSortFlights(results as FlightResult[], filters, sort);
+      return filterAndSortFlights(
+        results as FlightResult[],
+        filters,
+        sort,
+        currencyState
+          ? (result) => convertAmount(result.price, result.currency, "USD", currencyState.rates)
+          : undefined,
+      );
     }
     return [...results].sort((a, b) =>
         sort === "price"
           ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
           : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
       );
-  }, [results, filters, sort, product]);
+  }, [results, filters, sort, product, currencyState]);
   const flightOptions = useMemo(
     () => flightFilterOptions(results as FlightResult[]),
     [results],
@@ -180,6 +214,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         ? (x as FlightResult).price
         : (x as HotelResult).pricePerNight!,
     );
+  const flightDisplayPrices = useMemo(() => {
+    if (product !== "flight" || !currencyState) return new Map<string, DisplayPrice>();
+    return new Map((sorted as FlightResult[]).map((result) => [
+      result.id,
+      displayPrice(result.price, result.currency, currencyState.currency, currencyState.rates),
+    ]));
+  }, [currencyState, product, sorted]);
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
       <TopBar
@@ -223,6 +264,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <DateStrip
           date={date}
           prices={prices}
+          formattedPrices={product === "flight" ? sorted.slice(0, 5).map((result) => flightDisplayPrices.get(result.id)?.formatted) : undefined}
           flightResults={product === "flight"}
           onSelect={(v) =>
             router.setParams(
@@ -350,7 +392,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         ) : null}
         {sorted.map((x, i) =>
           product === "flight" ? (
-            <FlightCard key={x.id} result={x as FlightResult} rank={i} params={params} />
+            <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} rank={i} params={params} />
           ) : (
             <HotelCard
               key={x.id}
@@ -472,7 +514,7 @@ function FlightFilterModal({
     </Modal>
   );
 }
-function FlightCard({ result, rank, params }: { result: FlightResult; rank: number; params: Record<string, string | string[]> }) {
+function FlightCard({ result, displayPrice: fare, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; rank: number; params: Record<string, string | string[]> }) {
   const [saved, setSaved] = useState(false);
   return (
     <View style={[s0.card, rank === 0 && s0.best]}>
@@ -528,7 +570,7 @@ function FlightCard({ result, rank, params }: { result: FlightResult; rank: numb
         </View>
         <View style={s0.priceBox}>
           <Text style={s0.bigPrice}>
-            {money(result.currency, result.price)}
+            {fare?.formatted ?? "—"}
           </Text>
           <Text style={s0.sub}>round trip</Text>
         </View>
