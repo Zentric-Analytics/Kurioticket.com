@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Image,
   Pressable,
   ScrollView,
@@ -476,16 +477,109 @@ function HotelCard({
   );
 }
 function Loading({ product }: { product: Product }) {
+  const opacity = useRef(new Animated.Value(0.55)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.55,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [opacity]);
+
   return (
-            <View style={s0.foundAside}>
-      {[0, 1, 2].map((x) => (
-        <View key={x} style={s0.skeleton} />
-      ))}
-      <View style={s0.loading}>
+    <View style={s0.loadingState}>
+      <View style={s0.loadingMessage}>
         <ActivityIndicator color={ui.blue} />
-        <Text style={s0.sub}>
+        <Text
+          accessibilityRole="text"
+          accessibilityLiveRegion="polite"
+          style={s0.loadingText}
+        >
           Searching available {product === "flight" ? "flights" : "stays"}…
         </Text>
+      </View>
+      <Animated.View style={[s0.skeletonList, { opacity }]}>
+        {[0, 1, 2].map((x) =>
+          product === "flight" ? (
+            <FlightLoadingSkeleton key={x} />
+          ) : (
+            <HotelLoadingSkeleton key={x} />
+          ),
+        )}
+      </Animated.View>
+    </View>
+  );
+}
+
+function SkeletonLine({ style }: { style?: object }) {
+  return <View style={[s0.skeletonLine, style]} />;
+}
+
+function FlightLoadingSkeleton() {
+  return (
+    <View style={s0.skeletonCard} accessibilityElementsHidden>
+      <View style={s0.skeletonTopRow}>
+        <View style={s0.skeletonBadge} />
+        <View style={s0.skeletonHeart} />
+      </View>
+      <View style={s0.skeletonFlightRow}>
+        <View style={s0.skeletonLogo} />
+        <View style={s0.skeletonDeparture}>
+          <SkeletonLine style={s0.skeletonName} />
+          <SkeletonLine style={s0.skeletonTime} />
+          <SkeletonLine style={s0.skeletonAirport} />
+        </View>
+        <View style={s0.skeletonRoute}>
+          <SkeletonLine style={s0.skeletonDuration} />
+          <SkeletonLine style={s0.skeletonRouteLine} />
+          <SkeletonLine style={s0.skeletonStop} />
+        </View>
+        <View style={s0.skeletonArrival}>
+          <SkeletonLine style={s0.skeletonTime} />
+          <SkeletonLine style={s0.skeletonAirport} />
+        </View>
+        <View style={s0.skeletonPrice}>
+          <SkeletonLine style={s0.skeletonPriceLine} />
+          <SkeletonLine style={s0.skeletonPriceCaption} />
+        </View>
+      </View>
+      <View style={s0.skeletonBenefits}>
+        <View style={s0.skeletonBenefitLines}>
+          <SkeletonLine style={s0.skeletonBenefitLine} />
+          <SkeletonLine style={s0.skeletonBenefitLineShort} />
+          <SkeletonLine style={s0.skeletonBenefitLine} />
+        </View>
+        <View style={s0.skeletonButton} />
+      </View>
+    </View>
+  );
+}
+
+function HotelLoadingSkeleton() {
+  return (
+    <View style={s0.hotelSkeletonCard} accessibilityElementsHidden>
+      <View style={s0.hotelSkeletonImage} />
+      <View style={s0.hotelSkeletonCopy}>
+        <SkeletonLine style={s0.hotelSkeletonTitle} />
+        <SkeletonLine style={s0.hotelSkeletonMeta} />
+        <SkeletonLine style={s0.hotelSkeletonReview} />
+        <SkeletonLine style={s0.hotelSkeletonDetail} />
+        <View style={s0.hotelSkeletonFooter}>
+          <SkeletonLine style={s0.hotelSkeletonPrice} />
+          <View style={s0.skeletonButton} />
+        </View>
       </View>
     </View>
   );
@@ -666,20 +760,84 @@ const s0 = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  skeleton: {
-    height: 160,
-    backgroundColor: "#EEF1F6",
-    borderRadius: 14,
-    marginBottom: 12,
-  },
-  loading: {
-    position: "absolute",
-    top: 130,
-    left: 0,
-    right: 0,
+  loadingState: { width: "100%", gap: 14 },
+  loadingMessage: {
+    minHeight: 40,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+  },
+  loadingText: { fontSize: 13, lineHeight: 18, color: ui.navy, fontWeight: "700" },
+  skeletonList: { width: "100%", gap: 14 },
+  skeletonCard: {
+    width: "100%",
+    minHeight: 190,
+    borderWidth: 1,
+    borderColor: ui.border,
+    borderRadius: 14,
+    padding: 15,
+    gap: 15,
+    backgroundColor: "white",
+  },
+  skeletonTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  skeletonBadge: { width: 92, height: 23, borderRadius: 12, backgroundColor: "#E7EBF1" },
+  skeletonHeart: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#E7EBF1" },
+  skeletonFlightRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  skeletonLogo: { width: 38, height: 38, borderRadius: 9, backgroundColor: "#E7EBF1" },
+  skeletonDeparture: { flex: 1.15, minWidth: 0, gap: 5 },
+  skeletonArrival: { flex: 0.9, minWidth: 0, gap: 5 },
+  skeletonRoute: { flex: 1, minWidth: 38, maxWidth: 95, alignItems: "center", gap: 6 },
+  skeletonPrice: { width: 52, flexShrink: 0, alignItems: "flex-end", gap: 6 },
+  skeletonLine: { height: 7, borderRadius: 4, backgroundColor: "#E7EBF1" },
+  skeletonName: { width: "78%" },
+  skeletonTime: { width: "70%", height: 14 },
+  skeletonAirport: { width: "48%" },
+  skeletonDuration: { width: "65%", height: 6 },
+  skeletonRouteLine: { width: "100%", height: 2 },
+  skeletonStop: { width: "52%", height: 6 },
+  skeletonPriceLine: { width: "100%", height: 16 },
+  skeletonPriceCaption: { width: "75%", height: 6 },
+  skeletonBenefits: {
+    borderTopWidth: 1,
+    borderTopColor: "#EDF0F5",
+    paddingTop: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  skeletonBenefitLines: { flex: 1, gap: 7 },
+  skeletonBenefitLine: { width: "90%" },
+  skeletonBenefitLineShort: { width: "68%" },
+  skeletonButton: { width: 88, height: 34, borderRadius: 8, backgroundColor: "#E7EBF1" },
+  hotelSkeletonCard: {
+    width: "100%",
+    height: 234,
+    borderWidth: 1,
+    borderColor: ui.border,
+    borderRadius: 13,
+    overflow: "hidden",
+    flexDirection: "row",
+    backgroundColor: "white",
+  },
+  hotelSkeletonImage: { width: "39%", height: "100%", backgroundColor: "#E7EBF1" },
+  hotelSkeletonCopy: { flex: 1, padding: 12, gap: 12 },
+  hotelSkeletonTitle: { width: "82%", height: 15 },
+  hotelSkeletonMeta: { width: "62%" },
+  hotelSkeletonReview: { width: "74%" },
+  hotelSkeletonDetail: { width: "88%" },
+  hotelSkeletonFooter: {
+    marginTop: "auto",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 8,
   },
+  hotelSkeletonPrice: { width: 58, height: 16 },
   alert: {
     minHeight: 88,
     borderWidth: 1,
