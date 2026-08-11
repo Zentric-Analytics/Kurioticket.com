@@ -543,6 +543,33 @@ test("iOS delivery adopts a finished build and waits for its server-owned auto-s
   assert.equal(actions.filter(({ kind }) => kind === "IOS_SUBMISSION").length, 1);
 });
 
+test("coalesced iOS delivery preserves the native artifact owner through submission and TestFlight", async () => {
+  const artifactSha = "c".repeat(40);
+  const latestSha = "d".repeat(40);
+  const fingerprint = "f".repeat(40);
+  const finishedBuild = build({ status: "FINISHED", appVersion: "0.3.0", appBuildVersion: "34", gitCommitHash: artifactSha });
+  const actions = [];
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, github: {}, render: {}, sleep: async () => {},
+    ledger: {
+      reserveNativeBuild: async () => ({ created: false, action: { source_sha: artifactSha, remote_id: finishedBuild.id } }),
+      recordAction: async (action) => { actions.push(action); return action; },
+      advanceDeliveredNative: async (delivery) => { assert.equal(delivery.sourceSha, artifactSha); },
+    },
+    easFactory: () => ({
+      viewBuild: async () => finishedBuild,
+      listIosSubmissions: async () => [submission({ status: "FINISHED" })],
+    }),
+    appleFactory: () => finishedApple(),
+  });
+
+  const result = await orchestrator.deliverIos(latestSha, repositoryRoot, { checkpoint: async () => {} }, fingerprint);
+  assert.equal(result.nativeArtifactSourceSha, artifactSha);
+  assert.equal(actions.find(({ kind }) => kind === "IOS_SUBMISSION").sourceSha, artifactSha);
+  assert.equal(actions.find(({ kind }) => kind === "IOS_TESTFLIGHT_DISTRIBUTION").sourceSha, artifactSha);
+  assert.equal(actions.find(({ kind }) => kind === "IOS_SUBMISSION").evidence.latestCompatibleSourceSha, latestSha);
+});
+
 test("iOS delivery fails closed on a failed auto-submit and never invokes manual submission", async () => {
   let manualSubmissions = 0;
   const finishedBuild = build({ status: "FINISHED", appBuildVersion: "5" });
@@ -1249,6 +1276,25 @@ test("OTA delivery publishes platforms sequentially and resumes only a missing p
   assert.deepEqual(published, ["android"]);
   assert.deepEqual(result.updateIds, ["ios-existing", "android-new"]);
   assert.equal(actions[0].state, "PUBLISHED");
+});
+
+test("coalesced native delivery can publish an OTA overlay only to affected platforms", async () => {
+  const published = [];
+  const orchestrator = new PreviewOrchestrator({
+    config: {},
+    ledger: { recordAction: async (action) => action },
+    github: {}, render: {},
+    easFactory: () => ({
+      listUpdates: async () => [],
+      publishUpdate: async (_message, platform) => {
+        published.push(platform);
+        return [{ id: `${platform}-overlay`, branch: "preview", runtimeVersion: "preview-0.3.0", platforms: [platform], message: `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0` }];
+      },
+    }),
+  });
+  const result = await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["ios"]);
+  assert.deepEqual(published, ["ios"]);
+  assert.deepEqual(result.updateIds, ["ios-overlay"]);
 });
 
 test("OTA client rejects all-platform publication and uses bounded sequential export memory", async () => {
