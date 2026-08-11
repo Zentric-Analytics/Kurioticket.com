@@ -21,13 +21,13 @@ import {
   Armchair,
   Award,
   Bell,
-  Heart,
   Info,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
   Tag,
 } from "lucide-react-native";
+import { Heart } from "lucide-react-native";
 import {
   travelApi,
   type FlightResult,
@@ -74,6 +74,8 @@ import {
   type ExchangeRates,
 } from "../currency/displayCurrency";
 import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
+import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
+import { useSavedFlights } from "../../storage/useSavedFlights";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -538,7 +540,8 @@ function FlightFilterModal({
   );
 }
 function FlightCard({ result, displayPrice: fare, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; rank: number; params: Record<string, string | string[]> }) {
-  const [saved, setSaved] = useState(false);
+  const { savedFlights, toggle } = useSavedFlights();
+  const saved = savedFlights.has(result.id);
   const stopLabel = result.stops
     ? `${result.stops} stop${result.stops === 1 ? "" : "s"}`
     : "Nonstop";
@@ -566,14 +569,18 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
           </Badge>
         )}
         <Pressable
-          accessibilityLabel={`${saved ? "Remove" : "Save"} ${result.airlineName}`}
-          onPress={() => setSaved(!saved)}
+          accessibilityRole="button"
+          accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
+          accessibilityState={{ selected: saved }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          onPress={(event) => { event.stopPropagation(); toggle(result); }}
+          style={({ pressed }) => pressed && s0.favoritePressed}
         >
           <Heart
             size={20}
             strokeWidth={2}
-            fill={saved ? ui.blue : "none"}
-            color={saved ? ui.blue : ui.muted}
+            fill={saved ? androidFavoriteColors.active : "transparent"}
+            color={saved ? androidFavoriteColors.active : ui.muted}
           />
         </Pressable>
       </View>
@@ -973,6 +980,7 @@ const s0 = StyleSheet.create({
   },
   best: { borderColor: ui.blue },
   cardTop: { minHeight: 23, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
   badgeRow: { flex: 1, minWidth: 0, flexDirection: "row", gap: 6 },
   resultBadge: { height: 23, flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, borderRadius: 12, backgroundColor: "#EEF4FF" },
   resultBadgeGreen: { backgroundColor: "#EAF8ED" },

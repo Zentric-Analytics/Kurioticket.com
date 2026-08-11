@@ -17,7 +17,7 @@ function storeFor(userId: string) {
 }
 
 export function showFavoriteSignInPrompt() {
-  Alert.alert("Sign in to save favorites", "Create an account or sign in to save your favorite destinations and view them later.", [
+  Alert.alert("Sign in to save favorites", "Create an account or sign in to save your favorites and view them later.", [
     { text: "Not now", style: "cancel" },
     { text: "Sign in", onPress: () => router.push("/(tabs)/profile/sign-in") },
   ]);
