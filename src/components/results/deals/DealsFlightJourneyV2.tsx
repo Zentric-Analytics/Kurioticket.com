@@ -39,6 +39,7 @@ import {
   type DealsFlightSelectionSnapshotV2,
 } from "@/lib/deals/dealsFlightRevalidationV2";
 import type { DealsConfirmedFlightOfferV2 } from "@/lib/deals/dealsTripPlanV2";
+import { DealsCarJourneyV2 } from "./DealsCarJourneyV2";
 
 type Status = "initial" | "loading" | "success" | "empty" | "error";
 const messages: Record<DealsFlightInventoryErrorCode, string> = {
@@ -82,6 +83,7 @@ export function DealsFlightJourneyV2({
     [search, upstreamPlan],
   );
   const [plan, setPlan] = useState<DealsTripPlanV2>(() => freshPlan());
+  const [mountedAt] = useState(() => Date.now());
   const [status, setStatus] = useState<Status>("initial");
   const [returnState, setReturnState] = useState<DownstreamLoadState>("idle");
   const [fareState, setFareState] = useState<DownstreamLoadState>("idle");
@@ -851,6 +853,23 @@ export function DealsFlightJourneyV2({
               {plan.flightJourney.confirmedOffer.sourcePrice}
             </p>
           </section>
+        )}
+      {(search.mode === "flight-car" || search.mode === "hotel-flight-car") &&
+        plan.flightJourney?.phase === "confirmed" &&
+        plan.flightJourney.confirmedOffer &&
+        plan.flightJourney.confirmedOffer.offerExpiresAt > mountedAt && (
+          <DealsCarJourneyV2
+            key={`${plan.searchFingerprint}:${plan.flightJourney.confirmedOffer.outboundItineraryKey}:${plan.flightJourney.confirmedOffer.returnItineraryKey ?? ""}:${plan.flightJourney.confirmedOffer.fareKey}`}
+            search={search}
+            plan={plan}
+            onPlanChange={setPlan}
+            onFlightExpired={() =>
+              resetInvalidFlight(
+                "This flight offer expired while you were choosing a car. Refresh flight availability.",
+                "FLIGHT_OFFER_EXPIRED",
+              )
+            }
+          />
         )}
     </div>
   );

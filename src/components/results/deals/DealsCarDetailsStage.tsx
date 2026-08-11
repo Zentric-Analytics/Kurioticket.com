@@ -17,6 +17,7 @@ import type {
   DealsTripPlan,
   DealsTripPlanCar,
 } from "@/lib/deals/dealsTripPlan";
+import type { DealsTripPlanV2 } from "@/lib/deals/dealsTripPlanV2";
 import {
   buildDealsCarDetailsSelection,
   getEffectiveDealsCarDetailsId,
@@ -35,7 +36,7 @@ export function DealsCarDetailsStage({
 }: {
   search: DealsSearch;
   carId: string | null;
-  plan: DealsTripPlan | null;
+  plan: DealsTripPlan | DealsTripPlanV2 | null;
   confirming: boolean;
   confirmationError: string;
   onConfirm: (selection: DealsTripPlanCar) => void;
