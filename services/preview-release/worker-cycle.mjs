@@ -1,10 +1,12 @@
-export async function runWorkerCycle({ mode, github, orchestrator, reconcileNotifications, log = console }) {
+import { withDeadline } from "./deadlines.mjs";
+
+export async function runWorkerCycle({ mode, github, orchestrator, reconcileNotifications, cycleDeadlineMs = 18_000_000, log = console }) {
   let sourceSha = null;
   if (mode === "active") await runIsolated("native-ownership-reconciliation", () => orchestrator.reconcileNativeOwnership(), log);
   let releaseResult = null;
   try {
     sourceSha = await github.latestDevSha();
-    releaseResult = await orchestrator.cycle();
+    releaseResult = await withDeadline(() => orchestrator.cycle(), cycleDeadlineMs, "Preview release cycle");
     const resolvedSha = releaseResult?.source_sha ?? releaseResult?.sourceSha ?? sourceSha;
     log.log(JSON.stringify({ event: "preview-release-cycle", sourceSha: resolvedSha, state: releaseResult?.state }));
   } catch (error) {

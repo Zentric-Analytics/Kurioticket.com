@@ -1,4 +1,5 @@
 import { PREVIEW_IDENTITY } from "./config.mjs";
+import { fetchWithDeadline } from "./deadlines.mjs";
 
 const TERMINAL_FAILURES = new Set(["ERRORED", "FAILED", "CANCELED", "CANCELLED"]);
 const EXPO_ORIGIN = "https://expo.dev";
@@ -158,14 +159,14 @@ export function failureMentionsPlatform(reason, platform) {
 
 async function postNotification(payload, { secret, fetchImpl }) {
   const endpoint = new URL("/api/internal/preview-build-notifications", PREVIEW_IDENTITY.apiOrigin);
-  const response = await fetchImpl(endpoint, {
+  const response = await fetchWithDeadline(fetchImpl, endpoint, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       "x-kurioticket-preview-build-secret": secret,
     },
     body: JSON.stringify(payload),
-  });
+  }, { label: "Preview build notification request" });
   const body = await response.text();
   let result = null;
   try { result = body ? JSON.parse(body) : null; } catch { result = null; }

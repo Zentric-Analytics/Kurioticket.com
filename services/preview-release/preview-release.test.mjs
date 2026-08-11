@@ -14,6 +14,7 @@ import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { PreviewLedger } from "./ledger.mjs";
 import { runWorkerCycle } from "./worker-cycle.mjs";
+import { fetchWithDeadline, withDeadline } from "./deadlines.mjs";
 
 const sha = "a".repeat(40);
 const appleEnv = { APP_STORE_CONNECT_ISSUER_ID: "issuer", APP_STORE_CONNECT_KEY_ID: "key", APP_STORE_CONNECT_PRIVATE_KEY: "private-key", APP_STORE_CONNECT_PREVIEW_APP_ID: "6797447471", APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID: "group-preview" };
@@ -23,6 +24,14 @@ const appleContext = { app: { type: "apps", id: "6797447471", attributes: { bund
 const finishedApple = (overrides = {}) => ({ previewContext: async () => appleContext, resolveBuild: async () => ({ state: "VALID", build: { id: "apple-build-9", attributes: { version: "9", processingState: "VALID" } } }), isAssociated: async () => true, associate: async () => {}, ...overrides });
 const applePrivateKey = generateKeyPairSync("ec", { namedCurve: "P-256" }).privateKey.export({ type: "pkcs8", format: "pem" });
 const appleClient = (fetchImpl) => new AppStoreConnectClient({ issuerId: "issuer", keyId: "key", privateKey: applePrivateKey, appId: "6797447471", betaGroupId: "group-preview", betaGroupName: "Kurioticket Preview Internal", fetchImpl });
+
+test("provider and cycle deadlines fail closed instead of hanging forever", async () => {
+  await assert.rejects(
+    () => fetchWithDeadline((_url, init) => new Promise((_resolve, reject) => init.signal.addEventListener("abort", () => reject(init.signal.reason))), "https://example.test", {}, { timeoutMs: 10, label: "test provider" }),
+    /test provider exceeded 10ms/,
+  );
+  await assert.rejects(() => withDeadline(() => new Promise(() => {}), 10, "test cycle"), /test cycle exceeded 10ms/);
+});
 
 test("one native change plus four source advances coalesces to one build per platform", () => {
   const fingerprints = { android: "a".repeat(40), ios: "i".repeat(40) };
