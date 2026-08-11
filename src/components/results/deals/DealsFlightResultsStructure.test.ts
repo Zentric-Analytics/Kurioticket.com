@@ -82,7 +82,7 @@ test("guided loaded Flight results hide only the redundant heading and preserve 
   );
   assert.match(
     loadedBranch,
-    /<section aria-labelledby="deals-guided-flight-results-heading" className="mt-0 lg:relative lg:left-1\/2 lg:w-\[min\(1180px,calc\(100vw-32px\)\)\] lg:-translate-x-1\/2" data-flight-results-experience="deals-guided">/,
+    /<section[\s\S]*?aria-labelledby="deals-guided-flight-results-heading"[\s\S]*?className="mt-0 lg:relative lg:left-1\/2 lg:w-\[min\(1180px,calc\(100vw-32px\)\)\] lg:-translate-x-1\/2 xl:w-\[min\(1240px,calc\(100vw-32px\)\)\]"[\s\S]*?data-flight-results-experience="deals-guided">/,
   );
   assert.doesNotMatch(
     loadedBranch,
@@ -106,6 +106,7 @@ test("guided loaded Flight results hide only the redundant heading and preserve 
   assert.ok(guidedGridOpeningTag, "guided results grid opening tag is present");
   assert.match(guidedGridOpeningTag, /className="grid /);
   assert.match(guidedGridOpeningTag, /lg:grid-cols-\[260px_minmax\(0,1fr\)\]/);
+  assert.match(guidedGridOpeningTag, /xl:grid-cols-\[304px_minmax\(0,1fr\)\]/);
   assert.match(guidedGridOpeningTag, /lg:gap-x-6/);
   assert.doesNotMatch(guidedGridOpeningTag, /flight-results-grid/);
   assert.doesNotMatch(guidedGridOpeningTag, /lg:gap-x-9/);
@@ -129,6 +130,10 @@ test("guided loaded Flight results hide only the redundant heading and preserve 
     /<div className="lg:hidden">\{renderMobileSortResultsRow\(\)\}<\/div>/,
   );
   assert.match(loadedBranch, /<DesktopFlightFilters/);
+  assert.match(
+    loadedBranch,
+    /<DesktopFlightFilters[\s\S]*?presentationMode="deals-guided"/,
+  );
   assert.match(loadedBranch, /id="flight-mobile-filters-dialog"/);
   assert.match(
     loadedBranch,
