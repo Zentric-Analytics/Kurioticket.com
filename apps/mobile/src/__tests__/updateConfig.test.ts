@@ -18,7 +18,7 @@ test("production uses the first new-identity runtime epoch and waits for launch 
   }
 });
 
-test("preview uses a runtime that cannot receive legacy 0.2.0 updates", () => {
+test("preview binds updates to the installed native fingerprint", () => {
   const previous = { ...process.env };
   try {
     process.env.APP_VARIANT = "preview";
@@ -26,7 +26,7 @@ test("preview uses a runtime that cannot receive legacy 0.2.0 updates", () => {
     process.env.EXPO_PUBLIC_API_BASE_URL = "https://staging.kurioticket.com";
     const appConfig = createAppConfig({ config: {} } as never);
     assert.equal(appConfig.version, "0.3.0");
-    assert.equal(appConfig.runtimeVersion, "preview-0.3.0");
+    assert.deepEqual(appConfig.runtimeVersion, { policy: "fingerprint" });
     assert.equal(appConfig.extra?.environment.channel, "preview");
   } finally {
     process.env = previous;

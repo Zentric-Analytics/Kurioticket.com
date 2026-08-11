@@ -42,9 +42,9 @@ test("one native change plus four source advances coalesces to one build per pla
 });
 
 test("Preview identity is immutable", () => {
-  assert.equal(assertPreviewIdentity({ appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtime: "preview-0.3.0", apiOrigin: "https://staging.kurioticket.com" }), true);
-  for (const [key, value] of [["bundleIdentifier", "com.kurioticket.app"], ["profile", "production"], ["channel", "production"], ["runtime", "production-0.3.0"], ["apiOrigin", "https://kurioticket.com"]]) {
-    const valid = { appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtime: "preview-0.3.0", apiOrigin: "https://staging.kurioticket.com", [key]: value };
+  assert.equal(assertPreviewIdentity({ appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtimePolicy: "fingerprint", apiOrigin: "https://staging.kurioticket.com" }), true);
+  for (const [key, value] of [["bundleIdentifier", "com.kurioticket.app"], ["profile", "production"], ["channel", "production"], ["runtimePolicy", "appVersion"], ["apiOrigin", "https://kurioticket.com"]]) {
+    const valid = { appName: "Kurioticket Preview", bundleIdentifier: "com.kurioticket.app.preview", scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: "preview", runtimePolicy: "fingerprint", apiOrigin: "https://staging.kurioticket.com", [key]: value };
     assert.throws(() => assertPreviewIdentity(valid), /mismatch|forbidden/i);
   }
 });
@@ -56,6 +56,7 @@ test("environment defaults to non-mutating dry-run and rejects missing secrets",
   assert.equal(config.cutoverBaselineSha, null);
   assert.equal(config.iosNativeBackfillSha, null);
   assert.equal(config.pollIntervalMs, 60_000);
+  assert.equal(config.leaseMs, 90_000);
   assert.throws(() => requirePreviewEnvironment({ DATABASE_URL: "postgres://localhost/x", GITHUB_READ_TOKEN: "x", RENDER_API_KEY: "y", RENDER_STAGING_SERVICE_ID: "srv-other", EXPO_TOKEN: "z", ...appleEnv }), /approved Preview staging service/);
 });
 
@@ -547,7 +548,7 @@ test("coalesced iOS delivery preserves the native artifact owner through submiss
   const artifactSha = "c".repeat(40);
   const latestSha = "d".repeat(40);
   const fingerprint = "f".repeat(40);
-  const finishedBuild = build({ status: "FINISHED", appVersion: "0.3.0", appBuildVersion: "34", gitCommitHash: artifactSha });
+  const finishedBuild = build({ status: "FINISHED", appVersion: "0.3.0", appBuildVersion: "34", gitCommitHash: artifactSha, runtimeVersion: fingerprint });
   const actions = [];
   const orchestrator = new PreviewOrchestrator({
     config: {}, github: {}, render: {}, sleep: async () => {},
@@ -686,7 +687,8 @@ test("required native revert targets augment NO_DELIVERY without weakening same-
 });
 
 test("historical TestFlight reconciliation adopts only the recorded finished iOS build and submission", async () => {
-  const finishedBuild = build({ status: "FINISHED", appVersion: "0.3.0", appBuildVersion: "9" });
+  const expectedIosRuntime = "i".repeat(40);
+  const finishedBuild = build({ status: "FINISHED", appVersion: "0.3.0", appBuildVersion: "9", runtimeVersion: expectedIosRuntime });
   const finishedSubmission = submission();
   const actionKinds = [];
   let buildCreates = 0;
@@ -710,8 +712,8 @@ test("historical TestFlight reconciliation adopts only the recorded finished iOS
       return { directory: repositoryRoot, cleanup: async () => {} };
     },
     prepareCheckoutFactory: async () => {},
-    identityFactory: async () => ({ appName: "Kurioticket Preview", bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: PREVIEW_IDENTITY.channel, runtime: PREVIEW_IDENTITY.runtime, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
-    fingerprintsFactory: async () => ({ ios: "i".repeat(40), android: "a".repeat(40) }),
+    identityFactory: async () => ({ appName: "Kurioticket Preview", bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: "kurioticket-preview", projectId: PREVIEW_IDENTITY.easProjectId, profile: "preview", channel: PREVIEW_IDENTITY.channel, runtimePolicy: PREVIEW_IDENTITY.runtimePolicy, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
+    fingerprintsFactory: async () => ({ ios: expectedIosRuntime, android: "a".repeat(40) }),
     easFactory: () => ({
       viewBuild: async (id) => { assert.equal(id, finishedBuild.id); return finishedBuild; },
       listIosSubmissions: async () => [finishedSubmission],
@@ -740,6 +742,18 @@ test("failed TestFlight distribution is reclaimed through its dedicated lease-sa
   assert.doesNotMatch(queries[0].sql, /completed_at\s*=\s*NULL/i);
   assert.match(queries[0].sql, /IOS_BUILD'[\s\S]*IOS_SUBMISSION'[\s\S]*IOS_TESTFLIGHT_DISTRIBUTION'[\s\S]*state='FINISHED'/);
   assert.deepEqual(queries[0].values, [sha, "worker-2", 60_000, "active"]);
+});
+
+test("permanently unavailable notification candidates become terminal and stop retrying", async () => {
+  const queries = [];
+  const ledger = new PreviewLedger("postgres://localhost/test", {
+    pool: { query: async (sql, values) => { queries.push({ sql, values }); return { rows: [], rowCount: 1 }; } },
+  });
+  await ledger.markNativeNotificationTerminalUnavailable({ platform: "ios", build_id: "missing-build" }, "permanently unavailable");
+  assert.match(queries[0].sql, /TERMINAL_UNAVAILABLE/);
+  assert.match(queries[0].sql, /PENDING','RETRYABLE_FAILURE/);
+  assert.equal(queries[0].values[0], "ios");
+  assert.equal(queries[0].values[1], "missing-build");
 });
 
 test("historical distribution completion preserves the monotonic ordinary progression order", async () => {
@@ -1404,7 +1418,7 @@ test("permanent historical iOS absence is isolated while Android recipients and 
   const historical = new PreviewOrchestrator({
     config: { repository: PREVIEW_IDENTITY.repository, githubReadToken: "x", workerId: "worker" }, ledger, github: {}, render: {},
     checkoutFactory: async () => ({ directory: repositoryRoot, cleanup: async () => { cleanup += 1; } }),
-    prepareCheckoutFactory: async () => {}, identityFactory: async () => ({ appName: PREVIEW_IDENTITY.appName, bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: PREVIEW_IDENTITY.scheme, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile, channel: PREVIEW_IDENTITY.channel, runtime: PREVIEW_IDENTITY.runtime, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
+    prepareCheckoutFactory: async () => {}, identityFactory: async () => ({ appName: PREVIEW_IDENTITY.appName, bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: PREVIEW_IDENTITY.scheme, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile, channel: PREVIEW_IDENTITY.channel, runtimePolicy: PREVIEW_IDENTITY.runtimePolicy, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
     fingerprintsFactory: async () => ({ ios: "ios-fingerprint", android: "android-fingerprint" }),
     easFactory: () => ({ viewBuild: async () => { oldLookups += 1; throw new EasRemoteObjectUnavailableError("build", oldBuildId, new Error("exact absence")); } }),
   });
@@ -1467,7 +1481,7 @@ test("canonical incident replacement corrects planning once, reserves before cre
     config: { repository: PREVIEW_IDENTITY.repository, githubReadToken: "x" }, ledger,
     github: { latestDevSha: async () => sha }, render: {},
     checkoutFactory: async () => ({ directory: repositoryRoot, cleanup: async () => {} }), prepareCheckoutFactory: async () => {},
-    identityFactory: async () => ({ appName: PREVIEW_IDENTITY.appName, bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: PREVIEW_IDENTITY.scheme, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile, channel: PREVIEW_IDENTITY.channel, runtime: PREVIEW_IDENTITY.runtime, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
+    identityFactory: async () => ({ appName: PREVIEW_IDENTITY.appName, bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: PREVIEW_IDENTITY.scheme, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile, channel: PREVIEW_IDENTITY.channel, runtimePolicy: PREVIEW_IDENTITY.runtimePolicy, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
     fingerprintsFactory: async () => ({ android: canonical, ios: "e".repeat(40) }),
     easFactory: () => ({
       createAndroidBuild: async () => { creates += 1; order.push("create"); return { id: buildId }; },

@@ -577,6 +577,17 @@ export class PreviewLedger {
     );
   }
 
+  async markNativeNotificationTerminalUnavailable(candidate, reason) {
+    await this.pool.query(
+      `UPDATE preview_native_notification
+       SET state='TERMINAL_UNAVAILABLE', attempt_count=attempt_count+1,
+           last_response=$3::jsonb, updated_at=now()
+       WHERE platform=$1 AND build_id=$2
+         AND state IN ('PENDING','RETRYABLE_FAILURE')`,
+      [candidate.platform, candidate.build_id, JSON.stringify({ terminal: true, reason: String(reason ?? "Provider object is permanently unavailable.").slice(0, 500) })],
+    );
+  }
+
   async getNativeBuildActionForRelease(sourceSha, platform, fingerprint = null) {
     assertExactSha(sourceSha);
     const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;

@@ -11,6 +11,9 @@ export const PREVIEW_IDENTITY = Object.freeze({
   buildProfile: "preview",
   submitProfile: "preview",
   channel: "preview",
+  runtimePolicy: "fingerprint",
+  // Retained only to recognize updates/builds produced before the fingerprint
+  // runtime cutover. New Preview artifacts use their native fingerprint.
   runtime: "preview-0.3.0",
   apiOrigin: "https://staging.kurioticket.com",
   renderStagingServiceId: "srv-d86ulfgg4nts73bctt20",
@@ -53,7 +56,10 @@ export function requirePreviewEnvironment(env = process.env) {
     repository: env.PREVIEW_REPOSITORY || PREVIEW_IDENTITY.repository,
     branch: env.PREVIEW_BRANCH || PREVIEW_IDENTITY.branch,
     pollIntervalMs: parseBoundedInteger(env.PREVIEW_POLL_INTERVAL_MS, 60_000, 15_000, 300_000),
-    leaseMs: parseBoundedInteger(env.PREVIEW_LEASE_MS, 300_000, 60_000, 900_000),
+    // Keep abandoned Render-instance leases shorter than a normal deploy so a
+    // replacement worker can resume promptly. Active workers renew every third
+    // of the lease, including while provider commands are running.
+    leaseMs: parseBoundedInteger(env.PREVIEW_LEASE_MS, 90_000, 60_000, 300_000),
     mode: env.PREVIEW_RELEASE_MODE === "active" ? "active" : "dry-run",
     cutoverBaselineSha: env.PREVIEW_CUTOVER_BASELINE_SHA ? assertExactSha(env.PREVIEW_CUTOVER_BASELINE_SHA, "Cutover baseline SHA") : null,
     iosNativeBackfillSha: env.PREVIEW_IOS_NATIVE_BACKFILL_SHA ? assertExactSha(env.PREVIEW_IOS_NATIVE_BACKFILL_SHA, "iOS native backfill SHA") : null,
@@ -74,7 +80,7 @@ export function assertPreviewIdentity(value) {
     projectId: PREVIEW_IDENTITY.easProjectId,
     profile: PREVIEW_IDENTITY.buildProfile,
     channel: PREVIEW_IDENTITY.channel,
-    runtime: PREVIEW_IDENTITY.runtime,
+    runtimePolicy: PREVIEW_IDENTITY.runtimePolicy,
     apiOrigin: PREVIEW_IDENTITY.apiOrigin,
   };
   for (const [key, expected] of Object.entries(checks)) {
