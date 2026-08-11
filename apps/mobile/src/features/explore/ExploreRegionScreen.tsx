@@ -40,13 +40,14 @@ const NAVY = "#071A48",
   MUTED = "#56658E",
   BORDER = "#E7ECF5";
 export const REGION_BROWSE_HORIZONTAL_INSET = 18;
+export const REGION_BROWSE_CARD_HORIZONTAL_INSET = 8;
 export const REGION_BROWSE_IMAGE_ASPECT_RATIO = 1.7;
 export const REGION_BROWSE_IMAGE_HEIGHT_RATIO = 0.6;
 
 export function regionBrowseCardLayout(screenWidth: number) {
   const width = Math.max(
     240,
-    screenWidth - REGION_BROWSE_HORIZONTAL_INSET * 2,
+    screenWidth - REGION_BROWSE_CARD_HORIZONTAL_INSET * 2,
   );
   const imageHeight = width / REGION_BROWSE_IMAGE_ASPECT_RATIO;
   const height = imageHeight / REGION_BROWSE_IMAGE_HEIGHT_RATIO;
@@ -251,7 +252,7 @@ export function ExploreRegionScreen() {
           keyExtractor={(destination) => destination.id}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
-            s.list,
+            s.browseList,
             { paddingBottom: exploreBottomPadding(20, insets.bottom) },
           ]}
           renderItem={({ item }) => (
@@ -303,6 +304,7 @@ const s = StyleSheet.create({
   clearText: { color: BLUE, fontWeight: "700" },
   count: { color: MUTED, fontSize: 13, fontWeight: "600", paddingVertical: 14 },
   list: { paddingHorizontal: REGION_BROWSE_HORIZONTAL_INSET },
+  browseList: { paddingHorizontal: REGION_BROWSE_CARD_HORIZONTAL_INSET },
   browseCard: {
     borderWidth: 1,
     borderColor: BORDER,
