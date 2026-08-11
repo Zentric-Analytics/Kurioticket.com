@@ -534,7 +534,14 @@ export function canonicalizeDealsTripPlanV2(
     value.flightJourney === undefined
       ? undefined
       : canonicalJourney(value.flightJourney);
-  if (hotel === null || car === null || flightJourney === null) return null;
+  if (
+    hotel === null ||
+    car === null ||
+    flightJourney === null ||
+    (flightJourney?.confirmedOffer &&
+      flightJourney.confirmedOffer.validatedAt > value.updatedAt)
+  )
+    return null;
   const included = getIncludedProducts(mode);
   if (
     (!included.hotel && hotel) ||

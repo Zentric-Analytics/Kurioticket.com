@@ -7,11 +7,24 @@ import {
 import {
   applyDealsJourneyEventV2,
   getRequiredDealsJourneyStateV2,
+  type DealsJourneyEventV2,
 } from "./dealsJourneyEngineV2";
-import { createDealsTripPlanV2, type DealsTripPlanV2 } from "./dealsTripPlanV2";
+import {
+  createDealsTripPlanV2,
+  parseDealsTripPlanV2,
+  serializeDealsTripPlanV2,
+  type DealsTripPlanV2,
+} from "./dealsTripPlanV2";
 import { car, hotel, inbound, offer, outbound } from "./dealsTripPlanV2.test";
 
 const at = 10_100;
+type EventWithoutRevision = DealsJourneyEventV2 extends infer Event
+  ? Event extends { expectedRevision: number }
+    ? Omit<Event, "expectedRevision" | "sourceSearchKey"> & {
+        sourceSearchKey?: string;
+      }
+    : never
+  : never;
 const makeSearch = (patch: Partial<DealsSearch> = {}): DealsSearch => ({
   ...createDefaultDealsSearch(),
   mode: "hotel-flight-car",
@@ -30,23 +43,30 @@ const makeSearch = (patch: Partial<DealsSearch> = {}): DealsSearch => ({
 const apply = (
   plan: DealsTripPlanV2,
   search: DealsSearch,
-  event: Omit<
-    Parameters<typeof applyDealsJourneyEventV2>[2],
-    "expectedRevision"
-  >,
+  event: EventWithoutRevision,
   now = at,
 ) =>
   applyDealsJourneyEventV2(
     plan,
     search,
-    { ...event, expectedRevision: plan.revision } as Parameters<
-      typeof applyDealsJourneyEventV2
-    >[2],
+    {
+      ...(event.type === "HOTEL_CONFIRMED"
+        ? { sourceSearchKey: plan.productSearchKeys.hotel }
+        : event.type === "CAR_CONFIRMED"
+          ? { sourceSearchKey: plan.productSearchKeys.car }
+          : event.type === "FLIGHT_OUTBOUND_SELECTED" ||
+              event.type === "FLIGHT_RETURN_SELECTED" ||
+              event.type === "FLIGHT_FARE_SELECTED"
+            ? { sourceSearchKey: plan.productSearchKeys.flight }
+            : {}),
+      ...event,
+      expectedRevision: plan.revision,
+    } as Parameters<typeof applyDealsJourneyEventV2>[2],
     now,
   );
 const accepted = (result: ReturnType<typeof applyDealsJourneyEventV2>) => {
   assert.equal(result.ok, true);
-  if (!result.ok) throw new Error(result.reason);
+  if (!result.ok) throw new Error("Expected event to be accepted");
   return result.plan;
 };
 const completeFlight = (
@@ -270,7 +290,12 @@ test("revision, context, non-monotonic time, and incomplete review reject cleanl
   const stale = applyDealsJourneyEventV2(
     plan,
     search,
-    { type: "HOTEL_CONFIRMED", hotel, expectedRevision: 2 },
+    {
+      type: "HOTEL_CONFIRMED",
+      hotel,
+      sourceSearchKey: plan.productSearchKeys.hotel,
+      expectedRevision: 2,
+    },
     at,
   );
   assert.equal(stale.ok, false);
@@ -278,7 +303,12 @@ test("revision, context, non-monotonic time, and incomplete review reject cleanl
   const mismatch = applyDealsJourneyEventV2(
     plan,
     { ...search, hotelRooms: 2 },
-    { type: "HOTEL_CONFIRMED", hotel, expectedRevision: 0 },
+    {
+      type: "HOTEL_CONFIRMED",
+      hotel,
+      sourceSearchKey: plan.productSearchKeys.hotel,
+      expectedRevision: 0,
+    },
     at,
   );
   assert.equal(mismatch.ok, false);
@@ -330,6 +360,175 @@ test("materially identical selections and flight stages are idempotent", () => {
     fare: { fareKey: "fare-1", cabinClass: "economy" },
   });
   assert.equal(result.changed, false);
+});
+
+test("inventory events reject stale product search keys before idempotency", () => {
+  const search = makeSearch();
+  let plan = createDealsTripPlanV2(search, 10_000);
+  const initial = plan;
+  for (const event of [
+    { type: "HOTEL_CONFIRMED" as const, hotel, sourceSearchKey: "old-hotel" },
+    { type: "CAR_CONFIRMED" as const, car, sourceSearchKey: "old-car" },
+    {
+      type: "FLIGHT_OUTBOUND_SELECTED" as const,
+      itinerary: outbound,
+      sourceSearchKey: "old-flight",
+    },
+  ]) {
+    const result = apply(plan, search, event);
+    assert.equal(result.ok, false);
+    assert.equal(result.plan, plan);
+    assert.equal(result.plan.revision, initial.revision);
+    if (!result.ok) assert.equal(result.reason, "stale-product-search");
+  }
+
+  plan = accepted(apply(plan, search, { type: "HOTEL_CONFIRMED", hotel }));
+  const sameHotelFromOldSearch = apply(plan, search, {
+    type: "HOTEL_CONFIRMED",
+    hotel,
+    sourceSearchKey: "old-hotel",
+  });
+  assert.equal(sameHotelFromOldSearch.ok, false);
+  assert.equal(sameHotelFromOldSearch.changed, false);
+  assert.equal(sameHotelFromOldSearch.plan, plan);
+});
+
+test("late Hotel and Car results are rejected after their searches reconcile", () => {
+  for (const [product, patch] of [
+    ["hotel", { hotelRooms: 2 }],
+    ["car", { carDriverAge: 45 }],
+  ] as const) {
+    const searchA = makeSearch({ mode: "hotel-car" });
+    let plan = createDealsTripPlanV2(searchA, 10_000);
+    const oldKey = plan.productSearchKeys[product];
+    const searchB = { ...searchA, ...patch };
+    plan = accepted(apply(plan, searchB, { type: "SEARCH_RECONCILED" }));
+    if (product === "car")
+      plan = accepted(apply(plan, searchB, { type: "HOTEL_CONFIRMED", hotel }));
+    const revision = plan.revision;
+    const result =
+      product === "hotel"
+        ? apply(plan, searchB, {
+            type: "HOTEL_CONFIRMED",
+            hotel,
+            sourceSearchKey: oldKey,
+          })
+        : apply(plan, searchB, {
+            type: "CAR_CONFIRMED",
+            car,
+            sourceSearchKey: oldKey,
+          });
+    assert.equal(result.ok, false);
+    assert.equal(result.plan, plan);
+    assert.equal(result.plan.revision, revision);
+  }
+});
+
+test("Flight selections require the active source key at every selection stage", () => {
+  const search = makeSearch({ mode: "flight-car" });
+  let plan = createDealsTripPlanV2(search, 10_000);
+  const staleOutbound = apply(plan, search, {
+    type: "FLIGHT_OUTBOUND_SELECTED",
+    itinerary: outbound,
+    sourceSearchKey: "old-flight",
+  });
+  assert.equal(staleOutbound.ok, false);
+  plan = accepted(
+    apply(plan, search, {
+      type: "FLIGHT_OUTBOUND_SELECTED",
+      itinerary: outbound,
+    }),
+  );
+  const staleReturn = apply(plan, search, {
+    type: "FLIGHT_RETURN_SELECTED",
+    itinerary: inbound,
+    sourceSearchKey: "old-flight",
+  });
+  assert.equal(staleReturn.ok, false);
+  plan = accepted(
+    apply(plan, search, { type: "FLIGHT_RETURN_SELECTED", itinerary: inbound }),
+  );
+  const staleFare = apply(plan, search, {
+    type: "FLIGHT_FARE_SELECTED",
+    fare: { fareKey: "fare-1", cabinClass: "economy" },
+    sourceSearchKey: "old-flight",
+  });
+  assert.equal(staleFare.ok, false);
+  assert.equal(staleFare.plan, plan);
+  assert.equal(staleFare.plan.revision, plan.revision);
+  assert.equal(
+    apply(plan, search, {
+      type: "FLIGHT_FARE_SELECTED",
+      fare: { fareKey: "fare-1", cabinClass: "economy" },
+    }).ok,
+    true,
+  );
+});
+
+test("late outbound results are rejected after Flight search reconciliation", () => {
+  const searchA = makeSearch({ mode: "flight-car" });
+  let plan = createDealsTripPlanV2(searchA, 10_000);
+  const oldKey = plan.productSearchKeys.flight;
+  const searchB = { ...searchA, flightAdults: searchA.flightAdults + 1 };
+  plan = accepted(apply(plan, searchB, { type: "SEARCH_RECONCILED" }));
+  const result = apply(plan, searchB, {
+    type: "FLIGHT_OUTBOUND_SELECTED",
+    itinerary: outbound,
+    sourceSearchKey: oldKey,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.plan, plan);
+  assert.equal(result.plan.revision, plan.revision);
+});
+
+test("future validation is incomplete, while validation at event time round trips", () => {
+  const search = makeSearch({ mode: "flight-car" });
+  let plan = createDealsTripPlanV2(search, 10_000);
+  plan = accepted(
+    apply(plan, search, {
+      type: "FLIGHT_OUTBOUND_SELECTED",
+      itinerary: outbound,
+    }),
+  );
+  plan = accepted(
+    apply(plan, search, { type: "FLIGHT_RETURN_SELECTED", itinerary: inbound }),
+  );
+  plan = accepted(
+    apply(plan, search, {
+      type: "FLIGHT_FARE_SELECTED",
+      fare: { fareKey: "fare-1", cabinClass: "economy" },
+    }),
+  );
+  plan = accepted(apply(plan, search, { type: "FLIGHT_REVALIDATION_STARTED" }));
+  assert.equal(
+    apply(plan, search, {
+      type: "FLIGHT_REVALIDATION_SUCCEEDED",
+      offer: { ...offer, validatedAt: at + 1, providerExpiresAt: at + 100 },
+    }).ok,
+    false,
+  );
+  plan = accepted(
+    apply(plan, search, {
+      type: "FLIGHT_REVALIDATION_SUCCEEDED",
+      offer: { ...offer, validatedAt: at, providerExpiresAt: at + 100 },
+    }),
+  );
+  assert.deepEqual(parseDealsTripPlanV2(serializeDealsTripPlanV2(plan)), plan);
+  const futureAtEvaluation = {
+    ...plan,
+    updatedAt: at + 1,
+    flightJourney: {
+      ...plan.flightJourney!,
+      confirmedOffer: {
+        ...plan.flightJourney!.confirmedOffer!,
+        validatedAt: at + 1,
+      },
+    },
+  };
+  assert.equal(
+    getRequiredDealsJourneyStateV2(futureAtEvaluation, at),
+    "flight-fare",
+  );
 });
 
 test("reconciliation ignores excluded hidden inputs and preserves opened on no-op", () => {

@@ -234,3 +234,27 @@ test("persisted confirmed offers must match outbound, return, fare, and timestam
   };
   assert.equal(canonicalizeDealsTripPlanV2(oneWay), null);
 });
+
+test("confirmed validation cannot postdate the durable plan update", () => {
+  const validAtBoundary = confirmedPlan();
+  validAtBoundary.flightJourney!.confirmedOffer!.validatedAt =
+    validAtBoundary.updatedAt;
+  assert.ok(canonicalizeDealsTripPlanV2(validAtBoundary));
+
+  const invalid = {
+    ...validAtBoundary,
+    flightJourney: {
+      ...validAtBoundary.flightJourney!,
+      confirmedOffer: {
+        ...validAtBoundary.flightJourney!.confirmedOffer!,
+        validatedAt: validAtBoundary.updatedAt + 1,
+      },
+    },
+  };
+  assert.equal(canonicalizeDealsTripPlanV2(invalid), null);
+  assert.equal(parseDealsTripPlanV2(JSON.stringify(invalid)), null);
+  assert.throws(
+    () => serializeDealsTripPlanV2(invalid),
+    new TypeError("Invalid Deals trip plan v2"),
+  );
+});

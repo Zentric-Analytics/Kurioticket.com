@@ -32,6 +32,7 @@ export type DealsJourneyStateV2 =
   | "handoff";
 export type DealsJourneyFailureReasonV2 =
   | "stale-revision"
+  | "stale-product-search"
   | "search-context-mismatch"
   | "invalid-transition"
   | "not-ready"
@@ -40,16 +41,26 @@ export type DealsJourneyFailureReasonV2 =
 
 type Revisioned = { expectedRevision: number };
 export type DealsJourneyEventV2 =
-  | (Revisioned & { type: "HOTEL_CONFIRMED"; hotel: DealsTripPlanHotel })
+  | (Revisioned & {
+      type: "HOTEL_CONFIRMED";
+      hotel: DealsTripPlanHotel;
+      sourceSearchKey: string;
+    })
   | (Revisioned & {
       type: "FLIGHT_OUTBOUND_SELECTED";
       itinerary: DealsFlightItineraryV2;
+      sourceSearchKey: string;
     })
   | (Revisioned & {
       type: "FLIGHT_RETURN_SELECTED";
       itinerary: DealsFlightItineraryV2;
+      sourceSearchKey: string;
     })
-  | (Revisioned & { type: "FLIGHT_FARE_SELECTED"; fare: DealsFlightFareV2 })
+  | (Revisioned & {
+      type: "FLIGHT_FARE_SELECTED";
+      fare: DealsFlightFareV2;
+      sourceSearchKey: string;
+    })
   | (Revisioned & { type: "FLIGHT_REVALIDATION_STARTED" })
   | (Revisioned & {
       type: "FLIGHT_REVALIDATION_SUCCEEDED";
@@ -57,7 +68,11 @@ export type DealsJourneyEventV2 =
     })
   | (Revisioned & { type: "FLIGHT_OFFER_EXPIRED" })
   | (Revisioned & { type: "FLIGHT_OFFER_UNAVAILABLE" })
-  | (Revisioned & { type: "CAR_CONFIRMED"; car: DealsTripPlanCar })
+  | (Revisioned & {
+      type: "CAR_CONFIRMED";
+      car: DealsTripPlanCar;
+      sourceSearchKey: string;
+    })
   | (Revisioned & { type: "SEARCH_RECONCILED" })
   | (Revisioned & { type: "REVIEW_CONTINUE_REQUESTED" });
 export type DealsJourneyResultV2 =
@@ -92,6 +107,7 @@ const flightComplete = (
     journey?.phase === "confirmed" &&
     journey.fare &&
     journey.confirmedOffer &&
+    journey.confirmedOffer.validatedAt <= now &&
     journey.confirmedOffer.providerExpiresAt > now &&
     areDealsFlightOfferAndJourneyConsistentV2(journey.confirmedOffer, journey),
   );
@@ -173,6 +189,18 @@ export function applyDealsJourneyEventV2(
     (included.car && keys.car !== plan.productSearchKeys.car)
   )
     return fail(plan, now, "search-context-mismatch");
+  if (
+    (event.type === "HOTEL_CONFIRMED" &&
+      event.sourceSearchKey !== plan.productSearchKeys.hotel) ||
+    (event.type === "CAR_CONFIRMED" &&
+      event.sourceSearchKey !== plan.productSearchKeys.car) ||
+    ((event.type === "FLIGHT_OUTBOUND_SELECTED" ||
+      event.type === "FLIGHT_RETURN_SELECTED" ||
+      event.type === "FLIGHT_FARE_SELECTED") &&
+      (event.sourceSearchKey !== plan.productSearchKeys.flight ||
+        plan.flightJourney?.searchKey !== plan.productSearchKeys.flight))
+  )
+    return fail(plan, now, "stale-product-search");
   if (event.type === "REVIEW_CONTINUE_REQUESTED")
     return getRequiredDealsJourneyStateV2(plan, now) === "review"
       ? success(plan, now, false, "handoff")
