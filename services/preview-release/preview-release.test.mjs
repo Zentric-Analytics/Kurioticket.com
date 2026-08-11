@@ -1126,6 +1126,13 @@ test("exact checkouts are created on the selected worker artifact filesystem", a
   }
 });
 
+test("exact change-set history fetch is repeatable after a checkout becomes complete", () => {
+  const source = readFileSync(resolve(repositoryRoot, "services/preview-release/remote-clients.mjs"), "utf8");
+  assert.match(source, /rev-parse", "--is-shallow-repository/);
+  assert.match(source, /shallowOutput\.trim\(\) === "true"/);
+  assert.match(source, /\["fetch", "--quiet", "origin", PREVIEW_IDENTITY\.branch\]/);
+});
+
 test("exact-checkout preparation fails closed when dependency manifests differ", async () => {
   const temporary = await mkdtemp(resolve(tmpdir(), "preview-dependencies-"));
   try {
