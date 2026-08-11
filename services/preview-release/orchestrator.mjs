@@ -246,7 +246,24 @@ export class PreviewOrchestrator {
       if (classification.classification.includes("OTA")) deliveries.ota = () => this.deliverOta(sha, checkout.directory, lease);
       if (classification.classification.includes("IOS_NATIVE")) deliveries.ios = () => this.deliverIos(sha, checkout.directory, lease, fingerprints.ios);
       if (classification.classification.includes("ANDROID_NATIVE")) deliveries.android = () => this.deliverAndroid(sha, checkout.directory, lease, fingerprints.android);
-      Object.assign(evidence, await runDeliveries(deliveries));
+      const deliveryResults = await runDeliveries(deliveries);
+      Object.assign(evidence, deliveryResults);
+      const coalescedPlatforms = ["ios", "android"].filter((platform) => {
+        const result = deliveryResults[platform];
+        return result?.nativeArtifactSourceSha && result.nativeArtifactSourceSha !== sha;
+      });
+      if (!classification.classification.includes("OTA") && coalescedPlatforms.length) {
+        for (const platform of coalescedPlatforms) {
+          const artifactSourceSha = deliveryResults[platform].nativeArtifactSourceSha;
+          const overlayFiles = await exactChangeSet({ directory: checkout.directory, repository: this.config.repository, token: this.config.githubReadToken, previousSha: artifactSourceSha, targetSha: sha });
+          const overlay = classifyChangeSet(overlayFiles);
+          if (!overlay.classification.includes("OTA") || overlay.classification.includes("NATIVE") || overlay.classification === "UNSAFE") {
+            throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} cannot receive a safe OTA overlay for ${sha}.`);
+          }
+        }
+        evidence.ota = await this.deliverOta(sha, checkout.directory, lease, coalescedPlatforms);
+        evidence.coalescedOtaPlatforms = coalescedPlatforms;
+      }
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
       return complete;
@@ -363,11 +380,11 @@ export class PreviewOrchestrator {
     throw new Error(`Render deployment ${deploy.id} exceeded its bounded polling window.`);
   }
 
-  async deliverOta(sha, cwd, lease) {
+  async deliverOta(sha, cwd, lease, platforms = ["ios", "android"]) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
     const history = await eas.listUpdates();
     const updates = [];
-    for (const platform of ["ios", "android"]) {
+    for (const platform of platforms) {
       const replay = inspectPreviewUpdateHistory(history, sha, platform);
       if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups.`);
       if (replay.alreadyPublished) {
@@ -439,16 +456,16 @@ export class PreviewOrchestrator {
           await this.sleep(15_000);
           continue;
         }
-        await this.ledger.recordAction({ sourceSha: sha, kind: "IOS_SUBMISSION", identityKey: `ios-submission:${build.id}`, remoteId: submission.submission.id, state: submission.state, evidence: submission.submission });
+        await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "IOS_SUBMISSION", identityKey: `ios-submission:${build.id}`, remoteId: submission.submission.id, state: submission.state, evidence: { ...submission.submission, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
         if (submission.state === "FINISHED") {
-          const distribution = await this.distributeIosToInternalGroup({ sha, build, current, submission: submission.submission, lease });
+          const distribution = await this.distributeIosToInternalGroup({ sha: artifactSourceSha, build, current, submission: submission.submission, lease });
           if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({
             platform: "ios", sourceSha: artifactSourceSha, fingerprint, buildId: build.id,
             appVersion: current.appVersion, buildNumber: current.appBuildVersion,
             submissionId: submission.submission.id, appleBuildId: distribution.appleBuildId,
             distributionId: `${distribution.appleBuildId}:${distribution.betaGroupId}`,
           });
-          return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission.id, distribution };
+          return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission.id, distribution, nativeArtifactSourceSha: artifactSourceSha };
         }
         await this.sleep(15_000);
         continue;
@@ -527,7 +544,7 @@ export class PreviewOrchestrator {
       await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
       if (status === "FINISHED") {
         if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({ platform: "android", sourceSha: artifactSourceSha, fingerprint, buildId: build.id, appVersion: current.appVersion, buildNumber: current.appBuildVersion });
-        return { buildId: build.id, buildNumber: current.appBuildVersion, status };
+        return { buildId: build.id, buildNumber: current.appBuildVersion, status, nativeArtifactSourceSha: artifactSourceSha };
       }
       if (["ERRORED", "FAILED", "CANCELED"].includes(status)) throw new Error(`EAS Android build ${build.id} ended in ${status}.`);
       await this.sleep(30_000);
