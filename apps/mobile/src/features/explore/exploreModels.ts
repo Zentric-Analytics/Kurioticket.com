@@ -20,42 +20,6 @@ export type ExploreSearchResult = {
   rank: number;
 };
 
-export type ExploreCountryGroup = {
-  country: string;
-  countryCode: string;
-  destinations: Destination[];
-};
-
-/** Groups canonical destinations by their canonical country, in catalogue order. */
-export function groupExploreDestinationsByCountry(
-  regionalDestinations: readonly Destination[],
-): ExploreCountryGroup[] {
-  const groups = new Map<string, ExploreCountryGroup>();
-  for (const destination of regionalDestinations) {
-    const group = groups.get(destination.countryCode);
-    if (group) group.destinations.push(destination);
-    else {
-      groups.set(destination.countryCode, {
-        country: destination.country,
-        countryCode: destination.countryCode,
-        destinations: [destination],
-      });
-    }
-  }
-  return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      destinations: [...group.destinations].sort((a, b) =>
-        a.name.localeCompare(b.name),
-      ),
-    }))
-    .sort(
-      (a, b) =>
-        a.country.localeCompare(b.country) ||
-        a.countryCode.localeCompare(b.countryCode),
-    );
-}
-
 export function formatDestinationCount(count: number) {
   return `${count} ${count === 1 ? "destination" : "destinations"}`;
 }
