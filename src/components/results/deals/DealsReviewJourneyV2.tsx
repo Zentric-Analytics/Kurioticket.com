@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -10,52 +9,45 @@ import {
   formatDisplayPrice,
 } from "@/lib/currency/formatCurrency";
 import {
-  applyDealsJourneyEventV2,
-  getRequiredDealsJourneyStateV2,
-} from "@/lib/deals/dealsJourneyEngineV2";
-import { buildDealsJourneyUrl } from "@/lib/deals/dealsJourneyRoutes";
-import { clearDealsFlightRuntimeV2 } from "@/lib/deals/dealsFlightRuntimeStorageV2";
+  buildDealsReviewSnapshotV2,
+  type DealsReviewSnapshotV2,
+} from "@/lib/deals/dealsReviewLifecycleV2";
 import {
   getDealsReviewItemsV2,
   getDealsTripPlanV2EstimatedTotal,
 } from "@/lib/deals/dealsReviewPresentationV2";
-import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import {
   getDealsTripPlanV2NextDeadline,
   type DealsTripPlanV2,
-  type DealsV2DeadlineKind,
 } from "@/lib/deals/dealsTripPlanV2";
 
+export type DealsReviewActionOutcomeV2 =
+  | { status: "stale" | "recovered" }
+  | { status: "confirmed"; snapshot: DealsReviewSnapshotV2 };
+
 export function DealsReviewJourneyV2({
-  search,
   plan,
-  onPlanChange,
   onChangeFlight,
   onChangeCar,
-  onSessionExpired,
-  onLifecycleInvalidated,
+  onChangeStay,
+  onConfirmReview,
+  onLifecycleDeadline,
 }: {
-  search: DealsSearch;
   plan: DealsTripPlanV2;
-  onPlanChange: (plan: DealsTripPlanV2) => void;
-  onChangeFlight: (plan: DealsTripPlanV2) => void;
-  onChangeCar: () => void;
-  onSessionExpired: () => void;
-  onLifecycleInvalidated: (
-    kind: DealsV2DeadlineKind,
-    plan: DealsTripPlanV2,
-  ) => void;
+  onChangeFlight: (snapshot: DealsReviewSnapshotV2) => void;
+  onChangeCar: (snapshot: DealsReviewSnapshotV2) => void;
+  onChangeStay: (snapshot: DealsReviewSnapshotV2) => void;
+  onConfirmReview: (
+    snapshot: DealsReviewSnapshotV2,
+  ) => DealsReviewActionOutcomeV2;
+  onLifecycleDeadline: (snapshot: DealsReviewSnapshotV2) => void;
 }) {
-  const router = useRouter();
   const { locale } = useLocale();
   const { selectedCurrency } = useRegion();
   const rates = useCurrencyRates();
-  const [reviewed, setReviewed] = useState<{
-    reviewedRevision: number;
-    searchFingerprint: string;
-  } | null>(null);
+  const [reviewed, setReviewed] = useState<DealsReviewSnapshotV2 | null>(null);
   const [message, setMessage] = useState("");
-  const [blockedBy, setBlockedBy] = useState<DealsV2DeadlineKind | null>(null);
+  const snapshot = useMemo(() => buildDealsReviewSnapshotV2(plan), [plan]);
   const items = useMemo(
     () => getDealsReviewItemsV2(plan, locale),
     [locale, plan],
@@ -67,108 +59,29 @@ export function DealsReviewJourneyV2({
   );
 
   useEffect(() => {
-    const scheduledRevision = plan.revision;
-    const scheduledFingerprint = plan.searchFingerprint;
     const deadline = getDealsTripPlanV2NextDeadline(plan);
     const timer = window.setTimeout(
-      () => {
-        const latest = plan;
-        if (
-          latest.revision !== scheduledRevision ||
-          latest.searchFingerprint !== scheduledFingerprint
-        )
-          return;
-        const now = Date.now();
-        const currentDeadline = getDealsTripPlanV2NextDeadline(latest);
-        if (currentDeadline.expiresAt > now) return;
-        setReviewed(null);
-        if (
-          currentDeadline.kind === "plan" ||
-          currentDeadline.kind === "hotel"
-        ) {
-          setBlockedBy(currentDeadline.kind);
-          return;
-        }
-        onLifecycleInvalidated(currentDeadline.kind, latest);
-      },
+      () => onLifecycleDeadline(snapshot),
       Math.max(0, deadline.expiresAt - Date.now()),
     );
     return () => window.clearTimeout(timer);
-  }, [onLifecycleInvalidated, plan]);
+  }, [onLifecycleDeadline, plan, snapshot]);
 
   const confirmReview = () => {
-    const now = Date.now();
     setReviewed(null);
-    const result = applyDealsJourneyEventV2(
-      plan,
-      search,
-      { type: "REVIEW_CONTINUE_REQUESTED", expectedRevision: plan.revision },
-      now,
-    );
-    if (result.ok && result.nextState === "handoff") {
-      setReviewed({
-        reviewedRevision: plan.revision,
-        searchFingerprint: plan.searchFingerprint,
-      });
+    const result = onConfirmReview(snapshot);
+    if (result.status === "confirmed") {
+      setReviewed(result.snapshot);
       setMessage("");
-      return;
+    } else if (result.status === "recovered") {
+      setMessage(
+        "Your selections changed or expired. Review the recovered package before continuing.",
+      );
     }
-    setMessage(
-      result.ok === false && result.reason === "expired-plan"
-        ? "Your package session expired. Refresh availability to continue."
-        : "Your selections changed or expired. Review the recovered package before continuing.",
-    );
-    onPlanChange(result.plan);
-    const state = getRequiredDealsJourneyStateV2(result.plan, now);
-    if (state.startsWith("flight"))
-      onLifecycleInvalidated("flight-offer", result.plan);
-    else if (state === "car") onLifecycleInvalidated("car", result.plan);
-    else if (state === "hotel") onLifecycleInvalidated("hotel", result.plan);
   };
 
-  if (blockedBy === "plan")
-    return (
-      <section
-        role="alert"
-        className="rounded-2xl border border-amber-300 bg-white p-6"
-      >
-        <p className="font-semibold">
-          Your package session expired. Refresh availability to continue.
-        </p>
-        <button
-          type="button"
-          onClick={onSessionExpired}
-          className="mt-4 min-h-11 rounded-xl bg-[#004BB8] px-5 font-bold text-white"
-        >
-          Refresh availability
-        </button>
-      </section>
-    );
-  if (blockedBy === "hotel")
-    return (
-      <section
-        role="alert"
-        className="rounded-2xl border border-amber-300 bg-white p-6"
-      >
-        <p className="font-semibold">
-          Your hotel selection expired. Return to the hotel step to choose it
-          again.
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            clearDealsFlightRuntimeV2(sessionStorage);
-            router.push(buildDealsJourneyUrl("hotel-results", search));
-          }}
-          className="mt-4 min-h-11 rounded-xl bg-[#004BB8] px-5 font-bold text-white"
-        >
-          Return to hotel results
-        </button>
-      </section>
-    );
-
   if (
-    reviewed?.reviewedRevision === plan.revision &&
+    reviewed?.revision === plan.revision &&
     reviewed.searchFingerprint === plan.searchFingerprint
   )
     return (
@@ -260,12 +173,9 @@ export function DealsReviewJourneyV2({
                 className="focus-ring mt-5 min-h-11 rounded-xl border border-blue-700 px-4 font-bold text-blue-800"
                 onClick={() => {
                   setReviewed(null);
-                  if (item.product === "flight") onChangeFlight(plan);
-                  else if (item.product === "car") onChangeCar();
-                  else {
-                    clearDealsFlightRuntimeV2(sessionStorage);
-                    router.push(buildDealsJourneyUrl("hotel-results", search));
-                  }
+                  if (item.product === "flight") onChangeFlight(snapshot);
+                  else if (item.product === "car") onChangeCar(snapshot);
+                  else onChangeStay(snapshot);
                 }}
               >
                 {item.product === "hotel"

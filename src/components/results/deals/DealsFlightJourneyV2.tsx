@@ -1,8 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import { buildDealsProductSearchKeys } from "@/lib/deals/dealsProductSearchKeys";
+import { buildDealsJourneyUrl } from "@/lib/deals/dealsJourneyRoutes";
+import {
+  buildDealsReviewSnapshotV2,
+  evaluateDealsReviewLifecycleV2,
+  isCurrentDealsReviewSnapshotV2,
+  type DealsReviewSnapshotV2,
+} from "@/lib/deals/dealsReviewLifecycleV2";
 import {
   applyDealsJourneyEventV2,
   getRequiredDealsJourneyStateV2,
@@ -77,6 +85,7 @@ export function DealsFlightJourneyV2({
   search: DealsSearch;
   upstreamPlan: DealsTripPlan | null;
 }) {
+  const router = useRouter();
   const searchKey = buildDealsProductSearchKeys(search).flight;
   const [runtime, setRuntime] = useState<DealsFlightRuntimeV2 | null>(null);
   const freshPlan = useCallback(
@@ -85,6 +94,10 @@ export function DealsFlightJourneyV2({
     [search, upstreamPlan],
   );
   const [plan, setPlan] = useState<DealsTripPlanV2>(() => freshPlan());
+  const planRef = useRef(plan);
+  useEffect(() => {
+    planRef.current = plan;
+  }, [plan]);
   const [status, setStatus] = useState<Status>("initial");
   const [returnState, setReturnState] = useState<DownstreamLoadState>("idle");
   const [fareState, setFareState] = useState<DownstreamLoadState>("idle");
@@ -101,6 +114,9 @@ export function DealsFlightJourneyV2({
   } | null>(null);
   const [editingCar, setEditingCar] = useState(false);
   const [journeyNow, setJourneyNow] = useState(() => Date.now());
+  const [reviewRecovery, setReviewRecovery] = useState<"plan" | "hotel" | null>(
+    null,
+  );
   const coordinator = useRef(createDealsFlightRevalidationCoordinatorV2());
   const cancel = useCallback(() => {
     coordinator.current.cancel();
@@ -157,6 +173,7 @@ export function DealsFlightJourneyV2({
   );
 
   const create = useCallback(async () => {
+    setReviewRecovery(null);
     cancel();
     const cleared = clearDealsFlightRuntimeV2(sessionStorage);
     if (!cleared.ok)
@@ -642,32 +659,41 @@ export function DealsFlightJourneyV2({
     if (applied.ok) setPlan(applied.plan);
   };
 
-  const changeFlightFromReview = (reviewPlan: DealsTripPlanV2) => {
-    const fare = reviewPlan.flightJourney?.fare;
-    if (!fare) return;
-    cancel();
-    setEditingCar(false);
-    const applied = applyDealsJourneyEventV2(reviewPlan, search, {
-      type: "FLIGHT_FARE_SELECTED",
-      fare,
-      sourceSearchKey: searchKey,
-      expectedRevision: reviewPlan.revision,
-    });
-    if (applied.ok) setPlan(applied.plan);
-  };
+  const recoverReviewLifecycle = useCallback(
+    (snapshot: DealsReviewSnapshotV2) => {
+      const currentPlan = planRef.current;
+      const now = Date.now();
+      const outcome = evaluateDealsReviewLifecycleV2(
+        currentPlan,
+        snapshot,
+        now,
+      );
+      if (outcome.status === "stale" || outcome.status === "review-ready")
+        return outcome.status;
 
-  const invalidateReview = useCallback(
-    (
-      kind: import("@/lib/deals/dealsTripPlanV2").DealsV2DeadlineKind,
-      reviewPlan: DealsTripPlanV2,
-    ) => {
-      setJourneyNow(Date.now());
-      if (kind === "plan") return void create();
-      if (kind === "flight-offer") {
-        const applied = applyDealsJourneyEventV2(reviewPlan, search, {
-          type: "FLIGHT_OFFER_EXPIRED",
-          expectedRevision: reviewPlan.revision,
-        });
+      setJourneyNow(now);
+      setEditingCar(false);
+      if (outcome.kind === "plan") {
+        setReviewRecovery("plan");
+        return "recovered";
+      }
+      if (outcome.kind === "hotel") {
+        cancel();
+        clearDealsFlightRuntimeV2(sessionStorage);
+        setRuntime(null);
+        setReviewRecovery("hotel");
+        return "recovered";
+      }
+      if (outcome.kind === "flight-offer") {
+        const applied = applyDealsJourneyEventV2(
+          currentPlan,
+          search,
+          {
+            type: "FLIGHT_OFFER_EXPIRED",
+            expectedRevision: currentPlan.revision,
+          },
+          now,
+        );
         if (applied.ok) {
           cancel();
           clearDealsFlightRuntimeV2(sessionStorage);
@@ -678,13 +704,81 @@ export function DealsFlightJourneyV2({
             "This flight offer expired. Refresh flight availability.",
           );
         }
-        return;
+        return "recovered";
       }
-      setPlan({ ...reviewPlan });
+      // Car freshness is derived from time. Preserve the canonical plan.
+      return "recovered";
     },
-    [cancel, create, search],
+    [cancel, search],
   );
 
+  const confirmReview = useCallback(
+    (snapshot: DealsReviewSnapshotV2) => {
+      const currentPlan = planRef.current;
+      const now = Date.now();
+      const lifecycle = evaluateDealsReviewLifecycleV2(
+        currentPlan,
+        snapshot,
+        now,
+      );
+      if (lifecycle.status === "stale") return { status: "stale" } as const;
+      if (lifecycle.status === "expired") {
+        recoverReviewLifecycle(snapshot);
+        return { status: "recovered" } as const;
+      }
+      const result = applyDealsJourneyEventV2(
+        currentPlan,
+        search,
+        {
+          type: "REVIEW_CONTINUE_REQUESTED",
+          expectedRevision: currentPlan.revision,
+        },
+        now,
+      );
+      return result.ok && result.nextState === "handoff"
+        ? {
+            status: "confirmed" as const,
+            snapshot: buildDealsReviewSnapshotV2(currentPlan),
+          }
+        : { status: "recovered" as const };
+    },
+    [recoverReviewLifecycle, search],
+  );
+
+  const changeFlightFromReview = (snapshot: DealsReviewSnapshotV2) => {
+    const currentPlan = planRef.current;
+    if (!isCurrentDealsReviewSnapshotV2(currentPlan, snapshot)) return;
+    const fare = currentPlan.flightJourney?.fare;
+    if (!fare) return;
+    cancel();
+    setEditingCar(false);
+    const applied = applyDealsJourneyEventV2(currentPlan, search, {
+      type: "FLIGHT_FARE_SELECTED",
+      fare,
+      sourceSearchKey: searchKey,
+      expectedRevision: currentPlan.revision,
+    });
+    if (applied.ok) setPlan(applied.plan);
+  };
+
+  if (reviewRecovery === "plan")
+    return (
+      <ReviewRecovery
+        message="Your package session expired. Refresh availability to continue."
+        action="Refresh availability"
+        onRecover={() => void create()}
+      />
+    );
+  if (reviewRecovery === "hotel")
+    return (
+      <ReviewRecovery
+        message="Your hotel selection expired. Return to the hotel step to choose it again."
+        action="Return to hotel results"
+        onRecover={() =>
+          router.push(buildDealsJourneyUrl("hotel-results", search))
+        }
+      />
+    );
   if (hotelPrerequisiteMissing)
     return (
       <SafeState message="Your hotel selection expired. Return to the hotel step to choose it again." />
@@ -715,13 +809,20 @@ export function DealsFlightJourneyV2({
     return (
       <DealsReviewJourneyV2
         key={`${plan.searchFingerprint}:${plan.revision}`}
-        search={search}
         plan={plan}
-        onPlanChange={setPlan}
         onChangeFlight={changeFlightFromReview}
-        onChangeCar={() => setEditingCar(true)}
-        onSessionExpired={() => void create()}
-        onLifecycleInvalidated={invalidateReview}
+        onChangeCar={(snapshot) => {
+          if (isCurrentDealsReviewSnapshotV2(planRef.current, snapshot))
+            setEditingCar(true);
+        }}
+        onChangeStay={(snapshot) => {
+          if (!isCurrentDealsReviewSnapshotV2(planRef.current, snapshot))
+            return;
+          clearDealsFlightRuntimeV2(sessionStorage);
+          router.push(buildDealsJourneyUrl("hotel-results", search));
+        }}
+        onConfirmReview={confirmReview}
+        onLifecycleDeadline={recoverReviewLifecycle}
       />
     );
   if (editingCar && requiredState === "review")
@@ -736,7 +837,9 @@ export function DealsFlightJourneyV2({
           setEditingCar(false);
         }}
         onSessionExpired={() => void create()}
-        onFlightExpired={() => invalidateReview("flight-offer", plan)}
+        onFlightExpired={() =>
+          recoverReviewLifecycle(buildDealsReviewSnapshotV2(plan))
+        }
       />
     );
   return (
@@ -1045,5 +1148,31 @@ function SafeState({
         </button>
       )}
     </div>
+  );
+}
+
+function ReviewRecovery({
+  message,
+  action,
+  onRecover,
+}: {
+  message: string;
+  action: string;
+  onRecover: () => void;
+}) {
+  return (
+    <section
+      role="alert"
+      className="rounded-2xl border border-amber-300 bg-white p-6"
+    >
+      <p className="font-semibold">{message}</p>
+      <button
+        type="button"
+        onClick={onRecover}
+        className="focus-ring mt-4 min-h-11 rounded-xl bg-[#004BB8] px-5 font-bold text-white"
+      >
+        {action}
+      </button>
+    </section>
   );
 }

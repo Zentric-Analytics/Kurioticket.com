@@ -21,16 +21,18 @@ test("V2 review is canonically gated and confirmation is user initiated", () => 
 });
 
 test("review confirmation stops locally before every handoff side effect", () => {
-  assert.match(review, /nextState === "handoff"/);
-  assert.match(review, /reviewedRevision/);
+  assert.match(flight, /nextState === "handoff"/);
+  assert.match(review, /reviewed\?\.revision/);
   assert.doesNotMatch(
     review,
     /\/deals\/handoff|\/api\/redirect|buildGuidedDealsHandoffPendingUrl|window\.open|provider opened/,
   );
 });
 
-test("review lifecycle uses the canonical deadline helper and revision guard", () => {
+test("review lifecycle delegates snapshot actions to the canonical parent", () => {
   assert.match(review, /getDealsTripPlanV2NextDeadline/);
-  assert.match(review, /latest\.revision !== scheduledRevision/);
-  assert.match(review, /currentDeadline\.expiresAt > now/);
+  assert.match(review, /onLifecycleDeadline\(snapshot\)/);
+  assert.match(flight, /planRef\.current/);
+  assert.match(flight, /evaluateDealsReviewLifecycleV2/);
+  assert.doesNotMatch(flight, /setPlan\(\{ \.\.\.reviewPlan \}\)/);
 });
