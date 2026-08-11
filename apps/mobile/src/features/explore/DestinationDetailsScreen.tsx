@@ -52,11 +52,6 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
   const media = destinationMedia(destination.id);
   const [imageFailed, setImageFailed] = useState(false);
   const scrollRef = useRef(null as ScrollView | null);
-  const [viewportHeight, setViewportHeight] = useState(0);
-  const [contentHeight, setContentHeight] = useState(0);
-  const [contentOffsetY, setContentOffsetY] = useState(0);
-  const [bodyY, setBodyY] = useState(0);
-  const [ctaLayout, setCtaLayout] = useState({ y: 0, height: 0 });
   const handoff = destinationHandoff(destination);
 
   useEffect(() => {
@@ -72,12 +67,6 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
     params: { destinationId: destination.id, destination: destination.name },
   });
   const related = destination.relatedDestinationIds?.map((relatedId) => destinationById.get(relatedId)).filter((item): item is Destination => Boolean(item));
-  const ctaY = bodyY + ctaLayout.y;
-  const ctaBottom = ctaY + ctaLayout.height;
-  const maxOffset = Math.max(0, contentHeight - viewportHeight);
-  const trailingSpace = contentHeight - ctaBottom;
-  const remainingScroll = maxOffset - contentOffsetY;
-  const atMax = Math.abs(remainingScroll) <= 1;
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -90,19 +79,17 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
         contentContainerStyle={styles.content}
         overScrollMode="never"
         showsVerticalScrollIndicator={false}
-        onLayout={(event) => setViewportHeight(event.nativeEvent.layout.height)}
-        onContentSizeChange={(_, height) => setContentHeight(height)}
-        onScroll={(event) => setContentOffsetY(event.nativeEvent.contentOffset.y)}
-        scrollEventThrottle={16}
       >
-        <Image
-          source={resolvedDestinationHeroSource(media, imageFailed)}
-          accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`}
-          resizeMode="cover"
-          onError={() => { if (!imageFailed) setImageFailed(true); }}
-          style={styles.hero}
-        />
-        <View onLayout={(event) => setBodyY(event.nativeEvent.layout.y)} style={styles.body}>
+        <View style={styles.heroFrame}>
+          <Image
+            source={resolvedDestinationHeroSource(media, imageFailed)}
+            accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`}
+            resizeMode="cover"
+            onError={() => { if (!imageFailed) setImageFailed(true); }}
+            style={styles.hero}
+          />
+        </View>
+        <View style={styles.body}>
           <View style={styles.titleRow}>
             <View style={styles.titleCopy}>
               <Text accessibilityRole="header" style={styles.title}>{destination.name}</Text>
@@ -122,26 +109,12 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
             {destination.airportCodes.map((code, index) => <View key={code} style={styles.airportRow}><Text style={styles.airportRowCode}>{code}</Text><Text style={styles.airportRowName}>{destination.airportNames[index]}</Text></View>)}
           </Section>
           {related?.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={styles.related}><Text style={styles.relatedName}>{item.name}</Text><Text style={styles.relatedCountry}>{item.country}</Text></Pressable>)}</Section> : null}
-          <View onLayout={(event) => setCtaLayout({ y: event.nativeEvent.layout.y, height: event.nativeEvent.layout.height })}>
-            <View style={styles.actions}>
-              <Action label="Search flights" icon="flight" onPress={searchFlights} />
-              <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
-            </View>
+          <View style={styles.actions}>
+            <Action label="Search flights" icon="flight" onPress={searchFlights} />
+            <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
           </View>
         </View>
       </ScrollView>
-      <View pointerEvents="none" style={styles.debugOverlay}>
-        <Text style={styles.debugText}>viewportHeight: {viewportHeight.toFixed(1)}</Text>
-        <Text style={styles.debugText}>contentSize.height: {contentHeight.toFixed(1)}</Text>
-        <Text style={styles.debugText}>contentOffset.y: {contentOffsetY.toFixed(1)}</Text>
-        <Text style={styles.debugText}>maxOffset: {maxOffset.toFixed(1)}</Text>
-        <Text style={styles.debugText}>CTA row Y: {ctaY.toFixed(1)}</Text>
-        <Text style={styles.debugText}>CTA row height: {ctaLayout.height.toFixed(1)}</Text>
-        <Text style={styles.debugText}>CTA bottom: {ctaBottom.toFixed(1)}</Text>
-        <Text style={styles.debugText}>trailingSpace: {trailingSpace.toFixed(1)}</Text>
-        <Text style={styles.debugText}>remainingScroll: {remainingScroll.toFixed(1)}</Text>
-        <Text style={styles.debugText}>atMax: {String(atMax)}</Text>
-      </View>
     </SafeAreaView>
   );
 }
@@ -162,7 +135,8 @@ const styles = StyleSheet.create({
   topSpacer: { width: 48 },
   scroll: { flex: 1 },
   content: { paddingBottom: DESTINATION_DETAILS_BOTTOM_PADDING },
-  hero: { width: "100%", aspectRatio: 4 / 3, maxHeight: 360, minHeight: 240, backgroundColor: "#E7ECF5" },
+  heroFrame: { width: "100%", aspectRatio: 4 / 3, maxHeight: 360, minHeight: 240, overflow: "hidden", backgroundColor: "#E7ECF5" },
+  hero: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0 },
   body: { paddingHorizontal: 18, paddingTop: 18, gap: 20 },
   titleRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   titleCopy: { flex: 1 }, title: { color: NAVY, fontSize: 30, lineHeight: 38, fontWeight: "800" },
@@ -177,6 +151,4 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", gap: 10, marginTop: 4 }, actionButton: { flex: 1 }, primaryButton: { minHeight: 52, borderRadius: 12, backgroundColor: BLUE, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 18 }, primaryButtonText: { color: "white", fontSize: 15, fontWeight: "800" },
   secondaryButton: { backgroundColor: "white", borderWidth: 1, borderColor: BLUE }, secondaryButtonText: { color: BLUE },
   invalidHeader: { paddingHorizontal: 10 }, invalidBody: { flex: 1, padding: 24, justifyContent: "center", alignItems: "center", gap: 14 }, invalidTitle: { color: NAVY, fontSize: 25, fontWeight: "800", textAlign: "center" }, invalidText: { color: MUTED, fontSize: 15, lineHeight: 22, textAlign: "center", marginBottom: 8 },
-  debugOverlay: { position: "absolute", top: 64, right: 8, padding: 8, borderRadius: 6, backgroundColor: "rgba(0, 0, 0, 0.78)" },
-  debugText: { color: "white", fontSize: 11, lineHeight: 15, fontVariant: ["tabular-nums"] },
 });
