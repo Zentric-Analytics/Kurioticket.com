@@ -16,7 +16,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Info } from "lucide-react-native";
 import {
   travelApi,
@@ -57,10 +57,9 @@ import {
 } from "./flightFilters";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
-  countryCodeFromLocale,
   convertAmount,
   displayPrice,
-  resolveDisplayCurrency,
+  resolveDisplayCurrencyContext,
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
@@ -96,23 +95,33 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const hasUnreadNotifications = useUnreadNotifications(product === "flight");
   const [dateHeaderCollapsed, setDateHeaderCollapsed] = useState(false);
   const [currencyState, setCurrencyState] = useState<{ currency: string; rates: ExchangeRates } | null>(null);
-  useEffect(() => {
+  const currencyRatesRef = useRef<ExchangeRates | null>(null);
+  useFocusEffect(useCallback(() => {
     let active = true;
-    void Promise.all([readCurrencyPreference(), travelApi.currencyRates()])
-      .then(([preferredCurrency, payload]) => {
-        if (!active) return;
-        const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-        setCurrencyState({
-          currency: resolveDisplayCurrency({ preferredCurrency, countryCode: countryCodeFromLocale(locale) }),
-          rates: payload.rates,
-        });
-      })
-      .catch(() => {
-        // A missing rate must fall back to each result's accurate provider price.
-        if (active) setCurrencyState({ currency: "USD", rates: {} });
+    const ratesRequest = currencyRatesRef.current
+      ? Promise.resolve(currencyRatesRef.current)
+      : travelApi.currencyRates().then((payload) => payload.rates).catch(() => ({}));
+    void Promise.all([
+      readCurrencyPreference().catch(() => null),
+      travelApi.location().catch(() => null),
+      ratesRequest,
+    ]).then(([preferredCurrency, location, rates]) => {
+      if (!active) return;
+      const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+      const resolution = resolveDisplayCurrencyContext({
+        preferredCurrency,
+        ipCountryCode: location?.countryCode,
+        locale,
       });
+      if (Object.keys(rates).length) currencyRatesRef.current = rates;
+      setCurrencyState({
+        currency: resolution.resolvedCurrency,
+        rates,
+      });
+      if (__DEV__) console.debug("[currency] display resolution", resolution);
+    });
     return () => { active = false; };
-  }, []);
+  }, []));
   const dateHeaderProgress = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(dateHeaderProgress, {
