@@ -38,10 +38,13 @@ const outbound = leg("outbound", "2027-01-01T10:00:00Z");
 const otherOutbound = leg("outbound", "2027-01-01T11:00:00Z");
 const returnA = leg("return", "2027-01-08T10:00:00Z");
 const returnB = leg("return", "2027-01-09T10:00:00Z");
-const offer = (id: string, legs: FlightLeg[]): NormalizedFlightResult => ({
-  id,
+const offer = (
+  providerOfferId: string,
+  legs: FlightLeg[],
+): NormalizedFlightResult => ({
+  id: `duffel-${providerOfferId}`,
   provider: "Duffel",
-  providerOfferId: `secret-${id}`,
+  providerOfferId,
   providerExpiresAt: 99_000,
   rawProviderReference: { secret: true },
   airlineName: "Air",
@@ -71,10 +74,10 @@ const offer = (id: string, legs: FlightLeg[]): NormalizedFlightResult => ({
 });
 
 test("adapts only compatible complete offers and exposes browser-safe choices", () => {
-  const ax1 = offer("ax1", [outbound, returnA]);
-  const ax2 = offer("ax2", [outbound, returnA]);
-  const ay = offer("ay", [outbound, returnB]);
-  const other = offer("other", [otherOutbound, returnA]);
+  const ax1 = offer("off_secret_123", [outbound, returnA]);
+  const ax2 = offer("off_secret_456", [outbound, returnA]);
+  const ay = offer("off_secret_789", [outbound, returnB]);
+  const other = offer("off_secret_other", [otherOutbound, returnA]);
   const results = [ax1, ax2, ay, other];
   assert.equal(getDealsFlightOutboundChoicesV2(results).length, 2);
   assert.equal(
@@ -90,6 +93,11 @@ test("adapts only compatible complete offers and exposes browser-safe choices", 
   assert.equal(fares.length, 2);
   assert.equal(JSON.stringify(fares).includes("providerOfferId"), false);
   assert.equal(JSON.stringify(fares).includes("rawProviderReference"), false);
+  assert.doesNotMatch(
+    JSON.stringify(fares),
+    /off_secret_123|duffel-off_secret_123/,
+  );
+  assert.match(fares[0].fareKey, /^flight-fare-v3:/);
   assert.equal(
     resolveDealsFlightOfferV2(
       results,
@@ -105,6 +113,15 @@ test("adapts only compatible complete offers and exposes browser-safe choices", 
       buildFlightItineraryKey(otherOutbound),
       buildFlightItineraryKey(returnB),
       buildFlightFareKey(ax1)!,
+    ),
+    null,
+  );
+  assert.equal(
+    resolveDealsFlightOfferV2(
+      results,
+      buildFlightItineraryKey(outbound),
+      buildFlightItineraryKey(returnA),
+      "flight-fare-v3:forged",
     ),
     null,
   );

@@ -44,7 +44,6 @@ export const getDealsFlightReturnChoicesV2 = (
   );
 
 export type DealsFlightFareChoiceV2 = DealsFlightFareV2 & {
-  resultId: string;
   sourcePrice: number;
   sourceCurrency: string;
   offerExpiresAt?: number;
@@ -67,7 +66,6 @@ export const getDealsFlightFareChoicesV2 = (
       : [
           {
             fareKey: fare.fareKey,
-            resultId: fare.resultId,
             cabinClass: fare.cabinClass as DealsFlightFareV2["cabinClass"],
             baggageInfo: fare.baggageInfo,
             refundInfo: fare.refundInfo,

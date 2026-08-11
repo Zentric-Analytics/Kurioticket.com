@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { FlightLeg, NormalizedFlightResult } from "@/lib/types";
 
 export type FlightItineraryOption = {
@@ -147,7 +148,14 @@ export function getFlightOffersForItinerary(
 
 export function buildFlightFareKey(result: NormalizedFlightResult) {
   if (!isProviderBackedFlightOffer(result)) return null;
-  return JSON.stringify(["flight-fare-v2", result.id]);
+  const exactOfferIdentity = JSON.stringify([
+    result.provider.trim().toLowerCase(),
+    result.providerOfferId.trim(),
+  ]);
+  const digest = createHash("sha256")
+    .update(exactOfferIdentity)
+    .digest("base64url");
+  return `flight-fare-v3:${digest}`;
 }
 
 export function getFlightFareOptions(
