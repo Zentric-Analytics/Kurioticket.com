@@ -10,7 +10,6 @@ import { router } from "expo-router";
 import {
   ArrowLeft,
   Bell,
-  ChevronLeft,
   ChevronRight,
   FilePenLine,
   SlidersHorizontal,
@@ -177,24 +176,22 @@ export function DateStrip({
     setVisibleStart((current) => shiftCalendarDate(current, days));
 
   return (
-    <View style={s.dateNavigator}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Show earlier dates"
-        onPress={() => moveWindow(-1)}
-        style={s.arrow}
-      >
-        {flightResults ? (
-          <ChevronLeft size={20} strokeWidth={2} color={ui.navy} />
-        ) : (
+    <View style={[s.dateNavigator, flightResults && s.flightDateNavigator]}>
+      {!flightResults ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Show earlier dates"
+          onPress={() => moveWindow(-1)}
+          style={s.arrow}
+        >
           <FlowIcon name="back" size={20} />
-        )}
-      </Pressable>
+        </Pressable>
+      ) : null}
       <ScrollView
         horizontal
         style={s.dateRail}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.dates}
+        contentContainerStyle={[s.dates, flightResults && s.flightDates]}
       >
         {visibleDates.map((iso, i) => {
           const x = parseCalendarDate(iso);
@@ -224,18 +221,16 @@ export function DateStrip({
           );
         })}
       </ScrollView>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Show later dates"
-        onPress={() => moveWindow(1)}
-        style={s.arrow}
-      >
-        {flightResults ? (
-          <ChevronRight size={20} strokeWidth={2} color={ui.navy} />
-        ) : (
+      {!flightResults ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Show later dates"
+          onPress={() => moveWindow(1)}
+          style={s.arrow}
+        >
           <FlowIcon name="chevron" size={20} />
-        )}
-      </Pressable>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -368,6 +363,8 @@ export const s = StyleSheet.create({
   },
   dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
+  flightDateNavigator: { paddingHorizontal: 0 },
+  flightDates: { paddingHorizontal: 16 },
   arrow: {
     width: 40,
     height: 40,
