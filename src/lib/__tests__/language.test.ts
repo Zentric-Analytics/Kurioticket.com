@@ -8148,7 +8148,7 @@ test("Polish legal detail pages localize active render path without English fall
   assert.ok(legalViewerSource.includes("legalDocumentTranslationNamespaces"));
   assert.ok(legalViewerSource.includes("`${namespace}.sections.${section.id}.paragraph${index + 1}`"));
   assert.ok(legalViewerSource.includes("window.print()"));
-  assert.ok(legalViewerSource.includes("<div className=\"rounded-md border border-amber/30 bg-amber/10 p-4 text-sm leading-6 text-amber\">"));
+  assert.doesNotMatch(legalViewerSource, /developerNote|legalDeveloperNote|startup placeholder/i);
 
   const expected = {
     "terms-of-service": {
@@ -8189,7 +8189,6 @@ test("Polish legal detail pages localize active render path without English fall
     assert.equal(pl[`${detail.namespace}.title`], detail.title);
     assert.equal(pl[`${detail.namespace}.summary`], detail.summary);
     assert.equal(pl[`${detail.namespace}.tableOfContents`], "SPIS TREŚCI");
-    assert.equal(pl[`${detail.namespace}.developerNote`], "Te projekty dokumentów prawnych są roboczymi materiałami startowymi i przed publicznym uruchomieniem na dużą skalę powinny zostać sprawdzone przez wykwalifikowanego prawnika.");
     assert.equal(pl[`${detail.namespace}.sections.${detail.sections[0]}.title`], detail.sampleHeading);
     assert.equal(pl[`${detail.namespace}.sections.${detail.sections[0]}.paragraph1`], detail.sampleBody);
     assert.notEqual(pl[`${detail.namespace}.title`], enTranslations[`${detail.namespace}.title`]);

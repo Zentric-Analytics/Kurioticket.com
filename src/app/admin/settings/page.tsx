@@ -6,7 +6,7 @@ export const metadata = { title: "Admin Settings" };
 
 export default async function AdminSettingsPage() {
   return (
-    <AdminPageShell title="Settings" description="Read-only operational settings for platform systems and future RBAC controls.">
+    <AdminPageShell title="Settings" description="Read-only operational settings for active platform systems.">
       <div className="grid gap-4 lg:grid-cols-2">
         <AdminSectionCard className="p-5">
           <h2 className="font-black text-slate-950">Admin email configuration</h2>
@@ -16,8 +16,8 @@ export default async function AdminSettingsPage() {
         <AdminSectionCard className="p-5">
           <h2 className="font-black text-slate-950">System controls</h2>
           <div className="mt-3 flex flex-wrap gap-2">
-            <AdminStatusBadge tone="info">RBAC-ready navigation</AdminStatusBadge>
-            <AdminStatusBadge tone="info">Audit-log-ready actions</AdminStatusBadge>
+            <AdminStatusBadge tone="info">Role-protected navigation</AdminStatusBadge>
+            <AdminStatusBadge tone="info">Audited admin actions</AdminStatusBadge>
             <AdminStatusBadge>Secrets hidden</AdminStatusBadge>
           </div>
         </AdminSectionCard>

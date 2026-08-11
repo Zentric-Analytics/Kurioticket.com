@@ -10,7 +10,7 @@ Kurioticket uses one Expo codebase and exactly two permanent application identit
 | Scheme | `kurioticket-preview` | `kurioticket` |
 | API origin | `https://staging.kurioticket.com` | `https://kurioticket.com` |
 | EAS profile/channel | `preview` | `production` |
-| Distribution | Internal / TestFlight | App Store / Google Play |
+| Distribution | Internal / TestFlight | Google Play (Android only) |
 | App/runtime version | `0.3.0` / `preview-0.3.0` | `0.3.0` / `production-0.3.0` |
 
 There are no separate staging or development identities. Local development reuses Preview and must be started explicitly:
@@ -30,14 +30,13 @@ Local mode requires `LOCAL_DEVELOPMENT=true`, which the script supplies, and is 
 
 ## Build preparation
 
-The approved commands are:
+The approved iOS command is Preview/TestFlight only:
 
 ```bash
 eas build --platform ios --profile preview
-eas build --platform ios --profile production
 ```
 
-Do not run either command without the relevant owner approval. A Preview build is a signing and environment-validation build. Production builds, uploads, submissions, and releases require separate approval.
+Do not run this command without the relevant owner approval. A Preview build is a signing and environment-validation build. iOS Production is intentionally deferred and the application configuration rejects Production EAS builds for any platform other than Android.
 
 The `preview` profile is platform-specific: iOS uses store distribution to create a TestFlight-compatible IPA, while Android remains internal and produces an APK. A build only creates an EAS artifact. Submission to App Store Connect is a separate owner-approved action; never add `--auto-submit` to the build command.
 

@@ -104,7 +104,7 @@ jobs:
         working-directory: apps/mobile
         env:
           CI: "1"
-        run: npx expo export --platform all --output-dir /tmp/kurioticket-mobile-export --clear
+        run: npx expo export --platform android --output-dir /tmp/kurioticket-mobile-export --clear
 
   secret-scan:
     name: secret-scan
