@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   topSpacer: { width: 48 },
   scroll: { flex: 1 },
   content: { paddingBottom: DESTINATION_DETAILS_BOTTOM_PADDING },
-  heroFrame: { width: "100%", aspectRatio: 4 / 3, maxHeight: 360, minHeight: 240, overflow: "hidden", backgroundColor: "#E7ECF5" },
+  heroFrame: { width: "100%", height: 360, overflow: "hidden", backgroundColor: "#E7ECF5" },
   hero: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0 },
   body: { paddingHorizontal: 18, paddingTop: 18, gap: 20 },
   titleRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
