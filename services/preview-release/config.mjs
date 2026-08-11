@@ -60,6 +60,9 @@ export function requirePreviewEnvironment(env = process.env) {
     // replacement worker can resume promptly. Active workers renew every third
     // of the lease, including while provider commands are running.
     leaseMs: parseBoundedInteger(env.PREVIEW_LEASE_MS, 90_000, 60_000, 300_000),
+    // Allows a complete native build + TestFlight processing window while still
+    // guaranteeing that a live-but-stuck worker eventually releases ownership.
+    cycleDeadlineMs: parseBoundedInteger(env.PREVIEW_CYCLE_DEADLINE_MS, 18_000_000, 900_000, 21_600_000),
     mode: env.PREVIEW_RELEASE_MODE === "active" ? "active" : "dry-run",
     cutoverBaselineSha: env.PREVIEW_CUTOVER_BASELINE_SHA ? assertExactSha(env.PREVIEW_CUTOVER_BASELINE_SHA, "Cutover baseline SHA") : null,
     iosNativeBackfillSha: env.PREVIEW_IOS_NATIVE_BACKFILL_SHA ? assertExactSha(env.PREVIEW_IOS_NATIVE_BACKFILL_SHA, "iOS native backfill SHA") : null,

@@ -16,6 +16,8 @@ services:
         value: 60000
       - key: PREVIEW_LEASE_MS
         value: 90000
+      - key: PREVIEW_CYCLE_DEADLINE_MS
+        value: 18000000
       - key: DATABASE_URL
         fromDatabase:
           name: kurioticket-preview-release-db

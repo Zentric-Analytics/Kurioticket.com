@@ -27,7 +27,7 @@ export class PreviewOrchestrator {
         ? await this.ledger.claimNativeDrift(claim)
       : await this.ledger.claim(claim);
     if (!record) return { state: "LOCKED_OR_COMPLETE", sourceSha };
-    const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs });
+    const lease = maintainLease({ ledger: this.ledger, sourceSha, workerId: this.config.workerId, leaseMs: this.config.leaseMs, maxDurationMs: this.config.cycleDeadlineMs });
     try {
       await this.github.report(sourceSha, "pending", `Preview release ${this.config.mode} evaluation started`);
       if (iosDistributionPending) return await this.reconcileIosDistribution(record, lease);
@@ -604,7 +604,7 @@ export async function retry(operation, { attempts, sleep, baseMs = 1_000 }) {
   throw last;
 }
 
-export function maintainLease({ ledger, sourceSha, workerId, leaseMs }) {
+export function maintainLease({ ledger, sourceSha, workerId, leaseMs, maxDurationMs = 18_000_000 }) {
   let stopped = false;
   let lost = null;
   let renewing = Promise.resolve();
@@ -614,6 +614,11 @@ export function maintainLease({ ledger, sourceSha, workerId, leaseMs }) {
   };
   const timer = setInterval(renew, Math.max(5_000, Math.floor(leaseMs / 3)));
   timer.unref?.();
+  const deadline = setTimeout(() => {
+    lost = new Error(`Preview release cycle exceeded ${maxDurationMs}ms; lease renewal stopped for automatic recovery.`);
+    clearInterval(timer);
+  }, maxDurationMs);
+  deadline.unref?.();
   return {
     async checkpoint() {
       if (stopped) throw new Error("Preview release lease keeper is stopped.");
@@ -625,6 +630,7 @@ export function maintainLease({ ledger, sourceSha, workerId, leaseMs }) {
       if (stopped) return;
       stopped = true;
       clearInterval(timer);
+      clearTimeout(deadline);
       await renewing;
     },
   };

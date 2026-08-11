@@ -42,7 +42,7 @@ for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => { stopping 
 console.log(JSON.stringify({ event: "preview-release-worker-started", mode: config.mode, repository: config.repository, branch: config.branch, sourceSha: await github.latestDevSha(), pollIntervalMs: config.pollIntervalMs }));
 while (!stopping) {
   const started = Date.now();
-  await runWorkerCycle({ mode: config.mode, github, orchestrator, reconcileNotifications: reconcileAllBuildNotifications });
+  await runWorkerCycle({ mode: config.mode, github, orchestrator, reconcileNotifications: reconcileAllBuildNotifications, cycleDeadlineMs: config.cycleDeadlineMs });
   const remaining = Math.max(0, config.pollIntervalMs - (Date.now() - started));
   if (remaining) await new Promise((resolveDelay) => setTimeout(resolveDelay, remaining));
 }

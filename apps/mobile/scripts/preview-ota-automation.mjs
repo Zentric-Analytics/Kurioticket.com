@@ -139,10 +139,10 @@ export async function waitForStaging({ origin, targetSha, attempts = 20, delayMs
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
       const [healthResponse, configResponse, desktopResponse, mobileResponse] = await Promise.all([
-        fetchImpl(`${origin}/api/mobile/v1/health`, { cache: "no-store" }),
-        fetchImpl(`${origin}/api/mobile/v1/config`, { cache: "no-store" }),
-        fetchImpl(`${origin}/`, { cache: "no-store", headers: { "user-agent": "Kurioticket-Web-Delivery-Probe/Desktop" } }),
-        fetchImpl(`${origin}/`, { cache: "no-store", headers: { "user-agent": "Kurioticket-Web-Delivery-Probe/Mobile" } }),
+        fetchImpl(`${origin}/api/mobile/v1/health`, { cache: "no-store", signal: AbortSignal.timeout(30_000) }),
+        fetchImpl(`${origin}/api/mobile/v1/config`, { cache: "no-store", signal: AbortSignal.timeout(30_000) }),
+        fetchImpl(`${origin}/`, { cache: "no-store", signal: AbortSignal.timeout(30_000), headers: { "user-agent": "Kurioticket-Web-Delivery-Probe/Desktop" } }),
+        fetchImpl(`${origin}/`, { cache: "no-store", signal: AbortSignal.timeout(30_000), headers: { "user-agent": "Kurioticket-Web-Delivery-Probe/Mobile" } }),
       ]);
       requireValue(healthResponse.ok, `Staging health returned HTTP ${healthResponse.status}.`);
       requireValue(configResponse.ok, `Staging config returned HTTP ${configResponse.status}.`);
