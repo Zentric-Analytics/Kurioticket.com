@@ -83,7 +83,10 @@ test("normal submit remains on legacy Deals results and does not branch on previ
     form.match(
       /const submit = \(event: FormEvent\) => \{[\s\S]*?\n  \};/,
     )?.[0] ?? "";
-  assert.match(submit, /if \(!validateCurrentDealsSearch\(\)\) return/);
+  assert.match(
+    submit,
+    /if \(!validateCurrentDealsSearch\(submittedSearch\)\) return/,
+  );
   assert.match(submit, /if \(variant === "results" && onSubmitSearch\)/);
   assert.match(submit, /router\.push\(buildDealsResultsUrl\(search\)\)/);
   assert.doesNotMatch(
