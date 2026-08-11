@@ -1413,7 +1413,7 @@ test("permanent historical iOS absence is isolated while Android recipients and 
   let oldLookups = 0;
   let cleanup = 0;
   const ledger = {
-    getNativeBuildActionForRelease: async () => ({ identity_key: "old-ios", remote_id: oldBuildId, evidence: { nativeFingerprint: "ios-fingerprint" } }),
+    getNativeBuildActionForRelease: async () => ({ identity_key: "old-ios", remote_id: oldBuildId }),
     markRemoteObjectUnavailable: async () => { unavailable = true; },
     transition: async () => ({ state: "FAILED" }),
   };
