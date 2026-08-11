@@ -919,3 +919,17 @@ model AnalyticsEvent {
   @@index([name])
   @@index([createdAt])
 }
+
+model DealsFlightInventorySession {
+  id               String   @id @default(cuid())
+  tokenHash        String   @unique
+  schemaVersion    Int      @default(1)
+  sourceSearchKey  String
+  searchPayload    Json
+  inventoryPayload Json
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+
+  @@index([expiresAt])
+  @@index([sourceSearchKey, expiresAt])
+}

@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createDefaultDealsSearch } from "./dealsSearchParams";
-import { buildDealsProductSearchKeys } from "./dealsProductSearchKeys";
+import { buildFlightApiPayload } from "./dealsSearchParams";
+import {
+  buildDealsFlightSearchKey,
+  buildDealsFlightSearchKeyFromPayload,
+  buildDealsProductSearchKeys,
+} from "./dealsProductSearchKeys";
 
 const search = () => ({
   ...createDefaultDealsSearch(),
@@ -38,6 +43,13 @@ test("product keys are deterministic and ignore presentation/package controls", 
       displayCurrency: "EUR",
     } as typeof base),
     expected,
+  );
+});
+test("Deals and validated Flight payloads produce the identical key", () => {
+  const value = search();
+  assert.equal(
+    buildDealsFlightSearchKey(value),
+    buildDealsFlightSearchKeyFromPayload(buildFlightApiPayload(value)),
   );
 });
 test("flight identity tracks cabin/passengers and one-way ignores stale return date", () => {
