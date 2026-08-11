@@ -10,6 +10,8 @@ import {
 import {
   canonicalizeDealsTripPlanV2,
   createDealsTripPlanV2,
+  createDealsTripPlanV2ForRestart,
+  getDealsTripPlanV2NextDeadline,
   parseDealsTripPlanV2,
   serializeDealsTripPlanV2,
   type DealsConfirmedFlightOfferV2,
@@ -155,6 +157,89 @@ test("creation is v2 revision zero with a fixed TTL and parser separation", () =
   assert.equal(
     parseDealsTripPlanV2(JSON.stringify({ ...plan, version: 1 })),
     null,
+  );
+});
+
+test("next lifecycle deadline orders plan, hotel, flight offer, and car", () => {
+  const base = confirmedPlan();
+  const cases = [
+    ["plan", { expiresAt: now + 100 }],
+    [
+      "hotel",
+      {
+        expiresAt: now + 900,
+        hotel: {
+          ...hotel,
+          resultReceivedAt: now - DEALS_TRIP_PLAN_TTL_MS + 200,
+        },
+      },
+    ],
+    [
+      "flight-offer",
+      {
+        expiresAt: now + 900,
+        hotel: { ...hotel, resultReceivedAt: now },
+        flightJourney: {
+          ...base.flightJourney!,
+          confirmedOffer: { ...offer, offerExpiresAt: now + 300 },
+        },
+      },
+    ],
+    [
+      "car",
+      {
+        expiresAt: now + 900,
+        hotel: { ...hotel, resultReceivedAt: now },
+        flightJourney: {
+          ...base.flightJourney!,
+          confirmedOffer: { ...offer, offerExpiresAt: now + 800 },
+        },
+        car: { ...car, resultReceivedAt: now - DEALS_TRIP_PLAN_TTL_MS + 400 },
+      },
+    ],
+  ] as const;
+  for (const [kind, patch] of cases)
+    assert.equal(
+      getDealsTripPlanV2NextDeadline({ ...base, ...patch }).kind,
+      kind,
+    );
+});
+
+test("next lifecycle deadline retains an already-passed boundary", () => {
+  const plan = { ...confirmedPlan(), expiresAt: now - 1 };
+  assert.deepEqual(getDealsTripPlanV2NextDeadline(plan), {
+    kind: "plan",
+    expiresAt: now - 1,
+  });
+});
+
+test("restart carries only a fresh Hotel from the same search context", () => {
+  const current = confirmedPlan();
+  assert.equal(
+    createDealsTripPlanV2ForRestart(search(), current, now + 100).hotel?.id,
+    hotel.id,
+  );
+  assert.equal(
+    createDealsTripPlanV2ForRestart(
+      search(),
+      {
+        ...current,
+        hotel: {
+          ...hotel,
+          resultReceivedAt: now - DEALS_TRIP_PLAN_TTL_MS,
+        },
+      },
+      now,
+    ).hotel,
+    undefined,
+  );
+  assert.equal(
+    createDealsTripPlanV2ForRestart(
+      search(),
+      { ...current, searchFingerprint: "different" },
+      now,
+    ).hotel,
+    undefined,
   );
 });
 test("deep canonical round trip preserves opened, fare, and offer metadata", () => {
