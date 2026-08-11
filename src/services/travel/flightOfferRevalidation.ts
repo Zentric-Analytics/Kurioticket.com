@@ -21,6 +21,17 @@ export type FlightOfferRevalidationOutcome =
         | "invalid-selection";
     };
 
+export type FlightOfferRevalidationInternalOutcome =
+  | {
+      status: "confirmed" | "changed";
+      offer: DealsConfirmedFlightOfferV2;
+      refreshedOffer: NormalizedFlightResult;
+    }
+  | Exclude<
+      FlightOfferRevalidationOutcome,
+      { status: "confirmed" | "changed" }
+    >;
+
 type RefreshOffer = (
   offerId: string,
   search: FlightSearchParams,
@@ -44,7 +55,7 @@ const materiallyChanged = (
   cached.baggageInfo !== refreshed.baggageInfo ||
   cached.refundInfo !== refreshed.refundInfo;
 
-export async function revalidateFlightOffer({
+export async function revalidateFlightOfferInternal({
   cachedOffer,
   search,
   outboundItineraryKey,
@@ -60,7 +71,7 @@ export async function revalidateFlightOffer({
   fareKey: string;
   now: number;
   refreshDuffelOffer?: RefreshOffer;
-}): Promise<FlightOfferRevalidationOutcome> {
+}): Promise<FlightOfferRevalidationInternalOutcome> {
   if (!isFlightProviderOfferUsableAt(cachedOffer, now))
     return { status: "expired" };
   if (
@@ -136,5 +147,16 @@ export async function revalidateFlightOffer({
   return {
     status: materiallyChanged(cachedOffer, refreshed) ? "changed" : "confirmed",
     offer,
+    refreshedOffer: refreshed,
   };
+}
+
+/** Browser-safe projection. Provider identities and targets stay server-only. */
+export async function revalidateFlightOffer(
+  input: Parameters<typeof revalidateFlightOfferInternal>[0],
+): Promise<FlightOfferRevalidationOutcome> {
+  const outcome = await revalidateFlightOfferInternal(input);
+  if (outcome.status === "confirmed" || outcome.status === "changed")
+    return { status: outcome.status, offer: outcome.offer };
+  return outcome;
 }

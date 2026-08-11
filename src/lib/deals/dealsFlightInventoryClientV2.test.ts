@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  activateFlightHandoffV2,
   createFlightInventory,
   DealsFlightInventoryClientError,
   getFlightFareChoices,
@@ -228,4 +229,64 @@ test("revalidation keeps inventory errors distinct and rejects malformed offers"
       error instanceof DealsFlightInventoryClientError &&
       error.code === "MALFORMED_RESPONSE",
   );
+});
+
+test("handoff posts the exact capability and accepts only a safe ready URL", async () => {
+  const selection = {
+    inventoryToken: "fake_inventory_token_12345678901234567890",
+    sourceSearchKey: "search",
+    outboundItineraryKey: "out-1",
+    returnItineraryKey: "ret-1",
+    fareKey: "flight-fare-v3:safe",
+  };
+  let requestedUrl = "";
+  let init: RequestInit | undefined;
+  globalThis.fetch = async (input, requestInit) => {
+    requestedUrl = String(input);
+    init = requestInit;
+    return response({ status: "ready", url: "https://provider.example/book" });
+  };
+  assert.deepEqual(await activateFlightHandoffV2(selection), {
+    status: "ready",
+    url: "https://provider.example/book",
+  });
+  assert.equal(requestedUrl, "/api/deals/v2/flights/inventory/handoff");
+  assert.equal(init?.method, "POST");
+  assert.equal(init?.cache, "no-store");
+  assert.deepEqual(JSON.parse(String(init?.body)), selection);
+  assert.doesNotMatch(requestedUrl, /fake_inventory_token|fare-v3/);
+
+  globalThis.fetch = async () =>
+    response({ status: "ready", url: "javascript:alert(1)" });
+  await assert.rejects(
+    () => activateFlightHandoffV2(selection),
+    (error: unknown) =>
+      error instanceof DealsFlightInventoryClientError &&
+      error.code === "MALFORMED_RESPONSE",
+  );
+});
+
+test("handoff preserves fail-closed semantic outcomes without secret fields", async () => {
+  const selection = {
+    inventoryToken: "fake_inventory_token_12345678901234567890",
+    sourceSearchKey: "search",
+    outboundItineraryKey: "out-1",
+    fareKey: "flight-fare-v3:safe",
+  };
+  for (const status of [
+    "expired",
+    "unavailable",
+    "temporary-failure",
+    "invalid-selection",
+    "action-unavailable",
+  ] as const) {
+    globalThis.fetch = async () =>
+      response(
+        { status, providerOfferId: "off_secret_123" },
+        status === "invalid-selection" ? 422 : 200,
+      );
+    const outcome = await activateFlightHandoffV2(selection);
+    assert.deepEqual(outcome, { status });
+    assert.doesNotMatch(JSON.stringify(outcome), /off_secret_123/);
+  }
 });

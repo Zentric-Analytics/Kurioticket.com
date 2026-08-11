@@ -259,3 +259,67 @@ export async function revalidateFlightOfferV2(
   }
   throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
 }
+
+export type DealsFlightHandoffOutcomeV2 =
+  | { status: "ready"; url: string }
+  | { status: "changed"; offer: DealsConfirmedFlightOfferV2 }
+  | {
+      status:
+        | "expired"
+        | "unavailable"
+        | "temporary-failure"
+        | "invalid-selection"
+        | "action-unavailable";
+    };
+
+export async function activateFlightHandoffV2(
+  request: DealsFlightRevalidationRequestV2,
+): Promise<DealsFlightHandoffOutcomeV2> {
+  const response = await fetch("/api/deals/v2/flights/inventory/handoff", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+    cache: "no-store",
+  });
+  let value: unknown;
+  try {
+    value = await response.json();
+  } catch {
+    throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+  }
+  const parsed = record.safeParse(value);
+  if (!parsed.success || typeof parsed.data.status !== "string")
+    throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+  const status = parsed.data.status;
+  if (status === "ready") {
+    if (!response.ok || typeof parsed.data.url !== "string")
+      throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+    const url = new URL(parsed.data.url);
+    if (!["http:", "https:"].includes(url.protocol) || !url.hostname)
+      throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+    return { status, url: url.toString() };
+  }
+  if (status === "changed") {
+    const offer = canonicalizeDealsConfirmedFlightOfferV2(parsed.data.offer);
+    if (!response.ok || !offer)
+      throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+    return { status, offer };
+  }
+  if (
+    [
+      "expired",
+      "unavailable",
+      "temporary-failure",
+      "invalid-selection",
+      "action-unavailable",
+    ].includes(status)
+  )
+    return { status } as DealsFlightHandoffOutcomeV2;
+  const code = parsed.data.code;
+  throw new DealsFlightInventoryClientError(
+    knownCodes.has(code as DealsFlightInventoryErrorCode)
+      ? (code as DealsFlightInventoryErrorCode)
+      : "MALFORMED_RESPONSE",
+    retryableCodes.has(code as DealsFlightInventoryErrorCode),
+  );
+}

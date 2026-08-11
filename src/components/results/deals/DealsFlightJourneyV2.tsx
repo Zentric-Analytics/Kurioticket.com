@@ -30,6 +30,7 @@ import {
   getFlightFareChoices,
   getFlightReturnChoices,
   revalidateFlightOfferV2,
+  type DealsFlightHandoffOutcomeV2,
   type DealsFlightInventoryErrorCode,
 } from "@/lib/deals/dealsFlightInventoryClientV2";
 import {
@@ -56,6 +57,7 @@ import {
 import type { DealsConfirmedFlightOfferV2 } from "@/lib/deals/dealsTripPlanV2";
 import { DealsCarJourneyV2 } from "./DealsCarJourneyV2";
 import { DealsReviewJourneyV2 } from "./DealsReviewJourneyV2";
+import { DealsHandoffJourneyV2 } from "./DealsHandoffJourneyV2";
 
 type Status = "initial" | "loading" | "success" | "empty" | "error";
 const messages: Record<DealsFlightInventoryErrorCode, string> = {
@@ -123,6 +125,8 @@ export function DealsFlightJourneyV2({
   const [reviewRecovery, setReviewRecovery] = useState<"plan" | "hotel" | null>(
     null,
   );
+  const [reviewedSnapshot, setReviewedSnapshot] =
+    useState<DealsReviewSnapshotV2 | null>(null);
   const coordinator = useRef(createDealsFlightRevalidationCoordinatorV2());
   const cancel = useCallback(() => {
     coordinator.current.cancel();
@@ -676,6 +680,7 @@ export function DealsFlightJourneyV2({
         snapshot,
         now,
       );
+      if (outcome.status !== "review-ready") setReviewedSnapshot(null);
       if (outcome.status === "stale" || outcome.status === "review-ready")
         return outcome.status;
 
@@ -746,7 +751,11 @@ export function DealsFlightJourneyV2({
       return result.ok && result.nextState === "handoff"
         ? {
             status: "confirmed" as const,
-            snapshot: buildDealsReviewSnapshotV2(currentPlan),
+            snapshot: (() => {
+              const accepted = buildDealsReviewSnapshotV2(currentPlan);
+              setReviewedSnapshot(accepted);
+              return accepted;
+            })(),
           }
         : { status: "recovered" as const };
     },
@@ -813,6 +822,85 @@ export function DealsFlightJourneyV2({
     plan,
     Math.max(journeyNow, plan.updatedAt),
   );
+  const handoffAuthorized =
+    reviewedSnapshot &&
+    isCurrentDealsReviewSnapshotV2(plan, reviewedSnapshot) &&
+    evaluateDealsReviewLifecycleV2(
+      plan,
+      reviewedSnapshot,
+      Math.max(journeyNow, plan.updatedAt),
+    ).status === "review-ready";
+  if (requiredState === "review" && !editingCar && handoffAuthorized)
+    return (
+      <DealsHandoffJourneyV2
+        key={`${reviewedSnapshot.searchFingerprint}:${reviewedSnapshot.revision}`}
+        plan={plan}
+        runtime={runtime}
+        reviewedSnapshot={reviewedSnapshot}
+        authorizeAction={() =>
+          Boolean(
+            reviewedSnapshot &&
+            isCurrentDealsReviewSnapshotV2(planRef.current, reviewedSnapshot) &&
+            evaluateDealsReviewLifecycleV2(
+              planRef.current,
+              reviewedSnapshot,
+              Date.now(),
+            ).status === "review-ready",
+          )
+        }
+        onLifecycleDeadline={recoverReviewLifecycle}
+        onBackToReview={() => setReviewedSnapshot(null)}
+        onFlightOutcome={(outcome: DealsFlightHandoffOutcomeV2) => {
+          if (
+            outcome.status === "temporary-failure" ||
+            outcome.status === "action-unavailable" ||
+            outcome.status === "ready"
+          )
+            return;
+          setReviewedSnapshot(null);
+          const currentPlan = planRef.current;
+          if (
+            outcome.status === "expired" ||
+            outcome.status === "unavailable"
+          ) {
+            const applied = applyDealsJourneyEventV2(
+              currentPlan,
+              search,
+              {
+                type:
+                  outcome.status === "expired"
+                    ? "FLIGHT_OFFER_EXPIRED"
+                    : "FLIGHT_OFFER_UNAVAILABLE",
+                expectedRevision: currentPlan.revision,
+              },
+              Date.now(),
+            );
+            if (applied.ok) installPlan(applied.plan);
+          } else if (outcome.status === "changed") {
+            const fare = currentPlan.flightJourney?.fare;
+            if (fare) {
+              const applied = applyDealsJourneyEventV2(currentPlan, search, {
+                type: "FLIGHT_FARE_SELECTED",
+                fare,
+                sourceSearchKey: searchKey,
+                expectedRevision: currentPlan.revision,
+              });
+              if (applied.ok) {
+                installPlan(applied.plan);
+                setRevalidationMessage(
+                  "The provider changed this flight. Confirm the fare again before reviewing your package.",
+                );
+              }
+            }
+          } else {
+            clearDealsFlightRuntimeV2(sessionStorage);
+            setRuntime(null);
+            installPlan(freshPlan());
+            setStatus("initial");
+          }
+        }}
+      />
+    );
   if (requiredState === "review" && !editingCar)
     return (
       <DealsReviewJourneyV2
