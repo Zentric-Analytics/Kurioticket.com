@@ -12,15 +12,13 @@ import { flowColors } from "../flow/flowStyles";
 import { membershipLabel, profileIdentity } from "./profileModel";
 import { useAppTheme } from "../../theme/AppTheme";
 
-type Route = "/personal-information" | "/saved-travelers" | "/price-alerts" | "/settings" | "/currency" | "/saved" | "/(tabs)/trips" | "/notifications";
+type Route = "/personal-information" | "/price-alerts" | "/settings" | "/currency" | "/saved" | "/(tabs)/trips" | "/notifications";
 type Row = { title: string; description?: string; icon: FlowIconName; route?: Route; value?: string; action?: () => void };
 
 const TERMS_URL = "https://kurioticket.com/terms";
 const PRIVACY_URL = "https://kurioticket.com/privacy";
-
-function unavailable(feature: string) {
-  Alert.alert(feature, `${feature} is not available in this version of Kurioticket.`);
-}
+const HELP_URL = "https://kurioticket.com/faq";
+const CONTACT_URL = "https://kurioticket.com/support";
 
 async function openApprovedUrl(url: string, label: string) {
   try {
@@ -99,17 +97,15 @@ export function AuthenticatedProfileScreen() {
     { title: "Price Alerts", description: "Automatic and target price tracking", icon: "bell", route: "/price-alerts" },
     { title: "Notifications", description: "Updates from Kurioticket", icon: "bell", route: "/notifications" },
     { title: "Personal information", description: "Update your name, email and more", icon: "person", route: "/personal-information" },
-    { title: "Saved travelers", description: "Manage your saved traveler details", icon: "people", action: () => unavailable("Saved travelers") },
     { title: "Preferences", description: "Manage your app preferences", icon: "sliders", route: "/settings" },
   ], []);
   const support = useMemo<Row[]>(() => [
-    { title: "Help center", description: "Find answers to common questions", icon: "help", action: () => unavailable("Help center") },
-    { title: "Contact us", description: "Get in touch with our support team", icon: "headset", action: () => unavailable("Contact us") },
+    { title: "Help center", description: "Find answers to common questions", icon: "help", action: () => void openApprovedUrl(HELP_URL, "Help center") },
+    { title: "Contact us", description: "Get in touch with our support team", icon: "headset", action: () => void openApprovedUrl(CONTACT_URL, "Contact us") },
     { title: "Terms of Service", description: "Read our terms and conditions", icon: "document", action: () => void openApprovedUrl(TERMS_URL, "Terms of Service") },
     { title: "Privacy Policy", description: "Learn how we protect your data", icon: "shield", action: () => void openApprovedUrl(PRIVACY_URL, "Privacy Policy") },
   ], []);
   const settings = useMemo<Row[]>(() => [
-    { title: "Language", icon: "globe", value: "English", action: () => unavailable("Language selection") },
     { title: "Currency", icon: "currency", value: currency, route: "/currency" },
   ], [currency]);
 
