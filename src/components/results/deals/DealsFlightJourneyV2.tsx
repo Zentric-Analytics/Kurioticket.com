@@ -22,6 +22,7 @@ import {
   writeDealsFlightRuntimeV2,
   type DealsFlightRuntimeV2,
 } from "@/lib/deals/dealsFlightRuntimeStorageV2";
+import { restoreDealsFlightRuntimeV2 } from "@/lib/deals/dealsFlightRuntimeOrchestratorV2";
 
 type Status = "initial" | "loading" | "success" | "empty" | "error";
 const messages: Record<DealsFlightInventoryErrorCode, string> = {
@@ -96,6 +97,15 @@ export function DealsFlightJourneyV2({
     );
     setStatus("error");
   }, []);
+  const storageFail = useCallback(() => {
+    setError("STORAGE_UNAVAILABLE");
+    setStatus("error");
+  }, []);
+  const isFatal = (caught: unknown) =>
+    caught instanceof DealsFlightInventoryClientError &&
+    ["UNKNOWN_INVENTORY", "INVENTORY_EXPIRED", "STALE_SEARCH"].includes(
+      caught.code,
+    );
 
   const searchRequest = useMemo(
     () => ({
@@ -119,7 +129,10 @@ export function DealsFlightJourneyV2({
 
   const create = useCallback(async () => {
     cancel();
-    clearDealsFlightRuntimeV2(sessionStorage);
+    if (!clearDealsFlightRuntimeV2(sessionStorage).ok) {
+      storageFail();
+      return;
+    }
     setRuntime(null);
     setPlan(freshPlan());
     setError(null);
@@ -147,7 +160,10 @@ export function DealsFlightJourneyV2({
       };
       if (result.sourceSearchKey !== searchKey)
         throw new DealsFlightInventoryClientError("STALE_SEARCH", true);
-      writeDealsFlightRuntimeV2(sessionStorage, next);
+      if (!writeDealsFlightRuntimeV2(sessionStorage, next).ok) {
+        storageFail();
+        return;
+      }
       setRuntime(next);
       setStatus("success");
     } catch (caught) {
@@ -164,78 +180,77 @@ export function DealsFlightJourneyV2({
     search,
     searchKey,
     searchRequest,
+    storageFail,
   ]);
 
-  const commitRuntime = (next: DealsFlightRuntimeV2) => {
-    writeDealsFlightRuntimeV2(sessionStorage, next);
-    setRuntime(next);
-  };
-  const restorePlan = useCallback(
-    (restored: DealsFlightRuntimeV2) => {
-      let next = freshPlan();
-      const outbound = restored.outboundChoices.find(
-        (choice) => choice.itineraryKey === restored.selectedOutboundKey,
-      );
-      if (outbound) {
-        const result = applyDealsJourneyEventV2(next, search, {
-          type: "FLIGHT_OUTBOUND_SELECTED",
-          itinerary: outbound,
-          sourceSearchKey: searchKey,
-          expectedRevision: next.revision,
-        });
-        if (result.ok) next = result.plan;
+  const commitRuntime = useCallback(
+    (next: DealsFlightRuntimeV2) => {
+      if (!writeDealsFlightRuntimeV2(sessionStorage, next).ok) {
+        storageFail();
+        return false;
       }
-      const inbound = restored.returnChoices.find(
-        (choice) => choice.itineraryKey === restored.selectedReturnKey,
-      );
-      if (inbound) {
-        const result = applyDealsJourneyEventV2(next, search, {
-          type: "FLIGHT_RETURN_SELECTED",
-          itinerary: inbound,
-          sourceSearchKey: searchKey,
-          expectedRevision: next.revision,
-        });
-        if (result.ok) next = result.plan;
-      }
-      const fare = restored.fareChoices.find(
-        (choice) => choice.fareKey === restored.selectedFareKey,
-      );
-      if (fare) {
-        const result = applyDealsJourneyEventV2(next, search, {
-          type: "FLIGHT_FARE_SELECTED",
-          fare,
-          sourceSearchKey: searchKey,
-          expectedRevision: next.revision,
-        });
-        if (result.ok) next = result.plan;
-      }
-      return next;
+      setRuntime(next);
+      return true;
     },
-    [freshPlan, search, searchKey],
+    [storageFail],
   );
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      try {
-        const restored = readDealsFlightRuntimeV2(
+      void (async () => {
+        const read = readDealsFlightRuntimeV2(
           sessionStorage,
           searchKey,
           search.flightTripType,
         );
-        if (restored) {
-          setPlan(restorePlan(restored));
-          setRuntime(restored);
+        if (!read.ok) return storageFail();
+        if (!read.value) return void create();
+        setStatus("loading");
+        const pending = request();
+        try {
+          const restored = await restoreDealsFlightRuntimeV2({
+            stored: read.value,
+            initialPlan: freshPlan(),
+            search,
+            searchKey,
+            getReturns: getFlightReturnChoices,
+            getFares: getFlightFareChoices,
+            signal: pending.controller.signal,
+          });
+          if (!current(pending)) return;
+          if (!commitRuntime(restored.runtime)) return;
+          setPlan(restored.plan);
           setStatus("success");
-        } else void create();
-      } catch {
-        setError("STORAGE_UNAVAILABLE");
-        setStatus("error");
-      }
+        } catch (caught) {
+          if (!current(pending)) return;
+          if (isFatal(caught)) {
+            const cleared = clearDealsFlightRuntimeV2(sessionStorage);
+            setRuntime(null);
+            setPlan(freshPlan());
+            if (!cleared.ok) return storageFail();
+          }
+          fail(caught);
+        } finally {
+          controllers.current.delete(pending.controller);
+        }
+      })();
     }, 0);
     return () => {
       window.clearTimeout(timer);
       cancel();
     };
-  }, [cancel, create, restorePlan, search.flightTripType, searchKey]);
+  }, [
+    cancel,
+    commitRuntime,
+    create,
+    current,
+    fail,
+    freshPlan,
+    request,
+    search,
+    search.flightTripType,
+    searchKey,
+    storageFail,
+  ]);
 
   const selectOutbound = async (key: string) => {
     if (!runtime || runtime.selectedOutboundKey === key) return;
@@ -259,7 +274,6 @@ export function DealsFlightJourneyV2({
       return fail(
         new DealsFlightInventoryClientError("INVALID_SELECTION", false),
       );
-    setPlan(applied.plan);
     const next = {
       ...runtime,
       selectedOutboundKey: key,
@@ -268,7 +282,8 @@ export function DealsFlightJourneyV2({
       returnChoices: [],
       fareChoices: [],
     };
-    commitRuntime(next);
+    if (!commitRuntime(next)) return;
+    setPlan(applied.plan);
     const pending = request();
     try {
       if (search.flightTripType === "round-trip") {
@@ -281,7 +296,7 @@ export function DealsFlightJourneyV2({
           pending.controller.signal,
         );
         if (current(pending)) {
-          commitRuntime({ ...next, returnChoices });
+          if (!commitRuntime({ ...next, returnChoices })) return;
           setStatus(returnChoices.length ? "success" : "empty");
         }
       } else {
@@ -294,12 +309,22 @@ export function DealsFlightJourneyV2({
           pending.controller.signal,
         );
         if (current(pending)) {
-          commitRuntime({ ...next, fareChoices });
+          if (!commitRuntime({ ...next, fareChoices })) return;
           setStatus(fareChoices.length ? "success" : "empty");
         }
       }
     } catch (caught) {
-      if (current(pending)) fail(caught);
+      if (current(pending)) {
+        if (isFatal(caught)) {
+          if (!clearDealsFlightRuntimeV2(sessionStorage).ok) {
+            storageFail();
+            return;
+          }
+          setRuntime(null);
+          setPlan(freshPlan());
+        }
+        fail(caught);
+      }
     }
   };
   const selectReturn = async (key: string) => {
@@ -326,14 +351,14 @@ export function DealsFlightJourneyV2({
       return fail(
         new DealsFlightInventoryClientError("INVALID_SELECTION", false),
       );
-    setPlan(applied.plan);
     const next = {
       ...runtime,
       selectedReturnKey: key,
       selectedFareKey: undefined,
       fareChoices: [],
     };
-    commitRuntime(next);
+    if (!commitRuntime(next)) return;
+    setPlan(applied.plan);
     const pending = request();
     try {
       const fareChoices = await getFlightFareChoices(
@@ -346,11 +371,19 @@ export function DealsFlightJourneyV2({
         pending.controller.signal,
       );
       if (current(pending)) {
-        commitRuntime({ ...next, fareChoices });
+        if (!commitRuntime({ ...next, fareChoices })) return;
         setStatus(fareChoices.length ? "success" : "empty");
       }
     } catch (caught) {
-      if (current(pending)) fail(caught);
+      if (current(pending)) {
+        if (isFatal(caught)) {
+          if (!clearDealsFlightRuntimeV2(sessionStorage).ok)
+            return storageFail();
+          setRuntime(null);
+          setPlan(freshPlan());
+        }
+        fail(caught);
+      }
     }
   };
   const selectFare = (key: string) => {
@@ -370,8 +403,8 @@ export function DealsFlightJourneyV2({
       return fail(
         new DealsFlightInventoryClientError("INVALID_SELECTION", false),
       );
+    if (!commitRuntime({ ...runtime, selectedFareKey: key })) return;
     setPlan(applied.plan);
-    commitRuntime({ ...runtime, selectedFareKey: key });
   };
 
   if (!runtime && status === "loading")
@@ -418,6 +451,13 @@ export function DealsFlightJourneyV2({
               onSelect={() => void selectReturn(choice.itineraryKey)}
             />
           ))}
+          {status !== "loading" && runtime.returnChoices.length === 0 && (
+            <DownstreamEmptyState
+              message="No compatible return flights are currently available for this outbound."
+              alternative="Choose another outbound above, or restart Flight availability."
+              onRetry={create}
+            />
+          )}
         </ChoiceSection>
       )}
       {runtime.selectedOutboundKey &&
@@ -451,8 +491,38 @@ export function DealsFlightJourneyV2({
                 </span>
               </button>
             ))}
+            {status !== "loading" && runtime.fareChoices.length === 0 && (
+              <DownstreamEmptyState
+                message="No fares are currently available for this itinerary."
+                alternative="Choose a different return or outbound, or retry availability."
+                onRetry={create}
+              />
+            )}
           </ChoiceSection>
         )}
+    </div>
+  );
+}
+function DownstreamEmptyState({
+  message,
+  alternative,
+  onRetry,
+}: {
+  message: string;
+  alternative: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div role="status" className="rounded-2xl border border-amber-300 p-5">
+      <p className="font-semibold">{message}</p>
+      <p className="mt-1 text-sm text-slate-600">{alternative}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="focus-ring mt-4 min-h-11 rounded-xl bg-[#004BB8] px-5 font-bold text-white"
+      >
+        Retry Flight availability
+      </button>
     </div>
   );
 }

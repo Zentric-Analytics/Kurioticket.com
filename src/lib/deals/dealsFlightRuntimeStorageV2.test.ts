@@ -113,7 +113,11 @@ test("uses only the versioned session storage namespace and excludes provider id
     setItem: (key: string, value: string) => void values.set(key, value),
     removeItem: (key: string) => void values.delete(key),
   };
-  writeDealsFlightRuntimeV2(storage, runtime());
+  writeDealsFlightRuntimeV2(storage, {
+    ...runtime(),
+    providerOfferId: "off_secret_123",
+    rawProviderReference: "duffel-off_secret_123",
+  } as DealsFlightRuntimeV2);
   assert.deepEqual([...values.keys()], [DEALS_FLIGHT_RUNTIME_STORAGE_KEY]);
   const serialized = values.get(DEALS_FLIGHT_RUNTIME_STORAGE_KEY)!;
   assert.ok(serialized.includes(token));
@@ -126,6 +130,66 @@ test("uses only the versioned session storage namespace and excludes provider id
     assert.ok(!serialized.includes(secret));
   assert.deepEqual(
     readDealsFlightRuntimeV2(storage, "search-key", "round-trip", 1),
-    runtime(),
+    { ok: true, value: runtime() },
+  );
+});
+
+test("rejects invalid expiry and fares using the inventory browser contract", () => {
+  for (const patch of [
+    { inventoryExpiresAt: "not-a-date" },
+    { fareChoices: [{ ...runtime().fareChoices[0], fareKey: "forged" }] },
+    { fareChoices: [{ ...runtime().fareChoices[0], sourcePrice: Infinity }] },
+    { fareChoices: [{ ...runtime().fareChoices[0], sourceCurrency: "usd" }] },
+    { fareChoices: [{ ...runtime().fareChoices[0], offerExpiresAt: -1 }] },
+  ])
+    assert.equal(
+      parseDealsFlightRuntimeV2(
+        JSON.stringify({ ...runtime(), ...patch }),
+        "search-key",
+        "round-trip",
+        1,
+      ),
+      null,
+    );
+});
+
+test("normalizes every storage operation failure", () => {
+  const unavailable = { ok: false, code: "STORAGE_UNAVAILABLE" };
+  assert.deepEqual(
+    readDealsFlightRuntimeV2(
+      {
+        getItem: () => {
+          throw new Error("denied");
+        },
+        removeItem: () => {},
+      },
+      "search-key",
+      "round-trip",
+    ),
+    unavailable,
+  );
+  assert.deepEqual(
+    writeDealsFlightRuntimeV2(
+      {
+        setItem: () => {
+          throw new Error("full");
+        },
+      },
+      runtime(),
+    ),
+    unavailable,
+  );
+  assert.deepEqual(
+    readDealsFlightRuntimeV2(
+      {
+        getItem: () => "invalid",
+        removeItem: () => {
+          throw new Error("denied");
+        },
+      },
+      "search-key",
+      "round-trip",
+    ),
+    unavailable,
   );
 });

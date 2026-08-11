@@ -7,6 +7,9 @@ import {
 
 export const DEALS_FLIGHT_RUNTIME_STORAGE_KEY =
   "kurioticket:deals:v2:flight-runtime";
+export type DealsFlightStorageResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; code: "STORAGE_UNAVAILABLE" };
 export type DealsFlightRuntimeV2 = {
   version: 1;
   inventoryToken: string;
@@ -52,6 +55,7 @@ export function parseDealsFlightRuntimeV2(
     token.length < 32 ||
     sourceSearchKey !== currentSearchKey ||
     !expires ||
+    !Number.isFinite(Date.parse(expires)) ||
     Date.parse(expires) <= now ||
     item.tripType !== tripType ||
     !Array.isArray(item.outboundChoices) ||
@@ -69,9 +73,16 @@ export function parseDealsFlightRuntimeV2(
     const canonical = canonicalizeDealsFlightFareV2(fare);
     const candidate = fare as Record<string, unknown>;
     return canonical &&
+      canonical.fareKey.startsWith("flight-fare-v3:") &&
       typeof candidate.sourcePrice === "number" &&
+      Number.isFinite(candidate.sourcePrice) &&
       candidate.sourcePrice > 0 &&
-      typeof candidate.sourceCurrency === "string"
+      typeof candidate.sourceCurrency === "string" &&
+      /^[A-Z]{3}$/.test(candidate.sourceCurrency) &&
+      (candidate.offerExpiresAt === undefined ||
+        (typeof candidate.offerExpiresAt === "number" &&
+          Number.isFinite(candidate.offerExpiresAt) &&
+          candidate.offerExpiresAt >= 0))
       ? {
           ...canonical,
           sourcePrice: candidate.sourcePrice,
@@ -124,21 +135,45 @@ export function readDealsFlightRuntimeV2(
   searchKey: string,
   tripType: "round-trip" | "one-way",
   now = Date.now(),
-) {
-  const raw = storage.getItem(DEALS_FLIGHT_RUNTIME_STORAGE_KEY);
-  if (!raw) return null;
-  const parsed = parseDealsFlightRuntimeV2(raw, searchKey, tripType, now);
-  if (!parsed) storage.removeItem(DEALS_FLIGHT_RUNTIME_STORAGE_KEY);
-  return parsed;
+): DealsFlightStorageResult<DealsFlightRuntimeV2 | null> {
+  try {
+    const raw = storage.getItem(DEALS_FLIGHT_RUNTIME_STORAGE_KEY);
+    if (!raw) return { ok: true, value: null };
+    const parsed = parseDealsFlightRuntimeV2(raw, searchKey, tripType, now);
+    if (!parsed) storage.removeItem(DEALS_FLIGHT_RUNTIME_STORAGE_KEY);
+    return { ok: true, value: parsed };
+  } catch {
+    return { ok: false, code: "STORAGE_UNAVAILABLE" };
+  }
 }
 export function writeDealsFlightRuntimeV2(
   storage: Pick<Storage, "setItem">,
   runtime: DealsFlightRuntimeV2,
-) {
-  storage.setItem(DEALS_FLIGHT_RUNTIME_STORAGE_KEY, JSON.stringify(runtime));
+): DealsFlightStorageResult<void> {
+  try {
+    const safeRuntime = parseDealsFlightRuntimeV2(
+      JSON.stringify(runtime),
+      runtime.sourceSearchKey,
+      runtime.tripType,
+      0,
+    );
+    if (!safeRuntime) return { ok: false, code: "STORAGE_UNAVAILABLE" };
+    storage.setItem(
+      DEALS_FLIGHT_RUNTIME_STORAGE_KEY,
+      JSON.stringify(safeRuntime),
+    );
+    return { ok: true, value: undefined };
+  } catch {
+    return { ok: false, code: "STORAGE_UNAVAILABLE" };
+  }
 }
 export function clearDealsFlightRuntimeV2(
   storage: Pick<Storage, "removeItem">,
-) {
-  storage.removeItem(DEALS_FLIGHT_RUNTIME_STORAGE_KEY);
+): DealsFlightStorageResult<void> {
+  try {
+    storage.removeItem(DEALS_FLIGHT_RUNTIME_STORAGE_KEY);
+    return { ok: true, value: undefined };
+  } catch {
+    return { ok: false, code: "STORAGE_UNAVAILABLE" };
+  }
 }
