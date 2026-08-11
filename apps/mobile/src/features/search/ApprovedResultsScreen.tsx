@@ -613,7 +613,7 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
           <Text style={s0.sub}>{result.destinationAirport}</Text>
         </View>
         <View style={s0.priceBox}>
-          <Text style={s0.bigPrice} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+          <Text style={s0.bigPrice} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {fare?.formatted ?? "—"}
           </Text>
           <Text style={s0.sub}>round trip</Text>
@@ -986,7 +986,7 @@ const s0 = StyleSheet.create({
   resultBadgeGreen: { backgroundColor: "#EAF8ED" },
   resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
   resultBadgeTextGreen: { color: ui.green },
-  flightMain: { flexDirection: "row", alignItems: "center", gap: 3 },
+  flightMain: { flexDirection: "row", alignItems: "center", gap: 2 },
   airline: { width: 32, height: 32, resizeMode: "contain" },
   airlineFallback: {
     width: 32,
@@ -998,10 +998,10 @@ const s0 = StyleSheet.create({
   },
   airlineFallbackText: { color: ui.navy, fontSize: 12, fontWeight: "800" },
   nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
-  departureBlock: { flex: 1.35, minWidth: 0 },
-  arrivalBlock: { flex: 0.75, minWidth: 0 },
+  departureBlock: { flex: 1.1, minWidth: 0 },
+  arrivalBlock: { flex: 0.9, minWidth: 0 },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
-  timeline: { flex: 0.85, minWidth: 42, maxWidth: 82, alignItems: "center" },
+  timeline: { flex: 0.65, minWidth: 34, maxWidth: 68, alignItems: "center" },
   timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 2, marginVertical: 1 },
   line: {
     flex: 1,
@@ -1009,7 +1009,7 @@ const s0 = StyleSheet.create({
     backgroundColor: ui.muted,
   },
   nonstop: { fontSize: 11, color: ui.blue },
-  priceBox: { maxWidth: 72, minWidth: 0, flexShrink: 1, alignItems: "flex-end" },
+  priceBox: { flexBasis: 108, minWidth: 84, maxWidth: 118, flexShrink: 1, alignItems: "flex-end" },
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   benefits: {
     borderTopWidth: 1,

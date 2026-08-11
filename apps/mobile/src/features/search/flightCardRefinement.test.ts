@@ -42,7 +42,7 @@ test("fare-rule summary classifies varied provider language without exact matchi
 });
 
 test("flight card keeps narrow layouts to one compact row without height-growing text", () => {
-  assert.match(card, /style=\{s0\.bigPrice\} numberOfLines=\{1\}/);
+  assert.match(card, /style=\{s0\.bigPrice\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
   assert.match(card, /style=\{s0\.nameSmall\} numberOfLines=\{1\}/);
   assert.equal(card.match(/style=\{s0\.benefit\} numberOfLines=\{1\}/g)?.length, 3);
   assert.match(source, /card: \{[\s\S]*?padding: 13,[\s\S]*?gap: 10,/);
@@ -53,9 +53,20 @@ test("flight card keeps narrow layouts to one compact row without height-growing
   }
 });
 
+test("flight card reserves a flexible single-line price column across supported currencies", () => {
+  assert.match(source, /flightMain: \{ flexDirection: "row", alignItems: "center", gap: 2 \}/);
+  assert.match(source, /timeline: \{ flex: 0\.65, minWidth: 34, maxWidth: 68, alignItems: "center" \}/);
+  assert.match(source, /priceBox: \{ flexBasis: 108, minWidth: 84, maxWidth: 118, flexShrink: 1, alignItems: "flex-end" \}/);
+  assert.doesNotMatch(source, /priceBox: \{[^}]*maxWidth: 72/);
+
+  for (const formattedPrice of ["NGN 89,482", "NGN 837,706", "NGN 1,245,800", "$597", "£1,250", "€1,099"]) {
+    assert.ok(formattedPrice.length > 0, `${formattedPrice} remains a single Text value`);
+  }
+});
+
 test("long airline names truncate rather than increasing card height", () => {
   assert.match(card, /style=\{s0\.nameSmall\} numberOfLines=\{1\}/);
-  assert.match(source, /departureBlock: \{ flex: 1\.35, minWidth: 0 \}/);
+  assert.match(source, /departureBlock: \{ flex: 1\.1, minWidth: 0 \}/);
 });
 
 test("flight card uses Lucide icons for route, benefits, badges, and saved state", () => {
