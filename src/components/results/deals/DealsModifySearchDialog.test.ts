@@ -61,6 +61,11 @@ test("modify search uses a labelled modal while preserving the results page", ()
 test("modify search mounts the results form with the shared package selector", () => {
   assert.match(dialog, /<DealsSearchForm[^>]*variant="results"/);
   assert.match(form, /data-deals-package-selector/);
+  assert.match(form, /data-deals-results-main-search-row/);
+  assert.doesNotMatch(
+    form,
+    /data-deals-results-(?:flight|stay|car|travellers)/,
+  );
   assert.doesNotMatch(form, /data-deals-product-selector/);
 });
 
