@@ -115,7 +115,7 @@ test("empty regional browsing uses responsive Popular-style destination cards", 
   assert.match(source, /browseImage: {[\s\S]*?width: "100%"/);
   assert.match(
     source,
-    /style=\{\[s\.browseImage, \{ height: layout\.imageHeight \}\]\}/,
+    /style=\{\[s\.browseImage, \{ height: layout\.imageHeight, backgroundColor: theme\.border \}\]\}/,
   );
   assert.match(
     source,
@@ -140,7 +140,7 @@ test("browse cards render canonical editorial and metadata in the Popular hierar
 
   assert.match(
     browseCard,
-    /<Text style=\{s\.browseName\}>\{destination\.name\}<\/Text>\s*<Text style=\{s\.browseCountry\}> · \{destination\.country\}<\/Text>/,
+    /<Text style=\{\[s\.browseName, \{ color: theme\.text \}\]\}>\{destination\.name\}<\/Text>\s*<Text style=\{\[s\.browseCountry, \{ color: theme\.muted \}\]\}> · \{destination\.country\}<\/Text>/,
   );
   assert.match(browseCard, /numberOfLines=\{3\}/);
   assert.match(browseCard, /ellipsizeMode="tail"[\s\S]*?\{destination\.summary\}/);

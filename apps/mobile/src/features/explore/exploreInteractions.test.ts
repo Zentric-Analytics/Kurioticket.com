@@ -618,11 +618,17 @@ test("destination details follow the destination-first hierarchy without duplica
   assert.match(actions, /<Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary \/>/);
   assert.doesNotMatch(actions.slice(actions.indexOf("<\/View>") + 7), /<Section|<Action/);
 
+  const action = source.slice(source.indexOf("function Action"), source.indexOf("const styles = StyleSheet.create"));
+  assert.match(action, /secondary && \{ backgroundColor: theme\.surface \}/);
+  assert.match(action, /<FlowIcon name=\{icon\} color=\{secondary \? BLUE : "white"\}/);
+  assert.match(action, /secondary && styles\.secondaryButtonText/);
+
   const actionStyles = source.slice(source.indexOf("const styles = StyleSheet.create"));
   assert.match(actionStyles, /actions: \{ flexDirection: "row", gap: 10/);
   assert.match(actionStyles, /actionButton: \{ flex: 1 \}/);
   assert.match(actionStyles, /primaryButton: \{ minHeight: 52[\s\S]*backgroundColor: BLUE/);
-  assert.match(actionStyles, /secondaryButton: \{ backgroundColor: "white", borderWidth: 1, borderColor: BLUE \}/);
+  assert.match(actionStyles, /secondaryButton: \{ borderWidth: 1, borderColor: BLUE \}/);
+  assert.match(actionStyles, /secondaryButtonText: \{ color: BLUE \}/);
 
   const london = destinationById.get("gb-london")!;
   assert.ok(london.airportCodes.length > 1);
