@@ -18,6 +18,7 @@ const flushMicrotasks = async () => {
 };
 
 const hash = (digit) => digit.repeat(64);
+const fingerprintPlatform = (args) => args.find((value) => value.includes("fingerprint:generate")).match(/--platform (ios|android)/)[1];
 
 test("iOS and Android native fingerprints start together", async () => {
   const ios = deferred();
@@ -25,7 +26,7 @@ test("iOS and Android native fingerprints start together", async () => {
   const started = [];
 
   const commandRunner = async (_command, args) => {
-    const platform = args[args.indexOf("--platform") + 1];
+    const platform = fingerprintPlatform(args);
     started.push(platform);
     const gate = platform === "ios" ? ios : android;
     await gate.promise;
@@ -56,7 +57,7 @@ test("one fingerprint failure waits for the sibling process before rejecting", a
   let androidFinished = false;
 
   const commandRunner = async (_command, args) => {
-    const platform = args[args.indexOf("--platform") + 1];
+    const platform = fingerprintPlatform(args);
     if (platform === "ios") throw new Error("ios fingerprint failed");
     await android.promise;
     androidFinished = true;
@@ -76,7 +77,7 @@ test("multiple fingerprint failures preserve both platform reasons", async () =>
   const fingerprints = nativeFingerprints("/tmp/preview-checkout", {
     expoToken: "token",
     commandRunner: async (_command, args) => {
-      const platform = args[args.indexOf("--platform") + 1];
+      const platform = fingerprintPlatform(args);
       throw new Error(`${platform} fingerprint failed`);
     },
   });

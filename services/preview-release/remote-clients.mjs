@@ -362,12 +362,21 @@ export async function nativeFingerprints(directory, { commandRunner = exec, expo
   const settled = await Promise.allSettled(platforms.map(async (platform) => {
     const startedAt = Date.now();
     console.log(JSON.stringify({ event: "preview-release-fingerprint-started", platform, rssBytes: process.memoryUsage().rss }));
-    const { stdout } = await commandRunner(command, ["eas-cli@16.17.4", "fingerprint:generate", "--build-profile", "preview", "--platform", platform, "--json", "--non-interactive"], {
+    const fingerprintCommand = `npx eas-cli@16.17.4 fingerprint:generate --build-profile preview --platform ${platform} --json --non-interactive`;
+    const { stdout } = await commandRunner(command, ["eas-cli@16.17.4", "env:exec", "preview", fingerprintCommand, "--non-interactive"], {
       cwd,
       encoding: "utf8",
       maxBuffer: 50 * 1024 * 1024,
       timeout: 5 * 60 * 1000,
-      env: { ...process.env, EXPO_TOKEN: expoToken, NODE_OPTIONS: "--max-old-space-size=192", MALLOC_ARENA_MAX: "2" },
+      env: {
+        ...process.env,
+        EXPO_TOKEN: expoToken,
+        APP_VARIANT: "preview",
+        APP_BUILD_MODE: "release",
+        EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
+        NODE_OPTIONS: "--max-old-space-size=192",
+        MALLOC_ARENA_MAX: "2",
+      },
     });
     let value;
     try { value = JSON.parse(stdout.slice(stdout.indexOf("{"))); } catch { throw new Error(`Expo ${platform} fingerprint output is malformed.`); }

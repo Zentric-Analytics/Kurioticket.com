@@ -1183,8 +1183,9 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /APP_BUILD_MODE: "release"/);
   assert.match(client, /EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY\.apiOrigin/);
   assert.match(client, /process\.platform === "win32" \? "npx\.cmd" : "npx"/);
-  assert.match(client, /"fingerprint:generate", "--build-profile", "preview", "--platform", platform/);
-  assert.match(client, /EXPO_TOKEN: expoToken, NODE_OPTIONS: "--max-old-space-size=192", MALLOC_ARENA_MAX: "2"/);
+  assert.match(client, /"env:exec", "preview", fingerprintCommand/);
+  assert.match(client, /fingerprint:generate --build-profile preview --platform \$\{platform\}/);
+  assert.match(client, /EXPO_TOKEN: expoToken,[\s\S]*?APP_VARIANT: "preview",[\s\S]*?NODE_OPTIONS: "--max-old-space-size=192",[\s\S]*?MALLOC_ARENA_MAX: "2"/);
   assert.match(client, /preview-release-fingerprint-started/);
   assert.match(client, /preview-release-fingerprint-complete/);
   assert.match(client, /const isUpdatePublish = args\[1\] === "update"/);
