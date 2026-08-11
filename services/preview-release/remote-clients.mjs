@@ -168,7 +168,10 @@ export class EasClient {
     return withSourceAttestedPreviewIdentity(build, platform);
   }
   async compareBuildFingerprint(buildId, expectedFingerprint) {
-    const value = await this.run(["eas-cli@16.17.4", "fingerprint:compare", expectedFingerprint, "--build-id", buildId, "--json", "--non-interactive"]);
+    // Supplying a hash and one build makes EAS compare the uploaded hash with
+    // the local directory. Comparing the build to itself reads the uploaded
+    // build fingerprint twice and avoids any checkout/platform line-ending drift.
+    const value = await this.run(["eas-cli@16.17.4", "fingerprint:compare", "--build-id", buildId, "--build-id", buildId, "--json", "--non-interactive"]);
     const expectedHash = value?.fingerprint1?.hash;
     const buildHash = value?.fingerprint2?.hash;
     if (expectedHash !== expectedFingerprint || buildHash !== expectedFingerprint) {
