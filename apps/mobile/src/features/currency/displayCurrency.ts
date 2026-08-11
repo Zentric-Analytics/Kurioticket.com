@@ -35,6 +35,39 @@ export function resolveDisplayCurrency({
   return currencyForCountry(countryCode) ?? fallback;
 }
 
+export type DisplayCurrencyResolution = {
+  preferredCurrency: string | null;
+  detectedCountryCode: string | null;
+  localeCountryCode: string | null;
+  resolvedCurrency: string;
+};
+
+/** Resolves the complete preference -> IP country -> locale -> fallback priority. */
+export function resolveDisplayCurrencyContext({
+  preferredCurrency,
+  ipCountryCode,
+  locale,
+  fallback = "USD",
+}: {
+  preferredCurrency?: string | null;
+  ipCountryCode?: string | null;
+  locale?: string | null;
+  fallback?: string;
+}): DisplayCurrencyResolution {
+  const localeCountryCode = countryCodeFromLocale(locale);
+  const detectedCountryCode = ipCountryCode?.trim().toUpperCase() || localeCountryCode;
+  return {
+    preferredCurrency: preferredCurrency?.trim().toUpperCase() || null,
+    detectedCountryCode,
+    localeCountryCode,
+    resolvedCurrency: resolveDisplayCurrency({
+      preferredCurrency,
+      countryCode: detectedCountryCode,
+      fallback,
+    }),
+  };
+}
+
 export type DisplayPrice = {
   amount: number;
   currency: string;

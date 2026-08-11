@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { currencyForCountry, displayPrice, resolveDisplayCurrency } from "./displayCurrency";
+import { currencyForCountry, displayPrice, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
 
 test("country regions resolve to their ISO display currencies", () => {
   assert.equal(currencyForCountry("NG"), "NGN");
@@ -11,6 +11,31 @@ test("country regions resolve to their ISO display currencies", () => {
 
 test("an explicit saved currency overrides the country currency", () => {
   assert.equal(resolveDisplayCurrency({ preferredCurrency: "USD", countryCode: "NG" }), "USD");
+});
+
+test("display currency follows preference, IP country, locale, then USD priority", () => {
+  const resolve = (preferredCurrency: string | null, ipCountryCode: string | null, locale: string) =>
+    resolveDisplayCurrencyContext({ preferredCurrency, ipCountryCode, locale }).resolvedCurrency;
+
+  assert.equal(resolve(null, "NG", "en-US"), "NGN");
+  assert.equal(resolve("USD", "NG", "en-US"), "USD");
+  assert.equal(resolve(null, null, "en-NG"), "NGN");
+  assert.equal(resolve(null, null, "en-US"), "USD");
+  assert.equal(resolve(null, "GB", "en-US"), "GBP");
+  assert.equal(resolve(null, "CA", "en-US"), "CAD");
+});
+
+test("currency resolution diagnostics expose each decision input", () => {
+  assert.deepEqual(resolveDisplayCurrencyContext({
+    preferredCurrency: null,
+    ipCountryCode: "ng",
+    locale: "en-US",
+  }), {
+    preferredCurrency: null,
+    detectedCountryCode: "NG",
+    localeCountryCode: "US",
+    resolvedCurrency: "NGN",
+  });
 });
 
 test("same-currency provider prices do not convert", () => {
