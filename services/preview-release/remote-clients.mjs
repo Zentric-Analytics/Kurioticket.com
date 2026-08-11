@@ -167,6 +167,15 @@ export class EasClient {
     if (!['ios', 'android'].includes(platform)) throw new Error("EAS build:view response has an invalid platform.");
     return withSourceAttestedPreviewIdentity(build, platform);
   }
+  async compareBuildFingerprint(buildId, expectedFingerprint) {
+    const value = await this.run(["eas-cli@16.17.4", "fingerprint:compare", expectedFingerprint, "--build-id", buildId, "--json", "--non-interactive"]);
+    const expectedHash = value?.fingerprint1?.hash;
+    const buildHash = value?.fingerprint2?.hash;
+    if (expectedHash !== expectedFingerprint || buildHash !== expectedFingerprint) {
+      throw new Error(`EAS build ${buildId} fingerprint does not match the canonical Preview fingerprint.`);
+    }
+    return Object.freeze({ expectedHash, buildHash });
+  }
   async listIosSubmissions() {
     const query = `query PreviewIosSubmissions($appId: String!, $limit: Int!, $offset: Int!) {
       app { byId(appId: $appId) { id submissions(filter: { platform: IOS }, limit: $limit, offset: $offset) {

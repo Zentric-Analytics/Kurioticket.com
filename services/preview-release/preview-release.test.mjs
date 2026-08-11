@@ -1185,6 +1185,7 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /process\.platform === "win32" \? "npx\.cmd" : "npx"/);
   assert.match(client, /"env:exec", "preview", fingerprintCommand/);
   assert.match(client, /fingerprint:generate --build-profile preview --platform \$\{platform\}/);
+  assert.match(client, /"fingerprint:compare", expectedFingerprint, "--build-id", buildId/);
   assert.match(client, /EXPO_TOKEN: expoToken,[\s\S]*?APP_VARIANT: "preview",[\s\S]*?NODE_OPTIONS: "--max-old-space-size=192",[\s\S]*?MALLOC_ARENA_MAX: "2"/);
   assert.match(client, /preview-release-fingerprint-started/);
   assert.match(client, /preview-release-fingerprint-complete/);
@@ -1386,7 +1387,11 @@ test("canonical incident replacement corrects planning once, reserves before cre
     checkoutFactory: async () => ({ directory: repositoryRoot, cleanup: async () => {} }), prepareCheckoutFactory: async () => {},
     identityFactory: async () => ({ appName: PREVIEW_IDENTITY.appName, bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: PREVIEW_IDENTITY.scheme, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile, channel: PREVIEW_IDENTITY.channel, runtime: PREVIEW_IDENTITY.runtime, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
     fingerprintsFactory: async () => ({ android: canonical, ios: "e".repeat(40) }),
-    easFactory: () => ({ createAndroidBuild: async () => { creates += 1; order.push("create"); return { id: buildId }; }, viewBuild: async () => finished }),
+    easFactory: () => ({
+      createAndroidBuild: async () => { creates += 1; order.push("create"); return { id: buildId }; },
+      viewBuild: async () => finished,
+      compareBuildFingerprint: async () => ({ expectedHash: canonical, buildHash: canonical }),
+    }),
   });
   orchestrator.deliverAndroid = async () => ({ buildId, buildNumber: "30", status: "FINISHED" });
   await orchestrator.recoverCanonicalNativeBuild({ sourceSha: sha, platform: "android" });

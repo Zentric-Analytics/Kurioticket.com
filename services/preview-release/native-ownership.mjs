@@ -13,7 +13,7 @@ export function validateAdoptableBuild({ build, platform, sourceSha, fingerprint
   const actualPlatform = String(build?.platform ?? "").toLowerCase();
   const projectId = build?.project?.id ?? build?.projectId;
   const profile = build?.buildProfile;
-  const applicationId = build?.applicationIdentifier ?? build?.appIdentifier;
+  const applicationId = build?.applicationIdentifier ?? build?.appIdentifier ?? build?.sourceAttestedAppIdentifier;
   const actualFingerprint = build?.fingerprint?.hash ?? build?.fingerprintHash;
   const buildNumber = String(build?.appBuildVersion ?? "");
   const artifactUrl = build?.artifacts?.buildUrl ?? build?.artifacts?.applicationArchiveUrl;

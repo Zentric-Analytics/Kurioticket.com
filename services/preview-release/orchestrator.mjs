@@ -133,7 +133,8 @@ export class PreviewOrchestrator {
         ? await this.deliverIos(sourceSha, checkout.directory, lease, plannedFingerprint)
         : await this.deliverAndroid(sourceSha, checkout.directory, lease, plannedFingerprint);
       const finished = await eas.viewBuild(result.buildId);
-      validateAdoptableBuild({ build: finished, platform, sourceSha, fingerprint: plannedFingerprint, existingAction: action, delivered: null });
+      const fingerprintComparison = await eas.compareBuildFingerprint(result.buildId, plannedFingerprint);
+      validateAdoptableBuild({ build: { ...finished, fingerprintHash: fingerprintComparison.buildHash }, platform, sourceSha, fingerprint: plannedFingerprint, existingAction: action, delivered: null });
       console.log(JSON.stringify({ event: "canonical-native-replacement-verified", platform, sourceSha, fingerprint: plannedFingerprint, buildId: result.buildId, buildNumber: result.buildNumber }));
       return { ...result, fingerprint: plannedFingerprint };
     } finally { await checkout.cleanup(); }
