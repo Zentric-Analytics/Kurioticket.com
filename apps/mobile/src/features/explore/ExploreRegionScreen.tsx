@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import {
   FlatList,
+  Image,
   Keyboard,
   Pressable,
   SectionList,
@@ -29,13 +30,75 @@ import {
 import { destinationDetailsRoute } from "./exploreInteractionModels";
 import { DestinationResultRow } from "./ExploreScreen";
 import { FlowIcon } from "../flow/FlowIcon";
+import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
+import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
 
 const EMPTY_DESTINATIONS: readonly Destination[] = [];
 const NAVY = "#071A48",
   BLUE = "#0754F7",
   MUTED = "#56658E",
   BORDER = "#E7ECF5";
+export const REGION_BROWSE_IMAGE_ASPECT_RATIO = 2.15;
+
+function RegionBrowseDestinationCard({
+  destination,
+  saved,
+  onSelect,
+  onToggle,
+}: {
+  destination: Destination;
+  saved: boolean;
+  onSelect: () => void;
+  onToggle: () => void;
+}) {
+  const media = destinationMedia(destination.id);
+  const [failed, setFailed] = useState(false);
+  const airportSummary = `${destination.primaryAirportCode}${
+    destination.airportCodes.length > 1
+      ? ` + ${destination.airportCodes.length - 1} airports`
+      : ""
+  }`;
+
+  return (
+    <View style={s.browseCard}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Open details for ${destination.name}, ${destination.country}, ${destination.primaryAirportCode}`}
+        onPress={onSelect}
+        style={s.browseMain}
+      >
+        <Image
+          source={
+            failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)
+          }
+          alt={`${destination.name}, ${destination.country}`}
+          accessibilityLabel={
+            media?.accessibilityLabel ??
+            `${destination.name}, ${destination.country} travel landscape`
+          }
+          resizeMode="cover"
+          onError={() => setFailed(true)}
+          style={s.browseImage}
+        />
+        <View style={s.browseFooter}>
+          <Text numberOfLines={1} style={s.browseName}>
+            {destination.name}
+          </Text>
+          <Text numberOfLines={1} style={s.browseAirport}>
+            {airportSummary}
+          </Text>
+        </View>
+      </Pressable>
+      <AndroidFavoriteButton
+        saved={saved}
+        label={`${saved ? "Remove" : "Save"} ${destination.name}`}
+        onPress={onToggle}
+        style={s.browseHeart}
+      />
+    </View>
+  );
+}
 
 export function ExploreRegionScreen() {
   const { region: slug } = useLocalSearchParams<{ region?: string }>();
@@ -181,7 +244,7 @@ export function ExploreRegionScreen() {
             </View>
           )}
           renderItem={({ item }) => (
-            <DestinationResultRow
+            <RegionBrowseDestinationCard
               destination={item}
               saved={savedIds.has(item.id)}
               onSelect={() => select(item)}
@@ -230,8 +293,8 @@ const s = StyleSheet.create({
   list: { paddingHorizontal: 18 },
   countryHeader: {
     backgroundColor: "#FAFBFF",
-    paddingTop: 14,
-    paddingBottom: 8,
+    paddingTop: 24,
+    paddingBottom: 10,
   },
   countryName: { color: NAVY, fontSize: 18, lineHeight: 24, fontWeight: "800" },
   countryCount: {
@@ -240,6 +303,30 @@ const s = StyleSheet.create({
     lineHeight: 20,
     fontWeight: "600",
   },
+  browseCard: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 12,
+    backgroundColor: "white",
+    overflow: "hidden",
+    marginBottom: 12,
+  },
+  browseMain: { width: "100%" },
+  browseImage: {
+    width: "100%",
+    aspectRatio: REGION_BROWSE_IMAGE_ASPECT_RATIO,
+    backgroundColor: "#E7ECF5",
+  },
+  browseFooter: {
+    minHeight: 64,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    justifyContent: "center",
+  },
+  browseName: { color: NAVY, fontSize: 16, lineHeight: 21, fontWeight: "800" },
+  browseAirport: { color: MUTED, fontSize: 12, lineHeight: 17, marginTop: 2 },
+  browseHeart: { position: "absolute", right: 10, top: 10 },
   empty: { color: MUTED, paddingVertical: 18 },
   invalid: { color: MUTED, padding: 18 },
 });
