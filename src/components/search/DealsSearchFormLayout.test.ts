@@ -76,7 +76,39 @@ test("Flight package row order is route, dates, Travellers, Cabin, submit", () =
       positions,
     );
   }
-  assert.match(flightRow, /min-\[1050px\]:grid-cols/);
+  assert.match(flightRow, /flightRowDesktopClasses/);
+  assert.match(form, /min-\[1050px\]:grid-cols/);
+});
+
+test("Results Flight layout waits for safe widths and keeps its controls in sync", () => {
+  assert.match(
+    form,
+    /variant === "results"[\s\S]*min-\[1180px\]:grid-cols-\[minmax\(0,2\.6fr\)_minmax\(150px,1fr\)_minmax\(185px,1\.15fr\)_minmax\(135px,0\.8fr\)_minmax\(165px,auto\)\][\s\S]*min-\[1050px\]:grid-cols-\[minmax\(0,3fr\)_minmax\(125px,1\.05fr\)_minmax\(145px,1\.15fr\)_minmax\(105px,0\.8fr\)_minmax\(156px,auto\)\]/,
+  );
+  for (const desktopClasses of [
+    "packageTravellersDesktopClasses",
+    "packageCabinDesktopClasses",
+    "packageSearchDesktopClasses",
+  ]) {
+    const contract = form.slice(
+      form.indexOf(`const ${desktopClasses}`),
+      form.indexOf(";", form.indexOf(`const ${desktopClasses}`)),
+    );
+    assert.match(contract, /variant === "results"/);
+    assert.match(contract, /min-\[1180px\]:/);
+    assert.match(contract, /min-\[1050px\]:/);
+  }
+});
+
+test("Flight package labels stay on one line when the row is horizontal", () => {
+  assert.match(
+    primaryControls,
+    /whitespace-nowrap[^>]*>[\s\S]*\{travelersControlLabel\}/,
+  );
+  assert.match(
+    primaryControls,
+    /whitespace-nowrap[^>]*[\s\S]*\{t\("deals\.cabinClass"\)\}/,
+  );
 });
 
 test("Hotel and Car uses the safe destination, dates, Travellers, submit row without Flight controls", () => {
