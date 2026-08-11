@@ -1055,6 +1055,7 @@ export function CarsResultsExperience({
   detailsHrefForCar,
   actionLabel,
   actionAriaLabelForCar,
+  onSelectCar,
   resultHeadingRef,
 }: {
   results: NormalizedCarResult[];
@@ -1067,6 +1068,7 @@ export function CarsResultsExperience({
   detailsHrefForCar: (car: NormalizedCarResult) => string | null;
   actionLabel?: string;
   actionAriaLabelForCar?: (car: NormalizedCarResult) => string;
+  onSelectCar?: (car: NormalizedCarResult) => void;
 }) {
   const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -1152,7 +1154,7 @@ export function CarsResultsExperience({
             <button ref={filtersButtonRef} type="button" className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={17} aria-hidden="true" />{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</button>
             <div className="flex min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2"><span className="shrink-0 whitespace-nowrap text-sm font-semibold text-slate-700">{t("carsResults.sortBy")}:</span><div ref={carsSortRef} className="relative inline-flex min-w-0 max-w-full shrink items-center whitespace-nowrap"><button ref={carsSortButtonRef} type="button" aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`} aria-haspopup="menu" aria-expanded={carsSortOpen} className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033]" onClick={() => setCarsSortOpen((open) => !open)}><span className="min-w-0 truncate whitespace-nowrap">{selectedCarSortLabel}</span><ChevronDown size={16} className={cn("shrink-0 transition-transform duration-150", carsSortOpen && "rotate-180")} aria-hidden="true" /></button><div role="menu" aria-hidden={!carsSortOpen} className={cn("absolute end-0 top-11 z-40 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg", carsSortOpen ? "opacity-100" : "pointer-events-none opacity-0")}>{carSortOptions.map((option) => <button key={option.value} type="button" role="menuitemradio" aria-checked={sort === option.value} tabIndex={carsSortOpen ? 0 : -1} className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold" onClick={() => { setTransition(); setSort(option.value); setCarsSortOpen(false); }}><span className="w-4 shrink-0 text-[#004BB8]">{sort === option.value ? "✓" : ""}</span><span>{option.label}</span></button>)}</div></div></div>
           </div>
-          {resultsTransitioning ? <div className="w-full space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="w-full space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={detailsHrefForCar(car)} actionLabel={actionLabel} actionAriaLabel={actionAriaLabelForCar?.(car)} headingLevel={embedded ? "h3" : "h2"} />)}</div> : <div role="status" className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">{t("carsResults.filteredEmpty") || "No cars match these filters."}</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>{t("carsResults.clearFilters") || "Clear filters"}</Button></div>}
+          {resultsTransitioning ? <div className="w-full space-y-4">{[0,1,2].map((item) => <CarCardSkeleton key={item} />)}</div> : visibleResults.length ? <div className="w-full space-y-4">{visibleResults.map((car) => <CarResultCard key={car.id} car={car} badge={badges.get(car.id)} detailsHref={detailsHrefForCar(car)} onSelect={onSelectCar} actionLabel={actionLabel} actionAriaLabel={actionAriaLabelForCar?.(car)} headingLevel={embedded ? "h3" : "h2"} />)}</div> : <div role="status" className="w-full rounded-xl border border-slate-200 bg-white p-8 text-center"><p className="font-bold text-slate-950">{t("carsResults.filteredEmpty") || "No cars match these filters."}</p><Button type="button" variant="secondary" className="mt-4" onClick={clearCarFilters}>{t("carsResults.clearFilters") || "Clear filters"}</Button></div>}
         </> : <><h2 id={resultHeadingId} tabIndex={-1} className="text-xl font-extrabold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]">{resultHeading ?? t("deals.guided.carResults.emptyTitle")}</h2><CarsResultsShell hasSearchContext={hasSearchContext} inventoryStatus={inventoryStatus} t={t} /></>}
       </div>
     </div>
