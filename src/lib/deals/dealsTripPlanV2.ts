@@ -49,7 +49,6 @@ export type DealsFlightFareV2 = {
   refundInfo?: string;
 };
 export type DealsConfirmedFlightOfferV2 = {
-  resultId: string;
   provider: string;
   airline: string;
   flightNumber?: string;
@@ -228,7 +227,6 @@ export function canonicalizeDealsConfirmedFlightOfferV2(
   )
     return null;
   const required = [
-    "resultId",
     "provider",
     "airline",
     "outboundItineraryKey",
@@ -255,7 +253,6 @@ export function canonicalizeDealsConfirmedFlightOfferV2(
   )
     return null;
   return {
-    resultId: values.resultId!,
     provider: values.provider!,
     airline: values.airline!,
     ...(flightNumber ? { flightNumber } : {}),

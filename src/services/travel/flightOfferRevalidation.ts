@@ -26,6 +26,14 @@ type RefreshOffer = (
   search: FlightSearchParams,
 ) => Promise<ProviderResult<NormalizedFlightResult>>;
 
+const providerConfirmsUnavailable = (
+  response: ProviderResult<NormalizedFlightResult>,
+) =>
+  response.errorCategory === "no_inventory" ||
+  response.errorCategory === "route_unavailable" ||
+  response.errorReason === "provider_no_inventory" ||
+  response.errorReason === "provider_route_unavailable";
+
 const materiallyChanged = (
   cached: NormalizedFlightResult,
   refreshed: NormalizedFlightResult,
@@ -73,7 +81,12 @@ export async function revalidateFlightOffer({
     cachedOffer.providerOfferId,
     search,
   );
-  if (response.status !== "success") return { status: "temporary-failure" };
+  if (response.status !== "success")
+    return {
+      status: providerConfirmsUnavailable(response)
+        ? "unavailable"
+        : "temporary-failure",
+    };
   if (response.results.length !== 1) return { status: "unavailable" };
   const refreshed = response.results[0];
   if (
@@ -103,7 +116,6 @@ export async function revalidateFlightOffer({
   if (projectedLegs.length !== (search.tripType === "round-trip" ? 2 : 1))
     return { status: "invalid-selection" };
   const offer: DealsConfirmedFlightOfferV2 = {
-    resultId: refreshed.id,
     provider: refreshed.provider,
     airline: refreshed.airlineName,
     ...(refreshed.flightNumber ? { flightNumber: refreshed.flightNumber } : {}),

@@ -152,11 +152,22 @@ test("filters exact complete itineraries and resolves each actual provider offer
     ],
   );
   assert.notEqual(buildFlightFareKey(AX1), buildFlightFareKey(AX3));
-  assert.equal(
-    buildFlightFareKey(AX1),
-    JSON.stringify(["flight-fare-v2", "AX1"]),
-  );
+  assert.equal(buildFlightFareKey(AX1), buildFlightFareKey({ ...AX1 }));
+  assert.match(buildFlightFareKey(AX1)!, /^flight-fare-v3:[A-Za-z0-9_-]{43}$/);
+  assert.doesNotMatch(buildFlightFareKey(AX1)!, /AX1/);
   assert.doesNotMatch(buildFlightFareKey(AX1)!, /offer-1/);
+});
+
+test("opaque fare keys hide the production provider-derived result identity", () => {
+  const productionLike = result("duffel-off_secret_123", "off_secret_123", [
+    A,
+    X,
+  ]);
+  const other = result("duffel-off_secret_456", "off_secret_456", [A, X]);
+  const key = buildFlightFareKey(productionLike)!;
+  assert.equal(key, buildFlightFareKey({ ...productionLike }));
+  assert.notEqual(key, buildFlightFareKey(other));
+  assert.doesNotMatch(key, /off_secret_123|duffel-off_secret_123/);
 });
 
 test("one-way matching cannot include round trips", () => {

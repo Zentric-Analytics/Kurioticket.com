@@ -39,9 +39,9 @@ const outbound = {
   ],
 };
 const cached: NormalizedFlightResult = {
-  id: "offer-result",
+  id: "duffel-off_secret_123",
   provider: "Duffel",
-  providerOfferId: "server-secret",
+  providerOfferId: "off_secret_123",
   providerExpiresAt: 20_000,
   airlineName: "Air",
   originAirport: "LHR",
@@ -88,9 +88,64 @@ test("revalidation confirms an unchanged exact offer without leaking identity", 
     refreshDuffelOffer: response(cached),
   });
   assert.equal(outcome.status, "confirmed");
-  assert.equal(JSON.stringify(outcome).includes("server-secret"), false);
+  assert.doesNotMatch(
+    JSON.stringify(outcome),
+    /off_secret_123|duffel-off_secret_123/,
+  );
   if (outcome.status === "confirmed")
     assert.equal(outcome.offer.legs.length, 1);
+});
+
+test("revalidation maps confirmed provider disappearance separately from operational failures", async () => {
+  for (const classification of [
+    {
+      errorCategory: "no_inventory" as const,
+      errorReason: "provider_no_inventory" as const,
+    },
+    {
+      errorCategory: "route_unavailable" as const,
+      errorReason: "provider_route_unavailable" as const,
+    },
+  ]) {
+    const outcome = await revalidateFlightOffer({
+      ...input,
+      refreshDuffelOffer: async () => ({
+        provider: "Duffel",
+        results: [],
+        status: "failed",
+        latencyMs: 1,
+        ...classification,
+      }),
+    });
+    assert.equal(outcome.status, "unavailable");
+  }
+
+  for (const classification of [
+    {
+      errorCategory: "timeout" as const,
+      errorReason: "provider_timeout" as const,
+    },
+    {
+      errorCategory: "network" as const,
+      errorReason: "provider_network_error" as const,
+    },
+    {
+      errorCategory: "server" as const,
+      errorReason: "provider_server_error" as const,
+    },
+  ]) {
+    const outcome = await revalidateFlightOffer({
+      ...input,
+      refreshDuffelOffer: async () => ({
+        provider: "Duffel",
+        results: [],
+        status: "failed",
+        latencyMs: 1,
+        ...classification,
+      }),
+    });
+    assert.equal(outcome.status, "temporary-failure");
+  }
 });
 
 test("revalidation distinguishes changes, expiry, failures, and mismatches", async () => {

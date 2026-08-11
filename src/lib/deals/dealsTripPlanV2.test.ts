@@ -103,7 +103,6 @@ export const car: DealsTripPlanCar = {
     "/cars/details/c1?pickupLocation=JFK&dropoffLocation=JFK&pickupDate=2027-01-01&pickupTime=10%3A00&dropoffDate=2027-01-10&dropoffTime=10%3A00&driverAge=30",
 };
 export const offer: DealsConfirmedFlightOfferV2 = {
-  resultId: "r1",
   provider: "Duffel",
   airline: "Air",
   flightNumber: "KT1",
@@ -173,6 +172,8 @@ test("canonicalization strips unknown provider blobs", () => {
       ...confirmedPlan().flightJourney!,
       confirmedOffer: {
         ...offer,
+        resultId: "duffel-off_secret_123",
+        providerOfferId: "off_secret_123",
         rawProviderReference: { secret: "x" },
         authorization: "secret",
       },
@@ -181,8 +182,8 @@ test("canonicalization strips unknown provider blobs", () => {
   const canonical = canonicalizeDealsTripPlanV2(raw);
   assert.ok(canonical);
   assert.doesNotMatch(
-    JSON.stringify(canonical),
-    /rawProvider|authorization|secret/,
+    serializeDealsTripPlanV2(canonical),
+    /rawProvider|authorization|off_secret_123|duffel-off_secret_123/,
   );
 });
 test("schema, timestamps, optional fields, and paths are strict", () => {
