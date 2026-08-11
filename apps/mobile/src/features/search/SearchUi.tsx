@@ -164,12 +164,14 @@ export function Pill({
 export function DateStrip({
   date,
   prices,
+  formattedPrices,
   currency = "USD",
   flightResults = false,
   onSelect,
 }: {
   date: string;
   prices: (number | undefined)[];
+  formattedPrices?: (string | undefined)[];
   currency?: string;
   flightResults?: boolean;
   onSelect: (v: string) => void;
@@ -225,7 +227,7 @@ export function DateStrip({
               </Text>
               {prices[i] != null ? (
                 <Text style={[s.datePrice, active && { color: ui.blue }]}>
-                  {money(currency, prices[i])}
+                  {formattedPrices ? (formattedPrices[i] ?? "—") : money(currency, prices[i])}
                 </Text>
               ) : null}
             </Pressable>
