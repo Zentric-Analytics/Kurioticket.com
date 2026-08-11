@@ -360,13 +360,13 @@ export const s = StyleSheet.create({
   pillActive: { borderColor: "#B9CBFF", backgroundColor: "#F6F8FF" },
   pillText: { fontSize: 12, fontWeight: "700", color: ui.navy },
   dateNavigator: {
-    height: 96,
+    height: 80,
     paddingHorizontal: 8,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  dateRail: { height: 96, flex: 1 },
+  dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
   arrow: {
     width: 40,
@@ -379,7 +379,7 @@ export const s = StyleSheet.create({
   },
   date: {
     width: 80,
-    height: 78,
+    height: 64,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#E8EBF1",
@@ -389,7 +389,7 @@ export const s = StyleSheet.create({
   },
   dateActive: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
   day: { fontSize: 12, color: ui.muted },
-  datePrice: { fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 3 },
+  datePrice: { fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
   button: {
     height: 45,
     minWidth: 104,
