@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,6 +17,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
+import { Info } from "lucide-react-native";
 import {
   travelApi,
   type FlightResult,
@@ -43,6 +46,15 @@ import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
+import { resolveDateHeaderCollapsed } from "./resultsHeaderModel";
+import { useUnreadNotifications } from "../notifications/useUnreadNotifications";
+import {
+  activeFlightFilterCount,
+  emptyFlightFilters,
+  filterAndSortFlights,
+  flightFilterOptions,
+  type FlightFilters,
+} from "./flightFilters";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -55,7 +67,7 @@ const airportLabel = (code: unknown) => {
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { width } = useWindowDimensions();
   const narrowHeader = width < 360;
-  const stackedResultsSummary = width < 390;
+  const stackedResultsSummary = width < 430;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = useMemo(
@@ -67,6 +79,29 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
   const [sort, setSort] = useState("best");
+  const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterSection, setFilterSection] = useState<
+    "all" | "stops" | "airlines" | "times"
+  >("all");
+  const hasUnreadNotifications = useUnreadNotifications(product === "flight");
+  const [dateHeaderCollapsed, setDateHeaderCollapsed] = useState(false);
+  const dateHeaderProgress = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(dateHeaderProgress, {
+      toValue: dateHeaderCollapsed ? 1 : 0,
+      duration: 220,
+      useNativeDriver: false,
+    }).start();
+  }, [dateHeaderCollapsed, dateHeaderProgress]);
+  const onResultsScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
+    if (product !== "flight") return;
+    const y = Math.max(0, event.nativeEvent.contentOffset.y);
+    setDateHeaderCollapsed((current) => {
+      const next = resolveDateHeaderCollapsed(y, current);
+      return next === current ? current : next;
+    });
+  }, [product]);
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && one(params.visual) === "1";
   const load = useCallback(async () => {
@@ -106,24 +141,32 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   }, [load]);
   const edit = () => {
     if (product === "flight") {
-      router.push({ pathname: "/flights", params: flightEditSearchParams(params) });
+      router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) });
       return;
     }
     router.canGoBack() ? router.back() : router.replace("/hotels");
   };
-  const sorted = useMemo(
-    () =>
-      [...results].sort((a, b) =>
+  const sorted = useMemo(() => {
+    if (product === "flight") {
+      return filterAndSortFlights(results as FlightResult[], filters, sort);
+    }
+    return [...results].sort((a, b) =>
         sort === "price"
-          ? product === "flight"
-            ? (a as FlightResult).price - (b as FlightResult).price
-            : (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
-          : product === "flight"
-            ? (b as FlightResult).valueScore - (a as FlightResult).valueScore
-            : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
-      ),
-    [results, sort, product],
+          ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
+          : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
+      );
+  }, [results, filters, sort, product]);
+  const flightOptions = useMemo(
+    () => flightFilterOptions(results as FlightResult[]),
+    [results],
   );
+  const activeFilterCount = activeFlightFilterCount(filters);
+  const openFlightFilters = (
+    section: "all" | "stops" | "airlines" | "times",
+  ) => {
+    setFilterSection(section);
+    setFilterOpen(true);
+  };
   const payload = plan.plan?.payload || {};
   const date = String(
     product === "flight"
@@ -139,7 +182,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     );
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
-      <TopBar flightResults={product === "flight"} />
+      <TopBar
+        flightResults={product === "flight"}
+        hasUnreadNotifications={product === "flight" && hasUnreadNotifications}
+        onNotificationsPress={product === "flight" ? () => router.push("/notifications") : undefined}
+      />
       <View style={[s0.summary, narrowHeader && s0.summaryNarrow]}>
         <View style={s0.summaryCopy}>
           <Text style={s0.route}>
@@ -162,16 +209,28 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           />
         </View>
       </View>
-      <DateStrip
-        date={date}
-        prices={prices}
-        flightResults={product === "flight"}
-        onSelect={(v) =>
-          router.setParams(
-            product === "flight" ? { departureDate: v } : { checkIn: v },
-          )
-        }
-      />
+      <Animated.View
+        pointerEvents={product === "flight" && dateHeaderCollapsed ? "none" : "auto"}
+        accessibilityElementsHidden={product === "flight" && dateHeaderCollapsed}
+        importantForAccessibility={product === "flight" && dateHeaderCollapsed ? "no-hide-descendants" : "auto"}
+        style={product === "flight" ? {
+          height: dateHeaderProgress.interpolate({ inputRange: [0, 1], outputRange: [80, 0] }),
+          opacity: dateHeaderProgress.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.15, 0] }),
+          overflow: "hidden",
+          transform: [{ translateY: dateHeaderProgress.interpolate({ inputRange: [0, 1], outputRange: [0, -12] }) }],
+        } : undefined}
+      >
+        <DateStrip
+          date={date}
+          prices={prices}
+          flightResults={product === "flight"}
+          onSelect={(v) =>
+            router.setParams(
+              product === "flight" ? { departureDate: v } : { checkIn: v },
+            )
+          }
+        />
+      </Animated.View>
       <ScrollView
         horizontal
         style={s0.filterRail}
@@ -179,10 +238,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         contentContainerStyle={s0.filters}
       >
         <Pill
-          label="Filters"
+          label={product === "flight" && activeFilterCount ? `Filters (${activeFilterCount})` : "Filters"}
+          active={product === "flight" && activeFilterCount > 0}
           icon={product === "flight" ? undefined : "sliders"}
           flightResultsIcon={product === "flight" ? "filters" : undefined}
-          onPress={() =>
+          onPress={() => product === "flight" ? openFlightFilters("all") :
             Alert.alert(
               "Filters",
               "Filter controls use the current live result set.",
@@ -196,8 +256,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           <Pill
             key={x}
             label={x}
+            active={product === "flight" && (
+              x === "Stops" ? filters.stops.length > 0 :
+              x === "Airlines" ? filters.airlines.length > 0 :
+              x === "Times" ? filters.times.length > 0 : false
+            )}
             flightResultsChevron={product === "flight"}
-            onPress={() =>
+            onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines" | "times") :
               Alert.alert(
                 x,
                 "No additional values are available from this search response.",
@@ -212,7 +277,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
         />
       </ScrollView>
-      <ScrollView contentContainerStyle={s0.body}>
+      <ScrollView
+        contentContainerStyle={s0.body}
+        onScroll={onResultsScroll}
+        scrollEventThrottle={16}
+      >
         {status === "loading" ? <Loading product={product} /> : null}
         {message ? (
           <Text accessibilityRole="alert" style={s0.notice}>
@@ -239,7 +308,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           <View style={[s0.found, stackedResultsSummary && s0.foundNarrow]}>
             <View style={s0.foundCopy}>
               <Text style={s0.foundTitle}>
-                {results.length}{" "}
+                {sorted.length}{" "}
                 {product === "flight" ? "flights" : "properties"} found
               </Text>
               <Text style={s0.sub}>
@@ -264,7 +333,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   stackedResultsSummary && s0.foundAsideNarrow,
                 ]}
               >
-                <Text style={s0.change}>ⓘ Price may change</Text>
+                <View style={s0.priceNoticeTitle}>
+                  <Info
+                    accessibilityElementsHidden
+                    accessible={false}
+                    color={ui.muted}
+                    size={16}
+                    strokeWidth={2}
+                  />
+                  <Text style={s0.change}>Price may change</Text>
+                </View>
                 <Text style={s0.sub}>Book soon to lock in this price.</Text>
               </View>
             )}
@@ -282,10 +360,116 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             />
           ),
         )}
+        {status === "ready" && product === "flight" && results.length > 0 && sorted.length === 0 ? (
+          <Empty
+            title="No flights match these filters"
+            body="Clear the selected filters to see all loaded flights."
+            retry={() => setFilters(emptyFlightFilters())}
+            retryLabel="Clear filters"
+            edit={edit}
+          />
+        ) : null}
         {status === "ready" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
       </ScrollView>
+      {product === "flight" ? (
+        <FlightFilterModal
+          visible={filterOpen}
+          section={filterSection}
+          filters={filters}
+          options={flightOptions}
+          onChange={setFilters}
+          onClose={() => setFilterOpen(false)}
+        />
+      ) : null}
       <BottomNav />
     </SafeAreaView>
+  );
+}
+const stopLabels = {
+  nonstop: "Nonstop",
+  one: "1 stop",
+  twoPlus: "2+ stops",
+} as const;
+const timeLabels = {
+  morning: "Morning",
+  afternoon: "Afternoon",
+  evening: "Evening",
+  night: "Night",
+} as const;
+
+function FlightFilterModal({
+  visible,
+  section,
+  filters,
+  options,
+  onChange,
+  onClose,
+}: {
+  visible: boolean;
+  section: "all" | "stops" | "airlines" | "times";
+  filters: FlightFilters;
+  options: ReturnType<typeof flightFilterOptions>;
+  onChange: (filters: FlightFilters) => void;
+  onClose: () => void;
+}) {
+  const inset = useSafeAreaInsets();
+  const [draft, setDraft] = useState(filters);
+  useEffect(() => {
+    if (visible) setDraft(filters);
+  }, [visible, filters]);
+  const toggle = (key: keyof FlightFilters, value: string) =>
+    setDraft((current) => ({
+      ...current,
+      [key]: current[key].includes(value as never)
+        ? current[key].filter((item) => item !== value)
+        : [...current[key], value],
+    }) as FlightFilters);
+  const choices = (
+    key: keyof FlightFilters,
+    values: readonly string[],
+    labels?: Record<string, string>,
+  ) => values.length ? (
+    <View style={s0.choiceRow}>
+      {values.map((value) => {
+        const selected = draft[key].includes(value as never);
+        return (
+          <Pressable
+            key={value}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: selected }}
+            onPress={() => toggle(key, value)}
+            style={[s0.choice, selected && s0.choiceActive]}
+          >
+            <Text style={[s0.choiceText, selected && s0.choiceTextActive]}>
+              {labels?.[value] || value}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  ) : <Text style={s0.noChoices}>No additional values are available in these results.</Text>;
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
+      <View style={s0.modalBackdrop}>
+        <View style={[s0.sheet, { paddingBottom: Math.max(inset.bottom, 18) }]} accessibilityLabel="Flight filters">
+          <View style={s0.sheetHead}>
+            <Text accessibilityRole="header" style={s0.foundTitle}>Filter flights</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={s0.closeButton}>
+              <FlowIcon name="close" />
+            </Pressable>
+          </View>
+          <ScrollView style={s0.sheetScroll} contentContainerStyle={s0.sheetContent} showsVerticalScrollIndicator={false}>
+            {section === "all" || section === "stops" ? <View style={s0.filterSection}><Text style={s0.filterSectionTitle}>Stops</Text>{choices("stops", options.stops, stopLabels)}</View> : null}
+            {section === "all" || section === "airlines" ? <View style={s0.filterSection}><Text style={s0.filterSectionTitle}>Airlines</Text>{choices("airlines", options.airlines)}</View> : null}
+            {section === "all" || section === "times" ? <View style={s0.filterSection}><Text style={s0.filterSectionTitle}>Departure time</Text>{choices("times", options.times, timeLabels)}</View> : null}
+          </ScrollView>
+          <View style={s0.sheetActions}>
+            <Button label="Apply filters" onPress={() => { onChange(draft); onClose(); }} />
+            <Button label="Clear filters" outline onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} />
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 function FlightCard({ result, rank, params }: { result: FlightResult; rank: number; params: Record<string, string | string[]> }) {
@@ -476,16 +660,109 @@ function HotelCard({
   );
 }
 function Loading({ product }: { product: Product }) {
+  const opacity = useRef(new Animated.Value(0.55)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.55,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [opacity]);
+
   return (
-            <View style={s0.foundAside}>
-      {[0, 1, 2].map((x) => (
-        <View key={x} style={s0.skeleton} />
-      ))}
-      <View style={s0.loading}>
+    <View style={s0.loadingState}>
+      <View style={s0.loadingMessage}>
         <ActivityIndicator color={ui.blue} />
-        <Text style={s0.sub}>
+        <Text
+          accessibilityRole="text"
+          accessibilityLiveRegion="polite"
+          style={s0.loadingText}
+        >
           Searching available {product === "flight" ? "flights" : "stays"}…
         </Text>
+      </View>
+      <Animated.View style={[s0.skeletonList, { opacity }]}>
+        {[0, 1, 2].map((x) =>
+          product === "flight" ? (
+            <FlightLoadingSkeleton key={x} />
+          ) : (
+            <HotelLoadingSkeleton key={x} />
+          ),
+        )}
+      </Animated.View>
+    </View>
+  );
+}
+
+function SkeletonLine({ style }: { style?: object }) {
+  return <View style={[s0.skeletonLine, style]} />;
+}
+
+function FlightLoadingSkeleton() {
+  return (
+    <View style={s0.skeletonCard} accessibilityElementsHidden>
+      <View style={s0.skeletonTopRow}>
+        <View style={s0.skeletonBadge} />
+        <View style={s0.skeletonHeart} />
+      </View>
+      <View style={s0.skeletonFlightRow}>
+        <View style={s0.skeletonLogo} />
+        <View style={s0.skeletonDeparture}>
+          <SkeletonLine style={s0.skeletonName} />
+          <SkeletonLine style={s0.skeletonTime} />
+          <SkeletonLine style={s0.skeletonAirport} />
+        </View>
+        <View style={s0.skeletonRoute}>
+          <SkeletonLine style={s0.skeletonDuration} />
+          <SkeletonLine style={s0.skeletonRouteLine} />
+          <SkeletonLine style={s0.skeletonStop} />
+        </View>
+        <View style={s0.skeletonArrival}>
+          <SkeletonLine style={s0.skeletonTime} />
+          <SkeletonLine style={s0.skeletonAirport} />
+        </View>
+        <View style={s0.skeletonPrice}>
+          <SkeletonLine style={s0.skeletonPriceLine} />
+          <SkeletonLine style={s0.skeletonPriceCaption} />
+        </View>
+      </View>
+      <View style={s0.skeletonBenefits}>
+        <View style={s0.skeletonBenefitLines}>
+          <SkeletonLine style={s0.skeletonBenefitLine} />
+          <SkeletonLine style={s0.skeletonBenefitLineShort} />
+          <SkeletonLine style={s0.skeletonBenefitLine} />
+        </View>
+        <View style={s0.skeletonButton} />
+      </View>
+    </View>
+  );
+}
+
+function HotelLoadingSkeleton() {
+  return (
+    <View style={s0.hotelSkeletonCard} accessibilityElementsHidden>
+      <View style={s0.hotelSkeletonImage} />
+      <View style={s0.hotelSkeletonCopy}>
+        <SkeletonLine style={s0.hotelSkeletonTitle} />
+        <SkeletonLine style={s0.hotelSkeletonMeta} />
+        <SkeletonLine style={s0.hotelSkeletonReview} />
+        <SkeletonLine style={s0.hotelSkeletonDetail} />
+        <View style={s0.hotelSkeletonFooter}>
+          <SkeletonLine style={s0.hotelSkeletonPrice} />
+          <View style={s0.skeletonButton} />
+        </View>
       </View>
     </View>
   );
@@ -553,6 +830,21 @@ const s0 = StyleSheet.create({
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 18, paddingVertical: 10, gap: 9, alignItems: "center" },
+  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
+  sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
+  sheetHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  sheetScroll: { flexGrow: 0 },
+  sheetContent: { gap: 22, paddingBottom: 4 },
+  filterSection: { gap: 10 },
+  filterSectionTitle: { fontSize: 14, fontWeight: "800", color: ui.navy },
+  choiceRow: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
+  choice: { minHeight: 42, justifyContent: "center", borderWidth: 1, borderColor: ui.border, borderRadius: 21, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "white" },
+  choiceActive: { borderColor: ui.blue, backgroundColor: "#EEF4FF" },
+  choiceText: { color: ui.navy, fontSize: 13, fontWeight: "600" },
+  choiceTextActive: { color: ui.blue },
+  noChoices: { color: ui.muted, fontSize: 13, lineHeight: 19 },
+  sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
   notice: {
     backgroundColor: "#F2F6FF",
@@ -561,23 +853,24 @@ const s0 = StyleSheet.create({
     borderRadius: 8,
   },
   found: {
-    minHeight: 78,
     borderWidth: 1,
     borderColor: ui.border,
     borderRadius: 12,
-    padding: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     backgroundColor: "#FAFCFF",
     gap: 12,
   },
   foundNarrow: { alignItems: "flex-start", flexDirection: "column", gap: 8 },
-  foundCopy: { flex: 1, minWidth: 0 },
-  foundAside: { flexShrink: 1, maxWidth: 160 },
+  foundCopy: { flex: 1, minWidth: 0, gap: 2 },
+  foundAside: { flexShrink: 1, maxWidth: 170, gap: 2 },
   foundAsideNarrow: { maxWidth: "100%" },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  change: { color: ui.navy, fontSize: 12 },
+  priceNoticeTitle: { flexDirection: "row", alignItems: "center", gap: 5 },
+  change: { color: ui.navy, fontSize: 12, fontWeight: "600" },
   card: {
     borderWidth: 1,
     borderColor: ui.border,
@@ -666,20 +959,84 @@ const s0 = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  skeleton: {
-    height: 160,
-    backgroundColor: "#EEF1F6",
-    borderRadius: 14,
-    marginBottom: 12,
-  },
-  loading: {
-    position: "absolute",
-    top: 130,
-    left: 0,
-    right: 0,
+  loadingState: { width: "100%", gap: 14 },
+  loadingMessage: {
+    minHeight: 40,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    gap: 9,
+  },
+  loadingText: { fontSize: 13, lineHeight: 18, color: ui.navy, fontWeight: "700" },
+  skeletonList: { width: "100%", gap: 14 },
+  skeletonCard: {
+    width: "100%",
+    minHeight: 190,
+    borderWidth: 1,
+    borderColor: ui.border,
+    borderRadius: 14,
+    padding: 15,
+    gap: 15,
+    backgroundColor: "white",
+  },
+  skeletonTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  skeletonBadge: { width: 92, height: 23, borderRadius: 12, backgroundColor: "#E7EBF1" },
+  skeletonHeart: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#E7EBF1" },
+  skeletonFlightRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  skeletonLogo: { width: 38, height: 38, borderRadius: 9, backgroundColor: "#E7EBF1" },
+  skeletonDeparture: { flex: 1.15, minWidth: 0, gap: 5 },
+  skeletonArrival: { flex: 0.9, minWidth: 0, gap: 5 },
+  skeletonRoute: { flex: 1, minWidth: 38, maxWidth: 95, alignItems: "center", gap: 6 },
+  skeletonPrice: { width: 52, flexShrink: 0, alignItems: "flex-end", gap: 6 },
+  skeletonLine: { height: 7, borderRadius: 4, backgroundColor: "#E7EBF1" },
+  skeletonName: { width: "78%" },
+  skeletonTime: { width: "70%", height: 14 },
+  skeletonAirport: { width: "48%" },
+  skeletonDuration: { width: "65%", height: 6 },
+  skeletonRouteLine: { width: "100%", height: 2 },
+  skeletonStop: { width: "52%", height: 6 },
+  skeletonPriceLine: { width: "100%", height: 16 },
+  skeletonPriceCaption: { width: "75%", height: 6 },
+  skeletonBenefits: {
+    borderTopWidth: 1,
+    borderTopColor: "#EDF0F5",
+    paddingTop: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  skeletonBenefitLines: { flex: 1, gap: 7 },
+  skeletonBenefitLine: { width: "90%" },
+  skeletonBenefitLineShort: { width: "68%" },
+  skeletonButton: { width: 88, height: 34, borderRadius: 8, backgroundColor: "#E7EBF1" },
+  hotelSkeletonCard: {
+    width: "100%",
+    height: 234,
+    borderWidth: 1,
+    borderColor: ui.border,
+    borderRadius: 13,
+    overflow: "hidden",
+    flexDirection: "row",
+    backgroundColor: "white",
+  },
+  hotelSkeletonImage: { width: "39%", height: "100%", backgroundColor: "#E7EBF1" },
+  hotelSkeletonCopy: { flex: 1, padding: 12, gap: 12 },
+  hotelSkeletonTitle: { width: "82%", height: 15 },
+  hotelSkeletonMeta: { width: "62%" },
+  hotelSkeletonReview: { width: "74%" },
+  hotelSkeletonDetail: { width: "88%" },
+  hotelSkeletonFooter: {
+    marginTop: "auto",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 8,
   },
+  hotelSkeletonPrice: { width: 58, height: 16 },
   alert: {
     minHeight: 88,
     borderWidth: 1,

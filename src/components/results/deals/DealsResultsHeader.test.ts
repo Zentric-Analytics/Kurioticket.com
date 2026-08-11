@@ -39,18 +39,18 @@ test("the travel party summary localizes singular and plural guest counts", () =
   assert.equal(translations["deals.results.guests"], "guests");
 });
 
-test("both modify search launchers retain their accessible button contract without navigation", () => {
+test("all four modify search launchers retain their accessible button contract without navigation", () => {
   assert.match(summarySource, /<button ref=\{modifyButtonRef\} type="button"/);
-  assert.equal((summarySource.match(/type="button"/g) ?? []).length, 2);
-  assert.equal((summarySource.match(/aria-expanded=\{modifyExpanded\}/g) ?? []).length, 2);
-  assert.equal((summarySource.match(/aria-controls="deals-modify-search-dialog"/g) ?? []).length, 2);
+  assert.equal((summarySource.match(/type="button"/g) ?? []).length, 4);
+  assert.equal((summarySource.match(/aria-expanded=\{modifyExpanded\}/g) ?? []).length, 4);
+  assert.equal((summarySource.match(/aria-controls="deals-modify-search-dialog"/g) ?? []).length, 4);
   assert.doesNotMatch(summarySource, /href=/);
   assert.equal((summarySource.match(/min-h-11/g) ?? []).length, 2);
   assert.match(summarySource, /modifyButtonRef\.current = event\.currentTarget;\s*onModify\(\)/);
 });
 
 test("the inline responsive search surface remains sticky on mobile and static above mobile", () => {
-  assert.equal((summarySource.match(/<button/g) ?? []).length, 2);
+  assert.equal((summarySource.match(/<button/g) ?? []).length, 4);
   assert.match(summarySource, /<section[^>]+className="sticky top-0 z-50[^"\n]+sm:static/);
   assert.match(summarySource, /const mobileDetails = \[dates, modeLabel, context\]\.filter\(Boolean\)\.join\(" · "\)/);
   assert.doesNotMatch(summarySource, /col-span-2[^"\n]+border-t[^"\n]+sm:hidden/);
@@ -126,7 +126,13 @@ test("only the inline desktop Modify action gains larger spacing and typography"
   assert.match(fixedAction, /px-3/);
   assert.match(fixedAction, /min-h-11[^\n]+px-4 text-sm/);
   assert.doesNotMatch(fixedAction, /lg:min-h-\[52px\]|lg:px-6|lg:text-base|lg:rounded-xl/);
-  assert.equal((summarySource.match(/onClick=\{handleModify\}/g) ?? []).length, 2);
+  assert.equal((summarySource.match(/onClick=\{handleModify\}/g) ?? []).length, 4);
+});
+
+test("summary information uses sibling button triggers without nesting the Modify actions", () => {
+  assert.match(inlineRoot, /<button data-deals-summary-trigger="inline"[^>]+onClick=\{handleModify\}[^>]+aria-expanded=\{modifyExpanded\}[^>]+aria-controls="deals-modify-search-dialog"[^>]*>[\s\S]*?<\/button>\s*<div className="flex shrink-0 items-center/);
+  assert.match(fixedRoot, /<button data-deals-summary-trigger="sticky"[^>]+onClick=\{handleModify\}[^>]+aria-expanded=\{modifyExpanded\}[^>]+aria-controls="deals-modify-search-dialog"[^>]*>[\s\S]*?<\/button>\s*<div className="flex items-center px-3">/);
+  assert.match(summaryCell, /return <span className=/);
 });
 
 test("desktop sticky visibility measures the translated inline summary surface", () => {
