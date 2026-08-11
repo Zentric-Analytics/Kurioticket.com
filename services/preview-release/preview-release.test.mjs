@@ -1285,3 +1285,20 @@ test("web delivery adopts exact-SHA Render history before creating a duplicate",
   assert.equal(actions.at(-1).remoteId, deploy.id);
 });
 
+test("worker isolates ownership, release, and notification reconciliation stages", () => {
+  const worker = readFileSync(resolve(repositoryRoot, "services/preview-release/worker.mjs"), "utf8");
+  assert.match(worker, /runIsolated\("native-ownership-reconciliation"/);
+  assert.match(worker, /runIsolated\("native-notification-reconciliation"/);
+  assert.ok(worker.indexOf('native-ownership-reconciliation') < worker.indexOf('orchestrator.cycle()'));
+  assert.ok(worker.indexOf('orchestrator.cycle()') < worker.indexOf('native-notification-reconciliation'));
+});
+
+test("missing historical EAS objects become durable operator attention without deleting history", () => {
+  const ledgerSource = readFileSync(resolve(repositoryRoot, "services/preview-release/ledger.mjs"), "utf8");
+  const orchestratorSource = readFileSync(resolve(repositoryRoot, "services/preview-release/orchestrator.mjs"), "utf8");
+  assert.match(ledgerSource, /REMOTE_OBJECT_UNAVAILABLE/);
+  assert.match(orchestratorSource, /historical-action-isolated/);
+  assert.match(orchestratorSource, /OPERATOR_ATTENTION_REQUIRED/);
+  assert.doesNotMatch(orchestratorSource, /DELETE FROM preview_release_action/);
+});
+

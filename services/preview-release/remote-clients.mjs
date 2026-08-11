@@ -156,9 +156,16 @@ export class EasClient {
     return builds[0];
   }
   async viewBuild(id) {
-    const build = await this.run(["eas-cli@16.17.4", "build:view", id, "--json"]);
+    let build;
+    try { build = await this.run(["eas-cli@16.17.4", "build:view", id, "--json"]); }
+    catch (error) {
+      if (/does not exist|not found/i.test(String(error?.message ?? error))) throw new EasRemoteObjectUnavailableError("build", id, error);
+      throw error;
+    }
     if (!build || typeof build !== "object" || Array.isArray(build)) throw new Error("EAS build:view response must be an object.");
-    return withSourceAttestedPreviewIdentity(build, "ios");
+    const platform = String(build.platform ?? "").toLowerCase();
+    if (!['ios', 'android'].includes(platform)) throw new Error("EAS build:view response has an invalid platform.");
+    return withSourceAttestedPreviewIdentity(build, platform);
   }
   async listIosSubmissions() {
     const query = `query PreviewIosSubmissions($appId: String!, $limit: Int!, $offset: Int!) {
@@ -240,6 +247,16 @@ export class EasClient {
       console.log(JSON.stringify({ event: "preview-release-eas-command-complete", command: args[1], platform, durationMs: Date.now() - startedAt, rssBytes: process.memoryUsage().rss }));
       return readFile(stdoutPath, "utf8");
     } finally { await rm(directory, { recursive: true, force: true }); }
+  }
+}
+
+export class EasRemoteObjectUnavailableError extends Error {
+  constructor(kind, remoteId, cause) {
+    super(`EAS ${kind} ${remoteId} is permanently unavailable.`);
+    this.name = "EasRemoteObjectUnavailableError";
+    this.kind = kind;
+    this.remoteId = remoteId;
+    this.cause = cause;
   }
 }
 

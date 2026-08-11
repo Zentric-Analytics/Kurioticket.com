@@ -109,3 +109,9 @@ To disable build emails without changing native delivery:
 2. Leave the Preview release ledger and native delivery configuration unchanged.
 
 To roll back Team Access role behavior, revert the application changes and preserve the added database column until a separately reviewed data migration removes it. Do not drop role data as part of an application rollback.
+
+## Native build ownership and incident recovery
+
+The Preview release worker is the sole native-build owner. Expo GitHub build triggers and GitHub Actions that create EAS builds must remain absent. The worker detects EAS build-history IDs not present in the durable ledger, stores immutable ownership-incident evidence, and fails closed on any identity, SHA, fingerprint, version, package, artifact, or submission mismatch.
+
+A fully matching finished artifact can be adopted only through `npm run preview-release:adopt-native`; direct database repair is prohibited. Missing historical provider objects are isolated as durable operator-attention records, allowing the unaffected platform's notification reconciliation to continue without fabricating or deleting history.

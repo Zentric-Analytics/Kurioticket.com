@@ -3,9 +3,10 @@ import { join } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmissionHistory } from "./eas-state.mjs";
-import { exactChangeSet, exactCheckout, EasClient, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
+import { exactChangeSet, exactCheckout, EasClient, EasRemoteObjectUnavailableError, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
 import { inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
+import { unexpectedBuilds, validateAdoptableBuild, validateAdoptableIosSubmission } from "./native-ownership.mjs";
 
 export class PreviewOrchestrator {
   constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), checkoutFactory = exactCheckout, prepareCheckoutFactory = prepareCheckout, identityFactory = resolvedIdentity, fingerprintsFactory = nativeFingerprints, stagingWait = waitForStaging, sleep = delay }) {
@@ -37,6 +38,65 @@ export class PreviewOrchestrator {
       await this.github.report(sourceSha, "failure", `Preview release failed: ${safe}`).catch(() => {});
       throw error;
     } finally { await lease.stop(); }
+  }
+
+  async reconcileNativeOwnership() {
+    const sourceSha = await this.github.latestDevSha();
+    const release = await this.ledger.releaseBySha(sourceSha);
+    const fingerprints = release?.evidence?.fingerprints;
+    if (!fingerprints?.ios || !fingerprints?.android) return { sourceSha, inspected: 0, violations: 0 };
+    const eas = this.easFactory(join(process.cwd(), "apps/mobile"));
+    const owned = await this.ledger.nativeBuildRemoteIdsForSource(sourceSha);
+    let inspected = 0;
+    let violations = 0;
+    for (const platform of ["android", "ios"]) {
+      const builds = platform === "android" ? await eas.listAndroidBuilds(sourceSha) : await eas.listIosBuilds(sourceSha);
+      for (const build of unexpectedBuilds(builds, owned)) {
+        inspected += 1;
+        const common = { platform, buildId: build.id, sourceSha, buildNumber: build.appBuildVersion ?? null, fingerprint: build.fingerprint?.hash ?? null };
+        console.warn(JSON.stringify({ event: "unexpected-native-build-detected", ...common }));
+        try {
+          const delivered = await this.ledger.currentDeliveredNative(platform);
+          validateAdoptableBuild({ build, platform, sourceSha, fingerprint: fingerprints[platform], delivered });
+          await this.ledger.recordNativeOwnershipIncident({ platform, buildId: build.id, sourceSha, state: "DETECTED", reason: "strictly-valid-build-requires-explicit-operator-adoption", evidence: common });
+        } catch (error) {
+          violations += 1;
+          const reason = String(error?.message ?? error).slice(0, 500);
+          await this.ledger.recordNativeOwnershipIncident({ platform, buildId: build.id, sourceSha, state: "REJECTED", reason, evidence: { ...common, problems: error?.evidence?.problems ?? [] } });
+          console.error(JSON.stringify({ event: "ownership-violation-rejected", ...common, reason }));
+        }
+      }
+    }
+    return { sourceSha, inspected, violations };
+  }
+
+  async adoptNativeBuild({ sourceSha, platform, buildId, submissionId = null }) {
+    const release = await this.ledger.releaseBySha(sourceSha);
+    const fingerprint = release?.evidence?.fingerprints?.[platform];
+    if (!fingerprint) throw new Error(`Release ${sourceSha} has no durable ${platform} fingerprint.`);
+    const eas = this.easFactory(join(process.cwd(), "apps/mobile"));
+    const build = await eas.viewBuild(buildId);
+    const existingAction = await this.ledger.getAction(platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD", nativeBuildIdentityKey(platform, fingerprint));
+    const delivered = await this.ledger.currentDeliveredNative(platform);
+    validateAdoptableBuild({ build, platform, sourceSha, fingerprint, existingAction, delivered });
+
+    let submission = null;
+    if (platform === "ios") {
+      const matches = (await eas.listIosSubmissions()).filter((item) => item?.id === submissionId && item?.submittedBuild?.id === buildId);
+      if (matches.length !== 1) throw new Error("Strict iOS adoption requires one exact EAS submission relationship.");
+      submission = validateAdoptableIosSubmission({ submission: matches[0], buildId });
+      const apple = this.appleFactory();
+      await apple.previewContext();
+      const appleBuild = await apple.resolveBuild({ version: build.appVersion, buildNumber: build.appBuildVersion });
+      if (appleBuild.state !== "VALID" || !appleBuild.build?.id) throw new Error("Strict iOS adoption requires one valid exact App Store Connect build mapping.");
+    }
+    const action = await this.ledger.adoptNativeBuild({ platform, sourceSha, fingerprint, build });
+    if (submission) await this.ledger.recordAction({ sourceSha, kind: "IOS_SUBMISSION", identityKey: `ios-submission:${buildId}`, remoteId: submission.id, state: submission.status, evidence: { ...submission, ownershipSource: "SAFE_VERIFIED_ADOPTION" } });
+    if (platform === "android" && String(build.status).toUpperCase() === "FINISHED") {
+      await this.ledger.advanceDeliveredNative({ platform, sourceSha, fingerprint, buildId, appVersion: build.appVersion, buildNumber: build.appBuildVersion });
+    }
+    console.log(JSON.stringify({ event: "native-build-safely-adopted", sourceSha, platform, fingerprint, buildId, buildNumber: build.appBuildVersion, submissionId: submission?.id ?? null }));
+    return { action, submission };
   }
 
   async deriveDecision() {
@@ -185,10 +245,21 @@ export class PreviewOrchestrator {
       await lease.checkpoint();
 
       const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
-      const buildIdentityKey = `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`;
-      const buildAction = await this.ledger.getAction("IOS_BUILD", buildIdentityKey);
+      const buildAction = typeof this.ledger.getNativeBuildActionForRelease === "function"
+        ? await this.ledger.getNativeBuildActionForRelease(sha, "ios", fingerprints.ios)
+        : await this.ledger.getAction("IOS_BUILD", `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`);
       if (!buildAction?.remote_id) throw new Error("Pending TestFlight distribution is missing its durable iOS build identity.");
-      const buildDecision = reconcileBuilds([await eas.viewBuild(buildAction.remote_id)], sha);
+      let remoteBuild;
+      try { remoteBuild = await eas.viewBuild(buildAction.remote_id); }
+      catch (error) {
+        if (!(error instanceof EasRemoteObjectUnavailableError)) throw error;
+        await this.ledger.markRemoteObjectUnavailable({ kind: "IOS_BUILD", identityKey: buildAction.identity_key, remoteId: buildAction.remote_id, reason: error.message });
+        await this.ledger.transition(sha, this.config.workerId, [record.state, "DETECTED"], "FAILED", { failure_reason: error.message, recovery_action: "Historical EAS object is unavailable; strict adoption or an owner-approved replacement is required. Unrelated reconciliation continues." });
+        console.error(JSON.stringify({ event: "remote-object-unavailable", platform: "ios", sourceSha: sha, buildId: buildAction.remote_id }));
+        console.warn(JSON.stringify({ event: "historical-action-isolated", platform: "ios", sourceSha: sha, buildId: buildAction.remote_id }));
+        return { state: "OPERATOR_ATTENTION_REQUIRED", sourceSha: sha, buildId: buildAction.remote_id };
+      }
+      const buildDecision = reconcileBuilds([remoteBuild], sha);
       if (buildDecision.decision !== "FINISHED_MATCH") {
         throw new Error(`Pending TestFlight distribution requires one finished exact-SHA iOS build; found ${buildDecision.decision}.`);
       }

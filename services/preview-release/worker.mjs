@@ -41,22 +41,19 @@ console.log(JSON.stringify({ event: "preview-release-worker-started", mode: conf
 while (!stopping) {
   const started = Date.now();
   let cycleSourceSha = null;
+  if (config.mode === "active") {
+    await runIsolated("native-ownership-reconciliation", () => orchestrator.reconcileNativeOwnership());
+  }
   try {
     cycleSourceSha = await github.latestDevSha();
     const result = await orchestrator.cycle();
     const sourceSha = result.source_sha ?? result.sourceSha ?? cycleSourceSha;
     console.log(JSON.stringify({ event: "preview-release-cycle", sourceSha, state: result.state }));
-    if (config.mode === "active" && sourceSha) {
-      await reconcileAllBuildNotifications();
-    }
   } catch (error) {
     const message = String(error?.message ?? error).slice(0, 500);
     console.error(JSON.stringify({ event: "preview-release-cycle-failed", error: message }));
-    const sourceSha = cycleSourceSha ?? await github.latestDevSha().catch(() => null);
-    if (config.mode === "active" && sourceSha) {
-      await reconcileAllBuildNotifications();
-    }
   }
+  if (config.mode === "active") await runIsolated("native-notification-reconciliation", reconcileAllBuildNotifications);
   const remaining = Math.max(0, config.pollIntervalMs - (Date.now() - started));
   if (remaining) await new Promise((resolveDelay) => setTimeout(resolveDelay, remaining));
 }
@@ -77,5 +74,13 @@ async function reconcileAllBuildNotifications() {
       return [];
     });
     if (results[0]) await ledger.recordNativeNotificationAttempt(candidate, results[0]);
+  }
+}
+
+async function runIsolated(stage, operation) {
+  try { return await operation(); }
+  catch (error) {
+    console.error(JSON.stringify({ event: "preview-release-stage-failed", stage, error: String(error?.message ?? error).slice(0, 500) }));
+    return null;
   }
 }

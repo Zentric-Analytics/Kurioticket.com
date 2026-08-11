@@ -1,5 +1,5 @@
 import pg from "pg";
-import { assertExactSha } from "./config.mjs";
+import { assertExactSha, PREVIEW_IDENTITY } from "./config.mjs";
 
 export class PreviewLedger {
   constructor(connectionString, { pool } = {}) {
@@ -364,6 +364,77 @@ export class PreviewLedger {
     return result.rows[0];
   }
 
+  async nativeBuildRemoteIdsForSource(sourceSha) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `SELECT remote_id FROM preview_release_action
+       WHERE source_sha=$1 AND kind IN ('IOS_BUILD','ANDROID_BUILD') AND remote_id IS NOT NULL`,
+      [sourceSha],
+    );
+    return result.rows.map((row) => row.remote_id);
+  }
+
+  async recordNativeOwnershipIncident({ platform, buildId, sourceSha, state, reason = null, evidence = {} }) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `INSERT INTO preview_native_ownership_incident (platform,build_id,source_sha,state,reason,evidence)
+       VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+       ON CONFLICT (platform,build_id) DO UPDATE SET
+         state=excluded.state, reason=excluded.reason, evidence=excluded.evidence, updated_at=now()
+       WHERE preview_native_ownership_incident.source_sha=excluded.source_sha
+       RETURNING *`,
+      [platform, buildId, sourceSha, state, reason, JSON.stringify(evidence)],
+    );
+    if (result.rowCount !== 1) throw new Error(`Conflicting ownership incident for ${platform}:${buildId}.`);
+    return result.rows[0];
+  }
+
+  async adoptNativeBuild({ platform, sourceSha, fingerprint, build }) {
+    assertExactSha(sourceSha);
+    const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
+    if (!kind) throw new Error("Native build platform is invalid.");
+    const identityKey = `native-build:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))", [kind, identityKey]);
+      const conflict = await client.query(
+        `SELECT 1 FROM preview_release_action
+         WHERE kind=$1 AND (identity_key=$2 OR remote_id=$3) AND (source_sha<>$4 OR coalesce(remote_id,$3)<>$3)
+         LIMIT 1`, [kind, identityKey, build.id, sourceSha],
+      );
+      if (conflict.rowCount) throw new Error(`Conflicting durable identity prevents ${platform} build adoption.`);
+      const delivered = await client.query(
+        `SELECT 1 FROM preview_delivered_native_state
+         WHERE platform=$1 AND build_number=$2::bigint AND eas_build_id<>$3 LIMIT 1`,
+        [platform, build.appBuildVersion, build.id],
+      );
+      if (delivered.rowCount) throw new Error(`Conflicting delivered ${platform} build number prevents adoption.`);
+      const action = await client.query(
+        `INSERT INTO preview_release_action (source_sha,kind,identity_key,remote_id,state,evidence)
+         VALUES ($1,$2,$3,$4,$5,$6::jsonb)
+         ON CONFLICT (kind,identity_key) DO UPDATE SET
+           remote_id=excluded.remote_id,state=excluded.state,evidence=excluded.evidence,updated_at=now()
+         WHERE preview_release_action.source_sha=excluded.source_sha
+           AND (preview_release_action.remote_id IS NULL OR preview_release_action.remote_id=excluded.remote_id)
+         RETURNING *`,
+        [sourceSha, kind, identityKey, build.id, String(build.status).toUpperCase(), JSON.stringify({ ...build, nativeFingerprint: fingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: "SAFE_VERIFIED_ADOPTION" })],
+      );
+      if (action.rowCount !== 1) throw new Error(`Conflicting remote identity prevents ${platform} build adoption.`);
+      await client.query(
+        `INSERT INTO preview_native_ownership_incident (platform,build_id,source_sha,state,evidence)
+         VALUES ($1,$2,$3,'ADOPTED',$4::jsonb)
+         ON CONFLICT (platform,build_id) DO UPDATE SET state='ADOPTED',evidence=excluded.evidence,updated_at=now()`,
+        [platform, build.id, sourceSha, JSON.stringify({ buildNumber: build.appBuildVersion, fingerprint })],
+      );
+      await client.query("COMMIT");
+      return action.rows[0];
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally { client.release(); }
+  }
+
   async reserveNativeBuild({ sourceSha, platform, identityKey }) {
     assertExactSha(sourceSha);
     const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;
@@ -491,6 +562,29 @@ export class PreviewLedger {
     );
     if (result.rowCount > 1) throw new Error(`Ambiguous remote identity for ${kind}:${identityKey}.`);
     return result.rows[0] ?? null;
+  }
+
+  async markRemoteObjectUnavailable({ kind, identityKey, remoteId, reason }) {
+    const result = await this.pool.query(
+      `UPDATE preview_release_action
+       SET state='REMOTE_OBJECT_UNAVAILABLE',
+           evidence=evidence || $4::jsonb, updated_at=now()
+       WHERE kind=$1 AND identity_key=$2 AND remote_id=$3
+         AND state NOT IN ('REMOTE_OBJECT_UNAVAILABLE','FINISHED')
+       RETURNING *`,
+      [kind, identityKey, remoteId, JSON.stringify({ remoteObjectUnavailable: true, reason, operatorAction: "Verify provider retention and use strict adoption or an owner-approved replacement; never delete ledger evidence." })],
+    );
+    if (result.rowCount !== 1) {
+      const finished = await this.pool.query(
+        `UPDATE preview_release_action
+         SET state='REMOTE_OBJECT_UNAVAILABLE', evidence=evidence || $4::jsonb, updated_at=now()
+         WHERE kind=$1 AND identity_key=$2 AND remote_id=$3 AND state='FINISHED' RETURNING *`,
+        [kind, identityKey, remoteId, JSON.stringify({ remoteObjectUnavailable: true, reason, formerState: "FINISHED", operatorAction: "Verify provider retention and use strict adoption or an owner-approved replacement; never delete ledger evidence." })],
+      );
+      if (finished.rowCount !== 1) throw new Error(`Remote-object-unavailable transition for ${kind}:${identityKey} was rejected.`);
+      return finished.rows[0];
+    }
+    return result.rows[0];
   }
 
   async replaceTerminalAction({ sourceSha, kind, identityKey, expectedRemoteId, remoteId, state, evidence = {} }) {
