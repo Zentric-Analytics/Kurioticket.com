@@ -20,6 +20,7 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatItineraryShortDate, formatTime } from "@/lib/utils";
+import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
 
 type DetailItem = {
   label: string;
@@ -57,6 +58,12 @@ export function FlightCard({
     convertUsdEstimate: true,
     rates: currencyRates.rates,
     isFallbackRate: currencyRates.isFallback,
+  });
+  const cardPrice = formatFlightCardPrice({
+    amount: displayPrice.amount,
+    currency: displayPrice.currency,
+    formatted: displayPrice.formatted,
+    locale,
   });
   const details = buildFlightDetails(flight, t);
   const desktopDetails = details.filter(
@@ -116,7 +123,8 @@ export function FlightCard({
             <FlightDetailLines details={details} />
             <FlightFareAction
               detailsHref={resolvedDetailsHref}
-              formattedPrice={displayPrice.formatted}
+              formattedPrice={cardPrice.formatted}
+              priceSize={cardPrice.size}
               priceAriaLabel={priceAriaLabel}
               priceTitle={priceTitle}
               priceLabel={priceLabel}
@@ -185,7 +193,8 @@ export function FlightCard({
 
             <FlightFareAction
               detailsHref={resolvedDetailsHref}
-              formattedPrice={displayPrice.formatted}
+              formattedPrice={cardPrice.formatted}
+              priceSize={cardPrice.size}
               priceAriaLabel={priceAriaLabel}
               priceTitle={priceTitle}
               priceLabel={priceLabel}
@@ -487,6 +496,7 @@ function AirlineLogo({
 function FlightFareAction({
   detailsHref,
   formattedPrice,
+  priceSize,
   priceAriaLabel,
   priceTitle,
   priceLabel,
@@ -500,6 +510,7 @@ function FlightFareAction({
 }: {
   detailsHref: string | null;
   formattedPrice: string;
+  priceSize: "normal" | "large" | "compact";
   priceAriaLabel: string;
   priceTitle: string | undefined;
   priceLabel: string;
@@ -535,6 +546,7 @@ function FlightFareAction({
           )}
           aria-label={priceAriaLabel}
           title={priceTitle}
+          data-price-size={priceSize}
           dir="ltr"
         >
           {formattedPrice}
