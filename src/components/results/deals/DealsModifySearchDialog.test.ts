@@ -74,7 +74,7 @@ test("modify trigger and close controls retain accessible button contracts", () 
   assert.equal(
     (overview.match(/aria-controls="deals-modify-search-dialog"/g) ?? [])
       .length,
-    2,
+    4,
   );
   assert.match(overview, /modifyButtonRef\.current = event\.currentTarget/);
   assert.match(overview, /onClick=\{handleModify\}/);
