@@ -5,12 +5,12 @@ import test from "node:test";
 const read = (path: string) => readFileSync(path, "utf8");
 
 test("flow theme maps app dark preference to full-screen semantic colors", () => {
-  const theme = read("src/features/flow/flowStyles.ts");
+  const theme = read("src/features/flow/flowStyles.ts") + read("src/features/flow/flowThemeColors.ts");
   assert.match(theme, /useAppTheme/);
   assert.match(theme, /page: theme\.background/);
   assert.match(theme, /card: theme\.surface/);
   assert.match(theme, /input: theme\.dark \? "#17243A" : flowColors\.white/);
-  assert.match(theme, /text: theme\.text/);
+  assert.match(theme, /text: theme\.textPrimary/);
   assert.match(theme, /secondaryText: theme\.muted/);
   assert.match(theme, /placeholder: theme\.muted/);
   assert.match(theme, /overlay: theme\.dark \? "#020617AA" : "#071A4866"/);

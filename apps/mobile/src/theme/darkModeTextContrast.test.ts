@@ -45,7 +45,7 @@ test("bottom navigation inactive labels and promo cards keep readable themed con
 
 test("app theme exposes semantic text tokens without changing light-mode colors", () => {
   const theme = source("src/theme/AppTheme.tsx");
-  const flow = source("src/features/flow/flowStyles.ts");
+  const flow = source("src/features/flow/flowStyles.ts") + source("src/features/flow/flowThemeColors.ts");
 
   assert.match(theme, /lightTheme[\s\S]*textPrimary: "#071A48"/);
   assert.match(theme, /lightTheme[\s\S]*textSecondary: "#56658E"/);
