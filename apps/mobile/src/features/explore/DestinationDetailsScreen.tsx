@@ -51,7 +51,7 @@ function InvalidDestination() {
 function DestinationPage({ destination, saved, onToggle }: { destination: Destination; saved: boolean; onToggle: () => void }) {
   const media = destinationMedia(destination.id);
   const [imageFailed, setImageFailed] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef(null as ScrollView | null);
   const handoff = destinationHandoff(destination);
 
   useEffect(() => {
