@@ -19,7 +19,7 @@ const carResultBadgeIcons: Record<CarResultBadge, LucideIcon> = {
   "Top rated": Star,
 };
 
-export function CarResultCard({ car, badge, detailsHref, actionLabel = "View car", actionAriaLabel, headingLevel = "h2" }: { car: NormalizedCarResult; badge?: CarResultBadge; detailsHref: string | null; actionLabel?: string; actionAriaLabel?: string; headingLevel?: "h2" | "h3" }) {
+export function CarResultCard({ car, badge, detailsHref, onSelect, actionLabel = "View car", actionAriaLabel, headingLevel = "h2" }: { car: NormalizedCarResult; badge?: CarResultBadge; detailsHref: string | null; onSelect?: (car: NormalizedCarResult) => void; actionLabel?: string; actionAriaLabel?: string; headingLevel?: "h2" | "h3" }) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const offer = getPrimaryCarOffer(car);
@@ -109,7 +109,7 @@ export function CarResultCard({ car, badge, detailsHref, actionLabel = "View car
             <div className="order-1 md:order-2"><p className="break-words text-lg font-bold leading-7 tracking-[-0.01em] text-[#102A43] tabular-nums min-[380px]:whitespace-nowrap lg:text-xl" dir="ltr" title={totalDisplayPrice.title} aria-label={totalDisplayPrice.ariaLabel}>{totalDisplayPrice.formatted}</p><p className="text-xs font-medium text-slate-500">Total</p>{offer.taxesAndFeesIncluded && <p className="mt-1 text-xs leading-4 text-slate-500">Taxes and fees included</p>}</div>
             <div className="order-2 md:order-1"><p className="text-xs font-medium text-slate-500">Price per day</p><p className="mt-0.5 break-words text-sm font-semibold leading-5 text-slate-700 tabular-nums min-[380px]:whitespace-nowrap" dir="ltr" title={dailyDisplayPrice.title} aria-label={dailyDisplayPrice.ariaLabel}>{dailyDisplayPrice.formatted}</p></div>
           </div>
-          {detailsHref ? <Link href={detailsHref} aria-label={actionAriaLabel} className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5 lg:mt-auto">{actionLabel}</Link> : <button type="button" disabled aria-label={actionAriaLabel} className="mt-3 inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-lg bg-slate-300 px-2 text-sm font-bold text-white md:px-5 lg:mt-auto">{actionLabel}</button>}
+          {onSelect ? <button type="button" onClick={() => onSelect(car)} aria-label={actionAriaLabel} className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5 lg:mt-auto">{actionLabel}</button> : detailsHref ? <Link href={detailsHref} aria-label={actionAriaLabel} className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5 lg:mt-auto">{actionLabel}</Link> : <button type="button" disabled aria-label={actionAriaLabel} className="mt-3 inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-lg bg-slate-300 px-2 text-sm font-bold text-white md:px-5 lg:mt-auto">{actionLabel}</button>}
         </div>
       </div>
     </article>
