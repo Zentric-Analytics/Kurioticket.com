@@ -21,6 +21,10 @@ import {
 } from "@/lib/deals/dealsTripPlanV2";
 import type { DealsTripPlan } from "@/lib/deals/dealsTripPlan";
 import {
+  installDealsCurrentPlanV2,
+  isDealsFlightInventoryBlockedByHotelV2,
+} from "@/lib/deals/dealsFlightJourneyControllerV2";
+import {
   createFlightInventory,
   DealsFlightInventoryClientError,
   getFlightFareChoices,
@@ -95,9 +99,11 @@ export function DealsFlightJourneyV2({
   );
   const [plan, setPlan] = useState<DealsTripPlanV2>(() => freshPlan());
   const planRef = useRef(plan);
-  useEffect(() => {
-    planRef.current = plan;
-  }, [plan]);
+  const installPlan = useCallback(
+    (nextPlan: DealsTripPlanV2) =>
+      installDealsCurrentPlanV2(planRef, setPlan, nextPlan),
+    [],
+  );
   const [status, setStatus] = useState<Status>("initial");
   const [returnState, setReturnState] = useState<DownstreamLoadState>("idle");
   const [fareState, setFareState] = useState<DownstreamLoadState>("idle");
@@ -140,7 +146,7 @@ export function DealsFlightJourneyV2({
       if (isFatalFlightInventoryError(code)) {
         clearDealsFlightRuntimeV2(sessionStorage);
         setRuntime(null);
-        setPlan(freshPlan());
+        installPlan(freshPlan());
         setReturnState("idle");
         setFareState("idle");
       }
@@ -149,7 +155,7 @@ export function DealsFlightJourneyV2({
       if (stage === "fare") setFareState("error");
       setStatus("error");
     },
-    [freshPlan],
+    [freshPlan, installPlan],
   );
 
   const searchRequest = useMemo(
@@ -183,8 +189,8 @@ export function DealsFlightJourneyV2({
     setFareState("idle");
     setError(null);
     const nextPlan = freshPlan();
-    setPlan(nextPlan);
-    if (search.mode === "hotel-flight-car" && !nextPlan.hotel) {
+    installPlan(nextPlan);
+    if (isDealsFlightInventoryBlockedByHotelV2(search.mode, nextPlan)) {
       setStatus("initial");
       return;
     }
@@ -227,6 +233,7 @@ export function DealsFlightJourneyV2({
     current,
     fail,
     freshPlan,
+    installPlan,
     request,
     search,
     searchKey,
@@ -280,7 +287,7 @@ export function DealsFlightJourneyV2({
           if (!written.ok)
             throw new DealsFlightInventoryClientError(written.code, true);
           setRuntime(written.value);
-          setPlan(restored.plan);
+          installPlan(restored.plan);
           setReturnState(restored.returnState);
           setFareState(restored.fareState);
           setStatus("success");
@@ -301,6 +308,7 @@ export function DealsFlightJourneyV2({
     current,
     fail,
     freshPlan,
+    installPlan,
     request,
     search,
     search.flightTripType,
@@ -340,7 +348,7 @@ export function DealsFlightJourneyV2({
       fareChoices: [],
     };
     if (!commitRuntime(next)) return;
-    setPlan(applied.plan);
+    installPlan(applied.plan);
     const pending = request();
     try {
       if (search.flightTripType === "round-trip") {
@@ -412,7 +420,7 @@ export function DealsFlightJourneyV2({
       fareChoices: [],
     };
     if (!commitRuntime(next)) return;
-    setPlan(applied.plan);
+    installPlan(applied.plan);
     const pending = request();
     try {
       const fareChoices = await getFlightFareChoices(
@@ -453,7 +461,7 @@ export function DealsFlightJourneyV2({
         new DealsFlightInventoryClientError("INVALID_SELECTION", false),
       );
     if (!commitRuntime({ ...runtime, selectedFareKey: key })) return;
-    setPlan(applied.plan);
+    installPlan(applied.plan);
     setStatus("success");
   };
 
@@ -474,7 +482,7 @@ export function DealsFlightJourneyV2({
       return fail(new DealsFlightInventoryClientError(cleared.code, true));
     cancel();
     setRuntime(null);
-    setPlan(applied.plan);
+    installPlan(applied.plan);
     setStatus("initial");
     setRevalidationMessage(message);
   };
@@ -494,7 +502,7 @@ export function DealsFlightJourneyV2({
       return fail(
         new DealsFlightInventoryClientError("INVALID_SELECTION", false),
       );
-    setPlan(started.plan);
+    installPlan(started.plan);
     setPendingChange(null);
     setRevalidationMessage(null);
     setError(null);
@@ -545,7 +553,7 @@ export function DealsFlightJourneyV2({
         });
         if (!succeeded.ok)
           throw new DealsFlightInventoryClientError("INVALID_SELECTION", false);
-        setPlan(succeeded.plan);
+        installPlan(succeeded.plan);
         setStatus("success");
         return;
       }
@@ -644,7 +652,7 @@ export function DealsFlightJourneyV2({
         new DealsFlightInventoryClientError("INVALID_SELECTION", false),
       );
     setPendingChange(null);
-    setPlan(succeeded.plan);
+    installPlan(succeeded.plan);
   };
 
   const declineChangedFlight = () => {
@@ -656,7 +664,7 @@ export function DealsFlightJourneyV2({
       expectedRevision: plan.revision,
     });
     setPendingChange(null);
-    if (applied.ok) setPlan(applied.plan);
+    if (applied.ok) installPlan(applied.plan);
   };
 
   const recoverReviewLifecycle = useCallback(
@@ -698,7 +706,7 @@ export function DealsFlightJourneyV2({
           cancel();
           clearDealsFlightRuntimeV2(sessionStorage);
           setRuntime(null);
-          setPlan(applied.plan);
+          installPlan(applied.plan);
           setStatus("initial");
           setRevalidationMessage(
             "This flight offer expired. Refresh flight availability.",
@@ -709,7 +717,7 @@ export function DealsFlightJourneyV2({
       // Car freshness is derived from time. Preserve the canonical plan.
       return "recovered";
     },
-    [cancel, search],
+    [cancel, installPlan, search],
   );
 
   const confirmReview = useCallback(
@@ -758,7 +766,7 @@ export function DealsFlightJourneyV2({
       sourceSearchKey: searchKey,
       expectedRevision: currentPlan.revision,
     });
-    if (applied.ok) setPlan(applied.plan);
+    if (applied.ok) installPlan(applied.plan);
   };
 
   if (reviewRecovery === "plan")
@@ -833,7 +841,7 @@ export function DealsFlightJourneyV2({
         editing
         onBackToReview={() => setEditingCar(false)}
         onPlanChange={(next) => {
-          setPlan(next);
+          installPlan(next);
           setEditingCar(false);
         }}
         onSessionExpired={() => void create()}
