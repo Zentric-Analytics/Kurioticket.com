@@ -15,7 +15,14 @@ import {
   FilePenLine,
   SlidersHorizontal,
 } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
+import {
+  getDateWindow,
+  initialDateWindowStart,
+  parseCalendarDate,
+  shiftCalendarDate,
+} from "./dateStripModel";
 
 export const ui = {
   blue: "#0754F7",
@@ -157,56 +164,79 @@ export function DateStrip({
   flightResults?: boolean;
   onSelect: (v: string) => void;
 }) {
-  const base = new Date(`${date}T12:00:00`);
+  const [visibleStart, setVisibleStart] = useState(() =>
+    initialDateWindowStart(date),
+  );
+
+  useEffect(() => {
+    setVisibleStart(initialDateWindowStart(date));
+  }, [date]);
+
+  const visibleDates = getDateWindow(visibleStart);
+  const moveWindow = (days: number) =>
+    setVisibleStart((current) => shiftCalendarDate(current, days));
+
   return (
-    <ScrollView
-      horizontal
-      style={s.dateRail}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={s.dates}
-    >
-      <Pressable style={s.arrow}>
+    <View style={s.dateNavigator}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Show earlier dates"
+        onPress={() => moveWindow(-1)}
+        style={s.arrow}
+      >
         {flightResults ? (
           <ChevronLeft size={20} strokeWidth={2} color={ui.navy} />
         ) : (
           <FlowIcon name="back" size={20} />
         )}
       </Pressable>
-      {[-2, -1, 0, 1, 2].map((d, i) => {
-        const x = new Date(base);
-        x.setDate(x.getDate() + d);
-        const iso = x.toISOString().slice(0, 10);
-        const active = d === 0;
-        return (
-          <Pressable
-            key={iso}
-            onPress={() => onSelect(iso)}
-            style={[s.date, active && s.dateActive]}
-          >
-            <Text style={s.day}>
-              {x.toLocaleDateString("en-US", { weekday: "short" })}
-            </Text>
-            <Text
-              style={[s.day, active && { color: ui.blue, fontWeight: "800" }]}
+      <ScrollView
+        horizontal
+        style={s.dateRail}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={s.dates}
+      >
+        {visibleDates.map((iso, i) => {
+          const x = parseCalendarDate(iso);
+          const active = iso === date;
+          return (
+            <Pressable
+              key={iso}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              onPress={() => onSelect(iso)}
+              style={[s.date, active && s.dateActive]}
             >
-              {shortDate(iso)}
-            </Text>
-            {prices[i] != null ? (
-              <Text style={[s.datePrice, active && { color: ui.blue }]}>
-                {money(currency, prices[i])}
+              <Text style={s.day}>
+                {x.toLocaleDateString("en-US", { weekday: "short" })}
               </Text>
-            ) : null}
-          </Pressable>
-        );
-      })}
-      <Pressable style={s.arrow}>
+              <Text
+                style={[s.day, active && { color: ui.blue, fontWeight: "800" }]}
+              >
+                {shortDate(iso)}
+              </Text>
+              {prices[i] != null ? (
+                <Text style={[s.datePrice, active && { color: ui.blue }]}>
+                  {money(currency, prices[i])}
+                </Text>
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Show later dates"
+        onPress={() => moveWindow(1)}
+        style={s.arrow}
+      >
         {flightResults ? (
           <ChevronRight size={20} strokeWidth={2} color={ui.navy} />
         ) : (
           <FlowIcon name="chevron" size={20} />
         )}
       </Pressable>
-    </ScrollView>
+    </View>
   );
 }
 export function Button({
@@ -329,8 +359,15 @@ export const s = StyleSheet.create({
   },
   pillActive: { borderColor: "#B9CBFF", backgroundColor: "#F6F8FF" },
   pillText: { fontSize: 12, fontWeight: "700", color: ui.navy },
-  dateRail: { height: 96, flexGrow: 0, flexShrink: 0 },
-  dates: { paddingHorizontal: 18, gap: 9, alignItems: "center" },
+  dateNavigator: {
+    height: 96,
+    paddingHorizontal: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  dateRail: { height: 96, flex: 1 },
+  dates: { gap: 9, alignItems: "center" },
   arrow: {
     width: 40,
     height: 40,
