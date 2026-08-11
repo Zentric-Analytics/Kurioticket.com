@@ -1,6 +1,11 @@
 import { nanoid } from "nanoid";
-import type { FlightLeg, FlightSearchParams, Layover, NormalizedFlightResult } from "@/lib/types";
-import { minutesToDuration, sanitizeAirportCode } from "@/lib/utils";
+import type {
+  FlightLeg,
+  FlightSearchParams,
+  Layover,
+  NormalizedFlightResult,
+} from "@/lib/types";
+import { minutesToDuration } from "@/lib/utils";
 import { scoreFlight } from "@/services/travel/scoring";
 
 const airlineNames: Record<string, string> = {
@@ -27,15 +32,27 @@ export function normalizeFlightResult(
   return normalizeDuffelFlight(raw, search);
 }
 
-function normalizeDuffelFlight(raw: unknown, search: FlightSearchParams): NormalizedFlightResult | null {
+function normalizeDuffelFlight(
+  raw: unknown,
+  search: FlightSearchParams,
+): NormalizedFlightResult | null {
   const offer = raw as {
     id?: string;
+    expires_at?: string;
     total_amount?: string;
     total_currency?: string;
     owner?: { name?: string; iata_code?: string };
     conditions?: {
-      change_before_departure?: { allowed?: boolean; penalty_amount?: string; penalty_currency?: string };
-      refund_before_departure?: { allowed?: boolean; penalty_amount?: string; penalty_currency?: string };
+      change_before_departure?: {
+        allowed?: boolean;
+        penalty_amount?: string;
+        penalty_currency?: string;
+      };
+      refund_before_departure?: {
+        allowed?: boolean;
+        penalty_amount?: string;
+        penalty_currency?: string;
+      };
     };
     passengers?: Array<{
       baggages?: Array<{ type?: string; quantity?: number }>;
@@ -59,25 +76,49 @@ function normalizeDuffelFlight(raw: unknown, search: FlightSearchParams): Normal
     }>;
   };
 
+  const providerOfferId = offer.id?.trim();
+  const providerExpiresAt = parseProviderExpiry(offer.expires_at);
+  if (!providerOfferId || providerExpiresAt === null) return null;
+
   const legs = buildDuffelLegs(offer, search);
   const primaryLeg = legs[0];
   const segments = offer.slices?.[0]?.segments ?? [];
   const first = segments[0];
-  if (!primaryLeg || !first || !offer.total_amount) return null;
+  if (
+    !primaryLeg ||
+    !first ||
+    !offer.total_amount ||
+    !hasRequiredLegs(legs, search)
+  )
+    return null;
 
-  const carrier = first.marketing_carrier?.iata_code || first.operating_carrier?.iata_code || "";
-  const airlineName = first.marketing_carrier?.name || first.operating_carrier?.name || offer.owner?.name || airlineNames[carrier] || "Airline";
-  const cabinClass = formatDuffelCabin(first.passengers?.[0]?.cabin_class) || search.cabinClass;
-  const baggageInfo = buildDuffelBaggageInfo(first.passengers?.[0]?.baggages || offer.passengers?.[0]?.baggages);
+  const carrier =
+    first.marketing_carrier?.iata_code ||
+    first.operating_carrier?.iata_code ||
+    "";
+  const airlineName =
+    first.marketing_carrier?.name ||
+    first.operating_carrier?.name ||
+    offer.owner?.name ||
+    airlineNames[carrier] ||
+    "Airline";
+  const cabinClass =
+    formatDuffelCabin(first.passengers?.[0]?.cabin_class) || search.cabinClass;
+  const baggageInfo = buildDuffelBaggageInfo(
+    first.passengers?.[0]?.baggages || offer.passengers?.[0]?.baggages,
+  );
   const refundInfo = buildDuffelRefundInfo(offer.conditions);
   const price = Number(offer.total_amount);
   if (!Number.isFinite(price)) return null;
 
   return buildFlight({
     provider: "Duffel",
-    providerId: offer.id,
+    providerId: providerOfferId,
+    providerOfferId,
+    providerExpiresAt,
     airlineName,
-    flightNumber: `${carrier}${first.marketing_carrier_flight_number || ""}`.trim(),
+    flightNumber:
+      `${carrier}${first.marketing_carrier_flight_number || ""}`.trim(),
     originAirport: primaryLeg.originAirport,
     destinationAirport: primaryLeg.destinationAirport,
     departureTime: primaryLeg.departureTime,
@@ -95,7 +136,10 @@ function normalizeDuffelFlight(raw: unknown, search: FlightSearchParams): Normal
       provider: "duffel",
       id: offer.id,
       liveOffer: true,
-      sliceIds: offer.slices?.flatMap((slice) => slice.segments?.map((segment) => segment.id).filter(Boolean) || []),
+      sliceIds: offer.slices?.flatMap(
+        (slice) =>
+          slice.segments?.map((segment) => segment.id).filter(Boolean) || [],
+      ),
     },
   });
 }
@@ -103,6 +147,8 @@ function normalizeDuffelFlight(raw: unknown, search: FlightSearchParams): Normal
 function buildFlight(input: {
   provider: NormalizedFlightResult["provider"];
   providerId?: string;
+  providerOfferId?: string;
+  providerExpiresAt?: number;
   airlineName: string;
   flightNumber?: string;
   originAirport: string;
@@ -149,20 +195,30 @@ function buildFlight(input: {
     ...scores,
     recommendationReasons: buildReasons(input, scores),
     badges: [],
+    providerOfferId: input.providerOfferId,
+    providerExpiresAt: input.providerExpiresAt,
     rawProviderReference: input.rawProviderReference,
   };
 }
 
-function buildReasons(input: { price: number; stops: number; baggageInfo: string }, scores: ReturnType<typeof scoreFlight>) {
+function buildReasons(
+  input: { price: number; stops: number; baggageInfo: string },
+  scores: ReturnType<typeof scoreFlight>,
+) {
   const reasons = [];
   if (input.stops === 0) reasons.push("Nonstop route lowers travel effort.");
-  if (scores.valueScore >= 78) reasons.push("Strong balance of price, duration, and comfort.");
-  if (scores.riskScore <= 35) reasons.push("Lower disruption risk based on route complexity.");
-  if (input.baggageInfo.toLowerCase().includes("included")) reasons.push("Baggage details appear favorable.");
-  if (reasons.length === 0) reasons.push("Affordable option with transparent external provider comparison.");
+  if (scores.valueScore >= 78)
+    reasons.push("Strong balance of price, duration, and comfort.");
+  if (scores.riskScore <= 35)
+    reasons.push("Lower disruption risk based on route complexity.");
+  if (input.baggageInfo.toLowerCase().includes("included"))
+    reasons.push("Baggage details appear favorable.");
+  if (reasons.length === 0)
+    reasons.push(
+      "Affordable option with transparent external provider comparison.",
+    );
   return reasons;
 }
-
 
 function buildDuffelLegs(
   offer: {
@@ -187,14 +243,31 @@ function buildDuffelLegs(
       const segments = slice.segments ?? [];
       const first = segments[0];
       const last = segments[segments.length - 1];
-      if (!first?.departing_at || !last?.arriving_at) return null;
+      if (
+        !first?.departing_at ||
+        !last?.arriving_at ||
+        !first.origin?.iata_code ||
+        !last.destination?.iata_code ||
+        segments.some(
+          (segment) =>
+            !segment.departing_at ||
+            !segment.arriving_at ||
+            !segment.origin?.iata_code ||
+            !segment.destination?.iata_code ||
+            !Number.isFinite(Date.parse(segment.departing_at)) ||
+            !Number.isFinite(Date.parse(segment.arriving_at)),
+        )
+      )
+        return null;
 
-      const durationMinutes = parseIsoDuration(slice.duration) || estimateDuration(first.departing_at, last.arriving_at);
+      const durationMinutes =
+        parseIsoDuration(slice.duration) ||
+        estimateDuration(first.departing_at, last.arriving_at);
 
       return {
         direction: legDirection(index, search),
-        originAirport: first.origin?.iata_code || (index === 1 ? sanitizeAirportCode(search.destination) : sanitizeAirportCode(search.origin)),
-        destinationAirport: last.destination?.iata_code || (index === 1 ? sanitizeAirportCode(search.origin) : sanitizeAirportCode(search.destination)),
+        originAirport: first.origin.iata_code,
+        destinationAirport: last.destination.iata_code,
         departureTime: first.departing_at,
         arrivalTime: last.arriving_at,
         duration: minutesToDuration(durationMinutes),
@@ -204,14 +277,21 @@ function buildDuffelLegs(
         segments: segments
           .filter((segment) => segment.departing_at && segment.arriving_at)
           .map((segment) => {
-            const carrier = segment.marketing_carrier?.iata_code || segment.operating_carrier?.iata_code || "";
+            const carrier =
+              segment.marketing_carrier?.iata_code ||
+              segment.operating_carrier?.iata_code ||
+              "";
             return {
               originAirport: segment.origin?.iata_code || "",
               destinationAirport: segment.destination?.iata_code || "",
               departureTime: segment.departing_at || "",
               arrivalTime: segment.arriving_at || "",
-              airlineName: segment.marketing_carrier?.name || segment.operating_carrier?.name || offer.owner?.name,
-              flightNumber: `${carrier}${segment.marketing_carrier_flight_number || ""}`.trim(),
+              airlineName:
+                segment.marketing_carrier?.name ||
+                segment.operating_carrier?.name ||
+                offer.owner?.name,
+              flightNumber:
+                `${carrier}${segment.marketing_carrier_flight_number || ""}`.trim(),
             };
           }),
       } satisfies FlightLeg;
@@ -219,14 +299,40 @@ function buildDuffelLegs(
     .filter(Boolean) as FlightLeg[];
 }
 
-function legDirection(index: number, search: FlightSearchParams): FlightLeg["direction"] {
+function hasRequiredLegs(legs: FlightLeg[], search: FlightSearchParams) {
+  if (search.tripType === "round-trip") {
+    return (
+      legs.length === 2 &&
+      legs[0]?.direction === "outbound" &&
+      legs[1]?.direction === "return"
+    );
+  }
+  if (search.tripType === "one-way")
+    return legs.length === 1 && legs[0]?.direction === "outbound";
+  return legs.length > 0;
+}
+
+function parseProviderExpiry(value?: string) {
+  if (!value?.trim()) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function legDirection(
+  index: number,
+  search: FlightSearchParams,
+): FlightLeg["direction"] {
   if (index === 0) return "outbound";
   if (index === 1 && search.tripType === "round-trip") return "return";
   return "leg";
 }
 
 function buildDuffelLayovers(
-  segments: Array<{ arriving_at?: string; departing_at?: string; destination?: { iata_code?: string } }>,
+  segments: Array<{
+    arriving_at?: string;
+    departing_at?: string;
+    destination?: { iata_code?: string };
+  }>,
 ) {
   const layovers: Layover[] = [];
   for (let index = 0; index < segments.length - 1; index += 1) {
@@ -242,41 +348,69 @@ function buildDuffelLayovers(
   return layovers;
 }
 
-function buildDuffelBaggageInfo(baggages?: Array<{ type?: string; quantity?: number }>) {
-  if (!baggages?.length) return "Baggage details are reviewed on the external provider site.";
+function buildDuffelBaggageInfo(
+  baggages?: Array<{ type?: string; quantity?: number }>,
+) {
+  if (!baggages?.length)
+    return "Baggage details are reviewed on the external provider site.";
 
   const checked = baggages.find((bag) => bag.type === "checked");
   const carryOn = baggages.find((bag) => bag.type === "carry_on");
   const parts = [];
   if (carryOn?.quantity) parts.push(`${carryOn.quantity} carry-on included`);
-  if (checked?.quantity) parts.push(`${checked.quantity} checked bag${checked.quantity > 1 ? "s" : ""} included`);
-  return parts.length ? parts.join(", ") : "Baggage details are reviewed on the external provider site.";
+  if (checked?.quantity)
+    parts.push(
+      `${checked.quantity} checked bag${checked.quantity > 1 ? "s" : ""} included`,
+    );
+  return parts.length
+    ? parts.join(", ")
+    : "Baggage details are reviewed on the external provider site.";
 }
 
 function buildDuffelRefundInfo(conditions?: {
-  change_before_departure?: { allowed?: boolean; penalty_amount?: string; penalty_currency?: string };
-  refund_before_departure?: { allowed?: boolean; penalty_amount?: string; penalty_currency?: string };
+  change_before_departure?: {
+    allowed?: boolean;
+    penalty_amount?: string;
+    penalty_currency?: string;
+  };
+  refund_before_departure?: {
+    allowed?: boolean;
+    penalty_amount?: string;
+    penalty_currency?: string;
+  };
 }) {
   const refund = conditions?.refund_before_departure;
   const change = conditions?.change_before_departure;
   const parts = [];
 
   if (refund?.allowed === true) {
-    parts.push(refund.penalty_amount ? `Refundable before departure with ${refund.penalty_currency || ""} ${refund.penalty_amount} penalty`.trim() : "Refundable before departure");
+    parts.push(
+      refund.penalty_amount
+        ? `Refundable before departure with ${refund.penalty_currency || ""} ${refund.penalty_amount} penalty`.trim()
+        : "Refundable before departure",
+    );
   } else if (refund?.allowed === false) {
     parts.push("Not refundable before departure");
   }
 
   if (change?.allowed === true) {
-    parts.push(change.penalty_amount ? `Changes allowed with ${change.penalty_currency || ""} ${change.penalty_amount} penalty`.trim() : "Changes allowed before departure");
+    parts.push(
+      change.penalty_amount
+        ? `Changes allowed with ${change.penalty_currency || ""} ${change.penalty_amount} penalty`.trim()
+        : "Changes allowed before departure",
+    );
   } else if (change?.allowed === false) {
     parts.push("Changes not allowed before departure");
   }
 
-  return parts.length ? parts.join(". ") : "Change and refund rules vary by fare and are reviewed externally.";
+  return parts.length
+    ? parts.join(". ")
+    : "Change and refund rules vary by fare and are reviewed externally.";
 }
 
-function buildMetasearchPartnerUrl(){ return ""; }
+function buildMetasearchPartnerUrl() {
+  return "";
+}
 
 function formatDuffelCabin(value?: string) {
   if (!value) return "";
@@ -292,7 +426,9 @@ function parseIsoDuration(value?: string) {
 
 function estimateDuration(start?: string, end?: string) {
   if (!start || !end) return 0;
-  const minutes = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
+  const minutes = Math.round(
+    (new Date(end).getTime() - new Date(start).getTime()) / 60000,
+  );
   return Number.isFinite(minutes) && minutes > 0 ? minutes : 0;
 }
 

@@ -15,17 +15,24 @@ const ttlMs = 1000 * 60 * 30;
 const flightCache = new Map<string, CacheRecord<NormalizedFlightResult>>();
 const hotelCache = new Map<string, CacheRecord<NormalizedHotelResult>>();
 
-function purgeExpired<T>(cache: Map<string, CacheRecord<T>>) {
-  const now = Date.now();
+function purgeExpired<T>(cache: Map<string, CacheRecord<T>>, now = Date.now()) {
   for (const [key, record] of cache.entries()) {
     if (record.expiresAt <= now) cache.delete(key);
   }
 }
 
-export function rememberFlights(results: NormalizedFlightResult[]) {
-  purgeExpired(flightCache);
+export function rememberFlights(
+  results: NormalizedFlightResult[],
+  now = Date.now(),
+) {
+  purgeExpired(flightCache, now);
   for (const result of results) {
-    flightCache.set(result.id, { value: result, expiresAt: Date.now() + ttlMs });
+    const expiresAt = Math.min(
+      now + ttlMs,
+      result.providerExpiresAt ?? Number.POSITIVE_INFINITY,
+    );
+    if (expiresAt <= now) continue;
+    flightCache.set(result.id, { value: result, expiresAt });
   }
 }
 
@@ -36,8 +43,8 @@ export function rememberHotels(results: NormalizedHotelResult[]) {
   }
 }
 
-export function getFlightFromCache(id: string) {
-  purgeExpired(flightCache);
+export function getFlightFromCache(id: string, now = Date.now()) {
+  purgeExpired(flightCache, now);
   return flightCache.get(id)?.value ?? null;
 }
 
@@ -46,13 +53,19 @@ export function getHotelFromCache(id: string) {
   return hotelCache.get(id)?.value ?? null;
 }
 
-export function toPublicFlight(result: NormalizedFlightResult): PublicFlightResult {
+export function toPublicFlight(
+  result: NormalizedFlightResult,
+): PublicFlightResult {
   const publicResult = { ...result };
   delete publicResult.rawProviderReference;
+  delete publicResult.providerOfferId;
+  delete publicResult.providerExpiresAt;
   return publicResult;
 }
 
-export function toPublicHotel(result: NormalizedHotelResult): PublicHotelResult {
+export function toPublicHotel(
+  result: NormalizedHotelResult,
+): PublicHotelResult {
   const publicResult = { ...result };
   delete publicResult.rawProviderReference;
   return publicResult;

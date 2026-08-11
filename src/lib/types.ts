@@ -83,12 +83,16 @@ export type NormalizedFlightResult = {
   travelEffortScore: number;
   recommendationReasons: string[];
   badges: string[];
+  /** Server-only identity of the purchasable offer returned by the provider. */
+  providerOfferId?: string;
+  /** Server-only provider expiry, expressed as milliseconds since the Unix epoch. */
+  providerExpiresAt?: number;
   rawProviderReference?: unknown;
 };
 
 export type PublicFlightResult = Omit<
   NormalizedFlightResult,
-  "rawProviderReference"
+  "rawProviderReference" | "providerOfferId" | "providerExpiresAt"
 >;
 
 export type HotelInventoryKind = "bookable" | "discovery";
