@@ -44,6 +44,8 @@ import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
+import { resolveDateHeaderCollapsed } from "./resultsHeaderModel";
+import { useUnreadNotifications } from "../notifications/useUnreadNotifications";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -68,6 +70,24 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
   const [sort, setSort] = useState("best");
+  const hasUnreadNotifications = useUnreadNotifications(product === "flight");
+  const [dateHeaderCollapsed, setDateHeaderCollapsed] = useState(false);
+  const dateHeaderProgress = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(dateHeaderProgress, {
+      toValue: dateHeaderCollapsed ? 1 : 0,
+      duration: 220,
+      useNativeDriver: false,
+    }).start();
+  }, [dateHeaderCollapsed, dateHeaderProgress]);
+  const onResultsScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
+    if (product !== "flight") return;
+    const y = Math.max(0, event.nativeEvent.contentOffset.y);
+    setDateHeaderCollapsed((current) => {
+      const next = resolveDateHeaderCollapsed(y, current);
+      return next === current ? current : next;
+    });
+  }, [product]);
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && one(params.visual) === "1";
   const load = useCallback(async () => {
@@ -140,7 +160,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     );
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
-      <TopBar flightResults={product === "flight"} />
+      <TopBar
+        flightResults={product === "flight"}
+        hasUnreadNotifications={product === "flight" && hasUnreadNotifications}
+        onNotificationsPress={product === "flight" ? () => router.push("/notifications") : undefined}
+      />
       <View style={[s0.summary, narrowHeader && s0.summaryNarrow]}>
         <View style={s0.summaryCopy}>
           <Text style={s0.route}>
@@ -163,16 +187,27 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           />
         </View>
       </View>
-      <DateStrip
-        date={date}
-        prices={prices}
-        flightResults={product === "flight"}
-        onSelect={(v) =>
-          router.setParams(
-            product === "flight" ? { departureDate: v } : { checkIn: v },
-          )
-        }
-      />
+      <Animated.View
+        accessibilityElementsHidden={product === "flight" && dateHeaderCollapsed}
+        importantForAccessibility={product === "flight" && dateHeaderCollapsed ? "no-hide-descendants" : "auto"}
+        style={product === "flight" ? {
+          height: dateHeaderProgress.interpolate({ inputRange: [0, 1], outputRange: [80, 0] }),
+          opacity: dateHeaderProgress.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.15, 0] }),
+          overflow: "hidden",
+          transform: [{ translateY: dateHeaderProgress.interpolate({ inputRange: [0, 1], outputRange: [0, -12] }) }],
+        } : undefined}
+      >
+        <DateStrip
+          date={date}
+          prices={prices}
+          flightResults={product === "flight"}
+          onSelect={(v) =>
+            router.setParams(
+              product === "flight" ? { departureDate: v } : { checkIn: v },
+            )
+          }
+        />
+      </Animated.View>
       <ScrollView
         horizontal
         style={s0.filterRail}
@@ -213,7 +248,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
         />
       </ScrollView>
-      <ScrollView contentContainerStyle={s0.body}>
+      <ScrollView
+        contentContainerStyle={s0.body}
+        onScroll={onResultsScroll}
+        scrollEventThrottle={16}
+      >
         {status === "loading" ? <Loading product={product} /> : null}
         {message ? (
           <Text accessibilityRole="alert" style={s0.notice}>
