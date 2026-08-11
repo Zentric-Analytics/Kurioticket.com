@@ -85,22 +85,17 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
               style={styles.heart}
             />
           </View>
-          <View style={styles.primaryAirport}>
-            <Text style={styles.eyebrow}>PRIMARY AIRPORT</Text>
-            <Text style={styles.airportCode}>{destination.primaryAirportCode}</Text>
-            <Text style={styles.airportName}>{destination.airportNames[destination.airportCodes.indexOf(destination.primaryAirportCode)]}</Text>
-          </View>
           {destination.summary ? <Text style={styles.summary}>{destination.summary}</Text> : null}
-          {destination.description ? <Section title="About"><Text style={styles.paragraph}>{destination.description}</Text></Section> : null}
-          <Section title={destination.airportCodes.length === 1 ? "Airport" : "Airports"}>
-            {destination.airportCodes.map((code, index) => <View key={code} style={styles.airportRow}><Text style={styles.airportRowCode}>{code}</Text><Text style={styles.airportRowName}>{destination.airportNames[index]}</Text></View>)}
-          </Section>
-          {destination.highlights?.length ? <Section title="Highlights">{destination.highlights.map((highlight) => <View key={highlight} style={styles.highlight}><View style={styles.bullet} /><Text style={styles.highlightText}>{highlight}</Text></View>)}</Section> : null}
-          {related?.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={styles.related}><Text style={styles.relatedName}>{item.name}</Text><Text style={styles.relatedCountry}>{item.country}</Text></Pressable>)}</Section> : null}
           <View style={styles.actions}>
             <Action label="Search flights" icon="flight" onPress={searchFlights} />
             <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
           </View>
+          {destination.description ? <Section title="About"><Text style={styles.paragraph}>{destination.description}</Text></Section> : null}
+          {destination.highlights?.length ? <Section title="Highlights">{destination.highlights.map((highlight) => <View key={highlight} style={styles.highlight}><View style={styles.bullet} /><Text style={styles.highlightText}>{highlight}</Text></View>)}</Section> : null}
+          <Section title="Getting there">
+            {destination.airportCodes.map((code, index) => <View key={code} style={styles.airportRow}><Text style={styles.airportRowCode}>{code}</Text><Text style={styles.airportRowName}>{destination.airportNames[index]}</Text></View>)}
+          </Section>
+          {related?.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={styles.related}><Text style={styles.relatedName}>{item.name}</Text><Text style={styles.relatedCountry}>{item.country}</Text></Pressable>)}</Section> : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -128,8 +123,6 @@ const styles = StyleSheet.create({
   titleCopy: { flex: 1 }, title: { color: NAVY, fontSize: 30, lineHeight: 38, fontWeight: "800" },
   country: { color: MUTED, fontSize: 16, marginTop: 2 },
   heart: { flexShrink: 0 },
-  primaryAirport: { padding: 16, borderRadius: 14, backgroundColor: "#EDF3FF" },
-  eyebrow: { color: BLUE, fontSize: 11, letterSpacing: 1, fontWeight: "800" }, airportCode: { color: NAVY, fontSize: 26, fontWeight: "800", marginTop: 3 }, airportName: { color: MUTED, fontSize: 13, lineHeight: 19 },
   summary: { color: NAVY, fontSize: 17, lineHeight: 25, fontWeight: "600" }, paragraph: { color: MUTED, fontSize: 15, lineHeight: 23 },
   section: { gap: 10 }, sectionTitle: { color: NAVY, fontSize: 19, fontWeight: "800" },
   airportRow: { minHeight: 58, paddingVertical: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: BORDER, gap: 14 },

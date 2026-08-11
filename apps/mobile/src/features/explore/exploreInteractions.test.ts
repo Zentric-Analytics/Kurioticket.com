@@ -540,6 +540,40 @@ test("destination details render complete shared editorial while keeping related
   assert.doesNotMatch(source, /editorialProvenance|sourceReferences|lastVerifiedAt/);
 });
 
+test("destination details follow the destination-first hierarchy without duplicating airports", () => {
+  const source = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
+  const page = source.slice(source.indexOf("function DestinationPage"), source.indexOf("function Section"));
+  const orderedContent = [
+    "resolvedDestinationHeroSource(media, imageFailed)",
+    "styles.titleRow",
+    "destination.summary",
+    'label="Search flights"',
+    'label="Search hotels"',
+    'title="About"',
+    'title="Highlights"',
+    'title="Getting there"',
+    'title="Related destinations"',
+  ];
+
+  let previousIndex = -1;
+  for (const content of orderedContent) {
+    const index = page.indexOf(content);
+    assert.ok(index > previousIndex, `${content} should follow the preceding destination content`);
+    previousIndex = index;
+  }
+
+  assert.match(page, /destination\.description/);
+  assert.match(page, /destination\.highlights\.map/);
+  assert.doesNotMatch(page, /PRIMARY AIRPORT|styles\.primaryAirport|title="Airports?"/);
+  assert.equal(page.match(/destination\.airportCodes\.map/g)?.length, 1);
+  assert.equal(page.match(/destination\.airportNames\[index\]/g)?.length, 1);
+
+  const london = destinationById.get("gb-london")!;
+  assert.ok(london.airportCodes.length > 1);
+  assert.equal(london.airportCodes[0], london.primaryAirportCode);
+  assert.equal(london.airportCodes.length, london.airportNames.length);
+});
+
 test("all Explore destination entry points use the ID-only details route without the old sheet", () => {
   const source = screen();
   assert.match(source, /router\.push\(destinationDetailsRoute\(destination\.id\)\)/);
