@@ -122,9 +122,11 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
             {destination.airportCodes.map((code, index) => <View key={code} style={styles.airportRow}><Text style={styles.airportRowCode}>{code}</Text><Text style={styles.airportRowName}>{destination.airportNames[index]}</Text></View>)}
           </Section>
           {related?.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={styles.related}><Text style={styles.relatedName}>{item.name}</Text><Text style={styles.relatedCountry}>{item.country}</Text></Pressable>)}</Section> : null}
-          <View onLayout={(event) => setCtaLayout({ y: event.nativeEvent.layout.y, height: event.nativeEvent.layout.height })} style={styles.actions}>
-            <Action label="Search flights" icon="flight" onPress={searchFlights} />
-            <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
+          <View onLayout={(event) => setCtaLayout({ y: event.nativeEvent.layout.y, height: event.nativeEvent.layout.height })}>
+            <View style={styles.actions}>
+              <Action label="Search flights" icon="flight" onPress={searchFlights} />
+              <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
+            </View>
           </View>
         </View>
       </ScrollView>
