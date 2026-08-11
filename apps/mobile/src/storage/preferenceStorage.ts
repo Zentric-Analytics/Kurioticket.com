@@ -9,11 +9,16 @@ function webStorage() {
 }
 
 export async function readCurrency() {
+  return (await readCurrencyPreference()) || "USD";
+}
+
+/** Returns null when the user has not made an explicit currency selection. */
+export async function readCurrencyPreference() {
   const value =
     Platform.OS === "web"
       ? webStorage()?.getItem(CURRENCY_KEY)
       : await SecureStore.getItemAsync(CURRENCY_KEY);
-  return value || "USD";
+  return value || null;
 }
 
 export async function writeCurrency(currency: string) {
