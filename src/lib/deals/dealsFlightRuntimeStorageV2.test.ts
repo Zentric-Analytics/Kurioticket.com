@@ -5,6 +5,7 @@ import {
   DEALS_FLIGHT_RUNTIME_STORAGE_KEY,
   parseDealsFlightRuntimeV2,
   readDealsFlightRuntimeV2,
+  clearDealsFlightRuntimeV2,
   writeDealsFlightRuntimeV2,
   type DealsFlightRuntimeV2,
 } from "./dealsFlightRuntimeStorageV2";
@@ -113,7 +114,7 @@ test("uses only the versioned session storage namespace and excludes provider id
     setItem: (key: string, value: string) => void values.set(key, value),
     removeItem: (key: string) => void values.delete(key),
   };
-  writeDealsFlightRuntimeV2(storage, runtime());
+  assert.equal(writeDealsFlightRuntimeV2(storage, runtime()).ok, true);
   assert.deepEqual([...values.keys()], [DEALS_FLIGHT_RUNTIME_STORAGE_KEY]);
   const serialized = values.get(DEALS_FLIGHT_RUNTIME_STORAGE_KEY)!;
   assert.ok(serialized.includes(token));
@@ -124,8 +125,51 @@ test("uses only the versioned session storage namespace and excludes provider id
     "rawProviderReference",
   ])
     assert.ok(!serialized.includes(secret));
+  const read = readDealsFlightRuntimeV2(storage, "search-key", "round-trip", 1);
+  assert.equal(read.ok, true);
+  if (read.ok) assert.deepEqual(read.value, runtime());
+});
+
+test("normalizes throwing storage operations", () => {
+  const unavailable = () => {
+    throw new Error("blocked");
+  };
   assert.deepEqual(
-    readDealsFlightRuntimeV2(storage, "search-key", "round-trip", 1),
-    runtime(),
+    readDealsFlightRuntimeV2(
+      { getItem: unavailable, removeItem: unavailable },
+      "search-key",
+      "round-trip",
+    ),
+    { ok: false, code: "STORAGE_UNAVAILABLE" },
   );
+  assert.deepEqual(
+    writeDealsFlightRuntimeV2({ setItem: unavailable }, runtime()),
+    {
+      ok: false,
+      code: "STORAGE_UNAVAILABLE",
+    },
+  );
+  assert.deepEqual(clearDealsFlightRuntimeV2({ removeItem: unavailable }), {
+    ok: false,
+    code: "STORAGE_UNAVAILABLE",
+  });
+});
+
+test("rejects invalid expiry and fare projections", () => {
+  for (const patch of [
+    { inventoryExpiresAt: "not-a-date" },
+    { fareChoices: [{ ...runtime().fareChoices[0], fareKey: "forged" }] },
+    { fareChoices: [{ ...runtime().fareChoices[0], sourcePrice: Infinity }] },
+    { fareChoices: [{ ...runtime().fareChoices[0], sourceCurrency: "usd" }] },
+    { fareChoices: [{ ...runtime().fareChoices[0], offerExpiresAt: -1 }] },
+  ])
+    assert.equal(
+      parseDealsFlightRuntimeV2(
+        JSON.stringify({ ...runtime(), ...patch }),
+        "search-key",
+        "round-trip",
+        1,
+      ),
+      null,
+    );
 });
