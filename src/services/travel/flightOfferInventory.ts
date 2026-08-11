@@ -10,8 +10,7 @@ export type FlightFareOption = {
   fareKey: string;
   resultId: string;
   provider: string;
-  providerOfferId: string;
-  providerExpiresAt?: number;
+  offerExpiresAt?: number;
   cabinClass: string;
   baggageInfo: string;
   refundInfo: string;
@@ -148,11 +147,7 @@ export function getFlightOffersForItinerary(
 
 export function buildFlightFareKey(result: NormalizedFlightResult) {
   if (!isProviderBackedFlightOffer(result)) return null;
-  return JSON.stringify([
-    "flight-fare-v1",
-    result.provider.trim().toLowerCase(),
-    result.providerOfferId.trim(),
-  ]);
+  return JSON.stringify(["flight-fare-v2", result.id]);
 }
 
 export function getFlightFareOptions(
@@ -166,8 +161,7 @@ export function getFlightFareOptions(
         fareKey,
         resultId: result.id,
         provider: result.provider,
-        providerOfferId: result.providerOfferId,
-        providerExpiresAt: result.providerExpiresAt,
+        offerExpiresAt: result.providerExpiresAt,
         cabinClass: result.cabinClass,
         baggageInfo: result.baggageInfo,
         refundInfo: result.refundInfo,

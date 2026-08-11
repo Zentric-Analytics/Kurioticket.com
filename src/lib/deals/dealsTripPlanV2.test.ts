@@ -105,7 +105,6 @@ export const car: DealsTripPlanCar = {
 export const offer: DealsConfirmedFlightOfferV2 = {
   resultId: "r1",
   provider: "Duffel",
-  providerOfferId: "off-1",
   airline: "Air",
   flightNumber: "KT1",
   outboundItineraryKey: "out-1",
@@ -119,7 +118,7 @@ export const offer: DealsConfirmedFlightOfferV2 = {
   sourceCurrency: "USD",
   selectedAt: now,
   validatedAt: now + 1,
-  providerExpiresAt: now + 1_000,
+  offerExpiresAt: now + 1_000,
 };
 export const confirmedPlan = (): DealsTripPlanV2 => {
   const base = createDealsTripPlanV2(search(), now);
