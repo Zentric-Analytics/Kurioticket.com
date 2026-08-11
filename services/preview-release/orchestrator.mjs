@@ -220,7 +220,7 @@ export class PreviewOrchestrator {
       classification = applyCutoverBaseline({ classification, files, sha, config: this.config });
       classification = applyIosNativeBackfill({ classification, files, sha, config: this.config });
       if (classification.classification === "UNSAFE") throw new Error(`Release classification failed closed: ${classification.reason}.`);
-      await prepareCheckout(checkout.directory);
+      await prepareCheckout(checkout.directory, { allowRootScriptDrift: true });
       const identity = await resolvedIdentity(checkout.directory);
       assertPreviewIdentity(identity);
       const fingerprints = await nativeFingerprints(checkout.directory);
