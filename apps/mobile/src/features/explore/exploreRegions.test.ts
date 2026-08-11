@@ -117,27 +117,38 @@ test("region screen groups empty browsing and keeps active search flat", () => {
   assert.match(source, /destinationDetailsRoute\(destination\.id\)/);
 });
 
-test("empty regional browsing uses responsive image-led destination cards", () => {
+test("empty regional browsing uses responsive Popular-style destination cards", () => {
   const source = screenSource();
   const aspectRatio = Number(
     source.match(/REGION_BROWSE_IMAGE_ASPECT_RATIO = ([\d.]+);/)?.[1],
   );
-  const footerMinHeight = Number(
-    source.match(/browseFooter: {[\s\S]*?minHeight: (\d+),/)?.[1],
+  const imageHeightRatio = Number(
+    source.match(/REGION_BROWSE_IMAGE_HEIGHT_RATIO = ([\d.]+);/)?.[1],
   );
-  const representativeContentWidth = 360;
-  const imageHeight = representativeContentWidth / aspectRatio;
 
-  assert.ok(aspectRatio >= 2 && aspectRatio <= 2.3);
-  assert.ok(
-    imageHeight / (imageHeight + footerMinHeight) >= 0.65 &&
-      imageHeight / (imageHeight + footerMinHeight) <= 0.75,
+  assert.ok(aspectRatio > 1 && aspectRatio < 2);
+  assert.ok(imageHeightRatio >= 0.58 && imageHeightRatio <= 0.62);
+  assert.ok(Math.abs(1 - imageHeightRatio - 0.4) < Number.EPSILON);
+  assert.match(
+    source,
+    /screenWidth - REGION_BROWSE_HORIZONTAL_INSET \* 2/,
   );
-  assert.match(source, /browseCard: {[\s\S]*?width: "100%"/);
+  assert.match(source, /const imageHeight = width \/ REGION_BROWSE_IMAGE_ASPECT_RATIO/);
+  assert.match(source, /const height = imageHeight \/ REGION_BROWSE_IMAGE_HEIGHT_RATIO/);
+  assert.match(source, /informationHeight: height - imageHeight/);
+  for (const screenWidth of [320, 360, 390, 430]) {
+    const width = Math.max(240, screenWidth - 36);
+    const imageHeight = width / aspectRatio;
+    const height = imageHeight / imageHeightRatio;
+    assert.equal(imageHeight / height, 0.6);
+    assert.ok(Math.abs((height - imageHeight) / height - 0.4) < 1e-10);
+    assert.equal(width, screenWidth - 36);
+  }
+  assert.match(source, /browseCard:[\s\S]*?borderRadius: 16/);
   assert.match(source, /browseImage: {[\s\S]*?width: "100%"/);
   assert.match(
     source,
-    /browseImage: {[\s\S]*?aspectRatio: REGION_BROWSE_IMAGE_ASPECT_RATIO/,
+    /style=\{\[s\.browseImage, \{ height: layout\.imageHeight \}\]\}/,
   );
   assert.match(
     source,
@@ -153,17 +164,43 @@ test("empty regional browsing uses responsive image-led destination cards", () =
   );
 });
 
-test("browse card footer keeps canonical names and airport summaries without country metadata", () => {
+test("browse cards render canonical editorial and metadata in the Popular hierarchy", () => {
   const source = screenSource();
   const browseCard = source.slice(
     source.indexOf("function RegionBrowseDestinationCard"),
     source.indexOf("export function ExploreRegionScreen"),
   );
 
-  assert.match(browseCard, /{destination\.name}/);
+  assert.match(
+    browseCard,
+    /<Text style=\{s\.browseName\}>\{destination\.name\}<\/Text>\s*<Text style=\{s\.browseCountry\}> · \{destination\.country\}<\/Text>/,
+  );
+  assert.match(browseCard, /numberOfLines=\{3\}/);
+  assert.match(browseCard, /ellipsizeMode="tail"[\s\S]*?\{destination\.summary\}/);
+  assert.doesNotMatch(browseCard, /destination\.(description|highlights)/);
   assert.match(browseCard, /destination\.primaryAirportCode/);
-  assert.match(browseCard, /destination\.airportCodes\.length - 1/);
-  assert.doesNotMatch(browseCard, /{destination\.country} ·/);
+  assert.match(browseCard, /formatFlightAccess\([\s\S]*?destination\.airportCodes/);
+  assert.match(browseCard, /destinationMedia\(destination\.id\)/);
+  assert.match(browseCard, /media\?\.source/);
+  assert.match(browseCard, /style=\{s\.browseHeart\}/);
+  assert.match(browseCard, /onPress=\{onToggle\}/);
+  assert.ok(
+    browseCard.indexOf("style={[s.browseImage") <
+      browseCard.indexOf("style={[s.browseCopy"),
+  );
+});
+
+test("active regional search stays compact and excludes browse-card editorial", () => {
+  const source = screenSource();
+  const activeSearch = source.slice(
+    source.indexOf("{searchActive ? ("),
+    source.indexOf(") : (", source.indexOf("{searchActive ? (")),
+  );
+
+  assert.match(activeSearch, /<FlatList/);
+  assert.match(activeSearch, /<DestinationResultRow/);
+  assert.doesNotMatch(activeSearch, /RegionBrowseDestinationCard/);
+  assert.doesNotMatch(activeSearch, /destination\.summary/);
 });
 
 test("regional search continues to reuse unchanged global ranking and scope", () => {
