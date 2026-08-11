@@ -1,7 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { requirePreviewEnvironment } from "./config.mjs";
+import { PREVIEW_IDENTITY, requirePreviewEnvironment } from "./config.mjs";
 import { PreviewLedger } from "./ledger.mjs";
 import { PreviewOrchestrator } from "./orchestrator.mjs";
 import { GitHubClient, RenderClient, EasClient } from "./remote-clients.mjs";
@@ -18,10 +18,11 @@ for (const migration of (await readdir(resolve(root, "services/preview-release/s
 }
 const github = new GitHubClient({ readToken: config.githubReadToken, statusToken: config.githubStatusToken, repository: config.repository });
 const render = new RenderClient({ apiKey: config.renderApiKey, serviceId: config.renderServiceId });
+const renderWorker = new RenderClient({ apiKey: config.renderApiKey, serviceId: PREVIEW_IDENTITY.renderWorkerServiceId });
 const eas = new EasClient({ expoToken: config.expoToken, cwd: resolve(root, "apps/mobile") });
 const apple = new AppStoreConnectClient(config.appStoreConnect);
 try {
-  const preflight = await runPreviewPreflight({ config, ledger, github, render, eas, apple });
+  const preflight = await runPreviewPreflight({ config, ledger, github, render, renderWorker, eas, apple });
   console.log(JSON.stringify({ event: "preview-release-preflight", ...preflight }));
 } catch (error) {
   console.error(JSON.stringify({ event: "preview-release-preflight-failed", error: redactPreflightError(error, [config.githubReadToken, config.renderApiKey, config.expoToken, config.databaseUrl, config.appStoreConnect.privateKey, config.appStoreConnect.issuerId, config.appStoreConnect.keyId]) }));

@@ -2,6 +2,8 @@
 
 Operational status: **PREVIEW RELEASE CUTOVER VERIFIED**. The Render worker `srv-d9qisaaju40c73bbago0` is the sole approved automatic Preview delivery owner, running on Standard / 2 GB with PostgreSQL `dpg-d9qifcbm8hqs738hg570-a`. Current approved Preview release infrastructure cost is `$35.50/month`. Do not restore the superseded GitHub Actions Preview delivery workflows.
 
+The worker must track repository `Zentric-Analytics/Kurioticket.com`, branch `dev`, with Render Auto-Deploy set to **On Commit**. Startup and the read-only preflight verify those settings through the Render API and fail visibly if they drift. This is required because the immutable worker dependency manifests must advance with `dev`; disabling auto-deploy can otherwise cause every newer release to fail closed before classification.
+
 Run locally in non-mutating mode:
 
 ```powershell

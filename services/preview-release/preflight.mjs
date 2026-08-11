@@ -1,10 +1,11 @@
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
 
-export async function runPreviewPreflight({ config, ledger, github, render, eas, apple }) {
+export async function runPreviewPreflight({ config, ledger, github, render, renderWorker, eas, apple }) {
   if (!new Set(["dry-run", "active"]).has(config.mode)) throw new Error("Provider preflight mode is invalid.");
   const sourceSha = await github.latestDevSha();
   const database = await ledger.healthCheck();
   const service = await render.getService();
+  const workerService = await renderWorker.getPreviewWorkerService();
   const deploy = await render.latestDeploy();
   const project = await eas.projectInfo();
   const builds = await eas.previewBuildHistory();
@@ -29,6 +30,9 @@ export async function runPreviewPreflight({ config, ledger, github, render, eas,
     renderServiceName: service.name,
     renderDeployId: deploy?.id ?? null,
     renderDeployStatus: deploy?.status ?? "none",
+    renderWorkerServiceId: workerService.id,
+    renderWorkerAutoDeploy: workerService.autoDeploy === true,
+    renderWorkerBranch: workerService.branch,
     easProjectId: project.projectId,
     easBuildHistoryReadable: Array.isArray(builds),
     easUpdateHistoryReadable: Array.isArray(updates),
