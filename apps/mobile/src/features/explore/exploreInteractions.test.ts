@@ -547,12 +547,12 @@ test("destination details follow the destination-first hierarchy without duplica
     "resolvedDestinationHeroSource(media, imageFailed)",
     "styles.titleRow",
     "destination.summary",
-    'label="Search flights"',
-    'label="Search hotels"',
     'title="About"',
     'title="Highlights"',
     'title="Getting there"',
     'title="Related destinations"',
+    'label="Search flights"',
+    'label="Search hotels"',
   ];
 
   let previousIndex = -1;
@@ -567,6 +567,17 @@ test("destination details follow the destination-first hierarchy without duplica
   assert.doesNotMatch(page, /PRIMARY AIRPORT|styles\.primaryAirport|title="Airports?"/);
   assert.equal(page.match(/destination\.airportCodes\.map/g)?.length, 1);
   assert.equal(page.match(/destination\.airportNames\[index\]/g)?.length, 1);
+
+  const actions = page.slice(page.indexOf("<View style={styles.actions}>"));
+  assert.match(actions, /<Action label="Search flights" icon="flight" onPress={searchFlights} \/>/);
+  assert.match(actions, /<Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary \/>/);
+  assert.doesNotMatch(actions.slice(actions.indexOf("<\/View>") + 7), /<Section|<Action/);
+
+  const actionStyles = source.slice(source.indexOf("const styles = StyleSheet.create"));
+  assert.match(actionStyles, /actions: \{ flexDirection: "row", gap: 10/);
+  assert.match(actionStyles, /actionButton: \{ flex: 1 \}/);
+  assert.match(actionStyles, /primaryButton: \{ minHeight: 52[\s\S]*backgroundColor: BLUE/);
+  assert.match(actionStyles, /secondaryButton: \{ backgroundColor: "white", borderWidth: 1, borderColor: BLUE \}/);
 
   const london = destinationById.get("gb-london")!;
   assert.ok(london.airportCodes.length > 1);
