@@ -10,6 +10,7 @@ import {
 import {
   buildDealsSearchFingerprint,
   DEALS_TRIP_PLAN_TTL_MS,
+  isDealsTripPlanProductExpired,
   validateDealsCarDetailsPath,
   validateDealsProductDetailsPath,
   type DealsTripPlanCar,
@@ -88,6 +89,39 @@ export type DealsTripPlanV2 = {
   flightJourney?: DealsFlightJourneyV2;
   opened: { hotel?: number; flight?: number; car?: number };
 };
+
+export type DealsV2DeadlineKind = "plan" | "hotel" | "flight-offer" | "car";
+export type DealsV2Deadline = {
+  kind: DealsV2DeadlineKind;
+  expiresAt: number;
+};
+
+/** Returns the earliest canonical lifecycle boundary, including one already passed. */
+export function getDealsTripPlanV2NextDeadline(
+  plan: DealsTripPlanV2,
+): DealsV2Deadline {
+  const deadlines: DealsV2Deadline[] = [
+    { kind: "plan", expiresAt: plan.expiresAt },
+  ];
+  if (plan.hotel)
+    deadlines.push({
+      kind: "hotel",
+      expiresAt: plan.hotel.resultReceivedAt + DEALS_TRIP_PLAN_TTL_MS,
+    });
+  if (plan.flightJourney?.confirmedOffer)
+    deadlines.push({
+      kind: "flight-offer",
+      expiresAt: plan.flightJourney.confirmedOffer.offerExpiresAt,
+    });
+  if (plan.car)
+    deadlines.push({
+      kind: "car",
+      expiresAt: plan.car.resultReceivedAt + DEALS_TRIP_PLAN_TTL_MS,
+    });
+  return deadlines.reduce((earliest, deadline) =>
+    deadline.expiresAt < earliest.expiresAt ? deadline : earliest,
+  );
+}
 
 const record = (value: unknown): value is Record<string, unknown> =>
   Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -613,6 +647,19 @@ export function createDealsTripPlanV2(
       : {}),
     opened: {},
   };
+}
+
+export function createDealsTripPlanV2ForRestart(
+  search: DealsSearch,
+  upstreamPlan: Pick<DealsTripPlanV2, "searchFingerprint" | "hotel"> | null,
+  now = Date.now(),
+): DealsTripPlanV2 {
+  const plan = createDealsTripPlanV2(search, now);
+  return upstreamPlan?.hotel &&
+    upstreamPlan.searchFingerprint === plan.searchFingerprint &&
+    !isDealsTripPlanProductExpired(upstreamPlan.hotel.resultReceivedAt, now)
+    ? { ...plan, hotel: upstreamPlan.hotel }
+    : plan;
 }
 
 export const areDealsFlightOfferAndJourneyConsistentV2 = offerMatchesJourney;

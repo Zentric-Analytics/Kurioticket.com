@@ -5,7 +5,7 @@ import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import { buildDealsProductSearchKeys } from "@/lib/deals/dealsProductSearchKeys";
 import { applyDealsJourneyEventV2 } from "@/lib/deals/dealsJourneyEngineV2";
 import {
-  createDealsTripPlanV2,
+  createDealsTripPlanV2ForRestart,
   type DealsTripPlanV2,
 } from "@/lib/deals/dealsTripPlanV2";
 import type { DealsTripPlan } from "@/lib/deals/dealsTripPlan";
@@ -76,14 +76,11 @@ export function DealsFlightJourneyV2({
   const searchKey = buildDealsProductSearchKeys(search).flight;
   const [runtime, setRuntime] = useState<DealsFlightRuntimeV2 | null>(null);
   const freshPlan = useCallback(
-    () => ({
-      ...createDealsTripPlanV2(search),
-      ...(upstreamPlan?.hotel ? { hotel: upstreamPlan.hotel } : {}),
-    }),
+    (now = Date.now()) =>
+      createDealsTripPlanV2ForRestart(search, upstreamPlan, now),
     [search, upstreamPlan],
   );
   const [plan, setPlan] = useState<DealsTripPlanV2>(() => freshPlan());
-  const [mountedAt] = useState(() => Date.now());
   const [status, setStatus] = useState<Status>("initial");
   const [returnState, setReturnState] = useState<DownstreamLoadState>("idle");
   const [fareState, setFareState] = useState<DownstreamLoadState>("idle");
@@ -159,10 +156,15 @@ export function DealsFlightJourneyV2({
     if (!cleared.ok)
       return fail(new DealsFlightInventoryClientError(cleared.code, true));
     setRuntime(null);
-    setPlan(freshPlan());
     setReturnState("idle");
     setFareState("idle");
     setError(null);
+    const nextPlan = freshPlan();
+    setPlan(nextPlan);
+    if (search.mode === "hotel-flight-car" && !nextPlan.hotel) {
+      setStatus("initial");
+      return;
+    }
     setStatus("loading");
     const pending = request();
     try {
@@ -207,6 +209,9 @@ export function DealsFlightJourneyV2({
     searchKey,
     searchRequest,
   ]);
+
+  const hotelPrerequisiteMissing =
+    search.mode === "hotel-flight-car" && !plan.hotel;
 
   const commitRuntime = (next: DealsFlightRuntimeV2) => {
     const written = writeDealsFlightRuntimeV2(sessionStorage, next);
@@ -630,6 +635,10 @@ export function DealsFlightJourneyV2({
     if (applied.ok) setPlan(applied.plan);
   };
 
+  if (hotelPrerequisiteMissing)
+    return (
+      <SafeState message="Your hotel selection expired. Return to the hotel step to choose it again." />
+    );
   if (!runtime && status === "loading")
     return (
       <div role="status" className="rounded-2xl bg-white p-8">
@@ -856,13 +865,13 @@ export function DealsFlightJourneyV2({
         )}
       {(search.mode === "flight-car" || search.mode === "hotel-flight-car") &&
         plan.flightJourney?.phase === "confirmed" &&
-        plan.flightJourney.confirmedOffer &&
-        plan.flightJourney.confirmedOffer.offerExpiresAt > mountedAt && (
+        plan.flightJourney.confirmedOffer && (
           <DealsCarJourneyV2
             key={`${plan.searchFingerprint}:${plan.flightJourney.confirmedOffer.outboundItineraryKey}:${plan.flightJourney.confirmedOffer.returnItineraryKey ?? ""}:${plan.flightJourney.confirmedOffer.fareKey}`}
             search={search}
             plan={plan}
             onPlanChange={setPlan}
+            onSessionExpired={() => void create()}
             onFlightExpired={() =>
               resetInvalidFlight(
                 "This flight offer expired while you were choosing a car. Refresh flight availability.",
@@ -936,7 +945,7 @@ function SafeState({
   onRetry,
 }: {
   message: string;
-  onRetry: () => void;
+  onRetry?: () => void;
 }) {
   return (
     <div
@@ -944,13 +953,15 @@ function SafeState({
       className="rounded-2xl border border-amber-300 bg-white p-6"
     >
       <p className="font-semibold">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="focus-ring mt-4 min-h-11 rounded-xl bg-[#004BB8] px-5 font-bold text-white"
-      >
-        Retry flight search
-      </button>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="focus-ring mt-4 min-h-11 rounded-xl bg-[#004BB8] px-5 font-bold text-white"
+        >
+          Retry flight search
+        </button>
+      )}
     </div>
   );
 }

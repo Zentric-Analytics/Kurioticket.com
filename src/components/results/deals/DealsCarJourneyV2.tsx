@@ -9,7 +9,11 @@ import {
   getRequiredDealsJourneyStateV2,
 } from "@/lib/deals/dealsJourneyEngineV2";
 import type { DealsTripPlanCar } from "@/lib/deals/dealsTripPlan";
-import type { DealsTripPlanV2 } from "@/lib/deals/dealsTripPlanV2";
+import {
+  getDealsTripPlanV2NextDeadline,
+  type DealsTripPlanV2,
+  type DealsV2DeadlineKind,
+} from "@/lib/deals/dealsTripPlanV2";
 import { DealsCarDetailsStage } from "./DealsCarDetailsStage";
 import { DealsCarResultsStage } from "./DealsCarResultsStage";
 
@@ -18,28 +22,56 @@ export function DealsCarJourneyV2({
   plan,
   onPlanChange,
   onFlightExpired,
+  onSessionExpired,
 }: {
   search: DealsSearch;
   plan: DealsTripPlanV2;
   onPlanChange: (plan: DealsTripPlanV2) => void;
   onFlightExpired: () => void;
+  onSessionExpired: () => void;
 }) {
   const [candidateId, setCandidateId] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(!plan.car);
   const [confirmationError, setConfirmationError] = useState("");
+  const [lifecycleNow, setLifecycleNow] = useState(() => Date.now());
+  const [recovery, setRecovery] = useState<{
+    revision: number;
+    kind: DealsV2DeadlineKind;
+  } | null>(null);
 
   useEffect(() => {
-    const expiresAt = plan.flightJourney?.confirmedOffer?.offerExpiresAt;
-    if (!expiresAt) return;
+    if (recovery?.revision === plan.revision) return;
+    const deadline = getDealsTripPlanV2NextDeadline(plan);
     const timer = window.setTimeout(
-      onFlightExpired,
-      Math.max(0, expiresAt - Date.now()),
+      () => {
+        const now = Date.now();
+        setLifecycleNow(now);
+        const current = getDealsTripPlanV2NextDeadline(plan);
+        if (current.expiresAt > now) return;
+        setCandidateId(null);
+        setConfirmationError("");
+        setShowResults(true);
+        if (current.kind === "flight-offer") onFlightExpired();
+        else setRecovery({ revision: plan.revision, kind: current.kind });
+      },
+      Math.max(0, deadline.expiresAt - Date.now()),
     );
     return () => window.clearTimeout(timer);
-  }, [onFlightExpired, plan.flightJourney?.confirmedOffer?.offerExpiresAt]);
+  }, [onFlightExpired, plan, recovery]);
 
   const confirm = (car: DealsTripPlanCar) => {
     const now = Date.now();
+    const deadline = getDealsTripPlanV2NextDeadline(plan);
+    if (plan.expiresAt <= now) {
+      setCandidateId(null);
+      setRecovery({ revision: plan.revision, kind: "plan" });
+      return;
+    }
+    if (deadline.expiresAt <= now && deadline.kind === "hotel") {
+      setCandidateId(null);
+      setRecovery({ revision: plan.revision, kind: "hotel" });
+      return;
+    }
     if (
       plan.flightJourney?.phase !== "confirmed" ||
       !plan.flightJourney.confirmedOffer ||
@@ -76,7 +108,22 @@ export function DealsCarJourneyV2({
     setConfirmationError("");
   };
 
-  if (plan.car && !showResults) {
+  if (recovery?.revision === plan.revision && recovery.kind === "plan")
+    return (
+      <LifecycleRecovery
+        message="Your package session expired. Refresh availability to continue."
+        action="Refresh availability"
+        onAction={onSessionExpired}
+      />
+    );
+
+  if (recovery?.revision === plan.revision && recovery.kind === "hotel")
+    return (
+      <LifecycleRecovery message="Your hotel selection expired. Return to the hotel step to choose it again." />
+    );
+
+  const requiredState = getRequiredDealsJourneyStateV2(plan, lifecycleNow);
+  if (plan.car && !showResults && requiredState === "review") {
     const car = plan.car;
     return (
       <section
@@ -101,11 +148,9 @@ export function DealsCarJourneyV2({
         <p className="mt-2 text-lg font-extrabold">
           Car component: {car.sourceCurrency} {car.sourcePrice}
         </p>
-        {getRequiredDealsJourneyStateV2(plan) === "review" && (
-          <p className="mt-2 text-sm font-semibold">
-            Your package selections are ready for review.
-          </p>
-        )}
+        <p className="mt-2 text-sm font-semibold">
+          Your package selections are ready for review.
+        </p>
         <Button
           type="button"
           variant="secondary"
@@ -152,6 +197,30 @@ export function DealsCarJourneyV2({
           setCandidateId(car.id);
         }}
       />
+    </section>
+  );
+}
+
+function LifecycleRecovery({
+  message,
+  action,
+  onAction,
+}: {
+  message: string;
+  action?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <section
+      role="alert"
+      className="rounded-2xl border border-amber-300 bg-white p-6"
+    >
+      <p className="font-semibold">{message}</p>
+      {action && onAction && (
+        <Button type="button" className="mt-4" onClick={onAction}>
+          {action}
+        </Button>
+      )}
     </section>
   );
 }
