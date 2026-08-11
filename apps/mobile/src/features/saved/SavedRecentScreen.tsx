@@ -9,8 +9,10 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useAppTheme } from "../../theme/AppTheme";
+import { useSavedFlights } from "../../storage/useSavedFlights";
+import type { FlightResult } from "../../api/travelApi";
 
-export type SavedCategory = "destinations" | "stays";
+export type SavedCategory = "destinations" | "stays" | "flights";
 export type SavedItem = { id: string; category: SavedCategory; name: string; country: string; image: ImageSourcePropType; open: () => void };
 
 type SavedSection = { key: SavedCategory; title: string; items: SavedItem[] };
@@ -18,6 +20,7 @@ type SavedSection = { key: SavedCategory; title: string; items: SavedItem[] };
 export const savedCategoryOrder: readonly { key: SavedCategory; title: string }[] = [
   { key: "destinations", title: "Destinations" },
   { key: "stays", title: "Stays" },
+  { key: "flights", title: "Flights" },
 ] as const;
 
 export function savedItem(id: string): SavedItem | undefined {
@@ -25,6 +28,17 @@ export function savedItem(id: string): SavedItem | undefined {
   if (stay) return { id, category: "stays", name: stay.city, country: stay.country, image: stay.image, open: () => router.push({ pathname: "/hotels", params: { destination: stay.city } }) };
   const destination = destinations.find((item) => item.id === id);
   if (destination) return { id, category: "destinations", name: destination.name, country: destination.country, image: destinationMedia(id)?.source ?? FALLBACK_SOURCE, open: () => router.push({ pathname: "/flights", params: { destination: destination.name, destinationId: destination.id, airportCodes: destination.airportCodes.join(","), to: destination.primaryAirportCode } }) };
+}
+
+export function savedFlightItem(flight: FlightResult): SavedItem {
+  return {
+    id: flight.id,
+    category: "flights",
+    name: `${flight.airlineName} flight`,
+    country: `${flight.originAirport} to ${flight.destinationAirport}`,
+    image: FALLBACK_SOURCE,
+    open: () => router.push({ pathname: "/flight-details", params: { result: JSON.stringify(flight) } }),
+  };
 }
 
 export function savedSections(items: readonly SavedItem[]): SavedSection[] {
@@ -42,9 +56,20 @@ function SavedItemImage({ item }: { item: SavedItem }) {
 export function SavedRecentScreen() {
   const { theme } = useAppTheme();
   const { savedIds, toggle, isAuthenticated, authResolved } = useSavedDestinations();
-  const items = [...savedIds].map(savedItem).filter((item): item is SavedItem => !!item);
+  const { savedFlights, toggle: toggleFlight } = useSavedFlights();
+  const items = [
+    ...[...savedIds].map(savedItem).filter((item): item is SavedItem => !!item),
+    ...[...savedFlights.values()].map(savedFlightItem),
+  ];
   const sections = savedSections(items);
   const confirmRemove = (item: SavedItem) => {
+    if (item.category === "flights") {
+      Alert.alert("Remove from saved?", "Are you sure you want to remove this item from your saved favorites?", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Remove", style: "destructive", onPress: () => toggleFlight(savedFlights.get(item.id)!) },
+      ]);
+      return;
+    }
     Alert.alert("Remove from saved?", "Are you sure you want to remove this item from your saved favorites?", [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: () => toggle(item.id) },

@@ -62,8 +62,41 @@ test("flight card uses Lucide icons for route, benefits, badges, and saved state
   for (const icon of ["PlaneTakeoff", "Luggage", "Armchair", "ShieldCheck", "Award", "Tag"]) {
     assert.match(card, new RegExp(`<${icon}\\b`));
   }
-  assert.match(card, /<Heart[\s\S]*fill=\{saved \? ui\.blue : "none"\}/);
-  assert.match(card, /accessibilityLabel=\{`\$\{saved \? "Remove" : "Save"\}/);
+  assert.match(source, /import \{ Heart \} from "lucide-react-native"/);
+  assert.match(card, /<Heart[\s\S]*fill=\{saved \? androidFavoriteColors\.active : "transparent"\}/);
+  assert.match(card, /color=\{saved \? androidFavoriteColors\.active : ui\.muted\}/);
+  assert.match(card, /accessibilityLabel=\{saved \? `Remove \$\{result\.airlineName\} flight from saved` : `Save \$\{result\.airlineName\} flight`\}/);
   assert.doesNotMatch(card, /[▣◉★]/);
   assert.doesNotMatch(card, /<FlowIcon[\s\S]*name="heart"/);
+});
+
+test("flight favorite uses persistent shared state for initial, save, and remove behavior", () => {
+  assert.match(card, /const \{ savedFlights, toggle \} = useSavedFlights\(\)/);
+  assert.match(card, /const saved = savedFlights\.has\(result\.id\)/);
+  assert.match(card, /toggle\(result\)/);
+  assert.doesNotMatch(card, /useState\(false\)/);
+  const hook = readFileSync(resolve("src/storage/useSavedFlights.ts"), "utf8");
+  assert.match(hook, /SAVED_FLIGHTS_KEY/);
+  assert.match(hook, /SecureStore\.getItemAsync/);
+  assert.match(hook, /SecureStore\.setItemAsync/);
+  assert.match(hook, /next\.has\(flight\.id\) \? next\.delete\(flight\.id\) : next\.set\(flight\.id, flight\)/);
+  assert.match(hook, /favoriteAction\(userId\)/);
+});
+
+test("flight favorite is accessible, isolated, and does not enlarge the top row", () => {
+  assert.match(card, /accessibilityRole="button"/);
+  assert.match(card, /accessibilityState=\{\{ selected: saved \}\}/);
+  assert.match(card, /hitSlop=\{\{ top: 12, bottom: 12, left: 12, right: 12 \}\}/);
+  assert.match(card, /event\.stopPropagation\(\); toggle\(result\)/);
+  assert.match(source, /cardTop: \{ minHeight: 23/);
+  assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggle\(result\)/);
+});
+
+test("saved flights remain visible in the established Saved screen", () => {
+  const savedScreen = readFileSync(resolve("src/features/saved/SavedRecentScreen.tsx"), "utf8");
+  assert.match(savedScreen, /useSavedFlights\(\)/);
+  assert.match(savedScreen, /key: "flights", title: "Flights"/);
+  assert.match(savedScreen, /\[\.\.\.savedFlights\.values\(\)\]\.map\(savedFlightItem\)/);
+  assert.match(savedScreen, /item\.category === "flights"/);
+  assert.match(savedScreen, /toggleFlight\(savedFlights\.get\(item\.id\)!\)/);
 });
