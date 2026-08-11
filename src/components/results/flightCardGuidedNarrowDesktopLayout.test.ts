@@ -45,12 +45,12 @@ test("FlightCard retains its container-responsive desktop architecture", () => {
 test("wide and medium desktop cards retain their side fare columns", () => {
   assert.match(
     ruleBody(globalsCss, ".flight-card-desktop-itinerary"),
-    /grid-template-columns:\s*minmax\(0, 1fr\) 184px/,
+    /grid-template-columns:\s*minmax\(0, 1fr\) 196px/,
   );
   const mediumQueryStart = globalsCss.indexOf("@container (max-width: 759px)");
   assert.match(
     ruleBody(globalsCss, ".flight-card-desktop-itinerary", mediumQueryStart),
-    /grid-template-columns:\s*minmax\(0, 1fr\) 168px/,
+    /grid-template-columns:\s*minmax\(0, 1fr\) 180px/,
   );
   assert.match(
     ruleBody(globalsCss, ".flight-card-details"),

@@ -32,6 +32,7 @@ import {
 import {
   buildDealsFlightSelectionSnapshotV2,
   canonicalOfferForSnapshotV2,
+  createDealsFlightRevalidationCoordinatorV2,
   fareFromConfirmedOfferV2,
   getDealsFlightMaterialChangesV2,
   sameDealsFlightSelectionSnapshotV2,
@@ -93,25 +94,18 @@ export function DealsFlightJourneyV2({
   const [pendingChange, setPendingChange] = useState<{
     snapshot: DealsFlightSelectionSnapshotV2;
     offer: DealsConfirmedFlightOfferV2;
+    generation: number;
   } | null>(null);
-  const generation = useRef(0);
-  const controllers = useRef(new Set<AbortController>());
+  const coordinator = useRef(createDealsFlightRevalidationCoordinatorV2());
   const cancel = useCallback(() => {
-    generation.current += 1;
-    controllers.current.forEach((controller) => controller.abort());
-    controllers.current.clear();
+    coordinator.current.cancel();
     setPendingChange(null);
     setRevalidationMessage(null);
   }, []);
-  const request = useCallback(() => {
-    const controller = new AbortController();
-    controllers.current.add(controller);
-    return { controller, generation: generation.current };
-  }, []);
+  const request = useCallback(() => coordinator.current.request(), []);
   const current = useCallback(
     (value: { controller: AbortController; generation: number }) =>
-      !value.controller.signal.aborted &&
-      value.generation === generation.current,
+      coordinator.current.current(value),
     [],
   );
   const fail = useCallback(
@@ -199,7 +193,7 @@ export function DealsFlightJourneyV2({
     } catch (caught) {
       if (current(pending)) fail(caught);
     } finally {
-      controllers.current.delete(pending.controller);
+      coordinator.current.finish(pending);
     }
   }, [
     cancel,
@@ -262,7 +256,7 @@ export function DealsFlightJourneyV2({
         } catch (caught) {
           if (current(pending)) fail(caught);
         } finally {
-          controllers.current.delete(pending.controller);
+          coordinator.current.finish(pending);
         }
       })();
     }, 0);
@@ -409,12 +403,14 @@ export function DealsFlightJourneyV2({
     }
   };
   const selectFare = (key: string) => {
-    if (!runtime) return;
+    if (!runtime || runtime.selectedFareKey === key) return;
     const fare = runtime.fareChoices.find((choice) => choice.fareKey === key);
     if (!fare)
       return fail(
         new DealsFlightInventoryClientError("INVALID_SELECTION", false),
       );
+    cancel();
+    setError(null);
     const applied = applyDealsJourneyEventV2(plan, search, {
       type: "FLIGHT_FARE_SELECTED",
       fare,
@@ -427,6 +423,7 @@ export function DealsFlightJourneyV2({
       );
     if (!commitRuntime({ ...runtime, selectedFareKey: key })) return;
     setPlan(applied.plan);
+    setStatus("success");
   };
 
   const resetInvalidFlight = (
@@ -489,7 +486,11 @@ export function DealsFlightJourneyV2({
         if (!offer)
           throw new DealsFlightInventoryClientError("INVALID_SELECTION", false);
         if (result.status === "changed") {
-          setPendingChange({ snapshot, offer });
+          setPendingChange({
+            snapshot,
+            offer,
+            generation: pending.generation,
+          });
           setStatus("success");
           return;
         }
@@ -544,16 +545,19 @@ export function DealsFlightJourneyV2({
         fail(caught);
       }
     } finally {
-      controllers.current.delete(pending.controller);
+      coordinator.current.finish(pending);
     }
   };
 
   const acceptChangedFlight = () => {
     if (
       !pendingChange ||
-      !runtime ||
-      pendingChange.offer.offerExpiresAt <= Date.now()
+      pendingChange.generation !== coordinator.current.generation()
     ) {
+      setPendingChange(null);
+      return;
+    }
+    if (!runtime || pendingChange.offer.offerExpiresAt <= Date.now()) {
       setPendingChange(null);
       setRevalidationMessage(
         "The refreshed flight expired. Confirm the fare again.",

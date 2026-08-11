@@ -9,6 +9,39 @@ import type { DealsFlightRevalidationRequestV2 } from "./dealsFlightInventoryCli
 
 export type DealsFlightSelectionSnapshotV2 = DealsFlightRevalidationRequestV2;
 
+export type DealsFlightRevalidationRequestGuardV2 = {
+  controller: AbortController;
+  generation: number;
+};
+
+export function createDealsFlightRevalidationCoordinatorV2() {
+  let generation = 0;
+  const controllers = new Set<AbortController>();
+  return {
+    cancel() {
+      generation += 1;
+      controllers.forEach((controller) => controller.abort());
+      controllers.clear();
+    },
+    request(): DealsFlightRevalidationRequestGuardV2 {
+      const controller = new AbortController();
+      controllers.add(controller);
+      return { controller, generation };
+    },
+    current(request: DealsFlightRevalidationRequestGuardV2) {
+      return (
+        !request.controller.signal.aborted && request.generation === generation
+      );
+    },
+    finish(request: DealsFlightRevalidationRequestGuardV2) {
+      controllers.delete(request.controller);
+    },
+    generation() {
+      return generation;
+    },
+  };
+}
+
 export type DealsFlightMaterialChangeV2 = {
   field: "Price" | "Cabin" | "Baggage" | "Refunds";
   before: string;
