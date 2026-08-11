@@ -261,7 +261,7 @@ test("EAS reconciliation accepts omitted CLI bundle identity only when immutable
   assert.equal(reconcileBuilds([value], sha).decision, "ACTIVE_MATCH");
   assert.equal(reconcileBuilds([{ ...value, sourceAttestedAppIdentifier: undefined }], sha).decision, "CONFLICT");
 });
-test("EAS reconciliation accepts a sparse build:view result only with complete immutable source attestation", () => {
+test("EAS reconciliation rejects a sparse build:view result when provider runtime identity is absent", () => {
   const sparse = build({
     project: undefined,
     platform: undefined,
@@ -273,10 +273,9 @@ test("EAS reconciliation accepts a sparse build:view result only with complete i
     sourceAttestedPlatform: "ios",
     sourceAttestedBuildProfile: "preview",
     sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier,
-    sourceAttestedRuntimeVersion: PREVIEW_IDENTITY.runtime,
     sourceAttestedChannel: PREVIEW_IDENTITY.channel,
   });
-  assert.equal(reconcileBuilds([sparse], sha).decision, "ACTIVE_MATCH");
+  assert.equal(reconcileBuilds([sparse], sha).decision, "CONFLICT");
   assert.equal(reconcileBuilds([{ ...sparse, sourceAttestedChannel: undefined }], sha).decision, "CONFLICT");
   assert.equal(reconcileBuilds([{ ...sparse, channel: "production" }], sha).decision, "CONFLICT");
 });
@@ -699,7 +698,7 @@ test("historical TestFlight reconciliation adopts only the recorded finished iOS
     ledger: {
       getAction: async (kind) => {
         actionKinds.push(kind);
-        if (kind === "IOS_BUILD") return { remote_id: finishedBuild.id, state: "FINISHED" };
+        if (kind === "IOS_BUILD") return { remote_id: finishedBuild.id, state: "FINISHED", evidence: { nativeFingerprint: expectedIosRuntime } };
         if (kind === "IOS_SUBMISSION") return { remote_id: finishedSubmission.id, state: "FINISHED" };
         return null;
       },
@@ -1229,11 +1228,14 @@ test("legacy Preview deployment workflows are absent and Production delivery is 
   assert.equal(existsSync(resolve(repositoryRoot, ".github/workflows/mobile-production-update.yml")), true);
 });
 
-test("Render blueprint has one independent dry-run worker, durable database, and disables staging autodeploy", () => {
+test("Render blueprint matches the active auto-deployed worker and keeps staging deployment orchestrated", () => {
   const render = readFileSync(resolve(repositoryRoot, "render.yaml"), "utf8");
-  assert.match(render, /name: kurioticket-preview-release\s+[\s\S]*?type: worker|type: worker\s+[\s\S]*?name: kurioticket-preview-release/);
-  assert.match(render, /PREVIEW_RELEASE_MODE\s+value: dry-run/);
-  assert.match(render, /name: kurioticket-preview-release-postgres/);
+  assert.match(render, /type: worker\s+[\s\S]*?name: kurioticket-preview-release-worker/);
+  assert.match(render, /name: kurioticket-preview-release-worker[\s\S]*?autoDeploy: true/);
+  assert.match(render, /PREVIEW_RELEASE_MODE\s+value: active/);
+  assert.match(render, /PREVIEW_POLL_INTERVAL_MS\s+value: 60000/);
+  assert.match(render, /PREVIEW_LEASE_MS\s+value: 90000/);
+  assert.match(render, /name: kurioticket-preview-release-db/);
   assert.match(render, /name: kurioticket-web-staging[\s\S]*?autoDeploy: false/);
 });
 
@@ -1411,7 +1413,7 @@ test("permanent historical iOS absence is isolated while Android recipients and 
   let oldLookups = 0;
   let cleanup = 0;
   const ledger = {
-    getNativeBuildActionForRelease: async () => ({ identity_key: "old-ios", remote_id: oldBuildId }),
+    getNativeBuildActionForRelease: async () => ({ identity_key: "old-ios", remote_id: oldBuildId, evidence: { nativeFingerprint: "ios-fingerprint" } }),
     markRemoteObjectUnavailable: async () => { unavailable = true; },
     transition: async () => ({ state: "FAILED" }),
   };
@@ -1442,7 +1444,7 @@ test("permanent historical iOS absence is isolated while Android recipients and 
   assert.equal(unavailable, true);
   assert.deepEqual(emitted, ["android-build:tester", "android-build:developer"]);
   assert.equal(newerIosEligible, 1);
-  assert.equal(cleanup, 1);
+  assert.equal(cleanup, 0, "historical provider reconciliation must not create a dependency checkout");
 
   await runWorkerCycle({ mode: "active", github: { latestDevSha: async () => sha }, orchestrator, reconcileNotifications: async () => { newerIosEligible += 1; }, log });
   assert.equal(oldLookups, 1, "terminal historical absence must not hot-loop on the next polling cycle");

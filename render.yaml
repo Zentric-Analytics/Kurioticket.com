@@ -1,22 +1,24 @@
 services:
   - type: worker
-    name: kurioticket-preview-release
+    name: kurioticket-preview-release-worker
     runtime: node
-    plan: starter
+    plan: standard
     branch: dev
-    autoDeploy: false
+    autoDeploy: true
     buildCommand: npm ci && npm --prefix apps/mobile ci
     startCommand: node services/preview-release/worker.mjs
     envVars:
       - key: NODE_VERSION
         value: 24.14.0
       - key: PREVIEW_RELEASE_MODE
-        value: dry-run
+        value: active
       - key: PREVIEW_POLL_INTERVAL_MS
-        value: 15000
+        value: 60000
+      - key: PREVIEW_LEASE_MS
+        value: 90000
       - key: DATABASE_URL
         fromDatabase:
-          name: kurioticket-preview-release-postgres
+          name: kurioticket-preview-release-db
           property: connectionString
       - key: GITHUB_READ_TOKEN
         sync: false
@@ -182,7 +184,7 @@ services:
         sync: false
 
 databases:
-  - name: kurioticket-preview-release-postgres
+  - name: kurioticket-preview-release-db
     databaseName: kurioticket_preview_release
     user: kurioticket_preview_release
     plan: starter
