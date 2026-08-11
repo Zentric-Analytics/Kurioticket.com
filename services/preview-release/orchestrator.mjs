@@ -390,7 +390,7 @@ export class PreviewOrchestrator {
       }
       await lease.checkpoint();
       const message = `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0`;
-      const published = await eas.publishUpdate(message, platform);
+      const published = await eas.publishUpdate(message, platform, expectedRuntime);
       updates.push(...published);
     }
     const ids = updates.map((entry) => entry.id ?? entry.group);

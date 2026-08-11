@@ -1298,9 +1298,9 @@ test("OTA delivery publishes platforms sequentially and resumes only a missing p
     github: {}, render: {},
     easFactory: () => ({
       listUpdates: async () => [iosHistory],
-      publishUpdate: async (message, platform) => {
+      publishUpdate: async (message, platform, expectedRuntime) => {
         published.push(platform);
-        return [{ id: `${platform}-new`, branch: "preview", runtimeVersion: "preview-0.3.0", platforms: [platform], message }];
+        return [{ id: `${platform}-new`, branch: "preview", runtimeVersion: expectedRuntime, platforms: [platform], message }];
       },
     }),
   });
@@ -1318,9 +1318,9 @@ test("coalesced native delivery can publish an OTA overlay only to affected plat
     github: {}, render: {},
     easFactory: () => ({
       listUpdates: async () => [],
-      publishUpdate: async (_message, platform) => {
+      publishUpdate: async (_message, platform, expectedRuntime) => {
         published.push(platform);
-        return [{ id: `${platform}-overlay`, branch: "preview", runtimeVersion: "preview-0.3.0", platforms: [platform], message: `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0` }];
+        return [{ id: `${platform}-overlay`, branch: "preview", runtimeVersion: expectedRuntime, platforms: [platform], message: `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0` }];
       },
     }),
   });
@@ -1332,10 +1332,13 @@ test("coalesced native delivery can publish an OTA overlay only to affected plat
 test("OTA client rejects all-platform publication and uses bounded sequential export memory", async () => {
   const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
   const calls = [];
-  client.run = async (args) => { calls.push(args); return [{ id: "update-id" }]; };
-  await client.publishUpdate("message", "ios");
+  client.run = async (args) => { calls.push(args); return [{ id: "update-id", runtimeVersion: "a".repeat(40) }]; };
+  await client.publishUpdate("message", "ios", "a".repeat(40));
   assert.equal(calls[0][calls[0].indexOf("--platform") + 1], "ios");
-  await assert.rejects(client.publishUpdate("message", "all"), /platform is invalid/);
+  assert.equal(calls[0][calls[0].indexOf("--environment") + 1], "preview");
+  await assert.rejects(client.publishUpdate("message", "all", "a".repeat(40)), /platform is invalid/);
+  client.run = async () => [{ id: "wrong-runtime", runtimeVersion: "b".repeat(40) }];
+  await assert.rejects(client.publishUpdate("message", "ios", "a".repeat(40)), /runtime does not match/);
   const source = readFileSync(resolve(repositoryRoot, "services/preview-release/remote-clients.mjs"), "utf8");
   assert.match(source, /isUpdatePublish \? 512 : 128/);
 });
