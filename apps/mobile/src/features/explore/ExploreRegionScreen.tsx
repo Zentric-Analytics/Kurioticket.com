@@ -4,7 +4,6 @@ import {
   Image,
   Keyboard,
   Pressable,
-  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -26,7 +25,6 @@ import {
   exploreBottomPadding,
   formatFlightAccess,
   formatDestinationCount,
-  groupExploreDestinationsByCountry,
   searchExploreRegion,
 } from "./exploreModels";
 import { destinationDetailsRoute } from "./exploreInteractionModels";
@@ -151,14 +149,6 @@ export function ExploreRegionScreen() {
         : [],
     [query, region, searchActive],
   );
-  const countrySections = useMemo(
-    () =>
-      groupExploreDestinationsByCountry(allDestinations).map((group) => ({
-        ...group,
-        data: group.destinations,
-      })),
-    [allDestinations],
-  );
   const select = (destination: Destination) => {
     Keyboard.dismiss();
     router.push(destinationDetailsRoute(destination.id));
@@ -256,24 +246,14 @@ export function ExploreRegionScreen() {
           )}
         />
       ) : (
-        <SectionList
-          sections={countrySections}
+        <FlatList
+          data={allDestinations}
           keyExtractor={(destination) => destination.id}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[
             s.list,
             { paddingBottom: exploreBottomPadding(20, insets.bottom) },
           ]}
-          renderSectionHeader={({ section }) => (
-            <View style={s.countryHeader}>
-              <Text accessibilityRole="header" style={s.countryName}>
-                {section.country}
-              </Text>
-              <Text style={s.countryCount}>
-                {formatDestinationCount(section.destinations.length)}
-              </Text>
-            </View>
-          )}
           renderItem={({ item }) => (
             <RegionBrowseDestinationCard
               destination={item}
@@ -323,18 +303,6 @@ const s = StyleSheet.create({
   clearText: { color: BLUE, fontWeight: "700" },
   count: { color: MUTED, fontSize: 13, fontWeight: "600", paddingVertical: 14 },
   list: { paddingHorizontal: REGION_BROWSE_HORIZONTAL_INSET },
-  countryHeader: {
-    backgroundColor: "#FAFBFF",
-    paddingTop: 24,
-    paddingBottom: 10,
-  },
-  countryName: { color: NAVY, fontSize: 18, lineHeight: 24, fontWeight: "800" },
-  countryCount: {
-    color: MUTED,
-    fontSize: 13,
-    lineHeight: 20,
-    fontWeight: "600",
-  },
   browseCard: {
     borderWidth: 1,
     borderColor: BORDER,
