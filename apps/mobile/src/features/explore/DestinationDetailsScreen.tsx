@@ -66,6 +66,7 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <View style={styles.topBar}><BackButton /><Text numberOfLines={1} style={styles.topTitle}>{destination.name}</Text><View style={styles.topSpacer} /></View>
       <ScrollView
+        style={styles.scroll}
         alwaysBounceVertical={false}
         bounces={false}
         contentContainerStyle={styles.content}
@@ -123,6 +124,7 @@ const styles = StyleSheet.create({
   backButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 24 },
   topTitle: { flex: 1, color: NAVY, textAlign: "center", fontSize: 16, fontWeight: "800" },
   topSpacer: { width: 48 },
+  scroll: { flex: 1 },
   content: { paddingBottom: DESTINATION_DETAILS_BOTTOM_PADDING },
   hero: { width: "100%", aspectRatio: 4 / 3, maxHeight: 360, minHeight: 240, backgroundColor: "#E7ECF5" },
   body: { paddingHorizontal: 18, paddingTop: 18, gap: 20 },
