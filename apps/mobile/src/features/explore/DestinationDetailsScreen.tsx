@@ -127,7 +127,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Action({ label, icon, onPress, secondary = false }: { label: string; icon: "flight" | "hotel"; onPress: () => void; secondary?: boolean }) {
   const { theme } = useAppTheme();
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={[styles.primaryButton, styles.actionButton, secondary && styles.secondaryButton, secondary && { backgroundColor: theme.surface }]}><FlowIcon name={icon} color={secondary ? BLUE : theme.textOnImage} size={20} /><Text style={[styles.primaryButtonText, { color: theme.textOnImage }, secondary && styles.secondaryButtonText]}>{label}</Text></Pressable>;
+  const secondaryForeground = theme.dark ? theme.text : BLUE;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={[styles.primaryButton, styles.actionButton, secondary && styles.secondaryButton, secondary && { backgroundColor: theme.surface, borderColor: secondaryForeground }]}><FlowIcon name={icon} color={secondary ? secondaryForeground : theme.textOnImage} size={20} /><Text style={[styles.primaryButtonText, { color: theme.textOnImage }, secondary && styles.secondaryButtonText, secondary && { color: secondaryForeground }]}>{label}</Text></Pressable>;
 }
 
 const styles = StyleSheet.create({
