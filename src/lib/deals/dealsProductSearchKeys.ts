@@ -4,6 +4,7 @@ import {
   buildFlightApiPayload,
   type DealsSearch,
 } from "./dealsSearchParams";
+import type { FlightSearchParams } from "@/lib/types";
 
 export type DealsProductSearchKeys = {
   hotel: string;
@@ -34,7 +35,12 @@ export function buildDealsHotelSearchKey(search: DealsSearch): string {
 }
 
 export function buildDealsFlightSearchKey(search: DealsSearch): string {
-  const payload = buildFlightApiPayload(search);
+  return buildDealsFlightSearchKeyFromPayload(buildFlightApiPayload(search));
+}
+
+export function buildDealsFlightSearchKeyFromPayload(
+  payload: FlightSearchParams,
+): string {
   return key([
     ["tripType", payload.tripType],
     ["origin", payload.origin],
