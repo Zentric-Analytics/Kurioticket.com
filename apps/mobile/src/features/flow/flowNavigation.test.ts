@@ -1,5 +1,5 @@
 import * as assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 
@@ -40,8 +40,14 @@ test("deals and read-only My Trips expose real selected-state controls without i
 });
 
 test("profile exposes only account capabilities backed by production data", () => {
-  const tabs = source("src/features/flow/TabScreens.tsx");
-  for (const route of ["/personal-information", "/price-alerts", "/currency"]) assert.match(tabs, new RegExp(route));
-  for (const unsupported of ["/payment-methods", "/saved-travelers"]) assert.doesNotMatch(tabs, new RegExp(unsupported));
-  assert.doesNotMatch(tabs, /Alert\.alert/);
+  const profile = source("src/features/profile/ProfileScreen.tsx");
+  for (const route of ["/personal-information", "/price-alerts", "/currency"]) assert.match(profile, new RegExp(route));
+  for (const unsupported of ["/payment-methods", "/saved-travelers", "Saved travelers", "Language selection", "not available in this version"]) assert.doesNotMatch(profile, new RegExp(unsupported));
+  assert.match(profile, /https:\/\/kurioticket\.com\/faq/);
+  assert.match(profile, /https:\/\/kurioticket\.com\/support/);
+});
+
+test("unsupported routes are absent while compatibility routes remain", () => {
+  for (const route of ["payment-methods.tsx", "saved-travelers.tsx", "explore-trip.tsx"]) assert.equal(existsSync(join(process.cwd(), "app", route)), false);
+  for (const route of ["welcome.tsx", "home.tsx", "connection-status.tsx"]) assert.equal(existsSync(join(process.cwd(), "app", route)), true);
 });
