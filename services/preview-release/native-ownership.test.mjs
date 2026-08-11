@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { NativeOwnershipViolation, unexpectedBuilds, validateAdoptableBuild, validateAdoptableIosSubmission } from "./native-ownership.mjs";
+import { isExactEasObjectMissing } from "./remote-clients.mjs";
 
 const sha = "a".repeat(40);
 const fingerprint = "b".repeat(40);
@@ -46,4 +47,14 @@ test("audited incident fingerprints fail closed", () => {
     build: build({ id: "9a769546-6c5f-4131-9cc3-30e580e78622", fingerprint: { hash: "fb4426eeccb77c850aa443f5d510058c45b7ca5a" } }),
     platform: "android", sourceSha: sha, fingerprint: "0611047bc680d734009a024e83da8331026c953f",
   }), /native-fingerprint/);
+});
+
+test("only an exact EAS build-absence response is permanent", () => {
+  const id = "0c750d4a-79e1-42fe-8d1d-6f16e5dab1f6";
+  assert.equal(isExactEasObjectMissing({ stderr: `Build with id '${id}' does not exist.\nRequest ID: request` }, "build", id), true);
+  assert.equal(isExactEasObjectMissing({ stderr: "Authentication failed with HTTP 401." }, "build", id), false);
+  assert.equal(isExactEasObjectMissing({ stderr: "Rate limit exceeded with HTTP 429." }, "build", id), false);
+  assert.equal(isExactEasObjectMissing({ stderr: "Expo provider temporarily unavailable with HTTP 503." }, "build", id), false);
+  assert.equal(isExactEasObjectMissing({ stderr: `Documentation was not found for build ${id}.` }, "build", id), false);
+  assert.equal(isExactEasObjectMissing({ stderr: "Build with id 'different-id' does not exist." }, "build", id), false);
 });

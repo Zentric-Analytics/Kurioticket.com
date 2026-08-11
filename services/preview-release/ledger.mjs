@@ -389,6 +389,43 @@ export class PreviewLedger {
     return result.rows[0];
   }
 
+  async rejectedNativeOwnershipIncidents({ platform, sourceSha }) {
+    assertExactSha(sourceSha);
+    const result = await this.pool.query(
+      `SELECT * FROM preview_native_ownership_incident
+       WHERE platform=$1 AND source_sha=$2 AND state='REJECTED'
+       ORDER BY detected_at ASC`,
+      [platform, sourceSha],
+    );
+    return result.rows;
+  }
+
+  async correctPlannedNativeFingerprint({ platform, sourceSha, expectedFingerprint, canonicalFingerprint }) {
+    assertExactSha(sourceSha);
+    if (!['ios', 'android'].includes(platform) || !/^[0-9a-f]{40,128}$/.test(expectedFingerprint) || !/^[0-9a-f]{40,128}$/.test(canonicalFingerprint)) throw new Error("Canonical fingerprint correction identity is invalid.");
+    const kind = platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD";
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))", ["canonical-fingerprint-correction", `${sourceSha}:${platform}`]);
+      const incident = await client.query("SELECT 1 FROM preview_native_ownership_incident WHERE platform=$1 AND source_sha=$2 AND state='REJECTED' LIMIT 1", [platform, sourceSha]);
+      if (!incident.rowCount) throw new Error("Canonical fingerprint correction requires a rejected ownership incident.");
+      const owned = await client.query("SELECT 1 FROM preview_release_action WHERE kind=$1 AND remote_id IS NOT NULL AND source_sha=$2 LIMIT 1", [kind, sourceSha]);
+      if (owned.rowCount) throw new Error("Canonical fingerprint correction is forbidden after an owned remote build exists.");
+      const updated = await client.query(
+        `UPDATE preview_release SET evidence=jsonb_set(
+           jsonb_set(evidence, ARRAY['fingerprints',$2], to_jsonb($4::text), true),
+           ARRAY['fingerprintCorrections',$2], jsonb_build_object('previous',$3::text,'canonical',$4::text,'correctedAt',now()), true)
+         WHERE source_sha=$1 AND evidence->'fingerprints'->>$2=$3 RETURNING *`,
+        [sourceSha, platform, expectedFingerprint, canonicalFingerprint],
+      );
+      if (updated.rowCount !== 1) throw new Error("Durable fingerprint changed concurrently; correction rejected.");
+      await client.query("COMMIT");
+      return updated.rows[0];
+    } catch (error) { await client.query("ROLLBACK"); throw error; }
+    finally { client.release(); }
+  }
+
   async adoptNativeBuild({ platform, sourceSha, fingerprint, build }) {
     assertExactSha(sourceSha);
     const kind = platform === "ios" ? "IOS_BUILD" : platform === "android" ? "ANDROID_BUILD" : null;

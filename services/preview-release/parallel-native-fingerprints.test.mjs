@@ -32,7 +32,7 @@ test("iOS and Android native fingerprints start together", async () => {
     return { stdout: JSON.stringify({ hash: hash(platform === "ios" ? "a" : "b") }) };
   };
 
-  const fingerprints = nativeFingerprints("/tmp/preview-checkout", { commandRunner });
+  const fingerprints = nativeFingerprints("/tmp/preview-checkout", { commandRunner, expoToken: "token" });
   await flushMicrotasks();
   assert.deepEqual(started.sort(), ["android", "ios"]);
 
@@ -63,7 +63,7 @@ test("one fingerprint failure waits for the sibling process before rejecting", a
     return { stdout: JSON.stringify({ hash: hash("b") }) };
   };
 
-  const fingerprints = nativeFingerprints("/tmp/preview-checkout", { commandRunner });
+  const fingerprints = nativeFingerprints("/tmp/preview-checkout", { commandRunner, expoToken: "token" });
   await flushMicrotasks();
   assert.equal(androidFinished, false);
 
@@ -74,6 +74,7 @@ test("one fingerprint failure waits for the sibling process before rejecting", a
 
 test("multiple fingerprint failures preserve both platform reasons", async () => {
   const fingerprints = nativeFingerprints("/tmp/preview-checkout", {
+    expoToken: "token",
     commandRunner: async (_command, args) => {
       const platform = args[args.indexOf("--platform") + 1];
       throw new Error(`${platform} fingerprint failed`);

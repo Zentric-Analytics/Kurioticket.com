@@ -159,7 +159,7 @@ export class EasClient {
     let build;
     try { build = await this.run(["eas-cli@16.17.4", "build:view", id, "--json"]); }
     catch (error) {
-      if (/does not exist|not found/i.test(String(error?.message ?? error))) throw new EasRemoteObjectUnavailableError("build", id, error);
+      if (isExactEasObjectMissing(error, "build", id)) throw new EasRemoteObjectUnavailableError("build", id, error);
       throw error;
     }
     if (!build || typeof build !== "object" || Array.isArray(build)) throw new Error("EAS build:view response must be an object.");
@@ -260,6 +260,13 @@ export class EasRemoteObjectUnavailableError extends Error {
   }
 }
 
+export function isExactEasObjectMissing(error, kind, remoteId) {
+  if (kind !== "build" || !/^[0-9a-f-]{36}$/i.test(String(remoteId ?? ""))) return false;
+  const output = [error?.stderr, error?.stdout, error?.message].filter((value) => typeof value === "string").join("\n");
+  const escaped = String(remoteId).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^Build with id ['\"]${escaped}['\"] does not exist\\.$`, "mi").test(output);
+}
+
 export function createExactCheckoutDirectory(workspaceRoot = runtimeRoot) {
   return mkdtemp(join(workspaceRoot, ".kurioticket-preview-"));
 }
@@ -335,9 +342,10 @@ export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot,
   }
 }
 
-export async function nativeFingerprints(directory, { commandRunner = exec } = {}) {
+export async function nativeFingerprints(directory, { commandRunner = exec, expoToken = process.env.EXPO_TOKEN } = {}) {
+  if (!expoToken?.trim()) throw new Error("Canonical Preview fingerprinting requires EXPO_TOKEN to load the EAS Preview environment.");
   const cwd = join(directory, "apps/mobile");
-  const command = join(cwd, "node_modules", ".bin", process.platform === "win32" ? "fingerprint.cmd" : "fingerprint");
+  const command = process.platform === "win32" ? "npx.cmd" : "npx";
   const platforms = ["ios", "android"];
   const batchStartedAt = Date.now();
   console.log(JSON.stringify({ event: "preview-release-fingerprints-started", platforms, rssBytes: process.memoryUsage().rss }));
@@ -345,15 +353,15 @@ export async function nativeFingerprints(directory, { commandRunner = exec } = {
   const settled = await Promise.allSettled(platforms.map(async (platform) => {
     const startedAt = Date.now();
     console.log(JSON.stringify({ event: "preview-release-fingerprint-started", platform, rssBytes: process.memoryUsage().rss }));
-    const { stdout } = await commandRunner(command, ["fingerprint:generate", "--platform", platform, "--concurrent-io-limit", "1"], {
+    const { stdout } = await commandRunner(command, ["eas-cli@16.17.4", "fingerprint:generate", "--build-profile", "preview", "--platform", platform, "--json", "--non-interactive"], {
       cwd,
       encoding: "utf8",
       maxBuffer: 50 * 1024 * 1024,
       timeout: 5 * 60 * 1000,
-      env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=96", MALLOC_ARENA_MAX: "2" },
+      env: { ...process.env, EXPO_TOKEN: expoToken, NODE_OPTIONS: "--max-old-space-size=192", MALLOC_ARENA_MAX: "2" },
     });
     let value;
-    try { value = JSON.parse(stdout); } catch { throw new Error(`Expo ${platform} fingerprint output is malformed.`); }
+    try { value = JSON.parse(stdout.slice(stdout.indexOf("{"))); } catch { throw new Error(`Expo ${platform} fingerprint output is malformed.`); }
     if (!/^[0-9a-f]{40,128}$/.test(value?.hash ?? "")) throw new Error(`Expo ${platform} fingerprint has no valid hash.`);
     console.log(JSON.stringify({ event: "preview-release-fingerprint-complete", platform, durationMs: Date.now() - startedAt, rssBytes: process.memoryUsage().rss }));
     return [platform, value.hash];

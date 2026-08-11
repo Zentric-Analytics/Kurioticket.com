@@ -9,7 +9,7 @@ import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { unexpectedBuilds, validateAdoptableBuild, validateAdoptableIosSubmission } from "./native-ownership.mjs";
 
 export class PreviewOrchestrator {
-  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), checkoutFactory = exactCheckout, prepareCheckoutFactory = prepareCheckout, identityFactory = resolvedIdentity, fingerprintsFactory = nativeFingerprints, stagingWait = waitForStaging, sleep = delay }) {
+  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), checkoutFactory = exactCheckout, prepareCheckoutFactory = prepareCheckout, identityFactory = resolvedIdentity, fingerprintsFactory = (directory) => nativeFingerprints(directory, { expoToken: config.expoToken }), stagingWait = waitForStaging, sleep = delay }) {
     this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.checkoutFactory = checkoutFactory; this.prepareCheckoutFactory = prepareCheckoutFactory; this.identityFactory = identityFactory; this.fingerprintsFactory = fingerprintsFactory; this.stagingWait = stagingWait; this.sleep = sleep;
   }
 
@@ -97,6 +97,46 @@ export class PreviewOrchestrator {
     }
     console.log(JSON.stringify({ event: "native-build-safely-adopted", sourceSha, platform, fingerprint, buildId, buildNumber: build.appBuildVersion, submissionId: submission?.id ?? null }));
     return { action, submission };
+  }
+
+  async recoverCanonicalNativeBuild({ sourceSha, platform }) {
+    if (!['ios', 'android'].includes(platform)) throw new Error("Canonical recovery platform is invalid.");
+    if (await this.github.latestDevSha() !== sourceSha) throw new Error("Canonical recovery is restricted to the exact current dev SHA.");
+    const release = await this.ledger.releaseBySha(sourceSha);
+    let plannedFingerprint = release?.evidence?.fingerprints?.[platform];
+    if (!plannedFingerprint) throw new Error(`Release ${sourceSha} has no durable ${platform} fingerprint.`);
+    const rejected = await this.ledger.rejectedNativeOwnershipIncidents({ platform, sourceSha });
+    if (!rejected.length) throw new Error(`Canonical ${platform} replacement requires a rejected ownership incident.`);
+
+    const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha: sourceSha });
+    try {
+      await this.prepareCheckoutFactory(checkout.directory);
+      assertPreviewIdentity(await this.identityFactory(checkout.directory));
+      const currentFingerprints = await this.fingerprintsFactory(checkout.directory);
+      if (currentFingerprints[platform] !== plannedFingerprint) {
+        await this.ledger.correctPlannedNativeFingerprint({ platform, sourceSha, expectedFingerprint: plannedFingerprint, canonicalFingerprint: currentFingerprints[platform] });
+        console.warn(JSON.stringify({ event: "canonical-native-fingerprint-corrected", platform, sourceSha, previousFingerprint: plannedFingerprint, canonicalFingerprint: currentFingerprints[platform], cause: "planning-did-not-load-eas-preview-environment" }));
+        plannedFingerprint = currentFingerprints[platform];
+      }
+
+      const identityKey = nativeBuildIdentityKey(platform, plannedFingerprint);
+      const reservation = await this.ledger.reserveNativeBuild({ sourceSha, platform, identityKey });
+      let action = reservation.action;
+      const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
+      if (!action.remote_id) {
+        const created = platform === "ios" ? await eas.createIosBuild() : await eas.createAndroidBuild();
+        action = await this.ledger.recordAction({ sourceSha, kind: platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD", identityKey, remoteId: created.id, state: "CREATED", evidence: { ...created, nativeFingerprint: plannedFingerprint, nativeArtifactSourceSha: sourceSha, latestCompatibleSourceSha: sourceSha, ownershipSource: "CANONICAL_INCIDENT_REPLACEMENT", rejectedIncidentBuildIds: rejected.map(({ build_id }) => build_id) } });
+        console.log(JSON.stringify({ event: "canonical-native-replacement-created", platform, sourceSha, fingerprint: plannedFingerprint, buildId: created.id }));
+      }
+      const lease = { checkpoint: async () => {} };
+      const result = platform === "ios"
+        ? await this.deliverIos(sourceSha, checkout.directory, lease, plannedFingerprint)
+        : await this.deliverAndroid(sourceSha, checkout.directory, lease, plannedFingerprint);
+      const finished = await eas.viewBuild(result.buildId);
+      validateAdoptableBuild({ build: finished, platform, sourceSha, fingerprint: plannedFingerprint, existingAction: action, delivered: null });
+      console.log(JSON.stringify({ event: "canonical-native-replacement-verified", platform, sourceSha, fingerprint: plannedFingerprint, buildId: result.buildId, buildNumber: result.buildNumber }));
+      return { ...result, fingerprint: plannedFingerprint };
+    } finally { await checkout.cleanup(); }
   }
 
   async deriveDecision() {

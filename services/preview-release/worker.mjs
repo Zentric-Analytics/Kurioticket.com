@@ -8,6 +8,7 @@ import { GitHubClient, RenderClient, EasClient } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { notifyFailedNativeBuilds, notifySuccessfulNativeBuilds } from "./build-notifications.mjs";
+import { runWorkerCycle } from "./worker-cycle.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const config = requirePreviewEnvironment();
@@ -40,20 +41,7 @@ for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => { stopping 
 console.log(JSON.stringify({ event: "preview-release-worker-started", mode: config.mode, repository: config.repository, branch: config.branch, sourceSha: await github.latestDevSha(), pollIntervalMs: config.pollIntervalMs }));
 while (!stopping) {
   const started = Date.now();
-  let cycleSourceSha = null;
-  if (config.mode === "active") {
-    await runIsolated("native-ownership-reconciliation", () => orchestrator.reconcileNativeOwnership());
-  }
-  try {
-    cycleSourceSha = await github.latestDevSha();
-    const result = await orchestrator.cycle();
-    const sourceSha = result.source_sha ?? result.sourceSha ?? cycleSourceSha;
-    console.log(JSON.stringify({ event: "preview-release-cycle", sourceSha, state: result.state }));
-  } catch (error) {
-    const message = String(error?.message ?? error).slice(0, 500);
-    console.error(JSON.stringify({ event: "preview-release-cycle-failed", error: message }));
-  }
-  if (config.mode === "active") await runIsolated("native-notification-reconciliation", reconcileAllBuildNotifications);
+  await runWorkerCycle({ mode: config.mode, github, orchestrator, reconcileNotifications: reconcileAllBuildNotifications });
   const remaining = Math.max(0, config.pollIntervalMs - (Date.now() - started));
   if (remaining) await new Promise((resolveDelay) => setTimeout(resolveDelay, remaining));
 }
@@ -74,13 +62,5 @@ async function reconcileAllBuildNotifications() {
       return [];
     });
     if (results[0]) await ledger.recordNativeNotificationAttempt(candidate, results[0]);
-  }
-}
-
-async function runIsolated(stage, operation) {
-  try { return await operation(); }
-  catch (error) {
-    console.error(JSON.stringify({ event: "preview-release-stage-failed", stage, error: String(error?.message ?? error).slice(0, 500) }));
-    return null;
   }
 }

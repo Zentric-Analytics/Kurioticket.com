@@ -9,10 +9,11 @@ import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry } from "./orchestrator.mjs";
-import { createExactCheckoutDirectory, EasClient, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
+import { createExactCheckoutDirectory, EasClient, EasRemoteObjectUnavailableError, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { PreviewLedger } from "./ledger.mjs";
+import { runWorkerCycle } from "./worker-cycle.mjs";
 
 const sha = "a".repeat(40);
 const appleEnv = { APP_STORE_CONNECT_ISSUER_ID: "issuer", APP_STORE_CONNECT_KEY_ID: "key", APP_STORE_CONNECT_PRIVATE_KEY: "private-key", APP_STORE_CONNECT_PREVIEW_APP_ID: "6797447471", APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID: "group-preview" };
@@ -1181,9 +1182,9 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /APP_VARIANT: "preview"/);
   assert.match(client, /APP_BUILD_MODE: "release"/);
   assert.match(client, /EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY\.apiOrigin/);
-  assert.match(client, /node_modules", "\.bin"/);
-  assert.match(client, /\["fingerprint:generate", "--platform", platform, "--concurrent-io-limit", "1"\]/);
-  assert.match(client, /NODE_OPTIONS: "--max-old-space-size=96", MALLOC_ARENA_MAX: "2"/);
+  assert.match(client, /process\.platform === "win32" \? "npx\.cmd" : "npx"/);
+  assert.match(client, /"fingerprint:generate", "--build-profile", "preview", "--platform", platform/);
+  assert.match(client, /EXPO_TOKEN: expoToken, NODE_OPTIONS: "--max-old-space-size=192", MALLOC_ARENA_MAX: "2"/);
   assert.match(client, /preview-release-fingerprint-started/);
   assert.match(client, /preview-release-fingerprint-complete/);
   assert.match(client, /const isUpdatePublish = args\[1\] === "update"/);
@@ -1285,20 +1286,92 @@ test("web delivery adopts exact-SHA Render history before creating a duplicate",
   assert.equal(actions.at(-1).remoteId, deploy.id);
 });
 
-test("worker isolates ownership, release, and notification reconciliation stages", () => {
-  const worker = readFileSync(resolve(repositoryRoot, "services/preview-release/worker.mjs"), "utf8");
-  assert.match(worker, /runIsolated\("native-ownership-reconciliation"/);
-  assert.match(worker, /runIsolated\("native-notification-reconciliation"/);
-  assert.ok(worker.indexOf('native-ownership-reconciliation') < worker.indexOf('orchestrator.cycle()'));
-  assert.ok(worker.indexOf('orchestrator.cycle()') < worker.indexOf('native-notification-reconciliation'));
+test("permanent historical iOS absence is isolated while Android recipients and newer iOS remain eligible", async () => {
+  const oldBuildId = "0c750d4a-79e1-42fe-8d1d-6f16e5dab1f6";
+  let unavailable = false;
+  let oldLookups = 0;
+  let cleanup = 0;
+  const ledger = {
+    getNativeBuildActionForRelease: async () => ({ identity_key: "old-ios", remote_id: oldBuildId }),
+    markRemoteObjectUnavailable: async () => { unavailable = true; },
+    transition: async () => ({ state: "FAILED" }),
+  };
+  const historical = new PreviewOrchestrator({
+    config: { repository: PREVIEW_IDENTITY.repository, githubReadToken: "x", workerId: "worker" }, ledger, github: {}, render: {},
+    checkoutFactory: async () => ({ directory: repositoryRoot, cleanup: async () => { cleanup += 1; } }),
+    prepareCheckoutFactory: async () => {}, identityFactory: async () => ({ appName: PREVIEW_IDENTITY.appName, bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: PREVIEW_IDENTITY.scheme, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile, channel: PREVIEW_IDENTITY.channel, runtime: PREVIEW_IDENTITY.runtime, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
+    fingerprintsFactory: async () => ({ ios: "ios-fingerprint", android: "android-fingerprint" }),
+    easFactory: () => ({ viewBuild: async () => { oldLookups += 1; throw new EasRemoteObjectUnavailableError("build", oldBuildId, new Error("exact absence")); } }),
+  });
+  const recipients = ["tester", "developer"];
+  const emitted = [];
+  let newerIosEligible = 0;
+  const orchestrator = {
+    reconcileNativeOwnership: async () => {},
+    cycle: async () => unavailable
+      ? { state: "NEWER_IOS_ELIGIBLE", sourceSha: sha }
+      : historical.reconcileIosDistribution({ source_sha: sha, state: "DETECTED" }, { checkpoint: async () => {} }),
+  };
+  const reconcileNotifications = async () => {
+    emitted.push(...recipients.map((memberId) => `android-build:${memberId}`));
+    newerIosEligible += 1;
+  };
+  const log = { log() {}, error() {}, warn() {} };
+
+  const first = await runWorkerCycle({ mode: "active", github: { latestDevSha: async () => sha }, orchestrator, reconcileNotifications, log });
+  assert.equal(first.releaseResult.state, "OPERATOR_ATTENTION_REQUIRED");
+  assert.equal(unavailable, true);
+  assert.deepEqual(emitted, ["android-build:tester", "android-build:developer"]);
+  assert.equal(newerIosEligible, 1);
+  assert.equal(cleanup, 1);
+
+  await runWorkerCycle({ mode: "active", github: { latestDevSha: async () => sha }, orchestrator, reconcileNotifications: async () => { newerIosEligible += 1; }, log });
+  assert.equal(oldLookups, 1, "terminal historical absence must not hot-loop on the next polling cycle");
+  assert.equal(newerIosEligible, 2);
 });
 
-test("missing historical EAS objects become durable operator attention without deleting history", () => {
-  const ledgerSource = readFileSync(resolve(repositoryRoot, "services/preview-release/ledger.mjs"), "utf8");
-  const orchestratorSource = readFileSync(resolve(repositoryRoot, "services/preview-release/orchestrator.mjs"), "utf8");
-  assert.match(ledgerSource, /REMOTE_OBJECT_UNAVAILABLE/);
-  assert.match(orchestratorSource, /historical-action-isolated/);
-  assert.match(orchestratorSource, /OPERATOR_ATTENTION_REQUIRED/);
-  assert.doesNotMatch(orchestratorSource, /DELETE FROM preview_release_action/);
+test("current Android provider failure does not suppress eligible iOS notification reconciliation", async () => {
+  let iosNotifications = 0;
+  await runWorkerCycle({
+    mode: "active", github: { latestDevSha: async () => sha },
+    orchestrator: { reconcileNativeOwnership: async () => {}, cycle: async () => { throw new Error("Android provider unavailable"); } },
+    reconcileNotifications: async () => { iosNotifications += 1; },
+    log: { log() {}, error() {} },
+  });
+  assert.equal(iosNotifications, 1);
+});
+
+test("canonical incident replacement corrects planning once, reserves before creation, and is idempotent", async () => {
+  const canonical = "c".repeat(40);
+  const old = "d".repeat(40);
+  const buildId = "11111111-1111-4111-8111-111111111111";
+  let action = { source_sha: sha, identity_key: `native-build:android:${PREVIEW_IDENTITY.easProjectId}:${canonical}`, remote_id: null };
+  const order = [];
+  let creates = 0;
+  let corrections = 0;
+  let durableFingerprint = old;
+  const finished = { id: buildId, platform: "ANDROID", status: "FINISHED", buildProfile: "preview", applicationIdentifier: PREVIEW_IDENTITY.bundleIdentifier, gitCommitHash: sha, fingerprint: { hash: canonical }, appVersion: "0.3.0", appBuildVersion: "30", project: { id: PREVIEW_IDENTITY.easProjectId }, artifacts: { buildUrl: "https://expo.dev/artifacts/eas/replacement.apk" } };
+  const ledger = {
+    releaseBySha: async () => ({ evidence: { fingerprints: { android: durableFingerprint } } }),
+    rejectedNativeOwnershipIncidents: async () => [{ build_id: "incident-build" }],
+    correctPlannedNativeFingerprint: async () => { corrections += 1; durableFingerprint = canonical; order.push("correct"); },
+    reserveNativeBuild: async () => { order.push("reserve"); return { action, created: !action.remote_id }; },
+    recordAction: async (input) => { order.push("record"); action = { source_sha: sha, identity_key: input.identityKey, remote_id: input.remoteId }; return action; },
+  };
+  const orchestrator = new PreviewOrchestrator({
+    config: { repository: PREVIEW_IDENTITY.repository, githubReadToken: "x" }, ledger,
+    github: { latestDevSha: async () => sha }, render: {},
+    checkoutFactory: async () => ({ directory: repositoryRoot, cleanup: async () => {} }), prepareCheckoutFactory: async () => {},
+    identityFactory: async () => ({ appName: PREVIEW_IDENTITY.appName, bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: PREVIEW_IDENTITY.scheme, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile, channel: PREVIEW_IDENTITY.channel, runtime: PREVIEW_IDENTITY.runtime, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
+    fingerprintsFactory: async () => ({ android: canonical, ios: "e".repeat(40) }),
+    easFactory: () => ({ createAndroidBuild: async () => { creates += 1; order.push("create"); return { id: buildId }; }, viewBuild: async () => finished }),
+  });
+  orchestrator.deliverAndroid = async () => ({ buildId, buildNumber: "30", status: "FINISHED" });
+  await orchestrator.recoverCanonicalNativeBuild({ sourceSha: sha, platform: "android" });
+  await orchestrator.recoverCanonicalNativeBuild({ sourceSha: sha, platform: "android" });
+  assert.equal(creates, 1);
+  assert.equal(corrections, 1);
+  assert.ok(order.indexOf("reserve") < order.indexOf("create"));
+  assert.ok(order.indexOf("create") < order.indexOf("record"));
 });
 
