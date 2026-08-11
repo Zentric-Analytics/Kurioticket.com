@@ -33,12 +33,10 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
+import { useAppTheme } from "../../theme/AppTheme";
 
 const EMPTY_DESTINATIONS: readonly Destination[] = [];
-const NAVY = "#071A48",
-  BLUE = "#0754F7",
-  MUTED = "#56658E",
-  BORDER = "#E7ECF5";
+const BLUE = "#0754F7";
 export const REGION_BROWSE_HORIZONTAL_INSET = 18;
 export const REGION_BROWSE_CARD_HORIZONTAL_INSET = 8;
 export const REGION_BROWSE_IMAGE_ASPECT_RATIO = 1.7;
@@ -67,11 +65,12 @@ function RegionBrowseDestinationCard({
   onToggle: () => void;
   layout: ReturnType<typeof regionBrowseCardLayout>;
 }) {
+  const { theme } = useAppTheme();
   const media = destinationMedia(destination.id);
   const [failed, setFailed] = useState(false);
 
   return (
-    <View style={[s.browseCard, { width: layout.width, height: layout.height }]}>
+    <View style={[s.browseCard, { width: layout.width, height: layout.height, backgroundColor: theme.surface, borderColor: theme.border }]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Open details for ${destination.name}, ${destination.country}, ${destination.primaryAirportCode}`}
@@ -89,7 +88,7 @@ function RegionBrowseDestinationCard({
           }
           resizeMode="cover"
           onError={() => setFailed(true)}
-          style={[s.browseImage, { height: layout.imageHeight }]}
+          style={[s.browseImage, { height: layout.imageHeight, backgroundColor: theme.border }]}
         />
         <View
           style={[s.browseCopy, { height: layout.informationHeight }]}
@@ -98,19 +97,19 @@ function RegionBrowseDestinationCard({
             accessibilityLabel={`${destination.name}, ${destination.country}`}
             numberOfLines={1}
             ellipsizeMode="tail"
-            style={s.browseTitle}
+            style={[s.browseTitle, { color: theme.text }]}
           >
-            <Text style={s.browseName}>{destination.name}</Text>
-            <Text style={s.browseCountry}> · {destination.country}</Text>
+            <Text style={[s.browseName, { color: theme.text }]}>{destination.name}</Text>
+            <Text style={[s.browseCountry, { color: theme.muted }]}> · {destination.country}</Text>
           </Text>
           <Text
             numberOfLines={3}
             ellipsizeMode="tail"
-            style={s.browseSummary}
+            style={[s.browseSummary, { color: theme.text }]}
           >
             {destination.summary}
           </Text>
-          <Text numberOfLines={2} ellipsizeMode="tail" style={s.browseAirport}>
+          <Text numberOfLines={2} ellipsizeMode="tail" style={[s.browseAirport, { color: theme.muted }]}>
             {formatFlightAccess(
               destination.primaryAirportCode,
               destination.airportCodes,
@@ -129,6 +128,7 @@ function RegionBrowseDestinationCard({
 }
 
 export function ExploreRegionScreen() {
+  const { theme } = useAppTheme();
   const { region: slug } = useLocalSearchParams<{ region?: string }>();
   const region = exploreRegionFromSlug(slug ?? "");
   const [query, setQuery] = useState("");
@@ -162,37 +162,37 @@ export function ExploreRegionScreen() {
 
   if (!region)
     return (
-      <SafeAreaView style={s.safe}>
+      <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back to Explore"
           onPress={() => router.back()}
           style={s.back}
         >
-          <FlowIcon name="back" color={NAVY} />
-          <Text style={s.backText}>Explore</Text>
+          <FlowIcon name="back" color={theme.icon} />
+          <Text style={[s.backText, { color: theme.text }]}>Explore</Text>
         </Pressable>
-        <Text style={s.invalid}>Region not found.</Text>
+        <Text style={[s.invalid, { color: theme.muted }]}>Region not found.</Text>
       </SafeAreaView>
     );
 
   return (
-    <SafeAreaView style={s.safe} edges={["top"]}>
-      <View style={s.header}>
+    <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]} edges={["top"]}>
+      <View style={[s.header, { backgroundColor: theme.background }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back to Explore"
           onPress={() => router.back()}
           style={s.back}
         >
-          <FlowIcon name="back" color={NAVY} />
-          <Text style={s.backText}>Explore</Text>
+          <FlowIcon name="back" color={theme.icon} />
+          <Text style={[s.backText, { color: theme.text }]}>Explore</Text>
         </Pressable>
-        <Text accessibilityRole="header" style={s.title}>
+        <Text accessibilityRole="header" style={[s.title, { color: theme.text }]}>
           {region}
         </Text>
-        <View style={s.search}>
-          <FlowIcon name="search" size={22} />
+        <View style={[s.search, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <FlowIcon name="search" color={theme.icon} size={22} />
           <TextInput
             ref={input}
             accessibilityLabel={`Search ${region}`}
@@ -202,8 +202,8 @@ export function ExploreRegionScreen() {
             onSubmitEditing={submit}
             returnKeyType="search"
             placeholder={`Search ${region}`}
-            placeholderTextColor="#7B849F"
-            style={s.searchInput}
+            placeholderTextColor={theme.muted}
+            style={[s.searchInput, { color: theme.text }]}
           />
           {query ? (
             <Pressable
@@ -219,7 +219,7 @@ export function ExploreRegionScreen() {
             </Pressable>
           ) : null}
         </View>
-        <Text style={s.count}>
+        <Text style={[s.count, { color: theme.muted }]}>
           {formatDestinationCount(
             searchActive ? results.length : allDestinations.length,
           )}
@@ -235,7 +235,7 @@ export function ExploreRegionScreen() {
             { paddingBottom: exploreBottomPadding(20, insets.bottom) },
           ]}
           ListEmptyComponent={
-            <Text style={s.empty}>No destinations found in {region}</Text>
+            <Text style={[s.empty, { color: theme.muted, backgroundColor: theme.surface }]}>No destinations found in {region}</Text>
           }
           renderItem={({ item }) => (
             <DestinationResultRow
@@ -271,7 +271,7 @@ export function ExploreRegionScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#FAFBFF" },
+  safe: { flex: 1 },
   header: { paddingHorizontal: 18 },
   back: {
     minHeight: 48,
@@ -280,9 +280,8 @@ const s = StyleSheet.create({
     alignSelf: "flex-start",
     gap: 4,
   },
-  backText: { color: NAVY, fontSize: 14, fontWeight: "700" },
+  backText: { fontSize: 14, fontWeight: "700" },
   title: {
-    color: NAVY,
     fontSize: 28,
     lineHeight: 36,
     fontWeight: "800",
@@ -292,24 +291,20 @@ const s = StyleSheet.create({
     minHeight: 52,
     borderRadius: 26,
     borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: "white",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
     gap: 8,
   },
-  searchInput: { flex: 1, minHeight: 50, color: NAVY, fontSize: 13 },
+  searchInput: { flex: 1, minHeight: 50, fontSize: 13 },
   clear: { minHeight: 44, justifyContent: "center" },
   clearText: { color: BLUE, fontWeight: "700" },
-  count: { color: MUTED, fontSize: 13, fontWeight: "600", paddingVertical: 14 },
+  count: { fontSize: 13, fontWeight: "600", paddingVertical: 14 },
   list: { paddingHorizontal: REGION_BROWSE_HORIZONTAL_INSET },
   browseList: { paddingHorizontal: REGION_BROWSE_CARD_HORIZONTAL_INSET },
   browseCard: {
     borderWidth: 1,
-    borderColor: BORDER,
     borderRadius: 16,
-    backgroundColor: "white",
     overflow: "hidden",
     marginBottom: 12,
     shadowColor: "#18305B",
@@ -321,17 +316,15 @@ const s = StyleSheet.create({
   browseMain: { width: "100%" },
   browseImage: {
     width: "100%",
-    backgroundColor: "#E7ECF5",
   },
   browseCopy: {
     padding: 14,
     gap: 3,
   },
-  browseTitle: { color: NAVY, flexShrink: 1 },
-  browseName: { color: NAVY, fontSize: 21, lineHeight: 27, fontWeight: "800" },
-  browseCountry: { color: MUTED, fontSize: 14, fontWeight: "600" },
+  browseTitle: { flexShrink: 1 },
+  browseName: { fontSize: 21, lineHeight: 27, fontWeight: "800" },
+  browseCountry: { fontSize: 14, fontWeight: "600" },
   browseSummary: {
-    color: NAVY,
     fontSize: 14,
     lineHeight: 20,
     fontWeight: "400",
@@ -339,8 +332,8 @@ const s = StyleSheet.create({
     marginBottom: 4,
     flexShrink: 1,
   },
-  browseAirport: { color: MUTED, fontSize: 12, lineHeight: 18, flexShrink: 1 },
+  browseAirport: { fontSize: 12, lineHeight: 18, flexShrink: 1 },
   browseHeart: { position: "absolute", right: 10, top: 10 },
-  empty: { color: MUTED, paddingVertical: 18 },
-  invalid: { color: MUTED, padding: 18 },
+  empty: { padding: 18, borderRadius: 12 },
+  invalid: { padding: 18 },
 });

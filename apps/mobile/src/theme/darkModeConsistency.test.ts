@@ -27,9 +27,15 @@ test("Home, Trips, Explore, and Profile use theme-aware screen and card surfaces
   assert.match(trips, /useFlowTheme/);
   assert.match(trips, /ft\.styles\.safe/);
   assert.match(trips, /ft\.styles\.card/);
-  assert.match(explore, /SafeAreaView style=\{s\.safe\}/);
-  assert.match(explore, /backgroundColor: "#FAFBFF"/);
-  assert.match(explore, /backgroundColor: "white"/);
+  assert.match(explore, /import \{ useAppTheme \} from "\.\.\/\.\.\/theme\/AppTheme"/);
+  assert.match(explore, /const \{ theme \} = useAppTheme\(\)/);
+  assert.match(explore, /backgroundColor: theme\.background/);
+  assert.match(explore, /backgroundColor: theme\.surface/);
+  assert.match(explore, /color: theme\.text/);
+  assert.match(explore, /color: theme\.muted/);
+  assert.match(explore, /borderColor: theme\.border/);
+  assert.doesNotMatch(explore, /backgroundColor: "#FAFBFF"/);
+  assert.doesNotMatch(explore, /backgroundColor: "white"/);
   assert.match(profile, /theme\.background/);
   assert.match(profile, /theme\.surface/);
 });
