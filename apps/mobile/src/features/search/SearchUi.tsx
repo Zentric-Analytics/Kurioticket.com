@@ -64,9 +64,13 @@ export function Logo() {
 export function TopBar({
   detail = false,
   flightResults = false,
+  hasUnreadNotifications = false,
+  onNotificationsPress,
 }: {
   detail?: boolean;
   flightResults?: boolean;
+  hasUnreadNotifications?: boolean;
+  onNotificationsPress?: () => void;
 }) {
   return (
     <View style={s.top}>
@@ -91,14 +95,21 @@ export function TopBar({
             <FlowIcon name="heart" />
             <FlowIcon name="share" />
           </>
+        ) : flightResults ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+            onPress={onNotificationsPress}
+            disabled={!onNotificationsPress}
+            style={s.hit}
+          >
+            <Bell size={24} strokeWidth={2} color={ui.navy} />
+            {hasUnreadNotifications ? <View accessibilityLabel="Unread notifications" style={s.dot} /> : null}
+          </Pressable>
         ) : (
           <View>
-            {flightResults ? (
-              <Bell size={24} strokeWidth={2} color={ui.navy} />
-            ) : (
-              <FlowIcon name="bell" />
-            )}
-            <View style={s.dot} />
+            <FlowIcon name="bell" />
+            {hasUnreadNotifications ? <View accessibilityLabel="Unread notifications" style={s.dot} /> : null}
           </View>
         )}
       </View>
