@@ -8,7 +8,8 @@ import {
 } from "./destinationCatalogue";
 export const ALL_DESTINATIONS = destinations;
 export const REGION_PREVIEW_SIZE = 3;
-export const DESTINATIONS_BY_REGION = groupExploreDestinationsByRegion(destinations);
+export const DESTINATIONS_BY_REGION =
+  groupExploreDestinationsByRegion(destinations);
 export const REGION_DISCOVERY = EXPLORE_REGIONS.map((region) => ({
   region,
   destinations: DESTINATIONS_BY_REGION.get(region)!,
@@ -18,6 +19,10 @@ export type ExploreSearchResult = {
   destination: Destination;
   rank: number;
 };
+
+export function formatDestinationCount(count: number) {
+  return `${count} ${count === 1 ? "destination" : "destinations"}`;
+}
 
 const exact = (values: readonly string[], query: string) =>
   values.some((value) => normalizeDestinationText(value) === query);
@@ -62,12 +67,7 @@ export function searchExplore(queryValue: string): ExploreSearchResult[] {
       const codes = destination.airportCodes;
       const aliases = destination.searchAliases;
       const countries = [destination.country, destination.countryCode];
-      const general = [
-        ...names,
-        ...codes,
-        ...aliases,
-        ...countries,
-      ];
+      const general = [...names, ...codes, ...aliases, ...countries];
       let rank = 99;
       if (exact(names, query)) rank = 0;
       else if (exact(codes, query)) rank = 1;
