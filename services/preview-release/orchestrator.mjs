@@ -295,18 +295,15 @@ export class PreviewOrchestrator {
 
   async reconcileIosDistribution(record, lease) {
     const sha = record.source_sha;
-    const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha });
-    try {
-      await this.prepareCheckoutFactory(checkout.directory, { allowRootScriptDrift: true });
-      assertPreviewIdentity(await this.identityFactory(checkout.directory));
-      const fingerprints = await this.fingerprintsFactory(checkout.directory);
-      await lease.checkpoint();
-
-      const eas = this.easFactory(join(checkout.directory, "apps/mobile"));
-      const buildAction = typeof this.ledger.getNativeBuildActionForRelease === "function"
-        ? await this.ledger.getNativeBuildActionForRelease(sha, "ios", fingerprints.ios)
-        : await this.ledger.getAction("IOS_BUILD", `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`);
+    await lease.checkpoint();
+    // This is provider/ledger reconciliation, not a rebuild. Historical package
+    // manifests can legitimately differ from the worker that is doing cleanup.
+    const eas = this.easFactory(join(process.cwd(), "apps/mobile"));
+    const buildAction = typeof this.ledger.getNativeBuildActionForRelease === "function"
+      ? await this.ledger.getNativeBuildActionForRelease(sha, "ios")
+      : await this.ledger.getAction("IOS_BUILD", `${sha}:${PREVIEW_IDENTITY.easProjectId}:ios:preview`);
       if (!buildAction?.remote_id) throw new Error("Pending TestFlight distribution is missing its durable iOS build identity.");
+      const fingerprint = nativeFingerprintFromAction(buildAction);
       let remoteBuild;
       try { remoteBuild = await eas.viewBuild(buildAction.remote_id); }
       catch (error) {
@@ -317,7 +314,7 @@ export class PreviewOrchestrator {
         console.warn(JSON.stringify({ event: "historical-action-isolated", platform: "ios", sourceSha: sha, buildId: buildAction.remote_id }));
         return { state: "OPERATOR_ATTENTION_REQUIRED", sourceSha: sha, buildId: buildAction.remote_id };
       }
-      const buildDecision = reconcileBuilds([remoteBuild], sha, "ios", fingerprints.ios);
+      const buildDecision = reconcileBuilds([remoteBuild], sha, "ios", fingerprint);
       if (buildDecision.decision !== "FINISHED_MATCH") {
         throw new Error(`Pending TestFlight distribution requires one finished exact-SHA iOS build; found ${buildDecision.decision}.`);
       }
@@ -332,7 +329,7 @@ export class PreviewOrchestrator {
 
       const distribution = await this.distributeIosToInternalGroup({ sha, build, current: build, submission: submission.submission, lease });
       if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({
-        platform: "ios", sourceSha: sha, fingerprint: fingerprints.ios, buildId: build.id,
+        platform: "ios", sourceSha: sha, fingerprint, buildId: build.id,
         appVersion: build.appVersion, buildNumber: build.appBuildVersion,
         submissionId: submission.submission.id, appleBuildId: distribution.appleBuildId,
         distributionId: `${distribution.appleBuildId}:${distribution.betaGroupId}`,
@@ -340,7 +337,6 @@ export class PreviewOrchestrator {
       const complete = await this.ledger.completeIosDistribution({ sourceSha: sha, workerId: this.config.workerId });
       await this.github.report(sha, "success", "Preview TestFlight internal distribution reconciliation complete");
       return { ...complete, distribution };
-    } finally { await checkout.cleanup(); }
   }
 
   async deliverWeb(sha, lease) {
@@ -558,6 +554,18 @@ export class PreviewOrchestrator {
 export function nativeBuildIdentityKey(platform, fingerprint) {
   if (!['ios', 'android'].includes(platform) || !/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ''))) throw new Error('Native build fingerprint identity is malformed.');
   return `native-build:${platform}:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`;
+}
+
+export function nativeFingerprintFromAction(action) {
+  let evidence = action?.evidence;
+  if (typeof evidence === "string") {
+    try { evidence = JSON.parse(evidence); } catch { evidence = null; }
+  }
+  const fingerprint = evidence?.nativeFingerprint;
+  if (!/^[a-z0-9._-]{3,128}$/i.test(String(fingerprint ?? ""))) {
+    throw new Error("Pending TestFlight distribution is missing its durable native fingerprint evidence.");
+  }
+  return fingerprint;
 }
 
 async function resolvedIdentity(root) {

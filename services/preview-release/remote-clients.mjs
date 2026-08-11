@@ -17,7 +17,6 @@ function withSourceAttestedPreviewIdentity(build, platform = "ios") {
     sourceAttestedPlatform: platform,
     sourceAttestedBuildProfile: "preview",
     sourceAttestedAppIdentifier: PREVIEW_IDENTITY.bundleIdentifier,
-    sourceAttestedRuntimeVersion: PREVIEW_IDENTITY.runtimeVersion,
     sourceAttestedChannel: PREVIEW_IDENTITY.channel,
   };
 }
