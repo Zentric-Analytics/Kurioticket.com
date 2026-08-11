@@ -228,7 +228,7 @@ export class EasClient {
     const entries = Array.isArray(value) ? value : [value];
     if (!entries.length || entries.some((entry) => !entry?.id && !entry?.group)) throw new Error("EAS Update result is malformed.");
     if (entries.some((entry) => entry.runtimeVersion !== expectedRuntime)) {
-      throw new Error(`EAS Update ${platform} runtime does not match the canonical Preview fingerprint.`);
+      throw new EasUpdateRuntimeMismatchError(platform, expectedRuntime, entries);
     }
     return entries;
   }
@@ -280,6 +280,16 @@ export class EasClient {
       console.log(JSON.stringify({ event: "preview-release-eas-command-complete", command: args[1], platform, durationMs: Date.now() - startedAt, rssBytes: process.memoryUsage().rss }));
       return readFile(stdoutPath, "utf8");
     } finally { await rm(directory, { recursive: true, force: true }); }
+  }
+}
+
+export class EasUpdateRuntimeMismatchError extends Error {
+  constructor(platform, expectedRuntime, updates) {
+    super(`EAS Update ${platform} runtime does not match the canonical Preview fingerprint.`);
+    this.name = "EasUpdateRuntimeMismatchError";
+    this.platform = platform;
+    this.expectedRuntime = expectedRuntime;
+    this.updates = updates;
   }
 }
 

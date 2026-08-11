@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmissionHistory } from "./eas-state.mjs";
-import { exactChangeSet, exactCheckout, EasClient, EasRemoteObjectUnavailableError, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
+import { exactChangeSet, exactCheckout, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
 import { inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { unexpectedBuilds, validateAdoptableBuild, validateAdoptableIosSubmission } from "./native-ownership.mjs";
@@ -378,6 +378,12 @@ export class PreviewOrchestrator {
 
   async deliverOta(sha, cwd, lease, platforms = ["ios", "android"], runtimeByPlatform = null) {
     const eas = this.easFactory(join(cwd, "apps/mobile"));
+    const runtimes = Object.fromEntries(platforms.map((platform) => [platform, runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime]));
+    const identityKey = `${sha}:${platforms.map((platform) => `${platform}=${runtimes[platform]}`).join(",")}:${PREVIEW_IDENTITY.channel}`;
+    const recorded = typeof this.ledger.getAction === "function" ? await this.ledger.getAction("OTA", identityKey) : null;
+    if (recorded?.state === "RUNTIME_MISMATCH") {
+      throw new Error(`EAS Update runtime mismatch is already recorded for ${sha}; automatic republication is blocked.`);
+    }
     const history = await eas.listUpdates();
     const updates = [];
     for (const platform of platforms) {
@@ -390,12 +396,26 @@ export class PreviewOrchestrator {
       }
       await lease.checkpoint();
       const message = `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0`;
-      const published = await eas.publishUpdate(message, platform, expectedRuntime);
+      let published;
+      try {
+        published = await eas.publishUpdate(message, platform, expectedRuntime);
+      } catch (error) {
+        if (!(error instanceof EasUpdateRuntimeMismatchError)) throw error;
+        const mutatedUpdates = [...updates, ...error.updates];
+        const remoteIds = mutatedUpdates.map((entry) => entry.id ?? entry.group);
+        await this.ledger.recordAction({
+          sourceSha: sha,
+          kind: "OTA",
+          identityKey,
+          remoteId: remoteIds.join(","),
+          state: "RUNTIME_MISMATCH",
+          evidence: { updates: mutatedUpdates, mismatchPlatform: error.platform, expectedRuntime: error.expectedRuntime },
+        });
+        throw error;
+      }
       updates.push(...published);
     }
     const ids = updates.map((entry) => entry.id ?? entry.group);
-    const runtimes = Object.fromEntries(platforms.map((platform) => [platform, runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime]));
-    const identityKey = `${sha}:${platforms.map((platform) => `${platform}=${runtimes[platform]}`).join(",")}:${PREVIEW_IDENTITY.channel}`;
     await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: ids.join(","), state: "PUBLISHED", evidence: updates });
     return { updateIds: ids, runtimes, channel: PREVIEW_IDENTITY.channel };
   }
