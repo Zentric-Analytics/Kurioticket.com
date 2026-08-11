@@ -108,7 +108,7 @@ const flightComplete = (
     journey.fare &&
     journey.confirmedOffer &&
     journey.confirmedOffer.validatedAt <= now &&
-    journey.confirmedOffer.providerExpiresAt > now &&
+    journey.confirmedOffer.offerExpiresAt > now &&
     areDealsFlightOfferAndJourneyConsistentV2(journey.confirmedOffer, journey),
   );
 
@@ -242,6 +242,9 @@ export function applyDealsJourneyEventV2(
           phase: flight.tripType === "round-trip" ? "return" : "fare",
           outbound: itinerary,
         },
+        ...(included.car && !same(flight.outbound, itinerary)
+          ? { car: undefined }
+          : {}),
       },
       now,
     );
@@ -272,6 +275,9 @@ export function applyDealsJourneyEventV2(
           outbound: flight.outbound,
           return: itinerary,
         },
+        ...(included.car && !same(flight.return, itinerary)
+          ? { car: undefined }
+          : {}),
       },
       now,
     );
@@ -332,7 +338,7 @@ export function applyDealsJourneyEventV2(
       flight?.phase !== "revalidating" ||
       !flight.fare ||
       !offer ||
-      offer.providerExpiresAt <= now ||
+      offer.offerExpiresAt <= now ||
       offer.validatedAt > now ||
       !areDealsFlightOfferAndJourneyConsistentV2(offer, flight)
     )
@@ -351,7 +357,11 @@ export function applyDealsJourneyEventV2(
     if (!plan.flightJourney) return fail(plan, now, "invalid-transition");
     const clean = resetFlight(plan);
     if (same(plan.flightJourney, clean)) return success(plan, now, false);
-    next = commit(plan, { flightJourney: clean }, now);
+    next = commit(
+      plan,
+      { flightJourney: clean, ...(included.car ? { car: undefined } : {}) },
+      now,
+    );
   } else if (event.type === "CAR_CONFIRMED") {
     if (
       !included.car ||

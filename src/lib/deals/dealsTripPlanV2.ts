@@ -51,7 +51,6 @@ export type DealsFlightFareV2 = {
 export type DealsConfirmedFlightOfferV2 = {
   resultId: string;
   provider: string;
-  providerOfferId: string;
   airline: string;
   flightNumber?: string;
   outboundItineraryKey: string;
@@ -63,7 +62,7 @@ export type DealsConfirmedFlightOfferV2 = {
   refundInfo?: string;
   sourcePrice: number;
   sourceCurrency: string;
-  providerExpiresAt: number;
+  offerExpiresAt: number;
   selectedAt: number;
   validatedAt: number;
 };
@@ -223,7 +222,7 @@ export function canonicalizeDealsConfirmedFlightOfferV2(
     !Array.isArray(value.legs) ||
     !positive(value.sourcePrice) ||
     !cabin(value.cabinClass) ||
-    !timestamp(value.providerExpiresAt) ||
+    !timestamp(value.offerExpiresAt) ||
     !timestamp(value.selectedAt) ||
     !timestamp(value.validatedAt)
   )
@@ -231,7 +230,6 @@ export function canonicalizeDealsConfirmedFlightOfferV2(
   const required = [
     "resultId",
     "provider",
-    "providerOfferId",
     "airline",
     "outboundItineraryKey",
     "fareKey",
@@ -253,13 +251,12 @@ export function canonicalizeDealsConfirmedFlightOfferV2(
     refundInfo === null ||
     legs.includes(null) ||
     value.selectedAt > value.validatedAt ||
-    value.validatedAt >= value.providerExpiresAt
+    value.validatedAt >= value.offerExpiresAt
   )
     return null;
   return {
     resultId: values.resultId!,
     provider: values.provider!,
-    providerOfferId: values.providerOfferId!,
     airline: values.airline!,
     ...(flightNumber ? { flightNumber } : {}),
     outboundItineraryKey: values.outboundItineraryKey!,
@@ -271,7 +268,7 @@ export function canonicalizeDealsConfirmedFlightOfferV2(
     ...(refundInfo ? { refundInfo } : {}),
     sourcePrice: value.sourcePrice,
     sourceCurrency: values.sourceCurrency!,
-    providerExpiresAt: value.providerExpiresAt,
+    offerExpiresAt: value.offerExpiresAt,
     selectedAt: value.selectedAt,
     validatedAt: value.validatedAt,
   };

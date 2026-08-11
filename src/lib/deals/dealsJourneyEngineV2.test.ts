@@ -118,7 +118,7 @@ const completeFlight = (
         offer: {
           ...selectedOffer,
           validatedAt: start + 3,
-          providerExpiresAt: start + 1_000,
+          offerExpiresAt: start + 1_000,
         },
       },
       start + 4,
@@ -218,7 +218,7 @@ test("confirmation enforces fare, itinerary identities, and fresh provider time"
     { fareKey: "wrong" },
     { outboundItineraryKey: "wrong" },
     { returnItineraryKey: "wrong" },
-    { providerExpiresAt: at },
+    { offerExpiresAt: at },
   ]) {
     const result = apply(plan, search, {
       type: "FLIGHT_REVALIDATION_SUCCEEDED",
@@ -228,11 +228,11 @@ test("confirmation enforces fare, itinerary identities, and fresh provider time"
   }
   const result = apply(plan, search, {
     type: "FLIGHT_REVALIDATION_SUCCEEDED",
-    offer: { ...offer, validatedAt: at - 1, providerExpiresAt: at + 100 },
+    offer: { ...offer, validatedAt: at - 1, offerExpiresAt: at + 100 },
   });
   assert.equal(result.ok, true);
 });
-test("provider expiry never counts as a complete flight and recovery resets only flight", () => {
+test("provider expiry never counts as a complete flight and recovery clears downstream car", () => {
   const search = makeSearch(),
     base = createDealsTripPlanV2(search, 10_000);
   let plan = accepted(apply(base, search, { type: "HOTEL_CONFIRMED", hotel }));
@@ -243,7 +243,7 @@ test("provider expiry never counts as a complete flight and recovery resets only
       ...plan.flightJourney!,
       confirmedOffer: {
         ...plan.flightJourney!.confirmedOffer!,
-        providerExpiresAt: at + 200,
+        offerExpiresAt: at + 200,
       },
     },
   };
@@ -256,7 +256,7 @@ test("provider expiry never counts as a complete flight and recovery resets only
     apply(withCar, search, { type: "FLIGHT_OFFER_EXPIRED" }, at + 10),
   );
   assert.equal(reset.hotel?.id, hotel.id);
-  assert.equal(reset.car?.id, car.id);
+  assert.equal(reset.car, undefined);
   assert.equal(reset.flightJourney?.phase, "outbound");
   assert.equal(reset.flightJourney?.outbound, undefined);
 });
@@ -503,14 +503,14 @@ test("future validation is incomplete, while validation at event time round trip
   assert.equal(
     apply(plan, search, {
       type: "FLIGHT_REVALIDATION_SUCCEEDED",
-      offer: { ...offer, validatedAt: at + 1, providerExpiresAt: at + 100 },
+      offer: { ...offer, validatedAt: at + 1, offerExpiresAt: at + 100 },
     }).ok,
     false,
   );
   plan = accepted(
     apply(plan, search, {
       type: "FLIGHT_REVALIDATION_SUCCEEDED",
-      offer: { ...offer, validatedAt: at, providerExpiresAt: at + 100 },
+      offer: { ...offer, validatedAt: at, offerExpiresAt: at + 100 },
     }),
   );
   assert.deepEqual(parseDealsTripPlanV2(serializeDealsTripPlanV2(plan)), plan);

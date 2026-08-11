@@ -127,6 +127,26 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
   });
 }
 
+/** Refreshes one server-owned offer identity; callers must never send the ID to a browser. */
+export function getDuffelFlightOffer(providerOfferId: string, search: FlightSearchParams): Promise<ProviderResult<NormalizedFlightResult>> {
+  const apiKey = process.env.DUFFEL_API_KEY;
+  const stagingSafety = getStagingProviderSafety();
+  if (!stagingSafety.safe) return Promise.resolve(skippedProvider("Duffel", stagingSafety.reason));
+  if (!apiKey) return Promise.resolve(skippedProvider("Duffel", "Missing DUFFEL_API_KEY."));
+  const blockReason = getDuffelProviderBlockReason(apiKey);
+  if (blockReason) return Promise.resolve(skippedProvider("Duffel", blockReason));
+
+  return runProvider("Duffel", async () => {
+    const response = await fetchJson<{ data?: unknown }>(
+      `https://api.duffel.com/air/offers/${encodeURIComponent(providerOfferId)}`,
+      { headers: { Authorization: `Bearer ${apiKey}`, "Duffel-Version": "v2" } },
+      16000,
+    );
+    const normalized = normalizeFlightResult("Duffel", response.data, search);
+    return normalized ? [normalized] : [];
+  });
+}
+
 export async function checkDuffelHealth() {
   const apiKey = process.env.DUFFEL_API_KEY;
   const checkedAt = new Date().toISOString();

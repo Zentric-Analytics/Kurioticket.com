@@ -133,28 +133,30 @@ test("filters exact complete itineraries and resolves each actual provider offer
   );
   const fares = getFlightFareOptions(offers);
   assert.deepEqual(
-    fares.map(({ resultId, providerOfferId, price, refundInfo }) => ({
+    fares.map(({ resultId, price, refundInfo }) => ({
       resultId,
-      providerOfferId,
       price,
       refundInfo,
     })),
     [
       {
         resultId: "AX1",
-        providerOfferId: "offer-1",
         price: 700,
         refundInfo: "AX1 conditions",
       },
       {
         resultId: "AX3",
-        providerOfferId: "offer-3",
         price: 850,
         refundInfo: "AX3 conditions",
       },
     ],
   );
   assert.notEqual(buildFlightFareKey(AX1), buildFlightFareKey(AX3));
+  assert.equal(
+    buildFlightFareKey(AX1),
+    JSON.stringify(["flight-fare-v2", "AX1"]),
+  );
+  assert.doesNotMatch(buildFlightFareKey(AX1)!, /offer-1/);
 });
 
 test("one-way matching cannot include round trips", () => {
