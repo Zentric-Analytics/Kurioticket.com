@@ -1,5 +1,6 @@
 import { createPrivateKey, sign } from "node:crypto";
 import { PREVIEW_IDENTITY } from "./config.mjs";
+import { fetchWithDeadline } from "./deadlines.mjs";
 
 const API = "https://api.appstoreconnect.apple.com";
 
@@ -62,7 +63,7 @@ export class AppStoreConnectClient {
   }
 
   async request(path, { method = "GET", body, expectNoContent = false } = {}) {
-    const response = await this.fetch(`${API}${path}`, { method, headers: { Authorization: `Bearer ${this.token()}`, Accept: "application/json", "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    const response = await fetchWithDeadline(this.fetch, `${API}${path}`, { method, headers: { Authorization: `Bearer ${this.token()}`, Accept: "application/json", "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined }, { label: `App Store Connect ${method} ${path.split("?")[0]}` });
     if (!response.ok) throw new Error(`App Store Connect ${method} ${path.split("?")[0]} failed with HTTP ${response.status}.`);
     if (expectNoContent) {
       if (response.status !== 204) throw new Error("App Store Connect association returned an unexpected response.");

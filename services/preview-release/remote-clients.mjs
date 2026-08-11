@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import { PREVIEW_IDENTITY, assertExactSha } from "./config.mjs";
 import { normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
+import { fetchWithDeadline, LOCAL_COMMAND_TIMEOUT_MS } from "./deadlines.mjs";
 
 const exec = promisify(execFile);
 const runtimeRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -42,7 +43,7 @@ export class GitHubClient {
     return this.request(`/repos/${this.repository}/statuses/${sha}`, { method: "POST", token: this.statusToken, body: { state, description: description.slice(0, 140), context: "kurioticket/preview-release", target_url: targetUrl || undefined } });
   }
   async request(path, { method = "GET", body, token = this.readToken } = {}) {
-    const response = await this.fetch(`https://api.github.com${path}`, { method, headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28" }, body: body ? JSON.stringify(body) : undefined });
+    const response = await fetchWithDeadline(this.fetch, `https://api.github.com${path}`, { method, headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28" }, body: body ? JSON.stringify(body) : undefined }, { label: `GitHub API ${method} ${path}` });
     if (!response.ok) throw new Error(`GitHub API ${method} ${path} failed with HTTP ${response.status}.`);
     return response.status === 204 ? null : response.json();
   }
@@ -115,7 +116,7 @@ export class RenderClient {
     });
   }
   async request(path, { method = "GET", body } = {}) {
-    const response = await this.fetch(`https://api.render.com/v1${path}`, { method, headers: { Accept: "application/json", Authorization: `Bearer ${this.apiKey}`, "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    const response = await fetchWithDeadline(this.fetch, `https://api.render.com/v1${path}`, { method, headers: { Accept: "application/json", Authorization: `Bearer ${this.apiKey}`, "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined }, { label: `Render API ${method} ${path}` });
     if (!response.ok) throw new Error(`Render API ${method} ${path} failed with HTTP ${response.status}.`);
     const raw = await response.text();
     if (!raw.trim()) throw new Error(`Render API ${method} ${path} returned empty JSON.`);
@@ -203,11 +204,11 @@ export class EasClient {
     }`;
     const all = [];
     for (let offset = 0; offset < 500; offset += 50) {
-      const response = await this.fetch("https://api.expo.dev/graphql", {
+      const response = await fetchWithDeadline(this.fetch, "https://api.expo.dev/graphql", {
         method: "POST",
         headers: { Accept: "application/json", Authorization: `Bearer ${this.expoToken}`, "Content-Type": "application/json" },
         body: JSON.stringify({ query, variables: { appId: PREVIEW_IDENTITY.easProjectId, limit: 50, offset } }),
-      });
+      }, { label: "Expo submission GraphQL" });
       if (!response.ok) throw new Error(`Expo GraphQL submission history failed with HTTP ${response.status}.`);
       const raw = await response.text();
       let value;
@@ -307,14 +308,15 @@ export async function exactCheckout({ repository, token, sha }) {
   const directory = await createExactCheckoutDirectory();
   const remote = `https://github.com/${repository}.git`;
   try {
-    await exec("git", ["init", "--quiet"], { cwd: directory });
-    await exec("git", ["remote", "add", "origin", remote], { cwd: directory });
+    await exec("git", ["init", "--quiet"], { cwd: directory, timeout: LOCAL_COMMAND_TIMEOUT_MS });
+    await exec("git", ["remote", "add", "origin", remote], { cwd: directory, timeout: LOCAL_COMMAND_TIMEOUT_MS });
     await exec("git", ["fetch", "--quiet", "--depth", "1", "origin", sha], {
       cwd: directory,
       env: gitAuthEnvironment(token),
+      timeout: LOCAL_COMMAND_TIMEOUT_MS,
     });
-    await exec("git", ["checkout", "--quiet", "--detach", "FETCH_HEAD"], { cwd: directory });
-    const { stdout } = await exec("git", ["rev-parse", "HEAD"], { cwd: directory, encoding: "utf8" });
+    await exec("git", ["checkout", "--quiet", "--detach", "FETCH_HEAD"], { cwd: directory, timeout: LOCAL_COMMAND_TIMEOUT_MS });
+    const { stdout } = await exec("git", ["rev-parse", "HEAD"], { cwd: directory, encoding: "utf8", timeout: LOCAL_COMMAND_TIMEOUT_MS });
     if (stdout.trim() !== sha) throw new Error("Exact checkout SHA verification failed.");
     return { directory, cleanup: () => rm(directory, { recursive: true, force: true }) };
   } catch (error) { await rm(directory, { recursive: true, force: true }); throw error; }
@@ -324,17 +326,17 @@ export async function exactChangeSet({ directory, repository, token, previousSha
   assertExactSha(previousSha, "Previous SHA");
   assertExactSha(targetSha, "Target SHA");
   const auth = gitAuthEnvironment(token);
-  const { stdout: shallowOutput } = await exec("git", ["rev-parse", "--is-shallow-repository"], { cwd: directory, encoding: "utf8" });
+  const { stdout: shallowOutput } = await exec("git", ["rev-parse", "--is-shallow-repository"], { cwd: directory, encoding: "utf8", timeout: LOCAL_COMMAND_TIMEOUT_MS });
   const fetchArgs = shallowOutput.trim() === "true"
     ? ["fetch", "--quiet", "--unshallow", "origin", PREVIEW_IDENTITY.branch]
     : ["fetch", "--quiet", "origin", PREVIEW_IDENTITY.branch];
-  await exec("git", fetchArgs, { cwd: directory, env: auth });
-  await exec("git", ["cat-file", "-e", `${previousSha}^{commit}`], { cwd: directory });
-  const { stdout: ancestor } = await exec("git", ["merge-base", "--is-ancestor", previousSha, targetSha], { cwd: directory, encoding: "utf8" }).catch((error) => {
+  await exec("git", fetchArgs, { cwd: directory, env: auth, timeout: LOCAL_COMMAND_TIMEOUT_MS });
+  await exec("git", ["cat-file", "-e", `${previousSha}^{commit}`], { cwd: directory, timeout: LOCAL_COMMAND_TIMEOUT_MS });
+  const { stdout: ancestor } = await exec("git", ["merge-base", "--is-ancestor", previousSha, targetSha], { cwd: directory, encoding: "utf8", timeout: LOCAL_COMMAND_TIMEOUT_MS }).catch((error) => {
     throw new Error(`Previous completed SHA is not an ancestor of target SHA: ${error.code ?? "unknown"}.`);
   });
   void ancestor;
-  const { stdout } = await exec("git", ["diff", "--name-only", "--no-renames", `${previousSha}..${targetSha}`], { cwd: directory, encoding: "utf8", maxBuffer: 20 * 1024 * 1024 });
+  const { stdout } = await exec("git", ["diff", "--name-only", "--no-renames", `${previousSha}..${targetSha}`], { cwd: directory, encoding: "utf8", maxBuffer: 20 * 1024 * 1024, timeout: LOCAL_COMMAND_TIMEOUT_MS });
   const files = stdout.split(/\r?\n/).filter(Boolean);
   if (files.some((file) => file.includes("\\"))) throw new Error("Exact change-set output is malformed.");
   return files;
@@ -379,7 +381,7 @@ export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot,
     if (!metadata.isDirectory()) throw new Error(`Immutable worker dependency tree is missing: ${relative}.`);
     // Hard-linked files retain checkout-local paths for Expo fingerprint stability while
     // sharing the immutable Render build artifact's storage and avoiding another npm ci.
-    await commandRunner("cp", ["-al", "--", source, destination], { maxBuffer: 10 * 1024 * 1024 });
+    await commandRunner("cp", ["-al", "--", source, destination], { maxBuffer: 10 * 1024 * 1024, timeout: LOCAL_COMMAND_TIMEOUT_MS });
   }
 }
 
