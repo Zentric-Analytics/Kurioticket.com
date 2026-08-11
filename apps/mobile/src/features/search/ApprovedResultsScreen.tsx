@@ -17,7 +17,17 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { Bell, Info } from "lucide-react-native";
+import {
+  Armchair,
+  Award,
+  Bell,
+  Heart,
+  Info,
+  Luggage,
+  PlaneTakeoff,
+  ShieldCheck,
+  Tag,
+} from "lucide-react-native";
 import {
   travelApi,
   type FlightResult,
@@ -528,13 +538,22 @@ function FlightFilterModal({
 }
 function FlightCard({ result, displayPrice: fare, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; rank: number; params: Record<string, string | string[]> }) {
   const [saved, setSaved] = useState(false);
+  const stopLabel = result.stops
+    ? `${result.stops} stop${result.stops === 1 ? "" : "s"}`
+    : "Nonstop";
   return (
     <View style={[s0.card, rank === 0 && s0.best]}>
       <View style={s0.cardTop}>
         {rank === 0 ? (
           <View style={s0.badgeRow}>
-            <Badge>★ Best overall</Badge>
-            <Badge green>Great price</Badge>
+            <View style={s0.resultBadge}>
+              <Award size={12} strokeWidth={2} color={ui.blue} />
+              <Text style={s0.resultBadgeText}>Best overall</Text>
+            </View>
+            <View style={[s0.resultBadge, s0.resultBadgeGreen]}>
+              <Tag size={12} strokeWidth={2} color={ui.green} />
+              <Text style={[s0.resultBadgeText, s0.resultBadgeTextGreen]}>Great price</Text>
+            </View>
           </View>
         ) : rank === 1 ? (
           <Badge green>2nd best</Badge>
@@ -549,8 +568,9 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
           accessibilityLabel={`${saved ? "Remove" : "Save"} ${result.airlineName}`}
           onPress={() => setSaved(!saved)}
         >
-          <FlowIcon
-            name="heart"
+          <Heart
+            size={20}
+            strokeWidth={2}
             fill={saved ? ui.blue : "none"}
             color={saved ? ui.blue : ui.muted}
           />
@@ -561,40 +581,51 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
           <Image source={{ uri: result.airlineLogo }} style={s0.airline} />
         ) : (
           <View style={s0.airlineFallback}>
-            <Text>{result.airlineName.slice(0, 2)}</Text>
+            <Text style={s0.airlineFallbackText}>{result.airlineName.slice(0, 2)}</Text>
           </View>
         )}
         <View style={s0.departureBlock}>
-          <Text style={s0.nameSmall}>{result.airlineName}</Text>
+          <Text style={s0.nameSmall} numberOfLines={1}>
+            {result.airlineName}{result.flightNumber ? ` · ${result.flightNumber}` : ""}
+          </Text>
           <Text style={s0.time}>{clock(result.departureTime)}</Text>
           <Text style={s0.sub}>{result.originAirport}</Text>
         </View>
         <View style={s0.timeline}>
           <Text style={s0.sub}>{result.duration}</Text>
-          <View style={s0.line} />
-          <Text style={s0.nonstop}>
-            {result.stops ? `${result.stops} stop` : "Nonstop"}
-          </Text>
+          <View style={s0.timelineTrack}>
+            <View style={s0.line} />
+            <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
+            <View style={s0.line} />
+          </View>
+          <Text style={s0.nonstop}>{stopLabel}</Text>
         </View>
         <View style={s0.arrivalBlock}>
           <Text style={s0.time}>{clock(result.arrivalTime)}</Text>
           <Text style={s0.sub}>{result.destinationAirport}</Text>
         </View>
         <View style={s0.priceBox}>
-          <Text style={s0.bigPrice}>
+          <Text style={s0.bigPrice} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
             {fare?.formatted ?? "—"}
           </Text>
           <Text style={s0.sub}>round trip</Text>
         </View>
       </View>
       <View style={s0.benefits}>
-        <Text style={s0.benefit}>
-          ▣ {result.baggageInfo || "Baggage details unavailable"}
-        </Text>
-        <Text style={s0.benefit}>◉ Seat selection unavailable</Text>
-        <Text style={s0.benefit}>
-          ◉ {result.refundInfo || "Fare rules unavailable"}
-        </Text>
+        <View style={s0.benefitList}>
+          <View style={s0.benefitItem}>
+            <Luggage size={15} strokeWidth={1.9} color={ui.muted} />
+            <Text style={s0.benefit} numberOfLines={1}>{result.baggageInfo || "Baggage details unavailable"}</Text>
+          </View>
+          <View style={s0.benefitItem}>
+            <Armchair size={15} strokeWidth={1.9} color={ui.muted} />
+            <Text style={s0.benefit} numberOfLines={1}>Seat selection unavailable</Text>
+          </View>
+          <View style={s0.benefitItem}>
+            <ShieldCheck size={15} strokeWidth={1.9} color={ui.muted} />
+            <Text style={s0.benefit} numberOfLines={1}>{result.refundInfo || "Fare rules unavailable"}</Text>
+          </View>
+        </View>
         <Button
           label="View details"
           outline={rank !== 0}
@@ -932,14 +963,18 @@ const s0 = StyleSheet.create({
     borderWidth: 1,
     borderColor: ui.border,
     borderRadius: 14,
-    padding: 15,
-    gap: 15,
+    padding: 13,
+    gap: 10,
     backgroundColor: "white",
   },
   best: { borderColor: ui.blue },
-  cardTop: { flexDirection: "row", justifyContent: "space-between" },
-  badgeRow: { flexDirection: "row", gap: 7 },
-  flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
+  cardTop: { minHeight: 23, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  badgeRow: { flex: 1, minWidth: 0, flexDirection: "row", gap: 6 },
+  resultBadge: { height: 23, flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, borderRadius: 12, backgroundColor: "#EEF4FF" },
+  resultBadgeGreen: { backgroundColor: "#EAF8ED" },
+  resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
+  resultBadgeTextGreen: { color: ui.green },
+  flightMain: { flexDirection: "row", alignItems: "center", gap: 5 },
   airline: { width: 38, height: 38, resizeMode: "contain" },
   airlineFallback: {
     width: 38,
@@ -949,29 +984,32 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  airlineFallbackText: { color: ui.navy, fontSize: 12, fontWeight: "800" },
   nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
   departureBlock: { flex: 1.15, minWidth: 0 },
   arrivalBlock: { flex: 0.9, minWidth: 0 },
   time: { fontSize: 17, fontWeight: "900", color: ui.navy },
-  timeline: { flex: 1, minWidth: 56, maxWidth: 95, alignItems: "center" },
+  timeline: { flex: 1, minWidth: 48, maxWidth: 95, alignItems: "center" },
+  timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 3, marginVertical: 3 },
   line: {
-    width: "100%",
+    flex: 1,
     height: 1,
     backgroundColor: ui.muted,
-    marginVertical: 7,
   },
   nonstop: { fontSize: 11, color: ui.blue },
-  priceBox: { width: 62, flexShrink: 0, alignItems: "flex-end" },
-  bigPrice: { fontSize: 22, fontWeight: "900", color: ui.navy },
+  priceBox: { maxWidth: 82, flexShrink: 1, alignItems: "flex-end" },
+  bigPrice: { fontSize: 22, fontWeight: "900", color: ui.navy, textAlign: "right" },
   benefits: {
     borderTopWidth: 1,
     borderTopColor: "#EDF0F5",
-    paddingTop: 13,
+    paddingTop: 10,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
   },
-  benefit: { fontSize: 11, color: ui.muted, flex: 1 },
+  benefitList: { flex: 1, minWidth: 0, flexDirection: "row", gap: 6 },
+  benefitItem: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
+  benefit: { minWidth: 0, fontSize: 10, color: ui.muted, flex: 1 },
   hotelCard: {
     height: 234,
     borderWidth: 1,
@@ -1028,12 +1066,12 @@ const s0 = StyleSheet.create({
   skeletonList: { width: "100%", gap: 14 },
   skeletonCard: {
     width: "100%",
-    minHeight: 190,
+    minHeight: 178,
     borderWidth: 1,
     borderColor: ui.border,
     borderRadius: 14,
-    padding: 15,
-    gap: 15,
+    padding: 13,
+    gap: 10,
     backgroundColor: "white",
   },
   skeletonTopRow: {
@@ -1061,14 +1099,14 @@ const s0 = StyleSheet.create({
   skeletonBenefits: {
     borderTopWidth: 1,
     borderTopColor: "#EDF0F5",
-    paddingTop: 13,
+    paddingTop: 10,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
   },
-  skeletonBenefitLines: { flex: 1, gap: 7 },
-  skeletonBenefitLine: { width: "90%" },
-  skeletonBenefitLineShort: { width: "68%" },
+  skeletonBenefitLines: { flex: 1, flexDirection: "row", gap: 6 },
+  skeletonBenefitLine: { flex: 1 },
+  skeletonBenefitLineShort: { flex: 0.75 },
   skeletonButton: { width: 88, height: 34, borderRadius: 8, backgroundColor: "#E7EBF1" },
   hotelSkeletonCard: {
     width: "100%",
