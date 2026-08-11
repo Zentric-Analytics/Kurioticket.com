@@ -176,13 +176,38 @@ test("provider preflight validates all read-only identities without mutation in 
       ledger: { healthCheck: async () => ({ connected: true }) },
       github: { latestDevSha: async () => sha },
       render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
+      renderWorker: { getPreviewWorkerService: async () => ({ id: PREVIEW_IDENTITY.renderWorkerServiceId, autoDeploy: true, branch: "dev" }) },
       eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], listUpdates: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
       apple: { previewContext: async () => ({ app: { id: "6797447471" }, group: { id: "group-preview", attributes: { isInternalGroup: true } } }) },
     });
     assert.equal(result.status, "PASS");
     assert.equal(result.mode, mode);
     assert.equal(result.submissionPerformed, false);
+    assert.equal(result.renderWorkerAutoDeploy, true);
     assert.equal(mutations, 0);
+  }
+});
+
+test("Render worker preflight requires automatic dev deployments", async () => {
+  const valid = {
+    id: PREVIEW_IDENTITY.renderWorkerServiceId,
+    type: "background_worker",
+    branch: PREVIEW_IDENTITY.branch,
+    repo: `https://github.com/${PREVIEW_IDENTITY.repository}.git`,
+    autoDeploy: true,
+  };
+  const client = new RenderClient({ apiKey: "render-secret", serviceId: PREVIEW_IDENTITY.renderWorkerServiceId, fetchImpl: async () => ({
+    ok: true,
+    text: async () => JSON.stringify(valid),
+  }) });
+  assert.equal((await client.getPreviewWorkerService()).autoDeploy, true);
+  for (const service of [
+    { ...valid, autoDeploy: false },
+    { ...valid, branch: "main" },
+    { ...valid, repo: "https://github.com/other/repository" },
+  ]) {
+    client.fetch = async () => ({ ok: true, text: async () => JSON.stringify(service) });
+    await assert.rejects(client.getPreviewWorkerService(), /Render Preview worker/);
   }
 });
 
