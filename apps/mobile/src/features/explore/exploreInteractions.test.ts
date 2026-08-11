@@ -540,17 +540,49 @@ test("destination details render complete shared editorial while keeping related
   assert.doesNotMatch(source, /editorialProvenance|sourceReferences|lastVerifiedAt/);
 });
 
-test("destination details clamp native overscroll without changing content spacing", () => {
+test("destination details use one bounded trailing-space contract after the CTA row", () => {
   const source = readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
   const page = source.slice(source.indexOf("function DestinationPage"), source.indexOf("function Section"));
   const scrollView = page.slice(page.indexOf("<ScrollView"), page.indexOf(">", page.indexOf("<ScrollView")) + 1);
+  const styles = source.slice(source.indexOf("const styles = StyleSheet.create"));
 
   assert.match(scrollView, /alwaysBounceVertical={false}/);
   assert.match(scrollView, /bounces={false}/);
   assert.match(scrollView, /overScrollMode="never"/);
   assert.match(scrollView, /contentContainerStyle={styles\.content}/);
-  assert.match(source, /content: \{ paddingBottom: 36 \}/);
-  assert.doesNotMatch(page, /destination\.id\s*===|switch\s*\(destination|Platform\./);
+  const bottomPadding = Number(source.match(/const DESTINATION_DETAILS_BOTTOM_PADDING = (\d+);/)?.[1]);
+  assert.equal(bottomPadding, 36);
+  assert.ok(bottomPadding > 0 && bottomPadding < 80);
+  assert.match(styles, /content: \{ paddingBottom: DESTINATION_DETAILS_BOTTOM_PADDING \}/);
+  assert.match(styles, /body: \{ paddingHorizontal: 18, paddingTop: 18, gap: 20 \}/);
+  assert.doesNotMatch(styles, /content: \{[^}]*\b(?:flex|flexGrow|minHeight|height|justifyContent)\b/);
+  assert.doesNotMatch(styles, /body: \{[^}]*\b(?:flex|flexGrow|minHeight|height|justifyContent|paddingBottom)\b/);
+  assert.doesNotMatch(styles, /actions: \{[^}]*marginTop:\s*["']auto["']/);
+  assert.doesNotMatch(page, /destination\.id\s*===|switch\s*\(destination|POPULAR|CURATED_POPULAR|Platform\./);
+  assert.doesNotMatch(page, /ListFooterComponent|contentInset|contentInsetAdjustmentBehavior|<View\s+style={styles\.spacer}/);
+});
+
+test("all canonical destination detail models share the same complete layout inputs", () => {
+  assert.equal(destinations.length, 235);
+  assert.equal(exploreDestinationEditorial.length, 235);
+  assert.equal(CURATED_POPULAR_DESTINATION_IDS.length, 25);
+
+  for (const destination of destinations) {
+    assert.equal(resolveDestinationDetails(destination.id), destination);
+    assert.ok(destination.summary?.trim(), `${destination.id} needs a summary`);
+    assert.ok(destination.description?.trim(), `${destination.id} needs a description`);
+    assert.ok(destination.highlights?.length, `${destination.id} needs highlights`);
+    assert.ok(destination.airportCodes.length >= 1, `${destination.id} needs an airport`);
+    assert.equal(destination.airportCodes.length, destination.airportNames.length);
+    assert.ok(destination.editorialProvenance, `${destination.id} needs editorial ownership`);
+  }
+
+  assert.ok(destinations.some(({ airportCodes }) => airportCodes.length === 1));
+  assert.ok(destinations.some(({ airportCodes }) => airportCodes.length > 1));
+  assert.deepEqual(
+    POPULAR_DESTINATIONS.map(({ destination }) => destination.id),
+    CURATED_POPULAR_DESTINATION_IDS,
+  );
 });
 
 test("destination details follow the destination-first hierarchy without duplicating airports", () => {
