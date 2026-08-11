@@ -69,7 +69,7 @@ test("Preview iOS configuration declares truthful export compliance", async () =
   const config = createAppConfig({ config: {} } as never);
   assert.equal(config.ios?.infoPlist?.ITSAppUsesNonExemptEncryption, false);
   assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app.preview");
-  assert.equal(config.runtimeVersion, "preview-0.3.0");
+  assert.deepEqual(config.runtimeVersion, { policy: "fingerprint" });
   assert.deepEqual(config.plugins?.[1], ["expo-splash-screen", {
     ios: {
       image: "./assets/kurioticket-logo-primary-light-bg.png",
