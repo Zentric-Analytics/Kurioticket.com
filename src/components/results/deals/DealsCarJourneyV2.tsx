@@ -23,15 +23,19 @@ export function DealsCarJourneyV2({
   onPlanChange,
   onFlightExpired,
   onSessionExpired,
+  editing = false,
+  onBackToReview,
 }: {
   search: DealsSearch;
   plan: DealsTripPlanV2;
   onPlanChange: (plan: DealsTripPlanV2) => void;
   onFlightExpired: () => void;
   onSessionExpired: () => void;
+  editing?: boolean;
+  onBackToReview?: () => void;
 }) {
   const [candidateId, setCandidateId] = useState<string | null>(null);
-  const [showResults, setShowResults] = useState(!plan.car);
+  const [showResults, setShowResults] = useState(editing || !plan.car);
   const [confirmationError, setConfirmationError] = useState("");
   const [lifecycleNow, setLifecycleNow] = useState(() => Date.now());
   const [recovery, setRecovery] = useState<{
@@ -187,6 +191,16 @@ export function DealsCarJourneyV2({
 
   return (
     <section aria-labelledby="v2-car-results-heading" data-deals-v2-car-results>
+      {editing && plan.car && onBackToReview && (
+        <Button
+          type="button"
+          variant="secondary"
+          className="mb-4"
+          onClick={onBackToReview}
+        >
+          Back to review
+        </Button>
+      )}
       <h2 id="v2-car-results-heading" className="text-2xl font-extrabold">
         Choose your car
       </h2>
