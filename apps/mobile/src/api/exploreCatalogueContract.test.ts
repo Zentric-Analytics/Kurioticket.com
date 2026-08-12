@@ -35,6 +35,14 @@ test("Explore catalogue contract accepts a complete public catalogue", () => {
   assert.deepEqual(parseMobileExploreCatalogue(catalogue()), catalogue());
 });
 
+test("Explore catalogue contract rejects a live payload with no destinations", () => {
+  assert.equal(parseMobileExploreCatalogue({ version: "2026-08-12T12:00:00.000Z", regions: [] }), null);
+
+  const value = catalogue();
+  value.regions[0]!.destinations = [];
+  assert.equal(parseMobileExploreCatalogue(value), null);
+});
+
 test("Explore catalogue contract rejects duplicate destination IDs", () => {
   const value = catalogue();
   value.regions[0]!.destinations.push(destination("ng-lagos"));
