@@ -424,8 +424,8 @@ export function HotelDetailsClient({
         ? t("hotelDetails.directLinkUnavailable")
         : "";
   const guidedSelection = mode === "guided" && guidedSearch && resultReceivedAt !== null ? buildDealsHotelDetailsSelection({ hotel, requestedHotelId: requestId, search: guidedSearch, resultReceivedAt }) : null;
-  const guidedActionLabel = guidedSearch?.mode === "hotel-car" ? (t("deals.guided.hotelDetails.continueCars") || "Choose this room and continue to cars") : (t("deals.guided.hotelDetails.continueFlights") || "Choose this room and continue to flights");
-  const guidedUnavailableText = t("deals.guided.hotelDetails.roomUnavailable") || "This room cannot be added to your Trip Plan because a current live room rate is unavailable.";
+  const guidedActionLabel = guidedSearch?.mode === "hotel-car" ? (t("deals.guided.hotelDetails.continueCars") || "Continue with this stay to cars") : (t("deals.guided.hotelDetails.continueFlights") || "Continue with this stay to flights");
+  const guidedUnavailableText = t("deals.guided.hotelDetails.roomUnavailable") || "This stay cannot be added to your Trip Plan because a current planning estimate is unavailable.";
   const savedHotelLabel = (
     isSaved
       ? t("hotelResults.removeSavedHotel") ||
@@ -591,7 +591,7 @@ export function HotelDetailsClient({
 
               <HotelDetailsSections
                 embedded
-                roomTitle={t("hotelResults.roomDetails") || "Room"}
+                roomTitle={mode === "guided" ? (t("deals.guided.hotelDetails.roomInformation") || "Room information") : (t("hotelResults.roomDetails") || "Room")}
                 roomItems={[roomType, mealPlan]}
                 cancellationTitle={t("hotelResults.cancellationDetails") || "Cancellation"}
                 cancellationItems={[cancellationText]}
@@ -630,7 +630,7 @@ export function HotelDetailsClient({
             continueToProviderText={t("continueToProvider")}
             onContinue={continueToProvider}
             providerDisclaimerText={t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}
-            primaryAction={mode === "guided" ? { kind: "guided-room", enabled: Boolean(guidedSelection) && !confirming, pending: confirming, label: guidedActionLabel, accessibleLabel: `${guidedActionLabel}: ${hotel.name}${roomType ? `, ${roomType}` : ""}`, unavailableMessage: guidedSelection ? "" : guidedUnavailableText, error: confirmationError, onActivate: () => { if (guidedSelection) onGuidedSelection?.(guidedSelection); } } : undefined}
+            primaryAction={mode === "guided" ? { kind: "guided-room", enabled: Boolean(guidedSelection) && !confirming, pending: confirming, label: guidedActionLabel, accessibleLabel: `${guidedActionLabel}: ${hotel.name}`, unavailableMessage: guidedSelection ? "" : guidedUnavailableText, error: confirmationError, onActivate: () => { if (guidedSelection) onGuidedSelection?.(guidedSelection); } } : undefined}
             />
           </div>
 

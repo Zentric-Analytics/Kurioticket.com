@@ -4729,23 +4729,25 @@ export const translations: TranslationDictionary = {
   "deals.guided.hotelResults.loading": "Searching for hotels",
   "deals.guided.hotelResults.retry": "Retry hotel search",
   "deals.guided.hotelResults.empty": "No hotels were found for this search.",
-  "deals.guided.hotelResults.viewRooms": "View room",
-  "deals.guided.hotelResults.viewRoomsFor": "View room for {{hotelName}}",
-  "deals.guided.hotelResults.roomsUnavailable": "Room options unavailable",
+  "deals.guided.hotelResults.viewRooms": "View stay details",
+  "deals.guided.hotelResults.viewRoomsFor":
+    "View stay details for {{hotelName}}",
+  "deals.guided.hotelResults.roomsUnavailable": "Stay details unavailable",
   "deals.guided.hotelResults.roomsUnavailableFor":
-    "Room options unavailable for {{hotelName}}",
+    "Stay details unavailable for {{hotelName}}",
   "deals.guided.hotelDetails.pendingTitle":
     "Your selected hotel is ready for review.",
   "deals.guided.hotelDetails.pendingBody":
-    "Hotel details and available room options will appear on this step.",
-  "deals.guided.hotelDetails.continueFlights": "Choose this room",
-  "deals.guided.hotelDetails.continueCars":
-    "Choose this room and continue to cars",
+    "Hotel details and descriptive room information will appear on this step.",
+  "deals.guided.hotelDetails.roomInformation": "Room information",
+  "deals.guided.hotelDetails.continueFlights":
+    "Continue with this stay to flights",
+  "deals.guided.hotelDetails.continueCars": "Continue with this stay to cars",
   "deals.guided.hotelDetails.roomUnavailable":
-    "This room cannot be added to your Trip Plan because a current live room rate is unavailable.",
+    "This stay cannot be added to your Trip Plan because a current planning estimate is unavailable.",
   "deals.guided.hotelDetails.saveError":
-    "We could not save this room to your guided Trip Plan. Please try again.",
-  "deals.guided.hotelDetails.confirmed": "Hotel room added to your Trip Plan.",
+    "We could not save this stay to your guided Trip Plan. Please try again.",
+  "deals.guided.hotelDetails.confirmed": "Stay added to your Trip Plan.",
   "deals.staged.property.title": "Choose your stay",
   "deals.staged.property.summary":
     "{{count}} stays for {{destination}}, {{checkIn}} to {{checkOut}}",

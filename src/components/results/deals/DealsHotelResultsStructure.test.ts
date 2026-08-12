@@ -3,14 +3,14 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { translations } from "../../../lib/i18n/en";
 
-test("guided Hotel results use singular English room action copy", () => {
+test("guided Hotel results use truthful stay-details action copy", () => {
   assert.equal(
     translations["deals.guided.hotelResults.viewRooms"],
-    "View room",
+    "View stay details",
   );
   assert.equal(
     translations["deals.guided.hotelResults.viewRoomsFor"],
-    "View room for {{hotelName}}",
+    "View stay details for {{hotelName}}",
   );
 });
 
