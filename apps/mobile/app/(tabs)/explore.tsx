@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import type { ParamListBase } from "@react-navigation/native";
 import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useNavigation } from "expo-router";
 import { ExploreScreen } from "../../src/features/explore/ExploreScreen";
@@ -12,7 +14,7 @@ const ENTRY_FADE_DELAY_MS = ENTRY_DURATION_MS;
 const SWEEP_DURATION_MS = 700;
 
 export default function ExploreTab() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<BottomTabNavigationProp<ParamListBase>>();
   const [showEntry, setShowEntry] = useState(true);
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
   const entryRequested = useRef(true);
