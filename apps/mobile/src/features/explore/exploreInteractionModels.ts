@@ -1,7 +1,8 @@
 import type { Destination } from "./destinationCatalogue";
 export type DestinationProduct = "flights" | "hotels";
 export type DestinationHandoff = { destinationId: string; primaryAirportCode: string; airportCodes: readonly string[] };
-export function destinationHandoff(destination: Destination): DestinationHandoff {
+type DestinationHandoffInput = Pick<Destination, "id" | "name" | "primaryAirportCode" | "airportCodes">;
+export function destinationHandoff(destination: DestinationHandoffInput): DestinationHandoff {
   return { destinationId: destination.id, primaryAirportCode: destination.primaryAirportCode, airportCodes: destination.airportCodes };
 }
 export function destinationDetailsRoute(destinationId: string) {

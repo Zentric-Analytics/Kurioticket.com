@@ -43,19 +43,51 @@ test("travel API supports both legacy string errors and the standard mobile erro
   assert.match(api, /return \(data\.error as \{ message: string \}\)\.message/);
 });
 
-test("Explore repository is cache-first with bundled fallback and non-blocking live refresh", () => {
+test("Explore repository stays cache-first with bundled fallback", () => {
   const repository = source("src/features/explore/exploreCatalogueRepository.ts");
   assert.match(repository, /if \(cached\) return \{ catalogue: cached, source: "cache" \}/);
   assert.match(repository, /catalogue: dependencies\.bundled, source: "bundled"/);
-  assert.match(repository, /const refresh = refreshExploreCatalogue\(dependencies\)\.catch\(\(\) => null\)/);
 });
 
-test("PR 3 does not switch visible Explore screens to the live repository", () => {
+test("visible Explore screens consume one shared live catalogue store that refreshes on focus", () => {
   for (const path of [
     "src/features/explore/ExploreScreen.tsx",
     "src/features/explore/ExploreRegionScreen.tsx",
     "src/features/explore/DestinationDetailsScreen.tsx",
   ]) {
-    assert.doesNotMatch(source(path), /exploreCatalogueRepository|loadExploreCatalogue|refreshExploreCatalogue/);
+    assert.match(source(path), /useExploreCatalogue\(\)/, path);
   }
+  const store = source("src/features/explore/exploreCatalogueStore.ts");
+  assert.match(store, /let currentCatalogue = bundledExploreCatalogue/);
+  assert.match(store, /getExploreCatalogueSnapshot\(\)/);
+  assert.match(store, /refreshExploreCatalogue\(\)/);
+  assert.match(store, /if \(!refreshPromise\)/);
+  assert.match(store, /useFocusEffect/);
+  assert.match(store, /startExploreCatalogueSync\(\)/);
+});
+
+test("live Explore screens prefer imageDestinationId and retain own-ID media fallback", () => {
+  for (const path of [
+    "src/features/explore/ExploreScreen.tsx",
+    "src/features/explore/ExploreRegionScreen.tsx",
+    "src/features/explore/DestinationDetailsScreen.tsx",
+  ]) {
+    const screen = source(path);
+    const remappedLookup = screen.indexOf("destinationMedia(destination.imageDestinationId)");
+    const ownIdFallback = screen.indexOf("destinationMedia(destination.id)", remappedLookup);
+    assert.ok(remappedLookup >= 0, `${path} must resolve imageDestinationId`);
+    assert.ok(ownIdFallback > remappedLookup, `${path} must try imageDestinationId before destination.id fallback`);
+  }
+});
+
+test("Explore tab loader remains presentation-only and fixed at three seconds", () => {
+  const loader = source("app/(tabs)/explore.tsx");
+  assert.match(loader, /ENTRY_DURATION_MS = 3000/);
+  assert.doesNotMatch(loader, /travelApi|useExploreCatalogue|exploreCatalogueRepository|refreshExploreCatalogue/);
+});
+
+test("destination details keeps the protected 360px hero layout", () => {
+  const details = source("src/features/explore/DestinationDetailsScreen.tsx");
+  assert.match(details, /heroFrame: \{ width: "100%", height: 360, overflow: "hidden"/);
+  assert.match(details, /hero: \{ width: "100%", height: 360/);
 });
