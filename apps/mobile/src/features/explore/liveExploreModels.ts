@@ -53,6 +53,14 @@ const airportNameMatches = (values: readonly string[], query: string) => {
   });
 };
 
+const compareSearchDestinations = (
+  a: LiveExploreDestination,
+  b: LiveExploreDestination,
+) =>
+  a.name.localeCompare(b.name) ||
+  a.countryCode.localeCompare(b.countryCode) ||
+  a.id.localeCompare(b.id);
+
 export function searchLiveExplore(
   queryValue: string,
   destinations: readonly LiveExploreDestination[],
@@ -66,7 +74,9 @@ export function searchLiveExplore(
     ),
   );
   if (exactCountryMatches.length) {
-    return exactCountryMatches.map((destination) => ({ destination, rank: 4 }));
+    return [...exactCountryMatches]
+      .sort(compareSearchDestinations)
+      .map((destination) => ({ destination, rank: 4 }));
   }
 
   return destinations
@@ -87,10 +97,7 @@ export function searchLiveExplore(
     })
     .sort(
       (a, b) =>
-        a.rank - b.rank ||
-        a.destination.name.localeCompare(b.destination.name) ||
-        a.destination.countryCode.localeCompare(b.destination.countryCode) ||
-        a.destination.id.localeCompare(b.destination.id),
+        a.rank - b.rank || compareSearchDestinations(a.destination, b.destination),
     );
 }
 
