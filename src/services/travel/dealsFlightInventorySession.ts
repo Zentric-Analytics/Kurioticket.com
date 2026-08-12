@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import {
+  getDuffelGraphProviderOfferIds,
   pruneDuffelItineraryGraph,
   type DuffelItineraryInventoryGraph,
 } from "./providers/duffelItineraryView";
@@ -307,14 +308,100 @@ export class DealsFlightInventorySessionService {
       const parsed = inventoryV2Schema.safeParse(row.inventoryPayload);
       if (!parsed.success)
         throw new DealsFlightInventoryError("malformed-inventory");
+      const exactOffers = parsed.data.exactOffers as NormalizedFlightResult[];
+      const graph = parsed.data.itineraryGraph as DuffelItineraryInventoryGraph;
+      if (
+        exactOffers.some(
+          (offer) =>
+            offer.provider !== "Duffel" || !isProviderBackedFlightOffer(offer),
+        )
+      )
+        throw new DealsFlightInventoryError("malformed-inventory");
+      const exactIds = new Set(
+        exactOffers.map((offer) => offer.providerOfferId!),
+      );
+      const graphIds = getDuffelGraphProviderOfferIds(graph);
+      const expectedSlices = search.data.tripType === "one-way" ? 1 : 2;
+      const code = (value: string) => value.trim().toUpperCase();
+      const expectedRoutes =
+        search.data.tripType === "one-way"
+          ? [[search.data.origin, search.data.destination]]
+          : [
+              [search.data.origin, search.data.destination],
+              [search.data.destination, search.data.origin],
+            ];
+      if (
+        exactIds.size !== graphIds.size ||
+        [...exactIds].some((id) => !graphIds.has(id)) ||
+        graph.slices.length !== expectedSlices ||
+        graph.slices.some(
+          (slice, index) =>
+            slice.index !== index ||
+            code(slice.origin) !== code(expectedRoutes[index][0]) ||
+            code(slice.destination) !== code(expectedRoutes[index][1]),
+        )
+      )
+        throw new DealsFlightInventoryError("malformed-inventory");
       return {
-        offers: parsed.data.exactOffers as NormalizedFlightResult[],
+        offers: exactOffers,
         search: search.data as FlightSearchParams,
-        itineraryGraph: parsed.data
-          .itineraryGraph as DuffelItineraryInventoryGraph,
+        itineraryGraph: graph,
       };
     }
     throw new DealsFlightInventoryError("malformed-inventory");
+  }
+  async fareBrands(token: string, key: string, outbound: string) {
+    const loaded = await this.load(token, key);
+    if (!loaded.itineraryGraph || loaded.search.tripType !== "round-trip")
+      return [];
+    const { getDealsFlightFareBrandOptionsV2 } =
+      await import("./dealsFlightFareBrandInventoryV2");
+    return getDealsFlightFareBrandOptionsV2(
+      usable(loaded.offers, this.now()),
+      loaded.itineraryGraph,
+      hashInventoryToken(token),
+      outbound,
+    );
+  }
+  async brandReturns(
+    token: string,
+    key: string,
+    outbound: string,
+    brand: string,
+  ) {
+    const loaded = await this.load(token, key);
+    if (!loaded.itineraryGraph || loaded.search.tripType !== "round-trip")
+      return [];
+    const { getDealsFlightBrandReturnChoicesV2 } =
+      await import("./dealsFlightFareBrandInventoryV2");
+    return getDealsFlightBrandReturnChoicesV2(
+      usable(loaded.offers, this.now()),
+      loaded.itineraryGraph,
+      hashInventoryToken(token),
+      outbound,
+      brand,
+    );
+  }
+  async brandFares(
+    token: string,
+    key: string,
+    outbound: string,
+    brand: string,
+    inbound: string,
+  ) {
+    const loaded = await this.load(token, key);
+    if (!loaded.itineraryGraph || loaded.search.tripType !== "round-trip")
+      return [];
+    const { getDealsFlightBrandFareChoicesV2 } =
+      await import("./dealsFlightFareBrandInventoryV2");
+    return getDealsFlightBrandFareChoicesV2(
+      usable(loaded.offers, this.now()),
+      loaded.itineraryGraph,
+      hashInventoryToken(token),
+      outbound,
+      brand,
+      inbound,
+    );
   }
   async returns(token: string, key: string, outbound: string) {
     const { offers } = await this.load(token, key);
