@@ -15,8 +15,8 @@ export const REGION_DISCOVERY = EXPLORE_REGIONS.map((region) => ({
   destinations: DESTINATIONS_BY_REGION.get(region)!,
   preview: DESTINATIONS_BY_REGION.get(region)!.slice(0, REGION_PREVIEW_SIZE),
 }));
-export type ExploreSearchResult = {
-  destination: Destination;
+export type ExploreSearchResult<TDestination extends { id: string; name: string; countryCode: string } = Destination> = {
+  destination: TDestination;
   rank: number;
 };
 
