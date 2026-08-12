@@ -25,6 +25,19 @@ export type MobileNotification = { id: string; type: MobileNotificationType; tit
 export type MobileNotificationPage = { items: MobileNotification[]; nextCursor: string | null };
 export type FeatureAvailability = { flightSearch: boolean; hotelSearch: boolean; carSearch: boolean; deals: boolean; priceAlerts: boolean };
 
+function apiErrorMessage(data: Record<string, unknown>) {
+  if (typeof data.error === "string") return data.error;
+  if (
+    typeof data.error === "object" &&
+    data.error !== null &&
+    !Array.isArray(data.error) &&
+    typeof (data.error as Record<string, unknown>).message === "string"
+  ) {
+    return (data.error as { message: string }).message;
+  }
+  return "Kurioticket could not complete this request.";
+}
+
 async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string } = {}) {
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
@@ -46,11 +59,11 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       },
     });
     const raw = await response.text();
-    let data: { error?: string } & Record<string, unknown>;
-    try { data = raw ? JSON.parse(raw) as { error?: string } & Record<string, unknown> : {}; } catch { throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response"); }
+    let data: Record<string, unknown>;
+    try { data = raw ? JSON.parse(raw) as Record<string, unknown> : {}; } catch { throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response"); }
     if (!response.ok) {
       const code = response.status === 400 ? "validation" : response.status === 429 ? "rate-limit" : response.status === 503 ? "unavailable" : response.status >= 500 ? "server" : "network";
-      throw new TravelApiError(typeof data.error === "string" ? data.error : "Kurioticket could not complete this request.", response.status, code, data);
+      throw new TravelApiError(apiErrorMessage(data), response.status, code, data);
     }
     return data as T;
   } catch (error) {
