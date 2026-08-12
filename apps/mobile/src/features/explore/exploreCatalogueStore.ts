@@ -1,4 +1,5 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+import { useFocusEffect } from "expo-router";
 import type { MobileExploreCatalogue } from "../../api/exploreCatalogueContract";
 import { bundledExploreCatalogue } from "./bundledExploreCatalogue";
 import {
@@ -59,9 +60,11 @@ export function startExploreCatalogueSync() {
 
 export function useExploreCatalogue() {
   const catalogue = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-  useEffect(() => {
-    startExploreCatalogueSync();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      startExploreCatalogueSync();
+    }, []),
+  );
   return catalogue;
 }
 
