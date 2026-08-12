@@ -80,10 +80,10 @@ test("live Explore screens prefer imageDestinationId and retain own-ID media fal
   }
 });
 
-test("Explore tab loader remains presentation-only and fixed at three seconds", () => {
-  const loader = source("app/(tabs)/explore.tsx");
-  assert.match(loader, /ENTRY_DURATION_MS = 3000/);
-  assert.doesNotMatch(loader, /travelApi|useExploreCatalogue|exploreCatalogueRepository|refreshExploreCatalogue/);
+test("Explore tab renders content directly without an entry loading state", () => {
+  const tab = source("app/(tabs)/explore.tsx");
+  assert.match(tab, /return <ExploreScreen \/>/);
+  assert.doesNotMatch(tab, /ENTRY_DURATION_MS|Animated|AccessibilityInfo|loadingTitle|showEntry/);
 });
 
 test("destination details keeps the protected 360px hero layout", () => {
