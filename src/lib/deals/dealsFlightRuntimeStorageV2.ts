@@ -47,6 +47,9 @@ export type DealsFlightStorageResult<T> =
 const safeText = (value: unknown) =>
   typeof value === "string" && value.length > 0 ? value : null;
 
+const isDealsCabinClass = (value: unknown): value is DealsCabinClass =>
+  value === "economy" || value === "business" || value === "first";
+
 export function parseDealsFlightRuntimeV2(
   raw: string,
   currentSearchKey: string,
@@ -151,9 +154,7 @@ export function parseDealsFlightRuntimeV2(
         const currency = option.indicativeCurrency;
         const validCabin =
           option.cabinClass === undefined ||
-          ["economy", "premium-economy", "business", "first"].includes(
-            String(option.cabinClass),
-          );
+          isDealsCabinClass(option.cabinClass);
         if (
           !brandOptionKey?.startsWith("flight-brand-v1:") ||
           !fareBrandName ||
@@ -173,8 +174,8 @@ export function parseDealsFlightRuntimeV2(
         return {
           brandOptionKey,
           fareBrandName,
-          ...(option.cabinClass
-            ? { cabinClass: option.cabinClass as DealsCabinClass }
+          ...(isDealsCabinClass(option.cabinClass)
+            ? { cabinClass: option.cabinClass }
             : {}),
           ownerNames: owners as string[],
           ...(typeof price === "number"

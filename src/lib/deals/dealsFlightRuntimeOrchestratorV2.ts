@@ -50,6 +50,29 @@ export type RestoredDealsFlightRuntimeV2 = {
   fareState: DownstreamLoadState;
 };
 
+/**
+ * Produces the dormant Brand restoration checkpoint without committing an
+ * engine event. B3A does not activate Brand in the customer sequence, so this
+ * deliberately preserves revision and lifecycle timestamps while exposing the
+ * already-canonical outbound at the restoration-only Brand checkpoint. B3B can
+ * remove this projection when outbound selection canonically enters Brand.
+ */
+function atFareBrandRestorationCheckpoint(
+  plan: DealsTripPlanV2,
+): DealsTripPlanV2 {
+  const flightJourney = plan.flightJourney;
+  if (
+    !flightJourney?.outbound ||
+    flightJourney.tripType !== "round-trip" ||
+    flightJourney.phase !== "return"
+  )
+    return plan;
+  return {
+    ...plan,
+    flightJourney: { ...flightJourney, phase: "brand" },
+  };
+}
+
 /** Rebuilds staged state only from canonical events and fresh downstream data. */
 export async function restoreDealsFlightRuntimeV2({
   stored,
@@ -130,10 +153,7 @@ export async function restoreDealsFlightRuntimeV2({
     if (!option)
       return {
         runtime,
-        plan: {
-          ...plan,
-          flightJourney: { ...plan.flightJourney!, phase: "brand" },
-        },
+        plan: atFareBrandRestorationCheckpoint(plan),
         brandState,
         returnState: "idle",
         fareState: "idle",

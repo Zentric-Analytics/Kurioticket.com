@@ -83,6 +83,160 @@ test("one-way restoration skips returns and omits returnItineraryKey", async () 
   assert.equal(result.runtime.selectedFareKey, fare.fareKey);
 });
 
+const brandA = {
+  brandOptionKey: "flight-brand-v1:a",
+  fareBrandName: "Brand A",
+  ownerNames: ["Example Air"],
+};
+const brandB = {
+  brandOptionKey: "flight-brand-v1:b",
+  fareBrandName: "Brand B",
+  cabinClass: "business" as const,
+  ownerNames: ["Example Air"],
+};
+const brandedStored = (): DealsFlightRuntimeV2 => ({
+  ...stored(),
+  version: 2,
+  fareBrandOptions: [brandA],
+  selectedBrandOptionKey: brandA.brandOptionKey,
+});
+const unusedLegacyRequests = {
+  getReturns: async () => assert.fail("legacy returns must not be requested"),
+  getFares: async () => assert.fail("legacy fares must not be requested"),
+};
+
+test("runtime v2 restores the exact outbound, Brand, return, and fare in order", async () => {
+  const calls: string[] = [];
+  const result = await restoreDealsFlightRuntimeV2({
+    stored: brandedStored(),
+    freshPlan: fresh,
+    search,
+    searchKey: fresh.productSearchKeys.flight,
+    requests: {
+      ...unusedLegacyRequests,
+      getFareBrands: async () => (calls.push("brand"), [brandA]),
+      getBrandReturns: async () => (calls.push("return"), [inbound]),
+      getBrandFares: async () => (calls.push("fare"), [fare]),
+    },
+  });
+  assert.deepEqual(calls, ["brand", "return", "fare"]);
+  assert.equal(
+    result.plan.flightJourney?.outbound?.itineraryKey,
+    outbound.itineraryKey,
+  );
+  assert.deepEqual(result.plan.flightJourney?.fareBrand, {
+    brandOptionKey: brandA.brandOptionKey,
+    fareBrandName: brandA.fareBrandName,
+  });
+  assert.equal(
+    result.plan.flightJourney?.return?.itineraryKey,
+    inbound.itineraryKey,
+  );
+  assert.equal(result.plan.flightJourney?.fare?.fareKey, fare.fareKey);
+  assert.equal(result.runtime.selectedBrandOptionKey, brandA.brandOptionKey);
+  assert.equal(result.runtime.selectedReturnKey, inbound.itineraryKey);
+  assert.equal(result.runtime.selectedFareKey, fare.fareKey);
+});
+
+test("missing stored Brand stops at Brand without substitution", async () => {
+  let returns = 0;
+  let fares = 0;
+  const result = await restoreDealsFlightRuntimeV2({
+    stored: brandedStored(),
+    freshPlan: fresh,
+    search,
+    searchKey: fresh.productSearchKeys.flight,
+    requests: {
+      ...unusedLegacyRequests,
+      getFareBrands: async () => [brandB],
+      getBrandReturns: async () => (returns++, [inbound]),
+      getBrandFares: async () => (fares++, [fare]),
+    },
+  });
+  assert.equal(returns, 0);
+  assert.equal(fares, 0);
+  assert.equal(result.runtime.selectedBrandOptionKey, undefined);
+  assert.equal(result.plan.flightJourney?.fareBrand, undefined);
+  assert.equal(result.plan.flightJourney?.phase, "brand");
+  assert.equal(result.plan.revision, fresh.revision + 1);
+});
+
+test("missing stored Brand-compatible return retains Brand and clears downstream", async () => {
+  let fares = 0;
+  const result = await restoreDealsFlightRuntimeV2({
+    stored: brandedStored(),
+    freshPlan: fresh,
+    search,
+    searchKey: fresh.productSearchKeys.flight,
+    requests: {
+      ...unusedLegacyRequests,
+      getFareBrands: async () => [brandA],
+      getBrandReturns: async () => [],
+      getBrandFares: async () => (fares++, [fare]),
+    },
+  });
+  assert.equal(fares, 0);
+  assert.equal(result.runtime.selectedBrandOptionKey, brandA.brandOptionKey);
+  assert.equal(result.runtime.selectedReturnKey, undefined);
+  assert.equal(result.runtime.selectedFareKey, undefined);
+  assert.equal(
+    result.plan.flightJourney?.fareBrand?.brandOptionKey,
+    brandA.brandOptionKey,
+  );
+  assert.equal(result.plan.flightJourney?.return, undefined);
+});
+
+test("missing stored exact Brand fare retains outbound, Brand, and return", async () => {
+  const alternate = { ...fare, fareKey: "flight-fare-v3:alternate" };
+  const result = await restoreDealsFlightRuntimeV2({
+    stored: brandedStored(),
+    freshPlan: fresh,
+    search,
+    searchKey: fresh.productSearchKeys.flight,
+    requests: {
+      ...unusedLegacyRequests,
+      getFareBrands: async () => [brandA],
+      getBrandReturns: async () => [inbound],
+      getBrandFares: async () => [alternate],
+    },
+  });
+  assert.equal(result.runtime.selectedFareKey, undefined);
+  assert.equal(
+    result.plan.flightJourney?.outbound?.itineraryKey,
+    outbound.itineraryKey,
+  );
+  assert.equal(
+    result.plan.flightJourney?.fareBrand?.brandOptionKey,
+    brandA.brandOptionKey,
+  );
+  assert.equal(
+    result.plan.flightJourney?.return?.itineraryKey,
+    inbound.itineraryKey,
+  );
+  assert.equal(result.plan.flightJourney?.fare, undefined);
+});
+
+test("Brand request failures bubble instead of becoming empty inventory", async () => {
+  const failure = new Error("provider unavailable");
+  await assert.rejects(
+    restoreDealsFlightRuntimeV2({
+      stored: brandedStored(),
+      freshPlan: fresh,
+      search,
+      searchKey: fresh.productSearchKeys.flight,
+      requests: {
+        ...unusedLegacyRequests,
+        getFareBrands: async () => {
+          throw failure;
+        },
+        getBrandReturns: async () => [inbound],
+        getBrandFares: async () => [fare],
+      },
+    }),
+    (error) => error === failure,
+  );
+});
+
 test("rejects a stale stored return before requesting fares", async () => {
   let fares = 0;
   const result = await restoreDealsFlightRuntimeV2({

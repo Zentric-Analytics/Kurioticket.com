@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   createFlightInventory,
   DealsFlightInventoryClientError,
+  getFlightFareBrandOptions,
   getFlightFareChoices,
   getFlightReturnChoices,
   revalidateFlightOfferV2,
@@ -77,6 +78,24 @@ test("posts exact return and fare selection bodies", async () => {
   await getFlightReturnChoices(base);
   await getFlightFareChoices({ ...base, returnItineraryKey: "ret" });
   assert.deepEqual(bodies, [base, { ...base, returnItineraryKey: "ret" }]);
+});
+
+test("accepts a customer-safe fare Brand without a projected cabin", async () => {
+  const option = {
+    brandOptionKey: "flight-brand-v1:without-cabin",
+    fareBrandName: "Example Brand",
+    ownerNames: ["Example Air"],
+  };
+  globalThis.fetch = async () =>
+    response({ status: "success", fareBrandOptions: [option] });
+  assert.deepEqual(
+    await getFlightFareBrandOptions({
+      inventoryToken: "token_12345678901234567890123456789012",
+      sourceSearchKey: "key",
+      outboundItineraryKey: "out",
+    }),
+    [option],
+  );
 });
 
 test("normalizes API errors and malformed JSON", async () => {

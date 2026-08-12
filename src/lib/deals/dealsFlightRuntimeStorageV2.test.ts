@@ -140,6 +140,44 @@ test("parses strict v2 fare-brand state and enforces selected option integrity",
   );
 });
 
+test("accepts a customer-safe Brand without cabin and rejects unsupported runtime cabins", () => {
+  const branded: DealsFlightRuntimeV2 = {
+    ...runtime(),
+    version: 2,
+    fareBrandOptions: [
+      {
+        brandOptionKey: "flight-brand-v1:without-cabin",
+        fareBrandName: "Example Brand",
+        ownerNames: ["Example Air"],
+      },
+    ],
+    selectedBrandOptionKey: "flight-brand-v1:without-cabin",
+  };
+  assert.deepEqual(
+    parseDealsFlightRuntimeV2(
+      JSON.stringify(branded),
+      "search-key",
+      "round-trip",
+      1,
+    ),
+    branded,
+  );
+  assert.equal(
+    parseDealsFlightRuntimeV2(
+      JSON.stringify({
+        ...branded,
+        fareBrandOptions: [
+          { ...branded.fareBrandOptions![0], cabinClass: "premium-economy" },
+        ],
+      }),
+      "search-key",
+      "round-trip",
+      1,
+    ),
+    null,
+  );
+});
+
 test("fails closed for internally invalid selections", () => {
   assert.equal(
     parseDealsFlightRuntimeV2(
