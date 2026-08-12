@@ -16,16 +16,9 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  exploreRegionFromSlug,
-  type Destination,
-} from "./destinationCatalogue";
-import {
-  DESTINATIONS_BY_REGION,
-  exactExploreResult,
   exploreBottomPadding,
   formatFlightAccess,
   formatDestinationCount,
-  searchExploreRegion,
 } from "./exploreModels";
 import { destinationDetailsRoute } from "./exploreInteractionModels";
 import { DestinationResultRow } from "./ExploreScreen";
@@ -33,8 +26,14 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
+import { useExploreCatalogue } from "./exploreCatalogueStore";
+import {
+  exactLiveExploreResult,
+  liveExploreRegionBySlug,
+  searchLiveExplore,
+  type LiveExploreDestination,
+} from "./liveExploreModels";
 
-const EMPTY_DESTINATIONS: readonly Destination[] = [];
 const NAVY = "#071A48",
   BLUE = "#0754F7",
   MUTED = "#56658E",
@@ -61,7 +60,7 @@ function RegionBrowseDestinationCard({
   onToggle,
   layout,
 }: {
-  destination: Destination;
+  destination: LiveExploreDestination;
   saved: boolean;
   onSelect: () => void;
   onToggle: () => void;
@@ -129,34 +128,31 @@ function RegionBrowseDestinationCard({
 }
 
 export function ExploreRegionScreen() {
+  const catalogue = useExploreCatalogue();
   const { region: slug } = useLocalSearchParams<{ region?: string }>();
-  const region = exploreRegionFromSlug(slug ?? "");
+  const region = liveExploreRegionBySlug(catalogue, slug ?? "");
   const [query, setQuery] = useState("");
   const input = useRef<TextInput>(null);
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const browseCardLayout = regionBrowseCardLayout(windowWidth);
   const { savedIds, toggle } = useSavedDestinations();
-  const allDestinations = region
-    ? DESTINATIONS_BY_REGION.get(region)!
-    : EMPTY_DESTINATIONS;
+  const allDestinations = region?.destinations ?? [];
   const searchActive = Boolean(query.trim());
-  const results = useMemo(
-    () =>
-      region && searchActive
-        ? searchExploreRegion(query, region).map(
-            ({ destination }) => destination,
-          )
-        : [],
+  const searchResults = useMemo(
+    () => region && searchActive ? searchLiveExplore(query, region.destinations) : [],
     [query, region, searchActive],
   );
-  const select = (destination: Destination) => {
+  const results = useMemo(
+    () => searchResults.map(({ destination }) => destination),
+    [searchResults],
+  );
+  const select = (destination: LiveExploreDestination) => {
     Keyboard.dismiss();
     router.push(destinationDetailsRoute(destination.id));
   };
   const submit = () => {
-    if (!region) return;
-    const exact = exactExploreResult(searchExploreRegion(query, region));
+    const exact = exactLiveExploreResult(searchResults);
     if (exact) select(exact);
   };
 
@@ -189,26 +185,26 @@ export function ExploreRegionScreen() {
           <Text style={s.backText}>Explore</Text>
         </Pressable>
         <Text accessibilityRole="header" style={s.title}>
-          {region}
+          {region.name}
         </Text>
         <View style={s.search}>
           <FlowIcon name="search" size={22} />
           <TextInput
             ref={input}
-            accessibilityLabel={`Search ${region}`}
-            accessibilityHint={`Search destinations or airports in ${region}`}
+            accessibilityLabel={`Search ${region.name}`}
+            accessibilityHint={`Search destinations or airports in ${region.name}`}
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={submit}
             returnKeyType="search"
-            placeholder={`Search ${region}`}
+            placeholder={`Search ${region.name}`}
             placeholderTextColor="#7B849F"
             style={s.searchInput}
           />
           {query ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Clear ${region} search`}
+              accessibilityLabel={`Clear ${region.name} search`}
               onPress={() => {
                 setQuery("");
                 input.current?.focus();
@@ -235,7 +231,7 @@ export function ExploreRegionScreen() {
             { paddingBottom: exploreBottomPadding(20, insets.bottom) },
           ]}
           ListEmptyComponent={
-            <Text style={s.empty}>No destinations found in {region}</Text>
+            <Text style={s.empty}>No destinations found in {region.name}</Text>
           }
           renderItem={({ item }) => (
             <DestinationResultRow
