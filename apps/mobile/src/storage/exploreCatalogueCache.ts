@@ -8,6 +8,7 @@ import {
 const MANIFEST_KEY = "kurioticket.explore.catalogue.v1.manifest";
 const MAX_NATIVE_CHUNK_BYTES = 1500;
 const MAX_CHUNK_COUNT = 512;
+const MAX_READ_ATTEMPTS = 2;
 
 type CacheManifest = {
   token: string;
@@ -65,6 +66,10 @@ function parseManifest(raw: string | null): CacheManifest | null {
   }
 }
 
+function sameManifest(a: CacheManifest | null, b: CacheManifest | null) {
+  return a?.token === b?.token && a?.chunkCount === b?.chunkCount;
+}
+
 function utf8Length(value: string) {
   return new TextEncoder().encode(value).length;
 }
@@ -97,10 +102,11 @@ async function removeManifestChunks(store: StringStore, manifest: CacheManifest 
   }
 }
 
-export async function readExploreCatalogueCache(store: StringStore = defaultStore): Promise<MobileExploreCatalogue | null> {
-  const manifest = parseManifest(await store.getItem(MANIFEST_KEY).catch(() => null));
-  if (!manifest) return null;
+async function readManifest(store: StringStore) {
+  return parseManifest(await store.getItem(MANIFEST_KEY).catch(() => null));
+}
 
+async function readGeneration(store: StringStore, manifest: CacheManifest) {
   const chunks: string[] = [];
   for (let index = 0; index < manifest.chunkCount; index += 1) {
     const chunk = await store.getItem(chunkKey(manifest.token, index)).catch(() => null);
@@ -115,6 +121,19 @@ export async function readExploreCatalogueCache(store: StringStore = defaultStor
   }
 }
 
+export async function readExploreCatalogueCache(store: StringStore = defaultStore): Promise<MobileExploreCatalogue | null> {
+  for (let attempt = 0; attempt < MAX_READ_ATTEMPTS; attempt += 1) {
+    const manifest = await readManifest(store);
+    if (!manifest) return null;
+
+    const catalogue = await readGeneration(store, manifest);
+    const latestManifest = await readManifest(store);
+    if (sameManifest(manifest, latestManifest)) return catalogue;
+  }
+
+  return null;
+}
+
 export async function writeExploreCatalogueCache(
   catalogue: MobileExploreCatalogue,
   store: StringStore = defaultStore,
@@ -122,23 +141,31 @@ export async function writeExploreCatalogueCache(
   const validated = parseMobileExploreCatalogue(catalogue);
   if (!validated) throw new Error("Refusing to cache an invalid Explore catalogue.");
 
-  const previousManifest = parseManifest(await store.getItem(MANIFEST_KEY).catch(() => null));
+  const previousManifest = await readManifest(store);
   const serialized = JSON.stringify(validated);
   const chunks = Platform.OS === "web" ? [serialized] : splitExploreCatalogueCacheValue(serialized);
   if (chunks.length > MAX_CHUNK_COUNT) throw new Error("Explore catalogue cache exceeds the supported size.");
 
-  const token = `${safeTokenPart(validated.version)}-${Date.now().toString(36)}`;
-  for (let index = 0; index < chunks.length; index += 1) {
-    await store.setItem(chunkKey(token, index), chunks[index]!);
+  const manifest: CacheManifest = {
+    token: `${safeTokenPart(validated.version)}-${Date.now().toString(36)}`,
+    chunkCount: chunks.length,
+  };
+
+  try {
+    for (let index = 0; index < chunks.length; index += 1) {
+      await store.setItem(chunkKey(manifest.token, index), chunks[index]!);
+    }
+    await store.setItem(MANIFEST_KEY, JSON.stringify(manifest));
+  } catch (error) {
+    await removeManifestChunks(store, manifest);
+    throw error;
   }
 
-  const manifest: CacheManifest = { token, chunkCount: chunks.length };
-  await store.setItem(MANIFEST_KEY, JSON.stringify(manifest));
   await removeManifestChunks(store, previousManifest);
 }
 
 export async function clearExploreCatalogueCache(store: StringStore = defaultStore): Promise<void> {
-  const manifest = parseManifest(await store.getItem(MANIFEST_KEY).catch(() => null));
+  const manifest = await readManifest(store);
   await store.removeItem(MANIFEST_KEY).catch(() => undefined);
   await removeManifestChunks(store, manifest);
 }
