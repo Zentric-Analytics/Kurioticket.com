@@ -106,6 +106,24 @@ test("preserves the winning complete offer currency in the projection", () => {
   );
 });
 
+test("keeps an outbound itinerary but omits an unsafe mixed-currency projection", () => {
+  const choices = getDealsFlightOutboundChoicesV2([
+    offer("usd", [outbound], 700, "USD"),
+    offer("eur", [outbound], 620, "EUR"),
+  ]);
+  assert.equal(choices.length, 1);
+  assert.equal(choices[0].indicativeFromPrice, undefined);
+  assert.equal(choices[0].indicativeCurrency, undefined);
+});
+
+test("keeps an outbound itinerary when no valid price can be projected", () => {
+  const choices = getDealsFlightOutboundChoicesV2([
+    offer("invalid", [outbound], Number.NaN, "USD"),
+  ]);
+  assert.equal(choices.length, 1);
+  assert.equal(choices[0].indicativeFromPrice, undefined);
+});
+
 test("adapts only compatible complete offers and exposes browser-safe choices", () => {
   const ax1 = offer("off_secret_123", [outbound, returnA]);
   const ax2 = offer("off_secret_456", [outbound, returnA]);

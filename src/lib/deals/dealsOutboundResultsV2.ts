@@ -1,4 +1,5 @@
 import type { DealsFlightItineraryV2 } from "./dealsTripPlanV2";
+import { getItineraryLocalHour } from "@/lib/utils";
 
 export type OutboundStopsFilter = "all" | "nonstop" | "one" | "two-plus";
 export type OutboundDepartureFilter =
@@ -14,19 +15,17 @@ export type OutboundResultControls = {
   sort: OutboundSort;
 };
 
-const departureHour = (choice: DealsFlightItineraryV2) =>
-  new Date(choice.departureTime).getHours();
-
 export function filterAndSortDealsOutboundResultsV2(
   choices: DealsFlightItineraryV2[],
   controls: OutboundResultControls,
+  comparablePrice?: (choice: DealsFlightItineraryV2) => number | undefined,
 ) {
   return choices
     .filter((choice) => {
       if (controls.stops === "nonstop" && choice.stops !== 0) return false;
       if (controls.stops === "one" && choice.stops !== 1) return false;
       if (controls.stops === "two-plus" && choice.stops < 2) return false;
-      const hour = departureHour(choice);
+      const hour = getItineraryLocalHour(choice.departureTime);
       if (controls.departure === "morning" && !(hour >= 5 && hour < 12))
         return false;
       if (controls.departure === "afternoon" && !(hour >= 12 && hour < 18))
@@ -37,10 +36,13 @@ export function filterAndSortDealsOutboundResultsV2(
     })
     .sort((left, right) => {
       let difference = 0;
-      if (controls.sort === "cheapest")
+      if (controls.sort === "cheapest") {
+        const leftPrice = comparablePrice?.(left);
+        const rightPrice = comparablePrice?.(right);
         difference =
-          (left.indicativeFromPrice ?? Number.POSITIVE_INFINITY) -
-          (right.indicativeFromPrice ?? Number.POSITIVE_INFINITY);
+          (leftPrice ?? Number.POSITIVE_INFINITY) -
+          (rightPrice ?? Number.POSITIVE_INFINITY);
+      }
       if (controls.sort === "fastest")
         difference = left.durationMinutes - right.durationMinutes;
       if (controls.sort === "departure")
