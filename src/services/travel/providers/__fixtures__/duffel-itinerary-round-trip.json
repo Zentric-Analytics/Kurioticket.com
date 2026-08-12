@@ -214,6 +214,16 @@
           "id": "arl_american_airlines",
           "iata_code": "AA",
           "name": "American Airlines"
+        },
+        "arl_non_iata_one": {
+          "id": "arl_non_iata_one",
+          "iata_code": null,
+          "name": "Example Regional"
+        },
+        "arl_non_iata_two": {
+          "id": "arl_non_iata_two",
+          "iata_code": null,
+          "name": "Example Regional"
         }
       },
       "places": {
