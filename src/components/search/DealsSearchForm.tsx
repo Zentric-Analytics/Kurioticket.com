@@ -36,7 +36,6 @@ import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShe
 import { translations as en } from "@/lib/i18n/en";
 import { driverAgeOptions, timeOptions } from "@/lib/cars/carsSearchUtils";
 import {
-  buildDealsResultsUrl,
   createDefaultDealsSearch,
   dealsProductOrder,
   getIncludedProducts,
@@ -1971,7 +1970,12 @@ export function DealsSearchForm({
     }
     setSubmitting(true);
     start();
-    router.push(buildDealsResultsUrl(search));
+    router.push(
+      buildDealsJourneyUrl(
+        getFirstDealsJourneyStage(submittedSearch.mode),
+        submittedSearch,
+      ),
+    );
   };
 
   const previewGuidedJourney = () => {
