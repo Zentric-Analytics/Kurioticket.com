@@ -148,7 +148,7 @@ export default function ExploreTab() {
         <Animated.View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
+          pointerEvents="auto"
           style={[styles.overlay, { opacity: overlayOpacity }]}
         >
           <Animated.View style={[styles.glow, { opacity: glowOpacity, transform: [{ scale: glowScale }] }]} />
