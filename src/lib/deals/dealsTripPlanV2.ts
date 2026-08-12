@@ -24,6 +24,7 @@ import {
 export const DEALS_TRIP_PLAN_V2_VERSION = 2 as const;
 export type DealsFlightPhaseV2 =
   | "outbound"
+  | "brand"
   | "return"
   | "fare"
   | "revalidating"
@@ -52,6 +53,11 @@ export type DealsFlightFareV2 = {
   baggageInfo?: string;
   refundInfo?: string;
 };
+export type DealsFlightFareBrandSelectionV2 = {
+  brandOptionKey: string;
+  fareBrandName: string;
+  cabinClass?: DealsCabinClass;
+};
 export type DealsConfirmedFlightOfferV2 = {
   provider: string;
   airline: string;
@@ -74,6 +80,7 @@ export type DealsFlightJourneyV2 = {
   tripType: DealsFlightTripType;
   phase: DealsFlightPhaseV2;
   outbound?: DealsFlightItineraryV2;
+  fareBrand?: DealsFlightFareBrandSelectionV2;
   return?: DealsFlightItineraryV2;
   fare?: DealsFlightFareV2;
   confirmedOffer?: DealsConfirmedFlightOfferV2;
@@ -140,6 +147,34 @@ const nonNegativeInteger = (value: unknown): value is number =>
   typeof value === "number" && Number.isInteger(value) && value >= 0;
 const cabin = (value: unknown): value is DealsCabinClass =>
   value === "economy" || value === "business" || value === "first";
+
+export function canonicalizeDealsFlightFareBrandSelectionV2(
+  value: unknown,
+): DealsFlightFareBrandSelectionV2 | null {
+  if (!record(value)) return null;
+  const keys = Object.keys(value);
+  if (
+    keys.some(
+      (key) => !["brandOptionKey", "fareBrandName", "cabinClass"].includes(key),
+    )
+  )
+    return null;
+  const brandOptionKey = text(value.brandOptionKey);
+  const fareBrandName = text(value.fareBrandName);
+  if (
+    !brandOptionKey?.startsWith("flight-brand-v1:") ||
+    !fareBrandName ||
+    (value.cabinClass !== undefined && !cabin(value.cabinClass))
+  )
+    return null;
+  return {
+    brandOptionKey,
+    fareBrandName,
+    ...(value.cabinClass
+      ? { cabinClass: value.cabinClass as DealsCabinClass }
+      : {}),
+  };
+}
 
 const canonicalLayover = (value: unknown): Layover | null => {
   if (!record(value)) return null;
@@ -363,9 +398,14 @@ function canonicalJourney(value: unknown): DealsFlightJourneyV2 | null {
   if (
     !record(value) ||
     !["round-trip", "one-way"].includes(String(value.tripType)) ||
-    !["outbound", "return", "fare", "revalidating", "confirmed"].includes(
-      String(value.phase),
-    )
+    ![
+      "outbound",
+      "brand",
+      "return",
+      "fare",
+      "revalidating",
+      "confirmed",
+    ].includes(String(value.phase))
   )
     return null;
   const searchKey = text(value.searchKey);
@@ -378,6 +418,10 @@ function canonicalJourney(value: unknown): DealsFlightJourneyV2 | null {
     value.return === undefined
       ? undefined
       : canonicalizeDealsFlightItineraryV2(value.return);
+  const fareBrand =
+    value.fareBrand === undefined
+      ? undefined
+      : canonicalizeDealsFlightFareBrandSelectionV2(value.fareBrand);
   const fare =
     value.fare === undefined
       ? undefined
@@ -389,6 +433,7 @@ function canonicalJourney(value: unknown): DealsFlightJourneyV2 | null {
   if (
     outbound === null ||
     inbound === null ||
+    fareBrand === null ||
     fare === null ||
     offer === null ||
     (outbound !== undefined && outbound.direction !== "outbound") ||
@@ -400,12 +445,24 @@ function canonicalJourney(value: unknown): DealsFlightJourneyV2 | null {
     tripType: value.tripType as DealsFlightTripType,
     phase: value.phase as DealsFlightPhaseV2,
     ...(outbound ? { outbound } : {}),
+    ...(fareBrand ? { fareBrand } : {}),
     ...(inbound ? { return: inbound } : {}),
     ...(fare ? { fare } : {}),
     ...(offer ? { confirmedOffer: offer } : {}),
   };
-  if (journey.tripType === "one-way" && inbound) return null;
-  if (journey.phase === "outbound" && (inbound || fare || offer)) return null;
+  if (journey.tripType === "one-way" && (inbound || fareBrand)) return null;
+  if (
+    journey.phase === "brand" &&
+    (journey.tripType !== "round-trip" ||
+      !outbound ||
+      fareBrand ||
+      inbound ||
+      fare ||
+      offer)
+  )
+    return null;
+  if (journey.phase === "outbound" && (fareBrand || inbound || fare || offer))
+    return null;
   if (
     journey.phase === "return" &&
     (journey.tripType !== "round-trip" || !outbound || inbound || fare || offer)

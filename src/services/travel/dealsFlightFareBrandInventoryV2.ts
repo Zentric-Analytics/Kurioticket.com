@@ -9,6 +9,7 @@ import { buildFlightItineraryKey } from "./flightOfferInventory";
 import {
   getDealsFlightFareChoicesV2,
   getDealsFlightReturnChoicesV2,
+  resolveDealsFlightOfferV2,
 } from "./dealsFlightInventoryV2";
 
 export type DealsFlightFareBrandOptionV2 = {
@@ -124,6 +125,24 @@ function selectedOffers(
       matches[0].ids.has(offer.providerOfferId!)
     );
   });
+}
+
+/** Resolves against the persisted authority set, including an offer that expired after selection. */
+export function resolveDealsFlightBrandOfferV2(
+  offers: NormalizedFlightResult[],
+  graph: DuffelItineraryInventoryGraph,
+  session: string,
+  outbound: string,
+  brandKey: string,
+  inbound: string,
+  fareKey: string,
+) {
+  return resolveDealsFlightOfferV2(
+    selectedOffers(offers, graph, session, outbound, brandKey),
+    outbound,
+    inbound,
+    fareKey,
+  );
 }
 
 export function getDealsFlightBrandReturnChoicesV2(

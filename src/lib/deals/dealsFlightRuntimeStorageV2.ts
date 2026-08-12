@@ -4,12 +4,22 @@ import {
   type DealsFlightFareV2,
   type DealsFlightItineraryV2,
 } from "./dealsTripPlanV2";
+import type { DealsCabinClass } from "./dealsSearchParams";
 
 export const DEALS_FLIGHT_RUNTIME_STORAGE_KEY =
   "kurioticket:deals:v2:flight-runtime";
 
+export type DealsFlightFareBrandOptionV2 = {
+  brandOptionKey: string;
+  fareBrandName: string;
+  cabinClass?: DealsCabinClass;
+  ownerNames: string[];
+  indicativeFromPrice?: number;
+  indicativeCurrency?: string;
+};
+
 export type DealsFlightRuntimeV2 = {
-  version: 1;
+  version: 1 | 2;
   inventoryToken: string;
   sourceSearchKey: string;
   inventoryExpiresAt: string;
@@ -24,6 +34,8 @@ export type DealsFlightRuntimeV2 = {
     }
   >;
   selectedOutboundKey?: string;
+  fareBrandOptions?: DealsFlightFareBrandOptionV2[];
+  selectedBrandOptionKey?: string;
   selectedReturnKey?: string;
   selectedFareKey?: string;
 };
@@ -54,7 +66,7 @@ export function parseDealsFlightRuntimeV2(
   const expires = safeText(item.inventoryExpiresAt);
   const parsedExpiry = expires ? Date.parse(expires) : Number.NaN;
   if (
-    item.version !== 1 ||
+    (item.version !== 1 && item.version !== 2) ||
     !token ||
     token.length < 32 ||
     sourceSearchKey !== currentSearchKey ||
@@ -109,6 +121,76 @@ export function parseDealsFlightRuntimeV2(
     return null;
 
   const selectedOutboundKey = safeText(item.selectedOutboundKey) ?? undefined;
+  const fareBrandOptions = (() => {
+    if (item.version === 1)
+      return item.fareBrandOptions === undefined ? [] : null;
+    if (!Array.isArray(item.fareBrandOptions)) return null;
+    return item.fareBrandOptions.map(
+      (value): DealsFlightFareBrandOptionV2 | null => {
+        if (!value || typeof value !== "object" || Array.isArray(value))
+          return null;
+        const option = value as Record<string, unknown>;
+        if (
+          Object.keys(option).some(
+            (key) =>
+              ![
+                "brandOptionKey",
+                "fareBrandName",
+                "cabinClass",
+                "ownerNames",
+                "indicativeFromPrice",
+                "indicativeCurrency",
+              ].includes(key),
+          )
+        )
+          return null;
+        const brandOptionKey = safeText(option.brandOptionKey);
+        const fareBrandName = safeText(option.fareBrandName);
+        const owners = option.ownerNames;
+        const price = option.indicativeFromPrice;
+        const currency = option.indicativeCurrency;
+        const validCabin =
+          option.cabinClass === undefined ||
+          ["economy", "premium-economy", "business", "first"].includes(
+            String(option.cabinClass),
+          );
+        if (
+          !brandOptionKey?.startsWith("flight-brand-v1:") ||
+          !fareBrandName ||
+          !validCabin ||
+          !Array.isArray(owners) ||
+          owners.length === 0 ||
+          owners.some((owner) => !safeText(owner)) ||
+          (price === undefined) !== (currency === undefined) ||
+          (price !== undefined &&
+            (typeof price !== "number" ||
+              !Number.isFinite(price) ||
+              price <= 0)) ||
+          (currency !== undefined &&
+            (typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)))
+        )
+          return null;
+        return {
+          brandOptionKey,
+          fareBrandName,
+          ...(option.cabinClass
+            ? { cabinClass: option.cabinClass as DealsCabinClass }
+            : {}),
+          ownerNames: owners as string[],
+          ...(typeof price === "number"
+            ? {
+                indicativeFromPrice: price,
+                indicativeCurrency: currency as string,
+              }
+            : {}),
+        };
+      },
+    );
+  })();
+  if (!fareBrandOptions || fareBrandOptions.some((option) => !option))
+    return null;
+  const selectedBrandOptionKey =
+    safeText(item.selectedBrandOptionKey) ?? undefined;
   const selectedReturnKey = safeText(item.selectedReturnKey) ?? undefined;
   const selectedFareKey = safeText(item.selectedFareKey) ?? undefined;
   if (
@@ -123,6 +205,15 @@ export function parseDealsFlightRuntimeV2(
           (choice) => choice!.itineraryKey === selectedReturnKey,
         ))) ||
     (tripType === "one-way" && selectedReturnKey) ||
+    (item.version === 1 && selectedBrandOptionKey) ||
+    (tripType === "one-way" &&
+      (selectedBrandOptionKey || fareBrandOptions.length)) ||
+    (selectedBrandOptionKey &&
+      (!selectedOutboundKey ||
+        tripType !== "round-trip" ||
+        !fareBrandOptions.some(
+          (option) => option!.brandOptionKey === selectedBrandOptionKey,
+        ))) ||
     (selectedFareKey &&
       (!selectedOutboundKey ||
         (tripType === "round-trip" && !selectedReturnKey) ||
@@ -131,15 +222,19 @@ export function parseDealsFlightRuntimeV2(
     return null;
 
   return {
-    version: 1,
+    version: item.version,
     inventoryToken: token,
     sourceSearchKey,
     inventoryExpiresAt: expires,
     tripType,
     outboundChoices: outboundChoices as DealsFlightItineraryV2[],
+    ...(item.version === 2
+      ? { fareBrandOptions: fareBrandOptions as DealsFlightFareBrandOptionV2[] }
+      : {}),
     returnChoices: returnChoices as DealsFlightItineraryV2[],
     fareChoices: fareChoices as DealsFlightRuntimeV2["fareChoices"],
     ...(selectedOutboundKey ? { selectedOutboundKey } : {}),
+    ...(selectedBrandOptionKey ? { selectedBrandOptionKey } : {}),
     ...(selectedReturnKey ? { selectedReturnKey } : {}),
     ...(selectedFareKey ? { selectedFareKey } : {}),
   };

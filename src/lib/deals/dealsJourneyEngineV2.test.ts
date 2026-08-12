@@ -55,6 +55,7 @@ const apply = (
         : event.type === "CAR_CONFIRMED"
           ? { sourceSearchKey: plan.productSearchKeys.car }
           : event.type === "FLIGHT_OUTBOUND_SELECTED" ||
+              event.type === "FLIGHT_FARE_BRAND_SELECTED" ||
               event.type === "FLIGHT_RETURN_SELECTED" ||
               event.type === "FLIGHT_FARE_SELECTED"
             ? { sourceSearchKey: plan.productSearchKeys.flight }
@@ -168,6 +169,68 @@ test("round-trip requires return; one-way goes directly to fare", () => {
       tripType === "round-trip" ? "flight-return" : "flight-fare",
     );
   }
+});
+test("fare-brand event is dormant, invalidates downstream flight and car, and preserves upstream", () => {
+  const search = makeSearch();
+  let plan = accepted(
+    apply(createDealsTripPlanV2(search, 10_000), search, {
+      type: "HOTEL_CONFIRMED",
+      hotel,
+    }),
+  );
+  plan = accepted(
+    apply(plan, search, {
+      type: "FLIGHT_OUTBOUND_SELECTED",
+      itinerary: outbound,
+    }),
+  );
+  plan = accepted(
+    apply(plan, search, { type: "FLIGHT_RETURN_SELECTED", itinerary: inbound }),
+  );
+  plan = accepted(
+    apply(plan, search, {
+      type: "FLIGHT_FARE_SELECTED",
+      fare: { fareKey: "fare-1", cabinClass: "economy" },
+    }),
+  );
+  plan = { ...plan, car };
+  const result = apply(plan, search, {
+    type: "FLIGHT_FARE_BRAND_SELECTED",
+    fareBrand: { brandOptionKey: "flight-brand-v1:a", fareBrandName: "Flex" },
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.plan.hotel, hotel);
+  assert.equal(result.plan.car, undefined);
+  assert.deepEqual(result.plan.flightJourney?.outbound, outbound);
+  assert.equal(
+    result.plan.flightJourney?.fareBrand?.brandOptionKey,
+    "flight-brand-v1:a",
+  );
+  assert.equal(result.plan.flightJourney?.return, undefined);
+  assert.equal(result.plan.flightJourney?.fare, undefined);
+  assert.equal(result.plan.flightJourney?.confirmedOffer, undefined);
+  assert.equal(result.plan.flightJourney?.phase, "return");
+  assert.equal(
+    getRequiredDealsJourneyStateV2(result.plan, at),
+    "flight-return",
+  );
+});
+
+test("one-way rejects the dormant fare-brand event", () => {
+  const search = makeSearch({ mode: "flight-car", flightTripType: "one-way" });
+  const plan = accepted(
+    apply(createDealsTripPlanV2(search, 10_000), search, {
+      type: "FLIGHT_OUTBOUND_SELECTED",
+      itinerary: outbound,
+    }),
+  );
+  assert.equal(
+    apply(plan, search, {
+      type: "FLIGHT_FARE_BRAND_SELECTED",
+      fareBrand: { brandOptionKey: "flight-brand-v1:a", fareBrandName: "Flex" },
+    }).ok,
+    false,
+  );
 });
 test("fare cannot be bypassed before revalidation", () => {
   const search = makeSearch({ mode: "flight-car" });
