@@ -4,17 +4,25 @@ import { resolve } from "node:path";
 import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
+const resultsBody = source.slice(
+  source.indexOf("export function ApprovedResultsScreen"),
+  source.indexOf("const stopLabels"),
+);
 
 test("ready flight results place one eligible price alert before their summary and cards", () => {
   const flightAlert = source.indexOf('status === "ready" && product === "flight" && availability.priceAlerts');
   const summary = source.indexOf('status === "ready" ? (', flightAlert);
   const cards = source.indexOf('sorted.map((x, i)', summary);
   const filteredEmpty = source.indexOf('title="No flights match these filters"', cards);
+  const hotelAlert = source.indexOf('product === "hotel" && availability.priceAlerts', filteredEmpty);
+  const bottomNavigation = source.indexOf("<BottomNav />", hotelAlert);
 
   assert.ok(flightAlert >= 0, "the flight price-alert eligibility guard should exist");
   assert.ok(flightAlert < summary, "the flight price alert should precede the results summary");
   assert.ok(summary < cards, "the results summary should precede flight cards");
   assert.ok(cards < filteredEmpty, "flight cards should precede the filtered-empty state");
+  assert.ok(filteredEmpty < hotelAlert, "the separately placed hotel price alert should remain after results");
+  assert.ok(hotelAlert < bottomNavigation, "all result content should precede bottom navigation");
   assert.equal(
     source.match(/product === "flight" && availability\.priceAlerts/g)?.length,
     1,
@@ -37,11 +45,6 @@ test("flight price-alert eligibility is route-level while the summary stays filt
 });
 
 test("feature-disabled flight results render no unguarded price alert", () => {
-  const resultsBody = source.slice(
-    source.indexOf("export function ApprovedResultsScreen"),
-    source.indexOf("const stopLabels"),
-  );
-
   assert.equal(resultsBody.match(/<PriceAlert product=\{product\} \/>/g)?.length, 2);
   assert.match(resultsBody, /product === "flight" && availability\.priceAlerts \? \(\s*<PriceAlert/);
   assert.match(resultsBody, /product === "hotel" && availability\.priceAlerts \? <PriceAlert/);
