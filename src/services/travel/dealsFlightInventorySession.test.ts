@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
+import type { DuffelItineraryInventoryGraph } from "./providers/duffelItineraryView";
 import {
   DealsFlightInventoryError,
   DealsFlightInventorySessionService,
@@ -41,6 +42,56 @@ const search: FlightSearchParams = {
   travelers: 1,
   cabinClass: "economy",
 };
+const graph: DuffelItineraryInventoryGraph = {
+  offerRequestId: "orq_same",
+  slices: [
+    {
+      index: 0,
+      origin: "LHR",
+      destination: "JFK",
+      itineraries: [
+        {
+          itineraryKey: "duffel-itinerary-v1:not-the-browser-key",
+          segments: [
+            {
+              origin: "LHR",
+              destination: "JFK",
+              departure: "2027-01-01T10:00:00Z",
+              arrival: "2027-01-01T18:00:00Z",
+              marketingCarrier: {
+                referenceId: "arl_1",
+                name: "Air",
+                iataCode: "ZZ",
+              },
+              operatingCarrier: {
+                referenceId: "arl_1",
+                name: "Air",
+                iataCode: "ZZ",
+              },
+              flightNumber: "1",
+            },
+          ],
+          brands: [
+            {
+              serverBrandIdentity: "brand_1",
+              fareBrandName: "Basic",
+              compatibleSingleTicketOffers: [
+                {
+                  providerOfferId: "off_secret_123",
+                  owner: { referenceId: "arl_1", name: "Air", iataCode: "ZZ" },
+                  amount: "100.00",
+                  currency: "USD",
+                },
+              ],
+              indicativeFrom: { amount: "100.00", currency: "USD" },
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 const offer = (expiry: number): NormalizedFlightResult => ({
   id: "duffel-off_secret_123",
   provider: "Duffel",
@@ -92,7 +143,7 @@ test("persists only a high-entropy token hash and canonical inventory across ser
   const created = await new DealsFlightInventorySessionService(
     store,
     () => now,
-  ).create(search, [offer(now + 3_600_000)]);
+  ).create(search, [offer(now + 3_600_000)], graph);
   assert.ok(created);
   assert.ok(created.inventoryToken.length >= 43);
   const [row] = [...store.rows.values()];
@@ -107,7 +158,9 @@ test("persists only a high-entropy token hash and canonical inventory across ser
     store,
     () => now,
   ).load(created.inventoryToken, created.sourceSearchKey);
+  assert.equal(row.schemaVersion, 2);
   assert.equal(loaded.offers[0].providerOfferId, "off_secret_123");
+  assert.equal(loaded.itineraryGraph?.offerRequestId, "orq_same");
   await assert.rejects(
     () =>
       new DealsFlightInventorySessionService(store, () => now).load(
