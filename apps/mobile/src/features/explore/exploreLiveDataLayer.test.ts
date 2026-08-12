@@ -49,7 +49,7 @@ test("Explore repository stays cache-first with bundled fallback", () => {
   assert.match(repository, /catalogue: dependencies\.bundled, source: "bundled"/);
 });
 
-test("visible Explore screens consume one shared live catalogue store", () => {
+test("visible Explore screens consume one shared live catalogue store that refreshes on focus", () => {
   for (const path of [
     "src/features/explore/ExploreScreen.tsx",
     "src/features/explore/ExploreRegionScreen.tsx",
@@ -62,6 +62,20 @@ test("visible Explore screens consume one shared live catalogue store", () => {
   assert.match(store, /getExploreCatalogueSnapshot\(\)/);
   assert.match(store, /refreshExploreCatalogue\(\)/);
   assert.match(store, /if \(!refreshPromise\)/);
+  assert.match(store, /useFocusEffect/);
+  assert.match(store, /startExploreCatalogueSync\(\)/);
+});
+
+test("live Explore screens resolve protected media through imageDestinationId", () => {
+  for (const path of [
+    "src/features/explore/ExploreScreen.tsx",
+    "src/features/explore/ExploreRegionScreen.tsx",
+    "src/features/explore/DestinationDetailsScreen.tsx",
+  ]) {
+    const screen = source(path);
+    assert.match(screen, /destinationMedia\(destination\.imageDestinationId\)/, path);
+    assert.doesNotMatch(screen, /destinationMedia\(destination\.id\)/, path);
+  }
 });
 
 test("Explore tab loader remains presentation-only and fixed at three seconds", () => {
