@@ -4,7 +4,7 @@ import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertPreviewIdentity } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { exactChangeSet, exactCheckout, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, nativeFingerprints, prepareCheckout } from "./remote-clients.mjs";
-import { inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
+import { canonicalPreviewOtaRemoteIdentity, inspectPreviewUpdateHistory, waitForStaging } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { unexpectedBuilds, validateAdoptableBuild, validateAdoptableIosSubmission } from "./native-ownership.mjs";
 
@@ -391,12 +391,15 @@ export class PreviewOrchestrator {
     }
     const history = await eas.listUpdates();
     const updates = [];
+    const updatesByPlatform = {};
     for (const platform of platforms) {
       const expectedRuntime = runtimeByPlatform?.[platform] ?? PREVIEW_IDENTITY.runtime;
       const replay = inspectPreviewUpdateHistory(history, sha, platform, expectedRuntime);
       if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups.`);
       if (replay.alreadyPublished) {
-        updates.push(...history.filter((entry) => entry.message.includes(sha) && entry.platforms.includes(platform)));
+        const replayed = history.filter((entry) => entry.message.includes(sha) && entry.platforms.includes(platform));
+        updates.push(...replayed);
+        updatesByPlatform[platform] = replayed;
         continue;
       }
       await lease.checkpoint();
@@ -407,21 +410,22 @@ export class PreviewOrchestrator {
       } catch (error) {
         if (!(error instanceof EasUpdateRuntimeMismatchError)) throw error;
         const mutatedUpdates = [...updates, ...error.updates];
-        const remoteIds = mutatedUpdates.map((entry) => entry.id ?? entry.group);
+        const mismatchUpdatesByPlatform = { ...updatesByPlatform, [platform]: error.updates };
         await this.ledger.recordAction({
           sourceSha: sha,
           kind: "OTA",
           identityKey,
-          remoteId: remoteIds.join(","),
+          remoteId: canonicalPreviewOtaRemoteIdentity(mismatchUpdatesByPlatform),
           state: "RUNTIME_MISMATCH",
           evidence: { updates: mutatedUpdates, mismatchPlatform: error.platform, expectedRuntime: error.expectedRuntime },
         });
         throw error;
       }
       updates.push(...published);
+      updatesByPlatform[platform] = published;
     }
     const ids = updates.map((entry) => entry.id ?? entry.group);
-    await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: ids.join(","), state: "PUBLISHED", evidence: updates });
+    await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: canonicalPreviewOtaRemoteIdentity(updatesByPlatform), state: "PUBLISHED", evidence: updates });
     return { updateIds: ids, runtimes, channel: PREVIEW_IDENTITY.channel };
   }
 
