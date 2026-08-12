@@ -12,18 +12,18 @@ const clientSource = readFileSync(
   "utf8",
 );
 
-test("shortens only the guided Hotel to Flight CTA copy", () => {
+test("uses stay semantics for both guided Hotel continuation paths", () => {
   assert.equal(
     translations["deals.guided.hotelDetails.continueFlights"],
-    "Choose this room",
+    "Continue with this stay to flights",
   );
   assert.equal(
     translations["deals.guided.hotelDetails.continueCars"],
-    "Choose this room and continue to cars",
+    "Continue with this stay to cars",
   );
 });
 
-test("preserves guided room selection behavior and accessible labeling", () => {
+test("preserves guided stay selection behavior and truthful accessible labeling", () => {
   for (const contract of [
     'guidedSearch?.mode === "hotel-car"',
     't("deals.guided.hotelDetails.continueCars")',
@@ -31,11 +31,53 @@ test("preserves guided room selection behavior and accessible labeling", () => {
     'kind: "guided-room"',
     "label: guidedActionLabel",
     "accessibleLabel: `${guidedActionLabel}:",
-    "if (guidedSelection) onGuidedSelection?.(guidedSelection)",
+    "onGuidedSelection?.(guidedSelection)",
   ])
     assert.ok(clientSource.includes(contract), contract);
 
   assert.match(bookingSource, /getDealsGuidedConfirmationActionId\("hotel"\)/);
+  assert.ok(
+    clientSource.includes(
+      "accessibleLabel: `${guidedActionLabel}: ${hotel.name}`",
+    ),
+  );
+  assert.ok(
+    !clientSource.includes(
+      "accessibleLabel: `${guidedActionLabel}: ${hotel.name}${roomType",
+    ),
+  );
+});
+
+test("frames guided room content as information and unavailable states as planning estimates", () => {
+  assert.equal(
+    translations["deals.guided.hotelDetails.roomInformation"],
+    "Room information",
+  );
+  assert.equal(
+    translations["deals.guided.hotelDetails.roomUnavailable"],
+    "This stay cannot be added to your Trip Plan because a current planning estimate is unavailable.",
+  );
+  assert.ok(
+    clientSource.includes(
+      'mode === "guided" ? (t("deals.guided.hotelDetails.roomInformation")',
+    ),
+  );
+});
+
+test("does not emit exact-room claims in guided Hotel copy", () => {
+  const guidedCopy = Object.entries(translations)
+    .filter(([key]) => key.startsWith("deals.guided.hotel"))
+    .map(([, value]) => value)
+    .join("\n");
+
+  for (const misleadingClaim of [
+    "Choose this room",
+    "current live room rate",
+    "Hotel room added to your Trip Plan",
+    "save this room",
+  ]) {
+    assert.doesNotMatch(guidedCopy, new RegExp(misleadingClaim, "i"));
+  }
 });
 
 test("renders one restrained flight-style outer booking card", () => {
