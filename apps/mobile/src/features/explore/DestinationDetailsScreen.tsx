@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
 import { destinationMedia, FALLBACK_SOURCE, resolvedDestinationHeroSource } from "./destinationMedia";
+import { destinationHandoff } from "./exploreInteractionModels";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useExploreCatalogue } from "./exploreCatalogueStore";
 import {
@@ -56,6 +57,7 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
   const media = destinationMedia(destination.id);
   const [imageFailed, setImageFailed] = useState(false);
   const scrollRef = useRef(null as ScrollView | null);
+  const handoff = destinationHandoff(destination);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
@@ -63,7 +65,7 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
 
   const searchFlights = () => router.push({
     pathname: "/flights",
-    params: { destinationId: destination.id, destination: destination.name, to: destination.primaryAirportCode, airportCodes: destination.airportCodes.join(",") },
+    params: { destinationId: destination.id, destination: destination.name, to: handoff.primaryAirportCode, airportCodes: handoff.airportCodes.join(",") },
   });
   const searchHotels = () => router.push({
     pathname: "/hotels",
@@ -107,7 +109,7 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
           </View>
           {destination.summary ? <Text style={styles.summary}>{destination.summary}</Text> : null}
           {destination.description ? <Section title="About"><Text style={styles.paragraph}>{destination.description}</Text></Section> : null}
-          {destination.highlights.length ? <Section title="Highlights">{destination.highlights.map((highlight) => <View key={highlight} style={styles.highlight}><View style={styles.bullet} /><Text style={styles.highlightText}>{highlight}</Text></View>)}</Section> : null}
+          {destination.highlights?.length ? <Section title="Highlights">{destination.highlights.map((highlight) => <View key={highlight} style={styles.highlight}><View style={styles.bullet} /><Text style={styles.highlightText}>{highlight}</Text></View>)}</Section> : null}
           <Section title="Getting there">
             {destination.airportCodes.map((code, index) => <View key={code} style={styles.airportRow}><Text style={styles.airportRowCode}>{code}</Text><Text style={styles.airportRowName}>{destination.airportNames[index]}</Text></View>)}
           </Section>
