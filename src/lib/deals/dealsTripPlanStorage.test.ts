@@ -105,3 +105,10 @@ test("guided mismatch and pure snapshots are non-destructive", () => {
   assert.deepEqual(classifyDealsStagedJourneySnapshot("{", "safe", 101), { status: "invalid" });
   const legacy = memoryStorage(raw); assert.equal(readDealsTripPlan("other", 101, legacy).status, "fingerprint_mismatch"); assert.equal(legacy.value(), null);
 });
+
+test("staged cleanup is best-effort when browser persistence is blocked", () => {
+  const throwing = { getItem: () => null, setItem: () => undefined, removeItem: () => { throw new Error("blocked"); } };
+  assert.doesNotThrow(() => removeDealsStagedJourneyPlan(throwing));
+  assert.equal(removeDealsStagedJourneyPlan(throwing), false);
+  assert.equal(removeDealsStagedJourneyPlan(null), false);
+});
