@@ -37,9 +37,26 @@ export default function ExploreTab() {
 
   useEffect(() => {
     return navigation.addListener("tabPress", () => {
-      if (!navigation.isFocused()) entryRequested.current = true;
+      if (!navigation.isFocused()) {
+        entryRequested.current = true;
+        overlayOpacity.setValue(1);
+        contentOpacity.setValue(0.82);
+        contentTranslateY.setValue(8);
+        glowScale.setValue(0.88);
+        glowOpacity.setValue(0.28);
+        sweepTranslateX.setValue(-180);
+        setShowEntry(true);
+      }
     });
-  }, [navigation]);
+  }, [
+    contentOpacity,
+    contentTranslateY,
+    glowOpacity,
+    glowScale,
+    navigation,
+    overlayOpacity,
+    sweepTranslateX,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
