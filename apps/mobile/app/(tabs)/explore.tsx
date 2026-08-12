@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { ExploreScreen } from "../../src/features/explore/ExploreScreen";
 import { FlowIcon } from "../../src/features/flow/FlowIcon";
 
@@ -8,6 +9,7 @@ const BLUE = "#0754F7";
 
 export default function ExploreTab() {
   const [showEntry, setShowEntry] = useState(true);
+  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
   const overlayOpacity = useRef(new Animated.Value(1)).current;
   const contentOpacity = useRef(new Animated.Value(0.82)).current;
   const contentTranslateY = useRef(new Animated.Value(8)).current;
@@ -17,19 +19,35 @@ export default function ExploreTab() {
 
   useEffect(() => {
     let mounted = true;
-    let sweep: Animated.CompositeAnimation | undefined;
+    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (mounted) setReduceMotion(enabled);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-    void AccessibilityInfo.isReduceMotionEnabled().then((reduceMotion) => {
-      if (!mounted) return;
+  useFocusEffect(
+    useCallback(() => {
+      if (reduceMotion === null) return undefined;
+
       if (reduceMotion) {
         overlayOpacity.setValue(0);
         contentOpacity.setValue(1);
         contentTranslateY.setValue(0);
         setShowEntry(false);
-        return;
+        return undefined;
       }
 
-      sweep = Animated.loop(
+      overlayOpacity.setValue(1);
+      contentOpacity.setValue(0.82);
+      contentTranslateY.setValue(8);
+      glowScale.setValue(0.88);
+      glowOpacity.setValue(0.28);
+      sweepTranslateX.setValue(-180);
+      setShowEntry(true);
+
+      const sweep = Animated.loop(
         Animated.timing(sweepTranslateX, {
           toValue: 180,
           duration: 760,
@@ -38,9 +56,8 @@ export default function ExploreTab() {
         }),
         { iterations: 2 },
       );
-      sweep.start();
 
-      Animated.parallel([
+      const reveal = Animated.parallel([
         Animated.timing(glowScale, {
           toValue: 1.08,
           duration: 700,
@@ -71,9 +88,9 @@ export default function ExploreTab() {
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start();
+      ]);
 
-      Animated.sequence([
+      const fade = Animated.sequence([
         Animated.delay(760),
         Animated.timing(overlayOpacity, {
           toValue: 0,
@@ -81,16 +98,40 @@ export default function ExploreTab() {
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start(({ finished }) => {
-        if (finished && mounted) setShowEntry(false);
-      });
-    });
+      ]);
 
-    return () => {
-      mounted = false;
-      sweep?.stop();
-    };
-  }, [contentOpacity, contentTranslateY, glowOpacity, glowScale, overlayOpacity, sweepTranslateX]);
+      sweep.start();
+      reveal.start();
+      fade.start(({ finished }) => {
+        if (finished) setShowEntry(false);
+      });
+
+      return () => {
+        sweep.stop();
+        reveal.stop();
+        fade.stop();
+
+        // Tabs remain mounted. Reset while Explore is off-screen so the next
+        // tap starts with the reveal already prepared instead of showing the
+        // fully rendered page for a frame first.
+        overlayOpacity.setValue(1);
+        contentOpacity.setValue(0.82);
+        contentTranslateY.setValue(8);
+        glowScale.setValue(0.88);
+        glowOpacity.setValue(0.28);
+        sweepTranslateX.setValue(-180);
+        setShowEntry(true);
+      };
+    }, [
+      contentOpacity,
+      contentTranslateY,
+      glowOpacity,
+      glowScale,
+      overlayOpacity,
+      reduceMotion,
+      sweepTranslateX,
+    ]),
+  );
 
   return (
     <View style={styles.root}>
