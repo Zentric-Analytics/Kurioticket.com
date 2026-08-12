@@ -4,6 +4,7 @@ import type { NormalizedFlightResult } from "@/lib/types";
 import {
   getFlightProviderCapabilities,
   isFlightOfferExternalHandoffCapable,
+  projectFlightHandoffCapability,
   type FlightProviderCapabilities,
 } from "./flightProviderCapabilities";
 
@@ -156,4 +157,116 @@ test("allows only provider-backed offers from an explicitly capable provider", (
     isFlightOfferExternalHandoffCapable(offer("Synthetic", ""), providers),
     false,
   );
+});
+
+test("fails closed without throwing for unknown handoff discriminants", () => {
+  for (const kind of [
+    "external-deeplink-v2",
+    "provider-checkout",
+    "unknown",
+    "",
+    123,
+    null,
+    undefined,
+  ]) {
+    const externalHandoff = {
+      kind,
+      secret: "nested-secret",
+      apiKey: "secret-api-key",
+      inventoryToken: "inventory-secret-token",
+      providerOfferId: "off_secret_123",
+      destinationUrl: "https://secret.example/checkout",
+    };
+    const provider = {
+      ...capableProvider(),
+      externalHandoff,
+    } as unknown as FlightProviderCapabilities;
+
+    assert.doesNotThrow(() => projectFlightHandoffCapability(externalHandoff));
+    assert.deepEqual(projectFlightHandoffCapability(externalHandoff), {
+      kind: "none",
+    });
+    assert.deepEqual(getFlightProviderCapabilities("Synthetic", [provider]), {
+      provider: "Synthetic",
+      exactSelectionRefresh: "itinerary-scoped",
+      expirySemantics: "provider-specific",
+      externalHandoff: { kind: "none" },
+    });
+    assert.equal(
+      isFlightOfferExternalHandoffCapable(offer("Synthetic"), [provider]),
+      false,
+    );
+    assert.equal(
+      JSON.stringify(
+        getFlightProviderCapabilities("Synthetic", [provider]),
+      ).includes("secret"),
+      false,
+    );
+  }
+});
+
+test("fails closed without throwing when externalHandoff is missing", () => {
+  for (const externalHandoff of [undefined, null]) {
+    const provider = {
+      ...capableProvider(),
+      externalHandoff,
+    } as unknown as FlightProviderCapabilities;
+
+    assert.doesNotThrow(() =>
+      getFlightProviderCapabilities("Synthetic", [provider]),
+    );
+    assert.equal(
+      isFlightOfferExternalHandoffCapable(offer("Synthetic"), [provider]),
+      false,
+    );
+  }
+});
+
+test("fails closed without throwing for malformed external deeplink data", () => {
+  const inventoryRequirements =
+    capableProvider().externalHandoff.inventoryRequirements;
+  const malformedValues: unknown[] = [
+    { kind: "external-deeplink" },
+    { kind: "external-deeplink", inventoryRequirements: null },
+    {
+      kind: "external-deeplink",
+      destinationAcquisition: "wrong",
+      destinationValidation: "validateProviderUrl",
+      inventoryRequirements,
+    },
+    {
+      kind: "external-deeplink",
+      destinationAcquisition: "activation-only",
+      destinationValidation: "something-else",
+      inventoryRequirements,
+    },
+    {
+      kind: "external-deeplink",
+      destinationAcquisition: "activation-only",
+      destinationValidation: "validateProviderUrl",
+      inventoryRequirements: {
+        ...inventoryRequirements,
+        liveSearchItinerary: false,
+      },
+    },
+  ];
+
+  for (const externalHandoff of malformedValues) {
+    const provider = {
+      ...capableProvider(),
+      externalHandoff,
+    } as unknown as FlightProviderCapabilities;
+
+    assert.doesNotThrow(() => projectFlightHandoffCapability(externalHandoff));
+    assert.deepEqual(projectFlightHandoffCapability(externalHandoff), {
+      kind: "none",
+    });
+    assert.doesNotThrow(() =>
+      isFlightOfferExternalHandoffCapable(offer("Synthetic"), [provider]),
+    );
+    assert.equal(
+      isFlightOfferExternalHandoffCapable(offer("Synthetic"), [provider]),
+      false,
+    );
+  }
 });
