@@ -35,6 +35,51 @@ test("parses the compact itinerary hierarchy without treating offers as expanded
   );
 });
 
+test("resolves place, carrier, and offer-owner references to IATA codes", () => {
+  assert.equal(graph.slices[0].origin, "LHR");
+  assert.equal(graph.slices[0].destination, "JFK");
+  assert.deepEqual(outbound.segments[0], {
+    origin: "LHR",
+    destination: "JFK",
+    departure: "2027-04-01T09:00:00Z",
+    arrival: "2027-04-01T17:00:00Z",
+    marketingCarrier: "BA",
+    operatingCarrier: "BA",
+    flightNumber: "117",
+  });
+  assert.equal(basic.compatibleSingleTicketOffers[0].owner, "BA");
+  assert.doesNotMatch(JSON.stringify(graph), /arp_|arl_/);
+});
+
+test("missing or malformed place and airline references fail closed", () => {
+  const missingPlace = structuredClone(fixture);
+  Reflect.deleteProperty(missingPlace.data.references.places, "arp_lhr_gb");
+  assert.equal(parseDuffelItineraryView(missingPlace), null);
+
+  const missingCarrier = structuredClone(fixture);
+  Reflect.deleteProperty(
+    missingCarrier.data.references.airlines,
+    "arl_british_airways",
+  );
+  assert.equal(parseDuffelItineraryView(missingCarrier), null);
+
+  const malformedAirline = structuredClone(fixture);
+  malformedAirline.data.references.airlines.arl_british_airways.iata_code =
+    "arl_not_an_iata_code";
+  assert.equal(parseDuffelItineraryView(malformedAirline), null);
+});
+
+test("raw provider place and airline IDs are never accepted as IATA codes", () => {
+  const rawPlace = structuredClone(fixture);
+  rawPlace.data.slices[0].origin = "arp_unmapped_place";
+  assert.equal(parseDuffelItineraryView(rawPlace), null);
+
+  const rawAirline = structuredClone(fixture);
+  rawAirline.data.slices[0].itineraries[0].segments[0].marketing_carrier =
+    "arl_unmapped_airline";
+  assert.equal(parseDuffelItineraryView(rawAirline), null);
+});
+
 test("itinerary keys reflect physical sequence but not provider offer or price", () => {
   const key = buildDuffelItineraryKey(
     "outbound",
@@ -49,6 +94,37 @@ test("itinerary keys reflect physical sequence but not provider offer or price",
       { ...outbound.segments[0], flightNumber: "999" },
     ]),
     key,
+  );
+});
+
+test("itinerary identity is stable across different provider reference IDs", () => {
+  const alternateReferences = structuredClone(fixture);
+  const { airlines: fixtureAirlines, places: fixturePlaces } =
+    alternateReferences.data.references;
+  const airlines = fixtureAirlines as Record<
+    string,
+    (typeof fixtureAirlines)["arl_british_airways"]
+  >;
+  const places = fixturePlaces as Record<
+    string,
+    (typeof fixturePlaces)["arp_lhr_gb"]
+  >;
+  places.arp_london_alternate = places.arp_lhr_gb;
+  places.arp_new_york_alternate = places.arp_jfk_us;
+  airlines.arl_ba_alternate = airlines.arl_british_airways;
+  alternateReferences.data.slices[0].origin = "arp_london_alternate";
+  alternateReferences.data.slices[0].destination = "arp_new_york_alternate";
+  const segment = alternateReferences.data.slices[0].itineraries[0].segments[0];
+  segment.origin = "arp_london_alternate";
+  segment.destination = "arp_new_york_alternate";
+  segment.marketing_carrier = "arl_ba_alternate";
+  segment.operating_carrier = "arl_ba_alternate";
+
+  const alternateGraph = parseDuffelItineraryView(alternateReferences);
+  assert.ok(alternateGraph);
+  assert.equal(
+    alternateGraph.slices[0].itineraries[0].itineraryKey,
+    outbound.itineraryKey,
   );
 });
 
