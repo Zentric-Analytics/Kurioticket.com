@@ -56,7 +56,6 @@ import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
-import { resolveDateHeaderCollapsed } from "./resultsHeaderModel";
 import { useUnreadNotifications } from "../notifications/useUnreadNotifications";
 import {
   activeFlightFilterCount,
@@ -107,7 +106,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     "all" | "stops" | "airlines" | "times"
   >("all");
   const hasUnreadNotifications = useUnreadNotifications(product === "flight");
-  const [dateHeaderCollapsed, setDateHeaderCollapsed] = useState(false);
   const [currencyState, setCurrencyState] = useState<{ currency: string; rates: ExchangeRates } | null>(null);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   useFocusEffect(useCallback(() => {
@@ -136,22 +134,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     });
     return () => { active = false; };
   }, []));
-  const dateHeaderProgress = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.timing(dateHeaderProgress, {
-      toValue: dateHeaderCollapsed ? 1 : 0,
-      duration: 220,
-      useNativeDriver: false,
-    }).start();
-  }, [dateHeaderCollapsed, dateHeaderProgress]);
-  const onResultsScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
-    if (product !== "flight") return;
-    const y = Math.max(0, event.nativeEvent.contentOffset.y);
-    setDateHeaderCollapsed((current) => {
-      const next = resolveDateHeaderCollapsed(y, current);
-      return next === current ? current : next;
-    });
-  }, [product]);
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && one(params.visual) === "1";
   const load = useCallback(async () => {
@@ -253,6 +235,163 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       : [],
     [flightDisplayPrices, product, sorted],
   );
+  const dateStrip = (
+    <DateStrip
+            date={date}
+            prices={prices}
+            formattedPrices={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
+            priceAccessibilityLabels={product === "flight" ? dateStripPrices.map((price) => price?.accessibilityLabel) : undefined}
+            flightResults={product === "flight"}
+            onSelect={(v) =>
+              router.setParams(
+                product === "flight" ? { departureDate: v } : { checkIn: v },
+              )
+            }
+          />
+  );
+  const filterRail = (
+    <ScrollView
+            horizontal
+            style={s0.filterRail}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s0.filters}
+          >
+            <Pill
+              label={product === "flight" && activeFilterCount ? `Filters (${activeFilterCount})` : "Filters"}
+              active={product === "flight" && activeFilterCount > 0}
+              icon={product === "flight" ? undefined : "sliders"}
+              flightResultsIcon={product === "flight" ? "filters" : undefined}
+              onPress={() => product === "flight" ? openFlightFilters("all") :
+                Alert.alert(
+                  "Filters",
+                  "Filter controls use the current live result set.",
+                )
+              }
+            />
+            {(product === "flight"
+              ? ["Stops", "Airlines", "Times"]
+              : ["Price", "Guest rating", "Property type"]
+            ).map((x) => (
+              <Pill
+                key={x}
+                label={x}
+                active={product === "flight" && (
+                  x === "Stops" ? filters.stops.length > 0 :
+                  x === "Airlines" ? filters.airlines.length > 0 :
+                  x === "Times" ? filters.times.length > 0 : false
+                )}
+                flightResultsChevron={product === "flight"}
+                onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines" | "times") :
+                  Alert.alert(
+                    x,
+                    "No additional values are available from this search response.",
+                  )
+                }
+              />
+            ))}
+            <Pill
+              label={`Sort: ${sort === "price" ? "Price" : product === "flight" ? "Best" : "Recommended"}`}
+              active
+              flightResultsChevron={product === "flight"}
+              onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
+            />
+          </ScrollView>
+  );
+  const resultContent = (
+    <>
+      {status === "loading" ? <Loading product={product} /> : null}
+              {message ? (
+                <Text accessibilityRole="alert" style={s0.notice}>
+                  {message}
+                </Text>
+              ) : null}
+              {status === "empty" ? (
+                <Empty
+                  title={`No ${product === "flight" ? "flights" : "properties"} found`}
+                  body="Try changing your dates or removing filters."
+                  retry={() => setRetry((x) => x + 1)}
+                  edit={edit}
+                />
+              ) : null}
+              {status === "error" ? (
+                <Empty
+                  title="Search could not be completed"
+                  body={message || "Check your connection and try again."}
+                  retry={() => setRetry((x) => x + 1)}
+                  edit={edit}
+                />
+              ) : null}
+              {status === "ready" && product === "flight" && availability.priceAlerts ? (
+                <PriceAlert product={product} />
+              ) : null}
+              {status === "ready" ? (
+                <View style={[s0.found, stackedResultsSummary && s0.foundNarrow]}>
+                  <View style={s0.foundCopy}>
+                    <Text style={s0.foundTitle}>
+                      {sorted.length}{" "}
+                      {product === "flight" ? "flights" : "properties"} found
+                    </Text>
+                    <Text style={s0.sub}>
+                      Prices include taxes and fees when reported by the provider
+                    </Text>
+                  </View>
+                  {product === "hotel" ? (
+                    <Button
+                      label="Map view"
+                      outline
+                      onPress={() =>
+                        Alert.alert(
+                          "Map view",
+                          "Map inventory is not available from this provider response.",
+                        )
+                      }
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        s0.foundAside,
+                        stackedResultsSummary && s0.foundAsideNarrow,
+                      ]}
+                    >
+                      <View style={s0.priceNoticeTitle}>
+                        <Info
+                          accessibilityElementsHidden
+                          accessible={false}
+                          color={ui.muted}
+                          size={16}
+                          strokeWidth={2}
+                        />
+                        <Text style={s0.change}>Price may change</Text>
+                      </View>
+                      <Text style={s0.sub}>Book soon to lock in this price.</Text>
+                    </View>
+                  )}
+                </View>
+              ) : null}
+              {sorted.map((x, i) =>
+                product === "flight" ? (
+                  <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} rank={i} params={params} />
+                ) : (
+                  <HotelCard
+                    key={x.id}
+                    result={x as HotelResult}
+                    rank={i}
+                    params={params}
+                  />
+                ),
+              )}
+              {status === "ready" && product === "flight" && results.length > 0 && sorted.length === 0 ? (
+                <Empty
+                  title="No flights match these filters"
+                  body="Clear the selected filters to see all loaded flights."
+                  retry={() => setFilters(emptyFlightFilters())}
+                  retryLabel="Clear filters"
+                  edit={edit}
+                />
+              ) : null}
+              {status === "ready" && product === "hotel" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
+    </>
+  );
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
       <TopBar
@@ -282,173 +421,23 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           />
         </View>
       </View>
-      <Animated.View
-        pointerEvents={product === "flight" && dateHeaderCollapsed ? "none" : "auto"}
-        accessibilityElementsHidden={product === "flight" && dateHeaderCollapsed}
-        importantForAccessibility={product === "flight" && dateHeaderCollapsed ? "no-hide-descendants" : "auto"}
-        style={product === "flight" ? {
-          height: dateHeaderProgress.interpolate({ inputRange: [0, 1], outputRange: [80, 0] }),
-          opacity: dateHeaderProgress.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.15, 0] }),
-          overflow: "hidden",
-          transform: [{ translateY: dateHeaderProgress.interpolate({ inputRange: [0, 1], outputRange: [0, -12] }) }],
-        } : undefined}
-      >
-        <DateStrip
-          date={date}
-          prices={prices}
-          formattedPrices={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
-          priceAccessibilityLabels={product === "flight" ? dateStripPrices.map((price) => price?.accessibilityLabel) : undefined}
-          flightResults={product === "flight"}
-          onSelect={(v) =>
-            router.setParams(
-              product === "flight" ? { departureDate: v } : { checkIn: v },
-            )
-          }
-        />
-      </Animated.View>
-      <ScrollView
-        horizontal
-        style={s0.filterRail}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s0.filters}
-      >
-        <Pill
-          label={product === "flight" && activeFilterCount ? `Filters (${activeFilterCount})` : "Filters"}
-          active={product === "flight" && activeFilterCount > 0}
-          icon={product === "flight" ? undefined : "sliders"}
-          flightResultsIcon={product === "flight" ? "filters" : undefined}
-          onPress={() => product === "flight" ? openFlightFilters("all") :
-            Alert.alert(
-              "Filters",
-              "Filter controls use the current live result set.",
-            )
-          }
-        />
-        {(product === "flight"
-          ? ["Stops", "Airlines", "Times"]
-          : ["Price", "Guest rating", "Property type"]
-        ).map((x) => (
-          <Pill
-            key={x}
-            label={x}
-            active={product === "flight" && (
-              x === "Stops" ? filters.stops.length > 0 :
-              x === "Airlines" ? filters.airlines.length > 0 :
-              x === "Times" ? filters.times.length > 0 : false
-            )}
-            flightResultsChevron={product === "flight"}
-            onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines" | "times") :
-              Alert.alert(
-                x,
-                "No additional values are available from this search response.",
-              )
-            }
-          />
-        ))}
-        <Pill
-          label={`Sort: ${sort === "price" ? "Price" : product === "flight" ? "Best" : "Recommended"}`}
-          active
-          flightResultsChevron={product === "flight"}
-          onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
-        />
-      </ScrollView>
-      <ScrollView
-        contentContainerStyle={s0.body}
-        onScroll={onResultsScroll}
-        scrollEventThrottle={16}
-      >
-        {status === "loading" ? <Loading product={product} /> : null}
-        {message ? (
-          <Text accessibilityRole="alert" style={s0.notice}>
-            {message}
-          </Text>
-        ) : null}
-        {status === "empty" ? (
-          <Empty
-            title={`No ${product === "flight" ? "flights" : "properties"} found`}
-            body="Try changing your dates or removing filters."
-            retry={() => setRetry((x) => x + 1)}
-            edit={edit}
-          />
-        ) : null}
-        {status === "error" ? (
-          <Empty
-            title="Search could not be completed"
-            body={message || "Check your connection and try again."}
-            retry={() => setRetry((x) => x + 1)}
-            edit={edit}
-          />
-        ) : null}
-        {status === "ready" && product === "flight" && availability.priceAlerts ? (
-          <PriceAlert product={product} />
-        ) : null}
-        {status === "ready" ? (
-          <View style={[s0.found, stackedResultsSummary && s0.foundNarrow]}>
-            <View style={s0.foundCopy}>
-              <Text style={s0.foundTitle}>
-                {sorted.length}{" "}
-                {product === "flight" ? "flights" : "properties"} found
-              </Text>
-              <Text style={s0.sub}>
-                Prices include taxes and fees when reported by the provider
-              </Text>
-            </View>
-            {product === "hotel" ? (
-              <Button
-                label="Map view"
-                outline
-                onPress={() =>
-                  Alert.alert(
-                    "Map view",
-                    "Map inventory is not available from this provider response.",
-                  )
-                }
-              />
-            ) : (
-              <View
-                style={[
-                  s0.foundAside,
-                  stackedResultsSummary && s0.foundAsideNarrow,
-                ]}
-              >
-                <View style={s0.priceNoticeTitle}>
-                  <Info
-                    accessibilityElementsHidden
-                    accessible={false}
-                    color={ui.muted}
-                    size={16}
-                    strokeWidth={2}
-                  />
-                  <Text style={s0.change}>Price may change</Text>
-                </View>
-                <Text style={s0.sub}>Book soon to lock in this price.</Text>
-              </View>
-            )}
-          </View>
-        ) : null}
-        {sorted.map((x, i) =>
-          product === "flight" ? (
-            <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} rank={i} params={params} />
-          ) : (
-            <HotelCard
-              key={x.id}
-              result={x as HotelResult}
-              rank={i}
-              params={params}
-            />
-          ),
-        )}
-        {status === "ready" && product === "flight" && results.length > 0 && sorted.length === 0 ? (
-          <Empty
-            title="No flights match these filters"
-            body="Clear the selected filters to see all loaded flights."
-            retry={() => setFilters(emptyFlightFilters())}
-            retryLabel="Clear filters"
-            edit={edit}
-          />
-        ) : null}
-        {status === "ready" && product === "hotel" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
-      </ScrollView>
+      {product === "flight" ? (
+        <ScrollView
+          style={s0.resultsScroll}
+          stickyHeaderIndices={[1]}
+          contentContainerStyle={s0.flightResultsContent}
+        >
+          <View>{dateStrip}</View>
+          <View style={s0.stickyFilterSurface}>{filterRail}</View>
+          <View style={s0.body}>{resultContent}</View>
+        </ScrollView>
+      ) : (
+        <>
+          {dateStrip}
+          {filterRail}
+          <ScrollView contentContainerStyle={s0.body}>{resultContent}</ScrollView>
+        </>
+      )}
       {product === "flight" ? (
         <FlightFilterModal
           visible={filterOpen}
@@ -937,6 +926,9 @@ const s0 = StyleSheet.create({
   summaryMeta: { marginTop: 3 },
   editNarrow: { alignSelf: "flex-start" },
   filterRail: { height: 64, flexGrow: 0 },
+  resultsScroll: { flex: 1 },
+  flightResultsContent: { flexGrow: 1 },
+  stickyFilterSurface: { backgroundColor: "white", zIndex: 1 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
   filters: { paddingHorizontal: 18, paddingVertical: 10, gap: 9, alignItems: "center" },
