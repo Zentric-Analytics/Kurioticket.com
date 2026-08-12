@@ -66,7 +66,7 @@ function RegionBrowseDestinationCard({
   onToggle: () => void;
   layout: ReturnType<typeof regionBrowseCardLayout>;
 }) {
-  const media = destinationMedia(destination.imageDestinationId);
+  const media = destinationMedia(destination.imageDestinationId) ?? destinationMedia(destination.id);
   const [failed, setFailed] = useState(false);
 
   return (
