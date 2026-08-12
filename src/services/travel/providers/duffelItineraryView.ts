@@ -1,0 +1,368 @@
+import { createHash } from "node:crypto";
+
+/**
+ * Server-side representation of Duffel's compact `view=itineraries` response.
+ * It deliberately is not a NormalizedFlightResult: nested offers are only priced
+ * projections and do not contain the slices needed by that normalizer.
+ */
+export type DuffelItineraryInventoryGraph = {
+  offerRequestId: string;
+  slices: DuffelInventorySlice[];
+};
+
+export type DuffelInventorySlice = {
+  index: number;
+  origin: string;
+  destination: string;
+  itineraries: DuffelInventoryItinerary[];
+};
+
+export type DuffelInventoryItinerary = {
+  itineraryKey: string;
+  segments: DuffelInventorySegment[];
+  brands: DuffelInventoryBrand[];
+};
+
+export type DuffelInventorySegment = {
+  origin: string;
+  destination: string;
+  departure: string;
+  arrival: string;
+  marketingCarrier: string;
+  operatingCarrier: string;
+  flightNumber: string;
+};
+
+export type DuffelInventoryBrand = {
+  /** Internal node identity, never a client-authored brand name. */
+  serverBrandIdentity: string;
+  fareBrandName: string;
+  cabinClass?: string;
+  fareBasisCode?: string;
+  compatibleSingleTicketOffers: DuffelPricedOffer[];
+  indicativeFrom?: { amount: string; currency: string };
+};
+
+export type DuffelPricedOffer = {
+  /** A provider identity. Keep the graph and values containing it on the server. */
+  providerOfferId: string;
+  owner: string;
+  amount: string;
+  currency: string;
+};
+
+type UnknownRecord = Record<string, unknown>;
+
+const record = (value: unknown): UnknownRecord | null =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as UnknownRecord)
+    : null;
+
+const requiredString = (value: unknown) =>
+  typeof value === "string" && value.trim() ? value.trim() : null;
+
+const optionalString = (value: unknown) => requiredString(value) ?? undefined;
+
+function locationCode(value: unknown) {
+  if (typeof value === "string")
+    return requiredString(value)?.toUpperCase() ?? null;
+  const object = record(value);
+  return requiredString(object?.iata_code)?.toUpperCase() ?? null;
+}
+
+const canonical = (value: string) => value.trim().toUpperCase();
+
+/** Builds a browser-safe identity from physical flight sequence, never price or offer ID. */
+export function buildDuffelItineraryKey(
+  direction: "outbound" | "return",
+  origin: string,
+  destination: string,
+  segments: DuffelInventorySegment[],
+) {
+  const materialIdentity = JSON.stringify([
+    "duffel-itinerary-v1",
+    direction,
+    canonical(origin),
+    canonical(destination),
+    segments.map((segment) => [
+      canonical(segment.origin),
+      canonical(segment.destination),
+      segment.departure,
+      segment.arrival,
+      canonical(segment.marketingCarrier),
+      canonical(segment.operatingCarrier),
+      canonical(segment.flightNumber),
+    ]),
+  ]);
+  return `duffel-itinerary-v1:${createHash("sha256").update(materialIdentity).digest("base64url")}`;
+}
+
+function parseSegment(value: unknown): DuffelInventorySegment | null {
+  const segment = record(value);
+  if (!segment) return null;
+  const marketingCarrier = record(segment.marketing_carrier);
+  const operatingCarrier = record(segment.operating_carrier);
+  const parsed = {
+    origin: locationCode(segment.origin),
+    destination: locationCode(segment.destination),
+    departure: requiredString(segment.departing_at),
+    arrival: requiredString(segment.arriving_at),
+    marketingCarrier: requiredString(marketingCarrier?.iata_code),
+    operatingCarrier: requiredString(operatingCarrier?.iata_code),
+    flightNumber: requiredString(segment.marketing_carrier_flight_number),
+  };
+  if (Object.values(parsed).some((field) => field === null)) return null;
+  return parsed as DuffelInventorySegment;
+}
+
+function parseOffer(value: unknown): DuffelPricedOffer | null {
+  const offer = record(value);
+  if (!offer || offer.type !== "single_ticket") return null;
+  const owner = record(offer.owner);
+  const parsed = {
+    providerOfferId: requiredString(offer.id),
+    owner: requiredString(owner?.iata_code) ?? requiredString(offer.owner),
+    amount: requiredString(offer.total_amount),
+    currency: requiredString(offer.total_currency)?.toUpperCase() ?? null,
+  };
+  if (Object.values(parsed).some((field) => field === null)) return null;
+  if (!/^\d+(?:\.\d+)?$/.test(parsed.amount!)) return null;
+  return parsed as DuffelPricedOffer;
+}
+
+function indicativeFrom(offers: DuffelPricedOffer[]) {
+  const currencies = new Set(offers.map(({ currency }) => currency));
+  if (!offers.length || currencies.size !== 1) return undefined;
+  let minimum = offers[0];
+  for (const offer of offers.slice(1)) {
+    if (Number(offer.amount) < Number(minimum.amount)) minimum = offer;
+  }
+  return { amount: minimum.amount, currency: minimum.currency };
+}
+
+function brandIdentity(parts: unknown[]) {
+  return `duffel-brand-node-v1:${createHash("sha256").update(JSON.stringify(parts)).digest("base64url")}`;
+}
+
+/**
+ * Parses only Stage 4.5 identity and compatibility fields. A malformed root,
+ * slice, itinerary, segment, or brand fails the response closed. Malformed and
+ * split-ticket priced projections are excluded rather than inferred.
+ */
+export function parseDuffelItineraryView(
+  response: unknown,
+): DuffelItineraryInventoryGraph | null {
+  const envelope = record(response);
+  const data = record(envelope?.data);
+  const offerRequestId = requiredString(data?.id);
+  if (
+    !data ||
+    !offerRequestId ||
+    !Array.isArray(data.slices) ||
+    !data.slices.length
+  )
+    return null;
+
+  const provisional: DuffelItineraryInventoryGraph = {
+    offerRequestId,
+    slices: [],
+  };
+  for (const [sliceIndex, rawSlice] of data.slices.entries()) {
+    const slice = record(rawSlice);
+    const origin = locationCode(slice?.origin);
+    const destination = locationCode(slice?.destination);
+    if (!slice || !origin || !destination || !Array.isArray(slice.itineraries))
+      return null;
+    const direction = sliceIndex === 0 ? "outbound" : "return";
+    const itineraries: DuffelInventoryItinerary[] = [];
+    for (const rawItinerary of slice.itineraries) {
+      const itinerary = record(rawItinerary);
+      if (
+        !itinerary ||
+        !Array.isArray(itinerary.segments) ||
+        !itinerary.segments.length ||
+        !Array.isArray(itinerary.brands)
+      )
+        return null;
+      const segments = itinerary.segments.map(parseSegment);
+      if (segments.some((segment) => segment === null)) return null;
+      const parsedSegments = segments as DuffelInventorySegment[];
+      const itineraryKey = buildDuffelItineraryKey(
+        direction,
+        origin,
+        destination,
+        parsedSegments,
+      );
+      const brands: DuffelInventoryBrand[] = [];
+      for (const [brandIndex, rawBrand] of itinerary.brands.entries()) {
+        const brand = record(rawBrand);
+        const fareBrandName = requiredString(brand?.fare_brand_name);
+        if (!brand || !fareBrandName || !Array.isArray(brand.offers))
+          return null;
+        const offers = brand.offers
+          .map(parseOffer)
+          .filter((offer): offer is DuffelPricedOffer => offer !== null);
+        const cabinClass = optionalString(brand.cabin_class);
+        const fareBasisCode = optionalString(brand.fare_basis_code);
+        const identity = brandIdentity([
+          sliceIndex,
+          itineraryKey,
+          brandIndex,
+          fareBrandName,
+          cabinClass,
+          fareBasisCode,
+          offers
+            .map(({ providerOfferId, owner }) => [owner, providerOfferId])
+            .sort(),
+        ]);
+        brands.push({
+          serverBrandIdentity: identity,
+          fareBrandName,
+          cabinClass,
+          fareBasisCode,
+          compatibleSingleTicketOffers: offers,
+          indicativeFrom: indicativeFrom(offers),
+        });
+      }
+      itineraries.push({ itineraryKey, segments: parsedSegments, brands });
+    }
+    provisional.slices.push({
+      index: sliceIndex,
+      origin,
+      destination,
+      itineraries,
+    });
+  }
+
+  // A multi-slice single ticket is complete only when the same offer identity
+  // participates in every requested slice. Never manufacture an association.
+  if (provisional.slices.length > 1) {
+    const membership = provisional.slices.map(
+      (slice) =>
+        new Set(
+          slice.itineraries.flatMap((itinerary) =>
+            itinerary.brands.flatMap((brand) =>
+              brand.compatibleSingleTicketOffers.map(
+                (offer) => offer.providerOfferId,
+              ),
+            ),
+          ),
+        ),
+    );
+    const complete = new Set(
+      [...membership[0]].filter((id) => membership.every((ids) => ids.has(id))),
+    );
+    for (const slice of provisional.slices) {
+      for (const itinerary of slice.itineraries) {
+        for (const brand of itinerary.brands) {
+          brand.compatibleSingleTicketOffers =
+            brand.compatibleSingleTicketOffers.filter(({ providerOfferId }) =>
+              complete.has(providerOfferId),
+            );
+          brand.indicativeFrom = indicativeFrom(
+            brand.compatibleSingleTicketOffers,
+          );
+        }
+      }
+    }
+  }
+  // Bind the internal node identity to the retained, complete membership set.
+  // The array position keeps two otherwise-identical documented nodes distinct.
+  for (const slice of provisional.slices) {
+    for (const itinerary of slice.itineraries) {
+      for (const [brandIndex, brand] of itinerary.brands.entries()) {
+        brand.serverBrandIdentity = brandIdentity([
+          slice.index,
+          itinerary.itineraryKey,
+          brandIndex,
+          brand.fareBrandName,
+          brand.cabinClass,
+          brand.fareBasisCode,
+          brand.compatibleSingleTicketOffers
+            .map(({ providerOfferId, owner }) => [owner, providerOfferId])
+            .sort(),
+        ]);
+      }
+    }
+  }
+  return provisional;
+}
+
+export function getDuffelOutboundItineraryOptions(
+  graph: DuffelItineraryInventoryGraph,
+) {
+  return graph.slices[0]?.itineraries ?? [];
+}
+
+export function getDuffelFareBrandOptionsForOutbound(
+  graph: DuffelItineraryInventoryGraph,
+  outboundItineraryKey: string,
+) {
+  return (
+    graph.slices[0]?.itineraries.find(
+      ({ itineraryKey }) => itineraryKey === outboundItineraryKey,
+    )?.brands ?? []
+  );
+}
+
+function selectedOutboundBrand(
+  graph: DuffelItineraryInventoryGraph,
+  outboundItineraryKey: string,
+  serverBrandIdentity: string,
+) {
+  return getDuffelFareBrandOptionsForOutbound(graph, outboundItineraryKey).find(
+    (brand) => brand.serverBrandIdentity === serverBrandIdentity,
+  );
+}
+
+export function getCompatibleDuffelReturnItineraries(
+  graph: DuffelItineraryInventoryGraph,
+  outboundItineraryKey: string,
+  serverBrandIdentity: string,
+) {
+  const brand = selectedOutboundBrand(
+    graph,
+    outboundItineraryKey,
+    serverBrandIdentity,
+  );
+  if (!brand) return [];
+  const selectedIds = new Set(
+    brand.compatibleSingleTicketOffers.map(
+      ({ providerOfferId }) => providerOfferId,
+    ),
+  );
+  return (graph.slices[1]?.itineraries ?? []).filter((itinerary) =>
+    itinerary.brands.some((returnBrand) =>
+      returnBrand.compatibleSingleTicketOffers.some(({ providerOfferId }) =>
+        selectedIds.has(providerOfferId),
+      ),
+    ),
+  );
+}
+
+export function getCompatibleDuffelExactOfferIds(
+  graph: DuffelItineraryInventoryGraph,
+  outboundItineraryKey: string,
+  serverBrandIdentity: string,
+  returnItineraryKey: string,
+) {
+  const brand = selectedOutboundBrand(
+    graph,
+    outboundItineraryKey,
+    serverBrandIdentity,
+  );
+  const returnItinerary = graph.slices[1]?.itineraries.find(
+    ({ itineraryKey }) => itineraryKey === returnItineraryKey,
+  );
+  if (!brand || !returnItinerary) return [];
+  const returnIds = new Set(
+    returnItinerary.brands.flatMap((returnBrand) =>
+      returnBrand.compatibleSingleTicketOffers.map(
+        ({ providerOfferId }) => providerOfferId,
+      ),
+    ),
+  );
+  return brand.compatibleSingleTicketOffers
+    .map(({ providerOfferId }) => providerOfferId)
+    .filter((id) => returnIds.has(id));
+}
