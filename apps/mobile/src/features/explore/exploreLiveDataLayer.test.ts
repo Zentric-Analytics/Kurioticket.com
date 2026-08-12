@@ -66,15 +66,17 @@ test("visible Explore screens consume one shared live catalogue store that refre
   assert.match(store, /startExploreCatalogueSync\(\)/);
 });
 
-test("live Explore screens resolve protected media through imageDestinationId", () => {
+test("live Explore screens prefer imageDestinationId and retain own-ID media fallback", () => {
   for (const path of [
     "src/features/explore/ExploreScreen.tsx",
     "src/features/explore/ExploreRegionScreen.tsx",
     "src/features/explore/DestinationDetailsScreen.tsx",
   ]) {
     const screen = source(path);
-    assert.match(screen, /destinationMedia\(destination\.imageDestinationId\)/, path);
-    assert.doesNotMatch(screen, /destinationMedia\(destination\.id\)/, path);
+    const remappedLookup = screen.indexOf("destinationMedia(destination.imageDestinationId)");
+    const ownIdFallback = screen.indexOf("destinationMedia(destination.id)", remappedLookup);
+    assert.ok(remappedLookup >= 0, `${path} must resolve imageDestinationId`);
+    assert.ok(ownIdFallback > remappedLookup, `${path} must try imageDestinationId before destination.id fallback`);
   }
 });
 
