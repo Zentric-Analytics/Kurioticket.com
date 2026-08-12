@@ -38,7 +38,7 @@ export const REGION_PREVIEW_IMAGE_HEIGHT_SCALE = 1.12;
 const shadow = { shadowColor: "#18305B", shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 };
 
 export function DestinationThumbnail({ destination }: { destination: LiveExploreDestination }) {
-  const media = destinationMedia(destination.imageDestinationId);
+  const media = destinationMedia(destination.imageDestinationId) ?? destinationMedia(destination.id);
   const [failed, setFailed] = useState(false);
   return <Image source={failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)} alt={`${destination.name}, ${destination.country}`} accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`} resizeMode="cover" onError={() => setFailed(true)} style={s.rowImage} />;
 }
@@ -95,7 +95,7 @@ function SectionHeading({ title }: { title: string }) {
 }
 
 function RegionPreviewCard({ destination, saved, onSelect, onToggle, width, height, imageHeight }: { destination: LiveExploreDestination; saved: boolean; onSelect: () => void; onToggle: () => void; width: number; height: number; imageHeight: number }) {
-  const media = destinationMedia(destination.imageDestinationId);
+  const media = destinationMedia(destination.imageDestinationId) ?? destinationMedia(destination.id);
   const [failed, setFailed] = useState(false);
   return <View style={[s.previewCard, { width, height }]}><Pressable accessibilityRole="button" accessibilityLabel={`Open details for ${destination.name}, ${destination.country}`} onPress={onSelect} style={s.previewMain}>
     <Image source={failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)} alt={`${destination.name}, ${destination.country}`} onError={() => setFailed(true)} accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`} resizeMode="cover" style={[s.previewImage, { height: imageHeight }]} />
