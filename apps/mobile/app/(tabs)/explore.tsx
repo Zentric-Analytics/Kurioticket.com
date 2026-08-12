@@ -8,7 +8,7 @@ const NAVY = "#071A48";
 const BLUE = "#0754F7";
 const ENTRY_DURATION_MS = 6000;
 const ENTRY_FADE_DURATION_MS = 400;
-const ENTRY_FADE_DELAY_MS = ENTRY_DURATION_MS - ENTRY_FADE_DURATION_MS;
+const ENTRY_FADE_DELAY_MS = ENTRY_DURATION_MS;
 const SWEEP_DURATION_MS = 700;
 
 export default function ExploreTab() {
@@ -148,7 +148,7 @@ export default function ExploreTab() {
         <Animated.View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
+          pointerEvents="auto"
           style={[styles.overlay, { opacity: overlayOpacity }]}
         >
           <Animated.View style={[styles.glow, { opacity: glowOpacity, transform: [{ scale: glowScale }] }]} />
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(250,251,255,0.96)",
+    backgroundColor: "#FAFBFF",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
