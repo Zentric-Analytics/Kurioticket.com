@@ -13,12 +13,7 @@ async function main() {
         ) VALUES (
           ${region.id}, ${region.name}, ${region.slug}, ${region.displayOrder}, ${region.published}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         )
-        ON CONFLICT ("id") DO UPDATE SET
-          "name" = EXCLUDED."name",
-          "slug" = EXCLUDED."slug",
-          "displayOrder" = EXCLUDED."displayOrder",
-          "published" = EXCLUDED."published",
-          "updatedAt" = CURRENT_TIMESTAMP
+        ON CONFLICT ("id") DO NOTHING
       `;
     }
 
@@ -41,29 +36,12 @@ async function main() {
           ${destination.editorialProvenance ? JSON.stringify(destination.editorialProvenance) : null}::jsonb,
           ${destination.displayOrder}, ${destination.published}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         )
-        ON CONFLICT ("id") DO UPDATE SET
-          "name" = EXCLUDED."name",
-          "country" = EXCLUDED."country",
-          "countryCode" = EXCLUDED."countryCode",
-          "regionId" = EXCLUDED."regionId",
-          "primaryAirportCode" = EXCLUDED."primaryAirportCode",
-          "airportCodes" = EXCLUDED."airportCodes",
-          "airportNames" = EXCLUDED."airportNames",
-          "searchAliases" = EXCLUDED."searchAliases",
-          "imageDestinationId" = EXCLUDED."imageDestinationId",
-          "summary" = EXCLUDED."summary",
-          "description" = EXCLUDED."description",
-          "highlights" = EXCLUDED."highlights",
-          "relatedDestinationIds" = EXCLUDED."relatedDestinationIds",
-          "sourceProvenance" = EXCLUDED."sourceProvenance",
-          "editorialProvenance" = EXCLUDED."editorialProvenance",
-          "displayOrder" = EXCLUDED."displayOrder",
-          "updatedAt" = CURRENT_TIMESTAMP
+        ON CONFLICT ("id") DO NOTHING
       `;
     }
   });
 
-  console.log(`Seeded ${seed.regions.length} Explore regions and ${seed.destinations.length} destinations.`);
+  console.log(`Ensured ${seed.regions.length} Explore regions and ${seed.destinations.length} destinations exist.`);
 }
 
 main()
