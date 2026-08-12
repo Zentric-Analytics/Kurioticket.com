@@ -42,20 +42,26 @@ export const getDealsFlightOutboundChoicesV2 = (
           result.price > 0 &&
           /^[A-Z]{3}$/.test(result.currency),
       );
-      const cheapest = prices.reduce<NormalizedFlightResult | null>(
-        (lowest, offer) =>
-          !lowest || offer.price < lowest.price ? offer : lowest,
-        null,
-      );
-      return cheapest
-        ? [
-            {
-              ...toJourneyItinerary(itineraryKey, leg),
-              indicativeFromPrice: cheapest.price,
-              indicativeCurrency: cheapest.currency,
-            },
-          ]
-        : [];
+      const currencies = new Set(prices.map((offer) => offer.currency));
+      const cheapest =
+        currencies.size === 1
+          ? prices.reduce<NormalizedFlightResult | null>(
+              (lowest, offer) =>
+                !lowest || offer.price < lowest.price ? offer : lowest,
+              null,
+            )
+          : null;
+      return [
+        {
+          ...toJourneyItinerary(itineraryKey, leg),
+          ...(cheapest
+            ? {
+                indicativeFromPrice: cheapest.price,
+                indicativeCurrency: cheapest.currency,
+              }
+            : {}),
+        },
+      ];
     },
   );
 

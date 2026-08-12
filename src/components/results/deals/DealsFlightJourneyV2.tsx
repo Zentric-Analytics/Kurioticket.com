@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRegion } from "@/components/region/RegionProvider";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
+import type { DisplayPrice } from "@/lib/currency/formatCurrency";
+import { formatTime } from "@/lib/utils";
 import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import { buildDealsProductSearchKeys } from "@/lib/deals/dealsProductSearchKeys";
 import { buildDealsJourneyUrl } from "@/lib/deals/dealsJourneyRoutes";
@@ -60,6 +65,10 @@ import {
   type OutboundSort,
   type OutboundStopsFilter,
 } from "@/lib/deals/dealsOutboundResultsV2";
+import {
+  deriveDealsOutboundDisplayPricesV2,
+  getComparableDealsOutboundPriceV2,
+} from "@/lib/deals/dealsOutboundDisplayPriceV2";
 import { DealsCarJourneyV2 } from "./DealsCarJourneyV2";
 import { DealsReviewJourneyV2 } from "./DealsReviewJourneyV2";
 
@@ -96,6 +105,9 @@ export function DealsFlightJourneyV2({
   upstreamPlan: DealsTripPlan | null;
 }) {
   const router = useRouter();
+  const { locale } = useLocale();
+  const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const searchKey = buildDealsProductSearchKeys(search).flight;
   const [runtime, setRuntime] = useState<DealsFlightRuntimeV2 | null>(null);
   const freshPlan = useCallback(
@@ -860,9 +872,20 @@ export function DealsFlightJourneyV2({
         }
       />
     );
+  const outboundDisplayPrices = deriveDealsOutboundDisplayPricesV2({
+    choices: runtime.outboundChoices,
+    displayCurrency: selectedOption.currency,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
+  });
   const visibleOutboundChoices = filterAndSortDealsOutboundResultsV2(
     runtime.outboundChoices,
     { stops: stopsFilter, departure: departureFilter, sort: outboundSort },
+    (choice) =>
+      getComparableDealsOutboundPriceV2(
+        outboundDisplayPrices.get(choice.itineraryKey),
+        selectedOption.currency,
+      ),
   );
   return (
     <div className="space-y-8" data-deals-v2-flight-runtime>
@@ -883,6 +906,8 @@ export function DealsFlightJourneyV2({
           <ItineraryButton
             key={choice.itineraryKey}
             choice={choice}
+            displayPrice={outboundDisplayPrices.get(choice.itineraryKey)}
+            locale={locale}
             selected={runtime.selectedOutboundKey === choice.itineraryKey}
             onSelect={() => void selectOutbound(choice.itineraryKey)}
           />
@@ -903,6 +928,7 @@ export function DealsFlightJourneyV2({
             <ItineraryButton
               key={choice.itineraryKey}
               choice={choice}
+              locale={locale}
               selected={runtime.selectedReturnKey === choice.itineraryKey}
               onSelect={() => void selectReturn(choice.itineraryKey)}
             />
@@ -1191,10 +1217,14 @@ function ChoiceSection({
 }
 function ItineraryButton({
   choice,
+  displayPrice,
+  locale,
   selected,
   onSelect,
 }: {
   choice: DealsFlightRuntimeV2["outboundChoices"][number];
+  displayPrice?: DisplayPrice;
+  locale: string;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -1219,30 +1249,30 @@ function ItineraryButton({
             </span>
           )}
         </span>
-        {choice.indicativeFromPrice !== undefined &&
-          choice.indicativeCurrency && (
-            <span className="text-right">
-              <span className="block text-xs font-bold text-slate-500">
-                Estimated from
-              </span>
-              <span className="block font-extrabold text-[#004BB8]">
-                {new Intl.NumberFormat(undefined, {
-                  style: "currency",
-                  currency: choice.indicativeCurrency,
-                  currencyDisplay: "code",
-                  maximumFractionDigits: 0,
-                }).format(choice.indicativeFromPrice)}
-              </span>
+        {displayPrice && (
+          <span className="text-right">
+            <span className="block text-xs font-bold text-slate-500">
+              Estimated from
             </span>
-          )}
+            <span
+              className="block font-extrabold text-[#004BB8]"
+              title={displayPrice.title}
+              aria-label={displayPrice.ariaLabel}
+            >
+              {displayPrice.formatted}
+            </span>
+            {displayPrice.isConvertedEstimate && (
+              <span className="block text-xs font-semibold text-slate-500">
+                Provider price: {displayPrice.providerFormatted}
+              </span>
+            )}
+          </span>
+        )}
       </span>
       <span className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
         <span>
           <span className="block text-lg font-extrabold">
-            {new Date(choice.departureTime).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {formatTime(choice.departureTime, locale)}
           </span>
           <span className="text-sm font-bold">{choice.originAirport}</span>
         </span>
@@ -1256,10 +1286,7 @@ function ItineraryButton({
         </span>
         <span className="text-right">
           <span className="block text-lg font-extrabold">
-            {new Date(choice.arrivalTime).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {formatTime(choice.arrivalTime, locale)}
           </span>
           <span className="text-sm font-bold">{choice.destinationAirport}</span>
         </span>

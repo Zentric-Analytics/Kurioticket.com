@@ -5,7 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = "USD", locale = "en-US") {
+export function formatCurrency(
+  amount: number,
+  currency = "USD",
+  locale = "en-US",
+) {
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
@@ -28,14 +32,25 @@ export function isValidItineraryDateTime(value: string) {
 
   const [, year, month, day, hour, minute, second = "0"] = match;
   const written = [year, month, day, hour, minute, second].map(Number);
-  const normalized = new Date(Date.UTC(written[0], written[1] - 1, written[2], written[3], written[4], written[5]));
+  const normalized = new Date(
+    Date.UTC(
+      written[0],
+      written[1] - 1,
+      written[2],
+      written[3],
+      written[4],
+      written[5],
+    ),
+  );
 
-  return normalized.getUTCFullYear() === written[0]
-    && normalized.getUTCMonth() === written[1] - 1
-    && normalized.getUTCDate() === written[2]
-    && normalized.getUTCHours() === written[3]
-    && normalized.getUTCMinutes() === written[4]
-    && normalized.getUTCSeconds() === written[5];
+  return (
+    normalized.getUTCFullYear() === written[0] &&
+    normalized.getUTCMonth() === written[1] - 1 &&
+    normalized.getUTCDate() === written[2] &&
+    normalized.getUTCHours() === written[3] &&
+    normalized.getUTCMinutes() === written[4] &&
+    normalized.getUTCSeconds() === written[5]
+  );
 }
 
 function getItineraryDate(value: string | Date) {
@@ -102,6 +117,17 @@ export function getItineraryDateKey(value: string | Date, timeZone?: string) {
   const day = parts.find((part) => part.type === "day")?.value;
 
   return year && month && day ? `${year}-${month}-${day}` : "";
+}
+
+/** Returns the clock hour written in an itinerary timestamp, without applying the host timezone. */
+export function getItineraryLocalHour(value: string | Date) {
+  if (typeof value === "string") {
+    const match = value.match(ISO_LOCAL_DATE_TIME_PATTERN);
+    if (match && isValidItineraryDateTime(value)) return Number(match[4]);
+  }
+
+  const date = getItineraryDate(value);
+  return Number.isFinite(date.getTime()) ? date.getUTCHours() : Number.NaN;
 }
 
 export function formatShortDate(value: string | Date, locale = "en-US") {
