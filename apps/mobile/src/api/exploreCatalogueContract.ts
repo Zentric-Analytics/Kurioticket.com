@@ -111,6 +111,8 @@ export function parseMobileExploreCatalogue(value: unknown): MobileExploreCatalo
     });
   }
 
+  if (!destinationIds.size) return null;
+
   for (const region of regions) {
     for (const destination of region.destinations) {
       if (destination.relatedDestinationIds.some((id) => !destinationIds.has(id))) return null;
