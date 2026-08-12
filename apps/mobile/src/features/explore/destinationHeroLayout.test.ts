@@ -4,7 +4,7 @@ import test from "node:test";
 
 const source = () => readFileSync("src/features/explore/DestinationDetailsScreen.tsx", "utf8");
 
-test("destination hero uses one bounded native frame with absolute-fill image", () => {
+test("destination hero uses one bounded native frame with fixed normal-flow image", () => {
   const details = source();
   const page = details.slice(details.indexOf("function DestinationPage"), details.indexOf("function Section"));
   const styles = details.slice(details.indexOf("const styles = StyleSheet.create"));
@@ -12,8 +12,8 @@ test("destination hero uses one bounded native frame with absolute-fill image", 
   assert.match(page, /<View collapsable={false} style={styles\.heroFrame}>/);
   assert.match(page, /resizeMode="cover"/);
   assert.match(styles, /heroFrame: \{ width: "100%", height: 360, overflow: "hidden", backgroundColor: "#E7ECF5" \}/);
-  assert.match(styles, /hero: \{ position: "absolute", top: 0, right: 0, bottom: 0, left: 0 \}/);
-  assert.doesNotMatch(styles, /hero: \{[^}]*\b(?:aspectRatio|minHeight|maxHeight|height|width)\b/);
+  assert.match(styles, /hero: \{ width: "100%", height: 360, backgroundColor: "#E7ECF5" \}/);
+  assert.doesNotMatch(styles, /hero: \{[^}]*\b(?:position|top|right|bottom|left|aspectRatio|minHeight|maxHeight)\b/);
 });
 
 test("destination hero fix preserves the shared scroll trailing-space contract", () => {
