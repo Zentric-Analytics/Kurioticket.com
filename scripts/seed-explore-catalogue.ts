@@ -1,6 +1,8 @@
 import { getPrisma } from "../src/lib/prisma";
 import { buildExploreCatalogueSeed } from "../src/services/exploreCatalogueSeed";
 
+const EXPLORE_SEED_TRANSACTION_TIMEOUT_MS = 60_000;
+
 async function main() {
   const db = getPrisma();
   const seed = buildExploreCatalogueSeed();
@@ -39,7 +41,7 @@ async function main() {
         ON CONFLICT ("id") DO NOTHING
       `;
     }
-  });
+  }, { timeout: EXPLORE_SEED_TRANSACTION_TIMEOUT_MS });
 
   console.log(`Ensured ${seed.regions.length} Explore regions and ${seed.destinations.length} destinations exist.`);
 }
