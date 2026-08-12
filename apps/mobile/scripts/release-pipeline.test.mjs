@@ -18,7 +18,7 @@ import { verifyProductionAab } from './verify-production-aab.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
 import { buildReleaseAudit } from './write-release-audit.mjs';
 import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
-import { classifyReplayLookupFailure, inspectPreviewUpdateHistory, normalizePreviewUpdatePage, resolveTrustedPreviewTarget, validateStagingReadiness, validateStagingVisualResponse, waitForStaging } from './preview-ota-automation.mjs';
+import { canonicalPreviewOtaRemoteIdentity, classifyReplayLookupFailure, inspectPreviewUpdateHistory, normalizePreviewUpdatePage, resolveTrustedPreviewTarget, validateStagingReadiness, validateStagingVisualResponse, waitForStaging } from './preview-ota-automation.mjs';
 import { classifyPreviewPlatform, combinePreviewDecisions, resolveLatestPreviewBaseline, selectReviewedPreviewBuild } from './preview-delivery-contract.mjs';
 
 const { policy, eas, root } = loadReleaseFiles();
@@ -101,6 +101,21 @@ function testZip(content = '{"ok":true}', name = 'release-audit.json', { externa
   return Buffer.concat([local, filename, data, central, filename, eocd]);
 }
 const response = (body, { status = 200, headers = {} } = {}) => new Response(body, { status, headers });
+
+test('Preview OTA durable identity uses stable platform-labelled groups', () => {
+  const publication = {
+    ios: [{ id: 'ios-update', group: 'ios-group', platform: 'ios' }],
+    android: [{ id: 'android-update', group: 'android-group', platform: 'android' }],
+  };
+  const replay = {
+    ios: [{ group: 'ios-group', platforms: ['ios'] }],
+    android: [{ group: 'android-group', platforms: ['android'] }],
+  };
+  assert.equal(canonicalPreviewOtaRemoteIdentity(publication), 'ios=ios-group,android=android-group');
+  assert.equal(canonicalPreviewOtaRemoteIdentity(replay), 'ios=ios-group,android=android-group');
+  assert.throws(() => canonicalPreviewOtaRemoteIdentity({ ios: [{ group: 'one', platforms: ['ios'] }, { group: 'two', platforms: ['ios'] }] }), /groups conflict/);
+  assert.throws(() => canonicalPreviewOtaRemoteIdentity({ ios: [{ id: 'only-an-update-id', platform: 'ios' }] }), /group is missing/);
+});
 
 test('approved matrix isolates runtimes and Android-only counters', () => {
   assert.doesNotThrow(() => assertReleasePolicy(policy, eas));
