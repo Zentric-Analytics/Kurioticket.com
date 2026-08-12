@@ -6,6 +6,10 @@ import { FlowIcon } from "../../src/features/flow/FlowIcon";
 
 const NAVY = "#071A48";
 const BLUE = "#0754F7";
+const ENTRY_DURATION_MS = 6000;
+const ENTRY_FADE_DURATION_MS = 400;
+const ENTRY_FADE_DELAY_MS = ENTRY_DURATION_MS - ENTRY_FADE_DURATION_MS;
+const SWEEP_DURATION_MS = 700;
 
 export default function ExploreTab() {
   const [showEntry, setShowEntry] = useState(true);
@@ -50,11 +54,10 @@ export default function ExploreTab() {
       const sweep = Animated.loop(
         Animated.timing(sweepTranslateX, {
           toValue: 180,
-          duration: 760,
+          duration: SWEEP_DURATION_MS,
           easing: Easing.inOut(Easing.quad),
           useNativeDriver: true,
         }),
-        { iterations: 2 },
       );
 
       const reveal = Animated.parallel([
@@ -91,10 +94,10 @@ export default function ExploreTab() {
       ]);
 
       const fade = Animated.sequence([
-        Animated.delay(760),
+        Animated.delay(ENTRY_FADE_DELAY_MS),
         Animated.timing(overlayOpacity, {
           toValue: 0,
-          duration: 320,
+          duration: ENTRY_FADE_DURATION_MS,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
@@ -103,7 +106,10 @@ export default function ExploreTab() {
       sweep.start();
       reveal.start();
       fade.start(({ finished }) => {
-        if (finished) setShowEntry(false);
+        if (finished) {
+          sweep.stop();
+          setShowEntry(false);
+        }
       });
 
       return () => {
