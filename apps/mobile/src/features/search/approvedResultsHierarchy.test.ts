@@ -5,16 +5,16 @@ import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 
-test("ready flight results place one eligible price alert after their summary and cards", () => {
+test("ready flight results place one eligible price alert before their summary and cards", () => {
   const flightAlert = source.indexOf('status === "ready" && product === "flight" && availability.priceAlerts');
-  const summary = source.indexOf('status === "ready" ? (');
+  const summary = source.indexOf('status === "ready" ? (', flightAlert);
   const cards = source.indexOf('sorted.map((x, i)', summary);
   const filteredEmpty = source.indexOf('title="No flights match these filters"', cards);
 
   assert.ok(flightAlert >= 0, "the flight price-alert eligibility guard should exist");
+  assert.ok(flightAlert < summary, "the flight price alert should precede the results summary");
   assert.ok(summary < cards, "the results summary should precede flight cards");
   assert.ok(cards < filteredEmpty, "flight cards should precede the filtered-empty state");
-  assert.ok(filteredEmpty < flightAlert, "the price alert should follow cards and the filtered-empty state");
   assert.equal(
     source.match(/product === "flight" && availability\.priceAlerts/g)?.length,
     1,

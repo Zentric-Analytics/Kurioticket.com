@@ -368,6 +368,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             edit={edit}
           />
         ) : null}
+        {status === "ready" && product === "flight" && availability.priceAlerts ? (
+          <PriceAlert product={product} />
+        ) : null}
         {status === "ready" ? (
           <View style={[s0.found, stackedResultsSummary && s0.foundNarrow]}>
             <View style={s0.foundCopy}>
@@ -432,9 +435,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             retryLabel="Clear filters"
             edit={edit}
           />
-        ) : null}
-        {status === "ready" && product === "flight" && availability.priceAlerts ? (
-          <PriceAlert product={product} />
         ) : null}
         {status === "ready" && product === "hotel" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
       </ScrollView>
