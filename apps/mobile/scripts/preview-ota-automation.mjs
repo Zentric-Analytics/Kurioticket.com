@@ -78,6 +78,27 @@ export function normalizePreviewUpdatePage(value) {
   });
 }
 
+export function canonicalPreviewOtaRemoteIdentity(entriesByPlatform) {
+  requireValue(entriesByPlatform && typeof entriesByPlatform === "object" && !Array.isArray(entriesByPlatform), "Preview OTA remote identity input is malformed.");
+  const parts = [];
+  for (const platform of ["ios", "android"]) {
+    const entries = entriesByPlatform[platform];
+    if (entries === undefined) continue;
+    requireValue(Array.isArray(entries) && entries.length > 0, `Preview OTA ${platform} remote identity is missing.`);
+    const groups = new Set(entries.map((entry) => {
+      requireValue(entry && typeof entry === "object" && !Array.isArray(entry), `Preview OTA ${platform} entry is malformed.`);
+      requireValue(typeof entry.group === "string" && entry.group.trim().length > 0, `Preview OTA ${platform} group is missing.`);
+      const entryPlatforms = Array.isArray(entry.platforms) ? entry.platforms : [entry.platform].filter(Boolean);
+      requireValue(entryPlatforms.includes(platform), `Preview OTA ${platform} entry has mismatched platform identity.`);
+      return entry.group;
+    }));
+    requireValue(groups.size === 1, `Preview OTA ${platform} remote groups conflict.`);
+    parts.push(`${platform}=${[...groups][0]}`);
+  }
+  requireValue(parts.length > 0, "Preview OTA remote identity is empty.");
+  return parts.join(",");
+}
+
 export function inspectPreviewUpdateHistory(value, targetSha, platform = "android", expectedRuntime = PREVIEW_RUNTIME) {
   requireValue(FULL_SHA.test(targetSha ?? ""), "Replay target SHA is invalid.");
   requireValue(platform === "android" || platform === "ios", "Replay platform is invalid.");

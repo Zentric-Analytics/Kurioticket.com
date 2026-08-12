@@ -15,6 +15,7 @@ import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { PreviewLedger } from "./ledger.mjs";
 import { runWorkerCycle } from "./worker-cycle.mjs";
 import { fetchWithDeadline, withDeadline } from "./deadlines.mjs";
+import { normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 
 const sha = "a".repeat(40);
 const appleEnv = { APP_STORE_CONNECT_ISSUER_ID: "issuer", APP_STORE_CONNECT_KEY_ID: "key", APP_STORE_CONNECT_PRIVATE_KEY: "private-key", APP_STORE_CONNECT_PREVIEW_APP_ID: "6797447471", APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID: "group-preview" };
@@ -1300,7 +1301,7 @@ test("OTA delivery publishes platforms sequentially and resumes only a missing p
       listUpdates: async () => [iosHistory],
       publishUpdate: async (message, platform, expectedRuntime) => {
         published.push(platform);
-        return [{ id: `${platform}-new`, branch: "preview", runtimeVersion: expectedRuntime, platforms: [platform], message }];
+        return [{ id: `${platform}-new`, group: `${platform}-group`, branch: "preview", runtimeVersion: expectedRuntime, platforms: [platform], message }];
       },
     }),
   });
@@ -1308,6 +1309,52 @@ test("OTA delivery publishes platforms sequentially and resumes only a missing p
   assert.deepEqual(published, ["android"]);
   assert.deepEqual(result.updateIds, ["ios-existing", "android-new"]);
   assert.equal(actions[0].state, "PUBLISHED");
+  assert.equal(actions[0].remoteId, "ios=ios-existing,android=android-group");
+});
+
+test("OTA publication and normalized history replay use one durable identity without republishing", async () => {
+  const durable = new Map();
+  const published = [];
+  let history = [];
+  const ledger = {
+    getAction: async (_kind, identityKey) => durable.get(identityKey) ?? null,
+    recordAction: async (action) => {
+      const existing = durable.get(action.identityKey);
+      if (existing?.remoteId && existing.remoteId !== action.remoteId) throw new Error(`Conflicting remote identity for OTA:${action.identityKey}.`);
+      durable.set(action.identityKey, action);
+      return action;
+    },
+  };
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, ledger, github: {}, render: {},
+    easFactory: () => ({
+      listUpdates: async () => history,
+      publishUpdate: async (message, platform, expectedRuntime) => {
+        published.push(platform);
+        return [{ id: `${platform}-update`, group: `${platform}-group`, branch: "preview", runtimeVersion: expectedRuntime, platform, platforms: [platform], message }];
+      },
+    }),
+  });
+
+  await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} });
+  history = normalizePreviewUpdatePage({ name: "preview", currentPage: [
+    { branch: "preview", runtimeVersion: "preview-0.3.0", group: "ios-group", platforms: "ios", message: `Automatic Preview iOS OTA for ${sha}; audit run 0` },
+    { branch: "preview", runtimeVersion: "preview-0.3.0", group: "android-group", platforms: "android", message: `Automatic Preview Android OTA for ${sha}; audit run 0` },
+  ] });
+  await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} });
+
+  assert.deepEqual(published, ["ios", "android"]);
+  assert.equal([...durable.values()][0].remoteId, "ios=ios-group,android=android-group");
+
+  history = [
+    { ...history[0], group: "different-ios-group" },
+    history[1],
+  ];
+  await assert.rejects(
+    orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }),
+    /Conflicting remote identity/,
+  );
+  assert.deepEqual(published, ["ios", "android"]);
 });
 
 test("coalesced native delivery can publish an OTA overlay only to affected platforms", async () => {
@@ -1320,7 +1367,7 @@ test("coalesced native delivery can publish an OTA overlay only to affected plat
       listUpdates: async () => [],
       publishUpdate: async (_message, platform, expectedRuntime) => {
         published.push(platform);
-        return [{ id: `${platform}-overlay`, branch: "preview", runtimeVersion: expectedRuntime, platforms: [platform], message: `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0` }];
+        return [{ id: `${platform}-overlay`, group: `${platform}-overlay-group`, branch: "preview", runtimeVersion: expectedRuntime, platforms: [platform], message: `Automatic Preview ${platform === "ios" ? "iOS" : "Android"} OTA for ${sha}; audit run 0` }];
       },
     }),
   });
@@ -1426,7 +1473,7 @@ test("OTA runtime mismatch is recorded once and blocks automatic republication",
   let action = null;
   let publishes = 0;
   const expectedRuntime = "a".repeat(40);
-  const mismatched = { id: "wrong-runtime", runtimeVersion: "b".repeat(40) };
+  const mismatched = { id: "wrong-runtime", group: "wrong-runtime-group", platform: "ios", runtimeVersion: "b".repeat(40) };
   const orchestrator = new PreviewOrchestrator({
     config: {},
     ledger: {
@@ -1448,7 +1495,7 @@ test("OTA runtime mismatch is recorded once and blocks automatic republication",
     /runtime does not match/,
   );
   assert.equal(action.state, "RUNTIME_MISMATCH");
-  assert.equal(action.remoteId, "wrong-runtime");
+  assert.equal(action.remoteId, "ios=wrong-runtime-group");
   assert.deepEqual(action.evidence.updates, [mismatched]);
 
   await assert.rejects(
