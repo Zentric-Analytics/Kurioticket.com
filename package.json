@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
+    "db:seed:explore": "cross-env JITI_TSCONFIG_PATHS=true node --import jiti/register scripts/seed-explore-catalogue.ts",
     "db:studio": "prisma studio",
     "security:secrets": "node scripts/verify-no-secrets.mjs",
     "postinstall": "prisma generate",
