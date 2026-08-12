@@ -41,6 +41,9 @@ export type DealsFlightItineraryV2 = {
   stops: number;
   layovers: Layover[];
   segments: FlightSegment[];
+  /** Comparison-only projection from compatible complete provider offers. */
+  indicativeFromPrice?: number;
+  indicativeCurrency?: string;
 };
 export type DealsFlightFareV2 = {
   fareKey: string;
@@ -195,6 +198,8 @@ export function canonicalizeDealsFlightItineraryV2(
     arrivalTime = text(value.arrivalTime),
     duration = text(value.duration);
   const direction = value.direction;
+  const indicativeFromPrice = value.indicativeFromPrice;
+  const indicativeCurrency = value.indicativeCurrency;
   const layovers = value.layovers.map(canonicalLayover),
     segments = value.segments.map(canonicalSegment);
   if (
@@ -207,7 +212,13 @@ export function canonicalizeDealsFlightItineraryV2(
     !duration ||
     layovers.includes(null) ||
     segments.includes(null) ||
-    value.stops !== segments.length - 1
+    value.stops !== segments.length - 1 ||
+    (indicativeFromPrice === undefined) !==
+      (indicativeCurrency === undefined) ||
+    (indicativeFromPrice !== undefined && !positive(indicativeFromPrice)) ||
+    (indicativeCurrency !== undefined &&
+      (typeof indicativeCurrency !== "string" ||
+        !/^[A-Z]{3}$/.test(indicativeCurrency)))
   )
     return null;
   return {
@@ -222,6 +233,12 @@ export function canonicalizeDealsFlightItineraryV2(
     stops: value.stops,
     layovers: layovers as Layover[],
     segments: segments as FlightSegment[],
+    ...(typeof indicativeFromPrice === "number"
+      ? {
+          indicativeFromPrice,
+          indicativeCurrency: indicativeCurrency as string,
+        }
+      : {}),
   };
 }
 export function canonicalizeDealsFlightFareV2(

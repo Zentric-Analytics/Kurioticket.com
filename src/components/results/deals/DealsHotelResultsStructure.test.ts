@@ -40,6 +40,9 @@ test("guided Hotel results adapt the shared results experience and HotelCard", a
   assert.match(shared, /deals\.guided\.hotelResults\.viewRooms/);
   assert.match(shared, /deals\.guided\.hotelResults\.viewRoomsFor/);
   assert.match(shared, /deals\.guided\.hotelResults\.roomsUnavailableFor/);
+  assert.match(card, /hotelResults\.estimatedStayTotal/);
+  assert.match(card, /hotelResults\.pricePerNight/);
+  assert.doesNotMatch(card, /package total/i);
   assert.match(card, /resolvedDetailsHref === null/);
 });
 
