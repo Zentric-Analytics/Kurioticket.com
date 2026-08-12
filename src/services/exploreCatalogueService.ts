@@ -43,20 +43,24 @@ function latestTimestamp(values: Array<Date | null>) {
 
 export async function loadPublishedExploreCatalogue(): Promise<MobileExploreCatalogue> {
   const db = getPrisma();
-  const [regions, regionVersion, destinationVersion] = await Promise.all([
-    db.exploreRegion.findMany({
-      where: { published: true },
-      orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
-      include: {
-        destinations: {
+  const [regions, regionVersion, destinationVersion] = await db.$transaction(
+    async (tx) =>
+      Promise.all([
+        tx.exploreRegion.findMany({
           where: { published: true },
           orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
-        },
-      },
-    }),
-    db.exploreRegion.aggregate({ _max: { updatedAt: true } }),
-    db.exploreDestination.aggregate({ _max: { updatedAt: true } }),
-  ]);
+          include: {
+            destinations: {
+              where: { published: true },
+              orderBy: [{ displayOrder: "asc" }, { name: "asc" }, { id: "asc" }],
+            },
+          },
+        }),
+        tx.exploreRegion.aggregate({ _max: { updatedAt: true } }),
+        tx.exploreDestination.aggregate({ _max: { updatedAt: true } }),
+      ]),
+    { isolationLevel: "RepeatableRead" },
+  );
 
   if (!regions.length) {
     throw new ExploreCatalogueUnavailableError();
@@ -69,6 +73,10 @@ export async function loadPublishedExploreCatalogue(): Promise<MobileExploreCata
   if (!version) {
     throw new ExploreCatalogueUnavailableError();
   }
+
+  const publishedDestinationIds = new Set(
+    regions.flatMap((region) => region.destinations.map((destination) => destination.id)),
+  );
 
   return {
     version,
@@ -90,7 +98,9 @@ export async function loadPublishedExploreCatalogue(): Promise<MobileExploreCata
         summary: destination.summary,
         description: destination.description,
         highlights: destination.highlights,
-        relatedDestinationIds: destination.relatedDestinationIds,
+        relatedDestinationIds: destination.relatedDestinationIds.filter((id) =>
+          publishedDestinationIds.has(id),
+        ),
       })),
     })),
   };
