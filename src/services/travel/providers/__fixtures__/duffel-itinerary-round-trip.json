@@ -3,31 +3,20 @@
     "id": "orq_sanitized_round_trip",
     "slices": [
       {
-        "origin": {
-          "iata_code": "LHR"
-        },
-        "destination": {
-          "iata_code": "JFK"
-        },
+        "origin": "arp_lhr_gb",
+        "destination": "arp_jfk_us",
         "itineraries": [
           {
             "segments": [
               {
-                "origin": {
-                  "iata_code": "LHR"
-                },
-                "destination": {
-                  "iata_code": "JFK"
-                },
+                "origin": "arp_lhr_gb",
+                "destination": "arp_jfk_us",
                 "departing_at": "2027-04-01T09:00:00Z",
                 "arriving_at": "2027-04-01T17:00:00Z",
-                "marketing_carrier": {
-                  "iata_code": "BA"
-                },
-                "operating_carrier": {
-                  "iata_code": "BA"
-                },
-                "marketing_carrier_flight_number": "117"
+                "marketing_carrier": "arl_british_airways",
+                "operating_carrier": "arl_british_airways",
+                "marketing_carrier_flight_number": "117",
+                "aircraft": "arc_boeing_777"
               }
             ],
             "brands": [
@@ -39,36 +28,28 @@
                   {
                     "id": "off_1",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "600.00",
                     "total_currency": "USD"
                   },
                   {
                     "id": "off_2",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "650.00",
                     "total_currency": "USD"
                   },
                   {
                     "id": "off_outbound_only",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "500.00",
                     "total_currency": "USD"
                   },
                   {
                     "id": "off_split",
                     "type": "split_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "400.00",
                     "total_currency": "USD"
                   }
@@ -82,9 +63,7 @@
                   {
                     "id": "off_3",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "900.00",
                     "total_currency": "USD"
                   }
@@ -98,9 +77,7 @@
                   {
                     "id": "off_4",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "AA"
-                    },
+                    "owner": "arl_american_airlines",
                     "total_amount": "1100.00",
                     "total_currency": "USD"
                   }
@@ -113,18 +90,14 @@
                   {
                     "id": "off_1",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "600.00",
                     "total_currency": "USD"
                   },
                   {
                     "id": "off_5",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "520.00",
                     "total_currency": "GBP"
                   }
@@ -135,31 +108,20 @@
         ]
       },
       {
-        "origin": {
-          "iata_code": "JFK"
-        },
-        "destination": {
-          "iata_code": "LHR"
-        },
+        "origin": "arp_jfk_us",
+        "destination": "arp_lhr_gb",
         "itineraries": [
           {
             "segments": [
               {
-                "origin": {
-                  "iata_code": "JFK"
-                },
-                "destination": {
-                  "iata_code": "LHR"
-                },
+                "origin": "arp_jfk_us",
+                "destination": "arp_lhr_gb",
                 "departing_at": "2027-04-08T10:00:00Z",
                 "arriving_at": "2027-04-08T18:00:00Z",
-                "marketing_carrier": {
-                  "iata_code": "BA"
-                },
-                "operating_carrier": {
-                  "iata_code": "BA"
-                },
-                "marketing_carrier_flight_number": "178"
+                "marketing_carrier": "arl_british_airways",
+                "operating_carrier": "arl_british_airways",
+                "marketing_carrier_flight_number": "178",
+                "aircraft": "arc_boeing_777"
               }
             ],
             "brands": [
@@ -169,36 +131,28 @@
                   {
                     "id": "off_1",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "600.00",
                     "total_currency": "USD"
                   },
                   {
                     "id": "off_2",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "650.00",
                     "total_currency": "USD"
                   },
                   {
                     "id": "off_4",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "AA"
-                    },
+                    "owner": "arl_american_airlines",
                     "total_amount": "1100.00",
                     "total_currency": "USD"
                   },
                   {
                     "id": "off_5",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "520.00",
                     "total_currency": "GBP"
                   }
@@ -210,9 +164,7 @@
                   {
                     "id": "off_3",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "900.00",
                     "total_currency": "USD"
                   }
@@ -223,21 +175,14 @@
           {
             "segments": [
               {
-                "origin": {
-                  "iata_code": "JFK"
-                },
-                "destination": {
-                  "iata_code": "LHR"
-                },
+                "origin": "arp_jfk_us",
+                "destination": "arp_lhr_gb",
                 "departing_at": "2027-04-09T11:00:00Z",
                 "arriving_at": "2027-04-09T19:00:00Z",
-                "marketing_carrier": {
-                  "iata_code": "BA"
-                },
-                "operating_carrier": {
-                  "iata_code": "BA"
-                },
-                "marketing_carrier_flight_number": "112"
+                "marketing_carrier": "arl_british_airways",
+                "operating_carrier": "arl_british_airways",
+                "marketing_carrier_flight_number": "112",
+                "aircraft": "arc_boeing_777"
               }
             ],
             "brands": [
@@ -247,9 +192,7 @@
                   {
                     "id": "off_2",
                     "type": "single_ticket",
-                    "owner": {
-                      "iata_code": "BA"
-                    },
+                    "owner": "arl_british_airways",
                     "total_amount": "650.00",
                     "total_currency": "USD"
                   }
@@ -259,6 +202,39 @@
           }
         ]
       }
-    ]
+    ],
+    "references": {
+      "airlines": {
+        "arl_british_airways": {
+          "id": "arl_british_airways",
+          "iata_code": "BA",
+          "name": "British Airways"
+        },
+        "arl_american_airlines": {
+          "id": "arl_american_airlines",
+          "iata_code": "AA",
+          "name": "American Airlines"
+        }
+      },
+      "places": {
+        "arp_lhr_gb": {
+          "id": "arp_lhr_gb",
+          "iata_code": "LHR",
+          "name": "Heathrow Airport"
+        },
+        "arp_jfk_us": {
+          "id": "arp_jfk_us",
+          "iata_code": "JFK",
+          "name": "John F. Kennedy International Airport"
+        }
+      },
+      "aircraft": {
+        "arc_boeing_777": {
+          "id": "arc_boeing_777",
+          "iata_code": "777",
+          "name": "Boeing 777"
+        }
+      }
+    }
   }
 }
