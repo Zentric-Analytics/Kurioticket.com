@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { exploreDestinations } from "@/shared/destinations/exploreDestinationContent";
 import {
@@ -58,4 +59,14 @@ test("Explore live catalogue seed carries search, editorial and publish-safe def
     assert.ok(destination.description?.trim(), destination.id);
     assert.ok(destination.highlights.length >= 3, destination.id);
   }
+});
+
+test("Explore seed uses remote-safe bulk inserts without overwriting existing rows", () => {
+  const script = readFileSync("scripts/seed-explore-catalogue.ts", "utf8");
+
+  assert.match(script, /exploreRegion\.createMany\(/);
+  assert.match(script, /exploreDestination\.createMany\(/);
+  assert.equal((script.match(/skipDuplicates: true/g) ?? []).length, 2);
+  assert.doesNotMatch(script, /\$transaction\(/);
+  assert.doesNotMatch(script, /\$executeRaw/);
 });
