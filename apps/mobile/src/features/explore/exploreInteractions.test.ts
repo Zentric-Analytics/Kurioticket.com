@@ -394,6 +394,13 @@ test("responsive calculations support narrow phones and tab clearance", () => {
   assert.equal(exploreBottomPadding(65, 24), 107);
 });
 
+test("Explore discovery leaves breathing room without duplicating tab-bar clearance", () => {
+  const source = screen();
+  assert.match(source, /const EXPLORE_BOTTOM_SPACING = 18;/);
+  assert.match(source, /const bottomPadding = EXPLORE_BOTTOM_SPACING;/);
+  assert.doesNotMatch(source, /exploreBottomPadding\(65, insets\.bottom\)/);
+});
+
 test("Explore removes destination and inspiration tabs while keeping supported actions", () => {
   const source = screen();
   assert.doesNotMatch(source, /EXPLORE_TABS|tablist|accessibilityRole="tab"|function Inspiration/);
