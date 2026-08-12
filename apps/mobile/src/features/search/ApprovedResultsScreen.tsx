@@ -76,6 +76,7 @@ import {
 import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { useSavedFlights } from "../../storage/useSavedFlights";
+import { formatDateStripPrice } from "./dateStripPrice";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -243,6 +244,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       displayPrice(result.price, result.currency, currencyState.currency, currencyState.rates),
     ]));
   }, [currencyState, product, sorted]);
+  const dateStripPrices = useMemo(
+    () => product === "flight"
+      ? sorted.slice(0, 5).map((result) => {
+          const fare = flightDisplayPrices.get(result.id);
+          return fare ? formatDateStripPrice(fare) : undefined;
+        })
+      : [],
+    [flightDisplayPrices, product, sorted],
+  );
   return (
     <SafeAreaView style={s0.safe} edges={["top"]}>
       <TopBar
@@ -286,7 +296,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <DateStrip
           date={date}
           prices={prices}
-          formattedPrices={product === "flight" ? sorted.slice(0, 5).map((result) => flightDisplayPrices.get(result.id)?.formatted) : undefined}
+          formattedPrices={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
+          priceAccessibilityLabels={product === "flight" ? dateStripPrices.map((price) => price?.accessibilityLabel) : undefined}
           flightResults={product === "flight"}
           onSelect={(v) =>
             router.setParams(
