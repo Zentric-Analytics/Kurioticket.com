@@ -423,6 +423,10 @@ export function DealsJourneyShell({
     stage === "car-details";
   const displayPlanStatus: GuidedPlanState =
     plan && plan.expiresAt <= lifecycleNow ? "expired" : planStatus;
+  const canRenderStoragelessFirstResults =
+    displayPlanStatus === "storage-unavailable" &&
+    stage === firstStage &&
+    (stage === "hotel-results" || stage === "flight-results");
   const clearConfirmationFailure = () => {
     const product = confirmationFailure?.product;
     setConfirmationFailure(null);
@@ -504,7 +508,8 @@ export function DealsJourneyShell({
           ) : null}
           {displayPlanStatus === "fingerprint-mismatch" ? (
             <DealsGuidedConflictState t={t} onRestart={restartCurrentPreview} />
-          ) : displayPlanStatus === "storage-unavailable" ? (
+          ) : displayPlanStatus === "storage-unavailable" &&
+            !canRenderStoragelessFirstResults ? (
             <GuidedSafeState
               title={t("deals.guided.storageUnavailable.title")}
               body={t("deals.guided.storageUnavailable.body")}

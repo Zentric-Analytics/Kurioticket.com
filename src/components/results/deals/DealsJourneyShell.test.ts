@@ -283,3 +283,34 @@ test("safe plan states replace interactive stages with reachable recovery", asyn
   );
   assert.match(shellSource, /router\.replace/);
 });
+
+test("unavailable storage still renders either canonical first results stage without inventing a plan", async () => {
+  const shellSource = await readFile(
+    new URL("./DealsJourneyShell.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    shellSource,
+    /const canRenderStoragelessFirstResults =\s*displayPlanStatus === "storage-unavailable" &&\s*stage === firstStage &&\s*\(stage === "hotel-results" \|\| stage === "flight-results"\);/,
+  );
+  assert.match(
+    shellSource,
+    /displayPlanStatus === "storage-unavailable" &&\s*!canRenderStoragelessFirstResults/,
+  );
+  assert.match(
+    shellSource,
+    /requiredStage === stage && stage === "hotel-results" \? \(\s*<DealsHotelResultsStage search=\{search\} \/>/,
+  );
+  assert.match(
+    shellSource,
+    /requiredStage === stage && stage === "flight-results" \? \([\s\S]*?<DealsFlightResultsStage search=\{search\} \/>/,
+  );
+  const storageUnavailableRule = shellSource.slice(
+    shellSource.indexOf("const canRenderStoragelessFirstResults"),
+    shellSource.indexOf("const clearConfirmationFailure"),
+  );
+  assert.doesNotMatch(
+    storageUnavailableRule,
+    /writeDealsStagedJourneyPlan|createDealsTripPlan|setPlanState/,
+  );
+});

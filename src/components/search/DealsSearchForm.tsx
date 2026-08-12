@@ -30,6 +30,7 @@ import {
   buildDealsJourneyUrl,
   getFirstDealsJourneyStage,
 } from "@/lib/deals/dealsJourneyRoutes";
+import { removeDealsStagedJourneyPlan } from "@/lib/deals/dealsTripPlanStorage";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
@@ -1968,6 +1969,7 @@ export function DealsSearchForm({
       onSubmitSearch(submittedSearch);
       return;
     }
+    removeDealsStagedJourneyPlan();
     setSubmitting(true);
     start();
     router.push(

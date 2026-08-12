@@ -88,11 +88,32 @@ test("normal submit enters the package-owned first results stage", () => {
     /if \(!validateCurrentDealsSearch\(submittedSearch\)\) return/,
   );
   assert.match(submit, /if \(variant === "results" && onSubmitSearch\)/);
+  assert.ok(
+    submit.indexOf("removeDealsStagedJourneyPlan()") >
+      submit.indexOf('if (variant === "results" && onSubmitSearch)'),
+  );
+  assert.ok(
+    submit.indexOf("removeDealsStagedJourneyPlan()") <
+      submit.indexOf("router.push"),
+  );
   assert.match(
     submit,
     /buildDealsJourneyUrl\([\s\S]*getFirstDealsJourneyStage\(submittedSearch\.mode\)[\s\S]*submittedSearch/,
   );
   assert.doesNotMatch(submit, /guidedPreview/);
+});
+
+test("a fresh normal search clears an unrelated staged preview without coupling Preview lifecycle", () => {
+  const submit =
+    form.match(
+      /const submit = \(event: FormEvent\) => \{[\s\S]*?\n  \};/,
+    )?.[0] ?? "";
+  const preview =
+    form.match(/const previewGuidedJourney = \(\) => \{[\s\S]*?\n  \};/)?.[0] ??
+    "";
+  assert.match(submit, /validateCurrentDealsSearch\(submittedSearch\)/);
+  assert.match(submit, /removeDealsStagedJourneyPlan\(\)/);
+  assert.doesNotMatch(preview, /removeDealsStagedJourneyPlan/);
 });
 
 test("preview action uses shared validation and canonical guided route helpers", () => {
@@ -130,7 +151,10 @@ test("preview route helper starts each package mode at its owned first stage", (
   }
 });
 
-test("preview entry does not import or call guided storage shortcuts", () => {
+test("preview entry does not call guided storage shortcuts", () => {
+  const preview =
+    form.match(/const previewGuidedJourney = \(\) => \{[\s\S]*?\n  \};/)?.[0] ??
+    "";
   for (const forbidden of [
     "createDealsTripPlan",
     "replaceDealsHotelSelection",
@@ -138,10 +162,9 @@ test("preview entry does not import or call guided storage shortcuts", () => {
     "replaceDealsCarSelection",
     "writeDealsStagedJourneyPlan",
     "writeDealsTripPlan",
-    "removeDealsStagedJourneyPlan",
     "markDealsProviderOpened",
   ]) {
-    assert.doesNotMatch(form, new RegExp(forbidden));
+    assert.doesNotMatch(preview, new RegExp(forbidden));
   }
 });
 

@@ -3722,7 +3722,7 @@ export const translations: TranslationDictionary = {
   "deals.guidedPreview.availableCar":
     "Car results, filters, sorting, details, and confirmation",
   "deals.guidedPreview.normalSearchNote":
-    "This internal preview does not publicly activate guided Deals. Normal Search still opens the standard Deals results.",
+    "This internal preview remains a separate action. Normal Search begins your package journey with its first Hotel or Flight results.",
   "deals.guidedPreview.action": "Preview guided journey",
   "deals.guidedPreview.accessibleName":
     "Internal preview of the guided Deals journey",
