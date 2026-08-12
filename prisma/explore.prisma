@@ -1,0 +1,42 @@
+model ExploreRegion {
+  id           String               @id
+  name         String               @unique
+  slug         String               @unique
+  displayOrder Int
+  published    Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  destinations ExploreDestination[]
+
+  @@index([published, displayOrder])
+}
+
+model ExploreDestination {
+  id                    String        @id
+  name                  String
+  country               String
+  countryCode           String
+  regionId              String
+  primaryAirportCode    String
+  airportCodes          String[]
+  airportNames          String[]
+  searchAliases         String[]
+  imageDestinationId    String
+  imageUrl              String?
+  summary               String?
+  description           String?
+  highlights            String[]      @default([])
+  relatedDestinationIds String[]      @default([])
+  sourceProvenance      Json?
+  editorialProvenance   Json?
+  displayOrder          Int
+  published             Boolean       @default(true)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  region                ExploreRegion @relation(fields: [regionId], references: [id], onDelete: Restrict)
+
+  @@index([regionId, published, displayOrder])
+  @@index([published, name])
+  @@index([countryCode])
+  @@index([primaryAirportCode])
+}
