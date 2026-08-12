@@ -1,6 +1,10 @@
 import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
+import {
+  pruneDuffelItineraryGraph,
+  type DuffelItineraryInventoryGraph,
+} from "./providers/duffelItineraryView";
 import { buildDealsFlightSearchKeyFromPayload } from "@/lib/deals/dealsProductSearchKeys";
 import {
   getDealsFlightFareChoicesV2,
@@ -84,6 +88,95 @@ const offerSchema = z
   })
   .strict();
 const inventorySchema = z.array(offerSchema);
+const airlineSchema = z
+  .object({
+    referenceId: text.min(1),
+    name: text.min(1),
+    iataCode: text.optional(),
+  })
+  .strict();
+const graphSchema = z
+  .object({
+    offerRequestId: text.min(1),
+    slices: z
+      .array(
+        z
+          .object({
+            index: z.number().int().nonnegative(),
+            origin: text.min(1),
+            destination: text.min(1),
+            itineraries: z
+              .array(
+                z
+                  .object({
+                    itineraryKey: text.min(1),
+                    segments: z
+                      .array(
+                        z
+                          .object({
+                            origin: text.min(1),
+                            destination: text.min(1),
+                            departure: text.min(1),
+                            arrival: text.min(1),
+                            marketingCarrier: airlineSchema,
+                            operatingCarrier: airlineSchema,
+                            flightNumber: text.min(1),
+                            aircraft: z
+                              .object({
+                                referenceId: text.min(1),
+                                name: text.min(1),
+                                iataCode: text.min(1),
+                              })
+                              .strict()
+                              .optional(),
+                          })
+                          .strict(),
+                      )
+                      .min(1),
+                    brands: z
+                      .array(
+                        z
+                          .object({
+                            serverBrandIdentity: text.min(1),
+                            fareBrandName: text.min(1),
+                            cabinClass: text.optional(),
+                            fareBasisCode: text.optional(),
+                            compatibleSingleTicketOffers: z
+                              .array(
+                                z
+                                  .object({
+                                    providerOfferId: text.min(1),
+                                    owner: airlineSchema,
+                                    amount: text.regex(/^\d+(?:\.\d+)?$/),
+                                    currency: text.min(1),
+                                  })
+                                  .strict(),
+                              )
+                              .min(1),
+                            indicativeFrom: z
+                              .object({
+                                amount: text.regex(/^\d+(?:\.\d+)?$/),
+                                currency: text.min(1),
+                              })
+                              .strict()
+                              .optional(),
+                          })
+                          .strict(),
+                      )
+                      .min(1),
+                  })
+                  .strict(),
+              )
+              .min(1),
+          })
+          .strict(),
+      )
+      .min(1),
+  })
+  .strict();
+const inventoryV2Schema = z
+  .object({ exactOffers: inventorySchema, itineraryGraph: graphSchema })
+  .strict();
 const searchSchema = z
   .object({
     tripType: z.enum(["round-trip", "one-way"]),
@@ -136,7 +229,11 @@ export class DealsFlightInventorySessionService {
     private store: DealsFlightInventoryStore = prismaDealsFlightInventoryStore,
     private now: () => number = Date.now,
   ) {}
-  async create(search: FlightSearchParams, results: NormalizedFlightResult[]) {
+  async create(
+    search: FlightSearchParams,
+    results: NormalizedFlightResult[],
+    itineraryGraph: DuffelItineraryInventoryGraph,
+  ) {
     const now = this.now();
     const offers = results
       .filter(
@@ -147,6 +244,11 @@ export class DealsFlightInventorySessionService {
       )
       .map(withoutRawProviderReference);
     if (!offers.length) return null;
+    const prunedGraph = pruneDuffelItineraryGraph(
+      itineraryGraph,
+      new Set(offers.map(({ providerOfferId }) => providerOfferId!)),
+    );
+    if (!prunedGraph) return null;
     const finite = offers.flatMap((offer) =>
       offer.providerExpiresAt === undefined ? [] : [offer.providerExpiresAt],
     );
@@ -156,14 +258,17 @@ export class DealsFlightInventorySessionService {
         finite.length === offers.length ? Math.max(...finite) : Infinity,
       ),
     );
-    const inventoryPayload = inventorySchema.parse(offers);
+    const inventoryPayload = inventoryV2Schema.parse({
+      exactOffers: offers,
+      itineraryGraph: prunedGraph,
+    });
     const searchPayload = searchSchema.parse(search);
     const inventoryToken = randomBytes(32).toString("base64url");
     const sourceSearchKey = buildDealsFlightSearchKeyFromPayload(search);
     await this.store.deleteExpired(new Date(now), 100);
     await this.store.create({
       tokenHash: hashInventoryToken(inventoryToken),
-      schemaVersion: 1,
+      schemaVersion: 2,
       sourceSearchKey,
       searchPayload,
       inventoryPayload,
@@ -186,14 +291,30 @@ export class DealsFlightInventorySessionService {
     }
     if (row.sourceSearchKey !== expected)
       throw new DealsFlightInventoryError("stale-search");
-    const parsed = inventorySchema.safeParse(row.inventoryPayload);
     const search = searchSchema.safeParse(row.searchPayload);
-    if (row.schemaVersion !== 1 || !parsed.success || !search.success)
+    if (!search.success)
       throw new DealsFlightInventoryError("malformed-inventory");
-    return {
-      offers: parsed.data as NormalizedFlightResult[],
-      search: search.data as FlightSearchParams,
-    };
+    if (row.schemaVersion === 1) {
+      const parsed = inventorySchema.safeParse(row.inventoryPayload);
+      if (!parsed.success)
+        throw new DealsFlightInventoryError("malformed-inventory");
+      return {
+        offers: parsed.data as NormalizedFlightResult[],
+        search: search.data as FlightSearchParams,
+      };
+    }
+    if (row.schemaVersion === 2) {
+      const parsed = inventoryV2Schema.safeParse(row.inventoryPayload);
+      if (!parsed.success)
+        throw new DealsFlightInventoryError("malformed-inventory");
+      return {
+        offers: parsed.data.exactOffers as NormalizedFlightResult[],
+        search: search.data as FlightSearchParams,
+        itineraryGraph: parsed.data
+          .itineraryGraph as DuffelItineraryInventoryGraph,
+      };
+    }
+    throw new DealsFlightInventoryError("malformed-inventory");
   }
   async returns(token: string, key: string, outbound: string) {
     const { offers } = await this.load(token, key);

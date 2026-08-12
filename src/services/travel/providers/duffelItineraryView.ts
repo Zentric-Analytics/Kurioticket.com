@@ -505,3 +505,52 @@ export function getCompatibleDuffelExactOfferIds(
     .map(({ providerOfferId }) => providerOfferId)
     .filter((id) => returnIds.has(id));
 }
+
+/** Removes every relationship not backed by a usable exact offer. Empty nodes are removed. */
+export function pruneDuffelItineraryGraph(
+  graph: DuffelItineraryInventoryGraph,
+  usableProviderOfferIds: ReadonlySet<string>,
+): DuffelItineraryInventoryGraph | null {
+  const slices = graph.slices
+    .map((slice) => ({
+      ...slice,
+      itineraries: slice.itineraries
+        .map((itinerary) => ({
+          ...itinerary,
+          brands: itinerary.brands
+            .map((brand) => {
+              const compatibleSingleTicketOffers =
+                brand.compatibleSingleTicketOffers.filter(
+                  ({ providerOfferId }) =>
+                    usableProviderOfferIds.has(providerOfferId),
+                );
+              return {
+                ...brand,
+                compatibleSingleTicketOffers,
+                indicativeFrom: indicativeFrom(compatibleSingleTicketOffers),
+              };
+            })
+            .filter((brand) => brand.compatibleSingleTicketOffers.length > 0),
+        }))
+        .filter((itinerary) => itinerary.brands.length > 0),
+    }))
+    .filter((slice) => slice.itineraries.length > 0);
+  if (slices.length !== graph.slices.length || !slices.length) return null;
+  return { ...graph, slices };
+}
+
+export function getDuffelGraphProviderOfferIds(
+  graph: DuffelItineraryInventoryGraph,
+) {
+  return new Set(
+    graph.slices.flatMap((slice) =>
+      slice.itineraries.flatMap((itinerary) =>
+        itinerary.brands.flatMap((brand) =>
+          brand.compatibleSingleTicketOffers.map(
+            ({ providerOfferId }) => providerOfferId,
+          ),
+        ),
+      ),
+    ),
+  );
+}

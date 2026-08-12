@@ -317,3 +317,42 @@ test("client-authored names and provider IDs are not accepted as selection ident
     [],
   );
 });
+
+test("prunes graph-only and split-ticket memberships without inventing compatibility", async () => {
+  const { pruneDuffelItineraryGraph, getDuffelGraphProviderOfferIds } =
+    await import("./duffelItineraryView");
+  const pruned = pruneDuffelItineraryGraph(graph, new Set(["off_1"]));
+  assert.ok(pruned);
+  assert.deepEqual([...getDuffelGraphProviderOfferIds(pruned)], ["off_1"]);
+  assert.equal(JSON.stringify(pruned).includes("off_split"), false);
+  assert.equal(pruneDuffelItineraryGraph(graph, new Set()), null);
+});
+
+test("Duffel relationship keys are not Kurioticket TripPlan itinerary keys", async () => {
+  const { buildFlightItineraryKey } = await import("../flightOfferInventory");
+  const segment = outbound.segments[0];
+  const browserKey = buildFlightItineraryKey({
+    direction: "outbound",
+    originAirport: graph.slices[0].origin,
+    destinationAirport: graph.slices[0].destination,
+    departureTime: segment.departure,
+    arrivalTime: segment.arrival,
+    duration: "8h",
+    durationMinutes: 480,
+    stops: 0,
+    layovers: [],
+    segments: [
+      {
+        originAirport: segment.origin,
+        destinationAirport: segment.destination,
+        departureTime: segment.departure,
+        arrivalTime: segment.arrival,
+        airlineName: segment.marketingCarrier.name,
+        flightNumber: segment.flightNumber,
+      },
+    ],
+  });
+  assert.notEqual(outbound.itineraryKey, browserKey);
+  assert.match(outbound.itineraryKey, /^duffel-itinerary-v1:/);
+  assert.match(browserKey, /^\["flight-itinerary-v1"/);
+});
