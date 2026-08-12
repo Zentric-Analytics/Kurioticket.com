@@ -28,9 +28,24 @@ export type DuffelInventorySegment = {
   destination: string;
   departure: string;
   arrival: string;
-  marketingCarrier: string;
-  operatingCarrier: string;
+  marketingCarrier: ResolvedDuffelAirline;
+  operatingCarrier: ResolvedDuffelAirline;
   flightNumber: string;
+  aircraft?: ResolvedDuffelAircraft;
+};
+
+export type ResolvedDuffelAirline = {
+  /** Provider identity retained only inside the server-side inventory graph. */
+  referenceId: string;
+  name: string;
+  iataCode?: string;
+};
+
+export type ResolvedDuffelAircraft = {
+  /** Provider identity retained only inside the server-side inventory graph. */
+  referenceId: string;
+  name: string;
+  iataCode: string;
 };
 
 export type DuffelInventoryBrand = {
@@ -46,7 +61,7 @@ export type DuffelInventoryBrand = {
 export type DuffelPricedOffer = {
   /** A provider identity. Keep the graph and values containing it on the server. */
   providerOfferId: string;
-  owner: string;
+  owner: ResolvedDuffelAirline;
   amount: string;
   currency: string;
 };
@@ -94,6 +109,11 @@ const airlineCode = (value: unknown) => {
   return code && /^[A-Z0-9]{2}$/.test(code) ? code : null;
 };
 
+const aircraftCode = (value: unknown) => {
+  const code = requiredString(value)?.toUpperCase();
+  return code && /^[A-Z0-9]{3}$/.test(code) ? code : null;
+};
+
 function referencedCode(
   value: unknown,
   references: UnknownRecord,
@@ -105,7 +125,58 @@ function referencedCode(
   return entity ? parseCode(entity.iata_code) : null;
 }
 
+function resolvedAirline(
+  value: unknown,
+  references: UnknownRecord,
+): ResolvedDuffelAirline | null {
+  const referenceId = requiredString(value);
+  if (!referenceId) return null;
+  const entity = record(references[referenceId]);
+  const name = requiredString(entity?.name);
+  if (!entity || !name) return null;
+
+  // Duffel explicitly permits null (and older payloads may omit the field), but
+  // a supplied value must remain a real two-character airline IATA code.
+  const rawIataCode = entity.iata_code;
+  if (rawIataCode !== null && rawIataCode !== undefined) {
+    const parsedIataCode = airlineCode(rawIataCode);
+    if (!parsedIataCode) return null;
+    return { referenceId, name, iataCode: parsedIataCode };
+  }
+  return { referenceId, name };
+}
+
+function resolvedAircraft(
+  value: unknown,
+  references: UnknownRecord,
+): ResolvedDuffelAircraft | null {
+  const referenceId = requiredString(value);
+  if (!referenceId) return null;
+  const entity = record(references[referenceId]);
+  const name = requiredString(entity?.name);
+  const parsedIataCode = aircraftCode(entity?.iata_code);
+  return entity && name && parsedIataCode
+    ? { referenceId, name, iataCode: parsedIataCode }
+    : null;
+}
+
 const canonical = (value: string) => value.trim().toUpperCase();
+
+function carrierMaterialIdentity(carrier: ResolvedDuffelAirline) {
+  if (carrier.iataCode) return `iata:${canonical(carrier.iataCode)}`;
+
+  // Non-IATA airline names are useful display fallbacks, but names alone cannot
+  // prove that two Duffel airline entities are equivalent. Hash the reference to
+  // retain that distinction without placing raw arl_* material in a browser key.
+  const opaqueReference = createHash("sha256")
+    .update(carrier.referenceId)
+    .digest("base64url");
+  return `non-iata:${canonical(carrier.name)}:${opaqueReference}`;
+}
+
+function ownerMaterialIdentity(owner: ResolvedDuffelAirline) {
+  return carrierMaterialIdentity(owner);
+}
 
 /** Builds a browser-safe identity from physical flight sequence, never price or offer ID. */
 export function buildDuffelItineraryKey(
@@ -124,8 +195,8 @@ export function buildDuffelItineraryKey(
       canonical(segment.destination),
       segment.departure,
       segment.arrival,
-      canonical(segment.marketingCarrier),
-      canonical(segment.operatingCarrier),
+      carrierMaterialIdentity(segment.marketingCarrier),
+      carrierMaterialIdentity(segment.operatingCarrier),
       canonical(segment.flightNumber),
     ]),
   ]);
@@ -138,6 +209,11 @@ function parseSegment(
 ): DuffelInventorySegment | null {
   const segment = record(value);
   if (!segment) return null;
+  const aircraft =
+    segment.aircraft === null || segment.aircraft === undefined
+      ? undefined
+      : resolvedAircraft(segment.aircraft, references.aircraft);
+  if (aircraft === null) return null;
   const parsed = {
     origin: referencedCode(segment.origin, references.places, iataCode),
     destination: referencedCode(
@@ -147,17 +223,16 @@ function parseSegment(
     ),
     departure: requiredString(segment.departing_at),
     arrival: requiredString(segment.arriving_at),
-    marketingCarrier: referencedCode(
+    marketingCarrier: resolvedAirline(
       segment.marketing_carrier,
       references.airlines,
-      airlineCode,
     ),
-    operatingCarrier: referencedCode(
+    operatingCarrier: resolvedAirline(
       segment.operating_carrier,
       references.airlines,
-      airlineCode,
     ),
     flightNumber: requiredString(segment.marketing_carrier_flight_number),
+    aircraft,
   };
   if (Object.values(parsed).some((field) => field === null)) return null;
   return parsed as DuffelInventorySegment;
@@ -171,7 +246,7 @@ function parseOffer(
   if (!offer || offer.type !== "single_ticket") return null;
   const parsed = {
     providerOfferId: requiredString(offer.id),
-    owner: referencedCode(offer.owner, references.airlines, airlineCode),
+    owner: resolvedAirline(offer.owner, references.airlines),
     amount: requiredString(offer.total_amount),
     currency: requiredString(offer.total_currency)?.toUpperCase() ?? null,
   };
@@ -270,7 +345,10 @@ export function parseDuffelItineraryView(
           cabinClass,
           fareBasisCode,
           offers
-            .map(({ providerOfferId, owner }) => [owner, providerOfferId])
+            .map(({ providerOfferId, owner }) => [
+              ownerMaterialIdentity(owner),
+              providerOfferId,
+            ])
             .sort(),
         ]);
         brands.push({
@@ -337,7 +415,10 @@ export function parseDuffelItineraryView(
           brand.cabinClass,
           brand.fareBasisCode,
           brand.compatibleSingleTicketOffers
-            .map(({ providerOfferId, owner }) => [owner, providerOfferId])
+            .map(({ providerOfferId, owner }) => [
+              ownerMaterialIdentity(owner),
+              providerOfferId,
+            ])
             .sort(),
         ]);
       }
