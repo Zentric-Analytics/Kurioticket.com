@@ -6,7 +6,7 @@ import { FlowIcon } from "../../src/features/flow/FlowIcon";
 
 const NAVY = "#071A48";
 const BLUE = "#0754F7";
-const ENTRY_DURATION_MS = 6000;
+const ENTRY_DURATION_MS = 3000;
 const ENTRY_FADE_DURATION_MS = 400;
 const ENTRY_FADE_DELAY_MS = ENTRY_DURATION_MS;
 const SWEEP_DURATION_MS = 700;
