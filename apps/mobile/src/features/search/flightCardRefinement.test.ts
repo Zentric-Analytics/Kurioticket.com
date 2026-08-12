@@ -47,10 +47,18 @@ test("flight card keeps narrow layouts to one compact row without height-growing
   assert.equal(card.match(/style=\{s0\.benefit\} numberOfLines=\{1\}/g)?.length, 3);
   assert.match(source, /card: \{[\s\S]*?padding: 13,[\s\S]*?gap: 10,/);
   assert.match(source, /benefits: \{[\s\S]*?paddingTop: 8,[\s\S]*?flexDirection: "row"/);
+  assert.match(source, /benefitList: \{ flex: 1, minWidth: 0, flexDirection: "column", gap: 6 \}/);
+  assert.match(source, /benefit: \{ minWidth: 0, fontSize: 10\.5, color: ui\.muted, flex: 1 \}/);
   assert.match(source, /detailsButton: \{ width: 88, minHeight: 44/);
   for (const viewport of [320, 360, 390, 430]) {
     assert.ok(viewport - 36 - 26 > 0, `${viewport}px retains positive single-row card content width`);
   }
+});
+
+test("flight loading skeleton mirrors the stacked benefit footer", () => {
+  assert.match(source, /skeletonBenefitLines: \{ flex: 1, gap: 6 \}/);
+  assert.match(source, /skeletonBenefitLine: \{ width: "82%" \}/);
+  assert.match(source, /skeletonButton: \{ width: 88, height: 44/);
 });
 
 test("flight card reserves a flexible single-line price column across supported currencies", () => {
