@@ -4,17 +4,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import { buildDealsProductSearchKeys } from "@/lib/deals/dealsProductSearchKeys";
-import {
-  applyDealsJourneyEventV2,
-  getRequiredDealsJourneyStateV2,
-} from "@/lib/deals/dealsJourneyEngineV2";
+import { applyDealsJourneyEventV2 } from "@/lib/deals/dealsJourneyEngineV2";
 import type { DealsTripPlanCar } from "@/lib/deals/dealsTripPlan";
 import {
   getDealsTripPlanV2NextDeadline,
   type DealsTripPlanV2,
   type DealsV2DeadlineKind,
 } from "@/lib/deals/dealsTripPlanV2";
-import { DealsCarDetailsStage } from "./DealsCarDetailsStage";
 import { DealsCarResultsStage } from "./DealsCarResultsStage";
 
 export function DealsCarJourneyV2({
@@ -34,10 +30,7 @@ export function DealsCarJourneyV2({
   editing?: boolean;
   onBackToReview?: () => void;
 }) {
-  const [candidateId, setCandidateId] = useState<string | null>(null);
-  const [showResults, setShowResults] = useState(editing || !plan.car);
   const [confirmationError, setConfirmationError] = useState("");
-  const [lifecycleNow, setLifecycleNow] = useState(() => Date.now());
   const [recovery, setRecovery] = useState<{
     revision: number;
     kind: DealsV2DeadlineKind;
@@ -49,12 +42,9 @@ export function DealsCarJourneyV2({
     const timer = window.setTimeout(
       () => {
         const now = Date.now();
-        setLifecycleNow(now);
         const current = getDealsTripPlanV2NextDeadline(plan);
         if (current.expiresAt > now) return;
-        setCandidateId(null);
         setConfirmationError("");
-        setShowResults(true);
         if (current.kind === "flight-offer") onFlightExpired();
         else setRecovery({ revision: plan.revision, kind: current.kind });
       },
@@ -67,12 +57,10 @@ export function DealsCarJourneyV2({
     const now = Date.now();
     const deadline = getDealsTripPlanV2NextDeadline(plan);
     if (plan.expiresAt <= now) {
-      setCandidateId(null);
       setRecovery({ revision: plan.revision, kind: "plan" });
       return;
     }
     if (deadline.expiresAt <= now && deadline.kind === "hotel") {
-      setCandidateId(null);
       setRecovery({ revision: plan.revision, kind: "hotel" });
       return;
     }
@@ -81,7 +69,6 @@ export function DealsCarJourneyV2({
       !plan.flightJourney.confirmedOffer ||
       plan.flightJourney.confirmedOffer.offerExpiresAt <= now
     ) {
-      setCandidateId(null);
       onFlightExpired();
       return;
     }
@@ -102,13 +89,11 @@ export function DealsCarJourneyV2({
           ? "Your hotel selection is no longer current. Return to the hotel step."
           : result.nextState.startsWith("flight")
             ? "Your flight must be confirmed again before choosing this car."
-            : "This car could not be confirmed. Refresh it and try again.",
+            : "This car option could not be added to your Trip Plan. Refresh the options and try again.",
       );
       return;
     }
     onPlanChange(result.plan);
-    setCandidateId(null);
-    setShowResults(false);
     setConfirmationError("");
   };
 
@@ -126,69 +111,6 @@ export function DealsCarJourneyV2({
       <LifecycleRecovery message="Your hotel selection expired. Return to the hotel step to choose it again." />
     );
 
-  const requiredState = getRequiredDealsJourneyStateV2(plan, lifecycleNow);
-  if (plan.car && !showResults && requiredState === "review") {
-    const car = plan.car;
-    return (
-      <section
-        aria-labelledby="confirmed-car-heading"
-        className="rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-6"
-        data-deals-v2-car-confirmed
-      >
-        <h2 id="confirmed-car-heading" className="text-xl font-extrabold">
-          Car confirmed
-        </h2>
-        <p className="mt-2 font-semibold">
-          {car.rentalCompany} · {car.modelName}
-        </p>
-        <p className="mt-1">{car.categoryLabel}</p>
-        <p className="mt-2">
-          {car.pickupLocation} → {car.returnLocation}
-        </p>
-        <p className="mt-1">
-          {car.pickupDate} {car.pickupTime} – {car.dropoffDate}{" "}
-          {car.dropoffTime}
-        </p>
-        <p className="mt-2 text-lg font-extrabold">
-          Car component: {car.sourceCurrency} {car.sourcePrice}
-        </p>
-        <p className="mt-2 text-sm font-semibold">
-          Your package selections are ready for review.
-        </p>
-        <Button
-          type="button"
-          variant="secondary"
-          className="mt-4"
-          onClick={() => setShowResults(true)}
-        >
-          Choose another car
-        </Button>
-      </section>
-    );
-  }
-
-  if (candidateId) {
-    return (
-      <section data-deals-v2-car-details>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => setCandidateId(null)}
-        >
-          Back to car results
-        </Button>
-        <DealsCarDetailsStage
-          search={search}
-          carId={candidateId}
-          plan={plan}
-          confirming={false}
-          confirmationError={confirmationError}
-          onConfirm={confirm}
-        />
-      </section>
-    );
-  }
-
   return (
     <section aria-labelledby="v2-car-results-heading" data-deals-v2-car-results>
       {editing && plan.car && onBackToReview && (
@@ -202,13 +124,21 @@ export function DealsCarJourneyV2({
         </Button>
       )}
       <h2 id="v2-car-results-heading" className="text-2xl font-extrabold">
-        Choose your car
+        Car options for your trip
       </h2>
+      {confirmationError && (
+        <p
+          role="alert"
+          className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 font-semibold text-red-900"
+        >
+          {confirmationError}
+        </p>
+      )}
       <DealsCarResultsStage
         search={search}
         onSelectCar={(car) => {
           setConfirmationError("");
-          setCandidateId(car.id);
+          confirm(car);
         }}
       />
     </section>

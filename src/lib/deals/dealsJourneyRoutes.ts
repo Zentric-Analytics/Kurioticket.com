@@ -35,15 +35,9 @@ const stagesByMode: Record<DealsPackageMode, readonly DealsJourneyStage[]> = {
     "flight-results",
     "flight-details",
     "car-results",
-    "car-details",
   ],
-  "hotel-car": ["hotel-results", "hotel-details", "car-results", "car-details"],
-  "flight-car": [
-    "flight-results",
-    "flight-details",
-    "car-results",
-    "car-details",
-  ],
+  "hotel-car": ["hotel-results", "hotel-details", "car-results"],
+  "flight-car": ["flight-results", "flight-details", "car-results"],
 };
 
 export const isDealsJourneyStage = (
@@ -183,6 +177,8 @@ export function getRequiredDealsJourneyStage(
 ): DealsJourneyStage {
   if (stage === "review")
     return getEarliestIncompleteDealsJourneyStage(mode, plan);
+  if (stage === "car-details")
+    return getRequiredDealsJourneyStage("car-results", mode, plan);
   if (!isStageInDealsMode(stage, mode)) return getFirstDealsJourneyStage(mode);
   const included = getIncludedProducts(mode);
   if (stage === "hotel-results") return "hotel-results";

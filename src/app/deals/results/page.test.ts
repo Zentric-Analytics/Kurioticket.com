@@ -20,15 +20,9 @@ const expected = {
     "flight-results",
     "flight-details",
     "car-results",
-    "car-details",
   ],
-  "hotel-car": ["hotel-results", "hotel-details", "car-results", "car-details"],
-  "flight-car": [
-    "flight-results",
-    "flight-details",
-    "car-results",
-    "car-details",
-  ],
+  "hotel-car": ["hotel-results", "hotel-details", "car-results"],
+  "flight-car": ["flight-results", "flight-details", "car-results"],
 } as const;
 
 test("valid Deals results requests server-redirect to the canonical first sequential stage", async () => {
