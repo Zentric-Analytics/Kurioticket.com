@@ -48,7 +48,7 @@ test("complete website-defined NG fallback routes render in selector order", () 
   assert.match(sectionSource, /Discover destinations from your region/);
 });
 
-test("shared Android and iOS homepage places the section after promos and before its navigation inset", () => {
+test("shared Android and iOS homepage places the section after promos with only bottom breathing room", () => {
   const promoIndex = homeSource.indexOf("<HomepageDealPromos />");
   const regionalIndex = homeSource.indexOf("<RegionalDestinationRoutes />");
   const scrollEndIndex = homeSource.indexOf("</ScrollView>", regionalIndex);
@@ -56,7 +56,8 @@ test("shared Android and iOS homepage places the section after promos and before
   assert.ok(promoIndex >= 0);
   assert.ok(regionalIndex > promoIndex);
   assert.ok(scrollEndIndex > regionalIndex);
-  assert.match(homeSource, /content: \{ paddingHorizontal: 14, paddingBottom: 120, gap: 14 \}/);
+  assert.match(homeSource, /content: \{ paddingHorizontal: 14, paddingBottom: 26, gap: 14 \}/);
+  assert.doesNotMatch(homeSource, /paddingBottom: 120/);
   assert.doesNotMatch(homeSource, /Platform\.OS/);
 });
 

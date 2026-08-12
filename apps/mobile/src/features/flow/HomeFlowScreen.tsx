@@ -185,7 +185,7 @@ export const HomeFlowScreen = SharedHomePage;
 
 const styles = StyleSheet.create({
   homeScroll: { flex: 1 },
-  content: { paddingHorizontal: 14, paddingBottom: 120, gap: 14 },
+  content: { paddingHorizontal: 14, paddingBottom: 26, gap: 14 },
   homeHero: {
     height: HOME_HERO_DISPLAY_HEIGHT,
     marginHorizontal: -14,
