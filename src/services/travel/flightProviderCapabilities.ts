@@ -33,6 +33,51 @@ const FLIGHT_PROVIDER_CAPABILITIES: readonly FlightProviderCapabilities[] = [
   },
 ];
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+export function projectFlightHandoffCapability(
+  value: unknown,
+): FlightHandoffCapability {
+  if (!isObject(value) || value.kind === "none") {
+    return { kind: "none" };
+  }
+
+  if (value.kind !== "external-deeplink") {
+    return { kind: "none" };
+  }
+
+  const inventoryRequirements = value.inventoryRequirements;
+  if (
+    value.destinationAcquisition !== "activation-only" ||
+    value.destinationValidation !== "validateProviderUrl" ||
+    !isObject(inventoryRequirements) ||
+    inventoryRequirements.liveSearchItinerary !== true ||
+    inventoryRequirements.explicitOutboundReturnRelationship !== true ||
+    inventoryRequirements.fareOptionIdentity !== true ||
+    inventoryRequirements.bookingAgentIdentity !== true ||
+    inventoryRequirements.serverOnlyProviderIdentity !== true ||
+    inventoryRequirements.browserSafeProjection !== true
+  ) {
+    return { kind: "none" };
+  }
+
+  return {
+    kind: "external-deeplink",
+    destinationAcquisition: "activation-only",
+    destinationValidation: "validateProviderUrl",
+    inventoryRequirements: {
+      liveSearchItinerary: true,
+      explicitOutboundReturnRelationship: true,
+      fareOptionIdentity: true,
+      bookingAgentIdentity: true,
+      serverOnlyProviderIdentity: true,
+      browserSafeProjection: true,
+    },
+  };
+}
+
 /**
  * Creates a recursively allowlisted snapshot. TypeScript's structural types do
  * not remove undeclared runtime properties, so registry objects must never
@@ -41,31 +86,9 @@ const FLIGHT_PROVIDER_CAPABILITIES: readonly FlightProviderCapabilities[] = [
 export function projectFlightProviderCapabilities(
   source: FlightProviderCapabilities,
 ): FlightProviderCapabilities {
-  const externalHandoff: FlightHandoffCapability =
-    source.externalHandoff.kind === "none"
-      ? { kind: "none" }
-      : {
-          kind: "external-deeplink",
-          destinationAcquisition: source.externalHandoff.destinationAcquisition,
-          destinationValidation: source.externalHandoff.destinationValidation,
-          inventoryRequirements: {
-            liveSearchItinerary:
-              source.externalHandoff.inventoryRequirements.liveSearchItinerary,
-            explicitOutboundReturnRelationship:
-              source.externalHandoff.inventoryRequirements
-                .explicitOutboundReturnRelationship,
-            fareOptionIdentity:
-              source.externalHandoff.inventoryRequirements.fareOptionIdentity,
-            bookingAgentIdentity:
-              source.externalHandoff.inventoryRequirements.bookingAgentIdentity,
-            serverOnlyProviderIdentity:
-              source.externalHandoff.inventoryRequirements
-                .serverOnlyProviderIdentity,
-            browserSafeProjection:
-              source.externalHandoff.inventoryRequirements
-                .browserSafeProjection,
-          },
-        };
+  const externalHandoff = projectFlightHandoffCapability(
+    source.externalHandoff,
+  );
 
   return {
     provider: source.provider,
