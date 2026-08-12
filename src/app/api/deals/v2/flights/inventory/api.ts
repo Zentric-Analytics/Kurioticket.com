@@ -12,6 +12,9 @@ export const selectionSchema = z
     returnItineraryKey: z.string().min(1).max(4000).optional(),
   })
   .strict();
+export const brandSelectionSchema = selectionSchema.extend({
+  brandOptionKey: z.string().startsWith("flight-brand-v1:").max(256),
+});
 export const json = (body: unknown, status = 200) =>
   NextResponse.json(body, { status, headers: noStore });
 export function inventoryFailure(error: unknown) {

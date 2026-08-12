@@ -196,3 +196,60 @@ test("malformed, unknown, and expired sessions fail closed and expired rows are 
   );
   assert.equal(store.rows.size, 0);
 });
+
+test("schema-v2 sessions enforce exact/graph membership, provider, slice, and route integrity", async () => {
+  const now = 3_000_000;
+  async function corrupted(change: (row: DealsFlightInventoryRow) => void) {
+    const store = new FakeStore();
+    const service = new DealsFlightInventorySessionService(store, () => now);
+    const created = await service.create(search, [offer(now + 60_000)], graph);
+    assert.ok(created);
+    const row = [...store.rows.values()][0];
+    change(row);
+    await assert.rejects(
+      () => service.load(created.inventoryToken, created.sourceSearchKey),
+      (error) =>
+        error instanceof DealsFlightInventoryError &&
+        error.code === "malformed-inventory",
+    );
+  }
+  await corrupted((row) => {
+    const payload = row.inventoryPayload as {
+      exactOffers: NormalizedFlightResult[];
+    };
+    payload.exactOffers[0].providerOfferId = "off_not_in_graph";
+  });
+  await corrupted((row) => {
+    const payload = row.inventoryPayload as {
+      itineraryGraph: DuffelItineraryInventoryGraph;
+    };
+    payload.itineraryGraph.slices[0].itineraries[0].brands[0].compatibleSingleTicketOffers.push(
+      {
+        providerOfferId: "off_extra",
+        owner: { referenceId: "arl_1", name: "Air" },
+        amount: "200.00",
+        currency: "USD",
+      },
+    );
+  });
+  await corrupted((row) => {
+    const payload = row.inventoryPayload as {
+      exactOffers: NormalizedFlightResult[];
+    };
+    payload.exactOffers[0].provider = "Other";
+  });
+  await corrupted((row) => {
+    const payload = row.inventoryPayload as {
+      itineraryGraph: DuffelItineraryInventoryGraph;
+    };
+    payload.itineraryGraph.slices.push(
+      structuredClone(payload.itineraryGraph.slices[0]),
+    );
+  });
+  await corrupted((row) => {
+    const payload = row.inventoryPayload as {
+      itineraryGraph: DuffelItineraryInventoryGraph;
+    };
+    payload.itineraryGraph.slices[0].origin = "SFO";
+  });
+});
