@@ -44,7 +44,7 @@ export function HomepageAdventureDiscovery() {
   return (
     <View collapsable={false} testID="homepage-adventure-discovery" style={styles.section}>
       <View style={styles.header}>
-        <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>Discover your next adventure here</Text>
+        <Text accessibilityRole="header" style={[styles.heading, { color: ft.colors.textPrimary }]}>Discover your next adventure heres</Text>
         <Text style={[styles.subtitle, { color: ft.colors.textSecondary }]}>Compare smart route ideas, flexible fares, and destinations picked for your region.</Text>
       </View>
       <ScrollView
