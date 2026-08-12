@@ -4,7 +4,22 @@ services:
     runtime: node
     plan: standard
     branch: dev
-    autoDeploy: true
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - services/preview-release/**
+        - apps/mobile/scripts/**
+        - apps/mobile/plugins/**
+        - apps/mobile/config-plugins/**
+        - apps/mobile/app.config.*
+        - apps/mobile/app.json
+        - apps/mobile/eas.json
+        - apps/mobile/release-policy.json
+        - apps/mobile/package.json
+        - apps/mobile/package-lock.json
+        - package.json
+        - package-lock.json
+        - render.yaml
     buildCommand: npm ci && npm --prefix apps/mobile ci
     startCommand: node services/preview-release/worker.mjs
     envVars:
