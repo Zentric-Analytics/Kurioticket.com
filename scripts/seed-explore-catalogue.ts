@@ -1,47 +1,40 @@
+import { Prisma } from "../src/generated/prisma/client";
 import { getPrisma } from "../src/lib/prisma";
 import { buildExploreCatalogueSeed } from "../src/services/exploreCatalogueSeed";
-
-const EXPLORE_SEED_TRANSACTION_TIMEOUT_MS = 60_000;
 
 async function main() {
   const db = getPrisma();
   const seed = buildExploreCatalogueSeed();
 
-  await db.$transaction(async (tx) => {
-    for (const region of seed.regions) {
-      await tx.$executeRaw`
-        INSERT INTO "ExploreRegion" (
-          "id", "name", "slug", "displayOrder", "published", "createdAt", "updatedAt"
-        ) VALUES (
-          ${region.id}, ${region.name}, ${region.slug}, ${region.displayOrder}, ${region.published}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-        )
-        ON CONFLICT ("id") DO NOTHING
-      `;
-    }
+  await db.exploreRegion.createMany({
+    data: seed.regions.map((region) => ({ ...region })),
+    skipDuplicates: true,
+  });
 
-    for (const destination of seed.destinations) {
-      await tx.$executeRaw`
-        INSERT INTO "ExploreDestination" (
-          "id", "name", "country", "countryCode", "regionId", "primaryAirportCode",
-          "airportCodes", "airportNames", "searchAliases", "imageDestinationId", "imageUrl",
-          "summary", "description", "highlights", "relatedDestinationIds",
-          "sourceProvenance", "editorialProvenance", "displayOrder", "published",
-          "createdAt", "updatedAt"
-        ) VALUES (
-          ${destination.id}, ${destination.name}, ${destination.country}, ${destination.countryCode},
-          ${destination.regionId}, ${destination.primaryAirportCode},
-          ${destination.airportCodes as string[]}, ${destination.airportNames as string[]},
-          ${destination.searchAliases as string[]}, ${destination.imageDestinationId}, ${destination.imageUrl},
-          ${destination.summary}, ${destination.description}, ${destination.highlights as string[]},
-          ${destination.relatedDestinationIds as string[]},
-          ${JSON.stringify(destination.sourceProvenance)}::jsonb,
-          ${destination.editorialProvenance ? JSON.stringify(destination.editorialProvenance) : null}::jsonb,
-          ${destination.displayOrder}, ${destination.published}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-        )
-        ON CONFLICT ("id") DO NOTHING
-      `;
-    }
-  }, { timeout: EXPLORE_SEED_TRANSACTION_TIMEOUT_MS });
+  await db.exploreDestination.createMany({
+    data: seed.destinations.map((destination) => ({
+      id: destination.id,
+      name: destination.name,
+      country: destination.country,
+      countryCode: destination.countryCode,
+      regionId: destination.regionId,
+      primaryAirportCode: destination.primaryAirportCode,
+      airportCodes: [...destination.airportCodes],
+      airportNames: [...destination.airportNames],
+      searchAliases: [...destination.searchAliases],
+      imageDestinationId: destination.imageDestinationId,
+      imageUrl: destination.imageUrl,
+      summary: destination.summary,
+      description: destination.description,
+      highlights: [...destination.highlights],
+      relatedDestinationIds: [...destination.relatedDestinationIds],
+      sourceProvenance: destination.sourceProvenance,
+      editorialProvenance: destination.editorialProvenance ?? Prisma.DbNull,
+      displayOrder: destination.displayOrder,
+      published: destination.published,
+    })),
+    skipDuplicates: true,
+  });
 
   console.log(`Ensured ${seed.regions.length} Explore regions and ${seed.destinations.length} destinations exist.`);
 }
