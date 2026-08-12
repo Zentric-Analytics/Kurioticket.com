@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 import type { NormalizedCarResult } from "../../../../src/lib/cars/types";
 import type { PublicFlightResult, PublicHotelResult } from "../../../../src/lib/types";
 import type { ContractResult, TravelSearchResponse } from "../../../../src/lib/travel/searchContract";
+import { parseMobileExploreCatalogue, type MobileExploreCatalogue } from "./exploreCatalogueContract";
 
 export class TravelApiError extends Error {
   constructor(message: string, public status = 0, public code: "cancelled" | "timeout" | "configuration" | "validation" | "rate-limit" | "unavailable" | "server" | "network" | "invalid-response" = "network", public details?: Record<string, unknown>) { super(message); }
@@ -49,7 +50,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
     try { data = raw ? JSON.parse(raw) as { error?: string } & Record<string, unknown> : {}; } catch { throw new TravelApiError("The search provider returned an invalid response.", response.status, "invalid-response"); }
     if (!response.ok) {
       const code = response.status === 400 ? "validation" : response.status === 429 ? "rate-limit" : response.status === 503 ? "unavailable" : response.status >= 500 ? "server" : "network";
-      throw new TravelApiError(data.error || "Kurioticket could not complete this request.", response.status, code, data);
+      throw new TravelApiError(typeof data.error === "string" ? data.error : "Kurioticket could not complete this request.", response.status, code, data);
     }
     return data as T;
   } catch (error) {
@@ -60,6 +61,15 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
     }
     throw new TravelApiError("The search service could not be reached. Check your connection and try again.", 0, "network");
   } finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", onAbort); }
+}
+
+async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
+  const response = await request<{ data?: unknown }>("/api/mobile/v1/explore/catalogue");
+  const catalogue = parseMobileExploreCatalogue(response.data);
+  if (!catalogue) {
+    throw new TravelApiError("Explore returned an invalid catalogue.", 200, "invalid-response");
+  }
+  return catalogue;
 }
 
 export const travelApi = {
@@ -79,4 +89,5 @@ export const travelApi = {
   markAllNotificationsRead: () => request<{ updated: number }>("/api/mobile/v1/notifications", { method: "PATCH" }),
   location: () => request<MobileLocation>("/api/location"),
   currencyRates: () => request<CurrencyRates>("/api/currency/rates"),
+  exploreCatalogue: fetchExploreCatalogue,
 };
