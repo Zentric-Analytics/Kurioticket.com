@@ -129,6 +129,8 @@ export function getRequiredDealsJourneyStateV2(
   if (included.flight) {
     const flight = plan.flightJourney;
     if (!flight?.outbound) return "flight-outbound";
+    if (flight.tripType === "round-trip" && !flight.fareBrand)
+      return "flight-brand";
     if (flight.tripType === "round-trip" && !flight.return)
       return "flight-return";
     if (!flight.fare) return "flight-fare";
@@ -238,7 +240,7 @@ export function applyDealsJourneyEventV2(
     const flight = plan.flightJourney!;
     if (
       same(flight.outbound, itinerary) &&
-      ((flight.tripType === "round-trip" && flight.phase === "return") ||
+      ((flight.tripType === "round-trip" && flight.phase === "brand") ||
         (flight.tripType === "one-way" && flight.phase === "fare"))
     )
       return success(plan, now, false);
@@ -248,7 +250,7 @@ export function applyDealsJourneyEventV2(
         flightJourney: {
           searchKey: flight.searchKey,
           tripType: flight.tripType,
-          phase: flight.tripType === "round-trip" ? "return" : "fare",
+          phase: flight.tripType === "round-trip" ? "brand" : "fare",
           outbound: itinerary,
         },
         ...(included.car && !same(flight.outbound, itinerary)
@@ -300,6 +302,7 @@ export function applyDealsJourneyEventV2(
       !flight ||
       flight.tripType !== "round-trip" ||
       !flight.outbound ||
+      !flight.fareBrand ||
       !itinerary ||
       itinerary.direction !== "return"
     )
@@ -332,7 +335,8 @@ export function applyDealsJourneyEventV2(
       flight = plan.flightJourney;
     if (
       !flight?.outbound ||
-      (flight.tripType === "round-trip" && !flight.return) ||
+      (flight.tripType === "round-trip" &&
+        (!flight.fareBrand || !flight.return)) ||
       !fare
     )
       return fail(plan, now, "invalid-transition");
@@ -354,6 +358,9 @@ export function applyDealsJourneyEventV2(
           ...(flight.return ? { return: flight.return } : {}),
           fare,
         },
+        ...(included.car && flight.fare?.fareKey !== fare.fareKey
+          ? { car: undefined }
+          : {}),
       },
       now,
     );
@@ -361,7 +368,8 @@ export function applyDealsJourneyEventV2(
     const flight = plan.flightJourney;
     if (
       !flight?.outbound ||
-      (flight.tripType === "round-trip" && !flight.return) ||
+      (flight.tripType === "round-trip" &&
+        (!flight.fareBrand || !flight.return)) ||
       !flight.fare
     )
       return fail(plan, now, "invalid-transition");
@@ -383,6 +391,7 @@ export function applyDealsJourneyEventV2(
       offer = canonicalizeDealsConfirmedFlightOfferV2(event.offer);
     if (
       flight?.phase !== "revalidating" ||
+      (flight.tripType === "round-trip" && !flight.fareBrand) ||
       !flight.fare ||
       !offer ||
       offer.offerExpiresAt <= now ||

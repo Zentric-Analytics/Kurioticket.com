@@ -404,11 +404,17 @@ export class DealsFlightInventorySessionService {
     );
   }
   async returns(token: string, key: string, outbound: string) {
-    const { offers } = await this.load(token, key);
+    const loaded = await this.load(token, key);
+    if (loaded.itineraryGraph && loaded.search.tripType === "round-trip")
+      return [];
+    const { offers } = loaded;
     return getDealsFlightReturnChoicesV2(usable(offers, this.now()), outbound);
   }
   async fares(token: string, key: string, outbound: string, inbound?: string) {
-    const { offers } = await this.load(token, key);
+    const loaded = await this.load(token, key);
+    if (loaded.itineraryGraph && loaded.search.tripType === "round-trip")
+      return [];
+    const { offers } = loaded;
     return getDealsFlightFareChoicesV2(
       usable(offers, this.now()),
       outbound,
@@ -423,6 +429,8 @@ export class DealsFlightInventorySessionService {
     fare: string,
   ) {
     const loaded = await this.load(token, key);
+    if (loaded.itineraryGraph && loaded.search.tripType === "round-trip")
+      return { ...loaded, offer: null };
     return {
       ...loaded,
       offer: resolveDealsFlightOfferV2(loaded.offers, outbound, inbound, fare),

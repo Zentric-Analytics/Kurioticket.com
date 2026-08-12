@@ -465,18 +465,25 @@ function canonicalJourney(value: unknown): DealsFlightJourneyV2 | null {
     return null;
   if (
     journey.phase === "return" &&
-    (journey.tripType !== "round-trip" || !outbound || inbound || fare || offer)
+    (journey.tripType !== "round-trip" ||
+      !outbound ||
+      !fareBrand ||
+      inbound ||
+      fare ||
+      offer)
   )
     return null;
   if (
     journey.phase === "fare" &&
-    (!outbound || (journey.tripType === "round-trip" && !inbound) || offer)
+    (!outbound ||
+      (journey.tripType === "round-trip" && (!fareBrand || !inbound)) ||
+      offer)
   )
     return null;
   if (
     journey.phase === "revalidating" &&
     (!outbound ||
-      (journey.tripType === "round-trip" && !inbound) ||
+      (journey.tripType === "round-trip" && (!fareBrand || !inbound)) ||
       !fare ||
       offer)
   )
@@ -484,7 +491,7 @@ function canonicalJourney(value: unknown): DealsFlightJourneyV2 | null {
   if (
     journey.phase === "confirmed" &&
     (!outbound ||
-      (journey.tripType === "round-trip" && !inbound) ||
+      (journey.tripType === "round-trip" && (!fareBrand || !inbound)) ||
       !fare ||
       !offer ||
       !offerMatchesJourney(offer, journey))
