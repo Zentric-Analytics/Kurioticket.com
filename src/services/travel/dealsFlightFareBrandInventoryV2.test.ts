@@ -187,3 +187,19 @@ test("mixed currencies suppress indicative price", () => {
   assert.equal(option.indicativeFromPrice, undefined);
   assert.equal(option.indicativeCurrency, undefined);
 });
+
+test("retains a provider Brand with an unsupported customer cabin and omits cabinClass", () => {
+  const providerGraph = structuredClone(graph);
+  providerGraph.slices[0].itineraries[0].brands[0].cabinClass =
+    "premium-economy";
+  const option = getDealsFlightFareBrandOptionsV2(
+    [offer("basic-a", returnA, 700), offer("basic-a2", returnA, 650)],
+    providerGraph,
+    "session",
+    buildFlightItineraryKey(outbound),
+  )[0];
+  assert.equal(option.fareBrandName, "Basic");
+  assert.deepEqual(option.ownerNames, ["Safe Air"]);
+  assert.equal(option.indicativeFromPrice, 650);
+  assert.equal("cabinClass" in option, false);
+});

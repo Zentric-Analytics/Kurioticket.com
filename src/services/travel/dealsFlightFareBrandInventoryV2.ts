@@ -21,6 +21,9 @@ export type DealsFlightFareBrandOptionV2 = {
   indicativeCurrency?: string;
 };
 
+const isDealsCabinClass = (value: unknown): value is DealsCabinClass =>
+  value === "economy" || value === "business" || value === "first";
+
 const keyFor = (session: string, outbound: string, identity: string) =>
   `flight-brand-v1:${createHash("sha256")
     .update(JSON.stringify([session, outbound, identity]))
@@ -75,10 +78,7 @@ function option(
   return {
     brandOptionKey: node.key,
     fareBrandName: node.brand.fareBrandName,
-    ...(cabin &&
-    ["economy", "premium-economy", "business", "first"].includes(cabin)
-      ? { cabinClass: cabin as DealsCabinClass }
-      : {}),
+    ...(isDealsCabinClass(cabin) ? { cabinClass: cabin } : {}),
     ownerNames: [
       ...new Set(
         node.brand.compatibleSingleTicketOffers
