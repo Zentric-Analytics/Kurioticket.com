@@ -30,3 +30,19 @@ test("compact formatting works independently of the display currency", () => {
     assert.match(price.accessibilityLabel, /1,744,924/);
   }
 });
+
+test("falls back to the currency code when formatToParts is unexpected", () => {
+  const original = Intl.NumberFormat.prototype.formatToParts;
+  Intl.NumberFormat.prototype.formatToParts = () => [
+    { type: "currency", value: "NGN" },
+    { type: "literal", value: " " },
+  ];
+
+  try {
+    const price = format(1_744_924, "NGN");
+    assert.equal(price.formatted, "NGN 1.74M");
+    assert.match(price.accessibilityLabel, /1,744,924/);
+  } finally {
+    Intl.NumberFormat.prototype.formatToParts = original;
+  }
+});
