@@ -1,7 +1,7 @@
 import { flightSearchSchema } from "@/lib/validation";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
-import { searchFlights } from "@/services/travel/flightAggregator";
+import { searchDuffelDealsItineraryInventory } from "@/services/travel/providers/duffelProvider";
 import { dealsFlightInventorySessions } from "@/services/travel/dealsFlightInventorySession";
 import { body, inventoryFailure, json } from "./api";
 
@@ -18,16 +18,20 @@ export async function POST(request: Request) {
   if (!parsed.success || parsed.data.tripType === "multi-city")
     return json({ status: "error", code: "MALFORMED_REQUEST" }, 400);
   try {
-    const aggregate = await searchFlights(parsed.data);
-    if (aggregate.unavailableMessage)
+    const provider = await searchDuffelDealsItineraryInventory(parsed.data);
+    if (provider.status !== "success")
       return json(
         { status: "unavailable", code: "PROVIDER_TEMPORARILY_UNAVAILABLE" },
         503,
       );
-    const created = await dealsFlightInventorySessions.create(
-      parsed.data,
-      aggregate.results,
-    );
+    const inventory = provider.results[0];
+    const created = inventory
+      ? await dealsFlightInventorySessions.create(
+          parsed.data,
+          inventory.exactOffers,
+          inventory.itineraryGraph,
+        )
+      : null;
     return created
       ? json({ status: "success", ...created })
       : json({ status: "empty", code: "NO_INVENTORY", outboundChoices: [] });

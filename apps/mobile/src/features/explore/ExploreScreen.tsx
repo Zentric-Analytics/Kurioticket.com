@@ -12,10 +12,9 @@ import {
   View,
 } from "react-native";
 import { router } from "expo-router";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
-import { exploreBottomPadding } from "./exploreModels";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { destinationDetailsRoute } from "./exploreInteractionModels";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
@@ -29,6 +28,7 @@ import {
 } from "./liveExploreModels";
 
 const NAVY = "#071A48", BLUE = "#0754F7", MUTED = "#56658E", BORDER = "#E7ECF5";
+const EXPLORE_BOTTOM_SPACING = 18;
 export const REGION_PREVIEW_CARD_WIDTH_RATIO = 0.928;
 export const REGION_PREVIEW_INSET_RATIO = 0.024;
 export const REGION_PREVIEW_GAP_RATIO = 0.024;
@@ -65,7 +65,6 @@ export function ExploreScreen() {
   const catalogue = useExploreCatalogue();
   const [query, setQuery] = useState("");
   const { savedIds, toggle } = useSavedDestinations();
-  const insets = useSafeAreaInsets();
   const input = useRef<TextInput>(null);
   const destinations = useMemo(() => allLiveExploreDestinations(catalogue), [catalogue]);
   const REGION_DISCOVERY = useMemo(
@@ -82,7 +81,7 @@ export function ExploreScreen() {
   const select = (destination: LiveExploreDestination) => { Keyboard.dismiss(); input.current?.blur(); router.push(destinationDetailsRoute(destination.id)); };
   const submit = () => { const exact = exactLiveExploreResult(results); if (exact) select(exact); };
   useEffect(() => { if (query.trim()) void AccessibilityInfo.announceForAccessibility(`${results.length} ${results.length === 1 ? "result" : "results"}`); }, [query, results.length]);
-  const bottomPadding = exploreBottomPadding(65, insets.bottom);
+  const bottomPadding = EXPLORE_BOTTOM_SPACING;
   return <SafeAreaView style={s.safe} edges={["top"]}>
     <View style={s.stableHeader}><ExploreHeader query={query} setQuery={setQuery} input={input} submit={submit} /></View>
     {query.trim() ? <FlatList data={results} keyExtractor={(item) => item.destination.id} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { paddingBottom: bottomPadding }]} ListHeaderComponent={<SectionHeading title={`${results.length} result${results.length === 1 ? "" : "s"}`} />} ListEmptyComponent={<Text style={s.empty}>No destinations match “{query.trim()}”. Try a city, destination code, airport, or country.</Text>} renderItem={({ item }) => <DestinationResultRow destination={item.destination} saved={savedIds.has(item.destination.id)} onSelect={() => select(item.destination)} onToggle={() => toggle(item.destination.id)} />} />
