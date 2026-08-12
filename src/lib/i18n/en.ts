@@ -345,13 +345,15 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.metasearch.tabs.past": "Past",
   "accountDashboard.trips.metasearch.tabs.cancelled": "Cancelled",
   "accountDashboard.trips.metasearch.loading": "Loading trips…",
-  "accountDashboard.trips.metasearch.error": "We could not load your trips. Please try again.",
+  "accountDashboard.trips.metasearch.error":
+    "We could not load your trips. Please try again.",
   "accountDashboard.trips.metasearch.retry": "Try again",
   "accountDashboard.trips.metasearch.empty.title": "No {{status}} trips",
   "accountDashboard.trips.metasearch.empty.body":
     "Partner-confirmed trips will appear here after the provider confirms your reservation.",
   "accountDashboard.trips.metasearch.provider": "Provider",
-  "accountDashboard.trips.metasearch.providerConfirmation": "Provider confirmation",
+  "accountDashboard.trips.metasearch.providerConfirmation":
+    "Provider confirmation",
   "accountDashboard.trips.metasearch.travelers": "Travelers",
   "accountDashboard.trips.metasearch.priceSnapshot": "Price snapshot",
   "accountDashboard.trips.metasearch.priceUnavailable": "Not available",
@@ -4684,18 +4686,24 @@ export const translations: TranslationDictionary = {
   "deals.guided.carResults.pendingTitle": "Your flight is saved",
   "deals.guided.carResults.pendingBody":
     "Car options will appear on this step.",
-  "deals.guided.carResults.title": "Available cars for your trip",
-  "deals.guided.carResults.loading": "Loading real car inventory",
-  "deals.guided.carResults.errorTitle": "We could not load cars",
+  "deals.guided.carResults.title": "Car options for your trip",
+  "deals.guided.carResults.loading": "Loading car planning options",
+  "deals.guided.carResults.errorTitle": "This car option could not be loaded",
   "deals.guided.carResults.errorBody":
     "Please retry the car search. Your confirmed trip selections are unchanged.",
-  "deals.guided.carResults.emptyTitle": "No cars are available",
+  "deals.guided.carResults.emptyTitle":
+    "No car planning options were found for this search",
   "deals.guided.carResults.emptyBody":
     "No car inventory is currently available for this search. You can retry or modify your search.",
-  "deals.guided.carResults.retry": "Retry Cars",
-  "deals.guided.carResults.actionLabel": "View car",
-  "deals.guided.carResults.actionAriaLabel":
-    "View details for {model} from {company}",
+  "deals.guided.carResults.retry": "Refresh car options",
+  "deals.guided.carResults.actionLabel": "Continue with this car option",
+  "deals.guided.carResults.orSimilar": "or similar",
+  "deals.guided.carResults.estimatedTotal": "Estimated total",
+  "deals.guided.carResults.estimatedPerDay": "Estimated per day",
+  "deals.guided.carResults.lowestEstimatedTotal": "Lowest estimated total",
+  "deals.guided.carResults.disclosure":
+    "Planning estimate — not real-time supplier availability.",
+  "deals.guided.carResults.actionAriaLabel": "Continue with {model} car option",
   "deals.guided.carDetails.pendingTitle":
     "Your selected car is ready for review",
   "deals.guided.carDetails.pendingBody":
@@ -4718,7 +4726,7 @@ export const translations: TranslationDictionary = {
     "We could not save this car. Your confirmed Hotel and Flight selections have not changed. Try again.",
   "deals.guided.carDetails.unavailableConfirm":
     "Car confirmation is unavailable until the selected vehicle has loaded.",
-  "deals.guided.carDetails.confirmed": "Car confirmed. Review your trip.",
+  "deals.guided.carDetails.confirmed": "Car option added to your Trip Plan.",
   "deals.guided.review.pendingTitle":
     "Your trip selections are ready for review",
   "deals.guided.review.pendingBody":

@@ -35,15 +35,9 @@ const orders = {
     "flight-results",
     "flight-details",
     "car-results",
-    "car-details",
   ],
-  "hotel-car": ["hotel-results", "hotel-details", "car-results", "car-details"],
-  "flight-car": [
-    "flight-results",
-    "flight-details",
-    "car-results",
-    "car-details",
-  ],
+  "hotel-car": ["hotel-results", "hotel-details", "car-results"],
+  "flight-car": ["flight-results", "flight-details", "car-results"],
 } as const;
 
 test("validates exact stages and rejects unknown stages", () => {
@@ -69,11 +63,8 @@ test("derives previous and next stages without leaving mode", () => {
     getNextDealsJourneyStage("hotel-results", "hotel-flight"),
     "hotel-details",
   );
-  assert.equal(
-    getPreviousDealsJourneyStage("car-details", "flight-car"),
-    "car-results",
-  );
-  assert.equal(getNextDealsJourneyStage("car-details", "flight-car"), null);
+  assert.equal(getPreviousDealsJourneyStage("car-details", "flight-car"), null);
+  assert.equal(getNextDealsJourneyStage("car-results", "flight-car"), null);
 });
 test("builds only internal canonical guided URLs and a clean legacy escape", () => {
   const search = createDefaultDealsSearch();

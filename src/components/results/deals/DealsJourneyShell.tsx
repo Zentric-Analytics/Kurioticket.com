@@ -41,7 +41,6 @@ import { DealsFlightResultsStage } from "./DealsFlightResultsStage";
 import { DealsFlightDetailsStage } from "./DealsFlightDetailsStage";
 import { DealsFlightJourneyV2 } from "./DealsFlightJourneyV2";
 import { DealsCarResultsStage } from "./DealsCarResultsStage";
-import { DealsCarDetailsStage } from "./DealsCarDetailsStage";
 import { DealsReviewStage } from "./DealsReviewStage";
 import {
   attemptGuidedConfirmation,
@@ -119,7 +118,6 @@ export function DealsJourneyShell({
   const [announcement, setAnnouncement] = useState("");
   const [confirmingHotel, setConfirmingHotel] = useState(false);
   const [confirmingFlight, setConfirmingFlight] = useState(false);
-  const [confirmingCar, setConfirmingCar] = useState(false);
   const [confirmationFailure, setConfirmationFailure] = useState<{
     product: DealsTripPlanProduct;
     kind: "read" | "write";
@@ -309,18 +307,21 @@ export function DealsJourneyShell({
     product: DealsTripPlanProduct,
     selection: DealsTripPlanHotel | DealsTripPlanFlight | DealsTripPlanCar,
   ) => {
-    const nextStage = getNextDealsJourneyStage(
-      `${product}-details` as DealsJourneyStage,
-      search.mode,
-    );
+    const nextStage =
+      product === "car"
+        ? "review"
+        : getNextDealsJourneyStage(
+            `${product}-details` as DealsJourneyStage,
+            search.mode,
+          );
     const setConfirming =
       product === "hotel"
         ? setConfirmingHotel
         : product === "flight"
           ? setConfirmingFlight
-          : setConfirmingCar;
+          : null;
     setConfirmationFailure(null);
-    setConfirming(true);
+    setConfirming?.(true);
     const result = attemptGuidedConfirmation({
       product,
       selection,
@@ -331,7 +332,7 @@ export function DealsJourneyShell({
       read: readDealsStagedJourneyPlan,
       write: writeDealsStagedJourneyPlan,
     });
-    setConfirming(false);
+    setConfirming?.(false);
     if (!result.ok) {
       const failure: DealsGuidedConfirmationFailure = result.failure;
       if (result.currentPlan?.searchFingerprint === fingerprint)
@@ -563,15 +564,9 @@ export function DealsJourneyShell({
               onConfirm={confirmGuidedFlightSelection}
             />
           ) : requiredStage === stage && stage === "car-results" ? (
-            <DealsCarResultsStage search={search} />
-          ) : requiredStage === stage && stage === "car-details" ? (
-            <DealsCarDetailsStage
+            <DealsCarResultsStage
               search={search}
-              carId={carId}
-              plan={plan}
-              confirming={confirmingCar}
-              confirmationError=""
-              onConfirm={confirmGuidedCarSelection}
+              onSelectCar={confirmGuidedCarSelection}
             />
           ) : requiredStage === stage && stage === "review" && plan ? (
             <DealsReviewStage plan={plan} search={search} now={lifecycleNow} />
