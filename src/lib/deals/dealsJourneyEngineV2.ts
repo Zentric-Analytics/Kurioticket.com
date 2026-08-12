@@ -12,10 +12,12 @@ import {
   areDealsFlightOfferAndJourneyConsistentV2,
   canonicalizeDealsConfirmedFlightOfferV2,
   canonicalizeDealsFlightFareV2,
+  canonicalizeDealsFlightFareBrandSelectionV2,
   canonicalizeDealsFlightItineraryV2,
   canonicalizeDealsTripPlanV2,
   type DealsConfirmedFlightOfferV2,
   type DealsFlightFareV2,
+  type DealsFlightFareBrandSelectionV2,
   type DealsFlightItineraryV2,
   type DealsFlightJourneyV2,
   type DealsTripPlanV2,
@@ -24,6 +26,7 @@ import {
 export type DealsJourneyStateV2 =
   | "hotel"
   | "flight-outbound"
+  | "flight-brand"
   | "flight-return"
   | "flight-fare"
   | "flight-revalidating"
@@ -41,6 +44,11 @@ export type DealsJourneyFailureReasonV2 =
 
 type Revisioned = { expectedRevision: number };
 export type DealsJourneyEventV2 =
+  | (Revisioned & {
+      type: "FLIGHT_FARE_BRAND_SELECTED";
+      fareBrand: DealsFlightFareBrandSelectionV2;
+      sourceSearchKey: string;
+    })
   | (Revisioned & {
       type: "HOTEL_CONFIRMED";
       hotel: DealsTripPlanHotel;
@@ -196,6 +204,7 @@ export function applyDealsJourneyEventV2(
       event.sourceSearchKey !== plan.productSearchKeys.car) ||
     ((event.type === "FLIGHT_OUTBOUND_SELECTED" ||
       event.type === "FLIGHT_RETURN_SELECTED" ||
+      event.type === "FLIGHT_FARE_BRAND_SELECTED" ||
       event.type === "FLIGHT_FARE_SELECTED") &&
       (event.sourceSearchKey !== plan.productSearchKeys.flight ||
         plan.flightJourney?.searchKey !== plan.productSearchKeys.flight))
@@ -248,6 +257,42 @@ export function applyDealsJourneyEventV2(
       },
       now,
     );
+  } else if (event.type === "FLIGHT_FARE_BRAND_SELECTED") {
+    const flight = plan.flightJourney;
+    const fareBrand = canonicalizeDealsFlightFareBrandSelectionV2(
+      event.fareBrand,
+    );
+    if (
+      !included.flight ||
+      !flight?.outbound ||
+      flight.tripType !== "round-trip" ||
+      !fareBrand ||
+      (included.hotel && !selectionFresh(plan.hotel, now))
+    )
+      return fail(plan, now, "invalid-transition");
+    const downstream = Boolean(
+      flight.return || flight.fare || flight.confirmedOffer,
+    );
+    if (
+      same(flight.fareBrand, fareBrand) &&
+      !downstream &&
+      flight.phase === "return"
+    )
+      return success(plan, now, false);
+    next = commit(
+      plan,
+      {
+        flightJourney: {
+          searchKey: flight.searchKey,
+          tripType: "round-trip",
+          phase: "return",
+          outbound: flight.outbound,
+          fareBrand,
+        },
+        ...(included.car ? { car: undefined } : {}),
+      },
+      now,
+    );
   } else if (event.type === "FLIGHT_RETURN_SELECTED") {
     const itinerary = canonicalizeDealsFlightItineraryV2(event.itinerary),
       flight = plan.flightJourney;
@@ -273,6 +318,7 @@ export function applyDealsJourneyEventV2(
           tripType: flight.tripType,
           phase: "fare",
           outbound: flight.outbound,
+          ...(flight.fareBrand ? { fareBrand: flight.fareBrand } : {}),
           return: itinerary,
         },
         ...(included.car && !same(flight.return, itinerary)
@@ -304,6 +350,7 @@ export function applyDealsJourneyEventV2(
           tripType: flight.tripType,
           phase: "fare",
           outbound: flight.outbound,
+          ...(flight.fareBrand ? { fareBrand: flight.fareBrand } : {}),
           ...(flight.return ? { return: flight.return } : {}),
           fare,
         },

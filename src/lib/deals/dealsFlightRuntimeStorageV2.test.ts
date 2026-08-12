@@ -49,7 +49,7 @@ test("restores valid round-trip and one-way tab runtime", () => {
     );
 });
 
-test("discards malformed, expired, version-mismatched, and stale-search state", () => {
+test("discards malformed, expired, and stale-search state", () => {
   assert.equal(
     parseDealsFlightRuntimeV2("{", "search-key", "round-trip", 1),
     null,
@@ -65,7 +65,45 @@ test("discards malformed, expired, version-mismatched, and stale-search state", 
   );
   assert.equal(
     parseDealsFlightRuntimeV2(
-      JSON.stringify({ ...runtime(), version: 2 }),
+      JSON.stringify(runtime()),
+      "different",
+      "round-trip",
+      1,
+    ),
+    null,
+  );
+});
+
+test("parses strict v2 fare-brand state and enforces selected option integrity", () => {
+  const branded: DealsFlightRuntimeV2 = {
+    ...runtime(),
+    version: 2,
+    fareBrandOptions: [
+      {
+        brandOptionKey: "flight-brand-v1:a",
+        fareBrandName: "Flex",
+        ownerNames: ["Air"],
+        indicativeFromPrice: 120,
+        indicativeCurrency: "USD",
+      },
+    ],
+    selectedBrandOptionKey: "flight-brand-v1:a",
+  };
+  assert.deepEqual(
+    parseDealsFlightRuntimeV2(
+      JSON.stringify(branded),
+      "search-key",
+      "round-trip",
+      1,
+    ),
+    branded,
+  );
+  assert.equal(
+    parseDealsFlightRuntimeV2(
+      JSON.stringify({
+        ...branded,
+        selectedBrandOptionKey: "flight-brand-v1:missing",
+      }),
       "search-key",
       "round-trip",
       1,
@@ -74,9 +112,28 @@ test("discards malformed, expired, version-mismatched, and stale-search state", 
   );
   assert.equal(
     parseDealsFlightRuntimeV2(
-      JSON.stringify(runtime()),
-      "different",
+      JSON.stringify({
+        ...branded,
+        fareBrandOptions: [
+          { ...branded.fareBrandOptions![0], providerOfferId: "off_secret" },
+        ],
+      }),
+      "search-key",
       "round-trip",
+      1,
+    ),
+    null,
+  );
+  assert.equal(
+    parseDealsFlightRuntimeV2(
+      JSON.stringify({
+        ...branded,
+        tripType: "one-way",
+        returnChoices: [],
+        selectedReturnKey: undefined,
+      }),
+      "search-key",
+      "one-way",
       1,
     ),
     null,

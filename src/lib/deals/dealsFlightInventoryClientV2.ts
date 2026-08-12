@@ -6,6 +6,7 @@ import {
   type DealsFlightItineraryV2,
 } from "./dealsTripPlanV2";
 import type { DealsFlightFareChoiceV2 } from "@/services/travel/dealsFlightInventoryV2";
+import type { DealsFlightFareBrandOptionV2 } from "./dealsFlightRuntimeStorageV2";
 
 export type DealsFlightInventoryErrorCode =
   | "MALFORMED_REQUEST"
@@ -59,6 +60,24 @@ const fareSchema = z
     offerExpiresAt: z.number().nonnegative().optional(),
   })
   .strict();
+const fareBrandOptionSchema = z
+  .object({
+    brandOptionKey: z.string().startsWith("flight-brand-v1:"),
+    fareBrandName: z.string().trim().min(1),
+    cabinClass: z.enum(["economy", "business", "first"]).optional(),
+    ownerNames: z.array(z.string().trim().min(1)).min(1),
+    indicativeFromPrice: z.number().finite().positive().optional(),
+    indicativeCurrency: z
+      .string()
+      .regex(/^[A-Z]{3}$/)
+      .optional(),
+  })
+  .strict()
+  .refine(
+    (option) =>
+      (option.indicativeFromPrice === undefined) ===
+      (option.indicativeCurrency === undefined),
+  );
 const knownCodes = new Set<DealsFlightInventoryErrorCode>([
   "MALFORMED_REQUEST",
   "NO_INVENTORY",
@@ -187,8 +206,56 @@ export async function getFlightFareChoices(
   return parsed.data as DealsFlightFareChoiceV2[];
 }
 
+export async function getFlightFareBrandOptions(
+  request: Selection,
+  signal?: AbortSignal,
+) {
+  const value = await post(
+    "/api/deals/v2/flights/inventory/fare-brands",
+    request,
+    signal,
+  );
+  const parsed = z
+    .array(fareBrandOptionSchema)
+    .safeParse(value.fareBrandOptions);
+  if (value.status !== "success" || !parsed.success)
+    throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+  return parsed.data as DealsFlightFareBrandOptionV2[];
+}
+
+export async function getFlightBrandReturnChoices(
+  request: Selection & { brandOptionKey: string },
+  signal?: AbortSignal,
+) {
+  const value = await post(
+    "/api/deals/v2/flights/inventory/brand-returns",
+    request,
+    signal,
+  );
+  const returnChoices = choices(value.returnChoices, "return");
+  if (value.status !== "success" || !returnChoices)
+    throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+  return returnChoices;
+}
+
+export async function getFlightBrandFareChoices(
+  request: Selection & { brandOptionKey: string; returnItineraryKey: string },
+  signal?: AbortSignal,
+) {
+  const value = await post(
+    "/api/deals/v2/flights/inventory/brand-fares",
+    request,
+    signal,
+  );
+  const parsed = z.array(fareSchema).safeParse(value.fares);
+  if (value.status !== "success" || !parsed.success)
+    throw new DealsFlightInventoryClientError("MALFORMED_RESPONSE", false);
+  return parsed.data as DealsFlightFareChoiceV2[];
+}
+
 export type DealsFlightRevalidationRequestV2 = Selection & {
   returnItineraryKey?: string;
+  brandOptionKey?: string;
   fareKey: string;
 };
 export type DealsFlightRevalidationOutcomeV2 =

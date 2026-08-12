@@ -67,7 +67,12 @@ export function buildDealsFlightSelectionSnapshotV2(
       (!journey.return ||
         runtime.selectedReturnKey !== journey.return.itineraryKey)) ||
     (journey.tripType === "one-way" &&
-      (journey.return || runtime.selectedReturnKey))
+      (journey.return ||
+        runtime.selectedReturnKey ||
+        runtime.selectedBrandOptionKey)) ||
+    Boolean(journey.fareBrand) !== Boolean(runtime.selectedBrandOptionKey) ||
+    (journey.fareBrand &&
+      runtime.selectedBrandOptionKey !== journey.fareBrand.brandOptionKey)
   )
     return null;
   return {
@@ -76,6 +81,9 @@ export function buildDealsFlightSelectionSnapshotV2(
     outboundItineraryKey: runtime.selectedOutboundKey,
     ...(journey.tripType === "round-trip"
       ? { returnItineraryKey: runtime.selectedReturnKey! }
+      : {}),
+    ...(journey.fareBrand
+      ? { brandOptionKey: journey.fareBrand.brandOptionKey }
       : {}),
     fareKey: runtime.selectedFareKey,
   };
@@ -91,6 +99,7 @@ export const sameDealsFlightSelectionSnapshotV2 = (
     left.sourceSearchKey === right.sourceSearchKey &&
     left.outboundItineraryKey === right.outboundItineraryKey &&
     left.returnItineraryKey === right.returnItineraryKey &&
+    left.brandOptionKey === right.brandOptionKey &&
     left.fareKey === right.fareKey,
   );
 

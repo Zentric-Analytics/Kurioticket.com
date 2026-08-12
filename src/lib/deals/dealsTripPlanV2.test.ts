@@ -160,6 +160,59 @@ test("creation is v2 revision zero with a fixed TTL and parser separation", () =
   );
 });
 
+test("canonicalizes only valid round-trip fare-brand and dormant brand phase", () => {
+  const base = createDealsTripPlanV2(search(), now);
+  const valid = {
+    ...base,
+    flightJourney: {
+      ...base.flightJourney!,
+      phase: "return",
+      outbound,
+      fareBrand: {
+        brandOptionKey: "flight-brand-v1:opaque",
+        fareBrandName: "Flex",
+        cabinClass: "economy",
+      },
+    },
+  };
+  assert.ok(canonicalizeDealsTripPlanV2(valid));
+  assert.equal(
+    canonicalizeDealsTripPlanV2({
+      ...valid,
+      flightJourney: { ...valid.flightJourney, tripType: "one-way" },
+    }),
+    null,
+  );
+  assert.equal(
+    canonicalizeDealsTripPlanV2({
+      ...valid,
+      flightJourney: {
+        ...valid.flightJourney,
+        fareBrand: { ...valid.flightJourney.fareBrand, brandOptionKey: "bad" },
+      },
+    }),
+    null,
+  );
+  assert.ok(
+    canonicalizeDealsTripPlanV2({
+      ...base,
+      flightJourney: { ...base.flightJourney!, phase: "brand", outbound },
+    }),
+  );
+  assert.equal(
+    canonicalizeDealsTripPlanV2({
+      ...base,
+      flightJourney: {
+        ...base.flightJourney!,
+        phase: "brand",
+        outbound,
+        return: inbound,
+      },
+    }),
+    null,
+  );
+});
+
 test("next lifecycle deadline orders plan, hotel, flight offer, and car", () => {
   const base = confirmedPlan();
   const cases = [

@@ -428,6 +428,32 @@ export class DealsFlightInventorySessionService {
       offer: resolveDealsFlightOfferV2(loaded.offers, outbound, inbound, fare),
     };
   }
+  async resolveBrandFare(
+    token: string,
+    key: string,
+    outbound: string,
+    brand: string,
+    inbound: string,
+    fare: string,
+  ) {
+    const loaded = await this.load(token, key);
+    if (!loaded.itineraryGraph || loaded.search.tripType !== "round-trip")
+      return { ...loaded, offer: null };
+    const { resolveDealsFlightBrandOfferV2 } =
+      await import("./dealsFlightFareBrandInventoryV2");
+    return {
+      ...loaded,
+      offer: resolveDealsFlightBrandOfferV2(
+        loaded.offers,
+        loaded.itineraryGraph,
+        hashInventoryToken(token),
+        outbound,
+        brand,
+        inbound,
+        fare,
+      ),
+    };
+  }
 }
 
 export const dealsFlightInventorySessions =

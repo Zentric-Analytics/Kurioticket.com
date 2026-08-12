@@ -68,6 +68,43 @@ test("builds only an exact plan/runtime selection and detects races", () => {
   );
 });
 
+test("brand context is required on both sides and participates in race identity", () => {
+  const { plan, runtime } = setup();
+  plan.flightJourney!.fareBrand = {
+    brandOptionKey: "flight-brand-v1:a",
+    fareBrandName: "Flex",
+  };
+  const brandedRuntime: DealsFlightRuntimeV2 = {
+    ...runtime,
+    version: 2,
+    fareBrandOptions: [
+      {
+        brandOptionKey: "flight-brand-v1:a",
+        fareBrandName: "Flex",
+        ownerNames: ["Air"],
+      },
+    ],
+    selectedBrandOptionKey: "flight-brand-v1:a",
+  };
+  const snapshot = buildDealsFlightSelectionSnapshotV2(brandedRuntime, plan);
+  assert.equal(snapshot?.brandOptionKey, "flight-brand-v1:a");
+  assert.equal(
+    buildDealsFlightSelectionSnapshotV2(
+      { ...brandedRuntime, selectedBrandOptionKey: "flight-brand-v1:b" },
+      plan,
+    ),
+    null,
+  );
+  assert.equal(
+    sameDealsFlightSelectionSnapshotV2(snapshot!, {
+      ...snapshot!,
+      brandOptionKey: "flight-brand-v1:b",
+    }),
+    false,
+  );
+  assert.equal(buildDealsFlightSelectionSnapshotV2(runtime, plan), null);
+});
+
 test("canonical offer matching strips secrets and rejects itinerary substitution", () => {
   const snapshot = buildDealsFlightSelectionSnapshotV2(
     setup().runtime,
