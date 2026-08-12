@@ -33,6 +33,19 @@ test("date and filter rails retain their horizontal interactions", () => {
   }
 });
 
+test("flight dates use full resolved fares in wider, single-line tiles", () => {
+  const dateStrip = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
+
+  assert.match(screen, /flightDisplayPrices\.get\(result\.id\)/);
+  assert.match(screen, /dateStripPrices\.map\(\(price\) => price\?\.formatted\)/);
+  assert.doesNotMatch(screen, /formatDateStripPrice/);
+  assert.match(dateStrip, /flightResults && s\.flightDate/);
+  assert.match(dateStrip, /flightDate: \{ minWidth: 96, maxWidth: 116 \}/);
+  assert.match(dateStrip, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit/);
+  assert.match(dateStrip, /date: \{[\s\S]*?width: 80,[\s\S]*?height: 64/);
+  assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);
+});
+
 test("hotel results retain their non-sticky header and separate result scroll", () => {
   const hotelLayout = screen.slice(
     screen.indexOf(') : (\n        <>', screen.indexOf('{product === "flight" ? (')),

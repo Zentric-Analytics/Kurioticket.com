@@ -75,7 +75,6 @@ import {
 import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { useSavedFlights } from "../../storage/useSavedFlights";
-import { formatDateStripPrice } from "./dateStripPrice";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -228,10 +227,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   }, [currencyState, product, sorted]);
   const dateStripPrices = useMemo(
     () => product === "flight"
-      ? sorted.slice(0, 5).map((result) => {
-          const fare = flightDisplayPrices.get(result.id);
-          return fare ? formatDateStripPrice(fare) : undefined;
-        })
+      ? sorted.slice(0, 5).map((result) => flightDisplayPrices.get(result.id))
       : [],
     [flightDisplayPrices, product, sorted],
   );
@@ -240,7 +236,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             date={date}
             prices={prices}
             formattedPrices={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
-            priceAccessibilityLabels={product === "flight" ? dateStripPrices.map((price) => price?.accessibilityLabel) : undefined}
+            priceAccessibilityLabels={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
             flightResults={product === "flight"}
             onSelect={(v) =>
               router.setParams(

@@ -4,6 +4,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { router } from "expo-router";
@@ -178,6 +179,10 @@ export function DateStrip({
   flightResults?: boolean;
   onSelect: (v: string) => void;
 }) {
+  const { width: windowWidth } = useWindowDimensions();
+  // Account for the flight rail's 32px padding and the two gaps between three
+  // tiles. Clamping keeps the tiles useful on both compact and wide phones.
+  const flightDateWidth = Math.min(116, Math.max(96, (windowWidth - 50) / 3));
   const [visibleStart, setVisibleStart] = useState(() =>
     initialDateWindowStart(date),
   );
@@ -217,7 +222,12 @@ export function DateStrip({
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               onPress={() => onSelect(iso)}
-              style={[s.date, active && s.dateActive]}
+              style={[
+                s.date,
+                flightResults && s.flightDate,
+                flightResults && { width: flightDateWidth },
+                active && s.dateActive,
+              ]}
             >
               <Text style={s.day}>
                 {x.toLocaleDateString("en-US", { weekday: "short" })}
@@ -231,9 +241,8 @@ export function DateStrip({
                 <Text
                   accessibilityLabel={priceAccessibilityLabels?.[i]}
                   numberOfLines={1}
-                  ellipsizeMode="clip"
                   adjustsFontSizeToFit
-                  minimumFontScale={0.85}
+                  minimumFontScale={flightResults ? 0.78 : 0.85}
                   style={[s.datePrice, active && { color: ui.blue }]}
                 >
                   {formattedPrices ? (formattedPrices[i] ?? "—") : money(currency, prices[i])}
@@ -406,6 +415,7 @@ export const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "white",
   },
+  flightDate: { minWidth: 96, maxWidth: 116 },
   dateActive: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
   day: { fontSize: 12, color: ui.muted },
   datePrice: { maxWidth: "100%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
