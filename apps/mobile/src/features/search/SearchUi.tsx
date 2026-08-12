@@ -165,6 +165,7 @@ export function DateStrip({
   date,
   prices,
   formattedPrices,
+  priceAccessibilityLabels,
   currency = "USD",
   flightResults = false,
   onSelect,
@@ -172,6 +173,7 @@ export function DateStrip({
   date: string;
   prices: (number | undefined)[];
   formattedPrices?: (string | undefined)[];
+  priceAccessibilityLabels?: (string | undefined)[];
   currency?: string;
   flightResults?: boolean;
   onSelect: (v: string) => void;
@@ -226,7 +228,14 @@ export function DateStrip({
                 {shortDate(iso)}
               </Text>
               {prices[i] != null ? (
-                <Text style={[s.datePrice, active && { color: ui.blue }]}>
+                <Text
+                  accessibilityLabel={priceAccessibilityLabels?.[i]}
+                  numberOfLines={1}
+                  ellipsizeMode="clip"
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.85}
+                  style={[s.datePrice, active && { color: ui.blue }]}
+                >
                   {formattedPrices ? (formattedPrices[i] ?? "—") : money(currency, prices[i])}
                 </Text>
               ) : null}
@@ -399,7 +408,7 @@ export const s = StyleSheet.create({
   },
   dateActive: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
   day: { fontSize: 12, color: ui.muted },
-  datePrice: { fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
+  datePrice: { maxWidth: "100%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
   button: {
     height: 45,
     minWidth: 104,
