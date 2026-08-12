@@ -54,6 +54,12 @@ import {
   type DealsFlightSelectionSnapshotV2,
 } from "@/lib/deals/dealsFlightRevalidationV2";
 import type { DealsConfirmedFlightOfferV2 } from "@/lib/deals/dealsTripPlanV2";
+import {
+  filterAndSortDealsOutboundResultsV2,
+  type OutboundDepartureFilter,
+  type OutboundSort,
+  type OutboundStopsFilter,
+} from "@/lib/deals/dealsOutboundResultsV2";
 import { DealsCarJourneyV2 } from "./DealsCarJourneyV2";
 import { DealsReviewJourneyV2 } from "./DealsReviewJourneyV2";
 
@@ -123,6 +129,10 @@ export function DealsFlightJourneyV2({
   const [reviewRecovery, setReviewRecovery] = useState<"plan" | "hotel" | null>(
     null,
   );
+  const [stopsFilter, setStopsFilter] = useState<OutboundStopsFilter>("all");
+  const [departureFilter, setDepartureFilter] =
+    useState<OutboundDepartureFilter>("all");
+  const [outboundSort, setOutboundSort] = useState<OutboundSort>("departure");
   const coordinator = useRef(createDealsFlightRevalidationCoordinatorV2());
   const cancel = useCallback(() => {
     coordinator.current.cancel();
@@ -850,6 +860,10 @@ export function DealsFlightJourneyV2({
         }
       />
     );
+  const visibleOutboundChoices = filterAndSortDealsOutboundResultsV2(
+    runtime.outboundChoices,
+    { stops: stopsFilter, departure: departureFilter, sort: outboundSort },
+  );
   return (
     <div className="space-y-8" data-deals-v2-flight-runtime>
       {error && <SafeState message={messages[error]} onRetry={create} />}
@@ -857,7 +871,15 @@ export function DealsFlightJourneyV2({
         title="Choose your outbound flight"
         busy={status === "loading"}
       >
-        {runtime.outboundChoices.map((choice) => (
+        <OutboundControls
+          stops={stopsFilter}
+          departure={departureFilter}
+          sort={outboundSort}
+          onStops={setStopsFilter}
+          onDeparture={setDepartureFilter}
+          onSort={setOutboundSort}
+        />
+        {visibleOutboundChoices.map((choice) => (
           <ItineraryButton
             key={choice.itineraryKey}
             choice={choice}
@@ -865,6 +887,12 @@ export function DealsFlightJourneyV2({
             onSelect={() => void selectOutbound(choice.itineraryKey)}
           />
         ))}
+        {!visibleOutboundChoices.length && (
+          <p className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+            No outbound flights match these filters. Adjust the filters to see
+            more options.
+          </p>
+        )}
       </ChoiceSection>
       {runtime.tripType === "round-trip" && runtime.selectedOutboundKey && (
         <ChoiceSection
@@ -1077,6 +1105,69 @@ export function DealsFlightJourneyV2({
   );
 }
 
+function OutboundControls({
+  stops,
+  departure,
+  sort,
+  onStops,
+  onDeparture,
+  onSort,
+}: {
+  stops: OutboundStopsFilter;
+  departure: OutboundDepartureFilter;
+  sort: OutboundSort;
+  onStops: (value: OutboundStopsFilter) => void;
+  onDeparture: (value: OutboundDepartureFilter) => void;
+  onSort: (value: OutboundSort) => void;
+}) {
+  return (
+    <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-3">
+      <ResultSelect label="Stops" value={stops} onChange={onStops}>
+        <option value="all">Any stops</option>
+        <option value="nonstop">Nonstop</option>
+        <option value="one">1 stop</option>
+        <option value="two-plus">2+ stops</option>
+      </ResultSelect>
+      <ResultSelect label="Departure" value={departure} onChange={onDeparture}>
+        <option value="all">Any time</option>
+        <option value="morning">Morning</option>
+        <option value="afternoon">Afternoon</option>
+        <option value="evening">Evening</option>
+      </ResultSelect>
+      <ResultSelect label="Sort by" value={sort} onChange={onSort}>
+        <option value="departure">Departure time</option>
+        <option value="cheapest">Lowest estimated price</option>
+        <option value="fastest">Shortest duration</option>
+      </ResultSelect>
+    </div>
+  );
+}
+
+function ResultSelect<T extends string>({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: T;
+  onChange: (value: T) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="text-xs font-bold text-slate-700">
+      {label}
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value as T)}
+        className="focus-ring mt-1 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-950"
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
 function ChoiceSection({
   title,
   busy,
@@ -1107,28 +1198,71 @@ function ItineraryButton({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const airline = choice.segments[0]?.airlineName || "Airline unavailable";
+  const flightNumbers = choice.segments
+    .map((segment) => segment.flightNumber)
+    .filter(Boolean)
+    .join(" · ");
   return (
     <button
       type="button"
       aria-pressed={selected}
       onClick={onSelect}
-      className="focus-ring w-full rounded-2xl border border-slate-300 bg-white p-5 text-left aria-pressed:border-blue-700 aria-pressed:ring-2 aria-pressed:ring-blue-700"
+      className="focus-ring w-full rounded-2xl border border-slate-300 bg-white p-4 text-left aria-pressed:border-blue-700 aria-pressed:ring-2 aria-pressed:ring-blue-700 sm:p-5"
     >
-      <span className="block text-lg font-extrabold">
-        {choice.originAirport} → {choice.destinationAirport}
+      <span className="flex flex-wrap items-start justify-between gap-2">
+        <span>
+          <span className="block font-extrabold text-slate-950">{airline}</span>
+          {flightNumbers && (
+            <span className="block text-xs font-semibold text-slate-600">
+              {flightNumbers}
+            </span>
+          )}
+        </span>
+        {choice.indicativeFromPrice !== undefined &&
+          choice.indicativeCurrency && (
+            <span className="text-right">
+              <span className="block text-xs font-bold text-slate-500">
+                Estimated from
+              </span>
+              <span className="block font-extrabold text-[#004BB8]">
+                {new Intl.NumberFormat(undefined, {
+                  style: "currency",
+                  currency: choice.indicativeCurrency,
+                  currencyDisplay: "code",
+                  maximumFractionDigits: 0,
+                }).format(choice.indicativeFromPrice)}
+              </span>
+            </span>
+          )}
       </span>
-      <span className="mt-1 block text-slate-700">
-        {new Date(choice.departureTime).toLocaleString()} –{" "}
-        {new Date(choice.arrivalTime).toLocaleString()}
-      </span>
-      <span className="mt-2 block text-sm text-slate-600">
-        {choice.duration} ·{" "}
-        {choice.stops === 0
-          ? "Nonstop"
-          : `${choice.stops} stop${choice.stops === 1 ? "" : "s"}`}
-        {choice.segments[0]?.airlineName
-          ? ` · ${choice.segments[0].airlineName}`
-          : ""}
+      <span className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <span>
+          <span className="block text-lg font-extrabold">
+            {new Date(choice.departureTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+          <span className="text-sm font-bold">{choice.originAirport}</span>
+        </span>
+        <span className="text-center text-xs font-semibold text-slate-600">
+          <span className="block">{choice.duration}</span>
+          <span className="block border-t border-slate-300 pt-1">
+            {choice.stops === 0
+              ? "Nonstop"
+              : `${choice.stops} stop${choice.stops === 1 ? "" : "s"}`}
+          </span>
+        </span>
+        <span className="text-right">
+          <span className="block text-lg font-extrabold">
+            {new Date(choice.arrivalTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+          <span className="text-sm font-bold">{choice.destinationAirport}</span>
+        </span>
       </span>
     </button>
   );

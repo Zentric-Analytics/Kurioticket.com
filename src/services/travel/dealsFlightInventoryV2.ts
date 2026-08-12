@@ -9,6 +9,7 @@ import {
   getFlightFareOptions,
   getFlightOffersForItinerary,
   getFlightOutboundOptions,
+  isProviderBackedFlightOffer,
 } from "./flightOfferInventory";
 
 const toJourneyItinerary = (
@@ -31,8 +32,31 @@ const toJourneyItinerary = (
 export const getDealsFlightOutboundChoicesV2 = (
   results: NormalizedFlightResult[],
 ) =>
-  getFlightOutboundOptions(results).map(({ itineraryKey, leg }) =>
-    toJourneyItinerary(itineraryKey, leg),
+  getFlightOutboundOptions(results).flatMap(
+    ({ itineraryKey, leg, compatibleResultIds }) => {
+      const prices = results.filter(
+        (result) =>
+          compatibleResultIds.includes(result.id) &&
+          isProviderBackedFlightOffer(result) &&
+          Number.isFinite(result.price) &&
+          result.price > 0 &&
+          /^[A-Z]{3}$/.test(result.currency),
+      );
+      const cheapest = prices.reduce<NormalizedFlightResult | null>(
+        (lowest, offer) =>
+          !lowest || offer.price < lowest.price ? offer : lowest,
+        null,
+      );
+      return cheapest
+        ? [
+            {
+              ...toJourneyItinerary(itineraryKey, leg),
+              indicativeFromPrice: cheapest.price,
+              indicativeCurrency: cheapest.currency,
+            },
+          ]
+        : [];
+    },
   );
 
 export const getDealsFlightReturnChoicesV2 = (

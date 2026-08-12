@@ -41,6 +41,8 @@ const returnB = leg("return", "2027-01-09T10:00:00Z");
 const offer = (
   providerOfferId: string,
   legs: FlightLeg[],
+  price = 700,
+  currency = "USD",
 ): NormalizedFlightResult => ({
   id: `duffel-${providerOfferId}`,
   provider: "Duffel",
@@ -60,8 +62,8 @@ const offer = (
   cabinClass: "economy",
   baggageInfo: "bag",
   refundInfo: "rules",
-  price: 700,
-  currency: "USD",
+  price,
+  currency,
   bookingUrl: "",
   partnerRedirectUrl: "",
   valueScore: 1,
@@ -71,6 +73,37 @@ const offer = (
   travelEffortScore: 1,
   recommendationReasons: [],
   badges: [],
+});
+
+test("projects the minimum valid provider-backed price onto one outbound choice", () => {
+  const expensive = offer("expensive", [outbound, returnA], 920, "NGN");
+  const cheapest = offer("cheapest", [outbound, returnB], 640, "NGN");
+  const invalidPrice = offer("invalid", [outbound, returnA], Number.NaN, "NGN");
+  const notProviderBacked = {
+    ...offer("missing-provider", [outbound, returnA], 1, "NGN"),
+    providerOfferId: undefined,
+  };
+
+  const choices = getDealsFlightOutboundChoicesV2([
+    expensive,
+    cheapest,
+    invalidPrice,
+    notProviderBacked,
+  ]);
+  assert.equal(choices.length, 1);
+  assert.equal(choices[0].indicativeFromPrice, 640);
+  assert.equal(choices[0].indicativeCurrency, "NGN");
+});
+
+test("preserves the winning complete offer currency in the projection", () => {
+  const choices = getDealsFlightOutboundChoicesV2([
+    offer("one", [outbound], 480, "EUR"),
+    offer("two", [outbound], 510, "EUR"),
+  ]);
+  assert.deepEqual(
+    [choices[0].indicativeFromPrice, choices[0].indicativeCurrency],
+    [480, "EUR"],
+  );
 });
 
 test("adapts only compatible complete offers and exposes browser-safe choices", () => {
