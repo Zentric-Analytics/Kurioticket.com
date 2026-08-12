@@ -174,16 +174,38 @@ export function searchDuffelDealsItineraryInventory(
 
     const graphIds = getDuffelGraphProviderOfferIds(graph);
     const now = Date.now();
+    const rawMatchingOffers = flat.data.offers.filter((value) => {
+      if (!value || typeof value !== "object" || Array.isArray(value))
+        return false;
+      const id = (value as { id?: unknown }).id;
+      return typeof id === "string" && graphIds.has(id);
+    });
+    const rawMatchingIds = new Set(
+      rawMatchingOffers.map((value) => (value as { id: string }).id),
+    );
+    if (
+      graphIds.size !== rawMatchingIds.size ||
+      [...graphIds].some((id) => !rawMatchingIds.has(id))
+    )
+      throw new Error("Duffel grouped/flat offer identity bridge mismatch");
+    const normalizedMatchingOffers = rawMatchingOffers
+      .map((value) => normalizeFlightResult("Duffel", value, search))
+      .filter((value): value is NormalizedFlightResult => Boolean(value));
+    const normalizedIds = new Set(
+      normalizedMatchingOffers.map(({ providerOfferId }) => providerOfferId),
+    );
+    if (
+      normalizedIds.size !== graphIds.size ||
+      [...graphIds].some((id) => !normalizedIds.has(id))
+    )
+      throw new Error("Duffel matching offers could not be normalized");
     const exactOffers = deduplicateFlightOffers(
-      flat.data.offers
-        .map((value) => normalizeFlightResult("Duffel", value, search))
-        .filter((value): value is NormalizedFlightResult =>
+      normalizedMatchingOffers.filter(
+        (value): value is NormalizedFlightResult =>
           Boolean(
-            value?.providerOfferId &&
-            graphIds.has(value.providerOfferId) &&
-            isFlightProviderOfferUsableAt(value, now),
+            value?.providerOfferId && isFlightProviderOfferUsableAt(value, now),
           ),
-        ),
+      ),
     );
     const usableIds = new Set(
       exactOffers.map(({ providerOfferId }) => providerOfferId!),
