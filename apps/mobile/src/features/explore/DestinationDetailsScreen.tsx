@@ -54,7 +54,7 @@ function InvalidDestination() {
 }
 
 function DestinationPage({ destination, destinationById, saved, onToggle }: { destination: LiveExploreDestination; destinationById: Map<string, LiveExploreDestination>; saved: boolean; onToggle: () => void }) {
-  const media = destinationMedia(destination.id);
+  const media = destinationMedia(destination.imageDestinationId);
   const [imageFailed, setImageFailed] = useState(false);
   const scrollRef = useRef(null as ScrollView | null);
   const handoff = destinationHandoff(destination);
