@@ -1,10 +1,14 @@
 import { useEffect, useSyncExternalStore } from "react";
 import type { MobileExploreCatalogue } from "../../api/exploreCatalogueContract";
 import { bundledExploreCatalogue } from "./bundledExploreCatalogue";
-import { loadExploreCatalogue } from "./exploreCatalogueRepository";
+import {
+  getExploreCatalogueSnapshot,
+  refreshExploreCatalogue,
+} from "./exploreCatalogueRepository";
 
 let currentCatalogue = bundledExploreCatalogue;
-let started = false;
+let hydrationPromise: Promise<void> | null = null;
+let refreshPromise: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
 function publish(catalogue: MobileExploreCatalogue) {
@@ -15,25 +19,42 @@ function publish(catalogue: MobileExploreCatalogue) {
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
-  return () => listeners.delete(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }
 
 function getSnapshot() {
   return currentCatalogue;
 }
 
-export function startExploreCatalogueSync() {
-  if (started) return;
-  started = true;
+function hydrateExploreCatalogue() {
+  if (!hydrationPromise) {
+    hydrationPromise = getExploreCatalogueSnapshot()
+      .then((snapshot) => {
+        publish(snapshot.catalogue);
+      })
+      .catch(() => undefined);
+  }
+  return hydrationPromise;
+}
 
-  void loadExploreCatalogue()
-    .then(({ initial, refresh }) => {
-      publish(initial.catalogue);
-      void refresh.then((live) => {
-        if (live) publish(live);
+function refreshExploreCatalogueOnce() {
+  if (!refreshPromise) {
+    refreshPromise = refreshExploreCatalogue()
+      .then((live) => {
+        publish(live);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        refreshPromise = null;
       });
-    })
-    .catch(() => undefined);
+  }
+  return refreshPromise;
+}
+
+export function startExploreCatalogueSync() {
+  void hydrateExploreCatalogue().then(() => refreshExploreCatalogueOnce());
 }
 
 export function useExploreCatalogue() {
