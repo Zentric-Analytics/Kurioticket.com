@@ -12,6 +12,16 @@ export async function POST(request: Request) {
   if (!parsed.success) return json({ status: "invalid-selection" }, 422);
   try {
     const p = parsed.data;
+    const session = await dealsFlightInventorySessions.load(
+      p.inventoryToken,
+      p.sourceSearchKey,
+    );
+    if (
+      session.itineraryGraph &&
+      session.search.tripType === "round-trip" &&
+      !p.brandOptionKey
+    )
+      return json({ status: "invalid-selection" }, 422);
     const loaded = p.brandOptionKey
       ? p.returnItineraryKey
         ? await dealsFlightInventorySessions.resolveBrandFare(

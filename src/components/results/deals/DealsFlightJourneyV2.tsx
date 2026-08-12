@@ -32,7 +32,10 @@ import {
 import {
   createFlightInventory,
   DealsFlightInventoryClientError,
+  getFlightBrandFareChoices,
+  getFlightBrandReturnChoices,
   getFlightFareChoices,
+  getFlightFareBrandOptions,
   getFlightReturnChoices,
   revalidateFlightOfferV2,
   type DealsFlightInventoryErrorCode,
@@ -123,6 +126,7 @@ export function DealsFlightJourneyV2({
     [],
   );
   const [status, setStatus] = useState<Status>("initial");
+  const [brandState, setBrandState] = useState<DownstreamLoadState>("idle");
   const [returnState, setReturnState] = useState<DownstreamLoadState>("idle");
   const [fareState, setFareState] = useState<DownstreamLoadState>("idle");
   const [error, setError] = useState<DealsFlightInventoryErrorCode | null>(
@@ -158,7 +162,7 @@ export function DealsFlightJourneyV2({
     [],
   );
   const fail = useCallback(
-    (caught: unknown, stage?: "return" | "fare") => {
+    (caught: unknown, stage?: "brand" | "return" | "fare") => {
       if (caught instanceof DOMException && caught.name === "AbortError")
         return;
       const code =
@@ -169,10 +173,12 @@ export function DealsFlightJourneyV2({
         clearDealsFlightRuntimeV2(sessionStorage);
         setRuntime(null);
         installPlan(freshPlan());
+        setBrandState("idle");
         setReturnState("idle");
         setFareState("idle");
       }
       setError(code);
+      if (stage === "brand") setBrandState("error");
       if (stage === "return") setReturnState("error");
       if (stage === "fare") setFareState("error");
       setStatus("error");
@@ -207,6 +213,7 @@ export function DealsFlightJourneyV2({
     if (!cleared.ok)
       return fail(new DealsFlightInventoryClientError(cleared.code, true));
     setRuntime(null);
+    setBrandState("idle");
     setReturnState("idle");
     setFareState("idle");
     setError(null);
@@ -229,12 +236,15 @@ export function DealsFlightJourneyV2({
         return;
       }
       const next: DealsFlightRuntimeV2 = {
-        version: 1,
+        version: search.flightTripType === "round-trip" ? 2 : 1,
         inventoryToken: result.inventoryToken,
         sourceSearchKey: result.sourceSearchKey,
         inventoryExpiresAt: result.inventoryExpiresAt,
         tripType: search.flightTripType,
         outboundChoices: result.outboundChoices,
+        ...(search.flightTripType === "round-trip"
+          ? { fareBrandOptions: [] }
+          : {}),
         returnChoices: [],
         fareChoices: [],
       };
@@ -286,6 +296,8 @@ export function DealsFlightJourneyV2({
         if (!read.ok)
           return fail(new DealsFlightInventoryClientError(read.code, true));
         if (!read.value) return void create();
+        if (search.flightTripType === "round-trip" && read.value.version === 1)
+          return void create();
         setStatus("loading");
         const pending = request();
         try {
@@ -299,6 +311,12 @@ export function DealsFlightJourneyV2({
                 getFlightReturnChoices(body, pending.controller.signal),
               getFares: (body) =>
                 getFlightFareChoices(body, pending.controller.signal),
+              getFareBrands: (body) =>
+                getFlightFareBrandOptions(body, pending.controller.signal),
+              getBrandReturns: (body) =>
+                getFlightBrandReturnChoices(body, pending.controller.signal),
+              getBrandFares: (body) =>
+                getFlightBrandFareChoices(body, pending.controller.signal),
             },
           });
           if (!current(pending)) return;
@@ -310,6 +328,7 @@ export function DealsFlightJourneyV2({
             throw new DealsFlightInventoryClientError(written.code, true);
           setRuntime(written.value);
           installPlan(restored.plan);
+          setBrandState(restored.brandState);
           setReturnState(restored.returnState);
           setFareState(restored.fareState);
           setStatus("success");
@@ -342,7 +361,8 @@ export function DealsFlightJourneyV2({
     cancel();
     setError(null);
     setStatus("loading");
-    setReturnState(search.flightTripType === "round-trip" ? "loading" : "idle");
+    setBrandState(search.flightTripType === "round-trip" ? "loading" : "idle");
+    setReturnState("idle");
     setFareState(search.flightTripType === "one-way" ? "loading" : "idle");
     const itinerary = runtime.outboundChoices.find(
       (choice) => choice.itineraryKey === key,
@@ -364,6 +384,8 @@ export function DealsFlightJourneyV2({
     const next = {
       ...runtime,
       selectedOutboundKey: key,
+      fareBrandOptions: runtime.version === 2 ? [] : undefined,
+      selectedBrandOptionKey: undefined,
       selectedReturnKey: undefined,
       selectedFareKey: undefined,
       returnChoices: [],
@@ -374,7 +396,7 @@ export function DealsFlightJourneyV2({
     const pending = request();
     try {
       if (search.flightTripType === "round-trip") {
-        const returnChoices = await getFlightReturnChoices(
+        const fareBrandOptions = await getFlightFareBrandOptions(
           {
             inventoryToken: next.inventoryToken,
             sourceSearchKey: next.sourceSearchKey,
@@ -383,8 +405,8 @@ export function DealsFlightJourneyV2({
           pending.controller.signal,
         );
         if (current(pending)) {
-          if (!commitRuntime({ ...next, returnChoices })) return;
-          setReturnState(returnChoices.length ? "success" : "empty");
+          if (!commitRuntime({ ...next, fareBrandOptions })) return;
+          setBrandState(fareBrandOptions.length ? "success" : "empty");
           setStatus("success");
         }
       } else {
@@ -404,16 +426,82 @@ export function DealsFlightJourneyV2({
       }
     } catch (caught) {
       if (current(pending))
-        fail(
-          caught,
-          search.flightTripType === "round-trip" ? "return" : "fare",
-        );
+        fail(caught, search.flightTripType === "round-trip" ? "brand" : "fare");
+    }
+  };
+  const selectFareBrand = async (key: string) => {
+    if (
+      !runtime?.selectedOutboundKey ||
+      runtime.version !== 2 ||
+      runtime.selectedBrandOptionKey === key
+    )
+      return;
+    const outboundItineraryKey = runtime.selectedOutboundKey;
+    const option = runtime.fareBrandOptions?.find(
+      (candidate) => candidate.brandOptionKey === key,
+    );
+    if (!option)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    cancel();
+    setError(null);
+    setStatus("loading");
+    setReturnState("loading");
+    setFareState("idle");
+    const applied = applyDealsJourneyEventV2(plan, search, {
+      type: "FLIGHT_FARE_BRAND_SELECTED",
+      fareBrand: {
+        brandOptionKey: option.brandOptionKey,
+        fareBrandName: option.fareBrandName,
+        ...(option.cabinClass ? { cabinClass: option.cabinClass } : {}),
+      },
+      sourceSearchKey: searchKey,
+      expectedRevision: plan.revision,
+    });
+    if (!applied.ok)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    const next = {
+      ...runtime,
+      selectedBrandOptionKey: key,
+      selectedReturnKey: undefined,
+      selectedFareKey: undefined,
+      returnChoices: [],
+      fareChoices: [],
+    };
+    if (!commitRuntime(next)) return;
+    installPlan(applied.plan);
+    const pending = request();
+    try {
+      const returnChoices = await getFlightBrandReturnChoices(
+        {
+          inventoryToken: next.inventoryToken,
+          sourceSearchKey: next.sourceSearchKey,
+          outboundItineraryKey,
+          brandOptionKey: key,
+        },
+        pending.controller.signal,
+      );
+      if (current(pending)) {
+        if (!commitRuntime({ ...next, returnChoices })) return;
+        setReturnState(returnChoices.length ? "success" : "empty");
+        setStatus("success");
+      }
+    } catch (caught) {
+      if (current(pending)) fail(caught, "return");
     }
   };
   const selectReturn = async (key: string) => {
-    if (!runtime?.selectedOutboundKey || runtime.selectedReturnKey === key)
+    if (
+      !runtime?.selectedOutboundKey ||
+      !runtime.selectedBrandOptionKey ||
+      runtime.selectedReturnKey === key
+    )
       return;
     const outboundItineraryKey = runtime.selectedOutboundKey;
+    const brandOptionKey = runtime.selectedBrandOptionKey;
     cancel();
     setError(null);
     setStatus("loading");
@@ -445,11 +533,12 @@ export function DealsFlightJourneyV2({
     installPlan(applied.plan);
     const pending = request();
     try {
-      const fareChoices = await getFlightFareChoices(
+      const fareChoices = await getFlightBrandFareChoices(
         {
           inventoryToken: next.inventoryToken,
           sourceSearchKey: next.sourceSearchKey,
           outboundItineraryKey,
+          brandOptionKey,
           returnItineraryKey: key,
         },
         pending.controller.signal,
@@ -891,7 +980,7 @@ export function DealsFlightJourneyV2({
     <div className="space-y-8" data-deals-v2-flight-runtime>
       {error && <SafeState message={messages[error]} onRetry={create} />}
       <ChoiceSection
-        title="Choose your outbound flight"
+        title="Choose your departing flight"
         busy={status === "loading"}
       >
         <OutboundControls
@@ -920,6 +1009,59 @@ export function DealsFlightJourneyV2({
         )}
       </ChoiceSection>
       {runtime.tripType === "round-trip" && runtime.selectedOutboundKey && (
+        <ChoiceSection title="Choose a fare option" busy={status === "loading"}>
+          <p className="text-sm text-slate-600">
+            Choose the fare option you want with this departing flight. Any
+            “From” price is based on compatible complete round-trip flight
+            offers. Your exact fare and terms are shown after you choose a
+            return flight.
+          </p>
+          {runtime.fareBrandOptions?.map((option) => (
+            <button
+              type="button"
+              aria-pressed={
+                runtime.selectedBrandOptionKey === option.brandOptionKey
+              }
+              onClick={() => void selectFareBrand(option.brandOptionKey)}
+              key={option.brandOptionKey}
+              className="focus-ring w-full rounded-2xl border border-slate-300 bg-white p-5 text-left aria-pressed:border-blue-700 aria-pressed:ring-2 aria-pressed:ring-blue-700"
+            >
+              <span className="block text-lg font-extrabold">
+                {option.fareBrandName}
+              </span>
+              {option.cabinClass && (
+                <span className="mt-1 block capitalize">
+                  {option.cabinClass}
+                </span>
+              )}
+              <span className="mt-1 block text-sm text-slate-600">
+                {option.ownerNames.length === 1 ? "Airline" : "Airlines"}:{" "}
+                {option.ownerNames.join(", ")}
+              </span>
+              {option.indicativeFromPrice !== undefined &&
+                option.indicativeCurrency && (
+                  <span className="mt-2 block font-bold">
+                    From{" "}
+                    {new Intl.NumberFormat(undefined, {
+                      style: "currency",
+                      currency: option.indicativeCurrency,
+                    }).format(option.indicativeFromPrice)}{" "}
+                    round-trip flight
+                  </span>
+                )}
+            </button>
+          ))}
+          {shouldRenderDownstreamEmpty(
+            brandState,
+            runtime.fareBrandOptions?.length ?? 0,
+          ) && (
+            <p>
+              No fare options are currently available for this departing flight.
+            </p>
+          )}
+        </ChoiceSection>
+      )}
+      {runtime.tripType === "round-trip" && runtime.selectedBrandOptionKey && (
         <ChoiceSection
           title="Choose your return flight"
           busy={status === "loading"}
@@ -938,8 +1080,8 @@ export function DealsFlightJourneyV2({
             runtime.returnChoices.length,
           ) && (
             <p>
-              No compatible return flights are currently available for this
-              outbound.
+              No compatible return flights are currently available for this fare
+              option and departing flight.
             </p>
           )}
         </ChoiceSection>
@@ -947,12 +1089,17 @@ export function DealsFlightJourneyV2({
       {runtime.selectedOutboundKey &&
         (runtime.tripType === "one-way" || runtime.selectedReturnKey) && (
           <ChoiceSection
-            title="Choose a fare and cabin"
+            title={
+              runtime.tripType === "round-trip"
+                ? "Choose your final flight fare"
+                : "Choose a fare and cabin"
+            }
             busy={status === "loading"}
           >
             <p className="text-sm text-slate-600">
-              Current flight fares may need to be refreshed before final
-              confirmation.
+              {runtime.tripType === "round-trip"
+                ? "These are current exact complete flight offers matching your departing flight, fare option, and return flight. Your selection will be refreshed before continuing."
+                : "Current flight fares may need to be refreshed before continuing."}
             </p>
             {runtime.fareChoices.map((fare) => (
               <button
@@ -987,7 +1134,9 @@ export function DealsFlightJourneyV2({
                 aria-busy={status === "loading"}
                 className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-60"
               >
-                {status === "loading" ? "Refreshing flight…" : "Confirm flight"}
+                {status === "loading"
+                  ? "Checking fare…"
+                  : "Continue with this fare"}
               </button>
             )}
             {revalidationMessage && (
@@ -1088,7 +1237,7 @@ export function DealsFlightJourneyV2({
               id="confirmed-flight-heading"
               className="text-xl font-extrabold"
             >
-              Flight confirmed
+              Flight offer verified
             </h2>
             <p className="mt-2 font-semibold">
               {plan.flightJourney.confirmedOffer.airline}

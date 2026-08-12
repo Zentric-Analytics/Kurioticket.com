@@ -135,6 +135,11 @@ export const confirmedPlan = (): DealsTripPlanV2 => {
       tripType: "round-trip",
       phase: "confirmed",
       outbound,
+      fareBrand: {
+        brandOptionKey: "flight-brand-v1:a",
+        fareBrandName: "Flex",
+        cabinClass: "economy",
+      },
       return: inbound,
       fare: {
         fareKey: "fare-1",

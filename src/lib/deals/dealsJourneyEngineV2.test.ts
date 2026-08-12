@@ -45,9 +45,32 @@ const apply = (
   search: DealsSearch,
   event: EventWithoutRevision,
   now = at,
-) =>
-  applyDealsJourneyEventV2(
-    plan,
+) => {
+  let current = plan;
+  if (
+    event.type === "FLIGHT_RETURN_SELECTED" &&
+    current.flightJourney?.tripType === "round-trip" &&
+    !current.flightJourney.fareBrand
+  ) {
+    const brand = applyDealsJourneyEventV2(
+      current,
+      search,
+      {
+        type: "FLIGHT_FARE_BRAND_SELECTED",
+        fareBrand: {
+          brandOptionKey: "flight-brand-v1:a",
+          fareBrandName: "Flex",
+        },
+        sourceSearchKey: current.productSearchKeys.flight,
+        expectedRevision: current.revision,
+      },
+      now,
+    );
+    if (!brand.ok) return brand;
+    current = brand.plan;
+  }
+  return applyDealsJourneyEventV2(
+    current,
     search,
     {
       ...(event.type === "HOTEL_CONFIRMED"
@@ -61,10 +84,11 @@ const apply = (
             ? { sourceSearchKey: plan.productSearchKeys.flight }
             : {}),
       ...event,
-      expectedRevision: plan.revision,
+      expectedRevision: current.revision,
     } as Parameters<typeof applyDealsJourneyEventV2>[2],
     now,
   );
+};
 const accepted = (result: ReturnType<typeof applyDealsJourneyEventV2>) => {
   assert.equal(result.ok, true);
   if (!result.ok) throw new Error("Expected event to be accepted");
@@ -88,8 +112,23 @@ const completeFlight = (
       apply(
         next,
         search,
-        { type: "FLIGHT_RETURN_SELECTED", itinerary: inbound },
+        {
+          type: "FLIGHT_FARE_BRAND_SELECTED",
+          fareBrand: {
+            brandOptionKey: "flight-brand-v1:a",
+            fareBrandName: "Flex",
+          },
+        },
         start + 1,
+      ),
+    );
+  if (search.flightTripType === "round-trip")
+    next = accepted(
+      apply(
+        next,
+        search,
+        { type: "FLIGHT_RETURN_SELECTED", itinerary: inbound },
+        start + 2,
       ),
     );
   next = accepted(
@@ -100,11 +139,11 @@ const completeFlight = (
         type: "FLIGHT_FARE_SELECTED",
         fare: { fareKey: "fare-1", cabinClass: "economy" },
       },
-      start + 2,
+      start + 3,
     ),
   );
   next = accepted(
-    apply(next, search, { type: "FLIGHT_REVALIDATION_STARTED" }, start + 3),
+    apply(next, search, { type: "FLIGHT_REVALIDATION_STARTED" }, start + 4),
   );
   const selectedOffer =
     search.flightTripType === "round-trip"
@@ -155,7 +194,7 @@ test("hotel is a flight prerequisite and matching revision is accepted", () => {
   assert.equal(selected.changed, true);
   assert.equal(selected.plan.revision, 1);
 });
-test("round-trip requires return; one-way goes directly to fare", () => {
+test("round-trip requires Brand before return; one-way goes directly to fare", () => {
   for (const tripType of ["round-trip", "one-way"] as const) {
     const search = makeSearch({ mode: "flight-car", flightTripType: tripType }),
       plan = accepted(
@@ -166,11 +205,11 @@ test("round-trip requires return; one-way goes directly to fare", () => {
       );
     assert.equal(
       getRequiredDealsJourneyStateV2(plan, at),
-      tripType === "round-trip" ? "flight-return" : "flight-fare",
+      tripType === "round-trip" ? "flight-brand" : "flight-fare",
     );
   }
 });
-test("fare-brand event is dormant, invalidates downstream flight and car, and preserves upstream", () => {
+test("fare-brand event invalidates downstream flight and car, and preserves upstream", () => {
   const search = makeSearch();
   let plan = accepted(
     apply(createDealsTripPlanV2(search, 10_000), search, {
@@ -182,6 +221,15 @@ test("fare-brand event is dormant, invalidates downstream flight and car, and pr
     apply(plan, search, {
       type: "FLIGHT_OUTBOUND_SELECTED",
       itinerary: outbound,
+    }),
+  );
+  plan = accepted(
+    apply(plan, search, {
+      type: "FLIGHT_FARE_BRAND_SELECTED",
+      fareBrand: {
+        brandOptionKey: "flight-brand-v1:old",
+        fareBrandName: "Basic",
+      },
     }),
   );
   plan = accepted(

@@ -43,7 +43,7 @@ const stored = (tripType: "round-trip" | "one-way" = "round-trip") =>
     selectedFareKey: fare.fareKey,
   }) satisfies DealsFlightRuntimeV2;
 
-test("restores a round trip through fresh returns, fares, and canonical events", async () => {
+test("does not restore a legacy v1 round trip through the mandatory Brand sequence", async () => {
   let returns = 0;
   let fares = 0;
   const result = await restoreDealsFlightRuntimeV2({
@@ -56,10 +56,10 @@ test("restores a round trip through fresh returns, fares, and canonical events",
       getFares: async () => (fares++, [fare]),
     },
   });
-  assert.equal(returns, 1);
-  assert.equal(fares, 1);
-  assert.equal(result.runtime.selectedFareKey, fare.fareKey);
-  assert.equal(result.plan.flightJourney?.fare?.fareKey, fare.fareKey);
+  assert.equal(returns, 0);
+  assert.equal(fares, 0);
+  assert.equal(result.runtime.selectedFareKey, undefined);
+  assert.equal(result.plan.flightJourney?.phase, "brand");
 });
 
 test("one-way restoration skips returns and omits returnItineraryKey", async () => {
@@ -252,7 +252,7 @@ test("rejects a stale stored return before requesting fares", async () => {
   assert.equal(fares, 0);
   assert.equal(result.runtime.selectedOutboundKey, outbound.itineraryKey);
   assert.equal(result.runtime.selectedReturnKey, undefined);
-  assert.equal(result.returnState, "empty");
+  assert.equal(result.returnState, "idle");
 });
 
 test("failed outbound replay clears every staged selection", async () => {
