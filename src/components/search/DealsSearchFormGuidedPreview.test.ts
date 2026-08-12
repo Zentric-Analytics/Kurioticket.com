@@ -78,7 +78,7 @@ test("guided preview copy is translated and truthful about status", () => {
   );
 });
 
-test("normal submit remains on legacy Deals results and does not branch on preview", () => {
+test("normal submit enters the package-owned first results stage", () => {
   const submit =
     form.match(
       /const submit = \(event: FormEvent\) => \{[\s\S]*?\n  \};/,
@@ -88,11 +88,11 @@ test("normal submit remains on legacy Deals results and does not branch on previ
     /if \(!validateCurrentDealsSearch\(submittedSearch\)\) return/,
   );
   assert.match(submit, /if \(variant === "results" && onSubmitSearch\)/);
-  assert.match(submit, /router\.push\(buildDealsResultsUrl\(search\)\)/);
-  assert.doesNotMatch(
+  assert.match(
     submit,
-    /buildDealsJourneyUrl|getFirstDealsJourneyStage|guidedPreview/,
+    /buildDealsJourneyUrl\([\s\S]*getFirstDealsJourneyStage\(submittedSearch\.mode\)[\s\S]*submittedSearch/,
   );
+  assert.doesNotMatch(submit, /guidedPreview/);
 });
 
 test("preview action uses shared validation and canonical guided route helpers", () => {
