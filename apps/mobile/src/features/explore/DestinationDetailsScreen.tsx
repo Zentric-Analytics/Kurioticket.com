@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
-import { destinationById, type Destination } from "./destinationCatalogue";
-import { resolveDestinationDetails } from "./destinationDetailsModel";
 import { destinationMedia, FALLBACK_SOURCE, resolvedDestinationHeroSource } from "./destinationMedia";
-import { destinationHandoff } from "./exploreInteractionModels";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
+import { useExploreCatalogue } from "./exploreCatalogueStore";
+import {
+  liveExploreDestinationById,
+  type LiveExploreDestination,
+} from "./liveExploreModels";
 
 const NAVY = "#071A48";
 const BLUE = "#0754F7";
@@ -17,12 +19,14 @@ const BORDER = "#E7ECF5";
 const DESTINATION_DETAILS_BOTTOM_PADDING = 36;
 
 export function DestinationDetailsScreen() {
+  const catalogue = useExploreCatalogue();
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
-  const destination = resolveDestinationDetails(id);
+  const destinationById = useMemo(() => liveExploreDestinationById(catalogue), [catalogue]);
+  const destination = typeof id === "string" ? destinationById.get(id) : undefined;
   const { savedIds, toggle } = useSavedDestinations();
 
   if (!destination) return <InvalidDestination />;
-  return <DestinationPage key={destination.id} destination={destination} saved={savedIds.has(destination.id)} onToggle={() => toggle(destination.id)} />;
+  return <DestinationPage key={destination.id} destination={destination} destinationById={destinationById} saved={savedIds.has(destination.id)} onToggle={() => toggle(destination.id)} />;
 }
 
 function BackButton() {
@@ -48,11 +52,10 @@ function InvalidDestination() {
   );
 }
 
-function DestinationPage({ destination, saved, onToggle }: { destination: Destination; saved: boolean; onToggle: () => void }) {
+function DestinationPage({ destination, destinationById, saved, onToggle }: { destination: LiveExploreDestination; destinationById: Map<string, LiveExploreDestination>; saved: boolean; onToggle: () => void }) {
   const media = destinationMedia(destination.id);
   const [imageFailed, setImageFailed] = useState(false);
   const scrollRef = useRef(null as ScrollView | null);
-  const handoff = destinationHandoff(destination);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
@@ -60,13 +63,13 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
 
   const searchFlights = () => router.push({
     pathname: "/flights",
-    params: { destinationId: destination.id, destination: destination.name, to: handoff.primaryAirportCode, airportCodes: handoff.airportCodes.join(",") },
+    params: { destinationId: destination.id, destination: destination.name, to: destination.primaryAirportCode, airportCodes: destination.airportCodes.join(",") },
   });
   const searchHotels = () => router.push({
     pathname: "/hotels",
     params: { destinationId: destination.id, destination: destination.name },
   });
-  const related = destination.relatedDestinationIds?.map((relatedId) => destinationById.get(relatedId)).filter((item): item is Destination => Boolean(item));
+  const related = destination.relatedDestinationIds.map((relatedId) => destinationById.get(relatedId)).filter((item): item is LiveExploreDestination => Boolean(item));
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -104,11 +107,11 @@ function DestinationPage({ destination, saved, onToggle }: { destination: Destin
           </View>
           {destination.summary ? <Text style={styles.summary}>{destination.summary}</Text> : null}
           {destination.description ? <Section title="About"><Text style={styles.paragraph}>{destination.description}</Text></Section> : null}
-          {destination.highlights?.length ? <Section title="Highlights">{destination.highlights.map((highlight) => <View key={highlight} style={styles.highlight}><View style={styles.bullet} /><Text style={styles.highlightText}>{highlight}</Text></View>)}</Section> : null}
+          {destination.highlights.length ? <Section title="Highlights">{destination.highlights.map((highlight) => <View key={highlight} style={styles.highlight}><View style={styles.bullet} /><Text style={styles.highlightText}>{highlight}</Text></View>)}</Section> : null}
           <Section title="Getting there">
             {destination.airportCodes.map((code, index) => <View key={code} style={styles.airportRow}><Text style={styles.airportRowCode}>{code}</Text><Text style={styles.airportRowName}>{destination.airportNames[index]}</Text></View>)}
           </Section>
-          {related?.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={styles.related}><Text style={styles.relatedName}>{item.name}</Text><Text style={styles.relatedCountry}>{item.country}</Text></Pressable>)}</Section> : null}
+          {related.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={styles.related}><Text style={styles.relatedName}>{item.name}</Text><Text style={styles.relatedCountry}>{item.country}</Text></Pressable>)}</Section> : null}
           <View style={styles.actions}>
             <Action label="Search flights" icon="flight" onPress={searchFlights} />
             <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
