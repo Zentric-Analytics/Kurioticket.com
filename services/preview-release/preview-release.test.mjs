@@ -8,7 +8,7 @@ import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
-import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry } from "./orchestrator.mjs";
+import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, assertCoalescedOtaCompatibility, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry } from "./orchestrator.mjs";
 import { createExactCheckoutDirectory, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
@@ -1327,6 +1327,85 @@ test("coalesced native delivery can publish an OTA overlay only to affected plat
   const result = await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["ios"]);
   assert.deepEqual(published, ["ios"]);
   assert.deepEqual(result.updateIds, ["ios-overlay"]);
+});
+
+test("conservative native range coalesces onto fingerprint-compatible builds and completes OTA delivery", async () => {
+  const targetSha = "f".repeat(40);
+  const previousSha = "3".repeat(40);
+  const artifactSha = "6".repeat(40);
+  const fingerprints = { ios: "a".repeat(40), android: "e".repeat(40) };
+  const rangeFiles = ["package.json", "apps/mobile/src/features/home/HomepageAdventureDiscovery.tsx"];
+  const classification = classifyChangeSet(rangeFiles);
+  assert.equal(classification.classification, "ANDROID_NATIVE+IOS_NATIVE+WEB");
+  assert.deepEqual(classification.otaCandidates, ["apps/mobile/src/features/home/HomepageAdventureDiscovery.tsx"]);
+
+  const transitions = [];
+  const published = [];
+  const orchestrator = new PreviewOrchestrator({
+    config: { mode: "active", workerId: "test", repository: PREVIEW_IDENTITY.repository, githubReadToken: "token" },
+    ledger: {
+      transition: async (sourceSha, _workerId, _from, state, patch = {}) => {
+        const value = { source_sha: sourceSha, state, ...patch };
+        transitions.push(value);
+        return value;
+      },
+    },
+    github: { report: async () => {} },
+    render: {},
+    checkoutFactory: async () => ({ directory: repositoryRoot, cleanup: async () => {} }),
+    changeSetFactory: async ({ previousSha: base }) => {
+      assert.ok([previousSha, artifactSha].includes(base));
+      return rangeFiles;
+    },
+    prepareCheckoutFactory: async () => {},
+    identityFactory: async () => ({ appName: PREVIEW_IDENTITY.appName, bundleIdentifier: PREVIEW_IDENTITY.bundleIdentifier, scheme: PREVIEW_IDENTITY.scheme, projectId: PREVIEW_IDENTITY.easProjectId, profile: PREVIEW_IDENTITY.buildProfile, channel: PREVIEW_IDENTITY.channel, runtimePolicy: PREVIEW_IDENTITY.runtimePolicy, apiOrigin: PREVIEW_IDENTITY.apiOrigin }),
+    fingerprintsFactory: async () => fingerprints,
+  });
+  orchestrator.deliverWeb = async () => ({ deployId: "staging-deploy", deployedSha: targetSha, status: "live" });
+  orchestrator.deliverIos = async (_sha, _cwd, _lease, fingerprint) => ({ buildId: "ios-build", nativeArtifactSourceSha: artifactSha, nativeFingerprint: fingerprint });
+  orchestrator.deliverAndroid = async (_sha, _cwd, _lease, fingerprint) => ({ buildId: "android-build", nativeArtifactSourceSha: artifactSha, nativeFingerprint: fingerprint });
+  orchestrator.deliverOta = async (_sha, _cwd, _lease, platforms, runtimeByPlatform) => {
+    published.push(...platforms.map((platform) => ({ platform, runtime: runtimeByPlatform[platform] })));
+    return { updateIds: platforms.map((platform) => `${platform}-update`), runtimes: runtimeByPlatform, channel: "preview" };
+  };
+
+  const result = await orchestrator.process(
+    { source_sha: targetSha, state: "DETECTED" },
+    { source_sha: previousSha, evidence: { fingerprints } },
+    { checkpoint: async () => {} },
+    {
+      ios: { sourceSha: artifactSha, buildId: "ios-build", fingerprint: fingerprints.ios },
+      android: { sourceSha: artifactSha, buildId: "android-build", fingerprint: fingerprints.android },
+    },
+  );
+
+  assert.equal(result.state, "COMPLETE");
+  assert.deepEqual(published, [
+    { platform: "ios", runtime: fingerprints.ios },
+    { platform: "android", runtime: fingerprints.android },
+  ]);
+  assert.deepEqual(result.evidence.coalescedOtaPlatforms, ["ios", "android"]);
+  assert.deepEqual(transitions.map(({ state }) => state), ["VALIDATING", "PLANNED", "DELIVERING", "COMPLETE"]);
+});
+
+test("coalesced OTA compatibility fails closed without exact valid fingerprint equality", () => {
+  const valid = "a".repeat(40);
+  const base = {
+    platform: "ios",
+    artifactSourceSha: "6".repeat(40),
+    targetSourceSha: "f".repeat(40),
+    artifactFingerprint: valid,
+    targetFingerprint: valid,
+    overlay: classifyChangeSet(["package.json", "apps/mobile/src/features/home/HomepageAdventureDiscovery.tsx"]),
+  };
+  assert.equal(assertCoalescedOtaCompatibility(base), true);
+  assert.throws(() => assertCoalescedOtaCompatibility({ ...base, targetFingerprint: "b".repeat(40) }), /does not match/);
+  assert.throws(() => assertCoalescedOtaCompatibility({ ...base, platform: "android", targetFingerprint: "b".repeat(40) }), /does not match/);
+  assert.throws(() => assertCoalescedOtaCompatibility({ ...base, targetFingerprint: undefined }), /target .* no valid canonical fingerprint/);
+  assert.throws(() => assertCoalescedOtaCompatibility({ ...base, artifactFingerprint: undefined }), /artifact .* no valid canonical fingerprint/);
+  assert.throws(() => assertCoalescedOtaCompatibility({ ...base, targetFingerprint: "not-a-fingerprint" }), /target .* no valid canonical fingerprint/);
+  assert.throws(() => assertCoalescedOtaCompatibility({ ...base, overlay: classifyChangeSet(["package.json"]) }), /cannot receive a safe OTA overlay/);
+  assert.throws(() => assertCoalescedOtaCompatibility({ ...base, overlay: classifyChangeSet(["apps/mobile/unknown.file"]) }), /cannot receive a safe OTA overlay/);
 });
 
 test("OTA client rejects all-platform publication and uses bounded sequential export memory", async () => {

@@ -9,8 +9,8 @@ import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { unexpectedBuilds, validateAdoptableBuild, validateAdoptableIosSubmission } from "./native-ownership.mjs";
 
 export class PreviewOrchestrator {
-  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), checkoutFactory = exactCheckout, prepareCheckoutFactory = prepareCheckout, identityFactory = resolvedIdentity, fingerprintsFactory = (directory) => nativeFingerprints(directory, { expoToken: config.expoToken }), stagingWait = waitForStaging, sleep = delay }) {
-    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.checkoutFactory = checkoutFactory; this.prepareCheckoutFactory = prepareCheckoutFactory; this.identityFactory = identityFactory; this.fingerprintsFactory = fingerprintsFactory; this.stagingWait = stagingWait; this.sleep = sleep;
+  constructor({ config, ledger, github, render, easFactory = (cwd) => new EasClient({ expoToken: config.expoToken, cwd }), appleFactory = () => new AppStoreConnectClient(config.appStoreConnect), checkoutFactory = exactCheckout, changeSetFactory = exactChangeSet, prepareCheckoutFactory = prepareCheckout, identityFactory = resolvedIdentity, fingerprintsFactory = (directory) => nativeFingerprints(directory, { expoToken: config.expoToken }), stagingWait = waitForStaging, sleep = delay }) {
+    this.config = config; this.ledger = ledger; this.github = github; this.render = render; this.easFactory = easFactory; this.appleFactory = appleFactory; this.checkoutFactory = checkoutFactory; this.changeSetFactory = changeSetFactory; this.prepareCheckoutFactory = prepareCheckoutFactory; this.identityFactory = identityFactory; this.fingerprintsFactory = fingerprintsFactory; this.stagingWait = stagingWait; this.sleep = sleep;
   }
 
   async cycle() {
@@ -213,17 +213,17 @@ export class PreviewOrchestrator {
   async process(record, previous, lease, deliveredNative = null, requiredNativeTargets = []) {
     const sha = record.source_sha;
     await this.ledger.transition(sha, this.config.workerId, [record.state], "VALIDATING", { validation_state: "IN_PROGRESS" });
-    const checkout = await exactCheckout({ repository: this.config.repository, token: this.config.githubReadToken, sha });
+    const checkout = await this.checkoutFactory({ repository: this.config.repository, token: this.config.githubReadToken, sha });
     try {
-      const files = previous ? await exactChangeSet({ directory: checkout.directory, repository: this.config.repository, token: this.config.githubReadToken, previousSha: previous.source_sha, targetSha: sha }) : [];
+      const files = previous ? await this.changeSetFactory({ directory: checkout.directory, repository: this.config.repository, token: this.config.githubReadToken, previousSha: previous.source_sha, targetSha: sha }) : [];
       let classification = previous ? classifyChangeSet(files) : { classification: "NO_DELIVERY", reason: "initial-baseline", files: [] };
       classification = applyCutoverBaseline({ classification, files, sha, config: this.config });
       classification = applyIosNativeBackfill({ classification, files, sha, config: this.config });
       if (classification.classification === "UNSAFE") throw new Error(`Release classification failed closed: ${classification.reason}.`);
-      await prepareCheckout(checkout.directory, { allowRootScriptDrift: true });
-      const identity = await resolvedIdentity(checkout.directory);
+      await this.prepareCheckoutFactory(checkout.directory, { allowRootScriptDrift: true });
+      const identity = await this.identityFactory(checkout.directory);
       assertPreviewIdentity(identity);
-      const fingerprints = await nativeFingerprints(checkout.directory);
+      const fingerprints = await this.fingerprintsFactory(checkout.directory);
       await lease.checkpoint();
       const nativeBaselines = deliveredNative ?? await this.deliveredNativeBaselines();
       classification = enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative: nativeBaselines, requiredNativeTargets });
@@ -255,11 +255,16 @@ export class PreviewOrchestrator {
       if (!classification.classification.includes("OTA") && coalescedPlatforms.length) {
         for (const platform of coalescedPlatforms) {
           const artifactSourceSha = deliveryResults[platform].nativeArtifactSourceSha;
-          const overlayFiles = await exactChangeSet({ directory: checkout.directory, repository: this.config.repository, token: this.config.githubReadToken, previousSha: artifactSourceSha, targetSha: sha });
+          const overlayFiles = await this.changeSetFactory({ directory: checkout.directory, repository: this.config.repository, token: this.config.githubReadToken, previousSha: artifactSourceSha, targetSha: sha });
           const overlay = classifyChangeSet(overlayFiles);
-          if (!overlay.classification.includes("OTA") || overlay.classification.includes("NATIVE") || overlay.classification === "UNSAFE") {
-            throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} cannot receive a safe OTA overlay for ${sha}.`);
-          }
+          assertCoalescedOtaCompatibility({
+            platform,
+            artifactSourceSha,
+            targetSourceSha: sha,
+            artifactFingerprint: deliveryResults[platform].nativeFingerprint,
+            targetFingerprint: fingerprints[platform],
+            overlay,
+          });
         }
         evidence.ota = await this.deliverOta(sha, checkout.directory, lease, coalescedPlatforms, fingerprints);
         evidence.coalescedOtaPlatforms = coalescedPlatforms;
@@ -483,7 +488,7 @@ export class PreviewOrchestrator {
             submissionId: submission.submission.id, appleBuildId: distribution.appleBuildId,
             distributionId: `${distribution.appleBuildId}:${distribution.betaGroupId}`,
           });
-          return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission.id, distribution, nativeArtifactSourceSha: artifactSourceSha };
+          return { buildId: build.id, buildNumber: current.appBuildVersion, submissionState: submission.state, submissionId: submission.submission.id, distribution, nativeArtifactSourceSha: artifactSourceSha, nativeFingerprint: fingerprint };
         }
         await this.sleep(15_000);
         continue;
@@ -562,7 +567,7 @@ export class PreviewOrchestrator {
       await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
       if (status === "FINISHED") {
         if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({ platform: "android", sourceSha: artifactSourceSha, fingerprint, buildId: build.id, appVersion: current.appVersion, buildNumber: current.appBuildVersion });
-        return { buildId: build.id, buildNumber: current.appBuildVersion, status, nativeArtifactSourceSha: artifactSourceSha };
+        return { buildId: build.id, buildNumber: current.appBuildVersion, status, nativeArtifactSourceSha: artifactSourceSha, nativeFingerprint: fingerprint };
       }
       if (["ERRORED", "FAILED", "CANCELED"].includes(status)) throw new Error(`EAS Android build ${build.id} ended in ${status}.`);
       await this.sleep(30_000);
@@ -677,6 +682,26 @@ export function nativeDriftTargets(fingerprints, deliveredNative) {
     if (current && delivered && current !== delivered) targets.push(target);
   }
   return targets;
+}
+
+const CANONICAL_FINGERPRINT = /^[0-9a-f]{40,128}$/;
+
+export function assertCoalescedOtaCompatibility({ platform, artifactSourceSha, targetSourceSha, artifactFingerprint, targetFingerprint, overlay }) {
+  const hasOtaSource = String(overlay?.classification ?? "").split("+").includes("OTA")
+    || (Array.isArray(overlay?.otaCandidates) && overlay.otaCandidates.length > 0);
+  if (overlay?.classification === "UNSAFE" || !hasOtaSource) {
+    throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} cannot receive a safe OTA overlay for ${targetSourceSha}.`);
+  }
+  if (!CANONICAL_FINGERPRINT.test(String(artifactFingerprint ?? ""))) {
+    throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} has no valid canonical fingerprint.`);
+  }
+  if (!CANONICAL_FINGERPRINT.test(String(targetFingerprint ?? ""))) {
+    throw new Error(`Coalesced ${platform} target ${targetSourceSha} has no valid canonical fingerprint.`);
+  }
+  if (artifactFingerprint !== targetFingerprint) {
+    throw new Error(`Coalesced ${platform} artifact fingerprint does not match target ${targetSourceSha}.`);
+  }
+  return true;
 }
 
 export function enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative, requiredNativeTargets = [] }) {
