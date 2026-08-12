@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useNavigation } from "expo-router";
 import { ExploreScreen } from "../../src/features/explore/ExploreScreen";
 import { FlowIcon } from "../../src/features/flow/FlowIcon";
 
@@ -12,8 +12,10 @@ const ENTRY_FADE_DELAY_MS = ENTRY_DURATION_MS;
 const SWEEP_DURATION_MS = 700;
 
 export default function ExploreTab() {
+  const navigation = useNavigation();
   const [showEntry, setShowEntry] = useState(true);
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  const entryRequested = useRef(true);
   const overlayOpacity = useRef(new Animated.Value(1)).current;
   const contentOpacity = useRef(new Animated.Value(0.82)).current;
   const contentTranslateY = useRef(new Animated.Value(8)).current;
@@ -31,9 +33,25 @@ export default function ExploreTab() {
     };
   }, []);
 
+  useEffect(() => {
+    return navigation.addListener("tabPress", () => {
+      if (!navigation.isFocused()) entryRequested.current = true;
+    });
+  }, [navigation]);
+
   useFocusEffect(
     useCallback(() => {
       if (reduceMotion === null) return undefined;
+
+      if (!entryRequested.current) {
+        overlayOpacity.setValue(0);
+        contentOpacity.setValue(1);
+        contentTranslateY.setValue(0);
+        setShowEntry(false);
+        return undefined;
+      }
+
+      entryRequested.current = false;
 
       if (reduceMotion) {
         overlayOpacity.setValue(0);
@@ -116,17 +134,6 @@ export default function ExploreTab() {
         sweep.stop();
         reveal.stop();
         fade.stop();
-
-        // Tabs remain mounted. Reset while Explore is off-screen so the next
-        // tap starts with the reveal already prepared instead of showing the
-        // fully rendered page for a frame first.
-        overlayOpacity.setValue(1);
-        contentOpacity.setValue(0.82);
-        contentTranslateY.setValue(8);
-        glowScale.setValue(0.88);
-        glowOpacity.setValue(0.28);
-        sweepTranslateX.setValue(-180);
-        setShowEntry(true);
       };
     }, [
       contentOpacity,
