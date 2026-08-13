@@ -28,7 +28,10 @@ export function DealsJourneyProgress({
   actions,
   announcement = "",
 }: Props) {
-  const current = progress.steps[progress.currentStepIndex - 1];
+  const current =
+    progress.currentStepIndex === null
+      ? null
+      : progress.steps[progress.currentStepIndex - 1];
   const label = (step: DealsJourneyStep) => t(`deals.journey.step.${step.id}`);
   const statusLabel = (step: DealsJourneyStep) =>
     t(`deals.journey.status.${step.status}`);
@@ -40,19 +43,21 @@ export function DealsJourneyProgress({
       <p className="sr-only" aria-live="polite">
         {announcement}
       </p>
-      <div className="sm:hidden">
-        <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#004BB8]">
-          {t("deals.journey.stepCount")
-            .replace("{{current}}", String(progress.currentStepIndex))
-            .replace("{{total}}", String(progress.total))}
-        </p>
-        <p className="mt-1 text-lg font-extrabold text-slate-950">
-          {label(current)}
-        </p>
-        {substate && (
-          <p className="text-sm font-medium text-slate-600">{substate}</p>
-        )}
-      </div>
+      {current && (
+        <div className="sm:hidden">
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-[#004BB8]">
+            {t("deals.journey.stepCount")
+              .replace("{{current}}", String(progress.currentStepIndex))
+              .replace("{{total}}", String(progress.total))}
+          </p>
+          <p className="mt-1 text-lg font-extrabold text-slate-950">
+            {label(current)}
+          </p>
+          {substate && (
+            <p className="text-sm font-medium text-slate-600">{substate}</p>
+          )}
+        </div>
+      )}
       <ol
         className="mt-4 flex min-w-0 overflow-x-auto pb-1 sm:mt-0 sm:overflow-visible"
         dir="auto"
