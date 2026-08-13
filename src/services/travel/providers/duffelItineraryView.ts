@@ -329,6 +329,7 @@ export function parseDuffelItineraryView(
       const brands: DuffelInventoryBrand[] = [];
       for (const [brandIndex, rawBrand] of itinerary.brands.entries()) {
         const brand = record(rawBrand);
+        if (brand?.fare_brand_name === null) continue;
         const fareBrandName = requiredString(brand?.fare_brand_name);
         if (!brand || !fareBrandName || !Array.isArray(brand.offers))
           return null;

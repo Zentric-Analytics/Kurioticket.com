@@ -91,7 +91,19 @@ export type DuffelDealsItineraryInventory = {
   itineraryGraph: DuffelItineraryInventoryGraph;
 };
 
-const duffelSearchBody = (search: FlightSearchParams) => {
+export const DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS = 10_000;
+export const DUFFEL_SEARCH_HTTP_TIMEOUT_MS = 16_000;
+
+export const duffelOfferRequestSearchUrl = (view?: "itineraries") => {
+  const params = new URLSearchParams({
+    ...(view ? { view } : {}),
+    return_offers: "true",
+    supplier_timeout: String(DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS),
+  });
+  return `https://api.duffel.com/air/offer_requests?${params}`;
+};
+
+export const duffelSearchBody = (search: FlightSearchParams) => {
   const slices = [
     {
       origin: sanitizeAirportCode(search.origin),
@@ -149,13 +161,13 @@ export function searchDuffelDealsItineraryInventory(
   };
   return runProvider("Duffel", async () => {
     const grouped = await fetchJson<unknown>(
-      "https://api.duffel.com/air/offer_requests?view=itineraries&return_offers=true",
+      duffelOfferRequestSearchUrl("itineraries"),
       {
         method: "POST",
         headers,
         body: JSON.stringify(duffelSearchBody(search)),
       },
-      16000,
+      DUFFEL_SEARCH_HTTP_TIMEOUT_MS,
     );
     const graph = parseDuffelItineraryView(grouped);
     if (!graph) throw new Error("Malformed Duffel itinerary response");
@@ -264,7 +276,7 @@ export function searchDuffelFlights(
       })),
     ];
     const data = await fetchJson<{ data?: { offers?: unknown[] } }>(
-      "https://api.duffel.com/air/offer_requests?return_offers=true",
+      duffelOfferRequestSearchUrl(),
       {
         method: "POST",
         headers: {
@@ -280,7 +292,7 @@ export function searchDuffelFlights(
           },
         }),
       },
-      16000,
+      DUFFEL_SEARCH_HTTP_TIMEOUT_MS,
     );
 
     return (data.data?.offers || [])
