@@ -32,7 +32,7 @@ export type DealsJourneyStep = {
 export type DealsJourneyProgress = {
   mode: DealsPackageMode;
   steps: DealsJourneyStep[];
-  currentStepIndex: number;
+  currentStepIndex: number | null;
   total: number;
 };
 
@@ -51,20 +51,20 @@ function createDealsJourneyProgressFromIds(
     (id) => requested[id]?.status === "current",
   );
   const currentId =
-    requestedCurrent ??
-    ids.find((id) => requested[id]?.status !== "completed") ??
-    ids.at(-1)!;
-  const currentStepIndex = ids.indexOf(currentId);
+    requestedCurrent ?? ids.find((id) => requested[id]?.status !== "completed");
+  const currentStepIndex = currentId ? ids.indexOf(currentId) : null;
   const steps = ids.map(
     (id, index): DealsJourneyStep => ({
       id,
       status:
         requested[id]?.status ??
-        (index < currentStepIndex
+        (currentStepIndex === null
           ? "completed"
-          : index === currentStepIndex
-            ? "current"
-            : "upcoming"),
+          : index < currentStepIndex
+            ? "completed"
+            : index === currentStepIndex
+              ? "current"
+              : "upcoming"),
       ...(requested[id]?.substate ? { substate: requested[id]!.substate } : {}),
       ...(requested[id]?.summary ? { summary: requested[id]!.summary } : {}),
     }),
@@ -72,7 +72,7 @@ function createDealsJourneyProgressFromIds(
   return {
     mode,
     steps,
-    currentStepIndex: currentStepIndex + 1,
+    currentStepIndex: currentStepIndex === null ? null : currentStepIndex + 1,
     total: steps.length,
   };
 }

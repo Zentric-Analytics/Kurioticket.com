@@ -174,6 +174,8 @@ for (const mode of [
     });
     assert.equal(value.steps.at(-1)?.id, "review");
     assert.equal(value.steps.at(-1)?.status, "current");
+    assert.equal(value.steps.at(-1)?.substate, "review-trip");
+    assert.equal(value.currentStepIndex, value.steps.length);
   });
 
   test(`${mode} guided handoff completes products and Review`, () => {
@@ -190,6 +192,7 @@ for (const mode of [
       value.steps.some((step) => step.status === "current"),
       false,
     );
+    assert.equal(value.currentStepIndex, null);
   });
 
   test(`${mode} legacy handoff keeps product-only progress`, () => {
@@ -208,8 +211,27 @@ for (const mode of [
       value.steps.some((step) => step.id === "review"),
       false,
     );
+    assert.equal(
+      value.steps.some((step) => step.status === "current"),
+      false,
+    );
+    assert.equal(value.currentStepIndex, null);
   });
 }
+test("active product and Review progress retains 1-based current indexes", () => {
+  for (const [id, currentStepIndex] of [
+    ["hotel", 1],
+    ["flight", 2],
+    ["car", 3],
+    ["review", 4],
+  ] as const) {
+    const value = createDealsJourneyProgress("hotel-flight-car", {
+      [id]: { status: "current" },
+    });
+    assert.equal(value.currentStepIndex, currentStepIndex);
+    assert.equal(value.steps[currentStepIndex - 1]?.id, id);
+  }
+});
 test("guided results and details stages use truthful progress labels", () => {
   for (const [stage, expected] of [
     ["hotel-results", "choose-property"],

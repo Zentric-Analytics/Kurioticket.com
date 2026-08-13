@@ -61,3 +61,19 @@ test("track is RTL-safe and only becomes interactive with a real action", () => 
   assert.match(source, /href \? \([\s\S]*?<Link/);
   assert.doesNotMatch(source, /<img|<svg|left-|right-/);
 });
+
+test("active progress renders the mobile step count and current label", () => {
+  assert.match(
+    source,
+    /\{current && \([\s\S]*?deals\.journey\.stepCount[\s\S]*?label\(current\)/,
+  );
+});
+
+test("all-completed progress omits a fake mobile current-step summary", () => {
+  assert.match(
+    source,
+    /progress\.currentStepIndex === null\s*\? null\s*: progress\.steps/,
+  );
+  assert.match(source, /\{current && \(\s*<div className="sm:hidden">/);
+  assert.match(source, /progress\.steps\.map/);
+});
