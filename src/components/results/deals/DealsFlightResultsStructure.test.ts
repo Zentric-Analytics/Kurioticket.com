@@ -185,7 +185,11 @@ test("guided shell renders real Flight details and downstream pending states ins
     new URL("../FlightDetailsClient.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(shell, /<DealsFlightResultsStage search=\{search\}/);
+  assert.match(
+    shell,
+    /stage === "flight-results" \? \(\s*<DealsFlightJourneyV2 search=\{search\} upstreamPlan=\{plan\} \/>/,
+  );
+  assert.doesNotMatch(shell, /DealsFlightResultsStage|flightV2Enabled/);
   assert.match(shell, /<DealsFlightDetailsStage/);
   assert.match(shell, /<DealsCarResultsStage/);
   assert.match(shell, /<DealsReviewStage/);

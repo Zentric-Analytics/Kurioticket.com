@@ -303,8 +303,9 @@ test("unavailable storage still renders either canonical first results stage wit
   );
   assert.match(
     shellSource,
-    /requiredStage === stage && stage === "flight-results" \? \([\s\S]*?<DealsFlightResultsStage search=\{search\} \/>/,
+    /requiredStage === stage && stage === "flight-results" \? \(\s*<DealsFlightJourneyV2 search=\{search\} upstreamPlan=\{plan\} \/>/,
   );
+  assert.doesNotMatch(shellSource, /DealsFlightResultsStage|flightV2Enabled/);
   const storageUnavailableRule = shellSource.slice(
     shellSource.indexOf("const canRenderStoragelessFirstResults"),
     shellSource.indexOf("const clearConfirmationFailure"),
