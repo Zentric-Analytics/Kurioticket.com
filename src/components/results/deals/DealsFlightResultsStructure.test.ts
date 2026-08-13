@@ -8,12 +8,13 @@ test("FlightCard action distinguishes undefined string and null contracts", asyn
     "utf8",
   );
   assert.match(card, /detailsHref\?: string \| null/);
-  assert.match(card, /detailsHref === undefined \? `\/flights\/details/);
-  assert.match(card, /detailsHref \? <LinkButton/);
-  assert.match(card, /disabled aria-disabled="true"/);
+  assert.match(card, /detailsHref === undefined\s*\? `\/flights\/details/);
+  assert.match(card, /onAction \? \(\s*<button/);
+  assert.match(card, /detailsHref \? \(\s*<LinkButton/);
+  assert.match(card, /disabled\s*aria-disabled="true"/);
 });
 
-test("guided shell mounts only canonical Flight V2 and removes legacy Flight details", async () => {
+test("guided shell mounts stable shared Flight results and removes legacy Flight details", async () => {
   const shell = await readFile(
     new URL("./DealsJourneyShell.tsx", import.meta.url),
     "utf8",
@@ -24,9 +25,9 @@ test("guided shell mounts only canonical Flight V2 and removes legacy Flight det
   );
   assert.match(
     shell,
-    /stage === "flight-results" \? \([\s\S]*<DealsFlightJourneyV2/,
+    /stage === "flight-results" \? \([\s\S]*<DealsStableFlightResultsStage/,
   );
-  assert.doesNotMatch(shell, /DealsFlightResultsStage|flightV2Enabled/);
+  assert.doesNotMatch(shell, /DealsFlightJourneyV2|flightV2Enabled/);
   assert.doesNotMatch(shell, /DealsFlightDetailsStage|flightId/);
   assert.match(shell, /<DealsCarResultsStage/);
   assert.match(shell, /<DealsReviewStage/);

@@ -37,6 +37,7 @@ export function FlightCard({
   detailsHref,
   actionLabel,
   actionAriaLabel,
+  onAction,
   showProviderHandoffCopy = true,
 }: {
   flight: PublicFlightResult;
@@ -45,6 +46,7 @@ export function FlightCard({
   detailsHref?: string | null;
   actionLabel?: string;
   actionAriaLabel?: string;
+  onAction?: (flight: PublicFlightResult) => void;
   showProviderHandoffCopy?: boolean;
 }) {
   const { t: dictionary, locale } = useLocale();
@@ -87,7 +89,9 @@ export function FlightCard({
     : t("providerPrice");
   const providerHandoffCopy = t("flightCardProviderHandoff");
   const resolvedDetailsHref =
-    detailsHref === undefined ? `/flights/details/${encodeURIComponent(flight.id)}` : detailsHref;
+    detailsHref === undefined
+      ? `/flights/details/${encodeURIComponent(flight.id)}`
+      : detailsHref;
   const resolvedActionLabel = actionLabel ?? t("viewFlight");
 
   const mobileCard = (
@@ -133,6 +137,7 @@ export function FlightCard({
               providerPriceLabel={t("providerPrice")}
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
+              onAction={onAction ? () => onAction(flight) : undefined}
             />
           </div>
         </div>
@@ -203,6 +208,7 @@ export function FlightCard({
               providerPriceLabel={t("providerPrice")}
               viewFlightLabel={resolvedActionLabel}
               viewFlightAriaLabel={actionAriaLabel}
+              onAction={onAction ? () => onAction(flight) : undefined}
               desktop
             />
           </div>
@@ -492,7 +498,6 @@ function AirlineLogo({
   );
 }
 
-
 function FlightFareAction({
   detailsHref,
   formattedPrice,
@@ -505,6 +510,7 @@ function FlightFareAction({
   providerPriceLabel,
   viewFlightLabel,
   viewFlightAriaLabel,
+  onAction,
   className,
   desktop = false,
 }: {
@@ -519,6 +525,7 @@ function FlightFareAction({
   providerPriceLabel: string;
   viewFlightLabel: string;
   viewFlightAriaLabel?: string;
+  onAction?: () => void;
   className?: string;
   desktop?: boolean;
 }) {
@@ -563,20 +570,49 @@ function FlightFareAction({
           </div>
         ) : null}
       </div>
-      {detailsHref ? <LinkButton
-        href={detailsHref}
-        aria-label={viewFlightAriaLabel}
-        variant="primary"
-        size="sm"
-        className={cn(
-          "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
-          desktop
-            ? "flight-card-view-button rounded-md py-2.5"
-            : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
-        )}
-      >
-        {viewFlightLabel}
-      </LinkButton> : <button type="button" disabled aria-disabled="true" aria-label={viewFlightAriaLabel} className={cn("inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500", desktop ? "flight-card-view-button rounded-md" : "min-w-[104px]")}>{viewFlightLabel}</button>}
+      {onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          aria-label={viewFlightAriaLabel}
+          className={cn(
+            "inline-flex min-h-11 w-auto shrink-0 items-center justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold text-white hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
+            desktop
+              ? "flight-card-view-button rounded-md px-3.5 py-2.5"
+              : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
+          )}
+        >
+          {viewFlightLabel}
+        </button>
+      ) : detailsHref ? (
+        <LinkButton
+          href={detailsHref}
+          aria-label={viewFlightAriaLabel}
+          variant="primary"
+          size="sm"
+          className={cn(
+            "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
+            desktop
+              ? "flight-card-view-button rounded-md py-2.5"
+              : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
+          )}
+        >
+          {viewFlightLabel}
+        </LinkButton>
+      ) : (
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          aria-label={viewFlightAriaLabel}
+          className={cn(
+            "inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500",
+            desktop ? "flight-card-view-button rounded-md" : "min-w-[104px]",
+          )}
+        >
+          {viewFlightLabel}
+        </button>
+      )}
     </div>
   );
 }
