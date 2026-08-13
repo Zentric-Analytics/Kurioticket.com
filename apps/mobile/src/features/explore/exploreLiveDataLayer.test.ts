@@ -82,8 +82,15 @@ test("live Explore screens prefer imageDestinationId and retain own-ID media fal
 
 test("Explore tab renders content directly without an entry loading state", () => {
   const tab = source("app/(tabs)/explore.tsx");
-  assert.match(tab, /return <ExploreScreen \/>/);
+  assert.match(tab, /return <ExploreScreen key=\{visitKey\} \/>/);
   assert.doesNotMatch(tab, /ENTRY_DURATION_MS|Animated|AccessibilityInfo|loadingTitle|showEntry/);
+});
+
+test("Explore search resets only when returning from another tab", () => {
+  const tab = source("app/(tabs)/explore.tsx");
+  assert.match(tab, /navigation\.addListener\("tabPress"/);
+  assert.match(tab, /if \(!navigation\.isFocused\(\)\) setVisitKey/);
+  assert.doesNotMatch(tab, /useFocusEffect/);
 });
 
 test("destination details keeps the protected 360px hero layout", () => {
