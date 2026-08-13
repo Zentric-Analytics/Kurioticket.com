@@ -67,7 +67,7 @@ test("flight card reserves a flexible single-line price column across supported 
   assert.match(card, /const \{ width \} = useWindowDimensions\(\);/);
   assert.match(card, /const narrowCard = width < 430/);
   assert.match(card, /style=\{\[s0\.flightMain, narrowCard && s0\.flightMainNarrow\]\}/);
-  assert.match(source, /flightJourney: \{ flex: 1, minWidth: 0, maxWidth: 276, flexDirection: "row"/);
+  assert.match(source, /flightJourney: \{ flex: 1, minWidth: 0, maxWidth: 290, flexDirection: "row"/);
   assert.match(source, /timeline: \{ flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2/);
   assert.match(source, /priceBox: \{ flexBasis: 104, minWidth: 96, maxWidth: 118, flexShrink: 0/);
   assert.match(source, /priceBoxNarrow: \{ flexBasis: "auto", minWidth: 0, maxWidth: "100%" \}/);
@@ -78,20 +78,26 @@ test("flight card reserves a flexible single-line price column across supported 
   }
 });
 
-test("long airline names truncate rather than increasing card height", () => {
-  assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
-  assert.match(source, /departureBlock: \{ width: 82, flexShrink: 0 \}/);
+test("airline names receive protected width and only truncate as a last resort", () => {
+  assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} ellipsizeMode="tail"/);
+  assert.match(source, /departureBlock: \{ flexBasis: 96, minWidth: 96, flexShrink: 0 \}/);
+
+  for (const airlineName of ["Duffel Airways", "British Airways", "Brussels Airlines"]) {
+    assert.ok(airlineName.length <= 17, `${airlineName} fits the protected normal-name allowance`);
+  }
+  assert.ok("International Airways Worldwide".length > 17, "exceptionally long names still truncate on one line");
 });
 
 test("narrow flight cards reserve deterministic space for every journey section", () => {
   assert.match(source, /flightJourney: \{[^}]*gap: 3 \}/);
   assert.match(source, /airline: \{ width: 32, height: 32, flexShrink: 0/);
+  assert.match(source, /airlineFallback: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(source, /timeline: \{ flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2/);
   assert.match(source, /arrivalBlock: \{ width: 72, flexShrink: 0 \}/);
 
-  const readableMinimums = 32 + 82 + 48 + 72;
+  const readableMinimums = 32 + 96 + 48 + 72;
   const interSectionGaps = 3 * 3;
-  for (const viewport of [320, 360, 375, 390, 412, 430]) {
+  for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const cardContentWidth = viewport - 36 - 26;
     assert.ok(
       cardContentWidth >= readableMinimums + interSectionGaps,
@@ -102,14 +108,14 @@ test("narrow flight cards reserve deterministic space for every journey section"
 
 test("flight journey caps surplus width instead of stretching the departure-to-arrival relationship", () => {
   const logoWidth = 32;
-  const departureWidth = 82;
+  const departureWidth = 96;
   const arrivalWidth = 72;
   const interSectionGaps = 3 * 3;
   const maximumTimelineWidth = 81;
   const journeyMaximumWidth = logoWidth + departureWidth + arrivalWidth + interSectionGaps + maximumTimelineWidth;
 
-  assert.equal(journeyMaximumWidth, 276);
-  for (const viewport of [320, 360, 375, 390, 412, 430]) {
+  assert.equal(journeyMaximumWidth, 290);
+  for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const cardContentWidth = viewport - 36 - 26;
     const availableJourneyWidth = viewport < 430 ? cardContentWidth : cardContentWidth - 104 - 6;
     const renderedJourneyWidth = Math.min(availableJourneyWidth, journeyMaximumWidth);
