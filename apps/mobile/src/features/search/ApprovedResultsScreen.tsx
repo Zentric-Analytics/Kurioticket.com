@@ -1016,7 +1016,7 @@ const s0 = StyleSheet.create({
   resultBadgeTextGreen: { color: ui.green },
   flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
   flightMainNarrow: { flexDirection: "column", alignItems: "stretch", gap: 4 },
-  flightJourney: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
+  flightJourney: { flex: 1, minWidth: 0, maxWidth: 276, flexDirection: "row", alignItems: "center", gap: 3 },
   airline: { width: 32, height: 32, flexShrink: 0, resizeMode: "contain" },
   airlineFallback: {
     width: 32,
@@ -1028,10 +1028,10 @@ const s0 = StyleSheet.create({
   },
   airlineFallbackText: { color: ui.navy, fontSize: 12, fontWeight: "800" },
   nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
-  departureBlock: { flexGrow: 1, flexShrink: 1, flexBasis: 82, minWidth: 76 },
-  arrivalBlock: { flexGrow: 0, flexShrink: 1, flexBasis: 72, minWidth: 70 },
+  departureBlock: { width: 82, flexShrink: 0 },
+  arrivalBlock: { width: 72, flexShrink: 0 },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
-  timeline: { flexGrow: 1, flexShrink: 1, flexBasis: 54, minWidth: 48, maxWidth: 64, alignItems: "center" },
+  timeline: { flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2, alignItems: "center" },
   timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 2, marginVertical: 1 },
   line: {
     flex: 1,
