@@ -172,11 +172,17 @@ const commit = (
     updatedAt: now,
     revision: plan.revision + 1,
   });
-const resetFlight = (plan: DealsTripPlanV2): DealsFlightJourneyV2 => ({
-  searchKey: plan.productSearchKeys.flight,
-  tripType: plan.flightJourney!.tripType,
-  phase: "outbound",
-});
+const clearExactFare = (plan: DealsTripPlanV2): DealsFlightJourneyV2 => {
+  const flight = plan.flightJourney!;
+  return {
+    searchKey: plan.productSearchKeys.flight,
+    tripType: flight.tripType,
+    phase: "fare",
+    outbound: flight.outbound,
+    ...(flight.fareBrand ? { fareBrand: flight.fareBrand } : {}),
+    ...(flight.return ? { return: flight.return } : {}),
+  };
+};
 
 export function applyDealsJourneyEventV2(
   plan: DealsTripPlanV2,
@@ -411,7 +417,7 @@ export function applyDealsJourneyEventV2(
     event.type === "FLIGHT_OFFER_UNAVAILABLE"
   ) {
     if (!plan.flightJourney) return fail(plan, now, "invalid-transition");
-    const clean = resetFlight(plan);
+    const clean = clearExactFare(plan);
     if (same(plan.flightJourney, clean)) return success(plan, now, false);
     next = commit(
       plan,

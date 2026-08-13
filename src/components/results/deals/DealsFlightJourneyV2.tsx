@@ -576,10 +576,15 @@ export function DealsFlightJourneyV2({
     setStatus("success");
   };
 
-  const resetInvalidFlight = (
+  const recoverExactFares = async (
     message: string,
     event: "FLIGHT_OFFER_EXPIRED" | "FLIGHT_OFFER_UNAVAILABLE",
   ) => {
+    if (!runtime?.selectedOutboundKey)
+      return fail(
+        new DealsFlightInventoryClientError("INVALID_SELECTION", false),
+      );
+    const outboundItineraryKey = runtime.selectedOutboundKey;
     const applied = applyDealsJourneyEventV2(plan, search, {
       type: event,
       expectedRevision: plan.revision,
@@ -588,14 +593,53 @@ export function DealsFlightJourneyV2({
       return fail(
         new DealsFlightInventoryClientError("INVALID_SELECTION", false),
       );
-    const cleared = clearDealsFlightRuntimeV2(sessionStorage);
-    if (!cleared.ok)
-      return fail(new DealsFlightInventoryClientError(cleared.code, true));
     cancel();
-    setRuntime(null);
+    const next = {
+      ...runtime,
+      selectedFareKey: undefined,
+      fareChoices: [],
+    };
+    if (!commitRuntime(next)) return;
     installPlan(applied.plan);
-    setStatus("initial");
+    setFareState("loading");
+    setStatus("loading");
     setRevalidationMessage(message);
+    const pending = request();
+    try {
+      const fareChoices =
+        next.tripType === "round-trip"
+          ? next.selectedBrandOptionKey && next.selectedReturnKey
+            ? await getFlightBrandFareChoices(
+                {
+                  inventoryToken: next.inventoryToken,
+                  sourceSearchKey: next.sourceSearchKey,
+                  outboundItineraryKey,
+                  brandOptionKey: next.selectedBrandOptionKey,
+                  returnItineraryKey: next.selectedReturnKey,
+                },
+                pending.controller.signal,
+              )
+            : null
+          : await getFlightFareChoices(
+              {
+                inventoryToken: next.inventoryToken,
+                sourceSearchKey: next.sourceSearchKey,
+                outboundItineraryKey,
+              },
+              pending.controller.signal,
+            );
+      if (!fareChoices)
+        throw new DealsFlightInventoryClientError("INVALID_SELECTION", false);
+      if (current(pending)) {
+        if (!commitRuntime({ ...next, fareChoices })) return;
+        setFareState(fareChoices.length ? "success" : "empty");
+        setStatus("success");
+      }
+    } catch (caught) {
+      if (current(pending)) fail(caught, "fare");
+    } finally {
+      coordinator.current.finish(pending);
+    }
   };
 
   const confirmFlight = async () => {
@@ -674,17 +718,17 @@ export function DealsFlightJourneyV2({
         );
         setStatus("success");
       } else if (result.status === "expired") {
-        resetInvalidFlight(
+        await recoverExactFares(
           "This flight offer expired. Refresh flight availability.",
           "FLIGHT_OFFER_EXPIRED",
         );
       } else if (result.status === "unavailable") {
-        resetInvalidFlight(
+        await recoverExactFares(
           "This flight is no longer available. Refresh flight availability.",
           "FLIGHT_OFFER_UNAVAILABLE",
         );
       } else {
-        resetInvalidFlight(
+        await recoverExactFares(
           "This flight selection is no longer valid. Refresh availability.",
           "FLIGHT_OFFER_UNAVAILABLE",
         );
@@ -804,31 +848,16 @@ export function DealsFlightJourneyV2({
         return "recovered";
       }
       if (outcome.kind === "flight-offer") {
-        const applied = applyDealsJourneyEventV2(
-          currentPlan,
-          search,
-          {
-            type: "FLIGHT_OFFER_EXPIRED",
-            expectedRevision: currentPlan.revision,
-          },
-          now,
+        void recoverExactFares(
+          "This flight offer expired. Refresh flight availability.",
+          "FLIGHT_OFFER_EXPIRED",
         );
-        if (applied.ok) {
-          cancel();
-          clearDealsFlightRuntimeV2(sessionStorage);
-          setRuntime(null);
-          installPlan(applied.plan);
-          setStatus("initial");
-          setRevalidationMessage(
-            "This flight offer expired. Refresh flight availability.",
-          );
-        }
         return "recovered";
       }
       // Car freshness is derived from time. Preserve the canonical plan.
       return "recovered";
     },
-    [cancel, installPlan, search],
+    [cancel, recoverExactFares],
   );
 
   const confirmReview = useCallback(
@@ -1269,7 +1298,7 @@ export function DealsFlightJourneyV2({
             onPlanChange={setPlan}
             onSessionExpired={() => void create()}
             onFlightExpired={() =>
-              resetInvalidFlight(
+              void recoverExactFares(
                 "This flight offer expired while you were choosing a car. Refresh flight availability.",
                 "FLIGHT_OFFER_EXPIRED",
               )

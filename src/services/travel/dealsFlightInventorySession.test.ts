@@ -253,3 +253,142 @@ test("schema-v2 sessions enforce exact/graph membership, provider, slice, and ro
     payload.itineraryGraph.slices[0].origin = "SFO";
   });
 });
+
+test("schema-v2 round trips reject legacy bypasses while Brand-backed operations work", async () => {
+  const now = 4_000_000;
+  const roundSearch: FlightSearchParams = {
+    ...search,
+    tripType: "round-trip",
+    returnDate: "2027-01-10",
+  };
+  const inboundGraph = structuredClone(graph.slices[0]);
+  inboundGraph.index = 1;
+  inboundGraph.origin = "JFK";
+  inboundGraph.destination = "LHR";
+  inboundGraph.itineraries[0].segments[0] = {
+    ...inboundGraph.itineraries[0].segments[0],
+    origin: "JFK",
+    destination: "LHR",
+    departure: "2027-01-10T10:00:00Z",
+    arrival: "2027-01-10T18:00:00Z",
+  };
+  const roundGraph = { ...graph, slices: [graph.slices[0], inboundGraph] };
+  const roundOffer = offer(now + 60_000);
+  roundOffer.legs = [
+    ...roundOffer.legs!,
+    {
+      ...roundOffer.legs![0],
+      direction: "return",
+      originAirport: "JFK",
+      destinationAirport: "LHR",
+      departureTime: "2027-01-10T10:00:00Z",
+      arrivalTime: "2027-01-10T18:00:00Z",
+    },
+  ];
+  const service = new DealsFlightInventorySessionService(
+    new FakeStore(),
+    () => now,
+  );
+  const created = await service.create(roundSearch, [roundOffer], roundGraph);
+  assert.ok(created);
+  const outboundKey = created.outboundChoices[0].itineraryKey;
+  for (const operation of [
+    () =>
+      service.returns(
+        created.inventoryToken,
+        created.sourceSearchKey,
+        outboundKey,
+      ),
+    () =>
+      service.fares(
+        created.inventoryToken,
+        created.sourceSearchKey,
+        outboundKey,
+      ),
+    () =>
+      service.resolve(
+        created.inventoryToken,
+        created.sourceSearchKey,
+        outboundKey,
+        undefined,
+        "flight-fare-v3:forged",
+      ),
+  ])
+    await assert.rejects(
+      operation,
+      (error) =>
+        error instanceof DealsFlightInventoryError &&
+        error.code === "invalid-selection",
+    );
+
+  const brands = await service.fareBrands(
+    created.inventoryToken,
+    created.sourceSearchKey,
+    outboundKey,
+  );
+  assert.equal(brands.length, 1);
+  const returns = await service.brandReturns(
+    created.inventoryToken,
+    created.sourceSearchKey,
+    outboundKey,
+    brands[0].brandOptionKey,
+  );
+  assert.equal(returns.length, 1);
+  const fares = await service.brandFares(
+    created.inventoryToken,
+    created.sourceSearchKey,
+    outboundKey,
+    brands[0].brandOptionKey,
+    returns[0].itineraryKey,
+  );
+  assert.equal(fares.length, 1);
+  const resolved = await service.resolveBrandFare(
+    created.inventoryToken,
+    created.sourceSearchKey,
+    outboundKey,
+    brands[0].brandOptionKey,
+    returns[0].itineraryKey,
+    fares[0].fareKey,
+  );
+  assert.equal(resolved.offer?.providerOfferId, "off_secret_123");
+});
+
+test("schema-v1 round-trip and schema-v2 one-way legacy operations remain compatible", async () => {
+  const now = 5_000_000;
+  const store = new FakeStore();
+  const service = new DealsFlightInventorySessionService(store, () => now);
+  const legacyOffer = offer(now + 60_000);
+  delete legacyOffer.rawProviderReference;
+  legacyOffer.legs = [
+    ...legacyOffer.legs!,
+    { ...legacyOffer.legs![0], direction: "return" },
+  ];
+  store.rows.set(hashInventoryToken("schema-v1"), {
+    tokenHash: hashInventoryToken("schema-v1"),
+    schemaVersion: 1,
+    sourceSearchKey: "legacy-key",
+    searchPayload: {
+      ...search,
+      tripType: "round-trip",
+      returnDate: "2027-01-10",
+    },
+    inventoryPayload: [legacyOffer],
+    createdAt: new Date(now),
+    expiresAt: new Date(now + 60_000),
+  });
+  const legacyOutbound = (await service.load("schema-v1", "legacy-key")).offers;
+  assert.equal(legacyOutbound.length, 1);
+  await assert.doesNotReject(() =>
+    service.returns("schema-v1", "legacy-key", "missing"),
+  );
+
+  const created = await service.create(search, [offer(now + 60_000)], graph);
+  assert.ok(created);
+  const outboundKey = created.outboundChoices[0].itineraryKey;
+  const fares = await service.fares(
+    created.inventoryToken,
+    created.sourceSearchKey,
+    outboundKey,
+  );
+  assert.equal(fares.length, 1);
+});

@@ -209,6 +209,43 @@ test("round-trip requires Brand before return; one-way goes directly to fare", (
     );
   }
 });
+test("round-trip directly rejects Return and Fare when Brand is absent", () => {
+  const search = makeSearch({ mode: "flight-car" });
+  const initial = createDealsTripPlanV2(search, 10_000);
+  const outboundResult = applyDealsJourneyEventV2(
+    initial,
+    search,
+    {
+      type: "FLIGHT_OUTBOUND_SELECTED",
+      itinerary: outbound,
+      sourceSearchKey: initial.productSearchKeys.flight,
+      expectedRevision: initial.revision,
+    },
+    at,
+  );
+  assert.equal(outboundResult.ok, true);
+  if (!outboundResult.ok) return;
+  for (const event of [
+    { type: "FLIGHT_RETURN_SELECTED" as const, itinerary: inbound },
+    {
+      type: "FLIGHT_FARE_SELECTED" as const,
+      fare: { fareKey: "fare-1", cabinClass: "economy" as const },
+    },
+  ]) {
+    const result = applyDealsJourneyEventV2(
+      outboundResult.plan,
+      search,
+      {
+        ...event,
+        sourceSearchKey: outboundResult.plan.productSearchKeys.flight,
+        expectedRevision: outboundResult.plan.revision,
+      },
+      at,
+    );
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.equal(result.reason, "invalid-transition");
+  }
+});
 test("fare-brand event invalidates downstream flight and car, and preserves upstream", () => {
   const search = makeSearch();
   let plan = accepted(
@@ -343,7 +380,7 @@ test("confirmation enforces fare, itinerary identities, and fresh provider time"
   });
   assert.equal(result.ok, true);
 });
-test("provider expiry never counts as a complete flight and recovery clears downstream car", () => {
+test("exact Fare expiry and unavailability preserve upstream selections without substitution", () => {
   const search = makeSearch(),
     base = createDealsTripPlanV2(search, 10_000);
   let plan = accepted(apply(base, search, { type: "HOTEL_CONFIRMED", hotel }));
@@ -362,14 +399,46 @@ test("provider expiry never counts as a complete flight and recovery clears down
     getRequiredDealsJourneyStateV2(expired, at + 200),
     "flight-fare",
   );
-  const withCar = { ...plan, car };
-  const reset = accepted(
-    apply(withCar, search, { type: "FLIGHT_OFFER_EXPIRED" }, at + 10),
+  for (const type of [
+    "FLIGHT_OFFER_EXPIRED",
+    "FLIGHT_OFFER_UNAVAILABLE",
+  ] as const) {
+    const reset = accepted(apply({ ...plan, car }, search, { type }, at + 10));
+    assert.equal(reset.hotel?.id, hotel.id);
+    assert.equal(reset.car, undefined);
+    assert.equal(reset.flightJourney?.phase, "fare");
+    assert.deepEqual(reset.flightJourney?.outbound, outbound);
+    assert.equal(
+      reset.flightJourney?.fareBrand?.brandOptionKey,
+      "flight-brand-v1:a",
+    );
+    assert.deepEqual(reset.flightJourney?.return, inbound);
+    assert.equal(reset.flightJourney?.fare, undefined);
+    assert.equal(reset.flightJourney?.confirmedOffer, undefined);
+    assert.equal(getRequiredDealsJourneyStateV2(reset, at + 10), "flight-fare");
+  }
+});
+test("one-way exact Fare recovery preserves Outbound and clears only downstream state", () => {
+  const search = makeSearch({ mode: "flight-car", flightTripType: "one-way" });
+  const complete = completeFlight(
+    createDealsTripPlanV2(search, 10_000),
+    search,
   );
-  assert.equal(reset.hotel?.id, hotel.id);
+  const reset = accepted(
+    apply(
+      { ...complete, car },
+      search,
+      { type: "FLIGHT_OFFER_EXPIRED" },
+      at + 10,
+    ),
+  );
+  assert.deepEqual(reset.flightJourney?.outbound, outbound);
+  assert.equal(reset.flightJourney?.fareBrand, undefined);
+  assert.equal(reset.flightJourney?.return, undefined);
+  assert.equal(reset.flightJourney?.fare, undefined);
+  assert.equal(reset.flightJourney?.confirmedOffer, undefined);
+  assert.equal(reset.flightJourney?.phase, "fare");
   assert.equal(reset.car, undefined);
-  assert.equal(reset.flightJourney?.phase, "outbound");
-  assert.equal(reset.flightJourney?.outbound, undefined);
 });
 test("car requires all upstream products; completed modes reach review and handoff", () => {
   for (const mode of ["flight-car", "hotel-car", "hotel-flight-car"] as const) {
