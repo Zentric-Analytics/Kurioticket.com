@@ -88,6 +88,7 @@ import {
   readFlightResultsSessionSnapshot,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
+import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
 import {
   readSavedItemIds,
   toggleSavedItemId,
@@ -944,6 +945,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filtersReadySearchKey, setFiltersReadySearchKey] = useState<
+    string | null
+  >(null);
   const [mainInventoryRetryGeneration, setMainInventoryRetryGeneration] = useState(0);
   const userInitiatedRetryRef = useRef(false);
   const loadingFocusRef = useRef<HTMLDivElement | null>(null);
@@ -2481,6 +2485,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       currency: selectedCurrency,
     };
   }, [searchQueryString, selectedCurrency]);
+  const currentFlightSearchKey = useMemo(
+    () => (body ? buildFlightResultsSearchKey(body) : ""),
+    [body],
+  );
 
   const canonicalPriceAlertQuery = useMemo(() => {
     if (!body) return null;
@@ -2643,6 +2651,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     const timer = window.setTimeout(() => {
       if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
+      setFiltersReadySearchKey(null);
 
       const shouldBypassSnapshot = userInitiatedRetryRef.current && guidedMode;
       const snapshot = shouldBypassSnapshot ? null : readFlightResultsSessionSnapshot(searchKey);
@@ -2732,6 +2741,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     setWarnings([]);
     setResults([]);
     setLoading(true);
+    setFiltersReadySearchKey(null);
     setMainInventoryRetryGeneration((generation) => generation + 1);
   }, []);
 
@@ -3759,11 +3769,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   useEffect(() => {
     if (loading) return;
+    if (
+      !currentFlightSearchKey ||
+      activeFlightSearchKeyRef.current !== currentFlightSearchKey
+    ) {
+      return;
+    }
 
     if (lastWrittenFilterQueryStringRef.current === queryString) {
       lastWrittenFilterQueryStringRef.current = null;
       hydratedFilterQueryStringRef.current = queryString;
       filtersHydratedFromUrlRef.current = true;
+      setFiltersReadySearchKey(currentFlightSearchKey);
       return;
     }
 
@@ -3873,12 +3890,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     );
     hydratedFilterQueryStringRef.current = queryString;
     filtersHydratedFromUrlRef.current = true;
+    setFiltersReadySearchKey(currentFlightSearchKey);
   }, [
     airlineOptions,
     airportOptions,
     durationBounds?.max,
     durationBounds?.min,
     flightQualityOptions,
+    currentFlightSearchKey,
     loading,
     renderFlightQualityFilter,
     priceBounds.max,
@@ -3890,6 +3909,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     timeBounds.takeoff?.max,
     timeBounds.takeoff?.min,
   ]);
+
+  const resultsUiPreparing = isFlightResultsPreparing({
+    loading,
+    error,
+    currentSearchKey: currentFlightSearchKey,
+    filtersReadySearchKey,
+  });
 
   useEffect(() => {
     if (
@@ -4407,7 +4433,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
 
   useEffect(() => {
-    if (loading || !userInitiatedRetryRef.current) return;
+    if (resultsUiPreparing || !userInitiatedRetryRef.current) return;
 
     const focusTimer = window.setTimeout(() => {
       if (error) {
@@ -4421,7 +4447,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }, 0);
 
     return () => window.clearTimeout(focusTimer);
-  }, [error, loading, sortedResults.length]);
+  }, [error, resultsUiPreparing, sortedResults.length]);
 
   const lowestDisplayedFare = useMemo(() => {
     if (warnings.length > 0) return null;
@@ -6985,7 +7011,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     return <Button type="button" className="mt-4 rounded-xl" onClick={retryMainInventorySearch}>{t("deals.guided.flightResults.retry")}</Button>;
   }
 
-  if (loading) {
+  if (resultsUiPreparing) {
     if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
     return (
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
