@@ -86,7 +86,15 @@ export function PopularDestinationStays() {
               }
               style={({ pressed }) => [
                 styles.card,
-                { width: cardWidth, height: imageHeight + CTA_HEIGHT },
+                {
+                  width: cardWidth,
+                  height: imageHeight + CTA_HEIGHT,
+                  backgroundColor: ft.colors.card,
+                  borderColor: ft.colors.border,
+                  shadowColor: ft.colors.shadow,
+                  shadowOpacity: ft.theme.dark ? 0.18 : 0.1,
+                  elevation: ft.theme.dark ? 0 : 3,
+                },
                 pressed && styles.cardPressed,
               ]}
             >
@@ -98,7 +106,10 @@ export function PopularDestinationStays() {
                   <View
                     accessibilityLabel={`${destination.city} image unavailable`}
                     testID={`popular-stay-image-fallback-${destination.id}`}
-                    style={styles.imageFallback}
+                    style={[
+                      styles.imageFallback,
+                      { backgroundColor: ft.colors.neutralImage },
+                    ]}
                   />
                 ) : null}
                 <ImageBackground
@@ -136,7 +147,10 @@ export function PopularDestinationStays() {
                 </View>
               </View>
               <View
-                style={styles.ctaSection}
+                style={[
+                  styles.ctaSection,
+                  { backgroundColor: ft.colors.surface },
+                ]}
                 testID={`popular-stay-cta-${destination.id}`}
               >
                 <Pressable
@@ -148,10 +162,28 @@ export function PopularDestinationStays() {
                   }}
                   style={({ pressed }) => [
                     styles.ctaPill,
-                    pressed && styles.ctaPressed,
+                    {
+                      backgroundColor: ft.colors.raised,
+                      borderColor: ft.colors.border,
+                      shadowColor: ft.colors.shadow,
+                      shadowOpacity: ft.theme.dark ? 0.18 : 0.1,
+                      elevation: ft.theme.dark ? 0 : 1,
+                    },
+                    pressed && [
+                      styles.ctaPressed,
+                      {
+                        backgroundColor: ft.theme.dark
+                          ? ft.colors.status
+                          : ft.colors.page,
+                      },
+                    ],
                   ]}
                 >
-                  <Text style={styles.ctaText}>Explore stays</Text>
+                  <Text
+                    style={[styles.ctaText, { color: ft.colors.textPrimary }]}
+                  >
+                    Explore stays
+                  </Text>
                 </Pressable>
               </View>
             </Pressable>
@@ -177,10 +209,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: POPULAR_STAY_LAYOUT.radius,
-    borderColor: "rgba(203, 213, 225, 0.9)",
     borderWidth: StyleSheet.hairlineWidth,
-    backgroundColor: flowColors.white,
-    shadowColor: "#0F172A",
     shadowOpacity: 0.1,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 5 },
@@ -198,7 +227,6 @@ const styles = StyleSheet.create({
   },
   imageFallback: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#CBD5E1",
   },
   imageCorners: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
   heart: {
@@ -240,28 +268,23 @@ const styles = StyleSheet.create({
     height: CTA_HEIGHT,
     alignItems: "flex-start",
     justifyContent: "center",
-    backgroundColor: flowColors.white,
     paddingHorizontal: 16,
   },
   ctaPill: {
     minWidth: 156,
     height: 40,
     borderRadius: 999,
-    borderColor: "#CBD5E1",
     borderWidth: 1,
-    backgroundColor: flowColors.white,
     paddingHorizontal: 24,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#0F172A",
     shadowOpacity: 0.1,
     shadowRadius: 9,
     shadowOffset: { width: 0, height: 4 },
     elevation: 1,
   },
-  ctaPressed: { backgroundColor: "#F8FAFC", transform: [{ scale: 0.98 }] },
+  ctaPressed: { transform: [{ scale: 0.98 }] },
   ctaText: {
-    color: "#1E293B",
     fontSize: 15,
     lineHeight: 18,
     fontWeight: "700",

@@ -35,7 +35,7 @@ test("matches the mobile-web portrait card geometry", () => {
     section,
     /style=\{\[styles\.imageFrame, \{ height: imageHeight \}\]\}/,
   );
-  assert.match(section, /style=\{styles\.ctaSection\}/);
+  assert.match(section, /styles\.ctaSection/);
   assert.match(section, /height: CTA_HEIGHT/);
   assert.match(section, /<Pressable[\s\S]*Explore stays/);
 });
@@ -47,7 +47,7 @@ test("makes the complete card an accessible destination control", () => {
   );
   assert.match(
     section,
-    /style=\{\(\{ pressed \}\) => \[[\s\S]*styles\.card[\s\S]*width: cardWidth, height: imageHeight \+ CTA_HEIGHT[\s\S]*pressed && styles\.cardPressed/,
+    /style=\{\(\{ pressed \}\) => \[[\s\S]*styles\.card[\s\S]*width: cardWidth,[\s\S]*height: imageHeight \+ CTA_HEIGHT[\s\S]*pressed && styles\.cardPressed/,
   );
   assert.match(section, /cardPressed: \{ opacity: 0\.96 \}/);
 
@@ -91,7 +91,7 @@ test("keeps destination copy over the image and the compact footer separate", ()
   const imageFrame = section.indexOf("styles.imageFrame");
   const copy = section.indexOf("styles.copy", imageFrame);
   const imageFrameClose = section.indexOf("</View>", copy);
-  const footer = section.indexOf("style={styles.ctaSection}", imageFrameClose);
+  const footer = section.indexOf("styles.ctaSection", imageFrameClose);
 
   assert.ok(
     imageFrame < copy && copy < imageFrameClose && imageFrameClose < footer,
@@ -112,6 +112,21 @@ test("keeps destination copy over the image and the compact footer separate", ()
     /ctaSection: \{[\s\S]*height: CTA_HEIGHT[\s\S]*alignItems: "flex-start"[\s\S]*justifyContent: "center"[\s\S]*paddingHorizontal: 16/,
   );
   assert.doesNotMatch(section, /ctaSection: \{[^}]*alignItems: "center"/);
+});
+
+test("themes the card, footer, CTA, pressed state, fallback, and shadows", () => {
+  assert.match(section, /backgroundColor: ft\.colors\.card/);
+  assert.match(section, /borderColor: ft\.colors\.border/);
+  assert.match(section, /backgroundColor: ft\.colors\.surface/);
+  assert.match(section, /backgroundColor: ft\.colors\.raised/);
+  assert.match(section, /color: ft\.colors\.textPrimary/);
+  assert.match(section, /backgroundColor: ft\.colors\.neutralImage/);
+  assert.match(section, /shadowColor: ft\.colors\.shadow/);
+  assert.match(section, /ft\.theme\.dark\s*\? ft\.colors\.status\s*: ft\.colors\.page/);
+  assert.doesNotMatch(
+    section,
+    /rgba\(203, 213, 225, 0\.9\)|#CBD5E1|#F8FAFC|#1E293B/,
+  );
 });
 
 test("renders unobstructed destination images without a dark overlay", () => {
