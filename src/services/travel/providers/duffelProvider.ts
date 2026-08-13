@@ -13,6 +13,7 @@ import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
 import {
   fetchJson,
+  ProviderResponseError,
   runProvider,
   skippedProvider,
 } from "@/services/travel/providerUtils";
@@ -138,6 +139,19 @@ export const duffelSearchBody = (search: FlightSearchParams) => {
   };
 };
 
+/** Intersects the flat view with authoritative graph membership. */
+export function selectGraphBackedDuffelOffers(
+  offers: unknown[],
+  graphIds: ReadonlySet<string>,
+) {
+  return offers.filter((value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value))
+      return false;
+    const id = (value as { id?: unknown }).id;
+    return typeof id === "string" && graphIds.has(id);
+  });
+}
+
 /** Deals-only dual-view hydration. Both views belong to one Duffel Offer Request. */
 export function searchDuffelDealsItineraryInventory(
   search: FlightSearchParams,
@@ -170,7 +184,10 @@ export function searchDuffelDealsItineraryInventory(
       DUFFEL_SEARCH_HTTP_TIMEOUT_MS,
     );
     const graph = parseDuffelItineraryView(grouped);
-    if (!graph) throw new Error("Malformed Duffel itinerary response");
+    if (!graph)
+      throw new ProviderResponseError({
+        code: "duffel_itinerary_parse_failed",
+      });
     const flat = await fetchJson<{
       data?: { id?: unknown; offers?: unknown[] };
     }>(
@@ -182,35 +199,28 @@ export function searchDuffelDealsItineraryInventory(
       flat.data?.id !== graph.offerRequestId ||
       !Array.isArray(flat.data.offers)
     )
-      throw new Error("Duffel Offer Request identity mismatch");
+      throw new ProviderResponseError({
+        code: "duffel_offer_request_identity_mismatch",
+      });
 
     const graphIds = getDuffelGraphProviderOfferIds(graph);
     const now = Date.now();
-    const rawMatchingOffers = flat.data.offers.filter((value) => {
-      if (!value || typeof value !== "object" || Array.isArray(value))
-        return false;
-      const id = (value as { id?: unknown }).id;
-      return typeof id === "string" && graphIds.has(id);
-    });
-    const rawMatchingIds = new Set(
-      rawMatchingOffers.map((value) => (value as { id: string }).id),
+    const rawMatchingOffers = selectGraphBackedDuffelOffers(
+      flat.data.offers,
+      graphIds,
     );
-    if (
-      graphIds.size !== rawMatchingIds.size ||
-      [...graphIds].some((id) => !rawMatchingIds.has(id))
-    )
-      throw new Error("Duffel grouped/flat offer identity bridge mismatch");
     const normalizedMatchingOffers = rawMatchingOffers
       .map((value) => normalizeFlightResult("Duffel", value, search))
       .filter((value): value is NormalizedFlightResult => Boolean(value));
-    const normalizedIds = new Set(
-      normalizedMatchingOffers.map(({ providerOfferId }) => providerOfferId),
-    );
-    if (
-      normalizedIds.size !== graphIds.size ||
-      [...graphIds].some((id) => !normalizedIds.has(id))
-    )
-      throw new Error("Duffel matching offers could not be normalized");
+    if (!normalizedMatchingOffers.length)
+      throw new ProviderResponseError({
+        code: "duffel_offer_normalization_dropped",
+        counts: {
+          graphOfferCount: graphIds.size,
+          flatMatchingOfferCount: rawMatchingOffers.length,
+          normalizedOfferCount: 0,
+        },
+      });
     const exactOffers = deduplicateFlightOffers(
       normalizedMatchingOffers.filter(
         (value): value is NormalizedFlightResult =>
@@ -223,7 +233,18 @@ export function searchDuffelDealsItineraryInventory(
       exactOffers.map(({ providerOfferId }) => providerOfferId!),
     );
     const itineraryGraph = pruneDuffelItineraryGraph(graph, usableIds);
-    if (!exactOffers.length || !itineraryGraph) return [];
+    // Successfully parsed but expired offers truthfully represent no current inventory.
+    if (!exactOffers.length) return [];
+    if (!itineraryGraph)
+      throw new ProviderResponseError({
+        code: "duffel_inventory_pruned_empty",
+        counts: {
+          graphOfferCount: graphIds.size,
+          flatMatchingOfferCount: rawMatchingOffers.length,
+          normalizedOfferCount: normalizedMatchingOffers.length,
+          usableOfferCount: exactOffers.length,
+        },
+      });
     return [{ exactOffers, itineraryGraph }];
   });
 }

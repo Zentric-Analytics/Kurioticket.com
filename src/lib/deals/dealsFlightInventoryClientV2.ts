@@ -16,6 +16,8 @@ export type DealsFlightInventoryErrorCode =
   | "STALE_SEARCH"
   | "STORAGE_UNAVAILABLE"
   | "PROVIDER_TEMPORARILY_UNAVAILABLE"
+  | "PROVIDER_CONFIGURATION_UNAVAILABLE"
+  | "PROVIDER_RESPONSE_UNUSABLE"
   | "FEATURE_DISABLED"
   | "RATE_LIMITED"
   | "INVALID_SELECTION"
@@ -86,6 +88,8 @@ const knownCodes = new Set<DealsFlightInventoryErrorCode>([
   "STALE_SEARCH",
   "STORAGE_UNAVAILABLE",
   "PROVIDER_TEMPORARILY_UNAVAILABLE",
+  "PROVIDER_CONFIGURATION_UNAVAILABLE",
+  "PROVIDER_RESPONSE_UNUSABLE",
   "FEATURE_DISABLED",
   "RATE_LIMITED",
   "INVALID_SELECTION",
@@ -97,9 +101,15 @@ const retryableCodes = new Set<DealsFlightInventoryErrorCode>([
   "STALE_SEARCH",
   "STORAGE_UNAVAILABLE",
   "PROVIDER_TEMPORARILY_UNAVAILABLE",
+  // A fresh provider response can differ, so one user-initiated retry is useful.
+  "PROVIDER_RESPONSE_UNUSABLE",
   "RATE_LIMITED",
   "NETWORK_FAILURE",
 ]);
+
+export const isDealsFlightInventoryErrorRetryable = (
+  code: DealsFlightInventoryErrorCode,
+) => retryableCodes.has(code);
 
 function choices(value: unknown, direction: "outbound" | "return") {
   if (!Array.isArray(value)) return null;

@@ -127,6 +127,36 @@ test("normalizes API errors and malformed JSON", async () => {
   );
 });
 
+test("keeps provider configuration non-retryable and response failures retryable", async () => {
+  for (const [code, retryable] of [
+    ["PROVIDER_CONFIGURATION_UNAVAILABLE", false],
+    ["PROVIDER_RESPONSE_UNUSABLE", true],
+    ["PROVIDER_TEMPORARILY_UNAVAILABLE", true],
+  ] as const) {
+    globalThis.fetch = async () =>
+      response({ status: "unavailable", code }, 503);
+    await assert.rejects(
+      () =>
+        createFlightInventory({
+          tripType: "one-way",
+          origin: "LOS",
+          destination: "CDG",
+          departureDate: "2027-01-01",
+          travelers: 1,
+          adults: 1,
+          children: 0,
+          infants: 0,
+          cabinClass: "economy",
+          currency: "USD",
+        }),
+      (error: unknown) =>
+        error instanceof DealsFlightInventoryClientError &&
+        error.code === code &&
+        error.retryable === retryable,
+    );
+  }
+});
+
 test("revalidation posts exact one-way and round-trip bodies with fetch controls", async () => {
   const calls: Array<{ body: unknown; init: RequestInit }> = [];
   globalThis.fetch = async (_input, init = {}) => {

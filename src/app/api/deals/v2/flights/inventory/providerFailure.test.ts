@@ -35,24 +35,29 @@ test("inventory and route failures become truthful empty inventory", () => {
   }
 });
 
-test("infrastructure and skipped failures remain provider unavailable", () => {
-  for (const category of [
-    "timeout",
-    "auth",
-    "network",
-    "server",
-    "invalid_response",
-    "failed",
-  ] as const) {
+test("only transient infrastructure failures are temporarily unavailable", () => {
+  for (const category of ["timeout", "network", "server"] as const) {
     const response = classifyDealsInventoryProviderFailure(failure(category));
     assert.equal(response.statusCode, 503);
     assert.equal(response.body.code, "PROVIDER_TEMPORARILY_UNAVAILABLE");
   }
+});
+
+test("configuration and response failures have distinct safe contracts", () => {
+  assert.equal(
+    classifyDealsInventoryProviderFailure(failure("auth")).body.code,
+    "PROVIDER_CONFIGURATION_UNAVAILABLE",
+  );
   assert.equal(
     classifyDealsInventoryProviderFailure(failure("skipped", "skipped")).body
       .code,
-    "PROVIDER_TEMPORARILY_UNAVAILABLE",
+    "PROVIDER_CONFIGURATION_UNAVAILABLE",
   );
+  for (const category of ["invalid_response", "failed"] as const)
+    assert.equal(
+      classifyDealsInventoryProviderFailure(failure(category)).body.code,
+      "PROVIDER_RESPONSE_UNUSABLE",
+    );
 });
 
 test("browser failure contracts never leak provider diagnostics", () => {
@@ -78,5 +83,22 @@ test("server diagnostics include classifications but omit failed provider bodies
     serialized,
     /secret internal provider body|off_sensitive/,
   );
+  warning.mock.restore();
+});
+
+test("server diagnostics expose sanitized integration codes and aggregate counts", () => {
+  const warning = mock.method(console, "warn", () => undefined);
+  const result = {
+    ...failure("invalid_response"),
+    diagnostic: {
+      code: "duffel_offer_normalization_dropped",
+      counts: { graphOfferCount: 2, normalizedOfferCount: 0 },
+    },
+  };
+  logDealsInventoryProviderFailure(result);
+  const serialized = JSON.stringify(warning.mock.calls[0].arguments);
+  assert.match(serialized, /duffel_offer_normalization_dropped/);
+  assert.match(serialized, /graphOfferCount.*2/);
+  assert.doesNotMatch(serialized, /off_sensitive|ref_sensitive|duffel_test/);
   warning.mock.restore();
 });

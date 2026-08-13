@@ -40,6 +40,7 @@ import {
   getFlightFareChoices,
   getFlightFareBrandOptions,
   getFlightReturnChoices,
+  isDealsFlightInventoryErrorRetryable,
   revalidateFlightOfferV2,
   type DealsFlightInventoryErrorCode,
 } from "@/lib/deals/dealsFlightInventoryClientV2";
@@ -97,6 +98,9 @@ const messages: Record<DealsFlightInventoryErrorCode, string> = {
   STORAGE_UNAVAILABLE: "Flight availability is temporarily unavailable.",
   PROVIDER_TEMPORARILY_UNAVAILABLE:
     "The flight provider is temporarily unavailable.",
+  PROVIDER_CONFIGURATION_UNAVAILABLE: "Flight search is currently unavailable.",
+  PROVIDER_RESPONSE_UNUSABLE:
+    "Flight search returned an unexpected response. Please retry.",
   FEATURE_DISABLED: "Flight search is currently unavailable.",
   RATE_LIMITED:
     "Too many flight searches were requested. Please wait, then retry.",
@@ -1033,7 +1037,14 @@ export function DealsFlightJourneyV2({
   );
   return (
     <div className="space-y-8" data-deals-v2-flight-runtime>
-      {error && <SafeState message={messages[error]} onRetry={create} />}
+      {error && (
+        <SafeState
+          message={messages[error]}
+          onRetry={
+            isDealsFlightInventoryErrorRetryable(error) ? create : undefined
+          }
+        />
+      )}
       <ChoiceSection
         title="Choose your departing flight"
         busy={status === "loading"}
