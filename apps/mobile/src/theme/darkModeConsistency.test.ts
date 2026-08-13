@@ -27,9 +27,14 @@ test("Home, Trips, Explore, and Profile use theme-aware screen and card surfaces
   assert.match(trips, /useFlowTheme/);
   assert.match(trips, /ft\.styles\.safe/);
   assert.match(trips, /ft\.styles\.card/);
-  assert.match(explore, /SafeAreaView style=\{s\.safe\}/);
-  assert.match(explore, /backgroundColor: "#FAFBFF"/);
-  assert.match(explore, /backgroundColor: "white"/);
+  assert.match(explore, /useAppTheme/);
+  assert.match(explore, /backgroundColor: theme\.background/);
+  assert.match(explore, /backgroundColor: theme\.surface/);
+  assert.match(explore, /borderColor: theme\.border/);
+  assert.match(explore, /color: theme\.textPrimary/);
+  assert.match(explore, /color: theme\.textSecondary/);
+  assert.match(explore, /color=\{theme\.icon\}/);
+  assert.match(explore, /placeholderTextColor=\{theme\.textMuted\}/);
   assert.match(profile, /theme\.background/);
   assert.match(profile, /theme\.surface/);
 });
