@@ -170,7 +170,10 @@ export function ExploreRegionScreen() {
       </View>
       {searchActive ? (
         <FlatList
+          alwaysBounceVertical={false}
+          bounces={false}
           data={results}
+          overScrollMode="never"
           keyExtractor={(destination) => destination.id}
           keyboardShouldPersistTaps="handled"
           style={{ backgroundColor: theme.background }}
@@ -182,7 +185,10 @@ export function ExploreRegionScreen() {
         />
       ) : (
         <FlatList
+          alwaysBounceVertical={false}
+          bounces={false}
           data={allDestinations}
+          overScrollMode="never"
           keyExtractor={(destination) => destination.id}
           keyboardShouldPersistTaps="handled"
           style={{ backgroundColor: theme.background }}

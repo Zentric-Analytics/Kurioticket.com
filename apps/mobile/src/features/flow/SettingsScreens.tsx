@@ -76,7 +76,7 @@ export function CurrencyScreen() {
   return (
     <SafeAreaView style={flowStyles.safe}>
       <Header title="Currency" />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never">
         <Text style={flowStyles.meta}>Choose the currency used for price display. Provider checkout may use a different billing currency.</Text>
         {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
         {!error && !currencies.length ? <Text style={flowStyles.meta}>Loading currencies…</Text> : null}

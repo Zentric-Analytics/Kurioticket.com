@@ -59,8 +59,11 @@ function Page({
         backgroundColor="transparent"
       />
       <ScrollView
+        alwaysBounceVertical={false}
+        bounces={false}
         contentContainerStyle={styles.page}
         keyboardShouldPersistTaps="handled"
+        overScrollMode="never"
       >
         <View style={styles.heroShell}>
           <ResponsiveHero
@@ -201,8 +204,11 @@ export function HotelsScreen() {
         backgroundColor="transparent"
       />
       <ScrollView
+        alwaysBounceVertical={false}
+        bounces={false}
         contentContainerStyle={styles.hotelPage}
         keyboardShouldPersistTaps="handled"
+        overScrollMode="never"
       >
         <View style={styles.hotelHero}>
           <ResponsiveHero

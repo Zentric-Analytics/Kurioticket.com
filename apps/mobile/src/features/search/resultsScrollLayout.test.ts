@@ -54,7 +54,7 @@ test("hotel results retain their non-sticky header and separate result scroll", 
 
   assert.match(hotelLayout, /\{dateStrip\}/);
   assert.match(hotelLayout, /\{filterRail\}/);
-  assert.match(hotelLayout, /<ScrollView contentContainerStyle=\{s0\.body\}>\{resultContent\}<\/ScrollView>/);
+  assert.match(hotelLayout, /<ScrollView[^>]*contentContainerStyle=\{s0\.body\}[^>]*>\{resultContent\}<\/ScrollView>/);
   assert.doesNotMatch(hotelLayout, /stickyHeaderIndices/);
 });
 

@@ -426,6 +426,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       {product === "flight" ? (
         <ScrollView
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
+          alwaysBounceVertical={false}
+          bounces={false}
+          overScrollMode="never"
           stickyHeaderIndices={[1]}
           contentContainerStyle={s0.flightResultsContent}
         >
@@ -437,7 +440,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <>
           {dateStrip}
           {filterRail}
-          <ScrollView contentContainerStyle={s0.body}>{resultContent}</ScrollView>
+          <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={s0.body} overScrollMode="never">{resultContent}</ScrollView>
         </>
       )}
       {product === "flight" ? (

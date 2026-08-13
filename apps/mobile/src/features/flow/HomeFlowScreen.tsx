@@ -136,8 +136,11 @@ export function SharedHomePage() {
       <StatusBar style={ft.theme.dark ? "light" : "dark"} translucent backgroundColor={ft.colors.page} />
       <ScrollView
         style={styles.homeScroll}
+        alwaysBounceVertical={false}
+        bounces={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
+        overScrollMode="never"
       >
         <View>
           <HomeTopNavigation safeAreaTop={insets.top} />

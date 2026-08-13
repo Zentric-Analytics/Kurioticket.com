@@ -119,7 +119,7 @@ export function AuthenticatedProfileScreen() {
   };
 
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+    <ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       <Header />
       <ProfileSummary name={identity.name} email={identity.email} />
       <Section title="Account" rows={account} />
