@@ -23,29 +23,27 @@ import {
 
 export type DealsReviewActionOutcomeV2 =
   | { status: "stale" | "recovered" }
-  | { status: "confirmed"; snapshot: DealsReviewSnapshotV2 };
+  | { status: "continued" }
+  | { status: "persistence-failed" };
 
 export function DealsReviewJourneyV2({
   plan,
   onChangeFlight,
   onChangeCar,
   onChangeStay,
-  onConfirmReview,
+  onContinue,
   onLifecycleDeadline,
 }: {
   plan: DealsTripPlanV2;
   onChangeFlight: (snapshot: DealsReviewSnapshotV2) => void;
   onChangeCar: (snapshot: DealsReviewSnapshotV2) => void;
   onChangeStay: (snapshot: DealsReviewSnapshotV2) => void;
-  onConfirmReview: (
-    snapshot: DealsReviewSnapshotV2,
-  ) => DealsReviewActionOutcomeV2;
+  onContinue: (snapshot: DealsReviewSnapshotV2) => DealsReviewActionOutcomeV2;
   onLifecycleDeadline: (snapshot: DealsReviewSnapshotV2) => void;
 }) {
   const { locale } = useLocale();
   const { selectedCurrency } = useRegion();
   const rates = useCurrencyRates();
-  const [reviewed, setReviewed] = useState<DealsReviewSnapshotV2 | null>(null);
   const [message, setMessage] = useState("");
   const snapshot = useMemo(() => buildDealsReviewSnapshotV2(plan), [plan]);
   const items = useMemo(
@@ -67,37 +65,20 @@ export function DealsReviewJourneyV2({
     return () => window.clearTimeout(timer);
   }, [onLifecycleDeadline, plan, snapshot]);
 
-  const confirmReview = () => {
-    setReviewed(null);
-    const result = onConfirmReview(snapshot);
-    if (result.status === "confirmed") {
-      setReviewed(result.snapshot);
-      setMessage("");
-    } else if (result.status === "recovered") {
+  const continueJourney = () => {
+    const result = onContinue(snapshot);
+    if (result.status === "recovered") {
       setMessage(
-        "Your selections changed or expired. Review the recovered package before continuing.",
+        "A selection changed or expired. Refresh the affected option before continuing.",
       );
+    } else if (result.status === "persistence-failed") {
+      setMessage(
+        "We could not save your reviewed options. Please try Continue again.",
+      );
+    } else if (result.status === "continued") {
+      setMessage("");
     }
   };
-
-  if (
-    reviewed?.revision === plan.revision &&
-    reviewed.searchFingerprint === plan.searchFingerprint
-  )
-    return (
-      <section
-        data-deals-v2-review-confirmed
-        className="rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-6"
-      >
-        <h2 className="text-2xl font-extrabold">Review confirmed</h2>
-        <p className="mt-2 font-semibold">
-          Your package is ready for the handoff step.
-        </p>
-        <p className="mt-2 text-sm">
-          No provider has been opened and no booking has been started.
-        </p>
-      </section>
-    );
 
   return (
     <section
@@ -106,9 +87,9 @@ export function DealsReviewJourneyV2({
     >
       <div className="space-y-4">
         <header className="rounded-2xl border border-blue-100 bg-white p-6">
-          <h2 className="text-2xl font-extrabold">Review your package</h2>
+          <h2 className="text-2xl font-extrabold">Trip Review</h2>
           <p className="mt-2 text-slate-600">
-            Confirm every current component before the handoff step.
+            Review your selected options before continuing.
           </p>
         </header>
         {items.map((item) => {
@@ -127,21 +108,19 @@ export function DealsReviewJourneyV2({
               data-review-product={item.product}
             >
               <p className="text-sm font-bold uppercase text-blue-800">
-                {item.product === "hotel"
-                  ? "Hotel"
-                  : item.product === "flight"
-                    ? "Flight"
-                    : "Car"}
+                {item.heading}
               </p>
               <h3 className="mt-1 text-xl font-extrabold">{item.title}</h3>
               <p className="text-slate-600">{item.subtitle}</p>
               <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs font-bold uppercase text-slate-500">
-                    Provider
-                  </dt>
-                  <dd className="font-semibold">{item.provider}</dd>
-                </div>
+                {item.provenance && (
+                  <div>
+                    <dt className="text-xs font-bold uppercase text-slate-500">
+                      {item.provenance.label}
+                    </dt>
+                    <dd className="font-semibold">{item.provenance.value}</dd>
+                  </div>
+                )}
                 {item.details.map((detail) => (
                   <div key={`${detail.label}-${detail.value}`}>
                     <dt className="text-xs font-bold uppercase text-slate-500">
@@ -153,7 +132,7 @@ export function DealsReviewJourneyV2({
               </dl>
               <div className="mt-5 rounded-xl bg-slate-50 p-4">
                 <p className="text-xs font-bold uppercase text-slate-500">
-                  Provider/source price
+                  {item.priceLabel}
                 </p>
                 <p className="text-xl font-extrabold" dir="ltr">
                   {price.providerFormatted}
@@ -168,11 +147,15 @@ export function DealsReviewJourneyV2({
                   </p>
                 ) : null}
               </div>
+              {item.planningNote && (
+                <p className="mt-3 text-sm text-slate-600">
+                  {item.planningNote}
+                </p>
+              )}
               <button
                 type="button"
                 className="focus-ring mt-5 min-h-11 rounded-xl border border-blue-700 px-4 font-bold text-blue-800"
                 onClick={() => {
-                  setReviewed(null);
                   if (item.product === "flight") onChangeFlight(snapshot);
                   else if (item.product === "car") onChangeCar(snapshot);
                   else onChangeStay(snapshot);
@@ -189,16 +172,18 @@ export function DealsReviewJourneyV2({
         })}
       </div>
       <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 xl:sticky xl:top-24">
-        <h2 className="text-xl font-extrabold">Estimated package total</h2>
+        <h2 className="text-xl font-extrabold">Estimated trip total</h2>
         <p className="mt-3 text-2xl font-extrabold">
           {total === null
             ? "Estimate unavailable"
             : formatCurrency(total, selectedCurrency)}
         </p>
         <p className="mt-4 text-sm text-slate-600">
-          This is the sum of the current component estimates. It is not a final
-          package quote, and provider prices may change before Handoff or
-          booking.
+          This combines the values currently shown. Stay and car amounts are
+          planning estimates where included. The flight amount reflects the
+          current revalidated offer only while it remains valid. This is not a
+          bundled rate or guaranteed checkout total. Nothing has been booked or
+          charged. Downstream prices and terms may still change.
         </p>
         {rates.isFallback && (
           <p className="mt-2 text-sm font-semibold text-amber-900">
@@ -213,10 +198,10 @@ export function DealsReviewJourneyV2({
         )}
         <button
           type="button"
-          onClick={confirmReview}
+          onClick={continueJourney}
           className="focus-ring mt-5 min-h-11 w-full rounded-xl bg-[#004BB8] px-4 font-bold text-white"
         >
-          Confirm review
+          Continue
         </button>
       </aside>
     </section>

@@ -4798,12 +4798,12 @@ export const translations: TranslationDictionary = {
   "deals.staged.complete.flightNext": "Flight selection is next",
   "deals.staged.complete.carNext": "Car selection is next",
   "deals.staged.complete.notAvailable": "Next stage not available yet",
-  "deals.guided.review.title": "Your confirmed trip",
+  "deals.guided.review.title": "Trip Review",
   "deals.guided.review.introduction":
-    "Review each confirmed option before continuing to booking partners.",
+    "Review your selected options before continuing.",
   "deals.guided.review.stay": "Stay",
   "deals.guided.review.flight": "Flight",
-  "deals.guided.review.car": "Car",
+  "deals.guided.review.car": "Car option",
   "deals.guided.review.provider": "Provided by",
   "deals.guided.review.changeStay": "Change stay",
   "deals.guided.review.changeFlight": "Change flight",
@@ -4816,17 +4816,17 @@ export const translations: TranslationDictionary = {
   "deals.guided.review.totalUnavailable":
     "A combined estimate is currently unavailable. Review the provider prices for each trip option.",
   "deals.guided.review.estimateDisclosure":
-    "Estimated currency conversions may change. Each booking partner sets the final price.",
+    "This combines the values currently shown. Stay and car amounts are planning estimates where included. This is not a bundled rate or guaranteed checkout total.",
   "deals.guided.review.fallbackDisclosure":
     "Estimated using fallback exchange rates. Each booking partner sets the final price.",
   "deals.guided.review.priceNeedsRefresh": "Price needs refreshing",
   "deals.guided.review.expiredBody":
     "This option is too old to continue safely. Choose a current option before continuing.",
-  "deals.guided.review.continue": "Continue to booking partners",
+  "deals.guided.review.continue": "Continue",
   "deals.guided.review.continueUnavailable":
     "Refresh every expired option before continuing.",
   "deals.guided.review.bookingDisclosure":
-    "Nothing is booked on this page. Each booking partner will be reviewed separately.",
+    "Nothing has been booked or charged. Downstream prices and terms may still change.",
   "deals.guided.review.nights": "{{count}} nights",
   "deals.guided.review.rentalDays": "{{count}} rental days",
   "deals.guided.handoffPending.title": "Booking partner handoff is coming next",
@@ -4856,7 +4856,16 @@ export const translations: TranslationDictionary = {
   "deals.guided.review.checkIn": "Check-in",
   "deals.guided.review.checkOut": "Check-out",
   "deals.guided.review.nightsLabel": "Nights",
-  "deals.guided.review.room": "Room",
+  "deals.guided.review.room": "Room information",
+  "deals.guided.review.roomInformation": "Room information",
+  "deals.guided.review.estimatedStayTotal": "Estimated stay total",
+  "deals.guided.review.stayPlanningNote":
+    "Planning estimate. Room information is descriptive and nothing has been reserved.",
+  "deals.guided.review.flightSource": "Flight source",
+  "deals.guided.review.flightResultPrice": "Flight price shown in results",
+  "deals.guided.review.estimatedCarTotal": "Estimated car total",
+  "deals.guided.review.carPlanningNote":
+    "Planning estimate — live supplier availability is not currently verified.",
   "deals.guided.review.flightNumber": "Flight",
   "deals.guided.review.route": "Route",
   "deals.guided.review.departure": "Departure",

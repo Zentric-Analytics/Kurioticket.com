@@ -7,7 +7,10 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import type { DisplayPrice } from "@/lib/currency/formatCurrency";
 import { formatTime } from "@/lib/utils";
-import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
+import {
+  serializeDealsSearchParams,
+  type DealsSearch,
+} from "@/lib/deals/dealsSearchParams";
 import { buildDealsProductSearchKeys } from "@/lib/deals/dealsProductSearchKeys";
 import { buildDealsJourneyUrl } from "@/lib/deals/dealsJourneyRoutes";
 import {
@@ -74,6 +77,7 @@ import {
 } from "@/lib/deals/dealsOutboundDisplayPriceV2";
 import { DealsCarJourneyV2 } from "./DealsCarJourneyV2";
 import { DealsReviewJourneyV2 } from "./DealsReviewJourneyV2";
+import { writeDealsHandoffSnapshotV2 } from "@/lib/deals/dealsHandoffSnapshotV2";
 
 type Status = "initial" | "loading" | "success" | "empty" | "error";
 const messages: Record<DealsFlightInventoryErrorCode, string> = {
@@ -860,7 +864,7 @@ export function DealsFlightJourneyV2({
     [cancel, recoverExactFares],
   );
 
-  const confirmReview = useCallback(
+  const continueReview = useCallback(
     (snapshot: DealsReviewSnapshotV2) => {
       const currentPlan = planRef.current;
       const now = Date.now();
@@ -883,14 +887,17 @@ export function DealsFlightJourneyV2({
         },
         now,
       );
-      return result.ok && result.nextState === "handoff"
-        ? {
-            status: "confirmed" as const,
-            snapshot: buildDealsReviewSnapshotV2(currentPlan),
-          }
-        : { status: "recovered" as const };
+      if (result.ok && result.nextState === "handoff") {
+        if (!writeDealsHandoffSnapshotV2(sessionStorage, currentPlan))
+          return { status: "persistence-failed" as const };
+        const params = serializeDealsSearchParams(search);
+        params.set("journey", "guided-v2");
+        router.push(`/deals/handoff?${params.toString()}`);
+        return { status: "continued" as const };
+      }
+      return { status: "recovered" as const };
     },
-    [recoverReviewLifecycle, search],
+    [recoverReviewLifecycle, router, search],
   );
 
   const changeFlightFromReview = (snapshot: DealsReviewSnapshotV2) => {
@@ -969,7 +976,7 @@ export function DealsFlightJourneyV2({
           clearDealsFlightRuntimeV2(sessionStorage);
           router.push(buildDealsJourneyUrl("hotel-results", search));
         }}
-        onConfirmReview={confirmReview}
+        onContinue={continueReview}
         onLifecycleDeadline={recoverReviewLifecycle}
       />
     );

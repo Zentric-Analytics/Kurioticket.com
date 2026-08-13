@@ -58,10 +58,7 @@ import type {
   DealsStagedSnapshotResult,
   DealsTripPlanReadResult,
 } from "@/lib/deals/dealsTripPlanStorage";
-import {
-  buildGuidedDealsHandoffPendingUrl,
-  getDealsReviewStatus,
-} from "@/lib/deals/dealsReviewPresentation";
+import { buildGuidedDealsHandoffPendingUrl } from "@/lib/deals/dealsReviewPresentation";
 
 type GuidedPlanState =
   | "loading"
@@ -226,27 +223,6 @@ export function DealsJourneyShell({
     if (resolved && requiredStage === stage)
       headingRef.current?.focus({ preventScroll: true });
   }, [requiredStage, resolved, stage]);
-  useEffect(() => {
-    if (
-      pendingSearchFingerprint ||
-      !resolved ||
-      stage !== "review" ||
-      !plan ||
-      !getDealsReviewStatus(plan, lifecycleNow).canContinue
-    )
-      return;
-    start();
-    router.replace(buildGuidedDealsHandoffPendingUrl(search));
-  }, [
-    lifecycleNow,
-    pendingSearchFingerprint,
-    plan,
-    resolved,
-    router,
-    search,
-    stage,
-    start,
-  ]);
   useEffect(() => {
     if (!pendingSearchFingerprint) return;
     if (fingerprint === pendingSearchFingerprint) {

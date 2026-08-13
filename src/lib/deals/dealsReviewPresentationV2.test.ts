@@ -52,6 +52,10 @@ const base = (
     searchKey: "flight",
     tripType: "one-way",
     phase: "confirmed",
+    fareBrand: {
+      brandOptionKey: "flight-brand-v1:standard",
+      fareBrandName: "Standard",
+    },
     outbound: {
       itineraryKey: "out",
       direction: "outbound",
@@ -152,4 +156,32 @@ test("browser presentation never exposes opaque or provider-secret identifiers",
     visible,
     /off_secret_123|duffel-off_secret_123|opaque-fare/,
   );
+});
+
+test("cards use product-specific certainty and hide synthetic identities", () => {
+  const [stay, flight, car] = getDealsReviewItemsV2(base(), "en-US");
+  assert.equal(stay.heading, "Stay");
+  assert.equal(stay.provenance, undefined);
+  assert.equal(stay.priceLabel, "Estimated stay total");
+  assert.ok(stay.details.some(({ label }) => label === "Room information"));
+
+  assert.equal(flight.heading, "Flight");
+  assert.deepEqual(flight.provenance, {
+    label: "Fare source",
+    value: "Public Flights",
+  });
+  assert.equal(flight.priceLabel, "Current revalidated flight offer");
+  assert.ok(
+    flight.details.some(
+      ({ label, value }) => label === "Fare option" && value === "Standard",
+    ),
+  );
+  assert.ok(flight.details.some(({ label }) => label === "Valid until"));
+
+  assert.equal(car.heading, "Car option");
+  assert.equal(car.title, "Model or similar");
+  assert.equal(car.subtitle, "compact");
+  assert.equal(car.provenance, undefined);
+  assert.equal(car.priceLabel, "Estimated car total");
+  assert.doesNotMatch(JSON.stringify(car), /Rental Co|Public Cars/);
 });
