@@ -603,7 +603,7 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
             </View>
           )}
           <View style={s0.departureBlock}>
-            <Text style={[s0.nameSmall, { color: theme.textPrimary }]} numberOfLines={1}>
+            <Text style={[s0.nameSmall, { color: theme.textPrimary }]} numberOfLines={1} ellipsizeMode="tail">
               {result.airlineName}
             </Text>
             <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9}>{clock(result.departureTime)}</Text>
@@ -1016,11 +1016,12 @@ const s0 = StyleSheet.create({
   resultBadgeTextGreen: { color: ui.green },
   flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
   flightMainNarrow: { flexDirection: "column", alignItems: "stretch", gap: 4 },
-  flightJourney: { flex: 1, minWidth: 0, maxWidth: 276, flexDirection: "row", alignItems: "center", gap: 3 },
+  flightJourney: { flex: 1, minWidth: 0, maxWidth: 290, flexDirection: "row", alignItems: "center", gap: 3 },
   airline: { width: 32, height: 32, flexShrink: 0, resizeMode: "contain" },
   airlineFallback: {
     width: 32,
     height: 32,
+    flexShrink: 0,
     borderRadius: 9,
     backgroundColor: "#EEF2F8",
     alignItems: "center",
@@ -1028,7 +1029,7 @@ const s0 = StyleSheet.create({
   },
   airlineFallbackText: { color: ui.navy, fontSize: 12, fontWeight: "800" },
   nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
-  departureBlock: { width: 82, flexShrink: 0 },
+  departureBlock: { flexBasis: 96, minWidth: 96, flexShrink: 0 },
   arrivalBlock: { width: 72, flexShrink: 0 },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
   timeline: { flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2, alignItems: "center" },
