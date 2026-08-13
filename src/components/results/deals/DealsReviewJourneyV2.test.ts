@@ -11,28 +11,33 @@ const flight = readFileSync(
   "utf8",
 );
 
-test("V2 review is canonically gated and confirmation is user initiated", () => {
+test("V2 review has one neutral Continue action and no redundant confirmation state", () => {
   assert.match(flight, /requiredState === "review"/);
-  assert.match(review, /onClick=\{confirmReview\}/);
+  assert.match(review, /onClick=\{continueJourney\}/);
+  assert.equal((review.match(/>\s*Continue\s*</g) ?? []).length, 1);
   assert.doesNotMatch(
     review,
-    /useEffect\([\s\S]{0,500}REVIEW_CONTINUE_REQUESTED/,
+    /Confirm review|Review confirmed|const \[reviewed/,
   );
 });
 
-test("review confirmation stops locally before every handoff side effect", () => {
-  assert.match(flight, /nextState === "handoff"/);
-  assert.match(review, /reviewed\?\.revision/);
-  assert.doesNotMatch(
-    review,
-    /\/deals\/handoff|\/api\/redirect|buildGuidedDealsHandoffPendingUrl|window\.open|provider opened/,
-  );
-});
-
-test("review lifecycle delegates snapshot actions to the canonical parent", () => {
-  assert.match(review, /getDealsTripPlanV2NextDeadline/);
-  assert.match(review, /onLifecycleDeadline\(snapshot\)/);
+test("atomic review continuation persists only after the canonical handoff state", () => {
   assert.match(flight, /planRef\.current/);
   assert.match(flight, /evaluateDealsReviewLifecycleV2/);
+  assert.match(flight, /REVIEW_CONTINUE_REQUESTED/);
+  assert.match(flight, /result\.nextState === "handoff"/);
+  assert.ok(
+    flight.indexOf('result.nextState === "handoff"') <
+      flight.indexOf(
+        "writeDealsHandoffSnapshotV2",
+        flight.indexOf("const continueReview"),
+      ),
+  );
+  assert.match(flight, /journey", "guided-v2"/);
+});
+
+test("review lifecycle delegates precise recovery to the canonical parent", () => {
+  assert.match(review, /getDealsTripPlanV2NextDeadline/);
+  assert.match(review, /onLifecycleDeadline\(snapshot\)/);
   assert.doesNotMatch(flight, /setPlan\(\{ \.\.\.reviewPlan \}\)/);
 });

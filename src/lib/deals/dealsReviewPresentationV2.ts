@@ -14,9 +14,12 @@ import type { DealsTripPlanV2 } from "./dealsTripPlanV2";
 
 export type DealsReviewItemV2 = Readonly<{
   product: DealsTripPlanProduct;
+  heading: string;
   title: string;
   subtitle: string;
-  provider: string;
+  provenance?: Readonly<{ label: string; value: string }>;
+  priceLabel: string;
+  planningNote?: string;
   details: readonly Readonly<{ label: string; value: string }>[];
   sourcePrice: number;
   sourceCurrency: string;
@@ -33,9 +36,12 @@ export function getDealsReviewItemsV2(
     const nights = getDealsStayNights(hotel.checkIn, hotel.checkOut);
     items.push({
       product: "hotel",
+      heading: "Stay",
       title: hotel.name,
       subtitle: hotel.location,
-      provider: hotel.provider,
+      priceLabel: "Estimated stay total",
+      planningNote:
+        "Planning estimate. Room information is descriptive and nothing has been reserved.",
       sourcePrice: hotel.sourcePrice,
       sourceCurrency: hotel.sourceCurrency,
       details: [
@@ -54,7 +60,7 @@ export function getDealsReviewItemsV2(
         ...(hotel.roomType
           ? [
               {
-                label: "Room",
+                label: "Room information",
                 value: titleCaseDealsLabel(hotel.roomType) ?? hotel.roomType,
               },
             ]
@@ -81,14 +87,24 @@ export function getDealsReviewItemsV2(
     ]);
     items.push({
       product: "flight",
+      heading: "Flight",
       title: offer.airline,
       subtitle: offer.legs
         .map((leg) => `${leg.originAirport} → ${leg.destinationAirport}`)
         .join(" · "),
-      provider: offer.provider,
+      provenance: { label: "Fare source", value: offer.provider },
+      priceLabel: "Current revalidated flight offer",
       sourcePrice: offer.sourcePrice,
       sourceCurrency: offer.sourceCurrency,
       details: [
+        ...(plan.flightJourney?.fareBrand?.fareBrandName
+          ? [
+              {
+                label: "Fare option",
+                value: plan.flightJourney.fareBrand.fareBrandName,
+              },
+            ]
+          : []),
         ...(offer.flightNumber
           ? [{ label: "Flight number", value: offer.flightNumber }]
           : []),
@@ -105,6 +121,14 @@ export function getDealsReviewItemsV2(
           label: "Refunds",
           value: offer.refundInfo || "Refund terms unavailable",
         },
+        {
+          label: "Valid until",
+          value: formatDealsDate(
+            new Date(offer.offerExpiresAt).toISOString(),
+            locale,
+            true,
+          ),
+        },
       ],
     });
   }
@@ -113,9 +137,12 @@ export function getDealsReviewItemsV2(
     const days = getDealsRentalDays(car.pickupDate, car.dropoffDate);
     items.push({
       product: "car",
-      title: car.rentalCompany,
-      subtitle: `${car.modelName} · ${titleCaseDealsLabel(car.categoryLabel) ?? car.categoryLabel}`,
-      provider: car.provider,
+      heading: "Car option",
+      title: `${car.modelName} or similar`,
+      subtitle: titleCaseDealsLabel(car.categoryLabel) ?? car.categoryLabel,
+      priceLabel: "Estimated car total",
+      planningNote:
+        "Planning estimate — live supplier availability is not currently verified.",
       sourcePrice: car.sourcePrice,
       sourceCurrency: car.sourceCurrency,
       details: [
