@@ -157,6 +157,41 @@ test("renders the complete web-aligned destination list and safe image fallback"
   assert.match(section, /destination\.country/);
 });
 
+test("versions only the Johannesburg image to refresh the native cache", () => {
+  const imageUris = Object.fromEntries(
+    popularDestinationStays.map(({ city, image }) => [city, image.uri]),
+  );
+
+  assert.equal(
+    imageUris.Johannesburg,
+    "https://images.unsplash.com/photo-1604633193983-5ad0f0f9d4f8?auto=format&fit=crop&w=1600&q=90&v=2",
+  );
+  assert.equal(
+    imageUris.Dubai,
+    "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1600",
+  );
+  assert.equal(
+    imageUris.London,
+    "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
+  );
+  assert.equal(
+    imageUris.Accra,
+    "https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=1600&q=90",
+  );
+  assert.equal(
+    imageUris.Nairobi,
+    "https://images.unsplash.com/photo-1611348586804-61bf6c080437?auto=format&fit=crop&w=1600&q=90",
+  );
+  assert.equal(
+    imageUris.Istanbul,
+    "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1600&q=90",
+  );
+  assert.equal(
+    imageUris.Paris,
+    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=90",
+  );
+});
+
 test("Explore stays preserves destination context in the existing hotel-results contract", () => {
   assert.deepEqual(homepageHotelDestinationParams({ city: "London" }), {
     destination: "London",
