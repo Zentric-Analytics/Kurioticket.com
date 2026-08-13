@@ -41,7 +41,7 @@ test("fare-rule summary classifies varied provider language without exact matchi
   assert.equal(summarizeFareRules(), "Fare rules apply");
 });
 
-test("flight card keeps narrow layouts to one compact row without height-growing text", () => {
+test("flight card keeps narrow layouts compact without height-growing text", () => {
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
   assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
   assert.equal(card.match(/style=\{\[s0\.benefit, \{ color: theme\.textSecondary \}\]\} numberOfLines=\{1\}/g)?.length, 3);
@@ -49,22 +49,27 @@ test("flight card keeps narrow layouts to one compact row without height-growing
   assert.match(source, /benefits: \{[\s\S]*?paddingTop: 8,[\s\S]*?flexDirection: "row"/);
   assert.match(source, /benefitList: \{ flex: 1, minWidth: 0, flexDirection: "column", gap: 6 \}/);
   assert.match(source, /benefit: \{ minWidth: 0, fontSize: 10\.5, color: ui\.muted, flex: 1 \}/);
-  assert.match(source, /detailsButton: \{ width: 88, minHeight: 44/);
-  for (const viewport of [320, 360, 390, 430]) {
-    assert.ok(viewport - 36 - 26 > 0, `${viewport}px retains positive single-row card content width`);
+  assert.match(source, /detailsButton: \{ minWidth: 96, minHeight: 44, paddingHorizontal: 10/);
+  for (const viewport of [320, 360, 375, 390, 430]) {
+    const cardContentWidth = viewport - 36 - 26;
+    const journeyWidth = viewport < 430 ? cardContentWidth : cardContentWidth - 104 - 6;
+    assert.ok(journeyWidth >= 258, `${viewport}px reserves at least 258px for the journey row`);
   }
 });
 
 test("flight loading skeleton mirrors the stacked benefit footer", () => {
   assert.match(source, /skeletonBenefitLines: \{ flex: 1, gap: 6 \}/);
   assert.match(source, /skeletonBenefitLine: \{ width: "82%" \}/);
-  assert.match(source, /skeletonButton: \{ width: 88, height: 44/);
+  assert.match(source, /skeletonButton: \{ width: 96, height: 44/);
 });
 
 test("flight card reserves a flexible single-line price column across supported currencies", () => {
-  assert.match(source, /flightMain: \{ flexDirection: "row", alignItems: "center", gap: 2 \}/);
-  assert.match(source, /timeline: \{ flex: 0\.65, minWidth: 34, maxWidth: 68, alignItems: "center" \}/);
-  assert.match(source, /priceBox: \{ flexBasis: 108, minWidth: 84, maxWidth: 118, flexShrink: 1, alignItems: "flex-end" \}/);
+  assert.match(card, /const narrowCard = useWindowDimensions\(\)\.width < 430/);
+  assert.match(card, /style=\{\[s0\.flightMain, narrowCard && s0\.flightMainNarrow\]\}/);
+  assert.match(source, /flightJourney: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
+  assert.match(source, /timeline: \{ flexGrow: 1, flexShrink: 1, flexBasis: 58, minWidth: 48, maxWidth: 72/);
+  assert.match(source, /priceBox: \{ flexBasis: 104, minWidth: 96, maxWidth: 118, flexShrink: 0/);
+  assert.match(source, /priceBoxNarrow: \{ flexBasis: "auto", minWidth: 0, maxWidth: "100%" \}/);
   assert.doesNotMatch(source, /priceBox: \{[^}]*maxWidth: 72/);
 
   for (const formattedPrice of ["NGN 89,482", "NGN 837,706", "NGN 1,245,800", "$597", "£1,250", "€1,099"]) {
@@ -74,7 +79,15 @@ test("flight card reserves a flexible single-line price column across supported 
 
 test("long airline names truncate rather than increasing card height", () => {
   assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
-  assert.match(source, /departureBlock: \{ flex: 1\.1, minWidth: 0 \}/);
+  assert.match(source, /departureBlock: \{ flexGrow: 1, flexShrink: 1, flexBasis: 76, minWidth: 60 \}/);
+});
+
+test("flight times, airports, duration, and stop labels remain single-line", () => {
+  assert.equal(card.match(/style=\{\[s0\.time, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.9\}/g)?.length, 2);
+  assert.match(card, /\{result\.duration\}<\/Text>/);
+  assert.match(card, /\{result\.originAirport\}<\/Text>/);
+  assert.match(card, /\{result\.destinationAirport\}<\/Text>/);
+  assert.match(card, /<Text style=\{s0\.nonstop\} numberOfLines=\{1\}>\{stopLabel\}<\/Text>/);
 });
 
 test("flight card uses Lucide icons for route, benefits, badges, and saved state", () => {

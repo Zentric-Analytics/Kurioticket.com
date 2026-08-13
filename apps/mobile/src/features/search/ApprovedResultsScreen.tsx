@@ -544,6 +544,7 @@ function FlightFilterModal({
 }
 function FlightCard({ result, displayPrice: fare, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; rank: number; params: Record<string, string | string[]> }) {
   const { theme } = useAppTheme();
+  const narrowCard = useWindowDimensions().width < 430;
   const { savedFlights, toggle } = useSavedFlights();
   const saved = savedFlights.has(result.id);
   const stopLabel = result.stops
@@ -588,35 +589,37 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
           />
         </Pressable>
       </View>
-      <View style={s0.flightMain}>
-        {result.airlineLogo ? (
-          <Image source={{ uri: result.airlineLogo }} style={s0.airline} />
-        ) : (
-          <View style={[s0.airlineFallback, { backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 }]}>
-            <Text style={[s0.airlineFallbackText, { color: theme.textPrimary }]}>{result.airlineName.slice(0, 2)}</Text>
+      <View style={[s0.flightMain, narrowCard && s0.flightMainNarrow]}>
+        <View style={s0.flightJourney}>
+          {result.airlineLogo ? (
+            <Image source={{ uri: result.airlineLogo }} style={s0.airline} />
+          ) : (
+            <View style={[s0.airlineFallback, { backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 }]}>
+              <Text style={[s0.airlineFallbackText, { color: theme.textPrimary }]}>{result.airlineName.slice(0, 2)}</Text>
+            </View>
+          )}
+          <View style={s0.departureBlock}>
+            <Text style={[s0.nameSmall, { color: theme.textPrimary }]} numberOfLines={1}>
+              {result.airlineName}
+            </Text>
+            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9}>{clock(result.departureTime)}</Text>
+            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.originAirport}</Text>
           </View>
-        )}
-        <View style={s0.departureBlock}>
-          <Text style={[s0.nameSmall, { color: theme.textPrimary }]} numberOfLines={1}>
-            {result.airlineName}
-          </Text>
-          <Text style={[s0.time, { color: theme.textPrimary }]}>{clock(result.departureTime)}</Text>
-          <Text style={[s0.sub, { color: theme.textSecondary }]}>{result.originAirport}</Text>
-        </View>
-        <View style={s0.timeline}>
-          <Text style={[s0.sub, { color: theme.textSecondary }]}>{result.duration}</Text>
-          <View style={s0.timelineTrack}>
-            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
-            <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
-            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+          <View style={s0.timeline}>
+            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.duration}</Text>
+            <View style={s0.timelineTrack}>
+              <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+              <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
+              <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+            </View>
+            <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
           </View>
-          <Text style={s0.nonstop}>{stopLabel}</Text>
+          <View style={s0.arrivalBlock}>
+            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9}>{clock(result.arrivalTime)}</Text>
+            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.destinationAirport}</Text>
+          </View>
         </View>
-        <View style={s0.arrivalBlock}>
-          <Text style={[s0.time, { color: theme.textPrimary }]}>{clock(result.arrivalTime)}</Text>
-          <Text style={[s0.sub, { color: theme.textSecondary }]}>{result.destinationAirport}</Text>
-        </View>
-        <View style={s0.priceBox}>
+        <View style={[s0.priceBox, narrowCard && s0.priceBoxNarrow]}>
           <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {fare?.formatted ?? "—"}
           </Text>
@@ -1007,8 +1010,10 @@ const s0 = StyleSheet.create({
   resultBadgeGreen: { backgroundColor: "#EAF8ED" },
   resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
   resultBadgeTextGreen: { color: ui.green },
-  flightMain: { flexDirection: "row", alignItems: "center", gap: 2 },
-  airline: { width: 32, height: 32, resizeMode: "contain" },
+  flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
+  flightMainNarrow: { flexDirection: "column", alignItems: "stretch", gap: 4 },
+  flightJourney: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 },
+  airline: { width: 32, height: 32, flexShrink: 0, resizeMode: "contain" },
   airlineFallback: {
     width: 32,
     height: 32,
@@ -1019,10 +1024,10 @@ const s0 = StyleSheet.create({
   },
   airlineFallbackText: { color: ui.navy, fontSize: 12, fontWeight: "800" },
   nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
-  departureBlock: { flex: 1.1, minWidth: 0 },
-  arrivalBlock: { flex: 0.9, minWidth: 0 },
+  departureBlock: { flexGrow: 1, flexShrink: 1, flexBasis: 76, minWidth: 60 },
+  arrivalBlock: { flexGrow: 0, flexShrink: 1, flexBasis: 70, minWidth: 62 },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
-  timeline: { flex: 0.65, minWidth: 34, maxWidth: 68, alignItems: "center" },
+  timeline: { flexGrow: 1, flexShrink: 1, flexBasis: 58, minWidth: 48, maxWidth: 72, alignItems: "center" },
   timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 2, marginVertical: 1 },
   line: {
     flex: 1,
@@ -1030,7 +1035,8 @@ const s0 = StyleSheet.create({
     backgroundColor: ui.muted,
   },
   nonstop: { fontSize: 11, color: ui.blue },
-  priceBox: { flexBasis: 108, minWidth: 84, maxWidth: 118, flexShrink: 1, alignItems: "flex-end" },
+  priceBox: { flexBasis: 104, minWidth: 96, maxWidth: 118, flexShrink: 0, alignItems: "flex-end" },
+  priceBoxNarrow: { flexBasis: "auto", minWidth: 0, maxWidth: "100%" },
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   benefits: {
     borderTopWidth: 1,
@@ -1043,7 +1049,7 @@ const s0 = StyleSheet.create({
   benefitList: { flex: 1, minWidth: 0, flexDirection: "column", gap: 6 },
   benefitItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
   benefit: { minWidth: 0, fontSize: 10.5, color: ui.muted, flex: 1 },
-  detailsButton: { width: 88, minHeight: 44, paddingHorizontal: 8, borderRadius: 8, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
+  detailsButton: { minWidth: 96, minHeight: 44, paddingHorizontal: 10, borderRadius: 8, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
   detailsButtonOutline: { backgroundColor: "white", borderWidth: 1, borderColor: ui.blue },
   detailsButtonText: { color: "white", fontWeight: "800", fontSize: 12 },
   detailsButtonTextOutline: { color: ui.blue },
@@ -1144,7 +1150,7 @@ const s0 = StyleSheet.create({
   skeletonBenefitLines: { flex: 1, gap: 6 },
   skeletonBenefitLine: { width: "82%" },
   skeletonBenefitLineShort: { width: "64%" },
-  skeletonButton: { width: 88, height: 44, borderRadius: 8, backgroundColor: "#E7EBF1" },
+  skeletonButton: { width: 96, height: 44, borderRadius: 8, backgroundColor: "#E7EBF1" },
   hotelSkeletonCard: {
     width: "100%",
     height: 234,
