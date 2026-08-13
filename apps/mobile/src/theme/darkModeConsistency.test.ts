@@ -52,6 +52,22 @@ test("Explore destination details and invalid state use semantic theme colors", 
   assert.doesNotMatch(details, /backgroundColor: (?:"white"|"#FAFBFF"|"#E7ECF5")/);
 });
 
+test("Explore region browse, search results, and invalid state use semantic theme colors", () => {
+  const region = read("src/features/explore/ExploreRegionScreen.tsx");
+  assert.match(region, /useAppTheme/);
+  assert.match(region, /backgroundColor: theme\.background/);
+  assert.match(region, /backgroundColor: theme\.surface/);
+  assert.match(region, /borderColor: theme\.border/);
+  assert.match(region, /color: theme\.textPrimary/);
+  assert.match(region, /color: theme\.textSecondary/);
+  assert.match(region, /color: theme\.textMuted/);
+  assert.match(region, /color=\{theme\.icon\}/);
+  assert.match(region, /placeholderTextColor=\{theme\.textMuted\}/);
+  assert.match(region, /theme\.dark && s\.darkShadow/);
+  assert.doesNotMatch(region, /const (?:NAVY|MUTED|BORDER) =/);
+  assert.doesNotMatch(region, /backgroundColor: (?:"white"|"#FAFBFF"|"#E7ECF5")/);
+});
+
 test("product search panels and picker sheets have theme-aware inputs, placeholders, and modals", () => {
   for (const file of ["FlightSearchPanel.tsx", "HotelSearchPanel.tsx", "CarSearchPanel.tsx"]) {
     const source = read(`src/features/flow/${file}`);
