@@ -170,7 +170,10 @@ export function ExploreRegionScreen() {
       </View>
       {searchActive ? (
         <FlatList
+          alwaysBounceVertical={false}
+          bounces={false}
           data={results}
+          overScrollMode="never"
           keyExtractor={(destination) => destination.id}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[s.list, { paddingBottom: exploreBottomPadding(20, insets.bottom) }]}
@@ -181,7 +184,10 @@ export function ExploreRegionScreen() {
         />
       ) : (
         <FlatList
+          alwaysBounceVertical={false}
+          bounces={false}
           data={allDestinations}
+          overScrollMode="never"
           keyExtractor={(destination) => destination.id}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[s.browseList, { paddingBottom: exploreBottomPadding(20, insets.bottom) }]}

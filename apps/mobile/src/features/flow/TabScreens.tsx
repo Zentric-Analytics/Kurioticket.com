@@ -52,7 +52,7 @@ export function MyTripsFlowScreen() {
   }, [tab]);
   return (
     <SafeAreaView style={ft.styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={ft.styles.scroll}>
+      <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={ft.styles.scroll} overScrollMode="never">
         <ScreenHeader title="My Trips" />
         <View style={[ft.styles.card, ft.styles.shadow]}>
           <Segments
@@ -178,7 +178,7 @@ export function ProfileFlowScreen() {
   }, []);
   return (
     <SafeAreaView style={ft.styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={ft.styles.scroll}>
+      <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={ft.styles.scroll} overScrollMode="never">
         <ScreenHeader title="Profile" settings />
         <View style={styles.user}>
           <View
