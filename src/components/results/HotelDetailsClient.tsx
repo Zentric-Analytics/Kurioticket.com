@@ -619,7 +619,9 @@ export function HotelDetailsClient({
               t("hotelDetails.changeDatesGuests") ||
               "Change dates and guests"
             }}
-            providerPriceLabel={mode === "guided" ? "Source estimate" :
+            providerPriceLabel={mode === "guided" ?
+              t("deals.guided.hotelDetails.sourceEstimate") ||
+              enTranslations["deals.guided.hotelDetails.sourceEstimate"] :
               t("hotelDetails.providerPrice") || "Provider price"
             }
             providerText={providerText}

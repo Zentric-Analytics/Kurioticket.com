@@ -95,7 +95,10 @@ for (const [mode, scenarios] of Object.entries(expected) as [
       };
       const progress =
         page === "complete"
-          ? getHandoffReadyDealsJourneyProgress({ mode, ...plan } as never)
+          ? getHandoffReadyDealsJourneyProgress(
+              { mode, ...plan } as never,
+              "guided",
+            )
           : getGuidedDealsJourneyProgress(page, mode, plan as never);
       const items = getDealsJourneyBreadcrumbs(progress, page, search(mode));
       assert.deepEqual(

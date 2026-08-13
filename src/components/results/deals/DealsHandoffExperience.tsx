@@ -85,7 +85,10 @@ export function DealsHandoffExperience({
   return (
     <>
       <DealsJourneyProgress
-        progress={getHandoffReadyDealsJourneyProgress(plan)}
+        progress={getHandoffReadyDealsJourneyProgress(
+          plan,
+          guided ? "guided" : "legacy",
+        )}
         t={t}
       />
       {guided && allOpened && (

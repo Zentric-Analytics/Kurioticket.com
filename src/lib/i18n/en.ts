@@ -4751,6 +4751,7 @@ export const translations: TranslationDictionary = {
   "deals.guided.hotelDetails.pendingBody":
     "Hotel details and descriptive room information will appear on this step.",
   "deals.guided.hotelDetails.roomInformation": "Room information",
+  "deals.guided.hotelDetails.sourceEstimate": "Source estimate",
   "deals.guided.hotelDetails.continueFlights":
     "Continue with this stay to flights",
   "deals.guided.hotelDetails.continueCars": "Continue with this stay to cars",
