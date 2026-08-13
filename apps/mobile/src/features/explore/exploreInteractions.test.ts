@@ -398,6 +398,8 @@ test("Explore discovery leaves breathing room without duplicating tab-bar cleara
   const source = screen();
   assert.match(source, /const EXPLORE_BOTTOM_SPACING = 18;/);
   assert.match(source, /const bottomPadding = EXPLORE_BOTTOM_SPACING;/);
+  assert.match(source, /index === REGION_DISCOVERY\.length - 1 && s\.finalRegionSection/);
+  assert.match(source, /finalRegionSection: \{ marginBottom: 0 \}/);
   assert.doesNotMatch(source, /exploreBottomPadding\(65, insets\.bottom\)/);
 });
 
