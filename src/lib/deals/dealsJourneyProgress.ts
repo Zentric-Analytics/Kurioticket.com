@@ -2,6 +2,8 @@ import type { DealsPackageMode } from "./dealsSearchParams";
 import { getIncludedProductList } from "./dealsSearchParams";
 import type { DealsTripPlan } from "./dealsTripPlan";
 import type { DealsJourneyStage } from "./dealsJourneyRoutes";
+import { getRequiredDealsJourneyStateV2 } from "./dealsJourneyEngineV2";
+import type { DealsTripPlanV2 } from "./dealsTripPlanV2";
 
 export type DealsJourneyStepId = "hotel" | "flight" | "car" | "review";
 export type DealsJourneyStatus =
@@ -13,7 +15,10 @@ export type DealsJourneySubstate =
   | "choose-property"
   | "choose-room"
   | "choose-outbound"
+  | "choose-fare-brand"
   | "choose-return"
+  | "choose-final-fare"
+  | "verify-flight"
   | "choose-car"
   | "review-flight"
   | "review-car"
@@ -33,7 +38,7 @@ export type DealsJourneyProgress = {
 
 export const getDealsJourneyStepIds = (
   mode: DealsPackageMode,
-): DealsJourneyStepId[] => [...getIncludedProductList(mode)];
+): DealsJourneyStepId[] => [...getIncludedProductList(mode), "review"];
 
 export function createDealsJourneyProgress(
   mode: DealsPackageMode,
@@ -70,6 +75,48 @@ export function createDealsJourneyProgress(
     currentStepIndex: currentStepIndex + 1,
     total: steps.length,
   };
+}
+
+/** Product-oriented chrome derived from the same V2 plan used by the journey. */
+export function getDealsJourneyProgressV2(
+  plan: DealsTripPlanV2,
+  now: number,
+  editingCar = false,
+): DealsJourneyProgress {
+  const required = getRequiredDealsJourneyStateV2(plan, now);
+  if (required === "hotel")
+    return createDealsJourneyProgress(plan.mode, {
+      hotel: { status: "current", substate: "choose-property" },
+    });
+  if (required === "car" || (required === "review" && editingCar))
+    return createDealsJourneyProgress(plan.mode, {
+      hotel: plan.hotel ? { status: "completed" } : undefined,
+      flight: { status: "completed" },
+      car: { status: "current", substate: "choose-car" },
+    });
+  if (required === "review")
+    return createDealsJourneyProgress(plan.mode, {
+      hotel: plan.hotel ? { status: "completed" } : undefined,
+      flight: { status: "completed" },
+      car: plan.car ? { status: "completed" } : undefined,
+      review: { status: "current", substate: "review-trip" },
+    });
+
+  const phase = plan.flightJourney?.phase ?? "outbound";
+  const substate: DealsJourneySubstate =
+    phase === "brand"
+      ? "choose-fare-brand"
+      : phase === "return"
+        ? "choose-return"
+        : phase === "fare"
+          ? "choose-final-fare"
+          : phase === "revalidating"
+            ? "verify-flight"
+            : "choose-outbound";
+  return createDealsJourneyProgress(plan.mode, {
+    hotel: plan.hotel ? { status: "completed" } : undefined,
+    flight: { status: "current", substate },
+  });
 }
 
 export function getHandoffReadyDealsJourneyProgress(
@@ -115,7 +162,8 @@ export function getGuidedDealsJourneyProgress(
   > = {};
   for (const id of getDealsJourneyStepIds(mode)) {
     if (id === currentId) requested[id] = { status: "current", substate };
-    else if (id !== "review") requested[id] = { status: plan?.[id] ? "completed" : "upcoming" };
+    else if (id !== "review")
+      requested[id] = { status: plan?.[id] ? "completed" : "upcoming" };
   }
   return createDealsJourneyProgress(mode, requested);
 }

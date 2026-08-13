@@ -8,7 +8,6 @@ import { translations as en } from "@/lib/i18n/en";
 import {
   buildDealsSearchFingerprint,
   type DealsTripPlanCar,
-  type DealsTripPlanFlight,
   type DealsTripPlanHotel,
   type DealsTripPlanProduct,
 } from "@/lib/deals/dealsTripPlan";
@@ -22,7 +21,10 @@ import {
   writeDealsStagedJourneyPlan,
 } from "@/lib/deals/dealsTripPlanStorage";
 import { type DealsSearch } from "@/lib/deals/dealsSearchParams";
-import { getGuidedDealsJourneyProgress } from "@/lib/deals/dealsJourneyProgress";
+import {
+  getGuidedDealsJourneyProgress,
+  type DealsJourneyProgress as JourneyProgress,
+} from "@/lib/deals/dealsJourneyProgress";
 import {
   buildDealsJourneyUrl,
   getEarliestIncompleteDealsJourneyStage,
@@ -37,7 +39,6 @@ import { DealsJourneyProgress } from "./DealsJourneyProgress";
 import { DealsJourneyBreadcrumbs } from "./DealsJourneyBreadcrumbs";
 import { DealsHotelResultsStage } from "./DealsHotelResultsStage";
 import { DealsHotelDetailsStage } from "./DealsHotelDetailsStage";
-import { DealsFlightDetailsStage } from "./DealsFlightDetailsStage";
 import { DealsFlightJourneyV2 } from "./DealsFlightJourneyV2";
 import { DealsCarResultsStage } from "./DealsCarResultsStage";
 import { DealsReviewStage } from "./DealsReviewStage";
@@ -83,14 +84,12 @@ export function DealsJourneyShell({
   search,
   invalid,
   hotelId,
-  flightId,
   carId,
 }: {
   stage: DealsJourneyStage;
   search: DealsSearch;
   invalid: boolean;
   hotelId: string | null;
-  flightId: string | null;
   carId: string | null;
 }) {
   const router = useRouter();
@@ -111,7 +110,6 @@ export function DealsJourneyShell({
   >(null);
   const [announcement, setAnnouncement] = useState("");
   const [confirmingHotel, setConfirmingHotel] = useState(false);
-  const [confirmingFlight, setConfirmingFlight] = useState(false);
   const [confirmationFailure, setConfirmationFailure] = useState<{
     product: DealsTripPlanProduct;
     kind: "read" | "write";
@@ -193,7 +191,7 @@ export function DealsJourneyShell({
         stage,
         search.mode,
         plan,
-        { hotelId, flightId, carId },
+        { hotelId, carId },
         lifecycleNow,
       )
     : stage;
@@ -278,7 +276,7 @@ export function DealsJourneyShell({
   };
   const confirm = (
     product: DealsTripPlanProduct,
-    selection: DealsTripPlanHotel | DealsTripPlanFlight | DealsTripPlanCar,
+    selection: DealsTripPlanHotel | DealsTripPlanCar,
   ) => {
     const nextStage =
       product === "car"
@@ -287,12 +285,7 @@ export function DealsJourneyShell({
             `${product}-details` as DealsJourneyStage,
             search.mode,
           );
-    const setConfirming =
-      product === "hotel"
-        ? setConfirmingHotel
-        : product === "flight"
-          ? setConfirmingFlight
-          : null;
+    const setConfirming = product === "hotel" ? setConfirmingHotel : null;
     setConfirmationFailure(null);
     setConfirming?.(true);
     const result = attemptGuidedConfirmation({
@@ -375,8 +368,6 @@ export function DealsJourneyShell({
   };
   const confirmGuidedHotelSelection = (selection: DealsTripPlanHotel) =>
     confirm("hotel", selection);
-  const confirmGuidedFlightSelection = (selection: DealsTripPlanFlight) =>
-    confirm("flight", selection);
   const confirmGuidedCarSelection = (selection: DealsTripPlanCar) =>
     confirm("car", selection);
   const progress = useMemo(
@@ -384,17 +375,17 @@ export function DealsJourneyShell({
       getGuidedDealsJourneyProgress(stage, search.mode, resolved ? plan : null),
     [plan, resolved, search.mode, stage],
   );
+  const [v2Progress, setV2Progress] = useState<JourneyProgress | null>(null);
+  const displayedProgress =
+    stage === "flight-results" && v2Progress ? v2Progress : progress;
   const firstStage = getFirstDealsJourneyStage(search.mode);
   const visuallyHideStageHeading =
     stage === "hotel-results" ||
     stage === "hotel-details" ||
     stage === "flight-results" ||
-    stage === "flight-details" ||
     stage === "car-results";
   const useDetailsBackground =
-    stage === "hotel-details" ||
-    stage === "flight-details" ||
-    stage === "car-details";
+    stage === "hotel-details" || stage === "car-details";
   const displayPlanStatus: GuidedPlanState =
     plan && plan.expiresAt <= lifecycleNow ? "expired" : planStatus;
   const canRenderStoragelessFirstResults =
@@ -444,13 +435,15 @@ export function DealsJourneyShell({
         )}
         {resolved && (
           <DealsJourneyBreadcrumbs
-            progress={progress}
+            progress={displayedProgress}
             page={stage}
             search={search}
             t={t}
           />
         )}
-        {resolved && <DealsJourneyProgress progress={progress} t={t} />}
+        {resolved && (
+          <DealsJourneyProgress progress={displayedProgress} t={t} />
+        )}
         <section className="mt-7 min-w-0">
           <h1
             ref={headingRef}
@@ -522,15 +515,10 @@ export function DealsJourneyShell({
               onConfirm={confirmGuidedHotelSelection}
             />
           ) : requiredStage === stage && stage === "flight-results" ? (
-            <DealsFlightJourneyV2 search={search} upstreamPlan={plan} />
-          ) : requiredStage === stage && stage === "flight-details" ? (
-            <DealsFlightDetailsStage
+            <DealsFlightJourneyV2
               search={search}
-              flightId={flightId}
-              plan={plan}
-              confirming={confirmingFlight}
-              confirmationError=""
-              onConfirm={confirmGuidedFlightSelection}
+              upstreamPlan={plan}
+              onProgressChange={setV2Progress}
             />
           ) : requiredStage === stage && stage === "car-results" ? (
             <DealsCarResultsStage

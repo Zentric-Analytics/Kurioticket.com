@@ -12,6 +12,13 @@ const clientSource = readFileSync(
   "utf8",
 );
 
+test("guided estimates and standalone provider-backed prices use truthful labels", () => {
+  assert.match(
+    clientSource,
+    /mode === "guided"[\s\S]*\? "Source estimate"[\s\S]*: t\("hotelDetails\.providerPrice"\)/,
+  );
+});
+
 test("uses stay semantics for both guided Hotel continuation paths", () => {
   assert.equal(
     translations["deals.guided.hotelDetails.continueFlights"],

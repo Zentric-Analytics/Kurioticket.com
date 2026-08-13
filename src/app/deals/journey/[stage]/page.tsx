@@ -10,7 +10,6 @@ import {
 import {
   isDealsJourneyStage,
   normalizeDealsJourneyCarId,
-  normalizeDealsJourneyFlightId,
   normalizeDealsJourneyHotelId,
 } from "@/lib/deals/dealsJourneyRoutes";
 import { buildDealsSearchFingerprint } from "@/lib/deals/dealsTripPlan";
@@ -31,7 +30,6 @@ export default async function DealsJourneyPage({
   const search = parseDealsSearchParams(query);
   const invalid = Object.keys(validateDealsSearch(search)).length > 0;
   const hotelId = normalizeDealsJourneyHotelId(query.hotelId);
-  const flightId = normalizeDealsJourneyFlightId(query.flightId);
   const carId = normalizeDealsJourneyCarId(query.carId);
   const contextKey = buildDealsPlanContextKey(
     "guided",
@@ -46,7 +44,6 @@ export default async function DealsJourneyPage({
         search={search}
         invalid={invalid}
         hotelId={hotelId}
-        flightId={flightId}
         carId={carId}
       />
       <Footer />
