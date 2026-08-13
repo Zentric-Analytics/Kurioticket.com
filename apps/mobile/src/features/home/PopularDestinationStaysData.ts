@@ -20,7 +20,9 @@ export const popularDestinationStays = [
     city: "Johannesburg",
     country: "South Africa",
     image: {
-      uri: "https://images.unsplash.com/photo-1604633193983-5ad0f0f9d4f8?auto=format&fit=crop&w=1600&q=90",
+      // Keep the web image bytes and crop, but version this native-only URL so
+      // React Native does not reuse the stale response cached under the old URI.
+      uri: "https://images.unsplash.com/photo-1604633193983-5ad0f0f9d4f8?auto=format&fit=crop&w=1600&q=90&v=2",
     },
   },
   {
