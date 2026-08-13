@@ -4,6 +4,10 @@ import { isFeatureEnabled } from "@/lib/feature-controls/service";
 import { searchDuffelDealsItineraryInventory } from "@/services/travel/providers/duffelProvider";
 import { dealsFlightInventorySessions } from "@/services/travel/dealsFlightInventorySession";
 import { body, inventoryFailure, json } from "./api";
+import {
+  classifyDealsInventoryProviderFailure,
+  logDealsInventoryProviderFailure,
+} from "./providerFailure";
 
 export const runtime = "nodejs";
 export async function POST(request: Request) {
@@ -19,11 +23,11 @@ export async function POST(request: Request) {
     return json({ status: "error", code: "MALFORMED_REQUEST" }, 400);
   try {
     const provider = await searchDuffelDealsItineraryInventory(parsed.data);
-    if (provider.status !== "success")
-      return json(
-        { status: "unavailable", code: "PROVIDER_TEMPORARILY_UNAVAILABLE" },
-        503,
-      );
+    if (provider.status !== "success") {
+      logDealsInventoryProviderFailure(provider);
+      const failure = classifyDealsInventoryProviderFailure(provider);
+      return json(failure.body, failure.statusCode);
+    }
     const inventory = provider.results[0];
     const created = inventory
       ? await dealsFlightInventorySessions.create(

@@ -307,6 +307,45 @@ test("malformed required hierarchy and identity fail closed", () => {
   assert.equal(parseDuffelItineraryView(malformed), null);
 });
 
+test("nullable provider fare brands are excluded without poisoning valid brands", () => {
+  const nullable = structuredClone(fixture);
+  const nullBrand = structuredClone(
+    nullable.data.slices[0].itineraries[0].brands[0],
+  );
+  nullBrand.fare_brand_name = null as unknown as string;
+  nullable.data.slices[0].itineraries[0].brands.unshift(nullBrand);
+
+  const parsed = parseDuffelItineraryView(nullable);
+  assert.ok(parsed);
+  const parsedBrands = parsed.slices[0].itineraries[0].brands;
+  assert.ok(
+    parsedBrands.some(({ fareBrandName }) => fareBrandName === "Basic"),
+  );
+  assert.equal(parsedBrands.length, brands.length);
+  assert.equal(JSON.stringify(parsedBrands).includes("Standard"), false);
+  assert.ok(
+    parsedBrands.every(({ fareBrandName }) => fareBrandName.length > 0),
+  );
+});
+
+test("malformed non-null fare brands fail closed and all-null brands are unusable", async () => {
+  const malformed = structuredClone(fixture);
+  malformed.data.slices[0].itineraries[0].brands[0].fare_brand_name =
+    42 as unknown as string;
+  assert.equal(parseDuffelItineraryView(malformed), null);
+
+  const unbranded = structuredClone(fixture);
+  for (const slice of unbranded.data.slices)
+    for (const itinerary of slice.itineraries)
+      for (const brand of itinerary.brands)
+        brand.fare_brand_name = null as unknown as string;
+  const parsed = parseDuffelItineraryView(unbranded);
+  assert.ok(parsed);
+  const { pruneDuffelItineraryGraph } = await import("./duffelItineraryView");
+  assert.equal(pruneDuffelItineraryGraph(parsed, new Set()), null);
+  assert.equal(JSON.stringify(parsed).includes("Standard"), false);
+});
+
 test("client-authored names and provider IDs are not accepted as selection identities", () => {
   assert.deepEqual(
     getCompatibleDuffelReturnItineraries(graph, outbound.itineraryKey, "Basic"),
