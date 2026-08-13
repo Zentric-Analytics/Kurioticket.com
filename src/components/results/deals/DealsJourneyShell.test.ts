@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-test("Hotel, Flight, and Car details use the white guided journey page background", async () => {
+test("remaining details stages use the white guided journey page background", async () => {
   const source = await readFile(
     new URL("./DealsJourneyShell.tsx", import.meta.url),
     "utf8",
@@ -15,7 +15,7 @@ test("Hotel, Flight, and Car details use the white guided journey page backgroun
     [...backgroundRule[1].matchAll(/stage === "([^"]+)"/g)].map(
       ([, stage]) => stage,
     ),
-    ["hotel-details", "flight-details", "car-details"],
+    ["hotel-details", "car-details"],
   );
   for (const grayStage of [
     "hotel-results",
@@ -47,8 +47,7 @@ test("Hotel, Flight, and Car details use the white guided journey page backgroun
     source,
     /requiredStage === stage && stage === "hotel-details"[\s\S]*?<DealsHotelDetailsStage/,
   );
-  assert.match(source, /<DealsFlightDetailsStage/);
-  assert.match(source, /<DealsCarDetailsStage/);
+  assert.doesNotMatch(source, /DealsFlightDetailsStage|flightId/);
 });
 
 test("guided shell uses breadcrumbs as primary navigation without changing shared Deals presentation", async () => {
@@ -100,7 +99,7 @@ test("Hotel, Flight, and Car results journey stages hide redundant shell heading
   assert.equal((source.match(/<h1/g) ?? []).length, 1);
   assert.match(
     source,
-    /const visuallyHideStageHeading =\s*stage === "hotel-results" \|\|\s*stage === "hotel-details" \|\|\s*stage === "flight-results" \|\|\s*stage === "flight-details" \|\|\s*stage === "car-results";/,
+    /const visuallyHideStageHeading =\s*stage === "hotel-results" \|\|\s*stage === "hotel-details" \|\|\s*stage === "flight-results" \|\|\s*stage === "car-results";/,
   );
   const hiddenStageRule = source.match(
     /const visuallyHideStageHeading =([\s\S]*?);/,
@@ -110,13 +109,7 @@ test("Hotel, Flight, and Car results journey stages hide redundant shell heading
     [...hiddenStageRule[1].matchAll(/stage === "([^"]+)"/g)].map(
       ([, stage]) => stage,
     ),
-    [
-      "hotel-results",
-      "hotel-details",
-      "flight-results",
-      "flight-details",
-      "car-results",
-    ],
+    ["hotel-results", "hotel-details", "flight-results", "car-results"],
   );
   for (const visibleStage of ["car-details"])
     assert.doesNotMatch(hiddenStageRule[1], new RegExp(visibleStage));
@@ -138,9 +131,8 @@ test("Hotel, Flight, and Car results journey stages hide redundant shell heading
   );
   assert.match(source, /<DealsHotelResultsStage search=\{search\} \/>/);
   assert.match(source, /<DealsHotelDetailsStage/);
-  assert.match(source, /<DealsFlightDetailsStage/);
-  assert.match(source, /<DealsCarResultsStage search=\{search\} \/>/);
-  assert.match(source, /<DealsCarDetailsStage/);
+  assert.doesNotMatch(source, /DealsFlightDetailsStage|flightId/);
+  assert.match(source, /<DealsCarResultsStage/);
   const backgroundRule = source.match(
     /const useDetailsBackground =([\s\S]*?);/,
   );
@@ -149,7 +141,7 @@ test("Hotel, Flight, and Car results journey stages hide redundant shell heading
     [...backgroundRule[1].matchAll(/stage === "([^"]+)"/g)].map(
       ([, stage]) => stage,
     ),
-    ["hotel-details", "flight-details", "car-details"],
+    ["hotel-details", "car-details"],
   );
   assert.ok(
     source.indexOf("<DealsJourneyBreadcrumbs") <
@@ -303,7 +295,7 @@ test("unavailable storage still renders either canonical first results stage wit
   );
   assert.match(
     shellSource,
-    /requiredStage === stage && stage === "flight-results" \? \(\s*<DealsFlightJourneyV2 search=\{search\} upstreamPlan=\{plan\} \/>/,
+    /requiredStage === stage && stage === "flight-results" \? \([\s\S]*<DealsFlightJourneyV2/,
   );
   assert.doesNotMatch(shellSource, /DealsFlightResultsStage|flightV2Enabled/);
   const storageUnavailableRule = shellSource.slice(

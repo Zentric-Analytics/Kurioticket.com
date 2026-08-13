@@ -8,21 +8,15 @@ import {
 } from "@/lib/deals/dealsJourneyRoutes";
 
 const expected = {
-  "hotel-flight": [
-    "hotel-results",
-    "hotel-details",
-    "flight-results",
-    "flight-details",
-  ],
+  "hotel-flight": ["hotel-results", "hotel-details", "flight-results"],
   "hotel-flight-car": [
     "hotel-results",
     "hotel-details",
     "flight-results",
-    "flight-details",
     "car-results",
   ],
   "hotel-car": ["hotel-results", "hotel-details", "car-results"],
-  "flight-car": ["flight-results", "flight-details", "car-results"],
+  "flight-car": ["flight-results", "car-results"],
 } as const;
 
 test("valid Deals results requests server-redirect to the canonical first sequential stage", async () => {

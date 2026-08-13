@@ -23,21 +23,15 @@ export const dealsJourneyStages = [
 export type DealsJourneyStage = (typeof dealsJourneyStages)[number];
 
 const stagesByMode: Record<DealsPackageMode, readonly DealsJourneyStage[]> = {
-  "hotel-flight": [
-    "hotel-results",
-    "hotel-details",
-    "flight-results",
-    "flight-details",
-  ],
+  "hotel-flight": ["hotel-results", "hotel-details", "flight-results"],
   "hotel-flight-car": [
     "hotel-results",
     "hotel-details",
     "flight-results",
-    "flight-details",
     "car-results",
   ],
   "hotel-car": ["hotel-results", "hotel-details", "car-results"],
-  "flight-car": ["flight-results", "flight-details", "car-results"],
+  "flight-car": ["flight-results", "car-results"],
 };
 
 export const isDealsJourneyStage = (
@@ -172,11 +166,15 @@ export function getRequiredDealsJourneyStage(
   mode: DealsPackageMode,
   plan: Pick<DealsTripPlan, "hotel" | "flight" | "car"> | null,
   transientHotelId?: unknown,
-  transientFlightId?: unknown,
+  _transientFlightId?: unknown,
   transientCarId?: unknown,
 ): DealsJourneyStage {
   if (stage === "review")
     return getEarliestIncompleteDealsJourneyStage(mode, plan);
+  // Historical guided Flight Details URLs belong to the retired two-stage
+  // journey. Always return them to the canonical Flight V2 entry point.
+  if (stage === "flight-details")
+    return getRequiredDealsJourneyStage("flight-results", mode, plan);
   if (stage === "car-details")
     return getRequiredDealsJourneyStage("car-results", mode, plan);
   if (!isStageInDealsMode(stage, mode)) return getFirstDealsJourneyStage(mode);
@@ -188,11 +186,6 @@ export function getRequiredDealsJourneyStage(
       : "hotel-results";
   if (included.hotel && !has(plan, "hotel")) return "hotel-results";
   if (stage === "flight-results") return stage;
-  if (stage === "flight-details")
-    return has(plan, "flight") ||
-      normalizeDealsJourneyFlightId(transientFlightId)
-      ? stage
-      : "flight-results";
   if (included.flight && !has(plan, "flight")) return "flight-results";
   if (stage === "car-results") return stage;
   if (stage === "car-details")
@@ -209,7 +202,6 @@ export function getRequiredDealsJourneyStageAt(
   plan: DealsTripPlan | null,
   ids: {
     hotelId: string | null;
-    flightId: string | null;
     carId: string | null;
   },
   now: number,
@@ -219,7 +211,7 @@ export function getRequiredDealsJourneyStageAt(
     mode,
     plan,
     ids.hotelId,
-    ids.flightId,
+    null,
     ids.carId,
   );
   if (completeness !== requestedStage || !plan) return completeness;

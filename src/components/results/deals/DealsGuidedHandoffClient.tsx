@@ -120,7 +120,7 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
         "review",
         search.mode,
         plan,
-        { hotelId: null, flightId: null, carId: null },
+        { hotelId: null, carId: null },
         now,
       )
     : getFirstDealsJourneyStage(search.mode);

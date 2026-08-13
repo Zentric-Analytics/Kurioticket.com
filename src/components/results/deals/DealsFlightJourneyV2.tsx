@@ -78,6 +78,10 @@ import {
 import { DealsCarJourneyV2 } from "./DealsCarJourneyV2";
 import { DealsReviewJourneyV2 } from "./DealsReviewJourneyV2";
 import { writeDealsHandoffSnapshotV2 } from "@/lib/deals/dealsHandoffSnapshotV2";
+import {
+  getDealsJourneyProgressV2,
+  type DealsJourneyProgress,
+} from "@/lib/deals/dealsJourneyProgress";
 
 type Status = "initial" | "loading" | "success" | "empty" | "error";
 const messages: Record<DealsFlightInventoryErrorCode, string> = {
@@ -107,9 +111,11 @@ const messages: Record<DealsFlightInventoryErrorCode, string> = {
 export function DealsFlightJourneyV2({
   search,
   upstreamPlan,
+  onProgressChange,
 }: {
   search: DealsSearch;
   upstreamPlan: DealsTripPlan | null;
+  onProgressChange?: (progress: DealsJourneyProgress) => void;
 }) {
   const router = useRouter();
   const { locale } = useLocale();
@@ -154,6 +160,19 @@ export function DealsFlightJourneyV2({
     useState<OutboundDepartureFilter>("all");
   const [outboundSort, setOutboundSort] = useState<OutboundSort>("departure");
   const coordinator = useRef(createDealsFlightRevalidationCoordinatorV2());
+  const displayProgress = useMemo(
+    () =>
+      getDealsJourneyProgressV2(
+        plan,
+        Math.max(journeyNow, plan.updatedAt),
+        editingCar,
+      ),
+    [editingCar, journeyNow, plan],
+  );
+  useEffect(
+    () => onProgressChange?.(displayProgress),
+    [displayProgress, onProgressChange],
+  );
   const cancel = useCallback(() => {
     coordinator.current.cancel();
     setPendingChange(null);
@@ -1448,7 +1467,7 @@ function ItineraryButton({
             </span>
             {displayPrice.isConvertedEstimate && (
               <span className="block text-xs font-semibold text-slate-500">
-                Provider price: {displayPrice.providerFormatted}
+                Source estimate: {displayPrice.providerFormatted}
               </span>
             )}
           </span>

@@ -23,21 +23,15 @@ import {
 } from "./dealsJourneyRoutes";
 
 const orders = {
-  "hotel-flight": [
-    "hotel-results",
-    "hotel-details",
-    "flight-results",
-    "flight-details",
-  ],
+  "hotel-flight": ["hotel-results", "hotel-details", "flight-results"],
   "hotel-flight-car": [
     "hotel-results",
     "hotel-details",
     "flight-results",
-    "flight-details",
     "car-results",
   ],
   "hotel-car": ["hotel-results", "hotel-details", "car-results"],
-  "flight-car": ["flight-results", "flight-details", "car-results"],
+  "flight-car": ["flight-results", "car-results"],
 } as const;
 
 test("validates exact stages and rejects unknown stages", () => {
@@ -269,7 +263,7 @@ test("expiry-aware correction chooses earliest included expired product, includi
         "/cars/details/c?pickupLocation=p&dropoffLocation=r&pickupDate=d&pickupTime=t&dropoffDate=d&dropoffTime=t&driverAge=30",
     },
   };
-  const ids = { hotelId: null, flightId: null, carId: null };
+  const ids = { hotelId: null, carId: null };
   assert.equal(
     getRequiredDealsJourneyStageAt(
       "car-results",
@@ -306,7 +300,7 @@ test("plan expiry wins before the Review product-expiry exception in every mode"
   const { getRequiredDealsJourneyStageAt, getFirstDealsJourneyStage } =
     await import("./dealsJourneyRoutes");
   const { createDealsTripPlan } = await import("./dealsTripPlan");
-  const ids = { hotelId: null, flightId: null, carId: null };
+  const ids = { hotelId: null, carId: null };
   for (const mode of [
     "hotel-flight",
     "hotel-car",

@@ -58,3 +58,12 @@ test("exact Fare recovery preserves itinerary keys and refreshes without Fare su
   assert.match(recovery, /commitRuntime\(\{ \.\.\.next, fareChoices \}\)/);
   assert.doesNotMatch(recovery, /selectedFareKey:\s*fareChoices/);
 });
+
+test("outbound converted prices are identified as source estimates", async () => {
+  const source = await readFile(journeyUrl, "utf8");
+  assert.match(source, /Source estimate: \{displayPrice\.providerFormatted\}/);
+  assert.doesNotMatch(
+    source,
+    /Provider price: \{displayPrice\.providerFormatted\}/,
+  );
+});
