@@ -914,7 +914,7 @@ export function BottomNav({ flightResults = false }: { flightResults?: boolean }
           accessibilityRole="button"
           accessibilityLabel={accessibilityLabel}
           accessibilityState={{ selected: label === "Search" }}
-          onPress={() => router.replace(route)}
+          onPress={() => router.push(route)}
           style={({ pressed }) => [s0.navItem, pressed && s0.navItemPressed]}
         >
           <FlowIcon
