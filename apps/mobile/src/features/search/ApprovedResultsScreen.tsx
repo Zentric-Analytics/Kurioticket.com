@@ -544,7 +544,8 @@ function FlightFilterModal({
 }
 function FlightCard({ result, displayPrice: fare, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; rank: number; params: Record<string, string | string[]> }) {
   const { theme } = useAppTheme();
-  const narrowCard = useWindowDimensions().width < 430;
+  const { width } = useWindowDimensions();
+  const narrowCard = width < 430;
   const { savedFlights, toggle } = useSavedFlights();
   const saved = savedFlights.has(result.id);
   const stopLabel = result.stops
@@ -1012,7 +1013,7 @@ const s0 = StyleSheet.create({
   resultBadgeTextGreen: { color: ui.green },
   flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
   flightMainNarrow: { flexDirection: "column", alignItems: "stretch", gap: 4 },
-  flightJourney: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 4 },
+  flightJourney: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 3 },
   airline: { width: 32, height: 32, flexShrink: 0, resizeMode: "contain" },
   airlineFallback: {
     width: 32,
@@ -1024,10 +1025,10 @@ const s0 = StyleSheet.create({
   },
   airlineFallbackText: { color: ui.navy, fontSize: 12, fontWeight: "800" },
   nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
-  departureBlock: { flexGrow: 1, flexShrink: 1, flexBasis: 76, minWidth: 60 },
-  arrivalBlock: { flexGrow: 0, flexShrink: 1, flexBasis: 70, minWidth: 62 },
+  departureBlock: { flexGrow: 1, flexShrink: 1, flexBasis: 82, minWidth: 76 },
+  arrivalBlock: { flexGrow: 0, flexShrink: 1, flexBasis: 72, minWidth: 70 },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
-  timeline: { flexGrow: 1, flexShrink: 1, flexBasis: 58, minWidth: 48, maxWidth: 72, alignItems: "center" },
+  timeline: { flexGrow: 1, flexShrink: 1, flexBasis: 54, minWidth: 48, maxWidth: 64, alignItems: "center" },
   timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 2, marginVertical: 1 },
   line: {
     flex: 1,
