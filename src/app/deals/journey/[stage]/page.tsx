@@ -48,7 +48,6 @@ export default async function DealsJourneyPage({
         hotelId={hotelId}
         flightId={flightId}
         carId={carId}
-        flightV2Enabled={process.env.DEALS_V2_FLIGHT_UI_ENABLED === "true"}
       />
       <Footer />
     </>
