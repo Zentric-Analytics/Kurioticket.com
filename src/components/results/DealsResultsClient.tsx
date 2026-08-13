@@ -74,7 +74,7 @@ export function DealsResultsClient({ initialSearch: search, invalid, stagedReque
     setPlan(next); persist(next); setAnnouncement(t("deals.results.package.selectedAnnouncement"));
   };
   const clearPlan = () => { setPlan(null); if (stagedHotelJourneyActive) removeDealsStagedJourneyPlan(); else removeDealsTripPlan(); setPersistence("idle"); setHotelPhase("choose-property"); setAnnouncement(t("deals.tripPlan.cleared")); };
-  const closeEditor = useCallback(() => { if (pendingFingerprint) return; setEditorOpen(false); setDraftChanged(false); requestAnimationFrame(() => activeModifyTriggerRef.current?.focus()); }, [pendingFingerprint]);
+  const closeEditor = useCallback(() => { if (pendingFingerprint) return; setEditorOpen(false); setDraftChanged(false); requestAnimationFrame(() => activeModifyTriggerRef.current?.focus({ preventScroll: true })); }, [pendingFingerprint]);
   const openEditor=(event:MouseEvent<HTMLButtonElement>)=>{activeModifyTriggerRef.current=event.currentTarget;setEditorOpen(true);};
   const updateDraft = useCallback((draft: DealsSearch) => setDraftChanged(buildDealsSearchFingerprint(draft) !== fingerprint), [fingerprint]);
   const submitSearch = useCallback((draft: DealsSearch) => {

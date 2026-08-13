@@ -91,6 +91,22 @@ test("guided shell uses breadcrumbs as primary navigation without changing share
     assert.doesNotMatch(source, new RegExp(forbidden));
 });
 
+test("guided Modify Search close restores exact-launcher focus without scrolling", async () => {
+  const [shell, summary] = await Promise.all([
+    readFile(new URL("./DealsJourneyShell.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("./DealsResultsSearchSummary.tsx", import.meta.url),
+      "utf8",
+    ),
+  ]);
+  assert.match(
+    shell,
+    /requestAnimationFrame\(\(\) =>\s*modifyButtonRef\.current\?\.focus\(\{ preventScroll: true \}\),?\s*\)/,
+  );
+  assert.doesNotMatch(shell, /modifyButtonRef\.current\?\.focus\(\)/);
+  assert.match(summary, /modifyButtonRef\.current = event\.currentTarget/);
+});
+
 test("Hotel, Flight, and Car results journey stages hide redundant shell headings without changing accessibility or focus", async () => {
   const source = await readFile(
     new URL("./DealsJourneyShell.tsx", import.meta.url),

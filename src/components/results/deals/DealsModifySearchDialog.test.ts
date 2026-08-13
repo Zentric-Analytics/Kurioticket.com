@@ -85,8 +85,9 @@ test("modify trigger and close controls retain accessible button contracts", () 
   );
   assert.match(
     results,
-    /requestAnimationFrame\(\(\) => activeModifyTriggerRef\.current\?\.focus\(\)\)/,
+    /requestAnimationFrame\(\(\) => activeModifyTriggerRef\.current\?\.focus\(\{ preventScroll: true \}\)\)/,
   );
+  assert.doesNotMatch(results, /activeModifyTriggerRef\.current\?\.focus\(\)/);
 });
 
 test("dialog traps focus, locks scrolling, and restores document styles", () => {

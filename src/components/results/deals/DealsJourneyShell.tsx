@@ -245,7 +245,9 @@ export function DealsJourneyShell({
   const closeEditor = () => {
     if (pendingSearchFingerprint) return;
     setEditorOpen(false);
-    requestAnimationFrame(() => modifyButtonRef.current?.focus());
+    requestAnimationFrame(() =>
+      modifyButtonRef.current?.focus({ preventScroll: true }),
+    );
   };
   const submitSearch = (draft: DealsSearch) => {
     const nextFingerprint = buildDealsSearchFingerprint(draft);
