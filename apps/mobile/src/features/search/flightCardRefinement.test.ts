@@ -67,8 +67,8 @@ test("flight card reserves a flexible single-line price column across supported 
   assert.match(card, /const \{ width \} = useWindowDimensions\(\);/);
   assert.match(card, /const narrowCard = width < 430/);
   assert.match(card, /style=\{\[s0\.flightMain, narrowCard && s0\.flightMainNarrow\]\}/);
-  assert.match(source, /flightJourney: \{ flex: 1, minWidth: 0, flexDirection: "row"/);
-  assert.match(source, /timeline: \{ flexGrow: 1, flexShrink: 1, flexBasis: 54, minWidth: 48, maxWidth: 64/);
+  assert.match(source, /flightJourney: \{ flex: 1, minWidth: 0, maxWidth: 276, flexDirection: "row"/);
+  assert.match(source, /timeline: \{ flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2/);
   assert.match(source, /priceBox: \{ flexBasis: 104, minWidth: 96, maxWidth: 118, flexShrink: 0/);
   assert.match(source, /priceBoxNarrow: \{ flexBasis: "auto", minWidth: 0, maxWidth: "100%" \}/);
   assert.doesNotMatch(source, /priceBox: \{[^}]*maxWidth: 72/);
@@ -80,23 +80,42 @@ test("flight card reserves a flexible single-line price column across supported 
 
 test("long airline names truncate rather than increasing card height", () => {
   assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
-  assert.match(source, /departureBlock: \{ flexGrow: 1, flexShrink: 1, flexBasis: 82, minWidth: 76 \}/);
+  assert.match(source, /departureBlock: \{ width: 82, flexShrink: 0 \}/);
 });
 
 test("narrow flight cards reserve deterministic space for every journey section", () => {
   assert.match(source, /flightJourney: \{[^}]*gap: 3 \}/);
   assert.match(source, /airline: \{ width: 32, height: 32, flexShrink: 0/);
-  assert.match(source, /timeline: \{ flexGrow: 1, flexShrink: 1, flexBasis: 54, minWidth: 48, maxWidth: 64/);
-  assert.match(source, /arrivalBlock: \{ flexGrow: 0, flexShrink: 1, flexBasis: 72, minWidth: 70 \}/);
+  assert.match(source, /timeline: \{ flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2/);
+  assert.match(source, /arrivalBlock: \{ width: 72, flexShrink: 0 \}/);
 
-  const fixedMinimums = 32 + 76 + 48 + 70;
+  const readableMinimums = 32 + 82 + 48 + 72;
   const interSectionGaps = 3 * 3;
-  for (const viewport of [320, 360, 375, 390, 430]) {
+  for (const viewport of [320, 360, 375, 390, 412, 430]) {
     const cardContentWidth = viewport - 36 - 26;
     assert.ok(
-      cardContentWidth >= fixedMinimums + interSectionGaps,
+      cardContentWidth >= readableMinimums + interSectionGaps,
       `${viewport}px fits logo, departure, route, and arrival minimums without overlap`,
     );
+  }
+});
+
+test("flight journey caps surplus width instead of stretching the departure-to-arrival relationship", () => {
+  const logoWidth = 32;
+  const departureWidth = 82;
+  const arrivalWidth = 72;
+  const interSectionGaps = 3 * 3;
+  const maximumTimelineWidth = 81;
+  const journeyMaximumWidth = logoWidth + departureWidth + arrivalWidth + interSectionGaps + maximumTimelineWidth;
+
+  assert.equal(journeyMaximumWidth, 276);
+  for (const viewport of [320, 360, 375, 390, 412, 430]) {
+    const cardContentWidth = viewport - 36 - 26;
+    const availableJourneyWidth = viewport < 430 ? cardContentWidth : cardContentWidth - 104 - 6;
+    const renderedJourneyWidth = Math.min(availableJourneyWidth, journeyMaximumWidth);
+    const renderedTimelineWidth = renderedJourneyWidth - logoWidth - departureWidth - arrivalWidth - interSectionGaps;
+    assert.ok(renderedTimelineWidth >= 48, `${viewport}px keeps a readable route line`);
+    assert.ok(renderedTimelineWidth <= maximumTimelineWidth, `${viewport}px caps excess route-line space`);
   }
 });
 
