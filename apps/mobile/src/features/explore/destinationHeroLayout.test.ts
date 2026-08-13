@@ -9,10 +9,10 @@ test("destination hero uses one bounded native frame with fixed normal-flow imag
   const page = details.slice(details.indexOf("function DestinationPage"), details.indexOf("function Section"));
   const styles = details.slice(details.indexOf("const styles = StyleSheet.create"));
 
-  assert.match(page, /<View collapsable={false} style={styles\.heroFrame}>/);
+  assert.match(page, /<View collapsable={false} style=\{\[styles\.heroFrame, \{ backgroundColor: theme\.border \}\]\}>/);
   assert.match(page, /resizeMode="cover"/);
-  assert.match(styles, /heroFrame: \{ width: "100%", height: 360, overflow: "hidden", backgroundColor: "#E7ECF5" \}/);
-  assert.match(styles, /hero: \{ width: "100%", height: 360, backgroundColor: "#E7ECF5" \}/);
+  assert.match(styles, /heroFrame: \{ width: "100%", height: 360, overflow: "hidden" \}/);
+  assert.match(styles, /hero: \{ width: "100%", height: 360 \}/);
   assert.doesNotMatch(styles, /hero: \{[^}]*\b(?:position|top|right|bottom|left|aspectRatio|minHeight|maxHeight)\b/);
 });
 
