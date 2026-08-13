@@ -5,6 +5,7 @@ import {
   DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS,
   duffelSearchBody,
   duffelOfferRequestSearchUrl,
+  selectGraphBackedDuffelOffers,
 } from "./duffelProvider";
 
 test("Duffel Offer Request searches finish supplier work below the HTTP timeout", () => {
@@ -20,6 +21,16 @@ test("Duffel Offer Request searches finish supplier work below the HTTP timeout"
     );
     assert.equal(url.searchParams.get("view"), view ?? null);
   }
+});
+
+test("flat-view reconciliation accepts only the safe graph-backed subset", () => {
+  const graphIds = new Set(["off_kept", "off_missing"]);
+  const kept = { id: "off_kept", marker: "normalized later" };
+  const extra = { id: "off_not_in_graph", marker: "must never be accepted" };
+  assert.deepEqual(
+    selectGraphBackedDuffelOffers([kept, extra, null, { id: 42 }], graphIds),
+    [kept],
+  );
 });
 
 test("Deals Offer Requests keep split tickets disabled", () => {

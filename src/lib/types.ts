@@ -222,6 +222,23 @@ export type ProviderResult<T> = {
   error?: string;
   errorCategory?: ProviderErrorCategory;
   errorReason?: ProviderErrorReason;
+  /** Sanitized, server-only integration diagnostics. Never serialize publicly. */
+  diagnostic?: {
+    code:
+      | "duffel_itinerary_parse_failed"
+      | "duffel_offer_request_identity_mismatch"
+      | "duffel_offer_normalization_dropped"
+      | "duffel_inventory_pruned_empty";
+    counts?: Partial<
+      Record<
+        | "graphOfferCount"
+        | "flatMatchingOfferCount"
+        | "normalizedOfferCount"
+        | "usableOfferCount",
+        number
+      >
+    >;
+  };
 };
 
 export type AggregatedResult<T> = {

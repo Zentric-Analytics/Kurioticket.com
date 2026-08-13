@@ -67,3 +67,19 @@ test("outbound converted prices are identified as source estimates", async () =>
     /Provider price: \{displayPrice\.providerFormatted\}/,
   );
 });
+
+test("initial inventory errors only offer retry for retryable safe codes", async () => {
+  const source = await readFile(journeyUrl, "utf8");
+  assert.match(
+    source,
+    /PROVIDER_CONFIGURATION_UNAVAILABLE: "Flight search is currently unavailable\."/,
+  );
+  assert.match(
+    source,
+    /PROVIDER_RESPONSE_UNUSABLE:\s*"Flight search returned an unexpected response\. Please retry\."/,
+  );
+  assert.match(
+    source,
+    /isDealsFlightInventoryErrorRetryable\(error\) \? create : undefined/,
+  );
+});

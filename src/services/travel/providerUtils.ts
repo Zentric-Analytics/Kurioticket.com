@@ -8,7 +8,18 @@ type ProviderErrorClassification = {
   category: ProviderErrorCategory;
   reason: ProviderErrorReason;
   message: string;
+  diagnostic?: ProviderResult<unknown>["diagnostic"];
 };
+
+/** A provider contract failure carrying only allow-listed, non-identifying data. */
+export class ProviderResponseError extends Error {
+  constructor(
+    readonly diagnostic: NonNullable<ProviderResult<unknown>["diagnostic"]>,
+  ) {
+    super("Provider response could not be safely reconciled.");
+    this.name = "ProviderResponseError";
+  }
+}
 
 class ProviderHttpError extends Error {
   status: number;
@@ -75,6 +86,9 @@ export async function runProvider<T>(
       error: classification.reason,
       errorCategory: classification.category,
       errorReason: classification.reason,
+      ...(classification.diagnostic
+        ? { diagnostic: classification.diagnostic }
+        : {}),
     };
   }
 }
@@ -95,6 +109,14 @@ export function skippedProvider<T>(
 }
 
 function classifyProviderError(error: unknown): ProviderErrorClassification {
+  if (error instanceof ProviderResponseError) {
+    return {
+      category: "invalid_response",
+      reason: "provider_invalid_response",
+      message: "Provider response failed integration validation.",
+      diagnostic: error.diagnostic,
+    };
+  }
   if (isAbortError(error)) {
     return {
       category: "timeout",
