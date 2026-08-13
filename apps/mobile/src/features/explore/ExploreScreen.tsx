@@ -29,7 +29,7 @@ import {
 } from "./liveExploreModels";
 
 const BLUE = "#0754F7";
-const EXPLORE_BOTTOM_SPACING = 18;
+const SEARCH_RESULTS_BOTTOM_SPACING = 18;
 export const REGION_PREVIEW_CARD_WIDTH_RATIO = 0.928;
 export const REGION_PREVIEW_INSET_RATIO = 0.024;
 export const REGION_PREVIEW_GAP_RATIO = 0.024;
@@ -86,11 +86,10 @@ export function ExploreScreen() {
   const select = (destination: LiveExploreDestination) => { Keyboard.dismiss(); input.current?.blur(); router.push(destinationDetailsRoute(destination.id)); };
   const submit = () => { const exact = exactLiveExploreResult(results); if (exact) select(exact); };
   useEffect(() => { if (query.trim()) void AccessibilityInfo.announceForAccessibility(`${results.length} ${results.length === 1 ? "result" : "results"}`); }, [query, results.length]);
-  const bottomPadding = EXPLORE_BOTTOM_SPACING;
   return <SafeAreaView style={[s.safe, { backgroundColor: theme.background }]} edges={["top"]}>
     <View style={s.stableHeader}><ExploreHeader query={query} setQuery={setQuery} input={input} submit={submit} /></View>
-    {query.trim() ? <FlatList data={results} keyExtractor={(item) => item.destination.id} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { paddingBottom: bottomPadding }]} ListHeaderComponent={<SectionHeading title={`${results.length} result${results.length === 1 ? "" : "s"}`} />} ListEmptyComponent={<Text style={[s.empty, { backgroundColor: theme.surface, color: theme.textSecondary }]}>No destinations match “{query.trim()}”. Try a city, destination code, airport, or country.</Text>} renderItem={({ item }) => <DestinationResultRow destination={item.destination} saved={savedIds.has(item.destination.id)} onSelect={() => select(item.destination)} onToggle={() => toggle(item.destination.id)} />} />
-      : <ExploreDiscoveryContent REGION_DISCOVERY={REGION_DISCOVERY} bottomPadding={bottomPadding} select={select} />}
+    {query.trim() ? <FlatList data={results} keyExtractor={(item) => item.destination.id} keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content, { paddingBottom: SEARCH_RESULTS_BOTTOM_SPACING }]} ListHeaderComponent={<SectionHeading title={`${results.length} result${results.length === 1 ? "" : "s"}`} />} ListEmptyComponent={<Text style={[s.empty, { backgroundColor: theme.surface, color: theme.textSecondary }]}>No destinations match “{query.trim()}”. Try a city, destination code, airport, or country.</Text>} renderItem={({ item }) => <DestinationResultRow destination={item.destination} saved={savedIds.has(item.destination.id)} onSelect={() => select(item.destination)} onToggle={() => toggle(item.destination.id)} />} />
+      : <ExploreDiscoveryContent REGION_DISCOVERY={REGION_DISCOVERY} select={select} />}
   </SafeAreaView>;
 }
 
@@ -118,7 +117,7 @@ type RegionDiscoveryItem = {
   preview: LiveExploreDestination[];
 };
 
-function ExploreDiscoveryContent({ REGION_DISCOVERY, bottomPadding, select }: { REGION_DISCOVERY: RegionDiscoveryItem[]; bottomPadding: number; select: (destination: LiveExploreDestination) => void }) {
+function ExploreDiscoveryContent({ REGION_DISCOVERY, select }: { REGION_DISCOVERY: RegionDiscoveryItem[]; select: (destination: LiveExploreDestination) => void }) {
   const { theme } = useAppTheme();
   const { savedIds, toggle } = useSavedDestinations();
   const { width: windowWidth } = useWindowDimensions();
@@ -130,7 +129,7 @@ function ExploreDiscoveryContent({ REGION_DISCOVERY, bottomPadding, select }: { 
   const previewInset = windowWidth * REGION_PREVIEW_INSET_RATIO;
   const previewGap = windowWidth * REGION_PREVIEW_GAP_RATIO;
   const openRegion = (regionSlug: string) => router.push({ pathname: "/explore/region/[region]", params: { region: regionSlug } });
-  return <FlatList data={REGION_DISCOVERY} keyExtractor={({ regionId }) => regionId} contentContainerStyle={[s.discoveryContent, { paddingBottom: bottomPadding }]} renderItem={({ item, index }) => <View style={[s.regionSection, index === REGION_DISCOVERY.length - 1 && s.finalRegionSection]}>
+  return <FlatList data={REGION_DISCOVERY} keyExtractor={({ regionId }) => regionId} contentContainerStyle={s.discoveryContent} renderItem={({ item, index }) => <View style={[s.regionSection, index === REGION_DISCOVERY.length - 1 && s.finalRegionSection]}>
     <View style={[s.regionHeader, { paddingHorizontal: previewInset }]}><View><Text accessibilityRole="header" style={[s.regionTitle, { color: theme.textPrimary }]}>{item.region}</Text><Text style={[s.regionCount, { color: theme.textSecondary }]}>{item.destinations.length} destinations</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`See all destinations in ${item.region}`} onPress={() => openRegion(item.regionSlug)} style={s.seeAll}><Text style={s.seeAllText}>See all</Text><FlowIcon name="chevron" color={BLUE} size={16} /></Pressable></View>
     <FlatList horizontal data={item.preview} keyExtractor={(destination) => destination.id} showsHorizontalScrollIndicator={false} contentContainerStyle={[s.previewRow, { paddingHorizontal: previewInset, gap: previewGap }]} snapToInterval={previewCardWidth + previewGap} decelerationRate="fast" renderItem={({ item: destination }) => <RegionPreviewCard destination={destination} saved={savedIds.has(destination.id)} onSelect={() => select(destination)} onToggle={() => toggle(destination.id)} width={previewCardWidth} height={previewCardHeight} imageHeight={previewImageHeight} />} />
   </View>} />;
