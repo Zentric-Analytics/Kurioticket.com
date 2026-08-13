@@ -22,11 +22,13 @@ export function inventoryFailure(error: unknown) {
     const status =
       error.code === "unknown-inventory"
         ? 404
-        : error.code === "inventory-expired"
-          ? 410
-          : error.code === "stale-search"
-            ? 409
-            : 500;
+        : error.code === "invalid-selection"
+          ? 422
+          : error.code === "inventory-expired"
+            ? 410
+            : error.code === "stale-search"
+              ? 409
+              : 500;
     return json(
       { status: "error", code: error.code.toUpperCase().replaceAll("-", "_") },
       status,

@@ -199,7 +199,8 @@ export type InventoryFailure =
   | "unknown-inventory"
   | "inventory-expired"
   | "stale-search"
-  | "malformed-inventory";
+  | "malformed-inventory"
+  | "invalid-selection";
 export class DealsFlightInventoryError extends Error {
   constructor(public code: InventoryFailure) {
     super(code);
@@ -406,14 +407,14 @@ export class DealsFlightInventorySessionService {
   async returns(token: string, key: string, outbound: string) {
     const loaded = await this.load(token, key);
     if (loaded.itineraryGraph && loaded.search.tripType === "round-trip")
-      return [];
+      throw new DealsFlightInventoryError("invalid-selection");
     const { offers } = loaded;
     return getDealsFlightReturnChoicesV2(usable(offers, this.now()), outbound);
   }
   async fares(token: string, key: string, outbound: string, inbound?: string) {
     const loaded = await this.load(token, key);
     if (loaded.itineraryGraph && loaded.search.tripType === "round-trip")
-      return [];
+      throw new DealsFlightInventoryError("invalid-selection");
     const { offers } = loaded;
     return getDealsFlightFareChoicesV2(
       usable(offers, this.now()),
@@ -430,7 +431,7 @@ export class DealsFlightInventorySessionService {
   ) {
     const loaded = await this.load(token, key);
     if (loaded.itineraryGraph && loaded.search.tripType === "round-trip")
-      return { ...loaded, offer: null };
+      throw new DealsFlightInventoryError("invalid-selection");
     return {
       ...loaded,
       offer: resolveDealsFlightOfferV2(loaded.offers, outbound, inbound, fare),
