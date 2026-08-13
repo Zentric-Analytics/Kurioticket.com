@@ -631,7 +631,8 @@ test("destination details follow the destination-first hierarchy without duplica
   assert.match(actionStyles, /actions: \{ flexDirection: "row", gap: 10/);
   assert.match(actionStyles, /actionButton: \{ flex: 1 \}/);
   assert.match(actionStyles, /primaryButton: \{ minHeight: 52[\s\S]*backgroundColor: BLUE/);
-  assert.match(actionStyles, /secondaryButton: \{ backgroundColor: "white", borderWidth: 1, borderColor: BLUE \}/);
+  assert.match(actionStyles, /secondaryButton: \{ borderWidth: 1, borderColor: BLUE \}/);
+  assert.match(source, /secondary && \{ backgroundColor: theme\.surface \}/);
 
   const london = destinationById.get("gb-london")!;
   assert.ok(london.airportCodes.length > 1);

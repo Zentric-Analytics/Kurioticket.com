@@ -4,19 +4,17 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
-import { destinationMedia, FALLBACK_SOURCE, resolvedDestinationHeroSource } from "./destinationMedia";
+import { destinationMedia, resolvedDestinationHeroSource } from "./destinationMedia";
 import { destinationHandoff } from "./exploreInteractionModels";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useExploreCatalogue } from "./exploreCatalogueStore";
+import { useAppTheme } from "../../theme/AppTheme";
 import {
   liveExploreDestinationById,
   type LiveExploreDestination,
 } from "./liveExploreModels";
 
-const NAVY = "#071A48";
 const BLUE = "#0754F7";
-const MUTED = "#56658E";
-const BORDER = "#E7ECF5";
 const DESTINATION_DETAILS_BOTTOM_PADDING = 36;
 
 export function DestinationDetailsScreen() {
@@ -31,20 +29,22 @@ export function DestinationDetailsScreen() {
 }
 
 function BackButton() {
+  const { theme } = useAppTheme();
   return (
     <Pressable accessibilityRole="button" accessibilityLabel="Back to Explore" onPress={() => router.back()} style={styles.backButton}>
-      <FlowIcon name="back" color={NAVY} size={22} />
+      <FlowIcon name="back" color={theme.icon} size={22} />
     </Pressable>
   );
 }
 
 function InvalidDestination() {
+  const { theme } = useAppTheme();
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top", "bottom"]}>
       <View style={styles.invalidHeader}><BackButton /></View>
       <View accessibilityRole="alert" style={styles.invalidBody}>
-        <Text accessibilityRole="header" style={styles.invalidTitle}>Destination not found</Text>
-        <Text style={styles.invalidText}>This Explore destination is unavailable or the link is invalid.</Text>
+        <Text accessibilityRole="header" style={[styles.invalidTitle, { color: theme.textPrimary }]}>Destination not found</Text>
+        <Text style={[styles.invalidText, { color: theme.textSecondary }]}>This Explore destination is unavailable or the link is invalid.</Text>
         <Pressable accessibilityRole="button" accessibilityLabel="Back to Explore" onPress={() => router.back()} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>Back</Text>
         </Pressable>
@@ -54,6 +54,7 @@ function InvalidDestination() {
 }
 
 function DestinationPage({ destination, destinationById, saved, onToggle }: { destination: LiveExploreDestination; destinationById: Map<string, LiveExploreDestination>; saved: boolean; onToggle: () => void }) {
+  const { theme } = useAppTheme();
   const media = destinationMedia(destination.imageDestinationId) ?? destinationMedia(destination.id);
   const [imageFailed, setImageFailed] = useState(false);
   const scrollRef = useRef(null as ScrollView | null);
@@ -74,8 +75,8 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
   const related = destination.relatedDestinationIds.map((relatedId) => destinationById.get(relatedId)).filter((item): item is LiveExploreDestination => Boolean(item));
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <View style={styles.topBar}><BackButton /><Text numberOfLines={1} style={styles.topTitle}>{destination.name}</Text><View style={styles.topSpacer} /></View>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}>
+      <View style={[styles.topBar, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}><BackButton /><Text numberOfLines={1} style={[styles.topTitle, { color: theme.textPrimary }]}>{destination.name}</Text><View style={styles.topSpacer} /></View>
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
@@ -85,20 +86,20 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
         overScrollMode="never"
         showsVerticalScrollIndicator={false}
       >
-        <View collapsable={false} style={styles.heroFrame}>
+        <View collapsable={false} style={[styles.heroFrame, { backgroundColor: theme.border }]}>
           <Image
             source={resolvedDestinationHeroSource(media, imageFailed)}
             accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`}
             resizeMode="cover"
             onError={() => { if (!imageFailed) setImageFailed(true); }}
-            style={styles.hero}
+            style={[styles.hero, { backgroundColor: theme.border }]}
           />
         </View>
         <View style={styles.body}>
           <View style={styles.titleRow}>
             <View style={styles.titleCopy}>
-              <Text accessibilityRole="header" style={styles.title}>{destination.name}</Text>
-              <Text style={styles.country}>{destination.country}</Text>
+              <Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>{destination.name}</Text>
+              <Text style={[styles.country, { color: theme.textSecondary }]}>{destination.country}</Text>
             </View>
             <AndroidFavoriteButton
               saved={saved}
@@ -107,13 +108,13 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
               style={styles.heart}
             />
           </View>
-          {destination.summary ? <Text style={styles.summary}>{destination.summary}</Text> : null}
-          {destination.description ? <Section title="About"><Text style={styles.paragraph}>{destination.description}</Text></Section> : null}
-          {destination.highlights?.length ? <Section title="Highlights">{destination.highlights.map((highlight) => <View key={highlight} style={styles.highlight}><View style={styles.bullet} /><Text style={styles.highlightText}>{highlight}</Text></View>)}</Section> : null}
+          {destination.summary ? <Text style={[styles.summary, { color: theme.textPrimary }]}>{destination.summary}</Text> : null}
+          {destination.description ? <Section title="About"><Text style={[styles.paragraph, { color: theme.textSecondary }]}>{destination.description}</Text></Section> : null}
+          {destination.highlights?.length ? <Section title="Highlights">{destination.highlights.map((highlight) => <View key={highlight} style={styles.highlight}><View style={styles.bullet} /><Text style={[styles.highlightText, { color: theme.textSecondary }]}>{highlight}</Text></View>)}</Section> : null}
           <Section title="Getting there">
-            {destination.airportCodes.map((code, index) => <View key={code} style={styles.airportRow}><Text style={styles.airportRowCode}>{code}</Text><Text style={styles.airportRowName}>{destination.airportNames[index]}</Text></View>)}
+            {destination.airportCodes.map((code, index) => <View key={code} style={[styles.airportRow, { borderBottomColor: theme.border }]}><Text style={styles.airportRowCode}>{code}</Text><Text style={[styles.airportRowName, { color: theme.textPrimary }]}>{destination.airportNames[index]}</Text></View>)}
           </Section>
-          {related.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={styles.related}><Text style={styles.relatedName}>{item.name}</Text><Text style={styles.relatedCountry}>{item.country}</Text></Pressable>)}</Section> : null}
+          {related.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={[styles.related, { borderBottomColor: theme.border }]}><Text style={[styles.relatedName, { color: theme.textPrimary }]}>{item.name}</Text><Text style={[styles.relatedCountry, { color: theme.textSecondary }]}>{item.country}</Text></Pressable>)}</Section> : null}
           <View style={styles.actions}>
             <Action label="Search flights" icon="flight" onPress={searchFlights} />
             <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
@@ -125,35 +126,37 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <View style={styles.section}><Text accessibilityRole="header" style={styles.sectionTitle}>{title}</Text>{children}</View>;
+  const { theme } = useAppTheme();
+  return <View style={styles.section}><Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.textPrimary }]}>{title}</Text>{children}</View>;
 }
 
 function Action({ label, icon, onPress, secondary = false }: { label: string; icon: "flight" | "hotel"; onPress: () => void; secondary?: boolean }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={[styles.primaryButton, styles.actionButton, secondary && styles.secondaryButton]}><FlowIcon name={icon} color={secondary ? BLUE : "white"} size={20} /><Text style={[styles.primaryButtonText, secondary && styles.secondaryButtonText]}>{label}</Text></Pressable>;
+  const { theme } = useAppTheme();
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={[styles.primaryButton, styles.actionButton, secondary && styles.secondaryButton, secondary && { backgroundColor: theme.surface }]}><FlowIcon name={icon} color={secondary ? BLUE : "white"} size={20} /><Text style={[styles.primaryButtonText, secondary && styles.secondaryButtonText]}>{label}</Text></Pressable>;
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#FAFBFF" },
-  topBar: { minHeight: 56, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: "white" },
+  safe: { flex: 1 },
+  topBar: { minHeight: 56, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: 1 },
   backButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 24 },
-  topTitle: { flex: 1, color: NAVY, textAlign: "center", fontSize: 16, fontWeight: "800" },
+  topTitle: { flex: 1, textAlign: "center", fontSize: 16, fontWeight: "800" },
   topSpacer: { width: 48 },
   scroll: { flex: 1 },
   content: { paddingBottom: DESTINATION_DETAILS_BOTTOM_PADDING },
-  heroFrame: { width: "100%", height: 360, overflow: "hidden", backgroundColor: "#E7ECF5" },
-  hero: { width: "100%", height: 360, backgroundColor: "#E7ECF5" },
+  heroFrame: { width: "100%", height: 360, overflow: "hidden" },
+  hero: { width: "100%", height: 360 },
   body: { paddingHorizontal: 18, paddingTop: 18, gap: 20 },
   titleRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  titleCopy: { flex: 1 }, title: { color: NAVY, fontSize: 30, lineHeight: 38, fontWeight: "800" },
-  country: { color: MUTED, fontSize: 16, marginTop: 2 },
+  titleCopy: { flex: 1 }, title: { fontSize: 30, lineHeight: 38, fontWeight: "800" },
+  country: { fontSize: 16, marginTop: 2 },
   heart: { flexShrink: 0 },
-  summary: { color: NAVY, fontSize: 17, lineHeight: 25, fontWeight: "600" }, paragraph: { color: MUTED, fontSize: 15, lineHeight: 23 },
-  section: { gap: 10 }, sectionTitle: { color: NAVY, fontSize: 19, fontWeight: "800" },
-  airportRow: { minHeight: 58, paddingVertical: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: BORDER, gap: 14 },
-  airportRowCode: { width: 48, color: BLUE, fontSize: 16, fontWeight: "800" }, airportRowName: { flex: 1, color: NAVY, fontSize: 14, lineHeight: 20 },
-  highlight: { flexDirection: "row", alignItems: "flex-start", gap: 10 }, bullet: { width: 7, height: 7, borderRadius: 4, backgroundColor: BLUE, marginTop: 7 }, highlightText: { flex: 1, color: MUTED, fontSize: 15, lineHeight: 22 },
-  related: { minHeight: 58, justifyContent: "center", borderBottomWidth: 1, borderBottomColor: BORDER }, relatedName: { color: NAVY, fontSize: 15, fontWeight: "800" }, relatedCountry: { color: MUTED, fontSize: 13 },
+  summary: { fontSize: 17, lineHeight: 25, fontWeight: "600" }, paragraph: { fontSize: 15, lineHeight: 23 },
+  section: { gap: 10 }, sectionTitle: { fontSize: 19, fontWeight: "800" },
+  airportRow: { minHeight: 58, paddingVertical: 10, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, gap: 14 },
+  airportRowCode: { width: 48, color: BLUE, fontSize: 16, fontWeight: "800" }, airportRowName: { flex: 1, fontSize: 14, lineHeight: 20 },
+  highlight: { flexDirection: "row", alignItems: "flex-start", gap: 10 }, bullet: { width: 7, height: 7, borderRadius: 4, backgroundColor: BLUE, marginTop: 7 }, highlightText: { flex: 1, fontSize: 15, lineHeight: 22 },
+  related: { minHeight: 58, justifyContent: "center", borderBottomWidth: 1 }, relatedName: { fontSize: 15, fontWeight: "800" }, relatedCountry: { fontSize: 13 },
   actions: { flexDirection: "row", gap: 10, marginTop: 4 }, actionButton: { flex: 1 }, primaryButton: { minHeight: 52, borderRadius: 12, backgroundColor: BLUE, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 18 }, primaryButtonText: { color: "white", fontSize: 15, fontWeight: "800" },
-  secondaryButton: { backgroundColor: "white", borderWidth: 1, borderColor: BLUE }, secondaryButtonText: { color: BLUE },
-  invalidHeader: { paddingHorizontal: 10 }, invalidBody: { flex: 1, padding: 24, justifyContent: "center", alignItems: "center", gap: 14 }, invalidTitle: { color: NAVY, fontSize: 25, fontWeight: "800", textAlign: "center" }, invalidText: { color: MUTED, fontSize: 15, lineHeight: 22, textAlign: "center", marginBottom: 8 },
+  secondaryButton: { borderWidth: 1, borderColor: BLUE }, secondaryButtonText: { color: BLUE },
+  invalidHeader: { paddingHorizontal: 10 }, invalidBody: { flex: 1, padding: 24, justifyContent: "center", alignItems: "center", gap: 14 }, invalidTitle: { fontSize: 25, fontWeight: "800", textAlign: "center" }, invalidText: { fontSize: 15, lineHeight: 22, textAlign: "center", marginBottom: 8 },
 });

@@ -39,6 +39,19 @@ test("Home, Trips, Explore, and Profile use theme-aware screen and card surfaces
   assert.match(profile, /theme\.surface/);
 });
 
+test("Explore destination details and invalid state use semantic theme colors", () => {
+  const details = read("src/features/explore/DestinationDetailsScreen.tsx");
+  assert.match(details, /useAppTheme/);
+  assert.match(details, /backgroundColor: theme\.background/);
+  assert.match(details, /backgroundColor: theme\.surface/);
+  assert.match(details, /borderBottomColor: theme\.border/);
+  assert.match(details, /color: theme\.textPrimary/);
+  assert.match(details, /color: theme\.textSecondary/);
+  assert.match(details, /color=\{theme\.icon\}/);
+  assert.doesNotMatch(details, /const (?:NAVY|MUTED|BORDER) =/);
+  assert.doesNotMatch(details, /backgroundColor: (?:"white"|"#FAFBFF"|"#E7ECF5")/);
+});
+
 test("product search panels and picker sheets have theme-aware inputs, placeholders, and modals", () => {
   for (const file of ["FlightSearchPanel.tsx", "HotelSearchPanel.tsx", "CarSearchPanel.tsx"]) {
     const source = read(`src/features/flow/${file}`);
