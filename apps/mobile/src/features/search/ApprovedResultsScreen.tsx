@@ -899,16 +899,24 @@ function PriceAlert({ product }: { product: Product }) {
 export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
+  const items = [
+    { icon: "compass", label: "Explore", accessibilityLabel: "Explore", route: "/(tabs)/explore" },
+    { icon: "trip", label: "Trips", accessibilityLabel: "My Trips", route: "/(tabs)/trips" },
+    { icon: "search", label: "Search", accessibilityLabel: "Search", route: "/flights" },
+    { icon: "heart", label: "Saved", accessibilityLabel: "Saved", route: "/saved" },
+    { icon: "person", label: "Profile", accessibilityLabel: "Profile", route: "/(tabs)/profile" },
+  ] as const;
   return (
     <View style={[s0.nav, flightResults && { backgroundColor: theme.surface, borderTopColor: theme.border }, { paddingBottom: Math.max(inset.bottom, 8) }]}>
-      {[
-        ["compass", "Explore"],
-        ["trip", "Trips"],
-        ["search", "Search"],
-        ["heart", "Saved"],
-        ["person", "Profile"],
-      ].map(([icon, label]) => (
-        <View key={label} style={s0.navItem}>
+      {items.map(({ icon, label, accessibilityLabel, route }) => (
+        <Pressable
+          key={label}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          accessibilityState={{ selected: label === "Search" }}
+          onPress={() => router.replace(route)}
+          style={({ pressed }) => [s0.navItem, pressed && s0.navItemPressed]}
+        >
           <FlowIcon
             name={icon as never}
             color={label === "Search" ? ui.blue : flightResults ? theme.textSecondary : ui.muted}
@@ -916,7 +924,7 @@ export function BottomNav({ flightResults = false }: { flightResults?: boolean }
           <Text style={[s0.navText, flightResults && { color: theme.textSecondary }, label === "Search" && { color: ui.blue }]}>
             {label}
           </Text>
-        </View>
+        </Pressable>
       ))}
     </View>
   );
@@ -1195,6 +1203,7 @@ const s0 = StyleSheet.create({
     paddingTop: 9,
     backgroundColor: "white",
   },
-  navItem: { flex: 1, alignItems: "center", gap: 3 },
+  navItem: { flex: 1, minHeight: 48, alignItems: "center", justifyContent: "center", gap: 3 },
+  navItemPressed: { opacity: 0.72 },
   navText: { fontSize: 10, color: ui.muted, fontWeight: "700" },
 });
