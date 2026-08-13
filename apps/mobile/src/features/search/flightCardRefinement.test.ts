@@ -42,9 +42,9 @@ test("fare-rule summary classifies varied provider language without exact matchi
 });
 
 test("flight card keeps narrow layouts to one compact row without height-growing text", () => {
-  assert.match(card, /style=\{s0\.bigPrice\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
-  assert.match(card, /style=\{s0\.nameSmall\} numberOfLines=\{1\}/);
-  assert.equal(card.match(/style=\{s0\.benefit\} numberOfLines=\{1\}/g)?.length, 3);
+  assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
+  assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
+  assert.equal(card.match(/style=\{\[s0\.benefit, \{ color: theme\.textSecondary \}\]\} numberOfLines=\{1\}/g)?.length, 3);
   assert.match(source, /card: \{[\s\S]*?padding: 13,[\s\S]*?gap: 10,/);
   assert.match(source, /benefits: \{[\s\S]*?paddingTop: 8,[\s\S]*?flexDirection: "row"/);
   assert.match(source, /benefitList: \{ flex: 1, minWidth: 0, flexDirection: "column", gap: 6 \}/);
@@ -73,7 +73,7 @@ test("flight card reserves a flexible single-line price column across supported 
 });
 
 test("long airline names truncate rather than increasing card height", () => {
-  assert.match(card, /style=\{s0\.nameSmall\} numberOfLines=\{1\}/);
+  assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
   assert.match(source, /departureBlock: \{ flex: 1\.1, minWidth: 0 \}/);
 });
 
@@ -83,7 +83,7 @@ test("flight card uses Lucide icons for route, benefits, badges, and saved state
   }
   assert.match(source, /import \{ Heart \} from "lucide-react-native"/);
   assert.match(card, /<Heart[\s\S]*fill=\{saved \? androidFavoriteColors\.active : "transparent"\}/);
-  assert.match(card, /color=\{saved \? androidFavoriteColors\.active : ui\.muted\}/);
+  assert.match(card, /color=\{saved \? androidFavoriteColors\.active : theme\.textSecondary\}/);
   assert.match(card, /accessibilityLabel=\{saved \? `Remove \$\{result\.airlineName\} flight from saved` : `Save \$\{result\.airlineName\} flight`\}/);
   assert.doesNotMatch(card, /[▣◉★]/);
   assert.doesNotMatch(card, /<FlowIcon[\s\S]*name="heart"/);

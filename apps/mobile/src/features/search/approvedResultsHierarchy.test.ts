@@ -15,7 +15,7 @@ test("ready flight results place one eligible price alert before their summary a
   const cards = source.indexOf('sorted.map((x, i)', summary);
   const filteredEmpty = source.indexOf('title="No flights match these filters"', cards);
   const hotelAlert = source.indexOf('product === "hotel" && availability.priceAlerts', filteredEmpty);
-  const bottomNavigation = source.indexOf("<BottomNav />", hotelAlert);
+  const bottomNavigation = source.indexOf("<BottomNav flightResults={flightResults} />", hotelAlert);
 
   assert.ok(flightAlert >= 0, "the flight price-alert eligibility guard should exist");
   assert.ok(flightAlert < summary, "the flight price alert should precede the results summary");
@@ -56,5 +56,5 @@ test("loading and error states cannot expose the flight price alert", () => {
 });
 
 test("the compact flight price notice uses the Lucide Info icon", () => {
-  assert.match(source, /<Info[\s\S]*?<Text style=\{s0\.change\}>Price may change<\/Text>/);
+  assert.match(source, /<Info[\s\S]*?<Text style=\{\[s0\.change, \{ color: theme\.textPrimary \}\]\}>Price may change<\/Text>/);
 });

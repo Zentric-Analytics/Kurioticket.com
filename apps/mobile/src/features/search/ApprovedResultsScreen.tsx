@@ -75,6 +75,7 @@ import {
 import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { useSavedFlights } from "../../storage/useSavedFlights";
+import { useAppTheme } from "../../theme/AppTheme";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -85,6 +86,8 @@ const airportLabel = (code: unknown) => {
   return airport ? `${airport.city} (${value})` : value;
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
+  const { theme } = useAppTheme();
+  const flightResults = product === "flight";
   const { width } = useWindowDimensions();
   const narrowHeader = width < 360;
   const stackedResultsSummary = width < 430;
@@ -297,7 +300,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     <>
       {status === "loading" ? <Loading product={product} /> : null}
               {message ? (
-                <Text accessibilityRole="alert" style={s0.notice}>
+                <Text accessibilityRole="alert" style={[s0.notice, flightResults && { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: theme.border, borderWidth: 1 }]}>
                   {message}
                 </Text>
               ) : null}
@@ -307,6 +310,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   body="Try changing your dates or removing filters."
                   retry={() => setRetry((x) => x + 1)}
                   edit={edit}
+                  flightResults={flightResults}
                 />
               ) : null}
               {status === "error" ? (
@@ -315,19 +319,20 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   body={message || "Check your connection and try again."}
                   retry={() => setRetry((x) => x + 1)}
                   edit={edit}
+                  flightResults={flightResults}
                 />
               ) : null}
               {status === "ready" && product === "flight" && availability.priceAlerts ? (
                 <PriceAlert product={product} />
               ) : null}
               {status === "ready" ? (
-                <View style={[s0.found, stackedResultsSummary && s0.foundNarrow]}>
+                <View style={[s0.found, flightResults && { backgroundColor: theme.surface, borderColor: theme.border }, stackedResultsSummary && s0.foundNarrow]}>
                   <View style={s0.foundCopy}>
-                    <Text style={s0.foundTitle}>
+                    <Text style={[s0.foundTitle, flightResults && { color: theme.textPrimary }]}>
                       {sorted.length}{" "}
                       {product === "flight" ? "flights" : "properties"} found
                     </Text>
-                    <Text style={s0.sub}>
+                    <Text style={[s0.sub, flightResults && { color: theme.textSecondary }]}>
                       Prices include taxes and fees when reported by the provider
                     </Text>
                   </View>
@@ -353,13 +358,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                         <Info
                           accessibilityElementsHidden
                           accessible={false}
-                          color={ui.muted}
+                          color={theme.icon}
                           size={16}
                           strokeWidth={2}
                         />
-                        <Text style={s0.change}>Price may change</Text>
+                        <Text style={[s0.change, { color: theme.textPrimary }]}>Price may change</Text>
                       </View>
-                      <Text style={s0.sub}>Book soon to lock in this price.</Text>
+                      <Text style={[s0.sub, { color: theme.textSecondary }]}>Book soon to lock in this price.</Text>
                     </View>
                   )}
                 </View>
@@ -383,26 +388,27 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   retry={() => setFilters(emptyFlightFilters())}
                   retryLabel="Clear filters"
                   edit={edit}
+                  flightResults
                 />
               ) : null}
               {status === "ready" && product === "hotel" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
     </>
   );
   return (
-    <SafeAreaView style={s0.safe} edges={["top"]}>
+    <SafeAreaView style={[s0.safe, flightResults && { backgroundColor: theme.background }]} edges={["top"]}>
       <TopBar
         flightResults={product === "flight"}
         hasUnreadNotifications={product === "flight" && hasUnreadNotifications}
         onNotificationsPress={product === "flight" ? () => router.push("/notifications") : undefined}
       />
-      <View style={[s0.summary, narrowHeader && s0.summaryNarrow]}>
+      <View style={[s0.summary, flightResults && { backgroundColor: theme.background }, narrowHeader && s0.summaryNarrow]}>
         <View style={s0.summaryCopy}>
-          <Text style={s0.route}>
+          <Text style={[s0.route, flightResults && { color: theme.textPrimary }]}>
             {product === "flight"
               ? `${airportLabel(payload.origin)}  ⇄  ${airportLabel(payload.destination)}`
               : String(payload.destination || "")}
           </Text>
-          <Text style={[s0.sub, s0.summaryMeta]}>
+          <Text style={[s0.sub, s0.summaryMeta, flightResults && { color: theme.textSecondary }]}>
             {product === "flight"
               ? `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}  ·  ${payload.travelers} Traveler${payload.travelers === 1 ? "" : "s"}  ·  ${String(payload.cabinClass || "").replace(/-/g, " ")}`
               : `${shortDate(String(payload.checkIn || ""))} – ${shortDate(String(payload.checkOut || ""))}  ·  ${payload.rooms || 1} Room, ${payload.guests || 2} Guests`}
@@ -419,12 +425,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       </View>
       {product === "flight" ? (
         <ScrollView
-          style={s0.resultsScroll}
+          style={[s0.resultsScroll, { backgroundColor: theme.background }]}
           stickyHeaderIndices={[1]}
           contentContainerStyle={s0.flightResultsContent}
         >
           <View>{dateStrip}</View>
-          <View style={s0.stickyFilterSurface}>{filterRail}</View>
+          <View style={[s0.stickyFilterSurface, { backgroundColor: theme.background }]}>{filterRail}</View>
           <View style={s0.body}>{resultContent}</View>
         </ScrollView>
       ) : (
@@ -444,7 +450,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           onClose={() => setFilterOpen(false)}
         />
       ) : null}
-      <BottomNav />
+      <BottomNav flightResults={flightResults} />
     </SafeAreaView>
   );
 }
@@ -475,6 +481,7 @@ function FlightFilterModal({
   onChange: (filters: FlightFilters) => void;
   onClose: () => void;
 }) {
+  const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const [draft, setDraft] = useState(filters);
   useEffect(() => {
@@ -501,34 +508,34 @@ function FlightFilterModal({
             accessibilityRole="checkbox"
             accessibilityState={{ checked: selected }}
             onPress={() => toggle(key, value)}
-            style={[s0.choice, selected && s0.choiceActive]}
+            style={[s0.choice, { backgroundColor: theme.surface, borderColor: theme.border }, selected && s0.choiceActive, selected && theme.dark && { backgroundColor: "#142B55", borderColor: ui.blue }]}
           >
-            <Text style={[s0.choiceText, selected && s0.choiceTextActive]}>
+            <Text style={[s0.choiceText, { color: theme.textPrimary }, selected && s0.choiceTextActive]}>
               {labels?.[value] || value}
             </Text>
           </Pressable>
         );
       })}
     </View>
-  ) : <Text style={s0.noChoices}>No additional values are available in these results.</Text>;
+  ) : <Text style={[s0.noChoices, { color: theme.textSecondary }]}>No additional values are available in these results.</Text>;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
       <View style={s0.modalBackdrop}>
-        <View style={[s0.sheet, { paddingBottom: Math.max(inset.bottom, 18) }]} accessibilityLabel="Flight filters">
+        <View style={[s0.sheet, { paddingBottom: Math.max(inset.bottom, 18), backgroundColor: theme.surface }]} accessibilityLabel="Flight filters">
           <View style={s0.sheetHead}>
-            <Text accessibilityRole="header" style={s0.foundTitle}>Filter flights</Text>
+            <Text accessibilityRole="header" style={[s0.foundTitle, { color: theme.textPrimary }]}>Filter flights</Text>
             <Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={s0.closeButton}>
-              <FlowIcon name="close" />
+              <FlowIcon name="close" color={theme.icon} />
             </Pressable>
           </View>
           <ScrollView style={s0.sheetScroll} contentContainerStyle={s0.sheetContent} showsVerticalScrollIndicator={false}>
-            {section === "all" || section === "stops" ? <View style={s0.filterSection}><Text style={s0.filterSectionTitle}>Stops</Text>{choices("stops", options.stops, stopLabels)}</View> : null}
-            {section === "all" || section === "airlines" ? <View style={s0.filterSection}><Text style={s0.filterSectionTitle}>Airlines</Text>{choices("airlines", options.airlines)}</View> : null}
-            {section === "all" || section === "times" ? <View style={s0.filterSection}><Text style={s0.filterSectionTitle}>Departure time</Text>{choices("times", options.times, timeLabels)}</View> : null}
+            {section === "all" || section === "stops" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Stops</Text>{choices("stops", options.stops, stopLabels)}</View> : null}
+            {section === "all" || section === "airlines" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Airlines</Text>{choices("airlines", options.airlines)}</View> : null}
+            {section === "all" || section === "times" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Departure time</Text>{choices("times", options.times, timeLabels)}</View> : null}
           </ScrollView>
           <View style={s0.sheetActions}>
-            <Button label="Apply filters" onPress={() => { onChange(draft); onClose(); }} />
-            <Button label="Clear filters" outline onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} />
+            <Button label="Apply filters" flightResults onPress={() => { onChange(draft); onClose(); }} />
+            <Button label="Clear filters" outline flightResults onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} />
           </View>
         </View>
       </View>
@@ -536,29 +543,30 @@ function FlightFilterModal({
   );
 }
 function FlightCard({ result, displayPrice: fare, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; rank: number; params: Record<string, string | string[]> }) {
+  const { theme } = useAppTheme();
   const { savedFlights, toggle } = useSavedFlights();
   const saved = savedFlights.has(result.id);
   const stopLabel = result.stops
     ? `${result.stops} stop${result.stops === 1 ? "" : "s"}`
     : "Nonstop";
   return (
-    <View style={[s0.card, rank === 0 && s0.best]}>
+    <View style={[s0.card, { backgroundColor: theme.surface, borderColor: theme.border }, rank === 0 && s0.best]}>
       <View style={s0.cardTop}>
         {rank === 0 ? (
           <View style={s0.badgeRow}>
-            <View style={s0.resultBadge}>
-              <Award size={12} strokeWidth={2} color={ui.blue} />
-              <Text style={s0.resultBadgeText}>Best overall</Text>
+            <View style={[s0.resultBadge, theme.dark && { backgroundColor: "#173568" }]}>
+              <Award size={12} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue} />
+              <Text style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}>Best overall</Text>
             </View>
-            <View style={[s0.resultBadge, s0.resultBadgeGreen]}>
-              <Tag size={12} strokeWidth={2} color={ui.green} />
-              <Text style={[s0.resultBadgeText, s0.resultBadgeTextGreen]}>Great price</Text>
+            <View style={[s0.resultBadge, s0.resultBadgeGreen, theme.dark && { backgroundColor: "#153B2B" }]}>
+              <Tag size={12} strokeWidth={2} color={theme.dark ? "#72D69A" : ui.green} />
+              <Text style={[s0.resultBadgeText, s0.resultBadgeTextGreen, theme.dark && { color: "#72D69A" }]}>Great price</Text>
             </View>
           </View>
         ) : rank === 1 ? (
-          <Badge green>2nd best</Badge>
+          <Badge green flightResults>2nd best</Badge>
         ) : (
-          <Badge>
+          <Badge flightResults>
             {result.stops
               ? `${result.stops} stop${result.stops > 1 ? "s" : ""}`
               : "Nonstop"}
@@ -576,7 +584,7 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
             size={20}
             strokeWidth={2}
             fill={saved ? androidFavoriteColors.active : "transparent"}
-            color={saved ? androidFavoriteColors.active : ui.muted}
+            color={saved ? androidFavoriteColors.active : theme.textSecondary}
           />
         </Pressable>
       </View>
@@ -584,56 +592,56 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
         {result.airlineLogo ? (
           <Image source={{ uri: result.airlineLogo }} style={s0.airline} />
         ) : (
-          <View style={s0.airlineFallback}>
-            <Text style={s0.airlineFallbackText}>{result.airlineName.slice(0, 2)}</Text>
+          <View style={[s0.airlineFallback, { backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 }]}>
+            <Text style={[s0.airlineFallbackText, { color: theme.textPrimary }]}>{result.airlineName.slice(0, 2)}</Text>
           </View>
         )}
         <View style={s0.departureBlock}>
-          <Text style={s0.nameSmall} numberOfLines={1}>
+          <Text style={[s0.nameSmall, { color: theme.textPrimary }]} numberOfLines={1}>
             {result.airlineName}
           </Text>
-          <Text style={s0.time}>{clock(result.departureTime)}</Text>
-          <Text style={s0.sub}>{result.originAirport}</Text>
+          <Text style={[s0.time, { color: theme.textPrimary }]}>{clock(result.departureTime)}</Text>
+          <Text style={[s0.sub, { color: theme.textSecondary }]}>{result.originAirport}</Text>
         </View>
         <View style={s0.timeline}>
-          <Text style={s0.sub}>{result.duration}</Text>
+          <Text style={[s0.sub, { color: theme.textSecondary }]}>{result.duration}</Text>
           <View style={s0.timelineTrack}>
-            <View style={s0.line} />
+            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
             <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
-            <View style={s0.line} />
+            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
           </View>
           <Text style={s0.nonstop}>{stopLabel}</Text>
         </View>
         <View style={s0.arrivalBlock}>
-          <Text style={s0.time}>{clock(result.arrivalTime)}</Text>
-          <Text style={s0.sub}>{result.destinationAirport}</Text>
+          <Text style={[s0.time, { color: theme.textPrimary }]}>{clock(result.arrivalTime)}</Text>
+          <Text style={[s0.sub, { color: theme.textSecondary }]}>{result.destinationAirport}</Text>
         </View>
         <View style={s0.priceBox}>
-          <Text style={s0.bigPrice} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {fare?.formatted ?? "—"}
           </Text>
-          <Text style={s0.sub}>round trip</Text>
+          <Text style={[s0.sub, { color: theme.textSecondary }]}>round trip</Text>
         </View>
       </View>
-      <View style={s0.benefits}>
+      <View style={[s0.benefits, { borderTopColor: theme.border }]}>
         <View style={s0.benefitList}>
           <View style={s0.benefitItem}>
-            <Luggage size={15} strokeWidth={1.9} color={ui.muted} />
-            <Text style={s0.benefit} numberOfLines={1}>{summarizeBaggage(result.baggageInfo)}</Text>
+            <Luggage size={15} strokeWidth={1.9} color={theme.icon} />
+            <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{summarizeBaggage(result.baggageInfo)}</Text>
           </View>
           <View style={s0.benefitItem}>
-            <Armchair size={15} strokeWidth={1.9} color={ui.muted} />
-            <Text style={s0.benefit} numberOfLines={1}>Seat unavailable</Text>
+            <Armchair size={15} strokeWidth={1.9} color={theme.icon} />
+            <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>Seat unavailable</Text>
           </View>
           <View style={s0.benefitItem}>
-            <ShieldCheck size={15} strokeWidth={1.9} color={ui.muted} />
-            <Text style={s0.benefit} numberOfLines={1}>{summarizeFareRules(result.refundInfo)}</Text>
+            <ShieldCheck size={15} strokeWidth={1.9} color={theme.icon} />
+            <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{summarizeFareRules(result.refundInfo)}</Text>
           </View>
         </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="View details"
-          style={[s0.detailsButton, rank !== 0 && s0.detailsButtonOutline]}
+          style={[s0.detailsButton, rank !== 0 && s0.detailsButtonOutline, rank !== 0 && { backgroundColor: theme.surface }]}
           onPress={() =>
             router.push({
               pathname: "/flight-details",
@@ -752,6 +760,7 @@ function HotelCard({
   );
 }
 function Loading({ product }: { product: Product }) {
+  const { theme } = useAppTheme();
   const opacity = useRef(new Animated.Value(0.55)).current;
 
   useEffect(() => {
@@ -780,7 +789,7 @@ function Loading({ product }: { product: Product }) {
         <Text
           accessibilityRole="text"
           accessibilityLiveRegion="polite"
-          style={s0.loadingText}
+          style={[s0.loadingText, product === "flight" && { color: theme.textPrimary }]}
         >
           Searching available {product === "flight" ? "flights" : "stays"}…
         </Text>
@@ -798,45 +807,48 @@ function Loading({ product }: { product: Product }) {
   );
 }
 
-function SkeletonLine({ style }: { style?: object }) {
-  return <View style={[s0.skeletonLine, style]} />;
+function SkeletonLine({ style, flightResults = false }: { style?: object; flightResults?: boolean }) {
+  const { theme } = useAppTheme();
+  return <View style={[s0.skeletonLine, flightResults && { backgroundColor: theme.border }, style]} />;
 }
 
 function FlightLoadingSkeleton() {
+  const { theme } = useAppTheme();
+  const placeholder = { backgroundColor: theme.border };
   return (
-    <View style={s0.skeletonCard} accessibilityElementsHidden>
+    <View style={[s0.skeletonCard, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityElementsHidden>
       <View style={s0.skeletonTopRow}>
-        <View style={s0.skeletonBadge} />
-        <View style={s0.skeletonHeart} />
+        <View style={[s0.skeletonBadge, placeholder]} />
+        <View style={[s0.skeletonHeart, placeholder]} />
       </View>
       <View style={s0.skeletonFlightRow}>
-        <View style={s0.skeletonLogo} />
+        <View style={[s0.skeletonLogo, placeholder]} />
         <View style={s0.skeletonDeparture}>
-          <SkeletonLine style={s0.skeletonName} />
-          <SkeletonLine style={s0.skeletonTime} />
-          <SkeletonLine style={s0.skeletonAirport} />
+          <SkeletonLine flightResults style={s0.skeletonName} />
+          <SkeletonLine flightResults style={s0.skeletonTime} />
+          <SkeletonLine flightResults style={s0.skeletonAirport} />
         </View>
         <View style={s0.skeletonRoute}>
-          <SkeletonLine style={s0.skeletonDuration} />
-          <SkeletonLine style={s0.skeletonRouteLine} />
-          <SkeletonLine style={s0.skeletonStop} />
+          <SkeletonLine flightResults style={s0.skeletonDuration} />
+          <SkeletonLine flightResults style={s0.skeletonRouteLine} />
+          <SkeletonLine flightResults style={s0.skeletonStop} />
         </View>
         <View style={s0.skeletonArrival}>
-          <SkeletonLine style={s0.skeletonTime} />
-          <SkeletonLine style={s0.skeletonAirport} />
+          <SkeletonLine flightResults style={s0.skeletonTime} />
+          <SkeletonLine flightResults style={s0.skeletonAirport} />
         </View>
         <View style={s0.skeletonPrice}>
-          <SkeletonLine style={s0.skeletonPriceLine} />
-          <SkeletonLine style={s0.skeletonPriceCaption} />
+          <SkeletonLine flightResults style={s0.skeletonPriceLine} />
+          <SkeletonLine flightResults style={s0.skeletonPriceCaption} />
         </View>
       </View>
-      <View style={s0.skeletonBenefits}>
+      <View style={[s0.skeletonBenefits, { borderTopColor: theme.border }]}>
         <View style={s0.skeletonBenefitLines}>
-          <SkeletonLine style={s0.skeletonBenefitLine} />
-          <SkeletonLine style={s0.skeletonBenefitLineShort} />
-          <SkeletonLine style={s0.skeletonBenefitLine} />
+          <SkeletonLine flightResults style={s0.skeletonBenefitLine} />
+          <SkeletonLine flightResults style={s0.skeletonBenefitLineShort} />
+          <SkeletonLine flightResults style={s0.skeletonBenefitLine} />
         </View>
-        <View style={s0.skeletonButton} />
+        <View style={[s0.skeletonButton, placeholder]} />
       </View>
     </View>
   );
@@ -860,12 +872,13 @@ function HotelLoadingSkeleton() {
   );
 }
 function PriceAlert({ product }: { product: Product }) {
+  const { theme } = useAppTheme();
   const flight = product === "flight";
   return (
-    <View style={s0.alert}>
+    <View style={[s0.alert, flight && { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={s0.alertCopy}>
-        <Text style={s0.foundTitle}>{flight ? "Track this route" : "Price alerts"}</Text>
-        <Text style={s0.sub}>
+        <Text style={[s0.foundTitle, flight && { color: theme.textPrimary }]}>{flight ? "Track this route" : "Price alerts"}</Text>
+        <Text style={[s0.sub, flight && { color: theme.textSecondary }]}>
           {flight
             ? "Create a one-time email alert when the fare for this route reaches your target."
             : "Track this search and get notified when prices drop."}
@@ -875,7 +888,7 @@ function PriceAlert({ product }: { product: Product }) {
         accessibilityRole="button"
         accessibilityLabel={flight ? "Create price alert" : "Track prices"}
         onPress={() => router.push("/price-alerts")}
-        style={({ pressed }) => [s0.alertButton, pressed && s0.alertButtonPressed]}
+        style={({ pressed }) => [s0.alertButton, flight && { backgroundColor: theme.surface }, pressed && s0.alertButtonPressed, flight && pressed && theme.dark && { backgroundColor: "#142B55" }]}
       >
         <Bell accessibilityElementsHidden accessible={false} color={ui.blue} size={18} strokeWidth={2.25} />
         <Text style={s0.alertButtonText}>{flight ? "Create price alert" : "Track prices"}</Text>
@@ -883,10 +896,11 @@ function PriceAlert({ product }: { product: Product }) {
     </View>
   );
 }
-export function BottomNav() {
+export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
+  const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   return (
-    <View style={[s0.nav, { paddingBottom: Math.max(inset.bottom, 8) }]}>
+    <View style={[s0.nav, flightResults && { backgroundColor: theme.surface, borderTopColor: theme.border }, { paddingBottom: Math.max(inset.bottom, 8) }]}>
       {[
         ["compass", "Explore"],
         ["trip", "Trips"],
@@ -897,9 +911,9 @@ export function BottomNav() {
         <View key={label} style={s0.navItem}>
           <FlowIcon
             name={icon as never}
-            color={label === "Search" ? ui.blue : ui.muted}
+            color={label === "Search" ? ui.blue : flightResults ? theme.textSecondary : ui.muted}
           />
-          <Text style={[s0.navText, label === "Search" && { color: ui.blue }]}>
+          <Text style={[s0.navText, flightResults && { color: theme.textSecondary }, label === "Search" && { color: ui.blue }]}>
             {label}
           </Text>
         </View>
