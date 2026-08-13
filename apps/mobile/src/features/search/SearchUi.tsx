@@ -17,6 +17,7 @@ import {
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
+import { useAppTheme } from "../../theme/AppTheme";
 import {
   getDateWindow,
   initialDateWindowStart,
@@ -73,8 +74,9 @@ export function TopBar({
   hasUnreadNotifications?: boolean;
   onNotificationsPress?: () => void;
 }) {
+  const { theme } = useAppTheme();
   return (
-    <View style={s.top}>
+    <View style={[s.top, flightResults && { backgroundColor: theme.background }]}>
       <View style={s.topSide}>
         <Pressable
           accessibilityRole="button"
@@ -83,7 +85,7 @@ export function TopBar({
           style={s.hit}
         >
           {flightResults ? (
-            <ArrowLeft size={25} strokeWidth={2} color={ui.navy} />
+            <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
           ) : (
             <FlowIcon name="back" size={25} />
           )}
@@ -104,7 +106,7 @@ export function TopBar({
             disabled={!onNotificationsPress}
             style={s.hit}
           >
-            <Bell size={24} strokeWidth={2} color={ui.navy} />
+            <Bell size={24} strokeWidth={2} color={theme.icon} />
             {hasUnreadNotifications ? <View accessibilityLabel="Unread notifications" style={s.dot} /> : null}
           </Pressable>
         ) : (
@@ -132,14 +134,21 @@ export function Pill({
   flightResultsChevron?: boolean;
   onPress?: () => void;
 }) {
-  const iconColor = active ? ui.blue : ui.navy;
+  const { theme } = useAppTheme();
+  const flightResults = Boolean(flightResultsIcon || flightResultsChevron);
+  const iconColor = active ? ui.blue : flightResults ? theme.icon : ui.navy;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
       onPress={onPress}
-      style={[s.pill, active && s.pillActive]}
+      style={[
+        s.pill,
+        flightResults && { backgroundColor: theme.surface, borderColor: theme.border },
+        active && s.pillActive,
+        flightResults && active && { backgroundColor: theme.dark ? "#142B55" : "#F6F8FF", borderColor: ui.blue },
+      ]}
     >
       {flightResultsIcon === "edit" ? (
         <FilePenLine size={18} strokeWidth={2} color={iconColor} />
@@ -150,7 +159,7 @@ export function Pill({
       ) : null}
       <Text
         numberOfLines={1}
-        style={[s.pillText, active && { color: ui.blue }]}
+        style={[s.pillText, flightResults && { color: theme.textPrimary }, active && { color: ui.blue }]}
       >
         {label}
       </Text>
@@ -179,6 +188,7 @@ export function DateStrip({
   flightResults?: boolean;
   onSelect: (v: string) => void;
 }) {
+  const { theme } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
   // Account for the flight rail's 32px padding and the two gaps between three
   // tiles. Clamping keeps the tiles useful on both compact and wide phones.
@@ -226,14 +236,16 @@ export function DateStrip({
                 s.date,
                 flightResults && s.flightDate,
                 flightResults && { width: flightDateWidth },
+                flightResults && { backgroundColor: theme.surface, borderColor: theme.border },
                 active && s.dateActive,
+                flightResults && active && { backgroundColor: theme.dark ? "#142B55" : "#F5F8FF", borderColor: ui.blue },
               ]}
             >
-              <Text style={s.day}>
+              <Text style={[s.day, flightResults && { color: theme.textSecondary }]}>
                 {x.toLocaleDateString("en-US", { weekday: "short" })}
               </Text>
               <Text
-                style={[s.day, active && { color: ui.blue, fontWeight: "800" }]}
+                style={[s.day, flightResults && { color: theme.textSecondary }, active && { color: ui.blue, fontWeight: "800" }]}
               >
                 {shortDate(iso)}
               </Text>
@@ -243,7 +255,7 @@ export function DateStrip({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={flightResults ? 0.78 : 0.85}
-                  style={[s.datePrice, active && { color: ui.blue }]}
+                  style={[s.datePrice, flightResults && { color: theme.textPrimary }, active && { color: ui.blue }]}
                 >
                   {formattedPrices ? (formattedPrices[i] ?? "—") : money(currency, prices[i])}
                 </Text>
@@ -271,20 +283,23 @@ export function Button({
   onPress,
   disabled = false,
   external = false,
+  flightResults = false,
 }: {
   label: string;
   outline?: boolean;
   onPress?: () => void;
   disabled?: boolean;
   external?: boolean;
+  flightResults?: boolean;
 }) {
+  const { theme } = useAppTheme();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={[s.button, outline && s.outline, disabled && { opacity: 0.45 }]}
+      style={[s.button, outline && s.outline, flightResults && outline && { backgroundColor: theme.surface }, disabled && { opacity: 0.45 }]}
     >
       <View style={s.buttonContent}>
         <Text
@@ -305,13 +320,16 @@ export function Button({
 export function Badge({
   children,
   green = false,
+  flightResults = false,
 }: {
   children: React.ReactNode;
   green?: boolean;
+  flightResults?: boolean;
 }) {
+  const { theme } = useAppTheme();
   return (
-    <View style={[s.badge, green && { backgroundColor: "#EAF8ED" }]}>
-      <Text style={[s.badgeText, green && { color: ui.green }]}>
+    <View style={[s.badge, flightResults && theme.dark && { backgroundColor: "#173568" }, green && { backgroundColor: flightResults && theme.dark ? "#153B2B" : "#EAF8ED" }]}>
+      <Text style={[s.badgeText, flightResults && theme.dark && { color: "#8FB5FF" }, green && { color: flightResults && theme.dark ? "#72D69A" : ui.green }]}>
         {children}
       </Text>
     </View>
@@ -323,20 +341,23 @@ export function Empty({
   retry,
   retryLabel = "Try again",
   edit,
+  flightResults = false,
 }: {
   title: string;
   body: string;
   retry?: () => void;
   retryLabel?: string;
   edit: () => void;
+  flightResults?: boolean;
 }) {
+  const { theme } = useAppTheme();
   return (
     <View style={s.empty}>
       <FlowIcon name="search" size={38} color={ui.blue} />
-      <Text style={s.h2}>{title}</Text>
-      <Text style={s.meta}>{body}</Text>
-      {retry ? <Button label={retryLabel} onPress={retry} /> : null}
-      <Button label="Edit search" outline onPress={edit} />
+      <Text style={[s.h2, flightResults && { color: theme.textPrimary }]}>{title}</Text>
+      <Text style={[s.meta, flightResults && { color: theme.textSecondary }]}>{body}</Text>
+      {retry ? <Button label={retryLabel} onPress={retry} flightResults={flightResults} /> : null}
+      <Button label="Edit search" outline onPress={edit} flightResults={flightResults} />
     </View>
   );
 }
