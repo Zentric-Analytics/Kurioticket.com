@@ -82,7 +82,7 @@ test("live Explore screens prefer imageDestinationId and retain own-ID media fal
 
 test("Explore tab renders content directly without an entry loading state", () => {
   const tab = source("app/(tabs)/explore.tsx");
-  assert.match(tab, /return <ExploreScreen \/>/);
+  assert.match(tab, /return <ExploreScreen\b[^>]*\/>/);
   assert.doesNotMatch(tab, /ENTRY_DURATION_MS|Animated|AccessibilityInfo|loadingTitle|showEntry/);
 });
 
