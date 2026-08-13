@@ -40,13 +40,13 @@ export const getDealsJourneyStepIds = (
   mode: DealsPackageMode,
 ): DealsJourneyStepId[] => [...getIncludedProductList(mode), "review"];
 
-export function createDealsJourneyProgress(
+function createDealsJourneyProgressFromIds(
   mode: DealsPackageMode,
+  ids: DealsJourneyStepId[],
   requested: Partial<
     Record<DealsJourneyStepId, Omit<DealsJourneyStep, "id">>
   > = {},
 ): DealsJourneyProgress {
-  const ids = getDealsJourneyStepIds(mode);
   const requestedCurrent = ids.find(
     (id) => requested[id]?.status === "current",
   );
@@ -75,6 +75,19 @@ export function createDealsJourneyProgress(
     currentStepIndex: currentStepIndex + 1,
     total: steps.length,
   };
+}
+
+export function createDealsJourneyProgress(
+  mode: DealsPackageMode,
+  requested: Partial<
+    Record<DealsJourneyStepId, Omit<DealsJourneyStep, "id">>
+  > = {},
+): DealsJourneyProgress {
+  return createDealsJourneyProgressFromIds(
+    mode,
+    getDealsJourneyStepIds(mode),
+    requested,
+  );
 }
 
 /** Product-oriented chrome derived from the same V2 plan used by the journey. */
@@ -121,14 +134,16 @@ export function getDealsJourneyProgressV2(
 
 export function getHandoffReadyDealsJourneyProgress(
   plan: Pick<DealsTripPlan, "mode" | "hotel" | "flight" | "car">,
+  journey: "guided" | "legacy" = "legacy",
 ): DealsJourneyProgress {
+  const ids: DealsJourneyStepId[] = [
+    ...getIncludedProductList(plan.mode),
+    ...(journey === "guided" ? (["review"] as const) : []),
+  ];
   const statuses = Object.fromEntries(
-    getIncludedProductList(plan.mode).map((id) => [
-      id,
-      { status: "completed" as const },
-    ]),
+    ids.map((id) => [id, { status: "completed" as const }]),
   ) as Partial<Record<DealsJourneyStepId, Omit<DealsJourneyStep, "id">>>;
-  return createDealsJourneyProgress(plan.mode, statuses);
+  return createDealsJourneyProgressFromIds(plan.mode, ids, statuses);
 }
 
 export function getGuidedDealsJourneyProgress(

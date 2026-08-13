@@ -44,7 +44,7 @@ test("guided handoff omits redundant guidance while preserving the handoff contr
   assert.match(experience, /<DealsJourneyProgress/);
   assert.match(
     experience,
-    /progress=\{getHandoffReadyDealsJourneyProgress\(plan\)\}/,
+    /progress=\{getHandoffReadyDealsJourneyProgress\([\s\S]*guided \? "guided" : "legacy"/,
   );
   assert.match(experience, /<ol\s+id="provider-steps"/);
   assert.match(experience, /<DealsHandoffStepCard/);

@@ -445,7 +445,7 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
     >
       {ready && plan && (
         <DealsJourneyBreadcrumbs
-          progress={getHandoffReadyDealsJourneyProgress(plan)}
+          progress={getHandoffReadyDealsJourneyProgress(plan, "guided")}
           page="complete"
           search={search}
           t={t}

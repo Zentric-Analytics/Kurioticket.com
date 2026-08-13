@@ -8,6 +8,7 @@ import {
   getDealsJourneyProgressV2,
 } from "./dealsJourneyProgress";
 import { createDealsTripPlan } from "./dealsTripPlan";
+import { getIncludedProductList } from "./dealsSearchParams";
 
 test("every mode has only selected products in canonical order", () => {
   assert.deepEqual(getDealsJourneyStepIds("hotel-flight"), [
@@ -159,27 +160,56 @@ test("needs-attention and summaries survive while excluded product status is nor
   assert.equal(value.steps[0].status, "needs-attention");
   assert.equal(value.steps[0].summary, "Choose another room");
 });
-test("ready handoff completes products and makes Review current", () => {
-  const plan = createDealsTripPlan({
-    mode: "flight-car",
-    searchFingerprint: "x",
-    resultsPath: "/deals/results",
+for (const mode of [
+  "hotel-flight",
+  "flight-car",
+  "hotel-flight-car",
+  "hotel-car",
+] as const) {
+  test(`${mode} guided Review is current before handoff`, () => {
+    const value = getGuidedDealsJourneyProgress("review", mode, {
+      hotel: {} as never,
+      flight: {} as never,
+      car: {} as never,
+    });
+    assert.equal(value.steps.at(-1)?.id, "review");
+    assert.equal(value.steps.at(-1)?.status, "current");
   });
-  const value = getHandoffReadyDealsJourneyProgress({
-    ...plan,
-    flight: {} as never,
-    car: {} as never,
+
+  test(`${mode} guided handoff completes products and Review`, () => {
+    const plan = createDealsTripPlan({
+      mode,
+      searchFingerprint: "x",
+      resultsPath: "/deals/results",
+    });
+    const value = getHandoffReadyDealsJourneyProgress(plan, "guided");
+    assert.ok(value.steps.every((step) => step.status === "completed"));
+    assert.equal(value.steps.at(-1)?.id, "review");
+    assert.equal(value.steps.at(-1)?.status, "completed");
+    assert.equal(
+      value.steps.some((step) => step.status === "current"),
+      false,
+    );
   });
-  assert.deepEqual(
-    value.steps.map((step) => [step.id, step.status]),
-    [
-      ["flight", "completed"],
-      ["car", "completed"],
-      ["review", "current"],
-    ],
-  );
-  assert.equal(value.currentStepIndex, 3);
-});
+
+  test(`${mode} legacy handoff keeps product-only progress`, () => {
+    const plan = createDealsTripPlan({
+      mode,
+      searchFingerprint: "x",
+      resultsPath: "/deals/results",
+    });
+    const value = getHandoffReadyDealsJourneyProgress(plan);
+    assert.deepEqual(
+      value.steps.map((step) => step.id),
+      [...getIncludedProductList(mode)],
+    );
+    assert.ok(value.steps.every((step) => step.status === "completed"));
+    assert.equal(
+      value.steps.some((step) => step.id === "review"),
+      false,
+    );
+  });
+}
 test("guided results and details stages use truthful progress labels", () => {
   for (const [stage, expected] of [
     ["hotel-results", "choose-property"],
