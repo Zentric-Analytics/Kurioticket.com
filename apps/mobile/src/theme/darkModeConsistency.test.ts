@@ -68,6 +68,27 @@ test("Explore region browse, search results, and invalid state use semantic them
   assert.doesNotMatch(region, /backgroundColor: (?:"white"|"#FAFBFF"|"#E7ECF5")/);
 });
 
+test("flight details themes every booking surface without changing its route or layout", () => {
+  const route = read("app/flight-details.tsx");
+  const results = read("src/features/search/ApprovedResultsScreen.tsx");
+  const details = read("src/features/search/ApprovedDetailScreen.tsx");
+  const searchUi = read("src/features/search/SearchUi.tsx");
+
+  assert.match(route, /ApprovedDetailScreen product="flight"/);
+  assert.match(results, /pathname: "\/flight-details"/);
+  assert.match(details, /useAppTheme/);
+  assert.match(details, /backgroundColor: theme\.background/);
+  assert.match(details, /backgroundColor: theme\.surface/);
+  assert.match(details, /borderColor: theme\.border/);
+  assert.match(details, /borderTopColor: theme\.border/);
+  assert.match(details, /color: theme\.textPrimary/);
+  assert.match(details, /color: theme\.textSecondary/);
+  assert.match(details, /color=\{theme\.icon\}/);
+  assert.match(details, /theme\.dark && \{ backgroundColor: "#153B2B" \}/);
+  assert.match(searchUi, /backgroundColor: flightResults \? theme\.background : theme\.surface/);
+  assert.match(searchUi, /<FlowIcon name="(?:heart|share)" color=\{theme\.icon\}/);
+});
+
 test("product search panels and picker sheets have theme-aware inputs, placeholders, and modals", () => {
   for (const file of ["FlightSearchPanel.tsx", "HotelSearchPanel.tsx", "CarSearchPanel.tsx"]) {
     const source = read(`src/features/flow/${file}`);
