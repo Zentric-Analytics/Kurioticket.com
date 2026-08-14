@@ -595,30 +595,34 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
         </Pressable>
       </View>
       <View style={[s0.flightMain, narrowCard && s0.flightMainNarrow]}>
-        <View style={s0.flightJourney}>
-          <AirlineLogo
-            airlineName={result.airlineName}
-            logoUrl={result.airlineLogo}
-          />
-          <View style={s0.departureBlock}>
-            <Text style={[s0.nameSmall, { color: theme.textPrimary }]} numberOfLines={1} ellipsizeMode="tail">
+        <View style={s0.flightDetails}>
+          <View style={s0.airlineIdentityRow}>
+            <AirlineLogo
+              airlineName={result.airlineName}
+              logoUrl={result.airlineLogo}
+            />
+            <Text style={[s0.airlineName, { color: theme.textPrimary }]}>
               {result.airlineName}
             </Text>
-            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9}>{clock(result.departureTime)}</Text>
-            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.originAirport}</Text>
           </View>
-          <View style={s0.timeline}>
-            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.duration}</Text>
-            <View style={s0.timelineTrack}>
-              <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
-              <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
-              <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+          <View style={s0.journeyRow}>
+            <View style={s0.departureColumn}>
+              <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(result.departureTime)}</Text>
+              <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.originAirport}</Text>
             </View>
-            <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
-          </View>
-          <View style={s0.arrivalBlock}>
-            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9}>{clock(result.arrivalTime)}</Text>
-            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.destinationAirport}</Text>
+            <View style={s0.timelineColumn}>
+              <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.duration}</Text>
+              <View style={s0.timelineTrack}>
+                <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+                <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
+                <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+              </View>
+              <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
+            </View>
+            <View style={s0.arrivalColumn}>
+              <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(result.arrivalTime)}</Text>
+              <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.destinationAirport}</Text>
+            </View>
           </View>
         </View>
         <View style={[s0.priceBox, narrowCard && s0.priceBoxNarrow]}>
@@ -826,10 +830,12 @@ function FlightLoadingSkeleton() {
         <View style={[s0.skeletonBadge, placeholder]} />
         <View style={[s0.skeletonHeart, placeholder]} />
       </View>
-      <View style={s0.skeletonFlightRow}>
+      <View style={s0.skeletonIdentityRow}>
         <View style={[s0.skeletonLogo, placeholder]} />
+        <SkeletonLine flightResults style={s0.skeletonName} />
+      </View>
+      <View style={s0.skeletonFlightRow}>
         <View style={s0.skeletonDeparture}>
-          <SkeletonLine flightResults style={s0.skeletonName} />
           <SkeletonLine flightResults style={s0.skeletonTime} />
           <SkeletonLine flightResults style={s0.skeletonAirport} />
         </View>
@@ -1014,12 +1020,14 @@ const s0 = StyleSheet.create({
   resultBadgeTextGreen: { color: ui.green },
   flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
   flightMainNarrow: { flexDirection: "column", alignItems: "stretch", gap: 4 },
-  flightJourney: { flex: 1, minWidth: 0, maxWidth: 290, flexDirection: "row", alignItems: "center", gap: 3 },
-  nameSmall: { maxWidth: "100%", fontSize: 12, color: ui.navy, fontWeight: "700" },
-  departureBlock: { flexBasis: 96, minWidth: 96, flexShrink: 0 },
-  arrivalBlock: { width: 72, flexShrink: 0 },
+  flightDetails: { flex: 1, minWidth: 0, maxWidth: 258, gap: 6 },
+  airlineIdentityRow: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 8 },
+  airlineName: { flex: 1, minWidth: 0, fontSize: 12, lineHeight: 16, color: ui.navy, fontWeight: "700" },
+  journeyRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  departureColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
+  arrivalColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0, alignItems: "flex-end" },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
-  timeline: { flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2, alignItems: "center" },
+  timelineColumn: { flex: 1, minWidth: 70, maxWidth: 90, alignItems: "center" },
   timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 2, marginVertical: 1 },
   line: {
     flex: 1,
@@ -1112,6 +1120,7 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  skeletonIdentityRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   skeletonBadge: { width: 92, height: 23, borderRadius: 12, backgroundColor: "#E7EBF1" },
   skeletonHeart: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#E7EBF1" },
   skeletonFlightRow: { flexDirection: "row", alignItems: "center", gap: 6 },
@@ -1121,7 +1130,7 @@ const s0 = StyleSheet.create({
   skeletonRoute: { flex: 1, minWidth: 38, maxWidth: 95, alignItems: "center", gap: 6 },
   skeletonPrice: { width: 52, flexShrink: 0, alignItems: "flex-end", gap: 6 },
   skeletonLine: { height: 7, borderRadius: 4, backgroundColor: "#E7EBF1" },
-  skeletonName: { width: "78%" },
+  skeletonName: { width: "54%" },
   skeletonTime: { width: "70%", height: 14 },
   skeletonAirport: { width: "48%" },
   skeletonDuration: { width: "65%", height: 6 },
