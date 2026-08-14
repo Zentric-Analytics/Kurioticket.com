@@ -31,7 +31,12 @@ const slice = (
       arriving_at: arrival,
       origin: { iata_code: origin },
       destination: { iata_code: destination },
-      marketing_carrier: { name: "Example Air", iata_code: "EX" },
+      marketing_carrier: {
+        name: "Example Air",
+        iata_code: "EX",
+        logo_symbol_url: "https://assets.duffel.com/airlines/EX.svg",
+        logo_lockup_url: "https://assets.duffel.com/airlines/EX-lockup.svg",
+      },
       marketing_carrier_flight_number: "101",
       passengers: [
         {
@@ -64,9 +69,102 @@ test("normalizes a complete one-way Duffel provider offer", () => {
   );
   assert.equal(result.price, 700.25);
   assert.equal(result.currency, "EUR");
+  assert.equal(result.airlineName, "Example Air");
+  assert.equal(
+    result.airlineLogo,
+    "https://assets.duffel.com/airlines/EX.svg",
+  );
   assert.equal(result.legs?.length, 1);
   assert.match(result.baggageInfo, /checked bag/);
   assert.match(result.refundInfo, /Refundable/);
+});
+
+test("keeps the logo aligned with the displayed Duffel carrier identity", () => {
+  const raw = offer();
+  const segment = raw.slices[0].segments[0];
+  Object.assign(segment, {
+    marketing_carrier: {
+      name: "British Airways",
+      iata_code: "BA",
+      logo_lockup_url: "https://assets.duffel.com/airlines/BA-lockup.svg",
+    },
+    operating_carrier: {
+      name: "American Airlines",
+      iata_code: "AA",
+      logo_symbol_url: "https://assets.duffel.com/airlines/AA.svg",
+    },
+  });
+
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.equal(result?.airlineName, "British Airways");
+  assert.equal(
+    result?.airlineLogo,
+    "https://assets.duffel.com/airlines/BA-lockup.svg",
+  );
+});
+
+test("falls back through operating carrier and owner without mixing logos", () => {
+  const raw = offer();
+  const segment = raw.slices[0].segments[0];
+  Object.assign(segment, {
+    marketing_carrier: undefined,
+    operating_carrier: {
+      name: "Lufthansa",
+      iata_code: "LH",
+      logo_symbol_url: "https://assets.duffel.com/airlines/LH.svg",
+    },
+  });
+  assert.equal(
+    normalizeFlightResult("Duffel", raw, search("one-way"))?.airlineLogo,
+    "https://assets.duffel.com/airlines/LH.svg",
+  );
+
+  Object.assign(segment, { operating_carrier: undefined });
+  Object.assign(raw, {
+    owner: {
+      name: "Duffel Airways",
+      iata_code: "ZZ",
+      logo_symbol_url: "https://assets.duffel.com/airlines/ZZ.svg",
+    },
+  });
+  const ownerResult = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.equal(ownerResult?.airlineName, "Duffel Airways");
+  assert.equal(ownerResult?.airlineLogo, "https://assets.duffel.com/airlines/ZZ.svg");
+});
+
+test("omits missing and non-public carrier logo URLs", () => {
+  const raw = offer();
+  raw.slices[0].segments[0].marketing_carrier.logo_symbol_url = "not-a-url";
+  raw.slices[0].segments[0].marketing_carrier.logo_lockup_url = "";
+  assert.equal(
+    normalizeFlightResult("Duffel", raw, search("one-way"))?.airlineLogo,
+    undefined,
+  );
+});
+
+test("passes through live symbol logos without an airline catalogue", () => {
+  for (const [name, code] of [
+    ["American Airlines", "AA"],
+    ["British Airways", "BA"],
+    ["Lufthansa", "LH"],
+    ["Air France", "AF"],
+    ["Emirates", "EK"],
+  ] as const) {
+    const raw = offer();
+    Object.assign(raw.slices[0].segments[0], {
+      marketing_carrier: {
+        name,
+        iata_code: code,
+        logo_symbol_url: `https://assets.duffel.com/airlines/${code}.svg`,
+      },
+    });
+    const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+    assert.equal(result?.airlineName, name);
+    assert.equal(
+      result?.airlineLogo,
+      `https://assets.duffel.com/airlines/${code}.svg`,
+    );
+  }
 });
 
 test("normalizes both legs of a round-trip offer", () => {

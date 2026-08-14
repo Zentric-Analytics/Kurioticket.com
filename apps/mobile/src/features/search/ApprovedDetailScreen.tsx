@@ -21,6 +21,7 @@ import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useAppTheme } from "../../theme/AppTheme";
+import { AirlineLogo } from "./AirlineLogo";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -146,10 +147,16 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
                   day: "numeric",
                 })}
               </Text>
-              <Text style={[d.provider, { color: theme.textPrimary }]}>
-                {result.airlineName}
-                {result.flightNumber ? `  ·  ${result.flightNumber}` : ""}
-              </Text>
+              <View style={d.carrierRow}>
+                <AirlineLogo
+                  airlineName={result.airlineName}
+                  logoUrl={result.airlineLogo}
+                />
+                <Text style={[d.provider, { color: theme.textPrimary }]}>
+                  {result.airlineName}
+                  {result.flightNumber ? `  ·  ${result.flightNumber}` : ""}
+                </Text>
+              </View>
               <View style={d.legRoute}>
         <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[d.time, { color: theme.textPrimary }]}>{clock(leg.departureTime)}</Text>
@@ -556,6 +563,7 @@ const d = StyleSheet.create({
   },
   blue: { color: ui.blue, fontSize: 11, fontWeight: "800" },
   provider: { fontSize: 13, fontWeight: "800", color: ui.navy },
+  carrierRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   legRoute: { flexDirection: "row", alignItems: "center" },
   time: { fontSize: 19, fontWeight: "900", color: ui.navy },
   airport: { fontSize: 12, color: ui.muted },

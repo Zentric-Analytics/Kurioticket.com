@@ -99,9 +99,11 @@ test("airline names receive protected width and only truncate as a last resort",
 });
 
 test("narrow flight cards reserve deterministic space for every journey section", () => {
+  const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
   assert.match(source, /flightJourney: \{[^}]*gap: 3 \}/);
-  assert.match(source, /airline: \{ width: 32, height: 32, flexShrink: 0/);
-  assert.match(source, /airlineFallback: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
+  assert.match(card, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
+  assert.match(airlineLogo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
+  assert.match(airlineLogo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(source, /timeline: \{ flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2/);
   assert.match(source, /arrivalBlock: \{ width: 72, flexShrink: 0 \}/);
 
@@ -114,6 +116,16 @@ test("narrow flight cards reserve deterministic space for every journey section"
       `${viewport}px fits logo, departure, route, and arrival minimums without overlap`,
     );
   }
+});
+
+test("live airline logos support SVG and raster URLs with URL-scoped fallback", () => {
+  const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
+  assert.match(airlineLogo, /import \{ SvgUri \} from "react-native-svg"/);
+  assert.match(airlineLogo, /\.svg\(\?:\[\?#\]\|\$\)/);
+  assert.match(airlineLogo, /resizeMode="contain"/);
+  assert.equal(airlineLogo.match(/onError=\{\(\) => setFailedUrl\(visibleUrl\)\}/g)?.length, 2);
+  assert.match(airlineLogo, /useEffect\(\(\) => \{[\s\S]*setFailedUrl\(null\);[\s\S]*\}, \[visibleUrl\]\)/);
+  assert.match(airlineLogo, /\{airlineName\.trim\(\)\.slice\(0, 2\)\}/);
 });
 
 test("flight journey caps surplus width instead of stretching the departure-to-arrival relationship", () => {
