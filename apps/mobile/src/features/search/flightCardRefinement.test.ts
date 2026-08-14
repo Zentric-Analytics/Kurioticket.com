@@ -50,9 +50,9 @@ test("fare-rule summary classifies varied provider language without exact matchi
   assert.equal(summarizeFareRules(), "Fare rules apply");
 });
 
-test("flight card keeps narrow layouts compact without height-growing text", () => {
+test("flight card keeps fixed footer content compact while airline identity may grow", () => {
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
-  assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\}/);
+  assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\}>/);
   assert.equal(card.match(/style=\{\[s0\.benefit, \{ color: theme\.textSecondary \}\]\} numberOfLines=\{1\}/g)?.length, 3);
   assert.match(source, /card: \{[\s\S]*?padding: 13,[\s\S]*?gap: 10,/);
   assert.match(source, /benefits: \{[\s\S]*?paddingTop: 8,[\s\S]*?flexDirection: "row"/);
@@ -67,6 +67,7 @@ test("flight card keeps narrow layouts compact without height-growing text", () 
 });
 
 test("flight loading skeleton mirrors the stacked benefit footer", () => {
+  assert.match(source, /<View style=\{s0\.skeletonIdentityRow\}>[\s\S]*s0\.skeletonLogo[\s\S]*s0\.skeletonName[\s\S]*<View style=\{s0\.skeletonFlightRow\}>/);
   assert.match(source, /skeletonBenefitLines: \{ flex: 1, gap: 6 \}/);
   assert.match(source, /skeletonBenefitLine: \{ width: "82%" \}/);
   assert.match(source, /skeletonButton: \{ width: 96, height: 44/);
@@ -76,8 +77,8 @@ test("flight card reserves a flexible single-line price column across supported 
   assert.match(card, /const \{ width \} = useWindowDimensions\(\);/);
   assert.match(card, /const narrowCard = width < 430/);
   assert.match(card, /style=\{\[s0\.flightMain, narrowCard && s0\.flightMainNarrow\]\}/);
-  assert.match(source, /flightJourney: \{ flex: 1, minWidth: 0, maxWidth: 290, flexDirection: "row"/);
-  assert.match(source, /timeline: \{ flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2/);
+  assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0, maxWidth: 258, gap: 6 \}/);
+  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 70, maxWidth: 90, alignItems: "center" \}/);
   assert.match(source, /priceBox: \{ flexBasis: 104, minWidth: 96, maxWidth: 118, flexShrink: 0/);
   assert.match(source, /priceBoxNarrow: \{ flexBasis: "auto", minWidth: 0, maxWidth: "100%" \}/);
   assert.doesNotMatch(source, /priceBox: \{[^}]*maxWidth: 72/);
@@ -87,33 +88,47 @@ test("flight card reserves a flexible single-line price column across supported 
   }
 });
 
-test("airline names receive protected width and only truncate as a last resort", () => {
-  assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} ellipsizeMode="tail"/);
-  assert.match(source, /nameSmall: \{ maxWidth: "100%"/);
-  assert.match(source, /departureBlock: \{ flexBasis: 96, minWidth: 96, flexShrink: 0 \}/);
+test("airline identity renders every full carrier name without a truncation contract", () => {
+  const airlineText = /<Text style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\}>([\s\S]*?)<\/Text>/.exec(card)?.[0] ?? "";
+  assert.match(airlineText, /\{result\.airlineName\}/);
+  assert.doesNotMatch(airlineText, /numberOfLines/);
+  assert.doesNotMatch(airlineText, /ellipsizeMode/);
+  assert.doesNotMatch(source, /airlineName: \{[^}]*maxWidth/);
+  assert.match(source, /airlineName: \{ flex: 1, minWidth: 0,[^}]*lineHeight: 16/);
+  assert.match(card, /<View style=\{s0\.airlineIdentityRow\}>[\s\S]*?<AirlineLogo[\s\S]*?<Text style=\{\[s0\.airlineName/);
 
-  for (const airlineName of ["Duffel Airways", "British Airways", "Brussels Airlines"]) {
-    assert.ok(airlineName.length <= 17, `${airlineName} fits the protected normal-name allowance`);
+  for (const airlineName of [
+    "Qatar Airways",
+    "British Airways",
+    "American Airlines",
+    "Brussels Airlines",
+    "All Nippon Airways",
+    "Scandinavian Airlines",
+    "Royal Brunei Airlines",
+    "Duffel Airways",
+    "The Deliberately Extremely Long International Airways Company",
+  ]) {
+    assert.equal(airlineName.includes("…"), false, `${airlineName} is retained as a complete Text value`);
   }
-  assert.ok("International Airways Worldwide".length > 17, "exceptionally long names still truncate on one line");
 });
 
 test("narrow flight cards reserve deterministic space for every journey section", () => {
   const airlineLogo = readFileSync(resolve("src/features/search/AirlineLogo.tsx"), "utf8");
-  assert.match(source, /flightJourney: \{[^}]*gap: 3 \}/);
+  assert.match(source, /journeyRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
   assert.match(card, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
   assert.match(airlineLogo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(airlineLogo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
-  assert.match(source, /timeline: \{ flex: 1, minWidth: 0, maxWidth: 81, paddingHorizontal: 2/);
-  assert.match(source, /arrivalBlock: \{ width: 72, flexShrink: 0 \}/);
+  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 70, maxWidth: 90/);
+  assert.match(source, /departureColumn: \{ flexBasis: 78, minWidth: 78, flexShrink: 0 \}/);
+  assert.match(source, /arrivalColumn: \{ flexBasis: 78, minWidth: 78, flexShrink: 0, alignItems: "flex-end" \}/);
 
-  const readableMinimums = 32 + 96 + 48 + 72;
-  const interSectionGaps = 3 * 3;
+  const readableMinimums = 78 + 70 + 78;
+  const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const cardContentWidth = viewport - 36 - 26;
     assert.ok(
       cardContentWidth >= readableMinimums + interSectionGaps,
-      `${viewport}px fits logo, departure, route, and arrival minimums without overlap`,
+      `${viewport}px fits departure, route, and arrival minimums without overlap`,
     );
   }
 });
@@ -129,26 +144,25 @@ test("live airline logos support SVG and raster URLs with URL-scoped fallback", 
 });
 
 test("flight journey caps surplus width instead of stretching the departure-to-arrival relationship", () => {
-  const logoWidth = 32;
-  const departureWidth = 96;
-  const arrivalWidth = 72;
-  const interSectionGaps = 3 * 3;
-  const maximumTimelineWidth = 81;
-  const journeyMaximumWidth = logoWidth + departureWidth + arrivalWidth + interSectionGaps + maximumTimelineWidth;
+  const departureWidth = 78;
+  const arrivalWidth = 78;
+  const interSectionGaps = 6 * 2;
+  const maximumTimelineWidth = 90;
+  const journeyMaximumWidth = departureWidth + arrivalWidth + interSectionGaps + maximumTimelineWidth;
 
-  assert.equal(journeyMaximumWidth, 290);
+  assert.equal(journeyMaximumWidth, 258);
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const cardContentWidth = viewport - 36 - 26;
     const availableJourneyWidth = viewport < 430 ? cardContentWidth : cardContentWidth - 104 - 6;
     const renderedJourneyWidth = Math.min(availableJourneyWidth, journeyMaximumWidth);
-    const renderedTimelineWidth = renderedJourneyWidth - logoWidth - departureWidth - arrivalWidth - interSectionGaps;
-    assert.ok(renderedTimelineWidth >= 48, `${viewport}px keeps a readable route line`);
+    const renderedTimelineWidth = renderedJourneyWidth - departureWidth - arrivalWidth - interSectionGaps;
+    assert.ok(renderedTimelineWidth >= 70, `${viewport}px keeps a readable route line`);
     assert.ok(renderedTimelineWidth <= maximumTimelineWidth, `${viewport}px caps excess route-line space`);
   }
 });
 
 test("flight times, airports, duration, and stop labels remain single-line", () => {
-  assert.equal(card.match(/style=\{\[s0\.time, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.9\}/g)?.length, 2);
+  assert.equal(card.match(/style=\{\[s0\.time, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\}/g)?.length, 2);
   assert.match(card, /\{result\.duration\}<\/Text>/);
   assert.match(card, /\{result\.originAirport\}<\/Text>/);
   assert.match(card, /\{result\.destinationAirport\}<\/Text>/);
