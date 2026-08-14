@@ -24,6 +24,22 @@ const airlineNames: Record<string, string> = {
   WN: "Southwest Airlines",
 };
 
+type DuffelCarrier = {
+  id?: string;
+  name?: string;
+  iata_code?: string;
+  logo_symbol_url?: string | null;
+  logo_lockup_url?: string | null;
+};
+
+const carrierWithName = (carrier?: DuffelCarrier) =>
+  carrier?.name?.trim() ? carrier : undefined;
+
+const cleanPublicUrl = (value?: string | null) => {
+  const url = value?.trim();
+  return url && /^https:\/\//i.test(url) ? url : undefined;
+};
+
 export function normalizeFlightResult(
   provider: "Duffel",
   raw: unknown,
@@ -41,7 +57,7 @@ function normalizeDuffelFlight(
     expires_at?: string;
     total_amount?: string;
     total_currency?: string;
-    owner?: { name?: string; iata_code?: string };
+    owner?: DuffelCarrier;
     conditions?: {
       change_before_departure?: {
         allowed?: boolean;
@@ -65,8 +81,8 @@ function normalizeDuffelFlight(
         arriving_at?: string;
         origin?: { iata_code?: string; name?: string };
         destination?: { iata_code?: string; name?: string };
-        operating_carrier?: { name?: string; iata_code?: string };
-        marketing_carrier?: { name?: string; iata_code?: string };
+        operating_carrier?: DuffelCarrier;
+        marketing_carrier?: DuffelCarrier;
         marketing_carrier_flight_number?: string;
         passengers?: Array<{
           cabin_class?: string;
@@ -92,16 +108,23 @@ function normalizeDuffelFlight(
   )
     return null;
 
+  // Keep the public logo tied to the exact carrier identity used for the label.
+  // Duffel normally supplies a marketing carrier, with operating carrier and
+  // offer owner acting as progressively broader fallbacks.
+  const displayedCarrier =
+    carrierWithName(first.marketing_carrier) ||
+    carrierWithName(first.operating_carrier) ||
+    carrierWithName(offer.owner);
   const carrier =
+    displayedCarrier?.iata_code ||
     first.marketing_carrier?.iata_code ||
     first.operating_carrier?.iata_code ||
     "";
   const airlineName =
-    first.marketing_carrier?.name ||
-    first.operating_carrier?.name ||
-    offer.owner?.name ||
-    airlineNames[carrier] ||
-    "Airline";
+    displayedCarrier?.name || airlineNames[carrier] || "Airline";
+  const airlineLogo =
+    cleanPublicUrl(displayedCarrier?.logo_symbol_url) ||
+    cleanPublicUrl(displayedCarrier?.logo_lockup_url);
   const cabinClass =
     formatDuffelCabin(first.passengers?.[0]?.cabin_class) || search.cabinClass;
   const baggageInfo = buildDuffelBaggageInfo(
@@ -117,6 +140,7 @@ function normalizeDuffelFlight(
     providerOfferId,
     providerExpiresAt,
     airlineName,
+    airlineLogo,
     flightNumber:
       `${carrier}${first.marketing_carrier_flight_number || ""}`.trim(),
     originAirport: primaryLeg.originAirport,
@@ -150,6 +174,7 @@ function buildFlight(input: {
   providerOfferId?: string;
   providerExpiresAt?: number;
   airlineName: string;
+  airlineLogo?: string;
   flightNumber?: string;
   originAirport: string;
   destinationAirport: string;
@@ -174,7 +199,7 @@ function buildFlight(input: {
     id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,
     provider: input.provider,
     airlineName: input.airlineName,
-    airlineLogo: undefined,
+    airlineLogo: input.airlineLogo,
     flightNumber: input.flightNumber,
     originAirport: input.originAirport,
     destinationAirport: input.destinationAirport,

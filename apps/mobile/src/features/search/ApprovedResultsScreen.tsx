@@ -75,6 +75,7 @@ import {
 import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { useSavedFlights } from "../../storage/useSavedFlights";
+import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
 
 type Product = "flight" | "hotel";
@@ -595,13 +596,10 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
       </View>
       <View style={[s0.flightMain, narrowCard && s0.flightMainNarrow]}>
         <View style={s0.flightJourney}>
-          {result.airlineLogo ? (
-            <Image source={{ uri: result.airlineLogo }} style={s0.airline} />
-          ) : (
-            <View style={[s0.airlineFallback, { backgroundColor: theme.background, borderColor: theme.border, borderWidth: 1 }]}>
-              <Text style={[s0.airlineFallbackText, { color: theme.textPrimary }]}>{result.airlineName.slice(0, 2)}</Text>
-            </View>
-          )}
+          <AirlineLogo
+            airlineName={result.airlineName}
+            logoUrl={result.airlineLogo}
+          />
           <View style={s0.departureBlock}>
             <Text style={[s0.nameSmall, { color: theme.textPrimary }]} numberOfLines={1} ellipsizeMode="tail">
               {result.airlineName}
@@ -1017,17 +1015,6 @@ const s0 = StyleSheet.create({
   flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
   flightMainNarrow: { flexDirection: "column", alignItems: "stretch", gap: 4 },
   flightJourney: { flex: 1, minWidth: 0, maxWidth: 290, flexDirection: "row", alignItems: "center", gap: 3 },
-  airline: { width: 32, height: 32, flexShrink: 0, resizeMode: "contain" },
-  airlineFallback: {
-    width: 32,
-    height: 32,
-    flexShrink: 0,
-    borderRadius: 9,
-    backgroundColor: "#EEF2F8",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  airlineFallbackText: { color: ui.navy, fontSize: 12, fontWeight: "800" },
   nameSmall: { maxWidth: "100%", fontSize: 12, color: ui.navy, fontWeight: "700" },
   departureBlock: { flexBasis: 96, minWidth: 96, flexShrink: 0 },
   arrivalBlock: { width: 72, flexShrink: 0 },
