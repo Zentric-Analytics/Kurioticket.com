@@ -20,6 +20,7 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
+import { useAppTheme } from "../../theme/AppTheme";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -37,6 +38,7 @@ export function ApprovedDetailScreen({
 }: {
   product: "flight" | "hotel";
 }) {
+  const { theme } = useAppTheme();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && params.visual === "1";
@@ -49,11 +51,11 @@ export function ApprovedDetailScreen({
       : undefined);
   if (!value)
     return (
-      <SafeAreaView style={d.safe}>
+      <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]}>
         <TopBar detail />
         <View style={d.missing}>
-          <Text style={d.h2}>This offer is no longer available</Text>
-          <Text style={d.meta}>Return to results and refresh the search.</Text>
+          <Text style={[d.h2, { color: theme.textPrimary }]}>This offer is no longer available</Text>
+          <Text style={[d.meta, { color: theme.textSecondary }]}>Return to results and refresh the search.</Text>
           <Button label="Back to results" onPress={() => router.back()} />
         </View>
       </SafeAreaView>
@@ -66,6 +68,7 @@ export function ApprovedDetailScreen({
 }
 function FlightDetail({ result, params }: { result: FlightResult; params: Record<string, string | string[]> }) {
   const inset = useSafeAreaInsets();
+  const { theme } = useAppTheme();
   const legs = result.legs?.length
     ? result.legs
     : [
@@ -100,41 +103,41 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
     }
   };
   return (
-    <SafeAreaView style={d.safe} edges={["top"]}>
+    <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]} edges={["top"]}>
       <TopBar detail />
       <View style={d.routeRow}>
         <View style={d.routeCopy}>
-          <Text style={d.route}>
+          <Text style={[d.route, { color: theme.textPrimary }]}>
             {airportLabel(result.originAirport)} ⇄ {airportLabel(result.destinationAirport)}
           </Text>
-          <Text style={d.meta}>
+          <Text style={[d.meta, { color: theme.textSecondary }]}>
             {params.departureDate
               ? `${shortDate(String(params.departureDate))} – ${shortDate(String(params.returnDate || ""))} · `
               : ""}
             {params.travelers || params.adults || 1} Traveler · {result.cabinClass.replace(/-/g, " ")}
           </Text>
         </View>
-        <Button label="Edit search" outline onPress={() => router.back()} />
+        <Button label="Edit search" outline flightResults onPress={() => router.back()} />
       </View>
       {/free|refund/i.test(result.refundInfo) ? (
-        <View style={d.reassure}>
-          <FlowIcon name="shield" color={ui.green} />
+        <View style={[d.reassure, theme.dark && { backgroundColor: "#153B2B" }]}>
+          <FlowIcon name="shield" color={theme.dark ? "#72D69A" : ui.green} />
           <View>
-            <Text style={d.green}>{result.refundInfo}</Text>
-            <Text style={d.meta}>Book with confidence</Text>
+            <Text style={[d.green, theme.dark && { color: "#72D69A" }]}>{result.refundInfo}</Text>
+            <Text style={[d.meta, { color: theme.textSecondary }]}>Book with confidence</Text>
           </View>
         </View>
       ) : null}
       <ScrollView
         contentContainerStyle={[d.body, { paddingBottom: 130 + inset.bottom }]}
       >
-        <View style={d.section}>
+        <View style={[d.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <View style={d.sectionHead}>
-            <Text style={d.h2}>Flight details</Text>
-            <Badge>★ Best overall</Badge>
+            <Text style={[d.h2, { color: theme.textPrimary }]}>Flight details</Text>
+            <Badge flightResults>★ Best overall</Badge>
           </View>
           {legs.map((leg, i) => (
-            <View key={`${leg.departureTime}-${i}`} style={d.leg}>
+            <View key={`${leg.departureTime}-${i}`} style={[d.leg, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }]}>
               <Text style={d.blue}>
                 {leg.direction.toUpperCase()} ·{" "}
                 {new Date(leg.departureTime).toLocaleDateString("en-US", {
@@ -143,18 +146,18 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
                   day: "numeric",
                 })}
               </Text>
-              <Text style={d.provider}>
+              <Text style={[d.provider, { color: theme.textPrimary }]}>
                 {result.airlineName}
                 {result.flightNumber ? `  ·  ${result.flightNumber}` : ""}
               </Text>
               <View style={d.legRoute}>
         <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={d.time}>{clock(leg.departureTime)}</Text>
-                  <Text style={d.airport}>{leg.originAirport}</Text>
+                  <Text style={[d.time, { color: theme.textPrimary }]}>{clock(leg.departureTime)}</Text>
+                  <Text style={[d.airport, { color: theme.textSecondary }]}>{leg.originAirport}</Text>
                 </View>
                 <View style={d.middle}>
-                  <Text style={d.meta}>{leg.duration}</Text>
-                  <View style={d.line} />
+                  <Text style={[d.meta, { color: theme.textSecondary }]}>{leg.duration}</Text>
+                  <View style={[d.line, { backgroundColor: theme.border }]} />
                   <Text style={d.blue}>
                     {leg.stops
                       ? `${leg.stops} stop${leg.stops > 1 ? "s" : ""}`
@@ -162,12 +165,12 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
                   </Text>
                 </View>
                 <View style={{ flex: 1, alignItems: "flex-end" }}>
-                  <Text style={d.time}>{clock(leg.arrivalTime)}</Text>
-                  <Text style={d.airport}>{leg.destinationAirport}</Text>
+                  <Text style={[d.time, { color: theme.textPrimary }]}>{clock(leg.arrivalTime)}</Text>
+                  <Text style={[d.airport, { color: theme.textSecondary }]}>{leg.destinationAirport}</Text>
                 </View>
               </View>
               {leg.layovers?.length ? (
-                <Text style={d.meta}>
+                <Text style={[d.meta, { color: theme.textSecondary }]}>
                   {leg.layovers
                     .map((x) => `${x.airport} · ${x.duration}`)
                     .join("  ·  ")}
@@ -176,15 +179,15 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             </View>
           ))}
         </View>
-        <View style={d.section}>
+        <View style={[d.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <View style={d.fareHead}>
-            <Text style={d.h2}>Fare summary</Text>
+            <Text style={[d.h2, { color: theme.textPrimary }]}>Fare summary</Text>
             <View style={{ alignItems: "flex-end" }}>
-              <Text style={d.meta}>Total (1 traveler)</Text>
-              <Text style={d.price}>
+              <Text style={[d.meta, { color: theme.textSecondary }]}>Total (1 traveler)</Text>
+              <Text style={[d.price, { color: theme.textPrimary }]}>
                 {money(result.currency, result.price)}
               </Text>
-              <Text style={d.meta}>Taxes and fees per provider</Text>
+              <Text style={[d.meta, { color: theme.textSecondary }]}>Taxes and fees per provider</Text>
             </View>
           </View>
           <FareRow
@@ -199,9 +202,9 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             value={result.refundInfo || "Provider rules apply"}
           />
         </View>
-        <View style={d.section}>
-          <Text style={d.h2}>Choose where to book</Text>
-          <Text style={d.meta}>
+        <View style={[d.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[d.h2, { color: theme.textPrimary }]}>Choose where to book</Text>
+          <Text style={[d.meta, { color: theme.textSecondary }]}>
             Prices are per person and include taxes & fees when reported
           </Text>
           <Offer
@@ -214,28 +217,28 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             price={money(result.currency, result.price)}
             selected
           />
-          <Text style={d.disclosure}>
+          <Text style={[d.disclosure, { color: theme.textSecondary }]}>
             Only the authoritative offer returned for this search is shown.
           </Text>
         </View>
       </ScrollView>
-      <View style={[d.sticky, { paddingBottom: Math.max(inset.bottom, 10) }]}>
+      <View style={[d.sticky, { paddingBottom: Math.max(inset.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]}>
         <View>
-          <Text style={d.meta}>Total</Text>
-          <Text style={d.price}>{money(result.currency, result.price)}</Text>
-          <Text style={d.meta}>Round trip</Text>
+          <Text style={[d.meta, { color: theme.textSecondary }]}>Total</Text>
+          <Text style={[d.price, { color: theme.textPrimary }]}>{money(result.currency, result.price)}</Text>
+          <Text style={[d.meta, { color: theme.textSecondary }]}>Round trip</Text>
         </View>
         <View style={d.stickyAction}>
-          <FlowIcon name="heart" color={ui.muted} />
-          <Text style={d.meta}>Save</Text>
+          <FlowIcon name="heart" color={theme.icon} />
+          <Text style={[d.meta, { color: theme.textSecondary }]}>Save</Text>
         </View>
         <View style={d.stickyAction}>
-          <FlowIcon name="bell" color={ui.muted} />
-          <Text style={d.meta}>Price alert</Text>
+          <FlowIcon name="bell" color={theme.icon} />
+          <Text style={[d.meta, { color: theme.textSecondary }]}>Price alert</Text>
         </View>
         <View>
           <Button label={`Continue to ${provider}`} onPress={() => void go()} />
-          <Text style={d.redirect}>You’ll be redirected to {provider}’s site</Text>
+          <Text style={[d.redirect, { color: theme.textSecondary }]}>You’ll be redirected to {provider}’s site</Text>
         </View>
       </View>
     </SafeAreaView>
@@ -463,10 +466,11 @@ function HotelDetail({
   );
 }
 function FareRow({ label, value }: { label: string; value: string }) {
+  const { theme } = useAppTheme();
   return (
-    <View style={d.fareRow}>
-      <Text style={d.provider}>{label}</Text>
-      <Text style={d.meta}>{value}</Text>
+    <View style={[d.fareRow, { borderTopColor: theme.border }]}>
+      <Text style={[d.provider, { color: theme.textPrimary }]}>{label}</Text>
+      <Text style={[d.meta, { color: theme.textSecondary }]}>{value}</Text>
     </View>
   );
 }
@@ -481,17 +485,18 @@ function Offer({
   price: string;
   selected: boolean;
 }) {
+  const { theme } = useAppTheme();
   return (
-    <View style={[d.offer, selected && { borderColor: ui.blue }]}>
-      <View style={d.providerLogo}>
+    <View style={[d.offer, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }, selected && { borderColor: ui.blue }]}>
+      <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}>
         <Text style={d.blue}>{provider.slice(0, 1)}</Text>
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={d.provider}>
+        <Text style={[d.provider, { color: theme.textPrimary }]}>
           {provider}{" "}
           {selected ? <Text style={d.green}>★ Recommended</Text> : null}
         </Text>
-        <Text style={d.meta}>{kind}</Text>
+        <Text style={[d.meta, { color: theme.textSecondary }]}>{kind}</Text>
       </View>
       <Text style={d.priceSmall}>{price}</Text>
       <Button label="Select" />
