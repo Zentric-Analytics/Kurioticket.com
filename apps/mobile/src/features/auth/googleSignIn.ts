@@ -7,7 +7,14 @@ import {
   statusCodes,
   type OneTapResponse,
 } from "react-native-nitro-google-signin";
+import { Platform } from "react-native";
+import { getRuntimeEnvironment } from "../../config/environment";
 import { getGoogleIosClientId, requireGoogleWebClientId } from "./googleConfig";
+import {
+  formatNativeGoogleError,
+  getNativeGoogleErrorCode,
+  type GoogleSignInOperation,
+} from "./googleSignInDiagnostics";
 
 export type NativeGoogleResult =
   | { status: "cancelled" }
@@ -30,9 +37,16 @@ async function createNonce() {
   return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, raw);
 }
 
-async function resolveInteractiveResponse(response: OneTapResponse) {
-  if (isNoSavedCredentialFoundResponse(response)) response = await GoogleOneTapSignIn.createAccount();
-  if (isNoSavedCredentialFoundResponse(response)) response = await GoogleOneTapSignIn.presentExplicitSignIn();
+async function resolveInteractiveResponse(
+  response: OneTapResponse,
+  run: (operation: GoogleSignInOperation, task: () => Promise<OneTapResponse>) => Promise<OneTapResponse>,
+) {
+  if (isNoSavedCredentialFoundResponse(response)) {
+    response = await run("createAccount", () => GoogleOneTapSignIn.createAccount());
+  }
+  if (isNoSavedCredentialFoundResponse(response)) {
+    response = await run("presentExplicitSignIn", () => GoogleOneTapSignIn.presentExplicitSignIn());
+  }
   return response;
 }
 
@@ -47,22 +61,28 @@ export async function startNativeGoogleSignIn(
   const iosClientId = getGoogleIosClientId();
 
   const nonce = await createNonce();
-  GoogleOneTapSignIn.configure({
-    webClientId,
-    iosClientId: iosClientId || undefined,
-    nonce,
-    autoSelectOnSignIn: false,
-    offlineAccess: false,
-  });
+  let operation: GoogleSignInOperation = "configure";
+  const run = async (nextOperation: GoogleSignInOperation, task: () => Promise<OneTapResponse>) => {
+    operation = nextOperation;
+    return task();
+  };
 
   try {
+    GoogleOneTapSignIn.configure({
+      webClientId,
+      iosClientId: iosClientId || undefined,
+      nonce,
+      autoSelectOnSignIn: false,
+      offlineAccess: false,
+    });
+    operation = "checkPlayServices";
     await GoogleOneTapSignIn.checkPlayServices(true);
     const initialResponse = forceAccountSelection
-      ? await GoogleOneTapSignIn.presentExplicitSignIn()
-      : await GoogleOneTapSignIn.signIn();
+      ? await run("presentExplicitSignIn", () => GoogleOneTapSignIn.presentExplicitSignIn())
+      : await run("signIn", () => GoogleOneTapSignIn.signIn());
     const response = forceAccountSelection
       ? initialResponse
-      : await resolveInteractiveResponse(initialResponse);
+      : await resolveInteractiveResponse(initialResponse, run);
     if (isCancelledResponse(response)) return { status: "cancelled" };
     if (!isSuccessResponse(response) || !response.data.idToken) {
       throw new NativeGoogleSignInError("Google did not return a valid identity token.", "invalid_response");
@@ -70,7 +90,7 @@ export async function startNativeGoogleSignIn(
     return { status: "success", idToken: response.data.idToken, nonce };
   } catch (error) {
     if (error instanceof NativeGoogleSignInError) throw error;
-    const code = typeof error === "object" && error && "code" in error ? String(error.code) : "unknown";
+    const code = getNativeGoogleErrorCode(error);
     if (code === statusCodes.SIGN_IN_CANCELLED) return { status: "cancelled" };
     if (code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
       throw new NativeGoogleSignInError("Google Play services must be installed and up to date.", code);
@@ -81,6 +101,11 @@ export async function startNativeGoogleSignIn(
     if (code === statusCodes.IN_PROGRESS) {
       throw new NativeGoogleSignInError("Google sign-in is already in progress.", code);
     }
-    throw new NativeGoogleSignInError("Google sign-in could not be completed. Please try again.", code);
+    throw new NativeGoogleSignInError(formatNativeGoogleError({
+      error,
+      isPreview: getRuntimeEnvironment().isPreview,
+      operation,
+      platform: Platform.OS,
+    }), code);
   }
 }
