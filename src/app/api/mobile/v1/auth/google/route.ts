@@ -1,7 +1,7 @@
 import { OAuth2Client } from "google-auth-library";
 import { NextResponse } from "next/server";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
-import { getGoogleClientId } from "@/lib/env";
+import { getMobileGoogleClientId } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
 import { createMobileSession } from "@/lib/mobile-auth";
 import { canUseStagingGoogle } from "@/lib/previewTesterAccess";
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: genericError }, { status: 400 });
   }
 
-  const audience = getGoogleClientId().trim();
+  const audience = getMobileGoogleClientId();
   if (!audience) return NextResponse.json({ error: "Google sign-in is temporarily unavailable." }, { status: 503 });
 
   try {

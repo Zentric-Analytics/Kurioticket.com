@@ -22,6 +22,27 @@ export function getGoogleClientSecret() {
   return process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || "";
 }
 
+export function getMobileGoogleClientId() {
+  const configuredAudience = process.env.MOBILE_GOOGLE_WEB_CLIENT_ID?.trim();
+  if (configuredAudience) return configuredAudience;
+
+  const stagingHost = "staging.kurioticket.com";
+  const configuredHosts = [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXTAUTH_URL].map((value) => {
+    try {
+      return new URL(value || "").hostname.toLowerCase();
+    } catch {
+      return "";
+    }
+  });
+  const staging = process.env.TRAVEL_PROVIDER_MODE?.trim().toLowerCase() === "staging"
+    || configuredHosts.includes(stagingHost);
+
+  // Preview must never accept the website audience implicitly. Production
+  // temporarily retains the legacy audience until its separate mobile OAuth
+  // provider remediation can configure MOBILE_GOOGLE_WEB_CLIENT_ID.
+  return staging ? "" : getGoogleClientId().trim();
+}
+
 
 export type TravelProviderMode = "local" | "staging" | "production";
 export type DuffelApiMode = "live" | "test";
