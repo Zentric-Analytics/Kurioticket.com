@@ -1028,7 +1028,7 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   airlineFallbackText: { color: ui.navy, fontSize: 12, fontWeight: "800" },
-  nameSmall: { fontSize: 12, color: ui.navy, fontWeight: "700" },
+  nameSmall: { maxWidth: "100%", fontSize: 12, color: ui.navy, fontWeight: "700" },
   departureBlock: { flexBasis: 96, minWidth: 96, flexShrink: 0 },
   arrivalBlock: { width: 72, flexShrink: 0 },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },

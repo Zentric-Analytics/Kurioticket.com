@@ -80,6 +80,7 @@ test("flight card reserves a flexible single-line price column across supported 
 
 test("airline names receive protected width and only truncate as a last resort", () => {
   assert.match(card, /style=\{\[s0\.nameSmall, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} ellipsizeMode="tail"/);
+  assert.match(source, /nameSmall: \{ maxWidth: "100%"/);
   assert.match(source, /departureBlock: \{ flexBasis: 96, minWidth: 96, flexShrink: 0 \}/);
 
   for (const airlineName of ["Duffel Airways", "British Airways", "Brussels Airlines"]) {
