@@ -4751,10 +4751,19 @@ export const translations: TranslationDictionary = {
   "deals.guided.hotelDetails.pendingBody":
     "Hotel details and descriptive room information will appear on this step.",
   "deals.guided.hotelDetails.roomInformation": "Room information",
+  "deals.guided.hotelDetails.chooseRoom": "Choose your room",
+  "deals.guided.hotelDetails.planningDisclosure":
+    "Indicative room options for trip planning. Final room and bed availability is not yet confirmed, and prices are planning estimates for the selected stay.",
+  "deals.guided.hotelDetails.optionsUnavailable":
+    "Room planning options are unavailable for this property.",
+  "deals.guided.hotelDetails.perRoomNight": "per room, per night",
+  "deals.guided.hotelDetails.indicativeTotal": "indicative total for this stay",
+  "deals.guided.review.bedConfiguration": "Bed configuration",
+  "deals.guided.review.mealPlan": "Meal plan",
   "deals.guided.hotelDetails.sourceEstimate": "Source estimate",
   "deals.guided.hotelDetails.continueFlights":
-    "Continue with this stay to flights",
-  "deals.guided.hotelDetails.continueCars": "Continue with this stay to cars",
+    "Continue with this room to flights",
+  "deals.guided.hotelDetails.continueCars": "Continue with this room to cars",
   "deals.guided.hotelDetails.roomUnavailable":
     "This stay cannot be added to your Trip Plan because a current planning estimate is unavailable.",
   "deals.guided.hotelDetails.saveError":
