@@ -24,14 +24,14 @@ test("guided estimates and standalone provider-backed prices use truthful labels
   assert.doesNotMatch(clientSource, /\?\s*"Source estimate"/);
 });
 
-test("uses stay semantics for both guided Hotel continuation paths", () => {
+test("uses selected-room semantics for both guided Hotel continuation paths", () => {
   assert.equal(
     translations["deals.guided.hotelDetails.continueFlights"],
-    "Continue with this stay to flights",
+    "Continue with this room to flights",
   );
   assert.equal(
     translations["deals.guided.hotelDetails.continueCars"],
-    "Continue with this stay to cars",
+    "Continue with this room to cars",
   );
 });
 
@@ -50,7 +50,7 @@ test("preserves guided stay selection behavior and truthful accessible labeling"
   assert.match(bookingSource, /getDealsGuidedConfirmationActionId\("hotel"\)/);
   assert.ok(
     clientSource.includes(
-      "accessibleLabel: `${guidedActionLabel}: ${hotel.name}`",
+      "accessibleLabel: `${guidedActionLabel}: ${selectedRoom?.name ?? hotel.name}, ${hotel.name}`",
     ),
   );
   assert.ok(
@@ -60,19 +60,34 @@ test("preserves guided stay selection behavior and truthful accessible labeling"
   );
 });
 
-test("frames guided room content as information and unavailable states as planning estimates", () => {
+test("frames guided room content as a three-state planning experience", () => {
   assert.equal(
     translations["deals.guided.hotelDetails.roomInformation"],
     "Room information",
   );
   assert.equal(
-    translations["deals.guided.hotelDetails.roomUnavailable"],
-    "This stay cannot be added to your Trip Plan because a current planning estimate is unavailable.",
+    translations["deals.guided.hotelDetails.selectionRequiredTitle"],
+    "Select a room",
   );
-  assert.ok(
-    clientSource.includes(
-      'mode === "guided" ? (t("deals.guided.hotelDetails.roomInformation")',
-    ),
+  assert.ok(clientSource.includes('guidedPriceState === "selection-required"'));
+  assert.ok(clientSource.includes('"room-options-unavailable"'));
+  assert.ok(clientSource.includes("getGuidedHotelRoomState"));
+  assert.ok(bookingSource.includes("unavailablePresentation?.title"));
+  assert.ok(bookingSource.includes("unavailablePresentation?.body"));
+  assert.match(
+    bookingSource,
+    /disabled=\{!action\.enabled \|\| action\.pending\}/,
+  );
+  assert.match(bookingSource, /aria-describedby=/);
+
+  const selectionRequiredCopy = [
+    translations["deals.guided.hotelDetails.selectionRequiredTitle"],
+    translations["deals.guided.hotelDetails.selectionRequiredBody"],
+    translations["deals.guided.hotelDetails.selectRoomToContinue"],
+  ].join(" ");
+  assert.doesNotMatch(
+    selectionRequiredCopy,
+    /price unavailable|live room rate|planning estimate is unavailable/i,
   );
 });
 
@@ -343,12 +358,13 @@ test("hides only the internal static catalogue provider label", () => {
 });
 
 test("keeps the static catalogue estimated-price planning warning", () => {
-  assert.match(
-    clientSource,
-    /const providerUnavailableText = hotel\.provider === "Kurioticket static catalogue"\s*\? "Prices shown are estimated for trip planning\. Live booking availability will be introduced before launch\."/,
+  assert.ok(
+    clientSource.includes(
+      '"Prices shown are estimated for trip planning. Live booking availability will be introduced before launch."',
+    ),
   );
   assert.match(
     clientSource,
-    /providerUnavailableText=\{mode === "guided" \? "" : providerUnavailableText\}/,
+    /providerUnavailableText=\{\s*mode === "guided" \? "" : providerUnavailableText\s*\}/,
   );
 });

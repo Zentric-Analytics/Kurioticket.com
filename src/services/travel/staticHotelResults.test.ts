@@ -56,11 +56,13 @@ test("static hotel results are deterministic planning estimates", () => {
     second = buildStaticHotelResults(search);
   assert.deepEqual(first, second);
   assert.ok(first.length > 0);
+  const firstHotel = first[0];
+  assert.ok(firstHotel?.pricePerNight);
   assert.equal(calculateHotelStayNights(search.checkIn, search.checkOut), 3);
-  assert.equal(first[0]!.totalPrice, first[0]!.pricePerNight * 3 * 2);
-  assert.equal(first[0].provider, "Kurioticket static catalogue");
-  assert.equal(first[0].bookingUrl, "");
-  assert.equal(first[0].partnerRedirectUrl, "");
+  assert.equal(firstHotel.totalPrice, firstHotel.pricePerNight * 3 * 2);
+  assert.equal(firstHotel.provider, "Kurioticket static catalogue");
+  assert.equal(firstHotel.bookingUrl, "");
+  assert.equal(firstHotel.partnerRedirectUrl, "");
 });
 
 test("every static property has safe, stable multi-room planning options with room-count pricing", () => {
@@ -85,7 +87,35 @@ test("every static property has safe, stable multi-room planning options with ro
         JSON.stringify(option),
         /secret|supplier|rateKey|rawProvider/i,
       );
+      assert.equal(option.bedConfiguration, hotel.bedSummary);
     }
+  }
+});
+
+test("planning room facts are owned by their property and never invent generic beds", () => {
+  const roomFacts = staticHotelCatalogue.flatMap((hotel) =>
+    hotel.roomOptions.map((option) => ({ hotel, option })),
+  );
+  assert.ok(
+    roomFacts.every(
+      ({ hotel, option }) => option.bedConfiguration === hotel.bedSummary,
+    ),
+  );
+  assert.ok(
+    roomFacts.every(({ hotel, option }) =>
+      option.name.startsWith(hotel.roomSummary),
+    ),
+  );
+  for (const unsupportedClaim of [
+    "One king bed",
+    "One queen bed or two single beds",
+    "Additional room space",
+    "Seating area",
+  ]) {
+    assert.doesNotMatch(
+      JSON.stringify(roomFacts),
+      new RegExp(unsupportedClaim, "i"),
+    );
   }
 });
 
