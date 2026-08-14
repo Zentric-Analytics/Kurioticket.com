@@ -35,9 +35,43 @@ type DuffelCarrier = {
 const carrierWithName = (carrier?: DuffelCarrier) =>
   carrier?.name?.trim() ? carrier : undefined;
 
+const sameCarrier = (left: DuffelCarrier, right?: DuffelCarrier) => {
+  if (!right) return false;
+
+  const leftId = left.id?.trim();
+  const rightId = right.id?.trim();
+  if (leftId && rightId) return leftId === rightId;
+
+  const leftIata = left.iata_code?.trim().toUpperCase();
+  const rightIata = right.iata_code?.trim().toUpperCase();
+  if (leftIata && rightIata) return leftIata === rightIata;
+
+  return (
+    left.name?.trim().toLocaleLowerCase() ===
+    right.name?.trim().toLocaleLowerCase()
+  );
+};
+
 const cleanPublicUrl = (value?: string | null) => {
   const url = value?.trim();
   return url && /^https:\/\//i.test(url) ? url : undefined;
+};
+
+const carrierLogo = (
+  displayedCarrier: DuffelCarrier,
+  carriers: Array<DuffelCarrier | undefined>,
+) => {
+  // Some Duffel offer shapes repeat the same airline at segment and owner
+  // level, but only one copy contains its asset URLs. Search only equivalent
+  // carrier records so the logo can never belong to a different airline.
+  for (const carrier of carriers) {
+    if (!sameCarrier(displayedCarrier, carrier)) continue;
+    const logo =
+      cleanPublicUrl(carrier?.logo_symbol_url) ||
+      cleanPublicUrl(carrier?.logo_lockup_url);
+    if (logo) return logo;
+  }
+  return null;
 };
 
 export function normalizeFlightResult(
@@ -122,9 +156,14 @@ function normalizeDuffelFlight(
     "";
   const airlineName =
     displayedCarrier?.name || airlineNames[carrier] || "Airline";
-  const airlineLogo =
-    cleanPublicUrl(displayedCarrier?.logo_symbol_url) ||
-    cleanPublicUrl(displayedCarrier?.logo_lockup_url);
+  const airlineLogo = displayedCarrier
+    ? carrierLogo(displayedCarrier, [
+        displayedCarrier,
+        first.marketing_carrier,
+        first.operating_carrier,
+        offer.owner,
+      ])
+    : null;
   const cabinClass =
     formatDuffelCabin(first.passengers?.[0]?.cabin_class) || search.cabinClass;
   const baggageInfo = buildDuffelBaggageInfo(
@@ -174,7 +213,7 @@ function buildFlight(input: {
   providerOfferId?: string;
   providerExpiresAt?: number;
   airlineName: string;
-  airlineLogo?: string;
+  airlineLogo?: string | null;
   flightNumber?: string;
   originAirport: string;
   destinationAirport: string;
