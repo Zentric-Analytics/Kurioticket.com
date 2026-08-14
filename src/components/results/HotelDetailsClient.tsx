@@ -34,6 +34,11 @@ import {
 } from "@/components/results/hotelDetails/HotelDetailsPageStates";
 import { HotelDetailsSections } from "@/components/results/hotelDetails/HotelDetailsSections";
 import {
+  findGuidedHotelRoom,
+  getGuidedHotelRoomState,
+  getHotelDetailsTaxesAndFeesIncluded,
+} from "@/components/results/hotelDetails/guidedHotelRoomState";
+import {
   buildHotelDetailsResultsHref,
   canUseHotelDetailsProviderLink,
   formatHotelDetailsRating,
@@ -375,8 +380,11 @@ export function HotelDetailsClient({
     );
   }
 
-  const selectedRoom =
-    roomOptions.find((option) => option.id === selectedRoomId) ?? null;
+  const selectedRoom = findGuidedHotelRoom(roomOptions, selectedRoomId);
+  const guidedPriceState =
+    mode !== "guided"
+      ? null
+      : getGuidedHotelRoomState(roomOptions, selectedRoom);
   const propertyPriceDetails = getHotelPriceDetails(hotel);
   const priceDetails =
     mode === "guided"
@@ -501,10 +509,15 @@ export function HotelDetailsClient({
           new Intl.NumberFormat(locale).format(reviewCount),
         )
       : "";
+  const taxesAndFeesIncluded = getHotelDetailsTaxesAndFeesIncluded(
+    mode,
+    hotel.taxesAndFeesIncluded,
+    selectedRoom,
+  );
   const taxesText =
-    hotel.taxesAndFeesIncluded === true
+    taxesAndFeesIncluded === true
       ? t("hotelResults.taxesFeesIncluded")
-      : hotel.taxesAndFeesIncluded === false
+      : taxesAndFeesIncluded === false
         ? t("hotelResults.taxesFeesNotIncluded")
         : "";
   const providerEnabled = canUseHotelDetailsProviderLink(hotel);
@@ -541,8 +554,9 @@ export function HotelDetailsClient({
       : t("deals.guided.hotelDetails.continueFlights") ||
         "Continue with this room to flights";
   const guidedUnavailableText =
-    t("deals.guided.hotelDetails.roomUnavailable") ||
-    "This stay cannot be added to your Trip Plan because a current planning estimate is unavailable.";
+    guidedPriceState === "selection-required"
+      ? t("deals.guided.hotelDetails.selectRoomToContinue")
+      : t("deals.guided.hotelDetails.optionsUnavailable");
   const savedHotelLabel = (
     isSaved
       ? t("hotelResults.removeSavedHotel") ||
@@ -747,11 +761,11 @@ export function HotelDetailsClient({
                       "Room information"
                     : t("hotelResults.roomDetails") || "Room"
                 }
-                roomItems={[roomType, mealPlan]}
+                roomItems={mode === "guided" ? [] : [roomType, mealPlan]}
                 cancellationTitle={
                   t("hotelResults.cancellationDetails") || "Cancellation"
                 }
-                cancellationItems={[cancellationText]}
+                cancellationItems={mode === "guided" ? [] : [cancellationText]}
                 amenitiesTitle={
                   t("hotelResults.amenitiesDetails") || "Amenities"
                 }
@@ -852,6 +866,27 @@ export function HotelDetailsClient({
               taxesText={taxesText}
               priceUnavailableText={priceUnavailableText}
               liveRateUnavailableText={liveRateUnavailableText}
+              unavailablePresentation={
+                guidedPriceState === "selection-required"
+                  ? {
+                      title: t(
+                        "deals.guided.hotelDetails.selectionRequiredTitle",
+                      ),
+                      body: t(
+                        "deals.guided.hotelDetails.selectionRequiredBody",
+                      ),
+                    }
+                  : guidedPriceState === "room-options-unavailable"
+                    ? {
+                        title: t(
+                          "deals.guided.hotelDetails.optionsUnavailable",
+                        ),
+                        body: t(
+                          "deals.guided.hotelDetails.optionsUnavailableBody",
+                        ),
+                      }
+                    : undefined
+              }
               staySummary={staySummary}
               changeSearchHref={resultsHref}
               changeSearchText={

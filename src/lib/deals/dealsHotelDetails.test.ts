@@ -197,7 +197,7 @@ test("material equality ignores timestamp but detects room identity and price ch
     false,
   );
 });
-test("replace behavior preserves dependencies for identical selections and clears them for changed hotel", () => {
+test("same-hotel room replacement clears dependent flight and car selections", () => {
   const flight: DealsTripPlanFlight = {
     id: "f",
     provider: "P",
@@ -262,6 +262,31 @@ test("replace behavior preserves dependencies for identical selections and clear
   assert.equal(changed.flight, undefined);
   assert.equal(changed.car, undefined);
   assert.deepEqual(changed.opened, {});
+
+  const roomB = selected({
+    roomOptionId: "h1-room-b",
+    roomType: "Room B",
+    sourcePrice: 525,
+  });
+  const sameHotelDifferentRoom = replaceDealsHotelSelection(plan, roomB, 6);
+  assert.equal(sameHotelDifferentRoom.hotel?.id, plan.hotel.id);
+  assert.equal(sameHotelDifferentRoom.hotel?.roomOptionId, "h1-room-b");
+  assert.equal(sameHotelDifferentRoom.flight, undefined);
+  assert.equal(sameHotelDifferentRoom.car, undefined);
+  assert.deepEqual(sameHotelDifferentRoom.opened, {});
+
+  const hotelFlightPlan = {
+    ...plan,
+    mode: "hotel-flight" as const,
+    car: undefined,
+  };
+  const hotelFlightChanged = replaceDealsHotelSelection(
+    hotelFlightPlan,
+    roomB,
+    7,
+  );
+  assert.equal(hotelFlightChanged.hotel?.roomOptionId, "h1-room-b");
+  assert.equal(hotelFlightChanged.flight, undefined);
 });
 
 test("hotel details helpers cannot create a context-invalid base Trip Plan", async () => {

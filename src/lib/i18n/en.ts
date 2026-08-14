@@ -4756,6 +4756,13 @@ export const translations: TranslationDictionary = {
     "Indicative room options for trip planning. Final room and bed availability is not yet confirmed, and prices are planning estimates for the selected stay.",
   "deals.guided.hotelDetails.optionsUnavailable":
     "Room planning options are unavailable for this property.",
+  "deals.guided.hotelDetails.optionsUnavailableBody":
+    "Choose another property to continue planning your trip.",
+  "deals.guided.hotelDetails.selectionRequiredTitle": "Select a room",
+  "deals.guided.hotelDetails.selectionRequiredBody":
+    "Choose a room to see your indicative stay total.",
+  "deals.guided.hotelDetails.selectRoomToContinue":
+    "Select a room to continue.",
   "deals.guided.hotelDetails.perRoomNight": "per room, per night",
   "deals.guided.hotelDetails.indicativeTotal": "indicative total for this stay",
   "deals.guided.review.bedConfiguration": "Bed configuration",
@@ -4764,8 +4771,6 @@ export const translations: TranslationDictionary = {
   "deals.guided.hotelDetails.continueFlights":
     "Continue with this room to flights",
   "deals.guided.hotelDetails.continueCars": "Continue with this room to cars",
-  "deals.guided.hotelDetails.roomUnavailable":
-    "This stay cannot be added to your Trip Plan because a current planning estimate is unavailable.",
   "deals.guided.hotelDetails.saveError":
     "We could not save this stay to your guided Trip Plan. Please try again.",
   "deals.guided.hotelDetails.confirmed": "Stay added to your Trip Plan.",

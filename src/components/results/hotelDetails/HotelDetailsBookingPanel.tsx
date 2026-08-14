@@ -21,8 +21,25 @@ type StaySummary = {
 };
 
 export type HotelDetailsPrimaryAction =
-  | { kind: "provider"; enabled: boolean; pending: boolean; label: string; onActivate: () => void; error: string; disclaimer: string }
-  | { kind: "guided-room"; enabled: boolean; pending: boolean; label: string; accessibleLabel: string; unavailableMessage: string; error: string; onActivate: () => void };
+  | {
+      kind: "provider";
+      enabled: boolean;
+      pending: boolean;
+      label: string;
+      onActivate: () => void;
+      error: string;
+      disclaimer: string;
+    }
+  | {
+      kind: "guided-room";
+      enabled: boolean;
+      pending: boolean;
+      label: string;
+      accessibleLabel: string;
+      unavailableMessage: string;
+      error: string;
+      onActivate: () => void;
+    };
 
 export type HotelDetailsChangeSearchAction =
   | { kind: "link"; href: string; label: string }
@@ -37,6 +54,7 @@ type HotelDetailsBookingPanelProps = {
   taxesText: string;
   priceUnavailableText: string;
   liveRateUnavailableText: string;
+  unavailablePresentation?: { title: string; body: string };
   staySummary: StaySummary | null;
   changeSearchHref?: string;
   changeSearchText?: string;
@@ -91,6 +109,7 @@ export function HotelDetailsBookingPanel({
   taxesText,
   priceUnavailableText,
   liveRateUnavailableText,
+  unavailablePresentation,
   staySummary,
   changeSearchHref,
   changeSearchText,
@@ -107,8 +126,24 @@ export function HotelDetailsBookingPanel({
   primaryAction,
 }: HotelDetailsBookingPanelProps) {
   // Standalone compatibility: href={changeSearchHref}, changeSearchText, providerEnabled ?, disabled={redirecting}, onClick={onContinue}, providerDisclaimerText.
-  const resolvedChangeSearch = changeSearchAction ?? (changeSearchHref && changeSearchText ? { kind: "link" as const, href: changeSearchHref, label: changeSearchText } : { kind: "hidden" as const });
-  const action = primaryAction ?? { kind: "provider" as const, enabled: providerEnabled, pending: redirecting, label: continueToProviderText, onActivate: onContinue ?? (() => undefined), error: redirectError, disclaimer: providerDisclaimerText };
+  const resolvedChangeSearch =
+    changeSearchAction ??
+    (changeSearchHref && changeSearchText
+      ? {
+          kind: "link" as const,
+          href: changeSearchHref,
+          label: changeSearchText,
+        }
+      : { kind: "hidden" as const });
+  const action = primaryAction ?? {
+    kind: "provider" as const,
+    enabled: providerEnabled,
+    pending: redirecting,
+    label: continueToProviderText,
+    onActivate: onContinue ?? (() => undefined),
+    error: redirectError,
+    disclaimer: providerDisclaimerText,
+  };
   return (
     <aside className="min-w-0">
       <div className="lg:sticky lg:top-24">
@@ -165,10 +200,10 @@ export function HotelDetailsBookingPanel({
               ) : (
                 <div className="space-y-2 p-5 sm:p-6">
                   <p className="text-3xl font-bold text-slate-950">
-                    {priceUnavailableText}
+                    {unavailablePresentation?.title ?? priceUnavailableText}
                   </p>
                   <p className="text-sm font-semibold text-slate-700">
-                    {liveRateUnavailableText}
+                    {unavailablePresentation?.body ?? liveRateUnavailableText}
                   </p>
                 </div>
               )}
@@ -237,17 +272,48 @@ export function HotelDetailsBookingPanel({
                   {action.error}
                 </p>
               ) : null}
-              {action.kind === "guided-room" && action.unavailableMessage && !action.enabled ? (
-                <p id="hotel-guided-room-unavailable-message" className="text-sm font-medium leading-5 text-slate-700">{action.unavailableMessage}</p>
+              {action.kind === "guided-room" &&
+              action.unavailableMessage &&
+              !action.enabled ? (
+                <p
+                  id="hotel-guided-room-unavailable-message"
+                  className="text-sm font-medium leading-5 text-slate-700"
+                >
+                  {action.unavailableMessage}
+                </p>
               ) : null}
-              {action.enabled ? (
+              {action.enabled || action.kind === "guided-room" ? (
                 <div aria-busy={action.pending}>
-                  <Button id={action.kind === "guided-room" ? getDealsGuidedConfirmationActionId("hotel") : undefined} type="button" variant="accent" size="lg" className="w-full" disabled={action.pending} onClick={action.onActivate} aria-label={action.kind === "guided-room" ? action.accessibleLabel : undefined}>
+                  <Button
+                    id={
+                      action.kind === "guided-room"
+                        ? getDealsGuidedConfirmationActionId("hotel")
+                        : undefined
+                    }
+                    type="button"
+                    variant="accent"
+                    size="lg"
+                    className="w-full"
+                    disabled={!action.enabled || action.pending}
+                    onClick={action.onActivate}
+                    aria-label={
+                      action.kind === "guided-room"
+                        ? action.accessibleLabel
+                        : undefined
+                    }
+                    aria-describedby={
+                      action.kind === "guided-room" && !action.enabled
+                        ? "hotel-guided-room-unavailable-message"
+                        : undefined
+                    }
+                  >
                     {action.pending ? `${action.label}...` : action.label}
                   </Button>
                 </div>
               ) : null}
-              {action.kind === "provider" && action.enabled && action.disclaimer ? (
+              {action.kind === "provider" &&
+              action.enabled &&
+              action.disclaimer ? (
                 <p className="text-xs leading-5 text-slate-500">
                   {action.disclaimer}
                 </p>
