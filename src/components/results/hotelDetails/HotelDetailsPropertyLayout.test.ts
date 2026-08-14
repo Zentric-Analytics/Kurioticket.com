@@ -38,6 +38,45 @@ test("joins one embedded gallery and details summary before the booking sibling"
     propertyCard,
     /shadow-\[0_12px_32px_-26px_rgba\(2,28,43,0\.32\)\]/,
   );
+  assert.doesNotMatch(propertyCard, /<fieldset\b|guidedRoomSelector/);
+});
+
+test("places the guided room selector after the full upper property layout", () => {
+  const composition = clientSource.slice(
+    clientSource.indexOf("data-hotel-property-booking-layout"),
+    clientSource.indexOf(
+      "</div>\n    </section>",
+      clientSource.indexOf("data-hotel-property-booking-layout"),
+    ),
+  );
+
+  assert.ok(composition.indexOf("<HotelDetailsBookingPanel") >= 0);
+  assert.ok(
+    composition.indexOf("{guidedRoomSelector}") >
+      composition.indexOf("<HotelDetailsBookingPanel"),
+  );
+  assert.match(
+    clientSource,
+    /const guidedRoomSelector =\s*mode === "guided" \? \(\s*<fieldset/,
+  );
+  assert.equal(clientSource.match(/<fieldset\b/g)?.length, 1);
+  assert.equal(clientSource.match(/<GuidedHotelRoomCard\b/g)?.length, 1);
+});
+
+test("uses a non-scrolling one, two, then three-column guided room grid", () => {
+  const roomGridStart = clientSource.lastIndexOf(
+    "<div",
+    clientSource.indexOf("data-guided-room-grid"),
+  );
+  const roomGrid = clientSource.slice(
+    roomGridStart,
+    clientSource.indexOf("{roomOptions.map", roomGridStart),
+  );
+
+  assert.match(roomGrid, /grid-cols-1/);
+  assert.match(roomGrid, /md:grid-cols-2/);
+  assert.match(roomGrid, /xl:grid-cols-3/);
+  assert.doesNotMatch(roomGrid, /overflow-x|snap-|flex-nowrap/);
 });
 
 test("retains every booking integration prop and booking-panel contract", () => {

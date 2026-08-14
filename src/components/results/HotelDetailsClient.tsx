@@ -657,6 +657,77 @@ export function HotelDetailsClient({
     if (nextIndex !== -1) setPreferredImageIndex(nextIndex);
   }
 
+  const guidedRoomSelector =
+    mode === "guided" ? (
+      <fieldset
+        className="min-w-0 border-t border-slate-200 pt-6 sm:pt-8 lg:pt-10"
+        data-guided-room-selector
+      >
+        <legend className="text-xl font-extrabold text-slate-950">
+          {t("deals.guided.hotelDetails.chooseRoom")}
+        </legend>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
+          {t("deals.guided.hotelDetails.planningDisclosure")}
+        </p>
+        {roomOptions.length ? (
+          <div
+            className="mt-6 grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
+            data-guided-room-grid
+          >
+            {roomOptions.map((option) => {
+              const checked = selectedRoomId === option.id;
+              const nightly = formatDisplayPrice({
+                amount: option.pricePerNight,
+                sourceCurrency: option.currency,
+                displayCurrency: selectedOption.currency,
+                convertSourceEstimate: true,
+                rates: currencyRates.rates,
+                isFallbackRate: currencyRates.isFallback,
+              });
+              const total = formatDisplayPrice({
+                amount: option.totalPrice,
+                sourceCurrency: option.currency,
+                displayCurrency: selectedOption.currency,
+                convertSourceEstimate: true,
+                rates: currencyRates.rates,
+                isFallbackRate: currencyRates.isFallback,
+              });
+              return (
+                <GuidedHotelRoomCard
+                  key={option.id}
+                  option={option}
+                  nightlyPrice={nightly}
+                  totalPrice={total}
+                  selected={checked}
+                  lowestEstimate={option.id === lowestEstimateRoomId}
+                  planningOptionText={t(
+                    "deals.guided.hotelDetails.planningOption",
+                  )}
+                  lowestEstimateText={t(
+                    "deals.guided.hotelDetails.lowestEstimate",
+                  )}
+                  perRoomNightText={t("deals.guided.hotelDetails.perRoomNight")}
+                  indicativeTotalText={t(
+                    "deals.guided.hotelDetails.indicativeTotal",
+                  )}
+                  selectRoomText={t("deals.guided.hotelDetails.selectRoom")}
+                  selectedText={t("deals.guided.hotelDetails.selected")}
+                  onSelect={() => setSelectedRoomId(option.id)}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <p
+            role="status"
+            className="mt-5 rounded-xl bg-amber-50 p-4 font-semibold text-amber-950"
+          >
+            {t("deals.guided.hotelDetails.optionsUnavailable")}
+          </p>
+        )}
+      </fieldset>
+    ) : null;
+
   const detailsContent = (
     <section className="border-b border-border bg-white">
       <div
@@ -704,7 +775,10 @@ export function HotelDetailsClient({
             headingRef={mode === "guided" ? headingRef : undefined}
           />
 
-          <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
+          <div
+            className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8"
+            data-hotel-property-booking-layout
+          >
             <Card
               variant="flat"
               className="min-w-0 overflow-hidden p-0 shadow-[0_12px_32px_-26px_rgba(2,28,43,0.32)]"
@@ -774,75 +848,6 @@ export function HotelDetailsClient({
                 }
                 amenityItems={amenityItems}
               />
-              {mode === "guided" ? (
-                <fieldset className="min-w-0 border-t border-slate-200 p-5 sm:p-6">
-                  <legend className="text-xl font-extrabold text-slate-950">
-                    {t("deals.guided.hotelDetails.chooseRoom")}
-                  </legend>
-                  <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
-                    {t("deals.guided.hotelDetails.planningDisclosure")}
-                  </p>
-                  {roomOptions.length ? (
-                    <div className="mt-6 grid min-w-0 grid-cols-1 gap-5 min-[720px]:grid-cols-2 lg:grid-cols-1 min-[1280px]:grid-cols-2">
-                      {roomOptions.map((option) => {
-                        const checked = selectedRoomId === option.id;
-                        const nightly = formatDisplayPrice({
-                          amount: option.pricePerNight,
-                          sourceCurrency: option.currency,
-                          displayCurrency: selectedOption.currency,
-                          convertSourceEstimate: true,
-                          rates: currencyRates.rates,
-                          isFallbackRate: currencyRates.isFallback,
-                        });
-                        const total = formatDisplayPrice({
-                          amount: option.totalPrice,
-                          sourceCurrency: option.currency,
-                          displayCurrency: selectedOption.currency,
-                          convertSourceEstimate: true,
-                          rates: currencyRates.rates,
-                          isFallbackRate: currencyRates.isFallback,
-                        });
-                        return (
-                          <GuidedHotelRoomCard
-                            key={option.id}
-                            option={option}
-                            nightlyPrice={nightly}
-                            totalPrice={total}
-                            selected={checked}
-                            lowestEstimate={option.id === lowestEstimateRoomId}
-                            planningOptionText={t(
-                              "deals.guided.hotelDetails.planningOption",
-                            )}
-                            lowestEstimateText={t(
-                              "deals.guided.hotelDetails.lowestEstimate",
-                            )}
-                            perRoomNightText={t(
-                              "deals.guided.hotelDetails.perRoomNight",
-                            )}
-                            indicativeTotalText={t(
-                              "deals.guided.hotelDetails.indicativeTotal",
-                            )}
-                            selectRoomText={t(
-                              "deals.guided.hotelDetails.selectRoom",
-                            )}
-                            selectedText={t(
-                              "deals.guided.hotelDetails.selected",
-                            )}
-                            onSelect={() => setSelectedRoomId(option.id)}
-                          />
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p
-                      role="status"
-                      className="mt-5 rounded-xl bg-amber-50 p-4 font-semibold text-amber-950"
-                    >
-                      {t("deals.guided.hotelDetails.optionsUnavailable")}
-                    </p>
-                  )}
-                </fieldset>
-              ) : null}
             </Card>
 
             <HotelDetailsBookingPanel
@@ -931,6 +936,7 @@ export function HotelDetailsClient({
               }
             />
           </div>
+          {guidedRoomSelector}
         </div>
       </div>
     </section>
