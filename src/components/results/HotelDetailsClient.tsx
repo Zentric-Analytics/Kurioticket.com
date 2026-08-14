@@ -2,17 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
-import type {
-  SavedHotelSnapshot,
-} from "@/components/results/hotelSavedStorage";
-import {
-  useSavedHotel,
-} from "@/components/results/useSavedHotel";
+import type { SavedHotelSnapshot } from "@/components/results/hotelSavedStorage";
+import { useSavedHotel } from "@/components/results/useSavedHotel";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Card } from "@/components/ui/Card";
 import type { PublicHotelResult } from "@/lib/types";
+import type { HotelRoomOption } from "@/lib/hotels/hotelRoomOptions";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import {
@@ -27,9 +24,7 @@ import {
   getHotelGalleryPhotoPosition,
   resolveHotelGalleryIndex,
 } from "@/components/results/hotelGalleryPresentation";
-import {
-  buildHotelAmenityPresentation,
-} from "@/components/results/hotelAmenityPresentation";
+import { buildHotelAmenityPresentation } from "@/components/results/hotelAmenityPresentation";
 import { HotelDetailsBookingPanel } from "@/components/results/hotelDetails/HotelDetailsBookingPanel";
 import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDetailsGallery";
 import { HotelDetailsHeader } from "@/components/results/hotelDetails/HotelDetailsHeader";
@@ -56,7 +51,12 @@ import {
   translateKnownHotelDetailsLabel,
   type HotelDetailsSearchContext,
 } from "@/components/results/hotelDetails/hotelDetailsPresentation";
-import { buildDealsHotelDetailsApiParams, buildDealsHotelDetailsSelection, isCurrentDealsHotelDetailsResponse, type DealsHotelDetailsRequestContext } from "@/lib/deals/dealsHotelDetails";
+import {
+  buildDealsHotelDetailsApiParams,
+  buildDealsHotelDetailsSelection,
+  isCurrentDealsHotelDetailsResponse,
+  type DealsHotelDetailsRequestContext,
+} from "@/lib/deals/dealsHotelDetails";
 import type { DealsSearch } from "@/lib/deals/dealsSearchParams";
 import type { DealsTripPlanHotel } from "@/lib/deals/dealsTripPlan";
 import {
@@ -64,7 +64,6 @@ import {
   getHotelReviewCount,
   type HotelReviewBand,
 } from "@/components/results/hotelReviewPresentation";
-
 
 export type { HotelDetailsSearchContext };
 
@@ -110,19 +109,29 @@ export function HotelDetailsClient({
   const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [hotel, setHotel] = useState<PublicHotelResult | null>(null);
+  const [roomOptions, setRoomOptions] = useState<HotelRoomOption[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [redirectError, setRedirectError] = useState("");
   const [redirecting, setRedirecting] = useState(false);
   const [preferredImageIndex, setPreferredImageIndex] = useState(0);
-  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(() => new Set());
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [resultReceivedAt, setResultReceivedAt] = useState<number | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const loadingRef = useRef<HTMLDivElement | null>(null);
   const errorRef = useRef<HTMLHeadingElement | null>(null);
   const retryFocusRef = useRef(false);
-  const effectiveRequestContext = requestContext ?? { id, checkIn: searchContext?.checkIn ?? "", checkOut: searchContext?.checkOut ?? "", guests: searchContext?.guests ?? "", rooms: searchContext?.rooms ?? "" };
+  const effectiveRequestContext = requestContext ?? {
+    id,
+    checkIn: searchContext?.checkIn ?? "",
+    checkOut: searchContext?.checkOut ?? "",
+    guests: searchContext?.guests ?? "",
+    rooms: searchContext?.rooms ?? "",
+  };
   const requestId = effectiveRequestContext.id;
   const requestCheckIn = effectiveRequestContext.checkIn;
   const requestCheckOut = effectiveRequestContext.checkOut;
@@ -140,6 +149,8 @@ export function HotelDetailsClient({
       if (!active) return;
       setLoading(true);
       setHotel(null);
+      setRoomOptions([]);
+      setSelectedRoomId("");
       setLoadError("");
       setRedirectError("");
       setRedirecting(false);
@@ -148,23 +159,39 @@ export function HotelDetailsClient({
       setFailedImageUrls(new Set());
     });
 
-    fetch(`/api/hotels/details?${buildDealsHotelDetailsApiParams({ id: requestId, checkIn: requestCheckIn, checkOut: requestCheckOut, guests: requestGuests, rooms: requestRooms }).toString()}`, { signal: controller.signal })
+    fetch(
+      `/api/hotels/details?${buildDealsHotelDetailsApiParams({ id: requestId, checkIn: requestCheckIn, checkOut: requestCheckOut, guests: requestGuests, rooms: requestRooms }).toString()}`,
+      { signal: controller.signal },
+    )
       .then(async (response) => {
-        const data = (await response.json().catch(() => ({}))) as { hotel?: PublicHotelResult; error?: string };
-        if (!response.ok || !data.hotel) throw new Error(data.error || unavailableFallback);
-        if (!isCurrentDealsHotelDetailsResponse(requestId, data.hotel)) throw new Error(unavailableFallback);
-        return data.hotel;
+        const data = (await response.json().catch(() => ({}))) as {
+          hotel?: PublicHotelResult;
+          roomOptions?: HotelRoomOption[];
+          error?: string;
+        };
+        if (!response.ok || !data.hotel)
+          throw new Error(data.error || unavailableFallback);
+        if (!isCurrentDealsHotelDetailsResponse(requestId, data.hotel))
+          throw new Error(unavailableFallback);
+        return {
+          hotel: data.hotel,
+          roomOptions: Array.isArray(data.roomOptions) ? data.roomOptions : [],
+        };
       })
-      .then((nextHotel) => {
+      .then(({ hotel: nextHotel, roomOptions: nextRoomOptions }) => {
         if (!active) return;
         setHotel(nextHotel);
+        setRoomOptions(nextRoomOptions);
         setResultReceivedAt(Date.now());
         setLoadError("");
       })
       .catch((error) => {
         if (!active) return;
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setLoadError(error instanceof Error ? error.message : unavailableFallback);
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
+        setLoadError(
+          error instanceof Error ? error.message : unavailableFallback,
+        );
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -174,7 +201,14 @@ export function HotelDetailsClient({
       active = false;
       controller.abort();
     };
-  }, [requestId, requestCheckIn, requestCheckOut, requestGuests, requestRooms, loadAttempt]);
+  }, [
+    requestId,
+    requestCheckIn,
+    requestCheckOut,
+    requestGuests,
+    requestRooms,
+    loadAttempt,
+  ]);
 
   async function continueToProvider() {
     if (!hotel || redirecting || !canUseHotelDetailsProviderLink(hotel)) return;
@@ -184,13 +218,25 @@ export function HotelDetailsClient({
       const response = await fetch("/api/redirect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, type: "hotel", sourcePage: "hotel_details" }),
+        body: JSON.stringify({
+          id,
+          type: "hotel",
+          sourcePage: "hotel_details",
+        }),
       });
-      const data = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
-      if (!response.ok || !data.url) throw new Error(data.error || t("hotelDetails.redirectError"));
+      const data = (await response.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!response.ok || !data.url)
+        throw new Error(data.error || t("hotelDetails.redirectError"));
       window.location.href = data.url;
     } catch (error) {
-      setRedirectError(error instanceof Error ? error.message : t("hotelDetails.redirectError"));
+      setRedirectError(
+        error instanceof Error
+          ? error.message
+          : t("hotelDetails.redirectError"),
+      );
       setRedirecting(false);
       setResultReceivedAt(null);
     }
@@ -200,9 +246,7 @@ export function HotelDetailsClient({
 
   function getHotelDetailsSnapshot(): SavedHotelSnapshot {
     if (!hotel) {
-      throw new Error(
-        "Hotel details are unavailable.",
-      );
+      throw new Error("Hotel details are unavailable.");
     }
 
     const snapshotPrice = getHotelPriceDetails(hotel);
@@ -210,22 +254,15 @@ export function HotelDetailsClient({
       throw new Error("Cannot save a hotel without a valid live room rate.");
     }
 
-    const parsedCheckIn = parseHotelDetailsSearchDate(
-      searchContext?.checkIn,
-    );
-    const parsedCheckOut = parseHotelDetailsSearchDate(
-      searchContext?.checkOut,
-    );
+    const parsedCheckIn = parseHotelDetailsSearchDate(searchContext?.checkIn);
+    const parsedCheckOut = parseHotelDetailsSearchDate(searchContext?.checkOut);
 
     const hasValidStay =
       parsedCheckIn !== null &&
       parsedCheckOut !== null &&
-      parsedCheckOut.getTime() >
-        parsedCheckIn.getTime();
+      parsedCheckOut.getTime() > parsedCheckIn.getTime();
 
-    const fallbackDate = new Date()
-      .toISOString()
-      .slice(0, 10);
+    const fallbackDate = new Date().toISOString().slice(0, 10);
 
     const checkIn = hasValidStay
       ? searchContext?.checkIn || fallbackDate
@@ -235,40 +272,30 @@ export function HotelDetailsClient({
       ? searchContext?.checkOut || checkIn
       : checkIn;
 
-    const contextualDestination =
-      normalizeHotelDetailsWhitespace(
-        searchContext?.destination || "",
-      );
+    const contextualDestination = normalizeHotelDetailsWhitespace(
+      searchContext?.destination || "",
+    );
 
     const destination =
-      contextualDestination &&
-      contextualDestination.length <= 120
+      contextualDestination && contextualDestination.length <= 120
         ? contextualDestination
-        : hotel.location ||
-          hotel.neighbourhood ||
-          hotel.name;
+        : hotel.location || hotel.neighbourhood || hotel.name;
 
-    const snapshotGallery =
-      buildHotelGalleryCandidates(
-        hotel.imageUrls,
-        hotel.imageUrl,
-      );
+    const snapshotGallery = buildHotelGalleryCandidates(
+      hotel.imageUrls,
+      hotel.imageUrl,
+    );
 
-    const snapshotImageIndex =
-      resolveHotelGalleryIndex(
-        snapshotGallery,
-        failedImageUrls,
-        preferredImageIndex,
-      );
+    const snapshotImageIndex = resolveHotelGalleryIndex(
+      snapshotGallery,
+      failedImageUrls,
+      preferredImageIndex,
+    );
 
     const image =
-      snapshotImageIndex >= 0
-        ? snapshotGallery[snapshotImageIndex]
-        : undefined;
+      snapshotImageIndex >= 0 ? snapshotGallery[snapshotImageIndex] : undefined;
 
-    const href =
-      `${window.location.pathname}` +
-      `${window.location.search}`;
+    const href = `${window.location.pathname}` + `${window.location.search}`;
 
     return {
       id: savedHotelId,
@@ -288,10 +315,7 @@ export function HotelDetailsClient({
     };
   }
 
-  const {
-    isSaved,
-    toggleSavedHotel,
-  } = useSavedHotel({
+  const { isSaved, toggleSavedHotel } = useSavedHotel({
     hotelId: savedHotelId,
     getSnapshot: getHotelDetailsSnapshot,
   });
@@ -305,8 +329,16 @@ export function HotelDetailsClient({
     setLoadAttempt((attempt) => attempt + 1);
   }
 
-  useEffect(() => { if (retryFocusRef.current && loading) loadingRef.current?.focus({ preventScroll: true }); }, [loading]);
-  useEffect(() => { if (!retryFocusRef.current || loading) return; if (hotel && !loadError) headingRef.current?.focus({ preventScroll: true }); else errorRef.current?.focus({ preventScroll: true }); retryFocusRef.current = false; }, [hotel, loadError, loading]);
+  useEffect(() => {
+    if (retryFocusRef.current && loading)
+      loadingRef.current?.focus({ preventScroll: true });
+  }, [loading]);
+  useEffect(() => {
+    if (!retryFocusRef.current || loading) return;
+    if (hotel && !loadError) headingRef.current?.focus({ preventScroll: true });
+    else errorRef.current?.focus({ preventScroll: true });
+    retryFocusRef.current = false;
+  }, [hotel, loadError, loading]);
 
   if (loading) {
     return (
@@ -343,7 +375,19 @@ export function HotelDetailsClient({
     );
   }
 
-  const priceDetails = getHotelPriceDetails(hotel);
+  const selectedRoom =
+    roomOptions.find((option) => option.id === selectedRoomId) ?? null;
+  const propertyPriceDetails = getHotelPriceDetails(hotel);
+  const priceDetails =
+    mode === "guided"
+      ? selectedRoom
+        ? {
+            pricePerNight: selectedRoom.pricePerNight,
+            totalPrice: selectedRoom.totalPrice,
+            currency: selectedRoom.currency,
+          }
+        : null
+      : propertyPriceDetails;
   const hasValidPrice = priceDetails !== null;
   const totalDisplayPrice = priceDetails
     ? formatDisplayPrice({
@@ -365,7 +409,8 @@ export function HotelDetailsClient({
         isFallbackRate: currencyRates.isFallback,
       })
     : null;
-  const priceUnavailableText = t("hotelResults.priceUnavailable") || "Price unavailable";
+  const priceUnavailableText =
+    t("hotelResults.priceUnavailable") || "Price unavailable";
   const liveRateUnavailableText =
     t("hotelResults.liveRateUnavailable") ||
     "No live room rate is available for the selected dates.";
@@ -375,38 +420,93 @@ export function HotelDetailsClient({
   const discoveryBookingUnavailableText =
     t("hotelDetails.discoveryBookingUnavailable") ||
     "This property is available for discovery, but a live booking quote is not available yet.";
-  const starRating = normalizeHotelClassificationStars(hotel.classificationStars) ?? null;
-  const galleryCandidates = buildHotelGalleryCandidates(hotel.imageUrls, hotel.imageUrl);
+  const starRating =
+    normalizeHotelClassificationStars(hotel.classificationStars) ?? null;
+  const galleryCandidates = buildHotelGalleryCandidates(
+    hotel.imageUrls,
+    hotel.imageUrl,
+  );
   const displayCandidates = galleryCandidates;
-  const activeIndex = resolveHotelGalleryIndex(displayCandidates, failedImageUrls, preferredImageIndex);
-  const usableIndices = displayCandidates.reduce<number[]>((indices, url, index) => {
-    if (!failedImageUrls.has(url)) indices.push(index);
-    return indices;
-  }, []);
+  const activeIndex = resolveHotelGalleryIndex(
+    displayCandidates,
+    failedImageUrls,
+    preferredImageIndex,
+  );
+  const usableIndices = displayCandidates.reduce<number[]>(
+    (indices, url, index) => {
+      if (!failedImageUrls.has(url)) indices.push(index);
+      return indices;
+    },
+    [],
+  );
   const activeUrl = activeIndex >= 0 ? displayCandidates[activeIndex] : "";
   const showGalleryControls = usableIndices.length > 1;
-  const photoPosition = getHotelGalleryPhotoPosition(usableIndices, activeIndex);
+  const photoPosition = getHotelGalleryPhotoPosition(
+    usableIndices,
+    activeIndex,
+  );
   const activePosition = photoPosition.current;
-  const photoCounter = (t("hotelResults.photoCounter") || "{{current}} of {{total}} photos")
+  const photoCounter = (
+    t("hotelResults.photoCounter") || "{{current}} of {{total}} photos"
+  )
     .replace("{{current}}", String(activePosition))
     .replace("{{total}}", String(photoPosition.total));
-  const photoPositionAnnouncement = (t("hotelDetails.photoPositionAnnouncement") || "Photo {{current}} of {{total}}")
+  const photoPositionAnnouncement = (
+    t("hotelDetails.photoPositionAnnouncement") ||
+    "Photo {{current}} of {{total}}"
+  )
     .replace("{{current}}", String(activePosition))
     .replace("{{total}}", String(photoPosition.total));
-  const roomType = hotel.roomType ? translateKnownHotelDetailsLabel(toHotelDetailsTitleCase(hotel.roomType), t) : "";
+  const roomType = hotel.roomType
+    ? translateKnownHotelDetailsLabel(
+        toHotelDetailsTitleCase(hotel.roomType),
+        t,
+      )
+    : "";
   const mealPlan = getHotelDetailsMealPlan(hotel, roomType, t);
-  const cancellationText = getHotelDetailsCancellationText(hotel.cancellationInfo, t);
+  const cancellationText = getHotelDetailsCancellationText(
+    hotel.cancellationInfo,
+    t,
+  );
   const distanceText = getMeaningfulHotelDistance(hotel.distanceFromCenter);
-  const locationParts = getDistinctHotelDetailsLocationParts(hotel, distanceText);
-  const amenityItems = localizeHotelDetailsAmenityItems(buildHotelAmenityPresentation(hotel.amenities, hotel.amenities.length), t);
+  const locationParts = getDistinctHotelDetailsLocationParts(
+    hotel,
+    distanceText,
+  );
+  const amenityItems = localizeHotelDetailsAmenityItems(
+    buildHotelAmenityPresentation(hotel.amenities, hotel.amenities.length),
+    t,
+  );
   const reviewScale = normalizeHotelReviewScale(hotel.reviewScale);
-  const normalizedReviewScore = normalizeHotelReviewScore(hotel.reviewScore, reviewScale);
+  const normalizedReviewScore = normalizeHotelReviewScore(
+    hotel.reviewScore,
+    reviewScale,
+  );
   const reviewBand = getHotelReviewBand(normalizedReviewScore, reviewScale);
   const reviewCount = getHotelReviewCount(hotel.reviewCount);
-  const reviewLabel = reviewBand ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand] : "";
-  const reviewScore = reviewBand && reviewScale ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(normalizedReviewScore ?? 0)} / ${reviewScale}` : "";
-  const reviewCountText = reviewCount !== null ? (reviewCount === 1 ? t("hotelResults.review.single") || "{{count}} review" : t("hotelResults.review.multiple") || "{{count}} reviews").replace("{{count}}", new Intl.NumberFormat(locale).format(reviewCount)) : "";
-  const taxesText = hotel.taxesAndFeesIncluded === true ? t("hotelResults.taxesFeesIncluded") : hotel.taxesAndFeesIncluded === false ? t("hotelResults.taxesFeesNotIncluded") : "";
+  const reviewLabel = reviewBand
+    ? t(reviewLabelKeys[reviewBand]) || reviewLabelFallbacks[reviewBand]
+    : "";
+  const reviewScore =
+    reviewBand && reviewScale
+      ? `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(normalizedReviewScore ?? 0)} / ${reviewScale}`
+      : "";
+  const reviewCountText =
+    reviewCount !== null
+      ? (reviewCount === 1
+          ? t("hotelResults.review.single") || "{{count}} review"
+          : t("hotelResults.review.multiple") || "{{count}} reviews"
+        ).replace(
+          "{{count}}",
+          new Intl.NumberFormat(locale).format(reviewCount),
+        )
+      : "";
+  const taxesText =
+    hotel.taxesAndFeesIncluded === true
+      ? t("hotelResults.taxesFeesIncluded")
+      : hotel.taxesAndFeesIncluded === false
+        ? t("hotelResults.taxesFeesNotIncluded")
+        : "";
   const providerEnabled = canUseHotelDetailsProviderLink(hotel);
   const providerText =
     hotel.provider &&
@@ -414,31 +514,45 @@ export function HotelDetailsClient({
     hotel.provider !== "Kurioticket static catalogue"
       ? `${t("providedBy")} ${hotel.provider}`
       : "";
-  const providerUnavailableText = hotel.provider === "Kurioticket static catalogue"
-    ? "Prices shown are estimated for trip planning. Live booking availability will be introduced before launch."
-    : hotel.dataSource === "demo"
-    ? ""
-    : hotel.inventoryKind === "discovery" || !hasValidPrice
-      ? discoveryBookingUnavailableText
-      : !providerEnabled
-        ? t("hotelDetails.directLinkUnavailable")
-        : "";
-  const guidedSelection = mode === "guided" && guidedSearch && resultReceivedAt !== null ? buildDealsHotelDetailsSelection({ hotel, requestedHotelId: requestId, search: guidedSearch, resultReceivedAt }) : null;
-  const guidedActionLabel = guidedSearch?.mode === "hotel-car" ? (t("deals.guided.hotelDetails.continueCars") || "Continue with this stay to cars") : (t("deals.guided.hotelDetails.continueFlights") || "Continue with this stay to flights");
-  const guidedUnavailableText = t("deals.guided.hotelDetails.roomUnavailable") || "This stay cannot be added to your Trip Plan because a current planning estimate is unavailable.";
+  const providerUnavailableText =
+    hotel.provider === "Kurioticket static catalogue"
+      ? "Prices shown are estimated for trip planning. Live booking availability will be introduced before launch."
+      : hotel.dataSource === "demo"
+        ? ""
+        : hotel.inventoryKind === "discovery" || !hasValidPrice
+          ? discoveryBookingUnavailableText
+          : !providerEnabled
+            ? t("hotelDetails.directLinkUnavailable")
+            : "";
+  const guidedSelection =
+    mode === "guided" && guidedSearch && resultReceivedAt !== null
+      ? buildDealsHotelDetailsSelection({
+          hotel,
+          roomOption: selectedRoom,
+          requestedHotelId: requestId,
+          search: guidedSearch,
+          resultReceivedAt,
+        })
+      : null;
+  const guidedActionLabel =
+    guidedSearch?.mode === "hotel-car"
+      ? t("deals.guided.hotelDetails.continueCars") ||
+        "Continue with this room to cars"
+      : t("deals.guided.hotelDetails.continueFlights") ||
+        "Continue with this room to flights";
+  const guidedUnavailableText =
+    t("deals.guided.hotelDetails.roomUnavailable") ||
+    "This stay cannot be added to your Trip Plan because a current planning estimate is unavailable.";
   const savedHotelLabel = (
     isSaved
       ? t("hotelResults.removeSavedHotel") ||
         "Remove {{name}} from saved hotels"
       : hasValidPrice
-        ? t("hotelResults.saveHotel") ||
-          "Save {{name}}"
+        ? t("hotelResults.saveHotel") || "Save {{name}}"
         : saveRequiresLiveRateText
   ).replace("{{name}}", hotel.name);
 
-  const saveActionText = isSaved
-    ? t("saved") || "Saved"
-    : t("save") || "Save";
+  const saveActionText = isSaved ? t("saved") || "Saved" : t("save") || "Save";
 
   const sourceAttributions = (hotel.sourceAttributions || [])
     .map((attribution) => ({
@@ -455,11 +569,7 @@ export function HotelDetailsClient({
       1,
       12,
     );
-    const roomCount = parseHotelDetailsSearchCount(
-      searchContext?.rooms,
-      1,
-      6,
-    );
+    const roomCount = parseHotelDetailsSearchCount(searchContext?.rooms, 1, 6);
 
     if (
       checkInDate === null ||
@@ -503,8 +613,7 @@ export function HotelDetailsClient({
         : t("hotelDetails.nightPlural") || "nights";
 
     return {
-      dateText:
-        `${dateFormatter.format(checkInDate)} – ${dateFormatter.format(checkOutDate)}`,
+      dateText: `${dateFormatter.format(checkInDate)} – ${dateFormatter.format(checkOutDate)}`,
       occupancyText:
         `${numberFormatter.format(guestCount)} ${guestLabel}, ` +
         `${numberFormatter.format(roomCount)} ${roomLabel}`,
@@ -522,14 +631,25 @@ export function HotelDetailsClient({
   }
 
   function selectAdjacentImage(direction: -1 | 1) {
-    const nextIndex = getAdjacentHotelGalleryIndex(displayCandidates, failedImageUrls, activeIndex, direction);
+    const nextIndex = getAdjacentHotelGalleryIndex(
+      displayCandidates,
+      failedImageUrls,
+      activeIndex,
+      direction,
+    );
     if (nextIndex !== -1) setPreferredImageIndex(nextIndex);
   }
 
   const detailsContent = (
-      <section className="border-b border-border bg-white">
-        <div className={mode === "guided" ? "py-6 sm:py-8 lg:py-10" : "page-shell py-6 sm:py-8 lg:py-10"}>
-          <div className="space-y-6 sm:space-y-8 lg:space-y-10">
+    <section className="border-b border-border bg-white">
+      <div
+        className={
+          mode === "guided"
+            ? "py-6 sm:py-8 lg:py-10"
+            : "page-shell py-6 sm:py-8 lg:py-10"
+        }
+      >
+        <div className="space-y-6 sm:space-y-8 lg:space-y-10">
           <HotelDetailsHeader
             resultsHref={resultsHref}
             backToResultsText={backToResultsText}
@@ -539,10 +659,19 @@ export function HotelDetailsClient({
             isSaved={isSaved}
             hasValidPrice={hasValidPrice}
             saveRequiresLiveRateText={saveRequiresLiveRateText}
-            onSave={() => { if (isSaved || hasValidPrice) void toggleSavedHotel(); }}
+            onSave={() => {
+              if (isSaved || hasValidPrice) void toggleSavedHotel();
+            }}
             saveActionText={saveActionText}
             starRating={starRating}
-            starRatingAriaLabel={starRating ? t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(starRating, locale)) : ""}
+            starRatingAriaLabel={
+              starRating
+                ? t("hotelResults.starHotelAria").replace(
+                    "{{rating}}",
+                    formatHotelDetailsRating(starRating, locale),
+                  )
+                : ""
+            }
             isGoogleMapsProvider={hotel.provider === "Google Maps"}
             locationParts={locationParts}
             reviewBandVisible={Boolean(reviewBand)}
@@ -567,12 +696,21 @@ export function HotelDetailsClient({
                 embedded
                 activeUrl={activeUrl}
                 hotelName={hotel.name}
-                imageAlt={t("hotelResults.hotelImageAlt").replace("{{name}}", hotel.name).replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
+                imageAlt={t("hotelResults.hotelImageAlt")
+                  .replace("{{name}}", hotel.name)
+                  .replace(
+                    "{{location}}",
+                    hotel.location
+                      ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}`
+                      : "",
+                  )}
                 imageUnavailableText={t("hotelResults.imageUnavailable")}
                 showGalleryControls={showGalleryControls}
                 onPrevious={() => selectAdjacentImage(-1)}
                 onNext={() => selectAdjacentImage(1)}
-                previousPhotoLabel={t("hotelResults.previousPhoto") || "Previous photo"}
+                previousPhotoLabel={
+                  t("hotelResults.previousPhoto") || "Previous photo"
+                }
                 nextPhotoLabel={t("hotelResults.nextPhoto") || "Next photo"}
                 photoCounter={photoCounter}
                 photoPositionAnnouncement={photoPositionAnnouncement}
@@ -580,65 +718,203 @@ export function HotelDetailsClient({
                 displayCandidates={displayCandidates}
                 activeIndex={activeIndex}
                 activePosition={activePosition}
-                selectPhotoLabel={t("hotelResults.selectPhoto") || "Show photo {{number}}"}
-                viewAllPhotosLabel={t("hotelDetails.viewAllPhotos") || "View all photos"}
-                openPhotoViewerLabel={t("hotelDetails.openPhotoViewer") || "Open photo {{current}} of {{total}} for {{hotelName}}"}
-                closePhotoViewerLabel={t("hotelDetails.closePhotoViewer") || "Close photo viewer"}
-                photoViewerTitle={(t("hotelDetails.photoViewerTitle") || "Photos for {{hotelName}}").replace("{{hotelName}}", hotel.name)}
+                selectPhotoLabel={
+                  t("hotelResults.selectPhoto") || "Show photo {{number}}"
+                }
+                viewAllPhotosLabel={
+                  t("hotelDetails.viewAllPhotos") || "View all photos"
+                }
+                openPhotoViewerLabel={
+                  t("hotelDetails.openPhotoViewer") ||
+                  "Open photo {{current}} of {{total}} for {{hotelName}}"
+                }
+                closePhotoViewerLabel={
+                  t("hotelDetails.closePhotoViewer") || "Close photo viewer"
+                }
+                photoViewerTitle={(
+                  t("hotelDetails.photoViewerTitle") ||
+                  "Photos for {{hotelName}}"
+                ).replace("{{hotelName}}", hotel.name)}
                 onSelectImage={setPreferredImageIndex}
                 onImageError={markImageFailed}
               />
 
               <HotelDetailsSections
                 embedded
-                roomTitle={mode === "guided" ? (t("deals.guided.hotelDetails.roomInformation") || "Room information") : (t("hotelResults.roomDetails") || "Room")}
+                roomTitle={
+                  mode === "guided"
+                    ? t("deals.guided.hotelDetails.roomInformation") ||
+                      "Room information"
+                    : t("hotelResults.roomDetails") || "Room"
+                }
                 roomItems={[roomType, mealPlan]}
-                cancellationTitle={t("hotelResults.cancellationDetails") || "Cancellation"}
+                cancellationTitle={
+                  t("hotelResults.cancellationDetails") || "Cancellation"
+                }
                 cancellationItems={[cancellationText]}
-                amenitiesTitle={t("hotelResults.amenitiesDetails") || "Amenities"}
+                amenitiesTitle={
+                  t("hotelResults.amenitiesDetails") || "Amenities"
+                }
                 amenityItems={amenityItems}
               />
+              {mode === "guided" ? (
+                <fieldset className="min-w-0 border-t border-slate-200 p-5 sm:p-6">
+                  <legend className="text-xl font-extrabold text-slate-950">
+                    {t("deals.guided.hotelDetails.chooseRoom")}
+                  </legend>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {t("deals.guided.hotelDetails.planningDisclosure")}
+                  </p>
+                  {roomOptions.length ? (
+                    <div className="mt-5 grid min-w-0 gap-4">
+                      {roomOptions.map((option) => {
+                        const checked = selectedRoomId === option.id;
+                        const nightly = formatDisplayPrice({
+                          amount: option.pricePerNight,
+                          sourceCurrency: option.currency,
+                          displayCurrency: selectedOption.currency,
+                          convertSourceEstimate: true,
+                          rates: currencyRates.rates,
+                          isFallbackRate: currencyRates.isFallback,
+                        });
+                        const total = formatDisplayPrice({
+                          amount: option.totalPrice,
+                          sourceCurrency: option.currency,
+                          displayCurrency: selectedOption.currency,
+                          convertSourceEstimate: true,
+                          rates: currencyRates.rates,
+                          isFallbackRate: currencyRates.isFallback,
+                        });
+                        return (
+                          <label
+                            key={option.id}
+                            className={`min-w-0 cursor-pointer rounded-2xl border p-4 focus-within:ring-2 focus-within:ring-blue-600 ${checked ? "border-blue-600 bg-blue-50" : "border-slate-200 bg-white"}`}
+                          >
+                            <span className="flex min-w-0 items-start gap-3">
+                              <input
+                                type="radio"
+                                name="guided-hotel-room"
+                                value={option.id}
+                                checked={checked}
+                                onChange={() => setSelectedRoomId(option.id)}
+                                className="mt-1 size-5 shrink-0"
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="block break-words font-bold text-slate-950">
+                                  {option.name}
+                                </span>
+                                <span className="mt-1 block break-words text-sm text-slate-700">
+                                  {option.bedConfiguration}
+                                </span>
+                                <span className="mt-2 block break-words text-sm text-slate-600">
+                                  {option.features.join(" · ")}
+                                </span>
+                                <span className="mt-2 block text-sm text-slate-700">
+                                  {option.mealPlan}
+                                </span>
+                                <span className="mt-1 block text-sm text-slate-600">
+                                  {option.cancellationInfo}
+                                </span>
+                                <span className="mt-3 block font-bold text-slate-950">
+                                  {nightly.formatted}{" "}
+                                  {t("deals.guided.hotelDetails.perRoomNight")}
+                                </span>
+                                <span className="block text-sm font-semibold text-slate-700">
+                                  {total.formatted}{" "}
+                                  {t(
+                                    "deals.guided.hotelDetails.indicativeTotal",
+                                  )}
+                                </span>
+                              </span>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p
+                      role="status"
+                      className="mt-5 rounded-xl bg-amber-50 p-4 font-semibold text-amber-950"
+                    >
+                      {t("deals.guided.hotelDetails.optionsUnavailable")}
+                    </p>
+                  )}
+                </fieldset>
+              ) : null}
             </Card>
 
             <HotelDetailsBookingPanel
-            priceDetailsAvailable={Boolean(priceDetails)}
-            totalDisplayPrice={totalDisplayPrice}
-            nightlyDisplayPrice={nightlyDisplayPrice}
-            estimatedStayTotalText={t("hotelResults.estimatedStayTotal")}
-            pricePerNightText={t("hotelResults.pricePerNight")}
-            taxesText={taxesText}
-            priceUnavailableText={priceUnavailableText}
-            liveRateUnavailableText={liveRateUnavailableText}
-            staySummary={staySummary}
-            changeSearchHref={resultsHref}
-            changeSearchText={
-              t("hotelDetails.changeDatesGuests") ||
-              "Change dates and guests"
-            }
-            changeSearchAction={mode === "guided" ? { kind: "hidden" } : { kind: "link", href: resultsHref, label:
-              t("hotelDetails.changeDatesGuests") ||
-              "Change dates and guests"
-            }}
-            providerPriceLabel={mode === "guided" ?
-              t("deals.guided.hotelDetails.sourceEstimate") ||
-              enTranslations["deals.guided.hotelDetails.sourceEstimate"] :
-              t("hotelDetails.providerPrice") || "Provider price"
-            }
-            providerText={providerText}
-            providerUnavailableText={mode === "guided" ? "" : providerUnavailableText}
-            redirectError={redirectError}
-            providerEnabled={providerEnabled}
-            redirecting={redirecting}
-            continueToProviderText={t("continueToProvider")}
-            onContinue={continueToProvider}
-            providerDisclaimerText={t("hotelDetails.providerDisclaimer") || enTranslations["hotelDetails.providerDisclaimer"]}
-            primaryAction={mode === "guided" ? { kind: "guided-room", enabled: Boolean(guidedSelection) && !confirming, pending: confirming, label: guidedActionLabel, accessibleLabel: `${guidedActionLabel}: ${hotel.name}`, unavailableMessage: guidedSelection ? "" : guidedUnavailableText, error: confirmationError, onActivate: () => { if (guidedSelection) onGuidedSelection?.(guidedSelection); } } : undefined}
+              priceDetailsAvailable={Boolean(priceDetails)}
+              totalDisplayPrice={totalDisplayPrice}
+              nightlyDisplayPrice={nightlyDisplayPrice}
+              estimatedStayTotalText={t("hotelResults.estimatedStayTotal")}
+              pricePerNightText={t("hotelResults.pricePerNight")}
+              taxesText={taxesText}
+              priceUnavailableText={priceUnavailableText}
+              liveRateUnavailableText={liveRateUnavailableText}
+              staySummary={staySummary}
+              changeSearchHref={resultsHref}
+              changeSearchText={
+                t("hotelDetails.changeDatesGuests") || "Change dates and guests"
+              }
+              changeSearchAction={
+                mode === "guided"
+                  ? { kind: "hidden" }
+                  : {
+                      kind: "link",
+                      href: resultsHref,
+                      label:
+                        t("hotelDetails.changeDatesGuests") ||
+                        "Change dates and guests",
+                    }
+              }
+              providerPriceLabel={
+                mode === "guided"
+                  ? t("deals.guided.hotelDetails.sourceEstimate") ||
+                    enTranslations["deals.guided.hotelDetails.sourceEstimate"]
+                  : t("hotelDetails.providerPrice") || "Provider price"
+              }
+              providerText={providerText}
+              providerUnavailableText={
+                mode === "guided" ? "" : providerUnavailableText
+              }
+              redirectError={redirectError}
+              providerEnabled={providerEnabled}
+              redirecting={redirecting}
+              continueToProviderText={t("continueToProvider")}
+              onContinue={continueToProvider}
+              providerDisclaimerText={
+                t("hotelDetails.providerDisclaimer") ||
+                enTranslations["hotelDetails.providerDisclaimer"]
+              }
+              primaryAction={
+                mode === "guided"
+                  ? {
+                      kind: "guided-room",
+                      enabled: Boolean(guidedSelection) && !confirming,
+                      pending: confirming,
+                      label: guidedActionLabel,
+                      accessibleLabel: `${guidedActionLabel}: ${selectedRoom?.name ?? hotel.name}, ${hotel.name}`,
+                      unavailableMessage: guidedSelection
+                        ? ""
+                        : guidedUnavailableText,
+                      error: confirmationError,
+                      onActivate: () => {
+                        if (guidedSelection)
+                          onGuidedSelection?.(guidedSelection);
+                      },
+                    }
+                  : undefined
+              }
             />
           </div>
-
-          </div>
         </div>
-      </section>
+      </div>
+    </section>
   );
-  return mode === "guided" ? <div data-guided-hotel-details-experience>{detailsContent}</div> : <main className="flex-1 bg-surface-muted/40">{detailsContent}</main>;
+  return mode === "guided" ? (
+    <div data-guided-hotel-details-experience>{detailsContent}</div>
+  ) : (
+    <main className="flex-1 bg-surface-muted/40">{detailsContent}</main>
+  );
 }
