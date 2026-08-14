@@ -76,7 +76,7 @@ export function TopBar({
 }) {
   const { theme } = useAppTheme();
   return (
-    <View style={[s.top, flightResults && { backgroundColor: theme.background }]}>
+    <View style={[s.top, { backgroundColor: flightResults ? theme.background : theme.surface }]}>
       <View style={s.topSide}>
         <Pressable
           accessibilityRole="button"
@@ -87,7 +87,7 @@ export function TopBar({
           {flightResults ? (
             <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
           ) : (
-            <FlowIcon name="back" size={25} />
+            <FlowIcon name="back" size={25} color={theme.icon} />
           )}
         </Pressable>
       </View>
@@ -95,8 +95,8 @@ export function TopBar({
       <View style={s.topActions}>
         {detail ? (
           <>
-            <FlowIcon name="heart" />
-            <FlowIcon name="share" />
+            <FlowIcon name="heart" color={theme.icon} />
+            <FlowIcon name="share" color={theme.icon} />
           </>
         ) : flightResults ? (
           <Pressable
