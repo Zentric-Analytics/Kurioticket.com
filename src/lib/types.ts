@@ -58,7 +58,7 @@ export type NormalizedFlightResult = {
   id: string;
   provider: string;
   airlineName: string;
-  airlineLogo?: string;
+  airlineLogo?: string | null;
   flightNumber?: string;
   originAirport: string;
   destinationAirport: string;

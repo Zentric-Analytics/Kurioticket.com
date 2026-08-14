@@ -103,6 +103,55 @@ test("keeps the logo aligned with the displayed Duffel carrier identity", () => 
   );
 });
 
+test("uses an equivalent owner carrier logo when the segment copy omits assets", () => {
+  const raw = offer();
+  Object.assign(raw.slices[0].segments[0], {
+    marketing_carrier: {
+      id: "arl_british_airways",
+      name: "British Airways",
+      iata_code: "BA",
+    },
+  });
+  Object.assign(raw, {
+    owner: {
+      id: "arl_british_airways",
+      name: "British Airways",
+      iata_code: "BA",
+      logo_symbol_url:
+        "https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/BA.svg",
+    },
+  });
+
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.equal(result?.airlineName, "British Airways");
+  assert.equal(
+    result?.airlineLogo,
+    "https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/BA.svg",
+  );
+});
+
+test("does not borrow the offer owner's logo for a different marketing carrier", () => {
+  const raw = offer();
+  Object.assign(raw.slices[0].segments[0], {
+    marketing_carrier: {
+      name: "Qatar Airways",
+      iata_code: "QR",
+    },
+  });
+  Object.assign(raw, {
+    owner: {
+      name: "British Airways",
+      iata_code: "BA",
+      logo_symbol_url:
+        "https://assets.duffel.com/img/airlines/for-light-background/full-color-logo/BA.svg",
+    },
+  });
+
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.equal(result?.airlineName, "Qatar Airways");
+  assert.equal(result?.airlineLogo, null);
+});
+
 test("falls back through operating carrier and owner without mixing logos", () => {
   const raw = offer();
   const segment = raw.slices[0].segments[0];
@@ -138,7 +187,7 @@ test("omits missing and non-public carrier logo URLs", () => {
   raw.slices[0].segments[0].marketing_carrier.logo_lockup_url = "";
   assert.equal(
     normalizeFlightResult("Duffel", raw, search("one-way"))?.airlineLogo,
-    undefined,
+    null,
   );
 });
 
