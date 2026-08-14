@@ -648,7 +648,7 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="View details"
-          style={[s0.detailsButton, rank !== 0 && s0.detailsButtonOutline, rank !== 0 && { backgroundColor: theme.surface }]}
+          style={s0.detailsButton}
           onPress={() =>
             router.push({
               pathname: "/flight-details",
@@ -659,7 +659,7 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
             })
           }
         >
-          <Text style={[s0.detailsButtonText, rank !== 0 && s0.detailsButtonTextOutline]} numberOfLines={1}>View details</Text>
+          <Text style={s0.detailsButtonText} numberOfLines={1}>View details</Text>
         </Pressable>
       </View>
     </View>
@@ -1055,9 +1055,7 @@ const s0 = StyleSheet.create({
   benefitItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
   benefit: { minWidth: 0, fontSize: 10.5, color: ui.muted, flex: 1 },
   detailsButton: { minWidth: 96, minHeight: 44, paddingHorizontal: 10, borderRadius: 8, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
-  detailsButtonOutline: { backgroundColor: "white", borderWidth: 1, borderColor: ui.blue },
   detailsButtonText: { color: "white", fontWeight: "800", fontSize: 12 },
-  detailsButtonTextOutline: { color: ui.blue },
   hotelCard: {
     height: 234,
     borderWidth: 1,

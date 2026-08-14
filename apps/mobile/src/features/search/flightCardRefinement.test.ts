@@ -14,6 +14,15 @@ test("flight card preserves display pricing and provider data during details nav
   assert.match(card, /result: JSON\.stringify\(result\)/);
 });
 
+test("every flight card uses the same primary details CTA regardless of rank or theme", () => {
+  assert.match(card, /style=\{s0\.detailsButton\}/);
+  assert.match(card, /<Text style=\{s0\.detailsButtonText\} numberOfLines=\{1\}>View details<\/Text>/);
+  assert.doesNotMatch(card, /rank\s*!==\s*0[\s\S]*detailsButton/);
+  assert.doesNotMatch(source, /detailsButtonOutline|detailsButtonTextOutline/);
+  assert.match(source, /detailsButton: \{[^}]*backgroundColor: ui\.blue/);
+  assert.match(source, /detailsButtonText: \{ color: "white"/);
+});
+
 test("flight card derives singular, plural, and nonstop labels from provider stops", () => {
   assert.match(card, /result\.stops === 1 \? "" : "s"/);
   assert.match(card, /: "Nonstop"/);
