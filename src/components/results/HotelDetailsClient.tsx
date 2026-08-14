@@ -666,9 +666,6 @@ export function HotelDetailsClient({
         <legend className="text-xl font-extrabold text-slate-950">
           {t("deals.guided.hotelDetails.chooseRoom")}
         </legend>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
-          {t("deals.guided.hotelDetails.planningDisclosure")}
-        </p>
         {roomOptions.length ? (
           <div
             className="mt-6 grid min-w-0 grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"

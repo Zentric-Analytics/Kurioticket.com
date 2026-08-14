@@ -63,6 +63,20 @@ test("places the guided room selector after the full upper property layout", () 
   assert.equal(clientSource.match(/<GuidedHotelRoomCard\b/g)?.length, 1);
 });
 
+test("places the room grid directly after the guided room legend", () => {
+  const selectorStart = clientSource.indexOf("data-guided-room-selector");
+  const legendStart = clientSource.indexOf("<legend", selectorStart);
+  const gridStart = clientSource.indexOf("data-guided-room-grid", legendStart);
+  const legendToGrid = clientSource.slice(legendStart, gridStart);
+
+  assert.match(legendToGrid, /deals\.guided\.hotelDetails\.chooseRoom/);
+  assert.doesNotMatch(legendToGrid, /<p\b/);
+  assert.doesNotMatch(
+    clientSource,
+    /deals\.guided\.hotelDetails\.planningDisclosure/,
+  );
+});
+
 test("uses a non-scrolling one, two, then three-column guided room grid", () => {
   const roomGridStart = clientSource.lastIndexOf(
     "<div",
