@@ -171,6 +171,22 @@ export function getDealsReviewItems(
                     },
                   ]
                 : []),
+              ...(hotel.bedConfiguration
+                ? [
+                    {
+                      labelKey: "deals.guided.review.bedConfiguration",
+                      value: hotel.bedConfiguration,
+                    },
+                  ]
+                : []),
+              ...(hotel.mealPlan
+                ? [
+                    {
+                      labelKey: "deals.guided.review.mealPlan",
+                      value: hotel.mealPlan,
+                    },
+                  ]
+                : []),
             ],
           },
         ];

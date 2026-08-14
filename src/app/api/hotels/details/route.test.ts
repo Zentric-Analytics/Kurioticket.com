@@ -38,16 +38,22 @@ function testHotel(id: string, name: string): NormalizedHotelResult {
 }
 
 test("hotel details returns 400 when id is missing", async () => {
-  const response = GET(new Request("https://kurioticket.test/api/hotels/details"));
-  const payload = await response.json() as { error?: string };
+  const response = GET(
+    new Request("https://kurioticket.test/api/hotels/details"),
+  );
+  const payload = (await response.json()) as { error?: string };
 
   assert.equal(response.status, 400);
   assert.equal(payload.error, "Hotel id is required.");
 });
 
 test("hotel details returns 404 for an unknown id", async () => {
-  const response = GET(new Request("https://kurioticket.test/api/hotels/details?id=unknown-hotel-details-test"));
-  const payload = await response.json() as { error?: string };
+  const response = GET(
+    new Request(
+      "https://kurioticket.test/api/hotels/details?id=unknown-hotel-details-test",
+    ),
+  );
+  const payload = (await response.json()) as { error?: string };
 
   assert.equal(response.status, 404);
   assert.equal(payload.error, "Hotel not found.");
@@ -61,21 +67,60 @@ test("hotel details returns the selected cached public hotel", async () => {
     testHotel(selectedId, "Selected Cached Hotel"),
   ]);
 
-  const response = GET(new Request(`https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selectedId)}`));
-  const payload = await response.json() as { hotel?: Record<string, unknown> };
+  const response = GET(
+    new Request(
+      `https://kurioticket.test/api/hotels/details?id=${encodeURIComponent(selectedId)}`,
+    ),
+  );
+  const payload = (await response.json()) as {
+    hotel?: Record<string, unknown>;
+    roomOptions?: unknown[];
+  };
 
   assert.equal(response.status, 200);
   assert.equal(payload.hotel?.id, selectedId);
   assert.equal(payload.hotel?.name, "Selected Cached Hotel");
-  assert.equal(Object.hasOwn(payload.hotel ?? {}, "rawProviderReference"), false);
+  assert.equal(
+    Object.hasOwn(payload.hotel ?? {}, "rawProviderReference"),
+    false,
+  );
+  assert.deepEqual(payload.roomOptions, []);
+});
+
+test("static details include sanitized room options and requested stay totals", async () => {
+  const response = GET(
+    new Request(
+      "https://kurioticket.test/api/hotels/details?id=hotel-le-six-paris&checkIn=2027-06-01&checkOut=2027-06-04&rooms=2&guests=4",
+    ),
+  );
+  const payload = (await response.json()) as {
+    hotel: Record<string, unknown>;
+    roomOptions: Array<Record<string, unknown>>;
+  };
+  assert.equal(response.status, 200);
+  assert.equal(payload.hotel.id, "hotel-le-six-paris");
+  assert.ok(payload.roomOptions.length >= 2);
+  for (const room of payload.roomOptions) {
+    assert.equal(room.hotelId, "hotel-le-six-paris");
+    assert.equal(room.totalPrice, Number(room.pricePerNight) * 3 * 2);
+    assert.equal(room.pricingKind, "indicative");
+    assert.equal(Object.hasOwn(room, "rawProviderReference"), false);
+  }
 });
 
 test("hotel details does not return a different cached hotel for an unknown id", async () => {
   const cachedId = `hotel-details-cached-${Date.now()}`;
   rememberHotels([testHotel(cachedId, "Cached Hotel Should Not Leak")]);
 
-  const response = GET(new Request(`https://kurioticket.test/api/hotels/details?id=${cachedId}-missing`));
-  const payload = await response.json() as { hotel?: Record<string, unknown>; error?: string };
+  const response = GET(
+    new Request(
+      `https://kurioticket.test/api/hotels/details?id=${cachedId}-missing`,
+    ),
+  );
+  const payload = (await response.json()) as {
+    hotel?: Record<string, unknown>;
+    error?: string;
+  };
 
   assert.equal(response.status, 404);
   assert.equal(payload.hotel, undefined);
