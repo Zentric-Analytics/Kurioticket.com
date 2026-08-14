@@ -398,18 +398,6 @@ type DiscoveryFareCardState = {
 type HomepageRecommendationSurface = "popular" | "discovery" | "regionalRoutes";
 type HomepageRecommendationOrder = Partial<Record<HomepageRecommendationSurface, string[]>>;
 
-type NewsletterStatus = "idle" | "success" | "error";
-
-function isNewsletterEmail(value: string) {
-  const email = value.trim();
-  return (
-    email.length > 2 &&
-    email.length <= 254 &&
-    !/\s/.test(email) &&
-    /^[^@]+@[^@]+\.[^@]+$/.test(email)
-  );
-}
-
 // Production rule: the public homepage must never initiate passkey setup,
 // passkey authentication, or passkey setup-state fetches. Optional account-security
 // onboarding belongs on /auth/signin, /onboarding/security, /dashboard/security,
@@ -417,11 +405,6 @@ function isNewsletterEmail(value: string) {
 export default function Home() {
   const { locale, t: dictionary } = useLocale();
   const { mode: regionCode, selectedOption } = useRegion();
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterMessage, setNewsletterMessage] = useState("");
-  const [newsletterStatus, setNewsletterStatus] =
-    useState<NewsletterStatus>("idle");
-  const [newsletterPending, setNewsletterPending] = useState(false);
   const { status: sessionStatus } = useSession();
   const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
   const [backendSavedItemIds, setBackendSavedItemIds] = useState<
@@ -772,57 +755,6 @@ export default function Home() {
     () => distributeCountryDirectoryColumns(sortedCountryDirectoryCountries, 4),
     [sortedCountryDirectoryCountries],
   );
-
-  const handleNewsletterSubmit = async (
-    event: React.FormEvent<HTMLFormElement>,
-  ) => {
-    event.preventDefault();
-
-    if (newsletterPending) return;
-
-    const email = newsletterEmail.trim();
-    if (!isNewsletterEmail(email)) {
-      setNewsletterStatus("error");
-      setNewsletterMessage(t("homeNewsletterInvalidEmail"));
-      return;
-    }
-
-    setNewsletterPending(true);
-    setNewsletterStatus("idle");
-    setNewsletterMessage("");
-
-    try {
-      const response = await fetch("/api/newsletter/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          source: "homepage",
-          locale,
-          regionCode,
-        }),
-      });
-      const data = (await response.json().catch(() => null)) as {
-        ok?: boolean;
-        message?: string;
-      } | null;
-
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || t("homeNewsletterUnableSubscribe"));
-      }
-
-      setNewsletterStatus("success");
-      setNewsletterMessage(t("homeNewsletterThanks"));
-      setNewsletterEmail("");
-    } catch (error) {
-      setNewsletterStatus("error");
-      setNewsletterMessage(
-        error instanceof Error ? error.message : t("homeNewsletterTryAgain"),
-      );
-    } finally {
-      setNewsletterPending(false);
-    }
-  };
 
   const refreshBackendSavedItems = useCallback(async (signal?: AbortSignal) => {
     const result = await fetchBackendSavedDiscoveries(signal);
@@ -1617,87 +1549,6 @@ export default function Home() {
                 })}
               </div>
             ))}
-          </div>
-        </section>
-
-        <section className="page-shell pb-5 pt-1 sm:pb-7 sm:pt-2">
-          <div className="overflow-hidden rounded-2xl bg-[#062B63] px-5 py-4 text-white shadow-[0_22px_50px_-30px_rgba(2,28,43,0.7)] sm:rounded-3xl sm:px-7 sm:py-5 lg:grid lg:grid-cols-[150px_minmax(0,1fr)_minmax(360px,0.9fr)] lg:items-center lg:gap-6">
-            <div
-              className="mx-auto mb-3 h-16 w-36 text-white/90 lg:mb-0 lg:mx-0"
-              aria-hidden="true"
-            >
-              <svg viewBox="0 0 180 90" fill="none" className="h-full w-full">
-                <path
-                  d="M2 62C32 36 46 87 68 55C84 31 103 40 121 22"
-                  stroke="white"
-                  strokeOpacity="0.62"
-                  strokeWidth="2"
-                  strokeDasharray="6 7"
-                  strokeLinecap="round"
-                />
-                <path d="M83 36L160 8L132 76L116 49L83 36Z" fill="#EAF7FF" />
-                <path
-                  d="M116 49L160 8L102 43"
-                  stroke="#94DFF0"
-                  strokeWidth="3"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div className="text-center lg:text-start">
-              <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">
-                {t("homeNewsletterTitle")}
-              </h2>
-              <p className="mt-1.5 text-sm font-medium leading-6 text-white/82">
-                {t("homeNewsletterBody")}
-              </p>
-            </div>
-            <div className="mt-4 lg:mt-0">
-              <form
-                className="flex flex-col gap-2 sm:flex-row sm:gap-0"
-                onSubmit={handleNewsletterSubmit}
-                aria-busy={newsletterPending}
-              >
-                <input
-                  type="email"
-                  value={newsletterEmail}
-                  onChange={(event) => {
-                    setNewsletterEmail(event.target.value);
-                    if (newsletterStatus !== "idle") {
-                      setNewsletterStatus("idle");
-                      setNewsletterMessage("");
-                    }
-                  }}
-                  placeholder={t("homeNewsletterPlaceholder")}
-                  className="focus-ring h-12 min-w-0 flex-1 rounded-xl border-0 bg-white px-4 text-base font-semibold text-slate-950 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 sm:rounded-e-none"
-                  aria-label={t("homeEmailAddress")}
-                  disabled={newsletterPending}
-                  required
-                />
-                <button
-                  type="submit"
-                  className="focus-ring h-12 shrink-0 rounded-xl bg-[#5CB6B2] px-5 text-sm font-extrabold text-white transition hover:bg-[#48a5a1] disabled:cursor-not-allowed disabled:bg-slate-500 sm:rounded-s-none"
-                  aria-busy={newsletterPending}
-                  disabled={newsletterPending}
-                >
-                  {newsletterPending
-                    ? t("homeSubscribing")
-                    : t("homeSubscribe")}
-                </button>
-              </form>
-              <p className="mt-1.5 text-xs font-medium leading-5 text-white/72">
-                {t("homeNewsletterConsent")}
-              </p>
-              {newsletterMessage ? (
-                <p
-                  className={`mt-1.5 text-xs font-semibold ${newsletterStatus === "error" ? "text-red-200" : "text-teal-100"}`}
-                  role="status"
-                  aria-live="polite"
-                >
-                  {newsletterMessage}
-                </p>
-              ) : null}
-            </div>
           </div>
         </section>
       </main>
