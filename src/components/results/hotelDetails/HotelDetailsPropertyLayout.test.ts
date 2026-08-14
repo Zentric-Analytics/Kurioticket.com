@@ -62,7 +62,6 @@ test("retains every booking integration prop and booking-panel contract", () => 
     "changeSearchText=",
     "providerPriceLabel=",
     "providerText=",
-    'providerUnavailableText={mode === "guided" ? "" : providerUnavailableText}',
     "redirectError={redirectError}",
     "providerEnabled={providerEnabled}",
     "redirecting={redirecting}",
@@ -71,6 +70,11 @@ test("retains every booking integration prop and booking-panel contract", () => 
     "providerDisclaimerText=",
   ])
     assert.ok(bookingCall.includes(contract), contract);
+
+  assert.match(
+    bookingCall,
+    /providerUnavailableText=\{\s*mode === "guided" \? "" : providerUnavailableText\s*\}/,
+  );
 
   for (const contract of [
     "totalDisplayPrice.formatted",

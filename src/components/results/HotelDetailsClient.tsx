@@ -28,6 +28,8 @@ import { buildHotelAmenityPresentation } from "@/components/results/hotelAmenity
 import { HotelDetailsBookingPanel } from "@/components/results/hotelDetails/HotelDetailsBookingPanel";
 import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDetailsGallery";
 import { HotelDetailsHeader } from "@/components/results/hotelDetails/HotelDetailsHeader";
+import { GuidedHotelRoomCard } from "@/components/results/hotelDetails/GuidedHotelRoomCard";
+import { getLowestEstimateRoomId } from "@/components/results/hotelDetails/guidedHotelRoomPresentation";
 import {
   HotelDetailsLoadingState,
   HotelDetailsUnavailableState,
@@ -557,6 +559,7 @@ export function HotelDetailsClient({
     guidedPriceState === "selection-required"
       ? t("deals.guided.hotelDetails.selectRoomToContinue")
       : t("deals.guided.hotelDetails.optionsUnavailable");
+  const lowestEstimateRoomId = getLowestEstimateRoomId(roomOptions);
   const savedHotelLabel = (
     isSaved
       ? t("hotelResults.removeSavedHotel") ||
@@ -776,11 +779,11 @@ export function HotelDetailsClient({
                   <legend className="text-xl font-extrabold text-slate-950">
                     {t("deals.guided.hotelDetails.chooseRoom")}
                   </legend>
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
                     {t("deals.guided.hotelDetails.planningDisclosure")}
                   </p>
                   {roomOptions.length ? (
-                    <div className="mt-5 grid min-w-0 gap-4">
+                    <div className="mt-6 grid min-w-0 grid-cols-1 gap-5 min-[720px]:grid-cols-2 lg:grid-cols-1 min-[1280px]:grid-cols-2">
                       {roomOptions.map((option) => {
                         const checked = selectedRoomId === option.id;
                         const nightly = formatDisplayPrice({
@@ -800,48 +803,33 @@ export function HotelDetailsClient({
                           isFallbackRate: currencyRates.isFallback,
                         });
                         return (
-                          <label
+                          <GuidedHotelRoomCard
                             key={option.id}
-                            className={`min-w-0 cursor-pointer rounded-2xl border p-4 focus-within:ring-2 focus-within:ring-blue-600 ${checked ? "border-blue-600 bg-blue-50" : "border-slate-200 bg-white"}`}
-                          >
-                            <span className="flex min-w-0 items-start gap-3">
-                              <input
-                                type="radio"
-                                name="guided-hotel-room"
-                                value={option.id}
-                                checked={checked}
-                                onChange={() => setSelectedRoomId(option.id)}
-                                className="mt-1 size-5 shrink-0"
-                              />
-                              <span className="min-w-0 flex-1">
-                                <span className="block break-words font-bold text-slate-950">
-                                  {option.name}
-                                </span>
-                                <span className="mt-1 block break-words text-sm text-slate-700">
-                                  {option.bedConfiguration}
-                                </span>
-                                <span className="mt-2 block break-words text-sm text-slate-600">
-                                  {option.features.join(" · ")}
-                                </span>
-                                <span className="mt-2 block text-sm text-slate-700">
-                                  {option.mealPlan}
-                                </span>
-                                <span className="mt-1 block text-sm text-slate-600">
-                                  {option.cancellationInfo}
-                                </span>
-                                <span className="mt-3 block font-bold text-slate-950">
-                                  {nightly.formatted}{" "}
-                                  {t("deals.guided.hotelDetails.perRoomNight")}
-                                </span>
-                                <span className="block text-sm font-semibold text-slate-700">
-                                  {total.formatted}{" "}
-                                  {t(
-                                    "deals.guided.hotelDetails.indicativeTotal",
-                                  )}
-                                </span>
-                              </span>
-                            </span>
-                          </label>
+                            option={option}
+                            nightlyPrice={nightly}
+                            totalPrice={total}
+                            selected={checked}
+                            lowestEstimate={option.id === lowestEstimateRoomId}
+                            planningOptionText={t(
+                              "deals.guided.hotelDetails.planningOption",
+                            )}
+                            lowestEstimateText={t(
+                              "deals.guided.hotelDetails.lowestEstimate",
+                            )}
+                            perRoomNightText={t(
+                              "deals.guided.hotelDetails.perRoomNight",
+                            )}
+                            indicativeTotalText={t(
+                              "deals.guided.hotelDetails.indicativeTotal",
+                            )}
+                            selectRoomText={t(
+                              "deals.guided.hotelDetails.selectRoom",
+                            )}
+                            selectedText={t(
+                              "deals.guided.hotelDetails.selected",
+                            )}
+                            onSelect={() => setSelectedRoomId(option.id)}
+                          />
                         );
                       })}
                     </div>
