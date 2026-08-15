@@ -4963,4 +4963,5 @@ export const translations: TranslationDictionary = {
   "accountMenu.savedRecent.label": "Saved & Recent",
   "accountMenu.notifications.label": "Notifications",
   loadingSavedAndRecent: "Loading Saved & Recent",
+  flightSearchDestinationPlaceholderShort: 'To?',
 };

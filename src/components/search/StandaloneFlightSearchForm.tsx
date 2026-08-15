@@ -18,9 +18,11 @@ import {
   ArrowRightLeft,
   Calendar,
   ChevronDown,
+  MapPin,
   Minus,
   Plane,
   Plus,
+  UserRound,
   X,
 } from "lucide-react";
 
@@ -84,6 +86,10 @@ const searchFieldLabelClassName =
   "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
 const searchFieldValueButtonClassName =
   "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
+const mobileFieldValueRowClassName =
+  "flex min-w-0 flex-1 items-center gap-2 sm:contents";
+const mobileFieldValueIconClassName =
+  "h-4 w-4 shrink-0 text-slate-500 sm:hidden";
 const mobileDoneButtonClassName =
   "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]";
 const desktopPopoverSelector = "[data-standalone-flight-desktop-popover]";
@@ -173,11 +179,13 @@ const buildMonthCells = (monthDate: Date) => {
 type StandaloneFlightSearchFormProps = {
   localizeCalendarLabels?: boolean;
   mobileHeroCard?: boolean;
+  presentation?: "default" | "main-flight-landing";
 };
 
 export function StandaloneFlightSearchForm({
   localizeCalendarLabels = true,
   mobileHeroCard = false,
+  presentation = "default",
 }: StandaloneFlightSearchFormProps = {}) {
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
@@ -221,6 +229,8 @@ export function StandaloneFlightSearchForm({
   const router = useRouter();
   const { status: sessionStatus } = useSession();
   const { start: startRouteProgress } = useRouteProgress();
+  const useMainFlightLandingMobilePresentation =
+    presentation === "main-flight-landing";
 
   const standaloneFormCardRef = useRef<HTMLElement>(null);
   const originWrapRef = useRef<HTMLDivElement>(null);
@@ -1603,6 +1613,10 @@ export function StandaloneFlightSearchForm({
               label={t("origin")}
               value={origin}
               placeholder={t("cityOrAirport")}
+              mobilePlaceholder={t("cityOrAirport")}
+              useMainFlightLandingMobilePresentation={
+                useMainFlightLandingMobilePresentation
+              }
               open={originOpen || activeMobilePicker === "origin"}
               onMobileOpen={() => setActiveMobilePicker("origin")}
               onDesktopFocus={openOriginDesktopPopover}
@@ -1647,6 +1661,10 @@ export function StandaloneFlightSearchForm({
               label={t("destination")}
               value={destination}
               placeholder={t("cityOrAirport")}
+              mobilePlaceholder={t("flightSearchDestinationPlaceholderShort")}
+              useMainFlightLandingMobilePresentation={
+                useMainFlightLandingMobilePresentation
+              }
               open={destinationOpen || activeMobilePicker === "destination"}
               onMobileOpen={() => setActiveMobilePicker("destination")}
               onDesktopFocus={openDestinationDesktopPopover}
@@ -1703,9 +1721,22 @@ export function StandaloneFlightSearchForm({
               }}
               className={searchFieldValueButtonClassName}
             >
-              <span>{dateSummary}</span>
+              {useMainFlightLandingMobilePresentation ? (
+                <span className={mobileFieldValueRowClassName}>
+                  <Calendar
+                    className={mobileFieldValueIconClassName}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{dateSummary}</span>
+                </span>
+              ) : (
+                <span>{dateSummary}</span>
+              )}
               <Calendar
-                className="h-4 w-4 shrink-0 text-slate-500"
+                className={cn(
+                  "h-4 w-4 shrink-0 text-slate-500",
+                  useMainFlightLandingMobilePresentation && "hidden sm:block",
+                )}
                 aria-hidden="true"
               />
             </button>
@@ -1778,7 +1809,17 @@ export function StandaloneFlightSearchForm({
               }}
               className={searchFieldValueButtonClassName}
             >
-              <span className="truncate">{travelerSummary}</span>
+              {useMainFlightLandingMobilePresentation ? (
+                <span className={mobileFieldValueRowClassName}>
+                  <UserRound
+                    className={mobileFieldValueIconClassName}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{travelerSummary}</span>
+                </span>
+              ) : (
+                <span className="truncate">{travelerSummary}</span>
+              )}
               <ChevronDown
                 className={cn(
                   "h-4 w-4 shrink-0 text-slate-500 transition-transform",
@@ -1947,6 +1988,8 @@ type AirportFieldControlProps = {
   label: string;
   value: string;
   placeholder: string;
+  mobilePlaceholder: string;
+  useMainFlightLandingMobilePresentation: boolean;
   open: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   mobileLauncherRef: React.RefObject<HTMLButtonElement | null>;
@@ -1967,6 +2010,8 @@ const AirportFieldControl = React.forwardRef<
     label,
     value,
     placeholder,
+    mobilePlaceholder,
+    useMainFlightLandingMobilePresentation,
     open,
     inputRef,
     mobileLauncherRef,
@@ -1991,13 +2036,27 @@ const AirportFieldControl = React.forwardRef<
         onClick={onMobileOpen}
         className={cn(searchFieldValueButtonClassName, "sm:hidden")}
       >
-        <span className={cn("truncate", !value && "text-slate-400")}>
-          {value || placeholder}
-        </span>
-        <ChevronDown
-          className="h-4 w-4 shrink-0 text-slate-500"
-          aria-hidden="true"
-        />
+        {useMainFlightLandingMobilePresentation ? (
+          <span className={mobileFieldValueRowClassName}>
+            <MapPin
+              className={mobileFieldValueIconClassName}
+              aria-hidden="true"
+            />
+            <span className={cn("truncate", !value && "text-slate-400")}>
+              {value || mobilePlaceholder}
+            </span>
+          </span>
+        ) : (
+          <>
+            <span className={cn("truncate", !value && "text-slate-400")}>
+              {value || placeholder}
+            </span>
+            <ChevronDown
+              className="h-4 w-4 shrink-0 text-slate-500"
+              aria-hidden="true"
+            />
+          </>
+        )}
       </button>
       <div className="relative hidden sm:block">
         <input
