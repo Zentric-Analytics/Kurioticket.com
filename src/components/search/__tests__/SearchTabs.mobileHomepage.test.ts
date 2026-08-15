@@ -26,11 +26,12 @@ test("mobile Flights renders four connected product tabs in approved order and i
   assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
 });
 
-test("Deals uses the Tag icon and navigates to the canonical Deals page", () => {
+test("Deals uses the Tag icon and selects the canonical form inline", () => {
   assert.match(mobileBranch, /\["deals", Tag, t\.deals \|\| "Deals"\]/);
-  assert.match(mobileBranch, /if \(mode === "deals"\) \{\s*startRouteProgress\(\);\s*router\.push\("\/deals"\);\s*return;/);
-  assert.doesNotMatch(tabModeDeclaration, /"deals"/);
-  assert.doesNotMatch(mobileBranch, /DealsSearchForm/);
+  assert.match(tabModeDeclaration, /"deals"/);
+  assert.doesNotMatch(mobileBranch, /router\.push\("\/deals"\)/);
+  assert.match(source, /tab === "deals"[\s\S]*?<DealsSearchForm variant="landing" presentation="mobile-homepage"/);
+  assert.match(source, /aria-selected=\{selected\}/);
 });
 
 test("mobile flight controls retain the approved hierarchy", () => {
@@ -68,8 +69,8 @@ test("mobile homepage controls use the compact production density without scalin
 });
 
 test("mobile homepage reserved space follows the compact card while desktop offsets stay protected", () => {
-  assert.match(homepage, /bottom-\[-372px\][^\n]*sm:hidden/);
-  assert.match(homepage, /pt-\[25rem\][^\n]*sm:pt-24/);
+  assert.match(homepage, /bottom-\[-460px\][^\n]*sm:hidden/);
+  assert.match(homepage, /pt-\[30\.5rem\][^\n]*sm:pt-24/);
   assert.match(homepage, /bottom-\[-52px\][^\n]*hidden sm:block lg:bottom-\[-56px\]/);
 });
 

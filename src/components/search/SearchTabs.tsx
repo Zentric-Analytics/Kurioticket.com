@@ -41,6 +41,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
+import { DealsSearchForm } from "@/components/search/DealsSearchForm";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import {
   CarsDriverAgePickerContent,
@@ -89,7 +90,8 @@ import {
 type TabMode =
   | "flights"
   | "hotels"
-  | "cars";
+  | "cars"
+  | "deals";
 
 type TripType =
   | "round-trip"
@@ -2961,7 +2963,7 @@ export function SearchTabs({
           ["cars", CarFront, t.cars || "Cars"],
           ["deals", Tag, t.deals || "Deals"],
         ] as const).map(([mode, Icon, label], index) => {
-          const selected = mode !== "deals" && tab === mode;
+          const selected = tab === mode;
           return (
             <button
               key={mode}
@@ -2969,11 +2971,6 @@ export function SearchTabs({
               role="tab"
               aria-selected={selected}
               onClick={() => {
-                if (mode === "deals") {
-                  startRouteProgress();
-                  router.push("/deals");
-                  return;
-                }
                 setCarsOpenPicker(null);
                 setTab(mode);
               }}
@@ -3206,6 +3203,26 @@ export function SearchTabs({
         >
           {renderTravelersCabinPicker()}
         </FlightMobilePickerShell>
+      </section>
+    );
+  }
+
+  if (mobileHomepage && tab === "deals") {
+    const products = [
+      ["flights", Plane, t.flights || "Flights"],
+      ["hotels", Building2, t.hotels || "Hotels"],
+      ["cars", CarFront, t.cars || "Cars"],
+      ["deals", Tag, t.deals || "Deals"],
+    ] as const;
+    return (
+      <section data-testid="mobile-homepage-deals-surface" className="rounded-[19px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
+        <div role="tablist" aria-label={translate("searchType") || "Search type"} data-testid="mobile-homepage-product-tabs" className="grid h-11 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[13px] max-[359px]:text-[12px]">
+          {products.map(([mode, Icon, label], index) => {
+            const selected = tab === mode;
+            return <button key={mode} type="button" role="tab" aria-selected={selected} onClick={() => { setCarsOpenPicker(null); setTab(mode); }} className={cn("focus-ring flex min-w-0 items-center justify-center gap-1 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors", index > 0 && "border-s", selected && "bg-[#eef5ff] text-[#075ee8]")}><Icon aria-hidden="true" className="h-4 w-4 shrink-0 max-[359px]:h-[15px] max-[359px]:w-[15px]" strokeWidth={1.8} /><span className="truncate">{label}</span></button>;
+          })}
+        </div>
+        <DealsSearchForm variant="landing" presentation="mobile-homepage" />
       </section>
     );
   }
