@@ -48,9 +48,19 @@ test("mobile homepage matches the approved flight-form hierarchy", () => {
   assert.match(mobileBranch, /mobile-homepage-\$\{kind\}-field/);
   assert.match(mobileBranch, /mobile-homepage-swap/);
   assert.match(mobileBranch, /onClick=\{onSwapAirports\}/);
-  assert.match(mobileBranch, /mobile-homepage-\$\{label === "Depart" \? "depart" : "return"\}-field/);
-  assert.match(mobileBranch, /Travelers &amp; Cabin/);
+  assert.match(mobileBranch, /mobile-homepage-\$\{kind\}-field/);
+  assert.match(mobileBranch, /mobileTravelersCabinLabel/);
   assert.match(mobileBranch, /t\.searchFlights \|\| "Search flights"/);
+});
+
+test("mobile labels localize without changing the approved English copy", () => {
+  assert.match(mobileBranch, /const mobileFromLabel = t\.from \|\| t\.origin/);
+  assert.match(mobileBranch, /const mobileToLabel = t\.to \|\| t\.destination/);
+  assert.match(mobileBranch, /t\.toPlaceholder \|\| t\.destination/);
+  assert.match(mobileBranch, /t\.departure \|\| t\.departureDate/);
+  assert.match(mobileBranch, /t\.returnDate \|\| "Return"/);
+  assert.match(mobileBranch, /t\.selectDateAriaPrefix \|\| "Select date"/);
+  assert.match(mobileBranch, /t\.travelersAndCabin \|\| t\.travelersCabinDialogLabel/);
 });
 
 test("mobile controls retain the existing picker and submission behavior", () => {
@@ -59,6 +69,10 @@ test("mobile controls retain the existing picker and submission behavior", () =>
   assert.match(mobileBranch, /renderFlightDateCalendar\(\)/);
   assert.match(mobileBranch, /renderTravelersCabinPicker\(\)/);
   assert.match(source, /if \(mode === "one-way"\) \{\s*setReturnDate\(""\)/);
+  assert.match(mobileBranch, /const returnDisabled = kind === "return" && tripType === "one-way"/);
+  assert.match(mobileBranch, /disabled=\{returnDisabled\}/);
+  assert.match(mobileBranch, /setActiveFlightDatesLauncher\(kind\)/);
+  assert.match(mobileBranch, /activeFlightDatesLauncher === "return"[\s\S]*?returnFlightDatesLauncherRef/);
   assert.match(source, /new URLSearchParams\(\{[\s\S]*?tripType:[\s\S]*?origin:[\s\S]*?destination:/);
   assert.match(source, /tripType ===[\s\S]*?"round-trip"[\s\S]*?params\.set\([\s\S]*?"returnDate"/);
 });

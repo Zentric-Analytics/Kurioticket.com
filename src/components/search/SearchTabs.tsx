@@ -552,6 +552,8 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const flightDatesLauncherRef =
     useRef<HTMLButtonElement>(null);
+  const returnFlightDatesLauncherRef =
+    useRef<HTMLButtonElement>(null);
   const hotelDestinationMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
   const hotelDateWrapRef =
@@ -637,6 +639,8 @@ export function SearchTabs({
     flightDatesOpen,
     setFlightDatesOpen,
   ] = useState(false);
+  const [activeFlightDatesLauncher, setActiveFlightDatesLauncher] =
+    useState<"depart" | "return">("depart");
   const [
     hotelDatesOpen,
     setHotelDatesOpen,
@@ -2936,6 +2940,20 @@ export function SearchTabs({
   if (mobileHomepage) {
     const departureSummary = formatShortDate(departureDate);
     const returnSummary = formatShortDate(returnDate);
+    const isEnglishMobileHomepage = calendarLocale.toLowerCase().startsWith("en");
+    const mobileFromLabel = t.from || t.origin || "From";
+    const mobileToLabel = t.to || t.destination || "To";
+    const mobileToPlaceholder = isEnglishMobileHomepage
+      ? "Where to?"
+      : t.toPlaceholder || t.destination || "Where to?";
+    const mobileDepartLabel = isEnglishMobileHomepage
+      ? "Depart"
+      : t.departure || t.departureDate || "Depart";
+    const mobileReturnLabel = t.returnDate || "Return";
+    const mobileSelectDateLabel = t.selectDateAriaPrefix || "Select date";
+    const mobileTravelersCabinLabel = isEnglishMobileHomepage
+      ? "Travelers & Cabin"
+      : t.travelersAndCabin || t.travelersCabinDialogLabel || t.travelers || "Travelers & Cabin";
 
     return (
       <section
@@ -2978,8 +2996,8 @@ export function SearchTabs({
 
           <div className="relative space-y-3 pt-2" data-testid="mobile-homepage-route-fields">
             {([
-              ["origin", "From", from, t.fromPlaceholder || "From?"],
-              ["destination", "To", to, "Where to?"],
+              ["origin", mobileFromLabel, from, t.fromPlaceholder || "From?"],
+              ["destination", mobileToLabel, to, mobileToPlaceholder],
             ] as const).map(([kind, label, value, placeholder]) => (
               <button
                 key={kind}
@@ -3018,29 +3036,36 @@ export function SearchTabs({
 
           <div className="grid grid-cols-2 gap-3" data-testid="mobile-homepage-date-fields">
             {([
-              ["Depart", departureSummary],
-              ["Return", returnSummary],
-            ] as const).map(([label, value]) => (
+              ["depart", mobileDepartLabel, departureSummary],
+              ["return", mobileReturnLabel, returnSummary],
+            ] as const).map(([kind, label, value]) => {
+              const returnDisabled = kind === "return" && tripType === "one-way";
+              return (
               <button
-                key={label}
-                ref={label === "Depart" ? flightDatesLauncherRef : undefined}
+                key={kind}
+                ref={kind === "depart" ? flightDatesLauncherRef : returnFlightDatesLauncherRef}
                 type="button"
                 aria-haspopup="dialog"
                 aria-expanded={flightDatesOpen}
-                aria-label={`${label}: ${value || "Select date"}`}
-                onClick={() => setFlightDatesOpen(true)}
-                className="focus-ring flex h-[74px] min-w-0 flex-col justify-center rounded-[16px] border border-slate-200 bg-white px-4 text-start max-[359px]:px-3"
-                data-testid={`mobile-homepage-${label === "Depart" ? "depart" : "return"}-field`}
+                aria-label={`${label}: ${value || mobileSelectDateLabel}`}
+                disabled={returnDisabled}
+                onClick={() => {
+                  setActiveFlightDatesLauncher(kind);
+                  setFlightDatesOpen(true);
+                }}
+                className="focus-ring flex h-[74px] min-w-0 flex-col justify-center rounded-[16px] border border-slate-200 bg-white px-4 text-start disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 max-[359px]:px-3"
+                data-testid={`mobile-homepage-${kind}-field`}
               >
                 <span className="block text-[15px] font-medium leading-5 text-slate-600">{label}</span>
                 <span className="mt-1 flex min-w-0 items-center gap-2 max-[359px]:gap-1.5">
                   <Calendar aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-950 max-[359px]:h-[18px] max-[359px]:w-[18px]" strokeWidth={1.8} />
                   <span className={cn("truncate text-[16px] font-medium leading-6 text-slate-950 max-[359px]:text-[15px]", !value && "text-slate-400")}>
-                    {value || "Select date"}
+                    {value || mobileSelectDateLabel}
                   </span>
                 </span>
               </button>
-            ))}
+              );
+            })}
           </div>
 
           <button
@@ -3048,13 +3073,13 @@ export function SearchTabs({
             type="button"
             aria-haspopup="dialog"
             aria-expanded={travelersMenuOpen}
-            aria-label={`Travelers & Cabin: ${travelerSummary}`}
+            aria-label={`${mobileTravelersCabinLabel}: ${travelerSummary}`}
             onClick={() => travelersMenuOpen ? cancelTravelersDraft() : openTravelersMenu()}
             data-testid="mobile-homepage-travelers-field"
             className="focus-ring flex h-[76px] w-full items-center justify-between gap-3 rounded-[16px] border border-slate-200 bg-white px-4 text-start"
           >
             <span className="min-w-0">
-              <span className="block text-[15px] font-medium leading-5 text-slate-700">Travelers &amp; Cabin</span>
+              <span className="block text-[15px] font-medium leading-5 text-slate-700">{mobileTravelersCabinLabel}</span>
               <span className="mt-1 flex min-w-0 items-center gap-2">
                 <UserRound aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-950" strokeWidth={1.8} />
                 <span className="truncate text-[17px] font-medium leading-6 text-slate-950">{travelerSummary}</span>
@@ -3133,7 +3158,11 @@ export function SearchTabs({
           open={flightDatesOpen}
           title={translate("chooseTravelDates") || "Choose travel dates"}
           titleId="homepage-flight-dates-title"
-          launcherRef={flightDatesLauncherRef}
+          launcherRef={
+            activeFlightDatesLauncher === "return"
+              ? returnFlightDatesLauncherRef
+              : flightDatesLauncherRef
+          }
           footer={flightDatesFooter}
           onClose={() => setFlightDatesOpen(false)}
           contentClassName="px-4 py-4"
