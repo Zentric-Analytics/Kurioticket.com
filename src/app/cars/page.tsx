@@ -25,6 +25,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock,
+  MapPin,
   RotateCcw,
   ShieldCheck,
   X,
@@ -859,7 +860,7 @@ function CarsSearchBar({
   return (
     <section
       ref={searchCardRef}
-      className="overflow-visible rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70"
+      className="overflow-visible rounded-[15px] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70"
     >
       <form
         onSubmit={onSubmit}
@@ -870,6 +871,17 @@ function CarsSearchBar({
         <input type="hidden" name="dropoffDate" value={values.dropoffDate} />
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
+
+        <div className="flex items-center sm:hidden">
+          <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-2 text-[16px] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+            <CarFront
+              aria-hidden="true"
+              className="h-5 w-5 text-[#004BB8]"
+              strokeWidth={2.15}
+            />
+            {t("cars")}
+          </span>
+        </div>
 
         <div className="hidden items-center sm:flex">
           <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
@@ -900,9 +912,15 @@ function CarsSearchBar({
                       values.pickupLocation ? "text-slate-950" : "text-slate-400"
                     }`}
                   >
-                    <span className="truncate">
-                      {values.pickupLocation ||
-                        t("carsSearch.pickupLocationPlaceholder")}
+                    <span className="flex min-w-0 items-center gap-2">
+                      <MapPin
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0 text-slate-500"
+                      />
+                      <span className="truncate">
+                        {values.pickupLocation ||
+                          t("carsSearch.pickupLocationPlaceholder")}
+                      </span>
                     </span>
                   </button>
                   <CarLocationAutocomplete
@@ -952,9 +970,15 @@ function CarsSearchBar({
                           : "text-slate-400"
                       }`}
                     >
-                      <span className="truncate">
-                        {values.dropoffLocation ||
-                          t("carsSearch.returnLocationPlaceholder")}
+                      <span className="flex min-w-0 items-center gap-2">
+                        <MapPin
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 text-slate-500"
+                        />
+                        <span className="truncate">
+                          {values.dropoffLocation ||
+                            t("carsSearch.returnLocationPlaceholder")}
+                        </span>
                       </span>
                     </button>
                     <CarLocationAutocomplete
@@ -1824,8 +1848,17 @@ function TimeRangeField({
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
         className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
       >
-        <span className="truncate">{timeSummary}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+        <span className="flex min-w-0 items-center gap-2">
+          <Clock
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-slate-500 sm:hidden"
+          />
+          <span className="truncate">{timeSummary}</span>
+        </span>
+        <ChevronDown
+          className={`hidden h-4 w-4 shrink-0 text-slate-500 transition-transform sm:block ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
       </button>
       {isOpen && typeof document !== "undefined" ? createPortal(
         <div
