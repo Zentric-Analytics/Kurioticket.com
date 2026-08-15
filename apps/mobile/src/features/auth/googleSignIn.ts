@@ -10,6 +10,7 @@ import {
 import { Platform } from "react-native";
 import { getRuntimeEnvironment } from "../../config/environment";
 import { getGoogleIosClientId, requireGoogleWebClientId } from "./googleConfig";
+import { getInitialGoogleSignInOperation } from "./googleSignInFlow";
 import {
   formatNativeGoogleError,
   getNativeGoogleErrorCode,
@@ -77,10 +78,11 @@ export async function startNativeGoogleSignIn(
     });
     operation = "checkPlayServices";
     await GoogleOneTapSignIn.checkPlayServices(true);
-    const initialResponse = forceAccountSelection
+    const initialOperation = getInitialGoogleSignInOperation(Platform.OS, forceAccountSelection);
+    const initialResponse = initialOperation === "presentExplicitSignIn"
       ? await run("presentExplicitSignIn", () => GoogleOneTapSignIn.presentExplicitSignIn())
       : await run("signIn", () => GoogleOneTapSignIn.signIn());
-    const response = forceAccountSelection
+    const response = initialOperation === "presentExplicitSignIn"
       ? initialResponse
       : await resolveInteractiveResponse(initialResponse, run);
     if (isCancelledResponse(response)) return { status: "cancelled" };
