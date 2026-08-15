@@ -20,9 +20,9 @@ import { useSession } from "next-auth/react";
 import { createPortal } from "react-dom";
 
 import {
-  ArrowUpDown,
   ArrowRightLeft,
   BedDouble,
+  Building2,
   Calendar,
   CarFront,
   MapPin,
@@ -552,8 +552,6 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const flightDatesLauncherRef =
     useRef<HTMLButtonElement>(null);
-  const returnFlightDatesLauncherRef =
-    useRef<HTMLButtonElement>(null);
   const hotelDestinationMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
   const hotelDateWrapRef =
@@ -639,8 +637,6 @@ export function SearchTabs({
     flightDatesOpen,
     setFlightDatesOpen,
   ] = useState(false);
-  const [activeFlightDatesLauncher, setActiveFlightDatesLauncher] =
-    useState<"depart" | "return">("depart");
   const [
     hotelDatesOpen,
     setHotelDatesOpen,
@@ -766,18 +762,22 @@ export function SearchTabs({
       cn(
         "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
         searchTabsOverlayOpen && desktopOverlayRootClassName,
-        compactHero
+        mobileHomepage
+          ? "rounded-[22px] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
+          : compactHero
           ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
           : "p-2"
       ),
-    [compactHero, searchTabsOverlayOpen]
+    [compactHero, mobileHomepage, searchTabsOverlayOpen]
   );
 
   const tabsClassName = cn(
-    "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
-    compactHero
+    mobileHomepage
+      ? "mb-5 grid h-14 w-full grid-cols-3 overflow-hidden rounded-[16px] border border-slate-200 bg-white"
+      : "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
+    !mobileHomepage && compactHero
       ? "mb-1 sm:mb-1.5 lg:mb-2 lg:gap-0.5 lg:border-slate-200/90 lg:bg-slate-100/80 lg:shadow-inner"
-      : "mb-2"
+      : !mobileHomepage && "mb-2"
   );
   const formClassName = compactHero ? "space-y-1 lg:space-y-1.5" : "space-y-2";
   const fieldCardClassName = cn(
@@ -2937,34 +2937,64 @@ export function SearchTabs({
     </div>
   );
 
-  if (mobileHomepage) {
-    const departureSummary = formatShortDate(departureDate);
-    const returnSummary = formatShortDate(returnDate);
+  if (mobileHomepage && tab === "flights") {
     const isEnglishMobileHomepage = calendarLocale.toLowerCase().startsWith("en");
-    const mobileFromLabel = t.from || t.origin || "From";
-    const mobileToLabel = t.to || t.destination || "To";
-    const mobileToPlaceholder = isEnglishMobileHomepage
-      ? "Where to?"
-      : t.toPlaceholder || t.destination || "Where to?";
-    const mobileDepartLabel = isEnglishMobileHomepage
-      ? "Depart"
-      : t.departure || t.departureDate || "Depart";
-    const mobileReturnLabel = t.returnDate || "Return";
-    const mobileSelectDateLabel = t.selectDateAriaPrefix || "Select date";
+    const mobileOriginLabel = t.origin || t.from || "Origin";
+    const mobileDestinationLabel = t.destination || t.to || "Destination";
+    const mobileDestinationPlaceholder = t.toPlaceholder || "To?";
+    const mobileTravelDatesLabel = t.travelDates || "Travel dates";
     const mobileTravelersCabinLabel = isEnglishMobileHomepage
-      ? "Travelers & Cabin"
-      : t.travelersAndCabin || t.travelersCabinDialogLabel || t.travelers || "Travelers & Cabin";
+      ? "Travelers & Cabin Class"
+      : t.travelersAndCabinClass || t.travelersAndCabin || t.travelers || "Travelers & Cabin Class";
+
+    const mobileProductTabs = (
+      <div
+        role="tablist"
+        aria-label={translate("searchType") || "Search type"}
+        data-testid="mobile-homepage-product-tabs"
+        className="grid h-14 grid-cols-3 overflow-hidden rounded-[16px] border border-slate-200 bg-white"
+      >
+        {([
+          ["flights", Plane, t.flights || "Flights"],
+          ["hotels", Building2, t.hotels || "Hotels"],
+          ["cars", CarFront, t.cars || "Cars"],
+        ] as const).map(([mode, Icon, label], index) => {
+          const selected = tab === mode;
+          return (
+            <button
+              key={mode}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => {
+                setCarsOpenPicker(null);
+                setTab(mode);
+              }}
+              className={cn(
+                "focus-ring flex min-w-0 items-center justify-center gap-2 border-slate-200 px-2 text-[15px] font-medium text-slate-950 transition-colors max-[359px]:gap-1.5 max-[359px]:px-1 max-[359px]:text-[14px]",
+                index > 0 && "border-s",
+                selected && "bg-[#eef5ff] text-[#075ee8]",
+              )}
+            >
+              <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+              <span className="truncate">{label}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
 
     return (
       <section
         data-testid="mobile-homepage-flight-search"
-        className="rounded-[20px] border border-slate-200/80 bg-white p-4 shadow-[0_14px_36px_rgba(15,23,42,0.12)] sm:hidden"
+        className="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_14px_36px_rgba(15,23,42,0.12)] sm:hidden"
       >
-        <form onSubmit={onFlightSubmit} className="space-y-3">
+        {mobileProductTabs}
+        <form onSubmit={onFlightSubmit} className="mt-5 space-y-3">
           <div
             role="radiogroup"
             aria-label={t.tripType || "Trip type"}
-            className="grid h-14 grid-cols-2 rounded-[12px] border border-slate-200 bg-white"
+            className="grid min-h-12 grid-cols-2 items-center gap-2 px-2"
             data-testid="mobile-homepage-trip-selector"
           >
             {(["round-trip", "one-way"] as const).map((mode) => {
@@ -2983,21 +3013,28 @@ export function SearchTabs({
                     }
                   }}
                   className={cn(
-                    "focus-ring flex min-w-0 items-center justify-center rounded-[10px] px-2 text-[16px] font-medium text-slate-950 transition-colors",
-                    selected &&
-                      "border border-[#2559e8] bg-[#f9fbff] font-semibold text-[#1f55df] shadow-[0_1px_2px_rgba(37,89,232,0.08)]",
+                    "focus-ring flex min-h-11 min-w-0 items-center gap-3 rounded-[10px] px-1 text-start text-[17px] font-medium text-slate-950 transition-colors max-[359px]:gap-2 max-[359px]:text-[16px]",
                   )}
                 >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 bg-white",
+                      selected ? "border-[#1670ee]" : "border-slate-300",
+                    )}
+                  >
+                    <span className={cn("h-3 w-3 rounded-full bg-[#1670ee]", !selected && "invisible")} />
+                  </span>
                   {tripTypeLabel(mode)}
                 </button>
               );
             })}
           </div>
 
-          <div className="relative space-y-3 pt-2" data-testid="mobile-homepage-route-fields">
+          <div className="relative space-y-3 pt-1" data-testid="mobile-homepage-route-fields">
             {([
-              ["origin", mobileFromLabel, from, t.fromPlaceholder || "From?"],
-              ["destination", mobileToLabel, to, mobileToPlaceholder],
+              ["origin", mobileOriginLabel, from, t.fromPlaceholder || "From?"],
+              ["destination", mobileDestinationLabel, to, mobileDestinationPlaceholder],
             ] as const).map(([kind, label, value, placeholder]) => (
               <button
                 key={kind}
@@ -3011,16 +3048,18 @@ export function SearchTabs({
                   setToOpen(false);
                   setActiveMobileAirportPicker(kind);
                 }}
-                className="focus-ring flex h-[74px] w-full items-center justify-between gap-4 rounded-[16px] border border-slate-200 bg-white px-4 text-start"
+                className="focus-ring flex h-[86px] w-full items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-4 text-start"
                 data-testid={`mobile-homepage-${kind}-field`}
               >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8]" data-testid="mobile-homepage-location-icon-tile">
+                  <MapPin aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+                </span>
                 <span className="min-w-0">
-                  <span className="block text-[15px] font-medium leading-5 text-slate-600">{label}</span>
-                  <span className={cn("mt-1 block truncate text-[18px] font-medium leading-6 text-slate-950", !value.trim() && "text-slate-400")}>
+                  <span className="block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-600">{label}</span>
+                  <span className={cn("mt-2 block truncate text-[19px] font-medium leading-6 text-slate-950", !value.trim() && "text-slate-500")}>
                     {value.trim() || placeholder}
                   </span>
                 </span>
-                <MapPin aria-hidden="true" className="h-6 w-6 shrink-0 text-slate-950" strokeWidth={1.8} />
               </button>
             ))}
             <button
@@ -3028,45 +3067,30 @@ export function SearchTabs({
               onClick={onSwapAirports}
               aria-label={t.swapOriginDestination || "Swap origin and destination"}
               data-testid="mobile-homepage-swap"
-              className="focus-ring absolute left-1/2 top-[78px] z-20 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-[#2559e8] shadow-[0_5px_14px_rgba(15,23,42,0.14)]"
+              className="focus-ring absolute left-1/2 top-[91px] z-20 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-[#075ee8] shadow-[0_5px_14px_rgba(15,23,42,0.14)]"
             >
-              <ArrowUpDown aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+              <ArrowRightLeft aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3" data-testid="mobile-homepage-date-fields">
-            {([
-              ["depart", mobileDepartLabel, departureSummary],
-              ["return", mobileReturnLabel, returnSummary],
-            ] as const).map(([kind, label, value]) => {
-              const returnDisabled = kind === "return" && tripType === "one-way";
-              return (
-              <button
-                key={kind}
-                ref={kind === "depart" ? flightDatesLauncherRef : returnFlightDatesLauncherRef}
-                type="button"
-                aria-haspopup="dialog"
-                aria-expanded={flightDatesOpen}
-                aria-label={`${label}: ${value || mobileSelectDateLabel}`}
-                disabled={returnDisabled}
-                onClick={() => {
-                  setActiveFlightDatesLauncher(kind);
-                  setFlightDatesOpen(true);
-                }}
-                className="focus-ring flex h-[74px] min-w-0 flex-col justify-center rounded-[16px] border border-slate-200 bg-white px-4 text-start disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 max-[359px]:px-3"
-                data-testid={`mobile-homepage-${kind}-field`}
-              >
-                <span className="block text-[15px] font-medium leading-5 text-slate-600">{label}</span>
-                <span className="mt-1 flex min-w-0 items-center gap-2 max-[359px]:gap-1.5">
-                  <Calendar aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-950 max-[359px]:h-[18px] max-[359px]:w-[18px]" strokeWidth={1.8} />
-                  <span className={cn("truncate text-[16px] font-medium leading-6 text-slate-950 max-[359px]:text-[15px]", !value && "text-slate-400")}>
-                    {value || mobileSelectDateLabel}
-                  </span>
-                </span>
-              </button>
-              );
-            })}
-          </div>
+          <button
+            ref={flightDatesLauncherRef}
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={flightDatesOpen}
+            aria-label={translate("chooseTravelDates") || "Choose travel dates"}
+            onClick={() => setFlightDatesOpen(true)}
+            data-testid="mobile-homepage-travel-dates-field"
+            className="focus-ring flex h-[78px] w-full items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-4 text-start"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8]">
+              <Calendar aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-600">{mobileTravelDatesLabel}</span>
+              <span className="mt-2 block truncate text-[18px] font-medium leading-6 text-slate-950">{dateSummary}</span>
+            </span>
+          </button>
 
           <button
             ref={travelersLauncherRef}
@@ -3076,16 +3100,18 @@ export function SearchTabs({
             aria-label={`${mobileTravelersCabinLabel}: ${travelerSummary}`}
             onClick={() => travelersMenuOpen ? cancelTravelersDraft() : openTravelersMenu()}
             data-testid="mobile-homepage-travelers-field"
-            className="focus-ring flex h-[76px] w-full items-center justify-between gap-3 rounded-[16px] border border-slate-200 bg-white px-4 text-start"
+            className="focus-ring flex h-[78px] w-full items-center justify-between gap-3 rounded-[18px] border border-slate-200 bg-white px-4 text-start"
           >
-            <span className="min-w-0">
-              <span className="block text-[15px] font-medium leading-5 text-slate-700">{mobileTravelersCabinLabel}</span>
-              <span className="mt-1 flex min-w-0 items-center gap-2">
-                <UserRound aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-950" strokeWidth={1.8} />
-                <span className="truncate text-[17px] font-medium leading-6 text-slate-950">{travelerSummary}</span>
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8]">
+                <UserRound aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-600">{mobileTravelersCabinLabel}</span>
+                <span className="mt-2 block truncate text-[18px] font-medium leading-6 text-slate-950">{travelerSummary}</span>
               </span>
             </span>
-            <ChevronDown aria-hidden="true" className={cn("h-5 w-5 shrink-0 text-slate-950 transition-transform", travelersMenuOpen && "rotate-180")} />
+            <ChevronDown aria-hidden="true" className={cn("h-5 w-5 shrink-0 text-slate-500 transition-transform", travelersMenuOpen && "rotate-180")} />
           </button>
 
           <Button
@@ -3094,9 +3120,9 @@ export function SearchTabs({
             aria-busy={isFlightSubmitting}
             aria-label={t.searchFlights || "Search flights"}
             data-testid="mobile-homepage-search-submit"
-            className="h-14 w-full rounded-[14px] bg-[#2f5bf3] text-[17px] font-medium text-white shadow-none hover:bg-[#2f5bf3] active:bg-[#2f5bf3] disabled:bg-[#2f5bf3] disabled:text-white disabled:opacity-60"
+            className="h-14 w-full rounded-[14px] bg-[#075ee8] text-[18px] font-semibold text-white shadow-none hover:bg-[#075ee8] active:bg-[#075ee8] disabled:bg-[#075ee8] disabled:text-white disabled:opacity-60"
           >
-            {isFlightSubmitting ? t.searchingFlights || "Searching flights..." : t.searchFlights || "Search flights"}
+            {isFlightSubmitting ? t.searchingFlights || "Searching flights..." : t.search || "Search"}
           </Button>
         </form>
 
@@ -3158,11 +3184,7 @@ export function SearchTabs({
           open={flightDatesOpen}
           title={translate("chooseTravelDates") || "Choose travel dates"}
           titleId="homepage-flight-dates-title"
-          launcherRef={
-            activeFlightDatesLauncher === "return"
-              ? returnFlightDatesLauncherRef
-              : flightDatesLauncherRef
-          }
+          launcherRef={flightDatesLauncherRef}
           footer={flightDatesFooter}
           onClose={() => setFlightDatesOpen(false)}
           contentClassName="px-4 py-4"
@@ -3198,20 +3220,29 @@ export function SearchTabs({
         {desktopPopoverOpen ? (
           <div aria-hidden="true" className={desktopOverlayGuardClassName} />
         ) : null}
-      <div className={tabsClassName}>
+      <div
+        className={tabsClassName}
+        role={mobileHomepage ? "tablist" : undefined}
+        aria-label={mobileHomepage ? t.search : undefined}
+      >
         <button
           type="button"
+          role={mobileHomepage ? "tab" : undefined}
+          aria-selected={mobileHomepage ? tab === "flights" : undefined}
           onClick={() => {
             setCarsOpenPicker(null);
             setTab("flights");
           }}
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            "focus-ring inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            mobileHomepage ? "min-w-0 px-2 text-[15px]" : "rounded-lg px-3 py-1.5",
+            compactHero && !mobileHomepage && "lg:px-3.5 lg:py-2 lg:text-[15px]",
             tab === "flights"
-              ? "bg-white text-navy shadow-sm"
+              ? mobileHomepage
+                ? "bg-[#eef5ff] text-[#075ee8]"
+                : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
-            compactHero && tab === "flights" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
+            compactHero && !mobileHomepage && tab === "flights" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
           <Plane className="h-4 w-4" />
@@ -3220,36 +3251,46 @@ export function SearchTabs({
 
         <button
           type="button"
+          role={mobileHomepage ? "tab" : undefined}
+          aria-selected={mobileHomepage ? tab === "hotels" : undefined}
           onClick={() => {
             setCarsOpenPicker(null);
             setTab("hotels");
           }}
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            "focus-ring inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            mobileHomepage ? "min-w-0 border-s border-slate-200 px-2 text-[15px]" : "rounded-lg px-3 py-1.5",
+            compactHero && !mobileHomepage && "lg:px-3.5 lg:py-2 lg:text-[15px]",
             tab === "hotels"
-              ? "bg-white text-navy shadow-sm"
+              ? mobileHomepage
+                ? "bg-[#eef5ff] text-[#075ee8]"
+                : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
-            compactHero && tab === "hotels" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
+            compactHero && !mobileHomepage && tab === "hotels" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
-          <BedDouble className="h-4 w-4" />
+          {mobileHomepage ? <Building2 className="h-4 w-4" /> : <BedDouble className="h-4 w-4" />}
           {t.hotels}
         </button>
 
         <button
           type="button"
+          role={mobileHomepage ? "tab" : undefined}
+          aria-selected={mobileHomepage ? tab === "cars" : undefined}
           onClick={() => {
             setCarsOpenPicker(null);
             setTab("cars");
           }}
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            "focus-ring inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            mobileHomepage ? "min-w-0 border-s border-slate-200 px-2 text-[15px]" : "rounded-lg px-3 py-1.5",
+            compactHero && !mobileHomepage && "lg:px-3.5 lg:py-2 lg:text-[15px]",
             tab === "cars"
-              ? "bg-white text-navy shadow-sm"
+              ? mobileHomepage
+                ? "bg-[#eef5ff] text-[#075ee8]"
+                : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
-            compactHero && tab === "cars" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
+            compactHero && !mobileHomepage && tab === "cars" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
           <CarFront className="h-4 w-4" />

@@ -4,36 +4,31 @@ import test from "node:test";
 
 const source = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
 const homepage = readFileSync("src/app/page.tsx", "utf8");
-const mobileBranch = source.slice(
-  source.indexOf("if (mobileHomepage)"),
-  source.indexOf("return (", source.indexOf("if (mobileHomepage)")) === -1
-    ? source.length
-    : source.indexOf("\n  return (", source.indexOf("if (mobileHomepage)")),
-);
-const desktopBranch = source.slice(source.indexOf("\n  return (", source.indexOf("if (mobileHomepage)")));
+const mobileStart = source.indexOf('if (mobileHomepage && tab === "flights")');
+const desktopStart = source.indexOf("\n  return (", mobileStart);
+const mobileBranch = source.slice(mobileStart, desktopStart);
+const sharedBranch = source.slice(desktopStart);
 
-test("homepage gives only its below-sm SearchTabs instance the mobile presentation", () => {
+test("homepage scopes the approved presentation to its below-sm SearchTabs", () => {
   assert.match(homepage, /className="page-shell[^\n]*sm:hidden"[\s\S]*?<SearchTabs[\s\S]*?mobileHomepage/);
-  assert.match(homepage, /className="page-shell[^\n]*hidden sm:block[^\n]*"[\s\S]*?<SearchTabs[\s\S]*?compactHero[\s\S]*?locale=\{locale\}/);
-  assert.doesNotMatch(
-    homepage.match(/hidden sm:block[\s\S]*?<SearchTabs[\s\S]*?\/>/)?.[0] ?? "",
-    /mobileHomepage/,
-  );
+  assert.match(homepage, /className="page-shell[^\n]*hidden sm:block[^\n]*"[\s\S]*?<SearchTabs[\s\S]*?compactHero/);
+  assert.doesNotMatch(homepage.match(/hidden sm:block[\s\S]*?<SearchTabs[\s\S]*?\/>/)?.[0] ?? "", /mobileHomepage/);
 });
 
-test("mobile homepage is flights-only while desktop product tabs remain", () => {
-  assert.match(mobileBranch, /data-testid="mobile-homepage-flight-search"/);
-  assert.doesNotMatch(mobileBranch, /<BedDouble|<CarFront|<Plane/);
-  assert.match(desktopBranch, /<Plane[\s\S]*?\{t\.flights\}/);
-  assert.match(desktopBranch, /<BedDouble[\s\S]*?\{t\.hotels\}/);
-  assert.match(desktopBranch, /<CarFront[\s\S]*?\{t\.cars\}/);
+test("mobile Flights renders the connected product tabs and is the default", () => {
+  assert.match(source, /useState<TabMode>\("flights"\)/);
+  assert.match(mobileBranch, /mobile-homepage-product-tabs/);
+  assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront/);
+  assert.match(mobileBranch, /role="tab"[\s\S]*?aria-selected=\{selected\}/);
+  assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
 });
 
-test("mobile homepage matches the approved flight-form hierarchy", () => {
+test("mobile flight controls retain the approved hierarchy", () => {
   const markers = [
+    "mobile-homepage-product-tabs",
     "mobile-homepage-trip-selector",
     "mobile-homepage-route-fields",
-    "mobile-homepage-date-fields",
+    "mobile-homepage-travel-dates-field",
     "mobile-homepage-travelers-field",
     "mobile-homepage-search-submit",
   ];
@@ -43,36 +38,55 @@ test("mobile homepage matches the approved flight-form hierarchy", () => {
     assert.ok(index > previous, `${marker} should retain its approved order`);
     previous = index;
   }
+});
+
+test("trip type uses accessible radio-style options", () => {
+  assert.match(mobileBranch, /role="radiogroup"/);
   assert.match(mobileBranch, /\["round-trip", "one-way"\]/);
-  assert.doesNotMatch(mobileBranch, /rounded-full border[^\n]*selected/);
+  assert.match(mobileBranch, /role="radio"[\s\S]*?aria-checked=\{selected\}/);
+  assert.match(mobileBranch, /h-3 w-3 rounded-full bg-\[#1670ee\]/);
+  assert.doesNotMatch(mobileBranch, /mobile-homepage-trip-selector[^\n]*border/);
+});
+
+test("route cards use icon tiles and the wired horizontal swap", () => {
   assert.match(mobileBranch, /mobile-homepage-\$\{kind\}-field/);
+  assert.equal((mobileBranch.match(/mobile-homepage-location-icon-tile/g) ?? []).length, 1);
   assert.match(mobileBranch, /mobile-homepage-swap/);
   assert.match(mobileBranch, /onClick=\{onSwapAirports\}/);
-  assert.match(mobileBranch, /mobile-homepage-\$\{kind\}-field/);
-  assert.match(mobileBranch, /mobileTravelersCabinLabel/);
-  assert.match(mobileBranch, /t\.searchFlights \|\| "Search flights"/);
+  assert.match(mobileBranch, /<ArrowRightLeft/);
+  assert.doesNotMatch(mobileBranch, /<ArrowUpDown/);
 });
 
-test("mobile labels localize without changing the approved English copy", () => {
-  assert.match(mobileBranch, /const mobileFromLabel = t\.from \|\| t\.origin/);
-  assert.match(mobileBranch, /const mobileToLabel = t\.to \|\| t\.destination/);
-  assert.match(mobileBranch, /t\.toPlaceholder \|\| t\.destination/);
-  assert.match(mobileBranch, /t\.departure \|\| t\.departureDate/);
-  assert.match(mobileBranch, /t\.returnDate \|\| "Return"/);
-  assert.match(mobileBranch, /t\.selectDateAriaPrefix \|\| "Select date"/);
-  assert.match(mobileBranch, /t\.travelersAndCabin \|\| t\.travelersCabinDialogLabel/);
+test("dates and travelers are single full-width mobile cards", () => {
+  assert.equal((mobileBranch.match(/mobile-homepage-travel-dates-field/g) ?? []).length, 1);
+  assert.doesNotMatch(mobileBranch, /mobile-homepage-depart|mobile-homepage-return/);
+  assert.equal((mobileBranch.match(/mobile-homepage-travelers-field/g) ?? []).length, 1);
+  assert.match(mobileBranch, /Travelers & Cabin Class/);
+  assert.match(mobileBranch, /\{dateSummary\}/);
+  assert.match(mobileBranch, /\{travelerSummary\}/);
 });
 
-test("mobile controls retain the existing picker and submission behavior", () => {
+test("mobile CTA text is exactly Search while preserving submission", () => {
   assert.match(mobileBranch, /onSubmit=\{onFlightSubmit\}/);
+  assert.match(mobileBranch, /isFlightSubmitting[\s\S]*?: t\.search \|\| "Search"/);
+  assert.doesNotMatch(mobileBranch, />Search flights</);
+});
+
+test("mobile pickers and one-way/query behavior remain wired", () => {
   assert.match(mobileBranch, /renderMobileAirportPicker/);
   assert.match(mobileBranch, /renderFlightDateCalendar\(\)/);
   assert.match(mobileBranch, /renderTravelersCabinPicker\(\)/);
   assert.match(source, /if \(mode === "one-way"\) \{\s*setReturnDate\(""\)/);
-  assert.match(mobileBranch, /const returnDisabled = kind === "return" && tripType === "one-way"/);
-  assert.match(mobileBranch, /disabled=\{returnDisabled\}/);
-  assert.match(mobileBranch, /setActiveFlightDatesLauncher\(kind\)/);
-  assert.match(mobileBranch, /activeFlightDatesLauncher === "return"[\s\S]*?returnFlightDatesLauncherRef/);
   assert.match(source, /new URLSearchParams\(\{[\s\S]*?tripType:[\s\S]*?origin:[\s\S]*?destination:/);
   assert.match(source, /tripType ===[\s\S]*?"round-trip"[\s\S]*?params\.set\([\s\S]*?"returnDate"/);
+});
+
+test("Hotels and Cars remain switchable without changing desktop structure", () => {
+  assert.match(sharedBranch, /setTab\("hotels"\)/);
+  assert.match(sharedBranch, /setTab\("cars"\)/);
+  assert.match(sharedBranch, /\) : tab === "hotels" \? \(/);
+  assert.match(sharedBranch, /\) : \([\s\S]*?onSubmit=\{onCarsSubmit\}/);
+  assert.match(sharedBranch, /<Plane[\s\S]*?\{t\.flights\}/);
+  assert.match(sharedBranch, /<BedDouble[\s\S]*?\{t\.hotels\}/);
+  assert.match(sharedBranch, /<CarFront[\s\S]*?\{t\.cars\}/);
 });
