@@ -3361,12 +3361,17 @@ export function SearchTabs({
           <button
             type="button"
             role="tab"
-            aria-selected={false}
+            aria-selected={tab === "deals"}
             onClick={() => {
-              startRouteProgress();
-              router.push("/deals");
+              setCarsOpenPicker(null);
+              setTab("deals");
             }}
-            className="focus-ring inline-flex min-w-0 items-center justify-center gap-1.5 border-s border-slate-200 px-0.5 text-[15px] font-medium max-[359px]:text-[14px] text-slate-600 transition-colors hover:text-slate-800 max-[389px]:gap-1"
+            className={cn(
+              "focus-ring inline-flex min-w-0 items-center justify-center gap-1.5 border-s border-slate-200 px-0.5 text-[15px] font-medium max-[359px]:text-[14px] transition-colors max-[389px]:gap-1",
+              tab === "deals"
+                ? "bg-[#eef5ff] text-[#075ee8]"
+                : "text-slate-600 hover:text-slate-800",
+            )}
           >
             <Tag className="h-5 w-5 shrink-0 max-[359px]:h-[18px] max-[359px]:w-[18px]" strokeWidth={1.8} />
             {t.deals || "Deals"}
