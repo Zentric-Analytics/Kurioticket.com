@@ -3251,7 +3251,7 @@ export function DealsSearchForm({
                       preventScroll: true,
                     });
                   }}
-                  className={`focus-ring relative flex h-10 w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent px-3 text-[13px] font-medium text-slate-900 ${selected ? "after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : ""}`}
+                  className={`focus-ring relative flex h-10 w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent px-2.5 text-[12px] font-medium text-slate-900 ${selected ? "after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : ""}`}
                 >
                   <span className="whitespace-nowrap">{text}</span>
                 </button>

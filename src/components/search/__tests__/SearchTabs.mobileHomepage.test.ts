@@ -4,9 +4,11 @@ import test from "node:test";
 
 const source = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
 const homepage = readFileSync("src/app/page.tsx", "utf8");
-const mobileStart = source.indexOf('if (mobileHomepage && tab === "flights")');
+const rendererStart = source.indexOf("const mobileHomepageProductTabs = (");
+const mobileStart = source.indexOf('if (mobileHomepage && tab === "flights")', rendererStart);
 const desktopStart = source.indexOf("\n  return (", mobileStart);
-const mobileBranch = source.slice(mobileStart, desktopStart);
+const mobileProductTabs = source.slice(rendererStart, mobileStart);
+const mobileBranch = source.slice(rendererStart, desktopStart);
 const flightMobileBranch = source.slice(
   mobileStart,
   source.indexOf('if (mobileHomepage && tab === "deals")', mobileStart),
@@ -23,15 +25,15 @@ test("homepage scopes the approved presentation to its below-sm SearchTabs", () 
 test("mobile Flights renders four connected product tabs in approved order and is the default", () => {
   assert.match(source, /useState<TabMode>\("flights"\)/);
   assert.match(mobileBranch, /mobile-homepage-product-tabs/);
-  assert.match(mobileBranch, /grid-cols-4/);
+  assert.match(mobileProductTabs, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,0\.88fr\)_minmax\(0,1\.22fr\)\]/);
   assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", Tag/);
-  assert.equal((flightMobileBranch.match(/^\s*\["(?:flights|hotels|cars|deals)"/gm) ?? []).length, 4);
+  assert.equal((mobileProductTabs.match(/^\s*\["(?:flights|hotels|cars|deals)"/gm) ?? []).length, 4);
   assert.match(mobileBranch, /role="tab"[\s\S]*?aria-selected=\{selected\}/);
   assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
 });
 
 test("Packages uses the Tag icon and selects the canonical form inline", () => {
-  assert.match(mobileBranch, /\["deals", Tag, t\.deals \|\| "Packages"\]/);
+  assert.match(mobileProductTabs, /\["deals", Tag, t\.deals \|\| "Packages"\]/);
   assert.match(tabModeDeclaration, /"deals"/);
   assert.doesNotMatch(mobileBranch, /router\.push\("\/packages"\)/);
   assert.match(source, /tab === "deals"[\s\S]*?<DealsSearchForm variant="landing" presentation="mobile-homepage"/);
@@ -72,11 +74,13 @@ test("mobile English trip labels are exact and multi-city is truthfully unavaila
   assert.match(mobileBranch, /Multi-city search coming soon/);
 });
 
-test("mobile homepage controls use responsive, equal-width product tabs without scaling", () => {
-  assert.match(mobileBranch, /grid h-12 grid-cols-4/);
-  assert.match(mobileBranch, /text-\[13px\] min-\[360px\]:text-\[14px\] min-\[430px\]:text-\[15px\]/);
-  assert.match(mobileBranch, /h-\[17px\] w-\[17px\][^"\n]*min-\[360px\]:h-\[18px\][^"\n]*min-\[412px\]:h-\[19px\][^"\n]*min-\[430px\]:h-5/);
-  assert.match(mobileBranch, /gap-\[3px\][^"\n]*min-\[360px\]:gap-1[^"\n]*min-\[430px\]:gap-\[5px\]/);
+test("mobile homepage controls use one responsive product-tab renderer without scaling", () => {
+  assert.equal((source.match(/const mobileHomepageProductTabs = \(/g) ?? []).length, 1);
+  assert.equal((source.match(/data-testid="mobile-homepage-product-tabs"/g) ?? []).length, 1);
+  assert.match(mobileProductTabs, /grid h-12 w-full/);
+  assert.match(mobileProductTabs, /text-\[13px\] min-\[360px\]:text-\[14px\] min-\[375px\]:text-\[16px\]/);
+  assert.match(mobileProductTabs, /h-\[18px\] w-\[18px\][^"\n]*min-\[360px\]:h-5[^"\n]*min-\[375px\]:h-\[22px\]/);
+  assert.match(mobileProductTabs, /gap-\[3px\][^"\n]*min-\[360px\]:gap-1[^"\n]*min-\[375px\]:gap-\[5px\]/);
   assert.match(mobileBranch, /whitespace-nowrap/);
   assert.doesNotMatch(mobileBranch, /truncate[^\n]*\{label\}|text-ellipsis/);
   assert.match(mobileBranch, /h-\[68px\][^\n]*mobile-homepage|className="focus-ring flex h-\[68px\]/);
@@ -106,12 +110,12 @@ test("mobile Hotels removes only the nested surface and keeps its connected cont
   assert.match(sharedBranch, /mobile-homepage-hotel-guests[\s\S]*?hotelGuestsRoomsSummary/);
   assert.match(sharedBranch, /mobile-homepage-hotel-search/);
   assert.match(sharedBranch, /rounded-\[11px\] border-\[#dee5ed\] bg-\[#fcfdfe\]/);
-  assert.match(source, /tab === "hotels"[\s\S]{0,180}rounded-\[14px\][^\n]*p-\[11px\]/);
+  assert.match(source, /mobileHomepage[\s\S]{0,180}rounded-\[14px\][^\n]*p-\[13px\]/);
 });
 
 test("mobile Cars removes its nested surface and uses controlled card geometry", () => {
   assert.match(source, /const carsFieldCardClassName = mobileHomepage[\s\S]*?overflow-visible border-0 bg-transparent p-0 shadow-none ring-0/);
-  assert.match(source, /tab === "hotels" \|\| tab === "cars"[\s\S]{0,160}rounded-\[14px\]/);
+  assert.match(source, /mobileHomepage[\s\S]{0,160}rounded-\[14px\]/);
   assert.match(source, /const carsMobileHomepageFieldClassName = mobileHomepage[\s\S]*?rounded-\[11px\] border-\[#dee5ed\] bg-\[#fcfdfe\]/);
   assert.match(sharedBranch, /className=\{carsFieldCardClassName\} data-testid="cars-joined-search-card"/);
   assert.doesNotMatch(sharedBranch, /className=\{fieldCardClassName\} data-testid="cars-joined-search-card"/);
@@ -202,19 +206,16 @@ test("mobile pickers and one-way/query behavior remain wired", () => {
 });
 
 test("all mobile homepage products remain switchable without route navigation", () => {
-  assert.match(sharedBranch, /setTab\("flights"\)/);
-  assert.match(sharedBranch, /setTab\("hotels"\)/);
-  assert.match(sharedBranch, /setTab\("cars"\)/);
-  assert.match(sharedBranch, /setTab\("deals"\)/);
+  assert.match(mobileProductTabs, /setTab\(mode\)/);
+  assert.match(mobileProductTabs, /"flights"[\s\S]*"hotels"[\s\S]*"cars"[\s\S]*"deals"/);
   assert.match(sharedBranch, /\) : tab === "hotels" \? \(/);
   assert.match(sharedBranch, /\) : \([\s\S]*?onSubmit=\{onCarsSubmit\}/);
-  assert.match(sharedBranch, /<Plane[\s\S]*?\{t\.flights\}/);
-  assert.match(sharedBranch, /<BedDouble[\s\S]*?\{t\.hotels\}/);
-  assert.match(sharedBranch, /<CarFront[\s\S]*?\{t\.cars\}/);
-  assert.match(sharedBranch, /mobileHomepage \? \([\s\S]*?<Tag[\s\S]*?t\.deals \|\| "Packages"/);
-  assert.match(source, /const tabsClassName = cn\([\s\S]*?mobileHomepage[\s\S]*?grid-cols-4/);
-  assert.match(sharedBranch, /aria-selected=\{tab === "deals"\}/);
-  assert.match(sharedBranch, /tab === "deals"[\s\S]*?bg-\[#eef5ff\] text-\[#075ee8\]/);
+  assert.match(mobileProductTabs, /\["flights", Plane/);
+  assert.match(mobileProductTabs, /\["hotels", Building2/);
+  assert.match(mobileProductTabs, /\["cars", CarFront/);
+  assert.match(mobileProductTabs, /\["deals", Tag, t\.deals \|\| "Packages"\]/);
+  assert.match(mobileProductTabs, /aria-selected=\{selected\}/);
+  assert.match(mobileProductTabs, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
   assert.doesNotMatch(sharedBranch, /router\.push\("\/packages"\)/);
   assert.doesNotMatch(sharedBranch, /startRouteProgress\(\);[\s\S]{0,80}setTab\("deals"\)/);
 });

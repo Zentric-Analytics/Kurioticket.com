@@ -783,9 +783,7 @@ export function SearchTabs({
         "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
         searchTabsOverlayOpen && desktopOverlayRootClassName,
         mobileHomepage
-          ? tab === "hotels" || tab === "cars"
-            ? "rounded-[14px] border-[#dee5ed] bg-[#f8fafc] p-[11px] shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
-            : "rounded-[22px] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
+          ? "rounded-[14px] border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
           : compactHero
           ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
           : "p-2"
@@ -794,12 +792,7 @@ export function SearchTabs({
   );
 
   const tabsClassName = cn(
-    mobileHomepage
-      ? cn(
-          "grid h-12 w-full grid-cols-4 overflow-hidden rounded-[16px] border border-slate-200 bg-white text-[14px] min-[360px]:text-[15px] min-[375px]:text-[16px]",
-          tab === "hotels" || tab === "cars" ? "mb-[15px]" : "mb-5",
-        )
-      : "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
+    "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
     !mobileHomepage && compactHero
       ? "mb-1 sm:mb-1.5 lg:mb-2 lg:gap-0.5 lg:border-slate-200/90 lg:bg-slate-100/80 lg:shadow-inner"
       : !mobileHomepage && "mb-2"
@@ -3025,6 +3018,48 @@ export function SearchTabs({
     </div>
   ) : null;
 
+  const mobileHomepageProductTabs = (
+    <div
+      role="tablist"
+      aria-label={translate("searchType") || "Search type"}
+      data-testid="mobile-homepage-product-tabs"
+      className="grid h-12 w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.88fr)_minmax(0,1.22fr)] overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[13px] min-[360px]:text-[14px] min-[375px]:text-[16px]"
+    >
+      {([
+        ["flights", Plane, t.flights || "Flights"],
+        ["hotels", Building2, t.hotels || "Hotels"],
+        ["cars", CarFront, t.cars || "Cars"],
+        ["deals", Tag, t.deals || "Packages"],
+      ] as const).map(([mode, Icon, label], index) => {
+        const selected = tab === mode;
+        return (
+          <button
+            key={mode}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => {
+              setCarsOpenPicker(null);
+              setTab(mode);
+            }}
+            className={cn(
+              "focus-ring flex min-w-0 items-center justify-center gap-[3px] border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[360px]:gap-1 min-[375px]:gap-[5px]",
+              index > 0 && "border-s",
+              selected && "bg-[#eef5ff] text-[#075ee8]",
+            )}
+          >
+            <Icon
+              aria-hidden="true"
+              className="h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]"
+              strokeWidth={1.8}
+            />
+            <span className="whitespace-nowrap">{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   if (mobileHomepage && tab === "flights") {
     const isEnglishMobileHomepage = calendarLocale.toLowerCase().startsWith("en");
     const mobileOriginLabel = t.origin || t.from || "Origin";
@@ -3035,50 +3070,12 @@ export function SearchTabs({
       ? "Travelers & Cabin Class"
       : t.travelersAndCabinClass || t.travelersAndCabin || t.travelers || "Travelers & Cabin Class";
 
-    const mobileProductTabs = (
-      <div
-        role="tablist"
-        aria-label={translate("searchType") || "Search type"}
-        data-testid="mobile-homepage-product-tabs"
-        className="grid h-12 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[13px] min-[360px]:text-[14px] min-[430px]:text-[15px]"
-      >
-        {([
-          ["flights", Plane, t.flights || "Flights"],
-          ["hotels", Building2, t.hotels || "Hotels"],
-          ["cars", CarFront, t.cars || "Cars"],
-          ["deals", Tag, t.deals || "Packages"],
-        ] as const).map(([mode, Icon, label], index) => {
-          const selected = tab === mode;
-          return (
-            <button
-              key={mode}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              onClick={() => {
-                setCarsOpenPicker(null);
-                setTab(mode);
-              }}
-              className={cn(
-                "focus-ring flex min-w-0 items-center justify-center gap-[3px] border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[360px]:gap-1 min-[430px]:gap-[5px]",
-                index > 0 && "border-s",
-                selected && "bg-[#eef5ff] text-[#075ee8]",
-              )}
-            >
-              <Icon aria-hidden="true" className="h-[17px] w-[17px] shrink-0 min-[360px]:h-[18px] min-[360px]:w-[18px] min-[412px]:h-[19px] min-[412px]:w-[19px] min-[430px]:h-5 min-[430px]:w-5" strokeWidth={1.8} />
-              <span className="whitespace-nowrap">{label}</span>
-            </button>
-          );
-        })}
-      </div>
-    );
-
     return (
       <section
         data-testid="mobile-homepage-flight-search"
         className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden"
       >
-        {mobileProductTabs}
+        {mobileHomepageProductTabs}
         <form onSubmit={onFlightSubmit} className="mt-3 space-y-2">
           <div
             role="radiogroup"
@@ -3303,20 +3300,9 @@ export function SearchTabs({
   }
 
   if (mobileHomepage && tab === "deals") {
-    const products = [
-      ["flights", Plane, t.flights || "Flights"],
-      ["hotels", Building2, t.hotels || "Hotels"],
-      ["cars", CarFront, t.cars || "Cars"],
-      ["deals", Tag, t.deals || "Packages"],
-    ] as const;
     return (
       <section data-testid="mobile-homepage-deals-surface" className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
-        <div role="tablist" aria-label={translate("searchType") || "Search type"} data-testid="mobile-homepage-product-tabs" className="grid h-12 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[14px] min-[360px]:text-[15px] min-[375px]:text-[16px]">
-          {products.map(([mode, Icon, label], index) => {
-            const selected = tab === mode;
-            return <button key={mode} type="button" role="tab" aria-selected={selected} onClick={() => { setCarsOpenPicker(null); setTab(mode); }} className={cn("focus-ring flex min-w-0 items-center justify-center gap-1 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[375px]:gap-[5px]", index > 0 && "border-s", selected && "bg-[#eef5ff] text-[#075ee8]")}><Icon aria-hidden="true" className="h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]" strokeWidth={1.8} /><span className="whitespace-nowrap">{label}</span></button>;
-          })}
-        </div>
+        {mobileHomepageProductTabs}
         <DealsSearchForm variant="landing" presentation="mobile-homepage" />
       </section>
     );
@@ -3328,104 +3314,72 @@ export function SearchTabs({
         {desktopPopoverOpen ? (
           <div aria-hidden="true" className={desktopOverlayGuardClassName} />
         ) : null}
-      <div
-        className={tabsClassName}
-        role={mobileHomepage ? "tablist" : undefined}
-        aria-label={mobileHomepage ? t.search : undefined}
-      >
+      {mobileHomepage ? (
+        <div className="mb-[15px]">{mobileHomepageProductTabs}</div>
+      ) : (
+      <div className={tabsClassName}>
         <button
           type="button"
-          role={mobileHomepage ? "tab" : undefined}
-          aria-selected={mobileHomepage ? tab === "flights" : undefined}
           onClick={() => {
             setCarsOpenPicker(null);
             setTab("flights");
           }}
           className={cn(
             "focus-ring inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
-            mobileHomepage ? "min-w-0 gap-1 px-0.5 text-[14px] font-medium min-[360px]:text-[15px] min-[375px]:gap-[5px] min-[375px]:text-[16px]" : "rounded-lg px-3 py-1.5",
+            "rounded-lg px-3 py-1.5",
             compactHero && !mobileHomepage && "lg:px-3.5 lg:py-2 lg:text-[15px]",
             tab === "flights"
-              ? mobileHomepage
-                ? "bg-[#eef5ff] text-[#075ee8]"
-                : "bg-white text-navy shadow-sm"
+              ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
             compactHero && !mobileHomepage && tab === "flights" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
-          <Plane className={mobileHomepage ? "h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]" : "h-4 w-4"} strokeWidth={mobileHomepage ? 1.8 : undefined} />
-          <span className={mobileHomepage ? "whitespace-nowrap" : undefined}>{t.flights}</span>
+          <Plane className="h-4 w-4" />
+          <span>{t.flights}</span>
         </button>
 
         <button
           type="button"
-          role={mobileHomepage ? "tab" : undefined}
-          aria-selected={mobileHomepage ? tab === "hotels" : undefined}
           onClick={() => {
             setCarsOpenPicker(null);
             setTab("hotels");
           }}
           className={cn(
             "focus-ring inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
-            mobileHomepage ? "min-w-0 gap-1 border-s border-slate-200 px-0.5 text-[14px] font-medium min-[360px]:text-[15px] min-[375px]:gap-[5px] min-[375px]:text-[16px]" : "rounded-lg px-3 py-1.5",
+            "rounded-lg px-3 py-1.5",
             compactHero && !mobileHomepage && "lg:px-3.5 lg:py-2 lg:text-[15px]",
             tab === "hotels"
-              ? mobileHomepage
-                ? "bg-[#eef5ff] text-[#075ee8]"
-                : "bg-white text-navy shadow-sm"
+              ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
             compactHero && !mobileHomepage && tab === "hotels" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
-          {mobileHomepage ? <Building2 className="h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]" strokeWidth={1.8} /> : <BedDouble className="h-4 w-4" />}
-          <span className={mobileHomepage ? "whitespace-nowrap" : undefined}>{t.hotels}</span>
+          <BedDouble className="h-4 w-4" />
+          <span>{t.hotels}</span>
         </button>
 
         <button
           type="button"
-          role={mobileHomepage ? "tab" : undefined}
-          aria-selected={mobileHomepage ? tab === "cars" : undefined}
           onClick={() => {
             setCarsOpenPicker(null);
             setTab("cars");
           }}
           className={cn(
             "focus-ring inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
-            mobileHomepage ? "min-w-0 gap-1 border-s border-slate-200 px-0.5 text-[14px] font-medium min-[360px]:text-[15px] min-[375px]:gap-[5px] min-[375px]:text-[16px]" : "rounded-lg px-3 py-1.5",
+            "rounded-lg px-3 py-1.5",
             compactHero && !mobileHomepage && "lg:px-3.5 lg:py-2 lg:text-[15px]",
             tab === "cars"
-              ? mobileHomepage
-                ? "bg-[#eef5ff] text-[#075ee8]"
-                : "bg-white text-navy shadow-sm"
+              ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
             compactHero && !mobileHomepage && tab === "cars" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
-          <CarFront className={mobileHomepage ? "h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]" : "h-4 w-4"} strokeWidth={mobileHomepage ? 1.8 : undefined} />
-          <span className={mobileHomepage ? "whitespace-nowrap" : undefined}>{t.cars}</span>
+          <CarFront className="h-4 w-4" />
+          <span>{t.cars}</span>
         </button>
 
-        {mobileHomepage ? (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === "deals"}
-            onClick={() => {
-              setCarsOpenPicker(null);
-              setTab("deals");
-            }}
-            className={cn(
-              "focus-ring inline-flex min-w-0 items-center justify-center gap-1 border-s border-slate-200 px-0.5 text-[14px] font-medium transition-colors min-[360px]:text-[15px] min-[375px]:gap-[5px] min-[375px]:text-[16px]",
-              tab === "deals"
-                ? "bg-[#eef5ff] text-[#075ee8]"
-                : "text-slate-600 hover:text-slate-800",
-            )}
-          >
-            <Tag className="h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]" strokeWidth={1.8} />
-            <span className="whitespace-nowrap">{t.deals || "Packages"}</span>
-          </button>
-        ) : null}
       </div>
+      )}
 
       {tab === "flights" ? (
         <form
