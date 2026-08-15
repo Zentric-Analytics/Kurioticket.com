@@ -57,10 +57,19 @@ test("mobile flight controls retain the approved hierarchy", () => {
 
 test("trip type uses accessible radio-style options", () => {
   assert.match(mobileBranch, /role="radiogroup"/);
-  assert.match(mobileBranch, /\["round-trip", "one-way"\]/);
+  assert.match(mobileBranch, /\["round-trip", "one-way", "multi-city"\]/);
+  assert.match(mobileBranch, /grid-cols-3/);
   assert.match(mobileBranch, /role="radio"[\s\S]*?aria-checked=\{selected\}/);
-  assert.match(mobileBranch, /h-1\.5 w-1\.5 rounded-full bg-\[#1670ee\]/);
+  assert.match(mobileBranch, /aria-disabled=\{unavailable\}/);
+  assert.match(mobileBranch, /h-1\.5 w-1\.5 rounded-full bg-\[#004BB8\]/);
   assert.doesNotMatch(mobileBranch, /mobile-homepage-trip-selector[^\n]*border/);
+});
+
+test("mobile English trip labels are exact and multi-city is truthfully unavailable", () => {
+  assert.match(source, /"Round-trip"[\s\S]*?"One-way"[\s\S]*?"Multi-city"/);
+  assert.match(source, /const unavailable = mode === "multi-city"/);
+  assert.match(mobileBranch, /disabled=\{unavailable\}/);
+  assert.match(mobileBranch, /Multi-city search coming soon/);
 });
 
 test("mobile homepage controls use the refined product-tab hierarchy without scaling", () => {
@@ -70,7 +79,7 @@ test("mobile homepage controls use the refined product-tab hierarchy without sca
   assert.match(mobileBranch, /h-\[68px\][^\n]*mobile-homepage|className="focus-ring flex h-\[68px\]/);
   assert.match(mobileBranch, /h-\[62px\][^\n]*w-full/);
   assert.match(mobileBranch, /h-16 w-full/);
-  assert.match(mobileBranch, /h-12 w-full rounded-\[11px\]/);
+  assert.match(mobileBranch, /h-12 w-full rounded-\[10px\]/);
   assert.doesNotMatch(mobileBranch, /transform:\s*scale|scale-\[/);
 });
 
@@ -140,6 +149,20 @@ test("mobile card, fields, borders, and tabs use the cool-neutral surface hierar
   assert.match(mobileBranch, /border border-\[#dee5ed\] bg-\[#f8fafc\][^\n]*shadow-\[0_8px_22px_rgba\(15,23,42,0\.07\)\]/);
   assert.ok((mobileBranch.match(/border border-\[#dee5ed\] bg-\[#fcfdfe\]/g) ?? []).length >= 5);
   assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
+});
+
+test("mobile Flights alone uses straighter card and control geometry", () => {
+  assert.match(mobileBranch, /mobile-homepage-flight-search[\s\S]{0,120}rounded-\[14px\]/);
+  assert.ok((mobileBranch.match(/rounded-\[10px\] border border-\[#dee5ed\] bg-\[#fcfdfe\]/g) ?? []).length >= 3);
+  assert.match(mobileBranch, /mobile-homepage-search-submit[\s\S]{0,180}rounded-\[10px\]/);
+});
+
+test("flight CTA preserves validation without whole-button opacity washout", () => {
+  assert.match(source, /const isFlightSearchDisabled =[\s\S]*?!from\.trim\(\)[\s\S]*?!to\.trim\(\)[\s\S]*?!isValidFlightDate\(departureDate\)[\s\S]*?!isFlightReturnRangeValid/);
+  assert.match(mobileBranch, /disabled=\{isFlightSearchDisabled\}/);
+  assert.match(mobileBranch, /bg-\[#004BB8\]/);
+  assert.match(mobileBranch, /disabled:bg-\[#336fbd\]/);
+  assert.doesNotMatch(mobileBranch, /disabled:opacity/);
 });
 
 test("dates and travelers are single full-width mobile cards", () => {

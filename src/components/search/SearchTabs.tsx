@@ -1617,6 +1617,20 @@ export function SearchTabs({
     );
   };
 
+  const mobileHomepageTripTypeLabel = (mode: TripType) => {
+    const isEnglish = (locale ?? activeLocale).toLowerCase().startsWith("en");
+
+    if (isEnglish) {
+      return mode === "round-trip"
+        ? "Round-trip"
+        : mode === "one-way"
+          ? "One-way"
+          : "Multi-city";
+    }
+
+    return tripTypeLabel(mode);
+  };
+
   const onSelectTripType = (mode: Exclude<TripType, "multi-city">) => {
     setTripType(mode);
     if (mode === "one-way") {
@@ -3038,25 +3052,29 @@ export function SearchTabs({
     return (
       <section
         data-testid="mobile-homepage-flight-search"
-        className="rounded-[19px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden"
+        className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden"
       >
         {mobileProductTabs}
         <form onSubmit={onFlightSubmit} className="mt-3 space-y-2">
           <div
             role="radiogroup"
             aria-label={t.tripType || "Trip type"}
-            className="grid h-11 grid-cols-2 items-center gap-2 px-1"
+            className="grid h-11 grid-cols-3 items-center gap-0 px-0.5"
             data-testid="mobile-homepage-trip-selector"
           >
-            {(["round-trip", "one-way"] as const).map((mode) => {
+            {(["round-trip", "one-way", "multi-city"] as const).map((mode) => {
               const selected = tripType === mode;
+              const unavailable = mode === "multi-city";
               return (
                 <button
                   key={mode}
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  onClick={() => onSelectTripType(mode)}
+                  aria-disabled={unavailable}
+                  disabled={unavailable}
+                  title={unavailable ? (t.multiCityComingSoon || "Multi-city search coming soon") : undefined}
+                  onClick={() => mode !== "multi-city" && onSelectTripType(mode)}
                   onKeyDown={(event) => {
                     if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(event.key)) {
                       event.preventDefault();
@@ -3064,19 +3082,18 @@ export function SearchTabs({
                     }
                   }}
                   className={cn(
-                    "focus-ring flex min-h-11 min-w-0 items-center gap-2 rounded-[10px] px-1 text-start text-[13px] font-medium text-slate-950 transition-colors",
+                    "focus-ring flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-0.5 text-start text-[13px] font-medium text-slate-950 transition-colors max-[359px]:gap-1 max-[359px]:text-[12px] disabled:cursor-not-allowed",
                   )}
                 >
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 bg-white",
-                      selected ? "border-[#1670ee]" : "border-slate-300",
+                      "flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white",
                     )}
                   >
-                    <span className={cn("h-1.5 w-1.5 rounded-full bg-[#1670ee]", !selected && "invisible")} />
+                    <span className={cn("h-1.5 w-1.5 rounded-full bg-[#004BB8]", !selected && "invisible")} />
                   </span>
-                  {tripTypeLabel(mode)}
+                  {mobileHomepageTripTypeLabel(mode)}
                 </button>
               );
             })}
@@ -3099,7 +3116,7 @@ export function SearchTabs({
                   setToOpen(false);
                   setActiveMobileAirportPicker(kind);
                 }}
-                className="focus-ring flex h-[68px] w-full items-center rounded-[14px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
+                className="focus-ring flex h-[68px] w-full items-center rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
                 data-testid={`mobile-homepage-${kind}-field`}
               >
                 <span className="min-w-0">
@@ -3129,7 +3146,7 @@ export function SearchTabs({
             aria-label={translate("chooseTravelDates") || "Choose travel dates"}
             onClick={() => setFlightDatesOpen(true)}
             data-testid="mobile-homepage-travel-dates-field"
-            className="focus-ring flex h-[62px] w-full items-center rounded-[14px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
+            className="focus-ring flex h-[62px] w-full items-center rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
           >
             <span className="min-w-0">
               <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelDatesLabel}</span>
@@ -3145,7 +3162,7 @@ export function SearchTabs({
             aria-label={`${mobileTravelersCabinLabel}: ${travelerSummary}`}
             onClick={() => travelersMenuOpen ? cancelTravelersDraft() : openTravelersMenu()}
             data-testid="mobile-homepage-travelers-field"
-            className="focus-ring flex h-16 w-full items-center justify-between gap-3 rounded-[14px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
+            className="focus-ring flex h-16 w-full items-center justify-between gap-3 rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
           >
             <span className="min-w-0">
               <span className="block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelersCabinLabel}</span>
@@ -3160,7 +3177,7 @@ export function SearchTabs({
             aria-busy={isFlightSubmitting}
             aria-label={t.searchFlights || "Search flights"}
             data-testid="mobile-homepage-search-submit"
-            className="h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white shadow-none hover:bg-[#075ee8] active:bg-[#075ee8] disabled:bg-[#075ee8] disabled:text-white disabled:opacity-60"
+            className="h-12 w-full rounded-[10px] bg-[#004BB8] text-[16px] font-semibold text-white shadow-none hover:bg-[#003f9c] active:bg-[#003785] disabled:cursor-not-allowed disabled:bg-[#336fbd] disabled:text-white"
           >
             {isFlightSubmitting ? t.searchingFlights || "Searching flights..." : t.search || "Search"}
           </Button>
