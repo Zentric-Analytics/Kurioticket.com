@@ -4031,16 +4031,33 @@ export function SearchTabs({
                   aria-label={t.chooseHotelDestination || "Choose hotel destination"}
                   className={cn(hotelFieldValueClassName, "justify-between sm:hidden")}
                 >
-                  <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
-                    {destination.trim() || t.cityOrHotel || "City or hotel"}
-                  </span>
-                  <ChevronDown
-                    size={16}
-                    className={cn(
-                      "shrink-0 text-slate-500 transition-transform",
-                      hotelDestinationMobilePickerOpen && "rotate-180",
-                    )}
-                  />
+                  {mobileHomepage ? (
+                    <span
+                      className="flex min-w-0 items-center gap-2"
+                      data-testid="mobile-homepage-hotel-destination-value"
+                    >
+                      <MapPin
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0 text-slate-500"
+                      />
+                      <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
+                        {destination.trim() || t.cityOrHotel || "City or hotel"}
+                      </span>
+                    </span>
+                  ) : (
+                    <>
+                      <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
+                        {destination.trim() || t.cityOrHotel || "City or hotel"}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          "shrink-0 text-slate-500 transition-transform",
+                          hotelDestinationMobilePickerOpen && "rotate-180",
+                        )}
+                      />
+                    </>
+                  )}
                 </button>
                 <input
                   type="text"
@@ -4150,8 +4167,19 @@ export function SearchTabs({
                   aria-label={translate("chooseGuestsAndRooms") || "Choose guests and rooms"}
                   className={cn(hotelFieldValueClassName, "justify-between")}
                 >
-                  <span className="truncate">
-                    {hotelGuestsRoomsSummary}
+                  <span
+                    className={cn("flex min-w-0 items-center", mobileHomepage && "gap-2")}
+                    data-testid={mobileHomepage ? "mobile-homepage-hotel-guests-value" : undefined}
+                  >
+                    {mobileHomepage ? (
+                      <UserRound
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0 text-slate-500 sm:hidden"
+                      />
+                    ) : null}
+                    <span className="truncate">
+                      {hotelGuestsRoomsSummary}
+                    </span>
                   </span>
                   <ChevronDown
                     size={16}
