@@ -3031,7 +3031,7 @@ export function SearchTabs({
         role="tablist"
         aria-label={translate("searchType") || "Search type"}
         data-testid="mobile-homepage-product-tabs"
-        className="grid h-12 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[14px] min-[360px]:text-[15px] min-[375px]:text-[16px]"
+        className="grid h-12 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[13px] min-[360px]:text-[14px] min-[430px]:text-[15px]"
       >
         {([
           ["flights", Plane, t.flights || "Flights"],
@@ -3051,12 +3051,12 @@ export function SearchTabs({
                 setTab(mode);
               }}
               className={cn(
-                "focus-ring flex min-w-0 items-center justify-center gap-1 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[375px]:gap-[5px]",
+                "focus-ring flex min-w-0 items-center justify-center gap-[3px] border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[360px]:gap-1 min-[430px]:gap-[5px]",
                 index > 0 && "border-s",
                 selected && "bg-[#eef5ff] text-[#075ee8]",
               )}
             >
-              <Icon aria-hidden="true" className="h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]" strokeWidth={1.8} />
+              <Icon aria-hidden="true" className="h-[17px] w-[17px] shrink-0 min-[360px]:h-[18px] min-[360px]:w-[18px] min-[412px]:h-[19px] min-[412px]:w-[19px] min-[430px]:h-5 min-[430px]:w-5" strokeWidth={1.8} />
               <span className="whitespace-nowrap">{label}</span>
             </button>
           );
@@ -3097,16 +3097,16 @@ export function SearchTabs({
                     }
                   }}
                   className={cn(
-                    "focus-ring flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-0.5 text-start text-[13px] font-medium text-slate-950 transition-colors max-[359px]:gap-1 max-[359px]:text-[12px] disabled:cursor-not-allowed",
+                    "focus-ring flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-0.5 text-start text-[12px] font-medium text-slate-950 transition-colors max-[359px]:gap-1 max-[359px]:text-[11px] disabled:cursor-not-allowed",
                   )}
                 >
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white",
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white",
                     )}
                   >
-                    <span className={cn("h-1.5 w-1.5 rounded-full bg-[#004BB8]", !selected && "invisible")} />
+                    <span className={cn("h-[5px] w-[5px] rounded-full bg-[#004BB8]", !selected && "invisible")} />
                   </span>
                   {mobileHomepageTripTypeLabel(mode)}
                 </button>
@@ -3136,8 +3136,9 @@ export function SearchTabs({
               >
                 <span className="min-w-0">
                   <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{label}</span>
-                  <span className={cn("mt-1.5 block truncate text-[17px] font-medium leading-5 text-slate-950", !value.trim() && "text-slate-500")}>
-                    {value.trim() || placeholder}
+                  <span data-testid={`mobile-homepage-${kind}-value`} className={cn("mt-1.5 flex min-w-0 items-center gap-2 text-[17px] font-medium leading-5 text-slate-950", !value.trim() && "text-slate-500")}>
+                    <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                    <span className="truncate">{value.trim() || placeholder}</span>
                   </span>
                 </span>
               </button>
@@ -3165,7 +3166,10 @@ export function SearchTabs({
           >
             <span className="min-w-0">
               <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelDatesLabel}</span>
-              <span className="mt-1.5 block truncate text-[16px] font-medium leading-5 text-slate-950">{dateSummary}</span>
+              <span data-testid="mobile-homepage-travel-dates-value" className="mt-1.5 flex min-w-0 items-center gap-2 text-[16px] font-medium leading-5 text-slate-950">
+                <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                <span className="truncate">{dateSummary}</span>
+              </span>
             </span>
           </button>
 
@@ -3181,7 +3185,10 @@ export function SearchTabs({
           >
             <span className="min-w-0">
               <span className="block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelersCabinLabel}</span>
-              <span className="mt-1.5 block truncate text-[16px] font-medium leading-5 text-slate-950">{travelerSummary}</span>
+              <span data-testid="mobile-homepage-travelers-value" className="mt-1.5 flex min-w-0 items-center gap-2 text-[16px] font-medium leading-5 text-slate-950">
+                <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                <span className="truncate">{travelerSummary}</span>
+              </span>
             </span>
             <ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", travelersMenuOpen && "rotate-180")} />
           </button>

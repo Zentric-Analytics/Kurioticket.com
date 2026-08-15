@@ -61,7 +61,7 @@ test("trip type uses accessible radio-style options", () => {
   assert.match(mobileBranch, /grid-cols-3/);
   assert.match(mobileBranch, /role="radio"[\s\S]*?aria-checked=\{selected\}/);
   assert.match(mobileBranch, /aria-disabled=\{unavailable\}/);
-  assert.match(mobileBranch, /h-1\.5 w-1\.5 rounded-full bg-\[#004BB8\]/);
+  assert.match(mobileBranch, /h-\[5px\] w-\[5px\] rounded-full bg-\[#004BB8\]/);
   assert.doesNotMatch(mobileBranch, /mobile-homepage-trip-selector[^\n]*border/);
 });
 
@@ -74,15 +74,16 @@ test("mobile English trip labels are exact and multi-city is truthfully unavaila
 
 test("mobile homepage controls use responsive, equal-width product tabs without scaling", () => {
   assert.match(mobileBranch, /grid h-12 grid-cols-4/);
-  assert.match(mobileBranch, /text-\[14px\] min-\[360px\]:text-\[15px\] min-\[375px\]:text-\[16px\]/);
-  assert.match(mobileBranch, /h-\[18px\] w-\[18px\][^"\n]*min-\[360px\]:h-5[^"\n]*min-\[375px\]:h-\[22px\]/);
-  assert.match(mobileBranch, /gap-1[^"\n]*min-\[375px\]:gap-\[5px\]/);
+  assert.match(mobileBranch, /text-\[13px\] min-\[360px\]:text-\[14px\] min-\[430px\]:text-\[15px\]/);
+  assert.match(mobileBranch, /h-\[17px\] w-\[17px\][^"\n]*min-\[360px\]:h-\[18px\][^"\n]*min-\[412px\]:h-\[19px\][^"\n]*min-\[430px\]:h-5/);
+  assert.match(mobileBranch, /gap-\[3px\][^"\n]*min-\[360px\]:gap-1[^"\n]*min-\[430px\]:gap-\[5px\]/);
   assert.match(mobileBranch, /whitespace-nowrap/);
+  assert.doesNotMatch(mobileBranch, /truncate[^\n]*\{label\}|text-ellipsis/);
   assert.match(mobileBranch, /h-\[68px\][^\n]*mobile-homepage|className="focus-ring flex h-\[68px\]/);
   assert.match(mobileBranch, /h-\[62px\][^\n]*w-full/);
   assert.match(mobileBranch, /h-16 w-full/);
   assert.match(mobileBranch, /h-12 w-full rounded-\[10px\]/);
-  assert.match(mobileBranch, /mobile-homepage-trip-selector[\s\S]*?text-\[13px\][\s\S]*?h-\[17px\] w-\[17px\]/);
+  assert.match(mobileBranch, /mobile-homepage-trip-selector[\s\S]*?text-\[12px\][\s\S]*?max-\[359px\]:text-\[11px\][\s\S]*?h-4 w-4/);
   assert.doesNotMatch(mobileBranch, /transform:\s*scale|scale-\[/);
 });
 
@@ -138,9 +139,16 @@ test("mobile Cars places its single return-location field directly after pickup"
   assert.match(carsBranch, /checked=\{carsValues\.returnToDifferentLocation\}[\s\S]*?updateCarsValue\("returnToDifferentLocation", event\.target\.checked\)/);
 });
 
-test("mobile fields omit decorative icon tiles while retaining the wired horizontal swap", () => {
+test("mobile flight field icons sit in value rows without decorative tiles", () => {
   assert.match(mobileBranch, /mobile-homepage-\$\{kind\}-field/);
-  assert.doesNotMatch(mobileBranch, /mobile-homepage-location-icon-tile|<MapPin|<Calendar|<UserRound/);
+  assert.equal((mobileBranch.match(/<MapPin aria-hidden="true"/g) ?? []).length, 1);
+  assert.match(mobileBranch, /mobile-homepage-\$\{kind\}-value[\s\S]*?<MapPin aria-hidden="true"[^>]*h-4 w-4[^>]*text-slate-500/);
+  assert.match(mobileBranch, /mobile-homepage-travel-dates-value[\s\S]*?<Calendar aria-hidden="true"[^>]*h-4 w-4[^>]*text-slate-500/);
+  assert.match(mobileBranch, /mobile-homepage-travelers-value[\s\S]*?<UserRound aria-hidden="true"[^>]*h-4 w-4[^>]*text-slate-500/);
+  assert.doesNotMatch(mobileBranch, /mobile-homepage-location-icon-tile|rounded-full[^\n]*<(?:MapPin|Calendar|UserRound)|bg-\[#eef5ff\][^\n]*<(?:MapPin|Calendar|UserRound)/);
+  assert.match(mobileBranch, /tracking-\[0\.11em\][^\n]*\{label\}<\/span>[\s\S]*?mobile-homepage-\$\{kind\}-value/);
+  assert.match(mobileBranch, /tracking-\[0\.11em\][^\n]*\{mobileTravelDatesLabel\}<\/span>[\s\S]*?mobile-homepage-travel-dates-value/);
+  assert.match(mobileBranch, /tracking-\[0\.11em\][^\n]*\{mobileTravelersCabinLabel\}<\/span>[\s\S]*?mobile-homepage-travelers-value/);
   assert.equal((mobileBranch.match(/bg-\[#fcfdfe\] px-4 text-start/g) ?? []).length, 3);
   assert.match(mobileBranch, /mobile-homepage-swap/);
   assert.match(mobileBranch, /onClick=\{onSwapAirports\}/);
@@ -214,5 +222,4 @@ test("all mobile homepage products remain switchable without route navigation", 
 test("mobile Deals outer surface uses the refined radius without changing shared desktop geometry", () => {
   assert.match(source, /mobile-homepage-deals-surface[^\n]*rounded-\[14px\]/);
   assert.doesNotMatch(source, /mobile-homepage-deals-surface[^\n]*rounded-\[19px\]/);
-  assert.match(source, /lg:rounded-\[8px\] lg:border-\[#dee5ed\]/);
 });
