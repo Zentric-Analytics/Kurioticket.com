@@ -134,7 +134,7 @@ for (const [mode, scenarios] of Object.entries(expected) as [
         if (item.href) {
           assert.match(
             item.href,
-            /^\/deals\/journey\/(hotel|flight|car)-results\?/,
+            /^\/packages\/journey\/(hotel|flight|car)-results\?/,
           );
           assert.doesNotMatch(item.href, /^\/(hotels|flights|cars)\//);
         }
@@ -207,7 +207,7 @@ test("Deals root preserves the canonical current search", () => {
   )[0];
 
   assert.equal(root.href, buildDealsModifyUrl(currentSearch));
-  assert.match(root.href ?? "", /^\/deals\?/);
+  assert.match(root.href ?? "", /^\/packages\?/);
   const params = new URL(root.href ?? "", "https://example.test").searchParams;
   for (const [key, value] of [
     ["mode", "hotel-flight-car"],

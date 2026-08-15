@@ -1371,7 +1371,7 @@ export default function Home() {
             title={t("homePromoFlightsTitle")}
             body={t("homePromoFlightsBody")}
             cta={t("homePromoFlightsCta")}
-            href="/deals"
+            href="/packages"
             icon={<Plane size={74} />}
           />
 

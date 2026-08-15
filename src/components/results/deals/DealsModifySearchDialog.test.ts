@@ -31,21 +31,21 @@ test("results search form retains only the pending-safe primary action", () => {
   const action = form.match(/const searchDealsButton = [^;]+;/)?.[0] ?? "";
   assert.doesNotMatch(props, /onCancel/);
   assert.doesNotMatch(parameters, /onCancel/);
-  assert.doesNotMatch(form, /deals\.results\.editor\.cancel/);
+  assert.doesNotMatch(form, /packages\.results\.editor\.cancel/);
   assert.doesNotMatch(form, /onClick=\{onCancel\}/);
   assert.match(action, /type="submit"/);
   assert.match(action, /disabled=\{submitting \|\| pending\}/);
   assert.match(action, /aria-busy=\{submitting \|\| pending\}/);
-  assert.match(action, /deals\.results\.editor\.update/);
-  assert.match(action, /deals\.results\.editor\.updating/);
+  assert.match(action, /packages\.results\.editor\.update/);
+  assert.match(action, /packages\.results\.editor\.updating/);
   assert.doesNotMatch(dialog, /onCancel=\{onClose\}/);
 });
 
 test("English editor copy retains close and update labels without the obsolete cancel label", () => {
-  assert.doesNotMatch(english, /deals\.results\.editor\.cancel/);
-  assert.match(english, /deals\.results\.editor\.close/);
-  assert.match(english, /deals\.results\.editor\.update/);
-  assert.match(english, /deals\.results\.editor\.updating/);
+  assert.doesNotMatch(english, /packages\.results\.editor\.cancel/);
+  assert.match(english, /packages\.results\.editor\.close/);
+  assert.match(english, /packages\.results\.editor\.update/);
+  assert.match(english, /packages\.results\.editor\.updating/);
 });
 
 test("modify search uses a labelled modal while preserving the results page", () => {

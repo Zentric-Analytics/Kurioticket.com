@@ -7,7 +7,7 @@ import { reconcileDealsFlightSelection, reconcileDealsHotelSelection } from "./d
 
 const flightSelection: DealsTripPlanFlight = { id: "f", provider: "P", airline: "A", origin: "A", destination: "B", departure: "d", arrival: "a", duration: "1h", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 100, detailsPath: "/flights/details/f" };
 const hotelSelection: DealsTripPlanHotel = { id: "h", provider: "P", name: "H", location: "L", checkIn: "in", checkOut: "out", sourcePrice: 2, sourceCurrency: "USD", resultReceivedAt: 100, detailsPath: "/hotels/details/h" };
-const plan = { ...updateDealsTripPlan(createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "x", resultsPath: "/deals/results?q=x" }, 100), { flight: flightSelection, hotel: hotelSelection }, 101), opened: { flight: 101, hotel: 101 } };
+const plan = { ...updateDealsTripPlan(createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "x", resultsPath: "/packages/results?q=x" }, 100), { flight: flightSelection, hotel: hotelSelection }, 101), opened: { flight: 101, hotel: 101 } };
 const policy = (href: string, overrides: Partial<TravelResultPolicy> = {}): TravelResultPolicy => ({ source: "duffel", bookable: true, action: { kind: "internal-detail", href, enabled: true }, ...overrides });
 const flight = { id: "f", provider: "P", price: 1, currency: "USD", searchPolicy: policy("/flights/details/f") } as ContractResult<PublicFlightResult>;
 const hotel = { id: "h", provider: "P", totalPrice: 2, currency: "USD", searchPolicy: policy("/hotels/details/h", { source: "kurioticket-static-hotels", bookable: false }) } as ContractResult<PublicHotelResult>;

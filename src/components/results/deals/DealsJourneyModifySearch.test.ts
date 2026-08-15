@@ -47,7 +47,7 @@ test("linked destination modification survives the first-stage journey URL round
     "https://example.test",
   );
   const parsed = parseDealsSearchParams(url.searchParams);
-  assert.equal(url.pathname, "/deals/journey/hotel-results");
+  assert.equal(url.pathname, "/packages/journey/hotel-results");
   assert.equal(parsed.flightDestinationCode, "LHR");
   assert.equal(parsed.sharedDestination, "London");
   assert.equal(parsed.hotelDestination, "London");

@@ -143,7 +143,7 @@ test("preview route helper starts each package mode at its owned first stage", (
     const href = buildDealsJourneyUrl(firstStage, search);
     const url = new URL(href, "https://example.test");
     assert.equal(firstStage, stage);
-    assert.equal(url.pathname, `/deals/journey/${stage}`);
+    assert.equal(url.pathname, `/packages/journey/${stage}`);
     assert.equal(url.searchParams.has("guidedPreview"), false);
     assert.equal(url.searchParams.has("hotelId"), false);
     assert.equal(url.searchParams.has("flightId"), false);

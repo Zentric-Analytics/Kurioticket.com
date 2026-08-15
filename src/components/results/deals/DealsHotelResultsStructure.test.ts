@@ -37,9 +37,9 @@ test("guided Hotel results adapt the shared results experience and HotelCard", a
   assert.match(card, /allowExternalAttribution && isSafeHttpUrl/);
   assert.match(shared, /buildDetailsHref\?\.\(hotel\.id\) \?\? null/);
   assert.doesNotMatch(shared, /detailsHref=\{guided \?[^\n]*"#"/);
-  assert.match(shared, /deals\.guided\.hotelResults\.viewRooms/);
-  assert.match(shared, /deals\.guided\.hotelResults\.viewRoomsFor/);
-  assert.match(shared, /deals\.guided\.hotelResults\.roomsUnavailableFor/);
+  assert.match(shared, /packages\.guided\.hotelResults\.viewRooms/);
+  assert.match(shared, /packages\.guided\.hotelResults\.viewRoomsFor/);
+  assert.match(shared, /packages\.guided\.hotelResults\.roomsUnavailableFor/);
   assert.match(card, /hotelResults\.estimatedStayTotal/);
   assert.match(card, /hotelResults\.pricePerNight/);
   assert.doesNotMatch(card, /package total/i);

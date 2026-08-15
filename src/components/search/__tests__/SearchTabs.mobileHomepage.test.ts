@@ -30,10 +30,10 @@ test("mobile Flights renders four connected product tabs in approved order and i
   assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
 });
 
-test("Deals uses the Tag icon and selects the canonical form inline", () => {
-  assert.match(mobileBranch, /\["deals", Tag, t\.deals \|\| "Deals"\]/);
+test("Packages uses the Tag icon and selects the canonical form inline", () => {
+  assert.match(mobileBranch, /\["deals", Tag, t\.deals \|\| "Packages"\]/);
   assert.match(tabModeDeclaration, /"deals"/);
-  assert.doesNotMatch(mobileBranch, /router\.push\("\/deals"\)/);
+  assert.doesNotMatch(mobileBranch, /router\.push\("\/packages"\)/);
   assert.match(source, /tab === "deals"[\s\S]*?<DealsSearchForm variant="landing" presentation="mobile-homepage"/);
   assert.match(source, /aria-selected=\{selected\}/);
 });
@@ -203,10 +203,10 @@ test("all mobile homepage products remain switchable without route navigation", 
   assert.match(sharedBranch, /<Plane[\s\S]*?\{t\.flights\}/);
   assert.match(sharedBranch, /<BedDouble[\s\S]*?\{t\.hotels\}/);
   assert.match(sharedBranch, /<CarFront[\s\S]*?\{t\.cars\}/);
-  assert.match(sharedBranch, /mobileHomepage \? \([\s\S]*?<Tag[\s\S]*?t\.deals \|\| "Deals"/);
+  assert.match(sharedBranch, /mobileHomepage \? \([\s\S]*?<Tag[\s\S]*?t\.deals \|\| "Packages"/);
   assert.match(source, /const tabsClassName = cn\([\s\S]*?mobileHomepage[\s\S]*?grid-cols-4/);
   assert.match(sharedBranch, /aria-selected=\{tab === "deals"\}/);
   assert.match(sharedBranch, /tab === "deals"[\s\S]*?bg-\[#eef5ff\] text-\[#075ee8\]/);
-  assert.doesNotMatch(sharedBranch, /router\.push\("\/deals"\)/);
+  assert.doesNotMatch(sharedBranch, /router\.push\("\/packages"\)/);
   assert.doesNotMatch(sharedBranch, /startRouteProgress\(\);[\s\S]{0,80}setTab\("deals"\)/);
 });

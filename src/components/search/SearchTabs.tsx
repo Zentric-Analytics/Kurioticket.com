@@ -3027,7 +3027,7 @@ export function SearchTabs({
           ["flights", Plane, t.flights || "Flights"],
           ["hotels", Building2, t.hotels || "Hotels"],
           ["cars", CarFront, t.cars || "Cars"],
-          ["deals", Tag, t.deals || "Deals"],
+          ["deals", Tag, t.deals || "Packages"],
         ] as const).map(([mode, Icon, label], index) => {
           const selected = tab === mode;
           return (
@@ -3281,7 +3281,7 @@ export function SearchTabs({
       ["flights", Plane, t.flights || "Flights"],
       ["hotels", Building2, t.hotels || "Hotels"],
       ["cars", CarFront, t.cars || "Cars"],
-      ["deals", Tag, t.deals || "Deals"],
+      ["deals", Tag, t.deals || "Packages"],
     ] as const;
     return (
       <section data-testid="mobile-homepage-deals-surface" className="rounded-[19px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
@@ -3396,7 +3396,7 @@ export function SearchTabs({
             )}
           >
             <Tag className="h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]" strokeWidth={1.8} />
-            <span className="whitespace-nowrap">{t.deals || "Deals"}</span>
+            <span className="whitespace-nowrap">{t.deals || "Packages"}</span>
           </button>
         ) : null}
       </div>

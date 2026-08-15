@@ -27,7 +27,7 @@ test("breadcrumb markup is semantic, accessible, compact, and mobile complete", 
     /item\.status === "completed" \|\| item\.status === "ancestor"/,
   );
   assert.match(source, /\{Icon && <Icon aria-hidden/);
-  assert.doesNotMatch(source, /href=["']\/deals["']/);
+  assert.doesNotMatch(source, /href=["']\/packages["']/);
   assert.doesNotMatch(source, /router\.back|history\.back/);
   assert.doesNotMatch(source, /className="[^"]*(?:sm:)?hidden/);
   assert.doesNotMatch(source, /rounded-2xl|shadow|bg-white|border-slate/);

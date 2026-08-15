@@ -25,7 +25,7 @@ test("translated Deals copy states the mixed live and planning inventory model",
     "Review separate trip steps",
     "Live items continue to their provider; planning-only items are reviewed on Kurioticket.",
   ]) assert.match(english, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(card, /deals\.results\.package\.bookingModel/);
+  assert.match(card, /packages\.results\.package\.bookingModel/);
   assert.doesNotMatch(results + card + pricePanel + tripPlanBar, /Choose package|Book package|Continue to provider/);
 });
 
@@ -92,8 +92,8 @@ test("the borderless results toolbar is anchored to the package list by shared s
 });
 
 test("the anchored toolbar retains its count, sort control, and mode-specific options", () => {
-  assert.match(toolbar, /deals\.results\.tripOptions\.count/);
-  assert.match(toolbar, /deals\.results\.tripOptions\.sort/);
+  assert.match(toolbar, /packages\.results\.tripOptions\.count/);
+  assert.match(toolbar, /packages\.results\.tripOptions\.sort/);
   assert.match(toolbar, /\{currentSortLabel\}/);
   assert.match(toolbar, /aria-haspopup="listbox"/);
   assert.match(toolbar, /aria-expanded=\{sortMenuOpen\}/);
@@ -151,21 +151,21 @@ test("a package is selected atomically with every included product", () => {
 });
 
 test("combined cards disclose estimated totals and separate provider booking", () => {
-  assert.match(pricePanel, /deals\.results\.package\.estimatedTotal/);
-  assert.match(pricePanel, /deals\.results\.package\.disclosure/);
+  assert.match(pricePanel, /packages\.results\.package\.estimatedTotal/);
+  assert.match(pricePanel, /packages\.results\.package\.disclosure/);
   assert.match(card, /view\.flight/);
   assert.match(card, /view\.hotel/);
   assert.match(card, /view\.car/);
   assert.match(pricePanel, /priceBreakdown/);
   assert.match(card, /candidate\.badgeKey/);
-  assert.match(pricePanel, /deals\.results\.package\.providerPrice/);
-  assert.doesNotMatch(pricePanel, /deals\.results\.package\.providerCount/);
+  assert.match(pricePanel, /packages\.results\.package\.providerPrice/);
+  assert.doesNotMatch(pricePanel, /packages\.results\.package\.providerCount/);
   assert.doesNotMatch(pricePanel, /candidate\.providerCount/);
   assert.doesNotMatch(pricePanel, /\binterpolate\b/);
   assert.doesNotMatch(english, /"deals\.results\.package\.providerCount"/);
   assert.doesNotMatch(english, /Included sources: \{\{count\}\}/);
-  assert.match(pricePanel, /deals\.results\.package\.choose/);
-  assert.match(pricePanel, /deals\.results\.package\.selected/);
+  assert.match(pricePanel, /packages\.results\.package\.choose/);
+  assert.match(pricePanel, /packages\.results\.package\.selected/);
   assert.match(pricePanel, /aria-pressed=\{selected\}/);
   assert.match(pricePanel, /selected && <Check aria-hidden/);
   assert.match(pricePanel, /candidate\.priceBreakdown\.map/);
@@ -272,7 +272,7 @@ test("package cards use compact, content-driven vertical spacing", () => {
   assert.match(carSummary, /className="py-4 xl:py-3"/);
   assert.match(pricePanel, /xl:self-start[^"]*xl:py-3/);
   assert.match(pricePanel, /\bmin-h-11\b/);
-  assert.match(pricePanel, /deals\.results\.package\.disclosure/);
+  assert.match(pricePanel, /packages\.results\.package\.disclosure/);
 
   assert.match(skeleton, /gap-1\.5 border-b px-4 py-2\.5/);
   assert.match(skeleton, /xl:gap-4 xl:px-4 xl:py-3/);

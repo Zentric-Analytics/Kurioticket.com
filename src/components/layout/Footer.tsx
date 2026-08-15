@@ -48,7 +48,7 @@ export function Footer() {
         },
         {
           label: t.deals,
-          href: "/deals",
+          href: "/packages",
         },
         {
           label: t.destinations,

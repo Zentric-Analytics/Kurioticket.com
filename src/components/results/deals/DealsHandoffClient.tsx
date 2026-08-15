@@ -37,8 +37,8 @@ export function DealsHandoffClient() {
 
   let content;
   if (!readResult) content = <DealsHandoffSkeleton label={t("deals.handoff.loading")} />;
-  else if (readResult.status === "storage_unavailable") content = <StatePanel kind="storage" title={t("deals.handoff.storageTitle")} body={t("deals.handoff.storageUnavailable")} action={t("deals.handoff.returnSearch")} href="/deals" />;
-  else if (readResult.status === "missing" || readResult.status === "invalid" || readResult.status === "fingerprint_mismatch" || !plan || now === null) content = <StatePanel kind="missing" title={t("deals.handoff.missingTitle")} body={t("deals.handoff.missingBody")} action={t("deals.handoff.returnSearch")} href="/deals" />;
+  else if (readResult.status === "storage_unavailable") content = <StatePanel kind="storage" title={t("deals.handoff.storageTitle")} body={t("deals.handoff.storageUnavailable")} action={t("deals.handoff.returnSearch")} href="/packages" />;
+  else if (readResult.status === "missing" || readResult.status === "invalid" || readResult.status === "fingerprint_mismatch" || !plan || now === null) content = <StatePanel kind="missing" title={t("deals.handoff.missingTitle")} body={t("deals.handoff.missingBody")} action={t("deals.handoff.returnSearch")} href="/packages" />;
   else if (readResult.status === "expired") content = <StatePanel kind="warning" title={t("deals.handoff.expiredTitle")} body={t("deals.handoff.expiredBody")} action={t("deals.handoff.refresh")} href={plan.resultsPath} />;
   else {
     const readiness = getDealsTripPlanReadiness(plan.mode, plan);

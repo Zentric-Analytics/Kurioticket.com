@@ -30,7 +30,7 @@ const plan: DealsTripPlan = {
   version: 1,
   mode: "hotel-flight-car",
   searchFingerprint: "fp",
-  resultsPath: "/deals/results",
+  resultsPath: "/packages/results",
   createdAt: 0,
   updatedAt: now,
   expiresAt: now + 99_999,
@@ -174,17 +174,17 @@ test("computes completeness, freshness, change URLs, and handoff URL safely", ()
   );
   assert.match(
     getDealsReviewChangeHref("hotel", search),
-    /^\/deals\/journey\/hotel-results\?/,
+    /^\/packages\/journey\/hotel-results\?/,
   );
   assert.doesNotMatch(getDealsReviewChangeHref("hotel", search), /hotelId=/);
   assert.match(
     getDealsReviewChangeHref("flight", search),
-    /^\/deals\/journey\/flight-results\?/,
+    /^\/packages\/journey\/flight-results\?/,
   );
   assert.doesNotMatch(getDealsReviewChangeHref("flight", search), /flightId=/);
   assert.match(
     getDealsReviewChangeHref("car", search),
-    /^\/deals\/journey\/car-results\?/,
+    /^\/packages\/journey\/car-results\?/,
   );
   assert.doesNotMatch(getDealsReviewChangeHref("car", search), /carId=/);
   const href = buildGuidedDealsHandoffPendingUrl(search);

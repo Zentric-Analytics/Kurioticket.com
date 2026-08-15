@@ -64,7 +64,7 @@ test("builds only internal canonical guided URLs and a clean legacy escape", () 
   const search = createDefaultDealsSearch();
   search.flightOriginCode = "LOS";
   const href = buildDealsJourneyUrl("hotel-results", search);
-  assert.match(href, /^\/deals\/journey\/hotel-results\?/);
+  assert.match(href, /^\/packages\/journey\/hotel-results\?/);
   assert.equal(
     parseDealsSearchParams(new URL(href, "https://example.test").searchParams)
       .flightOriginCode,
@@ -73,12 +73,12 @@ test("builds only internal canonical guided URLs and a clean legacy escape", () 
   assert.equal(validateDealsJourneyUrl(href), href);
   assert.doesNotMatch(buildLegacyDealsResultsUrl(search), /journey|stage/);
   for (const unsafe of [
-    "https://evil.test/deals/journey/review",
+    "https://evil.test/packages/journey/review",
     "//evil.test",
-    "/deals/journey/review\\x",
-    "/deals/journey/review#x",
-    "/deals/journey/unknown",
-    "/deals/journey/review?x=%ZZ",
+    "/packages/journey/review\\x",
+    "/packages/journey/review#x",
+    "/packages/journey/unknown",
+    "/packages/journey/review?x=%ZZ",
   ])
     assert.equal(validateDealsJourneyUrl(unsafe), null);
 });
@@ -154,7 +154,7 @@ test("Hotel details URL preserves canonical search and safely encodes only a val
   const href = buildDealsHotelDetailsJourneyUrl(search, " source/id & room ");
   assert.ok(href);
   const url = new URL(href, "https://example.test");
-  assert.equal(url.pathname, "/deals/journey/hotel-details");
+  assert.equal(url.pathname, "/packages/journey/hotel-details");
   assert.equal(url.searchParams.get("hotelId"), "source/id & room");
   assert.equal(
     parseDealsSearchParams(url.searchParams).hotelDestination,
@@ -213,7 +213,7 @@ test("expiry-aware correction chooses earliest included expired product, includi
     {
       mode: "hotel-flight-car",
       searchFingerprint: "x",
-      resultsPath: "/deals/results",
+      resultsPath: "/packages/results",
     },
     0,
   );
@@ -308,7 +308,7 @@ test("plan expiry wins before the Review product-expiry exception in every mode"
     "hotel-flight-car",
   ] as const) {
     const base = createDealsTripPlan(
-      { mode, searchFingerprint: "x", resultsPath: "/deals/results" },
+      { mode, searchFingerprint: "x", resultsPath: "/packages/results" },
       0,
     );
     const hotel = {

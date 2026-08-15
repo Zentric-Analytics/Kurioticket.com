@@ -48,7 +48,7 @@ test("journey progress has responsive list semantics and accessible statuses", (
   assert.match(source, /<ol\s+[\s\S]*?className=/);
   assert.match(source, /aria-current=\{step\.status === "current" \? "step"/);
   assert.match(source, /aria-live="polite"/);
-  assert.match(source, /deals\.journey\.stepCount/);
+  assert.match(source, /packages\.journey\.stepCount/);
   assert.match(source, /sm:hidden/);
   assert.match(source, /overflow-x-auto/);
   assert.match(source, /sm:overflow-visible/);

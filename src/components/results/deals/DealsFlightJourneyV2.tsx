@@ -915,7 +915,7 @@ export function DealsFlightJourneyV2({
           return { status: "persistence-failed" as const };
         const params = serializeDealsSearchParams(search);
         params.set("journey", "guided-v2");
-        router.push(`/deals/handoff?${params.toString()}`);
+        router.push(`/packages/handoff?${params.toString()}`);
         return { status: "continued" as const };
       }
       return { status: "recovered" as const };

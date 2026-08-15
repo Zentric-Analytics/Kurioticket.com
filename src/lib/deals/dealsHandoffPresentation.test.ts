@@ -5,7 +5,7 @@ import { getDealsHandoffSteps } from "./dealsHandoffPresentation";
 
 const now = 1_000;
 const plan: DealsTripPlan = {
-  version: 1, mode: "hotel-flight-car", searchFingerprint: "x", resultsPath: "/deals/results?q=x", createdAt: 0, updatedAt: 0, expiresAt: 99_999_999, opened: {},
+  version: 1, mode: "hotel-flight-car", searchFingerprint: "x", resultsPath: "/packages/results?q=x", createdAt: 0, updatedAt: 0, expiresAt: 99_999_999, opened: {},
   flight: { id: "flight /?&=✓", provider: "Duffel", airline: "Brussels Airlines", flightNumber: "SN7261", origin: "LOS", destination: "LAX", departure: "2026-08-01T23:35:00", arrival: "2026-08-02T06:15:00", duration: "10h 40m", sourcePrice: 6400.33, sourceCurrency: "USD", resultReceivedAt: now, detailsPath: "/flights/details/example" },
   hotel: { id: "hotel /?&=✓", provider: "Kurioticket static catalogue", name: "Planning Hotel", location: "Los Angeles - CA", checkIn: "2026-08-01", checkOut: "2026-08-03", roomType: "DELUXE KING ROOM", sourcePrice: 500, sourceCurrency: "USD", resultReceivedAt: now, detailsPath: "/hotels/details/example" },
   car: { id: "c1", provider: "CarTrawler", rentalCompany: "Avis", modelName: "Corolla", categoryLabel: "COMPACT CAR", pickupLocation: "LAX", returnLocation: "Downtown", pickupDate: "2026-08-03", pickupTime: "09:30", dropoffDate: "2026-08-05", dropoffTime: "11:00", sourcePrice: 200, sourceCurrency: "USD", resultReceivedAt: now, detailsPath: "/cars/details/c1?pickupLocation=LAX&dropoffLocation=Downtown&pickupDate=2026-08-03&pickupTime=09%3A30&dropoffDate=2026-08-05&dropoffTime=11%3A00&driverAge=30" },

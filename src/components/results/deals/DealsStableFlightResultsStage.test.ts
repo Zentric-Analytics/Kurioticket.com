@@ -52,7 +52,7 @@ test("the guided plan carries Hotel through Flight and preserves Car ordering", 
 test("provider failure taxonomy remains server authoritative", async () => {
   const providerFailure = await readFile(
     new URL(
-      "../../../app/api/deals/v2/flights/inventory/providerFailure.ts",
+      "../../../app/api/packages/v2/flights/inventory/providerFailure.ts",
       import.meta.url,
     ),
     "utf8",

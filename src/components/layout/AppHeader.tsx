@@ -401,7 +401,7 @@ export function AppHeader({
         icon: Car,
       },
       {
-        href: "/deals",
+        href: "/packages",
         label: t.deals,
         icon: Tag,
       },
@@ -446,8 +446,8 @@ export function AppHeader({
       return pathname.startsWith("/cars");
     }
 
-    if (href === "/deals") {
-      return pathname.startsWith("/deals");
+    if (href === "/packages") {
+      return pathname.startsWith("/packages");
     }
 
     if (href === "/destinations") {
@@ -485,7 +485,7 @@ export function AppHeader({
       "/flights",
       "/hotels",
       "/cars",
-      "/deals",
+      "/packages",
     ]);
 
     return navItems.filter((item) => desktopPrimaryHrefs.has(item.href));
@@ -502,7 +502,7 @@ export function AppHeader({
       "/flights",
       "/hotels",
       "/cars",
-      "/deals",
+      "/packages",
     ]);
 
     return navItems.filter(
@@ -530,7 +530,7 @@ export function AppHeader({
   ]);
 
   const mobileTravelDrawerHrefs = useMemo(
-    () => new Set(["/flights", "/hotels", "/cars", "/deals"]),
+    () => new Set(["/flights", "/hotels", "/cars", "/packages"]),
     [],
   );
 
