@@ -15,6 +15,18 @@ const flightMobileBranch = source.slice(
 );
 const sharedBranch = source.slice(desktopStart);
 const tabModeDeclaration = source.slice(source.indexOf("type TabMode"), source.indexOf("type TripType"));
+const hotelDestinationField = source.slice(
+  source.indexOf('data-testid={mobileHomepage ? "mobile-homepage-hotel-destination"'),
+  source.indexOf('data-testid={mobileHomepage ? "mobile-homepage-hotel-dates"'),
+);
+const hotelDestinationHomepageValue = hotelDestinationField.slice(
+  hotelDestinationField.indexOf("{mobileHomepage ? ("),
+  hotelDestinationField.indexOf(") : (", hotelDestinationField.indexOf('data-testid="mobile-homepage-hotel-destination-value"')),
+);
+const hotelGuestsField = source.slice(
+  source.indexOf('data-testid={mobileHomepage ? "mobile-homepage-hotel-guests"'),
+  source.indexOf('data-testid={mobileHomepage ? "mobile-homepage-hotel-search"'),
+);
 
 test("homepage scopes the approved presentation to its below-sm SearchTabs", () => {
   assert.match(homepage, /className="page-shell[^\n]*sm:hidden"[\s\S]*?<SearchTabs[\s\S]*?mobileHomepage/);
@@ -111,6 +123,22 @@ test("mobile Hotels removes only the nested surface and keeps its connected cont
   assert.match(sharedBranch, /mobile-homepage-hotel-search/);
   assert.match(sharedBranch, /rounded-\[11px\] border-\[#dee5ed\] bg-\[#fcfdfe\]/);
   assert.match(source, /mobileHomepage[\s\S]{0,180}rounded-\[14px\][^\n]*p-\[13px\]/);
+});
+
+test("mobile homepage Hotels aligns neutral icons with values while preserving field behavior", () => {
+  assert.match(hotelDestinationField, /hotelSearchDestinationLabel[\s\S]*?mobile-homepage-hotel-destination-value/);
+  assert.match(hotelDestinationHomepageValue, /flex min-w-0 items-center gap-2/);
+  assert.match(hotelDestinationHomepageValue, /<MapPin[\s\S]*?aria-hidden="true"[\s\S]*?h-4 w-4 shrink-0 text-slate-500/);
+  assert.match(hotelDestinationHomepageValue, /<MapPin[\s\S]*?destination\.trim\(\) \|\| t\.cityOrHotel \|\| "City or hotel"/);
+  assert.doesNotMatch(hotelDestinationHomepageValue, /ChevronDown/);
+  assert.match(hotelDestinationField, /setHotelDestinationMobilePickerOpen\(true\)/);
+  assert.match(hotelDestinationField, /<input[\s\S]*?className=\{cn\(hotelFieldValueClassName, "hidden sm:block"\)\}/);
+
+  assert.match(sharedBranch, /mobile-homepage-hotel-dates[\s\S]*?<Calendar[\s\S]*?size=\{16\}[\s\S]*?text-slate-500/);
+  assert.match(hotelGuestsField, /hotelSearchGuestsLabel[\s\S]*?mobile-homepage-hotel-guests-value/);
+  assert.match(hotelGuestsField, /mobile-homepage-hotel-guests-value[\s\S]*?<UserRound[\s\S]*?aria-hidden="true"[\s\S]*?h-4 w-4 shrink-0 text-slate-500 sm:hidden/);
+  assert.match(hotelGuestsField, /<UserRound[\s\S]*?\{hotelGuestsRoomsSummary\}[\s\S]*?<ChevronDown/);
+  assert.match(mobileProductTabs, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", Tag/);
 });
 
 test("mobile Cars removes its nested surface and uses controlled card geometry", () => {
