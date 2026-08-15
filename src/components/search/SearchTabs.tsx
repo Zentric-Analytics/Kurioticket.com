@@ -424,7 +424,8 @@ function CarsSummaryField({
     // A mobile shell is portalled outside wrapperRef. Its own full-screen
     // dialog owns dismissal, so treating document pointer events as desktop
     // outside clicks would unmount it on pointerdown before option clicks run.
-    if (mobilePresentation === "shell" && !isSmViewport) return;
+    const listenForOutsidePointer =
+      mobilePresentation !== "shell" || isSmViewport;
     const closeOnOutsideClick = (event: PointerEvent) => {
       const target = event.target as Node;
       if (!wrapperRef.current?.contains(target) && !panelRef.current?.contains(target)) onOpenChange(false);
@@ -435,10 +436,14 @@ function CarsSummaryField({
       onOpenChange(false);
       launcherRef.current?.focus({ preventScroll: true });
     };
-    document.addEventListener("pointerdown", closeOnOutsideClick);
+    if (listenForOutsidePointer) {
+      document.addEventListener("pointerdown", closeOnOutsideClick);
+    }
     document.addEventListener("keydown", closeOnEscape);
     return () => {
-      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      if (listenForOutsidePointer) {
+        document.removeEventListener("pointerdown", closeOnOutsideClick);
+      }
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, [isSmViewport, mobilePresentation, onOpenChange, open]);

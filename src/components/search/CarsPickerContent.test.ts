@@ -85,7 +85,9 @@ test("shared shell locks the document while allowing picker touch panning", () =
 });
 
 test("mobile shell interactions are not closed by the desktop outside-pointer listener", () => {
-  assert.match(homepage, /mobilePresentation === "shell" && !isSmViewport/);
+  assert.match(homepage, /mobilePresentation !== "shell" \|\| isSmViewport/);
   assert.match(homepage, /would unmount it on pointerdown before option clicks run/);
+  assert.match(homepage, /if \(listenForOutsidePointer\) \{\s*document\.addEventListener\("pointerdown"/);
+  assert.match(homepage, /document\.addEventListener\("keydown", closeOnEscape\)/);
   assert.match(homepage, /\[isSmViewport, mobilePresentation, onOpenChange, open\]/);
 });
