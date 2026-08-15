@@ -8,6 +8,7 @@ export type DesktopPopoverGeometry = {
   top: number;
   width: number;
   maxHeight: number;
+  placement: "above" | "below";
 };
 
 export const MIN_VISIBLE_LOCATION_PANEL_HEIGHT = 160;
@@ -89,9 +90,16 @@ export function calculateDesktopPopoverGeometry({
     belowHeight < desiredHeight &&
     aboveHeight > belowHeight;
   const maxHeight = openAbove ? aboveHeight : belowHeight;
-  const top = openAbove
-    ? Math.max(viewportPadding, boundaryRect.top - gap - maxHeight)
-    : belowTop;
+  // For an above placement, `top` is the launcher's adjacent edge rather than
+  // the top of all available space. The popover translates by its own rendered
+  // height, so short content stays attached instead of floating near the header.
+  const top = openAbove ? boundaryRect.top - gap : belowTop;
 
-  return { left, top, width, maxHeight };
+  return {
+    left,
+    top,
+    width,
+    maxHeight,
+    placement: openAbove ? "above" : "below",
+  };
 }
