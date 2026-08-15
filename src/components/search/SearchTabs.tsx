@@ -31,6 +31,7 @@ import {
   Plane,
   Plus,
   RotateCcw,
+  Tag,
   UserRound,
   X,
 } from "lucide-react";
@@ -2952,14 +2953,15 @@ export function SearchTabs({
         role="tablist"
         aria-label={translate("searchType") || "Search type"}
         data-testid="mobile-homepage-product-tabs"
-        className="grid h-14 grid-cols-3 overflow-hidden rounded-[16px] border border-slate-200 bg-white"
+        className="grid h-14 grid-cols-4 overflow-hidden rounded-[16px] border border-slate-200 bg-white text-[14px] max-[389px]:text-[13px] max-[359px]:text-[12px]"
       >
         {([
           ["flights", Plane, t.flights || "Flights"],
           ["hotels", Building2, t.hotels || "Hotels"],
           ["cars", CarFront, t.cars || "Cars"],
+          ["deals", Tag, t.deals || "Deals"],
         ] as const).map(([mode, Icon, label], index) => {
-          const selected = tab === mode;
+          const selected = mode !== "deals" && tab === mode;
           return (
             <button
               key={mode}
@@ -2967,16 +2969,21 @@ export function SearchTabs({
               role="tab"
               aria-selected={selected}
               onClick={() => {
+                if (mode === "deals") {
+                  startRouteProgress();
+                  router.push("/deals");
+                  return;
+                }
                 setCarsOpenPicker(null);
                 setTab(mode);
               }}
               className={cn(
-                "focus-ring flex min-w-0 items-center justify-center gap-2 border-slate-200 px-2 text-[15px] font-medium text-slate-950 transition-colors max-[359px]:gap-1.5 max-[359px]:px-1 max-[359px]:text-[14px]",
+                "focus-ring flex min-w-0 items-center justify-center gap-1.5 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors max-[389px]:gap-1",
                 index > 0 && "border-s",
                 selected && "bg-[#eef5ff] text-[#075ee8]",
               )}
             >
-              <Icon aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+              <Icon aria-hidden="true" className="h-5 w-5 shrink-0 max-[389px]:h-[18px] max-[389px]:w-[18px] max-[359px]:h-4 max-[359px]:w-4" strokeWidth={1.8} />
               <span className="truncate">{label}</span>
             </button>
           );

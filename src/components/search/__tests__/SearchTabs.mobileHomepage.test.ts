@@ -8,6 +8,7 @@ const mobileStart = source.indexOf('if (mobileHomepage && tab === "flights")');
 const desktopStart = source.indexOf("\n  return (", mobileStart);
 const mobileBranch = source.slice(mobileStart, desktopStart);
 const sharedBranch = source.slice(desktopStart);
+const tabModeDeclaration = source.slice(source.indexOf("type TabMode"), source.indexOf("type TripType"));
 
 test("homepage scopes the approved presentation to its below-sm SearchTabs", () => {
   assert.match(homepage, /className="page-shell[^\n]*sm:hidden"[\s\S]*?<SearchTabs[\s\S]*?mobileHomepage/);
@@ -15,12 +16,21 @@ test("homepage scopes the approved presentation to its below-sm SearchTabs", () 
   assert.doesNotMatch(homepage.match(/hidden sm:block[\s\S]*?<SearchTabs[\s\S]*?\/>/)?.[0] ?? "", /mobileHomepage/);
 });
 
-test("mobile Flights renders the connected product tabs and is the default", () => {
+test("mobile Flights renders four connected product tabs in approved order and is the default", () => {
   assert.match(source, /useState<TabMode>\("flights"\)/);
   assert.match(mobileBranch, /mobile-homepage-product-tabs/);
-  assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront/);
+  assert.match(mobileBranch, /grid-cols-4/);
+  assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", Tag/);
+  assert.equal((mobileBranch.match(/^\s*\["(?:flights|hotels|cars|deals)"/gm) ?? []).length, 4);
   assert.match(mobileBranch, /role="tab"[\s\S]*?aria-selected=\{selected\}/);
   assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
+});
+
+test("Deals uses the Tag icon and navigates to the canonical Deals page", () => {
+  assert.match(mobileBranch, /\["deals", Tag, t\.deals \|\| "Deals"\]/);
+  assert.match(mobileBranch, /if \(mode === "deals"\) \{\s*startRouteProgress\(\);\s*router\.push\("\/deals"\);\s*return;/);
+  assert.doesNotMatch(tabModeDeclaration, /"deals"/);
+  assert.doesNotMatch(mobileBranch, /DealsSearchForm/);
 });
 
 test("mobile flight controls retain the approved hierarchy", () => {
@@ -89,4 +99,5 @@ test("Hotels and Cars remain switchable without changing desktop structure", () 
   assert.match(sharedBranch, /<Plane[\s\S]*?\{t\.flights\}/);
   assert.match(sharedBranch, /<BedDouble[\s\S]*?\{t\.hotels\}/);
   assert.match(sharedBranch, /<CarFront[\s\S]*?\{t\.cars\}/);
+  assert.doesNotMatch(sharedBranch.slice(0, sharedBranch.indexOf('{tab === "flights"')), /<Tag|t\.deals/);
 });
