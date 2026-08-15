@@ -28,7 +28,7 @@ test("shared time content renders two independently scrollable button lists", ()
   assert.match(shared, /data-cars-time-list=\{kind\}/);
   assert.match(shared, /timeOptions\.map/);
   assert.match(shared, /aria-selected=\{selectedTime === time\}/);
-  assert.match(shared, /grid h-full min-h-0 grid-cols-2/);
+  assert.match(shared, /grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-hidden/);
   assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
   assert.match(shared, /list\.scrollTop = Math\.max/);
   assert.equal(shared.includes("scrollIntoView"), false);
@@ -50,9 +50,9 @@ test("dedicated Cars desktop time popup has no native selects and stable relatio
 });
 
 
-test("mobile age owns one full-height momentum scroll region", () => {
-  assert.match(shared, /h-full min-h-0 touch-pan-y overflow-y-auto overscroll-contain/);
-  assert.match(shared, /mobileShell \? "h-full[^"]+" : "max-h-\[360px\]/);
+test("mobile age owns one flex-constrained momentum scroll region", () => {
+  assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
+  assert.match(shared, /mobileShell \? "min-h-0 flex-1[^"]+" : "max-h-\[360px\]/);
   assert.match(shared, /driverAgeOptions\.map/);
 });
 
@@ -77,4 +77,17 @@ test("shared shell locks the document while allowing picker touch panning", () =
   assert.match(shell, /bodyElement\.style\.touchAction = "auto"/);
   assert.match(shell, /touch-pan-y overflow-y-auto/);
   assert.match(shell, /-webkit-overflow-scrolling:touch/);
+  assert.match(shell, /contentLayout\?: "scroll" \| "contained"/);
+  assert.match(shell, /contentLayout === "scroll"/);
+  assert.match(shell, /"flex touch-auto flex-col overflow-y-hidden"/);
+  assert.match(homepage, /contentLayout="contained"/);
+  assert.match(homepage, /flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden/);
+});
+
+test("mobile shell interactions are not closed by the desktop outside-pointer listener", () => {
+  assert.match(homepage, /mobilePresentation !== "shell" \|\| isSmViewport/);
+  assert.match(homepage, /would unmount it on pointerdown before option clicks run/);
+  assert.match(homepage, /if \(listenForOutsidePointer\) \{\s*document\.addEventListener\("pointerdown"/);
+  assert.match(homepage, /document\.addEventListener\("keydown", closeOnEscape\)/);
+  assert.match(homepage, /\[isSmViewport, mobilePresentation, onOpenChange, open\]/);
 });
