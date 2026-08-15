@@ -214,14 +214,14 @@ test("desktop Travellers popover remains viewport-aware and scrolling-safe", () 
 
 test("each mutually exclusive presentation retains its existing submit source", () => {
   assert.equal(form.match(/type="submit"/g)?.length, 2);
-  assert.match(form, /mobileHomepageControls[\s\S]*type="submit"/);
+  assert.match(form, /compactMobileControls[\s\S]*type="submit"/);
   assert.match(form, /const searchDealsButton =[\s\S]*type="submit"/);
 });
 
 test("desktop landing expands the primary controls and moves submit to its own final row", () => {
   assert.match(
     form,
-    /presentation\?: "default" \| "mobile-homepage" \| "desktop-landing"/,
+    /presentation\?:[\s\S]*?\| "mobile-homepage"[\s\S]*?\| "desktop-landing"[\s\S]*?\| "packages-landing"/,
   );
   assert.match(form, /data-deals-desktop-package-selector/);
   assert.match(
