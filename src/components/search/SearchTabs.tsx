@@ -3284,7 +3284,7 @@ export function SearchTabs({
       ["deals", Tag, t.deals || "Deals"],
     ] as const;
     return (
-      <section data-testid="mobile-homepage-deals-surface" className="rounded-[19px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
+      <section data-testid="mobile-homepage-deals-surface" className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
         <div role="tablist" aria-label={translate("searchType") || "Search type"} data-testid="mobile-homepage-product-tabs" className="grid h-12 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[14px] min-[360px]:text-[15px] min-[375px]:text-[16px]">
           {products.map(([mode, Icon, label], index) => {
             const selected = tab === mode;

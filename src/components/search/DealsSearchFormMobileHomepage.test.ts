@@ -75,3 +75,22 @@ test("compact controls reuse canonical pickers, summary, validation and submissi
   assert.match(form, /buildDealsJourneyUrl\([\s\S]*?getFirstDealsJourneyStage/);
   assert.match(form, /removeDealsStagedJourneyPlan\(\)/);
 });
+
+test("mobile Deals fields use restrained geometry and neutral compact icons", () => {
+  assert.match(form, /compactFieldClassName[\s\S]{0,180}rounded-\[10px\]/);
+  assert.match(form, /compactIconClassName[\s\S]{0,160}h-8 w-8[^\"]*bg-slate-100\/70 text-slate-600/);
+  assert.match(compact, /h-\[17px\] w-\[17px\]/);
+  assert.doesNotMatch(form.slice(form.indexOf("const compactFieldClassName"), form.indexOf("const compactLabelClassName")), /h-10 w-10|bg-\[#eef5ff\] text-\[#075ee8\]/);
+  assert.match(compact, /type="submit"[^\n]*rounded-\[11px\]/);
+  assert.doesNotMatch(compact, /LocateFixed/);
+});
+
+test("flight packages expose one canonical route swap while hotel-car does not", () => {
+  const branchStart = compact.indexOf("{included.flight ?");
+  const hotelBranchStart = compact.indexOf("</div> : <>", branchStart);
+  const flightBranch = compact.slice(branchStart, hotelBranchStart);
+  assert.equal((flightBranch.match(/<ArrowRightLeft/g) ?? []).length, 1);
+  assert.match(flightBranch, /onClick=\{swapDealsFlightAirports\}/);
+  assert.match(flightBranch, /h-\[38px\] w-\[38px\]/);
+  assert.doesNotMatch(compact.slice(hotelBranchStart), /ArrowRightLeft/);
+});
