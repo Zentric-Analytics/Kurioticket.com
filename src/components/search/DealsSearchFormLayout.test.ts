@@ -253,8 +253,13 @@ test("desktop landing expands the primary controls and moves submit to its own f
   );
   assert.match(
     form,
-    /lg:mt-\[14px\][\s\S]*lg:h-\[50px\][\s\S]*lg:rounded-\[8px\]/,
+    /lg:mt-\[14px\][\s\S]*lg:justify-end[\s\S]*lg:h-\[46px\][\s\S]*lg:w-auto[\s\S]*lg:min-w-\[176px\][\s\S]*lg:rounded-\[8px\]/,
   );
+  const desktopSubmit = form.slice(
+    form.indexOf("const searchDealsButton"),
+    form.indexOf("const primaryPackageControls"),
+  );
+  assert.doesNotMatch(desktopSubmit, /lg:w-full/);
 });
 
 test("desktop-only styling leaves mobile homepage and results gates intact", () => {
@@ -314,10 +319,20 @@ test("desktop landing uses one shared portal contract for every expandable field
 test("desktop stay-date checkbox stays neutral and draws only a blue check", () => {
   assert.match(
     stayOptions,
-    /appearance-none bg-white checked:border-slate-400 checked:bg-white focus:ring-0/,
+    /appearance-none bg-white checked:border-slate-400 checked:bg-white[^"\n]*focus:ring-0/,
   );
   assert.match(stayOptions, /<Check[\s\S]*text-\[#2563eb\]/);
   assert.doesNotMatch(stayOptions, /checked:bg-\[#004BB8\]|checked:bg-blue/);
+  assert.doesNotMatch(stayOptions, /focus-within:ring-2|bg-\[#eef5ff\]/);
+  assert.match(stayOptions, /inline-flex[^"\n]*w-fit/);
+  assert.match(stayOptions, /focus-visible:ring-2[^"\n]*focus-visible:ring-\[#2563eb\]\/30/);
+});
+
+test("desktop primary controls share one 78px neutral field surface", () => {
+  assert.match(form, /const desktopLandingFieldSurface =[\s\S]*lg:bg-transparent[\s\S]*lg:focus-within:ring-0/);
+  assert.ok((form.match(/lg:h-\[78px\] lg:min-h-\[78px\]/g) ?? []).length >= 3);
+  assert.ok((form.match(/lg:text-\[15px\] lg:font-semibold/g) ?? []).length >= 3);
+  assert.match(form, /lg:rounded-\[8px\] lg:bg-\[#fcfdfe\] lg:ring-1 lg:ring-\[#dee5ed\]/);
 });
 
 test("desktop package selection is an underline without a selected box", () => {

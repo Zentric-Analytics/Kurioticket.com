@@ -143,6 +143,8 @@ const packageActionSegment =
   "relative min-w-0 min-h-12 border-0 bg-transparent px-3 py-2 text-start transition-colors hover:bg-slate-50/60 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#004BB8]/20 focus-within:bg-[#004BB8]/[0.04] focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#004BB8]/20";
 const packageActionControl =
   "min-h-6 w-full border-0 bg-transparent px-0 text-base font-medium text-slate-900 shadow-none outline-none focus:ring-0";
+const desktopLandingFieldSurface =
+  "lg:bg-transparent lg:hover:bg-slate-50/60 lg:focus-within:bg-transparent lg:focus-within:ring-0";
 
 const parseIsoDate = (value: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
@@ -265,11 +267,15 @@ function DesktopLandingPopover({
   }, [align, anchorRef, desiredHeight, open, width]);
 
   if (!open || !geometry || typeof document === "undefined") return null;
+  const { placement, ...popoverStyle } = geometry;
   return createPortal(
     <div
       data-deals-desktop-landing-popover={marker}
-      className={`fixed z-[1300] overflow-y-auto rounded-[8px] border border-[#dee5ed] bg-white shadow-[0_16px_40px_rgba(15,35,65,0.16)] ${className}`}
-      style={geometry}
+      className={`fixed z-[1300] overflow-y-auto rounded-[8px] border border-[#dee5ed] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.12)] ${className}`}
+      style={{
+        ...popoverStyle,
+        transform: placement === "above" ? "translateY(-100%)" : undefined,
+      }}
     >
       {children}
     </div>,
@@ -3065,13 +3071,13 @@ export function DealsSearchForm({
       data-deals-search-submit-row={
         isDesktopLanding ? "desktop-landing" : undefined
       }
-      className={`flex w-full ${packageSearchDesktopClasses} ${isDesktopLanding ? "lg:mt-[14px] lg:min-w-0 lg:border-s-0 lg:p-0" : ""}`}
+      className={`flex w-full ${packageSearchDesktopClasses} ${isDesktopLanding ? "lg:mt-[14px] lg:min-w-0 lg:justify-end lg:border-s-0 lg:p-0" : ""}`}
     >
       <button
         type="submit"
         disabled={submitting || pending}
         aria-busy={submitting || pending}
-        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? "lg:h-[50px] lg:min-h-[50px] lg:w-full lg:rounded-[8px] lg:px-4 lg:text-[14px] lg:shadow-none" : ""}`}
+        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? "lg:h-[46px] lg:min-h-[46px] lg:w-auto lg:min-w-[176px] lg:rounded-[8px] lg:px-6 lg:text-[14px] lg:shadow-none" : ""}`}
       >
         <Search className="h-4 w-4" />
         {t(
@@ -3101,7 +3107,7 @@ export function DealsSearchForm({
         onClick={() =>
           travelersOpen ? dismissDesktopTravelers() : openTravelers()
         }
-        className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4" : ""}`}
+        className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200 ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4 lg:text-[15px] lg:font-semibold` : ""}`}
       >
         {isDesktopLanding ? (
           <UserRound
@@ -3120,7 +3126,7 @@ export function DealsSearchForm({
       {included.flight ? (
         <div
           data-deals-package-cabin
-          className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4 lg:ps-10" : ""}`}
+          className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200 ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4 lg:ps-10 lg:text-[15px] lg:font-semibold` : ""}`}
         >
           {isDesktopLanding ? (
             <Plane
@@ -3625,7 +3631,7 @@ export function DealsSearchForm({
                       <Fragment key={kind}>
                         <div
                           ref={wrapRef}
-                          className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
+                          className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3` : ""}`}
                           data-deals-flight-destination={kind}
                         >
                           {isDesktopLanding ? (
@@ -3798,7 +3804,7 @@ export function DealsSearchForm({
                   })}
                 </div>
                 <div
-                  className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
+                  className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:h-[78px] lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3` : ""}`}
                 >
                   {isDesktopLanding ? (
                     <Calendar
@@ -4121,7 +4127,7 @@ export function DealsSearchForm({
               {supportsStayDateOverride ? (
                 <label
                   data-deals-change-stay-dates
-                  className="focus-within:ring-[#004BB8]/25 flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-1 text-sm font-bold text-slate-800 focus-within:ring-2"
+                  className="inline-flex min-h-11 w-fit cursor-pointer items-center gap-2 px-1 text-sm font-bold text-slate-800"
                 >
                   <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
                     <input
@@ -4143,7 +4149,7 @@ export function DealsSearchForm({
                             : relinkInheritedField(current, "stayDates"),
                         );
                       }}
-                      className={`size-4 rounded border-slate-300 ${isDesktopLanding ? "appearance-none bg-white checked:border-slate-400 checked:bg-white focus:ring-0" : "text-[#004BB8] focus:ring-[#004BB8]"}`}
+                      className={`size-4 rounded border-slate-300 ${isDesktopLanding ? "appearance-none bg-white checked:border-slate-400 checked:bg-white focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-[#2563eb]/30 focus-visible:ring-offset-1" : "text-[#004BB8] focus:ring-[#004BB8]"}`}
                     />
                     {isDesktopLanding && !search.stayDatesLinked ? (
                       <Check
