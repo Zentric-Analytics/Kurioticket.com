@@ -521,14 +521,9 @@ export function AppHeader({
     }
 
     return mobilePrimaryNavItems;
-    // hideMobileSecondaryNavLinks is retained for the current header API even though
-    // mobile secondary links now live in the overlay drawer instead of this rail.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hideMobileCategoryTabs,
-    hideMobileSecondaryNavLinks,
     hideTravelNav,
-    mobileHeroOverlay,
     mobilePrimaryNavItems,
     shouldHideDesktopTravelNavLinks,
     simpleHeader,
@@ -1124,7 +1119,13 @@ export function AppHeader({
           ) : null}
 
           {visibleMobilePrimaryNavItems.length > 0 ? (
-            <nav className="md:hidden" aria-label="Primary">
+            <nav
+              className={cn(
+                "md:hidden",
+                hideMobileSecondaryNavLinks && "hidden sm:block",
+              )}
+              aria-label="Primary"
+            >
               <div className="pb-1 pt-2.5">
                 <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {visibleMobilePrimaryNavItems.map((item) => {
