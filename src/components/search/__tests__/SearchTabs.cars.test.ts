@@ -24,7 +24,7 @@ test("homepage Cars primary fields use summaries and the location autocomplete",
     "carsSearch.pickupReturnTimeLabel",
     "carsSearch.driverAgeLabel",
   ]) assert.ok(carsBranch.includes(label), label);
-  assert.match(carsBranch, /<CarLocationAutocomplete id="homepage-cars-pickup"/);
+  assert.match(carsBranch, /<CarLocationAutocomplete id=\{mobileHomepage \? "homepage-cars-pickup-desktop" : "homepage-cars-pickup"\}/);
   assert.match(carsBranch, /value=\{carsDateSummary\}/);
   assert.match(carsBranch, /value=\{carsTimeSummary\}/);
   assert.equal(carsBranch.includes("<select"), false);
@@ -99,6 +99,31 @@ test("homepage Cars picker source contracts use the shared experiences", () => {
   assert.match(carsBranch, /<CarsDriverAgePickerContent/);
   assert.match(carsBranch, /desktopAlign="right" desktopWidth=\{248\}/);
   assert.match(carsBranch, /popupRole="listbox"/);
+});
+
+test("mobile homepage Cars launches every picker in the shared full-screen shell", () => {
+  assert.match(carsBranch, /mobilePresentation=\{mobileHomepage \? "shell" : "inline"\}/);
+  assert.match(carsBranch, /mobileHomepage && tab === "cars"/);
+  assert.ok((carsBranch.match(/<FlightMobilePickerShell/g) ?? []).length >= 4);
+  assert.match(carsBranch, /\(\["pickup", "dropoff"\] as const\)\.map/);
+  assert.match(carsBranch, /presentation="mobile"[\s\S]*mobileShell/);
+  assert.match(carsBranch, /<CarsRentalDatePickerContent[\s\S]*mobileShell/);
+});
+
+test("mobile Cars fields stay launchers without inline panels or persistent open rings", () => {
+  const summaryField = source.slice(source.indexOf("function CarsSummaryField"), source.indexOf("export function SearchTabs"));
+  assert.match(summaryField, /mobilePresentation === "inline" \? <div className="mt-3">\{panel\}<\/div> : null/);
+  assert.match(source, /focus-within:border-\[#dee5ed\] focus-within:ring-0 sm:rounded-xl/);
+  assert.match(carsBranch, /carsPickupLauncherRef[\s\S]*sm:hidden/);
+  assert.match(returnLocationField, /carsDropoffLauncherRef[\s\S]*sm:hidden/);
+});
+
+test("mobile time and age selection use small check indicators instead of filled rows", () => {
+  const pickerSource = readFileSync("src/components/search/CarsPickerContent.tsx", "utf8");
+  assert.match(pickerSource, /data-selected-time-indicator/);
+  assert.match(pickerSource, /data-selected-age-indicator/);
+  assert.match(pickerSource, /mobileShell \? "font-semibold text-slate-950"/);
+  assert.match(pickerSource, /mobileShell \? "font-semibold text-\[#142033\]"/);
 });
 
 test("homepage Cars calendar preserves range selection and localized controls", () => {

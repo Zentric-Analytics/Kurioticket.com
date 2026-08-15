@@ -386,6 +386,7 @@ function CarsSummaryField({
   leadingIcon,
   showChevron = true,
   valueClassName,
+  mobilePresentation = "inline",
 }: {
   id: string;
   label: string;
@@ -401,6 +402,7 @@ function CarsSummaryField({
   leadingIcon?: ReactNode;
   showChevron?: boolean;
   valueClassName?: string;
+  mobilePresentation?: "inline" | "shell";
 }) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const launcherRef = useRef<HTMLButtonElement | null>(null);
@@ -458,7 +460,7 @@ function CarsSummaryField({
       </button>
       {open ? (isSmViewport
         ? <DesktopTopLayerPopover open={open} launcherRef={launcherRef} align={desktopAlign} width={desktopWidth} panelRef={panelRef} id={panelId} role={popupRole} ariaLabel={label} className={desktopPanelClassName}>{children}</DesktopTopLayerPopover>
-        : <div className="mt-3">{panel}</div>) : null}
+        : mobilePresentation === "inline" ? <div className="mt-3">{panel}</div> : null) : null}
     </div>
   );
 }
@@ -603,6 +605,8 @@ export function SearchTabs({
   const carsSearchSurfaceRef = useRef<HTMLDivElement | null>(null);
   const carsPickupFieldRef = useRef<HTMLDivElement | null>(null);
   const carsDropoffFieldRef = useRef<HTMLDivElement | null>(null);
+  const carsPickupLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const carsDropoffLauncherRef = useRef<HTMLButtonElement | null>(null);
 
   const [tripType, setTripType] =
     useState<TripType>(
@@ -833,7 +837,7 @@ export function SearchTabs({
     compactHero ? "min-h-[58px] px-4 py-2 lg:min-h-[58px]" : "min-h-[58px] px-3.5 py-2"
   );
   const carsMobileHomepageFieldClassName = mobileHomepage
-    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe] sm:rounded-xl sm:border-slate-300 sm:bg-white"
+    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe] focus-within:border-[#dee5ed] focus-within:ring-0 sm:rounded-xl sm:border-slate-300 sm:bg-white sm:focus-within:border-[#004BB8] sm:focus-within:ring-2"
     : "";
   const flightFieldLabelClassName = cn(
     "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
@@ -2983,7 +2987,8 @@ export function SearchTabs({
       <label htmlFor="homepage-cars-dropoff" className={hotelFieldLabelClassName}>
         {translate("carsSearch.returnLocationLabel") || "Return location"}
       </label>
-      <CarLocationAutocomplete
+      {mobileHomepage ? <button ref={carsDropoffLauncherRef} id="homepage-cars-dropoff" type="button" onClick={() => setCarsOpenPicker("dropoff")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>{carsValues.dropoffLocation || translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"}</button> : null}
+      <div className={mobileHomepage ? "hidden sm:block" : undefined}><CarLocationAutocomplete
         id="homepage-cars-dropoff"
         name="dropoffLocation"
         value={carsValues.dropoffLocation}
@@ -2996,7 +3001,7 @@ export function SearchTabs({
         searchCardRef={carsSearchSurfaceRef}
         isOpen={carsOpenPicker === "dropoff"}
         onOpenChange={(open) => setCarsOpenPicker(open ? "dropoff" : null)}
-      />
+      /></div>
       {carsErrors.dropoffLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.dropoffLocation}</p> : null}
     </div>
   ) : null;
@@ -4532,11 +4537,12 @@ export function SearchTabs({
             <div className={carsGridClassName} data-testid="cars-primary-row">
               <div ref={carsPickupFieldRef} className={cn(hotelJoinedFieldClassName, "relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", carsMobileHomepageFieldClassName)} data-testid={mobileHomepage ? "cars-pickup-location-field" : undefined}>
                 <label htmlFor="homepage-cars-pickup" className={hotelFieldLabelClassName}>{translate("carsSearch.pickupLocationLabel") || "Pickup location"}</label>
-                <CarLocationAutocomplete id="homepage-cars-pickup" name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsPickupFieldRef} searchCardRef={carsSearchSurfaceRef} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
+                {mobileHomepage ? <button ref={carsPickupLauncherRef} id="homepage-cars-pickup" type="button" onClick={() => setCarsOpenPicker("pickup")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>{carsValues.pickupLocation || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</button> : null}
+                <div className={mobileHomepage ? "hidden sm:block" : undefined}><CarLocationAutocomplete id={mobileHomepage ? "homepage-cars-pickup-desktop" : "homepage-cars-pickup"} name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsPickupFieldRef} searchCardRef={carsSearchSurfaceRef} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} /></div>
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
               {mobileHomepage ? carsReturnLocationField : null}
-              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false}>
+              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsRentalDatePickerContent
                   dropoffDate={carsValues.dropoffDate}
                   formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)}
@@ -4552,10 +4558,10 @@ export function SearchTabs({
                   weekdays={getLocalizedWeekdays(calendarLocale)}
                 />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)}>
+              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsTimeRangePickerContent formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsValues.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsValues.dropoffTime} onPickupTimeChange={(time) => updateCarsValue("pickupTime", time)} onReturnTimeChange={(time) => { updateCarsValue("dropoffTime", time); setCarsOpenPicker(null); }} />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0">
+              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0" mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsDriverAgePickerContent anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} />
               </CarsSummaryField>
               <div className={hotelSubmitWrapClassName}>
@@ -4572,6 +4578,68 @@ export function SearchTabs({
           </div>
         </form>
       )}
+      {mobileHomepage && tab === "cars" ? (
+        <>
+          {(["pickup", "dropoff"] as const).map((mode) => {
+            const isPickup = mode === "pickup";
+            if (!isPickup && !carsValues.returnToDifferentLocation) return null;
+            return (
+              <FlightMobilePickerShell
+                key={mode}
+                open={carsOpenPicker === mode}
+                title={translate(isPickup ? "carsSearch.pickupLocationLabel" : "carsSearch.returnLocationLabel") || (isPickup ? "Pickup location" : "Return location")}
+                titleId={`cars-${mode}-mobile-title`}
+                dialogId={`cars-${mode}-mobile-dialog`}
+                launcherRef={isPickup ? carsPickupLauncherRef : carsDropoffLauncherRef}
+                onClose={() => setCarsOpenPicker(null)}
+                contentClassName="bg-white"
+              >
+                <div className="mx-auto w-full max-w-xl">
+                  <CarLocationAutocomplete
+                    id={`homepage-cars-${mode}-mobile-input`}
+                    value={isPickup ? carsValues.pickupLocation : carsValues.dropoffLocation}
+                    onValueChange={(value) => updateCarsValue(isPickup ? "pickupLocation" : "dropoffLocation", value)}
+                    onSelect={() => setCarsOpenPicker(null)}
+                    onRequestClose={() => setCarsOpenPicker(null)}
+                    placeholder={translate(isPickup ? "carsSearch.pickupLocationPlaceholder" : "carsSearch.returnLocationPlaceholder") || (isPickup ? "Airport, city or address" : "Return city, airport or address")}
+                    presentation="mobile"
+                    inputClassName="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-950 placeholder:text-slate-400"
+                    strings={carsLocationStrings}
+                    isOpen={carsOpenPicker === mode}
+                    onOpenChange={(open) => { if (!open) setCarsOpenPicker(null); }}
+                    autoFocus
+                    mobileShell
+                  />
+                </div>
+              </FlightMobilePickerShell>
+            );
+          })}
+          <FlightMobilePickerShell
+            open={carsOpenPicker === "dates"}
+            title={translate("carsSearch.chooseRentalDates") || "Choose rental dates"}
+            titleId="cars-dates-mobile-title"
+            dialogId="cars-dates-mobile-dialog"
+            onClose={() => setCarsOpenPicker(null)}
+            contentClassName="bg-white"
+            footer={(
+              <div className="flex items-center justify-between gap-3">
+                <button type="button" onClick={() => { updateCarsValue("pickupDate", ""); updateCarsValue("dropoffDate", ""); }} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">{translate("clear") || "Clear"}</button>
+                <button type="button" onClick={() => setCarsOpenPicker(null)} className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2 text-sm font-semibold text-white">{translate("done") || "Done"}</button>
+              </div>
+            )}
+          >
+            <div className="mx-auto w-full max-w-xl">
+              <CarsRentalDatePickerContent dropoffDate={carsValues.dropoffDate} formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)} locale={calendarLocale} onClear={() => { updateCarsValue("pickupDate", ""); updateCarsValue("dropoffDate", ""); }} onDone={() => setCarsOpenPicker(null)} onNextMonth={() => setCarsVisibleMonthDate((current) => addCarsMonths(current, 1))} onPreviousMonth={() => setCarsVisibleMonthDate((current) => addCarsMonths(current, -1))} onSelectDate={selectHomepageRentalDate} pickupDate={carsValues.pickupDate} strings={{ chooseDates: translate("carsSearch.chooseRentalDates") || "Choose rental dates", previousMonth: translate("carsSearch.previousMonth") || "Previous month", previousMonthShort: translate("carsSearch.previousMonthShort") || "Previous", nextMonth: translate("carsSearch.nextMonth") || "Next month", nextMonthShort: translate("carsSearch.nextMonthShort") || "Next", selectDatePrefix: translate("carsSearch.selectDateAriaPrefix") || "Select", startsNewPickupDate: translate("carsSearch.startsNewPickupDate") || "Starts a new pickup date", clear: translate("clear") || "Clear", done: translate("done") || "Done" }} visibleMonthDate={carsVisibleMonthDate} weekdays={getLocalizedWeekdays(calendarLocale)} mobileShell />
+            </div>
+          </FlightMobilePickerShell>
+          <FlightMobilePickerShell open={carsOpenPicker === "times"} title={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} titleId="cars-times-mobile-title" dialogId="cars-times-mobile-dialog" onClose={() => setCarsOpenPicker(null)} contentClassName="bg-white">
+            <div className="mx-auto w-full max-w-xl"><CarsTimeRangePickerContent mobileShell formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsValues.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsValues.dropoffTime} onPickupTimeChange={(time) => updateCarsValue("pickupTime", time)} onReturnTimeChange={(time) => { updateCarsValue("dropoffTime", time); setCarsOpenPicker(null); }} /></div>
+          </FlightMobilePickerShell>
+          <FlightMobilePickerShell open={carsOpenPicker === "age"} title={translate("carsSearch.driverAgeLabel") || "Driver age"} titleId="cars-age-mobile-title" dialogId="cars-age-mobile-dialog" onClose={() => setCarsOpenPicker(null)} contentClassName="bg-white px-2">
+            <div className="mx-auto w-full max-w-xl"><CarsDriverAgePickerContent mobileShell anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} /></div>
+          </FlightMobilePickerShell>
+        </>
+      ) : null}
       </section>
     </>
   );
