@@ -65,8 +65,8 @@ describe("hero image quality source contracts", () => {
       homepageSource,
       /min-h-\[420px\].*sm:min-h-\[550px\].*lg:min-h-\[610px\]/,
     );
-    assert.match(homepageSource, /bottom-\[-518px\] z-30 sm:hidden/);
-    assert.match(homepageSource, /pt-\[35rem\].*sm:pt-24.*lg:pt-28/);
+    assert.match(homepageSource, /top-\[calc\(100%-4rem\)\] z-30 sm:hidden/);
+    assert.match(homepageSource, /--mobile-search-card-height[\s\S]*sm:pt-24.*lg:pt-28/);
     assert.match(
       homepageSource,
       /bottom-\[-52px\] z-30 hidden sm:block lg:bottom-\[-56px\]/,

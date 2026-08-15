@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { hasFreshProviderPrice } from "@/lib/homepageFareDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -425,6 +425,8 @@ export default function Home() {
     useState<HomepageRecommendationOrder>({});
   const effectiveHomepageRecommendationOrder =
     sessionStatus === "authenticated" ? homepageRecommendationOrder : {};
+  const mobileSearchCardRef = useRef<HTMLDivElement>(null);
+  const [mobileSearchCardHeight, setMobileSearchCardHeight] = useState(0);
   const destinationsRailRef = useRef<HTMLDivElement>(null);
   const [canScrollDestinationsLeft, setCanScrollDestinationsLeft] =
     useState(false);
@@ -438,6 +440,27 @@ export default function Home() {
   const [expandedCountryDirectoryId, setExpandedCountryDirectoryId] = useState<
     string | null
   >(null);
+
+  useEffect(() => {
+    const card = mobileSearchCardRef.current;
+    if (!card) return;
+
+    const updateHeight = () => {
+      const nextHeight = Math.ceil(card.getBoundingClientRect().height);
+      setMobileSearchCardHeight((currentHeight) =>
+        currentHeight === nextHeight ? currentHeight : nextHeight,
+      );
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
+
+  const mobileSearchClearanceStyle = {
+    "--mobile-search-card-height": `${mobileSearchCardHeight}px`,
+  } as CSSProperties;
 
   const setHasAdvancedWithNextArrow = useCallback((value: boolean) => {
     hasAdvancedWithNextArrowRef.current = value;
@@ -1018,7 +1041,11 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="page-shell absolute inset-x-0 bottom-[-460px] z-30 sm:hidden">
+          <div
+            ref={mobileSearchCardRef}
+            data-testid="mobile-homepage-search-card-wrapper"
+            className="page-shell absolute inset-x-0 top-[calc(100%-4rem)] z-30 sm:hidden"
+          >
             <SearchTabs
               t={t as unknown as Record<string, string>}
               compactHero
@@ -1038,7 +1065,11 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[30.5rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
+        <section
+          data-testid="homepage-content-after-search"
+          style={mobileSearchClearanceStyle}
+          className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[max(1.75rem,calc(var(--mobile-search-card-height)_-_2.25rem))] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28"
+        >
           <div className="mx-auto h-px w-[calc(100%-2rem)] max-w-[1280px] bg-slate-200/80 sm:hidden" />
           <div className="page-shell pt-5 sm:pt-0">
             <div className="flex items-center">
