@@ -51,15 +51,65 @@ test("time uses a mobile Clock, hides only the mobile chevron, and retains deskt
   assert.match(timeFieldSource, /data-cars-desktop-popover="times"/);
 });
 
-test("Driver Age and Search cars controls remain present without a new age icon", () => {
-  const driverAgeSource = searchBarSource.slice(
+test("mobile Driver Age leads its dynamic value with UserRound and retains its launcher chevron", () => {
+  const driverAgeFieldSource = searchBarSource.slice(
     searchBarSource.indexOf('label={t("carsSearch.driverAgeLabel")}'),
     searchBarSource.indexOf('type="submit"'),
   );
-  assert.match(driverAgeSource, /ChevronDown/);
-  assert.doesNotMatch(driverAgeSource, /<Clock|<MapPin|<CarFront/);
+  const mobileLauncherSource = driverAgeFieldSource.slice(
+    driverAgeFieldSource.indexOf("<button"),
+    driverAgeFieldSource.indexOf("</button>") + "</button>".length,
+  );
+
+  assert.match(
+    mobileLauncherSource,
+    /onClick=\{\(\) => openMobilePicker\("driverAge"\)\}/,
+  );
+  assert.ok(
+    mobileLauncherSource.indexOf("<UserRound") <
+      mobileLauncherSource.indexOf("values.driverAge"),
+  );
+  assert.match(
+    mobileLauncherSource,
+    /<UserRound[\s\S]*?aria-hidden="true"[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/,
+  );
+  assert.match(mobileLauncherSource, /flex min-w-0 flex-1 items-center gap-2/);
+  assert.match(mobileLauncherSource, /className="truncate"/);
+  assert.match(
+    mobileLauncherSource,
+    /values\.driverAge === defaultDriverAge[\s\S]*?t\("carsSearch\.driverAgeAnyAgeRange"\)[\s\S]*?: getDriverAgeOptionLabel\(values\.driverAge\)/,
+  );
+  assert.ok(
+    mobileLauncherSource.indexOf("values.driverAge") <
+      mobileLauncherSource.indexOf("<ChevronDown"),
+  );
+  assert.doesNotMatch(mobileLauncherSource, /rounded-full|bg-\[#004BB8\]/);
+  assert.ok(
+    driverAgeFieldSource.indexOf('label={t("carsSearch.driverAgeLabel")}') <
+      driverAgeFieldSource.indexOf("<UserRound"),
+  );
   assert.match(searchBarSource, /type="submit"/);
   assert.match(searchBarSource, /\{isSubmitting \? t\("searchingCars"\) : t\("searchCars"\)\}/);
+});
+
+test("Driver Age icon is mobile-only and picker option rows stay unchanged", () => {
+  const driverAgeFieldSource = searchBarSource.slice(
+    searchBarSource.indexOf('label={t("carsSearch.driverAgeLabel")}'),
+    searchBarSource.indexOf('type="submit"'),
+  );
+  const desktopLauncherSource = driverAgeFieldSource.slice(
+    driverAgeFieldSource.indexOf("<button", driverAgeFieldSource.indexOf("</button>") + 1),
+    driverAgeFieldSource.lastIndexOf("</button>") + "</button>".length,
+  );
+  const driverAgePickerSource = searchBarSource.slice(
+    searchBarSource.lastIndexOf('activeMobilePicker === "driverAge"'),
+  );
+
+  assert.match(desktopLauncherSource, /className="hidden h-7[\s\S]*?sm:flex/);
+  assert.match(desktopLauncherSource, /ChevronDown/);
+  assert.doesNotMatch(desktopLauncherSource, /UserRound/);
+  assert.match(driverAgePickerSource, /driverAgeOptions\.map/);
+  assert.doesNotMatch(driverAgePickerSource, /UserRound/);
 });
 
 test("homepage Cars SearchTabs remains independently owned", () => {
