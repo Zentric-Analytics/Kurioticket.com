@@ -63,8 +63,10 @@ test("trip type uses accessible radio-style options", () => {
   assert.doesNotMatch(mobileBranch, /mobile-homepage-trip-selector[^\n]*border/);
 });
 
-test("mobile homepage controls use the compact production density without scaling", () => {
-  assert.match(mobileBranch, /grid h-11 grid-cols-4/);
+test("mobile homepage controls use the refined product-tab hierarchy without scaling", () => {
+  assert.match(mobileBranch, /grid h-\[46px\] grid-cols-4/);
+  assert.match(mobileBranch, /text-\[15px\] max-\[359px\]:text-\[14px\]/);
+  assert.match(mobileBranch, /h-5 w-5 shrink-0 max-\[359px\]:h-\[18px\]/);
   assert.match(mobileBranch, /h-\[68px\][^\n]*mobile-homepage|className="focus-ring flex h-\[68px\]/);
   assert.match(mobileBranch, /h-\[62px\][^\n]*w-full/);
   assert.match(mobileBranch, /h-16 w-full/);

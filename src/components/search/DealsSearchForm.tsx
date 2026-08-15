@@ -94,6 +94,15 @@ type LocationApiResponse = {
   source?: "ipinfo-lite" | "fallback";
   countryCode?: string | null;
 };
+const mobileHomepagePackageOptions = [
+  { mode: "hotel-flight", text: "Flight + Hotel" },
+  { mode: "flight-car", text: "Flight + Car" },
+  { mode: "hotel-car", text: "Hotel + Car" },
+  { mode: "hotel-flight-car", text: "Flight + Hotel + Car" },
+] as const satisfies ReadonlyArray<{
+  mode: DealsPackageMode;
+  text: string;
+}>;
 const dealsPackageOptions = [
   { mode: "hotel-flight", label: "deals.package.hotelFlight" },
   { mode: "flight-car", label: "deals.package.flightCar" },
@@ -657,6 +666,9 @@ export function DealsSearchForm({
   const flightOriginUserInteractedRef = useRef(false);
   const flightDefaultOriginRequestedRef = useRef(false);
   const firstError = useRef<HTMLDivElement>(null);
+  const mobilePackageOptionRefs = useRef<
+    Partial<Record<DealsPackageMode, HTMLButtonElement>>
+  >({});
   const flightDatesLauncherRef = useRef<HTMLButtonElement>(null);
   const mobileFlightDatesCommittedRef = useRef(false);
   const [flightDatesOpen, setFlightDatesOpen] = useState(false);
@@ -1758,6 +1770,14 @@ export function DealsSearchForm({
       return next;
     });
   };
+  useEffect(() => {
+    if (presentation !== "mobile-homepage") return;
+    mobilePackageOptionRefs.current[search.mode]?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [presentation, search.mode]);
   const openFlightAirport = (
     kind: "origin" | "destination",
     mobile = false,
@@ -2899,24 +2919,33 @@ export function DealsSearchForm({
     <div data-testid="mobile-homepage-deals-search" className="mt-3 space-y-2">
       <fieldset>
         <legend className="sr-only">{t("deals.packageSelector.instruction")}</legend>
-        <div role="radiogroup" aria-label={t("deals.packageSelector.instruction")} className="grid h-12 grid-cols-2 overflow-hidden rounded-[14px] border border-[#dee5ed] bg-[#fcfdfe]">
-          {([
-            ["hotel-flight", "Flight + Hotel"],
-            ["hotel-flight-car", "Flight + Hotel + Car"],
-          ] as const).map(([mode, text], index) => {
+        <div role="radiogroup" aria-label={t("deals.packageSelector.instruction")} data-testid="mobile-homepage-deals-package-rail" className="flex h-[42px] w-full flex-nowrap gap-2 overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-proximity [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+          {mobileHomepagePackageOptions.map(({ mode, text }, index) => {
             const selected = search.mode === mode;
+            const products = getIncludedProducts(mode);
             return (
-              <button key={mode} type="button" role="radio" aria-checked={selected} data-deals-mode={mode} onClick={() => selectPackageMode(mode)} className={`focus-ring flex min-w-0 items-center justify-center gap-1.5 px-1 text-[13px] font-semibold transition-colors max-[359px]:gap-1 max-[359px]:text-[11px] ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "relative z-10 rounded-[13px] border border-[#075ee8] bg-[#eef5ff] text-[#075ee8]" : "text-slate-800"}`}>
+              <button ref={(node) => { mobilePackageOptionRefs.current[mode] = node ?? undefined; }} key={mode} type="button" role="radio" aria-checked={selected} aria-label={text} data-deals-mode={mode} onClick={() => selectPackageMode(mode)} onKeyDown={(event) => {
+                const offset = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+                if (!offset && event.key !== "Home" && event.key !== "End") return;
+                event.preventDefault();
+                const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? mobileHomepagePackageOptions.length - 1 : (index + offset + mobileHomepagePackageOptions.length) % mobileHomepagePackageOptions.length;
+                const nextMode = mobileHomepagePackageOptions[nextIndex].mode;
+                selectPackageMode(nextMode);
+                mobilePackageOptionRefs.current[nextMode]?.focus({ preventScroll: true });
+              }} className={`focus-ring flex h-10 shrink-0 snap-start items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border px-3 text-[13px] font-semibold transition-colors ${selected ? "border-[#075ee8] bg-[#f2f7ff] text-[#075ee8]" : "border-[#dee5ed] bg-[#fcfdfe] text-slate-700"}`}>
                 <span aria-hidden="true" className="flex shrink-0 items-center gap-0.5">
-                  {mode === "hotel-flight" ? <><Building2 className="h-4 w-4" /><Plane className="h-3 w-3" /></> : <><Plane className="h-4 w-4" /><CarFront className="h-4 w-4" /></>}
+                  {products.flight ? <Plane className="h-4 w-4" strokeWidth={1.8} /> : null}
+                  {products.hotel ? <Building2 className="h-4 w-4" strokeWidth={1.8} /> : null}
+                  {products.car ? <CarFront className="h-4 w-4" strokeWidth={1.8} /> : null}
                 </span>
-                <span className="truncate">{text}</span>
+                <span className="whitespace-nowrap">{text}</span>
               </button>
             );
           })}
         </div>
       </fieldset>
 
+      {included.flight ? <>
       <button ref={flightOriginMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={flightMobileAirport === "origin"} onClick={() => setFlightMobileAirport("origin")} className={compactFieldClassName}>
         <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-5 w-5" /></span>
         <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Origin</span><span className={compactValueClassName}>{search.flightOriginText || t("cityOrAirport")}</span></span>
@@ -2932,9 +2961,21 @@ export function DealsSearchForm({
         <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travel Dates</span><span className={`${compactValueClassName} ${search.flightDepartureDate ? "" : "text-slate-500"}`}>{search.flightDepartureDate ? flightDatesSummary : "Choose dates"}</span></span>
         <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
       </button>
+      </> : <>
+      <button ref={hotelDestinationMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={hotelDestinationMobileOpen} onClick={() => openHotelDestination(true)} className={compactFieldClassName}>
+        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-5 w-5" /></span>
+        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Destination</span><span className={`${compactValueClassName} ${displayedHotelDestination ? "" : "text-slate-500"}`}>{displayedHotelDestination || "Where to?"}</span></span>
+        <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+      </button>
+      <button ref={hotelDatesLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileHotelDatesOpen} onClick={openHotelDates} className={compactFieldClassName}>
+        <span className={compactIconClassName}><Calendar aria-hidden="true" className="h-5 w-5" /></span>
+        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travel Dates</span><span className={`${compactValueClassName} ${displayedHotelCheckIn ? "" : "text-slate-500"}`}>{displayedHotelCheckIn ? hotelDatesSummary : "Choose dates"}</span></span>
+        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+      </button>
+      </>}
       <button ref={travelersLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileTravelersOpen} onClick={openTravelers} className={compactFieldClassName}>
         <span className={compactIconClassName}><UserRound aria-hidden="true" className="h-5 w-5" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travelers &amp; Rooms</span><span className={compactValueClassName}>{travelerSummary}</span></span>
+        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>{included.hotel ? <>Travelers &amp; Rooms</> : <>Travelers</>}</span><span className={compactValueClassName}>{travelerSummary}</span></span>
         <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
       </button>
       {errorBlock("flight")}{errorBlock("hotel")}{included.car ? errorBlock("car") : null}
