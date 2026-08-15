@@ -99,5 +99,8 @@ test("Hotels and Cars remain switchable without changing desktop structure", () 
   assert.match(sharedBranch, /<Plane[\s\S]*?\{t\.flights\}/);
   assert.match(sharedBranch, /<BedDouble[\s\S]*?\{t\.hotels\}/);
   assert.match(sharedBranch, /<CarFront[\s\S]*?\{t\.cars\}/);
-  assert.doesNotMatch(sharedBranch.slice(0, sharedBranch.indexOf('{tab === "flights"')), /<Tag|t\.deals/);
+  assert.match(sharedBranch, /mobileHomepage \? \([\s\S]*?<Tag[\s\S]*?t\.deals \|\| "Deals"/);
+  assert.match(source, /const tabsClassName = cn\([\s\S]*?mobileHomepage[\s\S]*?grid-cols-4/);
+  assert.match(sharedBranch, /startRouteProgress\(\);\s*router\.push\("\/deals"\)/);
+  assert.doesNotMatch(sharedBranch, /setTab\("deals"\)/);
 });
