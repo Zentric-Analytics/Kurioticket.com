@@ -55,6 +55,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 type TripType = "round-trip" | "one-way";
+type MobileTripTypeOption = TripType | "multi-city";
 type CabinClass = "economy" | "business" | "first";
 type AirportField = "origin" | "destination";
 type MobilePickerField = AirportField | "dates" | "travelers";
@@ -231,6 +232,10 @@ export function StandaloneFlightSearchForm({
   const { start: startRouteProgress } = useRouteProgress();
   const useMainFlightLandingMobilePresentation =
     presentation === "main-flight-landing";
+  const defaultTripTypeOptions = [
+    ["round-trip", t("roundTrip")],
+    ["one-way", t("oneWay")],
+  ] as const;
 
   const standaloneFormCardRef = useRef<HTMLElement>(null);
   const originWrapRef = useRef<HTMLDivElement>(null);
@@ -1543,21 +1548,51 @@ export function StandaloneFlightSearchForm({
       )}
     >
       <form onSubmit={onSubmit} className="relative space-y-3 sm:space-y-3">
+        {useMainFlightLandingMobilePresentation ? (
+          <div className="flex items-center gap-2.5 px-0.5 pt-0.5 sm:hidden">
+            <Plane
+              aria-hidden="true"
+              className="h-6 w-6 shrink-0 text-[#004BB8]"
+              strokeWidth={2.25}
+            />
+            <h2 className="text-[23px] font-bold leading-7 tracking-[-0.02em] text-[#021C2B]">
+              {t("flights") || "Flights"}
+            </h2>
+          </div>
+        ) : null}
+
         <div
           role="radiogroup"
           aria-label={t("tripType") || "Trip type"}
-          className="inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5"
+          className={cn(
+            "items-center rounded-lg px-0.5 py-1 sm:inline-flex sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5",
+            useMainFlightLandingMobilePresentation
+              ? "grid grid-cols-3 gap-1"
+              : "inline-flex gap-3",
+          )}
         >
-          {[
-            ["round-trip", t("roundTrip")],
-            ["one-way", t("oneWay")],
-          ].map(([value, label]) => (
+          {(
+            [
+              ...defaultTripTypeOptions,
+              ...(useMainFlightLandingMobilePresentation
+                ? [["multi-city", "Multi-city"] as const]
+                : []),
+            ] satisfies ReadonlyArray<readonly [MobileTripTypeOption, string]>
+          ).map(([value, localizedLabel]) => (
             <button
               key={value}
               type="button"
               role="radio"
               aria-checked={tripType === value}
+              aria-disabled={value === "multi-city"}
+              disabled={value === "multi-city"}
+              title={
+                value === "multi-city"
+                  ? t("multiCityComingSoon") || "Multi-city search coming soon"
+                  : undefined
+              }
               onClick={() => {
+                if (value === "multi-city") return;
                 const nextTripType = value as TripType;
                 setTripType(nextTripType);
                 if (nextTripType === "one-way") setReturnDate("");
@@ -1579,7 +1614,10 @@ export function StandaloneFlightSearchForm({
                 if (nextTripType === "one-way") setReturnDate("");
               }}
               className={cn(
-                "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold",
+                "focus-ring group inline-flex rounded-lg py-1 font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:text-sm sm:font-bold",
+                useMainFlightLandingMobilePresentation
+                  ? "min-h-9 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap px-0.5 text-[clamp(0.72rem,3.5vw,0.875rem)] disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-700"
+                  : "min-h-8 items-center gap-2 px-1.5 text-sm",
                 tripType === value &&
                   "bg-[#004BB8]/8 text-[#004BB8] ring-1 ring-[#004BB8]/10 sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:shadow-none",
               )}
@@ -1600,7 +1638,15 @@ export function StandaloneFlightSearchForm({
                   )}
                 />
               </span>
-              <span>{label}</span>
+              <span>
+                {useMainFlightLandingMobilePresentation
+                  ? value === "round-trip"
+                    ? "Round-trip"
+                    : value === "one-way"
+                      ? "One-way"
+                      : "Multi-city"
+                  : localizedLabel}
+              </span>
             </button>
           ))}
         </div>
