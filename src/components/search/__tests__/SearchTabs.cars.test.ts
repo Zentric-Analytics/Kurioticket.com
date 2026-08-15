@@ -4,6 +4,10 @@ import test from "node:test";
 
 const source = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
 const carsBranch = source.slice(source.lastIndexOf("<form onSubmit={onCarsSubmit}"));
+const returnLocationField = source.slice(
+  source.indexOf("const carsReturnLocationField"),
+  source.indexOf('if (mobileHomepage && tab === "flights")'),
+);
 
 test("homepage Cars search uses one responsive joined primary row", () => {
   assert.match(source, /data-testid="cars-joined-search-card"/);
@@ -59,20 +63,22 @@ test("source contract: Time and Driver Age retain the default summary-field chev
   }
 });
 
-test("homepage Cars return location is conditional and outside the primary row", () => {
-  const primaryRowEnd = carsBranch.indexOf("</div>\n          </div>\n          <div className=\"flex min-h-8");
-  const primaryRow = carsBranch.slice(0, primaryRowEnd);
-  assert.equal(primaryRow.includes("homepage-cars-dropoff"), false);
-  assert.match(carsBranch, /carsValues\.returnToDifferentLocation \? <div ref=\{carsDropoffFieldRef\}/);
+test("homepage Cars reuses one conditional return-location field in mobile and desktop positions", () => {
+  assert.match(returnLocationField, /carsValues\.returnToDifferentLocation \? \(/);
+  assert.equal((source.match(/data-testid="cars-return-location-field"/g) ?? []).length, 1);
+  assert.match(carsBranch, /cars-pickup-location-field[\s\S]*?\{mobileHomepage \? carsReturnLocationField : null\}[\s\S]*?homepage-cars-rental-dates/);
+  assert.match(carsBranch, /Different return location[\s\S]*?\{!mobileHomepage \? carsReturnLocationField : null\}/);
   assert.match(source, /if \(key === "returnToDifferentLocation" && value === false\) \{\s*next\.dropoffLocation = "";/);
 });
 
 test("Cars autocomplete uses responsive presentation and the complete surface boundary", () => {
   assert.match(carsBranch, /ref=\{carsSearchSurfaceRef\} data-testid="cars-search-surface"/);
-  assert.equal((carsBranch.match(/presentation="responsive"/g) ?? []).length, 2);
-  assert.equal((carsBranch.match(/searchCardRef=\{carsSearchSurfaceRef\}/g) ?? []).length, 2);
+  const allCarsFields = carsBranch + returnLocationField;
+  assert.equal((allCarsFields.match(/presentation="responsive"/g) ?? []).length, 2);
+  assert.equal((allCarsFields.match(/searchCardRef=\{carsSearchSurfaceRef\}/g) ?? []).length, 2);
   assert.match(carsBranch, /fieldAnchorRef=\{carsPickupFieldRef\}/);
-  assert.match(carsBranch, /fieldAnchorRef=\{carsDropoffFieldRef\}/);
+  assert.match(returnLocationField, /fieldAnchorRef=\{carsDropoffFieldRef\}/);
+  assert.match(returnLocationField, /value=\{carsValues\.dropoffLocation\}/);
 });
 
 test("Cars summary popup IDs are stable and field-specific", () => {
