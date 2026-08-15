@@ -12,6 +12,7 @@ import {
   type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
+import { calculateDesktopPopoverGeometry } from "@/components/search/desktopPopoverPosition";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
@@ -232,7 +233,7 @@ function DealsCarPopover({
     const updatePosition = () => {
       if (!desktop.matches || !anchorRef.current) return setPosition(null);
       const gutter = 16;
-      const gap = 12;
+      const gap = 8;
       const rect = anchorRef.current.getBoundingClientRect();
       const width = Math.min(preferredWidth, window.innerWidth - gutter * 2);
       const below = window.innerHeight - rect.bottom - gap - gutter;
@@ -293,7 +294,7 @@ function DealsCarPopover({
         : marker === "times"
           ? { "data-deals-car-times-popover": true }
           : { "data-deals-car-return-location-popover": true })}
-      className="fixed z-[1200] hidden overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:block"
+      className="fixed z-[1100] hidden overflow-y-auto rounded-[9px] border border-[#dee5ed] bg-[#fcfdfe] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.12)] sm:block"
       style={position}
     >
       {children}
@@ -315,6 +316,7 @@ function DealsFlightDatesPopover({
     left: number;
     top: number;
     width: number;
+    maxHeight: number;
   } | null>(null);
   useEffect(() => {
     if (!open || typeof window === "undefined") return;
@@ -324,21 +326,15 @@ function DealsFlightDatesPopover({
       const gutter = 16;
       const rect = anchorRef.current.getBoundingClientRect();
       const width = Math.min(690, window.innerWidth - gutter * 2);
-      const expectedHeight = Math.min(560, window.innerHeight - gutter * 2);
-      setPosition({
-        left: Math.min(
-          Math.max(gutter, rect.right - width),
-          window.innerWidth - width - gutter,
-        ),
-        top: Math.max(
-          gutter,
-          Math.min(
-            rect.bottom + 10,
-            window.innerHeight - expectedHeight - gutter,
-          ),
-        ),
-        width,
+      const geometry = calculateDesktopPopoverGeometry({
+        fieldRect: { ...rect, width },
+        boundaryRect: rect,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        viewportPadding: gutter,
+        gap: 8,
       });
+      setPosition(geometry);
     };
     updatePosition();
     window.addEventListener("resize", updatePosition);
@@ -354,7 +350,7 @@ function DealsFlightDatesPopover({
   return createPortal(
     <div
       data-deals-flight-dates-popover
-      className="fixed z-[1000] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.18)]"
+      className="fixed z-[1100] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[9px] border border-[#dee5ed] bg-[#fcfdfe] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
       style={position}
     >
       {children}
@@ -376,6 +372,7 @@ function DealsHotelDatesPopover({
     left: number;
     top: number;
     width: number;
+    maxHeight: number;
   } | null>(null);
   useEffect(() => {
     if (!open || typeof window === "undefined") return;
@@ -385,21 +382,15 @@ function DealsHotelDatesPopover({
       const gutter = 16;
       const rect = anchorRef.current.getBoundingClientRect();
       const width = Math.min(640, window.innerWidth - gutter * 2);
-      const expectedHeight = Math.min(560, window.innerHeight - gutter * 2);
-      setPosition({
-        left: Math.min(
-          Math.max(gutter, rect.right - width),
-          window.innerWidth - width - gutter,
-        ),
-        top: Math.max(
-          gutter,
-          Math.min(
-            rect.bottom + 10,
-            window.innerHeight - expectedHeight - gutter,
-          ),
-        ),
-        width,
+      const geometry = calculateDesktopPopoverGeometry({
+        fieldRect: { ...rect, width },
+        boundaryRect: rect,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        viewportPadding: gutter,
+        gap: 8,
       });
+      setPosition(geometry);
     };
     updatePosition();
     window.addEventListener("resize", updatePosition);
@@ -415,7 +406,7 @@ function DealsHotelDatesPopover({
   return createPortal(
     <div
       data-deals-hotel-dates-popover
-      className="fixed z-[1000] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.18)]"
+      className="fixed z-[1100] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[9px] border border-[#dee5ed] bg-[#fcfdfe] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
       style={position}
     >
       {children}
@@ -447,7 +438,7 @@ function DealsFlightPopover({
     const updatePosition = () => {
       if (!desktop.matches || !anchorRef.current) return setPosition(null);
       const gutter = 16;
-      const gap = 10;
+      const gap = 8;
       const rect = anchorRef.current.getBoundingClientRect();
       const width = Math.min(360, window.innerWidth - gutter * 2);
       const below = window.innerHeight - rect.bottom - gap - gutter;
@@ -486,7 +477,7 @@ function DealsFlightPopover({
   return createPortal(
     <div
       data-deals-flight-travellers-popover
-      className="fixed z-[1000] flex overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.18)]"
+      className="fixed z-[1100] flex overflow-hidden rounded-[9px] border border-[#dee5ed] bg-[#fcfdfe] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
       style={position}
     >
       {children}
@@ -527,14 +518,19 @@ function DealsDestinationPopover({
       const above = rect.top - gap - gutter;
       const useAbove = below < 240 && above > below;
       const maxHeight = Math.max(160, Math.min(352, useAbove ? above : below));
+      const anchored = calculateDesktopPopoverGeometry({
+        fieldRect: { ...rect, width },
+        boundaryRect: rect,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        viewportPadding: gutter,
+        gap,
+      });
       setPosition({
-        left: Math.min(
-          Math.max(gutter, rect.left),
-          window.innerWidth - width - gutter,
-        ),
+        left: anchored.left,
         top: useAbove
           ? Math.max(gutter, rect.top - gap - maxHeight)
-          : rect.bottom + gap,
+          : anchored.top,
         width,
         maxHeight,
       });
@@ -553,7 +549,7 @@ function DealsDestinationPopover({
   return createPortal(
     <div
       data-deals-destination-popover={marker}
-      className="fixed z-[1100] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_20px_50px_rgba(15,23,42,0.22)]"
+      className="fixed z-[1100] overflow-y-auto rounded-[9px] border border-[#dee5ed] bg-[#fcfdfe] p-2 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
       style={position}
     >
       {children}
@@ -696,6 +692,8 @@ export function DealsSearchForm({
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const travelersLauncherRef = useRef<HTMLButtonElement>(null);
+  const cabinLauncherRef = useRef<HTMLButtonElement>(null);
+  const [cabinOpen, setCabinOpen] = useState(false);
   const mobileTravelersCommittedRef = useRef(false);
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [mobileTravelersOpen, setMobileTravelersOpen] = useState(false);
@@ -992,6 +990,12 @@ export function DealsSearchForm({
       flightDatesLauncherRef.current?.focus({ preventScroll: true }),
     );
   const openFlightDates = () => {
+    setFlightOriginOpen(false);
+    setFlightDestinationOpen(false);
+    setHotelDestinationOpen(false);
+    setHotelDatesOpen(false);
+    setTravelersOpen(false);
+    setCabinOpen(false);
     resetFlightDatesDraft();
     const departure = parseIsoDate(search.flightDepartureDate);
     const validVisibleDeparture =
@@ -1148,6 +1152,12 @@ export function DealsSearchForm({
       hotelDatesLauncherRef.current?.focus({ preventScroll: true }),
     );
   const openHotelDates = () => {
+    setFlightOriginOpen(false);
+    setFlightDestinationOpen(false);
+    setHotelDestinationOpen(false);
+    setFlightDatesOpen(false);
+    setTravelersOpen(false);
+    setCabinOpen(false);
     resetHotelDatesDraft();
     const checkIn = parseIsoDate(displayedHotelCheckIn);
     const visibleDate =
@@ -1262,6 +1272,12 @@ export function DealsSearchForm({
     search.hotelRooms,
   ]);
   const openTravelers = () => {
+    setFlightOriginOpen(false);
+    setFlightDestinationOpen(false);
+    setHotelDestinationOpen(false);
+    setFlightDatesOpen(false);
+    setHotelDatesOpen(false);
+    setCabinOpen(false);
     resetTravelersDraft();
     if (window.matchMedia("(max-width: 639px)").matches)
       setMobileTravelersOpen(true);
@@ -1400,6 +1416,7 @@ export function DealsSearchForm({
     setMobileHotelDatesOpen(false);
     setTravelersOpen(false);
     setMobileTravelersOpen(false);
+    setCabinOpen(false);
   };
   const closeCarMobilePickers = () => {
     setMobileCarLocation(null);
@@ -1778,11 +1795,13 @@ export function DealsSearchForm({
       const optionBounds = selectedOption.getBoundingClientRect();
       const startOverflow = optionBounds.left - railBounds.left;
       const endOverflow = optionBounds.right - railBounds.right;
-      const delta = startOverflow < 0 ? startOverflow : endOverflow > 0 ? endOverflow : 0;
+      const delta =
+        startOverflow < 0 ? startOverflow : endOverflow > 0 ? endOverflow : 0;
       if (delta)
         rail.scrollBy({
           left: delta,
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+            .matches
             ? "auto"
             : "smooth",
         });
@@ -1796,6 +1815,7 @@ export function DealsSearchForm({
     closeUnrelatedPickers();
     setHotelDestinationOpen(false);
     setHotelDestinationMobileOpen(false);
+    setCabinOpen(false);
     setFlightOriginOpen(!mobile && kind === "origin");
     setFlightDestinationOpen(!mobile && kind === "destination");
     setFlightMobileAirport(mobile ? kind : null);
@@ -1805,6 +1825,7 @@ export function DealsSearchForm({
     setFlightOriginOpen(false);
     setFlightDestinationOpen(false);
     setFlightMobileAirport(null);
+    setCabinOpen(false);
     setHotelDestinationOpen(!mobile);
     setHotelDestinationMobileOpen(mobile);
   };
@@ -1824,12 +1845,14 @@ export function DealsSearchForm({
         setFlightDestinationOpen(false);
       if (!hotelDestinationWrapRef.current?.contains(target))
         setHotelDestinationOpen(false);
+      if (!cabinLauncherRef.current?.contains(target)) setCabinOpen(false);
     };
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setFlightOriginOpen(false);
         setFlightDestinationOpen(false);
         setHotelDestinationOpen(false);
+        setCabinOpen(false);
       }
     };
     document.addEventListener("pointerdown", dismiss);
@@ -2834,12 +2857,14 @@ export function DealsSearchForm({
     : "lg:h-full lg:min-w-[156px] lg:items-center lg:border-s lg:border-slate-200 lg:px-2";
 
   const searchDealsButton = (
-    <div className={`flex w-full ${packageSearchDesktopClasses} ${isDesktopLanding ? "lg:min-w-0 lg:border-s-0 lg:p-0" : ""}`}>
+    <div
+      className={`flex w-full ${packageSearchDesktopClasses} ${isDesktopLanding ? "lg:min-w-0 lg:border-s-0 lg:p-0" : ""}`}
+    >
       <button
         type="submit"
         disabled={submitting || pending}
         aria-busy={submitting || pending}
-        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:w-full lg:rounded-s-none lg:rounded-e-[8px] lg:px-4 lg:text-[14px] lg:shadow-none" : ""}`}
+        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? "lg:h-[50px] lg:min-h-[50px] lg:w-full lg:rounded-[8px] lg:px-4 lg:text-[14px] lg:shadow-none" : ""}`}
       >
         <Search className="h-4 w-4" />
         {t(
@@ -2871,7 +2896,12 @@ export function DealsSearchForm({
         }
         className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4" : ""}`}
       >
-        {isDesktopLanding ? <UserRound aria-hidden="true" className="hidden h-4 w-4 shrink-0 text-[#2563eb] lg:block" /> : null}
+        {isDesktopLanding ? (
+          <UserRound
+            aria-hidden="true"
+            className="hidden h-4 w-4 shrink-0 text-[#2563eb] lg:block"
+          />
+        ) : null}
         <span className="min-w-0">
           <span className={`${label} mb-0.5 whitespace-nowrap`}>
             {travelersControlLabel}
@@ -2885,7 +2915,12 @@ export function DealsSearchForm({
           data-deals-package-cabin
           className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4 lg:ps-10" : ""}`}
         >
-          {isDesktopLanding ? <Plane aria-hidden="true" className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block" /> : null}
+          {isDesktopLanding ? (
+            <Plane
+              aria-hidden="true"
+              className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
+            />
+          ) : null}
           <label
             className={`${label} mb-0.5 whitespace-nowrap`}
             htmlFor="deals-flight-cabin"
@@ -2901,19 +2936,40 @@ export function DealsSearchForm({
                 event.target.value as DealsSearch["flightCabinClass"],
               )
             }
-            className={`${packageActionControl} appearance-none pe-6`}
+            className={`${packageActionControl} appearance-none pe-6 ${isDesktopLanding ? "lg:hidden" : ""}`}
           >
             <option value="economy">{t("economy")}</option>
             <option value="business">{t("business")}</option>
             <option value="first">{t("first")}</option>
           </select>
+          {isDesktopLanding ? (
+            <button
+              ref={cabinLauncherRef}
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={cabinOpen}
+              aria-controls="deals-desktop-cabin-listbox"
+              onClick={() => {
+                setFlightOriginOpen(false);
+                setFlightDestinationOpen(false);
+                setHotelDestinationOpen(false);
+                setFlightDatesOpen(false);
+                setHotelDatesOpen(false);
+                setTravelersOpen(false);
+                setCabinOpen((open) => !open);
+              }}
+              className={`${packageActionControl} hidden text-start lg:block`}
+            >
+              {t(search.flightCabinClass)}
+            </button>
+          ) : null}
           <ChevronDown
             aria-hidden="true"
           className="pointer-events-none absolute end-3 bottom-3 h-4 w-4 lg:bottom-1/2 lg:translate-y-1/2"
           />
         </div>
       ) : null}
-      {searchDealsButton}
+      {!isDesktopLanding ? searchDealsButton : null}
     </>
   );
 
@@ -2926,23 +2982,65 @@ export function DealsSearchForm({
   const compactValueClassName =
     "mt-1.5 block truncate text-[16px] font-medium leading-5 text-slate-950";
 
-  const mobileHomepageControls = presentation === "mobile-homepage" ? (
-    <div data-testid="mobile-homepage-deals-search" className="mt-3 space-y-2">
+  const mobileHomepageControls =
+    presentation === "mobile-homepage" ? (
+      <div
+        data-testid="mobile-homepage-deals-search"
+        className="mt-3 space-y-2"
+      >
       <fieldset className="min-w-0 w-full max-w-full overflow-hidden">
-        <legend className="sr-only">{t("deals.packageSelector.instruction")}</legend>
-        <div ref={mobilePackageRailRef} role="radiogroup" aria-label={t("deals.packageSelector.instruction")} data-testid="mobile-homepage-deals-package-rail" className="flex h-10 min-w-0 w-full max-w-full touch-pan-x flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth border-b border-slate-200 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+          <legend className="sr-only">
+            {t("deals.packageSelector.instruction")}
+          </legend>
+          <div
+            ref={mobilePackageRailRef}
+            role="radiogroup"
+            aria-label={t("deals.packageSelector.instruction")}
+            data-testid="mobile-homepage-deals-package-rail"
+            className="flex h-10 min-w-0 w-full max-w-full touch-pan-x flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth border-b border-slate-200 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+          >
           {mobileHomepagePackageOptions.map(({ mode, text }, index) => {
             const selected = search.mode === mode;
             return (
-              <button ref={(node) => { mobilePackageOptionRefs.current[mode] = node ?? undefined; }} key={mode} type="button" role="radio" aria-checked={selected} aria-label={text} data-deals-mode={mode} onClick={() => selectPackageMode(mode)} onKeyDown={(event) => {
-                const offset = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
-                if (!offset && event.key !== "Home" && event.key !== "End") return;
+                <button
+                  ref={(node) => {
+                    mobilePackageOptionRefs.current[mode] = node ?? undefined;
+                  }}
+                  key={mode}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={text}
+                  data-deals-mode={mode}
+                  onClick={() => selectPackageMode(mode)}
+                  onKeyDown={(event) => {
+                    const offset =
+                      event.key === "ArrowRight"
+                        ? 1
+                        : event.key === "ArrowLeft"
+                          ? -1
+                          : 0;
+                    if (!offset && event.key !== "Home" && event.key !== "End")
+                      return;
                 event.preventDefault();
-                const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? mobileHomepagePackageOptions.length - 1 : (index + offset + mobileHomepagePackageOptions.length) % mobileHomepagePackageOptions.length;
-                const nextMode = mobileHomepagePackageOptions[nextIndex].mode;
+                    const nextIndex =
+                      event.key === "Home"
+                        ? 0
+                        : event.key === "End"
+                          ? mobileHomepagePackageOptions.length - 1
+                          : (index +
+                              offset +
+                              mobileHomepagePackageOptions.length) %
+                            mobileHomepagePackageOptions.length;
+                    const nextMode =
+                      mobileHomepagePackageOptions[nextIndex].mode;
                 selectPackageMode(nextMode);
-                mobilePackageOptionRefs.current[nextMode]?.focus({ preventScroll: true });
-              }} className={`focus-ring relative flex h-10 w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent px-3 text-[13px] font-medium text-slate-900 ${selected ? "after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : ""}`}>
+                    mobilePackageOptionRefs.current[nextMode]?.focus({
+                      preventScroll: true,
+                    });
+                  }}
+                  className={`focus-ring relative flex h-10 w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent px-3 text-[13px] font-medium text-slate-900 ${selected ? "after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : ""}`}
+                >
                 <span className="whitespace-nowrap">{text}</span>
               </button>
             );
@@ -2950,41 +3048,170 @@ export function DealsSearchForm({
         </div>
       </fieldset>
 
-      {included.flight ? <div className="relative space-y-2" data-testid="mobile-homepage-deals-route-fields">
-      <button ref={flightOriginMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={flightMobileAirport === "origin"} onClick={() => setFlightMobileAirport("origin")} className={compactFieldClassName}>
-        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Origin</span><span className={compactValueClassName}>{search.flightOriginText || t("cityOrAirport")}</span></span>
+        {included.flight ? (
+          <div
+            className="relative space-y-2"
+            data-testid="mobile-homepage-deals-route-fields"
+          >
+            <button
+              ref={flightOriginMobileLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={flightMobileAirport === "origin"}
+              onClick={() => setFlightMobileAirport("origin")}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <MapPin aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Origin</span>
+                <span className={compactValueClassName}>
+                  {search.flightOriginText || t("cityOrAirport")}
+                </span>
+              </span>
       </button>
-      <button type="button" onClick={swapDealsFlightAirports} aria-label={t("swapOriginDestination") || "Swap origin and destination"} className="focus-ring absolute left-1/2 top-[53px] z-10 flex h-[38px] w-[38px] -translate-x-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_2px_6px_rgba(15,23,42,0.10)] before:absolute before:-inset-[3px] before:content-[''] focus-visible:ring-2 focus-visible:ring-[#075ee8]/30">
-        <ArrowRightLeft aria-hidden="true" className="h-[18px] w-[18px]" />
+            <button
+              type="button"
+              onClick={swapDealsFlightAirports}
+              aria-label={
+                t("swapOriginDestination") || "Swap origin and destination"
+              }
+              className="focus-ring absolute left-1/2 top-[53px] z-10 flex h-[38px] w-[38px] -translate-x-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_2px_6px_rgba(15,23,42,0.10)] before:absolute before:-inset-[3px] before:content-[''] focus-visible:ring-2 focus-visible:ring-[#075ee8]/30"
+            >
+              <ArrowRightLeft
+                aria-hidden="true"
+                className="h-[18px] w-[18px]"
+              />
       </button>
-      <button ref={flightDestinationMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={flightMobileAirport === "destination"} onClick={() => setFlightMobileAirport("destination")} className={compactFieldClassName}>
-        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Destination</span><span className={`${compactValueClassName} ${search.flightDestinationText ? "" : "text-slate-500"}`}>{search.flightDestinationText || "Where to?"}</span></span>
+            <button
+              ref={flightDestinationMobileLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={flightMobileAirport === "destination"}
+              onClick={() => setFlightMobileAirport("destination")}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <MapPin aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Destination</span>
+                <span
+                  className={`${compactValueClassName} ${search.flightDestinationText ? "" : "text-slate-500"}`}
+                >
+                  {search.flightDestinationText || "Where to?"}
+                </span>
+              </span>
       </button>
-      <button ref={flightDatesLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileFlightDatesOpen} onClick={openFlightDates} className={compactFieldClassName}>
-        <span className={compactIconClassName}><Calendar aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travel Dates</span><span className={`${compactValueClassName} ${search.flightDepartureDate ? "" : "text-slate-500"}`}>{search.flightDepartureDate ? flightDatesSummary : "Choose dates"}</span></span>
-        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+            <button
+              ref={flightDatesLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={mobileFlightDatesOpen}
+              onClick={openFlightDates}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <Calendar aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Travel Dates</span>
+                <span
+                  className={`${compactValueClassName} ${search.flightDepartureDate ? "" : "text-slate-500"}`}
+                >
+                  {search.flightDepartureDate
+                    ? flightDatesSummary
+                    : "Choose dates"}
+                </span>
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="h-5 w-5 shrink-0 text-slate-700"
+              />
       </button>
-      </div> : <>
-      <button ref={hotelDestinationMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={hotelDestinationMobileOpen} onClick={() => openHotelDestination(true)} className={compactFieldClassName}>
-        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Destination</span><span className={`${compactValueClassName} ${displayedHotelDestination ? "" : "text-slate-500"}`}>{displayedHotelDestination || "Where to?"}</span></span>
+          </div>
+        ) : (
+          <>
+            <button
+              ref={hotelDestinationMobileLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={hotelDestinationMobileOpen}
+              onClick={() => openHotelDestination(true)}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <MapPin aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Destination</span>
+                <span
+                  className={`${compactValueClassName} ${displayedHotelDestination ? "" : "text-slate-500"}`}
+                >
+                  {displayedHotelDestination || "Where to?"}
+                </span>
+              </span>
       </button>
-      <button ref={hotelDatesLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileHotelDatesOpen} onClick={openHotelDates} className={compactFieldClassName}>
-        <span className={compactIconClassName}><Calendar aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travel Dates</span><span className={`${compactValueClassName} ${displayedHotelCheckIn ? "" : "text-slate-500"}`}>{displayedHotelCheckIn ? hotelDatesSummary : "Choose dates"}</span></span>
-        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+            <button
+              ref={hotelDatesLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={mobileHotelDatesOpen}
+              onClick={openHotelDates}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <Calendar aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Travel Dates</span>
+                <span
+                  className={`${compactValueClassName} ${displayedHotelCheckIn ? "" : "text-slate-500"}`}
+                >
+                  {displayedHotelCheckIn ? hotelDatesSummary : "Choose dates"}
+                </span>
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="h-5 w-5 shrink-0 text-slate-700"
+              />
+            </button>
+          </>
+        )}
+        <button
+          ref={travelersLauncherRef}
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={mobileTravelersOpen}
+          onClick={openTravelers}
+          className={compactFieldClassName}
+        >
+          <span className={compactIconClassName}>
+            <UserRound aria-hidden="true" className="h-[17px] w-[17px]" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className={compactLabelClassName}>
+              {included.hotel ? <>Travelers &amp; Rooms</> : <>Travelers</>}
+            </span>
+            <span className={compactValueClassName}>{travelerSummary}</span>
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className="h-5 w-5 shrink-0 text-slate-700"
+          />
       </button>
-      </>}
-      <button ref={travelersLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileTravelersOpen} onClick={openTravelers} className={compactFieldClassName}>
-        <span className={compactIconClassName}><UserRound aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>{included.hotel ? <>Travelers &amp; Rooms</> : <>Travelers</>}</span><span className={compactValueClassName}>{travelerSummary}</span></span>
-        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+        {errorBlock("flight")}
+        {errorBlock("hotel")}
+        {included.car ? errorBlock("car") : null}
+        <button
+          type="submit"
+          disabled={submitting || pending}
+          aria-busy={submitting || pending}
+          className="focus-ring h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60"
+        >
+          Search deals
       </button>
-      {errorBlock("flight")}{errorBlock("hotel")}{included.car ? errorBlock("car") : null}
-      <button type="submit" disabled={submitting || pending} aria-busy={submitting || pending} className="focus-ring h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60">Search deals</button>
     </div>
   ) : null;
 
@@ -2994,25 +3221,64 @@ export function DealsSearchForm({
       {...(variant === "results" ? { "data-deals-results-layout": true } : {})}
       onSubmit={submit}
       noValidate
-      className={presentation === "mobile-homepage" ? "w-full" : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""} ${isDesktopLanding ? "lg:max-w-[1280px] lg:rounded-[8px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:py-6 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8" : ""}`}
+      className={
+        presentation === "mobile-homepage"
+          ? "w-full"
+          : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""} ${isDesktopLanding ? "lg:max-w-[1280px] lg:rounded-[8px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:py-6 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8" : ""}`
+      }
     >
-      {mobileHomepageControls ?? <>
+      {mobileHomepageControls ?? (
+        <>
       {isDesktopLanding ? (
-        <fieldset className="hidden lg:block lg:pb-0" data-deals-desktop-package-selector>
-          <legend className="sr-only">{t("deals.packageSelector.instruction")}</legend>
-          <div role="radiogroup" aria-label={t("deals.packageSelector.instruction")} className="inline-grid h-12 grid-cols-4 overflow-hidden rounded-[8px] border border-[#dee5ed] bg-[#fcfdfe]">
+            <fieldset
+              className="hidden lg:block lg:pb-0"
+              data-deals-desktop-package-selector
+            >
+              <legend className="sr-only">
+                {t("deals.packageSelector.instruction")}
+              </legend>
+              <div
+                role="radiogroup"
+                aria-label={t("deals.packageSelector.instruction")}
+                className="inline-grid h-12 grid-cols-4 overflow-hidden rounded-[8px] border border-[#dee5ed] bg-[#fcfdfe]"
+              >
             {desktopLandingPackageOptions.map((option, index) => {
               const selected =
                 (desktopPackageChoice ??
-                  (search.mode === "hotel-flight" ? "hotel-flight" : search.mode)) ===
-                option.id;
-              const Icon = option.id === "hotel-car" ? CarFront : option.id === "flight-car" ? Plane : Building2;
-              return <button key={option.id} type="button" role="radio" aria-checked={selected} data-deals-presentation-choice={option.id} data-deals-canonical-mode={option.mode} onClick={() => { setDesktopPackageChoice(option.id); selectPackageMode(option.mode); }} className={`focus-ring relative flex min-w-[135px] items-center justify-center gap-2 px-3 text-[14px] font-semibold text-slate-700 transition-colors xl:min-w-[154px] xl:px-4 ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#2563EB] after:content-['']" : "hover:bg-slate-50"}`}><Icon aria-hidden="true" className="h-4 w-4" />{option.text}</button>;
+                      (search.mode === "hotel-flight"
+                        ? "hotel-flight"
+                        : search.mode)) === option.id;
+                  const Icon =
+                    option.id === "hotel-car"
+                      ? CarFront
+                      : option.id === "flight-car"
+                        ? Plane
+                        : Building2;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      data-deals-presentation-choice={option.id}
+                      data-deals-canonical-mode={option.mode}
+                      onClick={() => {
+                        setDesktopPackageChoice(option.id);
+                        selectPackageMode(option.mode);
+                      }}
+                      className={`focus-ring relative flex min-w-[135px] items-center justify-center gap-2 px-3 text-[14px] font-semibold text-slate-700 transition-colors xl:min-w-[154px] xl:px-4 ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#2563EB] after:content-['']" : "hover:bg-slate-50"}`}
+                    >
+                      <Icon aria-hidden="true" className="h-4 w-4" />
+                      {option.text}
+                    </button>
+                  );
             })}
           </div>
         </fieldset>
       ) : null}
-      <fieldset className={`pb-3 sm:pb-2 lg:pb-1 ${isDesktopLanding ? "lg:hidden" : ""}`}>
+          <fieldset
+            className={`pb-3 sm:pb-2 lg:pb-1 ${isDesktopLanding ? "lg:hidden" : ""}`}
+          >
         <legend className="sr-only">
           {t("deals.packageSelector.instruction")}
         </legend>
@@ -3111,9 +3377,11 @@ export function DealsSearchForm({
             {...(variant === "results"
               ? { "data-deals-results-main-search-row": "flight" }
               : {})}
-            className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1 ${isDesktopLanding ? "lg:mt-[18px] lg:h-[78px] lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1.05fr)_minmax(148px,.95fr)] lg:overflow-visible lg:rounded-[8px] lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]" : ""}`}
+                className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1 ${isDesktopLanding ? "lg:mt-[18px] lg:h-[78px] lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.3fr)_minmax(0,1.25fr)_minmax(148px,.95fr)] lg:overflow-visible lg:rounded-[8px] lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]" : ""}`}
+              >
+                <div
+                  className={`grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)]" : ""}`}
           >
-            <div className={`grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)]" : ""}`}>
               {(["origin", "destination"] as const).map((kind, index) => {
                 const textKey =
                   kind === "origin"
@@ -3124,7 +3392,9 @@ export function DealsSearchForm({
                     ? "flightOriginCode"
                     : "flightDestinationCode";
                 const open =
-                  kind === "origin" ? flightOriginOpen : flightDestinationOpen;
+                      kind === "origin"
+                        ? flightOriginOpen
+                        : flightDestinationOpen;
                 const loading =
                   kind === "origin"
                     ? flightOriginLoading
@@ -3152,8 +3422,16 @@ export function DealsSearchForm({
                       className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
                       data-deals-flight-destination={kind}
                     >
-                      {isDesktopLanding ? <MapPin aria-hidden="true" className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block" /> : null}
-                      <label className={label} htmlFor={`deals-flight-${kind}`}>
+                          {isDesktopLanding ? (
+                            <MapPin
+                              aria-hidden="true"
+                              className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
+                            />
+                          ) : null}
+                          <label
+                            className={label}
+                            htmlFor={`deals-flight-${kind}`}
+                          >
                         {t(kind)}
                       </label>
                       <div className="relative hidden sm:block">
@@ -3172,7 +3450,9 @@ export function DealsSearchForm({
                           value={search[textKey]}
                           placeholder={t("cityOrAirport")}
                           onFocus={() => openFlightAirport(kind)}
-                          onKeyDown={(event) => handleFlightKey(kind, event)}
+                              onKeyDown={(event) =>
+                                handleFlightKey(kind, event)
+                              }
                           onChange={(event) => {
                             const value = event.target.value;
                             if (kind === "origin")
@@ -3185,21 +3465,23 @@ export function DealsSearchForm({
                                       current,
                                       value,
                                     ),
-                                    flightDestinationCode: /^[a-z]{3}$/i.test(
-                                      value.trim(),
-                                    )
+                                        flightDestinationCode:
+                                          /^[a-z]{3}$/i.test(value.trim())
                                       ? value.trim().toUpperCase()
                                       : "",
                                   }
                                 : {
                                     ...current,
                                     [textKey]: value,
-                                    [codeKey]: /^[a-z]{3}$/i.test(value.trim())
+                                        [codeKey]: /^[a-z]{3}$/i.test(
+                                          value.trim(),
+                                        )
                                       ? value.trim().toUpperCase()
                                       : "",
                                   },
                             );
-                            if (kind === "origin") setFlightOriginHighlight(0);
+                                if (kind === "origin")
+                                  setFlightOriginHighlight(0);
                             else setFlightDestinationHighlight(0);
                             if (value.trim().length < 2)
                               setAirportLists((all) => ({
@@ -3311,7 +3593,12 @@ export function DealsSearchForm({
             <div
               className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
             >
-              {isDesktopLanding ? <Calendar aria-hidden="true" className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block" /> : null}
+                  {isDesktopLanding ? (
+                    <Calendar
+                      aria-hidden="true"
+                      className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
+                    />
+                  ) : null}
               <span className={label}>{t("travelDates")}</span>
               <button
                 ref={flightDatesLauncherRef}
@@ -3331,7 +3618,9 @@ export function DealsSearchForm({
                 }
                 className={`${field} ${flightConnectedField} flex items-center justify-between gap-2 text-start`}
               >
-                <span className="min-w-0 truncate">{flightDatesSummary}</span>
+                    <span className="min-w-0 truncate">
+                      {flightDatesSummary}
+                    </span>
                 <Calendar
                   aria-hidden="true"
                   className={`h-4 w-4 shrink-0 text-slate-500 ${isDesktopLanding ? "lg:hidden" : ""}`}
@@ -3349,7 +3638,9 @@ export function DealsSearchForm({
           <section
             aria-labelledby="deals-hotel-heading"
             data-deals-hotel-primary={!included.flight ? "true" : undefined}
-            data-deals-hotel-overrides={included.flight ? "true" : undefined}
+                data-deals-hotel-overrides={
+                  included.flight ? "true" : undefined
+                }
             className="border-t border-slate-200 py-4 sm:py-3 lg:py-2"
           >
             <h2
@@ -3367,7 +3658,7 @@ export function DealsSearchForm({
               {...(variant === "results"
                 ? { "data-deals-results-main-search-row": "stay" }
                 : {})}
-              className={`${connectedShell} sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(150px,1fr)_minmax(180px,1fr)_minmax(156px,auto)]`}
+                  className={`${connectedShell} sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(150px,1fr)_minmax(180px,1fr)]`}
             >
               {(!included.flight || !search.stayDestinationLinked) && (
                 <div
@@ -3375,7 +3666,10 @@ export function DealsSearchForm({
                   className={`${`${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0`} ${hotelDestinationOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
                   data-deals-hotel-destination
                 >
-                  <label className={label} htmlFor="deals-hotel-destination">
+                      <label
+                        className={label}
+                        htmlFor="deals-hotel-destination"
+                      >
                     {t("deals.destination")}
                   </label>
                   <div className="relative hidden sm:block">
@@ -3619,7 +3913,7 @@ export function DealsSearchForm({
           {supportsStayDateOverride ? (
             <label
               data-deals-change-stay-dates
-              className="focus-within:ring-[#004BB8]/25 flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-1 text-sm font-bold text-slate-800 focus-within:ring-2"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-1 text-sm font-bold text-slate-800 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#004BB8]/20"
             >
               <input
                 type="checkbox"
@@ -3640,18 +3934,17 @@ export function DealsSearchForm({
                       : relinkInheritedField(current, "stayDates"),
                   );
                 }}
-                className="size-4 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]"
+                    className="size-[18px] appearance-none rounded-[4px] border border-slate-400 bg-white checked:bg-white checked:bg-[url('/icons/check-blue.svg')] checked:bg-center checked:bg-no-repeat focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#004BB8]/30"
               />
               <span>{t("deals.changeDatesForStay")}</span>
             </label>
           ) : null}
         </div>
         {supportsStayDateOverride && !search.stayDatesLinked ? (
-          <div
-            data-deals-stay-dates
-            className="mt-3 w-full border-b border-slate-200 pb-3"
-          >
-            <span className={`${label} px-3`}>{t("deals.datesForStay")}</span>
+              <div data-deals-stay-dates className="mt-3 w-full pb-3">
+                <span className={`${label} px-3`}>
+                  {t("deals.datesForStay")}
+                </span>
             <button
               ref={hotelDatesLauncherRef}
               type="button"
@@ -3680,8 +3973,14 @@ export function DealsSearchForm({
           </div>
         ) : null}
         <div className="w-full">{guidedPreviewPanel}</div>
+            {isDesktopLanding ? (
+              <div data-deals-desktop-search-cta className="mt-[14px] w-full">
+                {searchDealsButton}
+              </div>
+            ) : null}
       </section>
-      </>}
+        </>
+      )}
       {warning}
       {(["origin", "destination"] as const).map((kind) => {
         const textKey =
@@ -3891,6 +4190,37 @@ export function DealsSearchForm({
           </div>
         </div>
       </DealsFlightPopover>
+      <DealsDestinationPopover
+        open={cabinOpen}
+        anchorRef={cabinLauncherRef}
+        width={260}
+        marker="cabin"
+      >
+        <div
+          id="deals-desktop-cabin-listbox"
+          role="listbox"
+          aria-label={t("deals.cabinClass")}
+        >
+          {(["economy", "business", "first"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="option"
+              aria-selected={search.flightCabinClass === option}
+              onClick={() => {
+                update("flightCabinClass", option);
+                setCabinOpen(false);
+                requestAnimationFrame(() =>
+                  cabinLauncherRef.current?.focus({ preventScroll: true }),
+                );
+              }}
+              className={`focus-ring flex min-h-11 w-full items-center rounded-md px-3 text-start text-sm font-semibold ${search.flightCabinClass === option ? "bg-slate-100 text-slate-950" : "text-slate-700 hover:bg-slate-50"}`}
+            >
+              {t(option)}
+            </button>
+          ))}
+        </div>
+      </DealsDestinationPopover>
       <FlightMobilePickerShell
         open={mobileTravelersOpen}
         title={travelersControlLabel}
