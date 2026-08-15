@@ -543,7 +543,11 @@ export function FlightLandingClient() {
         */}
         <div className="page-shell absolute inset-x-0 bottom-[-23.5rem] z-30">
           <div className="mx-auto max-w-6xl">
-            <StandaloneFlightSearchForm localizeCalendarLabels mobileHeroCard />
+            <StandaloneFlightSearchForm
+              localizeCalendarLabels
+              mobileHeroCard
+              presentation="main-flight-landing"
+            />
           </div>
         </div>
       </section>

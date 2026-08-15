@@ -15590,3 +15590,55 @@ test("Vietnamese account trips and price alerts render paths resolve without Eng
   assert.equal(languageOptions.find((option) => option.code === "id")?.status, "available");
   assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
 });
+
+test("main Flights mobile fields use the scoped icon and value-row presentation", () => {
+  const formSource = readFileSync(
+    "src/components/search/StandaloneFlightSearchForm.tsx",
+    "utf8",
+  );
+  const landingSource = readFileSync(
+    "src/components/flights/FlightLandingClient.tsx",
+    "utf8",
+  );
+  const routeLandingSource = readFileSync(
+    "src/app/flights/[slug]/page.tsx",
+    "utf8",
+  );
+
+  assert.equal(enTranslations.flightSearchDestinationPlaceholderShort, "To?");
+  assert.ok(
+    landingSource.includes('presentation="main-flight-landing"'),
+    "the main /flights mobile form should opt into the scoped presentation",
+  );
+  assert.ok(
+    routeLandingSource.includes("<StandaloneFlightSearchForm />"),
+    "route landing pages should retain the default presentation",
+  );
+  assert.ok(formSource.includes("MapPin,"));
+  assert.ok(formSource.includes("UserRound,"));
+  assert.ok(formSource.includes('mobilePlaceholder={t("flightSearchDestinationPlaceholderShort")}'));
+  assert.match(
+    formSource,
+    /<MapPin[\s\S]*?mobileFieldValueIconClassName[\s\S]*?aria-hidden="true"/,
+  );
+  assert.match(
+    formSource,
+    /<UserRound[\s\S]*?mobileFieldValueIconClassName[\s\S]*?aria-hidden="true"[\s\S]*?travelerSummary/,
+  );
+  assert.match(
+    formSource,
+    /<Calendar[\s\S]*?mobileFieldValueIconClassName[\s\S]*?aria-hidden="true"[\s\S]*?dateSummary/,
+  );
+  assert.match(
+    formSource,
+    /useMainFlightLandingMobilePresentation \? \([\s\S]*?<MapPin[\s\S]*?\) : \([\s\S]*?<ChevronDown/,
+    "airport chevrons should render only outside the scoped main landing presentation",
+  );
+  assert.match(
+    formSource,
+    /travelerSummary[\s\S]*?<ChevronDown/,
+    "the Travelers summary should retain its trailing chevron",
+  );
+  assert.ok(formSource.includes("onClick={swapAirports}"));
+  assert.ok(formSource.includes("<form onSubmit={onSubmit}"));
+});
