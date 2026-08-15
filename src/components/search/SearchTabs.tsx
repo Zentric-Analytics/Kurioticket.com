@@ -766,17 +766,22 @@ export function SearchTabs({
         "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
         searchTabsOverlayOpen && desktopOverlayRootClassName,
         mobileHomepage
-          ? "rounded-[22px] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
+          ? tab === "hotels"
+            ? "rounded-[14px] border-[#dee5ed] bg-[#f8fafc] p-[11px] shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
+            : "rounded-[22px] p-4 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
           : compactHero
           ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
           : "p-2"
       ),
-    [compactHero, mobileHomepage, searchTabsOverlayOpen]
+    [compactHero, mobileHomepage, searchTabsOverlayOpen, tab]
   );
 
   const tabsClassName = cn(
     mobileHomepage
-      ? "mb-5 grid h-[46px] w-full grid-cols-4 overflow-hidden rounded-[16px] border border-slate-200 bg-white text-[15px] max-[359px]:text-[14px]"
+      ? cn(
+          "grid h-[46px] w-full grid-cols-4 overflow-hidden rounded-[16px] border border-slate-200 bg-white text-[15px] max-[359px]:text-[14px]",
+          tab === "hotels" ? "mb-[15px]" : "mb-5",
+        )
       : "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
     !mobileHomepage && compactHero
       ? "mb-1 sm:mb-1.5 lg:mb-2 lg:gap-0.5 lg:border-slate-200/90 lg:bg-slate-100/80 lg:shadow-inner"
@@ -789,6 +794,9 @@ export function SearchTabs({
       ? "p-0.5 lg:border-slate-200/90 lg:p-1 lg:shadow-[0_14px_34px_rgba(15,23,42,0.10)] lg:ring-1 lg:ring-slate-900/[0.02]"
       : "p-1"
   );
+  const hotelFieldCardClassName = mobileHomepage
+    ? "overflow-visible border-0 bg-transparent p-0 shadow-none ring-0"
+    : fieldCardClassName;
   const flightGridClassName = cn(
     "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
     compactHero
@@ -797,8 +805,9 @@ export function SearchTabs({
   );
   const hotelGridClassName = cn(
     "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
+    mobileHomepage && "gap-2.5",
     compactHero
-      ? "gap-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(172px,1.28fr)_minmax(158px,1.02fr)_136px]"
+      ? !mobileHomepage && "gap-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(172px,1.28fr)_minmax(158px,1.02fr)_136px]"
       : "gap-1.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]"
   );
   const carsGridClassName = cn(
@@ -863,7 +872,8 @@ export function SearchTabs({
   );
   const hotelSubmitButtonClassName = cn(
     "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(2,28,43,0.14)] lg:disabled:shadow-[0_10px_22px_rgba(2,28,43,0.14)]",
-    compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
+    compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]",
+    mobileHomepage && "rounded-[11px]",
   );
 
   const fromQuery = from.trim();
@@ -3946,9 +3956,21 @@ export function SearchTabs({
           }
           className={formClassName}
         >
-          <div className={fieldCardClassName}>
+          <div
+            className={hotelFieldCardClassName}
+            data-testid={mobileHomepage ? "mobile-homepage-hotel-controls" : undefined}
+          >
             <div className={hotelGridClassName}>
-              <div className={cn("relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", hotelJoinedFieldClassName)}>
+              <div
+                className={cn(
+                  "relative border",
+                  mobileHomepage
+                    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe]"
+                    : "rounded-xl border-slate-300 bg-white lg:rounded-s-xl",
+                  hotelJoinedFieldClassName,
+                )}
+                data-testid={mobileHomepage ? "mobile-homepage-hotel-destination" : undefined}
+              >
                 <label className={hotelFieldLabelClassName}>
                   {t.hotelSearchDestinationLabel || t.destination || "Destination"}
                 </label>
@@ -3998,10 +4020,14 @@ export function SearchTabs({
               <div
                 ref={hotelDateWrapRef}
                 className={cn(
-                  "relative rounded-xl border border-slate-300 bg-white",
+                  "relative border",
+                  mobileHomepage
+                    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe]"
+                    : "rounded-xl border-slate-300 bg-white",
                   hotelJoinedFieldClassName,
                   hotelDatesOpen && desktopActiveFieldClassName
                 )}
+                data-testid={mobileHomepage ? "mobile-homepage-hotel-dates" : undefined}
               >
                 <label className={hotelFieldLabelClassName}>
                   {translateHotelTravelDateText("hotelSearchTravelDatesLabel") ||
@@ -4051,10 +4077,14 @@ export function SearchTabs({
               <div
                 ref={hotelGuestsRoomsWrapRef}
                 className={cn(
-                  "relative rounded-xl border border-slate-300 bg-white",
+                  "relative border",
+                  mobileHomepage
+                    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe]"
+                    : "rounded-xl border-slate-300 bg-white",
                   hotelJoinedFieldClassName,
                   hotelGuestsRoomsOpen && desktopActiveFieldClassName
                 )}
+                data-testid={mobileHomepage ? "mobile-homepage-hotel-guests" : undefined}
               >
                 <label className={hotelFieldLabelClassName}>
                   {translate("hotelSearchGuestsLabel") ||
@@ -4262,6 +4292,7 @@ export function SearchTabs({
                   }
                   aria-busy={isHotelSubmitting}
                   aria-label={t.searchHotels || "Search hotels"}
+                  data-testid={mobileHomepage ? "mobile-homepage-hotel-search" : undefined}
                   className={hotelSubmitButtonClassName}
                 >
                   {isHotelSubmitting
