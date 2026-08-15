@@ -112,13 +112,11 @@ const dealsPackageOptions = [
   mode: DealsPackageMode;
   label: keyof typeof en;
 }>;
-// Desktop labels are presentation choices only. Both ordering labels map to the
-// existing hotel-flight mode; no URL, validation, or journey mode is added.
 const desktopLandingPackageOptions = [
-  { id: "hotel-flight", mode: "hotel-flight", text: "Hotel + Flight" },
-  { id: "flight-hotel", mode: "hotel-flight", text: "Flight + Hotel" },
-  { id: "flight-car", mode: "flight-car", text: "Flight + Car" },
-  { id: "hotel-car", mode: "hotel-car", text: "Hotel + Car" },
+  { id: "hotel-flight", mode: "hotel-flight", text: "Flight+Hotel" },
+  { id: "flight-car", mode: "flight-car", text: "Flight+Car" },
+  { id: "hotel-car", mode: "hotel-car", text: "Hotel+Car" },
+  { id: "hotel-flight-car", mode: "hotel-flight-car", text: "Flight+Hotel+Car" },
 ] as const satisfies ReadonlyArray<{
   id: string;
   mode: DealsPackageMode;
@@ -3210,11 +3208,12 @@ export function DealsSearchForm({
                                 [kind]: [],
                               }));
                           }}
-                          className={`${field} ${flightConnectedField} pe-10 ${isDesktopLanding ? "lg:text-[15px] lg:font-semibold" : ""}`}
+                          className={`${field} ${flightConnectedField} ${isDesktopLanding ? "pe-3 lg:text-[15px] lg:font-semibold" : "pe-10"}`}
                           autoComplete="off"
                         />
-                        {search[textKey] ? (
+                        {!isDesktopLanding && search[textKey] ? (
                           <button
+                            data-deals-flight-clear={kind}
                             type="button"
                             aria-label={t("clear")}
                             onMouseDown={(event) => event.preventDefault()}

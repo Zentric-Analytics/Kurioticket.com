@@ -238,6 +238,14 @@ test("desktop-only styling leaves mobile homepage and results gates intact", () 
   assert.match(form, /data-deals-results-layout/);
 });
 
+test("desktop landing removes only flight clear controls and their reserved padding", () => {
+  assert.match(flightRow, /\$\{isDesktopLanding \? "pe-3[^"']*" : "pe-10"\}/);
+  assert.match(flightRow, /\{!isDesktopLanding && search\[textKey\] \? \(/);
+  assert.match(flightRow, /data-deals-flight-clear=\{kind\}/);
+  assert.match(flightRow, /onChange=\{\(event\) =>/);
+  assert.match(flightRow, /swapDealsFlightAirports/);
+});
+
 test("desktop landing uses restrained eight-pixel geometry", () => {
   assert.match(form, /lg:rounded-\[8px\] lg:border-\[#dee5ed\]/);
   assert.match(
