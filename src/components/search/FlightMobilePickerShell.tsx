@@ -32,6 +32,7 @@ type FlightMobilePickerShellProps = {
   onClose: () => void;
   className?: string;
   contentClassName?: string;
+  contentLayout?: "scroll" | "contained";
   pickerMarker?: "flight-date" | "traveler-cabin";
 };
 
@@ -139,6 +140,7 @@ export function FlightMobilePickerShell({
   onClose,
   className,
   contentClassName,
+  contentLayout = "scroll",
   pickerMarker,
 }: FlightMobilePickerShellProps) {
   const { t } = useLocale();
@@ -382,8 +384,13 @@ export function FlightMobilePickerShell({
         </div>
 
         <div
+          data-flight-mobile-picker-content
+          data-content-layout={contentLayout}
           className={cn(
-            "min-h-0 flex-1 touch-pan-y overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 px-4 py-4 [-webkit-overflow-scrolling:touch]",
+            "min-h-0 flex-1 overflow-x-hidden bg-slate-50 px-4 py-4",
+            contentLayout === "scroll"
+              ? "touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
+              : "flex touch-auto flex-col overflow-y-hidden",
             contentClassName,
           )}
         >
