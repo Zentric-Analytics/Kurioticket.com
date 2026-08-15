@@ -64,7 +64,6 @@ test("mobile homepage controls use the compact production density without scalin
   assert.match(mobileBranch, /h-\[62px\][^\n]*w-full/);
   assert.match(mobileBranch, /h-16 w-full/);
   assert.match(mobileBranch, /h-12 w-full rounded-\[11px\]/);
-  assert.match(mobileBranch, /h-9 w-9/);
   assert.doesNotMatch(mobileBranch, /transform:\s*scale|scale-\[/);
 });
 
@@ -74,13 +73,20 @@ test("mobile homepage reserved space follows the compact card while desktop offs
   assert.match(homepage, /bottom-\[-52px\][^\n]*hidden sm:block lg:bottom-\[-56px\]/);
 });
 
-test("route cards use icon tiles and the wired horizontal swap", () => {
+test("mobile fields omit decorative icon tiles while retaining the wired horizontal swap", () => {
   assert.match(mobileBranch, /mobile-homepage-\$\{kind\}-field/);
-  assert.equal((mobileBranch.match(/mobile-homepage-location-icon-tile/g) ?? []).length, 1);
+  assert.doesNotMatch(mobileBranch, /mobile-homepage-location-icon-tile|<MapPin|<Calendar|<UserRound/);
+  assert.equal((mobileBranch.match(/bg-\[#fcfdfe\] px-4 text-start/g) ?? []).length, 3);
   assert.match(mobileBranch, /mobile-homepage-swap/);
   assert.match(mobileBranch, /onClick=\{onSwapAirports\}/);
   assert.match(mobileBranch, /<ArrowRightLeft/);
   assert.doesNotMatch(mobileBranch, /<ArrowUpDown/);
+});
+
+test("mobile card, fields, borders, and tabs use the cool-neutral surface hierarchy", () => {
+  assert.match(mobileBranch, /border border-\[#dee5ed\] bg-\[#f8fafc\][^\n]*shadow-\[0_8px_22px_rgba\(15,23,42,0\.07\)\]/);
+  assert.ok((mobileBranch.match(/border border-\[#dee5ed\] bg-\[#fcfdfe\]/g) ?? []).length >= 5);
+  assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
 });
 
 test("dates and travelers are single full-width mobile cards", () => {
