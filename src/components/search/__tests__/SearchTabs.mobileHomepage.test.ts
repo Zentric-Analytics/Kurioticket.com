@@ -74,10 +74,26 @@ test("mobile homepage controls use the refined product-tab hierarchy without sca
   assert.doesNotMatch(mobileBranch, /transform:\s*scale|scale-\[/);
 });
 
-test("mobile homepage reserved space follows the compact card while desktop offsets stay protected", () => {
-  assert.match(homepage, /bottom-\[-460px\][^\n]*sm:hidden/);
-  assert.match(homepage, /pt-\[30\.5rem\][^\n]*sm:pt-24/);
+test("mobile homepage uses one top anchor and reserves the measured active-card height", () => {
+  assert.match(homepage, /top-\[calc\(100%-4rem\)\][^\n]*sm:hidden/);
+  assert.doesNotMatch(homepage, /bottom-\[-460px\]|pt-\[30\.5rem\]/);
+  assert.match(homepage, /new ResizeObserver\(updateHeight\)/);
+  assert.match(homepage, /observer\.observe\(card\)/);
+  assert.match(homepage, /--mobile-search-card-height/);
+  assert.match(homepage, /pt-\[max\(1\.75rem,calc\(var\(--mobile-search-card-height\)_-_2\.25rem\)\)\]/);
+  assert.doesNotMatch(homepage, /tab === ["'](?:hotels|cars|flights|deals)["'][\s\S]{0,120}top-/);
   assert.match(homepage, /bottom-\[-52px\][^\n]*hidden sm:block lg:bottom-\[-56px\]/);
+});
+
+test("mobile Hotels removes only the nested surface and keeps its connected controls", () => {
+  assert.match(source, /const hotelFieldCardClassName = mobileHomepage[\s\S]*?overflow-visible border-0 bg-transparent p-0 shadow-none ring-0/);
+  assert.match(sharedBranch, /mobile-homepage-hotel-controls/);
+  assert.match(sharedBranch, /mobile-homepage-hotel-destination[\s\S]*?HotelDestinationMobilePicker/);
+  assert.match(sharedBranch, /mobile-homepage-hotel-dates[\s\S]*?HotelMobilePickerShell/);
+  assert.match(sharedBranch, /mobile-homepage-hotel-guests[\s\S]*?hotelGuestsRoomsSummary/);
+  assert.match(sharedBranch, /mobile-homepage-hotel-search/);
+  assert.match(sharedBranch, /rounded-\[11px\] border-\[#dee5ed\] bg-\[#fcfdfe\]/);
+  assert.match(source, /tab === "hotels"[\s\S]{0,180}rounded-\[14px\][^\n]*p-\[11px\]/);
 });
 
 test("mobile fields omit decorative icon tiles while retaining the wired horizontal swap", () => {
