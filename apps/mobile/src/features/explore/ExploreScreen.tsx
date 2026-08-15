@@ -30,8 +30,8 @@ import {
 
 const BLUE = "#0754F7";
 const SEARCH_RESULTS_BOTTOM_SPACING = 18;
+export const REGION_PREVIEW_CARD_WIDTH_RATIO = 0.928;
 export const REGION_PREVIEW_NEXT_CARD_PEEK_EXPANSION_RATIO = 0.058;
-export const REGION_PREVIEW_CARD_WIDTH_RATIO = 0.928 - REGION_PREVIEW_NEXT_CARD_PEEK_EXPANSION_RATIO;
 export const REGION_PREVIEW_INSET_RATIO = 0.024;
 export const REGION_PREVIEW_GAP_RATIO = 0.024;
 export const REGION_PREVIEW_ASPECT_RATIO = 2.13;
@@ -122,7 +122,7 @@ function ExploreDiscoveryContent({ REGION_DISCOVERY, select }: { REGION_DISCOVER
   const { theme } = useAppTheme();
   const { savedIds, toggle } = useSavedDestinations();
   const { width: windowWidth } = useWindowDimensions();
-  const previewCardWidth = windowWidth * REGION_PREVIEW_CARD_WIDTH_RATIO;
+  const previewCardWidth = windowWidth * (REGION_PREVIEW_CARD_WIDTH_RATIO - REGION_PREVIEW_NEXT_CARD_PEEK_EXPANSION_RATIO);
   const previousCardHeight = previewCardWidth / REGION_PREVIEW_ASPECT_RATIO;
   const previousImageHeight = previewCardWidth / REGION_PREVIEW_IMAGE_ASPECT_RATIO;
   const previewImageHeight = previousImageHeight * REGION_PREVIEW_IMAGE_HEIGHT_SCALE;
