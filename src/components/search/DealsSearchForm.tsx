@@ -16,12 +16,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
   BedDouble,
+  Building2,
   Calendar,
+  CarFront,
   ChevronDown,
+  LocateFixed,
   MapPin,
   Minus,
+  Plane,
   Plus,
   Search,
+  UserRound,
   X,
 } from "lucide-react";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -546,6 +551,7 @@ export type DealsSearchFormProps = {
   onDraftChange?: (search: DealsSearch) => void;
   warning?: ReactNode;
   pending?: boolean;
+  presentation?: "default" | "mobile-homepage";
 };
 
 export function normalizeUnifiedResultsSearch(current: DealsSearch) {
@@ -573,6 +579,7 @@ export function DealsSearchForm({
   onDraftChange,
   warning,
   pending = false,
+  presentation = "default",
 }: DealsSearchFormProps = {}) {
   const params = useSearchParams();
   const router = useRouter();
@@ -2860,14 +2867,71 @@ export function DealsSearchForm({
     </>
   );
 
+  const compactFieldClassName =
+    "focus-ring flex h-[68px] w-full min-w-0 items-center gap-3 rounded-[14px] border border-[#dee5ed] bg-[#fcfdfe] px-3 text-start max-[359px]:gap-2.5";
+  const compactIconClassName =
+    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8] max-[359px]:h-9 max-[359px]:w-9";
+  const compactLabelClassName =
+    "block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600";
+  const compactValueClassName =
+    "mt-1.5 block truncate text-[16px] font-medium leading-5 text-slate-950";
+
+  const mobileHomepageControls = presentation === "mobile-homepage" ? (
+    <div data-testid="mobile-homepage-deals-search" className="mt-3 space-y-2">
+      <fieldset>
+        <legend className="sr-only">{t("deals.packageSelector.instruction")}</legend>
+        <div role="radiogroup" aria-label={t("deals.packageSelector.instruction")} className="grid h-12 grid-cols-2 overflow-hidden rounded-[14px] border border-[#dee5ed] bg-[#fcfdfe]">
+          {([
+            ["hotel-flight", "Flight + Hotel"],
+            ["hotel-flight-car", "Flight + Hotel + Car"],
+          ] as const).map(([mode, text], index) => {
+            const selected = search.mode === mode;
+            return (
+              <button key={mode} type="button" role="radio" aria-checked={selected} data-deals-mode={mode} onClick={() => selectPackageMode(mode)} className={`focus-ring flex min-w-0 items-center justify-center gap-1.5 px-1 text-[13px] font-semibold transition-colors max-[359px]:gap-1 max-[359px]:text-[11px] ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "relative z-10 rounded-[13px] border border-[#075ee8] bg-[#eef5ff] text-[#075ee8]" : "text-slate-800"}`}>
+                <span aria-hidden="true" className="flex shrink-0 items-center gap-0.5">
+                  {mode === "hotel-flight" ? <><Building2 className="h-4 w-4" /><Plane className="h-3 w-3" /></> : <><Plane className="h-4 w-4" /><CarFront className="h-4 w-4" /></>}
+                </span>
+                <span className="truncate">{text}</span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <button ref={flightOriginMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={flightMobileAirport === "origin"} onClick={() => setFlightMobileAirport("origin")} className={compactFieldClassName}>
+        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-5 w-5" /></span>
+        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Origin</span><span className={compactValueClassName}>{search.flightOriginText || t("cityOrAirport")}</span></span>
+        <LocateFixed aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+      </button>
+      <button ref={flightDestinationMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={flightMobileAirport === "destination"} onClick={() => setFlightMobileAirport("destination")} className={compactFieldClassName}>
+        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-5 w-5" /></span>
+        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Destination</span><span className={`${compactValueClassName} ${search.flightDestinationText ? "" : "text-slate-500"}`}>{search.flightDestinationText || "Where to?"}</span></span>
+        <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+      </button>
+      <button ref={flightDatesLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileFlightDatesOpen} onClick={openFlightDates} className={compactFieldClassName}>
+        <span className={compactIconClassName}><Calendar aria-hidden="true" className="h-5 w-5" /></span>
+        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travel Dates</span><span className={`${compactValueClassName} ${search.flightDepartureDate ? "" : "text-slate-500"}`}>{search.flightDepartureDate ? flightDatesSummary : "Choose dates"}</span></span>
+        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+      </button>
+      <button ref={travelersLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileTravelersOpen} onClick={openTravelers} className={compactFieldClassName}>
+        <span className={compactIconClassName}><UserRound aria-hidden="true" className="h-5 w-5" /></span>
+        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travelers &amp; Rooms</span><span className={compactValueClassName}>{travelerSummary}</span></span>
+        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+      </button>
+      {errorBlock("flight")}{errorBlock("hotel")}{included.car ? errorBlock("car") : null}
+      <button type="submit" disabled={submitting || pending} aria-busy={submitting || pending} className="focus-ring h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60">Search deals</button>
+    </div>
+  ) : null;
+
   return (
     <form
       data-deals-layout={variant}
       {...(variant === "results" ? { "data-deals-results-layout": true } : {})}
       onSubmit={submit}
       noValidate
-      className={`mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""}`}
+      className={presentation === "mobile-homepage" ? "w-full" : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""}`}
     >
+      {mobileHomepageControls ?? <>
       <fieldset className="pb-3 sm:pb-2 lg:pb-1">
         <legend className="sr-only">
           {t("deals.packageSelector.instruction")}
@@ -3532,6 +3596,7 @@ export function DealsSearchForm({
         ) : null}
         <div className="w-full">{guidedPreviewPanel}</div>
       </section>
+      </>}
       {warning}
       {(["origin", "destination"] as const).map((kind) => {
         const textKey =
