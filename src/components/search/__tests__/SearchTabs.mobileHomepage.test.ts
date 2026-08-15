@@ -96,6 +96,36 @@ test("mobile Hotels removes only the nested surface and keeps its connected cont
   assert.match(source, /tab === "hotels"[\s\S]{0,180}rounded-\[14px\][^\n]*p-\[11px\]/);
 });
 
+test("mobile Cars removes its nested surface and uses controlled card geometry", () => {
+  assert.match(source, /const carsFieldCardClassName = mobileHomepage[\s\S]*?overflow-visible border-0 bg-transparent p-0 shadow-none ring-0/);
+  assert.match(source, /tab === "hotels" \|\| tab === "cars"[\s\S]{0,160}rounded-\[14px\]/);
+  assert.match(source, /const carsMobileHomepageFieldClassName = mobileHomepage[\s\S]*?rounded-\[11px\] border-\[#dee5ed\] bg-\[#fcfdfe\]/);
+  assert.match(sharedBranch, /className=\{carsFieldCardClassName\} data-testid="cars-joined-search-card"/);
+  assert.doesNotMatch(sharedBranch, /className=\{fieldCardClassName\} data-testid="cars-joined-search-card"/);
+});
+
+test("mobile Cars places its single return-location field directly after pickup", () => {
+  const carsBranch = source.slice(source.lastIndexOf("<form onSubmit={onCarsSubmit}"));
+  const order = [
+    "cars-pickup-location-field",
+    "{mobileHomepage ? carsReturnLocationField : null}",
+    'id="homepage-cars-rental-dates"',
+    'id="homepage-cars-time-range"',
+    'id="homepage-cars-driver-age"',
+    'aria-label={translate("searchCars")',
+    "Different return location",
+  ];
+  let previous = -1;
+  for (const marker of order) {
+    const index = carsBranch.indexOf(marker);
+    assert.ok(index > previous, `${marker} should follow the preceding Cars control`);
+    previous = index;
+  }
+  assert.equal((source.match(/data-testid="cars-return-location-field"/g) ?? []).length, 1);
+  assert.match(source, /const carsReturnLocationField = carsValues\.returnToDifferentLocation/);
+  assert.match(carsBranch, /checked=\{carsValues\.returnToDifferentLocation\}[\s\S]*?updateCarsValue\("returnToDifferentLocation", event\.target\.checked\)/);
+});
+
 test("mobile fields omit decorative icon tiles while retaining the wired horizontal swap", () => {
   assert.match(mobileBranch, /mobile-homepage-\$\{kind\}-field/);
   assert.doesNotMatch(mobileBranch, /mobile-homepage-location-icon-tile|<MapPin|<Calendar|<UserRound/);
