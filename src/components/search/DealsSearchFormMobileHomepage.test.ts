@@ -77,13 +77,44 @@ test("compact controls reuse canonical pickers, summary, validation and submissi
   assert.match(form, /removeDealsStagedJourneyPlan\(\)/);
 });
 
-test("mobile Deals fields use restrained geometry and neutral compact icons", () => {
+test("mobile Packages fields use restrained geometry and neutral value-row icons", () => {
   assert.match(form, /compactFieldClassName[\s\S]{0,180}rounded-\[10px\]/);
-  assert.match(form, /compactIconClassName[\s\S]{0,160}h-8 w-8[^\"]*bg-slate-100\/70 text-slate-600/);
-  assert.match(compact, /h-\[17px\] w-\[17px\]/);
-  assert.doesNotMatch(form.slice(form.indexOf("const compactFieldClassName"), form.indexOf("const compactLabelClassName")), /h-10 w-10|bg-\[#eef5ff\] text-\[#075ee8\]/);
+  assert.match(form, /compactFieldClassName[\s\S]{0,220}h-\[68px\][^\"]*items-center justify-between[^\"]*px-\[13px\] py-\[11px\]/);
+  assert.match(form, /compactValueRowClassName[\s\S]{0,100}mt-1\.5 flex min-w-0 items-center gap-2 text-slate-600/);
+  assert.match(form, /compactValueIconClassName = "h-4 w-4 shrink-0"/);
+  assert.doesNotMatch(form, /compactIconClassName|h-8 w-8[^\"]*rounded-full[^\"]*bg-slate-100\/70/);
   assert.match(compact, /type="submit"[\s\S]{0,180}rounded-\[11px\]/);
   assert.doesNotMatch(compact, /LocateFixed/);
+});
+
+test("field content orders the label before the icon and value", () => {
+  const helperStart = form.indexOf("const compactPackageFieldContent");
+  const helperEnd = form.indexOf("const mobileHomepageControls", helperStart);
+  const helper = form.slice(helperStart, helperEnd);
+  const labelIndex = helper.indexOf("{label}");
+  const rowIndex = helper.indexOf("compactValueRowClassName");
+  const iconIndex = helper.indexOf("{icon}");
+  const valueIndex = helper.indexOf("{value}");
+
+  assert.ok(labelIndex >= 0 && labelIndex < rowIndex);
+  assert.ok(rowIndex < iconIndex && iconIndex < valueIndex);
+  assert.match(form, /compactValueTextClassName =\n\s+"min-w-0 truncate/);
+});
+
+test("all package modes share the label, value-row, icon hierarchy", () => {
+  assert.equal((compact.match(/compactPackageFieldContent\(/g) ?? []).length, 6);
+  assert.equal((compact.match(/<MapPin\s+aria-hidden="true"/g) ?? []).length, 3);
+  assert.equal((compact.match(/<Calendar\s+aria-hidden="true"/g) ?? []).length, 2);
+  assert.equal((compact.match(/<UserRound\s+aria-hidden="true"/g) ?? []).length, 1);
+  assert.match(compact, /"Origin",[\s\S]{0,140}<MapPin/);
+  assert.match(compact, /"Destination",[\s\S]{0,140}<MapPin/);
+  assert.match(compact, /"Travel Dates",[\s\S]{0,140}<Calendar/);
+  assert.match(compact, /Travelers &amp; Rooms[\s\S]{0,160}<UserRound/);
+  for (const mode of ["hotel-flight", "flight-car", "hotel-car", "hotel-flight-car"]) {
+    assert.ok(options.includes(`{ mode: "${mode}"`), `${mode} should use the shared controls`);
+  }
+  assert.match(compact, /included\.flight \?/);
+  assert.match(compact, /included\.hotel \? <>Travelers &amp; Rooms<\/> : <>Travelers<\/>/);
 });
 
 test("flight packages expose one canonical route swap while hotel-car does not", () => {

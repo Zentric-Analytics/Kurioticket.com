@@ -3186,13 +3186,33 @@ export function DealsSearchForm({
   );
 
   const compactFieldClassName =
-    "focus-ring flex h-[68px] w-full min-w-0 items-center gap-2.5 rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-[13px] text-start max-[359px]:gap-2";
-  const compactIconClassName =
-    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100/70 text-slate-600";
+    "focus-ring flex h-[68px] w-full min-w-0 items-center justify-between rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-[13px] py-[11px] text-start";
+  const compactFieldContentClassName = "min-w-0 flex-1";
   const compactLabelClassName =
     "block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600";
-  const compactValueClassName =
-    "mt-1.5 block truncate text-[16px] font-medium leading-5 text-slate-950";
+  const compactValueRowClassName =
+    "mt-1.5 flex min-w-0 items-center gap-2 text-slate-600";
+  const compactValueTextClassName =
+    "min-w-0 truncate text-[16px] font-medium leading-5 text-slate-950";
+  const compactValueIconClassName = "h-4 w-4 shrink-0";
+  const compactPackageFieldContent = (
+    label: ReactNode,
+    icon: ReactNode,
+    value: ReactNode,
+    placeholder = false,
+  ) => (
+    <span className={compactFieldContentClassName}>
+      <span className={compactLabelClassName}>{label}</span>
+      <span className={compactValueRowClassName}>
+        {icon}
+        <span
+          className={`${compactValueTextClassName} ${placeholder ? "text-slate-500" : ""}`}
+        >
+          {value}
+        </span>
+      </span>
+    </span>
+  );
 
   const mobileHomepageControls =
     presentation === "mobile-homepage" ? (
@@ -3273,15 +3293,15 @@ export function DealsSearchForm({
               onClick={() => setFlightMobileAirport("origin")}
               className={compactFieldClassName}
             >
-              <span className={compactIconClassName}>
-                <MapPin aria-hidden="true" className="h-[17px] w-[17px]" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className={compactLabelClassName}>Origin</span>
-                <span className={compactValueClassName}>
-                  {search.flightOriginText || t("cityOrAirport")}
-                </span>
-              </span>
+              {compactPackageFieldContent(
+                "Origin",
+                <MapPin
+                  aria-hidden="true"
+                  className={compactValueIconClassName}
+                />,
+                search.flightOriginText || t("cityOrAirport"),
+                !search.flightOriginText,
+              )}
             </button>
             <button
               type="button"
@@ -3304,17 +3324,15 @@ export function DealsSearchForm({
               onClick={() => setFlightMobileAirport("destination")}
               className={compactFieldClassName}
             >
-              <span className={compactIconClassName}>
-                <MapPin aria-hidden="true" className="h-[17px] w-[17px]" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className={compactLabelClassName}>Destination</span>
-                <span
-                  className={`${compactValueClassName} ${search.flightDestinationText ? "" : "text-slate-500"}`}
-                >
-                  {search.flightDestinationText || "Where to?"}
-                </span>
-              </span>
+              {compactPackageFieldContent(
+                "Destination",
+                <MapPin
+                  aria-hidden="true"
+                  className={compactValueIconClassName}
+                />,
+                search.flightDestinationText || "Where to?",
+                !search.flightDestinationText,
+              )}
             </button>
             <button
               ref={flightDatesLauncherRef}
@@ -3324,19 +3342,17 @@ export function DealsSearchForm({
               onClick={openFlightDates}
               className={compactFieldClassName}
             >
-              <span className={compactIconClassName}>
-                <Calendar aria-hidden="true" className="h-[17px] w-[17px]" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className={compactLabelClassName}>Travel Dates</span>
-                <span
-                  className={`${compactValueClassName} ${search.flightDepartureDate ? "" : "text-slate-500"}`}
-                >
-                  {search.flightDepartureDate
-                    ? flightDatesSummary
-                    : "Choose dates"}
-                </span>
-              </span>
+              {compactPackageFieldContent(
+                "Travel Dates",
+                <Calendar
+                  aria-hidden="true"
+                  className={compactValueIconClassName}
+                />,
+                search.flightDepartureDate
+                  ? flightDatesSummary
+                  : "Choose dates",
+                !search.flightDepartureDate,
+              )}
               <ChevronDown
                 aria-hidden="true"
                 className="h-5 w-5 shrink-0 text-slate-700"
@@ -3353,17 +3369,15 @@ export function DealsSearchForm({
               onClick={() => openHotelDestination(true)}
               className={compactFieldClassName}
             >
-              <span className={compactIconClassName}>
-                <MapPin aria-hidden="true" className="h-[17px] w-[17px]" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className={compactLabelClassName}>Destination</span>
-                <span
-                  className={`${compactValueClassName} ${displayedHotelDestination ? "" : "text-slate-500"}`}
-                >
-                  {displayedHotelDestination || "Where to?"}
-                </span>
-              </span>
+              {compactPackageFieldContent(
+                "Destination",
+                <MapPin
+                  aria-hidden="true"
+                  className={compactValueIconClassName}
+                />,
+                displayedHotelDestination || "Where to?",
+                !displayedHotelDestination,
+              )}
             </button>
             <button
               ref={hotelDatesLauncherRef}
@@ -3373,17 +3387,15 @@ export function DealsSearchForm({
               onClick={openHotelDates}
               className={compactFieldClassName}
             >
-              <span className={compactIconClassName}>
-                <Calendar aria-hidden="true" className="h-[17px] w-[17px]" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className={compactLabelClassName}>Travel Dates</span>
-                <span
-                  className={`${compactValueClassName} ${displayedHotelCheckIn ? "" : "text-slate-500"}`}
-                >
-                  {displayedHotelCheckIn ? hotelDatesSummary : "Choose dates"}
-                </span>
-              </span>
+              {compactPackageFieldContent(
+                "Travel Dates",
+                <Calendar
+                  aria-hidden="true"
+                  className={compactValueIconClassName}
+                />,
+                displayedHotelCheckIn ? hotelDatesSummary : "Choose dates",
+                !displayedHotelCheckIn,
+              )}
               <ChevronDown
                 aria-hidden="true"
                 className="h-5 w-5 shrink-0 text-slate-700"
@@ -3399,15 +3411,14 @@ export function DealsSearchForm({
           onClick={openTravelers}
           className={compactFieldClassName}
         >
-          <span className={compactIconClassName}>
-            <UserRound aria-hidden="true" className="h-[17px] w-[17px]" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className={compactLabelClassName}>
-              {included.hotel ? <>Travelers &amp; Rooms</> : <>Travelers</>}
-            </span>
-            <span className={compactValueClassName}>{travelerSummary}</span>
-          </span>
+          {compactPackageFieldContent(
+            included.hotel ? <>Travelers &amp; Rooms</> : <>Travelers</>,
+            <UserRound
+              aria-hidden="true"
+              className={compactValueIconClassName}
+            />,
+            travelerSummary,
+          )}
           <ChevronDown
             aria-hidden="true"
             className="h-5 w-5 shrink-0 text-slate-700"
