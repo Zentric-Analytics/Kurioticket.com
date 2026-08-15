@@ -210,3 +210,9 @@ test("all mobile homepage products remain switchable without route navigation", 
   assert.doesNotMatch(sharedBranch, /router\.push\("\/packages"\)/);
   assert.doesNotMatch(sharedBranch, /startRouteProgress\(\);[\s\S]{0,80}setTab\("deals"\)/);
 });
+
+test("mobile Deals outer surface uses the refined radius without changing shared desktop geometry", () => {
+  assert.match(source, /mobile-homepage-deals-surface[^\n]*rounded-\[14px\]/);
+  assert.doesNotMatch(source, /mobile-homepage-deals-surface[^\n]*rounded-\[19px\]/);
+  assert.match(source, /lg:rounded-\[8px\] lg:border-\[#dee5ed\]/);
+});
