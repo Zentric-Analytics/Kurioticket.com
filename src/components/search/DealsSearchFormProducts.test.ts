@@ -15,7 +15,7 @@ test("landing and results share the four direct package choices in exact order",
   assert.equal(form.match(/<div\s+data-deals-package-selector\s/g)?.length, 1);
   const config = form.slice(
     form.indexOf("const dealsPackageOptions"),
-    form.indexOf("const field"),
+    form.indexOf("const desktopLandingPackageOptions"),
   );
   const modes = ["hotel-flight", "flight-car", "hotel-car", "hotel-flight-car"];
   assert.deepEqual(
@@ -43,6 +43,26 @@ test("landing and results share the four direct package choices in exact order",
     /toggleProduct\(product\)|tryToggleDealsProduct/,
   );
   assert.doesNotMatch(form, /tryToggleDealsProduct/);
+});
+
+test("desktop landing exposes approved labels as aliases of canonical modes", () => {
+  const desktopConfig = form.slice(
+    form.indexOf("const desktopLandingPackageOptions"),
+    form.indexOf("const field"),
+  );
+  for (const label of [
+    "Hotel + Flight",
+    "Flight + Hotel",
+    "Flight + Car",
+    "Hotel + Car",
+  ]) assert.match(desktopConfig, new RegExp(`text: "${label.replace("+", "\\+")}"`));
+  assert.equal(
+    [...desktopConfig.matchAll(/mode: "hotel-flight"/g)].length,
+    2,
+  );
+  assert.match(form, /data-deals-canonical-mode=\{option\.mode\}/);
+  assert.match(form, /selectPackageMode\(option\.mode\)/);
+  assert.doesNotMatch(desktopConfig, /mode: "flight-hotel"/);
 });
 
 test("landing-only package normalization remains isolated from results", () => {
