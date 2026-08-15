@@ -2953,7 +2953,7 @@ export function SearchTabs({
         role="tablist"
         aria-label={translate("searchType") || "Search type"}
         data-testid="mobile-homepage-product-tabs"
-        className="grid h-14 grid-cols-4 overflow-hidden rounded-[16px] border border-slate-200 bg-white text-[14px] max-[389px]:text-[13px] max-[359px]:text-[12px]"
+        className="grid h-11 grid-cols-4 overflow-hidden rounded-xl border border-slate-200 bg-white text-[13px] max-[359px]:text-[12px]"
       >
         {([
           ["flights", Plane, t.flights || "Flights"],
@@ -2978,12 +2978,12 @@ export function SearchTabs({
                 setTab(mode);
               }}
               className={cn(
-                "focus-ring flex min-w-0 items-center justify-center gap-1.5 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors max-[389px]:gap-1",
+                "focus-ring flex min-w-0 items-center justify-center gap-1 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors",
                 index > 0 && "border-s",
                 selected && "bg-[#eef5ff] text-[#075ee8]",
               )}
             >
-              <Icon aria-hidden="true" className="h-5 w-5 shrink-0 max-[389px]:h-[18px] max-[389px]:w-[18px] max-[359px]:h-4 max-[359px]:w-4" strokeWidth={1.8} />
+              <Icon aria-hidden="true" className="h-4 w-4 shrink-0 max-[359px]:h-[15px] max-[359px]:w-[15px]" strokeWidth={1.8} />
               <span className="truncate">{label}</span>
             </button>
           );
@@ -2994,14 +2994,14 @@ export function SearchTabs({
     return (
       <section
         data-testid="mobile-homepage-flight-search"
-        className="rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_14px_36px_rgba(15,23,42,0.12)] sm:hidden"
+        className="rounded-[19px] border border-slate-200/80 bg-white p-[13px] shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:hidden"
       >
         {mobileProductTabs}
-        <form onSubmit={onFlightSubmit} className="mt-5 space-y-3">
+        <form onSubmit={onFlightSubmit} className="mt-3 space-y-2">
           <div
             role="radiogroup"
             aria-label={t.tripType || "Trip type"}
-            className="grid min-h-12 grid-cols-2 items-center gap-2 px-2"
+            className="grid h-11 grid-cols-2 items-center gap-2 px-1"
             data-testid="mobile-homepage-trip-selector"
           >
             {(["round-trip", "one-way"] as const).map((mode) => {
@@ -3020,17 +3020,17 @@ export function SearchTabs({
                     }
                   }}
                   className={cn(
-                    "focus-ring flex min-h-11 min-w-0 items-center gap-3 rounded-[10px] px-1 text-start text-[17px] font-medium text-slate-950 transition-colors max-[359px]:gap-2 max-[359px]:text-[16px]",
+                    "focus-ring flex min-h-11 min-w-0 items-center gap-2.5 rounded-[10px] px-1 text-start text-[14px] font-medium text-slate-950 transition-colors max-[359px]:gap-2 max-[359px]:text-[13px]",
                   )}
                 >
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 bg-white",
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 bg-white",
                       selected ? "border-[#1670ee]" : "border-slate-300",
                     )}
                   >
-                    <span className={cn("h-3 w-3 rounded-full bg-[#1670ee]", !selected && "invisible")} />
+                    <span className={cn("h-2 w-2 rounded-full bg-[#1670ee]", !selected && "invisible")} />
                   </span>
                   {tripTypeLabel(mode)}
                 </button>
@@ -3038,7 +3038,7 @@ export function SearchTabs({
             })}
           </div>
 
-          <div className="relative space-y-3 pt-1" data-testid="mobile-homepage-route-fields">
+          <div className="relative space-y-2" data-testid="mobile-homepage-route-fields">
             {([
               ["origin", mobileOriginLabel, from, t.fromPlaceholder || "From?"],
               ["destination", mobileDestinationLabel, to, mobileDestinationPlaceholder],
@@ -3055,15 +3055,15 @@ export function SearchTabs({
                   setToOpen(false);
                   setActiveMobileAirportPicker(kind);
                 }}
-                className="focus-ring flex h-[86px] w-full items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-4 text-start"
+                className="focus-ring flex h-[68px] w-full items-center gap-3 rounded-[14px] border border-slate-200 bg-white px-3 text-start"
                 data-testid={`mobile-homepage-${kind}-field`}
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8]" data-testid="mobile-homepage-location-icon-tile">
-                  <MapPin aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8]" data-testid="mobile-homepage-location-icon-tile">
+                  <MapPin aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={1.8} />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-600">{label}</span>
-                  <span className={cn("mt-2 block truncate text-[19px] font-medium leading-6 text-slate-950", !value.trim() && "text-slate-500")}>
+                  <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{label}</span>
+                  <span className={cn("mt-1.5 block truncate text-[17px] font-medium leading-5 text-slate-950", !value.trim() && "text-slate-500")}>
                     {value.trim() || placeholder}
                   </span>
                 </span>
@@ -3074,9 +3074,9 @@ export function SearchTabs({
               onClick={onSwapAirports}
               aria-label={t.swapOriginDestination || "Swap origin and destination"}
               data-testid="mobile-homepage-swap"
-              className="focus-ring absolute left-1/2 top-[91px] z-20 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-[#075ee8] shadow-[0_5px_14px_rgba(15,23,42,0.14)]"
+              className="focus-ring absolute left-1/2 top-[72px] z-20 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-[#075ee8] shadow-[0_4px_10px_rgba(15,23,42,0.12)] before:absolute before:-inset-0.5 before:rounded-full"
             >
-              <ArrowRightLeft aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+              <ArrowRightLeft aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
             </button>
           </div>
 
@@ -3088,14 +3088,14 @@ export function SearchTabs({
             aria-label={translate("chooseTravelDates") || "Choose travel dates"}
             onClick={() => setFlightDatesOpen(true)}
             data-testid="mobile-homepage-travel-dates-field"
-            className="focus-ring flex h-[78px] w-full items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-4 text-start"
+            className="focus-ring flex h-[62px] w-full items-center gap-3 rounded-[14px] border border-slate-200 bg-white px-3 text-start"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8]">
-              <Calendar aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8]">
+              <Calendar aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={1.8} />
             </span>
             <span className="min-w-0">
-              <span className="block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-600">{mobileTravelDatesLabel}</span>
-              <span className="mt-2 block truncate text-[18px] font-medium leading-6 text-slate-950">{dateSummary}</span>
+              <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelDatesLabel}</span>
+              <span className="mt-1.5 block truncate text-[16px] font-medium leading-5 text-slate-950">{dateSummary}</span>
             </span>
           </button>
 
@@ -3107,18 +3107,18 @@ export function SearchTabs({
             aria-label={`${mobileTravelersCabinLabel}: ${travelerSummary}`}
             onClick={() => travelersMenuOpen ? cancelTravelersDraft() : openTravelersMenu()}
             data-testid="mobile-homepage-travelers-field"
-            className="focus-ring flex h-[78px] w-full items-center justify-between gap-3 rounded-[18px] border border-slate-200 bg-white px-4 text-start"
+            className="focus-ring flex h-16 w-full items-center justify-between gap-3 rounded-[14px] border border-slate-200 bg-white px-3 text-start"
           >
             <span className="flex min-w-0 items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8]">
-                <UserRound aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8]">
+                <UserRound aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={1.8} />
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-600">{mobileTravelersCabinLabel}</span>
-                <span className="mt-2 block truncate text-[18px] font-medium leading-6 text-slate-950">{travelerSummary}</span>
+                <span className="block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelersCabinLabel}</span>
+                <span className="mt-1.5 block truncate text-[16px] font-medium leading-5 text-slate-950">{travelerSummary}</span>
               </span>
             </span>
-            <ChevronDown aria-hidden="true" className={cn("h-5 w-5 shrink-0 text-slate-500 transition-transform", travelersMenuOpen && "rotate-180")} />
+            <ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", travelersMenuOpen && "rotate-180")} />
           </button>
 
           <Button
@@ -3127,7 +3127,7 @@ export function SearchTabs({
             aria-busy={isFlightSubmitting}
             aria-label={t.searchFlights || "Search flights"}
             data-testid="mobile-homepage-search-submit"
-            className="h-14 w-full rounded-[14px] bg-[#075ee8] text-[18px] font-semibold text-white shadow-none hover:bg-[#075ee8] active:bg-[#075ee8] disabled:bg-[#075ee8] disabled:text-white disabled:opacity-60"
+            className="h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white shadow-none hover:bg-[#075ee8] active:bg-[#075ee8] disabled:bg-[#075ee8] disabled:text-white disabled:opacity-60"
           >
             {isFlightSubmitting ? t.searchingFlights || "Searching flights..." : t.search || "Search"}
           </Button>

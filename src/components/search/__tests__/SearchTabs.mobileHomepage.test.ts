@@ -54,8 +54,24 @@ test("trip type uses accessible radio-style options", () => {
   assert.match(mobileBranch, /role="radiogroup"/);
   assert.match(mobileBranch, /\["round-trip", "one-way"\]/);
   assert.match(mobileBranch, /role="radio"[\s\S]*?aria-checked=\{selected\}/);
-  assert.match(mobileBranch, /h-3 w-3 rounded-full bg-\[#1670ee\]/);
+  assert.match(mobileBranch, /h-2 w-2 rounded-full bg-\[#1670ee\]/);
   assert.doesNotMatch(mobileBranch, /mobile-homepage-trip-selector[^\n]*border/);
+});
+
+test("mobile homepage controls use the compact production density without scaling", () => {
+  assert.match(mobileBranch, /grid h-11 grid-cols-4/);
+  assert.match(mobileBranch, /h-\[68px\][^\n]*mobile-homepage|className="focus-ring flex h-\[68px\]/);
+  assert.match(mobileBranch, /h-\[62px\][^\n]*w-full/);
+  assert.match(mobileBranch, /h-16 w-full/);
+  assert.match(mobileBranch, /h-12 w-full rounded-\[11px\]/);
+  assert.match(mobileBranch, /h-9 w-9/);
+  assert.doesNotMatch(mobileBranch, /transform:\s*scale|scale-\[/);
+});
+
+test("mobile homepage reserved space follows the compact card while desktop offsets stay protected", () => {
+  assert.match(homepage, /bottom-\[-372px\][^\n]*sm:hidden/);
+  assert.match(homepage, /pt-\[25rem\][^\n]*sm:pt-24/);
+  assert.match(homepage, /bottom-\[-52px\][^\n]*hidden sm:block lg:bottom-\[-56px\]/);
 });
 
 test("route cards use icon tiles and the wired horizontal swap", () => {
