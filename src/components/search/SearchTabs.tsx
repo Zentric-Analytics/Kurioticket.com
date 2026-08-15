@@ -2958,13 +2958,13 @@ export function SearchTabs({
     return (
       <section
         data-testid="mobile-homepage-flight-search"
-        className="rounded-[24px] border border-slate-200/80 bg-white p-4 shadow-[0_14px_36px_rgba(15,23,42,0.12)] sm:hidden"
+        className="rounded-[20px] border border-slate-200/80 bg-white p-4 shadow-[0_14px_36px_rgba(15,23,42,0.12)] sm:hidden"
       >
         <form onSubmit={onFlightSubmit} className="space-y-3">
           <div
             role="radiogroup"
             aria-label={t.tripType || "Trip type"}
-            className="grid h-14 grid-cols-2 rounded-[15px] border border-slate-200 bg-white"
+            className="grid h-14 grid-cols-2 rounded-[12px] border border-slate-200 bg-white"
             data-testid="mobile-homepage-trip-selector"
           >
             {(["round-trip", "one-way"] as const).map((mode) => {
@@ -2983,7 +2983,7 @@ export function SearchTabs({
                     }
                   }}
                   className={cn(
-                    "focus-ring flex min-w-0 items-center justify-center rounded-[14px] px-2 text-[16px] font-medium text-slate-950 transition-colors",
+                    "focus-ring flex min-w-0 items-center justify-center rounded-[10px] px-2 text-[16px] font-medium text-slate-950 transition-colors",
                     selected &&
                       "border border-[#2559e8] bg-[#f9fbff] font-semibold text-[#1f55df] shadow-[0_1px_2px_rgba(37,89,232,0.08)]",
                   )}
