@@ -57,7 +57,7 @@ for (const mode of ["hotel-flight", "hotel-car", "flight-car", "hotel-flight-car
 test("scenario failures preserve staged state and never promote it to legacy", () => {
   const search = createDefaultDealsSearch(); search.mode = "hotel-flight"; const fingerprint = buildDealsSearchFingerprint(search);
   const { storage, counts } = isolatedStorage(); let confirmationWrites = 0;
-  const mismatch = attemptGuidedConfirmation({ product: "hotel", selection: hotel, renderedPlan: null, search, fingerprint, now: 100, read: () => ({ status: "fingerprint_mismatch", plan: { version: 1, mode: "hotel-flight", searchFingerprint: "other", resultsPath: "/deals/results", createdAt: 1, updatedAt: 1, expiresAt: 1000, opened: {} } }), write: plan => { confirmationWrites += 1; return writeDealsStagedJourneyPlan(plan, storage); } });
+  const mismatch = attemptGuidedConfirmation({ product: "hotel", selection: hotel, renderedPlan: null, search, fingerprint, now: 100, read: () => ({ status: "fingerprint_mismatch", plan: { version: 1, mode: "hotel-flight", searchFingerprint: "other", resultsPath: "/packages/results", createdAt: 1, updatedAt: 1, expiresAt: 1000, opened: {} } }), write: plan => { confirmationWrites += 1; return writeDealsStagedJourneyPlan(plan, storage); } });
   assert.equal(mismatch.ok, false); assert.equal(confirmationWrites, 0);
   const unavailable = attemptGuidedConfirmation({ product: "hotel", selection: hotel, renderedPlan: null, search, fingerprint, now: 100, read: () => ({ status: "storage_unavailable" }), write: plan => { confirmationWrites += 1; return writeDealsStagedJourneyPlan(plan, storage); } });
   assert.equal(unavailable.ok, false); assert.equal(confirmationWrites, 0);

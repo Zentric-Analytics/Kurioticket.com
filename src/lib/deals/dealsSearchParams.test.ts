@@ -140,8 +140,8 @@ test("complete query round trips and builds deals links", () => {
   const search = valid();
   const parsed = parseDealsSearchParams(serializeDealsSearchParams(search));
   assert.deepEqual(parsed, search);
-  assert.match(buildDealsResultsUrl(search), /^\/deals\/results\?/);
-  assert.match(buildDealsModifyUrl(search), /^\/deals\?/);
+  assert.match(buildDealsResultsUrl(search), /^\/packages\/results\?/);
+  assert.match(buildDealsModifyUrl(search), /^\/packages\?/);
 });
 test("missing and malformed dates normalize to empty", () => {
   const parsed = parseDealsSearchParams(

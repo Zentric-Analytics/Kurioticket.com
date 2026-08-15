@@ -234,7 +234,7 @@ test("same-hotel room replacement clears dependent flight and car selections", (
       {
         mode: "hotel-flight-car",
         searchFingerprint: "fp",
-        resultsPath: "/deals/results",
+        resultsPath: "/packages/results",
       },
       1,
     ),

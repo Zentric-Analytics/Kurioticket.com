@@ -13,7 +13,7 @@ export default function DealsJourneyError({ error, reset }: { error: Error & { d
     <div className="rounded-2xl border border-amber-300 bg-white p-6 shadow-sm sm:p-8">
       <h1 ref={heading} tabIndex={-1} className="text-2xl font-extrabold outline-none">{t["deals.guided.error.title"]}</h1>
       <p className="mt-3 leading-7 text-slate-600">{t["deals.guided.error.body"]}</p>
-      <div className="mt-6 flex flex-wrap gap-3"><button type="button" onClick={() => reset()} className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-5 font-bold text-white">{t["deals.guided.error.retry"]}</button><Link href="/deals" onClick={start} className="focus-ring inline-flex min-h-11 items-center rounded-xl px-5 font-bold underline">{t["deals.guided.error.returnDeals"]}</Link></div>
+      <div className="mt-6 flex flex-wrap gap-3"><button type="button" onClick={() => reset()} className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-5 font-bold text-white">{t["deals.guided.error.retry"]}</button><Link href="/packages" onClick={start} className="focus-ring inline-flex min-h-11 items-center rounded-xl px-5 font-bold underline">{t["deals.guided.error.returnDeals"]}</Link></div>
     </div>
   </section>;
 }

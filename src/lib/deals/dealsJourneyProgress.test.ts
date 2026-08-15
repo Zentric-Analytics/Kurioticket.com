@@ -182,7 +182,7 @@ for (const mode of [
     const plan = createDealsTripPlan({
       mode,
       searchFingerprint: "x",
-      resultsPath: "/deals/results",
+      resultsPath: "/packages/results",
     });
     const value = getHandoffReadyDealsJourneyProgress(plan, "guided");
     assert.ok(value.steps.every((step) => step.status === "completed"));
@@ -199,7 +199,7 @@ for (const mode of [
     const plan = createDealsTripPlan({
       mode,
       searchFingerprint: "x",
-      resultsPath: "/deals/results",
+      resultsPath: "/packages/results",
     });
     const value = getHandoffReadyDealsJourneyProgress(plan);
     assert.deepEqual(

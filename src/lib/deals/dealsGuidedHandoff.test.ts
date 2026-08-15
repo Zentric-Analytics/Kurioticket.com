@@ -8,7 +8,7 @@ import { parseDealsSearchParams, type DealsPackageMode } from "./dealsSearchPara
 
 const now = 100_000;
 function plan(mode: DealsPackageMode): DealsTripPlan {
-  const base = createDealsTripPlan({ mode, searchFingerprint: "fp", resultsPath: "/deals/results" }, now);
+  const base = createDealsTripPlan({ mode, searchFingerprint: "fp", resultsPath: "/packages/results" }, now);
   const common = { provider: "Safe", sourcePrice: 100, sourceCurrency: "USD", resultReceivedAt: now };
   return { ...base, updatedAt: now, hotel: { ...common, id: "h", name: "Hotel", location: "Paris", checkIn: "2027-01-01", checkOut: "2027-01-03", detailsPath: "/hotels/details/h" }, flight: { ...common, id: "f", airline: "Air", origin: "JFK", destination: "CDG", departure: "2027-01-01T10:00", arrival: "2027-01-01T20:00", duration: "7h" }, car: { ...common, id: "c", rentalCompany: "Cars", modelName: "Model", categoryLabel: "compact", pickupLocation: "Paris", returnLocation: "Paris", pickupDate: "2027-01-01", pickupTime: "10:00", dropoffDate: "2027-01-03", dropoffTime: "10:00", detailsPath: "/cars/details/c?pickupLocation=Paris&dropoffLocation=Paris&pickupDate=2027-01-01&pickupTime=10%3A00&dropoffDate=2027-01-03&dropoffTime=10%3A00&driverAge=30" } };
 }

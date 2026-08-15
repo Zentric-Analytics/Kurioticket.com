@@ -73,7 +73,7 @@ export function buildGuidedDealsHandoffPendingUrl(search: DealsSearch): string {
   const params = serializeDealsSearchParams(search);
   params.delete("journey");
   params.set("journey", "guided");
-  return `/deals/handoff?${params.toString()}`;
+  return `/packages/handoff?${params.toString()}`;
 }
 
 export function getDealsReviewStatus(

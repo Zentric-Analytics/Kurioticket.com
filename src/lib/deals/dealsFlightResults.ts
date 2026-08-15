@@ -45,5 +45,5 @@ export function buildDealsFlightDetailsJourneyUrl(
     return null;
   const params = serializeDealsSearchParams(search);
   params.set("flightId", normalizedFlightId);
-  return `/deals/journey/flight-details?${params.toString()}`;
+  return `/packages/journey/flight-details?${params.toString()}`;
 }

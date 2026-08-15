@@ -2984,7 +2984,7 @@ export function DealsSearchForm({
         <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
       </button>
       {errorBlock("flight")}{errorBlock("hotel")}{included.car ? errorBlock("car") : null}
-      <button type="submit" disabled={submitting || pending} aria-busy={submitting || pending} className="focus-ring h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60">Search deals</button>
+      <button type="submit" disabled={submitting || pending} aria-busy={submitting || pending} className="focus-ring h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60">Search packages</button>
     </div>
   ) : null;
 

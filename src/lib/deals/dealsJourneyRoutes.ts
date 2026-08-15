@@ -70,7 +70,7 @@ export function buildDealsJourneyUrl(
 ): string {
   if (stage !== "review" && !isStageInDealsMode(stage, search.mode))
     throw new TypeError("Stage is not part of this Deals mode");
-  return `/deals/journey/${stage}?${serializeDealsSearchParams(search).toString()}`;
+  return `/packages/journey/${stage}?${serializeDealsSearchParams(search).toString()}`;
 }
 
 const MAX_DEALS_JOURNEY_PRODUCT_ID_LENGTH = 256;
@@ -106,7 +106,7 @@ export function buildDealsHotelDetailsJourneyUrl(
     return null;
   const params = serializeDealsSearchParams(search);
   params.set("hotelId", normalizedHotelId);
-  return `/deals/journey/hotel-details?${params.toString()}`;
+  return `/packages/journey/hotel-details?${params.toString()}`;
 }
 export function buildDealsCarDetailsJourneyUrl(
   search: DealsSearch,
@@ -117,24 +117,28 @@ export function buildDealsCarDetailsJourneyUrl(
     return null;
   const params = serializeDealsSearchParams(search);
   params.append("carId", normalizedCarId);
-  return `/deals/journey/car-details?${params.toString()}`;
+  return `/packages/journey/car-details?${params.toString()}`;
 }
 export const buildLegacyDealsResultsUrl = (search: DealsSearch) =>
   buildDealsResultsUrl(search);
 
 export function validateDealsJourneyUrl(value: unknown): string | null {
+  const canonicalValue =
+    typeof value === "string" && value.startsWith("/deals/journey/")
+      ? value.replace("/deals/journey/", "/packages/journey/")
+      : value;
   if (
-    typeof value !== "string" ||
-    !value.startsWith("/deals/journey/") ||
-    value.startsWith("//") ||
-    value.includes("\\") ||
-    value.includes("#")
+    typeof canonicalValue !== "string" ||
+    !canonicalValue.startsWith("/packages/journey/") ||
+    canonicalValue.startsWith("//") ||
+    canonicalValue.includes("\\") ||
+    canonicalValue.includes("#")
   )
     return null;
   try {
-    decodeURIComponent(value);
-    const url = new URL(value, "https://kurioticket.invalid");
-    const match = /^\/deals\/journey\/([^/]+)$/.exec(url.pathname);
+    decodeURIComponent(canonicalValue);
+    const url = new URL(canonicalValue, "https://kurioticket.invalid");
+    const match = /^\/packages\/journey\/([^/]+)$/.exec(url.pathname);
     return url.origin === "https://kurioticket.invalid" &&
       match &&
       isDealsJourneyStage(match[1])

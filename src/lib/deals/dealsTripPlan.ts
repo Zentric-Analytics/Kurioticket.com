@@ -331,7 +331,7 @@ export function buildDealsSearchFingerprint(search: DealsSearch): string {
 
 export function validateDealsInternalPath(
   value: unknown,
-  allowed: "/deals/results" | "/cars/results" = "/deals/results",
+  allowed: "/packages/results" | "/cars/results" = "/packages/results",
 ): string | null {
   if (
     typeof value !== "string" ||

@@ -7,7 +7,7 @@ export const translations: TranslationDictionary = {
   flights: "Flights",
   hotels: "Hotels",
   cars: "Cars",
-  deals: "Deals",
+  deals: "Packages",
   home: "Home",
   destinationsLoadingPage: "Loading destinations page...",
   "brandedLoading.default.title": "Loading Kurioticket...",
@@ -530,7 +530,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.email.rows.productUpdates.shortDescription":
     "New Kurioticket features and account updates.",
   "accountDashboard.preferences.email.rows.dealsRecommendations.title":
-    "Deals and recommendations",
+    "Packages and recommendations",
   "accountDashboard.preferences.email.rows.dealsRecommendations.description":
     "Receive curated travel recommendations when they are relevant.",
   "accountDashboard.preferences.email.rows.dealsRecommendations.shortDescription":
@@ -575,7 +575,7 @@ export const translations: TranslationDictionary = {
     "Control how Kurioticket personalizes your recommendations.",
   "accountDashboard.preferences.customization.personalizeSearches":
     "Use my searches to personalize recommendations",
-  "accountDashboard.preferences.customization.personalizedTravelDeals":
+  "accountDashboard.preferences.customization.personalizedTravelPackages":
     "Show personalized travel deals",
   "accountDashboard.preferences.customization.rememberRecentSearches":
     "Remember my recent searches",
@@ -3655,7 +3655,7 @@ export const translations: TranslationDictionary = {
   loadingCarRentalResults: "Loading car rental results",
   loadingSavedTripsAndRecentSearches: "Loading Saved & Recent",
   loadingHotelSearch: "Loading hotel search...",
-  "deals.heroTitle": "Find travel deals for your next trip",
+  "deals.heroTitle": "Find travel packages for your next trip",
   "deals.heroSubtitle":
     "Search flights, stays, and cars together in one place.",
   "deals.packageLegend": "Choose trip type",
@@ -3673,7 +3673,7 @@ export const translations: TranslationDictionary = {
   "deals.travelersDetailsLabel": "Travelers / details",
   "deals.travelersRoomsCarLabel": "Travelers / rooms / car",
   "deals.originPlaceholder": "City or airport",
-  "deals.searchButton": "Search deals",
+  "deals.searchButton": "Search packages",
   "deals.guidedPreview.availableReview":
     "Trip Review with persisted opened-step progress",
   "deals.guidedPreview.availableHandoff":
@@ -3707,13 +3707,13 @@ export const translations: TranslationDictionary = {
   "deals.guided.expired.title": "Your guided preview has expired",
   "deals.guided.expired.body":
     "Return to the first guided stage and refresh your trip options.",
-  "deals.guided.error.title": "We could not show this guided Deals page",
+  "deals.guided.error.title": "We could not show this guided Packages page",
   "deals.guided.error.body":
-    "Your booking-partner pages were not opened. Try this page again or return safely to Deals.",
+    "Your booking-partner pages were not opened. Try this page again or return safely to Packages.",
   "deals.guided.error.retry": "Try again",
-  "deals.guided.error.returnDeals": "Return to Deals",
+  "deals.guided.error.returnDeals": "Return to Packages",
   "deals.guidedPreview.badge": "Internal guided preview",
-  "deals.guidedPreview.title": "Preview the new Deals journey",
+  "deals.guidedPreview.title": "Preview the new Packages journey",
   "deals.guidedPreview.description":
     "Explore the complete internal preview: Hotel, Flight, and Car results, details, and confirmation, followed by Review and the final booking-partner handoff.",
   "deals.guidedPreview.availableTitle": "Available now",
@@ -3727,7 +3727,7 @@ export const translations: TranslationDictionary = {
     "This internal preview remains a separate action. Normal Search begins your package journey with its first Hotel or Flight results.",
   "deals.guidedPreview.action": "Preview guided journey",
   "deals.guidedPreview.accessibleName":
-    "Internal preview of the guided Deals journey",
+    "Internal preview of the guided Packages journey",
   "deals.destinationPlaceholder": "City, airport, or area",
   "deals.dateFlightPlaceholder": "Departure — Return",
   "deals.dateHotelPlaceholder": "Check-in — Check-out",
@@ -3787,7 +3787,7 @@ export const translations: TranslationDictionary = {
   "deals.error.children": "Children cannot be below zero.",
   "deals.error.rooms": "At least one room is required.",
   "deals.error.guests": "At least one guest is required.",
-  "deals.destinationIdeasTitle": "Places to start your deal search",
+  "deals.destinationIdeasTitle": "Places to start your package search",
   "deals.destinationIdeasSubtitle":
     "Choose a destination idea, then compare provider results when you continue.",
   "deals.destinationCardAriaPrefix": "Search trip ideas for",
@@ -4143,9 +4143,9 @@ export const translations: TranslationDictionary = {
     "These results align each included product with your trip. Prices stay product-specific and selections are completed separately.",
   "deals.results.modify": "Modify search",
   "deals.results.breadcrumb.label": "Breadcrumb",
-  "deals.results.breadcrumb.current": "Deals results",
-  "deals.results.returnToDeals": "Return to Deals",
-  "deals.results.summary.currentSearch": "Current Deals search",
+  "deals.results.breadcrumb.current": "Package results",
+  "deals.results.returnToDeals": "Return to Packages",
+  "deals.results.summary.currentSearch": "Current package search",
   "deals.results.summary.package": "Package",
   "deals.results.summary.route": "Route",
   "deals.results.summary.destination": "Destination",
@@ -4180,7 +4180,7 @@ export const translations: TranslationDictionary = {
   "deals.results.editor.selectionsCleared":
     "Your selected trip options were cleared because the search details changed.",
   "deals.results.editor.correctHere":
-    "Correct your search on this page without returning to Deals home.",
+    "Correct your search on this page without returning to Packages home.",
   "deals.results.viewFlights": "View all flights",
   "deals.results.viewHotels": "View all hotels",
   "deals.results.viewFlightsCount": "View all {{count}} flight options",
@@ -4317,11 +4317,11 @@ export const translations: TranslationDictionary = {
     "Review each selected item separately. Live items continue to their provider; planning-only items remain on Kurioticket.",
   "deals.handoff.loading": "Loading your trip plan…",
   "deals.handoff.empty": "No trip options have been selected.",
-  "deals.handoff.returnSearch": "Return to Deals search",
+  "deals.handoff.returnSearch": "Return to Packages search",
   "deals.handoff.expired": "Your selected options may have expired.",
   "deals.handoff.refresh": "Refresh results",
   "deals.handoff.incomplete": "Your trip plan is incomplete. Choose:",
-  "deals.handoff.returnResults": "Back to Deals results",
+  "deals.handoff.returnResults": "Back to Package results",
   "deals.handoff.provider": "Provided by {{provider}}",
   "deals.handoff.opened": "Details opened",
   "deals.handoff.notOpened": "Provider not yet opened",
@@ -4386,7 +4386,7 @@ export const translations: TranslationDictionary = {
   "deals.handoff.storageTitle": "Your temporary trip plan cannot be read",
   "deals.handoff.missingTitle": "Your trip plan is no longer available",
   "deals.handoff.missingBody":
-    "Return to Deals and choose a complete trip option again.",
+    "Return to Packages and choose a complete trip option again.",
   "deals.handoff.expiredTitle": "Your selected options need fresh prices",
   "deals.handoff.expiredBody":
     "Refresh your results to check current prices and availability before continuing.",
@@ -4606,7 +4606,7 @@ export const translations: TranslationDictionary = {
   "deals.useMainDestination": "Use main destination",
   "deals.useMainTravelDates": "Use main travel dates",
   "deals.productSelector.instruction": "Choose at least two products",
-  "deals.productSelector.minimumTwo": "Deals requires at least two products.",
+  "deals.productSelector.minimumTwo": "Packages requires at least two products.",
   "deals.journey.navigationLabel": "Build your trip progress",
   "deals.journey.stepCount": "Step {{current}} of {{total}}",
   "deals.journey.step.hotel": "Hotel",
@@ -4628,7 +4628,7 @@ export const translations: TranslationDictionary = {
   "deals.journey.substate.review-flight": "Review flight",
   "deals.journey.substate.review-car": "Review car",
   "deals.journey.substate.review-trip": "Review trip",
-  "deals.breadcrumb.navigationLabel": "Deals journey pages",
+  "deals.breadcrumb.navigationLabel": "Packages journey pages",
   "deals.breadcrumb.selectStay": "Select stay",
   "deals.breadcrumb.selectFlight": "Select flight",
   "deals.breadcrumb.selectCar": "Select car",
@@ -4855,12 +4855,12 @@ export const translations: TranslationDictionary = {
   "deals.guided.handoffPending.body":
     "Your confirmed trip is still saved temporarily. Provider pages remain disabled in this preview milestone.",
   "deals.guided.handoffPending.backReview": "Back to trip review",
-  "deals.guided.handoffPending.returnDeals": "Return to Deals",
+  "deals.guided.handoffPending.returnDeals": "Return to Packages",
   "deals.guided.handoffPending.loading": "Loading your confirmed trip…",
   "deals.guided.handoffPending.missingTitle":
     "We could not load this guided trip",
   "deals.guided.handoffPending.missingBody":
-    "Return to Deals and confirm your trip options again.",
+    "Return to Packages and confirm your trip options again.",
   "deals.guided.handoffPending.expiredTitle": "Your guided trip has expired",
   "deals.guided.handoffPending.expiredBody":
     "Return to the guided journey and refresh your trip options.",
@@ -4900,8 +4900,8 @@ export const translations: TranslationDictionary = {
   "deals.guided.review.rentalDaysLabel": "Rental days",
   "deals.guided.handoffInvalid.title": "This handoff request is not valid",
   "deals.guided.handoffInvalid.body":
-    "For your safety, no booking partner was opened. Return to Deals and try again.",
-  "deals.guided.handoffInvalid.returnDeals": "Return to Deals",
+    "For your safety, no booking partner was opened. Return to Packages and try again.",
+  "deals.guided.handoffInvalid.returnDeals": "Return to Packages",
   "deals.guided.handoffPending.useCurrentOptions": "Use current trip options",
   "deals.guided.handoff.title": "Continue with your booking partners",
   "deals.guided.handoff.introduction":
@@ -4943,10 +4943,10 @@ export const translations: TranslationDictionary = {
   "deals.guided.handoff.storageTitle": "Temporary trip storage is unavailable",
   "deals.guided.handoff.storageBody":
     "Your browser could not load the guided trip safely.",
-  "deals.guided.handoff.returnDeals": "Return to Deals",
+  "deals.guided.handoff.returnDeals": "Return to Packages",
   "deals.guided.handoff.missingTitle": "We could not load this guided trip",
   "deals.guided.handoff.missingBody":
-    "Return to Deals and confirm your trip options again.",
+    "Return to Packages and confirm your trip options again.",
   "deals.guided.handoff.expiredTitle": "Your guided trip has expired",
   "deals.guided.handoff.expiredBody":
     "Return to the guided journey and refresh your trip options.",

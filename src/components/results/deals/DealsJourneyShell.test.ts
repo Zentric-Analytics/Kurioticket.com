@@ -73,7 +73,7 @@ test("guided shell uses breadcrumbs as primary navigation without changing share
   );
   assert.doesNotMatch(
     source,
-    /deals\.guided\.back|ArrowLeft|getPreviousDealsJourneyStage|backHref/,
+    /packages\.guided\.back|ArrowLeft|getPreviousDealsJourneyStage|backHref/,
   );
   assert.match(source, /data-deals-guided-journey-foundation/);
   assert.equal((source.match(/<h1/g) ?? []).length, 1);
@@ -175,7 +175,7 @@ test("public Deals and package results contracts remain active", async () => {
     ),
   ]);
   assert.match(landing, /<DealsSearchForm/);
-  assert.doesNotMatch(landing, /deals\/journey/);
+  assert.doesNotMatch(landing, /packages\/journey/);
   assert.match(results, /buildDealsPackageCandidates/);
   assert.match(results, /stagedHotelJourneyActive/);
   assert.match(handoff, /DealsHandoffClient/);
@@ -244,7 +244,7 @@ test("guided hotel confirmation creates only canonical validated base Trip Plan 
     source.indexOf("if (!base)"),
     source.indexOf("const nextPlan = replaceDealsHotelSelection"),
   );
-  assert.doesNotMatch(baseCreation, /\|\|\s*"\/deals\/results"/);
+  assert.doesNotMatch(baseCreation, /\|\|\s*"\/packages\/results"/);
   assert.doesNotMatch(baseCreation, /\|\|\s*"\/cars\/results"/);
   assert.doesNotMatch(
     baseCreation,

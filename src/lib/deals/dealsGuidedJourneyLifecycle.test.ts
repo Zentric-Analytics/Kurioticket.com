@@ -5,7 +5,7 @@ import { DEALS_STAGED_JOURNEY_STORAGE_KEY, DEALS_TRIP_PLAN_STORAGE_KEY } from ".
 import { createDealsTripPlan, getDealsGuidedNextExpiryAt, replaceDealsHotelSelection } from "./dealsTripPlan";
 
 const hotel = { id: "h", provider: "p", name: "Hotel", location: "City", checkIn: "2099-01-01", checkOut: "2099-01-02", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 10 };
-const base = () => replaceDealsHotelSelection(createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "fp", resultsPath: "/deals/results" }, 10), hotel, 10);
+const base = () => replaceDealsHotelSelection(createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "fp", resultsPath: "/packages/results" }, 10), hotel, 10);
 
 test("only materially changed storage snapshots announce cross-tab activity", () => {
   const plan = base(); const changed = { ...plan, opened: { hotel: 12 } };

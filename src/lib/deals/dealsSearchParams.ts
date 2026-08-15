@@ -311,9 +311,9 @@ export const serializeDealsSearchParams = (search: DealsSearch) => {
   return params;
 };
 export const buildDealsResultsUrl = (search: DealsSearch) =>
-  `/deals/results?${serializeDealsSearchParams(search)}`;
+  `/packages/results?${serializeDealsSearchParams(search)}`;
 export const buildDealsModifyUrl = (search: DealsSearch) =>
-  `/deals?${serializeDealsSearchParams(search)}`;
+  `/packages?${serializeDealsSearchParams(search)}`;
 
 export const buildFlightResultsUrl = (search: DealsSearch) => {
   const travelers =

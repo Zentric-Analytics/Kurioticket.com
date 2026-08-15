@@ -55,7 +55,7 @@ test("Results has no separate product or lower Travellers sections", () => {
   ])
     assert.doesNotMatch(normalResultsSlice, new RegExp(marker));
   assert.doesNotMatch(normalResultsSlice, /data-deals-heading-rail="car"/);
-  assert.doesNotMatch(normalResultsSlice, /deals-car-pickup|deals-car-return/);
+  assert.doesNotMatch(normalResultsSlice, /packages-car-pickup|deals-car-return/);
 });
 
 test("Flight package row order is route, dates, Travellers, Cabin, submit", () => {

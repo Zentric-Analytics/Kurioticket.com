@@ -39,7 +39,7 @@ test("guided Car details URL preserves canonical Deals search and appends exactl
   const href = buildDealsCarDetailsJourneyUrl(value, " car/id & unit ");
   assert.ok(href);
   const url = new URL(href, "https://example.test");
-  assert.equal(url.pathname, "/deals/journey/car-details");
+  assert.equal(url.pathname, "/packages/journey/car-details");
   assert.deepEqual(url.searchParams.getAll("carId"), ["car/id & unit"]);
   assert.equal(parseDealsSearchParams(url.searchParams).carPickupLocation, "LAX");
   assert.equal(buildGuidedDealsCarActionHref(value, " car/id & unit "), href);

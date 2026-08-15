@@ -12,7 +12,7 @@ test("preview articles use selection buttons without direct provider handoffs", 
   for (const card of [flightCard, hotelCard]) {
     assert.match(card, /reasonKey\?: string/);
     assert.match(card, /\{reasonKey && <p[^>]*>\{t\(reasonKey\)\}<\/p>\}/);
-    assert.doesNotMatch(card, /deals\.results\.providedBy/);
+    assert.doesNotMatch(card, /packages\.results\.providedBy/);
     assert.doesNotMatch(card, /provider\?\.trim\(\)/);
     assert.doesNotMatch(card, /href=\{handoff\.href\}/);
     assert.match(card, /<button type="button" aria-pressed=\{selected\}/);

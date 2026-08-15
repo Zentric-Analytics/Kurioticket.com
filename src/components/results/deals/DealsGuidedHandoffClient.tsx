@@ -195,7 +195,7 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
         title={t("deals.guided.handoff.storageTitle")}
         body={t("deals.guided.handoff.storageBody")}
         action={t("deals.guided.handoff.returnDeals")}
-        href="/deals"
+        href="/packages"
         start={start}
       />
     );
@@ -227,7 +227,7 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
         title={t("deals.guided.handoff.missingTitle")}
         body={t("deals.guided.handoff.missingBody")}
         action={t("deals.guided.handoff.returnDeals")}
-        href="/deals"
+        href="/packages"
         start={start}
       />
     );
@@ -308,7 +308,7 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
           title={t("deals.guided.handoff.missingTitle")}
           body={t("deals.guided.handoff.missingBody")}
           action={t("deals.guided.handoff.returnDeals")}
-          href="/deals"
+          href="/packages"
           start={start}
         />
       );
@@ -427,7 +427,7 @@ export function DealsGuidedHandoffClient({ search }: { search: DealsSearch }) {
             </Link>
             <Link
               onClick={start}
-              href="/deals"
+              href="/packages"
               className="focus-ring inline-flex min-h-11 items-center rounded-xl border border-slate-300 px-5 py-2.5 font-bold text-slate-700"
             >
               {t("deals.guided.handoff.startOver")}
