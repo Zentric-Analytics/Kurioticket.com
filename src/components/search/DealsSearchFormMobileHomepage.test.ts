@@ -34,10 +34,11 @@ test("mobile homepage exposes exactly four canonical package modes in visible or
 
 test("mobile package selector is a compact, nowrap horizontal rail", () => {
   assert.match(compact, /mobile-homepage-deals-package-rail/);
-  for (const utility of ["flex-nowrap", "overflow-x-auto", "overscroll-x-contain", "[-webkit-overflow-scrolling:touch]", "[&::-webkit-scrollbar]:hidden"]) {
+  for (const utility of ["min-w-0", "w-full", "max-w-full", "flex-nowrap", "overflow-x-auto", "overflow-y-hidden", "overscroll-x-contain", "touch-pan-x", "[-webkit-overflow-scrolling:touch]", "[&::-webkit-scrollbar]:hidden"]) {
     assert.ok(compact.includes(utility), `rail should include ${utility}`);
   }
-  assert.match(compact, /h-10 shrink-0 snap-start/);
+  assert.match(compact, /fieldset className="min-w-0 w-full max-w-full overflow-hidden"/);
+  assert.match(compact, /h-10 w-max shrink-0/);
   assert.match(compact, /text-\[13px\]/);
   assert.match(compact, /<span className="whitespace-nowrap">\{text\}<\/span>/);
   assert.doesNotMatch(compact.slice(0, compact.indexOf("Origin")), /truncate|text-overflow|ellipsis/);
@@ -47,13 +48,23 @@ test("mobile package selector is a compact, nowrap horizontal rail", () => {
 });
 
 test("selection stays visible and keyboard navigation reaches every package", () => {
-  assert.match(form, /scrollIntoView\(\{[\s\S]*?block: "nearest",[\s\S]*?inline: "nearest"/);
+  assert.match(form, /mobilePackageRailRef/);
+  assert.match(form, /rail\.scrollBy\(\{/);
+  assert.doesNotMatch(form.slice(form.indexOf("mobilePackageRailRef"), form.indexOf("const openFlightAirport")), /scrollIntoView/);
   assert.match(compact, /ArrowRight/);
   assert.match(compact, /ArrowLeft/);
   assert.match(compact, /event\.key === "Home"/);
   assert.match(compact, /event\.key === "End"/);
   assert.match(compact, /role="radiogroup"/);
   assert.match(compact, /role="radio" aria-checked=\{selected\} aria-label=\{text\}/);
+});
+
+test("mobile packages are text-only and selected state is an underline", () => {
+  assert.doesNotMatch(compact.slice(0, compact.indexOf("Origin")), /<Plane|<Building2|<CarFront/);
+  assert.match(compact, /text-slate-900/);
+  assert.match(compact, /after:h-\[2px\]/);
+  assert.match(compact, /after:bg-\[#075ee8\]/);
+  assert.doesNotMatch(compact.slice(0, compact.indexOf("Origin")), /text-\[#075ee8\]|bg-\[#f2f7ff\]|bg-\[#eef5ff\]|border-\[#075ee8\]/);
 });
 
 test("compact controls reuse canonical pickers, summary, validation and submission", () => {
