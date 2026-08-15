@@ -1,4 +1,7 @@
-export type PopoverRect = Pick<DOMRect, "left" | "right" | "top" | "bottom" | "width" | "height">;
+export type PopoverRect = Pick<
+  DOMRect,
+  "left" | "right" | "top" | "bottom" | "width" | "height"
+>;
 
 export type DesktopPopoverGeometry = {
   left: number;
@@ -24,10 +27,20 @@ export function calculateLocationPanelScrollAdjustment({
   gap: number;
   minimumVisibleHeight?: number;
 }) {
-  const finite = (value: number) => Number.isFinite(value) ? value : 0;
-  const requiredBottom = finite(boundaryRect.bottom) + finite(gap) + Math.max(0, finite(minimumVisibleHeight)) + Math.max(0, finite(viewportPadding));
-  const shortfall = Math.max(0, requiredBottom - Math.max(0, finite(viewportHeight)));
-  const maximumUsefulScroll = Math.max(0, finite(boundaryRect.top) - Math.max(0, finite(topViewportPadding)));
+  const finite = (value: number) => (Number.isFinite(value) ? value : 0);
+  const requiredBottom =
+    finite(boundaryRect.bottom) +
+    finite(gap) +
+    Math.max(0, finite(minimumVisibleHeight)) +
+    Math.max(0, finite(viewportPadding));
+  const shortfall = Math.max(
+    0,
+    requiredBottom - Math.max(0, finite(viewportHeight)),
+  );
+  const maximumUsefulScroll = Math.max(
+    0,
+    finite(boundaryRect.top) - Math.max(0, finite(topViewportPadding)),
+  );
   return Math.max(0, Math.min(shortfall, maximumUsefulScroll));
 }
 
@@ -38,6 +51,9 @@ export function calculateDesktopPopoverGeometry({
   viewportHeight,
   viewportPadding,
   gap,
+  preferredWidth,
+  align = "start",
+  desiredHeight,
 }: {
   fieldRect: PopoverRect;
   boundaryRect: PopoverRect;
@@ -45,13 +61,37 @@ export function calculateDesktopPopoverGeometry({
   viewportHeight: number;
   viewportPadding: number;
   gap: number;
+  preferredWidth?: number;
+  align?: "start" | "center" | "end";
+  desiredHeight?: number;
 }): DesktopPopoverGeometry {
   const safeWidth = Math.max(0, viewportWidth - viewportPadding * 2);
-  const width = Math.max(0, Math.min(fieldRect.width, safeWidth));
-  const maximumLeft = Math.max(viewportPadding, viewportWidth - viewportPadding - width);
-  const left = Math.min(Math.max(fieldRect.left, viewportPadding), maximumLeft);
-  const top = boundaryRect.bottom + gap;
-  const maxHeight = Math.max(0, viewportHeight - viewportPadding - top);
+  const width = Math.max(
+    0,
+    Math.min(preferredWidth ?? fieldRect.width, safeWidth),
+  );
+  const maximumLeft = Math.max(
+    viewportPadding,
+    viewportWidth - viewportPadding - width,
+  );
+  const requestedLeft =
+    align === "end"
+      ? fieldRect.right - width
+      : align === "center"
+        ? fieldRect.left + fieldRect.width / 2 - width / 2
+        : fieldRect.left;
+  const left = Math.min(Math.max(requestedLeft, viewportPadding), maximumLeft);
+  const belowTop = boundaryRect.bottom + gap;
+  const belowHeight = Math.max(0, viewportHeight - viewportPadding - belowTop);
+  const aboveHeight = Math.max(0, boundaryRect.top - gap - viewportPadding);
+  const openAbove =
+    desiredHeight !== undefined &&
+    belowHeight < desiredHeight &&
+    aboveHeight > belowHeight;
+  const maxHeight = openAbove ? aboveHeight : belowHeight;
+  const top = openAbove
+    ? Math.max(viewportPadding, boundaryRect.top - gap - maxHeight)
+    : belowTop;
 
   return { left, top, width, maxHeight };
 }

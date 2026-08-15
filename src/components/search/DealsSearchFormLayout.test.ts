@@ -55,7 +55,10 @@ test("Results has no separate product or lower Travellers sections", () => {
   ])
     assert.doesNotMatch(normalResultsSlice, new RegExp(marker));
   assert.doesNotMatch(normalResultsSlice, /data-deals-heading-rail="car"/);
-  assert.doesNotMatch(normalResultsSlice, /packages-car-pickup|deals-car-return/);
+  assert.doesNotMatch(
+    normalResultsSlice,
+    /packages-car-pickup|deals-car-return/,
+  );
 });
 
 test("Flight package row order is route, dates, Travellers, Cabin, submit", () => {
@@ -215,10 +218,16 @@ test("each mutually exclusive presentation retains its existing submit source", 
   assert.match(form, /const searchDealsButton =[\s\S]*type="submit"/);
 });
 
-test("desktop landing keeps the approved controls in one fixed-height row", () => {
-  assert.match(form, /presentation\?: "default" \| "mobile-homepage" \| "desktop-landing"/);
+test("desktop landing expands the primary controls and moves submit to its own final row", () => {
+  assert.match(
+    form,
+    /presentation\?: "default" \| "mobile-homepage" \| "desktop-landing"/,
+  );
   assert.match(form, /data-deals-desktop-package-selector/);
-  assert.match(form, /lg:h-\[78px\][\s\S]*lg:grid-cols-\[minmax\(0,2\.5fr\)_minmax\(0,1\.3fr\)_minmax\(0,1\.3fr\)_minmax\(0,1\.05fr\)_minmax\(148px,\.95fr\)\]/);
+  assert.match(
+    form,
+    /lg:h-\[78px\][\s\S]*lg:grid-cols-\[minmax\(0,2\.5fr\)_minmax\(0,1\.3fr\)_minmax\(0,1\.25fr\)_minmax\(0,\.95fr\)\]/,
+  );
   for (const control of [
     "origin",
     "destination",
@@ -226,13 +235,33 @@ test("desktop landing keeps the approved controls in one fixed-height row", () =
     "data-deals-package-travellers",
     "data-deals-package-cabin",
     "deals.searchButton",
-  ]) assert.match(form, new RegExp(control));
+  ])
+    assert.match(form, new RegExp(control));
   assert.match(form, /swapDealsFlightAirports[\s\S]*swapFlightAirports/);
   assert.match(primaryControls, /value=\{search\.flightCabinClass\}/);
+  assert.match(
+    primaryControls,
+    /!isDesktopLanding \? searchDealsButton : null/,
+  );
+  assert.match(
+    stayOptions,
+    /guidedPreviewPanel[\s\S]*isDesktopLanding \? searchDealsButton : null/,
+  );
+  assert.match(
+    form,
+    /data-deals-search-submit-row=\{[\s\S]*isDesktopLanding \? "desktop-landing"/,
+  );
+  assert.match(
+    form,
+    /lg:mt-\[14px\][\s\S]*lg:h-\[50px\][\s\S]*lg:rounded-\[8px\]/,
+  );
 });
 
 test("desktop-only styling leaves mobile homepage and results gates intact", () => {
-  assert.match(form, /const isDesktopLanding =[\s\S]*presentation === "desktop-landing"/);
+  assert.match(
+    form,
+    /const isDesktopLanding =[\s\S]*presentation === "desktop-landing"/,
+  );
   assert.match(form, /presentation === "mobile-homepage"/);
   assert.match(form, /variant === "results"/);
   assert.match(form, /data-deals-results-layout/);
@@ -253,25 +282,71 @@ test("desktop landing uses restrained eight-pixel geometry", () => {
     /data-deals-desktop-package-selector[\s\S]*rounded-\[8px\] border border-\[#dee5ed\]/,
   );
   assert.match(form, /lg:overflow-visible lg:rounded-\[8px\]/);
-  assert.match(form, /lg:rounded-e-\[8px\]/);
+  assert.match(
+    form,
+    /data-deals-desktop-landing-popover[\s\S]*rounded-\[8px\]/,
+  );
   assert.doesNotMatch(form, /lg:rounded-\[18px\]|lg:rounded-e-\[11px\]/);
+});
+
+test("desktop landing uses one shared portal contract for every expandable field", () => {
+  const popover = form.slice(
+    form.indexOf("function DesktopLandingPopover"),
+    form.indexOf("function DealsCarPopover"),
+  );
+  assert.match(popover, /calculateDesktopPopoverGeometry/);
+  assert.match(popover, /gap: 8/);
+  assert.match(popover, /createPortal\([\s\S]*document\.body/);
+  assert.ok(form.includes('marker={`flight-${kind}`}'));
+  for (const marker of [
+    "flight-dates",
+    "travellers",
+    "cabin",
+    "hotel-dates",
+    "car-dates",
+    "car-times",
+  ])
+    assert.match(form, new RegExp(marker));
+  assert.match(form, /const closeDesktopLandingPanels = \(\) =>/);
+  assert.match(form, /setCabinOpen\(false\)/);
+});
+
+test("desktop stay-date checkbox stays neutral and draws only a blue check", () => {
+  assert.match(
+    stayOptions,
+    /appearance-none bg-white checked:border-slate-400 checked:bg-white focus:ring-0/,
+  );
+  assert.match(stayOptions, /<Check[\s\S]*text-\[#2563eb\]/);
+  assert.doesNotMatch(stayOptions, /checked:bg-\[#004BB8\]|checked:bg-blue/);
 });
 
 test("desktop package selection is an underline without a selected box", () => {
   const selector = form.slice(
     form.indexOf("data-deals-desktop-package-selector"),
-    form.indexOf("</fieldset>", form.indexOf("data-deals-desktop-package-selector")),
+    form.indexOf(
+      "</fieldset>",
+      form.indexOf("data-deals-desktop-package-selector"),
+    ),
   );
-  assert.match(
+  assert.match(selector, /after:bottom-0 after:h-\[2px\] after:bg-\[#2563EB\]/);
+  assert.doesNotMatch(
     selector,
-    /after:bottom-0 after:h-\[2px\] after:bg-\[#2563EB\]/,
+    /bg-\[#eff6ff\]|-m-px border border-\[#2563eb\]/,
   );
-  assert.doesNotMatch(selector, /bg-\[#eff6ff\]|-m-px border border-\[#2563eb\]/);
 });
 
 test("desktop trip type uses localized Round trip and a neutral radio ring", () => {
-  assert.match(form, /isDesktopLanding[\s\S]*\? "roundTrip"[\s\S]*: "deals\.tripType\.return"/);
-  assert.match(form, /lg:h-\[18px\] lg:w-\[18px\] lg:border-2 lg:border-slate-300/);
+  assert.match(
+    form,
+    /isDesktopLanding[\s\S]*\? "roundTrip"[\s\S]*: "deals\.tripType\.return"/,
+  );
+  assert.match(
+    form,
+    /lg:h-\[18px\] lg:w-\[18px\] lg:border-2 lg:border-slate-300/,
+  );
   assert.match(form, /h-1\.5 w-1\.5 rounded-full bg-\[#004BB8\]/);
-  assert.match(form, /lg:text-\[14px\] lg:font-medium lg:text-slate-800 lg:ring-0/);
+  assert.match(
+    form,
+    /lg:text-\[14px\] lg:font-medium lg:text-slate-800 lg:ring-0/,
+  );
 });
