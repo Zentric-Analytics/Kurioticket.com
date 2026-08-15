@@ -2828,7 +2828,7 @@ export function DealsSearchForm({
         type="submit"
         disabled={submitting || pending}
         aria-busy={submitting || pending}
-        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:w-full lg:rounded-s-none lg:rounded-e-[11px] lg:px-4 lg:text-[14px] lg:shadow-none" : ""}`}
+        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:w-full lg:rounded-s-none lg:rounded-e-[8px] lg:px-4 lg:text-[14px] lg:shadow-none" : ""}`}
       >
         <Search className="h-4 w-4" />
         {t(
@@ -2989,20 +2989,20 @@ export function DealsSearchForm({
       {...(variant === "results" ? { "data-deals-results-layout": true } : {})}
       onSubmit={submit}
       noValidate
-      className={presentation === "mobile-homepage" ? "w-full" : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""} ${isDesktopLanding ? "lg:max-w-[1280px] lg:rounded-[18px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:py-6 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8" : ""}`}
+      className={presentation === "mobile-homepage" ? "w-full" : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""} ${isDesktopLanding ? "lg:max-w-[1280px] lg:rounded-[8px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:py-6 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8" : ""}`}
     >
       {mobileHomepageControls ?? <>
       {isDesktopLanding ? (
         <fieldset className="hidden lg:block lg:pb-0" data-deals-desktop-package-selector>
           <legend className="sr-only">{t("deals.packageSelector.instruction")}</legend>
-          <div role="radiogroup" aria-label={t("deals.packageSelector.instruction")} className="inline-grid h-12 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe]">
+          <div role="radiogroup" aria-label={t("deals.packageSelector.instruction")} className="inline-grid h-12 grid-cols-4 overflow-hidden rounded-[8px] border border-[#dee5ed] bg-[#fcfdfe]">
             {desktopLandingPackageOptions.map((option, index) => {
               const selected =
                 (desktopPackageChoice ??
                   (search.mode === "hotel-flight" ? "hotel-flight" : search.mode)) ===
                 option.id;
               const Icon = option.id === "hotel-car" ? CarFront : option.id === "flight-car" ? Plane : Building2;
-              return <button key={option.id} type="button" role="radio" aria-checked={selected} data-deals-presentation-choice={option.id} data-deals-canonical-mode={option.mode} onClick={() => { setDesktopPackageChoice(option.id); selectPackageMode(option.mode); }} className={`focus-ring relative flex min-w-[135px] items-center justify-center gap-2 px-3 text-[14px] font-semibold transition-colors xl:min-w-[154px] xl:px-4 ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "z-10 -m-px border border-[#2563eb] bg-[#eff6ff] text-[#2563eb]" : "text-slate-700 hover:bg-slate-50"}`}><Icon aria-hidden="true" className="h-4 w-4" />{option.text}</button>;
+              return <button key={option.id} type="button" role="radio" aria-checked={selected} data-deals-presentation-choice={option.id} data-deals-canonical-mode={option.mode} onClick={() => { setDesktopPackageChoice(option.id); selectPackageMode(option.mode); }} className={`focus-ring relative flex min-w-[135px] items-center justify-center gap-2 px-3 text-[14px] font-semibold text-slate-700 transition-colors xl:min-w-[154px] xl:px-4 ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#2563EB] after:content-['']" : "hover:bg-slate-50"}`}><Icon aria-hidden="true" className="h-4 w-4" />{option.text}</button>;
             })}
           </div>
         </fieldset>
@@ -3080,7 +3080,7 @@ export function DealsSearchForm({
                 >
                   <span
                     aria-hidden="true"
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border bg-white transition-colors ${search.flightTripType === value ? "border-[#004BB8]" : "border-slate-300 group-hover:border-slate-400"} ${isDesktopLanding ? "lg:h-[18px] lg:w-[18px] lg:border-2" : ""}`}
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border bg-white transition-colors ${search.flightTripType === value ? "border-[#004BB8]" : "border-slate-300 group-hover:border-slate-400"} ${isDesktopLanding ? "lg:h-[18px] lg:w-[18px] lg:border-2 lg:border-slate-300" : ""}`}
                   >
                     <span
                       className={`h-1.5 w-1.5 rounded-full bg-[#004BB8] transition-opacity ${search.flightTripType === value ? "opacity-100" : "opacity-0"}`}
@@ -3089,7 +3089,9 @@ export function DealsSearchForm({
                   <span>
                     {t(
                       value === "round-trip"
-                        ? "deals.tripType.return"
+                        ? isDesktopLanding
+                          ? "roundTrip"
+                          : "deals.tripType.return"
                         : "deals.tripType.oneWay",
                     )}
                   </span>
@@ -3104,7 +3106,7 @@ export function DealsSearchForm({
             {...(variant === "results"
               ? { "data-deals-results-main-search-row": "flight" }
               : {})}
-            className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1 ${isDesktopLanding ? "lg:mt-[18px] lg:h-[78px] lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1.05fr)_minmax(148px,.95fr)] lg:overflow-visible lg:rounded-xl lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]" : ""}`}
+            className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1 ${isDesktopLanding ? "lg:mt-[18px] lg:h-[78px] lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1.05fr)_minmax(148px,.95fr)] lg:overflow-visible lg:rounded-[8px] lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]" : ""}`}
           >
             <div className={`grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)]" : ""}`}>
               {(["origin", "destination"] as const).map((kind, index) => {
