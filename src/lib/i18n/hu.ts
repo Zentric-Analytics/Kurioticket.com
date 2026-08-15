@@ -153,4 +153,5 @@ export const translations: TranslationDictionary = {
   "deals.journey.substate.choose-return": "Choose return",
   "deals.journey.substate.choose-car": "Choose car",
   "deals.journey.substate.review-trip": "Review trip",
+  flightSearchDestinationPlaceholderShort: 'Hová?',
 };
