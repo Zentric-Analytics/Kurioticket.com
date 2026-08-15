@@ -19,6 +19,7 @@ import {
   Building2,
   Calendar,
   CarFront,
+  Check,
   ChevronDown,
   MapPin,
   Minus,
@@ -78,6 +79,7 @@ import {
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
+import { calculateDesktopPopoverGeometry } from "@/components/search/desktopPopoverPosition";
 
 type HotelSuggestion = {
   id: string;
@@ -115,7 +117,11 @@ const desktopLandingPackageOptions = [
   { id: "hotel-flight", mode: "hotel-flight", text: "Flight+Hotel" },
   { id: "flight-car", mode: "flight-car", text: "Flight+Car" },
   { id: "hotel-car", mode: "hotel-car", text: "Hotel+Car" },
-  { id: "hotel-flight-car", mode: "hotel-flight-car", text: "Flight+Hotel+Car" },
+  {
+    id: "hotel-flight-car",
+    mode: "hotel-flight-car",
+    text: "Flight+Hotel+Car",
+  },
 ] as const satisfies ReadonlyArray<{
   id: string;
   mode: DealsPackageMode;
@@ -204,11 +210,79 @@ const buildFlightOriginPatch = (option: AirportOption, locale: string) => {
   return text ? { flightOriginText: text, flightOriginCode: code } : null;
 };
 
+function DesktopLandingPopover({
+  open,
+  anchorRef,
+  width,
+  desiredHeight,
+  align = "start",
+  marker,
+  className = "p-3",
+  children,
+}: {
+  open: boolean;
+  anchorRef: RefObject<HTMLElement | null>;
+  width: number;
+  desiredHeight: number;
+  align?: "start" | "center" | "end";
+  marker: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  const [geometry, setGeometry] = useState<ReturnType<
+    typeof calculateDesktopPopoverGeometry
+  > | null>(null);
+
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return;
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const updatePosition = () => {
+      if (!desktop.matches || !anchorRef.current) return setGeometry(null);
+      const rect = anchorRef.current.getBoundingClientRect();
+      setGeometry(
+        calculateDesktopPopoverGeometry({
+          fieldRect: rect,
+          boundaryRect: rect,
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
+          viewportPadding: 16,
+          gap: 8,
+          preferredWidth: width,
+          align,
+          desiredHeight,
+        }),
+      );
+    };
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    desktop.addEventListener("change", updatePosition);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      desktop.removeEventListener("change", updatePosition);
+    };
+  }, [align, anchorRef, desiredHeight, open, width]);
+
+  if (!open || !geometry || typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      data-deals-desktop-landing-popover={marker}
+      className={`fixed z-[1300] overflow-y-auto rounded-[8px] border border-[#dee5ed] bg-white shadow-[0_16px_40px_rgba(15,35,65,0.16)] ${className}`}
+      style={geometry}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
 function DealsCarPopover({
   open,
   anchorRef,
   width: preferredWidth,
   marker,
+  desktopLanding = false,
   onDismiss,
   children,
 }: {
@@ -216,6 +290,7 @@ function DealsCarPopover({
   anchorRef: RefObject<HTMLElement | null>;
   width: number;
   marker: "dates" | "times" | "return-location";
+  desktopLanding?: boolean;
   onDismiss?: () => void;
   children: ReactNode;
 }) {
@@ -270,7 +345,11 @@ function DealsCarPopover({
       const target = event.target as Node;
       if (
         !popoverRef.current?.contains(target) &&
-        !anchorRef.current?.contains(target)
+        !anchorRef.current?.contains(target) &&
+        !(
+          target instanceof Element &&
+          target.closest(`[data-deals-desktop-landing-popover='car-${marker}']`)
+        )
       )
         onDismiss();
     };
@@ -283,7 +362,21 @@ function DealsCarPopover({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [anchorRef, onDismiss, open]);
+  }, [anchorRef, marker, onDismiss, open]);
+  if (desktopLanding)
+    return (
+      <DesktopLandingPopover
+        open={open}
+        anchorRef={anchorRef}
+        width={preferredWidth}
+        desiredHeight={marker === "dates" ? 520 : 300}
+        align="center"
+        marker={`car-${marker}`}
+        className="p-4"
+      >
+        {children}
+      </DesktopLandingPopover>
+    );
   if (!open || !position || typeof document === "undefined") return null;
   return createPortal(
     <div
@@ -305,10 +398,12 @@ function DealsCarPopover({
 function DealsFlightDatesPopover({
   open,
   anchorRef,
+  desktopLanding = false,
   children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
+  desktopLanding?: boolean;
   children: ReactNode;
 }) {
   const [position, setPosition] = useState<{
@@ -350,6 +445,20 @@ function DealsFlightDatesPopover({
       desktop.removeEventListener("change", updatePosition);
     };
   }, [anchorRef, open]);
+  if (desktopLanding)
+    return (
+      <DesktopLandingPopover
+        open={open}
+        anchorRef={anchorRef}
+        width={660}
+        desiredHeight={540}
+        align="end"
+        marker="flight-dates"
+        className="p-4"
+      >
+        {children}
+      </DesktopLandingPopover>
+    );
   if (!open || !position || typeof document === "undefined") return null;
   return createPortal(
     <div
@@ -366,10 +475,12 @@ function DealsFlightDatesPopover({
 function DealsHotelDatesPopover({
   open,
   anchorRef,
+  desktopLanding = false,
   children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
+  desktopLanding?: boolean;
   children: ReactNode;
 }) {
   const [position, setPosition] = useState<{
@@ -411,6 +522,20 @@ function DealsHotelDatesPopover({
       desktop.removeEventListener("change", updatePosition);
     };
   }, [anchorRef, open]);
+  if (desktopLanding)
+    return (
+      <DesktopLandingPopover
+        open={open}
+        anchorRef={anchorRef}
+        width={640}
+        desiredHeight={540}
+        align="end"
+        marker="hotel-dates"
+        className="p-4"
+      >
+        {children}
+      </DesktopLandingPopover>
+    );
   if (!open || !position || typeof document === "undefined") return null;
   return createPortal(
     <div
@@ -427,10 +552,12 @@ function DealsHotelDatesPopover({
 function DealsFlightPopover({
   open,
   anchorRef,
+  desktopLanding = false,
   children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
+  desktopLanding?: boolean;
   children: ReactNode;
 }) {
   const [position, setPosition] = useState<{
@@ -482,6 +609,20 @@ function DealsFlightPopover({
     };
   }, [anchorRef, open]);
 
+  if (desktopLanding)
+    return (
+      <DesktopLandingPopover
+        open={open}
+        anchorRef={anchorRef}
+        width={380}
+        desiredHeight={460}
+        align="end"
+        marker="travellers"
+        className="flex overflow-hidden p-4"
+      >
+        {children}
+      </DesktopLandingPopover>
+    );
   if (!open || !position || typeof document === "undefined") return null;
   return createPortal(
     <div
@@ -500,12 +641,14 @@ function DealsDestinationPopover({
   anchorRef,
   width: desiredWidth,
   marker,
+  desktopLanding = false,
   children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
   width: number;
   marker: string;
+  desktopLanding?: boolean;
   children: ReactNode;
 }) {
   const [position, setPosition] = useState<{
@@ -549,6 +692,19 @@ function DealsDestinationPopover({
       desktop.removeEventListener("change", updatePosition);
     };
   }, [anchorRef, desiredWidth, open]);
+  if (desktopLanding)
+    return (
+      <DesktopLandingPopover
+        open={open}
+        anchorRef={anchorRef}
+        width={desiredWidth}
+        desiredHeight={352}
+        marker={marker}
+        className="p-2"
+      >
+        {children}
+      </DesktopLandingPopover>
+    );
   if (!open || !position || typeof document === "undefined") return null;
   return createPortal(
     <div
@@ -699,6 +855,8 @@ export function DealsSearchForm({
   const mobileTravelersCommittedRef = useRef(false);
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [mobileTravelersOpen, setMobileTravelersOpen] = useState(false);
+  const cabinLauncherRef = useRef<HTMLButtonElement>(null);
+  const [cabinOpen, setCabinOpen] = useState(false);
   const [draftAdults, setDraftAdults] = useState(search.flightAdults);
   const [draftChildren, setDraftChildren] = useState(search.flightChildren);
   const [draftInfants, setDraftInfants] = useState(search.flightInfants);
@@ -762,6 +920,19 @@ export function DealsSearchForm({
     search.carDriverAge,
   );
   const included = getIncludedProducts(search.mode);
+  const closeDesktopLandingPanels = () => {
+    if (!isDesktopLanding) return;
+    setFlightOriginOpen(false);
+    setFlightDestinationOpen(false);
+    setHotelDestinationOpen(false);
+    setFlightDatesOpen(false);
+    setHotelDatesOpen(false);
+    setTravelersOpen(false);
+    setCabinOpen(false);
+    setCarReturnLocationOpen(false);
+    setCarDatesOpen(false);
+    setCarTimesOpen(false);
+  };
   const supportsStayDateOverride = included.hotel && included.flight;
   const travelersControlLabel = !included.hotel
     ? t("deals.travellersRow")
@@ -992,6 +1163,7 @@ export function DealsSearchForm({
       flightDatesLauncherRef.current?.focus({ preventScroll: true }),
     );
   const openFlightDates = () => {
+    closeDesktopLandingPanels();
     resetFlightDatesDraft();
     const departure = parseIsoDate(search.flightDepartureDate);
     const validVisibleDeparture =
@@ -1148,6 +1320,7 @@ export function DealsSearchForm({
       hotelDatesLauncherRef.current?.focus({ preventScroll: true }),
     );
   const openHotelDates = () => {
+    closeDesktopLandingPanels();
     resetHotelDatesDraft();
     const checkIn = parseIsoDate(displayedHotelCheckIn);
     const visibleDate =
@@ -1262,6 +1435,7 @@ export function DealsSearchForm({
     search.hotelRooms,
   ]);
   const openTravelers = () => {
+    closeDesktopLandingPanels();
     resetTravelersDraft();
     if (window.matchMedia("(max-width: 639px)").matches)
       setMobileTravelersOpen(true);
@@ -1408,6 +1582,7 @@ export function DealsSearchForm({
     setMobileCarDriverAgeOpen(false);
   };
   const openCarLocation = (kind: "pickup" | "return") => {
+    closeDesktopLandingPanels();
     closeOtherDealsPickers();
     resetCarDatesDraft();
     resetCarTimesDraft();
@@ -1433,6 +1608,7 @@ export function DealsSearchForm({
     restoreCarFocus(carReturnLocationLauncherRef);
   };
   const openCarDates = () => {
+    closeDesktopLandingPanels();
     resetCarDatesDraft();
     resetCarTimesDraft();
     closeOtherDealsPickers();
@@ -1454,6 +1630,7 @@ export function DealsSearchForm({
     [resetCarDatesDraft],
   );
   const openCarTimes = () => {
+    closeDesktopLandingPanels();
     resetCarTimesDraft();
     resetCarDatesDraft();
     closeOtherDealsPickers();
@@ -1579,7 +1756,9 @@ export function DealsSearchForm({
         !carDatesLauncherRef.current?.contains(target) &&
         !(
           target instanceof Element &&
-          target.closest("[data-deals-car-dates-popover]")
+          target.closest(
+            "[data-deals-car-dates-popover], [data-deals-desktop-landing-popover='car-dates']",
+          )
         )
       )
         dismissCarDates();
@@ -1588,7 +1767,9 @@ export function DealsSearchForm({
         !carTimesLauncherRef.current?.contains(target) &&
         !(
           target instanceof Element &&
-          target.closest("[data-deals-car-times-popover]")
+          target.closest(
+            "[data-deals-car-times-popover], [data-deals-desktop-landing-popover='car-times']",
+          )
         )
       )
         dismissCarTimes();
@@ -1616,7 +1797,9 @@ export function DealsSearchForm({
         !travelersLauncherRef.current?.contains(target) &&
         !(
           target instanceof Element &&
-          target.closest("[data-deals-flight-travellers-popover]")
+          target.closest(
+            "[data-deals-flight-travellers-popover], [data-deals-desktop-landing-popover='travellers']",
+          )
         )
       )
         dismissDesktopTravelers();
@@ -1636,6 +1819,40 @@ export function DealsSearchForm({
   }, [dismissDesktopTravelers, travelersOpen]);
 
   useEffect(() => {
+    if (!cabinOpen) return;
+    const dismiss = (restoreFocus = false) => {
+      setCabinOpen(false);
+      if (restoreFocus)
+        requestAnimationFrame(() =>
+          cabinLauncherRef.current?.focus({ preventScroll: true }),
+        );
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (
+        !cabinLauncherRef.current?.contains(target) &&
+        !(
+          target instanceof Element &&
+          target.closest('[data-deals-desktop-landing-popover="cabin"]')
+        )
+      )
+        dismiss();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      dismiss(true);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [cabinOpen]);
+
+  useEffect(() => {
     if (!flightDatesOpen) return;
     const dismissOnPointer = (event: PointerEvent) => {
       const target = event.target;
@@ -1644,7 +1861,9 @@ export function DealsSearchForm({
         !flightDatesLauncherRef.current?.contains(target) &&
         !(
           target instanceof Element &&
-          target.closest("[data-deals-flight-dates-popover]")
+          target.closest(
+            "[data-deals-flight-dates-popover], [data-deals-desktop-landing-popover='flight-dates']",
+          )
         )
       )
         dismissDesktopFlightDates();
@@ -1672,7 +1891,9 @@ export function DealsSearchForm({
         !hotelDatesLauncherRef.current?.contains(target) &&
         !(
           target instanceof Element &&
-          target.closest("[data-deals-hotel-dates-popover]")
+          target.closest(
+            "[data-deals-hotel-dates-popover], [data-deals-desktop-landing-popover='hotel-dates']",
+          )
         )
       )
         dismissDesktopHotelDates();
@@ -1778,11 +1999,13 @@ export function DealsSearchForm({
       const optionBounds = selectedOption.getBoundingClientRect();
       const startOverflow = optionBounds.left - railBounds.left;
       const endOverflow = optionBounds.right - railBounds.right;
-      const delta = startOverflow < 0 ? startOverflow : endOverflow > 0 ? endOverflow : 0;
+      const delta =
+        startOverflow < 0 ? startOverflow : endOverflow > 0 ? endOverflow : 0;
       if (delta)
         rail.scrollBy({
           left: delta,
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+            .matches
             ? "auto"
             : "smooth",
         });
@@ -1793,6 +2016,7 @@ export function DealsSearchForm({
     kind: "origin" | "destination",
     mobile = false,
   ) => {
+    closeDesktopLandingPanels();
     closeUnrelatedPickers();
     setHotelDestinationOpen(false);
     setHotelDestinationMobileOpen(false);
@@ -1801,6 +2025,7 @@ export function DealsSearchForm({
     setFlightMobileAirport(mobile ? kind : null);
   };
   const openHotelDestination = (mobile = false) => {
+    closeDesktopLandingPanels();
     closeUnrelatedPickers();
     setFlightOriginOpen(false);
     setFlightDestinationOpen(false);
@@ -1815,7 +2040,9 @@ export function DealsSearchForm({
       if (!(target instanceof Node)) return;
       if (
         target instanceof Element &&
-        target.closest("[data-deals-destination-popover]")
+        target.closest(
+          "[data-deals-destination-popover], [data-deals-desktop-landing-popover^='flight-'], [data-deals-desktop-landing-popover='hotel']",
+        )
       )
         return;
       if (!flightOriginWrapRef.current?.contains(target))
@@ -2834,12 +3061,17 @@ export function DealsSearchForm({
     : "lg:h-full lg:min-w-[156px] lg:items-center lg:border-s lg:border-slate-200 lg:px-2";
 
   const searchDealsButton = (
-    <div className={`flex w-full ${packageSearchDesktopClasses} ${isDesktopLanding ? "lg:min-w-0 lg:border-s-0 lg:p-0" : ""}`}>
+    <div
+      data-deals-search-submit-row={
+        isDesktopLanding ? "desktop-landing" : undefined
+      }
+      className={`flex w-full ${packageSearchDesktopClasses} ${isDesktopLanding ? "lg:mt-[14px] lg:min-w-0 lg:border-s-0 lg:p-0" : ""}`}
+    >
       <button
         type="submit"
         disabled={submitting || pending}
         aria-busy={submitting || pending}
-        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:w-full lg:rounded-s-none lg:rounded-e-[8px] lg:px-4 lg:text-[14px] lg:shadow-none" : ""}`}
+        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? "lg:h-[50px] lg:min-h-[50px] lg:w-full lg:rounded-[8px] lg:px-4 lg:text-[14px] lg:shadow-none" : ""}`}
       >
         <Search className="h-4 w-4" />
         {t(
@@ -2871,7 +3103,12 @@ export function DealsSearchForm({
         }
         className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4" : ""}`}
       >
-        {isDesktopLanding ? <UserRound aria-hidden="true" className="hidden h-4 w-4 shrink-0 text-[#2563eb] lg:block" /> : null}
+        {isDesktopLanding ? (
+          <UserRound
+            aria-hidden="true"
+            className="hidden h-4 w-4 shrink-0 text-[#2563eb] lg:block"
+          />
+        ) : null}
         <span className="min-w-0">
           <span className={`${label} mb-0.5 whitespace-nowrap`}>
             {travelersControlLabel}
@@ -2885,35 +3122,60 @@ export function DealsSearchForm({
           data-deals-package-cabin
           className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4 lg:ps-10" : ""}`}
         >
-          {isDesktopLanding ? <Plane aria-hidden="true" className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block" /> : null}
-          <label
-            className={`${label} mb-0.5 whitespace-nowrap`}
-            htmlFor="deals-flight-cabin"
-          >
+          {isDesktopLanding ? (
+            <Plane
+              aria-hidden="true"
+              className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
+            />
+          ) : null}
+          <span className={`${label} mb-0.5 whitespace-nowrap`}>
             {t("deals.cabinClass")}
-          </label>
-          <select
-            id="deals-flight-cabin"
-            value={search.flightCabinClass}
-            onChange={(event) =>
-              update(
-                "flightCabinClass",
-                event.target.value as DealsSearch["flightCabinClass"],
-              )
-            }
-            className={`${packageActionControl} appearance-none pe-6`}
-          >
-            <option value="economy">{t("economy")}</option>
-            <option value="business">{t("business")}</option>
-            <option value="first">{t("first")}</option>
-          </select>
-          <ChevronDown
-            aria-hidden="true"
-          className="pointer-events-none absolute end-3 bottom-3 h-4 w-4 lg:bottom-1/2 lg:translate-y-1/2"
-          />
+          </span>
+          {isDesktopLanding ? (
+            <button
+              ref={cabinLauncherRef}
+              id="deals-flight-cabin"
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={cabinOpen}
+              onClick={() => {
+                if (cabinOpen) setCabinOpen(false);
+                else {
+                  closeDesktopLandingPanels();
+                  setCabinOpen(true);
+                }
+              }}
+              className={`${packageActionControl} flex items-center justify-between pe-6 text-start`}
+            >
+              <span>{t(search.flightCabinClass)}</span>
+              <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0" />
+            </button>
+          ) : (
+            <select
+              id="deals-flight-cabin"
+              value={search.flightCabinClass}
+              onChange={(event) =>
+                update(
+                  "flightCabinClass",
+                  event.target.value as DealsSearch["flightCabinClass"],
+                )
+              }
+              className={`${packageActionControl} appearance-none pe-6`}
+            >
+              <option value="economy">{t("economy")}</option>
+              <option value="business">{t("business")}</option>
+              <option value="first">{t("first")}</option>
+            </select>
+          )}
+          {!isDesktopLanding ? (
+            <ChevronDown
+              aria-hidden="true"
+              className="pointer-events-none absolute end-3 bottom-3 h-4 w-4 lg:bottom-1/2 lg:translate-y-1/2"
+            />
+          ) : null}
         </div>
       ) : null}
-      {searchDealsButton}
+      {!isDesktopLanding ? searchDealsButton : null}
     </>
   );
 
@@ -2926,67 +3188,238 @@ export function DealsSearchForm({
   const compactValueClassName =
     "mt-1.5 block truncate text-[16px] font-medium leading-5 text-slate-950";
 
-  const mobileHomepageControls = presentation === "mobile-homepage" ? (
-    <div data-testid="mobile-homepage-deals-search" className="mt-3 space-y-2">
-      <fieldset className="min-w-0 w-full max-w-full overflow-hidden">
-        <legend className="sr-only">{t("deals.packageSelector.instruction")}</legend>
-        <div ref={mobilePackageRailRef} role="radiogroup" aria-label={t("deals.packageSelector.instruction")} data-testid="mobile-homepage-deals-package-rail" className="flex h-10 min-w-0 w-full max-w-full touch-pan-x flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth border-b border-slate-200 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
-          {mobileHomepagePackageOptions.map(({ mode, text }, index) => {
-            const selected = search.mode === mode;
-            return (
-              <button ref={(node) => { mobilePackageOptionRefs.current[mode] = node ?? undefined; }} key={mode} type="button" role="radio" aria-checked={selected} aria-label={text} data-deals-mode={mode} onClick={() => selectPackageMode(mode)} onKeyDown={(event) => {
-                const offset = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
-                if (!offset && event.key !== "Home" && event.key !== "End") return;
-                event.preventDefault();
-                const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? mobileHomepagePackageOptions.length - 1 : (index + offset + mobileHomepagePackageOptions.length) % mobileHomepagePackageOptions.length;
-                const nextMode = mobileHomepagePackageOptions[nextIndex].mode;
-                selectPackageMode(nextMode);
-                mobilePackageOptionRefs.current[nextMode]?.focus({ preventScroll: true });
-              }} className={`focus-ring relative flex h-10 w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent px-3 text-[13px] font-medium text-slate-900 ${selected ? "after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : ""}`}>
-                <span className="whitespace-nowrap">{text}</span>
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
+  const mobileHomepageControls =
+    presentation === "mobile-homepage" ? (
+      <div
+        data-testid="mobile-homepage-deals-search"
+        className="mt-3 space-y-2"
+      >
+        <fieldset className="min-w-0 w-full max-w-full overflow-hidden">
+          <legend className="sr-only">
+            {t("deals.packageSelector.instruction")}
+          </legend>
+          <div
+            ref={mobilePackageRailRef}
+            role="radiogroup"
+            aria-label={t("deals.packageSelector.instruction")}
+            data-testid="mobile-homepage-deals-package-rail"
+            className="flex h-10 min-w-0 w-full max-w-full touch-pan-x flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth border-b border-slate-200 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+          >
+            {mobileHomepagePackageOptions.map(({ mode, text }, index) => {
+              const selected = search.mode === mode;
+              return (
+                <button
+                  ref={(node) => {
+                    mobilePackageOptionRefs.current[mode] = node ?? undefined;
+                  }}
+                  key={mode}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={text}
+                  data-deals-mode={mode}
+                  onClick={() => selectPackageMode(mode)}
+                  onKeyDown={(event) => {
+                    const offset =
+                      event.key === "ArrowRight"
+                        ? 1
+                        : event.key === "ArrowLeft"
+                          ? -1
+                          : 0;
+                    if (!offset && event.key !== "Home" && event.key !== "End")
+                      return;
+                    event.preventDefault();
+                    const nextIndex =
+                      event.key === "Home"
+                        ? 0
+                        : event.key === "End"
+                          ? mobileHomepagePackageOptions.length - 1
+                          : (index +
+                              offset +
+                              mobileHomepagePackageOptions.length) %
+                            mobileHomepagePackageOptions.length;
+                    const nextMode =
+                      mobileHomepagePackageOptions[nextIndex].mode;
+                    selectPackageMode(nextMode);
+                    mobilePackageOptionRefs.current[nextMode]?.focus({
+                      preventScroll: true,
+                    });
+                  }}
+                  className={`focus-ring relative flex h-10 w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent px-3 text-[13px] font-medium text-slate-900 ${selected ? "after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : ""}`}
+                >
+                  <span className="whitespace-nowrap">{text}</span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
 
-      {included.flight ? <div className="relative space-y-2" data-testid="mobile-homepage-deals-route-fields">
-      <button ref={flightOriginMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={flightMobileAirport === "origin"} onClick={() => setFlightMobileAirport("origin")} className={compactFieldClassName}>
-        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Origin</span><span className={compactValueClassName}>{search.flightOriginText || t("cityOrAirport")}</span></span>
-      </button>
-      <button type="button" onClick={swapDealsFlightAirports} aria-label={t("swapOriginDestination") || "Swap origin and destination"} className="focus-ring absolute left-1/2 top-[53px] z-10 flex h-[38px] w-[38px] -translate-x-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_2px_6px_rgba(15,23,42,0.10)] before:absolute before:-inset-[3px] before:content-[''] focus-visible:ring-2 focus-visible:ring-[#075ee8]/30">
-        <ArrowRightLeft aria-hidden="true" className="h-[18px] w-[18px]" />
-      </button>
-      <button ref={flightDestinationMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={flightMobileAirport === "destination"} onClick={() => setFlightMobileAirport("destination")} className={compactFieldClassName}>
-        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Destination</span><span className={`${compactValueClassName} ${search.flightDestinationText ? "" : "text-slate-500"}`}>{search.flightDestinationText || "Where to?"}</span></span>
-      </button>
-      <button ref={flightDatesLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileFlightDatesOpen} onClick={openFlightDates} className={compactFieldClassName}>
-        <span className={compactIconClassName}><Calendar aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travel Dates</span><span className={`${compactValueClassName} ${search.flightDepartureDate ? "" : "text-slate-500"}`}>{search.flightDepartureDate ? flightDatesSummary : "Choose dates"}</span></span>
-        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
-      </button>
-      </div> : <>
-      <button ref={hotelDestinationMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={hotelDestinationMobileOpen} onClick={() => openHotelDestination(true)} className={compactFieldClassName}>
-        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Destination</span><span className={`${compactValueClassName} ${displayedHotelDestination ? "" : "text-slate-500"}`}>{displayedHotelDestination || "Where to?"}</span></span>
-      </button>
-      <button ref={hotelDatesLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileHotelDatesOpen} onClick={openHotelDates} className={compactFieldClassName}>
-        <span className={compactIconClassName}><Calendar aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travel Dates</span><span className={`${compactValueClassName} ${displayedHotelCheckIn ? "" : "text-slate-500"}`}>{displayedHotelCheckIn ? hotelDatesSummary : "Choose dates"}</span></span>
-        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
-      </button>
-      </>}
-      <button ref={travelersLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileTravelersOpen} onClick={openTravelers} className={compactFieldClassName}>
-        <span className={compactIconClassName}><UserRound aria-hidden="true" className="h-[17px] w-[17px]" /></span>
-        <span className="min-w-0 flex-1"><span className={compactLabelClassName}>{included.hotel ? <>Travelers &amp; Rooms</> : <>Travelers</>}</span><span className={compactValueClassName}>{travelerSummary}</span></span>
-        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
-      </button>
-      {errorBlock("flight")}{errorBlock("hotel")}{included.car ? errorBlock("car") : null}
-      <button type="submit" disabled={submitting || pending} aria-busy={submitting || pending} className="focus-ring h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60">Search packages</button>
-    </div>
-  ) : null;
+        {included.flight ? (
+          <div
+            className="relative space-y-2"
+            data-testid="mobile-homepage-deals-route-fields"
+          >
+            <button
+              ref={flightOriginMobileLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={flightMobileAirport === "origin"}
+              onClick={() => setFlightMobileAirport("origin")}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <MapPin aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Origin</span>
+                <span className={compactValueClassName}>
+                  {search.flightOriginText || t("cityOrAirport")}
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={swapDealsFlightAirports}
+              aria-label={
+                t("swapOriginDestination") || "Swap origin and destination"
+              }
+              className="focus-ring absolute left-1/2 top-[53px] z-10 flex h-[38px] w-[38px] -translate-x-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_2px_6px_rgba(15,23,42,0.10)] before:absolute before:-inset-[3px] before:content-[''] focus-visible:ring-2 focus-visible:ring-[#075ee8]/30"
+            >
+              <ArrowRightLeft
+                aria-hidden="true"
+                className="h-[18px] w-[18px]"
+              />
+            </button>
+            <button
+              ref={flightDestinationMobileLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={flightMobileAirport === "destination"}
+              onClick={() => setFlightMobileAirport("destination")}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <MapPin aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Destination</span>
+                <span
+                  className={`${compactValueClassName} ${search.flightDestinationText ? "" : "text-slate-500"}`}
+                >
+                  {search.flightDestinationText || "Where to?"}
+                </span>
+              </span>
+            </button>
+            <button
+              ref={flightDatesLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={mobileFlightDatesOpen}
+              onClick={openFlightDates}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <Calendar aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Travel Dates</span>
+                <span
+                  className={`${compactValueClassName} ${search.flightDepartureDate ? "" : "text-slate-500"}`}
+                >
+                  {search.flightDepartureDate
+                    ? flightDatesSummary
+                    : "Choose dates"}
+                </span>
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="h-5 w-5 shrink-0 text-slate-700"
+              />
+            </button>
+          </div>
+        ) : (
+          <>
+            <button
+              ref={hotelDestinationMobileLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={hotelDestinationMobileOpen}
+              onClick={() => openHotelDestination(true)}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <MapPin aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Destination</span>
+                <span
+                  className={`${compactValueClassName} ${displayedHotelDestination ? "" : "text-slate-500"}`}
+                >
+                  {displayedHotelDestination || "Where to?"}
+                </span>
+              </span>
+            </button>
+            <button
+              ref={hotelDatesLauncherRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={mobileHotelDatesOpen}
+              onClick={openHotelDates}
+              className={compactFieldClassName}
+            >
+              <span className={compactIconClassName}>
+                <Calendar aria-hidden="true" className="h-[17px] w-[17px]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={compactLabelClassName}>Travel Dates</span>
+                <span
+                  className={`${compactValueClassName} ${displayedHotelCheckIn ? "" : "text-slate-500"}`}
+                >
+                  {displayedHotelCheckIn ? hotelDatesSummary : "Choose dates"}
+                </span>
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="h-5 w-5 shrink-0 text-slate-700"
+              />
+            </button>
+          </>
+        )}
+        <button
+          ref={travelersLauncherRef}
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={mobileTravelersOpen}
+          onClick={openTravelers}
+          className={compactFieldClassName}
+        >
+          <span className={compactIconClassName}>
+            <UserRound aria-hidden="true" className="h-[17px] w-[17px]" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className={compactLabelClassName}>
+              {included.hotel ? <>Travelers &amp; Rooms</> : <>Travelers</>}
+            </span>
+            <span className={compactValueClassName}>{travelerSummary}</span>
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className="h-5 w-5 shrink-0 text-slate-700"
+          />
+        </button>
+        {errorBlock("flight")}
+        {errorBlock("hotel")}
+        {included.car ? errorBlock("car") : null}
+        <button
+          type="submit"
+          disabled={submitting || pending}
+          aria-busy={submitting || pending}
+          className="focus-ring h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60"
+        >
+          Search packages
+        </button>
+      </div>
+    ) : null;
 
   return (
     <form
@@ -2994,258 +3427,554 @@ export function DealsSearchForm({
       {...(variant === "results" ? { "data-deals-results-layout": true } : {})}
       onSubmit={submit}
       noValidate
-      className={presentation === "mobile-homepage" ? "w-full" : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""} ${isDesktopLanding ? "lg:max-w-[1280px] lg:rounded-[8px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:py-6 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8" : ""}`}
+      className={
+        presentation === "mobile-homepage"
+          ? "w-full"
+          : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""} ${isDesktopLanding ? "lg:max-w-[1280px] lg:rounded-[8px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:py-6 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8" : ""}`
+      }
     >
-      {mobileHomepageControls ?? <>
-      {isDesktopLanding ? (
-        <fieldset className="hidden lg:block lg:pb-0" data-deals-desktop-package-selector>
-          <legend className="sr-only">{t("deals.packageSelector.instruction")}</legend>
-          <div role="radiogroup" aria-label={t("deals.packageSelector.instruction")} className="inline-grid h-12 grid-cols-4 overflow-hidden rounded-[8px] border border-[#dee5ed] bg-[#fcfdfe]">
-            {desktopLandingPackageOptions.map((option, index) => {
-              const selected =
-                (desktopPackageChoice ??
-                  (search.mode === "hotel-flight" ? "hotel-flight" : search.mode)) ===
-                option.id;
-              const Icon = option.id === "hotel-car" ? CarFront : option.id === "flight-car" ? Plane : Building2;
-              return <button key={option.id} type="button" role="radio" aria-checked={selected} data-deals-presentation-choice={option.id} data-deals-canonical-mode={option.mode} onClick={() => { setDesktopPackageChoice(option.id); selectPackageMode(option.mode); }} className={`focus-ring relative flex min-w-[135px] items-center justify-center gap-2 px-3 text-[14px] font-semibold text-slate-700 transition-colors xl:min-w-[154px] xl:px-4 ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#2563EB] after:content-['']" : "hover:bg-slate-50"}`}><Icon aria-hidden="true" className="h-4 w-4" />{option.text}</button>;
-            })}
-          </div>
-        </fieldset>
-      ) : null}
-      <fieldset className={`pb-3 sm:pb-2 lg:pb-1 ${isDesktopLanding ? "lg:hidden" : ""}`}>
-        <legend className="sr-only">
-          {t("deals.packageSelector.instruction")}
-        </legend>
-        <div
-          data-deals-package-selector
-          data-deals-package-selector-variant={variant}
-          className="flex flex-nowrap gap-2 overflow-x-auto pb-1"
-        >
-          {dealsPackageOptions.map((option) => {
-            const selected = search.mode === option.mode;
-            return (
-              <button
-                key={option.mode}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => selectPackageMode(option.mode)}
-                className={`focus-ring min-h-10 shrink-0 rounded-full border-2 px-4 py-2 text-sm font-extrabold transition ${selected ? "border-[#004BB8] bg-blue-50 text-[#004BB8] shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50"}`}
-              >
-                {t(option.label)}
-              </button>
-            );
-          })}
-        </div>
-        <p
-          role="status"
-          aria-live="polite"
-          className={`mt-2 min-h-5 text-sm font-semibold text-rose-700 ${productSelectionMessage ? "" : "sr-only"}`}
-        >
-          {productSelectionMessage}
-        </p>
-      </fieldset>
-      {included.flight && (
-        <section
-          aria-label={t("deals.flightRow")}
-          className={`border-t border-slate-200 py-4 sm:py-3 lg:py-2 ${isDesktopLanding ? "lg:mt-5 lg:border-t-0 lg:py-0" : ""}`}
-        >
-          <div
-            data-deals-heading-rail="flight"
-            className="lg:flex lg:min-w-0 lg:items-center lg:gap-3"
-          >
-            <h2 className="sr-only">{t("deals.flightRow")}</h2>
-            <div
-              role="radiogroup"
-              aria-label={t("tripType")}
-              className={`mb-1 inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5 lg:mb-0 lg:flex-row lg:gap-1 ${isDesktopLanding ? "lg:gap-5 lg:p-0" : ""}`}
+      {mobileHomepageControls ?? (
+        <>
+          {isDesktopLanding ? (
+            <fieldset
+              className="hidden lg:block lg:pb-0"
+              data-deals-desktop-package-selector
             >
-              {(["round-trip", "one-way"] as const).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={search.flightTripType === value}
-                  onClick={() => setDealsFlightTripType(value)}
-                  onKeyDown={(event) => {
-                    if (
-                      ![
-                        "ArrowRight",
-                        "ArrowLeft",
-                        "ArrowDown",
-                        "ArrowUp",
-                      ].includes(event.key)
-                    )
-                      return;
-                    event.preventDefault();
-                    setDealsFlightTripType(
-                      value === "round-trip" ? "one-way" : "round-trip",
-                    );
-                  }}
-                  className={`focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold ${search.flightTripType === value ? "bg-[#004BB8]/8 text-[#004BB8] ring-1 ring-[#004BB8]/10 sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:shadow-none" : ""} ${isDesktopLanding ? "lg:min-h-5 lg:rounded-none lg:bg-transparent lg:p-0 lg:text-[14px] lg:font-medium lg:text-slate-800 lg:ring-0" : ""}`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border bg-white transition-colors ${search.flightTripType === value ? "border-[#004BB8]" : "border-slate-300 group-hover:border-slate-400"} ${isDesktopLanding ? "lg:h-[18px] lg:w-[18px] lg:border-2 lg:border-slate-300" : ""}`}
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full bg-[#004BB8] transition-opacity ${search.flightTripType === value ? "opacity-100" : "opacity-0"}`}
-                    />
-                  </span>
-                  <span>
-                    {t(
-                      value === "round-trip"
-                        ? isDesktopLanding
-                          ? "roundTrip"
-                          : "deals.tripType.return"
-                        : "deals.tripType.oneWay",
-                    )}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div
-            data-deals-field-content="flight"
-            data-deals-main-search-row="flight"
-            data-deals-main-search-variant={variant}
-            {...(variant === "results"
-              ? { "data-deals-results-main-search-row": "flight" }
-              : {})}
-            className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1 ${isDesktopLanding ? "lg:mt-[18px] lg:h-[78px] lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1.05fr)_minmax(148px,.95fr)] lg:overflow-visible lg:rounded-[8px] lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]" : ""}`}
-          >
-            <div className={`grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)]" : ""}`}>
-              {(["origin", "destination"] as const).map((kind, index) => {
-                const textKey =
-                  kind === "origin"
-                    ? "flightOriginText"
-                    : "flightDestinationText";
-                const codeKey =
-                  kind === "origin"
-                    ? "flightOriginCode"
-                    : "flightDestinationCode";
-                const open =
-                  kind === "origin" ? flightOriginOpen : flightDestinationOpen;
-                const loading =
-                  kind === "origin"
-                    ? flightOriginLoading
-                    : flightDestinationLoading;
-                const highlight =
-                  kind === "origin"
-                    ? flightOriginHighlight
-                    : flightDestinationHighlight;
-                const wrapRef =
-                  kind === "origin"
-                    ? flightOriginWrapRef
-                    : flightDestinationWrapRef;
-                const inputRef =
-                  kind === "origin"
-                    ? flightOriginInputRef
-                    : flightDestinationInputRef;
-                const launcherRef =
-                  kind === "origin"
-                    ? flightOriginMobileLauncherRef
-                    : flightDestinationMobileLauncherRef;
-                return (
-                  <Fragment key={kind}>
-                    <div
-                      ref={wrapRef}
-                      className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
-                      data-deals-flight-destination={kind}
+              <legend className="sr-only">
+                {t("deals.packageSelector.instruction")}
+              </legend>
+              <div
+                role="radiogroup"
+                aria-label={t("deals.packageSelector.instruction")}
+                className="inline-grid h-12 grid-cols-4 overflow-hidden rounded-[8px] border border-[#dee5ed] bg-[#fcfdfe]"
+              >
+                {desktopLandingPackageOptions.map((option, index) => {
+                  const selected =
+                    (desktopPackageChoice ??
+                      (search.mode === "hotel-flight"
+                        ? "hotel-flight"
+                        : search.mode)) === option.id;
+                  const Icon =
+                    option.id === "hotel-car"
+                      ? CarFront
+                      : option.id === "flight-car"
+                        ? Plane
+                        : Building2;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      data-deals-presentation-choice={option.id}
+                      data-deals-canonical-mode={option.mode}
+                      onClick={() => {
+                        setDesktopPackageChoice(option.id);
+                        selectPackageMode(option.mode);
+                      }}
+                      className={`focus-ring relative flex min-w-[135px] items-center justify-center gap-2 px-3 text-[14px] font-semibold text-slate-700 transition-colors xl:min-w-[154px] xl:px-4 ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#2563EB] after:content-['']" : "hover:bg-slate-50"}`}
                     >
-                      {isDesktopLanding ? <MapPin aria-hidden="true" className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block" /> : null}
-                      <label className={label} htmlFor={`deals-flight-${kind}`}>
-                        {t(kind)}
+                      <Icon aria-hidden="true" className="h-4 w-4" />
+                      {option.text}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          ) : null}
+          <fieldset
+            className={`pb-3 sm:pb-2 lg:pb-1 ${isDesktopLanding ? "lg:hidden" : ""}`}
+          >
+            <legend className="sr-only">
+              {t("deals.packageSelector.instruction")}
+            </legend>
+            <div
+              data-deals-package-selector
+              data-deals-package-selector-variant={variant}
+              className="flex flex-nowrap gap-2 overflow-x-auto pb-1"
+            >
+              {dealsPackageOptions.map((option) => {
+                const selected = search.mode === option.mode;
+                return (
+                  <button
+                    key={option.mode}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => selectPackageMode(option.mode)}
+                    className={`focus-ring min-h-10 shrink-0 rounded-full border-2 px-4 py-2 text-sm font-extrabold transition ${selected ? "border-[#004BB8] bg-blue-50 text-[#004BB8] shadow-sm" : "border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50"}`}
+                  >
+                    {t(option.label)}
+                  </button>
+                );
+              })}
+            </div>
+            <p
+              role="status"
+              aria-live="polite"
+              className={`mt-2 min-h-5 text-sm font-semibold text-rose-700 ${productSelectionMessage ? "" : "sr-only"}`}
+            >
+              {productSelectionMessage}
+            </p>
+          </fieldset>
+          {included.flight && (
+            <section
+              aria-label={t("deals.flightRow")}
+              className={`border-t border-slate-200 py-4 sm:py-3 lg:py-2 ${isDesktopLanding ? "lg:mt-5 lg:border-t-0 lg:py-0" : ""}`}
+            >
+              <div
+                data-deals-heading-rail="flight"
+                className="lg:flex lg:min-w-0 lg:items-center lg:gap-3"
+              >
+                <h2 className="sr-only">{t("deals.flightRow")}</h2>
+                <div
+                  role="radiogroup"
+                  aria-label={t("tripType")}
+                  className={`mb-1 inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5 lg:mb-0 lg:flex-row lg:gap-1 ${isDesktopLanding ? "lg:gap-5 lg:p-0" : ""}`}
+                >
+                  {(["round-trip", "one-way"] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={search.flightTripType === value}
+                      onClick={() => setDealsFlightTripType(value)}
+                      onKeyDown={(event) => {
+                        if (
+                          ![
+                            "ArrowRight",
+                            "ArrowLeft",
+                            "ArrowDown",
+                            "ArrowUp",
+                          ].includes(event.key)
+                        )
+                          return;
+                        event.preventDefault();
+                        setDealsFlightTripType(
+                          value === "round-trip" ? "one-way" : "round-trip",
+                        );
+                      }}
+                      className={`focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold ${search.flightTripType === value ? "bg-[#004BB8]/8 text-[#004BB8] ring-1 ring-[#004BB8]/10 sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:shadow-none" : ""} ${isDesktopLanding ? "lg:min-h-5 lg:rounded-none lg:bg-transparent lg:p-0 lg:text-[14px] lg:font-medium lg:text-slate-800 lg:ring-0" : ""}`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border bg-white transition-colors ${search.flightTripType === value ? "border-[#004BB8]" : "border-slate-300 group-hover:border-slate-400"} ${isDesktopLanding ? "lg:h-[18px] lg:w-[18px] lg:border-2 lg:border-slate-300" : ""}`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full bg-[#004BB8] transition-opacity ${search.flightTripType === value ? "opacity-100" : "opacity-0"}`}
+                        />
+                      </span>
+                      <span>
+                        {t(
+                          value === "round-trip"
+                            ? isDesktopLanding
+                              ? "roundTrip"
+                              : "deals.tripType.return"
+                            : "deals.tripType.oneWay",
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div
+                data-deals-field-content="flight"
+                data-deals-main-search-row="flight"
+                data-deals-main-search-variant={variant}
+                {...(variant === "results"
+                  ? { "data-deals-results-main-search-row": "flight" }
+                  : {})}
+                className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1 ${isDesktopLanding ? "lg:mt-[18px] lg:h-[78px] lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.3fr)_minmax(0,1.25fr)_minmax(0,.95fr)] lg:overflow-visible lg:rounded-[8px] lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]" : ""}`}
+              >
+                <div
+                  className={`grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)]" : ""}`}
+                >
+                  {(["origin", "destination"] as const).map((kind, index) => {
+                    const textKey =
+                      kind === "origin"
+                        ? "flightOriginText"
+                        : "flightDestinationText";
+                    const codeKey =
+                      kind === "origin"
+                        ? "flightOriginCode"
+                        : "flightDestinationCode";
+                    const open =
+                      kind === "origin"
+                        ? flightOriginOpen
+                        : flightDestinationOpen;
+                    const loading =
+                      kind === "origin"
+                        ? flightOriginLoading
+                        : flightDestinationLoading;
+                    const highlight =
+                      kind === "origin"
+                        ? flightOriginHighlight
+                        : flightDestinationHighlight;
+                    const wrapRef =
+                      kind === "origin"
+                        ? flightOriginWrapRef
+                        : flightDestinationWrapRef;
+                    const inputRef =
+                      kind === "origin"
+                        ? flightOriginInputRef
+                        : flightDestinationInputRef;
+                    const launcherRef =
+                      kind === "origin"
+                        ? flightOriginMobileLauncherRef
+                        : flightDestinationMobileLauncherRef;
+                    return (
+                      <Fragment key={kind}>
+                        <div
+                          ref={wrapRef}
+                          className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
+                          data-deals-flight-destination={kind}
+                        >
+                          {isDesktopLanding ? (
+                            <MapPin
+                              aria-hidden="true"
+                              className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
+                            />
+                          ) : null}
+                          <label
+                            className={label}
+                            htmlFor={`deals-flight-${kind}`}
+                          >
+                            {t(kind)}
+                          </label>
+                          <div className="relative hidden sm:block">
+                            <input
+                              ref={inputRef}
+                              id={`deals-flight-${kind}`}
+                              role="combobox"
+                              aria-autocomplete="list"
+                              aria-expanded={open}
+                              aria-controls={`deals-flight-${kind}-listbox`}
+                              aria-activedescendant={
+                                open && airportLists[kind][highlight]
+                                  ? `deals-flight-${kind}-option-${highlight}`
+                                  : undefined
+                              }
+                              value={search[textKey]}
+                              placeholder={t("cityOrAirport")}
+                              onFocus={() => openFlightAirport(kind)}
+                              onKeyDown={(event) =>
+                                handleFlightKey(kind, event)
+                              }
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                if (kind === "origin")
+                                  flightOriginUserInteractedRef.current = true;
+                                openFlightAirport(kind);
+                                setSearch((current) =>
+                                  kind === "destination"
+                                    ? {
+                                        ...applyAuthoritativeDestination(
+                                          current,
+                                          value,
+                                        ),
+                                        flightDestinationCode:
+                                          /^[a-z]{3}$/i.test(value.trim())
+                                            ? value.trim().toUpperCase()
+                                            : "",
+                                      }
+                                    : {
+                                        ...current,
+                                        [textKey]: value,
+                                        [codeKey]: /^[a-z]{3}$/i.test(
+                                          value.trim(),
+                                        )
+                                          ? value.trim().toUpperCase()
+                                          : "",
+                                      },
+                                );
+                                if (kind === "origin")
+                                  setFlightOriginHighlight(0);
+                                else setFlightDestinationHighlight(0);
+                                if (value.trim().length < 2)
+                                  setAirportLists((all) => ({
+                                    ...all,
+                                    [kind]: [],
+                                  }));
+                              }}
+                              className={`${field} ${flightConnectedField} ${isDesktopLanding ? "pe-3 lg:text-[15px] lg:font-semibold" : "pe-10"}`}
+                              autoComplete="off"
+                            />
+                            {!isDesktopLanding && search[textKey] ? (
+                              <button
+                                data-deals-flight-clear={kind}
+                                type="button"
+                                aria-label={t("clear")}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => {
+                                  if (kind === "origin")
+                                    flightOriginUserInteractedRef.current = true;
+                                  setSearch((current) =>
+                                    kind === "destination"
+                                      ? {
+                                          ...applyAuthoritativeDestination(
+                                            current,
+                                            "",
+                                          ),
+                                          flightDestinationCode: "",
+                                        }
+                                      : {
+                                          ...current,
+                                          [textKey]: "",
+                                          [codeKey]: "",
+                                        },
+                                  );
+                                  setAirportLists((all) => ({
+                                    ...all,
+                                    [kind]: [],
+                                  }));
+                                  if (kind === "origin") {
+                                    setFlightOriginLoading(false);
+                                    setFlightOriginHighlight(0);
+                                  } else {
+                                    setFlightDestinationLoading(false);
+                                    setFlightDestinationHighlight(0);
+                                  }
+                                  inputRef.current?.focus();
+                                }}
+                                className="focus-ring absolute end-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+                              >
+                                <X className="h-4 w-4" aria-hidden="true" />
+                              </button>
+                            ) : null}
+                          </div>
+                          <button
+                            ref={launcherRef}
+                            type="button"
+                            aria-haspopup="dialog"
+                            aria-expanded={flightMobileAirport === kind}
+                            aria-controls={`deals-flight-mobile-${kind}-dialog`}
+                            onClick={() => openFlightAirport(kind, true)}
+                            className={`${field} flex items-center justify-between gap-2 text-start sm:hidden`}
+                          >
+                            <span
+                              className={`min-w-0 truncate ${search[textKey] ? "text-slate-900" : "text-slate-400"}`}
+                            >
+                              {search[textKey] || t("cityOrAirport")}
+                            </span>
+                            <ChevronDown
+                              className="h-4 w-4 shrink-0 text-slate-500"
+                              aria-hidden="true"
+                            />
+                          </button>
+                          <DealsDestinationPopover
+                            open={open}
+                            anchorRef={wrapRef}
+                            width={390}
+                            marker={`flight-${kind}`}
+                            desktopLanding={isDesktopLanding}
+                          >
+                            {flightSuggestionContent(kind)}
+                          </DealsDestinationPopover>
+                          {loading ? (
+                            <span className="sr-only" aria-live="polite">
+                              {t("searchingAirportsAndCities")}
+                            </span>
+                          ) : null}
+                        </div>
+                        {index === 0 ? (
+                          <div className="relative z-10 -my-2 flex h-4 items-center justify-center lg:my-0 lg:h-auto lg:before:absolute lg:before:left-1/2 lg:before:top-3 lg:before:h-[calc(100%-1.5rem)] lg:before:w-px lg:before:-translate-x-1/2 lg:before:bg-slate-200/90">
+                            <button
+                              type="button"
+                              onClick={swapDealsFlightAirports}
+                              aria-label={
+                                t("swapOriginDestination") ||
+                                "Swap origin and destination"
+                              }
+                              className="focus-ring relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 lg:h-8 lg:w-8 lg:text-[#2563eb] lg:shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
+                            >
+                              <ArrowRightLeft
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                              />
+                            </button>
+                          </div>
+                        ) : null}
+                      </Fragment>
+                    );
+                  })}
+                </div>
+                <div
+                  className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
+                >
+                  {isDesktopLanding ? (
+                    <Calendar
+                      aria-hidden="true"
+                      className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
+                    />
+                  ) : null}
+                  <span className={label}>{t("travelDates")}</span>
+                  <button
+                    ref={flightDatesLauncherRef}
+                    type="button"
+                    aria-expanded={flightDatesOpen || mobileFlightDatesOpen}
+                    aria-haspopup="dialog"
+                    aria-controls={
+                      mobileFlightDatesOpen
+                        ? "deals-flight-mobile-dates"
+                        : "deals-flight-desktop-dates"
+                    }
+                    aria-label={t("chooseTravelDates")}
+                    onClick={() =>
+                      flightDatesOpen
+                        ? dismissDesktopFlightDates(true)
+                        : openFlightDates()
+                    }
+                    className={`${field} ${flightConnectedField} flex items-center justify-between gap-2 text-start`}
+                  >
+                    <span className="min-w-0 truncate">
+                      {flightDatesSummary}
+                    </span>
+                    <Calendar
+                      aria-hidden="true"
+                      className={`h-4 w-4 shrink-0 text-slate-500 ${isDesktopLanding ? "lg:hidden" : ""}`}
+                    />
+                  </button>
+                </div>
+                {primaryPackageControls}
+              </div>
+              <div>{errorBlock("flight")}</div>
+            </section>
+          )}
+          {included.hotel &&
+            (!included.flight ||
+              (variant === "landing" && !search.stayDestinationLinked)) && (
+              <section
+                aria-labelledby="deals-hotel-heading"
+                data-deals-hotel-primary={!included.flight ? "true" : undefined}
+                data-deals-hotel-overrides={
+                  included.flight ? "true" : undefined
+                }
+                className="border-t border-slate-200 py-4 sm:py-3 lg:py-2"
+              >
+                <h2
+                  id="deals-hotel-heading"
+                  data-deals-heading-rail="stay"
+                  className="sr-only"
+                >
+                  <BedDouble className="h-5 w-5 text-[#004BB8]" />
+                  {t("deals.stayRow")}
+                </h2>
+                <div
+                  data-deals-field-content="stay"
+                  data-deals-main-search-row="stay"
+                  data-deals-main-search-variant={variant}
+                  {...(variant === "results"
+                    ? { "data-deals-results-main-search-row": "stay" }
+                    : {})}
+                  className={`${connectedShell} sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(150px,1fr)_minmax(180px,1fr)_minmax(156px,auto)] ${isDesktopLanding ? "lg:h-[78px] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1.25fr)] lg:overflow-visible lg:rounded-[8px] lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]" : ""}`}
+                >
+                  {(!included.flight || !search.stayDestinationLinked) && (
+                    <div
+                      ref={hotelDestinationWrapRef}
+                      className={`${`${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0`} ${hotelDestinationOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
+                      data-deals-hotel-destination
+                    >
+                      <label
+                        className={label}
+                        htmlFor="deals-hotel-destination"
+                      >
+                        {t("deals.destination")}
                       </label>
                       <div className="relative hidden sm:block">
                         <input
-                          ref={inputRef}
-                          id={`deals-flight-${kind}`}
+                          ref={hotelDestinationInputRef}
+                          id="deals-hotel-destination"
                           role="combobox"
                           aria-autocomplete="list"
-                          aria-expanded={open}
-                          aria-controls={`deals-flight-${kind}-listbox`}
+                          aria-controls="deals-hotel-destination-listbox"
+                          aria-expanded={hotelDestinationOpen}
                           aria-activedescendant={
-                            open && airportLists[kind][highlight]
-                              ? `deals-flight-${kind}-option-${highlight}`
+                            hotelDestinationOpen &&
+                            hotelSuggestions[hotelDestinationHighlight]
+                              ? `deals-hotel-destination-option-${hotelDestinationHighlight}`
                               : undefined
                           }
-                          value={search[textKey]}
-                          placeholder={t("cityOrAirport")}
-                          onFocus={() => openFlightAirport(kind)}
-                          onKeyDown={(event) => handleFlightKey(kind, event)}
+                          value={displayedHotelDestination}
+                          placeholder={t("hotelSearchDestinationPlaceholder")}
+                          onFocus={() => openHotelDestination()}
                           onChange={(event) => {
-                            const value = event.target.value;
-                            if (kind === "origin")
-                              flightOriginUserInteractedRef.current = true;
-                            openFlightAirport(kind);
                             setSearch((current) =>
-                              kind === "destination"
-                                ? {
-                                    ...applyAuthoritativeDestination(
-                                      current,
-                                      value,
-                                    ),
-                                    flightDestinationCode: /^[a-z]{3}$/i.test(
-                                      value.trim(),
-                                    )
-                                      ? value.trim().toUpperCase()
-                                      : "",
-                                  }
-                                : {
-                                    ...current,
-                                    [textKey]: value,
-                                    [codeKey]: /^[a-z]{3}$/i.test(value.trim())
-                                      ? value.trim().toUpperCase()
-                                      : "",
-                                  },
+                              getIncludedProducts(current.mode).flight
+                                ? customizeInheritedField(
+                                    current,
+                                    "stayDestination",
+                                    event.target.value,
+                                  )
+                                : applySharedDestination(
+                                    current,
+                                    event.target.value,
+                                  ),
                             );
-                            if (kind === "origin") setFlightOriginHighlight(0);
-                            else setFlightDestinationHighlight(0);
-                            if (value.trim().length < 2)
-                              setAirportLists((all) => ({
-                                ...all,
-                                [kind]: [],
-                              }));
+                            setHotelDestinationHighlight(0);
+                            openHotelDestination();
                           }}
-                          className={`${field} ${flightConnectedField} ${isDesktopLanding ? "pe-3 lg:text-[15px] lg:font-semibold" : "pe-10"}`}
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape")
+                              return setHotelDestinationOpen(false);
+                            if (
+                              event.key === "ArrowDown" ||
+                              event.key === "ArrowUp"
+                            ) {
+                              event.preventDefault();
+                              openHotelDestination();
+                              if (hotelSuggestions.length)
+                                setHotelDestinationHighlight(
+                                  (current) =>
+                                    (current +
+                                      (event.key === "ArrowDown" ? 1 : -1) +
+                                      hotelSuggestions.length) %
+                                    hotelSuggestions.length,
+                                );
+                            } else if (
+                              event.key === "Enter" &&
+                              hotelDestinationOpen &&
+                              hotelSuggestions[hotelDestinationHighlight]
+                            ) {
+                              event.preventDefault();
+                              const option =
+                                hotelSuggestions[hotelDestinationHighlight];
+                              setSearch((current) =>
+                                getIncludedProducts(current.mode).flight
+                                  ? customizeInheritedField(
+                                      current,
+                                      "stayDestination",
+                                      option.searchValue,
+                                    )
+                                  : applySharedDestination(
+                                      current,
+                                      option.searchValue,
+                                    ),
+                              );
+                              setHotelDestinationOpen(false);
+                              setHotelDestinationHighlight(0);
+                            }
+                          }}
+                          className={`${field} ${connectedField} pe-10`}
                           autoComplete="off"
                         />
-                        {!isDesktopLanding && search[textKey] ? (
+                        {displayedHotelDestination ? (
                           <button
-                            data-deals-flight-clear={kind}
                             type="button"
-                            aria-label={t("clear")}
+                            aria-label={t("clearDestination")}
                             onMouseDown={(event) => event.preventDefault()}
                             onClick={() => {
-                              if (kind === "origin")
-                                flightOriginUserInteractedRef.current = true;
                               setSearch((current) =>
-                                kind === "destination"
-                                  ? {
-                                      ...applyAuthoritativeDestination(
-                                        current,
-                                        "",
-                                      ),
-                                      flightDestinationCode: "",
-                                    }
-                                  : {
-                                      ...current,
-                                      [textKey]: "",
-                                      [codeKey]: "",
-                                    },
+                                getIncludedProducts(current.mode).flight
+                                  ? customizeInheritedField(
+                                      current,
+                                      "stayDestination",
+                                      "",
+                                    )
+                                  : applyAuthoritativeDestination(current, ""),
                               );
-                              setAirportLists((all) => ({
-                                ...all,
-                                [kind]: [],
-                              }));
-                              if (kind === "origin") {
-                                setFlightOriginLoading(false);
-                                setFlightOriginHighlight(0);
-                              } else {
-                                setFlightDestinationLoading(false);
-                                setFlightDestinationHighlight(0);
-                              }
-                              inputRef.current?.focus();
+                              setHotelSuggestions([]);
+                              setHotelDestinationLoading(false);
+                              setHotelDestinationHighlight(0);
+                              hotelDestinationInputRef.current?.focus();
                             }}
                             className="focus-ring absolute end-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
                           >
@@ -3254,18 +3983,18 @@ export function DealsSearchForm({
                         ) : null}
                       </div>
                       <button
-                        ref={launcherRef}
+                        ref={hotelDestinationMobileLauncherRef}
                         type="button"
                         aria-haspopup="dialog"
-                        aria-expanded={flightMobileAirport === kind}
-                        aria-controls={`deals-flight-mobile-${kind}-dialog`}
-                        onClick={() => openFlightAirport(kind, true)}
+                        aria-expanded={hotelDestinationMobileOpen}
+                        onClick={() => openHotelDestination(true)}
                         className={`${field} flex items-center justify-between gap-2 text-start sm:hidden`}
                       >
                         <span
-                          className={`min-w-0 truncate ${search[textKey] ? "text-slate-900" : "text-slate-400"}`}
+                          className={`min-w-0 truncate ${displayedHotelDestination ? "text-slate-900" : "text-slate-400"}`}
                         >
-                          {search[textKey] || t("cityOrAirport")}
+                          {displayedHotelDestination ||
+                            t("hotelSearchDestinationPlaceholder")}
                         </span>
                         <ChevronDown
                           className="h-4 w-4 shrink-0 text-slate-500"
@@ -3273,415 +4002,201 @@ export function DealsSearchForm({
                         />
                       </button>
                       <DealsDestinationPopover
-                        open={open}
-                        anchorRef={wrapRef}
-                        width={390}
-                        marker={`flight-${kind}`}
+                        open={hotelDestinationOpen}
+                        anchorRef={hotelDestinationWrapRef}
+                        width={436}
+                        marker="hotel"
+                        desktopLanding={isDesktopLanding}
                       >
-                        {flightSuggestionContent(kind)}
+                        {hotelSuggestionContent}
                       </DealsDestinationPopover>
-                      {loading ? (
-                        <span className="sr-only" aria-live="polite">
-                          {t("searchingAirportsAndCities")}
-                        </span>
-                      ) : null}
-                    </div>
-                    {index === 0 ? (
-                      <div className="relative z-10 -my-2 flex h-4 items-center justify-center lg:my-0 lg:h-auto lg:before:absolute lg:before:left-1/2 lg:before:top-3 lg:before:h-[calc(100%-1.5rem)] lg:before:w-px lg:before:-translate-x-1/2 lg:before:bg-slate-200/90">
+                      {getIncludedProducts(search.mode).flight &&
+                      !search.stayDestinationLinked ? (
                         <button
                           type="button"
-                          onClick={swapDealsFlightAirports}
-                          aria-label={
-                            t("swapOriginDestination") ||
-                            "Swap origin and destination"
-                          }
-                          className="focus-ring relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 lg:h-8 lg:w-8 lg:text-[#2563eb] lg:shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
-                        >
-                          <ArrowRightLeft
-                            className="h-4 w-4"
-                            aria-hidden="true"
-                          />
-                        </button>
-                      </div>
-                    ) : null}
-                  </Fragment>
-                );
-              })}
-            </div>
-            <div
-              className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
-            >
-              {isDesktopLanding ? <Calendar aria-hidden="true" className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block" /> : null}
-              <span className={label}>{t("travelDates")}</span>
-              <button
-                ref={flightDatesLauncherRef}
-                type="button"
-                aria-expanded={flightDatesOpen || mobileFlightDatesOpen}
-                aria-haspopup="dialog"
-                aria-controls={
-                  mobileFlightDatesOpen
-                    ? "deals-flight-mobile-dates"
-                    : "deals-flight-desktop-dates"
-                }
-                aria-label={t("chooseTravelDates")}
-                onClick={() =>
-                  flightDatesOpen
-                    ? dismissDesktopFlightDates(true)
-                    : openFlightDates()
-                }
-                className={`${field} ${flightConnectedField} flex items-center justify-between gap-2 text-start`}
-              >
-                <span className="min-w-0 truncate">{flightDatesSummary}</span>
-                <Calendar
-                  aria-hidden="true"
-                  className={`h-4 w-4 shrink-0 text-slate-500 ${isDesktopLanding ? "lg:hidden" : ""}`}
-                />
-              </button>
-            </div>
-            {primaryPackageControls}
-          </div>
-          <div>{errorBlock("flight")}</div>
-        </section>
-      )}
-      {included.hotel &&
-        (!included.flight ||
-          (variant === "landing" && !search.stayDestinationLinked)) && (
-          <section
-            aria-labelledby="deals-hotel-heading"
-            data-deals-hotel-primary={!included.flight ? "true" : undefined}
-            data-deals-hotel-overrides={included.flight ? "true" : undefined}
-            className="border-t border-slate-200 py-4 sm:py-3 lg:py-2"
-          >
-            <h2
-              id="deals-hotel-heading"
-              data-deals-heading-rail="stay"
-              className="sr-only"
-            >
-              <BedDouble className="h-5 w-5 text-[#004BB8]" />
-              {t("deals.stayRow")}
-            </h2>
-            <div
-              data-deals-field-content="stay"
-              data-deals-main-search-row="stay"
-              data-deals-main-search-variant={variant}
-              {...(variant === "results"
-                ? { "data-deals-results-main-search-row": "stay" }
-                : {})}
-              className={`${connectedShell} sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(150px,1fr)_minmax(180px,1fr)_minmax(156px,auto)]`}
-            >
-              {(!included.flight || !search.stayDestinationLinked) && (
-                <div
-                  ref={hotelDestinationWrapRef}
-                  className={`${`${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0`} ${hotelDestinationOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
-                  data-deals-hotel-destination
-                >
-                  <label className={label} htmlFor="deals-hotel-destination">
-                    {t("deals.destination")}
-                  </label>
-                  <div className="relative hidden sm:block">
-                    <input
-                      ref={hotelDestinationInputRef}
-                      id="deals-hotel-destination"
-                      role="combobox"
-                      aria-autocomplete="list"
-                      aria-controls="deals-hotel-destination-listbox"
-                      aria-expanded={hotelDestinationOpen}
-                      aria-activedescendant={
-                        hotelDestinationOpen &&
-                        hotelSuggestions[hotelDestinationHighlight]
-                          ? `deals-hotel-destination-option-${hotelDestinationHighlight}`
-                          : undefined
-                      }
-                      value={displayedHotelDestination}
-                      placeholder={t("hotelSearchDestinationPlaceholder")}
-                      onFocus={() => openHotelDestination()}
-                      onChange={(event) => {
-                        setSearch((current) =>
-                          getIncludedProducts(current.mode).flight
-                            ? customizeInheritedField(
-                                current,
-                                "stayDestination",
-                                event.target.value,
-                              )
-                            : applySharedDestination(
-                                current,
-                                event.target.value,
-                              ),
-                        );
-                        setHotelDestinationHighlight(0);
-                        openHotelDestination();
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Escape")
-                          return setHotelDestinationOpen(false);
-                        if (
-                          event.key === "ArrowDown" ||
-                          event.key === "ArrowUp"
-                        ) {
-                          event.preventDefault();
-                          openHotelDestination();
-                          if (hotelSuggestions.length)
-                            setHotelDestinationHighlight(
-                              (current) =>
-                                (current +
-                                  (event.key === "ArrowDown" ? 1 : -1) +
-                                  hotelSuggestions.length) %
-                                hotelSuggestions.length,
+                          onClick={() => {
+                            setSearch((current) =>
+                              relinkInheritedField(current, "stayDestination"),
                             );
-                        } else if (
-                          event.key === "Enter" &&
-                          hotelDestinationOpen &&
-                          hotelSuggestions[hotelDestinationHighlight]
-                        ) {
-                          event.preventDefault();
-                          const option =
-                            hotelSuggestions[hotelDestinationHighlight];
-                          setSearch((current) =>
-                            getIncludedProducts(current.mode).flight
-                              ? customizeInheritedField(
-                                  current,
-                                  "stayDestination",
-                                  option.searchValue,
-                                )
-                              : applySharedDestination(
-                                  current,
-                                  option.searchValue,
-                                ),
-                          );
-                          setHotelDestinationOpen(false);
-                          setHotelDestinationHighlight(0);
-                        }
-                      }}
-                      className={`${field} ${connectedField} pe-10`}
-                      autoComplete="off"
-                    />
-                    {displayedHotelDestination ? (
+                          }}
+                          className="focus-ring mt-1 rounded-md px-1 text-xs font-bold text-[#004BB8] hover:underline"
+                        >
+                          {t("deals.useMainDestination")}
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
+                  {!included.flight && (
+                    <div
+                      className={`${`${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0`} ${hotelDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
+                    >
+                      <span className={label}>{t("deals.travelDates")}</span>
                       <button
+                        ref={hotelDatesLauncherRef}
                         type="button"
-                        aria-label={t("clearDestination")}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => {
-                          setSearch((current) =>
-                            getIncludedProducts(current.mode).flight
-                              ? customizeInheritedField(
-                                  current,
-                                  "stayDestination",
-                                  "",
-                                )
-                              : applyAuthoritativeDestination(current, ""),
-                          );
-                          setHotelSuggestions([]);
-                          setHotelDestinationLoading(false);
-                          setHotelDestinationHighlight(0);
-                          hotelDestinationInputRef.current?.focus();
-                        }}
-                        className="focus-ring absolute end-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+                        aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
+                        aria-haspopup="dialog"
+                        aria-controls={
+                          mobileHotelDatesOpen
+                            ? "deals-hotel-mobile-dates"
+                            : "deals-hotel-desktop-dates"
+                        }
+                        aria-label={t("chooseTravelDates")}
+                        onClick={() =>
+                          hotelDatesOpen
+                            ? dismissDesktopHotelDates(true)
+                            : openHotelDates()
+                        }
+                        className={`${field} ${connectedField} flex items-center justify-between gap-2 text-start`}
                       >
-                        <X className="h-4 w-4" aria-hidden="true" />
+                        <span className="min-w-0 truncate">
+                          {hotelDatesSummary}
+                        </span>
+                        <Calendar
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 text-slate-500"
+                        />
                       </button>
-                    ) : null}
-                  </div>
-                  <button
-                    ref={hotelDestinationMobileLauncherRef}
-                    type="button"
-                    aria-haspopup="dialog"
-                    aria-expanded={hotelDestinationMobileOpen}
-                    onClick={() => openHotelDestination(true)}
-                    className={`${field} flex items-center justify-between gap-2 text-start sm:hidden`}
-                  >
-                    <span
-                      className={`min-w-0 truncate ${displayedHotelDestination ? "text-slate-900" : "text-slate-400"}`}
-                    >
-                      {displayedHotelDestination ||
-                        t("hotelSearchDestinationPlaceholder")}
-                    </span>
-                    <ChevronDown
-                      className="h-4 w-4 shrink-0 text-slate-500"
-                      aria-hidden="true"
-                    />
-                  </button>
-                  <DealsDestinationPopover
-                    open={hotelDestinationOpen}
-                    anchorRef={hotelDestinationWrapRef}
-                    width={436}
-                    marker="hotel"
-                  >
-                    {hotelSuggestionContent}
-                  </DealsDestinationPopover>
-                  {getIncludedProducts(search.mode).flight &&
-                  !search.stayDestinationLinked ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearch((current) =>
-                          relinkInheritedField(current, "stayDestination"),
-                        );
-                      }}
-                      className="focus-ring mt-1 rounded-md px-1 text-xs font-bold text-[#004BB8] hover:underline"
-                    >
-                      {t("deals.useMainDestination")}
-                    </button>
-                  ) : null}
+                      {getIncludedProducts(search.mode).flight &&
+                      !search.stayDatesLinked ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearch((current) =>
+                              relinkInheritedField(current, "stayDates"),
+                            );
+                          }}
+                          className="focus-ring mt-1 rounded-md px-1 text-xs font-bold text-[#004BB8] hover:underline"
+                        >
+                          {t("deals.useMainTravelDates")}
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
+                  {!included.flight ? primaryPackageControls : null}
                 </div>
-              )}
-              {!included.flight && (
-                <div
-                  className={`${`${connectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0`} ${hotelDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
-                >
-                  <span className={label}>{t("deals.travelDates")}</span>
+                <div>{errorBlock("hotel")}</div>
+              </section>
+            )}
+          {variant === "landing" &&
+          included.car &&
+          (!search.carPickupLinked || !search.carDatesLinked) ? (
+            <aside
+              data-deals-car-recovery
+              className="border-t border-slate-200 py-3 text-sm text-slate-700"
+            >
+              <p className="font-bold">{t("deals.carRow")}</p>
+              <div className="mt-1 flex flex-wrap gap-3">
+                {!search.carPickupLinked ? (
                   <button
-                    ref={hotelDatesLauncherRef}
                     type="button"
-                    aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
-                    aria-haspopup="dialog"
-                    aria-controls={
-                      mobileHotelDatesOpen
-                        ? "deals-hotel-mobile-dates"
-                        : "deals-hotel-desktop-dates"
-                    }
-                    aria-label={t("chooseTravelDates")}
                     onClick={() =>
-                      hotelDatesOpen
-                        ? dismissDesktopHotelDates(true)
-                        : openHotelDates()
+                      setSearch((current) =>
+                        relinkInheritedField(current, "carPickup"),
+                      )
                     }
-                    className={`${field} ${connectedField} flex items-center justify-between gap-2 text-start`}
+                    className="focus-ring min-h-11 rounded-lg px-2 text-xs font-bold text-[#004BB8] hover:underline"
                   >
-                    <span className="min-w-0 truncate">
-                      {hotelDatesSummary}
-                    </span>
-                    <Calendar
-                      aria-hidden="true"
-                      className="h-4 w-4 shrink-0 text-slate-500"
-                    />
+                    {t("deals.useMainDestination")}
                   </button>
-                  {getIncludedProducts(search.mode).flight &&
-                  !search.stayDatesLinked ? (
-                    <button
-                      type="button"
-                      onClick={() => {
+                ) : null}
+                {!search.carDatesLinked ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearch((current) =>
+                        relinkInheritedField(current, "carDates"),
+                      )
+                    }
+                    className="focus-ring min-h-11 rounded-lg px-2 text-xs font-bold text-[#004BB8] hover:underline"
+                  >
+                    {t("deals.useMainTravelDates")}
+                  </button>
+                ) : null}
+              </div>
+            </aside>
+          ) : null}
+          <section data-deals-search-actions className="py-3">
+            <div data-deals-stay-options>
+              {supportsStayDateOverride ? (
+                <label
+                  data-deals-change-stay-dates
+                  className="focus-within:ring-[#004BB8]/25 flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-1 text-sm font-bold text-slate-800 focus-within:ring-2"
+                >
+                  <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={!search.stayDatesLinked}
+                      onChange={(event) => {
+                        const checked = event.currentTarget.checked;
+                        if (!checked) {
+                          dismissDesktopHotelDates();
+                          resetHotelDatesDraft();
+                          setMobileHotelDatesOpen(false);
+                        }
                         setSearch((current) =>
-                          relinkInheritedField(current, "stayDates"),
+                          checked
+                            ? customizeInheritedField(current, "stayDates", {
+                                start: current.sharedTravelStartDate,
+                                end: current.sharedTravelEndDate,
+                              })
+                            : relinkInheritedField(current, "stayDates"),
                         );
                       }}
-                      className="focus-ring mt-1 rounded-md px-1 text-xs font-bold text-[#004BB8] hover:underline"
-                    >
-                      {t("deals.useMainTravelDates")}
-                    </button>
-                  ) : null}
-                </div>
-              )}
-              {!included.flight ? primaryPackageControls : null}
+                      className={`size-4 rounded border-slate-300 ${isDesktopLanding ? "appearance-none bg-white checked:border-slate-400 checked:bg-white focus:ring-0" : "text-[#004BB8] focus:ring-[#004BB8]"}`}
+                    />
+                    {isDesktopLanding && !search.stayDatesLinked ? (
+                      <Check
+                        aria-hidden="true"
+                        className="pointer-events-none absolute h-3 w-3 text-[#2563eb]"
+                        strokeWidth={3}
+                      />
+                    ) : null}
+                  </span>
+                  <span>{t("deals.changeDatesForStay")}</span>
+                </label>
+              ) : null}
             </div>
-            <div>{errorBlock("hotel")}</div>
-          </section>
-        )}
-      {variant === "landing" &&
-      included.car &&
-      (!search.carPickupLinked || !search.carDatesLinked) ? (
-        <aside
-          data-deals-car-recovery
-          className="border-t border-slate-200 py-3 text-sm text-slate-700"
-        >
-          <p className="font-bold">{t("deals.carRow")}</p>
-          <div className="mt-1 flex flex-wrap gap-3">
-            {!search.carPickupLinked ? (
-              <button
-                type="button"
-                onClick={() =>
-                  setSearch((current) =>
-                    relinkInheritedField(current, "carPickup"),
-                  )
-                }
-                className="focus-ring min-h-11 rounded-lg px-2 text-xs font-bold text-[#004BB8] hover:underline"
+            {supportsStayDateOverride && !search.stayDatesLinked ? (
+              <div
+                data-deals-stay-dates
+                className="mt-3 w-full border-b border-slate-200 pb-3"
               >
-                {t("deals.useMainDestination")}
-              </button>
-            ) : null}
-            {!search.carDatesLinked ? (
-              <button
-                type="button"
-                onClick={() =>
-                  setSearch((current) =>
-                    relinkInheritedField(current, "carDates"),
-                  )
-                }
-                className="focus-ring min-h-11 rounded-lg px-2 text-xs font-bold text-[#004BB8] hover:underline"
-              >
-                {t("deals.useMainTravelDates")}
-              </button>
-            ) : null}
-          </div>
-        </aside>
-      ) : null}
-      <section data-deals-search-actions className="py-3">
-        <div data-deals-stay-options>
-          {supportsStayDateOverride ? (
-            <label
-              data-deals-change-stay-dates
-              className="focus-within:ring-[#004BB8]/25 flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-1 text-sm font-bold text-slate-800 focus-within:ring-2"
-            >
-              <input
-                type="checkbox"
-                checked={!search.stayDatesLinked}
-                onChange={(event) => {
-                  const checked = event.currentTarget.checked;
-                  if (!checked) {
-                    dismissDesktopHotelDates();
-                    resetHotelDatesDraft();
-                    setMobileHotelDatesOpen(false);
+                <span className={`${label} px-3`}>
+                  {t("deals.datesForStay")}
+                </span>
+                <button
+                  ref={hotelDatesLauncherRef}
+                  type="button"
+                  aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
+                  aria-haspopup="dialog"
+                  aria-controls={
+                    mobileHotelDatesOpen
+                      ? "deals-hotel-mobile-dates"
+                      : "deals-hotel-desktop-dates"
                   }
-                  setSearch((current) =>
-                    checked
-                      ? customizeInheritedField(current, "stayDates", {
-                          start: current.sharedTravelStartDate,
-                          end: current.sharedTravelEndDate,
-                        })
-                      : relinkInheritedField(current, "stayDates"),
-                  );
-                }}
-                className="size-4 rounded border-slate-300 text-[#004BB8] focus:ring-[#004BB8]"
-              />
-              <span>{t("deals.changeDatesForStay")}</span>
-            </label>
-          ) : null}
-        </div>
-        {supportsStayDateOverride && !search.stayDatesLinked ? (
-          <div
-            data-deals-stay-dates
-            className="mt-3 w-full border-b border-slate-200 pb-3"
-          >
-            <span className={`${label} px-3`}>{t("deals.datesForStay")}</span>
-            <button
-              ref={hotelDatesLauncherRef}
-              type="button"
-              aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
-              aria-haspopup="dialog"
-              aria-controls={
-                mobileHotelDatesOpen
-                  ? "deals-hotel-mobile-dates"
-                  : "deals-hotel-desktop-dates"
-              }
-              aria-label={t("deals.chooseStayDates")}
-              onClick={() =>
-                hotelDatesOpen
-                  ? dismissDesktopHotelDates(true)
-                  : openHotelDates()
-              }
-              className={`${packageActionSegment} flex w-full max-w-sm items-center justify-between gap-2 text-start`}
-            >
-              <span className="min-w-0 truncate">{hotelDatesSummary}</span>
-              <Calendar
-                aria-hidden="true"
-                className="h-4 w-4 shrink-0 text-slate-500"
-              />
-            </button>
-            <div>{errorBlock("hotel")}</div>
-          </div>
-        ) : null}
-        <div className="w-full">{guidedPreviewPanel}</div>
-      </section>
-      </>}
+                  aria-label={t("deals.chooseStayDates")}
+                  onClick={() =>
+                    hotelDatesOpen
+                      ? dismissDesktopHotelDates(true)
+                      : openHotelDates()
+                  }
+                  className={`${packageActionSegment} flex w-full max-w-sm items-center justify-between gap-2 text-start`}
+                >
+                  <span className="min-w-0 truncate">{hotelDatesSummary}</span>
+                  <Calendar
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0 text-slate-500"
+                  />
+                </button>
+                <div>{errorBlock("hotel")}</div>
+              </div>
+            ) : null}
+            <div className="w-full">{guidedPreviewPanel}</div>
+            {isDesktopLanding ? searchDealsButton : null}
+          </section>
+        </>
+      )}
       {warning}
       {(["origin", "destination"] as const).map((kind) => {
         const textKey =
@@ -3799,9 +4314,40 @@ export function DealsSearchForm({
         }}
         onClose={() => setHotelDestinationMobileOpen(false)}
       />
+      <DesktopLandingPopover
+        open={isDesktopLanding && cabinOpen}
+        anchorRef={cabinLauncherRef}
+        width={248}
+        desiredHeight={180}
+        align="end"
+        marker="cabin"
+        className="p-1.5"
+      >
+        <div role="listbox" aria-label={t("deals.cabinClass")}>
+          {(["economy", "business", "first"] as const).map((cabin) => (
+            <button
+              key={cabin}
+              type="button"
+              role="option"
+              aria-selected={search.flightCabinClass === cabin}
+              onClick={() => {
+                update("flightCabinClass", cabin);
+                setCabinOpen(false);
+                requestAnimationFrame(() =>
+                  cabinLauncherRef.current?.focus({ preventScroll: true }),
+                );
+              }}
+              className={`focus-ring flex min-h-10 w-full items-center rounded-[6px] px-3 text-start text-sm font-medium ${search.flightCabinClass === cabin ? "bg-blue-50 text-[#004BB8]" : "text-slate-800 hover:bg-slate-50"}`}
+            >
+              {t(cabin)}
+            </button>
+          ))}
+        </div>
+      </DesktopLandingPopover>
       <DealsFlightDatesPopover
         open={flightDatesOpen}
         anchorRef={flightDatesLauncherRef}
+        desktopLanding={isDesktopLanding}
       >
         <div
           id="deals-flight-desktop-dates"
@@ -3869,7 +4415,11 @@ export function DealsSearchForm({
       >
         {renderFlightDatesCalendar(true)}
       </FlightMobilePickerShell>
-      <DealsFlightPopover open={travelersOpen} anchorRef={travelersLauncherRef}>
+      <DealsFlightPopover
+        open={travelersOpen}
+        anchorRef={travelersLauncherRef}
+        desktopLanding={isDesktopLanding}
+      >
         <div
           id="deals-desktop-travellers"
           role="dialog"
@@ -3919,6 +4469,7 @@ export function DealsSearchForm({
       <DealsHotelDatesPopover
         open={hotelDatesOpen}
         anchorRef={hotelDatesLauncherRef}
+        desktopLanding={isDesktopLanding}
       >
         <div
           id="deals-hotel-desktop-dates"
@@ -3998,6 +4549,7 @@ export function DealsSearchForm({
         anchorRef={carReturnLocationLauncherRef}
         width={360}
         marker="return-location"
+        desktopLanding={isDesktopLanding}
         onDismiss={dismissCarReturnLocation}
       >
         <div
@@ -4051,6 +4603,7 @@ export function DealsSearchForm({
         anchorRef={carDatesLauncherRef}
         width={620}
         marker="dates"
+        desktopLanding={isDesktopLanding}
       >
         <div
           id="deals-car-desktop-dates"
@@ -4089,6 +4642,7 @@ export function DealsSearchForm({
         anchorRef={carTimesLauncherRef}
         width={320}
         marker="times"
+        desktopLanding={isDesktopLanding}
       >
         <div
           id="deals-car-desktop-times"

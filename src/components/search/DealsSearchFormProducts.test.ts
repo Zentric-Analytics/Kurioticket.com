@@ -50,9 +50,11 @@ test("desktop landing exposes each canonical mode once with exact compact labels
     form.indexOf("const desktopLandingPackageOptions"),
     form.indexOf("const field"),
   );
-  const options = [...desktopConfig.matchAll(
-    /\{ id: "([^"]+)", mode: "([^"]+)", text: "([^"]+)" \}/g,
-  )].map((match) => match.slice(1));
+  const options = [
+    ...desktopConfig.matchAll(
+      /\{[\s\S]*?id: "([^"]+)",[\s\S]*?mode: "([^"]+)",[\s\S]*?text: "([^"]+)"[\s\S]*?\}/g,
+    ),
+  ].map((match) => match.slice(1));
   assert.deepEqual(options, [
     ["hotel-flight", "hotel-flight", "Flight+Hotel"],
     ["flight-car", "flight-car", "Flight+Car"],
