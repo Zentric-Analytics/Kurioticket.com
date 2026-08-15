@@ -19,14 +19,19 @@ test("shared calendar exposes range state and disables past dates", () => {
   assert.match(shared, /disabled=\{past\}/);
   assert.match(shared, /data-in-range=\{inRange \|\| undefined\}/);
   assert.match(shared, /aria-pressed=\{selected\}/);
-  assert.match(shared, /\[0, 1\]\.map/);
+  assert.match(shared, /length: mobileShell \? 12 : 2/);
+  assert.match(shared, /!mobileShell \? <div className="mb-3 flex items-center justify-between"/);
 });
 
 test("shared time content renders two independently scrollable button lists", () => {
   assert.match(shared, /data-cars-time-columns/);
   assert.match(shared, /data-cars-time-list=\{kind\}/);
   assert.match(shared, /timeOptions\.map/);
-  assert.match(shared, /aria-pressed=\{selectedTime === time\}/);
+  assert.match(shared, /aria-selected=\{selectedTime === time\}/);
+  assert.match(shared, /grid h-full min-h-0 grid-cols-2/);
+  assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
+  assert.match(shared, /list\.scrollTop = Math\.max/);
+  assert.equal(shared.includes("scrollIntoView"), false);
 });
 
 test("shared age content provides compact selection and keyboard semantics", () => {
@@ -42,4 +47,34 @@ test("dedicated Cars desktop time popup has no native selects and stable relatio
   assert.match(timeField, /id="cars-desktop-time-range-dialog"/);
   assert.match(timeField, /aria-controls="cars-desktop-time-range-dialog"/);
   assert.match(timeField, /role="dialog"/);
+});
+
+
+test("mobile age owns one full-height momentum scroll region", () => {
+  assert.match(shared, /h-full min-h-0 touch-pan-y overflow-y-auto overscroll-contain/);
+  assert.match(shared, /mobileShell \? "h-full[^"]+" : "max-h-\[360px\]/);
+  assert.match(shared, /driverAgeOptions\.map/);
+});
+
+test("mobile calendar mirrors the twelve-month touch presentation", () => {
+  assert.match(shared, /data-month-count=\{months\.length\}/);
+  assert.match(shared, /h-11 w-full max-w-11 text-\[15px\]/);
+  assert.match(shared, /text-\[17px\] font-bold/);
+});
+
+test("homepage mobile time picker drafts both values and commits only from Done", () => {
+  assert.match(homepage, /setCarsDraftTimes\(\{\s*pickupTime: carsValues\.pickupTime,\s*dropoffTime: carsValues\.dropoffTime/);
+  assert.match(homepage, /pickupTime=\{carsDraftTimes\.pickupTime\}/);
+  assert.match(homepage, /returnTime=\{carsDraftTimes\.dropoffTime\}/);
+  assert.match(homepage, /updateCarsValue\("pickupTime", carsDraftTimes\.pickupTime\)/);
+  assert.match(homepage, /updateCarsValue\("dropoffTime", carsDraftTimes\.dropoffTime\)/);
+});
+
+test("shared shell locks the document while allowing picker touch panning", () => {
+  const shell = readFileSync("src/components/search/FlightMobilePickerShell.tsx", "utf8");
+  assert.match(shell, /bodyElement\.style\.position = "fixed"/);
+  assert.match(shell, /bodyElement\.style\.overflow = "hidden"/);
+  assert.match(shell, /bodyElement\.style\.touchAction = "auto"/);
+  assert.match(shell, /touch-pan-y overflow-y-auto/);
+  assert.match(shell, /-webkit-overflow-scrolling:touch/);
 });

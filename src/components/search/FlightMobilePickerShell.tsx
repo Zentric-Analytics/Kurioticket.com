@@ -273,7 +273,10 @@ export function FlightMobilePickerShell({
     bodyElement.style.position = "fixed";
     bodyElement.style.right = "0";
     bodyElement.style.top = `-${scrollY}px`;
-    bodyElement.style.touchAction = "none";
+    // The fixed/overflow locks keep the document stationary. Do not disable
+    // touch gestures on body: touch-action participates in ancestor hit
+    // testing and `none` also suppresses panning in the portalled picker.
+    bodyElement.style.touchAction = "auto";
     bodyElement.style.width = "100%";
     rootElement.style.height = "100%";
     rootElement.style.overflow = "hidden";
@@ -380,7 +383,7 @@ export function FlightMobilePickerShell({
 
         <div
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 px-4 py-4",
+            "min-h-0 flex-1 touch-pan-y overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 px-4 py-4 [-webkit-overflow-scrolling:touch]",
             contentClassName,
           )}
         >
