@@ -39,11 +39,12 @@ test("mobile package selector is a compact, nowrap horizontal rail", () => {
   }
   assert.match(compact, /fieldset className="min-w-0 w-full max-w-full overflow-hidden"/);
   assert.match(compact, /h-10 w-max shrink-0/);
-  assert.match(compact, /text-\[13px\]/);
+  assert.match(compact, /px-2\.5 text-\[12px\] font-medium/);
+  assert.doesNotMatch(compact, /text-\[13px\]|px-3 text-\[13px\]/);
   assert.match(compact, /<span className="whitespace-nowrap">\{text\}<\/span>/);
   assert.doesNotMatch(compact.slice(0, compact.indexOf("Origin")), /truncate|text-overflow|ellipsis/);
   assert.match(form, /presentation === "mobile-homepage"/);
-  assert.match(form, /mobileHomepageControls \?\? <>/);
+  assert.match(form, /\{mobileHomepageControls \?\? \(/);
   assert.match(form, /data-deals-package-selector-variant=\{variant\}/);
 });
 
@@ -56,7 +57,7 @@ test("selection stays visible and keyboard navigation reaches every package", ()
   assert.match(compact, /event\.key === "Home"/);
   assert.match(compact, /event\.key === "End"/);
   assert.match(compact, /role="radiogroup"/);
-  assert.match(compact, /role="radio" aria-checked=\{selected\} aria-label=\{text\}/);
+  assert.match(compact, /role="radio"[\s\S]*?aria-checked=\{selected\}[\s\S]*?aria-label=\{text\}/);
 });
 
 test("mobile packages are text-only and selected state is an underline", () => {
@@ -81,7 +82,7 @@ test("mobile Deals fields use restrained geometry and neutral compact icons", ()
   assert.match(form, /compactIconClassName[\s\S]{0,160}h-8 w-8[^\"]*bg-slate-100\/70 text-slate-600/);
   assert.match(compact, /h-\[17px\] w-\[17px\]/);
   assert.doesNotMatch(form.slice(form.indexOf("const compactFieldClassName"), form.indexOf("const compactLabelClassName")), /h-10 w-10|bg-\[#eef5ff\] text-\[#075ee8\]/);
-  assert.match(compact, /type="submit"[^\n]*rounded-\[11px\]/);
+  assert.match(compact, /type="submit"[\s\S]{0,180}rounded-\[11px\]/);
   assert.doesNotMatch(compact, /LocateFixed/);
 });
 
