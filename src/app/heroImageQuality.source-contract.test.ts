@@ -60,12 +60,13 @@ describe("hero image quality source contracts", () => {
     assert.doesNotMatch(heroImage, /\b(?:blur|unoptimized)\b|image-rendering/);
   });
 
-  it("keeps homepage hero dimensions and SearchTabs positioning unchanged", () => {
+  it("keeps homepage hero dimensions and desktop SearchTabs positioning unchanged", () => {
     assert.match(
       homepageSource,
       /min-h-\[420px\].*sm:min-h-\[550px\].*lg:min-h-\[610px\]/,
     );
-    assert.match(homepageSource, /bottom-\[-360px\] z-30 sm:hidden/);
+    assert.match(homepageSource, /bottom-\[-438px\] z-30 sm:hidden/);
+    assert.match(homepageSource, /pt-\[30rem\].*sm:pt-24.*lg:pt-28/);
     assert.match(
       homepageSource,
       /bottom-\[-52px\] z-30 hidden sm:block lg:bottom-\[-56px\]/,

@@ -20,6 +20,7 @@ import { useSession } from "next-auth/react";
 import { createPortal } from "react-dom";
 
 import {
+  ArrowUpDown,
   ArrowRightLeft,
   BedDouble,
   Calendar,
@@ -30,6 +31,7 @@ import {
   Plane,
   Plus,
   RotateCcw,
+  UserRound,
   X,
 } from "lucide-react";
 
@@ -100,6 +102,7 @@ type SearchTabsTranslations =
 type SearchTabsProps = {
   t: SearchTabsTranslations;
   compactHero?: boolean;
+  mobileHomepage?: boolean;
   locale?: string;
 };
 
@@ -460,6 +463,7 @@ function CarsSummaryField({
 export function SearchTabs({
   t: translations,
   compactHero = false,
+  mobileHomepage = false,
   locale,
 }: SearchTabsProps) {
   const {
@@ -548,6 +552,8 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const flightDatesLauncherRef =
     useRef<HTMLButtonElement>(null);
+  const returnFlightDatesLauncherRef =
+    useRef<HTMLButtonElement>(null);
   const hotelDestinationMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
   const hotelDateWrapRef =
@@ -633,6 +639,8 @@ export function SearchTabs({
     flightDatesOpen,
     setFlightDatesOpen,
   ] = useState(false);
+  const [activeFlightDatesLauncher, setActiveFlightDatesLauncher] =
+    useState<"depart" | "return">("depart");
   const [
     hotelDatesOpen,
     setHotelDatesOpen,
@@ -2928,6 +2936,261 @@ export function SearchTabs({
       {renderCabinClassPicker()}
     </div>
   );
+
+  if (mobileHomepage) {
+    const departureSummary = formatShortDate(departureDate);
+    const returnSummary = formatShortDate(returnDate);
+    const isEnglishMobileHomepage = calendarLocale.toLowerCase().startsWith("en");
+    const mobileFromLabel = t.from || t.origin || "From";
+    const mobileToLabel = t.to || t.destination || "To";
+    const mobileToPlaceholder = isEnglishMobileHomepage
+      ? "Where to?"
+      : t.toPlaceholder || t.destination || "Where to?";
+    const mobileDepartLabel = isEnglishMobileHomepage
+      ? "Depart"
+      : t.departure || t.departureDate || "Depart";
+    const mobileReturnLabel = t.returnDate || "Return";
+    const mobileSelectDateLabel = t.selectDateAriaPrefix || "Select date";
+    const mobileTravelersCabinLabel = isEnglishMobileHomepage
+      ? "Travelers & Cabin"
+      : t.travelersAndCabin || t.travelersCabinDialogLabel || t.travelers || "Travelers & Cabin";
+
+    return (
+      <section
+        data-testid="mobile-homepage-flight-search"
+        className="rounded-[24px] border border-slate-200/80 bg-white p-4 shadow-[0_14px_36px_rgba(15,23,42,0.12)] sm:hidden"
+      >
+        <form onSubmit={onFlightSubmit} className="space-y-3">
+          <div
+            role="radiogroup"
+            aria-label={t.tripType || "Trip type"}
+            className="grid h-14 grid-cols-2 rounded-[15px] border border-slate-200 bg-white"
+            data-testid="mobile-homepage-trip-selector"
+          >
+            {(["round-trip", "one-way"] as const).map((mode) => {
+              const selected = tripType === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => onSelectTripType(mode)}
+                  onKeyDown={(event) => {
+                    if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(event.key)) {
+                      event.preventDefault();
+                      onSelectTripType(mode === "round-trip" ? "one-way" : "round-trip");
+                    }
+                  }}
+                  className={cn(
+                    "focus-ring flex min-w-0 items-center justify-center rounded-[14px] px-2 text-[16px] font-medium text-slate-950 transition-colors",
+                    selected &&
+                      "border border-[#2559e8] bg-[#f9fbff] font-semibold text-[#1f55df] shadow-[0_1px_2px_rgba(37,89,232,0.08)]",
+                  )}
+                >
+                  {tripTypeLabel(mode)}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative space-y-3 pt-2" data-testid="mobile-homepage-route-fields">
+            {([
+              ["origin", mobileFromLabel, from, t.fromPlaceholder || "From?"],
+              ["destination", mobileToLabel, to, mobileToPlaceholder],
+            ] as const).map(([kind, label, value, placeholder]) => (
+              <button
+                key={kind}
+                ref={kind === "origin" ? fromMobileLauncherRef : toMobileLauncherRef}
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={activeMobileAirportPicker === kind}
+                aria-label={`${label}: ${value.trim() || placeholder}`}
+                onClick={() => {
+                  setFromOpen(false);
+                  setToOpen(false);
+                  setActiveMobileAirportPicker(kind);
+                }}
+                className="focus-ring flex h-[74px] w-full items-center justify-between gap-4 rounded-[16px] border border-slate-200 bg-white px-4 text-start"
+                data-testid={`mobile-homepage-${kind}-field`}
+              >
+                <span className="min-w-0">
+                  <span className="block text-[15px] font-medium leading-5 text-slate-600">{label}</span>
+                  <span className={cn("mt-1 block truncate text-[18px] font-medium leading-6 text-slate-950", !value.trim() && "text-slate-400")}>
+                    {value.trim() || placeholder}
+                  </span>
+                </span>
+                <MapPin aria-hidden="true" className="h-6 w-6 shrink-0 text-slate-950" strokeWidth={1.8} />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={onSwapAirports}
+              aria-label={t.swapOriginDestination || "Swap origin and destination"}
+              data-testid="mobile-homepage-swap"
+              className="focus-ring absolute left-1/2 top-[78px] z-20 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-[#2559e8] shadow-[0_5px_14px_rgba(15,23,42,0.14)]"
+            >
+              <ArrowUpDown aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3" data-testid="mobile-homepage-date-fields">
+            {([
+              ["depart", mobileDepartLabel, departureSummary],
+              ["return", mobileReturnLabel, returnSummary],
+            ] as const).map(([kind, label, value]) => {
+              const returnDisabled = kind === "return" && tripType === "one-way";
+              return (
+              <button
+                key={kind}
+                ref={kind === "depart" ? flightDatesLauncherRef : returnFlightDatesLauncherRef}
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={flightDatesOpen}
+                aria-label={`${label}: ${value || mobileSelectDateLabel}`}
+                disabled={returnDisabled}
+                onClick={() => {
+                  setActiveFlightDatesLauncher(kind);
+                  setFlightDatesOpen(true);
+                }}
+                className="focus-ring flex h-[74px] min-w-0 flex-col justify-center rounded-[16px] border border-slate-200 bg-white px-4 text-start disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 max-[359px]:px-3"
+                data-testid={`mobile-homepage-${kind}-field`}
+              >
+                <span className="block text-[15px] font-medium leading-5 text-slate-600">{label}</span>
+                <span className="mt-1 flex min-w-0 items-center gap-2 max-[359px]:gap-1.5">
+                  <Calendar aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-950 max-[359px]:h-[18px] max-[359px]:w-[18px]" strokeWidth={1.8} />
+                  <span className={cn("truncate text-[16px] font-medium leading-6 text-slate-950 max-[359px]:text-[15px]", !value && "text-slate-400")}>
+                    {value || mobileSelectDateLabel}
+                  </span>
+                </span>
+              </button>
+              );
+            })}
+          </div>
+
+          <button
+            ref={travelersLauncherRef}
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={travelersMenuOpen}
+            aria-label={`${mobileTravelersCabinLabel}: ${travelerSummary}`}
+            onClick={() => travelersMenuOpen ? cancelTravelersDraft() : openTravelersMenu()}
+            data-testid="mobile-homepage-travelers-field"
+            className="focus-ring flex h-[76px] w-full items-center justify-between gap-3 rounded-[16px] border border-slate-200 bg-white px-4 text-start"
+          >
+            <span className="min-w-0">
+              <span className="block text-[15px] font-medium leading-5 text-slate-700">{mobileTravelersCabinLabel}</span>
+              <span className="mt-1 flex min-w-0 items-center gap-2">
+                <UserRound aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-950" strokeWidth={1.8} />
+                <span className="truncate text-[17px] font-medium leading-6 text-slate-950">{travelerSummary}</span>
+              </span>
+            </span>
+            <ChevronDown aria-hidden="true" className={cn("h-5 w-5 shrink-0 text-slate-950 transition-transform", travelersMenuOpen && "rotate-180")} />
+          </button>
+
+          <Button
+            type="submit"
+            disabled={isFlightSearchDisabled}
+            aria-busy={isFlightSubmitting}
+            aria-label={t.searchFlights || "Search flights"}
+            data-testid="mobile-homepage-search-submit"
+            className="h-14 w-full rounded-[14px] bg-[#2f5bf3] text-[17px] font-medium text-white shadow-none hover:bg-[#2f5bf3] active:bg-[#2f5bf3] disabled:bg-[#2f5bf3] disabled:text-white disabled:opacity-60"
+          >
+            {isFlightSubmitting ? t.searchingFlights || "Searching flights..." : t.searchFlights || "Search flights"}
+          </Button>
+        </form>
+
+        {renderMobileAirportPicker({
+          open: activeMobileAirportPicker === "origin",
+          title: t.chooseOrigin || "Choose origin",
+          inputId: "homepage-origin-picker-search",
+          value: from,
+          suggestions: fromSuggestions,
+          isLoading: isFromLoadingVisible,
+          launcherRef: fromMobileLauncherRef,
+          inputRef: fromMobilePickerInputRef,
+          onChange: (nextValue) => {
+            setFromState((current) => markOriginManualInput(current, nextValue));
+            if (nextValue.trim().length < 2) {
+              setFromLoading(false);
+              setFromLiveSuggestions([]);
+            }
+            setFromHighlight(0);
+          },
+          onClear: onClearOrigin,
+          onSelect: (option) => {
+            setFromState((current) =>
+              markOriginManualInput(
+                current,
+                formatAirportLabel(option, locale),
+                option.code,
+              ),
+            );
+          },
+          onClose: () => setActiveMobileAirportPicker(null),
+        })}
+        {renderMobileAirportPicker({
+          open: activeMobileAirportPicker === "destination",
+          title: t.chooseDestination || "Choose destination",
+          inputId: "homepage-destination-picker-search",
+          value: to,
+          suggestions: toSuggestions,
+          isLoading: isToLoadingVisible,
+          launcherRef: toMobileLauncherRef,
+          inputRef: toMobilePickerInputRef,
+          onChange: (nextValue) => {
+            setTo(nextValue);
+            if (nextValue.trim().length < 2) {
+              setToLoading(false);
+              setToLiveSuggestions([]);
+            }
+            setToCode("");
+            setToHighlight(0);
+          },
+          onClear: onClearDestination,
+          onSelect: (option) => {
+            setTo(formatAirportLabel(option, locale));
+            setToCode(option.code);
+          },
+          onClose: () => setActiveMobileAirportPicker(null),
+        })}
+        <FlightMobilePickerShell
+          open={flightDatesOpen}
+          title={translate("chooseTravelDates") || "Choose travel dates"}
+          titleId="homepage-flight-dates-title"
+          launcherRef={
+            activeFlightDatesLauncher === "return"
+              ? returnFlightDatesLauncherRef
+              : flightDatesLauncherRef
+          }
+          footer={flightDatesFooter}
+          onClose={() => setFlightDatesOpen(false)}
+          contentClassName="px-4 py-4"
+          pickerMarker="flight-date"
+        >
+          {renderFlightDateCalendar()}
+        </FlightMobilePickerShell>
+        <FlightMobilePickerShell
+          open={travelersMenuOpen}
+          title={translate("passengers") || t.travelers || "Travelers"}
+          titleId="homepage-flight-travelers-title"
+          launcherRef={travelersLauncherRef}
+          footer={(requestClose) => (
+            <div className="flex items-center justify-end">
+              <button type="button" onClick={() => { applyTravelersDraft(false); requestClose(); }} className={cn(mobileDoneButtonClassName, "px-5 py-3")}>
+                {t.done || "Done"}
+              </button>
+            </div>
+          )}
+          onClose={cancelTravelersDraft}
+          contentClassName="px-4 py-5"
+          pickerMarker="traveler-cabin"
+        >
+          {renderTravelersCabinPicker()}
+        </FlightMobilePickerShell>
+      </section>
+    );
+  }
 
   return (
     <>
