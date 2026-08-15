@@ -166,9 +166,11 @@ test("mobile pickers and one-way/query behavior remain wired", () => {
   assert.match(source, /tripType ===[\s\S]*?"round-trip"[\s\S]*?params\.set\([\s\S]*?"returnDate"/);
 });
 
-test("Hotels and Cars remain switchable without changing desktop structure", () => {
+test("all mobile homepage products remain switchable without route navigation", () => {
+  assert.match(sharedBranch, /setTab\("flights"\)/);
   assert.match(sharedBranch, /setTab\("hotels"\)/);
   assert.match(sharedBranch, /setTab\("cars"\)/);
+  assert.match(sharedBranch, /setTab\("deals"\)/);
   assert.match(sharedBranch, /\) : tab === "hotels" \? \(/);
   assert.match(sharedBranch, /\) : \([\s\S]*?onSubmit=\{onCarsSubmit\}/);
   assert.match(sharedBranch, /<Plane[\s\S]*?\{t\.flights\}/);
@@ -176,6 +178,8 @@ test("Hotels and Cars remain switchable without changing desktop structure", () 
   assert.match(sharedBranch, /<CarFront[\s\S]*?\{t\.cars\}/);
   assert.match(sharedBranch, /mobileHomepage \? \([\s\S]*?<Tag[\s\S]*?t\.deals \|\| "Deals"/);
   assert.match(source, /const tabsClassName = cn\([\s\S]*?mobileHomepage[\s\S]*?grid-cols-4/);
-  assert.match(sharedBranch, /startRouteProgress\(\);\s*router\.push\("\/deals"\)/);
-  assert.doesNotMatch(sharedBranch, /setTab\("deals"\)/);
+  assert.match(sharedBranch, /aria-selected=\{tab === "deals"\}/);
+  assert.match(sharedBranch, /tab === "deals"[\s\S]*?bg-\[#eef5ff\] text-\[#075ee8\]/);
+  assert.doesNotMatch(sharedBranch, /router\.push\("\/deals"\)/);
+  assert.doesNotMatch(sharedBranch, /startRouteProgress\(\);[\s\S]{0,80}setTab\("deals"\)/);
 });
