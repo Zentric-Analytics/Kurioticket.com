@@ -669,6 +669,7 @@ export function DealsSearchForm({
   const mobilePackageOptionRefs = useRef<
     Partial<Record<DealsPackageMode, HTMLButtonElement>>
   >({});
+  const mobilePackageRailRef = useRef<HTMLDivElement>(null);
   const flightDatesLauncherRef = useRef<HTMLButtonElement>(null);
   const mobileFlightDatesCommittedRef = useRef(false);
   const [flightDatesOpen, setFlightDatesOpen] = useState(false);
@@ -1772,11 +1773,24 @@ export function DealsSearchForm({
   };
   useEffect(() => {
     if (presentation !== "mobile-homepage") return;
-    mobilePackageOptionRefs.current[search.mode]?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "nearest",
+    const rail = mobilePackageRailRef.current;
+    const selectedOption = mobilePackageOptionRefs.current[search.mode];
+    if (!rail || !selectedOption) return;
+    const frame = requestAnimationFrame(() => {
+      const railBounds = rail.getBoundingClientRect();
+      const optionBounds = selectedOption.getBoundingClientRect();
+      const startOverflow = optionBounds.left - railBounds.left;
+      const endOverflow = optionBounds.right - railBounds.right;
+      const delta = startOverflow < 0 ? startOverflow : endOverflow > 0 ? endOverflow : 0;
+      if (delta)
+        rail.scrollBy({
+          left: delta,
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            ? "auto"
+            : "smooth",
+        });
     });
+    return () => cancelAnimationFrame(frame);
   }, [presentation, search.mode]);
   const openFlightAirport = (
     kind: "origin" | "destination",
@@ -2917,12 +2931,11 @@ export function DealsSearchForm({
 
   const mobileHomepageControls = presentation === "mobile-homepage" ? (
     <div data-testid="mobile-homepage-deals-search" className="mt-3 space-y-2">
-      <fieldset>
+      <fieldset className="min-w-0 w-full max-w-full overflow-hidden">
         <legend className="sr-only">{t("deals.packageSelector.instruction")}</legend>
-        <div role="radiogroup" aria-label={t("deals.packageSelector.instruction")} data-testid="mobile-homepage-deals-package-rail" className="flex h-[42px] w-full flex-nowrap gap-2 overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-proximity [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+        <div ref={mobilePackageRailRef} role="radiogroup" aria-label={t("deals.packageSelector.instruction")} data-testid="mobile-homepage-deals-package-rail" className="flex h-10 min-w-0 w-full max-w-full touch-pan-x flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth border-b border-slate-200 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
           {mobileHomepagePackageOptions.map(({ mode, text }, index) => {
             const selected = search.mode === mode;
-            const products = getIncludedProducts(mode);
             return (
               <button ref={(node) => { mobilePackageOptionRefs.current[mode] = node ?? undefined; }} key={mode} type="button" role="radio" aria-checked={selected} aria-label={text} data-deals-mode={mode} onClick={() => selectPackageMode(mode)} onKeyDown={(event) => {
                 const offset = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
@@ -2932,12 +2945,7 @@ export function DealsSearchForm({
                 const nextMode = mobileHomepagePackageOptions[nextIndex].mode;
                 selectPackageMode(nextMode);
                 mobilePackageOptionRefs.current[nextMode]?.focus({ preventScroll: true });
-              }} className={`focus-ring flex h-10 shrink-0 snap-start items-center justify-center gap-1.5 whitespace-nowrap rounded-[11px] border px-3 text-[13px] font-semibold transition-colors ${selected ? "border-[#075ee8] bg-[#f2f7ff] text-[#075ee8]" : "border-[#dee5ed] bg-[#fcfdfe] text-slate-700"}`}>
-                <span aria-hidden="true" className="flex shrink-0 items-center gap-0.5">
-                  {products.flight ? <Plane className="h-4 w-4" strokeWidth={1.8} /> : null}
-                  {products.hotel ? <Building2 className="h-4 w-4" strokeWidth={1.8} /> : null}
-                  {products.car ? <CarFront className="h-4 w-4" strokeWidth={1.8} /> : null}
-                </span>
+              }} className={`focus-ring relative flex h-10 w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent px-3 text-[13px] font-medium text-slate-900 ${selected ? "after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : ""}`}>
                 <span className="whitespace-nowrap">{text}</span>
               </button>
             );
