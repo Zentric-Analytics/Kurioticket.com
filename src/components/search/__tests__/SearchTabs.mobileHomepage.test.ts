@@ -7,6 +7,10 @@ const homepage = readFileSync("src/app/page.tsx", "utf8");
 const mobileStart = source.indexOf('if (mobileHomepage && tab === "flights")');
 const desktopStart = source.indexOf("\n  return (", mobileStart);
 const mobileBranch = source.slice(mobileStart, desktopStart);
+const flightMobileBranch = source.slice(
+  mobileStart,
+  source.indexOf('if (mobileHomepage && tab === "deals")', mobileStart),
+);
 const sharedBranch = source.slice(desktopStart);
 const tabModeDeclaration = source.slice(source.indexOf("type TabMode"), source.indexOf("type TripType"));
 
@@ -21,7 +25,7 @@ test("mobile Flights renders four connected product tabs in approved order and i
   assert.match(mobileBranch, /mobile-homepage-product-tabs/);
   assert.match(mobileBranch, /grid-cols-4/);
   assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", Tag/);
-  assert.equal((mobileBranch.match(/^\s*\["(?:flights|hotels|cars|deals)"/gm) ?? []).length, 4);
+  assert.equal((flightMobileBranch.match(/^\s*\["(?:flights|hotels|cars|deals)"/gm) ?? []).length, 4);
   assert.match(mobileBranch, /role="tab"[\s\S]*?aria-selected=\{selected\}/);
   assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
 });
@@ -55,7 +59,7 @@ test("trip type uses accessible radio-style options", () => {
   assert.match(mobileBranch, /role="radiogroup"/);
   assert.match(mobileBranch, /\["round-trip", "one-way"\]/);
   assert.match(mobileBranch, /role="radio"[\s\S]*?aria-checked=\{selected\}/);
-  assert.match(mobileBranch, /h-2 w-2 rounded-full bg-\[#1670ee\]/);
+  assert.match(mobileBranch, /h-1\.5 w-1\.5 rounded-full bg-\[#1670ee\]/);
   assert.doesNotMatch(mobileBranch, /mobile-homepage-trip-selector[^\n]*border/);
 });
 

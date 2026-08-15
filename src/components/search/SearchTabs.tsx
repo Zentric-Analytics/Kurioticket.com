@@ -776,7 +776,7 @@ export function SearchTabs({
 
   const tabsClassName = cn(
     mobileHomepage
-      ? "mb-5 grid h-14 w-full grid-cols-4 overflow-hidden rounded-[16px] border border-slate-200 bg-white text-[14px] max-[389px]:text-[13px] max-[359px]:text-[12px]"
+      ? "mb-5 grid h-14 w-full grid-cols-4 overflow-hidden rounded-[16px] border border-slate-200 bg-white text-[14px] max-[359px]:text-[13px]"
       : "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
     !mobileHomepage && compactHero
       ? "mb-1 sm:mb-1.5 lg:mb-2 lg:gap-0.5 lg:border-slate-200/90 lg:bg-slate-100/80 lg:shadow-inner"
@@ -2955,7 +2955,7 @@ export function SearchTabs({
         role="tablist"
         aria-label={translate("searchType") || "Search type"}
         data-testid="mobile-homepage-product-tabs"
-        className="grid h-11 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[13px] max-[359px]:text-[12px]"
+        className="grid h-11 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[14px] max-[359px]:text-[13px]"
       >
         {([
           ["flights", Plane, t.flights || "Flights"],
@@ -2975,12 +2975,12 @@ export function SearchTabs({
                 setTab(mode);
               }}
               className={cn(
-                "focus-ring flex min-w-0 items-center justify-center gap-1 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors",
+                "focus-ring flex min-w-0 items-center justify-center gap-1.5 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors max-[359px]:gap-1",
                 index > 0 && "border-s",
                 selected && "bg-[#eef5ff] text-[#075ee8]",
               )}
             >
-              <Icon aria-hidden="true" className="h-4 w-4 shrink-0 max-[359px]:h-[15px] max-[359px]:w-[15px]" strokeWidth={1.8} />
+              <Icon aria-hidden="true" className="h-[18px] w-[18px] shrink-0 max-[359px]:h-4 max-[359px]:w-4" strokeWidth={1.8} />
               <span className="truncate">{label}</span>
             </button>
           );
@@ -3017,17 +3017,17 @@ export function SearchTabs({
                     }
                   }}
                   className={cn(
-                    "focus-ring flex min-h-11 min-w-0 items-center gap-2.5 rounded-[10px] px-1 text-start text-[14px] font-medium text-slate-950 transition-colors max-[359px]:gap-2 max-[359px]:text-[13px]",
+                    "focus-ring flex min-h-11 min-w-0 items-center gap-2 rounded-[10px] px-1 text-start text-[13px] font-medium text-slate-950 transition-colors",
                   )}
                 >
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 bg-white",
+                      "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 bg-white",
                       selected ? "border-[#1670ee]" : "border-slate-300",
                     )}
                   >
-                    <span className={cn("h-2 w-2 rounded-full bg-[#1670ee]", !selected && "invisible")} />
+                    <span className={cn("h-1.5 w-1.5 rounded-full bg-[#1670ee]", !selected && "invisible")} />
                   </span>
                   {tripTypeLabel(mode)}
                 </button>
@@ -3216,10 +3216,10 @@ export function SearchTabs({
     ] as const;
     return (
       <section data-testid="mobile-homepage-deals-surface" className="rounded-[19px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
-        <div role="tablist" aria-label={translate("searchType") || "Search type"} data-testid="mobile-homepage-product-tabs" className="grid h-11 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[13px] max-[359px]:text-[12px]">
+        <div role="tablist" aria-label={translate("searchType") || "Search type"} data-testid="mobile-homepage-product-tabs" className="grid h-11 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[14px] max-[359px]:text-[13px]">
           {products.map(([mode, Icon, label], index) => {
             const selected = tab === mode;
-            return <button key={mode} type="button" role="tab" aria-selected={selected} onClick={() => { setCarsOpenPicker(null); setTab(mode); }} className={cn("focus-ring flex min-w-0 items-center justify-center gap-1 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors", index > 0 && "border-s", selected && "bg-[#eef5ff] text-[#075ee8]")}><Icon aria-hidden="true" className="h-4 w-4 shrink-0 max-[359px]:h-[15px] max-[359px]:w-[15px]" strokeWidth={1.8} /><span className="truncate">{label}</span></button>;
+            return <button key={mode} type="button" role="tab" aria-selected={selected} onClick={() => { setCarsOpenPicker(null); setTab(mode); }} className={cn("focus-ring flex min-w-0 items-center justify-center gap-1.5 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors max-[359px]:gap-1", index > 0 && "border-s", selected && "bg-[#eef5ff] text-[#075ee8]")}><Icon aria-hidden="true" className="h-[18px] w-[18px] shrink-0 max-[359px]:h-4 max-[359px]:w-4" strokeWidth={1.8} /><span className="truncate">{label}</span></button>;
           })}
         </div>
         <DealsSearchForm variant="landing" presentation="mobile-homepage" />
@@ -3258,7 +3258,7 @@ export function SearchTabs({
             compactHero && !mobileHomepage && tab === "flights" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
-          <Plane className={mobileHomepage ? "h-5 w-5 shrink-0 max-[389px]:h-[18px] max-[389px]:w-[18px] max-[359px]:h-4 max-[359px]:w-4" : "h-4 w-4"} />
+          <Plane className={mobileHomepage ? "h-[18px] w-[18px] shrink-0 max-[359px]:h-4 max-[359px]:w-4" : "h-4 w-4"} strokeWidth={mobileHomepage ? 1.8 : undefined} />
           {t.flights}
         </button>
 
@@ -3282,7 +3282,7 @@ export function SearchTabs({
             compactHero && !mobileHomepage && tab === "hotels" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
-          {mobileHomepage ? <Building2 className="h-5 w-5 shrink-0 max-[389px]:h-[18px] max-[389px]:w-[18px] max-[359px]:h-4 max-[359px]:w-4" /> : <BedDouble className="h-4 w-4" />}
+          {mobileHomepage ? <Building2 className="h-[18px] w-[18px] shrink-0 max-[359px]:h-4 max-[359px]:w-4" strokeWidth={1.8} /> : <BedDouble className="h-4 w-4" />}
           {t.hotels}
         </button>
 
@@ -3306,7 +3306,7 @@ export function SearchTabs({
             compactHero && !mobileHomepage && tab === "cars" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
-          <CarFront className={mobileHomepage ? "h-5 w-5 shrink-0 max-[389px]:h-[18px] max-[389px]:w-[18px] max-[359px]:h-4 max-[359px]:w-4" : "h-4 w-4"} />
+          <CarFront className={mobileHomepage ? "h-[18px] w-[18px] shrink-0 max-[359px]:h-4 max-[359px]:w-4" : "h-4 w-4"} strokeWidth={mobileHomepage ? 1.8 : undefined} />
           {t.cars}
         </button>
 
@@ -3321,7 +3321,7 @@ export function SearchTabs({
             }}
             className="focus-ring inline-flex min-w-0 items-center justify-center gap-1.5 border-s border-slate-200 px-0.5 font-semibold text-slate-600 transition-colors hover:text-slate-800 max-[389px]:gap-1"
           >
-            <Tag className="h-5 w-5 shrink-0 max-[389px]:h-[18px] max-[389px]:w-[18px] max-[359px]:h-4 max-[359px]:w-4" />
+            <Tag className="h-[18px] w-[18px] shrink-0 max-[359px]:h-4 max-[359px]:w-4" strokeWidth={1.8} />
             {t.deals || "Deals"}
           </button>
         ) : null}
