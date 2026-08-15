@@ -42,7 +42,7 @@ test("mobile package selector is a compact, nowrap horizontal rail", () => {
     assert.ok(compact.includes(utility), `rail should include ${utility}`);
   }
   assert.match(compact, /fieldset className="min-w-0 w-full max-w-full overflow-hidden"/);
-  assert.match(compact, /isPackagesLanding \? "h-\[54px\][^"]*" : "h-10 px-2\.5 text-\[12px\]"/);
+  assert.match(compact, /isPackagesLanding \? "h-\[46px\][^"]*" : "h-10 px-2\.5 text-\[12px\]"/);
   assert.doesNotMatch(rail, /px-3 text-\[13px\]/);
   assert.match(compact, /<span className="whitespace-nowrap">\{text\}<\/span>/);
   assert.doesNotMatch(compact.slice(0, compact.indexOf("Origin")), /truncate|text-overflow|ellipsis/);
@@ -64,7 +64,7 @@ test("selection stays visible and keyboard navigation reaches every package", ()
 });
 
 test("mobile packages are text-only and selected state is an underline", () => {
-  assert.match(compact, /\{isPackagesLanding \? \([\s\S]*?<Building2[\s\S]*?<Plane[\s\S]*?<CarFront/);
+  assert.match(compact, /\{isPackagesLanding \? \([\s\S]*?<PackagesIcon/);
   assert.match(compact, /\{isPackagesLanding \? \([\s\S]*?\) : null\}[\s\S]*?<span className="whitespace-nowrap">\{text\}<\/span>/);
   assert.match(compact, /text-slate-900/);
   assert.match(compact, /after:h-\[2px\]/);
@@ -82,11 +82,11 @@ test("compact controls reuse canonical pickers, summary, validation and submissi
 });
 
 test("mobile Packages fields use restrained geometry and neutral value-row icons", () => {
-  assert.match(form, /isPackagesLanding \? "h-\[78px\][^"]*" : "h-\[68px\] rounded-\[10px\] px-\[13px\] py-\[11px\]"/);
+  assert.match(form, /isPackagesLanding \? "h-\[62px\][^"]*" : "h-\[68px\] rounded-\[10px\] px-\[13px\] py-\[11px\]"/);
   assert.match(form, /compactValueRowClassName[\s\S]{0,100}mt-1\.5 flex min-w-0 items-center gap-2 text-slate-600/);
   assert.match(form, /compactValueIconClassName = `\$\{isPackagesLanding[\s\S]*?: "h-4 w-4"\} shrink-0`/);
   assert.doesNotMatch(form, /compactIconClassName|h-8 w-8[^\"]*rounded-full[^\"]*bg-slate-100\/70/);
-  assert.match(compact, /type="submit"[\s\S]{0,180}rounded-\[11px\]/);
+  assert.match(compact, /isPackagesLanding \? "h-\[50px\] rounded-\[10px\]"/);
   assert.doesNotMatch(compact, /LocateFixed/);
 });
 
@@ -126,6 +126,7 @@ test("flight packages expose one canonical route swap while hotel-car does not",
   const flightBranch = compact.slice(branchStart, hotelBranchStart);
   assert.equal((flightBranch.match(/<ArrowRightLeft/g) ?? []).length, 1);
   assert.match(flightBranch, /onClick=\{swapDealsFlightAirports\}/);
-  assert.match(flightBranch, /h-\[38px\] w-\[38px\]/);
+  assert.match(flightBranch, /h-\[34px\] w-\[34px\]/);
+  assert.match(compact, /h-\[38px\] w-\[38px\]/);
   assert.doesNotMatch(compact.slice(hotelBranchStart), /ArrowRightLeft/);
 });

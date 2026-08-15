@@ -39,6 +39,7 @@ import {
   X,
 } from "lucide-react";
 
+import { PackagesIcon } from "@/components/icons/PackagesIcon";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 import { cn } from "@/lib/utils";
@@ -403,7 +404,7 @@ export function AppHeader({
       {
         href: "/packages",
         label: t.deals,
-        icon: Tag,
+        icon: PackagesIcon,
       },
       {
         href: "/destinations",
