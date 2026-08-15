@@ -430,7 +430,8 @@ export default function HotelsSearchPage() {
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
                 desktopIdentityLabel={t("hotels")}
-                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.5rem] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!pb-[calc(0.9rem+env(safe-area-inset-bottom))] [&>form>div]:!shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] [&>form>div>div]:!gap-2 [&>form>div>div>label]:!min-h-[50px] [&>form>div>div>div]:!min-h-[50px] [&>form>div>div>div:last-child>button]:!h-12"
+                mobileLandingPresentation
+                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[15px] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!pb-[calc(0.9rem+env(safe-area-inset-bottom))] [&>form>div]:!shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] [&>form>div>div]:!gap-2 [&>form>div>div>label]:!min-h-[50px] [&>form>div>div>div]:!min-h-[50px] [&>form>div>div>div:last-child>button]:!h-12"
               />
             </div>
           </div>

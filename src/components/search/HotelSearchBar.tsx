@@ -15,11 +15,13 @@ import {
   BedDouble,
   Calendar,
   ChevronDown,
+  MapPin,
   Minus,
   PencilLine,
   Plus,
   RotateCcw,
   SlidersHorizontal,
+  UserRound,
   X,
 } from "lucide-react";
 
@@ -217,6 +219,7 @@ export type HotelSearchBarProps = {
   errorRole?: "alert" | "status";
   compact?: boolean;
   mobileLayout?: "default" | "controls" | "drawer";
+  mobileLandingPresentation?: boolean;
   onOpenFilters?: () => void;
   onOpenMobileSearch?: () => void;
   onCloseMobileSearch?: () => void;
@@ -244,6 +247,7 @@ export function HotelSearchBar({
   errorRole,
   compact = false,
   mobileLayout = "default",
+  mobileLandingPresentation = false,
   onOpenFilters,
   onOpenMobileSearch,
   onCloseMobileSearch,
@@ -1192,10 +1196,20 @@ export function HotelSearchBar({
         >
           {!compact && desktopIdentityLabel ? (
             <div className="flex items-center px-1 pb-2 sm:hidden">
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#004BB8]/8 px-3 py-1.5 text-[0.86rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-lg bg-[#004BB8]/8 px-3 font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10",
+                  mobileLandingPresentation
+                    ? "gap-2 py-2 text-[16px]"
+                    : "gap-1.5 py-1.5 text-[0.86rem]",
+                )}
+              >
                 <BedDouble
                   aria-hidden="true"
-                  className="h-4 w-4 text-[#004BB8]"
+                  className={cn(
+                    "text-[#004BB8]",
+                    mobileLandingPresentation ? "h-5 w-5" : "h-4 w-4",
+                  )}
                   strokeWidth={2.15}
                 />
                 {hotelSearchIdentityLabel}
@@ -1256,25 +1270,46 @@ export function HotelSearchBar({
                   aria-label={t("chooseHotelDestination")}
                   className={cn(
                     valueControlClassName,
-                    "flex items-center justify-between gap-2 pe-2 text-start sm:hidden",
+                    "flex items-center gap-2 text-start sm:hidden",
+                    !mobileLandingPresentation && "justify-between pe-2",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "truncate",
-                      !destination.trim() && "text-slate-400",
-                    )}
-                  >
-                    {destination.trim() ||
-                      t("hotelSearchDestinationPlaceholder")}
-                  </span>
-                  <ChevronDown
-                    size={16}
-                    className={cn(
-                      "shrink-0 text-slate-500 transition-transform",
-                      destinationMobilePickerOpen && "rotate-180",
-                    )}
-                  />
+                  {mobileLandingPresentation ? (
+                    <span className="flex min-w-0 items-center gap-2">
+                      <MapPin
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0 text-slate-500"
+                      />
+                      <span
+                        className={cn(
+                          "truncate",
+                          !destination.trim() && "text-slate-400",
+                        )}
+                      >
+                        {destination.trim() ||
+                          t("hotelSearchDestinationPlaceholder")}
+                      </span>
+                    </span>
+                  ) : (
+                    <>
+                      <span
+                        className={cn(
+                          "truncate",
+                          !destination.trim() && "text-slate-400",
+                        )}
+                      >
+                        {destination.trim() ||
+                          t("hotelSearchDestinationPlaceholder")}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          "shrink-0 text-slate-500 transition-transform",
+                          destinationMobilePickerOpen && "rotate-180",
+                        )}
+                      />
+                    </>
+                  )}
                 </button>
                 <input
                   ref={destinationInputRef}
@@ -1568,7 +1603,15 @@ export function HotelSearchBar({
                   "flex items-center justify-between gap-1.5 text-start",
                 )}
               >
-                <span className="truncate">{guestsRoomsSummary}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  {mobileLandingPresentation ? (
+                    <UserRound
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-slate-500"
+                    />
+                  ) : null}
+                  <span className="truncate">{guestsRoomsSummary}</span>
+                </span>
                 <ChevronDown
                   size={16}
                   className={`shrink-0 text-slate-500 transition-transform ${
