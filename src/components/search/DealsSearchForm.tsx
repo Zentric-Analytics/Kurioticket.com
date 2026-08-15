@@ -731,7 +731,11 @@ export type DealsSearchFormProps = {
   onDraftChange?: (search: DealsSearch) => void;
   warning?: ReactNode;
   pending?: boolean;
-  presentation?: "default" | "mobile-homepage" | "desktop-landing";
+  presentation?:
+    | "default"
+    | "mobile-homepage"
+    | "desktop-landing"
+    | "packages-landing";
 };
 
 export function normalizeUnifiedResultsSearch(current: DealsSearch) {
@@ -770,8 +774,11 @@ export function DealsSearchForm({
     [dictionary],
   );
   const isLandingVariant = variant === "landing";
+  const isPackagesLanding =
+    isLandingVariant && presentation === "packages-landing";
   const isDesktopLanding =
-    isLandingVariant && presentation === "desktop-landing";
+    isLandingVariant &&
+    (presentation === "desktop-landing" || isPackagesLanding);
   const [desktopPackageChoice, setDesktopPackageChoice] = useState<
     string | null
   >(null);
@@ -1996,7 +2003,7 @@ export function DealsSearchForm({
     });
   };
   useEffect(() => {
-    if (presentation !== "mobile-homepage") return;
+    if (presentation !== "mobile-homepage" && !isPackagesLanding) return;
     const rail = mobilePackageRailRef.current;
     const selectedOption = mobilePackageOptionRefs.current[search.mode];
     if (!rail || !selectedOption) return;
@@ -2017,7 +2024,7 @@ export function DealsSearchForm({
         });
     });
     return () => cancelAnimationFrame(frame);
-  }, [presentation, search.mode]);
+  }, [isPackagesLanding, presentation, search.mode]);
   const openFlightAirport = (
     kind: "origin" | "destination",
     mobile = false,
@@ -3185,16 +3192,13 @@ export function DealsSearchForm({
     </>
   );
 
-  const compactFieldClassName =
-    "focus-ring flex h-[68px] w-full min-w-0 items-center justify-between rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-[13px] py-[11px] text-start";
+  const compactFieldClassName = `focus-ring flex w-full min-w-0 items-center justify-between border border-[#dee5ed] bg-[#fcfdfe] text-start ${isPackagesLanding ? "h-[78px] rounded-[11px] px-5 py-3.5" : "h-[68px] rounded-[10px] px-[13px] py-[11px]"}`;
   const compactFieldContentClassName = "min-w-0 flex-1";
-  const compactLabelClassName =
-    "block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600";
+  const compactLabelClassName = `block truncate font-semibold uppercase tracking-[0.11em] text-slate-600 ${isPackagesLanding ? "text-[11px] leading-4" : "text-[10px] leading-3"}`;
   const compactValueRowClassName =
     "mt-1.5 flex min-w-0 items-center gap-2 text-slate-600";
-  const compactValueTextClassName =
-    "min-w-0 truncate text-[16px] font-medium leading-5 text-slate-950";
-  const compactValueIconClassName = "h-4 w-4 shrink-0";
+  const compactValueTextClassName = `min-w-0 truncate font-medium text-slate-950 ${isPackagesLanding ? "text-[18px] leading-6" : "text-[16px] leading-5"}`;
+  const compactValueIconClassName = `${isPackagesLanding ? "h-[17px] w-[17px] text-[#075ee8]" : "h-4 w-4"} shrink-0`;
   const compactPackageFieldContent = (
     label: ReactNode,
     icon: ReactNode,
@@ -3214,12 +3218,35 @@ export function DealsSearchForm({
     </span>
   );
 
-  const mobileHomepageControls =
-    presentation === "mobile-homepage" ? (
+  const compactMobileControls =
+    presentation === "mobile-homepage" || isPackagesLanding ? (
       <div
-        data-testid="mobile-homepage-deals-search"
-        className="mt-3 space-y-2"
+        data-testid={
+          isPackagesLanding
+            ? "mobile-packages-landing-search"
+            : "mobile-homepage-deals-search"
+        }
+        className={isPackagesLanding ? "space-y-3 sm:hidden" : "mt-3 space-y-2"}
       >
+        {isPackagesLanding ? (
+          <>
+            <div className="flex items-center gap-3.5 px-0.5 pb-1 pt-1">
+              <span
+                data-packages-identity-icon
+                className="relative block h-11 w-12 shrink-0 text-[#075ee8]"
+                aria-hidden="true"
+              >
+                <Building2 className="absolute left-[14px] top-0 h-8 w-8" strokeWidth={1.8} />
+                <Plane className="absolute bottom-0 left-0 h-7 w-7 -rotate-12 fill-[#fcfdfe]" strokeWidth={2} />
+                <CarFront className="absolute bottom-0 right-0 h-6 w-6 fill-[#fcfdfe]" strokeWidth={2} />
+              </span>
+              <h1 className="text-[25px] font-bold leading-8 tracking-[-0.02em] text-[#07182f]">
+                {t("deals")}
+              </h1>
+            </div>
+            <div className="h-px bg-[#dee5ed]" aria-hidden="true" />
+          </>
+        ) : null}
         <fieldset className="min-w-0 w-full max-w-full overflow-hidden">
           <legend className="sr-only">
             {t("deals.packageSelector.instruction")}
@@ -3228,8 +3255,12 @@ export function DealsSearchForm({
             ref={mobilePackageRailRef}
             role="radiogroup"
             aria-label={t("deals.packageSelector.instruction")}
-            data-testid="mobile-homepage-deals-package-rail"
-            className="flex h-10 min-w-0 w-full max-w-full touch-pan-x flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth border-b border-slate-200 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden"
+            data-testid={
+              isPackagesLanding
+                ? "mobile-packages-landing-package-rail"
+                : "mobile-homepage-deals-package-rail"
+            }
+            className={`flex min-w-0 w-full max-w-full touch-pan-x flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth border-b border-slate-200 [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden ${isPackagesLanding ? "h-[54px]" : "h-10 px-1"}`}
           >
             {mobileHomepagePackageOptions.map(({ mode, text }, index) => {
               const selected = search.mode === mode;
@@ -3271,8 +3302,15 @@ export function DealsSearchForm({
                       preventScroll: true,
                     });
                   }}
-                  className={`focus-ring relative flex h-10 w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent px-2.5 text-[12px] font-medium text-slate-900 ${selected ? "after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : ""}`}
+                  className={`focus-ring relative flex w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent font-medium ${isPackagesLanding ? "h-[54px] gap-1.5 px-2 text-[13px] min-[390px]:text-[14px]" : "h-10 px-2.5 text-[12px]"} ${selected ? "text-[#075ee8] after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : "text-slate-700"}`}
                 >
+                  {isPackagesLanding ? (
+                    <span className="flex shrink-0 items-end -space-x-1" aria-hidden="true">
+                      {mode !== "flight-car" ? <Building2 className="h-4 w-4" /> : null}
+                      {mode !== "hotel-car" ? <Plane className="h-4 w-4" /> : null}
+                      {mode !== "hotel-flight" ? <CarFront className="h-4 w-4" /> : null}
+                    </span>
+                  ) : null}
                   <span className="whitespace-nowrap">{text}</span>
                 </button>
               );
@@ -3280,9 +3318,51 @@ export function DealsSearchForm({
           </div>
         </fieldset>
 
+        {isPackagesLanding && included.flight ? (
+          <div
+            role="radiogroup"
+            aria-label={t("tripType")}
+            className="flex min-h-14 items-center justify-between gap-1"
+          >
+            {(["round-trip", "one-way"] as const).map((value) => {
+              const selected = search.flightTripType === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setDealsFlightTripType(value)}
+                  className="focus-ring flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium text-slate-900 min-[375px]:text-[13px]"
+                >
+                  <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border ${selected ? "border-[#8ebcff]" : "border-slate-300"}`} aria-hidden="true">
+                    {selected ? <span className="h-2.5 w-2.5 rounded-full bg-[#075ee8]" /> : null}
+                  </span>
+                  {value === "round-trip"
+                    ? locale.toLowerCase().startsWith("en")
+                      ? "Round-trip"
+                      : t("roundTrip")
+                    : t("deals.tripType.oneWay")}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              role="radio"
+              aria-checked="false"
+              aria-disabled="true"
+              disabled
+              className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium text-slate-900 disabled:opacity-100 min-[375px]:text-[13px]"
+            >
+              <span className="h-[18px] w-[18px] rounded-full border border-slate-300" aria-hidden="true" />
+              {t("multiCity")}
+            </button>
+          </div>
+        ) : null}
+
         {included.flight ? (
           <div
-            className="relative space-y-2"
+            className={`relative ${isPackagesLanding ? "space-y-3" : "space-y-2"}`}
             data-testid="mobile-homepage-deals-route-fields"
           >
             <button
@@ -3294,7 +3374,7 @@ export function DealsSearchForm({
               className={compactFieldClassName}
             >
               {compactPackageFieldContent(
-                "Origin",
+                t("origin"),
                 <MapPin
                   aria-hidden="true"
                   className={compactValueIconClassName}
@@ -3309,7 +3389,7 @@ export function DealsSearchForm({
               aria-label={
                 t("swapOriginDestination") || "Swap origin and destination"
               }
-              className="focus-ring absolute left-1/2 top-[53px] z-10 flex h-[38px] w-[38px] -translate-x-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_2px_6px_rgba(15,23,42,0.10)] before:absolute before:-inset-[3px] before:content-[''] focus-visible:ring-2 focus-visible:ring-[#075ee8]/30"
+              className={`focus-ring absolute left-1/2 z-10 flex h-[38px] w-[38px] -translate-x-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_2px_6px_rgba(15,23,42,0.10)] before:absolute before:-inset-[3px] before:content-[''] focus-visible:ring-2 focus-visible:ring-[#075ee8]/30 ${isPackagesLanding ? "top-[65px]" : "top-[53px]"}`}
             >
               <ArrowRightLeft
                 aria-hidden="true"
@@ -3325,12 +3405,12 @@ export function DealsSearchForm({
               className={compactFieldClassName}
             >
               {compactPackageFieldContent(
-                "Destination",
+                t("destination"),
                 <MapPin
                   aria-hidden="true"
-                  className={compactValueIconClassName}
+                  className={`${compactValueIconClassName} ${isPackagesLanding && !search.flightDestinationText ? "text-slate-500" : ""}`}
                 />,
-                search.flightDestinationText || "Where to?",
+                search.flightDestinationText || t("deals.destinationLabel"),
                 !search.flightDestinationText,
               )}
             </button>
@@ -3343,7 +3423,7 @@ export function DealsSearchForm({
               className={compactFieldClassName}
             >
               {compactPackageFieldContent(
-                "Travel Dates",
+                t("travelDates"),
                 <Calendar
                   aria-hidden="true"
                   className={compactValueIconClassName}
@@ -3353,10 +3433,7 @@ export function DealsSearchForm({
                   : "Choose dates",
                 !search.flightDepartureDate,
               )}
-              <ChevronDown
-                aria-hidden="true"
-                className="h-5 w-5 shrink-0 text-slate-700"
-              />
+              {!isPackagesLanding ? <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" /> : null}
             </button>
           </div>
         ) : (
@@ -3370,12 +3447,12 @@ export function DealsSearchForm({
               className={compactFieldClassName}
             >
               {compactPackageFieldContent(
-                "Destination",
+                t("destination"),
                 <MapPin
                   aria-hidden="true"
-                  className={compactValueIconClassName}
+                  className={`${compactValueIconClassName} ${isPackagesLanding && !displayedHotelDestination ? "text-slate-500" : ""}`}
                 />,
-                displayedHotelDestination || "Where to?",
+                displayedHotelDestination || t("deals.destinationLabel"),
                 !displayedHotelDestination,
               )}
             </button>
@@ -3388,7 +3465,7 @@ export function DealsSearchForm({
               className={compactFieldClassName}
             >
               {compactPackageFieldContent(
-                "Travel Dates",
+                t("travelDates"),
                 <Calendar
                   aria-hidden="true"
                   className={compactValueIconClassName}
@@ -3396,10 +3473,7 @@ export function DealsSearchForm({
                 displayedHotelCheckIn ? hotelDatesSummary : "Choose dates",
                 !displayedHotelCheckIn,
               )}
-              <ChevronDown
-                aria-hidden="true"
-                className="h-5 w-5 shrink-0 text-slate-700"
-              />
+              {!isPackagesLanding ? <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" /> : null}
             </button>
           </>
         )}
@@ -3412,17 +3486,18 @@ export function DealsSearchForm({
           className={compactFieldClassName}
         >
           {compactPackageFieldContent(
-            included.hotel ? <>Travelers &amp; Rooms</> : <>Travelers</>,
+            included.hotel
+              ? locale.toLowerCase().startsWith("en")
+                ? <>Travelers &amp; Rooms</>
+                : t("deals.travelersRoomsLabel")
+              : t("travelers"),
             <UserRound
               aria-hidden="true"
               className={compactValueIconClassName}
             />,
             travelerSummary,
           )}
-          <ChevronDown
-            aria-hidden="true"
-            className="h-5 w-5 shrink-0 text-slate-700"
-          />
+          {!isPackagesLanding ? <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" /> : null}
         </button>
         {errorBlock("flight")}
         {errorBlock("hotel")}
@@ -3431,9 +3506,9 @@ export function DealsSearchForm({
           type="submit"
           disabled={submitting || pending}
           aria-busy={submitting || pending}
-          className="focus-ring h-12 w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60"
+          className={`focus-ring w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60 ${isPackagesLanding ? "h-[54px]" : "h-12"}`}
         >
-          Search packages
+          {t("deals.searchButton")}
         </button>
       </div>
     ) : null;
@@ -3447,11 +3522,14 @@ export function DealsSearchForm({
       className={
         presentation === "mobile-homepage"
           ? "w-full"
-          : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""} ${isDesktopLanding ? "lg:max-w-[1280px] lg:rounded-[8px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:py-6 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8" : ""}`
+          : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? `${isPackagesLanding ? "rounded-[16px] border-[#dee5ed] bg-[#fcfdfe] shadow-[0_14px_36px_rgba(15,35,65,0.12)] sm:rounded-3xl sm:border-slate-200 sm:bg-white sm:shadow-[0_18px_46px_rgba(15,23,42,0.12)]" : "rounded-3xl border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)]"} border sm:px-6 lg:py-3` : ""} ${isDesktopLanding ? "lg:max-w-[1280px] lg:rounded-[8px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:py-6 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8" : ""}`
       }
     >
-      {mobileHomepageControls ?? (
+      {presentation === "mobile-homepage" ? compactMobileControls : (
         <>
+          {isPackagesLanding ? compactMobileControls : null}
+          <div className={isPackagesLanding ? "hidden sm:contents" : "contents"}>
+          <>
           {isDesktopLanding ? (
             <fieldset
               className="hidden lg:block lg:pb-0"
@@ -4212,6 +4290,8 @@ export function DealsSearchForm({
             <div className="w-full">{guidedPreviewPanel}</div>
             {isDesktopLanding ? searchDealsButton : null}
           </section>
+          </>
+          </div>
         </>
       )}
       {warning}

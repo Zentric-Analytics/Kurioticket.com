@@ -11,5 +11,5 @@ test("Deals hero is a clean high-resolution image without marketing copy or read
   assert.match(page, /object-cover object-\[center_52%\] lg:object-\[center_48%\]/);
   assert.doesNotMatch(page, /linear-gradient|bg-gradient/);
   assert.doesNotMatch(page, /packages\.heroTitle|deals\.heroSubtitle|<h1/);
-  assert.match(page, /<DealsSearchForm presentation="desktop-landing"/);
+  assert.match(page, /pathname === "\/packages" \? "packages-landing" : "desktop-landing"/);
 });
