@@ -237,3 +237,33 @@ test("desktop-only styling leaves mobile homepage and results gates intact", () 
   assert.match(form, /variant === "results"/);
   assert.match(form, /data-deals-results-layout/);
 });
+
+test("desktop landing uses restrained eight-pixel geometry", () => {
+  assert.match(form, /lg:rounded-\[8px\] lg:border-\[#dee5ed\]/);
+  assert.match(
+    form,
+    /data-deals-desktop-package-selector[\s\S]*rounded-\[8px\] border border-\[#dee5ed\]/,
+  );
+  assert.match(form, /lg:overflow-visible lg:rounded-\[8px\]/);
+  assert.match(form, /lg:rounded-e-\[8px\]/);
+  assert.doesNotMatch(form, /lg:rounded-\[18px\]|lg:rounded-e-\[11px\]/);
+});
+
+test("desktop package selection is an underline without a selected box", () => {
+  const selector = form.slice(
+    form.indexOf("data-deals-desktop-package-selector"),
+    form.indexOf("</fieldset>", form.indexOf("data-deals-desktop-package-selector")),
+  );
+  assert.match(
+    selector,
+    /after:bottom-0 after:h-\[2px\] after:bg-\[#2563EB\]/,
+  );
+  assert.doesNotMatch(selector, /bg-\[#eff6ff\]|-m-px border border-\[#2563eb\]/);
+});
+
+test("desktop trip type uses localized Round trip and a neutral radio ring", () => {
+  assert.match(form, /isDesktopLanding[\s\S]*\? "roundTrip"[\s\S]*: "deals\.tripType\.return"/);
+  assert.match(form, /lg:h-\[18px\] lg:w-\[18px\] lg:border-2 lg:border-slate-300/);
+  assert.match(form, /h-1\.5 w-1\.5 rounded-full bg-\[#004BB8\]/);
+  assert.match(form, /lg:text-\[14px\] lg:font-medium lg:text-slate-800 lg:ring-0/);
+});
