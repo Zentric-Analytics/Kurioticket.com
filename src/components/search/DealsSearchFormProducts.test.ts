@@ -45,21 +45,22 @@ test("landing and results share the four direct package choices in exact order",
   assert.doesNotMatch(form, /tryToggleDealsProduct/);
 });
 
-test("desktop landing exposes approved labels as aliases of canonical modes", () => {
+test("desktop landing exposes each canonical mode once with exact compact labels", () => {
   const desktopConfig = form.slice(
     form.indexOf("const desktopLandingPackageOptions"),
     form.indexOf("const field"),
   );
-  for (const label of [
-    "Hotel + Flight",
-    "Flight + Hotel",
-    "Flight + Car",
-    "Hotel + Car",
-  ]) assert.match(desktopConfig, new RegExp(`text: "${label.replace("+", "\\+")}"`));
-  assert.equal(
-    [...desktopConfig.matchAll(/mode: "hotel-flight"/g)].length,
-    2,
-  );
+  const options = [...desktopConfig.matchAll(
+    /\{ id: "([^"]+)", mode: "([^"]+)", text: "([^"]+)" \}/g,
+  )].map((match) => match.slice(1));
+  assert.deepEqual(options, [
+    ["hotel-flight", "hotel-flight", "Flight+Hotel"],
+    ["flight-car", "flight-car", "Flight+Car"],
+    ["hotel-car", "hotel-car", "Hotel+Car"],
+    ["hotel-flight-car", "hotel-flight-car", "Flight+Hotel+Car"],
+  ]);
+  assert.equal(new Set(options.map(([, mode]) => mode)).size, 4);
+  assert.doesNotMatch(desktopConfig, /Hotel \+ Flight|flight-hotel/);
   assert.match(form, /data-deals-canonical-mode=\{option\.mode\}/);
   assert.match(form, /selectPackageMode\(option\.mode\)/);
   assert.doesNotMatch(desktopConfig, /mode: "flight-hotel"/);

@@ -1,8 +1,6 @@
 import test from "node:test";
 
 const activeDealsRenderKeys = new Set([
-  "deals.heroTitle",
-  "deals.heroSubtitle",
   "deals.package.hotelFlight",
   "deals.package.hotelFlightCar",
   "deals.package.flightCar",
@@ -1794,12 +1792,13 @@ test("Deals landing package values and destination card data remain unchanged wh
     "Search flights, stays, and cars together in one place.",
     "Hotel + Flight",
     "Hotel + Flight + Car",
-    "Flight + Car",
-    "Hotel + Car",
     "Places to start your deal search",
     "Choose a destination idea, then compare provider results when you continue.",
   ]) {
     assert.equal(dealsPageSource.includes(englishCopy), false, `${englishCopy} should not be hardcoded in DealsPage`);
+  }
+  for (const desktopLabel of ["Flight+Hotel", "Flight+Car", "Hotel+Car", "Flight+Hotel+Car"]) {
+    assert.ok(dealsPageSource.includes(`text: "${desktopLabel}"`), `${desktopLabel} should remain the exact desktop presentation label`);
   }
 });
 
