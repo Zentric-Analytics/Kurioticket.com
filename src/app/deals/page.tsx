@@ -44,8 +44,14 @@ export default function DealsPage() {
 
       if (!Number.isFinite(height) || height <= 0) return;
 
-      pageElement.style.setProperty("--deals-search-inside", `${height * 0.62}px`);
-      pageElement.style.setProperty("--deals-search-outside", `${height * 0.38}px`);
+      const desktopLayout = window.matchMedia("(min-width: 1024px)").matches;
+      const insideHeight = desktopLayout ? height * 0.44 : Math.min(height, 128);
+
+      pageElement.style.setProperty("--deals-search-inside", `${insideHeight}px`);
+      pageElement.style.setProperty(
+        "--deals-search-outside",
+        `${Math.max(0, height - insideHeight)}px`,
+      );
     };
 
     const scheduleUpdate = () => {
@@ -58,20 +64,21 @@ export default function DealsPage() {
 
     const observer = new ResizeObserver(scheduleUpdate);
     observer.observe(searchElement);
+    window.addEventListener("resize", scheduleUpdate);
     scheduleUpdate();
 
     return () => {
       observer.disconnect();
+      window.removeEventListener("resize", scheduleUpdate);
       if (animationFrame) cancelAnimationFrame(animationFrame);
     };
   }, []);
 
   return <><AppHeader /><main ref={dealsPageRef} className="flex-1 bg-slate-50 pb-12" style={{ "--deals-search-inside": "0px", "--deals-search-outside": "0px" } as CSSProperties}>
-    <section className="relative overflow-hidden border-b border-slate-200 bg-[#F6F9FC] pb-12 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:overflow-visible sm:pb-0 lg:h-[390px]">
+    <section className="relative h-96 overflow-visible border-b border-slate-200 bg-[#F6F9FC] shadow-[0_18px_45px_rgba(15,23,42,0.06)] lg:h-[390px]">
       <div className="absolute inset-0 overflow-hidden bg-slate-800"><Image src={dealsHeroImage} alt="" fill priority quality={90} sizes="100vw" className="object-cover object-[center_52%] lg:object-[center_48%]" /></div>
-      <div className="h-36 sm:h-[calc(2.5rem+var(--deals-search-inside))] lg:h-auto" aria-hidden="true" />
-      <div ref={dealsSearchRef} className="page-shell relative z-20 mt-8 sm:absolute sm:inset-x-0 sm:bottom-0 sm:mt-0 sm:translate-y-[38%] lg:translate-y-[56%]"><div className="mx-auto max-w-[1280px]"><Suspense fallback={<div className="min-h-80 rounded-3xl bg-white/90" />}><DealsSearchForm presentation={pathname === "/packages" ? "packages-landing" : "desktop-landing"} /></Suspense></div></div>
+      <div ref={dealsSearchRef} className="page-shell absolute inset-x-0 bottom-[calc(-1_*_var(--deals-search-outside))] z-20 lg:bottom-0 lg:translate-y-[56%]"><div className="mx-auto max-w-[1280px]"><Suspense fallback={<div className="min-h-80 rounded-3xl bg-white/90" />}><DealsSearchForm presentation={pathname === "/packages" ? "packages-landing" : "desktop-landing"} /></Suspense></div></div>
     </section>
-    <section className="page-shell pt-10 sm:pt-[calc(var(--deals-search-outside)+6.5rem)]"><h2 className="text-xl font-extrabold tracking-tight text-slate-950 sm:text-2xl">{t("deals.destinationIdeasTitle")}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{t("deals.destinationIdeasSubtitle")}</p><div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">{destinationIdeas.map(([key, city, image]) => { const search = createDefaultDealsSearch(); search.hotelDestination = city; search.carPickupLocation = city; return <Link key={key} href={buildDealsModifyUrl(search)} aria-label={`${t("deals.destinationCardAriaPrefix")} ${t(`deals.destination.${key}.city`)}`} className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><div className="relative aspect-[4/3] overflow-hidden bg-slate-100"><Image src={image} alt={t(`deals.destination.${key}.imageAlt`)} fill sizes="(min-width:1024px) 33vw, 50vw" className="object-cover transition duration-300 group-hover:scale-105" /></div><div className="p-4"><p className="font-extrabold text-slate-950">{t(`deals.destination.${key}.city`)}</p><p className="mt-1 text-sm text-slate-600">{t(`deals.destination.${key}.country`)}</p></div></Link>; })}</div></section>
+    <section className="page-shell pt-[calc(var(--deals-search-outside)+3rem)] lg:pt-[calc(var(--deals-search-outside)+6.5rem)]"><h2 className="text-xl font-extrabold tracking-tight text-slate-950 sm:text-2xl">{t("deals.destinationIdeasTitle")}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{t("deals.destinationIdeasSubtitle")}</p><div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">{destinationIdeas.map(([key, city, image]) => { const search = createDefaultDealsSearch(); search.hotelDestination = city; search.carPickupLocation = city; return <Link key={key} href={buildDealsModifyUrl(search)} aria-label={`${t("deals.destinationCardAriaPrefix")} ${t(`deals.destination.${key}.city`)}`} className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#004BB8]/25 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"><div className="relative aspect-[4/3] overflow-hidden bg-slate-100"><Image src={image} alt={t(`deals.destination.${key}.imageAlt`)} fill sizes="(min-width:1024px) 33vw, 50vw" className="object-cover transition duration-300 group-hover:scale-105" /></div><div className="p-4"><p className="font-extrabold text-slate-950">{t(`deals.destination.${key}.city`)}</p><p className="mt-1 text-sm text-slate-600">{t(`deals.destination.${key}.country`)}</p></div></Link>; })}</div></section>
   </main><Footer /></>;
 }
