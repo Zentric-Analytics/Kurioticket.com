@@ -20,7 +20,6 @@ import {
   Calendar,
   CarFront,
   ChevronDown,
-  LocateFixed,
   MapPin,
   Minus,
   Plane,
@@ -2919,9 +2918,10 @@ export function DealsSearchForm({
   );
 
   const compactFieldClassName =
-    "focus-ring flex h-[68px] w-full min-w-0 items-center gap-3 rounded-[14px] border border-[#dee5ed] bg-[#fcfdfe] px-3 text-start max-[359px]:gap-2.5";
+    "focus-ring flex h-[68px] w-full min-w-0 items-center gap-2.5 rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-3 text-start";
   const compactIconClassName =
-    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eef5ff] text-[#075ee8] max-[359px]:h-9 max-[359px]:w-9";
+    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100/70 text-slate-600";
+  const compactIconSizeClassName = "h-[17px] w-[17px]";
   const compactLabelClassName =
     "block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600";
   const compactValueClassName =
@@ -2952,35 +2952,39 @@ export function DealsSearchForm({
       </fieldset>
 
       {included.flight ? <>
+      <div className="relative space-y-2" data-testid="mobile-homepage-deals-route-fields">
       <button ref={flightOriginMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={flightMobileAirport === "origin"} onClick={() => setFlightMobileAirport("origin")} className={compactFieldClassName}>
-        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-5 w-5" /></span>
+        <span className={compactIconClassName}><MapPin aria-hidden="true" className={compactIconSizeClassName} /></span>
         <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Origin</span><span className={compactValueClassName}>{search.flightOriginText || t("cityOrAirport")}</span></span>
-        <LocateFixed aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
+      </button>
+      <button type="button" onClick={swapDealsFlightAirports} aria-label={t("swapOriginDestination") || "Swap origin and destination"} className="focus-ring absolute start-1/2 top-[50px] z-10 flex h-11 w-11 -translate-x-1/2 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-[#075ee8]/25 rtl:translate-x-1/2">
+        <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_2px_6px_rgba(15,23,42,0.10)]">
+          <ArrowRightLeft aria-hidden="true" className="h-[18px] w-[18px]" />
+        </span>
       </button>
       <button ref={flightDestinationMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={flightMobileAirport === "destination"} onClick={() => setFlightMobileAirport("destination")} className={compactFieldClassName}>
-        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-5 w-5" /></span>
+        <span className={compactIconClassName}><MapPin aria-hidden="true" className={compactIconSizeClassName} /></span>
         <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Destination</span><span className={`${compactValueClassName} ${search.flightDestinationText ? "" : "text-slate-500"}`}>{search.flightDestinationText || "Where to?"}</span></span>
-        <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
       </button>
+      </div>
       <button ref={flightDatesLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileFlightDatesOpen} onClick={openFlightDates} className={compactFieldClassName}>
-        <span className={compactIconClassName}><Calendar aria-hidden="true" className="h-5 w-5" /></span>
+        <span className={compactIconClassName}><Calendar aria-hidden="true" className={compactIconSizeClassName} /></span>
         <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travel Dates</span><span className={`${compactValueClassName} ${search.flightDepartureDate ? "" : "text-slate-500"}`}>{search.flightDepartureDate ? flightDatesSummary : "Choose dates"}</span></span>
         <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
       </button>
       </> : <>
       <button ref={hotelDestinationMobileLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={hotelDestinationMobileOpen} onClick={() => openHotelDestination(true)} className={compactFieldClassName}>
-        <span className={compactIconClassName}><MapPin aria-hidden="true" className="h-5 w-5" /></span>
+        <span className={compactIconClassName}><MapPin aria-hidden="true" className={compactIconSizeClassName} /></span>
         <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Destination</span><span className={`${compactValueClassName} ${displayedHotelDestination ? "" : "text-slate-500"}`}>{displayedHotelDestination || "Where to?"}</span></span>
-        <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
       </button>
       <button ref={hotelDatesLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileHotelDatesOpen} onClick={openHotelDates} className={compactFieldClassName}>
-        <span className={compactIconClassName}><Calendar aria-hidden="true" className="h-5 w-5" /></span>
+        <span className={compactIconClassName}><Calendar aria-hidden="true" className={compactIconSizeClassName} /></span>
         <span className="min-w-0 flex-1"><span className={compactLabelClassName}>Travel Dates</span><span className={`${compactValueClassName} ${displayedHotelCheckIn ? "" : "text-slate-500"}`}>{displayedHotelCheckIn ? hotelDatesSummary : "Choose dates"}</span></span>
         <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
       </button>
       </>}
       <button ref={travelersLauncherRef} type="button" aria-haspopup="dialog" aria-expanded={mobileTravelersOpen} onClick={openTravelers} className={compactFieldClassName}>
-        <span className={compactIconClassName}><UserRound aria-hidden="true" className="h-5 w-5" /></span>
+        <span className={compactIconClassName}><UserRound aria-hidden="true" className={compactIconSizeClassName} /></span>
         <span className="min-w-0 flex-1"><span className={compactLabelClassName}>{included.hotel ? <>Travelers &amp; Rooms</> : <>Travelers</>}</span><span className={compactValueClassName}>{travelerSummary}</span></span>
         <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
       </button>

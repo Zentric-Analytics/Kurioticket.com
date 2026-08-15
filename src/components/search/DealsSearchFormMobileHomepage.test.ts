@@ -9,6 +9,7 @@ const options = form.slice(compactStart, compactEnd);
 const controlsStart = form.indexOf("const mobileHomepageControls");
 const controlsEnd = form.indexOf("\n  return (", controlsStart);
 const compact = form.slice(controlsStart, controlsEnd);
+const searchTabs = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
 
 test("mobile homepage exposes exactly four canonical package modes in visible order", () => {
   assert.match(form, /presentation\?: "default" \| "mobile-homepage"/);
@@ -74,4 +75,35 @@ test("compact controls reuse canonical pickers, summary, validation and submissi
   assert.match(form, /validateDealsSearch\(candidate\)/);
   assert.match(form, /buildDealsJourneyUrl\([\s\S]*?getFirstDealsJourneyStage/);
   assert.match(form, /removeDealsStagedJourneyPlan\(\)/);
+});
+
+test("mobile Deals uses restrained geometry without changing desktop geometry", () => {
+  assert.match(searchTabs, /mobile-homepage-deals-surface" className="rounded-\[14px\]/);
+  assert.match(form, /compactFieldClassName =\s*\n\s*"[^"]*rounded-\[10px\] border border-\[#dee5ed\] bg-\[#fcfdfe\]/);
+  assert.match(compact, /type="submit"[\s\S]*rounded-\[11px\][\s\S]*>Search deals<\/button>/);
+  assert.match(form, /lg:rounded-\[8px\] lg:border-\[#dee5ed\]/);
+});
+
+test("mobile Deals field icons are small, neutral, left aligned, and not duplicated", () => {
+  assert.match(form, /compactIconClassName =\s*\n\s*"flex h-8 w-8[^"]*bg-slate-100\/70 text-slate-600"/);
+  assert.match(form, /compactIconSizeClassName = "h-\[17px\] w-\[17px\]"/);
+  assert.doesNotMatch(compact, /LocateFixed/);
+  assert.doesNotMatch(compact, /h-10 w-10|bg-\[#eef5ff\] text-\[#075ee8\]/);
+  const flightBranch = compact.slice(compact.indexOf("{included.flight ?"), compact.indexOf(": <>", compact.indexOf("{included.flight ?")));
+  const hotelCarBranch = compact.slice(compact.indexOf(": <>", compact.indexOf("{included.flight ?")), compact.indexOf("</>}", compact.indexOf(": <>", compact.indexOf("{included.flight ?"))));
+  assert.equal((flightBranch.match(/<MapPin/g) ?? []).length, 2);
+  assert.equal((hotelCarBranch.match(/<MapPin/g) ?? []).length, 1);
+  assert.match(compact, /<Calendar[\s\S]*compactIconSizeClassName[\s\S]*<ChevronDown/);
+  assert.match(compact, /<UserRound[\s\S]*compactIconSizeClassName[\s\S]*<ChevronDown/);
+});
+
+test("flight packages render one accessible canonical route swap and hotel-car renders none", () => {
+  const flightBranch = compact.slice(compact.indexOf("{included.flight ?"), compact.indexOf(": <>", compact.indexOf("{included.flight ?")));
+  const hotelCarBranch = compact.slice(compact.indexOf(": <>", compact.indexOf("{included.flight ?")), compact.indexOf("</>}", compact.indexOf(": <>", compact.indexOf("{included.flight ?"))));
+  assert.equal((flightBranch.match(/<ArrowRightLeft/g) ?? []).length, 1);
+  assert.equal((flightBranch.match(/onClick=\{swapDealsFlightAirports\}/g) ?? []).length, 1);
+  assert.match(flightBranch, /aria-label=\{t\("swapOriginDestination"\) \|\| "Swap origin and destination"\}/);
+  assert.match(flightBranch, /h-\[38px\] w-\[38px\]/);
+  assert.doesNotMatch(hotelCarBranch, /ArrowRightLeft|swapDealsFlightAirports/);
+  assert.match(form, /const swapDealsFlightAirports[\s\S]*swapFlightAirports/);
 });
