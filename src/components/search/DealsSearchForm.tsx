@@ -103,6 +103,18 @@ const dealsPackageOptions = [
   mode: DealsPackageMode;
   label: keyof typeof en;
 }>;
+// Desktop labels are presentation choices only. Both ordering labels map to the
+// existing hotel-flight mode; no URL, validation, or journey mode is added.
+const desktopLandingPackageOptions = [
+  { id: "hotel-flight", mode: "hotel-flight", text: "Hotel + Flight" },
+  { id: "flight-hotel", mode: "hotel-flight", text: "Flight + Hotel" },
+  { id: "flight-car", mode: "flight-car", text: "Flight + Car" },
+  { id: "hotel-car", mode: "hotel-car", text: "Hotel + Car" },
+] as const satisfies ReadonlyArray<{
+  id: string;
+  mode: DealsPackageMode;
+  text: string;
+}>;
 const field =
   "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-medium text-slate-900 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20";
 const label =
@@ -551,7 +563,7 @@ export type DealsSearchFormProps = {
   onDraftChange?: (search: DealsSearch) => void;
   warning?: ReactNode;
   pending?: boolean;
-  presentation?: "default" | "mobile-homepage";
+  presentation?: "default" | "mobile-homepage" | "desktop-landing";
 };
 
 export function normalizeUnifiedResultsSearch(current: DealsSearch) {
@@ -590,6 +602,11 @@ export function DealsSearchForm({
     [dictionary],
   );
   const isLandingVariant = variant === "landing";
+  const isDesktopLanding =
+    isLandingVariant && presentation === "desktop-landing";
+  const [desktopPackageChoice, setDesktopPackageChoice] = useState<
+    string | null
+  >(null);
   const guidedPreviewEnabled =
     isLandingVariant && params.get("guidedPreview") === "1";
   const [search, setSearch] = useState<DealsSearch>(
@@ -2786,12 +2803,12 @@ export function DealsSearchForm({
     : "lg:h-full lg:min-w-[156px] lg:items-center lg:border-s lg:border-slate-200 lg:px-2";
 
   const searchDealsButton = (
-    <div className={`flex w-full ${packageSearchDesktopClasses}`}>
+    <div className={`flex w-full ${packageSearchDesktopClasses} ${isDesktopLanding ? "lg:min-w-0 lg:border-s-0 lg:p-0" : ""}`}>
       <button
         type="submit"
         disabled={submitting || pending}
         aria-busy={submitting || pending}
-        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto"
+        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:w-full lg:rounded-s-none lg:rounded-e-[11px] lg:px-4 lg:text-[14px] lg:shadow-none" : ""}`}
       >
         <Search className="h-4 w-4" />
         {t(
@@ -2821,8 +2838,9 @@ export function DealsSearchForm({
         onClick={() =>
           travelersOpen ? dismissDesktopTravelers() : openTravelers()
         }
-        className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200`}
+        className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4" : ""}`}
       >
+        {isDesktopLanding ? <UserRound aria-hidden="true" className="hidden h-4 w-4 shrink-0 text-[#2563eb] lg:block" /> : null}
         <span className="min-w-0">
           <span className={`${label} mb-0.5 whitespace-nowrap`}>
             {travelersControlLabel}
@@ -2834,8 +2852,9 @@ export function DealsSearchForm({
       {included.flight ? (
         <div
           data-deals-package-cabin
-          className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200`}
+          className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:border-b-0 lg:border-s lg:px-4 lg:ps-10" : ""}`}
         >
+          {isDesktopLanding ? <Plane aria-hidden="true" className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block" /> : null}
           <label
             className={`${label} mb-0.5 whitespace-nowrap`}
             htmlFor="deals-flight-cabin"
@@ -2859,7 +2878,7 @@ export function DealsSearchForm({
           </select>
           <ChevronDown
             aria-hidden="true"
-            className="pointer-events-none absolute end-3 bottom-3 h-4 w-4"
+          className="pointer-events-none absolute end-3 bottom-3 h-4 w-4 lg:bottom-1/2 lg:translate-y-1/2"
           />
         </div>
       ) : null}
@@ -2929,10 +2948,25 @@ export function DealsSearchForm({
       {...(variant === "results" ? { "data-deals-results-layout": true } : {})}
       onSubmit={submit}
       noValidate
-      className={presentation === "mobile-homepage" ? "w-full" : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""}`}
+      className={presentation === "mobile-homepage" ? "w-full" : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? "rounded-3xl border border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)] sm:px-6 lg:py-3" : ""} ${isDesktopLanding ? "lg:max-w-[1280px] lg:rounded-[18px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:py-6 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8" : ""}`}
     >
       {mobileHomepageControls ?? <>
-      <fieldset className="pb-3 sm:pb-2 lg:pb-1">
+      {isDesktopLanding ? (
+        <fieldset className="hidden lg:block lg:pb-0" data-deals-desktop-package-selector>
+          <legend className="sr-only">{t("deals.packageSelector.instruction")}</legend>
+          <div role="radiogroup" aria-label={t("deals.packageSelector.instruction")} className="inline-grid h-12 grid-cols-4 overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe]">
+            {desktopLandingPackageOptions.map((option, index) => {
+              const selected =
+                (desktopPackageChoice ??
+                  (search.mode === "hotel-flight" ? "hotel-flight" : search.mode)) ===
+                option.id;
+              const Icon = option.id === "hotel-car" ? CarFront : option.id === "flight-car" ? Plane : Building2;
+              return <button key={option.id} type="button" role="radio" aria-checked={selected} data-deals-presentation-choice={option.id} data-deals-canonical-mode={option.mode} onClick={() => { setDesktopPackageChoice(option.id); selectPackageMode(option.mode); }} className={`focus-ring relative flex min-w-[135px] items-center justify-center gap-2 px-3 text-[14px] font-semibold transition-colors xl:min-w-[154px] xl:px-4 ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "z-10 -m-px border border-[#2563eb] bg-[#eff6ff] text-[#2563eb]" : "text-slate-700 hover:bg-slate-50"}`}><Icon aria-hidden="true" className="h-4 w-4" />{option.text}</button>;
+            })}
+          </div>
+        </fieldset>
+      ) : null}
+      <fieldset className={`pb-3 sm:pb-2 lg:pb-1 ${isDesktopLanding ? "lg:hidden" : ""}`}>
         <legend className="sr-only">
           {t("deals.packageSelector.instruction")}
         </legend>
@@ -2967,7 +3001,7 @@ export function DealsSearchForm({
       {included.flight && (
         <section
           aria-label={t("deals.flightRow")}
-          className="border-t border-slate-200 py-4 sm:py-3 lg:py-2"
+          className={`border-t border-slate-200 py-4 sm:py-3 lg:py-2 ${isDesktopLanding ? "lg:mt-5 lg:border-t-0 lg:py-0" : ""}`}
         >
           <div
             data-deals-heading-rail="flight"
@@ -2977,7 +3011,7 @@ export function DealsSearchForm({
             <div
               role="radiogroup"
               aria-label={t("tripType")}
-              className="mb-1 inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5 lg:mb-0 lg:flex-row lg:gap-1"
+              className={`mb-1 inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5 lg:mb-0 lg:flex-row lg:gap-1 ${isDesktopLanding ? "lg:gap-5 lg:p-0" : ""}`}
             >
               {(["round-trip", "one-way"] as const).map((value) => (
                 <button
@@ -3001,11 +3035,11 @@ export function DealsSearchForm({
                       value === "round-trip" ? "one-way" : "round-trip",
                     );
                   }}
-                  className={`focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold ${search.flightTripType === value ? "bg-[#004BB8]/8 text-[#004BB8] ring-1 ring-[#004BB8]/10 sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:shadow-none" : ""}`}
+                  className={`focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold ${search.flightTripType === value ? "bg-[#004BB8]/8 text-[#004BB8] ring-1 ring-[#004BB8]/10 sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:shadow-none" : ""} ${isDesktopLanding ? "lg:min-h-5 lg:rounded-none lg:bg-transparent lg:p-0 lg:text-[14px] lg:font-medium lg:text-slate-800 lg:ring-0" : ""}`}
                 >
                   <span
                     aria-hidden="true"
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border bg-white transition-colors ${search.flightTripType === value ? "border-[#004BB8]" : "border-slate-300 group-hover:border-slate-400"}`}
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border bg-white transition-colors ${search.flightTripType === value ? "border-[#004BB8]" : "border-slate-300 group-hover:border-slate-400"} ${isDesktopLanding ? "lg:h-[18px] lg:w-[18px] lg:border-2" : ""}`}
                   >
                     <span
                       className={`h-1.5 w-1.5 rounded-full bg-[#004BB8] transition-opacity ${search.flightTripType === value ? "opacity-100" : "opacity-0"}`}
@@ -3029,9 +3063,9 @@ export function DealsSearchForm({
             {...(variant === "results"
               ? { "data-deals-results-main-search-row": "flight" }
               : {})}
-            className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1`}
+            className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1 ${isDesktopLanding ? "lg:mt-[18px] lg:h-[78px] lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1.05fr)_minmax(148px,.95fr)] lg:overflow-visible lg:rounded-xl lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]" : ""}`}
           >
-            <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200">
+            <div className={`grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 ${isDesktopLanding ? "lg:h-[78px] lg:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)]" : ""}`}>
               {(["origin", "destination"] as const).map((kind, index) => {
                 const textKey =
                   kind === "origin"
@@ -3067,9 +3101,10 @@ export function DealsSearchForm({
                   <Fragment key={kind}>
                     <div
                       ref={wrapRef}
-                      className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
+                      className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
                       data-deals-flight-destination={kind}
                     >
+                      {isDesktopLanding ? <MapPin aria-hidden="true" className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block" /> : null}
                       <label className={label} htmlFor={`deals-flight-${kind}`}>
                         {t(kind)}
                       </label>
@@ -3124,7 +3159,7 @@ export function DealsSearchForm({
                                 [kind]: [],
                               }));
                           }}
-                          className={`${field} ${flightConnectedField} pe-10`}
+                          className={`${field} ${flightConnectedField} pe-10 ${isDesktopLanding ? "lg:text-[15px] lg:font-semibold" : ""}`}
                           autoComplete="off"
                         />
                         {search[textKey] ? (
@@ -3211,7 +3246,7 @@ export function DealsSearchForm({
                             t("swapOriginDestination") ||
                             "Swap origin and destination"
                           }
-                          className="focus-ring relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 lg:text-[#004BB8] lg:shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
+                          className="focus-ring relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 lg:h-8 lg:w-8 lg:text-[#2563eb] lg:shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
                         >
                           <ArrowRightLeft
                             className="h-4 w-4"
@@ -3225,8 +3260,9 @@ export function DealsSearchForm({
               })}
             </div>
             <div
-              className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""}`}
+              className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? "sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20" : ""} ${isDesktopLanding ? "lg:h-[78px] lg:min-h-[78px] lg:py-3 lg:ps-10 lg:pe-3" : ""}`}
             >
+              {isDesktopLanding ? <Calendar aria-hidden="true" className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block" /> : null}
               <span className={label}>{t("travelDates")}</span>
               <button
                 ref={flightDatesLauncherRef}
@@ -3249,7 +3285,7 @@ export function DealsSearchForm({
                 <span className="min-w-0 truncate">{flightDatesSummary}</span>
                 <Calendar
                   aria-hidden="true"
-                  className="h-4 w-4 shrink-0 text-slate-500"
+                  className={`h-4 w-4 shrink-0 text-slate-500 ${isDesktopLanding ? "lg:hidden" : ""}`}
                 />
               </button>
             </div>
