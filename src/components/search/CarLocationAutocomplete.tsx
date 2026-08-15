@@ -40,6 +40,8 @@ type Props = {
   searchCardRef?: RefObject<HTMLElement | null>;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  autoFocus?: boolean;
+  mobileShell?: boolean;
 };
 
 type ApiResponse = { suggestions?: CarLocationSuggestion[]; source?: "local-fallback" };
@@ -69,6 +71,8 @@ export function CarLocationAutocomplete({
   searchCardRef,
   isOpen,
   onOpenChange,
+  autoFocus = false,
+  mobileShell = false,
 }: Props) {
   const reactId = useId().replace(/:/g, "");
   const listboxId = `${id}-${reactId}-listbox`;
@@ -243,7 +247,9 @@ export function CarLocationAutocomplete({
   const label = value.trim() ? strings.locationSuggestions : strings.popularLocations;
   const panelClass = usesDesktopPanel
     ? "fixed z-[1110] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-950/12 ring-1 ring-slate-950/5"
-    : "mt-4 max-h-[48vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm";
+    : mobileShell
+      ? "mt-4 overflow-y-auto border-t border-slate-200 bg-white pt-2"
+      : "mt-4 max-h-[48vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm";
 
   const panelContent = (
     <>
@@ -302,6 +308,7 @@ export function CarLocationAutocomplete({
         className={inputClassName}
         autoComplete="off"
         disabled={disabled}
+        autoFocus={autoFocus}
         role="combobox"
         aria-autocomplete="list"
         aria-expanded={open}

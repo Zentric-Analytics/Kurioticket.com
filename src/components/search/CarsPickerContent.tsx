@@ -44,6 +44,7 @@ export function CarsRentalDatePickerContent({
   strings,
   visibleMonthDate,
   weekdays,
+  mobileShell = false,
 }: {
   dropoffDate: string;
   formatFullDate: (date: Date) => string;
@@ -57,13 +58,14 @@ export function CarsRentalDatePickerContent({
   strings: CalendarStrings;
   visibleMonthDate: Date;
   weekdays: string[];
+  mobileShell?: boolean;
 }) {
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
 
   return (
     <>
-      <p className="mb-3 text-base font-semibold text-slate-900">{strings.chooseDates}</p>
+      {!mobileShell ? <p className="mb-3 text-base font-semibold text-slate-900">{strings.chooseDates}</p> : null}
       <div className="mb-3 flex items-center justify-between">
         <button type="button" aria-label={strings.previousMonth} onClick={onPreviousMonth} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
           {strings.previousMonthShort}
@@ -112,10 +114,10 @@ export function CarsRentalDatePickerContent({
           );
         })}
       </div>
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
+      {!mobileShell ? <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
         <button type="button" onClick={onClear} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">{strings.clear}</button>
         <button type="button" onClick={onDone} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35">{strings.done}</button>
-      </div>
+      </div> : null}
     </>
   );
 }
@@ -128,6 +130,7 @@ export function CarsTimeRangePickerContent({
   pickupTime,
   returnLabel,
   returnTime,
+  mobileShell = false,
 }: {
   formatTime: (time: string) => string;
   onPickupTimeChange: (time: string) => void;
@@ -136,6 +139,7 @@ export function CarsTimeRangePickerContent({
   pickupTime: string;
   returnLabel: string;
   returnTime: string;
+  mobileShell?: boolean;
 }) {
   return (
     <div className="grid grid-cols-2 gap-3" data-cars-time-columns>
@@ -145,10 +149,11 @@ export function CarsTimeRangePickerContent({
       ] as const).map(([kind, label, selectedTime, onChange]) => (
         <div key={kind} role="group" aria-label={label}>
           <p className="mb-2 text-xs font-bold text-slate-600">{label}</p>
-          <div className="max-h-56 overflow-y-auto overscroll-contain" data-cars-time-list={kind}>
+          <div className={mobileShell ? "overflow-y-auto overscroll-contain" : "max-h-56 overflow-y-auto overscroll-contain"} data-cars-time-list={kind}>
             {timeOptions.map((time) => (
-              <button key={`${kind}-${time}`} type="button" aria-pressed={selectedTime === time} onClick={() => onChange(time)} className={`focus-ring block w-full rounded-lg px-3 py-2 text-start text-sm ${selectedTime === time ? "bg-[#004BB8] font-bold text-white" : "hover:bg-slate-100"}`}>
-                {formatTime(time)}
+              <button key={`${kind}-${time}`} type="button" aria-pressed={selectedTime === time} onClick={() => onChange(time)} className={`focus-ring flex w-full items-center justify-between rounded-lg px-3 py-2 text-start text-sm ${selectedTime === time ? (mobileShell ? "font-semibold text-slate-950" : "bg-[#004BB8] font-bold text-white") : "text-slate-700 hover:bg-slate-100"}`}>
+                <span>{formatTime(time)}</span>
+                {mobileShell && selectedTime === time ? <CheckCircle2 data-selected-time-indicator className="h-4 w-4 text-[#004BB8]" aria-hidden="true" /> : null}
               </button>
             ))}
           </div>
@@ -163,11 +168,13 @@ export function CarsDriverAgePickerContent({
   formatAge = (age) => age,
   onSelect,
   selectedAge,
+  mobileShell = false,
 }: {
   anyAgeLabel: string;
   formatAge?: (age: string) => string;
   onSelect: (age: string) => void;
   selectedAge: string;
+  mobileShell?: boolean;
 }) {
   const initialIndex = Math.max(0, driverAgeOptions.indexOf(selectedAge));
   const [focusedIndex, setFocusedIndex] = useState(initialIndex);
@@ -202,7 +209,7 @@ export function CarsDriverAgePickerContent({
       {driverAgeOptions.map((age, index) => {
         const selected = selectedAge === age;
         return (
-          <button key={age} ref={(node) => { optionRefs.current[index] = node; }} type="button" role="option" aria-selected={selected} tabIndex={index === focusedIndex ? 0 : -1} onFocus={() => setFocusedIndex(index)} onClick={() => onSelect(age)} className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-start text-[15px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${selected ? "bg-[#EAF2FB] font-semibold text-[#142033]" : "text-[#263A55] hover:bg-slate-50 hover:text-slate-950"}`}>
+          <button key={age} ref={(node) => { optionRefs.current[index] = node; }} type="button" role="option" aria-selected={selected} tabIndex={index === focusedIndex ? 0 : -1} onFocus={() => setFocusedIndex(index)} onClick={() => onSelect(age)} className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3.5 py-2.5 text-start text-[15px] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${selected ? (mobileShell ? "font-semibold text-[#142033]" : "bg-[#EAF2FB] font-semibold text-[#142033]") : "text-[#263A55] hover:bg-slate-50 hover:text-slate-950"}`}>
             <span>{age === defaultDriverAge ? anyAgeLabel : formatAge(age)}</span>
             <span className="flex w-5 shrink-0 justify-center">{selected ? <CheckCircle2 data-selected-age-indicator className="h-[18px] w-[18px] text-[#004BB8]" aria-hidden="true" /> : null}</span>
           </button>
