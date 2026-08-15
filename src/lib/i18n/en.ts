@@ -3660,6 +3660,7 @@ export const translations: TranslationDictionary = {
     "Search flights, stays, and cars together in one place.",
   "deals.packageLegend": "Choose trip type",
   "deals.package.hotelFlight": "Hotel + Flight",
+  "deals.package.flightHotel": "Flight + Hotel",
   "deals.package.hotelFlightCar": "Hotel + Flight + Car",
   "deals.package.flightCar": "Flight + Car",
   "deals.package.hotelCar": "Hotel + Car",

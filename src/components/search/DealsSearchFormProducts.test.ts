@@ -107,3 +107,19 @@ test("English package labels preserve the requested display order", () => {
   assert.ok(positions.every((position) => position >= 0));
   assert.equal(new Set(positions).size, entries.length);
 });
+
+test("desktop landing aliases approved labels onto canonical package modes", () => {
+  const desktop = form.slice(
+    form.indexOf("const desktopLandingPackageOptions"),
+    form.indexOf("const parseIsoDate"),
+  );
+  assert.deepEqual(
+    [...desktop.matchAll(/mode: "([^"]+)"/g)].map((match) => match[1]),
+    ["hotel-flight", "hotel-flight", "flight-car", "hotel-car"],
+  );
+  for (const label of ["hotelFlight", "flightHotel", "flightCar", "hotelCar"])
+    assert.match(desktop, new RegExp(`deals\\.package\\.${label}`));
+  assert.match(form, /presentation\?: "default" \| "desktop-landing"/);
+  assert.match(form, /data-deals-desktop-package-selector/);
+  assert.match(form, /selectPackageMode\(option\.mode\)/);
+});

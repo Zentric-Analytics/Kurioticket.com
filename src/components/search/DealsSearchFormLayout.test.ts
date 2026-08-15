@@ -212,3 +212,15 @@ test("desktop Travellers popover remains viewport-aware and scrolling-safe", () 
 test("there is exactly one submit source", () => {
   assert.equal(form.match(/type="submit"/g)?.length, 1);
 });
+
+test("desktop landing keeps the approved controls in one 76px search row", () => {
+  assert.match(form, /isDesktopLanding[\s\S]*lg:grid-cols-\[minmax\(0,2\.5fr\)_minmax\(0,1\.3fr\)_minmax\(0,1\.3fr\)_minmax\(0,1\.05fr\)_minmax\(132px,0\.95fr\)\]/);
+  assert.match(form, /data-deals-flight-destination=\{kind\}/);
+  assert.match(form, /flightDatesLauncherRef/);
+  assert.match(primaryControls, /data-deals-package-travellers/);
+  assert.match(primaryControls, /data-deals-package-cabin/);
+  assert.match(primaryControls, /search\.flightCabinClass/);
+  assert.match(form, /lg:min-h-\[76px\]/);
+  assert.match(form, /swapDealsFlightAirports[\s\S]*swapFlightAirports/);
+  assert.match(form, /data-deals-search-actions[\s\S]*isDesktopLanding \? "lg:hidden"/);
+});
