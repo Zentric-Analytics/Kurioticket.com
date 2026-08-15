@@ -28,6 +28,7 @@ import {
   MapPin,
   RotateCcw,
   ShieldCheck,
+  UserRound,
   X,
 } from "lucide-react";
 
@@ -1079,10 +1080,16 @@ function CarsSearchBar({
                   onClick={() => openMobilePicker("driverAge")}
                   className="flex h-7 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 focus:outline-none sm:hidden"
                 >
-                  <span className="truncate">
-                    {values.driverAge === defaultDriverAge
-                      ? t("carsSearch.driverAgeAnyAgeRange")
-                      : getDriverAgeOptionLabel(values.driverAge)}
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    <UserRound
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-slate-500"
+                    />
+                    <span className="truncate">
+                      {values.driverAge === defaultDriverAge
+                        ? t("carsSearch.driverAgeAnyAgeRange")
+                        : getDriverAgeOptionLabel(values.driverAge)}
+                    </span>
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
                 </button>
