@@ -598,6 +598,10 @@ export function SearchTabs({
   const [carsOpenPicker, setCarsOpenPicker] = useState<
     "pickup" | "dropoff" | "dates" | "times" | "age" | null
   >(null);
+  const [carsDraftTimes, setCarsDraftTimes] = useState({
+    pickupTime: "10:00",
+    dropoffTime: "10:00",
+  });
   const [carsVisibleMonthDate, setCarsVisibleMonthDate] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -2054,8 +2058,14 @@ export function SearchTabs({
   const openHomepageCarsPicker = (picker: "dates" | "times" | "age", open: boolean) => {
     if (open && picker === "dates") {
       const selectedPickup = parseCarsIsoDate(carsValues.pickupDate);
-      const startingDate = selectedPickup ?? new Date();
+      const startingDate = mobileHomepage ? new Date() : (selectedPickup ?? new Date());
       setCarsVisibleMonthDate(new Date(startingDate.getFullYear(), startingDate.getMonth(), 1));
+    }
+    if (open && picker === "times") {
+      setCarsDraftTimes({
+        pickupTime: carsValues.pickupTime,
+        dropoffTime: carsValues.dropoffTime,
+      });
     }
     setCarsOpenPicker(open ? picker : null);
   };
@@ -4632,11 +4642,11 @@ export function SearchTabs({
               <CarsRentalDatePickerContent dropoffDate={carsValues.dropoffDate} formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)} locale={calendarLocale} onClear={() => { updateCarsValue("pickupDate", ""); updateCarsValue("dropoffDate", ""); }} onDone={() => setCarsOpenPicker(null)} onNextMonth={() => setCarsVisibleMonthDate((current) => addCarsMonths(current, 1))} onPreviousMonth={() => setCarsVisibleMonthDate((current) => addCarsMonths(current, -1))} onSelectDate={selectHomepageRentalDate} pickupDate={carsValues.pickupDate} strings={{ chooseDates: translate("carsSearch.chooseRentalDates") || "Choose rental dates", previousMonth: translate("carsSearch.previousMonth") || "Previous month", previousMonthShort: translate("carsSearch.previousMonthShort") || "Previous", nextMonth: translate("carsSearch.nextMonth") || "Next month", nextMonthShort: translate("carsSearch.nextMonthShort") || "Next", selectDatePrefix: translate("carsSearch.selectDateAriaPrefix") || "Select", startsNewPickupDate: translate("carsSearch.startsNewPickupDate") || "Starts a new pickup date", clear: translate("clear") || "Clear", done: translate("done") || "Done" }} visibleMonthDate={carsVisibleMonthDate} weekdays={getLocalizedWeekdays(calendarLocale)} mobileShell />
             </div>
           </FlightMobilePickerShell>
-          <FlightMobilePickerShell open={carsOpenPicker === "times"} title={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} titleId="cars-times-mobile-title" dialogId="cars-times-mobile-dialog" onClose={() => setCarsOpenPicker(null)} contentClassName="bg-white">
-            <div className="mx-auto w-full max-w-xl"><CarsTimeRangePickerContent mobileShell formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsValues.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsValues.dropoffTime} onPickupTimeChange={(time) => updateCarsValue("pickupTime", time)} onReturnTimeChange={(time) => { updateCarsValue("dropoffTime", time); setCarsOpenPicker(null); }} /></div>
+          <FlightMobilePickerShell open={carsOpenPicker === "times"} title={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} titleId="cars-times-mobile-title" dialogId="cars-times-mobile-dialog" onClose={() => setCarsOpenPicker(null)} contentClassName="overflow-hidden bg-white" footer={<button type="button" onClick={() => { updateCarsValue("pickupTime", carsDraftTimes.pickupTime); updateCarsValue("dropoffTime", carsDraftTimes.dropoffTime); setCarsOpenPicker(null); }} className="focus-ring w-full rounded-lg bg-[#004BB8] px-5 py-3 text-sm font-semibold text-white">{translate("done") || "Done"}</button>}>
+            <div className="mx-auto h-full min-h-0 w-full max-w-xl"><CarsTimeRangePickerContent mobileShell formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsDraftTimes.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsDraftTimes.dropoffTime} onPickupTimeChange={(pickupTime) => setCarsDraftTimes((current) => ({ ...current, pickupTime }))} onReturnTimeChange={(dropoffTime) => setCarsDraftTimes((current) => ({ ...current, dropoffTime }))} /></div>
           </FlightMobilePickerShell>
-          <FlightMobilePickerShell open={carsOpenPicker === "age"} title={translate("carsSearch.driverAgeLabel") || "Driver age"} titleId="cars-age-mobile-title" dialogId="cars-age-mobile-dialog" onClose={() => setCarsOpenPicker(null)} contentClassName="bg-white px-2">
-            <div className="mx-auto w-full max-w-xl"><CarsDriverAgePickerContent mobileShell anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} /></div>
+          <FlightMobilePickerShell open={carsOpenPicker === "age"} title={translate("carsSearch.driverAgeLabel") || "Driver age"} titleId="cars-age-mobile-title" dialogId="cars-age-mobile-dialog" onClose={() => setCarsOpenPicker(null)} contentClassName="overflow-hidden bg-white px-2">
+            <div className="mx-auto h-full min-h-0 w-full max-w-xl"><CarsDriverAgePickerContent mobileShell anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} /></div>
           </FlightMobilePickerShell>
         </>
       ) : null}
