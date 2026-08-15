@@ -104,7 +104,7 @@ export function CarsTimeRangePickerContent({ formatTime, onPickupTimeChange, onR
     return () => cancelAnimationFrame(frame);
   }, [mobileShell, pickupTime, returnTime]);
 
-  return <div className={mobileShell ? "grid h-full min-h-0 grid-cols-2 gap-3" : "grid grid-cols-2 gap-3"} data-cars-time-columns>
+  return <div className={mobileShell ? "grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-hidden" : "grid grid-cols-2 gap-3"} data-cars-time-columns>
     {([ ["pickup", pickupLabel, pickupTime, onPickupTimeChange, pickupListRef], ["return", returnLabel, returnTime, onReturnTimeChange, returnListRef] ] as const).map(([kind, label, selectedTime, onChange, listRef]) =>
       <div key={kind} role="group" aria-label={label} className={mobileShell ? "flex min-h-0 flex-col" : undefined}>
         <h3 className="mb-2 shrink-0 text-sm font-bold text-slate-700">{label}</h3>
@@ -141,7 +141,7 @@ export function CarsDriverAgePickerContent({ anyAgeLabel, formatAge = (age) => a
     else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(driverAgeOptions[focusedIndex]); return; }
     if (next === null) return; event.preventDefault(); setFocusedIndex(next); optionRefs.current[next]?.focus({ preventScroll: true }); reveal(next);
   };
-  return <div ref={listRef} role="listbox" aria-label={anyAgeLabel} onKeyDown={onKeyDown} className={mobileShell ? "h-full min-h-0 touch-pan-y overflow-y-auto overscroll-contain p-1.5 [-webkit-overflow-scrolling:touch]" : "max-h-[360px] overflow-y-auto overscroll-contain p-1.5"} data-cars-age-list>
+  return <div ref={listRef} role="listbox" aria-label={anyAgeLabel} onKeyDown={onKeyDown} className={mobileShell ? "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-1.5 [-webkit-overflow-scrolling:touch]" : "max-h-[360px] overflow-y-auto overscroll-contain p-1.5"} data-cars-age-list>
     {driverAgeOptions.map((age, index) => { const selected = selectedAge === age; return <button key={age} ref={(node) => { optionRefs.current[index] = node; }} type="button" role="option" aria-selected={selected} tabIndex={index === focusedIndex ? 0 : -1} onFocus={() => setFocusedIndex(index)} onClick={() => onSelect(age)} className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-lg px-3.5 text-start text-[15px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${selected ? (mobileShell ? "font-semibold text-[#142033]" : "bg-[#EAF2FB] font-semibold text-[#142033]") : "text-[#263A55] hover:bg-slate-50"}`}><span>{age === defaultDriverAge ? anyAgeLabel : formatAge(age)}</span><span className="flex w-5 shrink-0 justify-center">{selected ? <CheckCircle2 data-selected-age-indicator className="h-[18px] w-[18px] text-[#004BB8]" aria-hidden="true" /> : null}</span></button>; })}
   </div>;
 }
