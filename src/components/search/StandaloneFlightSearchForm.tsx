@@ -1549,13 +1549,16 @@ export function StandaloneFlightSearchForm({
     >
       <form onSubmit={onSubmit} className="relative space-y-3 sm:space-y-3">
         {useMainFlightLandingMobilePresentation ? (
-          <div className="flex items-center gap-2.5 px-0.5 pt-0.5 sm:hidden">
+          <div
+            className="flex items-center gap-[5px] px-0.5 sm:hidden"
+            data-testid="main-flight-landing-identity"
+          >
             <Plane
               aria-hidden="true"
-              className="h-6 w-6 shrink-0 text-[#004BB8]"
-              strokeWidth={2.25}
+              className="h-[18px] w-[18px] shrink-0 text-[#075EE8] min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]"
+              strokeWidth={1.8}
             />
-            <h2 className="text-[23px] font-bold leading-7 tracking-[-0.02em] text-[#021C2B]">
+            <h2 className="text-[13px] font-medium leading-none text-[#075EE8] min-[360px]:text-[14px] min-[375px]:text-[16px]">
               {t("flights") || "Flights"}
             </h2>
           </div>
@@ -1567,9 +1570,14 @@ export function StandaloneFlightSearchForm({
           className={cn(
             "items-center rounded-lg px-0.5 py-1 sm:inline-flex sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5",
             useMainFlightLandingMobilePresentation
-              ? "grid grid-cols-3 gap-1"
+              ? "grid h-11 grid-cols-3 gap-0 py-0 sm:h-auto"
               : "inline-flex gap-3",
           )}
+          data-testid={
+            useMainFlightLandingMobilePresentation
+              ? "main-flight-landing-trip-selector"
+              : undefined
+          }
         >
           {(
             [
@@ -1616,10 +1624,12 @@ export function StandaloneFlightSearchForm({
               className={cn(
                 "focus-ring group inline-flex rounded-lg py-1 font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:text-sm sm:font-bold",
                 useMainFlightLandingMobilePresentation
-                  ? "min-h-9 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap px-0.5 text-[clamp(0.72rem,3.5vw,0.875rem)] disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-700"
+                  ? "min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap bg-transparent px-0.5 text-[12px] font-medium text-slate-950 hover:bg-transparent hover:text-slate-950 max-[359px]:gap-1 max-[359px]:text-[11px] disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-950 sm:min-h-9 sm:hover:bg-slate-100/70 sm:hover:text-slate-950"
                   : "min-h-8 items-center gap-2 px-1.5 text-sm",
                 tripType === value &&
-                  "bg-[#004BB8]/8 text-[#004BB8] ring-1 ring-[#004BB8]/10 sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:shadow-none",
+                  (useMainFlightLandingMobilePresentation
+                    ? "sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:ring-1 sm:ring-[#004BB8]/10 sm:shadow-none"
+                    : "bg-[#004BB8]/8 text-[#004BB8] ring-1 ring-[#004BB8]/10 sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:shadow-none"),
               )}
             >
               <span
@@ -1633,7 +1643,7 @@ export function StandaloneFlightSearchForm({
               >
                 <span
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full bg-[#004BB8] transition-opacity",
+                    "h-[5px] w-[5px] rounded-full bg-[#004BB8] transition-opacity",
                     tripType === value ? "opacity-100" : "opacity-0",
                   )}
                 />
