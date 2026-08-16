@@ -3199,7 +3199,7 @@ export function DealsSearchForm({
   const compactValueRowClassName =
     "mt-1.5 flex min-w-0 items-center gap-2 text-slate-600";
   const compactValueTextClassName = `min-w-0 truncate font-medium text-slate-950 ${isPackagesLanding ? "text-[16px] leading-5" : "text-[16px] leading-5"}`;
-  const compactValueIconClassName = `${isPackagesLanding ? "h-4 w-4 text-[#075ee8]" : "h-4 w-4"} shrink-0`;
+  const compactValueIconClassName = `h-4 w-4 shrink-0 ${isPackagesLanding ? "text-slate-500" : ""}`;
   const compactPackageFieldContent = (
     label: ReactNode,
     icon: ReactNode,
@@ -3231,13 +3231,12 @@ export function DealsSearchForm({
       >
         {isPackagesLanding ? (
           <>
-            <div className="flex items-center gap-3 px-0.5 pb-1 pt-1">
-              <PackagesIcon data-packages-identity-icon className="h-10 w-11 text-[#075ee8]" />
-              <h1 className="text-[22px] font-bold leading-7 tracking-[-0.02em] text-[#07182f]">
+            <div className="flex items-center pb-1">
+              <h1 className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-2 text-[16px] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+                <PackagesIcon data-packages-identity-icon className="h-6 w-7 text-[#004BB8]" />
                 {t("deals")}
               </h1>
             </div>
-            <div className="h-px bg-[#dee5ed]" aria-hidden="true" />
           </>
         ) : null}
         <fieldset className="min-w-0 w-full max-w-full overflow-hidden">
@@ -3401,9 +3400,14 @@ export function DealsSearchForm({
                 t("destination"),
                 <MapPin
                   aria-hidden="true"
-                  className={`${compactValueIconClassName} ${isPackagesLanding && !search.flightDestinationText ? "text-slate-500" : ""}`}
+                  className={compactValueIconClassName}
                 />,
-                search.flightDestinationText || t("deals.destinationLabel"),
+                search.flightDestinationText ||
+                  t(
+                    isPackagesLanding
+                      ? "flightSearchDestinationPlaceholderShort"
+                      : "deals.destinationLabel",
+                  ),
                 !search.flightDestinationText,
               )}
             </button>
@@ -3443,9 +3447,14 @@ export function DealsSearchForm({
                 t("destination"),
                 <MapPin
                   aria-hidden="true"
-                  className={`${compactValueIconClassName} ${isPackagesLanding && !displayedHotelDestination ? "text-slate-500" : ""}`}
+                  className={compactValueIconClassName}
                 />,
-                displayedHotelDestination || t("deals.destinationLabel"),
+                displayedHotelDestination ||
+                  t(
+                    isPackagesLanding
+                      ? "flightSearchDestinationPlaceholderShort"
+                      : "deals.destinationLabel",
+                  ),
                 !displayedHotelDestination,
               )}
             </button>
