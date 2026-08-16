@@ -2007,6 +2007,9 @@ flightLandingRouteAriaLabel:
   hotelAdultHelper: "Voyageurs 18+",
   hotelChildrenHelper: "Âges 0–17",
   hotelRoomsHelper: "Jusqu’à 6 chambres",
+  "hotelGuests.adultDescription": "18 ans et plus",
+  "hotelGuests.childDescription": "De 0 à 17 ans",
+  "hotelGuests.roomDescription": "Chambres séparées",
   togglePetFriendlyStays: "Basculer les séjours acceptant les animaux",
   exploreHotelStaysByDestination:
     "Explorer les séjours hôteliers par destination",

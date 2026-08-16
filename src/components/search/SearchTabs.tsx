@@ -45,6 +45,7 @@ import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicke
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
+import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
 import { DealsSearchForm } from "@/components/search/DealsSearchForm";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import {
@@ -768,8 +769,20 @@ export function SearchTabs({
   const [rooms, setRooms] =
     useState("1");
   const [hotelPetFriendly, setHotelPetFriendly] = useState(false);
+  const [draftHotelAdults, setDraftHotelAdults] = useState(1);
+  const [draftHotelChildren, setDraftHotelChildren] = useState(0);
+  const [draftHotelRooms, setDraftHotelRooms] = useState(1);
+  const [draftHotelPetFriendly, setDraftHotelPetFriendly] = useState(false);
   const [hotelGuestsRoomsOpen, setHotelGuestsRoomsOpen] =
     useState(false);
+
+  useEffect(() => {
+    if (!hotelGuestsRoomsOpen) return;
+    setDraftHotelAdults(hotelAdultCount);
+    setDraftHotelChildren(hotelChildCount);
+    setDraftHotelRooms(Number(rooms));
+    setDraftHotelPetFriendly(hotelPetFriendly);
+  }, [hotelGuestsRoomsOpen]);
 
   const desktopPopoverOpen =
     flightDatesOpen ||
@@ -4095,118 +4108,24 @@ export function SearchTabs({
             titleId="homepage-hotel-mobile-guests-title"
             launcherRef={hotelGuestsRoomsMobileLauncherRef}
             onClose={() => setHotelGuestsRoomsOpen(false)}
+            showCancelAction={false}
+            showBackLabel={false}
+            contentClassName="bg-[#fcfdfe] px-4 py-6"
             footer={(requestClose) => (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={requestClose}
-                  className={cn(mobileDoneButtonClassName, "px-4 py-2")}
-                >
+                <button type="button" onClick={() => {
+                  setHotelAdultCount(draftHotelAdults);
+                  setHotelChildCount(draftHotelChildren);
+                  setRooms(String(draftHotelRooms));
+                  setHotelPetFriendly(draftHotelPetFriendly);
+                  requestClose();
+                }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white">
                   {t.done || "Done"}
                 </button>
-              </div>
             )}
           >
-            <div className="mx-auto w-full max-w-xl divide-y divide-slate-200/80">
-              {[
-                {
-                  key: "adults",
-                  label: translate("adults") || "Adults",
-                  value: hotelAdultCount,
-                  min: 1,
-                  max: 12 - hotelChildCount,
-                  onDecrement: () => setHotelAdultCount((prev) => Math.max(1, prev - 1)),
-                  onIncrement: () =>
-                    setHotelAdultCount((prev) => Math.min(12 - hotelChildCount, prev + 1)),
-                },
-                {
-                  key: "children",
-                  label: translate("children") || "Children",
-                  value: hotelChildCount,
-                  min: 0,
-                  max: 12 - hotelAdultCount,
-                  onDecrement: () => setHotelChildCount((prev) => Math.max(0, prev - 1)),
-                  onIncrement: () =>
-                    setHotelChildCount((prev) => Math.min(12 - hotelAdultCount, prev + 1)),
-                },
-                {
-                  key: "rooms",
-                  label: translate("rooms") || "Rooms",
-                  value: Number(rooms),
-                  min: 1,
-                  max: 6,
-                  onDecrement: () => setRooms((prev) => String(Math.max(1, Number(prev) - 1))),
-                  onIncrement: () => setRooms((prev) => String(Math.min(6, Number(prev) + 1))),
-                },
-              ].map((row) => {
-                const canDecrement = row.value > row.min;
-                const canIncrement = row.value < row.max;
-
-                return (
-                  <div
-                    key={row.key}
-                    className="flex items-center justify-between gap-4 px-1 py-4"
-                  >
-                    <span className="text-[15px] font-bold text-slate-950">{row.label}</span>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={row.onDecrement}
-                        disabled={!canDecrement}
-                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
-                      >
-                        <Minus className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                      <span className="min-w-8 text-center text-base font-black tabular-nums text-slate-950">
-                        {row.value}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={row.onIncrement}
-                        disabled={!canIncrement}
-                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
-                      >
-                        <Plus className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="flex items-center justify-between gap-4 px-1 py-4">
-                <div>
-                  <p className="text-[15px] font-bold text-slate-950">
-                    {translate("petFriendly") || "Pet-friendly"}
-                  </p>
-                  <p className="text-sm leading-5 text-slate-600">
-                    {translate("onlyShowPetFriendlyStays") ||
-                      "Only show stays that allow pets"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={hotelPetFriendly}
-                  aria-label={
-                    translate("togglePetFriendlyStays") ||
-                    "Toggle pet-friendly stays"
-                  }
-                  onClick={() => setHotelPetFriendly((prev) => !prev)}
-                  className={cn(
-                    "focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
-                    hotelPetFriendly
-                      ? "border-[#004BB8] bg-[#004BB8]"
-                      : "border-slate-300 bg-slate-200",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform",
-                      hotelPetFriendly ? "translate-x-5" : "translate-x-0.5",
-                    )}
-                  />
-                </button>
-              </div>
-            </div>
+            <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly}
+              onAdultsChange={setDraftHotelAdults} onChildrenChange={setDraftHotelChildren} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly}
+              strings={{ guests: translate("guests") || "Guests", adults: translate("adults") || "Adults", adultDescription: translate("hotelGuests.adultDescription") || "Ages 18+", children: translate("children") || "Children", childDescription: translate("hotelGuests.childDescription") || "Ages 0–17", rooms: translate("rooms") || "Rooms", roomDescription: translate("hotelGuests.roomDescription") || "Separate rooms", petFriendly: translate("petFriendly") || "Pet-friendly", petDescription: translate("onlyShowPetFriendlyStays") || "Only show stays that allow pets", decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
           </HotelMobilePickerShell>
         </form>
       ) : (
