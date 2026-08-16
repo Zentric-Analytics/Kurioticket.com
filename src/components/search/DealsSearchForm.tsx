@@ -38,6 +38,7 @@ import {
 } from "@/lib/deals/dealsJourneyRoutes";
 import { removeDealsStagedJourneyPlan } from "@/lib/deals/dealsTripPlanStorage";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
@@ -4658,96 +4659,30 @@ export function DealsSearchForm({
         const launcherRef = pickup
           ? carPickupLocationLauncherRef
           : carReturnLocationLauncherRef;
-        const inputRef = pickup
-          ? carPickupMobileInputRef
-          : carReturnMobileInputRef;
         const value = pickup
           ? search.carPickupLocation
           : draftCarReturnLocation;
-        const title = pickup
-          ? t("carsSearch.pickupLocationLabel")
-          : t("carsSearch.returnLocationPlaceholder");
         return (
-          <FlightMobilePickerShell
+          <MobileCarLocationPicker
             key={kind}
             open={mobileCarLocation === kind}
-            title={title}
-            titleId={`deals-car-mobile-${kind}-location-title`}
-            dialogId={`deals-car-mobile-${kind}-location-dialog`}
+            mode={pickup ? "pickup" : "return"}
+            value={value}
             launcherRef={launcherRef}
             onClose={() => {
               if (!pickup) setDraftCarReturnLocation(search.carReturnLocation);
               setMobileCarLocation(null);
               restoreCarFocus(launcherRef);
             }}
-            contentClassName="px-4 py-5"
-            footer={(requestClose) => (
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (pickup)
-                      setSearch((current) =>
-                        customizeInheritedField(current, "carPickup", ""),
-                      );
-                    else setDraftCarReturnLocation("");
-                    inputRef.current?.focus();
-                  }}
-                  className="focus-ring min-h-11 rounded-xl px-4 text-sm font-extrabold text-slate-700"
-                >
-                  {t("clear")}
-                </button>
-                <button
-                  type="button"
-                  disabled={!pickup && !draftCarReturnLocation.trim()}
-                  onClick={() => {
-                    if (!pickup)
-                      setSearch((current) =>
-                        setCarReturnMode(
-                          current,
-                          true,
-                          draftCarReturnLocation.trim(),
-                        ),
-                      );
-                    requestClose();
-                  }}
-                  className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {t("done")}
-                </button>
-              </div>
-            )}
-          >
-            <label
-              className={label}
-              htmlFor={`deals-car-mobile-${kind}-location-input`}
-            >
-              {title}
-            </label>
-            <input
-              ref={inputRef}
-              id={`deals-car-mobile-${kind}-location-input`}
-              value={value}
-              placeholder={t(
-                pickup
-                  ? "carsSearch.pickupLocationPlaceholder"
-                  : "carsSearch.returnLocationPlaceholder",
-              )}
-              autoComplete="off"
-              onChange={(event) => {
-                if (pickup) {
-                  setSearch((current) =>
-                    customizeInheritedField(
-                      current,
-                      "carPickup",
-                      event.target.value,
-                    ),
-                  );
-                } else setDraftCarReturnLocation(event.target.value);
-              }}
-              className={field}
-            />
-          </FlightMobilePickerShell>
+            onCommit={(nextValue) => {
+              if (pickup) setSearch((current) => customizeInheritedField(current, "carPickup", nextValue));
+              else {
+                setDraftCarReturnLocation(nextValue);
+                setSearch((current) => setCarReturnMode(current, true, nextValue));
+              }
+              setMobileCarLocation(null);
+            }}
+          />
         );
       })}
       <MobileDatePickerDialog
