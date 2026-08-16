@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "mobileTravelerCabin.title": "यात्री और केबिन",
+  "mobileTravelerCabin.adultDescription": "18 वर्ष और उससे अधिक",
+  "mobileTravelerCabin.childDescription": "2 से 17 वर्ष",
+  "mobileTravelerCabin.infantDescription": "2 वर्ष से कम",
+  "mobileTravelerCabin.tip": "सुझाव",
+  "mobileTravelerCabin.baggageTip": "बैगेज भत्ता एयरलाइन के अनुसार अलग हो सकता है। प्रदाता पेज पर विवरण देखें।",
   "mobileDatePicker.start": "शुरुआत",
   "mobileDatePicker.end": "समाप्ति",
   "deals.guided.confirmation.retry": "फिर से कोशिश करें",

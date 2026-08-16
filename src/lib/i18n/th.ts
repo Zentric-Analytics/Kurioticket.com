@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "mobileTravelerCabin.title": "ผู้เดินทางและชั้นโดยสาร",
+  "mobileTravelerCabin.adultDescription": "อายุ 18 ปีขึ้นไป",
+  "mobileTravelerCabin.childDescription": "อายุ 2 ถึง 17 ปี",
+  "mobileTravelerCabin.infantDescription": "อายุต่ำกว่า 2 ปี",
+  "mobileTravelerCabin.tip": "เคล็ดลับ",
+  "mobileTravelerCabin.baggageTip": "น้ำหนักสัมภาระที่อนุญาตอาจแตกต่างกันตามสายการบิน ตรวจสอบรายละเอียดในหน้าผู้ให้บริการ",
   "mobileDatePicker.start": "เริ่มต้น",
   "mobileDatePicker.end": "สิ้นสุด",
   "deals.guided.confirmation.retry": "ลองอีกครั้ง",
