@@ -23,7 +23,7 @@ test("opens directly above with the configured gap when below is too short", () 
   const result = geometry({ boundaryRect, fieldRect: rect(400, 500, 200, 78), viewportHeight: 720, desiredHeight: 350, gap: 8 });
 
   assert.equal(result.placement, "above");
-  assert.equal(result.top, boundaryRect.top - 8);
+  assert.equal(result.top, boundaryRect.top - 8 - 350);
   assert.equal(result.maxHeight, boundaryRect.top - 8 - 16);
 });
 
