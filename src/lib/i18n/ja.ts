@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "deals.mobileTravelersTitle": "旅行者",
   "mobileTravelerCabin.title": "旅行者と座席クラス",
   "mobileTravelerCabin.adultDescription": "18歳以上",
   "mobileTravelerCabin.childDescription": "2～17歳",

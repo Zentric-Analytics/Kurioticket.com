@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "deals.mobileTravelersTitle": "旅客",
   "mobileDatePicker.start": "開始",
   "mobileDatePicker.end": "結束",
   deals: "旅遊套裝",

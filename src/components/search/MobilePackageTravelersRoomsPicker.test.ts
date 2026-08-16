@@ -17,7 +17,13 @@ test("Packages mobile traveler body matches the approved connected-card hierarch
 });
 
 test("Packages mobile shell uses exact title, arrow-only header, fixed full-width Done, and canonical commit", () => {
+  assert.match(english, /"deals\.mobileTravelersTitle": "Travelers"/);
+  assert.doesNotMatch(english, /"deals\.mobileTravelersTitle": "Travellers"/);
   assert.match(english, /"deals\.mobileTravelersRoomsTitle": "Travelers\/Rooms"/);
+  assert.match(
+    form,
+    /title=\{included\.hotel \? t\("deals\.mobileTravelersRoomsTitle"\) : t\("deals\.mobileTravelersTitle"\)\}/,
+  );
   assert.match(english, /Add the number of travelers and rooms\./);
   assert.match(form, /showBackLabel=\{false\}/);
   assert.match(form, /showCancelAction=\{false\}/);

@@ -1470,6 +1470,7 @@ export const translations: TranslationDictionary = {
   "hotelGuests.adultDescription": "Ages 18+",
   "hotelGuests.childDescription": "Ages 0–17",
   "hotelGuests.roomDescription": "Separate rooms",
+  "deals.mobileTravelersTitle": "Travelers",
   "deals.mobileTravelersRoomsTitle": "Travelers/Rooms",
   "deals.mobileTravelersRoomsIntro": "Add the number of travelers and rooms.",
   "deals.mobileAdultDescription": "18+ years",
