@@ -131,11 +131,11 @@ export function MobileTravelerCabinPicker({
 
       <section className="mt-4" aria-labelledby="mobile-cabin-heading">
         <h3 id="mobile-cabin-heading" className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{strings.cabinClass}</h3>
-        <div role="radiogroup" aria-labelledby="mobile-cabin-heading" className="grid h-[86px] grid-cols-3 overflow-hidden rounded-[10px] border border-slate-200 bg-white">
+        <div role="radiogroup" aria-labelledby="mobile-cabin-heading" className="grid h-[86px] grid-cols-3 overflow-hidden rounded-[10px] bg-white">
           {cabins.map(([value, label], index) => {
             const selected = cabinClass === value;
             return (
-              <button key={value} type="button" role="radio" aria-checked={selected} onClick={() => onCabinClassChange(value)} className={cn("focus-ring relative flex min-w-0 flex-col items-center justify-center gap-1.5 px-1 text-[12px] font-semibold text-slate-950", index > 0 && "border-s border-slate-200", selected && "z-10 bg-[#eff6ff] text-[#075EE8] ring-1 ring-inset ring-[#075EE8]") }>
+              <button key={value} type="button" role="radio" aria-checked={selected} onClick={() => onCabinClassChange(value)} className={cn("focus-ring relative flex min-w-0 flex-col items-center justify-center gap-1.5 border border-slate-200 bg-white px-1 text-[12px] font-semibold text-slate-950", index > 0 && "-ms-px", selected && "z-10 border-[#075EE8] bg-[#eff6ff] text-[#075EE8]") }>
                 {selected ? <span aria-hidden="true" className="absolute end-2 top-2 flex h-[21px] w-[21px] items-center justify-center rounded-full bg-[#075EE8] text-white"><Check className="h-[13px] w-[13px]" /></span> : null}
                 <Armchair className="h-[23px] w-[23px]" aria-hidden="true" />
                 <span>{label}</span>

@@ -81,10 +81,23 @@ test("traveler icons and enabled counters use restrained Kurioticket blue", () =
   assert.doesNotMatch(picker, /bg-slate-100 text-slate-950/);
 });
 
-test("cabin selection uses an inset ring without geometry-changing borders", () => {
-  assert.match(picker, /ring-1 ring-inset ring-\[#075EE8\]/);
-  assert.match(picker, /index > 0 && "border-s border-slate-200"/);
+test("cabin segments own overlapping borders while the clipped parent has no competing outline", () => {
+  assert.match(picker, /grid h-\[86px\] grid-cols-3 overflow-hidden rounded-\[10px\] bg-white/);
+  assert.doesNotMatch(picker, /grid h-\[86px\] grid-cols-3[^\n"]*border border-slate-200/);
+  assert.match(picker, /gap-1\.5 border border-slate-200 bg-white px-1/);
+  assert.match(picker, /index > 0 && "-ms-px"/);
+  assert.doesNotMatch(picker, /border-s border-slate-200/);
+  assert.doesNotMatch(picker, /ring-1 ring-inset ring-\[#075EE8\]/);
   assert.doesNotMatch(picker, /border-\[1\.5px\]/);
+});
+
+test("Economy, Business, and First each use the selected segment border contract", () => {
+  for (const cabin of ["economy", "business", "first"]) {
+    assert.match(picker, new RegExp(`\\["${cabin}"`));
+  }
+  assert.match(picker, /const selected = cabinClass === value/);
+  assert.match(picker, /selected && "z-10 border-\[#075EE8\] bg-\[#eff6ff\] text-\[#075EE8\]"/);
+  assert.match(picker, /aria-checked=\{selected\}/);
 });
 
 test("shared mobile flight surfaces require the exact English picker title", () => {
