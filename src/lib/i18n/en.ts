@@ -3766,6 +3766,7 @@ export const translations: TranslationDictionary = {
   "deals.carRow": "Car",
   "deals.travellersRow": "Travellers",
   "deals.travellersRooms": "Travellers / rooms",
+  "deals.desktopPackages.travelersRoomsLabel": "Travelers/Rooms",
   "deals.changeDatesForStay": "Change dates for stay",
   "deals.datesForStay": "Dates for stay",
   "deals.chooseStayDates": "Choose dates for stay",
