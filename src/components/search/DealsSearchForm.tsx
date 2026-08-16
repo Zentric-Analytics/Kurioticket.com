@@ -42,6 +42,7 @@ import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPi
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
+import { MobilePackageTravelersRoomsPicker } from "@/components/search/MobilePackageTravelersRoomsPicker";
 import { MobileCarDriverAgePickerDialog, MobileCarTimePickerDialog } from "@/components/search/CarsPickerContent";
 import { translations as en } from "@/lib/i18n/en";
 import { driverAgeOptions, timeOptions } from "@/lib/cars/carsSearchUtils";
@@ -4458,28 +4459,29 @@ export function DealsSearchForm({
       </DealsFlightPopover>
       <FlightMobilePickerShell
         open={mobileTravelersOpen}
-        title={travelersControlLabel}
+        title={included.hotel ? t("deals.mobileTravelersRoomsTitle") : travelersControlLabel}
         titleId="deals-mobile-travellers-title"
         dialogId="deals-mobile-travellers"
         launcherRef={travelersLauncherRef}
         onClose={closeMobileTravelers}
-        contentClassName="px-4 py-5"
+        showBackLabel={false}
+        showCancelAction={false}
+        contentClassName="bg-[#FCFDFE] px-4 py-5"
         footer={(requestClose) => (
-          <div className="flex justify-end">
             <button
               type="button"
               onClick={() => {
                 commitTravelers(true);
                 requestClose();
               }}
-              className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 py-3 text-sm font-extrabold text-white hover:bg-[#021C2B]"
+              className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-[16px] font-bold text-white hover:bg-[#004BB8]"
             >
               {t("done")}
             </button>
-          </div>
         )}
       >
-        {travelersPicker}
+        <p className="mx-auto mb-5 w-full max-w-xl text-[14px] font-medium text-slate-600">{t("deals.mobileTravelersRoomsIntro")}</p>
+        <MobilePackageTravelersRoomsPicker adults={draftAdults} children={draftChildren} infants={draftInfants} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} includeFlight={included.flight} includeHotel={included.hotel} strings={{ adults: t("adults"), adultDescription: t("deals.mobileAdultDescription"), children: t("children"), childDescription: t("childAgeRange"), infants: t("infantsOnLap"), infantDescription: t("deals.mobileInfantDescription"), rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription"), petFriendly: t("deals.petFriendlyRooms"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => t("deals.decreaseCountAria").replace("{{label}}", label), increase: (label) => t("deals.increaseCountAria").replace("{{label}}", label) }} onAdultsChange={setDraftAdults} onChildrenChange={setDraftChildren} onInfantsChange={setDraftInfants} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly} />
       </FlightMobilePickerShell>
       <DealsHotelDatesPopover
         open={hotelDatesOpen}
