@@ -70,9 +70,9 @@ export function MobileTravelerCabinPicker({
 }: Props) {
   const total = adults + children + infants;
   const rows = [
-    { key: "adults", label: strings.adults, description: strings.adultDescription, count: adults, minimum: 1, icon: <UserRound className="h-7 w-7" aria-hidden="true" /> },
-    { key: "children", label: strings.children, description: strings.childDescription, count: children, minimum: 0, icon: <ChildOutlineIcon className="h-8 w-8" /> },
-    { key: "infants", label: strings.infants, description: strings.infantDescription, count: infants, minimum: 0, icon: <Baby className="h-8 w-8" aria-hidden="true" /> },
+    { key: "adults", label: strings.adults, description: strings.adultDescription, count: adults, minimum: 1, icon: <UserRound className="h-6 w-6" aria-hidden="true" /> },
+    { key: "children", label: strings.children, description: strings.childDescription, count: children, minimum: 0, icon: <ChildOutlineIcon className="h-6 w-6" /> },
+    { key: "infants", label: strings.infants, description: strings.infantDescription, count: infants, minimum: 0, icon: <Baby className="h-6 w-6" aria-hidden="true" /> },
   ] as const;
 
   const change = (key: (typeof rows)[number]["key"], direction: -1 | 1) => {
@@ -96,27 +96,31 @@ export function MobileTravelerCabinPicker({
   return (
     <div className="mx-auto w-full max-w-xl pb-2" data-mobile-traveler-cabin-content>
       <section aria-labelledby="mobile-travelers-heading">
-        <h3 id="mobile-travelers-heading" className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+        <h3 id="mobile-travelers-heading" className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
           {strings.travelers}
         </h3>
-        <div className="overflow-hidden rounded-[13px] border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white">
           {rows.map((row) => {
             const canDecrease = row.count > row.minimum;
             const canIncrease = total < maximumTravelers && (row.key !== "infants" || infants < adults);
             return (
-              <div key={row.key} data-traveler-row={row.key} className="flex min-h-[106px] items-center gap-3 border-b border-slate-200 px-4 last:border-b-0">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-950">{row.icon}</span>
+              <div key={row.key} data-traveler-row={row.key} className="flex min-h-[88px] items-center gap-2 border-b border-slate-200 px-[14px] last:border-b-0">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-950">{row.icon}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[16px] font-bold text-slate-950">{row.label}</span>
-                  <span className="mt-1 block text-[12px] font-medium leading-4 text-slate-600">{row.description}</span>
+                  <span className="block text-[15px] font-bold text-slate-950">{row.label}</span>
+                  <span className="mt-0.5 block text-[12px] font-medium leading-[16px] text-slate-600">{row.description}</span>
                 </span>
-                <span className="flex shrink-0 items-center gap-2.5">
-                  <button type="button" aria-label={strings.decrease(row.label)} disabled={!canDecrease} onClick={() => change(row.key, -1)} className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-500 bg-white text-slate-900 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300">
-                    <Minus className="h-[18px] w-[18px]" aria-hidden="true" />
+                <span className="flex shrink-0 items-center gap-2">
+                  <button type="button" aria-label={strings.decrease(row.label)} disabled={!canDecrease} onClick={() => change(row.key, -1)} className="group focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-slate-900 disabled:cursor-not-allowed disabled:text-slate-300">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-500 bg-white group-disabled:border-slate-200">
+                      <Minus className="h-4 w-4" aria-hidden="true" />
+                    </span>
                   </button>
-                  <span aria-live="polite" className="min-w-7 text-center text-[18px] font-bold tabular-nums text-slate-950">{row.count}</span>
-                  <button type="button" aria-label={strings.increase(row.label)} disabled={!canIncrease} onClick={() => change(row.key, 1)} className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-500 bg-white text-slate-900 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300">
-                    <Plus className="h-[18px] w-[18px]" aria-hidden="true" />
+                  <span aria-live="polite" className="min-w-7 text-center text-[16px] font-bold tabular-nums text-slate-950">{row.count}</span>
+                  <button type="button" aria-label={strings.increase(row.label)} disabled={!canIncrease} onClick={() => change(row.key, 1)} className="group focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full bg-transparent text-slate-900 disabled:cursor-not-allowed disabled:text-slate-300">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-500 bg-white group-disabled:border-slate-200">
+                      <Plus className="h-4 w-4" aria-hidden="true" />
+                    </span>
                   </button>
                 </span>
               </div>
@@ -125,15 +129,15 @@ export function MobileTravelerCabinPicker({
         </div>
       </section>
 
-      <section className="mt-7" aria-labelledby="mobile-cabin-heading">
-        <h3 id="mobile-cabin-heading" className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{strings.cabinClass}</h3>
-        <div role="radiogroup" aria-labelledby="mobile-cabin-heading" className="grid h-[118px] grid-cols-3 overflow-hidden rounded-[12px] border border-slate-200 bg-white">
+      <section className="mt-5" aria-labelledby="mobile-cabin-heading">
+        <h3 id="mobile-cabin-heading" className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">{strings.cabinClass}</h3>
+        <div role="radiogroup" aria-labelledby="mobile-cabin-heading" className="grid h-[96px] grid-cols-3 overflow-hidden rounded-[10px] border border-slate-200 bg-white">
           {cabins.map(([value, label], index) => {
             const selected = cabinClass === value;
             return (
-              <button key={value} type="button" role="radio" aria-checked={selected} onClick={() => onCabinClassChange(value)} className={cn("focus-ring relative flex min-w-0 flex-col items-center justify-center gap-3 border-slate-200 px-1 text-[14px] font-semibold text-slate-950", index > 0 && "border-s", selected && "z-10 border-[1.5px] border-[#075ee8] bg-[#eff6ff] text-[#075ee8]") }>
-                {selected ? <span aria-hidden="true" className="absolute end-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-[#075ee8] text-white"><Check className="h-4 w-4" /></span> : null}
-                <Armchair className="h-8 w-8" aria-hidden="true" />
+              <button key={value} type="button" role="radio" aria-checked={selected} onClick={() => onCabinClassChange(value)} className={cn("focus-ring relative flex min-w-0 flex-col items-center justify-center gap-2 border-slate-200 px-1 text-[13px] font-semibold text-slate-950", index > 0 && "border-s", selected && "z-10 border-[1.5px] border-[#075ee8] bg-[#eff6ff] text-[#075ee8]") }>
+                {selected ? <span aria-hidden="true" className="absolute end-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#075ee8] text-white"><Check className="h-[14px] w-[14px]" /></span> : null}
+                <Armchair className="h-[26px] w-[26px]" aria-hidden="true" />
                 <span>{label}</span>
               </button>
             );
@@ -141,9 +145,9 @@ export function MobileTravelerCabinPicker({
         </div>
       </section>
 
-      <aside className="mt-5 flex items-center gap-3 rounded-[11px] bg-[#eff6ff] p-4 text-slate-900">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/70 text-[#075ee8]"><Lightbulb className="h-6 w-6" aria-hidden="true" /></span>
-        <p className="text-[13px] font-medium leading-[1.5]"><strong className="font-bold">{strings.tip}:</strong> {strings.baggageTip}</p>
+      <aside className="mt-4 flex items-center gap-2.5 rounded-[11px] bg-[#eff6ff] p-3 text-slate-900">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70 text-[#075ee8]"><Lightbulb className="h-5 w-5" aria-hidden="true" /></span>
+        <p className="text-[13px] font-medium leading-[1.45]"><strong className="font-bold">{strings.tip}:</strong> {strings.baggageTip}</p>
       </aside>
     </div>
   );
