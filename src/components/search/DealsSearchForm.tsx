@@ -952,7 +952,11 @@ export function DealsSearchForm({
   const supportsStayDateOverride = included.hotel && included.flight;
   const travelersControlLabel = !included.hotel
     ? t("deals.travellersRow")
-    : t("deals.travellersRooms");
+    : t(
+        isPackagesLanding
+          ? "deals.desktopPackages.travelersRoomsLabel"
+          : "deals.travellersRooms",
+      );
   const applyAuthoritativeDestination = (
     current: DealsSearch,
     value: string,
@@ -3108,7 +3112,7 @@ export function DealsSearchForm({
         }
         className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200 ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:border-b-0 lg:border-s lg:px-4 lg:text-[15px] lg:font-semibold ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px] lg:cursor-pointer" : "lg:h-[78px] lg:min-h-[78px]"}` : ""}`}
       >
-        {isDesktopLanding ? (
+        {isDesktopLanding && !isPackagesLanding ? (
           <UserRound
             aria-hidden="true"
             className="hidden h-4 w-4 shrink-0 text-[#2563eb] lg:block"
@@ -3118,16 +3122,24 @@ export function DealsSearchForm({
           <span className={`${label} mb-0.5 whitespace-nowrap`}>
             {travelersControlLabel}
           </span>
-          <span className="block truncate">{travelerSummary}</span>
+          <span className="mt-1 flex min-w-0 items-center gap-2">
+            {isPackagesLanding ? (
+              <UserRound
+                aria-hidden="true"
+                className="hidden h-4 w-4 shrink-0 text-slate-500 lg:block"
+              />
+            ) : null}
+            <span className="truncate">{travelerSummary}</span>
+          </span>
         </span>
         <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 ${isPackagesLanding ? "lg:me-1 lg:self-center lg:text-slate-500" : ""}`} />
       </button>
       {included.flight ? (
         <div
           data-deals-package-cabin
-          className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200 ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:border-b-0 lg:border-s lg:px-4 lg:ps-10 lg:text-[15px] lg:font-semibold ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px]" : "lg:h-[78px] lg:min-h-[78px]"}` : ""}`}
+          className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200 ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:border-b-0 lg:border-s lg:px-4 lg:text-[15px] lg:font-semibold ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px]" : "lg:h-[78px] lg:min-h-[78px] lg:ps-10"}` : ""}`}
         >
-          {isDesktopLanding ? (
+          {isDesktopLanding && !isPackagesLanding ? (
             <Plane
               aria-hidden="true"
               className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
@@ -3152,7 +3164,15 @@ export function DealsSearchForm({
               }}
               className={`${packageActionControl} flex items-center justify-between pe-2 text-start ${isPackagesLanding ? "lg:cursor-pointer" : ""}`}
             >
-              <span>{t(search.flightCabinClass)}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                {isPackagesLanding ? (
+                  <Plane
+                    aria-hidden="true"
+                    className="hidden h-4 w-4 shrink-0 text-slate-500 lg:block"
+                  />
+                ) : null}
+                <span className="truncate">{t(search.flightCabinClass)}</span>
+              </span>
               <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 ${isPackagesLanding ? "lg:me-1 lg:self-center lg:text-slate-500" : ""}`} />
             </button>
           ) : (
@@ -3617,7 +3637,7 @@ export function DealsSearchForm({
                 <div
                   role="radiogroup"
                   aria-label={t("tripType")}
-                  className={`mb-1 inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5 lg:mb-0 lg:flex-row lg:gap-1 ${isDesktopLanding ? "lg:gap-5 lg:p-0" : ""}`}
+                  className={`mb-1 inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5 lg:mb-0 lg:flex-row lg:gap-1 ${isDesktopLanding ? "lg:gap-5 lg:p-0" : ""} ${isPackagesLanding ? "lg:hidden" : ""}`}
                 >
                   {(["round-trip", "one-way"] as const).map((value) => (
                     <button
@@ -3671,7 +3691,7 @@ export function DealsSearchForm({
                 {...(variant === "results"
                   ? { "data-deals-results-main-search-row": "flight" }
                   : {})}
-                className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1 ${isDesktopLanding ? `${isPackagesLanding ? "lg:mt-[14px] lg:h-[70px]" : "lg:mt-[18px] lg:h-[78px]"} lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.3fr)_minmax(0,1.25fr)_minmax(0,.95fr)] lg:overflow-visible lg:rounded-[8px] lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]` : ""}`}
+                className={`${connectedShell} ${flightRowDesktopClasses} lg:mt-1 ${isDesktopLanding ? `${isPackagesLanding ? "lg:mt-0 lg:h-[70px]" : "lg:mt-[18px] lg:h-[78px]"} lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.3fr)_minmax(0,1.25fr)_minmax(0,.95fr)] lg:overflow-visible lg:rounded-[8px] lg:bg-[#fcfdfe] lg:ring-1 lg:ring-[#dee5ed]` : ""}`}
               >
                 <div
                   className={`grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 ${isDesktopLanding ? `${isPackagesLanding ? "lg:h-[70px]" : "lg:h-[78px]"} lg:grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)]` : ""}`}
@@ -3713,10 +3733,10 @@ export function DealsSearchForm({
                       <Fragment key={kind}>
                         <div
                           ref={wrapRef}
-                          className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:ps-10 lg:pe-3 ${isPackagesLanding ? "lg:min-h-[70px] lg:cursor-text lg:py-2.5" : "lg:min-h-[78px] lg:py-3"}` : ""}`}
+                          className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:pe-3 ${isPackagesLanding ? "lg:min-h-[70px] lg:cursor-text lg:py-2.5 lg:ps-4" : "lg:min-h-[78px] lg:py-3 lg:ps-10"}` : ""}`}
                           data-deals-flight-destination={kind}
                         >
-                          {isDesktopLanding ? (
+                          {isDesktopLanding && !isPackagesLanding ? (
                             <MapPin
                               aria-hidden="true"
                               className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
@@ -3728,7 +3748,13 @@ export function DealsSearchForm({
                           >
                             {t(kind)}
                           </label>
-                          <div className="relative hidden sm:block">
+                          <div className={`relative hidden sm:block ${isPackagesLanding ? "lg:flex lg:min-w-0 lg:items-center lg:gap-2" : ""}`}>
+                            {isPackagesLanding ? (
+                              <MapPin
+                                aria-hidden="true"
+                                className="hidden h-4 w-4 shrink-0 text-slate-500 lg:block"
+                              />
+                            ) : null}
                             <input
                               ref={inputRef}
                               id={`deals-flight-${kind}`}
@@ -3783,7 +3809,7 @@ export function DealsSearchForm({
                                     [kind]: [],
                                   }));
                               }}
-                              className={`${field} ${flightConnectedField} ${isDesktopLanding ? "pe-3 lg:text-[15px] lg:font-semibold" : "pe-10"}`}
+                              className={`${field} ${flightConnectedField} ${isDesktopLanding ? "min-w-0 pe-3 lg:text-[15px] lg:font-semibold" : "pe-10"}`}
                               autoComplete="off"
                             />
                             {!isDesktopLanding && search[textKey] ? (
@@ -3886,9 +3912,9 @@ export function DealsSearchForm({
                   })}
                 </div>
                 <div
-                  className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:ps-10 lg:pe-3 ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px] lg:cursor-pointer lg:py-2.5" : "lg:h-[78px] lg:min-h-[78px] lg:py-3"}` : ""}`}
+                  className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:pe-3 ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px] lg:cursor-pointer lg:py-2.5 lg:ps-4" : "lg:h-[78px] lg:min-h-[78px] lg:py-3 lg:ps-10"}` : ""}`}
                 >
-                  {isDesktopLanding ? (
+                  {isDesktopLanding && !isPackagesLanding ? (
                     <Calendar
                       aria-hidden="true"
                       className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
@@ -3913,8 +3939,14 @@ export function DealsSearchForm({
                     }
                     className={`${field} ${flightConnectedField} flex items-center justify-between gap-2 text-start`}
                   >
-                    <span className="min-w-0 truncate">
-                      {flightDatesSummary}
+                    <span className="flex min-w-0 items-center gap-2">
+                      {isPackagesLanding ? (
+                        <Calendar
+                          aria-hidden="true"
+                          className="hidden h-4 w-4 shrink-0 text-slate-500 lg:block"
+                        />
+                      ) : null}
+                      <span className="truncate">{flightDatesSummary}</span>
                     </span>
                     <Calendar
                       aria-hidden="true"
@@ -4211,7 +4243,7 @@ export function DealsSearchForm({
                   data-deals-change-stay-dates
                   className="inline-flex min-h-11 w-fit cursor-pointer items-center gap-2 px-1 text-sm font-bold text-slate-800"
                 >
-                  <span className="relative flex h-4 w-4 shrink-0 items-center justify-center">
+                  <span className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center">
                     <input
                       type="checkbox"
                       checked={!search.stayDatesLinked}
@@ -4231,7 +4263,7 @@ export function DealsSearchForm({
                             : relinkInheritedField(current, "stayDates"),
                         );
                       }}
-                      className={`size-4 cursor-pointer rounded border-slate-300 ${isDesktopLanding ? `${isPackagesLanding ? "border-slate-400 bg-slate-50 checked:border-[#2563eb] checked:bg-[#2563eb]" : "bg-white checked:border-slate-400 checked:bg-white"} appearance-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-[#2563eb]/30 focus-visible:ring-offset-1` : "text-[#004BB8] focus:ring-[#004BB8]"}`}
+                      className={`size-4 cursor-pointer rounded border-slate-300 ${isDesktopLanding ? `${isPackagesLanding ? "h-[18px] w-[18px] rounded-[4px] border-[1.5px] border-slate-500 bg-white checked:border-[#075EE8] checked:bg-[#075EE8]" : "bg-white checked:border-slate-400 checked:bg-white"} appearance-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-[#2563eb]/30 focus-visible:ring-offset-1` : "text-[#004BB8] focus:ring-[#004BB8]"}`}
                     />
                     {isDesktopLanding && !search.stayDatesLinked ? (
                       <Check
