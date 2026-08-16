@@ -84,7 +84,10 @@ test("compact controls reuse canonical pickers, summary, validation and submissi
 test("mobile Packages fields use restrained geometry and neutral value-row icons", () => {
   assert.match(form, /isPackagesLanding \? "h-\[62px\][^"]*" : "h-\[68px\] rounded-\[10px\] px-\[13px\] py-\[11px\]"/);
   assert.match(form, /compactValueRowClassName[\s\S]{0,100}mt-1\.5 flex min-w-0 items-center gap-2 text-slate-600/);
-  assert.match(form, /compactValueIconClassName = `\$\{isPackagesLanding[\s\S]*?: "h-4 w-4"\} shrink-0`/);
+  assert.match(
+    form,
+    /compactValueIconClassName = `h-4 w-4 shrink-0 \$\{isPackagesLanding \? "text-slate-500" : ""\}`/,
+  );
   assert.doesNotMatch(form, /compactIconClassName|h-8 w-8[^\"]*rounded-full[^\"]*bg-slate-100\/70/);
   assert.match(compact, /isPackagesLanding \? "h-\[50px\] rounded-\[10px\]"/);
   assert.doesNotMatch(compact, /LocateFixed/);

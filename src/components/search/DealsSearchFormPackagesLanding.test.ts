@@ -23,10 +23,18 @@ test("Packages route selects a dedicated landing presentation while Deals keeps 
 });
 
 test("standalone mobile Packages has the approved identity without homepage product tabs", () => {
+  const identity = compact.slice(
+    compact.indexOf("{isPackagesLanding ? ("),
+    compact.indexOf('<fieldset className="min-w-0', compact.indexOf("{isPackagesLanding ? (")),
+  );
   assert.match(compact, /data-packages-identity-icon/);
   assert.match(compact, /<PackagesIcon/);
-  assert.match(compact, /text-\[22px\][\s\S]*\{t\("deals"\)\}/);
-  assert.match(compact, /h-px bg-\[#dee5ed\]/);
+  assert.match(compact, /h-6 w-7 text-\[#004BB8\]/);
+  assert.match(
+    compact,
+    /rounded-lg bg-\[#004BB8\]\/8[\s\S]*text-\[16px\] font-semibold[\s\S]*\{t\("deals"\)\}/,
+  );
+  assert.doesNotMatch(identity, /h-px|border-b|border-bottom/);
   assert.doesNotMatch(compact, /Flights \| Hotels \| Cars \| Packages/);
 });
 
@@ -81,8 +89,26 @@ test("mobile Packages fields use label then left icon and value with one canonic
   assert.match(compact, /t\("destination"\)[\s\S]*?<MapPin/);
   assert.match(compact, /t\("travelDates"\)[\s\S]*?<Calendar/);
   assert.match(compact, /deals\.travelersRoomsLabel[\s\S]*?<UserRound/);
+  assert.match(form, /h-4 w-4 shrink-0[\s\S]*isPackagesLanding \? "text-slate-500"/);
+  assert.doesNotMatch(
+    form,
+    /compactValueIconClassName = `[^`]*text-\[#075ee8\]/,
+  );
   assert.equal((compact.match(/<ArrowRightLeft/g) ?? []).length, 1);
   assert.match(compact, /onClick=\{swapDealsFlightAirports\}/);
+});
+
+test("standalone mobile Packages alone uses the short localized destination placeholder", () => {
+  assert.match(
+    compact,
+    /search\.flightDestinationText \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
+  );
+  assert.match(
+    compact,
+    /displayedHotelDestination \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
+  );
+  assert.match(form, /presentation === "mobile-homepage" \|\| isPackagesLanding/);
+  assert.match(form, /isPackagesLanding \? "hidden sm:contents" : "contents"/);
 });
 
 test("standalone mobile CTA and card geometry are scoped without changing homepage", () => {
