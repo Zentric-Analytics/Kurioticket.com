@@ -14,9 +14,37 @@ test("shared Cars picker matches approved mobile structure", () => {
   assert.match(picker, /carsResults\.returnLocationLabel/);
   assert.match(picker, /<Search aria-hidden="true"/);
   assert.match(picker, /Airport, city, or address/);
-  assert.match(picker, /recentSearches\.title[\s\S]*carsSearch\.popularLocations/);
+  assert.match(picker, /recentSearches\.title/);
+  assert.match(picker, /carsSearch\.locationSuggestions/);
   for (const icon of ["Clock3", "Building2", "Plane"]) assert.match(picker, new RegExp(icon));
   assert.match(picker, /h-\[52px\][\s\S]*Done/);
+});
+
+test("blank mobile Cars queries stay clean and never request generic suggestions", () => {
+  assert.match(picker, /const trimmedQuery = query\.trim\(\);\s*if \(!trimmedQuery\) return;/);
+  assert.match(picker, /searchCarLocationSuggestions\(trimmedQuery, \{ limit: 8 \}\)/);
+  assert.doesNotMatch(picker, /searchCarLocationSuggestions\(query,/);
+  assert.doesNotMatch(picker, /carsSearch\.popularLocations|Popular locations/);
+  assert.doesNotMatch(picker, /query\.trim\(\) \? results : results/);
+});
+
+test("results and empty states render only for a completed non-empty query", () => {
+  assert.match(picker, /\{trimmedQuery \? <section[\s\S]*carsSearch\.locationSuggestions[\s\S]*results\.map/);
+  assert.match(picker, /searchCompleted && !results\.length[\s\S]*carsSearch\.noMatchingLocations/);
+  assert.match(picker, /!trimmedQuery && recents\.length[\s\S]*recentSearches\.title/);
+  assert.doesNotMatch(picker, /Start typing to see suggestions/);
+});
+
+test("opening and clearing the query immediately discard stale suggestions", () => {
+  assert.match(picker, /setQuery\(""\);\s*setDraft\(null\);\s*setResults\(\[\]\);\s*setSearchCompleted\(false\)/);
+  assert.match(picker, /onChange=\{\(event\) => \{ setQuery\(event\.target\.value\); setDraft\(null\); setResults\(\[\]\); setSearchCompleted\(false\); \}\}/);
+  assert.match(picker, /\{trimmedQuery \? <section/);
+});
+
+test("Pickup and Return share the same query-gated picker body", () => {
+  assert.equal((picker.match(/export function MobileCarLocationPicker/g) ?? []).length, 1);
+  assert.match(picker, /mode: "pickup" \| "return"/);
+  assert.match(picker, /mode === "pickup"[\s\S]*Pickup location[\s\S]*Return location/);
 });
 
 test("Cars recents are dedicated, capped, deduped, and removable", () => {
