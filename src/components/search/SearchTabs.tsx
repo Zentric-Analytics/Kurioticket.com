@@ -31,10 +31,10 @@ import {
   Plane,
   Plus,
   RotateCcw,
-  Tag,
   UserRound,
   X,
 } from "lucide-react";
+import { PackagesIcon } from "@/components/icons/PackagesIcon";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -3033,7 +3033,7 @@ export function SearchTabs({
           ["flights", Plane, t.flights || "Flights"],
           ["hotels", Building2, t.hotels || "Hotels"],
           ["cars", CarFront, t.cars || "Cars"],
-          ["deals", Tag, t.deals || "Packages"],
+          ["deals", PackagesIcon, t.deals || "Packages"],
         ] as const).map(([mode, Icon, label], index) => {
           const selected = tab === mode;
           return (

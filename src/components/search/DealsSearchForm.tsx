@@ -29,6 +29,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+import { PackagesIcon } from "@/components/icons/PackagesIcon";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import {
@@ -3192,13 +3193,13 @@ export function DealsSearchForm({
     </>
   );
 
-  const compactFieldClassName = `focus-ring flex w-full min-w-0 items-center justify-between border border-[#dee5ed] bg-[#fcfdfe] text-start ${isPackagesLanding ? "h-[78px] rounded-[11px] px-5 py-3.5" : "h-[68px] rounded-[10px] px-[13px] py-[11px]"}`;
+  const compactFieldClassName = `focus-ring flex w-full min-w-0 items-center justify-between border border-[#dee5ed] bg-[#fcfdfe] text-start ${isPackagesLanding ? "h-[62px] rounded-[10px] px-4 py-2.5" : "h-[68px] rounded-[10px] px-[13px] py-[11px]"}`;
   const compactFieldContentClassName = "min-w-0 flex-1";
-  const compactLabelClassName = `block truncate font-semibold uppercase tracking-[0.11em] text-slate-600 ${isPackagesLanding ? "text-[11px] leading-4" : "text-[10px] leading-3"}`;
+  const compactLabelClassName = `block truncate font-semibold uppercase tracking-[0.11em] text-slate-600 ${isPackagesLanding ? "text-[10px] leading-3" : "text-[10px] leading-3"}`;
   const compactValueRowClassName =
     "mt-1.5 flex min-w-0 items-center gap-2 text-slate-600";
-  const compactValueTextClassName = `min-w-0 truncate font-medium text-slate-950 ${isPackagesLanding ? "text-[18px] leading-6" : "text-[16px] leading-5"}`;
-  const compactValueIconClassName = `${isPackagesLanding ? "h-[17px] w-[17px] text-[#075ee8]" : "h-4 w-4"} shrink-0`;
+  const compactValueTextClassName = `min-w-0 truncate font-medium text-slate-950 ${isPackagesLanding ? "text-[16px] leading-5" : "text-[16px] leading-5"}`;
+  const compactValueIconClassName = `${isPackagesLanding ? "h-4 w-4 text-[#075ee8]" : "h-4 w-4"} shrink-0`;
   const compactPackageFieldContent = (
     label: ReactNode,
     icon: ReactNode,
@@ -3226,21 +3227,13 @@ export function DealsSearchForm({
             ? "mobile-packages-landing-search"
             : "mobile-homepage-deals-search"
         }
-        className={isPackagesLanding ? "space-y-3 sm:hidden" : "mt-3 space-y-2"}
+        className={isPackagesLanding ? "space-y-2 sm:hidden" : "mt-3 space-y-2"}
       >
         {isPackagesLanding ? (
           <>
-            <div className="flex items-center gap-3.5 px-0.5 pb-1 pt-1">
-              <span
-                data-packages-identity-icon
-                className="relative block h-11 w-12 shrink-0 text-[#075ee8]"
-                aria-hidden="true"
-              >
-                <Building2 className="absolute left-[14px] top-0 h-8 w-8" strokeWidth={1.8} />
-                <Plane className="absolute bottom-0 left-0 h-7 w-7 -rotate-12 fill-[#fcfdfe]" strokeWidth={2} />
-                <CarFront className="absolute bottom-0 right-0 h-6 w-6 fill-[#fcfdfe]" strokeWidth={2} />
-              </span>
-              <h1 className="text-[25px] font-bold leading-8 tracking-[-0.02em] text-[#07182f]">
+            <div className="flex items-center gap-3 px-0.5 pb-1 pt-1">
+              <PackagesIcon data-packages-identity-icon className="h-10 w-11 text-[#075ee8]" />
+              <h1 className="text-[22px] font-bold leading-7 tracking-[-0.02em] text-[#07182f]">
                 {t("deals")}
               </h1>
             </div>
@@ -3260,7 +3253,7 @@ export function DealsSearchForm({
                 ? "mobile-packages-landing-package-rail"
                 : "mobile-homepage-deals-package-rail"
             }
-            className={`flex min-w-0 w-full max-w-full touch-pan-x flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth border-b border-slate-200 [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden ${isPackagesLanding ? "h-[54px]" : "h-10 px-1"}`}
+            className={`flex min-w-0 w-full max-w-full touch-pan-x flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain scroll-smooth border-b border-slate-200 [scrollbar-width:none] [-ms-overflow-style:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden ${isPackagesLanding ? "h-[46px]" : "h-10 px-1"}`}
           >
             {mobileHomepagePackageOptions.map(({ mode, text }, index) => {
               const selected = search.mode === mode;
@@ -3302,7 +3295,7 @@ export function DealsSearchForm({
                       preventScroll: true,
                     });
                   }}
-                  className={`focus-ring relative flex w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent font-medium ${isPackagesLanding ? "h-[54px] gap-1.5 px-2 text-[13px] min-[390px]:text-[14px]" : "h-10 px-2.5 text-[12px]"} ${selected ? "text-[#075ee8] after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : "text-slate-700"}`}
+                  className={`focus-ring relative flex w-max shrink-0 items-center justify-center whitespace-nowrap bg-transparent font-medium ${isPackagesLanding ? "h-[46px] gap-1.5 px-2 text-[13px]" : "h-10 px-2.5 text-[12px]"} ${selected ? "text-[#075ee8] after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#075ee8] after:content-['']" : "text-slate-700"}`}
                 >
                   {isPackagesLanding ? (
                     <span className="flex shrink-0 items-end -space-x-1" aria-hidden="true">
@@ -3322,7 +3315,7 @@ export function DealsSearchForm({
           <div
             role="radiogroup"
             aria-label={t("tripType")}
-            className="flex min-h-14 items-center justify-between gap-1"
+            className="flex min-h-11 items-center justify-between gap-1"
           >
             {(["round-trip", "one-way"] as const).map((value) => {
               const selected = search.flightTripType === value;
@@ -3333,9 +3326,9 @@ export function DealsSearchForm({
                   role="radio"
                   aria-checked={selected}
                   onClick={() => setDealsFlightTripType(value)}
-                  className="focus-ring flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium text-slate-900 min-[375px]:text-[13px]"
+                  className="focus-ring flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-slate-900"
                 >
-                  <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border ${selected ? "border-[#8ebcff]" : "border-slate-300"}`} aria-hidden="true">
+                  <span className={`flex h-4 w-4 items-center justify-center rounded-full border ${selected ? "border-[#8ebcff]" : "border-slate-300"}`} aria-hidden="true">
                     {selected ? <span className="h-2.5 w-2.5 rounded-full bg-[#075ee8]" /> : null}
                   </span>
                   {value === "round-trip"
@@ -3352,9 +3345,9 @@ export function DealsSearchForm({
               aria-checked="false"
               aria-disabled="true"
               disabled
-              className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[12px] font-medium text-slate-900 disabled:opacity-100 min-[375px]:text-[13px]"
+              className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-slate-900 disabled:opacity-100"
             >
-              <span className="h-[18px] w-[18px] rounded-full border border-slate-300" aria-hidden="true" />
+              <span className="h-4 w-4 rounded-full border border-slate-300" aria-hidden="true" />
               {t("multiCity")}
             </button>
           </div>
@@ -3362,7 +3355,7 @@ export function DealsSearchForm({
 
         {included.flight ? (
           <div
-            className={`relative ${isPackagesLanding ? "space-y-3" : "space-y-2"}`}
+            className="relative space-y-2"
             data-testid="mobile-homepage-deals-route-fields"
           >
             <button
@@ -3389,7 +3382,7 @@ export function DealsSearchForm({
               aria-label={
                 t("swapOriginDestination") || "Swap origin and destination"
               }
-              className={`focus-ring absolute left-1/2 z-10 flex h-[38px] w-[38px] -translate-x-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_2px_6px_rgba(15,23,42,0.10)] before:absolute before:-inset-[3px] before:content-[''] focus-visible:ring-2 focus-visible:ring-[#075ee8]/30 ${isPackagesLanding ? "top-[65px]" : "top-[53px]"}`}
+              className={`focus-ring absolute left-1/2 z-10 flex -translate-x-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_2px_6px_rgba(15,23,42,0.10)] before:absolute before:-inset-[3px] before:content-[''] focus-visible:ring-2 focus-visible:ring-[#075ee8]/30 ${isPackagesLanding ? "top-[53px] h-[34px] w-[34px]" : "top-[53px] h-[38px] w-[38px]"}`}
             >
               <ArrowRightLeft
                 aria-hidden="true"
@@ -3506,7 +3499,7 @@ export function DealsSearchForm({
           type="submit"
           disabled={submitting || pending}
           aria-busy={submitting || pending}
-          className={`focus-ring w-full rounded-[11px] bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60 ${isPackagesLanding ? "h-[54px]" : "h-12"}`}
+          className={`focus-ring w-full bg-[#075ee8] text-[16px] font-semibold text-white disabled:opacity-60 ${isPackagesLanding ? "h-[50px] rounded-[10px]" : "h-12 rounded-[11px]"}`}
         >
           {t("deals.searchButton")}
         </button>

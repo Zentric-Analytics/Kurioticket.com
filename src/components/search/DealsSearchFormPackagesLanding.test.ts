@@ -24,8 +24,8 @@ test("Packages route selects a dedicated landing presentation while Deals keeps 
 
 test("standalone mobile Packages has the approved identity without homepage product tabs", () => {
   assert.match(compact, /data-packages-identity-icon/);
-  assert.match(compact, /<Building2[\s\S]*?<Plane[\s\S]*?<CarFront/);
-  assert.match(compact, /text-\[25px\][\s\S]*\{t\("deals"\)\}/);
+  assert.match(compact, /<PackagesIcon/);
+  assert.match(compact, /text-\[22px\][\s\S]*\{t\("deals"\)\}/);
   assert.match(compact, /h-px bg-\[#dee5ed\]/);
   assert.doesNotMatch(compact, /Flights \| Hotels \| Cars \| Packages/);
 });
@@ -76,7 +76,7 @@ test("mobile Packages fields use label then left icon and value with one canonic
   );
   assert.ok(helper.indexOf("{label}") < helper.indexOf("{icon}"));
   assert.ok(helper.indexOf("{icon}") < helper.indexOf("{value}"));
-  assert.match(form, /h-\[78px\] rounded-\[11px\]/);
+  assert.match(form, /h-\[62px\] rounded-\[10px\]/);
   assert.match(compact, /t\("origin"\)[\s\S]*?<MapPin/);
   assert.match(compact, /t\("destination"\)[\s\S]*?<MapPin/);
   assert.match(compact, /t\("travelDates"\)[\s\S]*?<Calendar/);
@@ -87,11 +87,28 @@ test("mobile Packages fields use label then left icon and value with one canonic
 
 test("standalone mobile CTA and card geometry are scoped without changing homepage", () => {
   assert.match(form, /rounded-\[16px\][\s\S]*sm:rounded-3xl/);
-  assert.match(compact, /isPackagesLanding \? "h-\[54px\]" : "h-12"/);
+  assert.match(compact, /isPackagesLanding \? "h-\[50px\] rounded-\[10px\]" : "h-12 rounded-\[11px\]"/);
   assert.match(compact, /\{t\("deals.searchButton"\)\}/);
   assert.match(form, /presentation === "mobile-homepage"\s*\? "w-full"/);
   assert.match(
     form,
     /presentation === "mobile-homepage" \? compactMobileControls/,
   );
+});
+
+test("mobile Packages uses moderate field, rail, trip row, and CTA sizing", () => {
+  assert.match(form, /h-\[62px\] rounded-\[10px\] px-4 py-2\.5/);
+  assert.match(form, /text-\[16px\] leading-5/);
+  assert.match(compact, /h-\[46px\] gap-1\.5 px-2 text-\[13px\]/);
+  assert.match(compact, /className="flex min-h-11 items-center justify-between/);
+  assert.match(compact, /h-\[50px\]/);
+  assert.doesNotMatch(compact, /h-\[78px\]|text-\[18px\]|h-\[54px\]/);
+});
+
+test("mobile hero is bounded and card clearance is measured independently", () => {
+  assert.match(page, /className="relative h-96 overflow-visible/);
+  assert.match(page, /bottom-\[calc\(-1_\*_var\(--deals-search-outside\)\)\]/);
+  assert.match(page, /Math\.max\(0, height - insideHeight\)/);
+  assert.match(page, /pt-\[calc\(var\(--deals-search-outside\)\+3rem\)\]/);
+  assert.doesNotMatch(page, /sm:h-\[calc\(2\.5rem\+var\(--deals-search-inside\)\)\]/);
 });

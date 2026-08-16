@@ -39,14 +39,14 @@ test("mobile Flights renders four connected product tabs in approved order and i
   assert.match(mobileBranch, /mobile-homepage-product-tabs/);
   assert.match(mobileProductTabs, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.16fr\)\]/);
   assert.doesNotMatch(mobileProductTabs, /0\.88fr/);
-  assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", Tag/);
+  assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", PackagesIcon/);
   assert.equal((mobileProductTabs.match(/^\s*\["(?:flights|hotels|cars|deals)"/gm) ?? []).length, 4);
   assert.match(mobileBranch, /role="tab"[\s\S]*?aria-selected=\{selected\}/);
   assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
 });
 
-test("Packages uses the Tag icon and selects the canonical form inline", () => {
-  assert.match(mobileProductTabs, /\["deals", Tag, t\.deals \|\| "Packages"\]/);
+test("Packages uses the canonical icon and selects the canonical form inline", () => {
+  assert.match(mobileProductTabs, /\["deals", PackagesIcon, t\.deals \|\| "Packages"\]/);
   assert.match(tabModeDeclaration, /"deals"/);
   assert.doesNotMatch(mobileBranch, /router\.push\("\/packages"\)/);
   assert.match(source, /tab === "deals"[\s\S]*?<DealsSearchForm variant="landing" presentation="mobile-homepage"/);
@@ -159,7 +159,7 @@ test("mobile homepage Hotels aligns neutral icons with values while preserving f
   assert.match(hotelGuestsField, /hotelSearchGuestsLabel[\s\S]*?mobile-homepage-hotel-guests-value/);
   assert.match(hotelGuestsField, /mobile-homepage-hotel-guests-value[\s\S]*?<UserRound[\s\S]*?aria-hidden="true"[\s\S]*?h-4 w-4 shrink-0 text-slate-500 sm:hidden/);
   assert.match(hotelGuestsField, /<UserRound[\s\S]*?\{hotelGuestsRoomsSummary\}[\s\S]*?<ChevronDown/);
-  assert.match(mobileProductTabs, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", Tag/);
+  assert.match(mobileProductTabs, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", PackagesIcon/);
 });
 
 test("mobile Cars removes its nested surface and uses controlled card geometry", () => {
@@ -262,7 +262,7 @@ test("all mobile homepage products remain switchable without route navigation", 
   assert.match(mobileProductTabs, /\["flights", Plane/);
   assert.match(mobileProductTabs, /\["hotels", Building2/);
   assert.match(mobileProductTabs, /\["cars", CarFront/);
-  assert.match(mobileProductTabs, /\["deals", Tag, t\.deals \|\| "Packages"\]/);
+  assert.match(mobileProductTabs, /\["deals", PackagesIcon, t\.deals \|\| "Packages"\]/);
   assert.match(mobileProductTabs, /aria-selected=\{selected\}/);
   assert.match(mobileProductTabs, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
   assert.doesNotMatch(sharedBranch, /router\.push\("\/packages"\)/);
