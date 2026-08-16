@@ -38,11 +38,24 @@ test("shared Hotel guests picker preserves approved sections and limits", () => 
 test("shared Hotel guests picker offers compact density without changing its default", () => {
   assert.match(guests, /density\?: "default" \| "compact"/);
   assert.match(guests, /density = "default"/);
-  for (const compactToken of ["min-h-[86px]", "h-11 w-11", "h-6 w-6", "text-[15px]", "text-[12px] leading-[16px]", "text-[16px]", "h-[38px] w-[38px]", "min-h-[74px]", "h-5 w-5", "h-[26px] w-[46px]"]) {
+  for (const compactToken of ["min-h-[80px]", "h-10 w-10", "h-[22px] w-[22px]", "text-[14px]", "text-[12px] leading-[16px]", "text-[15px]", "h-9 w-9", "min-h-[70px]", "h-5 w-5", "h-[26px] w-[46px]"]) {
     assert.ok(guests.includes(compactToken), `compact density should include ${compactToken}`);
   }
-  assert.match(guests, /compact \? "h-11 w-11" : "h-\[52px\] w-\[52px\]"/);
-  assert.match(guests, /compact \? "min-h-\[86px\][^"]*" : "min-h-\[104px\]/);
+  assert.match(guests, /compact \? "min-h-\[80px\][^"]*" : "min-h-\[104px\]/);
+  assert.match(guests, /compact \? "mt-4" : "mt-7"/);
+});
+
+test("compact Hotel guest visuals use blue active accents and neutral disabled controls", () => {
+  assert.match(guests, /h-10 w-10 bg-\[#075EE8\]\/\[0\.06\] text-\[#075EE8\]/);
+  assert.match(guests, /disabled \? "border-slate-200 text-slate-300" : "border-\[#075EE8\] text-\[#075EE8\]"/);
+  assert.doesNotMatch(guests, /compact \? "h-11 w-11"/);
+});
+
+test("Hotel pet switch uses contained logical edge positioning in both densities", () => {
+  for (const token of ["flex h-11 shrink-0", "h-[26px] w-[46px]", "h-[30px] w-[52px]", "absolute top-[3px]", "h-5 w-5", "h-6 w-6", 'petFriendly ? "end-[3px]" : "start-[3px]"']) {
+    assert.ok(guests.includes(token), `pet switch should include ${token}`);
+  }
+  assert.doesNotMatch(guests, /translate-x-\[(?:23|25)px\]/);
 });
 
 test("homepage and standalone Hotels share draft guest presentation", () => {
