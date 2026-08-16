@@ -26,7 +26,6 @@ import {
   ChevronDown,
   Clock,
   MapPin,
-  RotateCcw,
   ShieldCheck,
   UserRound,
   X,
@@ -242,14 +241,6 @@ function CarsSearchPage() {
   const [values, setValues] = useState<CarsFormValues>(initialValues);
   const [errors, setErrors] = useState<CarsFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasActiveSearch =
-    values.pickupLocation.trim() ||
-    values.pickupDate ||
-    values.dropoffDate ||
-    values.driverAge !== defaultDriverAge ||
-    values.returnToDifferentLocation ||
-    values.dropoffLocation.trim();
-
   const updateValue = <Key extends keyof CarsFormValues>(
     key: Key,
     value: CarsFormValues[Key],
@@ -272,20 +263,6 @@ function CarsSearchPage() {
         ? { dropoffLocation: undefined }
         : {}),
     }));
-  };
-
-  const clearSearch = () => {
-    setValues({
-      pickupLocation: "",
-      pickupDate: "",
-      pickupTime: "10:00",
-      dropoffDate: "",
-      dropoffTime: "10:00",
-      driverAge: defaultDriverAge,
-      returnToDifferentLocation: false,
-      dropoffLocation: "",
-    });
-    setErrors({});
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -365,8 +342,6 @@ function CarsSearchPage() {
               <div className="mx-auto max-w-6xl">
                 <CarsSearchBar
                   errors={errors}
-                  hasActiveSearch={Boolean(hasActiveSearch)}
-                  onClearSearch={clearSearch}
                   onSubmit={handleSubmit}
                   isSubmitting={isSubmitting}
                   updateValue={updateValue}
@@ -378,10 +353,10 @@ function CarsSearchPage() {
 
           <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-full md:space-y-10">
             <section
-              className="relative hidden overflow-visible pb-28 sm:block lg:pb-32"
+              className="relative hidden overflow-visible pb-24 sm:block lg:pb-28"
               aria-labelledby="cars-search-heading"
             >
-              <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
+              <div className="relative isolate min-h-[25rem] bg-slate-950 lg:min-h-[27rem]">
                 <div className="absolute inset-0 overflow-hidden">
                   <Image
                     src={carsHeroImage}
@@ -390,31 +365,30 @@ function CarsSearchPage() {
                     priority
                     sizes="100vw"
                     quality={92}
-                    className="object-cover object-[56%_45%] brightness-[1.04] saturate-[1.08] contrast-[1.03]"
+                    className="object-cover object-[50%_52%]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-950/62 via-slate-950/22 to-slate-950/6" />
-                  <div className="absolute inset-y-0 start-0 w-[78%] bg-gradient-to-r from-slate-950/70 via-slate-950/28 to-transparent" />
-                  <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/36 via-slate-950/10 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/62 via-slate-950/18 to-transparent" />
+                  <div className="absolute inset-y-0 start-0 w-[52%] bg-gradient-to-r from-white/74 via-white/34 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/12 to-transparent" />
                 </div>
 
-                <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-10 lg:min-h-[36rem] lg:pb-40 lg:pt-14">
-                  <div className="max-w-3xl text-start text-white">
+                <div className="page-shell relative z-10 flex min-h-[25rem] flex-col items-start pt-14 lg:min-h-[27rem] lg:pt-16">
+                  <div className="max-w-[30rem] text-start text-slate-950">
                     <h1
                       id="cars-search-heading"
-                      className="max-w-[50rem] text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.3rem]"
+                      className="max-w-[27rem] text-[2.65rem] font-bold leading-[1.04] tracking-[-0.04em] text-slate-950 lg:text-[3rem]"
                     >
-                      {t("searchRentalCarsEveryPartTrip")}
+                      {t("carsDesktopHeroTitle")}
                     </h1>
+                    <p className="mt-4 max-w-[23rem] text-lg font-medium leading-7 text-slate-700">
+                      {t("carsDesktopHeroBody")}
+                    </p>
                   </div>
                 </div>
 
-                <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
+                <div className="page-shell absolute inset-x-0 bottom-[-64px] z-30 lg:bottom-[-68px]">
                   <div className="mx-auto max-w-6xl">
                     <CarsSearchBar
                       errors={errors}
-                      hasActiveSearch={Boolean(hasActiveSearch)}
-                      onClearSearch={clearSearch}
                       onSubmit={handleSubmit}
                       isSubmitting={isSubmitting}
                       updateValue={updateValue}
@@ -599,16 +573,12 @@ function getCarLocationAutocompleteStrings(t: (key: string) => string) {
 
 function CarsSearchBar({
   errors,
-  hasActiveSearch,
-  onClearSearch,
   onSubmit,
   isSubmitting,
   updateValue,
   values,
 }: {
   errors: CarsFormErrors;
-  hasActiveSearch: boolean;
-  onClearSearch: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   isSubmitting: boolean;
   updateValue: <Key extends keyof CarsFormValues>(
@@ -865,7 +835,7 @@ function CarsSearchBar({
   return (
     <section
       ref={searchCardRef}
-      className="overflow-visible rounded-[15px] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70"
+      className="overflow-visible rounded-[15px] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.25rem] sm:border-slate-200/80 sm:bg-white sm:p-5 sm:shadow-[0_18px_42px_-24px_rgba(15,23,42,0.30)] sm:ring-1 sm:ring-white/70"
     >
       <form
         onSubmit={onSubmit}
@@ -888,22 +858,19 @@ function CarsSearchBar({
           </span>
         </div>
 
-        <div className="hidden items-center sm:flex">
-          <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
-            <CarFront
-              aria-hidden="true"
-              className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
-              strokeWidth={2.15}
-            />
-            {t("cars")}
-          </span>
-        </div>
-
         <div className="relative z-20 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-2xl sm:border sm:border-slate-200/85 sm:bg-white lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
+          <div
+            data-testid="cars-desktop-field-grid"
+            className={`grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-xl sm:border sm:border-slate-200/85 sm:bg-white lg:gap-0 ${
+              values.returnToDifferentLocation
+                ? "lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1.25fr)_minmax(0,1.15fr)_minmax(0,1.15fr)_140px_126px]"
+                : "lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1.3fr)_minmax(0,1.05fr)_140px_126px]"
+            }`}
+          >
             <SearchCell
               divRef={pickupFieldRef}
               label={t("carsSearch.pickupLocationLabel")}
+              icon={<MapPin aria-hidden="true" className="h-3.5 w-3.5" />}
               error={errors.pickupLocation || errors.dropoffLocation}
               className="sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
             >
@@ -937,7 +904,7 @@ function CarsSearchBar({
                     }
                     placeholder={t("carsSearch.pickupLocationPlaceholder")}
                     inputRef={pickupLocationRef}
-                    inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
+                    inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
                     presentation="desktop"
                     fieldAnchorRef={pickupFieldRef}
                     searchCardRef={searchCardRef}
@@ -964,7 +931,7 @@ function CarsSearchBar({
                 </div>
 
                 {values.returnToDifferentLocation ? (
-                  <div className="relative">
+                  <div className="relative sm:hidden">
                     <button
                       ref={dropoffLocationLauncherRef}
                       type="button"
@@ -1024,8 +991,53 @@ function CarsSearchBar({
               </div>
             </SearchCell>
 
+            {values.returnToDifferentLocation ? (
+              <SearchCell
+                label={t("carsSearch.returnLocationLabel")}
+                icon={<MapPin aria-hidden="true" className="h-3.5 w-3.5" />}
+                error={errors.dropoffLocation}
+                className="hidden sm:block sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
+              >
+                <div className="relative">
+                  <CarLocationAutocomplete
+                    id="dropoffLocationDesktop"
+                    name="dropoffLocation"
+                    value={values.dropoffLocation}
+                    onValueChange={(nextValue) =>
+                      updateValue("dropoffLocation", nextValue)
+                    }
+                    placeholder={t("carsSearch.pickupLocationPlaceholder")}
+                    inputRef={dropoffLocationRef}
+                    inputClassName="hidden h-8 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[15px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block"
+                    presentation="desktop"
+                    fieldAnchorRef={pickupFieldRef}
+                    searchCardRef={searchCardRef}
+                    isOpen={openDesktopLocation === "dropoff"}
+                    onOpenChange={(nextOpen) =>
+                      setLocationPopoverOpen("dropoff", nextOpen)
+                    }
+                    strings={locationAutocompleteStrings}
+                  />
+                  {values.dropoffLocation ? (
+                    <button
+                      type="button"
+                      aria-label={t("carsSearch.clearReturnLocation")}
+                      onClick={() => {
+                        updateValue("dropoffLocation", "");
+                        dropoffLocationRef.current?.focus();
+                      }}
+                      className="absolute end-0 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 sm:inline-flex"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
+              </SearchCell>
+            ) : null}
+
             <SearchCell
               label={t("carsSearch.rentalDatesLabel")}
+              icon={<Calendar aria-hidden="true" className="h-3.5 w-3.5" />}
               error={dateError}
               className={`relative sm:border-b sm:border-slate-200/80 lg:border-b-0 lg:border-e ${
                 datesOpen ? "z-[260]" : "z-10"
@@ -1053,6 +1065,7 @@ function CarsSearchBar({
 
             <SearchCell
               label={t("carsSearch.pickupReturnTimeLabel")}
+              icon={<Clock aria-hidden="true" className="h-3.5 w-3.5" />}
               error={timeError}
               className={`relative sm:border-e sm:border-slate-200/80 ${
                 timesOpen ? "z-[250]" : "z-10"
@@ -1075,6 +1088,7 @@ function CarsSearchBar({
 
             <SearchCell
               label={t("carsSearch.driverAgeLabel")}
+              icon={<UserRound aria-hidden="true" className="h-3.5 w-3.5" />}
               error={errors.driverAge}
             >
               <div ref={driverAgeWrapRef}>
@@ -1108,7 +1122,7 @@ function CarsSearchBar({
                 >
                   <span className="truncate">
                     {values.driverAge === defaultDriverAge
-                      ? t("carsSearch.driverAgeAnyAgeRange")
+                      ? t("carsSearch.driverAgeAnyAge")
                       : getDriverAgeOptionLabel(values.driverAge)}
                   </span>
                   <ChevronDown
@@ -1140,7 +1154,7 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 sm:h-full sm:min-h-[58px] sm:rounded-none sm:rounded-e-2xl sm:border sm:border-s-0 sm:border-[#004BB8]/20 sm:px-5 sm:text-[15px] sm:font-bold sm:shadow-[0_10px_22px_rgba(0,75,184,0.22)] sm:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:h-full"
+                className="focus-ring inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl bg-[#075EE8] px-4 text-sm font-bold text-white shadow-md shadow-[#075EE8]/20 enabled:hover:bg-[#004BB8] enabled:active:bg-[#003f9c] disabled:bg-[#075EE8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#075EE8]/20 sm:mx-3 sm:my-3 sm:h-[52px] sm:w-[calc(100%-24px)] sm:min-h-0 sm:rounded-[9px] sm:border-0 sm:px-4 sm:text-[15px] sm:shadow-[0_8px_18px_rgba(7,94,232,0.22)]"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
@@ -1150,7 +1164,7 @@ function CarsSearchBar({
           </div>
         </div>
 
-        <div className="relative z-0 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:min-h-9 sm:border-0 sm:bg-transparent sm:px-1 sm:py-0 sm:shadow-none sm:ring-0">
+        <div className="relative z-0 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:min-h-11 sm:rounded-none sm:border-0 sm:border-t sm:border-slate-200/80 sm:bg-transparent sm:px-3 sm:pb-0 sm:pt-3 sm:shadow-none sm:ring-0">
           <label className="focus-within:ring-ring inline-flex min-h-8 cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900 sm:min-h-9">
             <input
               type="checkbox"
@@ -1163,16 +1177,6 @@ function CarsSearchBar({
             {t("carsSearch.differentReturnLocation")}
           </label>
 
-          {hasActiveSearch ? (
-            <button
-              type="button"
-              onClick={onClearSearch}
-              className="focus-ring hidden min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
-            >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              {t("clearAll")}
-            </button>
-          ) : null}
         </div>
 
         <CarsMobilePickerDialogs
@@ -1562,6 +1566,22 @@ function RentalDatesField({
       ? `${pickupDisplay} — ${dropoffDisplay}`
       : pickupDisplay
     : t("carsSearch.rentalDatePlaceholder");
+  const parsedPickupDate = parseIsoDate(pickupDate);
+  const parsedDropoffDate = parseIsoDate(dropoffDate);
+  const rentalDayCount =
+    parsedPickupDate && parsedDropoffDate
+      ? Math.max(
+          0,
+          Math.round(
+            (parsedDropoffDate.getTime() - parsedPickupDate.getTime()) /
+              86_400_000,
+          ),
+        )
+      : 0;
+  const rentalDaysLabel = t("carsSearch.rentalDays").replace(
+    "{count}",
+    String(rentalDayCount),
+  );
   const { popoverRef, style } = useDesktopPopoverPosition(
     isOpen,
     launcherRef,
@@ -1579,16 +1599,23 @@ function RentalDatesField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-rental-dates-dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
+        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors sm:h-10 md:text-[15px]"
       >
         <Calendar
-          className="h-4 w-4 shrink-0 text-slate-500"
+          className="h-4 w-4 shrink-0 text-slate-500 sm:hidden"
           aria-hidden="true"
         />
-        <span
-          className={`truncate ${pickupDate ? "text-slate-950" : "text-slate-400"}`}
-        >
-          {dateSummary}
+        <span className="min-w-0">
+          <span
+            className={`block truncate ${pickupDate ? "text-slate-950" : "text-slate-400"}`}
+          >
+            {dateSummary}
+          </span>
+          {rentalDayCount > 0 ? (
+            <span className="mt-0.5 hidden text-[11px] font-medium leading-3 text-slate-500 sm:block">
+              {rentalDaysLabel}
+            </span>
+          ) : null}
         </span>
       </button>
 
@@ -1681,7 +1708,10 @@ function TimeRangeField({
             aria-hidden="true"
             className="h-4 w-4 shrink-0 text-slate-500 sm:hidden"
           />
-          <span className="truncate">{timeSummary}</span>
+          <span className="truncate sm:hidden">{timeSummary}</span>
+          <span className="hidden truncate sm:inline">
+            {formatCarTimeLabel(pickupTime, intlLocale)}
+          </span>
         </span>
         <ChevronDown
           className={`hidden h-4 w-4 shrink-0 text-slate-500 transition-transform sm:block ${isOpen ? "rotate-180" : ""}`}
@@ -1719,12 +1749,14 @@ function SearchCell({
   className = "",
   divRef,
   error,
+  icon,
   label,
 }: {
   children: ReactNode;
   className?: string;
   divRef?: RefObject<HTMLDivElement | null>;
   error?: string;
+  icon?: ReactNode;
   label: string;
 }) {
   return (
@@ -1732,8 +1764,9 @@ function SearchCell({
       ref={divRef}
       className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:px-4 lg:py-2 ${className}`}
     >
-      <label className="mb-1 block text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-0.5 sm:text-[0.66rem] sm:text-slate-500 lg:mb-0.5">
-        {label}
+      <label className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-1 sm:text-[0.66rem] sm:text-slate-700 lg:mb-1">
+        {icon ? <span className="hidden text-slate-700 sm:inline-flex">{icon}</span> : null}
+        <span>{label}</span>
       </label>
       {children}
       {error ? (
