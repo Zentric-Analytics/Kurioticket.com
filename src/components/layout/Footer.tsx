@@ -99,7 +99,7 @@ export function Footer() {
   const [aboutSection, ...linkSections] = footerSections;
 
   return (
-    <footer className="border-t border-slate-200 bg-white text-slate-700">
+    <footer className="border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] text-slate-700">
       <div className="page-shell py-10 md:py-12">
         <div className="hidden gap-x-8 gap-y-8 lg:grid lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,0.85fr)] xl:gap-x-12">
           {footerSections.map((section) => (
