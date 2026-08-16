@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "mobileTravelerCabin.title": "المسافرون ودرجة المقصورة",
+  "mobileTravelerCabin.adultDescription": "18 سنة فأكثر",
+  "mobileTravelerCabin.childDescription": "من سنتين إلى 17 سنة",
+  "mobileTravelerCabin.infantDescription": "أقل من سنتين",
+  "mobileTravelerCabin.tip": "نصيحة",
+  "mobileTravelerCabin.baggageTip": "قد يختلف وزن الأمتعة المسموح به حسب شركة الطيران. تحقق من التفاصيل في صفحة مزود الخدمة.",
   "mobileDatePicker.start": "البداية",
   "mobileDatePicker.end": "النهاية",
   "deals.guided.confirmation.retry": "إعادة المحاولة",

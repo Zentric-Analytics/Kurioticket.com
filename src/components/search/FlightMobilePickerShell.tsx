@@ -10,7 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,7 @@ type FlightMobilePickerShellProps = {
   contentClassName?: string;
   contentLayout?: "scroll" | "contained";
   pickerMarker?: "flight-date" | "traveler-cabin";
+  headerVariant?: "navigation" | "close";
 };
 
 type ScrollLockSnapshot = {
@@ -142,6 +143,7 @@ export function FlightMobilePickerShell({
   contentClassName,
   contentLayout = "scroll",
   pickerMarker,
+  headerVariant = "navigation",
 }: FlightMobilePickerShellProps) {
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
@@ -356,30 +358,38 @@ export function FlightMobilePickerShell({
         )}
       >
         <div className="shrink-0 border-b border-slate-200/80 bg-white px-4">
-          <div className="mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <button
-              type="button"
-              onClick={requestClose}
-              disabled={isClosing}
-              className="focus-ring inline-flex min-h-10 items-center justify-self-start gap-2 rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60"
-            >
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
-              {t.back}
-            </button>
+          <div data-mobile-picker-header={headerVariant} className="mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2">
+            {headerVariant === "close" ? (
+              <button type="button" aria-label={t.cancel} onClick={requestClose} disabled={isClosing} className="focus-ring inline-flex h-11 w-11 items-center justify-center justify-self-start rounded-full text-slate-950 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60">
+                <X className="h-6 w-6" aria-hidden="true" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={requestClose}
+                disabled={isClosing}
+                className="focus-ring inline-flex min-h-10 items-center justify-self-start gap-2 rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60"
+              >
+                <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+                {t.back}
+              </button>
+            )}
             <h2
               id={titleId}
               className="max-w-[52vw] truncate text-[17px] font-bold text-slate-950"
             >
               {title}
             </h2>
-            <button
-              type="button"
-              onClick={requestClose}
-              disabled={isClosing}
-              className="focus-ring min-h-10 justify-self-end rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:pointer-events-none disabled:opacity-60"
-            >
-              {t.cancel}
-            </button>
+            {headerVariant === "close" ? <span aria-hidden="true" /> : (
+              <button
+                type="button"
+                onClick={requestClose}
+                disabled={isClosing}
+                className="focus-ring min-h-10 justify-self-end rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:pointer-events-none disabled:opacity-60"
+              >
+                {t.cancel}
+              </button>
+            )}
           </div>
         </div>
 

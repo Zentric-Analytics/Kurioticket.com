@@ -31,6 +31,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
+import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
 import {
   formatFlightsDateSummary,
   formatFlightsMonthHeading,
@@ -1814,27 +1815,55 @@ export function StandaloneFlightSearchForm({
         {activeMobilePicker === "travelers" ? (
           <FlightMobilePickerShell
             open={true}
-            title={t("passengers") || t("travelers") || "Travelers"}
+            title={t("mobileTravelerCabin.title") || "Travelers & cabin"}
             titleId="standalone-flight-mobile-travelers-title"
             launcherRef={travelersLauncherRef}
             onClose={closeTravelersMobilePicker}
-            contentClassName="px-4 py-5"
+            contentClassName="bg-[#fcfdfe] px-4 py-6"
+            headerVariant="close"
+            pickerMarker="traveler-cabin"
             footer={(requestClose) => (
-              <div className="flex justify-end">
+              <div>
                 <button
                   type="button"
                   onClick={() => {
                     applyTravelersDraft(false);
                     requestClose();
                   }}
-                  className={cn(mobileDoneButtonClassName, "px-6 py-3")}
+                  className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white"
                 >
                   {t("done")}
                 </button>
               </div>
             )}
           >
-            {renderTravelersPicker()}
+            <MobileTravelerCabinPicker
+              adults={draftAdultCount}
+              children={draftChildCount}
+              infants={draftInfantCount}
+              cabinClass={draftCabinClass}
+              strings={{
+                travelers: t("travelers") || "Travelers",
+                adults: t("adults") || "Adults",
+                adultDescription: t("mobileTravelerCabin.adultDescription") || "18 years and above",
+                children: t("children") || "Children",
+                childDescription: t("mobileTravelerCabin.childDescription") || "2 to 17 years",
+                infants: t("infants") || "Infants",
+                infantDescription: t("mobileTravelerCabin.infantDescription") || "Under 2 years",
+                cabinClass: t("cabinClass") || "Cabin class",
+                economy: t("economy") || "Economy",
+                business: t("business") || "Business",
+                first: t("first") || "First",
+                tip: t("mobileTravelerCabin.tip") || "Tip",
+                baggageTip: t("mobileTravelerCabin.baggageTip") || "Baggage allowance may vary by airline. Check details on the provider page.",
+                decrease: (label) => (t("deals.decreaseCountAria") || "Decrease {{label}}").replace("{{label}}", label),
+                increase: (label) => (t("deals.increaseCountAria") || "Increase {{label}}").replace("{{label}}", label),
+              }}
+              onAdultsChange={setDraftAdultCount}
+              onChildrenChange={setDraftChildCount}
+              onInfantsChange={setDraftInfantCount}
+              onCabinClassChange={setDraftCabinClass}
+            />
           </FlightMobilePickerShell>
         ) : null}
 

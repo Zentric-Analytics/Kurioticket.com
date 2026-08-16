@@ -3,6 +3,12 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "mobileTravelerCabin.title": "Reizigers en cabine",
+  "mobileTravelerCabin.adultDescription": "18 jaar en ouder",
+  "mobileTravelerCabin.childDescription": "2 tot 17 jaar",
+  "mobileTravelerCabin.infantDescription": "Jonger dan 2 jaar",
+  "mobileTravelerCabin.tip": "Tip",
+  "mobileTravelerCabin.baggageTip": "De bagagevrijstelling kan per luchtvaartmaatschappij verschillen. Bekijk de details op de providerpagina.",
   "mobileDatePicker.start": "Begin",
   "mobileDatePicker.end": "Einde",
   "deals.guided.confirmation.retry": "Opnieuw proberen",
