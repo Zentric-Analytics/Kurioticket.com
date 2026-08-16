@@ -9,6 +9,7 @@ const shell = read("./FlightMobilePickerShell.tsx");
 const home = read("./SearchTabs.tsx");
 const standalone = read("./HotelSearchBar.tsx");
 const recents = read("../../lib/recent-searches.ts");
+const english = read("../../lib/i18n/en.ts");
 
 test("hotel destination uses draft selection, real recents, and Done-only footer", () => {
   assert.match(destination, /deriveRecentHotelDestinations\(readRecentSearches\(\), 3\)/);
@@ -68,9 +69,19 @@ test("homepage and standalone Hotels share draft guest presentation", () => {
   }
 });
 
-test("compact Hotel guest density is scoped to the mobile homepage integration", () => {
+test("compact Hotel guest density is scoped to approved mobile integrations", () => {
   assert.match(home, /density=\{mobileHomepage \? "compact" : undefined\}/);
-  assert.doesNotMatch(standalone, /density=/);
+  assert.match(standalone, /density=\{mobileLandingPresentation \? "compact" : undefined\}/);
+  assert.doesNotMatch(standalone, /density="compact"/);
+});
+
+test("both mobile Hotel picker shells use the dedicated Guests & Rooms title", () => {
+  for (const source of [home, standalone]) {
+    assert.match(source, /title=\{(?:translate|t)\("hotelGuestsRooms\.mobileTitle"\) \|\| "Guests & Rooms"\}/);
+  }
+  assert.doesNotMatch(home, /title=\{translate\("guestsAndRooms"\) \|\| "Guests and rooms"\}/);
+  assert.doesNotMatch(standalone, /title=\{t\("guestsAndRooms"\)\}/);
+  assert.match(english, /"hotelGuestsRooms\.mobileTitle": "Guests & Rooms"/);
 });
 
 test("shell supports navigation labels, arrow-only headers, and real spacers", () => {

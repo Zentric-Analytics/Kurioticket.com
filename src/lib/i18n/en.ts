@@ -1459,6 +1459,7 @@ export const translations: TranslationDictionary = {
   nextMonthShort: "Next",
   chooseGuestsAndRooms: "Choose guests and rooms",
   guestsAndRooms: "Guests and rooms",
+  "hotelGuestsRooms.mobileTitle": "Guests & Rooms",
   adults: "Adults",
   adultAgeRange: "18+",
   children: "Children",
