@@ -12,22 +12,35 @@ const searchBar = source.slice(
   source.indexOf("function CarsMobilePickerDialogs"),
 );
 
-test("desktop Cars uses the approved coastal convertible hero and exact copy", () => {
+test("desktop Cars uses the approved text-free coastal convertible hero", () => {
   assert.match(
     content,
     /\/images\/premium\/cars\/kurioticket-cars-hero-coastal-convertible-001\.jpg/,
   );
-  assert.match(source, /t\("carsDesktopHeroTitle"\)/);
+  assert.match(
+    source,
+    /<h1 className="sr-only">\{t\("carsDesktopHeroTitle"\)\}<\/h1>/,
+  );
+  assert.equal(source.match(/<h1\b/g)?.length, 1);
+  assert.doesNotMatch(
+    source,
+    /cars-search-heading|cars-mobile-search-heading/,
+  );
+  assert.doesNotMatch(source, /text-\[2\.65rem\]|lg:text-\[3rem\]/);
   assert.doesNotMatch(source, /t\("carsDesktopHeroBody"\)/);
-  assert.match(source, /bottom-\[-84px\][\s\S]*?lg:bottom-\[-88px\]/);
-  assert.doesNotMatch(source, /bottom-\[-64px\]|lg:bottom-\[-68px\]/);
+  assert.match(source, /pb-36 sm:block lg:pb-40/);
+  assert.match(source, /bottom-\[-100px\][\s\S]*?lg:bottom-\[-104px\]/);
+  assert.doesNotMatch(
+    source,
+    /bottom-\[-84px\]|lg:bottom-\[-88px\]|pb-32 sm:block lg:pb-36/,
+  );
   assert.match(source, /object-cover object-\[50%_52%\]/);
   assert.match(source, /from-white\/62 via-white\/24 to-transparent/);
   assert.doesNotMatch(source, /from-white\/74 via-white\/34/);
   assert.doesNotMatch(source, /brightness-\[/);
   assert.doesNotMatch(
     source,
-    /cars-search-heading[\s\S]{0,800}from-slate-950\/70/,
+    /from-slate-950\/70/,
   );
 });
 

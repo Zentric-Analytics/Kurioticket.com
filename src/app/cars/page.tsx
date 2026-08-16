@@ -303,14 +303,12 @@ function CarsSearchPage() {
     <>
       <AppHeader mobileHeroOverlay mobileHeroOverlayLowered />
       <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
+        <h1 className="sr-only">{t("carsDesktopHeroTitle")}</h1>
         <div className="pointer-events-none absolute start-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl sm:max-w-none">
-          <section
-            className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden"
-            aria-labelledby="cars-mobile-search-heading"
-          >
+          <section className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
             <div className="absolute inset-0 overflow-hidden">
               <Image
                 src={carsHeroImage}
@@ -321,17 +319,6 @@ function CarsSearchPage() {
                 quality={100}
                 className="object-cover object-[54%_45%]"
               />
-            </div>
-
-            <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
-              <div className="max-w-[22.5rem] pe-2 text-start text-white">
-                <h1
-                  id="cars-mobile-search-heading"
-                  className="text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.62)]"
-                >
-                  {t("carsDesktopHeroTitle")}
-                </h1>
-              </div>
             </div>
 
             <div className="page-shell absolute inset-x-0 bottom-[-24.5rem] z-30">
@@ -348,10 +335,7 @@ function CarsSearchPage() {
           </section>
 
           <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-full md:space-y-10">
-            <section
-              className="relative hidden overflow-visible pb-32 sm:block lg:pb-36"
-              aria-labelledby="cars-search-heading"
-            >
+            <section className="relative hidden overflow-visible pb-36 sm:block lg:pb-40">
               <div className="relative isolate min-h-[25rem] bg-slate-950 lg:min-h-[27rem]">
                 <div className="absolute inset-0 overflow-hidden">
                   <Image
@@ -367,18 +351,7 @@ function CarsSearchPage() {
                   <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/12 to-transparent" />
                 </div>
 
-                <div className="page-shell relative z-10 flex min-h-[25rem] flex-col items-start pt-14 lg:min-h-[27rem] lg:pt-16">
-                  <div className="max-w-[30rem] text-start text-slate-950">
-                    <h1
-                      id="cars-search-heading"
-                      className="max-w-[27rem] text-[2.65rem] font-bold leading-[1.04] tracking-[-0.04em] text-slate-950 lg:text-[3rem]"
-                    >
-                      {t("carsDesktopHeroTitle")}
-                    </h1>
-                  </div>
-                </div>
-
-                <div className="page-shell absolute inset-x-0 bottom-[-84px] z-30 lg:bottom-[-88px]">
+                <div className="page-shell absolute inset-x-0 bottom-[-100px] z-30 lg:bottom-[-104px]">
                   <div className="mx-auto max-w-6xl">
                     <CarsSearchBar
                       errors={errors}
