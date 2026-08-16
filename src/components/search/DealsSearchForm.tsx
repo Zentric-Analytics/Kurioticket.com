@@ -41,6 +41,7 @@ import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerS
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
+import { MobileCarDriverAgePickerDialog, MobileCarTimePickerDialog } from "@/components/search/CarsPickerContent";
 import { translations as en } from "@/lib/i18n/en";
 import { driverAgeOptions, timeOptions } from "@/lib/cars/carsSearchUtils";
 import {
@@ -4767,72 +4768,8 @@ export function DealsSearchForm({
         onCommit={(start, end) => setSearch((current) => customizeInheritedField(current, "carDates", { start, end }))}
         onClose={closeMobileCarDates}
       />
-      <FlightMobilePickerShell
-        open={mobileCarTimesOpen}
-        title={t("carsSearch.pickupReturnTimeLabel")}
-        titleId="deals-car-mobile-times-title"
-        dialogId="deals-car-mobile-times"
-        launcherRef={carTimesLauncherRef}
-        onClose={closeMobileCarTimes}
-        contentClassName="overflow-x-hidden px-4 py-5"
-        footer={(requestClose) => (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              disabled={!validDraftCarTimes}
-              onClick={() => {
-                commitCarTimes(true);
-                requestClose();
-              }}
-              className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-extrabold text-white disabled:opacity-50"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        {renderCarTimePicker(true)}
-      </FlightMobilePickerShell>
-      <FlightMobilePickerShell
-        open={mobileCarDriverAgeOpen}
-        title={t("carsSearch.driverAgeLabel")}
-        titleId="deals-car-mobile-driver-age-title"
-        dialogId="deals-car-mobile-driver-age"
-        launcherRef={carDriverAgeLauncherRef}
-        onClose={closeMobileCarDriverAge}
-        contentClassName="overflow-x-hidden px-4 py-5"
-        footer={(requestClose) => (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                update("carDriverAge", draftCarDriverAge);
-                mobileCarDriverAgeCommittedRef.current = true;
-                requestClose();
-              }}
-              className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-extrabold text-white"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        <div className="rounded-2xl border border-slate-200 p-1">
-          {driverAgeOptions.map((age) => (
-            <button
-              key={age}
-              type="button"
-              onClick={() => setDraftCarDriverAge(age)}
-              className={`focus-ring flex min-h-12 w-full items-center justify-between rounded-xl px-4 text-start text-sm font-bold ${draftCarDriverAge === age ? "bg-[#004BB8] text-white" : "text-slate-800 hover:bg-slate-50"}`}
-            >
-              {carDriverAgeLabel(age)}
-              {draftCarDriverAge === age ? (
-                <span aria-hidden="true">✓</span>
-              ) : null}
-            </button>
-          ))}
-        </div>
-      </FlightMobilePickerShell>
+      <MobileCarTimePickerDialog open={mobileCarTimesOpen} launcherRef={carTimesLauncherRef} onClose={closeMobileCarTimes} pickupTime={search.carPickupTime} returnTime={search.carReturnTime} onCommit={(carPickupTime, carReturnTime) => { setSearch((current) => ({ ...current, carPickupTime, carReturnTime })); mobileCarTimesCommittedRef.current = true; }} formatTime={(time) => formatCarTimeLabel(time, carIntlLocale)} title={t("carsSearch.pickupReturnTimeLabel")} intro={t("carsSearch.mobileTimeIntro") || "Select when you’ll pick up and return your car."} pickupLabel={t("carsSearch.pickupTimeLabel")} returnLabel={t("carsSearch.returnTimeLabel")} doneLabel={t("done")} />
+      <MobileCarDriverAgePickerDialog open={mobileCarDriverAgeOpen} launcherRef={carDriverAgeLauncherRef} onClose={closeMobileCarDriverAge} driverAge={search.carDriverAge} onCommit={(age) => { update("carDriverAge", age); mobileCarDriverAgeCommittedRef.current = true; }} title={t("carsSearch.driverAgeLabel")} intro={t("carsSearch.mobileDriverAgeIntro") || "Driver must be between 18 and 70 years old."} anyAgeLabel={t("carsSearch.driverAgeAnyAgeRange")} formatAge={carDriverAgeLabel} doneLabel={t("done")} />
     </form>
   );
 }
