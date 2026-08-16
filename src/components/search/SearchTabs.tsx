@@ -2967,7 +2967,7 @@ export function SearchTabs({
         />
         <FlightMobilePickerShell
           open={travelersMenuOpen}
-          title={translate("mobileTravelerCabin.title") || "Travelers & cabin"}
+          title={translate("mobileTravelerCabin.title") || "Travelers & Cabin"}
           titleId="homepage-flight-travelers-title"
           launcherRef={travelersLauncherRef}
           footer={(requestClose) => (

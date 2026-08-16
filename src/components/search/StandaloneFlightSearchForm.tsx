@@ -1815,7 +1815,7 @@ export function StandaloneFlightSearchForm({
         {activeMobilePicker === "travelers" ? (
           <FlightMobilePickerShell
             open={true}
-            title={t("mobileTravelerCabin.title") || "Travelers & cabin"}
+            title={t("mobileTravelerCabin.title") || "Travelers & Cabin"}
             titleId="standalone-flight-mobile-travelers-title"
             launcherRef={travelersLauncherRef}
             onClose={closeTravelersMobilePicker}
