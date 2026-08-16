@@ -93,7 +93,12 @@ export function calculateDesktopPopoverGeometry({
   // For an above placement, `top` is the launcher's adjacent edge rather than
   // the top of all available space. The popover translates by its own rendered
   // height, so short content stays attached instead of floating near the header.
-  const top = openAbove ? boundaryRect.top - gap : belowTop;
+  const top = openAbove
+    ? Math.max(
+        viewportPadding,
+        boundaryRect.top - gap - Math.min(desiredHeight ?? aboveHeight, aboveHeight),
+      )
+    : belowTop;
 
   return {
     left,

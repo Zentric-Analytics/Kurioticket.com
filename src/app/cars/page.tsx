@@ -4,12 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   FormEvent,
-  CSSProperties,
   ReactNode,
   RefObject,
   Suspense,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -42,6 +40,7 @@ import {
   MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { carsDesktopPopoverClassName, useCarsDesktopPopover } from "@/components/search/useCarsDesktopPopover";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -1032,7 +1031,10 @@ function CarsSearchBar({
                 dropoffDate={values.dropoffDate}
                 isOpen={datesOpen}
                 onClear={clearRentalDates}
-                onDone={() => setDatesOpen(false)}
+                onDone={() => {
+                  setDatesOpen(false);
+                  requestAnimationFrame(() => datesLauncherRef.current?.focus({ preventScroll: true }));
+                }}
                 onNextMonth={() =>
                   setVisibleMonthDate((current) => addMonths(current, 1))
                 }
@@ -1409,111 +1411,6 @@ function CarPickupCardLink({ card }: { card: TranslatedCarImageCard }) {
   );
 }
 
-type DesktopPopoverPlacement = "above" | "below";
-type DesktopPopoverPlacementMode = "auto" | "below";
-type DesktopPopoverAlignment = "center" | "end";
-
-const desktopPopoverViewportPadding = 16;
-const desktopPopoverOffset = 14;
-
-function useDesktopPopoverPosition(
-  isOpen: boolean,
-  launcherRef: RefObject<HTMLButtonElement | null> | undefined,
-  preferredWidth: number,
-  placementMode: DesktopPopoverPlacementMode = "auto",
-  alignment: DesktopPopoverAlignment = "center",
-  maximumHeight?: number,
-  providedPopoverRef?: RefObject<HTMLDivElement | null>,
-) {
-  const internalPopoverRef = useRef<HTMLDivElement | null>(null);
-  const popoverRef = providedPopoverRef ?? internalPopoverRef;
-  const [style, setStyle] = useState<CSSProperties | null>(null);
-  const [placement, setPlacement] = useState<DesktopPopoverPlacement>(
-    placementMode === "below" ? "below" : "above",
-  );
-
-  useLayoutEffect(() => {
-    if (!isOpen || !launcherRef?.current || typeof window === "undefined") {
-      return;
-    }
-
-    const updatePosition = () => {
-      const launcherRect = launcherRef.current?.getBoundingClientRect();
-
-      if (!launcherRect) {
-        return;
-      }
-
-      const popoverRect = popoverRef.current?.getBoundingClientRect();
-      const popoverWidth = Math.min(
-        preferredWidth,
-        window.innerWidth - desktopPopoverViewportPadding * 2,
-      );
-      const popoverHeight = popoverRect?.height ?? 420;
-      const centeredLeft =
-        alignment === "end"
-          ? launcherRect.right - popoverWidth
-          : launcherRect.left + launcherRect.width / 2 - popoverWidth / 2;
-      const left = Math.min(
-        Math.max(centeredLeft, desktopPopoverViewportPadding),
-        window.innerWidth - popoverWidth - desktopPopoverViewportPadding,
-      );
-      const spaceBelow =
-        window.innerHeight - launcherRect.bottom - desktopPopoverOffset;
-      const availableHeightBelow = Math.max(
-        0,
-        spaceBelow - desktopPopoverViewportPadding,
-      );
-      const shouldOpenBelow =
-        placementMode === "below" ||
-        spaceBelow >= popoverHeight + desktopPopoverViewportPadding;
-      const nextTop = shouldOpenBelow
-        ? launcherRect.bottom + desktopPopoverOffset
-        : Math.max(
-            desktopPopoverViewportPadding,
-            launcherRect.top - popoverHeight - desktopPopoverOffset,
-          );
-
-      setPlacement(shouldOpenBelow ? "below" : "above");
-      setStyle({
-        left,
-        top: nextTop,
-        width: popoverWidth,
-        ...(placementMode === "below"
-          ? {
-              maxHeight: Math.max(
-                0,
-                Math.min(
-                  maximumHeight ?? availableHeightBelow,
-                  availableHeightBelow,
-                ),
-              ),
-            }
-          : {}),
-      });
-    };
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [
-    alignment,
-    isOpen,
-    launcherRef,
-    maximumHeight,
-    placementMode,
-    popoverRef,
-    preferredWidth,
-  ]);
-
-  return { placement, popoverRef, style };
-}
-
 function DriverAgeDesktopPopover({
   isOpen,
   launcherRef,
@@ -1531,15 +1428,10 @@ function DriverAgeDesktopPopover({
   selectedAge: string;
 }) {
   const { t } = useCarsLandingTranslations();
-  const { popoverRef: positionedPopoverRef, style } = useDesktopPopoverPosition(
-    isOpen,
-    launcherRef,
-    248,
-    "below",
-    "end",
-    360,
-    popoverRef,
-  );
+  const { placement, popoverRef: positionedPopoverRef, style } = useCarsDesktopPopover({
+    open: isOpen, launcherRef, preferredWidth: 288, desiredHeight: 320,
+    maxHeight: 320, align: "end", providedPopoverRef: popoverRef,
+  });
 
   if (!isOpen || typeof document === "undefined") return null;
 
@@ -1550,9 +1442,9 @@ function DriverAgeDesktopPopover({
       role="listbox"
       aria-label={t("carsSearch.driverAgeLabel")}
       data-cars-desktop-popover="driver-age"
-      data-placement="below"
+      data-placement={placement}
       style={style ?? undefined}
-      className="fixed z-[1110] hidden w-[248px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.42)] ring-1 ring-slate-950/[0.06] sm:block"
+      className={`${carsDesktopPopoverClassName} overflow-hidden`}
     >
       <CarsDriverAgePickerContent
         anyAgeLabel={t("carsSearch.driverAgeAnyAgeRange")}
@@ -1618,12 +1510,10 @@ function RentalDatesField({
     "{count}",
     String(rentalDayCount),
   );
-  const { popoverRef, style } = useDesktopPopoverPosition(
-    isOpen,
-    launcherRef,
-    620,
-    "below",
-  );
+  const { placement, popoverRef, style } = useCarsDesktopPopover({
+    open: isOpen, launcherRef, preferredWidth: 580, desiredHeight: 420,
+    align: "center",
+  });
 
   return (
     <div ref={wrapRef} className="relative overflow-visible">
@@ -1635,7 +1525,7 @@ function RentalDatesField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-rental-dates-dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors sm:h-10 md:text-[15px]"
+        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors sm:h-10 md:text-[15px]"
       >
         <Calendar
           className="h-4 w-4 shrink-0 text-slate-500"
@@ -1652,7 +1542,7 @@ function RentalDatesField({
               {rentalDaysLabel}
             </span>
           ) : null}
-        </span>
+        </span><ChevronDown className={`hidden h-4 w-4 shrink-0 text-slate-500 transition-transform sm:block ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
 
       {isOpen && typeof document !== "undefined"
@@ -1663,9 +1553,9 @@ function RentalDatesField({
               role="dialog"
               aria-label={t("carsSearch.rentalDatePickerAria")}
               data-cars-desktop-popover="dates"
-              data-placement="below"
+              data-placement={placement}
               style={style ?? undefined}
-              className="fixed z-[1100] hidden overflow-y-auto overscroll-contain rounded-[1.35rem] border border-slate-200/95 bg-white p-4 shadow-[0_30px_90px_-30px_rgba(15,23,42,0.52),0_16px_36px_-22px_rgba(15,23,42,0.34)] ring-1 ring-slate-950/[0.08] sm:block"
+              className={`${carsDesktopPopoverClassName} overflow-hidden p-4`}
             >
               <CarsRentalDatePickerContent
                 dropoffDate={dropoffDate}
@@ -1728,12 +1618,10 @@ function TimeRangeField({
     formatCarTimeLabel(pickupTime, intlLocale),
     formatCarTimeLabel(returnTime, intlLocale),
   );
-  const { popoverRef, style } = useDesktopPopoverPosition(
-    isOpen,
-    launcherRef,
-    448,
-    "below",
-  );
+  const { placement, popoverRef, style } = useCarsDesktopPopover({
+    open: isOpen, launcherRef, preferredWidth: 448, desiredHeight: 320,
+    align: "center",
+  });
 
   return (
     <div ref={wrapRef} className="relative overflow-visible">
@@ -1745,7 +1633,7 @@ function TimeRangeField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-time-range-dialog"
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
-        className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
+        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
       >
         <span className="flex min-w-0 items-center gap-2">
           <Clock
@@ -1770,9 +1658,9 @@ function TimeRangeField({
               role="dialog"
               aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
               data-cars-desktop-popover="times"
-              data-placement="below"
+              data-placement={placement}
               style={style ?? undefined}
-              className="fixed z-[990] hidden overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/95 bg-white p-3 shadow-[0_26px_70px_-28px_rgba(15,23,42,0.48),0_12px_28px_-20px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.08] sm:block"
+              className={`${carsDesktopPopoverClassName} overflow-hidden p-3`}
             >
               <CarsTimeRangePickerContent
                 formatTime={(time) => formatCarTimeLabel(time, intlLocale)}
