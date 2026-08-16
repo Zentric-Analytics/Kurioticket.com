@@ -4108,7 +4108,7 @@ export function SearchTabs({
 
           <HotelMobilePickerShell
             open={hotelGuestsRoomsOpen}
-            title={translate("guestsAndRooms") || "Guests and rooms"}
+            title={translate("hotelGuestsRooms.mobileTitle") || "Guests & Rooms"}
             titleId="homepage-hotel-mobile-guests-title"
             launcherRef={hotelGuestsRoomsMobileLauncherRef}
             onClose={() => setHotelGuestsRoomsOpen(false)}

@@ -1859,7 +1859,7 @@ export function HotelSearchBar({
 
       <HotelMobilePickerShell
         open={guestsRoomsOpen}
-        title={t("guestsAndRooms")}
+        title={t("hotelGuestsRooms.mobileTitle") || "Guests & Rooms"}
         titleId={`${idPrefix}-mobile-guests-title`}
         launcherRef={guestsRoomsMobileLauncherRef}
         onClose={() => setGuestsRoomsOpen(false)}
@@ -1878,7 +1878,7 @@ export function HotelSearchBar({
             </button>
         )}
       >
-        <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly}
+        <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileLandingPresentation ? "compact" : undefined}
           onAdultsChange={setDraftHotelAdults} onChildrenChange={setDraftHotelChildren} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly}
           strings={{ guests: t("guests"), adults: t("adults"), adultDescription: t("hotelGuests.adultDescription") || "Ages 18+", children: t("children"), childDescription: t("hotelGuests.childDescription") || "Ages 0–17", rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription") || "Separate rooms", petFriendly: t("petFriendly"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
       </HotelMobilePickerShell>
