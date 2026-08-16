@@ -148,12 +148,16 @@ test("every mobile homepage surface starts with the shared product tabs and no t
 });
 
 test("mobile homepage uses one top anchor and reserves the measured active-card height", () => {
-  assert.match(homepage, /top-\[calc\(100%-4rem\)\][^\n]*sm:hidden/);
+  // The approved product row is h-12 (3rem), so a 3rem hero overlap makes
+  // its bottom edge coincide with the hero boundary in every product state.
+  assert.match(homepage, /data-testid="mobile-homepage-hero"/);
+  assert.match(homepage, /top-\[calc\(100%-3rem\)\][^\n]*sm:hidden/);
+  assert.match(mobileProductTabs, /grid h-12 w-full/);
   assert.doesNotMatch(homepage, /bottom-\[-460px\]|pt-\[30\.5rem\]/);
   assert.match(homepage, /new ResizeObserver\(updateHeight\)/);
   assert.match(homepage, /observer\.observe\(card\)/);
   assert.match(homepage, /--mobile-search-card-height/);
-  assert.match(homepage, /pt-\[max\(1\.75rem,calc\(var\(--mobile-search-card-height\)_-_2\.25rem\)\)\]/);
+  assert.match(homepage, /pt-\[max\(1\.75rem,calc\(var\(--mobile-search-card-height\)_-_1\.25rem\)\)\]/);
   assert.doesNotMatch(homepage, /tab === ["'](?:hotels|cars|flights|deals)["'][\s\S]{0,120}top-/);
   assert.match(homepage, /bottom-\[-52px\][^\n]*hidden sm:block lg:bottom-\[-56px\]/);
 });

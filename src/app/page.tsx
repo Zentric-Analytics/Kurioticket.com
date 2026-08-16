@@ -1012,7 +1012,10 @@ export default function Home() {
       <AppHeader hideMobileSecondaryNavLinks />
 
       <main className="flex-1 bg-white">
-        <section className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
+        <section
+          data-testid="mobile-homepage-hero"
+          className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]"
+        >
           <div className="absolute inset-0">
             <Image
               src={homepageHeroImage.url}
@@ -1044,7 +1047,7 @@ export default function Home() {
           <div
             ref={mobileSearchCardRef}
             data-testid="mobile-homepage-search-card-wrapper"
-            className="page-shell absolute inset-x-0 top-[calc(100%-4rem)] z-30 sm:hidden"
+            className="page-shell absolute inset-x-0 top-[calc(100%-3rem)] z-30 sm:hidden"
           >
             <SearchTabs
               t={t as unknown as Record<string, string>}
@@ -1068,7 +1071,7 @@ export default function Home() {
         <section
           data-testid="homepage-content-after-search"
           style={mobileSearchClearanceStyle}
-          className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[max(1.75rem,calc(var(--mobile-search-card-height)_-_2.25rem))] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28"
+          className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[max(1.75rem,calc(var(--mobile-search-card-height)_-_1.25rem))] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28"
         >
           <div className="mx-auto h-px w-[calc(100%-2rem)] max-w-[1280px] bg-slate-200/80 sm:hidden" />
           <div className="page-shell pt-5 sm:pt-0">
