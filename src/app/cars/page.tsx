@@ -39,6 +39,8 @@ import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
   CarsTimeRangePickerContent,
+  MobileCarDriverAgePickerDialog,
+  MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
@@ -1290,74 +1292,9 @@ function CarsMobilePickerDialogs({
         onClose={onClose}
       />
 
-      <FlightMobilePickerShell
-        open={activeMobilePicker === "times"}
-        title={t("carsSearch.pickupReturnTimeLabel")}
-        titleId="cars-mobile-times-title"
-        launcherRef={timesLauncherRef}
-        onClose={onClose}
-        footer={(requestClose) => (
-          <button type="button" onClick={requestClose} className="focus-ring w-full rounded-full bg-[#004BB8] px-5 py-3 text-sm font-bold text-white">{t("done")}</button>
-        )}
-      >
-        <div className="grid gap-5">
-          {[
-            ["pickupTime", t("carsSearch.pickupTimeLabel"), values.pickupTime],
-            ["dropoffTime", t("carsSearch.returnTimeLabel"), values.dropoffTime],
-          ].map(([field, label, selectedTime]) => (
-            <section key={field} className="space-y-2">
-              <h3 className="px-1 text-xs font-bold uppercase tracking-wide text-slate-500">{label}</h3>
-              <div className={timeListClass}>
-                {timeOptions.map((time) => (
-                  <button
-                    key={`${field}-${time}`}
-                    type="button"
-                    onClick={() => updateValue(field as "pickupTime" | "dropoffTime", time)}
-                    className={`focus-ring flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-bold ${
-                      selectedTime === time ? "bg-[#004BB8] text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
-                    }`}
-                  >
-                    {formatCarTimeLabel(time, intlLocale)}
-                    {selectedTime === time ? <span aria-hidden="true">✓</span> : null}
-                  </button>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </FlightMobilePickerShell>
+      <MobileCarTimePickerDialog open={activeMobilePicker === "times"} launcherRef={timesLauncherRef} onClose={onClose} pickupTime={values.pickupTime} returnTime={values.dropoffTime} onCommit={(pickupTime, dropoffTime) => { updateValue("pickupTime", pickupTime); updateValue("dropoffTime", dropoffTime); }} formatTime={(time) => formatCarTimeLabel(time, intlLocale)} title={t("carsSearch.pickupReturnTimeLabel")} intro={t("carsSearch.mobileTimeIntro") || "Select when you’ll pick up and return your car."} pickupLabel={t("carsSearch.pickupTimeLabel")} returnLabel={t("carsSearch.returnTimeLabel")} doneLabel={t("done")} />
 
-      <FlightMobilePickerShell
-        open={activeMobilePicker === "driverAge"}
-        title={t("carsSearch.driverAgeLabel")}
-        titleId="cars-mobile-driver-age-title"
-        launcherRef={driverAgeLauncherRef}
-        onClose={onClose}
-        footer={(requestClose) => (
-          <button type="button" onClick={requestClose} className="focus-ring w-full rounded-full bg-[#004BB8] px-5 py-3 text-sm font-bold text-white">{t("done")}</button>
-        )}
-      >
-        <div className="grid gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
-          {driverAgeOptions.map((age) => {
-            const label = age === defaultDriverAge ? t("carsSearch.driverAgeAnyAgeRange") : getDriverAgeOptionLabel(age);
-            const selected = values.driverAge === age;
-
-            return (
-              <button
-                key={age}
-                type="button"
-                onClick={() => updateValue("driverAge", age)}
-                className={`focus-ring flex min-h-12 items-center justify-between rounded-2xl px-4 text-start text-sm font-bold ${
-                  selected ? "bg-[#004BB8] text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
-                }`}
-              >
-                {label}
-                {selected ? <span aria-hidden="true">✓</span> : null}
-              </button>
-            );
-          })}
-        </div>
-      </FlightMobilePickerShell>
+      <MobileCarDriverAgePickerDialog open={activeMobilePicker === "driverAge"} launcherRef={driverAgeLauncherRef} onClose={onClose} driverAge={values.driverAge} onCommit={(age) => updateValue("driverAge", age)} title={t("carsSearch.driverAgeLabel")} intro={t("carsSearch.mobileDriverAgeIntro") || "Driver must be between 18 and 70 years old."} anyAgeLabel={t("carsSearch.driverAgeAnyAgeRange")} formatAge={getDriverAgeOptionLabel} doneLabel={t("done")} />
     </>
   );
 }

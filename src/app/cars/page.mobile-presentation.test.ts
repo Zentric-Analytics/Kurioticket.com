@@ -92,7 +92,7 @@ test("mobile Driver Age leads its dynamic value with UserRound and retains its l
   assert.match(searchBarSource, /\{isSubmitting \? t\("searchingCars"\) : t\("searchCars"\)\}/);
 });
 
-test("Driver Age icon is mobile-only and picker option rows stay unchanged", () => {
+test("Driver Age icon is mobile-only and mobile picker uses the shared draft dialog", () => {
   const driverAgeFieldSource = searchBarSource.slice(
     searchBarSource.indexOf('label={t("carsSearch.driverAgeLabel")}'),
     searchBarSource.indexOf('type="submit"'),
@@ -108,7 +108,8 @@ test("Driver Age icon is mobile-only and picker option rows stay unchanged", () 
   assert.match(desktopLauncherSource, /className="hidden h-7[\s\S]*?sm:flex/);
   assert.match(desktopLauncherSource, /ChevronDown/);
   assert.doesNotMatch(desktopLauncherSource, /UserRound/);
-  assert.match(driverAgePickerSource, /driverAgeOptions\.map/);
+  assert.match(searchBarSource, /<MobileCarDriverAgePickerDialog/);
+  assert.match(driverAgePickerSource, /onCommit=\{\(age\) => updateValue\("driverAge", age\)\}/);
   assert.doesNotMatch(driverAgePickerSource, /UserRound/);
 });
 

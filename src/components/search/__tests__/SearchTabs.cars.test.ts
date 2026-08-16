@@ -104,8 +104,9 @@ test("homepage Cars picker source contracts use the shared experiences", () => {
 test("mobile homepage Cars launches every picker in the shared full-screen shell", () => {
   assert.match(carsBranch, /mobilePresentation=\{mobileHomepage \? "shell" : "inline"\}/);
   assert.match(carsBranch, /mobileHomepage && tab === "cars"/);
-  assert.ok((carsBranch.match(/<FlightMobilePickerShell/g) ?? []).length >= 2);
   assert.match(carsBranch, /<MobileCarLocationPicker/);
+  assert.match(carsBranch, /<MobileCarTimePickerDialog/);
+  assert.match(carsBranch, /<MobileCarDriverAgePickerDialog/);
   assert.match(carsBranch, /\(\["pickup", "dropoff"\] as const\)\.map/);
   assert.match(carsBranch, /<MobileCarLocationPicker/);
   assert.match(carsBranch, /<MobileDatePickerDialog/);
@@ -119,12 +120,12 @@ test("mobile Cars fields stay launchers without inline panels or persistent open
   assert.match(returnLocationField, /carsDropoffLauncherRef[\s\S]*sm:hidden/);
 });
 
-test("mobile time and age selection use small check indicators instead of filled rows", () => {
+test("mobile time and age selection use pale connected rows and filled check indicators", () => {
   const pickerSource = readFileSync("src/components/search/CarsPickerContent.tsx", "utf8");
   assert.match(pickerSource, /data-selected-time-indicator/);
   assert.match(pickerSource, /data-selected-age-indicator/);
-  assert.match(pickerSource, /mobileShell \? "font-semibold text-slate-950"/);
-  assert.match(pickerSource, /mobileShell \? "font-semibold text-\[#142033\]"/);
+  assert.match(pickerSource, /bg-\[#eff6ff\] font-bold text-\[#075EE8\]/);
+  assert.match(pickerSource, /selected \? "bg-\[#075EE8\]" : "border border-slate-400"/);
 });
 
 test("homepage Cars calendar preserves range selection and localized controls", () => {

@@ -9,10 +9,10 @@ const carsPage = readFileSync("src/app/cars/page.tsx", "utf8");
 test("shared Cars picker content is consumed by both search surfaces", () => {
   assert.ok(homepage.includes("<CarsRentalDatePickerContent"));
   assert.ok(carsPage.includes("<CarsRentalDatePickerContent"));
-  assert.ok(homepage.includes("<CarsTimeRangePickerContent"));
-  assert.ok(carsPage.includes("<CarsTimeRangePickerContent"));
-  assert.ok(homepage.includes("<CarsDriverAgePickerContent"));
-  assert.ok(carsPage.includes("<CarsDriverAgePickerContent"));
+  assert.ok(homepage.includes("<MobileCarTimePickerDialog"));
+  assert.ok(carsPage.includes("<MobileCarTimePickerDialog"));
+  assert.ok(homepage.includes("<MobileCarDriverAgePickerDialog"));
+  assert.ok(carsPage.includes("<MobileCarDriverAgePickerDialog"));
 });
 
 test("shared calendar exposes range state and disables past dates", () => {
@@ -38,7 +38,8 @@ test("shared age content provides compact selection and keyboard semantics", () 
   for (const key of ["ArrowDown", "ArrowUp", "Home", "End", "Enter"]) assert.ok(shared.includes(key));
   assert.match(shared, /role="option" aria-selected=\{selected\}/);
   assert.match(shared, /data-selected-age-indicator/);
-  assert.match(shared, /bg-\[#EAF2FB\]/);
+  assert.match(shared, /border border-slate-400/);
+  assert.match(shared, /rounded-full bg-\[#075EE8\]/);
 });
 
 test("dedicated Cars desktop time popup has no native selects and stable relationships", () => {
@@ -63,11 +64,12 @@ test("mobile calendar mirrors the twelve-month touch presentation", () => {
 });
 
 test("homepage mobile time picker drafts both values and commits only from Done", () => {
-  assert.match(homepage, /setCarsDraftTimes\(\{\s*pickupTime: carsValues\.pickupTime,\s*dropoffTime: carsValues\.dropoffTime/);
-  assert.match(homepage, /pickupTime=\{carsDraftTimes\.pickupTime\}/);
-  assert.match(homepage, /returnTime=\{carsDraftTimes\.dropoffTime\}/);
-  assert.match(homepage, /updateCarsValue\("pickupTime", carsDraftTimes\.pickupTime\)/);
-  assert.match(homepage, /updateCarsValue\("dropoffTime", carsDraftTimes\.dropoffTime\)/);
+  assert.match(shared, /const \[draftPickup, setDraftPickup\]/);
+  assert.match(shared, /const \[draftAge, setDraftAge\]/);
+  assert.match(homepage, /pickupTime=\{carsValues\.pickupTime\}/);
+  assert.match(homepage, /returnTime=\{carsValues\.dropoffTime\}/);
+  assert.match(homepage, /onCommit=\{\(pickupTime, dropoffTime\)/);
+  assert.match(homepage, /onCommit=\{\(age\) => updateCarsValue\("driverAge", age\)\}/);
 });
 
 test("shared shell locks the document while allowing picker touch panning", () => {
@@ -80,8 +82,8 @@ test("shared shell locks the document while allowing picker touch panning", () =
   assert.match(shell, /contentLayout\?: "scroll" \| "contained"/);
   assert.match(shell, /contentLayout === "scroll"/);
   assert.match(shell, /"flex touch-auto flex-col overflow-y-hidden"/);
-  assert.match(homepage, /contentLayout="contained"/);
-  assert.match(homepage, /flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden/);
+  assert.match(shared, /contentLayout="contained"/);
+  assert.match(shared, /flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden/);
 });
 
 test("mobile shell interactions are not closed by the desktop outside-pointer listener", () => {

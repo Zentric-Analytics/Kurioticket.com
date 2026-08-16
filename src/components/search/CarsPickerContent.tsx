@@ -6,8 +6,10 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { Check, Clock3 } from "lucide-react";
 import { MobileDateRangePicker } from "@/components/search/MobileDateRangePicker";
+import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import type { RefObject } from "react";
 
 import {
   addMonths,
@@ -131,9 +133,9 @@ export function CarsTimeRangePickerContent({ formatTime, onPickupTimeChange, onR
   return <div className={mobileShell ? "grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-hidden" : "grid grid-cols-2 gap-3"} data-cars-time-columns>
     {([ ["pickup", pickupLabel, pickupTime, onPickupTimeChange, pickupListRef], ["return", returnLabel, returnTime, onReturnTimeChange, returnListRef] ] as const).map(([kind, label, selectedTime, onChange, listRef]) =>
       <div key={kind} role="group" aria-label={label} className={mobileShell ? "flex min-h-0 flex-col" : undefined}>
-        <h3 className="mb-2 shrink-0 text-sm font-bold text-slate-700">{label}</h3>
-        <div ref={listRef} role="listbox" aria-label={label} className={mobileShell ? "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]" : "max-h-56 overflow-y-auto overscroll-contain"} data-cars-time-list={kind}>
-          {timeOptions.map((time) => <button key={`${kind}-${time}`} data-time-value={time} type="button" role="option" aria-selected={selectedTime === time} onClick={() => onChange(time)} className={`focus-ring flex min-h-12 w-full items-center justify-between rounded-lg px-3 text-start text-[15px] ${selectedTime === time ? (mobileShell ? "font-semibold text-slate-950" : "bg-[#004BB8] font-bold text-white") : "text-slate-700 hover:bg-slate-100"}`}><span>{formatTime(time)}</span>{mobileShell && selectedTime === time ? <CheckCircle2 data-selected-time-indicator className="h-4 w-4 text-[#004BB8]" aria-hidden="true" /> : null}</button>)}
+        <h3 className="mb-3 flex shrink-0 items-center gap-2 text-[15px] font-bold text-slate-950">{mobileShell ? <Clock3 aria-hidden="true" className="h-[18px] w-[18px] text-[#075EE8]" /> : null}{label}</h3>
+        <div ref={listRef} role="listbox" aria-label={label} className={mobileShell ? "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white [-webkit-overflow-scrolling:touch]" : "max-h-56 overflow-y-auto overscroll-contain"} data-cars-time-list={kind}>
+          {timeOptions.map((time) => <button key={`${kind}-${time}`} data-time-value={time} type="button" role="option" aria-selected={selectedTime === time} onClick={() => onChange(time)} className={`focus-ring flex min-h-12 w-full items-center justify-between border-b border-slate-200 px-3 text-start text-[15px] last:border-b-0 ${selectedTime === time ? (mobileShell ? "bg-[#eff6ff] font-bold text-[#075EE8]" : "bg-[#004BB8] font-bold text-white") : "text-slate-800 hover:bg-slate-50"}`}><span>{formatTime(time)}</span>{mobileShell && selectedTime === time ? <span data-selected-time-indicator className="flex h-6 w-6 items-center justify-center rounded-full bg-[#075EE8]" aria-hidden="true"><Check className="h-4 w-4 text-white" /></span> : null}</button>)}
         </div>
       </div>)}
   </div>;
@@ -165,7 +167,20 @@ export function CarsDriverAgePickerContent({ anyAgeLabel, formatAge = (age) => a
     else if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(driverAgeOptions[focusedIndex]); return; }
     if (next === null) return; event.preventDefault(); setFocusedIndex(next); optionRefs.current[next]?.focus({ preventScroll: true }); reveal(next);
   };
-  return <div ref={listRef} role="listbox" aria-label={anyAgeLabel} onKeyDown={onKeyDown} className={mobileShell ? "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-1.5 [-webkit-overflow-scrolling:touch]" : "max-h-[360px] overflow-y-auto overscroll-contain p-1.5"} data-cars-age-list>
-    {driverAgeOptions.map((age, index) => { const selected = selectedAge === age; return <button key={age} ref={(node) => { optionRefs.current[index] = node; }} type="button" role="option" aria-selected={selected} tabIndex={index === focusedIndex ? 0 : -1} onFocus={() => setFocusedIndex(index)} onClick={() => onSelect(age)} className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-lg px-3.5 text-start text-[15px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${selected ? (mobileShell ? "font-semibold text-[#142033]" : "bg-[#EAF2FB] font-semibold text-[#142033]") : "text-[#263A55] hover:bg-slate-50"}`}><span>{age === defaultDriverAge ? anyAgeLabel : formatAge(age)}</span><span className="flex w-5 shrink-0 justify-center">{selected ? <CheckCircle2 data-selected-age-indicator className="h-[18px] w-[18px] text-[#004BB8]" aria-hidden="true" /> : null}</span></button>; })}
+  return <div ref={listRef} role="listbox" aria-label={anyAgeLabel} onKeyDown={onKeyDown} className={mobileShell ? "min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white [-webkit-overflow-scrolling:touch]" : "max-h-[360px] overflow-y-auto overscroll-contain p-1.5"} data-cars-age-list>
+    {driverAgeOptions.map((age, index) => { const selected = selectedAge === age; return <button key={age} ref={(node) => { optionRefs.current[index] = node; }} type="button" role="option" aria-selected={selected} tabIndex={index === focusedIndex ? 0 : -1} onFocus={() => setFocusedIndex(index)} onClick={() => onSelect(age)} className={`flex min-h-14 w-full items-center justify-between gap-3 border-b border-slate-200 px-4 text-start text-[15px] font-medium transition-colors last:border-b-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 ${selected ? (mobileShell ? "font-semibold text-[#142033]" : "bg-[#EAF2FB] font-semibold text-[#142033]") : "text-[#263A55] hover:bg-slate-50"}`}><span>{age === defaultDriverAge ? <span><span className="block">{anyAgeLabel}</span><span className="mt-1 block text-xs font-medium text-slate-500">Show all available cars</span></span> : formatAge(age)}</span><span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${selected ? "bg-[#075EE8]" : "border border-slate-400"}`}>{selected ? <Check data-selected-age-indicator className="h-4 w-4 text-white" aria-hidden="true" /> : null}</span></button>; })}
   </div>;
+}
+
+type MobileDialogBase = { open: boolean; launcherRef?: RefObject<HTMLElement | null>; onClose: () => void; doneLabel: string };
+export function MobileCarTimePickerDialog({ open, launcherRef, onClose, pickupTime, returnTime, onCommit, formatTime, title, intro, pickupLabel, returnLabel, doneLabel }: MobileDialogBase & { pickupTime: string; returnTime: string; onCommit: (pickup: string, returned: string) => void; formatTime: (time: string) => string; title: string; intro: string; pickupLabel: string; returnLabel: string }) {
+  const [draftPickup, setDraftPickup] = useState(pickupTime), [draftReturn, setDraftReturn] = useState(returnTime);
+  useEffect(() => { if (open) { setDraftPickup(pickupTime); setDraftReturn(returnTime); } }, [open, pickupTime, returnTime]);
+  return <FlightMobilePickerShell open={open} title={title} titleId="cars-mobile-time-title" launcherRef={launcherRef} onClose={onClose} showCancelAction={false} showBackLabel contentLayout="contained" contentClassName="bg-[#FCFDFE] px-4 py-5" footer={<button type="button" onClick={() => { onCommit(draftPickup, draftReturn); onClose(); }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white">{doneLabel}</button>}><div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden"><p className="mb-5 text-center text-sm font-medium text-slate-600">{intro}</p><CarsTimeRangePickerContent mobileShell formatTime={formatTime} pickupLabel={pickupLabel} pickupTime={draftPickup} returnLabel={returnLabel} returnTime={draftReturn} onPickupTimeChange={setDraftPickup} onReturnTimeChange={setDraftReturn} /></div></FlightMobilePickerShell>;
+}
+
+export function MobileCarDriverAgePickerDialog({ open, launcherRef, onClose, driverAge, onCommit, title, intro, anyAgeLabel, doneLabel, formatAge }: MobileDialogBase & { driverAge: string; onCommit: (age: string) => void; title: string; intro: string; anyAgeLabel: string; formatAge?: (age: string) => string }) {
+  const [draftAge, setDraftAge] = useState(driverAge);
+  useEffect(() => { if (open) setDraftAge(driverAge); }, [open, driverAge]);
+  return <FlightMobilePickerShell open={open} title={title} titleId="cars-mobile-driver-age-title" launcherRef={launcherRef} onClose={onClose} showCancelAction={false} showBackLabel={false} contentLayout="contained" contentClassName="bg-[#FCFDFE] px-4 py-5" footer={<button type="button" onClick={() => { onCommit(draftAge); onClose(); }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white">{doneLabel}</button>}><div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden"><p className="mb-5 text-sm font-medium text-slate-600">{intro}</p><CarsDriverAgePickerContent mobileShell anyAgeLabel={anyAgeLabel} formatAge={formatAge} selectedAge={draftAge} onSelect={setDraftAge} /></div></FlightMobilePickerShell>;
 }

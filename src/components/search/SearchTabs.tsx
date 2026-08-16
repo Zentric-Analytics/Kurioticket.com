@@ -53,6 +53,8 @@ import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
   CarsTimeRangePickerContent,
+  MobileCarDriverAgePickerDialog,
+  MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -4218,12 +4220,8 @@ export function SearchTabs({
             }}
             onClose={() => setCarsOpenPicker(null)}
           />
-          <FlightMobilePickerShell open={carsOpenPicker === "times"} title={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} titleId="cars-times-mobile-title" dialogId="cars-times-mobile-dialog" onClose={() => setCarsOpenPicker(null)} contentLayout="contained" contentClassName="bg-white" footer={<button type="button" onClick={() => { updateCarsValue("pickupTime", carsDraftTimes.pickupTime); updateCarsValue("dropoffTime", carsDraftTimes.dropoffTime); setCarsOpenPicker(null); }} className="focus-ring w-full rounded-lg bg-[#004BB8] px-5 py-3 text-sm font-semibold text-white">{translate("done") || "Done"}</button>}>
-            <div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden"><CarsTimeRangePickerContent mobileShell formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsDraftTimes.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsDraftTimes.dropoffTime} onPickupTimeChange={(pickupTime) => setCarsDraftTimes((current) => ({ ...current, pickupTime }))} onReturnTimeChange={(dropoffTime) => setCarsDraftTimes((current) => ({ ...current, dropoffTime }))} /></div>
-          </FlightMobilePickerShell>
-          <FlightMobilePickerShell open={carsOpenPicker === "age"} title={translate("carsSearch.driverAgeLabel") || "Driver age"} titleId="cars-age-mobile-title" dialogId="cars-age-mobile-dialog" onClose={() => setCarsOpenPicker(null)} contentLayout="contained" contentClassName="bg-white px-2">
-            <div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden"><CarsDriverAgePickerContent mobileShell anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} /></div>
-          </FlightMobilePickerShell>
+          <MobileCarTimePickerDialog open={carsOpenPicker === "times"} onClose={() => setCarsOpenPicker(null)} pickupTime={carsValues.pickupTime} returnTime={carsValues.dropoffTime} onCommit={(pickupTime, dropoffTime) => { updateCarsValue("pickupTime", pickupTime); updateCarsValue("dropoffTime", dropoffTime); }} formatTime={formatCarsTime} title={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} intro={translate("carsSearch.mobileTimeIntro") || "Select when you’ll pick up and return your car."} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} doneLabel={translate("done") || "Done"} />
+          <MobileCarDriverAgePickerDialog open={carsOpenPicker === "age"} onClose={() => setCarsOpenPicker(null)} driverAge={carsValues.driverAge} onCommit={(age) => updateCarsValue("driverAge", age)} title={translate("carsSearch.driverAgeLabel") || "Driver age"} intro={translate("carsSearch.mobileDriverAgeIntro") || "Driver must be between 18 and 70 years old."} anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age 18–70"} doneLabel={translate("done") || "Done"} />
         </>
       ) : null}
       </section>
