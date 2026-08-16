@@ -14,12 +14,20 @@ export function readRecentCarLocations(): CarLocationSuggestion[] {
 export function saveRecentCarLocation(location: CarLocationSuggestion) {
   if (typeof window === "undefined" || location.kind === "custom") return;
   const next = [location, ...readRecentCarLocations().filter((item) => item.id !== location.id)].slice(0, MAX_RECENTS);
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Recent-location persistence is best effort and must not block a search.
+  }
 }
 
 export function removeRecentCarLocation(id: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(readRecentCarLocations().filter((item) => item.id !== id)));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(readRecentCarLocations().filter((item) => item.id !== id)));
+  } catch {
+    // Keep the picker usable when storage is unavailable or over quota.
+  }
 }
 
 function isLocation(value: unknown): value is CarLocationSuggestion {

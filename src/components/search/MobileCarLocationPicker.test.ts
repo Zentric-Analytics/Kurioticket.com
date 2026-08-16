@@ -11,6 +11,7 @@ const packages = readFileSync("src/components/search/DealsSearchForm.tsx", "utf8
 test("shared Cars picker matches approved mobile structure", () => {
   assert.match(picker, /showCancelAction=\{false\}[\s\S]*showBackLabel=\{false\}/);
   assert.match(picker, /mode === "pickup"[\s\S]*Pickup location[\s\S]*Return location/);
+  assert.match(picker, /carsResults\.returnLocationLabel/);
   assert.match(picker, /<Search aria-hidden="true"/);
   assert.match(picker, /Airport, city, or address/);
   assert.match(picker, /recentSearches\.title[\s\S]*carsSearch\.popularLocations/);
@@ -23,6 +24,8 @@ test("Cars recents are dedicated, capped, deduped, and removable", () => {
   assert.match(recents, /MAX_RECENTS = 3/);
   assert.match(recents, /filter\(\(item\) => item\.id !== location\.id\)/);
   assert.match(recents, /removeRecentCarLocation/);
+  assert.ok((recents.match(/localStorage\.setItem/g) ?? []).length === 2);
+  assert.ok((recents.match(/try \{/g) ?? []).length >= 3);
 });
 
 test("homepage, standalone Cars, and Packages reuse the shared picker", () => {
