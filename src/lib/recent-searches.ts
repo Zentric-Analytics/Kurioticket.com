@@ -1,3 +1,5 @@
+import { getAirportByCode, type AirportOption } from "@/data/airports";
+
 export type RecentSearchType = "flight" | "hotel";
 
 export type RecentFlightParams = {
@@ -32,6 +34,42 @@ export type RecentSearchEntry = {
   href: string;
   params: RecentFlightParams | RecentHotelParams;
 };
+
+const airportCodeFromRecentValue = (value: unknown) => {
+  if (typeof value !== "string") return "";
+  const normalized = value.trim().toUpperCase();
+  const exact = normalized.match(/^[A-Z]{3}$/)?.[0];
+  if (exact) return exact;
+  return normalized.match(/\(([A-Z]{3})\)\s*$/)?.[1] ?? "";
+};
+
+export function deriveRecentAirports(
+  entries: readonly RecentSearchEntry[],
+  max = 3,
+): AirportOption[] {
+  if (max <= 0) return [];
+  const seen = new Set<string>();
+  const result: AirportOption[] = [];
+  const ordered = [...entries].sort(
+    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+  );
+
+  for (const entry of ordered) {
+    if (entry.type !== "flight") continue;
+    const params = entry.params as RecentFlightParams;
+    for (const value of [params.origin, params.destination]) {
+      const code = airportCodeFromRecentValue(value);
+      if (!code || seen.has(code)) continue;
+      const airport = getAirportByCode(code);
+      if (!airport) continue;
+      seen.add(code);
+      result.push(airport);
+      if (result.length >= max) return result;
+    }
+  }
+
+  return result;
+}
 
 const STORAGE_KEY = "kurioticket_recent_searches_v1";
 

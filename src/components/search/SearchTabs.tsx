@@ -40,6 +40,7 @@ import { PackagesIcon } from "@/components/icons/PackagesIcon";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { DealsSearchForm } from "@/components/search/DealsSearchForm";
@@ -557,12 +558,8 @@ export function SearchTabs({
     useRef<HTMLInputElement>(null);
   const fromMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
-  const fromMobilePickerInputRef =
-    useRef<HTMLInputElement>(null);
   const toMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
-  const toMobilePickerInputRef =
-    useRef<HTMLInputElement>(null);
   const dateWrapRef =
     useRef<HTMLDivElement>(null);
   const flightDatesLauncherRef =
@@ -1015,20 +1012,6 @@ export function SearchTabs({
 
     return () => controller.abort();
   }, []);
-
-  useEffect(() => {
-    if (!activeMobileAirportPicker) return;
-
-    const inputRef = activeMobileAirportPicker === "origin"
-      ? fromMobilePickerInputRef
-      : toMobilePickerInputRef;
-    const focusId = window.setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 80);
-
-    return () => window.clearTimeout(focusId);
-  }, [activeMobileAirportPicker]);
 
   useEffect(() => {
     if (!canApplyDefaultOrigin(fromState)) return;
@@ -2433,148 +2416,40 @@ export function SearchTabs({
 
 
   const renderMobileAirportPicker = ({
+    field,
     open,
     title,
     inputId,
     value,
-    suggestions,
-    isLoading,
     launcherRef,
-    inputRef,
-    onChange,
     onClear,
     onSelect,
     onClose,
   }: {
+    field: "origin" | "destination";
     open: boolean;
     title: string;
     inputId: string;
     value: string;
-    suggestions: AirportOption[];
-    isLoading: boolean;
     launcherRef: typeof fromMobileLauncherRef;
-    inputRef: typeof fromMobilePickerInputRef;
-    onChange: (value: string) => void;
     onClear: () => void;
     onSelect: (option: AirportOption) => void;
     onClose: () => void;
   }) => {
-    if (!open) return null;
-
-    const titleId = `${inputId}-title`;
-    const query = value.trim();
-    const focusInput = () => {
-      window.requestAnimationFrame(() => inputRef.current?.focus());
-    };
-
     return (
-      <FlightMobilePickerShell
+      <MobileAirportPicker
         open={open}
+        field={field}
         title={title}
-        titleId={titleId}
+        inputId={inputId}
+        value={value}
+        selectedCode={field === "origin" ? fromCode : toCode}
         launcherRef={launcherRef}
         onClose={onClose}
-        contentClassName="bg-slate-50 px-4 py-5"
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                onClear();
-                focusInput();
-              }}
-              className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-            >
-              {t.clear || "Clear"}
-            </button>
-            <button
-              type="button"
-              onClick={requestClose}
-              className={mobileDoneButtonClassName}
-            >
-              {t.done || "Done"}
-            </button>
-          </div>
-        )}
-      >
-        {(requestClose) => (
-        <div className="mx-auto w-full max-w-xl space-y-5">
-          <div className="space-y-2">
-            <label className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500" htmlFor={inputId}>
-              {translate("searchAirportsAndCities")}
-            </label>
-            <div className="relative">
-              <input
-                ref={inputRef}
-                id={inputId}
-                type="text"
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-                placeholder={translate("cityAirportOrCode")}
-                autoComplete="off"
-                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/25"
-              />
-              {value.trim() ? (
-                <button
-                  type="button"
-                  aria-label={title === (t.chooseOrigin || "Choose origin") ? (t.clearOrigin || "Clear origin") : (t.clearDestination || "Clear destination")}
-                  onClick={() => {
-                    onClear();
-                    focusInput();
-                  }}
-                  className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            {query.length < 2 ? (
-              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                {translate("startTypingCityAirportOrCode")}
-              </p>
-            ) : isLoading ? (
-              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                {translate("searchingAirportsAndCities")}
-              </p>
-            ) : suggestions.length ? (
-              suggestions.map((option) => (
-                <button
-                  key={`${option.code}-${option.airport}-${inputId}`}
-                  type="button"
-                  onClick={() => {
-                    onSelect(option);
-                    requestClose();
-                  }}
-                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true">
-                    <Plane className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
-                      {getLocalizedCityName(option.city, locale)}
-                    </span>
-                    <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
-                      {option.airport}
-                    </span>
-                  </span>
-                  <span className="shrink-0 ps-2 text-end text-sm font-extrabold tracking-[0.12em] text-slate-700">
-                    {option.code}
-                  </span>
-                </button>
-              ))
-            ) : (
-              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                {translate("noMatchingAirportsOrCities")}
-              </p>
-            )}
-          </div>
-        </div>
-        )}
-      </FlightMobilePickerShell>
+        locale={locale}
+        labels={t}
+        onCommit={(option) => (option ? onSelect(option) : onClear())}
+      />
     );
   };
 
@@ -3218,22 +3093,12 @@ export function SearchTabs({
         </form>
 
         {renderMobileAirportPicker({
+          field: "origin",
           open: activeMobileAirportPicker === "origin",
           title: t.chooseOrigin || "Choose origin",
           inputId: "homepage-origin-picker-search",
           value: from,
-          suggestions: fromSuggestions,
-          isLoading: isFromLoadingVisible,
           launcherRef: fromMobileLauncherRef,
-          inputRef: fromMobilePickerInputRef,
-          onChange: (nextValue) => {
-            setFromState((current) => markOriginManualInput(current, nextValue));
-            if (nextValue.trim().length < 2) {
-              setFromLoading(false);
-              setFromLiveSuggestions([]);
-            }
-            setFromHighlight(0);
-          },
           onClear: onClearOrigin,
           onSelect: (option) => {
             setFromState((current) =>
@@ -3247,23 +3112,12 @@ export function SearchTabs({
           onClose: () => setActiveMobileAirportPicker(null),
         })}
         {renderMobileAirportPicker({
+          field: "destination",
           open: activeMobileAirportPicker === "destination",
           title: t.chooseDestination || "Choose destination",
           inputId: "homepage-destination-picker-search",
           value: to,
-          suggestions: toSuggestions,
-          isLoading: isToLoadingVisible,
           launcherRef: toMobileLauncherRef,
-          inputRef: toMobilePickerInputRef,
-          onChange: (nextValue) => {
-            setTo(nextValue);
-            if (nextValue.trim().length < 2) {
-              setToLoading(false);
-              setToLiveSuggestions([]);
-            }
-            setToCode("");
-            setToHighlight(0);
-          },
           onClear: onClearDestination,
           onSelect: (option) => {
             setTo(formatAirportLabel(option, locale));
@@ -3940,22 +3794,12 @@ export function SearchTabs({
           ) : null}
 
           {renderMobileAirportPicker({
+            field: "origin",
             open: activeMobileAirportPicker === "origin",
             title: t.chooseOrigin || "Choose origin",
             inputId: "homepage-origin-picker-search",
             value: from,
-            suggestions: fromSuggestions,
-            isLoading: isFromLoadingVisible,
             launcherRef: fromMobileLauncherRef,
-            inputRef: fromMobilePickerInputRef,
-            onChange: (nextValue) => {
-              setFromState((current) => markOriginManualInput(current, nextValue));
-              if (nextValue.trim().length < 2) {
-                setFromLoading(false);
-                setFromLiveSuggestions([]);
-              }
-              setFromHighlight(0);
-            },
             onClear: () => {
               setFromState((current) => markOriginManualInput(current, ""));
               setFromLoading(false);
@@ -3968,23 +3812,12 @@ export function SearchTabs({
             onClose: () => setActiveMobileAirportPicker(null),
           })}
           {renderMobileAirportPicker({
+            field: "destination",
             open: activeMobileAirportPicker === "destination",
             title: t.chooseDestination || "Choose destination",
             inputId: "homepage-destination-picker-search",
             value: to,
-            suggestions: toSuggestions,
-            isLoading: isToLoadingVisible,
             launcherRef: toMobileLauncherRef,
-            inputRef: toMobilePickerInputRef,
-            onChange: (nextValue) => {
-              setTo(nextValue);
-              if (nextValue.trim().length < 2) {
-                setToLoading(false);
-                setToLiveSuggestions([]);
-              }
-              setToCode("");
-              setToHighlight(0);
-            },
             onClear: () => {
               setTo("");
               setToLoading(false);

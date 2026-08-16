@@ -355,20 +355,20 @@ export function FlightMobilePickerShell({
           className,
         )}
       >
-        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-3">
-          <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-3">
+        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4">
+          <div className="mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2">
             <button
               type="button"
               onClick={requestClose}
               disabled={isClosing}
-              className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60"
+              className="focus-ring inline-flex min-h-10 items-center justify-self-start gap-2 rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60"
             >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
               {t.back}
             </button>
             <h2
               id={titleId}
-              className="min-w-0 truncate text-base font-bold text-slate-950"
+              className="max-w-[52vw] truncate text-[17px] font-bold text-slate-950"
             >
               {title}
             </h2>
@@ -376,7 +376,7 @@ export function FlightMobilePickerShell({
               type="button"
               onClick={requestClose}
               disabled={isClosing}
-              className="focus-ring min-h-10 rounded-full px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:pointer-events-none disabled:opacity-60"
+              className="focus-ring min-h-10 justify-self-end rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:pointer-events-none disabled:opacity-60"
             >
               {t.cancel}
             </button>

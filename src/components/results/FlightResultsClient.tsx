@@ -1095,12 +1095,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const [originSuggestions, setOriginSuggestions] = useState<AirportOption[]>(
     [],
   );
-  const [originSuggestionsLoading, setOriginSuggestionsLoading] =
+  const [, setOriginSuggestionsLoading] =
     useState(false);
   const [destinationSuggestions, setDestinationSuggestions] = useState<
     AirportOption[]
   >([]);
-  const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] =
+  const [, setDestinationSuggestionsLoading] =
     useState(false);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
   const { status: sessionStatus } = useSession();
@@ -7100,74 +7100,43 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         <>
           <MobileAirportPicker
             open={activeMobileAirportPicker === "origin"}
+            field="origin"
             title={t("chooseOrigin")}
             inputId="results-mobile-origin-picker-search"
             value={originInput}
-            suggestions={originSuggestions}
-            isLoading={originSuggestionsLoading}
+            selectedCode={originCode}
             launcherRef={mobileOriginLauncherRef}
             labels={airportPickerLabels}
             locale={locale}
-            onChange={(nextValue) => {
-              setOriginInput(nextValue);
-              setOriginCode("");
-              if (nextValue.trim().length < 2) {
-                setOriginSuggestions([]);
-                setOriginSuggestionsLoading(false);
-              }
-            }}
-            onClear={() => {
-              setOriginInput("");
-              setOriginCode("");
+            onCommit={(option) => {
+              setOriginInput(option?.code ?? "");
+              setOriginCode(option?.code ?? "");
               setOriginSuggestions([]);
               setOriginSuggestionsLoading(false);
-            }}
-            onSelect={(option, requestClose) => {
-              setOriginInput(option.code);
-              setOriginCode(option.code);
-              if (!destinationCode && !destinationInput.trim()) {
-                setActiveMobileAirportPicker("destination");
-                return;
-              }
-              requestClose();
             }}
             onClose={closeMobileAirportPicker}
           />
           <MobileAirportPicker
             open={activeMobileAirportPicker === "destination"}
+            field="destination"
             title={t("chooseDestination")}
             inputId="results-mobile-destination-picker-search"
             value={destinationInput}
-            suggestions={destinationSuggestions}
-            isLoading={destinationSuggestionsLoading}
+            selectedCode={destinationCode}
             launcherRef={mobileDestinationLauncherRef}
             labels={airportPickerLabels}
             locale={locale}
-            onChange={(nextValue) => {
-              setDestinationInput(nextValue);
-              setDestinationCode("");
-              if (nextValue.trim().length < 2) {
-                setDestinationSuggestions([]);
-                setDestinationSuggestionsLoading(false);
-              }
-            }}
-            onClear={() => {
-              setDestinationInput("");
-              setDestinationCode("");
+            onCommit={(option) => {
+              setDestinationInput(option?.code ?? "");
+              setDestinationCode(option?.code ?? "");
               setDestinationSuggestions([]);
               setDestinationSuggestionsLoading(false);
-            }}
-            onSelect={(option, requestClose) => {
-              setDestinationInput(option.code);
-              setDestinationCode(option.code);
 
-              const missingDatePicker = getMissingMobileDatePicker();
+              const missingDatePicker = option ? getMissingMobileDatePicker() : null;
               if (missingDatePicker) {
                 rememberMobileSearchScrollPosition();
                 pendingMobileDatePickerRef.current = missingDatePicker;
               }
-
-              requestClose();
             }}
             onClose={closeMobileAirportPicker}
           />

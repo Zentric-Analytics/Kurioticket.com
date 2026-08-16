@@ -38,6 +38,7 @@ import {
 } from "@/lib/deals/dealsJourneyRoutes";
 import { removeDealsStagedJourneyPlan } from "@/lib/deals/dealsTripPlanStorage";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { translations as en } from "@/lib/i18n/en";
@@ -822,11 +823,9 @@ export function DealsSearchForm({
   const flightOriginWrapRef = useRef<HTMLDivElement>(null);
   const flightOriginInputRef = useRef<HTMLInputElement>(null);
   const flightOriginMobileLauncherRef = useRef<HTMLButtonElement>(null);
-  const flightOriginMobileInputRef = useRef<HTMLInputElement>(null);
   const flightDestinationWrapRef = useRef<HTMLDivElement>(null);
   const flightDestinationInputRef = useRef<HTMLInputElement>(null);
   const flightDestinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
-  const flightDestinationMobileInputRef = useRef<HTMLInputElement>(null);
   const hotelDestinationWrapRef = useRef<HTMLDivElement>(null);
   const hotelDestinationInputRef = useRef<HTMLInputElement>(null);
   const hotelDestinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
@@ -2200,17 +2199,6 @@ export function DealsSearchForm({
       controller.abort();
     };
   }, [hotelDestinationOpen, search.hotelDestination]);
-  useEffect(() => {
-    if (!flightMobileAirport) return;
-    const frame = requestAnimationFrame(() =>
-      (flightMobileAirport === "origin"
-        ? flightOriginMobileInputRef
-        : flightDestinationMobileInputRef
-      ).current?.focus(),
-    );
-    return () => cancelAnimationFrame(frame);
-  }, [flightMobileAirport]);
-
   const chooseAirport = (
     kind: "origin" | "destination",
     option: AirportOption,
@@ -4302,98 +4290,44 @@ export function DealsSearchForm({
           kind === "origin" ? "flightOriginText" : "flightDestinationText";
         const codeKey =
           kind === "origin" ? "flightOriginCode" : "flightDestinationCode";
-        const inputRef =
-          kind === "origin"
-            ? flightOriginMobileInputRef
-            : flightDestinationMobileInputRef;
         const launcherRef =
           kind === "origin"
             ? flightOriginMobileLauncherRef
             : flightDestinationMobileLauncherRef;
+        const commitAirport = (option: AirportOption | null) => {
+          const value = option ? formatAirportLabel(option, locale) : "";
+          if (kind === "origin") flightOriginUserInteractedRef.current = true;
+          setSearch((current) =>
+            kind === "destination"
+              ? {
+                  ...applyAuthoritativeDestination(current, value),
+                  flightDestinationCode: option?.code ?? "",
+                }
+              : {
+                  ...current,
+                  [textKey]: value,
+                  [codeKey]: option?.code ?? "",
+                },
+          );
+          setAirportLists((all) => ({ ...all, [kind]: [] }));
+        };
+
         return (
-          <FlightMobilePickerShell
+          <MobileAirportPicker
             key={kind}
             open={flightMobileAirport === kind}
-            title={t(kind)}
-            titleId={`deals-flight-mobile-${kind}-title`}
-            dialogId={`deals-flight-mobile-${kind}-dialog`}
+            field={kind}
+            title={t(kind === "origin" ? "chooseOrigin" : "chooseDestination")}
+            inputId={`deals-flight-mobile-${kind}-input`}
+            value={search[textKey]}
+            selectedCode={search[codeKey]}
             launcherRef={launcherRef}
+            locale={locale}
+            onCommit={commitAirport}
             onClose={() => setFlightMobileAirport(null)}
-            contentClassName="px-4 py-5"
-          >
-            <div className="space-y-4 overflow-x-hidden">
-              <label
-                className={label}
-                htmlFor={`deals-flight-mobile-${kind}-input`}
-              >
-                {t(kind)}
-              </label>
-              <div className="relative">
-                <input
-                  ref={inputRef}
-                  id={`deals-flight-mobile-${kind}-input`}
-                  value={search[textKey]}
-                  placeholder={t("cityOrAirport")}
-                  autoComplete="off"
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    if (kind === "origin")
-                      flightOriginUserInteractedRef.current = true;
-                    setSearch((current) =>
-                      kind === "destination"
-                        ? {
-                            ...applyAuthoritativeDestination(current, value),
-                            flightDestinationCode: /^[a-z]{3}$/i.test(
-                              value.trim(),
-                            )
-                              ? value.trim().toUpperCase()
-                              : "",
-                          }
-                        : {
-                            ...current,
-                            [textKey]: value,
-                            [codeKey]: /^[a-z]{3}$/i.test(value.trim())
-                              ? value.trim().toUpperCase()
-                              : "",
-                          },
-                    );
-                    if (kind === "origin") setFlightOriginHighlight(0);
-                    else setFlightDestinationHighlight(0);
-                    if (value.trim().length < 2)
-                      setAirportLists((all) => ({ ...all, [kind]: [] }));
-                  }}
-                  className={`${field} pe-10`}
-                />
-                {search[textKey] ? (
-                  <button
-                    type="button"
-                    aria-label={t("clear")}
-                    onClick={() => {
-                      if (kind === "origin")
-                        flightOriginUserInteractedRef.current = true;
-                      setSearch((current) =>
-                        kind === "destination"
-                          ? {
-                              ...applyAuthoritativeDestination(current, ""),
-                              flightDestinationCode: "",
-                            }
-                          : { ...current, [textKey]: "", [codeKey]: "" },
-                      );
-                      setAirportLists((all) => ({ ...all, [kind]: [] }));
-                      inputRef.current?.focus();
-                    }}
-                    className="focus-ring absolute end-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                ) : null}
-              </div>
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                {flightSuggestionContent(kind)}
-              </div>
-            </div>
-          </FlightMobilePickerShell>
+          />
         );
+
       })}
       <HotelDestinationMobilePicker
         open={hotelDestinationMobileOpen}
