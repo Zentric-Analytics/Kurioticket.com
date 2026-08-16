@@ -13,6 +13,7 @@ const consumers = [
 
 test("shared airport picker owns the approved search, rows, recents, and Done footer", () => {
   assert.match(picker, /<FlightMobilePickerShell/);
+  assert.match(picker, /showCancelAction=\{false\}/);
   assert.match(picker, /<MapPin[\s\S]*?<input/);
   assert.match(picker, /h-\[50px\][\s\S]*?rounded-\[10px\]/);
   assert.match(picker, /<X className="h-\[18px\] w-\[18px\]"/);
@@ -24,6 +25,22 @@ test("shared airport picker owns the approved search, rows, recents, and Done fo
   assert.match(picker, /h-\[52px\] w-full rounded-\[9px\]/);
   assert.doesNotMatch(picker, />\s*Clear\s*</);
   assert.doesNotMatch(picker, /<Plane/);
+});
+
+test("origin and destination headers keep Back and centered titles without Cancel", () => {
+  assert.match(picker, /title=\{title\}/);
+  assert.match(picker, /showCancelAction=\{false\}/);
+  assert.match(shell, /<ArrowLeft[^>]*rtl:rotate-180/);
+  assert.match(shell, /\{t\.back\}/);
+  assert.match(shell, /grid-cols-\[1fr_auto_1fr\]/);
+  assert.match(
+    shell,
+    /showCancelAction \? \([\s\S]*?data-mobile-picker-header-spacer/,
+  );
+  assert.match(
+    shell,
+    /<span\s+aria-hidden="true"\s+className="min-h-10"\s+data-mobile-picker-header-spacer\s*\/>/,
+  );
 });
 
 test("draft selection commits only through Done while shell close discards it", () => {
