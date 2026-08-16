@@ -35,6 +35,7 @@ type FlightMobilePickerShellProps = {
   contentLayout?: "scroll" | "contained";
   pickerMarker?: "flight-date" | "traveler-cabin";
   headerVariant?: "navigation" | "close";
+  showCancelAction?: boolean;
 };
 
 type ScrollLockSnapshot = {
@@ -144,6 +145,7 @@ export function FlightMobilePickerShell({
   contentLayout = "scroll",
   pickerMarker,
   headerVariant = "navigation",
+  showCancelAction = true,
 }: FlightMobilePickerShellProps) {
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
@@ -380,7 +382,7 @@ export function FlightMobilePickerShell({
             >
               {title}
             </h2>
-            {headerVariant === "close" ? <span aria-hidden="true" /> : (
+            {headerVariant === "close" ? <span aria-hidden="true" /> : showCancelAction ? (
               <button
                 type="button"
                 onClick={requestClose}
@@ -389,6 +391,12 @@ export function FlightMobilePickerShell({
               >
                 {t.cancel}
               </button>
+            ) : (
+              <span
+                aria-hidden="true"
+                className="min-h-10"
+                data-mobile-picker-header-spacer
+              />
             )}
           </div>
         </div>

@@ -275,6 +275,7 @@ export function MobileDatePickerDialog({
       launcherRef={launcherRef}
       onClose={onClose}
       pickerMarker="flight-date"
+      showCancelAction={false}
       contentClassName="bg-[#fcfdfe] px-4 py-4"
       footer={(requestClose) => (
         <button
@@ -284,7 +285,7 @@ export function MobileDatePickerDialog({
             onCommit(draftStart, rangeRequired ? draftEnd : "");
             requestClose();
           }}
-          className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:opacity-50"
+          className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:bg-[#075ee8] disabled:text-white disabled:opacity-100"
         >
           {labels.done}
         </button>
