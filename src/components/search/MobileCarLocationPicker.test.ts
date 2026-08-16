@@ -67,3 +67,31 @@ test("desktop CarLocationAutocomplete remains available", () => {
   assert.match(homepage, /hidden sm:block[\s\S]*CarLocationAutocomplete/);
   assert.match(cars, /<CarLocationAutocomplete/);
 });
+
+test("location rows use neutral result metadata and reserve blue for selection", () => {
+  assert.match(picker, /<Icon aria-hidden="true" className="h-5 w-5 text-slate-600"/);
+  assert.doesNotMatch(picker, /<Icon[^>]*text-\[#075EE8\]/);
+  assert.match(picker, /bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600">Airport/);
+  assert.doesNotMatch(picker, /bg-blue-50[^>]*>Airport|text-\[#075EE8\][^>]*>Airport/);
+});
+
+test("selecting a result only changes the draft and keeps the query and result list in place", () => {
+  assert.match(picker, /const select = \(item: CarLocationSuggestion\) => \{ setDraft\(item\); \};/);
+  const selectBody = picker.match(/const select = \(item: CarLocationSuggestion\) => \{([^}]*)\};/)?.[1] ?? "";
+  assert.doesNotMatch(selectBody, /setQuery|setResults|setSearchCompleted|searchCarLocationSuggestions/);
+  assert.match(picker, /useEffect\([\s\S]*?searchCarLocationSuggestions\(trimmedQuery, \{ limit: 8 \}\)[\s\S]*?\}, \[open, query\]\)/);
+});
+
+test("results and recents show one stable-id draft selection without changing the search", () => {
+  assert.ok((picker.match(/selected=\{draft\?\.id === item\.id\}/g) ?? []).length === 2);
+  assert.match(picker, /aria-pressed=\{selected\}/);
+  assert.match(picker, /selectedIndicator = selected \? <span aria-hidden="true"[\s\S]*bg-\[#075EE8\][\s\S]*<Check/);
+  assert.match(picker, /selectedIndicator \?\? <ChevronRight/);
+});
+
+test("Done commits the canonical draft while Back remains a discard-only close", () => {
+  assert.match(picker, /const next = draft\?\.value \?\? \(query\.trim\(\) \|\| value\.trim\(\)\)/);
+  assert.match(picker, /if \(draft\) saveRecentCarLocation\(draft\); onCommit\(next\); onClose\(\)/);
+  assert.match(picker, /launcherRef=\{launcherRef\} onClose=\{onClose\}/);
+  assert.equal((picker.match(/onCommit\(/g) ?? []).length, 1);
+});
