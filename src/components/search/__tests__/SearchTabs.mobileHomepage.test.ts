@@ -125,10 +125,11 @@ test("mobile homepage controls use one responsive product-tab renderer without s
   assert.doesNotMatch(mobileBranch, /transform:\s*scale|scale-\[/);
 });
 
-test("mobile product tabs alone break out to a bounded viewport gutter", () => {
+test("mobile product cards align to the search-form shell without viewport overlap", () => {
   assert.match(mobileProductTabs, /mobile-homepage-product-tabs-breakout/);
   assert.match(mobileProductTabs, /left-1\/2/);
-  assert.match(mobileProductTabs, /w-\[calc\(100vw-24px\)\]/);
+  assert.match(mobileProductTabs, /w-\[calc\(100%\+28px\)\]/);
+  assert.doesNotMatch(mobileProductTabs, /100vw|w-screen/);
   assert.match(mobileProductTabs, /-translate-x-1\/2/);
   assert.match(mobileProductTabs, /sm:static sm:w-full sm:translate-x-0/);
   assert.doesNotMatch(mobileProductTabs, /overflow-x-auto|overflow-x-scroll/);
