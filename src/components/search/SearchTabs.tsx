@@ -41,6 +41,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { DealsSearchForm } from "@/components/search/DealsSearchForm";
@@ -543,6 +544,13 @@ export function SearchTabs({
       )
     );
   }, [calendarLocale]);
+  const mobileDatePickerLabels = {
+    selectDates: translate("carsResults.selectDates") || "Select dates",
+    start: translate("mobileDatePicker.start") || "Start",
+    end: translate("mobileDatePicker.end") || "End",
+    done: translate("done") || "Done",
+    selectDatePrefix: translate("selectDateAriaPrefix") || "Select",
+  };
 
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
@@ -2211,210 +2219,6 @@ export function SearchTabs({
     setCheckOut(selectedIso);
   };
 
-
-  const renderFlightDateCalendar = () => {
-    const mobileFlightCalendarMonths = Array.from(
-      { length: 12 },
-      (_, monthOffset) => addMonths(todayLocal, monthOffset)
-    );
-
-    return (
-      <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
-        {mobileFlightCalendarMonths.map((monthDate) => {
-          const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
-          const cells = buildMonthCells(monthDate);
-
-          return (
-            <section
-              key={monthKey}
-              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
-              className="space-y-2.5"
-            >
-              <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
-                {formatFlightsMonthHeading(monthDate, calendarLocale)}
-              </h3>
-              <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
-                {weekdays.map((weekday) => (
-                  <span key={weekday} className="py-2">{weekday}</span>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-y-1.5">
-                {cells.map((cell) => {
-                  const day = cell.date;
-                  const iso = toIsoDate(day);
-                  const isDeparture = iso === departureDate;
-                  const isReturn = iso === returnDate;
-                  const isDisabledDate = !isSelectableFlightDate(day);
-                  const isToday = toIsoDate(new Date()) === iso;
-                  const isInRange = !!(
-                    departureParsed &&
-                    returnParsed &&
-                    !isDisabledDate &&
-                    day > departureParsed &&
-                    day < returnParsed
-                  );
-
-                  if (!cell.isCurrentMonth) {
-                    return (
-                      <span
-                        key={`placeholder-${iso}`}
-                        aria-hidden="true"
-                        className="h-11 w-full"
-                      />
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      aria-label={`${translate("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
-                      aria-pressed={isDeparture || isReturn}
-                      onClick={() => {
-                        if (isDisabledDate || !isSelectableFlightDate(day)) return;
-                        onSelectDate(day);
-                      }}
-                      disabled={isDisabledDate}
-                      aria-disabled={isDisabledDate}
-                      className={cn(
-                        "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
-                        isDisabledDate
-                          ? "text-slate-300"
-                          : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
-                        isInRange && "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
-                        (isDeparture || isReturn) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
-                      )}
-                    >
-                      {day.getDate()}
-                      {isToday && !isDeparture && !isReturn ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const renderHotelDateCalendar = () => {
-    const mobileHotelCalendarMonths = Array.from(
-      { length: 12 },
-      (_, monthOffset) => addMonths(todayLocal, monthOffset)
-    );
-
-    return (
-      <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
-        {mobileHotelCalendarMonths.map((monthDate) => {
-          const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
-          const cells = buildMonthCells(monthDate);
-
-          return (
-            <section
-              key={monthKey}
-              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
-              className="space-y-2.5"
-            >
-              <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
-                {formatFlightsMonthHeading(monthDate, calendarLocale)}
-              </h3>
-              <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
-                {weekdays.map((weekday) => (
-                  <span key={weekday} className="py-2">{weekday}</span>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-y-1.5">
-                {cells.map((cell) => {
-                  const day = cell.date;
-                  const iso = toIsoDate(day);
-                  const isCheckIn = iso === checkIn;
-                  const isCheckOut = iso === checkOut;
-                  const isPastDate = isBeforeToday(day);
-                  const isDisabledDate = isPastDate;
-                  const isToday = toIsoDate(new Date()) === iso;
-                  const isInRange = Boolean(
-                    checkInParsed &&
-                      checkOutParsed &&
-                      !isDisabledDate &&
-                      day > checkInParsed &&
-                      day < checkOutParsed,
-                  );
-
-                  if (!cell.isCurrentMonth) {
-                    return (
-                      <span
-                        key={`homepage-mobile-placeholder-${iso}`}
-                        aria-hidden="true"
-                        className="h-11 w-full"
-                      />
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      aria-label={`${translate("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
-                      aria-pressed={isCheckIn || isCheckOut}
-                      onClick={() => {
-                        if (isDisabledDate) return;
-                        onSelectHotelDate(day);
-                      }}
-                      disabled={isDisabledDate}
-                      aria-disabled={isDisabledDate}
-                      className={cn(
-                        "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
-                        isDisabledDate
-                          ? "text-slate-300"
-                          : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
-                        isInRange && "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
-                        (isCheckIn || isCheckOut) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
-                      )}
-                    >
-                      {day.getDate()}
-                      {isToday && !isCheckIn && !isCheckOut ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const flightDatesFooter = (requestClose: () => void) => (
-    <div className="flex items-center justify-between gap-3">
-      <button
-        type="button"
-        onClick={() => {
-          setDepartureDate("");
-          setReturnDate("");
-        }}
-        className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-      >
-        {translate("clear") || "Clear"}
-      </button>
-      <button
-        type="button"
-        onClick={requestClose}
-        className={cn(mobileDoneButtonClassName, "px-4 py-2")}
-      >
-        {translate("done") || "Done"}
-      </button>
-    </div>
-  );
-
-
-
   const renderMobileAirportPicker = ({
     field,
     open,
@@ -3125,18 +2929,24 @@ export function SearchTabs({
           },
           onClose: () => setActiveMobileAirportPicker(null),
         })}
-        <FlightMobilePickerShell
+        <MobileDatePickerDialog
           open={flightDatesOpen}
           title={translate("chooseTravelDates") || "Choose travel dates"}
           titleId="homepage-flight-dates-title"
           launcherRef={flightDatesLauncherRef}
-          footer={flightDatesFooter}
+          startDate={departureDate}
+          endDate={returnDate}
+          rangeRequired={tripType !== "one-way"}
+          locale={calendarLocale}
+          weekdays={weekdays}
+          labels={mobileDatePickerLabels}
+          isDateDisabled={(date) => !isSelectableFlightDate(date)}
+          onCommit={(startDate, endDate) => {
+            setDepartureDate(startDate);
+            setReturnDate(endDate);
+          }}
           onClose={() => setFlightDatesOpen(false)}
-          contentClassName="px-4 py-4"
-          pickerMarker="flight-date"
-        >
-          {renderFlightDateCalendar()}
-        </FlightMobilePickerShell>
+        />
         <FlightMobilePickerShell
           open={travelersMenuOpen}
           title={translate("passengers") || t.travelers || "Travelers"}
@@ -3632,17 +3442,24 @@ export function SearchTabs({
 
                 {flightDatesOpen ? (
                   <>
-                    <FlightMobilePickerShell
+                    <MobileDatePickerDialog
                       open={flightDatesOpen}
                       title={translate("chooseTravelDates") || "Choose travel dates"}
                       titleId="homepage-flight-dates-title"
                       launcherRef={flightDatesLauncherRef}
-                      footer={flightDatesFooter}
+                      startDate={departureDate}
+                      endDate={returnDate}
+                      rangeRequired={tripType !== "one-way"}
+                      locale={calendarLocale}
+                      weekdays={weekdays}
+                      labels={mobileDatePickerLabels}
+                      isDateDisabled={(date) => !isSelectableFlightDate(date)}
+                      onCommit={(startDate, endDate) => {
+                        setDepartureDate(startDate);
+                        setReturnDate(endDate);
+                      }}
                       onClose={() => setFlightDatesOpen(false)}
-                      contentClassName="px-4 py-4"
-                    >
-                      {renderFlightDateCalendar()}
-                    </FlightMobilePickerShell>
+                    />
                     {renderDesktopCalendarPopover({
                       launcherRef: flightDatesLauncherRef,
                       mode: "flights",
@@ -4225,37 +4042,24 @@ export function SearchTabs({
             onClose={() => setHotelDestinationMobilePickerOpen(false)}
           />
 
-          <HotelMobilePickerShell
+          <MobileDatePickerDialog
             open={hotelDatesOpen}
             title={translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates"}
             titleId="homepage-hotel-mobile-dates-title"
             launcherRef={hotelDatesMobileLauncherRef}
+            startDate={checkIn}
+            endDate={checkOut}
+            rangeRequired
+            locale={calendarLocale}
+            weekdays={weekdays}
+            labels={mobileDatePickerLabels}
+            isDateDisabled={isBeforeToday}
+            onCommit={(startDate, endDate) => {
+              setCheckIn(startDate);
+              setCheckOut(endDate);
+            }}
             onClose={() => setHotelDatesOpen(false)}
-            contentClassName="px-3 py-3"
-            footer={(requestClose) => (
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCheckIn("");
-                    setCheckOut("");
-                  }}
-                  className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                >
-                  {translateHotelTravelDateText("clear") || "Clear"}
-                </button>
-                <button
-                  type="button"
-                  onClick={requestClose}
-                  className={cn(mobileDoneButtonClassName, "px-4 py-2")}
-                >
-                  {translate("done") || "Done"}
-                </button>
-              </div>
-            )}
-          >
-            {renderHotelDateCalendar()}
-          </HotelMobilePickerShell>
+          />
 
           <HotelMobilePickerShell
             open={hotelGuestsRoomsOpen}
@@ -4466,24 +4270,25 @@ export function SearchTabs({
               </FlightMobilePickerShell>
             );
           })}
-          <FlightMobilePickerShell
+          <MobileDatePickerDialog
             open={carsOpenPicker === "dates"}
             title={translate("carsSearch.chooseRentalDates") || "Choose rental dates"}
             titleId="cars-dates-mobile-title"
             dialogId="cars-dates-mobile-dialog"
+            startDate={carsValues.pickupDate}
+            endDate={carsValues.dropoffDate}
+            rangeRequired
+            firstMonth={carsVisibleMonthDate}
+            locale={calendarLocale}
+            weekdays={getLocalizedWeekdays(calendarLocale)}
+            labels={{ ...mobileDatePickerLabels, selectDatePrefix: translate("carsSearch.selectDateAriaPrefix") || "Select" }}
+            isDateDisabled={isBeforeToday}
+            onCommit={(startDate, endDate) => {
+              updateCarsValue("pickupDate", startDate);
+              updateCarsValue("dropoffDate", endDate);
+            }}
             onClose={() => setCarsOpenPicker(null)}
-            contentClassName="bg-white"
-            footer={(
-              <div className="flex items-center justify-between gap-3">
-                <button type="button" onClick={() => { updateCarsValue("pickupDate", ""); updateCarsValue("dropoffDate", ""); }} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">{translate("clear") || "Clear"}</button>
-                <button type="button" onClick={() => setCarsOpenPicker(null)} className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2 text-sm font-semibold text-white">{translate("done") || "Done"}</button>
-              </div>
-            )}
-          >
-            <div className="mx-auto w-full max-w-xl">
-              <CarsRentalDatePickerContent dropoffDate={carsValues.dropoffDate} formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)} locale={calendarLocale} onClear={() => { updateCarsValue("pickupDate", ""); updateCarsValue("dropoffDate", ""); }} onDone={() => setCarsOpenPicker(null)} onNextMonth={() => setCarsVisibleMonthDate((current) => addCarsMonths(current, 1))} onPreviousMonth={() => setCarsVisibleMonthDate((current) => addCarsMonths(current, -1))} onSelectDate={selectHomepageRentalDate} pickupDate={carsValues.pickupDate} strings={{ chooseDates: translate("carsSearch.chooseRentalDates") || "Choose rental dates", previousMonth: translate("carsSearch.previousMonth") || "Previous month", previousMonthShort: translate("carsSearch.previousMonthShort") || "Previous", nextMonth: translate("carsSearch.nextMonth") || "Next month", nextMonthShort: translate("carsSearch.nextMonthShort") || "Next", selectDatePrefix: translate("carsSearch.selectDateAriaPrefix") || "Select", startsNewPickupDate: translate("carsSearch.startsNewPickupDate") || "Starts a new pickup date", clear: translate("clear") || "Clear", done: translate("done") || "Done" }} visibleMonthDate={carsVisibleMonthDate} weekdays={getLocalizedWeekdays(calendarLocale)} mobileShell />
-            </div>
-          </FlightMobilePickerShell>
+          />
           <FlightMobilePickerShell open={carsOpenPicker === "times"} title={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} titleId="cars-times-mobile-title" dialogId="cars-times-mobile-dialog" onClose={() => setCarsOpenPicker(null)} contentLayout="contained" contentClassName="bg-white" footer={<button type="button" onClick={() => { updateCarsValue("pickupTime", carsDraftTimes.pickupTime); updateCarsValue("dropoffTime", carsDraftTimes.dropoffTime); setCarsOpenPicker(null); }} className="focus-ring w-full rounded-lg bg-[#004BB8] px-5 py-3 text-sm font-semibold text-white">{translate("done") || "Done"}</button>}>
             <div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-hidden"><CarsTimeRangePickerContent mobileShell formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsDraftTimes.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsDraftTimes.dropoffTime} onPickupTimeChange={(pickupTime) => setCarsDraftTimes((current) => ({ ...current, pickupTime }))} onReturnTimeChange={(dropoffTime) => setCarsDraftTimes((current) => ({ ...current, dropoffTime }))} /></div>
           </FlightMobilePickerShell>

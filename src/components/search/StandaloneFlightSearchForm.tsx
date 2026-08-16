@@ -30,6 +30,7 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import {
   formatFlightsDateSummary,
   formatFlightsMonthHeading,
@@ -1784,37 +1785,30 @@ export function StandaloneFlightSearchForm({
         </div>
 
         {activeMobilePicker === "dates" ? (
-          <FlightMobilePickerShell
+          <MobileDatePickerDialog
             open={true}
             title={t("chooseTravelDates")}
             titleId="standalone-flight-mobile-dates-title"
             launcherRef={datesMobileLauncherRef}
+            startDate={departureDate}
+            endDate={returnDate}
+            rangeRequired={tripType !== "one-way"}
+            locale={calendarLocale}
+            weekdays={weekdays}
+            labels={{
+              selectDates: t("carsResults.selectDates") || "Select dates",
+              start: t("mobileDatePicker.start") || "Start",
+              end: t("mobileDatePicker.end") || "End",
+              done: t("done") || "Done",
+              selectDatePrefix: t("selectDateAriaPrefix") || "Select",
+            }}
+            isDateDisabled={isBeforeToday}
+            onCommit={(startDate, endDate) => {
+              setDepartureDate(startDate);
+              setReturnDate(endDate);
+            }}
             onClose={() => setActiveMobilePicker(null)}
-            contentClassName="px-4 py-4"
-            footer={(requestClose) => (
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDepartureDate("");
-                    setReturnDate("");
-                  }}
-                  className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-                >
-                  {t("clear")}
-                </button>
-                <button
-                  type="button"
-                  onClick={requestClose}
-                  className={mobileDoneButtonClassName}
-                >
-                  {t("done")}
-                </button>
-              </div>
-            )}
-          >
-            {renderDateCalendar(true)}
-          </FlightMobilePickerShell>
+          />
         ) : null}
 
         {activeMobilePicker === "travelers" ? (

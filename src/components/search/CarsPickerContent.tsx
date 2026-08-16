@@ -7,6 +7,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { MobileDateRangePicker } from "@/components/search/MobileDateRangePicker";
 
 import {
   addMonths,
@@ -29,6 +30,8 @@ type CalendarStrings = {
   startsNewPickupDate: string;
   clear: string;
   done: string;
+  start?: string;
+  end?: string;
 };
 
 export function CarsRentalDatePickerContent({
@@ -49,6 +52,27 @@ export function CarsRentalDatePickerContent({
     { length: mobileShell ? 12 : 2 },
     (_, offset) => addMonths(visibleMonthDate, offset),
   );
+
+  if (mobileShell) {
+    return (
+      <MobileDateRangePicker
+        startDate={pickupDate}
+        endDate={dropoffDate}
+        firstMonth={visibleMonthDate}
+        locale={locale}
+        weekdays={weekdays}
+        labels={{
+          selectDates: strings.chooseDates,
+          start: strings.start ?? "Start",
+          end: strings.end ?? "End",
+          done: strings.done,
+          selectDatePrefix: strings.selectDatePrefix,
+        }}
+        isDateDisabled={isBeforeToday}
+        onSelectDate={onSelectDate}
+      />
+    );
+  }
 
   return <>
     {!mobileShell ? <p className="mb-3 text-base font-semibold text-slate-900">{strings.chooseDates}</p> : null}

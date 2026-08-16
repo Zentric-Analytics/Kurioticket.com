@@ -3,6 +3,8 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "mobileDatePicker.start": "Początek",
+  "mobileDatePicker.end": "Koniec",
   "deals.guided.confirmation.retry": "Spróbuj ponownie",
   "deals.guidedPreview.description": "Podgląd ofert z przewodnikiem: Complete guided Pakiety preview: Hotel, Flight and Car selection and confirmation, Review, and final partner handoff.",
   "deals.guidedPreview.availableCar": "Podgląd ofert z przewodnikiem: Car results, filters, sorting, details, and confirmation",

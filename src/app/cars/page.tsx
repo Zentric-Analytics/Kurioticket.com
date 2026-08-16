@@ -40,6 +40,7 @@ import {
   CarsTimeRangePickerContent,
 } from "@/components/search/CarsPickerContent";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -1325,86 +1326,26 @@ function CarsMobilePickerDialogs({
         />
       </FlightMobilePickerShell>
 
-      <FlightMobilePickerShell
+      <MobileDatePickerDialog
         open={activeMobilePicker === "dates"}
         title={t("carsSearch.chooseRentalDates")}
         titleId="cars-mobile-rental-dates-title"
+        dialogId="cars-mobile-rental-dates"
         launcherRef={datesLauncherRef}
+        startDate={values.pickupDate}
+        endDate={values.dropoffDate}
+        rangeRequired
+        firstMonth={visibleMonthDate}
+        locale={intlLocale}
+        weekdays={weekdays}
+        labels={{ selectDates: t("carsResults.selectDates"), start: t("mobileDatePicker.start"), end: t("mobileDatePicker.end"), done: t("done"), selectDatePrefix: t("carsSearch.selectDateAriaPrefix") }}
+        isDateDisabled={isBeforeToday}
+        onCommit={(pickupDate, dropoffDate) => {
+          updateValue("pickupDate", pickupDate);
+          updateValue("dropoffDate", dropoffDate);
+        }}
         onClose={onClose}
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={clearRentalDates}
-              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <button type="button" onClick={onPreviousMonth} className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">{t("carsSearch.previousMonthShort")}</button>
-            <button type="button" onClick={onNextMonth} className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">{t("carsSearch.nextMonthShort")}</button>
-          </div>
-          <div className="grid gap-5">
-            {[0, 1].map((monthOffset) => {
-              const monthDate = addMonths(visibleMonthDate, monthOffset);
-              const cells = buildMonthCells(monthDate);
-
-              return (
-                <div key={monthOffset}>
-                  <p className="mb-2 text-center text-sm font-bold text-slate-900">
-                    {monthDate.toLocaleDateString(intlLocale, { month: "long", year: "numeric" })}
-                  </p>
-                  <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500">
-                    {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
-                  </div>
-                  <div className="grid grid-cols-7 gap-1.5">
-                    {cells.map((cell) => {
-                      const day = cell.date;
-                      const iso = toIsoDate(day);
-                      const isPickup = iso === values.pickupDate;
-                      const isDropoff = iso === values.dropoffDate;
-                      const isPastDate = isBeforeToday(day);
-                      const isInRange = Boolean(pickupParsed && dropoffParsed && !isPastDate && day > pickupParsed && day < dropoffParsed);
-
-                      if (!cell.isCurrentMonth) {
-                        return <span key={`mobile-placeholder-${iso}`} aria-hidden="true" className="h-10" />;
-                      }
-
-                      return (
-                        <button
-                          key={iso}
-                          type="button"
-                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, intlLocale)}`}
-                          onClick={() => onSelectDate(day)}
-                          disabled={isPastDate}
-                          className={`focus-ring flex h-10 items-center justify-center rounded-full text-sm font-semibold disabled:cursor-not-allowed ${
-                            isPastDate ? "text-slate-300" : "text-slate-900 hover:bg-[#004BB8]/8"
-                          } ${isInRange ? "rounded-xl bg-[#004BB8]/10 text-[#021C2B]" : ""} ${
-                            isPickup || isDropoff ? "bg-[#004BB8] text-white hover:bg-[#004BB8]" : ""
-                          }`}
-                        >
-                          {day.getDate()}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </FlightMobilePickerShell>
+      />
 
       <FlightMobilePickerShell
         open={activeMobilePicker === "times"}

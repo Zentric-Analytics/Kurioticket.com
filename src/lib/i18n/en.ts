@@ -1339,6 +1339,8 @@ export const translations: TranslationDictionary = {
   clear: "Clear",
   clearAll: "Clear all",
   done: "Done",
+  "mobileDatePicker.start": "Start",
+  "mobileDatePicker.end": "End",
   back: "Back",
   cancel: "Cancel",
   remove: "Remove",
