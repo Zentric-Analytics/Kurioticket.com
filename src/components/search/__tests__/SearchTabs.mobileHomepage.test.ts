@@ -175,6 +175,7 @@ test("mobile Hotels removes only the nested surface and keeps its connected cont
   assert.match(sharedBranch, /mobile-homepage-hotel-search/);
   assert.match(sharedBranch, /rounded-\[11px\] border-\[#dee5ed\] bg-\[#fcfdfe\]/);
   assert.match(source, /mobileHomepage[\s\S]{0,180}rounded-\[14px\][^\n]*px-\[13px\] pb-\[13px\] pt-0/);
+  assert.match(sharedBranch, /MobileHotelGuestsRoomsPicker[^>]*density=\{mobileHomepage \? "compact" : undefined\}/);
 });
 
 test("mobile homepage Hotels aligns neutral icons with values while preserving field behavior", () => {
