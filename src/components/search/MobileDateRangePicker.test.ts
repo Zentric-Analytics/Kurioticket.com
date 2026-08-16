@@ -35,6 +35,20 @@ test("dialog owns draft selection and only Done commits a valid product range", 
   assert.doesNotMatch(source, />\s*Clear\s*</);
 });
 
+test("dialog hides the Cancel action at the shared shell boundary", () => {
+  assert.match(source, /showCancelAction=\{false\}/);
+});
+
+test("Done preserves native validation while always retaining its strong-blue treatment", () => {
+  assert.match(source, /disabled=\{!validDraft\}/);
+  assert.match(source, /bg-\[#075ee8\]/);
+  assert.match(source, /text-white/);
+  assert.match(source, /disabled:bg-\[#075ee8\]/);
+  assert.match(source, /disabled:text-white/);
+  assert.match(source, /disabled:opacity-100/);
+  assert.doesNotMatch(source, /disabled:opacity-50/);
+});
+
 test("calendar preserves mobile scrolling, safe fixed footer, accessibility, and selected-month reveal", () => {
   assert.match(source, /<FlightMobilePickerShell/);
   assert.match(source, /h-\[52px\] w-full rounded-\[9px\]/);
