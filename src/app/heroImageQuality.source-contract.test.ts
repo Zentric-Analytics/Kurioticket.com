@@ -40,8 +40,12 @@ describe("hero image quality source contracts", () => {
 
   it("keeps the mobile Cars photograph clean instead of darkening or color-filtering it", () => {
     const mobileHero = carsPageSource.slice(
-      carsPageSource.indexOf('aria-labelledby="cars-mobile-search-heading"'),
-      carsPageSource.indexOf('aria-labelledby="cars-search-heading"'),
+      carsPageSource.indexOf(
+        'className="relative isolate z-20 min-h-[24.25rem]',
+      ),
+      carsPageSource.indexOf(
+        'className="relative hidden overflow-visible pb-36 sm:block',
+      ),
     );
 
     assert.doesNotMatch(mobileHero, /brightness-|saturate-|contrast-/);
@@ -54,8 +58,9 @@ describe("hero image quality source contracts", () => {
     assert.match(carsPageSource, /absolute inset-x-0 bottom-\[-24\.5rem\] z-30/);
     assert.match(
       carsPageSource,
-      /absolute inset-x-0 bottom-\[-84px\] z-30 lg:bottom-\[-88px\]/,
+      /absolute inset-x-0 bottom-\[-100px\] z-30 lg:bottom-\[-104px\]/,
     );
+    assert.doesNotMatch(carsPageSource, /bottom-\[-84px\]|lg:bottom-\[-88px\]/);
   });
 
   it("keeps the market-aware homepage hero at quality 92 without image hacks", () => {

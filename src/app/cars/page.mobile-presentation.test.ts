@@ -33,11 +33,18 @@ test("mobile Cars card uses the refined radius and compact Cars identity", () =>
   assert.match(searchBarSource, /sm:rounded-\[1\.35rem\]/);
 });
 
-test("mobile Cars shares the canonical hero title and lower form position", () => {
+test("Cars keeps one screen-reader heading while the mobile hero stays text-free", () => {
   assert.equal(
     carsPageSource.match(/t\("carsDesktopHeroTitle"\)/g)?.length,
-    2,
+    1,
   );
+  assert.match(
+    carsPageSource,
+    /<h1 className="sr-only">\{t\("carsDesktopHeroTitle"\)\}<\/h1>/,
+  );
+  assert.equal(carsPageSource.match(/<h1\b/g)?.length, 1);
+  assert.doesNotMatch(carsPageSource, /cars-mobile-search-heading/);
+  assert.doesNotMatch(carsPageSource, /text-balance drop-shadow/);
   assert.doesNotMatch(carsPageSource, /t\("searchRentalCarsEveryPartTrip"\)/);
   assert.match(carsPageSource, /bottom-\[-24\.5rem\]/);
   assert.doesNotMatch(carsPageSource, /bottom-\[-23rem\]/);
