@@ -1472,6 +1472,8 @@ export const translations: TranslationDictionary = {
   "hotelGuests.roomDescription": "Separate rooms",
   "deals.mobileTravelersRoomsTitle": "Travelers/Rooms",
   "deals.mobileTravelersRoomsIntro": "Add the number of travelers and rooms.",
+  "deals.mobileTravelersTitle": "Travelers",
+  "deals.mobileTravelersIntro": "Select the number of travelers",
   "deals.mobileAdultDescription": "18+ years",
   "deals.mobileInfantDescription": "Under 2 years",
   "deals.petFriendlyRooms": "Pet-friendly rooms",

@@ -32,3 +32,12 @@ test("Hotel-only controls remain mode-gated while traveler limits preserve packa
   assert.match(picker, /maximum=\{6\}/);
   assert.match(picker, /Math\.min\(adults/);
 });
+
+test("traveler-only mode uses exact copy and omits every Hotel control", () => {
+  assert.match(english, /"deals\.mobileTravelersTitle": "Travelers"/);
+  assert.match(english, /"deals\.mobileTravelersIntro": "Select the number of travelers"/);
+  assert.match(form, /included\.hotel \? t\("deals\.mobileTravelersRoomsTitle"\) : t\("deals\.mobileTravelersTitle"\)/);
+  assert.match(form, /included\.hotel \? "deals\.mobileTravelersRoomsIntro" : "deals\.mobileTravelersIntro"/);
+  assert.match(picker, /includeHotel \? <div/);
+  assert.match(picker, /neutral=\{!includeHotel\}/);
+});

@@ -4459,7 +4459,7 @@ export function DealsSearchForm({
       </DealsFlightPopover>
       <FlightMobilePickerShell
         open={mobileTravelersOpen}
-        title={included.hotel ? t("deals.mobileTravelersRoomsTitle") : travelersControlLabel}
+        title={included.hotel ? t("deals.mobileTravelersRoomsTitle") : t("deals.mobileTravelersTitle")}
         titleId="deals-mobile-travellers-title"
         dialogId="deals-mobile-travellers"
         launcherRef={travelersLauncherRef}
@@ -4480,7 +4480,7 @@ export function DealsSearchForm({
             </button>
         )}
       >
-        <p className="mx-auto mb-5 w-full max-w-xl text-[14px] font-medium text-slate-600">{t("deals.mobileTravelersRoomsIntro")}</p>
+        <p className={`mx-auto mb-5 w-full max-w-xl text-[14px] font-medium text-slate-600 ${included.hotel ? "text-start" : "text-center"}`}>{t(included.hotel ? "deals.mobileTravelersRoomsIntro" : "deals.mobileTravelersIntro")}</p>
         <MobilePackageTravelersRoomsPicker adults={draftAdults} children={draftChildren} infants={draftInfants} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} includeFlight={included.flight} includeHotel={included.hotel} strings={{ adults: t("adults"), adultDescription: t("deals.mobileAdultDescription"), children: t("children"), childDescription: t("childAgeRange"), infants: t("infantsOnLap"), infantDescription: t("deals.mobileInfantDescription"), rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription"), petFriendly: t("deals.petFriendlyRooms"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => t("deals.decreaseCountAria").replace("{{label}}", label), increase: (label) => t("deals.increaseCountAria").replace("{{label}}", label) }} onAdultsChange={setDraftAdults} onChildrenChange={setDraftChildren} onInfantsChange={setDraftInfants} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly} />
       </FlightMobilePickerShell>
       <DealsHotelDatesPopover
