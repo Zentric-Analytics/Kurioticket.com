@@ -395,7 +395,7 @@ test("Vietnamese Cars landing copy resolves through active i18n render paths", (
   const vi = viTranslations as Record<string, string>;
   const en = enTranslations as Record<string, string>;
 
-  assert.ok(carsPageSource.includes('t("searchRentalCarsEveryPartTrip")'));
+  assert.ok(carsPageSource.includes('t("carsDesktopHeroTitle")'));
   assert.ok(carsPageSource.includes('t("carsSearch.pickupLocationLabel")'));
   assert.ok(carsPageSource.includes('t("carsSearch.chooseRentalDates")'));
   assert.ok(carsPageSource.includes('dictionary[`${key}.title`]'));

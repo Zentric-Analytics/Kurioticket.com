@@ -48,13 +48,13 @@ describe("hero image quality source contracts", () => {
     assert.doesNotMatch(mobileHero, /from-slate-950|via-slate-950|to-slate-950/);
   });
 
-  it("keeps Cars hero dimensions and search positioning unchanged", () => {
+  it("keeps Cars hero dimensions while protecting the finalized lower search positions", () => {
     assert.match(carsPageSource, /min-h-\[24\.25rem\]/);
     assert.match(carsPageSource, /min-h-\[25rem\].*lg:min-h-\[27rem\]/);
-    assert.match(carsPageSource, /absolute inset-x-0 bottom-\[-23rem\] z-30/);
+    assert.match(carsPageSource, /absolute inset-x-0 bottom-\[-24\.5rem\] z-30/);
     assert.match(
       carsPageSource,
-      /absolute inset-x-0 bottom-\[-64px\] z-30 lg:bottom-\[-68px\]/,
+      /absolute inset-x-0 bottom-\[-84px\] z-30 lg:bottom-\[-88px\]/,
     );
   });
 
