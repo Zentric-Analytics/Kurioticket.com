@@ -854,6 +854,7 @@ export function DealsSearchForm({
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const hotelDatesLauncherRef = useRef<HTMLButtonElement>(null);
+  const stayDatesLauncherRef = useRef<HTMLButtonElement>(null);
   const mobileHotelDatesCommittedRef = useRef(false);
   const [hotelDatesOpen, setHotelDatesOpen] = useState(false);
   const [mobileHotelDatesOpen, setMobileHotelDatesOpen] = useState(false);
@@ -1335,9 +1336,16 @@ export function DealsSearchForm({
     setDraftHotelCheckIn(displayedHotelCheckIn);
     setDraftHotelCheckOut(displayedHotelCheckOut);
   }, [displayedHotelCheckIn, displayedHotelCheckOut]);
+  const desktopHotelDatesLauncherRef =
+    supportsStayDateOverride && !search.stayDatesLinked
+      ? stayDatesLauncherRef
+      : hotelDatesLauncherRef;
   const restoreHotelDatesFocus = () =>
     requestAnimationFrame(() =>
-      hotelDatesLauncherRef.current?.focus({ preventScroll: true }),
+      (window.matchMedia("(max-width: 639px)").matches
+        ? hotelDatesLauncherRef
+        : desktopHotelDatesLauncherRef
+      ).current?.focus({ preventScroll: true }),
     );
   const openHotelDates = () => {
     closeDesktopLandingPanels();
@@ -1908,7 +1916,7 @@ export function DealsSearchForm({
       const target = event.target;
       if (
         target instanceof Node &&
-        !hotelDatesLauncherRef.current?.contains(target) &&
+        !desktopHotelDatesLauncherRef.current?.contains(target) &&
         !(
           target instanceof Element &&
           target.closest(
@@ -1930,7 +1938,7 @@ export function DealsSearchForm({
       document.removeEventListener("pointerdown", dismissOnPointer);
       document.removeEventListener("keydown", dismissOnEscape);
     };
-  }, [dismissDesktopHotelDates, hotelDatesOpen]);
+  }, [desktopHotelDatesLauncherRef, dismissDesktopHotelDates, hotelDatesOpen]);
 
   const closeUnrelatedPickers = useCallback(() => {
     resetFlightDatesDraft();
@@ -3543,6 +3551,18 @@ export function DealsSearchForm({
           {isPackagesLanding ? compactMobileControls : null}
           <div className={isPackagesLanding ? "hidden sm:contents" : "contents"}>
           <>
+          {isPackagesLanding ? (
+            <div
+              data-deals-packages-identity
+              className="mb-3 hidden h-[42px] w-fit items-center gap-2 rounded-[8px] bg-[#004BB8]/8 px-[13px] text-[16px] font-semibold text-navy ring-1 ring-[#004BB8]/10 lg:inline-flex"
+            >
+              <PackagesIcon
+                data-packages-identity-icon
+                className="h-6 w-6 text-[#004BB8]"
+              />
+              {t("deals")}
+            </div>
+          ) : null}
           {isDesktopLanding ? (
             <fieldset
               className="hidden lg:block lg:pb-0"
@@ -4288,7 +4308,7 @@ export function DealsSearchForm({
                   {t("deals.datesForStay")}
                 </span>
                 <button
-                  ref={hotelDatesLauncherRef}
+                  ref={stayDatesLauncherRef}
                   type="button"
                   aria-expanded={hotelDatesOpen || mobileHotelDatesOpen}
                   aria-haspopup="dialog"
@@ -4303,13 +4323,17 @@ export function DealsSearchForm({
                       ? dismissDesktopHotelDates(true)
                       : openHotelDates()
                   }
-                  className={`${packageActionSegment} flex w-full max-w-sm cursor-pointer items-center justify-between gap-2 text-start`}
+                  className="focus-ring mt-1 flex h-[52px] w-[350px] max-w-full cursor-pointer items-center gap-2 rounded-[8px] border border-[#DEE5ED] bg-white px-4 text-start transition-colors hover:border-slate-400"
                 >
-                  <span className="min-w-0 truncate">{hotelDatesSummary}</span>
                   <Calendar
                     aria-hidden="true"
                     className="h-4 w-4 shrink-0 text-slate-500"
                   />
+                  <span
+                    className={`min-w-0 truncate text-[15px] font-medium ${displayedHotelCheckIn && displayedHotelCheckOut ? "text-slate-950" : "text-slate-500"}`}
+                  >
+                    {hotelDatesSummary}
+                  </span>
                 </button>
                 <div>{errorBlock("hotel")}</div>
               </div>
@@ -4519,7 +4543,7 @@ export function DealsSearchForm({
       </FlightMobilePickerShell>
       <DealsHotelDatesPopover
         open={hotelDatesOpen}
-        anchorRef={hotelDatesLauncherRef}
+        anchorRef={desktopHotelDatesLauncherRef}
         desktopLanding={isDesktopLanding}
       >
         <div

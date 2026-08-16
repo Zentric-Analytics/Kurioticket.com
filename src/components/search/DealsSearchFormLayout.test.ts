@@ -153,7 +153,7 @@ test("Hotel plus Flight modes expose only the date-specific Stay override below 
   assert.match(stayOptions, /customizeInheritedField\(current, "stayDates"/);
   assert.match(stayOptions, /relinkInheritedField\(current, "stayDates"\)/);
   assert.match(stayOptions, /data-deals-stay-dates/);
-  assert.match(stayOptions, /hotelDatesLauncherRef/);
+  assert.match(stayOptions, /stayDatesLauncherRef/);
   assert.match(stayOptions, /hotelDatesSummary/);
   assert.match(stayOptions, /border-b border-slate-200/);
 });

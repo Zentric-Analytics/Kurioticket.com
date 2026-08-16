@@ -250,7 +250,32 @@ test("desktop Packages custom stay-date flow renders its launcher and existing c
   );
   assert.match(actions, /supportsStayDateOverride && !search\.stayDatesLinked/);
   assert.match(actions, /data-deals-stay-dates/);
-  assert.match(actions, /ref=\{hotelDatesLauncherRef\}/);
+  assert.match(actions, /ref=\{stayDatesLauncherRef\}/);
   assert.match(actions, /onClick=\{\(\) =>[\s\S]*openHotelDates\(\)/);
+  assert.match(actions, /h-\[52px\] w-\[350px\][\s\S]*rounded-\[8px\][\s\S]*border border-\[#DEE5ED\][\s\S]*bg-white/);
+  assert.match(actions, /cursor-pointer[\s\S]*hover:border-slate-400/);
+  assert.match(
+    actions,
+    /<Calendar[\s\S]*className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*<span[\s\S]*\{hotelDatesSummary\}/,
+  );
+  assert.doesNotMatch(actions, /\{hotelDatesSummary\}[\s\S]*<Calendar/);
   assert.match(form, /id="deals-hotel-desktop-dates"/);
+  assert.match(form, /anchorRef=\{desktopHotelDatesLauncherRef\}/);
+  assert.match(
+    form,
+    /const desktopHotelDatesLauncherRef =[\s\S]*\? stayDatesLauncherRef[\s\S]*: hotelDatesLauncherRef/,
+  );
+  assert.match(form, /!desktopHotelDatesLauncherRef\.current\?\.contains\(target\)/);
+});
+
+test("desktop Packages renders one visible identity above its mode tabs", () => {
+  const desktop = form.slice(
+    form.indexOf('<div className={isPackagesLanding ? "hidden sm:contents"'),
+    form.indexOf("data-deals-desktop-package-selector"),
+  );
+  assert.match(desktop, /data-deals-packages-identity/);
+  assert.match(desktop, /<PackagesIcon[\s\S]*data-packages-identity-icon/);
+  assert.match(desktop, /\{t\("deals"\)\}/);
+  assert.match(desktop, /h-\[42px\][\s\S]*rounded-\[8px\][\s\S]*bg-\[#004BB8\]\/8[\s\S]*text-\[16px\][\s\S]*lg:inline-flex/);
+  assert.equal((desktop.match(/data-deals-packages-identity/g) ?? []).length, 1);
 });
