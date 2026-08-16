@@ -18,7 +18,7 @@ test("mobile Cars location launchers do not reserve space for clear buttons", ()
   assert.doesNotMatch(returnLauncher[1], /\bpe-9\b/);
 });
 
-test("Cars clear controls are available only at the desktop breakpoint", () => {
+test("Cars location clear controls are available only at the desktop breakpoint", () => {
   for (const label of [
     "carsSearch.clearPickupLocation",
     "carsSearch.clearReturnLocation",
@@ -34,11 +34,5 @@ test("Cars clear controls are available only at the desktop breakpoint", () => {
     assert.match(clearControl[1], /\bsm:inline-flex\b/);
   }
 
-  const clearAllControl = carsPageSource.match(
-    /onClick=\{onClearSearch\}[\s\S]*?className="([^"]+)"/,
-  );
-
-  assert.ok(clearAllControl);
-  assert.match(clearAllControl[1], /\bhidden\b/);
-  assert.match(clearAllControl[1], /\bsm:inline-flex\b/);
+  assert.doesNotMatch(carsPageSource, /onClick=\{onClearSearch\}|\{t\("clearAll"\)\}/);
 });
