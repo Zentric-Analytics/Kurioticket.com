@@ -35,6 +35,16 @@ test("shared Hotel guests picker preserves approved sections and limits", () => 
   assert.match(guests, /min=\{1\}/);
 });
 
+test("shared Hotel guests picker offers compact density without changing its default", () => {
+  assert.match(guests, /density\?: "default" \| "compact"/);
+  assert.match(guests, /density = "default"/);
+  for (const compactToken of ["min-h-[86px]", "h-11 w-11", "h-6 w-6", "text-[15px]", "text-[12px] leading-[16px]", "text-[16px]", "h-[38px] w-[38px]", "min-h-[74px]", "h-5 w-5", "h-[26px] w-[46px]"]) {
+    assert.ok(guests.includes(compactToken), `compact density should include ${compactToken}`);
+  }
+  assert.match(guests, /compact \? "h-11 w-11" : "h-\[52px\] w-\[52px\]"/);
+  assert.match(guests, /compact \? "min-h-\[86px\][^"]*" : "min-h-\[104px\]/);
+});
+
 test("homepage and standalone Hotels share draft guest presentation", () => {
   for (const source of [home, standalone]) {
     assert.match(source, /MobileHotelGuestsRoomsPicker/);
@@ -43,6 +53,11 @@ test("homepage and standalone Hotels share draft guest presentation", () => {
     assert.match(source, /showBackLabel=\{false\}/);
     assert.match(source, /showCancelAction=\{false\}/);
   }
+});
+
+test("compact Hotel guest density is scoped to the mobile homepage integration", () => {
+  assert.match(home, /density=\{mobileHomepage \? "compact" : undefined\}/);
+  assert.doesNotMatch(standalone, /density=/);
 });
 
 test("shell supports navigation labels, arrow-only headers, and real spacers", () => {
