@@ -203,6 +203,7 @@ export function MobileAirportPicker({
       dialogId={`${inputId}-dialog`}
       launcherRef={launcherRef}
       onClose={onClose}
+      showCancelAction={false}
       contentClassName="bg-[#fcfdff] px-4 py-6"
       footer={(requestClose) => (
         <button
