@@ -1550,15 +1550,15 @@ export function StandaloneFlightSearchForm({
       <form onSubmit={onSubmit} className="relative space-y-3 sm:space-y-3">
         {useMainFlightLandingMobilePresentation ? (
           <div
-            className="flex items-center gap-[5px] px-0.5 sm:hidden"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3 py-2 shadow-sm ring-1 ring-[#004BB8]/10 sm:hidden"
             data-testid="main-flight-landing-identity"
           >
             <Plane
               aria-hidden="true"
-              className="h-[18px] w-[18px] shrink-0 text-[#075EE8] min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]"
-              strokeWidth={1.8}
+              className="h-5 w-5 shrink-0 text-[#004BB8]"
+              strokeWidth={2.1}
             />
-            <h2 className="text-[13px] font-medium leading-none text-[#075EE8] min-[360px]:text-[14px] min-[375px]:text-[16px]">
+            <h2 className="text-[16px] font-semibold text-navy">
               {t("flights") || "Flights"}
             </h2>
           </div>
