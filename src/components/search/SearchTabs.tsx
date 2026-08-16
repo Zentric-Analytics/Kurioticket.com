@@ -2718,7 +2718,7 @@ export function SearchTabs({
   const mobileHomepageProductTabs = (
     <div
       data-testid="mobile-homepage-product-tabs-breakout"
-      className="relative left-1/2 w-[calc(100vw-24px)] -translate-x-1/2 sm:static sm:w-full sm:translate-x-0"
+      className="relative left-1/2 w-[calc(100%+28px)] -translate-x-1/2 sm:static sm:w-full sm:translate-x-0"
     >
       <div
         role="tablist"
