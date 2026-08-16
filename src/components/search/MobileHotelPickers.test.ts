@@ -35,6 +35,22 @@ test("shared Hotel guests picker preserves approved sections and limits", () => 
   assert.match(guests, /min=\{1\}/);
 });
 
+test("shared Hotel guests picker uses Kurioticket blue only for its row icons", () => {
+  assert.match(guests, /bg-slate-100 text-\[#075EE8\]/);
+  assert.match(guests, /<PawPrint[^>]*className=\{cn\("text-\[#075EE8\]"/);
+  assert.doesNotMatch(guests, /bg-slate-100 text-slate-800/);
+  assert.doesNotMatch(guests, /<PawPrint[^>]*text-slate-700/);
+});
+
+test("shared Hotel Pet-friendly switch keeps its thumb inside both density tracks", () => {
+  assert.match(guests, /compact \? "h-\[26px\] w-\[46px\]" : "h-\[30px\] w-\[52px\]"/);
+  assert.match(guests, /compact \? "h-5 w-5" : "h-6 w-6"/);
+  assert.match(guests, /petFriendly \? "end-\[3px\]" : "start-\[3px\]"/);
+  assert.match(guests, /transition-\[inset\]/);
+  assert.doesNotMatch(guests, /translate-x-\[23px\]|translate-x-\[25px\]/);
+  assert.match(guests, /role="switch" aria-checked=\{petFriendly\} aria-label=\{strings\.petFriendly\}/);
+});
+
 test("shared Hotel guests picker offers compact density without changing its default", () => {
   assert.match(guests, /density\?: "default" \| "compact"/);
   assert.match(guests, /density = "default"/);
