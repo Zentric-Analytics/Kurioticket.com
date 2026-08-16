@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    qualities: [75, 92],
+    qualities: [75, 92, 100],
     localPatterns: imageLocalPatterns,
     remotePatterns: imageRemotePatterns,
   },

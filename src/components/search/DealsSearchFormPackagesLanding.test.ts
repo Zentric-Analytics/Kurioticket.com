@@ -164,9 +164,76 @@ test("desktop Packages polish stays scoped to the Packages landing presentation"
   );
   assert.match(form, /lg:absolute lg:end-0 lg:top-2/);
   assert.match(form, /lg:min-h-\[48px\] lg:pe-\[188px\]/);
-  assert.match(form, /checked:border-\[#2563eb\] checked:bg-\[#2563eb\]/);
+  assert.match(form, /checked:border-\[#075EE8\] checked:bg-\[#075EE8\]/);
   assert.match(form, /isPackagesLanding \? "text-white" : "text-\[#2563eb\]"/);
   assert.match(form, /lg:me-1 lg:self-center lg:text-slate-500/);
   assert.match(form, /lg:h-\[48px\] lg:min-h-\[48px\] lg:min-w-\[164px\]/);
   assert.match(form, /isPackagesLanding \? "lg:py-5" : "lg:py-6"/);
+});
+
+test("desktop Packages removes its trip selector and the vacated row spacing only at lg", () => {
+  assert.match(
+    form,
+    /aria-label=\{t\("tripType"\)\}[\s\S]*?isPackagesLanding \? "lg:hidden" : ""/,
+  );
+  assert.match(form, /isPackagesLanding \? "lg:mt-0 lg:h-\[70px\]"/);
+  assert.doesNotMatch(form, /isPackagesLanding \? "lg:mt-\[14px\]/);
+  assert.match(compact, /\["round-trip", "one-way"\] as const/);
+  assert.match(form, /search\.flightTripType/);
+});
+
+test("desktop Packages fields place neutral icons in value rows", () => {
+  const originDestination = form.slice(
+    form.indexOf('{(["origin", "destination"] as const).map'),
+    form.indexOf("<DealsDestinationPopover", form.indexOf('{(["origin", "destination"] as const).map')),
+  );
+  const dates = form.slice(
+    form.indexOf('<span className={label}>{t("travelDates")}</span>'),
+    form.indexOf("{primaryPackageControls}"),
+  );
+  const travelers = form.slice(
+    form.indexOf("data-deals-package-travellers"),
+    form.indexOf("data-deals-package-cabin"),
+  );
+  const cabin = form.slice(
+    form.indexOf("data-deals-package-cabin"),
+    form.indexOf("!isDesktopLanding", form.indexOf("data-deals-package-cabin")),
+  );
+
+  assert.ok(originDestination.indexOf("{t(kind)}") < originDestination.lastIndexOf("<MapPin"));
+  assert.ok(dates.indexOf("travelDates") < dates.lastIndexOf("<Calendar"));
+  assert.ok(travelers.indexOf("travelersControlLabel") < travelers.lastIndexOf("<UserRound"));
+  assert.ok(cabin.indexOf("deals.cabinClass") < cabin.lastIndexOf("<Plane"));
+  for (const fieldMarkup of [originDestination, dates, travelers, cabin]) {
+    assert.match(fieldMarkup, /h-4 w-4 shrink-0 text-slate-500/);
+  }
+  assert.match(form, /flex min-w-0 items-center gap-2/);
+});
+
+test("desktop Packages uses exact dedicated Travelers/Rooms copy", () => {
+  assert.match(
+    form,
+    /isPackagesLanding[\s\S]*?deals\.desktopPackages\.travelersRoomsLabel[\s\S]*?: "deals\.travellersRooms"/,
+  );
+  const english = readFileSync("src/lib/i18n/en.ts", "utf8");
+  assert.match(
+    english,
+    /"deals\.desktopPackages\.travelersRoomsLabel": "Travelers\/Rooms"/,
+  );
+  assert.doesNotMatch(english, /desktopPackages[^\n]*Travellers/);
+  assert.doesNotMatch(english, /desktopPackages[^\n]*Travelers \/ Rooms/);
+});
+
+test("desktop Packages stay-date override is a visible semantic checkbox", () => {
+  const checkbox = form.slice(
+    form.lastIndexOf("<label", form.indexOf("data-deals-change-stay-dates")),
+    form.indexOf("{supportsStayDateOverride && !search.stayDatesLinked"),
+  );
+  assert.match(checkbox, /<label[\s\S]*cursor-pointer/);
+  assert.match(checkbox, /<input[\s\S]*type="checkbox"[\s\S]*checked=\{!search\.stayDatesLinked\}/);
+  assert.match(checkbox, /onChange=\{\(event\) =>/);
+  assert.match(checkbox, /h-\[18px\] w-\[18px\] rounded-\[4px\] border-\[1\.5px\] border-slate-500 bg-white/);
+  assert.match(checkbox, /checked:border-\[#075EE8\] checked:bg-\[#075EE8\]/);
+  assert.match(checkbox, /<Check[\s\S]*isPackagesLanding \? "text-white"/);
+  assert.match(form, /lg:rounded-\[8px\]/);
 });

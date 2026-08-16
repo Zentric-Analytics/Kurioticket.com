@@ -318,13 +318,9 @@ function CarsSearchPage() {
                 fill
                 priority
                 sizes="100vw"
-                quality={92}
-                className="object-cover object-[54%_45%] brightness-[1.03] saturate-[1.08] contrast-[1.03]"
+                quality={100}
+                className="object-cover object-[54%_45%]"
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/46 via-slate-950/14 to-slate-950/4" />
-              <div className="absolute inset-y-0 start-0 w-[84%] bg-gradient-to-r from-slate-950/58 via-slate-950/20 to-transparent" />
-              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/38 via-slate-950/10 to-transparent" />
             </div>
 
             <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
@@ -364,7 +360,7 @@ function CarsSearchPage() {
                     fill
                     priority
                     sizes="100vw"
-                    quality={92}
+                    quality={100}
                     className="object-cover object-[50%_52%]"
                   />
                   <div className="absolute inset-y-0 start-0 w-[52%] bg-gradient-to-r from-white/74 via-white/34 to-transparent" />
