@@ -53,7 +53,7 @@ test("dedicated Cars desktop time popup has no native selects and stable relatio
 
 test("mobile age owns one flex-constrained momentum scroll region", () => {
   assert.match(shared, /min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain/);
-  assert.match(shared, /mobileShell \? "min-h-0 flex-1[^"]+" : "max-h-\[360px\]/);
+  assert.match(shared, /mobileShell \? "min-h-0 flex-1[^"]+" : "max-h-\[320px\]/);
   assert.match(shared, /driverAgeOptions\.map/);
 });
 
