@@ -40,7 +40,7 @@ import { removeDealsStagedJourneyPlan } from "@/lib/deals/dealsTripPlanStorage";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
-import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { translations as en } from "@/lib/i18n/en";
 import { driverAgeOptions, timeOptions } from "@/lib/cars/carsSearchUtils";
 import {
@@ -4411,43 +4411,23 @@ export function DealsSearchForm({
           </div>
         </div>
       </DealsFlightDatesPopover>
-      <FlightMobilePickerShell
+      <MobileDatePickerDialog
         open={mobileFlightDatesOpen}
         title={t("chooseTravelDates")}
         titleId="deals-flight-mobile-dates-title"
         dialogId="deals-flight-mobile-dates"
         launcherRef={flightDatesLauncherRef}
+        startDate={draftFlightDepartureDate}
+        endDate={draftFlightReturnDate}
+        rangeRequired
+        firstMonth={visibleFlightMonth}
+        locale={calendarLocale}
+        weekdays={weekdays}
+        labels={{ selectDates: t("carsResults.selectDates"), start: t("mobileDatePicker.start"), end: t("mobileDatePicker.end"), done: t("done"), selectDatePrefix: t("selectDateAriaPrefix") }}
+        isDateDisabled={isBeforeToday}
+        onCommit={(start, end) => setSearch((current) => applyAuthoritativeDates(current, { start, end }))}
         onClose={closeMobileFlightDates}
-        pickerMarker="flight-date"
-        contentClassName="px-4 py-5"
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => {
-                setDraftFlightDepartureDate("");
-                setDraftFlightReturnDate("");
-              }}
-              className="focus-ring min-h-11 rounded-xl px-4 text-sm font-extrabold text-slate-700 hover:bg-slate-100"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              disabled={!validDraftFlightRange}
-              onClick={() => {
-                commitFlightDates(true);
-                requestClose();
-              }}
-              className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-extrabold text-white hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        {renderFlightDatesCalendar(true)}
-      </FlightMobilePickerShell>
+      />
       <DealsFlightPopover
         open={travelersOpen}
         anchorRef={travelersLauncherRef}
@@ -4537,46 +4517,23 @@ export function DealsSearchForm({
           </div>
         </div>
       </DealsHotelDatesPopover>
-      <HotelMobilePickerShell
+      <MobileDatePickerDialog
         open={mobileHotelDatesOpen}
-        title={t(
-          supportsStayDateOverride && !search.stayDatesLinked
-            ? "deals.chooseStayDates"
-            : "chooseTravelDates",
-        )}
+        title={t(supportsStayDateOverride && !search.stayDatesLinked ? "deals.chooseStayDates" : "chooseTravelDates")}
         titleId="deals-hotel-mobile-dates-title"
         dialogId="deals-hotel-mobile-dates"
         launcherRef={hotelDatesLauncherRef}
+        startDate={draftHotelCheckIn}
+        endDate={draftHotelCheckOut}
+        rangeRequired
+        firstMonth={visibleHotelMonth}
+        locale={hotelCalendarLocale}
+        weekdays={hotelWeekdays}
+        labels={{ selectDates: t("carsResults.selectDates"), start: t("mobileDatePicker.start"), end: t("mobileDatePicker.end"), done: t("done"), selectDatePrefix: t("hotelResults.selectDateAriaPrefix") }}
+        isDateDisabled={isBeforeToday}
+        onCommit={(start, end) => setSearch((current) => getIncludedProducts(current.mode).flight ? customizeInheritedField(current, "stayDates", { start, end }) : applyAuthoritativeDates(current, { start, end }))}
         onClose={closeMobileHotelDates}
-        contentClassName="px-4 py-5"
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => {
-                setDraftHotelCheckIn("");
-                setDraftHotelCheckOut("");
-              }}
-              className="focus-ring min-h-11 rounded-xl px-4 text-sm font-extrabold text-slate-700 hover:bg-slate-100"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              disabled={!validDraftHotelRange}
-              onClick={() => {
-                commitHotelDates(true);
-                requestClose();
-              }}
-              className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-extrabold text-white hover:bg-[#021C2B] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        {renderHotelDatesCalendar(true)}
-      </HotelMobilePickerShell>
+      />
       <DealsCarPopover
         open={carReturnLocationOpen}
         anchorRef={carReturnLocationLauncherRef}
@@ -4793,42 +4750,23 @@ export function DealsSearchForm({
           </FlightMobilePickerShell>
         );
       })}
-      <FlightMobilePickerShell
+      <MobileDatePickerDialog
         open={mobileCarDatesOpen}
         title={t("carsSearch.chooseRentalDates")}
         titleId="deals-car-mobile-dates-title"
         dialogId="deals-car-mobile-dates"
         launcherRef={carDatesLauncherRef}
+        startDate={draftCarPickupDate}
+        endDate={draftCarReturnDate}
+        rangeRequired
+        firstMonth={visibleCarMonth}
+        locale={carIntlLocale}
+        weekdays={carWeekdays}
+        labels={{ selectDates: t("carsResults.selectDates"), start: t("mobileDatePicker.start"), end: t("mobileDatePicker.end"), done: t("done"), selectDatePrefix: t("carsSearch.selectDateAriaPrefix") }}
+        isDateDisabled={isBeforeToday}
+        onCommit={(start, end) => setSearch((current) => customizeInheritedField(current, "carDates", { start, end }))}
         onClose={closeMobileCarDates}
-        contentClassName="overflow-x-hidden px-4 py-5"
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setDraftCarPickupDate("");
-                setDraftCarReturnDate("");
-              }}
-              className="focus-ring min-h-11 rounded-xl px-4 text-sm font-extrabold text-slate-700"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              disabled={!validDraftCarRange}
-              onClick={() => {
-                commitCarDates(true);
-                requestClose();
-              }}
-              className="focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-extrabold text-white disabled:opacity-50"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        {renderCarDatesCalendar(true)}
-      </FlightMobilePickerShell>
+      />
       <FlightMobilePickerShell
         open={mobileCarTimesOpen}
         title={t("carsSearch.pickupReturnTimeLabel")}
