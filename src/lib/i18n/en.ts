@@ -1718,6 +1718,7 @@ export const translations: TranslationDictionary = {
   "carsPickup.Hotel area.imageAlt":
     "Hotel exterior with palm trees and a driveway",
   "carsSearch.pickupLocationLabel": "Pickup location",
+  "carsSearch.returnLocationLabel": "Return location",
   "carsSearch.pickupLocationPlaceholder": "Airport, city, or address",
   "carsSearch.returnLocationPlaceholder": "Return city, airport, or address",
   "carsSearch.returnToSameLocation": "Return to same location",
@@ -1745,6 +1746,7 @@ export const translations: TranslationDictionary = {
   "carsSearch.mobileDriverAgeIntro": "Driver must be between 18 and 70 years old.",
   "carsSearch.driverAgeAnyAge": "Any age",
   "carsSearch.driverAgeAnyAgeRange": "Any age 18–70",
+  "carsSearch.rentalDays": "{count} days",
   "carsSearch.clearPickupLocation": "Clear pickup location",
   "carsSearch.clearReturnLocation": "Clear return location",
   "carsSearch.chooseRentalDatesAria": "Choose rental pickup and return dates",
@@ -3529,6 +3531,9 @@ export const translations: TranslationDictionary = {
   hotelInspirationCategories: "Hotel inspiration categories",
   searchRentalCarsEveryPartTrip:
     "Search rental cars for every part of your trip",
+  carsDesktopHeroTitle: "Find the perfect car for your next trip",
+  carsDesktopHeroBody:
+    "Compare top car rental brands and explore at your own pace.",
   exploreRoute: "Explore route",
   beachVacations: "Beach vacations",
   beachVacationsBody:
@@ -3766,6 +3771,7 @@ export const translations: TranslationDictionary = {
   "deals.carRow": "Car",
   "deals.travellersRow": "Travellers",
   "deals.travellersRooms": "Travellers / rooms",
+  "deals.desktopPackages.travelersRoomsLabel": "Travelers/Rooms",
   "deals.changeDatesForStay": "Change dates for stay",
   "deals.datesForStay": "Dates for stay",
   "deals.chooseStayDates": "Choose dates for stay",
