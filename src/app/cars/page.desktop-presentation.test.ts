@@ -18,7 +18,9 @@ test("desktop Cars uses the approved coastal convertible hero and exact copy", (
     /\/images\/premium\/cars\/kurioticket-cars-hero-coastal-convertible-001\.jpg/,
   );
   assert.match(source, /t\("carsDesktopHeroTitle"\)/);
-  assert.match(source, /t\("carsDesktopHeroBody"\)/);
+  assert.doesNotMatch(source, /t\("carsDesktopHeroBody"\)/);
+  assert.match(source, /bottom-\[-84px\][\s\S]*?lg:bottom-\[-88px\]/);
+  assert.doesNotMatch(source, /bottom-\[-64px\]|lg:bottom-\[-68px\]/);
   assert.match(source, /object-cover object-\[50%_52%\]/);
   assert.match(source, /from-white\/62 via-white\/24 to-transparent/);
   assert.doesNotMatch(source, /from-white\/74 via-white\/34/);
@@ -46,13 +48,16 @@ test("desktop Cars field row follows the approved order and moderate geometry", 
   }
 
   assert.match(searchBar, /data-testid="cars-desktop-field-grid"/);
-  assert.match(searchBar, /sm:h-\[52px\]/);
+  assert.match(searchBar, /sm:h-\[54px\]/);
   assert.match(searchBar, /sm:rounded-\[9px\]/);
   assert.match(searchBar, /bg-\[#075EE8\]/);
-  assert.match(searchBar, /_140px_148px\]/);
-  assert.match(searchBar, /sm:mx-2 sm:my-1/);
-  assert.match(searchBar, /sm:w-\[calc\(100%-16px\)\]/);
-  assert.doesNotMatch(searchBar, /sm:flex[\s\S]{0,500}\{t\("cars"\)\}/);
+  assert.match(searchBar, /_140px_154px\]/);
+  assert.match(searchBar, /sm:mx-\[5px\] sm:my-\[5px\]/);
+  assert.match(searchBar, /sm:w-\[calc\(100%-10px\)\]/);
+  assert.match(
+    searchBar,
+    /className="flex items-center sm:-mb-0\.5">[\s\S]*?<CarFront[\s\S]*?className="h-5 w-5 text-\[#075EE8\]"[\s\S]*?\{t\("cars"\)\}/,
+  );
 });
 
 test("return location is a distinct desktop field only when enabled", () => {

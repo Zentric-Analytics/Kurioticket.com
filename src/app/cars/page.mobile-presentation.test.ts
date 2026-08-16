@@ -28,9 +28,20 @@ test("mobile Cars card uses the refined radius and compact Cars identity", () =>
   assert.doesNotMatch(searchBarSource, /rounded-\[1\.5rem\]/);
   assert.match(
     searchBarSource,
-    /className="flex items-center sm:hidden">[\s\S]*?<CarFront[\s\S]*?className="h-5 w-5 text-\[#004BB8\]"[\s\S]*?\{t\("cars"\)\}/,
+    /className="flex items-center sm:-mb-0\.5">[\s\S]*?<CarFront[\s\S]*?className="h-5 w-5 text-\[#075EE8\]"[\s\S]*?\{t\("cars"\)\}/,
   );
   assert.match(searchBarSource, /sm:rounded-\[1\.35rem\]/);
+});
+
+test("mobile Cars shares the canonical hero title and lower form position", () => {
+  assert.equal(
+    carsPageSource.match(/t\("carsDesktopHeroTitle"\)/g)?.length,
+    2,
+  );
+  assert.doesNotMatch(carsPageSource, /t\("searchRentalCarsEveryPartTrip"\)/);
+  assert.match(carsPageSource, /bottom-\[-24\.5rem\]/);
+  assert.doesNotMatch(carsPageSource, /bottom-\[-23rem\]/);
+  assert.match(carsPageSource, /pt-\[26\.5rem\] sm:pt-0/);
 });
 
 test("mobile pickup and conditional return launchers lead values with MapPin and retain picker actions", () => {

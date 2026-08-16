@@ -329,12 +329,12 @@ function CarsSearchPage() {
                   id="cars-mobile-search-heading"
                   className="text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.62)]"
                 >
-                  {t("searchRentalCarsEveryPartTrip")}
+                  {t("carsDesktopHeroTitle")}
                 </h1>
               </div>
             </div>
 
-            <div className="page-shell absolute inset-x-0 bottom-[-23rem] z-30">
+            <div className="page-shell absolute inset-x-0 bottom-[-24.5rem] z-30">
               <div className="mx-auto max-w-6xl">
                 <CarsSearchBar
                   errors={errors}
@@ -349,7 +349,7 @@ function CarsSearchPage() {
 
           <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-full md:space-y-10">
             <section
-              className="relative hidden overflow-visible pb-24 sm:block lg:pb-28"
+              className="relative hidden overflow-visible pb-32 sm:block lg:pb-36"
               aria-labelledby="cars-search-heading"
             >
               <div className="relative isolate min-h-[25rem] bg-slate-950 lg:min-h-[27rem]">
@@ -375,13 +375,10 @@ function CarsSearchPage() {
                     >
                       {t("carsDesktopHeroTitle")}
                     </h1>
-                    <p className="mt-4 max-w-[23rem] text-lg font-medium leading-7 text-slate-700">
-                      {t("carsDesktopHeroBody")}
-                    </p>
                   </div>
                 </div>
 
-                <div className="page-shell absolute inset-x-0 bottom-[-64px] z-30 lg:bottom-[-68px]">
+                <div className="page-shell absolute inset-x-0 bottom-[-84px] z-30 lg:bottom-[-88px]">
                   <div className="mx-auto max-w-6xl">
                     <CarsSearchBar
                       errors={errors}
@@ -396,7 +393,7 @@ function CarsSearchPage() {
             </section>
 
             <section
-              className="mx-auto max-w-6xl space-y-4 pt-[25rem] sm:pt-0"
+              className="mx-auto max-w-6xl space-y-4 pt-[26.5rem] sm:pt-0"
               aria-labelledby="car-trip-style-heading"
             >
               <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
@@ -847,11 +844,11 @@ function CarsSearchBar({
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
-        <div className="flex items-center sm:hidden">
-          <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-2 text-[16px] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+        <div className="flex items-center sm:-mb-0.5">
+          <span className="inline-flex items-center gap-2 rounded-lg bg-[#075EE8]/8 px-3.5 py-2 text-[16px] font-semibold text-navy shadow-sm ring-1 ring-[#075EE8]/10">
             <CarFront
               aria-hidden="true"
-              className="h-5 w-5 text-[#004BB8]"
+              className="h-5 w-5 text-[#075EE8]"
               strokeWidth={2.15}
             />
             {t("cars")}
@@ -863,8 +860,8 @@ function CarsSearchBar({
             data-testid="cars-desktop-field-grid"
             className={`grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-xl sm:border sm:border-slate-200/85 sm:bg-white lg:gap-0 ${
               values.returnToDifferentLocation
-                ? "lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1.25fr)_minmax(0,1.15fr)_minmax(0,1.15fr)_140px_148px]"
-                : "lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1.3fr)_minmax(0,1.05fr)_140px_148px]"
+                ? "lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1.25fr)_minmax(0,1.15fr)_minmax(0,1.15fr)_140px_154px]"
+                : "lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1.3fr)_minmax(0,1.05fr)_140px_154px]"
             }`}
           >
             <SearchCell
@@ -1178,7 +1175,7 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl bg-[#075EE8] px-4 text-sm font-bold text-white shadow-md shadow-[#075EE8]/20 enabled:hover:bg-[#004BB8] enabled:active:bg-[#003f9c] disabled:bg-[#075EE8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#075EE8]/20 sm:mx-2 sm:my-1 sm:h-[52px] sm:w-[calc(100%-16px)] sm:min-h-0 sm:rounded-[9px] sm:border-0 sm:px-4 sm:text-[15px] sm:shadow-[0_8px_18px_rgba(7,94,232,0.22)]"
+                className="focus-ring inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl bg-[#075EE8] px-4 text-sm font-bold text-white shadow-md shadow-[#075EE8]/20 enabled:hover:bg-[#004BB8] enabled:active:bg-[#003f9c] disabled:bg-[#075EE8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#075EE8]/20 sm:mx-[5px] sm:my-[5px] sm:h-[54px] sm:w-[calc(100%-10px)] sm:min-h-0 sm:rounded-[9px] sm:border-0 sm:px-4 sm:text-[15px] sm:shadow-[0_8px_18px_rgba(7,94,232,0.22)]"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
