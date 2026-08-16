@@ -3028,7 +3028,7 @@ export function SearchTabs({
         role="tablist"
         aria-label={translate("searchType") || "Search type"}
         data-testid="mobile-homepage-product-tabs"
-        className="grid h-12 w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.16fr)] overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[14px] min-[360px]:text-[15px] min-[375px]:text-[17px] min-[430px]:text-[18px]"
+        className="grid h-12 w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.22fr)] overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[14px] min-[360px]:text-[16px] min-[375px]:text-[18px] min-[430px]:text-[19px]"
       >
         {([
           ["flights", Plane, t.flights || "Flights"],
@@ -3055,7 +3055,7 @@ export function SearchTabs({
             >
               <Icon
                 aria-hidden="true"
-                className="h-[19px] w-[19px] shrink-0 min-[360px]:h-[21px] min-[360px]:w-[21px] min-[375px]:h-[23px] min-[375px]:w-[23px] min-[430px]:h-6 min-[430px]:w-6"
+                className="h-5 w-5 shrink-0 min-[360px]:h-[22px] min-[360px]:w-[22px] min-[375px]:h-6 min-[375px]:w-6 min-[430px]:h-[25px] min-[430px]:w-[25px]"
                 strokeWidth={1.8}
               />
               <span className="whitespace-nowrap">{label}</span>
