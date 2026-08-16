@@ -54,7 +54,7 @@ test("homepage scopes the approved presentation to its below-sm SearchTabs", () 
 test("mobile Flights renders four connected product tabs in approved order and is the default", () => {
   assert.match(source, /useState<TabMode>\("flights"\)/);
   assert.match(mobileBranch, /mobile-homepage-product-tabs/);
-  assert.match(mobileProductTabs, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.16fr\)\]/);
+  assert.match(mobileProductTabs, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.22fr\)\]/);
   assert.doesNotMatch(mobileProductTabs, /0\.88fr/);
   assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", PackagesIcon/);
   assert.equal((mobileProductTabs.match(/^\s*\["(?:flights|hotels|cars|deals)"/gm) ?? []).length, 4);
@@ -109,8 +109,8 @@ test("mobile homepage controls use one responsive product-tab renderer without s
   assert.equal((source.match(/data-testid="mobile-homepage-product-tabs-breakout"/g) ?? []).length, 1);
   assert.equal((source.match(/data-testid="mobile-homepage-product-tabs"/g) ?? []).length, 1);
   assert.match(mobileProductTabs, /grid h-12 w-full/);
-  assert.match(mobileProductTabs, /text-\[14px\] min-\[360px\]:text-\[15px\] min-\[375px\]:text-\[17px\] min-\[430px\]:text-\[18px\]/);
-  assert.match(mobileProductTabs, /h-\[19px\] w-\[19px\][^"\n]*min-\[360px\]:h-\[21px\][^"\n]*min-\[375px\]:h-\[23px\][^"\n]*min-\[430px\]:h-6/);
+  assert.match(mobileProductTabs, /text-\[14px\] min-\[360px\]:text-\[16px\] min-\[375px\]:text-\[18px\] min-\[430px\]:text-\[19px\]/);
+  assert.match(mobileProductTabs, /h-5 w-5[^"\n]*min-\[360px\]:h-\[22px\][^"\n]*min-\[375px\]:h-6[^"\n]*min-\[430px\]:h-\[25px\]/);
   assert.match(mobileProductTabs, /gap-1[^"\n]*min-\[360px\]:gap-\[5px\]/);
   assert.match(mobileBranch, /whitespace-nowrap/);
   assert.doesNotMatch(mobileBranch, /truncate[^\n]*\{label\}|text-ellipsis/);
@@ -132,8 +132,8 @@ test("mobile product tabs alone break out to a bounded viewport gutter", () => {
   assert.doesNotMatch(mobileProductTabs, /overflow-x-auto|overflow-x-scroll/);
 
   assert.match(mobileProductTabs, /grid h-12 w-full/);
-  assert.match(mobileProductTabs, /minmax\(0,1fr\)_minmax\(0,1\.16fr\)/);
-  assert.doesNotMatch(mobileProductTabs, /0\.88fr|1\.2[2-9]fr/);
+  assert.match(mobileProductTabs, /minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.22fr\)/);
+  assert.doesNotMatch(mobileProductTabs, /0\.88fr|1\.1[0-9]fr|1\.2[3-9]fr/);
 
   assert.match(flightMobileBranch, /<form onSubmit=\{onFlightSubmit\} className="mt-3 space-y-2">/);
   assert.match(flightMobileBranch, /mobile-homepage-route-fields[\s\S]*?h-\[68px\] w-full/);
