@@ -28,17 +28,46 @@ export function MobileCarLocationPicker({ open, mode, value, launcherRef, onClos
   const [draft, setDraft] = useState<CarLocationSuggestion | null>(null);
   const [results, setResults] = useState<CarLocationSuggestion[]>([]);
   const [recents, setRecents] = useState<CarLocationSuggestion[]>([]);
-  useEffect(() => { if (!open) return; setQuery(""); setDraft(null); setRecents(readRecentCarLocations()); requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true })); }, [open, value]);
-  useEffect(() => { if (!open) return; let active = true; const timer = window.setTimeout(() => searchCarLocationSuggestions(query, { limit: 8 }).then((items) => { if (active) setResults(items); }), 120); return () => { active = false; window.clearTimeout(timer); }; }, [open, query]);
-  const select = (item: CarLocationSuggestion) => { setDraft(item); setQuery(item.value); };
+  const [searchCompleted, setSearchCompleted] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const frame = requestAnimationFrame(() => {
+      setQuery("");
+      setDraft(null);
+      setResults([]);
+      setSearchCompleted(false);
+      setRecents(readRecentCarLocations());
+      inputRef.current?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [open, value]);
+  useEffect(() => {
+    if (!open) return;
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+
+    let active = true;
+    const timer = window.setTimeout(() => {
+      searchCarLocationSuggestions(trimmedQuery, { limit: 8 }).then((items) => {
+        if (!active) return;
+        setResults(items);
+        setSearchCompleted(true);
+      });
+    }, 120);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [open, query]);
+  const select = (item: CarLocationSuggestion) => { setDraft(item); setQuery(item.value); setResults([]); setSearchCompleted(false); };
   const commit = () => { const next = draft?.value ?? (query.trim() || value.trim()); if (!next) return; if (draft) saveRecentCarLocation(draft); onCommit(next); onClose(); };
-  const popular = query.trim() ? results : results;
+  const trimmedQuery = query.trim();
   const text = (key: string, fallback: string) => t[key] ?? fallback;
   return <FlightMobilePickerShell open={open} title={mode === "pickup" ? text("carsSearch.pickupLocationLabel", "Pickup location") : text("carsResults.returnLocationLabel", "Return location")} titleId={`cars-${mode}-location-title`} launcherRef={launcherRef} onClose={onClose} showCancelAction={false} showBackLabel={false} contentClassName="bg-[#FCFDFE] px-4 py-4" footer={<button type="button" onClick={commit} disabled={!draft && !query.trim() && !value.trim()} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white disabled:cursor-not-allowed">{text("done", "Done")}</button>}>
     <div className="mx-auto w-full max-w-xl">
-      <div className="relative"><Search aria-hidden="true" className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-600" /><input ref={inputRef} value={query} onChange={(event) => { setQuery(event.target.value); setDraft(null); }} aria-label={text("carsSearch.pickupLocationPlaceholder", "Airport, city, or address")} placeholder={text("carsSearch.pickupLocationPlaceholder", "Airport, city, or address")} className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white ps-12 pe-4 text-[16px] text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#075EE8] focus:ring-1 focus:ring-[#075EE8]/20" /></div>
-      {!query.trim() && recents.length ? <section className="mt-7"><h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">{text("recentSearches.title", "Recent searches")}</h2><div className="overflow-hidden rounded-xl border border-slate-200 bg-white">{recents.map((item) => <LocationRow key={item.id} item={item} recent onSelect={() => select(item)} onRemove={() => { removeRecentCarLocation(item.id); setRecents(readRecentCarLocations()); }} />)}</div></section> : null}
-      <section className="mt-7"><h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">{query.trim() ? text("carsSearch.locationSuggestions", "Location suggestions") : text("carsSearch.popularLocations", "Popular locations")}</h2><div className="overflow-hidden rounded-xl border border-slate-200 bg-white">{popular.map((item) => <LocationRow key={item.id} item={item} onSelect={() => select(item)} />)}{!popular.length ? <p className="p-5 text-sm text-slate-600">{text("carsSearch.noMatchingLocations", "No matching locations found.")}</p> : null}</div></section>
+      <div className="relative"><Search aria-hidden="true" className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-600" /><input ref={inputRef} value={query} onChange={(event) => { setQuery(event.target.value); setDraft(null); setResults([]); setSearchCompleted(false); }} aria-label={text("carsSearch.pickupLocationPlaceholder", "Airport, city, or address")} placeholder={text("carsSearch.pickupLocationPlaceholder", "Airport, city, or address")} className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white ps-12 pe-4 text-[16px] text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#075EE8] focus:ring-1 focus:ring-[#075EE8]/20" /></div>
+      {!trimmedQuery && recents.length ? <section className="mt-7"><h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">{text("recentSearches.title", "Recent searches")}</h2><div className="overflow-hidden rounded-xl border border-slate-200 bg-white">{recents.map((item) => <LocationRow key={item.id} item={item} recent onSelect={() => select(item)} onRemove={() => { removeRecentCarLocation(item.id); setRecents(readRecentCarLocations()); }} />)}</div></section> : null}
+      {trimmedQuery ? <section className="mt-7"><h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">{text("carsSearch.locationSuggestions", "Location suggestions")}</h2><div className="overflow-hidden rounded-xl border border-slate-200 bg-white">{results.map((item) => <LocationRow key={item.id} item={item} onSelect={() => select(item)} />)}{searchCompleted && !results.length ? <p className="p-5 text-sm text-slate-600">{text("carsSearch.noMatchingLocations", "No matching locations found.")}</p> : null}</div></section> : null}
     </div>
   </FlightMobilePickerShell>;
 }
