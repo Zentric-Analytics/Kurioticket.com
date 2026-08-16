@@ -28,6 +28,10 @@ const hotelGuestsField = source.slice(
   source.indexOf('data-testid={mobileHomepage ? "mobile-homepage-hotel-search"'),
 );
 const carsBranch = source.slice(source.lastIndexOf("<form onSubmit={onCarsSubmit}"));
+const carsPickupField = carsBranch.slice(
+  carsBranch.indexOf('data-testid={mobileHomepage ? "cars-pickup-location-field"'),
+  carsBranch.indexOf("{mobileHomepage ? carsReturnLocationField : null}"),
+);
 const carsRentalDatesField = carsBranch.slice(
   carsBranch.indexOf('id="homepage-cars-rental-dates"'),
   carsBranch.indexOf('id="homepage-cars-time-range"'),
@@ -216,6 +220,15 @@ test("mobile Cars places its single return-location field directly after pickup"
   assert.equal((source.match(/data-testid="cars-return-location-field"/g) ?? []).length, 1);
   assert.match(source, /const carsReturnLocationField = carsValues\.returnToDifferentLocation/);
   assert.match(carsBranch, /checked=\{carsValues\.returnToDifferentLocation\}[\s\S]*?updateCarsValue\("returnToDifferentLocation", event\.target\.checked\)/);
+});
+
+test("mobile homepage Cars aligns a decorative MapPin before the dynamic pickup value", () => {
+  assert.match(carsPickupField, /cars-pickup-location-field[\s\S]*?carsSearch\.pickupLocationLabel/);
+  assert.match(carsPickupField, /id="homepage-cars-pickup"[\s\S]*?onClick=\{\(\) => setCarsOpenPicker\("pickup"\)\}/);
+  assert.match(carsPickupField, /sm:hidden[\s\S]*?<span className="flex min-w-0 items-center gap-2">/);
+  assert.match(carsPickupField, /<MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" \/>[\s\S]*?<span className="truncate">\{carsValues\.pickupLocation \|\| translate\("carsSearch\.pickupLocationPlaceholder"\) \|\| "Airport, city or address"\}<\/span>/);
+  assert.doesNotMatch(carsPickupField, /<MapPin[^>]*className="[^"]*(?:rounded|bg-)/);
+  assert.match(carsPickupField, /hidden sm:block[\s\S]*?<CarLocationAutocomplete/);
 });
 
 test("mobile homepage Cars adds neutral value icons without changing summaries or chevrons", () => {
