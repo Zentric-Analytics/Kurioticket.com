@@ -1,4 +1,5 @@
 import { getAirportByCode, type AirportOption } from "@/data/airports";
+import { hotelDestinations, type HotelDestinationSuggestion } from "@/data/hotelDestinations";
 
 export type RecentSearchType = "flight" | "hotel";
 
@@ -68,6 +69,39 @@ export function deriveRecentAirports(
     }
   }
 
+  return result;
+}
+
+const normalizeRecentHotelDestination = (value: string) =>
+  value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
+
+export function deriveRecentHotelDestinations(
+  entries: readonly RecentSearchEntry[],
+  max = 3,
+): HotelDestinationSuggestion[] {
+  if (max <= 0) return [];
+  const seen = new Set<string>();
+  const result: HotelDestinationSuggestion[] = [];
+  const ordered = [...entries].sort(
+    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+  );
+
+  for (const entry of ordered) {
+    if (entry.type !== "hotel") continue;
+    const value = (entry.params as RecentHotelParams).destination;
+    if (typeof value !== "string" || !value.trim()) continue;
+    const normalized = normalizeRecentHotelDestination(value);
+    const destination = hotelDestinations.find((option) => {
+      const candidates = [option.name, option.searchValue, `${option.name}, ${option.country}`];
+      return candidates.some(
+        (candidate) => normalizeRecentHotelDestination(candidate) === normalized,
+      );
+    });
+    if (!destination || seen.has(destination.id)) continue;
+    seen.add(destination.id);
+    result.push(destination);
+    if (result.length >= max) return result;
+  }
   return result;
 }
 
