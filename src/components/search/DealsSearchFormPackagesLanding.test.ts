@@ -230,10 +230,27 @@ test("desktop Packages stay-date override is a visible semantic checkbox", () =>
     form.indexOf("{supportsStayDateOverride && !search.stayDatesLinked"),
   );
   assert.match(checkbox, /<label[\s\S]*cursor-pointer/);
+  assert.match(checkbox, /htmlFor="deals-change-stay-dates"/);
   assert.match(checkbox, /<input[\s\S]*type="checkbox"[\s\S]*checked=\{!search\.stayDatesLinked\}/);
+  assert.match(checkbox, /id="deals-change-stay-dates"/);
   assert.match(checkbox, /onChange=\{\(event\) =>/);
+  assert.match(checkbox, /customizeInheritedField\(current, "stayDates"/);
+  assert.match(checkbox, /relinkInheritedField\(current, "stayDates"\)/);
   assert.match(checkbox, /h-\[18px\] w-\[18px\] rounded-\[4px\] border-\[1\.5px\] border-slate-500 bg-white/);
   assert.match(checkbox, /checked:border-\[#075EE8\] checked:bg-\[#075EE8\]/);
-  assert.match(checkbox, /<Check[\s\S]*isPackagesLanding \? "text-white"/);
-  assert.match(form, /lg:rounded-\[8px\]/);
+  assert.match(checkbox, /<Check[\s\S]*pointer-events-none[\s\S]*isPackagesLanding \? "text-white"/);
+  assert.match(form, /isPackagesLanding \? "lg:rounded-\[12px\]" : "lg:rounded-\[8px\]"/);
+  assert.doesNotMatch(form, /isPackagesLanding \? "lg:rounded-(?:2xl|3xl)"/);
+});
+
+test("desktop Packages custom stay-date flow renders its launcher and existing calendar", () => {
+  const actions = form.slice(
+    form.indexOf("<section data-deals-search-actions"),
+    form.indexOf("{warning}"),
+  );
+  assert.match(actions, /supportsStayDateOverride && !search\.stayDatesLinked/);
+  assert.match(actions, /data-deals-stay-dates/);
+  assert.match(actions, /ref=\{hotelDatesLauncherRef\}/);
+  assert.match(actions, /onClick=\{\(\) =>[\s\S]*openHotelDates\(\)/);
+  assert.match(form, /id="deals-hotel-desktop-dates"/);
 });

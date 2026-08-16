@@ -10,7 +10,11 @@ test("Deals hero is a clean high-resolution image without marketing copy or read
   assert.match(page, /pathname === "\/packages" \? packagesHeroImage : dealsHeroImage/);
   assert.match(page, /fit=crop&w=2400&q=90/);
   assert.match(page, /<Image src=\{heroImage\} alt="" fill priority quality=\{90\} sizes="100vw"/);
-  assert.match(page, /object-cover object-\[center_52%\] lg:object-\[center_48%\]/);
+  assert.match(page, /object-cover object-\[center_52%\]/);
+  assert.match(
+    page,
+    /pathname === "\/packages" \? "lg:object-\[center_62%\]" : "lg:object-\[center_48%\]"/,
+  );
   assert.doesNotMatch(page, /linear-gradient|bg-gradient/);
   assert.doesNotMatch(page, /packages\.heroTitle|deals\.heroSubtitle|<h1/);
   assert.match(page, /pathname === "\/packages" \? "packages-landing" : "desktop-landing"/);
