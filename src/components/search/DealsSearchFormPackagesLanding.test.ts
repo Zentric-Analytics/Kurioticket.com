@@ -25,7 +25,10 @@ test("Packages route selects a dedicated landing presentation while Deals keeps 
 test("standalone mobile Packages has the approved identity without homepage product tabs", () => {
   const identity = compact.slice(
     compact.indexOf("{isPackagesLanding ? ("),
-    compact.indexOf('<fieldset className="min-w-0', compact.indexOf("{isPackagesLanding ? (")),
+    compact.indexOf(
+      '<fieldset className="min-w-0',
+      compact.indexOf("{isPackagesLanding ? ("),
+    ),
   );
   assert.match(compact, /data-packages-identity-icon/);
   assert.match(compact, /<PackagesIcon/);
@@ -89,7 +92,10 @@ test("mobile Packages fields use label then left icon and value with one canonic
   assert.match(compact, /t\("destination"\)[\s\S]*?<MapPin/);
   assert.match(compact, /t\("travelDates"\)[\s\S]*?<Calendar/);
   assert.match(compact, /deals\.travelersRoomsLabel[\s\S]*?<UserRound/);
-  assert.match(form, /h-4 w-4 shrink-0[\s\S]*isPackagesLanding \? "text-slate-500"/);
+  assert.match(
+    form,
+    /h-4 w-4 shrink-0[\s\S]*isPackagesLanding \? "text-slate-500"/,
+  );
   assert.doesNotMatch(
     form,
     /compactValueIconClassName = `[^`]*text-\[#075ee8\]/,
@@ -107,13 +113,19 @@ test("standalone mobile Packages alone uses the short localized destination plac
     compact,
     /displayedHotelDestination \|\|[\s\S]*?isPackagesLanding[\s\S]*?"flightSearchDestinationPlaceholderShort"[\s\S]*?: "deals\.destinationLabel"/,
   );
-  assert.match(form, /presentation === "mobile-homepage" \|\| isPackagesLanding/);
+  assert.match(
+    form,
+    /presentation === "mobile-homepage" \|\| isPackagesLanding/,
+  );
   assert.match(form, /isPackagesLanding \? "hidden sm:contents" : "contents"/);
 });
 
 test("standalone mobile CTA and card geometry are scoped without changing homepage", () => {
   assert.match(form, /rounded-\[16px\][\s\S]*sm:rounded-3xl/);
-  assert.match(compact, /isPackagesLanding \? "h-\[50px\] rounded-\[10px\]" : "h-12 rounded-\[11px\]"/);
+  assert.match(
+    compact,
+    /isPackagesLanding \? "h-\[50px\] rounded-\[10px\]" : "h-12 rounded-\[11px\]"/,
+  );
   assert.match(compact, /\{t\("deals.searchButton"\)\}/);
   assert.match(form, /presentation === "mobile-homepage"\s*\? "w-full"/);
   assert.match(
@@ -126,7 +138,10 @@ test("mobile Packages uses moderate field, rail, trip row, and CTA sizing", () =
   assert.match(form, /h-\[62px\] rounded-\[10px\] px-4 py-2\.5/);
   assert.match(form, /text-\[16px\] leading-5/);
   assert.match(compact, /h-\[46px\] gap-1\.5 px-2 text-\[13px\]/);
-  assert.match(compact, /className="flex min-h-11 items-center justify-between/);
+  assert.match(
+    compact,
+    /className="flex min-h-11 items-center justify-between/,
+  );
   assert.match(compact, /h-\[50px\]/);
   assert.doesNotMatch(compact, /h-\[78px\]|text-\[18px\]|h-\[54px\]/);
 });
@@ -136,5 +151,22 @@ test("mobile hero is bounded and card clearance is measured independently", () =
   assert.match(page, /bottom-\[calc\(-1_\*_var\(--deals-search-outside\)\)\]/);
   assert.match(page, /Math\.max\(0, height - insideHeight\)/);
   assert.match(page, /pt-\[calc\(var\(--deals-search-outside\)\+3rem\)\]/);
-  assert.doesNotMatch(page, /sm:h-\[calc\(2\.5rem\+var\(--deals-search-inside\)\)\]/);
+  assert.doesNotMatch(
+    page,
+    /sm:h-\[calc\(2\.5rem\+var\(--deals-search-inside\)\)\]/,
+  );
+});
+
+test("desktop Packages polish stays scoped to the Packages landing presentation", () => {
+  assert.match(
+    form,
+    /isPackagesLanding \? "lg:h-\[70px\] lg:min-h-\[70px\] lg:cursor-pointer"/,
+  );
+  assert.match(form, /lg:absolute lg:end-0 lg:top-2/);
+  assert.match(form, /lg:min-h-\[48px\] lg:pe-\[188px\]/);
+  assert.match(form, /checked:border-\[#2563eb\] checked:bg-\[#2563eb\]/);
+  assert.match(form, /isPackagesLanding \? "text-white" : "text-\[#2563eb\]"/);
+  assert.match(form, /lg:me-1 lg:self-center lg:text-slate-500/);
+  assert.match(form, /lg:h-\[48px\] lg:min-h-\[48px\] lg:min-w-\[164px\]/);
+  assert.match(form, /isPackagesLanding \? "lg:py-5" : "lg:py-6"/);
 });
