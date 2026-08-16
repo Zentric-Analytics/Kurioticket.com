@@ -3020,43 +3020,48 @@ export function SearchTabs({
 
   const mobileHomepageProductTabs = (
     <div
-      role="tablist"
-      aria-label={translate("searchType") || "Search type"}
-      data-testid="mobile-homepage-product-tabs"
-      className="grid h-12 w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.88fr)_minmax(0,1.22fr)] overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[13px] min-[360px]:text-[14px] min-[375px]:text-[16px]"
+      data-testid="mobile-homepage-product-tabs-breakout"
+      className="relative left-1/2 w-[calc(100vw-16px)] -translate-x-1/2 min-[360px]:w-[calc(100vw-20px)] sm:static sm:w-full sm:translate-x-0"
     >
-      {([
-        ["flights", Plane, t.flights || "Flights"],
-        ["hotels", Building2, t.hotels || "Hotels"],
-        ["cars", CarFront, t.cars || "Cars"],
-        ["deals", PackagesIcon, t.deals || "Packages"],
-      ] as const).map(([mode, Icon, label], index) => {
-        const selected = tab === mode;
-        return (
-          <button
-            key={mode}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            onClick={() => {
-              setCarsOpenPicker(null);
-              setTab(mode);
-            }}
-            className={cn(
-              "focus-ring flex min-w-0 items-center justify-center gap-[3px] border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[360px]:gap-1 min-[375px]:gap-[5px]",
-              index > 0 && "border-s",
-              selected && "bg-[#eef5ff] text-[#075ee8]",
-            )}
-          >
-            <Icon
-              aria-hidden="true"
-              className="h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]"
-              strokeWidth={1.8}
-            />
-            <span className="whitespace-nowrap">{label}</span>
-          </button>
-        );
-      })}
+      <div
+        role="tablist"
+        aria-label={translate("searchType") || "Search type"}
+        data-testid="mobile-homepage-product-tabs"
+        className="grid h-12 w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.16fr)] overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[13px] min-[360px]:text-[14px] min-[375px]:text-[16px]"
+      >
+        {([
+          ["flights", Plane, t.flights || "Flights"],
+          ["hotels", Building2, t.hotels || "Hotels"],
+          ["cars", CarFront, t.cars || "Cars"],
+          ["deals", PackagesIcon, t.deals || "Packages"],
+        ] as const).map(([mode, Icon, label], index) => {
+          const selected = tab === mode;
+          return (
+            <button
+              key={mode}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => {
+                setCarsOpenPicker(null);
+                setTab(mode);
+              }}
+              className={cn(
+                "focus-ring flex min-w-0 items-center justify-center gap-[3px] border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[360px]:gap-1 min-[375px]:gap-[5px]",
+                index > 0 && "border-s",
+                selected && "bg-[#eef5ff] text-[#075ee8]",
+              )}
+            >
+              <Icon
+                aria-hidden="true"
+                className="h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]"
+                strokeWidth={1.8}
+              />
+              <span className="whitespace-nowrap">{label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 

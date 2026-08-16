@@ -37,7 +37,8 @@ test("homepage scopes the approved presentation to its below-sm SearchTabs", () 
 test("mobile Flights renders four connected product tabs in approved order and is the default", () => {
   assert.match(source, /useState<TabMode>\("flights"\)/);
   assert.match(mobileBranch, /mobile-homepage-product-tabs/);
-  assert.match(mobileProductTabs, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,0\.88fr\)_minmax\(0,1\.22fr\)\]/);
+  assert.match(mobileProductTabs, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.16fr\)\]/);
+  assert.doesNotMatch(mobileProductTabs, /0\.88fr/);
   assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", PackagesIcon/);
   assert.equal((mobileProductTabs.match(/^\s*\["(?:flights|hotels|cars|deals)"/gm) ?? []).length, 4);
   assert.match(mobileBranch, /role="tab"[\s\S]*?aria-selected=\{selected\}/);
@@ -88,6 +89,7 @@ test("mobile English trip labels are exact and multi-city is truthfully unavaila
 
 test("mobile homepage controls use one responsive product-tab renderer without scaling", () => {
   assert.equal((source.match(/const mobileHomepageProductTabs = \(/g) ?? []).length, 1);
+  assert.equal((source.match(/data-testid="mobile-homepage-product-tabs-breakout"/g) ?? []).length, 1);
   assert.equal((source.match(/data-testid="mobile-homepage-product-tabs"/g) ?? []).length, 1);
   assert.match(mobileProductTabs, /grid h-12 w-full/);
   assert.match(mobileProductTabs, /text-\[13px\] min-\[360px\]:text-\[14px\] min-\[375px\]:text-\[16px\]/);
@@ -101,6 +103,25 @@ test("mobile homepage controls use one responsive product-tab renderer without s
   assert.match(mobileBranch, /h-12 w-full rounded-\[10px\]/);
   assert.match(mobileBranch, /mobile-homepage-trip-selector[\s\S]*?text-\[12px\][\s\S]*?max-\[359px\]:text-\[11px\][\s\S]*?h-4 w-4/);
   assert.doesNotMatch(mobileBranch, /transform:\s*scale|scale-\[/);
+});
+
+test("mobile product tabs alone break out to a bounded viewport gutter", () => {
+  assert.match(mobileProductTabs, /mobile-homepage-product-tabs-breakout/);
+  assert.match(mobileProductTabs, /left-1\/2/);
+  assert.match(mobileProductTabs, /w-\[calc\(100vw-16px\)\]/);
+  assert.match(mobileProductTabs, /min-\[360px\]:w-\[calc\(100vw-20px\)\]/);
+  assert.match(mobileProductTabs, /-translate-x-1\/2/);
+  assert.match(mobileProductTabs, /sm:static sm:w-full sm:translate-x-0/);
+  assert.doesNotMatch(mobileProductTabs, /overflow-x-auto|overflow-x-scroll/);
+
+  assert.match(mobileProductTabs, /grid h-12 w-full/);
+  assert.match(mobileProductTabs, /minmax\(0,1fr\)_minmax\(0,1\.16fr\)/);
+  assert.doesNotMatch(mobileProductTabs, /0\.88fr|1\.2[2-9]fr/);
+
+  assert.match(flightMobileBranch, /<form onSubmit=\{onFlightSubmit\} className="mt-3 space-y-2">/);
+  assert.match(flightMobileBranch, /mobile-homepage-route-fields[\s\S]*?h-\[68px\] w-full/);
+  assert.match(flightMobileBranch, /mobile-homepage-travel-dates-field[\s\S]*?h-\[62px\] w-full/);
+  assert.match(flightMobileBranch, /mobile-homepage-search-submit[\s\S]*?h-12 w-full/);
 });
 
 test("mobile homepage uses one top anchor and reserves the measured active-card height", () => {
