@@ -104,11 +104,12 @@ test("homepage Cars picker source contracts use the shared experiences", () => {
 test("mobile homepage Cars launches every picker in the shared full-screen shell", () => {
   assert.match(carsBranch, /mobilePresentation=\{mobileHomepage \? "shell" : "inline"\}/);
   assert.match(carsBranch, /mobileHomepage && tab === "cars"/);
+  assert.match(carsBranch, /<MobileCarLocationPicker/);
   assert.match(carsBranch, /<MobileCarTimePickerDialog/);
   assert.match(carsBranch, /<MobileCarDriverAgePickerDialog/);
   assert.match(carsBranch, /\(\["pickup", "dropoff"\] as const\)\.map/);
-  assert.match(carsBranch, /presentation="mobile"[\s\S]*mobileShell/);
-  assert.match(carsBranch, /<CarsRentalDatePickerContent[\s\S]*mobileShell/);
+  assert.match(carsBranch, /<MobileCarLocationPicker/);
+  assert.match(carsBranch, /<MobileDatePickerDialog/);
 });
 
 test("mobile Cars fields stay launchers without inline panels or persistent open rings", () => {

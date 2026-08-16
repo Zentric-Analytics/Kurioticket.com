@@ -34,6 +34,7 @@ import {
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
@@ -1252,81 +1253,23 @@ function CarsMobilePickerDialogs({
 
   return (
     <>
-      <FlightMobilePickerShell
+      <MobileCarLocationPicker
         open={activeMobilePicker === "pickupLocation"}
-        title={t("carsSearch.pickupLocationLabel")}
-        titleId="cars-mobile-pickup-location-title"
+        mode="pickup"
+        value={values.pickupLocation}
         launcherRef={pickupLocationLauncherRef}
         onClose={onClose}
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => updateValue("pickupLocation", "")}
-              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        <CarLocationAutocomplete
-          id="pickupLocationMobile"
-          value={values.pickupLocation}
-          onValueChange={(nextValue) => updateValue("pickupLocation", nextValue)}
-          placeholder={t("carsSearch.pickupLocationPlaceholder")}
-          inputRef={pickupMobileInputRef}
-          inputClassName="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
-          presentation="mobile"
-          strings={locationAutocompleteStrings}
-          onRequestClose={onClose}
-        />
-      </FlightMobilePickerShell>
+        onCommit={(nextValue) => updateValue("pickupLocation", nextValue)}
+      />
 
-      <FlightMobilePickerShell
+      <MobileCarLocationPicker
         open={activeMobilePicker === "dropoffLocation"}
-        title={t("carsSearch.returnLocationPlaceholder")}
-        titleId="cars-mobile-dropoff-location-title"
+        mode="return"
+        value={values.dropoffLocation}
         launcherRef={dropoffLocationLauncherRef}
         onClose={onClose}
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => updateValue("dropoffLocation", "")}
-              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        <CarLocationAutocomplete
-          id="dropoffLocationMobile"
-          value={values.dropoffLocation}
-          onValueChange={(nextValue) => updateValue("dropoffLocation", nextValue)}
-          placeholder={t("carsSearch.returnLocationPlaceholder")}
-          inputRef={dropoffMobileInputRef}
-          inputClassName="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
-          presentation="mobile"
-          strings={locationAutocompleteStrings}
-          onRequestClose={onClose}
-        />
-      </FlightMobilePickerShell>
+        onCommit={(nextValue) => updateValue("dropoffLocation", nextValue)}
+      />
 
       <MobileDatePickerDialog
         open={activeMobilePicker === "dates"}

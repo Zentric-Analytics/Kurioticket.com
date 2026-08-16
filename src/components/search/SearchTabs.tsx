@@ -48,6 +48,7 @@ import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShe
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
 import { DealsSearchForm } from "@/components/search/DealsSearchForm";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
@@ -4189,34 +4190,15 @@ export function SearchTabs({
             const isPickup = mode === "pickup";
             if (!isPickup && !carsValues.returnToDifferentLocation) return null;
             return (
-              <FlightMobilePickerShell
+              <MobileCarLocationPicker
                 key={mode}
                 open={carsOpenPicker === mode}
-                title={translate(isPickup ? "carsSearch.pickupLocationLabel" : "carsSearch.returnLocationLabel") || (isPickup ? "Pickup location" : "Return location")}
-                titleId={`cars-${mode}-mobile-title`}
-                dialogId={`cars-${mode}-mobile-dialog`}
+                mode={isPickup ? "pickup" : "return"}
+                value={isPickup ? carsValues.pickupLocation : carsValues.dropoffLocation}
                 launcherRef={isPickup ? carsPickupLauncherRef : carsDropoffLauncherRef}
                 onClose={() => setCarsOpenPicker(null)}
-                contentClassName="bg-white"
-              >
-                <div className="mx-auto w-full max-w-xl">
-                  <CarLocationAutocomplete
-                    id={`homepage-cars-${mode}-mobile-input`}
-                    value={isPickup ? carsValues.pickupLocation : carsValues.dropoffLocation}
-                    onValueChange={(value) => updateCarsValue(isPickup ? "pickupLocation" : "dropoffLocation", value)}
-                    onSelect={() => setCarsOpenPicker(null)}
-                    onRequestClose={() => setCarsOpenPicker(null)}
-                    placeholder={translate(isPickup ? "carsSearch.pickupLocationPlaceholder" : "carsSearch.returnLocationPlaceholder") || (isPickup ? "Airport, city or address" : "Return city, airport or address")}
-                    presentation="mobile"
-                    inputClassName="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-950 placeholder:text-slate-400"
-                    strings={carsLocationStrings}
-                    isOpen={carsOpenPicker === mode}
-                    onOpenChange={(open) => { if (!open) setCarsOpenPicker(null); }}
-                    autoFocus
-                    mobileShell
-                  />
-                </div>
-              </FlightMobilePickerShell>
+                onCommit={(value) => updateCarsValue(isPickup ? "pickupLocation" : "dropoffLocation", value)}
+              />
             );
           })}
           <MobileDatePickerDialog
