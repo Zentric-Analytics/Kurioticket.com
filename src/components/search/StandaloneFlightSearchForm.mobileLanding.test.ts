@@ -27,17 +27,21 @@ test("standalone Flights mobile landing form has a scoped title and safe trip op
   assert.match(source, /grid h-11 grid-cols-3 gap-0 py-0 sm:h-auto/);
 });
 
-test("main-flight landing identity mirrors the approved responsive homepage scale", () => {
-  assert.match(identity, /gap-\[5px\]/);
+test("main-flight landing identity mirrors the approved Hotel product badge", () => {
   assert.match(
     identity,
-    /h-\[18px\] w-\[18px\][^"\n]*min-\[360px\]:h-5[^"\n]*min-\[375px\]:h-\[22px\]/,
+    /inline-flex items-center gap-2 rounded-lg bg-\[#004BB8\]\/8 px-3 py-2 shadow-sm ring-1 ring-\[#004BB8\]\/10 sm:hidden/,
   );
+  assert.match(identity, /h-5 w-5[^"\n]*text-\[#004BB8\]/);
+  assert.match(identity, /strokeWidth=\{2\.1\}/);
   assert.match(
     identity,
-    /text-\[13px\][^"\n]*font-medium[^"\n]*text-\[#075EE8\][^"\n]*min-\[360px\]:text-\[14px\][^"\n]*min-\[375px\]:text-\[16px\]/,
+    /text-\[16px\][^"\n]*font-semibold[^"\n]*text-navy/,
   );
-  assert.doesNotMatch(identity, /h-6 w-6|text-\[23px\]|font-bold/);
+  assert.doesNotMatch(
+    identity,
+    /h-6 w-6|text-\[23px\]|font-bold|<h2[^>]*text-\[#075EE8\]/,
+  );
 });
 
 test("main-flight landing trip selector uses radio-only mobile selection styling", () => {
