@@ -14,18 +14,18 @@ const imageTagsUsing = (source: string, expression: string) =>
 
 describe("hero image quality source contracts", () => {
   it("uses a dedicated, hero-sized Cars source while retaining the SUV card source", () => {
-    const heroUrl = new URL(carsHeroImage);
     const suvCardUrl = new URL(tripStyleCards[1].image);
 
-    assert.match(heroUrl.pathname, /photo-1533473359331-0135ef1b58bf/);
-    assert.ok(Number(heroUrl.searchParams.get("w")) >= 2400);
-    assert.ok(Number(heroUrl.searchParams.get("q")) >= 90);
+    assert.equal(
+      carsHeroImage,
+      "/images/premium/cars/kurioticket-cars-hero-coastal-convertible-001.jpg",
+    );
     assert.equal(suvCardUrl.searchParams.get("w"), "1200");
     assert.equal(suvCardUrl.searchParams.get("q"), "80");
     assert.doesNotMatch(carsPageSource, /tripStyleCards\[1\]\.image/);
   });
 
-  it("keeps both Cars hero Image components responsive, prioritized, and quality 92", () => {
+  it("keeps both Cars hero Image components responsive, prioritized, and full quality", () => {
     const heroImages = imageTagsUsing(carsPageSource, "carsHeroImage");
 
     assert.equal(heroImages.length, 2);
@@ -33,18 +33,28 @@ describe("hero image quality source contracts", () => {
       assert.match(image, /\bfill\b/);
       assert.match(image, /\bpriority\b/);
       assert.match(image, /sizes="100vw"/);
-      assert.match(image, /quality=\{92\}/);
+      assert.match(image, /quality=\{100\}/);
       assert.doesNotMatch(image, /\b(?:blur|unoptimized)\b|image-rendering/);
     }
   });
 
+  it("keeps the mobile Cars photograph clean instead of darkening or color-filtering it", () => {
+    const mobileHero = carsPageSource.slice(
+      carsPageSource.indexOf('aria-labelledby="cars-mobile-search-heading"'),
+      carsPageSource.indexOf('aria-labelledby="cars-search-heading"'),
+    );
+
+    assert.doesNotMatch(mobileHero, /brightness-|saturate-|contrast-/);
+    assert.doesNotMatch(mobileHero, /from-slate-950|via-slate-950|to-slate-950/);
+  });
+
   it("keeps Cars hero dimensions and search positioning unchanged", () => {
     assert.match(carsPageSource, /min-h-\[24\.25rem\]/);
-    assert.match(carsPageSource, /min-h-\[32rem\].*lg:min-h-\[36rem\]/);
+    assert.match(carsPageSource, /min-h-\[25rem\].*lg:min-h-\[27rem\]/);
     assert.match(carsPageSource, /absolute inset-x-0 bottom-\[-23rem\] z-30/);
     assert.match(
       carsPageSource,
-      /absolute inset-x-0 bottom-\[-52px\] z-30 lg:bottom-\[-56px\]/,
+      /absolute inset-x-0 bottom-\[-64px\] z-30 lg:bottom-\[-68px\]/,
     );
   });
 
