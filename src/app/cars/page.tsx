@@ -913,7 +913,7 @@ function CarsSearchBar({
                     ref={pickupLocationLauncherRef}
                     type="button"
                     onClick={() => openMobilePicker("pickupLocation")}
-                    className={`flex h-7 w-full items-center border-none bg-transparent py-0 ps-0 pe-9 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
+                    className={`flex h-7 w-full items-center border-none bg-transparent py-0 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
                       values.pickupLocation ? "text-slate-950" : "text-slate-400"
                     }`}
                   >
@@ -956,7 +956,7 @@ function CarsSearchBar({
                         updateValue("pickupLocation", "");
                         pickupLocationRef.current?.focus();
                       }}
-                      className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                      className="absolute end-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 sm:inline-flex lg:h-8 lg:w-8"
                     >
                       <X className="h-4 w-4" aria-hidden="true" />
                     </button>
@@ -969,7 +969,7 @@ function CarsSearchBar({
                       ref={dropoffLocationLauncherRef}
                       type="button"
                       onClick={() => openMobilePicker("dropoffLocation")}
-                      className={`flex h-7 w-full items-center border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
+                      className={`flex h-7 w-full items-center border-t border-slate-100 bg-transparent py-0 pt-1.5 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
                         values.dropoffLocation
                           ? "text-slate-950"
                           : "text-slate-400"
@@ -1014,7 +1014,7 @@ function CarsSearchBar({
                           updateValue("dropoffLocation", "");
                           dropoffLocationRef.current?.focus();
                         }}
-                        className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                        className="absolute end-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 sm:inline-flex lg:h-8 lg:w-8"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -1167,7 +1167,7 @@ function CarsSearchBar({
             <button
               type="button"
               onClick={onClearSearch}
-              className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:min-h-9"
+              className="focus-ring hidden min-h-9 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               {t("clearAll")}
