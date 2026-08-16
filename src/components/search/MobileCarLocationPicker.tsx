@@ -1,34 +1,103 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { Building2, ChevronRight, MapPin, Plane, Search } from "lucide-react";
-import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MapPin, X } from "lucide-react";
+
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { searchCarLocationSuggestions, type CarLocationSuggestion } from "@/lib/cars/carLocationSuggestions";
+import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import {
+  searchCarLocationSuggestions,
+  type CarLocationSuggestion,
+} from "@/lib/cars/carLocationSuggestions";
+import { cn } from "@/lib/utils";
 
-type Props = { open: boolean; mode: "pickup" | "return"; value: string; launcherRef?: RefObject<HTMLElement | null>; onClose: () => void; onCommit: (value: string) => void };
+type Props = {
+  open: boolean;
+  mode: "pickup" | "return";
+  value: string;
+  launcherRef?: RefObject<HTMLElement | null>;
+  onClose: () => void;
+  onCommit: (value: string) => void;
+};
 
-function LocationRow({ item, selected = false, onSelect }: { item: CarLocationSuggestion; selected?: boolean; onSelect: () => void }) {
-  const Icon = item.kind === "airport" ? Plane : item.kind === "city" ? Building2 : MapPin;
-  return <div className={`flex min-h-[76px] items-center border-b border-slate-200 px-3 last:border-b-0 ${selected ? "bg-[#075EE8]/5" : ""}`}>
-    <button type="button" onClick={onSelect} aria-label={`${item.primaryText}, ${item.secondaryText}`} aria-pressed={selected} className="focus-ring flex min-w-0 flex-1 items-center gap-3 text-start">
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-50"><Icon aria-hidden="true" className="h-5 w-5 text-slate-600" /></span>
-      <span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-bold text-slate-950">{item.primaryText}{item.airportCode ? ` (${item.airportCode})` : ""}</span><span className="mt-1 block truncate text-xs font-medium text-slate-500">{item.secondaryText || (item.kind === "city" ? "City" : "")}</span></span>
-      <span className="flex shrink-0 items-center gap-2"><span className="rounded-full bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600">{item.airportCode ?? (item.kind === "city" ? "City" : item.kind === "area" ? "Area" : "")}</span>{item.airportCode ? <span className="rounded-full bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600">Airport</span> : null}{!selected ? <ChevronRight aria-hidden="true" className="h-4 w-4 text-slate-500" /> : null}</span>
-    </button>
-  </div>;
+export function formatSelectedCarLocation(item: CarLocationSuggestion) {
+  if (item.kind === "airport" && item.airportCode) {
+    return `${item.city || item.primaryText} (${item.airportCode})`;
+  }
+  if (item.kind === "custom") return item.value;
+  return item.primaryText;
 }
 
-export function MobileCarLocationPicker({ open, mode, value, launcherRef, onClose, onCommit }: Props) {
+function locationSecondaryText(item: CarLocationSuggestion) {
+  return item.kind === "airport" ? item.primaryText : item.secondaryText;
+}
+
+function LocationRow({
+  item,
+  selected = false,
+  onSelect,
+}: {
+  item: CarLocationSuggestion;
+  selected?: boolean;
+  onSelect: () => void;
+}) {
+  const primaryText = formatSelectedCarLocation(item);
+  const secondaryText = locationSecondaryText(item);
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-label={`${primaryText}, ${secondaryText}`}
+      aria-pressed={selected}
+      className={cn(
+        "focus-ring flex min-h-[80px] w-full items-center gap-3 border-b border-slate-200 px-5 py-3 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50",
+        selected && "bg-blue-50/60",
+      )}
+    >
+      <MapPin
+        aria-hidden="true"
+        className="h-5 w-5 shrink-0 text-slate-700"
+      />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[16px] font-semibold leading-5 text-slate-950">
+          {primaryText}
+        </span>
+        {secondaryText ? (
+          <span className="mt-1 block truncate text-[13px] font-medium leading-5 text-slate-500">
+            {secondaryText}
+          </span>
+        ) : null}
+      </span>
+      {item.airportCode ? (
+        <span className="shrink-0 ps-2 text-[15px] font-medium text-slate-600">
+          {item.airportCode}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+export function MobileCarLocationPicker({
+  open,
+  mode,
+  value,
+  launcherRef,
+  onClose,
+  onCommit,
+}: Props) {
   const { t } = useLocale();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState(value);
+  const searchRequestRef = useRef(0);
+  const [query, setQuery] = useState("");
   const [draft, setDraft] = useState<CarLocationSuggestion | null>(null);
   const [results, setResults] = useState<CarLocationSuggestion[]>([]);
   const [searchCompleted, setSearchCompleted] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => {
+      searchRequestRef.current += 1;
       setQuery("");
       setDraft(null);
       setResults([]);
@@ -37,36 +106,138 @@ export function MobileCarLocationPicker({ open, mode, value, launcherRef, onClos
     });
     return () => cancelAnimationFrame(frame);
   }, [open, value]);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open || draft) return;
     const trimmedQuery = query.trim();
-    if (!trimmedQuery) {
-      setResults([]);
-      setSearchCompleted(false);
-      return;
-    }
+    if (!trimmedQuery) return;
 
     let active = true;
+    const requestId = ++searchRequestRef.current;
     const timer = window.setTimeout(() => {
-      searchCarLocationSuggestions(trimmedQuery, { limit: 8 }).then((items) => {
-        if (!active) return;
-        setResults(items);
-        setSearchCompleted(true);
-      });
+      void searchCarLocationSuggestions(trimmedQuery, { limit: 8 }).then(
+        (items) => {
+          if (!active || requestId !== searchRequestRef.current) return;
+          setResults(items);
+          setSearchCompleted(true);
+        },
+      );
     }, 120);
     return () => {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [open, query]);
-  const select = (item: CarLocationSuggestion) => { setDraft(item); };
-  const commit = () => { const next = draft?.value ?? (query.trim() || value.trim()); if (!next) return; onCommit(next); onClose(); };
+  }, [draft, open, query]);
+
+  const select = (item: CarLocationSuggestion) => {
+    searchRequestRef.current += 1;
+    setDraft(item);
+    setQuery(formatSelectedCarLocation(item));
+    setResults([item]);
+    setSearchCompleted(true);
+  };
+
+  const clear = () => {
+    searchRequestRef.current += 1;
+    setQuery("");
+    setDraft(null);
+    setResults([]);
+    setSearchCompleted(false);
+    window.requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const commit = (requestClose: () => void) => {
+    if (!draft) return;
+    onCommit(draft.value);
+    requestClose();
+  };
+
   const trimmedQuery = query.trim();
+  const visibleResults = draft ? [draft] : results;
   const text = (key: string, fallback: string) => t[key] ?? fallback;
-  return <FlightMobilePickerShell open={open} title={mode === "pickup" ? text("carsSearch.pickupLocationLabel", "Pickup location") : text("carsResults.returnLocationLabel", "Return location")} titleId={`cars-${mode}-location-title`} launcherRef={launcherRef} onClose={onClose} showCancelAction={false} showBackLabel={false} contentClassName="bg-[#FCFDFE] px-4 py-4" footer={<button type="button" onClick={commit} disabled={!draft && !query.trim() && !value.trim()} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-bold text-white disabled:cursor-not-allowed">{text("done", "Done")}</button>}>
-    <div className="mx-auto w-full max-w-xl">
-      <div className="relative"><Search aria-hidden="true" className="pointer-events-none absolute start-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-600" /><input ref={inputRef} value={query} onChange={(event) => { setQuery(event.target.value); setDraft(null); setResults([]); setSearchCompleted(false); }} aria-label={text("carsSearch.pickupLocationPlaceholder", "Airport, city, or address")} placeholder={text("carsSearch.pickupLocationPlaceholder", "Airport, city, or address")} className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white ps-12 pe-4 text-[16px] text-slate-950 outline-none placeholder:text-slate-500 focus:border-[#075EE8] focus:ring-1 focus:ring-[#075EE8]/20" /></div>
-      {trimmedQuery ? <section className="mt-7"><h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-600">{text("carsSearch.locationSuggestions", "Location suggestions")}</h2><div className="overflow-hidden rounded-xl border border-slate-200 bg-white">{results.map((item) => <LocationRow key={item.id} item={item} selected={draft?.id === item.id} onSelect={() => select(item)} />)}{searchCompleted && !results.length ? <p className="p-5 text-sm text-slate-600">{text("carsSearch.noMatchingLocations", "No matching locations found.")}</p> : null}</div></section> : null}
-    </div>
-  </FlightMobilePickerShell>;
+  const placeholder = text(
+    "carsSearch.pickupLocationPlaceholder",
+    "Airport, city, or address",
+  );
+
+  return (
+    <FlightMobilePickerShell
+      open={open}
+      title={
+        mode === "pickup"
+          ? text("carsSearch.pickupLocationLabel", "Pickup location")
+          : text("carsResults.returnLocationLabel", "Return location")
+      }
+      titleId={`cars-${mode}-location-title`}
+      launcherRef={launcherRef}
+      onClose={onClose}
+      showBackLabel={true}
+      showCancelAction={false}
+      contentClassName="bg-[#fcfdff] px-4 py-6"
+      footer={(requestClose) => (
+        <button
+          type="button"
+          onClick={() => commit(requestClose)}
+          disabled={!draft}
+          className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[16px] font-semibold text-white transition-colors hover:bg-[#004bb8] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {text("done", "Done")}
+        </button>
+      )}
+    >
+      <div className="mx-auto w-full max-w-xl">
+        <div className="relative">
+          <MapPin
+            aria-hidden="true"
+            className="pointer-events-none absolute start-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-700"
+          />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(event) => {
+              searchRequestRef.current += 1;
+              setQuery(event.target.value);
+              setDraft(null);
+              setResults([]);
+              setSearchCompleted(false);
+            }}
+            aria-label={placeholder}
+            placeholder={placeholder}
+            autoComplete="off"
+            className="h-[50px] w-full rounded-[10px] border border-slate-300 bg-white py-3 ps-12 pe-12 text-[15px] font-medium text-slate-950 outline-none transition-colors placeholder:text-slate-500 focus:border-[#075ee8] focus:ring-2 focus:ring-[#075ee8]/10"
+          />
+          <button
+            type="button"
+            aria-label={text("carsSearch.clearLocation", "Clear location")}
+            onClick={clear}
+            className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
+          >
+            <X className="h-[18px] w-[18px]" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mt-8">
+          {visibleResults.length ? (
+            <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
+              {visibleResults.map((item) => (
+                <LocationRow
+                  key={item.id}
+                  item={item}
+                  selected={draft?.id === item.id}
+                  onSelect={() => select(item)}
+                />
+              ))}
+            </div>
+          ) : searchCompleted && trimmedQuery ? (
+            <p className="px-4 py-8 text-center text-sm font-medium text-slate-500">
+              {text(
+                "carsSearch.noMatchingLocations",
+                "No matching locations found.",
+              )}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </FlightMobilePickerShell>
+  );
 }
