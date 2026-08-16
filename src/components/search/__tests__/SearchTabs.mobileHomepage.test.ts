@@ -51,15 +51,15 @@ test("homepage scopes the approved presentation to its below-sm SearchTabs", () 
   assert.doesNotMatch(homepage.match(/hidden sm:block[\s\S]*?<SearchTabs[\s\S]*?\/>/)?.[0] ?? "", /mobileHomepage/);
 });
 
-test("mobile Flights renders four connected product tabs in approved order and is the default", () => {
+test("mobile Flights renders four independent equal-width product cards in approved order and is the default", () => {
   assert.match(source, /useState<TabMode>\("flights"\)/);
   assert.match(mobileBranch, /mobile-homepage-product-tabs/);
-  assert.match(mobileProductTabs, /grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.22fr\)\]/);
-  assert.doesNotMatch(mobileProductTabs, /0\.88fr/);
+  assert.match(mobileProductTabs, /grid-cols-4/);
+  assert.doesNotMatch(mobileProductTabs, /1\.22fr|0\.88fr/);
   assert.match(mobileBranch, /\["flights", Plane,[\s\S]*?\["hotels", Building2,[\s\S]*?\["cars", CarFront,[\s\S]*?\["deals", PackagesIcon/);
   assert.equal((mobileProductTabs.match(/^\s*\["(?:flights|hotels|cars|deals)"/gm) ?? []).length, 4);
   assert.match(mobileBranch, /role="tab"[\s\S]*?aria-selected=\{selected\}/);
-  assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
+  assert.match(mobileBranch, /border-\[#075ee8\] bg-\[#eef5ff\] text-\[#075ee8\]/);
 });
 
 test("Packages uses the canonical icon and selects the canonical form inline", () => {
@@ -108,11 +108,14 @@ test("mobile homepage controls use one responsive product-tab renderer without s
   assert.equal((source.match(/const mobileHomepageProductTabs = \(/g) ?? []).length, 1);
   assert.equal((source.match(/data-testid="mobile-homepage-product-tabs-breakout"/g) ?? []).length, 1);
   assert.equal((source.match(/data-testid="mobile-homepage-product-tabs"/g) ?? []).length, 1);
-  assert.match(mobileProductTabs, /grid h-12 w-full/);
-  assert.match(mobileProductTabs, /text-\[14px\] min-\[360px\]:text-\[16px\] min-\[375px\]:text-\[18px\] min-\[430px\]:text-\[19px\]/);
-  assert.match(mobileProductTabs, /h-5 w-5[^"\n]*min-\[360px\]:h-\[22px\][^"\n]*min-\[375px\]:h-6[^"\n]*min-\[430px\]:h-\[25px\]/);
-  assert.match(mobileProductTabs, /gap-1[^"\n]*min-\[360px\]:gap-\[5px\]/);
+  assert.match(mobileProductTabs, /grid h-\[68px\] w-full grid-cols-4 gap-\[clamp\(6px,2vw,8px\)\]/);
+  assert.match(mobileProductTabs, /text-\[clamp\(13px,3\.85vw,16px\)\]/);
+  assert.match(mobileProductTabs, /h-\[clamp\(22px,6\.15vw,25px\)\] w-\[clamp\(22px,6\.15vw,25px\)\]/);
+  assert.match(mobileProductTabs, /flex h-\[68px\][^"\n]*flex-col[^"\n]*gap-1[^"\n]*rounded-\[10px\] border/);
+  assert.match(mobileProductTabs, /border-slate-200\/70 bg-white/);
+  assert.match(mobileProductTabs, /shadow-\[0_3px_10px_rgba\(15,23,42,0\.07\)\]/);
   assert.match(mobileBranch, /whitespace-nowrap/);
+  assert.match(mobileProductTabs, /tracking-\[-0\.01em\]/);
   assert.doesNotMatch(mobileBranch, /truncate[^\n]*\{label\}|text-ellipsis/);
   assert.match(mobileBranch, /h-\[68px\][^\n]*mobile-homepage|className="focus-ring flex h-\[68px\]/);
   assert.match(mobileBranch, /h-\[62px\][^\n]*w-full/);
@@ -125,15 +128,14 @@ test("mobile homepage controls use one responsive product-tab renderer without s
 test("mobile product tabs alone break out to a bounded viewport gutter", () => {
   assert.match(mobileProductTabs, /mobile-homepage-product-tabs-breakout/);
   assert.match(mobileProductTabs, /left-1\/2/);
-  assert.match(mobileProductTabs, /w-\[calc\(100vw-14px\)\]/);
-  assert.doesNotMatch(mobileProductTabs, /100vw-(?:16|20)px/);
+  assert.match(mobileProductTabs, /w-\[calc\(100vw-24px\)\]/);
   assert.match(mobileProductTabs, /-translate-x-1\/2/);
   assert.match(mobileProductTabs, /sm:static sm:w-full sm:translate-x-0/);
   assert.doesNotMatch(mobileProductTabs, /overflow-x-auto|overflow-x-scroll/);
 
-  assert.match(mobileProductTabs, /grid h-12 w-full/);
-  assert.match(mobileProductTabs, /minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1fr\)_minmax\(0,1\.22fr\)/);
-  assert.doesNotMatch(mobileProductTabs, /0\.88fr|1\.1[0-9]fr|1\.2[3-9]fr/);
+  assert.match(mobileProductTabs, /grid h-\[68px\] w-full grid-cols-4/);
+  assert.doesNotMatch(mobileProductTabs, /minmax\(0,1fr\)|0\.88fr|1\.1[0-9]fr|1\.2[0-9]fr/);
+  assert.doesNotMatch(mobileProductTabs, /overflow-hidden|index > 0|"border-s"|overflow-x-auto|overflow-x-scroll/);
 
   assert.match(flightMobileBranch, /<form onSubmit=\{onFlightSubmit\} className="mt-3 space-y-2">/);
   assert.match(flightMobileBranch, /mobile-homepage-route-fields[\s\S]*?h-\[68px\] w-full/);
@@ -152,11 +154,11 @@ test("every mobile homepage surface starts with the shared product tabs and no t
 });
 
 test("mobile homepage uses one top anchor and reserves the measured active-card height", () => {
-  // The approved product row is h-12 (3rem), so a 3rem hero overlap makes
-  // its bottom edge coincide with the hero boundary in every product state.
+  // The homepage anchor remains stable while ResizeObserver reserves the
+  // active card's measured height below the taller product-card row.
   assert.match(homepage, /data-testid="mobile-homepage-hero"/);
   assert.match(homepage, /top-\[calc\(100%-3rem\)\][^\n]*sm:hidden/);
-  assert.match(mobileProductTabs, /grid h-12 w-full/);
+  assert.match(mobileProductTabs, /grid h-\[68px\] w-full grid-cols-4/);
   assert.doesNotMatch(homepage, /bottom-\[-460px\]|pt-\[30\.5rem\]/);
   assert.match(homepage, /new ResizeObserver\(updateHeight\)/);
   assert.match(homepage, /observer\.observe\(card\)/);
@@ -271,8 +273,8 @@ test("mobile flight field icons sit in value rows without decorative tiles", () 
 
 test("mobile card, fields, borders, and tabs use the cool-neutral surface hierarchy", () => {
   assert.match(mobileBranch, /border border-\[#dee5ed\] bg-\[#f8fafc\][^\n]*shadow-\[0_8px_22px_rgba\(15,23,42,0\.07\)\]/);
-  assert.ok((mobileBranch.match(/border border-\[#dee5ed\] bg-\[#fcfdfe\]/g) ?? []).length >= 5);
-  assert.match(mobileBranch, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
+  assert.ok((mobileBranch.match(/border border-\[#dee5ed\] bg-\[#fcfdfe\]/g) ?? []).length >= 4);
+  assert.match(mobileProductTabs, /border-\[#075ee8\] bg-\[#eef5ff\] text-\[#075ee8\]/);
 });
 
 test("mobile Flights alone uses straighter card and control geometry", () => {
@@ -307,8 +309,8 @@ test("mobile CTA text is exactly Search while preserving submission", () => {
 
 test("mobile pickers and one-way/query behavior remain wired", () => {
   assert.match(mobileBranch, /renderMobileAirportPicker/);
-  assert.match(mobileBranch, /renderFlightDateCalendar\(\)/);
-  assert.match(mobileBranch, /renderTravelersCabinPicker\(\)/);
+  assert.match(mobileBranch, /<MobileDatePickerDialog/);
+  assert.match(mobileBranch, /<MobileTravelerCabinPicker/);
   assert.match(source, /if \(mode === "one-way"\) \{\s*setReturnDate\(""\)/);
   assert.match(source, /new URLSearchParams\(\{[\s\S]*?tripType:[\s\S]*?origin:[\s\S]*?destination:/);
   assert.match(source, /tripType ===[\s\S]*?"round-trip"[\s\S]*?params\.set\([\s\S]*?"returnDate"/);
@@ -324,7 +326,7 @@ test("all mobile homepage products remain switchable without route navigation", 
   assert.match(mobileProductTabs, /\["cars", CarFront/);
   assert.match(mobileProductTabs, /\["deals", PackagesIcon, t\.deals \|\| "Packages"\]/);
   assert.match(mobileProductTabs, /aria-selected=\{selected\}/);
-  assert.match(mobileProductTabs, /selected && "bg-\[#eef5ff\] text-\[#075ee8\]"/);
+  assert.match(mobileProductTabs, /border-\[#075ee8\] bg-\[#eef5ff\] text-\[#075ee8\]/);
   assert.doesNotMatch(sharedBranch, /router\.push\("\/packages"\)/);
   assert.doesNotMatch(sharedBranch, /startRouteProgress\(\);[\s\S]{0,80}setTab\("deals"\)/);
 });

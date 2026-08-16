@@ -2718,20 +2718,20 @@ export function SearchTabs({
   const mobileHomepageProductTabs = (
     <div
       data-testid="mobile-homepage-product-tabs-breakout"
-      className="relative left-1/2 w-[calc(100vw-14px)] -translate-x-1/2 sm:static sm:w-full sm:translate-x-0"
+      className="relative left-1/2 w-[calc(100vw-24px)] -translate-x-1/2 sm:static sm:w-full sm:translate-x-0"
     >
       <div
         role="tablist"
         aria-label={translate("searchType") || "Search type"}
         data-testid="mobile-homepage-product-tabs"
-        className="grid h-12 w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.22fr)] overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[14px] min-[360px]:text-[16px] min-[375px]:text-[18px] min-[430px]:text-[19px]"
+        className="grid h-[68px] w-full grid-cols-4 gap-[clamp(6px,2vw,8px)]"
       >
         {([
           ["flights", Plane, t.flights || "Flights"],
           ["hotels", Building2, t.hotels || "Hotels"],
           ["cars", CarFront, t.cars || "Cars"],
           ["deals", PackagesIcon, t.deals || "Packages"],
-        ] as const).map(([mode, Icon, label], index) => {
+        ] as const).map(([mode, Icon, label]) => {
           const selected = tab === mode;
           return (
             <button
@@ -2744,17 +2744,18 @@ export function SearchTabs({
                 setTab(mode);
               }}
               className={cn(
-                "focus-ring flex min-w-0 items-center justify-center gap-1 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[360px]:gap-[5px]",
-                index > 0 && "border-s",
-                selected && "bg-[#eef5ff] text-[#075ee8]",
+                "focus-ring flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-[10px] border px-0.5 text-[clamp(13px,3.85vw,16px)] font-medium text-slate-950 shadow-[0_3px_10px_rgba(15,23,42,0.07)] transition-colors",
+                selected
+                  ? "border-[#075ee8] bg-[#eef5ff] text-[#075ee8]"
+                  : "border-slate-200/70 bg-white",
               )}
             >
               <Icon
                 aria-hidden="true"
-                className="h-5 w-5 shrink-0 min-[360px]:h-[22px] min-[360px]:w-[22px] min-[375px]:h-6 min-[375px]:w-6 min-[430px]:h-[25px] min-[430px]:w-[25px]"
+                className="h-[clamp(22px,6.15vw,25px)] w-[clamp(22px,6.15vw,25px)] shrink-0"
                 strokeWidth={1.8}
               />
-              <span className="whitespace-nowrap">{label}</span>
+              <span className="whitespace-nowrap tracking-[-0.01em]">{label}</span>
             </button>
           );
         })}
