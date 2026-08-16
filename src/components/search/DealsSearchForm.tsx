@@ -4459,7 +4459,7 @@ export function DealsSearchForm({
       </DealsFlightPopover>
       <FlightMobilePickerShell
         open={mobileTravelersOpen}
-        title={included.hotel ? t("deals.mobileTravelersRoomsTitle") : travelersControlLabel}
+        title={included.hotel ? t("deals.mobileTravelersRoomsTitle") : t("deals.mobileTravelersTitle")}
         titleId="deals-mobile-travellers-title"
         dialogId="deals-mobile-travellers"
         launcherRef={travelersLauncherRef}

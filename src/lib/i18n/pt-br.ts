@@ -3,6 +3,7 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "deals.mobileTravelersTitle": "Viajantes",
   "mobileTravelerCabin.title": "Viajantes e cabine",
   "mobileTravelerCabin.adultDescription": "18 anos ou mais",
   "mobileTravelerCabin.childDescription": "De 2 a 17 anos",
