@@ -3626,7 +3626,7 @@ export const translations: TranslationDictionary = {
   editFlightSearch: "Edit flight search",
   travelersAndCabin: "Travelers and cabin",
   travelersAndCabinClass: "Travelers and cabin class",
-  "mobileTravelerCabin.title": "Travelers & cabin",
+  "mobileTravelerCabin.title": "Travelers & Cabin",
   "mobileTravelerCabin.adultDescription": "18 years and above",
   "mobileTravelerCabin.childDescription": "2 to 17 years",
   "mobileTravelerCabin.infantDescription": "Under 2 years",
