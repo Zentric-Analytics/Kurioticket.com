@@ -60,12 +60,17 @@ describe("hero image quality source contracts", () => {
     assert.doesNotMatch(heroImage, /\b(?:blur|unoptimized)\b|image-rendering/);
   });
 
-  it("keeps homepage hero dimensions and desktop SearchTabs positioning unchanged", () => {
+  it("aligns the 3rem mobile product row with the hero boundary without changing desktop", () => {
     assert.match(
       homepageSource,
       /min-h-\[420px\].*sm:min-h-\[550px\].*lg:min-h-\[610px\]/,
     );
-    assert.match(homepageSource, /top-\[calc\(100%-4rem\)\] z-30 sm:hidden/);
+    assert.match(homepageSource, /data-testid="mobile-homepage-hero"/);
+    assert.match(homepageSource, /top-\[calc\(100%-3rem\)\] z-30 sm:hidden/);
+    assert.match(
+      homepageSource,
+      /pt-\[max\(1\.75rem,calc\(var\(--mobile-search-card-height\)_-_1\.25rem\)\)\]/,
+    );
     assert.match(homepageSource, /--mobile-search-card-height[\s\S]*sm:pt-24.*lg:pt-28/);
     assert.match(
       homepageSource,
