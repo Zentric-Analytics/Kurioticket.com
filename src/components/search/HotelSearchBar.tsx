@@ -30,6 +30,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { MessageBanner } from "@/components/ui/MessageBanner";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
+import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { useRegion } from "@/components/region/RegionProvider";
 import {
@@ -287,9 +288,20 @@ export function HotelSearchBar({
   const [hotelChildCount, setHotelChildCount] = useState(0);
   const [rooms, setRooms] = useState(String(initialRooms || "1"));
   const [hotelPetFriendly, setHotelPetFriendly] = useState(false);
+  const [draftHotelAdults, setDraftHotelAdults] = useState(1);
+  const [draftHotelChildren, setDraftHotelChildren] = useState(0);
+  const [draftHotelRooms, setDraftHotelRooms] = useState(1);
+  const [draftHotelPetFriendly, setDraftHotelPetFriendly] = useState(false);
   const [error, setError] = useState("");
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
+  useEffect(() => {
+    if (!guestsRoomsOpen) return;
+    setDraftHotelAdults(hotelAdultCount);
+    setDraftHotelChildren(hotelChildCount);
+    setDraftHotelRooms(clampCount(rooms, 1, 6));
+    setDraftHotelPetFriendly(hotelPetFriendly);
+  }, [guestsRoomsOpen]);
   const [internalMobileSearchOpen, setInternalMobileSearchOpen] =
     useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1851,98 +1863,24 @@ export function HotelSearchBar({
         titleId={`${idPrefix}-mobile-guests-title`}
         launcherRef={guestsRoomsMobileLauncherRef}
         onClose={() => setGuestsRoomsOpen(false)}
+        showCancelAction={false}
+        showBackLabel={false}
+        contentClassName="bg-[#fcfdfe] px-4 py-6"
         footer={(requestClose) => (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={requestClose}
-              className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
-            >
+            <button type="button" onClick={() => {
+              setHotelAdultCount(draftHotelAdults);
+              setHotelChildCount(draftHotelChildren);
+              setRooms(String(draftHotelRooms));
+              setHotelPetFriendly(draftHotelPetFriendly);
+              requestClose();
+            }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white">
               {t("done")}
             </button>
-          </div>
         )}
       >
-        <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-4 shadow-sm">
-          {[
-            {
-              key: "adults",
-              label: t("adults"),
-              value: hotelAdultCount,
-              min: 1,
-              max: 12 - hotelChildCount,
-              onDecrement: () =>
-                setHotelAdultCount((prev) => Math.max(1, prev - 1)),
-              onIncrement: () =>
-                setHotelAdultCount((prev) =>
-                  Math.min(12 - hotelChildCount, prev + 1),
-                ),
-            },
-            {
-              key: "children",
-              label: t("children"),
-              value: hotelChildCount,
-              min: 0,
-              max: 12 - hotelAdultCount,
-              onDecrement: () =>
-                setHotelChildCount((prev) => Math.max(0, prev - 1)),
-              onIncrement: () =>
-                setHotelChildCount((prev) =>
-                  Math.min(12 - hotelAdultCount, prev + 1),
-                ),
-            },
-            {
-              key: "rooms",
-              label: t("rooms"),
-              value: clampCount(rooms, 1, 6),
-              min: 1,
-              max: 6,
-              onDecrement: () =>
-                setRooms((prev) =>
-                  String(Math.max(1, clampCount(prev, 1, 6) - 1)),
-                ),
-              onIncrement: () =>
-                setRooms((prev) =>
-                  String(Math.min(6, clampCount(prev, 1, 6) + 1)),
-                ),
-            },
-          ].map((row) => {
-            const canDecrement = row.value > row.min;
-            const canIncrement = row.value < row.max;
-
-            return (
-              <div
-                key={row.key}
-                className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 last:border-b-0 last:pb-0"
-              >
-                <span className="text-base font-black text-slate-950">
-                  {row.label}
-                </span>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={row.onDecrement}
-                    disabled={!canDecrement}
-                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <Minus className="h-5 w-5" aria-hidden="true" />
-                  </button>
-                  <span className="min-w-8 text-center text-base font-bold text-slate-950">
-                    {row.value}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={row.onIncrement}
-                    disabled={!canIncrement}
-                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <Plus className="h-5 w-5" aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly}
+          onAdultsChange={setDraftHotelAdults} onChildrenChange={setDraftHotelChildren} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly}
+          strings={{ guests: t("guests"), adults: t("adults"), adultDescription: t("hotelGuests.adultDescription") || "Ages 18+", children: t("children"), childDescription: t("hotelGuests.childDescription") || "Ages 0–17", rooms: t("rooms"), roomDescription: t("hotelGuests.roomDescription") || "Separate rooms", petFriendly: t("petFriendly"), petDescription: t("onlyShowPetFriendlyStays"), decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
       </HotelMobilePickerShell>
     </section>
   );

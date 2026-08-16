@@ -1196,6 +1196,9 @@ export const translations: TranslationDictionary = {
   hotelAdultHelper: "18+ misafir",
   hotelChildrenHelper: "0–17 yaş",
   hotelRoomsHelper: "En fazla 6 oda",
+  "hotelGuests.adultDescription": "18 yaş ve üzeri",
+  "hotelGuests.childDescription": "0–17 yaş",
+  "hotelGuests.roomDescription": "Ayrı odalar",
   petFriendly: "Evcil hayvan dostu",
   onlyShowPetFriendlyStays:
     "Yalnızca evcil hayvana izin veren konaklamaları göster",
