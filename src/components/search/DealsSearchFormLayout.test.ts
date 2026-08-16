@@ -253,7 +253,7 @@ test("desktop landing expands the primary controls and moves submit to its own f
   );
   assert.match(
     form,
-    /lg:mt-\[14px\][\s\S]*lg:justify-end[\s\S]*lg:h-\[46px\][\s\S]*lg:w-auto[\s\S]*lg:min-w-\[176px\][\s\S]*lg:rounded-\[8px\]/,
+    /lg:justify-end[\s\S]*lg:mt-\[14px\][\s\S]*lg:w-auto[\s\S]*lg:rounded-\[8px\][\s\S]*lg:h-\[46px\][\s\S]*lg:min-w-\[176px\]/,
   );
   const desktopSubmit = form.slice(
     form.indexOf("const searchDealsButton"),
@@ -273,15 +273,18 @@ test("desktop-only styling leaves mobile homepage and results gates intact", () 
 });
 
 test("desktop landing removes only flight clear controls and their reserved padding", () => {
-  assert.match(flightRow, /\$\{isDesktopLanding \? "pe-3[^"']*" : "pe-10"\}/);
+  assert.match(flightRow, /\$\{isDesktopLanding \? "min-w-0 pe-3[^"']*" : "pe-10"\}/);
   assert.match(flightRow, /\{!isDesktopLanding && search\[textKey\] \? \(/);
   assert.match(flightRow, /data-deals-flight-clear=\{kind\}/);
   assert.match(flightRow, /onChange=\{\(event\) =>/);
   assert.match(flightRow, /swapDealsFlightAirports/);
 });
 
-test("desktop landing uses restrained eight-pixel geometry", () => {
-  assert.match(form, /lg:rounded-\[8px\] lg:border-\[#dee5ed\]/);
+test("desktop landing uses restrained geometry with a subtly softer Packages card", () => {
+  assert.match(
+    form,
+    /isPackagesLanding \? "lg:rounded-\[12px\]" : "lg:rounded-\[8px\]"/,
+  );
   assert.match(
     form,
     /data-deals-desktop-package-selector[\s\S]*rounded-\[8px\] border border-\[#dee5ed\]/,
@@ -317,10 +320,8 @@ test("desktop landing uses one shared portal contract for every expandable field
 });
 
 test("desktop stay-date checkbox stays neutral and draws only a blue check", () => {
-  assert.match(
-    stayOptions,
-    /appearance-none bg-white checked:border-slate-400 checked:bg-white[^"\n]*focus:ring-0/,
-  );
+  assert.match(stayOptions, /bg-white checked:border-slate-400 checked:bg-white/);
+  assert.match(stayOptions, /appearance-none focus:outline-none focus:ring-0/);
   assert.match(stayOptions, /<Check[\s\S]*text-\[#2563eb\]/);
   assert.doesNotMatch(stayOptions, /checked:bg-\[#004BB8\]|checked:bg-blue/);
   assert.doesNotMatch(stayOptions, /focus-within:ring-2|bg-\[#eef5ff\]/);

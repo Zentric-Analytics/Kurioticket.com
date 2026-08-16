@@ -3535,7 +3535,7 @@ export function DealsSearchForm({
       className={
         presentation === "mobile-homepage"
           ? "w-full"
-          : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? `${isPackagesLanding ? "rounded-[16px] border-[#dee5ed] bg-[#fcfdfe] shadow-[0_14px_36px_rgba(15,35,65,0.12)] sm:rounded-3xl sm:border-slate-200 sm:bg-white sm:shadow-[0_18px_46px_rgba(15,23,42,0.12)]" : "rounded-3xl border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)]"} border sm:px-6 lg:py-3` : ""} ${isDesktopLanding ? `lg:max-w-[1280px] lg:rounded-[8px] lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8 ${isPackagesLanding ? "lg:py-5" : "lg:py-6"}` : ""}`
+          : `mx-auto w-full max-w-[1120px] bg-white p-4 sm:px-4 sm:py-3 ${variant === "landing" ? `${isPackagesLanding ? "rounded-[16px] border-[#dee5ed] bg-[#fcfdfe] shadow-[0_14px_36px_rgba(15,35,65,0.12)] sm:rounded-3xl sm:border-slate-200 sm:bg-white sm:shadow-[0_18px_46px_rgba(15,23,42,0.12)]" : "rounded-3xl border-slate-200 shadow-[0_18px_46px_rgba(15,23,42,0.12)]"} border sm:px-6 lg:py-3` : ""} ${isDesktopLanding ? `lg:max-w-[1280px] ${isPackagesLanding ? "lg:rounded-[12px]" : "lg:rounded-[8px]"} lg:border-[#dee5ed] lg:bg-[#fafbfd] lg:px-5 lg:shadow-[0_18px_48px_rgba(15,35,65,0.14)] xl:px-8 ${isPackagesLanding ? "lg:py-5" : "lg:py-6"}` : ""}`
       }
     >
       {presentation === "mobile-homepage" ? compactMobileControls : (
@@ -4240,11 +4240,13 @@ export function DealsSearchForm({
             <div data-deals-stay-options className={isPackagesLanding ? "lg:min-h-[48px] lg:pe-[188px]" : undefined}>
               {supportsStayDateOverride ? (
                 <label
+                  htmlFor="deals-change-stay-dates"
                   data-deals-change-stay-dates
-                  className="inline-flex min-h-11 w-fit cursor-pointer items-center gap-2 px-1 text-sm font-bold text-slate-800"
+                  className="relative z-10 inline-flex min-h-11 w-fit cursor-pointer items-center gap-2 px-1 text-sm font-bold text-slate-800"
                 >
                   <span className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center">
                     <input
+                      id="deals-change-stay-dates"
                       type="checkbox"
                       checked={!search.stayDatesLinked}
                       onChange={(event) => {
