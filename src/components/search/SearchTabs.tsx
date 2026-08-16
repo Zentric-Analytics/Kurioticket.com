@@ -784,7 +784,7 @@ export function SearchTabs({
         "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
         searchTabsOverlayOpen && desktopOverlayRootClassName,
         mobileHomepage
-          ? "rounded-[14px] border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
+          ? "rounded-[14px] border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
           : compactHero
           ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
           : "p-2"
@@ -3022,13 +3022,13 @@ export function SearchTabs({
   const mobileHomepageProductTabs = (
     <div
       data-testid="mobile-homepage-product-tabs-breakout"
-      className="relative left-1/2 w-[calc(100vw-16px)] -translate-x-1/2 min-[360px]:w-[calc(100vw-20px)] sm:static sm:w-full sm:translate-x-0"
+      className="relative left-1/2 w-[calc(100vw-14px)] -translate-x-1/2 sm:static sm:w-full sm:translate-x-0"
     >
       <div
         role="tablist"
         aria-label={translate("searchType") || "Search type"}
         data-testid="mobile-homepage-product-tabs"
-        className="grid h-12 w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.16fr)] overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[13px] min-[360px]:text-[14px] min-[375px]:text-[16px]"
+        className="grid h-12 w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.16fr)] overflow-hidden rounded-xl border border-[#dee5ed] bg-[#fcfdfe] text-[14px] min-[360px]:text-[15px] min-[375px]:text-[17px] min-[430px]:text-[18px]"
       >
         {([
           ["flights", Plane, t.flights || "Flights"],
@@ -3048,14 +3048,14 @@ export function SearchTabs({
                 setTab(mode);
               }}
               className={cn(
-                "focus-ring flex min-w-0 items-center justify-center gap-[3px] border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[360px]:gap-1 min-[375px]:gap-[5px]",
+                "focus-ring flex min-w-0 items-center justify-center gap-1 border-slate-200 px-0.5 font-medium text-slate-950 transition-colors min-[360px]:gap-[5px]",
                 index > 0 && "border-s",
                 selected && "bg-[#eef5ff] text-[#075ee8]",
               )}
             >
               <Icon
                 aria-hidden="true"
-                className="h-[18px] w-[18px] shrink-0 min-[360px]:h-5 min-[360px]:w-5 min-[375px]:h-[22px] min-[375px]:w-[22px]"
+                className="h-[19px] w-[19px] shrink-0 min-[360px]:h-[21px] min-[360px]:w-[21px] min-[375px]:h-[23px] min-[375px]:w-[23px] min-[430px]:h-6 min-[430px]:w-6"
                 strokeWidth={1.8}
               />
               <span className="whitespace-nowrap">{label}</span>
@@ -3079,7 +3079,7 @@ export function SearchTabs({
     return (
       <section
         data-testid="mobile-homepage-flight-search"
-        className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden"
+        className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden"
       >
         {mobileHomepageProductTabs}
         <form onSubmit={onFlightSubmit} className="mt-3 space-y-2">
@@ -3307,7 +3307,7 @@ export function SearchTabs({
 
   if (mobileHomepage && tab === "deals") {
     return (
-      <section data-testid="mobile-homepage-deals-surface" className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] p-[13px] shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
+      <section data-testid="mobile-homepage-deals-surface" className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
         {mobileHomepageProductTabs}
         <DealsSearchForm variant="landing" presentation="mobile-homepage" />
       </section>
@@ -3321,7 +3321,7 @@ export function SearchTabs({
           <div aria-hidden="true" className={desktopOverlayGuardClassName} />
         ) : null}
       {mobileHomepage ? (
-        <div className="mb-[15px]">{mobileHomepageProductTabs}</div>
+        <div className="mb-3">{mobileHomepageProductTabs}</div>
       ) : (
       <div className={tabsClassName}>
         <button

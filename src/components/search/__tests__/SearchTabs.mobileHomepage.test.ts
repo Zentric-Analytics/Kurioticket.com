@@ -105,9 +105,9 @@ test("mobile homepage controls use one responsive product-tab renderer without s
   assert.equal((source.match(/data-testid="mobile-homepage-product-tabs-breakout"/g) ?? []).length, 1);
   assert.equal((source.match(/data-testid="mobile-homepage-product-tabs"/g) ?? []).length, 1);
   assert.match(mobileProductTabs, /grid h-12 w-full/);
-  assert.match(mobileProductTabs, /text-\[13px\] min-\[360px\]:text-\[14px\] min-\[375px\]:text-\[16px\]/);
-  assert.match(mobileProductTabs, /h-\[18px\] w-\[18px\][^"\n]*min-\[360px\]:h-5[^"\n]*min-\[375px\]:h-\[22px\]/);
-  assert.match(mobileProductTabs, /gap-\[3px\][^"\n]*min-\[360px\]:gap-1[^"\n]*min-\[375px\]:gap-\[5px\]/);
+  assert.match(mobileProductTabs, /text-\[14px\] min-\[360px\]:text-\[15px\] min-\[375px\]:text-\[17px\] min-\[430px\]:text-\[18px\]/);
+  assert.match(mobileProductTabs, /h-\[19px\] w-\[19px\][^"\n]*min-\[360px\]:h-\[21px\][^"\n]*min-\[375px\]:h-\[23px\][^"\n]*min-\[430px\]:h-6/);
+  assert.match(mobileProductTabs, /gap-1[^"\n]*min-\[360px\]:gap-\[5px\]/);
   assert.match(mobileBranch, /whitespace-nowrap/);
   assert.doesNotMatch(mobileBranch, /truncate[^\n]*\{label\}|text-ellipsis/);
   assert.match(mobileBranch, /h-\[68px\][^\n]*mobile-homepage|className="focus-ring flex h-\[68px\]/);
@@ -121,8 +121,8 @@ test("mobile homepage controls use one responsive product-tab renderer without s
 test("mobile product tabs alone break out to a bounded viewport gutter", () => {
   assert.match(mobileProductTabs, /mobile-homepage-product-tabs-breakout/);
   assert.match(mobileProductTabs, /left-1\/2/);
-  assert.match(mobileProductTabs, /w-\[calc\(100vw-16px\)\]/);
-  assert.match(mobileProductTabs, /min-\[360px\]:w-\[calc\(100vw-20px\)\]/);
+  assert.match(mobileProductTabs, /w-\[calc\(100vw-14px\)\]/);
+  assert.doesNotMatch(mobileProductTabs, /100vw-(?:16|20)px/);
   assert.match(mobileProductTabs, /-translate-x-1\/2/);
   assert.match(mobileProductTabs, /sm:static sm:w-full sm:translate-x-0/);
   assert.doesNotMatch(mobileProductTabs, /overflow-x-auto|overflow-x-scroll/);
@@ -135,6 +135,16 @@ test("mobile product tabs alone break out to a bounded viewport gutter", () => {
   assert.match(flightMobileBranch, /mobile-homepage-route-fields[\s\S]*?h-\[68px\] w-full/);
   assert.match(flightMobileBranch, /mobile-homepage-travel-dates-field[\s\S]*?h-\[62px\] w-full/);
   assert.match(flightMobileBranch, /mobile-homepage-search-submit[\s\S]*?h-12 w-full/);
+});
+
+test("every mobile homepage surface starts with the shared product tabs and no top inset", () => {
+  const zeroTopInset = /px-\[13px\] pb-\[13px\] pt-0/;
+  assert.equal((source.match(/px-\[13px\] pb-\[13px\] pt-0/g) ?? []).length, 3);
+  assert.match(flightMobileBranch, new RegExp(`${zeroTopInset.source}[^>]*>[\\s\\S]*?\\{mobileHomepageProductTabs\\}[\\s\\S]*?<form onSubmit=\\{onFlightSubmit\\} className="mt-3`));
+  assert.match(source, /mobile-homepage-deals-surface[^>]*px-\[13px\] pb-\[13px\] pt-0[^>]*>[\s\S]*?\{mobileHomepageProductTabs\}[\s\S]*?<DealsSearchForm/);
+  assert.match(sharedBranch, /className=\{wrapper\}[\s\S]*?mobileHomepage \? \([\s\S]*?<div className="mb-3">\{mobileHomepageProductTabs\}<\/div>/);
+  assert.match(source, /mobileHomepage[\s\S]{0,180}px-\[13px\] pb-\[13px\] pt-0/);
+  assert.doesNotMatch(source, /mobileHomepage[\s\S]{0,180}bg-\[#f8fafc\] p-\[13px\]/);
 });
 
 test("mobile homepage uses one top anchor and reserves the measured active-card height", () => {
@@ -156,7 +166,7 @@ test("mobile Hotels removes only the nested surface and keeps its connected cont
   assert.match(sharedBranch, /mobile-homepage-hotel-guests[\s\S]*?hotelGuestsRoomsSummary/);
   assert.match(sharedBranch, /mobile-homepage-hotel-search/);
   assert.match(sharedBranch, /rounded-\[11px\] border-\[#dee5ed\] bg-\[#fcfdfe\]/);
-  assert.match(source, /mobileHomepage[\s\S]{0,180}rounded-\[14px\][^\n]*p-\[13px\]/);
+  assert.match(source, /mobileHomepage[\s\S]{0,180}rounded-\[14px\][^\n]*px-\[13px\] pb-\[13px\] pt-0/);
 });
 
 test("mobile homepage Hotels aligns neutral icons with values while preserving field behavior", () => {
