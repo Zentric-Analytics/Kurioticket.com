@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const picker = readFileSync("src/components/search/MobileCarLocationPicker.tsx", "utf8");
-const recents = readFileSync("src/lib/cars/recentCarLocations.ts", "utf8");
 const homepage = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
 const cars = readFileSync("src/app/cars/page.tsx", "utf8");
 const packages = readFileSync("src/components/search/DealsSearchForm.tsx", "utf8");
@@ -14,24 +13,24 @@ test("shared Cars picker matches approved mobile structure", () => {
   assert.match(picker, /carsResults\.returnLocationLabel/);
   assert.match(picker, /<Search aria-hidden="true"/);
   assert.match(picker, /Airport, city, or address/);
-  assert.match(picker, /recentSearches\.title/);
   assert.match(picker, /carsSearch\.locationSuggestions/);
-  for (const icon of ["Clock3", "Building2", "Plane"]) assert.match(picker, new RegExp(icon));
+  for (const icon of ["Building2", "MapPin", "Plane"]) assert.match(picker, new RegExp(icon));
   assert.match(picker, /h-\[52px\][\s\S]*Done/);
 });
 
 test("blank mobile Cars queries stay clean and never request generic suggestions", () => {
-  assert.match(picker, /const trimmedQuery = query\.trim\(\);\s*if \(!trimmedQuery\) return;/);
+  assert.match(picker, /const trimmedQuery = query\.trim\(\);\s*if \(!trimmedQuery\) \{\s*setResults\(\[\]\);\s*setSearchCompleted\(false\);\s*return;/);
   assert.match(picker, /searchCarLocationSuggestions\(trimmedQuery, \{ limit: 8 \}\)/);
   assert.doesNotMatch(picker, /searchCarLocationSuggestions\(query,/);
   assert.doesNotMatch(picker, /carsSearch\.popularLocations|Popular locations/);
+  assert.doesNotMatch(picker, /recentSearches\.title|Recent searches|readRecentCarLocations|recents/);
   assert.doesNotMatch(picker, /query\.trim\(\) \? results : results/);
 });
 
 test("results and empty states render only for a completed non-empty query", () => {
   assert.match(picker, /\{trimmedQuery \? <section[\s\S]*carsSearch\.locationSuggestions[\s\S]*results\.map/);
   assert.match(picker, /searchCompleted && !results\.length[\s\S]*carsSearch\.noMatchingLocations/);
-  assert.match(picker, /!trimmedQuery && recents\.length[\s\S]*recentSearches\.title/);
+  assert.doesNotMatch(picker, /Recent searches|Popular locations/);
   assert.doesNotMatch(picker, /Start typing to see suggestions/);
 });
 
@@ -45,15 +44,6 @@ test("Pickup and Return share the same query-gated picker body", () => {
   assert.equal((picker.match(/export function MobileCarLocationPicker/g) ?? []).length, 1);
   assert.match(picker, /mode: "pickup" \| "return"/);
   assert.match(picker, /mode === "pickup"[\s\S]*Pickup location[\s\S]*Return location/);
-});
-
-test("Cars recents are dedicated, capped, deduped, and removable", () => {
-  assert.match(recents, /kurioticket:recent-car-locations/);
-  assert.match(recents, /MAX_RECENTS = 3/);
-  assert.match(recents, /filter\(\(item\) => item\.id !== location\.id\)/);
-  assert.match(recents, /removeRecentCarLocation/);
-  assert.ok((recents.match(/localStorage\.setItem/g) ?? []).length === 2);
-  assert.ok((recents.match(/try \{/g) ?? []).length >= 3);
 });
 
 test("homepage, standalone Cars, and Packages reuse the shared picker", () => {
@@ -82,16 +72,17 @@ test("selecting a result only changes the draft and keeps the query and result l
   assert.match(picker, /useEffect\([\s\S]*?searchCarLocationSuggestions\(trimmedQuery, \{ limit: 8 \}\)[\s\S]*?\}, \[open, query\]\)/);
 });
 
-test("results and recents show one stable-id draft selection without changing the search", () => {
-  assert.ok((picker.match(/selected=\{draft\?\.id === item\.id\}/g) ?? []).length === 2);
+test("results show one semantic, background-only draft selection without changing the search", () => {
+  assert.equal((picker.match(/selected=\{draft\?\.id === item\.id\}/g) ?? []).length, 1);
   assert.match(picker, /aria-pressed=\{selected\}/);
-  assert.match(picker, /selectedIndicator = selected \? <span aria-hidden="true"[\s\S]*bg-\[#075EE8\][\s\S]*<Check/);
-  assert.match(picker, /selectedIndicator \?\? <ChevronRight/);
+  assert.match(picker, /selected \? "bg-\[#075EE8\]\/5" : ""/);
+  assert.match(picker, /!selected \? <ChevronRight/);
+  assert.doesNotMatch(picker, /\bCheck(?:Circle)?\b|selectedIndicator/);
 });
 
 test("Done commits the canonical draft while Back remains a discard-only close", () => {
   assert.match(picker, /const next = draft\?\.value \?\? \(query\.trim\(\) \|\| value\.trim\(\)\)/);
-  assert.match(picker, /if \(draft\) saveRecentCarLocation\(draft\); onCommit\(next\); onClose\(\)/);
+  assert.match(picker, /if \(!next\) return; onCommit\(next\); onClose\(\)/);
   assert.match(picker, /launcherRef=\{launcherRef\} onClose=\{onClose\}/);
   assert.equal((picker.match(/onCommit\(/g) ?? []).length, 1);
 });
