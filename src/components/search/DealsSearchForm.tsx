@@ -2387,7 +2387,7 @@ export function DealsSearchForm({
                 <span className={`block font-extrabold text-slate-950 ${isPackagesLanding ? "lg:text-[14px] lg:font-semibold lg:leading-tight lg:text-slate-900" : ""}`}>
                   {rowLabel}
                 </span>
-                <span className={`block text-xs font-medium text-slate-500 ${isPackagesLanding ? "lg:text-[12px] lg:font-normal lg:leading-relaxed" : ""}`}>
+                <span className={`block text-xs font-medium text-slate-500 ${isPackagesLanding ? "lg:text-[12px] lg:font-normal lg:leading-[1.35]" : ""}`}>
                   {description}
                 </span>
               </span>
