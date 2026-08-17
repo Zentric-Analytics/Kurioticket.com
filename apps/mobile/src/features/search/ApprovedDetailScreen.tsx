@@ -24,12 +24,11 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { AirlineLogo } from "./AirlineLogo";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
-  displayPrice,
-  isDisplayPriceCurrent,
   resolveDisplayCurrencyContext,
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
+import { canReuseFlightDetailFare, createFlightDetailFare } from "./flightDetailCurrency";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -79,21 +78,41 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
   const inset = useSafeAreaInsets();
   const { theme } = useAppTheme();
   const passedFare = parse<DisplayPrice>(params.displayFare);
-  const [fare, setFare] = useState<DisplayPrice | null>(null);
+  const initiallyValidPassedFare = canReuseFlightDetailFare({
+    passedFare,
+    providerAmount: result.price,
+    providerCurrency: result.currency,
+  }) ? passedFare! : null;
+  const [fare, setFare] = useState<DisplayPrice | null>(initiallyValidPassedFare);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
+  const hasFocusedRef = useRef(false);
   useFocusEffect(useCallback(() => {
     let active = true;
-    // The route fare is only a handoff snapshot. Hide it until the current
-    // preference has been resolved so a stale currency cannot flash on refocus.
-    setFare(null);
-    const ratesRequest = currencyRatesRef.current
-      ? Promise.resolve(currencyRatesRef.current)
-      : travelApi.currencyRates().then((payload) => payload.rates).catch(() => ({}));
-    void Promise.all([
-      readCurrencyPreference().catch(() => null),
-      travelApi.location().catch(() => null),
-      ratesRequest,
-    ]).then(([preferredCurrency, location, rates]) => {
+    if (hasFocusedRef.current) setFare(null);
+    hasFocusedRef.current = true;
+    void readCurrencyPreference().catch(() => null).then(async (preferredCurrency) => {
+      if (!active) return;
+      if (canReuseFlightDetailFare({
+        passedFare,
+        providerAmount: result.price,
+        providerCurrency: result.currency,
+        preferredCurrency,
+      })) {
+        setFare(passedFare!);
+        return;
+      }
+
+      // A changed explicit preference invalidates the snapshot immediately.
+      // Never show the provider currency while the requested conversion loads.
+      setFare(null);
+      const [location, rates] = await Promise.all([
+        passedFare || preferredCurrency
+          ? Promise.resolve(null)
+          : travelApi.location().catch(() => null),
+        currencyRatesRef.current
+          ? Promise.resolve(currencyRatesRef.current)
+          : travelApi.currencyRates().then((payload) => payload.rates).catch(() => ({})),
+      ]);
       if (!active) return;
       const resolution = resolveDisplayCurrencyContext({
         preferredCurrency,
@@ -101,14 +120,12 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
         locale: Intl.DateTimeFormat().resolvedOptions().locale,
       });
       if (Object.keys(rates).length) currencyRatesRef.current = rates;
-      setFare(isDisplayPriceCurrent(
-        passedFare,
+      setFare(createFlightDetailFare(
         result.price,
         result.currency,
         resolution.resolvedCurrency,
-      )
-        ? passedFare!
-        : displayPrice(result.price, result.currency, resolution.resolvedCurrency, rates));
+        rates,
+      ));
     });
     return () => { active = false; };
   }, [passedFare?.amount, passedFare?.currency, passedFare?.providerAmount,
