@@ -3382,48 +3382,6 @@ export function DealsSearchForm({
           </div>
         </fieldset>
 
-        {isPackagesLanding && included.flight ? (
-          <div
-            role="radiogroup"
-            aria-label={t("tripType")}
-            className="flex min-h-11 items-center justify-between gap-1"
-          >
-            {(["round-trip", "one-way"] as const).map((value) => {
-              const selected = search.flightTripType === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  onClick={() => setDealsFlightTripType(value)}
-                  className="focus-ring flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-slate-900"
-                >
-                  <span className={`flex h-4 w-4 items-center justify-center rounded-full border ${selected ? "border-[#8ebcff]" : "border-slate-300"}`} aria-hidden="true">
-                    {selected ? <span className="h-2.5 w-2.5 rounded-full bg-[#075ee8]" /> : null}
-                  </span>
-                  {value === "round-trip"
-                    ? locale.toLowerCase().startsWith("en")
-                      ? "Round-trip"
-                      : t("roundTrip")
-                    : t("deals.tripType.oneWay")}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              role="radio"
-              aria-checked="false"
-              aria-disabled="true"
-              disabled
-              className="flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap text-[13px] font-medium text-slate-900 disabled:opacity-100"
-            >
-              <span className="h-4 w-4 rounded-full border border-slate-300" aria-hidden="true" />
-              {t("multiCity")}
-            </button>
-          </div>
-        ) : null}
-
         {included.flight ? (
           <div
             className="relative space-y-2"
