@@ -656,6 +656,7 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
               pathname: "/flight-details",
               params: {
                 result: JSON.stringify(result),
+                ...(fare ? { displayFare: JSON.stringify(fare) } : {}),
                 ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, one(value) || ""])),
               },
             })

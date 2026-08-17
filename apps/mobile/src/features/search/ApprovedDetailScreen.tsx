@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -15,13 +15,19 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
-import type { FlightResult, HotelResult } from "../../api/travelApi";
+import { travelApi, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useAppTheme } from "../../theme/AppTheme";
 import { AirlineLogo } from "./AirlineLogo";
+import { readCurrencyPreference } from "../../storage/preferenceStorage";
+import {
+  displayPrice,
+  resolveDisplayCurrencyContext,
+  type DisplayPrice,
+} from "../currency/displayCurrency";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -70,6 +76,36 @@ export function ApprovedDetailScreen({
 function FlightDetail({ result, params }: { result: FlightResult; params: Record<string, string | string[]> }) {
   const inset = useSafeAreaInsets();
   const { theme } = useAppTheme();
+  const passedFare = parse<DisplayPrice>(params.displayFare);
+  const initialFare = passedFare
+    && passedFare.providerAmount === result.price
+    && passedFare.providerCurrency === result.currency.toUpperCase()
+    ? passedFare
+    : null;
+  const [fare, setFare] = useState<DisplayPrice | null>(initialFare);
+  useEffect(() => {
+    let active = true;
+    if (initialFare) {
+      setFare(initialFare);
+      return () => { active = false; };
+    }
+    setFare(null);
+    void Promise.all([
+      readCurrencyPreference().catch(() => null),
+      travelApi.location().catch(() => null),
+      travelApi.currencyRates().then((payload) => payload.rates).catch(() => ({})),
+    ]).then(([preferredCurrency, location, rates]) => {
+      if (!active) return;
+      const resolution = resolveDisplayCurrencyContext({
+        preferredCurrency,
+        ipCountryCode: location?.countryCode,
+        locale: Intl.DateTimeFormat().resolvedOptions().locale,
+      });
+      setFare(displayPrice(result.price, result.currency, resolution.resolvedCurrency, rates));
+    });
+    return () => { active = false; };
+  }, [initialFare?.amount, initialFare?.currency, result.currency, result.id, result.price]);
+  const formattedFare = fare?.formatted ?? "—";
   const legs = result.legs?.length
     ? result.legs
     : [
@@ -192,7 +228,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             <View style={{ alignItems: "flex-end" }}>
               <Text style={[d.meta, { color: theme.textSecondary }]}>Total (1 traveler)</Text>
               <Text style={[d.price, { color: theme.textPrimary }]}>
-                {money(result.currency, result.price)}
+                {formattedFare}
               </Text>
               <Text style={[d.meta, { color: theme.textSecondary }]}>Taxes and fees per provider</Text>
             </View>
@@ -221,7 +257,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
                 ? "Airline direct"
                 : "Travel provider"
             }
-            price={money(result.currency, result.price)}
+            price={formattedFare}
             selected
           />
           <Text style={[d.disclosure, { color: theme.textSecondary }]}>
@@ -232,7 +268,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
       <View style={[d.sticky, { paddingBottom: Math.max(inset.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]}>
         <View>
           <Text style={[d.meta, { color: theme.textSecondary }]}>Total</Text>
-          <Text style={[d.price, { color: theme.textPrimary }]}>{money(result.currency, result.price)}</Text>
+          <Text style={[d.price, { color: theme.textPrimary }]}>{formattedFare}</Text>
           <Text style={[d.meta, { color: theme.textSecondary }]}>Round trip</Text>
         </View>
         <View style={d.stickyAction}>
