@@ -27,14 +27,14 @@ test("source-contract: the image fills phones and restores its tablet inset", ()
   assert.match(image, /md:p-2\.5/);
   assert.doesNotMatch(image, /(?<!md:)p-2\.5/);
   assert.match(image, /md:rounded-xl/);
-  assert.match(image, /<CarResultImage /);
+  assert.match(image, /<CarResultImage\s/);
 });
 
 test("source-contract: the full-width heading safely contains car identity", () => {
   const heading = region("heading", "details");
   assert.match(heading, /col-span-2 row-start-2 min-w-0/);
   assert.match(heading, /\{car\.categoryLabel\}/);
-  assert.match(heading, /<h2[^>]*>[\s\S]*\{car\.modelName\}[\s\S]*<\/h2>/);
+  assert.match(heading, /<h2[^>]*>[\s\S]*\{vehicleName\}[\s\S]*<\/h2>/);
   assert.match(heading, /\{badge && BadgeIcon &&/);
   assert.match(heading, /shrink-0/);
   assert.match(heading, /<MapPin/);
@@ -60,23 +60,25 @@ test("source-contract: pricing and its sole action share the lower-right column"
   const pricing = region("pricing");
   assert.match(pricing, /col-start-2 row-start-3 flex min-w-0/);
   assert.match(pricing, /border-s border-t/);
-  assert.match(pricing, /text-end/);
+  assert.match(pricing, /items-center/);
+  assert.match(pricing, /text-center/);
+  assert.doesNotMatch(pricing, /text-end/);
   assert.match(pricing, /md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0/);
   assert.match(pricing, /lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1/);
   assert.match(pricing, /lg:border-s lg:border-t-0/);
   assert.ok(pricing.indexOf("totalDisplayPrice.formatted") < pricing.indexOf("dailyDisplayPrice.formatted"));
   assert.match(pricing, /Taxes and fees included/);
-  assert.match(pricing, /<Link href=\{detailsHref\} className="[^"]*w-full[^"]*bg-\[#004BB8\][^"]*text-white[^"]*focus-visible:ring-2/);
-  assert.ok(pricing.indexOf("View car") > pricing.indexOf("totalDisplayPrice.formatted"));
-  assert.equal((source.match(/<Link href=\{detailsHref\}/g) ?? []).length, 1);
+  assert.match(pricing, /<Link\s+href=\{detailsHref\}[\s\S]*?className="[^"]*w-full[^"]*bg-\[#004BB8\][^"]*text-white[^"]*focus-visible:ring-2/);
+  assert.ok(pricing.indexOf("{actionLabel}") > pricing.indexOf("totalDisplayPrice.formatted"));
+  assert.equal((source.match(/<Link\s+href=\{detailsHref\}/g) ?? []).length, 1);
 });
 
 test("source-contract: prices retain accessible overflow-safe formatting", () => {
   for (const price of ["dailyDisplayPrice", "totalDisplayPrice"]) {
-    assert.match(source, new RegExp(`dir="ltr" title=\\{${price}\\.title\\} aria-label=\\{${price}\\.ariaLabel\\}`));
+    assert.match(source, new RegExp(`dir="ltr"[\\s\\S]*?title=\\{${price}\\.title\\}[\\s\\S]*?aria-label=\\{${price}\\.ariaLabel\\}`));
   }
   assert.equal((source.match(/tabular-nums/g) ?? []).length, 2);
-  assert.match(source, /min-\[380px\]:whitespace-nowrap/);
+  assert.match(source, /max-w-full whitespace-nowrap/);
 });
 
 test("source-contract: offer selection and non-positional layout stay unchanged", () => {

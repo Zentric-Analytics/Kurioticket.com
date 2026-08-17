@@ -23,6 +23,12 @@ test("shared calendar exposes range state and disables past dates", () => {
   assert.match(shared, /!mobileShell \? <div className="mb-3 flex items-center justify-between"/);
 });
 
+test("shared calendar shows today with only the restrained ring", () => {
+  assert.match(shared, /today && !past \? "ring-1 ring-inset ring-\[#004BB8\]\/25"/);
+  assert.doesNotMatch(shared, /today && !selected \? <span/);
+  assert.doesNotMatch(shared, /bottom-1\.5 h-1 w-1 rounded-full bg-\[#004BB8\]/);
+});
+
 test("shared time content renders two independently scrollable button lists", () => {
   assert.match(shared, /data-cars-time-columns/);
   assert.match(shared, /data-cars-time-list=\{kind\}/);

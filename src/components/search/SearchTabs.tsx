@@ -2417,9 +2417,6 @@ export function SearchTabs({
                 )}
               >
                 {day.getDate()}
-                {isToday && !isStart && !isEnd ? (
-                  <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
-                ) : null}
               </button>
             );
           })}

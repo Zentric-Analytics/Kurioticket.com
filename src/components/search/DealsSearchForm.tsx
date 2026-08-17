@@ -2544,12 +2544,6 @@ export function DealsSearchForm({
                 className={`focus-ring relative mx-auto flex items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${mobile ? "h-11 w-full max-w-11 text-[15px] font-semibold" : isPackagesLanding ? "h-[38px] w-[38px] text-sm font-medium" : "h-10 w-10 text-sm font-medium"} ${disabled ? "text-slate-300" : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"} ${today && !disabled ? "ring-1 ring-inset ring-[#004BB8]/20" : ""} ${inRange ? "bg-[#004BB8]/10 text-[#021C2B]" : ""} ${departure || returning ? "bg-[#004BB8] text-white ring-0 hover:bg-[#004BB8] hover:text-white" : ""}`}
               >
                 {date.getDate()}
-                {today && !departure && !returning && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]"
-                  />
-                )}
               </button>
             );
           })}
@@ -2672,12 +2666,6 @@ export function DealsSearchForm({
                 className={`focus-ring relative mx-auto flex items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${mobile ? "h-11 w-full max-w-11 text-[15px] font-semibold" : "h-10 w-10 text-sm font-medium"} ${disabled ? "text-slate-300" : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"} ${today && !disabled ? "ring-1 ring-inset ring-[#004BB8]/20" : ""} ${inRange ? "bg-[#004BB8]/10 text-[#021C2B]" : ""} ${checkIn || checkOut ? "bg-[#004BB8] text-white ring-0 hover:bg-[#004BB8] hover:text-white" : ""}`}
               >
                 {date.getDate()}
-                {today && !checkIn && !checkOut && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]"
-                  />
-                )}
               </button>
             );
           })}

@@ -11,6 +11,16 @@ const sync = readFileSync(
   "utf8",
 );
 
+test("package flight and stay calendars use today rings without decorative dots", () => {
+  assert.equal(
+    form.match(/today && !disabled \? "ring-1 ring-inset ring-\[#004BB8\]\/20"/g)?.length,
+    2,
+  );
+  assert.doesNotMatch(form, /today && !departure && !returning && \(/);
+  assert.doesNotMatch(form, /today && !checkIn && !checkOut && \(/);
+  assert.doesNotMatch(form, /bottom-1\.5 h-1 w-1 rounded-full bg-\[#004BB8\]/);
+});
+
 test("landing and results share the four direct package choices in exact order", () => {
   assert.equal(form.match(/<div\s+data-deals-package-selector\s/g)?.length, 1);
   const config = form.slice(
