@@ -134,6 +134,18 @@ test("source-contract: sticky editor has layered Escape handling and isolated su
     /const desktopStickySearchRefs = useSearchSurfaceRefs\(\)/,
   );
   assert.match(source, /const mobileSearchRefs = useSearchSurfaceRefs\(\)/);
+  for (const picker of ["date", "time", "driverAge"]) {
+    assert.match(
+      source,
+      new RegExp(`${picker}PopoverRef: RefObject<HTMLDivElement \\| null>`),
+    );
+    assert.match(
+      source,
+      new RegExp(
+        `${picker}PopoverRef: useRef<HTMLDivElement \\| null>\\(null\\)`,
+      ),
+    );
+  }
   assert.match(
     source,
     /desktopStickySearchOpen[\s\S]*?\? desktopStickySearchRefs[\s\S]*?: mobileSearchOpen[\s\S]*?\? mobileSearchRefs[\s\S]*?: desktopFullSearchRefs/,

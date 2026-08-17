@@ -172,6 +172,50 @@ test("desktop controls reuse Cars autocomplete, picker content, and fixed popove
     assert.match(source, new RegExp(primitive));
 });
 
+test("results desktop popovers expose their actual portal nodes to each search surface", () => {
+  const resultsDesktopPopover = source.match(
+    /function ResultsDesktopPopover\([\s\S]*?\n}\n\nfunction SearchDateCell/,
+  )?.[0];
+
+  assert.ok(resultsDesktopPopover, "ResultsDesktopPopover should be defined");
+  assert.match(
+    resultsDesktopPopover,
+    /providedPopoverRef\?: RefObject<HTMLDivElement \| null>/,
+  );
+  assert.match(
+    resultsDesktopPopover,
+    /useCarsDesktopPopover\(\{[\s\S]*?providedPopoverRef,[\s\S]*?\}\)/,
+  );
+  assert.match(resultsDesktopPopover, /<div\s+ref=\{popoverRef\}/);
+
+  for (const picker of ["date", "time", "driverAge"]) {
+    assert.match(
+      source,
+      new RegExp(`providedPopoverRef=\\{popoverRef\\}[\\s\\S]*?`),
+    );
+    assert.match(
+      source,
+      new RegExp(`popoverRef=\\{searchSurfaceRefs\\.${picker}PopoverRef\\}`),
+    );
+  }
+});
+
+test("outside pointer handling includes each launcher and its exact portal", () => {
+  for (const picker of ["date", "time", "driverAge"]) {
+    assert.match(
+      source,
+      new RegExp(
+        `!activeSearchRefs\\.${picker}WrapRef\\.current\\?\\.contains\\(target\\)\\s*&&\\s*!activeSearchRefs\\.${picker}PopoverRef\\.current\\?\\.contains\\(target\\)`,
+      ),
+    );
+  }
+  assert.match(
+    source,
+    /document\.addEventListener\("pointerdown", onPointerDown\)/,
+  );
+  assert.doesNotMatch(source, /closest\([^)]*popover/i);
+});
+
 test("desktop time cell matches the main search while retaining the full range wiring", () => {
   const searchTimeCell = source.match(
     /function SearchTimeCell\([\s\S]*?\n}\n\nfunction DriverAgeCell/,
