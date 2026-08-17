@@ -723,10 +723,10 @@ export const translations: TranslationDictionary = {
   homeCompareOptions: "Bandingkan opsi",
   homePromoFlightsTitle: "Promo penerbangan dari maskapai ternama",
   homePromoFlightsBody: "Temukan tarif waktu terbatas dan bandingkan opsi secara instan.",
-  homePromoFlightsCta: "Jelajahi promo penerbangan",
+  homePromoFlightsCta: "Jelajahi paket penerbangan",
   homePromoHotelsTitle: "Hemat hotel di seluruh dunia",
   homePromoHotelsBody: "Telusuri akomodasi dari hotel butik hingga jaringan global dengan transparansi harga.",
-  homePromoHotelsCta: "Jelajahi promo hotel",
+  homePromoHotelsCta: "Jelajahi paket hotel",
   moreServiceInfoEyebrow: "Informasi Platform",
   moreServiceInfoTitle: "Informasi Layanan Lainnya",
   moreServiceInfoDescription:

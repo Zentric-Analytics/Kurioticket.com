@@ -1081,11 +1081,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "주요 항공사의 항공권 특가",
   homePromoFlightsBody:
     "기간 한정 운임을 확인하고 옵션을 즉시 비교하세요.",
-  homePromoFlightsCta: "항공권 특가 보기",
+  homePromoFlightsCta: "항공 패키지 보기",
   homePromoHotelsTitle: "전 세계 호텔 할인",
   homePromoHotelsBody:
     "부티크 호텔부터 글로벌 체인까지 투명한 가격으로 숙소를 살펴보세요.",
-  homePromoHotelsCta: "호텔 특가 보기",
+  homePromoHotelsCta: "호텔 패키지 보기",
   homeCompareOptions: "옵션 비교",
   "homeDiscoveryRoute.ng-los-lhr.title": "런던 출장과 주말 여행",
   "homeDiscoveryRoute.ng-los-lhr.routeNote": "출장과 주말 여행에 좋은 장거리 노선입니다.",

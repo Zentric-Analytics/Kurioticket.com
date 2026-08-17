@@ -666,7 +666,7 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Vluchtdeals van topmaatschappijen",
   homePromoFlightsBody:
     "Ontdek tijdelijke tarieven en vergelijk opties direct.",
-  homePromoFlightsCta: "Vluchtdeals bekijken",
+  homePromoFlightsCta: "Vluchtpakketten bekijken",
   "flightLandingCity.Accra": "Accra",
   "flightLandingCity.Doha": "Doha",
   "flightLandingCity.Dubai": "Dubai",
@@ -699,7 +699,7 @@ export const translations: TranslationDictionary = {
   homePromoHotelsTitle: "Wereldwijde hotelbesparingen",
   homePromoHotelsBody:
     "Bekijk verblijven van boetiekhotels tot internationale ketens met transparante prijzen.",
-  homePromoHotelsCta: "Hoteldeals bekijken",
+  homePromoHotelsCta: "Hotelpakketten bekijken",
   homeHotelDestinationsTitle: "Ontdek verblijven wereldwijd",
   homeHotelDestinationsSubtitle:
     "Ontdek hotelbestemmingen in populaire steden, landen en regio’s.",

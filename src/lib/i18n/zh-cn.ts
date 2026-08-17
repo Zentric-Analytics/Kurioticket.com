@@ -1319,10 +1319,10 @@ export const translations: TranslationDictionary = {
   homeViewAllDestinations: "查看所有目的地",
   homePromoFlightsTitle: "来自主要航空公司的机票优惠",
   homePromoFlightsBody: "发现限时票价，并即时比较多种选择。",
-  homePromoFlightsCta: "探索机票优惠",
+  homePromoFlightsCta: "探索机票套餐",
   homePromoHotelsTitle: "全球酒店优惠",
   homePromoHotelsBody: "浏览从精品酒店到全球连锁酒店的住宿，并清楚了解价格。",
-  homePromoHotelsCta: "探索酒店优惠",
+  homePromoHotelsCta: "探索酒店套餐",
   homeHotelDestinationsTitle: "探索全球住宿",
   homeHotelDestinationsSubtitle:
     "发现热门城市、国家和地区的酒店目的地。",

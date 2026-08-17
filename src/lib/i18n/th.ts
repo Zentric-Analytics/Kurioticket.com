@@ -659,11 +659,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "ดีลเที่ยวบินจากสายการบินชั้นนำ",
   homePromoFlightsBody:
     "ค้นหาค่าโดยสารช่วงเวลาจำกัดและเปรียบเทียบตัวเลือกได้ทันที",
-  homePromoFlightsCta: "ดูดีลเที่ยวบิน",
+  homePromoFlightsCta: "ดูแพ็กเกจเที่ยวบิน",
   homePromoHotelsTitle: "ประหยัดค่าโรงแรมทั่วโลก",
   homePromoHotelsBody:
     "เลือกดูที่พักตั้งแต่โรงแรมบูติกไปจนถึงเครือโรงแรมระดับโลก พร้อมราคาที่โปร่งใส",
-  homePromoHotelsCta: "ดูดีลโรงแรม",
+  homePromoHotelsCta: "ดูแพ็กเกจโรงแรม",
   faqHeading: "คำถามที่พบบ่อย",
   faqIntro:
     "เรียนรู้ว่า Kurioticket ช่วยให้คุณเปรียบเทียบเที่ยวบิน โรงแรม และตัวเลือกการเดินทางก่อนจองกับผู้ให้บริการที่เชื่อถือได้อย่างไร",

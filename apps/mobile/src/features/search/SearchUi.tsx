@@ -68,16 +68,18 @@ export function TopBar({
   flightResults = false,
   hasUnreadNotifications = false,
   onNotificationsPress,
+  onPriceAlertPress,
 }: {
   detail?: boolean;
   flightResults?: boolean;
   hasUnreadNotifications?: boolean;
   onNotificationsPress?: () => void;
+  onPriceAlertPress?: () => void;
 }) {
   const { theme } = useAppTheme();
   return (
     <View style={[s.top, { backgroundColor: flightResults ? theme.background : theme.surface }]}>
-      <View style={s.topSide}>
+      <View style={[s.topSide, detail && s.detailTopSide]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -92,10 +94,21 @@ export function TopBar({
         </Pressable>
       </View>
       <Logo />
-      <View style={s.topActions}>
+      <View style={[s.topActions, detail && s.detailTopActions]}>
         {detail ? (
           <>
-            <FlowIcon name="heart" color={theme.icon} />
+            {onPriceAlertPress ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Price alert"
+                onPress={onPriceAlertPress}
+                style={s.hit}
+              >
+                <FlowIcon name="bell" color={theme.icon} />
+              </Pressable>
+            ) : (
+              <FlowIcon name="heart" color={theme.icon} />
+            )}
             <FlowIcon name="share" color={theme.icon} />
           </>
         ) : flightResults ? (
@@ -378,12 +391,14 @@ export const s = StyleSheet.create({
     justifyContent: "center",
   },
   topSide: { width: 76, alignItems: "flex-start" },
+  detailTopSide: { width: 88 },
   topActions: {
     width: 76,
     flexDirection: "row",
     justifyContent: "flex-end",
     gap: 18,
   },
+  detailTopActions: { width: 88, gap: 0, alignItems: "center" },
   dot: {
     position: "absolute",
     right: -2,

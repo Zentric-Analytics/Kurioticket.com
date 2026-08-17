@@ -1677,10 +1677,10 @@ export const translations: TranslationDictionary = {
   homeViewAllDestinations: "عرض كل الوجهات",
   homePromoFlightsTitle: "عروض رحلات من أفضل شركات الطيران",
   homePromoFlightsBody: "اكتشف أسعارًا محدودة الوقت وقارن الخيارات فورًا.",
-  homePromoFlightsCta: "استكشف عروض الرحلات",
+  homePromoFlightsCta: "استكشف باقات الرحلات",
   homePromoHotelsTitle: "توفير على الفنادق حول العالم",
   homePromoHotelsBody: "تصفح الإقامات من الفنادق البوتيكية إلى السلاسل العالمية مع شفافية الأسعار.",
-  homePromoHotelsCta: "استكشف عروض الفنادق",
+  homePromoHotelsCta: "استكشف باقات الفنادق",
   homeHotelDestinationsTitle: "استكشف الإقامات حول العالم",
   homeHotelDestinationsSubtitle:
     "اكتشف وجهات فندقية في مدن ودول ومناطق شهيرة.",
