@@ -69,12 +69,16 @@ export function TopBar({
   hasUnreadNotifications = false,
   onNotificationsPress,
   onPriceAlertPress,
+  priceAlertDisabled = false,
+  onSharePress,
 }: {
   detail?: boolean;
   flightResults?: boolean;
   hasUnreadNotifications?: boolean;
   onNotificationsPress?: () => void;
   onPriceAlertPress?: () => void;
+  priceAlertDisabled?: boolean;
+  onSharePress?: () => void;
 }) {
   const { theme } = useAppTheme();
   return (
@@ -97,11 +101,13 @@ export function TopBar({
       <View style={[s.topActions, detail && s.detailTopActions]}>
         {detail ? (
           <>
-            {onPriceAlertPress ? (
+            {onPriceAlertPress || priceAlertDisabled ? (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Price alert"
+                accessibilityState={{ disabled: priceAlertDisabled }}
                 onPress={onPriceAlertPress}
+                disabled={priceAlertDisabled}
                 style={s.hit}
               >
                 <FlowIcon name="bell" color={theme.icon} />
@@ -109,7 +115,13 @@ export function TopBar({
             ) : (
               <FlowIcon name="heart" color={theme.icon} />
             )}
-            <FlowIcon name="share" color={theme.icon} />
+            {onSharePress ? (
+              <Pressable accessibilityRole="button" accessibilityLabel="Share flight" onPress={onSharePress} style={s.hit}>
+                <FlowIcon name="share" color={theme.icon} />
+              </Pressable>
+            ) : (
+              <FlowIcon name="share" color={theme.icon} />
+            )}
           </>
         ) : flightResults ? (
           <Pressable
