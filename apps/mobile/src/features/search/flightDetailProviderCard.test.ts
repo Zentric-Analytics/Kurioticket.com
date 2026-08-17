@@ -11,7 +11,8 @@ test("provider card switches to a stacked layout on narrow screens", () => {
   assert.match(offer, /useWindowDimensions\(\)\.width < 480/);
   assert.match(offer, /compact && d\.offerCompact/);
   assert.match(detailSource, /offerCompact: \{[\s\S]*?flexDirection: "column"/);
-  assert.match(detailSource, /offerActionsCompact: \{ flexWrap: "wrap" \}/);
+  assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?flexDirection: "column"[\s\S]*?alignItems: "flex-end"[\s\S]*?gap: 6/);
+  assert.doesNotMatch(detailSource, /offerActionsCompact: \{[^}]*flexWrap/);
 });
 
 test("provider identity keeps readable space and labels do not shrink into vertical text", () => {
@@ -26,8 +27,16 @@ test("provider identity keeps readable space and labels do not shrink into verti
 test("responsive actions retain the displayed fare and Select behavior", () => {
   assert.match(offer, /<Text numberOfLines=\{1\} style=\{d\.priceSmall\}>\{price\}<\/Text>/);
   assert.match(offer, /<Button label="Select" \/>/);
+  assert.match(offer, /\{price\}<\/Text>[\s\S]*?<Button label="Select" \/>/);
+  assert.match(detailSource, /offerActions: \{[\s\S]*?flexDirection: "row"/);
   assert.match(flightDetail, /price=\{formattedFare\}/);
   assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 3);
+});
+
+test("flight offer reuses a live carrier logo only for the same provider identity", () => {
+  assert.match(flightDetail, /const providerLogoUrl =[\s\S]*?provider\.trim\(\)\.toLocaleLowerCase\(\) ===[\s\S]*?result\.airlineName\.trim\(\)\.toLocaleLowerCase\(\)[\s\S]*?\? result\.airlineLogo[\s\S]*?: null/);
+  assert.match(flightDetail, /<Offer[\s\S]*?provider=\{provider\}[\s\S]*?logoUrl=\{providerLogoUrl\}[\s\S]*?price=\{formattedFare\}/);
+  assert.match(offer, /<ProviderLogo provider=\{provider\} logoUrl=\{logoUrl\} \/>/);
 });
 
 test("provider booking redirect logic remains unchanged", () => {
