@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import {
+  Calendar,
   CalendarDays,
   CheckCircle2,
   ChevronDown,
@@ -517,7 +518,7 @@ const fieldLabelClass =
   "mb-1.5 flex min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600 lg:text-[0.66rem] lg:leading-3 lg:tracking-[0.13em] lg:text-slate-500";
 
 const fieldInputClass =
-  "h-8 min-w-0 w-full truncate border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-medium lg:leading-6";
+  "h-8 min-w-0 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:shadow-none md:text-sm lg:text-[15px] lg:font-medium lg:leading-6";
 
 export function CarsResultsClient({
   values,
@@ -1879,19 +1880,21 @@ function SearchInputCell({
           className="hidden h-4 w-4 shrink-0 text-slate-500 lg:block"
           aria-hidden="true"
         />
-        <CarLocationAutocomplete
-          inputRef={inputRef}
-          id={`${idPrefix}-${name}`}
-          name={name}
-          value={value}
-          onValueChange={onChange}
-          placeholder={placeholder}
-          inputClassName={cn(fieldInputClass, showClearButton && "pr-8")}
-          presentation="desktop"
-          strings={strings}
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-        />
+        <div className="min-w-0 flex-1">
+          <CarLocationAutocomplete
+            inputRef={inputRef}
+            id={`${idPrefix}-${name}`}
+            name={name}
+            value={value}
+            onValueChange={onChange}
+            placeholder={placeholder}
+            inputClassName={cn(fieldInputClass, showClearButton && "pr-8")}
+            presentation="desktop"
+            strings={strings}
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+          />
+        </div>
         {showClearButton && value ? (
           <button
             type="button"
@@ -2036,7 +2039,13 @@ function SearchDateCell({
         aria-haspopup="dialog"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        <span className="min-w-0">
+        {showRentalDuration ? (
+          <Calendar
+            className="h-4 w-4 shrink-0 text-slate-500"
+            aria-hidden="true"
+          />
+        ) : null}
+        <span className="min-w-0 flex-1">
           <span
             className={cn(
               "block truncate leading-4",
