@@ -989,11 +989,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Offerte voli delle compagnie aeree",
   homePromoFlightsBody:
     "Scopri tariffe a tempo limitato e confronta i prezzi per tratta.",
-  homePromoFlightsCta: "Esplora offerte voli",
+  homePromoFlightsCta: "Esplora pacchetti volo",
   homePromoHotelsTitle: "Risparmi sugli hotel in tutto il mondo",
   homePromoHotelsBody:
     "Esplora soggiorni in boutique hotel tramite fornitori di prenotazione premium.",
-  homePromoHotelsCta: "Esplora offerte hotel",
+  homePromoHotelsCta: "Esplora pacchetti hotel",
   "hotelDestination.London.title": "Regno Unito",
   "hotelDestination.London.subtitle": "Soggiorni a Londra",
   "hotelDestination.London.linkLabel": "Cerca hotel a Londra, Regno Unito",

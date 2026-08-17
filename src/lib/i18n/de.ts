@@ -707,11 +707,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Flugangebote führender Airlines",
   homePromoFlightsBody:
     "Entdecke zeitlich begrenzte Tarife und vergleiche Optionen sofort.",
-  homePromoFlightsCta: "Flugangebote entdecken",
+  homePromoFlightsCta: "Flugpakete entdecken",
   homePromoHotelsTitle: "Hotels weltweit günstiger",
   homePromoHotelsBody:
     "Finde Unterkünfte von Boutique-Hotels bis zu globalen Ketten mit Preistransparenz.",
-  homePromoHotelsCta: "Hotelangebote entdecken",
+  homePromoHotelsCta: "Hotelpakete entdecken",
   homeHotelDestinationsTitle: "Unterkünfte weltweit entdecken",
   homeHotelDestinationsSubtitle:
     "Entdecke Hotelziele in beliebten Städten, Ländern und Regionen.",
