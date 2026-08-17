@@ -24,6 +24,11 @@ test("range endpoints and continuous band use the approved distinct treatments",
   assert.doesNotMatch(source, /isEnd && "bg-\[#075ee8\]/);
 });
 
+test("today uses only the subtle ring without a decorative dot", () => {
+  assert.match(source, /iso === todayIso && !disabled && !isStart && !isEnd && "ring-1 ring-inset ring-\[#075ee8\]\/20"/);
+  assert.doesNotMatch(source, /todayIso[\s\S]{0,160}h-1 w-1 rounded-full/);
+});
+
 test("dialog owns draft selection and only Done commits a valid product range", () => {
   assert.match(source, /const \[draftStart, setDraftStart\]/);
   assert.match(source, /const \[draftEnd, setDraftEnd\]/);
