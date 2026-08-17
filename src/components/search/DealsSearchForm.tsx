@@ -2907,7 +2907,13 @@ export function DealsSearchForm({
         role="listbox"
         className="divide-y divide-slate-100"
       >
-        {options.map((option, index) => (
+        {options.map((option, index) => {
+          const city = getLocalizedCityName(option.city, locale);
+          const airportName = (option.name || option.airport || "").trim();
+          const isAirportResult = Boolean(airportName) && airportName.toLocaleLowerCase() !== city.toLocaleLowerCase();
+          const ResultIcon = isAirportResult ? Plane : MapPin;
+          const secondaryText = isAirportResult ? airportName : getLocalizedAirportCountryName(option, locale);
+          return (
           <li key={`${option.code}-${index}`} role="presentation">
             <button
               id={`deals-flight-${kind}-option-${index}`}
@@ -2917,29 +2923,27 @@ export function DealsSearchForm({
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setHighlight(index)}
               onClick={() => chooseAirport(kind, option)}
-              className={`flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-[6px] px-3 py-2 text-start transition-colors ${highlight === index ? "bg-slate-50" : "hover:bg-slate-50"}`}
+              className={`flex min-h-[58px] w-full cursor-pointer items-center gap-3 px-3 py-2.5 text-start transition-colors ${highlight === index ? "bg-slate-50" : "hover:bg-slate-50"}`}
             >
-              <MapPin
-                className={`h-5 w-5 shrink-0 ${isPackagesLanding ? "text-slate-600" : "text-[#004BB8]"}`}
+              <ResultIcon
+                className={`h-4 w-4 shrink-0 ${isPackagesLanding ? "text-slate-600" : "text-[#004BB8]"}`}
                 aria-hidden="true"
               />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-extrabold text-slate-950">
-                  {getLocalizedCityName(option.city, locale)}
+                <span className="block truncate text-sm font-bold text-slate-950">
+                  {city}
                 </span>
-                <span className="block truncate text-xs font-medium text-slate-500">
-                  {option.name}
-                  {getLocalizedAirportCountryName(option, locale)
-                    ? ` · ${getLocalizedAirportCountryName(option, locale)}`
-                    : ""}
+                <span className="line-clamp-2 block text-xs font-medium leading-4 text-slate-500">
+                  {secondaryText}
                 </span>
               </span>
-              <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-slate-700">
+              <span className="shrink-0 text-xs font-bold text-slate-700">
                 {option.code.toUpperCase()}
               </span>
             </button>
           </li>
-        ))}
+          );
+        })}
       </ul>
     );
   };
@@ -3171,7 +3175,7 @@ export function DealsSearchForm({
         onClick={() =>
           travelersOpen ? dismissDesktopTravelers() : openTravelers()
         }
-        className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex items-center justify-between gap-2 border-b border-slate-200 ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:border-b-0 lg:border-s lg:px-4 lg:text-[15px] lg:font-semibold ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px] lg:cursor-pointer" : "lg:h-[78px] lg:min-h-[78px]"}` : ""}`}
+        className={`${packageActionSegment} ${packageTravellersDesktopClasses} flex h-full w-full cursor-pointer items-center justify-between gap-2 border-b border-slate-200 ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:border-b-0 lg:border-s lg:px-4 lg:text-[15px] lg:font-semibold ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px] lg:cursor-pointer" : "lg:h-[78px] lg:min-h-[78px]"}` : ""}`}
       >
         {isDesktopLanding && !isPackagesLanding ? (
           <UserRound
@@ -3198,7 +3202,7 @@ export function DealsSearchForm({
       {included.flight ? (
         <div
           data-deals-package-cabin
-          className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200 ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:border-b-0 lg:border-s lg:px-4 lg:text-[15px] lg:font-semibold ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px]" : "lg:h-[78px] lg:min-h-[78px] lg:ps-10"}` : ""}`}
+          className={`${packageActionSegment} ${packageCabinDesktopClasses} border-b border-slate-200 ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:border-b-0 lg:border-s lg:text-[15px] lg:font-semibold ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px] lg:p-0" : "lg:h-[78px] lg:min-h-[78px] lg:px-4 lg:ps-10"}` : ""}`}
         >
           {isDesktopLanding && !isPackagesLanding ? (
             <Plane
@@ -3206,7 +3210,7 @@ export function DealsSearchForm({
               className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
             />
           ) : null}
-          <span className={`${label} mb-0.5 whitespace-nowrap`}>
+          <span className={`${label} mb-0.5 whitespace-nowrap ${isPackagesLanding ? "lg:hidden" : ""}`}>
             {t("deals.cabinClass")}
           </span>
           {isDesktopLanding ? (
@@ -3223,16 +3227,16 @@ export function DealsSearchForm({
                   setCabinOpen(true);
                 }
               }}
-              className={`${packageActionControl} flex items-center justify-between pe-2 text-start ${isPackagesLanding ? "lg:cursor-pointer" : ""}`}
+              className={`${packageActionControl} flex items-center justify-between pe-2 text-start ${isPackagesLanding ? "lg:absolute lg:inset-0 lg:h-full lg:w-full lg:cursor-pointer lg:px-4" : ""}`}
             >
               <span className="flex min-w-0 items-center gap-2">
-                {isPackagesLanding ? (
-                  <Plane
-                    aria-hidden="true"
-                    className="hidden h-4 w-4 shrink-0 text-slate-500 lg:block"
-                  />
-                ) : null}
-                <span className="truncate">{t(search.flightCabinClass)}</span>
+                <span className="min-w-0">
+                  {isPackagesLanding ? <span className={`${label} mb-0.5 hidden whitespace-nowrap lg:block`}>{t("deals.cabinClass")}</span> : null}
+                  <span className="flex min-w-0 items-center gap-2">
+                    {isPackagesLanding ? <Plane aria-hidden="true" className="hidden h-4 w-4 shrink-0 text-slate-500 lg:block" /> : null}
+                    <span className="truncate">{t(search.flightCabinClass)}</span>
+                  </span>
+                </span>
               </span>
               <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-150 ${cabinOpen ? "rotate-180" : ""} ${isPackagesLanding ? "lg:me-1 lg:self-center lg:text-slate-500" : ""}`} />
             </button>
@@ -3758,6 +3762,13 @@ export function DealsSearchForm({
                       <Fragment key={kind}>
                         <div
                           ref={wrapRef}
+                          onPointerDown={(event) => {
+                            if (!isPackagesLanding || !window.matchMedia("(min-width: 1024px)").matches) return;
+                            const target = event.target;
+                            if (target instanceof Element && target.closest("input, button, a, select, textarea")) return;
+                            event.preventDefault();
+                            inputRef.current?.focus();
+                          }}
                           className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:pe-3 ${isPackagesLanding ? "lg:min-h-[70px] lg:cursor-text lg:py-2.5 lg:ps-4" : "lg:min-h-[78px] lg:py-3 lg:ps-10"}` : ""}`}
                           data-deals-flight-destination={kind}
                         >
@@ -3942,7 +3953,7 @@ export function DealsSearchForm({
                   })}
                 </div>
                 <div
-                  className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:pe-3 ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px] lg:cursor-pointer lg:py-2.5 lg:ps-4" : "lg:h-[78px] lg:min-h-[78px] lg:py-3 lg:ps-10"}` : ""}`}
+                  className={`${flightConnectedSegment} sm:border-e sm:border-b sm:border-slate-200 lg:border-b-0 lg:last:border-e-0 ${flightDatesOpen ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} ${isPackagesLanding ? "lg:h-[70px] lg:min-h-[70px] lg:p-0" : "lg:h-[78px] lg:min-h-[78px] lg:py-3 lg:pe-3 lg:ps-10"}` : ""}`}
                 >
                   {isDesktopLanding && !isPackagesLanding ? (
                     <Calendar
@@ -3950,7 +3961,6 @@ export function DealsSearchForm({
                       className="absolute start-4 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-[#2563eb] lg:block"
                     />
                   ) : null}
-                  <span className={label}>{t("travelDates")}</span>
                   <button
                     ref={flightDatesLauncherRef}
                     type="button"
@@ -3967,8 +3977,9 @@ export function DealsSearchForm({
                         ? dismissDesktopFlightDates(true)
                         : openFlightDates()
                     }
-                    className={`${field} ${flightConnectedField} flex items-center justify-between gap-2 text-start`}
+                    className={`${field} ${flightConnectedField} flex cursor-pointer items-center justify-between gap-2 text-start ${isPackagesLanding ? "lg:h-full lg:w-full lg:flex-col lg:items-stretch lg:justify-center lg:px-4 lg:py-2.5" : ""}`}
                   >
+                    <span className={label}>{t("travelDates")}</span>
                     <span className="flex min-w-0 items-center gap-2">
                       {isPackagesLanding ? (
                         <Calendar

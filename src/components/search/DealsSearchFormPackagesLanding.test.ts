@@ -352,3 +352,29 @@ test("desktop Packages cabin remains a compact committing listbox", () => {
   assert.match(cabinPopover, /setCabinOpen\(false\)/);
   assert.match(cabinPopover, /cabinLauncherRef\.current\?\.focus/);
 });
+
+test("desktop Packages fields expose their complete visual surfaces on first click", () => {
+  assert.match(form, /onPointerDown=\{\(event\) => \{[\s\S]*?inputRef\.current\?\.focus\(\)/);
+  assert.match(form, /target\.closest\("input, button, a, select, textarea"\)/);
+  assert.match(form, /flightDatesLauncherRef[\s\S]*?lg:h-full lg:w-full/);
+  assert.match(form, /data-deals-package-travellers[\s\S]*?h-full w-full cursor-pointer/);
+  assert.match(form, /data-deals-package-cabin[\s\S]*?lg:absolute lg:inset-0 lg:h-full lg:w-full lg:cursor-pointer/);
+});
+
+test("desktop Packages launchers keep one-click switching and outside-click containment", () => {
+  assert.match(form, /const openFlightDates = \(\) => \{\s*closeDesktopLandingPanels\(\)/);
+  assert.match(form, /const openTravelers = \(\) => \{\s*closeDesktopLandingPanels\(\)/);
+  assert.match(form, /closeDesktopLandingPanels\(\);\s*setCabinOpen\(true\)/);
+  assert.match(form, /flightDatesLauncherRef\.current\?\.contains\(target\)/);
+  assert.match(form, /travelersLauncherRef\.current\?\.contains\(target\)/);
+  assert.match(form, /cabinLauncherRef\.current\?\.contains\(target\)/);
+});
+
+test("desktop Packages results show city, airport name, and one compact IATA code", () => {
+  const results = form.slice(form.indexOf("const flightSuggestionContent"), form.indexOf("const handleFlightKey"));
+  assert.match(results, /const ResultIcon = isAirportResult \? Plane : MapPin/);
+  assert.match(results, /const secondaryText = isAirportResult \? airportName : getLocalizedAirportCountryName/);
+  assert.match(results, /\{city\}[\s\S]*?\{secondaryText\}[\s\S]*?option\.code\.toUpperCase\(\)/);
+  assert.match(results, /line-clamp-2/);
+  assert.doesNotMatch(results, /` · \$\{getLocalizedAirportCountryName/);
+});
