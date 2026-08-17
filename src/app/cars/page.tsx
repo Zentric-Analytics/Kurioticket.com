@@ -278,10 +278,6 @@ function CarsSearchPage() {
     }
 
     const pickupLocation = values.pickupLocation.trim();
-    const dropoffLocation = values.returnToDifferentLocation
-      ? values.dropoffLocation.trim()
-      : pickupLocation;
-
     const params = new URLSearchParams({
       pickupLocation,
       pickupDate: values.pickupDate,
@@ -289,8 +285,12 @@ function CarsSearchPage() {
       dropoffDate: values.dropoffDate,
       dropoffTime: values.dropoffTime,
       driverAge: values.driverAge,
-      dropoffLocation,
     });
+
+    if (values.returnToDifferentLocation) {
+      params.set("dropoffLocation", values.dropoffLocation.trim());
+      params.set("returnToDifferentLocation", "1");
+    }
 
     setIsSubmitting(true);
     startRouteProgress();

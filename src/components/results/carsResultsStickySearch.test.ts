@@ -5,7 +5,7 @@ const source = readFileSync(new URL("./CarsResultsClient.tsx", import.meta.url),
 test("source-contract: Cars uses the full form measurement and in-place dialog", () => {
   assert.match(source, /shouldShowDesktopStickySearch/);
   assert.match(source, /new IntersectionObserver/);
-  assert.match(source, /role="dialog" aria-modal="true" aria-labelledby="sticky-cars-search-title"/);
+  assert.match(source, /role="dialog"\s+aria-modal="true"\s+aria-labelledby="sticky-cars-search-title"/);
   assert.match(source, /focus\(\{ preventScroll: true \}\)/);
   assert.match(source, /cars-results-full-search/);
   assert.match(source, /sticky-cars-search/);
