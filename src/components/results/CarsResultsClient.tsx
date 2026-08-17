@@ -1946,6 +1946,7 @@ function ResultsDesktopPopover({
   preferredWidth,
   desiredHeight,
   align = "start",
+  shellClassName = "overflow-y-auto p-4",
   role,
   ariaLabel,
   children,
@@ -1955,6 +1956,7 @@ function ResultsDesktopPopover({
   preferredWidth: number;
   desiredHeight: number;
   align?: "start" | "center" | "end";
+  shellClassName?: string;
   role: "dialog" | "listbox";
   ariaLabel: string;
   children: ReactNode;
@@ -1975,7 +1977,7 @@ function ResultsDesktopPopover({
       aria-label={ariaLabel}
       data-placement={placement}
       style={style}
-      className={cn(carsDesktopPopoverClassName, "overflow-y-auto p-4")}
+      className={cn(carsDesktopPopoverClassName, shellClassName)}
     >
       {children}
     </div>,
@@ -2401,6 +2403,7 @@ function SearchTimeCell({
         preferredWidth={448}
         desiredHeight={320}
         align="center"
+        shellClassName="overflow-hidden p-3"
         role="dialog"
         ariaLabel={t("carsResults.pickupReturnTimeSelector")}
       >
@@ -2523,12 +2526,13 @@ function DriverAgeCell({
         preferredWidth={288}
         desiredHeight={320}
         align="end"
+        shellClassName="overflow-hidden"
         role="listbox"
         ariaLabel={t("carsResults.driverAge")}
       >
         <CarsDriverAgePickerContent
           anyAgeLabel={t("carsSearch.driverAgeAnyAgeRange")}
-          formatAge={(age) => getDriverAgeOptionLabel(age, t)}
+          formatAge={(age) => age}
           selectedAge={driverAge}
           onSelect={onSelect}
         />
