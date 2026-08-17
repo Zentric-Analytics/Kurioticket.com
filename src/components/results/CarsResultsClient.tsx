@@ -1109,7 +1109,10 @@ export function CarsResultsClient({
               isOpen={surfaceOwnsPopovers && driverAgeOpen}
               onSelect={(age) => {
                 setDriverAge(age);
-                setDriverAgeOpen(false);
+
+                if (placement === "mobile") {
+                  setDriverAgeOpen(false);
+                }
               }}
               onToggle={() => {
                 setDriverAgeOpen((current) => !current);
