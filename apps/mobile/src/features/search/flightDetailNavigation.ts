@@ -10,6 +10,15 @@ const inheritedFlightDetailKeys = [
   "returnDate",
   "travelers",
   "adults",
+  "children",
+  "infants",
+  "tripType",
+  "origin",
+  "destination",
+  "from",
+  "to",
+  "cabin",
+  "cabinClass",
 ] as const;
 
 export function buildFlightDetailParams({
