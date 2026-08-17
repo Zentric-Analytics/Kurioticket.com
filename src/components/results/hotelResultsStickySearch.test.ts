@@ -22,6 +22,20 @@ function stickyHotelDialogSource() {
   return resultsSource.slice(start, end);
 }
 
+function minimizedHotelSearchBarSource() {
+  const start = resultsSource.indexOf(
+    "function renderDesktopMinimizedHotelSearchBar()",
+  );
+  const end = resultsSource.indexOf(
+    "function renderDesktopStickyHotelSearchDialog()",
+    start,
+  );
+
+  assert.notEqual(start, -1, "compact Hotel toolbar renderer exists");
+  assert.notEqual(end, -1, "sticky Hotel dialog follows the toolbar");
+  return resultsSource.slice(start, end);
+}
+
 test("Hotel Results connects its measurement ref to the visible search form", () => {
   assert.match(resultsSource, /desktopFormRef={setDesktopSearchFormRef}/);
   assert.match(searchBarSource, /<form[\s\S]*?ref={setSearchPanelRef}/);
@@ -192,5 +206,29 @@ test("Hotel Results date icons stay neutral in the full and sticky search forms"
   assert.doesNotMatch(
     searchBarSource,
     /compact \? "text-\[#004BB8\]" : "text-slate-500"/,
+  );
+});
+
+test("Hotel Results compact toolbar has neutral icons and no colored field focus surrounds", () => {
+  const toolbar = minimizedHotelSearchBarSource();
+
+  assert.equal(
+    toolbar.match(/className="h-4 w-4 shrink-0 text-slate-500"/g)?.length,
+    3,
+  );
+  assert.match(toolbar, /focus-visible:outline-none/);
+  assert.doesNotMatch(toolbar, /focus-ring flex h-\[56px\]/);
+  assert.doesNotMatch(toolbar, /text-\[#004BB8\]/);
+  assert.doesNotMatch(toolbar, /focus-visible:bg-slate/);
+});
+
+test("Hotel Results sticky editor suppresses colored field focus rings", () => {
+  assert.match(
+    searchBarSource,
+    /isStickyDialog[\s\S]*?focus-within:outline-none focus-within:ring-0/,
+  );
+  assert.doesNotMatch(
+    searchBarSource,
+    /isStickyDialog[\s\S]*?focus-within:ring-\[#004BB8\]\/20/,
   );
 });

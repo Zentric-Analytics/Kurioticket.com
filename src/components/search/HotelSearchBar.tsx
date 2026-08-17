@@ -1027,7 +1027,7 @@ export function HotelSearchBar({
   const fieldClassName = cn(
     "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25",
     isStickyDialog
-      ? "min-h-[58px] rounded-none border-0 border-e border-slate-200/80 bg-white/90 px-3 py-1.5 flex flex-col justify-center hover:border-slate-200/80 focus-within:z-10 focus-within:border-slate-200/80 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20"
+      ? "min-h-[58px] rounded-none border-0 border-e border-slate-200/80 bg-white/90 px-3 py-1.5 flex flex-col justify-center outline-none hover:border-slate-200/80 focus-within:z-10 focus-within:border-slate-200/80 focus-within:bg-white focus-within:outline-none focus-within:ring-0"
       : compact
         ? cn(
             "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
