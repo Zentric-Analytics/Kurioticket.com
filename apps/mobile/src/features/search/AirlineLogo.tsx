@@ -6,11 +6,12 @@ import { useAppTheme } from "../../theme/AppTheme";
 type Props = {
   airlineName: string;
   logoUrl?: string | null;
+  fallbackCharacters?: number;
 };
 
 const isSvgUrl = (url: string) => /\.svg(?:[?#]|$)/i.test(url);
 
-export function AirlineLogo({ airlineName, logoUrl }: Props) {
+export function AirlineLogo({ airlineName, logoUrl, fallbackCharacters = 2 }: Props) {
   const { theme } = useAppTheme();
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const visibleUrl = logoUrl?.trim() || null;
@@ -29,7 +30,7 @@ export function AirlineLogo({ airlineName, logoUrl }: Props) {
         ]}
       >
         <Text style={[styles.initials, { color: theme.textPrimary }]}>
-          {airlineName.trim().slice(0, 2)}
+          {airlineName.trim().slice(0, fallbackCharacters)}
         </Text>
       </View>
     );
