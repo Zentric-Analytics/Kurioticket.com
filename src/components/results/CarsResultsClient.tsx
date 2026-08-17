@@ -87,6 +87,9 @@ type SearchSurfaceRefs = {
   dateWrapRef: RefObject<HTMLDivElement | null>;
   timeWrapRef: RefObject<HTMLDivElement | null>;
   driverAgeWrapRef: RefObject<HTMLDivElement | null>;
+  datePopoverRef: RefObject<HTMLDivElement | null>;
+  timePopoverRef: RefObject<HTMLDivElement | null>;
+  driverAgePopoverRef: RefObject<HTMLDivElement | null>;
 };
 
 function useSearchSurfaceRefs(): SearchSurfaceRefs {
@@ -96,6 +99,9 @@ function useSearchSurfaceRefs(): SearchSurfaceRefs {
     dateWrapRef: useRef<HTMLDivElement | null>(null),
     timeWrapRef: useRef<HTMLDivElement | null>(null),
     driverAgeWrapRef: useRef<HTMLDivElement | null>(null),
+    datePopoverRef: useRef<HTMLDivElement | null>(null),
+    timePopoverRef: useRef<HTMLDivElement | null>(null),
+    driverAgePopoverRef: useRef<HTMLDivElement | null>(null),
   };
 }
 
@@ -765,21 +771,24 @@ export function CarsResultsClient({
 
       if (
         datesOpen &&
-        !activeSearchRefs.dateWrapRef.current?.contains(target)
+        !activeSearchRefs.dateWrapRef.current?.contains(target) &&
+        !activeSearchRefs.datePopoverRef.current?.contains(target)
       ) {
         setDatesOpen(false);
       }
 
       if (
         timesOpen &&
-        !activeSearchRefs.timeWrapRef.current?.contains(target)
+        !activeSearchRefs.timeWrapRef.current?.contains(target) &&
+        !activeSearchRefs.timePopoverRef.current?.contains(target)
       ) {
         setTimesOpen(false);
       }
 
       if (
         driverAgeOpen &&
-        !activeSearchRefs.driverAgeWrapRef.current?.contains(target)
+        !activeSearchRefs.driverAgeWrapRef.current?.contains(target) &&
+        !activeSearchRefs.driverAgePopoverRef.current?.contains(target)
       ) {
         setDriverAgeOpen(false);
       }
@@ -1064,6 +1073,7 @@ export function CarsResultsClient({
               t={t}
               intlLocale={intlLocale}
               wrapRef={searchSurfaceRefs.dateWrapRef}
+              popoverRef={searchSurfaceRefs.datePopoverRef}
             />
             <SearchTimeCell
               dropoffTime={dropoffTime}
@@ -1085,6 +1095,7 @@ export function CarsResultsClient({
               t={t}
               intlLocale={intlLocale}
               wrapRef={searchSurfaceRefs.timeWrapRef}
+              popoverRef={searchSurfaceRefs.timePopoverRef}
               useMainPageDesktopPresentation={placement !== "mobile"}
             />
             <DriverAgeCell
@@ -1103,6 +1114,7 @@ export function CarsResultsClient({
               }}
               t={t}
               wrapRef={searchSurfaceRefs.driverAgeWrapRef}
+              popoverRef={searchSurfaceRefs.driverAgePopoverRef}
               useMainPageDesktopPresentation={placement !== "mobile"}
             />
             <Button
@@ -1947,6 +1959,7 @@ function ResultsDesktopPopover({
   desiredHeight,
   align = "start",
   shellClassName = "overflow-y-auto p-4",
+  providedPopoverRef,
   role,
   ariaLabel,
   children,
@@ -1957,6 +1970,7 @@ function ResultsDesktopPopover({
   desiredHeight: number;
   align?: "start" | "center" | "end";
   shellClassName?: string;
+  providedPopoverRef?: RefObject<HTMLDivElement | null>;
   role: "dialog" | "listbox";
   ariaLabel: string;
   children: ReactNode;
@@ -1968,6 +1982,7 @@ function ResultsDesktopPopover({
     desiredHeight,
     maxHeight: desiredHeight,
     align,
+    providedPopoverRef,
   });
   if (!open || typeof document === "undefined") return null;
   return createPortal(
@@ -2003,6 +2018,7 @@ function SearchDateCell({
   t,
   intlLocale,
   wrapRef,
+  popoverRef,
 }: {
   dropoffDate: string;
   doneButtonVariant: "brand" | "neutral";
@@ -2021,6 +2037,7 @@ function SearchDateCell({
   t: (key: string) => string;
   intlLocale: string;
   wrapRef: RefObject<HTMLDivElement | null>;
+  popoverRef: RefObject<HTMLDivElement | null>;
 }) {
   const dateFormatter = useCompactDateSummary ? formatCompactDate : formatDate;
   const pickupDisplay = dateFormatter(
@@ -2245,6 +2262,7 @@ function SearchDateCell({
       <ResultsDesktopPopover
         open={isOpen}
         launcherRef={wrapRef}
+        providedPopoverRef={popoverRef}
         preferredWidth={640}
         desiredHeight={480}
         role="dialog"
@@ -2294,6 +2312,7 @@ function SearchTimeCell({
   t,
   intlLocale,
   wrapRef,
+  popoverRef,
   useMainPageDesktopPresentation,
 }: {
   dropoffTime: string;
@@ -2306,6 +2325,7 @@ function SearchTimeCell({
   t: (key: string) => string;
   intlLocale: string;
   wrapRef: RefObject<HTMLDivElement | null>;
+  popoverRef: RefObject<HTMLDivElement | null>;
   useMainPageDesktopPresentation: boolean;
 }) {
   return (
@@ -2400,6 +2420,7 @@ function SearchTimeCell({
       <ResultsDesktopPopover
         open={isOpen}
         launcherRef={wrapRef}
+        providedPopoverRef={popoverRef}
         preferredWidth={448}
         desiredHeight={320}
         align="center"
@@ -2429,6 +2450,7 @@ function DriverAgeCell({
   onToggle,
   t,
   wrapRef,
+  popoverRef,
   useMainPageDesktopPresentation,
 }: {
   driverAge: string;
@@ -2438,6 +2460,7 @@ function DriverAgeCell({
   onToggle: () => void;
   t: (key: string) => string;
   wrapRef: RefObject<HTMLDivElement | null>;
+  popoverRef: RefObject<HTMLDivElement | null>;
   useMainPageDesktopPresentation: boolean;
 }) {
   const visibleOptions = useMemo(() => driverAgeOptions, []);
@@ -2523,6 +2546,7 @@ function DriverAgeCell({
       <ResultsDesktopPopover
         open={isOpen}
         launcherRef={wrapRef}
+        providedPopoverRef={popoverRef}
         preferredWidth={288}
         desiredHeight={320}
         align="end"
