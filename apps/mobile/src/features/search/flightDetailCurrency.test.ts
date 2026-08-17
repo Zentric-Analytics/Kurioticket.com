@@ -9,6 +9,7 @@ const detailScreen = readFileSync(
 
 test("flight details resolves one shared display fare for every visible total", () => {
   assert.match(detailScreen, /resolveDisplayCurrencyContext\(\{/);
+  assert.match(detailScreen, /useFocusEffect\(useCallback\(\(\) => \{/);
   assert.match(detailScreen, /travelApi\.currencyRates\(\)/);
   assert.match(
     detailScreen,
@@ -33,6 +34,17 @@ test("flight results passes its numeric display fare into details", () => {
     "utf8",
   );
   assert.match(resultsScreen, /displayFare: JSON\.stringify\(fare\)/);
-  assert.match(detailScreen, /passedFare\.providerAmount === result\.price/);
-  assert.match(detailScreen, /passedFare\.providerCurrency === result\.currency\.toUpperCase\(\)/);
+  assert.match(detailScreen, /isDisplayPriceCurrent\(/);
+  assert.match(detailScreen, /resolution\.resolvedCurrency/);
+});
+
+test("flight results re-resolves display prices whenever the screen focuses", () => {
+  const resultsScreen = readFileSync(
+    new URL("./ApprovedResultsScreen.tsx", import.meta.url).pathname,
+    "utf8",
+  );
+  assert.match(resultsScreen, /useFocusEffect\(useCallback\(\(\) => \{/);
+  assert.match(resultsScreen, /readCurrencyPreference\(\)/);
+  assert.match(resultsScreen, /setCurrencyState\(\{/);
+  assert.match(resultsScreen, /displayPrice\(result\.price, result\.currency, currencyState\.currency/);
 });
