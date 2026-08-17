@@ -90,10 +90,11 @@ test("pickup alone removes its clear action and reclaims the input width", () =>
 });
 
 test("desktop-full rental dates use compact dates and localized duration", () => {
+  assert.match(source, /useCompactDateSummary=\{placement !== "mobile"\}/);
   assert.match(source, /showRentalDuration=\{placement === "desktop-full"\}/);
   assert.match(
     source,
-    /dateFormatter = showRentalDuration \? formatCompactDate : formatDate/,
+    /dateFormatter = useCompactDateSummary \? formatCompactDate : formatDate/,
   );
   assert.match(
     source,
@@ -109,6 +110,20 @@ test("desktop-full rental dates use compact dates and localized duration", () =>
   );
   assert.match(source, /name="pickupDate" value=\{pickupDate\}/);
   assert.match(source, /name="dropoffDate" value=\{dropoffDate\}/);
+});
+
+test("desktop-sticky compact date summary is independent from rental duration", () => {
+  assert.match(source, /useCompactDateSummary=\{placement !== "mobile"\}/);
+  assert.match(source, /showRentalDuration=\{placement === "desktop-full"\}/);
+  assert.match(source, /useCompactDateSummary: boolean/);
+  assert.match(
+    source,
+    /dateFormatter = useCompactDateSummary \? formatCompactDate : formatDate/,
+  );
+  assert.doesNotMatch(
+    source,
+    /dateFormatter = showRentalDuration \? formatCompactDate : formatDate/,
+  );
 });
 
 test("desktop-full rental dates compose calendar, value stack, then chevron", () => {
