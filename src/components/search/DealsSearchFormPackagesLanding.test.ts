@@ -267,6 +267,10 @@ test("desktop Packages custom stay-date flow renders its launcher and existing c
   );
   assert.match(form, /!desktopHotelDatesLauncherRef\.current\?\.contains\(target\)/);
   assert.match(form, /minimumDesktopWidth=\{isPackagesLanding \? 640 : 1024\}/);
+  assert.match(
+    form,
+    /function DealsHotelDatesPopover\(\{[\s\S]*?minimumDesktopWidth = 1024,[\s\S]*?minimumDesktopWidth\?: number;/,
+  );
   assert.match(form, /window\.matchMedia\(`\(min-width: \$\{minimumWidth\}px\)`\)/);
   assert.match(form, /width=\{600\}/);
 });
