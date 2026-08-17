@@ -517,11 +517,13 @@ function DealsHotelDatesPopover({
   open,
   anchorRef,
   desktopLanding = false,
+  minimumDesktopWidth = 1024,
   children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
   desktopLanding?: boolean;
+  minimumDesktopWidth?: number;
   children: ReactNode;
 }) {
   const [position, setPosition] = useState<{
