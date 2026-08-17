@@ -2,6 +2,7 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "Baru-baru ini",
   ...en,
   "deals.mobileTravelersTitle": "Wisatawan",
   "mobileTravelerCabin.title": "Wisatawan & kabin",

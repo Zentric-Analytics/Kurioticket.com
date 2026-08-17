@@ -43,6 +43,7 @@ import {
   serializeRegistrationCredential,
 } from "@/lib/passkey-client";
 import type { TranslationDictionary } from "@/lib/i18n/types";
+import { findLanguageOption } from "@/lib/language";
 import type { UserProfileResponse } from "@/lib/userProfile";
 
 const RawImage = "img";
@@ -75,14 +76,14 @@ type AccountSessionActivity = {
   isCurrent: boolean;
 };
 
-function formatSessionTime(value: string) {
+function formatSessionTime(value: string, locale: string, recently: string) {
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Recently";
+    return recently;
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
@@ -2487,7 +2488,8 @@ function SecuritySettingRow({
 }
 
 export function SecurityDashboardPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const dateTimeLocale = findLanguageOption(locale)?.locale ?? "en-US";
   const router = useRouter();
   const [actionMessage, setActionMessage] = useState("");
   const [securityFeedback, setSecurityFeedback] = useState("");
@@ -3080,7 +3082,7 @@ export function SecurityDashboardPage() {
             onAction={handleOpenSessions}
             statusId={securityActionStatusId}
           />
-          <div className="border-b border-slate-200 py-5"><h2 className="text-base font-semibold text-slate-900">Security activity</h2><div className="mt-3 space-y-2">{securityEvents.length ? securityEvents.map((event) => <p key={event.id} className="text-sm text-slate-600">{event.type.toLowerCase().replaceAll("_", " ")} · {formatSessionTime(event.occurredAt)}</p>) : <p className="text-sm text-slate-500">No recent security activity.</p>}</div></div>
+          <div className="border-b border-slate-200 py-5"><h2 className="text-base font-semibold text-slate-900">Security activity</h2><div className="mt-3 space-y-2">{securityEvents.length ? securityEvents.map((event) => <p key={event.id} className="text-sm text-slate-600">{event.type.toLowerCase().replaceAll("_", " ")} · {formatSessionTime(event.occurredAt, dateTimeLocale, t["accountDashboard.recently"])}</p>) : <p className="text-sm text-slate-500">No recent security activity.</p>}</div></div>
           <SecuritySettingRow title="Sign out everywhere" body="End every web and mobile session connected to your account." action="Sign out everywhere" onAction={() => void handleSignOutEverywhere()} statusId={securityActionStatusId} />
           <div className="grid min-w-0 grid-cols-1 gap-3 border-b border-slate-200 py-5 last:border-b-0 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:py-5">
             <div className="min-w-0">
@@ -3176,7 +3178,7 @@ export function SecurityDashboardPage() {
             <h2 id="passkeys-title" className="text-xl font-semibold text-slate-950">{passkeys.length ? "Manage passkeys" : "Set up a passkey"}</h2>
             <div className="mt-2 space-y-2 text-sm leading-6 text-slate-600"><p>Use Face ID, fingerprint, Windows Hello, your device screen lock, password manager, or security key to sign in faster and more securely.</p><p className="rounded-xl bg-slate-50 p-3 text-slate-700">Kurioticket never receives your fingerprint, face, device PIN, or private key.</p></div>
             {passkeyFlowError ? <MessageBanner tone="error" className="mt-4">{passkeyFlowError}</MessageBanner> : null}
-            {passkeyFlowStep === "intro" || passkeyFlowStep === "success" ? <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt)} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}{passkeyFlowStep === "success" ? <MessageBanner tone="success">Passkey added successfully.</MessageBanner> : null}</div> : null}
+            {passkeyFlowStep === "intro" || passkeyFlowStep === "success" ? <div className="mt-5 space-y-3">{passkeys.length ? passkeys.map((passkey) => <div key={passkey.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-slate-950">{passkey.name || "Passkey"}</p><p className="text-sm text-slate-600">Created {formatSessionTime(passkey.createdAt, dateTimeLocale, t["accountDashboard.recently"])} · Last used {passkey.lastUsedAt ? formatSessionTime(passkey.lastUsedAt, dateTimeLocale, t["accountDashboard.recently"]) : "never"} · {passkey.label || (passkey.backedUp ? "Synced passkey" : passkey.deviceType || "Device or security key")}</p></div><div className="flex gap-2"><button type="button" onClick={() => void handleRenamePasskey(passkey.id, passkey.name)} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Rename</button><button type="button" onClick={() => void handleRemovePasskey(passkey.id)} disabled={passkeySaving} className="focus-ring rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-60">Remove</button></div></div>) : <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">No passkeys yet.</p>}{passkeyFlowStep === "success" ? <MessageBanner tone="success">Passkey added successfully.</MessageBanner> : null}</div> : null}
             {passkeyFlowStep === "sending" ? <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">Sending verification code…</p> : null}
             {passkeyFlowStep === "code" || passkeyFlowStep === "verifying" ? <form onSubmit={handlePasskeyCodeSubmit} className="mt-5 space-y-4"><p className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm font-semibold text-blue-900">{passkeyVerificationMethod === "totp" ? "Enter your authenticator app code or a recovery code." : "We sent a code to your email."}</p><label className="block text-sm font-medium text-slate-800">Verification code<input value={passkeyVerificationCode} onChange={(event) => setPasskeyVerificationCode(event.target.value.replace(/[^A-Za-z0-9-]/g, "").slice(0, 32))} autoComplete="one-time-code" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder={passkeyVerificationMethod === "totp" ? "123456 or recovery code" : "123456"} /></label><div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button type="button" onClick={resetPasskeySetupFlow} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Cancel</button>{passkeyVerificationMethod === "email" ? <button type="button" onClick={() => void handleAddPasskey()} disabled={passkeySaving} className="focus-ring rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60">Resend code</button> : null}<button type="submit" disabled={passkeySaving || !passkeyVerificationCode.trim()} className="focus-ring rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{passkeyFlowStep === "verifying" ? "Verifying…" : "OK"}</button></div></form> : null}
             {passkeyFlowStep === "native" ? <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">Opening your browser or device passkey prompt…</p> : null}
@@ -3214,7 +3216,7 @@ export function SecurityDashboardPage() {
                           {session.revokedAt ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">Marked signed out</span> : null}
                         </div>
                         <p className="mt-1 break-words text-sm text-slate-600">{session.browser} on {session.os}</p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">Last active {formatSessionTime(session.lastSeenAt)}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">Last active {formatSessionTime(session.lastSeenAt, dateTimeLocale, t["accountDashboard.recently"])}</p>
                         <p className="text-xs leading-5 text-slate-500">IP network {session.maskedIp || "not available"}</p>
                         {confirmingSessionRemovalId === session.id ? (
                           <div role="status" aria-live="polite" className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-900 sm:max-w-md">

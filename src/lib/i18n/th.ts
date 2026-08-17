@@ -2,6 +2,7 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "เมื่อเร็ว ๆ นี้",
   ...en,
   "deals.mobileTravelersTitle": "ผู้เดินทาง",
   "mobileTravelerCabin.title": "ผู้เดินทางและชั้นโดยสาร",
@@ -476,7 +477,7 @@ export const translations: TranslationDictionary = {
   signupPasswordLabel: "รหัสผ่าน",
   signupAgreementBeforeTerms: "เมื่อสร้างบัญชี คุณยอมรับ",
   signupTermsLink: "ข้อกำหนด",
-  signupAgreementBetweenLinks: " ",
+  signupAgreementBetweenLinks: " และ ",
   signupPrivacyPolicyLink: "นโยบายความเป็นส่วนตัว",
   signupAgreementAfterPrivacy:
     " และประกาศเกี่ยวกับการเปลี่ยนเส้นทางไปยังพาร์ทเนอร์",
