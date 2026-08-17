@@ -93,6 +93,25 @@ test("source-contract: explicit picker toggles remain mutually exclusive", () =>
   );
 });
 
+test("source-contract: portaled picker interactions are not treated as outside clicks", () => {
+  assert.match(
+    source,
+    /target\.closest\('\[data-cars-results-picker-popover="true"\]'\)/,
+  );
+  assert.match(source, /if \(clickedInsidePickerPopover\) return/);
+  assert.match(source, /data-cars-results-picker-popover="true"/);
+});
+
+test("source-contract: sticky rental dates keep the icon and compact calendar actions visible", () => {
+  assert.match(source, /showRentalDuration \|\| isCompact/);
+  assert.match(source, /desiredHeight=\{isCompact \? 420 : 480\}/);
+  assert.match(
+    source,
+    /shellClassName=\{isCompact \? "overflow-hidden p-3" : undefined\}/,
+  );
+  assert.match(source, /desktopCompact=\{isCompact\}/);
+});
+
 test("source-contract: sticky editor has layered Escape handling and isolated surface refs", () => {
   assert.match(
     source,
@@ -128,7 +147,7 @@ test("source-contract: expanded sticky editor uses the Flights-style floating sh
   );
   assert.match(
     source,
-    /flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28/,
+    /flex min-h-dvh items-start justify-center px-6 pb-10 pt-12 xl:pt-16/,
   );
   assert.match(
     source,

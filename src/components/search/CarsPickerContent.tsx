@@ -39,13 +39,13 @@ type CalendarStrings = {
 export function CarsRentalDatePickerContent({
   dropoffDate, formatFullDate, locale, onClear, onDone, onNextMonth,
   onPreviousMonth, onSelectDate, pickupDate, strings, visibleMonthDate,
-  weekdays, mobileShell = false,
+  weekdays, mobileShell = false, desktopCompact = false,
 }: {
   dropoffDate: string; formatFullDate: (date: Date) => string; locale: string;
   onClear: () => void; onDone: () => void; onNextMonth: () => void;
   onPreviousMonth: () => void; onSelectDate: (date: Date) => void;
   pickupDate: string; strings: CalendarStrings; visibleMonthDate: Date;
-  weekdays: string[]; mobileShell?: boolean;
+  weekdays: string[]; mobileShell?: boolean; desktopCompact?: boolean;
 }) {
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
@@ -77,35 +77,35 @@ export function CarsRentalDatePickerContent({
   }
 
   return <>
-    {!mobileShell ? <p className="mb-3 text-base font-semibold text-slate-900">{strings.chooseDates}</p> : null}
-    {!mobileShell ? <div className="mb-3 flex items-center justify-between">
+    {!mobileShell ? <p className={desktopCompact ? "mb-2 text-sm font-semibold text-slate-900" : "mb-3 text-base font-semibold text-slate-900"}>{strings.chooseDates}</p> : null}
+    {!mobileShell ? <div className={desktopCompact ? "mb-2 flex items-center justify-between" : "mb-3 flex items-center justify-between"}>
       <button type="button" aria-label={strings.previousMonth} onClick={onPreviousMonth} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700">{strings.previousMonthShort}</button>
       <button type="button" aria-label={strings.nextMonth} onClick={onNextMonth} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700">{strings.nextMonthShort}</button>
     </div> : null}
     <div className={mobileShell ? "mx-auto w-full max-w-xl space-y-8 pb-2" : "grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4"} data-cars-calendar-months data-month-count={months.length}>
       {months.map((monthDate) => <section key={toIsoDate(monthDate)} aria-label={monthDate.toLocaleDateString(locale, { month: "long", year: "numeric" })} className={mobileShell ? "space-y-2.5" : undefined} data-cars-calendar-month>
-        <h3 className={mobileShell ? "text-start text-[17px] font-bold tracking-tight text-slate-950" : "mb-1.5 text-center text-sm font-semibold text-slate-800"}>{monthDate.toLocaleDateString(locale, { month: "long", year: "numeric" })}</h3>
+        <h3 className={mobileShell ? "text-start text-[17px] font-bold tracking-tight text-slate-950" : desktopCompact ? "mb-1 text-center text-[13px] font-semibold text-slate-800" : "mb-1.5 text-center text-sm font-semibold text-slate-800"}>{monthDate.toLocaleDateString(locale, { month: "long", year: "numeric" })}</h3>
         <div className={mobileShell ? "grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500" : "mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600"}>
           {weekdays.map((weekday, index) => <span className={mobileShell ? "py-2" : undefined} key={`${weekday}-${index}`}>{weekday}</span>)}
         </div>
         <div className={mobileShell ? "grid grid-cols-7 gap-y-1.5" : "grid grid-cols-7 gap-1"}>
           {buildMonthCells(monthDate).map((cell) => {
             const iso = toIsoDate(cell.date);
-            if (!cell.isCurrentMonth) return <span key={`placeholder-${iso}`} aria-hidden="true" className={mobileShell ? "h-11 w-full" : "h-8 w-8 justify-self-center"} />;
+            if (!cell.isCurrentMonth) return <span key={`placeholder-${iso}`} aria-hidden="true" className={mobileShell ? "h-11 w-full" : desktopCompact ? "h-7 w-7 justify-self-center" : "h-8 w-8 justify-self-center"} />;
             const past = isBeforeToday(cell.date);
             const beforePickup = Boolean(pickupDate && !dropoffDate && iso < pickupDate);
             const inRange = Boolean(pickupParsed && dropoffParsed && !past && cell.date > pickupParsed && cell.date < dropoffParsed);
             const selected = iso === pickupDate || iso === dropoffDate;
             const today = iso === todayIso;
             return <button key={iso} type="button" aria-label={`${strings.selectDatePrefix} ${formatFullDate(cell.date)}${beforePickup ? `; ${strings.startsNewPickupDate}` : ""}`} aria-pressed={selected} aria-disabled={past} disabled={past} onClick={() => onSelectDate(cell.date)} data-cars-date={iso} data-in-range={inRange || undefined}
-              className={`focus-ring relative mx-auto flex items-center justify-center rounded-full font-semibold transition-colors disabled:cursor-not-allowed ${mobileShell ? "h-11 w-full max-w-11 text-[15px]" : "h-8 w-8 text-sm"} ${past ? "text-slate-300" : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"} ${today && !past ? "ring-1 ring-inset ring-[#004BB8]/25" : ""} ${inRange ? "bg-[#004BB8]/10 text-[#021C2B]" : ""} ${selected ? "bg-[#004BB8] text-white shadow-sm ring-0 hover:bg-[#004BB8] hover:text-white" : ""}`}>
+              className={`focus-ring relative mx-auto flex items-center justify-center rounded-full font-semibold transition-colors disabled:cursor-not-allowed ${mobileShell ? "h-11 w-full max-w-11 text-[15px]" : desktopCompact ? "h-7 w-7 text-[13px]" : "h-8 w-8 text-sm"} ${past ? "text-slate-300" : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"} ${today && !past ? "ring-1 ring-inset ring-[#004BB8]/25" : ""} ${inRange ? "bg-[#004BB8]/10 text-[#021C2B]" : ""} ${selected ? "bg-[#004BB8] text-white shadow-sm ring-0 hover:bg-[#004BB8] hover:text-white" : ""}`}>
               {cell.date.getDate()}
             </button>;
           })}
         </div>
       </section>)}
     </div>
-    {!mobileShell ? <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"><button type="button" onClick={onClear} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">{strings.clear}</button><button type="button" onClick={onDone} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white">{strings.done}</button></div> : null}
+    {!mobileShell ? <div className={desktopCompact ? "mt-2 flex items-center justify-between gap-3 border-t border-slate-200 pt-2" : "mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3"}><button type="button" onClick={onClear} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700">{strings.clear}</button><button type="button" onClick={onDone} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white">{strings.done}</button></div> : null}
   </>;
 }
 
