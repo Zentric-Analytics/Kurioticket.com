@@ -5159,7 +5159,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 {mobileOriginSummary}
               </span>
               <ArrowRightLeft
-                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
@@ -5175,7 +5175,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <Calendar
-                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span className={compactValueClass}>{compactDateSummary}</span>
@@ -5189,7 +5189,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <Users
-                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span className={compactValueClass}>{travelerCabinSummary}</span>
@@ -5240,7 +5240,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             }}
           >
             <div
-              className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28"
+              className="flex min-h-dvh items-start justify-center px-6 pb-8 pt-12 xl:pt-16"
               onMouseDown={(event) => event.stopPropagation()}
             >
               <form
@@ -5323,11 +5323,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     >
                       {t("origin")}
                     </label>
-                    <input
-                      id="sticky-results-origin"
-                      name="origin"
-                      required
-                      value={originInput}
+                    <div className="mt-0.5 flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <input
+                        id="sticky-results-origin"
+                        name="origin"
+                        required
+                        value={originInput}
                       onFocus={() => {
                         setActiveDesktopSearchSurface("sticky");
                         setTripTypeMenuOpen(false);
@@ -5353,10 +5355,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                             : null,
                         );
                       }}
-                      placeholder={t("fromPlaceholder")}
-                      autoComplete="off"
-                      className="mt-0.5 h-5 min-w-0 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
-                    />
+                        placeholder={t("fromPlaceholder")}
+                        autoComplete="off"
+                        className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
+                      />
+                    </div>
                     {activeSuggest === "origin" &&
                     activeDesktopSearchSurface === "sticky" ? (
                       <SuggestionList
@@ -5382,7 +5385,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       event.stopPropagation();
                       handleSwapLocations();
                     }}
-                    className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white/90 text-[#5CB6B2] transition-colors hover:bg-blue-50/60 hover:text-[#39948F]"
+                    className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white/90 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800"
                   >
                     <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -5397,11 +5400,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     >
                       {t("destination")}
                     </label>
-                    <input
-                      id="sticky-results-destination"
-                      name="destination"
-                      required
-                      value={destinationInput}
+                    <div className="mt-0.5 flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <input
+                        id="sticky-results-destination"
+                        name="destination"
+                        required
+                        value={destinationInput}
                       onFocus={() => {
                         setActiveDesktopSearchSurface("sticky");
                         setTripTypeMenuOpen(false);
@@ -5427,10 +5432,11 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                             : null,
                         );
                       }}
-                      placeholder={t("toPlaceholder")}
-                      autoComplete="off"
-                      className="mt-0.5 h-5 min-w-0 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
-                    />
+                        placeholder={t("toPlaceholder")}
+                        autoComplete="off"
+                        className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
+                      />
+                    </div>
                     {activeSuggest === "destination" &&
                     activeDesktopSearchSurface === "sticky" ? (
                       <SuggestionList
@@ -5467,8 +5473,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       <span className={stickyLabelClass}>
                         {t("travelDates")}
                       </span>
-                      <span className={stickyValueClass}>
-                        {stickyDateSummary}
+                      <span className={cn(stickyValueClass, "flex items-center gap-2")}>
+                        <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                        <span className="min-w-0 truncate">{stickyDateSummary}</span>
                       </span>
                     </button>
                     {activeDatePicker &&
@@ -5523,7 +5530,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     >
                       <span className={stickyLabelClass}>{t("travelers")}</span>
                       <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2 text-sm font-medium leading-5 text-slate-950">
-                        <span className="truncate">{travelerCabinSummary}</span>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                          <span className="truncate">{travelerCabinSummary}</span>
+                        </span>
                         <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
                       </span>
                     </button>
