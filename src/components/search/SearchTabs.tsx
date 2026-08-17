@@ -2706,8 +2706,6 @@ export function SearchTabs({
         presentation="responsive"
         inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")}
         strings={carsLocationStrings}
-        fieldAnchorRef={carsDropoffFieldRef}
-        searchCardRef={carsSearchSurfaceRef}
         isOpen={carsOpenPicker === "dropoff"}
         onOpenChange={(open) => setCarsOpenPicker(open ? "dropoff" : null)}
       /></div>
@@ -4145,7 +4143,7 @@ export function SearchTabs({
                     <span className="truncate">{carsValues.pickupLocation || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</span>
                   </span>
                 </button> : null}
-                <div className={mobileHomepage ? "hidden sm:block" : undefined}><CarLocationAutocomplete id={mobileHomepage ? "homepage-cars-pickup-desktop" : "homepage-cars-pickup"} name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsPickupFieldRef} searchCardRef={carsSearchSurfaceRef} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} /></div>
+                <div className={mobileHomepage ? "hidden sm:block" : undefined}><CarLocationAutocomplete id={mobileHomepage ? "homepage-cars-pickup-desktop" : "homepage-cars-pickup"} name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} /></div>
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
               {mobileHomepage ? carsReturnLocationField : null}

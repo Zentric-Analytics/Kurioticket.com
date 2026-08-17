@@ -26,7 +26,6 @@ import {
   MapPin,
   ShieldCheck,
   UserRound,
-  X,
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -334,7 +333,7 @@ function CarsSearchPage() {
           </section>
 
           <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-full md:space-y-10">
-            <section className="relative hidden overflow-visible pb-40 sm:block lg:pb-44">
+            <section className="relative hidden overflow-visible pb-44 sm:block lg:pb-48">
               <div className="relative isolate min-h-[25rem] bg-slate-950 lg:min-h-[27rem]">
                 <div className="absolute inset-0 overflow-hidden">
                   <Image
@@ -350,7 +349,7 @@ function CarsSearchPage() {
                   <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/12 to-transparent" />
                 </div>
 
-                <div className="page-shell absolute inset-x-0 bottom-[-114px] z-30 lg:bottom-[-118px]">
+                <div className="page-shell absolute inset-x-0 bottom-[-126px] z-30 lg:bottom-[-130px]">
                   <div className="mx-auto max-w-6xl">
                     <CarsSearchBar
                       errors={errors}
@@ -570,8 +569,8 @@ function CarsSearchBar({
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
   const driverAgeWrapRef = useRef<HTMLDivElement | null>(null);
   const driverAgePopoverRef = useRef<HTMLDivElement | null>(null);
-  const searchCardRef = useRef<HTMLElement | null>(null);
   const pickupFieldRef = useRef<HTMLDivElement | null>(null);
+  const dropoffFieldRef = useRef<HTMLDivElement | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
   const [timesOpen, setTimesOpen] = useState(false);
   const [driverAgeOpen, setDriverAgeOpen] = useState(false);
@@ -579,6 +578,14 @@ function CarsSearchBar({
     "pickup" | "dropoff" | null
   >(null);
   const [focusedDriverAgeIndex, setFocusedDriverAgeIndex] = useState(0);
+
+  useEffect(() => {
+    if (!values.returnToDifferentLocation) {
+      setOpenDesktopLocation((current) =>
+        current === "dropoff" ? null : current,
+      );
+    }
+  }, [values.returnToDifferentLocation]);
   const driverAgeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeMobilePicker, setActiveMobilePicker] =
     useState<CarsMobilePicker>(null);
@@ -803,7 +810,6 @@ function CarsSearchBar({
 
   return (
     <section
-      ref={searchCardRef}
       className="overflow-visible rounded-[15px] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.25rem] sm:border-slate-200/80 sm:bg-white sm:p-5 sm:shadow-[0_18px_42px_-24px_rgba(15,23,42,0.30)] sm:ring-1 sm:ring-white/70"
     >
       <form
@@ -880,10 +886,8 @@ function CarsSearchBar({
                         }
                         placeholder={t("carsSearch.pickupLocationPlaceholder")}
                         inputRef={pickupLocationRef}
-                        inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
+                        inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 text-[16px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
                         presentation="desktop"
-                        fieldAnchorRef={pickupFieldRef}
-                        searchCardRef={searchCardRef}
                         isOpen={openDesktopLocation === "pickup"}
                         onOpenChange={(nextOpen) =>
                           setLocationPopoverOpen("pickup", nextOpen)
@@ -893,19 +897,6 @@ function CarsSearchBar({
                     </div>
                   </div>
 
-                  {values.pickupLocation ? (
-                    <button
-                      type="button"
-                      aria-label={t("carsSearch.clearPickupLocation")}
-                      onClick={() => {
-                        updateValue("pickupLocation", "");
-                        pickupLocationRef.current?.focus();
-                      }}
-                      className="absolute end-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 sm:inline-flex lg:h-8 lg:w-8"
-                    >
-                      <X className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  ) : null}
                 </div>
 
                 {values.returnToDifferentLocation ? (
@@ -931,39 +922,6 @@ function CarsSearchBar({
                         </span>
                       </span>
                     </button>
-                    <CarLocationAutocomplete
-                      id="dropoffLocation"
-                      name="dropoffLocation"
-                      value={values.dropoffLocation}
-                      onValueChange={(nextValue) =>
-                        updateValue("dropoffLocation", nextValue)
-                      }
-                      placeholder={t("carsSearch.returnLocationPlaceholder")}
-                      inputRef={dropoffLocationRef}
-                      inputClassName="hidden h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8 lg:pt-1.5"
-                      presentation="desktop"
-                      fieldAnchorRef={pickupFieldRef}
-                      searchCardRef={searchCardRef}
-                      isOpen={openDesktopLocation === "dropoff"}
-                      onOpenChange={(nextOpen) =>
-                        setLocationPopoverOpen("dropoff", nextOpen)
-                      }
-                      strings={locationAutocompleteStrings}
-                    />
-
-                    {values.dropoffLocation ? (
-                      <button
-                        type="button"
-                        aria-label={t("carsSearch.clearReturnLocation")}
-                        onClick={() => {
-                          updateValue("dropoffLocation", "");
-                          dropoffLocationRef.current?.focus();
-                        }}
-                        className="absolute end-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 sm:inline-flex lg:h-8 lg:w-8"
-                      >
-                        <X className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -971,6 +929,7 @@ function CarsSearchBar({
 
             {values.returnToDifferentLocation ? (
               <SearchCell
+                divRef={dropoffFieldRef}
                 label={t("carsSearch.returnLocationLabel")}
                 error={errors.dropoffLocation}
                 className="hidden sm:block sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
@@ -989,12 +948,10 @@ function CarsSearchBar({
                         onValueChange={(nextValue) =>
                           updateValue("dropoffLocation", nextValue)
                         }
-                        placeholder={t("carsSearch.pickupLocationPlaceholder")}
+                        placeholder={t("carsSearch.returnLocationPlaceholder")}
                         inputRef={dropoffLocationRef}
-                        inputClassName="hidden h-8 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[15px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block"
+                        inputClassName="hidden h-8 w-full border-none bg-transparent py-0 ps-0 text-[15px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block"
                         presentation="desktop"
-                        fieldAnchorRef={pickupFieldRef}
-                        searchCardRef={searchCardRef}
                         isOpen={openDesktopLocation === "dropoff"}
                         onOpenChange={(nextOpen) =>
                           setLocationPopoverOpen("dropoff", nextOpen)
@@ -1003,19 +960,6 @@ function CarsSearchBar({
                       />
                     </div>
                   </div>
-                  {values.dropoffLocation ? (
-                    <button
-                      type="button"
-                      aria-label={t("carsSearch.clearReturnLocation")}
-                      onClick={() => {
-                        updateValue("dropoffLocation", "");
-                        dropoffLocationRef.current?.focus();
-                      }}
-                      className="absolute end-0 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 sm:inline-flex"
-                    >
-                      <X className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  ) : null}
                 </div>
               </SearchCell>
             ) : null}

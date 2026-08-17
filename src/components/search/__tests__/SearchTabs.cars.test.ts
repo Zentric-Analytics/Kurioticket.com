@@ -71,13 +71,11 @@ test("homepage Cars reuses one conditional return-location field in mobile and d
   assert.match(source, /if \(key === "returnToDifferentLocation" && value === false\) \{\s*next\.dropoffLocation = "";/);
 });
 
-test("Cars autocomplete uses responsive presentation and the complete surface boundary", () => {
+test("Cars autocomplete uses responsive presentation and input anchoring", () => {
   assert.match(carsBranch, /ref=\{carsSearchSurfaceRef\} data-testid="cars-search-surface"/);
   const allCarsFields = carsBranch + returnLocationField;
   assert.equal((allCarsFields.match(/presentation="responsive"/g) ?? []).length, 2);
-  assert.equal((allCarsFields.match(/searchCardRef=\{carsSearchSurfaceRef\}/g) ?? []).length, 2);
-  assert.match(carsBranch, /fieldAnchorRef=\{carsPickupFieldRef\}/);
-  assert.match(returnLocationField, /fieldAnchorRef=\{carsDropoffFieldRef\}/);
+  assert.doesNotMatch(allCarsFields, /fieldAnchorRef=|searchCardRef=/);
   assert.match(returnLocationField, /value=\{carsValues\.dropoffLocation\}/);
 });
 
