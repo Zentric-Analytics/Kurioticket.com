@@ -175,3 +175,11 @@ test("HotelSearchBar sticky-dialog source contract renders a direct compact row"
   assert.match(searchBarSource, /handleToggleGuestsRooms/);
   assert.match(searchBarSource, /\$\{idPrefix\}-destination-suggestions/);
 });
+
+test("sticky Hotel calendar keeps both months and Done inside a non-scrolling compact popover", () => {
+  assert.match(searchBarSource, /desiredHeight=\{isStickyDialog \? 360 : 420\}/);
+  assert.match(searchBarSource, /isStickyDialog \? "overflow-hidden p-2" : "p-3"/);
+  assert.match(searchBarSource, /isStickyDialog \? "h-7 w-7 text-xs" : "h-8 w-8 text-sm"/);
+  assert.match(searchBarSource, /isStickyDialog \? "mt-2 pt-2" : "mt-4 pt-3"/);
+  assert.match(searchBarSource, /isStickyDialog \? "py-1\.5" : "py-2"/);
+});
