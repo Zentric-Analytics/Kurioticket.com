@@ -28,8 +28,9 @@ test("desktop Cars uses the approved text-free coastal convertible hero", () => 
   );
   assert.doesNotMatch(source, /text-\[2\.65rem\]|lg:text-\[3rem\]/);
   assert.doesNotMatch(source, /t\("carsDesktopHeroBody"\)/);
-  assert.match(source, /pb-36 sm:block lg:pb-40/);
-  assert.match(source, /bottom-\[-100px\][\s\S]*?lg:bottom-\[-104px\]/);
+  assert.match(source, /pb-40 sm:block lg:pb-44/);
+  assert.match(source, /bottom-\[-114px\][\s\S]*?lg:bottom-\[-118px\]/);
+  assert.doesNotMatch(source, /bottom-\[-100px\]|lg:bottom-\[-104px\]/);
   assert.doesNotMatch(
     source,
     /bottom-\[-84px\]|lg:bottom-\[-88px\]|pb-32 sm:block lg:pb-36/,

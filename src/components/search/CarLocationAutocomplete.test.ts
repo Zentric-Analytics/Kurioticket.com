@@ -25,3 +25,29 @@ test("location combobox retains keyboard selection semantics", () => {
   assert.match(source, /role="combobox"/);
   assert.match(source, /aria-activedescendant=\{activeId\}/);
 });
+
+test("desktop location suggestions require a user-edited non-empty query", () => {
+  assert.match(source, /open && hasUserEditedQuery && trimmedQuery\.length > 0/);
+  assert.match(source, /if \(usesDesktopPanel && \(!hasUserEditedQuery \|\| !trimmedQuery\)\)/);
+  assert.match(source, /if \(!usesDesktopPanel\) setOpen\(true\)/);
+  assert.doesNotMatch(source, /onFocus=\{\(\) => setOpen\(true\)\}/);
+  assert.match(source, /new URLSearchParams\(\{ q: trimmedQuery, limit: "8" \}\)/);
+});
+
+test("clearing a desktop location query immediately removes stale search state", () => {
+  const emptyQueryBranch = source.slice(
+    source.indexOf("if (!nextQuery)"),
+    source.indexOf("return;", source.indexOf("if (!nextQuery)")) + "return;".length,
+  );
+  assert.match(emptyQueryBranch, /requestIdRef\.current \+= 1/);
+  assert.match(emptyQueryBranch, /abortRef\.current\?\.abort\(\)/);
+  assert.match(emptyQueryBranch, /setSuggestions\(\[\]\)/);
+  assert.match(emptyQueryBranch, /setLoading\(false\)/);
+  assert.match(emptyQueryBranch, /setError\(false\)/);
+  assert.match(emptyQueryBranch, /setOpen\(false\)/);
+});
+
+test("desktop empty focus never renders the Popular Locations experience", () => {
+  assert.match(source, /const label = usesDesktopPanel\s*\? strings\.locationSuggestions/);
+  assert.match(source, /aria-expanded=\{showPanel\}/);
+});

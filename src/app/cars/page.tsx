@@ -334,7 +334,7 @@ function CarsSearchPage() {
           </section>
 
           <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-full md:space-y-10">
-            <section className="relative hidden overflow-visible pb-36 sm:block lg:pb-40">
+            <section className="relative hidden overflow-visible pb-40 sm:block lg:pb-44">
               <div className="relative isolate min-h-[25rem] bg-slate-950 lg:min-h-[27rem]">
                 <div className="absolute inset-0 overflow-hidden">
                   <Image
@@ -350,7 +350,7 @@ function CarsSearchPage() {
                   <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/12 to-transparent" />
                 </div>
 
-                <div className="page-shell absolute inset-x-0 bottom-[-100px] z-30 lg:bottom-[-104px]">
+                <div className="page-shell absolute inset-x-0 bottom-[-114px] z-30 lg:bottom-[-118px]">
                   <div className="mx-auto max-w-6xl">
                     <CarsSearchBar
                       errors={errors}
