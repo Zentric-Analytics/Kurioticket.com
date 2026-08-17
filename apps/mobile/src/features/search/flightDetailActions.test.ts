@@ -9,12 +9,15 @@ const resultsSource = readFileSync(resolve("src/features/search/ApprovedResultsS
 const flightDetail = detailSource.slice(detailSource.indexOf("function FlightDetail"), detailSource.indexOf("function HotelDetail"));
 const stickyFooter = flightDetail.slice(flightDetail.indexOf("<View style={[d.sticky"), flightDetail.indexOf("</SafeAreaView>"));
 
-test("flight details moves its sole price-alert entry point to the header", () => {
-  assert.match(flightDetail, /<TopBar detail onPriceAlertPress=\{\(\) => router\.push\("\/price-alerts"\)\} \/>/);
+test("flight details starts its existing price-alert creation flow from the header", () => {
+  assert.match(flightDetail, /flightAlertPresentation\("flight", Boolean\(searchPlan\.plan\), \[result\]\)/);
+  assert.match(flightDetail, /priceAlertAvailable = availability\.priceAlerts && alertPresentation\.enabled/);
+  assert.match(flightDetail, /<TopBar detail onPriceAlertPress=\{handlePriceAlert\} priceAlertDisabled=\{!priceAlertAvailable\}/);
+  assert.match(flightDetail, /travelApi\.createPriceAlert\(buildFlightPriceAlertPayload\(/);
+  assert.match(flightDetail, /status === 401/);
+  assert.match(flightDetail, /status === 409 && error\.details\?\.duplicate === true/);
   assert.doesNotMatch(stickyFooter, /Price alert|name="bell"/);
-  assert.equal(flightDetail.match(/router\.push\("\/price-alerts"\)/g)?.length, 1);
 });
-
 test("flight details footer only contains total information and the provider CTA", () => {
   assert.match(stickyFooter, />Total</);
   assert.match(stickyFooter, /\{formattedFare\}/);
@@ -23,12 +26,17 @@ test("flight details footer only contains total information and the provider CTA
   assert.doesNotMatch(stickyFooter, />Save<|name="heart"|stickyAction/);
 });
 
-test("detail TopBar renders an accessible themed price alert and retains share", () => {
-  assert.match(topBarSource, /accessibilityLabel="Price alert"[\s\S]*?onPress=\{onPriceAlertPress\}[\s\S]*?name="bell" color=\{theme\.icon\}/);
-  assert.match(topBarSource, /<FlowIcon name="share" color=\{theme\.icon\} \/>/);
+test("detail TopBar exposes configurable accessible price-alert and share actions", () => {
+  assert.match(topBarSource, /accessibilityLabel="Price alert"[\s\S]*?accessibilityState=\{\{ disabled: priceAlertDisabled \}\}[\s\S]*?onPress=\{onPriceAlertPress\}/);
+  assert.match(topBarSource, /accessibilityLabel="Share flight" onPress=\{onSharePress\}/);
   assert.match(topBarSource, /onPriceAlertPress[\s\S]*?<FlowIcon name="heart" color=\{theme\.icon\}/);
+  assert.match(flightDetail, /Share\.share\(\{ message: flightShareMessage\(result, formattedFare\) \}\)/);
 });
 
+test("flight details retains back and uses the dedicated current edit-search flow", () => {
+  assert.match(topBarSource, /accessibilityLabel="Go back"[\s\S]*?onPress=\{\(\) => router\.back\(\)\}/);
+  assert.match(flightDetail, /pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\)/);
+});
 test("flight-results favorite control remains available", () => {
   const flightCard = resultsSource.slice(resultsSource.indexOf("function FlightCard"), resultsSource.indexOf("function HotelCard"));
   assert.match(flightCard, /const \{ savedFlights, toggle \} = useSavedFlights\(\)/);
