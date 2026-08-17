@@ -25,6 +25,7 @@ import { AirlineLogo } from "./AirlineLogo";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
   resolveDisplayCurrencyContext,
+  type DisplayCurrencyResolution,
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
@@ -78,21 +79,24 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
   const inset = useSafeAreaInsets();
   const { theme } = useAppTheme();
   const passedFare = parse<DisplayPrice>(params.displayFare);
+  const parsedDisplayCurrencyContext = parse<DisplayCurrencyResolution>(params.displayCurrencyContext);
+  const passedDisplayCurrencyContext = typeof parsedDisplayCurrencyContext?.resolvedCurrency === "string"
+    ? parsedDisplayCurrencyContext
+    : undefined;
+  const contextMatchesPassedFare = !passedDisplayCurrencyContext
+    || passedDisplayCurrencyContext.resolvedCurrency.toUpperCase() === passedFare?.currency.toUpperCase();
   const initiallyValidPassedFare = canReuseFlightDetailFare({
     passedFare,
     providerAmount: result.price,
     providerCurrency: result.currency,
-  }) ? passedFare! : null;
+  }) && contextMatchesPassedFare ? passedFare! : null;
   const [fare, setFare] = useState<DisplayPrice | null>(initiallyValidPassedFare);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
-  const hasFocusedRef = useRef(false);
   useFocusEffect(useCallback(() => {
     let active = true;
-    if (hasFocusedRef.current) setFare(null);
-    hasFocusedRef.current = true;
     void readCurrencyPreference().catch(() => null).then(async (preferredCurrency) => {
       if (!active) return;
-      if (canReuseFlightDetailFare({
+      if (contextMatchesPassedFare && canReuseFlightDetailFare({
         passedFare,
         providerAmount: result.price,
         providerCurrency: result.currency,
@@ -128,7 +132,8 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
       ));
     });
     return () => { active = false; };
-  }, [passedFare?.amount, passedFare?.currency, passedFare?.providerAmount,
+  }, [contextMatchesPassedFare, passedDisplayCurrencyContext?.resolvedCurrency,
+    passedFare?.amount, passedFare?.currency, passedFare?.providerAmount,
     passedFare?.providerCurrency, result.currency, result.id, result.price]));
   const formattedFare = fare?.formatted ?? "—";
   const legs = result.legs?.length

@@ -78,6 +78,7 @@ import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { useSavedFlights } from "../../storage/useSavedFlights";
 import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
+import { buildFlightDetailParams } from "./flightDetailNavigation";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -651,12 +652,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
           onPress={() =>
             router.push({
               pathname: "/flight-details",
-              params: {
-                result: JSON.stringify(result),
-                ...(fare ? { displayFare: JSON.stringify(fare) } : {}),
-                ...(displayCurrencyContext ? { displayCurrencyContext: JSON.stringify(displayCurrencyContext) } : {}),
-                ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, one(value) || ""])),
-              },
+              params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }),
             })
           }
         >
