@@ -318,6 +318,12 @@ test("desktop Packages pickers share one restrained anchored surface contract", 
   assert.match(form, /desiredHeight=\{packagesLanding \? 320 : 352\}/);
 });
 
+test("desktop Packages airport fields stay clean until two characters are entered", () => {
+  assert.match(form, /const showDesktopPanel =[\s\S]*?!isPackagesLanding \|\| query\.length >= 2/);
+  assert.match(form, /openFlightAirport\(kind, false, value\)/);
+  assert.match(form, /if \(value\.trim\(\)\.length < 2\) \{[\s\S]*?setAirportLists[\s\S]*?setFlightOriginLoading\(false\)[\s\S]*?setFlightDestinationLoading\(false\)/);
+});
+
 test("desktop Packages dates, travelers, and cabin use moderate common-shell geometry", () => {
   assert.match(form, /width=\{packagesLanding \? 580 : 660\}/);
   assert.match(form, /desiredHeight=\{packagesLanding \? 430 : 540\}/);
