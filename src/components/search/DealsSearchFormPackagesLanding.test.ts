@@ -177,7 +177,7 @@ test("desktop Packages polish stays scoped to the Packages landing presentation"
   assert.match(form, /checked:border-\[#075EE8\] checked:bg-\[#075EE8\]/);
   assert.match(form, /isPackagesLanding \? "text-white" : "text-\[#2563eb\]"/);
   assert.match(form, /lg:me-1 lg:self-center lg:text-slate-500/);
-  assert.match(form, /lg:h-\[48px\] lg:min-h-\[48px\] lg:min-w-\[164px\]/);
+  assert.match(form, /lg:h-\[48px\] lg:min-h-\[48px\] lg:min-w-\[184px\]/);
   assert.match(form, /isPackagesLanding \? "lg:py-5" : "lg:py-6"/);
 });
 
@@ -297,7 +297,7 @@ test("desktop Packages submit hit target is constrained to the visible CTA", () 
   );
   assert.match(
     submit,
-    /isDesktopLanding && isPackagesLanding[\s\S]*lg:absolute lg:end-0 lg:top-2 lg:h-\[48px\] lg:w-\[164px\]/,
+    /isDesktopLanding && isPackagesLanding[\s\S]*lg:absolute lg:end-0 lg:top-2 lg:h-\[48px\] lg:w-\[184px\]/,
   );
   assert.match(submit, /lg:pointer-events-none/);
   assert.match(submit, /lg:pointer-events-auto lg:h-\[48px\]/);
@@ -305,6 +305,24 @@ test("desktop Packages submit hit target is constrained to the visible CTA", () 
     submit,
     /isDesktopLanding && isPackagesLanding[\s\S]*\? `flex w-full \$\{packageSearchDesktopClasses\}/,
   );
+});
+
+test("desktop Packages submit keeps its translated icon and label on one line", () => {
+  const submit = form.slice(
+    form.indexOf("const searchDealsButton ="),
+    form.indexOf("const primaryPackageControls ="),
+  );
+  assert.match(submit, /lg:min-w-\[184px\] lg:flex-nowrap/);
+  assert.match(submit, /lg:whitespace-nowrap lg:px-5/);
+  assert.match(
+    submit,
+    /<Search className=\{`h-4 w-4 \$\{isPackagesLanding \? "lg:shrink-0" : ""\}`\} \/>/,
+  );
+  assert.match(
+    submit,
+    /<span className=\{isPackagesLanding \? "lg:whitespace-nowrap" : undefined\}>[\s\S]*"deals\.searchButton"/,
+  );
+  assert.doesNotMatch(submit, /truncate|text-ellipsis|overflow-hidden/);
 });
 
 test("desktop Packages mode tabs render every included product icon in label order", () => {
