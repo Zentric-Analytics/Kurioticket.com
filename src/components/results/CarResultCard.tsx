@@ -219,7 +219,7 @@ export function CarResultCard({
 
         <div
           data-region="pricing"
-          className="col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] bg-slate-50/45 px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:border-s lg:border-t-0 lg:bg-white"
+          className="col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] bg-slate-50/45 px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:justify-center lg:border-s lg:border-t-0 lg:bg-white"
         >
           <div className="flex min-w-0 w-full flex-col items-center text-center">
             <p
@@ -230,7 +230,7 @@ export function CarResultCard({
             >
               {totalDisplayPrice.formatted}
             </p>
-            <p className="mt-1 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px]">
+            <p className="mt-0.5 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px]">
               {guidedPlanning ? planningLabels?.estimatedTotal : "Total"}
             </p>
             <p className="mt-2 text-xs font-medium leading-4 text-slate-600">
@@ -263,7 +263,7 @@ export function CarResultCard({
               type="button"
               onClick={() => onSelect(car)}
               aria-label={actionAriaLabel}
-              className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5 lg:mt-auto"
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5"
             >
               {actionLabel}
             </button>
@@ -271,7 +271,7 @@ export function CarResultCard({
             <Link
               href={detailsHref}
               aria-label={actionAriaLabel}
-              className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5 lg:mt-auto"
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-[#004BB8] px-2 text-sm font-bold text-white transition hover:bg-[#021C2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/40 focus-visible:ring-offset-2 md:px-5"
             >
               {actionLabel}
             </Link>
@@ -280,7 +280,7 @@ export function CarResultCard({
               type="button"
               disabled
               aria-label={actionAriaLabel}
-              className="mt-3 inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-lg bg-slate-300 px-2 text-sm font-bold text-white md:px-5 lg:mt-auto"
+              className="mt-3 inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-lg bg-slate-300 px-2 text-sm font-bold text-white md:px-5"
             >
               {actionLabel}
             </button>
