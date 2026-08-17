@@ -47,6 +47,12 @@ import type {
   NormalizedCarResult,
 } from "@/lib/cars/types";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
+import {
+  calculateCompactFilterPlacement,
+  shouldShowDesktopCompactFilter,
+  type DesktopCompactFilterPlacementState,
+} from "@/lib/flights/desktopCompactFilter";
+import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
 import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import {
@@ -108,6 +114,14 @@ function useSearchSurfaceRefs(): SearchSurfaceRefs {
 const defaultDriverAge = "18-70";
 const minimumDriverAge = 18;
 const maximumDriverAge = 70;
+const desktopCompactFilterTopOffset = 116;
+const desktopCompactFilterBottomGap = 12;
+
+type DesktopCompactFilterFrame = {
+  left: number;
+  width: number;
+  maxHeight: number;
+};
 
 const timeOptions = Array.from({ length: 48 }, (_, index) => {
   const hour = Math.floor(index / 2);
@@ -1431,6 +1445,26 @@ export function CarsResultsExperience({
   > | null>(null);
   const carsSortRef = useRef<HTMLDivElement | null>(null);
   const carsSortButtonRef = useRef<HTMLButtonElement | null>(null);
+  const desktopFilterSidebarRef = useRef<HTMLElement | null>(null);
+  const desktopFilterSentinelRef = useRef<HTMLDivElement | null>(null);
+  const desktopCompactFilterRef = useRef<HTMLDivElement | null>(null);
+  const carsResultsBodyRef = useRef<HTMLDivElement | null>(null);
+  const [showDesktopCompactFilter, setShowDesktopCompactFilter] =
+    useState(false);
+  const [desktopCompactFilterFrame, setDesktopCompactFilterFrame] =
+    useState<DesktopCompactFilterFrame | null>(null);
+  const [desktopCompactFilterPlacement, setDesktopCompactFilterPlacement] =
+    useState<DesktopCompactFilterPlacementState>("hidden");
+  const desktopCompactFilterVisibilityRef = useRef(false);
+  const desktopCompactFilterPlacementRef =
+    useRef<DesktopCompactFilterPlacementState>("hidden");
+  const desktopCompactFilterFrameRef = useRef<DesktopCompactFilterFrame | null>(
+    null,
+  );
+  const desktopCompactFilterHeightRef = useRef(1);
+  const scheduleDesktopCompactFilterMeasurementRef = useRef<
+    (() => void) | null
+  >(null);
   const activeFilterCount = useMemo(
     () =>
       Object.values(selectedCarFilters).reduce(
@@ -1577,15 +1611,162 @@ export function CarsResultsExperience({
     };
   }, [filtersOpen]);
 
+  useEffect(() => {
+    if (presentation !== "standalone" || typeof window === "undefined")
+      return undefined;
+
+    let animationFrameId: number | null = null;
+
+    const applyPlacement = (
+      placement: DesktopCompactFilterPlacementState,
+      frame: DesktopCompactFilterFrame | null,
+    ) => {
+      if (placement !== desktopCompactFilterPlacementRef.current) {
+        desktopCompactFilterPlacementRef.current = placement;
+        setDesktopCompactFilterPlacement(placement);
+      }
+
+      const currentFrame = desktopCompactFilterFrameRef.current;
+      const frameChanged =
+        (frame === null) !== (currentFrame === null) ||
+        (frame !== null &&
+          currentFrame !== null &&
+          (Math.abs(frame.left - currentFrame.left) >= 0.5 ||
+            Math.abs(frame.width - currentFrame.width) >= 0.5 ||
+            Math.abs(frame.maxHeight - currentFrame.maxHeight) >= 0.5));
+
+      if (frameChanged) {
+        desktopCompactFilterFrameRef.current = frame;
+        setDesktopCompactFilterFrame(frame);
+      }
+    };
+
+    const measureDesktopCompactFilter = () => {
+      const sentinel = desktopFilterSentinelRef.current;
+      const sidebar = desktopFilterSidebarRef.current;
+      const compactPanel = desktopCompactFilterRef.current;
+      const resultsBody = carsResultsBodyRef.current;
+      const scrollY = window.scrollY;
+      const nextVisibility = shouldShowDesktopCompactFilter({
+        viewportWidth: window.innerWidth,
+        sentinelTop:
+          sentinel?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY,
+        topOffset: desktopCompactFilterTopOffset,
+      });
+
+      if (nextVisibility !== desktopCompactFilterVisibilityRef.current) {
+        desktopCompactFilterVisibilityRef.current = nextVisibility;
+        setShowDesktopCompactFilter(nextVisibility);
+      }
+
+      if (!nextVisibility || !sidebar || !resultsBody) {
+        applyPlacement("hidden", null);
+        return;
+      }
+
+      const sidebarRect = sidebar.getBoundingClientRect();
+      const panelHeight =
+        compactPanel?.getBoundingClientRect().height ??
+        desktopCompactFilterHeightRef.current;
+      if (Number.isFinite(panelHeight) && panelHeight > 0)
+        desktopCompactFilterHeightRef.current = panelHeight;
+
+      const placement = calculateCompactFilterPlacement({
+        enabled: nextVisibility,
+        scrollY,
+        desiredTop: desktopCompactFilterTopOffset,
+        panelHeight,
+        bodyBottomDocument:
+          resultsBody.getBoundingClientRect().bottom + scrollY,
+        currentState: desktopCompactFilterPlacementRef.current,
+        bottomGap: desktopCompactFilterBottomGap,
+      });
+
+      if (placement.state === "hidden") {
+        applyPlacement("hidden", null);
+        return;
+      }
+
+      applyPlacement(placement.state, {
+        left: sidebarRect.left,
+        width: sidebarRect.width,
+        maxHeight: calculateCompactFilterMaxHeight({
+          viewportHeight: window.innerHeight,
+          topOffset: desktopCompactFilterTopOffset,
+          bottomGap: desktopCompactFilterBottomGap,
+        }),
+      });
+    };
+
+    const scheduleMeasurement = () => {
+      if (animationFrameId !== null) return;
+      animationFrameId = window.requestAnimationFrame(() => {
+        animationFrameId = null;
+        measureDesktopCompactFilter();
+      });
+    };
+    scheduleDesktopCompactFilterMeasurementRef.current = scheduleMeasurement;
+
+    const resizeObserver =
+      "ResizeObserver" in window
+        ? new ResizeObserver(scheduleMeasurement)
+        : null;
+    if (resizeObserver) {
+      if (desktopFilterSidebarRef.current)
+        resizeObserver.observe(desktopFilterSidebarRef.current);
+      if (carsResultsBodyRef.current)
+        resizeObserver.observe(carsResultsBodyRef.current);
+    }
+
+    measureDesktopCompactFilter();
+    window.addEventListener("scroll", scheduleMeasurement, { passive: true });
+    window.addEventListener("resize", scheduleMeasurement);
+    return () => {
+      if (animationFrameId !== null)
+        window.cancelAnimationFrame(animationFrameId);
+      scheduleDesktopCompactFilterMeasurementRef.current = null;
+      resizeObserver?.disconnect();
+      window.removeEventListener("scroll", scheduleMeasurement);
+      window.removeEventListener("resize", scheduleMeasurement);
+    };
+  }, [presentation]);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !("ResizeObserver" in window) ||
+      desktopCompactFilterPlacement === "hidden" ||
+      !desktopCompactFilterRef.current
+    )
+      return undefined;
+
+    const resizeObserver = new ResizeObserver(() =>
+      scheduleDesktopCompactFilterMeasurementRef.current?.(),
+    );
+    resizeObserver.observe(desktopCompactFilterRef.current);
+    return () => resizeObserver.disconnect();
+  }, [desktopCompactFilterPlacement]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !showDesktopCompactFilter) return;
+    scheduleDesktopCompactFilterMeasurementRef.current?.();
+  }, [activeFilterCount, results.length, showDesktopCompactFilter]);
+
   return (
     <section
       className={cn("min-w-0", embedded ? "mt-6" : "w-full")}
       aria-labelledby={resultHeadingId}
       data-cars-results-experience
     >
-      <div className="grid gap-5 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
+      <div
+        ref={carsResultsBodyRef}
+        className="grid gap-5 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]"
+      >
         {results.length > 0 ? (
-          <aside className="relative hidden lg:block">
+          <aside
+            className="relative hidden lg:block self-stretch"
+            ref={desktopFilterSidebarRef}
+          >
             <CarFilters
               groups={
                 guidedPlanning
@@ -1601,6 +1782,51 @@ export function CarsResultsExperience({
               selectedFilters={selectedCarFilters}
               t={t}
             />
+            {presentation === "standalone" ? (
+              <>
+                <div
+                  ref={desktopFilterSentinelRef}
+                  className="h-px w-full"
+                  aria-hidden="true"
+                />
+                {showDesktopCompactFilter &&
+                desktopCompactFilterFrame &&
+                desktopCompactFilterPlacement !== "hidden" ? (
+                  <div
+                    ref={desktopCompactFilterRef}
+                    className={cn(
+                      "z-30 flex overflow-visible",
+                      desktopCompactFilterPlacement === "fixed" && "fixed",
+                      desktopCompactFilterPlacement === "docked" &&
+                        "absolute inset-x-0 bottom-0",
+                    )}
+                    style={
+                      desktopCompactFilterPlacement === "fixed"
+                        ? {
+                            top: desktopCompactFilterTopOffset,
+                            left: desktopCompactFilterFrame.left,
+                            width: desktopCompactFilterFrame.width,
+                            maxHeight: desktopCompactFilterFrame.maxHeight,
+                          }
+                        : {
+                            width: "100%",
+                            maxHeight: desktopCompactFilterFrame.maxHeight,
+                          }
+                    }
+                  >
+                    <CarFilters
+                      groups={carFilterGroups}
+                      activeFilterCount={activeFilterCount}
+                      layout="compact"
+                      onClear={clearCarFilters}
+                      onToggle={toggleCarFilter}
+                      selectedFilters={selectedCarFilters}
+                      t={t}
+                    />
+                  </div>
+                ) : null}
+              </>
+            ) : null}
           </aside>
         ) : null}
         <div className="min-w-0 space-y-4">
