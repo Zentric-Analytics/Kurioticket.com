@@ -28,6 +28,7 @@ import {
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import { HotelDesktopPopover } from "@/components/search/HotelDesktopPopover";
 import { MessageBanner } from "@/components/ui/MessageBanner";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
@@ -438,6 +439,7 @@ export function HotelSearchBar({
       : [];
   const shouldShowDestinationSuggestions =
     destinationSuggestionsOpen &&
+    destinationQuery.length >= 1 &&
     (destinationSuggestionsLoading ||
       visibleDestinationSuggestions.length > 0 ||
       destinationQuery.length >= 1);
@@ -552,6 +554,8 @@ export function HotelSearchBar({
       if (!(target instanceof Node)) return;
 
       if (target instanceof Element) {
+        if (target.closest("[data-hotel-desktop-popover]")) return;
+
         const mobilePickerShell = target.closest(
           "[data-flight-mobile-picker-shell]",
         );
@@ -670,6 +674,10 @@ export function HotelSearchBar({
 
   useEffect(() => {
     if (!destinationSuggestionsOpen) {
+      return;
+    }
+
+    if (destinationQuery.length < 1) {
       return;
     }
 
@@ -903,6 +911,7 @@ export function HotelSearchBar({
       const nextOpen = !prev;
 
       if (nextOpen) {
+        setDestinationSuggestionsOpen(false);
         setDestinationMobilePickerOpen(false);
         setGuestsRoomsOpen(false);
       }
@@ -916,6 +925,7 @@ export function HotelSearchBar({
       const nextOpen = !prev;
 
       if (nextOpen) {
+        setDestinationSuggestionsOpen(false);
         setDestinationMobilePickerOpen(false);
         setDatesOpen(false);
       }
@@ -1080,8 +1090,6 @@ export function HotelSearchBar({
           )
         : "h-8 text-[16px] text-slate-900 md:text-sm",
   );
-  const desktopPopoverClassName =
-    "absolute top-[calc(100%+10px)] z-[1000] hidden border border-slate-200 bg-white shadow-[0_24px_56px_rgba(15,23,42,0.20)] ring-1 ring-slate-950/[0.04] sm:block";
   const fieldLabelClassName = cn(
     "block font-semibold uppercase",
     isStickyDialog
@@ -1334,7 +1342,11 @@ export function HotelSearchBar({
                     setDestinationHighlight(0);
                     setError("");
                   }}
-                  onFocus={() => setDestinationSuggestionsOpen(true)}
+                  onFocus={() => {
+                    setDestinationSuggestionsOpen(true);
+                    setDatesOpen(false);
+                    setGuestsRoomsOpen(false);
+                  }}
                   onKeyDown={handleDestinationKeyDown}
                   role="combobox"
                   aria-autocomplete="list"
@@ -1366,14 +1378,16 @@ export function HotelSearchBar({
                 ) : null}
               </span>
               {shouldShowDestinationSuggestions ? (
-                <div
+                <HotelDesktopPopover
+                  open={shouldShowDestinationSuggestions}
+                  launcherRef={destinationInputRef}
+                  preferredWidth={420}
+                  desiredHeight={320}
+                  onClose={() => setDestinationSuggestionsOpen(false)}
                   id={`${idPrefix}-destination-suggestions`}
                   role="listbox"
-                  aria-label={t("hotelDestinationSuggestions")}
-                  className={cn(
-                    desktopPopoverClassName,
-                    "start-0 max-h-[min(68vh,360px)] w-[min(92vw,420px)] overflow-y-auto rounded-2xl p-1.5 lg:w-[min(42vw,440px)]",
-                  )}
+                  ariaLabel={t("hotelDestinationSuggestions")}
+                  className="p-1.5"
                 >
                   {destinationSuggestionsLoading ? (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
@@ -1428,7 +1442,7 @@ export function HotelSearchBar({
                       {t("noMatchingDestinationsYet")}
                     </div>
                   )}
-                </div>
+                </HotelDesktopPopover>
               ) : null}
             </label>
 
@@ -1461,11 +1475,13 @@ export function HotelSearchBar({
                 <span className="truncate">{dateSummary}</span>
               </button>
               {datesOpen ? (
-                <div
-                  className={cn(
-                    desktopPopoverClassName,
-                    "end-0 w-[min(92vw,580px)] rounded-2xl p-3 lg:end-auto lg:start-0",
-                  )}
+                <HotelDesktopPopover
+                  open={datesOpen}
+                  launcherRef={datesMobileLauncherRef}
+                  preferredWidth={570}
+                  desiredHeight={420}
+                  onClose={() => setDatesOpen(false)}
+                  className="p-3"
                 >
                   <p className="mb-2.5 text-sm font-semibold text-slate-900">
                     {t("chooseTravelDates")}
@@ -1593,7 +1609,7 @@ export function HotelSearchBar({
                       {t("done")}
                     </button>
                   </div>
-                </div>
+                </HotelDesktopPopover>
               ) : null}
             </div>
 
@@ -1633,11 +1649,14 @@ export function HotelSearchBar({
                 />
               </button>
               {guestsRoomsOpen ? (
-                <div
-                  className={cn(
-                    desktopPopoverClassName,
-                    "start-0 w-[min(92vw,320px)] rounded-xl p-3 lg:end-0 lg:start-auto",
-                  )}
+                <HotelDesktopPopover
+                  open={guestsRoomsOpen}
+                  launcherRef={guestsRoomsMobileLauncherRef}
+                  preferredWidth={336}
+                  desiredHeight={360}
+                  align="end"
+                  onClose={() => setGuestsRoomsOpen(false)}
+                  className="p-3"
                 >
                   <div className="space-y-3">
                     {[
@@ -1753,7 +1772,7 @@ export function HotelSearchBar({
                       </div>
                     ) : null}
                   </div>
-                </div>
+                </HotelDesktopPopover>
               ) : null}
             </div>
 
