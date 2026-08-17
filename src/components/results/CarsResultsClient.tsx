@@ -768,6 +768,11 @@ export function CarsResultsClient({
         : desktopFullSearchRefs;
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
+      const clickedInsidePickerPopover =
+        target instanceof Element &&
+        target.closest('[data-cars-results-picker-popover="true"]');
+
+      if (clickedInsidePickerPopover) return;
 
       if (
         datesOpen &&
@@ -1267,7 +1272,7 @@ export function CarsResultsClient({
           }}
         >
           <div
-            className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28"
+            className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-12 xl:pt-16"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div
@@ -1990,6 +1995,7 @@ function ResultsDesktopPopover({
       ref={popoverRef}
       role={role}
       aria-label={ariaLabel}
+      data-cars-results-picker-popover="true"
       data-placement={placement}
       style={style}
       className={cn(carsDesktopPopoverClassName, shellClassName)}
@@ -2093,7 +2099,7 @@ function SearchDateCell({
         aria-haspopup="dialog"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        {showRentalDuration ? (
+        {showRentalDuration || isCompact ? (
           <Calendar
             className="h-4 w-4 shrink-0 text-slate-500"
             aria-hidden="true"
@@ -2264,7 +2270,8 @@ function SearchDateCell({
         launcherRef={wrapRef}
         providedPopoverRef={popoverRef}
         preferredWidth={640}
-        desiredHeight={480}
+        desiredHeight={isCompact ? 420 : 480}
+        shellClassName={isCompact ? "overflow-hidden p-3" : undefined}
         role="dialog"
         ariaLabel={t("carsResults.rentalDateRangeCalendar")}
       >
@@ -2295,6 +2302,7 @@ function SearchDateCell({
           }}
           visibleMonthDate={visibleMonthDate}
           weekdays={weekdays}
+          desktopCompact={isCompact}
         />
       </ResultsDesktopPopover>
     </div>

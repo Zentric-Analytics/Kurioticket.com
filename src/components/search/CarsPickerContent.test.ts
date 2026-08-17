@@ -20,7 +20,12 @@ test("shared calendar exposes range state and disables past dates", () => {
   assert.match(shared, /data-in-range=\{inRange \|\| undefined\}/);
   assert.match(shared, /aria-pressed=\{selected\}/);
   assert.match(shared, /length: mobileShell \? 12 : 2/);
-  assert.match(shared, /!mobileShell \? <div className="mb-3 flex items-center justify-between"/);
+  assert.match(
+    shared,
+    /!mobileShell \? <div className=\{desktopCompact \? "mb-2 flex items-center justify-between" : "mb-3 flex items-center justify-between"\}/,
+  );
+  assert.match(shared, /desktopCompact \? "h-7 w-7 text-\[13px\]"/);
+  assert.match(shared, /desktopCompact\?: boolean/);
 });
 
 test("shared calendar shows today with only the restrained ring", () => {
