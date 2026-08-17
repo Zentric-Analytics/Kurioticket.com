@@ -171,3 +171,84 @@ test("desktop controls reuse Cars autocomplete, picker content, and fixed popove
   ])
     assert.match(source, new RegExp(primitive));
 });
+
+test("desktop time cell matches the main search while retaining the full range wiring", () => {
+  const searchTimeCell = source.match(
+    /function SearchTimeCell\([\s\S]*?\n}\n\nfunction DriverAgeCell/,
+  )?.[0];
+
+  assert.ok(searchTimeCell, "SearchTimeCell should remain defined");
+  assert.match(searchTimeCell, /useMainPageDesktopPresentation: boolean/);
+  assert.match(
+    searchTimeCell,
+    /<Clock[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?formatTimeLabel\(pickupTime, intlLocale\)/,
+  );
+  assert.match(searchTimeCell, /<ChevronDown/);
+  assert.match(
+    searchTimeCell,
+    /useMainPageDesktopPresentation \? \([\s\S]*?formatTimeLabel\(pickupTime, intlLocale\)[\s\S]*?\) : \([\s\S]*?formatTimeLabel\(pickupTime, intlLocale\)[\s\S]*?formatTimeLabel\(dropoffTime, intlLocale\)/,
+  );
+  assert.match(
+    searchTimeCell,
+    /preferredWidth=\{448\}[\s\S]*?desiredHeight=\{320\}[\s\S]*?align="center"/,
+  );
+  assert.match(
+    searchTimeCell,
+    /<CarsTimeRangePickerContent[\s\S]*?pickupTime=\{pickupTime\}[\s\S]*?returnTime=\{dropoffTime\}[\s\S]*?onReturnTimeChange=\{setDropoffTime\}/,
+  );
+  assert.match(searchTimeCell, /carsSearch\.pickupTimeLabel/);
+  assert.match(searchTimeCell, /carsSearch\.returnTimeLabel/);
+});
+
+test("desktop driver age cell uses the compact main-search label and icon", () => {
+  const driverAgeCell = source.match(
+    /function DriverAgeCell\([\s\S]*?\n}\n\nfunction CarsResultsShell/,
+  )?.[0];
+
+  assert.ok(driverAgeCell, "DriverAgeCell should remain defined");
+  assert.match(driverAgeCell, /useMainPageDesktopPresentation: boolean/);
+  assert.match(
+    driverAgeCell,
+    /<UserRound[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/,
+  );
+  assert.match(
+    driverAgeCell,
+    /driverAge === defaultDriverAge[\s\S]*?carsSearch\.driverAgeAnyAge[\s\S]*?: getDriverAgeOptionLabel\(driverAge, t\)/,
+  );
+  assert.match(driverAgeCell, /<ChevronDown/);
+  assert.match(
+    driverAgeCell,
+    /preferredWidth=\{288\}[\s\S]*?desiredHeight=\{320\}[\s\S]*?align="end"/,
+  );
+  assert.match(driverAgeCell, /<CarsDriverAgePickerContent/);
+  assert.match(driverAgeCell, /carsSearch\.driverAgeAnyAgeRange/);
+
+  const desktopClosedValue = driverAgeCell.match(
+    /useMainPageDesktopPresentation \? \([\s\S]*?\) : \(/,
+  )?.[0];
+  assert.ok(desktopClosedValue, "desktop Driver Age value should be defined");
+  assert.doesNotMatch(desktopClosedValue, /carsResults\.anyDriverAgeRange/);
+});
+
+test("results desktop popovers pass explicit alignment without changing the default", () => {
+  const resultsDesktopPopover = source.match(
+    /function ResultsDesktopPopover\([\s\S]*?\n}\n\nfunction SearchDateCell/,
+  )?.[0];
+
+  assert.ok(
+    resultsDesktopPopover,
+    "ResultsDesktopPopover should remain defined",
+  );
+  assert.match(resultsDesktopPopover, /align = "start"/);
+  assert.match(resultsDesktopPopover, /align\?: "start" \| "center" \| "end"/);
+  assert.match(
+    resultsDesktopPopover,
+    /useCarsDesktopPopover\(\{[\s\S]*?align,[\s\S]*?}\)/,
+  );
+
+  const searchDateCell = source.match(
+    /function SearchDateCell\([\s\S]*?\n}\n\nfunction SearchTimeCell/,
+  )?.[0];
+  assert.ok(searchDateCell, "SearchDateCell should remain defined");
+  assert.doesNotMatch(searchDateCell, /align=/);
+});
