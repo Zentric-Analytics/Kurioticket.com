@@ -961,11 +961,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Oferty lotów od czołowych linii",
   homePromoFlightsBody:
     "Odkrywaj ograniczone czasowo taryfy i natychmiast porównuj opcje.",
-  homePromoFlightsCta: "Przeglądaj oferty lotów",
+  homePromoFlightsCta: "Przeglądaj pakiety lotnicze",
   homePromoHotelsTitle: "Oszczędności hotelowe na całym świecie",
   homePromoHotelsBody:
     "Przeglądaj pobyty od hoteli butikowych po globalne sieci z przejrzystymi cenami.",
-  homePromoHotelsCta: "Przeglądaj oferty hoteli",
+  homePromoHotelsCta: "Przeglądaj pakiety hotelowe",
   faqHeading: "Najczęściej zadawane pytania",
   faqIntro:
     "Dowiedz się, jak Kurioticket pomaga porównywać loty, hotele i opcje podróży przed rezerwacją u zaufanych dostawców.",

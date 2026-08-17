@@ -6,6 +6,10 @@ import { countryDirectoryCountries } from "@/data/homepageCountryDirectory";
 const countryDirectoryCategories = ["Hotels", "Flights", "Cars"] as const;
 
 const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
+const englishSource = readFileSync(
+  new URL("../lib/i18n/en.ts", import.meta.url),
+  "utf8",
+);
 const hotelsPageSource = readFileSync(
   new URL("./hotels/page.tsx", import.meta.url),
   "utf8",
@@ -40,6 +44,30 @@ test("homepage section order places trust between adventure and regional routes"
   assert.ok(
     regionalIndex > trustIndex,
     "regional routes should follow trust section",
+  );
+});
+
+test("homepage package promos route consistently and regional routes omit the view-all link", () => {
+  const promoSection = pageSource.slice(
+    pageSource.indexOf('className="page-shell grid gap-5 py-9 lg:grid-cols-2"'),
+    pageSource.indexOf('aria-labelledby="homepage-country-directory-heading"'),
+  );
+  assert.equal(promoSection.match(/href="\/packages"/g)?.length, 2);
+  assert.doesNotMatch(promoSection, /href="\/hotels\/results"/);
+
+  const regionalSection = pageSource.slice(
+    pageSource.indexOf('aria-labelledby="regional-routes-heading"'),
+    pageSource.indexOf('className="page-shell grid gap-5 py-9 lg:grid-cols-2"'),
+  );
+  assert.doesNotMatch(regionalSection, /homeRegionalRoutesViewAll/);
+  assert.doesNotMatch(regionalSection, /View all route ideas/);
+  assert.match(
+    englishSource,
+    /homePromoFlightsCta: "Explore flight packages"/,
+  );
+  assert.match(
+    englishSource,
+    /homePromoHotelsCta: "Explore hotel packages"/,
   );
 });
 

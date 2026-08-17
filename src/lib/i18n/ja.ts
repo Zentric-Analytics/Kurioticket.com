@@ -1029,11 +1029,11 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-rob.routeNote": "大西洋のビーチとローカルマーケットを楽しむ西アフリカの都市休暇。",
   homePromoFlightsTitle: "主要航空会社のお得な航空券",
   homePromoFlightsBody: "期間限定運賃を見つけて、選択肢をすぐに比較できます。",
-  homePromoFlightsCta: "航空券のお得情報を見る",
+  homePromoFlightsCta: "フライトパッケージを見る",
   homePromoHotelsTitle: "世界中のホテルをお得に",
   homePromoHotelsBody:
     "ブティックホテルからグローバルチェーンまで、料金をわかりやすく比較しながら探せます。",
-  homePromoHotelsCta: "ホテルのお得情報を見る",
+  homePromoHotelsCta: "ホテルパッケージを見る",
   homeHotelDestinationsTitle: "世界の滞在先を探す",
   homeHotelDestinationsSubtitle:
     "人気の都市、国、地域からホテル目的地を見つけましょう。",
