@@ -9,7 +9,7 @@ export async function runPreviewPreflight({ config, ledger, github, render, rend
   const deploy = await render.latestDeploy();
   const project = await eas.projectInfo();
   const builds = await eas.previewBuildHistory();
-  const updates = await eas.listUpdates();
+  const updates = await eas.previewUpdateHistoryProbe();
   const appleContext = await apple.previewContext();
   assertPreviewIdentity({
     appName: PREVIEW_IDENTITY.appName,

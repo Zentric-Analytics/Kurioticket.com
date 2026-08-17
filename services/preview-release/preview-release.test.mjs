@@ -163,8 +163,26 @@ ID        ${PREVIEW_IDENTITY.easProjectId}
   client.run = async (args) => { calls.push(args); return []; };
   assert.equal((await client.projectInfo()).projectId, PREVIEW_IDENTITY.easProjectId);
   assert.deepEqual(await client.previewBuildHistory(), []);
+  assert.deepEqual(await client.previewUpdateHistoryProbe(), []);
   assert.deepEqual(calls[0], ["eas-cli@16.17.4", "project:info"]);
-  assert.equal(calls.every((args) => !args.includes("build") && !args.includes("update")), true);
+  assert.deepEqual(calls.at(-1), ["eas-cli@16.17.4", "update:list", "--branch", "preview", "--limit", "1", "--offset", "0", "--json", "--non-interactive"]);
+});
+
+test("EAS update reads stay bounded when Preview history exceeds 500 records", async () => {
+  const client = new EasClient({ expoToken: "expo-secret", cwd: repositoryRoot, command: "unused" });
+  const calls = [];
+  client.run = async (args) => {
+    calls.push(args);
+    const limit = Number(args[args.indexOf("--limit") + 1]);
+    return Array.from({ length: limit }, (_, index) => ({
+      branch: "preview", runtimeVersion: "preview-0.3.0", group: `group-${calls.length}-${index}`,
+      platforms: ["ios"], message: "historical update",
+    }));
+  };
+  assert.equal((await client.previewUpdateHistoryProbe()).length, 1);
+  assert.equal((await client.listUpdates()).length, 100);
+  assert.equal(calls.length, 3, "one probe page and exactly two reconciliation pages are permitted");
+  assert.equal(calls.some((args) => Number(args[args.indexOf("--offset") + 1]) >= 100), false);
 });
 
 test("EAS preflight rejects wrong projects, authentication errors, and malformed history", async () => {
@@ -188,7 +206,7 @@ test("provider preflight validates all read-only identities without mutation in 
       github: { latestDevSha: async () => sha },
       render: { getService: async () => ({ id: PREVIEW_IDENTITY.renderStagingServiceId, name: "Kurioticket.com-staging" }), latestDeploy: async () => ({ id: "dep-stage", status: "live" }), createDeploy: async () => { mutations += 1; } },
       renderWorker: { getPreviewWorkerService: async () => ({ id: PREVIEW_IDENTITY.renderWorkerServiceId, autoDeployOnCommit: true, branch: "dev" }) },
-      eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], listUpdates: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
+      eas: { projectInfo: async () => ({ projectId: PREVIEW_IDENTITY.easProjectId }), previewBuildHistory: async () => [], previewUpdateHistoryProbe: async () => [], createIosBuild: async () => { mutations += 1; }, publishUpdate: async () => { mutations += 1; } },
       apple: { previewContext: async () => ({ app: { id: "6797447471" }, group: { id: "group-preview", attributes: { isInternalGroup: true } } }) },
     });
     assert.equal(result.status, "PASS");
