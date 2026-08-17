@@ -61,6 +61,32 @@ test("desktop sticky compact search opens the popout neutrally without targeting
   assert.doesNotMatch(callback, /\.focus\(\)/);
 });
 
+test("compact toolbar fields do not add colored focus surrounds", () => {
+  const toolbar = desktopMinimizedSearchBarSource();
+
+  assert.match(toolbar, /focus-visible:outline-none/);
+  assert.doesNotMatch(toolbar, /focus-ring flex h-\[56px\]/);
+  assert.doesNotMatch(toolbar, /focus-visible:bg-slate/);
+});
+
+test("sticky editor exposes all trip types in production order and closes from the backdrop", () => {
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchPopovers", start);
+  const popout = source.slice(start, end);
+  const roundTrip = popout.indexOf('label: t("roundTrip")');
+  const oneWay = popout.indexOf('label: t("oneWay")');
+  const multiCity = popout.indexOf('label: t("multiCity")');
+
+  assert.ok(roundTrip >= 0 && roundTrip < oneWay && oneWay < multiCity);
+  assert.match(popout, /aria-disabled=\{option\.disabled\}/);
+  assert.match(popout, /disabled=\{option\.disabled\}/);
+  assert.match(
+    popout,
+    /if \(event\.target === event\.currentTarget\) \{\s*collapseStickySearch\(\)/,
+  );
+  assert.doesNotMatch(popout, /focus-within:ring-\[#004BB8\]/);
+});
+
 test("sticky search popout uses neutral dialog focus and returns focus to trigger", () => {
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
