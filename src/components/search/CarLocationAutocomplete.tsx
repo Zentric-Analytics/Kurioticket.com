@@ -36,8 +36,6 @@ type Props = {
   countryHint?: string;
   strings: Strings;
   onRequestClose?: () => void;
-  fieldAnchorRef?: RefObject<HTMLElement | null>;
-  searchCardRef?: RefObject<HTMLElement | null>;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   autoFocus?: boolean;

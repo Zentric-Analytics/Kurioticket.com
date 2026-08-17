@@ -28,8 +28,8 @@ test("desktop Cars uses the approved text-free coastal convertible hero", () => 
   );
   assert.doesNotMatch(source, /text-\[2\.65rem\]|lg:text-\[3rem\]/);
   assert.doesNotMatch(source, /t\("carsDesktopHeroBody"\)/);
-  assert.match(source, /pb-40 sm:block lg:pb-44/);
-  assert.match(source, /bottom-\[-114px\][\s\S]*?lg:bottom-\[-118px\]/);
+  assert.match(source, /pb-44 sm:block lg:pb-48/);
+  assert.match(source, /bottom-\[-126px\][\s\S]*?lg:bottom-\[-130px\]/);
   assert.doesNotMatch(source, /bottom-\[-100px\]|lg:bottom-\[-104px\]/);
   assert.doesNotMatch(
     source,
@@ -88,6 +88,51 @@ test("return location is a distinct desktop field only when enabled", () => {
     searchBar,
     /onClick=\{onClearSearch\}|\{t\("clearAll"\)\}/,
   );
+});
+
+test("desktop return location owns one autocomplete and its own field anchor", () => {
+  assert.equal(
+    (searchBar.match(/<CarLocationAutocomplete/g) ?? []).length,
+    2,
+    "CarsSearchBar should render one pickup and one return autocomplete",
+  );
+  assert.equal(
+    (searchBar.match(/id="dropoffLocationDesktop"/g) ?? []).length,
+    1,
+  );
+  assert.doesNotMatch(searchBar, /id="dropoffLocation"/);
+  assert.match(searchBar, /const dropoffFieldRef = useRef<HTMLDivElement \| null>\(null\)/);
+  assert.match(
+    searchBar,
+    /divRef=\{dropoffFieldRef\}[\s\S]*?id="dropoffLocationDesktop"[\s\S]*?inputRef=\{dropoffLocationRef\}/,
+  );
+  assert.doesNotMatch(searchBar, /fieldAnchorRef=|searchCardRef=/);
+});
+
+test("pickup and return share the query-driven autocomplete and selection contract", () => {
+  for (const [id, stateKey, inputRef] of [
+    ["pickupLocation", "pickupLocation", "pickupLocationRef"],
+    ["dropoffLocationDesktop", "dropoffLocation", "dropoffLocationRef"],
+  ]) {
+    const start = searchBar.indexOf(`id="${id}"`);
+    assert.ok(start >= 0);
+    const field = searchBar.slice(start, start + 1_200);
+    assert.match(field, new RegExp(`value=\\{values\\.${stateKey}\\}`));
+    assert.match(field, new RegExp(`updateValue\\("${stateKey}", nextValue\\)`));
+    assert.match(field, new RegExp(`inputRef=\\{${inputRef}\\}`));
+    assert.match(field, /presentation="desktop"/);
+  }
+
+  assert.match(
+    searchBar,
+    /if \(!values\.returnToDifferentLocation\)[\s\S]*?current === "dropoff" \? null : current/,
+  );
+});
+
+test("desktop location fields have no explicit clear controls", () => {
+  assert.doesNotMatch(searchBar, /carsSearch\.clearPickupLocation/);
+  assert.doesNotMatch(searchBar, /carsSearch\.clearReturnLocation/);
+  assert.doesNotMatch(searchBar, /<X\b/);
 });
 
 test("desktop date, time, and age summaries match the approved hierarchy", () => {
