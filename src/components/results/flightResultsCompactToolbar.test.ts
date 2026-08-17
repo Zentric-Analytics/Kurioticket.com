@@ -35,6 +35,8 @@ test("desktop sticky compact search is a small four-section toolbar without trip
   assert.doesNotMatch(toolbar, /openStickySearchEditor\("travelers"\)/);
   assert.doesNotMatch(toolbar, /t\("tripType"\)/);
   assert.doesNotMatch(toolbar, /mobileTripTypeSummary/);
+  assert.equal(toolbar.match(/text-slate-500/g)?.length, 3);
+  assert.doesNotMatch(toolbar, /text-\[#004BB8\]/);
 });
 
 
@@ -64,4 +66,17 @@ test("sticky search popout uses neutral dialog focus and returns focus to trigge
   assert.match(source, /aria-modal="true"/);
   assert.match(source, /stickySearchCloseButtonRef\.current\?\.focus\(\)/);
   assert.match(source, /stickySearchLauncherRef\.current\?\.focus\(\)/);
+});
+
+test("sticky search popout uses neutral field icons and keeps the calendar controls in view", () => {
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchPopovers", start);
+  const popout = source.slice(start, end);
+
+  assert.equal(popout.match(/<MapPin aria-hidden="true"/g)?.length, 2);
+  assert.match(popout, /<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.match(popout, /<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.match(popout, /text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800/);
+  assert.doesNotMatch(popout, /text-\[#5CB6B2\]|text-\[#39948F\]/);
+  assert.match(popout, /pb-8 pt-12 xl:pt-16/);
 });
