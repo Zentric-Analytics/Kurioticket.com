@@ -30,6 +30,7 @@ import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDeta
 import { HotelDetailsHeader } from "@/components/results/hotelDetails/HotelDetailsHeader";
 import { GuidedHotelRoomCard } from "@/components/results/hotelDetails/GuidedHotelRoomCard";
 import { getLowestEstimateRoomId } from "@/components/results/hotelDetails/guidedHotelRoomPresentation";
+import { getGuidedDealsDownstreamProducts } from "@/lib/deals/dealsGuidedJourneyOrder";
 import {
   HotelDetailsLoadingState,
   HotelDetailsUnavailableState,
@@ -549,12 +550,15 @@ export function HotelDetailsClient({
           resultReceivedAt,
         })
       : null;
+  const guidedHotelNextProduct = guidedSearch
+    ? getGuidedDealsDownstreamProducts(guidedSearch.mode, "hotel")[0]
+    : undefined;
   const guidedActionLabel =
-    guidedSearch?.mode === "hotel-car"
+    guidedHotelNextProduct === "car"
       ? t("deals.guided.hotelDetails.continueCars") ||
         "Continue with this room to cars"
-      : t("deals.guided.hotelDetails.continueFlights") ||
-        "Continue with this room to flights";
+      : t("deals.guided.hotelDetails.continueReview") ||
+        "Continue with this room to review";
   const guidedUnavailableText =
     guidedPriceState === "selection-required"
       ? t("deals.guided.hotelDetails.selectRoomToContinue")

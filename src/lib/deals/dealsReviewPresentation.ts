@@ -18,6 +18,7 @@ import {
   getDealsStayNights,
   titleCaseDealsLabel,
 } from "./dealsTripPresentation";
+import { getGuidedDealsProductOrder } from "./dealsGuidedJourneyOrder";
 
 export type DealsReviewItem = Readonly<{
   product: DealsTripPlanProduct;
@@ -81,9 +82,7 @@ export function getDealsReviewStatus(
   now: number,
   contextVisible = true,
 ): DealsReviewStatus {
-  const included = plan
-    ? (getIncludedProductList(plan.mode) as DealsTripPlanProduct[])
-    : [];
+  const included = plan ? getGuidedDealsProductOrder(plan.mode) : [];
   const missing = included.filter((product) => !plan?.[product]);
   const expired = included.filter((product) => {
     const selection = plan?.[product];
@@ -118,7 +117,7 @@ export function getDealsReviewItems(
   now: number,
   locale: string,
 ): DealsReviewItem[] {
-  return (getIncludedProductList(plan.mode) as DealsTripPlanProduct[]).flatMap(
+  return getGuidedDealsProductOrder(plan.mode).flatMap(
     (product): DealsReviewItem[] => {
       const selection = plan[product];
       if (!selection) return [];

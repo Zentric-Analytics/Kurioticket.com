@@ -1,6 +1,5 @@
 import {
   buildDealsResultsUrl,
-  getIncludedProducts,
   serializeDealsSearchParams,
   type DealsPackageMode,
   type DealsSearch,
@@ -10,6 +9,10 @@ import {
   isDealsTripPlanProductExpired,
   type DealsTripPlan,
 } from "./dealsTripPlan";
+import {
+  getGuidedDealsPrerequisites,
+  getGuidedDealsProductOrder,
+} from "./dealsGuidedJourneyOrder";
 
 export const dealsJourneyStages = [
   "hotel-results",
@@ -22,16 +25,17 @@ export const dealsJourneyStages = [
 ] as const;
 export type DealsJourneyStage = (typeof dealsJourneyStages)[number];
 
+const getStagesForMode = (mode: DealsPackageMode): DealsJourneyStage[] =>
+  getGuidedDealsProductOrder(mode).flatMap((product) =>
+    product === "hotel"
+      ? (["hotel-results", "hotel-details"] as DealsJourneyStage[])
+      : ([`${product}-results`] as DealsJourneyStage[]),
+  );
 const stagesByMode: Record<DealsPackageMode, readonly DealsJourneyStage[]> = {
-  "hotel-flight": ["hotel-results", "hotel-details", "flight-results"],
-  "hotel-flight-car": [
-    "hotel-results",
-    "hotel-details",
-    "flight-results",
-    "car-results",
-  ],
-  "hotel-car": ["hotel-results", "hotel-details", "car-results"],
-  "flight-car": ["flight-results", "car-results"],
+  "hotel-flight": getStagesForMode("hotel-flight"),
+  "flight-car": getStagesForMode("flight-car"),
+  "hotel-car": getStagesForMode("hotel-car"),
+  "hotel-flight-car": getStagesForMode("hotel-flight-car"),
 };
 
 export const isDealsJourneyStage = (
@@ -158,10 +162,8 @@ export function getEarliestIncompleteDealsJourneyStage(
   mode: DealsPackageMode,
   plan: Pick<DealsTripPlan, "hotel" | "flight" | "car"> | null,
 ): DealsJourneyStage {
-  const included = getIncludedProducts(mode);
-  if (included.hotel && !has(plan, "hotel")) return "hotel-results";
-  if (included.flight && !has(plan, "flight")) return "flight-results";
-  if (included.car && !has(plan, "car")) return "car-results";
+  for (const product of getGuidedDealsProductOrder(mode))
+    if (!has(plan, product)) return `${product}-results`;
   return "review";
 }
 
@@ -171,8 +173,10 @@ export function getRequiredDealsJourneyStage(
   plan: Pick<DealsTripPlan, "hotel" | "flight" | "car"> | null,
   transientHotelId?: unknown,
   _transientFlightId?: unknown,
-  transientCarId?: unknown,
+  _transientCarId?: unknown,
 ): DealsJourneyStage {
+  void _transientFlightId;
+  void _transientCarId;
   if (stage === "review")
     return getEarliestIncompleteDealsJourneyStage(mode, plan);
   // Historical guided Flight Details URLs belong to the retired two-stage
@@ -182,21 +186,17 @@ export function getRequiredDealsJourneyStage(
   if (stage === "car-details")
     return getRequiredDealsJourneyStage("car-results", mode, plan);
   if (!isStageInDealsMode(stage, mode)) return getFirstDealsJourneyStage(mode);
-  const included = getIncludedProducts(mode);
-  if (stage === "hotel-results") return "hotel-results";
+  const product = stage.startsWith("hotel")
+    ? "hotel"
+    : stage.startsWith("flight")
+      ? "flight"
+      : "car";
+  for (const prerequisite of getGuidedDealsPrerequisites(mode, product))
+    if (!has(plan, prerequisite)) return `${prerequisite}-results`;
   if (stage === "hotel-details")
     return has(plan, "hotel") || normalizeDealsJourneyHotelId(transientHotelId)
       ? stage
       : "hotel-results";
-  if (included.hotel && !has(plan, "hotel")) return "hotel-results";
-  if (stage === "flight-results") return stage;
-  if (included.flight && !has(plan, "flight")) return "flight-results";
-  if (stage === "car-results") return stage;
-  if (stage === "car-details")
-    return has(plan, "car") || normalizeDealsJourneyCarId(transientCarId)
-      ? stage
-      : "car-results";
-  if (included.car && !has(plan, "car")) return "car-results";
   return stage;
 }
 
@@ -220,24 +220,13 @@ export function getRequiredDealsJourneyStageAt(
   );
   if (completeness !== requestedStage || !plan) return completeness;
   if (isDealsTripPlanExpired(plan, now)) return getFirstDealsJourneyStage(mode);
-  const included = getIncludedProducts(mode);
-  if (
-    included.hotel &&
-    plan.hotel &&
-    isDealsTripPlanProductExpired(plan.hotel.resultReceivedAt, now)
-  )
-    return "hotel-results";
-  if (
-    included.flight &&
-    plan.flight &&
-    isDealsTripPlanProductExpired(plan.flight.resultReceivedAt, now)
-  )
-    return "flight-results";
-  if (
-    included.car &&
-    plan.car &&
-    isDealsTripPlanProductExpired(plan.car.resultReceivedAt, now)
-  )
-    return "car-results";
+  for (const product of getGuidedDealsProductOrder(mode)) {
+    const selection = plan[product];
+    if (
+      selection &&
+      isDealsTripPlanProductExpired(selection.resultReceivedAt, now)
+    )
+      return `${product}-results`;
+  }
   return requestedStage;
 }

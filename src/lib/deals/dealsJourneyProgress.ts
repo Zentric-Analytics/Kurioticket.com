@@ -1,5 +1,6 @@
 import type { DealsPackageMode } from "./dealsSearchParams";
 import { getIncludedProductList } from "./dealsSearchParams";
+import { getGuidedDealsProductOrder } from "./dealsGuidedJourneyOrder";
 import type { DealsTripPlan } from "./dealsTripPlan";
 import type { DealsJourneyStage } from "./dealsJourneyRoutes";
 import { getRequiredDealsJourneyStateV2 } from "./dealsJourneyEngineV2";
@@ -175,10 +176,14 @@ export function getGuidedDealsJourneyProgress(
   const requested: Partial<
     Record<DealsJourneyStepId, Omit<DealsJourneyStep, "id">>
   > = {};
-  for (const id of getDealsJourneyStepIds(mode)) {
+  const guidedIds: DealsJourneyStepId[] = [
+    ...getGuidedDealsProductOrder(mode),
+    "review",
+  ];
+  for (const id of guidedIds) {
     if (id === currentId) requested[id] = { status: "current", substate };
     else if (id !== "review")
       requested[id] = { status: plan?.[id] ? "completed" : "upcoming" };
   }
-  return createDealsJourneyProgress(mode, requested);
+  return createDealsJourneyProgressFromIds(mode, guidedIds, requested);
 }

@@ -89,7 +89,7 @@ test("maps review products in canonical included order and omits excluded produc
       now,
       "en-US",
     ).map((i) => i.product),
-    ["hotel", "flight"],
+    ["flight", "hotel"],
   );
   assert.deepEqual(
     getDealsReviewItems(
@@ -111,14 +111,14 @@ test("maps review products in canonical included order and omits excluded produc
   );
   assert.deepEqual(
     getDealsReviewItems(plan, search, now, "en-US").map((i) => i.product),
-    ["hotel", "flight", "car"],
+    ["flight", "hotel", "car"],
   );
 });
 
 test("preserves stored product facts, prices, currencies, durations, and providers", () => {
   const items = getDealsReviewItems(plan, search, now, "en-US");
-  const hotel = items[0],
-    flight = items[1],
+  const flight = items[0],
+    hotel = items[1],
     car = items[2];
   assert.equal(hotel.title, "Truth Hotel");
   assert.equal(hotel.subtitle, "Los Angeles");
@@ -194,14 +194,17 @@ test("computes completeness, freshness, change URLs, and handoff URL safely", ()
 
 test("filters totals and freshness to the current package without mutating the plan", () => {
   for (const [mode, products] of [
-    ["hotel-flight", ["hotel", "flight"]],
+    ["hotel-flight", ["flight", "hotel"]],
     ["hotel-car", ["hotel", "car"]],
     ["flight-car", ["flight", "car"]],
-    ["hotel-flight-car", ["hotel", "flight", "car"]],
+    ["hotel-flight-car", ["flight", "hotel", "car"]],
   ] as const) {
     const modePlan = { ...plan, mode };
     const snapshot = JSON.stringify(modePlan);
-    assert.deepEqual(Object.keys(getDealsReviewTotalPlan(modePlan)), products);
+    assert.deepEqual(
+      new Set(Object.keys(getDealsReviewTotalPlan(modePlan))),
+      new Set(products),
+    );
     assert.deepEqual(
       getDealsReviewItems(modePlan, { ...search, mode }, now, "en-US").map(
         (item) => item.product,

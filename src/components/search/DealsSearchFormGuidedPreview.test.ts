@@ -131,8 +131,8 @@ test("preview action uses shared validation and canonical guided route helpers",
 
 test("preview route helper starts each package mode at its owned first stage", () => {
   const expected = {
-    "hotel-flight": "hotel-results",
-    "hotel-flight-car": "hotel-results",
+    "hotel-flight": "flight-results",
+    "hotel-flight-car": "flight-results",
     "hotel-car": "hotel-results",
     "flight-car": "flight-results",
   } as const;
