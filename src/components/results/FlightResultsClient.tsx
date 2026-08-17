@@ -144,8 +144,9 @@ type NearbyFareRequest = {
   promise: Promise<void>;
 };
 
-const nearbyFareRangeSize = 7;
-const nearbyFareDaysBeforeAnchor = 3;
+const nearbyFareRangeSize = 10;
+const nearbyFareVisibleCount = 7;
+const nearbyFareDaysBeforeAnchor = 4;
 const nearbyFareRequestConcurrency = 4;
 const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
@@ -1007,7 +1008,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
-  const [fareWindowStart, setFareWindowStart] = useState<string | null>(null);
+  const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(0);
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
@@ -2773,13 +2774,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
 
     let active = true;
-    const initialWindowStart = formatDateValue(
-      getNearbyFareWindowStart(centerDate),
-    );
-    const activeWindowStart = fareWindowStart ?? initialWindowStart;
-    const dates = getNearbyFareDateRange(
-      parseDateValue(activeWindowStart) ?? centerDate,
-    );
+    const dates = getNearbyFareDateRange(getNearbyFareWindowStart(centerDate));
     const fetchedAt = Date.now();
     const currentFare = getLowestProviderFare(results);
     const selectedKey = getNearbyFareCacheKey(body, body.departureDate);
@@ -2927,7 +2922,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeRequests.forEach((request) => request.controller.abort());
       activeRequests.clear();
     };
-  }, [body, fareWindowStart, guidedMode, results]);
+  }, [body, guidedMode, results]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
@@ -3389,29 +3384,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const departureDate = parseDateValue(body.departureDate);
     if (!departureDate) return;
 
-    setFareWindowStart(
-      formatDateValue(getNearbyFareWindowStart(departureDate)),
-    );
+    setNearbyFareVisibleStart(0);
   }, [body?.departureDate]);
 
-  const navigateNearbyFareWeek = useCallback(
+  const navigateNearbyFareWindow = useCallback(
     (direction: "previous" | "next") => {
-      setFareWindowStart((current) => {
-        const fallbackDate = body?.departureDate
-          ? parseDateValue(body.departureDate)
-          : null;
-        const currentStart = current ? parseDateValue(current) : null;
-        const start =
-          currentStart ??
-          (fallbackDate ? getNearbyFareWindowStart(fallbackDate) : null);
-        if (!start) return current;
-
-        const nextStart = addDays(start, direction === "previous" ? -7 : 7);
-        const today = startOfLocalDay(new Date());
-        return formatDateValue(nextStart < today ? today : nextStart);
-      });
+      setNearbyFareVisibleStart((current) =>
+        Math.max(
+          0,
+          Math.min(
+            current + (direction === "previous" ? -1 : 1),
+            nearbyFareRangeSize - nearbyFareVisibleCount,
+          ),
+        ),
+      );
     },
-    [body?.departureDate],
+    [],
   );
 
   const sortOptions = useMemo(
@@ -7203,17 +7191,21 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   <div className="mx-auto grid w-full max-w-[780px] grid-cols-[36px_repeat(7,minmax(72px,1fr))_36px] items-stretch overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <button
                       type="button"
-                      aria-label="Previous week"
-                      onClick={() => navigateNearbyFareWeek("previous")}
-                      className="focus-ring inline-flex min-h-[88px] items-center justify-center border-e border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8]"
+                      aria-label="Previous nearby fare date"
+                      disabled={nearbyFareVisibleStart === 0}
+                      onClick={() => navigateNearbyFareWindow("previous")}
+                      className="focus-ring inline-flex min-h-[88px] items-center justify-center border-e border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
                     >
                       <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                     </button>
 
                     {(nearbyFares.length
-                      ? nearbyFares
+                      ? nearbyFares.slice(
+                          nearbyFareVisibleStart,
+                          nearbyFareVisibleStart + nearbyFareVisibleCount,
+                        )
                       : Array.from(
-                          { length: nearbyFareRangeSize },
+                          { length: nearbyFareVisibleCount },
                           (_, index) => ({
                             date: `loading-${index}`,
                             status: "loading" as const,
@@ -7300,11 +7292,18 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "mt-1 max-w-full truncate text-[12px] font-medium leading-4",
+                                  "flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-4",
                                   selected
                                     ? "font-semibold text-[#075EE8]"
                                     : "text-slate-900",
                                 )}
+                                data-price-size={
+                                  ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 13
+                                    ? "extra-long"
+                                    : ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 10
+                                      ? "long"
+                                      : "default"
+                                }
                                 dir="ltr"
                               >
                                 {displayPrice ?? "Unavailable"}
@@ -7317,9 +7316,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
                     <button
                       type="button"
-                      aria-label="Next week"
-                      onClick={() => navigateNearbyFareWeek("next")}
-                      className="focus-ring inline-flex min-h-[88px] items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8]"
+                      aria-label="Next nearby fare date"
+                      disabled={
+                        nearbyFareVisibleStart >=
+                        nearbyFareRangeSize - nearbyFareVisibleCount
+                      }
+                      onClick={() => navigateNearbyFareWindow("next")}
+                      className="focus-ring inline-flex min-h-[88px] items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
                     >
                       <ChevronRight className="h-5 w-5" aria-hidden="true" />
                     </button>
@@ -8711,23 +8714,25 @@ function TravelerCabinPopover({
             </h3>
           ) : null}
 
-          <div className="mt-3 divide-y divide-slate-100">
+          <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white px-3">
             <CounterRow
-              label={t("adultPlural")}
+              label={t("adults")}
               description={t("adultAgeRange")}
               value={adultCount}
               min={1}
               max={9}
               onChange={onAdultChange}
+              presentation="desktop"
             />
 
             <CounterRow
-              label={t("childPlural")}
+              label={t("children")}
               description={t("childAgeRange")}
               value={childCount}
               min={0}
               max={9}
               onChange={onChildChange}
+              presentation="desktop"
             />
 
             <CounterRow
@@ -8737,15 +8742,16 @@ function TravelerCabinPopover({
               min={0}
               max={adultCount}
               onChange={onInfantChange}
+              presentation="desktop"
             />
           </div>
         </div>
 
-        <div className="mt-2 border-t border-slate-200 pt-2">
+        <div className="mt-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">
             {t("cabinClass")}
           </h3>
-          <div className="mt-2 grid grid-cols-3 gap-1">
+          <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
             {cabinClassOptions.map((option) => {
               const selected = option.value === cabinClass;
 
@@ -8756,10 +8762,10 @@ function TravelerCabinPopover({
                   aria-pressed={selected}
                   onClick={() => onCabinClassChange(option.value)}
                   className={cn(
-                    "focus-ring min-h-11 rounded-xl border px-3 py-2 text-sm font-bold leading-4 text-center transition-colors",
+                    "focus-ring min-h-11 border-e border-slate-200 px-3 py-2 text-center text-sm font-semibold leading-4 transition-colors last:border-e-0",
                     selected
-                      ? "border-[#004BB8]/22 bg-[#004BB8]/6 text-[#021C2B]"
-                      : "border-slate-300 text-slate-700 hover:bg-slate-50",
+                      ? "bg-[#EEF5FF] text-[#004BB8] shadow-[inset_0_0_0_1px_#075EE8]"
+                      : "text-slate-700 hover:bg-slate-50",
                   )}
                 >
                   {t(option.labelKey)}
@@ -8792,6 +8798,7 @@ function CounterRow({
   min,
   max,
   onChange,
+  presentation = "default",
 }: {
   label: string;
   description: string;
@@ -8799,29 +8806,30 @@ function CounterRow({
   min: number;
   max: number;
   onChange: (value: number) => void;
+  presentation?: "default" | "desktop";
 }) {
   const decrementDisabled = value <= min;
   const incrementDisabled = value >= max;
 
   return (
-    <div className="flex min-h-10 items-center justify-between gap-3 py-2.5">
-      <div>
+    <div className={cn("flex items-center justify-between gap-3", presentation === "desktop" ? "min-h-[68px] py-3" : "min-h-10 py-2.5")}>
+      <div className="min-w-0">
         <p className="text-sm font-bold text-slate-950">{label}</p>
         <p className="text-xs font-semibold text-slate-500">{description}</p>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className={cn("flex shrink-0 items-center", presentation === "desktop" ? "gap-2" : "gap-1")}>
         <button
           type="button"
           aria-label={`Decrease ${label.toLowerCase()}`}
           disabled={decrementDisabled}
           onClick={() => onChange(value - 1)}
-          className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className={cn("focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:opacity-40", presentation === "desktop" ? "h-10 w-10" : "h-7 w-7")}
         >
-          <Minus className="h-3.5 w-3.5" />
+          <Minus className={presentation === "desktop" ? "h-4 w-4" : "h-3.5 w-3.5"} />
         </button>
 
-        <span className="min-w-7 text-center text-sm font-semibold text-slate-900">
+        <span className={cn("text-center font-semibold tabular-nums text-slate-900", presentation === "desktop" ? "min-w-8 text-base" : "min-w-7 text-sm")}>
           {value}
         </span>
 
@@ -8830,9 +8838,9 @@ function CounterRow({
           aria-label={`Increase ${label.toLowerCase()}`}
           disabled={incrementDisabled}
           onClick={() => onChange(value + 1)}
-          className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className={cn("focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:opacity-40", presentation === "desktop" ? "h-10 w-10" : "h-7 w-7")}
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className={presentation === "desktop" ? "h-4 w-4" : "h-3.5 w-3.5"} />
         </button>
       </div>
     </div>
