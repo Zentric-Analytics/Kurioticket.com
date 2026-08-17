@@ -1470,7 +1470,7 @@ export function HotelResultsExperience({
 
   function renderDesktopMinimizedHotelSearchBar() {
     const compactSectionClass =
-      "focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-r border-slate-200/85 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90";
+      "flex h-[56px] min-w-0 items-center gap-2.5 border-r border-slate-200/85 px-3 text-start outline-none transition-colors hover:bg-slate-50/80 focus:outline-none focus-visible:outline-none";
     const compactValueClass =
       "min-w-0 truncate whitespace-nowrap text-[0.86rem] font-medium leading-5 text-slate-800";
     const destination =
@@ -1490,7 +1490,7 @@ export function HotelResultsExperience({
             className={compactSectionClass}
           >
             <MapPin
-              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              className="h-4 w-4 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className={compactValueClass}>{destination}</span>
@@ -1522,7 +1522,7 @@ export function HotelResultsExperience({
             className={compactSectionClass}
           >
             <Users
-              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              className="h-4 w-4 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className={compactValueClass}>
