@@ -55,6 +55,21 @@ test("desktop populated airport inputs remain editable without clear controls", 
   assert.doesNotMatch(source, /function clearDestinationField/);
 });
 
+test("origin and destination share one bounded production-ready suggestion card", () => {
+  const start = source.indexOf("function SuggestionList");
+  const end = source.indexOf("type FilterOption", start);
+  const suggestions = source.slice(start, end);
+
+  assert.match(suggestions, /suggestions\.slice\(0, 5\)/);
+  assert.match(suggestions, /role="listbox"/);
+  assert.match(suggestions, /role="option"/);
+  assert.match(suggestions, /overflow-hidden/);
+  assert.match(suggestions, /min-h-\[58px\]/);
+  assert.match(suggestions, /border-b border-slate-200\/75/);
+  assert.doesNotMatch(suggestions, /overflow-auto|max-h-\[/);
+  assert.equal(source.match(/<SuggestionList/g)?.length, 6);
+});
+
 test("desktop traveler picker uses clean traveler names and preserves counters", () => {
   const popoverStart = source.indexOf('id="flight-traveler-cabin-popover"');
   const counterStart = source.indexOf("function CounterRow", popoverStart);
