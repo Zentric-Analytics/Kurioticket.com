@@ -116,7 +116,6 @@ import {
   formatFlightsMonthHeading,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
-import { getDateWindowStart } from "@/lib/flights/flexibleDateWindow";
 import { MAX_PRICE_ALERT_TARGET, buildCanonicalFlightPriceAlertQuery } from "@/lib/price-alerts/flightPriceAlerts";
 
 const resultStackClass = "w-full min-w-0";
@@ -145,8 +144,8 @@ type NearbyFareRequest = {
   promise: Promise<void>;
 };
 
-const nearbyFareRangeSize = 14;
-const nearbyFareDaysBeforeAnchor = 6;
+const nearbyFareRangeSize = 7;
+const nearbyFareDaysBeforeAnchor = 3;
 const nearbyFareRequestConcurrency = 4;
 const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
@@ -1007,13 +1006,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const nearbyFareCacheRef = useRef(new Map<string, NearbyFareState>());
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
-  const nearbyFareStripScrollRef = useRef<HTMLDivElement | null>(null);
-  const nearbyFarePositionedContextRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
-  const [nearbyFareCanScrollPrevious, setNearbyFareCanScrollPrevious] =
-    useState(false);
-  const [nearbyFareCanScrollNext, setNearbyFareCanScrollNext] =
-    useState(false);
+  const [fareWindowStart, setFareWindowStart] = useState<string | null>(null);
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
@@ -2180,25 +2174,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     window.requestAnimationFrame(() => destinationInputRef.current?.focus());
   }
 
-  function clearOriginField() {
-    markExpandedSearchInteraction();
-    setOriginInput("");
-    setOriginCode("");
-    setOriginSuggestions([]);
-    setOriginSuggestionsLoading(false);
-    closeFlightSearchPopovers();
-    if (!activeMobileAirportPicker) focusOriginInput();
-  }
-
-  function clearDestinationField() {
-    markExpandedSearchInteraction();
-    setDestinationInput("");
-    setDestinationCode("");
-    setDestinationSuggestions([]);
-    setDestinationSuggestionsLoading(false);
-    closeFlightSearchPopovers();
-    if (!activeMobileAirportPicker) focusDestinationInput();
-  }
 
 
   function getCurrentFlightSearchForSavedItem(): SavedDiscoveryFlightSearch | undefined {
@@ -2770,19 +2745,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     };
   }, [desktopSortOpen]);
 
-  const updateNearbyFareScrollState = useCallback(() => {
-    const strip = nearbyFareStripScrollRef.current;
-    if (!strip) {
-      setNearbyFareCanScrollPrevious(false);
-      setNearbyFareCanScrollNext(false);
-      return;
-    }
-
-    const maxScrollLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
-    setNearbyFareCanScrollPrevious(strip.scrollLeft > 1);
-    setNearbyFareCanScrollNext(strip.scrollLeft < maxScrollLeft - 1);
-  }, []);
-
   useEffect(() => {
     const generation = nearbyFareGenerationRef.current + 1;
     nearbyFareGenerationRef.current = generation;
@@ -2793,11 +2755,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     if (guidedMode) {
       nearbyFareCacheRef.current.clear();
-      nearbyFarePositionedContextRef.current = null;
       const timer = window.setTimeout(() => {
         setNearbyFares([]);
-        setNearbyFareCanScrollPrevious(false);
-        setNearbyFareCanScrollNext(false);
       }, 0);
       return () => window.clearTimeout(timer);
     }
@@ -2814,7 +2773,13 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     }
 
     let active = true;
-    const dates = getNearbyFareDateRange(centerDate);
+    const initialWindowStart = formatDateValue(
+      getNearbyFareWindowStart(centerDate),
+    );
+    const activeWindowStart = fareWindowStart ?? initialWindowStart;
+    const dates = getNearbyFareDateRange(
+      parseDateValue(activeWindowStart) ?? centerDate,
+    );
     const fetchedAt = Date.now();
     const currentFare = getLowestProviderFare(results);
     const selectedKey = getNearbyFareCacheKey(body, body.departureDate);
@@ -2841,7 +2806,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const syncTimer = window.setTimeout(() => {
       if (active && nearbyFareGenerationRef.current === generation) {
         setNearbyFares(nextFares);
-        window.requestAnimationFrame(updateNearbyFareScrollState);
       }
     }, 0);
 
@@ -2852,13 +2816,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
         const rightDistance = Math.abs(dates.indexOf(right) - selectedIndex);
         return leftDistance - rightDistance;
       })
-      .filter((date) => !getFreshNearbyFareCacheEntry(
-        nearbyFareCacheRef.current,
-        getNearbyFareCacheKey(body, date),
-      ));
+      .filter(
+        (date) =>
+          !getFreshNearbyFareCacheEntry(
+            nearbyFareCacheRef.current,
+            getNearbyFareCacheKey(body, date),
+          ),
+      );
 
     async function fetchFareForDate(date: string) {
-      if (!body || !active || nearbyFareGenerationRef.current !== generation) return;
+      if (!body || !active || nearbyFareGenerationRef.current !== generation)
+        return;
 
       const key = getNearbyFareCacheKey(body, date);
       const existing = nearbyFareRequestsRef.current.get(key);
@@ -2877,7 +2845,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       })
         .then(async (response) => {
           if (!response.ok) throw new Error("nearby-fare-search-failed");
-          const data = (await response.json()) as { results?: PublicFlightResult[] };
+          const data = (await response.json()) as {
+            results?: PublicFlightResult[];
+          };
           const fare = getLowestProviderFare(data.results ?? []);
           const state: NearbyFareState = fare
             ? {
@@ -2897,7 +2867,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           );
         })
         .catch((error) => {
-          if (controller.signal.aborted || !active || nearbyFareGenerationRef.current !== generation) return;
+          if (
+            controller.signal.aborted ||
+            !active ||
+            nearbyFareGenerationRef.current !== generation
+          )
+            return;
 
           const state: NearbyFareState = {
             date,
@@ -2911,7 +2886,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
           );
         })
         .finally(() => {
-          if (nearbyFareRequestsRef.current.get(key)?.controller === controller) {
+          if (
+            nearbyFareRequestsRef.current.get(key)?.controller === controller
+          ) {
             nearbyFareRequestsRef.current.delete(key);
           }
         });
@@ -2923,7 +2900,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     async function runQueue() {
       let nextIndex = 0;
       const workers = Array.from(
-        { length: Math.min(nearbyFareRequestConcurrency, prioritizedDates.length) },
+        {
+          length: Math.min(
+            nearbyFareRequestConcurrency,
+            prioritizedDates.length,
+          ),
+        },
         async () => {
           while (active && nearbyFareGenerationRef.current === generation) {
             const date = prioritizedDates[nextIndex];
@@ -2945,7 +2927,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       activeRequests.forEach((request) => request.controller.abort());
       activeRequests.clear();
     };
-  }, [body, guidedMode, results, updateNearbyFareScrollState]);
+  }, [body, fareWindowStart, guidedMode, results]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
@@ -3401,96 +3383,35 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
 
 
-  useLayoutEffect(() => {
-    updateNearbyFareScrollState();
+  useEffect(() => {
+    if (!body?.departureDate) return;
 
-    const strip = nearbyFareStripScrollRef.current;
-    if (!strip) return;
+    const departureDate = parseDateValue(body.departureDate);
+    if (!departureDate) return;
 
-    const resizeObserver = new ResizeObserver(updateNearbyFareScrollState);
-    resizeObserver.observe(strip);
+    setFareWindowStart(
+      formatDateValue(getNearbyFareWindowStart(departureDate)),
+    );
+  }, [body?.departureDate]);
 
-    return () => resizeObserver.disconnect();
-  }, [nearbyFares, updateNearbyFareScrollState]);
-
-  useLayoutEffect(() => {
-    const departureDate = body?.departureDate;
-    if (!departureDate || nearbyFares.length === 0) return;
-
-    const strip = nearbyFareStripScrollRef.current;
-    if (!strip) return;
-
-    const selectedIndex = nearbyFares.findIndex((fare) => fare.date === departureDate);
-    if (selectedIndex < 0) return;
-
-    const positioningContext = [
-      body.tripType,
-      body.origin,
-      body.destination,
-      departureDate,
-      body.returnDate ?? "",
-      body.travelers,
-      body.cabinClass ?? "",
-    ].join("|");
-
-    if (nearbyFarePositionedContextRef.current === positioningContext) return;
-
-    const firstCell = strip.querySelector<HTMLElement>("[data-fare-date-cell]");
-    if (!firstCell) return;
-
-    const cellWidth = firstCell.getBoundingClientRect().width;
-    const gap =
-      Number.parseFloat(window.getComputedStyle(strip).columnGap || "0") || 0;
-    const step = cellWidth + gap;
-    if (step <= 0) return;
-
-    const visibleCount = Math.max(1, Math.floor((strip.clientWidth + gap) / step));
-    const windowStart = getDateWindowStart({
-      selectedIndex,
-      totalDates: nearbyFares.length,
-      visibleCount,
-      desiredPosition: 2,
-    });
-
-    strip.scrollTo({
-      left: windowStart * step,
-      behavior: "auto",
-    });
-    nearbyFarePositionedContextRef.current = positioningContext;
-    window.requestAnimationFrame(updateNearbyFareScrollState);
-  }, [
-    body?.cabinClass,
-    body?.departureDate,
-    body?.destination,
-    body?.origin,
-    body?.returnDate,
-    body?.travelers,
-    body?.tripType,
-    nearbyFares,
-    updateNearbyFareScrollState,
-  ]);
-
-  const scrollNearbyFareStrip = useCallback(
+  const navigateNearbyFareWeek = useCallback(
     (direction: "previous" | "next") => {
-      const strip = nearbyFareStripScrollRef.current;
-      if (!strip) return;
+      setFareWindowStart((current) => {
+        const fallbackDate = body?.departureDate
+          ? parseDateValue(body.departureDate)
+          : null;
+        const currentStart = current ? parseDateValue(current) : null;
+        const start =
+          currentStart ??
+          (fallbackDate ? getNearbyFareWindowStart(fallbackDate) : null);
+        if (!start) return current;
 
-      const firstCell = strip.querySelector<HTMLElement>(
-        "[data-fare-date-cell]",
-      );
-      const cellWidth = firstCell?.getBoundingClientRect().width ?? 104;
-      const gap =
-        Number.parseFloat(window.getComputedStyle(strip).columnGap || "0") || 0;
-      const distance = cellWidth + gap;
-
-      strip.scrollBy({
-        left: direction === "previous" ? -distance : distance,
-        behavior: "smooth",
+        const nextStart = addDays(start, direction === "previous" ? -7 : 7);
+        const today = startOfLocalDay(new Date());
+        return formatDateValue(nextStart < today ? today : nextStart);
       });
-
-      window.setTimeout(updateNearbyFareScrollState, 240);
     },
-    [updateNearbyFareScrollState],
+    [body?.departureDate],
   );
 
   const sortOptions = useMemo(
@@ -4716,24 +4637,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       autoComplete="off"
                       className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-medium md:text-sm"
                     />
-                    {originInput ? (
-                      <button
-                        type="button"
-                        aria-label={t("clearOrigin")}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          clearOriginField();
-                        }}
-                        className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    ) : null}
 
                     {activeSuggest === "origin" && dropdownPosition ? (
                       <SuggestionList
@@ -4803,24 +4706,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       autoComplete="off"
                       className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-medium md:text-sm"
                     />
-                    {destinationInput ? (
-                      <button
-                        type="button"
-                        aria-label={t("clearDestination")}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          clearDestinationField();
-                        }}
-                        className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    ) : null}
 
                     {activeSuggest === "destination" && dropdownPosition ? (
                       <SuggestionList
@@ -6178,11 +6063,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             <div
               role="radiogroup"
               aria-label={t("tripType")}
-              className="hidden translate-y-2 items-center gap-4 px-1 pb-0 sm:flex"
+              className="hidden translate-y-2 items-center gap-8 px-1 pb-0 sm:flex"
             >
               {[
-                { label: t("oneWay"), value: "one-way" },
-                { label: t("roundTrip"), value: "round-trip" },
+                { label: "Round-trip", value: "round-trip" },
+                { label: "One-way", value: "one-way" },
+                { label: "Multi-city", value: "multi-city" },
               ].map((option) => {
                 const selected = tripTypeInput === option.value;
 
@@ -6192,27 +6078,29 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     type="button"
                     role="radio"
                     aria-checked={selected}
+                    aria-disabled={option.value === "multi-city"}
+                    disabled={option.value === "multi-city"}
+                    title={
+                      option.value === "multi-city"
+                        ? t("multiCityComingSoon")
+                        : undefined
+                    }
                     onClick={() => handleTripTypeChange(option.value)}
                     className={cn(
-                      "focus-ring inline-flex min-h-6 items-center gap-1.5 rounded-full px-1 py-0.5 text-xs font-medium transition-colors",
-                      selected
-                        ? "text-slate-900"
-                        : "text-slate-500 hover:text-slate-800",
+                      "focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 py-1 text-[14px] font-medium text-slate-900 transition-colors hover:text-slate-950",
                     )}
                   >
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors",
-                        selected
-                          ? "border-[#004BB8] bg-white shadow-[0_0_0_3px_rgba(0,75,184,0.10)]"
-                          : "border-slate-300 bg-white/70",
+                        "inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 bg-white transition-colors",
+                        selected ? "border-[#075EE8]" : "border-slate-300",
                       )}
                     >
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 rounded-full transition-colors",
-                          selected ? "bg-[#004BB8]" : "bg-transparent",
+                          "h-2 w-2 rounded-full transition-colors",
+                          selected ? "bg-[#075EE8]" : "bg-transparent",
                         )}
                       />
                     </span>
@@ -6304,25 +6192,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       className="h-6 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
                     />
 
-                    {originInput ? (
-                      <button
-                        type="button"
-                        aria-label={t("clearOrigin")}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          clearOriginField();
-                        }}
-                        className="focus-ring absolute end-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    ) : null}
-
                     {activeSuggest === "origin" &&
                     activeDesktopSearchSurface !== "sticky" ? (
                       <SuggestionList
@@ -6409,25 +6278,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       autoComplete="off"
                       className="h-6 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
                     />
-
-                    {destinationInput ? (
-                      <button
-                        type="button"
-                        aria-label={t("clearDestination")}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          clearDestinationField();
-                        }}
-                        className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    ) : null}
 
                     {activeSuggest === "destination" &&
                     activeDesktopSearchSurface !== "sticky" ? (
@@ -7345,118 +7195,137 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="hidden w-full sm:block" aria-label="Nearby departure fares">
-                <div className="relative">
-                  <button
-                    type="button"
-                    aria-label="Scroll to previous departure fares"
-                    aria-disabled={!nearbyFareCanScrollPrevious}
-                    disabled={!nearbyFareCanScrollPrevious}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      scrollNearbyFareStrip("previous");
-                    }}
-                    className="focus-ring absolute left-0 top-1/2 z-10 inline-flex h-12 w-8 -translate-x-5 -translate-y-1/2 items-center justify-start border-0 bg-transparent p-0 text-[#0057FF] shadow-none transition hover:text-[#003E91] focus-visible:text-[#003E91] disabled:cursor-not-allowed disabled:text-slate-300 lg:-translate-x-7 xl:-translate-x-7"
-                  >
-                    <ChevronLeft
-                      className="h-8 w-8"
-                      strokeWidth={2.7}
-                      aria-hidden="true"
-                    />
-                  </button>
+              {body?.tripType !== "multi-city" ? (
+                <div
+                  className="hidden w-full sm:block"
+                  aria-label="Nearby departure fares"
+                >
+                  <div className="mx-auto grid w-full max-w-[780px] grid-cols-[36px_repeat(7,minmax(72px,1fr))_36px] items-stretch overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <button
+                      type="button"
+                      aria-label="Previous week"
+                      onClick={() => navigateNearbyFareWeek("previous")}
+                      className="focus-ring inline-flex min-h-[88px] items-center justify-center border-e border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8]"
+                    >
+                      <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                    </button>
 
-                  <div
-                    ref={nearbyFareStripScrollRef}
-                    onScroll={updateNearbyFareScrollState}
-                    className="fare-strip-scroll grid auto-cols-[188px] grid-flow-col items-center gap-2 overflow-x-auto scroll-smooth px-0 py-1 sm:auto-cols-[192px]"
-                    role="list"
-                  >
-                    {nearbyFares.length
-                      ? nearbyFares.map((fare) => {
-                          const selected = fare.date === body?.departureDate;
-                          return (
-                            <button
-                              key={fare.date}
-                              type="button"
-                              data-fare-date-cell
-                              className={cn(
-                                "flex min-h-[112px] w-[188px] min-w-0 flex-col items-center justify-center bg-transparent px-3 py-3 text-center text-[#24324A] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:w-[192px]",
-                                selected ? "text-[#0057FF]" : "text-[#24324A]",
-                              )}
-                              aria-current={selected ? "date" : undefined}
-                              aria-pressed={selected}
-                              disabled={selected || loading}
-                              onClick={() => handleNearbyFareDateSelect(fare.date)}
-                            >
-                              <span className={cn("text-[13px] font-semibold uppercase leading-5 tracking-[0.02em]", selected ? "text-[#0057FF]" : "text-slate-600")}>
-                                {formatFareStripDateLabel(fare.date, calendarLocale).toUpperCase()}
-                              </span>
-                              <span className={cn("text-[13px] font-semibold uppercase leading-5", selected ? "text-[#0057FF]" : "text-[#24324A]")}>
-                                {formatFareStripWeekdayLabel(fare.date, calendarLocale).toUpperCase()}
-                              </span>
-                              <span className={cn("mt-1 flex min-w-0 max-w-full justify-center text-[14px] font-semibold leading-5", selected ? "text-[#0057FF]" : "text-slate-950")} aria-live={fare.status === "loading" ? "polite" : undefined}>
-                                {fare.status === "loading" ? (
-                                  <span className="block h-5 w-32 animate-pulse rounded-full bg-slate-200" aria-label="Loading fare" />
-                                ) : fare.status === "success" ? (() => {
-                                  const nearbyDisplayPrice = formatDisplayPrice({
-                                    amount: fare.amount,
-                                    sourceCurrency: fare.currency,
-                                    displayCurrency: selectedCurrency,
-                                    convertUsdEstimate: true,
-                                    rates: currencyRates.rates,
-                                    isFallbackRate: currencyRates.isFallback,
-                                  }).formatted;
+                    {(nearbyFares.length
+                      ? nearbyFares
+                      : Array.from(
+                          { length: nearbyFareRangeSize },
+                          (_, index) => ({
+                            date: `loading-${index}`,
+                            status: "loading" as const,
+                          }),
+                        )
+                    ).map((fare) => {
+                      const selected = fare.date === body?.departureDate;
+                      const displayPrice =
+                        fare.status === "success"
+                          ? formatDisplayPrice({
+                              amount: fare.amount,
+                              sourceCurrency: fare.currency,
+                              displayCurrency: selectedCurrency,
+                              convertUsdEstimate: true,
+                              rates: currencyRates.rates,
+                              isFallbackRate: currencyRates.isFallback,
+                            }).formatted
+                          : null;
+                      const accessibleFare =
+                        displayPrice ??
+                        (fare.status === "loading"
+                          ? "Loading fare"
+                          : "Unavailable");
+                      const accessibleDate = fare.date.startsWith("loading-")
+                        ? "Loading date"
+                        : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
 
-                                  return (
-                                    <span
-                                      className="flight-fare-strip-price"
-                                      aria-label={nearbyDisplayPrice}
-                                      title={nearbyDisplayPrice}
-                                      dir="ltr"
-                                    >
-                                      {nearbyDisplayPrice}
-                                    </span>
-                                  );
-                                })() : (
-                                  "Unavailable"
+                      return (
+                        <button
+                          key={fare.date}
+                          type="button"
+                          data-fare-date-cell
+                          aria-label={`${accessibleDate}: ${accessibleFare}`}
+                          aria-current={selected ? "date" : undefined}
+                          aria-pressed={selected}
+                          disabled={
+                            selected || loading || fare.status === "loading"
+                          }
+                          onClick={() => handleNearbyFareDateSelect(fare.date)}
+                          className={cn(
+                            "focus-ring relative flex min-h-[88px] min-w-0 flex-col items-center justify-center border-e border-slate-100 px-1.5 py-2 text-center transition last:border-e-0 hover:bg-slate-50",
+                            selected && "bg-blue-50/60",
+                          )}
+                        >
+                          {selected ? (
+                            <span
+                              className="absolute inset-x-2 top-0 h-0.5 rounded-b bg-[#075EE8]"
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          {fare.status === "loading" ? (
+                            <>
+                              <span className="h-3 w-12 animate-pulse rounded bg-slate-200" />
+                              <span className="mt-2 h-3 w-8 animate-pulse rounded bg-slate-200" />
+                              <span className="mt-2 h-3 w-14 animate-pulse rounded bg-slate-200" />
+                            </>
+                          ) : (
+                            <>
+                              <span
+                                className={cn(
+                                  "text-[12px] font-semibold uppercase leading-4",
+                                  selected
+                                    ? "text-[#075EE8]"
+                                    : "text-slate-800",
                                 )}
+                              >
+                                {formatFareStripDateLabel(
+                                  fare.date,
+                                  calendarLocale,
+                                ).toUpperCase()}
                               </span>
-                            </button>
-                          );
-                        })
-                      : Array.from({ length: nearbyFareRangeSize }).map((_, index) => (
-                          <div
-                            key={index}
-                            className="flex min-h-[112px] w-[188px] min-w-0 flex-col items-center justify-center px-3 py-3 sm:w-[192px]"
-                          >
-                            <div className="h-3 w-14 animate-pulse rounded-full bg-slate-200" />
-                            <div className="mt-2 h-3 w-8 animate-pulse rounded-full bg-slate-200" />
-                            <div className="mt-2 h-5 w-32 animate-pulse rounded-full bg-slate-200" />
-                          </div>
-                        ))}
-                  </div>
+                              <span
+                                className={cn(
+                                  "text-[11px] font-medium uppercase leading-4",
+                                  selected
+                                    ? "text-[#075EE8]"
+                                    : "text-slate-500",
+                                )}
+                              >
+                                {formatFareStripWeekdayLabel(
+                                  fare.date,
+                                  calendarLocale,
+                                ).toUpperCase()}
+                              </span>
+                              <span
+                                className={cn(
+                                  "mt-1 max-w-full truncate text-[12px] font-medium leading-4",
+                                  selected
+                                    ? "font-semibold text-[#075EE8]"
+                                    : "text-slate-900",
+                                )}
+                                dir="ltr"
+                              >
+                                {displayPrice ?? "Unavailable"}
+                              </span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    })}
 
-                  <button
-                    type="button"
-                    aria-label="Scroll to next departure fares"
-                    aria-disabled={!nearbyFareCanScrollNext}
-                    disabled={!nearbyFareCanScrollNext}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      scrollNearbyFareStrip("next");
-                    }}
-                    className="focus-ring absolute right-0 top-1/2 z-10 inline-flex h-12 w-8 -translate-y-1/2 items-center justify-end border-0 bg-transparent p-0 text-[#0057FF] shadow-none transition hover:text-[#003E91] focus-visible:text-[#003E91] disabled:cursor-not-allowed disabled:text-slate-300 lg:translate-x-7 xl:translate-x-8"
-                  >
-                    <ChevronRight
-                      className="h-8 w-8"
-                      strokeWidth={2.7}
-                      aria-hidden="true"
-                    />
-                  </button>
+                    <button
+                      type="button"
+                      aria-label="Next week"
+                      onClick={() => navigateNearbyFareWeek("next")}
+                      className="focus-ring inline-flex min-h-[88px] items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8]"
+                    >
+                      <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               <div className="flex w-full flex-col gap-3 rounded-2xl border border-[#D8E1EC] bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4 lg:bg-transparent">
                 <div className="min-w-0">
@@ -7951,11 +7820,16 @@ function formatFareStripWeekdayLabel(value: string, locale: string): string {
   }).format(date);
 }
 
-function getNearbyFareDateRange(anchorDate: Date): string[] {
+function getNearbyFareWindowStart(selectedDate: Date): Date {
   const today = startOfLocalDay(new Date());
-  const preferredStart = addDays(anchorDate, -nearbyFareDaysBeforeAnchor);
-  const startDate = startOfLocalDay(preferredStart) < today ? today : preferredStart;
+  const preferredStart = startOfLocalDay(
+    addDays(selectedDate, -nearbyFareDaysBeforeAnchor),
+  );
+  return preferredStart < today ? today : preferredStart;
+}
 
+function getNearbyFareDateRange(windowStart: Date): string[] {
+  const startDate = startOfLocalDay(windowStart);
   return Array.from({ length: nearbyFareRangeSize }, (_, index) =>
     formatDateValue(addDays(startDate, index)),
   );
@@ -8840,7 +8714,7 @@ function TravelerCabinPopover({
           <div className="mt-3 divide-y divide-slate-100">
             <CounterRow
               label={t("adultPlural")}
-              description="18+"
+              description={t("adultAgeRange")}
               value={adultCount}
               min={1}
               max={9}
@@ -8857,7 +8731,7 @@ function TravelerCabinPopover({
             />
 
             <CounterRow
-              label={t("infantsOnLap")}
+              label={t("infantPlural")}
               description={t("under2")}
               value={infantCount}
               min={0}
