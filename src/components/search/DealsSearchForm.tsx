@@ -2387,7 +2387,7 @@ export function DealsSearchForm({
                 <span className={`block font-extrabold text-slate-950 ${isPackagesLanding ? "lg:text-[14px] lg:font-semibold lg:leading-tight lg:text-slate-900" : ""}`}>
                   {rowLabel}
                 </span>
-                <span className={`block text-xs font-medium text-slate-500 ${isPackagesLanding ? "lg:text-[12px] lg:font-normal lg:leading-[1.35]" : ""}`}>
+                <span className={`block text-xs font-medium text-slate-500 ${isPackagesLanding ? "lg:text-[12px] lg:font-normal lg:leading-[1.35] lg:text-slate-500" : ""}`}>
                   {description}
                 </span>
               </span>
@@ -2437,7 +2437,7 @@ export function DealsSearchForm({
       {included.hotel ? (
         <div className={`space-y-3 rounded-2xl border border-slate-200 p-3 ${isPackagesLanding ? "lg:rounded-none lg:border-x-0 lg:border-b-0 lg:px-1 lg:pb-0 lg:pt-3" : ""}`}>
           <div className="flex items-center justify-between">
-            <span className={`font-extrabold ${isPackagesLanding ? "lg:text-[14px] lg:font-semibold lg:text-slate-900" : ""}`}>{t("rooms")}</span>
+            <span className={`font-extrabold ${isPackagesLanding ? "lg:text-[14px] lg:font-semibold lg:leading-tight lg:text-slate-900" : ""}`}>{t("rooms")}</span>
             <span className="flex items-center gap-2">
               <button
                 type="button"
