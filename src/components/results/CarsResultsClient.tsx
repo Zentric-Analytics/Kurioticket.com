@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Clock3,
   MapPin,
   SquarePen,
@@ -1068,6 +1069,7 @@ export function CarsResultsClient({
               t={t}
               intlLocale={intlLocale}
               wrapRef={searchSurfaceRefs.timeWrapRef}
+              useMainPageDesktopPresentation={placement !== "mobile"}
             />
             <DriverAgeCell
               driverAge={driverAge}
@@ -1085,6 +1087,7 @@ export function CarsResultsClient({
               }}
               t={t}
               wrapRef={searchSurfaceRefs.driverAgeWrapRef}
+              useMainPageDesktopPresentation={placement !== "mobile"}
             />
             <Button
               type="submit"
@@ -1926,6 +1929,7 @@ function ResultsDesktopPopover({
   launcherRef,
   preferredWidth,
   desiredHeight,
+  align = "start",
   role,
   ariaLabel,
   children,
@@ -1934,6 +1938,7 @@ function ResultsDesktopPopover({
   launcherRef: RefObject<HTMLElement | null>;
   preferredWidth: number;
   desiredHeight: number;
+  align?: "start" | "center" | "end";
   role: "dialog" | "listbox";
   ariaLabel: string;
   children: ReactNode;
@@ -1944,6 +1949,7 @@ function ResultsDesktopPopover({
     preferredWidth,
     desiredHeight,
     maxHeight: desiredHeight,
+    align,
   });
   if (!open || typeof document === "undefined") return null;
   return createPortal(
@@ -2270,6 +2276,7 @@ function SearchTimeCell({
   t,
   intlLocale,
   wrapRef,
+  useMainPageDesktopPresentation,
 }: {
   dropoffTime: string;
   isCompact: boolean;
@@ -2281,6 +2288,7 @@ function SearchTimeCell({
   t: (key: string) => string;
   intlLocale: string;
   wrapRef: RefObject<HTMLDivElement | null>;
+  useMainPageDesktopPresentation: boolean;
 }) {
   return (
     <div
@@ -2304,10 +2312,22 @@ function SearchTimeCell({
         aria-haspopup="menu"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        <span className="truncate">
-          {formatTimeLabel(pickupTime, intlLocale)} —{" "}
-          {formatTimeLabel(dropoffTime, intlLocale)}
-        </span>
+        {useMainPageDesktopPresentation ? (
+          <span className="flex min-w-0 items-center gap-2">
+            <Clock
+              className="h-4 w-4 shrink-0 text-slate-500"
+              aria-hidden="true"
+            />
+            <span className="truncate">
+              {formatTimeLabel(pickupTime, intlLocale)}
+            </span>
+          </span>
+        ) : (
+          <span className="truncate">
+            {formatTimeLabel(pickupTime, intlLocale)} —{" "}
+            {formatTimeLabel(dropoffTime, intlLocale)}
+          </span>
+        )}
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
@@ -2362,16 +2382,17 @@ function SearchTimeCell({
       <ResultsDesktopPopover
         open={isOpen}
         launcherRef={wrapRef}
-        preferredWidth={420}
-        desiredHeight={350}
+        preferredWidth={448}
+        desiredHeight={320}
+        align="center"
         role="dialog"
         ariaLabel={t("carsResults.pickupReturnTimeSelector")}
       >
         <CarsTimeRangePickerContent
           formatTime={(time) => formatTimeLabel(time, intlLocale)}
-          pickupLabel={t("carsResults.pickupTime")}
+          pickupLabel={t("carsSearch.pickupTimeLabel")}
           pickupTime={pickupTime}
-          returnLabel={t("carsResults.returnTime")}
+          returnLabel={t("carsSearch.returnTimeLabel")}
           returnTime={dropoffTime}
           onPickupTimeChange={setPickupTime}
           onReturnTimeChange={setDropoffTime}
@@ -2389,6 +2410,7 @@ function DriverAgeCell({
   onToggle,
   t,
   wrapRef,
+  useMainPageDesktopPresentation,
 }: {
   driverAge: string;
   isCompact: boolean;
@@ -2397,6 +2419,7 @@ function DriverAgeCell({
   onToggle: () => void;
   t: (key: string) => string;
   wrapRef: RefObject<HTMLDivElement | null>;
+  useMainPageDesktopPresentation: boolean;
 }) {
   const visibleOptions = useMemo(() => driverAgeOptions, []);
 
@@ -2421,9 +2444,23 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        <span className="truncate">
-          {getDriverAgeOptionLabel(driverAge, t)}
-        </span>
+        {useMainPageDesktopPresentation ? (
+          <span className="flex min-w-0 items-center gap-2">
+            <UserRound
+              className="h-4 w-4 shrink-0 text-slate-500"
+              aria-hidden="true"
+            />
+            <span className="truncate">
+              {driverAge === defaultDriverAge
+                ? t("carsSearch.driverAgeAnyAge")
+                : getDriverAgeOptionLabel(driverAge, t)}
+            </span>
+          </span>
+        ) : (
+          <span className="truncate">
+            {getDriverAgeOptionLabel(driverAge, t)}
+          </span>
+        )}
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
@@ -2467,13 +2504,14 @@ function DriverAgeCell({
       <ResultsDesktopPopover
         open={isOpen}
         launcherRef={wrapRef}
-        preferredWidth={260}
-        desiredHeight={360}
+        preferredWidth={288}
+        desiredHeight={320}
+        align="end"
         role="listbox"
         ariaLabel={t("carsResults.driverAge")}
       >
         <CarsDriverAgePickerContent
-          anyAgeLabel={t("carsResults.anyDriverAgeRange")}
+          anyAgeLabel={t("carsSearch.driverAgeAnyAgeRange")}
           formatAge={(age) => getDriverAgeOptionLabel(age, t)}
           selectedAge={driverAge}
           onSelect={onSelect}
