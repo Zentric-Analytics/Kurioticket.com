@@ -138,6 +138,23 @@ test("hotel hero keeps its approved mobile crop and shifts only the desktop imag
   assert.doesNotMatch(hotelsPageSource, /object-\[50%_50%\]/);
 });
 
+test("hotel hero keeps its mobile height while using the compact desktop height and anchored search form", () => {
+  const mobileHero = hotelsPageSource.slice(
+    hotelsPageSource.indexOf('<section className="relative z-20 isolate'),
+    hotelsPageSource.indexOf('<section className="relative z-20 hidden'),
+  );
+  const desktopHero = hotelsPageSource.slice(
+    hotelsPageSource.indexOf('<section className="relative z-20 hidden'),
+    hotelsPageSource.indexOf('aria-labelledby="hotel-destinations-heading"'),
+  );
+
+  assert.match(mobileHero, /min-h-\[24\.25rem\]/);
+  assert.match(desktopHero, /min-h-\[31rem\]/);
+  assert.match(desktopHero, /lg:min-h-\[34rem\]/);
+  assert.match(desktopHero, /bottom-\[-52px\]/);
+  assert.match(desktopHero, /lg:bottom-\[-56px\]/);
+});
+
 test("hotel hero is text-free with one screen-reader-accessible page heading", () => {
   const mobileHero = hotelsPageSource.slice(
     hotelsPageSource.indexOf('<section className="relative z-20 isolate'),

@@ -385,7 +385,7 @@ export default function HotelsSearchPage() {
         </section>
 
         <section className="relative z-20 hidden overflow-visible pb-28 sm:block lg:pb-32">
-          <div className="relative isolate min-h-[35rem] bg-slate-950 lg:min-h-[39rem]">
+          <div className="relative isolate min-h-[31rem] bg-slate-950 lg:min-h-[34rem]">
             <div className="absolute inset-0 overflow-hidden">
               <Image
                 src={hotelsHeroImage}
