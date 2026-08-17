@@ -1469,7 +1469,7 @@ function RentalDatesField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-rental-dates-dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors sm:h-10 md:text-[15px]"
+        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-start gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors sm:h-10 sm:justify-between md:text-[15px]"
       >
         <Calendar
           className="h-4 w-4 shrink-0 text-slate-500"

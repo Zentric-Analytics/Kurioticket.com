@@ -62,10 +62,22 @@ test("mobile pickup and conditional return launchers lead values with MapPin and
   );
 });
 
-test("rental dates retain Calendar before their dynamic summary", () => {
+test("rental dates keep Calendar and their dynamic summary left-aligned on mobile", () => {
+  assert.match(
+    rentalDatesSource,
+    /className="[^"]*items-center justify-start gap-2[^"]*sm:justify-between[^"]*"/,
+  );
   assert.ok(
     rentalDatesSource.indexOf("<Calendar") <
       rentalDatesSource.indexOf("{dateSummary}"),
+  );
+  assert.match(
+    rentalDatesSource,
+    /<Calendar[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/,
+  );
+  assert.match(
+    rentalDatesSource,
+    /<ChevronDown[\s\S]*?className=\{`hidden h-4 w-4[\s\S]*?sm:block/,
   );
 });
 
