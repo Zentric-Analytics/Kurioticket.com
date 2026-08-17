@@ -52,10 +52,50 @@ test("results location inputs use a clean local focus presentation", () => {
   assert.doesNotMatch(fieldInputClass, /(?:^|\s)focus-ring(?:\s|$)/);
   assert.match(fieldInputClass, /(?:^|\s)focus-visible:outline-none(?:\s|$)/);
   assert.match(fieldInputClass, /(?:^|\s)focus-visible:shadow-none(?:\s|$)/);
+});
+
+test("pickup alone removes its clear action and reclaims the input width", () => {
+  const pickupCell = source.match(
+    /<SearchInputCell[\s\S]*?name="pickupLocation"[\s\S]*?\/>/,
+  )?.[0];
+  const returnCell = source.match(/name="dropoffLocation"[\s\S]*?\/>/)?.[0];
+
+  assert.ok(pickupCell, "Pickup SearchInputCell should remain rendered");
+  assert.match(pickupCell, /showClearButton=\{false\}/);
+  assert.ok(returnCell, "Return SearchInputCell should remain rendered");
+  assert.doesNotMatch(returnCell, /showClearButton=\{false\}/);
+  assert.match(returnCell, /onClear=\{\(\) => \{/);
   assert.match(
     source,
-    /<CarLocationAutocomplete[\s\S]*?inputClassName=\{cn\(fieldInputClass, "pr-8"\)\}/,
+    /inputClassName=\{cn\(fieldInputClass, showClearButton && "pr-8"\)\}/,
   );
+  assert.match(source, /\{showClearButton && value \? \(/);
+  assert.doesNotMatch(
+    source,
+    /inputClassName=\{cn\(fieldInputClass, "pr-8"\)\}/,
+  );
+});
+
+test("desktop-full rental dates use compact dates and localized duration", () => {
+  assert.match(source, /showRentalDuration=\{placement === "desktop-full"\}/);
+  assert.match(
+    source,
+    /dateFormatter = showRentalDuration \? formatCompactDate : formatDate/,
+  );
+  assert.match(
+    source,
+    /const rentalDayCount =[\s\S]*?Math\.max\([\s\S]*?0,[\s\S]*?Math\.round\([\s\S]*?dropoffParsed\.getTime\(\) - pickupParsed\.getTime\(\)[\s\S]*?86_400_000/,
+  );
+  assert.match(
+    source,
+    /t\("carsSearch\.rentalDays"\)\.replace\([\s\S]*?"\{count\}"[\s\S]*?String\(rentalDayCount\)/,
+  );
+  assert.match(
+    source,
+    /showRentalDuration && rentalDayCount > 0[\s\S]*?\{rentalDaysLabel\}/,
+  );
+  assert.match(source, /name="pickupDate" value=\{pickupDate\}/);
+  assert.match(source, /name="dropoffDate" value=\{dropoffDate\}/);
 });
 
 test("desktop controls reuse Cars autocomplete, picker content, and fixed popovers", () => {
