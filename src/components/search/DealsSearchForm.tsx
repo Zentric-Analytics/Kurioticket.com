@@ -3152,10 +3152,13 @@ export function DealsSearchForm({
         type="submit"
         disabled={submitting || pending}
         aria-busy={submitting || pending}
-        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? `lg:w-auto lg:rounded-[8px] lg:text-[14px] lg:shadow-none ${isPackagesLanding ? "flex-nowrap whitespace-nowrap lg:pointer-events-auto lg:h-[48px] lg:min-h-[48px] lg:w-[188px] lg:min-w-[188px] lg:cursor-pointer lg:px-5" : "lg:h-[46px] lg:min-h-[46px] lg:min-w-[176px] lg:px-6"}` : ""}`}
+        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? `lg:w-auto lg:rounded-[8px] lg:text-[14px] lg:shadow-none ${isPackagesLanding ? "lg:pointer-events-auto lg:h-[48px] lg:min-h-[48px] lg:w-[188px] lg:min-w-[188px] lg:flex-nowrap lg:cursor-pointer lg:whitespace-nowrap lg:px-5" : "lg:h-[46px] lg:min-h-[46px] lg:min-w-[176px] lg:px-6"}` : ""}`}
       >
-        <Search aria-hidden="true" className="h-4 w-4 shrink-0" />
-        <span className="whitespace-nowrap">
+        <Search
+          aria-hidden="true"
+          className={`h-4 w-4 ${isPackagesLanding ? "lg:shrink-0" : ""}`}
+        />
+        <span className={isPackagesLanding ? "lg:whitespace-nowrap" : undefined}>
           {t(
             variant === "results" && pending
               ? "deals.results.editor.updating"

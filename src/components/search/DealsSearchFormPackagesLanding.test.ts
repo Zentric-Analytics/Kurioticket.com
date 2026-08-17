@@ -12,7 +12,7 @@ test("Packages route selects a dedicated landing presentation while Deals keeps 
   assert.match(page, /usePathname/);
   assert.match(
     page,
-    /pathname === "\/packages" \? "packages-landing" : "desktop-landing"/,
+    /pathname === "\/packages"[\s\S]*\?[\s\S]*"packages-landing"[\s\S]*:[\s\S]*"desktop-landing"/,
   );
   assert.match(form, /\| "packages-landing"/);
   assert.match(
@@ -179,7 +179,7 @@ test("desktop Packages polish stays scoped to the Packages landing presentation"
   assert.match(form, /lg:me-1 lg:self-center lg:text-slate-500/);
   assert.match(
     form,
-    /flex-nowrap whitespace-nowrap[\s\S]*lg:h-\[48px\] lg:min-h-\[48px\] lg:w-\[188px\] lg:min-w-\[188px\]/,
+    /lg:h-\[48px\] lg:min-h-\[48px\] lg:w-\[188px\] lg:min-w-\[188px\] lg:flex-nowrap[\s\S]*lg:whitespace-nowrap/,
   );
   assert.match(form, /isPackagesLanding \? "lg:py-5" : "lg:py-6"/);
 });
@@ -191,9 +191,15 @@ test("desktop Packages CTA keeps its complete label and icon on one line without
   );
   assert.match(submit, /lg:w-\[188px\]/);
   assert.match(submit, /lg:min-w-\[188px\]/);
-  assert.match(submit, /flex-nowrap whitespace-nowrap/);
-  assert.match(submit, /<Search aria-hidden="true" className="h-4 w-4 shrink-0" \/>/);
-  assert.match(submit, /<span className="whitespace-nowrap">[\s\S]*deals\.searchButton/);
+  assert.match(submit, /lg:flex-nowrap[\s\S]*lg:whitespace-nowrap/);
+  assert.match(
+    submit,
+    /<Search[\s\S]*aria-hidden="true"[\s\S]*isPackagesLanding \? "lg:shrink-0"/,
+  );
+  assert.match(
+    submit,
+    /<span className=\{isPackagesLanding \? "lg:whitespace-nowrap" : undefined\}>[\s\S]*deals\.searchButton/,
+  );
   assert.match(compact, /isPackagesLanding \? "h-\[50px\] rounded-\[10px\]"/);
   assert.doesNotMatch(compact, /w-\[188px\]|min-w-\[188px\]/);
 });
@@ -322,6 +328,24 @@ test("desktop Packages submit hit target is constrained to the visible CTA", () 
     submit,
     /isDesktopLanding && isPackagesLanding[\s\S]*\? `flex w-full \$\{packageSearchDesktopClasses\}/,
   );
+});
+
+test("desktop Packages submit keeps its translated icon and label on one line", () => {
+  const submit = form.slice(
+    form.indexOf("const searchDealsButton ="),
+    form.indexOf("const primaryPackageControls ="),
+  );
+  assert.match(submit, /lg:min-w-\[188px\] lg:flex-nowrap/);
+  assert.match(submit, /lg:whitespace-nowrap lg:px-5/);
+  assert.match(
+    submit,
+    /<Search[\s\S]*aria-hidden="true"[\s\S]*className=\{`h-4 w-4 \$\{isPackagesLanding \? "lg:shrink-0" : ""\}`\}[\s\S]*\/>/,
+  );
+  assert.match(
+    submit,
+    /<span className=\{isPackagesLanding \? "lg:whitespace-nowrap" : undefined\}>[\s\S]*"deals\.searchButton"/,
+  );
+  assert.doesNotMatch(submit, /truncate|text-ellipsis|overflow-hidden/);
 });
 
 test("desktop Packages mode tabs render every included product icon in label order", () => {
