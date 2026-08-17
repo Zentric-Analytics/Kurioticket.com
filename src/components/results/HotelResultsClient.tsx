@@ -1504,7 +1504,7 @@ export function HotelResultsExperience({
             className={compactSectionClass}
           >
             <Calendar
-              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              className="h-4 w-4 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className={compactValueClass}>

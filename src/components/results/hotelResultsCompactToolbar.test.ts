@@ -143,6 +143,11 @@ test("Hotel compact summaries use decorative icons and no two-line labels", () =
   for (const icon of ["MapPin", "Calendar", "Users"]) {
     assert.match(toolbar, new RegExp(`<${icon}[\\s\\S]*?aria-hidden="true"`));
   }
+  assert.match(
+    toolbar,
+    /<Calendar[^>]*className="h-4 w-4 shrink-0 text-slate-500"/,
+  );
+  assert.doesNotMatch(toolbar, /<Calendar[^>]*text-\[#004BB8\]/);
   assert.equal(
     toolbar.match(/aria-hidden="true"/g)?.length,
     3,

@@ -183,3 +183,14 @@ test("sticky Hotel calendar keeps both months and Done inside a non-scrolling co
   assert.match(searchBarSource, /isStickyDialog \? "mt-2 pt-2" : "mt-4 pt-3"/);
   assert.match(searchBarSource, /isStickyDialog \? "py-1\.5" : "py-2"/);
 });
+
+test("Hotel Results date icons stay neutral in the full and sticky search forms", () => {
+  assert.match(
+    searchBarSource,
+    /<Calendar[^>]*className="shrink-0 text-slate-500"/,
+  );
+  assert.doesNotMatch(
+    searchBarSource,
+    /compact \? "text-\[#004BB8\]" : "text-slate-500"/,
+  );
+});
