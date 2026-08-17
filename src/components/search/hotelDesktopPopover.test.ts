@@ -48,7 +48,7 @@ test("Hotel landing protects desktop-only crop and moderate card radius", () => 
     new URL("../../app/hotels/page.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(source, /object-\[50%_50%\]/);
+  assert.match(source, /object-\[50%_55%\]/);
   assert.match(source, /object-\[52%_34%\]/);
   assert.match(source, /rounded-\[14px\]/);
   assert.match(source, /rounded-\[16px\]/);
