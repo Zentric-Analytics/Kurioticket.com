@@ -232,16 +232,30 @@ export class EasClient {
     }
     return entries;
   }
-  async listUpdates() {
+  async recentPreviewUpdates({ limit = 100 } = {}) {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 500) throw new Error("EAS recent update history limit is invalid.");
     const all = [];
-    for (let offset = 0; offset < 500; offset += 50) {
-      const value = await this.run(["eas-cli@16.17.4", "update:list", "--branch", "preview", "--limit", "50", "--offset", String(offset), "--json", "--non-interactive"]);
+    for (let offset = 0; offset < limit; offset += 50) {
+      const pageLimit = Math.min(50, limit - offset);
+      const value = await this.run(["eas-cli@16.17.4", "update:list", "--branch", "preview", "--limit", String(pageLimit), "--offset", String(offset), "--json", "--non-interactive"]);
       const page = Array.isArray(value) ? value : normalizePreviewUpdatePage(value);
       if (!Array.isArray(page)) throw new Error("EAS update:list response is malformed.");
       all.push(...page);
-      if (page.length < 50) return all;
+      if (page.length < pageLimit) break;
     }
-    throw new Error("EAS update history exceeded the bounded pagination limit.");
+    return all;
+  }
+  async previewUpdateHistoryProbe() {
+    // Preflight verifies credentials, project access, and response shape. It must
+    // never enumerate the lifetime of an append-only branch merely to prove that
+    // its newest records are readable.
+    return this.recentPreviewUpdates({ limit: 1 });
+  }
+  async listUpdates() {
+    // Releases are serialized and the target is the current dev SHA, so any
+    // interrupted publish must be among the newest records. Bound reconciliation
+    // by records inspected rather than failing when the branch's lifetime grows.
+    return this.recentPreviewUpdates({ limit: 100 });
   }
   async run(args) {
     const raw = await this.runText(args);
