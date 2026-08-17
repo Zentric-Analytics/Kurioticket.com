@@ -444,6 +444,7 @@ test("desktop Packages cabin remains a compact committing listbox", () => {
   assert.match(cabinPopover, /text-\[#075EE8\][\s\S]*text-slate-600/);
   assert.match(cabinPopover, /gap-2\.5/);
   assert.match(cabinPopover, /min-h-\[42px\]/);
+  assert.match(cabinPopover, /whitespace-nowrap/);
   assert.match(cabinPopover, /bg-\[#075EE8\]\/\[0\.06\] text-\[#075EE8\]/);
   assert.match(cabinPopover, /role="option"[\s\S]*aria-selected=/);
   assert.match(cabinPopover, /update\("flightCabinClass", cabin\)/);
