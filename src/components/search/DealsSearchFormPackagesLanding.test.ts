@@ -407,13 +407,33 @@ test("desktop Packages dates, travelers, and cabin use moderate common-shell geo
   assert.match(form, /lg:h-8 lg:w-8/);
 });
 
+test("desktop Packages travelers and Rooms use a restrained type hierarchy without rewriting shared mobile styles", () => {
+  const travelersPicker = form.slice(
+    form.indexOf("const travelersPicker"),
+    form.indexOf("const renderFlightDatesCalendar"),
+  );
+  assert.match(travelersPicker, /font-extrabold text-slate-950 \$\{isPackagesLanding \? "lg:text-\[14px\] lg:font-semibold lg:leading-tight lg:text-slate-900"/);
+  assert.match(travelersPicker, /text-xs font-medium text-slate-500 \$\{isPackagesLanding \? "lg:text-\[12px\] lg:font-normal lg:leading-relaxed"/);
+  assert.match(travelersPicker, /font-extrabold tabular-nums text-slate-950 \$\{isPackagesLanding \? "lg:text-\[14px\] lg:font-semibold"/);
+  assert.match(travelersPicker, /font-extrabold \$\{isPackagesLanding \? "lg:text-\[14px\] lg:font-semibold lg:text-slate-900"/);
+  assert.match(travelersPicker, /lg:text-center lg:text-\[14px\] lg:font-semibold lg:tabular-nums/);
+  assert.match(travelersPicker, /text-sm font-bold \$\{isPackagesLanding \? "lg:text-\[13px\] lg:font-medium lg:text-slate-800"/);
+  assert.doesNotMatch(travelersPicker, /className="block text-\[14px\] font-semibold/);
+});
+
 test("desktop Packages cabin remains a compact committing listbox", () => {
   const cabinPopover = form.slice(form.indexOf("open={isDesktopLanding && cabinOpen}"), form.indexOf("<DealsFlightDatesPopover"));
   assert.match(cabinPopover, /role="listbox"/);
   assert.match(cabinPopover, /\["economy", "business", "first"\]/);
+  assert.match(cabinPopover, /<Armchair aria-hidden="true"/);
+  assert.match(cabinPopover, /gap-2\.5/);
+  assert.match(cabinPopover, /min-h-\[42px\]/);
+  assert.match(cabinPopover, /bg-\[#075EE8\]\/\[0\.06\] text-\[#075EE8\]/);
+  assert.match(cabinPopover, /role="option"[\s\S]*aria-selected=/);
   assert.match(cabinPopover, /update\("flightCabinClass", cabin\)/);
   assert.match(cabinPopover, /setCabinOpen\(false\)/);
   assert.match(cabinPopover, /cabinLauncherRef\.current\?\.focus/);
+  assert.match(cabinPopover, /anchorRef=\{cabinLauncherRef\}[\s\S]*align="end"/);
 });
 
 test("desktop Packages fields expose their complete visual surfaces on first click", () => {
