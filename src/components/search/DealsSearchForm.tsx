@@ -522,12 +522,14 @@ function DealsHotelDatesPopover({
   open,
   anchorRef,
   desktopLanding = false,
+  packagesLanding = false,
   minimumDesktopWidth = 1024,
   children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
   desktopLanding?: boolean;
+  packagesLanding?: boolean;
   minimumDesktopWidth?: number;
   children: ReactNode;
 }) {
@@ -575,12 +577,13 @@ function DealsHotelDatesPopover({
       <DesktopLandingPopover
         open={open}
         anchorRef={anchorRef}
-        width={600}
-        desiredHeight={540}
-        align="end"
+        width={packagesLanding ? 580 : 600}
+        desiredHeight={packagesLanding ? 430 : 540}
+        align={packagesLanding ? "start" : "end"}
         marker="hotel-dates"
         minimumWidth={minimumDesktopWidth}
         className="p-4"
+        packagesSurface={packagesLanding}
       >
         {children}
       </DesktopLandingPopover>
@@ -4325,9 +4328,6 @@ export function DealsSearchForm({
                 data-deals-stay-dates
                 className={`mt-3 w-full border-b border-slate-200 pb-3 ${isPackagesLanding ? "lg:w-[calc(100%_-_188px)] lg:mt-1 lg:pb-2" : ""}`}
               >
-                <span className={`${label} px-3`}>
-                  {t("deals.datesForStay")}
-                </span>
                 <button
                   ref={stayDatesLauncherRef}
                   type="button"
@@ -4344,16 +4344,21 @@ export function DealsSearchForm({
                       ? dismissDesktopHotelDates(true)
                       : openHotelDates()
                   }
-                  className="focus-ring mt-1 flex h-[52px] w-[312px] max-w-full cursor-pointer items-center gap-2 rounded-[8px] border border-[#DEE5ED] bg-white px-4 text-start transition-colors hover:border-slate-400"
+                  className="focus-ring flex h-[66px] w-[320px] max-w-full cursor-pointer flex-col items-stretch justify-center gap-1 rounded-[8px] border border-[#DEE5ED] bg-white px-4 text-start transition-colors hover:border-slate-400"
                 >
-                  <Calendar
-                    aria-hidden="true"
-                    className="h-4 w-4 shrink-0 text-slate-500"
-                  />
-                  <span
-                    className={`min-w-0 truncate text-[15px] font-medium ${displayedHotelCheckIn && displayedHotelCheckOut ? "text-slate-950" : "text-slate-500"}`}
-                  >
-                    {hotelDatesSummary}
+                  <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-600">
+                    {t("deals.datesForStay")}
+                  </span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Calendar
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-slate-500"
+                    />
+                    <span
+                      className={`min-w-0 truncate text-[15px] font-medium ${displayedHotelCheckIn && displayedHotelCheckOut ? "text-slate-950" : "text-slate-500"}`}
+                    >
+                      {hotelDatesSummary}
+                    </span>
                   </span>
                 </button>
                 <div>{errorBlock("hotel")}</div>
@@ -4569,6 +4574,7 @@ export function DealsSearchForm({
         open={hotelDatesOpen}
         anchorRef={desktopHotelDatesLauncherRef}
         desktopLanding={isDesktopLanding}
+        packagesLanding={isPackagesLanding}
         minimumDesktopWidth={isPackagesLanding ? 640 : 1024}
       >
         <div
