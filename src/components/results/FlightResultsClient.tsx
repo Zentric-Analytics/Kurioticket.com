@@ -5125,7 +5125,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   function renderDesktopMinimizedSearchBar() {
     const compactSectionClass =
-      "focus-ring flex h-[56px] min-w-0 items-center gap-2.5 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90";
+      "flex h-[56px] min-w-0 items-center gap-2.5 px-3 text-start outline-none transition-colors hover:bg-slate-50/80 focus:outline-none focus-visible:outline-none";
     const compactValueClass = "min-w-0 truncate text-[0.86rem] font-medium leading-5 text-slate-800";
     const compactDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
@@ -5216,15 +5216,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const stickyValueClass =
       "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
     const panelFieldClass =
-      "group relative flex min-h-[58px] min-w-0 flex-col justify-center border-r border-slate-200/80 bg-white/90 px-3 py-1.5 text-start transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20";
+      "group relative flex min-h-[58px] min-w-0 flex-col justify-center border-r border-slate-200/80 bg-white/90 px-3 py-1.5 text-start outline-none transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:outline-none";
     const stickyDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
         : formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("travelDates");
     const tripTypeOptions = [
-      { label: t("oneWay"), value: "one-way" },
-      { label: t("roundTrip"), value: "round-trip" },
+      { label: t("roundTrip"), value: "round-trip", disabled: false },
+      { label: t("oneWay"), value: "one-way", disabled: false },
+      { label: t("multiCity"), value: "multi-city", disabled: true },
     ];
 
     return (
@@ -5294,12 +5295,17 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         type="button"
                         role="radio"
                         aria-checked={selected}
+                        aria-disabled={option.disabled}
+                        disabled={option.disabled}
+                        title={option.disabled ? t("multiCityComingSoon") : undefined}
                         onClick={() => handleTripTypeChange(option.value)}
                         className={cn(
                           "focus-ring inline-flex min-h-7 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
                           selected
                             ? "bg-[#004BB8]/10 text-[#004BB8]"
-                            : "text-slate-500 hover:bg-white hover:text-slate-800",
+                            : option.disabled
+                              ? "cursor-not-allowed text-slate-400"
+                              : "text-slate-500 hover:bg-white hover:text-slate-800",
                         )}
                       >
                         <span
