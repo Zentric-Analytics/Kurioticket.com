@@ -25,6 +25,7 @@ import {
 
 type LocaleContextValue = {
   locale: LanguageCode;
+  storageResolutionComplete: boolean;
   setLocale: (locale: string) => boolean;
   setLocaleFromAccount: (locale: string) => boolean;
   t: ReturnType<typeof getTranslations>;
@@ -64,6 +65,9 @@ export function LocaleProvider({
       ? "manual"
       : "default",
   );
+  const [storageResolutionComplete, setStorageResolutionComplete] = useState(
+    initialLocaleIsExplicit,
+  );
 
   const setLocale = useCallback((nextLocale: string) => {
     const normalized = normalizeLanguage(nextLocale);
@@ -94,12 +98,40 @@ export function LocaleProvider({
   );
 
   useEffect(() => {
-    setStoredLocale(locale);
-
     document.documentElement.lang = getDocumentLanguage(locale);
 
     document.documentElement.dir = getTextDirection(locale);
   }, [locale]);
+
+  useEffect(() => {
+    if (initialLocaleIsExplicit || storageResolutionComplete) return;
+
+    // The server cannot inspect browser storage. Resolve it once after hydration,
+    // before persisting a default or allowing account preferences to hydrate.
+    const current = window.localStorage.getItem("kurioticket_locale");
+    const legacy = window.localStorage.getItem("ct_language");
+    const stored = isPublicLocale(current)
+      ? normalizeLanguage(current)
+      : isPublicLocale(legacy)
+        ? normalizeLanguage(legacy)
+        : null;
+
+    queueMicrotask(() => {
+      if (stored) {
+        setLocaleState(stored);
+        setSelectionSource("manual");
+        setStoredLocale(stored);
+      }
+      setStorageResolutionComplete(true);
+    });
+  }, [initialLocaleIsExplicit, storageResolutionComplete]);
+
+  useEffect(() => {
+    if (initialLocaleIsExplicit) setStoredLocale(locale);
+    // The initial explicit cookie wins over stale current and legacy storage.
+    // This synchronization intentionally runs only for the server-provided choice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialLocaleIsExplicit]);
 
   useEffect(() => {
     if (process.env.NODE_ENV === "development") {
@@ -113,12 +145,13 @@ export function LocaleProvider({
   const value = useMemo<LocaleContextValue>(
     () => ({
       locale,
+      storageResolutionComplete,
       setLocale,
       setLocaleFromAccount,
       t: getTranslations(locale),
       locales: localeOptions,
     }),
-    [locale, setLocale, setLocaleFromAccount],
+    [locale, storageResolutionComplete, setLocale, setLocaleFromAccount],
   );
 
   return (

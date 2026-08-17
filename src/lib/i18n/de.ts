@@ -2,6 +2,7 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "Kürzlich",
   ...en,
   "deals.mobileTravelersTitle": "Reisende",
   "mobileTravelerCabin.title": "Reisende & Kabine",
@@ -707,11 +708,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Flugangebote führender Airlines",
   homePromoFlightsBody:
     "Entdecke zeitlich begrenzte Tarife und vergleiche Optionen sofort.",
-  homePromoFlightsCta: "Flugangebote entdecken",
+  homePromoFlightsCta: "Flugpakete entdecken",
   homePromoHotelsTitle: "Hotels weltweit günstiger",
   homePromoHotelsBody:
     "Finde Unterkünfte von Boutique-Hotels bis zu globalen Ketten mit Preistransparenz.",
-  homePromoHotelsCta: "Hotelangebote entdecken",
+  homePromoHotelsCta: "Hotelpakete entdecken",
   homeHotelDestinationsTitle: "Unterkünfte weltweit entdecken",
   homeHotelDestinationsSubtitle:
     "Entdecke Hotelziele in beliebten Städten, Ländern und Regionen.",

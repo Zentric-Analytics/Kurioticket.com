@@ -2,6 +2,7 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "Gần đây",
   ...en,
   "deals.mobileTravelersTitle": "Hành khách",
   "mobileTravelerCabin.title": "Hành khách và hạng ghế",
@@ -963,11 +964,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Ưu đãi chuyến bay từ các hãng hàng không hàng đầu",
   homePromoFlightsBody:
     "Khám phá giá vé có thời hạn và so sánh lựa chọn ngay lập tức.",
-  homePromoFlightsCta: "Khám phá ưu đãi chuyến bay",
+  homePromoFlightsCta: "Khám phá gói chuyến bay",
   homePromoHotelsTitle: "Tiết kiệm khách sạn trên toàn thế giới",
   homePromoHotelsBody:
     "Duyệt chỗ nghỉ từ khách sạn boutique đến chuỗi khách sạn toàn cầu với giá minh bạch.",
-  homePromoHotelsCta: "Khám phá ưu đãi khách sạn",
+  homePromoHotelsCta: "Khám phá gói khách sạn",
   homeHotelDestinationsTitle: "Khám phá chỗ nghỉ khắp thế giới",
   homeHotelDestinationsSubtitle:
     "Khám phá điểm đến khách sạn tại các thành phố, quốc gia và khu vực phổ biến.",

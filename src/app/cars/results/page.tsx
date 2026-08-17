@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { CarsResultsClient } from "@/components/results/CarsResultsClient";
 import type { CarSearchParams } from "@/lib/cars/types";
+import { hasExplicitDifferentReturnLocation } from "@/lib/cars/carsSearchUtils";
 import { searchCars } from "@/services/travel/carAggregator";
 
 type CarsResultsSearchParams = Promise<
@@ -43,9 +44,15 @@ export default async function CarsResultsPage({
   const params = await searchParams;
   const pickupLocation = getParamValue(params, "pickupLocation");
   const dropoffLocation = getParamValue(params, "dropoffLocation");
-  const values: CarSearchParams = {
+  const returnToDifferentLocation = hasExplicitDifferentReturnLocation({
+    pickupLocation,
+    dropoffLocation,
+    marker: getParamValue(params, "returnToDifferentLocation"),
+  });
+  const values: CarSearchParams & { returnToDifferentLocation: boolean } = {
     pickupLocation,
     dropoffLocation: dropoffLocation || pickupLocation,
+    returnToDifferentLocation,
     pickupDate: getParamValue(params, "pickupDate"),
     pickupTime: getParamValue(params, "pickupTime") || "10:00",
     dropoffDate: getParamValue(params, "dropoffDate"),

@@ -2,6 +2,7 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "हाल ही में",
   ...en,
   "deals.mobileTravelersTitle": "यात्री",
   "mobileTravelerCabin.title": "यात्री और केबिन",
@@ -424,11 +425,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "शीर्ष एयरलाइनों की उड़ान डील्स",
   homePromoFlightsBody:
     "सीमित समय के किराए खोजें और विकल्पों की तुरंत तुलना करें।",
-  homePromoFlightsCta: "उड़ान डील्स देखें",
+  homePromoFlightsCta: "उड़ान पैकेज देखें",
   homePromoHotelsTitle: "दुनिया भर में होटल बचत",
   homePromoHotelsBody:
     "बुटीक होटलों से लेकर वैश्विक चेन तक, पारदर्शी कीमतों के साथ ठहराव देखें।",
-  homePromoHotelsCta: "होटल डील्स देखें",
+  homePromoHotelsCta: "होटल पैकेज देखें",
   faqHeading: "अक्सर पूछे जाने वाले प्रश्न",
   faqIntro:
     "जानें कि विश्वसनीय प्रदाताओं के साथ बुकिंग से पहले Kurioticket उड़ानों, होटलों और यात्रा विकल्पों की तुलना करने में कैसे मदद करता है।",

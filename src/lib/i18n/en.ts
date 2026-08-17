@@ -1,6 +1,7 @@
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "Recently",
   "metadata.root.title.default": "Kurioticket | Find Cheap Flights Fast",
   "metadata.root.description":
     "Compare affordable flights and hotels in seconds with a calmer travel decision platform.",
@@ -2947,11 +2948,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Flight deals from top airlines",
   homePromoFlightsBody:
     "Discover limited-time fares and compare options instantly.",
-  homePromoFlightsCta: "Explore flight deals",
+  homePromoFlightsCta: "Explore flight packages",
   homePromoHotelsTitle: "Hotel savings worldwide",
   homePromoHotelsBody:
     "Browse stays from boutique hotels to global chains with price transparency.",
-  homePromoHotelsCta: "Explore hotel deals",
+  homePromoHotelsCta: "Explore hotel packages",
   homeHotelDestinationsTitle: "Explore stays around the world",
   homeHotelDestinationsSubtitle:
     "Discover hotel stays across popular countries and destinations.",

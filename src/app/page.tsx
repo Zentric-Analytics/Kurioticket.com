@@ -1324,7 +1324,7 @@ export default function Home() {
           className="page-shell bg-white pb-8 pt-8 sm:bg-transparent sm:pb-9 sm:pt-11"
           aria-labelledby="regional-routes-heading"
         >
-          <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="mb-4">
             <h2
               id="regional-routes-heading"
               className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
@@ -1332,13 +1332,6 @@ export default function Home() {
               {t("homeRegionalRoutesTitle") ||
                 "Discover destinations from your region"}
             </h2>
-            <Link
-              href="/flights"
-              className="focus-ring hidden items-center gap-1.5 rounded-full px-2 py-1 text-sm font-bold text-[#004BB8] hover:text-[#021C2B] sm:inline-flex"
-            >
-              {t("homeRegionalRoutesViewAll") || "View all route ideas"}
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
           </div>
           <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
             <div className="flex snap-x snap-mandatory gap-4 sm:grid sm:grid-cols-5 sm:gap-5">
@@ -1383,7 +1376,7 @@ export default function Home() {
             title={t("homePromoHotelsTitle")}
             body={t("homePromoHotelsBody")}
             cta={t("homePromoHotelsCta")}
-            href="/hotels/results"
+            href="/packages"
             icon={<Hotel size={74} />}
           />
         </section>

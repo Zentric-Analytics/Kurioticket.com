@@ -2,6 +2,7 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "เมื่อเร็ว ๆ นี้",
   ...en,
   "deals.mobileTravelersTitle": "ผู้เดินทาง",
   "mobileTravelerCabin.title": "ผู้เดินทางและชั้นโดยสาร",
@@ -476,7 +477,7 @@ export const translations: TranslationDictionary = {
   signupPasswordLabel: "รหัสผ่าน",
   signupAgreementBeforeTerms: "เมื่อสร้างบัญชี คุณยอมรับ",
   signupTermsLink: "ข้อกำหนด",
-  signupAgreementBetweenLinks: " ",
+  signupAgreementBetweenLinks: " และ ",
   signupPrivacyPolicyLink: "นโยบายความเป็นส่วนตัว",
   signupAgreementAfterPrivacy:
     " และประกาศเกี่ยวกับการเปลี่ยนเส้นทางไปยังพาร์ทเนอร์",
@@ -658,11 +659,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "ดีลเที่ยวบินจากสายการบินชั้นนำ",
   homePromoFlightsBody:
     "ค้นหาค่าโดยสารช่วงเวลาจำกัดและเปรียบเทียบตัวเลือกได้ทันที",
-  homePromoFlightsCta: "ดูดีลเที่ยวบิน",
+  homePromoFlightsCta: "ดูแพ็กเกจเที่ยวบิน",
   homePromoHotelsTitle: "ประหยัดค่าโรงแรมทั่วโลก",
   homePromoHotelsBody:
     "เลือกดูที่พักตั้งแต่โรงแรมบูติกไปจนถึงเครือโรงแรมระดับโลก พร้อมราคาที่โปร่งใส",
-  homePromoHotelsCta: "ดูดีลโรงแรม",
+  homePromoHotelsCta: "ดูแพ็กเกจโรงแรม",
   faqHeading: "คำถามที่พบบ่อย",
   faqIntro:
     "เรียนรู้ว่า Kurioticket ช่วยให้คุณเปรียบเทียบเที่ยวบิน โรงแรม และตัวเลือกการเดินทางก่อนจองกับผู้ให้บริการที่เชื่อถือได้อย่างไร",

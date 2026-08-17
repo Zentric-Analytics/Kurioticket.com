@@ -22,7 +22,8 @@ const customizationPreferencesPathname = "/dashboard/preferences/customization";
 export function AccountCustomizationHydrator() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const { locale, setLocaleFromAccount, locales } = useLocale();
+  const { locale, setLocaleFromAccount, locales, storageResolutionComplete } =
+    useLocale();
   const {
     mode,
     setMode,
@@ -56,6 +57,8 @@ export function AccountCustomizationHydrator() {
       hydratedSessionKeyRef.current = null;
       return;
     }
+
+    if (!storageResolutionComplete) return;
 
     if (pathname === customizationPreferencesPathname) {
       return;
@@ -150,6 +153,7 @@ export function AccountCustomizationHydrator() {
     supportedLocaleCodes,
     supportedCurrencyCodes,
     supportedRegionCodes,
+    storageResolutionComplete,
   ]);
 
   return null;

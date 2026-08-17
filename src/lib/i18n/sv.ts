@@ -2,6 +2,7 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "Nyligen",
   ...en,
   "deals.mobileTravelersTitle": "Resenärer",
   "mobileTravelerCabin.title": "Resenärer och kabin",
@@ -1095,10 +1096,10 @@ export const translations: TranslationDictionary = {
   'homeTrustHandoffBody': 'När du väljer ett erbjudande fortsätter du till leverantören för att slutföra bokningen säkert.',
   'homePromoFlightsTitle': 'Flygerbjudanden från ledande flygbolag',
   'homePromoFlightsBody': 'Upptäck tidsbegränsade priser och jämför alternativ direkt.',
-  'homePromoFlightsCta': 'Utforska flygerbjudanden',
+  'homePromoFlightsCta': 'Utforska flygpaket',
   'homePromoHotelsTitle': 'Hotellbesparingar världen över',
   'homePromoHotelsBody': 'Bläddra bland boenden från boutiquehotell till globala kedjor med tydliga priser.',
-  'homePromoHotelsCta': 'Utforska hotellerbjudanden',
+  'homePromoHotelsCta': 'Utforska hotellpaket',
   'faqHeading': 'Vanliga frågor',
   'faqIntro': 'Lär dig hur Kurioticket hjälper dig att jämföra flyg, hotell och resealternativ innan du bokar hos betrodda leverantörer.',
   'faqGeneralQuestions': 'Allmänna frågor',

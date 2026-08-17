@@ -425,11 +425,12 @@ test("desktop Packages travelers and Rooms use a restrained type hierarchy witho
     form.indexOf("const renderFlightDatesCalendar"),
   );
   assert.match(travelersPicker, /font-extrabold text-slate-950 \$\{isPackagesLanding \? "lg:text-\[14px\] lg:font-semibold lg:leading-tight lg:text-slate-900"/);
-  assert.match(travelersPicker, /text-xs font-medium text-slate-500 \$\{isPackagesLanding \? "lg:text-\[12px\] lg:font-normal lg:leading-relaxed"/);
+  assert.match(travelersPicker, /text-xs font-medium text-slate-500 \$\{isPackagesLanding \? "lg:text-\[12px\] lg:font-normal lg:leading-\[1\.35\] lg:text-slate-500"/);
   assert.match(travelersPicker, /font-extrabold tabular-nums text-slate-950 \$\{isPackagesLanding \? "lg:text-\[14px\] lg:font-semibold"/);
-  assert.match(travelersPicker, /font-extrabold \$\{isPackagesLanding \? "lg:text-\[14px\] lg:font-semibold lg:text-slate-900"/);
+  assert.match(travelersPicker, /font-extrabold \$\{isPackagesLanding \? "lg:text-\[14px\] lg:font-semibold lg:leading-tight lg:text-slate-900"/);
   assert.match(travelersPicker, /lg:text-center lg:text-\[14px\] lg:font-semibold lg:tabular-nums/);
   assert.match(travelersPicker, /text-sm font-bold \$\{isPackagesLanding \? "lg:text-\[13px\] lg:font-medium lg:text-slate-800"/);
+  assert.doesNotMatch(travelersPicker, /lg:font-(?:extrabold|black)/);
   assert.doesNotMatch(travelersPicker, /className="block text-\[14px\] font-semibold/);
 });
 
@@ -438,6 +439,9 @@ test("desktop Packages cabin remains a compact committing listbox", () => {
   assert.match(cabinPopover, /role="listbox"/);
   assert.match(cabinPopover, /\["economy", "business", "first"\]/);
   assert.match(cabinPopover, /<Armchair aria-hidden="true"/);
+  assert.match(cabinPopover, /\{isPackagesLanding \? <Armchair/);
+  assert.match(cabinPopover, /h-4 w-4 shrink-0/);
+  assert.match(cabinPopover, /text-\[#075EE8\][\s\S]*text-slate-600/);
   assert.match(cabinPopover, /gap-2\.5/);
   assert.match(cabinPopover, /min-h-\[42px\]/);
   assert.match(cabinPopover, /bg-\[#075EE8\]\/\[0\.06\] text-\[#075EE8\]/);

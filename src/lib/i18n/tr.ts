@@ -2,6 +2,7 @@ import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "Yakın zamanda",
   ...en,
   "deals.mobileTravelersTitle": "Yolcular",
   "mobileTravelerCabin.title": "Yolcular ve kabin",
@@ -1677,11 +1678,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "En iyi hava yollarından uçuş fırsatları",
   homePromoFlightsBody:
     "Sınırlı süreli ücretleri keşfedin ve seçenekleri anında karşılaştırın.",
-  homePromoFlightsCta: "Uçuş fırsatlarını keşfet",
+  homePromoFlightsCta: "Uçuş paketlerini keşfet",
   homePromoHotelsTitle: "Dünya çapında otel tasarrufları",
   homePromoHotelsBody:
     "Butik otellerden global zincirlere kadar konaklamaları fiyat şeffaflığıyla inceleyin.",
-  homePromoHotelsCta: "Otel fırsatlarını keşfet",
+  homePromoHotelsCta: "Otel paketlerini keşfet",
   faqHeading: "Sıkça sorulan sorular",
   faqIntro:
     "Kurioticket'in güvenilir sağlayıcılarla rezervasyon yapmadan önce uçuşları, otelleri ve seyahat seçeneklerini karşılaştırmanıza nasıl yardımcı olduğunu öğrenin.",
