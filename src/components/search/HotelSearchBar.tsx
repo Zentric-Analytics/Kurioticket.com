@@ -1429,21 +1429,21 @@ export function HotelSearchBar({
                   open={datesOpen}
                   launcherRef={datesMobileLauncherRef}
                   preferredWidth={570}
-                  desiredHeight={420}
+                  desiredHeight={isStickyDialog ? 360 : 420}
                   onClose={() => setDatesOpen(false)}
-                  className="p-3"
+                  className={isStickyDialog ? "overflow-hidden p-2" : "p-3"}
                 >
-                  <p className="mb-2.5 text-sm font-semibold text-slate-900">
+                  <p className={cn("text-sm font-semibold text-slate-900", isStickyDialog ? "mb-1.5" : "mb-2.5")}>
                     {t("chooseTravelDates")}
                   </p>
-                  <div className="mb-3 flex items-center justify-between">
+                  <div className={cn("flex items-center justify-between", isStickyDialog ? "mb-2" : "mb-3")}>
                     <button
                       type="button"
                       aria-label={t("previousMonth")}
                       onClick={() =>
                         setHotelVisibleMonthDate((prev) => addMonths(prev, -1))
                       }
-                      className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      className={cn("focus-ring rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50", isStickyDialog ? "py-1" : "py-1.5")}
                     >
                       {t("previousMonthShort")}
                     </button>
@@ -1453,12 +1453,12 @@ export function HotelSearchBar({
                       onClick={() =>
                         setHotelVisibleMonthDate((prev) => addMonths(prev, 1))
                       }
-                      className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      className={cn("focus-ring rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50", isStickyDialog ? "py-1" : "py-1.5")}
                     >
                       {t("nextMonthShort")}
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className={cn("grid grid-cols-1 sm:grid-cols-2", isStickyDialog ? "gap-2" : "gap-3")}>
                     {[0, 1].map((monthOffset) => {
                       const monthDate = addMonths(
                         hotelVisibleMonthDate,
@@ -1468,18 +1468,18 @@ export function HotelSearchBar({
 
                       return (
                         <div key={monthOffset}>
-                          <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
+                          <p className={cn("text-center text-sm font-semibold text-slate-800", isStickyDialog ? "mb-1" : "mb-1.5")}>
                             {monthDate.toLocaleDateString(calendarLocale, {
                               month: "long",
                               year: "numeric",
                             })}
                           </p>
-                          <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
+                          <div className={cn("grid grid-cols-7 text-center text-xs font-semibold text-slate-600", isStickyDialog ? "mb-1 gap-0.5" : "mb-1.5 gap-1")}>
                             {weekdays.map((weekday) => (
                               <span key={weekday}>{weekday}</span>
                             ))}
                           </div>
-                          <div className="grid grid-cols-7 gap-1">
+                          <div className={cn("grid grid-cols-7", isStickyDialog ? "gap-0.5" : "gap-1")}>
                             {cells.map((cell) => {
                               const day = cell.date;
                               const iso = toIsoDate(day);
@@ -1499,7 +1499,7 @@ export function HotelSearchBar({
                                   <span
                                     key={`placeholder-${iso}`}
                                     aria-hidden="true"
-                                    className="h-8 w-8 justify-self-center"
+                                    className={cn("justify-self-center", isStickyDialog ? "h-7 w-7" : "h-8 w-8")}
                                   />
                                 );
                               }
@@ -1517,7 +1517,7 @@ export function HotelSearchBar({
                                   })}`}
                                   onClick={() => handleSelectHotelDate(day)}
                                   disabled={isPastDate}
-                                  className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
+                                  className={`focus-ring flex items-center justify-center justify-self-center rounded-full transition-colors disabled:cursor-not-allowed ${isStickyDialog ? "h-7 w-7 text-xs" : "h-8 w-8 text-sm"} ${
                                     isPastDate
                                       ? "text-slate-300 hover:bg-transparent"
                                       : "text-slate-900 hover:bg-[#004BB8]/8"
@@ -1540,21 +1540,21 @@ export function HotelSearchBar({
                       );
                     })}
                   </div>
-                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
+                  <div className={cn("flex items-center justify-between gap-3 border-t border-slate-200", isStickyDialog ? "mt-2 pt-2" : "mt-4 pt-3")}>
                     <button
                       type="button"
                       onClick={() => {
                         setCheckIn("");
                         setCheckOut("");
                       }}
-                      className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      className={cn("focus-ring rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50", isStickyDialog ? "py-1.5" : "py-2")}
                     >
                       {t("clear")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setDatesOpen(false)}
-                      className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
+                      className={cn("focus-ring rounded-lg bg-[#004BB8] px-4 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(0,75,184,0.20)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35", isStickyDialog ? "py-1.5" : "py-2")}
                     >
                       {t("done")}
                     </button>
