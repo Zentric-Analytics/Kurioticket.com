@@ -8,11 +8,11 @@ import {
 } from "@/lib/deals/dealsJourneyRoutes";
 
 const expected = {
-  "hotel-flight": ["hotel-results", "hotel-details", "flight-results"],
+  "hotel-flight": ["flight-results", "hotel-results", "hotel-details"],
   "hotel-flight-car": [
+    "flight-results",
     "hotel-results",
     "hotel-details",
-    "flight-results",
     "car-results",
   ],
   "hotel-car": ["hotel-results", "hotel-details", "car-results"],
@@ -30,7 +30,7 @@ test("valid Deals results requests server-redirect to the canonical first sequen
   );
 });
 
-test("all package modes progress product-by-product directly to handoff, never Review", () => {
+test("all package modes progress product-by-product in guided customer order", () => {
   for (const mode of dealsPackageModes) {
     const visited = [getFirstDealsJourneyStage(mode)];
     while (getNextDealsJourneyStage(visited.at(-1)!, mode))
