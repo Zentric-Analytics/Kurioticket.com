@@ -143,7 +143,9 @@ export function MobileCarLocationPicker({
     setDraft(null);
     setResults([]);
     setSearchCompleted(false);
-    window.requestAnimationFrame(() => inputRef.current?.focus());
+    window.requestAnimationFrame(() =>
+      inputRef.current?.focus({ preventScroll: true }),
+    );
   };
 
   const commit = (requestClose: () => void) => {

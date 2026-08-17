@@ -230,7 +230,15 @@ export function MobileDatePickerDialog({
     setDraftStart(startDate);
     setDraftEnd(rangeRequired ? endDate : "");
     const frame = window.requestAnimationFrame(() => {
-      if (startDate) selectedMonthRef.current?.scrollIntoView({ block: "start" });
+      const selectedMonth = selectedMonthRef.current;
+      const scrollContainer = selectedMonth?.closest<HTMLElement>(
+        "[data-flight-mobile-picker-content]",
+      );
+      if (startDate && selectedMonth && scrollContainer) {
+        const containerTop = scrollContainer.getBoundingClientRect().top;
+        const monthTop = selectedMonth.getBoundingClientRect().top;
+        scrollContainer.scrollTop += monthTop - containerTop;
+      }
     });
     return () => window.cancelAnimationFrame(frame);
   }, [endDate, open, rangeRequired, startDate]);

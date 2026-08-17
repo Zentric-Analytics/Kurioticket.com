@@ -61,7 +61,9 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
   useEffect(() => {
     if (!open) return;
     setQuery(value); setDraftValue(value); setSuggestions([]);
-    const frame = requestAnimationFrame(() => inputRef.current?.focus());
+    const frame = requestAnimationFrame(() =>
+      inputRef.current?.focus({ preventScroll: true }),
+    );
     return () => cancelAnimationFrame(frame);
   }, [open, value]);
 
@@ -84,7 +86,7 @@ export function HotelDestinationMobilePicker({ open, value, titleId, inputId, la
   }, [open, trimmed, selectedCountryHint, detectedCountryHint]);
 
   const choose = (option: HotelDestinationSuggestion) => { setDraftValue(option.searchValue); setQuery(option.searchValue); };
-  const clearDraft = () => { setQuery(""); setDraftValue(""); setSuggestions([]); requestAnimationFrame(() => inputRef.current?.focus()); };
+  const clearDraft = () => { setQuery(""); setDraftValue(""); setSuggestions([]); requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true })); };
   const rows = trimmed ? suggestions : recents;
 
   return <HotelMobilePickerShell open={open} title={t("chooseDestination")} titleId={titleId} launcherRef={launcherRef}
