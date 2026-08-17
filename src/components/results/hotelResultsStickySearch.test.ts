@@ -61,7 +61,7 @@ test("Hotel sticky editor source contract preserves position and reuses HotelSea
   assert.match(resultsSource, /activeDesktopStickyHotelSearchSection/);
   assert.match(
     resultsSource,
-    /stickyHotelScrollLockRef\.current = lockBodyScroll\(\)/,
+    /stickyHotelScrollLockRef\.current = lockDesktopPageScroll\(\)/,
   );
   assert.match(resultsSource, /focus\(\{ preventScroll: true \}\)/);
   assert.match(resultsSource, /role="dialog"/);
