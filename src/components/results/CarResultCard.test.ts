@@ -49,3 +49,16 @@ test("CarResultCard keeps centered LTR price presentation without changing the c
   assert.match(source, /lg:grid-cols-\[250px_minmax\(0,1fr\)_205px\]/);
   assert.match(source, /xl:grid-cols-\[270px_minmax\(0,1fr\)_205px\]/);
 });
+
+test("CarResultCard groups the pricing rhythm with its action at every breakpoint", () => {
+  assert.match(source, /lg:justify-center/);
+  assert.match(
+    source,
+    /totalDisplayPrice\.formatted[\s\S]*?className="mt-0\.5[^\"]*uppercase[\s\S]*?className="mt-2[^\"]*leading-4[\s\S]*?Taxes and fees included/,
+  );
+  assert.match(
+    source,
+    /Taxes and fees included[\s\S]*?className="mt-3[^\"]*min-h-11/,
+  );
+  assert.doesNotMatch(source, /lg:mt-auto/);
+});

@@ -83,11 +83,50 @@ test("desktop Hotel guests picker has moderate production hierarchy without redu
   assert.match(source, /t\("hotelGuests\.adultDescription"\)/);
   assert.match(source, /t\("hotelGuests\.childDescription"\)/);
   assert.match(source, /t\("hotelGuests\.roomDescription"\)/);
-  assert.match(source, /<PawPrint/);
+  assert.doesNotMatch(
+    guestsPanelSource,
+    /RowIcon|<PawPrint|icon: UserRound|icon: BedDouble/,
+  );
   assert.doesNotMatch(guestsPanelSource, /chooseGuestsAndRooms/);
   assert.doesNotMatch(guestsPanelSource, /t\("done"\)/);
   assert.match(source, /aria-label=\{`\$\{t\("decrease"\)\}/);
   assert.match(source, /aria-label=\{`\$\{t\("increase"\)\}/);
+});
+
+test("desktop Hotel destination and guest fields use clean leading icons", () => {
+  const source = readFileSync(
+    new URL("./HotelSearchBar.tsx", import.meta.url),
+    "utf8",
+  );
+  const destinationInputStart = source.indexOf("ref={destinationInputRef}");
+  const destinationFieldSource = source.slice(
+    source.lastIndexOf("<MapPin", destinationInputStart),
+    source.indexOf("required", destinationInputStart),
+  );
+  const guestsLauncherStart = source.indexOf(
+    "ref={guestsRoomsMobileLauncherRef}",
+  );
+  const guestsLauncherSource = source.slice(
+    guestsLauncherStart,
+    source.indexOf("{guestsRoomsOpen ?", guestsLauncherStart),
+  );
+
+  assert.match(destinationFieldSource, /hidden h-4 w-4[\s\S]*sm:block/);
+  assert.match(destinationFieldSource, /sm:ps-6/);
+  assert.match(destinationFieldSource, /focus:!shadow-none/);
+  assert.match(destinationFieldSource, /focus-visible:!shadow-none/);
+  assert.ok(
+    destinationFieldSource.indexOf("<MapPin") <
+      destinationFieldSource.indexOf("<input"),
+  );
+  assert.ok(
+    guestsLauncherSource.indexOf("<UserRound") <
+      guestsLauncherSource.indexOf("{guestsRoomsSummary}"),
+  );
+  assert.match(
+    guestsLauncherSource,
+    /!mobileLandingPresentation && "max-sm:hidden"/,
+  );
 });
 
 test("desktop Hotel hero keeps the search card visible on laptop viewports", () => {
