@@ -962,6 +962,7 @@ export function CarsResultsClient({
                 searchSurfaceRefs.pickupInputRef.current?.focus();
               }}
               placeholder={t("carsSearch.pickupLocationPlaceholder")}
+              showClearButton={false}
               value={pickupLocation}
               clearLabel={t("carsSearch.clearPickupLocation")}
               strings={locationStrings}
@@ -1037,6 +1038,7 @@ export function CarsResultsClient({
                 setDriverAgeOpen(false);
               }}
               pickupDate={pickupDate}
+              showRentalDuration={placement === "desktop-full"}
               visibleMonthDate={visibleMonthDate}
               t={t}
               intlLocale={intlLocale}
@@ -1823,6 +1825,7 @@ function SearchInputCell({
   onOpenChange,
   placeholder,
   secondaryAction,
+  showClearButton = true,
   strings,
   value,
 }: {
@@ -1840,6 +1843,7 @@ function SearchInputCell({
   onOpenChange: (open: boolean) => void;
   placeholder: string;
   secondaryAction?: { label: string; onClick: () => void };
+  showClearButton?: boolean;
   strings: Parameters<typeof CarLocationAutocomplete>[0]["strings"];
   value: string;
 }) {
@@ -1882,13 +1886,13 @@ function SearchInputCell({
           value={value}
           onValueChange={onChange}
           placeholder={placeholder}
-          inputClassName={cn(fieldInputClass, "pr-8")}
+          inputClassName={cn(fieldInputClass, showClearButton && "pr-8")}
           presentation="desktop"
           strings={strings}
           isOpen={isOpen}
           onOpenChange={onOpenChange}
         />
-        {value ? (
+        {showClearButton && value ? (
           <button
             type="button"
             aria-label={clearLabel}
@@ -1955,6 +1959,7 @@ function SearchDateCell({
   onSelectDate,
   onToggle,
   pickupDate,
+  showRentalDuration,
   visibleMonthDate,
   t,
   intlLocale,
@@ -1971,17 +1976,19 @@ function SearchDateCell({
   onSelectDate: (date: Date) => void;
   onToggle: () => void;
   pickupDate: string;
+  showRentalDuration: boolean;
   visibleMonthDate: Date;
   t: (key: string) => string;
   intlLocale: string;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const pickupDisplay = formatDate(
+  const dateFormatter = showRentalDuration ? formatCompactDate : formatDate;
+  const pickupDisplay = dateFormatter(
     pickupDate,
     intlLocale,
     t("carsResults.selectDate"),
   );
-  const dropoffDisplay = formatDate(
+  const dropoffDisplay = dateFormatter(
     dropoffDate,
     intlLocale,
     t("carsResults.selectDate"),
@@ -1994,6 +2001,19 @@ function SearchDateCell({
   const weekdays = getWeekdays(intlLocale);
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
+  const rentalDayCount =
+    pickupParsed && dropoffParsed
+      ? Math.max(
+          0,
+          Math.round(
+            (dropoffParsed.getTime() - pickupParsed.getTime()) / 86_400_000,
+          ),
+        )
+      : 0;
+  const rentalDaysLabel = t("carsSearch.rentalDays").replace(
+    "{count}",
+    String(rentalDayCount),
+  );
 
   return (
     <div
@@ -2016,8 +2036,20 @@ function SearchDateCell({
         aria-haspopup="dialog"
         className="focus-ring flex h-8 min-w-0 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-start text-[16px] font-medium text-slate-900 outline-none md:text-sm lg:font-semibold lg:leading-6"
       >
-        <span className={cn("truncate", !pickupDate && "text-slate-400")}>
-          {summary}
+        <span className="min-w-0">
+          <span
+            className={cn(
+              "block truncate leading-4",
+              !pickupDate && "text-slate-400",
+            )}
+          >
+            {summary}
+          </span>
+          {showRentalDuration && rentalDayCount > 0 ? (
+            <span className="mt-0.5 block text-[11px] font-medium leading-3 text-slate-500">
+              {rentalDaysLabel}
+            </span>
+          ) : null}
         </span>
         <ChevronDown
           className={cn(
