@@ -555,20 +555,25 @@ function Offer({
   selected: boolean;
 }) {
   const { theme } = useAppTheme();
+  const compact = useWindowDimensions().width < 480;
   return (
-    <View style={[d.offer, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }, selected && { borderColor: ui.blue }]}>
-      <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}>
-        <ProviderLogo provider={provider} />
+    <View style={[d.offer, compact && d.offerCompact, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }, selected && { borderColor: ui.blue }]}>
+      <View style={d.providerIdentity}>
+        <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}>
+          <ProviderLogo provider={provider} />
+        </View>
+        <View style={d.providerCopy}>
+          <Text style={[d.provider, d.providerName, { color: theme.textPrimary }]}>
+            {provider}
+          </Text>
+          {selected ? <Text style={[d.green, d.recommended]}>★ Recommended</Text> : null}
+          <Text style={[d.meta, d.providerKind, { color: theme.textSecondary }]}>{kind}</Text>
+        </View>
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={[d.provider, { color: theme.textPrimary }]}>
-          {provider}{" "}
-          {selected ? <Text style={d.green}>★ Recommended</Text> : null}
-        </Text>
-        <Text style={[d.meta, { color: theme.textSecondary }]}>{kind}</Text>
+      <View style={[d.offerActions, compact && d.offerActionsCompact]}>
+        <Text numberOfLines={1} style={d.priceSmall}>{price}</Text>
+        <Button label="Select" />
       </View>
-      <Text style={d.priceSmall}>{price}</Text>
-      <Button label="Select" />
     </View>
   );
 }
@@ -655,6 +660,21 @@ const d = StyleSheet.create({
     alignItems: "center",
     gap: 9,
   },
+  offerCompact: {
+    alignItems: "stretch",
+    flexDirection: "column",
+  },
+  providerIdentity: {
+    flex: 1,
+    minWidth: 140,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+  providerCopy: { flex: 1, minWidth: 97 },
+  providerName: { flexShrink: 0 },
+  recommended: { alignSelf: "flex-start", flexShrink: 0 },
+  providerKind: { alignSelf: "flex-start", flexShrink: 0 },
   providerLogo: {
     width: 34,
     height: 34,
@@ -662,8 +682,17 @@ const d = StyleSheet.create({
     backgroundColor: "#EEF3FF",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
-  priceSmall: { fontSize: 18, fontWeight: "900", color: ui.blue },
+  offerActions: {
+    flexShrink: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 9,
+  },
+  offerActionsCompact: { flexWrap: "wrap" },
+  priceSmall: { fontSize: 18, fontWeight: "900", color: ui.blue, flexShrink: 0 },
   disclosure: { fontSize: 10, color: ui.muted, textAlign: "center" },
   sticky: {
     position: "absolute",
