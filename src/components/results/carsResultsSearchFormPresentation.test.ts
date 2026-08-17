@@ -6,6 +6,10 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const carsPageSource = readFileSync(
+  new URL("../../app/cars/page.tsx", import.meta.url),
+  "utf8",
+);
 
 test("results search preserves both desktop grid geometries and outer footprint", () => {
   assert.match(source, /mx-auto w-full min-w-0 max-w-5xl/);
@@ -31,6 +35,12 @@ test("results search conditionally renders return location and canonical marker"
     source,
     /setReturnToDifferentLocation\(false\)[\s\S]*?setDropoffLocation\(""\)/,
   );
+});
+
+test("different-return action is landing-page only while same-as-pickup remains", () => {
+  assert.doesNotMatch(source, /carsSearch\.differentReturnLocation/);
+  assert.match(source, /carsResults\.sameAsPickup/);
+  assert.match(carsPageSource, /carsSearch\.differentReturnLocation/);
 });
 
 test("desktop controls reuse Cars autocomplete, picker content, and fixed popovers", () => {
