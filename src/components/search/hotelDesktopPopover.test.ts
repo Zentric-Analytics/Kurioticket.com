@@ -27,7 +27,7 @@ const nearBottomGeometry = (desiredHeight: number, preferredWidth: number) =>
 
 test("Hotel dates, guests, and destination panels flip above a low launcher", () => {
   assert.equal(nearBottomGeometry(420, 570).placement, "above");
-  assert.equal(nearBottomGeometry(360, 336).placement, "above");
+  assert.equal(nearBottomGeometry(486, 392).placement, "above");
   assert.equal(nearBottomGeometry(320, 420).placement, "above");
 });
 
@@ -48,7 +48,7 @@ test("Hotel landing protects desktop-only crop and moderate card radius", () => 
     new URL("../../app/hotels/page.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(source, /object-\[50%_55%\]/);
+  assert.match(source, /object-\[50%_48%\]/);
   assert.match(source, /object-\[52%_34%\]/);
   assert.match(source, /rounded-\[14px\]/);
   assert.match(source, /rounded-\[16px\]/);
@@ -65,5 +65,29 @@ test("all three desktop Hotel pickers reuse the shared wrapper", () => {
   assert.equal(source.match(/<HotelDesktopPopover/g)?.length, 3);
   assert.match(source, /preferredWidth=\{420\}[\s\S]*desiredHeight=\{320\}/);
   assert.match(source, /preferredWidth=\{570\}[\s\S]*desiredHeight=\{420\}/);
-  assert.match(source, /preferredWidth=\{336\}[\s\S]*desiredHeight=\{360\}/);
+  assert.match(source, /preferredWidth=\{392\}[\s\S]*desiredHeight=\{486\}/);
+});
+
+test("desktop Hotel guests picker has production hierarchy and a clear completion action", () => {
+  const source = readFileSync(
+    new URL("./HotelSearchBar.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /t\("guestsAndRooms"\)/);
+  assert.match(source, /t\("hotelGuests\.adultDescription"\)/);
+  assert.match(source, /t\("hotelGuests\.childDescription"\)/);
+  assert.match(source, /t\("hotelGuests\.roomDescription"\)/);
+  assert.match(source, /<PawPrint/);
+  assert.match(source, /t\("done"\)/);
+  assert.match(source, /aria-label=\{`\$\{t\("decrease"\)\}/);
+  assert.match(source, /aria-label=\{`\$\{t\("increase"\)\}/);
+});
+
+test("desktop Hotel hero keeps the search card visible on laptop viewports", () => {
+  const source = readFileSync(
+    new URL("../../app/hotels/page.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /min-h-\[28rem\][\s\S]*lg:min-h-\[29rem\]/);
+  assert.match(source, /bottom-\[-44px\][\s\S]*lg:bottom-\[-46px\]/);
 });

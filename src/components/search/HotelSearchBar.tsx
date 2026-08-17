@@ -17,6 +17,7 @@ import {
   ChevronDown,
   MapPin,
   Minus,
+  PawPrint,
   PencilLine,
   Plus,
   SlidersHorizontal,
@@ -1598,17 +1599,27 @@ export function HotelSearchBar({
                 <HotelDesktopPopover
                   open={guestsRoomsOpen}
                   launcherRef={guestsRoomsMobileLauncherRef}
-                  preferredWidth={336}
-                  desiredHeight={360}
+                  preferredWidth={392}
+                  desiredHeight={486}
                   align="end"
                   onClose={() => setGuestsRoomsOpen(false)}
-                  className="p-3"
+                  className="rounded-2xl border-slate-200 p-0 shadow-[0_24px_64px_-18px_rgba(15,23,42,0.28)]"
                 >
-                  <div className="space-y-3">
+                  <div className="border-b border-slate-200 px-5 py-4">
+                    <h2 className="text-base font-bold tracking-[-0.01em] text-slate-950">
+                      {t("guestsAndRooms")}
+                    </h2>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {t("chooseGuestsAndRooms")}
+                    </p>
+                  </div>
+                  <div className="divide-y divide-slate-200 px-5">
                     {[
                       {
                         key: "adults",
                         label: t("adults"),
+                        description: t("hotelGuests.adultDescription"),
+                        icon: UserRound,
                         value: hotelAdultCount,
                         min: 1,
                         max: 12 - hotelChildCount,
@@ -1622,6 +1633,8 @@ export function HotelSearchBar({
                       {
                         key: "children",
                         label: t("children"),
+                        description: t("hotelGuests.childDescription"),
+                        icon: UserRound,
                         value: hotelChildCount,
                         min: 0,
                         max: 12 - hotelAdultCount,
@@ -1635,6 +1648,8 @@ export function HotelSearchBar({
                       {
                         key: "rooms",
                         label: t("rooms"),
+                        description: t("hotelGuests.roomDescription"),
+                        icon: BedDouble,
                         value: clampCount(rooms, 1, 6),
                         min: 1,
                         max: 6,
@@ -1650,32 +1665,45 @@ export function HotelSearchBar({
                     ].map((row) => {
                       const canDecrement = row.value > row.min;
                       const canIncrement = row.value < row.max;
+                      const RowIcon = row.icon;
 
                       return (
                         <div
                           key={row.key}
-                          className="flex items-center justify-between gap-2.5"
+                          className="flex min-h-[82px] items-center justify-between gap-4 py-3"
                         >
-                          <span className="text-sm font-semibold text-slate-900">
-                            {row.label}
-                          </span>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+                              <RowIcon aria-hidden="true" className="h-5 w-5" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-sm font-bold text-slate-950">
+                                {row.label}
+                              </span>
+                              <span className="mt-0.5 block text-xs font-medium text-slate-500">
+                                {row.description}
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
                             <button
                               type="button"
                               onClick={row.onDecrement}
                               disabled={!canDecrement}
-                              className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                              aria-label={`${t("decrease")} ${row.label}`}
+                              className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
                             >
                               <Minus className="h-4 w-4" />
                             </button>
-                            <span className="min-w-6 text-center text-sm font-semibold text-slate-900">
+                            <span className="min-w-7 text-center text-base font-bold tabular-nums text-slate-950">
                               {row.value}
                             </span>
                             <button
                               type="button"
                               onClick={row.onIncrement}
                               disabled={!canIncrement}
-                              className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                              aria-label={`${t("increase")} ${row.label}`}
+                              className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
@@ -1683,40 +1711,54 @@ export function HotelSearchBar({
                         </div>
                       );
                     })}
-                    {!mobileSearchOpen ? (
-                      <div className="border-t border-slate-200 pt-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
+                  </div>
+                  {!mobileSearchOpen ? (
+                    <div className="border-t border-slate-200 bg-slate-50/70 px-5 py-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-slate-200">
+                            <PawPrint aria-hidden="true" className="h-5 w-5" />
+                          </span>
+                          <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-900">
                               {t("petFriendly")}
                             </p>
-                            <p className="pr-2 text-xs leading-5 text-slate-600">
+                            <p className="mt-0.5 text-xs leading-5 text-slate-500">
                               {t("onlyShowPetFriendlyStays")}
                             </p>
                           </div>
+                        </div>
                           <button
                             type="button"
                             role="switch"
                             aria-checked={hotelPetFriendly}
                             aria-label={t("togglePetFriendlyStays")}
                             onClick={() => setHotelPetFriendly((prev) => !prev)}
-                            className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
+                            className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
                               hotelPetFriendly
                                 ? "border-[#004BB8] bg-[#004BB8]"
                                 : "border-slate-300 bg-slate-200"
                             }`}
                           >
                             <span
-                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                              className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${
                                 hotelPetFriendly
                                   ? "translate-x-5"
                                   : "translate-x-0.5"
                               }`}
                             />
                           </button>
-                        </div>
                       </div>
-                    ) : null}
+                    </div>
+                  ) : null}
+                  <div className="border-t border-slate-200 bg-white p-4">
+                    <button
+                      type="button"
+                      onClick={() => setGuestsRoomsOpen(false)}
+                      className="focus-ring h-11 w-full rounded-lg bg-[#004BB8] text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,75,184,0.2)] transition-colors hover:bg-[#003f9c]"
+                    >
+                      {t("done")}
+                    </button>
                   </div>
                 </HotelDesktopPopover>
               ) : null}
