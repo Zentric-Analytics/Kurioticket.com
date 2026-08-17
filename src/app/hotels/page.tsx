@@ -401,7 +401,7 @@ export default function HotelsSearchPage() {
               <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/34 via-slate-950/8 to-transparent" />
             </div>
 
-            <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-54px]">
+            <div className="page-shell absolute inset-x-0 bottom-[-78px] z-30 lg:bottom-[-80px]">
               <div className="mx-auto max-w-6xl">
                 <HotelSearchBar
                   introLabel={hotelSearchIntroLabel}
