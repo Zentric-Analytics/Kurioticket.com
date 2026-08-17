@@ -145,7 +145,10 @@ export function MobileAirportPicker({
       );
       setRecentEntries(merged);
     });
-    const focusId = window.setTimeout(() => inputRef.current?.focus(), 100);
+    const focusId = window.setTimeout(
+      () => inputRef.current?.focus({ preventScroll: true }),
+      100,
+    );
     return () => {
       controller.abort();
       window.clearTimeout(focusId);
@@ -251,7 +254,9 @@ export function MobileAirportPicker({
               setQuery("");
               setDraft(null);
               setSuggestions([]);
-              window.requestAnimationFrame(() => inputRef.current?.focus());
+              window.requestAnimationFrame(() =>
+                inputRef.current?.focus({ preventScroll: true }),
+              );
             }}
             className="focus-ring absolute end-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
           >

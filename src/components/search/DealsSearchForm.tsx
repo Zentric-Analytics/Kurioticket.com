@@ -1816,7 +1816,7 @@ export function DealsSearchForm({
         mobileCarLocation === "pickup"
           ? carPickupMobileInputRef.current
           : carReturnMobileInputRef.current;
-      input?.focus();
+      input?.focus({ preventScroll: true });
       input?.select();
     }, 80);
     return () => window.clearTimeout(timer);
@@ -3779,7 +3779,7 @@ export function DealsSearchForm({
                             const target = event.target;
                             if (target instanceof Element && target.closest("input, button, a, select, textarea")) return;
                             event.preventDefault();
-                            inputRef.current?.focus();
+                            inputRef.current?.focus({ preventScroll: true });
                           }}
                           className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:pe-3 ${isPackagesLanding ? "lg:min-h-[70px] lg:cursor-text lg:py-2.5 lg:ps-4" : "lg:min-h-[78px] lg:py-3 lg:ps-10"}` : ""}`}
                           data-deals-flight-destination={kind}
@@ -3899,7 +3899,7 @@ export function DealsSearchForm({
                                     setFlightDestinationLoading(false);
                                     setFlightDestinationHighlight(0);
                                   }
-                                  inputRef.current?.focus();
+                                  inputRef.current?.focus({ preventScroll: true });
                                 }}
                                 className="focus-ring absolute end-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
                               >
@@ -4147,7 +4147,9 @@ export function DealsSearchForm({
                               setHotelSuggestions([]);
                               setHotelDestinationLoading(false);
                               setHotelDestinationHighlight(0);
-                              hotelDestinationInputRef.current?.focus();
+                              hotelDestinationInputRef.current?.focus({
+                                preventScroll: true,
+                              });
                             }}
                             className="focus-ring absolute end-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
                           >

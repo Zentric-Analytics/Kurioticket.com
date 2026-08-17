@@ -43,6 +43,7 @@ type ScrollLockSnapshot = {
   body: HTMLElement;
   root: HTMLElement;
   launcherElement: HTMLElement | null | undefined;
+  scrollX: number;
   scrollY: number;
   previousBodyStyles: {
     left: string;
@@ -58,6 +59,7 @@ type ScrollLockSnapshot = {
     height: string;
     overflow: string;
     overscrollBehavior: string;
+    scrollBehavior: string;
   };
 };
 
@@ -132,6 +134,12 @@ function waitForMobileViewportToSettle() {
   });
 }
 
+function waitForNextPaint() {
+  return new Promise<void>((resolve) =>
+    window.requestAnimationFrame(() => resolve()),
+  );
+}
+
 export function FlightMobilePickerShell({
   open,
   title,
@@ -155,15 +163,16 @@ export function FlightMobilePickerShell({
   const closePromiseRef = useRef<Promise<void> | null>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const scrollLockSnapshotRef = useRef<ScrollLockSnapshot | null>(null);
-  const canRestoreScrollLockRef = useRef(false);
   const portalElement = typeof document === "undefined" ? null : document.body;
 
-  const restoreScrollLock = useCallback((restoreFocus: boolean) => {
-    if (typeof window === "undefined") return;
+  const restorePagePosition = useCallback(() => {
+    if (typeof window === "undefined") return null;
 
     const snapshot = scrollLockSnapshotRef.current;
-    if (!snapshot) return;
+    if (!snapshot) return null;
 
+    // Claim this session before touching the document so cleanup cannot
+    // perform a second restoration after a normal close.
     scrollLockSnapshotRef.current = null;
     snapshot.body.style.left = snapshot.previousBodyStyles.left;
     snapshot.body.style.overflow = snapshot.previousBodyStyles.overflow;
@@ -178,14 +187,27 @@ export function FlightMobilePickerShell({
     snapshot.root.style.overflow = snapshot.previousRootStyles.overflow;
     snapshot.root.style.overscrollBehavior =
       snapshot.previousRootStyles.overscrollBehavior;
-    window.scrollTo(0, snapshot.scrollY);
-
-    if (restoreFocus) {
-      window.requestAnimationFrame(() => {
-        snapshot.launcherElement?.focus({ preventScroll: true });
+    snapshot.root.style.scrollBehavior = "auto";
+    try {
+      window.scrollTo({
+        left: snapshot.scrollX,
+        top: snapshot.scrollY,
+        behavior: "instant" as ScrollBehavior,
       });
+    } finally {
+      snapshot.root.style.scrollBehavior =
+        snapshot.previousRootStyles.scrollBehavior;
     }
+
+    return snapshot.launcherElement;
   }, []);
+
+  const restoreLauncherFocus = useCallback(
+    (launcherElement: HTMLElement | null | undefined) => {
+      launcherElement?.focus({ preventScroll: true });
+    },
+    [],
+  );
 
   const requestClose = useCallback(() => {
     if (closePromiseRef.current) return;
@@ -212,19 +234,24 @@ export function FlightMobilePickerShell({
       activeElement.blur();
     }
 
-    closePromiseRef.current = waitForMobileViewportToSettle().then(() => {
-      canRestoreScrollLockRef.current = true;
+    closePromiseRef.current = (async () => {
+      await waitForMobileViewportToSettle();
+      // Restore behind the opaque shell, then give the browser one paint to
+      // settle the underlying page before the parent unmounts this portal.
+      const launcherElement = restorePagePosition();
+      await waitForNextPaint();
       onClose();
-      restoreScrollLock(closeInteractionRef.current === "keyboard");
-    });
-  }, [onClose, restoreScrollLock]);
+      if (closeInteractionRef.current === "keyboard") {
+        restoreLauncherFocus(launcherElement);
+      }
+    })();
+  }, [onClose, restoreLauncherFocus, restorePagePosition]);
 
   useEffect(() => {
     if (!open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsClosing(false);
       closePromiseRef.current = null;
-      canRestoreScrollLockRef.current = false;
     }
   }, [open]);
 
@@ -237,12 +264,14 @@ export function FlightMobilePickerShell({
     const launcherElement = launcherRef?.current;
     const bodyElement = document.body;
     const rootElement = document.documentElement;
+    const scrollX = window.scrollX;
     const scrollY = window.scrollY;
 
     scrollLockSnapshotRef.current = {
       body: bodyElement,
       root: rootElement,
       launcherElement,
+      scrollX,
       scrollY,
       previousBodyStyles: {
         left: bodyElement.style.left,
@@ -258,6 +287,7 @@ export function FlightMobilePickerShell({
         height: rootElement.style.height,
         overflow: rootElement.style.overflow,
         overscrollBehavior: rootElement.style.overscrollBehavior,
+        scrollBehavior: rootElement.style.scrollBehavior,
       },
     };
 
@@ -303,7 +333,7 @@ export function FlightMobilePickerShell({
         capture: true,
       });
 
-      if (!canRestoreScrollLockRef.current) {
+      if (scrollLockSnapshotRef.current) {
         const activeElement = document.activeElement;
         if (
           activeElement instanceof HTMLElement &&
@@ -313,9 +343,12 @@ export function FlightMobilePickerShell({
         }
       }
 
-      restoreScrollLock(closeInteractionRef.current === "keyboard");
+      const launcherElement = restorePagePosition();
+      if (closeInteractionRef.current === "keyboard") {
+        restoreLauncherFocus(launcherElement);
+      }
     };
-  }, [launcherRef, open, restoreScrollLock]);
+  }, [launcherRef, open, restoreLauncherFocus, restorePagePosition]);
 
   if (!open || !portalElement) return null;
 

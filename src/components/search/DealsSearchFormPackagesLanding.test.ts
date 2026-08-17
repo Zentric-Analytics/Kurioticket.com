@@ -417,7 +417,7 @@ test("desktop Packages cabin remains a compact committing listbox", () => {
 });
 
 test("desktop Packages fields expose their complete visual surfaces on first click", () => {
-  assert.match(form, /onPointerDown=\{\(event\) => \{[\s\S]*?inputRef\.current\?\.focus\(\)/);
+  assert.match(form, /onPointerDown=\{\(event\) => \{[\s\S]*?inputRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(form, /target\.closest\("input, button, a, select, textarea"\)/);
   assert.match(form, /flightDatesLauncherRef[\s\S]*?lg:h-full lg:w-full/);
   assert.match(form, /data-deals-package-travellers[\s\S]*?h-full w-full cursor-pointer/);

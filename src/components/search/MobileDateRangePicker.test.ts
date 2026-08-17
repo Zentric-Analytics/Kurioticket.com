@@ -49,10 +49,12 @@ test("Done preserves native validation while always retaining its strong-blue tr
   assert.doesNotMatch(source, /disabled:opacity-50/);
 });
 
-test("calendar preserves mobile scrolling, safe fixed footer, accessibility, and selected-month reveal", () => {
+test("calendar preserves internal mobile scrolling, safe fixed footer, accessibility, and selected-month reveal", () => {
   assert.match(source, /<FlightMobilePickerShell/);
   assert.match(source, /h-\[52px\] w-full rounded-\[9px\]/);
-  assert.match(source, /scrollIntoView\(\{ block: "start" \}\)/);
+  assert.match(source, /"\[data-flight-mobile-picker-content\]"/);
+  assert.match(source, /scrollContainer\.scrollTop \+= monthTop - containerTop/);
+  assert.doesNotMatch(source, /scrollIntoView/);
   assert.match(source, /aria-pressed=\{isStart \|\| isEnd\}/);
   assert.match(source, /aria-disabled=\{disabled\}/);
   assert.match(source, /selectDatePrefix/);

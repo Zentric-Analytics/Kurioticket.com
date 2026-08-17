@@ -70,6 +70,9 @@ test("homepage mobile time picker drafts both values and commits only from Done"
   assert.match(homepage, /returnTime=\{carsValues\.dropoffTime\}/);
   assert.match(homepage, /onCommit=\{\(pickupTime, dropoffTime\)/);
   assert.match(homepage, /onCommit=\{\(age\) => updateCarsValue\("driverAge", age\)\}/);
+  assert.match(shared, /onCommit\(draftPickup, draftReturn\); requestClose\(\)/);
+  assert.match(shared, /onCommit\(draftAge\); requestClose\(\)/);
+  assert.doesNotMatch(shared, /onCommit\(draft(?:Pickup|Age)[^;]*; onClose\(\)/);
 });
 
 test("shared shell locks the document while allowing picker touch panning", () => {
