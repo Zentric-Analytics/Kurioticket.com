@@ -1794,7 +1794,7 @@ export function HotelSearchBar({
           </div>
         </div>
 
-        {!compact && hasActiveHotelSearch ? (
+        {!compact && !mobileLandingPresentation && hasActiveHotelSearch ? (
           <div className="flex justify-end px-1">
             <button
               type="button"

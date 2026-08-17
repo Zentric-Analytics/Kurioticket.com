@@ -91,3 +91,32 @@ test("landing hotel identity is moderately enlarged without changing other consu
   assert.doesNotMatch(homepageSource, /mobileLandingPresentation/);
   assert.doesNotMatch(homepageSource, /<HotelSearchBar/);
 });
+
+test("mobile hotel landing omits the active-search reset surface while preserving desktop reset", () => {
+  assert.match(
+    searchBarSource,
+    /!compact && !mobileLandingPresentation && hasActiveHotelSearch/,
+  );
+  assert.match(searchBarSource, /onClick=\{handleResetSearch\}/);
+  assert.match(searchBarSource, /<RotateCcw/);
+  assert.match(searchBarSource, /\{t\("clearAll"\)\}/);
+});
+
+test("hotel hero is text-free with one screen-reader-accessible page heading", () => {
+  const mobileHero = hotelsPageSource.slice(
+    hotelsPageSource.indexOf('<section className="relative z-20 isolate'),
+    hotelsPageSource.indexOf('<section className="relative z-20 hidden'),
+  );
+  const desktopHero = hotelsPageSource.slice(
+    hotelsPageSource.indexOf('<section className="relative z-20 hidden'),
+    hotelsPageSource.indexOf('aria-labelledby="hotel-destinations-heading"'),
+  );
+
+  assert.doesNotMatch(mobileHero, /hotelsHeroMobileTitle|hotelsHeroMobileSubtitle/);
+  assert.doesNotMatch(desktopHero, /hotelsHeroTitle|hotelsHeroSubtitle/);
+  assert.equal((hotelsPageSource.match(/<h1\b/g) ?? []).length, 1);
+  assert.match(
+    hotelsPageSource,
+    /<h1 className="sr-only">\{t\("hotelsHeroTitle"\)\}<\/h1>/,
+  );
+});
