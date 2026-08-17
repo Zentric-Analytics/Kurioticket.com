@@ -393,7 +393,7 @@ export default function HotelsSearchPage() {
                 fill
                 priority
                 sizes="100vw"
-                className="object-cover object-[50%_46%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
+                className="object-cover object-[50%_50%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
               />
               <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-slate-950/56 via-slate-950/20 to-transparent" />
               <div className="absolute left-0 top-0 h-[66%] w-[62%] bg-[radial-gradient(ellipse_at_22%_26%,rgba(15,23,42,0.42),rgba(15,23,42,0.18)_42%,transparent_72%)]" />
@@ -406,7 +406,7 @@ export default function HotelsSearchPage() {
                 <HotelSearchBar
                   introLabel={hotelSearchIntroLabel}
                   desktopIdentityLabel={t("hotels")}
-                  className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/[0.97] [&>form>div]:!p-4 [&>form>div]:!shadow-[0_34px_86px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-5 lg:[&>form>div>div:last-child]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_142px] lg:[&>form>div>div:last-child>*]:!min-h-[68px] lg:[&>form>div>div:last-child>div:last-child>button]:!min-h-[68px]"
+                  className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[14px] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/[0.97] [&>form>div]:!p-4 [&>form>div]:!shadow-[0_34px_86px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[16px] lg:[&>form>div]:!p-5 lg:[&>form>div>div:last-child]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_142px] lg:[&>form>div>div:last-child>*]:!min-h-[68px] lg:[&>form>div>div:last-child>div:last-child>button]:!min-h-[68px]"
                 />
               </div>
             </div>
