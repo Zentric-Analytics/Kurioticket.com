@@ -1248,7 +1248,7 @@ export function CarsResultsClient({
               className="focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-e border-slate-200/85 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90"
             >
               <Icon
-                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span
@@ -1290,7 +1290,10 @@ export function CarsResultsClient({
         >
           <div
             className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-12 xl:pt-16"
-            onMouseDown={(event) => event.stopPropagation()}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget)
+                closeDesktopStickySearch();
+            }}
           >
             <div
               ref={stickyDialogRef}
@@ -1298,6 +1301,7 @@ export function CarsResultsClient({
               aria-modal="true"
               aria-labelledby="sticky-cars-search-title"
               tabIndex={-1}
+              onMouseDown={(event) => event.stopPropagation()}
               className={cn(
                 "w-full rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md",
                 returnToDifferentLocation ? "max-w-5xl" : "max-w-4xl",

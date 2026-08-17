@@ -189,3 +189,39 @@ test("source-contract: sticky controls form one restrained segmented row", () =>
   );
   assert.doesNotMatch(source, /isCompactSearch \? "p-1" : "p-1\.5"/);
 });
+
+test("source-contract: collapsed Cars search icons use neutral slate styling", () => {
+  const compactStart = source.indexOf(
+    '"pointer-events-none fixed inset-x-0 top-0 z-[1000]',
+  );
+  const compactEnd = source.indexOf(
+    "{desktopStickySearchSection ? (",
+    compactStart,
+  );
+  const compactToolbar = source.slice(compactStart, compactEnd);
+
+  assert.notEqual(compactStart, -1);
+  assert.notEqual(compactEnd, -1);
+  assert.match(compactToolbar, /className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.doesNotMatch(compactToolbar, /className="h-4 w-4 shrink-0 text-\[#004BB8\]"/);
+});
+
+test("source-contract: the full expanded backdrop closes while dialog clicks stay inside", () => {
+  const overlayStart = source.indexOf("{desktopStickySearchSection ? (");
+  const overlayEnd = source.indexOf(
+    'aria-labelledby="cars-results-heading"',
+    overlayStart,
+  );
+  const overlay = source.slice(overlayStart, overlayEnd);
+
+  assert.notEqual(overlayStart, -1);
+  assert.notEqual(overlayEnd, -1);
+  assert.match(
+    overlay,
+    /className="flex min-h-dvh[^"]*"\s+onMouseDown=\{\(event\) => \{\s+if \(event\.target === event\.currentTarget\)\s+closeDesktopStickySearch\(\);/,
+  );
+  assert.match(
+    overlay,
+    /ref=\{stickyDialogRef\}[\s\S]*?onMouseDown=\{\(event\) => event\.stopPropagation\(\)\}/,
+  );
+});
