@@ -3142,13 +3142,17 @@ export function DealsSearchForm({
       data-deals-search-submit-row={
         isDesktopLanding ? "desktop-landing" : undefined
       }
-      className={`flex w-full ${packageSearchDesktopClasses} ${isDesktopLanding ? `lg:min-w-0 lg:justify-end lg:border-s-0 lg:p-0 ${isPackagesLanding ? "lg:absolute lg:end-0 lg:top-2" : "lg:mt-[14px]"}` : ""}`}
+      className={
+        isDesktopLanding && isPackagesLanding
+          ? "flex w-full lg:pointer-events-none lg:absolute lg:end-0 lg:top-2 lg:h-[48px] lg:w-[164px] lg:justify-end"
+          : `flex w-full ${packageSearchDesktopClasses} ${isDesktopLanding ? "lg:mt-[14px] lg:min-w-0 lg:justify-end lg:border-s-0 lg:p-0" : ""}`
+      }
     >
       <button
         type="submit"
         disabled={submitting || pending}
         aria-busy={submitting || pending}
-        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? `lg:w-auto lg:rounded-[8px] lg:text-[14px] lg:shadow-none ${isPackagesLanding ? "lg:h-[48px] lg:min-h-[48px] lg:min-w-[164px] lg:cursor-pointer lg:px-5" : "lg:h-[46px] lg:min-h-[46px] lg:min-w-[176px] lg:px-6"}` : ""}`}
+        className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#004BB8] px-8 text-sm font-extrabold text-white shadow-lg shadow-blue-900/20 hover:bg-[#021C2B] disabled:opacity-70 sm:w-auto ${isDesktopLanding ? `lg:w-auto lg:rounded-[8px] lg:text-[14px] lg:shadow-none ${isPackagesLanding ? "lg:pointer-events-auto lg:h-[48px] lg:min-h-[48px] lg:min-w-[164px] lg:cursor-pointer lg:px-5" : "lg:h-[46px] lg:min-h-[46px] lg:min-w-[176px] lg:px-6"}` : ""}`}
       >
         <Search className="h-4 w-4" />
         {t(
