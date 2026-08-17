@@ -83,7 +83,7 @@ test("flight details themes every booking surface without changing its route or 
   assert.match(details, /borderTopColor: theme\.border/);
   assert.match(details, /color: theme\.textPrimary/);
   assert.match(details, /color: theme\.textSecondary/);
-  assert.match(details, /color=\{theme\.icon\}/);
+  assert.match(searchUi, /name="bell" color=\{theme\.icon\}/);
   assert.match(details, /theme\.dark && \{ backgroundColor: "#153B2B" \}/);
   assert.match(searchUi, /backgroundColor: flightResults \? theme\.background : theme\.surface/);
   assert.match(searchUi, /<FlowIcon name="(?:heart|share)" color=\{theme\.icon\}/);

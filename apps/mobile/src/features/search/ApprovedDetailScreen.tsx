@@ -61,7 +61,10 @@ export function ApprovedDetailScreen({
   if (!value)
     return (
       <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]}>
-        <TopBar detail />
+        <TopBar
+          detail
+          onPriceAlertPress={product === "flight" ? () => router.push("/price-alerts") : undefined}
+        />
         <View style={d.missing}>
           <Text style={[d.h2, { color: theme.textPrimary }]}>This offer is no longer available</Text>
           <Text style={[d.meta, { color: theme.textSecondary }]}>Return to results and refresh the search.</Text>
@@ -171,7 +174,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
   };
   return (
     <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]} edges={["top"]}>
-      <TopBar detail />
+      <TopBar detail onPriceAlertPress={() => router.push("/price-alerts")} />
       <View style={d.routeRow}>
         <View style={d.routeCopy}>
           <Text style={[d.route, { color: theme.textPrimary }]}>
@@ -296,20 +299,12 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
         </View>
       </ScrollView>
       <View style={[d.sticky, { paddingBottom: Math.max(inset.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-        <View>
+        <View style={d.stickyTotal}>
           <Text style={[d.meta, { color: theme.textSecondary }]}>Total</Text>
-          <Text style={[d.price, { color: theme.textPrimary }]}>{formattedFare}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[d.price, { color: theme.textPrimary }]}>{formattedFare}</Text>
           <Text style={[d.meta, { color: theme.textSecondary }]}>Round trip</Text>
         </View>
-        <View style={d.stickyAction}>
-          <FlowIcon name="heart" color={theme.icon} />
-          <Text style={[d.meta, { color: theme.textSecondary }]}>Save</Text>
-        </View>
-        <View style={d.stickyAction}>
-          <FlowIcon name="bell" color={theme.icon} />
-          <Text style={[d.meta, { color: theme.textSecondary }]}>Price alert</Text>
-        </View>
-        <View>
+        <View style={d.stickyCta}>
           <Button label={`Continue to ${provider}`} onPress={() => void go()} />
           <Text style={[d.redirect, { color: theme.textSecondary }]}>You’ll be redirected to {provider}’s site</Text>
         </View>
@@ -682,9 +677,11 @@ const d = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
+    gap: 14,
   },
+  stickyTotal: { flexShrink: 1, minWidth: 92, maxWidth: "42%" },
+  stickyCta: { flex: 1, minWidth: 0, maxWidth: 250 },
   redirect: { fontSize: 9, color: ui.muted, textAlign: "center", marginTop: 4 },
-  stickyAction: { alignItems: "center", justifyContent: "center", gap: 3 },
   gallery: { height: 241, flexDirection: "row", backgroundColor: "#E7EBF2" },
   hero: { width: "77%", height: "100%", backgroundColor: "#E7EBF2" },
   thumbs: { width: "23%", gap: 3, paddingLeft: 3 },
