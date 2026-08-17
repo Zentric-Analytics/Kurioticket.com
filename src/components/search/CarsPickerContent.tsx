@@ -99,7 +99,7 @@ export function CarsRentalDatePickerContent({
             const today = iso === todayIso;
             return <button key={iso} type="button" aria-label={`${strings.selectDatePrefix} ${formatFullDate(cell.date)}${beforePickup ? `; ${strings.startsNewPickupDate}` : ""}`} aria-pressed={selected} aria-disabled={past} disabled={past} onClick={() => onSelectDate(cell.date)} data-cars-date={iso} data-in-range={inRange || undefined}
               className={`focus-ring relative mx-auto flex items-center justify-center rounded-full font-semibold transition-colors disabled:cursor-not-allowed ${mobileShell ? "h-11 w-full max-w-11 text-[15px]" : "h-8 w-8 text-sm"} ${past ? "text-slate-300" : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"} ${today && !past ? "ring-1 ring-inset ring-[#004BB8]/25" : ""} ${inRange ? "bg-[#004BB8]/10 text-[#021C2B]" : ""} ${selected ? "bg-[#004BB8] text-white shadow-sm ring-0 hover:bg-[#004BB8] hover:text-white" : ""}`}>
-              {cell.date.getDate()}{today && !selected ? <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" /> : null}
+              {cell.date.getDate()}
             </button>;
           })}
         </div>

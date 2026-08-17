@@ -15,6 +15,12 @@ const selector = source.slice(
   source.indexOf("</div>", source.indexOf('data-testid={')),
 );
 
+test("standalone Flights calendar shows today with a ring and no decorative dot", () => {
+  assert.match(source, /isToday &&[\s\S]*?ring-1 ring-inset ring-\[#004BB8\]\/20/);
+  assert.doesNotMatch(source, /isToday && !isDeparture && !isReturn \? \(/);
+  assert.doesNotMatch(source, /bottom-1\.5 h-1 w-1 rounded-full bg-\[#004BB8\]/);
+});
+
 test("standalone Flights mobile landing form has a scoped title and safe trip options", () => {
   assert.match(
     source,
