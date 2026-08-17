@@ -31,9 +31,11 @@ import {
   Calendar,
   ChevronDown,
   Heart,
+  MapPin,
   Minus,
   SquarePen,
   Users,
+  UserRound,
   Plus,
   SlidersHorizontal,
   X,
@@ -6125,7 +6127,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                 placement === "desktop" && "sm:bg-white sm:backdrop-blur-none",
               )}
             >
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.95fr)_minmax(0,1.35fr)_minmax(0,1.12fr)_116px] lg:gap-0">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.75fr)_minmax(0,1.3fr)_minmax(0,1.37fr)_116px] lg:gap-0">
                 <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] items-stretch rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 transition-colors hover:border-slate-300/90 focus-within:border-[#004BB8]/55 focus-within:ring-2 focus-within:ring-[#004BB8]/15 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85 lg:focus-within:border-slate-200/85 lg:focus-within:ring-0">
                   <div
                     ref={originWrapRef}
@@ -6137,7 +6139,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     >
                       {t("origin")}
                     </label>
-                    <input
+                    <div className="flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <input
                       id="results-origin"
                       ref={originInputRef}
                       name="origin"
@@ -6177,8 +6181,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       }}
                       placeholder={t("fromPlaceholder")}
                       autoComplete="off"
-                      className="h-6 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
-                    />
+                      className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
+                      />
+                    </div>
 
                     {activeSuggest === "origin" &&
                     activeDesktopSearchSurface !== "sticky" ? (
@@ -6223,7 +6228,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     >
                       {t("destination")}
                     </label>
-                    <input
+                    <div className="flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <input
                       id="results-destination"
                       ref={destinationInputRef}
                       name="destination"
@@ -6264,8 +6271,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       }}
                       placeholder={t("toPlaceholder")}
                       autoComplete="off"
-                      className="h-6 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
-                    />
+                      className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
+                      />
+                    </div>
 
                     {activeSuggest === "destination" &&
                     activeDesktopSearchSurface !== "sticky" ? (
@@ -6299,22 +6307,24 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                       setActiveDatePicker("departure");
                       setDatePickerPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[58px] w-full items-center gap-2.5 rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 px-4 py-2.5 text-start transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85"
+                    className="focus-ring flex h-full min-h-[58px] w-full items-center rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 px-4 py-2.5 text-start transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85"
                   >
-                    <Calendar className="h-4 w-4 shrink-0 text-[#004BB8]" />
                     <span className="min-w-0">
                       <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelDates")}
                       </span>
-                      <span className="block truncate text-sm font-semibold leading-6 text-slate-950">
-                        {departureDateInput
-                          ? tripTypeInput === "round-trip" && returnDateInput
-                            ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
-                            : formatDateLabel(
-                                departureDateInput,
-                                calendarLocale,
-                              )
-                          : t("travelDates")}
+                      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-6 text-slate-950">
+                        <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600" />
+                        <span className="truncate">
+                          {departureDateInput
+                            ? tripTypeInput === "round-trip" && returnDateInput
+                              ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
+                              : formatDateLabel(
+                                  departureDateInput,
+                                  calendarLocale,
+                                )
+                            : t("travelDates")}
+                        </span>
                       </span>
                     </span>
                   </button>
@@ -6371,18 +6381,22 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     }}
                     className="focus-ring flex h-full min-h-[58px] w-full items-center justify-between gap-2.5 rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 px-4 py-2.5 text-start transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85"
                   >
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelers")}
                       </span>
-                      <span className="block truncate text-sm font-semibold leading-6 text-slate-950">
-                        {buildTravelerCabinSummary(
-                          adultCount,
-                          childCount,
-                          infantCount,
-                          cabinClassInput,
-                          t,
-                        )}
+                      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-6 text-slate-950">
+                        <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600" />
+                        <span className="truncate">
+                          {buildTravelerCabinSummary(
+                            adultCount,
+                            childCount,
+                            infantCount,
+                            cabinClassInput,
+                            t,
+                            locale,
+                          )}
+                        </span>
                       </span>
                     </span>
                     <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
@@ -8201,8 +8215,16 @@ function buildTravelerCabinSummary(
   const isArabic = locale === "ar";
   const formatTravelerCount = isArabic ? pluralizeArabicTraveler : pluralize;
   const joiner = isArabic ? "، " : ", ";
+  const adultSingular = t("adultSingular");
+  const adultPlural = t("adultPlural");
+  const displayAdultSingular = locale?.startsWith("en")
+    ? `${adultSingular.charAt(0).toUpperCase()}${adultSingular.slice(1)}`
+    : adultSingular;
+  const displayAdultPlural = locale?.startsWith("en")
+    ? `${adultPlural.charAt(0).toUpperCase()}${adultPlural.slice(1)}`
+    : adultPlural;
   const parts = [
-    formatTravelerCount(adults, t("adultSingular"), t("adultPlural")),
+    formatTravelerCount(adults, displayAdultSingular, displayAdultPlural),
   ];
 
   if (children > 0) {

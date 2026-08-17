@@ -55,6 +55,14 @@ test("desktop populated airport inputs remain editable without clear controls", 
   assert.doesNotMatch(source, /function clearDestinationField/);
 });
 
+test("desktop results fields lead values with neutral semantic icons", () => {
+  assert.equal(source.match(/<MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500"/g)?.length, 2);
+  assert.match(source, /<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600"/);
+  assert.match(source, /<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600"/);
+  assert.match(source, /locale\?\.startsWith\("en"\)/);
+  assert.match(source, /adultSingular\.charAt\(0\)\.toUpperCase\(\)/);
+});
+
 test("origin and destination share one bounded production-ready suggestion card", () => {
   const start = source.indexOf("function SuggestionList");
   const end = source.indexOf("type FilterOption", start);
