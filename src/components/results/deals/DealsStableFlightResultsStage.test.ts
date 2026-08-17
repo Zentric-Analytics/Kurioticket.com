@@ -31,10 +31,7 @@ test("a real round-trip result is selected without leaving Deals", async () => {
   assert.match(stage, /requestedFlightId: flight\.id/);
   assert.match(stage, /buildDealsFlightDetailsSelection/);
   assert.match(shell, /confirm\("flight", selection\)/);
-  assert.match(
-    shell,
-    /getNextDealsJourneyStage\("flight-results", search\.mode\)/,
-  );
+  assert.match(shell, /getGuidedDealsProductOrder\(search\.mode\)/);
   assert.match(shell, /buildDealsJourneyUrl\(nextStage, search\)/);
   assert.doesNotMatch(stage, /router\.(?:push|replace)|\/flights\/results/);
 });

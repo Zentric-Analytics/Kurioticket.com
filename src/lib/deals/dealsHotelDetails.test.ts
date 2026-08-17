@@ -197,7 +197,7 @@ test("material equality ignores timestamp but detects room identity and price ch
     false,
   );
 });
-test("same-hotel room replacement clears dependent flight and car selections", () => {
+test("same-hotel room replacement preserves upstream Flight and clears Car", () => {
   const flight: DealsTripPlanFlight = {
     id: "f",
     provider: "P",
@@ -259,9 +259,9 @@ test("same-hotel room replacement clears dependent flight and car selections", (
     }),
     5,
   );
-  assert.equal(changed.flight, undefined);
+  assert.equal(changed.flight, flight);
   assert.equal(changed.car, undefined);
-  assert.deepEqual(changed.opened, {});
+  assert.deepEqual(changed.opened, { flight: 3 });
 
   const roomB = selected({
     roomOptionId: "h1-room-b",
@@ -271,9 +271,9 @@ test("same-hotel room replacement clears dependent flight and car selections", (
   const sameHotelDifferentRoom = replaceDealsHotelSelection(plan, roomB, 6);
   assert.equal(sameHotelDifferentRoom.hotel?.id, plan.hotel.id);
   assert.equal(sameHotelDifferentRoom.hotel?.roomOptionId, "h1-room-b");
-  assert.equal(sameHotelDifferentRoom.flight, undefined);
+  assert.equal(sameHotelDifferentRoom.flight, flight);
   assert.equal(sameHotelDifferentRoom.car, undefined);
-  assert.deepEqual(sameHotelDifferentRoom.opened, {});
+  assert.deepEqual(sameHotelDifferentRoom.opened, { flight: 3 });
 
   const hotelFlightPlan = {
     ...plan,
@@ -286,7 +286,7 @@ test("same-hotel room replacement clears dependent flight and car selections", (
     7,
   );
   assert.equal(hotelFlightChanged.hotel?.roomOptionId, "h1-room-b");
-  assert.equal(hotelFlightChanged.flight, undefined);
+  assert.equal(hotelFlightChanged.flight, flight);
 });
 
 test("hotel details helpers cannot create a context-invalid base Trip Plan", async () => {

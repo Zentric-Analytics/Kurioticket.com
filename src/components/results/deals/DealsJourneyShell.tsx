@@ -27,10 +27,10 @@ import {
   buildDealsJourneyUrl,
   getEarliestIncompleteDealsJourneyStage,
   getFirstDealsJourneyStage,
-  getNextDealsJourneyStage,
   getRequiredDealsJourneyStageAt,
   type DealsJourneyStage,
 } from "@/lib/deals/dealsJourneyRoutes";
+import { getGuidedDealsProductOrder } from "@/lib/deals/dealsGuidedJourneyOrder";
 import { DealsResultsSearchSummary } from "./DealsResultsSearchSummary";
 import { DealsModifySearchDialog } from "./DealsModifySearchDialog";
 import { DealsJourneyProgress } from "./DealsJourneyProgress";
@@ -56,7 +56,6 @@ import type {
   DealsStagedSnapshotResult,
   DealsTripPlanReadResult,
 } from "@/lib/deals/dealsTripPlanStorage";
-import { buildGuidedDealsHandoffPendingUrl } from "@/lib/deals/dealsReviewPresentation";
 
 type GuidedPlanState =
   | "loading"
@@ -278,13 +277,11 @@ export function DealsJourneyShell({
     product: DealsTripPlanProduct,
     selection: DealsTripPlanHotel | DealsTripPlanFlight | DealsTripPlanCar,
   ) => {
-    const nextStage =
-      product === "car"
-        ? "review"
-        : product === "flight"
-          ? (getNextDealsJourneyStage("flight-results", search.mode) ??
-            "review")
-          : getNextDealsJourneyStage("hotel-details", search.mode);
+    const order = getGuidedDealsProductOrder(search.mode);
+    const nextProduct = order[order.indexOf(product) + 1];
+    const nextStage: DealsJourneyStage = nextProduct
+      ? `${nextProduct}-results`
+      : "review";
     const setConfirming = product === "hotel" ? setConfirmingHotel : null;
     setConfirmationFailure(null);
     setConfirming?.(true);
@@ -360,11 +357,7 @@ export function DealsJourneyShell({
     }));
     setAnnouncement(t(`deals.guided.${product}Details.confirmed`));
     start();
-    router.push(
-      nextStage
-        ? buildDealsJourneyUrl(nextStage, search)
-        : buildGuidedDealsHandoffPendingUrl(search),
-    );
+    router.push(buildDealsJourneyUrl(nextStage, search));
   };
   const confirmGuidedHotelSelection = (selection: DealsTripPlanHotel) =>
     confirm("hotel", selection);

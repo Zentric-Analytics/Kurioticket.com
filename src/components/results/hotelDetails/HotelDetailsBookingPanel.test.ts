@@ -26,8 +26,8 @@ test("guided estimates and standalone provider-backed prices use truthful labels
 
 test("uses selected-room semantics for both guided Hotel continuation paths", () => {
   assert.equal(
-    translations["deals.guided.hotelDetails.continueFlights"],
-    "Continue with this room to flights",
+    translations["deals.guided.hotelDetails.continueReview"],
+    "Continue with this room to review",
   );
   assert.equal(
     translations["deals.guided.hotelDetails.continueCars"],
@@ -37,9 +37,9 @@ test("uses selected-room semantics for both guided Hotel continuation paths", ()
 
 test("preserves guided stay selection behavior and truthful accessible labeling", () => {
   for (const contract of [
-    'guidedSearch?.mode === "hotel-car"',
+    'getGuidedDealsDownstreamProducts(guidedSearch.mode, "hotel")[0]',
     't("deals.guided.hotelDetails.continueCars")',
-    't("deals.guided.hotelDetails.continueFlights")',
+    't("deals.guided.hotelDetails.continueReview")',
     'kind: "guided-room"',
     "label: guidedActionLabel",
     "accessibleLabel: `${guidedActionLabel}:",

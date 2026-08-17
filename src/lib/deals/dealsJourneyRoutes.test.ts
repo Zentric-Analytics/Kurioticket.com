@@ -23,11 +23,11 @@ import {
 } from "./dealsJourneyRoutes";
 
 const orders = {
-  "hotel-flight": ["hotel-results", "hotel-details", "flight-results"],
+  "hotel-flight": ["flight-results", "hotel-results", "hotel-details"],
   "hotel-flight-car": [
+    "flight-results",
     "hotel-results",
     "hotel-details",
-    "flight-results",
     "car-results",
   ],
   "hotel-car": ["hotel-results", "hotel-details", "car-results"],
@@ -50,12 +50,12 @@ test("orders every package mode and derives its first stage", () => {
 });
 test("derives previous and next stages without leaving mode", () => {
   assert.equal(
-    getPreviousDealsJourneyStage("hotel-results", "hotel-flight"),
+    getPreviousDealsJourneyStage("flight-results", "hotel-flight"),
     null,
   );
   assert.equal(
-    getNextDealsJourneyStage("hotel-results", "hotel-flight"),
-    "hotel-details",
+    getNextDealsJourneyStage("flight-results", "hotel-flight"),
+    "hotel-results",
   );
   assert.equal(getPreviousDealsJourneyStage("car-details", "flight-car"), null);
   assert.equal(getNextDealsJourneyStage("car-results", "flight-car"), null);
@@ -88,23 +88,21 @@ test("guards prerequisites and returns the earliest incomplete stage", () => {
     car = { id: "c" };
   assert.equal(
     getRequiredDealsJourneyStage("hotel-details", "hotel-flight", null),
-    "hotel-results",
+    "flight-results",
   );
   assert.equal(
     getRequiredDealsJourneyStage("flight-results", "flight-car", null),
     "flight-results",
   );
   assert.equal(
-    getRequiredDealsJourneyStage("flight-details", "hotel-flight", {
-      hotel,
-    } as never),
+    getRequiredDealsJourneyStage("flight-details", "hotel-flight", null),
     "flight-results",
   );
   assert.equal(
     getRequiredDealsJourneyStage("car-results", "hotel-flight-car", {
-      hotel,
+      flight,
     } as never),
-    "flight-results",
+    "hotel-results",
   );
   assert.equal(
     getRequiredDealsJourneyStage("car-details", "flight-car", {
@@ -164,23 +162,25 @@ test("Hotel details URL preserves canonical search and safely encodes only a val
 });
 
 test("a transient Hotel ID unlocks Hotel details only", () => {
-  const hotel = { id: "confirmed" };
+  const hotel = { id: "confirmed" },
+    flight = { id: "selected" };
   assert.equal(
     getRequiredDealsJourneyStage(
       "hotel-details",
       "hotel-flight",
-      null,
+      { flight } as never,
       "transient",
     ),
     "hotel-details",
   );
   assert.equal(
     getRequiredDealsJourneyStage("hotel-details", "hotel-flight", null),
-    "hotel-results",
+    "flight-results",
   );
   assert.equal(
     getRequiredDealsJourneyStage("hotel-details", "hotel-flight", {
       hotel,
+      flight,
     } as never),
     "hotel-details",
   );
@@ -191,7 +191,7 @@ test("a transient Hotel ID unlocks Hotel details only", () => {
       null,
       "transient",
     ),
-    "hotel-results",
+    "flight-results",
   );
   assert.equal(
     getRequiredDealsJourneyStage(
@@ -272,7 +272,7 @@ test("expiry-aware correction chooses earliest included expired product, includi
       ids,
       DEALS_TRIP_PLAN_TTL_MS + 4,
     ),
-    "hotel-results",
+    "flight-results",
   );
   assert.equal(
     getRequiredDealsJourneyStageAt(
@@ -282,7 +282,7 @@ test("expiry-aware correction chooses earliest included expired product, includi
       ids,
       DEALS_TRIP_PLAN_TTL_MS + 4,
     ),
-    "hotel-results",
+    "flight-results",
   );
   assert.equal(
     getRequiredDealsJourneyStageAt(

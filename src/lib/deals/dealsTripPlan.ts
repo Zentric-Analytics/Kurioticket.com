@@ -1,6 +1,10 @@
 import type { DealsPackageMode, DealsSearch } from "./dealsSearchParams";
 import { buildDealsInternalRedirectHref } from "./dealsProviderHandoff";
 import {
+  getGuidedDealsDownstreamProducts,
+  getGuidedDealsProductOrder,
+} from "./dealsGuidedJourneyOrder";
+import {
   convertCurrencyAmount,
   type ExchangeRates,
 } from "@/lib/currency/exchangeRates";
@@ -114,39 +118,50 @@ function withoutSelections(
   }
   return next;
 }
+function withoutSelectionAndDownstream(
+  plan: DealsTripPlan,
+  product: DealsTripPlanProduct,
+  now: number,
+) {
+  return withoutSelections(
+    plan,
+    [product, ...getGuidedDealsDownstreamProducts(plan.mode, product)],
+    now,
+  );
+}
 export function replaceDealsHotelSelection(
   plan: DealsTripPlan,
   hotel: DealsTripPlanHotel,
   now = Date.now(),
 ): DealsTripPlan {
-  return { ...withoutSelections(plan, ["flight", "hotel", "car"], now), hotel };
+  return { ...withoutSelectionAndDownstream(plan, "hotel", now), hotel };
 }
 export const clearDealsTripPlanFromHotel = (
   plan: DealsTripPlan,
   now = Date.now(),
-) => withoutSelections(plan, ["hotel", "flight", "car"], now);
+) => withoutSelectionAndDownstream(plan, "hotel", now);
 export function replaceDealsFlightSelection(
   plan: DealsTripPlan,
   flight: DealsTripPlanFlight,
   now = Date.now(),
 ): DealsTripPlan {
-  return { ...withoutSelections(plan, ["flight", "car"], now), flight };
+  return { ...withoutSelectionAndDownstream(plan, "flight", now), flight };
 }
 export const clearDealsTripPlanFromFlight = (
   plan: DealsTripPlan,
   now = Date.now(),
-) => withoutSelections(plan, ["flight", "car"], now);
+) => withoutSelectionAndDownstream(plan, "flight", now);
 export function replaceDealsCarSelection(
   plan: DealsTripPlan,
   car: DealsTripPlanCar,
   now = Date.now(),
 ): DealsTripPlan {
-  return { ...withoutSelections(plan, ["car"], now), car };
+  return { ...withoutSelectionAndDownstream(plan, "car", now), car };
 }
 export const clearDealsTripPlanFromCar = (
   plan: DealsTripPlan,
   now = Date.now(),
-) => withoutSelections(plan, ["car"], now);
+) => withoutSelectionAndDownstream(plan, "car", now);
 export function clearDealsTripPlan(
   plan: DealsTripPlan,
   now = Date.now(),
@@ -180,14 +195,7 @@ export function getDealsGuidedNextExpiryAt(
   plan: DealsTripPlan,
   now: number,
 ): number | null {
-  const included =
-    plan.mode === "hotel-flight"
-      ? (["hotel", "flight"] as const)
-      : plan.mode === "hotel-car"
-        ? (["hotel", "car"] as const)
-        : plan.mode === "flight-car"
-          ? (["flight", "car"] as const)
-          : (["hotel", "flight", "car"] as const);
+  const included = getGuidedDealsProductOrder(plan.mode);
   const deadlines = [
     plan.expiresAt,
     ...included.flatMap((product) => {

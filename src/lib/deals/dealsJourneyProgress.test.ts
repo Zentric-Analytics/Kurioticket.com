@@ -261,3 +261,24 @@ test("one-way and round-trip flight details never claim return selection", () =>
       "review-flight",
     );
 });
+
+test("active guided progress follows customer journey order in all package modes", () => {
+  const expected = {
+    "hotel-flight": ["flight", "hotel", "review"],
+    "flight-car": ["flight", "car", "review"],
+    "hotel-car": ["hotel", "car", "review"],
+    "hotel-flight-car": ["flight", "hotel", "car", "review"],
+  } as const;
+  for (const [mode, ids] of Object.entries(expected)) {
+    const progress = getGuidedDealsJourneyProgress(
+      "review",
+      mode as keyof typeof expected,
+      null,
+    );
+    assert.deepEqual(
+      progress.steps.map(({ id }) => id),
+      ids,
+    );
+    assert.equal(progress.steps.at(-1)?.status, "current");
+  }
+});

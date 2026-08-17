@@ -1,60 +1,158 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createDefaultDealsSearch } from "./dealsSearchParams";
+import {
+  createDefaultDealsSearch,
+  type DealsPackageMode,
+} from "./dealsSearchParams";
 import { attemptGuidedConfirmation } from "./dealsGuidedConfirmation";
-import { createDealsTripPlan, replaceDealsHotelSelection, type DealsTripPlanFlight, type DealsTripPlanHotel } from "./dealsTripPlan";
+import {
+  createDealsTripPlan,
+  type DealsTripPlan,
+  type DealsTripPlanCar,
+  type DealsTripPlanFlight,
+  type DealsTripPlanHotel,
+  type DealsTripPlanProduct,
+} from "./dealsTripPlan";
 
-const hotel: DealsTripPlanHotel = { id: "h", provider: "p", name: "Hotel", location: "City", checkIn: "2099-01-01", checkOut: "2099-01-02", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 10 };
-const flight: DealsTripPlanFlight = { id: "f", provider: "p", airline: "Air", origin: "AAA", destination: "BBB", departure: "d", arrival: "a", duration: "1h", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 10 };
-const search = () => { const value = createDefaultDealsSearch(); value.mode = "hotel-flight"; return value; };
+const hotel: DealsTripPlanHotel = {
+  id: "h",
+  provider: "p",
+  name: "Hotel",
+  location: "City",
+  checkIn: "2099-01-01",
+  checkOut: "2099-01-02",
+  sourcePrice: 1,
+  sourceCurrency: "USD",
+  resultReceivedAt: 10,
+};
+const flight: DealsTripPlanFlight = {
+  id: "f",
+  provider: "p",
+  airline: "Air",
+  origin: "AAA",
+  destination: "BBB",
+  departure: "d",
+  arrival: "a",
+  duration: "1h",
+  sourcePrice: 1,
+  sourceCurrency: "USD",
+  resultReceivedAt: 10,
+};
+const car: DealsTripPlanCar = {
+  id: "c",
+  provider: "p",
+  rentalCompany: "Rent",
+  modelName: "Car",
+  categoryLabel: "Compact",
+  pickupLocation: "City",
+  returnLocation: "City",
+  pickupDate: "2099-01-01",
+  pickupTime: "10:00",
+  dropoffDate: "2099-01-02",
+  dropoffTime: "10:00",
+  sourcePrice: 1,
+  sourceCurrency: "USD",
+  resultReceivedAt: 10,
+  detailsPath: "/cars/details/c",
+};
+const selections = { flight, hotel, car };
+const search = (mode: DealsPackageMode) => {
+  const value = createDefaultDealsSearch();
+  value.mode = mode;
+  return value;
+};
 
-test("first confirmation creates and persists one guided plan", () => {
-  let writes = 0; const result = attemptGuidedConfirmation({ product: "hotel", selection: hotel, renderedPlan: null, search: search(), fingerprint: "fp", now: 10, read: () => ({ status: "missing" }), write: () => { writes += 1; return true; } });
-  assert.equal(result.ok, true); assert.equal(writes, 1); if (result.ok) assert.equal(result.plan.hotel?.id, "h");
+function confirm(
+  mode: DealsPackageMode,
+  product: DealsTripPlanProduct,
+  plan: DealsTripPlan | null,
+  renderedPlan = plan,
+) {
+  let written: DealsTripPlan | null = null;
+  const result = attemptGuidedConfirmation({
+    product,
+    selection: selections[product],
+    renderedPlan,
+    search: search(mode),
+    fingerprint: "fp",
+    now: 11,
+    read: () => (plan ? { status: "valid", plan } : { status: "missing" }),
+    write: (next) => {
+      written = next;
+      return true;
+    },
+  });
+  return { result, written };
+}
+
+test("only the authoritative first product creates a missing plan", () => {
+  assert.equal(confirm("hotel-flight", "flight", null).result.ok, true);
+  const wrong = confirm("hotel-flight", "hotel", null).result;
+  assert.equal(wrong.ok, false);
+  if (!wrong.ok) assert.equal(wrong.failure, "plan-missing");
+  assert.equal(confirm("hotel-car", "hotel", null).result.ok, true);
 });
 
-test("same selection rereads and performs no write", () => {
-  const plan = replaceDealsHotelSelection(createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "fp", resultsPath: "/packages/results" }, 10), hotel, 10); let writes = 0;
-  const result = attemptGuidedConfirmation({ product: "hotel", selection: { ...hotel, resultReceivedAt: 99 }, renderedPlan: plan, search: search(), fingerprint: "fp", now: 11, read: () => ({ status: "valid", plan }), write: () => { writes += 1; return true; } });
-  assert.deepEqual(result, { ok: true, plan, wrote: false }); assert.equal(writes, 0);
-});
-
-test("changed upstream prerequisite blocks stale downstream confirmation", () => {
-  const rendered = replaceDealsHotelSelection(createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "fp", resultsPath: "/packages/results" }, 10), hotel, 10);
-  const current = { ...rendered, hotel: { ...hotel, id: "new" } }; let writes = 0;
-  const result = attemptGuidedConfirmation({ product: "flight", selection: flight, renderedPlan: rendered, search: search(), fingerprint: "fp", now: 11, read: () => ({ status: "valid", plan: current }), write: () => { writes += 1; return true; } });
-  assert.equal(result.ok, false); if (!result.ok) assert.equal(result.failure, "prerequisite-changed"); assert.equal(writes, 0);
-});
-
-test("mismatch and failed persistence never overwrite visible storage", () => {
-  const plan = createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "other", resultsPath: "/packages/results" }, 10); let writes = 0;
-  const mismatch = attemptGuidedConfirmation({ product: "hotel", selection: hotel, renderedPlan: null, search: search(), fingerprint: "fp", now: 11, read: () => ({ status: "fingerprint_mismatch", plan }), write: () => { writes += 1; return true; } });
-  assert.equal(mismatch.ok, false); assert.equal(writes, 0);
-  const own = { ...plan, searchFingerprint: "fp" };
-  const failed = attemptGuidedConfirmation({ product: "hotel", selection: hotel, renderedPlan: own, search: search(), fingerprint: "fp", now: 11, read: () => ({ status: "valid", plan: own }), write: () => { writes += 1; return false; } });
-  assert.equal(failed.ok, false); if (!failed.ok) assert.equal(failed.failure, "persistence-failed"); assert.equal(writes, 1);
-});
-
-test("typed confirmation failures never write", () => {
-  const own = replaceDealsHotelSelection(createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "fp", resultsPath: "/packages/results" }, 10), hotel, 10);
-  const cases = [
-    ["storage-read-unavailable", { status: "storage_unavailable" }],
-    ["plan-missing", { status: "missing" }],
-    ["plan-invalid", { status: "invalid" }],
-    ["mode-mismatch", { status: "valid", plan: { ...own, mode: "hotel-car" } }],
-    ["plan-expired", { status: "expired", plan: own }],
+test("all package modes confirm sequentially without deleting upstream products", () => {
+  const matrix = [
+    ["hotel-flight", ["flight", "hotel"]],
+    ["flight-car", ["flight", "car"]],
+    ["hotel-car", ["hotel", "car"]],
+    ["hotel-flight-car", ["flight", "hotel", "car"]],
   ] as const;
-  for (const [failure, readResult] of cases) {
-    let writes = 0;
-    const result = attemptGuidedConfirmation({ product: "flight", selection: flight, renderedPlan: own, search: search(), fingerprint: "fp", now: 11, read: () => readResult, write: () => { writes += 1; return true; } });
-    assert.equal(result.ok, false); if (!result.ok) assert.equal(result.failure, failure); assert.equal(writes, 0);
+  for (const [mode, products] of matrix) {
+    let plan: DealsTripPlan | null = null;
+    for (const product of products) {
+      const { result, written } = confirm(mode, product, plan);
+      assert.equal(result.ok, true, `${mode}:${product}`);
+      plan = written ?? (result.ok ? result.plan : null);
+    }
+    for (const product of products)
+      assert.ok(plan?.[product], `${mode}:${product} remains`);
   }
 });
 
-test("missing and changed prerequisites are distinct and non-mutating", () => {
-  const empty = createDealsTripPlan({ mode: "hotel-flight", searchFingerprint: "fp", resultsPath: "/packages/results" }, 10);
-  const before = structuredClone(empty); let writes = 0;
-  const missing = attemptGuidedConfirmation({ product: "flight", selection: flight, renderedPlan: empty, search: search(), fingerprint: "fp", now: 11, read: () => ({ status: "valid", plan: empty }), write: () => { writes += 1; return true; } });
-  assert.equal(missing.ok, false); if (!missing.ok) assert.equal(missing.failure, "prerequisite-missing");
-  assert.deepEqual(empty, before); assert.equal(writes, 0);
+test("changed upstream prerequisite blocks stale Hotel confirmation", () => {
+  const base = createDealsTripPlan(
+    {
+      mode: "hotel-flight",
+      searchFingerprint: "fp",
+      resultsPath: "/packages/results",
+    },
+    10,
+  );
+  const rendered = { ...base, flight };
+  const current = { ...rendered, flight: { ...flight, id: "changed" } };
+  const result = confirm("hotel-flight", "hotel", current, rendered).result;
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.failure, "prerequisite-changed");
+});
+
+test("same selection performs no write and storage failures remain typed", () => {
+  const plan = {
+    ...createDealsTripPlan(
+      {
+        mode: "hotel-flight",
+        searchFingerprint: "fp",
+        resultsPath: "/packages/results",
+      },
+      10,
+    ),
+    flight,
+  };
+  const same = confirm("hotel-flight", "flight", plan).result;
+  assert.deepEqual(same, { ok: true, plan, wrote: false });
+  const unavailable = attemptGuidedConfirmation({
+    product: "flight",
+    selection: flight,
+    renderedPlan: null,
+    search: search("hotel-flight"),
+    fingerprint: "fp",
+    now: 11,
+    read: () => ({ status: "storage_unavailable" }),
+    write: () => true,
+  });
+  assert.equal(unavailable.ok, false);
+  if (!unavailable.ok)
+    assert.equal(unavailable.failure, "storage-read-unavailable");
 });

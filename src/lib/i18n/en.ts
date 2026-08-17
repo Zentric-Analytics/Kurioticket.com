@@ -1739,11 +1739,13 @@ export const translations: TranslationDictionary = {
   "carsSearch.rentalDatesLabel": "Rental dates",
   "carsSearch.rentalDatePlaceholder": "Pickup date — Return date",
   "carsSearch.pickupReturnTimeLabel": "Pickup / return time",
-  "carsSearch.mobileTimeIntro": "Select when you’ll pick up and return your car.",
+  "carsSearch.mobileTimeIntro":
+    "Select when you’ll pick up and return your car.",
   "carsSearch.pickupReturnTimeSummary":
     "{pickupTime} pickup — {returnTime} return",
   "carsSearch.driverAgeLabel": "Driver age",
-  "carsSearch.mobileDriverAgeIntro": "Driver must be between 18 and 70 years old.",
+  "carsSearch.mobileDriverAgeIntro":
+    "Driver must be between 18 and 70 years old.",
   "carsSearch.driverAgeAnyAge": "Any age",
   "carsSearch.driverAgeAnyAgeRange": "Any age 18–70",
   "carsSearch.rentalDays": "{count} days",
@@ -3637,7 +3639,8 @@ export const translations: TranslationDictionary = {
   "mobileTravelerCabin.childDescription": "2 to 17 years",
   "mobileTravelerCabin.infantDescription": "Under 2 years",
   "mobileTravelerCabin.tip": "Tip",
-  "mobileTravelerCabin.baggageTip": "Baggage allowance may vary by airline. Check details on the provider page.",
+  "mobileTravelerCabin.baggageTip":
+    "Baggage allowance may vary by airline. Check details on the provider page.",
   infantsOnLap: "Infants on lap",
   childAgeRange: "Ages 2–17",
   under2: "Under 2",
@@ -4632,7 +4635,8 @@ export const translations: TranslationDictionary = {
   "deals.useMainDestination": "Use main destination",
   "deals.useMainTravelDates": "Use main travel dates",
   "deals.productSelector.instruction": "Choose at least two products",
-  "deals.productSelector.minimumTwo": "Packages requires at least two products.",
+  "deals.productSelector.minimumTwo":
+    "Packages requires at least two products.",
   "deals.journey.navigationLabel": "Build your trip progress",
   "deals.journey.stepCount": "Step {{current}} of {{total}}",
   "deals.journey.step.hotel": "Hotel",
@@ -4801,6 +4805,8 @@ export const translations: TranslationDictionary = {
   "deals.guided.hotelDetails.continueFlights":
     "Continue with this room to flights",
   "deals.guided.hotelDetails.continueCars": "Continue with this room to cars",
+  "deals.guided.hotelDetails.continueReview":
+    "Continue with this room to review",
   "deals.guided.hotelDetails.saveError":
     "We could not save this stay to your guided Trip Plan. Please try again.",
   "deals.guided.hotelDetails.confirmed": "Stay added to your Trip Plan.",
@@ -4989,5 +4995,5 @@ export const translations: TranslationDictionary = {
   "accountMenu.savedRecent.label": "Saved & Recent",
   "accountMenu.notifications.label": "Notifications",
   loadingSavedAndRecent: "Loading Saved & Recent",
-  flightSearchDestinationPlaceholderShort: 'To?',
+  flightSearchDestinationPlaceholderShort: "To?",
 };
