@@ -252,6 +252,7 @@ function DesktopLandingPopover({
   marker,
   minimumWidth = 1024,
   className = "p-3",
+  packagesSurface = false,
   children,
 }: {
   open: boolean;
@@ -262,6 +263,7 @@ function DesktopLandingPopover({
   marker: string;
   minimumWidth?: number;
   className?: string;
+  packagesSurface?: boolean;
   children: ReactNode;
 }) {
   const [geometry, setGeometry] = useState<ReturnType<
@@ -304,7 +306,7 @@ function DesktopLandingPopover({
   return createPortal(
     <div
       data-deals-desktop-landing-popover={marker}
-      className={`fixed z-[1300] overflow-y-auto rounded-[8px] border border-[#dee5ed] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.12)] ${className}`}
+      className={`fixed z-[1300] overflow-y-auto border bg-white ${packagesSurface ? "rounded-[10px] border-[#DEE5ED] shadow-[0_14px_36px_rgba(15,23,42,0.14)]" : "rounded-[8px] border-[#dee5ed] shadow-[0_12px_30px_rgba(15,23,42,0.12)]"} ${className}`}
       style={{
         ...popoverStyle,
         transform: placement === "above" ? "translateY(-100%)" : undefined,
@@ -440,11 +442,13 @@ function DealsFlightDatesPopover({
   open,
   anchorRef,
   desktopLanding = false,
+  packagesLanding = false,
   children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
   desktopLanding?: boolean;
+  packagesLanding?: boolean;
   children: ReactNode;
 }) {
   const [position, setPosition] = useState<{
@@ -491,11 +495,12 @@ function DealsFlightDatesPopover({
       <DesktopLandingPopover
         open={open}
         anchorRef={anchorRef}
-        width={660}
-        desiredHeight={540}
+        width={packagesLanding ? 580 : 660}
+        desiredHeight={packagesLanding ? 430 : 540}
         align="end"
         marker="flight-dates"
         className="p-4"
+        packagesSurface={packagesLanding}
       >
         {children}
       </DesktopLandingPopover>
@@ -597,11 +602,13 @@ function DealsFlightPopover({
   open,
   anchorRef,
   desktopLanding = false,
+  packagesLanding = false,
   children,
 }: {
   open: boolean;
   anchorRef: RefObject<HTMLElement | null>;
   desktopLanding?: boolean;
+  packagesLanding?: boolean;
   children: ReactNode;
 }) {
   const [position, setPosition] = useState<{
@@ -659,10 +666,11 @@ function DealsFlightPopover({
         open={open}
         anchorRef={anchorRef}
         width={380}
-        desiredHeight={460}
+        desiredHeight={packagesLanding ? 410 : 460}
         align="end"
         marker="travellers"
         className="flex overflow-hidden p-4"
+        packagesSurface={packagesLanding}
       >
         {children}
       </DesktopLandingPopover>
@@ -686,6 +694,7 @@ function DealsDestinationPopover({
   width: desiredWidth,
   marker,
   desktopLanding = false,
+  packagesLanding = false,
   children,
 }: {
   open: boolean;
@@ -693,6 +702,7 @@ function DealsDestinationPopover({
   width: number;
   marker: string;
   desktopLanding?: boolean;
+  packagesLanding?: boolean;
   children: ReactNode;
 }) {
   const [position, setPosition] = useState<{
@@ -742,9 +752,10 @@ function DealsDestinationPopover({
         open={open}
         anchorRef={anchorRef}
         width={desiredWidth}
-        desiredHeight={352}
+        desiredHeight={packagesLanding ? 320 : 352}
         marker={marker}
         className="p-2"
+        packagesSurface={packagesLanding}
       >
         {children}
       </DesktopLandingPopover>
@@ -2335,8 +2346,8 @@ export function DealsSearchForm({
       </div>
     ) : null;
   const travelersPicker = (
-    <div className="w-full space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <div className={`w-full space-y-4 ${isPackagesLanding ? "lg:space-y-3" : ""}`}>
+      <div className={`overflow-hidden rounded-2xl border border-slate-200 bg-white ${isPackagesLanding ? "lg:rounded-none lg:border-0" : ""}`}>
         {(
           [
             ["adults", t("adults"), t("adultAgeRange"), draftAdults, 1],
@@ -2354,7 +2365,7 @@ export function DealsSearchForm({
           return (
             <div
               key={key}
-              className="flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-3 last:border-b-0"
+              className={`flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-3 last:border-b-0 ${isPackagesLanding ? "lg:min-h-[52px] lg:px-1 lg:py-1.5" : ""}`}
             >
               <span className="min-w-0">
                 <span className="block font-extrabold text-slate-950">
@@ -2378,7 +2389,7 @@ export function DealsSearchForm({
                       setDraftChildren((current) => Math.max(0, current - 1));
                     else setDraftInfants((current) => Math.max(0, current - 1));
                   }}
-                  className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10"
+                  className={`focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10 ${isPackagesLanding ? "lg:h-8 lg:w-8" : ""}`}
                 >
                   <Minus className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -2398,7 +2409,7 @@ export function DealsSearchForm({
                     else if (draftInfants < draftAdults)
                       setDraftInfants((current) => current + 1);
                   }}
-                  className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10"
+                  className={`focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10 ${isPackagesLanding ? "lg:h-8 lg:w-8" : ""}`}
                 >
                   <Plus className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -2408,7 +2419,7 @@ export function DealsSearchForm({
         })}
       </div>
       {included.hotel ? (
-        <div className="space-y-3 rounded-2xl border border-slate-200 p-3">
+        <div className={`space-y-3 rounded-2xl border border-slate-200 p-3 ${isPackagesLanding ? "lg:rounded-none lg:border-x-0 lg:border-b-0 lg:px-1 lg:pb-0 lg:pt-3" : ""}`}>
           <div className="flex items-center justify-between">
             <span className="font-extrabold">{t("rooms")}</span>
             <span className="flex items-center gap-2">
@@ -2422,7 +2433,7 @@ export function DealsSearchForm({
                 onClick={() =>
                   setDraftHotelRooms((value) => Math.max(1, value - 1))
                 }
-                className="focus-ring h-10 w-10 rounded-full border"
+                className={`focus-ring h-10 w-10 rounded-full border ${isPackagesLanding ? "lg:h-8 lg:w-8" : ""}`}
               >
                 −
               </button>
@@ -2437,7 +2448,7 @@ export function DealsSearchForm({
                 onClick={() =>
                   setDraftHotelRooms((value) => Math.min(6, value + 1))
                 }
-                className="focus-ring h-10 w-10 rounded-full border"
+                className={`focus-ring h-10 w-10 rounded-full border ${isPackagesLanding ? "lg:h-8 lg:w-8" : ""}`}
               >
                 +
               </button>
@@ -2514,7 +2525,7 @@ export function DealsSearchForm({
                 aria-disabled={disabled}
                 disabled={disabled}
                 onClick={() => selectDraftFlightDate(date)}
-                className={`focus-ring relative mx-auto flex items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${mobile ? "h-11 w-full max-w-11 text-[15px] font-semibold" : "h-10 w-10 text-sm font-medium"} ${disabled ? "text-slate-300" : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"} ${today && !disabled ? "ring-1 ring-inset ring-[#004BB8]/20" : ""} ${inRange ? "bg-[#004BB8]/10 text-[#021C2B]" : ""} ${departure || returning ? "bg-[#004BB8] text-white ring-0 hover:bg-[#004BB8] hover:text-white" : ""}`}
+                className={`focus-ring relative mx-auto flex items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed ${mobile ? "h-11 w-full max-w-11 text-[15px] font-semibold" : isPackagesLanding ? "h-[38px] w-[38px] text-sm font-medium" : "h-10 w-10 text-sm font-medium"} ${disabled ? "text-slate-300" : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]"} ${today && !disabled ? "ring-1 ring-inset ring-[#004BB8]/20" : ""} ${inRange ? "bg-[#004BB8]/10 text-[#021C2B]" : ""} ${departure || returning ? "bg-[#004BB8] text-white ring-0 hover:bg-[#004BB8] hover:text-white" : ""}`}
               >
                 {date.getDate()}
                 {today && !departure && !returning && (
@@ -2556,7 +2567,7 @@ export function DealsSearchForm({
             onClick={() =>
               setVisibleFlightMonth((month) => addMonths(month, -1))
             }
-            className="focus-ring rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:text-[#004BB8]"
+            className={`focus-ring border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:text-[#004BB8] ${isPackagesLanding ? "h-[38px] rounded-[8px]" : "rounded-xl"}`}
           >
             {t("previousMonthShort")}
           </button>
@@ -2566,7 +2577,7 @@ export function DealsSearchForm({
             onClick={() =>
               setVisibleFlightMonth((month) => addMonths(month, 1))
             }
-            className="focus-ring rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:text-[#004BB8]"
+            className={`focus-ring border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:text-[#004BB8] ${isPackagesLanding ? "h-[38px] rounded-[8px]" : "rounded-xl"}`}
           >
             {t("nextMonthShort")}
           </button>
@@ -2897,10 +2908,10 @@ export function DealsSearchForm({
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setHighlight(index)}
               onClick={() => chooseAirport(kind, option)}
-              className={`flex min-h-14 w-full items-center gap-3 rounded-xl px-3 py-2 text-start transition-colors ${highlight === index ? "bg-blue-50" : "hover:bg-slate-50"}`}
+              className={`flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-[6px] px-3 py-2 text-start transition-colors ${highlight === index ? "bg-slate-50" : "hover:bg-slate-50"}`}
             >
               <MapPin
-                className="h-5 w-5 shrink-0 text-[#004BB8]"
+                className={`h-5 w-5 shrink-0 ${isPackagesLanding ? "text-slate-600" : "text-[#004BB8]"}`}
                 aria-hidden="true"
               />
               <span className="min-w-0 flex-1">
@@ -3173,7 +3184,7 @@ export function DealsSearchForm({
             <span className="truncate">{travelerSummary}</span>
           </span>
         </span>
-        <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 ${isPackagesLanding ? "lg:me-1 lg:self-center lg:text-slate-500" : ""}`} />
+        <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-150 ${travelersOpen ? "rotate-180" : ""} ${isPackagesLanding ? "lg:me-1 lg:self-center lg:text-slate-500" : ""}`} />
       </button>
       {included.flight ? (
         <div
@@ -3214,7 +3225,7 @@ export function DealsSearchForm({
                 ) : null}
                 <span className="truncate">{t(search.flightCabinClass)}</span>
               </span>
-              <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 ${isPackagesLanding ? "lg:me-1 lg:self-center lg:text-slate-500" : ""}`} />
+              <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-150 ${cabinOpen ? "rotate-180" : ""} ${isPackagesLanding ? "lg:me-1 lg:self-center lg:text-slate-500" : ""}`} />
             </button>
           ) : (
             <select
@@ -3924,9 +3935,10 @@ export function DealsSearchForm({
                           <DealsDestinationPopover
                             open={open}
                             anchorRef={wrapRef}
-                            width={390}
+                            width={isPackagesLanding ? 420 : 390}
                             marker={`flight-${kind}`}
                             desktopLanding={isDesktopLanding}
+                            packagesLanding={isPackagesLanding}
                           >
                             {flightSuggestionContent(kind)}
                           </DealsDestinationPopover>
@@ -4438,11 +4450,12 @@ export function DealsSearchForm({
       <DesktopLandingPopover
         open={isDesktopLanding && cabinOpen}
         anchorRef={cabinLauncherRef}
-        width={248}
+        width={isPackagesLanding ? 232 : 248}
         desiredHeight={180}
         align="end"
         marker="cabin"
         className="p-1.5"
+        packagesSurface={isPackagesLanding}
       >
         <div role="listbox" aria-label={t("deals.cabinClass")}>
           {(["economy", "business", "first"] as const).map((cabin) => (
@@ -4458,7 +4471,7 @@ export function DealsSearchForm({
                   cabinLauncherRef.current?.focus({ preventScroll: true }),
                 );
               }}
-              className={`focus-ring flex min-h-10 w-full items-center rounded-[6px] px-3 text-start text-sm font-medium ${search.flightCabinClass === cabin ? "bg-blue-50 text-[#004BB8]" : "text-slate-800 hover:bg-slate-50"}`}
+              className={`focus-ring flex min-h-[42px] w-full cursor-pointer items-center rounded-[6px] px-3 text-start text-sm font-medium ${search.flightCabinClass === cabin ? "bg-blue-50 text-[#004BB8]" : "text-slate-800 hover:bg-slate-50"}`}
             >
               {t(cabin)}
             </button>
@@ -4469,6 +4482,7 @@ export function DealsSearchForm({
         open={flightDatesOpen}
         anchorRef={flightDatesLauncherRef}
         desktopLanding={isDesktopLanding}
+        packagesLanding={isPackagesLanding}
       >
         <div
           id="deals-flight-desktop-dates"
@@ -4520,6 +4534,7 @@ export function DealsSearchForm({
         open={travelersOpen}
         anchorRef={travelersLauncherRef}
         desktopLanding={isDesktopLanding}
+        packagesLanding={isPackagesLanding}
       >
         <div
           id="deals-desktop-travellers"
