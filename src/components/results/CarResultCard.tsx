@@ -219,42 +219,39 @@ export function CarResultCard({
 
         <div
           data-region="pricing"
-          className="col-start-2 row-start-3 flex min-w-0 flex-col border-s border-t border-[#E2E8F0] bg-slate-50/45 px-3 py-3 text-end md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:border-s lg:border-t-0 lg:bg-white lg:text-end"
+          className="col-start-2 row-start-3 flex min-w-0 flex-col items-center border-s border-t border-[#E2E8F0] bg-slate-50/45 px-3 py-3 text-center md:col-span-2 md:col-start-1 md:row-start-3 md:border-s-0 md:px-4 lg:col-span-1 lg:col-start-3 lg:row-span-2 lg:row-start-1 lg:border-s lg:border-t-0 lg:bg-white"
         >
-          <div className="flex flex-col gap-2">
-            <div className="order-1 md:order-2">
-              <p
-                className="break-words text-lg font-bold leading-7 tracking-[-0.01em] text-[#102A43] tabular-nums min-[380px]:whitespace-nowrap lg:text-xl"
-                dir="ltr"
-                title={totalDisplayPrice.title}
-                aria-label={totalDisplayPrice.ariaLabel}
-              >
-                {totalDisplayPrice.formatted}
-              </p>
-              <p className="text-xs font-medium text-slate-500">
-                {guidedPlanning ? planningLabels?.estimatedTotal : "Total"}
-              </p>
-              {!guidedPlanning && offer.taxesAndFeesIncluded && (
-                <p className="mt-1 text-xs leading-4 text-slate-500">
-                  Taxes and fees included
-                </p>
-              )}
-            </div>
-            <div className="order-2 md:order-1">
-              <p className="text-xs font-medium text-slate-500">
-                {guidedPlanning
-                  ? planningLabels?.estimatedPerDay
-                  : "Price per day"}
-              </p>
-              <p
-                className="mt-0.5 break-words text-sm font-semibold leading-5 text-slate-700 tabular-nums min-[380px]:whitespace-nowrap"
+          <div className="flex min-w-0 w-full flex-col items-center text-center">
+            <p
+              className="max-w-full whitespace-nowrap text-[clamp(1rem,4.5vw,1.25rem)] font-extrabold leading-tight tracking-[-0.025em] text-slate-950 tabular-nums lg:text-xl"
+              dir="ltr"
+              title={totalDisplayPrice.title}
+              aria-label={totalDisplayPrice.ariaLabel}
+            >
+              {totalDisplayPrice.formatted}
+            </p>
+            <p className="mt-1 text-[10px] font-medium uppercase leading-none tracking-[0.08em] text-slate-600 sm:text-[11px]">
+              {guidedPlanning ? planningLabels?.estimatedTotal : "Total"}
+            </p>
+            <p className="mt-2 text-xs font-medium leading-4 text-slate-600">
+              {guidedPlanning
+                ? planningLabels?.estimatedPerDay
+                : "Price per day"}
+              {": "}
+              <span
+                className="whitespace-nowrap font-semibold tabular-nums"
                 dir="ltr"
                 title={dailyDisplayPrice.title}
                 aria-label={dailyDisplayPrice.ariaLabel}
               >
                 {dailyDisplayPrice.formatted}
+              </span>
+            </p>
+            {!guidedPlanning && offer.taxesAndFeesIncluded && (
+              <p className="mt-1.5 text-xs leading-4 text-slate-500">
+                Taxes and fees included
               </p>
-            </div>
+            )}
           </div>
           {guidedPlanning && (
             <p className="mt-2 text-xs leading-4 text-slate-600">
