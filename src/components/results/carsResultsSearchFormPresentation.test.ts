@@ -192,6 +192,8 @@ test("desktop time cell matches the main search while retaining the full range w
     searchTimeCell,
     /preferredWidth=\{448\}[\s\S]*?desiredHeight=\{320\}[\s\S]*?align="center"/,
   );
+  assert.match(searchTimeCell, /shellClassName="overflow-hidden p-3"/);
+  assert.doesNotMatch(searchTimeCell, /shellClassName="overflow-y-auto p-4"/);
   assert.match(
     searchTimeCell,
     /<CarsTimeRangePickerContent[\s\S]*?pickupTime=\{pickupTime\}[\s\S]*?returnTime=\{dropoffTime\}[\s\S]*?onReturnTimeChange=\{setDropoffTime\}/,
@@ -220,8 +222,15 @@ test("desktop driver age cell uses the compact main-search label and icon", () =
     driverAgeCell,
     /preferredWidth=\{288\}[\s\S]*?desiredHeight=\{320\}[\s\S]*?align="end"/,
   );
+  assert.match(driverAgeCell, /shellClassName="overflow-hidden"/);
+  assert.doesNotMatch(driverAgeCell, /shellClassName="[^"]*p-4/);
   assert.match(driverAgeCell, /<CarsDriverAgePickerContent/);
   assert.match(driverAgeCell, /carsSearch\.driverAgeAnyAgeRange/);
+  assert.match(driverAgeCell, /formatAge=\{\(age\) => age\}/);
+  assert.doesNotMatch(
+    driverAgeCell,
+    /<CarsDriverAgePickerContent[\s\S]*?formatAge=\{\(age\) => getDriverAgeOptionLabel/,
+  );
 
   const desktopClosedValue = driverAgeCell.match(
     /useMainPageDesktopPresentation \? \([\s\S]*?\) : \(/,
@@ -240,6 +249,12 @@ test("results desktop popovers pass explicit alignment without changing the defa
     "ResultsDesktopPopover should remain defined",
   );
   assert.match(resultsDesktopPopover, /align = "start"/);
+  assert.match(resultsDesktopPopover, /shellClassName = "overflow-y-auto p-4"/);
+  assert.match(resultsDesktopPopover, /shellClassName\?: string/);
+  assert.match(
+    resultsDesktopPopover,
+    /className=\{cn\(carsDesktopPopoverClassName, shellClassName\)\}/,
+  );
   assert.match(resultsDesktopPopover, /align\?: "start" \| "center" \| "end"/);
   assert.match(
     resultsDesktopPopover,
