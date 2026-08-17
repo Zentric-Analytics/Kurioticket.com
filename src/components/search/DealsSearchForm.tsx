@@ -2087,13 +2087,22 @@ export function DealsSearchForm({
   const openFlightAirport = (
     kind: "origin" | "destination",
     mobile = false,
+    queryOverride?: string,
   ) => {
     closeDesktopLandingPanels();
     closeUnrelatedPickers();
     setHotelDestinationOpen(false);
     setHotelDestinationMobileOpen(false);
-    setFlightOriginOpen(!mobile && kind === "origin");
-    setFlightDestinationOpen(!mobile && kind === "destination");
+    const query = (
+      queryOverride ??
+      (kind === "origin"
+        ? search.flightOriginText
+        : search.flightDestinationText)
+    ).trim();
+    const showDesktopPanel =
+      !mobile && (!isPackagesLanding || query.length >= 2);
+    setFlightOriginOpen(showDesktopPanel && kind === "origin");
+    setFlightDestinationOpen(showDesktopPanel && kind === "destination");
     setFlightMobileAirport(mobile ? kind : null);
   };
   const openHotelDestination = (mobile = false) => {
@@ -3835,7 +3844,7 @@ export function DealsSearchForm({
                                 const value = event.target.value;
                                 if (kind === "origin")
                                   flightOriginUserInteractedRef.current = true;
-                                openFlightAirport(kind);
+                                openFlightAirport(kind, false, value);
                                 setSearch((current) =>
                                   kind === "destination"
                                     ? {
@@ -3861,11 +3870,15 @@ export function DealsSearchForm({
                                 if (kind === "origin")
                                   setFlightOriginHighlight(0);
                                 else setFlightDestinationHighlight(0);
-                                if (value.trim().length < 2)
+                                if (value.trim().length < 2) {
                                   setAirportLists((all) => ({
                                     ...all,
                                     [kind]: [],
                                   }));
+                                  if (kind === "origin")
+                                    setFlightOriginLoading(false);
+                                  else setFlightDestinationLoading(false);
+                                }
                               }}
                               className={`${field} ${flightConnectedField} ${isDesktopLanding ? "min-w-0 pe-3 lg:text-[15px] lg:font-semibold" : "pe-10"}`}
                               autoComplete="off"
