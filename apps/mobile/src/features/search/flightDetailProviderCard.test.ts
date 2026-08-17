@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import { authoritativeProviderUrl } from "./providerBooking";
 
 const detailSource = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
 const flightDetail = detailSource.slice(detailSource.indexOf("function FlightDetail"), detailSource.indexOf("function HotelDetail"));
@@ -26,10 +27,13 @@ test("provider identity keeps readable space and labels do not shrink into verti
 
 test("responsive actions retain the displayed fare and Select behavior", () => {
   assert.match(offer, /<Text numberOfLines=\{1\} style=\{d\.priceSmall\}>\{price\}<\/Text>/);
-  assert.match(offer, /<Button label="Select" \/>/);
-  assert.match(offer, /\{price\}<\/Text>[\s\S]*?<Button label="Select" \/>/);
+  assert.match(offer, /onSelect\?: \(\) => void/);
+  assert.match(offer, /<Button label="Select" onPress=\{onSelect\} \/>/);
+  assert.match(offer, /\{price\}<\/Text>[\s\S]*?<Button label="Select" onPress=\{onSelect\} \/>/);
   assert.match(detailSource, /offerActions: \{[\s\S]*?flexDirection: "row"/);
+  assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?flexDirection: "column"/);
   assert.match(flightDetail, /price=\{formattedFare\}/);
+  assert.match(flightDetail, /<Offer[\s\S]*?onSelect=\{handleProviderBooking\}/);
   assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 3);
 });
 
@@ -40,7 +44,21 @@ test("flight offer reuses a live carrier logo only for the same provider identit
 });
 
 test("provider booking redirect logic remains unchanged", () => {
-  assert.match(flightDetail, /const url = result\.partnerRedirectUrl \|\| result\.bookingUrl/);
+  assert.equal(authoritativeProviderUrl({
+    partnerRedirectUrl: "https://partner.example/flight",
+    bookingUrl: "https://booking.example/flight",
+  }), "https://partner.example/flight");
+  assert.equal(authoritativeProviderUrl({
+    bookingUrl: "https://booking.example/flight",
+  }), "https://booking.example/flight");
+  assert.equal(authoritativeProviderUrl({
+    partnerRedirectUrl: "",
+    bookingUrl: "",
+  }), "");
+
+  assert.match(flightDetail, /const url = authoritativeProviderUrl\(result\)/);
   assert.match(flightDetail, /await Linking\.openURL\(url\)/);
-  assert.match(flightDetail, /<Button label=\{`Continue to \$\{provider\}`\} onPress=\{\(\) => void go\(\)\} \/>/);
+  assert.equal(flightDetail.match(/onPress=\{handleProviderBooking\}/g)?.length, 1);
+  assert.match(flightDetail, /<Offer[\s\S]*?onSelect=\{handleProviderBooking\}/);
+  assert.match(flightDetail, /<Button label=\{`Continue to \$\{provider\}`\} onPress=\{handleProviderBooking\} \/>/);
 });

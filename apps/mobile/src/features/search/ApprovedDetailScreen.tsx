@@ -31,6 +31,7 @@ import {
   type ExchangeRates,
 } from "../currency/displayCurrency";
 import { canReuseFlightDetailFare, createFlightDetailFare } from "./flightDetailCurrency";
+import { authoritativeProviderUrl } from "./providerBooking";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -162,8 +163,8 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
     result.airlineName.trim().toLocaleLowerCase()
       ? result.airlineLogo
       : null;
-  const go = async () => {
-    const url = result.partnerRedirectUrl || result.bookingUrl;
+  const handleProviderBooking = async () => {
+    const url = authoritativeProviderUrl(result);
     if (!/^https:\/\//.test(url))
       return Alert.alert(
         "Offer unavailable",
@@ -299,6 +300,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             }
             price={formattedFare}
             selected
+            onSelect={handleProviderBooking}
           />
           <Text style={[d.disclosure, { color: theme.textSecondary }]}>
             Only the authoritative offer returned for this search is shown.
@@ -312,7 +314,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
           <Text style={[d.meta, { color: theme.textSecondary }]}>Round trip</Text>
         </View>
         <View style={d.stickyCta}>
-          <Button label={`Continue to ${provider}`} onPress={() => void go()} />
+          <Button label={`Continue to ${provider}`} onPress={handleProviderBooking} />
           <Text style={[d.redirect, { color: theme.textSecondary }]}>You’ll be redirected to {provider}’s site</Text>
         </View>
       </View>
@@ -555,12 +557,14 @@ function Offer({
   kind,
   price,
   selected,
+  onSelect,
 }: {
   provider: string;
   logoUrl?: string | null;
   kind: string;
   price: string;
   selected: boolean;
+  onSelect?: () => void;
 }) {
   const { theme } = useAppTheme();
   const compact = useWindowDimensions().width < 480;
@@ -580,7 +584,7 @@ function Offer({
       </View>
       <View style={[d.offerActions, compact && d.offerActionsCompact]}>
         <Text numberOfLines={1} style={d.priceSmall}>{price}</Text>
-        <Button label="Select" />
+        <Button label="Select" onPress={onSelect} />
       </View>
     </View>
   );
