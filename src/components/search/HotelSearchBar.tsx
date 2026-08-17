@@ -1599,21 +1599,20 @@ export function HotelSearchBar({
                 <HotelDesktopPopover
                   open={guestsRoomsOpen}
                   launcherRef={guestsRoomsMobileLauncherRef}
-                  preferredWidth={392}
-                  desiredHeight={486}
+                  preferredWidth={360}
+                  desiredHeight={356}
                   align="end"
                   onClose={() => setGuestsRoomsOpen(false)}
                   className="rounded-2xl border-slate-200 p-0 shadow-[0_24px_64px_-18px_rgba(15,23,42,0.28)]"
                 >
-                  <div className="border-b border-slate-200 px-5 py-4">
+                  <div className="border-b border-slate-200 px-4 py-3.5">
                     <h2 className="text-base font-bold tracking-[-0.01em] text-slate-950">
-                      {t("guestsAndRooms")}
+                      {locale.toLowerCase().startsWith("en")
+                        ? "Guests & Rooms"
+                        : t("guestsAndRooms")}
                     </h2>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      {t("chooseGuestsAndRooms")}
-                    </p>
                   </div>
-                  <div className="divide-y divide-slate-200 px-5">
+                  <div className="divide-y divide-slate-200 px-4">
                     {[
                       {
                         key: "adults",
@@ -1670,11 +1669,11 @@ export function HotelSearchBar({
                       return (
                         <div
                           key={row.key}
-                          className="flex min-h-[82px] items-center justify-between gap-4 py-3"
+                          className="flex min-h-[70px] items-center justify-between gap-3 py-2.5"
                         >
                           <div className="flex min-w-0 items-center gap-3">
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-                              <RowIcon aria-hidden="true" className="h-5 w-5" />
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
+                              <RowIcon aria-hidden="true" className="h-[18px] w-[18px]" />
                             </span>
                             <span className="min-w-0">
                               <span className="block text-sm font-bold text-slate-950">
@@ -1691,7 +1690,7 @@ export function HotelSearchBar({
                               onClick={row.onDecrement}
                               disabled={!canDecrement}
                               aria-label={`${t("decrease")} ${row.label}`}
-                              className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
+                              className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
                             >
                               <Minus className="h-4 w-4" />
                             </button>
@@ -1703,7 +1702,7 @@ export function HotelSearchBar({
                               onClick={row.onIncrement}
                               disabled={!canIncrement}
                               aria-label={`${t("increase")} ${row.label}`}
-                              className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
+                              className="focus-ring inline-flex h-[34px] w-[34px] items-center justify-center rounded-full border border-slate-300 bg-white text-slate-800 transition-colors hover:border-[#004BB8] hover:bg-blue-50 hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-white"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
@@ -1713,11 +1712,11 @@ export function HotelSearchBar({
                     })}
                   </div>
                   {!mobileSearchOpen ? (
-                    <div className="border-t border-slate-200 bg-slate-50/70 px-5 py-4">
+                    <div className="border-t border-slate-200 bg-slate-50/70 px-4 py-3">
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex min-w-0 items-center gap-3">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-slate-200">
-                            <PawPrint aria-hidden="true" className="h-5 w-5" />
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-slate-200">
+                            <PawPrint aria-hidden="true" className="h-[18px] w-[18px]" />
                           </span>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-900">
@@ -1751,15 +1750,6 @@ export function HotelSearchBar({
                       </div>
                     </div>
                   ) : null}
-                  <div className="border-t border-slate-200 bg-white p-4">
-                    <button
-                      type="button"
-                      onClick={() => setGuestsRoomsOpen(false)}
-                      className="focus-ring h-11 w-full rounded-lg bg-[#004BB8] text-sm font-bold text-white shadow-[0_8px_18px_rgba(0,75,184,0.2)] transition-colors hover:bg-[#003f9c]"
-                    >
-                      {t("done")}
-                    </button>
-                  </div>
                 </HotelDesktopPopover>
               ) : null}
             </div>
