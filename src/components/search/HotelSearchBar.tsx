@@ -1417,10 +1417,7 @@ export function HotelSearchBar({
               >
                 <Calendar
                   size={16}
-                  className={cn(
-                    "shrink-0",
-                    compact ? "text-[#004BB8]" : "text-slate-500",
-                  )}
+                  className="shrink-0 text-slate-500"
                 />
                 <span className="truncate">{dateSummary}</span>
               </button>
