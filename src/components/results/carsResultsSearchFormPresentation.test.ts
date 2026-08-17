@@ -52,6 +52,19 @@ test("results location inputs use a clean local focus presentation", () => {
   assert.doesNotMatch(fieldInputClass, /(?:^|\s)focus-ring(?:\s|$)/);
   assert.match(fieldInputClass, /(?:^|\s)focus-visible:outline-none(?:\s|$)/);
   assert.match(fieldInputClass, /(?:^|\s)focus-visible:shadow-none(?:\s|$)/);
+  assert.doesNotMatch(fieldInputClass, /(?:^|\s)truncate(?:\s|$)/);
+});
+
+test("results location autocomplete owns the remaining value-row width", () => {
+  const searchInputCell = source.match(
+    /function SearchInputCell\([\s\S]*?\n}\n\nfunction ResultsDesktopPopover/,
+  )?.[0];
+
+  assert.ok(searchInputCell, "SearchInputCell should remain defined");
+  assert.match(
+    searchInputCell,
+    /<Icon[\s\S]*?<div className="min-w-0 flex-1">\s*<CarLocationAutocomplete[\s\S]*?<\/div>[\s\S]*?showClearButton && value/,
+  );
 });
 
 test("pickup alone removes its clear action and reclaims the input width", () => {
@@ -96,6 +109,39 @@ test("desktop-full rental dates use compact dates and localized duration", () =>
   );
   assert.match(source, /name="pickupDate" value=\{pickupDate\}/);
   assert.match(source, /name="dropoffDate" value=\{dropoffDate\}/);
+});
+
+test("desktop-full rental dates compose calendar, value stack, then chevron", () => {
+  const searchDateCell = source.match(
+    /function SearchDateCell\([\s\S]*?\n}\n\nfunction SearchTimeCell/,
+  )?.[0];
+
+  assert.ok(searchDateCell, "SearchDateCell should remain defined");
+  assert.match(
+    searchDateCell,
+    /\{showRentalDuration \? \(\s*<Calendar[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*?<span className="min-w-0 flex-1">[\s\S]*?\{summary\}[\s\S]*?showRentalDuration && rentalDayCount > 0[\s\S]*?\{rentalDaysLabel\}[\s\S]*?<ChevronDown/,
+  );
+  const labelRow = searchDateCell.match(
+    /<div className=\{fieldLabelClass\}>[\s\S]*?<\/div>/,
+  )?.[0];
+  assert.ok(labelRow, "SearchDateCell label row should remain defined");
+  assert.doesNotMatch(labelRow, /<Calendar\b/);
+});
+
+test("Cars main search retains its location-width and rental-date references", () => {
+  assert.match(
+    carsPageSource,
+    /<div className="min-w-0 flex-1">\s*<CarLocationAutocomplete/,
+  );
+  const rentalDatesField = carsPageSource.match(
+    /function RentalDatesField\([\s\S]*?\n}\n\nfunction TimeRangeField/,
+  )?.[0];
+
+  assert.ok(rentalDatesField, "RentalDatesField should remain defined");
+  assert.match(
+    rentalDatesField,
+    /<Calendar[\s\S]*?\{dateSummary\}[\s\S]*?\{rentalDaysLabel\}[\s\S]*?<ChevronDown/,
+  );
 });
 
 test("desktop controls reuse Cars autocomplete, picker content, and fixed popovers", () => {
