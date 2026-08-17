@@ -385,7 +385,7 @@ export default function HotelsSearchPage() {
         </section>
 
         <section className="relative z-20 hidden overflow-visible pb-28 sm:block lg:pb-32">
-          <div className="relative isolate min-h-[31rem] bg-slate-950 lg:min-h-[34rem]">
+          <div className="relative isolate min-h-[28rem] bg-slate-950 lg:min-h-[29rem]">
             <div className="absolute inset-0 overflow-hidden">
               <Image
                 src={hotelsHeroImage}
@@ -393,7 +393,7 @@ export default function HotelsSearchPage() {
                 fill
                 priority
                 sizes="100vw"
-                className="object-cover object-[50%_55%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
+                className="object-cover object-[50%_48%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
               />
               <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-slate-950/56 via-slate-950/20 to-transparent" />
               <div className="absolute left-0 top-0 h-[66%] w-[62%] bg-[radial-gradient(ellipse_at_22%_26%,rgba(15,23,42,0.42),rgba(15,23,42,0.18)_42%,transparent_72%)]" />
@@ -401,7 +401,7 @@ export default function HotelsSearchPage() {
               <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/34 via-slate-950/8 to-transparent" />
             </div>
 
-            <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
+            <div className="page-shell absolute inset-x-0 bottom-[-44px] z-30 lg:bottom-[-46px]">
               <div className="mx-auto max-w-6xl">
                 <HotelSearchBar
                   introLabel={hotelSearchIntroLabel}
