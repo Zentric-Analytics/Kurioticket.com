@@ -1133,6 +1133,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
   const stickyOriginWrapRef = useRef<HTMLDivElement | null>(null);
   const stickyDestinationWrapRef = useRef<HTMLDivElement | null>(null);
+  const stickyDateButtonRef = useRef<HTMLButtonElement | null>(null);
+  const stickyTravelerButtonRef = useRef<HTMLButtonElement | null>(null);
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
@@ -1141,6 +1143,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
   const stickySearchCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const pendingStickySearchTargetRef = useRef<
+    "route" | "dates" | "travelers" | null
+  >(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
@@ -1239,21 +1244,30 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }, []);
 
   const openStickySearchEditor = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
+    (
+      event: React.MouseEvent<HTMLButtonElement>,
+      target: "route" | "dates" | "travelers",
+    ) => {
       stickySearchLauncherRef.current = event.currentTarget;
+      pendingStickySearchTargetRef.current = target;
       const currentScrollY = window.scrollY;
       expandedSearchScrollYRef.current = currentScrollY;
       setIsSearchExpandedWhileSticky(true);
       setActiveDesktopSearchSurface("sticky");
       setTripTypeMenuOpen(false);
-      setActiveSuggest(null);
+      setActiveSuggest(
+        target === "route" && originInput.trim().length >= 2
+          ? "origin"
+          : null,
+      );
       setDropdownPosition(null);
-      setActiveDatePicker(null);
+      setActiveDatePicker(target === "dates" ? "departure" : null);
       setDatePickerPosition(null);
-      setTravelerPopoverOpen(false);
+      setTravelerPopoverOpen(target === "travelers");
       setTravelerPopoverPosition(null);
     },
     [
+      originInput,
       setActiveDatePicker,
       setActiveSuggest,
       setDatePickerPosition,
@@ -1310,8 +1324,28 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return undefined;
     }
 
-    window.requestAnimationFrame(() => {
-      stickySearchCloseButtonRef.current?.focus();
+    const focusFrame = window.requestAnimationFrame(() => {
+      const pendingTarget = pendingStickySearchTargetRef.current;
+      pendingStickySearchTargetRef.current = null;
+
+      if (pendingTarget === "route") {
+        stickyOriginWrapRef.current
+          ?.querySelector<HTMLInputElement>("input")
+          ?.focus({ preventScroll: true });
+        return;
+      }
+
+      if (pendingTarget === "dates") {
+        stickyDateButtonRef.current?.focus({ preventScroll: true });
+        return;
+      }
+
+      if (pendingTarget === "travelers") {
+        stickyTravelerButtonRef.current?.focus({ preventScroll: true });
+        return;
+      }
+
+      stickySearchCloseButtonRef.current?.focus({ preventScroll: true });
     });
 
     const handleStickyPanelPointerDown = (event: MouseEvent) => {
@@ -1380,6 +1414,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     document.addEventListener("keydown", handleStickyPanelKeyDown);
 
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.removeEventListener("mousedown", handleStickyPanelPointerDown);
       document.removeEventListener("keydown", handleStickyPanelKeyDown);
     };
@@ -5152,7 +5187,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               type="button"
               aria-expanded={isStickySearchPanelOpen}
               aria-label={`${t("editFlightSearch")}: ${mobileOriginSummary} ${t("to")} ${mobileDestinationSummary}`}
-              onClick={openStickySearchEditor}
+              onClick={(event) => openStickySearchEditor(event, "route")}
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
@@ -5171,7 +5206,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               type="button"
               aria-expanded={isStickySearchPanelOpen}
               aria-label={`${t("editFlightSearch")}: ${compactDateSummary}`}
-              onClick={openStickySearchEditor}
+              onClick={(event) => openStickySearchEditor(event, "dates")}
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <Calendar
@@ -5185,7 +5220,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
               type="button"
               aria-expanded={isStickySearchPanelOpen}
               aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
-              onClick={openStickySearchEditor}
+              onClick={(event) => openStickySearchEditor(event, "travelers")}
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <Users
@@ -5463,6 +5498,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
                   <div className="relative">
                     <button
+                      ref={stickyDateButtonRef}
                       type="button"
                       onClick={() => {
                         setActiveDesktopSearchSurface("sticky");
@@ -5521,6 +5557,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
                   <div className="relative">
                     <button
+                      ref={stickyTravelerButtonRef}
                       type="button"
                       onClick={() => {
                         setActiveDesktopSearchSurface("sticky");
