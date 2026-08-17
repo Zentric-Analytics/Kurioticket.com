@@ -22,6 +22,7 @@ import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useAppTheme } from "../../theme/AppTheme";
 import { AirlineLogo } from "./AirlineLogo";
+import { ProviderLogo } from "./ProviderLogo";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
   resolveDisplayCurrencyContext,
@@ -557,7 +558,7 @@ function Offer({
   return (
     <View style={[d.offer, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }, selected && { borderColor: ui.blue }]}>
       <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}>
-        <Text style={d.blue}>{provider.slice(0, 1)}</Text>
+        <ProviderLogo provider={provider} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[d.provider, { color: theme.textPrimary }]}>
