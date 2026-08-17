@@ -60,6 +60,7 @@ import {
 } from "@/lib/flights/desktopCompactFilter";
 import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
+import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
 const desktopCompactFilterTopOffset = 116;
@@ -642,7 +643,7 @@ export function HotelResultsExperience({
       };
     }
 
-    stickyHotelScrollLockRef.current = lockBodyScroll();
+    stickyHotelScrollLockRef.current = lockDesktopPageScroll();
     const handleViewportChange = (event: MediaQueryListEvent) => {
       if (!event.matches) closeDesktopStickyHotelSearch();
     };

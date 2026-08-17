@@ -47,6 +47,7 @@ import type {
   NormalizedCarResult,
 } from "@/lib/cars/types";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
+import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import {
   CarsDriverAgePickerContent,
@@ -684,7 +685,7 @@ export function CarsResultsClient({
 
   useEffect(() => {
     if (!desktopStickySearchOpen) return undefined;
-    const scrollLock = lockBodyScroll();
+    const scrollLock = lockDesktopPageScroll();
     stickyScrollLockRef.current = scrollLock;
     return () => {
       scrollLock.restore();

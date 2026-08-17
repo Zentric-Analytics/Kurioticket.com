@@ -28,11 +28,11 @@ test("source-contract: sticky editor lifecycle keeps scroll locking independent 
   );
   assert.match(
     source,
-    /const scrollLock = lockBodyScroll\(\);[\s\S]*?scrollLock\.restore\(\);[\s\S]*?\}, \[desktopStickySearchOpen\]\);/,
+    /const scrollLock = lockDesktopPageScroll\(\);[\s\S]*?scrollLock\.restore\(\);[\s\S]*?\}, \[desktopStickySearchOpen\]\);/,
   );
   const scrollLockEffect =
     source.match(
-      /useEffect\(\(\) => \{[\s\S]*?const scrollLock = lockBodyScroll\(\);[\s\S]*?\}, \[desktopStickySearchOpen\]\);/,
+      /useEffect\(\(\) => \{[\s\S]*?const scrollLock = lockDesktopPageScroll\(\);[\s\S]*?\}, \[desktopStickySearchOpen\]\);/,
     )?.[0] ?? "";
   assert.doesNotMatch(scrollLockEffect, /datesOpen|timesOpen|driverAgeOpen/);
   assert.match(
@@ -48,7 +48,7 @@ test("source-contract: sticky editor lifecycle keeps scroll locking independent 
 test("source-contract: sticky editor opens with nested controls closed and focuses the dialog", () => {
   const openHelper =
     source.match(
-      /const openDesktopStickySearch = useCallback\([\s\S]*?\n  \);/,
+      /const openDesktopStickySearch = useCallback\([\s\S]*?\r?\n  \);/,
     )?.[0] ?? "";
   assert.match(openHelper, /setOpenLocation\(null\)/);
   assert.match(openHelper, /setDatesOpen\(false\)/);
@@ -62,7 +62,7 @@ test("source-contract: sticky editor opens with nested controls closed and focus
 
   const initialFocusEffect =
     source.match(
-      /useEffect\(\(\) => \{\n    if \(!desktopStickySearchSection\)[\s\S]*?\n  \}, \[desktopStickySearchSection\]\);/,
+      /useEffect\(\(\) => \{\r?\n    if \(!desktopStickySearchSection\)[\s\S]*?\r?\n  \}, \[desktopStickySearchSection\]\);/,
     )?.[0] ?? "";
   assert.match(
     initialFocusEffect,
