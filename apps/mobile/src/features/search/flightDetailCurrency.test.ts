@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { resolveDisplayCurrencyContext, type DisplayPrice } from "../currency/displayCurrency";
-import { canReuseFlightDetailFare, createFlightDetailFare } from "./flightDetailCurrency";
+import {
+  canReuseFlightDetailFare,
+  createFlightDetailFare,
+  flightDetailFareReuseDecision,
+} from "./flightDetailCurrency";
 
 const passedNgnFare: DisplayPrice = {
   amount: 92_720,
@@ -79,6 +83,15 @@ test("provider identity must match before a passed fare can be reused", () => {
   }), false);
 });
 
+test("fare reuse decisions explain every rejection", () => {
+  const input = { providerAmount: 67, providerCurrency: "USD", preferredCurrency: null };
+  assert.equal(flightDetailFareReuseDecision({ ...input, passedFare: null }), "missing fare");
+  assert.equal(flightDetailFareReuseDecision({ ...input, passedFare: { ...passedNgnFare, providerAmount: 68 } }), "provider amount mismatch");
+  assert.equal(flightDetailFareReuseDecision({ ...input, passedFare: { ...passedNgnFare, providerCurrency: "EUR" } }), "provider currency mismatch");
+  assert.equal(flightDetailFareReuseDecision({ ...input, passedFare: passedNgnFare, preferredCurrency: "EUR" }), "explicit preference mismatch");
+  assert.equal(flightDetailFareReuseDecision({ ...input, passedFare: passedNgnFare }), "valid");
+});
+
 test("direct Saved-flight entry resolves Nigeria and explicit EUR normally", () => {
   const automatic = resolveDisplayCurrencyContext({
     preferredCurrency: null, ipCountryCode: "NG", locale: "en-US",
@@ -100,8 +113,7 @@ test("all three Flight Details totals use the one shared formatted fare", () => 
   assert.doesNotMatch(flightDetail, /money\(result\.currency, result\.price\)/);
 });
 
-test("Results passes both its fare and display resolution context", () => {
+test("Results uses the collision-safe navigation contract", () => {
   const resultsScreen = readFileSync(new URL("./ApprovedResultsScreen.tsx", import.meta.url).pathname, "utf8");
-  assert.match(resultsScreen, /displayFare: JSON\.stringify\(fare\)/);
-  assert.match(resultsScreen, /displayCurrencyContext: JSON\.stringify\(displayCurrencyContext\)/);
+  assert.match(resultsScreen, /params: buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });
