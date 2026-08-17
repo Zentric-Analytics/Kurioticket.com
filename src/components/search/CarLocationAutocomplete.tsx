@@ -79,6 +79,7 @@ export function CarLocationAutocomplete({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const activeInputRef = inputRef ?? fallbackRef;
   const [internalOpen, setInternalOpen] = useState(false);
+  const [hasUserEditedQuery, setHasUserEditedQuery] = useState(false);
   const [suggestions, setSuggestions] = useState<CarLocationSuggestion[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const open = isOpen ?? internalOpen;
@@ -101,8 +102,12 @@ export function CarLocationAutocomplete({
   const [error, setError] = useState(false);
   const requestIdRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
+  const trimmedQuery = value.trim();
+  const showPanel = usesDesktopPanel
+    ? open && hasUserEditedQuery && trimmedQuery.length > 0
+    : open;
   const { placement, popoverRef, style } = useCarsDesktopPopover({
-    open: open && usesDesktopPanel,
+    open: showPanel && usesDesktopPanel,
     launcherRef: activeInputRef,
     preferredWidth: 420,
     desiredHeight: 320,
@@ -117,6 +122,17 @@ export function CarLocationAutocomplete({
   }, [open]);
 
   useEffect(() => {
+    if (usesDesktopPanel && (!hasUserEditedQuery || !trimmedQuery)) {
+      requestIdRef.current += 1;
+      abortRef.current?.abort();
+      abortRef.current = null;
+      setSuggestions([]);
+      setLoading(false);
+      setError(false);
+      setHighlightedIndex(-1);
+      if (open) setOpen(false);
+      return;
+    }
     if (!open || disabled) return;
     const requestId = ++requestIdRef.current;
     const controller = new AbortController();
@@ -125,7 +141,7 @@ export function CarLocationAutocomplete({
     const timeout = window.setTimeout(() => {
       setLoading(true);
       setError(false);
-      const params = new URLSearchParams({ q: value, limit: "8" });
+      const params = new URLSearchParams({ q: trimmedQuery, limit: "8" });
       if (countryHint && /^[A-Za-z]{2}$/.test(countryHint)) params.set("country", countryHint.toUpperCase());
       fetch(`/api/cars/locations?${params.toString()}`, { signal: controller.signal, cache: "no-store" })
         .then((response) => (response.ok ? response.json() : Promise.reject(new Error("Location suggestions unavailable"))))
@@ -148,7 +164,7 @@ export function CarLocationAutocomplete({
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [countryHint, disabled, open, value]);
+  }, [countryHint, disabled, hasUserEditedQuery, open, setOpen, trimmedQuery, usesDesktopPanel]);
 
   useEffect(() => {
     if (!open || !usesDesktopPanel) return;
@@ -172,21 +188,40 @@ export function CarLocationAutocomplete({
 
   const selectSuggestion = (suggestion: CarLocationSuggestion) => {
     onValueChange(suggestion.value);
+    setHasUserEditedQuery(false);
     onSelect?.(suggestion);
     close();
   };
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onValueChange(event.target.value);
+    const nextValue = event.target.value;
+    const nextQuery = nextValue.trim();
+    onValueChange(nextValue);
+    if (usesDesktopPanel) {
+      setHasUserEditedQuery(nextQuery.length > 0);
+      if (!nextQuery) {
+        requestIdRef.current += 1;
+        abortRef.current?.abort();
+        abortRef.current = null;
+        setSuggestions([]);
+        setLoading(false);
+        setError(false);
+        setHighlightedIndex(-1);
+        setOpen(false);
+        return;
+      }
+    }
     setOpen(true);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
+      if (usesDesktopPanel && (!hasUserEditedQuery || !trimmedQuery)) return;
       event.preventDefault();
       setOpen(true);
       setHighlightedIndex((current) => Math.min(suggestions.length - 1, current + 1));
     } else if (event.key === "ArrowUp") {
+      if (usesDesktopPanel && (!hasUserEditedQuery || !trimmedQuery)) return;
       event.preventDefault();
       setOpen(true);
       setHighlightedIndex((current) => Math.max(0, current === -1 ? suggestions.length - 1 : current - 1));
@@ -205,8 +240,12 @@ export function CarLocationAutocomplete({
     }
   };
 
-  const activeId = open && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined;
-  const label = value.trim() ? strings.locationSuggestions : strings.popularLocations;
+  const activeId = showPanel && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined;
+  const label = usesDesktopPanel
+    ? strings.locationSuggestions
+    : trimmedQuery
+      ? strings.locationSuggestions
+      : strings.popularLocations;
   const panelClass = usesDesktopPanel
     ? `${carsDesktopPopoverClassName} overflow-y-auto overscroll-contain p-2`
     : mobileShell
@@ -261,7 +300,9 @@ export function CarLocationAutocomplete({
         type="text"
         value={value}
         onChange={onChange}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          if (!usesDesktopPanel) setOpen(true);
+        }}
         onBlur={(event) => {
           if (usesDesktopPanel && !panelRef.current?.contains(event.relatedTarget as Node | null)) close();
         }}
@@ -273,12 +314,12 @@ export function CarLocationAutocomplete({
         autoFocus={autoFocus}
         role="combobox"
         aria-autocomplete="list"
-        aria-expanded={open}
+        aria-expanded={showPanel}
         aria-controls={listboxId}
         aria-activedescendant={activeId}
       />
 
-      {open ? (usesDesktopPanel && typeof document !== "undefined" ? createPortal(
+      {showPanel ? (usesDesktopPanel && typeof document !== "undefined" ? createPortal(
         <div ref={popoverRef} style={style} data-placement={placement} className={panelClass} data-cars-desktop-popover="locations">
           {panelContent}
         </div>,

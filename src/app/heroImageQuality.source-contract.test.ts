@@ -44,7 +44,7 @@ describe("hero image quality source contracts", () => {
         'className="relative isolate z-20 min-h-[24.25rem]',
       ),
       carsPageSource.indexOf(
-        'className="relative hidden overflow-visible pb-36 sm:block',
+        'className="relative hidden overflow-visible pb-40 sm:block',
       ),
     );
 
@@ -58,9 +58,12 @@ describe("hero image quality source contracts", () => {
     assert.match(carsPageSource, /absolute inset-x-0 bottom-\[-24\.5rem\] z-30/);
     assert.match(
       carsPageSource,
-      /absolute inset-x-0 bottom-\[-100px\] z-30 lg:bottom-\[-104px\]/,
+      /absolute inset-x-0 bottom-\[-114px\] z-30 lg:bottom-\[-118px\]/,
     );
-    assert.doesNotMatch(carsPageSource, /bottom-\[-84px\]|lg:bottom-\[-88px\]/);
+    assert.doesNotMatch(
+      carsPageSource,
+      /bottom-\[-84px\]|lg:bottom-\[-88px\]|bottom-\[-100px\]|lg:bottom-\[-104px\]/,
+    );
   });
 
   it("keeps the market-aware homepage hero at quality 92 without image hacks", () => {
