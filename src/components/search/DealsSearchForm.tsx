@@ -15,6 +15,7 @@ import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
+  Armchair,
   BedDouble,
   Building2,
   Calendar,
@@ -2383,10 +2384,10 @@ export function DealsSearchForm({
               className={`flex items-center justify-between gap-3 border-b border-slate-100 px-3 py-3 last:border-b-0 ${isPackagesLanding ? "lg:min-h-[52px] lg:px-1 lg:py-1.5" : ""}`}
             >
               <span className="min-w-0">
-                <span className="block font-extrabold text-slate-950">
+                <span className={`block font-extrabold text-slate-950 ${isPackagesLanding ? "lg:text-[14px] lg:font-semibold lg:leading-tight lg:text-slate-900" : ""}`}>
                   {rowLabel}
                 </span>
-                <span className="block text-xs font-medium text-slate-500">
+                <span className={`block text-xs font-medium text-slate-500 ${isPackagesLanding ? "lg:text-[12px] lg:font-normal lg:leading-relaxed" : ""}`}>
                   {description}
                 </span>
               </span>
@@ -2404,11 +2405,11 @@ export function DealsSearchForm({
                       setDraftChildren((current) => Math.max(0, current - 1));
                     else setDraftInfants((current) => Math.max(0, current - 1));
                   }}
-                  className={`focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10 ${isPackagesLanding ? "lg:h-8 lg:w-8" : ""}`}
+                  className={`focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10 ${isPackagesLanding ? "lg:h-8 lg:w-8 lg:hover:border-[#075EE8] lg:hover:text-[#075EE8]" : ""}`}
                 >
                   <Minus className="h-4 w-4" aria-hidden="true" />
                 </button>
-                <span className="min-w-7 text-center font-extrabold tabular-nums text-slate-950">
+                <span className={`min-w-7 text-center font-extrabold tabular-nums text-slate-950 ${isPackagesLanding ? "lg:text-[14px] lg:font-semibold" : ""}`}>
                   {count}
                 </span>
                 <button
@@ -2424,7 +2425,7 @@ export function DealsSearchForm({
                     else if (draftInfants < draftAdults)
                       setDraftInfants((current) => current + 1);
                   }}
-                  className={`focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10 ${isPackagesLanding ? "lg:h-8 lg:w-8" : ""}`}
+                  className={`focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 sm:h-10 sm:w-10 ${isPackagesLanding ? "lg:h-8 lg:w-8 lg:hover:border-[#075EE8] lg:hover:text-[#075EE8]" : ""}`}
                 >
                   <Plus className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -2436,7 +2437,7 @@ export function DealsSearchForm({
       {included.hotel ? (
         <div className={`space-y-3 rounded-2xl border border-slate-200 p-3 ${isPackagesLanding ? "lg:rounded-none lg:border-x-0 lg:border-b-0 lg:px-1 lg:pb-0 lg:pt-3" : ""}`}>
           <div className="flex items-center justify-between">
-            <span className="font-extrabold">{t("rooms")}</span>
+            <span className={`font-extrabold ${isPackagesLanding ? "lg:text-[14px] lg:font-semibold lg:text-slate-900" : ""}`}>{t("rooms")}</span>
             <span className="flex items-center gap-2">
               <button
                 type="button"
@@ -2448,11 +2449,11 @@ export function DealsSearchForm({
                 onClick={() =>
                   setDraftHotelRooms((value) => Math.max(1, value - 1))
                 }
-                className={`focus-ring h-10 w-10 rounded-full border ${isPackagesLanding ? "lg:h-8 lg:w-8" : ""}`}
+                className={`focus-ring h-10 w-10 rounded-full border ${isPackagesLanding ? "lg:h-8 lg:w-8 lg:border-slate-300 lg:text-slate-700 lg:hover:border-[#075EE8] lg:hover:text-[#075EE8] lg:disabled:border-slate-200 lg:disabled:bg-slate-100 lg:disabled:text-slate-300" : ""}`}
               >
                 −
               </button>
-              <span>{draftHotelRooms}</span>
+              <span className={isPackagesLanding ? "lg:min-w-7 lg:text-center lg:text-[14px] lg:font-semibold lg:tabular-nums lg:text-slate-950" : undefined}>{draftHotelRooms}</span>
               <button
                 type="button"
                 aria-label={t("deals.increaseCountAria").replace(
@@ -2463,13 +2464,13 @@ export function DealsSearchForm({
                 onClick={() =>
                   setDraftHotelRooms((value) => Math.min(6, value + 1))
                 }
-                className={`focus-ring h-10 w-10 rounded-full border ${isPackagesLanding ? "lg:h-8 lg:w-8" : ""}`}
+                className={`focus-ring h-10 w-10 rounded-full border ${isPackagesLanding ? "lg:h-8 lg:w-8 lg:border-slate-300 lg:text-slate-700 lg:hover:border-[#075EE8] lg:hover:text-[#075EE8] lg:disabled:border-slate-200 lg:disabled:bg-slate-100 lg:disabled:text-slate-300" : ""}`}
               >
                 +
               </button>
             </span>
           </div>
-          <label className="flex items-center gap-2 text-sm font-bold">
+          <label className={`flex items-center gap-2 text-sm font-bold ${isPackagesLanding ? "lg:text-[13px] lg:font-medium lg:text-slate-800" : ""}`}>
             <input
               type="checkbox"
               checked={draftHotelPetFriendly}
@@ -4516,7 +4517,7 @@ export function DealsSearchForm({
         className="p-1.5"
         packagesSurface={isPackagesLanding}
       >
-        <div role="listbox" aria-label={t("deals.cabinClass")}>
+        <div role="listbox" aria-label={t("deals.cabinClass")} className={isPackagesLanding ? "divide-y divide-slate-100" : undefined}>
           {(["economy", "business", "first"] as const).map((cabin) => (
             <button
               key={cabin}
@@ -4530,9 +4531,10 @@ export function DealsSearchForm({
                   cabinLauncherRef.current?.focus({ preventScroll: true }),
                 );
               }}
-              className={`focus-ring flex min-h-[42px] w-full cursor-pointer items-center rounded-[6px] px-3 text-start text-sm font-medium ${search.flightCabinClass === cabin ? "bg-blue-50 text-[#004BB8]" : "text-slate-800 hover:bg-slate-50"}`}
+              className={`focus-ring flex min-h-[42px] w-full cursor-pointer items-center rounded-[6px] px-3 text-start text-sm font-medium ${isPackagesLanding ? "gap-2.5 lg:text-[14px]" : ""} ${search.flightCabinClass === cabin ? (isPackagesLanding ? "bg-[#075EE8]/[0.06] text-[#075EE8]" : "bg-blue-50 text-[#004BB8]") : "text-slate-800 hover:bg-slate-50"}`}
             >
-              {t(cabin)}
+              {isPackagesLanding ? <Armchair aria-hidden="true" className={`h-4 w-4 shrink-0 ${search.flightCabinClass === cabin ? "text-[#075EE8]" : "text-slate-600"}`} /> : null}
+              <span>{t(cabin)}</span>
             </button>
           ))}
         </div>

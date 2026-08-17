@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -14,14 +14,22 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { router, useLocalSearchParams } from "expo-router";
-import type { FlightResult, HotelResult } from "../../api/travelApi";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { travelApi, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useAppTheme } from "../../theme/AppTheme";
 import { AirlineLogo } from "./AirlineLogo";
+import { readCurrencyPreference } from "../../storage/preferenceStorage";
+import {
+  resolveDisplayCurrencyContext,
+  type DisplayCurrencyResolution,
+  type DisplayPrice,
+  type ExchangeRates,
+} from "../currency/displayCurrency";
+import { canReuseFlightDetailFare, createFlightDetailFare } from "./flightDetailCurrency";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -70,6 +78,64 @@ export function ApprovedDetailScreen({
 function FlightDetail({ result, params }: { result: FlightResult; params: Record<string, string | string[]> }) {
   const inset = useSafeAreaInsets();
   const { theme } = useAppTheme();
+  const passedFare = parse<DisplayPrice>(params.displayFare);
+  const parsedDisplayCurrencyContext = parse<DisplayCurrencyResolution>(params.displayCurrencyContext);
+  const passedDisplayCurrencyContext = typeof parsedDisplayCurrencyContext?.resolvedCurrency === "string"
+    ? parsedDisplayCurrencyContext
+    : undefined;
+  const contextMatchesPassedFare = !passedDisplayCurrencyContext
+    || passedDisplayCurrencyContext.resolvedCurrency.toUpperCase() === passedFare?.currency.toUpperCase();
+  const initiallyValidPassedFare = canReuseFlightDetailFare({
+    passedFare,
+    providerAmount: result.price,
+    providerCurrency: result.currency,
+  }) && contextMatchesPassedFare ? passedFare! : null;
+  const [fare, setFare] = useState<DisplayPrice | null>(initiallyValidPassedFare);
+  const currencyRatesRef = useRef<ExchangeRates | null>(null);
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    void readCurrencyPreference().catch(() => null).then(async (preferredCurrency) => {
+      if (!active) return;
+      if (contextMatchesPassedFare && canReuseFlightDetailFare({
+        passedFare,
+        providerAmount: result.price,
+        providerCurrency: result.currency,
+        preferredCurrency,
+      })) {
+        setFare(passedFare!);
+        return;
+      }
+
+      // A changed explicit preference invalidates the snapshot immediately.
+      // Never show the provider currency while the requested conversion loads.
+      setFare(null);
+      const [location, rates] = await Promise.all([
+        passedFare || preferredCurrency
+          ? Promise.resolve(null)
+          : travelApi.location().catch(() => null),
+        currencyRatesRef.current
+          ? Promise.resolve(currencyRatesRef.current)
+          : travelApi.currencyRates().then((payload) => payload.rates).catch(() => ({})),
+      ]);
+      if (!active) return;
+      const resolution = resolveDisplayCurrencyContext({
+        preferredCurrency,
+        ipCountryCode: location?.countryCode,
+        locale: Intl.DateTimeFormat().resolvedOptions().locale,
+      });
+      if (Object.keys(rates).length) currencyRatesRef.current = rates;
+      setFare(createFlightDetailFare(
+        result.price,
+        result.currency,
+        resolution.resolvedCurrency,
+        rates,
+      ));
+    });
+    return () => { active = false; };
+  }, [contextMatchesPassedFare, passedDisplayCurrencyContext?.resolvedCurrency,
+    passedFare?.amount, passedFare?.currency, passedFare?.providerAmount,
+    passedFare?.providerCurrency, result.currency, result.id, result.price]));
+  const formattedFare = fare?.formatted ?? "—";
   const legs = result.legs?.length
     ? result.legs
     : [
@@ -192,7 +258,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             <View style={{ alignItems: "flex-end" }}>
               <Text style={[d.meta, { color: theme.textSecondary }]}>Total (1 traveler)</Text>
               <Text style={[d.price, { color: theme.textPrimary }]}>
-                {money(result.currency, result.price)}
+                {formattedFare}
               </Text>
               <Text style={[d.meta, { color: theme.textSecondary }]}>Taxes and fees per provider</Text>
             </View>
@@ -221,7 +287,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
                 ? "Airline direct"
                 : "Travel provider"
             }
-            price={money(result.currency, result.price)}
+            price={formattedFare}
             selected
           />
           <Text style={[d.disclosure, { color: theme.textSecondary }]}>
@@ -232,7 +298,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
       <View style={[d.sticky, { paddingBottom: Math.max(inset.bottom, 10), backgroundColor: theme.surface, borderTopColor: theme.border }]}>
         <View>
           <Text style={[d.meta, { color: theme.textSecondary }]}>Total</Text>
-          <Text style={[d.price, { color: theme.textPrimary }]}>{money(result.currency, result.price)}</Text>
+          <Text style={[d.price, { color: theme.textPrimary }]}>{formattedFare}</Text>
           <Text style={[d.meta, { color: theme.textSecondary }]}>Round trip</Text>
         </View>
         <View style={d.stickyAction}>

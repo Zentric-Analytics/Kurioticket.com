@@ -1227,7 +1227,7 @@ export const translations: TranslationDictionary = {
   totalTripTime: "إجمالي مدة الرحلة",
   optionFound: "تم العثور على خيار واحد",
   optionsFound: "تم العثور على {{count}} خيارات",
-  resultFound: "تم العثور على نتيجة واحدة",
+  resultFound: "تم العثور على {{count}} نتيجة",
   resultsFound: "تم العثور على {{count}} نتائج",
   oneStop: "توقف واحد",
   twoPlusStops: "توقفان أو أكثر",

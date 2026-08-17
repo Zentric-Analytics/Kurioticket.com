@@ -11,7 +11,7 @@ test("flight card preserves display pricing and provider data during details nav
   assert.match(card, /fare\?\.formatted \?\? "—"/);
   assert.doesNotMatch(card, /money\(result\.currency, result\.price\)/);
   assert.match(card, /pathname: "\/flight-details"/);
-  assert.match(card, /result: JSON\.stringify\(result\)/);
+  assert.match(card, /buildFlightDetailParams\(\{ searchParams: params, result, fare, displayCurrencyContext \}\)/);
 });
 
 test("every flight card uses the same primary details CTA regardless of rank or theme", () => {
