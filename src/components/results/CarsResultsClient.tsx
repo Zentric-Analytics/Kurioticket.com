@@ -922,8 +922,10 @@ export function CarsResultsClient({
         ) : null}
         <div
           className={cn(
-            "overflow-visible rounded-[1.15rem] border border-slate-200/90 bg-white shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025] transition-[padding,border-color,box-shadow,border-radius] duration-200",
-            isCompactSearch ? "p-1" : "p-1.5",
+            "overflow-visible border border-slate-200/90 bg-white transition-[padding,border-color,box-shadow,border-radius] duration-200",
+            isCompactSearch
+              ? "rounded-xl border-slate-200/85 bg-white/90 p-0 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.64)]"
+              : "rounded-[1.15rem] p-1.5 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.58)] ring-1 ring-slate-950/[0.025]",
           )}
         >
           <div
@@ -1039,6 +1041,7 @@ export function CarsResultsClient({
                 setDriverAgeOpen(false);
               }}
               pickupDate={pickupDate}
+              useCompactDateSummary={placement !== "mobile"}
               showRentalDuration={placement === "desktop-full"}
               visibleMonthDate={visibleMonthDate}
               t={t}
@@ -1227,44 +1230,52 @@ export function CarsResultsClient({
 
       {desktopStickySearchSection ? (
         <div
-          className="fixed inset-0 z-[1100] hidden bg-slate-950/45 px-6 py-20 lg:block"
+          className="fixed inset-0 z-[1100] hidden bg-slate-950/30 backdrop-blur-[2px] lg:block"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget)
               closeDesktopStickySearch();
           }}
         >
           <div
-            ref={stickyDialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="sticky-cars-search-title"
-            className="mx-auto max-w-6xl rounded-2xl bg-white p-5 shadow-2xl"
+            className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28"
+            onMouseDown={(event) => event.stopPropagation()}
           >
-            <div className="mb-4 flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
-                  {t("carsResults.searchCars")}
-                </p>
-                <h2
-                  id="sticky-cars-search-title"
-                  className="mt-1 truncate text-xl font-bold tracking-tight text-slate-950"
+            <div
+              ref={stickyDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="sticky-cars-search-title"
+              className={cn(
+                "w-full rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md",
+                returnToDifferentLocation ? "max-w-5xl" : "max-w-4xl",
+              )}
+            >
+              <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#004BB8]">
+                    {t("carsResults.searchCars")}
+                  </p>
+                  <h2
+                    id="sticky-cars-search-title"
+                    className="mt-1 truncate text-xl font-bold tracking-tight text-slate-950"
+                  >
+                    {locationPairSummary}
+                  </h2>
+                  <p className="mt-1 truncate text-sm font-medium text-slate-600">
+                    {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  aria-label={t("carsResults.closeEditSearch")}
+                  onClick={closeDesktopStickySearch}
+                  className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
                 >
-                  {locationPairSummary}
-                </h2>
-                <p className="mt-1 truncate text-sm font-medium text-slate-600">
-                  {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
-                </p>
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
               </div>
-              <button
-                type="button"
-                aria-label={t("carsResults.closeEditSearch")}
-                onClick={closeDesktopStickySearch}
-                className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
+              {renderCarsSearchForm("desktop-sticky")}
             </div>
-            {renderCarsSearchForm("desktop-sticky")}
           </div>
         </div>
       ) : null}
@@ -1962,6 +1973,7 @@ function SearchDateCell({
   onSelectDate,
   onToggle,
   pickupDate,
+  useCompactDateSummary,
   showRentalDuration,
   visibleMonthDate,
   t,
@@ -1979,13 +1991,14 @@ function SearchDateCell({
   onSelectDate: (date: Date) => void;
   onToggle: () => void;
   pickupDate: string;
+  useCompactDateSummary: boolean;
   showRentalDuration: boolean;
   visibleMonthDate: Date;
   t: (key: string) => string;
   intlLocale: string;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const dateFormatter = showRentalDuration ? formatCompactDate : formatDate;
+  const dateFormatter = useCompactDateSummary ? formatCompactDate : formatDate;
   const pickupDisplay = dateFormatter(
     pickupDate,
     intlLocale,
