@@ -43,6 +43,21 @@ test("different-return action is landing-page only while same-as-pickup remains"
   assert.match(carsPageSource, /carsSearch\.differentReturnLocation/);
 });
 
+test("results location inputs use a clean local focus presentation", () => {
+  const fieldInputClass = source.match(
+    /const fieldInputClass =\s*\n\s*"([^"]+)";/,
+  )?.[1];
+
+  assert.ok(fieldInputClass, "fieldInputClass should remain defined");
+  assert.doesNotMatch(fieldInputClass, /(?:^|\s)focus-ring(?:\s|$)/);
+  assert.match(fieldInputClass, /(?:^|\s)focus-visible:outline-none(?:\s|$)/);
+  assert.match(fieldInputClass, /(?:^|\s)focus-visible:shadow-none(?:\s|$)/);
+  assert.match(
+    source,
+    /<CarLocationAutocomplete[\s\S]*?inputClassName=\{cn\(fieldInputClass, "pr-8"\)\}/,
+  );
+});
+
 test("desktop controls reuse Cars autocomplete, picker content, and fixed popovers", () => {
   for (const primitive of [
     "CarLocationAutocomplete",
