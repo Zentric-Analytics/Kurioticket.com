@@ -17,7 +17,6 @@ import {
   ChevronDown,
   MapPin,
   Minus,
-  PawPrint,
   PencilLine,
   Plus,
   SlidersHorizontal,
@@ -1290,6 +1289,10 @@ export function HotelSearchBar({
                     </>
                   )}
                 </button>
+                <MapPin
+                  aria-hidden="true"
+                  className="pointer-events-none absolute start-0 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-500 sm:block"
+                />
                 <input
                   ref={destinationInputRef}
                   type="text"
@@ -1319,7 +1322,7 @@ export function HotelSearchBar({
                   placeholder={t("hotelSearchDestinationPlaceholder")}
                   className={cn(
                     valueControlClassName,
-                    "placeholder:text-slate-400 max-sm:hidden",
+                    "placeholder:text-slate-400 max-sm:hidden sm:ps-6 focus:!shadow-none focus-visible:!shadow-none",
                   )}
                   required
                 />
@@ -1580,12 +1583,13 @@ export function HotelSearchBar({
                 )}
               >
                 <span className="flex min-w-0 items-center gap-2">
-                  {mobileLandingPresentation ? (
-                    <UserRound
-                      aria-hidden="true"
-                      className="h-4 w-4 shrink-0 text-slate-500"
-                    />
-                  ) : null}
+                  <UserRound
+                    aria-hidden="true"
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-slate-500",
+                      !mobileLandingPresentation && "max-sm:hidden",
+                    )}
+                  />
                   <span className="truncate">{guestsRoomsSummary}</span>
                 </span>
                 <ChevronDown
@@ -1616,7 +1620,6 @@ export function HotelSearchBar({
                         key: "adults",
                         label: t("adults"),
                         description: t("hotelGuests.adultDescription"),
-                        icon: UserRound,
                         value: hotelAdultCount,
                         min: 1,
                         max: 12 - hotelChildCount,
@@ -1631,7 +1634,6 @@ export function HotelSearchBar({
                         key: "children",
                         label: t("children"),
                         description: t("hotelGuests.childDescription"),
-                        icon: UserRound,
                         value: hotelChildCount,
                         min: 0,
                         max: 12 - hotelAdultCount,
@@ -1646,7 +1648,6 @@ export function HotelSearchBar({
                         key: "rooms",
                         label: t("rooms"),
                         description: t("hotelGuests.roomDescription"),
-                        icon: BedDouble,
                         value: clampCount(rooms, 1, 6),
                         min: 1,
                         max: 6,
@@ -1662,26 +1663,20 @@ export function HotelSearchBar({
                     ].map((row) => {
                       const canDecrement = row.value > row.min;
                       const canIncrement = row.value < row.max;
-                      const RowIcon = row.icon;
 
                       return (
                         <div
                           key={row.key}
                           className="flex min-h-[70px] items-center justify-between gap-3 py-2.5"
                         >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
-                              <RowIcon aria-hidden="true" className="h-[18px] w-[18px]" />
+                          <span className="min-w-0">
+                            <span className="block text-sm font-bold text-slate-950">
+                              {row.label}
                             </span>
-                            <span className="min-w-0">
-                              <span className="block text-sm font-bold text-slate-950">
-                                {row.label}
-                              </span>
-                              <span className="mt-0.5 block text-xs font-medium text-slate-500">
-                                {row.description}
-                              </span>
+                            <span className="mt-0.5 block text-xs font-medium text-slate-500">
+                              {row.description}
                             </span>
-                          </div>
+                          </span>
                           <div className="flex shrink-0 items-center gap-2">
                             <button
                               type="button"
@@ -1712,39 +1707,34 @@ export function HotelSearchBar({
                   {!mobileSearchOpen ? (
                     <div className="border-t border-slate-200 bg-slate-50/70 px-4 py-3">
                       <div className="flex items-center justify-between gap-4">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-700 shadow-sm ring-1 ring-slate-200">
-                            <PawPrint aria-hidden="true" className="h-[18px] w-[18px]" />
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-900">
-                              {t("petFriendly")}
-                            </p>
-                            <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                              {t("onlyShowPetFriendlyStays")}
-                            </p>
-                          </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {t("petFriendly")}
+                          </p>
+                          <p className="mt-0.5 text-xs leading-5 text-slate-500">
+                            {t("onlyShowPetFriendlyStays")}
+                          </p>
                         </div>
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={hotelPetFriendly}
-                            aria-label={t("togglePetFriendlyStays")}
-                            onClick={() => setHotelPetFriendly((prev) => !prev)}
-                            className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={hotelPetFriendly}
+                          aria-label={t("togglePetFriendlyStays")}
+                          onClick={() => setHotelPetFriendly((prev) => !prev)}
+                          className={`focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+                            hotelPetFriendly
+                              ? "border-[#004BB8] bg-[#004BB8]"
+                              : "border-slate-300 bg-slate-200"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${
                               hotelPetFriendly
-                                ? "border-[#004BB8] bg-[#004BB8]"
-                                : "border-slate-300 bg-slate-200"
+                                ? "translate-x-5"
+                                : "translate-x-0.5"
                             }`}
-                          >
-                            <span
-                              className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform ${
-                                hotelPetFriendly
-                                  ? "translate-x-5"
-                                  : "translate-x-0.5"
-                              }`}
-                            />
-                          </button>
+                          />
+                        </button>
                       </div>
                     </div>
                   ) : null}
