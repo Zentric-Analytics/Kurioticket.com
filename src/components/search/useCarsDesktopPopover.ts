@@ -15,6 +15,7 @@ export function useCarsDesktopPopover<T extends HTMLElement>({
   maxHeight,
   align = "start",
   providedPopoverRef,
+  onLauncherOutOfView,
 }: {
   open: boolean;
   launcherRef?: RefObject<T | null>;
@@ -23,17 +24,30 @@ export function useCarsDesktopPopover<T extends HTMLElement>({
   maxHeight?: number;
   align?: "start" | "center" | "end";
   providedPopoverRef?: RefObject<HTMLDivElement | null>;
+  onLauncherOutOfView?: () => void;
 }) {
   const internalRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = providedPopoverRef ?? internalRef;
   const [style, setStyle] = useState<CSSProperties>();
   const [placement, setPlacement] = useState<"above" | "below">("below");
+  const onLauncherOutOfViewRef = useRef(onLauncherOutOfView);
+  onLauncherOutOfViewRef.current = onLauncherOutOfView;
 
   useLayoutEffect(() => {
     if (!open || !launcherRef?.current) return;
     const update = () => {
       if (!launcherRef.current) return;
       const rect = launcherRef.current.getBoundingClientRect();
+      const viewportPadding = 16;
+      const launcherIsOutsideViewport =
+        rect.bottom <= viewportPadding ||
+        rect.top >= window.innerHeight - viewportPadding ||
+        rect.right <= viewportPadding ||
+        rect.left >= window.innerWidth - viewportPadding;
+      if (launcherIsOutsideViewport) {
+        onLauncherOutOfViewRef.current?.();
+        return;
+      }
       const renderedHeight = popoverRef.current?.getBoundingClientRect().height;
       const height = Math.min(renderedHeight || desiredHeight, maxHeight ?? desiredHeight);
       const geometry = calculateDesktopPopoverGeometry({
@@ -41,7 +55,7 @@ export function useCarsDesktopPopover<T extends HTMLElement>({
         boundaryRect: rect,
         viewportWidth: window.innerWidth,
         viewportHeight: window.innerHeight,
-        viewportPadding: 16,
+        viewportPadding,
         gap: 10,
         preferredWidth,
         desiredHeight: height,
@@ -53,6 +67,7 @@ export function useCarsDesktopPopover<T extends HTMLElement>({
         top: geometry.top,
         width: geometry.width,
         maxHeight: Math.min(geometry.maxHeight, maxHeight ?? geometry.maxHeight),
+        transform: geometry.placement === "above" ? "translateY(-100%)" : undefined,
       });
     };
     update();

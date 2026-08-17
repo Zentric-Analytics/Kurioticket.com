@@ -19,6 +19,11 @@ test("desktop location suggestion icons remain neutral", () => {
   assert.doesNotMatch(source, /bg-slate-100 text-\[#004BB8\]/);
 });
 
+test("desktop results omit the visible heading but retain listbox labeling", () => {
+  assert.match(source, /!usesDesktopPanel \? <div[^>]*>\{label\}<\/div> : null/);
+  assert.match(source, /role="listbox"[^>]*aria-label=\{label\}/);
+});
+
 test("location combobox retains keyboard selection semantics", () => {
   for (const key of ["ArrowDown", "ArrowUp", "Enter", "Escape", "Home", "End"])
     assert.ok(source.includes(`event.key === "${key}"`));

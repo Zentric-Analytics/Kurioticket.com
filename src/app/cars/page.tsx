@@ -975,6 +975,7 @@ function CarsSearchBar({
                 dropoffDate={values.dropoffDate}
                 isOpen={datesOpen}
                 onClear={clearRentalDates}
+                onClose={() => setDatesOpen(false)}
                 onDone={() => {
                   setDatesOpen(false);
                   requestAnimationFrame(() => datesLauncherRef.current?.focus({ preventScroll: true }));
@@ -1003,6 +1004,7 @@ function CarsSearchBar({
             >
               <TimeRangeField
                 isOpen={timesOpen}
+                onClose={() => setTimesOpen(false)}
                 onToggle={toggleTimes}
                 pickupTime={values.pickupTime}
                 returnTime={values.dropoffTime}
@@ -1074,6 +1076,7 @@ function CarsSearchBar({
                   focusedIndex={focusedDriverAgeIndex}
                   isOpen={driverAgeOpen}
                   launcherRef={desktopDriverAgeLauncherRef}
+                  onClose={() => setDriverAgeOpen(false)}
                   onFocusedIndexChange={setFocusedDriverAgeIndex}
                   onSelect={(age) => {
                     updateValue("driverAge", age);
@@ -1358,6 +1361,7 @@ function CarPickupCardLink({ card }: { card: TranslatedCarImageCard }) {
 function DriverAgeDesktopPopover({
   isOpen,
   launcherRef,
+  onClose,
   onSelect,
   popoverRef,
   selectedAge,
@@ -1365,6 +1369,7 @@ function DriverAgeDesktopPopover({
   focusedIndex: number;
   isOpen: boolean;
   launcherRef: RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
   onFocusedIndexChange: (index: number) => void;
   onSelect: (age: string) => void;
   optionRefs: RefObject<Array<HTMLButtonElement | null>>;
@@ -1375,6 +1380,7 @@ function DriverAgeDesktopPopover({
   const { placement, popoverRef: positionedPopoverRef, style } = useCarsDesktopPopover({
     open: isOpen, launcherRef, preferredWidth: 288, desiredHeight: 320,
     maxHeight: 320, align: "end", providedPopoverRef: popoverRef,
+    onLauncherOutOfView: onClose,
   });
 
   if (!isOpen || typeof document === "undefined") return null;
@@ -1405,6 +1411,7 @@ function RentalDatesField({
   dropoffDate,
   isOpen,
   onClear,
+  onClose,
   onDone,
   onNextMonth,
   onPreviousMonth,
@@ -1418,6 +1425,7 @@ function RentalDatesField({
   dropoffDate: string;
   isOpen: boolean;
   onClear: () => void;
+  onClose: () => void;
   onDone: () => void;
   onNextMonth: () => void;
   onPreviousMonth: () => void;
@@ -1457,6 +1465,7 @@ function RentalDatesField({
   const { placement, popoverRef, style } = useCarsDesktopPopover({
     open: isOpen, launcherRef, preferredWidth: 580, desiredHeight: 420,
     align: "center",
+    onLauncherOutOfView: onClose,
   });
 
   return (
@@ -1536,6 +1545,7 @@ function RentalDatesField({
 function TimeRangeField({
   isOpen,
   onDone,
+  onClose,
   onToggle,
   pickupTime,
   returnTime,
@@ -1545,6 +1555,7 @@ function TimeRangeField({
 }: {
   isOpen: boolean;
   onDone: () => void;
+  onClose: () => void;
   onToggle: () => void;
   pickupTime: string;
   returnTime: string;
@@ -1565,6 +1576,7 @@ function TimeRangeField({
   const { placement, popoverRef, style } = useCarsDesktopPopover({
     open: isOpen, launcherRef, preferredWidth: 448, desiredHeight: 320,
     align: "center",
+    onLauncherOutOfView: onClose,
   });
 
   return (
