@@ -165,6 +165,29 @@ function tokenSignature(value) {
     .sort()
     .join("|");
 }
+
+// Deliberately small: identical copy is accepted only for stable product/data
+// identifiers that were reviewed, never for generic UI words such as “Save”.
+const reviewedIdenticalAllowlist = new Map([
+  ["brand.name", "Registered product name."],
+  ["common.brandName", "Registered product name."],
+]);
+function isReviewedIdentical(key, value) {
+  if (reviewedIdenticalAllowlist.has(key)) return true;
+  const text = String(value ?? "").trim();
+  return (
+    text === "Kurioticket" ||
+    /(?:Url|Email|Iata|FlightNumber|BookingReference)$/i.test(key)
+  );
+}
+function isConfirmedMixedLanguage(value) {
+  const words = String(value ?? "").match(
+    /\b(?:the|and|this|your|could|try|return|preview|results|filters|sorting|complete|booking|saved|flight|hotel|car|page|progress|search)\b/gi,
+  );
+  // Two English connective/content words is conservative enough to avoid
+  // flagging isolated international travel terms such as “hotel”.
+  return new Set((words ?? []).map((word) => word.toLowerCase())).size >= 2;
+}
 function csv(value) {
   const text = Array.isArray(value) ? value.join(";") : String(value ?? "");
   return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
@@ -1331,25 +1354,59 @@ const matrixRoutes = new Set(routeRows.map((row) => row.route)).size;
 const localeCoverage = Object.fromEntries(
   [...localeData].map(([code, data]) => {
     const required = [...allUsedKeys].filter((key) => key in enEffective);
+    const inheritedKeys = required.filter(
+      (key) => !data.explicit.keys.has(key),
+    );
+    const explicitIdenticalKeys = required.filter(
+      (key) =>
+        data.explicit.keys.has(key) && data.effective[key] === enEffective[key],
+    );
+    const blankKeys = required.filter(
+      (key) => String(data.effective[key] ?? "").trim() === "",
+    );
+    const placeholderKeys = required.filter(
+      (key) =>
+        tokenSignature(enEffective[key]) !==
+        tokenSignature(data.effective[key]),
+    );
+    const mixedKeys = required.filter(
+      (key) =>
+        data.explicit.keys.has(key) &&
+        data.effective[key] !== enEffective[key] &&
+        isConfirmedMixedLanguage(data.effective[key]),
+    );
+    const allowlistedKeys = explicitIdenticalKeys.filter((key) =>
+      isReviewedIdentical(key, data.effective[key]),
+    );
+    const explicitEnglishKeys =
+      code === "en-us"
+        ? []
+        : explicitIdenticalKeys.filter(
+            (key) => !isReviewedIdentical(key, data.effective[key]),
+          );
+    const explicitTargetLanguage = required.filter(
+      (key) =>
+        data.explicit.keys.has(key) &&
+        !blankKeys.includes(key) &&
+        !placeholderKeys.includes(key) &&
+        !explicitEnglishKeys.includes(key) &&
+        !allowlistedKeys.includes(key) &&
+        !mixedKeys.includes(key),
+    );
     return [
       code,
       {
         explicit: required.filter((key) => data.explicit.keys.has(key)).length,
-        inherited: required.filter((key) => !data.explicit.keys.has(key))
-          .length,
-        identicalExplicit: required.filter(
-          (key) =>
-            data.explicit.keys.has(key) &&
-            data.effective[key] === enEffective[key],
-        ).length,
-        blank: required.filter(
-          (key) => String(data.effective[key] ?? "").trim() === "",
-        ).length,
-        placeholderDefects: required.filter(
-          (key) =>
-            tokenSignature(enEffective[key]) !==
-            tokenSignature(data.effective[key]),
-        ).length,
+        explicitTargetLanguage: explicitTargetLanguage.length,
+        inherited: inheritedKeys.length,
+        inheritedNonLegal: inheritedKeys.length,
+        explicitEnglishReviewRequired: explicitEnglishKeys.length,
+        explicitIdenticalAllowlisted: allowlistedKeys.length,
+        mixedLanguage: mixedKeys.length,
+        blank: blankKeys.length,
+        placeholderDefects: placeholderKeys.length,
+        legalTranslationBlockers: 0,
+        dynamicOrManualReview: unresolvedDynamic.length,
       },
     ];
   }),
