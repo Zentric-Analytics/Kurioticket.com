@@ -37,11 +37,59 @@ test("source-contract: sticky editor lifecycle keeps scroll locking independent 
   assert.doesNotMatch(scrollLockEffect, /datesOpen|timesOpen|driverAgeOpen/);
   assert.match(
     source,
-    /const frame = requestAnimationFrame[\s\S]*?desktopStickySearchRefs\.pickupInputRef[\s\S]*?cancelAnimationFrame\(frame\)[\s\S]*?\[desktopStickySearchSection, desktopStickySearchRefs\.pickupInputRef\]/,
+    /const frame = requestAnimationFrame[\s\S]*?stickyDialogRef\.current\?\.focus\(\{ preventScroll: true \}\)[\s\S]*?cancelAnimationFrame\(frame\)[\s\S]*?\[desktopStickySearchSection\]/,
   );
   assert.doesNotMatch(
     source,
     /if \(!next\) setDesktopStickySearchSection\(null\)/,
+  );
+});
+
+test("source-contract: sticky editor opens with nested controls closed and focuses the dialog", () => {
+  const openHelper =
+    source.match(
+      /const openDesktopStickySearch = useCallback\([\s\S]*?\n  \);/,
+    )?.[0] ?? "";
+  assert.match(openHelper, /setOpenLocation\(null\)/);
+  assert.match(openHelper, /setDatesOpen\(false\)/);
+  assert.match(openHelper, /setTimesOpen\(false\)/);
+  assert.match(openHelper, /setDriverAgeOpen\(false\)/);
+  assert.match(openHelper, /setDesktopStickySearchSection\(section\)/);
+  assert.doesNotMatch(
+    openHelper,
+    /setDatesOpen\(true\)|setTimesOpen\(true\)|setDriverAgeOpen\(true\)/,
+  );
+
+  const initialFocusEffect =
+    source.match(
+      /useEffect\(\(\) => \{\n    if \(!desktopStickySearchSection\)[\s\S]*?\n  \}, \[desktopStickySearchSection\]\);/,
+    )?.[0] ?? "";
+  assert.match(
+    initialFocusEffect,
+    /stickyDialogRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
+  );
+  assert.doesNotMatch(
+    initialFocusEffect,
+    /setDatesOpen\(true\)|setTimesOpen\(true\)|setDriverAgeOpen\(true\)|pickupInputRef/,
+  );
+  assert.match(
+    source,
+    /aria-labelledby="sticky-cars-search-title"\s+tabIndex=\{-1\}/,
+  );
+});
+
+test("source-contract: explicit picker toggles remain mutually exclusive", () => {
+  assert.match(
+    source,
+    /setDatesOpen\(\(current\) => !current\);\s+setOpenLocation\(null\);\s+setTimesOpen\(false\);\s+setDriverAgeOpen\(false\)/,
+  );
+  assert.match(
+    source,
+    /setTimesOpen\(\(current\) => !current\);\s+setOpenLocation\(null\);\s+setDatesOpen\(false\);\s+setDriverAgeOpen\(false\)/,
+  );
+  assert.match(
+    source,
+    /setDriverAgeOpen\(\(current\) => !current\);\s+setOpenLocation\(null\);\s+setDatesOpen\(false\);\s+setTimesOpen\(false\)/,
   );
 });
 

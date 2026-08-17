@@ -8862,9 +8862,13 @@ function SuggestionList({
   alignToField?: boolean;
   locale?: string | null;
 }) {
+  const visibleSuggestions = suggestions.slice(0, 5);
+
   return (
     <div
       id={id}
+      role="listbox"
+      aria-label="Airport suggestions"
       style={
         alignToField
           ? {
@@ -8882,24 +8886,30 @@ function SuggestionList({
               zIndex: 9999,
             }
       }
-      className="w-full max-h-[min(42dvh,270px)] overflow-auto rounded-xl border border-slate-200 bg-white py-0.5 shadow-xl md:max-h-[220px]"
+      className="w-full overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_18px_42px_-22px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.025]"
     >
-      {suggestions.length ? (
-        suggestions.map((item) => (
+      {visibleSuggestions.length ? (
+        visibleSuggestions.map((item, index) => (
           <button
             key={`${item.code}-${item.airport}`}
             type="button"
+            role="option"
+            aria-selected="false"
+            aria-label={`${getLocalizedCityName(item.city, locale)}, ${item.airport}, ${item.code}`}
             onMouseDown={(event) => {
               event.preventDefault();
               event.stopPropagation();
             }}
             onClick={() => onSelect(airportInputValue(item))}
-            className="block w-full px-3 py-1.5 text-start transition-colors hover:bg-slate-50"
+            className={cn(
+              "block min-h-[58px] w-full px-4 py-2.5 text-start transition-colors hover:bg-slate-50 focus-visible:bg-blue-50/60 focus-visible:outline-none",
+              index < visibleSuggestions.length - 1 && "border-b border-slate-200/75",
+            )}
           >
-            <p className="text-[13px] font-medium text-slate-900">
+            <p className="truncate text-sm font-semibold leading-5 text-slate-950">
               {getLocalizedCityName(item.city, locale)} ({item.code})
             </p>
-            <p className="text-[11px] leading-4 text-slate-600">
+            <p className="mt-0.5 truncate text-xs font-medium leading-4 text-slate-500">
               {item.airport}
               {item.country
                 ? ` · ${getLocalizedAirportCountryName(item, locale)}`
@@ -8908,7 +8918,7 @@ function SuggestionList({
           </button>
         ))
       ) : (
-        <p className="whitespace-nowrap px-4 py-3 text-xs font-medium text-slate-500">
+        <p className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-500">
           No matching airports found
         </p>
       )}
