@@ -19,10 +19,8 @@ import {
   Minus,
   PencilLine,
   Plus,
-  RotateCcw,
   SlidersHorizontal,
   UserRound,
-  X,
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -444,16 +442,6 @@ export function HotelSearchBar({
       visibleDestinationSuggestions.length > 0 ||
       destinationQuery.length >= 1);
 
-  const hasActiveHotelSearch =
-    destination.trim() !== "" ||
-    checkIn !== "" ||
-    checkOut !== "" ||
-    hotelAdultCount !== 1 ||
-    hotelChildCount !== 0 ||
-    normalizedRooms !== "1" ||
-    hotelPetFriendly ||
-    error !== "";
-
   useEffect(() => {
     if (
       desktopPresentation !== "sticky-dialog" ||
@@ -820,17 +808,6 @@ export function HotelSearchBar({
     }
   };
 
-  const handleClearDestination = () => {
-    setDestinationMobilePickerOpen(false);
-    setDestination("");
-    setDestinationSuggestions([]);
-    setDestinationSuggestionsCountryHint(activeCountryHint);
-    setDestinationSuggestionsOpen(true);
-    setDestinationHighlight(0);
-    setError("");
-    destinationInputRef.current?.focus();
-  };
-
   const closeHotelSearchPopovers = () => {
     setDestinationSuggestionsOpen(false);
     setDestinationMobilePickerOpen(false);
@@ -884,26 +861,6 @@ export function HotelSearchBar({
     if (typeof window === "undefined") return;
 
     window.requestAnimationFrame(resetMobileSearchPanelScroll);
-  };
-
-  const handleResetSearch = () => {
-    setDestination("");
-    setCheckIn("");
-    setCheckOut("");
-    setHotelAdultCount(1);
-    setHotelChildCount(0);
-    setRooms("1");
-    setHotelPetFriendly(false);
-    setError("");
-    setDatesOpen(false);
-    setGuestsRoomsOpen(false);
-    setInternalMobileSearchOpen(false);
-    setDestinationSuggestions([]);
-    setDestinationSuggestionsCountryHint(activeCountryHint);
-    setDestinationSuggestionsOpen(false);
-    setDestinationMobilePickerOpen(false);
-    setDestinationHighlight(0);
-    setHotelVisibleMonthDate(currentMonthStart());
   };
 
   const handleToggleDates = () => {
@@ -1361,21 +1318,10 @@ export function HotelSearchBar({
                   placeholder={t("hotelSearchDestinationPlaceholder")}
                   className={cn(
                     valueControlClassName,
-                    "pr-9 placeholder:text-slate-400 max-sm:hidden",
+                    "placeholder:text-slate-400 max-sm:hidden",
                   )}
                   required
                 />
-                {destination ? (
-                  <button
-                    type="button"
-                    onClick={handleClearDestination}
-                    onMouseDown={(event) => event.preventDefault()}
-                    aria-label={t("clearDestination")}
-                    className="focus-ring absolute end-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                ) : null}
               </span>
               {shouldShowDestinationSuggestions ? (
                 <HotelDesktopPopover
@@ -1812,19 +1758,6 @@ export function HotelSearchBar({
             </div>
           </div>
         </div>
-
-        {!compact && !mobileLandingPresentation && hasActiveHotelSearch ? (
-          <div className="flex justify-end px-1">
-            <button
-              type="button"
-              onClick={handleResetSearch}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-            >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              {t("clearAll")}
-            </button>
-          </div>
-        ) : null}
 
         {error ? (
           <MessageBanner tone="error" role={errorRole}>

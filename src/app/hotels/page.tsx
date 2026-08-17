@@ -393,7 +393,7 @@ export default function HotelsSearchPage() {
                 fill
                 priority
                 sizes="100vw"
-                className="object-cover object-[50%_50%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
+                className="object-cover object-[50%_55%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
               />
               <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-slate-950/56 via-slate-950/20 to-transparent" />
               <div className="absolute left-0 top-0 h-[66%] w-[62%] bg-[radial-gradient(ellipse_at_22%_26%,rgba(15,23,42,0.42),rgba(15,23,42,0.18)_42%,transparent_72%)]" />

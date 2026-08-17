@@ -107,14 +107,35 @@ test("landing hotel identity is moderately enlarged without changing other consu
   assert.doesNotMatch(homepageSource, /<HotelSearchBar/);
 });
 
-test("mobile hotel landing omits the active-search reset surface while preserving desktop reset", () => {
-  assert.match(
-    searchBarSource,
-    /!compact && !mobileLandingPresentation && hasActiveHotelSearch/,
+test("hotel landing omits reset and destination clear controls while keeping destination editable", () => {
+  assert.doesNotMatch(searchBarSource, /hasActiveHotelSearch/);
+  assert.doesNotMatch(searchBarSource, /handleResetSearch|<RotateCcw/);
+  assert.doesNotMatch(searchBarSource, /handleClearDestination|<X\b/);
+  assert.doesNotMatch(searchBarSource, /t\("clearAll"\)|t\("clearDestination"\)/);
+
+  const desktopDestinationInput = searchBarSource.slice(
+    searchBarSource.indexOf("ref={destinationInputRef}"),
+    searchBarSource.indexOf(
+      "{shouldShowDestinationSuggestions ?",
+      searchBarSource.indexOf("ref={destinationInputRef}"),
+    ),
   );
-  assert.match(searchBarSource, /onClick=\{handleResetSearch\}/);
-  assert.match(searchBarSource, /<RotateCcw/);
-  assert.match(searchBarSource, /\{t\("clearAll"\)\}/);
+  assert.match(desktopDestinationInput, /value=\{destination\}/);
+  assert.match(desktopDestinationInput, /onChange=\{\(event\) => \{/);
+  assert.match(desktopDestinationInput, /setDestination\(event\.target\.value\)/);
+  assert.doesNotMatch(desktopDestinationInput, /pr-9/);
+});
+
+test("hotel hero keeps its approved mobile crop and shifts only the desktop image crop", () => {
+  assert.match(
+    hotelsPageSource,
+    /object-cover object-\[52%_34%\] brightness-\[1\.22\] saturate-\[1\.14\] contrast-\[1\.02\]/,
+  );
+  assert.match(
+    hotelsPageSource,
+    /object-cover object-\[50%_55%\] brightness-\[1\.2\] saturate-\[1\.1\] contrast-\[1\.01\]/,
+  );
+  assert.doesNotMatch(hotelsPageSource, /object-\[50%_50%\]/);
 });
 
 test("hotel hero is text-free with one screen-reader-accessible page heading", () => {
