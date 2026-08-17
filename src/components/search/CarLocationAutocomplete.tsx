@@ -111,6 +111,7 @@ export function CarLocationAutocomplete({
     desiredHeight: 320,
     maxHeight: 320,
     providedPopoverRef: panelRef,
+    onLauncherOutOfView: () => setOpen(false),
   });
 
   useEffect(() => {
@@ -252,7 +253,7 @@ export function CarLocationAutocomplete({
 
   const panelContent = (
     <>
-      <div className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</div>
+      {!usesDesktopPanel ? <div className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</div> : null}
       {loading ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.loadingSuggestions}</p> : null}
       {error ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.suggestionsUnavailable} {strings.continueTypingManually}</p> : null}
       {!loading && !error && suggestions.length === 0 ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.noMatchingLocations} {strings.continueTypingManually}</p> : null}
