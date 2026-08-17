@@ -25,3 +25,18 @@ test("navigation headers use a non-interactive spacer when Cancel is suppressed"
     /data-mobile-picker-header-spacer[^>]*(?:role=|tabIndex=|onClick=|aria-label=)/,
   );
 });
+
+test("close restores the page once and instantly before unmounting the shell", () => {
+  assert.match(source, /scrollX: number/);
+  assert.match(source, /scrollY: number/);
+  assert.match(source, /scrollBehavior: string/);
+  assert.match(source, /snapshot\.root\.style\.scrollBehavior = "auto"/);
+  assert.match(source, /behavior: "instant" as ScrollBehavior/);
+  assert.match(
+    source,
+    /const launcherElement = restorePagePosition\(\);[\s\S]*?await waitForNextPaint\(\);[\s\S]*?onClose\(\)/,
+  );
+  assert.doesNotMatch(source, /onClose\(\);\s*restorePagePosition\(/);
+  assert.match(source, /scrollLockSnapshotRef\.current = null/);
+  assert.match(source, /launcherElement\?\.focus\(\{ preventScroll: true \}\)/);
+});

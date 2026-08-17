@@ -807,7 +807,9 @@ export function StandaloneFlightSearchForm({
       setOriginOpen(false);
       setOriginHighlight(0);
       if (!activeMobilePicker)
-        window.requestAnimationFrame(() => originInputRef.current?.focus());
+        window.requestAnimationFrame(() =>
+          originInputRef.current?.focus({ preventScroll: true }),
+        );
     } else {
       setDestination("");
       setDestinationCode("");
@@ -817,7 +819,7 @@ export function StandaloneFlightSearchForm({
       setDestinationHighlight(0);
       if (!activeMobilePicker)
         window.requestAnimationFrame(() =>
-          destinationInputRef.current?.focus(),
+          destinationInputRef.current?.focus({ preventScroll: true }),
         );
     }
   };

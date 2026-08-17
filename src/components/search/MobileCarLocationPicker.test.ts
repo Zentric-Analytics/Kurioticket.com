@@ -95,7 +95,7 @@ test("editing after selection clears the draft and returns to search mode", () =
 test("clear X resets all selection and search state before focusing the input", () => {
   assert.match(
     picker,
-    /const clear = \(\) => \{[\s\S]*?setQuery\(""\);[\s\S]*?setDraft\(null\);[\s\S]*?setResults\(\[\]\);[\s\S]*?setSearchCompleted\(false\);[\s\S]*?inputRef\.current\?\.focus\(\)/,
+    /const clear = \(\) => \{[\s\S]*?setQuery\(""\);[\s\S]*?setDraft\(null\);[\s\S]*?setResults\(\[\]\);[\s\S]*?setSearchCompleted\(false\);[\s\S]*?inputRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
   );
   assert.match(picker, /onClick=\{clear\}/);
 });

@@ -31,7 +31,7 @@ test("origin and destination headers keep Back and centered titles without Cance
   assert.match(picker, /title=\{title\}/);
   assert.match(picker, /showCancelAction=\{false\}/);
   assert.match(shell, /<ArrowLeft[^>]*rtl:rotate-180/);
-  assert.match(shell, /\{t\.back\}/);
+  assert.match(shell, /showBackLabel \? t\.back : null/);
   assert.match(shell, /grid-cols-\[1fr_auto_1fr\]/);
   assert.match(
     shell,
@@ -60,6 +60,15 @@ test("all mobile flight-airport consumers render the same shared picker", () => 
   assert.match(consumers[1], /field: "origin"[\s\S]*?field: "destination"/);
   assert.match(consumers[2], /field=\{kind\}/);
   assert.match(consumers[3], /field="origin"[\s\S]*?field="destination"/);
+});
+
+test("opening and clearing the airport picker focus without moving the page", () => {
+  assert.equal(
+    [...picker.matchAll(/\.focus\(([^)]*)\)/g)].every((match) =>
+      match[1].includes("preventScroll: true"),
+    ),
+    true,
+  );
 });
 
 test("shared shell keeps centered header chrome, dialog semantics, scrolling, and safe footer", () => {

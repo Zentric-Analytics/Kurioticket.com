@@ -903,6 +903,7 @@ export function DealsSearchForm({
   });
   const hotelDatesLauncherRef = useRef<HTMLButtonElement>(null);
   const stayDatesLauncherRef = useRef<HTMLButtonElement>(null);
+  const desktopStayDatesLauncherRef = useRef<HTMLButtonElement>(null);
   const mobileHotelDatesCommittedRef = useRef(false);
   const [hotelDatesOpen, setHotelDatesOpen] = useState(false);
   const [mobileHotelDatesOpen, setMobileHotelDatesOpen] = useState(false);
@@ -1386,7 +1387,9 @@ export function DealsSearchForm({
   }, [displayedHotelCheckIn, displayedHotelCheckOut]);
   const desktopHotelDatesLauncherRef =
     supportsStayDateOverride && !search.stayDatesLinked
-      ? stayDatesLauncherRef
+      ? isDesktopLanding && isPackagesLanding
+        ? desktopStayDatesLauncherRef
+        : stayDatesLauncherRef
       : hotelDatesLauncherRef;
   const restoreHotelDatesFocus = () =>
     requestAnimationFrame(() =>
@@ -1817,7 +1820,7 @@ export function DealsSearchForm({
         mobileCarLocation === "pickup"
           ? carPickupMobileInputRef.current
           : carReturnMobileInputRef.current;
-      input?.focus();
+      input?.focus({ preventScroll: true });
       input?.select();
     }, 80);
     return () => window.clearTimeout(timer);
@@ -3780,7 +3783,7 @@ export function DealsSearchForm({
                             const target = event.target;
                             if (target instanceof Element && target.closest("input, button, a, select, textarea")) return;
                             event.preventDefault();
-                            inputRef.current?.focus();
+                            inputRef.current?.focus({ preventScroll: true });
                           }}
                           className={`${flightConnectedSegment} sm:border-b sm:border-slate-200 lg:border-b-0 ${open ? `sm:z-20 sm:bg-[#004BB8]/8 sm:ring-1 sm:ring-inset sm:ring-[#004BB8]/20 ${isDesktopLanding ? "lg:bg-transparent lg:ring-0" : ""}` : ""} ${isDesktopLanding ? `${desktopLandingFieldSurface} lg:pe-3 ${isPackagesLanding ? "lg:min-h-[70px] lg:cursor-text lg:py-2.5 lg:ps-4" : "lg:min-h-[78px] lg:py-3 lg:ps-10"}` : ""}`}
                           data-deals-flight-destination={kind}
@@ -3900,7 +3903,7 @@ export function DealsSearchForm({
                                     setFlightDestinationLoading(false);
                                     setFlightDestinationHighlight(0);
                                   }
-                                  inputRef.current?.focus();
+                                  inputRef.current?.focus({ preventScroll: true });
                                 }}
                                 className="focus-ring absolute end-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
                               >
@@ -4148,7 +4151,9 @@ export function DealsSearchForm({
                               setHotelSuggestions([]);
                               setHotelDestinationLoading(false);
                               setHotelDestinationHighlight(0);
-                              hotelDestinationInputRef.current?.focus();
+                              hotelDestinationInputRef.current?.focus({
+                                preventScroll: true,
+                              });
                             }}
                             className="focus-ring absolute end-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
                           >
@@ -4291,7 +4296,14 @@ export function DealsSearchForm({
             </aside>
           ) : null}
           <section data-deals-search-actions className={`py-3 ${isPackagesLanding ? "lg:relative lg:py-2" : ""}`}>
-            <div data-deals-stay-options className={isPackagesLanding ? "lg:min-h-[48px] lg:pe-[200px]" : undefined}>
+            <div
+              data-deals-stay-options
+              className={
+                isPackagesLanding
+                  ? "lg:flex lg:min-h-[48px] lg:items-center lg:gap-3 lg:pe-[200px]"
+                  : undefined
+              }
+            >
               {supportsStayDateOverride ? (
                 <label
                   htmlFor="deals-change-stay-dates"
@@ -4303,6 +4315,21 @@ export function DealsSearchForm({
                       id="deals-change-stay-dates"
                       type="checkbox"
                       checked={!search.stayDatesLinked}
+                      aria-expanded={
+                        isDesktopLanding && isPackagesLanding
+                          ? hotelDatesOpen
+                          : undefined
+                      }
+                      aria-haspopup={
+                        isDesktopLanding && isPackagesLanding
+                          ? "dialog"
+                          : undefined
+                      }
+                      aria-controls={
+                        isDesktopLanding && isPackagesLanding
+                          ? "deals-hotel-desktop-dates"
+                          : undefined
+                      }
                       onChange={(event) => {
                         const checked = event.currentTarget.checked;
                         if (!checked) {
@@ -4318,6 +4345,14 @@ export function DealsSearchForm({
                               })
                             : relinkInheritedField(current, "stayDates"),
                         );
+                        if (
+                          checked &&
+                          isDesktopLanding &&
+                          isPackagesLanding &&
+                          window.matchMedia("(min-width: 1024px)").matches
+                        ) {
+                          requestAnimationFrame(() => openHotelDates());
+                        }
                       }}
                       className={`size-4 cursor-pointer rounded border-slate-300 ${isDesktopLanding ? `${isPackagesLanding ? "h-[18px] w-[18px] rounded-[4px] border-[1.5px] border-slate-500 bg-white checked:border-[#075EE8] checked:bg-[#075EE8]" : "bg-white checked:border-slate-400 checked:bg-white"} appearance-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-[#2563eb]/30 focus-visible:ring-offset-1` : "text-[#004BB8] focus:ring-[#004BB8]"}`}
                     />
@@ -4332,11 +4367,39 @@ export function DealsSearchForm({
                   <span>{t("deals.changeDatesForStay")}</span>
                 </label>
               ) : null}
+              {supportsStayDateOverride &&
+              !search.stayDatesLinked &&
+              isDesktopLanding &&
+              isPackagesLanding ? (
+                <button
+                  ref={desktopStayDatesLauncherRef}
+                  type="button"
+                  data-deals-stay-dates
+                  aria-expanded={hotelDatesOpen}
+                  aria-haspopup="dialog"
+                  aria-controls="deals-hotel-desktop-dates"
+                  aria-label={t("deals.chooseStayDates")}
+                  onClick={() =>
+                    hotelDatesOpen
+                      ? dismissDesktopHotelDates(true)
+                      : openHotelDates()
+                  }
+                  className="focus-ring hidden h-10 min-w-0 cursor-pointer items-center gap-2 rounded-[8px] border border-[#DEE5ED] bg-white px-3 text-start transition-colors hover:border-slate-400 lg:flex"
+                >
+                  <Calendar
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0 text-slate-500"
+                  />
+                  <span className="min-w-0 truncate text-[13px] font-medium text-slate-700">
+                    {hotelDatesSummary}
+                  </span>
+                </button>
+              ) : null}
             </div>
             {supportsStayDateOverride && !search.stayDatesLinked ? (
               <div
                 data-deals-stay-dates
-                className={`mt-3 w-full border-b border-slate-200 pb-3 ${isPackagesLanding ? "lg:w-[calc(100%_-_188px)] lg:mt-1 lg:pb-2" : ""}`}
+                className={`mt-3 w-full border-b border-slate-200 pb-3 ${isPackagesLanding ? "lg:hidden" : ""}`}
               >
                 <button
                   ref={stayDatesLauncherRef}

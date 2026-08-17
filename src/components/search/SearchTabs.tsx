@@ -1823,7 +1823,7 @@ export function SearchTabs({
   };
 
   const focusInputAfterClear = (input: HTMLInputElement | null) => {
-    window.requestAnimationFrame(() => input?.focus());
+    window.requestAnimationFrame(() => input?.focus({ preventScroll: true }));
   };
 
   const onClearOrigin = () => {

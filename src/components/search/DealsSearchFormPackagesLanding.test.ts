@@ -173,7 +173,10 @@ test("desktop Packages polish stays scoped to the Packages landing presentation"
     /isPackagesLanding \? "lg:h-\[70px\] lg:min-h-\[70px\] lg:cursor-pointer"/,
   );
   assert.match(form, /lg:absolute lg:end-0 lg:top-2/);
-  assert.match(form, /lg:min-h-\[48px\] lg:pe-\[200px\]/);
+  assert.match(
+    form,
+    /lg:flex lg:min-h-\[48px\] lg:items-center lg:gap-3 lg:pe-\[200px\]/,
+  );
   assert.match(form, /checked:border-\[#075EE8\] checked:bg-\[#075EE8\]/);
   assert.match(form, /isPackagesLanding \? "text-white" : "text-\[#2563eb\]"/);
   assert.match(form, /lg:me-1 lg:self-center lg:text-slate-500/);
@@ -269,6 +272,12 @@ test("desktop Packages stay-date override is a visible semantic checkbox", () =>
   assert.match(checkbox, /onChange=\{\(event\) =>/);
   assert.match(checkbox, /customizeInheritedField\(current, "stayDates"/);
   assert.match(checkbox, /relinkInheritedField\(current, "stayDates"\)/);
+  assert.match(checkbox, /aria-haspopup=[\s\S]*\? "dialog"/);
+  assert.match(checkbox, /aria-controls=[\s\S]*"deals-hotel-desktop-dates"/);
+  assert.match(
+    checkbox,
+    /checked &&[\s\S]*isDesktopLanding &&[\s\S]*isPackagesLanding &&[\s\S]*window\.matchMedia\("\(min-width: 1024px\)"\)\.matches[\s\S]*requestAnimationFrame\(\(\) => openHotelDates\(\)\)/,
+  );
   assert.match(checkbox, /h-\[18px\] w-\[18px\] rounded-\[4px\] border-\[1\.5px\] border-slate-500 bg-white/);
   assert.match(checkbox, /checked:border-\[#075EE8\] checked:bg-\[#075EE8\]/);
   assert.match(checkbox, /<Check[\s\S]*pointer-events-none[\s\S]*isPackagesLanding \? "text-white"/);
@@ -276,28 +285,31 @@ test("desktop Packages stay-date override is a visible semantic checkbox", () =>
   assert.doesNotMatch(form, /isPackagesLanding \? "lg:rounded-(?:2xl|3xl)"/);
 });
 
-test("desktop Packages custom stay-date flow renders its launcher and existing calendar", () => {
+test("desktop Packages custom stay-date flow opens from a stable checkbox anchor", () => {
   const actions = form.slice(
     form.indexOf("<section data-deals-search-actions"),
     form.indexOf("{warning}"),
   );
   assert.match(actions, /supportsStayDateOverride && !search\.stayDatesLinked/);
-  assert.match(actions, /data-deals-stay-dates/);
-  assert.match(actions, /ref=\{stayDatesLauncherRef\}/);
-  assert.match(actions, /onClick=\{\(\) =>[\s\S]*openHotelDates\(\)/);
-  assert.match(actions, /h-\[66px\] w-\[320px\][\s\S]*rounded-\[8px\][\s\S]*border border-\[#DEE5ED\][\s\S]*bg-white/);
-  assert.match(actions, /cursor-pointer[\s\S]*hover:border-slate-400/);
   assert.match(
     actions,
-    /<button[\s\S]*\{t\("deals\.datesForStay"\)\}[\s\S]*<Calendar[\s\S]*className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*\{hotelDatesSummary\}[\s\S]*<\/button>/,
+    /lg:flex lg:min-h-\[48px\] lg:items-center lg:gap-3 lg:pe-\[200px\]/,
   );
-  assert.equal((actions.match(/\{t\("deals\.datesForStay"\)\}/g) ?? []).length, 1);
-  assert.doesNotMatch(actions, /\{hotelDatesSummary\}[\s\S]*<Calendar/);
+  assert.match(actions, /data-deals-stay-dates/);
+  assert.match(actions, /ref=\{desktopStayDatesLauncherRef\}/);
+  assert.match(
+    actions,
+    /isDesktopLanding &&[\s\S]*isPackagesLanding[\s\S]*<button[\s\S]*data-deals-stay-dates[\s\S]*hidden h-10[\s\S]*lg:flex/,
+  );
+  assert.match(
+    actions,
+    /className=\{`mt-3[\s\S]*isPackagesLanding \? "lg:hidden"[\s\S]*ref=\{stayDatesLauncherRef\}/,
+  );
   assert.match(form, /id="deals-hotel-desktop-dates"/);
   assert.match(form, /anchorRef=\{desktopHotelDatesLauncherRef\}/);
   assert.match(
     form,
-    /const desktopHotelDatesLauncherRef =[\s\S]*\? stayDatesLauncherRef[\s\S]*: hotelDatesLauncherRef/,
+    /const desktopHotelDatesLauncherRef =[\s\S]*isDesktopLanding && isPackagesLanding[\s\S]*\? desktopStayDatesLauncherRef[\s\S]*: stayDatesLauncherRef[\s\S]*: hotelDatesLauncherRef/,
   );
   assert.match(form, /!desktopHotelDatesLauncherRef\.current\?\.contains\(target\)/);
   assert.match(form, /minimumDesktopWidth=\{isPackagesLanding \? 640 : 1024\}/);
@@ -437,7 +449,7 @@ test("desktop Packages cabin remains a compact committing listbox", () => {
 });
 
 test("desktop Packages fields expose their complete visual surfaces on first click", () => {
-  assert.match(form, /onPointerDown=\{\(event\) => \{[\s\S]*?inputRef\.current\?\.focus\(\)/);
+  assert.match(form, /onPointerDown=\{\(event\) => \{[\s\S]*?inputRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(form, /target\.closest\("input, button, a, select, textarea"\)/);
   assert.match(form, /flightDatesLauncherRef[\s\S]*?lg:h-full lg:w-full/);
   assert.match(form, /data-deals-package-travellers[\s\S]*?h-full w-full cursor-pointer/);
