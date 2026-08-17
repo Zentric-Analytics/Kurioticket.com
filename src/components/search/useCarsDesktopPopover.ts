@@ -48,8 +48,7 @@ export function useCarsDesktopPopover<T extends HTMLElement>({
         onLauncherOutOfViewRef.current?.();
         return;
       }
-      const renderedHeight = popoverRef.current?.getBoundingClientRect().height;
-      const height = Math.min(renderedHeight || desiredHeight, maxHeight ?? desiredHeight);
+      const placementHeight = Math.min(desiredHeight, maxHeight ?? desiredHeight);
       const geometry = calculateDesktopPopoverGeometry({
         fieldRect: rect,
         boundaryRect: rect,
@@ -58,7 +57,7 @@ export function useCarsDesktopPopover<T extends HTMLElement>({
         viewportPadding,
         gap: 10,
         preferredWidth,
-        desiredHeight: height,
+        desiredHeight: placementHeight,
         align,
       });
       setPlacement(geometry.placement);
