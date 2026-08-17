@@ -7292,15 +7292,15 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                               </span>
                               <span
                                 className={cn(
-                                  "flight-fare-strip-price mt-1 max-w-full font-medium leading-4",
+                                  "flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-4",
                                   selected
                                     ? "font-semibold text-[#075EE8]"
                                     : "text-slate-900",
                                 )}
                                 data-price-size={
-                                  (displayPrice?.replace(/\s/g, "").length ?? 0) >= 13
+                                  ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 13
                                     ? "extra-long"
-                                    : (displayPrice?.replace(/\s/g, "").length ?? 0) >= 10
+                                    : ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 10
                                       ? "long"
                                       : "default"
                                 }
@@ -8736,7 +8736,7 @@ function TravelerCabinPopover({
             />
 
             <CounterRow
-              label={t("infants")}
+              label={t("infantPlural")}
               description={t("under2")}
               value={infantCount}
               min={0}

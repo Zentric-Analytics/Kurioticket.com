@@ -26,7 +26,7 @@ test("desktop traveler rows use title-case labels and moderate controls", () => 
   );
   assert.match(desktopRows, /label={t\("adults"\)}/);
   assert.match(desktopRows, /label={t\("children"\)}/);
-  assert.match(desktopRows, /label={t\("infants"\)}/);
+  assert.match(desktopRows, /label={t\("infantPlural"\)}/);
   assert.match(desktopRows, /presentation="desktop"/);
   assert.match(source, /presentation === "desktop" \? "h-10 w-10"/);
 });
@@ -40,4 +40,6 @@ test("long nearby-fare currency values use adaptive sizing without wrapping", ()
   );
   assert.match(styles, /white-space: nowrap/);
   assert.match(styles, /max-width: 100%/);
+  assert.match(source, /displayPrice \?\? "Unavailable"/);
+  assert.match(source, /overflow-hidden text-ellipsis whitespace-nowrap/);
 });
