@@ -1,12 +1,17 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Image,
+  KeyboardAvoidingView,
   Linking,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -15,7 +20,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { travelApi, type FlightResult, type HotelResult } from "../../api/travelApi";
+import { travelApi, TravelApiError, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
@@ -31,6 +36,10 @@ import {
   type ExchangeRates,
 } from "../currency/displayCurrency";
 import { canReuseFlightDetailFare, createFlightDetailFare } from "./flightDetailCurrency";
+import { useFeatureAvailability } from "../availability/FeatureAvailability";
+import { buildSearchPlan } from "../flow/travelSearchModel";
+import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "../flow/flightPriceAlertModel";
+import { authoritativeProviderUrl, flightShareMessage } from "./flightDetailInteractions";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -82,6 +91,15 @@ export function ApprovedDetailScreen({
 function FlightDetail({ result, params }: { result: FlightResult; params: Record<string, string | string[]> }) {
   const inset = useSafeAreaInsets();
   const { theme } = useAppTheme();
+  const { availability } = useFeatureAvailability();
+  const alertPlan = useMemo(() => buildSearchPlan("flight", params).plan, [params]);
+  const alertPresentation = flightAlertPresentation("flight", Boolean(alertPlan), [result]);
+  const alertCurrency = alertPresentation.currencies[0] || "";
+  const priceAlertEnabled = availability.priceAlerts && Boolean(alertPlan) && alertPresentation.enabled;
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [targetDraft, setTargetDraft] = useState("");
+  const [targetError, setTargetError] = useState("");
+  const [creatingAlert, setCreatingAlert] = useState(false);
   const passedFare = parse<DisplayPrice>(params.displayFare);
   const parsedDisplayCurrencyContext = parse<DisplayCurrencyResolution>(params.displayCurrencyContext);
   const passedDisplayCurrencyContext = typeof parsedDisplayCurrencyContext?.resolvedCurrency === "string"
@@ -162,8 +180,8 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
     result.airlineName.trim().toLocaleLowerCase()
       ? result.airlineLogo
       : null;
-  const go = async () => {
-    const url = result.partnerRedirectUrl || result.bookingUrl;
+  const handleProviderBooking = async () => {
+    const url = authoritativeProviderUrl(result);
     if (!/^https:\/\//.test(url))
       return Alert.alert(
         "Offer unavailable",
@@ -178,9 +196,59 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
       );
     }
   };
+  const handleShare = async () => {
+    try {
+      await Share.share({ message: flightShareMessage(result, formattedFare) });
+    } catch {
+      Alert.alert("Unable to share flight", "Please try again.");
+    }
+  };
+  const handlePriceAlert = () => {
+    if (!priceAlertEnabled) return;
+    setTargetError("");
+    setAlertOpen(true);
+  };
+  const createPriceAlert = async () => {
+    if (creatingAlert || !alertPlan || !alertCurrency) return;
+    const parsed = parseTargetPrice(targetDraft);
+    if (parsed.error || parsed.value === undefined) {
+      setTargetError(parsed.error || "Enter a target price.");
+      return;
+    }
+    setCreatingAlert(true);
+    setTargetError("");
+    try {
+      await travelApi.createPriceAlert(buildFlightPriceAlertPayload(alertPlan, parsed.value, alertCurrency));
+      setAlertOpen(false);
+      setTargetDraft("");
+      Alert.alert("Price alert created", "We’ll track this flight search against your target price.", [
+        { text: "View price alerts", onPress: () => router.push("/price-alerts") },
+        { text: "Stay here" },
+      ]);
+    } catch (error) {
+      if (error instanceof TravelApiError && error.status === 401) {
+        setAlertOpen(false);
+        Alert.alert("Sign in required", "Sign in to create a price alert.", [
+          { text: "Sign in", onPress: () => router.push("/email-auth") },
+          { text: "Cancel" },
+        ]);
+      } else if (error instanceof TravelApiError && error.status === 409 && error.details?.duplicate === true) {
+        setTargetError("This alert already exists. Open Price alerts to manage it.");
+      } else {
+        setTargetError(error instanceof TravelApiError ? error.message : "Unable to create price alert. Try again.");
+      }
+    } finally {
+      setCreatingAlert(false);
+    }
+  };
   return (
     <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]} edges={["top"]}>
-      <TopBar detail onPriceAlertPress={() => router.push("/price-alerts")} />
+      <TopBar
+        detail
+        onPriceAlertPress={handlePriceAlert}
+        priceAlertDisabled={!priceAlertEnabled}
+        onSharePress={() => void handleShare()}
+      />
       <View style={d.routeRow}>
         <View style={d.routeCopy}>
           <Text style={[d.route, { color: theme.textPrimary }]}>
@@ -299,6 +367,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             }
             price={formattedFare}
             selected
+            onSelect={handleProviderBooking}
           />
           <Text style={[d.disclosure, { color: theme.textSecondary }]}>
             Only the authoritative offer returned for this search is shown.
@@ -312,10 +381,24 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
           <Text style={[d.meta, { color: theme.textSecondary }]}>Round trip</Text>
         </View>
         <View style={d.stickyCta}>
-          <Button label={`Continue to ${provider}`} onPress={() => void go()} />
+          <Button label={`Continue to ${provider}`} onPress={handleProviderBooking} />
           <Text style={[d.redirect, { color: theme.textSecondary }]}>You’ll be redirected to {provider}’s site</Text>
         </View>
       </View>
+      <Modal visible={alertOpen} transparent animationType="slide" onRequestClose={() => !creatingAlert && setAlertOpen(false)} accessibilityViewIsModal>
+        <KeyboardAvoidingView style={d.modalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <View style={[d.alertSheet, { backgroundColor: theme.surface }]} accessibilityLabel="Create flight price alert">
+            <Text accessibilityRole="header" style={[d.h2, { color: theme.textPrimary }]}>Create price alert</Text>
+            <Text style={[d.provider, { color: theme.textPrimary }]}>{alertPlan?.summary}</Text>
+            <Text style={[d.meta, { color: theme.textSecondary }]}>{String(alertPlan?.payload.tripType)} · {String(alertPlan?.payload.travelers)} travelers · {String(alertPlan?.payload.cabinClass)} · {alertCurrency}</Text>
+            <Text style={[d.meta, { color: theme.textSecondary }]}>Target price ({alertCurrency})</Text>
+            <TextInput autoFocus accessibilityLabel={`Target price in ${alertCurrency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!creatingAlert} style={[d.alertInput, { color: theme.textPrimary, borderColor: theme.border }]} />
+            {targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={d.alertError}>{targetError}</Text> : null}
+            <Button label={creatingAlert ? "Creating…" : "Create price alert"} disabled={creatingAlert} onPress={() => void createPriceAlert()} />
+            <Button label="Cancel" outline disabled={creatingAlert} onPress={() => setAlertOpen(false)} />
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -555,12 +638,14 @@ function Offer({
   kind,
   price,
   selected,
+  onSelect,
 }: {
   provider: string;
   logoUrl?: string | null;
   kind: string;
   price: string;
   selected: boolean;
+  onSelect?: () => void;
 }) {
   const { theme } = useAppTheme();
   const compact = useWindowDimensions().width < 480;
@@ -580,7 +665,7 @@ function Offer({
       </View>
       <View style={[d.offerActions, compact && d.offerActionsCompact]}>
         <Text numberOfLines={1} style={d.priceSmall}>{price}</Text>
-        <Button label="Select" />
+        <Button label="Select" onPress={onSelect} />
       </View>
     </View>
   );
@@ -594,6 +679,10 @@ const d = StyleSheet.create({
     gap: 14,
     padding: 30,
   },
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
+  alertSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 32, gap: 12, maxHeight: "90%" },
+  alertInput: { minHeight: 52, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, fontSize: 18 },
+  alertError: { color: "#A4262C" },
   routeRow: {
     paddingHorizontal: 26,
     paddingBottom: 14,

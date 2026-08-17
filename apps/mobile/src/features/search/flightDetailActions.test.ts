@@ -9,10 +9,11 @@ const resultsSource = readFileSync(resolve("src/features/search/ApprovedResultsS
 const flightDetail = detailSource.slice(detailSource.indexOf("function FlightDetail"), detailSource.indexOf("function HotelDetail"));
 const stickyFooter = flightDetail.slice(flightDetail.indexOf("<View style={[d.sticky"), flightDetail.indexOf("</SafeAreaView>"));
 
-test("flight details moves its sole price-alert entry point to the header", () => {
-  assert.match(flightDetail, /<TopBar detail onPriceAlertPress=\{\(\) => router\.push\("\/price-alerts"\)\} \/>/);
+test("flight details gives its price-alert entry point the existing creation flow", () => {
+  assert.match(flightDetail, /onPriceAlertPress=\{handlePriceAlert\}/);
+  assert.match(flightDetail, /travelApi\.createPriceAlert\(buildFlightPriceAlertPayload\(alertPlan, parsed\.value, alertCurrency\)\)/);
+  assert.match(flightDetail, /priceAlertDisabled=\{!priceAlertEnabled\}/);
   assert.doesNotMatch(stickyFooter, /Price alert|name="bell"/);
-  assert.equal(flightDetail.match(/router\.push\("\/price-alerts"\)/g)?.length, 1);
 });
 
 test("flight details footer only contains total information and the provider CTA", () => {
@@ -23,10 +24,22 @@ test("flight details footer only contains total information and the provider CTA
   assert.doesNotMatch(stickyFooter, />Save<|name="heart"|stickyAction/);
 });
 
-test("detail TopBar renders an accessible themed price alert and retains share", () => {
-  assert.match(topBarSource, /accessibilityLabel="Price alert"[\s\S]*?onPress=\{onPriceAlertPress\}[\s\S]*?name="bell" color=\{theme\.icon\}/);
-  assert.match(topBarSource, /<FlowIcon name="share" color=\{theme\.icon\} \/>/);
+test("detail TopBar renders accessible, configurable price-alert and share controls", () => {
+  assert.match(topBarSource, /accessibilityLabel="Price alert"[\s\S]*?accessibilityState=\{\{ disabled: priceAlertDisabled \}\}[\s\S]*?onPress=\{onPriceAlertPress\}[\s\S]*?name="bell" color=\{theme\.icon\}/);
+  assert.match(topBarSource, /accessibilityLabel="Share flight"[\s\S]*?onPress=\{onSharePress\}[\s\S]*?<FlowIcon name="share" color=\{theme\.icon\} \/>/);
+  assert.match(topBarSource, /onSharePress \? \([\s\S]*?\) : \(\s*<FlowIcon name="share"/);
   assert.match(topBarSource, /onPriceAlertPress[\s\S]*?<FlowIcon name="heart" color=\{theme\.icon\}/);
+});
+
+test("Select and Continue share the authoritative provider handler", () => {
+  assert.match(flightDetail, /<Offer[\s\S]*?onSelect=\{handleProviderBooking\}/);
+  assert.match(flightDetail, /Continue to \$\{provider\}`\} onPress=\{handleProviderBooking\}/);
+  assert.equal(flightDetail.match(/authoritativeProviderUrl\(result\)/g)?.length, 1);
+});
+
+test("flight share invokes native Share with safe presentation data", () => {
+  assert.match(flightDetail, /Share\.share\(\{ message: flightShareMessage\(result, formattedFare\) \}\)/);
+  assert.doesNotMatch(flightDetail.slice(flightDetail.indexOf("const handleShare"), flightDetail.indexOf("const handlePriceAlert")), /bookingUrl|partnerRedirectUrl/);
 });
 
 test("flight-results favorite control remains available", () => {
