@@ -1,5 +1,14 @@
-import { REGION_COOKIE_KEY as SERVER_REGION_COOKIE_KEY, REGION_OVERRIDE_COOKIE_KEY, REGION_OVERRIDE_STORAGE_KEY, REGION_STORAGE_KEY as SERVER_REGION_STORAGE_KEY } from "@/config/regionConfig";
-import { normalizeLanguage, type LanguageCode } from "@/lib/language";
+import {
+  REGION_COOKIE_KEY as SERVER_REGION_COOKIE_KEY,
+  REGION_OVERRIDE_COOKIE_KEY,
+  REGION_OVERRIDE_STORAGE_KEY,
+  REGION_STORAGE_KEY as SERVER_REGION_STORAGE_KEY,
+} from "@/config/regionConfig";
+import {
+  LANGUAGE_STORAGE_KEY,
+  normalizeLanguage,
+  type LanguageCode,
+} from "@/lib/language";
 
 export const LOCALE_COOKIE_KEY = "kurioticket_locale";
 export const REGION_COOKIE_KEY = "kurioticket_region";
@@ -31,7 +40,11 @@ export function getStoredLocale(): LanguageCode {
   if (cookie) return normalizeLanguage(cookie);
 
   if (typeof window !== "undefined") {
-    return normalizeLanguage(window.localStorage.getItem(LOCALE_COOKIE_KEY));
+    const currentValue = window.localStorage.getItem(LOCALE_COOKIE_KEY);
+    if (currentValue) return normalizeLanguage(currentValue);
+
+    const legacyValue = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (legacyValue) return normalizeLanguage(legacyValue);
   }
 
   return "en-us";
@@ -44,7 +57,7 @@ export function setStoredLocale(locale: string) {
 
   if (typeof window !== "undefined") {
     window.localStorage.setItem(LOCALE_COOKIE_KEY, normalized);
-    window.localStorage.setItem("ct_language", normalized);
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
   }
 }
 
@@ -78,7 +91,10 @@ export function setStoredDetectedRegion(regionCode: string) {
 
   if (typeof window !== "undefined") {
     window.localStorage.setItem(REGION_COOKIE_KEY, normalizedRegionCode);
-    window.localStorage.setItem(SERVER_REGION_STORAGE_KEY, normalizedRegionCode);
+    window.localStorage.setItem(
+      SERVER_REGION_STORAGE_KEY,
+      normalizedRegionCode,
+    );
   }
 }
 
@@ -89,7 +105,10 @@ export function setStoredRegion(regionCode: string) {
   setStoredDetectedRegion(normalizedRegionCode);
 
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(REGION_OVERRIDE_STORAGE_KEY, normalizedRegionCode);
+    window.localStorage.setItem(
+      REGION_OVERRIDE_STORAGE_KEY,
+      normalizedRegionCode,
+    );
   }
 }
 
@@ -98,7 +117,9 @@ export function getStoredCurrency(): string | null {
   if (cookie) return cookie.toUpperCase();
 
   if (typeof window !== "undefined") {
-    return window.localStorage.getItem(CURRENCY_COOKIE_KEY)?.toUpperCase() ?? null;
+    return (
+      window.localStorage.getItem(CURRENCY_COOKIE_KEY)?.toUpperCase() ?? null
+    );
   }
 
   return null;

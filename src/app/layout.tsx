@@ -11,17 +11,23 @@ import { RegionProvider } from "@/components/region/RegionProvider";
 import { RouteProgressProvider } from "@/components/layout/RouteProgress";
 import { StagingDeploymentBadge } from "@/components/layout/StagingDeploymentBadge";
 
-import { REGION_COOKIE_KEY, REGION_OVERRIDE_COOKIE_KEY } from "@/config/regionConfig";
+import {
+  REGION_COOKIE_KEY,
+  REGION_OVERRIDE_COOKIE_KEY,
+} from "@/config/regionConfig";
 
-import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
+import {
+  extractVisitorIp,
+  resolveIpinfoLiteCountryContext,
+} from "@/lib/geo/ipinfo";
 import { getTranslations } from "@/lib/i18n";
+import { getLanguageOption, normalizeLanguage } from "@/lib/language";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 import {
   countryToRegion,
   normalizeRegion,
   type RegionMode,
 } from "@/lib/region/detectRegion";
-
 
 export async function generateMetadata(): Promise<Metadata> {
   const cookieStore = await cookies();
@@ -34,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: t["metadata.root.description"],
     metadataBase: new URL(
-      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
     ),
     icons: {
       icon: [
@@ -72,55 +78,65 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const cookieStore = await cookies();
   const headerStore = await headers();
+  const initialLocale = normalizeLanguage(
+    cookieStore.get(LOCALE_COOKIE_KEY)?.value,
+  );
+  const initialLanguage = getLanguageOption(initialLocale);
 
   const selectedRegion = normalizeRegion(
-    cookieStore.get(REGION_OVERRIDE_COOKIE_KEY)?.value
+    cookieStore.get(REGION_OVERRIDE_COOKIE_KEY)?.value,
   );
 
   const platformRegion = countryToRegion(
     headerStore.get("x-vercel-ip-country") ||
       headerStore.get("cf-ipcountry") ||
-      headerStore.get("x-country")
+      headerStore.get("x-country"),
   );
 
   const detectedHeaderRegion = normalizeRegion(
-    headerStore.get("x-kurioticket-detected-region")
+    headerStore.get("x-kurioticket-detected-region"),
   );
 
   const visitorIp = extractVisitorIp(headerStore);
-  const ipinfoCountryContext = !platformRegion && !detectedHeaderRegion && visitorIp
-    ? await resolveIpinfoLiteCountryContext(visitorIp)
-    : null;
+  const ipinfoCountryContext =
+    !platformRegion && !detectedHeaderRegion && visitorIp
+      ? await resolveIpinfoLiteCountryContext(visitorIp)
+      : null;
   const ipinfoRegion = ipinfoCountryContext?.countryCode
     ? countryToRegion(ipinfoCountryContext.countryCode)
     : null;
 
   const cookieRegion = normalizeRegion(
-    cookieStore.get(REGION_COOKIE_KEY)?.value
+    cookieStore.get(REGION_COOKIE_KEY)?.value,
   );
 
-  const detectedRegion = (
-    platformRegion ||
+  const detectedRegion = (platformRegion ||
     detectedHeaderRegion ||
     ipinfoRegion ||
     cookieRegion ||
-    null
-  ) as RegionMode | null;
+    null) as RegionMode | null;
 
-  const initialRegion = (selectedRegion || detectedRegion || "US") as RegionMode;
+  const initialRegion = (selectedRegion ||
+    detectedRegion ||
+    "US") as RegionMode;
 
   return (
     <html
-      lang="en"
+      lang={initialLanguage?.locale ?? "en-US"}
+      dir={initialLanguage?.direction ?? "ltr"}
       className="h-full antialiased"
       data-scroll-behavior="smooth"
     >
-      <body
-        className="flex min-h-full flex-col"
-      >
+      <body className="flex min-h-full flex-col">
         <AuthProvider>
-          <LocaleProvider>
-            <RegionProvider initialMode={initialRegion} detectedMode={detectedRegion}>
+          <LocaleProvider
+            initialLocale={initialLocale}
+            initialLocaleIsExplicit={cookieStore.has(LOCALE_COOKIE_KEY)}
+          >
+            <RegionProvider
+              initialMode={initialRegion}
+              detectedMode={detectedRegion}
+            >
               <AccountCustomizationHydrator />
               <CurrencyRatesProvider>
                 <RouteProgressProvider>

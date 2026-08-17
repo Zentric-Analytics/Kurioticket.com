@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { currencyForCountry, displayPrice, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
+import { currencyForCountry, displayPrice, isDisplayPriceCurrent, resolveDisplayCurrency, resolveDisplayCurrencyContext } from "./displayCurrency";
 
 test("country regions resolve to their ISO display currencies", () => {
   assert.equal(currencyForCountry("NG"), "NGN");
@@ -11,6 +11,25 @@ test("country regions resolve to their ISO display currencies", () => {
 
 test("an explicit saved currency overrides the country currency", () => {
   assert.equal(resolveDisplayCurrency({ preferredCurrency: "USD", countryCode: "NG" }), "USD");
+  assert.equal(resolveDisplayCurrency({ preferredCurrency: "EUR", countryCode: "NG" }), "EUR");
+});
+
+test("a passed fare is current only for the resolved display currency", () => {
+  const ngnFare = displayPrice(604, "USD", "NGN", { USD: 1, NGN: 1600 });
+  assert.equal(isDisplayPriceCurrent(ngnFare, 604, "USD", "NGN"), true);
+  assert.equal(isDisplayPriceCurrent(ngnFare, 604, "USD", "EUR"), false);
+  assert.equal(isDisplayPriceCurrent(ngnFare, 604, "USD", "USD"), false);
+
+  const rates = { USD: 1, EUR: 0.9, NGN: 1600 };
+  assert.equal(displayPrice(604, "USD", "EUR", rates).currency, "EUR");
+  assert.equal(displayPrice(965000, "NGN", "USD", rates).currency, "USD");
+  assert.equal(isDisplayPriceCurrent(null, 604, "USD", "EUR"), false);
+});
+
+test("a passed fare must still describe the authoritative provider fare", () => {
+  const fare = displayPrice(604, "USD", "EUR", { USD: 1, EUR: 0.9 });
+  assert.equal(isDisplayPriceCurrent(fare, 605, "USD", "EUR"), false);
+  assert.equal(isDisplayPriceCurrent(fare, 604, "GBP", "EUR"), false);
 });
 
 test("display currency follows preference, IP country, locale, then USD priority", () => {

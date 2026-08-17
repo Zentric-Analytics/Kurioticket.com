@@ -77,6 +77,20 @@ export type DisplayPrice = {
   converted: boolean;
 };
 
+export function isDisplayPriceCurrent(
+  fare: DisplayPrice | null | undefined,
+  providerAmount: number,
+  providerCurrency: string,
+  displayCurrency: string,
+) {
+  return Boolean(
+    fare
+      && fare.providerAmount === providerAmount
+      && fare.providerCurrency === providerCurrency.toUpperCase()
+      && fare.currency === displayCurrency.toUpperCase(),
+  );
+}
+
 export function convertAmount(
   amount: number,
   sourceCurrency: string,
