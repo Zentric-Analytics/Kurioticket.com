@@ -69,6 +69,7 @@ import {
   convertAmount,
   displayPrice,
   resolveDisplayCurrencyContext,
+  type DisplayCurrencyResolution,
   type DisplayPrice,
   type ExchangeRates,
 } from "../currency/displayCurrency";
@@ -109,7 +110,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     "all" | "stops" | "airlines" | "times"
   >("all");
   const hasUnreadNotifications = useUnreadNotifications(product === "flight");
-  const [currencyState, setCurrencyState] = useState<{ currency: string; rates: ExchangeRates } | null>(null);
+  const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   useFocusEffect(useCallback(() => {
     let active = true;
@@ -129,11 +130,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         locale,
       });
       if (Object.keys(rates).length) currencyRatesRef.current = rates;
-      setCurrencyState({
-        currency: resolution.resolvedCurrency,
-        rates,
-      });
-      if (__DEV__) console.debug("[currency] display resolution", resolution);
+      setCurrencyState({ resolution, rates });
     });
     return () => { active = false; };
   }, []));
@@ -226,7 +223,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     if (product !== "flight" || !currencyState) return new Map<string, DisplayPrice>();
     return new Map((sorted as FlightResult[]).map((result) => [
       result.id,
-      displayPrice(result.price, result.currency, currencyState.currency, currencyState.rates),
+      displayPrice(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates),
     ]));
   }, [currencyState, product, sorted]);
   const dateStripPrices = useMemo(
@@ -372,7 +369,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               ) : null}
               {sorted.map((x, i) =>
                 product === "flight" ? (
-                  <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} rank={i} params={params} />
+                  <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} displayCurrencyContext={currencyState?.resolution} rank={i} params={params} />
                 ) : (
                   <HotelCard
                     key={x.id}
@@ -546,7 +543,7 @@ function FlightFilterModal({
     </Modal>
   );
 }
-function FlightCard({ result, displayPrice: fare, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; rank: number; params: Record<string, string | string[]> }) {
+function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; rank: number; params: Record<string, string | string[]> }) {
   const { theme } = useAppTheme();
   const { width } = useWindowDimensions();
   const narrowCard = width < 430;
@@ -657,6 +654,7 @@ function FlightCard({ result, displayPrice: fare, rank, params }: { result: Flig
               params: {
                 result: JSON.stringify(result),
                 ...(fare ? { displayFare: JSON.stringify(fare) } : {}),
+                ...(displayCurrencyContext ? { displayCurrencyContext: JSON.stringify(displayCurrencyContext) } : {}),
                 ...Object.fromEntries(Object.entries(params).map(([key, value]) => [key, one(value) || ""])),
               },
             })
