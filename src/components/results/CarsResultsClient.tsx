@@ -966,23 +966,6 @@ export function CarsResultsClient({
               clearLabel={t("carsSearch.clearPickupLocation")}
               strings={locationStrings}
               className="lg:rounded-s-xl"
-              secondaryAction={
-                !returnToDifferentLocation
-                  ? {
-                      label: t("carsSearch.differentReturnLocation"),
-                      onClick: () => {
-                        setReturnToDifferentLocation(true);
-                        setDropoffLocation(pickupLocation);
-                        requestAnimationFrame(() => {
-                          searchSurfaceRefs.dropoffInputRef.current?.focus({
-                            preventScroll: true,
-                          });
-                          setOpenLocation("dropoff");
-                        });
-                      },
-                    }
-                  : undefined
-              }
             />
             {returnToDifferentLocation ? (
               <SearchInputCell
