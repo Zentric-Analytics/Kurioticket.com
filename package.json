@@ -26,7 +26,7 @@
     "preview-release:decision-trace": "node services/preview-release/decision-trace.mjs",
     "preview-release:adopt-native": "node services/preview-release/adopt-native-build.mjs",
     "preview-release:recover-native": "node services/preview-release/recover-native-build.mjs",
-    "audit:i18n": "JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v2.mjs",
+    "audit:i18n": "JITI_TSCONFIG_PATHS=true node scripts/audit-i18n-coverage-v4.mjs",
     "audit:images": "node scripts/audit-images.mjs",
     "audit:market-images": "node scripts/audit-market-images.mjs"
   },
