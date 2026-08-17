@@ -9,6 +9,12 @@ const returnLocationField = source.slice(
   source.indexOf('if (mobileHomepage && tab === "flights")'),
 );
 
+test("homepage calendar shows today with a ring and no decorative dot", () => {
+  assert.match(source, /isToday && !isDisabledDate && "ring-1 ring-inset ring-\[#004BB8\]\/25"/);
+  assert.doesNotMatch(source, /isToday && !isStart && !isEnd \? \(/);
+  assert.doesNotMatch(source, /bottom-1\.5 h-1 w-1 rounded-full bg-\[#004BB8\]/);
+});
+
 test("homepage Cars search uses one responsive joined primary row", () => {
   assert.match(source, /data-testid="cars-joined-search-card"/);
   assert.match(source, /data-testid="cars-primary-row"/);
