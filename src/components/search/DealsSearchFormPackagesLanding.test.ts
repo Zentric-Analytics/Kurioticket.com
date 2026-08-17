@@ -70,14 +70,18 @@ test("standalone package mode rail keeps four canonical icon-labelled choices", 
   assert.doesNotMatch(compact, /rounded-full border-2 px-4/);
 });
 
-test("trip radios expose only supported canonical values and disable Multi-city", () => {
-  assert.match(compact, /\["round-trip", "one-way"\] as const/);
-  assert.match(compact, /setDealsFlightTripType\(value\)/);
-  assert.match(
-    compact,
-    /role="radio"[\s\S]*aria-disabled="true"[\s\S]*disabled[\s\S]*t\("multiCity"\)/,
+test("mobile Packages moves directly from package modes to Origin without trip-type controls", () => {
+  const packageRailEnd = compact.indexOf("</fieldset>");
+  const routeFieldsStart = compact.indexOf(
+    'data-testid="mobile-homepage-deals-route-fields"',
   );
-  assert.doesNotMatch(compact, /setDealsFlightTripType\("multi-city"\)/);
+  const betweenRailAndRouteFields = compact.slice(packageRailEnd, routeFieldsStart);
+
+  assert.ok(packageRailEnd >= 0 && routeFieldsStart > packageRailEnd);
+  assert.doesNotMatch(betweenRailAndRouteFields, /tripType|round-trip|one-way|multiCity/);
+  assert.doesNotMatch(betweenRailAndRouteFields, /role="radiogroup"|role="radio"/);
+  assert.match(compact.slice(routeFieldsStart), /t\("origin"\)[\s\S]*?<MapPin/);
+  assert.match(form, /search\.flightTripType/);
 });
 
 test("mobile Packages fields use label then left icon and value with one canonical swap", () => {
@@ -134,14 +138,11 @@ test("standalone mobile CTA and card geometry are scoped without changing homepa
   );
 });
 
-test("mobile Packages uses moderate field, rail, trip row, and CTA sizing", () => {
+test("mobile Packages uses moderate field, rail, and CTA sizing with no vacated trip-row space", () => {
   assert.match(form, /h-\[62px\] rounded-\[10px\] px-4 py-2\.5/);
   assert.match(form, /text-\[16px\] leading-5/);
   assert.match(compact, /h-\[46px\] gap-1\.5 px-2 text-\[13px\]/);
-  assert.match(
-    compact,
-    /className="flex min-h-11 items-center justify-between/,
-  );
+  assert.doesNotMatch(compact, /className="flex min-h-11 items-center justify-between/);
   assert.match(compact, /h-\[50px\]/);
   assert.doesNotMatch(compact, /h-\[78px\]|text-\[18px\]|h-\[54px\]/);
 });
@@ -155,6 +156,15 @@ test("mobile hero is bounded and card clearance is measured independently", () =
     page,
     /sm:h-\[calc\(2\.5rem\+var\(--deals-search-inside\)\)\]/,
   );
+});
+
+test("Packages hero lowers only the mobile crop and preserves tablet and desktop positions", () => {
+  assert.match(
+    page,
+    /pathname === "\/packages" \? "object-\[center_66%\] sm:object-\[center_52%\] lg:object-\[center_62%\]"/,
+  );
+  assert.match(page, /className=\{`object-cover/);
+  assert.match(page, /packagesHeroImage[\s\S]*kurioticket-packages-hero-tropical-resort-001\.jpg/);
 });
 
 test("desktop Packages polish stays scoped to the Packages landing presentation", () => {
@@ -178,7 +188,7 @@ test("desktop Packages removes its trip selector and the vacated row spacing onl
   );
   assert.match(form, /isPackagesLanding \? "lg:mt-0 lg:h-\[70px\]"/);
   assert.doesNotMatch(form, /isPackagesLanding \? "lg:mt-\[14px\]/);
-  assert.match(compact, /\["round-trip", "one-way"\] as const/);
+  assert.doesNotMatch(compact, /\["round-trip", "one-way"\] as const/);
   assert.match(form, /search\.flightTripType/);
 });
 
