@@ -610,8 +610,29 @@ export function CarsResultsClient({
   const locationPairSummary = returnToDifferentLocation
     ? `${pickupSummary} → ${returnSummary}`
     : pickupSummary;
+  const openDesktopStickySearch = useCallback(
+    (
+      section: NonNullable<typeof desktopStickySearchSection>,
+      launcher?: HTMLButtonElement,
+    ) => {
+      if (launcher) stickyLauncherRef.current = launcher;
+      setOpenLocation(null);
+      setDatesOpen(false);
+      setTimesOpen(false);
+      setDriverAgeOpen(false);
+      setDesktopStickySearchSection(section);
+    },
+    [
+      setOpenLocation,
+      setDatesOpen,
+      setTimesOpen,
+      setDriverAgeOpen,
+      setDesktopStickySearchSection,
+    ],
+  );
   const closeDesktopStickySearch = useCallback(() => {
     setDesktopStickySearchSection(null);
+    setOpenLocation(null);
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
@@ -620,6 +641,7 @@ export function CarsResultsClient({
     );
   }, [
     setDesktopStickySearchSection,
+    setOpenLocation,
     setDatesOpen,
     setTimesOpen,
     setDriverAgeOpen,
@@ -685,17 +707,10 @@ export function CarsResultsClient({
   useEffect(() => {
     if (!desktopStickySearchSection) return undefined;
     const frame = requestAnimationFrame(() => {
-      if (desktopStickySearchSection === "locations")
-        desktopStickySearchRefs.pickupInputRef.current?.focus({
-          preventScroll: true,
-        });
-      else if (desktopStickySearchSection === "dates") setDatesOpen(true);
-      else if (desktopStickySearchSection === "times") setTimesOpen(true);
-      else if (desktopStickySearchSection === "driverAge")
-        setDriverAgeOpen(true);
+      stickyDialogRef.current?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(frame);
-  }, [desktopStickySearchSection, desktopStickySearchRefs.pickupInputRef]);
+  }, [desktopStickySearchSection]);
 
   useEffect(() => {
     if (!desktopStickySearchOpen) return undefined;
@@ -1193,8 +1208,7 @@ export function CarsResultsClient({
               type="button"
               aria-label={label}
               onClick={(event) => {
-                stickyLauncherRef.current = event.currentTarget;
-                setDesktopStickySearchSection(section);
+                openDesktopStickySearch(section, event.currentTarget);
               }}
               className="focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-e border-slate-200/85 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90"
             >
@@ -1217,9 +1231,9 @@ export function CarsResultsClient({
                 if (pickupLocation.trim() && pickupDate && dropoffDate)
                   searchFormRef.current?.requestSubmit();
                 else {
-                  stickyLauncherRef.current = event.currentTarget;
-                  setDesktopStickySearchSection(
+                  openDesktopStickySearch(
                     !pickupLocation.trim() ? "locations" : "dates",
+                    event.currentTarget,
                   );
                 }
               }}
@@ -1248,6 +1262,7 @@ export function CarsResultsClient({
               role="dialog"
               aria-modal="true"
               aria-labelledby="sticky-cars-search-title"
+              tabIndex={-1}
               className={cn(
                 "w-full rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md",
                 returnToDifferentLocation ? "max-w-5xl" : "max-w-4xl",
