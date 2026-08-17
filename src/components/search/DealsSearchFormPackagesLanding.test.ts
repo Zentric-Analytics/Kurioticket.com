@@ -290,6 +290,23 @@ test("desktop Packages custom stay-date flow renders its launcher and existing c
   assert.match(form, /packagesSurface=\{packagesLanding\}/);
 });
 
+test("desktop Packages submit hit target is constrained to the visible CTA", () => {
+  const submit = form.slice(
+    form.indexOf("const searchDealsButton ="),
+    form.indexOf("const primaryPackageControls ="),
+  );
+  assert.match(
+    submit,
+    /isDesktopLanding && isPackagesLanding[\s\S]*lg:absolute lg:end-0 lg:top-2 lg:h-\[48px\] lg:w-\[164px\]/,
+  );
+  assert.match(submit, /lg:pointer-events-none/);
+  assert.match(submit, /lg:pointer-events-auto lg:h-\[48px\]/);
+  assert.doesNotMatch(
+    submit,
+    /isDesktopLanding && isPackagesLanding[\s\S]*\? `flex w-full \$\{packageSearchDesktopClasses\}/,
+  );
+});
+
 test("desktop Packages mode tabs render every included product icon in label order", () => {
   const helper = form.slice(
     form.indexOf("function PackageModeIcons"),
