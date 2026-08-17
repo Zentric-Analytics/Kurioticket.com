@@ -51,3 +51,18 @@ test("desktop empty focus never renders the Popular Locations experience", () =>
   assert.match(source, /const label = usesDesktopPanel\s*\? strings\.locationSuggestions/);
   assert.match(source, /aria-expanded=\{showPanel\}/);
 });
+
+test("desktop pickup and return use one input-anchored request and selection lifecycle", () => {
+  assert.match(source, /launcherRef: activeInputRef/);
+  assert.doesNotMatch(source, /fieldAnchorRef|searchCardRef/);
+  assert.equal(
+    (source.match(/fetch\(`\/api\/cars\/locations\?\$\{params\.toString\(\)\}`/g) ?? []).length,
+    1,
+    "one autocomplete instance issues one logical request for a debounced query",
+  );
+  assert.match(
+    source,
+    /const selectSuggestion = \(suggestion: CarLocationSuggestion\) => \{[\s\S]*?onValueChange\(suggestion\.value\);[\s\S]*?setHasUserEditedQuery\(false\);[\s\S]*?close\(\);/,
+  );
+  assert.match(source, /onClick=\{\(\) => selectSuggestion\(suggestion\)\}/);
+});

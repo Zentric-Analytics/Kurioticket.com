@@ -309,3 +309,30 @@ test("desktop Packages renders one visible identity above its mode tabs", () => 
   assert.match(desktop, /h-\[42px\][\s\S]*rounded-\[8px\][\s\S]*bg-\[#004BB8\]\/8[\s\S]*text-\[16px\][\s\S]*lg:inline-flex/);
   assert.equal((desktop.match(/data-deals-packages-identity/g) ?? []).length, 1);
 });
+
+test("desktop Packages pickers share one restrained anchored surface contract", () => {
+  assert.match(form, /packagesSurface \? "rounded-\[10px\] border-\[#DEE5ED\] shadow-\[0_14px_36px_rgba\(15,23,42,0\.14\)\]"/);
+  assert.match(form, /viewportPadding: 16/);
+  assert.match(form, /gap: 8/);
+  assert.match(form, /width=\{isPackagesLanding \? 420 : 390\}/);
+  assert.match(form, /desiredHeight=\{packagesLanding \? 320 : 352\}/);
+});
+
+test("desktop Packages dates, travelers, and cabin use moderate common-shell geometry", () => {
+  assert.match(form, /width=\{packagesLanding \? 580 : 660\}/);
+  assert.match(form, /desiredHeight=\{packagesLanding \? 430 : 540\}/);
+  assert.match(form, /desiredHeight=\{packagesLanding \? 410 : 460\}/);
+  assert.match(form, /width=\{isPackagesLanding \? 232 : 248\}/);
+  assert.match(form, /packagesSurface=\{isPackagesLanding\}/);
+  assert.match(form, /lg:min-h-\[52px\]/);
+  assert.match(form, /lg:h-8 lg:w-8/);
+});
+
+test("desktop Packages cabin remains a compact committing listbox", () => {
+  const cabinPopover = form.slice(form.indexOf("open={isDesktopLanding && cabinOpen}"), form.indexOf("<DealsFlightDatesPopover"));
+  assert.match(cabinPopover, /role="listbox"/);
+  assert.match(cabinPopover, /\["economy", "business", "first"\]/);
+  assert.match(cabinPopover, /update\("flightCabinClass", cabin\)/);
+  assert.match(cabinPopover, /setCabinOpen\(false\)/);
+  assert.match(cabinPopover, /cabinLauncherRef\.current\?\.focus/);
+});
