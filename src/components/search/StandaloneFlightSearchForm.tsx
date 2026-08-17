@@ -23,7 +23,6 @@ import {
   Plane,
   Plus,
   UserRound,
-  X,
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -85,7 +84,7 @@ type MonthCell = {
 };
 
 const searchFieldShellClassName =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-e sm:border-slate-200 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-[#004BB8]/20 sm:focus-within:border-[#004BB8] sm:focus-within:bg-[#004BB8]/8 sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-[#004BB8]/20 lg:flex lg:flex-col lg:justify-center";
+  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-e sm:border-slate-200 sm:bg-white sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200 sm:focus-within:border-slate-200 sm:focus-within:bg-white sm:focus-within:ring-0 lg:flex lg:flex-col lg:justify-center";
 const searchFieldLabelClassName =
   "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
 const searchFieldValueButtonClassName =
@@ -1396,7 +1395,7 @@ export function StandaloneFlightSearchForm({
     <section
       ref={standaloneFormCardRef}
       className={cn(
-        "relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_14px_34px_rgba(15,23,42,0.08)]",
+        "relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_16px_38px_rgba(15,23,42,0.10)] sm:backdrop-blur-none",
         mobileHeroCard &&
           "border-white/85 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] ring-slate-950/[0.06] sm:p-4",
       )}
@@ -1436,9 +1435,7 @@ export function StandaloneFlightSearchForm({
           {(
             [
               ...defaultTripTypeOptions,
-              ...(useMainFlightLandingMobilePresentation
-                ? [["multi-city", "Multi-city"] as const]
-                : []),
+              ["multi-city", "Multi-city"] as const,
             ] satisfies ReadonlyArray<readonly [MobileTripTypeOption, string]>
           ).map(([value, localizedLabel]) => (
             <button
@@ -1503,7 +1500,7 @@ export function StandaloneFlightSearchForm({
                 />
               </span>
               <span>
-                {useMainFlightLandingMobilePresentation
+                {locale.toLowerCase().startsWith("en")
                   ? value === "round-trip"
                     ? "Round-trip"
                     : value === "one-way"
@@ -1541,14 +1538,12 @@ export function StandaloneFlightSearchForm({
                   setOriginLoading(false);
                 }
               }}
-              onClear={() => clearAirport("origin")}
               onKeyDown={(event) => onAirportKeyNav(event, "origin")}
               mobileLauncherRef={originMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("origin")}
               className={cn(
-                "lg:min-h-[58px] lg:rounded-s-2xl lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-[#004BB8]/8 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20",
-                originOpen &&
-                  "sm:z-20 lg:bg-[#004BB8]/8 lg:ring-1 lg:ring-inset lg:ring-[#004BB8]/20",
+                "lg:min-h-[58px] lg:rounded-s-2xl lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
+                originOpen && "sm:z-20",
               )}
             />
 
@@ -1588,14 +1583,12 @@ export function StandaloneFlightSearchForm({
                   setDestinationLoading(false);
                 }
               }}
-              onClear={() => clearAirport("destination")}
               onKeyDown={(event) => onAirportKeyNav(event, "destination")}
               mobileLauncherRef={destinationMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("destination")}
               className={cn(
-                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-[#004BB8]/8 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20",
-                destinationOpen &&
-                  "sm:z-20 lg:bg-[#004BB8]/8 lg:ring-1 lg:ring-inset lg:ring-[#004BB8]/20",
+                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
+                destinationOpen && "sm:z-20",
               )}
             />
           </div>
@@ -1904,7 +1897,6 @@ type AirportFieldControlProps = {
   onMobileOpen: () => void;
   onDesktopFocus: () => void;
   onChange: (value: string) => void;
-  onClear: () => void;
   onKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
 };
 
@@ -1926,7 +1918,6 @@ const AirportFieldControl = React.forwardRef<
     onMobileOpen,
     onDesktopFocus,
     onChange,
-    onClear,
     onKeyDown,
   },
   ref,
@@ -1974,18 +1965,8 @@ const AirportFieldControl = React.forwardRef<
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           autoComplete="off"
-          className="h-7 w-full rounded-none border-0 bg-transparent pe-9 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
+          className="h-7 w-full rounded-none border-0 bg-transparent pe-0 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
         />
-        {value ? (
-          <button
-            type="button"
-            aria-label={`Clear ${label.toLowerCase()}`}
-            onClick={onClear}
-            className="focus-ring absolute end-0 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-[#004BB8]/8 hover:text-[#004BB8]"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        ) : null}
       </div>
       {desktopSuggestions}
     </div>
@@ -2015,10 +1996,12 @@ function DesktopFlightPopover({
   contentClassName,
   children,
 }: DesktopFlightPopoverProps) {
+  const popoverRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{
     left: number;
     top: number;
     width: number;
+    availableHeight: number;
   } | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -2060,16 +2043,42 @@ function DesktopFlightPopover({
         Math.max(gutter, preferredLeft),
         Math.max(gutter, viewportWidth - width - gutter),
       );
-      const top = Math.max(gutter, anchorRect.bottom + offset);
+      const viewportHeight = window.innerHeight;
+      const measuredHeight = popoverRef.current?.getBoundingClientRect().height;
+      const estimatedHeight =
+        typeof maxHeight === "number"
+          ? maxHeight
+          : Math.min(520, viewportHeight * 0.72);
+      const popoverHeight = Math.min(
+        measuredHeight || estimatedHeight,
+        viewportHeight - gutter * 2,
+      );
+      const availableBelow =
+        viewportHeight - anchorRect.bottom - offset - gutter;
+      const availableAbove = anchorRect.top - offset - gutter;
+      const openAbove =
+        availableBelow < popoverHeight && availableAbove > availableBelow;
+      const availableHeight = Math.max(
+        160,
+        openAbove ? availableAbove : availableBelow,
+      );
+      const top = openAbove
+        ? Math.max(
+            gutter,
+            anchorRect.top - offset - Math.min(popoverHeight, availableHeight),
+          )
+        : Math.max(gutter, anchorRect.bottom + offset);
 
-      setPosition({ left, top, width });
+      setPosition({ left, top, width, availableHeight });
     };
 
     updatePosition();
+    const animationFrame = window.requestAnimationFrame(updatePosition);
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
 
     return () => {
+      window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
@@ -2080,13 +2089,20 @@ function DesktopFlightPopover({
 
   return createPortal(
     <div
+      ref={popoverRef}
       data-standalone-flight-desktop-popover
-      className={cn("fixed z-[1000]", contentClassName)}
+      className={cn(
+        "fixed z-[1000] overflow-y-auto overscroll-contain",
+        contentClassName,
+      )}
       style={{
         left: position.left,
         top: position.top,
         width: position.width,
-        maxHeight: typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
+        maxHeight:
+          typeof maxHeight === "number"
+            ? `${Math.min(maxHeight, position.availableHeight)}px`
+            : maxHeight || `${position.availableHeight}px`,
       }}
     >
       <div className={cn("bg-white", className)}>{children}</div>

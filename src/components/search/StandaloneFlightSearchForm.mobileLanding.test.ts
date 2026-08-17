@@ -77,11 +77,11 @@ test("supported mobile trip options update canonical state while Multi-city cann
   assert.doesNotMatch(source, /setTripType\("multi-city"\)/);
 });
 
-test("standalone Flights desktop and default presentations keep their existing selector", () => {
+test("standalone Flights uses the complete selector without changing supported search semantics", () => {
   assert.match(source, /sm:inline-flex sm:gap-1/);
   assert.match(
     source,
-    /\.\.\.\(useMainFlightLandingMobilePresentation[\s\S]*?\[\["multi-city", "Multi-city"\] as const\][\s\S]*?: \[\]\)/,
+    /\.\.\.defaultTripTypeOptions,[\s\S]*?\["multi-city", "Multi-city"\] as const/,
   );
   assert.match(source, /type TripType = "round-trip" \| "one-way";/);
   assert.match(
