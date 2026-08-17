@@ -22,7 +22,7 @@ const customizationPreferencesPathname = "/dashboard/preferences/customization";
 export function AccountCustomizationHydrator() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const { locale, setLocale, locales } = useLocale();
+  const { locale, setLocaleFromAccount, locales } = useLocale();
   const {
     mode,
     setMode,
@@ -61,7 +61,9 @@ export function AccountCustomizationHydrator() {
       return;
     }
 
-    const user = session?.user as { id?: string | null; email?: string | null } | undefined;
+    const user = session?.user as
+      | { id?: string | null; email?: string | null }
+      | undefined;
     const sessionKey = user?.id || user?.email || "authenticated";
 
     if (hydratedSessionKeyRef.current === sessionKey) {
@@ -88,7 +90,8 @@ export function AccountCustomizationHydrator() {
           return;
         }
 
-        const data = (await response.json()) as AccountCustomizationPreferencesResponse;
+        const data =
+          (await response.json()) as AccountCustomizationPreferencesResponse;
 
         if (!active) return;
 
@@ -111,7 +114,7 @@ export function AccountCustomizationHydrator() {
         );
 
         if (nextLocale && nextLocale !== locale) {
-          setLocale(nextLocale);
+          setLocaleFromAccount(nextLocale);
         }
 
         if (nextCurrency && nextCurrency !== selectedCurrency) {
@@ -139,7 +142,7 @@ export function AccountCustomizationHydrator() {
     pathname,
     session?.user,
     locale,
-    setLocale,
+    setLocaleFromAccount,
     selectedCurrency,
     setCurrency,
     mode,
@@ -152,7 +155,10 @@ export function AccountCustomizationHydrator() {
   return null;
 }
 
-function normalizeLocalePreference(value: unknown, supportedLocaleCodes: Set<string>) {
+function normalizeLocalePreference(
+  value: unknown,
+  supportedLocaleCodes: Set<string>,
+) {
   if (typeof value !== "string") return null;
 
   const normalized = normalizeLanguage(value);
@@ -160,7 +166,10 @@ function normalizeLocalePreference(value: unknown, supportedLocaleCodes: Set<str
   return supportedLocaleCodes.has(normalized) ? normalized : null;
 }
 
-function normalizeCurrencyPreference(value: unknown, supportedCurrencyCodes: Set<string>) {
+function normalizeCurrencyPreference(
+  value: unknown,
+  supportedCurrencyCodes: Set<string>,
+) {
   if (typeof value !== "string") return null;
 
   const normalized = value.trim().toUpperCase();
@@ -168,7 +177,10 @@ function normalizeCurrencyPreference(value: unknown, supportedCurrencyCodes: Set
   return supportedCurrencyCodes.has(normalized) ? normalized : null;
 }
 
-function normalizeRegionPreference(value: unknown, supportedRegionCodes: Set<string>) {
+function normalizeRegionPreference(
+  value: unknown,
+  supportedRegionCodes: Set<string>,
+) {
   if (typeof value !== "string") return null;
 
   const normalized = value.trim().toUpperCase();

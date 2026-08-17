@@ -1607,9 +1607,7 @@ export function HotelSearchBar({
                 >
                   <div className="border-b border-slate-200 px-4 py-3.5">
                     <h2 className="text-base font-bold tracking-[-0.01em] text-slate-950">
-                      {locale.toLowerCase().startsWith("en")
-                        ? "Guests & Rooms"
-                        : t("guestsAndRooms")}
+                      {t("hotelGuestsRooms.mobileTitle")}
                     </h2>
                   </div>
                   <div className="divide-y divide-slate-200 px-4">
@@ -1843,7 +1841,7 @@ export function HotelSearchBar({
 
       <HotelMobilePickerShell
         open={guestsRoomsOpen}
-        title={t("hotelGuestsRooms.mobileTitle") || "Guests & Rooms"}
+        title={t("hotelGuestsRooms.mobileTitle")}
         titleId={`${idPrefix}-mobile-guests-title`}
         launcherRef={guestsRoomsMobileLauncherRef}
         onClose={() => setGuestsRoomsOpen(false)}

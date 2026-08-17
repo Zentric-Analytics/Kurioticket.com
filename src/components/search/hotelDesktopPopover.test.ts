@@ -78,7 +78,8 @@ test("desktop Hotel guests picker has moderate production hierarchy without redu
     panelStart,
     source.indexOf("</HotelDesktopPopover>", panelStart),
   );
-  assert.match(source, /"Guests & Rooms"/);
+  assert.match(source, /t\("hotelGuestsRooms\.mobileTitle"\)/);
+  assert.doesNotMatch(source, /"Guests & Rooms"/);
   assert.match(source, /t\("hotelGuests\.adultDescription"\)/);
   assert.match(source, /t\("hotelGuests\.childDescription"\)/);
   assert.match(source, /t\("hotelGuests\.roomDescription"\)/);

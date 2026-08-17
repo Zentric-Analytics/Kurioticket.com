@@ -407,7 +407,7 @@ export const translations: TranslationDictionary = {
   languageSearchPlaceholder: "ค้นหา English, Español, Français, Deutsch...",
   selectLanguageOption: "เลือกภาษา {{language}}",
   languagePreparingAria: "กำลังเตรียมภาษา {{language}}",
-  languageUnavailableMessage: "ภาษานี้ยังไม่พร้อมใช้งาน",
+  languageUnavailableMessage: "ภาษา {{language}} ยังไม่พร้อมใช้งาน ขณะนี้กำลังขยายการรองรับคำแปล",
   globalLanguage: "ภาษาของเว็บไซต์",
   closeLanguageSelector: "ปิดตัวเลือกภาษา",
   preparing: "กำลังเตรียม",
