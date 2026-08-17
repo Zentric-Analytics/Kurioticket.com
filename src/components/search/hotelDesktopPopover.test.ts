@@ -95,5 +95,5 @@ test("desktop Hotel hero keeps the search card visible on laptop viewports", () 
     "utf8",
   );
   assert.match(source, /min-h-\[28rem\][\s\S]*lg:min-h-\[29rem\]/);
-  assert.match(source, /bottom-\[-52px\][\s\S]*lg:bottom-\[-54px\]/);
+  assert.match(source, /bottom-\[-62px\][\s\S]*lg:bottom-\[-64px\]/);
 });
