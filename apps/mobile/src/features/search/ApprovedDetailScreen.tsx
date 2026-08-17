@@ -157,6 +157,11 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
         },
       ];
   const provider = result.provider || result.airlineName;
+  const providerLogoUrl =
+    provider.trim().toLocaleLowerCase() ===
+    result.airlineName.trim().toLocaleLowerCase()
+      ? result.airlineLogo
+      : null;
   const go = async () => {
     const url = result.partnerRedirectUrl || result.bookingUrl;
     if (!/^https:\/\//.test(url))
@@ -286,6 +291,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
           </Text>
           <Offer
             provider={provider}
+            logoUrl={providerLogoUrl}
             kind={
               provider === result.airlineName
                 ? "Airline direct"
@@ -545,11 +551,13 @@ function FareRow({ label, value }: { label: string; value: string }) {
 }
 function Offer({
   provider,
+  logoUrl,
   kind,
   price,
   selected,
 }: {
   provider: string;
+  logoUrl?: string | null;
   kind: string;
   price: string;
   selected: boolean;
@@ -560,7 +568,7 @@ function Offer({
     <View style={[d.offer, compact && d.offerCompact, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }, selected && { borderColor: ui.blue }]}>
       <View style={d.providerIdentity}>
         <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}>
-          <ProviderLogo provider={provider} />
+          <ProviderLogo provider={provider} logoUrl={logoUrl} />
         </View>
         <View style={d.providerCopy}>
           <Text style={[d.provider, d.providerName, { color: theme.textPrimary }]}>
@@ -691,7 +699,11 @@ const d = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 9,
   },
-  offerActionsCompact: { flexWrap: "wrap" },
+  offerActionsCompact: {
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: 6,
+  },
   priceSmall: { fontSize: 18, fontWeight: "900", color: ui.blue, flexShrink: 0 },
   disclosure: { fontSize: 10, color: ui.muted, textAlign: "center" },
   sticky: {

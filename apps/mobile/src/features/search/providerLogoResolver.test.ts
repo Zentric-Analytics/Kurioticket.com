@@ -4,12 +4,8 @@ import { resolve } from "node:path";
 import test from "node:test";
 import { resolveProviderLogo } from "./providerLogoResolver";
 
-test("Duffel resolves through the provider logo resolver to its Duffel asset", () => {
-  assert.equal(
-    resolveProviderLogo("Duffel"),
-    "https://assets.duffel.com/airlines/ZZ.svg",
-  );
-  assert.equal(resolveProviderLogo("  DUFFEL  "), resolveProviderLogo("Duffel"));
+test("Duffel does not use the Duffel Airways carrier asset as provider branding", () => {
+  assert.equal(resolveProviderLogo("Duffel"), null);
 });
 
 test("unknown providers retain the initial fallback path", () => {
@@ -17,6 +13,7 @@ test("unknown providers retain the initial fallback path", () => {
 
   const providerLogo = readFileSync(resolve("src/features/search/ProviderLogo.tsx"), "utf8");
   assert.match(providerLogo, /fallbackCharacters=\{1\}/);
+  assert.match(providerLogo, /logoUrl=\{logoUrl \?\? resolveProviderLogo\(provider\)\}/);
 });
 
 test("provider logos reuse the remote-image failure fallback used by flight results", () => {

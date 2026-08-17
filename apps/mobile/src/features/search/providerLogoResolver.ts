@@ -1,8 +1,4 @@
-const DUFFEL_PROVIDER_LOGO_URL = "https://assets.duffel.com/airlines/ZZ.svg";
-
-const providerLogos: Readonly<Record<string, string>> = {
-  duffel: DUFFEL_PROVIDER_LOGO_URL,
-};
+const providerLogos: Readonly<Record<string, string>> = {};
 
 const normalizeProvider = (provider: string) =>
   provider.trim().toLocaleLowerCase().replace(/\s+/g, " ");
