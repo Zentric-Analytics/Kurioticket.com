@@ -132,6 +132,32 @@ const desktopLandingPackageOptions = [
   mode: DealsPackageMode;
   text: string;
 }>;
+function PackageModeIcons({ mode }: { mode: DealsPackageMode }) {
+  const icons =
+    mode === "hotel-flight"
+      ? [[Plane, "flight"], [Building2, "hotel"]]
+      : mode === "flight-car"
+        ? [[Plane, "flight"], [CarFront, "car"]]
+        : mode === "hotel-car"
+          ? [[Building2, "hotel"], [CarFront, "car"]]
+          : [[Plane, "flight"], [Building2, "hotel"], [CarFront, "car"]];
+
+  return (
+    <span
+      aria-hidden="true"
+      data-package-mode-icons={mode}
+      className="flex shrink-0 items-center gap-[2px] text-slate-600"
+    >
+      {icons.map(([Icon, product]) => (
+        <Icon
+          key={product as string}
+          data-package-product-icon={product as string}
+          className="h-[14px] w-[14px]"
+        />
+      ))}
+    </span>
+  );
+}
 const field =
   "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-medium text-slate-900 outline-none focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20";
 const label =
@@ -224,6 +250,7 @@ function DesktopLandingPopover({
   desiredHeight,
   align = "start",
   marker,
+  minimumWidth = 1024,
   className = "p-3",
   children,
 }: {
@@ -233,6 +260,7 @@ function DesktopLandingPopover({
   desiredHeight: number;
   align?: "start" | "center" | "end";
   marker: string;
+  minimumWidth?: number;
   className?: string;
   children: ReactNode;
 }) {
@@ -242,7 +270,7 @@ function DesktopLandingPopover({
 
   useEffect(() => {
     if (!open || typeof window === "undefined") return;
-    const desktop = window.matchMedia("(min-width: 1024px)");
+    const desktop = window.matchMedia(`(min-width: ${minimumWidth}px)`);
     const updatePosition = () => {
       if (!desktop.matches || !anchorRef.current) return setGeometry(null);
       const rect = anchorRef.current.getBoundingClientRect();
@@ -269,7 +297,7 @@ function DesktopLandingPopover({
       window.removeEventListener("scroll", updatePosition, true);
       desktop.removeEventListener("change", updatePosition);
     };
-  }, [align, anchorRef, desiredHeight, open, width]);
+  }, [align, anchorRef, desiredHeight, minimumWidth, open, width]);
 
   if (!open || !geometry || typeof document === "undefined") return null;
   const { placement, ...popoverStyle } = geometry;
@@ -294,6 +322,7 @@ function DealsCarPopover({
   width: preferredWidth,
   marker,
   desktopLanding = false,
+  minimumDesktopWidth = 1024,
   onDismiss,
   children,
 }: {
@@ -302,6 +331,7 @@ function DealsCarPopover({
   width: number;
   marker: "dates" | "times" | "return-location";
   desktopLanding?: boolean;
+  minimumDesktopWidth?: number;
   onDismiss?: () => void;
   children: ReactNode;
 }) {
@@ -538,10 +568,11 @@ function DealsHotelDatesPopover({
       <DesktopLandingPopover
         open={open}
         anchorRef={anchorRef}
-        width={640}
+        width={600}
         desiredHeight={540}
         align="end"
         marker="hotel-dates"
+        minimumWidth={minimumDesktopWidth}
         className="p-4"
       >
         {children}
@@ -3582,12 +3613,6 @@ export function DealsSearchForm({
                       (search.mode === "hotel-flight"
                         ? "hotel-flight"
                         : search.mode)) === option.id;
-                  const Icon =
-                    option.id === "hotel-car"
-                      ? CarFront
-                      : option.id === "flight-car"
-                        ? Plane
-                        : Building2;
                   return (
                     <button
                       key={option.id}
@@ -3600,9 +3625,9 @@ export function DealsSearchForm({
                         setDesktopPackageChoice(option.id);
                         selectPackageMode(option.mode);
                       }}
-                      className={`focus-ring relative flex min-w-[135px] items-center justify-center gap-2 px-3 text-[14px] font-semibold text-slate-700 transition-colors xl:min-w-[154px] xl:px-4 ${isPackagesLanding ? "cursor-pointer" : ""} ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#2563EB] after:content-['']" : "hover:bg-slate-50"}`}
+                      className={`focus-ring relative flex min-w-[140px] items-center justify-center gap-2 whitespace-nowrap px-3 text-[14px] font-semibold text-slate-700 transition-colors xl:min-w-[150px] xl:px-4 ${option.mode === "hotel-flight-car" ? "min-w-[174px] xl:min-w-[178px]" : ""} ${isPackagesLanding ? "cursor-pointer" : ""} ${index ? "border-s border-[#dee5ed]" : ""} ${selected ? "after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-[#2563EB] after:content-['']" : "hover:bg-slate-50"}`}
                     >
-                      <Icon aria-hidden="true" className="h-4 w-4" />
+                      <PackageModeIcons mode={option.mode} />
                       {option.text}
                     </button>
                   );
@@ -4323,7 +4348,7 @@ export function DealsSearchForm({
                       ? dismissDesktopHotelDates(true)
                       : openHotelDates()
                   }
-                  className="focus-ring mt-1 flex h-[52px] w-[350px] max-w-full cursor-pointer items-center gap-2 rounded-[8px] border border-[#DEE5ED] bg-white px-4 text-start transition-colors hover:border-slate-400"
+                  className="focus-ring mt-1 flex h-[52px] w-[312px] max-w-full cursor-pointer items-center gap-2 rounded-[8px] border border-[#DEE5ED] bg-white px-4 text-start transition-colors hover:border-slate-400"
                 >
                   <Calendar
                     aria-hidden="true"
@@ -4545,6 +4570,7 @@ export function DealsSearchForm({
         open={hotelDatesOpen}
         anchorRef={desktopHotelDatesLauncherRef}
         desktopLanding={isDesktopLanding}
+        minimumDesktopWidth={isPackagesLanding ? 640 : 1024}
       >
         <div
           id="deals-hotel-desktop-dates"

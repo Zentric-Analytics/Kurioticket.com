@@ -252,7 +252,7 @@ test("desktop Packages custom stay-date flow renders its launcher and existing c
   assert.match(actions, /data-deals-stay-dates/);
   assert.match(actions, /ref=\{stayDatesLauncherRef\}/);
   assert.match(actions, /onClick=\{\(\) =>[\s\S]*openHotelDates\(\)/);
-  assert.match(actions, /h-\[52px\] w-\[350px\][\s\S]*rounded-\[8px\][\s\S]*border border-\[#DEE5ED\][\s\S]*bg-white/);
+  assert.match(actions, /h-\[52px\] w-\[312px\][\s\S]*rounded-\[8px\][\s\S]*border border-\[#DEE5ED\][\s\S]*bg-white/);
   assert.match(actions, /cursor-pointer[\s\S]*hover:border-slate-400/);
   assert.match(
     actions,
@@ -266,6 +266,32 @@ test("desktop Packages custom stay-date flow renders its launcher and existing c
     /const desktopHotelDatesLauncherRef =[\s\S]*\? stayDatesLauncherRef[\s\S]*: hotelDatesLauncherRef/,
   );
   assert.match(form, /!desktopHotelDatesLauncherRef\.current\?\.contains\(target\)/);
+  assert.match(form, /minimumDesktopWidth=\{isPackagesLanding \? 640 : 1024\}/);
+  assert.match(form, /window\.matchMedia\(`\(min-width: \$\{minimumWidth\}px\)`\)/);
+  assert.match(form, /width=\{600\}/);
+});
+
+test("desktop Packages mode tabs render every included product icon in label order", () => {
+  const helper = form.slice(
+    form.indexOf("function PackageModeIcons"),
+    form.indexOf("const field ="),
+  );
+  assert.match(helper, /mode === "hotel-flight"[\s\S]*\[Plane, "flight"\], \[Building2, "hotel"\]/);
+  assert.match(helper, /mode === "flight-car"[\s\S]*\[Plane, "flight"\], \[CarFront, "car"\]/);
+  assert.match(helper, /mode === "hotel-car"[\s\S]*\[Building2, "hotel"\], \[CarFront, "car"\]/);
+  assert.match(helper, /\[Plane, "flight"\], \[Building2, "hotel"\], \[CarFront, "car"\]/);
+  assert.match(helper, /aria-hidden="true"[\s\S]*gap-\[2px\][\s\S]*text-slate-600/);
+  assert.match(helper, /className="h-\[14px\] w-\[14px\]"/);
+  assert.match(form, /<PackageModeIcons mode=\{option\.mode\} \/>/);
+  assert.match(form, /whitespace-nowrap[\s\S]*min-w-\[174px\]/);
+});
+
+test("Packages hero alignment uses the measured desktop selector boundary", () => {
+  assert.match(page, /querySelector<HTMLElement>\([\s\S]*data-deals-desktop-package-selector/);
+  assert.match(page, /selectorRect\.bottom - searchRect\.top/);
+  assert.match(page, /pathname === "\/packages"[\s\S]*packagesDesktopInsideHeight/);
+  assert.match(page, /pathname === "\/packages" \? "lg:translate-y-\[var\(--deals-search-outside\)\]"/);
+  assert.doesNotMatch(page, /pathname === "\/packages" \? "lg:translate-y-\[56%\]"/);
 });
 
 test("desktop Packages renders one visible identity above its mode tabs", () => {
