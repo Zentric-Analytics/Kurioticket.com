@@ -262,12 +262,13 @@ test("desktop Packages custom stay-date flow renders its launcher and existing c
   assert.match(actions, /data-deals-stay-dates/);
   assert.match(actions, /ref=\{stayDatesLauncherRef\}/);
   assert.match(actions, /onClick=\{\(\) =>[\s\S]*openHotelDates\(\)/);
-  assert.match(actions, /h-\[52px\] w-\[312px\][\s\S]*rounded-\[8px\][\s\S]*border border-\[#DEE5ED\][\s\S]*bg-white/);
+  assert.match(actions, /h-\[66px\] w-\[320px\][\s\S]*rounded-\[8px\][\s\S]*border border-\[#DEE5ED\][\s\S]*bg-white/);
   assert.match(actions, /cursor-pointer[\s\S]*hover:border-slate-400/);
   assert.match(
     actions,
-    /<Calendar[\s\S]*className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*<span[\s\S]*\{hotelDatesSummary\}/,
+    /<button[\s\S]*\{t\("deals\.datesForStay"\)\}[\s\S]*<Calendar[\s\S]*className="h-4 w-4 shrink-0 text-slate-500"[\s\S]*\{hotelDatesSummary\}[\s\S]*<\/button>/,
   );
+  assert.equal((actions.match(/\{t\("deals\.datesForStay"\)\}/g) ?? []).length, 1);
   assert.doesNotMatch(actions, /\{hotelDatesSummary\}[\s\S]*<Calendar/);
   assert.match(form, /id="deals-hotel-desktop-dates"/);
   assert.match(form, /anchorRef=\{desktopHotelDatesLauncherRef\}/);
@@ -282,7 +283,11 @@ test("desktop Packages custom stay-date flow renders its launcher and existing c
     /function DealsHotelDatesPopover\(\{[\s\S]*?minimumDesktopWidth = 1024,[\s\S]*?minimumDesktopWidth\?: number;/,
   );
   assert.match(form, /window\.matchMedia\(`\(min-width: \$\{minimumWidth\}px\)`\)/);
-  assert.match(form, /width=\{600\}/);
+  assert.match(form, /packagesLanding=\{isPackagesLanding\}/);
+  assert.match(form, /width=\{packagesLanding \? 580 : 600\}/);
+  assert.match(form, /desiredHeight=\{packagesLanding \? 430 : 540\}/);
+  assert.match(form, /align=\{packagesLanding \? "start" : "end"\}/);
+  assert.match(form, /packagesSurface=\{packagesLanding\}/);
 });
 
 test("desktop Packages mode tabs render every included product icon in label order", () => {
