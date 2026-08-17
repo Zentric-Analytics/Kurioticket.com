@@ -553,7 +553,7 @@ export function FlightLandingClient() {
       </section>
 
       <section className="relative hidden overflow-visible pb-28 sm:block lg:pb-32">
-        <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
+        <div className="relative isolate min-h-[30rem] bg-slate-950 lg:min-h-[33rem]">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={heroImageUrl}
@@ -569,7 +569,7 @@ export function FlightLandingClient() {
             <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/76 via-slate-950/26 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-8 lg:min-h-[36rem] lg:pb-40 lg:pt-12">
+          <div className="page-shell relative z-10 flex min-h-[30rem] flex-col items-start pb-36 pt-8 lg:min-h-[33rem] lg:pb-40 lg:pt-10">
             <div className="max-w-3xl pt-0 text-start text-white lg:pt-2">
               <h1 className="text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.55rem]">
                 {heroTitle}
