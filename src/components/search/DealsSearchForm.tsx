@@ -4522,7 +4522,7 @@ export function DealsSearchForm({
               className={`focus-ring flex min-h-[42px] w-full cursor-pointer items-center rounded-[6px] px-3 text-start text-sm font-medium ${isPackagesLanding ? "gap-2.5 lg:text-[14px]" : ""} ${search.flightCabinClass === cabin ? (isPackagesLanding ? "bg-[#075EE8]/[0.06] text-[#075EE8]" : "bg-blue-50 text-[#004BB8]") : "text-slate-800 hover:bg-slate-50"}`}
             >
               {isPackagesLanding ? <Armchair aria-hidden="true" className={`h-4 w-4 shrink-0 ${search.flightCabinClass === cabin ? "text-[#075EE8]" : "text-slate-600"}`} /> : null}
-              <span>{t(cabin)}</span>
+              <span className={isPackagesLanding ? "whitespace-nowrap" : undefined}>{t(cabin)}</span>
             </button>
           ))}
         </div>
