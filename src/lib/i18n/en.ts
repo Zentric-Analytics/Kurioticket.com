@@ -2947,11 +2947,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Flight deals from top airlines",
   homePromoFlightsBody:
     "Discover limited-time fares and compare options instantly.",
-  homePromoFlightsCta: "Explore flight deals",
+  homePromoFlightsCta: "Explore flight packages",
   homePromoHotelsTitle: "Hotel savings worldwide",
   homePromoHotelsBody:
     "Browse stays from boutique hotels to global chains with price transparency.",
-  homePromoHotelsCta: "Explore hotel deals",
+  homePromoHotelsCta: "Explore hotel packages",
   homeHotelDestinationsTitle: "Explore stays around the world",
   homeHotelDestinationsSubtitle:
     "Discover hotel stays across popular countries and destinations.",

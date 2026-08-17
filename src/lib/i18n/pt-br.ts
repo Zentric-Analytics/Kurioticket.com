@@ -1425,11 +1425,11 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Ofertas de voos de companhias aéreas",
   homePromoFlightsBody:
     "Pesquise tarifas por tempo limitado e compare itinerários de fornecedores.",
-  homePromoFlightsCta: "Explorar ofertas de voos",
+  homePromoFlightsCta: "Explorar pacotes de voos",
   homePromoHotelsTitle: "Economias em hotéis no mundo todo",
   homePromoHotelsBody:
     "Explore ofertas de hotéis no mundo todo antes de concluir sua estadia com um fornecedor.",
-  homePromoHotelsCta: "Explorar ofertas de hotéis",
+  homePromoHotelsCta: "Explorar pacotes de hotéis",
   homeHotelDestinationsTitle: "Explore estadias pelo mundo",
   homeHotelDestinationsSubtitle:
     "Descubra destinos de hotel em cidades, países e regiões populares.",
