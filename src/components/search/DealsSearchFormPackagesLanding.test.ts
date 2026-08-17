@@ -12,7 +12,7 @@ test("Packages route selects a dedicated landing presentation while Deals keeps 
   assert.match(page, /usePathname/);
   assert.match(
     page,
-    /pathname === "\/packages" \? "packages-landing" : "desktop-landing"/,
+    /pathname === "\/packages"[\s\S]*\?[\s\S]*"packages-landing"[\s\S]*:[\s\S]*"desktop-landing"/,
   );
   assert.match(form, /\| "packages-landing"/);
   assert.match(
@@ -173,12 +173,35 @@ test("desktop Packages polish stays scoped to the Packages landing presentation"
     /isPackagesLanding \? "lg:h-\[70px\] lg:min-h-\[70px\] lg:cursor-pointer"/,
   );
   assert.match(form, /lg:absolute lg:end-0 lg:top-2/);
-  assert.match(form, /lg:min-h-\[48px\] lg:pe-\[188px\]/);
+  assert.match(form, /lg:min-h-\[48px\] lg:pe-\[200px\]/);
   assert.match(form, /checked:border-\[#075EE8\] checked:bg-\[#075EE8\]/);
   assert.match(form, /isPackagesLanding \? "text-white" : "text-\[#2563eb\]"/);
   assert.match(form, /lg:me-1 lg:self-center lg:text-slate-500/);
-  assert.match(form, /lg:h-\[48px\] lg:min-h-\[48px\] lg:min-w-\[184px\]/);
+  assert.match(
+    form,
+    /lg:h-\[48px\] lg:min-h-\[48px\] lg:w-\[188px\] lg:min-w-\[188px\] lg:flex-nowrap[\s\S]*lg:whitespace-nowrap/,
+  );
   assert.match(form, /isPackagesLanding \? "lg:py-5" : "lg:py-6"/);
+});
+
+test("desktop Packages CTA keeps its complete label and icon on one line without changing mobile", () => {
+  const submit = form.slice(
+    form.indexOf("const searchDealsButton ="),
+    form.indexOf("const primaryPackageControls ="),
+  );
+  assert.match(submit, /lg:w-\[188px\]/);
+  assert.match(submit, /lg:min-w-\[188px\]/);
+  assert.match(submit, /lg:flex-nowrap[\s\S]*lg:whitespace-nowrap/);
+  assert.match(
+    submit,
+    /<Search[\s\S]*aria-hidden="true"[\s\S]*isPackagesLanding \? "lg:shrink-0"/,
+  );
+  assert.match(
+    submit,
+    /<span className=\{isPackagesLanding \? "lg:whitespace-nowrap" : undefined\}>[\s\S]*deals\.searchButton/,
+  );
+  assert.match(compact, /isPackagesLanding \? "h-\[50px\] rounded-\[10px\]"/);
+  assert.doesNotMatch(compact, /w-\[188px\]|min-w-\[188px\]/);
 });
 
 test("desktop Packages removes its trip selector and the vacated row spacing only at lg", () => {
@@ -297,7 +320,7 @@ test("desktop Packages submit hit target is constrained to the visible CTA", () 
   );
   assert.match(
     submit,
-    /isDesktopLanding && isPackagesLanding[\s\S]*lg:absolute lg:end-0 lg:top-2 lg:h-\[48px\] lg:w-\[184px\]/,
+    /isDesktopLanding && isPackagesLanding[\s\S]*lg:absolute lg:end-0 lg:top-2 lg:h-\[48px\] lg:w-\[188px\]/,
   );
   assert.match(submit, /lg:pointer-events-none/);
   assert.match(submit, /lg:pointer-events-auto lg:h-\[48px\]/);
@@ -312,11 +335,11 @@ test("desktop Packages submit keeps its translated icon and label on one line", 
     form.indexOf("const searchDealsButton ="),
     form.indexOf("const primaryPackageControls ="),
   );
-  assert.match(submit, /lg:min-w-\[184px\] lg:flex-nowrap/);
+  assert.match(submit, /lg:min-w-\[188px\] lg:flex-nowrap/);
   assert.match(submit, /lg:whitespace-nowrap lg:px-5/);
   assert.match(
     submit,
-    /<Search className=\{`h-4 w-4 \$\{isPackagesLanding \? "lg:shrink-0" : ""\}`\} \/>/,
+    /<Search[\s\S]*aria-hidden="true"[\s\S]*className=\{`h-4 w-4 \$\{isPackagesLanding \? "lg:shrink-0" : ""\}`\}[\s\S]*\/>/,
   );
   assert.match(
     submit,
