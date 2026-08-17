@@ -38,19 +38,6 @@ const toIsoDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const splitMobileHeroText = (text: string, lines: readonly string[]) =>
-  text === lines.join(" ") ? lines : null;
-
-const mobileHotelsHeroTitleLines = [
-  "Find the stays that start the",
-  "right trip.",
-] as const;
-
-const mobileHotelsHeroSubtitleLines = [
-  "Compare hotels in one place, from polished city arrivals",
-  "to easy resort and escapes.",
-] as const;
-
 const hotelInspirationCategoryChips = [
   "Beach",
   "City breaks",
@@ -366,21 +353,11 @@ export default function HotelsSearchPage() {
     href: destinationCardHref(card.destinationQuery),
   }));
   const hotelSearchIntroLabel = t("hotelSearchIntroLabel");
-  const mobileHotelsHeroTitle = t("hotelsHeroMobileTitle");
-  const mobileHotelsHeroSubtitle = t("hotelsHeroMobileSubtitle");
-  const mobileHotelsHeroTitleSplit = splitMobileHeroText(
-    mobileHotelsHeroTitle,
-    mobileHotelsHeroTitleLines,
-  );
-  const mobileHotelsHeroSubtitleSplit = splitMobileHeroText(
-    mobileHotelsHeroSubtitle,
-    mobileHotelsHeroSubtitleLines,
-  );
-
   return (
     <>
       <AppHeader mobileHeroOverlay />
       <main className="relative isolate flex-1 overflow-x-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
+        <h1 className="sr-only">{t("hotelsHeroTitle")}</h1>
         <section className="relative z-20 isolate min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
           <div className="absolute inset-0 overflow-hidden">
             <Image
@@ -393,36 +370,6 @@ export default function HotelsSearchPage() {
             />
             <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/28 via-slate-950/8 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/22 via-slate-950/6 to-transparent" />
-          </div>
-
-          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
-            <div className="max-w-[22.25rem] text-white">
-              <p className="sr-only">
-                {t("hotelsHeroEyebrow")}
-              </p>
-              <h1 className="w-max max-w-none text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
-                {mobileHotelsHeroTitleSplit ? (
-                  mobileHotelsHeroTitleSplit.map((line) => (
-                    <span key={line} className="block whitespace-nowrap">
-                      {line}
-                    </span>
-                  ))
-                ) : (
-                  mobileHotelsHeroTitle
-                )}
-              </h1>
-              <p className="mt-4 w-max max-w-none text-[clamp(0.72rem,3.28vw,0.89rem)] font-medium leading-[1.5] tracking-[-0.012em] text-white/92 drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
-                {mobileHotelsHeroSubtitleSplit ? (
-                  mobileHotelsHeroSubtitleSplit.map((line) => (
-                    <span key={line} className="block whitespace-nowrap">
-                      {line}
-                    </span>
-                  ))
-                ) : (
-                  mobileHotelsHeroSubtitle
-                )}
-              </p>
-            </div>
           </div>
 
           <div className="page-shell absolute inset-x-0 bottom-[-18.05rem] z-30">
@@ -452,20 +399,6 @@ export default function HotelsSearchPage() {
               <div className="absolute left-0 top-0 h-[66%] w-[62%] bg-[radial-gradient(ellipse_at_22%_26%,rgba(15,23,42,0.42),rgba(15,23,42,0.18)_42%,transparent_72%)]" />
               <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950/18 via-slate-950/4 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/34 via-slate-950/8 to-transparent" />
-            </div>
-
-            <div className="page-shell relative z-10 flex min-h-[35rem] flex-col items-start pb-36 pt-14 lg:min-h-[39rem] lg:pb-40 lg:pt-16">
-              <div className="max-w-[44rem] text-white">
-                <p className="sr-only">
-                  {t("hotelsHeroEyebrow")}
-                </p>
-                <h1 className="text-[3rem] font-semibold leading-[1.04] tracking-[-0.038em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.32rem]">
-                  {t("hotelsHeroTitle")}
-                </h1>
-                <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] lg:text-lg lg:leading-8">
-                  {t("hotelsHeroSubtitle")}
-                </p>
-              </div>
             </div>
 
             <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
