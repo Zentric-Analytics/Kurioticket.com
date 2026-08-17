@@ -9,6 +9,7 @@ import {
   normalizeLanguage,
   type LanguageCode,
 } from "@/lib/language";
+import { resolveExplicitLocalePreference } from "./localePreference";
 
 export const LOCALE_COOKIE_KEY = "kurioticket_locale";
 export const REGION_COOKIE_KEY = "kurioticket_region";
@@ -48,6 +49,21 @@ export function getStoredLocale(): LanguageCode {
   }
 
   return "en-us";
+}
+
+/**
+ * Reads only client storage for the one-time, post-hydration migration used
+ * when the server did not receive an explicit locale cookie. Keeping this
+ * separate prevents the server/default locale from being persisted before a
+ * legacy preference has had a chance to migrate.
+ */
+export function getStoredLocaleForMigration(): LanguageCode | null {
+  if (typeof window === "undefined") return null;
+
+  return resolveExplicitLocalePreference({
+    currentStorage: window.localStorage.getItem(LOCALE_COOKIE_KEY),
+    legacyStorage: window.localStorage.getItem(LANGUAGE_STORAGE_KEY),
+  });
 }
 
 export function setStoredLocale(locale: string) {

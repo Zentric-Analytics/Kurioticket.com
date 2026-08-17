@@ -2300,4 +2300,5 @@ export const translations: TranslationDictionary = {
   "deals.guided.handoff.refreshTitle": "One or more options need fresh results",
   "deals.guided.handoff.refreshBody": "Return to trip review and refresh the expired option before opening a handoff step.",
   flightSearchDestinationPlaceholderShort: '去哪里？',
+  "accountDashboard.recently": "最近",
 };

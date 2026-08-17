@@ -2941,4 +2941,5 @@ flightLandingRouteAriaLabel:
   "deals.guided.handoff.refreshTitle": "One or more options need fresh results",
   "deals.guided.handoff.refreshBody": "Return to trip review and refresh the expired option before opening a handoff step.",
   flightSearchDestinationPlaceholderShort: 'Wohin?',
+  "accountDashboard.recently": "Kürzlich",
 };

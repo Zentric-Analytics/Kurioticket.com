@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -15,7 +16,11 @@ import {
   publicLocaleOptions,
 } from "@/lib/i18n";
 
-import { setStoredLocale } from "@/lib/preferences/preferences";
+import {
+  getStoredLocaleForMigration,
+  setStoredLocale,
+} from "@/lib/preferences/preferences";
+import { canHydrateLocaleFromAccount } from "@/lib/preferences/localePreference";
 import {
   findLanguageOption,
   isAvailableLanguage,
@@ -57,12 +62,14 @@ export function LocaleProvider({
       ? normalizeLanguage(initialLocale)
       : DEFAULT_LOCALE,
   );
-  const [selectionSource, setSelectionSource] = useState<
-    "default" | "manual" | "account"
-  >(() =>
+  const selectionSourceRef = useRef<"default" | "manual" | "account">(
     initialLocaleIsExplicit && isPublicLocale(initialLocale)
       ? "manual"
       : "default",
+  );
+  const storageMigrationCompleteRef = useRef(initialLocaleIsExplicit);
+  const [storageMigrationComplete, setStorageMigrationComplete] = useState(
+    initialLocaleIsExplicit,
   );
 
   const setLocale = useCallback((nextLocale: string) => {
@@ -73,33 +80,61 @@ export function LocaleProvider({
     }
 
     setLocaleState(normalized);
-    setSelectionSource("manual");
+    selectionSourceRef.current = "manual";
     setStoredLocale(normalized);
     return true;
   }, []);
 
-  const setLocaleFromAccount = useCallback(
-    (nextLocale: string) => {
-      const normalized = normalizeLanguage(nextLocale);
+  const setLocaleFromAccount = useCallback((nextLocale: string) => {
+    const normalized = normalizeLanguage(nextLocale);
 
-      if (selectionSource !== "default" || !isPublicLocale(normalized))
-        return false;
+    if (
+      !canHydrateLocaleFromAccount(
+        selectionSourceRef.current,
+        storageMigrationCompleteRef.current,
+      ) ||
+      !isPublicLocale(normalized)
+    )
+      return false;
 
-      setLocaleState(normalized);
-      setSelectionSource("account");
-      setStoredLocale(normalized);
-      return true;
-    },
-    [selectionSource],
-  );
+    setLocaleState(normalized);
+    selectionSourceRef.current = "account";
+    setStoredLocale(normalized);
+    return true;
+  }, []);
 
   useEffect(() => {
+    if (storageMigrationCompleteRef.current) return;
+
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+
+      const storedLocale = getStoredLocaleForMigration();
+      if (storedLocale && isPublicLocale(storedLocale)) {
+        selectionSourceRef.current = "manual";
+        setLocaleState(storedLocale);
+        setStoredLocale(storedLocale);
+      }
+
+      storageMigrationCompleteRef.current = true;
+      setStorageMigrationComplete(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!storageMigrationComplete) return;
+
     setStoredLocale(locale);
 
     document.documentElement.lang = getDocumentLanguage(locale);
 
     document.documentElement.dir = getTextDirection(locale);
-  }, [locale]);
+  }, [locale, storageMigrationComplete]);
 
   useEffect(() => {
     if (process.env.NODE_ENV === "development") {
