@@ -19,8 +19,10 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
   Armchair,
+  ArrowLeft,
   Award,
   Bell,
+  FilePenLine,
   Info,
   Luggage,
   PlaneTakeoff,
@@ -57,7 +59,6 @@ import { visualFlights, visualHotels } from "./visualFixtures";
 import { airports } from "../flow/airportData";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
-import { useUnreadNotifications } from "../notifications/useUnreadNotifications";
 import {
   activeFlightFilterCount,
   emptyFlightFilters,
@@ -112,7 +113,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [filterSection, setFilterSection] = useState<
     "all" | "stops" | "airlines" | "times"
   >("all");
-  const hasUnreadNotifications = useUnreadNotifications(product === "flight");
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   useFocusEffect(useCallback(() => {
@@ -233,7 +233,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) });
       return;
     }
-    router.canGoBack() ? router.back() : router.replace("/hotels");
+    router.push({
+      pathname: "/hotels",
+      params: {
+        destination: one(params.destination) || "",
+        checkIn: one(params.checkIn) || "",
+        checkOut: one(params.checkOut) || "",
+        guests: one(params.guests) || "",
+        rooms: one(params.rooms) || "",
+      },
+    });
   };
   const sorted = useMemo(() => {
     if (product === "flight") {
@@ -451,33 +460,28 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   );
   return (
     <SafeAreaView style={[s0.safe, flightResults && { backgroundColor: theme.background }]} edges={["top"]}>
-      <TopBar
-        flightResults={product === "flight"}
-        hasUnreadNotifications={product === "flight" && hasUnreadNotifications}
-        onNotificationsPress={product === "flight" ? () => router.push("/notifications") : undefined}
-      />
-      <View style={[s0.summary, flightResults && { backgroundColor: theme.background }, narrowHeader && s0.summaryNarrow]}>
-        <View style={s0.summaryCopy}>
-          <Text style={[s0.route, flightResults && { color: theme.textPrimary }]}>
-            {product === "flight"
-              ? `${airportLabel(payload.origin)}  ⇄  ${airportLabel(payload.destination)}`
-              : String(payload.destination || "")}
-          </Text>
-          <Text style={[s0.sub, s0.summaryMeta, flightResults && { color: theme.textSecondary }]}>
-            {product === "flight"
-              ? `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}  ·  ${payload.travelers} Traveler${payload.travelers === 1 ? "" : "s"}  ·  ${String(payload.cabinClass || "").replace(/-/g, " ")}`
-              : `${shortDate(String(payload.checkIn || ""))} – ${shortDate(String(payload.checkOut || ""))}  ·  ${payload.rooms || 1} Room, ${payload.guests || 2} Guests`}
-          </Text>
-        </View>
-        <View style={narrowHeader && s0.editNarrow}>
-          <Pill
-            label="Edit search"
-            icon={product === "flight" ? undefined : "document"}
-            flightResultsIcon={product === "flight" ? "edit" : undefined}
-            onPress={edit}
-          />
-        </View>
-      </View>
+      {flightResults ? (
+        <FlightResultsHeader
+          route={`${airportLabel(payload.origin)}  ⇄  ${airportLabel(payload.destination)}`}
+          metadata={`${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}  ·  ${payload.travelers} Traveler${payload.travelers === 1 ? "" : "s"}  ·  ${String(payload.cabinClass || "").replace(/-/g, " ")}`}
+          onEdit={edit}
+        />
+      ) : (
+        <>
+          <TopBar />
+          <View style={[s0.summary, narrowHeader && s0.summaryNarrow]}>
+            <View style={s0.summaryCopy}>
+              <Text style={s0.route}>{String(payload.destination || "")}</Text>
+              <Text style={[s0.sub, s0.summaryMeta]}>
+                {`${shortDate(String(payload.checkIn || ""))} – ${shortDate(String(payload.checkOut || ""))}  ·  ${payload.rooms || 1} Room, ${payload.guests || 2} Guests`}
+              </Text>
+            </View>
+            <View style={narrowHeader && s0.editNarrow}>
+              <Pill label="Edit search" icon="document" onPress={edit} />
+            </View>
+          </View>
+        </>
+      )}
       {product === "flight" ? (
         <ScrollView
           style={[s0.resultsScroll, { backgroundColor: theme.background }]}
@@ -510,6 +514,50 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ) : null}
       <BottomNav flightResults={flightResults} />
     </SafeAreaView>
+  );
+}
+
+function FlightResultsHeader({
+  route,
+  metadata,
+  onEdit,
+}: {
+  route: string;
+  metadata: string;
+  onEdit: () => void;
+}) {
+  const { theme } = useAppTheme();
+  return (
+    <View
+      accessibilityLabel="Flight search summary"
+      style={[s0.flightHeader, { backgroundColor: theme.background }]}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
+        onPress={() => router.back()}
+        style={s0.flightHeaderBack}
+      >
+        <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
+      </Pressable>
+      <View style={s0.flightHeaderContent}>
+        <View style={s0.flightHeaderTitleRow}>
+          <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
+            {route}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Edit search"
+            onPress={onEdit}
+            style={[s0.flightHeaderEdit, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          >
+            <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
+            <Text style={s0.flightHeaderEditText}>Edit search</Text>
+          </Pressable>
+        </View>
+        <Text style={[s0.sub, s0.summaryMeta, { color: theme.textSecondary }]}>{metadata}</Text>
+      </View>
+    </View>
   );
 }
 const stopLabels = {
@@ -1005,6 +1053,40 @@ const s0 = StyleSheet.create({
   summaryCopy: { flex: 1, minWidth: 0 },
   summaryMeta: { marginTop: 3 },
   editNarrow: { alignSelf: "flex-start" },
+  flightHeader: {
+    paddingHorizontal: 14,
+    paddingTop: 6,
+    paddingBottom: 12,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  flightHeaderBack: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  flightHeaderContent: { flex: 1, minWidth: 0, paddingTop: 3 },
+  flightHeaderTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  flightHeaderRoute: { flex: 1, minWidth: 0 },
+  flightHeaderEdit: {
+    minWidth: 106,
+    minHeight: 44,
+    flexShrink: 0,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  flightHeaderEditText: { color: ui.blue, fontSize: 12, fontWeight: "800" },
   filterRail: { height: 64, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },

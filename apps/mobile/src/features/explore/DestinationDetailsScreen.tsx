@@ -4,8 +4,13 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
+import { fetchHomepageDefaultOrigin } from "../home/homepageDefaultOrigin";
 import { destinationMedia, resolvedDestinationHeroSource } from "./destinationMedia";
 import { destinationHandoff } from "./exploreInteractionModels";
+import {
+  exploreFlightResultsNavigation,
+  exploreHotelResultsNavigation,
+} from "./exploreSearchHandoff";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useExploreCatalogue } from "./exploreCatalogueStore";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -58,20 +63,47 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
   const media = destinationMedia(destination.imageDestinationId) ?? destinationMedia(destination.id);
   const [imageFailed, setImageFailed] = useState(false);
   const scrollRef = useRef(null as ScrollView | null);
+  const flightSearchPending = useRef(false);
+  const currentDestinationId = useRef(destination.id);
   const handoff = destinationHandoff(destination);
 
   useEffect(() => {
+    currentDestinationId.current = destination.id;
     scrollRef.current?.scrollTo({ y: 0, animated: false });
+    return () => {
+      if (currentDestinationId.current === destination.id) currentDestinationId.current = "";
+      flightSearchPending.current = false;
+    };
   }, [destination.id]);
 
-  const searchFlights = () => router.push({
-    pathname: "/flights",
-    params: { destinationId: destination.id, destination: destination.name, to: handoff.primaryAirportCode, airportCodes: handoff.airportCodes.join(",") },
-  });
-  const searchHotels = () => router.push({
-    pathname: "/hotels",
-    params: { destinationId: destination.id, destination: destination.name },
-  });
+  const searchFlights = () => {
+    if (flightSearchPending.current) return;
+    flightSearchPending.current = true;
+    const requestedDestinationId = destination.id;
+    void fetchHomepageDefaultOrigin()
+      .then((origin) => {
+        if (currentDestinationId.current !== requestedDestinationId) return;
+        const resultsRoute = origin
+          ? exploreFlightResultsNavigation(origin.code, handoff.primaryAirportCode)
+          : null;
+        if (resultsRoute) {
+          router.push(resultsRoute);
+          return;
+        }
+        router.push({
+          pathname: "/flights",
+          params: { destinationId: destination.id, destination: destination.name, to: handoff.primaryAirportCode, airportCodes: handoff.airportCodes.join(",") },
+        });
+      })
+      .finally(() => {
+        if (currentDestinationId.current === requestedDestinationId) flightSearchPending.current = false;
+      });
+  };
+  const searchHotels = () => {
+    const resultsRoute = exploreHotelResultsNavigation(destination.name);
+    if (resultsRoute) router.push(resultsRoute);
+    else router.push({ pathname: "/hotels", params: { destinationId: destination.id, destination: destination.name } });
+  };
   const related = destination.relatedDestinationIds.map((relatedId) => destinationById.get(relatedId)).filter((item): item is LiveExploreDestination => Boolean(item));
 
   return (

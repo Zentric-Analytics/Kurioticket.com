@@ -58,14 +58,14 @@ test("hotel results retain their non-sticky header and separate result scroll", 
   assert.doesNotMatch(hotelLayout, /stickyHeaderIndices/);
 });
 
-test("the flight-results bell opens notifications and refreshes unread state on focus", () => {
+test("Flight Results removes bell work without changing the shared notification implementation", () => {
   const topBar = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
   const unreadHook = readFileSync(
     resolve("src/features/notifications/useUnreadNotifications.ts"),
     "utf8",
   );
 
-  assert.match(screen, /router\.push\("\/notifications"\)/);
+  assert.doesNotMatch(screen, /router\.push\("\/notifications"\)|useUnreadNotifications/);
   assert.match(topBar, /accessibilityLabel="Notifications"/);
   assert.match(topBar, /hasUnreadNotifications \? <View/);
   assert.match(unreadHook, /useFocusEffect/);

@@ -6,22 +6,26 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const pageSource = readFileSync(
+  new URL("../../app/cars/results/page.tsx", import.meta.url),
+  "utf8",
+);
 
 const openDrawer = source.slice(
   source.indexOf("const openMobileSearchDrawer"),
-  source.indexOf("const closeMobileSearchDrawer"),
+  source.indexOf("const cancelMobileSearchDrawer"),
 );
 const closeDrawer = source.slice(
-  source.indexOf("const closeMobileSearchDrawer"),
+  source.indexOf("const cancelMobileSearchDrawer"),
   source.indexOf(
     "useLayoutEffect",
-    source.indexOf("const closeMobileSearchDrawer"),
+    source.indexOf("const cancelMobileSearchDrawer"),
   ),
 );
 const scrollLifecycle = source.slice(
   source.indexOf(
     "useLayoutEffect",
-    source.indexOf("const closeMobileSearchDrawer"),
+    source.indexOf("const cancelMobileSearchDrawer"),
   ),
   source.indexOf("const renderMobileControlsRow"),
 );
@@ -51,13 +55,24 @@ test("opening mobile Edit Search snapshots every mutable Cars search value", () 
   }
 });
 
-test("cancel restores the snapshot while Search submits the editor draft", () => {
-  assert.match(closeDrawer, /if \(cancelDraft && snapshot\)/);
+test("cancel restores the snapshot while mobile Search uses submit semantics", () => {
+  assert.match(closeDrawer, /if \(snapshot\)/);
   assert.match(
     source,
-    /onSubmit=\{\(\) => \{\s*closeMobileSearchDrawer\(false\)/,
+    /if \(placement === "mobile"\) \{[\s\S]*?event\.preventDefault\(\)/,
   );
-  assert.match(source, /onClick=\{\(\) => closeMobileSearchDrawer\(\)\}/);
+  assert.match(
+    source,
+    /mobileSearchSnapshotRef\.current = null;[\s\S]*?mobileSearchLauncherRef\.current = null;[\s\S]*?setMobileSearchOpen\(false\)/,
+  );
+  assert.match(source, /onClick=\{\(\) => cancelMobileSearchDrawer\(\)\}/);
+});
+
+test("a committed Results navigation remounts client state for the new search", () => {
+  assert.match(
+    pageSource,
+    /<CarsResultsClient\s+key=\{searchIdentity\}\s+values=\{values\}/,
+  );
 });
 
 test("mobile search restores saved Results scroll and the actual launcher without scrolling", () => {
@@ -78,6 +93,6 @@ test("nested picker Done remains draft state that the editor X can cancel", () =
     source.match(
       /<MobileDatePickerDialog[\s\S]*?<div\n        className=\{cn\(/,
     )?.[0] ?? "",
-    /closeMobileSearchDrawer/,
+    /cancelMobileSearchDrawer/,
   );
 });

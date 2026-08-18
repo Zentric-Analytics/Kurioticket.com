@@ -4074,6 +4074,14 @@ export const translations: TranslationDictionary = {
   "hotelDetails.photoPositionAnnouncement": "Photo {{current}} of {{total}}",
 
   "flightResults.loading.title": "Searching the best flights for you",
+  "carsResults.loading.title": "Searching the best cars for you",
+  "carsResults.loading.checkingCarsAndRates":
+    "Checking rental cars and rates...",
+  "carsResults.loading.comparingVehiclesAndProviders":
+    "Comparing vehicles and providers...",
+  "carsResults.loading.findingBestAvailableOptions":
+    "Finding the best available options...",
+  "carsResults.loading.preparingResults": "Preparing your results...",
   "flightResults.loading.checkingAirlinesAndFares":
     "Checking airlines and fares...",
   "flightResults.loading.comparingRoutesAndProviders":
