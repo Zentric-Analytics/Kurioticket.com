@@ -1095,7 +1095,10 @@ export function CarsResultsClient({
         method="get"
         className="mx-auto w-full min-w-0 max-w-5xl"
         onSubmit={() => {
-          closeMobileSearchDrawer(false);
+          // The mobile form is rendered inside the drawer. Keep it connected
+          // until the browser has captured its successful controls and started
+          // the native GET navigation.
+          if (placement === "mobile") return;
           setDesktopStickySearchSection(null);
         }}
       >

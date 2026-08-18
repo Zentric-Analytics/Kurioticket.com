@@ -70,6 +70,7 @@ export default async function CarsResultsPage({
         hideMobileCategoryTabs
       />
       <CarsResultsClient
+        key={JSON.stringify(values)}
         values={values}
         initialResults={inventory.results}
         inventoryStatus={inventory.status}
