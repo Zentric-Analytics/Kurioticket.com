@@ -3,7 +3,6 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import {
   exploreFlightResultsNavigation,
-  exploreFlightSearchFallbackNavigation,
   exploreHotelResultsNavigation,
 } from "./exploreSearchHandoff";
 
@@ -42,28 +41,14 @@ test("Explore hotel handoff goes directly to results with the selected destinati
   assert.equal(exploreHotelResultsNavigation("   "), null);
 });
 
-test("Explore flight fallback preserves destination context for the editable form", () => {
-  assert.deepEqual(exploreFlightSearchFallbackNavigation({
-    destinationId: "gb-london",
-    destinationName: "London",
-    primaryAirportCode: "LHR",
-    airportCodes: ["LHR", "LGW"],
-  }), {
-    pathname: "/flights",
-    params: {
-      destinationId: "gb-london",
-      destination: "London",
-      to: "LHR",
-      airportCodes: "LHR,LGW",
-    },
-  });
-});
-
 test("destination details resolves the same geo default origin used by Home before opening flight results", () => {
   const source = detailsSource();
   assert.match(source, /fetchHomepageDefaultOrigin\(\)/);
   assert.match(source, /exploreFlightResultsNavigation\(origin\.code, handoff\.primaryAirportCode\)/);
-  assert.match(source, /exploreFlightSearchFallbackNavigation/);
+  assert.match(source, /currentDestinationId\.current !== requestedDestinationId/);
+  assert.match(source, /flightSearchPending\.current/);
+  assert.match(source, /pathname: "\/flights"/);
+  assert.match(source, /destinationId: destination\.id, destination: destination\.name, to: handoff\.primaryAirportCode, airportCodes: handoff\.airportCodes\.join/);
   assert.match(source, /exploreHotelResultsNavigation\(destination\.name\)/);
   assert.doesNotMatch(source, /origin:\s*["']LOS["']|currency:\s*["']USD["']|market:\s*["']NG["']/);
 });
