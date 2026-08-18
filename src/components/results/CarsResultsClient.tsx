@@ -25,6 +25,7 @@ import {
   Clock3,
   MapPin,
   SlidersHorizontal,
+  SquarePen,
   UserRound,
   X,
 } from "lucide-react";
@@ -1016,19 +1017,25 @@ export function CarsResultsClient({
   }, []);
 
   const renderMobileControlsRow = () => (
-    <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
+    <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch justify-center px-4">
       <button
         type="button"
         onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
-        className="flex h-14 min-w-0 max-w-full flex-1 items-center gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-start shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+        className="group relative z-10 flex h-[4.25rem] min-w-0 w-full max-w-[30rem] items-center justify-between gap-3 overflow-hidden rounded-xl border border-slate-200/80 bg-white px-4 py-0 text-start shadow-[0_16px_34px_-26px_rgba(15,23,42,0.55)] transition hover:border-slate-300 hover:bg-white hover:shadow-[0_18px_38px_-28px_rgba(15,23,42,0.62)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
-        <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-          <span className="block truncate text-sm font-bold leading-5 text-slate-950">
+        <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden pe-1">
+          <span className="block truncate text-[16px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950">
             {locationPairSummary}
           </span>
-          <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-600">
+          <span className="mt-1.5 block truncate text-[12.5px] font-semibold leading-4 text-slate-500">
             {rentalDateSummary} · {driverAgeSummary}
           </span>
+        </span>
+        <span
+          aria-hidden="true"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200/90 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] transition group-hover:border-slate-300 group-hover:bg-slate-100"
+        >
+          <SquarePen size={15} strokeWidth={2.2} />
         </span>
       </button>
     </div>
@@ -1298,12 +1305,18 @@ export function CarsResultsClient({
     <main className="flex-1 bg-[#f6f8fb] pb-8">
       <section
         className={cn(
-          "relative z-40 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
+          "relative z-40 bg-white pb-0 pt-0 sm:hidden",
           mobileSearchOpen && "hidden",
         )}
         aria-label={t("carsResults.carRentalSearch")}
       >
-        {renderMobileControlsRow()}
+        <div className="relative translate-y-1/2">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-1/2 z-0 h-px -translate-y-1/2 bg-slate-300 shadow-[0_1px_0_rgba(100,116,139,0.18)]"
+            aria-hidden="true"
+          />
+          {renderMobileControlsRow()}
+        </div>
         <div
           ref={mobileSearchSummarySentinelRef}
           className="pointer-events-none h-px w-full"
@@ -1589,7 +1602,7 @@ export function CarsResultsClient({
         </ol>
       </nav>
 
-      <div ref={resultsGridRef} className="page-shell pb-6 pt-5 sm:pt-6">
+      <div ref={resultsGridRef} className="page-shell pb-6 pt-12 sm:pt-6">
         <CarsResultsExperience
           results={initialResults}
           inventoryStatus={inventoryStatus}
