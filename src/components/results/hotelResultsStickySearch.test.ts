@@ -82,7 +82,15 @@ test("Hotel sticky editor source contract preserves position and reuses HotelSea
   assert.match(resultsSource, /aria-modal="true"/);
   assert.match(resultsSource, /aria-labelledby="sticky-hotel-search-title"/);
   assert.match(resultsSource, /id="sticky-hotel-search-dialog"/);
-  assert.match(resultsSource, /event\.target === event\.currentTarget/);
+  assert.doesNotMatch(resultsSource, /event\.target === event\.currentTarget/);
+  assert.match(
+    resultsSource,
+    /role="presentation"\s+onPointerDown=\{closeDesktopStickyHotelSearch\}/,
+  );
+  assert.match(
+    resultsSource,
+    /ref=\{stickyHotelDialogRef\}[\s\S]*?onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/,
+  );
   assert.match(
     resultsSource,
     /initialDestination=\{activeDesktopHotelSearchDraft\.destination\}/,
