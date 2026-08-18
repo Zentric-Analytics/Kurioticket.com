@@ -39,13 +39,13 @@ test("compact toolbar opens the existing filter drawer without duplicate state",
   assert.doesNotMatch(source, /mobileStickyFiltersOpen|stickySelectedFilters/);
 });
 
-test("old single SquarePen mobile toolbar is removed while the normal search summary remains", () => {
+test("SquarePen remains exclusive to the normal summary instead of the compact toolbar", () => {
   const normalControls = source.slice(
     source.indexOf("const renderMobileControlsRow"),
     source.indexOf("const renderCarsSearchForm"),
   );
   assert.match(normalControls, /locationPairSummary/);
-  assert.doesNotMatch(normalControls, /SquarePen/);
+  assert.match(normalControls, /SquarePen/);
   assert.doesNotMatch(toolbar, /SquarePen|rentalDateSummary|driverAgeSummary/);
   assert.match(source, /mobileSearchSummarySentinelRef/);
   assert.match(source, /mobileCompactHeaderVisible/);
