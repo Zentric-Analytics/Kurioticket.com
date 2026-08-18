@@ -20,6 +20,11 @@ test("desktop Flights exposes the complete trip-type selector", () => {
     formSource,
     /value === "round-trip"[\s\S]*?"Round-trip"[\s\S]*?value === "one-way"[\s\S]*?"One-way"[\s\S]*?"Multi-city"/,
   );
+  assert.match(formSource, /data-testid="desktop-flight-landing-identity"/);
+  assert.match(
+    formSource,
+    /bg-transparent text-slate-950 ring-0 shadow-none hover:bg-transparent/,
+  );
 });
 
 test("desktop airport fields do not render inline clear controls", () => {
@@ -42,6 +47,7 @@ test("desktop popovers flip into the available viewport and scroll internally", 
 });
 
 test("desktop flight hero uses the reduced production height", () => {
-  assert.match(landingSource, /min-h-\[30rem\][\s\S]*?lg:min-h-\[33rem\]/);
+  assert.match(landingSource, /min-h-\[29rem\][\s\S]*?lg:min-h-\[32rem\]/);
   assert.doesNotMatch(landingSource, /lg:min-h-\[36rem\]/);
+  assert.match(landingSource, /brightness-\[1\.04\]/);
 });

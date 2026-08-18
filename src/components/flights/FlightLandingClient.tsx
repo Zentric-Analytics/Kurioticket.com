@@ -553,7 +553,7 @@ export function FlightLandingClient() {
       </section>
 
       <section className="relative hidden overflow-visible pb-28 sm:block lg:pb-32">
-        <div className="relative isolate min-h-[30rem] bg-slate-950 lg:min-h-[33rem]">
+        <div className="relative isolate min-h-[29rem] bg-slate-950 lg:min-h-[32rem]">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={heroImageUrl}
@@ -561,15 +561,15 @@ export function FlightLandingClient() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-[55%_46%]"
+              className="object-cover object-[55%_44%] brightness-[1.04]"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/68 via-slate-950/24 to-slate-950/8" />
-            <div className="absolute inset-y-0 start-0 w-[76%] bg-gradient-to-r from-slate-950/74 via-slate-950/34 to-transparent" />
-            <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/48 via-slate-950/14 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/76 via-slate-950/26 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/60 via-slate-950/20 to-slate-950/6" />
+            <div className="absolute inset-y-0 start-0 w-[76%] bg-gradient-to-r from-slate-950/66 via-slate-950/28 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/40 via-slate-950/10 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/68 via-slate-950/22 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[30rem] flex-col items-start pb-36 pt-8 lg:min-h-[33rem] lg:pb-40 lg:pt-10">
+          <div className="page-shell relative z-10 flex min-h-[29rem] flex-col items-start pb-36 pt-8 lg:min-h-[32rem] lg:pb-40 lg:pt-10">
             <div className="max-w-3xl pt-0 text-start text-white lg:pt-2">
               <h1 className="text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.55rem]">
                 {heroTitle}
