@@ -855,18 +855,20 @@ function CarsSearchBar({
                     ref={pickupLocationLauncherRef}
                     type="button"
                     onClick={() => openMobilePicker("pickupLocation")}
-                    className={`flex h-7 w-full items-center border-none bg-transparent py-0 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
-                      values.pickupLocation
-                        ? "text-slate-950"
-                        : "text-slate-400"
-                    }`}
+                    className="flex h-7 w-full items-center border-none bg-transparent py-0 text-start text-[16px] font-semibold focus:outline-none sm:hidden"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <MapPin
                         aria-hidden="true"
                         className="h-4 w-4 shrink-0 text-slate-500"
                       />
-                      <span className="truncate">
+                      <span
+                        className={`truncate ${
+                          values.pickupLocation
+                            ? "text-slate-950"
+                            : "text-slate-400"
+                        }`}
+                      >
                         {values.pickupLocation ||
                           t("carsSearch.pickupLocationPlaceholder")}
                       </span>
@@ -1488,7 +1490,7 @@ function RentalDatesField({
         />
         <span className="min-w-0">
           <span
-            className={`block truncate ${pickupDate ? "text-slate-950" : "text-slate-400"}`}
+            className={`block truncate ${pickupDate ? "text-slate-950" : "text-slate-950 sm:text-slate-400"}`}
           >
             {dateSummary}
           </span>
