@@ -104,7 +104,7 @@ function RegionPreviewCard({ destination, saved, onSelect, onToggle, width, heig
   const media = destinationMedia(destination.imageDestinationId) ?? destinationMedia(destination.id);
   const [failed, setFailed] = useState(false);
   return <View style={[s.previewCard, { width, height, backgroundColor: theme.surface }, theme.dark && s.darkShadow]}><Pressable accessibilityRole="button" accessibilityLabel={`Open details for ${destination.name}, ${destination.country}`} onPress={onSelect} style={s.previewMain}>
-    <Image source={failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)} alt={`${destination.name}, ${destination.country}`} onError={() => setFailed(true)} accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`} resizeMode="cover" style={[s.previewImage, { height: imageHeight, backgroundColor: theme.border }]} />
+    <Image source={failed ? FALLBACK_SOURCE : (media?.source ?? FALLBACK_SOURCE)} alt={`${destination.name}, ${destination.country}`} onError={() => setFailed(true)} accessibilityLabel={media?.accessibilityLabel ?? `${destination.name}, ${destination.country} travel landscape`} resizeMode="cover" style={[s.previewImage, { height: imageHeight, backgroundColor: theme.surface }]} />
     <View style={[s.previewCopy, { height: height - imageHeight }]}><Text numberOfLines={1} style={[s.previewName, { color: theme.textPrimary }]}>{destination.name}</Text><Text numberOfLines={1} style={[s.previewCountry, { color: theme.textSecondary }]}>{destination.country}</Text></View>
   </Pressable><AndroidFavoriteButton saved={saved} label={`${saved ? "Remove" : "Save"} ${destination.name}`} onPress={onToggle} style={s.heart} />
   </View>;
