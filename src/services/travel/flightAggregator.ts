@@ -83,7 +83,7 @@ export async function searchFlights(
 }
 
 /** Leaves response time for route serialization before the mobile hard timeout. */
-export const FLIGHT_SEARCH_DEADLINE_MS = 18_000;
+export const FLIGHT_SEARCH_DEADLINE_MS = 12_000;
 
 export async function runWithFlightSearchDeadline<T>(
   task: (signal: AbortSignal) => Promise<ProviderResult<T>>,

@@ -147,8 +147,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     activeSearch.current = controller;
     const sequence = ++searchSequence.current;
     const requestId = `mobile-${Date.now()}-${sequence}`;
-    const isCurrent = () =>
-      !controller.signal.aborted && sequence === searchSequence.current;
+    let deadlineExpired = false;
+    const isLatest = () => sequence === searchSequence.current;
+    const isCurrent = () => !controller.signal.aborted && isLatest();
     if (!plan.plan) {
       setStatus("error");
       setMessage(plan.error || "Invalid search");
@@ -166,7 +167,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         product === "flight"
           ? await withinFlightLoadingDeadline(
               travelApi.searchFlights(plan.plan.payload, { signal: controller.signal, requestId }),
-              () => undefined,
+              () => {
+                deadlineExpired = true;
+                controller.abort("ui-deadline");
+              },
             )
           : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
       if (!isCurrent()) return;
@@ -180,9 +184,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setStatus(valid.length ? "ready" : "empty");
       setMessage(response.warnings?.[0] || "");
     } catch (e) {
-      if (!isCurrent() || (e instanceof TravelApiError && e.code === "cancelled")) return;
+      if (!isLatest()) return;
+      if (!deadlineExpired && (controller.signal.aborted || (e instanceof TravelApiError && e.code === "cancelled"))) return;
       setStatus("error");
       setMessage(
+        deadlineExpired ||
         (e instanceof TravelApiError && e.code === "timeout") ||
         (e instanceof Error && e.message === "flight_loading_deadline")
           ? "Flight search took too long. Please try again."

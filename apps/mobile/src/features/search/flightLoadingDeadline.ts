@@ -1,4 +1,4 @@
-export const FLIGHT_LOADING_DEADLINE_MS = 22_000;
+export const FLIGHT_LOADING_DEADLINE_MS = 16_000;
 
 /** Keeps the results UI terminal even when a transport ignores cancellation. */
 export function withinFlightLoadingDeadline<T>(
