@@ -30,6 +30,7 @@ import { AirlineLogo } from "./AirlineLogo";
 import { ProviderLogo } from "./ProviderLogo";
 import { providerMatchesCarrier } from "./providerLogoResolver";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
+import { readSession } from "../../storage/sessionStorage";
 import {
   resolveDisplayCurrencyContext,
   type DisplayCurrencyResolution,
@@ -38,7 +39,7 @@ import {
 } from "../currency/displayCurrency";
 import { canReuseFlightDetailFare, createFlightDetailFare } from "./flightDetailCurrency";
 import { authoritativeProviderUrl } from "./providerBooking";
-import { flightShareMessage } from "./flightDetailInteractions";
+import { flightShareMessage, shareFlightForAuthenticatedSession } from "./flightDetailInteractions";
 import { buildSearchPlan } from "../flow/travelSearchModel";
 import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "../flow/flightPriceAlertModel";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
@@ -117,6 +118,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
   }) && contextMatchesPassedFare ? passedFare! : null;
   const [fare, setFare] = useState<DisplayPrice | null>(initiallyValidPassedFare);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
+  const sharePendingRef = useRef(false);
   useFocusEffect(useCallback(() => {
     let active = true;
     void readCurrencyPreference().catch(() => null).then(async (preferredCurrency) => {
@@ -198,8 +200,23 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
     }
   };
   const handleShare = async () => {
-    try { await Share.share({ message: flightShareMessage(result, formattedFare) }); }
+    if (sharePendingRef.current) return;
+    sharePendingRef.current = true;
+    try {
+      const outcome = await shareFlightForAuthenticatedSession({
+        readSession,
+        share: (message) => Share.share({ message }),
+        message: flightShareMessage(result, formattedFare),
+      });
+      if (outcome === "sign-in-required") {
+        Alert.alert("Sign in required", "Sign in to share this flight.", [
+          { text: "Sign in", onPress: () => router.push("/email-auth") },
+          { text: "Cancel", style: "cancel" },
+        ]);
+      }
+    }
     catch { Alert.alert("Unable to share", "Please try again."); }
+    finally { sharePendingRef.current = false; }
   };
   const handlePriceAlert = () => { if (priceAlertAvailable) { setTargetError(""); setAlertOpen(true); } };
   const createPriceAlert = async () => {

@@ -15,3 +15,18 @@ export function flightShareMessage(result: ShareFlight, displayedFare: string) {
     displayedFare && displayedFare !== "—" ? `Fare ${displayedFare}` : null,
   ].filter(Boolean).join(" · ");
 }
+
+export async function shareFlightForAuthenticatedSession({
+  readSession,
+  share,
+  message,
+}: {
+  readSession: () => Promise<unknown | null>;
+  share: (message: string) => Promise<unknown>;
+  message: string;
+}): Promise<"shared" | "sign-in-required"> {
+  const session = await readSession().catch(() => null);
+  if (!session) return "sign-in-required";
+  await share(message);
+  return "shared";
+}
