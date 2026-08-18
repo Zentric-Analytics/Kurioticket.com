@@ -19,7 +19,10 @@ test("standalone Cars compact header follows the Flights mobile interaction mode
   assert.match(toolbar, /mobileSearchSummary/);
   assert.match(toolbar, /ArrowLeft/);
   assert.match(toolbar, /onClick=\{onMobileBack\}/);
-  assert.match(toolbar, /onClick=\{onMobileModifySearch\}/);
+  assert.match(
+    toolbar,
+    /onClick=\{\(event\) => onMobileModifySearch\?\.\(event\.currentTarget\)\}/,
+  );
   assert.match(toolbar, /t\("deals\.results\.modifySearch"\)/);
   assert.match(toolbar, /SlidersHorizontal/);
   assert.match(toolbar, /openMobileFiltersDrawer\(event\.currentTarget\)/);

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -81,6 +82,17 @@ type CarsResultsValues = CarSearchParams & {
 };
 
 type CarsResultsMobilePicker = "dates" | "times" | "driverAge" | null;
+
+type CarsResultsSearchSnapshot = {
+  pickupLocation: string;
+  dropoffLocation: string;
+  returnToDifferentLocation: boolean;
+  pickupDate: string;
+  dropoffDate: string;
+  pickupTime: string;
+  dropoffTime: string;
+  driverAge: string;
+};
 
 type CarFilterOption = {
   id: string;
@@ -596,6 +608,13 @@ export function CarsResultsClient({
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
+  const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
+  const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
+  const mobileSearchSnapshotRef = useRef<CarsResultsSearchSnapshot | null>(
+    null,
+  );
   const stickyDialogRef = useRef<HTMLDivElement | null>(null);
   const stickyLauncherRef = useRef<HTMLButtonElement | null>(null);
   const stickyScrollLockRef = useRef<{ restore: () => void } | null>(null);
@@ -874,28 +893,86 @@ export function CarsResultsClient({
     setDropoffDate(selectedIso);
   };
 
-  const openMobileSearchDrawer = useCallback(() => {
-    setMobileSearchOpen(true);
-    setMobilePicker(null);
-    setDesktopStickySearchSection(null);
-    setDatesOpen(false);
-    setTimesOpen(false);
-    setDriverAgeOpen(false);
-  }, [
-    setMobileSearchOpen,
-    setDesktopStickySearchSection,
-    setDatesOpen,
-    setTimesOpen,
-    setDriverAgeOpen,
-  ]);
+  const openMobileSearchDrawer = useCallback(
+    (launcher?: HTMLElement | null) => {
+      mobileSearchLauncherRef.current = launcher ?? null;
+      mobileSearchSnapshotRef.current = {
+        pickupLocation,
+        dropoffLocation,
+        returnToDifferentLocation,
+        pickupDate,
+        dropoffDate,
+        pickupTime,
+        dropoffTime,
+        driverAge,
+      };
+      mobileSearchScrollLockRef.current ??= lockBodyScroll();
+      setMobileSearchOpen(true);
+      setMobilePicker(null);
+      setDesktopStickySearchSection(null);
+      setDatesOpen(false);
+      setTimesOpen(false);
+      setDriverAgeOpen(false);
+    },
+    [
+      pickupLocation,
+      dropoffLocation,
+      returnToDifferentLocation,
+      pickupDate,
+      dropoffDate,
+      pickupTime,
+      dropoffTime,
+      driverAge,
+      setMobileSearchOpen,
+      setDesktopStickySearchSection,
+      setDatesOpen,
+      setTimesOpen,
+      setDriverAgeOpen,
+    ],
+  );
 
-  const closeMobileSearchDrawer = useCallback(() => {
-    setMobileSearchOpen(false);
-    setMobilePicker(null);
-    setDatesOpen(false);
-    setTimesOpen(false);
-    setDriverAgeOpen(false);
-  }, [setMobileSearchOpen, setDatesOpen, setTimesOpen, setDriverAgeOpen]);
+  const closeMobileSearchDrawer = useCallback(
+    (cancelDraft = true) => {
+      const snapshot = mobileSearchSnapshotRef.current;
+      if (cancelDraft && snapshot) {
+        setPickupLocation(snapshot.pickupLocation);
+        setDropoffLocation(snapshot.dropoffLocation);
+        setReturnToDifferentLocation(snapshot.returnToDifferentLocation);
+        setPickupDate(snapshot.pickupDate);
+        setDropoffDate(snapshot.dropoffDate);
+        setPickupTime(snapshot.pickupTime);
+        setDropoffTime(snapshot.dropoffTime);
+        setDriverAge(snapshot.driverAge);
+      }
+      mobileSearchSnapshotRef.current = null;
+      setMobileSearchOpen(false);
+      setMobilePicker(null);
+      setDatesOpen(false);
+      setTimesOpen(false);
+      setDriverAgeOpen(false);
+    },
+    [setMobileSearchOpen, setDatesOpen, setTimesOpen, setDriverAgeOpen],
+  );
+
+  useLayoutEffect(() => {
+    const releaseSearchOverlay = () => {
+      mobileSearchScrollLockRef.current?.restore();
+      mobileSearchScrollLockRef.current = null;
+
+      const launcher = mobileSearchLauncherRef.current;
+      if (launcher && isSafelyFocusableElement(launcher)) {
+        launcher.focus({ preventScroll: true });
+      }
+    };
+
+    if (!mobileSearchOpen) {
+      releaseSearchOverlay();
+      return releaseSearchOverlay;
+    }
+
+    mobileSearchScrollLockRef.current ??= lockBodyScroll();
+    return releaseSearchOverlay;
+  }, [mobileSearchOpen]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -942,7 +1019,7 @@ export function CarsResultsClient({
     <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
       <button
         type="button"
-        onClick={openMobileSearchDrawer}
+        onClick={(event) => openMobileSearchDrawer(event.currentTarget)}
         className="flex h-14 min-w-0 max-w-full flex-1 items-center gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-start shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
@@ -1002,7 +1079,7 @@ export function CarsResultsClient({
         method="get"
         className="mx-auto w-full min-w-0 max-w-5xl"
         onSubmit={() => {
-          closeMobileSearchDrawer();
+          closeMobileSearchDrawer(false);
           setDesktopStickySearchSection(null);
         }}
       >
@@ -1313,7 +1390,7 @@ export function CarsResultsClient({
               variant="secondary"
               aria-label={t("carsResults.closeEditSearch")}
               className="h-10 w-10 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-sm"
-              onClick={closeMobileSearchDrawer}
+              onClick={() => closeMobileSearchDrawer()}
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </Button>
@@ -1560,7 +1637,7 @@ export function CarsResultsExperience({
   mobileCompactToolbarVisible?: boolean;
   mobileSearchSummary?: string;
   onMobileBack?: () => void;
-  onMobileModifySearch?: () => void;
+  onMobileModifySearch?: (launcher?: HTMLElement | null) => void;
   detailsHrefForCar: (car: NormalizedCarResult) => string | null;
   actionLabel?: string;
   actionAriaLabelForCar?: (car: NormalizedCarResult) => string;
@@ -1929,7 +2006,7 @@ export function CarsResultsExperience({
           <button
             type="button"
             aria-label={modifySearchLabel}
-            onClick={onMobileModifySearch}
+            onClick={(event) => onMobileModifySearch?.(event.currentTarget)}
             className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
           >
             <span className="block max-w-full truncate text-[15px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950">
