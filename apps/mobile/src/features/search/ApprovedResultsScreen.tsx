@@ -80,6 +80,7 @@ import { useSavedFlights } from "../../storage/useSavedFlights";
 import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
+import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -163,7 +164,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     try {
       const response =
         product === "flight"
-          ? await travelApi.searchFlights(plan.plan.payload, { signal: controller.signal, requestId })
+          ? await withinFlightLoadingDeadline(
+              travelApi.searchFlights(plan.plan.payload, { signal: controller.signal, requestId }),
+              () => undefined,
+            )
           : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
       if (!isCurrent()) return;
       const valid =
@@ -179,7 +183,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       if (!isCurrent() || (e instanceof TravelApiError && e.code === "cancelled")) return;
       setStatus("error");
       setMessage(
-        e instanceof TravelApiError && e.code === "timeout"
+        (e instanceof TravelApiError && e.code === "timeout") ||
+        (e instanceof Error && e.message === "flight_loading_deadline")
           ? "Flight search took too long. Please try again."
           : e instanceof Error ? e.message : "Search failed",
       );

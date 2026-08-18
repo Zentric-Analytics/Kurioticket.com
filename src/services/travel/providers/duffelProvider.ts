@@ -269,6 +269,10 @@ export function searchDuffelFlights(
     return Promise.resolve(skippedProvider("Duffel", blockReason));
   }
 
+  let supplierMs = 0;
+  let normalizationMs = 0;
+  let offerCount = 0;
+  let connectingOfferCount = 0;
   return runProvider("Duffel", async () => {
     const slices = [
       {
@@ -297,6 +301,7 @@ export function searchDuffelFlights(
         type: "infant_without_seat" as const,
       })),
     ];
+    const supplierStartedAt = performance.now();
     const data = await fetchJson<{ data?: { offers?: unknown[] } }>(
       duffelOfferRequestSearchUrl(),
       {
@@ -317,11 +322,20 @@ export function searchDuffelFlights(
       },
       DUFFEL_SEARCH_HTTP_TIMEOUT_MS,
     );
-
-    return (data.data?.offers || [])
+    supplierMs = performance.now() - supplierStartedAt;
+    const offers = data.data?.offers || [];
+    offerCount = offers.length;
+    const normalizationStartedAt = performance.now();
+    const results = offers
       .map((offer) => normalizeFlightResult("Duffel", offer, search))
       .filter(Boolean) as NormalizedFlightResult[];
-  });
+    normalizationMs = performance.now() - normalizationStartedAt;
+    connectingOfferCount = results.filter((result) => result.stops > 0).length;
+    return results;
+  }).then((result) => ({
+    ...result,
+    performance: { supplierMs, normalizationMs, offerCount, connectingOfferCount },
+  }));
 }
 
 /** Refreshes one server-owned offer identity; callers must never send the ID to a browser. */

@@ -16,26 +16,45 @@ import {
 /** The sole production flight pipeline. Provider policy is deliberately not configurable. */
 export async function searchFlights(
   search: FlightSearchParams,
-  options: { signal?: AbortSignal; deadlineMs?: number } = {},
-): Promise<AggregatedResult<NormalizedFlightResult>> {
+  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void } = {},
+): Promise<AggregatedResult<NormalizedFlightResult> & {
+  performance: {
+    supplierMs: number;
+    offerCount: number;
+    connectingOfferCount: number;
+    normalizationMs: number;
+    deduplicationMs: number;
+    aggregationMs: number;
+  };
+}> {
   const startedAt = Date.now();
   const provider = await runWithFlightSearchDeadline(
-    (signal) => searchDuffelFlights(search, signal),
+    (signal) => {
+      options.onProviderStart?.();
+      return searchDuffelFlights(search, signal);
+    },
     options,
   );
+  const providerPerformance = (provider as typeof provider & {
+    performance?: { supplierMs: number; normalizationMs: number; offerCount: number; connectingOfferCount: number };
+  }).performance;
   const now = Date.now();
+  const aggregationStartedAt = performance.now();
+  const deduplicationStartedAt = performance.now();
+  const usableResults = provider.results.filter(
+    (result) =>
+      matchesDeparture(result, search.departureDate) &&
+      isFlightProviderOfferUsableAt(result, now),
+  );
+  const deduplicatedResults = deduplicateFlightOffers(usableResults);
+  const deduplicationMs = performance.now() - deduplicationStartedAt;
   const results = assignBadges(
     sortFlights(
-      deduplicateFlightOffers(
-        provider.results.filter(
-          (result) =>
-            matchesDeparture(result, search.departureDate) &&
-            isFlightProviderOfferUsableAt(result, now),
-        ),
-      ),
+      deduplicatedResults,
       search.sort || "cheapest",
     ),
   );
+  const aggregationMs = performance.now() - aggregationStartedAt;
   if (results.length) rememberFlights(results);
   return {
     results,
@@ -45,6 +64,15 @@ export async function searchFlights(
         ? ["Flight results are temporarily unavailable. Please try again."]
         : [],
     latencyMs: Date.now() - startedAt,
+    performance: {
+      supplierMs: providerPerformance?.supplierMs ?? provider.latencyMs,
+      offerCount: providerPerformance?.offerCount ?? provider.results.length,
+      connectingOfferCount: providerPerformance?.connectingOfferCount ??
+        provider.results.filter((result) => result.stops > 0).length,
+      normalizationMs: providerPerformance?.normalizationMs ?? 0,
+      deduplicationMs,
+      aggregationMs,
+    },
     ...(provider.status !== "success"
       ? {
           unavailableMessage:
