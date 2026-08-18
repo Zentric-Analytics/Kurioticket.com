@@ -1417,6 +1417,22 @@ export function StandaloneFlightSearchForm({
           </div>
         ) : null}
 
+        {!useMainFlightLandingMobilePresentation ? (
+          <div
+            className="hidden w-fit items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3 py-2 shadow-sm ring-1 ring-[#004BB8]/10 sm:inline-flex"
+            data-testid="desktop-flight-landing-identity"
+          >
+            <Plane
+              aria-hidden="true"
+              className="h-5 w-5 shrink-0 text-[#004BB8]"
+              strokeWidth={2.1}
+            />
+            <h2 className="text-[16px] font-semibold text-navy">
+              {t("flights") || "Flights"}
+            </h2>
+          </div>
+        ) : null}
+
         <div
           role="radiogroup"
           aria-label={t("tripType") || "Trip type"}
@@ -1480,7 +1496,7 @@ export function StandaloneFlightSearchForm({
                 tripType === value &&
                   (useMainFlightLandingMobilePresentation
                     ? "sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:ring-1 sm:ring-[#004BB8]/10 sm:shadow-none"
-                    : "bg-[#004BB8]/8 text-[#004BB8] ring-1 ring-[#004BB8]/10 sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:shadow-none"),
+                    : "bg-transparent text-slate-950 ring-0 shadow-none hover:bg-transparent hover:text-slate-950"),
               )}
             >
               <span
