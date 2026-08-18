@@ -4,8 +4,14 @@ import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlowIcon } from "../flow/FlowIcon";
 import { AndroidFavoriteButton } from "../home/AndroidFavoriteButton";
+import { fetchHomepageDefaultOrigin } from "../home/homepageDefaultOrigin";
 import { destinationMedia, resolvedDestinationHeroSource } from "./destinationMedia";
 import { destinationHandoff } from "./exploreInteractionModels";
+import {
+  exploreFlightResultsNavigation,
+  exploreFlightSearchFallbackNavigation,
+  exploreHotelResultsNavigation,
+} from "./exploreSearchHandoff";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useExploreCatalogue } from "./exploreCatalogueStore";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -57,6 +63,7 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
   const { theme } = useAppTheme();
   const media = destinationMedia(destination.imageDestinationId) ?? destinationMedia(destination.id);
   const [imageFailed, setImageFailed] = useState(false);
+  const [resolvingFlightOrigin, setResolvingFlightOrigin] = useState(false);
   const scrollRef = useRef(null as ScrollView | null);
   const handoff = destinationHandoff(destination);
 
@@ -64,14 +71,33 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [destination.id]);
 
-  const searchFlights = () => router.push({
-    pathname: "/flights",
-    params: { destinationId: destination.id, destination: destination.name, to: handoff.primaryAirportCode, airportCodes: handoff.airportCodes.join(",") },
-  });
-  const searchHotels = () => router.push({
-    pathname: "/hotels",
-    params: { destinationId: destination.id, destination: destination.name },
-  });
+  const searchFlights = async () => {
+    if (resolvingFlightOrigin) return;
+    setResolvingFlightOrigin(true);
+    try {
+      const origin = await fetchHomepageDefaultOrigin();
+      const resultsRoute = origin
+        ? exploreFlightResultsNavigation(origin.code, handoff.primaryAirportCode)
+        : null;
+      if (resultsRoute) {
+        router.push(resultsRoute);
+        return;
+      }
+      router.push(exploreFlightSearchFallbackNavigation({
+        destinationId: destination.id,
+        destinationName: destination.name,
+        primaryAirportCode: handoff.primaryAirportCode,
+        airportCodes: handoff.airportCodes,
+      }));
+    } finally {
+      setResolvingFlightOrigin(false);
+    }
+  };
+  const searchHotels = () => {
+    const resultsRoute = exploreHotelResultsNavigation(destination.name);
+    if (resultsRoute) router.push(resultsRoute);
+    else router.push({ pathname: "/hotels", params: { destinationId: destination.id, destination: destination.name } });
+  };
   const related = destination.relatedDestinationIds.map((relatedId) => destinationById.get(relatedId)).filter((item): item is LiveExploreDestination => Boolean(item));
 
   return (
@@ -116,7 +142,7 @@ function DestinationPage({ destination, destinationById, saved, onToggle }: { de
           </Section>
           {related.length ? <Section title="Related destinations">{related.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}`} onPress={() => router.replace({ pathname: "/explore/destination/[id]", params: { id: item.id } })} style={[styles.related, { borderBottomColor: theme.border }]}><Text style={[styles.relatedName, { color: theme.textPrimary }]}>{item.name}</Text><Text style={[styles.relatedCountry, { color: theme.textSecondary }]}>{item.country}</Text></Pressable>)}</Section> : null}
           <View style={styles.actions}>
-            <Action label="Search flights" icon="flight" onPress={searchFlights} />
+            <Action label={resolvingFlightOrigin ? "Finding flights…" : "Search flights"} icon="flight" onPress={() => { void searchFlights(); }} disabled={resolvingFlightOrigin} />
             <Action label="Search hotels" icon="hotel" onPress={searchHotels} secondary />
           </View>
         </View>
@@ -130,9 +156,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return <View style={styles.section}><Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.textPrimary }]}>{title}</Text>{children}</View>;
 }
 
-function Action({ label, icon, onPress, secondary = false }: { label: string; icon: "flight" | "hotel"; onPress: () => void; secondary?: boolean }) {
+function Action({ label, icon, onPress, secondary = false, disabled = false }: { label: string; icon: "flight" | "hotel"; onPress: () => void; secondary?: boolean; disabled?: boolean }) {
   const { theme } = useAppTheme();
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={[styles.primaryButton, styles.actionButton, secondary && styles.secondaryButton, secondary && { backgroundColor: theme.surface }]}><FlowIcon name={icon} color={secondary ? BLUE : "white"} size={20} /><Text style={[styles.primaryButtonText, secondary && styles.secondaryButtonText]}>{label}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} disabled={disabled} onPress={onPress} style={[styles.primaryButton, styles.actionButton, secondary && styles.secondaryButton, secondary && { backgroundColor: theme.surface }, disabled && styles.disabledButton]}><FlowIcon name={icon} color={secondary ? BLUE : "white"} size={20} /><Text style={[styles.primaryButtonText, secondary && styles.secondaryButtonText]}>{label}</Text></Pressable>;
 }
 
 const styles = StyleSheet.create({
@@ -157,6 +183,6 @@ const styles = StyleSheet.create({
   highlight: { flexDirection: "row", alignItems: "flex-start", gap: 10 }, bullet: { width: 7, height: 7, borderRadius: 4, backgroundColor: BLUE, marginTop: 7 }, highlightText: { flex: 1, fontSize: 15, lineHeight: 22 },
   related: { minHeight: 58, justifyContent: "center", borderBottomWidth: 1 }, relatedName: { fontSize: 15, fontWeight: "800" }, relatedCountry: { fontSize: 13 },
   actions: { flexDirection: "row", gap: 10, marginTop: 4 }, actionButton: { flex: 1 }, primaryButton: { minHeight: 52, borderRadius: 12, backgroundColor: BLUE, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 18 }, primaryButtonText: { color: "white", fontSize: 15, fontWeight: "800" },
-  secondaryButton: { borderWidth: 1, borderColor: BLUE }, secondaryButtonText: { color: BLUE },
+  secondaryButton: { borderWidth: 1, borderColor: BLUE }, secondaryButtonText: { color: BLUE }, disabledButton: { opacity: 0.65 },
   invalidHeader: { paddingHorizontal: 10 }, invalidBody: { flex: 1, padding: 24, justifyContent: "center", alignItems: "center", gap: 14 }, invalidTitle: { fontSize: 25, fontWeight: "800", textAlign: "center" }, invalidText: { fontSize: 15, lineHeight: 22, textAlign: "center", marginBottom: 8 },
 });
