@@ -30,7 +30,10 @@ test("detail TopBar exposes configurable accessible price-alert and share action
   assert.match(topBarSource, /accessibilityLabel="Price alert"[\s\S]*?accessibilityState=\{\{ disabled: priceAlertDisabled \}\}[\s\S]*?onPress=\{onPriceAlertPress\}/);
   assert.match(topBarSource, /accessibilityLabel="Share flight" onPress=\{onSharePress\}/);
   assert.match(topBarSource, /onPriceAlertPress[\s\S]*?<FlowIcon name="heart" color=\{theme\.icon\}/);
-  assert.match(flightDetail, /Share\.share\(\{ message: flightShareMessage\(result, formattedFare\) \}\)/);
+  assert.match(flightDetail, /readSession,[\s\S]*?share: \(message\) => Share\.share\(\{ message \}\),[\s\S]*?message: flightShareMessage\(result, formattedFare\)/);
+  assert.match(flightDetail, /"Sign in required", "Sign in to share this flight\."/);
+  assert.match(flightDetail, /text: "Sign in", onPress: \(\) => router\.push\("\/email-auth"\)/);
+  assert.match(flightDetail, /sharePendingRef\.current/);
 });
 
 test("flight details retains back and uses the dedicated current edit-search flow", () => {
