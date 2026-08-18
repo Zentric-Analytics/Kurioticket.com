@@ -208,7 +208,7 @@ test("mobile Cars removes its nested surface and uses controlled card geometry",
 test("mobile Cars places its single return-location field directly after pickup", () => {
   const order = [
     "cars-pickup-location-field",
-    "{carsReturnLocationField}",
+    "{compactHero ? carsReturnLocationField : null}",
     'id="homepage-cars-rental-dates"',
     'id="homepage-cars-time-range"',
     'id="homepage-cars-driver-age"',

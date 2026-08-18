@@ -867,9 +867,7 @@ export function SearchTabs({
       ? carsValues.returnToDifferentLocation
         ? "lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(150px,1fr)_minmax(150px,0.95fr)_minmax(120px,0.72fr)_136px]"
         : "lg:grid-cols-[minmax(0,1.65fr)_minmax(170px,1.25fr)_minmax(170px,1.15fr)_minmax(135px,0.85fr)_136px]"
-      : carsValues.returnToDifferentLocation
-        ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1.15fr)_minmax(145px,1fr)_minmax(145px,0.95fr)_minmax(115px,0.72fr)_112px]"
-        : "lg:grid-cols-[minmax(0,1.65fr)_minmax(160px,1.2fr)_minmax(160px,1.1fr)_minmax(125px,0.8fr)_112px]"
+      : "lg:grid-cols-[minmax(0,1.65fr)_minmax(160px,1.2fr)_minmax(160px,1.1fr)_minmax(125px,0.8fr)_112px]"
   );
   const joinedFieldClassName = cn(
     "transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/30 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
@@ -2708,8 +2706,9 @@ export function SearchTabs({
     <div
       ref={carsDropoffFieldRef}
       className={cn(
-        hotelJoinedFieldClassName,
-        "relative rounded-xl border border-slate-300 bg-white",
+        compactHero
+          ? hotelJoinedFieldClassName
+          : "relative rounded-xl border border-slate-300 bg-white px-4 py-2 sm:max-w-[50%]",
         mobileHomepage && "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe] sm:rounded-xl sm:border-slate-300 sm:bg-white",
       )}
       data-testid="cars-return-location-field"
@@ -4174,7 +4173,7 @@ export function SearchTabs({
                 </div>
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
-              {carsReturnLocationField}
+              {compactHero ? carsReturnLocationField : null}
               <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsRentalDatePickerContent
                   dropoffDate={carsValues.dropoffDate}
@@ -4207,6 +4206,7 @@ export function SearchTabs({
           <div className={cn("flex min-h-8 items-center gap-3 px-1 text-sm font-semibold text-slate-600", mobileHomepage && "mt-[11px]")}>
             <label className="focus-within:text-slate-900 flex cursor-pointer items-center gap-2"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#004BB8]" checked={carsValues.returnToDifferentLocation} onChange={(event) => { updateCarsValue("returnToDifferentLocation", event.target.checked); if (!event.target.checked) setCarsOpenPicker(null); }} />{translate("carsSearch.differentReturnLocation") || "Different return location"}</label>
           </div>
+          {!compactHero ? carsReturnLocationField : null}
           </div>
         </form>
       )}

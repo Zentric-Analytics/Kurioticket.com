@@ -69,10 +69,11 @@ test("source contract: Time and Driver Age retain the default summary-field chev
   }
 });
 
-test("homepage Cars renders one conditional return-location field beside pickup", () => {
+test("wide homepage Cars renders one conditional return-location field beside pickup", () => {
   assert.match(returnLocationField, /carsValues\.returnToDifferentLocation \? \(/);
   assert.equal((source.match(/data-testid="cars-return-location-field"/g) ?? []).length, 1);
-  assert.match(carsBranch, /cars-pickup-location-field[\s\S]*?\{carsReturnLocationField\}[\s\S]*?homepage-cars-rental-dates/);
+  assert.match(carsBranch, /cars-pickup-location-field[\s\S]*?\{compactHero \? carsReturnLocationField : null\}[\s\S]*?homepage-cars-rental-dates/);
+  assert.match(carsBranch, /Different return location[\s\S]*?\{!compactHero \? carsReturnLocationField : null\}/);
   assert.match(carsBranch, /homepage-cars-driver-age[\s\S]*?Different return location/);
   assert.match(source, /if \(key === "returnToDifferentLocation" && value === false\) \{\s*next\.dropoffLocation = "";/);
 });

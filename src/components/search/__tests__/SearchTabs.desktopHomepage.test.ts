@@ -16,7 +16,9 @@ test("desktop homepage uses a clean tab rail and separate search fields", () => 
 });
 
 test("desktop Cars keeps a different return location beside pickup and gives every summary a leading icon", () => {
-  assert.match(source, /carsValues\.returnToDifferentLocation[\s\S]*?lg:grid-cols-\[minmax\(0,1\.2fr\)_minmax\(0,1\.2fr\)/);
+  assert.match(source, /compactHero[\s\S]*?carsValues\.returnToDifferentLocation[\s\S]*?lg:grid-cols-\[minmax\(0,1\.2fr\)_minmax\(0,1\.2fr\)/);
+  assert.match(desktopBranch, /\{compactHero \? carsReturnLocationField : null\}/);
+  assert.match(desktopBranch, /\{!compactHero \? carsReturnLocationField : null\}/);
   assert.match(source, /carsReturnLocationField[\s\S]*?<MapPin aria-hidden="true"/);
   assert.match(desktopBranch, /homepage-cars-pickup-desktop[\s\S]*?h-8 w-full ps-6/);
   assert.match(desktopBranch, /homepage-cars-time-range[\s\S]*?leadingIcon=\{<Clock/);
