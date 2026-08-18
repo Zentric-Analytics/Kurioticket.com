@@ -1,5 +1,4 @@
 import { AirlineLogo } from "./AirlineLogo";
-import { resolveProviderLogo } from "./providerLogoResolver";
 
 export function ProviderLogo({
   provider,
@@ -11,7 +10,7 @@ export function ProviderLogo({
   return (
     <AirlineLogo
       airlineName={provider}
-      logoUrl={logoUrl ?? resolveProviderLogo(provider)}
+      logoUrl={logoUrl}
       fallbackCharacters={1}
     />
   );

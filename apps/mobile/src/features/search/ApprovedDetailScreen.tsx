@@ -28,7 +28,6 @@ import { airports } from "../flow/airportData";
 import { useAppTheme } from "../../theme/AppTheme";
 import { AirlineLogo } from "./AirlineLogo";
 import { ProviderLogo } from "./ProviderLogo";
-import { providerMatchesCarrier } from "./providerLogoResolver";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import { readSession } from "../../storage/sessionStorage";
 import {
@@ -180,9 +179,6 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
         },
       ];
   const provider = result.provider || result.airlineName;
-  const providerLogoUrl = providerMatchesCarrier(provider, result.airlineName)
-    ? result.airlineLogo
-    : null;
   const handleProviderBooking = async () => {
     const url = authoritativeProviderUrl(result);
     if (!/^https:\/\//.test(url))
@@ -347,7 +343,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
           </Text>
           <Offer
             provider={provider}
-            logoUrl={providerLogoUrl}
+            logoUrl={result.airlineLogo}
             kind={
               provider === result.airlineName
                 ? "Airline direct"

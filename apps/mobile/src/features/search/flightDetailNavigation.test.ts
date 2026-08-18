@@ -9,6 +9,7 @@ const result = {
   id: "offer-65",
   price: 65,
   currency: "USD",
+  airlineLogo: "https://cdn.example/carriers/airline.svg",
 } as FlightResult;
 const ngnFare: DisplayPrice = {
   amount: 100_000,
@@ -43,6 +44,7 @@ test("fresh NGN handoff fields win over stale inherited USD snapshots", () => {
   const handedOffFare = JSON.parse(params.displayFare!) as DisplayPrice;
   const handedOffContext = JSON.parse(params.displayCurrencyContext!) as DisplayCurrencyResolution;
   assert.equal(handedOffResult.id, "offer-65");
+  assert.equal(handedOffResult.airlineLogo, "https://cdn.example/carriers/airline.svg");
   assert.equal(handedOffFare.currency, "NGN");
   assert.equal(handedOffFare.providerAmount, 65);
   assert.equal(handedOffFare.formatted, "NGN 100,000");
