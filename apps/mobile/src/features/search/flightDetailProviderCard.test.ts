@@ -8,14 +8,27 @@ const detailSource = readFileSync(resolve("src/features/search/ApprovedDetailScr
 const flightDetail = detailSource.slice(detailSource.indexOf("function FlightDetail"), detailSource.indexOf("function HotelDetail"));
 const offer = detailSource.slice(detailSource.indexOf("function Offer"), detailSource.indexOf("const d = StyleSheet.create"));
 
-test("provider card switches to a stacked layout on narrow screens", () => {
-  assert.match(offer, /useWindowDimensions\(\)\.width < 480/);
+test("provider card shares a compact main row on normal phones and stacks only when unusually narrow", () => {
+  assert.match(offer, /useWindowDimensions\(\)\.width < 360/);
   assert.match(offer, /compact && d\.offerCompact/);
+  assert.match(detailSource, /offer: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "flex-start"/);
   assert.match(detailSource, /offerCompact: \{[\s\S]*?flexDirection: "column"/);
   assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?flexDirection: "column"[\s\S]*?alignItems: "flex-end"[\s\S]*?gap: 6/);
   assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?alignSelf: "flex-end"/);
   assert.match(detailSource, /priceSmall: \{[^}]*textAlign: "right"/);
   assert.doesNotMatch(detailSource, /offerActionsCompact: \{[^}]*flexWrap/);
+});
+
+test("provider card height is content-driven and its action column cannot stretch", () => {
+  const offerStyles = detailSource.slice(detailSource.indexOf("  offer: {"), detailSource.indexOf("  offerCompact: {"));
+  const actionStyles = detailSource.slice(detailSource.indexOf("  offerActions: {"), detailSource.indexOf("  offerActionsCompact: {"));
+
+  assert.doesNotMatch(offerStyles, /\b(?:height|minHeight)\s*:/);
+  assert.match(actionStyles, /flexDirection: "column"/);
+  assert.match(actionStyles, /alignItems: "flex-end"/);
+  assert.match(actionStyles, /justifyContent: "flex-start"/);
+  assert.match(actionStyles, /gap: 9/);
+  assert.doesNotMatch(actionStyles, /\bflex\s*:|space-between/);
 });
 
 test("provider identity keeps readable space and labels do not shrink into vertical text", () => {
@@ -32,7 +45,8 @@ test("responsive actions retain the displayed fare and Select behavior", () => {
   assert.match(offer, /onSelect\?: \(\) => void/);
   assert.match(offer, /<Button label="Select" onPress=\{onSelect\} \/>/);
   assert.match(offer, /\{price\}<\/Text>[\s\S]*?<Button label="Select" onPress=\{onSelect\} \/>/);
-  assert.match(detailSource, /offerActions: \{[\s\S]*?flexDirection: "row"/);
+  assert.match(detailSource, /offerActions: \{[\s\S]*?flexDirection: "column"/);
+  assert.match(detailSource, /offerActions: \{[\s\S]*?alignItems: "flex-end"/);
   assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?flexDirection: "column"/);
   assert.match(flightDetail, /price=\{formattedFare\}/);
   assert.match(flightDetail, /<Offer[\s\S]*?onSelect=\{handleProviderBooking\}/);
@@ -43,6 +57,11 @@ test("flight offer passes the live result logo for the matching provider identit
   assert.match(flightDetail, /const providerLogoUrl = providerMatchesCarrier\(provider, result\.airlineName\)[\s\S]*?\? result\.airlineLogo[\s\S]*?: null/);
   assert.match(flightDetail, /<Offer[\s\S]*?provider=\{provider\}[\s\S]*?logoUrl=\{providerLogoUrl\}[\s\S]*?price=\{formattedFare\}/);
   assert.match(offer, /<ProviderLogo provider=\{provider\} logoUrl=\{logoUrl\} \/>/);
+});
+
+test("provider card keeps its existing theme-aware surfaces", () => {
+  assert.match(offer, /backgroundColor: theme\.dark \? "#17243A" : theme\.surface/);
+  assert.match(offer, /<View style=\{\[d\.providerLogo, theme\.dark && \{ backgroundColor: "#142B55" \}\]\}>/);
 });
 
 test("provider booking redirect logic remains unchanged", () => {
