@@ -58,6 +58,7 @@ import {
 import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
 import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
@@ -82,7 +83,13 @@ type CarsResultsValues = CarSearchParams & {
   driverAge: string;
 };
 
-type CarsResultsMobilePicker = "dates" | "times" | "driverAge" | null;
+type CarsResultsMobilePicker =
+  | "pickupLocation"
+  | "returnLocation"
+  | "dates"
+  | "times"
+  | "driverAge"
+  | null;
 
 type CarsResultsSearchSnapshot = {
   pickupLocation: string;
@@ -606,6 +613,8 @@ export function CarsResultsClient({
   const desktopFullSearchRefs = useSearchSurfaceRefs();
   const desktopStickySearchRefs = useSearchSurfaceRefs();
   const mobileSearchRefs = useSearchSurfaceRefs();
+  const pickupLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const returnLocationLauncherRef = useRef<HTMLButtonElement | null>(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
@@ -1116,56 +1125,36 @@ export function CarsResultsClient({
               returnToDifferentLocation ? "different" : "same"
             }
           >
-            <SearchInputCell
-              idPrefix={idPrefix}
-              icon={MapPin}
-              inputRef={searchSurfaceRefs.pickupInputRef}
-              isCompact={isCompactSearch}
-              label={
-                t("carsResults.pickupLocationLabel") ||
-                t("carsResults.pickupLocation")
-              }
-              name="pickupLocation"
-              onChange={(nextValue) => {
-                setPickupLocation(nextValue);
-              }}
-              isOpen={surfaceOwnsPopovers && openLocation === "pickup"}
-              onOpenChange={(open) => {
-                setOpenLocation(open ? "pickup" : null);
-                if (open) {
-                  setDatesOpen(false);
-                  setTimesOpen(false);
-                  setDriverAgeOpen(false);
+            {placement === "mobile" ? (
+              <MobileLocationLauncher
+                buttonRef={pickupLocationLauncherRef}
+                icon={MapPin}
+                label={
+                  t("carsResults.pickupLocationLabel") ||
+                  t("carsResults.pickupLocation")
                 }
-              }}
-              onClear={() => {
-                setPickupLocation("");
-                searchSurfaceRefs.pickupInputRef.current?.focus();
-              }}
-              placeholder={t("carsSearch.pickupLocationPlaceholder")}
-              showClearButton={false}
-              value={pickupLocation}
-              clearLabel={t("carsSearch.clearPickupLocation")}
-              strings={locationStrings}
-              className="lg:rounded-s-xl"
-            />
-            {returnToDifferentLocation ? (
+                value={pickupLocation}
+                placeholder={t("carsSearch.pickupLocationPlaceholder")}
+                onClick={() => setMobilePicker("pickupLocation")}
+                className="lg:rounded-s-xl"
+              />
+            ) : (
               <SearchInputCell
                 idPrefix={idPrefix}
                 icon={MapPin}
-                inputRef={searchSurfaceRefs.dropoffInputRef}
+                inputRef={searchSurfaceRefs.pickupInputRef}
                 isCompact={isCompactSearch}
                 label={
-                  t("carsResults.returnLocationLabel") ||
-                  t("carsResults.returnLocation")
+                  t("carsResults.pickupLocationLabel") ||
+                  t("carsResults.pickupLocation")
                 }
-                name="dropoffLocation"
+                name="pickupLocation"
                 onChange={(nextValue) => {
-                  setDropoffLocation(nextValue);
+                  setPickupLocation(nextValue);
                 }}
-                isOpen={surfaceOwnsPopovers && openLocation === "dropoff"}
+                isOpen={surfaceOwnsPopovers && openLocation === "pickup"}
                 onOpenChange={(open) => {
-                  setOpenLocation(open ? "dropoff" : null);
+                  setOpenLocation(open ? "pickup" : null);
                   if (open) {
                     setDatesOpen(false);
                     setTimesOpen(false);
@@ -1173,25 +1162,98 @@ export function CarsResultsClient({
                   }
                 }}
                 onClear={() => {
-                  setDropoffLocation("");
-                  searchSurfaceRefs.dropoffInputRef.current?.focus();
+                  setPickupLocation("");
+                  searchSurfaceRefs.pickupInputRef.current?.focus();
                 }}
-                placeholder={t("carsResults.sameAsPickup")}
-                value={dropoffLocation}
-                clearLabel={t("carsSearch.clearReturnLocation")}
+                placeholder={t("carsSearch.pickupLocationPlaceholder")}
+                showClearButton={false}
+                value={pickupLocation}
+                clearLabel={t("carsSearch.clearPickupLocation")}
                 strings={locationStrings}
-                secondaryAction={{
-                  label: t("carsResults.sameAsPickup"),
-                  onClick: () => {
-                    searchSurfaceRefs.pickupInputRef.current?.focus({
-                      preventScroll: true,
-                    });
-                    setReturnToDifferentLocation(false);
-                    setDropoffLocation("");
-                    setOpenLocation(null);
-                  },
-                }}
+                className="lg:rounded-s-xl"
               />
+            )}
+            {returnToDifferentLocation ? (
+              placement === "mobile" ? (
+                <MobileLocationLauncher
+                  buttonRef={returnLocationLauncherRef}
+                  icon={MapPin}
+                  label={
+                    t("carsResults.returnLocationLabel") ||
+                    t("carsResults.returnLocation")
+                  }
+                  value={dropoffLocation}
+                  placeholder={t("carsSearch.returnLocationPlaceholder")}
+                  onClick={() => setMobilePicker("returnLocation")}
+                  secondaryAction={{
+                    label: t("carsResults.sameAsPickup"),
+                    onClick: () => {
+                      setReturnToDifferentLocation(false);
+                      setDropoffLocation("");
+                      setMobilePicker(null);
+                    },
+                  }}
+                />
+              ) : (
+                <SearchInputCell
+                  idPrefix={idPrefix}
+                  icon={MapPin}
+                  inputRef={searchSurfaceRefs.dropoffInputRef}
+                  isCompact={isCompactSearch}
+                  label={
+                    t("carsResults.returnLocationLabel") ||
+                    t("carsResults.returnLocation")
+                  }
+                  name="dropoffLocation"
+                  onChange={(nextValue) => {
+                    setDropoffLocation(nextValue);
+                  }}
+                  isOpen={surfaceOwnsPopovers && openLocation === "dropoff"}
+                  onOpenChange={(open) => {
+                    setOpenLocation(open ? "dropoff" : null);
+                    if (open) {
+                      setDatesOpen(false);
+                      setTimesOpen(false);
+                      setDriverAgeOpen(false);
+                    }
+                  }}
+                  onClear={() => {
+                    setDropoffLocation("");
+                    searchSurfaceRefs.dropoffInputRef.current?.focus();
+                  }}
+                  placeholder={t("carsResults.sameAsPickup")}
+                  value={dropoffLocation}
+                  clearLabel={t("carsSearch.clearReturnLocation")}
+                  strings={locationStrings}
+                  secondaryAction={{
+                    label: t("carsResults.sameAsPickup"),
+                    onClick: () => {
+                      searchSurfaceRefs.pickupInputRef.current?.focus({
+                        preventScroll: true,
+                      });
+                      setReturnToDifferentLocation(false);
+                      setDropoffLocation("");
+                      setOpenLocation(null);
+                    },
+                  }}
+                />
+              )
+            ) : null}
+            {placement === "mobile" ? (
+              <>
+                <input
+                  type="hidden"
+                  name="pickupLocation"
+                  value={pickupLocation}
+                />
+                {returnToDifferentLocation ? (
+                  <input
+                    type="hidden"
+                    name="dropoffLocation"
+                    value={dropoffLocation}
+                  />
+                ) : null}
+              </>
             ) : null}
             <SearchDateCell
               dropoffDate={dropoffDate}
@@ -1348,6 +1410,24 @@ export function CarsResultsClient({
           setPickupDate(nextPickupDate);
           setDropoffDate(nextDropoffDate);
         }}
+        onClose={() => setMobilePicker(null)}
+      />
+
+      <MobileCarLocationPicker
+        open={mobileSearchOpen && mobilePicker === "pickupLocation"}
+        mode="pickup"
+        value={pickupLocation}
+        launcherRef={pickupLocationLauncherRef}
+        onCommit={setPickupLocation}
+        onClose={() => setMobilePicker(null)}
+      />
+
+      <MobileCarLocationPicker
+        open={mobileSearchOpen && mobilePicker === "returnLocation"}
+        mode="return"
+        value={dropoffLocation}
+        launcherRef={returnLocationLauncherRef}
+        onCommit={setDropoffLocation}
         onClose={() => setMobilePicker(null)}
       />
 
@@ -2390,6 +2470,58 @@ export function CarsResultsExperience({
         </aside>
       ) : null}
     </section>
+  );
+}
+
+function MobileLocationLauncher({
+  buttonRef,
+  className,
+  icon: Icon,
+  label,
+  onClick,
+  placeholder,
+  secondaryAction,
+  value,
+}: {
+  buttonRef: RefObject<HTMLButtonElement | null>;
+  className?: string;
+  icon: typeof MapPin;
+  label: string;
+  onClick: () => void;
+  placeholder: string;
+  secondaryAction?: { label: string; onClick: () => void };
+  value: string;
+}) {
+  return (
+    <div className={cn(fieldShellClass, className)}>
+      <div className={fieldLabelClass}>
+        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="flex min-w-0 items-center gap-2">
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={onClick}
+          className={cn(
+            fieldInputClass,
+            "focus-ring min-w-0 flex-1 truncate text-start",
+            !value && "text-slate-400",
+          )}
+        >
+          {value || placeholder}
+        </button>
+        {secondaryAction ? (
+          <button
+            type="button"
+            onClick={secondaryAction.onClick}
+            className="focus-ring shrink-0 text-xs font-semibold text-[#004BB8]"
+          >
+            {secondaryAction.label}
+          </button>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

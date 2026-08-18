@@ -55,10 +55,7 @@ function LocationRow({
         selected && "bg-blue-50/60",
       )}
     >
-      <MapPin
-        aria-hidden="true"
-        className="h-5 w-5 shrink-0 text-slate-700"
-      />
+      <MapPin aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-700" />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[16px] font-semibold leading-5 text-slate-950">
           {primaryText}
@@ -93,16 +90,34 @@ export function MobileCarLocationPicker({
   const [draft, setDraft] = useState<CarLocationSuggestion | null>(null);
   const [results, setResults] = useState<CarLocationSuggestion[]>([]);
   const [searchCompleted, setSearchCompleted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => {
-      searchRequestRef.current += 1;
+      const requestId = ++searchRequestRef.current;
       setQuery("");
       setDraft(null);
       setResults([]);
       setSearchCompleted(false);
+      setLoading(true);
+      setError(false);
       inputRef.current?.focus({ preventScroll: true });
+      void searchCarLocationSuggestions("", { limit: 8 })
+        .then((items) => {
+          if (requestId !== searchRequestRef.current) return;
+          setResults(items);
+          setSearchCompleted(true);
+        })
+        .catch(() => {
+          if (requestId !== searchRequestRef.current) return;
+          setError(true);
+          setSearchCompleted(true);
+        })
+        .finally(() => {
+          if (requestId === searchRequestRef.current) setLoading(false);
+        });
     });
     return () => cancelAnimationFrame(frame);
   }, [open, value]);
@@ -115,13 +130,24 @@ export function MobileCarLocationPicker({
     let active = true;
     const requestId = ++searchRequestRef.current;
     const timer = window.setTimeout(() => {
-      void searchCarLocationSuggestions(trimmedQuery, { limit: 8 }).then(
-        (items) => {
+      setLoading(true);
+      setError(false);
+      void searchCarLocationSuggestions(trimmedQuery, { limit: 8 })
+        .then((items) => {
           if (!active || requestId !== searchRequestRef.current) return;
           setResults(items);
           setSearchCompleted(true);
-        },
-      );
+        })
+        .catch(() => {
+          if (!active || requestId !== searchRequestRef.current) return;
+          setResults([]);
+          setError(true);
+          setSearchCompleted(true);
+        })
+        .finally(() => {
+          if (active && requestId === searchRequestRef.current)
+            setLoading(false);
+        });
     }, 120);
     return () => {
       active = false;
@@ -143,6 +169,8 @@ export function MobileCarLocationPicker({
     setDraft(null);
     setResults([]);
     setSearchCompleted(false);
+    setLoading(false);
+    setError(false);
     window.requestAnimationFrame(() =>
       inputRef.current?.focus({ preventScroll: true }),
     );
@@ -167,8 +195,8 @@ export function MobileCarLocationPicker({
       open={open}
       title={
         mode === "pickup"
-          ? text("carsSearch.pickupLocationLabel", "Pickup location")
-          : text("carsResults.returnLocationLabel", "Return location")
+          ? text("carsSearch.choosePickupLocation", "Choose pickup location")
+          : text("carsSearch.chooseReturnLocation", "Choose return location")
       }
       titleId={`cars-${mode}-location-title`}
       launcherRef={launcherRef}
@@ -202,6 +230,8 @@ export function MobileCarLocationPicker({
               setDraft(null);
               setResults([]);
               setSearchCompleted(false);
+              setLoading(false);
+              setError(false);
             }}
             aria-label={placeholder}
             placeholder={placeholder}
@@ -219,7 +249,28 @@ export function MobileCarLocationPicker({
         </div>
 
         <div className="mt-8">
-          {visibleResults.length ? (
+          {loading ? (
+            <p
+              className="px-4 py-8 text-center text-sm font-medium text-slate-500"
+              aria-live="polite"
+            >
+              {text("carsSearch.loadingSuggestions", "Loading suggestions…")}
+            </p>
+          ) : error ? (
+            <p
+              className="px-4 py-8 text-center text-sm font-medium text-slate-500"
+              aria-live="polite"
+            >
+              {text(
+                "carsSearch.suggestionsUnavailable",
+                "Suggestions unavailable.",
+              )}{" "}
+              {text(
+                "carsSearch.continueTypingManually",
+                "Continue typing manually.",
+              )}
+            </p>
+          ) : visibleResults.length ? (
             <div className="overflow-hidden rounded-[11px] border border-slate-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)]">
               {visibleResults.map((item) => (
                 <LocationRow

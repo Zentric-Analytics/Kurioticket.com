@@ -17,9 +17,10 @@ test("mobile Results uses the main Cars dedicated picker dialogs", () => {
   assert.match(source, /<MobileDatePickerDialog/);
   assert.match(source, /<MobileCarTimePickerDialog/);
   assert.match(source, /<MobileCarDriverAgePickerDialog/);
+  assert.match(source, /<MobileCarLocationPicker/);
   assert.match(
     source,
-    /type CarsResultsMobilePicker = "dates" \| "times" \| "driverAge" \| null/,
+    /type CarsResultsMobilePicker =\s*\| "pickupLocation"\s*\| "returnLocation"\s*\| "dates"\s*\| "times"\s*\| "driverAge"\s*\| null/,
   );
 });
 
@@ -50,7 +51,7 @@ test("picker Back and Done return to Edit Search without submitting", () => {
   assert.equal(
     (dialogs.match(/onClose=\{\(\) => setMobilePicker\(null\)\}/g) ?? [])
       .length,
-    3,
+    5,
   );
   assert.doesNotMatch(
     dialogs,
