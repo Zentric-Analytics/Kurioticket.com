@@ -41,3 +41,19 @@ test("deadline, supersession, cleanup, and retry preserve latest-request ownersh
   assert.match(screen, /setRetry\(\(x\) => x \+ 1\)/);
   assert.match(screen, /const controller = new AbortController\(\)/);
 });
+
+test("loading decoration cannot intercept controls and route changes cannot loop requests", () => {
+  assert.match(screen, /<View pointerEvents="none" style=\{s0\.loadingState\}>/);
+  assert.doesNotMatch(screen, /\[product, JSON\.stringify\(params\)\]/);
+  assert.match(screen, /\[product, plan\.plan\?\.key, retry, visualTest\]/);
+  assert.match(screen, /activeSearch\.current\?\.abort\("edit-search"\)/);
+  assert.match(screen, /activeSearch\.current\?\.abort\("screen-blur"\)/);
+});
+
+test("slow flight diagnostics measure parsing, processing, and event-loop responsiveness", () => {
+  assert.match(api, /responseBytes: responseByteLength\(raw\)/);
+  assert.match(api, /textDecodeMs/);
+  assert.match(api, /jsonParseMs/);
+  assert.match(screen, /clientValidationMs/);
+  assert.match(screen, /\[flight-search:event-loop\]/);
+});

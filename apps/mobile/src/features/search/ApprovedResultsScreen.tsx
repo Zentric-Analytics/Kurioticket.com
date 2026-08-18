@@ -81,6 +81,7 @@ import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
+import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -98,10 +99,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const stackedResultsSummary = width < 430;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
-  const plan = useMemo(
-    () => buildSearchPlan(product, params),
-    [product, JSON.stringify(params)],
-  );
+  const plan = buildSearchPlan(product, params);
   const [results, setResults] = useState<(FlightResult | HotelResult)[]>([]);
   const [status, setStatus] = useState<Status>("loading");
   const [message, setMessage] = useState("");
@@ -147,6 +145,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     activeSearch.current = controller;
     const sequence = ++searchSequence.current;
     const requestId = `mobile-${Date.now()}-${sequence}`;
+    const clientStartedAt = performance.now();
     let deadlineExpired = false;
     const isLatest = () => sequence === searchSequence.current;
     const isCurrent = () => !controller.signal.aborted && isLatest();
@@ -162,6 +161,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setStatus("ready");
       return;
     }
+    const stopEventLoopMonitor = __DEV__ && product === "flight"
+      ? startFlightSearchEventLoopMonitor()
+      : undefined;
     try {
       const response =
         product === "flight"
@@ -174,15 +176,26 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             )
           : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
       if (!isCurrent()) return;
+      const validationStartedAt = performance.now();
       const valid =
         product === "flight"
           ? (response.results as FlightResult[]).filter((x) =>
               validFlight(x, plan.plan!),
             )
           : (response.results as HotelResult[]).filter(validBookableHotel);
+      const clientValidationMs = performance.now() - validationStartedAt;
       setResults(valid);
       setStatus(valid.length ? "ready" : "empty");
       setMessage(response.warnings?.[0] || "");
+      if (__DEV__ && product === "flight") {
+        console.info("[flight-search:client-processing]", {
+          requestId,
+          resultCount: response.results.length,
+          clientValidationMs,
+          statePreparationMs: performance.now() - validationStartedAt,
+          clientElapsedMs: performance.now() - clientStartedAt,
+        });
+      }
     } catch (e) {
       if (!isLatest()) return;
       if (!deadlineExpired && (controller.signal.aborted || (e instanceof TravelApiError && e.code === "cancelled"))) return;
@@ -194,6 +207,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           ? "Flight search took too long. Please try again."
           : e instanceof Error ? e.message : "Search failed",
       );
+    } finally {
+      if (stopEventLoopMonitor) {
+        // Let an overdue interval run before clearing it so a blocking parse or
+        // validation phase at request completion is included in max drift.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        console.info("[flight-search:event-loop]", { requestId, ...stopEventLoopMonitor() });
+      }
     }
   }, [product, plan.plan?.key, retry, visualTest]);
   useEffect(() => {
@@ -203,7 +223,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       activeSearch.current?.abort("screen-cleanup");
     };
   }, [load]);
+  useFocusEffect(useCallback(() => () => {
+    searchSequence.current += 1;
+    activeSearch.current?.abort("screen-blur");
+  }, []));
   const edit = () => {
+    activeSearch.current?.abort("edit-search");
     if (product === "flight") {
       router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) });
       return;
@@ -818,7 +843,7 @@ function Loading({ product }: { product: Product }) {
   }, [opacity]);
 
   return (
-    <View style={s0.loadingState}>
+    <View pointerEvents="none" style={s0.loadingState}>
       <View style={s0.loadingMessage}>
         <ActivityIndicator color={ui.blue} />
         <Text
