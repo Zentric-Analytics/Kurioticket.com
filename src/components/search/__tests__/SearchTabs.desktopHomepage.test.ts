@@ -53,3 +53,19 @@ test("desktop airport, calendar, and traveler panels share viewport-safe placeme
   assert.match(source, /maxHeight: Math\.max/);
   assert.match(source, /sticky bottom-0/);
 });
+
+test("desktop fields expose one clean focus boundary instead of nested input rings", () => {
+  const flightValueClasses = source.slice(
+    source.indexOf("const flightFieldValueClassName"),
+    source.indexOf("const flightFieldButtonClassName"),
+  );
+  const hotelValueClasses = source.slice(
+    source.indexOf("const hotelFieldValueClassName"),
+    source.indexOf("const flightRouteGroupClassName"),
+  );
+
+  assert.doesNotMatch(flightValueClasses, /focus-ring/);
+  assert.doesNotMatch(hotelValueClasses, /focus-ring/);
+  assert.match(flightValueClasses, /focus-visible:ring-0/);
+  assert.match(hotelValueClasses, /focus-visible:ring-0/);
+});

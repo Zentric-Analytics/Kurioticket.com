@@ -76,6 +76,7 @@ test("wide homepage Cars renders one conditional return-location field beside pi
   assert.match(carsBranch, /Different return location[\s\S]*?\{!compactHero \? carsReturnLocationField : null\}/);
   assert.match(carsBranch, /homepage-cars-driver-age[\s\S]*?Different return location/);
   assert.match(source, /if \(key === "returnToDifferentLocation" && value === false\) \{\s*next\.dropoffLocation = "";/);
+  assert.match(returnLocationField, /sm:!bg-white/);
 });
 
 test("Cars autocomplete uses responsive presentation and input anchoring", () => {
@@ -104,6 +105,25 @@ test("homepage Cars picker source contracts use the shared experiences", () => {
   assert.match(carsBranch, /<CarsDriverAgePickerContent/);
   assert.match(carsBranch, /desktopAlign="right" desktopWidth=\{248\}/);
   assert.match(carsBranch, /popupRole="listbox"/);
+});
+
+test("desktop Cars pickers stay open for selection and use viewport-safe homepage placement", () => {
+  for (const id of ["homepage-cars-rental-dates", "homepage-cars-time-range", "homepage-cars-driver-age"]) {
+    const start = carsBranch.indexOf(`<CarsSummaryField id="${id}"`);
+    const invocation = carsBranch.slice(start, carsBranch.indexOf("\n", start));
+    assert.match(invocation, /desktopPlacement=\{compactHero \? "above" : "below"\}/, id);
+  }
+
+  const timePicker = carsBranch.slice(
+    carsBranch.indexOf("<CarsTimeRangePickerContent"),
+    carsBranch.indexOf("</CarsSummaryField>", carsBranch.indexOf("<CarsTimeRangePickerContent")),
+  );
+  const agePicker = carsBranch.slice(
+    carsBranch.indexOf("<CarsDriverAgePickerContent"),
+    carsBranch.indexOf("</CarsSummaryField>", carsBranch.indexOf("<CarsDriverAgePickerContent")),
+  );
+  assert.doesNotMatch(timePicker, /setCarsOpenPicker\(null\)/);
+  assert.doesNotMatch(agePicker, /setCarsOpenPicker\(null\)/);
 });
 
 test("mobile homepage Cars launches every picker in the shared full-screen shell", () => {
