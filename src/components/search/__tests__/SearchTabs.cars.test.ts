@@ -111,7 +111,7 @@ test("desktop Cars pickers stay open for selection and use viewport-safe homepag
   for (const id of ["homepage-cars-rental-dates", "homepage-cars-time-range", "homepage-cars-driver-age"]) {
     const start = carsBranch.indexOf(`<CarsSummaryField id="${id}"`);
     const invocation = carsBranch.slice(start, carsBranch.indexOf("\n", start));
-    assert.match(invocation, /desktopPlacement=\{compactHero \? "above" : "below"\}/, id);
+    assert.match(invocation, /desktopPlacement="auto"/, id);
   }
 
   const timePicker = carsBranch.slice(

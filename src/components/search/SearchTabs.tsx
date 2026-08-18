@@ -267,7 +267,7 @@ type DesktopTopLayerPopoverProps = {
   id?: string;
   role?: "dialog" | "listbox";
   ariaLabel?: string;
-  placement?: "above" | "below";
+  placement?: "auto" | "above" | "below";
   children: ReactNode;
 };
 
@@ -298,7 +298,7 @@ function DesktopTopLayerPopover({
   id,
   role,
   ariaLabel,
-  placement = "below",
+  placement = "auto",
   children,
 }: DesktopTopLayerPopoverProps) {
   const [anchorRect, setAnchorRect] = useState<{
@@ -313,7 +313,7 @@ function DesktopTopLayerPopover({
     subscribeToViewportChanges,
     () => (typeof window === "undefined"
       ? getDesktopPopoverServerSnapshot()
-      : `${window.innerWidth}:${window.scrollX}:${window.scrollY}`),
+      : `${window.innerWidth}:${window.innerHeight}:${window.scrollX}:${window.scrollY}`),
     getDesktopPopoverServerSnapshot
   );
 
@@ -356,6 +356,14 @@ function DesktopTopLayerPopover({
     viewportWidth - maxViewportGutter - panelWidth,
     Math.max(maxViewportGutter, unclampedLeft)
   );
+  const availableAbove = Math.max(0, anchorRect.top - offset - maxViewportGutter);
+  const availableBelow = Math.max(
+    0,
+    window.innerHeight - anchorRect.bottom - offset - maxViewportGutter
+  );
+  const resolvedPlacement = placement === "auto"
+    ? (availableBelow >= availableAbove ? "below" : "above")
+    : placement;
 
   return createPortal(
     <div
@@ -364,19 +372,18 @@ function DesktopTopLayerPopover({
       role={role}
       aria-label={ariaLabel}
       data-desktop-search-popover="true"
+      data-placement={resolvedPlacement}
       data-viewport-snapshot={viewportSnapshot}
       style={{
         left,
-        ...(placement === "above"
+        ...(resolvedPlacement === "above"
           ? { bottom: window.innerHeight - anchorRect.top + offset }
           : { top: anchorRect.bottom + offset }),
         width: panelWidth,
         maxWidth,
         maxHeight: Math.max(
           0,
-          placement === "above"
-            ? anchorRect.top - offset - maxViewportGutter
-            : window.innerHeight - anchorRect.bottom - offset - maxViewportGutter
+          resolvedPlacement === "above" ? availableAbove : availableBelow
         ),
       }}
       className={cn(
@@ -405,7 +412,7 @@ function CarsSummaryField({
   desktopAlign = "left",
   desktopWidth = 448,
   desktopPanelClassName = "p-3",
-  desktopPlacement = "below",
+  desktopPlacement = "auto",
   leadingIcon,
   showChevron = true,
   valueClassName,
@@ -422,7 +429,7 @@ function CarsSummaryField({
   desktopAlign?: "left" | "center" | "right";
   desktopWidth?: number;
   desktopPanelClassName?: string;
-  desktopPlacement?: "above" | "below";
+  desktopPlacement?: "auto" | "above" | "below";
   leadingIcon?: ReactNode;
   showChevron?: boolean;
   valueClassName?: string;
@@ -2310,7 +2317,7 @@ export function SearchTabs({
     <DesktopTopLayerPopover
       open
       launcherId={inputId}
-      placement={compactHero ? "above" : "below"}
+      placement="auto"
       width={520}
       role="listbox"
       ariaLabel={sectionLabel}
@@ -2465,7 +2472,7 @@ export function SearchTabs({
     <DesktopTopLayerPopover
       open
       launcherRef={launcherRef}
-      placement={compactHero ? "above" : "below"}
+      placement="auto"
       align={mode === "flights" ? "center" : "left"}
       width={mode === "flights" ? 760 : 660}
       className={cn(
@@ -3618,7 +3625,7 @@ export function SearchTabs({
                     <DesktopTopLayerPopover
                       open
                       launcherRef={travelersLauncherRef}
-                      placement={compactHero ? "above" : "below"}
+                      placement="auto"
                       align="right"
                       width={360}
                       className={cn(compactHero ? "p-3" : "p-4", desktopTravelersPopoverClassName)}
@@ -4176,7 +4183,7 @@ export function SearchTabs({
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
               {compactHero ? carsReturnLocationField : null}
-              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" desktopPlacement={compactHero ? "above" : "below"} leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" desktopPlacement="auto" leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsRentalDatePickerContent
                   dropoffDate={carsValues.dropoffDate}
                   formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)}
@@ -4192,10 +4199,10 @@ export function SearchTabs({
                   weekdays={getLocalizedWeekdays(calendarLocale)}
                 />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopPlacement={compactHero ? "above" : "below"} leadingIcon={<Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopPlacement="auto" leadingIcon={<Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsTimeRangePickerContent formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsValues.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsValues.dropoffTime} onPickupTimeChange={(time) => updateCarsValue("pickupTime", time)} onReturnTimeChange={(time) => updateCarsValue("dropoffTime", time)} />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0" desktopPlacement={compactHero ? "above" : "below"} leadingIcon={<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0" desktopPlacement="auto" leadingIcon={<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsDriverAgePickerContent anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => updateCarsValue("driverAge", age)} />
               </CarsSummaryField>
               <div className={hotelSubmitWrapClassName}>

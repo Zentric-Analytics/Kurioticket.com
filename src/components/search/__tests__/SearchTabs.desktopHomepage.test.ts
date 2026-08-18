@@ -48,7 +48,9 @@ test("desktop flight fields include semantic icons and omit compact clear contro
 
 test("desktop airport, calendar, and traveler panels share viewport-safe placement", () => {
   assert.match(source, /const renderDesktopAirportSuggestions[\s\S]*?<DesktopTopLayerPopover/);
-  assert.match(source, /placement=\{compactHero \? "above" : "below"\}/);
+  assert.match(source, /placement="auto"/);
+  assert.match(source, /const resolvedPlacement = placement === "auto"/);
+  assert.match(source, /availableBelow >= availableAbove \? "below" : "above"/);
   assert.match(source, /bottom: window\.innerHeight - anchorRect\.top \+ offset/);
   assert.match(source, /maxHeight: Math\.max/);
   assert.match(source, /sticky bottom-0/);
