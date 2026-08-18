@@ -35,12 +35,13 @@ test("desktop-sticky Driver Age selection updates without closing the picker", (
     renderCarsSearchForm,
     /placement: "desktop-full" \| "desktop-sticky" \| "mobile"/,
   );
-  assert.match(driverAgeSelection, /if \(placement === "mobile"\)/);
+  assert.doesNotMatch(driverAgeSelection, /setDriverAgeOpen\(false\)/);
 });
 
-test("mobile Driver Age selection retains close-after-selection behavior", () => {
+test("mobile Driver Age selection is drafted in the shared dialog until Done", () => {
   assert.match(
-    driverAgeSelection,
-    /if \(placement === "mobile"\) \{\s*setDriverAgeOpen\(false\);\s*\}/,
+    source,
+    /<MobileCarDriverAgePickerDialog[\s\S]*?onCommit=\{setDriverAge\}/,
   );
+  assert.doesNotMatch(driverAgeSelection, /setDriverAgeOpen\(false\)/);
 });
