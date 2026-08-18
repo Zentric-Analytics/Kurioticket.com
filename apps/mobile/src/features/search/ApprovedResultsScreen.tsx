@@ -233,7 +233,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) });
       return;
     }
-    router.canGoBack() ? router.back() : router.replace("/hotels");
+    router.push({
+      pathname: "/hotels",
+      params: {
+        destination: one(params.destination) || "",
+        checkIn: one(params.checkIn) || "",
+        checkOut: one(params.checkOut) || "",
+        guests: one(params.guests) || "",
+        rooms: one(params.rooms) || "",
+      },
+    });
   };
   const sorted = useMemo(() => {
     if (product === "flight") {
