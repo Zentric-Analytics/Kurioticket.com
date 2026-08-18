@@ -102,6 +102,17 @@ type CarsResultsSearchSnapshot = {
   driverAge: string;
 };
 
+export function buildCarsResultsHref(formData: FormData) {
+  const params = new URLSearchParams();
+
+  for (const [name, value] of formData.entries()) {
+    if (typeof value === "string") params.append(name, value);
+  }
+
+  const query = params.toString();
+  return query ? `/cars/results?${query}` : "/cars/results";
+}
+
 type CarFilterOption = {
   id: string;
   labelKey: string;
@@ -941,28 +952,25 @@ export function CarsResultsClient({
     ],
   );
 
-  const closeMobileSearchDrawer = useCallback(
-    (cancelDraft = true) => {
-      const snapshot = mobileSearchSnapshotRef.current;
-      if (cancelDraft && snapshot) {
-        setPickupLocation(snapshot.pickupLocation);
-        setDropoffLocation(snapshot.dropoffLocation);
-        setReturnToDifferentLocation(snapshot.returnToDifferentLocation);
-        setPickupDate(snapshot.pickupDate);
-        setDropoffDate(snapshot.dropoffDate);
-        setPickupTime(snapshot.pickupTime);
-        setDropoffTime(snapshot.dropoffTime);
-        setDriverAge(snapshot.driverAge);
-      }
-      mobileSearchSnapshotRef.current = null;
-      setMobileSearchOpen(false);
-      setMobilePicker(null);
-      setDatesOpen(false);
-      setTimesOpen(false);
-      setDriverAgeOpen(false);
-    },
-    [setMobileSearchOpen, setDatesOpen, setTimesOpen, setDriverAgeOpen],
-  );
+  const cancelMobileSearchDrawer = useCallback(() => {
+    const snapshot = mobileSearchSnapshotRef.current;
+    if (snapshot) {
+      setPickupLocation(snapshot.pickupLocation);
+      setDropoffLocation(snapshot.dropoffLocation);
+      setReturnToDifferentLocation(snapshot.returnToDifferentLocation);
+      setPickupDate(snapshot.pickupDate);
+      setDropoffDate(snapshot.dropoffDate);
+      setPickupTime(snapshot.pickupTime);
+      setDropoffTime(snapshot.dropoffTime);
+      setDriverAge(snapshot.driverAge);
+    }
+    mobileSearchSnapshotRef.current = null;
+    setMobileSearchOpen(false);
+    setMobilePicker(null);
+    setDatesOpen(false);
+    setTimesOpen(false);
+    setDriverAgeOpen(false);
+  }, [setMobileSearchOpen, setDatesOpen, setTimesOpen, setDriverAgeOpen]);
 
   useLayoutEffect(() => {
     const releaseSearchOverlay = () => {
@@ -1094,11 +1102,25 @@ export function CarsResultsClient({
         action="/cars/results"
         method="get"
         className="mx-auto w-full min-w-0 max-w-5xl"
-        onSubmit={() => {
-          // The mobile form is rendered inside the drawer. Keep it connected
-          // until the browser has captured its successful controls and started
-          // the native GET navigation.
-          if (placement === "mobile") return;
+        onSubmit={(event) => {
+          if (placement === "mobile") {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            const href = buildCarsResultsHref(formData);
+
+            // Submission commits the live form. It must not run the cancel
+            // snapshot or restore focus to the outgoing Results set.
+            mobileSearchSnapshotRef.current = null;
+            mobileSearchLauncherRef.current = null;
+            setMobileSearchOpen(false);
+            setMobilePicker(null);
+            setDatesOpen(false);
+            setTimesOpen(false);
+            setDriverAgeOpen(false);
+            router.push(href, { scroll: true });
+            return;
+          }
+
           setDesktopStickySearchSection(null);
         }}
       >
@@ -1486,7 +1508,7 @@ export function CarsResultsClient({
               variant="secondary"
               aria-label={t("carsResults.closeEditSearch")}
               className="h-10 w-10 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-sm"
-              onClick={() => closeMobileSearchDrawer()}
+              onClick={() => cancelMobileSearchDrawer()}
             >
               <X className="h-5 w-5" aria-hidden="true" />
             </Button>
