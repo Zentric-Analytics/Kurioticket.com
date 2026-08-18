@@ -6,6 +6,10 @@ const source = readFileSync(
   new URL("./CarsResultsClient.tsx", import.meta.url),
   "utf8",
 );
+const pageSource = readFileSync(
+  new URL("../../app/cars/results/page.tsx", import.meta.url),
+  "utf8",
+);
 
 const openDrawer = source.slice(
   source.indexOf("const openMobileSearchDrawer"),
@@ -51,13 +55,24 @@ test("opening mobile Edit Search snapshots every mutable Cars search value", () 
   }
 });
 
-test("cancel restores the snapshot while Search submits the editor draft", () => {
+test("cancel restores the snapshot while mobile Search leaves its form connected", () => {
   assert.match(closeDrawer, /if \(cancelDraft && snapshot\)/);
   assert.match(
     source,
-    /onSubmit=\{\(\) => \{\s*closeMobileSearchDrawer\(false\)/,
+    /onSubmit=\{\(\) => \{[\s\S]*?if \(placement === "mobile"\) return;/,
+  );
+  assert.doesNotMatch(
+    source.match(/onSubmit=\{\(\) => \{[\s\S]*?\}\}/)?.[0] ?? "",
+    /closeMobileSearchDrawer/,
   );
   assert.match(source, /onClick=\{\(\) => closeMobileSearchDrawer\(\)\}/);
+});
+
+test("a committed Results navigation remounts client state for the new search", () => {
+  assert.match(
+    pageSource,
+    /<CarsResultsClient\s+key=\{JSON\.stringify\(values\)\}\s+values=\{values\}/,
+  );
 });
 
 test("mobile search restores saved Results scroll and the actual launcher without scrolling", () => {
