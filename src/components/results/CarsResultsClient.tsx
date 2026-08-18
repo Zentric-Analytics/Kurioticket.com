@@ -10,10 +10,12 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
   Calendar,
   CalendarDays,
+  ArrowLeft,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
@@ -21,7 +23,6 @@ import {
   Clock,
   Clock3,
   MapPin,
-  SquarePen,
   SlidersHorizontal,
   UserRound,
   X,
@@ -557,9 +558,12 @@ export function CarsResultsClient({
   inventoryStatus: CarInventoryStatus;
 }) {
   const { locale, t: dictionary } = useLocale();
+  const router = useRouter();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
+    useState(false);
   const [mobilePicker, setMobilePicker] =
     useState<CarsResultsMobilePicker>(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
@@ -591,6 +595,7 @@ export function CarsResultsClient({
   const mobileSearchRefs = useSearchSurfaceRefs();
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
+  const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
   const stickyDialogRef = useRef<HTMLDivElement | null>(null);
   const stickyLauncherRef = useRef<HTMLButtonElement | null>(null);
   const stickyScrollLockRef = useRef<{ restore: () => void } | null>(null);
@@ -892,12 +897,53 @@ export function CarsResultsClient({
     setDriverAgeOpen(false);
   }, [setMobileSearchOpen, setDatesOpen, setTimesOpen, setDriverAgeOpen]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const sentinel = mobileSearchSummarySentinelRef.current;
+    const updateFromSentinel = () => {
+      const currentSentinel = mobileSearchSummarySentinelRef.current;
+      if (!currentSentinel) {
+        setMobileCompactHeaderVisible(false);
+        return;
+      }
+
+      const rect = currentSentinel.getBoundingClientRect();
+      setMobileCompactHeaderVisible(rect.bottom < 8 && window.scrollY > 96);
+    };
+
+    updateFromSentinel();
+    if (typeof IntersectionObserver === "undefined" || !sentinel) {
+      window.addEventListener("scroll", updateFromSentinel, { passive: true });
+      window.addEventListener("resize", updateFromSentinel);
+      return () => {
+        window.removeEventListener("scroll", updateFromSentinel);
+        window.removeEventListener("resize", updateFromSentinel);
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setMobileCompactHeaderVisible(
+          !entry.isIntersecting && window.scrollY > 96,
+        );
+      },
+      { rootMargin: "-8px 0px 0px 0px", threshold: 0 },
+    );
+    observer.observe(sentinel);
+    window.addEventListener("scroll", updateFromSentinel, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", updateFromSentinel);
+    };
+  }, []);
+
   const renderMobileControlsRow = () => (
     <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
       <button
         type="button"
         onClick={openMobileSearchDrawer}
-        className="flex h-14 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-start shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+        className="flex h-14 min-w-0 max-w-full flex-1 items-center gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-start shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
           <span className="block truncate text-sm font-bold leading-5 text-slate-950">
@@ -906,12 +952,6 @@ export function CarsResultsClient({
           <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-600">
             {rentalDateSummary} · {driverAgeSummary}
           </span>
-        </span>
-        <span
-          aria-hidden="true"
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
-        >
-          <SquarePen size={16} strokeWidth={2.1} />
         </span>
       </button>
     </div>
@@ -1179,14 +1219,20 @@ export function CarsResultsClient({
 
   return (
     <main className="flex-1 bg-[#f6f8fb] pb-8">
-      <div
+      <section
         className={cn(
-          "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
+          "relative z-40 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
           mobileSearchOpen && "hidden",
         )}
+        aria-label={t("carsResults.carRentalSearch")}
       >
         {renderMobileControlsRow()}
-      </div>
+        <div
+          ref={mobileSearchSummarySentinelRef}
+          className="pointer-events-none h-px w-full"
+          aria-hidden="true"
+        />
+      </section>
 
       <MobileDatePickerDialog
         open={mobileSearchOpen && mobilePicker === "dates"}
@@ -1473,6 +1519,10 @@ export function CarsResultsClient({
           hasSearchContext={hasSearchContext}
           resultHeadingId="cars-results-heading"
           detailsHrefForCar={(car) => buildCarDetailsHref(car.id, values)}
+          mobileCompactToolbarVisible={mobileCompactHeaderVisible}
+          mobileSearchSummary={locationPairSummary}
+          onMobileBack={() => router.push("/cars")}
+          onMobileModifySearch={openMobileSearchDrawer}
         />
       </div>
     </main>
@@ -1493,6 +1543,10 @@ export function CarsResultsExperience({
   resultHeadingRef,
   presentation = "standalone",
   isCarSelectable,
+  mobileCompactToolbarVisible = false,
+  mobileSearchSummary,
+  onMobileBack,
+  onMobileModifySearch,
 }: {
   results: NormalizedCarResult[];
   inventoryStatus: CarInventoryStatus;
@@ -1503,6 +1557,10 @@ export function CarsResultsExperience({
   embedded?: boolean;
   presentation?: "standalone" | "guided-planning";
   isCarSelectable?: (car: NormalizedCarResult) => boolean;
+  mobileCompactToolbarVisible?: boolean;
+  mobileSearchSummary?: string;
+  onMobileBack?: () => void;
+  onMobileModifySearch?: () => void;
   detailsHrefForCar: (car: NormalizedCarResult) => string | null;
   actionLabel?: string;
   actionAriaLabelForCar?: (car: NormalizedCarResult) => string;
@@ -1513,6 +1571,7 @@ export function CarsResultsExperience({
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileFiltersLauncherRef = useRef<HTMLButtonElement | null>(null);
   const filtersDialogRef = useRef<HTMLElement | null>(null);
   const filtersCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileFiltersScrollLockRef = useRef<{ restore: () => void } | null>(
@@ -1612,6 +1671,10 @@ export function CarsResultsExperience({
     setTransition();
     setSelectedCarFilters({});
   };
+  const openMobileFiltersDrawer = (launcher: HTMLButtonElement) => {
+    mobileFiltersLauncherRef.current = launcher;
+    setFiltersOpen(true);
+  };
   useEffect(
     () => () => {
       if (resultsTransitionTimerRef.current)
@@ -1685,7 +1748,8 @@ export function CarsResultsExperience({
     mobileFiltersScrollLockRef.current = lockBodyScroll();
     window.addEventListener("keydown", handleKeyDown);
     media.addEventListener("change", closeForDesktop);
-    const launcher = filtersButtonRef.current;
+    const launcher =
+      mobileFiltersLauncherRef.current ?? filtersButtonRef.current;
     return () => {
       cancelAnimationFrame(focusDrawer);
       window.removeEventListener("keydown", handleKeyDown);
@@ -1837,12 +1901,79 @@ export function CarsResultsExperience({
     scheduleDesktopCompactFilterMeasurementRef.current?.();
   }, [activeFilterCount, results.length, showDesktopCompactFilter]);
 
+  const renderMobileCompactResultsHeader = () => {
+    if (presentation !== "standalone") return null;
+
+    const summary = mobileSearchSummary || t("carsResults.pickupLocationLabel");
+    const modifySearchLabel = `${t("deals.results.modifySearch")}: ${summary}`;
+
+    return (
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-[90] border-b border-slate-200/80 bg-white/95 px-3 pb-2 pt-[calc(0.5rem+env(safe-area-inset-top))] shadow-[0_10px_26px_-20px_rgba(15,23,42,0.55)] backdrop-blur-xl transition-all duration-200 ease-out sm:hidden",
+          mobileCompactToolbarVisible
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none -translate-y-2 opacity-0",
+        )}
+        aria-hidden={!mobileCompactToolbarVisible}
+      >
+        <div className="mx-auto grid h-12 w-full max-w-3xl grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-2">
+          <button
+            type="button"
+            aria-label={t("carDetails.backToResults")}
+            onClick={onMobileBack}
+            className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          >
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label={modifySearchLabel}
+            onClick={onMobileModifySearch}
+            className="focus-ring flex min-w-0 flex-col items-center justify-center rounded-xl px-2 py-1 text-center transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          >
+            <span className="block max-w-full truncate text-[15px] font-extrabold leading-5 tracking-[-0.015em] text-slate-950">
+              {summary}
+            </span>
+            <span className="mt-0.5 block text-[11px] font-semibold leading-4 text-slate-500">
+              {t("deals.results.modifySearch")}
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-label={
+              activeFilterCount > 0
+                ? t("carsResults.openFiltersWithCount").replace(
+                    "{count}",
+                    String(activeFilterCount),
+                  )
+                : t("carsResults.openFilters")
+            }
+            onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}
+            className="focus-ring inline-flex h-11 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-[13px] font-bold text-slate-800 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35"
+          >
+            <SlidersHorizontal
+              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              strokeWidth={2.2}
+              aria-hidden="true"
+            />
+            <span className="truncate">{t("filters")}</span>
+            {activeFilterCount > 0 ? (
+              <span className="sr-only"> ({activeFilterCount})</span>
+            ) : null}
+          </button>
+        </div>
+      </header>
+    );
+  };
+
   return (
     <section
       className={cn("min-w-0", embedded ? "mt-6" : "w-full")}
       aria-labelledby={resultHeadingId}
       data-cars-results-experience
     >
+      {renderMobileCompactResultsHeader()}
       <div
         ref={carsResultsBodyRef}
         className="grid gap-5 lg:grid-cols-[256px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]"
