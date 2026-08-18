@@ -63,7 +63,12 @@ export default async function CarsResultsPage({
 
   return (
     <>
-      <AppHeader flushDesktopBottom hideDesktopTravelNav />
+      <AppHeader
+        flushDesktopBottom
+        flushMobileBottom
+        hideDesktopTravelNav
+        hideMobileCategoryTabs
+      />
       <CarsResultsClient
         values={values}
         initialResults={inventory.results}
