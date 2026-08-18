@@ -39,7 +39,10 @@ import {
   MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
-import { carsDesktopPopoverClassName, useCarsDesktopPopover } from "@/components/search/useCarsDesktopPopover";
+import {
+  carsDesktopPopoverClassName,
+  useCarsDesktopPopover,
+} from "@/components/search/useCarsDesktopPopover";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -809,9 +812,7 @@ function CarsSearchBar({
   };
 
   return (
-    <section
-      className="overflow-visible rounded-[15px] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.25rem] sm:border-slate-200/80 sm:bg-white sm:p-5 sm:shadow-[0_18px_42px_-24px_rgba(15,23,42,0.30)] sm:ring-1 sm:ring-white/70"
-    >
+    <section className="overflow-visible rounded-[15px] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.25rem] sm:border-slate-200/80 sm:bg-white sm:p-5 sm:shadow-[0_18px_42px_-24px_rgba(15,23,42,0.30)] sm:ring-1 sm:ring-white/70">
       <form
         onSubmit={onSubmit}
         className="relative flex flex-col gap-3 overflow-visible"
@@ -896,7 +897,6 @@ function CarsSearchBar({
                       />
                     </div>
                   </div>
-
                 </div>
 
                 {values.returnToDifferentLocation ? (
@@ -978,7 +978,9 @@ function CarsSearchBar({
                 onClose={() => setDatesOpen(false)}
                 onDone={() => {
                   setDatesOpen(false);
-                  requestAnimationFrame(() => datesLauncherRef.current?.focus({ preventScroll: true }));
+                  requestAnimationFrame(() =>
+                    datesLauncherRef.current?.focus({ preventScroll: true }),
+                  );
                 }}
                 onNextMonth={() =>
                   setVisibleMonthDate((current) => addMonths(current, 1))
@@ -1008,12 +1010,6 @@ function CarsSearchBar({
                 onToggle={toggleTimes}
                 pickupTime={values.pickupTime}
                 returnTime={values.dropoffTime}
-                onDone={() => {
-                  setTimesOpen(false);
-                  requestAnimationFrame(() =>
-                    timesLauncherRef.current?.focus({ preventScroll: true }),
-                  );
-                }}
                 updateValue={updateValue}
                 launcherRef={timesLauncherRef}
                 wrapRef={timeWrapRef}
@@ -1080,12 +1076,6 @@ function CarsSearchBar({
                   onFocusedIndexChange={setFocusedDriverAgeIndex}
                   onSelect={(age) => {
                     updateValue("driverAge", age);
-                    setDriverAgeOpen(false);
-                    requestAnimationFrame(() =>
-                      desktopDriverAgeLauncherRef.current?.focus({
-                        preventScroll: true,
-                      }),
-                    );
                   }}
                   optionRefs={driverAgeOptionRefs}
                   popoverRef={driverAgePopoverRef}
@@ -1377,9 +1367,18 @@ function DriverAgeDesktopPopover({
   selectedAge: string;
 }) {
   const { t } = useCarsLandingTranslations();
-  const { placement, popoverRef: positionedPopoverRef, style } = useCarsDesktopPopover({
-    open: isOpen, launcherRef, preferredWidth: 288, desiredHeight: 320,
-    maxHeight: 320, align: "end", providedPopoverRef: popoverRef,
+  const {
+    placement,
+    popoverRef: positionedPopoverRef,
+    style,
+  } = useCarsDesktopPopover({
+    open: isOpen,
+    launcherRef,
+    preferredWidth: 288,
+    desiredHeight: 320,
+    maxHeight: 320,
+    align: "end",
+    providedPopoverRef: popoverRef,
     onLauncherOutOfView: onClose,
   });
 
@@ -1463,7 +1462,10 @@ function RentalDatesField({
     String(rentalDayCount),
   );
   const { placement, popoverRef, style } = useCarsDesktopPopover({
-    open: isOpen, launcherRef, preferredWidth: 580, desiredHeight: 420,
+    open: isOpen,
+    launcherRef,
+    preferredWidth: 580,
+    desiredHeight: 420,
     align: "center",
     onLauncherOutOfView: onClose,
   });
@@ -1495,7 +1497,11 @@ function RentalDatesField({
               {rentalDaysLabel}
             </span>
           ) : null}
-        </span><ChevronDown className={`hidden h-4 w-4 shrink-0 text-slate-500 transition-transform sm:block ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+        </span>
+        <ChevronDown
+          className={`hidden h-4 w-4 shrink-0 text-slate-500 transition-transform sm:block ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
       </button>
 
       {isOpen && typeof document !== "undefined"
@@ -1544,7 +1550,6 @@ function RentalDatesField({
 
 function TimeRangeField({
   isOpen,
-  onDone,
   onClose,
   onToggle,
   pickupTime,
@@ -1554,7 +1559,6 @@ function TimeRangeField({
   wrapRef,
 }: {
   isOpen: boolean;
-  onDone: () => void;
   onClose: () => void;
   onToggle: () => void;
   pickupTime: string;
@@ -1574,7 +1578,10 @@ function TimeRangeField({
     formatCarTimeLabel(returnTime, intlLocale),
   );
   const { placement, popoverRef, style } = useCarsDesktopPopover({
-    open: isOpen, launcherRef, preferredWidth: 448, desiredHeight: 320,
+    open: isOpen,
+    launcherRef,
+    preferredWidth: 448,
+    desiredHeight: 320,
     align: "center",
     onLauncherOutOfView: onClose,
   });
@@ -1627,7 +1634,6 @@ function TimeRangeField({
                 onPickupTimeChange={(time) => updateValue("pickupTime", time)}
                 onReturnTimeChange={(time) => {
                   updateValue("dropoffTime", time);
-                  onDone();
                 }}
               />
             </div>,
