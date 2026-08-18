@@ -364,15 +364,23 @@ export function StandaloneFlightSearchForm({
   const travelerCount = adultCount + childCount + infantCount;
   const travelerSummary = useMemo(() => {
     const isJapanese = locale.toLowerCase().startsWith("ja");
+    const isEnglish = locale.toLowerCase().startsWith("en");
     const listSeparator = isJapanese ? "、" : locale === "zh-cn" ? "，" : ", ";
     const formatTravelerPart = (
       count: number,
       singularLabel: string,
       pluralLabel: string,
-    ) =>
-      isJapanese
+    ) => {
+      const label = count === 1 ? singularLabel : pluralLabel;
+      const presentedLabel =
+        isEnglish && label
+          ? `${label.charAt(0).toLocaleUpperCase(locale)}${label.slice(1)}`
+          : label;
+
+      return isJapanese
         ? `${singularLabel}${count}名`
-        : `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+        : `${count} ${presentedLabel}`;
+    };
     const parts: string[] = [];
     if (adultCount > 0)
       parts.push(
@@ -1008,7 +1016,8 @@ export function StandaloneFlightSearchForm({
         anchorRef={anchorRef}
         desiredWidth={390}
         align="start"
-        offset={4}
+        placement="above"
+        offset={10}
         maxHeight={300}
         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.14)] ring-1 ring-slate-950/[0.02]"
       >
@@ -1017,7 +1026,7 @@ export function StandaloneFlightSearchForm({
             {t("searchingAirportsAndCities")}
           </p>
         ) : suggestions.length ? (
-          <div className="max-h-[280px] overflow-y-auto overscroll-contain py-1">
+          <div className="py-1">
             {suggestions.map((option, index) => (
               <button
                 key={`${field}-${option.code}-${option.airport}`}
@@ -1641,24 +1650,13 @@ export function StandaloneFlightSearchForm({
               }}
               className={searchFieldValueButtonClassName}
             >
-              {useMainFlightLandingMobilePresentation ? (
-                <span className={mobileFieldValueRowClassName}>
-                  <Calendar
-                    className={mobileFieldValueIconClassName}
-                    aria-hidden="true"
-                  />
-                  <span className="truncate">{dateSummary}</span>
-                </span>
-              ) : (
-                <span>{dateSummary}</span>
-              )}
-              <Calendar
-                className={cn(
-                  "h-4 w-4 shrink-0 text-slate-500",
-                  useMainFlightLandingMobilePresentation && "hidden sm:block",
-                )}
-                aria-hidden="true"
-              />
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                <Calendar
+                  className="h-4 w-4 shrink-0 text-slate-500"
+                  aria-hidden="true"
+                />
+                <span className="truncate">{dateSummary}</span>
+              </span>
             </button>
             {datesOpen ? (
               <>
@@ -1729,17 +1727,13 @@ export function StandaloneFlightSearchForm({
               }}
               className={searchFieldValueButtonClassName}
             >
-              {useMainFlightLandingMobilePresentation ? (
-                <span className={mobileFieldValueRowClassName}>
-                  <UserRound
-                    className={mobileFieldValueIconClassName}
-                    aria-hidden="true"
-                  />
-                  <span className="truncate">{travelerSummary}</span>
-                </span>
-              ) : (
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                <UserRound
+                  className="h-4 w-4 shrink-0 text-slate-500"
+                  aria-hidden="true"
+                />
                 <span className="truncate">{travelerSummary}</span>
-              )}
+              </span>
               <ChevronDown
                 className={cn(
                   "h-4 w-4 shrink-0 text-slate-500 transition-transform",
@@ -1972,7 +1966,11 @@ const AirportFieldControl = React.forwardRef<
           </>
         )}
       </button>
-      <div className="relative hidden sm:block">
+      <div className="relative hidden min-w-0 items-center gap-2 sm:flex">
+        <MapPin
+          className="h-4 w-4 shrink-0 text-slate-500"
+          aria-hidden="true"
+        />
         <input
           ref={inputRef}
           type="text"
@@ -1982,7 +1980,7 @@ const AirportFieldControl = React.forwardRef<
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           autoComplete="off"
-          className="h-7 w-full rounded-none border-0 bg-transparent pe-0 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
+          className="h-7 min-w-0 flex-1 rounded-none border-0 bg-transparent pe-0 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
         />
       </div>
       {desktopSuggestions}
@@ -1995,6 +1993,7 @@ type DesktopFlightPopoverProps = {
   anchorRef: React.RefObject<HTMLElement | null>;
   desiredWidth: number;
   align?: "start" | "end";
+  placement?: "auto" | "above" | "below";
   offset?: number;
   maxHeight?: number | string;
   className?: string;
@@ -2007,6 +2006,7 @@ function DesktopFlightPopover({
   anchorRef,
   desiredWidth,
   align = "start",
+  placement = "auto",
   offset = 10,
   maxHeight,
   className,
@@ -2016,7 +2016,8 @@ function DesktopFlightPopover({
   const popoverRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{
     left: number;
-    top: number;
+    top: number | null;
+    bottom: number | null;
     width: number;
     availableHeight: number;
   } | null>(null);
@@ -2074,19 +2075,20 @@ function DesktopFlightPopover({
         viewportHeight - anchorRect.bottom - offset - gutter;
       const availableAbove = anchorRect.top - offset - gutter;
       const openAbove =
-        availableBelow < popoverHeight && availableAbove > availableBelow;
+        placement === "above" ||
+        (placement === "auto" &&
+          availableBelow < popoverHeight &&
+          availableAbove > availableBelow);
       const availableHeight = Math.max(
         160,
         openAbove ? availableAbove : availableBelow,
       );
-      const top = openAbove
-        ? Math.max(
-            gutter,
-            anchorRect.top - offset - Math.min(popoverHeight, availableHeight),
-          )
-        : Math.max(gutter, anchorRect.bottom + offset);
+      const top = openAbove ? null : Math.max(gutter, anchorRect.bottom + offset);
+      const bottom = openAbove
+        ? Math.max(gutter, viewportHeight - anchorRect.top + offset)
+        : null;
 
-      setPosition({ left, top, width, availableHeight });
+      setPosition({ left, top, bottom, width, availableHeight });
     };
 
     updatePosition();
@@ -2105,7 +2107,16 @@ function DesktopFlightPopover({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [align, anchorRef, desiredWidth, isDesktop, maxHeight, offset, open]);
+  }, [
+    align,
+    anchorRef,
+    desiredWidth,
+    isDesktop,
+    maxHeight,
+    offset,
+    open,
+    placement,
+  ]);
 
   if (!open || !isDesktop || !position || typeof document === "undefined")
     return null;
@@ -2120,7 +2131,8 @@ function DesktopFlightPopover({
       )}
       style={{
         left: position.left,
-        top: position.top,
+        top: position.top ?? undefined,
+        bottom: position.bottom ?? undefined,
         width: position.width,
         maxHeight:
           typeof maxHeight === "number"
