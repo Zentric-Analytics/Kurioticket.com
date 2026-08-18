@@ -237,18 +237,22 @@ export function PrimaryButton({
   label,
   onPress,
   icon = "search",
+  disabled = false,
 }: {
   label: string;
   onPress: () => void;
   icon?: FlowIconName;
+  disabled?: boolean;
 }) {
   const ft = useFlowTheme();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [ft.styles.primary, pressed && ft.styles.pressed]}
+      style={({ pressed }) => [ft.styles.primary, disabled && { opacity: 0.6 }, pressed && ft.styles.pressed]}
     >
       <FlowIcon name={icon} color="white" />
       <Text style={ft.styles.primaryText}>{label}</Text>

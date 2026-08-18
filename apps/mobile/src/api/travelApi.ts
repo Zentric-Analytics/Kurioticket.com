@@ -24,6 +24,7 @@ export type MobileNotificationType = "PRICE_ALERT" | "SUPPORT_UPDATE" | "ACCOUNT
 export type MobileNotification = { id: string; type: MobileNotificationType; title: string; body: string; actionPath: "/price-alerts" | "/saved" | "/settings" | "/personal-information" | null; metadata: Record<string, unknown> | null; readAt: string | null; createdAt: string };
 export type MobileNotificationPage = { items: MobileNotification[]; nextCursor: string | null };
 export type FeatureAvailability = { flightSearch: boolean; hotelSearch: boolean; carSearch: boolean; deals: boolean; priceAlerts: boolean };
+export const FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 22_000;
 
 function apiErrorMessage(data: Record<string, unknown>) {
   if (typeof data.error === "string") return data.error;
@@ -87,7 +88,7 @@ async function fetchExploreCatalogue(): Promise<MobileExploreCatalogue> {
 
 export const travelApi = {
   featureAvailability: () => request<FeatureAvailability>("/api/feature-availability"),
-  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, options),
+  searchFlights: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicFlightResult>>("/api/flights/search", { method: "POST", body: JSON.stringify(body) }, { ...options, timeoutMs: FLIGHT_SEARCH_REQUEST_TIMEOUT_MS }),
   searchHotels: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<PublicHotelResult>>("/api/hotels/search", { method: "POST", body: JSON.stringify(body) }, options),
   searchCars: (body: Record<string, unknown>, options?: { signal?: AbortSignal; requestId?: string }) => request<TravelSearchResponse<NormalizedCarResult>>("/api/cars/search", { method: "POST", body: JSON.stringify(body) }, options),
   trips: (status?: "upcoming" | "past" | "cancelled") => request<{ trips: MobileTrip[]; summary: Record<string, number> }>(`/api/mobile/v1/trips${status ? `?status=${status}` : ""}`),
