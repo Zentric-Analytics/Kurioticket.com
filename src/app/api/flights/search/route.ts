@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
@@ -24,9 +24,9 @@ export async function POST(request: Request) {
   }
 
   const session = (await resolveOptionalWebApiSession())?.session;
-  const aggregate = await searchFlights(parsed.data);
+  const aggregate = await searchFlights(parsed.data, { signal: request.signal });
   if (aggregate.unavailableMessage) {
-    await Promise.all(
+    after(() => Promise.all(
       aggregate.providerStatuses.map((provider) =>
         logProviderCall({
           provider: provider.provider,
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
           errorMessage: provider.error,
         }),
       ),
-    );
+    ).catch((error) => console.error("[flight-search:logging]", error)));
 
     return NextResponse.json(
       {
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       ? "PARTIAL"
       : "SUCCESS";
 
-  await Promise.all([
+  after(() => Promise.all([
     logSearchHistory({
       userId: session?.user?.id,
       type: "FLIGHT",
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         errorMessage: provider.error,
       }),
     ),
-  ]);
+  ]).catch((error) => console.error("[flight-search:logging]", error)));
 
   return NextResponse.json({
     ...classifyFlights(publicResults, aggregate.warnings, requestId),

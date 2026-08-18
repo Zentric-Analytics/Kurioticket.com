@@ -7,6 +7,7 @@ import {
   duffelOfferRequestSearchUrl,
   selectGraphBackedDuffelOffers,
 } from "./duffelProvider";
+import { fetchJson, runProvider } from "../providerUtils";
 
 test("Duffel Offer Request searches finish supplier work below the HTTP timeout", () => {
   assert.ok(DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS < DUFFEL_SEARCH_HTTP_TIMEOUT_MS);
@@ -20,6 +21,19 @@ test("Duffel Offer Request searches finish supplier work below the HTTP timeout"
       String(DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS),
     );
     assert.equal(url.searchParams.get("view"), view ?? null);
+  }
+});
+
+test("provider HTTP timeout aborts and propagates as provider_timeout", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = ((_url: string | URL | Request, init?: RequestInit) =>
+    new Promise((_resolve, reject) => init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))))) as typeof fetch;
+  try {
+    const result = await runProvider("Duffel", async () => [await fetchJson("https://example.invalid", {}, 5)]);
+    assert.equal(result.status, "failed");
+    assert.equal(result.errorReason, "provider_timeout");
+  } finally {
+    globalThis.fetch = originalFetch;
   }
 });
 

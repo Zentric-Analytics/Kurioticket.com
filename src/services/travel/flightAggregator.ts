@@ -2,6 +2,7 @@ import type {
   AggregatedResult,
   FlightSearchParams,
   NormalizedFlightResult,
+  ProviderResult,
   SortMode,
 } from "@/lib/types";
 import { getItineraryDateKey } from "@/lib/utils";
@@ -15,9 +16,13 @@ import {
 /** The sole production flight pipeline. Provider policy is deliberately not configurable. */
 export async function searchFlights(
   search: FlightSearchParams,
+  options: { signal?: AbortSignal; deadlineMs?: number } = {},
 ): Promise<AggregatedResult<NormalizedFlightResult>> {
   const startedAt = Date.now();
-  const provider = await searchDuffelFlights(search);
+  const provider = await runWithFlightSearchDeadline(
+    (signal) => searchDuffelFlights(search, signal),
+    options,
+  );
   const now = Date.now();
   const results = assignBadges(
     sortFlights(
@@ -47,6 +52,33 @@ export async function searchFlights(
         }
       : {}),
   };
+}
+
+/** Leaves response time for route serialization before the mobile hard timeout. */
+export const FLIGHT_SEARCH_DEADLINE_MS = 18_000;
+
+export async function runWithFlightSearchDeadline<T>(
+  task: (signal: AbortSignal) => Promise<ProviderResult<T>>,
+  options: { signal?: AbortSignal; deadlineMs?: number } = {},
+) {
+  const startedAt = Date.now();
+  const controller = new AbortController();
+  const onAbort = () => controller.abort();
+  options.signal?.addEventListener("abort", onAbort, { once: true });
+  if (options.signal?.aborted) controller.abort();
+  let timeout: ReturnType<typeof setTimeout>;
+  const deadlineResult = new Promise<ProviderResult<T>>((resolve) => {
+    timeout = setTimeout(() => {
+      controller.abort();
+      resolve({ provider: "Duffel", results: [], status: "failed", latencyMs: Date.now() - startedAt, error: "provider_timeout", errorCategory: "timeout", errorReason: "provider_timeout" });
+    }, options.deadlineMs ?? FLIGHT_SEARCH_DEADLINE_MS);
+  });
+  try {
+    return await Promise.race([task(controller.signal), deadlineResult]);
+  } finally {
+    clearTimeout(timeout!);
+    options.signal?.removeEventListener("abort", onAbort);
+  }
 }
 
 export function sortFlights(results: NormalizedFlightResult[], sort: SortMode) {

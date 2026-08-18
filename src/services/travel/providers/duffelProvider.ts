@@ -251,6 +251,7 @@ export function searchDuffelDealsItineraryInventory(
 
 export function searchDuffelFlights(
   search: FlightSearchParams,
+  signal?: AbortSignal,
 ): Promise<ProviderResult<NormalizedFlightResult>> {
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
@@ -300,6 +301,7 @@ export function searchDuffelFlights(
       duffelOfferRequestSearchUrl(),
       {
         method: "POST",
+        signal,
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",

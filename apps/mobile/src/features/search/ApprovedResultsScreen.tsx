@@ -30,6 +30,7 @@ import {
 import { Heart } from "lucide-react-native";
 import {
   travelApi,
+  TravelApiError,
   type FlightResult,
   type HotelResult,
 } from "../../api/travelApi";
@@ -104,6 +105,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [status, setStatus] = useState<Status>("loading");
   const [message, setMessage] = useState("");
   const [retry, setRetry] = useState(0);
+  const searchSequence = useRef(0);
+  const activeSearch = useRef<AbortController | null>(null);
   const [sort, setSort] = useState("best");
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -138,6 +141,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && one(params.visual) === "1";
   const load = useCallback(async () => {
+    activeSearch.current?.abort("superseded");
+    const controller = new AbortController();
+    activeSearch.current = controller;
+    const sequence = ++searchSequence.current;
+    const requestId = `mobile-${Date.now()}-${sequence}`;
+    const isCurrent = () =>
+      !controller.signal.aborted && sequence === searchSequence.current;
     if (!plan.plan) {
       setStatus("error");
       setMessage(plan.error || "Invalid search");
@@ -153,8 +163,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     try {
       const response =
         product === "flight"
-          ? await travelApi.searchFlights(plan.plan.payload)
-          : await travelApi.searchHotels(plan.plan.payload);
+          ? await travelApi.searchFlights(plan.plan.payload, { signal: controller.signal, requestId })
+          : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
+      if (!isCurrent()) return;
       const valid =
         product === "flight"
           ? (response.results as FlightResult[]).filter((x) =>
@@ -165,12 +176,21 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setStatus(valid.length ? "ready" : "empty");
       setMessage(response.warnings?.[0] || "");
     } catch (e) {
+      if (!isCurrent() || (e instanceof TravelApiError && e.code === "cancelled")) return;
       setStatus("error");
-      setMessage(e instanceof Error ? e.message : "Search failed");
+      setMessage(
+        e instanceof TravelApiError && e.code === "timeout"
+          ? "Flight search took too long. Please try again."
+          : e instanceof Error ? e.message : "Search failed",
+      );
     }
   }, [product, plan.plan?.key, retry, visualTest]);
   useEffect(() => {
     void load();
+    return () => {
+      searchSequence.current += 1;
+      activeSearch.current?.abort("screen-cleanup");
+    };
   }, [load]);
   const edit = () => {
     if (product === "flight") {

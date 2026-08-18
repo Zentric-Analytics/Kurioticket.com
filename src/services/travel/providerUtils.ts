@@ -41,6 +41,9 @@ export async function fetchJson<T>(
   timeoutMs = 12000,
 ) {
   const controller = new AbortController();
+  const onAbort = () => controller.abort();
+  init.signal?.addEventListener("abort", onAbort, { once: true });
+  if (init.signal?.aborted) controller.abort();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
@@ -58,6 +61,7 @@ export async function fetchJson<T>(
     return (await response.json()) as T;
   } finally {
     clearTimeout(timeout);
+    init.signal?.removeEventListener("abort", onAbort);
   }
 }
 
