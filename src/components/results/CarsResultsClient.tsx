@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
@@ -111,6 +112,20 @@ export function buildCarsResultsHref(formData: FormData) {
 
   const query = params.toString();
   return query ? `/cars/results?${query}` : "/cars/results";
+}
+
+export function isSameCarsResultsHref(targetHref: string, currentHref: string) {
+  const baseUrl = "https://kurioticket.local";
+  const targetUrl = new URL(targetHref, baseUrl);
+  const currentUrl = new URL(currentHref, baseUrl);
+
+  targetUrl.searchParams.sort();
+  currentUrl.searchParams.sort();
+
+  return (
+    targetUrl.pathname === currentUrl.pathname &&
+    targetUrl.search === currentUrl.search
+  );
 }
 
 type CarFilterOption = {
@@ -593,6 +608,8 @@ export function CarsResultsClient({
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isSearchSubmitting, setIsSearchSubmitting] = useState(false);
+  const isSearchSubmittingRef = useRef(false);
   const [mobileCompactHeaderVisible, setMobileCompactHeaderVisible] =
     useState(false);
   const [mobilePicker, setMobilePicker] =
@@ -1108,15 +1125,29 @@ export function CarsResultsClient({
             const formData = new FormData(event.currentTarget);
             const href = buildCarsResultsHref(formData);
 
+            if (isSearchSubmittingRef.current) return;
+
             // Submission commits the live form. It must not run the cancel
             // snapshot or restore focus to the outgoing Results set.
             mobileSearchSnapshotRef.current = null;
             mobileSearchLauncherRef.current = null;
+
+            const currentHref = `${window.location.pathname}${window.location.search}`;
+            const isSameSearch = isSameCarsResultsHref(href, currentHref);
+
+            if (!isSameSearch) {
+              isSearchSubmittingRef.current = true;
+              setIsSearchSubmitting(true);
+            }
+
             setMobileSearchOpen(false);
             setMobilePicker(null);
             setDatesOpen(false);
             setTimesOpen(false);
             setDriverAgeOpen(false);
+
+            if (isSameSearch) return;
+
             router.push(href, { scroll: true });
             return;
           }
@@ -1387,6 +1418,27 @@ export function CarsResultsClient({
       </form>
     );
   };
+
+  if (isSearchSubmitting) {
+    return (
+      <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+        <BrandedLoading
+          variant="fullscreen"
+          visual="logoPulse"
+          showProgress={false}
+          className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+          contentClassName="max-w-md text-center"
+          title={t("carsResults.loading.title")}
+          messages={[
+            t("carsResults.loading.checkingCarsAndRates"),
+            t("carsResults.loading.comparingVehiclesAndProviders"),
+            t("carsResults.loading.findingBestAvailableOptions"),
+            t("carsResults.loading.preparingResults"),
+          ]}
+        />
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 bg-[#f6f8fb] pb-8">

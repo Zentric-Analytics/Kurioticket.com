@@ -76,15 +76,69 @@ test("mobile Search captures the live form before submit-close and router naviga
   const closeIndex = submitHandler.indexOf(
     "mobileSearchSnapshotRef.current = null",
   );
+  const pendingIndex = submitHandler.indexOf("setIsSearchSubmitting(true)");
+  const drawerCloseIndex = submitHandler.indexOf("setMobileSearchOpen(false)");
   const navigationIndex = submitHandler.indexOf("router.push(href");
 
   assert.ok(preventDefaultIndex >= 0);
   assert.ok(preventDefaultIndex < formDataIndex);
   assert.ok(formDataIndex < hrefIndex);
   assert.ok(hrefIndex < closeIndex);
-  assert.ok(closeIndex < navigationIndex);
+  assert.ok(closeIndex < pendingIndex);
+  assert.ok(pendingIndex < drawerCloseIndex);
+  assert.ok(drawerCloseIndex < navigationIndex);
   assert.doesNotMatch(submitHandler, /mode: "cancel"/);
   assert.match(submitHandler, /router\.push\(href, \{ scroll: true \}\)/);
+});
+
+test("mobile Search replaces stale Cars results with localized branded loading", () => {
+  const pendingBranch = source.slice(
+    source.indexOf("if (isSearchSubmitting) {"),
+    source.indexOf(
+      'return (\n    <main className="flex-1 bg-[#f6f8fb] pb-8">',
+      source.indexOf("if (isSearchSubmitting) {") + 1,
+    ),
+  );
+
+  assert.match(source, /const \[isSearchSubmitting, setIsSearchSubmitting\]/);
+  assert.match(pendingBranch, /<BrandedLoading/);
+  assert.match(pendingBranch, /variant="fullscreen"/);
+  assert.match(pendingBranch, /visual="logoPulse"/);
+  assert.match(pendingBranch, /showProgress=\{false\}/);
+  assert.doesNotMatch(pendingBranch, /CarsResultsExperience|CarResultCard/);
+
+  for (const key of [
+    "carsResults.loading.title",
+    "carsResults.loading.checkingCarsAndRates",
+    "carsResults.loading.comparingVehiclesAndProviders",
+    "carsResults.loading.findingBestAvailableOptions",
+    "carsResults.loading.preparingResults",
+  ]) {
+    assert.match(pendingBranch, new RegExp(key.replaceAll(".", "\\.")));
+  }
+
+  assert.doesNotMatch(pendingBranch, /setTimeout|setInterval/);
+});
+
+test("same-URL Search closes without entering a permanent pending state", () => {
+  const submitHandler = source.slice(
+    source.indexOf('if (placement === "mobile") {'),
+    source.indexOf(
+      "setDesktopStickySearchSection(null)",
+      source.indexOf('if (placement === "mobile") {'),
+    ),
+  );
+
+  assert.match(submitHandler, /isSameCarsResultsHref\(href, currentHref\)/);
+  assert.match(
+    submitHandler,
+    /if \(!isSameSearch\) \{[\s\S]*setIsSearchSubmitting\(true\)/,
+  );
+  assert.match(
+    submitHandler,
+    /setMobileSearchOpen\(false\)[\s\S]*if \(isSameSearch\) return;[\s\S]*router\.push/,
+  );
+  assert.match(submitHandler, /if \(isSearchSubmittingRef\.current\) return;/);
 });
 
 test("Heathrow mobile draft produces one exact pickup query value", () => {
