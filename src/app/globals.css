@@ -846,3 +846,45 @@ textarea {
 .fare-strip-scroll::-webkit-scrollbar {
   display: none;
 }
+
+/* Cars Results desktop pickers keep native scrolling while matching the
+   understated scrollbar treatment used by the main Cars search. */
+[data-cars-results-picker-popover="true"] [data-cars-time-list],
+[data-cars-results-picker-popover="true"] [data-cars-age-list] {
+  scrollbar-color: #64748b transparent;
+  scrollbar-width: thin;
+}
+
+[data-cars-results-picker-popover="true"]
+  :is([data-cars-time-list], [data-cars-age-list])::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+[data-cars-results-picker-popover="true"]
+  :is([data-cars-time-list], [data-cars-age-list])::-webkit-scrollbar-track,
+[data-cars-results-picker-popover="true"]
+  :is([data-cars-time-list], [data-cars-age-list])::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+[data-cars-results-picker-popover="true"]
+  :is([data-cars-time-list], [data-cars-age-list])::-webkit-scrollbar-thumb {
+  background-color: #64748b;
+  border-radius: 999px;
+}
+
+[data-cars-results-picker-popover="true"]
+  :is(
+    [data-cars-time-list],
+    [data-cars-age-list]
+  )::-webkit-scrollbar-thumb:hover {
+  background-color: #475569;
+}
+
+[data-cars-results-picker-popover="true"]
+  :is([data-cars-time-list], [data-cars-age-list])::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
