@@ -256,7 +256,8 @@ const mobileDoneButtonClassName =
 
 type DesktopTopLayerPopoverProps = {
   open: boolean;
-  launcherRef: RefObject<HTMLElement | null>;
+  launcherRef?: RefObject<HTMLElement | null>;
+  launcherId?: string;
   align?: "left" | "center" | "right";
   width: number;
   maxViewportGutter?: number;
@@ -266,6 +267,7 @@ type DesktopTopLayerPopoverProps = {
   id?: string;
   role?: "dialog" | "listbox";
   ariaLabel?: string;
+  placement?: "above" | "below";
   children: ReactNode;
 };
 
@@ -286,6 +288,7 @@ const getDesktopPopoverServerSnapshot = () => "server";
 function DesktopTopLayerPopover({
   open,
   launcherRef,
+  launcherId,
   align = "left",
   width,
   maxViewportGutter = 16,
@@ -295,9 +298,11 @@ function DesktopTopLayerPopover({
   id,
   role,
   ariaLabel,
+  placement = "below",
   children,
 }: DesktopTopLayerPopoverProps) {
   const [anchorRect, setAnchorRect] = useState<{
+    top: number;
     bottom: number;
     left: number;
     right: number;
@@ -313,16 +318,18 @@ function DesktopTopLayerPopover({
   );
 
   const updateAnchorRect = useCallback(() => {
-    const rect = launcherRef.current?.getBoundingClientRect();
+    const launcher = launcherRef?.current ?? (launcherId ? document.getElementById(launcherId) : null);
+    const rect = launcher?.getBoundingClientRect();
     setAnchorRect(rect
       ? {
           bottom: rect.bottom,
+          top: rect.top,
           left: rect.left,
           right: rect.right,
           width: rect.width,
         }
       : null);
-  }, [launcherRef]);
+  }, [launcherId, launcherRef]);
 
   useEffect(() => {
     if (!open) {
@@ -360,10 +367,17 @@ function DesktopTopLayerPopover({
       data-viewport-snapshot={viewportSnapshot}
       style={{
         left,
-        top: anchorRect.bottom + offset,
+        ...(placement === "above"
+          ? { bottom: window.innerHeight - anchorRect.top + offset }
+          : { top: anchorRect.bottom + offset }),
         width: panelWidth,
         maxWidth,
-        maxHeight: Math.max(0, window.innerHeight - anchorRect.bottom - offset - maxViewportGutter),
+        maxHeight: Math.max(
+          0,
+          placement === "above"
+            ? anchorRect.top - offset - maxViewportGutter
+            : window.innerHeight - anchorRect.bottom - offset - maxViewportGutter
+        ),
       }}
       className={cn(
         "fixed hidden overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
@@ -808,7 +822,7 @@ export function SearchTabs({
         mobileHomepage
           ? "rounded-[14px] border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
           : compactHero
-          ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
+          ? "p-3 sm:p-4 lg:rounded-[22px] lg:border-white/80 lg:bg-white/95 lg:p-5 lg:shadow-[0_22px_54px_rgba(15,23,42,0.16)] lg:ring-1 lg:ring-white/80"
           : "p-2"
       ),
     [compactHero, mobileHomepage, searchTabsOverlayOpen, tab]
@@ -817,14 +831,14 @@ export function SearchTabs({
   const tabsClassName = cn(
     "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
     !mobileHomepage && compactHero
-      ? "mb-1 sm:mb-1.5 lg:mb-2 lg:gap-0.5 lg:border-slate-200/90 lg:bg-slate-100/80 lg:shadow-inner"
+      ? "mb-4 w-full gap-5 rounded-none border-0 border-b border-slate-200 bg-transparent p-0 lg:mb-5 lg:gap-7 lg:shadow-none"
       : !mobileHomepage && "mb-2"
   );
-  const formClassName = compactHero ? "space-y-1 lg:space-y-1.5" : "space-y-2";
+  const formClassName = compactHero ? "space-y-3 lg:space-y-4" : "space-y-2";
   const fieldCardClassName = cn(
     "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
     compactHero
-      ? "p-0.5 lg:border-slate-200/90 lg:p-1 lg:shadow-[0_14px_34px_rgba(15,23,42,0.10)] lg:ring-1 lg:ring-slate-900/[0.02]"
+      ? "border-0 bg-transparent p-0 shadow-none ring-0"
       : "p-1"
   );
   const hotelFieldCardClassName = mobileHomepage
@@ -836,7 +850,7 @@ export function SearchTabs({
   const flightGridClassName = cn(
     "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
     compactHero
-      ? "gap-1 lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]"
+      ? "gap-2.5 lg:grid-cols-[minmax(0,2.75fr)_minmax(180px,1.15fr)_minmax(190px,1.22fr)_132px] lg:gap-3"
       : "gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]"
   );
   const hotelGridClassName = cn(
@@ -889,14 +903,11 @@ export function SearchTabs({
     compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em] lg:text-slate-900 lg:placeholder:text-slate-500" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-[#004BB8]/35 sm:focus-within:ring-2 sm:focus-within:ring-[#004BB8]/20 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-[#004BB8]/35 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-[#004BB8]/20"
+    ? "grid grid-cols-1 gap-2.5 bg-transparent sm:grid-cols-[minmax(0,1fr)_38px_minmax(0,1fr)] sm:items-stretch lg:grid-cols-[minmax(0,1fr)_42px_minmax(0,1fr)]"
     : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
-      ? cn(
-          "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 transition-colors sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 lg:flex lg:flex-col lg:justify-center lg:rounded-lg",
-          side === "origin" ? "sm:pe-3" : "sm:ps-3"
-        )
+      ? "relative min-h-[68px] rounded-xl border border-slate-200 bg-white px-4 py-2.5 shadow-[0_3px_10px_rgba(15,23,42,0.05)] transition-colors hover:border-slate-300 focus-within:border-[#075EE8] focus-within:ring-2 focus-within:ring-[#075EE8]/10 lg:flex lg:flex-col lg:justify-center"
       : cn("relative px-0 py-0 transition-colors lg:rounded-lg", side === "origin" ? "pe-3" : "ps-3");
   const submitWrapClassName = cn(
     "sm:col-span-2 lg:col-span-1 lg:self-stretch",
@@ -2289,18 +2300,21 @@ export function SearchTabs({
     sectionLabel: string;
     onSelect: (option: AirportOption) => void;
   }) => (
-    <div
-      className={cn(
-        "absolute start-0 top-[calc(100%+10px)] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]",
-        desktopPopoverPanelClassName
-      )}
+    <DesktopTopLayerPopover
+      open
+      launcherId={inputId}
+      placement={compactHero ? "above" : "below"}
+      width={520}
+      role="listbox"
+      ariaLabel={sectionLabel}
+      className="overflow-hidden"
     >
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
           {sectionLabel}
         </p>
       </div>
-      <div className="max-h-[min(52vh,360px)] overflow-y-auto py-1">
+      <div className="py-1">
         {isLoading ? (
           <div className="flex items-center gap-3 px-4 py-4 text-sm font-medium text-slate-500">
             <span className="h-2 w-2 rounded-full bg-[#004BB8] shadow-[0_0_0_4px_rgba(0,75,184,0.18)]" aria-hidden="true" />
@@ -2341,7 +2355,7 @@ export function SearchTabs({
           </div>
         )}
       </div>
-    </div>
+    </DesktopTopLayerPopover>
   );
 
   const renderDesktopCalendarMonth = ({
@@ -2358,12 +2372,12 @@ export function SearchTabs({
         aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
         className="min-w-0"
       >
-        <h3 className="mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900">
+        <h3 className={cn("text-center text-sm font-medium tracking-tight text-slate-900", compactHero ? "mb-1.5" : "mb-2.5")}>
           {formatFlightsMonthHeading(monthDate, calendarLocale)}
         </h3>
-        <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium tracking-[0.09em] text-slate-500">
+        <div className={cn("grid grid-cols-7 text-center text-[10px] font-medium tracking-[0.09em] text-slate-500", compactHero ? "mb-1" : "mb-1.5")}>
           {weekdays.map((weekday) => (
-            <span key={weekday} className="py-1.5">{weekday}</span>
+            <span key={weekday} className={compactHero ? "py-1" : "py-1.5"}>{weekday}</span>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-y-0.5">
@@ -2386,7 +2400,7 @@ export function SearchTabs({
             );
 
             if (!cell.isCurrentMonth) {
-              return <span key={`desktop-placeholder-${mode}-${iso}`} aria-hidden="true" className="h-10" />;
+              return <span key={`desktop-placeholder-${mode}-${iso}`} aria-hidden="true" className={compactHero ? "h-8" : "h-10"} />;
             }
 
             return (
@@ -2407,7 +2421,8 @@ export function SearchTabs({
                 disabled={isDisabledDate}
                 aria-disabled={isDisabledDate}
                 className={cn(
-                  "focus-ring relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors disabled:cursor-not-allowed",
+                  "focus-ring relative mx-auto flex items-center justify-center rounded-full text-sm font-medium transition-colors disabled:cursor-not-allowed",
+                  compactHero ? "h-8 w-8" : "h-10 w-10",
                   isDisabledDate
                     ? "text-slate-300"
                     : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
@@ -2443,11 +2458,12 @@ export function SearchTabs({
     <DesktopTopLayerPopover
       open
       launcherRef={launcherRef}
+      placement={compactHero ? "above" : "below"}
       align={mode === "flights" ? "center" : "left"}
       width={mode === "flights" ? 760 : 660}
       className={cn(
-        "p-4",
-        mode === "flights" && "lg:p-5"
+        compactHero ? "p-3" : "p-4",
+        mode === "flights" && !compactHero && "lg:p-5"
       )}
     >
     <div
@@ -2457,7 +2473,7 @@ export function SearchTabs({
         : (translate("chooseTravelDates") || "Choose travel dates")}
       className="bg-white"
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className={cn("flex items-center justify-between gap-3", compactHero ? "mb-2" : "mb-3")}>
         <div>
           <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
             {mode === "flights"
@@ -2497,17 +2513,17 @@ export function SearchTabs({
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-5">
+      <div className={cn("grid grid-cols-2", compactHero ? "gap-3" : "gap-5")}>
         {[0, 1].map((monthOffset) => renderDesktopCalendarMonth({
           monthDate: addMonths(visibleMonth, monthOffset),
           mode,
         }))}
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+      <div className={cn("flex items-center justify-between gap-3 border-t border-slate-100", compactHero ? "mt-2 pt-2" : "mt-3 pt-3")}>
         <button
           type="button"
           onClick={onClear}
-          className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+          className={cn("focus-ring rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900", compactHero ? "py-2" : "py-2.5")}
         >
           {mode === "hotels"
             ? (translateHotelTravelDateText("clear") || "Clear")
@@ -2516,7 +2532,7 @@ export function SearchTabs({
         <button
           type="button"
           onClick={onDone}
-          className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
+          className={cn("focus-ring rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35", compactHero ? "py-2" : "py-2.5")}
         >
           {translate("done") || "Done"}
         </button>
@@ -2553,7 +2569,7 @@ export function SearchTabs({
             key={row.key}
             className={cn(
               "flex items-center justify-between gap-4 border-b border-slate-100 px-4 last:border-b-0",
-              compact ? "py-3" : "py-4"
+              compact ? (compactHero ? "py-2" : "py-3") : "py-4"
             )}
           >
             <span className="min-w-0">
@@ -2636,7 +2652,7 @@ export function SearchTabs({
   const renderCabinClassPicker = (compact = false) => (
     <div className={cn(
       "rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]",
-      compact && "rounded-2xl border-slate-100 p-3 shadow-none"
+      compact && cn("rounded-2xl border-slate-100 shadow-none", compactHero ? "p-2" : "p-3")
     )}>
       {!compact ? (
         <div className="mb-3 flex items-center justify-between">
@@ -2659,7 +2675,7 @@ export function SearchTabs({
                     compact && "border-[#004BB8]/20 bg-[#004BB8]/7 shadow-none"
                   )
                 : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
-              compact ? "min-h-9 rounded-xl text-xs font-medium" : "font-extrabold"
+              compact ? cn("rounded-xl text-xs font-medium", compactHero ? "min-h-8" : "min-h-9") : "font-extrabold"
             )}
           >
             {label}
@@ -3035,13 +3051,11 @@ export function SearchTabs({
             setTab("flights");
           }}
           className={cn(
-            "focus-ring inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
-            "rounded-lg px-3 py-1.5",
-            compactHero && !mobileHomepage && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            "relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/30 lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
             tab === "flights"
-              ? "bg-white text-navy shadow-sm"
+              ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
-            compactHero && !mobileHomepage && tab === "flights" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
           <Plane className="h-4 w-4" />
@@ -3055,13 +3069,11 @@ export function SearchTabs({
             setTab("hotels");
           }}
           className={cn(
-            "focus-ring inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
-            "rounded-lg px-3 py-1.5",
-            compactHero && !mobileHomepage && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            "relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/30 lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
             tab === "hotels"
-              ? "bg-white text-navy shadow-sm"
+              ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
-            compactHero && !mobileHomepage && tab === "hotels" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
           <BedDouble className="h-4 w-4" />
@@ -3075,13 +3087,11 @@ export function SearchTabs({
             setTab("cars");
           }}
           className={cn(
-            "focus-ring inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
-            "rounded-lg px-3 py-1.5",
-            compactHero && !mobileHomepage && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            "relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/30 lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
             tab === "cars"
-              ? "bg-white text-navy shadow-sm"
+              ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
-            compactHero && !mobileHomepage && tab === "cars" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
           <CarFront className="h-4 w-4" />
@@ -3107,10 +3117,11 @@ export function SearchTabs({
                 <div
                   role="radiogroup"
                   aria-label={t.tripType || "Trip type"}
-                  className="inline-flex items-center gap-3 rounded-lg bg-white/80 px-0.5 py-1 lg:gap-1 lg:rounded-xl lg:border lg:border-slate-200 lg:bg-slate-50 lg:p-1"
+                  className="inline-flex items-center gap-2 bg-transparent py-0.5"
                 >
-                  {(["round-trip", "one-way"] as const).map((mode) => {
+                  {(["round-trip", "one-way", "multi-city"] as const).map((mode) => {
                     const selected = tripType === mode;
+                    const unavailable = mode === "multi-city";
 
                     return (
                       <button
@@ -3118,7 +3129,10 @@ export function SearchTabs({
                         type="button"
                         role="radio"
                         aria-checked={selected}
-                        onClick={() => onSelectTripType(mode)}
+                        aria-disabled={unavailable}
+                        disabled={unavailable}
+                        title={unavailable ? (t.useOneWayOrRoundTripSearch || "Use one-way or round-trip search") : undefined}
+                        onClick={() => !unavailable && onSelectTripType(mode)}
                         onKeyDown={(event) => {
                           if (
                             event.key !== "ArrowRight" &&
@@ -3130,11 +3144,12 @@ export function SearchTabs({
                           }
 
                           event.preventDefault();
-                          onSelectTripType(mode === "round-trip" ? "one-way" : "round-trip");
+                          if (!unavailable) onSelectTripType(mode === "round-trip" ? "one-way" : "round-trip");
                         }}
                         className={cn(
-                          "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950 lg:px-2.5",
-                          selected && "text-slate-950 lg:bg-white lg:shadow-sm"
+                          "focus-ring group inline-flex min-h-9 items-center gap-2 rounded-lg border px-4 py-1.5 text-sm font-semibold transition-colors",
+                          selected ? "border-[#075EE8] bg-[#EEF5FF] text-[#075EE8]" : "border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:text-slate-950",
+                          unavailable && "cursor-not-allowed opacity-60"
                         )}
                       >
                         <span
@@ -3246,6 +3261,7 @@ export function SearchTabs({
                     "Origin"}
                 </label>
                 <div className="relative h-8">
+                  <MapPin aria-hidden="true" className="pointer-events-none absolute start-0 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-500 sm:block" />
                   <button
                     ref={fromMobileLauncherRef}
                     type="button"
@@ -3301,9 +3317,9 @@ export function SearchTabs({
                       )
                     }
                     placeholder={t.fromPlaceholder || "From?"}
-                    className={flightFieldValueClassName}
+                    className={cn(flightFieldValueClassName, compactHero && "ps-6 pe-1")}
                   />
-                  {from.trim() ? (
+                  {!compactHero && from.trim() ? (
                     <button
                       type="button"
                       onClick={onClearOrigin}
@@ -3353,6 +3369,7 @@ export function SearchTabs({
                   {t.destination || "Destination"}
                 </label>
                 <div className="relative h-8">
+                  <MapPin aria-hidden="true" className="pointer-events-none absolute start-0 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-500 sm:block" />
                   <button
                     ref={toMobileLauncherRef}
                     type="button"
@@ -3402,9 +3419,9 @@ export function SearchTabs({
                       )
                     }
                     placeholder={t.toPlaceholder || "To?"}
-                    className={flightFieldValueClassName}
+                    className={cn(flightFieldValueClassName, compactHero && "ps-6 pe-1")}
                   />
-                  {to.trim() ? (
+                  {!compactHero && to.trim() ? (
                     <button
                       type="button"
                       onClick={onClearDestination}
@@ -3436,6 +3453,7 @@ export function SearchTabs({
                 className={cn(
                   "relative rounded-xl border border-slate-300 bg-white",
                   flightJoinedFieldClassName,
+                  compactHero && "lg:rounded-xl lg:border lg:border-slate-200 lg:shadow-[0_3px_10px_rgba(15,23,42,0.05)]",
                   flightDatesOpen && desktopActiveFieldClassName
                 )}
               >
@@ -3520,6 +3538,7 @@ export function SearchTabs({
                 className={cn(
                   "relative rounded-xl border border-slate-300 bg-white",
                   flightJoinedFieldClassName,
+                  compactHero && "lg:rounded-xl lg:border lg:border-slate-200 lg:shadow-[0_3px_10px_rgba(15,23,42,0.05)]",
                   travelersMenuOpen && desktopTravelersFieldClassName
                 )}
               >
@@ -3542,10 +3561,13 @@ export function SearchTabs({
                   }}
                   className={cn(flightFieldButtonClassName, "justify-between pe-0")}
                 >
-                  <span className="block min-w-0 truncate">
+                  <span className="flex min-w-0 items-center gap-2 truncate">
+                    <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                    <span className="truncate">
                       {
                         travelerSummary
                       }
+                    </span>
                   </span>
                   <ChevronDown
                     className={cn(
@@ -3584,9 +3606,10 @@ export function SearchTabs({
                     <DesktopTopLayerPopover
                       open
                       launcherRef={travelersLauncherRef}
+                      placement={compactHero ? "above" : "below"}
                       align="right"
                       width={360}
-                      className={cn("p-4", desktopTravelersPopoverClassName)}
+                      className={cn(compactHero ? "p-3" : "p-4", desktopTravelersPopoverClassName)}
                     >
                     <div
                       role="dialog"
@@ -3601,7 +3624,7 @@ export function SearchTabs({
                           {translate("passengers") || t.travelers || "Travelers"}
                         </h3>
                       </div>
-                      <div className="mt-3 space-y-4">
+                      <div className={cn(compactHero ? "mt-2 space-y-2" : "mt-3 space-y-4")}>
                         {renderPassengerControlRows(true)}
                         <div>
                           <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
@@ -3610,7 +3633,7 @@ export function SearchTabs({
                           {renderCabinClassPicker(true)}
                         </div>
                       </div>
-                      <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                      <div className={cn("flex items-center justify-end gap-2 border-t border-slate-100 bg-white", compactHero ? "sticky bottom-0 mt-2 py-2" : "mt-3 pt-3")}>
                         <button type="button" onClick={() => applyTravelersDraft()} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35">{t.done || "Done"}</button>
                       </div>
                     </div>

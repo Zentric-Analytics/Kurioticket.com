@@ -1014,7 +1014,7 @@ export default function Home() {
       <main className="flex-1 bg-white">
         <section
           data-testid="mobile-homepage-hero"
-          className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]"
+          className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[540px]"
         >
           <div className="absolute inset-0">
             <Image
