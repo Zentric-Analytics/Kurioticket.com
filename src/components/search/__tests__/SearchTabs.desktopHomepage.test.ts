@@ -48,8 +48,26 @@ test("desktop flight fields include semantic icons and omit compact clear contro
 
 test("desktop airport, calendar, and traveler panels share viewport-safe placement", () => {
   assert.match(source, /const renderDesktopAirportSuggestions[\s\S]*?<DesktopTopLayerPopover/);
-  assert.match(source, /placement=\{compactHero \? "above" : "below"\}/);
+  assert.match(source, /placement="auto"/);
+  assert.match(source, /const resolvedPlacement = placement === "auto"/);
+  assert.match(source, /availableBelow >= availableAbove \? "below" : "above"/);
   assert.match(source, /bottom: window\.innerHeight - anchorRect\.top \+ offset/);
   assert.match(source, /maxHeight: Math\.max/);
   assert.match(source, /sticky bottom-0/);
+});
+
+test("desktop fields expose one clean focus boundary instead of nested input rings", () => {
+  const flightValueClasses = source.slice(
+    source.indexOf("const flightFieldValueClassName"),
+    source.indexOf("const flightFieldButtonClassName"),
+  );
+  const hotelValueClasses = source.slice(
+    source.indexOf("const hotelFieldValueClassName"),
+    source.indexOf("const flightRouteGroupClassName"),
+  );
+
+  assert.doesNotMatch(flightValueClasses, /focus-ring/);
+  assert.doesNotMatch(hotelValueClasses, /focus-ring/);
+  assert.match(flightValueClasses, /focus-visible:ring-0/);
+  assert.match(hotelValueClasses, /focus-visible:ring-0/);
 });
