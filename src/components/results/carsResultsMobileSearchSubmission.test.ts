@@ -60,6 +60,44 @@ test("different-return Search serializes both current drafts exactly once", () =
   assert.deepEqual(data.getAll("returnToDifferentLocation"), ["1"]);
 });
 
+test("mobile Search captures the live form before submit-close and router navigation", () => {
+  const submitHandler = source.slice(
+    source.indexOf('if (placement === "mobile") {'),
+    source.indexOf(
+      "setDesktopStickySearchSection(null)",
+      source.indexOf('if (placement === "mobile") {'),
+    ),
+  );
+  const preventDefaultIndex = submitHandler.indexOf("event.preventDefault()");
+  const formDataIndex = submitHandler.indexOf(
+    "new FormData(event.currentTarget)",
+  );
+  const hrefIndex = submitHandler.indexOf("buildCarsResultsHref(formData)");
+  const closeIndex = submitHandler.indexOf(
+    "mobileSearchSnapshotRef.current = null",
+  );
+  const navigationIndex = submitHandler.indexOf("router.push(href");
+
+  assert.ok(preventDefaultIndex >= 0);
+  assert.ok(preventDefaultIndex < formDataIndex);
+  assert.ok(formDataIndex < hrefIndex);
+  assert.ok(hrefIndex < closeIndex);
+  assert.ok(closeIndex < navigationIndex);
+  assert.doesNotMatch(submitHandler, /mode: "cancel"/);
+  assert.match(submitHandler, /router\.push\(href, \{ scroll: true \}\)/);
+});
+
+test("Heathrow mobile draft produces one exact pickup query value", () => {
+  const data = submittedLocations({
+    pickupLocation: "Heathrow Airport (LHR)",
+    dropoffLocation: "",
+    returnToDifferentLocation: false,
+  });
+  const query = new URLSearchParams(data as never);
+
+  assert.deepEqual(query.getAll("pickupLocation"), ["Heathrow Airport (LHR)"]);
+});
+
 test("changed server search input replaces inventory search context", async () => {
   const common = {
     pickupDate: "2026-09-10",

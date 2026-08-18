@@ -13,19 +13,19 @@ const pageSource = readFileSync(
 
 const openDrawer = source.slice(
   source.indexOf("const openMobileSearchDrawer"),
-  source.indexOf("const closeMobileSearchDrawer"),
+  source.indexOf("const cancelMobileSearchDrawer"),
 );
 const closeDrawer = source.slice(
-  source.indexOf("const closeMobileSearchDrawer"),
+  source.indexOf("const cancelMobileSearchDrawer"),
   source.indexOf(
     "useLayoutEffect",
-    source.indexOf("const closeMobileSearchDrawer"),
+    source.indexOf("const cancelMobileSearchDrawer"),
   ),
 );
 const scrollLifecycle = source.slice(
   source.indexOf(
     "useLayoutEffect",
-    source.indexOf("const closeMobileSearchDrawer"),
+    source.indexOf("const cancelMobileSearchDrawer"),
   ),
   source.indexOf("const renderMobileControlsRow"),
 );
@@ -55,23 +55,23 @@ test("opening mobile Edit Search snapshots every mutable Cars search value", () 
   }
 });
 
-test("cancel restores the snapshot while mobile Search leaves its form connected", () => {
-  assert.match(closeDrawer, /if \(cancelDraft && snapshot\)/);
+test("cancel restores the snapshot while mobile Search uses submit semantics", () => {
+  assert.match(closeDrawer, /if \(snapshot\)/);
   assert.match(
     source,
-    /onSubmit=\{\(\) => \{[\s\S]*?if \(placement === "mobile"\) return;/,
+    /if \(placement === "mobile"\) \{[\s\S]*?event\.preventDefault\(\)/,
   );
-  assert.doesNotMatch(
-    source.match(/onSubmit=\{\(\) => \{[\s\S]*?\}\}/)?.[0] ?? "",
-    /closeMobileSearchDrawer/,
+  assert.match(
+    source,
+    /mobileSearchSnapshotRef\.current = null;[\s\S]*?mobileSearchLauncherRef\.current = null;[\s\S]*?setMobileSearchOpen\(false\)/,
   );
-  assert.match(source, /onClick=\{\(\) => closeMobileSearchDrawer\(\)\}/);
+  assert.match(source, /onClick=\{\(\) => cancelMobileSearchDrawer\(\)\}/);
 });
 
 test("a committed Results navigation remounts client state for the new search", () => {
   assert.match(
     pageSource,
-    /<CarsResultsClient\s+key=\{JSON\.stringify\(values\)\}\s+values=\{values\}/,
+    /<CarsResultsClient\s+key=\{searchIdentity\}\s+values=\{values\}/,
   );
 });
 
@@ -93,6 +93,6 @@ test("nested picker Done remains draft state that the editor X can cancel", () =
     source.match(
       /<MobileDatePickerDialog[\s\S]*?<div\n        className=\{cn\(/,
     )?.[0] ?? "",
-    /closeMobileSearchDrawer/,
+    /cancelMobileSearchDrawer/,
   );
 });

@@ -1,8 +1,15 @@
+import { Suspense } from "react";
+import { cookies } from "next/headers";
+
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { CarsResultsClient } from "@/components/results/CarsResultsClient";
 import type { CarSearchParams } from "@/lib/cars/types";
 import { hasExplicitDifferentReturnLocation } from "@/lib/cars/carsSearchUtils";
+import { getTranslations } from "@/lib/i18n";
+import { translations as enTranslations } from "@/lib/i18n/en";
+import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
 import { searchCars } from "@/services/travel/carAggregator";
 
 type CarsResultsSearchParams = Promise<
@@ -59,7 +66,8 @@ export default async function CarsResultsPage({
     dropoffTime: getParamValue(params, "dropoffTime") || "10:00",
     driverAge: normalizeDriverAge(getParamValue(params, "driverAge")),
   };
-  const inventory = await searchCars(values);
+  const searchIdentity = JSON.stringify(values);
+  const t = getTranslations((await cookies()).get(LOCALE_COOKIE_KEY)?.value);
 
   return (
     <>
@@ -69,13 +77,75 @@ export default async function CarsResultsPage({
         hideDesktopTravelNav
         hideMobileCategoryTabs
       />
-      <CarsResultsClient
-        key={JSON.stringify(values)}
-        values={values}
-        initialResults={inventory.results}
-        inventoryStatus={inventory.status}
-      />
+      <Suspense
+        key={searchIdentity}
+        fallback={
+          <CarsResultsFallback
+            title={
+              t["carsResults.loading.title"] ??
+              enTranslations["carsResults.loading.title"]
+            }
+            messages={[
+              t["carsResults.loading.checkingCarsAndRates"] ??
+                enTranslations["carsResults.loading.checkingCarsAndRates"],
+              t["carsResults.loading.comparingVehiclesAndProviders"] ??
+                enTranslations[
+                  "carsResults.loading.comparingVehiclesAndProviders"
+                ],
+              t["carsResults.loading.findingBestAvailableOptions"] ??
+                enTranslations[
+                  "carsResults.loading.findingBestAvailableOptions"
+                ],
+              t["carsResults.loading.preparingResults"] ??
+                enTranslations["carsResults.loading.preparingResults"],
+            ]}
+          />
+        }
+      >
+        <CarsResultsContent values={values} searchIdentity={searchIdentity} />
+      </Suspense>
       <Footer />
     </>
+  );
+}
+
+async function CarsResultsContent({
+  values,
+  searchIdentity,
+}: {
+  values: CarSearchParams & { returnToDifferentLocation: boolean };
+  searchIdentity: string;
+}) {
+  const inventory = await searchCars(values);
+
+  return (
+    <CarsResultsClient
+      key={searchIdentity}
+      values={values}
+      initialResults={inventory.results}
+      inventoryStatus={inventory.status}
+    />
+  );
+}
+
+function CarsResultsFallback({
+  title,
+  messages,
+}: {
+  title: string;
+  messages: string[];
+}) {
+  return (
+    <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+      <BrandedLoading
+        variant="fullscreen"
+        visual="logoPulse"
+        showProgress={false}
+        className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+        contentClassName="max-w-md text-center"
+        title={title}
+        messages={messages}
+      />
+    </main>
   );
 }
