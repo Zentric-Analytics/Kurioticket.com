@@ -8,9 +8,26 @@ const desktopBranch = source.slice(desktopStart);
 
 test("desktop homepage uses a clean tab rail and separate search fields", () => {
   assert.match(source, /compactHero[\s\S]*?border-b border-slate-200 bg-transparent/);
-  assert.match(source, /min-h-\[68px\][\s\S]*?rounded-xl border border-slate-200 bg-white/);
+  assert.match(source, /flightRouteGroupClassName[\s\S]*?rounded-xl border border-slate-200 bg-white/);
+  assert.match(source, /sm:grid-cols-\[minmax\(0,1fr\)_34px_minmax\(0,1fr\)\]/);
+  assert.match(source, /before:start-1\/2 before:w-px before:bg-slate-200/);
   assert.match(source, /lg:rounded-xl lg:border lg:border-slate-200/);
   assert.match(desktopBranch, /Flights[\s\S]*?Hotels[\s\S]*?Cars/);
+});
+
+test("desktop Cars keeps a different return location beside pickup and gives every summary a leading icon", () => {
+  assert.match(source, /compactHero[\s\S]*?carsValues\.returnToDifferentLocation[\s\S]*?lg:grid-cols-\[minmax\(0,1\.2fr\)_minmax\(0,1\.2fr\)/);
+  assert.match(desktopBranch, /\{compactHero \? carsReturnLocationField : null\}/);
+  assert.match(desktopBranch, /\{!compactHero \? carsReturnLocationField : null\}/);
+  assert.match(source, /carsReturnLocationField[\s\S]*?<MapPin aria-hidden="true"/);
+  assert.match(desktopBranch, /homepage-cars-pickup-desktop[\s\S]*?h-8 w-full ps-6/);
+  assert.match(desktopBranch, /homepage-cars-time-range[\s\S]*?leadingIcon=\{<Clock/);
+  assert.match(desktopBranch, /homepage-cars-driver-age[\s\S]*?leadingIcon=\{<UserRound/);
+});
+
+test("desktop Hotel destination and guest values include neutral leading icons", () => {
+  assert.match(desktopBranch, /hotelSearchDestinationLabel[\s\S]*?<MapPin[\s\S]*?className=\{cn\(hotelFieldValueClassName, "ps-6"\)\}/);
+  assert.match(desktopBranch, /hotelSearchGuestsLabel[\s\S]*?<UserRound[\s\S]*?text-slate-500/);
 });
 
 test("desktop flight controls expose the full truthful trip-type set", () => {
