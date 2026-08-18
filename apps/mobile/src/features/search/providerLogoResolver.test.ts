@@ -2,10 +2,16 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
-import { resolveProviderLogo } from "./providerLogoResolver";
+import { providerMatchesCarrier, resolveProviderLogo } from "./providerLogoResolver";
 
-test("Duffel does not use the Duffel Airways carrier asset as provider branding", () => {
+test("Duffel has no hardcoded provider asset", () => {
   assert.equal(resolveProviderLogo("Duffel"), null);
+});
+
+test("provider identity matching accepts carrier-branded suffixes", () => {
+  assert.equal(providerMatchesCarrier("Duffel", "Duffel Airways"), true);
+  assert.equal(providerMatchesCarrier(" duffel ", "DUFFEL AIRLINES"), true);
+  assert.equal(providerMatchesCarrier("Duffel", "British Airways"), false);
 });
 
 test("unknown providers retain the initial fallback path", () => {

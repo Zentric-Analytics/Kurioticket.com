@@ -28,6 +28,7 @@ import { airports } from "../flow/airportData";
 import { useAppTheme } from "../../theme/AppTheme";
 import { AirlineLogo } from "./AirlineLogo";
 import { ProviderLogo } from "./ProviderLogo";
+import { providerMatchesCarrier } from "./providerLogoResolver";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
   resolveDisplayCurrencyContext,
@@ -177,11 +178,9 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
         },
       ];
   const provider = result.provider || result.airlineName;
-  const providerLogoUrl =
-    provider.trim().toLocaleLowerCase() ===
-    result.airlineName.trim().toLocaleLowerCase()
-      ? result.airlineLogo
-      : null;
+  const providerLogoUrl = providerMatchesCarrier(provider, result.airlineName)
+    ? result.airlineLogo
+    : null;
   const handleProviderBooking = async () => {
     const url = authoritativeProviderUrl(result);
     if (!/^https:\/\//.test(url))
@@ -762,9 +761,10 @@ const d = StyleSheet.create({
   offerActionsCompact: {
     flexDirection: "column",
     alignItems: "flex-end",
+    alignSelf: "flex-end",
     gap: 6,
   },
-  priceSmall: { fontSize: 18, fontWeight: "900", color: ui.blue, flexShrink: 0 },
+  priceSmall: { fontSize: 18, fontWeight: "900", color: ui.blue, flexShrink: 0, textAlign: "right" },
   disclosure: { fontSize: 10, color: ui.muted, textAlign: "center" },
   sticky: {
     position: "absolute",
