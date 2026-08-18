@@ -1555,10 +1555,7 @@ export function HotelResultsExperience({
       <div
         className="fixed inset-0 z-[1100] hidden bg-slate-950/30 backdrop-blur-[2px] lg:block"
         role="presentation"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget)
-            closeDesktopStickyHotelSearch();
-        }}
+        onPointerDown={closeDesktopStickyHotelSearch}
       >
         <div className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28">
           <div
@@ -1567,7 +1564,7 @@ export function HotelResultsExperience({
             role="dialog"
             aria-modal="true"
             aria-labelledby="sticky-hotel-search-title"
-            onMouseDown={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
             className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md"
           >
             <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">
