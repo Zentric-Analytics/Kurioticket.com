@@ -36,20 +36,3 @@ export function exploreHotelResultsNavigation(destinationName: string): Href | n
   if (!destination) return null;
   return { pathname: "/hotel-results", params: { destination } };
 }
-
-export function exploreFlightSearchFallbackNavigation(input: {
-  destinationId: string;
-  destinationName: string;
-  primaryAirportCode: string;
-  airportCodes: readonly string[];
-}): Href {
-  return {
-    pathname: "/flights",
-    params: {
-      destinationId: input.destinationId,
-      destination: input.destinationName,
-      to: input.primaryAirportCode,
-      airportCodes: input.airportCodes.join(","),
-    },
-  };
-}
