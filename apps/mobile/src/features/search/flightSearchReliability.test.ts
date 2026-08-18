@@ -25,8 +25,19 @@ test("ready, empty, error, visible message, and clean retry remain terminal stat
 
 test("request identity and the flight-specific hard timeout reach the backend", () => {
   assert.match(api, /"X-Search-Request-Id": options\.requestId/);
-  assert.match(api, /FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 22_000/);
+  assert.match(api, /FLIGHT_SEARCH_REQUEST_TIMEOUT_MS = 14_000/);
   assert.match(screen, /searchFlights\(plan\.plan\.payload, \{ signal: controller\.signal, requestId \}\)/);
+  assert.match(screen, /controller\.abort\("ui-deadline"\)/);
+  assert.match(screen, /deadlineExpired \|\|/);
   assert.match(route, /headers\.get\("x-search-request-id"\)/);
   assert.match(route, /requestId,/);
+});
+
+test("deadline, supersession, cleanup, and retry preserve latest-request ownership", () => {
+  assert.match(screen, /const sequence = \+\+searchSequence\.current/);
+  assert.match(screen, /if \(!isLatest\(\)\) return/);
+  assert.match(screen, /searchSequence\.current \+= 1/);
+  assert.match(screen, /activeSearch\.current\?\.abort\("screen-cleanup"\)/);
+  assert.match(screen, /setRetry\(\(x\) => x \+ 1\)/);
+  assert.match(screen, /const controller = new AbortController\(\)/);
 });

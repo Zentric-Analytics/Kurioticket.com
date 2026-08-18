@@ -27,3 +27,26 @@ for (const gapDays of [1, 6]) {
     assert.equal(loading, false);
   });
 }
+
+test("the UI deadline aborts the active request rather than only abandoning its result", async () => {
+  const controller = new AbortController();
+  let requestObservedAbort = false;
+  const activeRequest = new Promise<never>((_resolve, reject) => {
+    controller.signal.addEventListener("abort", () => {
+      requestObservedAbort = true;
+      reject(new Error("underlying_request_aborted"));
+    });
+  });
+
+  await assert.rejects(
+    withinFlightLoadingDeadline(
+      activeRequest,
+      () => controller.abort("ui-deadline"),
+      5,
+    ),
+    /flight_loading_deadline|underlying_request_aborted/,
+  );
+  assert.equal(controller.signal.aborted, true);
+  assert.equal(controller.signal.reason, "ui-deadline");
+  assert.equal(requestObservedAbort, true);
+});

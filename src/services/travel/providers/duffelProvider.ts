@@ -93,7 +93,7 @@ export type DuffelDealsItineraryInventory = {
 };
 
 export const DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS = 10_000;
-export const DUFFEL_SEARCH_HTTP_TIMEOUT_MS = 16_000;
+export const DUFFEL_SEARCH_HTTP_TIMEOUT_MS = 11_000;
 
 export const duffelOfferRequestSearchUrl = (view?: "itineraries") => {
   const params = new URLSearchParams({

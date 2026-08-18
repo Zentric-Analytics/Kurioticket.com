@@ -4,10 +4,24 @@ import type { ProviderResult } from "@/lib/types";
 import { FLIGHT_SEARCH_DEADLINE_MS, runWithFlightSearchDeadline } from "./flightAggregator";
 import { DUFFEL_SEARCH_HTTP_TIMEOUT_MS, DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS } from "./providers/duffelProvider";
 
+const MOBILE_FLIGHT_TRANSPORT_TIMEOUT_MS = 14_000;
+const MOBILE_FLIGHT_UI_DEADLINE_MS = 16_000;
+
 test("flight timeout hierarchy leaves response margin for mobile", () => {
   assert.ok(DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS < DUFFEL_SEARCH_HTTP_TIMEOUT_MS);
   assert.ok(DUFFEL_SEARCH_HTTP_TIMEOUT_MS < FLIGHT_SEARCH_DEADLINE_MS);
-  assert.ok(FLIGHT_SEARCH_DEADLINE_MS < 22_000);
+  assert.ok(FLIGHT_SEARCH_DEADLINE_MS < MOBILE_FLIGHT_TRANSPORT_TIMEOUT_MS);
+  assert.ok(MOBILE_FLIGHT_TRANSPORT_TIMEOUT_MS < MOBILE_FLIGHT_UI_DEADLINE_MS);
+  assert.deepEqual(
+    [
+      DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS,
+      DUFFEL_SEARCH_HTTP_TIMEOUT_MS,
+      FLIGHT_SEARCH_DEADLINE_MS,
+      MOBILE_FLIGHT_TRANSPORT_TIMEOUT_MS,
+      MOBILE_FLIGHT_UI_DEADLINE_MS,
+    ],
+    [10_000, 11_000, 12_000, 14_000, 16_000],
+  );
 });
 
 test("aggregate deadline bounds even a provider promise that never settles", async () => {
