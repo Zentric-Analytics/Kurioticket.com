@@ -1722,6 +1722,8 @@ export const translations: TranslationDictionary = {
   "carsSearch.returnLocationLabel": "Return location",
   "carsSearch.pickupLocationPlaceholder": "Airport, city, or address",
   "carsSearch.returnLocationPlaceholder": "Return city, airport, or address",
+  "carsSearch.choosePickupLocation": "Choose pickup location",
+  "carsSearch.chooseReturnLocation": "Choose return location",
   "carsSearch.returnToSameLocation": "Return to same location",
   "carsSearch.differentReturnLocation": "Different return location",
   "carsSearch.locationSuggestions": "Location suggestions",
