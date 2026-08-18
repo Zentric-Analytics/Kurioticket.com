@@ -23,6 +23,10 @@ test("desktop Flights exposes the complete trip-type selector", () => {
   assert.match(formSource, /data-testid="desktop-flight-landing-identity"/);
   assert.match(
     formSource,
+    /className="hidden w-fit[^"]*sm:flex"[\s\S]*?data-testid="desktop-flight-landing-identity"/,
+  );
+  assert.match(
+    formSource,
     /bg-transparent text-slate-950 ring-0 shadow-none hover:bg-transparent/,
   );
 });
@@ -44,10 +48,15 @@ test("desktop popovers flip into the available viewport and scroll internally", 
   assert.match(formSource, /const openAbove =/);
   assert.match(formSource, /overflow-y-auto overscroll-contain/);
   assert.match(formSource, /requestAnimationFrame\(updatePosition\)/);
+  assert.match(formSource, /new ResizeObserver\(\(\) => updatePosition\(\)\)/);
+  assert.match(formSource, /maxHeight=\{300\}/);
 });
 
 test("desktop flight hero uses the reduced production height", () => {
-  assert.match(landingSource, /min-h-\[29rem\][\s\S]*?lg:min-h-\[32rem\]/);
+  assert.match(
+    landingSource,
+    /min-h-\[28\.75rem\][\s\S]*?lg:min-h-\[31\.75rem\]/,
+  );
   assert.doesNotMatch(landingSource, /lg:min-h-\[36rem\]/);
   assert.match(landingSource, /brightness-\[1\.04\]/);
 });
