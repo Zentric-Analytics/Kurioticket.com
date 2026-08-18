@@ -59,7 +59,10 @@ import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
   CarsTimeRangePickerContent,
+  MobileCarDriverAgePickerDialog,
+  MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import {
   carsDesktopPopoverClassName,
   useCarsDesktopPopover,
@@ -75,6 +78,8 @@ type CarsResultsValues = CarSearchParams & {
   dropoffTime: string;
   driverAge: string;
 };
+
+type CarsResultsMobilePicker = "dates" | "times" | "driverAge" | null;
 
 type CarFilterOption = {
   id: string;
@@ -555,6 +560,8 @@ export function CarsResultsClient({
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const intlLocale = getCarsResultsIntlLocale(locale);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobilePicker, setMobilePicker] =
+    useState<CarsResultsMobilePicker>(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [desktopStickySearchSection, setDesktopStickySearchSection] = useState<
     "locations" | "dates" | "times" | "driverAge" | null
@@ -864,6 +871,7 @@ export function CarsResultsClient({
 
   const openMobileSearchDrawer = useCallback(() => {
     setMobileSearchOpen(true);
+    setMobilePicker(null);
     setDesktopStickySearchSection(null);
     setDatesOpen(false);
     setTimesOpen(false);
@@ -878,6 +886,7 @@ export function CarsResultsClient({
 
   const closeMobileSearchDrawer = useCallback(() => {
     setMobileSearchOpen(false);
+    setMobilePicker(null);
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
@@ -1064,7 +1073,9 @@ export function CarsResultsClient({
               dropoffDate={dropoffDate}
               isCompact={isCompactSearch}
               doneButtonVariant={placement === "mobile" ? "neutral" : "brand"}
-              isOpen={surfaceOwnsPopovers && datesOpen}
+              isOpen={
+                placement !== "mobile" && surfaceOwnsPopovers && datesOpen
+              }
               onClear={() => {
                 setPickupDate("");
                 setDropoffDate("");
@@ -1080,6 +1091,10 @@ export function CarsResultsClient({
               }}
               onSelectDate={selectRentalDate}
               onToggle={() => {
+                if (placement === "mobile") {
+                  setMobilePicker("dates");
+                  return;
+                }
                 setDatesOpen((current) => !current);
                 setOpenLocation(null);
                 setTimesOpen(false);
@@ -1097,8 +1112,14 @@ export function CarsResultsClient({
             <SearchTimeCell
               dropoffTime={dropoffTime}
               isCompact={isCompactSearch}
-              isOpen={surfaceOwnsPopovers && timesOpen}
+              isOpen={
+                placement !== "mobile" && surfaceOwnsPopovers && timesOpen
+              }
               onToggle={() => {
+                if (placement === "mobile") {
+                  setMobilePicker("times");
+                  return;
+                }
                 setTimesOpen((current) => !current);
                 setOpenLocation(null);
                 setDatesOpen(false);
@@ -1120,15 +1141,17 @@ export function CarsResultsClient({
             <DriverAgeCell
               driverAge={driverAge}
               isCompact={isCompactSearch}
-              isOpen={surfaceOwnsPopovers && driverAgeOpen}
+              isOpen={
+                placement !== "mobile" && surfaceOwnsPopovers && driverAgeOpen
+              }
               onSelect={(age) => {
                 setDriverAge(age);
-
-                if (placement === "mobile") {
-                  setDriverAgeOpen(false);
-                }
               }}
               onToggle={() => {
+                if (placement === "mobile") {
+                  setMobilePicker("driverAge");
+                  return;
+                }
                 setDriverAgeOpen((current) => !current);
                 setOpenLocation(null);
                 setDatesOpen(false);
@@ -1164,6 +1187,64 @@ export function CarsResultsClient({
       >
         {renderMobileControlsRow()}
       </div>
+
+      <MobileDatePickerDialog
+        open={mobileSearchOpen && mobilePicker === "dates"}
+        title={t("carsSearch.chooseRentalDates")}
+        titleId="cars-results-mobile-rental-dates-title"
+        dialogId="cars-results-mobile-rental-dates"
+        launcherRef={mobileSearchRefs.dateWrapRef}
+        startDate={pickupDate}
+        endDate={dropoffDate}
+        rangeRequired
+        firstMonth={visibleMonthDate}
+        locale={intlLocale}
+        weekdays={getWeekdays(intlLocale)}
+        labels={{
+          selectDates: t("carsResults.selectDates"),
+          start: t("mobileDatePicker.start"),
+          end: t("mobileDatePicker.end"),
+          done: t("done"),
+          selectDatePrefix: t("carsSearch.selectDateAriaPrefix"),
+        }}
+        isDateDisabled={isBeforeToday}
+        onCommit={(nextPickupDate, nextDropoffDate) => {
+          setPickupDate(nextPickupDate);
+          setDropoffDate(nextDropoffDate);
+        }}
+        onClose={() => setMobilePicker(null)}
+      />
+
+      <MobileCarTimePickerDialog
+        open={mobileSearchOpen && mobilePicker === "times"}
+        launcherRef={mobileSearchRefs.timeWrapRef}
+        onClose={() => setMobilePicker(null)}
+        pickupTime={pickupTime}
+        returnTime={dropoffTime}
+        onCommit={(nextPickupTime, nextDropoffTime) => {
+          setPickupTime(nextPickupTime);
+          setDropoffTime(nextDropoffTime);
+        }}
+        formatTime={(time) => formatTimeLabel(time, intlLocale)}
+        title={t("carsSearch.pickupReturnTimeLabel")}
+        intro={t("carsSearch.mobileTimeIntro")}
+        pickupLabel={t("carsSearch.pickupTimeLabel")}
+        returnLabel={t("carsSearch.returnTimeLabel")}
+        doneLabel={t("done")}
+      />
+
+      <MobileCarDriverAgePickerDialog
+        open={mobileSearchOpen && mobilePicker === "driverAge"}
+        launcherRef={mobileSearchRefs.driverAgeWrapRef}
+        onClose={() => setMobilePicker(null)}
+        driverAge={driverAge}
+        onCommit={setDriverAge}
+        title={t("carsSearch.driverAgeLabel")}
+        intro={t("carsSearch.mobileDriverAgeIntro")}
+        anyAgeLabel={t("carsSearch.driverAgeAnyAgeRange")}
+        formatAge={(age) => age}
+        doneLabel={t("done")}
+      />
 
       <div
         className={cn(
