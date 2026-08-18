@@ -2,24 +2,31 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
-import { providerMatchesCarrier, resolveProviderLogo } from "./providerLogoResolver";
+import { resolveTravelProviderLogo } from "./providerLogoResolver";
 
-test("Duffel has no hardcoded provider asset", () => {
-  assert.equal(resolveProviderLogo("Duffel"), null);
+test("uses valid remote HTTPS metadata without provider-specific mappings", () => {
+  assert.equal(
+    resolveTravelProviderLogo("https://cdn.example/airline-a.svg"),
+    "https://cdn.example/airline-a.svg",
+  );
+  assert.equal(
+    resolveTravelProviderLogo("  https://cdn.example/provider-b.png  "),
+    "https://cdn.example/provider-b.png",
+  );
 });
 
-test("provider identity matching accepts carrier-branded suffixes", () => {
-  assert.equal(providerMatchesCarrier("Duffel", "Duffel Airways"), true);
-  assert.equal(providerMatchesCarrier(" duffel ", "DUFFEL AIRLINES"), true);
-  assert.equal(providerMatchesCarrier("Duffel", "British Airways"), false);
+test("tries existing metadata in order and rejects unsafe or missing URLs", () => {
+  assert.equal(
+    resolveTravelProviderLogo("http://cdn.example/logo.png", "https://cdn.example/logo.svg"),
+    "https://cdn.example/logo.svg",
+  );
+  assert.equal(resolveTravelProviderLogo(undefined, null, "", "data:image/png;base64,bad"), null);
 });
 
-test("unknown providers retain the initial fallback path", () => {
-  assert.equal(resolveProviderLogo("Unknown Booking Partner"), null);
-
+test("providers retain the initial only as the shared image component's final fallback", () => {
   const providerLogo = readFileSync(resolve("src/features/search/ProviderLogo.tsx"), "utf8");
   assert.match(providerLogo, /fallbackCharacters=\{1\}/);
-  assert.match(providerLogo, /logoUrl=\{logoUrl \?\? resolveProviderLogo\(provider\)\}/);
+  assert.match(providerLogo, /logoUrl=\{logoUrl\}/);
 });
 
 test("provider logos reuse the remote-image failure fallback used by flight results", () => {
@@ -30,5 +37,6 @@ test("provider logos reuse the remote-image failure fallback used by flight resu
   assert.match(providerLogo, /<AirlineLogo/);
   assert.equal(airlineLogo.match(/onError=\{\(\) => setFailedUrl\(visibleUrl\)\}/g)?.length, 2);
   assert.match(airlineLogo, /if \(!visibleUrl \|\| failed\)/);
+  assert.match(airlineLogo, /resolveTravelProviderLogo\(logoUrl\)/);
   assert.match(results, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
 });

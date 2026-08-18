@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { SvgUri } from "react-native-svg";
 import { useAppTheme } from "../../theme/AppTheme";
+import { resolveTravelProviderLogo } from "./providerLogoResolver";
 
 type Props = {
   airlineName: string;
@@ -14,7 +15,7 @@ const isSvgUrl = (url: string) => /\.svg(?:[?#]|$)/i.test(url);
 export function AirlineLogo({ airlineName, logoUrl, fallbackCharacters = 2 }: Props) {
   const { theme } = useAppTheme();
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const visibleUrl = logoUrl?.trim() || null;
+  const visibleUrl = resolveTravelProviderLogo(logoUrl);
   const failed = visibleUrl !== null && failedUrl === visibleUrl;
 
   useEffect(() => {

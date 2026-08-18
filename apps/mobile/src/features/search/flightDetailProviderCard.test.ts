@@ -53,10 +53,10 @@ test("responsive actions retain the displayed fare and Select behavior", () => {
   assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 3);
 });
 
-test("flight offer passes the live result logo for the matching provider identity", () => {
-  assert.match(flightDetail, /const providerLogoUrl = providerMatchesCarrier\(provider, result\.airlineName\)[\s\S]*?\? result\.airlineLogo[\s\S]*?: null/);
-  assert.match(flightDetail, /<Offer[\s\S]*?provider=\{provider\}[\s\S]*?logoUrl=\{providerLogoUrl\}[\s\S]*?price=\{formattedFare\}/);
+test("flight offer reuses the normalized result logo regardless of provider identity", () => {
+  assert.match(flightDetail, /<Offer[\s\S]*?provider=\{provider\}[\s\S]*?logoUrl=\{result\.airlineLogo\}[\s\S]*?price=\{formattedFare\}/);
   assert.match(offer, /<ProviderLogo provider=\{provider\} logoUrl=\{logoUrl\} \/>/);
+  assert.doesNotMatch(flightDetail, /providerMatchesCarrier|providerLogoUrl/);
 });
 
 test("provider card keeps its existing theme-aware surfaces", () => {
