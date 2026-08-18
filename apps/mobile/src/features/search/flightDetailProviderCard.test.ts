@@ -13,6 +13,8 @@ test("provider card switches to a stacked layout on narrow screens", () => {
   assert.match(offer, /compact && d\.offerCompact/);
   assert.match(detailSource, /offerCompact: \{[\s\S]*?flexDirection: "column"/);
   assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?flexDirection: "column"[\s\S]*?alignItems: "flex-end"[\s\S]*?gap: 6/);
+  assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?alignSelf: "flex-end"/);
+  assert.match(detailSource, /priceSmall: \{[^}]*textAlign: "right"/);
   assert.doesNotMatch(detailSource, /offerActionsCompact: \{[^}]*flexWrap/);
 });
 
@@ -37,8 +39,8 @@ test("responsive actions retain the displayed fare and Select behavior", () => {
   assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 3);
 });
 
-test("flight offer reuses a live carrier logo only for the same provider identity", () => {
-  assert.match(flightDetail, /const providerLogoUrl =[\s\S]*?provider\.trim\(\)\.toLocaleLowerCase\(\) ===[\s\S]*?result\.airlineName\.trim\(\)\.toLocaleLowerCase\(\)[\s\S]*?\? result\.airlineLogo[\s\S]*?: null/);
+test("flight offer passes the live result logo for the matching provider identity", () => {
+  assert.match(flightDetail, /const providerLogoUrl = providerMatchesCarrier\(provider, result\.airlineName\)[\s\S]*?\? result\.airlineLogo[\s\S]*?: null/);
   assert.match(flightDetail, /<Offer[\s\S]*?provider=\{provider\}[\s\S]*?logoUrl=\{providerLogoUrl\}[\s\S]*?price=\{formattedFare\}/);
   assert.match(offer, /<ProviderLogo provider=\{provider\} logoUrl=\{logoUrl\} \/>/);
 });
