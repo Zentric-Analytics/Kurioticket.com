@@ -1009,6 +1009,7 @@ export function StandaloneFlightSearchForm({
         desiredWidth={390}
         align="start"
         offset={4}
+        maxHeight={300}
         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.14)] ring-1 ring-slate-950/[0.02]"
       >
         {loading ? (
@@ -1016,7 +1017,7 @@ export function StandaloneFlightSearchForm({
             {t("searchingAirportsAndCities")}
           </p>
         ) : suggestions.length ? (
-          <div className="max-h-[min(44vh,320px)] overflow-y-auto overscroll-contain py-1">
+          <div className="max-h-[280px] overflow-y-auto overscroll-contain py-1">
             {suggestions.map((option, index) => (
               <button
                 key={`${field}-${option.code}-${option.airport}`}
@@ -1419,7 +1420,7 @@ export function StandaloneFlightSearchForm({
 
         {!useMainFlightLandingMobilePresentation ? (
           <div
-            className="hidden w-fit items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3 py-2 shadow-sm ring-1 ring-[#004BB8]/10 sm:inline-flex"
+            className="hidden w-fit items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3 py-2 shadow-sm ring-1 ring-[#004BB8]/10 sm:flex"
             data-testid="desktop-flight-landing-identity"
           >
             <Plane
@@ -2090,15 +2091,21 @@ function DesktopFlightPopover({
 
     updatePosition();
     const animationFrame = window.requestAnimationFrame(updatePosition);
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => updatePosition());
+    if (popoverRef.current) resizeObserver?.observe(popoverRef.current);
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [align, anchorRef, desiredWidth, isDesktop, offset, open]);
+  }, [align, anchorRef, desiredWidth, isDesktop, maxHeight, offset, open]);
 
   if (!open || !isDesktop || !position || typeof document === "undefined")
     return null;
