@@ -9,6 +9,8 @@ import { searchFlights } from "@/services/travel/flightAggregator";
 import { isFeatureEnabled } from "@/lib/feature-controls/service";
 
 export async function POST(request: Request) {
+  const routeStartedAt = performance.now();
+  let providerStartedAt = routeStartedAt;
   const requestId = request.headers.get("x-search-request-id")?.trim() || crypto.randomUUID();
   if (!(await isFeatureEnabled("FLIGHT_SEARCH_ENABLED"))) return NextResponse.json({ error: "Flight search is temporarily unavailable.", code: "FEATURE_DISABLED", results: [], status: "unavailable", requestId }, { status: 503 });
   const ip = getClientIp(request);
@@ -23,8 +25,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Search needs a little more detail.", issues: parsed.error.flatten() }, { status: 400 });
   }
 
-  const session = (await resolveOptionalWebApiSession())?.session;
-  const aggregate = await searchFlights(parsed.data, { signal: request.signal });
+  const aggregate = await searchFlights(parsed.data, {
+    signal: request.signal,
+    onProviderStart: () => { providerStartedAt = performance.now(); },
+  });
+  const performanceMetrics = aggregate.performance!;
+  const routeDurationMs = performance.now() - routeStartedAt;
+  const beforeProviderMs = providerStartedAt - routeStartedAt;
+  const serverTiming = [
+    `pre_duffel;dur=${beforeProviderMs.toFixed(1)}`,
+    `duffel;dur=${performanceMetrics.supplierMs.toFixed(1)}`,
+    `normalize;dur=${performanceMetrics.normalizationMs.toFixed(1)}`,
+    `deduplicate;dur=${performanceMetrics.deduplicationMs.toFixed(1)}`,
+    `aggregate;dur=${performanceMetrics.aggregationMs.toFixed(1)}`,
+    `route;dur=${routeDurationMs.toFixed(1)}`,
+  ].join(", ");
+  console.info("[flight-search:performance]", {
+    requestId,
+    beforeProviderMs,
+    supplierMs: performanceMetrics.supplierMs,
+    offerCount: performanceMetrics.offerCount,
+    connectingOfferCount: performanceMetrics.connectingOfferCount,
+    normalizationMs: performanceMetrics.normalizationMs,
+    deduplicationMs: performanceMetrics.deduplicationMs,
+    aggregationMs: performanceMetrics.aggregationMs,
+    routeDurationMs,
+  });
   if (aggregate.unavailableMessage) {
     after(() => Promise.all(
       aggregate.providerStatuses.map((provider) =>
@@ -49,7 +75,7 @@ export async function POST(request: Request) {
         partial: false,
         requestId,
       },
-      { status: 503 },
+      { status: 503, headers: { "Server-Timing": serverTiming } },
     );
   }
 
@@ -58,7 +84,9 @@ export async function POST(request: Request) {
       ? "PARTIAL"
       : "SUCCESS";
 
-  after(() => Promise.all([
+  after(async () => {
+    const session = (await resolveOptionalWebApiSession())?.session;
+    return Promise.all([
     logSearchHistory({
       userId: session?.user?.id,
       type: "FLIGHT",
@@ -89,10 +117,12 @@ export async function POST(request: Request) {
         errorMessage: provider.error,
       }),
     ),
-  ]).catch((error) => console.error("[flight-search:logging]", error)));
+    ]).catch((error) => console.error("[flight-search:logging]", error));
+  });
 
   return NextResponse.json({
     ...classifyFlights(publicResults, aggregate.warnings, requestId),
     latencyMs: aggregate.latencyMs,
-  });
+    performance: { ...performanceMetrics, beforeProviderMs, routeDurationMs },
+  }, { headers: { "Server-Timing": serverTiming } });
 }

@@ -40,6 +40,7 @@ function apiErrorMessage(data: Record<string, unknown>) {
 }
 
 async function request<T>(path: string, init: RequestInit = {}, options: { signal?: AbortSignal; timeoutMs?: number; requestId?: string } = {}) {
+  const requestStartedAt = Date.now();
   const base = getApiBaseUrl(Platform.OS, __DEV__);
   if (!base.ok) throw new TravelApiError(base.message, 0, "configuration");
   const session = await readSession().catch(() => null);
@@ -65,6 +66,15 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
     if (!response.ok) {
       const code = response.status === 400 ? "validation" : response.status === 429 ? "rate-limit" : response.status === 503 ? "unavailable" : response.status >= 500 ? "server" : "network";
       throw new TravelApiError(apiErrorMessage(data), response.status, code, data);
+    }
+    if (path === "/api/flights/search") {
+      const mobileRoundTripMs = Date.now() - requestStartedAt;
+      data.mobileRoundTripMs = mobileRoundTripMs;
+      console.info("[flight-search:mobile-performance]", {
+        requestId: options.requestId,
+        mobileRoundTripMs,
+        server: data.performance,
+      });
     }
     return data as T;
   } catch (error) {
