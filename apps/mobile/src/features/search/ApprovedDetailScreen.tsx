@@ -618,7 +618,7 @@ function Offer({
   onSelect?: () => void;
 }) {
   const { theme } = useAppTheme();
-  const compact = useWindowDimensions().width < 480;
+  const compact = useWindowDimensions().width < 360;
   return (
     <View style={[d.offer, compact && d.offerCompact, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }, selected && { borderColor: ui.blue }]}>
       <View style={d.providerIdentity}>
@@ -718,13 +718,12 @@ const d = StyleSheet.create({
     justifyContent: "space-between",
   },
   offer: {
-    minHeight: 58,
     borderWidth: 1,
     borderColor: ui.border,
     borderRadius: 9,
     padding: 8,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 9,
   },
   offerCompact: {
@@ -735,7 +734,7 @@ const d = StyleSheet.create({
     flex: 1,
     minWidth: 140,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 9,
   },
   providerCopy: { flex: 1, minWidth: 97 },
@@ -753,9 +752,9 @@ const d = StyleSheet.create({
   },
   offerActions: {
     flexShrink: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    justifyContent: "flex-start",
     gap: 9,
   },
   offerActionsCompact: {
