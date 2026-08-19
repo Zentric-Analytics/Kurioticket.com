@@ -42,14 +42,17 @@ test("route title contains only uppercase airport codes from the current payload
   assert.doesNotMatch(header, /airport\.city|\([A-Z]{3}\)/);
 });
 
-test("main controls flank a separate metadata row beneath the route", () => {
-  assert.match(header, /<View accessibilityLabel="Flight route controls" style=\{s0\.flightHeaderMainRow\}>[\s\S]*?\{route\}[\s\S]*?<View accessibilityLabel="Trip metadata row" style=\{s0\.flightHeaderMetadataRow\}>/);
-  const mainRow = header.slice(header.indexOf('accessibilityLabel="Flight route controls"'), header.indexOf('accessibilityLabel="Trip metadata row"'));
-  assert.match(header, /accessibilityLabel="Go back"[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Trip metadata row"[\s\S]*?accessibilityLabel="Edit search"/);
+test("main controls and metadata render in two independent rows", () => {
+  const mainRowStart = header.indexOf('<View accessibilityLabel="Flight route controls"');
+  const metadataRowStart = header.indexOf('<View style={s0.flightHeaderMetadataAlignmentRow}>');
+  const mainRow = header.slice(mainRowStart, metadataRowStart);
+  const metadataRow = header.slice(metadataRowStart);
+  assert.ok(mainRowStart >= 0 && metadataRowStart > mainRowStart);
+  assert.match(mainRow, /accessibilityLabel="Go back"[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Edit search"/);
   assert.doesNotMatch(mainRow, /dateRange|travelerCount|cabinClass/);
-  assert.match(header, /<CalendarDays[\s\S]*?\{dateRange\}[\s\S]*?<User[\s\S]*?\{travelerCount\}[\s\S]*?<Briefcase[\s\S]*?\{cabinClass\}/);
+  assert.match(metadataRow, /accessibilityLabel="Trip metadata row"[\s\S]*?<CalendarDays[\s\S]*?\{dateRange\}[\s\S]*?<User[\s\S]*?\{travelerCount\}[\s\S]*?<Briefcase[\s\S]*?\{cabinClass\}/);
   assert.doesNotMatch(header, /·/);
-  assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "flex-start"/);
+  assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
 });
 
 test("metadata uses modest, decorative semantic icons", () => {
@@ -106,10 +109,18 @@ test("route stays centered and narrow screens use balanced compact controls with
   assert.doesNotMatch(header, /numberOfLines|ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
 });
 
-test("metadata items wrap without shrinking or hiding their text", () => {
-  assert.match(styles, /flightHeaderMetadataRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?flexWrap: "wrap"[\s\S]*?columnGap: 18,[\s\S]*?rowGap: 6/);
+test("metadata stays horizontal without wrapping and scrolls on narrow screens", () => {
+  assert.match(header, /<ScrollView[\s\S]*?accessibilityLabel="Trip metadata row"[\s\S]*?horizontal[\s\S]*?showsHorizontalScrollIndicator=\{false\}[\s\S]*?contentContainerStyle=\{s0\.flightHeaderMetadataRow\}/);
+  assert.match(styles, /flightHeaderMetadataRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?flexWrap: "nowrap"[\s\S]*?alignItems: "center"[\s\S]*?columnGap: 18/);
   assert.match(styles, /flightHeaderMetadataItem: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"[\s\S]*?flexShrink: 0,[\s\S]*?gap: 6/);
   assert.doesNotMatch(header, /numberOfLines|ellipsizeMode/);
+});
+
+test("metadata alignment clears the Back target without fragile absolute positioning", () => {
+  assert.match(header, /<View style=\{s0\.flightHeaderMetadataAlignmentRow\}>[\s\S]*?<View style=\{s0\.flightHeaderMetadataInset\} \/>[\s\S]*?<ScrollView[\s\S]*?<\/ScrollView>/);
+  assert.match(styles, /flightHeaderMetadataAlignmentRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"[\s\S]*?marginTop: 7/);
+  assert.match(styles, /flightHeaderMetadataInset: \{ width: 52, flexShrink: 0 \}/);
+  assert.doesNotMatch(styles.slice(styles.indexOf("flightHeaderMetadataAlignmentRow:"), styles.indexOf("flightHeaderMetadataItem:")), /position:|left:|right:/);
 });
 
 test("Back is an independent icon with pressed feedback and no card treatment", () => {

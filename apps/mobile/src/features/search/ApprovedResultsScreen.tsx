@@ -564,22 +564,6 @@ function FlightResultsHeader({
           <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
             {route}
           </Text>
-          <View accessibilityLabel="Trip metadata row" style={s0.flightHeaderMetadataRow}>
-            <View style={s0.flightHeaderMetadataItem}>
-              <CalendarDays accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
-            </View>
-            <View style={s0.flightHeaderMetadataItem}>
-              <User accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
-                {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
-              </Text>
-            </View>
-            <View style={s0.flightHeaderMetadataItem}>
-              <Briefcase accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
-            </View>
-          </View>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -594,6 +578,31 @@ function FlightResultsHeader({
           <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
           {!compact ? <Text style={s0.flightHeaderEditText}>Edit search</Text> : null}
         </Pressable>
+      </View>
+      <View style={s0.flightHeaderMetadataAlignmentRow}>
+        <View style={s0.flightHeaderMetadataInset} />
+        <ScrollView
+          accessibilityLabel="Trip metadata row"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s0.flightHeaderMetadataScroller}
+          contentContainerStyle={s0.flightHeaderMetadataRow}
+        >
+            <View style={s0.flightHeaderMetadataItem}>
+              <CalendarDays accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
+            </View>
+            <View style={s0.flightHeaderMetadataItem}>
+              <User accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
+                {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
+              </Text>
+            </View>
+            <View style={s0.flightHeaderMetadataItem}>
+              <Briefcase accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
+            </View>
+        </ScrollView>
       </View>
     </View>
   );
@@ -1157,7 +1166,7 @@ const s0 = StyleSheet.create({
   flightHeaderMainRow: {
     width: "100%",
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   flightHeaderSide: { width: 106, flexShrink: 0 },
   flightHeaderSideCompact: { width: 44 },
@@ -1168,17 +1177,21 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderControlPressed: { opacity: 0.55 },
-  flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center", paddingTop: 7 },
+  flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center" },
   flightHeaderRoute: { minWidth: 0, textAlign: "center" },
-  flightHeaderMetadataRow: {
+  flightHeaderMetadataAlignmentRow: {
     width: "100%",
-    paddingTop: 4,
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
-    justifyContent: "center",
+    marginTop: 7,
+  },
+  flightHeaderMetadataInset: { width: 52, flexShrink: 0 },
+  flightHeaderMetadataScroller: { flex: 1, minWidth: 0 },
+  flightHeaderMetadataRow: {
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "center",
     columnGap: 18,
-    rowGap: 6,
   },
   flightHeaderMetadataItem: {
     flexDirection: "row",
