@@ -194,6 +194,16 @@ export type NormalizedHotelResult = NormalizedHotelBase & HotelInventory;
 
 export type PublicHotelResult = PublicHotelBase & HotelInventory;
 
+export type PublicHotelPropertyDetails = {
+  description: string;
+  latitude: number;
+  longitude: number;
+  streetAddress: string;
+  city: string;
+  country: string;
+  neighbourhood: string;
+};
+
 export type ProviderErrorCategory =
   | "no_inventory"
   | "route_unavailable"

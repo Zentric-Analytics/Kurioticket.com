@@ -95,10 +95,16 @@ test("static details include sanitized room options and requested stay totals", 
   );
   const payload = (await response.json()) as {
     hotel: Record<string, unknown>;
+    propertyDetails: Record<string, unknown>;
     roomOptions: Array<Record<string, unknown>>;
   };
   assert.equal(response.status, 200);
   assert.equal(payload.hotel.id, "hotel-le-six-paris");
+  assert.equal(typeof payload.propertyDetails.description, "string");
+  assert.equal(typeof payload.propertyDetails.latitude, "number");
+  assert.equal(typeof payload.propertyDetails.longitude, "number");
+  assert.equal(payload.propertyDetails.city, "Paris");
+  assert.equal(Object.hasOwn(payload.propertyDetails, "rawProviderReference"), false);
   assert.ok(payload.roomOptions.length >= 2);
   for (const room of payload.roomOptions) {
     assert.equal(room.hotelId, "hotel-le-six-paris");

@@ -324,7 +324,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     roomSummary: "Compact modern room options",
     bedSummary: "Large bed configuration",
     description:
-      "A modern hotel near Gare de Lyon designed for efficient city stays.",
+      "citizenM Paris Gare de Lyon offers stylish, tech-savvy rooms and a vibrant social atmosphere just steps away from Gare de Lyon. Perfect for travelers who want convenience, comfort and a modern stay in the heart of Paris.",
     indicativeNightlyPrice: 210,
     roomOptions: [
       planningRoom({
