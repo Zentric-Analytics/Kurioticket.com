@@ -7,15 +7,16 @@ const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8")
 
 test("home exposes the canonical Packages identity and route in product order", () => {
   const home = source("src/features/flow/HomeFlowScreen.tsx");
-  const flights = home.indexOf('{ label: "Flights"');
-  const hotels = home.indexOf('{ label: "Hotels"');
-  const cars = home.indexOf('{ label: "Cars"');
-  const packages = home.indexOf('{ label: "Packages", route: "/packages", icon: "packages" }');
+  const flights = home.indexOf('{ id: "flights", label: "Flights"');
+  const hotels = home.indexOf('{ id: "hotels", label: "Hotels"');
+  const cars = home.indexOf('{ id: "cars", label: "Cars"');
+  const packages = home.indexOf('{ id: "packages", label: "Packages", route: "/packages", icon: "packages" }');
 
   assert.ok(flights < hotels && hotels < cars && cars < packages);
   assert.doesNotMatch(home, /label: "Deals"/);
-  assert.match(home, /accessibilityLabel=\{`Open \$\{product\.label\}`\}/);
-  assert.match(home, /product\.route !== "\/packages" \|\| availability\.deals/);
+  assert.match(home, /accessibilityRole="tab"/);
+  assert.match(home, /accessibilityLabel=\{product\.label\}/);
+  assert.match(home, /packages: availability\.deals/);
 });
 
 test("Packages icon composes the configurable, decorative canonical mark", () => {
