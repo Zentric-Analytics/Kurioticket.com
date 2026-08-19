@@ -43,7 +43,7 @@ test("favorite behavior, navigation, and propagation remain unchanged", () => {
   const hook = source("src/storage/useSavedDestinations.ts");
   const store = source("src/storage/savedDestinationsStore.ts");
   assert.match(hook, /favoriteAction\(userId\) === "sign-in"/);
-  assert.match(hook, /showFavoriteSignInPrompt\(\); return;/);
+  assert.match(hook, /showFavoriteSignInPrompt\("\/saved"\);return;/);
   assert.match(store, /next\.has\(id\) \? next\.delete\(id\) : next\.add\(id\)/);
   assert.match(explore, /onPress=\{onSelect\}/);
 });

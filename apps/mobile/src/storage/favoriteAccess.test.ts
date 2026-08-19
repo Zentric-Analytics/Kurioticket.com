@@ -15,7 +15,7 @@ test("favorite prompt offers dismissal and the existing sign-in flow", () => {
   assert.match(hook, /Sign in to save favorites/);
   assert.match(hook, /Not now/);
   assert.match(hook, /\(tabs\)\/profile\/sign-in/);
-  assert.match(hook, /favoriteAction\(userId\).*showFavoriteSignInPrompt\(\).*return/s);
+  assert.match(hook, /favoriteAction\(userId\).*showFavoriteSignInPrompt\("\/saved"\).*return/s);
 });
 
 test("every existing favorite-bearing section uses the protected shared hook", () => {

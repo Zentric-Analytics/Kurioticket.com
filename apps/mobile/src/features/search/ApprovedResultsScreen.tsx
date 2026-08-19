@@ -82,11 +82,13 @@ import {
 import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 import { androidFavoriteColors } from "../home/AndroidFavoriteButton";
 import { useSavedFlights } from "../../storage/useSavedFlights";
+import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { AirlineLogo } from "./AirlineLogo";
 import { useAppTheme } from "../../theme/AppTheme";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
+import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -190,6 +192,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setResults(valid);
       setStatus(valid.length ? "ready" : "empty");
       setMessage(response.warnings?.[0] || "");
+      void recordRecentSearchBestEffort(buildRecentSearch(product, plan.plan.payload));
       if (__DEV__ && product === "flight") {
         console.info("[flight-search:client-processing]", {
           requestId,
@@ -810,7 +813,8 @@ function HotelCard({
   rank: number;
   params: Record<string, string | string[]>;
 }) {
-  const [saved, setSaved] = useState(false);
+  const canonical = useCanonicalSaved();
+  const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
   const compact = useWindowDimensions().width < 430;
   const score =
     result.reviewScore == null
@@ -842,7 +846,7 @@ function HotelCard({
         </View>
       </View>
       <View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>
-        <Pressable onPress={() => setSaved(!saved)} style={s0.heart}>
+        <Pressable onPress={() => void canonical.toggleHotel(result, params)} style={s0.heart}>
           <FlowIcon name="heart" fill={saved ? ui.blue : "white"} />
         </Pressable>
         <Text style={s0.hotelName}>{result.name}</Text>

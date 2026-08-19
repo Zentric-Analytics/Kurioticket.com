@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 const source = (path: string) => readFileSync(path, "utf8");
 
 test("Profile exposes Saved & recent without changing the bottom tabs", () => {
-  assert.match(source("src/features/profile/ProfileScreen.tsx"), /Saved & Recent.*route: "\/saved"/);
+  assert.match(source("src/features/profile/ProfileScreen.tsx"), /t\("savedRecent"\).*route: "\/saved"/);
   assert.match(source("src/features/profile/GuestProfileScreen.tsx"), /Saved & Recent.*router\.push\("\/saved"\)/);
   assert.equal((source("app/(tabs)/_layout.tsx").match(/<Tabs\.Screen/g) ?? []).length, 4);
   assert.doesNotMatch(source("app/(tabs)/_layout.tsx"), /name="saved"/);
@@ -17,7 +17,7 @@ test("Saved & recent resolves existing records, protects guests, and supports cl
   assert.match(screen, /popularDestinationStays\.find/);
   assert.match(screen, /destinations\.find/);
   assert.match(screen, /!isAuthenticated/);
-  assert.match(screen, /router\.push\("\/\(tabs\)\/profile\/sign-in"\)/);
+  assert.match(screen, /pathname: "\/\(tabs\)\/profile\/sign-in"/);
   assert.match(screen, /No saved favorites yet/);
   assert.match(screen, /Tap the heart on a destination to save it here\./);
   assert.match(screen, /event\.stopPropagation\(\); confirmRemove\(item\)/);

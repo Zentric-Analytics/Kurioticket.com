@@ -36,7 +36,7 @@ export function MyTripsFlowScreen() {
       .catch(() => {
         if (!active) return;
         void readSession().then((session) => {
-          if (!session) router.replace("/email-auth");
+          if (!session) router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/(tabs)/trips" } });
           else
             setError(
               "Unable to load trips. Check your connection and try again.",
