@@ -187,47 +187,47 @@ function lockBodyScroll() {
   const bodyElement = document.body;
   const rootElement = document.documentElement;
   const scrollY = window.scrollY;
+  const scrollbarWidth = Math.max(
+    0,
+    window.innerWidth - rootElement.clientWidth,
+  );
+  let restored = false;
   const previousBodyStyles = {
-    left: bodyElement.style.left,
     overflow: bodyElement.style.overflow,
     overscrollBehavior: bodyElement.style.overscrollBehavior,
-    position: bodyElement.style.position,
-    right: bodyElement.style.right,
-    top: bodyElement.style.top,
-    touchAction: bodyElement.style.touchAction,
-    width: bodyElement.style.width,
+    paddingRight: bodyElement.style.paddingRight,
   };
   const previousRootStyles = {
     overflow: rootElement.style.overflow,
     overscrollBehavior: rootElement.style.overscrollBehavior,
   };
 
-  bodyElement.style.left = "0";
+  if (scrollbarWidth > 0) {
+    const computedPaddingRight =
+      window.getComputedStyle(bodyElement).paddingRight;
+    bodyElement.style.paddingRight = `calc(${computedPaddingRight} + ${scrollbarWidth}px)`;
+  }
+
   bodyElement.style.overflow = "hidden";
   bodyElement.style.overscrollBehavior = "none";
-  bodyElement.style.position = "fixed";
-  bodyElement.style.right = "0";
-  bodyElement.style.top = `-${scrollY}px`;
-  bodyElement.style.touchAction = "none";
-  bodyElement.style.width = "100%";
   rootElement.style.overflow = "hidden";
   rootElement.style.overscrollBehavior = "none";
 
   return {
     restore: ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      bodyElement.style.left = previousBodyStyles.left;
+      if (restored) return;
+      restored = true;
       bodyElement.style.overflow = previousBodyStyles.overflow;
       bodyElement.style.overscrollBehavior =
         previousBodyStyles.overscrollBehavior;
-      bodyElement.style.position = previousBodyStyles.position;
-      bodyElement.style.right = previousBodyStyles.right;
-      bodyElement.style.top = previousBodyStyles.top;
-      bodyElement.style.touchAction = previousBodyStyles.touchAction;
-      bodyElement.style.width = previousBodyStyles.width;
+      bodyElement.style.paddingRight = previousBodyStyles.paddingRight;
       rootElement.style.overflow = previousRootStyles.overflow;
       rootElement.style.overscrollBehavior =
         previousRootStyles.overscrollBehavior;
-      if (restoreScroll) {
+
+      // Overflow locking leaves the Results document at its real position. This
+      // correction is only a safety net for browser-driven viewport changes.
+      if (restoreScroll && window.scrollY !== scrollY) {
         window.scrollTo(0, scrollY);
       }
     },
@@ -972,6 +972,14 @@ export function CarsResultsClient({
     ],
   );
 
+  const releaseMobileSearchScrollLock = useCallback(
+    ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
+      mobileSearchScrollLockRef.current?.restore({ restoreScroll });
+      mobileSearchScrollLockRef.current = null;
+    },
+    [],
+  );
+
   const cancelMobileSearchDrawer = useCallback(() => {
     const snapshot = mobileSearchSnapshotRef.current;
     if (snapshot) {
@@ -985,20 +993,21 @@ export function CarsResultsClient({
       setDriverAge(snapshot.driverAge);
     }
     mobileSearchSnapshotRef.current = null;
+    // Stabilize the uncovered Results document while the overlay still masks
+    // this synchronous commit, then let the layout effect restore focus.
+    releaseMobileSearchScrollLock();
     setMobileSearchOpen(false);
     setMobilePicker(null);
     setDatesOpen(false);
     setTimesOpen(false);
     setDriverAgeOpen(false);
-  }, [setMobileSearchOpen, setDatesOpen, setTimesOpen, setDriverAgeOpen]);
-
-  const releaseMobileSearchScrollLock = useCallback(
-    ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
-      mobileSearchScrollLockRef.current?.restore({ restoreScroll });
-      mobileSearchScrollLockRef.current = null;
-    },
-    [],
-  );
+  }, [
+    releaseMobileSearchScrollLock,
+    setMobileSearchOpen,
+    setDatesOpen,
+    setTimesOpen,
+    setDriverAgeOpen,
+  ]);
 
   const submitMobileSearch = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
