@@ -12,7 +12,7 @@ const stores = new Map<string, SavedFlightsStore>();
 
 const userKey = (userId: string) => `${SAVED_FLIGHTS_KEY}.${encodeURIComponent(userId)}`;
 
-async function readSavedFlights(userId: string): Promise<FlightResult[]> {
+export async function readSavedFlights(userId: string): Promise<FlightResult[]> {
   const key = userKey(userId);
   const raw = Platform.OS === "web"
     ? (globalThis as { localStorage?: Storage }).localStorage?.getItem(key)
@@ -28,7 +28,7 @@ async function readSavedFlights(userId: string): Promise<FlightResult[]> {
   }
 }
 
-async function writeSavedFlights(userId: string, flights: readonly FlightResult[]) {
+export async function writeSavedFlights(userId: string, flights: readonly FlightResult[]) {
   const key = userKey(userId);
   const value = JSON.stringify(flights);
   if (Platform.OS === "web") (globalThis as { localStorage?: Storage }).localStorage?.setItem(key, value);
@@ -79,23 +79,9 @@ function storeFor(userId: string) {
 }
 
 export function useSavedFlights() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [savedState, setSavedState] = useState<{ userId: string | null; flights: Map<string, FlightResult> }>({ userId: null, flights: new Map() });
-  const refresh = useCallback(() => {
-    void readSession().then((session) => setUserId(session?.user.id ?? null)).catch(() => setUserId(null));
-  }, []);
-  useEffect(() => {
-    if (!userId) { setSavedState({ userId: null, flights: new Map() }); return; }
-    const store = storeFor(userId);
-    setSavedState({ userId, flights: store.snapshot() });
-    const unsubscribe = store.subscribe((flights) => setSavedState({ userId, flights }));
-    void store.refresh().catch(() => undefined);
-    return unsubscribe;
-  }, [userId]);
-  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
-  const toggle = useCallback((flight: FlightResult) => {
-    if (favoriteAction(userId) === "sign-in" || !userId) { showFavoriteSignInPrompt(); return; }
-    void storeFor(userId).toggle(flight).catch(() => undefined);
-  }, [userId]);
-  return { savedFlights: savedState.userId === userId ? savedState.flights : new Map<string, FlightResult>(), toggle, refresh };
+  const [userId, setUserId] = useState<string | null>(null); const [savedFlights, setSavedFlights] = useState(new Map<string, FlightResult>());
+  const refresh = useCallback(() => { void readSession().then((session) => setUserId(session?.user.id ?? null)).catch(() => setUserId(null)); }, []); useFocusEffect(refresh);
+  useEffect(() => { if (!userId) { setSavedFlights(new Map()); return; } const repository = require("./savedRepository") as typeof import("./savedRepository"); const store = repository.savedRepositoryFor(userId); setSavedFlights(store.snapshot().flights); const unsubscribe = store.subscribe((value) => setSavedFlights(value.flights)); void store.refresh(); return unsubscribe; }, [userId]);
+  const toggle = useCallback((flight: FlightResult) => { if (favoriteAction(userId) === "sign-in" || !userId) { showFavoriteSignInPrompt("/saved"); return; } const repository = require("./savedRepository") as typeof import("./savedRepository"); void repository.savedRepositoryFor(userId).toggleFlight(flight).catch(() => undefined); }, [userId]);
+  return { savedFlights, toggle, refresh };
 }

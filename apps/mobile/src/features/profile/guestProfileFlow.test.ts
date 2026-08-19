@@ -37,6 +37,6 @@ test("guest email upgrade enters the existing email flow and returns to Profile"
   const route = source("app/email-auth.tsx");
   const flow = source("src/features/auth/AuthFlow.tsx");
   assert.match(route, /initialStep=\{entry === "email" \? "email" : "welcome"\}/);
-  assert.match(route, /successRoute=\{returnTo === "profile" \? "\/\(tabs\)\/profile" : "\/"\}/);
+  assert.match(route, /successRoute=\{returnTo \? validateSignInIntent\(returnTo\) : "\/"\}/);
   assert.match(flow, /router\.replace\(successRoute\)/);
 });

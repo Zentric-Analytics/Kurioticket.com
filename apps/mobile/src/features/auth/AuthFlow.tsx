@@ -9,7 +9,7 @@ import { CreateAccountScreen, EmailScreen, PasswordScreen, SuccessScreen, TwoFac
 import { requireGoogleWebClientId } from "./googleConfig";
 
 type Step = "welcome" | "email" | "verify" | "password" | "twoFactor" | "create" | "success";
-export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { initialStep?: "welcome" | "email"; successRoute?: "/" | "/(tabs)/profile" } = {}) {
+export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { initialStep?: "welcome" | "email"; successRoute?: "/" | import("./signInIntent").ProtectedRoute } = {}) {
   const [step, setStep] = useState<Step>(initialStep); const [email, setEmail] = useState(""); const [challengeToken, setChallengeToken] = useState(""); const [proof, setProof] = useState(""); const [loading, setLoading] = useState(false); const [error, setError] = useState(""); const [cooldown, setCooldown] = useState(28); const [forceGoogleAccountSelection, setForceGoogleAccountSelection] = useState(false);
   const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || (e instanceof Error && e.name === "NativeGoogleSignInError") ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => void run(async () => { const normalized = normalizeEmail(value); const result = await authApi.requestCode(normalized); setEmail(normalized); setCooldown(result.cooldownSeconds || 28); setStep("verify"); });

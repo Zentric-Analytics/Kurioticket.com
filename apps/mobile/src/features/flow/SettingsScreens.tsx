@@ -1,108 +1,31 @@
-import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import Constants from "expo-constants";
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { travelApi } from "../../api/travelApi";
 import { readSession } from "../../storage/sessionStorage";
-import { authApi } from "../auth/authApi";
-import { readCurrency, writeCurrency } from "../../storage/preferenceStorage";
-import { FlowIcon } from "./FlowIcon";
-import { flowColors, flowStyles } from "./flowStyles";
-import { getRuntimeDiagnostics } from "../../diagnostics/runtimeDiagnostics";
+import { readCurrency } from "../../storage/preferenceStorage";
+import { useMobileLocalization } from "../../localization/MobileLocalization";
+import { mobileLocales } from "../../localization/mobileLocalization";
+import { useAppTheme } from "../../theme/AppTheme";
+import { FlowIcon, type FlowIconName } from "./FlowIcon";
+import { flowColors } from "./flowStyles";
 
-function Header({ title }: { title: string }) {
-  return (
-    <View style={styles.header}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={flowStyles.iconButton}>
-        <FlowIcon name="back" />
-      </Pressable>
-      <Text accessibilityRole="header" style={flowStyles.title}>{title}</Text>
-      <View style={flowStyles.iconButton} />
-    </View>
-  );
-}
-
+function Header({ title }: { title: string }) { const { theme } = useAppTheme(); return <View style={[styles.header, { borderBottomColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.touch}><FlowIcon name="back" color={theme.icon} /></Pressable><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>{title}</Text><View style={styles.touch} /></View>; }
+async function openExternal(url: string, label: string) { try { if (!await Linking.canOpenURL(url)) throw new Error(); await Linking.openURL(url); } catch { Alert.alert(`Unable to open ${label}`, "Check your connection and try again."); } }
+type RowProps = { label: string; icon: FlowIconName; value?: string; external?: boolean; onPress: () => void };
+function Row({ label, icon, value, external, onPress }: RowProps) { const { theme } = useAppTheme(); return <Pressable accessibilityRole="button" accessibilityLabel={`${label}${external ? ", opens website" : ""}`} accessibilityHint={external ? "Opens in your web browser; mobile and web sign-in sessions are separate" : undefined} onPress={onPress} style={[styles.row, { borderBottomColor: theme.border }]}><FlowIcon name={icon} color={flowColors.blue} /><Text style={[styles.rowText, { color: theme.text }]}>{label}</Text>{value ? <Text style={{ color: theme.muted }}>{value}</Text> : null}<FlowIcon name={external ? "external" : "chevron"} color={theme.icon} size={18} /></Pressable>; }
 export function SettingsScreen() {
-  const [email, setEmail] = useState("");
-  const diagnostics = getRuntimeDiagnostics();
-  useEffect(() => { void readSession().then((session) => setEmail(session?.user.email || "")); }, []);
-  const signOut = async () => {
-    await authApi.logout();
-    router.replace("/email-auth");
-  };
-  return (
-    <SafeAreaView style={flowStyles.safe}>
-      <Header title="Settings" />
-      <View style={styles.content}>
-        <Text style={flowStyles.sectionTitle}>Account</Text>
-        <View style={[flowStyles.card, flowStyles.shadow, styles.account]}>
-          <Text style={flowStyles.label}>Signed in as</Text>
-          <Text style={flowStyles.value}>{email || "Guest traveler"}</Text>
-        </View>
-        {email ? (
-          <Pressable accessibilityRole="button" onPress={signOut} style={styles.dangerButton}>
-            <Text style={styles.dangerText}>Sign out</Text>
-          </Pressable>
-        ) : (
-          <Pressable accessibilityRole="button" onPress={() => router.replace("/email-auth")} style={styles.primaryButton}>
-            <Text style={styles.primaryText}>Sign in</Text>
-          </Pressable>
-        )}
-        <Text style={flowStyles.sectionTitle}>System information</Text>
-        <View style={[flowStyles.card, flowStyles.shadow, styles.account]} accessibilityLabel="Build diagnostics">
-          {[["Application version", diagnostics.applicationVersion], ["Native build", diagnostics.nativeBuildVersion], ["Runtime", diagnostics.runtimeVersion], ["Update ID", diagnostics.updateId], ["Channel", diagnostics.channel], ["Created", diagnostics.createdAt], ["Embedded update", diagnostics.embedded ? "Yes" : "No"], ["Expo project", diagnostics.projectId], ["API environment", diagnostics.apiBaseUrl]].map(([label, value]) => <View key={label}><Text style={flowStyles.label}>{label}</Text><Text selectable style={styles.diagnosticValue}>{value}</Text></View>)}
-        </View>
-      </View>
-    </SafeAreaView>
-  );
+  const { theme, darkMode, setDarkMode } = useAppTheme(); const { t, locale, currency: coordinatedCurrency, refresh: refreshPreferences } = useMobileLocalization(); const [authenticated, setAuthenticated] = useState(false); const [currency, setCurrency] = useState("USD");
+  const refresh = useCallback(() => { void readSession().then((s) => setAuthenticated(Boolean(s))); void refreshPreferences(); setCurrency(coordinatedCurrency); }, [coordinatedCurrency]); useFocusEffect(refresh);
+  const web = (path: string, label: string) => void openExternal(`https://kurioticket.com${path}`, label);
+  return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}><Header title={t("settings")} /><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" contentContainerStyle={styles.content}><Text style={[styles.section, { color: theme.text }]}>App preferences</Text><View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}><Row label={t("language")} icon="globe" value={mobileLocales.find((item) => item.code === locale)?.label} onPress={() => router.push("/language")} /><Row label={t("currency")} icon="currency" value={currency} onPress={() => router.push("/currency")} /><View style={styles.row}><FlowIcon name="moon" color={flowColors.blue} /><Text style={[styles.rowText, { color: theme.text }]}>{t("darkMode")}</Text><Switch accessibilityLabel="Dark mode" accessibilityRole="switch" accessibilityState={{ checked: darkMode }} value={darkMode} onValueChange={(v) => void setDarkMode(v).catch(() => Alert.alert("Unable to update dark mode", "Please try again."))} /></View></View>{authenticated ? <><Text style={[styles.section, { color: theme.text }]}>Account</Text><View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}><Row label="Security" icon="shield" external onPress={() => web("/dashboard/security", "Security")} /><Row label="Email preferences" icon="document" external onPress={() => web("/dashboard/preferences/email", "Email preferences")} /><Row label="Travel preferences" icon="sliders" external onPress={() => web("/dashboard/preferences/travel", "Travel preferences")} /></View></> : null}<Text style={[styles.section, { color: theme.text }]}>About</Text><View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}><Row label="Terms of Service" icon="document" external onPress={() => web("/terms", "Terms of Service")} /><Row label="Privacy Policy" icon="shield" external onPress={() => web("/privacy", "Privacy Policy")} /><View style={styles.row}><FlowIcon name="settings" color={flowColors.blue} /><Text style={[styles.rowText, { color: theme.text }]}>App version</Text><Text style={{ color: theme.muted }}>{Constants.expoConfig?.version || "0.1.0"}</Text></View></View></ScrollView></SafeAreaView>;
 }
-
 export function CurrencyScreen() {
-  const [selected, setSelected] = useState("USD");
-  const [currencies, setCurrencies] = useState<string[]>([]);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    void Promise.all([readCurrency(), travelApi.currencyRates()])
-      .then(([saved, payload]) => {
-        setSelected(saved);
-        setCurrencies(Object.keys(payload.rates).sort());
-      })
-      .catch(() => setError("Unable to load current exchange rates. Try again."));
-  }, []);
-  const select = async (currency: string) => {
-    setSelected(currency);
-    await writeCurrency(currency);
-  };
-  return (
-    <SafeAreaView style={flowStyles.safe}>
-      <Header title="Currency" />
-      <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never">
-        <Text style={flowStyles.meta}>Choose the currency used for price display. Provider checkout may use a different billing currency.</Text>
-        {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-        {!error && !currencies.length ? <Text style={flowStyles.meta}>Loading currencies…</Text> : null}
-        <View style={[flowStyles.card, flowStyles.shadow]}>
-          {currencies.map((currency) => (
-            <Pressable key={currency} accessibilityRole="radio" accessibilityState={{ checked: selected === currency }} onPress={() => void select(currency)} style={styles.row}>
-              <Text style={[flowStyles.value, styles.grow]}>{currency}</Text>
-              {selected === currency ? <FlowIcon name="check" color={flowColors.blue} /> : null}
-            </Pressable>
-          ))}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+  const { theme } = useAppTheme(); const { currency: selected, setCurrency, t } = useMobileLocalization(); const [currencies, setCurrencies] = useState<string[]>([]); const [error, setError] = useState("");
+  useEffect(() => { void travelApi.currencyRates().then((payload) => setCurrencies(Object.keys(payload.rates).sort())).catch(() => setError("Unable to load current exchange rates. Try again.")); }, []);
+  const select = async (currency: string) => { setError(""); try { await setCurrency(currency); } catch { setError("Currency was saved for offline use but could not be synchronized."); } };
+  return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}><Header title={t("currency")} /><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" contentContainerStyle={styles.content}><Text style={{ color: theme.muted }}>Choose the currency used for price display.</Text>{error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}<View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>{currencies.map((currency) => <Pressable key={currency} accessibilityRole="radio" accessibilityState={{ checked: selected === currency }} onPress={() => void select(currency)} style={[styles.row, { borderBottomColor: theme.border }]}><Text style={[styles.rowText, { color: theme.text }]}>{currency}</Text>{selected === currency ? <FlowIcon name="check" color={flowColors.blue} /> : null}</Pressable>)}</View></ScrollView></SafeAreaView>;
 }
-
-const styles = StyleSheet.create({
-  header: { minHeight: 60, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 8 },
-  content: { padding: 16, gap: 14 },
-  account: { padding: 16, gap: 6 },
-  dangerButton: { minHeight: 52, borderRadius: 12, borderWidth: 1, borderColor: "#D92D20", alignItems: "center", justifyContent: "center" },
-  dangerText: { color: "#D92D20", fontWeight: "800" },
-  primaryButton: { minHeight: 52, borderRadius: 12, backgroundColor: flowColors.blue, alignItems: "center", justifyContent: "center" },
-  primaryText: { color: "white", fontWeight: "800" },
-  row: { minHeight: 54, flexDirection: "row", alignItems: "center", paddingHorizontal: 16, borderBottomColor: flowColors.border, borderBottomWidth: 1 },
-  grow: { flex: 1 },
-  diagnosticValue: { color: flowColors.navy, fontSize: 13 },
-  error: { color: "#D92D20" },
-});
+const styles = StyleSheet.create({ safe: { flex: 1 }, header: { minHeight: 62, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth }, touch: { width: 52, height: 52, alignItems: "center", justifyContent: "center" }, title: { flex: 1, textAlign: "center", fontSize: 22, fontWeight: "800" }, content: { padding: 18, gap: 12 }, section: { fontSize: 16, fontWeight: "800", marginTop: 8 }, card: { borderWidth: 1, borderRadius: 14, overflow: "hidden" }, row: { minHeight: 58, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: StyleSheet.hairlineWidth }, rowText: { flex: 1, fontWeight: "700" }, error: { color: "#D92D20" } });

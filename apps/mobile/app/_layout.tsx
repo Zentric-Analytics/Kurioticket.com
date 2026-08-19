@@ -6,10 +6,11 @@ import { buildStartupLog } from "../src/diagnostics/buildDiagnostics";
 import { getRuntimeDiagnostics } from "../src/diagnostics/runtimeDiagnostics";
 import { View } from "react-native";
 import { FeatureAvailabilityProvider } from "../src/features/availability/FeatureAvailability";
+import { MobileLocalizationProvider } from "../src/localization/MobileLocalization";
 
 export default function RootLayout() {
   useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
-  return <AppThemeProvider><FeatureAvailabilityProvider><ThemedRootLayout /></FeatureAvailabilityProvider></AppThemeProvider>;
+  return <AppThemeProvider><MobileLocalizationProvider><FeatureAvailabilityProvider><ThemedRootLayout /></FeatureAvailabilityProvider></MobileLocalizationProvider></AppThemeProvider>;
 }
 
 function ThemedRootLayout() {

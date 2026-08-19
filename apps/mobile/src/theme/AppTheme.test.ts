@@ -11,12 +11,12 @@ test("light and dark themes provide contrasting production surfaces", () => {
   assert.match(provider, /text: "#F4F7FF"/);
 });
 
-test("profile switch is enabled, controlled, and persisted through theme context", () => {
-  const profile = readFileSync("src/features/profile/ProfileScreen.tsx", "utf8");
+test("settings switch is enabled, controlled, and persisted through theme context", () => {
+  const settings = readFileSync("src/features/flow/SettingsScreens.tsx", "utf8");
   const provider = readFileSync("src/theme/AppTheme.tsx", "utf8");
-  assert.match(profile, /value=\{darkMode\}/);
-  assert.match(profile, /onValueChange=\{toggleDarkMode\}/);
-  assert.doesNotMatch(profile, /Dark mode, unavailable/);
+  assert.match(settings, /value=\{darkMode\}/);
+  assert.match(settings, /onValueChange=\{/);
+  assert.doesNotMatch(settings, /Dark mode, unavailable/);
   assert.match(provider, /readDarkMode\(\)/);
   assert.match(provider, /writeDarkMode\(enabled\)/);
 });

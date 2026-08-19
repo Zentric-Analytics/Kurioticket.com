@@ -2,6 +2,7 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 const CURRENCY_KEY = "kurioticket.preferences.currency.v1";
+const GUEST_CURRENCY_KEY = "kurioticket.preferences.currency.guest.v1";
 const DARK_MODE_KEY = "kurioticket.preferences.dark-mode.v1";
 
 function webStorage() {
@@ -27,6 +28,15 @@ export async function writeCurrency(currency: string) {
     await SecureStore.setItemAsync(CURRENCY_KEY, currency, {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     });
+}
+export async function readGuestCurrency() {
+  const value = Platform.OS === "web" ? webStorage()?.getItem(GUEST_CURRENCY_KEY) : await SecureStore.getItemAsync(GUEST_CURRENCY_KEY);
+  return value || await readCurrency();
+}
+export async function writeGuestCurrency(currency: string) {
+  if (Platform.OS === "web") webStorage()?.setItem(GUEST_CURRENCY_KEY, currency);
+  else await SecureStore.setItemAsync(GUEST_CURRENCY_KEY, currency, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
+  await writeCurrency(currency);
 }
 
 export async function readDarkMode() {
