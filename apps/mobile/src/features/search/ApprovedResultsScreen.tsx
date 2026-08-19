@@ -529,7 +529,9 @@ function FlightResultsHeader({
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
-  const narrow = useWindowDimensions().width < 360;
+  // Leave the route enough room to remain readable before asking it to share
+  // its row with a fixed-width action. The route itself is never truncated.
+  const stackEditSearch = useWindowDimensions().width < 500;
   return (
     <View
       accessibilityLabel="Flight search summary"
@@ -543,7 +545,7 @@ function FlightResultsHeader({
       >
         <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
       </Pressable>
-      <View style={[s0.flightHeaderRouteBlock, narrow && s0.flightHeaderRouteBlockNarrow]}>
+      <View style={[s0.flightHeaderRouteBlock, stackEditSearch && s0.flightHeaderRouteBlockStacked]}>
         <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
           {route}
         </Text>
@@ -555,7 +557,7 @@ function FlightResultsHeader({
         onPress={onEdit}
         style={[
           s0.flightHeaderEdit,
-          narrow && s0.flightHeaderEditNarrow,
+          stackEditSearch && s0.flightHeaderEditStacked,
           { backgroundColor: theme.surface, borderColor: theme.border },
         ]}
       >
@@ -1130,9 +1132,9 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  flightHeaderRouteBlock: { flex: 1, minWidth: 0 },
-  flightHeaderRouteBlockNarrow: { flexBasis: "75%", flexShrink: 0 },
-  flightHeaderRoute: { flex: 1, minWidth: 0 },
+  flightHeaderRouteBlock: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
+  flightHeaderRouteBlockStacked: { flexBasis: "75%", flexShrink: 0 },
+  flightHeaderRoute: { minWidth: 0 },
   flightHeaderMetadata: { marginTop: 1 },
   flightHeaderEdit: {
     minWidth: 106,
@@ -1146,7 +1148,7 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
-  flightHeaderEditNarrow: { marginLeft: "auto", marginTop: 4 },
+  flightHeaderEditStacked: { marginLeft: "auto", marginTop: 4 },
   flightHeaderEditText: { color: ui.blue, fontSize: 12, fontWeight: "800" },
   filterRail: { height: 64, flexGrow: 0 },
   resultsScroll: { flex: 1 },
