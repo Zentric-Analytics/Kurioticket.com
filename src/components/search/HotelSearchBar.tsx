@@ -2,7 +2,6 @@
 
 import {
   type FormEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -36,7 +35,13 @@ import {
   getLocalizedHotelDestinationCityName,
   getLocalizedHotelDestinationDetail,
   normalizeHotelDestinationSearchValue,
+  type HotelDestinationSuggestion,
 } from "@/data/hotelDestinations";
+import {
+  hotelDestinationKindLabels,
+  hotelDestinationKindTranslationKeys,
+  useHotelDestinationAutocomplete,
+} from "@/components/search/useHotelDestinationAutocomplete";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { normalizeHotelCalendarLocale } from "@/lib/hotelsDateFormatting";
 import {
@@ -154,53 +159,12 @@ const formatHotelSearchTemplate = (
     template,
   );
 
-type HotelDestinationSuggestion = {
-  id: string;
-  name: string;
-  country: string;
-  countryCode: string;
-  region?: string;
-  kind: "city" | "district" | "landmark" | "airport-area";
-  searchValue: string;
-};
-
-type HotelDestinationsApiResponse = {
-  suggestions?: HotelDestinationSuggestion[];
-  source?: "curated-destinations";
-};
-
 type HotelSearchDraft = {
   destination: string;
   checkIn: string;
   checkOut: string;
   guests: number;
   rooms: number;
-};
-
-const normalizeCountryHint = (value: string | null | undefined) => {
-  const countryCode = value?.trim().toUpperCase() || "";
-  if (countryCode === "EU") return countryCode;
-  return /^[A-Z]{2}$/.test(countryCode) ? countryCode : "";
-};
-
-const destinationKindLabels: Record<
-  HotelDestinationSuggestion["kind"],
-  string
-> = {
-  city: "City",
-  district: "Area",
-  landmark: "Landmark",
-  "airport-area": "Airport area",
-};
-
-const destinationKindTranslationKeys: Record<
-  HotelDestinationSuggestion["kind"],
-  string
-> = {
-  city: "hotelDestinationKind.city",
-  district: "hotelDestinationKind.district",
-  landmark: "hotelDestinationKind.landmark",
-  "airport-area": "hotelDestinationKind.airport-area",
 };
 
 export type HotelSearchBarProps = {
@@ -265,7 +229,7 @@ export function HotelSearchBar({
     [dictionary],
   );
   const getDestinationKindLabel = (kind: HotelDestinationSuggestion["kind"]) =>
-    t(destinationKindTranslationKeys[kind]) || destinationKindLabels[kind];
+    t(hotelDestinationKindTranslationKeys[kind]) || hotelDestinationKindLabels[kind];
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -304,21 +268,9 @@ export function HotelSearchBar({
   const [internalMobileSearchOpen, setInternalMobileSearchOpen] =
     useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [destinationSuggestions, setDestinationSuggestions] = useState<
-    HotelDestinationSuggestion[]
-  >([]);
-  const [
-    destinationSuggestionsCountryHint,
-    setDestinationSuggestionsCountryHint,
-  ] = useState("");
-  const [destinationSuggestionsOpen, setDestinationSuggestionsOpen] =
-    useState(false);
-  const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] =
-    useState(false);
+  const destinationInputRef = useRef<HTMLInputElement>(null);
   const [destinationMobilePickerOpen, setDestinationMobilePickerOpen] =
     useState(false);
-  const [destinationHighlight, setDestinationHighlight] = useState(0);
-  const destinationInputRef = useRef<HTMLInputElement>(null);
   const destinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const guestsRoomsMobileLauncherRef = useRef<HTMLButtonElement>(null);
@@ -424,23 +376,25 @@ export function HotelSearchBar({
   const checkOutParsed = parseIsoDate(checkOut);
   const normalizedRooms = String(clampCount(rooms, 1, 6));
   const selectedCountryHint = hasUserSelectedRegion
-    ? normalizeCountryHint(selectedCountryCode ?? selectedOption.code)
+    ? selectedCountryCode ?? selectedOption.code
     : "";
-  const detectedCountryHint = selectedCountryHint
-    ? ""
-    : normalizeCountryHint(detectedCountryCode);
-  const activeCountryHint = selectedCountryHint || detectedCountryHint;
-  const destinationQuery = destination.trim();
-  const visibleDestinationSuggestions =
-    destinationSuggestionsCountryHint === activeCountryHint
-      ? destinationSuggestions
-      : [];
-  const shouldShowDestinationSuggestions =
-    destinationSuggestionsOpen &&
-    destinationQuery.length >= 1 &&
-    (destinationSuggestionsLoading ||
-      visibleDestinationSuggestions.length > 0 ||
-      destinationQuery.length >= 1);
+  const detectedCountryHint = selectedCountryHint ? "" : detectedCountryCode ?? "";
+  const {
+    handleKeyDown: handleDestinationAutocompleteKeyDown,
+    highlight: destinationHighlight,
+    loading: destinationSuggestionsLoading,
+    open: destinationSuggestionsOpen,
+    select: commitDestinationSuggestion,
+    setHighlight: setDestinationHighlight,
+    setOpen: setDestinationSuggestionsOpen,
+    shouldShow: shouldShowDestinationSuggestions,
+    suggestions: visibleDestinationSuggestions,
+  } = useHotelDestinationAutocomplete({
+    query: destination,
+    selectedCountryHint,
+    detectedCountryHint,
+    locale,
+  });
 
   useEffect(() => {
     if (
@@ -660,153 +614,16 @@ export function HotelSearchBar({
     return releaseExistingLock;
   }, [mobileLayout, mobileSearchOpen]);
 
-  useEffect(() => {
-    if (!destinationSuggestionsOpen) {
-      return;
-    }
-
-    if (destinationQuery.length < 1) {
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(
-      async () => {
-        setDestinationSuggestionsLoading(true);
-
-        try {
-          const params = new URLSearchParams({
-            limit: "8",
-          });
-
-          if (destinationQuery.length >= 1) {
-            params.set("q", destinationQuery);
-          }
-
-          if (selectedCountryHint) {
-            params.set("countryCode", selectedCountryHint);
-          }
-
-          if (detectedCountryHint) {
-            params.set("detectedCountryCode", detectedCountryHint);
-          }
-
-          if (typeof navigator !== "undefined" && navigator.language) {
-            params.set("locale", navigator.language);
-          }
-
-          const response = await fetch(
-            `/api/hotels/destinations?${params.toString()}`,
-            {
-              signal: controller.signal,
-              cache: "no-store",
-            },
-          );
-
-          if (!response.ok) {
-            throw new Error("Failed to load hotel destination suggestions");
-          }
-
-          const payload =
-            (await response.json()) as HotelDestinationsApiResponse;
-          const suggestions = Array.isArray(payload.suggestions)
-            ? payload.suggestions
-                .filter((suggestion) =>
-                  Boolean(
-                    suggestion?.id &&
-                    suggestion?.name &&
-                    suggestion?.country &&
-                    suggestion?.searchValue,
-                  ),
-                )
-                .slice(0, 8)
-            : [];
-
-          setDestinationSuggestions(suggestions);
-          setDestinationSuggestionsCountryHint(activeCountryHint);
-          setDestinationHighlight(0);
-        } catch {
-          if (!controller.signal.aborted) {
-            setDestinationSuggestions([]);
-            setDestinationSuggestionsCountryHint(activeCountryHint);
-          }
-        } finally {
-          if (!controller.signal.aborted) {
-            setDestinationSuggestionsLoading(false);
-          }
-        }
-      },
-      destinationQuery.length >= 1 ? 180 : 0,
-    );
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      controller.abort();
-    };
-  }, [
-    activeCountryHint,
-    destinationQuery,
-    destinationSuggestionsOpen,
-    selectedCountryHint,
-    detectedCountryHint,
-  ]);
-
-  const selectDestinationSuggestion = (
-    suggestion: HotelDestinationSuggestion,
-  ) => {
-    setDestination(suggestion.searchValue);
-    setDestinationSuggestionsOpen(false);
-    setDestinationHighlight(0);
+  const selectDestinationSuggestion = (suggestion: HotelDestinationSuggestion) => {
+    setDestination(commitDestinationSuggestion(suggestion));
     setError("");
     window.requestAnimationFrame(() =>
       destinationInputRef.current?.focus({ preventScroll: true }),
     );
   };
 
-  const handleDestinationKeyDown = (
-    event: ReactKeyboardEvent<HTMLInputElement>,
-  ) => {
-    if (event.key === "Escape") {
-      setDestinationSuggestionsOpen(false);
-      return;
-    }
-
-    if (!visibleDestinationSuggestions.length) {
-      if (event.key === "ArrowDown") {
-        setDestinationSuggestionsOpen(true);
-      }
-      return;
-    }
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setDestinationSuggestionsOpen(true);
-      setDestinationHighlight(
-        (current) => (current + 1) % visibleDestinationSuggestions.length,
-      );
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setDestinationSuggestionsOpen(true);
-      setDestinationHighlight(
-        (current) =>
-          (current - 1 + visibleDestinationSuggestions.length) %
-          visibleDestinationSuggestions.length,
-      );
-      return;
-    }
-
-    if (event.key === "Enter" && destinationSuggestionsOpen) {
-      const highlightedSuggestion =
-        visibleDestinationSuggestions[destinationHighlight];
-      if (!highlightedSuggestion) return;
-
-      event.preventDefault();
-      selectDestinationSuggestion(highlightedSuggestion);
-    }
-  };
+  const handleDestinationKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) =>
+    handleDestinationAutocompleteKeyDown(event, selectDestinationSuggestion);
 
   const closeHotelSearchPopovers = () => {
     setDestinationSuggestionsOpen(false);

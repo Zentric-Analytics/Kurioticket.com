@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const source = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+const autocompleteSource = readFileSync(
+  "src/components/search/useHotelDestinationAutocomplete.ts",
+  "utf8",
+);
 const desktopStart = source.lastIndexOf("\n  return (");
 const desktopBranch = source.slice(desktopStart);
 
@@ -28,6 +32,29 @@ test("desktop Cars keeps a different return location beside pickup and gives eve
 test("desktop Hotel destination and guest values include neutral leading icons", () => {
   assert.match(desktopBranch, /hotelSearchDestinationLabel[\s\S]*?<MapPin[\s\S]*?className=\{cn\(hotelFieldValueClassName, "ps-6"\)\}/);
   assert.match(desktopBranch, /hotelSearchGuestsLabel[\s\S]*?<UserRound[\s\S]*?text-slate-500/);
+});
+
+test("desktop homepage Hotel destination uses the shared API autocomplete", () => {
+  assert.match(source, /useHotelDestinationAutocomplete\(\{[\s\S]*?query: destination/);
+  assert.match(autocompleteSource, /\/api\/hotels\/destinations\?\$\{params\.toString\(\)\}/);
+  assert.match(autocompleteSource, /}, 180\)/);
+  assert.match(source, /id="homepage-hotel-destination"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"/);
+  assert.match(source, /width=\{420\}[\s\S]*?desiredHeight=\{320\}[\s\S]*?placement="auto"/);
+});
+
+test("desktop homepage Hotel renders and selects structured canonical destinations", () => {
+  assert.match(source, /suggestion\.kind === "airport-area"[\s\S]*?Plane[\s\S]*?Building2[\s\S]*?MapPin/);
+  assert.match(source, /getLocalizedHotelDestinationCityName\([\s\S]*?getLocalizedHotelDestinationDetail\(/);
+  assert.match(source, /hotelDestinationKindTranslationKeys\[suggestion\.kind\]/);
+  assert.match(source, /setDestination\(commitHotelDestinationSuggestion\(suggestion\)\)/);
+  assert.match(source, /onMouseDown=\{\(event\) => event\.preventDefault\(\)\}/);
+});
+
+test("desktop homepage Hotel keeps empty focus closed and mutually excludes pickers", () => {
+  assert.match(source, /if \(destination\.trim\(\)\) setHotelDestinationSuggestionsOpen\(true\)/);
+  assert.match(source, /setHotelDatesOpen\(\(prev\) => !prev\);[\s\S]*?setHotelDestinationSuggestionsOpen\(false\)/);
+  assert.match(source, /setHotelGuestsRoomsOpen\(\(prev\) => !prev\);[\s\S]*?setHotelDestinationSuggestionsOpen\(false\)/);
+  assert.match(autocompleteSource, /open &&[\s\S]*?trimmedQuery\.length >= 1/);
 });
 
 test("desktop flight controls expose the full truthful trip-type set", () => {
