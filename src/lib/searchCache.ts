@@ -4,6 +4,7 @@ import type {
   PublicFlightResult,
   PublicHotelResult,
 } from "@/lib/types";
+import { buildFlightItineraryKey } from "@/services/travel/flightOfferInventory";
 
 type CacheRecord<T> = {
   value: T;
@@ -46,6 +47,25 @@ export function rememberHotels(results: NormalizedHotelResult[]) {
 export function getFlightFromCache(id: string, now = Date.now()) {
   purgeExpired(flightCache, now);
   return flightCache.get(id)?.value ?? null;
+}
+
+export function getCompatibleFlightsFromCache(id: string, now = Date.now()) {
+  purgeExpired(flightCache, now);
+  const selected = flightCache.get(id)?.value;
+  if (!selected) return [];
+
+  const selectedLegs = selected.legs?.length
+    ? selected.legs
+    : [];
+  if (!selectedLegs.length) return [selected];
+  const selectedKey = selectedLegs.map(buildFlightItineraryKey).join("|");
+
+  return [...flightCache.values()]
+    .map(({ value }) => value)
+    .filter((candidate) => {
+      if (!candidate.legs?.length) return candidate.id === selected.id;
+      return candidate.legs.map(buildFlightItineraryKey).join("|") === selectedKey;
+    });
 }
 
 export function getHotelFromCache(id: string) {
