@@ -32,7 +32,6 @@ import {
   ShieldCheck,
   Tag,
   User,
-  Zap,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -1046,51 +1045,40 @@ function PriceAlert({ product }: { product: Product }) {
           narrow && s0.flightAlertNarrow,
         ]}
       >
-        <View style={s0.flightAlertDeal}>
-          <Zap
+        <View style={[s0.flightAlertIcon, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>
+          <Bell
             accessibilityElementsHidden
             accessible={false}
             color={theme.priceAlertAccent}
-            fill={theme.priceAlertAccent}
-            size={25}
+            size={20}
             strokeWidth={2.25}
-            testID="flight-price-alert-lightning"
+            testID="flight-price-alert-bell"
           />
-          <View style={s0.flightAlertCopy}>
-            <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Get the best deals</Text>
-            <Text style={[s0.sub, { color: theme.textSecondary }]}>Prices may change. Book now and save.</Text>
-          </View>
         </View>
-        <View
-          style={[
-            s0.flightAlertAction,
-            { borderLeftColor: theme.priceAlertBorder },
-            narrow && [s0.flightAlertActionNarrow, { borderTopColor: theme.priceAlertBorder }],
-          ]}
-        >
-          <View style={s0.flightAlertActionLabel}>
-            <Bell
-              accessibilityElementsHidden
-              accessible={false}
-              color={theme.priceAlertAccent}
-              size={18}
-              strokeWidth={2.25}
-              testID="flight-price-alert-bell"
-            />
-            <Text numberOfLines={1} style={[s0.flightAlertActionText, { color: theme.textPrimary }]}>Track prices</Text>
-          </View>
-          <View style={s0.flightAlertSwitchTarget}>
-            <Switch
-              accessibilityLabel="Track prices"
-              accessibilityRole="switch"
-              accessibilityState={{ checked: false }}
-              value={false}
-              onValueChange={() => router.push("/price-alerts")}
-              trackColor={{ false: theme.switchTrack, true: theme.switchTrackActive }}
-              ios_backgroundColor={theme.switchTrack}
-              thumbColor={theme.surface}
-            />
-          </View>
+        <View style={s0.flightAlertCopy}>
+          <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices for this route</Text>
+          <Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Get notified when prices drop.</Text>
+        </View>
+        <View style={[s0.flightAlertSky, narrow && s0.flightAlertSkyNarrow]} pointerEvents="none" accessibilityElementsHidden>
+          <Image
+            accessible={false}
+            source={require("../../../assets/heroes/flights-aircraft.png")}
+            resizeMode="cover"
+            style={s0.flightAlertAircraft}
+            testID="flight-price-alert-aircraft"
+          />
+        </View>
+        <View style={s0.flightAlertSwitchTarget}>
+          <Switch
+            accessibilityLabel="Track prices"
+            accessibilityRole="switch"
+            accessibilityState={{ checked: false }}
+            value={false}
+            onValueChange={() => router.push("/price-alerts")}
+            trackColor={{ false: theme.switchTrack, true: theme.switchTrackActive }}
+            ios_backgroundColor={theme.switchTrack}
+            thumbColor={theme.surface}
+          />
         </View>
       </View>
     );
@@ -1444,41 +1432,31 @@ const s0 = StyleSheet.create({
   },
   alertCopy: { gap: 4 },
   flightAlert: {
-    minHeight: 80,
+    minHeight: 82,
     borderWidth: 1,
     borderRadius: 14,
-    paddingHorizontal: 13,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
     flexDirection: "row",
     alignItems: "center",
+    gap: 9,
+    overflow: "hidden",
   },
-  flightAlertNarrow: { flexDirection: "column", alignItems: "stretch" },
-  flightAlertDeal: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 9 },
+  flightAlertNarrow: { paddingHorizontal: 8, gap: 7 },
+  flightAlertIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 2 },
-  flightAlertTitle: { fontSize: 15, lineHeight: 20, fontWeight: "900" },
-  flightAlertAction: {
-    minWidth: 146,
-    minHeight: 48,
-    marginLeft: 11,
-    paddingLeft: 11,
-    borderLeftWidth: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 5,
-  },
-  flightAlertActionNarrow: {
-    minWidth: 0,
-    marginLeft: 0,
-    marginTop: 8,
-    paddingLeft: 0,
-    paddingTop: 8,
-    borderLeftWidth: 0,
-    borderTopWidth: 1,
-    justifyContent: "space-between",
-  },
-  flightAlertActionLabel: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
-  flightAlertActionText: { fontSize: 12, lineHeight: 16, fontWeight: "800" },
+  flightAlertTitle: { fontSize: 15, lineHeight: 19, fontWeight: "900" },
+  flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500" },
+  flightAlertSky: { width: 72, height: 58, borderRadius: 12, overflow: "hidden", opacity: 0.9 },
+  flightAlertSkyNarrow: { width: 42 },
+  flightAlertAircraft: { width: "100%", height: "100%" },
   flightAlertSwitchTarget: { minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },
   alertButton: {
     width: "100%",
