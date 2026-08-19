@@ -302,25 +302,9 @@ function dealTabAvailable(tab: DealTab, availability: ReturnType<typeof useFeatu
 }
 
 export function DealsScreen() {
-  const ft = useFlowTheme();
   const { availability, loading } = useFeatureAvailability();
-  const [tab, setTab] = useState<DealTab>("hotel-flight");
-  const availableDealTabs = useMemo(() => dealTabs.filter((option) => dealTabAvailable(option.value, availability)), [availability]);
-  const fade = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    fade.setValue(0);
-    Animated.timing(fade, {
-      toValue: 1,
-      duration: 220,
-      useNativeDriver: true,
-    }).start();
-  }, [fade, tab]);
-  useEffect(() => { if (!availableDealTabs.some((option) => option.value === tab) && availableDealTabs[0]) setTab(availableDealTabs[0].value); }, [availableDealTabs, tab]);
-  const includesFlight = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "flight-car";
-  const includesHotel = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "hotel-car";
-  const includesCar = tab === "hotel-flight-car" || tab === "hotel-car" || tab === "flight-car";
   if (loading) return <UnavailableProduct title="Packages" text="Checking package availability…" />;
-  if (!availability.deals || availableDealTabs.length === 0) return <UnavailableProduct title="Packages" text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
+  if (!availability.deals) return <UnavailableProduct title="Packages" text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
   return (
     <Page
       title="Packages"
@@ -329,6 +313,29 @@ export function DealsScreen() {
       heroHeight={596}
       focalY={0.58}
     >
+      <PackagesSearchPanel />
+    </Page>
+  );
+}
+
+export function PackagesSearchPanel() {
+  const ft = useFlowTheme();
+  const { availability, loading } = useFeatureAvailability();
+  const [tab, setTab] = useState<DealTab>("hotel-flight");
+  const availableDealTabs = useMemo(() => dealTabs.filter((option) => dealTabAvailable(option.value, availability)), [availability]);
+  const fade = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    fade.setValue(0);
+    Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+  }, [fade, tab]);
+  useEffect(() => { if (!availableDealTabs.some((option) => option.value === tab) && availableDealTabs[0]) setTab(availableDealTabs[0].value); }, [availableDealTabs, tab]);
+  const includesFlight = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "flight-car";
+  const includesHotel = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "hotel-car";
+  const includesCar = tab === "hotel-flight-car" || tab === "hotel-car" || tab === "flight-car";
+  if (loading) return <UnavailableNotice text="Checking package availability…" />;
+  if (!availability.deals || availableDealTabs.length === 0) return <UnavailableNotice text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
+  return (
+    <>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -424,7 +431,7 @@ export function DealsScreen() {
           </View>
         ) : null}
       </Animated.View>
-    </Page>
+    </>
   );
 }
 

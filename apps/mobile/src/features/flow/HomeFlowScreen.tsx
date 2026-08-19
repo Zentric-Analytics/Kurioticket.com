@@ -16,6 +16,9 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { PackagesIcon } from "./PackagesIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
+import { HotelSearchPanel } from "./HotelSearchPanel";
+import { CarSearchPanel } from "./CarSearchPanel";
+import { PackagesSearchPanel } from "./ProductScreens";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { HomepageDealPromos } from "../home/HomepageDealPromos";
 import { RegionalDestinationRoutes } from "../home/RegionalDestinationRoutes";
@@ -116,21 +119,39 @@ export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
   );
 }
 
+type HomeProduct = "flights" | "hotels" | "cars" | "packages";
+
 const products: {
+  id: HomeProduct;
   label: string;
   route: "/flights" | "/hotels" | "/cars" | "/packages";
   icon: FlowIconName | "packages";
 }[] = [
-  { label: "Flights", route: "/flights", icon: "flight" },
-  { label: "Hotels", route: "/hotels", icon: "hotel" },
-  { label: "Cars", route: "/cars", icon: "car" },
-  { label: "Packages", route: "/packages", icon: "packages" },
+  { id: "flights", label: "Flights", route: "/flights", icon: "flight" },
+  { id: "hotels", label: "Hotels", route: "/hotels", icon: "hotel" },
+  { id: "cars", label: "Cars", route: "/cars", icon: "car" },
+  { id: "packages", label: "Packages", route: "/packages", icon: "packages" },
 ];
 export function SharedHomePage() {
   const ft = useFlowTheme();
   const insets = useSafeAreaInsets();
   const { availability } = useFeatureAvailability();
-  const visibleProducts = products.filter((product) => product.route !== "/packages" || availability.deals);
+  const [activeProduct, setActiveProduct] = useState<HomeProduct>("flights");
+
+  const searchPanel = {
+    flights: availability.flightSearch
+      ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
+      : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />,
+    hotels: availability.hotelSearch
+      ? <HotelSearchPanel embedded params={{}} />
+      : <UnavailableNotice text="Hotel search is temporarily unavailable. Flights and cars remain available." />,
+    cars: availability.carSearch
+      ? <CarSearchPanel embedded params={{}} />
+      : <UnavailableNotice text="Car search is temporarily unavailable. Flights and hotels remain available." />,
+    packages: availability.deals
+      ? <PackagesSearchPanel />
+      : <UnavailableNotice text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />,
+  } satisfies Record<HomeProduct, React.ReactNode>;
 
   return (
     <View style={ft.styles.safe}>
@@ -148,38 +169,42 @@ export function SharedHomePage() {
           <HomeHero />
         </View>
         <View style={[styles.products, { backgroundColor: ft.colors.card }, ft.styles.shadow]}>
-          {visibleProducts.map((product, index) => (
-            <Pressable
-              key={product.label}
-              accessibilityRole="button"
-              accessibilityLabel={`Open ${product.label}`}
-              onPress={() => router.push(product.route)}
-              style={({ pressed }) => [
-                styles.product,
-                index === 0 && [styles.productActive, { backgroundColor: ft.colors.selected }],
-                pressed && ft.styles.pressed,
-              ]}
-            >
-              {product.icon === "packages" ? (
-                <PackagesIcon color={index === 0 ? flowColors.blue : ft.colors.icon} />
-              ) : (
-                <FlowIcon
-                  name={product.icon}
-                  color={index === 0 ? flowColors.blue : ft.colors.icon}
-                />
-              )}
-              <Text
-                style={[
-                  styles.productText, { color: ft.colors.text },
-                  index === 0 && styles.productTextActive,
+          {products.map((product) => {
+            const selected = activeProduct === product.id;
+            return (
+              <Pressable
+                key={product.label}
+                accessibilityRole="tab"
+                accessibilityLabel={product.label}
+                accessibilityState={{ selected }}
+                onPress={() => setActiveProduct(product.id)}
+                style={({ pressed }) => [
+                  styles.product,
+                  selected && [styles.productActive, { backgroundColor: ft.colors.selected }],
+                  pressed && ft.styles.pressed,
                 ]}
               >
-                {product.label}
-              </Text>
-            </Pressable>
-          ))}
+                {product.icon === "packages" ? (
+                  <PackagesIcon color={selected ? flowColors.blue : ft.colors.icon} />
+                ) : (
+                  <FlowIcon
+                    name={product.icon}
+                    color={selected ? flowColors.blue : ft.colors.icon}
+                  />
+                )}
+                <Text
+                  style={[
+                    styles.productText, { color: ft.colors.text },
+                    selected && styles.productTextActive,
+                  ]}
+                >
+                  {product.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
-        {availability.flightSearch ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker /> : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />}
+        {searchPanel[activeProduct]}
         <PopularDestinationStays />
         <HomepageAdventureDiscovery />
         <HomepageDealPromos />

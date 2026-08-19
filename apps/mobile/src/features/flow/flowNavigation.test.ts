@@ -5,10 +5,11 @@ import { test } from "node:test";
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
-test("home product controls navigate to dedicated product routes", () => {
+test("home product controls switch in place while dedicated product routes remain", () => {
   const home = source("src/features/flow/HomeFlowScreen.tsx");
   for (const route of ["/flights", "/hotels", "/cars", "/packages"]) assert.match(home, new RegExp(`route: "${route}"`));
-  assert.match(home, /router\.push\(product\.route\)/);
+  assert.match(home, /setActiveProduct\(product\.id\)/);
+  assert.doesNotMatch(home, /router\.push\(product\.route\)/);
   assert.equal(existsSync(join(process.cwd(), "app", "deals.tsx")), true);
   assert.equal(existsSync(join(process.cwd(), "app", "packages.tsx")), true);
 });
