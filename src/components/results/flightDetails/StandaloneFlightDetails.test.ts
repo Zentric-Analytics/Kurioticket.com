@@ -3,7 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import type { PublicFlightResult } from "@/lib/types";
-import { fareBenefits, groupFareOffers } from "./flightDetailsPresentation";
+import {
+  fareBenefits,
+  getCanonicalProviderFareOffers,
+  groupFareOffers,
+} from "./flightDetailsPresentation";
 
 const fixture = (overrides: Partial<PublicFlightResult> = {}): PublicFlightResult => ({
   id: "iberia-mad-lis-economy",
@@ -54,6 +58,32 @@ test("optional baggage details fail closed instead of creating benefits", () => 
   assert.deepEqual(fareBenefits(fixture()), ["1 carry-on included"]);
 });
 
+test("fare families stay with the canonical Results provider", () => {
+  const canonical = fixture();
+  const canonicalBusiness = fixture({
+    id: "duffel-business",
+    cabinClass: "business",
+    baggageInfo: "2 checked bags included",
+    price: 491,
+  });
+  const unrelatedCheaperProvider = fixture({
+    id: "unrelated-cheaper-business",
+    provider: "Unrelated Travel",
+    cabinClass: "business",
+    baggageInfo: "2 checked bags included",
+    price: 420,
+  });
+
+  const canonicalOffers = getCanonicalProviderFareOffers(
+    [unrelatedCheaperProvider, canonicalBusiness, canonical],
+    canonical,
+  );
+  assert.deepEqual(canonicalOffers.map(({ id }) => id), ["duffel-business", canonical.id]);
+  const business = groupFareOffers(canonicalOffers).find(({ label }) => label === "Business");
+  assert.equal(business?.lowest.id, "duffel-business");
+  assert.equal(business?.lowest.provider, canonical.provider);
+});
+
 test("desktop details contract keeps real selection, pricing, navigation, and accessibility wiring", async () => {
   const source = await readFile(new URL("./StandaloneFlightDetails.tsx", import.meta.url), "utf8");
   for (const contract of [
@@ -61,13 +91,22 @@ test("desktop details contract keeps real selection, pricing, navigation, and ac
     'role="radio"',
     'aria-checked={selected}',
     "setSelectedFareKey(fare.key)",
-    "setSelectedProviderId(provider.id)",
+    'fareGroups.length === 1 ? "max-w-[350px] grid-cols-1"',
+    'fareGroups.length === 1 ? "min-h-[160px]"',
+    "getCanonicalProviderFareOffers",
     "id: selectedOffer.id",
+    "selectedOffer.partnerRedirectUrl || selectedOffer.bookingUrl",
     "Back to results",
     "Edit search",
     "Continue to provider",
     "lg:sticky lg:top-24",
   ]) assert.ok(source.includes(contract), contract);
+
+  assert.ok(source.includes(">Pick your fare</h2>"));
+  assert.ok(!source.includes("Step 1: Pick your fare"));
+  assert.ok(!source.includes("Step 2: Choose where to book"));
+  assert.ok(!source.includes("Booking provider"));
+  assert.ok(!source.includes("setSelectedProviderId"));
 
   for (const forbiddenSample of ["Houston", "Denver", "Frontier", "Super.com", "Dreams", "Kiwi.com", "$269", "$349", "$517"])
     assert.ok(!source.includes(forbiddenSample), forbiddenSample);
