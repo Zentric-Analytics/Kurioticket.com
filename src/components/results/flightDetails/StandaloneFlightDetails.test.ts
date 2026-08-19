@@ -150,7 +150,7 @@ test("connecting segments remain ordered and provider-authored", async () => {
       { originAirport: "DFW", destinationAirport: "LAS", departureTime: "2027-02-10T11:20:00Z", arrivalTime: "2027-02-10T14:00:00Z", airlineName: "American Airlines", flightNumber: "AA456" },
     ],
   };
-  assert.deepEqual(connected.legs[0].segments.map(({ originAirport, destinationAirport }) => `${originAirport}-${destinationAirport}`), ["ORD-DFW", "DFW-LAS"]);
+  assert.deepEqual(connected.legs![0].segments.map(({ originAirport, destinationAirport }) => `${originAirport}-${destinationAirport}`), ["ORD-DFW", "DFW-LAS"]);
 });
 
 test("unbranded exact offers never acquire synthetic fare identity from matching copy", () => {
