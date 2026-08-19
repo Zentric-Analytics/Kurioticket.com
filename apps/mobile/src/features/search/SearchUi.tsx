@@ -23,6 +23,7 @@ import {
   initialDateWindowStart,
   parseCalendarDate,
   shiftCalendarDate,
+  type DateStripPrice,
 } from "./dateStripModel";
 
 export const ui = {
@@ -198,17 +199,13 @@ export function Pill({
 }
 export function DateStrip({
   date,
-  prices,
-  formattedPrices,
-  priceAccessibilityLabels,
+  priceByDate,
   currency = "USD",
   flightResults = false,
   onSelect,
 }: {
   date: string;
-  prices: (number | undefined)[];
-  formattedPrices?: (string | undefined)[];
-  priceAccessibilityLabels?: (string | undefined)[];
+  priceByDate: Record<string, DateStripPrice>;
   currency?: string;
   flightResults?: boolean;
   onSelect: (v: string) => void;
@@ -248,10 +245,11 @@ export function DateStrip({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[s.dates, flightResults && s.flightDates]}
       >
-        {visibleDates.map((iso, i) => {
+        {visibleDates.map((iso) => {
           const x = parseCalendarDate(iso);
           const active = iso === date;
-          const hasPrice = prices[i] != null;
+          const price = priceByDate[iso];
+          const hasPrice = price != null;
           return (
             <Pressable
               key={iso}
@@ -286,16 +284,14 @@ export function DateStrip({
               </Text>
               {hasPrice || flightResults ? (
                 <Text
-                  accessibilityLabel={hasPrice ? priceAccessibilityLabels?.[i] : undefined}
+                  accessibilityLabel={price?.accessibilityLabel}
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={flightResults ? 0.78 : 0.85}
                   style={[s.datePrice, flightResults && s.flightDatePrice, flightResults && { color: theme.textPrimary }, active && { color: ui.blue }]}
                 >
                   {hasPrice
-                    ? formattedPrices
-                      ? (formattedPrices[i] ?? "—")
-                      : money(currency, prices[i])
+                    ? (price.formatted ?? money(currency, price.amount))
                     : ""}
                 </Text>
               ) : null}

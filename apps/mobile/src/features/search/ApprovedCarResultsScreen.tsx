@@ -48,7 +48,7 @@ export function ApprovedCarResultsScreen() {
   return <SafeAreaView style={r.safe} edges={["top"]}>
     <TopBar />
     <View style={r.summary}><View style={r.summaryCopy}><Text style={r.route}>{String(payload.pickupLocation||"")}</Text><Text style={r.sub}>{shortDate(pickup)}, {formatClock(payload.pickupTime)}  →  {shortDate(dropoff)}, {formatClock(payload.dropoffTime)}</Text><Text style={r.sub}>{days} day{days===1?"":"s"}  ·  Driver age {String(payload.driverAge||"")}+</Text></View><Pill label="Edit search" icon="document" onPress={edit}/></View>
-    <DateStrip date={pickup} prices={[undefined,undefined,cheapest||undefined,undefined,undefined]} currency={results[0]?.offers[0]?.currency} onSelect={selectDate}/>
+    <DateStrip date={pickup} priceByDate={cheapest ? { [pickup]: { amount: cheapest } } : {}} currency={results[0]?.offers[0]?.currency} onSelect={selectDate}/>
     <ScrollView horizontal style={r.filterRail} showsHorizontalScrollIndicator={false} contentContainerStyle={r.filters}>
       <Pill label="Filters" icon="sliders" active={Boolean(category||company||priceFilter)} onPress={clearFilters}/>
       <Pill label={category||"Car type"} active={Boolean(category)} onPress={()=>cycle(categories,category,setCategory)}/>
