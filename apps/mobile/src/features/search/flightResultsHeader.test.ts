@@ -47,8 +47,15 @@ test("main controls flank a separate metadata row beneath the route", () => {
   const mainRow = header.slice(header.indexOf('accessibilityLabel="Flight route controls"'), header.indexOf('accessibilityLabel="Trip metadata row"'));
   assert.match(header, /accessibilityLabel="Go back"[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Trip metadata row"[\s\S]*?accessibilityLabel="Edit search"/);
   assert.doesNotMatch(mainRow, /dateRange|travelerCount|cabinClass/);
-  assert.match(header, /\{dateRange\}  ·  \{travelerCount\}[\s\S]*?·  \{cabinClass\}/);
+  assert.match(header, /<CalendarDays[\s\S]*?\{dateRange\}[\s\S]*?<User[\s\S]*?\{travelerCount\}[\s\S]*?<Briefcase[\s\S]*?\{cabinClass\}/);
+  assert.doesNotMatch(header, /·/);
   assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "flex-start"/);
+});
+
+test("metadata uses modest, decorative semantic icons", () => {
+  for (const icon of ["CalendarDays", "User", "Briefcase"]) {
+    assert.match(header, new RegExp(`<${icon} accessibilityElementsHidden accessible=\\{false\\} color=\\{theme\\.icon\\} size=\\{16\\}`));
+  }
 });
 
 test("metadata renders current dates without a redundant trip-type label", () => {
@@ -97,6 +104,12 @@ test("route stays centered and narrow screens use balanced compact controls with
   assert.match(results, /compact=\{narrowHeader\}/);
   assert.match(header, /\{!compact \? <Text style=\{s0\.flightHeaderEditText\}>Edit search<\/Text> : null\}/);
   assert.doesNotMatch(header, /numberOfLines|ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
+});
+
+test("metadata items wrap without shrinking or hiding their text", () => {
+  assert.match(styles, /flightHeaderMetadataRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?flexWrap: "wrap"[\s\S]*?columnGap: 18,[\s\S]*?rowGap: 6/);
+  assert.match(styles, /flightHeaderMetadataItem: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"[\s\S]*?flexShrink: 0,[\s\S]*?gap: 6/);
+  assert.doesNotMatch(header, /numberOfLines|ellipsizeMode/);
 });
 
 test("Back is an independent icon with pressed feedback and no card treatment", () => {
