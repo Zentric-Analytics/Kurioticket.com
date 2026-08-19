@@ -40,9 +40,9 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
   assert.match(screen, /dateStripPrices\.map\(\(price\) => price\?\.formatted\)/);
   assert.doesNotMatch(screen, /formatDateStripPrice/);
   assert.match(dateStrip, /flightResults && s\.flightDate/);
-  assert.match(dateStrip, /flightDate: \{ minWidth: 96, maxWidth: 116 \}/);
+  assert.match(dateStrip, /flightDate: \{[\s\S]*?minWidth: 96,[\s\S]*?maxWidth: 116/);
   assert.match(dateStrip, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit/);
-  assert.match(dateStrip, /date: \{[\s\S]*?width: 80,[\s\S]*?height: 64/);
+  assert.match(dateStrip, /flightDate: \{[\s\S]*?height: 76/);
   assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);
 });
 
