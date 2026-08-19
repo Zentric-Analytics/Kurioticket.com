@@ -23,12 +23,15 @@ import {
   ArrowLeft,
   Award,
   Bell,
+  BriefcaseBusiness,
+  CalendarDays,
   FilePenLine,
   Info,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
   Tag,
+  UserRound,
   Zap,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
@@ -58,7 +61,6 @@ import {
   ui,
 } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
-import { airports } from "../flow/airportData";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
 import {
@@ -89,10 +91,9 @@ import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
-const airportLabel = (code: unknown) => {
-  const value = String(code || "").toUpperCase();
-  const airport = airports.find((item) => item.code === value);
-  return airport ? `${airport.city} (${value})` : value;
+const cabinLabel = (value: unknown) => {
+  const normalized = String(value || "economy").replace(/[-_]+/g, " ").toLowerCase();
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
@@ -464,14 +465,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     <SafeAreaView style={[s0.safe, flightResults && { backgroundColor: theme.background }]} edges={["top"]}>
       {flightResults ? (
         <FlightResultsHeader
-          route={`${String(payload.origin || "").toUpperCase()} ⇄ ${String(payload.destination || "").toUpperCase()}`}
-          tripSummary={[
-            payload.tripType === "one-way" ? "One way" : "Round trip",
-            payload.tripType === "one-way"
-              ? shortDate(String(payload.departureDate || ""))
-              : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`,
-            `${payload.travelers} ${Number(payload.travelers) === 1 ? "Traveler" : "Travelers"}`,
-          ].join(" · ")}
+          route={`${String(payload.origin || "").toUpperCase()} ${payload.tripType === "one-way" ? "→" : "⇄"} ${String(payload.destination || "").toUpperCase()}`}
+          dateRange={payload.tripType === "one-way"
+            ? shortDate(String(payload.departureDate || ""))
+            : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`}
+          travelerCount={Number(payload.travelers)}
+          cabinClass={cabinLabel(payload.cabinClass)}
           onEdit={edit}
         />
       ) : (
@@ -527,11 +526,15 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
 
 function FlightResultsHeader({
   route,
-  tripSummary,
+  dateRange,
+  travelerCount,
+  cabinClass,
   onEdit,
 }: {
   route: string;
-  tripSummary: string;
+  dateRange: string;
+  travelerCount: number;
+  cabinClass: string;
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -545,7 +548,11 @@ function FlightResultsHeader({
           accessibilityRole="button"
           accessibilityLabel="Go back"
           onPress={() => router.back()}
-          style={s0.flightHeaderBack}
+          style={[
+            s0.flightHeaderBack,
+            s0.flightHeaderElevated,
+            { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : theme.textPrimary },
+          ]}
         >
           <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
         </Pressable>
@@ -560,17 +567,29 @@ function FlightResultsHeader({
           onPress={onEdit}
           style={[
             s0.flightHeaderEdit,
-            { backgroundColor: theme.surface, borderColor: theme.border },
+            s0.flightHeaderElevated,
+            { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : theme.textPrimary },
           ]}
         >
           <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
           <Text style={s0.flightHeaderEditText}>Edit search</Text>
         </Pressable>
       </View>
-      <View accessibilityLabel="Trip summary row" style={s0.flightHeaderSummaryRow}>
-        <Text style={[s0.flightHeaderSummary, { color: theme.textSecondary }]}>
-          {tripSummary}
-        </Text>
+      <View accessibilityLabel="Trip metadata row" style={s0.flightHeaderMetadataRow}>
+        <View accessibilityLabel={`Travel dates ${dateRange}`} style={s0.flightHeaderMetadataItem}>
+          <CalendarDays accessible={false} color={theme.icon} size={15} strokeWidth={2} />
+          <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
+        </View>
+        <View accessibilityLabel={`${travelerCount} ${travelerCount === 1 ? "Traveler" : "Travelers"}`} style={s0.flightHeaderMetadataItem}>
+          <UserRound accessible={false} color={theme.icon} size={15} strokeWidth={2} />
+          <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
+            {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
+          </Text>
+        </View>
+        <View accessibilityLabel={`Cabin class ${cabinClass}`} style={s0.flightHeaderMetadataItem}>
+          <BriefcaseBusiness accessible={false} color={theme.icon} size={15} strokeWidth={2} />
+          <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
+        </View>
       </View>
     </View>
   );
@@ -1142,21 +1161,33 @@ const s0 = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: 12,
+  },
+  flightHeaderElevated: {
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
   },
   flightHeaderRouteBlock: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
   flightHeaderRoute: { minWidth: 0 },
-  flightHeaderSummaryRow: {
+  flightHeaderMetadataRow: {
     marginLeft: 46,
-    paddingTop: 4,
+    paddingTop: 8,
     paddingRight: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    columnGap: 16,
+    rowGap: 6,
   },
-  flightHeaderSummary: { fontSize: 12, lineHeight: 17, flexShrink: 1 },
+  flightHeaderMetadataItem: { flexDirection: "row", alignItems: "center", gap: 5 },
+  flightHeaderMetadataText: { fontSize: 12, lineHeight: 17 },
   flightHeaderEdit: {
     minWidth: 106,
     minHeight: 44,
     flexShrink: 0,
     paddingHorizontal: 10,
-    borderWidth: 1,
     borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
