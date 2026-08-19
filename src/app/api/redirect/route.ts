@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
-import { getFlightFromCache, getHotelFromCache } from "@/lib/searchCache";
+import { getFlightFromCache, getHotelFromCache, replaceFlightInCache } from "@/lib/searchCache";
 import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
-import type { NormalizedHotelResult } from "@/lib/types";
+import type { NormalizedFlightResult, NormalizedHotelResult } from "@/lib/types";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
+import { parseFlightDetailsSearch, searchRecordToParams } from "@/services/travel/flightDetailsSearchContext";
+import { revalidateStandaloneFlightOffer } from "@/services/travel/standaloneFlightOfferRevalidation";
 
 export async function POST(request: Request) {
   if (isStagingEnvironment()) {
@@ -15,17 +17,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string };
+  const body = (await request.json()) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string; search?: unknown };
   if (!body.id || !body.type) {
     return NextResponse.json({ error: "Redirect target is required." }, { status: 400 });
   }
 
-  const target = body.type === "flight" ? getFlightFromCache(body.id) : getHotelFromCache(body.id);
+  let target = body.type === "flight" ? getFlightFromCache(body.id) : getHotelFromCache(body.id);
   if (!target) {
     return NextResponse.json(
       { error: "This partner link expired. Please search again for current prices." },
       { status: 404 },
     );
+  }
+
+  if (body.type === "flight" && body.sourcePage === "flight_details") {
+    const search = parseFlightDetailsSearch(searchRecordToParams(body.search));
+    if (!search)
+      return NextResponse.json({ error: "Complete flight search context is required to confirm this handoff." }, { status: 400 });
+    const outcome = await revalidateStandaloneFlightOffer({ cachedOffer: target as NormalizedFlightResult, search });
+    if (outcome.status !== "confirmed" && outcome.status !== "changed")
+      return NextResponse.json({ error: "The provider could not confirm this flight for handoff." }, { status: outcome.status === "temporary-failure" ? 503 : 409 });
+    target = replaceFlightInCache(body.id, outcome.flight);
   }
 
   const hotelTarget = body.type === "hotel" ? (target as NormalizedHotelResult) : null;

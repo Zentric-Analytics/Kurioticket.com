@@ -24,16 +24,19 @@ export function getCanonicalProviderFareOffers(
 export function groupFareOffers(offers: PublicFlightResult[]): FareGroup[] {
   const groups = new Map<string, PublicFlightResult[]>();
   for (const offer of offers) {
-    const key = [offer.cabinClass, offer.baggageInfo, offer.refundInfo]
-      .map((value) => value.trim().toLowerCase())
-      .join("|");
+    const providerBrand = offer.fareBrandName?.trim();
+    const key = providerBrand
+      ? `${offer.provider.trim().toLowerCase()}|${providerBrand.toLowerCase()}`
+      : `exact-offer|${offer.id}`;
     groups.set(key, [...(groups.get(key) ?? []), offer]);
   }
 
   return [...groups.entries()]
     .map(([key, grouped]) => ({
       key,
-      label: titleCase(grouped[0].cabinClass || "Fare"),
+      label: grouped[0].fareBrandName
+        ? titleCase(grouped[0].fareBrandName)
+        : `${titleCase(grouped[0].cabinClass || "Unknown")} fare`,
       offers: grouped.sort((a, b) => a.price - b.price),
       lowest: grouped.reduce((lowest, offer) =>
         offer.price < lowest.price ? offer : lowest,

@@ -28,6 +28,7 @@ import {
 } from "./flightDetailsPresentation";
 
 type DetailsResponse = {
+  status?: "confirmed" | "changed";
   flight?: PublicFlightResult;
   fareOffers?: PublicFlightResult[];
   error?: string;
@@ -44,10 +45,13 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [selectedFareKey, setSelectedFareKey] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
   const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const detailsQuery = searchParams.toString();
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`/api/flights/details?id=${encodeURIComponent(id)}`, {
+    const query = new URLSearchParams(detailsQuery);
+    query.set("id", id);
+    fetch(`/api/flights/details?${query.toString()}`, {
       signal: controller.signal,
     })
       .then(async (result) => {
@@ -62,7 +66,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         }
       });
     return () => controller.abort();
-  }, [id]);
+  }, [detailsQuery, id]);
 
   const flight = response?.flight;
   const canonicalFareOffers = useMemo(
@@ -115,7 +119,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
       const result = await fetch("/api/redirect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: selectedOffer.id, type: "flight", sourcePage: "flight_details" }),
+        body: JSON.stringify({ id: selectedOffer.id, type: "flight", sourcePage: "flight_details", search: Object.fromEntries(searchParams.entries()) }),
       });
       const data = (await result.json()) as { url?: string; error?: string };
       if (!result.ok || !data.url) throw new Error(data.error || "This provider link is unavailable.");
@@ -129,7 +133,9 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   if (!response && !error) return <FlightDetailsSkeleton resultsHref={resultsHref} />;
   if (!flight || error && !response) return <FlightDetailsUnavailable resultsHref={resultsHref} message={error} />;
 
-  const leg = primaryLeg(flight);
+  const legs = flight.legs ?? [];
+  const leg = legs[0];
+  if (!leg) return <FlightDetailsUnavailable resultsHref={resultsHref} message="The provider did not return a complete itinerary." />;
   const origin = searchParams.get("originName") || searchParams.get("origin") || flight.originAirport;
   const destination = searchParams.get("destinationName") || searchParams.get("destination") || flight.destinationAirport;
   const route = `${cleanLocation(origin)} to ${cleanLocation(destination)}`;
@@ -167,7 +173,10 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
               </Link>
             </div>
 
-            <ItineraryCard flight={flight} leg={leg} origin={cleanLocation(origin)} destination={cleanLocation(destination)} locale={locale} />
+            {response.status === "changed" ? <p role="status" className="mt-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-medium text-slate-700">Price or itinerary details were updated by {flight.provider}.</p> : null}
+            <div className="space-y-5">
+              {legs.map((itineraryLeg, index) => <ItineraryCard key={`${itineraryLeg.direction}-${index}`} flight={flight} leg={itineraryLeg} label={itineraryLeg.direction === "outbound" ? "Outbound" : itineraryLeg.direction === "return" ? "Return" : `Leg ${index + 1}`} origin={itineraryLeg.originAirport === leg.originAirport ? cleanLocation(origin) : cleanLocation(destination)} destination={itineraryLeg.destinationAirport === leg.destinationAirport ? cleanLocation(destination) : cleanLocation(origin)} locale={locale} />)}
+            </div>
 
             <h2 className="mb-3.5 mt-7 text-lg font-semibold leading-tight tracking-[-0.01em] text-slate-950 xl:text-[19px]">Pick your fare</h2>
             <div role="radiogroup" aria-label="Available fares" className={`grid gap-4 ${fareGroups.length === 1 ? "max-w-[350px] grid-cols-1" : fareGroups.length === 2 ? "sm:grid-cols-2" : fareGroups.length === 3 ? "md:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4"}`}>
@@ -190,22 +199,24 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
           </section>
 
-          <TripSidebar flight={flight} leg={leg} route={route} date={date} tripLine={tripLine} travelers={travelers.label} selectedFare={selectedFare?.label || selectedOffer?.cabinClass || ""} selectedOffer={selectedOffer} price={providerPrice} locale={locale} redirecting={redirecting} canContinue={canContinue} onContinue={continueToProvider} error={error} />
+          <TripSidebar flight={flight} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} selectedFare={selectedFare?.label || selectedOffer?.cabinClass || ""} selectedOffer={selectedOffer} price={providerPrice} locale={locale} redirecting={redirecting} canContinue={canContinue} onContinue={continueToProvider} error={error} />
         </div>
       </div>
     </main>
   );
 }
 
-function ItineraryCard({ flight, leg, origin, destination, locale }: { flight: PublicFlightResult; leg: FlightLeg; origin: string; destination: string; locale: string }) {
+function ItineraryCard({ flight, leg, label, origin, destination, locale }: { flight: PublicFlightResult; leg: FlightLeg; label: string; origin: string; destination: string; locale: string }) {
   const logo = flight.airlineLogo || undefined;
   return <div className="mt-5 overflow-hidden rounded-xl border border-[#E2E8F0] bg-white">
+    <h3 className="border-b border-[#E2E8F0] px-5 py-3 text-sm font-bold text-slate-900 lg:px-6">{label}</h3>
     <div className="grid gap-5 p-5 sm:grid-cols-[1.2fr_0.8fr_1.2fr_0.8fr] sm:items-center lg:p-6">
       <div className="flex min-w-0 items-center gap-3">{logo ? <Image src={logo} alt={`${flight.airlineName} logo`} width={42} height={42} className="h-10 w-10 object-contain" /> : <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-[#075EE8]"><Plane className="h-5 w-5" aria-hidden="true" /></span>}<div className="min-w-0"><p className="truncate text-sm font-semibold">{flight.airlineName}</p>{flight.flightNumber ? <p className="mt-1 text-xs text-slate-500">Flight {flight.flightNumber}</p> : null}</div></div>
       <AirportTime time={leg.departureTime} airport={leg.originAirport} city={origin} locale={locale} />
       <div className="text-center"><p className="mb-1 text-xs font-medium text-slate-500">{leg.duration}</p><div className="flex items-center text-slate-400"><Plane className="h-4 w-4 rotate-45 text-[#075EE8]" aria-hidden="true" /><span className="mx-2 h-px flex-1 border-t border-dashed border-slate-300" /><span className="h-1.5 w-1.5 rounded-full bg-slate-400" /></div><p className="mt-1.5 text-xs font-medium text-slate-500">{formatStops(leg.stops)}</p></div>
       <AirportTime time={leg.arrivalTime} airport={leg.destinationAirport} city={destination} locale={locale} />
     </div>
+    {leg.segments.length > 1 ? <ol className="border-t border-[#E2E8F0] px-5 py-3 lg:px-6">{leg.segments.map((segment, index) => <li key={`${segment.departureTime}-${index}`} className="py-1 text-xs text-slate-600">{segment.airlineName ? `${segment.airlineName}${segment.flightNumber ? ` ${segment.flightNumber}` : ""}: ` : ""}{segment.originAirport} to {segment.destinationAirport}{index < leg.layovers.length ? ` • ${leg.layovers[index].duration} layover in ${leg.layovers[index].airport}` : ""}</li>)}</ol> : null}
     <div className="grid border-t border-[#E2E8F0] sm:grid-cols-2">
       {flight.cabinClass ? <Metadata icon={Armchair} label="Cabin" value={titleCase(flight.cabinClass)} /> : null}
       <Metadata icon={Clock3} label="Duration" value={leg.duration} divided={Boolean(flight.cabinClass)} />
@@ -217,25 +228,24 @@ function AirportTime({ time, airport, city, locale }: { time: string; airport: s
 
 function Metadata({ icon: Icon, label, value, divided = false }: { icon: typeof Plane; label: string; value: string; divided?: boolean }) { return <div className={`flex items-center gap-3 px-5 py-4 lg:px-6 ${divided ? "sm:border-l sm:border-[#E2E8F0]" : ""}`}><Icon className="h-5 w-5 text-slate-700" aria-hidden="true" /><div><p className="text-[11px] text-slate-500">{label}</p><p className="mt-0.5 text-xs font-medium text-slate-800">{value}</p></div></div>; }
 
-function TripSidebar({ flight, leg, route, date, tripLine, travelers, selectedFare, selectedOffer, price, locale, redirecting, canContinue, onContinue, error }: { flight: PublicFlightResult; leg: FlightLeg; route: string; date: string; tripLine: string; travelers: string; selectedFare: string; selectedOffer?: PublicFlightResult; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; canContinue: boolean; onContinue: () => void; error: string }) {
+function TripSidebar({ flight, legs, route, date, tripLine, travelers, selectedFare, selectedOffer, price, locale, redirecting, canContinue, onContinue, error }: { flight: PublicFlightResult; legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; selectedFare: string; selectedOffer?: PublicFlightResult; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; canContinue: boolean; onContinue: () => void; error: string }) {
   return <aside className="rounded-[15px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:sticky lg:top-24" aria-labelledby="your-trip-heading">
     <h2 id="your-trip-heading" className="text-xl font-bold">Your trip</h2><p className="mt-4 text-base font-semibold">{route}</p><p className="mt-1 text-xs leading-5 text-slate-600">{date} • {tripLine}</p>
     <div className="my-5 border-t border-[#E2E8F0]" />
     <div className="flex items-center gap-3">{flight.airlineLogo ? <Image src={flight.airlineLogo} alt={`${flight.airlineName} logo`} width={38} height={38} className="h-9 w-9 object-contain" /> : <Plane className="h-7 w-7 text-[#075EE8]" aria-hidden="true" />}<div><p className="text-sm font-semibold">{flight.airlineName}</p>{flight.flightNumber ? <p className="mt-0.5 text-xs text-slate-500">Flight {flight.flightNumber}</p> : null}</div></div>
-    <div className="mt-5 grid grid-cols-[1fr_0.85fr_1fr] items-start gap-2"><AirportTime time={leg.departureTime} airport={leg.originAirport} city="" locale={locale} /><div className="pt-1 text-center"><Plane className="mx-auto h-5 w-5 rotate-45 text-slate-500" aria-hidden="true" /><p className="mt-2 text-xs text-slate-500">{leg.duration}</p><p className="text-xs text-slate-500">{formatStops(leg.stops)}</p></div><div className="text-right"><p className="text-base font-semibold">{formatTime(leg.arrivalTime, locale)}</p><p className="mt-1 text-sm font-bold">{leg.destinationAirport}</p></div></div>
+    <div className="mt-5 space-y-4">{legs.map((leg, index) => <div key={`${leg.direction}-${index}`}><p className="mb-2 text-xs font-bold text-slate-700">{leg.direction === "outbound" ? "Outbound" : leg.direction === "return" ? "Return" : `Leg ${index + 1}`}</p><div className="grid grid-cols-[1fr_0.85fr_1fr] items-start gap-2"><AirportTime time={leg.departureTime} airport={leg.originAirport} city="" locale={locale} /><div className="pt-1 text-center"><Plane className="mx-auto h-5 w-5 rotate-45 text-slate-500" aria-hidden="true" /><p className="mt-2 text-xs text-slate-500">{leg.duration}</p><p className="text-xs text-slate-500">{formatStops(leg.stops)}</p></div><div className="text-right"><p className="text-base font-semibold">{formatTime(leg.arrivalTime, locale)}</p><p className="mt-1 text-sm font-bold">{leg.destinationAirport}</p></div></div></div>)}</div>
     <div className="my-5 border-t border-[#E2E8F0]" /><dl className="space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-600">Fare</dt><dd className="font-medium text-slate-800">{selectedFare}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-600">Traveler</dt><dd className="font-medium text-slate-800">{travelers}</dd></div>{selectedOffer?.provider ? <div className="flex justify-between gap-4"><dt className="text-slate-600">Provider</dt><dd className="max-w-[60%] truncate font-medium text-slate-800">{selectedOffer.provider}</dd></div> : null}</dl>
     <div className="my-5 border-t border-[#E2E8F0]" /><div className="flex items-end justify-between gap-4"><p className="text-sm font-semibold">Total per traveler</p>{price ? <p className="text-[30px] font-bold leading-none text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : null}</div>
-    <button type="button" aria-label={selectedOffer?.provider ? `Continue to ${selectedOffer.provider}` : "Continue to provider"} disabled={!canContinue || redirecting} onClick={onContinue} className="mt-6 h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{redirecting ? "Opening provider…" : "Continue to provider"}</button>
-    <p className="mt-3 text-center text-xs leading-5 text-slate-500">You’ll complete your booking on the provider’s website.</p><p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-slate-700"><LockKeyhole className="h-4 w-4" aria-hidden="true" /> Secure provider handoff</p>
+    <button type="button" aria-label={selectedOffer?.provider ? `Continue to ${selectedOffer.provider}` : "Provider handoff unavailable"} disabled={!canContinue || redirecting} onClick={onContinue} className="mt-6 h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{redirecting ? `Opening ${selectedOffer?.provider}…` : canContinue && selectedOffer?.provider ? `Continue to ${selectedOffer.provider}` : "External booking unavailable"}</button>
+    <p className="mt-3 text-center text-xs leading-5 text-slate-500">{canContinue ? `You’ll complete your booking on ${selectedOffer?.provider}’s website.` : "This provider did not supply a verified external booking link."}</p>{canContinue ? <p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-slate-700"><LockKeyhole className="h-4 w-4" aria-hidden="true" /> Verified provider handoff</p> : null}
     {error ? <p role="alert" className="mt-4 text-sm font-medium text-red-700">{error}</p> : null}
-    <div className="mt-5 flex gap-3 rounded-[10px] border border-blue-200 bg-blue-50/60 p-4"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#075EE8]" aria-hidden="true" /><div><p className="text-xs font-medium text-slate-700">Price and availability are confirmed by the provider before purchase.</p><p className="mt-1 text-xs text-slate-500">Review the provider’s final fare terms before booking.</p></div></div>
+    <div className="mt-5 flex gap-3 rounded-[10px] border border-blue-200 bg-blue-50/60 p-4"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#075EE8]" aria-hidden="true" /><div><p className="text-xs font-medium text-slate-700">This quote was refreshed with {selectedOffer?.provider || "the provider"}.</p><p className="mt-1 text-xs text-slate-500">Review the provider’s final fare terms before booking.</p></div></div>
   </aside>;
 }
 
 function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <main className="flex-1 bg-[#F7F9FC] py-7"><div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8"><Link href={resultsHref} className="inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8]"><ArrowLeft className="h-4 w-4" /> Back to results</Link><div role="status" aria-label="Loading flight details" className="mt-4 grid gap-7 lg:grid-cols-[minmax(0,2.25fr)_minmax(300px,0.95fr)]"><div className="h-[720px] animate-pulse rounded-[15px] border border-slate-200 bg-white" /><div className="h-[620px] animate-pulse rounded-[15px] border border-slate-200 bg-white" /></div></div></main>; }
 function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-[#F7F9FC] py-10"><div className="mx-auto max-w-3xl px-4"><Link href={resultsHref} className="inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8]"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 rounded-[15px] border border-slate-200 bg-white p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
 
-function primaryLeg(flight: PublicFlightResult): FlightLeg { return flight.legs?.[0] ?? { direction: "leg", originAirport: flight.originAirport, destinationAirport: flight.destinationAirport, departureTime: flight.departureTime, arrivalTime: flight.arrivalTime, duration: flight.duration, durationMinutes: flight.durationMinutes, stops: flight.stops, layovers: flight.layovers, segments: [] }; }
 function readTravelerSummary(params: URLSearchParams) { const adults = Number(params.get("adults") || 1); const children = Number(params.get("children") || 0); const infants = Number(params.get("infants") || 0); const count = Math.max(1, adults + children + infants); const parts = [adults ? `${adults} ${adults === 1 ? "adult" : "adults"}` : "", children ? `${children} ${children === 1 ? "child" : "children"}` : "", infants ? `${infants} ${infants === 1 ? "infant" : "infants"}` : ""].filter(Boolean); return { count, label: parts.join(", ") || "1 adult" }; }
 function formatTripDate(value: string, locale: string) { const date = new Date(value.includes("T") ? value : `${value}T12:00:00`); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(locale, { weekday: "short", month: "short", day: "numeric" }).format(date); }
 function formatTime(value: string, locale: string) { return new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }).format(new Date(value)); }

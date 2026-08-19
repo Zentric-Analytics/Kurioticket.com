@@ -39,16 +39,17 @@ const fixture = (overrides: Partial<PublicFlightResult> = {}): PublicFlightResul
   ...overrides,
 });
 
-test("groups only matching production fare conditions and keeps real provider prices", () => {
-  const economySecondProvider = fixture({ id: "tap-economy", provider: "TAP", price: 205 });
-  const business = fixture({ id: "iberia-business", cabinClass: "business", baggageInfo: "2 checked bags included", price: 491 });
-  const groups = groupFareOffers([business, economySecondProvider, fixture()]);
+test("groups only provider-backed fare brands and never synthesizes identity from generic rules", () => {
+  const basic = fixture({ fareBrandName: "Basic" });
+  const sameBrand = fixture({ id: "iberia-basic-2", fareBrandName: "Basic", price: 205 });
+  const unbranded = fixture({ id: "unbranded", price: 491 });
+  const groups = groupFareOffers([unbranded, sameBrand, basic]);
 
   assert.equal(groups.length, 2);
-  assert.equal(groups[0].label, "Economy");
+  assert.equal(groups[0].label, "Basic");
   assert.equal(groups[0].lowest.price, 188);
-  assert.deepEqual(groups[0].offers.map(({ provider }) => provider), ["Duffel", "TAP"]);
-  assert.equal(groups[1].label, "Business");
+  assert.deepEqual(groups[0].offers.map(({ id }) => id), [basic.id, sameBrand.id]);
+  assert.equal(groups[1].label, "Economy fare");
   assert.equal(groups[1].lowest.price, 491);
 });
 
@@ -79,7 +80,7 @@ test("fare families stay with the canonical Results provider", () => {
     canonical,
   );
   assert.deepEqual(canonicalOffers.map(({ id }) => id), ["duffel-business", canonical.id]);
-  const business = groupFareOffers(canonicalOffers).find(({ label }) => label === "Business");
+  const business = groupFareOffers(canonicalOffers).find(({ label }) => label === "Business fare");
   assert.equal(business?.lowest.id, "duffel-business");
   assert.equal(business?.lowest.provider, canonical.provider);
 });
@@ -98,7 +99,9 @@ test("desktop details contract keeps real selection, pricing, navigation, and ac
     "selectedOffer.partnerRedirectUrl || selectedOffer.bookingUrl",
     "Back to results",
     "Edit search",
-    "Continue to provider",
+    "Continue to ${selectedOffer.provider}",
+    'itineraryLeg.direction === "outbound" ? "Outbound"',
+    'itineraryLeg.direction === "return" ? "Return"',
     "lg:sticky lg:top-24",
   ]) assert.ok(source.includes(contract), contract);
 
@@ -107,7 +110,16 @@ test("desktop details contract keeps real selection, pricing, navigation, and ac
   assert.ok(!source.includes("Step 2: Choose where to book"));
   assert.ok(!source.includes("Booking provider"));
   assert.ok(!source.includes("setSelectedProviderId"));
+  assert.ok(!source.includes('"Continue to provider"'));
+  assert.ok(!source.includes("primaryLeg(flight)"));
 
   for (const forbiddenSample of ["Houston", "Denver", "Frontier", "Super.com", "Dreams", "Kiwi.com", "$269", "$349", "$517"])
     assert.ok(!source.includes(forbiddenSample), forbiddenSample);
+});
+
+test("Flight Results keeps the Kurioticket id and full search query on the standalone details route", async () => {
+  const results = await readFile(new URL("../FlightResultsClient.tsx", import.meta.url), "utf8");
+  assert.match(results, /`\/flights\/details\/\$\{encodeURIComponent\(flight\.id\)\}`/);
+  assert.match(results, /const detailsQuery = params\.toString\(\)/);
+  assert.match(results, /detailsQuery \? `\?\$\{detailsQuery\}` : ""/);
 });

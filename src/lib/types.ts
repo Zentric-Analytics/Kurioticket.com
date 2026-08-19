@@ -70,6 +70,8 @@ export type NormalizedFlightResult = {
   layovers: Layover[];
   legs?: FlightLeg[];
   cabinClass: string;
+  /** Provider-supplied branded fare name. Never derive this from cabin or rules. */
+  fareBrandName?: string;
   baggageInfo: string;
   refundInfo: string;
   price: number;

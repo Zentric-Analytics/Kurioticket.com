@@ -49,6 +49,17 @@ export function getFlightFromCache(id: string, now = Date.now()) {
   return flightCache.get(id)?.value ?? null;
 }
 
+export function replaceFlightInCache(
+  originalId: string,
+  refreshed: NormalizedFlightResult,
+  now = Date.now(),
+) {
+  flightCache.delete(originalId);
+  const stable = { ...refreshed, id: originalId };
+  rememberFlights([stable], now);
+  return stable;
+}
+
 export function getCompatibleFlightsFromCache(id: string, now = Date.now()) {
   purgeExpired(flightCache, now);
   const selected = flightCache.get(id)?.value;

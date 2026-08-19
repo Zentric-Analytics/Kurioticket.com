@@ -120,6 +120,7 @@ function normalizeDuffelFlight(
         marketing_carrier_flight_number?: string;
         passengers?: Array<{
           cabin_class?: string;
+          fare_type?: string;
           baggages?: Array<{ type?: string; quantity?: number }>;
         }>;
       }>;
@@ -154,8 +155,8 @@ function normalizeDuffelFlight(
     first.marketing_carrier?.iata_code ||
     first.operating_carrier?.iata_code ||
     "";
-  const airlineName =
-    displayedCarrier?.name || airlineNames[carrier] || "Airline";
+  const airlineName = displayedCarrier?.name || airlineNames[carrier];
+  if (!airlineName) return null;
   const airlineLogo = displayedCarrier
     ? carrierLogo(displayedCarrier, [
         displayedCarrier,
@@ -164,8 +165,10 @@ function normalizeDuffelFlight(
         offer.owner,
       ])
     : null;
-  const cabinClass =
-    formatDuffelCabin(first.passengers?.[0]?.cabin_class) || search.cabinClass;
+  const cabinClass = formatDuffelCabin(first.passengers?.[0]?.cabin_class);
+  const currency = offer.total_currency?.trim().toUpperCase();
+  if (!cabinClass || !currency || !/^[A-Z]{3}$/.test(currency)) return null;
+  const fareBrandName = first.passengers?.[0]?.fare_type?.trim() || undefined;
   const baggageInfo = buildDuffelBaggageInfo(
     first.passengers?.[0]?.baggages || offer.passengers?.[0]?.baggages,
   );
@@ -191,10 +194,11 @@ function normalizeDuffelFlight(
     layovers: primaryLeg.layovers,
     legs,
     cabinClass,
+    fareBrandName,
     baggageInfo,
     refundInfo,
     price,
-    currency: offer.total_currency || "USD",
+    currency,
     rawProviderReference: {
       provider: "duffel",
       id: offer.id,
@@ -224,6 +228,7 @@ function buildFlight(input: {
   layovers: Layover[];
   legs?: FlightLeg[];
   cabinClass: string;
+  fareBrandName?: string;
   baggageInfo: string;
   refundInfo: string;
   price: number;
@@ -250,6 +255,7 @@ function buildFlight(input: {
     layovers: input.layovers,
     legs: input.legs,
     cabinClass: input.cabinClass,
+    fareBrandName: input.fareBrandName,
     baggageInfo: input.baggageInfo,
     refundInfo: input.refundInfo,
     price: Number(input.price.toFixed(2)),
