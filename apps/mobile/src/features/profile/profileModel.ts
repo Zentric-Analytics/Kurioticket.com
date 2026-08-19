@@ -1,22 +1,29 @@
-export type ProfileIdentity = {
-  name: string;
-  email: string;
-  initial: string;
-};
+import type { FlowIconName } from "../flow/FlowIcon";
+import type { MobileTranslationKey } from "../../localization/mobileLocalization";
 
-export function profileIdentity(user: { name?: string | null; email?: string | null } | null): ProfileIdentity {
-  const email = user?.email?.trim() || "";
-  const name = user?.name?.trim() || (email ? email.split("@")[0] : "Traveler");
-  return {
-    name,
-    email,
-    initial: (name || email || "T").slice(0, 1).toUpperCase(),
-  };
-}
+export type ProfileDestination =
+  | { kind: "native"; href: "/personal-information" | "/price-alerts" | "/settings" | "/saved" | "/(tabs)/trips" }
+  | { kind: "external"; href: string };
+export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
+export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
 
-export function membershipLabel(createdAt?: string | null, locale?: string) {
-  if (!createdAt) return "Member";
-  const date = new Date(createdAt);
-  if (Number.isNaN(date.getTime())) return "Member";
-  return `Member since ${new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(date)}`;
-}
+export const authenticatedProfileSections: ProfileSection[] = [
+  { title: "manageAccount", items: [
+    { label: "personalDetails", icon: "person", destination: { kind: "native", href: "/personal-information" } },
+    { label: "securitySettings", icon: "shield", destination: { kind: "external", href: "https://kurioticket.com/dashboard/security" } },
+  ] },
+  { title: "travelActivity", items: [
+    { label: "myTrips", icon: "briefcase", destination: { kind: "native", href: "/(tabs)/trips" } },
+    { label: "savedRecent", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
+    { label: "priceAlerts", icon: "bell", destination: { kind: "native", href: "/price-alerts" } },
+  ] },
+  { title: "preferences", items: [
+    { label: "emailPreferences", icon: "mail", destination: { kind: "external", href: "https://kurioticket.com/dashboard/preferences/email" } },
+    { label: "customizationPreferences", icon: "palette", destination: { kind: "native", href: "/settings" } },
+    { label: "travelPreferences", icon: "settings", destination: { kind: "external", href: "https://kurioticket.com/dashboard/preferences/travel" } },
+  ] },
+  { title: "helpSupport", items: [
+    { label: "contactSupport", icon: "headset", destination: { kind: "external", href: "https://kurioticket.com/support" } },
+    { label: "faq", icon: "help", destination: { kind: "external", href: "https://kurioticket.com/faq" } },
+  ] },
+];
