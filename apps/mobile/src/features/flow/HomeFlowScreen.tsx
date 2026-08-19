@@ -121,6 +121,11 @@ export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
 
 type HomeProduct = "flights" | "hotels" | "cars" | "packages";
 
+function HomeSearchSurface({ children }: { children: React.ReactNode }) {
+  const ft = useFlowTheme();
+  return <View style={[ft.styles.card, ft.styles.shadow]}>{children}</View>;
+}
+
 const products: {
   id: HomeProduct;
   label: string;
@@ -143,13 +148,17 @@ export function SharedHomePage() {
       ? <FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker />
       : <UnavailableNotice text="Flight search is temporarily unavailable. Hotels and cars remain available." />,
     hotels: availability.hotelSearch
-      ? <HotelSearchPanel embedded params={{}} />
+      ? <HomeSearchSurface>
+          <HotelSearchPanel embedded params={{}} />
+        </HomeSearchSurface>
       : <UnavailableNotice text="Hotel search is temporarily unavailable. Flights and cars remain available." />,
     cars: availability.carSearch
-      ? <CarSearchPanel embedded params={{}} />
+      ? <HomeSearchSurface>
+          <CarSearchPanel embedded params={{}} />
+        </HomeSearchSurface>
       : <UnavailableNotice text="Car search is temporarily unavailable. Flights and hotels remain available." />,
     packages: availability.deals
-      ? <PackagesSearchPanel />
+      ? <PackagesSearchPanel presentation="home" />
       : <UnavailableNotice text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />,
   } satisfies Record<HomeProduct, React.ReactNode>;
 
