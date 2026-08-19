@@ -529,6 +529,7 @@ function FlightResultsHeader({
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
+  const narrow = useWindowDimensions().width < 360;
   return (
     <View
       accessibilityLabel="Flight search summary"
@@ -542,23 +543,25 @@ function FlightResultsHeader({
       >
         <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
       </Pressable>
-      <View style={s0.flightHeaderContent}>
-        <View style={s0.flightHeaderTitleRow}>
-          <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
-            {route}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Edit search"
-            onPress={onEdit}
-            style={[s0.flightHeaderEdit, { backgroundColor: theme.surface, borderColor: theme.border }]}
-          >
-            <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
-            <Text style={s0.flightHeaderEditText}>Edit search</Text>
-          </Pressable>
-        </View>
-        <Text style={[s0.sub, s0.summaryMeta, { color: theme.textSecondary }]}>{metadata}</Text>
+      <View style={[s0.flightHeaderRouteBlock, narrow && s0.flightHeaderRouteBlockNarrow]}>
+        <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
+          {route}
+        </Text>
+        <Text style={[s0.sub, s0.flightHeaderMetadata, { color: theme.textSecondary }]}>{metadata}</Text>
       </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Edit search"
+        onPress={onEdit}
+        style={[
+          s0.flightHeaderEdit,
+          narrow && s0.flightHeaderEditNarrow,
+          { backgroundColor: theme.surface, borderColor: theme.border },
+        ]}
+      >
+        <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
+        <Text style={s0.flightHeaderEditText}>Edit search</Text>
+      </Pressable>
     </View>
   );
 }
@@ -1113,12 +1116,13 @@ const s0 = StyleSheet.create({
   summaryMeta: { marginTop: 3 },
   editNarrow: { alignSelf: "flex-start" },
   flightHeader: {
-    paddingHorizontal: 14,
-    paddingTop: 6,
-    paddingBottom: 12,
+    paddingHorizontal: 12,
+    paddingTop: 4,
+    paddingBottom: 8,
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 6,
+    flexWrap: "wrap",
+    alignItems: "center",
+    columnGap: 2,
   },
   flightHeaderBack: {
     width: 44,
@@ -1126,13 +1130,10 @@ const s0 = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  flightHeaderContent: { flex: 1, minWidth: 0, paddingTop: 3 },
-  flightHeaderTitleRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-  },
+  flightHeaderRouteBlock: { flex: 1, minWidth: 0 },
+  flightHeaderRouteBlockNarrow: { flexBasis: "75%", flexShrink: 0 },
   flightHeaderRoute: { flex: 1, minWidth: 0 },
+  flightHeaderMetadata: { marginTop: 1 },
   flightHeaderEdit: {
     minWidth: 106,
     minHeight: 44,
@@ -1145,6 +1146,7 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
+  flightHeaderEditNarrow: { marginLeft: "auto", marginTop: 4 },
   flightHeaderEditText: { color: ui.blue, fontSize: 12, fontWeight: "800" },
   filterRail: { height: 64, flexGrow: 0 },
   resultsScroll: { flex: 1 },

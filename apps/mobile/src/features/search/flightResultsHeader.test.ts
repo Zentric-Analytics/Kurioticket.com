@@ -27,13 +27,35 @@ test("compact header keeps functional Back and Edit search controls", () => {
   assert.match(results, /pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\)/);
 });
 
-test("route and metadata reclaim the old TopBar row without sacrificing responsive width", () => {
-  assert.match(header, /<View style=\{s0\.flightHeaderContent\}>[\s\S]*?\{route\}[\s\S]*?\{metadata\}/);
-  assert.match(results, /flightHeaderContent: \{ flex: 1, minWidth: 0/);
+test("Back, route block, and Edit search form one ordered header row", () => {
+  assert.match(header, /accessibilityLabel="Go back"[\s\S]*?flightHeaderRouteBlock[\s\S]*?\{route\}[\s\S]*?\{metadata\}[\s\S]*?accessibilityLabel="Edit search"/);
+  assert.match(results, /flightHeader: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
+  assert.match(results, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
+});
+
+test("route and metadata share a flexible block that cannot collide with Edit search", () => {
+  assert.match(header, /<View style=\{\[s0\.flightHeaderRouteBlock,[\s\S]*?<Text[^>]*flightHeaderRoute[\s\S]*?\{route\}[\s\S]*?<Text[^>]*flightHeaderMetadata[\s\S]*?\{metadata\}[\s\S]*?<\/View>/);
+  assert.match(results, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0 \}/);
   assert.match(results, /flightHeaderRoute: \{ flex: 1, minWidth: 0 \}/);
   assert.match(results, /flightHeaderEdit: \{[\s\S]*?minWidth: 106,[\s\S]*?minHeight: 44,[\s\S]*?flexShrink: 0/);
   assert.doesNotMatch(header, /numberOfLines/);
   assert.doesNotMatch(header, /<TopBar|height: 64/);
+});
+
+test("narrow screens wrap Edit search to a deliberate trailing position", () => {
+  assert.match(header, /const narrow = useWindowDimensions\(\)\.width < 360/);
+  assert.match(header, /narrow && s0\.flightHeaderRouteBlockNarrow/);
+  assert.match(header, /narrow && s0\.flightHeaderEditNarrow/);
+  assert.match(results, /flightHeader: \{[\s\S]*?flexWrap: "wrap"/);
+  assert.match(results, /flightHeaderRouteBlockNarrow: \{ flexBasis: "75%", flexShrink: 0 \}/);
+  assert.match(results, /flightHeaderEditNarrow: \{ marginLeft: "auto", marginTop: 4 \}/);
+});
+
+test("compact header spacing stays tight without changing the date strip", () => {
+  assert.match(results, /flightHeaderMetadata: \{ marginTop: 1 \}/);
+  assert.match(results, /flightHeader: \{[\s\S]*?paddingBottom: 8/);
+  assert.match(results, /<View>\{dateStrip\}<\/View>/);
+  assert.match(results, /stickyHeaderIndices=\{\[1\]\}/);
 });
 
 test("shared TopBar and Flight Details actions remain unchanged", () => {
