@@ -16,6 +16,7 @@ export type StaticHotelRecord = {
   classificationStars: 1 | 2 | 3 | 4 | 5;
   amenities: readonly string[];
   imageUrl: string;
+  imageUrls: readonly string[];
   imageProvenance: string;
   roomSummary: string;
   bedSummary: string;
@@ -39,6 +40,34 @@ const newYorkImage =
   "/images/premium/homepage/destinations/kurioticket-homepage-destination-new-york-statue-liberty-skyline-001.jpg";
 const hotelImage =
   "/images/premium/hotels/kurioticket-hotels-hero-bellboy-guest-arrival-lobby-001.jpg";
+
+const staticHotelGalleryImages = [
+  hotelImage,
+  londonImage,
+  parisImage,
+  newYorkImage,
+  "/images/premium/homepage/destinations/kurioticket-homepage-destination-miami-skyline-waterfront-001.jpg",
+  "/images/premium/homepage/destinations/kurioticket-homepage-destination-las-vegas-strip-night-drone-001.jpg",
+  "/images/premium/homepage/destinations/kurioticket-homepage-destination-los-angeles-palm-skyline-001.jpg",
+  "/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
+  "/images/premium/packages/kurioticket-packages-hero-tropical-resort-001.jpg",
+  "/images/premium/cars/kurioticket-cars-hero-coastal-convertible-001.jpg",
+] as const;
+
+function buildStaticHotelGallery(primaryImage: string, hotelId: string) {
+  const remainingImages = staticHotelGalleryImages.filter(
+    (image) => image !== primaryImage,
+  );
+  const offset = [...hotelId].reduce(
+    (total, character) => total + character.charCodeAt(0),
+    0,
+  ) % remainingImages.length;
+  const rotated = remainingImages.map(
+    (_image, index, images) => images[(index + offset) % images.length]!,
+  );
+
+  return [primaryImage, ...rotated] as const;
+}
 
 const common = {
   propertyType: "Hotel",
@@ -99,6 +128,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 5,
     amenities: ["Wi-Fi", "Concierge", "Fitness centre", "Indoor pool"],
     imageUrl: londonImage,
+    imageUrls: buildStaticHotelGallery(londonImage, "the-savoy-london"),
     roomSummary: "Classic room options",
     bedSummary: "Bed configuration varies by room",
     description:
@@ -162,6 +192,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Fitness centre", "Indoor pool", "Restaurant"],
     imageUrl: londonImage,
+    imageUrls: buildStaticHotelGallery(londonImage, "park-plaza-westminster-bridge"),
     roomSummary: "Guest room and studio options",
     bedSummary: "Bed configuration varies by room",
     description:
@@ -225,6 +256,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Spa", "Bar", "Breakfast available"],
     imageUrl: parisImage,
+    imageUrls: buildStaticHotelGallery(parisImage, "hotel-le-six-paris"),
     roomSummary: "Classic and superior room options",
     bedSummary: "Bed configuration varies by room",
     description:
@@ -288,6 +320,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Restaurant", "Bar", "Workspaces"],
     imageUrl: parisImage,
+    imageUrls: buildStaticHotelGallery(parisImage, "citizenm-paris-gare-de-lyon"),
     roomSummary: "Compact modern room options",
     bedSummary: "Large bed configuration",
     description:
@@ -351,6 +384,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Fitness centre", "Restaurant", "Terrace"],
     imageUrl: newYorkImage,
+    imageUrls: buildStaticHotelGallery(newYorkImage, "arlo-midtown-new-york"),
     roomSummary: "City room and suite options",
     bedSummary: "Bed configuration varies by room",
     description:
@@ -414,6 +448,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 3,
     amenities: ["Wi-Fi", "Restaurant", "Bar", "Luggage storage"],
     imageUrl: newYorkImage,
+    imageUrls: buildStaticHotelGallery(newYorkImage, "pod-times-square"),
     roomSummary: "Compact room options",
     bedSummary: "Queen or bunk-bed configurations",
     description:
@@ -477,6 +512,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Restaurant", "Concierge", "Laundry service"],
     imageUrl: hotelImage,
+    imageUrls: buildStaticHotelGallery(hotelImage, "hotel-gracery-shinjuku"),
     roomSummary: "Single, double and twin room options",
     bedSummary: "Bed configuration varies by room",
     description:
@@ -540,6 +576,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Restaurant", "Fitness centre", "Laundry service"],
     imageUrl: hotelImage,
+    imageUrls: buildStaticHotelGallery(hotelImage, "shibuya-stream-excel-hotel-tokyu"),
     roomSummary: "Modern city room options",
     bedSummary: "Bed configuration varies by room",
     description:
