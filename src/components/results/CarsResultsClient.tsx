@@ -2325,9 +2325,23 @@ export function CarsResultsExperience({
           {results.length > 0 ? (
             <>
               <div
-                className="flex w-full min-w-0 flex-col items-start gap-2 py-1 sm:gap-3"
+                className="flex w-full min-w-0 flex-col items-start gap-2 pt-1 sm:gap-3 lg:py-1"
                 data-cars-results-toolbar
               >
+                <button
+                  ref={filtersButtonRef}
+                  type="button"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden"
+                  onClick={() => setFiltersOpen(true)}
+                >
+                  <SlidersHorizontal size={17} aria-hidden="true" />
+                  {activeFilterCount > 0
+                    ? t("filtersWithCount").replace(
+                        "{{count}}",
+                        String(activeFilterCount),
+                      )
+                    : t("filters")}
+                </button>
                 <div
                   className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"
                   data-cars-results-summary-row
@@ -2413,20 +2427,6 @@ export function CarsResultsExperience({
                     </div>
                   </div>
                 </div>
-                <button
-                  ref={filtersButtonRef}
-                  type="button"
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-900 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:hidden"
-                  onClick={() => setFiltersOpen(true)}
-                >
-                  <SlidersHorizontal size={17} aria-hidden="true" />
-                  {activeFilterCount > 0
-                    ? t("filtersWithCount").replace(
-                        "{{count}}",
-                        String(activeFilterCount),
-                      )
-                    : t("filters")}
-                </button>
               </div>
               {resultsTransitioning ? (
                 <div className="w-full space-y-4">

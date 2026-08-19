@@ -60,7 +60,7 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
       "<div",
       resultsToolbar.indexOf("data-cars-results-summary-row"),
     ),
-    resultsToolbar.indexOf("ref={filtersButtonRef}"),
+    resultsToolbar.length,
   );
 
   assert.match(resultsToolbar, /flex w-full min-w-0 flex-col items-start/);
@@ -102,20 +102,23 @@ test("source-contract: Cars result count and Sort share a shrink-safe row", () =
   assert.match(resultsToolbar, /"shrink-0 transition-transform duration-150"/);
 });
 
-test("source-contract: mobile Filter is a separate row after count and Sort", () => {
+test("source-contract: mobile Filter precedes the final count and Sort row", () => {
   const resultsToolbar = source.slice(
     source.lastIndexOf("<div", source.indexOf("data-cars-results-toolbar")),
     source.indexOf("{resultsTransitioning ?"),
   );
-  const summaryEnd = resultsToolbar.indexOf("ref={filtersButtonRef}");
+  const filterStart = resultsToolbar.indexOf("ref={filtersButtonRef}");
+  const summaryStart = resultsToolbar.indexOf("data-cars-results-summary-row");
 
-  assert.ok(
-    resultsToolbar.indexOf("data-cars-results-summary-row") < summaryEnd,
-  );
-  assert.ok(resultsToolbar.indexOf("ref={carsSortRef}") < summaryEnd);
+  assert.ok(filterStart < summaryStart);
+  assert.ok(summaryStart < resultsToolbar.indexOf("ref={carsSortRef}"));
   assert.match(
-    resultsToolbar.slice(summaryEnd),
+    resultsToolbar.slice(filterStart, summaryStart),
     /lg:hidden[\s\S]*onClick=\{\(\) => setFiltersOpen\(true\)\}/,
+  );
+  assert.match(
+    resultsToolbar.slice(summaryStart),
+    /data-cars-results-summary-row[\s\S]*<h2[\s\S]*ref=\{carsSortRef\}[\s\S]*<\/div>\s*<\/div>\s*$/,
   );
 });
 
