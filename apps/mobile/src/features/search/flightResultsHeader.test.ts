@@ -14,14 +14,6 @@ const header = results.slice(
 );
 const styles = results.slice(results.indexOf("const s0 = StyleSheet.create"));
 
-const summary = (payload: Record<string, unknown>) => [
-  payload.tripType === "one-way" ? "One way" : "Round trip",
-  payload.tripType === "one-way"
-    ? String(payload.departureDate)
-    : `${payload.departureDate} – ${payload.returnDate}`,
-  `${payload.travelers} ${Number(payload.travelers) === 1 ? "Traveler" : "Travelers"}`,
-].join(" · ");
-
 const flightPayload = (counts: { adults: number; children: number; infants: number }) => {
   const { plan } = buildSearchPlan("flight", {
     tripType: "round-trip",
@@ -45,27 +37,40 @@ test("Flight Results uses its compact header and leaves the hotel TopBar unchang
 });
 
 test("route title contains only uppercase airport codes from the current payload", () => {
-  assert.match(results, /route=\{`\$\{String\(payload\.origin \|\| ""\)\.toUpperCase\(\)\} ⇄ \$\{String\(payload\.destination \|\| ""\)\.toUpperCase\(\)\}`\}/);
+  assert.match(results, /route=\{`\$\{String\(payload\.origin \|\| ""\)\.toUpperCase\(\)\} \$\{payload\.tripType === "one-way" \? "→" : "⇄"\} \$\{String\(payload\.destination \|\| ""\)\.toUpperCase\(\)\}`\}/);
   assert.doesNotMatch(results, /route=\{`[^`]*airportLabel/);
+  assert.doesNotMatch(header, /airport\.city|\([A-Z]{3}\)/);
 });
 
-test("main controls and trip summary occupy independent rows", () => {
-  assert.match(header, /<View accessibilityLabel="Flight route controls" style=\{s0\.flightHeaderMainRow\}>[\s\S]*?<\/View>\s*<View accessibilityLabel="Trip summary row" style=\{s0\.flightHeaderSummaryRow\}>/);
-  const mainRow = header.slice(header.indexOf('accessibilityLabel="Flight route controls"'), header.indexOf('accessibilityLabel="Trip summary row"'));
+test("main controls and icon metadata occupy independent rows", () => {
+  assert.match(header, /<View accessibilityLabel="Flight route controls" style=\{s0\.flightHeaderMainRow\}>[\s\S]*?<\/View>\s*<View accessibilityLabel="Trip metadata row" style=\{s0\.flightHeaderMetadataRow\}>/);
+  const mainRow = header.slice(header.indexOf('accessibilityLabel="Flight route controls"'), header.indexOf('accessibilityLabel="Trip metadata row"'));
   assert.match(mainRow, /accessibilityLabel="Go back"[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Edit search"/);
-  assert.doesNotMatch(mainRow, /\{tripSummary\}/);
+  assert.doesNotMatch(mainRow, /dateRange|travelerCount|cabinClass/);
+  assert.match(header, /<CalendarDays[\s\S]*?<UserRound[\s\S]*?<BriefcaseBusiness/);
   assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
 });
 
-test("summary preserves trip type and dates while using canonical total traveler wording", () => {
-  assert.match(results, /payload\.tripType === "one-way" \? "One way" : "Round trip"/);
+test("metadata renders current dates without a redundant trip-type label", () => {
   assert.match(results, /shortDate\(String\(payload\.departureDate/);
   assert.match(results, /shortDate\(String\(payload\.returnDate/);
-  assert.match(results, /payload\.travelers[\s\S]*?"Traveler" : "Travelers"/);
+  assert.match(results, /dateRange=\{payload\.tripType === "one-way"/);
+  assert.doesNotMatch(header, /Round trip|One way/);
+});
+
+test("traveler metadata uses the canonical total with singular and plural wording", () => {
+  assert.match(results, /travelerCount=\{Number\(payload\.travelers\)\}/);
+  assert.match(header, /travelerCount === 1 \? "Traveler" : "Travelers"/);
   assert.doesNotMatch(header, /\badults?\b/i);
-  assert.doesNotMatch(header, /cabin|economy|business|first/);
-  assert.equal(summary({ tripType: "round-trip", departureDate: "Aug 19", returnDate: "Aug 20", travelers: 1 }), "Round trip · Aug 19 – Aug 20 · 1 Traveler");
-  assert.equal(summary({ tripType: "one-way", departureDate: "Aug 19", travelers: 2 }), "One way · Aug 19 · 2 Travelers");
+  const travelerText = (count: number) => `${count} ${count === 1 ? "Traveler" : "Travelers"}`;
+  assert.equal(travelerText(1), "1 Traveler");
+  assert.equal(travelerText(2), "2 Travelers");
+});
+
+test("cabin class comes from current normalized search data", () => {
+  assert.match(results, /cabinClass=\{cabinLabel\(payload\.cabinClass\)\}/);
+  assert.match(results, /replace\(\/\[-_\]\+\/g, " "\)\.toLowerCase\(\)/);
+  assert.equal(flightPayload({ adults: 1, children: 0, infants: 0 }).cabinClass, "economy");
 });
 
 test("canonical total includes adults, children, and infants", () => {
@@ -79,16 +84,28 @@ test("Back and Edit search retain their behavior and touch targets", () => {
   assert.match(header, /accessibilityLabel="Go back"[\s\S]*?onPress=\{\(\) => router\.back\(\)\}/);
   assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
+  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?minHeight: 44/);
   assert.match(results, /onEdit=\{edit\}/);
   assert.match(results, /pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\)/);
 });
 
-test("route remains flexible and summary wraps beneath route content on narrow screens", () => {
+test("route remains flexible and metadata wraps beneath route content on narrow screens", () => {
   assert.match(styles, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
   assert.match(styles, /flightHeaderEdit: \{[\s\S]*?minWidth: 106,[\s\S]*?flexShrink: 0/);
-  assert.match(styles, /flightHeaderSummaryRow: \{[\s\S]*?marginLeft: 46,[\s\S]*?paddingTop: 4/);
-  assert.match(styles, /flightHeaderSummary: \{[^}]*flexShrink: 1/);
+  assert.match(styles, /flightHeaderMetadataRow: \{[\s\S]*?marginLeft: 46,[\s\S]*?flexWrap: "wrap"/);
+  assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexWrap: "wrap"/);
   assert.doesNotMatch(header, /numberOfLines|ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
+});
+
+test("Back and Edit search use soft theme-aware elevation without heavy borders", () => {
+  assert.match(header, /flightHeaderBack,[\s\S]*?flightHeaderElevated[\s\S]*?backgroundColor: theme\.surface/);
+  assert.match(header, /flightHeaderEdit,[\s\S]*?flightHeaderElevated[\s\S]*?backgroundColor: theme\.surface/);
+  assert.match(header, /shadowColor: theme\.dark \? "#000000" : theme\.textPrimary/);
+  assert.match(styles, /flightHeaderElevated: \{[\s\S]*?shadowOffset:[\s\S]*?shadowOpacity: 0\.12,[\s\S]*?shadowRadius: 6,[\s\S]*?elevation: 4/);
+  const backStyle = styles.slice(styles.indexOf("flightHeaderBack:"), styles.indexOf("flightHeaderRouteBlock:"));
+  const editStyle = styles.slice(styles.indexOf("flightHeaderEdit:"), styles.indexOf("flightHeaderEditText:"));
+  assert.doesNotMatch(backStyle, /borderWidth/);
+  assert.doesNotMatch(editStyle, /borderWidth/);
 });
 
 test("header spacing stays compact before the unchanged date strip", () => {
@@ -97,11 +114,11 @@ test("header spacing stays compact before the unchanged date strip", () => {
   assert.match(results, /stickyHeaderIndices=\{\[1\]\}/);
 });
 
-test("summary and controls preserve semantic light and dark theme colors", () => {
+test("metadata and controls preserve semantic light and dark theme colors", () => {
   assert.match(header, /backgroundColor: theme\.background/);
   assert.match(header, /color: theme\.textPrimary/);
   assert.match(header, /color: theme\.textSecondary/);
-  assert.match(header, /backgroundColor: theme\.surface, borderColor: theme\.border/);
+  assert.match(header, /backgroundColor: theme\.surface/);
   assert.match(header, /color=\{theme\.icon\}/);
 });
 
