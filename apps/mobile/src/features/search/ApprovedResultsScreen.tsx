@@ -464,7 +464,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     <SafeAreaView style={[s0.safe, flightResults && { backgroundColor: theme.background }]} edges={["top"]}>
       {flightResults ? (
         <FlightResultsHeader
-          route={`${airportLabel(payload.origin)}  ⇄  ${airportLabel(payload.destination)}`}
+          route={`${String(payload.origin || "").toUpperCase()} ⇄ ${String(payload.destination || "").toUpperCase()}`}
           metadata={`${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}  ·  ${payload.travelers} Traveler${payload.travelers === 1 ? "" : "s"}  ·  ${String(payload.cabinClass || "").replace(/-/g, " ")}`}
           onEdit={edit}
         />
@@ -529,9 +529,6 @@ function FlightResultsHeader({
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
-  // Leave the route enough room to remain readable before asking it to share
-  // its row with a fixed-width action. The route itself is never truncated.
-  const stackEditSearch = useWindowDimensions().width < 500;
   return (
     <View
       accessibilityLabel="Flight search summary"
@@ -545,7 +542,7 @@ function FlightResultsHeader({
       >
         <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
       </Pressable>
-      <View style={[s0.flightHeaderRouteBlock, stackEditSearch && s0.flightHeaderRouteBlockStacked]}>
+      <View style={s0.flightHeaderRouteBlock}>
         <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
           {route}
         </Text>
@@ -557,7 +554,6 @@ function FlightResultsHeader({
         onPress={onEdit}
         style={[
           s0.flightHeaderEdit,
-          stackEditSearch && s0.flightHeaderEditStacked,
           { backgroundColor: theme.surface, borderColor: theme.border },
         ]}
       >
@@ -1133,7 +1129,6 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderRouteBlock: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
-  flightHeaderRouteBlockStacked: { flexBasis: "75%", flexShrink: 0 },
   flightHeaderRoute: { minWidth: 0 },
   flightHeaderMetadata: { marginTop: 1 },
   flightHeaderEdit: {
@@ -1148,7 +1143,6 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
-  flightHeaderEditStacked: { marginLeft: "auto", marginTop: 4 },
   flightHeaderEditText: { color: ui.blue, fontSize: 12, fontWeight: "800" },
   filterRail: { height: 64, flexGrow: 0 },
   resultsScroll: { flex: 1 },
