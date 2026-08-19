@@ -23,15 +23,12 @@ import {
   ArrowLeft,
   Award,
   Bell,
-  BriefcaseBusiness,
-  CalendarDays,
   FilePenLine,
   Info,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
   Tag,
-  UserRound,
   Zap,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
@@ -475,6 +472,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           travelerCount={Number(payload.travelers)}
           cabinClass={cabinLabel(payload.cabinClass)}
           onEdit={edit}
+          compact={narrowHeader}
         />
       ) : (
         <>
@@ -533,12 +531,14 @@ function FlightResultsHeader({
   travelerCount,
   cabinClass,
   onEdit,
+  compact,
 }: {
   route: string;
   dateRange: string;
   travelerCount: number;
   cabinClass: string;
   onEdit: () => void;
+  compact: boolean;
 }) {
   const { theme } = useAppTheme();
   return (
@@ -547,52 +547,39 @@ function FlightResultsHeader({
       style={[s0.flightHeader, { backgroundColor: theme.background }]}
     >
       <View accessibilityLabel="Flight route controls" style={s0.flightHeaderMainRow}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          onPress={() => router.back()}
-          style={[
-            s0.flightHeaderBack,
-            s0.flightHeaderElevated,
-            { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : theme.textPrimary },
-          ]}
-        >
-          <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
-        </Pressable>
+        <View style={[s0.flightHeaderSide, compact && s0.flightHeaderSideCompact]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            onPress={() => router.back()}
+            style={({ pressed }) => [s0.flightHeaderBack, pressed && s0.flightHeaderControlPressed]}
+          >
+            <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
+          </Pressable>
+        </View>
         <View style={s0.flightHeaderRouteBlock}>
           <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
             {route}
           </Text>
+          <View accessibilityLabel="Trip metadata row" style={s0.flightHeaderMetadataRow}>
+            <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
+              {dateRange}  ·  {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}  ·  {cabinClass}
+            </Text>
+          </View>
         </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Edit search"
           onPress={onEdit}
-          style={[
+          style={({ pressed }) => [
             s0.flightHeaderEdit,
-            s0.flightHeaderElevated,
-            { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : theme.textPrimary },
+            compact && s0.flightHeaderEditCompact,
+            pressed && s0.flightHeaderControlPressed,
           ]}
         >
           <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
-          <Text style={s0.flightHeaderEditText}>Edit search</Text>
+          {!compact ? <Text style={s0.flightHeaderEditText}>Edit search</Text> : null}
         </Pressable>
-      </View>
-      <View accessibilityLabel="Trip metadata row" style={s0.flightHeaderMetadataRow}>
-        <View accessibilityLabel={`Travel dates ${dateRange}`} style={s0.flightHeaderMetadataItem}>
-          <CalendarDays accessible={false} color={theme.icon} size={15} strokeWidth={2} />
-          <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
-        </View>
-        <View accessibilityLabel={`${travelerCount} ${travelerCount === 1 ? "Traveler" : "Travelers"}`} style={s0.flightHeaderMetadataItem}>
-          <UserRound accessible={false} color={theme.icon} size={15} strokeWidth={2} />
-          <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
-            {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
-          </Text>
-        </View>
-        <View accessibilityLabel={`Cabin class ${cabinClass}`} style={s0.flightHeaderMetadataItem}>
-          <BriefcaseBusiness accessible={false} color={theme.icon} size={15} strokeWidth={2} />
-          <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
-        </View>
       </View>
     </View>
   );
@@ -1156,48 +1143,36 @@ const s0 = StyleSheet.create({
   flightHeaderMainRow: {
     width: "100%",
     flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    columnGap: 2,
+    alignItems: "flex-start",
   },
+  flightHeaderSide: { width: 106, flexShrink: 0 },
+  flightHeaderSideCompact: { width: 44 },
   flightHeaderBack: {
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
   },
-  flightHeaderElevated: {
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  flightHeaderRouteBlock: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
-  flightHeaderRoute: { minWidth: 0 },
+  flightHeaderControlPressed: { opacity: 0.55 },
+  flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center", paddingTop: 7 },
+  flightHeaderRoute: { minWidth: 0, textAlign: "center" },
   flightHeaderMetadataRow: {
-    marginLeft: 46,
-    paddingTop: 8,
-    paddingRight: 8,
-    flexDirection: "row",
-    flexWrap: "wrap",
+    width: "100%",
+    paddingTop: 4,
     alignItems: "center",
-    columnGap: 16,
-    rowGap: 6,
   },
-  flightHeaderMetadataItem: { flexDirection: "row", alignItems: "center", gap: 5 },
-  flightHeaderMetadataText: { fontSize: 12, lineHeight: 17 },
+  flightHeaderMetadataText: { fontSize: 12, lineHeight: 17, textAlign: "center" },
   flightHeaderEdit: {
-    minWidth: 106,
+    width: 106,
     minHeight: 44,
     flexShrink: 0,
     paddingHorizontal: 10,
-    borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
   },
+  flightHeaderEditCompact: { width: 44, paddingHorizontal: 0 },
   flightHeaderEditText: { color: ui.blue, fontSize: 12, fontWeight: "800" },
   filterRail: { height: 64, flexGrow: 0 },
   resultsScroll: { flex: 1 },

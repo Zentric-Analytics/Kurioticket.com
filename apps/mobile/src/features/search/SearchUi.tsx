@@ -215,9 +215,9 @@ export function DateStrip({
 }) {
   const { theme } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
-  // Account for the flight rail's 32px padding and the two gaps between three
-  // tiles. Clamping keeps the tiles useful on both compact and wide phones.
-  const flightDateWidth = Math.min(116, Math.max(96, (windowWidth - 50) / 3));
+  // Reserve a quarter-tile peek after three tiles. The 43px deduction accounts
+  // for the leading inset and the three gaps before the peeking tile.
+  const flightDateWidth = Math.min(116, Math.max(96, (windowWidth - 43) / 3.25));
   const [visibleStart, setVisibleStart] = useState(() =>
     initialDateWindowStart(date),
   );

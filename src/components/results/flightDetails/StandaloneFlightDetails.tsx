@@ -21,7 +21,11 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
-import { fareBenefits, groupFareOffers } from "./flightDetailsPresentation";
+import {
+  fareBenefits,
+  getCanonicalProviderFareOffers,
+  groupFareOffers,
+} from "./flightDetailsPresentation";
 
 type DetailsResponse = {
   flight?: PublicFlightResult;
@@ -38,8 +42,8 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const [error, setError] = useState("");
   const [redirecting, setRedirecting] = useState(false);
   const [selectedFareKey, setSelectedFareKey] = useState("");
-  const [selectedProviderId, setSelectedProviderId] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const fareButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -61,20 +65,47 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   }, [id]);
 
   const flight = response?.flight;
+  const canonicalFareOffers = useMemo(
+    () => getCanonicalProviderFareOffers(response?.fareOffers ?? [], flight),
+    [response?.fareOffers, flight],
+  );
   const fareGroups = useMemo(
-    () => groupFareOffers(response?.fareOffers?.length ? response.fareOffers : flight ? [flight] : []),
-    [response, flight],
+    () => groupFareOffers(canonicalFareOffers.length ? canonicalFareOffers : flight ? [flight] : []),
+    [canonicalFareOffers, flight],
   );
 
   const initialFare = flight
     ? fareGroups.find((group) => group.offers.some((offer) => offer.id === flight.id))
     : undefined;
   const selectedFare = fareGroups.find((group) => group.key === selectedFareKey) ?? initialFare ?? fareGroups[0];
-  const providers = selectedFare?.offers ?? [];
-  const selectedOffer = providers.find((offer) => offer.id === selectedProviderId)
-    ?? providers.find((offer) => offer.id === flight?.id)
+  const selectedOffer = selectedFare?.offers.find((offer) => offer.id === flight?.id)
     ?? selectedFare?.lowest
     ?? flight;
+  const canContinue = Boolean(
+    selectedOffer && (selectedOffer.partnerRedirectUrl || selectedOffer.bookingUrl),
+  );
+
+  function selectFare(index: number) {
+    const fare = fareGroups[index];
+    if (!fare) return;
+    setSelectedFareKey(fare.key);
+  }
+
+  function handleFareKeyDown(
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    const offset = event.key === "ArrowRight" || event.key === "ArrowDown"
+      ? 1
+      : event.key === "ArrowLeft" || event.key === "ArrowUp"
+        ? -1
+        : 0;
+    if (!offset) return;
+    event.preventDefault();
+    const nextIndex = (index + offset + fareGroups.length) % fareGroups.length;
+    selectFare(nextIndex);
+    fareButtonRefs.current[nextIndex]?.focus();
+  }
 
   async function continueToProvider() {
     if (!selectedOffer || redirecting) return;
@@ -138,47 +169,28 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
             <ItineraryCard flight={flight} leg={leg} origin={cleanLocation(origin)} destination={cleanLocation(destination)} locale={locale} />
 
-            <h2 className="mb-3 mt-7 text-xl font-bold tracking-[-0.015em] text-slate-950">Step 1: Pick your fare</h2>
-            <div role="radiogroup" aria-label="Available fares" className={`grid gap-4 ${fareGroups.length >= 3 ? "md:grid-cols-3" : fareGroups.length === 2 ? "sm:grid-cols-2" : "grid-cols-1"}`}>
-              {fareGroups.map((fare) => {
+            <h2 className="mb-3.5 mt-7 text-lg font-semibold leading-tight tracking-[-0.01em] text-slate-950 xl:text-[19px]">Pick your fare</h2>
+            <div role="radiogroup" aria-label="Available fares" className={`grid gap-4 ${fareGroups.length === 1 ? "max-w-[350px] grid-cols-1" : fareGroups.length === 2 ? "sm:grid-cols-2" : fareGroups.length === 3 ? "md:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-4"}`}>
+              {fareGroups.map((fare, index) => {
                 const selected = fare.key === selectedFare?.key;
                 const price = formatDisplayPrice({ amount: fare.lowest.price, sourceCurrency: fare.lowest.currency, displayCurrency: selectedOption.currency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
                 const benefits = fareBenefits(fare.lowest);
                 return (
-                  <button key={fare.key} type="button" role="radio" aria-checked={selected} onClick={() => { setSelectedFareKey(fare.key); setSelectedProviderId(fare.lowest.id); }} className={`relative min-h-[218px] rounded-[13px] border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${selected ? "border-2 border-[#075EE8] bg-[#075EE8]/[0.035]" : "border-[#E2E8F0] bg-white hover:border-slate-300"}`}>
+                  <button key={fare.key} ref={(element) => { fareButtonRefs.current[index] = element; }} type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} onClick={() => selectFare(index)} onKeyDown={(event) => handleFareKeyDown(event, index)} className={`relative rounded-[13px] border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 ${fareGroups.length === 1 ? "min-h-[160px]" : "min-h-[190px]"} ${selected ? "border-2 border-[#075EE8] bg-[#075EE8]/[0.035]" : "border-[#E2E8F0] bg-white hover:border-slate-300"}`}>
                     <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 ${selected ? "border-[#075EE8]" : "border-slate-300"}`} aria-hidden="true"><span className={`h-2 w-2 rounded-full ${selected ? "bg-[#075EE8]" : "bg-transparent"}`} /></span>
                     <div className="mt-3 flex items-center gap-3">
                       <span className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-50 text-[#075EE8]"><Luggage className="h-5 w-5" aria-hidden="true" /></span>
-                      <div><p className="text-[17px] font-semibold text-slate-950">{fare.label}</p><p className="text-[21px] font-bold leading-6 text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
+                      <div><p className="text-base font-semibold text-slate-950">{fare.label}</p><p className="text-xl font-bold leading-6 text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
                     </div>
-                    {benefits.length ? <ul className="mt-5 space-y-2.5">{benefits.map((benefit) => <li key={benefit} className="flex items-start gap-2 text-[13px] leading-5 text-slate-700"><span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-emerald-500 text-emerald-600"><Check className="h-2.5 w-2.5" aria-hidden="true" /></span>{benefit}</li>)}</ul> : null}
+                    {benefits.length ? <ul className="mt-4 space-y-2">{benefits.map((benefit) => <li key={benefit} className="flex items-start gap-2 text-[13px] leading-5 text-slate-700"><span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-emerald-500 text-emerald-600"><Check className="h-2.5 w-2.5" aria-hidden="true" /></span>{benefit}</li>)}</ul> : null}
                   </button>
                 );
               })}
             </div>
 
-            <h2 className="mb-3 mt-7 text-xl font-bold tracking-[-0.015em] text-slate-950">Step 2: Choose where to book</h2>
-            <div className="space-y-3">
-              {providers.map((provider) => {
-                const selected = provider.id === selectedOffer?.id;
-                const price = formatDisplayPrice({ amount: provider.price, sourceCurrency: provider.currency, displayCurrency: selectedOption.currency, convertUsdEstimate: true, rates: currencyRates.rates, isFallbackRate: currencyRates.isFallback });
-                return (
-                  <div key={provider.id} className={`flex min-h-[76px] flex-col gap-3 rounded-xl border px-4 py-3.5 transition sm:flex-row sm:items-center ${selected ? "border-[#075EE8] bg-[#075EE8]/[0.03]" : "border-[#E2E8F0] bg-white"}`}>
-                    <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <ProviderMark provider={provider} />
-                      <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-950">{provider.provider}</p><p className="mt-0.5 text-xs text-slate-500">Booking provider</p></div>
-                    </div>
-                    <div className="flex items-center gap-4 sm:justify-end">
-                      <div className="min-w-[88px] text-right"><p className="text-lg font-semibold text-slate-950" aria-label={price.ariaLabel}>{price.formatted}</p><p className="text-[11px] text-slate-500">Total</p></div>
-                      <button type="button" onClick={() => setSelectedProviderId(provider.id)} aria-label={`Select ${provider.provider} for ${price.formatted}`} className="h-10 w-[102px] rounded-lg border border-[#075EE8] bg-white text-sm font-semibold text-[#075EE8] transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/35">{selected ? "Selected" : "Select"}</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </section>
 
-          <TripSidebar flight={flight} leg={leg} route={route} date={date} tripLine={tripLine} travelers={travelers.label} selectedFare={selectedFare?.label || selectedOffer?.cabinClass || ""} selectedOffer={selectedOffer} price={providerPrice} locale={locale} redirecting={redirecting} onContinue={continueToProvider} error={error} />
+          <TripSidebar flight={flight} leg={leg} route={route} date={date} tripLine={tripLine} travelers={travelers.label} selectedFare={selectedFare?.label || selectedOffer?.cabinClass || ""} selectedOffer={selectedOffer} price={providerPrice} locale={locale} redirecting={redirecting} canContinue={canContinue} onContinue={continueToProvider} error={error} />
         </div>
       </div>
     </main>
@@ -205,7 +217,7 @@ function AirportTime({ time, airport, city, locale }: { time: string; airport: s
 
 function Metadata({ icon: Icon, label, value, divided = false }: { icon: typeof Plane; label: string; value: string; divided?: boolean }) { return <div className={`flex items-center gap-3 px-5 py-4 lg:px-6 ${divided ? "sm:border-l sm:border-[#E2E8F0]" : ""}`}><Icon className="h-5 w-5 text-slate-700" aria-hidden="true" /><div><p className="text-[11px] text-slate-500">{label}</p><p className="mt-0.5 text-xs font-medium text-slate-800">{value}</p></div></div>; }
 
-function TripSidebar({ flight, leg, route, date, tripLine, travelers, selectedFare, selectedOffer, price, locale, redirecting, onContinue, error }: { flight: PublicFlightResult; leg: FlightLeg; route: string; date: string; tripLine: string; travelers: string; selectedFare: string; selectedOffer?: PublicFlightResult; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; onContinue: () => void; error: string }) {
+function TripSidebar({ flight, leg, route, date, tripLine, travelers, selectedFare, selectedOffer, price, locale, redirecting, canContinue, onContinue, error }: { flight: PublicFlightResult; leg: FlightLeg; route: string; date: string; tripLine: string; travelers: string; selectedFare: string; selectedOffer?: PublicFlightResult; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; canContinue: boolean; onContinue: () => void; error: string }) {
   return <aside className="rounded-[15px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:sticky lg:top-24" aria-labelledby="your-trip-heading">
     <h2 id="your-trip-heading" className="text-xl font-bold">Your trip</h2><p className="mt-4 text-base font-semibold">{route}</p><p className="mt-1 text-xs leading-5 text-slate-600">{date} • {tripLine}</p>
     <div className="my-5 border-t border-[#E2E8F0]" />
@@ -213,14 +225,12 @@ function TripSidebar({ flight, leg, route, date, tripLine, travelers, selectedFa
     <div className="mt-5 grid grid-cols-[1fr_0.85fr_1fr] items-start gap-2"><AirportTime time={leg.departureTime} airport={leg.originAirport} city="" locale={locale} /><div className="pt-1 text-center"><Plane className="mx-auto h-5 w-5 rotate-45 text-slate-500" aria-hidden="true" /><p className="mt-2 text-xs text-slate-500">{leg.duration}</p><p className="text-xs text-slate-500">{formatStops(leg.stops)}</p></div><div className="text-right"><p className="text-base font-semibold">{formatTime(leg.arrivalTime, locale)}</p><p className="mt-1 text-sm font-bold">{leg.destinationAirport}</p></div></div>
     <div className="my-5 border-t border-[#E2E8F0]" /><dl className="space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-600">Fare</dt><dd className="font-medium text-slate-800">{selectedFare}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-600">Traveler</dt><dd className="font-medium text-slate-800">{travelers}</dd></div>{selectedOffer?.provider ? <div className="flex justify-between gap-4"><dt className="text-slate-600">Provider</dt><dd className="max-w-[60%] truncate font-medium text-slate-800">{selectedOffer.provider}</dd></div> : null}</dl>
     <div className="my-5 border-t border-[#E2E8F0]" /><div className="flex items-end justify-between gap-4"><p className="text-sm font-semibold">Total per traveler</p>{price ? <p className="text-[30px] font-bold leading-none text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : null}</div>
-    <button type="button" disabled={!selectedOffer || redirecting} onClick={onContinue} className="mt-6 h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{redirecting ? "Opening provider…" : "Continue to provider"}</button>
+    <button type="button" aria-label={selectedOffer?.provider ? `Continue to ${selectedOffer.provider}` : "Continue to provider"} disabled={!canContinue || redirecting} onClick={onContinue} className="mt-6 h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{redirecting ? "Opening provider…" : "Continue to provider"}</button>
     <p className="mt-3 text-center text-xs leading-5 text-slate-500">You’ll complete your booking on the provider’s website.</p><p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-slate-700"><LockKeyhole className="h-4 w-4" aria-hidden="true" /> Secure provider handoff</p>
     {error ? <p role="alert" className="mt-4 text-sm font-medium text-red-700">{error}</p> : null}
     <div className="mt-5 flex gap-3 rounded-[10px] border border-blue-200 bg-blue-50/60 p-4"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#075EE8]" aria-hidden="true" /><div><p className="text-xs font-medium text-slate-700">Price and availability are confirmed by the provider before purchase.</p><p className="mt-1 text-xs text-slate-500">Review the provider’s final fare terms before booking.</p></div></div>
   </aside>;
 }
-
-function ProviderMark({ provider }: { provider: PublicFlightResult }) { return provider.airlineLogo ? <Image src={provider.airlineLogo} alt={`${provider.provider} logo`} width={40} height={40} className="h-10 w-10 rounded-lg border border-slate-100 bg-white object-contain p-1" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-base font-bold text-[#075EE8]" aria-hidden="true">{provider.provider.trim().charAt(0).toUpperCase()}</span>; }
 
 function FlightDetailsSkeleton({ resultsHref }: { resultsHref: string }) { return <main className="flex-1 bg-[#F7F9FC] py-7"><div className="mx-auto max-w-[1500px] px-4 sm:px-6 lg:px-8"><Link href={resultsHref} className="inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8]"><ArrowLeft className="h-4 w-4" /> Back to results</Link><div role="status" aria-label="Loading flight details" className="mt-4 grid gap-7 lg:grid-cols-[minmax(0,2.25fr)_minmax(300px,0.95fr)]"><div className="h-[720px] animate-pulse rounded-[15px] border border-slate-200 bg-white" /><div className="h-[620px] animate-pulse rounded-[15px] border border-slate-200 bg-white" /></div></div></main>; }
 function FlightDetailsUnavailable({ resultsHref, message }: { resultsHref: string; message: string }) { return <main className="flex-1 bg-[#F7F9FC] py-10"><div className="mx-auto max-w-3xl px-4"><Link href={resultsHref} className="inline-flex items-center gap-2 text-sm font-semibold text-[#075EE8]"><ArrowLeft className="h-4 w-4" /> Back to results</Link><section className="mt-4 rounded-[15px] border border-slate-200 bg-white p-8"><h1 className="text-xl font-bold">Flight quote unavailable</h1><p className="mt-2 text-sm text-slate-600">{message || "Please return to results and search again for current prices."}</p></section></div></main>; }
