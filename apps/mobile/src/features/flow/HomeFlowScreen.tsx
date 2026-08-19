@@ -14,6 +14,7 @@ import { router, useFocusEffect } from "expo-router";
 import { travelApi } from "../../api/travelApi";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
+import { PackagesIcon } from "./PackagesIcon";
 import { FlightSearchPanel } from "./FlightSearchPanel";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { HomepageDealPromos } from "../home/HomepageDealPromos";
@@ -117,19 +118,19 @@ export function HomeTopNavigation({ safeAreaTop }: { safeAreaTop: number }) {
 
 const products: {
   label: string;
-  route: "/flights" | "/hotels" | "/cars" | "/deals";
-  icon: FlowIconName;
+  route: "/flights" | "/hotels" | "/cars" | "/packages";
+  icon: FlowIconName | "packages";
 }[] = [
   { label: "Flights", route: "/flights", icon: "flight" },
   { label: "Hotels", route: "/hotels", icon: "hotel" },
   { label: "Cars", route: "/cars", icon: "car" },
-  { label: "Deals", route: "/deals", icon: "deal" },
+  { label: "Packages", route: "/packages", icon: "packages" },
 ];
 export function SharedHomePage() {
   const ft = useFlowTheme();
   const insets = useSafeAreaInsets();
   const { availability } = useFeatureAvailability();
-  const visibleProducts = products.filter((product) => product.route !== "/deals" || availability.deals);
+  const visibleProducts = products.filter((product) => product.route !== "/packages" || availability.deals);
 
   return (
     <View style={ft.styles.safe}>
@@ -159,10 +160,14 @@ export function SharedHomePage() {
                 pressed && ft.styles.pressed,
               ]}
             >
-              <FlowIcon
-                name={product.icon}
-                color={index === 0 ? flowColors.blue : ft.colors.icon}
-              />
+              {product.icon === "packages" ? (
+                <PackagesIcon color={index === 0 ? flowColors.blue : ft.colors.icon} />
+              ) : (
+                <FlowIcon
+                  name={product.icon}
+                  color={index === 0 ? flowColors.blue : ft.colors.icon}
+                />
+              )}
               <Text
                 style={[
                   styles.productText, { color: ft.colors.text },

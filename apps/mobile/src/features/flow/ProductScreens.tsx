@@ -319,11 +319,11 @@ export function DealsScreen() {
   const includesFlight = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "flight-car";
   const includesHotel = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "hotel-car";
   const includesCar = tab === "hotel-flight-car" || tab === "hotel-car" || tab === "flight-car";
-  if (loading) return <UnavailableProduct title="Deals" text="Checking Deals availability…" />;
-  if (!availability.deals || availableDealTabs.length === 0) return <UnavailableProduct title="Deals" text="Deals are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
+  if (loading) return <UnavailableProduct title="Packages" text="Checking package availability…" />;
+  if (!availability.deals || availableDealTabs.length === 0) return <UnavailableProduct title="Packages" text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
   return (
     <Page
-      title="Deals"
+      title="Packages"
       hero={require("../../../assets/heroes/deals-balloons.png")}
       heroWidth={308}
       heroHeight={596}
