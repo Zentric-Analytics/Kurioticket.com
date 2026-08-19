@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
@@ -38,7 +38,7 @@ test("the compact flight alert uses the route-tracking copy and retains its exis
   assert.doesNotMatch(component, /Get the best deals/);
   assert.doesNotMatch(component, /Prices may change\. Book now and save\./);
   assert.match(component, /<Bell /);
-  assert.match(component, /require\("\.\.\/\.\.\/\.\.\/assets\/heroes\/flights-aircraft\.png"\)/);
+  assert.doesNotMatch(component, /flights-aircraft|flightAlertSky|flightAlertAircraft/);
   assert.doesNotMatch(component, /Create price alert/);
   assert.doesNotMatch(component, /Create a one-time email alert/);
   assert.doesNotMatch(component, /<FlowIcon name="bell"/);
@@ -54,12 +54,19 @@ test("the flight price action is an accessible, backend-honest switch", () => {
 });
 
 test("the compact alert stays horizontal and readable on narrow screens", () => {
-  assert.match(source, /const narrow = width < 350/);
   assert.match(source, /flightAlert: \{[\s\S]*?flexDirection: "row"/);
-  assert.doesNotMatch(source, /flightAlertNarrow: \{[^}]*flexDirection: "column"/);
   assert.match(source, /flightAlertCopy: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /flightAlertSkyNarrow: \{ width: 42 \}/);
   assert.match(source, /flightAlertSwitchTarget: \{ minWidth: 48, minHeight: 48/);
+  assert.doesNotMatch(source, /flightAlertNarrow|flightAlertSkyNarrow/);
+});
+
+test("the flight alert has no aircraft placeholder or visible banner border", () => {
+  const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
+  const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertIcon: {"));
+
+  assert.doesNotMatch(component, /<Image|flight-price-alert-aircraft|flights-aircraft/);
+  assert.doesNotMatch(bannerStyle, /borderWidth|borderColor/);
+  assert.ok(existsSync(resolve("assets/heroes/flights-aircraft.png")), "the shared aircraft asset should remain in the repository");
 });
 
 test("the flight alert uses semantic light and dark theme values", () => {

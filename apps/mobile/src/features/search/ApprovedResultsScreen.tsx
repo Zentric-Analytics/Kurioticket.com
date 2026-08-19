@@ -1033,16 +1033,13 @@ function HotelLoadingSkeleton() {
 function PriceAlert({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const flight = product === "flight";
-  const { width } = useWindowDimensions();
-  const narrow = width < 350;
   if (flight) {
     return (
       <View
         accessibilityLabel="Flight price alert"
         style={[
           s0.flightAlert,
-          { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder },
-          narrow && s0.flightAlertNarrow,
+          { backgroundColor: theme.priceAlertSurface },
         ]}
       >
         <View style={[s0.flightAlertIcon, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>
@@ -1058,15 +1055,6 @@ function PriceAlert({ product }: { product: Product }) {
         <View style={s0.flightAlertCopy}>
           <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices for this route</Text>
           <Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Get notified when prices drop.</Text>
-        </View>
-        <View style={[s0.flightAlertSky, narrow && s0.flightAlertSkyNarrow]} pointerEvents="none" accessibilityElementsHidden>
-          <Image
-            accessible={false}
-            source={require("../../../assets/heroes/flights-aircraft.png")}
-            resizeMode="cover"
-            style={s0.flightAlertAircraft}
-            testID="flight-price-alert-aircraft"
-          />
         </View>
         <View style={s0.flightAlertSwitchTarget}>
           <Switch
@@ -1433,7 +1421,6 @@ const s0 = StyleSheet.create({
   alertCopy: { gap: 4 },
   flightAlert: {
     minHeight: 82,
-    borderWidth: 1,
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 9,
@@ -1442,7 +1429,6 @@ const s0 = StyleSheet.create({
     gap: 9,
     overflow: "hidden",
   },
-  flightAlertNarrow: { paddingHorizontal: 8, gap: 7 },
   flightAlertIcon: {
     width: 38,
     height: 38,
@@ -1454,9 +1440,6 @@ const s0 = StyleSheet.create({
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 2 },
   flightAlertTitle: { fontSize: 15, lineHeight: 19, fontWeight: "900" },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500" },
-  flightAlertSky: { width: 72, height: 58, borderRadius: 12, overflow: "hidden", opacity: 0.9 },
-  flightAlertSkyNarrow: { width: 42 },
-  flightAlertAircraft: { width: "100%", height: "100%" },
   flightAlertSwitchTarget: { minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },
   alertButton: {
     width: "100%",
