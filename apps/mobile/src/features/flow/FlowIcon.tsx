@@ -3,7 +3,7 @@ import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
 
 export type FlowIconName =
   | "back" | "bell" | "calendar" | "car" | "card" | "check" | "chevron"
-  | "close" | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
+  | "clock" | "close" | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
   | "person" | "plus" | "search" | "settings" | "share" | "swap" | "trip"
   | "people" | "sliders" | "help" | "headset" | "document" | "shield"
   | "globe" | "currency" | "moon" | "logout" | "briefcase" | "bookmark" | "mail" | "palette"
@@ -22,6 +22,7 @@ export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none" }: 
     card: <><Rect {...line} x="3" y="6" width="18" height="13" rx="2" /><Path {...line} d="M3 10h18M7 15h4" /></>,
     check: <Path {...line} d="m5 12 4 4L19 6" />,
     chevron: <Path {...line} d="m9 6 6 6-6 6" />,
+    clock: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M12 7v5l3 2" /></>,
     close: <Path {...line} d="M6 6l12 12M18 6 6 18" />,
     compass: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="m15.5 8.5-2 5-5 2 2-5 5-2Z" /></>,
     deal: <><Path {...line} d="M4 11V5h6l10 10-6 6L4 11Z" /><Circle {...line} cx="8" cy="8.5" r="1" /></>,
