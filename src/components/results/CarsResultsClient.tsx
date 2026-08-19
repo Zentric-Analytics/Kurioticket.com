@@ -2324,28 +2324,95 @@ export function CarsResultsExperience({
         <div className="min-w-0 space-y-4">
           {results.length > 0 ? (
             <>
-              <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2 py-1 sm:gap-3">
-                <h2
-                  ref={resultHeadingRef}
-                  id={resultHeadingId}
-                  tabIndex={-1}
-                  className={cn(
-                    "min-w-0 flex-1 truncate whitespace-nowrap text-[16px] font-semibold leading-6 tracking-[-0.005em] text-[#142033] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]",
-                    !embedded && "sr-only",
-                  )}
+              <div
+                className="flex w-full min-w-0 flex-col items-start gap-2 py-1 sm:gap-3"
+                data-cars-results-toolbar
+              >
+                <div
+                  className="flex w-full min-w-0 flex-nowrap items-center justify-between gap-2"
+                  data-cars-results-summary-row
                 >
-                  {resultHeading ??
-                    t(
-                      visibleResults.length === 1
-                        ? "resultFound"
-                        : "resultsFound",
-                    ).replace(
-                      "{{count}}",
-                      new Intl.NumberFormat(intlLocale, {
-                        maximumFractionDigits: 0,
-                      }).format(visibleResults.length),
-                    )}
-                </h2>
+                  <h2
+                    ref={resultHeadingRef}
+                    id={resultHeadingId}
+                    tabIndex={-1}
+                    className="min-w-0 flex-1 truncate whitespace-nowrap text-sm font-semibold leading-6 tracking-[-0.005em] text-[#142033] outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8] sm:text-[16px]"
+                  >
+                    {resultHeading ??
+                      t(
+                        visibleResults.length === 1
+                          ? "resultFound"
+                          : "resultsFound",
+                      ).replace(
+                        "{{count}}",
+                        new Intl.NumberFormat(intlLocale, {
+                          maximumFractionDigits: 0,
+                        }).format(visibleResults.length),
+                      )}
+                  </h2>
+                  <div className="flex min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
+                    <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-slate-700 sm:text-sm">
+                      {t("carsResults.sortBy")}:
+                    </span>
+                    <div
+                      ref={carsSortRef}
+                      className="relative inline-flex min-w-0 max-w-full shrink items-center whitespace-nowrap"
+                    >
+                      <button
+                        ref={carsSortButtonRef}
+                        type="button"
+                        aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
+                        aria-haspopup="menu"
+                        aria-expanded={carsSortOpen}
+                        className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-1 rounded-md bg-transparent px-1 text-sm font-semibold text-[#142033] sm:gap-2 sm:px-2 sm:text-[16px]"
+                        onClick={() => setCarsSortOpen((open) => !open)}
+                      >
+                        <span className="min-w-0 truncate whitespace-nowrap">
+                          {selectedCarSortLabel}
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          className={cn(
+                            "shrink-0 transition-transform duration-150",
+                            carsSortOpen && "rotate-180",
+                          )}
+                          aria-hidden="true"
+                        />
+                      </button>
+                      <div
+                        role="menu"
+                        aria-hidden={!carsSortOpen}
+                        className={cn(
+                          "absolute end-0 top-11 z-40 w-56 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg",
+                          carsSortOpen
+                            ? "opacity-100"
+                            : "pointer-events-none opacity-0",
+                        )}
+                      >
+                        {carSortOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            role="menuitemradio"
+                            aria-checked={sort === option.value}
+                            tabIndex={carsSortOpen ? 0 : -1}
+                            className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold"
+                            onClick={() => {
+                              setTransition();
+                              setSort(option.value);
+                              setCarsSortOpen(false);
+                            }}
+                          >
+                            <span className="w-4 shrink-0 text-[#004BB8]">
+                              {sort === option.value ? "✓" : ""}
+                            </span>
+                            <span>{option.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <button
                   ref={filtersButtonRef}
                   type="button"
@@ -2360,68 +2427,6 @@ export function CarsResultsExperience({
                       )
                     : t("filters")}
                 </button>
-                <div className="flex min-w-0 max-w-full flex-nowrap items-center justify-end gap-1 whitespace-nowrap sm:gap-2">
-                  <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-slate-700">
-                    {t("carsResults.sortBy")}:
-                  </span>
-                  <div
-                    ref={carsSortRef}
-                    className="relative inline-flex min-w-0 max-w-full shrink items-center whitespace-nowrap"
-                  >
-                    <button
-                      ref={carsSortButtonRef}
-                      type="button"
-                      aria-label={`${t("carsResults.sortBy")}: ${selectedCarSortLabel}`}
-                      aria-haspopup="menu"
-                      aria-expanded={carsSortOpen}
-                      className="inline-flex h-9 min-w-0 max-w-full items-center justify-center gap-2 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033]"
-                      onClick={() => setCarsSortOpen((open) => !open)}
-                    >
-                      <span className="min-w-0 truncate whitespace-nowrap">
-                        {selectedCarSortLabel}
-                      </span>
-                      <ChevronDown
-                        size={16}
-                        className={cn(
-                          "shrink-0 transition-transform duration-150",
-                          carsSortOpen && "rotate-180",
-                        )}
-                        aria-hidden="true"
-                      />
-                    </button>
-                    <div
-                      role="menu"
-                      aria-hidden={!carsSortOpen}
-                      className={cn(
-                        "absolute end-0 top-11 z-40 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg",
-                        carsSortOpen
-                          ? "opacity-100"
-                          : "pointer-events-none opacity-0",
-                      )}
-                    >
-                      {carSortOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          role="menuitemradio"
-                          aria-checked={sort === option.value}
-                          tabIndex={carsSortOpen ? 0 : -1}
-                          className="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm font-semibold"
-                          onClick={() => {
-                            setTransition();
-                            setSort(option.value);
-                            setCarsSortOpen(false);
-                          }}
-                        >
-                          <span className="w-4 shrink-0 text-[#004BB8]">
-                            {sort === option.value ? "✓" : ""}
-                          </span>
-                          <span>{option.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
               </div>
               {resultsTransitioning ? (
                 <div className="w-full space-y-4">
