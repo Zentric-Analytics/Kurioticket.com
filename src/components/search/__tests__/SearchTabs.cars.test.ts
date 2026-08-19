@@ -45,7 +45,7 @@ test("homepage Cars primary fields use summaries and the location autocomplete",
 test("source contract: homepage Rental Dates renders localized two-slot summary states", () => {
   assert.match(source, /const carsPickupDateDisplay =\s*formatCarsDate\(carsValues\.pickupDate\) \|\|\s*translate\("carsSearch\.pickupDateLabel"\) \|\|\s*"Pickup date";/);
   assert.match(source, /const carsReturnDateDisplay =\s*formatCarsDate\(carsValues\.dropoffDate\) \|\|\s*translate\("carsSearch\.returnDateLabel"\) \|\|\s*"Return date";/);
-  assert.match(source, /\{carsPickupDateDisplay\}<\/span>\s*<span className="text-slate-400"> — <\/span>\s*<span className=\{carsValues\.dropoffDate \? "text-slate-900" : "text-slate-500"\}>\{carsReturnDateDisplay\}/);
+  assert.match(source, /\{carsPickupDateDisplay\}<\/span>\s*<span className=\{carsEmptyDateTextClassName \?\? "text-slate-400"\}> — <\/span>\s*<span className=\{carsEmptyDateTextClassName \?\? \(carsValues\.dropoffDate \? "text-slate-900" : "text-slate-500"\)\}>\{carsReturnDateDisplay\}/);
   assert.equal(source.slice(source.indexOf("const carsDateSummary"), source.indexOf("const formatCarsTime")).includes("chooseRentalDates"), false);
 });
 
