@@ -7,8 +7,10 @@ const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8")
 
 test("home product controls navigate to dedicated product routes", () => {
   const home = source("src/features/flow/HomeFlowScreen.tsx");
-  for (const route of ["/flights", "/hotels", "/cars", "/deals"]) assert.match(home, new RegExp(`route: "${route}"`));
+  for (const route of ["/flights", "/hotels", "/cars", "/packages"]) assert.match(home, new RegExp(`route: "${route}"`));
   assert.match(home, /router\.push\(product\.route\)/);
+  assert.equal(existsSync(join(process.cwd(), "app", "deals.tsx")), true);
+  assert.equal(existsSync(join(process.cwd(), "app", "packages.tsx")), true);
 });
 
 test("bottom navigation keeps the approved order and active accessibility state", () => {
