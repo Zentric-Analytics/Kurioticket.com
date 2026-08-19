@@ -244,26 +244,36 @@ export function DateStrip({
       ) : null}
       <ScrollView
         horizontal
-        style={s.dateRail}
+        style={[s.dateRail, flightResults && s.flightDateRail]}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[s.dates, flightResults && s.flightDates]}
       >
         {visibleDates.map((iso, i) => {
           const x = parseCalendarDate(iso);
           const active = iso === date;
+          const hasPrice = prices[i] != null;
           return (
             <Pressable
               key={iso}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               onPress={() => onSelect(iso)}
-              style={[
+              style={({ pressed }) => [
                 s.date,
                 flightResults && s.flightDate,
                 flightResults && { width: flightDateWidth },
-                flightResults && { backgroundColor: theme.surface, borderColor: theme.border },
-                active && s.dateActive,
-                flightResults && active && { backgroundColor: theme.dark ? "#142B55" : "#F5F8FF", borderColor: ui.blue },
+                flightResults && {
+                  backgroundColor: theme.surface,
+                  shadowColor: theme.dark ? "#000000" : "#18305B",
+                  shadowOpacity: theme.dark ? 0.28 : 0.1,
+                },
+                !flightResults && active && s.dateActive,
+                flightResults && active && {
+                  backgroundColor: theme.dark ? "#142B55" : "#F0F5FF",
+                  shadowOpacity: theme.dark ? 0.34 : 0.15,
+                  elevation: 5,
+                },
+                pressed && s.datePressed,
               ]}
             >
               <Text style={[s.day, flightResults && { color: theme.textSecondary }]}>
@@ -274,15 +284,19 @@ export function DateStrip({
               >
                 {shortDate(iso)}
               </Text>
-              {prices[i] != null ? (
+              {hasPrice || flightResults ? (
                 <Text
-                  accessibilityLabel={priceAccessibilityLabels?.[i]}
+                  accessibilityLabel={hasPrice ? priceAccessibilityLabels?.[i] : undefined}
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={flightResults ? 0.78 : 0.85}
-                  style={[s.datePrice, flightResults && { color: theme.textPrimary }, active && { color: ui.blue }]}
+                  style={[s.datePrice, flightResults && s.flightDatePrice, flightResults && { color: theme.textPrimary }, active && { color: ui.blue }]}
                 >
-                  {formattedPrices ? (formattedPrices[i] ?? "—") : money(currency, prices[i])}
+                  {hasPrice
+                    ? formattedPrices
+                      ? (formattedPrices[i] ?? "—")
+                      : money(currency, prices[i])
+                    : ""}
                 </Text>
               ) : null}
             </Pressable>
@@ -442,8 +456,9 @@ export const s = StyleSheet.create({
   },
   dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
-  flightDateNavigator: { paddingHorizontal: 0 },
-  flightDates: { paddingHorizontal: 16 },
+  flightDateNavigator: { height: 96, paddingHorizontal: 0 },
+  flightDateRail: { height: 96 },
+  flightDates: { paddingHorizontal: 16, paddingVertical: 8 },
   arrow: {
     width: 40,
     height: 40,
@@ -463,10 +478,23 @@ export const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "white",
   },
-  flightDate: { minWidth: 96, maxWidth: 116 },
+  flightDate: {
+    minWidth: 96,
+    maxWidth: 116,
+    height: 76,
+    borderRadius: 14,
+    borderWidth: 0,
+    shadowColor: "#18305B",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
+  },
   dateActive: { borderColor: ui.blue, backgroundColor: "#F5F8FF" },
-  day: { fontSize: 12, color: ui.muted },
+  datePressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
+  day: { fontSize: 12, lineHeight: 16, color: ui.muted },
   datePrice: { maxWidth: "100%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
+  flightDatePrice: { width: "100%", height: 20, textAlign: "center", lineHeight: 20, marginTop: 2, paddingHorizontal: 4 },
   button: {
     height: 45,
     minWidth: 104,
