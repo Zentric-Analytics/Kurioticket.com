@@ -42,13 +42,13 @@ test("route title contains only uppercase airport codes from the current payload
   assert.doesNotMatch(header, /airport\.city|\([A-Z]{3}\)/);
 });
 
-test("main controls and icon metadata occupy independent rows", () => {
-  assert.match(header, /<View accessibilityLabel="Flight route controls" style=\{s0\.flightHeaderMainRow\}>[\s\S]*?<\/View>\s*<View accessibilityLabel="Trip metadata row" style=\{s0\.flightHeaderMetadataRow\}>/);
+test("main controls flank a separate metadata row beneath the route", () => {
+  assert.match(header, /<View accessibilityLabel="Flight route controls" style=\{s0\.flightHeaderMainRow\}>[\s\S]*?\{route\}[\s\S]*?<View accessibilityLabel="Trip metadata row" style=\{s0\.flightHeaderMetadataRow\}>/);
   const mainRow = header.slice(header.indexOf('accessibilityLabel="Flight route controls"'), header.indexOf('accessibilityLabel="Trip metadata row"'));
-  assert.match(mainRow, /accessibilityLabel="Go back"[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Edit search"/);
+  assert.match(header, /accessibilityLabel="Go back"[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Trip metadata row"[\s\S]*?accessibilityLabel="Edit search"/);
   assert.doesNotMatch(mainRow, /dateRange|travelerCount|cabinClass/);
-  assert.match(header, /<CalendarDays[\s\S]*?<UserRound[\s\S]*?<BriefcaseBusiness/);
-  assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
+  assert.match(header, /\{dateRange\}  ·  \{travelerCount\}[\s\S]*?·  \{cabinClass\}/);
+  assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "flex-start"/);
 });
 
 test("metadata renders current dates without a redundant trip-type label", () => {
@@ -84,28 +84,27 @@ test("Back and Edit search retain their behavior and touch targets", () => {
   assert.match(header, /accessibilityLabel="Go back"[\s\S]*?onPress=\{\(\) => router\.back\(\)\}/);
   assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
-  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?minHeight: 44/);
+  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 106,[\s\S]*?minHeight: 44/);
   assert.match(results, /onEdit=\{edit\}/);
   assert.match(results, /pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\)/);
 });
 
-test("route remains flexible and metadata wraps beneath route content on narrow screens", () => {
-  assert.match(styles, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
-  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?minWidth: 106,[\s\S]*?flexShrink: 0/);
-  assert.match(styles, /flightHeaderMetadataRow: \{[\s\S]*?marginLeft: 46,[\s\S]*?flexWrap: "wrap"/);
-  assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexWrap: "wrap"/);
+test("route stays centered and narrow screens use balanced compact controls without overlap", () => {
+  assert.match(styles, /flightHeaderSide: \{ width: 106, flexShrink: 0 \}/);
+  assert.match(styles, /flightHeaderSideCompact: \{ width: 44 \}/);
+  assert.match(styles, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0, alignItems: "center"/);
+  assert.match(styles, /flightHeaderEditCompact: \{ width: 44, paddingHorizontal: 0 \}/);
+  assert.match(results, /compact=\{narrowHeader\}/);
+  assert.match(header, /\{!compact \? <Text style=\{s0\.flightHeaderEditText\}>Edit search<\/Text> : null\}/);
   assert.doesNotMatch(header, /numberOfLines|ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
 });
 
-test("Back and Edit search use soft theme-aware elevation without heavy borders", () => {
-  assert.match(header, /flightHeaderBack,[\s\S]*?flightHeaderElevated[\s\S]*?backgroundColor: theme\.surface/);
-  assert.match(header, /flightHeaderEdit,[\s\S]*?flightHeaderElevated[\s\S]*?backgroundColor: theme\.surface/);
-  assert.match(header, /shadowColor: theme\.dark \? "#000000" : theme\.textPrimary/);
-  assert.match(styles, /flightHeaderElevated: \{[\s\S]*?shadowOffset:[\s\S]*?shadowOpacity: 0\.12,[\s\S]*?shadowRadius: 6,[\s\S]*?elevation: 4/);
+test("Back is an independent icon with pressed feedback and no card treatment", () => {
+  assert.match(header, /style=\{\(\{ pressed \}\) => \[s0\.flightHeaderBack, pressed && s0\.flightHeaderControlPressed\]\}/);
+  assert.match(styles, /flightHeaderControlPressed: \{ opacity: 0\.55 \}/);
   const backStyle = styles.slice(styles.indexOf("flightHeaderBack:"), styles.indexOf("flightHeaderRouteBlock:"));
-  const editStyle = styles.slice(styles.indexOf("flightHeaderEdit:"), styles.indexOf("flightHeaderEditText:"));
-  assert.doesNotMatch(backStyle, /borderWidth/);
-  assert.doesNotMatch(editStyle, /borderWidth/);
+  assert.doesNotMatch(backStyle, /backgroundColor|border|shadow|elevation|borderRadius/);
+  assert.doesNotMatch(header.slice(header.indexOf('accessibilityLabel="Go back"'), header.indexOf("<ArrowLeft")), /backgroundColor|shadowColor|flightHeaderElevated/);
 });
 
 test("header spacing stays compact before the unchanged date strip", () => {
@@ -118,7 +117,6 @@ test("metadata and controls preserve semantic light and dark theme colors", () =
   assert.match(header, /backgroundColor: theme\.background/);
   assert.match(header, /color: theme\.textPrimary/);
   assert.match(header, /color: theme\.textSecondary/);
-  assert.match(header, /backgroundColor: theme\.surface/);
   assert.match(header, /color=\{theme\.icon\}/);
 });
 
