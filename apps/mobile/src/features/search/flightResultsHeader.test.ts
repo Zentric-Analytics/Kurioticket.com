@@ -35,20 +35,39 @@ test("Back, route block, and Edit search form one ordered header row", () => {
 
 test("route and metadata share a flexible block that cannot collide with Edit search", () => {
   assert.match(header, /<View style=\{\[s0\.flightHeaderRouteBlock,[\s\S]*?<Text[^>]*flightHeaderRoute[\s\S]*?\{route\}[\s\S]*?<Text[^>]*flightHeaderMetadata[\s\S]*?\{metadata\}[\s\S]*?<\/View>/);
-  assert.match(results, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0 \}/);
-  assert.match(results, /flightHeaderRoute: \{ flex: 1, minWidth: 0 \}/);
+  assert.match(results, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
+  assert.match(results, /flightHeaderRoute: \{ minWidth: 0 \}/);
   assert.match(results, /flightHeaderEdit: \{[\s\S]*?minWidth: 106,[\s\S]*?minHeight: 44,[\s\S]*?flexShrink: 0/);
   assert.doesNotMatch(header, /numberOfLines/);
+  assert.doesNotMatch(header, /ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
   assert.doesNotMatch(header, /<TopBar|height: 64/);
 });
 
 test("narrow screens wrap Edit search to a deliberate trailing position", () => {
-  assert.match(header, /const narrow = useWindowDimensions\(\)\.width < 360/);
-  assert.match(header, /narrow && s0\.flightHeaderRouteBlockNarrow/);
-  assert.match(header, /narrow && s0\.flightHeaderEditNarrow/);
+  assert.match(header, /const stackEditSearch = useWindowDimensions\(\)\.width < 500/);
+  assert.match(header, /stackEditSearch && s0\.flightHeaderRouteBlockStacked/);
+  assert.match(header, /stackEditSearch && s0\.flightHeaderEditStacked/);
   assert.match(results, /flightHeader: \{[\s\S]*?flexWrap: "wrap"/);
-  assert.match(results, /flightHeaderRouteBlockNarrow: \{ flexBasis: "75%", flexShrink: 0 \}/);
-  assert.match(results, /flightHeaderEditNarrow: \{ marginLeft: "auto", marginTop: 4 \}/);
+  assert.match(results, /flightHeaderRouteBlockStacked: \{ flexBasis: "75%", flexShrink: 0 \}/);
+  assert.match(results, /flightHeaderEditStacked: \{ marginLeft: "auto", marginTop: 4 \}/);
+});
+
+test("complete realistic and long routes remain renderable without an ellipsis contract", () => {
+  const routes = [
+    "Lagos (LOS)  ⇄  Abuja (ABV)",
+    "Lagos (LOS)  ⇄  New York (JFK)",
+    "Los Angeles (LAX)  ⇄  F9",
+    "Los Angeles (LAX)  ⇄  London Heathrow (LHR)",
+    "Buenos Aires Ministro Pistarini (EZE)  ⇄  Bangkok Suvarnabhumi International (BKK)",
+  ];
+
+  for (const route of routes) {
+    assert.equal(route.includes("..."), false);
+    assert.ok(route.split("⇄")[1]?.trim(), `${route} keeps its complete destination`);
+  }
+  assert.match(results, /route=\{`\$\{airportLabel\(payload\.origin\)\}  ⇄  \$\{airportLabel\(payload\.destination\)\}`\}/);
+  assert.match(results, /const airportLabel = \(code: unknown\)[\s\S]*?return airport \? `\$\{airport\.city\} \(\$\{value\}\)` : value;/);
+  assert.doesNotMatch(header, /numberOfLines|ellipsizeMode/);
 });
 
 test("compact header spacing stays tight without changing the date strip", () => {
