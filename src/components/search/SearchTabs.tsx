@@ -44,6 +44,11 @@ import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import {
+  hotelDestinationKindLabels,
+  hotelDestinationKindTranslationKeys,
+  useHotelDestinationAutocomplete,
+} from "@/components/search/useHotelDestinationAutocomplete";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
 import { DealsSearchForm } from "@/components/search/DealsSearchForm";
@@ -73,6 +78,11 @@ import {
 } from "@/data/airports";
 import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import {
+  getLocalizedHotelDestinationCityName,
+  getLocalizedHotelDestinationDetail,
+  type HotelDestinationSuggestion,
+} from "@/data/hotelDestinations";
 import {
   applyDefaultOrigin,
   canApplyDefaultOrigin,
@@ -614,6 +624,8 @@ export function SearchTabs({
     useRef<HTMLButtonElement>(null);
   const hotelDestinationMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
+  const hotelDestinationDesktopWrapRef = useRef<HTMLDivElement>(null);
+  const hotelDestinationDesktopInputRef = useRef<HTMLInputElement>(null);
   const hotelDateWrapRef =
     useRef<HTMLDivElement>(null);
   const hotelDatesMobileLauncherRef =
@@ -813,6 +825,28 @@ export function SearchTabs({
   const [draftHotelPetFriendly, setDraftHotelPetFriendly] = useState(false);
   const [hotelGuestsRoomsOpen, setHotelGuestsRoomsOpen] =
     useState(false);
+  const {
+    handleKeyDown: handleHotelDestinationKeyDown,
+    highlight: hotelDestinationHighlight,
+    loading: hotelDestinationLoading,
+    open: hotelDestinationSuggestionsOpen,
+    select: commitHotelDestinationSuggestion,
+    setHighlight: setHotelDestinationHighlight,
+    setOpen: setHotelDestinationSuggestionsOpen,
+    shouldShow: shouldShowHotelDestinationSuggestions,
+    suggestions: hotelDestinationSuggestions,
+  } = useHotelDestinationAutocomplete({
+    query: destination,
+    detectedCountryHint: countryHint,
+    locale: locale ?? activeLocale,
+  });
+
+  const selectHotelDestination = (suggestion: HotelDestinationSuggestion) => {
+    setDestination(commitHotelDestinationSuggestion(suggestion));
+    window.requestAnimationFrame(() =>
+      hotelDestinationDesktopInputRef.current?.focus({ preventScroll: true }),
+    );
+  };
 
   useEffect(() => {
     if (!hotelGuestsRoomsOpen) return;
@@ -828,6 +862,7 @@ export function SearchTabs({
     travelersMenuOpen ||
     fromOpen ||
     toOpen ||
+    hotelDestinationSuggestionsOpen ||
     hotelGuestsRoomsOpen;
 
   const searchTabsOverlayOpen =
@@ -1299,6 +1334,9 @@ export function SearchTabs({
       ) {
         setHotelDatesOpen(false);
       }
+      if (!hotelDestinationDesktopWrapRef.current?.contains(eventTarget)) {
+        setHotelDestinationSuggestionsOpen(false);
+      }
       if (
         !tripTypeWrapRef.current?.contains(
           eventTarget
@@ -1338,6 +1376,7 @@ export function SearchTabs({
         );
         setHotelDatesOpen(false);
         setHotelDestinationMobilePickerOpen(false);
+        setHotelDestinationSuggestionsOpen(false);
         setTripTypeOpen(false);
         if (travelersMenuOpen) {
           cancelTravelersDraft();
@@ -1366,7 +1405,12 @@ export function SearchTabs({
           onEscape
         );
       };
-  }, [applyTravelersFromValues, cancelTravelersDraft, travelersMenuOpen]);
+  }, [
+    applyTravelersFromValues,
+    cancelTravelersDraft,
+    setHotelDestinationSuggestionsOpen,
+    travelersMenuOpen,
+  ]);
 
 
   const guests = String(hotelAdultCount + hotelChildCount);
@@ -3780,12 +3824,14 @@ export function SearchTabs({
           >
             <div className={hotelGridClassName}>
               <div
+                ref={hotelDestinationDesktopWrapRef}
                 className={cn(
                   "relative border",
                   mobileHomepage
                     ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe]"
                     : "rounded-xl border-slate-300 bg-white lg:rounded-s-xl",
                   hotelJoinedFieldClassName,
+                  hotelDestinationSuggestionsOpen && desktopActiveFieldClassName,
                 )}
                 data-testid={mobileHomepage ? "mobile-homepage-hotel-destination" : undefined}
               >
@@ -3839,14 +3885,115 @@ export function SearchTabs({
                     className="pointer-events-none absolute start-0 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500"
                   />
                   <input
+                    ref={hotelDestinationDesktopInputRef}
+                    id="homepage-hotel-destination"
                     type="text"
                     value={destination}
-                    onChange={(event) => setDestination(event.target.value)}
+                    onChange={(event) => {
+                      setDestination(event.target.value);
+                      setHotelDestinationSuggestionsOpen(
+                        event.target.value.trim().length > 0,
+                      );
+                      setHotelDestinationHighlight(0);
+                    }}
+                    onFocus={() => {
+                      if (destination.trim()) setHotelDestinationSuggestionsOpen(true);
+                      setHotelDatesOpen(false);
+                      setHotelGuestsRoomsOpen(false);
+                    }}
+                    onKeyDown={(event) =>
+                      handleHotelDestinationKeyDown(event, selectHotelDestination)
+                    }
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={shouldShowHotelDestinationSuggestions}
+                    aria-controls="homepage-hotel-destination-suggestions"
+                    aria-activedescendant={
+                      shouldShowHotelDestinationSuggestions &&
+                      hotelDestinationSuggestions[hotelDestinationHighlight]
+                        ? `homepage-hotel-destination-suggestion-${hotelDestinationSuggestions[hotelDestinationHighlight].id}`
+                        : undefined
+                    }
                     placeholder={t.cityOrHotel || "City or hotel"}
                     className={cn(hotelFieldValueClassName, "ps-6")}
                     required
                   />
                 </div>
+                {shouldShowHotelDestinationSuggestions ? (
+                  <DesktopTopLayerPopover
+                    open
+                    launcherRef={hotelDestinationDesktopInputRef}
+                    align="left"
+                    width={420}
+                    desiredHeight={320}
+                    placement="auto"
+                    id="homepage-hotel-destination-suggestions"
+                    role="listbox"
+                    ariaLabel={translate("hotelDestinationSuggestions") || "Hotel destination suggestions"}
+                    className="p-1.5"
+                  >
+                    {hotelDestinationLoading ? (
+                      <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
+                        {translate("findingDestinations") || "Finding destinations…"}
+                      </div>
+                    ) : hotelDestinationSuggestions.length ? (
+                      hotelDestinationSuggestions.map((suggestion, index) => {
+                        const active = hotelDestinationHighlight === index;
+                        const DestinationIcon = suggestion.kind === "airport-area"
+                          ? Plane
+                          : suggestion.kind === "city"
+                            ? Building2
+                            : MapPin;
+                        const kindLabel =
+                          translate(hotelDestinationKindTranslationKeys[suggestion.kind]) ||
+                          hotelDestinationKindLabels[suggestion.kind];
+
+                        return (
+                          <button
+                            key={suggestion.id}
+                            id={`homepage-hotel-destination-suggestion-${suggestion.id}`}
+                            type="button"
+                            role="option"
+                            aria-selected={active}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onMouseEnter={() => setHotelDestinationHighlight(index)}
+                            onClick={() => selectHotelDestination(suggestion)}
+                            className={cn(
+                              "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-start transition-colors",
+                              active ? "bg-slate-100" : "hover:bg-slate-50",
+                            )}
+                          >
+                            <DestinationIcon
+                              aria-hidden="true"
+                              className="mt-0.5 h-4 w-4 shrink-0 text-slate-500"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-semibold text-slate-950">
+                                {getLocalizedHotelDestinationCityName(
+                                  suggestion.name,
+                                  locale ?? activeLocale,
+                                )}
+                              </span>
+                              <span className="mt-0.5 block truncate text-xs font-medium text-slate-600">
+                                {getLocalizedHotelDestinationDetail(
+                                  suggestion,
+                                  locale ?? activeLocale,
+                                )}
+                              </span>
+                            </span>
+                            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                              {kindLabel}
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
+                        {translate("noMatchingDestinations") || "No matching destinations"}
+                      </div>
+                    )}
+                  </DesktopTopLayerPopover>
+                ) : null}
               </div>
               <div
                 ref={hotelDateWrapRef}
@@ -3869,6 +4016,7 @@ export function SearchTabs({
                   type="button"
                   onClick={() => {
                     setHotelDatesOpen((prev) => !prev);
+                    setHotelDestinationSuggestionsOpen(false);
                     setHotelDestinationMobilePickerOpen(false);
                     setHotelGuestsRoomsOpen(false);
                   }}
@@ -3927,6 +4075,7 @@ export function SearchTabs({
                   type="button"
                   onClick={() => {
                     setHotelGuestsRoomsOpen((prev) => !prev);
+                    setHotelDestinationSuggestionsOpen(false);
                     setHotelDestinationMobilePickerOpen(false);
                     setHotelDatesOpen(false);
                   }}
