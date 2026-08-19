@@ -23,12 +23,15 @@ import {
   ArrowLeft,
   Award,
   Bell,
+  Briefcase,
+  CalendarDays,
   FilePenLine,
   Info,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
   Tag,
+  User,
   Zap,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
@@ -562,9 +565,20 @@ function FlightResultsHeader({
             {route}
           </Text>
           <View accessibilityLabel="Trip metadata row" style={s0.flightHeaderMetadataRow}>
-            <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
-              {dateRange}  ·  {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}  ·  {cabinClass}
-            </Text>
+            <View style={s0.flightHeaderMetadataItem}>
+              <CalendarDays accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
+            </View>
+            <View style={s0.flightHeaderMetadataItem}>
+              <User accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
+                {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
+              </Text>
+            </View>
+            <View style={s0.flightHeaderMetadataItem}>
+              <Briefcase accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
+            </View>
           </View>
         </View>
         <Pressable
@@ -1159,9 +1173,20 @@ const s0 = StyleSheet.create({
   flightHeaderMetadataRow: {
     width: "100%",
     paddingTop: 4,
+    flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
+    justifyContent: "center",
+    columnGap: 18,
+    rowGap: 6,
   },
-  flightHeaderMetadataText: { fontSize: 12, lineHeight: 17, textAlign: "center" },
+  flightHeaderMetadataItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+    gap: 6,
+  },
+  flightHeaderMetadataText: { fontSize: 12, lineHeight: 17 },
   flightHeaderEdit: {
     width: 106,
     minHeight: 44,
