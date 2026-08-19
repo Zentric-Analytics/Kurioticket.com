@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getFlightFromCache, toPublicFlight } from "@/lib/searchCache";
+import { getCompatibleFlightsFromCache, getFlightFromCache, toPublicFlight } from "@/lib/searchCache";
 
 export function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,5 +14,8 @@ export function GET(request: Request) {
     );
   }
 
-  return NextResponse.json({ flight: toPublicFlight(flight) });
+  return NextResponse.json({
+    flight: toPublicFlight(flight),
+    fareOffers: getCompatibleFlightsFromCache(id).map(toPublicFlight),
+  });
 }

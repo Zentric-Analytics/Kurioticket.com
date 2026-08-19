@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   type LucideIcon,
   Armchair,
@@ -24,6 +24,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { getDealsGuidedConfirmationActionId } from "@/lib/deals/dealsConfirmationIds";
 import { DetailsBackLink } from "@/components/results/DetailsBackLink";
+import { StandaloneFlightDetails } from "@/components/results/flightDetails/StandaloneFlightDetails";
 
 const FLIGHT_QUOTE_UNAVAILABLE_MESSAGE =
   enTranslations.flightSearchAgainCurrentPrices;
@@ -35,29 +36,8 @@ export type FlightDetailsPrimaryAction =
 export function FlightDetailsClient({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const resultsQuery = searchParams.toString();
-  const resultsHref = resultsQuery ? `/flights/results?${resultsQuery}` : "/flights";
-  const [providerError, setProviderError] = useState("");
-
-  const continueToProvider = useCallback(async () => {
-    const response = await fetch("/api/redirect", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, type: "flight", sourcePage: "flight_details" }),
-    });
-    const data = (await response.json()) as { url?: string; error?: string };
-    if (data.url) window.location.href = data.url;
-    if (data.error) setProviderError(data.error);
-  }, [id]);
-
-  return (
-    <FlightDetailsExperience
-      id={id}
-      mode="standalone"
-      backHref={resultsHref}
-      providerError={providerError}
-      primaryAction={{ kind: "provider", label: "", disabled: false, onActivate: continueToProvider }}
-    />
-  );
+  const resultsHref = resultsQuery ? `/flights/results?${resultsQuery}` : "/flights/results";
+  return <StandaloneFlightDetails id={id} resultsHref={resultsHref} />;
 }
 
 export function FlightDetailsExperience({ id, mode = "standalone", backHref, primaryAction, providerError = "", onFlightLoaded }: { id: string | null; mode?: "standalone" | "guided"; backHref?: string; primaryAction: FlightDetailsPrimaryAction; providerError?: string; onFlightLoaded?: (flight: PublicFlightResult | null, resultReceivedAt: number | null) => void }) {
