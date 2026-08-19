@@ -49,6 +49,25 @@ test("empty fares reserve the same price row and press behavior stays intact", (
 
 test("horizontal rail keeps scrolling and includes breathing room for shadows", () => {
   assert.match(component, /<ScrollView\s+horizontal/);
+  assert.match(component, /showsHorizontalScrollIndicator=\{false\}/);
   assert.match(styles, /flightDateRail: \{ height: 96 \}/);
   assert.match(styles, /flightDates: \{ paddingHorizontal: 16, paddingVertical: 8 \}/);
+});
+
+test("responsive card widths expose part of the fourth card", () => {
+  assert.match(
+    component,
+    /const flightDateWidth = Math\.min\(116, Math\.max\(96, \(windowWidth - 43\) \/ 3\.25\)\)/,
+  );
+
+  for (const windowWidth of [360, 390, 430]) {
+    const cardWidth = Math.min(116, Math.max(96, (windowWidth - 43) / 3.25));
+    const visibleAfterThreeCards = windowWidth - 16 - cardWidth * 3 - 9 * 3;
+
+    assert.ok(visibleAfterThreeCards > 0, `${windowWidth}px fits three full cards`);
+    assert.ok(
+      visibleAfterThreeCards < cardWidth,
+      `${windowWidth}px exposes only part of the fourth card`,
+    );
+  }
 });
