@@ -5,6 +5,20 @@ import {
   buildStaticHotelRoomOptions,
   getStaticHotelById,
 } from "@/services/travel/staticHotelResults";
+import type { StaticHotelRecord } from "@/services/travel/staticHotelCatalogue";
+
+function toPublicPropertyDetails(record: StaticHotelRecord | null) {
+  if (!record) return null;
+  return {
+    description: record.description,
+    latitude: record.latitude,
+    longitude: record.longitude,
+    streetAddress: record.location,
+    city: record.city,
+    country: record.country,
+    neighbourhood: record.neighbourhood,
+  };
+}
 export function GET(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id")?.trim();
@@ -32,6 +46,7 @@ export function GET(request: Request) {
   if (cached)
     return NextResponse.json({
       hotel: toPublicHotel(cached),
+      propertyDetails: toPublicPropertyDetails(record),
       roomOptions: record ? buildStaticHotelRoomOptions(record, search) : [],
     });
   if (!record)
@@ -39,6 +54,7 @@ export function GET(request: Request) {
   const hotel = buildStaticHotelResult(record, search);
   return NextResponse.json({
     hotel: toPublicHotel(hotel),
+    propertyDetails: toPublicPropertyDetails(record),
     roomOptions: buildStaticHotelRoomOptions(record, search),
   });
 }

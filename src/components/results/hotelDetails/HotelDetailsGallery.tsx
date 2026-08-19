@@ -16,6 +16,8 @@ import { HotelDetailsGalleryDialog } from "@/components/results/hotelDetails/Hot
 
 type HotelDetailsGalleryProps = {
   embedded?: boolean;
+  layout?: "hero" | "mosaic";
+  remainingPhotosLabel?: string;
   activeUrl: string;
   imageAlt: string;
   hotelName: string;
@@ -50,6 +52,8 @@ function isEditableTarget(target: EventTarget | null) {
 
 export function HotelDetailsGallery({
   embedded = false,
+  layout = "hero",
+  remainingPhotosLabel = "+{{count}} photos",
   activeUrl,
   imageAlt,
   hotelName,
@@ -144,9 +148,68 @@ export function HotelDetailsGallery({
     .replace("{{total}}", String(usableIndices.length))
     .replace("{{hotelName}}", hotelName);
 
+  const visibleIndices = usableIndices.slice(0, 4);
+  const remainingPhotoCount = Math.max(usableIndices.length - visibleIndices.length, 0);
+
+  const mosaic = (
+    <div
+      className="grid h-[300px] min-w-0 grid-cols-1 gap-2 overflow-hidden sm:h-[300px] lg:h-[300px] lg:grid-cols-[1.42fr_1fr] lg:grid-rows-2"
+      data-hotel-gallery-mosaic
+    >
+      {visibleIndices.map((imageIndex, tileIndex) => {
+        const url = displayCandidates[imageIndex];
+        const tileLabel = openPhotoViewerLabel
+          .replace("{{current}}", String(tileIndex + 1))
+          .replace("{{total}}", String(usableIndices.length))
+          .replace("{{hotelName}}", hotelName);
+        return (
+          <button
+            key={url}
+            type="button"
+            className={`group relative min-h-0 overflow-hidden rounded-[10px] bg-slate-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-blue ${
+              tileIndex === 0
+                ? "lg:row-span-2"
+                : tileIndex === 1
+                  ? "hidden lg:block"
+                  : tileIndex === 2
+                    ? "hidden lg:block lg:col-start-2 lg:row-start-2 lg:me-[calc(50%+4px)]"
+                    : "hidden lg:block lg:col-start-2 lg:row-start-2 lg:ms-[calc(50%+4px)]"
+            }`}
+            aria-label={tileLabel}
+            onClick={(event) => {
+              onSelectImage(imageIndex);
+              openViewer(event.currentTarget);
+            }}
+          >
+            <Image
+              src={url}
+              alt={tileIndex === 0 ? imageAlt : ""}
+              fill
+              className="object-cover transition-transform duration-200 group-hover:scale-[1.01]"
+              sizes={tileIndex === 0 ? "(min-width: 1024px) 520px, 100vw" : "340px"}
+              onError={() => onImageError(url)}
+              priority={tileIndex < 2}
+            />
+            {tileIndex === 3 && remainingPhotoCount > 0 ? (
+              <span className="absolute inset-0 flex items-center justify-center bg-slate-950/30 text-sm font-bold text-white">
+                {remainingPhotosLabel.replace("{{count}}", String(remainingPhotoCount))}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+      {!visibleIndices.length ? (
+        <div className="flex h-full flex-col items-center justify-center gap-3 rounded-[10px] bg-surface-subtle px-6 text-center lg:col-span-2 lg:row-span-2">
+          <Building2 className="h-11 w-11 text-blue" aria-hidden="true" />
+          <span className="max-w-xs text-sm font-semibold text-slate-600">{imageUnavailableText}</span>
+        </div>
+      ) : null}
+    </div>
+  );
+
   const content = (
     <>
-      <div
+      {layout === "mosaic" ? mosaic : <div
         className="relative aspect-[4/3] min-h-[240px] max-h-[420px] w-full overflow-hidden bg-slate-100 sm:aspect-[16/10] sm:min-h-0"
         style={{ touchAction: "pan-y" }}
         onPointerDown={(event) => {
@@ -200,9 +263,9 @@ export function HotelDetailsGallery({
             </button>
           </>
         ) : null}
-      </div>
+      </div>}
 
-      {showGalleryControls ? (
+      {layout === "hero" && showGalleryControls ? (
         <div
           ref={thumbnailStripRef}
           className="flex w-full max-w-full gap-2.5 overflow-x-auto overscroll-x-contain border-t border-border bg-surface-subtle/50 p-3"

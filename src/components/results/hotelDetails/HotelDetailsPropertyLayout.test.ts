@@ -14,39 +14,47 @@ const bookingSource = readFileSync(
   new URL("./HotelDetailsBookingPanel.tsx", import.meta.url),
   "utf8",
 );
+const standaloneSource = readFileSync(
+  new URL("./StandaloneHotelDetails.tsx", import.meta.url),
+  "utf8",
+);
 
-test("joins one embedded gallery and details summary before the booking sibling", () => {
+test("isolates the approved standalone property composition from guided mode", () => {
   assert.equal(clientSource.match(/<HotelDetailsGallery\b/g)?.length, 1);
   assert.equal(clientSource.match(/<HotelDetailsSections\b/g)?.length, 1);
   assert.equal(clientSource.match(/<HotelDetailsBookingPanel\b/g)?.length, 1);
-  assert.equal(clientSource.match(/<DetailsBackLink\b/g)?.length, 1);
+  assert.equal(clientSource.match(/<StandaloneHotelDetails\b/g)?.length, 1);
+  assert.match(clientSource, /if \(mode === "standalone"\)/);
+  assert.match(standaloneSource, /data-standalone-hotel-details/);
+  assert.match(standaloneSource, /lg:grid-cols-\[minmax\(0,1fr\)_334px\]/);
+  assert.match(standaloneSource, /<HotelDetailsGallery[\s\S]*layout="mosaic"/);
+  assert.match(standaloneSource, /data-hotel-amenities-strip/);
+  for (const contract of [
+    "About this property",
+    "propertyDetails?.description",
+    "openstreetmap.org/export/embed.html",
+    "google.com/maps/dir/",
+    "Your stay",
+    "View room options",
+    'role="dialog"',
+  ]) assert.ok(clientSource.includes(contract) || standaloneSource.includes(contract), contract);
+
+  const guidedStart = clientSource.indexOf("const detailsContent = (");
+  const guidedContent = clientSource.slice(guidedStart);
   assert.match(clientSource, /import { Card } from "@\/components\/ui\/Card"/);
   assert.match(
-    clientSource,
+    guidedContent,
     /lg:grid-cols-\[minmax\(0,1fr\)_360px\] lg:items-start lg:gap-8/,
   );
-  const propertyCard = clientSource.slice(
-    clientSource.indexOf('<Card\n              variant="flat"'),
-    clientSource.indexOf("<HotelDetailsBookingPanel"),
-  );
-  assert.ok(propertyCard.indexOf("<HotelDetailsGallery") >= 0);
-  assert.match(propertyCard, /mode === "standalone" \? detailsHeader : null/);
+  assert.ok(guidedContent.indexOf("<HotelDetailsGallery") >= 0);
   assert.ok(
-    propertyCard.indexOf("detailsHeader") <
-      propertyCard.indexOf("<HotelDetailsGallery"),
+    guidedContent.indexOf("<HotelDetailsSections") >
+      guidedContent.indexOf("<HotelDetailsGallery"),
   );
   assert.ok(
-    propertyCard.indexOf("<HotelDetailsSections") >
-      propertyCard.indexOf("<HotelDetailsGallery"),
+    guidedContent.indexOf("<HotelDetailsBookingPanel") >
+      guidedContent.indexOf("<HotelDetailsSections"),
   );
-  assert.equal(propertyCard.match(/\bembedded\b/g)?.length, 2);
-  assert.match(clientSource, /embedded=\{mode === "standalone"\}/);
-  assert.match(clientSource, /showBackLink=\{false\}/);
-  assert.match(
-    propertyCard,
-    /shadow-\[0_12px_32px_-26px_rgba\(2,28,43,0\.32\)\]/,
-  );
-  assert.doesNotMatch(propertyCard, /<fieldset\b|guidedRoomSelector/);
 });
 
 test("places the guided room selector after the full upper property layout", () => {

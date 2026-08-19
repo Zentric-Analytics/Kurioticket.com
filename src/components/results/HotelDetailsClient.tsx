@@ -9,7 +9,7 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Card } from "@/components/ui/Card";
 import { DetailsBackLink } from "@/components/results/DetailsBackLink";
-import type { PublicHotelResult } from "@/lib/types";
+import type { PublicHotelPropertyDetails, PublicHotelResult } from "@/lib/types";
 import type { HotelRoomOption } from "@/lib/hotels/hotelRoomOptions";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
@@ -37,6 +37,7 @@ import {
   HotelDetailsUnavailableState,
 } from "@/components/results/hotelDetails/HotelDetailsPageStates";
 import { HotelDetailsSections } from "@/components/results/hotelDetails/HotelDetailsSections";
+import { StandaloneHotelDetails } from "@/components/results/hotelDetails/StandaloneHotelDetails";
 import {
   findGuidedHotelRoom,
   getGuidedHotelRoomState,
@@ -118,6 +119,7 @@ export function HotelDetailsClient({
   const currencyRates = useCurrencyRates();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [hotel, setHotel] = useState<PublicHotelResult | null>(null);
+  const [propertyDetails, setPropertyDetails] = useState<PublicHotelPropertyDetails | null>(null);
   const [roomOptions, setRoomOptions] = useState<HotelRoomOption[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -158,6 +160,7 @@ export function HotelDetailsClient({
       if (!active) return;
       setLoading(true);
       setHotel(null);
+      setPropertyDetails(null);
       setRoomOptions([]);
       setSelectedRoomId("");
       setLoadError("");
@@ -175,6 +178,7 @@ export function HotelDetailsClient({
       .then(async (response) => {
         const data = (await response.json().catch(() => ({}))) as {
           hotel?: PublicHotelResult;
+          propertyDetails?: PublicHotelPropertyDetails | null;
           roomOptions?: HotelRoomOption[];
           error?: string;
         };
@@ -184,12 +188,14 @@ export function HotelDetailsClient({
           throw new Error(unavailableFallback);
         return {
           hotel: data.hotel,
+          propertyDetails: data.propertyDetails ?? null,
           roomOptions: Array.isArray(data.roomOptions) ? data.roomOptions : [],
         };
       })
-      .then(({ hotel: nextHotel, roomOptions: nextRoomOptions }) => {
+      .then(({ hotel: nextHotel, propertyDetails: nextPropertyDetails, roomOptions: nextRoomOptions }) => {
         if (!active) return;
         setHotel(nextHotel);
+        setPropertyDetails(nextPropertyDetails);
         setRoomOptions(nextRoomOptions);
         setResultReceivedAt(Date.now());
         setLoadError("");
@@ -770,21 +776,124 @@ export function HotelDetailsClient({
     />
   );
 
+  if (mode === "standalone") {
+    const roomChoices = roomOptions.map((option) => {
+      const nightly = formatDisplayPrice({
+        amount: option.pricePerNight,
+        sourceCurrency: option.currency,
+        displayCurrency: selectedOption.currency,
+        convertSourceEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      });
+      const total = formatDisplayPrice({
+        amount: option.totalPrice,
+        sourceCurrency: option.currency,
+        displayCurrency: selectedOption.currency,
+        convertSourceEstimate: true,
+        rates: currencyRates.rates,
+        isFallbackRate: currencyRates.isFallback,
+      });
+      return {
+        id: option.id,
+        name: option.name,
+        details: [option.bedConfiguration, option.mealPlan].filter(Boolean).join(" · "),
+        nightly: (t("hotelResults.pricePerNight") || "{{price}} per night").replace("{{price}}", nightly.formatted),
+        total: total.formatted,
+      };
+    });
+
+    return (
+      <main className="flex-1 bg-[#f8fafc]">
+        <section className="border-b border-slate-200/70 py-2 sm:py-2 lg:py-2">
+          <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-7">
+            <DetailsBackLink href={resultsHref}>{t("hotelDetails.backToHotelResults") || "Back to hotel results"}</DetailsBackLink>
+            <div className="mt-3">
+              <StandaloneHotelDetails
+                hotelName={hotel.name}
+                starRating={starRating}
+                starRatingAriaLabel={starRating ? t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(starRating, locale)) : ""}
+                locationParts={locationParts}
+                propertyDetails={propertyDetails}
+                amenityItems={amenityItems}
+                recommendationReasons={hotel.recommendationReasons}
+                reviewScore={reviewBand && reviewScale ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(normalizedReviewScore ?? 0) : ""}
+                reviewLabel={reviewLabel}
+                reviewCountText={reviewCountText}
+                isSaved={isSaved}
+                savedHotelLabel={savedHotelLabel}
+                saveText={saveActionText}
+                onSave={() => { if (isSaved || hasValidPrice) void toggleSavedHotel(); }}
+                resultsHref={resultsHref}
+                staySummary={staySummary}
+                totalDisplayPrice={totalDisplayPrice}
+                nightlyDisplayPrice={nightlyDisplayPrice}
+                estimatedTotalText={t("hotelResults.estimatedStayTotal") || "Estimated total"}
+                perNightText={t("hotelResults.pricePerNight") || "{{price}} per night"}
+                taxesText={taxesText}
+                planningPriceText={t("hotelDetails.planningPriceMayVary") || "Final taxes, availability, and terms may vary."}
+                roomChoices={roomChoices}
+                galleryProps={{
+                  activeUrl,
+                  hotelName: hotel.name,
+                  imageAlt: t("hotelResults.hotelImageAlt").replace("{{name}}", hotel.name).replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : ""),
+                  imageUnavailableText: t("hotelResults.imageUnavailable"),
+                  showGalleryControls,
+                  onPrevious: () => selectAdjacentImage(-1),
+                  onNext: () => selectAdjacentImage(1),
+                  previousPhotoLabel: t("hotelResults.previousPhoto") || "Previous photo",
+                  nextPhotoLabel: t("hotelResults.nextPhoto") || "Next photo",
+                  photoCounter,
+                  photoPositionAnnouncement,
+                  usableIndices,
+                  displayCandidates,
+                  activeIndex,
+                  activePosition,
+                  selectPhotoLabel: t("hotelResults.selectPhoto") || "Show photo {{number}}",
+                  viewAllPhotosLabel: t("hotelDetails.viewAllPhotos") || "View all photos",
+                  remainingPhotosLabel: t("hotelDetails.remainingPhotos") || "+{{count}} photos",
+                  openPhotoViewerLabel: t("hotelDetails.openPhotoViewer") || "Open photo {{current}} of {{total}} for {{hotelName}}",
+                  closePhotoViewerLabel: t("hotelDetails.closePhotoViewer") || "Close photo viewer",
+                  photoViewerTitle: (t("hotelDetails.photoViewerTitle") || "Photos for {{hotelName}}").replace("{{hotelName}}", hotel.name),
+                  onSelectImage: setPreferredImageIndex,
+                  onImageError: markImageFailed,
+                }}
+                labels={{
+                  share: t("hotelDetails.share") || "Share",
+                  shared: t("hotelDetails.shared") || "Copied",
+                  more: t("hotelDetails.more") || "More",
+                  less: t("hotelDetails.showLess") || "Show less",
+                  about: t("hotelDetails.aboutProperty") || "About this property",
+                  location: t("hotelDetails.location") || "Location",
+                  directions: t("hotelDetails.getDirections") || "Get directions",
+                  yourStay: t("hotelDetails.yourStay") || "Your stay",
+                  edit: t("edit") || "Edit",
+                  viewRooms: t("hotelDetails.viewRoomOptions") || "View room options",
+                  roomSupport: t("hotelDetails.roomOptionsSupport") || "You'll choose your room in the next step.",
+                  roomTitle: t("hotelDetails.roomOptionsTitle") || "Room options",
+                  closeRooms: t("hotelDetails.closeRoomOptions") || "Close room options",
+                  planningTitle: t("hotelDetails.planningSecureTitle") || "Secure Kurioticket experience",
+                  planningBody: t("hotelDetails.planningSecureBody") || "Your trip planning data stays protected.",
+                  termsTitle: t("hotelDetails.termsTitle") || "Planning estimates",
+                  termsBody: t("hotelDetails.termsBody") || "Final room availability and terms must be confirmed.",
+                  paymentTitle: t("hotelDetails.paymentTitle") || "No payment collected",
+                  paymentBody: t("hotelDetails.paymentBody") || "Kurioticket does not collect payment for this planning listing.",
+                }}
+              />
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const detailsContent = (
     <section className="border-b border-border bg-white">
       <div
-        className={
-          mode === "guided"
-            ? "py-6 sm:py-8 lg:py-10"
-            : "page-shell py-6 sm:py-8 lg:py-10"
-        }
+        className="py-6 sm:py-8 lg:py-10"
       >
         <div className="space-y-6 sm:space-y-8 lg:space-y-10">
-          {mode === "standalone" ? (
-            <DetailsBackLink href={resultsHref}>
-              {backToResultsText}
-            </DetailsBackLink>
-          ) : detailsHeader}
+          {detailsHeader}
 
           <div
             className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8"
@@ -794,7 +903,6 @@ export function HotelDetailsClient({
               variant="flat"
               className="min-w-0 overflow-hidden p-0 shadow-[0_12px_32px_-26px_rgba(2,28,43,0.32)]"
             >
-              {mode === "standalone" ? detailsHeader : null}
               <HotelDetailsGallery
                 embedded
                 activeUrl={activeUrl}
