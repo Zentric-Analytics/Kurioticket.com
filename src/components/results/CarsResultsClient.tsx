@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FormEvent,
   type RefObject,
   type ReactNode,
 } from "react";
@@ -213,7 +214,7 @@ function lockBodyScroll() {
   rootElement.style.overscrollBehavior = "none";
 
   return {
-    restore: () => {
+    restore: ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
       bodyElement.style.left = previousBodyStyles.left;
       bodyElement.style.overflow = previousBodyStyles.overflow;
       bodyElement.style.overscrollBehavior =
@@ -226,7 +227,9 @@ function lockBodyScroll() {
       rootElement.style.overflow = previousRootStyles.overflow;
       rootElement.style.overscrollBehavior =
         previousRootStyles.overscrollBehavior;
-      window.scrollTo(0, scrollY);
+      if (restoreScroll) {
+        window.scrollTo(0, scrollY);
+      }
     },
   };
 }
@@ -646,9 +649,9 @@ export function CarsResultsClient({
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const resultsGridRef = useRef<HTMLDivElement | null>(null);
   const mobileSearchSummarySentinelRef = useRef<HTMLDivElement | null>(null);
-  const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
-    null,
-  );
+  const mobileSearchScrollLockRef = useRef<{
+    restore: (options?: { restoreScroll?: boolean }) => void;
+  } | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileSearchSnapshotRef = useRef<CarsResultsSearchSnapshot | null>(
     null,
@@ -989,6 +992,50 @@ export function CarsResultsClient({
     setDriverAgeOpen(false);
   }, [setMobileSearchOpen, setDatesOpen, setTimesOpen, setDriverAgeOpen]);
 
+  const releaseMobileSearchScrollLock = useCallback(
+    ({ restoreScroll = true }: { restoreScroll?: boolean } = {}) => {
+      mobileSearchScrollLockRef.current?.restore({ restoreScroll });
+      mobileSearchScrollLockRef.current = null;
+    },
+    [],
+  );
+
+  const submitMobileSearch = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      const href = buildCarsResultsHref(formData);
+
+      if (isSearchSubmittingRef.current) return;
+
+      // Submission commits the live form. It must not run the cancel
+      // snapshot or restore focus to the outgoing Results set.
+      mobileSearchSnapshotRef.current = null;
+      mobileSearchLauncherRef.current = null;
+
+      const currentHref = `${window.location.pathname}${window.location.search}`;
+      const isSameSearch = isSameCarsResultsHref(href, currentHref);
+
+      if (!isSameSearch) {
+        isSearchSubmittingRef.current = true;
+        setIsSearchSubmitting(true);
+        releaseMobileSearchScrollLock({ restoreScroll: false });
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }
+
+      setMobileSearchOpen(false);
+      setMobilePicker(null);
+      setDatesOpen(false);
+      setTimesOpen(false);
+      setDriverAgeOpen(false);
+
+      if (isSameSearch) return;
+
+      router.push(href, { scroll: true });
+    },
+    [releaseMobileSearchScrollLock, router],
+  );
+
   useLayoutEffect(() => {
     const releaseSearchOverlay = () => {
       mobileSearchScrollLockRef.current?.restore();
@@ -1121,34 +1168,7 @@ export function CarsResultsClient({
         className="mx-auto w-full min-w-0 max-w-5xl"
         onSubmit={(event) => {
           if (placement === "mobile") {
-            event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            const href = buildCarsResultsHref(formData);
-
-            if (isSearchSubmittingRef.current) return;
-
-            // Submission commits the live form. It must not run the cancel
-            // snapshot or restore focus to the outgoing Results set.
-            mobileSearchSnapshotRef.current = null;
-            mobileSearchLauncherRef.current = null;
-
-            const currentHref = `${window.location.pathname}${window.location.search}`;
-            const isSameSearch = isSameCarsResultsHref(href, currentHref);
-
-            if (!isSameSearch) {
-              isSearchSubmittingRef.current = true;
-              setIsSearchSubmitting(true);
-            }
-
-            setMobileSearchOpen(false);
-            setMobilePicker(null);
-            setDatesOpen(false);
-            setTimesOpen(false);
-            setDriverAgeOpen(false);
-
-            if (isSameSearch) return;
-
-            router.push(href, { scroll: true });
+            submitMobileSearch(event);
             return;
           }
 

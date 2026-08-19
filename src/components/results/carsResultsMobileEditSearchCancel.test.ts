@@ -59,7 +59,7 @@ test("cancel restores the snapshot while mobile Search uses submit semantics", (
   assert.match(closeDrawer, /if \(snapshot\)/);
   assert.match(
     source,
-    /if \(placement === "mobile"\) \{[\s\S]*?event\.preventDefault\(\)/,
+    /const submitMobileSearch[\s\S]*?event\.preventDefault\(\)/,
   );
   assert.match(
     source,
@@ -79,6 +79,10 @@ test("mobile search restores saved Results scroll and the actual launcher withou
   assert.match(
     scrollLifecycle,
     /mobileSearchScrollLockRef\.current\?\.restore\(\)/,
+  );
+  assert.match(
+    source,
+    /restore: \([\s\S]*restoreScroll = true[\s\S]*if \(restoreScroll\) \{\s*window\.scrollTo\(0, scrollY\)/,
   );
   assert.match(scrollLifecycle, /isSafelyFocusableElement\(launcher\)/);
   assert.match(scrollLifecycle, /launcher\.focus\(\{ preventScroll: true \}\)/);

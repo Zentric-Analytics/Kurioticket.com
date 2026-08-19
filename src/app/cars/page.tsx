@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import {
@@ -295,10 +296,41 @@ function CarsSearchPage() {
       params.set("returnToDifferentLocation", "1");
     }
 
+    const href = `/cars/results?${params.toString()}`;
     setIsSubmitting(true);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     startRouteProgress();
-    router.push(`/cars/results?${params.toString()}`);
+    router.push(href);
   };
+
+  if (isSubmitting) {
+    return (
+      <>
+        <AppHeader
+          flushDesktopBottom
+          flushMobileBottom
+          hideDesktopTravelNav
+          hideMobileCategoryTabs
+        />
+        <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+          <BrandedLoading
+            variant="fullscreen"
+            visual="logoPulse"
+            showProgress={false}
+            className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+            contentClassName="max-w-md text-center"
+            title={t("carsResults.loading.title")}
+            messages={[
+              t("carsResults.loading.checkingCarsAndRates"),
+              t("carsResults.loading.comparingVehiclesAndProviders"),
+              t("carsResults.loading.findingBestAvailableOptions"),
+              t("carsResults.loading.preparingResults"),
+            ]}
+          />
+        </main>
+      </>
+    );
+  }
 
   return (
     <>

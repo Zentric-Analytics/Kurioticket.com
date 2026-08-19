@@ -15,6 +15,10 @@ const mobileControls = source.slice(
     source.indexOf('{placement === "mobile" ? (\n              <>'),
   ),
 );
+const mobileSubmit = source.slice(
+  source.indexOf("const submitMobileSearch"),
+  source.indexOf("useLayoutEffect", source.indexOf("const submitMobileSearch")),
+);
 
 function submittedLocations({
   pickupLocation,
@@ -61,13 +65,7 @@ test("different-return Search serializes both current drafts exactly once", () =
 });
 
 test("mobile Search captures the live form before submit-close and router navigation", () => {
-  const submitHandler = source.slice(
-    source.indexOf('if (placement === "mobile") {'),
-    source.indexOf(
-      "setDesktopStickySearchSection(null)",
-      source.indexOf('if (placement === "mobile") {'),
-    ),
-  );
+  const submitHandler = mobileSubmit;
   const preventDefaultIndex = submitHandler.indexOf("event.preventDefault()");
   const formDataIndex = submitHandler.indexOf(
     "new FormData(event.currentTarget)",
@@ -77,6 +75,12 @@ test("mobile Search captures the live form before submit-close and router naviga
     "mobileSearchSnapshotRef.current = null",
   );
   const pendingIndex = submitHandler.indexOf("setIsSearchSubmitting(true)");
+  const releaseIndex = submitHandler.indexOf(
+    "releaseMobileSearchScrollLock({ restoreScroll: false })",
+  );
+  const topIndex = submitHandler.indexOf(
+    'window.scrollTo({ top: 0, left: 0, behavior: "auto" })',
+  );
   const drawerCloseIndex = submitHandler.indexOf("setMobileSearchOpen(false)");
   const navigationIndex = submitHandler.indexOf("router.push(href");
 
@@ -85,10 +89,16 @@ test("mobile Search captures the live form before submit-close and router naviga
   assert.ok(formDataIndex < hrefIndex);
   assert.ok(hrefIndex < closeIndex);
   assert.ok(closeIndex < pendingIndex);
-  assert.ok(pendingIndex < drawerCloseIndex);
+  assert.ok(pendingIndex < releaseIndex);
+  assert.ok(releaseIndex < topIndex);
+  assert.ok(topIndex < drawerCloseIndex);
   assert.ok(drawerCloseIndex < navigationIndex);
   assert.doesNotMatch(submitHandler, /mode: "cancel"/);
   assert.match(submitHandler, /router\.push\(href, \{ scroll: true \}\)/);
+  assert.match(
+    submitHandler,
+    /releaseMobileSearchScrollLock\(\{ restoreScroll: false \}\)/,
+  );
 });
 
 test("mobile Search replaces stale Cars results with localized branded loading", () => {
@@ -121,13 +131,7 @@ test("mobile Search replaces stale Cars results with localized branded loading",
 });
 
 test("same-URL Search closes without entering a permanent pending state", () => {
-  const submitHandler = source.slice(
-    source.indexOf('if (placement === "mobile") {'),
-    source.indexOf(
-      "setDesktopStickySearchSection(null)",
-      source.indexOf('if (placement === "mobile") {'),
-    ),
-  );
+  const submitHandler = mobileSubmit;
 
   assert.match(submitHandler, /isSameCarsResultsHref\(href, currentHref\)/);
   assert.match(
