@@ -76,17 +76,45 @@ test("a committed Results navigation remounts client state for the new search", 
 });
 
 test("mobile search restores saved Results scroll and the actual launcher without scrolling", () => {
+  const scrollLock = source.slice(
+    source.indexOf("function lockBodyScroll"),
+    source.indexOf("function isSafelyFocusableElement"),
+  );
+
   assert.match(
     scrollLifecycle,
     /mobileSearchScrollLockRef\.current\?\.restore\(\)/,
   );
   assert.match(
-    source,
-    /restore: \([\s\S]*restoreScroll = true[\s\S]*if \(restoreScroll\) \{\s*window\.scrollTo\(0, scrollY\)/,
+    scrollLock,
+    /restoreScroll = true[\s\S]*restoreScroll && window\.scrollY !== scrollY[\s\S]*window\.scrollTo\(0, scrollY\)/,
   );
+  assert.match(scrollLock, /bodyElement\.style\.overflow = "hidden"/);
+  assert.match(scrollLock, /rootElement\.style\.overflow = "hidden"/);
+  assert.match(scrollLock, /overscrollBehavior = "none"/);
+  assert.match(scrollLock, /if \(restored\) return;[\s\S]*restored = true/);
+  assert.doesNotMatch(scrollLock, /style\.position = "fixed"/);
+  assert.doesNotMatch(scrollLock, /style\.top = `-\$\{scrollY\}px`/);
+  assert.doesNotMatch(scrollLock, /behavior: "smooth"/);
   assert.match(scrollLifecycle, /isSafelyFocusableElement\(launcher\)/);
   assert.match(scrollLifecycle, /launcher\.focus\(\{ preventScroll: true \}\)/);
   assert.match(source, /openMobileSearchDrawer\(event\.currentTarget\)/);
+});
+
+test("cancel stabilizes Results before closing the editor and restoring focus", () => {
+  const restoreSnapshotIndex = closeDrawer.indexOf(
+    "setDriverAge(snapshot.driverAge)",
+  );
+  const releaseIndex = closeDrawer.indexOf("releaseMobileSearchScrollLock();");
+  const closeIndex = closeDrawer.indexOf("setMobileSearchOpen(false)");
+  const focusIndex = scrollLifecycle.indexOf(
+    "launcher.focus({ preventScroll: true })",
+  );
+
+  assert.ok(restoreSnapshotIndex >= 0);
+  assert.ok(restoreSnapshotIndex < releaseIndex);
+  assert.ok(releaseIndex < closeIndex);
+  assert.ok(focusIndex >= 0);
 });
 
 test("nested picker Done remains draft state that the editor X can cancel", () => {
