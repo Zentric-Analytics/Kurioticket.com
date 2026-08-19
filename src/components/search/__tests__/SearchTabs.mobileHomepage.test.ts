@@ -230,9 +230,25 @@ test("mobile homepage Cars aligns a decorative MapPin before the dynamic pickup 
   assert.match(carsPickupField, /cars-pickup-location-field[\s\S]*?carsSearch\.pickupLocationLabel/);
   assert.match(carsPickupField, /id="homepage-cars-pickup"[\s\S]*?onClick=\{\(\) => setCarsOpenPicker\("pickup"\)\}/);
   assert.match(carsPickupField, /sm:hidden[\s\S]*?<span className="flex min-w-0 items-center gap-2">/);
-  assert.match(carsPickupField, /<MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" \/>[\s\S]*?<span className="truncate">\{carsValues\.pickupLocation \|\| translate\("carsSearch\.pickupLocationPlaceholder"\) \|\| "Airport, city or address"\}<\/span>/);
+  assert.match(carsPickupField, /<MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" \/>[\s\S]*?<span className="truncate font-normal">\{carsValues\.pickupLocation \|\| translate\("carsSearch\.pickupLocationPlaceholder"\) \|\| "Airport, city or address"\}<\/span>/);
   assert.doesNotMatch(carsPickupField, /<MapPin[^>]*className="[^"]*(?:rounded|bg-)/);
   assert.match(carsPickupField, /hidden sm:block[\s\S]*?<CarLocationAutocomplete/);
+});
+
+test("mobile Cars scopes the balanced value weights without changing desktop or shared defaults", () => {
+  assert.match(
+    carsPickupField,
+    /sm:hidden[\s\S]*?<span className="truncate font-normal">\{carsValues\.pickupLocation \|\| translate\("carsSearch\.pickupLocationPlaceholder"\) \|\| "Airport, city or address"\}<\/span>/,
+  );
+  assert.match(carsPickupField, /hidden sm:block[\s\S]*?inputClassName=\{cn\(hotelFieldValueClassName, "h-8 w-full ps-6"\)\}/);
+  assert.match(carsRentalDatesField, /value=\{carsDateSummary\}[\s\S]*?valueClassName=\{mobileHomepage \? "font-medium" : undefined\}/);
+  assert.doesNotMatch(carsTimeField, /valueClassName=/);
+  assert.doesNotMatch(carsDriverAgeField, /valueClassName=/);
+
+  const summaryField = source.slice(source.indexOf("function CarsSummaryField"), source.indexOf("export function SearchTabs"));
+  assert.match(summaryField, /font-medium text-slate-900/);
+  assert.match(summaryField, /className=\{cn\("flex min-w-0 items-center gap-2 truncate", valueClassName\)\}/);
+  assert.equal((carsBranch.match(/valueClassName=\{mobileHomepage \? "font-medium" : undefined\}/g) ?? []).length, 1);
 });
 
 test("Cars adds neutral value icons without changing summaries or chevrons", () => {
