@@ -8,6 +8,7 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Card } from "@/components/ui/Card";
+import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import type { PublicHotelResult } from "@/lib/types";
 import type { HotelRoomOption } from "@/lib/hotels/hotelRoomOptions";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -729,6 +730,46 @@ export function HotelDetailsClient({
       </fieldset>
     ) : null;
 
+  const detailsHeader = (
+    <HotelDetailsHeader
+      embedded={mode === "standalone"}
+      resultsHref={resultsHref}
+      backToResultsText={backToResultsText}
+      badges={hotel.badges}
+      name={hotel.name}
+      savedHotelLabel={savedHotelLabel}
+      isSaved={isSaved}
+      hasValidPrice={hasValidPrice}
+      saveRequiresLiveRateText={saveRequiresLiveRateText}
+      onSave={() => {
+        if (isSaved || hasValidPrice) void toggleSavedHotel();
+      }}
+      saveActionText={saveActionText}
+      starRating={starRating}
+      starRatingAriaLabel={
+        starRating
+          ? t("hotelResults.starHotelAria").replace(
+              "{{rating}}",
+              formatHotelDetailsRating(starRating, locale),
+            )
+          : ""
+      }
+      isGoogleMapsProvider={hotel.provider === "Google Maps"}
+      locationParts={locationParts}
+      reviewBandVisible={Boolean(reviewBand)}
+      reviewScore={reviewScore}
+      reviewLabel={reviewLabel}
+      reviewCountText={reviewCountText}
+      sourceAttributions={sourceAttributions}
+      isSafeAttributionUrl={isSafeHotelDetailsHttpUrl}
+      headingLevel={mode === "guided" ? "h2" : "h1"}
+      showBackLink={false}
+      showSave={mode !== "guided"}
+      allowExternalAttribution={mode !== "guided"}
+      headingRef={mode === "guided" ? headingRef : undefined}
+    />
+  );
+
   const detailsContent = (
     <section className="border-b border-border bg-white">
       <div
@@ -739,42 +780,11 @@ export function HotelDetailsClient({
         }
       >
         <div className="space-y-6 sm:space-y-8 lg:space-y-10">
-          <HotelDetailsHeader
-            resultsHref={resultsHref}
-            backToResultsText={backToResultsText}
-            badges={hotel.badges}
-            name={hotel.name}
-            savedHotelLabel={savedHotelLabel}
-            isSaved={isSaved}
-            hasValidPrice={hasValidPrice}
-            saveRequiresLiveRateText={saveRequiresLiveRateText}
-            onSave={() => {
-              if (isSaved || hasValidPrice) void toggleSavedHotel();
-            }}
-            saveActionText={saveActionText}
-            starRating={starRating}
-            starRatingAriaLabel={
-              starRating
-                ? t("hotelResults.starHotelAria").replace(
-                    "{{rating}}",
-                    formatHotelDetailsRating(starRating, locale),
-                  )
-                : ""
-            }
-            isGoogleMapsProvider={hotel.provider === "Google Maps"}
-            locationParts={locationParts}
-            reviewBandVisible={Boolean(reviewBand)}
-            reviewScore={reviewScore}
-            reviewLabel={reviewLabel}
-            reviewCountText={reviewCountText}
-            sourceAttributions={sourceAttributions}
-            isSafeAttributionUrl={isSafeHotelDetailsHttpUrl}
-            headingLevel={mode === "guided" ? "h2" : "h1"}
-            showBackLink={mode !== "guided"}
-            showSave={mode !== "guided"}
-            allowExternalAttribution={mode !== "guided"}
-            headingRef={mode === "guided" ? headingRef : undefined}
-          />
+          {mode === "standalone" ? (
+            <DetailsBackLink href={resultsHref}>
+              {backToResultsText}
+            </DetailsBackLink>
+          ) : detailsHeader}
 
           <div
             className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8"
@@ -784,6 +794,7 @@ export function HotelDetailsClient({
               variant="flat"
               className="min-w-0 overflow-hidden p-0 shadow-[0_12px_32px_-26px_rgba(2,28,43,0.32)]"
             >
+              {mode === "standalone" ? detailsHeader : null}
               <HotelDetailsGallery
                 embedded
                 activeUrl={activeUrl}

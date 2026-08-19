@@ -43,8 +43,8 @@ test("deals and read-only My Trips expose real selected-state controls without i
 });
 
 test("profile exposes only account capabilities backed by production data", () => {
-  const profile = source("src/features/profile/ProfileScreen.tsx");
-  for (const route of ["/personal-information", "/price-alerts", "/currency"]) assert.match(profile, new RegExp(route));
+  const profile = source("src/features/profile/profileModel.ts");
+  for (const route of ["/personal-information", "/price-alerts", "/saved", "/settings"]) assert.match(profile, new RegExp(route));
   for (const unsupported of ["/payment-methods", "/saved-travelers", "Saved travelers", "Language selection", "not available in this version"]) assert.doesNotMatch(profile, new RegExp(unsupported));
   assert.match(profile, /https:\/\/kurioticket\.com\/faq/);
   assert.match(profile, /https:\/\/kurioticket\.com\/support/);

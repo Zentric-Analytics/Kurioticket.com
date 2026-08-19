@@ -23,9 +23,9 @@ test("Home product tabs expose one selected state driven by activeProduct", () =
 
 test("Home switches the search area to reusable panels without route screens", () => {
   assert.match(home, /flights: availability\.flightSearch[\s\S]*?<FlightSearchPanel compact enableHomepageDefaultOrigin homepageAirportPicker \/>/);
-  assert.match(home, /hotels: availability\.hotelSearch[\s\S]*?<HotelSearchPanel embedded params=\{\{\}\} \/>/);
-  assert.match(home, /cars: availability\.carSearch[\s\S]*?<CarSearchPanel embedded params=\{\{\}\} \/>/);
-  assert.match(home, /packages: availability\.deals[\s\S]*?<PackagesSearchPanel \/>/);
+  assert.match(home, /hotels: availability\.hotelSearch[\s\S]*?<HomeSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
+  assert.match(home, /cars: availability\.carSearch[\s\S]*?<HomeSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
+  assert.match(home, /packages: availability\.deals[\s\S]*?<PackagesSearchPanel presentation="home" \/>/);
   assert.match(home, /\{searchPanel\[activeProduct\]\}/);
   assert.doesNotMatch(home, /<(?:Flights|Hotels|Cars|Deals)Screen/);
 });
@@ -49,7 +49,7 @@ test("Home keeps its hero and surrounding discovery content around the switchabl
 });
 
 test("Home and the Packages route share one extracted package builder", () => {
-  assert.match(products, /export function PackagesSearchPanel\(\)/);
+  assert.match(products, /export function PackagesSearchPanel\(\{/);
   assert.match(products, /export function DealsScreen\(\)[\s\S]*?<PackagesSearchPanel \/>/);
   assert.equal((products.match(/const dealTabs:/g) ?? []).length, 1);
   assert.equal((products.match(/function dealTabAvailable/g) ?? []).length, 1);

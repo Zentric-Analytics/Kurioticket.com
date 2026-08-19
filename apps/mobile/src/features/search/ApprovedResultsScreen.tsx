@@ -32,7 +32,6 @@ import {
   ShieldCheck,
   Tag,
   User,
-  Zap,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -89,6 +88,7 @@ import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
+import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -284,32 +284,33 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ? payload.departureDate
       : payload.checkIn || new Date().toISOString().slice(0, 10),
   );
-  const prices = sorted
-    .slice(0, 5)
-    .map((x) =>
-      product === "flight"
-        ? (x as FlightResult).price
-        : (x as HotelResult).pricePerNight!,
-    );
   const flightDisplayPrices = useMemo(() => {
     if (product !== "flight" || !currencyState) return new Map<string, DisplayPrice>();
-    return new Map((sorted as FlightResult[]).map((result) => [
+    return new Map((results as FlightResult[]).map((result) => [
       result.id,
       displayPrice(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates),
     ]));
-  }, [currencyState, product, sorted]);
-  const dateStripPrices = useMemo(
-    () => product === "flight"
-      ? sorted.slice(0, 5).map((result) => flightDisplayPrices.get(result.id))
-      : [],
-    [flightDisplayPrices, product, sorted],
-  );
+  }, [currencyState, product, results]);
+  const dateStripPriceByDate = useMemo(() => {
+    if (product === "flight") {
+      return buildPriceByDate((results as FlightResult[]).flatMap((result) => {
+        const departureDate = calendarIsoFromTimestamp(result.departureTime);
+        const displayed = flightDisplayPrices.get(result.id);
+        return departureDate && displayed ? [{
+          date: departureDate,
+          amount: displayed.amount,
+          formatted: displayed.formatted,
+          accessibilityLabel: displayed.formatted,
+        }] : [];
+      }));
+    }
+    const lowest = (sorted as HotelResult[])[0]?.pricePerNight;
+    return lowest == null ? {} : buildPriceByDate([{ date, amount: lowest }]);
+  }, [date, flightDisplayPrices, product, results, sorted]);
   const dateStrip = (
     <DateStrip
             date={date}
-            prices={prices}
-            formattedPrices={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
-            priceAccessibilityLabels={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
+            priceByDate={dateStripPriceByDate}
             flightResults={product === "flight"}
             onSelect={(v) =>
               router.setParams(
@@ -564,22 +565,6 @@ function FlightResultsHeader({
           <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
             {route}
           </Text>
-          <View accessibilityLabel="Trip metadata row" style={s0.flightHeaderMetadataRow}>
-            <View style={s0.flightHeaderMetadataItem}>
-              <CalendarDays accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
-            </View>
-            <View style={s0.flightHeaderMetadataItem}>
-              <User accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
-                {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
-              </Text>
-            </View>
-            <View style={s0.flightHeaderMetadataItem}>
-              <Briefcase accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
-            </View>
-          </View>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -594,6 +579,31 @@ function FlightResultsHeader({
           <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
           {!compact ? <Text style={s0.flightHeaderEditText}>Edit search</Text> : null}
         </Pressable>
+      </View>
+      <View style={s0.flightHeaderMetadataAlignmentRow}>
+        <View style={s0.flightHeaderMetadataInset} />
+        <ScrollView
+          accessibilityLabel="Trip metadata row"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s0.flightHeaderMetadataScroller}
+          contentContainerStyle={s0.flightHeaderMetadataRow}
+        >
+            <View style={s0.flightHeaderMetadataItem}>
+              <CalendarDays accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
+            </View>
+            <View style={s0.flightHeaderMetadataItem}>
+              <User accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
+                {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
+              </Text>
+            </View>
+            <View style={s0.flightHeaderMetadataItem}>
+              <Briefcase accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
+            </View>
+        </ScrollView>
       </View>
     </View>
   );
@@ -1035,51 +1045,40 @@ function PriceAlert({ product }: { product: Product }) {
           narrow && s0.flightAlertNarrow,
         ]}
       >
-        <View style={s0.flightAlertDeal}>
-          <Zap
+        <View style={[s0.flightAlertIcon, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>
+          <Bell
             accessibilityElementsHidden
             accessible={false}
             color={theme.priceAlertAccent}
-            fill={theme.priceAlertAccent}
-            size={25}
+            size={20}
             strokeWidth={2.25}
-            testID="flight-price-alert-lightning"
+            testID="flight-price-alert-bell"
           />
-          <View style={s0.flightAlertCopy}>
-            <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Get the best deals</Text>
-            <Text style={[s0.sub, { color: theme.textSecondary }]}>Prices may change. Book now and save.</Text>
-          </View>
         </View>
-        <View
-          style={[
-            s0.flightAlertAction,
-            { borderLeftColor: theme.priceAlertBorder },
-            narrow && [s0.flightAlertActionNarrow, { borderTopColor: theme.priceAlertBorder }],
-          ]}
-        >
-          <View style={s0.flightAlertActionLabel}>
-            <Bell
-              accessibilityElementsHidden
-              accessible={false}
-              color={theme.priceAlertAccent}
-              size={18}
-              strokeWidth={2.25}
-              testID="flight-price-alert-bell"
-            />
-            <Text numberOfLines={1} style={[s0.flightAlertActionText, { color: theme.textPrimary }]}>Track prices</Text>
-          </View>
-          <View style={s0.flightAlertSwitchTarget}>
-            <Switch
-              accessibilityLabel="Track prices"
-              accessibilityRole="switch"
-              accessibilityState={{ checked: false }}
-              value={false}
-              onValueChange={() => router.push("/price-alerts")}
-              trackColor={{ false: theme.switchTrack, true: theme.switchTrackActive }}
-              ios_backgroundColor={theme.switchTrack}
-              thumbColor={theme.surface}
-            />
-          </View>
+        <View style={s0.flightAlertCopy}>
+          <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices for this route</Text>
+          <Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Get notified when prices drop.</Text>
+        </View>
+        <View style={[s0.flightAlertSky, narrow && s0.flightAlertSkyNarrow]} pointerEvents="none" accessibilityElementsHidden>
+          <Image
+            accessible={false}
+            source={require("../../../assets/heroes/flights-aircraft.png")}
+            resizeMode="cover"
+            style={s0.flightAlertAircraft}
+            testID="flight-price-alert-aircraft"
+          />
+        </View>
+        <View style={s0.flightAlertSwitchTarget}>
+          <Switch
+            accessibilityLabel="Track prices"
+            accessibilityRole="switch"
+            accessibilityState={{ checked: false }}
+            value={false}
+            onValueChange={() => router.push("/price-alerts")}
+            trackColor={{ false: theme.switchTrack, true: theme.switchTrackActive }}
+            ios_backgroundColor={theme.switchTrack}
+            thumbColor={theme.surface}
+          />
         </View>
       </View>
     );
@@ -1157,7 +1156,7 @@ const s0 = StyleSheet.create({
   flightHeaderMainRow: {
     width: "100%",
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   flightHeaderSide: { width: 106, flexShrink: 0 },
   flightHeaderSideCompact: { width: 44 },
@@ -1168,17 +1167,21 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderControlPressed: { opacity: 0.55 },
-  flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center", paddingTop: 7 },
+  flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center" },
   flightHeaderRoute: { minWidth: 0, textAlign: "center" },
-  flightHeaderMetadataRow: {
+  flightHeaderMetadataAlignmentRow: {
     width: "100%",
-    paddingTop: 4,
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
-    justifyContent: "center",
+    marginTop: 7,
+  },
+  flightHeaderMetadataInset: { width: 52, flexShrink: 0 },
+  flightHeaderMetadataScroller: { flex: 1, minWidth: 0 },
+  flightHeaderMetadataRow: {
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "center",
     columnGap: 18,
-    rowGap: 6,
   },
   flightHeaderMetadataItem: {
     flexDirection: "row",
@@ -1429,41 +1432,31 @@ const s0 = StyleSheet.create({
   },
   alertCopy: { gap: 4 },
   flightAlert: {
-    minHeight: 80,
+    minHeight: 82,
     borderWidth: 1,
     borderRadius: 14,
-    paddingHorizontal: 13,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
     flexDirection: "row",
     alignItems: "center",
+    gap: 9,
+    overflow: "hidden",
   },
-  flightAlertNarrow: { flexDirection: "column", alignItems: "stretch" },
-  flightAlertDeal: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 9 },
+  flightAlertNarrow: { paddingHorizontal: 8, gap: 7 },
+  flightAlertIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 2 },
-  flightAlertTitle: { fontSize: 15, lineHeight: 20, fontWeight: "900" },
-  flightAlertAction: {
-    minWidth: 146,
-    minHeight: 48,
-    marginLeft: 11,
-    paddingLeft: 11,
-    borderLeftWidth: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 5,
-  },
-  flightAlertActionNarrow: {
-    minWidth: 0,
-    marginLeft: 0,
-    marginTop: 8,
-    paddingLeft: 0,
-    paddingTop: 8,
-    borderLeftWidth: 0,
-    borderTopWidth: 1,
-    justifyContent: "space-between",
-  },
-  flightAlertActionLabel: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
-  flightAlertActionText: { fontSize: 12, lineHeight: 16, fontWeight: "800" },
+  flightAlertTitle: { fontSize: 15, lineHeight: 19, fontWeight: "900" },
+  flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500" },
+  flightAlertSky: { width: 72, height: 58, borderRadius: 12, overflow: "hidden", opacity: 0.9 },
+  flightAlertSkyNarrow: { width: 42 },
+  flightAlertAircraft: { width: "100%", height: "100%" },
   flightAlertSwitchTarget: { minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },
   alertButton: {
     width: "100%",
