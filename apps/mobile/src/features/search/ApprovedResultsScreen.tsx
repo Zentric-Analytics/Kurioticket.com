@@ -465,6 +465,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       {flightResults ? (
         <FlightResultsHeader
           route={`${String(payload.origin || "").toUpperCase()} ⇄ ${String(payload.destination || "").toUpperCase()}`}
+          tripSummary={[
+            payload.tripType === "one-way" ? "One way" : "Round trip",
+            payload.tripType === "one-way"
+              ? shortDate(String(payload.departureDate || ""))
+              : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`,
+            `${payload.adults || 1} ${Number(payload.adults || 1) === 1 ? "adult" : "adults"}`,
+          ].join(" · ")}
           onEdit={edit}
         />
       ) : (
@@ -520,9 +527,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
 
 function FlightResultsHeader({
   route,
+  tripSummary,
   onEdit,
 }: {
   route: string;
+  tripSummary: string;
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -531,31 +540,38 @@ function FlightResultsHeader({
       accessibilityLabel="Flight search summary"
       style={[s0.flightHeader, { backgroundColor: theme.background }]}
     >
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Go back"
-        onPress={() => router.back()}
-        style={s0.flightHeaderBack}
-      >
-        <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
-      </Pressable>
-      <View style={s0.flightHeaderRouteBlock}>
-        <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
-          {route}
+      <View accessibilityLabel="Flight route controls" style={s0.flightHeaderMainRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          onPress={() => router.back()}
+          style={s0.flightHeaderBack}
+        >
+          <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
+        </Pressable>
+        <View style={s0.flightHeaderRouteBlock}>
+          <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
+            {route}
+          </Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Edit search"
+          onPress={onEdit}
+          style={[
+            s0.flightHeaderEdit,
+            { backgroundColor: theme.surface, borderColor: theme.border },
+          ]}
+        >
+          <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
+          <Text style={s0.flightHeaderEditText}>Edit search</Text>
+        </Pressable>
+      </View>
+      <View accessibilityLabel="Trip summary row" style={s0.flightHeaderSummaryRow}>
+        <Text style={[s0.flightHeaderSummary, { color: theme.textSecondary }]}>
+          {tripSummary}
         </Text>
       </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Edit search"
-        onPress={onEdit}
-        style={[
-          s0.flightHeaderEdit,
-          { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
-      >
-        <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
-        <Text style={s0.flightHeaderEditText}>Edit search</Text>
-      </Pressable>
     </View>
   );
 }
@@ -1113,6 +1129,9 @@ const s0 = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 12,
     paddingBottom: 8,
+  },
+  flightHeaderMainRow: {
+    width: "100%",
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
@@ -1126,6 +1145,12 @@ const s0 = StyleSheet.create({
   },
   flightHeaderRouteBlock: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
   flightHeaderRoute: { minWidth: 0 },
+  flightHeaderSummaryRow: {
+    marginLeft: 46,
+    paddingTop: 4,
+    paddingRight: 8,
+  },
+  flightHeaderSummary: { fontSize: 12, lineHeight: 17, flexShrink: 1 },
   flightHeaderEdit: {
     minWidth: 106,
     minHeight: 44,

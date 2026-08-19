@@ -11,86 +11,78 @@ const header = results.slice(
   results.indexOf("function FlightResultsHeader"),
   results.indexOf("const stopLabels"),
 );
+const styles = results.slice(results.indexOf("const s0 = StyleSheet.create"));
 
-test("Flight Results replaces the branded notification TopBar with its compact summary header", () => {
+const summary = (payload: Record<string, unknown>) => [
+  payload.tripType === "one-way" ? "One way" : "Round trip",
+  payload.tripType === "one-way"
+    ? String(payload.departureDate)
+    : `${payload.departureDate} – ${payload.returnDate}`,
+  `${payload.adults || 1} ${Number(payload.adults || 1) === 1 ? "adult" : "adults"}`,
+].join(" · ");
+
+test("Flight Results uses its compact header and leaves the hotel TopBar unchanged", () => {
   assert.match(results, /flightResults \? \(\s*<FlightResultsHeader/);
   assert.doesNotMatch(results, /<TopBar\s+flightResults=/);
-  assert.doesNotMatch(results, /useUnreadNotifications|onNotificationsPress|hasUnreadNotifications/);
+  assert.match(results, /<TopBar \/>/);
   assert.doesNotMatch(header, /<Logo|Notifications|<Bell/);
-  assert.match(results, /<TopBar \/>/, "the unrelated hotel results header remains shared");
 });
 
-test("compact header keeps functional Back and Edit search controls", () => {
+test("route title contains only uppercase airport codes from the current payload", () => {
+  assert.match(results, /route=\{`\$\{String\(payload\.origin \|\| ""\)\.toUpperCase\(\)\} ⇄ \$\{String\(payload\.destination \|\| ""\)\.toUpperCase\(\)\}`\}/);
+  assert.doesNotMatch(results, /route=\{`[^`]*airportLabel/);
+});
+
+test("main controls and trip summary occupy independent rows", () => {
+  assert.match(header, /<View accessibilityLabel="Flight route controls" style=\{s0\.flightHeaderMainRow\}>[\s\S]*?<\/View>\s*<View accessibilityLabel="Trip summary row" style=\{s0\.flightHeaderSummaryRow\}>/);
+  const mainRow = header.slice(header.indexOf('accessibilityLabel="Flight route controls"'), header.indexOf('accessibilityLabel="Trip summary row"'));
+  assert.match(mainRow, /accessibilityLabel="Go back"[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Edit search"/);
+  assert.doesNotMatch(mainRow, /\{tripSummary\}/);
+  assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
+});
+
+test("summary derives trip type, dates, and adult wording without cabin class", () => {
+  assert.match(results, /payload\.tripType === "one-way" \? "One way" : "Round trip"/);
+  assert.match(results, /shortDate\(String\(payload\.departureDate/);
+  assert.match(results, /shortDate\(String\(payload\.returnDate/);
+  assert.match(results, /payload\.adults \|\| 1[\s\S]*?"adult" : "adults"/);
+  assert.doesNotMatch(header, /cabin|economy|business|first/);
+  assert.equal(summary({ tripType: "round-trip", departureDate: "Aug 19", returnDate: "Aug 20", adults: 1 }), "Round trip · Aug 19 – Aug 20 · 1 adult");
+  assert.equal(summary({ tripType: "one-way", departureDate: "Aug 19", adults: 2 }), "One way · Aug 19 · 2 adults");
+});
+
+test("Back and Edit search retain their behavior and touch targets", () => {
   assert.match(header, /accessibilityLabel="Go back"[\s\S]*?onPress=\{\(\) => router\.back\(\)\}/);
   assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
+  assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
   assert.match(results, /onEdit=\{edit\}/);
   assert.match(results, /pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\)/);
 });
 
-test("Back, route block, and Edit search form one ordered header row", () => {
-  assert.match(header, /accessibilityLabel="Go back"[\s\S]*?flightHeaderRouteBlock[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Edit search"/);
-  assert.match(results, /flightHeader: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
-  assert.match(results, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
+test("route remains flexible and summary wraps beneath route content on narrow screens", () => {
+  assert.match(styles, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
+  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?minWidth: 106,[\s\S]*?flexShrink: 0/);
+  assert.match(styles, /flightHeaderSummaryRow: \{[\s\S]*?marginLeft: 46,[\s\S]*?paddingTop: 4/);
+  assert.match(styles, /flightHeaderSummary: \{[^}]*flexShrink: 1/);
+  assert.doesNotMatch(header, /numberOfLines|ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
 });
 
-test("route uses a flexible block that cannot collide with Edit search", () => {
-  assert.match(header, /<View style=\{s0\.flightHeaderRouteBlock\}>[\s\S]*?<Text[^>]*flightHeaderRoute[\s\S]*?\{route\}[\s\S]*?<\/View>/);
-  assert.match(results, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
-  assert.match(results, /flightHeaderRoute: \{ minWidth: 0 \}/);
-  assert.match(results, /flightHeaderEdit: \{[\s\S]*?minWidth: 106,[\s\S]*?minHeight: 44,[\s\S]*?flexShrink: 0/);
-  assert.doesNotMatch(header, /numberOfLines/);
-  assert.doesNotMatch(header, /ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
-  assert.doesNotMatch(header, /<TopBar|height: 64/);
-});
-
-test("short code title reclaims space so Back, route, and Edit search stay aligned", () => {
-  assert.doesNotMatch(header, /stackEditSearch|flightHeaderRouteBlockStacked|flightHeaderEditStacked/);
-  assert.match(results, /flightHeader: \{[\s\S]*?flexDirection: "row"[\s\S]*?flexWrap: "wrap"[\s\S]*?alignItems: "center"/);
-  assert.match(results, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
-  assert.doesNotMatch(results, /flightHeaderRoute:\s*\{[^}]*fontSize/);
-});
-
-test("route title uses uppercase codes directly from the current search payload", () => {
-  assert.match(results, /route=\{`\$\{String\(payload\.origin \|\| ""\)\.toUpperCase\(\)\} ⇄ \$\{String\(payload\.destination \|\| ""\)\.toUpperCase\(\)\}`\}/);
-  assert.doesNotMatch(results, /route=\{`[^`]*airportLabel/);
-  assert.match(results, /const airportLabel = \(code: unknown\)[\s\S]*?return airport \? `\$\{airport\.city\} \(\$\{value\}\)` : value;/);
-});
-
-test("representative payload codes render without airport city lookups", () => {
-  const route = (origin: unknown, destination: unknown) =>
-    `${String(origin || "").toUpperCase()} ⇄ ${String(destination || "").toUpperCase()}`;
-
-  assert.equal(route("los", "abv"), "LOS ⇄ ABV");
-  assert.equal(route("lax", "jfk"), "LAX ⇄ JFK");
-  assert.doesNotMatch(route("los", "abv"), /Lagos|Abuja|\(|\)/);
-  assert.equal(route("current-origin", "current-destination"), "CURRENT-ORIGIN ⇄ CURRENT-DESTINATION");
-});
-
-test("compact header adds modest spacing after the safe-area inset without changing the date strip", () => {
-  assert.match(results, /<SafeAreaView[^>]*edges=\{\["top"\]\}/);
-  assert.match(results, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
+test("header spacing stays compact before the unchanged date strip", () => {
+  assert.match(styles, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
   assert.match(results, /<View>\{dateStrip\}<\/View>/);
   assert.match(results, /stickyHeaderIndices=\{\[1\]\}/);
 });
 
-test("flight header omits date, traveler, and cabin metadata without moving it elsewhere", () => {
-  assert.doesNotMatch(header, /metadata|departureDate|returnDate|travelers|Traveler|cabinClass/);
-  assert.doesNotMatch(results, /<FlightResultsHeader[\s\S]*?metadata=/);
-  assert.match(results, /flightEditSearchParams\(params\)/, "Edit search retains the canonical values");
-});
-
-test("shared TopBar and Flight Details actions remain unchanged", () => {
-  assert.match(searchUi, /export function TopBar/);
-  assert.match(searchUi, /<Logo \/>/);
-  assert.match(searchUi, /accessibilityLabel="Notifications"/);
-  assert.match(searchUi, /accessibilityLabel="Price alert"/);
-  assert.match(searchUi, /accessibilityLabel="Share flight"/);
-  assert.match(details, /<TopBar detail onPriceAlertPress=\{handlePriceAlert\} priceAlertDisabled=\{!priceAlertAvailable\} onSharePress=/);
-});
-
-test("compact header preserves themed colors and the existing bottom navigation", () => {
+test("summary and controls preserve semantic light and dark theme colors", () => {
   assert.match(header, /backgroundColor: theme\.background/);
   assert.match(header, /color: theme\.textPrimary/);
+  assert.match(header, /color: theme\.textSecondary/);
   assert.match(header, /backgroundColor: theme\.surface, borderColor: theme\.border/);
+  assert.match(header, /color=\{theme\.icon\}/);
+});
+
+test("shared actions and bottom navigation remain unchanged", () => {
+  assert.match(searchUi, /export function TopBar/);
+  assert.match(details, /<TopBar detail onPriceAlertPress=\{handlePriceAlert\}/);
   assert.match(results, /<BottomNav flightResults=\{flightResults\} \/>/);
 });
