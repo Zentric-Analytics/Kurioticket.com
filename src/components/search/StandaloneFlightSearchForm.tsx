@@ -994,7 +994,6 @@ export function StandaloneFlightSearchForm({
         onClose={onClose}
       />
     );
-
   };
 
   const renderAirportSuggestions = (field: AirportField) => {
@@ -1501,7 +1500,7 @@ export function StandaloneFlightSearchForm({
               className={cn(
                 "focus-ring group inline-flex rounded-lg py-1 font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:text-sm sm:font-bold",
                 useMainFlightLandingMobilePresentation
-                  ? "min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap bg-transparent px-0.5 text-[12px] font-medium text-slate-950 hover:bg-transparent hover:text-slate-950 max-[359px]:gap-1 max-[359px]:text-[11px] disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-950 sm:min-h-9 sm:hover:bg-slate-100/70 sm:hover:text-slate-950"
+                  ? "min-h-11 min-w-0 items-center justify-center gap-1 whitespace-nowrap bg-transparent px-0.5 text-[11px] font-medium text-slate-950 hover:bg-transparent hover:text-slate-950 max-[359px]:gap-0.5 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-950 sm:min-h-9 sm:hover:bg-slate-100/70 sm:hover:text-slate-950"
                   : "min-h-8 items-center gap-2 px-1.5 text-sm",
                 tripType === value &&
                   (useMainFlightLandingMobilePresentation
@@ -1530,8 +1529,8 @@ export function StandaloneFlightSearchForm({
                   ? value === "round-trip"
                     ? "Round-trip"
                     : value === "one-way"
-                      ? "One-way"
-                      : "Multi-city"
+                      ? "One way-trip"
+                      : "Multi-city trip"
                   : localizedLabel}
               </span>
             </button>
@@ -1845,19 +1844,31 @@ export function StandaloneFlightSearchForm({
               strings={{
                 travelers: t("travelers") || "Travelers",
                 adults: t("adults") || "Adults",
-                adultDescription: t("mobileTravelerCabin.adultDescription") || "18 years and above",
+                adultDescription:
+                  t("mobileTravelerCabin.adultDescription") ||
+                  "18 years and above",
                 children: t("children") || "Children",
-                childDescription: t("mobileTravelerCabin.childDescription") || "2 to 17 years",
+                childDescription:
+                  t("mobileTravelerCabin.childDescription") || "2 to 17 years",
                 infants: t("infants") || "Infants",
-                infantDescription: t("mobileTravelerCabin.infantDescription") || "Under 2 years",
+                infantDescription:
+                  t("mobileTravelerCabin.infantDescription") || "Under 2 years",
                 cabinClass: t("cabinClass") || "Cabin class",
                 economy: t("economy") || "Economy",
                 business: t("business") || "Business",
                 first: t("first") || "First",
                 tip: t("mobileTravelerCabin.tip") || "Tip",
-                baggageTip: t("mobileTravelerCabin.baggageTip") || "Baggage allowance may vary by airline. Check details on the provider page.",
-                decrease: (label) => (t("deals.decreaseCountAria") || "Decrease {{label}}").replace("{{label}}", label),
-                increase: (label) => (t("deals.increaseCountAria") || "Increase {{label}}").replace("{{label}}", label),
+                baggageTip:
+                  t("mobileTravelerCabin.baggageTip") ||
+                  "Baggage allowance may vary by airline. Check details on the provider page.",
+                decrease: (label) =>
+                  (
+                    t("deals.decreaseCountAria") || "Decrease {{label}}"
+                  ).replace("{{label}}", label),
+                increase: (label) =>
+                  (
+                    t("deals.increaseCountAria") || "Increase {{label}}"
+                  ).replace("{{label}}", label),
               }}
               onAdultsChange={setDraftAdultCount}
               onChildrenChange={setDraftChildCount}
@@ -2083,7 +2094,9 @@ function DesktopFlightPopover({
         160,
         openAbove ? availableAbove : availableBelow,
       );
-      const top = openAbove ? null : Math.max(gutter, anchorRect.bottom + offset);
+      const top = openAbove
+        ? null
+        : Math.max(gutter, anchorRect.bottom + offset);
       const bottom = openAbove
         ? Math.max(gutter, viewportHeight - anchorRect.top + offset)
         : null;
