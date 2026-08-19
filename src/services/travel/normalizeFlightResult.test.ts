@@ -262,3 +262,54 @@ test("rejects a round-trip offer missing its return leg without synthesizing ide
     null,
   );
 });
+
+test("rejects provider slices whose direction contradicts the searched route", () => {
+  const raw = offer();
+  raw.slices[0] = slice("JFK", "LHR", "2027-01-01T08:00:00Z", "2027-01-01T16:00:00Z");
+  assert.equal(normalizeFlightResult("Duffel", raw, search("one-way")), null);
+});
+
+test("rejects missing currency and non-positive or malformed prices", () => {
+  assert.equal(
+    normalizeFlightResult("Duffel", { ...offer(), total_currency: undefined }, search("one-way")),
+    null,
+  );
+  for (const total_amount of ["0", "-1", "not-a-price"]) {
+    assert.equal(
+      normalizeFlightResult("Duffel", { ...offer(), total_amount }, search("one-way")),
+      null,
+    );
+  }
+});
+
+test("does not turn the searched cabin into a provider-confirmed cabin", () => {
+  const raw = offer();
+  raw.slices[0].segments[0].passengers[0].cabin_class = undefined as unknown as string;
+  assert.equal(normalizeFlightResult("Duffel", raw, search("one-way"))?.cabinClass, "");
+});
+
+test("missing baggage and conditions remain explicitly unknown", () => {
+  const raw = offer();
+  raw.conditions = undefined as unknown as typeof raw.conditions;
+  raw.slices[0].segments[0].passengers[0].baggages = [];
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.equal(result?.baggageInfo, "Baggage details not supplied by the provider");
+  assert.equal(result?.refundInfo, "Change and refund rules not supplied by the provider");
+});
+
+test("rejects malformed timestamps, disconnected segments, and unidentified carriers", () => {
+  const malformedTime = offer();
+  malformedTime.slices[0].segments[0].departing_at = "not-a-time";
+  assert.equal(normalizeFlightResult("Duffel", malformedTime, search("one-way")), null);
+
+  const disconnected = offer();
+  disconnected.slices[0].segments.push({
+    ...slice("DFW", "JFK", "2027-01-01T12:00:00Z", "2027-01-01T16:00:00Z").segments[0],
+  });
+  assert.equal(normalizeFlightResult("Duffel", disconnected, search("one-way")), null);
+
+  const unidentified = offer();
+  delete (unidentified.slices[0].segments[0] as { marketing_carrier?: unknown })
+    .marketing_carrier;
+  assert.equal(normalizeFlightResult("Duffel", unidentified, search("one-way")), null);
+});
