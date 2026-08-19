@@ -318,7 +318,13 @@ export function DealsScreen() {
   );
 }
 
-export function PackagesSearchPanel() {
+type PackagesSearchPanelProps = {
+  presentation?: "standalone" | "home";
+};
+
+export function PackagesSearchPanel({
+  presentation = "standalone",
+}: PackagesSearchPanelProps) {
   const ft = useFlowTheme();
   const { availability, loading } = useFeatureAvailability();
   const [tab, setTab] = useState<DealTab>("hotel-flight");
@@ -332,14 +338,15 @@ export function PackagesSearchPanel() {
   const includesFlight = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "flight-car";
   const includesHotel = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "hotel-car";
   const includesCar = tab === "hotel-flight-car" || tab === "hotel-car" || tab === "flight-car";
+  const isHome = presentation === "home";
   if (loading) return <UnavailableNotice text="Checking package availability…" />;
   if (!availability.deals || availableDealTabs.length === 0) return <UnavailableNotice text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
-  return (
+  const packageBuilder = (
     <>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.dealTabs}
+        contentContainerStyle={[styles.dealTabs, isHome && styles.homeDealTabs]}
       >
         {availableDealTabs.map((option) => (
           <Pressable
@@ -370,9 +377,9 @@ export function PackagesSearchPanel() {
       </ScrollView>
       <Animated.View
         style={[
-          styles.packageCard,
-          { backgroundColor: ft.colors.card },
-          ft.styles.shadow,
+          !isHome && styles.packageCard,
+          !isHome && { backgroundColor: ft.colors.card },
+          !isHome && ft.styles.shadow,
           {
             opacity: fade,
             transform: [
@@ -433,10 +440,14 @@ export function PackagesSearchPanel() {
       </Animated.View>
     </>
   );
+  return isHome ? (
+    <View style={[ft.styles.card, ft.styles.shadow]}>{packageBuilder}</View>
+  ) : packageBuilder;
 }
 
 const styles = StyleSheet.create({
   dealTabs: { gap: 8, paddingHorizontal: 2, paddingVertical: 4 },
+  homeDealTabs: { paddingHorizontal: 12, paddingTop: 12 },
   dealTab: {
     minHeight: 42,
     justifyContent: "center",

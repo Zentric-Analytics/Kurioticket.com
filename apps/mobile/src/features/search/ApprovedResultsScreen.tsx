@@ -89,6 +89,7 @@ import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
+import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -284,32 +285,33 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ? payload.departureDate
       : payload.checkIn || new Date().toISOString().slice(0, 10),
   );
-  const prices = sorted
-    .slice(0, 5)
-    .map((x) =>
-      product === "flight"
-        ? (x as FlightResult).price
-        : (x as HotelResult).pricePerNight!,
-    );
   const flightDisplayPrices = useMemo(() => {
     if (product !== "flight" || !currencyState) return new Map<string, DisplayPrice>();
-    return new Map((sorted as FlightResult[]).map((result) => [
+    return new Map((results as FlightResult[]).map((result) => [
       result.id,
       displayPrice(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates),
     ]));
-  }, [currencyState, product, sorted]);
-  const dateStripPrices = useMemo(
-    () => product === "flight"
-      ? sorted.slice(0, 5).map((result) => flightDisplayPrices.get(result.id))
-      : [],
-    [flightDisplayPrices, product, sorted],
-  );
+  }, [currencyState, product, results]);
+  const dateStripPriceByDate = useMemo(() => {
+    if (product === "flight") {
+      return buildPriceByDate((results as FlightResult[]).flatMap((result) => {
+        const departureDate = calendarIsoFromTimestamp(result.departureTime);
+        const displayed = flightDisplayPrices.get(result.id);
+        return departureDate && displayed ? [{
+          date: departureDate,
+          amount: displayed.amount,
+          formatted: displayed.formatted,
+          accessibilityLabel: displayed.formatted,
+        }] : [];
+      }));
+    }
+    const lowest = (sorted as HotelResult[])[0]?.pricePerNight;
+    return lowest == null ? {} : buildPriceByDate([{ date, amount: lowest }]);
+  }, [date, flightDisplayPrices, product, results, sorted]);
   const dateStrip = (
     <DateStrip
             date={date}
-            prices={prices}
-            formattedPrices={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
-            priceAccessibilityLabels={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
+            priceByDate={dateStripPriceByDate}
             flightResults={product === "flight"}
             onSelect={(v) =>
               router.setParams(
@@ -564,22 +566,6 @@ function FlightResultsHeader({
           <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
             {route}
           </Text>
-          <View accessibilityLabel="Trip metadata row" style={s0.flightHeaderMetadataRow}>
-            <View style={s0.flightHeaderMetadataItem}>
-              <CalendarDays accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
-            </View>
-            <View style={s0.flightHeaderMetadataItem}>
-              <User accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
-                {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
-              </Text>
-            </View>
-            <View style={s0.flightHeaderMetadataItem}>
-              <Briefcase accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
-            </View>
-          </View>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -594,6 +580,31 @@ function FlightResultsHeader({
           <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
           {!compact ? <Text style={s0.flightHeaderEditText}>Edit search</Text> : null}
         </Pressable>
+      </View>
+      <View style={s0.flightHeaderMetadataAlignmentRow}>
+        <View style={s0.flightHeaderMetadataInset} />
+        <ScrollView
+          accessibilityLabel="Trip metadata row"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s0.flightHeaderMetadataScroller}
+          contentContainerStyle={s0.flightHeaderMetadataRow}
+        >
+            <View style={s0.flightHeaderMetadataItem}>
+              <CalendarDays accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
+            </View>
+            <View style={s0.flightHeaderMetadataItem}>
+              <User accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
+                {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
+              </Text>
+            </View>
+            <View style={s0.flightHeaderMetadataItem}>
+              <Briefcase accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
+              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
+            </View>
+        </ScrollView>
       </View>
     </View>
   );
@@ -1157,7 +1168,7 @@ const s0 = StyleSheet.create({
   flightHeaderMainRow: {
     width: "100%",
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   flightHeaderSide: { width: 106, flexShrink: 0 },
   flightHeaderSideCompact: { width: 44 },
@@ -1168,17 +1179,21 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
   },
   flightHeaderControlPressed: { opacity: 0.55 },
-  flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center", paddingTop: 7 },
+  flightHeaderRouteBlock: { flex: 1, minWidth: 0, alignItems: "center" },
   flightHeaderRoute: { minWidth: 0, textAlign: "center" },
-  flightHeaderMetadataRow: {
+  flightHeaderMetadataAlignmentRow: {
     width: "100%",
-    paddingTop: 4,
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
-    justifyContent: "center",
+    marginTop: 7,
+  },
+  flightHeaderMetadataInset: { width: 52, flexShrink: 0 },
+  flightHeaderMetadataScroller: { flex: 1, minWidth: 0 },
+  flightHeaderMetadataRow: {
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    alignItems: "center",
     columnGap: 18,
-    rowGap: 6,
   },
   flightHeaderMetadataItem: {
     flexDirection: "row",
