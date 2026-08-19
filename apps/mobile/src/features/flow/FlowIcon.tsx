@@ -6,7 +6,7 @@ export type FlowIconName =
   | "close" | "compass" | "deal" | "flight" | "home" | "hotel" | "location" | "more"
   | "person" | "plus" | "search" | "settings" | "share" | "swap" | "trip"
   | "people" | "sliders" | "help" | "headset" | "document" | "shield"
-  | "globe" | "currency" | "moon" | "logout"
+  | "globe" | "currency" | "moon" | "logout" | "briefcase" | "bookmark" | "mail" | "palette"
   | "external" | "snow" | "gauge"
   | "heart" | "trending" | "map" | "beach" | "city" | "adventure"
   | "nature" | "culture" | "family";
@@ -37,6 +37,10 @@ export function FlowIcon({ name, size = 24, color = "#071A48", fill = "none" }: 
     share: <><Circle {...line} cx="18" cy="5" r="2.5" /><Circle {...line} cx="6" cy="12" r="2.5" /><Circle {...line} cx="18" cy="19" r="2.5" /><Path {...line} d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5" /></>,
     swap: <><Path {...line} d="M8 4v16M5 17l3 3 3-3M16 20V4M13 7l3-3 3 3" /></>,
     trip: <><Rect {...line} x="5" y="7" width="14" height="13" rx="2" /><Path {...line} d="M9 7V5h6v2M9 12h6" /></>,
+    briefcase: <><Rect {...line} x="3" y="7" width="18" height="13" rx="2" /><Path {...line} d="M9 7V5h6v2M3 12h18M10 12v2h4v-2" /></>,
+    bookmark: <Path {...line} d="M6 4h12v17l-6-4-6 4V4Z" />,
+    mail: <><Rect {...line} x="3" y="5" width="18" height="14" rx="2" /><Path {...line} d="m4 7 8 6 8-6" /></>,
+    palette: <><Path {...line} d="M12 3a9 9 0 0 0 0 18h1.5a2 2 0 0 0 0-4H12a2 2 0 0 1 0-4h3a6 6 0 0 0 0-12h-3Z" /><Circle fill={color} cx="7.5" cy="10" r="1" /><Circle fill={color} cx="9" cy="6.5" r="1" /><Circle fill={color} cx="14" cy="6" r="1" /></>,
     people: <><Circle {...line} cx="9" cy="8" r="3" /><Path {...line} d="M3.5 19c.5-3.4 2.3-5 5.5-5s5 1.6 5.5 5" /><Path {...line} d="M15 5.5a3 3 0 0 1 0 5.5M16 14c2.7.2 4.1 1.8 4.5 4.5" /></>,
     sliders: <><Line {...line} x1="4" y1="7" x2="20" y2="7" /><Circle {...line} cx="9" cy="7" r="2" /><Line {...line} x1="4" y1="17" x2="20" y2="17" /><Circle {...line} cx="15" cy="17" r="2" /></>,
     help: <><Circle {...line} cx="12" cy="12" r="9" /><Path {...line} d="M9.7 9a2.4 2.4 0 1 1 3.1 2.3c-.8.3-.8 1-.8 1.7M12 17h.01" /></>,

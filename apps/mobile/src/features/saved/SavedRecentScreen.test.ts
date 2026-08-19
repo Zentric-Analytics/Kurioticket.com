@@ -5,8 +5,8 @@ import { readFileSync } from "node:fs";
 const source = (path: string) => readFileSync(path, "utf8");
 
 test("Profile exposes Saved & recent without changing the bottom tabs", () => {
-  assert.match(source("src/features/profile/ProfileScreen.tsx"), /t\("savedRecent"\).*route: "\/saved"/);
-  assert.match(source("src/features/profile/GuestProfileScreen.tsx"), /Saved & Recent.*router\.push\("\/saved"\)/);
+  assert.match(source("src/features/profile/profileModel.ts"), /label: "savedRecent"[\s\S]*?href: "\/saved"/);
+  assert.match(source("src/features/profile/GuestProfileScreen.tsx"), /label: "savedRecent"[\s\S]*?href: "\/saved"/);
   assert.equal((source("app/(tabs)/_layout.tsx").match(/<Tabs\.Screen/g) ?? []).length, 4);
   assert.doesNotMatch(source("app/(tabs)/_layout.tsx"), /name="saved"/);
 });
