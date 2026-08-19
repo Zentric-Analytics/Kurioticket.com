@@ -48,6 +48,7 @@ import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShe
 import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
 import { DealsSearchForm } from "@/components/search/DealsSearchForm";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import { resolveDesktopPopoverGeometry } from "@/components/search/desktopPopoverGeometry";
 import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import {
   CarsDriverAgePickerContent,
@@ -268,6 +269,7 @@ type DesktopTopLayerPopoverProps = {
   role?: "dialog" | "listbox";
   ariaLabel?: string;
   placement?: "auto" | "above" | "below";
+  desiredHeight?: number;
   children: ReactNode;
 };
 
@@ -299,6 +301,7 @@ function DesktopTopLayerPopover({
   role,
   ariaLabel,
   placement = "auto",
+  desiredHeight,
   children,
 }: DesktopTopLayerPopoverProps) {
   const [anchorRect, setAnchorRect] = useState<{
@@ -361,9 +364,19 @@ function DesktopTopLayerPopover({
     0,
     window.innerHeight - anchorRect.bottom - offset - maxViewportGutter
   );
-  const resolvedPlacement = placement === "auto"
-    ? (availableBelow >= availableAbove ? "below" : "above")
-    : placement;
+  const geometry = resolveDesktopPopoverGeometry({
+    availableAbove,
+    availableBelow,
+    desiredHeight,
+    placement,
+  });
+  const resolvedPlacement = geometry.placement;
+  const launcherIsVisible = anchorRect.bottom > maxViewportGutter
+    && anchorRect.top < window.innerHeight - maxViewportGutter
+    && anchorRect.right > maxViewportGutter
+    && anchorRect.left < viewportWidth - maxViewportGutter;
+
+  if (!launcherIsVisible) return null;
 
   return createPortal(
     <div
@@ -381,13 +394,10 @@ function DesktopTopLayerPopover({
           : { top: anchorRect.bottom + offset }),
         width: panelWidth,
         maxWidth,
-        maxHeight: Math.max(
-          0,
-          resolvedPlacement === "above" ? availableAbove : availableBelow
-        ),
+        maxHeight: geometry.maxHeight,
       }}
       className={cn(
-        "fixed hidden overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
+        "fixed hidden overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.14)] sm:block",
         desktopPopoverPanelClassName,
         className
       )}
@@ -413,6 +423,7 @@ function CarsSummaryField({
   desktopWidth = 448,
   desktopPanelClassName = "p-3",
   desktopPlacement = "auto",
+  desktopDesiredHeight,
   leadingIcon,
   showChevron = true,
   valueClassName,
@@ -430,6 +441,7 @@ function CarsSummaryField({
   desktopWidth?: number;
   desktopPanelClassName?: string;
   desktopPlacement?: "auto" | "above" | "below";
+  desktopDesiredHeight?: number;
   leadingIcon?: ReactNode;
   showChevron?: boolean;
   valueClassName?: string;
@@ -499,7 +511,7 @@ function CarsSummaryField({
         {showChevron ? <ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", open && "rotate-180")} /> : null}
       </button>
       {open ? (isSmViewport
-        ? <DesktopTopLayerPopover open={open} launcherRef={launcherRef} align={desktopAlign} width={desktopWidth} panelRef={panelRef} id={panelId} role={popupRole} ariaLabel={label} className={desktopPanelClassName} placement={desktopPlacement}>{children}</DesktopTopLayerPopover>
+        ? <DesktopTopLayerPopover open={open} launcherRef={launcherRef} align={desktopAlign} width={desktopWidth} panelRef={panelRef} id={panelId} role={popupRole} ariaLabel={label} className={desktopPanelClassName} placement={desktopPlacement} desiredHeight={desktopDesiredHeight}>{children}</DesktopTopLayerPopover>
         : mobilePresentation === "inline" ? <div className="mt-3">{panel}</div> : null) : null}
     </div>
   );
@@ -1771,6 +1783,11 @@ export function SearchTabs({
       ? setFromOpen
       : setToOpen;
 
+    if (event.key === "Escape") {
+      setOpen(false);
+      return;
+    }
+
     if (!list.length) {
       return;
     }
@@ -1826,9 +1843,6 @@ export function SearchTabs({
       setOpen(false);
     }
 
-    if (event.key === "Escape") {
-      setOpen(false);
-    }
   };
 
   const onSwapAirports = () => {
@@ -2318,10 +2332,11 @@ export function SearchTabs({
       open
       launcherId={inputId}
       placement="auto"
+      desiredHeight={360}
       width={520}
+      id={`${inputId}-suggestions`}
       role="listbox"
       ariaLabel={sectionLabel}
-      className="overflow-hidden"
     >
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
@@ -2338,6 +2353,9 @@ export function SearchTabs({
           <button
             key={`${option.code}-${option.airport}-${inputId}`}
             type="button"
+            id={`${inputId}-suggestion-${index}`}
+            role="option"
+            aria-selected={highlight === index}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(option)}
             className={cn(
@@ -2475,6 +2493,7 @@ export function SearchTabs({
       placement="auto"
       align={mode === "flights" ? "center" : "left"}
       width={mode === "flights" ? 760 : 660}
+      desiredHeight={440}
       className={cn(
         compactHero ? "p-3" : "p-4",
         mode === "flights" && !compactHero && "lg:p-5"
@@ -3299,7 +3318,15 @@ export function SearchTabs({
                   </button>
                   <input
                     ref={fromInputRef}
+                    id="homepage-flight-origin"
                     type="text"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={shouldShowFromSuggestionsPanel}
+                    aria-controls="homepage-flight-origin-suggestions"
+                    aria-activedescendant={shouldShowFromSuggestionsPanel && fromSuggestions.length
+                      ? `homepage-flight-origin-suggestion-${fromHighlight}`
+                      : undefined}
                     value={from}
                     onChange={(
                       event
@@ -3407,7 +3434,15 @@ export function SearchTabs({
                   </button>
                   <input
                     ref={toInputRef}
+                    id="homepage-flight-destination"
                     type="text"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={shouldShowToSuggestionsPanel}
+                    aria-controls="homepage-flight-destination-suggestions"
+                    aria-activedescendant={shouldShowToSuggestionsPanel && toSuggestions.length
+                      ? `homepage-flight-destination-suggestion-${toHighlight}`
+                      : undefined}
                     value={to}
                     onChange={(
                       event
@@ -3626,6 +3661,7 @@ export function SearchTabs({
                       open
                       launcherRef={travelersLauncherRef}
                       placement="auto"
+                      desiredHeight={420}
                       align="right"
                       width={360}
                       className={cn(compactHero ? "p-3" : "p-4", desktopTravelersPopoverClassName)}
@@ -3927,6 +3963,7 @@ export function SearchTabs({
                     launcherRef={hotelGuestsRoomsMobileLauncherRef}
                     align="right"
                     width={360}
+                    desiredHeight={420}
                     className="p-4"
                   >
                   <div
@@ -4084,6 +4121,15 @@ export function SearchTabs({
                         </div>
                       </div>
                     </div>
+                    <div className="sticky bottom-0 mt-3 flex justify-end border-t border-slate-100 bg-white pt-3">
+                      <button
+                        type="button"
+                        onClick={() => setHotelGuestsRoomsOpen(false)}
+                        className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
+                      >
+                        {translate("done") || "Done"}
+                      </button>
+                    </div>
                   </div>
                   </DesktopTopLayerPopover>
                 ) : null}
@@ -4183,7 +4229,7 @@ export function SearchTabs({
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
               {compactHero ? carsReturnLocationField : null}
-              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" desktopPlacement="auto" leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" desktopPlacement="auto" desktopDesiredHeight={430} leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsRentalDatePickerContent
                   dropoffDate={carsValues.dropoffDate}
                   formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)}
@@ -4199,10 +4245,10 @@ export function SearchTabs({
                   weekdays={getLocalizedWeekdays(calendarLocale)}
                 />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopPlacement="auto" leadingIcon={<Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopPlacement="auto" desktopDesiredHeight={350} leadingIcon={<Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsTimeRangePickerContent formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsValues.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsValues.dropoffTime} onPickupTimeChange={(time) => updateCarsValue("pickupTime", time)} onReturnTimeChange={(time) => updateCarsValue("dropoffTime", time)} />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0" desktopPlacement="auto" leadingIcon={<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0" desktopPlacement="auto" desktopDesiredHeight={340} leadingIcon={<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsDriverAgePickerContent anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => updateCarsValue("driverAge", age)} />
               </CarsSummaryField>
               <div className={hotelSubmitWrapClassName}>
