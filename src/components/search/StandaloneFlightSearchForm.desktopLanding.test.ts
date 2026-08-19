@@ -18,7 +18,7 @@ test("desktop Flights exposes the complete trip-type selector", () => {
   );
   assert.match(
     formSource,
-    /value === "round-trip"[\s\S]*?"Round-trip"[\s\S]*?value === "one-way"[\s\S]*?"One-way"[\s\S]*?"Multi-city"/,
+    /value === "round-trip"[\s\S]*?"Round-trip"[\s\S]*?value === "one-way"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/,
   );
   assert.match(formSource, /data-testid="desktop-flight-landing-identity"/);
   assert.match(
@@ -52,7 +52,10 @@ test("desktop field values use neutral leading icons and title-cased English tra
     formSource,
     /<UserRound[\s\S]*?text-slate-500[\s\S]*?\{travelerSummary\}/,
   );
-  assert.match(formSource, /const isEnglish = locale\.toLowerCase\(\)\.startsWith\("en"\)/);
+  assert.match(
+    formSource,
+    /const isEnglish = locale\.toLowerCase\(\)\.startsWith\("en"\)/,
+  );
   assert.match(formSource, /toLocaleUpperCase\(locale\)/);
 });
 
