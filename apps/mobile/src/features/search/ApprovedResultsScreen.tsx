@@ -470,7 +470,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             payload.tripType === "one-way"
               ? shortDate(String(payload.departureDate || ""))
               : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`,
-            `${payload.adults || 1} ${Number(payload.adults || 1) === 1 ? "adult" : "adults"}`,
+            `${payload.travelers} ${Number(payload.travelers) === 1 ? "Traveler" : "Travelers"}`,
           ].join(" · ")}
           onEdit={edit}
         />

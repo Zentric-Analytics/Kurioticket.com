@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import { buildSearchPlan } from "../flow/travelSearchModel";
 
 const read = (path: string) => readFileSync(resolve(path), "utf8");
 const results = read("src/features/search/ApprovedResultsScreen.tsx");
@@ -18,8 +19,23 @@ const summary = (payload: Record<string, unknown>) => [
   payload.tripType === "one-way"
     ? String(payload.departureDate)
     : `${payload.departureDate} – ${payload.returnDate}`,
-  `${payload.adults || 1} ${Number(payload.adults || 1) === 1 ? "adult" : "adults"}`,
+  `${payload.travelers} ${Number(payload.travelers) === 1 ? "Traveler" : "Travelers"}`,
 ].join(" · ");
+
+const flightPayload = (counts: { adults: number; children: number; infants: number }) => {
+  const { plan } = buildSearchPlan("flight", {
+    tripType: "round-trip",
+    origin: "LOS",
+    destination: "ABV",
+    departureDate: "2030-08-19",
+    returnDate: "2030-08-20",
+    adults: String(counts.adults),
+    children: String(counts.children),
+    infants: String(counts.infants),
+  }, new Date("2030-01-01T00:00:00Z"));
+  assert.ok(plan);
+  return plan.payload;
+};
 
 test("Flight Results uses its compact header and leaves the hotel TopBar unchanged", () => {
   assert.match(results, /flightResults \? \(\s*<FlightResultsHeader/);
@@ -41,14 +57,22 @@ test("main controls and trip summary occupy independent rows", () => {
   assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
 });
 
-test("summary derives trip type, dates, and adult wording without cabin class", () => {
+test("summary preserves trip type and dates while using canonical total traveler wording", () => {
   assert.match(results, /payload\.tripType === "one-way" \? "One way" : "Round trip"/);
   assert.match(results, /shortDate\(String\(payload\.departureDate/);
   assert.match(results, /shortDate\(String\(payload\.returnDate/);
-  assert.match(results, /payload\.adults \|\| 1[\s\S]*?"adult" : "adults"/);
+  assert.match(results, /payload\.travelers[\s\S]*?"Traveler" : "Travelers"/);
+  assert.doesNotMatch(header, /\badults?\b/i);
   assert.doesNotMatch(header, /cabin|economy|business|first/);
-  assert.equal(summary({ tripType: "round-trip", departureDate: "Aug 19", returnDate: "Aug 20", adults: 1 }), "Round trip · Aug 19 – Aug 20 · 1 adult");
-  assert.equal(summary({ tripType: "one-way", departureDate: "Aug 19", adults: 2 }), "One way · Aug 19 · 2 adults");
+  assert.equal(summary({ tripType: "round-trip", departureDate: "Aug 19", returnDate: "Aug 20", travelers: 1 }), "Round trip · Aug 19 – Aug 20 · 1 Traveler");
+  assert.equal(summary({ tripType: "one-way", departureDate: "Aug 19", travelers: 2 }), "One way · Aug 19 · 2 Travelers");
+});
+
+test("canonical total includes adults, children, and infants", () => {
+  assert.equal(flightPayload({ adults: 2, children: 1, infants: 1 }).travelers, 4);
+  assert.equal(flightPayload({ adults: 2, children: 0, infants: 0 }).travelers, 2);
+  assert.equal(flightPayload({ adults: 1, children: 2, infants: 0 }).travelers, 3);
+  assert.equal(flightPayload({ adults: 1, children: 0, infants: 2 }).travelers, 3);
 });
 
 test("Back and Edit search retain their behavior and touch targets", () => {
