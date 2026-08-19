@@ -38,7 +38,7 @@ test("desktop homepage Hotel destination uses the shared API autocomplete", () =
   assert.match(source, /useHotelDestinationAutocomplete\(\{[\s\S]*?query: destination/);
   assert.match(autocompleteSource, /\/api\/hotels\/destinations\?\$\{params\.toString\(\)\}/);
   assert.match(autocompleteSource, /}, 180\)/);
-  assert.match(source, /id="homepage-hotel-destination"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"/);
+  assert.match(source, /id="homepage-hotel-destination"[\s\S]*?autoComplete="off"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"/);
   assert.match(source, /width=\{420\}[\s\S]*?desiredHeight=\{320\}[\s\S]*?placement="auto"/);
 });
 
@@ -84,12 +84,18 @@ test("desktop airport, calendar, and traveler panels share viewport-safe placeme
 });
 
 test("desktop airport inputs expose accessible structured combobox results", () => {
-  assert.match(desktopBranch, /id="homepage-flight-origin"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"/);
-  assert.match(desktopBranch, /id="homepage-flight-destination"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"/);
+  assert.match(desktopBranch, /id="homepage-flight-origin"[\s\S]*?autoComplete="off"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"/);
+  assert.match(desktopBranch, /id="homepage-flight-destination"[\s\S]*?autoComplete="off"[\s\S]*?role="combobox"[\s\S]*?aria-autocomplete="list"/);
   assert.match(source, /id=\{`\$\{inputId\}-suggestion-\$\{index\}`\}[\s\S]*?role="option"/);
   assert.match(source, /<Plane className="h-4 w-4"/);
   assert.match(source, /getLocalizedCityName\(option\.city, locale\)/);
   assert.match(source, /option\.airport[\s\S]*?option\.country[\s\S]*?option\.code/);
+});
+
+test("desktop homepage location forms disable browser-native history suggestions", () => {
+  assert.match(desktopBranch, /onSubmit=\{\s*onFlightSubmit\s*\}[\s\S]*?autoComplete="off"/);
+  assert.match(desktopBranch, /onSubmit=\{\s*onHotelSubmit\s*\}[\s\S]*?autoComplete="off"/);
+  assert.match(desktopBranch, /<form onSubmit=\{onCarsSubmit\} autoComplete="off"/);
 });
 
 test("desktop fields expose one clean focus boundary instead of nested input rings", () => {

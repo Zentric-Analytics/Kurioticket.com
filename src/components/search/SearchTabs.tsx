@@ -3188,6 +3188,7 @@ export function SearchTabs({
           onSubmit={
             onFlightSubmit
           }
+          autoComplete="off"
           className={formClassName}
         >
           <div className="flex items-center justify-between gap-2 px-1">
@@ -3364,6 +3365,7 @@ export function SearchTabs({
                     ref={fromInputRef}
                     id="homepage-flight-origin"
                     type="text"
+                    autoComplete="off"
                     role="combobox"
                     aria-autocomplete="list"
                     aria-expanded={shouldShowFromSuggestionsPanel}
@@ -3480,6 +3482,7 @@ export function SearchTabs({
                     ref={toInputRef}
                     id="homepage-flight-destination"
                     type="text"
+                    autoComplete="off"
                     role="combobox"
                     aria-autocomplete="list"
                     aria-expanded={shouldShowToSuggestionsPanel}
@@ -3816,6 +3819,7 @@ export function SearchTabs({
           onSubmit={
             onHotelSubmit
           }
+          autoComplete="off"
           className={formClassName}
         >
           <div
@@ -3888,6 +3892,7 @@ export function SearchTabs({
                     ref={hotelDestinationDesktopInputRef}
                     id="homepage-hotel-destination"
                     type="text"
+                    autoComplete="off"
                     value={destination}
                     onChange={(event) => {
                       setDestination(event.target.value);
@@ -4359,7 +4364,7 @@ export function SearchTabs({
           </HotelMobilePickerShell>
         </form>
       ) : (
-        <form onSubmit={onCarsSubmit} className={formClassName} noValidate>
+        <form onSubmit={onCarsSubmit} autoComplete="off" className={formClassName} noValidate>
           <div ref={carsSearchSurfaceRef} data-testid="cars-search-surface">
           <div className={carsFieldCardClassName} data-testid="cars-joined-search-card">
             <div className={carsGridClassName} data-testid="cars-primary-row">
