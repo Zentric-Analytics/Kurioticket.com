@@ -30,12 +30,43 @@ test("ready flight results place one eligible price alert before their summary a
   );
 });
 
-test("the price alert retains its existing action and uses the Lucide Bell", () => {
+test("the compact flight alert replaces the old copy and retains its existing action", () => {
   const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
   assert.match(component, /router\.push\("\/price-alerts"\)/);
+  assert.match(component, /Get the best deals/);
+  assert.match(component, /Prices may change\. Book now and save\./);
+  assert.match(component, /Track prices/);
+  assert.match(component, /<Zap/);
   assert.match(component, /<Bell /);
-  assert.match(component, /Create price alert/);
+  assert.doesNotMatch(component, /Track this route/);
+  assert.doesNotMatch(component, /Create price alert/);
+  assert.doesNotMatch(component, /Create a one-time email alert/);
   assert.doesNotMatch(component, /<FlowIcon name="bell"/);
+});
+
+test("the flight price action is an accessible, backend-honest switch", () => {
+  const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
+  assert.match(component, /<Switch[\s\S]*?accessibilityLabel="Track prices"/);
+  assert.match(component, /accessibilityRole="switch"/);
+  assert.match(component, /accessibilityState=\{\{ checked: false \}\}/);
+  assert.match(component, /value=\{false\}/);
+  assert.match(component, /onValueChange=\{\(\) => router\.push\("\/price-alerts"\)\}/);
+});
+
+test("the compact alert has one-row and readable narrow-screen layouts", () => {
+  assert.match(source, /const narrow = width < 350/);
+  assert.match(source, /flightAlert: \{[\s\S]*?flexDirection: "row"/);
+  assert.match(source, /flightAlertNarrow: \{ flexDirection: "column"/);
+  assert.match(source, /numberOfLines=\{1\}[\s\S]*?>Track prices<\/Text>/);
+  assert.match(source, /flightAlertSwitchTarget: \{ minWidth: 48, minHeight: 48/);
+});
+
+test("the flight alert uses semantic light and dark theme values", () => {
+  const theme = readFileSync(resolve("src/theme/AppTheme.tsx"), "utf8");
+  for (const token of ["priceAlertSurface", "priceAlertBorder", "priceAlertAccent", "switchTrack", "switchTrackActive"]) {
+    assert.equal(theme.match(new RegExp(`${token}:`, "g"))?.length, 2, `${token} should be defined for both themes`);
+    assert.match(source, new RegExp(`theme\\.${token}`));
+  }
 });
 
 test("flight price-alert eligibility is route-level while the summary stays filter-aware", () => {

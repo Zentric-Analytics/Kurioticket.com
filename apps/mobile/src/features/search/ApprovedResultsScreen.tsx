@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   useWindowDimensions,
   View,
@@ -28,6 +29,7 @@ import {
   PlaneTakeoff,
   ShieldCheck,
   Tag,
+  Zap,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -984,24 +986,81 @@ function HotelLoadingSkeleton() {
 function PriceAlert({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const flight = product === "flight";
+  const { width } = useWindowDimensions();
+  const narrow = width < 350;
+  if (flight) {
+    return (
+      <View
+        accessibilityLabel="Flight price alert"
+        style={[
+          s0.flightAlert,
+          { backgroundColor: theme.priceAlertSurface, borderColor: theme.priceAlertBorder },
+          narrow && s0.flightAlertNarrow,
+        ]}
+      >
+        <View style={s0.flightAlertDeal}>
+          <Zap
+            accessibilityElementsHidden
+            accessible={false}
+            color={theme.priceAlertAccent}
+            fill={theme.priceAlertAccent}
+            size={25}
+            strokeWidth={2.25}
+            testID="flight-price-alert-lightning"
+          />
+          <View style={s0.flightAlertCopy}>
+            <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Get the best deals</Text>
+            <Text style={[s0.sub, { color: theme.textSecondary }]}>Prices may change. Book now and save.</Text>
+          </View>
+        </View>
+        <View
+          style={[
+            s0.flightAlertAction,
+            { borderLeftColor: theme.priceAlertBorder },
+            narrow && [s0.flightAlertActionNarrow, { borderTopColor: theme.priceAlertBorder }],
+          ]}
+        >
+          <View style={s0.flightAlertActionLabel}>
+            <Bell
+              accessibilityElementsHidden
+              accessible={false}
+              color={theme.priceAlertAccent}
+              size={18}
+              strokeWidth={2.25}
+              testID="flight-price-alert-bell"
+            />
+            <Text numberOfLines={1} style={[s0.flightAlertActionText, { color: theme.textPrimary }]}>Track prices</Text>
+          </View>
+          <View style={s0.flightAlertSwitchTarget}>
+            <Switch
+              accessibilityLabel="Track prices"
+              accessibilityRole="switch"
+              accessibilityState={{ checked: false }}
+              value={false}
+              onValueChange={() => router.push("/price-alerts")}
+              trackColor={{ false: theme.switchTrack, true: theme.switchTrackActive }}
+              ios_backgroundColor={theme.switchTrack}
+              thumbColor={theme.surface}
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
   return (
-    <View style={[s0.alert, flight && { backgroundColor: theme.surface, borderColor: theme.border }]}>
+    <View style={s0.alert}>
       <View style={s0.alertCopy}>
-        <Text style={[s0.foundTitle, flight && { color: theme.textPrimary }]}>{flight ? "Track this route" : "Price alerts"}</Text>
-        <Text style={[s0.sub, flight && { color: theme.textSecondary }]}>
-          {flight
-            ? "Create a one-time email alert when the fare for this route reaches your target."
-            : "Track this search and get notified when prices drop."}
-        </Text>
+        <Text style={s0.foundTitle}>Price alerts</Text>
+        <Text style={s0.sub}>Track this search and get notified when prices drop.</Text>
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={flight ? "Create price alert" : "Track prices"}
+        accessibilityLabel="Track prices"
         onPress={() => router.push("/price-alerts")}
-        style={({ pressed }) => [s0.alertButton, flight && { backgroundColor: theme.surface }, pressed && s0.alertButtonPressed, flight && pressed && theme.dark && { backgroundColor: "#142B55" }]}
+        style={({ pressed }) => [s0.alertButton, pressed && s0.alertButtonPressed]}
       >
         <Bell accessibilityElementsHidden accessible={false} color={ui.blue} size={18} strokeWidth={2.25} />
-        <Text style={s0.alertButtonText}>{flight ? "Create price alert" : "Track prices"}</Text>
+        <Text style={s0.alertButtonText}>Track prices</Text>
       </Pressable>
     </View>
   );
@@ -1316,6 +1375,43 @@ const s0 = StyleSheet.create({
     backgroundColor: "#FAFCFF",
   },
   alertCopy: { gap: 4 },
+  flightAlert: {
+    minHeight: 80,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  flightAlertNarrow: { flexDirection: "column", alignItems: "stretch" },
+  flightAlertDeal: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 9 },
+  flightAlertCopy: { flex: 1, minWidth: 0, gap: 2 },
+  flightAlertTitle: { fontSize: 15, lineHeight: 20, fontWeight: "900" },
+  flightAlertAction: {
+    minWidth: 146,
+    minHeight: 48,
+    marginLeft: 11,
+    paddingLeft: 11,
+    borderLeftWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 5,
+  },
+  flightAlertActionNarrow: {
+    minWidth: 0,
+    marginLeft: 0,
+    marginTop: 8,
+    paddingLeft: 0,
+    paddingTop: 8,
+    borderLeftWidth: 0,
+    borderTopWidth: 1,
+    justifyContent: "space-between",
+  },
+  flightAlertActionLabel: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
+  flightAlertActionText: { fontSize: 12, lineHeight: 16, fontWeight: "800" },
+  flightAlertSwitchTarget: { minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },
   alertButton: {
     width: "100%",
     minHeight: 44,

@@ -14,6 +14,11 @@ export const lightTheme = {
   muted: "#56658E",
   border: "#E7ECF5",
   icon: "#071A48",
+  priceAlertSurface: "#EFFAF3",
+  priceAlertBorder: "#BFE7CC",
+  priceAlertAccent: "#16885B",
+  switchTrack: "#FFFFFF",
+  switchTrackActive: "#2563EB",
 } as const;
 
 export const darkTheme = {
@@ -29,6 +34,11 @@ export const darkTheme = {
   muted: "#AAB5CD",
   border: "#2B3952",
   icon: "#EAF0FF",
+  priceAlertSurface: "#142A27",
+  priceAlertBorder: "#285247",
+  priceAlertAccent: "#65D6A2",
+  switchTrack: "#33435D",
+  switchTrackActive: "#4D82F7",
 } as const;
 
 type ThemeValue = {
