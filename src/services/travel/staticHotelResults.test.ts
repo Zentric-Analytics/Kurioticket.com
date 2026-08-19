@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { buildHotelGalleryCandidates } from "@/components/results/hotelGalleryPresentation";
 import {
   buildStaticHotelResults,
   buildStaticHotelRoomOptions,
@@ -63,6 +64,24 @@ test("static hotel results are deterministic planning estimates", () => {
   assert.equal(firstHotel.provider, "Kurioticket static catalogue");
   assert.equal(firstHotel.bookingUrl, "");
   assert.equal(firstHotel.partnerRedirectUrl, "");
+});
+
+test("every static hotel supplies a distinct ten-image gallery with its approved lead image", () => {
+  for (const hotel of staticHotelCatalogue) {
+    assert.equal(hotel.imageUrls.length, 10, hotel.id);
+    assert.equal(new Set(hotel.imageUrls).size, 10, hotel.id);
+    assert.equal(hotel.imageUrls[0], hotel.imageUrl, hotel.id);
+  }
+
+  for (const result of buildStaticHotelResults(search)) {
+    assert.equal(result.imageUrls?.length, 10, result.id);
+    assert.equal(result.imageUrls?.[0], result.imageUrl, result.id);
+    assert.equal(
+      buildHotelGalleryCandidates(result.imageUrls, result.imageUrl).length,
+      10,
+      result.id,
+    );
+  }
 });
 
 test("every static property has safe, stable multi-room planning options with room-count pricing", () => {

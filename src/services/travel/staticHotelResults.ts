@@ -54,7 +54,7 @@ export function buildStaticHotelResult(
     provider: "Kurioticket static catalogue",
     name: record.name,
     imageUrl: record.imageUrl,
-    imageUrls: [record.imageUrl],
+    imageUrls: [...record.imageUrls],
     rating: record.classificationStars,
     classificationStars: record.classificationStars,
     neighbourhood: record.neighbourhood,

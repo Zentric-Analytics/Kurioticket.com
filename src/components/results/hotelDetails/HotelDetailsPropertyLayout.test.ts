@@ -19,6 +19,7 @@ test("joins one embedded gallery and details summary before the booking sibling"
   assert.equal(clientSource.match(/<HotelDetailsGallery\b/g)?.length, 1);
   assert.equal(clientSource.match(/<HotelDetailsSections\b/g)?.length, 1);
   assert.equal(clientSource.match(/<HotelDetailsBookingPanel\b/g)?.length, 1);
+  assert.equal(clientSource.match(/<DetailsBackLink\b/g)?.length, 1);
   assert.match(clientSource, /import { Card } from "@\/components\/ui\/Card"/);
   assert.match(
     clientSource,
@@ -29,11 +30,18 @@ test("joins one embedded gallery and details summary before the booking sibling"
     clientSource.indexOf("<HotelDetailsBookingPanel"),
   );
   assert.ok(propertyCard.indexOf("<HotelDetailsGallery") >= 0);
+  assert.match(propertyCard, /mode === "standalone" \? detailsHeader : null/);
+  assert.ok(
+    propertyCard.indexOf("detailsHeader") <
+      propertyCard.indexOf("<HotelDetailsGallery"),
+  );
   assert.ok(
     propertyCard.indexOf("<HotelDetailsSections") >
       propertyCard.indexOf("<HotelDetailsGallery"),
   );
   assert.equal(propertyCard.match(/\bembedded\b/g)?.length, 2);
+  assert.match(clientSource, /embedded=\{mode === "standalone"\}/);
+  assert.match(clientSource, /showBackLink=\{false\}/);
   assert.match(
     propertyCard,
     /shadow-\[0_12px_32px_-26px_rgba\(2,28,43,0\.32\)\]/,

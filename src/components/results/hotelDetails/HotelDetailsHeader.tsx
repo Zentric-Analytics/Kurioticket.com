@@ -32,6 +32,7 @@ type HotelDetailsHeaderProps = {
   showSave?: boolean;
   allowExternalAttribution?: boolean;
   headingRef?: RefObject<HTMLHeadingElement | null>;
+  embedded?: boolean;
 };
 
 export function HotelDetailsHeader({
@@ -60,9 +61,16 @@ export function HotelDetailsHeader({
   showSave = true,
   allowExternalAttribution = true,
   headingRef,
+  embedded = false,
 }: HotelDetailsHeaderProps) {
   return (
-    <header className="min-w-0 border-b border-border pb-6 sm:pb-8">
+    <header
+      className={
+        embedded
+          ? "min-w-0 px-5 pb-5 pt-5 sm:px-6 sm:pb-6 sm:pt-6"
+          : "min-w-0 border-b border-border pb-6 sm:pb-8"
+      }
+    >
       {showBackLink ? (
         <DetailsBackLink href={resultsHref}>
           {backToResultsText}
