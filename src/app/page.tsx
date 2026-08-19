@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -411,6 +412,7 @@ export default function Home() {
     Record<string, string>
   >({});
   const [savedItemError, setSavedItemError] = useState("");
+  const [carsResultsPending, setCarsResultsPending] = useState(false);
   const [destinationPriceState, setDestinationPriceState] =
     useState<DestinationPriceState>({
       loading: true,
@@ -1007,6 +1009,40 @@ export default function Home() {
     }
   };
 
+  const handleCarsResultsNavigationStart = useCallback(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    setCarsResultsPending(true);
+  }, []);
+
+  if (carsResultsPending) {
+    return (
+      <>
+        <AppHeader
+          flushDesktopBottom
+          flushMobileBottom
+          hideDesktopTravelNav
+          hideMobileCategoryTabs
+        />
+        <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+          <BrandedLoading
+            variant="fullscreen"
+            visual="logoPulse"
+            showProgress={false}
+            className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+            contentClassName="max-w-md text-center"
+            title={t("carsResults.loading.title")}
+            messages={[
+              t("carsResults.loading.checkingCarsAndRates"),
+              t("carsResults.loading.comparingVehiclesAndProviders"),
+              t("carsResults.loading.findingBestAvailableOptions"),
+              t("carsResults.loading.preparingResults"),
+            ]}
+          />
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <AppHeader hideMobileSecondaryNavLinks />
@@ -1054,6 +1090,7 @@ export default function Home() {
               compactHero
               mobileHomepage
               locale={locale}
+              onCarsResultsNavigationStart={handleCarsResultsNavigationStart}
             />
           </div>
 
@@ -1063,6 +1100,7 @@ export default function Home() {
                 t={t as unknown as Record<string, string>}
                 compactHero
                 locale={locale}
+                onCarsResultsNavigationStart={handleCarsResultsNavigationStart}
               />
             </div>
           </div>
