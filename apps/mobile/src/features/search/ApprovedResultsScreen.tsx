@@ -89,6 +89,7 @@ import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
+import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -284,32 +285,33 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       ? payload.departureDate
       : payload.checkIn || new Date().toISOString().slice(0, 10),
   );
-  const prices = sorted
-    .slice(0, 5)
-    .map((x) =>
-      product === "flight"
-        ? (x as FlightResult).price
-        : (x as HotelResult).pricePerNight!,
-    );
   const flightDisplayPrices = useMemo(() => {
     if (product !== "flight" || !currencyState) return new Map<string, DisplayPrice>();
-    return new Map((sorted as FlightResult[]).map((result) => [
+    return new Map((results as FlightResult[]).map((result) => [
       result.id,
       displayPrice(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates),
     ]));
-  }, [currencyState, product, sorted]);
-  const dateStripPrices = useMemo(
-    () => product === "flight"
-      ? sorted.slice(0, 5).map((result) => flightDisplayPrices.get(result.id))
-      : [],
-    [flightDisplayPrices, product, sorted],
-  );
+  }, [currencyState, product, results]);
+  const dateStripPriceByDate = useMemo(() => {
+    if (product === "flight") {
+      return buildPriceByDate((results as FlightResult[]).flatMap((result) => {
+        const departureDate = calendarIsoFromTimestamp(result.departureTime);
+        const displayed = flightDisplayPrices.get(result.id);
+        return departureDate && displayed ? [{
+          date: departureDate,
+          amount: displayed.amount,
+          formatted: displayed.formatted,
+          accessibilityLabel: displayed.formatted,
+        }] : [];
+      }));
+    }
+    const lowest = (sorted as HotelResult[])[0]?.pricePerNight;
+    return lowest == null ? {} : buildPriceByDate([{ date, amount: lowest }]);
+  }, [date, flightDisplayPrices, product, results, sorted]);
   const dateStrip = (
     <DateStrip
             date={date}
-            prices={prices}
-            formattedPrices={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
-            priceAccessibilityLabels={product === "flight" ? dateStripPrices.map((price) => price?.formatted) : undefined}
+            priceByDate={dateStripPriceByDate}
             flightResults={product === "flight"}
             onSelect={(v) =>
               router.setParams(

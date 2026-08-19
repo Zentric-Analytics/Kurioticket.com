@@ -39,7 +39,8 @@ test("date cards use soft native elevation and selected state only strengthens i
 });
 
 test("empty fares reserve the same price row and press behavior stays intact", () => {
-  assert.match(component, /const hasPrice = prices\[i\] != null/);
+  assert.match(component, /const price = priceByDate\[iso\]/);
+  assert.match(component, /const hasPrice = price != null/);
   assert.match(component, /hasPrice \|\| flightResults[\s\S]*?<Text/);
   assert.match(component, /hasPrice[\s\S]*?: ""/);
   assert.match(styles, /flightDatePrice: \{ width: "100%", height: 20/);

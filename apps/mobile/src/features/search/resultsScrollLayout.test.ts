@@ -37,12 +37,15 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
   const dateStrip = readFileSync(resolve("src/features/search/SearchUi.tsx"), "utf8");
 
   assert.match(screen, /flightDisplayPrices\.get\(result\.id\)/);
-  assert.match(screen, /dateStripPrices\.map\(\(price\) => price\?\.formatted\)/);
+  assert.match(screen, /date: departureDate,[\s\S]*?formatted: displayed\.formatted,[\s\S]*?accessibilityLabel: displayed\.formatted/);
+  assert.match(dateStrip, /const price = priceByDate\[iso\]/);
   assert.doesNotMatch(screen, /formatDateStripPrice/);
   assert.match(dateStrip, /flightResults && s\.flightDate/);
   assert.match(dateStrip, /flightDate: \{[\s\S]*?minWidth: 96,[\s\S]*?maxWidth: 116/);
   assert.match(dateStrip, /numberOfLines=\{1\}[\s\S]*?adjustsFontSizeToFit/);
   assert.match(dateStrip, /flightDate: \{[\s\S]*?height: 76/);
+  assert.match(dateStrip, /\{hasPrice \|\| flightResults \? \(/);
+  assert.match(dateStrip, /: ""\}/);
   assert.doesNotMatch(dateStrip, /ellipsizeMode="clip"/);
 });
 
