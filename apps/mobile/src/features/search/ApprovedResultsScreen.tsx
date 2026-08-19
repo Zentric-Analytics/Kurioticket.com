@@ -465,7 +465,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       {flightResults ? (
         <FlightResultsHeader
           route={`${String(payload.origin || "").toUpperCase()} ⇄ ${String(payload.destination || "").toUpperCase()}`}
-          metadata={`${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}  ·  ${payload.travelers} Traveler${payload.travelers === 1 ? "" : "s"}  ·  ${String(payload.cabinClass || "").replace(/-/g, " ")}`}
           onEdit={edit}
         />
       ) : (
@@ -521,11 +520,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
 
 function FlightResultsHeader({
   route,
-  metadata,
   onEdit,
 }: {
   route: string;
-  metadata: string;
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -546,7 +543,6 @@ function FlightResultsHeader({
         <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
           {route}
         </Text>
-        <Text style={[s0.sub, s0.flightHeaderMetadata, { color: theme.textSecondary }]}>{metadata}</Text>
       </View>
       <Pressable
         accessibilityRole="button"
@@ -1115,7 +1111,7 @@ const s0 = StyleSheet.create({
   editNarrow: { alignSelf: "flex-start" },
   flightHeader: {
     paddingHorizontal: 12,
-    paddingTop: 4,
+    paddingTop: 12,
     paddingBottom: 8,
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1130,7 +1126,6 @@ const s0 = StyleSheet.create({
   },
   flightHeaderRouteBlock: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
   flightHeaderRoute: { minWidth: 0 },
-  flightHeaderMetadata: { marginTop: 1 },
   flightHeaderEdit: {
     minWidth: 106,
     minHeight: 44,

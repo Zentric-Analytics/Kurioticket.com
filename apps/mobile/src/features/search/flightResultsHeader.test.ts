@@ -28,13 +28,13 @@ test("compact header keeps functional Back and Edit search controls", () => {
 });
 
 test("Back, route block, and Edit search form one ordered header row", () => {
-  assert.match(header, /accessibilityLabel="Go back"[\s\S]*?flightHeaderRouteBlock[\s\S]*?\{route\}[\s\S]*?\{metadata\}[\s\S]*?accessibilityLabel="Edit search"/);
+  assert.match(header, /accessibilityLabel="Go back"[\s\S]*?flightHeaderRouteBlock[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Edit search"/);
   assert.match(results, /flightHeader: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
   assert.match(results, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
 });
 
-test("route and metadata share a flexible block that cannot collide with Edit search", () => {
-  assert.match(header, /<View style=\{s0\.flightHeaderRouteBlock\}>[\s\S]*?<Text[^>]*flightHeaderRoute[\s\S]*?\{route\}[\s\S]*?<Text[^>]*flightHeaderMetadata[\s\S]*?\{metadata\}[\s\S]*?<\/View>/);
+test("route uses a flexible block that cannot collide with Edit search", () => {
+  assert.match(header, /<View style=\{s0\.flightHeaderRouteBlock\}>[\s\S]*?<Text[^>]*flightHeaderRoute[\s\S]*?\{route\}[\s\S]*?<\/View>/);
   assert.match(results, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
   assert.match(results, /flightHeaderRoute: \{ minWidth: 0 \}/);
   assert.match(results, /flightHeaderEdit: \{[\s\S]*?minWidth: 106,[\s\S]*?minHeight: 44,[\s\S]*?flexShrink: 0/);
@@ -45,8 +45,9 @@ test("route and metadata share a flexible block that cannot collide with Edit se
 
 test("short code title reclaims space so Back, route, and Edit search stay aligned", () => {
   assert.doesNotMatch(header, /stackEditSearch|flightHeaderRouteBlockStacked|flightHeaderEditStacked/);
-  assert.match(results, /flightHeader: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
+  assert.match(results, /flightHeader: \{[\s\S]*?flexDirection: "row"[\s\S]*?flexWrap: "wrap"[\s\S]*?alignItems: "center"/);
   assert.match(results, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
+  assert.doesNotMatch(results, /flightHeaderRoute:\s*\{[^}]*fontSize/);
 });
 
 test("route title uses uppercase codes directly from the current search payload", () => {
@@ -65,16 +66,17 @@ test("representative payload codes render without airport city lookups", () => {
   assert.equal(route("current-origin", "current-destination"), "CURRENT-ORIGIN ⇄ CURRENT-DESTINATION");
 });
 
-test("compact header spacing stays tight without changing the date strip", () => {
-  assert.match(results, /flightHeaderMetadata: \{ marginTop: 1 \}/);
-  assert.match(results, /flightHeader: \{[\s\S]*?paddingBottom: 8/);
+test("compact header adds modest spacing after the safe-area inset without changing the date strip", () => {
+  assert.match(results, /<SafeAreaView[^>]*edges=\{\["top"\]\}/);
+  assert.match(results, /flightHeader: \{[\s\S]*?paddingTop: 12,[\s\S]*?paddingBottom: 8/);
   assert.match(results, /<View>\{dateStrip\}<\/View>/);
   assert.match(results, /stickyHeaderIndices=\{\[1\]\}/);
 });
 
-test("flight metadata remains sourced and formatted exactly as before", () => {
-  assert.match(results, /metadata=\{`\$\{shortDate\(String\(payload\.departureDate \|\| ""\)\)\} – \$\{shortDate\(String\(payload\.returnDate \|\| ""\)\)\}  ·  \$\{payload\.travelers\} Traveler/);
-  assert.match(header, /\{metadata\}/);
+test("flight header omits date, traveler, and cabin metadata without moving it elsewhere", () => {
+  assert.doesNotMatch(header, /metadata|departureDate|returnDate|travelers|Traveler|cabinClass/);
+  assert.doesNotMatch(results, /<FlightResultsHeader[\s\S]*?metadata=/);
+  assert.match(results, /flightEditSearchParams\(params\)/, "Edit search retains the canonical values");
 });
 
 test("shared TopBar and Flight Details actions remain unchanged", () => {
@@ -89,7 +91,6 @@ test("shared TopBar and Flight Details actions remain unchanged", () => {
 test("compact header preserves themed colors and the existing bottom navigation", () => {
   assert.match(header, /backgroundColor: theme\.background/);
   assert.match(header, /color: theme\.textPrimary/);
-  assert.match(header, /color: theme\.textSecondary/);
   assert.match(header, /backgroundColor: theme\.surface, borderColor: theme\.border/);
   assert.match(results, /<BottomNav flightResults=\{flightResults\} \/>/);
 });
