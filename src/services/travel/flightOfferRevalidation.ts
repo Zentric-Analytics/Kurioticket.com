@@ -26,6 +26,23 @@ type RefreshOffer = (
   search: FlightSearchParams,
 ) => Promise<ProviderResult<NormalizedFlightResult>>;
 
+export type ExactFlightOfferRefreshOutcome = {
+  status:
+    | "confirmed"
+    | "changed"
+    | "expired"
+    | "unavailable"
+    | "temporary-failure"
+    | "invalid-selection";
+  offer?: NormalizedFlightResult;
+};
+
+export type RefreshExactFlightOffer = (input: {
+  cachedOffer: NormalizedFlightResult;
+  search: FlightSearchParams;
+  now: number;
+}) => Promise<ExactFlightOfferRefreshOutcome>;
+
 const providerConfirmsUnavailable = (
   response: ProviderResult<NormalizedFlightResult>,
 ) =>
@@ -34,15 +51,76 @@ const providerConfirmsUnavailable = (
   response.errorReason === "provider_no_inventory" ||
   response.errorReason === "provider_route_unavailable";
 
-const materiallyChanged = (
+export const flightOfferMateriallyChanged = (
   cached: NormalizedFlightResult,
   refreshed: NormalizedFlightResult,
 ) =>
   cached.price !== refreshed.price ||
   cached.currency !== refreshed.currency ||
   cached.cabinClass !== refreshed.cabinClass ||
+  cached.fareBrandName !== refreshed.fareBrandName ||
   cached.baggageInfo !== refreshed.baggageInfo ||
-  cached.refundInfo !== refreshed.refundInfo;
+  cached.refundInfo !== refreshed.refundInfo ||
+  cached.partnerRedirectUrl !== refreshed.partnerRedirectUrl ||
+  cached.bookingUrl !== refreshed.bookingUrl;
+
+const physicalItinerary = (offer: NormalizedFlightResult) =>
+  (offer.legs ?? []).map((leg) => JSON.stringify([
+    leg.direction,
+    leg.originAirport,
+    leg.destinationAirport,
+    leg.departureTime,
+    leg.arrivalTime,
+    leg.segments.map((segment) => [
+      segment.originAirport,
+      segment.destinationAirport,
+      segment.departureTime,
+      segment.arrivalTime,
+      segment.airlineName,
+      segment.flightNumber,
+    ]),
+  ])).join("|");
+
+export async function refreshExactFlightOffer({
+  cachedOffer,
+  search,
+  now,
+  refreshDuffelOffer = getDuffelFlightOffer,
+}: {
+  cachedOffer: NormalizedFlightResult;
+  search: FlightSearchParams;
+  now: number;
+  refreshDuffelOffer?: RefreshOffer;
+}): Promise<ExactFlightOfferRefreshOutcome> {
+  if (!isFlightProviderOfferUsableAt(cachedOffer, now))
+    return { status: "expired" };
+  if (!cachedOffer.providerOfferId)
+    return { status: "invalid-selection" };
+  if (cachedOffer.provider.trim().toLowerCase() !== "duffel")
+    return { status: "unavailable" };
+  const response = await refreshDuffelOffer(cachedOffer.providerOfferId, search);
+  if (response.status !== "success")
+    return {
+      status: providerConfirmsUnavailable(response)
+        ? "unavailable"
+        : "temporary-failure",
+    };
+  if (response.results.length !== 1) return { status: "unavailable" };
+  const refreshed = response.results[0];
+  if (!isFlightProviderOfferUsableAt(refreshed, now) || !refreshed.providerExpiresAt)
+    return { status: "expired" };
+  if (
+    !physicalItinerary(cachedOffer) ||
+    refreshed.providerOfferId !== cachedOffer.providerOfferId ||
+    physicalItinerary(refreshed) !== physicalItinerary(cachedOffer)
+  ) return { status: "invalid-selection" };
+  return {
+    status: flightOfferMateriallyChanged(cachedOffer, refreshed)
+      ? "changed"
+      : "confirmed",
+    offer: refreshed,
+  };
+}
 
 export async function revalidateFlightOffer({
   cachedOffer,
@@ -77,33 +155,28 @@ export async function revalidateFlightOffer({
   if (cachedOffer.provider.trim().toLowerCase() !== "duffel")
     return { status: "unavailable" };
 
-  const response = await refreshDuffelOffer(
-    cachedOffer.providerOfferId,
+  const exact = await refreshExactFlightOffer({
+    cachedOffer,
     search,
-  );
-  if (response.status !== "success")
+    now,
+    refreshDuffelOffer,
+  });
+  if (!exact.offer)
     return {
-      status: providerConfirmsUnavailable(response)
-        ? "unavailable"
-        : "temporary-failure",
+      status:
+        exact.status === "confirmed" || exact.status === "changed"
+          ? "unavailable"
+          : exact.status,
     };
-  if (response.results.length !== 1) return { status: "unavailable" };
-  const refreshed = response.results[0];
+  const refreshed = exact.offer;
   if (
-    !isFlightProviderOfferUsableAt(refreshed, now) ||
-    !refreshed.providerExpiresAt
-  )
-    return { status: "expired" };
-  if (
-    refreshed.providerOfferId !== cachedOffer.providerOfferId ||
     resolveDealsFlightOfferV2(
       [refreshed],
       outboundItineraryKey,
       returnItineraryKey,
       fareKey,
     ) !== refreshed
-  )
-    return { status: "invalid-selection" };
+  ) return { status: "invalid-selection" };
 
   const legs = refreshed.legs ?? [];
   const projectedLegs = legs.flatMap((leg) => {
@@ -129,12 +202,12 @@ export async function revalidateFlightOffer({
     refundInfo: refreshed.refundInfo,
     sourcePrice: refreshed.price,
     sourceCurrency: refreshed.currency,
-    offerExpiresAt: refreshed.providerExpiresAt,
+    offerExpiresAt: refreshed.providerExpiresAt!,
     selectedAt: now,
     validatedAt: now,
   };
   return {
-    status: materiallyChanged(cachedOffer, refreshed) ? "changed" : "confirmed",
+    status: exact.status === "changed" ? "changed" : "confirmed",
     offer,
   };
 }

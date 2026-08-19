@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
-import { getFlightFromCache, getHotelFromCache, replaceFlightInCache } from "@/lib/searchCache";
+import { getFlightFromCache, getHotelFromCache } from "@/lib/searchCache";
 import { withOptionalDb } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
-import type { NormalizedFlightResult, NormalizedHotelResult } from "@/lib/types";
+import type { NormalizedHotelResult } from "@/lib/types";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
-import { parseFlightDetailsSearch, searchRecordToParams } from "@/services/travel/flightDetailsSearchContext";
-import { revalidateStandaloneFlightOffer } from "@/services/travel/standaloneFlightOfferRevalidation";
+import type { NormalizedFlightResult } from "@/lib/types";
+import type { FlightHandoff } from "@/services/travel/flightHandoff";
+import { revalidateFlightRedirectHandoff } from "@/services/travel/flightRedirectHandoff";
 
 export async function POST(request: Request) {
   if (isStagingEnvironment()) {
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string; search?: unknown };
+  const body = (await request.json()) as { id?: string; type?: "flight" | "hotel"; sourcePage?: string };
   if (!body.id || !body.type) {
     return NextResponse.json({ error: "Redirect target is required." }, { status: 400 });
   }
@@ -30,14 +31,27 @@ export async function POST(request: Request) {
     );
   }
 
-  if (body.type === "flight" && body.sourcePage === "flight_details") {
-    const search = parseFlightDetailsSearch(searchRecordToParams(body.search));
-    if (!search)
-      return NextResponse.json({ error: "Complete flight search context is required to confirm this handoff." }, { status: 400 });
-    const outcome = await revalidateStandaloneFlightOffer({ cachedOffer: target as NormalizedFlightResult, search });
-    if (outcome.status !== "confirmed" && outcome.status !== "changed")
-      return NextResponse.json({ error: "The provider could not confirm this flight for handoff." }, { status: outcome.status === "temporary-failure" ? 503 : 409 });
-    target = replaceFlightInCache(body.id, outcome.flight);
+  let verifiedFlightHandoff: FlightHandoff | null = null;
+  if (body.type === "flight") {
+    const cachedFlight = target as NormalizedFlightResult;
+    const verified = await revalidateFlightRedirectHandoff({ cachedOffer: cachedFlight });
+    if (verified.status === "changed") {
+      return NextResponse.json(
+        {
+          code: "offer_changed",
+          error: "The provider updated this offer. Review the current details before continuing.",
+        },
+        { status: 409 },
+      );
+    }
+    if (verified.status !== "ready") {
+      return NextResponse.json(
+        { error: "Booking link currently unavailable." },
+        { status: 409 },
+      );
+    }
+    verifiedFlightHandoff = verified.handoff;
+    target = verified.offer;
   }
 
   const hotelTarget = body.type === "hotel" ? (target as NormalizedHotelResult) : null;
@@ -60,7 +74,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!target.partnerRedirectUrl && !target.bookingUrl) {
+  if (body.type !== "flight" && !target.partnerRedirectUrl && !target.bookingUrl) {
     return NextResponse.json(
       {
         error: "No external provider link is available for this result right now. Please choose another flight option.",
@@ -69,7 +83,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const url = new URL(target.partnerRedirectUrl || target.bookingUrl);
+  const url = body.type === "flight"
+    ? verifiedFlightHandoff!.url
+    : new URL(target.partnerRedirectUrl! || target.bookingUrl!);
   if (!["http:", "https:"].includes(url.protocol)) {
     return NextResponse.json({ error: "Unsafe redirect target." }, { status: 400 });
   }
@@ -89,7 +105,7 @@ export async function POST(request: Request) {
           data: {
             userId: session?.user?.id,
             type: body.type === "flight" ? "FLIGHT" : "HOTEL",
-            provider: target.provider,
+            provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider,
             route,
             price: "price" in target ? target.price : hotelPriceDetails?.totalPrice,
             currency: "price" in target ? target.currency : hotelPriceDetails?.currency,
@@ -107,7 +123,7 @@ export async function POST(request: Request) {
       userId: session?.user?.id,
       type: "REDIRECT",
       name: `${body.type}_partner_redirect`,
-      metadata: { provider: target.provider, route },
+      metadata: { provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider, route },
     }),
   ]);
 

@@ -4,6 +4,7 @@ import type {
   PublicFlightResult,
   PublicHotelResult,
 } from "@/lib/types";
+import type { FlightDetailsOffer } from "@/lib/flights/flightDetailsContract";
 import { buildFlightItineraryKey } from "@/services/travel/flightOfferInventory";
 
 type CacheRecord<T> = {
@@ -49,17 +50,6 @@ export function getFlightFromCache(id: string, now = Date.now()) {
   return flightCache.get(id)?.value ?? null;
 }
 
-export function replaceFlightInCache(
-  originalId: string,
-  refreshed: NormalizedFlightResult,
-  now = Date.now(),
-) {
-  flightCache.delete(originalId);
-  const stable = { ...refreshed, id: originalId };
-  rememberFlights([stable], now);
-  return stable;
-}
-
 export function getCompatibleFlightsFromCache(id: string, now = Date.now()) {
   purgeExpired(flightCache, now);
   const selected = flightCache.get(id)?.value;
@@ -92,6 +82,13 @@ export function toPublicFlight(
   delete publicResult.providerOfferId;
   delete publicResult.providerExpiresAt;
   return publicResult;
+}
+
+export function toFlightDetailsOffer(result: NormalizedFlightResult): FlightDetailsOffer {
+  const offer = { ...toPublicFlight(result) } as Partial<PublicFlightResult>;
+  delete offer.bookingUrl;
+  delete offer.partnerRedirectUrl;
+  return offer as FlightDetailsOffer;
 }
 
 export function toPublicHotel(

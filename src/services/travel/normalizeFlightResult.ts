@@ -91,6 +91,7 @@ function normalizeDuffelFlight(
     expires_at?: string;
     total_amount?: string;
     total_currency?: string;
+    fare_brand_name?: string;
     owner?: DuffelCarrier;
     conditions?: {
       change_before_departure?: {
@@ -120,7 +121,7 @@ function normalizeDuffelFlight(
         marketing_carrier_flight_number?: string;
         passengers?: Array<{
           cabin_class?: string;
-          fare_type?: string;
+          fare_brand_name?: string;
           baggages?: Array<{ type?: string; quantity?: number }>;
         }>;
       }>;
@@ -166,15 +167,18 @@ function normalizeDuffelFlight(
       ])
     : null;
   const cabinClass = formatDuffelCabin(first.passengers?.[0]?.cabin_class);
-  const currency = offer.total_currency?.trim().toUpperCase();
-  if (!cabinClass || !currency || !/^[A-Z]{3}$/.test(currency)) return null;
-  const fareBrandName = first.passengers?.[0]?.fare_type?.trim() || undefined;
+  const fareBrandName =
+    offer.fare_brand_name?.trim() ||
+    first.passengers?.[0]?.fare_brand_name?.trim() ||
+    undefined;
   const baggageInfo = buildDuffelBaggageInfo(
     first.passengers?.[0]?.baggages || offer.passengers?.[0]?.baggages,
   );
   const refundInfo = buildDuffelRefundInfo(offer.conditions);
   const price = Number(offer.total_amount);
-  if (!Number.isFinite(price)) return null;
+  const currency = offer.total_currency?.trim().toUpperCase();
+  if (!Number.isFinite(price) || price <= 0 || !currency || !/^[A-Z]{3}$/.test(currency))
+    return null;
 
   return buildFlight({
     provider: "Duffel",
@@ -324,15 +328,31 @@ function buildDuffelLegs(
             !segment.arriving_at ||
             !segment.origin?.iata_code ||
             !segment.destination?.iata_code ||
+            !(
+              segment.marketing_carrier?.name?.trim() ||
+              segment.operating_carrier?.name?.trim() ||
+              offer.owner?.name?.trim()
+            ) ||
             !Number.isFinite(Date.parse(segment.departing_at)) ||
-            !Number.isFinite(Date.parse(segment.arriving_at)),
+            !Number.isFinite(Date.parse(segment.arriving_at)) ||
+            Date.parse(segment.arriving_at) <= Date.parse(segment.departing_at),
         )
       )
         return null;
 
+      for (let segmentIndex = 1; segmentIndex < segments.length; segmentIndex += 1) {
+        const previous = segments[segmentIndex - 1];
+        const current = segments[segmentIndex];
+        if (
+          previous.destination?.iata_code?.toUpperCase() !== current.origin?.iata_code?.toUpperCase() ||
+          Date.parse(current.departing_at!) <= Date.parse(previous.arriving_at!)
+        ) return null;
+      }
+
       const durationMinutes =
         parseIsoDuration(slice.duration) ||
         estimateDuration(first.departing_at, last.arriving_at);
+      if (!durationMinutes) return null;
 
       return {
         direction: legDirection(index, search),
@@ -344,22 +364,21 @@ function buildDuffelLegs(
         durationMinutes,
         stops: Math.max(segments.length - 1, 0),
         layovers: buildDuffelLayovers(segments),
-        segments: segments
-          .filter((segment) => segment.departing_at && segment.arriving_at)
-          .map((segment) => {
+        segments: segments.map((segment) => {
             const carrier =
               segment.marketing_carrier?.iata_code ||
               segment.operating_carrier?.iata_code ||
               "";
+            const airlineName =
+              segment.marketing_carrier?.name ||
+              segment.operating_carrier?.name ||
+              offer.owner?.name;
             return {
               originAirport: segment.origin?.iata_code || "",
               destinationAirport: segment.destination?.iata_code || "",
               departureTime: segment.departing_at || "",
               arrivalTime: segment.arriving_at || "",
-              airlineName:
-                segment.marketing_carrier?.name ||
-                segment.operating_carrier?.name ||
-                offer.owner?.name,
+              airlineName,
               flightNumber:
                 `${carrier}${segment.marketing_carrier_flight_number || ""}`.trim(),
             };
@@ -370,11 +389,21 @@ function buildDuffelLegs(
 }
 
 function hasRequiredLegs(legs: FlightLeg[], search: FlightSearchParams) {
+  const expectedOrigin = search.origin.trim().toUpperCase();
+  const expectedDestination = search.destination.trim().toUpperCase();
+  const outbound = legs[0];
+  if (
+    !outbound ||
+    outbound.originAirport.toUpperCase() !== expectedOrigin ||
+    outbound.destinationAirport.toUpperCase() !== expectedDestination
+  ) return false;
   if (search.tripType === "round-trip") {
     return (
       legs.length === 2 &&
       legs[0]?.direction === "outbound" &&
-      legs[1]?.direction === "return"
+      legs[1]?.direction === "return" &&
+      legs[1].originAirport.toUpperCase() === expectedDestination &&
+      legs[1].destinationAirport.toUpperCase() === expectedOrigin
     );
   }
   if (search.tripType === "one-way")
@@ -422,7 +451,7 @@ function buildDuffelBaggageInfo(
   baggages?: Array<{ type?: string; quantity?: number }>,
 ) {
   if (!baggages?.length)
-    return "Baggage details are reviewed on the external provider site.";
+    return "Baggage details not supplied by the provider";
 
   const checked = baggages.find((bag) => bag.type === "checked");
   const carryOn = baggages.find((bag) => bag.type === "carry_on");
@@ -434,7 +463,7 @@ function buildDuffelBaggageInfo(
     );
   return parts.length
     ? parts.join(", ")
-    : "Baggage details are reviewed on the external provider site.";
+    : "Baggage details not supplied by the provider";
 }
 
 function buildDuffelRefundInfo(conditions?: {
@@ -475,7 +504,7 @@ function buildDuffelRefundInfo(conditions?: {
 
   return parts.length
     ? parts.join(". ")
-    : "Change and refund rules vary by fare and are reviewed externally.";
+    : "Change and refund rules not supplied by the provider";
 }
 
 function buildMetasearchPartnerUrl() {
