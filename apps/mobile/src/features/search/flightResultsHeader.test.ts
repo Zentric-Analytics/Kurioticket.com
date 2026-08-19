@@ -34,7 +34,7 @@ test("Back, route block, and Edit search form one ordered header row", () => {
 });
 
 test("route and metadata share a flexible block that cannot collide with Edit search", () => {
-  assert.match(header, /<View style=\{\[s0\.flightHeaderRouteBlock,[\s\S]*?<Text[^>]*flightHeaderRoute[\s\S]*?\{route\}[\s\S]*?<Text[^>]*flightHeaderMetadata[\s\S]*?\{metadata\}[\s\S]*?<\/View>/);
+  assert.match(header, /<View style=\{s0\.flightHeaderRouteBlock\}>[\s\S]*?<Text[^>]*flightHeaderRoute[\s\S]*?\{route\}[\s\S]*?<Text[^>]*flightHeaderMetadata[\s\S]*?\{metadata\}[\s\S]*?<\/View>/);
   assert.match(results, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
   assert.match(results, /flightHeaderRoute: \{ minWidth: 0 \}/);
   assert.match(results, /flightHeaderEdit: \{[\s\S]*?minWidth: 106,[\s\S]*?minHeight: 44,[\s\S]*?flexShrink: 0/);
@@ -43,31 +43,26 @@ test("route and metadata share a flexible block that cannot collide with Edit se
   assert.doesNotMatch(header, /<TopBar|height: 64/);
 });
 
-test("narrow screens wrap Edit search to a deliberate trailing position", () => {
-  assert.match(header, /const stackEditSearch = useWindowDimensions\(\)\.width < 500/);
-  assert.match(header, /stackEditSearch && s0\.flightHeaderRouteBlockStacked/);
-  assert.match(header, /stackEditSearch && s0\.flightHeaderEditStacked/);
-  assert.match(results, /flightHeader: \{[\s\S]*?flexWrap: "wrap"/);
-  assert.match(results, /flightHeaderRouteBlockStacked: \{ flexBasis: "75%", flexShrink: 0 \}/);
-  assert.match(results, /flightHeaderEditStacked: \{ marginLeft: "auto", marginTop: 4 \}/);
+test("short code title reclaims space so Back, route, and Edit search stay aligned", () => {
+  assert.doesNotMatch(header, /stackEditSearch|flightHeaderRouteBlockStacked|flightHeaderEditStacked/);
+  assert.match(results, /flightHeader: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
+  assert.match(results, /flightHeaderRouteBlock: \{ flexGrow: 1, flexShrink: 1, minWidth: 0 \}/);
 });
 
-test("complete realistic and long routes remain renderable without an ellipsis contract", () => {
-  const routes = [
-    "Lagos (LOS)  ⇄  Abuja (ABV)",
-    "Lagos (LOS)  ⇄  New York (JFK)",
-    "Los Angeles (LAX)  ⇄  F9",
-    "Los Angeles (LAX)  ⇄  London Heathrow (LHR)",
-    "Buenos Aires Ministro Pistarini (EZE)  ⇄  Bangkok Suvarnabhumi International (BKK)",
-  ];
-
-  for (const route of routes) {
-    assert.equal(route.includes("..."), false);
-    assert.ok(route.split("⇄")[1]?.trim(), `${route} keeps its complete destination`);
-  }
-  assert.match(results, /route=\{`\$\{airportLabel\(payload\.origin\)\}  ⇄  \$\{airportLabel\(payload\.destination\)\}`\}/);
+test("route title uses uppercase codes directly from the current search payload", () => {
+  assert.match(results, /route=\{`\$\{String\(payload\.origin \|\| ""\)\.toUpperCase\(\)\} ⇄ \$\{String\(payload\.destination \|\| ""\)\.toUpperCase\(\)\}`\}/);
+  assert.doesNotMatch(results, /route=\{`[^`]*airportLabel/);
   assert.match(results, /const airportLabel = \(code: unknown\)[\s\S]*?return airport \? `\$\{airport\.city\} \(\$\{value\}\)` : value;/);
-  assert.doesNotMatch(header, /numberOfLines|ellipsizeMode/);
+});
+
+test("representative payload codes render without airport city lookups", () => {
+  const route = (origin: unknown, destination: unknown) =>
+    `${String(origin || "").toUpperCase()} ⇄ ${String(destination || "").toUpperCase()}`;
+
+  assert.equal(route("los", "abv"), "LOS ⇄ ABV");
+  assert.equal(route("lax", "jfk"), "LAX ⇄ JFK");
+  assert.doesNotMatch(route("los", "abv"), /Lagos|Abuja|\(|\)/);
+  assert.equal(route("current-origin", "current-destination"), "CURRENT-ORIGIN ⇄ CURRENT-DESTINATION");
 });
 
 test("compact header spacing stays tight without changing the date strip", () => {
@@ -75,6 +70,11 @@ test("compact header spacing stays tight without changing the date strip", () =>
   assert.match(results, /flightHeader: \{[\s\S]*?paddingBottom: 8/);
   assert.match(results, /<View>\{dateStrip\}<\/View>/);
   assert.match(results, /stickyHeaderIndices=\{\[1\]\}/);
+});
+
+test("flight metadata remains sourced and formatted exactly as before", () => {
+  assert.match(results, /metadata=\{`\$\{shortDate\(String\(payload\.departureDate \|\| ""\)\)\} – \$\{shortDate\(String\(payload\.returnDate \|\| ""\)\)\}  ·  \$\{payload\.travelers\} Traveler/);
+  assert.match(header, /\{metadata\}/);
 });
 
 test("shared TopBar and Flight Details actions remain unchanged", () => {
