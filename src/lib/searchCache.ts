@@ -4,6 +4,7 @@ import type {
   PublicFlightResult,
   PublicHotelResult,
 } from "@/lib/types";
+import type { FlightDetailsOffer } from "@/lib/flights/flightDetailsContract";
 import { buildFlightItineraryKey } from "@/services/travel/flightOfferInventory";
 
 type CacheRecord<T> = {
@@ -81,6 +82,13 @@ export function toPublicFlight(
   delete publicResult.providerOfferId;
   delete publicResult.providerExpiresAt;
   return publicResult;
+}
+
+export function toFlightDetailsOffer(result: NormalizedFlightResult): FlightDetailsOffer {
+  const offer = { ...toPublicFlight(result) } as Partial<PublicFlightResult>;
+  delete offer.bookingUrl;
+  delete offer.partnerRedirectUrl;
+  return offer as FlightDetailsOffer;
 }
 
 export function toPublicHotel(

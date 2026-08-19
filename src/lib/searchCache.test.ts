@@ -4,6 +4,7 @@ import type { NormalizedFlightResult } from "./types";
 import {
   getFlightFromCache,
   rememberFlights,
+  toFlightDetailsOffer,
   toPublicFlight,
 } from "./searchCache";
 
@@ -36,6 +37,17 @@ const flight = (id: string, expiresAt: number): NormalizedFlightResult => ({
   travelEffortScore: 1,
   recommendationReasons: [],
   badges: [],
+});
+
+test("flight details projection also keeps server-owned handoff URLs private", () => {
+  const details = toFlightDetailsOffer({
+    ...flight("details", 15_000),
+    bookingUrl: "https://private.example/book",
+    partnerRedirectUrl: "https://private.example/redirect",
+  });
+  assert.equal("bookingUrl" in details, false);
+  assert.equal("partnerRedirectUrl" in details, false);
+  assert.equal("providerOfferId" in details, false);
 });
 
 test("flight cache is capped by provider expiry and skips already-expired offers", () => {
