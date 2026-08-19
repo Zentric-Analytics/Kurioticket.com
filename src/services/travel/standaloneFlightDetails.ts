@@ -143,12 +143,10 @@ export function validatesSearchContext(
 }
 
 function materialKey(offer: NormalizedFlightResult) {
-  return [
-    canonical(offer.fareBrandName || ""),
-    canonical(offer.cabinClass || ""),
-    canonical(offer.baggageInfo || ""),
-    canonical(offer.refundInfo || ""),
-  ].join("|");
+  const providerBrand = offer.fareBrandName?.trim();
+  return providerBrand
+    ? ["provider-brand", canonical(offer.provider), canonical(providerBrand)].join("|")
+    : ["exact-offer", canonical(offer.provider), offer.providerOfferId || offer.id].join("|");
 }
 
 function fareTerms(offer: NormalizedFlightResult) {
@@ -236,7 +234,11 @@ export async function buildStandaloneFlightDetails({
         : [],
     ),
   ];
-  const fareChoices = buildMaterialFareChoices(refreshedOffers);
+  const fareEligibleOffers = [
+    selectedOffer,
+    ...refreshedOffers.slice(1).filter((offer) => offer.fareBrandName?.trim()),
+  ];
+  const fareChoices = buildMaterialFareChoices(fareEligibleOffers);
   const initial =
     fareChoices.find(({ memberProviderOfferIds }) =>
       selectedOffer.providerOfferId &&

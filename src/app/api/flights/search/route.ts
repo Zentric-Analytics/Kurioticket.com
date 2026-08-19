@@ -121,7 +121,7 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({
-    ...classifyFlights(publicResults, aggregate.warnings, requestId),
+    ...classifyFlights(publicResults, parsed.data, aggregate.warnings, requestId),
     latencyMs: aggregate.latencyMs,
     performance: { ...performanceMetrics, beforeProviderMs, routeDurationMs },
   }, { headers: { "Server-Timing": serverTiming } });

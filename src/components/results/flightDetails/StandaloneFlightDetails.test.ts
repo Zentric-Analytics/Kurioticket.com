@@ -115,6 +115,24 @@ test("round trip preserves explicit outbound and return with their own carriers"
   assert.doesNotMatch(JSON.stringify(details), /providerOfferId|off_server_secret|rawProviderReference|partnerRedirectUrl|bookingUrl/);
 });
 
+test("standalone details do not show price-only unbranded alternatives as fare choices", async () => {
+  const selected = fixture();
+  const priceOnlyAlternative = fixture({
+    id: "duffel-price-only-alternative",
+    providerOfferId: "off_price_only_alternative",
+    price: 205,
+  });
+  const details = await buildStandaloneFlightDetails({
+    cachedSelected: selected,
+    cachedAlternatives: [selected, priceOnlyAlternative],
+    search,
+    now: 1,
+    refresh: async ({ cachedOffer }) => ({ status: "confirmed", offer: cachedOffer }),
+  });
+  assert.equal(details.status, "available");
+  if (details.status === "available") assert.equal(details.fareChoices.length, 1);
+});
+
 test("one-way is valid without a return while a round trip missing return fails closed", () => {
   const outboundOnly = fixture({ legs: [fixture().legs![0]] });
   assert.equal(validatesSearchContext(outboundOnly, { ...search, tripType: "one-way", returnDate: undefined }), true);
@@ -132,20 +150,20 @@ test("connecting segments remain ordered and provider-authored", async () => {
       { originAirport: "DFW", destinationAirport: "LAS", departureTime: "2027-02-10T11:20:00Z", arrivalTime: "2027-02-10T14:00:00Z", airlineName: "American Airlines", flightNumber: "AA456" },
     ],
   };
-  assert.deepEqual(connected.legs[0].segments.map(({ originAirport, destinationAirport }) => `${originAirport}-${destinationAirport}`), ["ORD-DFW", "DFW-LAS"]);
+  assert.deepEqual(connected.legs![0].segments.map(({ originAirport, destinationAirport }) => `${originAirport}-${destinationAirport}`), ["ORD-DFW", "DFW-LAS"]);
 });
 
-test("price-only duplicates collapse to the lowest exact live offer", () => {
+test("unbranded exact offers never acquire synthetic fare identity from matching copy", () => {
   const choices = buildMaterialFareChoices([
     fixture({ id: "one", providerOfferId: "one", price: 205 }),
     fixture({ id: "two", providerOfferId: "two", price: 198.1 }),
     fixture({ id: "three", providerOfferId: "three", price: 199.86 }),
   ]);
-  assert.equal(choices.length, 1);
-  assert.equal(choices[0].source.id, "two");
+  assert.equal(choices.length, 3);
+  assert.deepEqual(choices.map(({ source }) => source.id), ["two", "three", "one"]);
 });
 
-test("material baggage and refund differences create visible fare choices", () => {
+test("baggage and refund copy do not become provider fare-brand identity", () => {
   const choices = buildMaterialFareChoices([
     fixture(),
     fixture({ id: "refundable", providerOfferId: "refundable", baggageInfo: "1 checked bag included", refundInfo: "Refundable before departure", price: 240 }),
