@@ -75,7 +75,13 @@ export function Segments<T extends string>({
   onChange,
 }: {
   value: T;
-  options: readonly { value: T; label: string; icon?: FlowIconName }[];
+  options: readonly {
+    value: T;
+    label: string;
+    icon?: FlowIconName;
+    disabled?: boolean;
+    accessibilityHint?: string;
+  }[];
   onChange: (value: T) => void;
 }) {
   const ft = useFlowTheme();
@@ -85,17 +91,19 @@ export function Segments<T extends string>({
       style={[styles.segments, { borderBottomColor: ft.colors.border }]}
     >
       {options.map((item) => {
-        const selected = value === item.value;
+        const selected = !item.disabled && value === item.value;
         return (
           <Pressable
             key={item.value}
             accessibilityRole="tab"
-            accessibilityState={{ selected }}
+            accessibilityHint={item.accessibilityHint}
+            accessibilityState={{ selected, disabled: item.disabled }}
+            disabled={item.disabled}
             onPress={() => onChange(item.value)}
             style={({ pressed }) => [
               styles.segment,
               selected && styles.segmentActive,
-              pressed && ft.styles.pressed,
+              pressed && !item.disabled && ft.styles.pressed,
             ]}
           >
             {item.icon ? (
@@ -108,7 +116,7 @@ export function Segments<T extends string>({
             <Text
               style={[
                 styles.segmentText,
-                { color: ft.colors.text },
+                { color: item.disabled ? ft.colors.secondaryText : ft.colors.text },
                 selected && styles.segmentTextActive,
               ]}
             >
