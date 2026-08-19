@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const source = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+const carLocationAutocompleteSource = readFileSync(
+  "src/components/search/CarLocationAutocomplete.tsx",
+  "utf8",
+);
 const carsBranch = source.slice(source.lastIndexOf("<form onSubmit={onCarsSubmit}"));
 const returnLocationField = source.slice(
   source.indexOf("const carsReturnLocationField"),
@@ -24,6 +28,8 @@ test("homepage Cars search uses one responsive joined primary row", () => {
 });
 
 test("homepage Cars primary fields use summaries and the location autocomplete", () => {
+  assert.match(carsBranch, /<form onSubmit=\{onCarsSubmit\} autoComplete="off"/);
+  assert.match(carLocationAutocompleteSource, /autoComplete="off"[\s\S]*?aria-autocomplete="list"/);
   for (const label of [
     "carsSearch.pickupLocationLabel",
     "carsSearch.rentalDatesLabel",
