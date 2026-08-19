@@ -2253,11 +2253,13 @@ export function SearchTabs({
     formatCarsDate(carsValues.dropoffDate) ||
     translate("carsSearch.returnDateLabel") ||
     "Return date";
+  const carsDateRangeIsEmpty = !carsValues.pickupDate && !carsValues.dropoffDate;
+  const carsEmptyDateTextClassName = mobileHomepage && carsDateRangeIsEmpty ? "text-slate-950" : undefined;
   const carsDateSummary = (
     <>
-      <span className={carsValues.pickupDate ? "text-slate-900" : "text-slate-500"}>{carsPickupDateDisplay}</span>
-      <span className="text-slate-400"> — </span>
-      <span className={carsValues.dropoffDate ? "text-slate-900" : "text-slate-500"}>{carsReturnDateDisplay}</span>
+      <span className={carsEmptyDateTextClassName ?? (carsValues.pickupDate ? "text-slate-900" : "text-slate-500")}>{carsPickupDateDisplay}</span>
+      <span className={carsEmptyDateTextClassName ?? "text-slate-400"}> — </span>
+      <span className={carsEmptyDateTextClassName ?? (carsValues.dropoffDate ? "text-slate-900" : "text-slate-500")}>{carsReturnDateDisplay}</span>
     </>
   );
   const formatCarsTime = (value: string) => {
@@ -4380,7 +4382,7 @@ export function SearchTabs({
                 {mobileHomepage ? <button ref={carsPickupLauncherRef} id="homepage-cars-pickup" type="button" onClick={() => setCarsOpenPicker("pickup")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>
                   <span className="flex min-w-0 items-center gap-2">
                     <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
-                    <span className="truncate font-normal">{carsValues.pickupLocation || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</span>
+                    <span className={cn("truncate", carsValues.pickupLocation ? "font-normal" : "text-[16px] font-medium text-slate-500")}>{carsValues.pickupLocation || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</span>
                   </span>
                 </button> : null}
                 <div className={cn("relative", mobileHomepage && "hidden sm:block")}>
@@ -4390,7 +4392,7 @@ export function SearchTabs({
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
               {compactHero ? carsReturnLocationField : null}
-              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" desktopPlacement="auto" desktopDesiredHeight={430} leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false} valueClassName={mobileHomepage ? "font-medium" : undefined} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" desktopPlacement="auto" desktopDesiredHeight={430} leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false} valueClassName={mobileHomepage && carsDateRangeIsEmpty ? "text-[17px] font-normal leading-6 text-slate-950" : undefined} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsRentalDatePickerContent
                   dropoffDate={carsValues.dropoffDate}
                   formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)}
