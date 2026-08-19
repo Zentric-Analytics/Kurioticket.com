@@ -126,6 +126,7 @@ type SearchTabsProps = {
   compactHero?: boolean;
   mobileHomepage?: boolean;
   locale?: string;
+  onCarsResultsNavigationStart?: () => void;
 };
 
 const normalizeHomepageCalendarLocale = normalizeFlightsCalendarLocale;
@@ -532,6 +533,7 @@ export function SearchTabs({
   compactHero = false,
   mobileHomepage = false,
   locale,
+  onCarsResultsNavigationStart,
 }: SearchTabsProps) {
   const {
     locale: activeLocale,
@@ -2198,10 +2200,15 @@ export function SearchTabs({
       driverAge: carsValues.driverAge,
       dropoffLocation,
     });
+    if (carsValues.returnToDifferentLocation) {
+      params.set("returnToDifferentLocation", "1");
+    }
 
+    const href = `/cars/results?${params.toString()}`;
     setIsCarsSubmitting(true);
+    onCarsResultsNavigationStart?.();
     startRouteProgress();
-    router.push(`/cars/results?${params.toString()}`);
+    router.push(href);
   };
 
   const isCarsSearchDisabled =

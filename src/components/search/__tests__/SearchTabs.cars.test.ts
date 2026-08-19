@@ -181,5 +181,26 @@ test("Cars results URL retains every required parameter and validation", () => {
   for (const parameter of ["pickupLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge", "dropoffLocation"]) {
     assert.ok(submit.includes(parameter), parameter);
   }
-  assert.match(submit, /router\.push\(`\/cars\/results\?\$\{params\.toString\(\)\}`\)/);
+  assert.match(submit, /params\.set\("returnToDifferentLocation", "1"\)/);
+  assert.match(submit, /const href = `\/cars\/results\?\$\{params\.toString\(\)\}`/);
+  assert.match(submit, /router\.push\(href\)/);
+});
+
+test("valid Cars submission signals page pending only after validation and href construction", () => {
+  const submit = source.slice(source.indexOf("const onCarsSubmit"), source.indexOf("const isCarsSearchDisabled"));
+  const validationIndex = submit.indexOf("validateCarsForm");
+  const invalidReturnIndex = submit.indexOf("if (Object.values(nextErrors).some(Boolean))");
+  const hrefIndex = submit.indexOf("const href = `/cars/results?${params.toString()}`");
+  const submittingIndex = submit.indexOf("setIsCarsSubmitting(true)");
+  const pendingIndex = submit.indexOf("onCarsResultsNavigationStart?.()");
+  const progressIndex = submit.indexOf("startRouteProgress()");
+  const navigationIndex = submit.indexOf("router.push(href)");
+
+  assert.ok(validationIndex < invalidReturnIndex);
+  assert.ok(invalidReturnIndex < hrefIndex);
+  assert.ok(hrefIndex < submittingIndex);
+  assert.ok(submittingIndex < pendingIndex);
+  assert.ok(pendingIndex < progressIndex);
+  assert.ok(progressIndex < navigationIndex);
+  assert.doesNotMatch(submit, /setTimeout|sleep|delay\(/);
 });
