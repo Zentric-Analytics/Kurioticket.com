@@ -3,7 +3,7 @@ import type { MobileTranslationKey } from "../../localization/mobileLocalization
 
 export type ProfileDestination =
   | { kind: "native"; href: "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/(tabs)/trips" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" }
-  | { kind: "external"; href: string };
+  | { kind: "external"; href: "/terms" | "/privacy" };
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
 
@@ -25,5 +25,9 @@ export const authenticatedProfileSections: ProfileSection[] = [
   { title: "helpSupport", items: [
     { label: "contactSupport", icon: "headset", destination: { kind: "native", href: "/support" } },
     { label: "faq", icon: "help", destination: { kind: "native", href: "/faq" } },
+  ] },
+  { title: "aboutLegal", items: [
+    { label: "terms", icon: "document", destination: { kind: "external", href: "/terms" } },
+    { label: "privacy", icon: "shield", destination: { kind: "external", href: "/privacy" } },
   ] },
 ];
