@@ -31,6 +31,9 @@ import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerS
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
+import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
+import type { FlightSearchLeg } from "@/lib/types";
+import { appendFlightLegParams, parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
 import {
   formatFlightsDateSummary,
   formatFlightsMonthHeading,
@@ -56,8 +59,8 @@ import {
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
-type TripType = "round-trip" | "one-way";
-type MobileTripTypeOption = TripType | "multi-city";
+type TripType = "round-trip" | "one-way" | "multi-city";
+type MobileTripTypeOption = TripType;
 type CabinClass = "economy" | "business" | "first";
 type AirportField = "origin" | "destination";
 type MobilePickerField = AirportField | "dates" | "travelers";
@@ -252,7 +255,11 @@ export function StandaloneFlightSearchForm({
   const travelersLauncherRef = useRef<HTMLButtonElement>(null);
   const travelPreferencesRequestedRef = useRef(false);
 
-  const [tripType, setTripType] = useState<TripType>("round-trip");
+  const [tripType, setTripType] = useState<TripType>(() => {
+    if (typeof window === "undefined") return "round-trip";
+    const value = new URLSearchParams(window.location.search).get("tripType");
+    return value === "one-way" || value === "multi-city" ? value : "round-trip";
+  });
   const [originState, setOriginState] = useState<OriginFieldState>(() => {
     if (typeof window === "undefined") {
       return {
@@ -288,6 +295,16 @@ export function StandaloneFlightSearchForm({
   const [countryHint, setCountryHint] = useState("");
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
+  const [multiCityLegs, setMultiCityLegs] = useState<FlightSearchLeg[]>(() => {
+    if (typeof window !== "undefined") {
+      const restored = parseFlightLegParams(new URLSearchParams(window.location.search));
+      if (restored.length >= 2) return restored;
+    }
+    return [
+      { origin: "", destination: "", departureDate: "" },
+      { origin: "", destination: "", departureDate: "" },
+    ];
+  });
   const [datesOpen, setDatesOpen] = useState(false);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const now = new Date();
@@ -334,12 +351,12 @@ export function StandaloneFlightSearchForm({
       isValidFlightDate(departureDate) &&
       returnDate >= departureDate);
 
-  const isSearchDisabled =
-    isSubmitting ||
-    !origin.trim() ||
-    !destination.trim() ||
-    !isValidFlightDate(departureDate) ||
-    !isReturnRangeValid;
+  const validMultiCity = multiCityLegs.length >= 2 && multiCityLegs.every((leg, index) =>
+    /^[A-Z0-9]{3}$/.test(leg.origin) && /^[A-Z0-9]{3}$/.test(leg.destination) && leg.origin !== leg.destination && isValidFlightDate(leg.departureDate) && (index === 0 || leg.departureDate >= multiCityLegs[index - 1].departureDate),
+  );
+  const isSearchDisabled = isSubmitting || (tripType === "multi-city"
+    ? !validMultiCity
+    : !origin.trim() || !destination.trim() || !isValidFlightDate(departureDate) || !isReturnRangeValid);
 
   const dateSummary = useMemo(() => {
     const departureSummary = departureParsed
@@ -919,8 +936,7 @@ export function StandaloneFlightSearchForm({
 
     if (
       isSearchDisabled ||
-      !parsedDeparture ||
-      isBeforeToday(parsedDeparture) ||
+      (tripType !== "multi-city" && (!parsedDeparture || isBeforeToday(parsedDeparture))) ||
       hasInvalidReturn
     )
       return;
@@ -939,11 +955,14 @@ export function StandaloneFlightSearchForm({
     );
     const normalizedTravelers =
       normalizedAdults + normalizedChildren + normalizedInfants;
+    const authoritativeLegs = tripType === "multi-city" ? multiCityLegs : [];
+    const firstLeg = authoritativeLegs[0];
+    const finalLeg = authoritativeLegs.at(-1);
     const params = new URLSearchParams({
       tripType,
-      origin: originCode || origin.trim(),
-      destination: destinationCode || destination.trim(),
-      departureDate,
+      origin: tripType === "multi-city" ? firstLeg?.origin ?? "" : originCode || origin.trim(),
+      destination: tripType === "multi-city" ? finalLeg?.destination ?? "" : destinationCode || destination.trim(),
+      departureDate: tripType === "multi-city" ? firstLeg?.departureDate ?? "" : departureDate,
       adults: String(normalizedAdults),
       children: String(normalizedChildren),
       infants: String(normalizedInfants),
@@ -952,6 +971,7 @@ export function StandaloneFlightSearchForm({
     });
 
     if (tripType === "round-trip") params.set("returnDate", returnDate);
+    if (tripType === "multi-city") appendFlightLegParams(params, authoritativeLegs);
 
     setIsSubmitting(true);
     startRouteProgress();
@@ -1468,16 +1488,8 @@ export function StandaloneFlightSearchForm({
               type="button"
               role="radio"
               aria-checked={tripType === value}
-              aria-disabled={value === "multi-city"}
-              disabled={value === "multi-city"}
-              title={
-                value === "multi-city"
-                  ? t("multiCityComingSoon") || "Multi-city search coming soon"
-                  : undefined
-              }
               onClick={() => {
-                if (value === "multi-city") return;
-                const nextTripType = value as TripType;
+                const nextTripType = value;
                 setTripType(nextTripType);
                 if (nextTripType === "one-way") setReturnDate("");
               }}
@@ -1492,8 +1504,10 @@ export function StandaloneFlightSearchForm({
                 }
 
                 event.preventDefault();
-                const nextTripType =
-                  value === "round-trip" ? "one-way" : "round-trip";
+                const options: TripType[] = ["round-trip", "one-way", "multi-city"];
+                const currentIndex = options.indexOf(value);
+                const offset = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+                const nextTripType = options[(currentIndex + offset + options.length) % options.length];
                 setTripType(nextTripType);
                 if (nextTripType === "one-way") setReturnDate("");
               }}
@@ -1537,8 +1551,10 @@ export function StandaloneFlightSearchForm({
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px] lg:items-stretch lg:gap-0">
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent">
+        {tripType === "multi-city" ? <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(todayLocal)} /> : null}
+
+        <div className={cn("grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:items-stretch lg:gap-0", tripType === "multi-city" ? "mt-3 sm:grid-cols-[minmax(164px,1fr)_136px]" : "lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]")}>
+          <div className={cn("grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent", tripType === "multi-city" && "hidden")}>
             <AirportFieldControl
               ref={originWrapRef}
               inputRef={originInputRef}
@@ -1620,7 +1636,7 @@ export function StandaloneFlightSearchForm({
 
           <div
             ref={dateWrapRef}
-            className={cn(searchFieldShellClassName, datesOpen && "sm:z-20")}
+            className={cn(searchFieldShellClassName, datesOpen && "sm:z-20", tripType === "multi-city" && "!hidden")}
           >
             <label className={searchFieldLabelClassName}>
               {t("travelDates")}

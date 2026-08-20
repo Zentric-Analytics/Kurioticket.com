@@ -41,7 +41,7 @@ export function rememberFlights(
     flightCache.set(result.id, { value: result, expiresAt });
     if (search)
       flightSearchCache.set(result.id, {
-        value: { ...search },
+        value: { ...search, ...(search.legs ? { legs: search.legs.map((leg) => ({ ...leg })) } : {}) },
         expiresAt,
       });
     else flightSearchCache.delete(result.id);
@@ -64,7 +64,7 @@ export function getFlightFromCache(id: string, now = Date.now()) {
 export function getFlightSearchFromCache(id: string, now = Date.now()) {
   purgeExpired(flightSearchCache, now);
   const search = flightSearchCache.get(id)?.value;
-  return search ? { ...search } : null;
+  return search ? { ...search, ...(search.legs ? { legs: search.legs.map((leg) => ({ ...leg })) } : {}) } : null;
 }
 
 export function getCompatibleFlightsFromCache(id: string, now = Date.now()) {

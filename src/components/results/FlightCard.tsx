@@ -712,7 +712,9 @@ function buildFlightDetails(
 function formatLegTitle(leg: FlightLeg, t: (key: string) => string) {
   if (leg.direction === "return") return t("return");
   if (leg.direction === "outbound") return t("outbound");
-  return t("flightLeg");
+  return leg.legIndex === undefined
+    ? t("flightLeg")
+    : (t("flightMultiCity.flight") || "Flight {{number}}").replace("{{number}}", String(leg.legIndex + 1));
 }
 
 function formatStopsLabel(stops: number, t: (key: string) => string) {

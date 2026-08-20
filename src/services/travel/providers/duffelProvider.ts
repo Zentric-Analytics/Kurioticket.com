@@ -9,6 +9,7 @@ import type {
   NormalizedFlightResult,
   ProviderResult,
 } from "@/lib/types";
+import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
 import {
@@ -105,20 +106,11 @@ export const duffelOfferRequestSearchUrl = (view?: "itineraries") => {
 };
 
 export const duffelSearchBody = (search: FlightSearchParams) => {
-  const slices = [
-    {
-      origin: sanitizeAirportCode(search.origin),
-      destination: sanitizeAirportCode(search.destination),
-      departure_date: search.departureDate,
-    },
-  ];
-  if (search.tripType === "round-trip" && search.returnDate) {
-    slices.push({
-      origin: sanitizeAirportCode(search.destination),
-      destination: sanitizeAirportCode(search.origin),
-      departure_date: search.returnDate,
-    });
-  }
+  const slices = getSearchLegs(search).map((leg) => ({
+    origin: sanitizeAirportCode(leg.origin),
+    destination: sanitizeAirportCode(leg.destination),
+    departure_date: leg.departureDate,
+  }));
   return {
     data: {
       slices,

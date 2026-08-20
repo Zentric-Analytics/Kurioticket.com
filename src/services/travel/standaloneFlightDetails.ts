@@ -11,6 +11,7 @@ import type {
   NormalizedFlightResult,
   ProviderResult,
 } from "@/lib/types";
+import { getSearchLegs, parseFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 import {
   buildFlightItineraryKey,
   isFlightProviderOfferUsableAt,
@@ -40,17 +41,19 @@ export function parseFlightDetailsSearch(
   const destination = params.get("destination")?.trim().toUpperCase() || "";
   const departureDate = params.get("departureDate")?.trim() || "";
   const returnDate = params.get("returnDate")?.trim() || undefined;
+  const parsedLegs = tripType === "multi-city" ? parseFlightLegParams(params) : [];
   const cabinClass = params.get("cabinClass") as CabinClass | null;
   const adults = strictCount(params.get("adults"), 1);
   const children = strictCount(params.get("children"), 0);
   const infants = strictCount(params.get("infants"), 0);
   if (
-    (tripType !== "one-way" && tripType !== "round-trip") ||
+    (tripType !== "one-way" && tripType !== "round-trip" && tripType !== "multi-city") ||
     !/^[A-Z0-9]{3}$/.test(origin) ||
     !/^[A-Z0-9]{3}$/.test(destination) ||
     origin === destination ||
     !isDate(departureDate) ||
     (tripType === "round-trip" && (!returnDate || !isDate(returnDate))) ||
+    (tripType === "multi-city" && (parsedLegs.length < 2 || parsedLegs.some((leg, index) => !/^[A-Z0-9]{3}$/.test(leg.origin) || !/^[A-Z0-9]{3}$/.test(leg.destination) || leg.origin === leg.destination || !isDate(leg.departureDate) || (index > 0 && leg.departureDate < parsedLegs[index - 1].departureDate)))) ||
     !cabinClass ||
     !cabins.has(cabinClass) ||
     adults === null ||
@@ -60,11 +63,7 @@ export function parseFlightDetailsSearch(
     infants > adults
   ) return null;
   return {
-    tripType,
-    origin,
-    destination,
-    departureDate,
-    ...(tripType === "round-trip" ? { returnDate } : {}),
+    ...(tripType === "multi-city" ? projectSearchLegs(tripType, parsedLegs) : { tripType, origin, destination, departureDate, ...(tripType === "round-trip" ? { returnDate } : {}) }),
     adults,
     children,
     infants,
@@ -83,15 +82,17 @@ export function deriveFlightSearchFromOffer(
   const legs = offer.legs ?? [];
   const outbound = legs[0];
   const returnLeg = legs[1];
-  if (!outbound || (legs.length !== 1 && legs.length !== 2)) return null;
+  if (!outbound || !legs.length) return null;
   const cabin = canonical(offer.cabinClass).replace(/ /g, "-") as CabinClass;
   if (!cabins.has(cabin)) return null;
+  const tripType = legs.length === 1 ? "one-way" : legs.length === 2 && returnLeg?.originAirport === outbound.destinationAirport && returnLeg.destinationAirport === outbound.originAirport ? "round-trip" : "multi-city";
   return {
-    tripType: legs.length === 2 ? "round-trip" : "one-way",
+    tripType,
+    legs: legs.map((leg) => ({ origin: leg.originAirport.toUpperCase(), destination: leg.destinationAirport.toUpperCase(), departureDate: leg.departureTime.slice(0, 10) })),
     origin: outbound.originAirport.toUpperCase(),
     destination: outbound.destinationAirport.toUpperCase(),
     departureDate: outbound.departureTime.slice(0, 10),
-    ...(returnLeg ? { returnDate: returnLeg.departureTime.slice(0, 10) } : {}),
+    ...(tripType === "round-trip" && returnLeg ? { returnDate: returnLeg.departureTime.slice(0, 10) } : {}),
     adults: 1,
     children: 0,
     infants: 0,
@@ -126,18 +127,13 @@ export function validatesSearchContext(
   { allowDifferentCabin = false }: { allowDifferentCabin?: boolean } = {},
 ) {
   const legs = offer.legs ?? [];
-  const expectedCount = search.tripType === "round-trip" ? 2 : 1;
+  const requestedLegs = getSearchLegs(search);
+  const expectedCount = requestedLegs.length;
   if (
     legs.length !== expectedCount ||
-    legs[0]?.direction !== "outbound" ||
-    (expectedCount === 2 && legs[1]?.direction !== "return") ||
-    legs[0]?.originAirport.toUpperCase() !== search.origin ||
-    legs[0]?.destinationAirport.toUpperCase() !== search.destination ||
-    legs[0]?.departureTime.slice(0, 10) !== search.departureDate ||
-    (expectedCount === 2 &&
-      (legs[1]?.originAirport.toUpperCase() !== search.destination ||
-        legs[1]?.destinationAirport.toUpperCase() !== search.origin ||
-        legs[1]?.departureTime.slice(0, 10) !== search.returnDate)) ||
+    (search.tripType !== "multi-city" && legs[0]?.direction !== "outbound") ||
+    (search.tripType === "round-trip" && legs[1]?.direction !== "return") ||
+    requestedLegs.some((requested, index) => legs[index]?.originAirport.toUpperCase() !== requested.origin.toUpperCase() || legs[index]?.destinationAirport.toUpperCase() !== requested.destination.toUpperCase() || legs[index]?.departureTime.slice(0, 10) !== requested.departureDate) ||
     !Number.isFinite(offer.price) ||
     offer.price <= 0 ||
     !/^[A-Z]{3}$/.test(offer.currency)
@@ -326,7 +322,8 @@ export async function buildStandaloneFlightDetails({
       : { available: false },
     revalidation: { status: selected.status === "changed" ? "changed" : "confirmed" },
     search: {
-      tripType: search.tripType === "round-trip" ? "round-trip" : "one-way",
+      tripType: search.tripType,
+      legs: getSearchLegs(search),
       departureDate: search.departureDate,
       ...(search.returnDate ? { returnDate: search.returnDate } : {}),
       adults: search.adults,

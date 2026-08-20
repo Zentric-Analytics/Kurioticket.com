@@ -2,8 +2,16 @@ export type TripType = "round-trip" | "one-way" | "multi-city";
 export type CabinClass = "economy" | "premium-economy" | "business" | "first";
 export type SortMode = "cheapest" | "best" | "fastest" | "stops";
 
+export type FlightSearchLeg = {
+  origin: string;
+  destination: string;
+  departureDate: string;
+};
+
 export type FlightSearchParams = {
   tripType: TripType;
+  /** Authoritative journey representation. Legacy fields below are projections. */
+  legs?: FlightSearchLeg[];
   origin: string;
   destination: string;
   departureDate: string;
@@ -91,6 +99,7 @@ export type FlightCabinDetails = {
 export type FlightProviderCondition = {
   category: "change" | "refund" | "priority-check-in" | "priority-boarding" | "advance-seat-selection";
   scope: "trip" | FlightLeg["direction"];
+  legIndex?: number;
   state: "allowed" | "not-allowed" | "unknown";
   penaltyAmount?: number;
   penaltyCurrency?: string;
@@ -134,6 +143,7 @@ export type FlightProviderDetails = {
 
 export type FlightLeg = {
   direction: "outbound" | "return" | "leg";
+  legIndex?: number;
   originAirport: string;
   destinationAirport: string;
   departureTime: string;
@@ -152,6 +162,7 @@ export type FlightFareTerm = {
   semantic: "positive" | "negative" | "informational";
   text: string;
   legDirection?: FlightLeg["direction"];
+  legIndex?: number;
 };
 
 export type NormalizedFlightResult = {

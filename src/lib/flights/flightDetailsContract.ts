@@ -1,4 +1,4 @@
-import type { FlightFareTerm, PublicFlightResult } from "@/lib/types";
+import type { FlightFareTerm, FlightSearchLeg, PublicFlightResult, TripType } from "@/lib/types";
 
 export type FlightDetailsOffer = Omit<
   PublicFlightResult,
@@ -25,7 +25,8 @@ export type FlightDetailsSuccess = {
   handoff: FlightDetailsHandoff;
   revalidation: { status: "confirmed" | "changed" };
   search: {
-    tripType: "one-way" | "round-trip";
+    tripType: TripType;
+    legs: FlightSearchLeg[];
     departureDate: string;
     returnDate?: string;
     adults: number;
