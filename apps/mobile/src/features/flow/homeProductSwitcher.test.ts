@@ -49,9 +49,9 @@ test("Home keeps its hero and surrounding discovery content around the switchabl
 });
 
 test("Home and the Packages route share one extracted package builder", () => {
-  assert.match(products, /export function PackagesSearchPanel\(\{/);
+  assert.match(products, /export function PackagesSearchPanel\(/);
   assert.match(products, /export function DealsScreen\(\)[\s\S]*?<PackagesSearchPanel \/>/);
-  assert.equal((products.match(/const dealTabs:/g) ?? []).length, 1);
+  assert.equal((products.match(/packageModes\.filter/g) ?? []).length, 1);
   assert.equal((products.match(/function dealTabAvailable/g) ?? []).length, 1);
   assert.doesNotMatch(home, /dealTabs|dealTabAvailable|includesFlight|includesHotel|includesCar/);
 });

@@ -53,6 +53,6 @@ test("package destination uses customer-facing copy while preserving internal mo
   assert.match(products, /Packages are temporarily unavailable/);
   assert.doesNotMatch(products, /title="Deals"|Checking Deals availability|Deals are temporarily unavailable/);
   assert.match(products, /export function DealsScreen/);
-  assert.match(products, /type DealTab/);
+  assert.match(products, /type PackageMode/);
   assert.match(products, /availability\.deals/);
 });

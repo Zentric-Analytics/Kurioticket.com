@@ -7,7 +7,7 @@ import { useFlowTheme } from "./flowStyles";
 import { localDateFromIso, localIsoDate } from "./localDateModel";
 import { formatTime, selectRentalRangeDate, timeOptions } from "./carSearchModel";
 
-export function CarRentalDatesSheet({ visible, pickupDate, returnDate, onDone, onCancel }: { visible: boolean; pickupDate: string; returnDate: string; onDone: (pickupDate: string, returnDate: string) => void; onCancel: () => void }) {
+export function CarRentalDatesSheet({ visible, pickupDate, returnDate, title = "Rental dates", onDone, onCancel }: { visible: boolean; pickupDate: string; returnDate: string; title?: string; onDone: (pickupDate: string, returnDate: string) => void; onCancel: () => void }) {
   const ft = useFlowTheme();
   const today = localIsoDate(new Date());
   const [draftPickup, setDraftPickup] = useState("");
@@ -27,7 +27,7 @@ export function CarRentalDatesSheet({ visible, pickupDate, returnDate, onDone, o
     <View style={styles.modalRoot}>
       <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: ft.colors.overlay }]} accessibilityRole="button" accessibilityLabel="Cancel rental date changes" onPress={onCancel}/>
       <SafeAreaView edges={["bottom"]} style={styles.safeLayer} pointerEvents="box-none"><View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: ft.colors.surface }]}>
-        <Text accessibilityRole="header" style={ft.styles.title}>Rental dates</Text>
+        <Text accessibilityRole="header" style={ft.styles.title}>{title}</Text>
         <View style={styles.rangeHeader}><RangeValue label="Pick-up date" value={draftPickup} /><RangeValue label="Return date" value={draftReturn} /></View>
         <View style={styles.monthRow}><Pressable accessibilityRole="button" accessibilityLabel="Previous month" accessibilityState={{disabled:!canGoBack}} disabled={!canGoBack} onPress={() => setMonthOffset((value) => value - 1)} style={[styles.monthControl,!canGoBack&&styles.disabled]}><Text style={[styles.controlText,{color:ft.colors.text}]}>‹</Text></Pressable><Text accessibilityRole="header" style={[styles.month,{color:ft.colors.text}]}>{month.toLocaleDateString(undefined,{month:"long",year:"numeric"})}</Text><Pressable accessibilityRole="button" accessibilityLabel="Next month" onPress={() => setMonthOffset((value) => value + 1)} style={[styles.monthControl,{borderColor:ft.colors.border}]}><Text style={[styles.controlText,{color:ft.colors.text}]}>›</Text></Pressable></View>
         <View style={styles.week}>{["S","M","T","W","T","F","S"].map((day,index)=><Text key={`${day}-${index}`} style={[styles.weekday,{color:ft.colors.secondaryText}]}>{day}</Text>)}</View>
