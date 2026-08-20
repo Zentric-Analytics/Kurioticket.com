@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import {
-  Animated,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,15 +18,14 @@ import {
 import { HotelSearchPanel, type HotelSearchHandle } from "./HotelSearchPanel";
 import { CarSearchPanel } from "./CarSearchPanel";
 import {
-  Field,
-  PrimaryButton,
-  Segments,
   UnavailableNotice,
 } from "./FlowPrimitives";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { ResponsiveHero } from "./ResponsiveHero";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
+import { PackageSearchForm } from "./PackageSearchForm";
+import { packageModes, type PackageMode } from "./packageSearchModel";
 
 function UnavailableProduct({ title, text }: { title: string; text: string }) {
   return <SafeAreaView style={flowStyles.safe}><View style={flowStyles.scroll}><Text accessibilityRole="header" style={flowStyles.title}>{title}</Text><UnavailableNotice text={text} /></View></SafeAreaView>;
@@ -286,15 +283,7 @@ export function CarsScreen() {
   );
 }
 
-type DealTab = "hotel-flight" | "hotel-flight-car" | "hotel-car" | "flight-car";
-// Theme-aware formatting keeps these test anchors stable: <FlightSearchPanel embedded <HotelSearchPanel embedded <CarSearchPanel embedded FlightSearchPanel embedded showSubmit={false} HotelSearchPanel embedded showSubmit={!includesCar} submitLabel="Search package" CarSearchPanel embedded showSubmit submitLabel="Search package"
-const dealTabs: { value: DealTab; label: string }[] = [
-  { value: "hotel-flight", label: "Hotel + Flight" },
-  { value: "hotel-flight-car", label: "Hotel + Flight + Car" },
-  { value: "hotel-car", label: "Hotel + Car" },
-  { value: "flight-car", label: "Flight + Car" },
-];
-function dealTabAvailable(tab: DealTab, availability: ReturnType<typeof useFeatureAvailability>["availability"]) {
+function dealTabAvailable(tab: PackageMode, availability: ReturnType<typeof useFeatureAvailability>["availability"]) {
   const flight = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "flight-car";
   const hotel = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "hotel-car";
   const car = tab === "hotel-flight-car" || tab === "hotel-car" || tab === "flight-car";
@@ -327,119 +316,11 @@ export function PackagesSearchPanel({
 }: PackagesSearchPanelProps) {
   const ft = useFlowTheme();
   const { availability, loading } = useFeatureAvailability();
-  const [tab, setTab] = useState<DealTab>("hotel-flight");
-  const availableDealTabs = useMemo(() => dealTabs.filter((option) => dealTabAvailable(option.value, availability)), [availability]);
-  const fade = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    fade.setValue(0);
-    Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }).start();
-  }, [fade, tab]);
-  useEffect(() => { if (!availableDealTabs.some((option) => option.value === tab) && availableDealTabs[0]) setTab(availableDealTabs[0].value); }, [availableDealTabs, tab]);
-  const includesFlight = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "flight-car";
-  const includesHotel = tab === "hotel-flight" || tab === "hotel-flight-car" || tab === "hotel-car";
-  const includesCar = tab === "hotel-flight-car" || tab === "hotel-car" || tab === "flight-car";
+  const availableDealTabs = useMemo(() => packageModes.filter(option => dealTabAvailable(option.value, availability)), [availability]);
   const isHome = presentation === "home";
   if (loading) return <UnavailableNotice text="Checking package availability…" />;
   if (!availability.deals || availableDealTabs.length === 0) return <UnavailableNotice text="Packages are temporarily unavailable. You can still search available flights, hotels, and cars separately." />;
-  const packageBuilder = (
-    <>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.dealTabs, isHome && styles.homeDealTabs]}
-      >
-        {availableDealTabs.map((option) => (
-          <Pressable
-            key={option.value}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: tab === option.value }}
-            onPress={() => setTab(option.value)}
-            style={[
-              styles.dealTab,
-              {
-                backgroundColor: ft.colors.card,
-                borderColor: ft.colors.border,
-              },
-              tab === option.value && styles.dealTabSelected,
-            ]}
-          >
-            <Text
-              style={[
-                styles.dealTabText,
-                { color: ft.colors.text },
-                tab === option.value && styles.dealTabTextSelected,
-              ]}
-            >
-              {option.label}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-      <Animated.View
-        style={[
-          !isHome && styles.packageCard,
-          !isHome && { backgroundColor: ft.colors.card },
-          !isHome && ft.styles.shadow,
-          {
-            opacity: fade,
-            transform: [
-              {
-                translateY: fade.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [8, 0],
-                }),
-              },
-            ],
-          },
-        ]}
-      >
-        {includesFlight ? (
-          <View>
-            <Text style={[styles.packageSection, { color: ft.colors.text }]}>
-              Flights
-            </Text>
-            <FlightSearchPanel embedded showSubmit={false} params={{}} />
-          </View>
-        ) : null}
-        {includesHotel ? (
-          <View
-            style={[
-              includesFlight && styles.packageDivider,
-              { borderTopColor: ft.colors.border },
-            ]}
-          >
-            <Text style={[styles.packageSection, { color: ft.colors.text }]}>
-              Hotels
-            </Text>
-            <HotelSearchPanel
-              embedded
-              showSubmit={!includesCar}
-              submitLabel="Search package"
-              params={{}}
-            />
-          </View>
-        ) : null}
-        {includesCar ? (
-          <View
-            style={[
-              (includesFlight || includesHotel) && styles.packageDivider,
-              { borderTopColor: ft.colors.border },
-            ]}
-          >
-            <Text style={[styles.packageSection, { color: ft.colors.text }]}>
-              Cars
-            </Text>
-            <CarSearchPanel
-              embedded
-              showSubmit
-              submitLabel="Search package"
-              params={{}}
-            />
-          </View>
-        ) : null}
-      </Animated.View>
-    </>
-  );
+  const packageBuilder = <PackageSearchForm presentation={presentation} />;
   return isHome ? (
     <View style={[ft.styles.card, ft.styles.shadow]}>{packageBuilder}</View>
   ) : packageBuilder;

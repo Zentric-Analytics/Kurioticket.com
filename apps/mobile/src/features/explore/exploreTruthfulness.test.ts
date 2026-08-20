@@ -5,6 +5,7 @@ import test from "node:test";
 const source = (path: string) => readFileSync(path, "utf8");
 const explore = source("src/features/explore/ExploreScreen.tsx") + source("src/features/explore/exploreData.ts");
 const products = source("src/features/flow/ProductScreens.tsx");
+const packageModel = source("src/features/flow/packageSearchModel.ts");
 const results = source("src/features/flow/TravelResultsScreen.tsx");
 
 test("Explore and product entry screens contain no prototype prices or commercial claims", () => {
@@ -26,5 +27,5 @@ test("provider-backed result prices remain rendered", () => {
 
 test("Deals retains every reusable product form and package tab", () => {
   for (const route of ["/flights", "/hotels", "/cars"]) assert.match(products, new RegExp(route));
-  for (const tab of ["hotel-flight", "hotel-flight-car", "hotel-car", "flight-car"]) assert.match(products, new RegExp(`value: "${tab}"`));
+  for (const tab of ["hotel-flight", "hotel-flight-car", "hotel-car", "flight-car"]) assert.match(packageModel, new RegExp(`value: "${tab}"`));
 });
