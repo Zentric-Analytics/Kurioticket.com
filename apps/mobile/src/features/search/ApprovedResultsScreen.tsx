@@ -1390,10 +1390,9 @@ const s0 = StyleSheet.create({
   },
   alertCopy: { gap: 4 },
   flightAlert: {
-    minHeight: 82,
     borderRadius: 14,
     paddingHorizontal: 10,
-    paddingVertical: 9,
+    paddingVertical: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 9,
