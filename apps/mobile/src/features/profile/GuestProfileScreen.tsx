@@ -15,8 +15,8 @@ export function GuestProfileScreen() {
     { title: "travelActivity", items: [{ label: "savedRecent", icon: "bookmark", destination: { kind: "native", href: "/saved" } }] },
     { title: "preferences", items: [{ label: "customizationPreferences", icon: "palette", destination: { kind: "native", href: "/settings" } }] },
     { title: "helpSupport", items: [
-      { label: "contactSupport", icon: "headset", destination: { kind: "external", href: "https://kurioticket.com/support" } },
-      { label: "faq", icon: "help", destination: { kind: "external", href: "https://kurioticket.com/faq" } },
+      { label: "contactSupport", icon: "headset", destination: { kind: "native", href: "/support" } },
+      { label: "faq", icon: "help", destination: { kind: "native", href: "/faq" } },
     ] },
   ];
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}><View style={styles.header}><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>{t("profile")}</Text></View><View style={styles.illustration}><TravelIllustration /></View><Text accessibilityRole="header" style={[styles.heroTitle, { color: theme.text }]}>{t("guestHeroTitle")}</Text><Text style={[styles.heroBody, { color: theme.muted }]}>{t("guestHeroBody")}</Text><Pressable accessibilityRole="button" accessibilityLabel={t("signIn")} accessibilityHint={t("signInHint")} onPress={() => router.push("/(tabs)/profile/sign-in")} style={({ pressed }) => [styles.signIn, pressed && styles.pressed]}><FlowIcon name="person" color="white" size={24} /><Text style={styles.signInText}>{t("signIn")}</Text><View style={styles.signInArrow}><FlowIcon name="chevron" color="white" size={22} /></View></Pressable><View style={styles.sections}>{sections.map(section => <ProfileCardSection key={section.title} section={section} />)}</View></ScrollView></SafeAreaView>;

@@ -189,10 +189,10 @@ export const resetPasswordSchema = z
 export const supportTicketSchema = z.object({
   email: emailSchema,
   subject: z.string().trim().min(4).max(160),
-  category: z.string().trim().min(2).max(80),
+  category: z.enum(["search-help", "price-alerts", "redirect", "account"]),
   body: z.string().trim().min(20).max(4000),
   sourceContext: z.record(z.string(), z.unknown()).optional(),
-});
+}).strict();
 
 export const adminSupportReplySchema = z.object({
   body: z.string().trim().min(2).max(4000),
