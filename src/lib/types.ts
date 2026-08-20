@@ -98,10 +98,17 @@ export type FlightOptionalService = {
   maximumQuantity?: number;
   travelerCount?: number;
   journeyContext?: string;
+  /** True only when identical provider services were individually scoped to one traveler each. */
+  pricedPerTraveler?: boolean;
 };
 
 /** Deliberately normalized provider-authored customer facts; never raw Duffel data. */
 export type FlightProviderDetails = {
+  offerOwner?: {
+    name: string;
+    iataCode?: string;
+    conditionsOfCarriageUrl?: string;
+  };
   price?: {
     baseAmount?: number;
     baseCurrency?: string;
