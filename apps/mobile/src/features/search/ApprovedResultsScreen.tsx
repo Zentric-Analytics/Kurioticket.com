@@ -89,6 +89,7 @@ import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
 import { flightResultCountLabel } from "./flightResultCount";
+import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -682,11 +683,10 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
   const narrowCard = width < 430;
   const { savedFlights, toggle } = useSavedFlights();
   const saved = savedFlights.has(result.id);
-  const stopLabel = result.stops
-    ? `${result.stops} stop${result.stops === 1 ? "" : "s"}`
-    : "Nonstop";
+  const roundTrip = one(params.tripType) === "round-trip";
+  const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
   return (
-    <View style={[s0.card, { backgroundColor: theme.surface, borderColor: theme.border }, rank === 0 && s0.best]}>
+    <View style={[s0.card, { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : "#18305B" }]}>
       <View style={s0.cardTop}>
         {rank === 0 ? (
           <View style={s0.badgeRow}>
@@ -735,31 +735,14 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
               {result.airlineName}
             </Text>
           </View>
-          <View style={s0.journeyRow}>
-            <View style={s0.departureColumn}>
-              <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(result.departureTime)}</Text>
-              <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.originAirport}</Text>
-            </View>
-            <View style={s0.timelineColumn}>
-              <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.duration}</Text>
-              <View style={s0.timelineTrack}>
-                <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
-                <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
-                <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
-              </View>
-              <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
-            </View>
-            <View style={s0.arrivalColumn}>
-              <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(result.arrivalTime)}</Text>
-              <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{result.destinationAirport}</Text>
-            </View>
-          </View>
+          <FlightJourneyRow label="OUTBOUND" leg={outbound} />
+          {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
         </View>
         <View style={[s0.priceBox, narrowCard && s0.priceBoxNarrow]}>
           <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {fare?.formatted ?? "—"}
           </Text>
-          <Text style={[s0.sub, { color: theme.textSecondary }]}>round trip</Text>
+          <Text style={[s0.sub, { color: theme.textSecondary }]}>{roundTrip ? "round trip" : "one way"}</Text>
         </View>
       </View>
       <View style={[s0.benefits, { borderTopColor: theme.border }]}>
@@ -790,6 +773,36 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
         >
           <Text style={s0.detailsButtonText} numberOfLines={1}>View details</Text>
         </Pressable>
+      </View>
+    </View>
+  );
+}
+function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: FlightCardLeg }) {
+  const { theme } = useAppTheme();
+  const stopLabel = leg.stops
+    ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`
+    : "Nonstop";
+  return (
+    <View style={s0.journeyBlock}>
+      <Text style={[s0.journeyLabel, { color: theme.textSecondary }]}>{label}</Text>
+      <View style={s0.journeyRow}>
+        <View style={s0.departureColumn}>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
+          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport}</Text>
+        </View>
+        <View style={s0.timelineColumn}>
+          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.duration}</Text>
+          <View style={s0.timelineTrack}>
+            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+            <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
+            <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
+          </View>
+          <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
+        </View>
+        <View style={s0.arrivalColumn}>
+          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
+        </View>
       </View>
     </View>
   );
@@ -1209,14 +1222,16 @@ const s0 = StyleSheet.create({
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   flightResultCount: { fontSize: 18, lineHeight: 23, fontWeight: "800" },
   card: {
-    borderWidth: 1,
-    borderColor: ui.border,
     borderRadius: 14,
     padding: 13,
     gap: 10,
     backgroundColor: "white",
+    shadowColor: "#18305B",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  best: { borderColor: ui.blue },
   cardTop: { minHeight: 23, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
   badgeRow: { flex: 1, minWidth: 0, flexDirection: "row", gap: 6 },
@@ -1226,9 +1241,11 @@ const s0 = StyleSheet.create({
   resultBadgeTextGreen: { color: ui.green },
   flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
   flightMainNarrow: { flexDirection: "column", alignItems: "stretch", gap: 4 },
-  flightDetails: { flex: 1, minWidth: 0, maxWidth: 258, gap: 6 },
+  flightDetails: { flex: 1, minWidth: 0, maxWidth: 258, gap: 7 },
   airlineIdentityRow: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 8 },
   airlineName: { flex: 1, minWidth: 0, fontSize: 12, lineHeight: 16, color: ui.navy, fontWeight: "700" },
+  journeyBlock: { width: "100%", gap: 2 },
+  journeyLabel: { fontSize: 9, lineHeight: 11, fontWeight: "800", letterSpacing: 0.7 },
   journeyRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   departureColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
   arrivalColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0, alignItems: "flex-end" },
