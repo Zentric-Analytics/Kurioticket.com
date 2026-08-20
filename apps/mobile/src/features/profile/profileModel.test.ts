@@ -6,7 +6,7 @@ import { authenticatedProfileSections } from "./profileModel";
 test("authenticated profile sections and destinations match the account architecture", () => {
   assert.deepEqual(authenticatedProfileSections.map(section => section.title), ["manageAccount", "travelActivity", "preferences", "helpSupport"]);
   assert.deepEqual(authenticatedProfileSections.flatMap(section => section.items.map(item => [item.label, item.destination.href])), [
-    ["personalDetails", "/personal-information"], ["securitySettings", "https://kurioticket.com/dashboard/security"],
+    ["personalDetails", "/personal-information"], ["securitySettings", "/security"],
     ["myTrips", "/(tabs)/trips"], ["savedRecent", "/saved"], ["priceAlerts", "/price-alerts"],
     ["emailPreferences", "/email-preferences"], ["customizationPreferences", "/settings"],
     ["travelPreferences", "/travel-preferences"], ["contactSupport", "/support"], ["faq", "/faq"],

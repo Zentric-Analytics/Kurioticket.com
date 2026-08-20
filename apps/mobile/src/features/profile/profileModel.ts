@@ -2,7 +2,7 @@ import type { FlowIconName } from "../flow/FlowIcon";
 import type { MobileTranslationKey } from "../../localization/mobileLocalization";
 
 export type ProfileDestination =
-  | { kind: "native"; href: "/personal-information" | "/price-alerts" | "/settings" | "/saved" | "/(tabs)/trips" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" }
+  | { kind: "native"; href: "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/(tabs)/trips" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" }
   | { kind: "external"; href: string };
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
@@ -10,7 +10,7 @@ export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[]
 export const authenticatedProfileSections: ProfileSection[] = [
   { title: "manageAccount", items: [
     { label: "personalDetails", icon: "person", destination: { kind: "native", href: "/personal-information" } },
-    { label: "securitySettings", icon: "shield", destination: { kind: "external", href: "https://kurioticket.com/dashboard/security" } },
+    { label: "securitySettings", icon: "shield", destination: { kind: "native", href: "/security" } },
   ] },
   { title: "travelActivity", items: [
     { label: "myTrips", icon: "briefcase", destination: { kind: "native", href: "/(tabs)/trips" } },
