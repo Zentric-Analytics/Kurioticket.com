@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createPasswordHandlers } from "./route";
+import { AuthRateLimitError } from "@/lib/auth-rate-limit";
 
 const sessionEmail = "account@example.com";
 const validPasswordBody = {
@@ -104,4 +105,19 @@ test("OAuth-only password reset behavior remains unchanged", async () => {
   assert.deepEqual(await response.json(), {
     error: "Use password reset to create a password for this account.",
   });
+});
+
+test("rate limiting returns the canonical retry-after contract", async () => {
+  const handlers = createPasswordHandlers({
+    requireSecurity: async () => ({ id: "session-1", user: { id: "user-1", email: sessionEmail } }),
+    rateLimit: () => { throw new AuthRateLimitError(37); },
+    requestPasswordReset: async () => assert.fail("rate-limited reset must not run"),
+    updatePassword: async () => assert.fail("rate-limited change must not run"),
+  });
+
+  for (const [method, body] of [["POST", undefined], ["PATCH", validPasswordBody]] as const) {
+    const response = await handlers[method](request(method, body));
+    assert.equal(response.status, 429);
+    assert.equal(response.headers.get("retry-after"), "37");
+  }
 });
