@@ -43,3 +43,7 @@ export type FlightDetailsUnavailable = {
 export type FlightDetailsResponse =
   | FlightDetailsSuccess
   | FlightDetailsUnavailable;
+
+export function flightDetailsTotalLabel(travelerCount: number) {
+  return travelerCount === 1 ? "Trip total" : `Total for ${travelerCount} travelers`;
+}

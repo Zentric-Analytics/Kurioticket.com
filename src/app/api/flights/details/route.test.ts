@@ -46,14 +46,22 @@ test("flight details fails closed for an unknown cached identity", async () => {
   assert.equal(response.status, 404);
 });
 
-test("flight details validates complete search context before provider refresh", async () => {
+test("flight details fails closed without server-owned search context", async () => {
   const flight = cached();
   rememberFlights([flight]);
-  const response = await GET(new Request(`https://kurioticket.test/api/flights/details?id=${flight.id}`));
-  assert.equal(response.status, 400);
+  const response = await GET(new Request(`https://kurioticket.test/api/flights/details?id=${flight.id}&adults=6&children=0&infants=0&travelers=6`));
+  assert.equal(response.status, 409);
   assert.deepEqual(await response.json(), {
     status: "unavailable",
-    error: "Flight search context is invalid or incomplete.",
+    error: "This flight search context is no longer available. Please search again.",
   });
+});
+
+test("Flight Details never treats browser passenger parameters as authority", async () => {
+  const source = await import("node:fs/promises").then(({ readFile }) =>
+    readFile(new URL("./route.ts", import.meta.url), "utf8"),
+  );
+  assert.match(source, /getFlightSearchFromCache\(id\)/);
+  assert.doesNotMatch(source, /parseFlightDetailsSearch\(searchParams\)/);
 });
 
