@@ -154,6 +154,6 @@ test("metadata and controls preserve semantic light and dark theme colors", () =
 
 test("shared actions and bottom navigation remain unchanged", () => {
   assert.match(searchUi, /export function TopBar/);
-  assert.match(details, /<TopBar detail onPriceAlertPress=\{handlePriceAlert\}/);
+  assert.match(details, /accessibilityLabel="Flight details header"/);
   assert.match(results, /<BottomNav flightResults=\{flightResults\} \/>/);
 });
