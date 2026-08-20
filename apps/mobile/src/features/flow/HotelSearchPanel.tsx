@@ -78,7 +78,7 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
     {errors.guests || errors.rooms ? <Text accessibilityRole="alert" style={styles.error}>{errors.guests || errors.rooms}</Text> : null}
     {notice ? <UnavailableNotice text={notice}/> : null}
     {showSubmit ? <View style={styles.pad}><PrimaryButton label={submitLabel} onPress={submit}/></View> : null}
-    <LocalCalendarModal visible={Boolean(calendar)} title={calendar === "checkOut" ? "Choose check-out date" : "Choose check-in date"} selected={calendar ? form[calendar] : form.checkIn} minimum={calendar === "checkOut" && form.checkIn ? addCalendarDays(form.checkIn, 1) : localIsoDate(new Date())} onChoose={chooseDate} onClose={() => setCalendar(undefined)}/>
+    <LocalCalendarModal visible={Boolean(calendar)} title={calendar === "checkOut" ? "Choose check-out date" : "Choose check-in date"} selected={calendar ? form[calendar] : form.checkIn} minimum={calendar === "checkOut" && form.checkIn ? addCalendarDays(form.checkIn, 1) : localIsoDate(new Date())} onChoose={chooseDate} onClose={() => setCalendar(undefined)} dismissOnBackdropPress/>
     <HotelDestinationSheet visible={destinationOpen} value={form.destination} onDone={(destination) => { update({ ...form, destination }); if (destination.trim()) setErrors((current) => ({ ...current, destination: undefined })); setDestinationOpen(false); destinationRef.current?.focus(); }} onCancel={() => setDestinationOpen(false)}/>
     <HotelGuestsRoomsSheet visible={countsOpen} adults={adultCount} children={childCount} rooms={form.rooms} petFriendly={petFriendly} onDone={(draft) => { setAdultCount(draft.adults); setChildCount(draft.children); setPetFriendly(draft.petFriendly); update({ ...form, guests: draft.adults + draft.children, rooms: draft.rooms }); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); setCountsOpen(false); }} onCancel={() => setCountsOpen(false)}/>
   </View>;
@@ -126,7 +126,7 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
   return <Modal transparent animationType="slide" visible={visible} onRequestClose={onCancel}>
     <View style={styles.modalRoot}>
       <Pressable style={[StyleSheet.absoluteFill,{backgroundColor:ft.colors.overlay}]} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Close hotel destination picker"/>
-      <KeyboardAvoidingView style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoidingView style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"} pointerEvents="box-none">
         <SafeAreaView edges={["top", "bottom"]} style={styles.destinationOverlay} pointerEvents="box-none">
           <View accessibilityViewIsModal style={[styles.destinationSheet,{backgroundColor:ft.colors.surface}]}>
             <View style={styles.destinationHeader}><Text accessibilityRole="header" style={ft.styles.title}>Choose destination</Text>{trimmedQuery ? <Pressable accessibilityRole="button" accessibilityLabel="Clear hotel destination search" onPress={clear}><Text style={[styles.link,{color:ft.colors.selectedBorder}]}>Clear</Text></Pressable> : null}</View>

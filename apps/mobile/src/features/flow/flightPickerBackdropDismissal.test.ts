@@ -4,7 +4,6 @@ import test from "node:test";
 
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
 const calendar = readFileSync("src/features/flow/LocalCalendarModal.tsx", "utf8");
-const hotel = readFileSync("src/features/flow/HotelSearchPanel.tsx", "utf8");
 const airportSheet = panel.slice(panel.indexOf("function AirportSheet"), panel.indexOf("type TravelerCabinDraft"));
 const travelerSheet = panel.slice(panel.indexOf("function TravelerCabinSheet"), panel.indexOf("function Counter"));
 
@@ -20,7 +19,6 @@ test("Flight calendars opt into the backwards-compatible calendar backdrop", () 
   assert.match(calendar, /dismissOnBackdropPress = false/);
   assert.match(calendar, /dismissOnBackdropPress \? <Pressable[^>]*onPress=\{onClose\}[^>]*accessibilityLabel="Close calendar"\/> : <View pointerEvents="none"/);
   assert.match(panel, /<LocalCalendarModal[^>]*onClose=\{\(\) => setPicker\(undefined\)\} dismissOnBackdropPress\/>/);
-  assert.doesNotMatch(hotel, /dismissOnBackdropPress/);
   assert.match(calendar, /onRequestClose=\{onClose\}/);
 });
 
