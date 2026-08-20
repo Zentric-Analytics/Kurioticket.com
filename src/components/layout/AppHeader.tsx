@@ -81,7 +81,6 @@ type AppHeaderProps = {
   hideDesktopTravelNav?: boolean;
   simpleHeader?: boolean;
   flushDesktopBottom?: boolean;
-  compactDesktopNav?: boolean;
   flushMobileBottom?: boolean;
 };
 
@@ -136,7 +135,6 @@ export function AppHeader({
   hideDesktopTravelNav = false,
   simpleHeader = false,
   flushDesktopBottom = false,
-  compactDesktopNav = false,
   flushMobileBottom = false,
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
@@ -714,7 +712,7 @@ export function AppHeader({
           flushDesktopBottom && "sm:border-b-0 sm:shadow-none",
         )}
       >
-        <div className={`page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3 ${compactDesktopNav ? "md:relative" : ""}`}>
+        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link
               href="/"
@@ -1085,8 +1083,8 @@ export function AppHeader({
           </div>
 
           {desktopPrimaryNavItems.length > 0 ? (
-            <nav className={`hidden md:block ${compactDesktopNav ? "md:absolute md:inset-y-0 md:start-[220px]" : ""}`} aria-label="Primary">
-              <div className={`relative flex items-center justify-start ${compactDesktopNav ? "h-full" : "min-h-[44px] pt-1.5 md:ps-[8.5rem] lg:ps-[9.75rem] xl:ps-[10.5rem]"}`}>
+            <nav className="hidden md:block" aria-label="Primary">
+              <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:ps-[8.5rem] lg:ps-[9.75rem] xl:ps-[10.5rem]">
                 <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
                   {desktopPrimaryNavItems.map((item) => {
                     const Icon = item.icon;
@@ -1099,7 +1097,11 @@ export function AppHeader({
                         onClick={(event) =>
                           handleRouteLinkClick(event, item.href)
                         }
-                        className={`inline-flex min-h-[38px] cursor-pointer items-center gap-2 px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2 lg:px-4 ${compactDesktopNav ? `relative rounded-md border border-transparent ${active ? "text-[#075EE8] after:absolute after:-bottom-[10px] after:inset-x-2 after:h-0.5 after:bg-[#075EE8]" : "text-[#021C2B] hover:bg-slate-50"}` : `rounded-full border ${active ? "border-[#004BB8]/18 bg-[#004BB8]/6 text-[#021C2B]" : "border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]"}`}`}
+                        className={`inline-flex min-h-[38px] cursor-pointer items-center gap-2 rounded-full border px-3.5 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25 focus-visible:ring-offset-2 lg:px-4 ${
+                          active
+                            ? "border-[#004BB8]/18 bg-[#004BB8]/6 text-[#021C2B]"
+                            : "border-[#DDE7F0] bg-[#F3F7FA]/70 text-[#021C2B]/85 hover:border-[#004BB8]/20 hover:bg-[#004BB8]/5 hover:text-[#021C2B]"
+                        }`}
                       >
                         {Icon ? (
                           <Icon
