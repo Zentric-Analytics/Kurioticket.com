@@ -1,4 +1,4 @@
-import type { FlightResult } from "../../api/travelApi";
+import type { FlightResult, MobilePriceAlert } from "../../api/travelApi";
 import { supportedCurrencies } from "../../config/supportedCurrencies";
 import type { SearchPlan } from "./travelSearchModel";
 
@@ -41,4 +41,23 @@ export function buildFlightPriceAlertPayload(plan: SearchPlan, targetPrice: numb
       adults, children, infants, travelers: adults + children + infants, cabinClass, currency: normalizedCurrency,
     },
   };
+}
+
+const canonicalText = (value: unknown) => String(value ?? "").trim().toLowerCase();
+const canonicalCount = (value: unknown) => Number(value ?? 0);
+
+/** Match the search identity rather than a route alone. Currency and target are deliberately not identity fields. */
+export function flightPriceAlertMatchesPlan(alert: MobilePriceAlert, plan: SearchPlan) {
+  if (alert.type !== "FLIGHT") return false;
+  const expected: Record<string, unknown> = buildFlightPriceAlertPayload(plan, 1, "USD").query;
+  const query = alert.query || {};
+  const same = (field: string) => canonicalText(query[field]) === canonicalText(expected[field]);
+  if (!["origin", "destination", "tripType", "departureDate", "cabinClass"].every(same)) return false;
+  if (canonicalText(expected.tripType) === "round-trip" && !same("returnDate")) return false;
+  return ["adults", "children", "infants"].every((field) => canonicalCount(query[field]) === canonicalCount(expected[field]));
+}
+
+export function matchingFlightPriceAlert(alerts: MobilePriceAlert[], plan: SearchPlan) {
+  const matches = alerts.filter((alert) => flightPriceAlertMatchesPlan(alert, plan));
+  return matches.find(({ status }) => status === "ACTIVE") ?? matches.find(({ status }) => status === "PAUSED");
 }
