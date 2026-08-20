@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
-import { travelApi, TravelApiError, type MobilePriceAlert, type MobileProfile } from "../../api/travelApi";
-import { readSession, updateStoredSessionName } from "../../storage/sessionStorage";
-import { useAppTheme } from "../../theme/AppTheme";
+import { travelApi, TravelApiError, type MobilePriceAlert } from "../../api/travelApi";
+import { readSession } from "../../storage/sessionStorage";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { useFeatureAvailability } from "../availability/FeatureAvailability";
@@ -16,16 +15,6 @@ function State({ loading, error, retry }: { loading: boolean; error: string; ret
   if (loading) return <View style={styles.center}><ActivityIndicator color={flowColors.blue} /><Text style={flowStyles.meta}>Loading…</Text></View>;
   if (error) return <View style={styles.center}><Text accessibilityRole="alert" style={flowStyles.meta}>{error}</Text><Pressable onPress={retry} style={flowStyles.primary}><Text style={flowStyles.primaryText}>Try again</Text></Pressable></View>;
   return null;
-}
-export function PersonalInformationScreen() {
-  const { theme } = useAppTheme();
-  const [profile, setProfile] = useState<MobileProfile>({}); const [email, setEmail] = useState(""); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState(""); const [success, setSuccess] = useState("");
-  const load = useCallback(async () => { setLoading(true); setError(""); try { const data = await travelApi.profile(); setProfile(data.profile || {}); setEmail(data.user.email); } catch (e) { const session = await readSession().catch(() => null); if (!session) { router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/personal-information" } }); return; } setError(e instanceof TravelApiError ? e.message : "Unable to load profile."); } finally { setLoading(false); } }, []);
-  useEffect(() => { void load(); }, [load]);
-  const change = (key: keyof MobileProfile, value: string) => setProfile((current) => ({ ...current, [key]: value }));
-  const save = async () => { if (saving) return; setSaving(true); setError(""); setSuccess(""); try { const result = await travelApi.updateProfile(profile); setProfile(result.profile); await updateStoredSessionName(result.profile.fullName || null); setSuccess("Personal information saved."); } catch (e) { setError(e instanceof TravelApiError ? e.message : "Unable to save profile."); } finally { setSaving(false); } };
-  const fields: [keyof MobileProfile, string, string?][] = [["fullName", "Full name"], ["phoneCountryCode", "Phone country code", "US"], ["phoneNumber", "Phone number"], ["dateOfBirth", "Date of birth", "YYYY-MM-DD"], ["gender", "Gender"], ["nationality", "Nationality"], ["address", "Address"]];
-  return <Shell title="Personal information"><State loading={loading} error={loading ? error : ""} retry={() => void load()} />{!loading ? <ScrollView contentContainerStyle={flowStyles.scroll}>{error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}{success ? <Text accessibilityRole="alert" style={styles.success}>{success}</Text> : null}<Text style={[flowStyles.label, { color: theme.muted }]}>Email</Text><TextInput accessibilityLabel="Email, read only" editable={false} value={email} style={[styles.input, { color: theme.muted, backgroundColor: theme.surface, borderColor: theme.border }]} /><Pressable accessibilityRole="link" accessibilityLabel="Change email on web, opens website" onPress={() => void Linking.openURL("https://kurioticket.com/dashboard").catch(() => setError("Unable to open personal details."))}><Text style={styles.link}>Change email on web</Text></Pressable>{fields.map(([key, label, placeholder]) => <View key={key}><Text style={[flowStyles.label, { color: theme.muted }]}>{label}</Text><TextInput accessibilityLabel={label} value={profile[key] || ""} placeholder={placeholder} placeholderTextColor={theme.muted} onChangeText={(value) => change(key, value)} multiline={key === "address"} style={[styles.input, key === "address" && styles.multiline, { color: theme.text, backgroundColor: theme.surface, borderColor: theme.border }]} /></View>)}<Pressable accessibilityRole="button" accessibilityState={{ busy: saving, disabled: saving }} disabled={saving} onPress={() => void save()} style={flowStyles.primary}><Text style={flowStyles.primaryText}>{saving ? "Saving…" : "Save changes"}</Text></Pressable></ScrollView> : null}</Shell>;
 }
 export function PriceAlertsScreen() {
   const { availability } = useFeatureAvailability();

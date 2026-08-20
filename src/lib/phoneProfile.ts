@@ -1,4 +1,4 @@
-import { personalDetailsCountryCodes, supportedRegions } from "@/lib/region/supportedRegions";
+import { personalDetailsCountryCodes, supportedRegions } from "./region/supportedRegions";
 
 export type PhoneCountryOption = {
   countryName: string;

@@ -1,1 +1,1 @@
-export { PersonalInformationScreen as default } from "../src/features/flow/AccountDataScreens";
+export { PersonalDetailsScreen as default } from "../src/features/personal-details/PersonalDetailsScreen";
