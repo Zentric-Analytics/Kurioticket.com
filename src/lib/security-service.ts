@@ -42,12 +42,15 @@ export async function changePassword(input: { userId: string; email: string; cur
     await tx.accountSession.updateMany({ where: { userId: user.id, id: { not: input.currentSessionId }, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: "password_changed_other_device" } });
     return tx.securityEvent.create({ data: { userId: user.id, accountSessionId: input.currentSessionId, type: "PASSWORD_CHANGED" } });
   });
-  await deliverSecurityEvent({ userId:user.id, email:input.email, securityEventId:event.id, title:"Password changed", body:"Your Kurioticket password was changed. If this wasn’t you, reset your password and contact Support immediately." });
+  // The password and session revocations are already committed. Notification
+  // delivery is best-effort and must not turn that successful mutation into an
+  // API failure that encourages a duplicate submission.
+  await deliverSecurityEvent({ userId:user.id, email:input.email, securityEventId:event.id, title:"Password changed", body:"Your Kurioticket password was changed. If this wasn’t you, reset your password and contact Support immediately." }).catch(() => undefined);
   return "changed" as const;
 }
 
 export { revokeSession };
 export async function signOutEverywhere(userId: string, email: string) {
   const event = await revokeAllSessions(userId);
-  await deliverSecurityEvent({ userId, email, securityEventId:event.id, title:"Signed out everywhere", body:"All devices were signed out of your Kurioticket account. If this wasn’t you, reset your password immediately." });
+  await deliverSecurityEvent({ userId, email, securityEventId:event.id, title:"Signed out everywhere", body:"All devices were signed out of your Kurioticket account. If this wasn’t you, reset your password immediately." }).catch(() => undefined);
 }
