@@ -4,7 +4,7 @@ import test from "node:test";
 import { FLIGHT_CABINS } from "./flightSearchModel";
 
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
-const cabinSheet = panel.slice(panel.indexOf("function CabinSheet"), panel.indexOf("function Cancel"));
+const cabinSheet = panel.slice(panel.indexOf("function TravelerCabinSheet"), panel.indexOf("function Counter"));
 const selectableCabins = FLIGHT_CABINS.filter((cabin) => cabin !== "Premium Economy");
 
 test("the native cabin picker offers only Economy, Business, and First in order", () => {
@@ -16,10 +16,10 @@ test("the native cabin picker offers only Economy, Business, and First in order"
 });
 
 test("the cabin picker retains selection, accessibility, and close behavior", () => {
-  assert.match(cabinSheet, /accessibilityRole="button" accessibilityState=\{\{selected:cabin===selected\}\}/);
-  assert.match(cabinSheet, /onPress=\{\(\)=>onChoose\(cabin\)\}/);
-  assert.match(cabinSheet, /<Cancel onPress=\{onClose\}/);
-  assert.match(cabinSheet, /onRequestClose=\{onClose\}/);
+  assert.match(cabinSheet, /accessibilityRole="radio" accessibilityState=\{\{selected:cabin===draft\.cabin\}\}/);
+  assert.match(cabinSheet, /onPress=\{\(\)=>setDraft\(\{\.\.\.draft,cabin\}\)\}/);
+  assert.match(cabinSheet, /<Cancel onPress=\{onCancel\}/);
+  assert.match(cabinSheet, /onRequestClose=\{onCancel\}/);
 });
 
 test("legacy Premium Economy remains canonical but is not freshly selectable", () => {
