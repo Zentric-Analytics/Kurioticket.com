@@ -90,7 +90,7 @@ test("phone, nationality, and address searches have independent aliases", () => 
     /NATIONALITY_OPTIONS\.map[\s\S]*?searchTerms: \[COUNTRY_OPTIONS\[index\]\.code\]/,
   );
 });
-test("country selector is full-screen, keyboard-aware, and only results scroll", () => {
+test("country selector is full-screen, keyboard-aware, and only results virtualize", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
@@ -100,12 +100,26 @@ test("country selector is full-screen, keyboard-aware, and only results scroll",
     selector,
     /<KeyboardAvoidingView[\s\S]*?behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
   );
-  assert.ok(selector.indexOf("{title}") < selector.indexOf("<ScrollView"));
-  assert.ok(selector.indexOf("<TextInput") < selector.indexOf("<ScrollView"));
+  assert.ok(selector.indexOf("{title}") < selector.indexOf("<FlatList"));
+  assert.ok(selector.indexOf("<TextInput") < selector.indexOf("<FlatList"));
   assert.doesNotMatch(selector, /maxHeight|0\.82|transparent/);
   assert.match(selector, /keyboardShouldPersistTaps="handled"/);
   assert.match(selector, /style=\{s\.countryResults\}/);
+  assert.match(selector, /data=\{shown\}/);
+  assert.match(selector, /keyExtractor=\{\(item\) => item\.value\}/);
+  assert.match(selector, /initialNumToRender=\{12\}/);
+  assert.doesNotMatch(selector, /shown\.map\(/);
   assert.match(selector, /!keyboardVisible \? \(/);
+});
+test("country search accessibility hints match the available filters", () => {
+  const selector = screen.slice(
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
+  );
+  assert.match(
+    selector,
+    /kind === "phone"[\s\S]*?c\.searchCountryPhoneHint[\s\S]*?c\.searchCountryHint/,
+  );
 });
 test("all country-selector dismissal paths discard the draft and keyboard", () => {
   const selector = screen.slice(
