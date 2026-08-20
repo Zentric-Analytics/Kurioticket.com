@@ -94,19 +94,23 @@ test("Back and Edit search retain their behavior and touch targets", () => {
   assert.match(header, /accessibilityLabel="Go back"[\s\S]*?onPress=\{\(\) => router\.back\(\)\}/);
   assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?onPress=\{onEdit\}/);
   assert.match(styles, /flightHeaderBack: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
-  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 106,[\s\S]*?minHeight: 44/);
+  assert.match(styles, /flightHeaderEdit: \{[\s\S]*?width: 44,[\s\S]*?height: 44/);
   assert.match(results, /onEdit=\{edit\}/);
   assert.match(results, /pathname: "\/edit-flight-search", params: flightEditSearchParams\(params\)/);
 });
 
-test("route stays centered and narrow screens use balanced compact controls without overlap", () => {
-  assert.match(styles, /flightHeaderSide: \{ width: 106, flexShrink: 0 \}/);
-  assert.match(styles, /flightHeaderSideCompact: \{ width: 44 \}/);
+test("route stays centered between balanced compact controls without overlap", () => {
+  assert.match(styles, /flightHeaderSide: \{ width: 44, flexShrink: 0 \}/);
   assert.match(styles, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0, alignItems: "center"/);
-  assert.match(styles, /flightHeaderEditCompact: \{ width: 44, paddingHorizontal: 0 \}/);
-  assert.match(results, /compact=\{narrowHeader\}/);
-  assert.match(header, /\{!compact \? <Text style=\{s0\.flightHeaderEditText\}>Edit search<\/Text> : null\}/);
+  assert.doesNotMatch(header, />Edit search<\/Text>/);
+  assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?<FilePenLine/);
   assert.doesNotMatch(header, /numberOfLines|ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
+});
+
+test("Edit search is an icon-only action without card decoration", () => {
+  const editStyle = styles.slice(styles.indexOf("flightHeaderEdit:"), styles.indexOf("filterRail:"));
+  assert.doesNotMatch(editStyle, /backgroundColor|border|shadow|elevation|borderRadius/);
+  assert.doesNotMatch(header, /flightHeaderEditText/);
 });
 
 test("metadata stays horizontal without wrapping and scrolls on narrow screens", () => {

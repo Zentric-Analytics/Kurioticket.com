@@ -26,7 +26,6 @@ import {
   Briefcase,
   CalendarDays,
   FilePenLine,
-  Info,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
@@ -89,6 +88,7 @@ import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
 import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
 import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
+import { flightResultCountLabel } from "./flightResultCount";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -102,7 +102,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const flightResults = product === "flight";
   const { width } = useWindowDimensions();
   const narrowHeader = width < 360;
-  const stackedResultsSummary = width < 430;
   const { availability } = useFeatureAvailability();
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const plan = buildSearchPlan(product, params);
@@ -396,48 +395,34 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               {status === "ready" && product === "flight" && availability.priceAlerts ? (
                 <PriceAlert product={product} />
               ) : null}
-              {status === "ready" ? (
-                <View style={[s0.found, flightResults && { backgroundColor: theme.surface, borderColor: theme.border }, stackedResultsSummary && s0.foundNarrow]}>
+              {status === "ready" && product === "flight" ? (
+                <Text
+                  accessibilityRole="header"
+                  style={[s0.flightResultCount, { color: theme.textPrimary }]}
+                >
+                  {flightResultCountLabel(sorted.length)}
+                </Text>
+              ) : null}
+              {status === "ready" && product === "hotel" ? (
+                <View style={s0.found}>
                   <View style={s0.foundCopy}>
-                    <Text style={[s0.foundTitle, flightResults && { color: theme.textPrimary }]}>
-                      {sorted.length}{" "}
-                      {product === "flight" ? "flights" : "properties"} found
+                    <Text style={s0.foundTitle}>
+                      {sorted.length} properties found
                     </Text>
-                    <Text style={[s0.sub, flightResults && { color: theme.textSecondary }]}>
+                    <Text style={s0.sub}>
                       Prices include taxes and fees when reported by the provider
                     </Text>
                   </View>
-                  {product === "hotel" ? (
-                    <Button
-                      label="Map view"
-                      outline
-                      onPress={() =>
-                        Alert.alert(
-                          "Map view",
-                          "Map inventory is not available from this provider response.",
-                        )
-                      }
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        s0.foundAside,
-                        stackedResultsSummary && s0.foundAsideNarrow,
-                      ]}
-                    >
-                      <View style={s0.priceNoticeTitle}>
-                        <Info
-                          accessibilityElementsHidden
-                          accessible={false}
-                          color={theme.icon}
-                          size={16}
-                          strokeWidth={2}
-                        />
-                        <Text style={[s0.change, { color: theme.textPrimary }]}>Price may change</Text>
-                      </View>
-                      <Text style={[s0.sub, { color: theme.textSecondary }]}>Book soon to lock in this price.</Text>
-                    </View>
-                  )}
+                  <Button
+                    label="Map view"
+                    outline
+                    onPress={() =>
+                      Alert.alert(
+                        "Map view",
+                        "Map inventory is not available from this provider response.",
+                      )
+                    }
+                  />
                 </View>
               ) : null}
               {sorted.map((x, i) =>
@@ -476,7 +461,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           travelerCount={Number(payload.travelers)}
           cabinClass={cabinLabel(payload.cabinClass)}
           onEdit={edit}
-          compact={narrowHeader}
         />
       ) : (
         <>
@@ -535,14 +519,12 @@ function FlightResultsHeader({
   travelerCount,
   cabinClass,
   onEdit,
-  compact,
 }: {
   route: string;
   dateRange: string;
   travelerCount: number;
   cabinClass: string;
   onEdit: () => void;
-  compact: boolean;
 }) {
   const { theme } = useAppTheme();
   return (
@@ -551,7 +533,7 @@ function FlightResultsHeader({
       style={[s0.flightHeader, { backgroundColor: theme.background }]}
     >
       <View accessibilityLabel="Flight route controls" style={s0.flightHeaderMainRow}>
-        <View style={[s0.flightHeaderSide, compact && s0.flightHeaderSideCompact]}>
+        <View style={s0.flightHeaderSide}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Go back"
@@ -572,12 +554,10 @@ function FlightResultsHeader({
           onPress={onEdit}
           style={({ pressed }) => [
             s0.flightHeaderEdit,
-            compact && s0.flightHeaderEditCompact,
             pressed && s0.flightHeaderControlPressed,
           ]}
         >
           <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
-          {!compact ? <Text style={s0.flightHeaderEditText}>Edit search</Text> : null}
         </Pressable>
       </View>
       <View style={s0.flightHeaderMetadataAlignmentRow}>
@@ -1146,8 +1126,7 @@ const s0 = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  flightHeaderSide: { width: 106, flexShrink: 0 },
-  flightHeaderSideCompact: { width: 44 },
+  flightHeaderSide: { width: 44, flexShrink: 0 },
   flightHeaderBack: {
     width: 44,
     height: 44,
@@ -1179,17 +1158,12 @@ const s0 = StyleSheet.create({
   },
   flightHeaderMetadataText: { fontSize: 12, lineHeight: 17 },
   flightHeaderEdit: {
-    width: 106,
-    minHeight: 44,
+    width: 44,
+    height: 44,
     flexShrink: 0,
-    paddingHorizontal: 10,
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
   },
-  flightHeaderEditCompact: { width: 44, paddingHorizontal: 0 },
-  flightHeaderEditText: { color: ui.blue, fontSize: 12, fontWeight: "800" },
   filterRail: { height: 64, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
@@ -1231,13 +1205,9 @@ const s0 = StyleSheet.create({
     backgroundColor: "#FAFCFF",
     gap: 12,
   },
-  foundNarrow: { alignItems: "flex-start", flexDirection: "column", gap: 8 },
   foundCopy: { flex: 1, minWidth: 0, gap: 2 },
-  foundAside: { flexShrink: 1, maxWidth: 170, gap: 2 },
-  foundAsideNarrow: { maxWidth: "100%" },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  priceNoticeTitle: { flexDirection: "row", alignItems: "center", gap: 5 },
-  change: { color: ui.navy, fontSize: 12, fontWeight: "600" },
+  flightResultCount: { fontSize: 18, lineHeight: 23, fontWeight: "800" },
   card: {
     borderWidth: 1,
     borderColor: ui.border,
