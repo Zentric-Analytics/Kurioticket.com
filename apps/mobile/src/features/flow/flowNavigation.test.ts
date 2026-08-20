@@ -35,7 +35,7 @@ test("flight controls retain trip type, complete airport swap, and validated sub
 test("deals and read-only My Trips expose real selected-state controls without internal management routes", () => {
   const products = source("src/features/flow/ProductScreens.tsx");
   const tabs = source("src/features/flow/TabScreens.tsx");
-  assert.match(products, /useState<DealTab>\("hotel-flight"\)/);
+  assert.match(products, /<PackageSearchForm presentation=\{presentation\}/);
   assert.match(tabs, /useState<TripTab>\("upcoming"\)/);
   assert.match(tabs, /Linking\.openURL/);
   assert.match(tabs, /providerConfirmationCode/);

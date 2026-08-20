@@ -16,18 +16,10 @@ test("Home contains embedded Hotel and Car forms in its themed search surface", 
   assert.match(home, /<HomeSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
 });
 
-test("Home Packages unifies its selector and builder without a nested standalone card", () => {
+test("Home Packages uses one package-owned card and dedicated route uses the same form", () => {
   assert.match(home, /<PackagesSearchPanel presentation="home" \/>/);
-  assert.match(products, /presentation = "standalone"/);
-  assert.match(products, /const packageBuilder = \([\s\S]*?<ScrollView[\s\S]*?<Animated\.View/);
-  assert.match(products, /return isHome \? \([\s\S]*?<View style=\{\[ft\.styles\.card, ft\.styles\.shadow\]\}>\{packageBuilder\}<\/View>/);
-  assert.match(products, /!isHome && styles\.packageCard/);
-  assert.match(products, /!isHome && ft\.styles\.shadow/);
-});
-
-test("dedicated Packages and embedded package children retain their presentation contracts", () => {
+  assert.match(products, /const packageBuilder = <PackageSearchForm presentation=\{presentation\} \/>/);
+  assert.match(products, /return isHome \? \([\s\S]*?ft\.styles\.card/);
   assert.match(products, /export function DealsScreen\(\)[\s\S]*?<PackagesSearchPanel \/>/);
-  assert.match(products, /<FlightSearchPanel embedded showSubmit=\{false\}/);
-  assert.match(products, /<HotelSearchPanel\s+embedded/);
-  assert.match(products, /<CarSearchPanel\s+embedded/);
+  assert.doesNotMatch(products, /<FlightSearchPanel embedded|<HotelSearchPanel embedded|<CarSearchPanel embedded/);
 });

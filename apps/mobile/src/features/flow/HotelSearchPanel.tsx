@@ -84,7 +84,7 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
   </View>;
 });
 
-function HotelDestinationSheet({ visible, value, onDone, onCancel }: { visible: boolean; value: string; onDone: (destination: string) => void; onCancel: () => void }) {
+export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { visible: boolean; value: string; onDone: (destination: string) => void; onCancel: () => void }) {
   const ft = useFlowTheme();
   const inputRef = useRef<TextInput>(null);
   const requestSequence = useRef(0);
