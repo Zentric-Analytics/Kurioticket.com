@@ -7,6 +7,25 @@ import { summarizeBaggage, summarizeFareRules } from "./flightCardSummaries";
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 const card = source.slice(source.indexOf("function FlightCard"), source.indexOf("function HotelCard"));
 
+test("flight card renders labeled provider legs only for the active trip type", () => {
+  assert.match(card, /const roundTrip = one\(params\.tripType\) === "round-trip"/);
+  assert.match(card, /flightCardLegs\(result, roundTrip\)/);
+  assert.match(card, /<FlightJourneyRow label="OUTBOUND" leg=\{outbound\} \/>/);
+  assert.match(card, /\{returnLeg \? <FlightJourneyRow label="RETURN" leg=\{returnLeg\} \/> : null\}/);
+});
+
+test("main flight card is borderless and uses theme-aware native depth", () => {
+  const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
+  assert.doesNotMatch(cardStyle, /borderWidth|borderColor/);
+  assert.match(cardStyle, /borderRadius: 14/);
+  assert.match(cardStyle, /shadowOffset: \{ width: 0, height: 4 \}/);
+  assert.match(cardStyle, /shadowOpacity: 0\.1/);
+  assert.match(cardStyle, /shadowRadius: 10/);
+  assert.match(cardStyle, /elevation: 3/);
+  assert.match(card, /backgroundColor: theme\.surface/);
+  assert.match(card, /shadowColor: theme\.dark \? "#000000" : "#18305B"/);
+});
+
 test("flight card preserves display pricing and provider data during details navigation", () => {
   assert.match(card, /fare\?\.formatted \?\? "—"/);
   assert.doesNotMatch(card, /money\(result\.currency, result\.price\)/);
@@ -24,7 +43,7 @@ test("every flight card uses the same primary details CTA regardless of rank or 
 });
 
 test("flight card derives singular, plural, and nonstop labels from provider stops", () => {
-  assert.match(card, /result\.stops === 1 \? "" : "s"/);
+  assert.match(card, /leg\.stops === 1 \? "" : "s"/);
   assert.match(card, /: "Nonstop"/);
   assert.match(card, /\{stopLabel\}/);
 });
@@ -77,7 +96,7 @@ test("flight card reserves a flexible single-line price column across supported 
   assert.match(card, /const \{ width \} = useWindowDimensions\(\);/);
   assert.match(card, /const narrowCard = width < 430/);
   assert.match(card, /style=\{\[s0\.flightMain, narrowCard && s0\.flightMainNarrow\]\}/);
-  assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0, maxWidth: 258, gap: 6 \}/);
+  assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0, maxWidth: 258, gap: 7 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 70, maxWidth: 90, alignItems: "center" \}/);
   assert.match(source, /priceBox: \{ flexBasis: 104, minWidth: 96, maxWidth: 118, flexShrink: 0/);
   assert.match(source, /priceBoxNarrow: \{ flexBasis: "auto", minWidth: 0, maxWidth: "100%" \}/);
@@ -164,9 +183,9 @@ test("flight journey caps surplus width instead of stretching the departure-to-a
 
 test("flight times, airports, duration, and stop labels remain single-line", () => {
   assert.equal(card.match(/style=\{\[s0\.time, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\}/g)?.length, 2);
-  assert.match(card, /\{result\.duration\}<\/Text>/);
-  assert.match(card, /\{result\.originAirport\}<\/Text>/);
-  assert.match(card, /\{result\.destinationAirport\}<\/Text>/);
+  assert.match(card, /\{leg\.duration\}<\/Text>/);
+  assert.match(card, /\{leg\.originAirport\}<\/Text>/);
+  assert.match(card, /\{leg\.destinationAirport\}<\/Text>/);
   assert.match(card, /<Text style=\{s0\.nonstop\} numberOfLines=\{1\}>\{stopLabel\}<\/Text>/);
 });
 
