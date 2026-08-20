@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { requireMobileSecurity,mobileUnauthorized } from "@/lib/mobile-security-route"; import { signOutEverywhere } from "@/lib/security-service";
+export async function POST(request:Request){const auth=await requireMobileSecurity(request);if(!auth)return mobileUnauthorized();try{await signOutEverywhere(auth.user.id,auth.user.email);return NextResponse.json({success:true});}catch{return NextResponse.json({error:"Unable to sign out every device."},{status:503});}}

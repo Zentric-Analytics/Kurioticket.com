@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { requireMobileSecurity,mobileUnauthorized } from "@/lib/mobile-security-route"; import { securityActivity } from "@/lib/security-service";
+export async function GET(request:Request){const auth=await requireMobileSecurity(request);if(!auth)return mobileUnauthorized();try{return NextResponse.json({events:await securityActivity(auth.user.id)});}catch{return NextResponse.json({error:"Unable to load security activity."},{status:503});}}

@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { requireMobileSecurity,mobileUnauthorized } from "@/lib/mobile-security-route"; import { activeSecuritySessions } from "@/lib/security-service";
+export async function GET(request:Request){const auth=await requireMobileSecurity(request);if(!auth)return mobileUnauthorized();try{return NextResponse.json({sessions:await activeSecuritySessions(auth.user.id,auth.id)});}catch{return NextResponse.json({error:"Unable to load devices."},{status:503});}}
