@@ -4093,6 +4093,8 @@ export const translations: TranslationDictionary = {
   "hotelDetails.termsBody": "Final room availability and terms must be confirmed.",
   "hotelDetails.paymentTitle": "No payment collected",
   "hotelDetails.paymentBody": "Kurioticket does not collect payment for this planning listing.",
+  "hotelDetails.moreHotelsIn": "More hotels in {{destination}}",
+  "hotelDetails.priceUnavailable": "Price unavailable",
 
   "flightResults.loading.title": "Searching the best flights for you",
   "carsResults.loading.title": "Searching the best cars for you",

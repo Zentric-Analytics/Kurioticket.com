@@ -12,6 +12,15 @@ type HotelCoordinates = Pick<
   "latitude" | "longitude"
 >;
 
+type HotelMapDetails = {
+  hotelName: string;
+  propertyDetails: PublicHotelPropertyDetails;
+};
+
+type HotelMapConfiguration = HotelMapDetails & {
+  googleMapsEmbedApiKey?: string;
+};
+
 export function hasValidHotelCoordinates(
   coordinates: HotelCoordinates,
 ): boolean {
@@ -25,7 +34,7 @@ export function hasValidHotelCoordinates(
   );
 }
 
-export function buildHotelMapEmbedUrl(
+export function buildOpenStreetMapHotelMapEmbedUrl(
   coordinates: HotelCoordinates,
 ): string | null {
   if (!hasValidHotelCoordinates(coordinates)) return null;
@@ -66,6 +75,51 @@ export function buildHotelAddress(
     parts.push(part);
   }
   return parts.join(", ");
+}
+
+export function buildGoogleHotelMapEmbedUrl({
+  hotelName,
+  propertyDetails,
+  googleMapsEmbedApiKey,
+}: HotelMapConfiguration): string | null {
+  const apiKey = googleMapsEmbedApiKey?.trim();
+  if (!apiKey) return null;
+
+  const address = buildHotelAddress(propertyDetails);
+  const propertyQuery = [normalizeAddressPart(hotelName), address]
+    .filter(Boolean)
+    .join(", ");
+  const query =
+    propertyQuery ||
+    (hasValidHotelCoordinates(propertyDetails)
+      ? `${propertyDetails.latitude},${propertyDetails.longitude}`
+      : "");
+  if (!query) return null;
+
+  const url = new URL("https://www.google.com/maps/embed/v1/place");
+  const params = new URLSearchParams({
+    key: apiKey,
+    q: query,
+    zoom: "16",
+    maptype: "roadmap",
+  });
+  if (hasValidHotelCoordinates(propertyDetails)) {
+    params.set(
+      "center",
+      `${propertyDetails.latitude},${propertyDetails.longitude}`,
+    );
+  }
+  url.search = params.toString();
+  return url.toString();
+}
+
+export function buildHotelMapEmbedUrl(
+  configuration: HotelMapConfiguration,
+): string | null {
+  return (
+    buildGoogleHotelMapEmbedUrl(configuration) ??
+    buildOpenStreetMapHotelMapEmbedUrl(configuration.propertyDetails)
+  );
 }
 
 export function buildHotelDirectionsUrl(

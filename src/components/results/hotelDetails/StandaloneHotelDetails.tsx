@@ -22,9 +22,11 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
-import type { PublicHotelPropertyDetails } from "@/lib/types";
+import type { PublicHotelPropertyDetails, PublicHotelResult } from "@/lib/types";
 import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDetailsGallery";
 import { HotelLocationSection } from "@/components/results/hotelDetails/HotelLocationSection";
+import { RelatedHotelsSection } from "@/components/results/hotelDetails/RelatedHotelsSection";
+import type { HotelDetailsSearchContext } from "@/components/results/hotelDetails/hotelDetailsPresentation";
 
 type DisplayPrice = {
   formatted: string;
@@ -50,6 +52,8 @@ export type StandaloneHotelDetailsProps = {
   starRatingAriaLabel: string;
   locationParts: string[];
   propertyDetails: PublicHotelPropertyDetails | null;
+  relatedHotels: PublicHotelResult[];
+  relatedSearchContext?: HotelDetailsSearchContext;
   amenityItems: HotelAmenityPresentationItem[];
   isSaved: boolean;
   savedHotelLabel: string;
@@ -80,6 +84,15 @@ export type StandaloneHotelDetailsProps = {
     roomTitle: string;
     closeRooms: string;
     roomTerms: string;
+    moreHotelsIn: string;
+    viewHotel: string;
+    pricePerNight: string;
+    estimatedStayTotal: string;
+    priceUnavailable: string;
+    imageUnavailable: string;
+    imageAlt: string;
+    nearLocation: string;
+    starHotelAria: string;
   };
 };
 
@@ -159,7 +172,8 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_334px] lg:items-start lg:gap-7" data-standalone-hotel-details>
-      <article className="min-w-0 rounded-[17px] border border-slate-200/80 bg-white p-5 shadow-[0_5px_24px_rgba(15,23,42,0.045)] sm:p-6">
+      <div className="min-w-0">
+        <article className="min-w-0 rounded-[17px] border border-slate-200/80 bg-white p-5 shadow-[0_5px_24px_rgba(15,23,42,0.045)] sm:p-6">
         <header className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5">
@@ -181,7 +195,25 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
         {description ? <section className="mt-5" aria-labelledby="hotel-about-heading"><h2 id="hotel-about-heading" className="text-[17px] font-bold text-slate-950">{props.labels.about}</h2><p className={`mt-2 text-[13px] leading-5 text-slate-600 ${descriptionExpanded ? "" : "line-clamp-2"}`}>{description}</p>{canExpandDescription ? <button type="button" aria-expanded={descriptionExpanded} onClick={() => setDescriptionExpanded((value) => !value)} className="focus-ring mt-1 inline-flex items-center gap-1 text-xs font-bold text-blue hover:underline">{descriptionExpanded ? props.labels.less : props.labels.more}{descriptionExpanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}</button> : null}</section> : null}
 
         {props.propertyDetails ? <HotelLocationSection hotelName={props.hotelName} propertyDetails={props.propertyDetails} locationLabel={props.labels.location} directionsLabel={props.labels.directions} /> : null}
-      </article>
+        </article>
+
+        <RelatedHotelsSection
+          hotels={props.relatedHotels}
+          city={props.propertyDetails?.city || ""}
+          searchContext={props.relatedSearchContext}
+          labels={{
+            heading: props.labels.moreHotelsIn,
+            viewHotel: props.labels.viewHotel,
+            pricePerNight: props.labels.pricePerNight,
+            estimatedStayTotal: props.labels.estimatedStayTotal,
+            priceUnavailable: props.labels.priceUnavailable,
+            imageUnavailable: props.labels.imageUnavailable,
+            imageAlt: props.labels.imageAlt,
+            nearLocation: props.labels.nearLocation,
+            starHotelAria: props.labels.starHotelAria,
+          }}
+        />
+      </div>
 
       <aside className="min-w-0 self-start" data-standalone-stay-summary>
         <section className="rounded-[17px] border border-slate-200/80 bg-white p-5 shadow-[0_5px_24px_rgba(15,23,42,0.045)] sm:p-6" aria-labelledby="your-stay-heading">

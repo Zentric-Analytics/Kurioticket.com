@@ -35,7 +35,12 @@ export function HotelLocationSection({
   locationLabel,
   directionsLabel,
 }: HotelLocationSectionProps) {
-  const mapUrl = buildHotelMapEmbedUrl(propertyDetails);
+  const mapUrl = buildHotelMapEmbedUrl({
+    hotelName,
+    propertyDetails,
+    googleMapsEmbedApiKey:
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY,
+  });
   const directionsUrl = buildHotelDirectionsUrl(propertyDetails);
   const streetAddress = propertyDetails.streetAddress.trim();
   const secondaryLocation = getSecondaryLocation(propertyDetails);

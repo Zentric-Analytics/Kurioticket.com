@@ -116,6 +116,23 @@ export function buildStaticHotelResults(search: HotelSearchParams) {
   );
 }
 
+export function buildRelatedStaticHotelResults(
+  currentRecord: StaticHotelRecord,
+  search: HotelSearchParams,
+  limit = 5,
+) {
+  return searchStaticHotelCatalogue(currentRecord.city)
+    .filter((record) => record.id !== currentRecord.id)
+    .map((record) => buildStaticHotelResult(record, search))
+    .sort(
+      (first, second) =>
+        second.valueScore - first.valueScore ||
+        second.arrivalSuitabilityScore - first.arrivalSuitabilityScore ||
+        first.id.localeCompare(second.id),
+    )
+    .slice(0, Math.max(0, Math.min(limit, 5)));
+}
+
 export function calculateHotelStayNights(checkIn: string, checkOut: string) {
   return Math.max(
     Math.round((Date.parse(checkOut) - Date.parse(checkIn)) / 86_400_000),

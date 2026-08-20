@@ -78,6 +78,18 @@ export function buildHotelDetailsResultsHref(searchContext?: HotelDetailsSearchC
   return `/hotels/results?${params.toString()}`;
 }
 
+export function buildHotelDetailsHref(
+  hotelId: string,
+  searchContext?: HotelDetailsSearchContext,
+) {
+  const path = `/hotels/details/${encodeURIComponent(hotelId)}`;
+  const resultsHref = buildHotelDetailsResultsHref(searchContext);
+  const queryIndex = resultsHref.indexOf("?");
+  if (queryIndex < 0) return path;
+  const params = new URLSearchParams(resultsHref.slice(queryIndex + 1));
+  return `${path}?${params.toString()}`;
+}
+
 export function getDistinctHotelDetailsLocationParts(hotel: PublicHotelResult, distanceText: string) {
   const parts: string[] = [];
   const seen = new Set<string>();
