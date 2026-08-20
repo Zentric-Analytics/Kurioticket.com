@@ -42,6 +42,25 @@ export const NATIONALITY_OPTIONS = COUNTRY_OPTIONS.map(
 );
 export const PHONE_COUNTRY_OPTIONS = phoneCountryOptions;
 
+export type PersonalDetailsSelectorOption = {
+  label: string;
+  value: string;
+  searchTerms?: string[];
+};
+
+export function filterSelectorOptions(
+  options: PersonalDetailsSelectorOption[],
+  query: string,
+) {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  if (!normalizedQuery) return options;
+  return options.filter((option) =>
+    [option.label, ...(option.searchTerms ?? [])].some((term) =>
+      term.toLocaleLowerCase().includes(normalizedQuery),
+    ),
+  );
+}
+
 /** Builds only validated FlagCDN URLs; caller input can never become a host or path. */
 export function getCountryFlagUri(value: string | null | undefined) {
   const isoCode = getSupportedPhoneCountryCode(value);

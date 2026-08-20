@@ -63,15 +63,59 @@ test("country and nationality search selectors wait for an explicit search-field
     screen,
     /<TextInput autoFocus accessibilityLabel=\{c\.searchCountry\}/,
   );
+  assert.doesNotMatch(screen, /autoFocus/);
+  assert.match(screen, /if \(visible\) Keyboard\.dismiss\(\)/);
+});
+test("selector query is session-scoped and reset on lifecycle boundaries", () => {
+  assert.match(screen, /const \[q, setQ\] = useState\(""\)/);
   assert.match(
     screen,
-    /dismissKeyboard=\{[\s\S]*?selector === "phone"[\s\S]*?selector === "nationality"[\s\S]*?selector === "addressCountry"[\s\S]*?\}/,
+    /useEffect\([\s\S]*?setQ\(""\)[\s\S]*?\[selectorType, visible\]\)/,
   );
-  assert.match(screen, /if \(visible && dismissKeyboard\) Keyboard\.dismiss\(\)/);
   assert.match(
     screen,
-    /if \(dismissKeyboard\) Keyboard\.dismiss\(\);\s*onClose\(\)/,
+    /const close = \(\) => \{[\s\S]*?Keyboard\.dismiss\(\);[\s\S]*?setQ\(""\)/,
   );
+  assert.match(screen, /onSelect\(item\.value\);\s*setQ\(""\);\s*onClose\(\)/);
+  assert.match(screen, /selectorType=\{selector\}/);
+});
+test("phone, nationality, and address searches have independent aliases", () => {
+  assert.match(
+    screen,
+    /PHONE_COUNTRY_OPTIONS\.map[\s\S]*?x\.isoCode[\s\S]*?x\.dialCode[\s\S]*?replace\("\+", ""\)/,
+  );
+  assert.match(screen, /addressCountry"[\s\S]*?searchTerms: \[x\.code\]/);
+  assert.match(
+    screen,
+    /NATIONALITY_OPTIONS\.map[\s\S]*?searchTerms: \[COUNTRY_OPTIONS\[index\]\.code\]/,
+  );
+});
+test("selector modal is keyboard-aware and only results scroll", () => {
+  assert.match(
+    screen,
+    /<KeyboardAvoidingView\s*behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
+  );
+  const selector = screen.slice(
+    screen.indexOf("function Selector("),
+    screen.indexOf("function Field("),
+  );
+  assert.ok(selector.indexOf("{title}") < selector.indexOf("<ScrollView"));
+  assert.ok(selector.indexOf("<TextInput") < selector.indexOf("<ScrollView"));
+  assert.match(selector, /maxHeight: height \* 0\.82/);
+  assert.match(selector, /keyboardShouldPersistTaps="handled"/);
+});
+test("all selector dismissal paths dismiss the keyboard", () => {
+  const selector = screen.slice(
+    screen.indexOf("function Selector("),
+    screen.indexOf("function Field("),
+  );
+  assert.match(selector, /onRequestClose=\{close\}/);
+  assert.match(selector, /onPress=\{close\}/);
+  assert.match(
+    selector,
+    /onPress=\{\(\) => \{\s*Keyboard\.dismiss\(\);\s*onSelect/,
+  );
+  assert.ok((selector.match(/onPress=\{close\}/g) ?? []).length >= 2);
 });
 test("opening Address does not programmatically focus its fields", () => {
   const addressSection = screen.slice(
@@ -139,7 +183,12 @@ test("address fields retain web order and canonical serializer", () => {
 
 test("editable controls keep stable component identity across draft updates", () => {
   const screenStart = screen.indexOf("export function PersonalDetailsScreen");
-  for (const component of ["Field", "SelectButton", "PhoneControl"]) {
+  for (const component of [
+    "Selector",
+    "Field",
+    "SelectButton",
+    "PhoneControl",
+  ]) {
     const definition = screen.indexOf(`function ${component}(`);
     assert.ok(definition >= 0, `${component} must be defined`);
     assert.ok(

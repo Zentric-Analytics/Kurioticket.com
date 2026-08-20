@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   canonicalDate,
   COUNTRY_OPTIONS,
+  filterSelectorOptions,
   GENDER_VALUES,
   getCountryFlagUri,
   NATIONALITY_OPTIONS,
@@ -37,17 +38,32 @@ test("phone country and local number serialize with canonical catalogue", () => 
   assert.match(result.phoneNumber, /212/);
   assert.ok(COUNTRY_OPTIONS.some((x) => x.code === "US"));
 });
+test("selector matching supports labels, ISO codes, and phone calling codes", () => {
+  const nigeria = PHONE_COUNTRY_OPTIONS.find(
+    (option) => option.isoCode === "NG",
+  );
+  assert.ok(nigeria);
+  const options = [
+    {
+      label: nigeria.countryName,
+      value: nigeria.isoCode,
+      searchTerms: [
+        nigeria.isoCode,
+        nigeria.dialCode,
+        nigeria.dialCode.slice(1),
+      ],
+    },
+  ];
+  for (const query of ["Nigeria", "NG", "+234", "234"])
+    assert.deepEqual(filterSelectorOptions(options, query), options);
+});
 test("date selection emits canonical dates and rejects impossible or future dates", () => {
   assert.equal(canonicalDate("2000", "2", "29"), "2000-02-29");
   assert.equal(canonicalDate("2023", "2", "29"), null);
   assert.equal(canonicalDate("2999", "1", "1"), null);
 });
 test("gender and nationality use canonical supported options", () => {
-  assert.deepEqual(GENDER_VALUES, [
-    "Male",
-    "Female",
-    "I prefer not to say",
-  ]);
+  assert.deepEqual(GENDER_VALUES, ["Male", "Female", "I prefer not to say"]);
   assert.ok(NATIONALITY_OPTIONS.includes("United States"));
 });
 test("structured addresses round trip and legacy values remain readable", () => {
