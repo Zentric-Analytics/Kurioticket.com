@@ -23,7 +23,7 @@ const search = {
 } as const;
 
 test("static hotel catalogue is authoritative and destination relevant", () => {
-  assert.equal(staticHotelCatalogue.length, 12);
+  assert.equal(staticHotelCatalogue.length, 14);
   assert.deepEqual(
     [...supportedStaticHotelDestinations],
     ["London", "Paris", "New York", "Tokyo"],
@@ -159,9 +159,9 @@ test("related hotels are same-city, deterministic, capped, and preserve stay pri
   const parkPlaza = getStaticHotelById("park-plaza-westminster-bridge");
   assert.ok(parkPlaza);
   const related = buildRelatedStaticHotelResults(parkPlaza, search);
-  assert.equal(related.length, 5);
-  assert.equal(new Set(related.map((hotel) => hotel.id)).size, 5);
-  assert.equal(new Set(related.map((hotel) => hotel.name)).size, 5);
+  assert.equal(related.length, 7);
+  assert.equal(new Set(related.map((hotel) => hotel.id)).size, 7);
+  assert.equal(new Set(related.map((hotel) => hotel.name)).size, 7);
   assert.ok(related.every((hotel) => hotel.id !== parkPlaza.id));
   assert.ok(related.every((hotel) => hotel.location.startsWith("London")));
   const firstRelated = related[0];
@@ -170,20 +170,23 @@ test("related hotels are same-city, deterministic, capped, and preserve stay pri
   assert.deepEqual(related, buildRelatedStaticHotelResults(parkPlaza, search));
 });
 
-test("every London property has exactly five unique same-city alternatives", () => {
+test("every London property has exactly seven unique same-city alternatives", () => {
   const londonHotels = searchStaticHotelCatalogue("London");
-  assert.ok(londonHotels.length >= 6);
+  assert.ok(londonHotels.length >= 8);
 
   for (const current of londonHotels) {
     const related = buildRelatedStaticHotelResults(current, search);
-    assert.equal(related.length, 5, current.id);
-    assert.equal(new Set(related.map((hotel) => hotel.id)).size, 5, current.id);
+    assert.equal(related.length, 7, current.id);
+    assert.equal(new Set(related.map((hotel) => hotel.id)).size, 7, current.id);
     assert.equal(
       new Set(related.map((hotel) => hotel.name)).size,
-      5,
+      7,
       current.id,
     );
-    assert.ok(related.every((hotel) => hotel.id !== current.id), current.id);
+    assert.ok(
+      related.every((hotel) => hotel.id !== current.id),
+      current.id,
+    );
     assert.ok(
       related.every((hotel) => hotel.location.startsWith("London")),
       current.id,
@@ -199,12 +202,27 @@ test("every London property has exactly five unique same-city alternatives", () 
   }
 });
 
+test("destinations with smaller inventories return available same-city alternatives", () => {
+  const parisHotels = searchStaticHotelCatalogue("Paris");
+  assert.equal(parisHotels.length, 2);
+
+  const related = buildRelatedStaticHotelResults(parisHotels[0]!, {
+    ...search,
+    destination: "Paris",
+  });
+  assert.equal(related.length, 1);
+  assert.equal(related[0]?.id, parisHotels[1]?.id);
+  assert.ok(related.every((hotel) => hotel.location.startsWith("Paris")));
+});
+
 test("new London records retain verified identity and location facts", () => {
   const expected = [
     ["park-plaza-county-hall-london", /1 Addington St.*SE1 7RY/i],
     ["citizenm-tower-of-london", /40 Trinity Square.*EC3N 4DJ/i],
     ["the-clermont-london-charing-cross", /Strand.*WC2N 5HX/i],
     ["sea-containers-london", /20 Upper Ground.*SE1 9PD/i],
+    ["london-marriott-hotel-county-hall", /Westminster Bridge Road.*SE1 7PB/i],
+    ["shangri-la-the-shard-london", /31 St Thomas Street.*SE1 9QU/i],
   ] as const;
   for (const [id, address] of expected) {
     const hotel = getStaticHotelById(id);
