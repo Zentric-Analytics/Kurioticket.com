@@ -1,4 +1,5 @@
 import type {
+  FlightSearchParams,
   NormalizedFlightResult,
   NormalizedHotelResult,
   PublicFlightResult,
@@ -15,6 +16,7 @@ type CacheRecord<T> = {
 const ttlMs = 1000 * 60 * 30;
 
 const flightCache = new Map<string, CacheRecord<NormalizedFlightResult>>();
+const flightSearchCache = new Map<string, CacheRecord<FlightSearchParams>>();
 const hotelCache = new Map<string, CacheRecord<NormalizedHotelResult>>();
 
 function purgeExpired<T>(cache: Map<string, CacheRecord<T>>, now = Date.now()) {
@@ -26,8 +28,10 @@ function purgeExpired<T>(cache: Map<string, CacheRecord<T>>, now = Date.now()) {
 export function rememberFlights(
   results: NormalizedFlightResult[],
   now = Date.now(),
+  search?: FlightSearchParams,
 ) {
   purgeExpired(flightCache, now);
+  purgeExpired(flightSearchCache, now);
   for (const result of results) {
     const expiresAt = Math.min(
       now + ttlMs,
@@ -35,6 +39,12 @@ export function rememberFlights(
     );
     if (expiresAt <= now) continue;
     flightCache.set(result.id, { value: result, expiresAt });
+    if (search)
+      flightSearchCache.set(result.id, {
+        value: { ...search },
+        expiresAt,
+      });
+    else flightSearchCache.delete(result.id);
   }
 }
 
@@ -48,6 +58,13 @@ export function rememberHotels(results: NormalizedHotelResult[]) {
 export function getFlightFromCache(id: string, now = Date.now()) {
   purgeExpired(flightCache, now);
   return flightCache.get(id)?.value ?? null;
+}
+
+/** Returns the server-owned search composition that produced this exact result. */
+export function getFlightSearchFromCache(id: string, now = Date.now()) {
+  purgeExpired(flightSearchCache, now);
+  const search = flightSearchCache.get(id)?.value;
+  return search ? { ...search } : null;
 }
 
 export function getCompatibleFlightsFromCache(id: string, now = Date.now()) {
