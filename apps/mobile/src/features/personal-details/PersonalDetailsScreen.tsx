@@ -38,6 +38,7 @@ import {
   COUNTRY_OPTIONS,
   displayAddress,
   EMPTY_ADDRESS,
+  filterSelectorOptions,
   GENDER_VALUES,
   getCountryFlagUri,
   NATIONALITY_OPTIONS,
@@ -48,26 +49,27 @@ import {
   serializeAddress,
   serializePhone,
   type AddressParts,
+  type PersonalDetailsSelectorOption,
 } from "./personalDetailsModel";
 import { personalDetailsCopy } from "./translations";
 
 type SelectorProps = {
   visible: boolean;
   title: string;
-  options: { label: string; value: string }[];
+  selectorType: string | null;
+  options: PersonalDetailsSelectorOption[];
   selected: string;
   searchable?: boolean;
-  dismissKeyboard?: boolean;
   onClose: () => void;
   onSelect: (value: string) => void;
 };
 function Selector({
   visible,
   title,
+  selectorType,
   options,
   selected,
   searchable,
-  dismissKeyboard,
   onClose,
   onSelect,
 }: SelectorProps) {
@@ -75,14 +77,15 @@ function Selector({
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
   const [q, setQ] = useState("");
-  const shown = options.filter((x) =>
-    x.label.toLocaleLowerCase().includes(q.toLocaleLowerCase()),
-  );
+  const { height } = useWindowDimensions();
+  const shown = filterSelectorOptions(options, q);
   useEffect(() => {
-    if (visible && dismissKeyboard) Keyboard.dismiss();
-  }, [dismissKeyboard, visible]);
+    setQ("");
+    if (visible) Keyboard.dismiss();
+  }, [selectorType, visible]);
   const close = () => {
-    if (dismissKeyboard) Keyboard.dismiss();
+    Keyboard.dismiss();
+    setQ("");
     onClose();
   };
   return (
@@ -92,7 +95,10 @@ function Selector({
       animationType="slide"
       onRequestClose={close}
     >
-      <View style={s.modalRoot}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={s.modalRoot}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={c.cancel}
@@ -104,7 +110,10 @@ function Selector({
         />
         <SafeAreaView
           edges={["bottom"]}
-          style={[s.sheet, { backgroundColor: theme.surface }]}
+          style={[
+            s.sheet,
+            { backgroundColor: theme.surface, maxHeight: height * 0.82 },
+          ]}
         >
           <Text
             accessibilityRole="header"
@@ -136,9 +145,10 @@ function Selector({
                 accessibilityRole="radio"
                 accessibilityState={{ selected: item.value === selected }}
                 onPress={() => {
+                  Keyboard.dismiss();
                   onSelect(item.value);
                   setQ("");
-                  close();
+                  onClose();
                 }}
                 style={[s.option, { borderBottomColor: theme.border }]}
               >
@@ -161,7 +171,7 @@ function Selector({
             <Text style={s.blue}>{c.cancel}</Text>
           </Pressable>
         </SafeAreaView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -493,35 +503,46 @@ export function PersonalDetailsScreen() {
     displayAddress(saved?.address || ""),
   ];
   const selectOptions =
-    selector === "phone" || selector === "addressCountry"
-      ? COUNTRY_OPTIONS.map((x) => ({
-          label: `${x.label}${selector === "phone" ? "" : ""}`,
-          value: x.code,
+    selector === "phone"
+      ? PHONE_COUNTRY_OPTIONS.map((x) => ({
+          label: x.countryName,
+          value: x.isoCode,
+          searchTerms: [x.isoCode, x.dialCode, x.dialCode.replace("+", "")],
         }))
-      : selector === "gender"
-        ? GENDER_VALUES.map((value, index) => ({
-            value,
-            label: [c.male, c.female, c.prefer][index],
+      : selector === "addressCountry"
+        ? COUNTRY_OPTIONS.map((x) => ({
+            label: x.label,
+            value: x.code,
+            searchTerms: [x.code],
           }))
-        : selector === "nationality"
-          ? NATIONALITY_OPTIONS.map((value) => ({ value, label: value }))
-          : selector === "day"
-            ? Array.from({ length: 31 }, (_, i) => ({
-                value: String(i + 1).padStart(2, "0"),
-                label: String(i + 1),
+        : selector === "gender"
+          ? GENDER_VALUES.map((value, index) => ({
+              value,
+              label: [c.male, c.female, c.prefer][index],
+            }))
+          : selector === "nationality"
+            ? NATIONALITY_OPTIONS.map((value, index) => ({
+                value,
+                label: value,
+                searchTerms: [COUNTRY_OPTIONS[index].code],
               }))
-            : selector === "month"
-              ? Array.from({ length: 12 }, (_, i) => ({
+            : selector === "day"
+              ? Array.from({ length: 31 }, (_, i) => ({
                   value: String(i + 1).padStart(2, "0"),
-                  label: new Intl.DateTimeFormat(
-                    locale === "es-es" ? "es-ES" : "en-US",
-                    { month: "long", timeZone: "UTC" },
-                  ).format(new Date(Date.UTC(2020, i, 1))),
+                  label: String(i + 1),
                 }))
-              : Array.from({ length: 125 }, (_, i) => ({
-                  value: String(new Date().getUTCFullYear() - i),
-                  label: String(new Date().getUTCFullYear() - i),
-                }));
+              : selector === "month"
+                ? Array.from({ length: 12 }, (_, i) => ({
+                    value: String(i + 1).padStart(2, "0"),
+                    label: new Intl.DateTimeFormat(
+                      locale === "es-es" ? "es-ES" : "en-US",
+                      { month: "long", timeZone: "UTC" },
+                    ).format(new Date(Date.UTC(2020, i, 1))),
+                  }))
+                : Array.from({ length: 125 }, (_, i) => ({
+                    value: String(new Date().getUTCFullYear() - i),
+                    label: String(new Date().getUTCFullYear() - i),
+                  }));
   const selected =
     selector === "phone"
       ? draft.phoneCountryCode || ""
@@ -830,6 +851,7 @@ export function PersonalDetailsScreen() {
       )}
       <Selector
         visible={!!selector}
+        selectorType={selector}
         title={
           selector
             ? {
@@ -846,11 +868,6 @@ export function PersonalDetailsScreen() {
         options={selectOptions}
         selected={selected}
         searchable={
-          selector === "phone" ||
-          selector === "nationality" ||
-          selector === "addressCountry"
-        }
-        dismissKeyboard={
           selector === "phone" ||
           selector === "nationality" ||
           selector === "addressCountry"
@@ -873,7 +890,6 @@ export function PersonalDetailsScreen() {
       />
     </SafeAreaView>
   );
-
 }
 function safeDate(value: string, locale: string) {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
