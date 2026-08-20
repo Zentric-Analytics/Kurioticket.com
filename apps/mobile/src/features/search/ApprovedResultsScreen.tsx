@@ -781,22 +781,36 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
     <View style={s0.journeyBlock}>
       <Text style={[s0.journeyLabel, { color: theme.textSecondary }]}>{label}</Text>
       <View style={s0.journeyRow}>
-        <View style={s0.departureColumn}>
-          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
-          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport}</Text>
+        <View style={s0.durationRow}>
+          <View style={s0.departureColumn} />
+          <View style={s0.timelineColumn}>
+            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.duration}</Text>
+          </View>
+          <View style={s0.arrivalColumn} />
         </View>
-        <View style={s0.timelineColumn}>
-          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.duration}</Text>
+        <View style={s0.timeTimelineRow}>
+          <View style={s0.departureColumn}>
+            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
+          </View>
           <View style={s0.timelineTrack}>
             <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
             <PlaneTakeoff size={14} strokeWidth={2} color={ui.blue} />
             <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
           </View>
-          <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
+          <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
+            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+          </View>
         </View>
-        <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
-          <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
-          <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
+        <View style={s0.airportStopRow}>
+          <View style={s0.departureColumn}>
+            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport}</Text>
+          </View>
+          <View style={s0.timelineColumn}>
+            <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
+          </View>
+          <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
+            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
+          </View>
         </View>
       </View>
     </View>
@@ -1316,13 +1330,16 @@ const s0 = StyleSheet.create({
   airlineName: { flex: 1, minWidth: 0, fontSize: 12, lineHeight: 16, color: ui.navy, fontWeight: "700" },
   journeyBlock: { width: "100%", gap: 2 },
   journeyLabel: { fontSize: 9, lineHeight: 11, fontWeight: "800", letterSpacing: 0.7 },
-  journeyRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  journeyRow: { width: "100%" },
+  durationRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  timeTimelineRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  airportStopRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   departureColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
   arrivalColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
   rightColumnContract: { alignItems: "flex-end" },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
   timelineColumn: { flex: 1, minWidth: 70, alignItems: "center" },
-  timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 2, marginVertical: 1 },
+  timelineTrack: { flex: 1, minWidth: 70, flexDirection: "row", alignItems: "center", gap: 2 },
   line: {
     flex: 1,
     height: 1,
