@@ -1,42 +1,54 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { formatTime, rentalTimesSummary, selectRentalRangeDate } from "./carSearchModel";
 
 const panel = readFileSync("src/features/flow/CarSearchPanel.tsx", "utf8");
+const pickers = readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8");
 const icons = readFileSync("src/features/flow/FlowIcon.tsx", "utf8");
-const pairedRows = [...panel.matchAll(/<View style=\{styles\.pairedRow\}>([\s\S]*?)<\/View>/g)].map((match) => match[1]);
 
-test("Cars pairs pick-up and drop-off dates before paired pick-up and drop-off times", () => {
-  assert.equal(pairedRows.length, 2);
-  assert.match(pairedRows[0], /label="Pick-up date"[\s\S]*label="Drop-off date"/);
-  assert.doesNotMatch(pairedRows[0], /label="(?:Pick-up|Drop-off) time"/);
-  assert.match(pairedRows[1], /label="Pick-up time"[\s\S]*label="Drop-off time"/);
-  assert.doesNotMatch(pairedRows[1], /label="(?:Pick-up|Drop-off) date"/);
-
-  const order = ["Pick-up location", "Return to a different location", "Drop-off location", "Pick-up date", "Drop-off date", "Pick-up time", "Drop-off time", "Driver age", "PrimaryButton"];
-  let cursor = -1;
-  for (const marker of order) {
-    const next = panel.indexOf(marker, cursor + 1);
-    assert.ok(next > cursor, `${marker} must follow the preceding form control`);
-    cursor = next;
-  }
+test("Cars presents one unified date field and one unified time field in form order", () => {
+  assert.equal((panel.match(/<Field label="Rental dates"/g) ?? []).length, 1);
+  assert.equal((panel.match(/<Field label="Pick-up \/ Return time"/g) ?? []).length, 1);
+  assert.doesNotMatch(panel, /<Field label="(?:Pick-up|Drop-off) (?:date|time)"/);
+  assert.match(panel, /label="Rental dates"[\s\S]*icon="calendar"/);
+  assert.match(panel, /label="Pick-up \/ Return time"[\s\S]*icon="clock"/);
+  const order = ["Pick-up location", "Return to a different location", "Drop-off location", "Rental dates", "Pick-up / Return time", "Driver age", "PrimaryButton"];
+  let cursor = -1; for (const marker of order) { const next=panel.indexOf(marker,cursor+1); assert.ok(next>cursor,`${marker} must follow the preceding control`); cursor=next; }
 });
 
-test("Cars fields use the native calendar, clock, person, and themed chevron icons", () => {
-  assert.match(pairedRows[0], /label="Pick-up date"[\s\S]*?icon="calendar"/);
-  assert.match(pairedRows[0], /label="Drop-off date"[\s\S]*?icon="calendar"/);
-  assert.match(pairedRows[1], /label="Pick-up time"[\s\S]*?icon="clock"/);
-  assert.match(pairedRows[1], /label="Drop-off time"[\s\S]*?icon="clock"/);
-  assert.match(panel, /label="Driver age"[\s\S]*?icon="person"[\s\S]*?name="chevron" color=\{ft\.colors\.icon\}/);
+test("Cars summaries cover empty, partial, and complete values with Return terminology", () => {
+  assert.match(panel, /pickupDate \? displayDate\(pickupDate\) : "Select pick-up date"/);
+  assert.match(panel, /returnDate \? displayDate\(returnDate\) : "Select return date"/);
+  assert.equal(rentalTimesSummary("",""), "Select pick-up time — Select return time");
+  assert.equal(rentalTimesSummary("10:00",""), `${formatTime("10:00")} — Select return time`);
+  assert.doesNotMatch(rentalTimesSummary("10:00","10:30"), /Select/);
+  assert.doesNotMatch(panel + pickers, /Drop-off (?:date|time)|drop-off (?:date|time)/);
+  assert.match(pickers, /Pick-up date/); assert.match(pickers, /Return date/); assert.match(pickers, /Pick-up time/); assert.match(pickers, /Return time/);
 });
 
-test("Cars paired controls stay in equal non-wrapping columns at narrow widths", () => {
-  assert.match(panel, /pairedRow:\{flexDirection:"row"\}/);
-  assert.match(panel, /pairedHalf:\{flex:1,minWidth:0\}/);
-  assert.doesNotMatch(panel, /pairedRow:\{[^}]*flexWrap/);
+test("rental range selection starts, completes including same day, and restarts", () => {
+  assert.deepEqual(selectRentalRangeDate("2026-09-03","2026-09-06","2026-09-10"),{pickupDate:"2026-09-10",returnDate:""});
+  assert.deepEqual(selectRentalRangeDate("2026-09-03","","2026-09-06"),{pickupDate:"2026-09-03",returnDate:"2026-09-06"});
+  assert.deepEqual(selectRentalRangeDate("2026-09-03","","2026-09-03"),{pickupDate:"2026-09-03",returnDate:"2026-09-03"});
+  assert.deepEqual(selectRentalRangeDate("2026-09-03","","2026-09-02"),{pickupDate:"2026-09-02",returnDate:""});
 });
 
-test("FlowIcon owns a stroke-based clock glyph", () => {
+test("combined pickers preserve draft, dismissal, accessibility, range, and two-list structure", () => {
+  assert.match(pickers, /setDraftPickup\(pickupDate\)[\s\S]*setDraftReturn\(returnDate\)/);
+  assert.match(pickers, /onRequestClose=\{onCancel\}/);
+  assert.match(pickers, /accessibilityViewIsModal/g);
+  assert.match(pickers, /disabled=\{!draftPickup\|\|!draftReturn\}/g);
+  assert.match(pickers, /iso<today/);
+  assert.match(pickers, /inRange/);
+  assert.match(pickers, /timeColumns:\{flex:1,flexDirection:"row"/);
+  assert.equal((pickers.match(/<TimeColumn label=/g) ?? []).length,2);
+  assert.match(pickers, /timeOptions\.map/);
+  assert.doesNotMatch(pickers, /✓|position:"absolute"|margin(?:Left|Right|Top|Bottom):-|Platform\.OS/);
+});
+
+test("Cars keeps person and themed chevron icons and FlowIcon clock", () => {
+  assert.match(panel, /label="Driver age"[\s\S]*icon="person"[\s\S]*name="chevron" color=\{ft\.colors\.icon\}/);
   assert.match(icons, /\| "clock" \| "close"/);
   assert.match(icons, /clock: <><Circle \{\.\.\.line\}[\s\S]*?<Path \{\.\.\.line\}/);
 });
