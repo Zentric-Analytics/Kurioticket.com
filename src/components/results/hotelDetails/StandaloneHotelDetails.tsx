@@ -77,6 +77,8 @@ export type StandaloneHotelDetailsProps = {
     about: string;
     location: string;
     directions: string;
+    map: string;
+    streetView: string;
     yourStay: string;
     edit: string;
     viewRooms: string;
@@ -194,7 +196,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
 
         {description ? <section className="mt-5" aria-labelledby="hotel-about-heading"><h2 id="hotel-about-heading" className="text-[17px] font-bold text-slate-950">{props.labels.about}</h2><p className={`mt-2 text-[13px] leading-5 text-slate-600 ${descriptionExpanded ? "" : "line-clamp-2"}`}>{description}</p>{canExpandDescription ? <button type="button" aria-expanded={descriptionExpanded} onClick={() => setDescriptionExpanded((value) => !value)} className="focus-ring mt-1 inline-flex items-center gap-1 text-xs font-bold text-blue hover:underline">{descriptionExpanded ? props.labels.less : props.labels.more}{descriptionExpanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}</button> : null}</section> : null}
 
-        {props.propertyDetails ? <HotelLocationSection hotelName={props.hotelName} propertyDetails={props.propertyDetails} locationLabel={props.labels.location} directionsLabel={props.labels.directions} /> : null}
+        {props.propertyDetails ? <HotelLocationSection hotelName={props.hotelName} propertyDetails={props.propertyDetails} locationLabel={props.labels.location} directionsLabel={props.labels.directions} mapLabel={props.labels.map} streetViewLabel={props.labels.streetView} /> : null}
         </article>
 
         <RelatedHotelsSection

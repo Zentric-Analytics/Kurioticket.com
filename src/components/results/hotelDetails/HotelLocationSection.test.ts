@@ -10,10 +10,14 @@ const source = readFileSync(
 test("renders a factual responsive hotel location card", () => {
   for (const contract of [
     "buildHotelMapEmbedUrl({",
+    "buildGoogleHotelStreetViewEmbedUrl({",
     "NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY",
     "buildHotelDirectionsUrl(propertyDetails)",
     "data-hotel-location-section",
     "Map showing the location of ${hotelName}",
+    "Street View near ${hotelName}",
+    'aria-pressed={active}',
+    'useState<"map" | "streetview">("map")',
     'loading="lazy"',
     'referrerPolicy="strict-origin-when-cross-origin"',
     'target="_blank"',
@@ -26,6 +30,6 @@ test("renders a factual responsive hotel location card", () => {
 test("keys the iframe to stable property coordinates", () => {
   assert.match(
     source,
-    /key=\{`\$\{hotelName\}:\$\{propertyDetails\.latitude\}:\$\{propertyDetails\.longitude\}`\}/,
+    /key=\{`\$\{hotelName\}:\$\{propertyDetails\.latitude\}:\$\{propertyDetails\.longitude\}:\$\{view\}`\}/,
   );
 });

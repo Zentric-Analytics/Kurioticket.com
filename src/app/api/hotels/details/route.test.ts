@@ -155,9 +155,14 @@ test("Park Plaza details expose the matching Westminster address and coordinates
   assert.equal(payload.propertyDetails.longitude, -0.1167);
   assert.match(payload.propertyDetails.streetAddress, /200 Westminster Bridge Rd/i);
   assert.match(payload.propertyDetails.streetAddress, /SE1 7UT/i);
-  assert.deepEqual(
-    payload.relatedHotels.map((hotel) => hotel.id),
-    ["the-savoy-london"],
+  assert.equal(payload.relatedHotels.length, 5);
+  assert.equal(
+    new Set(payload.relatedHotels.map((hotel) => hotel.id)).size,
+    5,
+  );
+  assert.equal(
+    new Set(payload.relatedHotels.map((hotel) => hotel.name)).size,
+    5,
   );
   assert.equal(
     payload.relatedHotels.some((hotel) => hotel.id === "park-plaza-westminster-bridge"),
