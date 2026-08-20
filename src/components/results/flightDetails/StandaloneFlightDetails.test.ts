@@ -269,15 +269,27 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     "Base fare",
     "Fare basis:",
     "Time zone:",
-    "Provider fare refreshed",
+    "Provider offer last updated",
     "Supported identity documents:",
-    "Supported loyalty programmes:",
-    "Airline conditions of carriage",
+    "Supported loyalty airline codes:",
+    "Airline conditions",
+    "conditions of carriage",
     "Offer airline:",
     'permission ? "Allowed" : "Included"',
     'service.pricedPerTraveler ? " each" : ""',
     "Maximum quantity per traveler",
     'condition.category === "change" ? "Changes"',
+    "Flight distance:",
+    "formatDistanceKm(segment.distanceKm, locale)",
+    "Cabin and fare by flight",
+    "segment.originAirport} → {segment.destinationAirport",
+    "Provider source price breakdown",
+    'currencyDisplay: "code"',
+    'condition.scope === "trip" ? "Whole trip"',
+    'condition.scope === "outbound" ? "Outbound only"',
+    'condition.scope === "return" ? "Return only"',
+    "carrierConditionsLinks(offer)",
+    "new Map(entries.map((entry) => [entry.url, entry]))",
   ]) assert.ok(source.includes(contract), contract);
   assert.ok(!source.includes("function primaryLeg"));
   assert.ok(!source.includes('"Continue to provider"'));
@@ -287,6 +299,8 @@ test("standalone UI renders every leg and segment from selected offer and uses a
   assert.ok(!source.includes("ShieldCheck"));
   assert.ok(!source.includes("Included/allowed"));
   assert.ok(!source.includes("Not included/not allowed"));
+  assert.ok(!source.includes("Provider fare refreshed"));
+  assert.ok(!source.includes("Supported loyalty programmes:"));
   assert.match(source, /handoff\.available \? <>.*Secure provider handoff.*<\/> :/s);
   assert.match(source, /Booking link currently unavailable/);
   assert.match(source, /No verified external booking destination is available for this offer\./);
