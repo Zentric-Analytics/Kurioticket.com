@@ -91,6 +91,9 @@ const fixture = (overrides: Partial<NormalizedFlightResult> = {}): NormalizedFli
   ...overrides,
 });
 
+const noUpsells = async () => ({ provider: "Duffel", results: [], status: "success" as const, latencyMs: 2 });
+const upsells = (...results: NormalizedFlightResult[]) => async () => ({ provider: "Duffel", results, status: "success" as const, latencyMs: 3 });
+
 test("round trip preserves explicit outbound and return with their own carriers", async () => {
   const cached = fixture();
   const refreshed = fixture({ price: 205.4 });
@@ -100,6 +103,7 @@ test("round trip preserves explicit outbound and return with their own carriers"
     search,
     now: 1,
     refresh: async () => ({ status: "changed", offer: refreshed }),
+    discoverUpsells: noUpsells,
   });
   assert.equal(details.status, "available");
   if (details.status !== "available") return;
@@ -128,6 +132,7 @@ test("standalone details do not show price-only unbranded alternatives as fare c
     search,
     now: 1,
     refresh: async ({ cachedOffer }) => ({ status: "confirmed", offer: cachedOffer }),
+    discoverUpsells: noUpsells,
   });
   assert.equal(details.status, "available");
   if (details.status === "available") assert.equal(details.fareChoices.length, 1);
@@ -169,8 +174,61 @@ test("baggage and refund copy do not become provider fare-brand identity", () =>
     fixture({ id: "refundable", providerOfferId: "refundable", baggageInfo: "1 checked bag included", refundInfo: "Refundable before departure", price: 240 }),
   ]);
   assert.equal(choices.length, 2);
-  assert.match(choices[0].choice.distinguishingTerms.join(" "), /carry-on|refundable/i);
-  assert.match(choices[1].choice.distinguishingTerms.join(" "), /checked bag|Refundable/i);
+  assert.match(choices[0].choice.distinguishingTerms.map(({ text }) => text).join(" "), /carry-on|refundable/i);
+  assert.match(choices[1].choice.distinguishingTerms.map(({ text }) => text).join(" "), /checked bag|Refundable/i);
+});
+
+test("provider Basic, Standard, and Flex upsells produce sorted real choices", async () => {
+  const selected = fixture({ fareBrandName: "Basic", price: 120 });
+  const standard = fixture({ id: "standard", providerOfferId: "off_standard", fareBrandName: "Standard", price: 155 });
+  const flex = fixture({ id: "flex", providerOfferId: "off_flex", fareBrandName: "Flex", price: 190 });
+  const details = await buildStandaloneFlightDetails({ cachedSelected: selected, cachedAlternatives: [selected], search, now: 1, refresh: async ({ cachedOffer }) => ({ status: "confirmed", offer: cachedOffer }), discoverUpsells: upsells(flex, standard) });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") return;
+  assert.deepEqual(details.fareChoices.map(({ label }) => label), ["Basic", "Standard", "Flex"]);
+  assert.deepEqual(details.fareChoices.map(({ offer }) => offer.price), [120, 155, 190]);
+  assert.equal(details.fareChoices[0].selectedOffer, true);
+  assert.doesNotMatch(JSON.stringify(details), /providerOfferId|off_standard|off_flex|rawProviderReference|partnerRedirectUrl|bookingUrl/);
+});
+
+test("upsell failures and unsupported airlines fail soft to the selected fare", async () => {
+  for (const discoverUpsells of [
+    async () => ({ provider: "Duffel", results: [], status: "failed" as const, latencyMs: 10, errorCategory: "timeout" as const, errorReason: "provider_timeout" as const }),
+    noUpsells,
+  ]) {
+    const details = await buildStandaloneFlightDetails({ cachedSelected: fixture(), cachedAlternatives: [fixture()], search, now: 1, refresh: async ({ cachedOffer }) => ({ status: "confirmed", offer: cachedOffer }), discoverUpsells });
+    assert.equal(details.status, "available");
+    if (details.status === "available") assert.equal(details.fareChoices.length, 1);
+  }
+});
+
+test("rejects mismatched, expired, invalid, and foreign-provider upsells", async () => {
+  const mismatched = fixture({ id: "wrong-route", providerOfferId: "wrong-route", legs: [leg("outbound", "ORD", "LAX", "2027-02-10", "Iberia", "IB100"), fixture().legs![1]] });
+  const expired = fixture({ id: "expired", providerOfferId: "expired", fareBrandName: "Flex", providerExpiresAt: 0 });
+  const invalidPrice = fixture({ id: "invalid-price", providerOfferId: "invalid-price", fareBrandName: "Flex", price: 0 });
+  const invalidCurrency = fixture({ id: "invalid-currency", providerOfferId: "invalid-currency", fareBrandName: "Flex", currency: "US" });
+  const foreign = fixture({ id: "foreign", providerOfferId: "foreign", fareBrandName: "Flex", provider: "Other" });
+  const details = await buildStandaloneFlightDetails({ cachedSelected: fixture(), cachedAlternatives: [fixture()], search, now: 1, refresh: async ({ cachedOffer }) => ({ status: "confirmed", offer: cachedOffer }), discoverUpsells: upsells(mismatched, expired, invalidPrice, invalidCurrency, foreign) });
+  assert.equal(details.status, "available");
+  if (details.status === "available") assert.equal(details.fareChoices.length, 1);
+});
+
+test("higher-cabin provider upsells keep their real cabin", async () => {
+  const premium = fixture({ id: "premium", providerOfferId: "premium", fareBrandName: undefined, cabinClass: "premium economy", price: 250 });
+  const details = await buildStandaloneFlightDetails({ cachedSelected: fixture(), cachedAlternatives: [fixture()], search, now: 1, refresh: async ({ cachedOffer }) => ({ status: "confirmed", offer: cachedOffer }), discoverUpsells: upsells(premium) });
+  assert.equal(details.status, "available");
+  if (details.status !== "available") return;
+  assert.equal(details.fareChoices.length, 2);
+  assert.equal(details.fareChoices[1].label, "Premium Economy");
+  assert.equal(details.fareChoices[1].offer.cabinClass, "premium economy");
+});
+
+test("mixed round-trip provider brands form an explicit leg combination", () => {
+  const mixed = fixture({ fareBrandName: undefined, legs: [
+    { ...fixture().legs![0], fareBrandName: "Basic" },
+    { ...fixture().legs![1], fareBrandName: "Standard" },
+  ] });
+  assert.equal(buildMaterialFareChoices([mixed])[0].choice.label, "Basic / Standard");
 });
 
 test("provider fare brands pass through but are never manufactured", () => {
@@ -197,6 +255,11 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     "id: selectedOffer.id",
     'role="radiogroup"',
     'role="radio"',
+    "term.semantic === \"positive\" ? Check",
+    'event.key === "ArrowRight" || event.key === "ArrowDown"',
+    'tabIndex={selected ? 0 : -1}',
+    "selectedFare?.label",
+    "selectedOffer.price",
   ]) assert.ok(source.includes(contract), contract);
   assert.ok(!source.includes("function primaryLeg"));
   assert.ok(!source.includes('"Continue to provider"'));

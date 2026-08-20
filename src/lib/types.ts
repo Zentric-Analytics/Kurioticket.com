@@ -52,6 +52,15 @@ export type FlightLeg = {
   stops: number;
   layovers: Layover[];
   segments: FlightSegment[];
+  /** Provider-supplied fare brand for this leg/slice. Never inferred. */
+  fareBrandName?: string;
+};
+
+export type FlightFareTerm = {
+  category: "baggage" | "refund" | "change";
+  semantic: "positive" | "negative" | "informational";
+  text: string;
+  legDirection?: FlightLeg["direction"];
 };
 
 export type NormalizedFlightResult = {
@@ -74,6 +83,8 @@ export type NormalizedFlightResult = {
   fareBrandName?: string;
   baggageInfo: string;
   refundInfo: string;
+  /** Provider-authored terms with truthful presentation semantics. */
+  fareTerms?: FlightFareTerm[];
   price: number;
   currency: string;
   bookingUrl: string;
@@ -240,7 +251,8 @@ export type ProviderResult<T> = {
       | "duffel_itinerary_parse_failed"
       | "duffel_offer_request_identity_mismatch"
       | "duffel_offer_normalization_dropped"
-      | "duffel_inventory_pruned_empty";
+      | "duffel_inventory_pruned_empty"
+      | "duffel_upsell_response_invalid";
     counts?: Partial<
       Record<
         | "graphOfferCount"

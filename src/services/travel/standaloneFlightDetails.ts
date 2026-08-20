@@ -9,6 +9,7 @@ import type {
   CabinClass,
   FlightSearchParams,
   NormalizedFlightResult,
+  ProviderResult,
 } from "@/lib/types";
 import {
   buildFlightItineraryKey,
@@ -19,6 +20,7 @@ import {
   type RefreshExactFlightOffer,
 } from "./flightOfferRevalidation";
 import { resolveFlightHandoff } from "./flightHandoff";
+import { getDuffelFlightUpsellOffers } from "./providers/duffelProvider";
 
 const unavailableMessage =
   "This flight quote is no longer available. Please search again for current prices.";
@@ -121,6 +123,7 @@ function itineraryIdentity(offer: NormalizedFlightResult) {
 export function validatesSearchContext(
   offer: NormalizedFlightResult,
   search: FlightSearchParams,
+  { allowDifferentCabin = false }: { allowDifferentCabin?: boolean } = {},
 ) {
   const legs = offer.legs ?? [];
   const expectedCount = search.tripType === "round-trip" ? 2 : 1;
@@ -139,28 +142,39 @@ export function validatesSearchContext(
     offer.price <= 0 ||
     !/^[A-Z]{3}$/.test(offer.currency)
   ) return false;
-  return !offer.cabinClass || canonical(offer.cabinClass) === canonical(search.cabinClass);
+  return allowDifferentCabin || !offer.cabinClass || canonical(offer.cabinClass) === canonical(search.cabinClass);
 }
 
-function materialKey(offer: NormalizedFlightResult) {
-  const providerBrand = offer.fareBrandName?.trim();
-  return providerBrand
-    ? ["provider-brand", canonical(offer.provider), canonical(providerBrand)].join("|")
-    : ["exact-offer", canonical(offer.provider), offer.providerOfferId || offer.id].join("|");
+function providerBrandIdentity(offer: NormalizedFlightResult) {
+  const legBrands = (offer.legs ?? []).map((leg) => leg.fareBrandName?.trim() || "");
+  return legBrands.some(Boolean) ? legBrands.map((brand) => canonical(brand) || "unbranded").join("/") : canonical(offer.fareBrandName || "");
+}
+
+function materialKey(offer: NormalizedFlightResult, upsellOfferIds: ReadonlySet<string>) {
+  const providerBrand = providerBrandIdentity(offer);
+  if (providerBrand)
+    return ["provider-brand", canonical(offer.provider), providerBrand, canonical(offer.cabinClass)].join("|");
+  if (offer.providerOfferId && upsellOfferIds.has(offer.providerOfferId))
+    return ["provider-upsell-cabin", canonical(offer.provider), canonical(offer.cabinClass)].join("|");
+  return ["exact-offer", canonical(offer.provider), offer.providerOfferId || offer.id].join("|");
 }
 
 function fareTerms(offer: NormalizedFlightResult) {
-  return [offer.baggageInfo, offer.refundInfo]
-    .map((term) => term.trim())
-    .filter(Boolean);
+  return offer.fareTerms?.length ? offer.fareTerms : [
+    { category: "baggage" as const, semantic: offer.baggageInfo.toLowerCase().includes("included") ? "positive" as const : "informational" as const, text: offer.baggageInfo },
+    { category: "refund" as const, semantic: /not refundable|not allowed/i.test(offer.refundInfo) ? "negative" as const : /not supplied/i.test(offer.refundInfo) ? "informational" as const : "positive" as const, text: offer.refundInfo },
+  ].filter(({ text }) => text.trim());
 }
 
 function fareLabel(offer: NormalizedFlightResult) {
-  return offer.fareBrandName?.trim() || titleCase(offer.cabinClass || "Fare");
+  const legBrands = (offer.legs ?? []).map((leg) => leg.fareBrandName?.trim()).filter(Boolean) as string[];
+  const unique = [...new Set(legBrands)];
+  return unique.length > 1 ? legBrands.join(" / ") : unique[0] || offer.fareBrandName?.trim() || titleCase(offer.cabinClass || "Fare");
 }
 
 export function buildMaterialFareChoices(
   offers: NormalizedFlightResult[],
+  { upsellOfferIds = new Set<string>(), selectedProviderOfferId }: { upsellOfferIds?: ReadonlySet<string>; selectedProviderOfferId?: string } = {},
 ): Array<{
   source: NormalizedFlightResult;
   memberProviderOfferIds: string[];
@@ -168,7 +182,7 @@ export function buildMaterialFareChoices(
 }> {
   const groups = new Map<string, NormalizedFlightResult[]>();
   for (const offer of offers) {
-    const key = materialKey(offer);
+    const key = materialKey(offer, upsellOfferIds);
     groups.set(key, [...(groups.get(key) ?? []), offer]);
   }
   return [...groups.entries()]
@@ -182,6 +196,7 @@ export function buildMaterialFareChoices(
         label: fareLabel(source),
         offer: toFlightDetailsOffer(source),
         distinguishingTerms: fareTerms(source),
+        selectedOffer: Boolean(selectedProviderOfferId && group.some((offer) => offer.providerOfferId === selectedProviderOfferId)),
         handoff: handoff
           ? { available: true, providerName: handoff.providerName }
           : { available: false },
@@ -203,12 +218,14 @@ export async function buildStandaloneFlightDetails({
   search,
   now = Date.now(),
   refresh = refreshExactFlightOffer,
+  discoverUpsells = getDuffelFlightUpsellOffers,
 }: {
   cachedSelected: NormalizedFlightResult;
   cachedAlternatives: NormalizedFlightResult[];
   search: FlightSearchParams;
   now?: number;
   refresh?: RefreshExactFlightOffer;
+  discoverUpsells?: (providerOfferId: string, search: FlightSearchParams) => Promise<ProviderResult<NormalizedFlightResult>>;
 }): Promise<FlightDetailsSuccess | { status: "unavailable"; error: string }> {
   if (!isFlightProviderOfferUsableAt(cachedSelected, now))
     return { status: "unavailable", error: unavailableMessage };
@@ -218,9 +235,22 @@ export async function buildStandaloneFlightDetails({
 
   const selectedOffer = selected.offer;
   const selectedIdentity = itineraryIdentity(selectedOffer);
+  const upsellResponse = selectedOffer.providerOfferId
+    ? await discoverUpsells(selectedOffer.providerOfferId, search)
+    : null;
+  const upsells = (upsellResponse?.status === "success" ? upsellResponse.results : []).filter((offer) =>
+    offer.provider.trim().toLowerCase() === selectedOffer.provider.trim().toLowerCase() &&
+    validatesSearchContext(offer, search, { allowDifferentCabin: true }) &&
+    offer.currency === selectedOffer.currency &&
+    Boolean(offer.providerExpiresAt && offer.providerExpiresAt > now) &&
+    Boolean(offer.providerOfferId) &&
+    itineraryIdentity(offer) === selectedIdentity,
+  );
   const alternativeResults = await Promise.all(
     cachedAlternatives
       .filter((offer) => offer.id !== cachedSelected.id)
+      .filter((offer) => providerBrandIdentity(offer))
+      .slice(0, 4)
       .map((cachedOffer) => refresh({ cachedOffer, search, now })),
   );
   const refreshedOffers = [
@@ -234,19 +264,32 @@ export async function buildStandaloneFlightDetails({
         : [],
     ),
   ];
-  const fareEligibleOffers = [
+  const cachedFareOffers = [
     selectedOffer,
-    ...refreshedOffers.slice(1).filter((offer) => offer.fareBrandName?.trim()),
+    ...refreshedOffers.slice(1).filter((offer) => providerBrandIdentity(offer)),
   ];
-  const fareChoices = buildMaterialFareChoices(fareEligibleOffers);
+  const upsellOfferIds = new Set(upsells.flatMap(({ providerOfferId }) => providerOfferId ? [providerOfferId] : []));
+  const fareChoices = buildMaterialFareChoices(
+    [selectedOffer, ...upsells, ...cachedFareOffers.slice(1)],
+    { upsellOfferIds, selectedProviderOfferId: selectedOffer.providerOfferId },
+  );
   const initial =
-    fareChoices.find(({ memberProviderOfferIds }) =>
-      selectedOffer.providerOfferId &&
-      memberProviderOfferIds.includes(selectedOffer.providerOfferId),
-    ) ??
+    fareChoices.find(({ choice }) => choice.selectedOffer) ??
     fareChoices[0];
   if (!initial) return { status: "unavailable", error: unavailableMessage };
-  rememberFlights(refreshedOffers, now);
+  rememberFlights([selectedOffer, ...upsells, ...refreshedOffers.slice(1)], now);
+  console.info("[flight-details:fare-discovery]", {
+    upsellAttempted: Boolean(selectedOffer.providerOfferId),
+    providerStatusCategory: upsellResponse?.errorCategory ?? upsellResponse?.status ?? "not_attempted",
+    providerLatencyMs: upsellResponse?.latencyMs ?? 0,
+    returnedUpsellCount: upsellResponse?.status === "success" ? upsellResponse.results.length : 0,
+    normalizedUpsellCount: upsellResponse?.status === "success" ? upsellResponse.results.length : 0,
+    sameItineraryEligibleCount: upsells.length,
+    finalFareChoiceCount: fareChoices.length,
+    missingFareBrandCount: [selectedOffer, ...upsells].filter((offer) => !providerBrandIdentity(offer)).length,
+    missingBaggageCount: [selectedOffer, ...upsells].filter((offer) => /not supplied/i.test(offer.baggageInfo)).length,
+    missingConditionsCount: [selectedOffer, ...upsells].filter((offer) => /not supplied/i.test(offer.refundInfo)).length,
+  });
   const handoff = resolveFlightHandoff(initial.source);
   return {
     status: "available",
