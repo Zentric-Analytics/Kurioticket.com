@@ -17,6 +17,7 @@ type DuffelCarrier = {
   iata_code?: string;
   logo_symbol_url?: string | null;
   logo_lockup_url?: string | null;
+  conditions_of_carriage_url?: string | null;
 };
 
 type DuffelPlace = {
@@ -290,7 +291,8 @@ function buildFlight(input: {
   const partnerUrl = input.bookingUrl || buildMetasearchPartnerUrl();
 
   return {
-    id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,
+    // Public result identity must never contain or be derived from a provider ID.
+    id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-result-${nanoid(16)}`,
     provider: input.provider,
     airlineName: input.airlineName,
     airlineLogo: input.airlineLogo,
@@ -547,19 +549,46 @@ function buildDuffelProviderDetails(offer: {
   base_amount?: string; base_currency?: string; tax_amount?: string | null; tax_currency?: string | null;
   total_emissions_kg?: string | null; updated_at?: string; passenger_identity_documents_required?: boolean;
   supported_passenger_identity_document_types?: string[]; supported_loyalty_programmes?: string[];
+  owner?: DuffelCarrier;
   conditions?: DuffelConditions; slices?: Array<{ conditions?: DuffelConditions; segments?: Array<{ id?: string; origin?: DuffelPlace; destination?: DuffelPlace; marketing_carrier?: DuffelCarrier; marketing_carrier_flight_number?: string }> }>;
   available_services?: Array<{ type?: string; total_amount?: string; total_currency?: string; maximum_quantity?: number; passenger_ids?: string[]; segment_ids?: string[] }>;
 }, totalAmount: number, totalCurrency: string): FlightProviderDetails {
   const segmentLabels = new Map((offer.slices ?? []).flatMap((slice) => (slice.segments ?? []).flatMap((segment) => segment.id ? [[segment.id, `${segment.origin?.iata_code || "?"} → ${segment.destination?.iata_code || "?"}${flightNumber(segment.marketing_carrier?.iata_code, segment.marketing_carrier_flight_number) ? ` · Flight ${flightNumber(segment.marketing_carrier?.iata_code, segment.marketing_carrier_flight_number)}` : ""}`] as const] : [])));
   const conditions = buildProviderConditions(offer);
-  const optionalServices = (offer.available_services ?? []).flatMap((service) => {
+  const ungroupedOptionalServices = (offer.available_services ?? []).flatMap((service) => {
     const price = money(service.total_amount);
     const currency = clean(service.total_currency)?.toUpperCase();
     if (!clean(service.type) || price === undefined || !currency || !/^[A-Z]{3}$/.test(currency)) return [];
     const contexts = (service.segment_ids ?? []).flatMap((id) => segmentLabels.get(id) ? [segmentLabels.get(id)!] : []);
-    return [{ type: clean(service.type)!, description: service.type === "baggage" ? "Additional baggage available" : `${clean(service.type)} available`, price, currency, ...(Number.isInteger(service.maximum_quantity) ? { maximumQuantity: service.maximum_quantity } : {}), ...(service.passenger_ids?.length ? { travelerCount: service.passenger_ids.length } : {}), ...(contexts.length ? { journeyContext: [...new Set(contexts)].join(", ") } : {}) }];
+    return [{ type: clean(service.type)!, description: service.type === "baggage" ? "Additional baggage available" : `${clean(service.type)} available`, price, currency, ...(Number.isInteger(service.maximum_quantity) ? { maximumQuantity: service.maximum_quantity } : {}), ...(service.passenger_ids?.length ? { travelerCount: service.passenger_ids.length } : {}), ...(contexts.length ? { journeyContext: [...new Set(contexts)].join(", ") } : {}), individuallyScoped: service.passenger_ids?.length === 1 }];
   });
+  const groupedOptionalServices = new Map<string, typeof ungroupedOptionalServices>();
+  for (const service of ungroupedOptionalServices) {
+    const key = JSON.stringify([service.type, service.description, service.price, service.currency, service.maximumQuantity, service.journeyContext]);
+    groupedOptionalServices.set(key, [...(groupedOptionalServices.get(key) ?? []), service]);
+  }
+  const optionalServices = [...groupedOptionalServices.values()].map((members) => {
+    const first = members[0];
+    const travelerCount = members.reduce((total, service) => total + (service.travelerCount ?? 0), 0);
+    return {
+      type: first.type,
+      description: first.description,
+      price: first.price,
+      currency: first.currency,
+      ...(first.maximumQuantity !== undefined ? { maximumQuantity: first.maximumQuantity } : {}),
+      ...(travelerCount ? { travelerCount } : {}),
+      ...(first.journeyContext ? { journeyContext: first.journeyContext } : {}),
+      ...(members.length > 1 && members.every(({ individuallyScoped }) => individuallyScoped) ? { pricedPerTraveler: true } : {}),
+    };
+  });
+  const ownerName = clean(offer.owner?.name);
+  const conditionsOfCarriageUrl = cleanPublicUrl(offer.owner?.conditions_of_carriage_url);
   return {
+    ...(ownerName ? { offerOwner: {
+      name: ownerName,
+      ...(clean(offer.owner?.iata_code) ? { iataCode: clean(offer.owner?.iata_code)?.toUpperCase() } : {}),
+      ...(conditionsOfCarriageUrl ? { conditionsOfCarriageUrl } : {}),
+    } } : {}),
     price: {
       ...(money(offer.base_amount) !== undefined ? { baseAmount: money(offer.base_amount) } : {}),
       ...(clean(offer.base_currency) ? { baseCurrency: clean(offer.base_currency)?.toUpperCase() } : {}),
