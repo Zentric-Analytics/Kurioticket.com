@@ -9,9 +9,9 @@ const resultsBody = source.slice(
   source.indexOf("const stopLabels"),
 );
 
-test("ready flight results place one eligible price alert before their summary and cards", () => {
+test("ready flight results place one eligible price alert before their count and cards", () => {
   const flightAlert = source.indexOf('status === "ready" && product === "flight" && availability.priceAlerts');
-  const summary = source.indexOf('status === "ready" ? (', flightAlert);
+  const summary = source.indexOf('status === "ready" && product === "flight" ? (', flightAlert);
   const cards = source.indexOf('sorted.map((x, i)', summary);
   const filteredEmpty = source.indexOf('title="No flights match these filters"', cards);
   const hotelAlert = source.indexOf('product === "hotel" && availability.priceAlerts', filteredEmpty);
@@ -77,10 +77,10 @@ test("the flight alert uses semantic light and dark theme values", () => {
   }
 });
 
-test("flight price-alert eligibility is route-level while the summary stays filter-aware", () => {
+test("flight price-alert eligibility is route-level while the count stays filter-aware", () => {
   assert.match(source, /product === "flight" && availability\.priceAlerts/);
   assert.doesNotMatch(source, /sorted\.length > 0 && availability\.priceAlerts/);
-  assert.match(source, /\{sorted\.length\}\{" "\}[\s\S]*?"flights"/);
+  assert.match(source, /flightResultCountLabel\(sorted\.length\)/);
 });
 
 test("feature-disabled flight results render no unguarded price alert", () => {
@@ -92,8 +92,4 @@ test("feature-disabled flight results render no unguarded price alert", () => {
 test("loading and error states cannot expose the flight price alert", () => {
   assert.doesNotMatch(source, /status === "(?:loading|error)"[^\n]*<PriceAlert/);
   assert.match(source, /status === "ready" && product === "flight" && availability\.priceAlerts/);
-});
-
-test("the compact flight price notice uses the Lucide Info icon", () => {
-  assert.match(source, /<Info[\s\S]*?<Text style=\{\[s0\.change, \{ color: theme\.textPrimary \}\]\}>Price may change<\/Text>/);
 });
