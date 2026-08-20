@@ -55,9 +55,10 @@ export function createPasswordHandlers(
         return NextResponse.json({ ok: true });
       } catch (error) {
         if (error instanceof AuthRateLimitError) {
+          const retryAfter = error.retryAfterSeconds;
           return NextResponse.json(
             { error: "Too many password reset attempts. Please wait and try again." },
-            { status: 429 },
+            { status: 429, headers: { "Retry-After": String(retryAfter) } },
           );
         }
         return NextResponse.json({ ok: true });
@@ -110,9 +111,10 @@ export function createPasswordHandlers(
         return NextResponse.json({ success: true });
       } catch (error) {
         if (error instanceof AuthRateLimitError) {
+          const retryAfter = error.retryAfterSeconds;
           return NextResponse.json(
             { error: "Too many attempts. Please wait and try again." },
-            { status: 429 },
+            { status: 429, headers: { "Retry-After": String(retryAfter) } },
           );
         }
         return NextResponse.json(
