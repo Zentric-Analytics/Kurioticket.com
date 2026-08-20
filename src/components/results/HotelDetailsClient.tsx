@@ -877,6 +877,8 @@ export function HotelDetailsClient({
                   about: t("hotelDetails.aboutProperty") || "About this property",
                   location: t("hotelDetails.location") || "Location",
                   directions: t("hotelDetails.getDirections") || "Get directions",
+                  map: t("hotelDetails.map") || "Map",
+                  streetView: t("hotelDetails.streetView") || "Street View",
                   yourStay: t("hotelDetails.yourStay") || "Your stay",
                   edit: t("edit") || "Edit",
                   viewRooms: t("hotelDetails.viewRoomOptions") || "View room options",
