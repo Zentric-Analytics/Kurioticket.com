@@ -11,7 +11,7 @@ test("the Hotel destination field launches a dedicated searchable picker", () =>
   assert.match(panel, /<HotelDestinationSheet visible=\{destinationOpen\}/);
   assert.match(sheet, /accessibilityLabel="Search hotel destinations"/);
   assert.match(sheet, /placeholder="City, area, or hotel"/);
-  assert.match(sheet, /autoFocus/);
+  assert.doesNotMatch(sheet, /autoFocus/);
 });
 
 test("destination suggestions use the shared native API client with the web contract", () => {
@@ -66,6 +66,7 @@ test("the native sheet is keyboard-aware, safe-area-aware, and scrollable", () =
   assert.match(sheet, /<KeyboardAvoidingView/);
   assert.match(sheet, /behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/);
   assert.match(sheet, /<SafeAreaView edges=\{\["top", "bottom"\]\}/);
-  assert.match(sheet, /<FlatList keyboardShouldPersistTaps="handled"/);
+  assert.match(sheet, /<FlatList style=\{styles\.destinationResults\} keyboardShouldPersistTaps="handled"/);
+  assert.match(panel, /destinationResults:\{flexShrink:1,minHeight:0\}/);
   assert.doesNotMatch(sheet, /keyboardHeight|Dimensions\.get|useWindowDimensions/);
 });
