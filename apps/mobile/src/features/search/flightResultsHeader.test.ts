@@ -49,23 +49,25 @@ test("main controls and metadata render in two independent rows", () => {
   const metadataRow = header.slice(metadataRowStart);
   assert.ok(mainRowStart >= 0 && metadataRowStart > mainRowStart);
   assert.match(mainRow, /accessibilityLabel="Go back"[\s\S]*?\{route\}[\s\S]*?accessibilityLabel="Edit search"/);
-  assert.doesNotMatch(mainRow, /dateRange|travelerCount|cabinClass/);
-  assert.match(metadataRow, /accessibilityLabel="Trip metadata row"[\s\S]*?<CalendarDays[\s\S]*?\{dateRange\}[\s\S]*?<User[\s\S]*?\{travelerCount\}[\s\S]*?<Briefcase[\s\S]*?\{cabinClass\}/);
+  assert.doesNotMatch(mainRow, /dateRange|travelerCount|tripTypeLabel/);
+  assert.match(metadataRow, /accessibilityLabel="Trip metadata row"[\s\S]*?\{dateRange\}[\s\S]*?\{travelerCount\}[\s\S]*?\{tripTypeLabel\}/);
   assert.doesNotMatch(header, /·/);
   assert.match(styles, /flightHeaderMainRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"/);
 });
 
-test("metadata uses modest, decorative semantic icons", () => {
+test("metadata is plain text without calendar, user, or briefcase icons", () => {
   for (const icon of ["CalendarDays", "User", "Briefcase"]) {
-    assert.match(header, new RegExp(`<${icon} accessibilityElementsHidden accessible=\\{false\\} color=\\{theme\\.icon\\} size=\\{16\\}`));
+    assert.doesNotMatch(header, new RegExp(`<${icon}\\b`));
+    assert.doesNotMatch(results, new RegExp(`\\b${icon},`));
   }
 });
 
-test("metadata renders current dates without a redundant trip-type label", () => {
+test("metadata renders current dates and the canonical payload trip type", () => {
   assert.match(results, /shortDate\(String\(payload\.departureDate/);
   assert.match(results, /shortDate\(String\(payload\.returnDate/);
   assert.match(results, /dateRange=\{payload\.tripType === "one-way"/);
-  assert.doesNotMatch(header, /Round trip|One way/);
+  assert.match(results, /tripTypeLabel=\{payload\.tripType === "round-trip" \? "Round trip" : "One way"\}/);
+  assert.match(header, /\{tripTypeLabel\}/);
 });
 
 test("traveler metadata uses the canonical total with singular and plural wording", () => {
@@ -77,9 +79,9 @@ test("traveler metadata uses the canonical total with singular and plural wordin
   assert.equal(travelerText(2), "2 Travelers");
 });
 
-test("cabin class comes from current normalized search data", () => {
-  assert.match(results, /cabinClass=\{cabinLabel\(payload\.cabinClass\)\}/);
-  assert.match(results, /replace\(\/\[-_\]\+\/g, " "\)\.toLowerCase\(\)/);
+test("cabin class is absent from the Flight Results header contract and metadata", () => {
+  assert.doesNotMatch(header, /cabinClass|cabinLabel|Economy/);
+  assert.doesNotMatch(results, /cabinClass=\{cabinLabel/);
   assert.equal(flightPayload({ adults: 1, children: 0, infants: 0 }).cabinClass, "economy");
 });
 
@@ -104,7 +106,7 @@ test("route stays centered between balanced compact controls without overlap", (
   assert.match(styles, /flightHeaderRouteBlock: \{ flex: 1, minWidth: 0, alignItems: "center"/);
   assert.doesNotMatch(header, />Edit search<\/Text>/);
   assert.match(header, /accessibilityLabel="Edit search"[\s\S]*?<FilePenLine/);
-  assert.doesNotMatch(header, /numberOfLines|ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
+  assert.doesNotMatch(header.slice(0, header.indexOf('<View style={s0.flightHeaderMetadataAlignmentRow}>')), /numberOfLines|ellipsizeMode|overflow:\s*["']hidden["']|position:\s*["']absolute["']/);
 });
 
 test("Edit search is an icon-only action without card decoration", () => {
@@ -115,16 +117,17 @@ test("Edit search is an icon-only action without card decoration", () => {
 
 test("metadata stays horizontal without wrapping and scrolls on narrow screens", () => {
   assert.match(header, /<ScrollView[\s\S]*?accessibilityLabel="Trip metadata row"[\s\S]*?horizontal[\s\S]*?showsHorizontalScrollIndicator=\{false\}[\s\S]*?contentContainerStyle=\{s0\.flightHeaderMetadataRow\}/);
-  assert.match(styles, /flightHeaderMetadataRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?flexWrap: "nowrap"[\s\S]*?alignItems: "center"[\s\S]*?columnGap: 18/);
-  assert.match(styles, /flightHeaderMetadataItem: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"[\s\S]*?flexShrink: 0,[\s\S]*?gap: 6/);
-  assert.doesNotMatch(header, /numberOfLines|ellipsizeMode/);
+  assert.match(styles, /flightHeaderMetadataRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?flexWrap: "nowrap"[\s\S]*?alignItems: "center"[\s\S]*?columnGap: 14/);
+  assert.match(styles, /flightHeaderMetadataText: \{ flexShrink: 0, fontSize: 12, lineHeight: 17 \}/);
+  assert.equal(header.match(/numberOfLines=\{1\}/g)?.length, 3);
+  assert.doesNotMatch(header, /ellipsizeMode/);
 });
 
 test("metadata alignment clears the Back target without fragile absolute positioning", () => {
   assert.match(header, /<View style=\{s0\.flightHeaderMetadataAlignmentRow\}>[\s\S]*?<View style=\{s0\.flightHeaderMetadataInset\} \/>[\s\S]*?<ScrollView[\s\S]*?<\/ScrollView>/);
   assert.match(styles, /flightHeaderMetadataAlignmentRow: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "center"[\s\S]*?marginTop: 7/);
   assert.match(styles, /flightHeaderMetadataInset: \{ width: 52, flexShrink: 0 \}/);
-  assert.doesNotMatch(styles.slice(styles.indexOf("flightHeaderMetadataAlignmentRow:"), styles.indexOf("flightHeaderMetadataItem:")), /position:|left:|right:/);
+  assert.doesNotMatch(styles.slice(styles.indexOf("flightHeaderMetadataAlignmentRow:"), styles.indexOf("flightHeaderMetadataText:")), /position:|left:|right:/);
 });
 
 test("Back is an independent icon with pressed feedback and no card treatment", () => {
@@ -146,6 +149,7 @@ test("metadata and controls preserve semantic light and dark theme colors", () =
   assert.match(header, /color: theme\.textPrimary/);
   assert.match(header, /color: theme\.textSecondary/);
   assert.match(header, /color=\{theme\.icon\}/);
+  assert.match(header, /flightHeaderMetadataText, \{ color: theme\.textSecondary \}/);
 });
 
 test("shared actions and bottom navigation remain unchanged", () => {

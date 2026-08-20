@@ -16,11 +16,11 @@ test("outbound and return share one three-column journey component", () => {
   assert.match(source, /arrivalColumn: \{ flexBasis: 78, minWidth: 78, flexShrink: 0 \}/);
 });
 
-test("arrival, price, trip type, and action terminate on the shared right edge", () => {
+test("arrival, price, and action terminate on the shared right edge", () => {
   assert.match(source, /rightColumnContract: \{ alignItems: "flex-end" \}/);
   assert.match(card, /style=\{\[s0\.priceBox, s0\.rightColumnContract\]\}/);
   assert.match(card, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}/);
-  assert.match(card, /<Text style=\{\[s0\.sub, \{ color: theme\.textSecondary \}\]\}>\{roundTrip \? "round trip" : "one way"\}<\/Text>/);
+  assert.doesNotMatch(card, />\{roundTrip \? "round trip" : "one way"\}<\/Text>/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch"/);
   assert.match(source, /flightDetails: \{ width: "100%"/);
   assert.match(source, /priceBox: \{ width: "100%", minWidth: 0 \}/);
@@ -31,7 +31,7 @@ test("arrival, price, trip type, and action terminate on the shared right edge",
 test("one-way cards omit return while preserving the shared right-side contract", () => {
   assert.match(card, /const roundTrip = one\(params\.tripType\) === "round-trip"/);
   assert.match(card, /\{returnLeg \? <FlightJourneyRow[^\n]+ : null\}/);
-  assert.match(card, /\{roundTrip \? "round trip" : "one way"\}/);
+  assert.doesNotMatch(card, /"round trip" : "one way"/);
   assert.match(card, /style=\{\[s0\.priceBox, s0\.rightColumnContract\]\}/);
   assert.match(card, /style=\{\[s0\.actionColumn, s0\.rightColumnContract\]\}/);
 });
