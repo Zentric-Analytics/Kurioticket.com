@@ -106,6 +106,7 @@ import {
 } from "@/lib/saved-items-api";
 import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { FlightSearchParams, PublicFlightResult, SortMode } from "@/lib/types";
+import { parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
 import {
   calculateCompactFilterPlacement,
@@ -1248,6 +1249,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       event: React.MouseEvent<HTMLButtonElement>,
       target: "route" | "dates" | "travelers",
     ) => {
+      if (tripTypeInput === "multi-city") {
+        router.push(`/flights?${searchQueryString}`);
+        return;
+      }
       stickySearchLauncherRef.current = event.currentTarget;
       pendingStickySearchTargetRef.current = target;
       const currentScrollY = window.scrollY;
@@ -1268,6 +1273,8 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     },
     [
       originInput,
+      router,
+      searchQueryString,
       setActiveDatePicker,
       setActiveSuggest,
       setDatePickerPosition,
@@ -1275,6 +1282,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       setTravelerPopoverOpen,
       setTravelerPopoverPosition,
       setTripTypeMenuOpen,
+      tripTypeInput,
     ],
   );
 
@@ -2186,6 +2194,10 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   }
 
   function openMobileSearchDrawer(launcher?: HTMLElement | null) {
+    if (tripTypeInput === "multi-city") {
+      router.push(`/flights?${searchQueryString}`);
+      return;
+    }
     mobileSearchLauncherRef.current = launcher ?? null;
     closeMobileFiltersDrawer({ restoreFocus: false });
     closeFlightSearchPopovers();
@@ -2216,6 +2228,9 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   function getCurrentFlightSearchForSavedItem(): SavedDiscoveryFlightSearch | undefined {
     if (!body) return undefined;
+    // The legacy saved-discovery contract cannot restore intermediate multi-city legs.
+    // Keep it unavailable until that persistent model becomes leg-aware.
+    if (body.tripType === "multi-city") return undefined;
     const tripType = body.tripType === "one-way" ? "one-way" : "round-trip";
     const cabinClass = body.cabinClass === "business" || body.cabinClass === "first" ? body.cabinClass : "economy";
     if (!body.origin || !body.destination || !body.departureDate) return undefined;
@@ -2452,19 +2467,16 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const destination = searchParams.get("destination")?.trim() || "";
     const departureDate = searchParams.get("departureDate")?.trim() || "";
     const tripType = searchParams.get("tripType") || "round-trip";
+    const legs = tripType === "multi-city" ? parseFlightLegParams(searchParams) : undefined;
     const returnDate = searchParams.get("returnDate")?.trim() || "";
     const hasValidDepartureDate = isValidFutureOrTodayDateValue(departureDate);
     const hasValidReturnDate =
       tripType !== "round-trip" ||
       (isValidFutureOrTodayDateValue(returnDate) &&
         !isDateValueBefore(returnDate, departureDate));
-    const hasSearch = Boolean(
-      origin &&
-      destination &&
-      departureDate &&
-      hasValidDepartureDate &&
-      hasValidReturnDate,
-    );
+    const hasSearch = tripType === "multi-city"
+      ? Boolean(legs && legs.length >= 2 && legs.every((leg, index) => leg.origin && leg.destination && leg.origin !== leg.destination && isValidFutureOrTodayDateValue(leg.departureDate) && (index === 0 || leg.departureDate >= legs[index - 1].departureDate)))
+      : Boolean(origin && destination && departureDate && hasValidDepartureDate && hasValidReturnDate);
 
     if (!hasSearch) return null;
 
@@ -2485,6 +2497,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
     return {
       tripType,
+      ...(legs ? { legs } : {}),
       origin,
       destination,
       departureDate,

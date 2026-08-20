@@ -129,12 +129,14 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
   const flight = selectedOffer;
   const legs = flight.legs ?? [];
   const origin = flight.originAirport;
-  const destination = flight.destinationAirport;
+  const destination = available.search.tripType === "multi-city" ? legs.at(-1)?.destinationAirport ?? flight.destinationAirport : flight.destinationAirport;
   const route = `${cleanLocation(origin)} to ${cleanLocation(destination)}`;
   const travelers = readTravelerSummary(available.search);
-  const tripType = available.search.tripType === "round-trip" ? "Round-trip" : "One-way";
+  const tripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? `Multi-city • ${legs.length} flights` : "One-way";
   const tripLine = `${tripType} • ${travelers.count} ${travelers.count === 1 ? "traveler" : "travelers"}`;
-  const date = available.search.returnDate
+  const date = available.search.tripType === "multi-city"
+    ? available.search.legs.map((leg) => formatTripDate(leg.departureDate, locale)).join(" • ")
+    : available.search.returnDate
     ? `${formatTripDate(available.search.departureDate, locale)} – ${formatTripDate(available.search.returnDate, locale)}`
     : formatTripDate(available.search.departureDate, locale);
   const providerPrice = selectedOffer
@@ -172,7 +174,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                 <ItineraryCard
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}`}
                   leg={leg}
-                  label={index === 0 ? "OUTBOUND" : "RETURN"}
+                  label={available.search.tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"}
                   locale={locale}
                 />
               ))}
@@ -201,14 +203,14 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
           </section>
 
-          <TripSidebar legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={continueToProvider} error={error || notice} />
+          <TripSidebar tripType={available.search.tripType} legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={continueToProvider} error={error || notice} />
         </div>
       </div>
     </main>
   );
 }
 
-function ItineraryCard({ leg, label, locale }: { leg: FlightLeg; label: "OUTBOUND" | "RETURN"; locale: string }) {
+function ItineraryCard({ leg, label, locale }: { leg: FlightLeg; label: string; locale: string }) {
   return <section className="overflow-hidden rounded-xl border border-[#E2E8F0] bg-white" aria-labelledby={`${label.toLowerCase()}-heading`}>
     <div className="border-b border-[#E2E8F0] bg-slate-50 px-5 py-3 lg:px-6">
       <h2 id={`${label.toLowerCase()}-heading`} className="text-sm font-bold tracking-[0.12em] text-[#075EE8]">{label}</h2>
@@ -280,7 +282,7 @@ function DetailGroup({ title, children }: { title: string; children: React.React
 function PriceRow({ label, amount, currency, locale }: { label: string; amount: number; currency: string; locale: string }) { return <div className="flex justify-between gap-3"><dt className="text-slate-600">{label}</dt><dd className="font-medium">{formatSourceMoney(amount, currency, locale)}</dd></div>; }
 function formatSourceMoney(amount: number, currency: string, locale: string) { try { return new Intl.NumberFormat(locale, { style: "currency", currency, currencyDisplay: "code" }).format(amount); } catch { return `${currency} ${amount.toFixed(2)}`; } }
 function amenityLines(cabin: NonNullable<FlightLeg["segments"][number]["cabinDetails"]>[number]) { const lines: string[] = []; if (cabin.amenities?.wifi) lines.push(`Wi-Fi: ${cabin.amenities.wifi.state === "included" ? cabin.amenities.wifi.cost ? `Available (${titleCase(cabin.amenities.wifi.cost)})` : "Available" : cabin.amenities.wifi.state === "not-included" ? "Not available" : "Not supplied by provider"}`); if (cabin.amenities?.power) lines.push(`Power: ${cabin.amenities.power.state === "included" ? "Available" : cabin.amenities.power.state === "not-included" ? "Not available" : "Not supplied by provider"}`); if (cabin.amenities?.seat) lines.push(`Seat: ${[cabin.amenities.seat.type && titleCase(cabin.amenities.seat.type), cabin.amenities.seat.pitch && `${cabin.amenities.seat.pitch} in pitch`, cabin.amenities.seat.legroom && `${cabin.amenities.seat.legroom.toUpperCase() === "N/A" ? "N/A" : titleCase(cabin.amenities.seat.legroom)} legroom`].filter(Boolean).join(", ")}`); return lines; }
-function conditionLabel(condition: FlightProviderCondition) { const scope = condition.scope === "trip" ? "Whole trip" : condition.scope === "outbound" ? "Outbound only" : condition.scope === "return" ? "Return only" : "Leg"; const category = condition.category === "change" ? "Changes" : titleCase(condition.category); const permission = condition.category === "change" || condition.category === "refund"; const state = condition.state === "allowed" ? permission ? "Allowed" : "Included" : condition.state === "not-allowed" ? permission ? "Not allowed" : "Not included" : "Not supplied by provider"; return `${scope} • ${category}: ${state}`; }
+function conditionLabel(condition: FlightProviderCondition) { const scope = condition.scope === "trip" ? "Whole trip" : condition.legIndex !== undefined ? `Flight ${condition.legIndex + 1}` : condition.scope === "outbound" ? "Outbound only" : condition.scope === "return" ? "Return only" : "Leg"; const category = condition.category === "change" ? "Changes" : titleCase(condition.category); const permission = condition.category === "change" || condition.category === "refund"; const state = condition.state === "allowed" ? permission ? "Allowed" : "Included" : condition.state === "not-allowed" ? permission ? "Not allowed" : "Not included" : "Not supplied by provider"; return `${scope} • ${category}: ${state}`; }
 function formatProviderTimestamp(value: string, locale: string) { const timestamp = new Date(value); return Number.isNaN(timestamp.getTime()) ? value : new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" }).format(timestamp); }
 function formatDistanceKm(distanceKm: number, locale: string) { return `${new Intl.NumberFormat(locale, { maximumFractionDigits: distanceKm >= 100 ? 0 : 1 }).format(distanceKm)} km`; }
 function carrierConditionsLinks(offer: FlightDetailsOffer) {
@@ -289,11 +291,11 @@ function carrierConditionsLinks(offer: FlightDetailsOffer) {
   return [...new Map(entries.map((entry) => [entry.url, entry])).values()];
 }
 
-function TripSidebar({ legs, route, date, tripLine, travelers, travelerCount, selectedFare, fareTerms, price, locale, redirecting, handoff, canContinue, onContinue, error }: { legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; travelerCount: number; selectedFare: string; fareTerms: FlightDetailsFareChoice["distinguishingTerms"]; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
+function TripSidebar({ tripType, legs, route, date, tripLine, travelers, travelerCount, selectedFare, fareTerms, price, locale, redirecting, handoff, canContinue, onContinue, error }: { tripType: "one-way" | "round-trip" | "multi-city"; legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; travelerCount: number; selectedFare: string; fareTerms: FlightDetailsFareChoice["distinguishingTerms"]; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
   return <aside className="rounded-[15px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:sticky lg:top-24" aria-labelledby="your-trip-heading">
     <h2 id="your-trip-heading" className="text-xl font-bold">Your trip</h2><p className="mt-4 text-base font-semibold">{route}</p><p className="mt-1 text-xs leading-5 text-slate-600">{date} • {tripLine}</p>
     <div className="my-5 border-t border-[#E2E8F0]" />
-    <div className="space-y-5">{legs.map((leg, index) => <div key={`${leg.direction}-${leg.departureTime}`}><p className="text-xs font-bold tracking-[0.12em] text-[#075EE8]">{index === 0 ? "OUTBOUND" : "RETURN"}</p><p className="mt-1 text-sm font-semibold">{leg.originAirport} → {leg.destinationAirport}</p><div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-600"><span>{formatTime(leg.departureTime, locale)}</span><span>{leg.duration} • {formatStops(leg.stops, technicalStopCount(leg))}</span><span>{formatTime(leg.arrivalTime, locale)}</span></div></div>)}</div>
+    <div className="space-y-5">{legs.map((leg, index) => <div key={`${leg.direction}-${leg.departureTime}`}><p className="text-xs font-bold tracking-[0.12em] text-[#075EE8]">{tripType === "multi-city" ? `FLIGHT ${index + 1}` : index === 0 ? "OUTBOUND" : "RETURN"}</p><p className="mt-1 text-sm font-semibold">{leg.originAirport} → {leg.destinationAirport}</p><div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-600"><span>{formatTime(leg.departureTime, locale)}</span><span>{leg.duration} • {formatStops(leg.stops, technicalStopCount(leg))}</span><span>{formatTime(leg.arrivalTime, locale)}</span></div></div>)}</div>
     <div className="my-5 border-t border-[#E2E8F0]" /><dl className="space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-600">Fare</dt><dd className="font-medium text-slate-800">{selectedFare}</dd></div>{fareTerms.length ? <div><dt className="text-slate-600">Fare terms</dt><dd className="mt-1 space-y-1 text-xs leading-5 text-slate-700">{fareTerms.map((term) => <p key={`${term.category}-${term.legDirection || "trip"}-${term.text}`}>{term.text}</p>)}</dd></div> : null}<div className="flex justify-between gap-4"><dt className="text-slate-600">Traveler</dt><dd className="font-medium text-slate-800">{travelers}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-600">Handoff provider</dt><dd className="max-w-[60%] text-right font-medium text-slate-800">{handoff.available ? handoff.providerName : "Unavailable"}</dd></div></dl>
     <div className="my-5 border-t border-[#E2E8F0]" /><div className="flex items-end justify-between gap-4"><p className="text-sm font-semibold">{flightDetailsTotalLabel(travelerCount)}</p>{price ? <p className="text-[30px] font-bold leading-none text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : null}</div>
     <button type="button" aria-label={handoff.available ? `Continue to ${handoff.providerName}` : "Booking link currently unavailable"} disabled={!canContinue || redirecting} onClick={onContinue} className="mt-6 h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{handoff.available ? (redirecting ? `Opening ${handoff.providerName}…` : `Continue to ${handoff.providerName}`) : "Booking link currently unavailable"}</button>

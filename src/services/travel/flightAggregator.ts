@@ -6,6 +6,7 @@ import type {
   SortMode,
 } from "@/lib/types";
 import { getItineraryDateKey } from "@/lib/utils";
+import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { rememberFlights } from "@/lib/searchCache";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 import {
@@ -43,7 +44,7 @@ export async function searchFlights(
   const deduplicationStartedAt = performance.now();
   const usableResults = provider.results.filter(
     (result) =>
-      matchesDeparture(result, search.departureDate) &&
+      matchesRequestedLegs(result, search) &&
       isFlightProviderOfferUsableAt(result, now),
   );
   const deduplicatedResults = deduplicateFlightOffers(usableResults);
@@ -131,6 +132,16 @@ const matchesDeparture = (result: NormalizedFlightResult, date: string) =>
     result.legs?.find((leg) => leg.direction === "outbound")?.departureTime ||
       result.departureTime,
   ) === date;
+const matchesRequestedLegs = (result: NormalizedFlightResult, search: FlightSearchParams) => {
+  const requested = getSearchLegs(search);
+  const actual = result.legs ?? [];
+  return actual.length === requested.length && requested.every((leg, index) => {
+    const candidate = actual[index];
+    return candidate?.originAirport.toUpperCase() === leg.origin.toUpperCase() &&
+      candidate.destinationAirport.toUpperCase() === leg.destination.toUpperCase() &&
+      getItineraryDateKey(candidate.departureTime) === leg.departureDate;
+  });
+};
 function assignBadges(results: NormalizedFlightResult[]) {
   if (!results.length) return results;
   const cheapest = [...results].sort((a, b) => a.price - b.price)[0].id;
@@ -154,4 +165,8 @@ export function filterFlightsByRequestedOutboundDate(
   return results.filter((result) =>
     matchesDeparture(result, requestedDepartureDate),
   );
+}
+
+export function filterFlightsByRequestedLegs(results: NormalizedFlightResult[], search: FlightSearchParams) {
+  return results.filter((result) => matchesRequestedLegs(result, search));
 }

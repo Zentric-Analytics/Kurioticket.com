@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { buildFlightPriceAlertPayload } from "@/lib/price-alerts/flightPriceAlerts";
+import { MULTI_CITY_MAX_LEGS, MULTI_CITY_MIN_LEGS, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 
 const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -39,12 +40,22 @@ const futureDate = z
   .min(1)
   .refine(isTodayOrFutureDate, "Choose today or a future date.");
 
+const flightLegSchema = z.object({
+  origin: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/, "Choose a valid departure airport."),
+  destination: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{3}$/, "Choose a valid arrival airport."),
+  departureDate: futureDate,
+}).refine((leg) => leg.origin !== leg.destination, {
+  message: "Departure and arrival airports must be different.",
+  path: ["destination"],
+});
+
 export const flightSearchSchema = z
   .object({
     tripType: z.enum(["round-trip", "one-way", "multi-city"]).default("round-trip"),
-    origin: z.string().trim().min(3, "Enter a departure airport or city.").max(80),
-    destination: z.string().trim().min(3, "Enter an arrival airport or city.").max(80),
-    departureDate: futureDate,
+    legs: z.array(flightLegSchema).max(MULTI_CITY_MAX_LEGS).optional(),
+    origin: z.string().trim().min(3, "Enter a departure airport or city.").max(80).optional(),
+    destination: z.string().trim().min(3, "Enter an arrival airport or city.").max(80).optional(),
+    departureDate: futureDate.optional(),
     returnDate: z.preprocess(
       (value) => (value === "" ? undefined : value),
       futureDate.optional(),
@@ -61,32 +72,41 @@ export const flightSearchSchema = z
     const adults = data.adults ?? data.travelers;
     const children = data.children ?? 0;
     const infants = data.infants ?? 0;
+    const legacyLegs = data.origin && data.destination && data.departureDate
+      ? [{ origin: data.origin.toUpperCase(), destination: data.destination.toUpperCase(), departureDate: data.departureDate }]
+      : [];
+    if (data.tripType === "round-trip" && legacyLegs[0] && data.returnDate) {
+      legacyLegs.push({ origin: legacyLegs[0].destination, destination: legacyLegs[0].origin, departureDate: data.returnDate });
+    }
+    const legs = data.legs?.length ? data.legs : legacyLegs;
     return {
       ...data,
+      ...projectSearchLegs(data.tripType, legs),
       adults,
       children,
       infants,
       travelers: adults + children + infants,
     };
   })
-  .refine((data) => data.tripType === "round-trip" || !data.returnDate, {
-    message: "Return date is only allowed for round trips.",
-    path: ["returnDate"],
+  .superRefine((data, context) => {
+    const legs = data.legs;
+    const expectedCount = data.tripType === "one-way" ? 1 : data.tripType === "round-trip" ? 2 : null;
+    if (expectedCount !== null && legs.length !== expectedCount) {
+      context.addIssue({ code: "custom", message: `${data.tripType} requires exactly ${expectedCount} flight${expectedCount === 1 ? "" : "s"}.`, path: ["legs"] });
+    }
+    if (data.tripType === "multi-city" && legs.length < MULTI_CITY_MIN_LEGS) {
+      context.addIssue({ code: "custom", message: "Multi-city search requires at least two flights.", path: ["legs"] });
+    }
+    if (data.tripType === "round-trip" && legs.length === 2 &&
+      (legs[1].origin !== legs[0].destination || legs[1].destination !== legs[0].origin)) {
+      context.addIssue({ code: "custom", message: "Round-trip flights must return to the original airport.", path: ["legs", 1] });
+    }
+    legs.forEach((leg, index) => {
+      if (index > 0 && leg.departureDate < legs[index - 1].departureDate) {
+        context.addIssue({ code: "custom", message: "Flights must be in chronological order.", path: ["legs", index, "departureDate"] });
+      }
+    });
   })
-  .refine((data) => data.tripType !== "round-trip" || Boolean(data.returnDate), {
-    message: "Choose a return date for round trips.",
-    path: ["returnDate"],
-  })
-  .refine(
-    (data) =>
-      data.tripType !== "round-trip" ||
-      !data.returnDate ||
-      data.returnDate >= data.departureDate,
-    {
-      message: "Return date must be the same as or after departure.",
-      path: ["returnDate"],
-    },
-  )
   .refine((data) => data.infants <= data.adults, {
     message: "Infants on lap cannot exceed adults.",
     path: ["infants"],

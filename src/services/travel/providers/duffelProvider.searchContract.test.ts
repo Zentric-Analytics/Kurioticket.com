@@ -87,3 +87,17 @@ test("Deals Offer Requests keep split tickets disabled", () => {
   });
   assert.equal(request.data.include_split_ticket, false);
 });
+
+test("one-way, round-trip, and multi-city use one ordered Duffel slice path", () => {
+  const shared = { adults: 2, children: 1, infants: 1, travelers: 4, cabinClass: "business" as const };
+  const oneWay = duffelSearchBody({ tripType: "one-way", origin: "IAH", destination: "LHR", departureDate: "2099-09-10", ...shared });
+  assert.deepEqual(oneWay.data.slices, [{ origin: "IAH", destination: "LHR", departure_date: "2099-09-10" }]);
+  const roundTrip = duffelSearchBody({ tripType: "round-trip", origin: "IAH", destination: "LHR", departureDate: "2099-09-10", returnDate: "2099-09-20", ...shared });
+  assert.deepEqual(roundTrip.data.slices, [{ origin: "IAH", destination: "LHR", departure_date: "2099-09-10" }, { origin: "LHR", destination: "IAH", departure_date: "2099-09-20" }]);
+  const legs = [{ origin: "IAH", destination: "LHR", departureDate: "2099-09-10" }, { origin: "LHR", destination: "CDG", departureDate: "2099-09-15" }, { origin: "CDG", destination: "JFK", departureDate: "2099-09-22" }];
+  const multi = duffelSearchBody({ tripType: "multi-city", legs, origin: "IAH", destination: "JFK", departureDate: "2099-09-10", ...shared });
+  assert.deepEqual(multi.data.slices, legs.map((item) => ({ origin: item.origin, destination: item.destination, departure_date: item.departureDate })));
+  assert.equal(multi.data.include_split_ticket, false);
+  assert.deepEqual(multi.data.passengers.map(({ type }) => type), ["adult", "adult", "child", "infant_without_seat"]);
+  assert.equal(multi.data.cabin_class, "business");
+});

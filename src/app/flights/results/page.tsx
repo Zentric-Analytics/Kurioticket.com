@@ -9,6 +9,7 @@ import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { FlightResultsClient } from "@/components/results/FlightResultsClient";
 import { getTranslations } from "@/lib/i18n";
 import { LOCALE_COOKIE_KEY } from "@/lib/preferences/preferences";
+import { parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
 
 type FlightResultsSearchParams = Promise<
   Record<string, string | string[] | undefined>
@@ -75,7 +76,19 @@ const hasValidFlightSearchParams = (
   const departureDate = getParamValue(params, "departureDate");
   const returnDate = getParamValue(params, "returnDate");
   const requestedTripType = getParamValue(params, "tripType");
-  const tripType = requestedTripType === "one-way" ? "one-way" : "round-trip";
+  const tripType = requestedTripType === "one-way" ? "one-way" : requestedTripType === "multi-city" ? "multi-city" : "round-trip";
+
+  if (tripType === "multi-city") {
+    const url = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      const first = Array.isArray(value) ? value[0] : value;
+      if (first) url.set(key, first);
+    });
+    const legs = parseFlightLegParams(url);
+    return legs.length >= 2 && legs.every((leg, index) =>
+      Boolean(leg.origin && leg.destination && leg.origin !== leg.destination && isValidFutureOrTodayDate(leg.departureDate) && (index === 0 || leg.departureDate >= legs[index - 1].departureDate)),
+    );
+  }
 
   if (!origin || !destination || !isValidFutureOrTodayDate(departureDate)) {
     return false;

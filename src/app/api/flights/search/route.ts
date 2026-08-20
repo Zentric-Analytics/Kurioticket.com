@@ -104,6 +104,8 @@ export async function POST(request: Request) {
       metadata: {
         origin: parsed.data.origin,
         destination: parsed.data.destination,
+        tripType: parsed.data.tripType,
+        legCount: parsed.data.legs?.length ?? (parsed.data.tripType === "round-trip" ? 2 : 1),
         resultCount: publicResults.length,
       },
     }),

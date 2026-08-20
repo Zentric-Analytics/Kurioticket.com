@@ -80,6 +80,43 @@ test("normalizes a complete one-way Duffel provider offer", () => {
   assert.match(result.refundInfo, /Refundable/);
 });
 
+test("multi-city normalization requires every requested slice in order", () => {
+  const legs = [
+    { origin: "LHR", destination: "CDG", departureDate: "2027-01-01" },
+    { origin: "CDG", destination: "FCO", departureDate: "2027-01-05" },
+    { origin: "FCO", destination: "JFK", departureDate: "2027-01-10" },
+  ];
+  const multiSearch: FlightSearchParams = {
+    ...search("one-way"),
+    tripType: "multi-city",
+    origin: "LHR",
+    destination: "JFK",
+    departureDate: "2027-01-01",
+    legs,
+  };
+  const raw = {
+    ...offer(),
+    slices: [
+      slice("LHR", "CDG", "2027-01-01T08:00:00Z", "2027-01-01T10:00:00Z"),
+      slice("CDG", "FCO", "2027-01-05T08:00:00Z", "2027-01-05T10:00:00Z"),
+      slice("FCO", "JFK", "2027-01-10T08:00:00Z", "2027-01-10T16:00:00Z"),
+    ],
+  };
+  const result = normalizeFlightResult("Duffel", raw, multiSearch);
+  assert.ok(result);
+  assert.deepEqual(result.legs?.map((leg) => [leg.direction, leg.legIndex]), [["leg", 0], ["leg", 1], ["leg", 2]]);
+  assert.equal(result.durationMinutes, 24 * 60);
+  assert.equal(result.stops, 0);
+
+  for (const [sliceIndex, replacement] of [
+    [1, slice("CDG", "MAD", "2027-01-05T08:00:00Z", "2027-01-05T10:00:00Z")],
+    [2, slice("FCO", "JFK", "2027-01-11T08:00:00Z", "2027-01-11T16:00:00Z")],
+  ] as const) {
+    const mismatched = { ...raw, slices: raw.slices.map((item, index) => index === sliceIndex ? replacement : item) };
+    assert.equal(normalizeFlightResult("Duffel", mismatched, multiSearch), null);
+  }
+});
+
 test("preserves complete customer-facing Duffel facts without provider identities", () => {
   const raw = offer();
   Object.assign(raw, {
