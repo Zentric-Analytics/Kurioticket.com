@@ -4,12 +4,15 @@ import {
   Alert,
   Animated,
   Image,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -38,6 +41,7 @@ import {
   TravelApiError,
   type FlightResult,
   type HotelResult,
+  type MobilePriceAlert,
 } from "../../api/travelApi";
 import {
   buildSearchPlan,
@@ -90,6 +94,14 @@ import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recen
 import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
 import { flightResultCountLabel } from "./flightResultCount";
 import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
+import { readSession } from "../../storage/sessionStorage";
+import {
+  buildFlightPriceAlertPayload,
+  flightAlertPresentation,
+  matchingFlightPriceAlert,
+  parseTargetPrice,
+} from "../flow/flightPriceAlertModel";
+import type { SearchPlan } from "../flow/travelSearchModel";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -393,8 +405,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                   flightResults={flightResults}
                 />
               ) : null}
-              {status === "ready" && product === "flight" && availability.priceAlerts ? (
-                <PriceAlert product={product} />
+              {status === "ready" && product === "flight" && plan.plan ? (
+                <PriceAlert product={product} plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} />
               ) : null}
               {status === "ready" && product === "flight" ? (
                 <Text
@@ -1023,9 +1035,78 @@ function HotelLoadingSkeleton() {
     </View>
   );
 }
-function PriceAlert({ product }: { product: Product }) {
+function PriceAlert({ product, plan, results, available = true }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; available?: boolean }) {
   const { theme } = useAppTheme();
   const flight = product === "flight";
+  const presentation = useMemo(() => flightAlertPresentation(product, Boolean(plan), results || []), [plan?.key, product, results]);
+  const currency = presentation.currencies[0] || "";
+  const [matchingAlert, setMatchingAlert] = useState<MobilePriceAlert | undefined>();
+  const [loadingAlert, setLoadingAlert] = useState(flight);
+  const [pending, setPending] = useState(false);
+  const pendingRef = useRef(false);
+  const [targetOpen, setTargetOpen] = useState(false);
+  const [targetDraft, setTargetDraft] = useState("");
+  const [targetError, setTargetError] = useState("");
+  const isTracking = matchingAlert?.status === "ACTIVE";
+  const unavailable = !presentation.enabled || (!available && !isTracking);
+  const requireSignIn = useCallback(() => Alert.alert(
+    "Sign in required",
+    "Sign in to track prices for this route.",
+    [{ text: "Sign in", onPress: () => router.push("/(tabs)/profile/sign-in") }, { text: "Cancel", style: "cancel" }],
+  ), []);
+  const reconcile = useCallback(async () => {
+    if (!flight || !plan) return;
+    setLoadingAlert(true);
+    try {
+      if (!await readSession().catch(() => null)) { setMatchingAlert(undefined); return; }
+      const alerts = (await travelApi.priceAlerts()).alerts;
+      setMatchingAlert(matchingFlightPriceAlert(alerts, plan));
+    } catch (error) {
+      if (error instanceof TravelApiError && error.status === 401) setMatchingAlert(undefined);
+    } finally { setLoadingAlert(false); }
+  }, [flight, plan?.key]);
+  useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
+  const handleToggle = async (next: boolean) => {
+    if (pendingRef.current || loadingAlert || !plan) return;
+    if (next) {
+      if (unavailable) return;
+      if (!await readSession().catch(() => null)) { requireSignIn(); return; }
+      if (isTracking) return;
+      if (!matchingAlert) { setTargetError(""); setTargetOpen(true); return; }
+      pendingRef.current = true; setPending(true);
+      try { setMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
+      catch (error) {
+        if (error instanceof TravelApiError && error.status === 401) requireSignIn();
+        else Alert.alert("Unable to track prices", error instanceof TravelApiError ? error.message : "Please try again.");
+      } finally { pendingRef.current = false; setPending(false); }
+      return;
+    }
+    if (!isTracking || !matchingAlert) return;
+    pendingRef.current = true; setPending(true);
+    try { setMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert); }
+    catch (error) {
+      if (error instanceof TravelApiError && error.status === 401) requireSignIn();
+      else Alert.alert("Unable to pause price tracking", error instanceof TravelApiError ? error.message : "Please try again.");
+    } finally { pendingRef.current = false; setPending(false); }
+  };
+  const createAlert = async () => {
+    if (pendingRef.current || !plan || !currency) return;
+    const parsed = parseTargetPrice(targetDraft);
+    if (parsed.error || parsed.value === undefined) { setTargetError(parsed.error || "Enter a target price."); return; }
+    pendingRef.current = true; setPending(true); setTargetError("");
+    try {
+      const session = await readSession().catch(() => null);
+      if (!session) { setTargetOpen(false); requireSignIn(); return; }
+      const created = await travelApi.createPriceAlert(buildFlightPriceAlertPayload(plan, parsed.value, currency));
+      setMatchingAlert(created.alert); setTargetOpen(false); setTargetDraft("");
+    } catch (error) {
+      if (error instanceof TravelApiError && error.status === 401) { setTargetOpen(false); requireSignIn(); }
+      else if (error instanceof TravelApiError && error.status === 409) {
+        await reconcile();
+        setTargetError("An alert for this search already exists. Its current status has been refreshed.");
+      } else setTargetError(error instanceof TravelApiError ? error.message : "Unable to create price alert. Try again.");
+    } finally { pendingRef.current = false; setPending(false); }
+  };
   if (flight) {
     return (
       <View
@@ -1053,14 +1134,27 @@ function PriceAlert({ product }: { product: Product }) {
           <Switch
             accessibilityLabel="Track prices"
             accessibilityRole="switch"
-            accessibilityState={{ checked: false }}
-            value={false}
-            onValueChange={() => router.push("/price-alerts")}
+            accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }}
+            value={isTracking}
+            disabled={pending || loadingAlert || unavailable}
+            onValueChange={(next) => void handleToggle(next)}
             trackColor={{ false: theme.switchTrack, true: theme.switchTrackActive }}
             ios_backgroundColor={theme.switchTrack}
             thumbColor={theme.surface}
           />
         </View>
+        <Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal>
+          <KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert">
+              <Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices</Text>
+              <Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text>
+              <TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border }]} />
+              {targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s0.alertError}>{targetError}</Text> : null}
+              <Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} />
+              <Button label="Cancel" outline onPress={() => setTargetOpen(false)} />
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
       </View>
     );
   }
@@ -1425,6 +1519,10 @@ const s0 = StyleSheet.create({
   flightAlertTitle: { fontSize: 15, lineHeight: 19, fontWeight: "900" },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500" },
   flightAlertSwitchTarget: { minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },
+  alertModalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
+  alertSheet: { padding: 20, gap: 12, borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
+  alertInput: { minHeight: 48, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, fontSize: 18 },
+  alertError: { color: "#A4262C" },
   alertButton: {
     width: "100%",
     minHeight: 44,
