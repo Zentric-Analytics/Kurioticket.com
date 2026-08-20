@@ -9,6 +9,8 @@ export const firstRouteParam = (value: RouteValue) => (Array.isArray(value) ? va
 export const validTime = (value: string) => /^(?:[01]\d|2[0-3]):(?:00|30)$/.test(value);
 export const timeOptions = Array.from({ length: 48 }, (_, index) => `${String(Math.floor(index / 2)).padStart(2, "0")}:${index % 2 ? "30" : "00"}`);
 export const formatTime = (time: string) => { const [hour, minute] = time.split(":").map(Number); return new Date(2000, 0, 1, hour, minute).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); };
+export const selectRentalRangeDate = (pickupDate: string, returnDate: string, selected: string) => !pickupDate || returnDate || selected < pickupDate ? { pickupDate: selected, returnDate: "" } : { pickupDate, returnDate: selected };
+export const rentalTimesSummary = (pickupTime: string, returnTime: string) => `${pickupTime ? formatTime(pickupTime) : "Select pick-up time"} — ${returnTime ? formatTime(returnTime) : "Select return time"}`;
 export const parseDriverAge = (value: string) => /^\d+$/.test(value) && Number(value) >= CAR_AGE.min && Number(value) <= CAR_AGE.max ? Number(value) : undefined;
 export const boundedAge = (age: number, delta: number) => Math.max(CAR_AGE.min, Math.min(CAR_AGE.max, age + delta));
 
@@ -85,10 +87,10 @@ export function validateCarForm(form: CarForm, today = new Date()): CarFormError
   if (!form.pickupLocation.trim()) errors.pickupLocation = "Enter a pick-up location.";
   if (form.separateDropoff && !form.dropoffLocation.trim()) errors.dropoffLocation = "Enter a drop-off location.";
   if (!localDateFromIso(form.pickupDate) || form.pickupDate < todayIso) errors.pickupDate = "Choose a current or future pick-up date.";
-  if (!localDateFromIso(form.dropoffDate) || form.dropoffDate < form.pickupDate || form.dropoffDate < todayIso) errors.dropoffDate = "Choose a drop-off date on or after pick-up.";
+  if (!localDateFromIso(form.dropoffDate) || form.dropoffDate < form.pickupDate || form.dropoffDate < todayIso) errors.dropoffDate = "Choose a return date on or after pick-up.";
   if (!validTime(form.pickupTime)) errors.pickupTime = "Choose a valid pick-up time.";
-  if (!validTime(form.dropoffTime)) errors.dropoffTime = "Choose a valid drop-off time.";
-  if (!errors.pickupDate && !errors.dropoffDate && !errors.pickupTime && !errors.dropoffTime && compareLocalDateTimes(form.dropoffDate, form.dropoffTime, form.pickupDate, form.pickupTime) <= 0) errors.dropoffTime = "Drop-off must be later than pick-up.";
+  if (!validTime(form.dropoffTime)) errors.dropoffTime = "Choose a valid return time.";
+  if (!errors.pickupDate && !errors.dropoffDate && !errors.pickupTime && !errors.dropoffTime && compareLocalDateTimes(form.dropoffDate, form.dropoffTime, form.pickupDate, form.pickupTime) <= 0) errors.dropoffTime = "Return must be later than pick-up.";
   if (form.driverAge === undefined || !Number.isInteger(form.driverAge) || form.driverAge < CAR_AGE.min || form.driverAge > CAR_AGE.max) errors.driverAge = "Driver age must be a whole number from 18 to 70.";
   return errors;
 }
