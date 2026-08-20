@@ -9,6 +9,8 @@ import {
   Clock3,
   LockKeyhole,
   Luggage,
+  Info,
+  MinusCircle,
   Pencil,
   Plane,
   ShieldCheck,
@@ -55,7 +57,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
         setSelectedFareKey((current) =>
           data.fareChoices.some((fare) => fare.key === current)
             ? current
-            : data.fareChoices.find((fare) => fare.offer.id === data.flight.id)?.key || data.fareChoices[0]?.key || "",
+            : data.fareChoices.find((fare) => fare.selectedOffer)?.key || data.fareChoices[0]?.key || "",
         );
       })
       .catch((loadError) => {
@@ -188,7 +190,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
                       <div><p className="text-base font-semibold text-slate-950">{fare.label}</p><p className="text-xl font-bold leading-6 text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p></div>
                     </div>
                     {fare.offer.fareBrandName && fare.offer.cabinClass ? <p className="mt-2 text-xs font-medium text-slate-600">{titleCase(fare.offer.cabinClass)}</p> : null}
-                    {fare.distinguishingTerms.length ? <ul className="mt-4 space-y-2">{fare.distinguishingTerms.map((term) => <li key={term} className="flex items-start gap-2 text-[13px] leading-5 text-slate-700"><span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-emerald-500 text-emerald-600"><Check className="h-2.5 w-2.5" aria-hidden="true" /></span>{term}</li>)}</ul> : null}
+                    {fare.distinguishingTerms.length ? <ul className="mt-4 space-y-2">{fare.distinguishingTerms.map((term) => <FareTerm key={`${term.category}-${term.legDirection || "trip"}-${term.text}`} term={term} />)}</ul> : null}
                   </button>
                 );
               })}
@@ -235,12 +237,18 @@ function AirportTime({ time, airport, city, locale }: { time: string; airport: s
 
 function Metadata({ icon: Icon, label, value, divided = false }: { icon: typeof Plane; label: string; value: string; divided?: boolean }) { return <div className={`flex items-center gap-3 px-5 py-4 lg:px-6 ${divided ? "sm:border-l sm:border-[#E2E8F0]" : ""}`}><Icon className="h-5 w-5 text-slate-700" aria-hidden="true" /><div><p className="text-[11px] text-slate-500">{label}</p><p className="mt-0.5 text-xs font-medium text-slate-800">{value}</p></div></div>; }
 
-function TripSidebar({ legs, route, date, tripLine, travelers, selectedFare, fareTerms, price, locale, redirecting, handoff, canContinue, onContinue, error }: { legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; selectedFare: string; fareTerms: string[]; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
+function FareTerm({ term }: { term: FlightDetailsFareChoice["distinguishingTerms"][number] }) {
+  const Icon = term.semantic === "positive" ? Check : term.semantic === "negative" ? MinusCircle : Info;
+  const iconClass = term.semantic === "positive" ? "border-emerald-500 text-emerald-600" : "border-slate-300 text-slate-500";
+  return <li className="flex items-start gap-2 text-[13px] leading-5 text-slate-700"><span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${iconClass}`}><Icon className="h-2.5 w-2.5" aria-hidden="true" /></span>{term.text}</li>;
+}
+
+function TripSidebar({ legs, route, date, tripLine, travelers, selectedFare, fareTerms, price, locale, redirecting, handoff, canContinue, onContinue, error }: { legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; selectedFare: string; fareTerms: FlightDetailsFareChoice["distinguishingTerms"]; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
   return <aside className="rounded-[15px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:sticky lg:top-24" aria-labelledby="your-trip-heading">
     <h2 id="your-trip-heading" className="text-xl font-bold">Your trip</h2><p className="mt-4 text-base font-semibold">{route}</p><p className="mt-1 text-xs leading-5 text-slate-600">{date} • {tripLine}</p>
     <div className="my-5 border-t border-[#E2E8F0]" />
     <div className="space-y-5">{legs.map((leg, index) => <div key={`${leg.direction}-${leg.departureTime}`}><p className="text-xs font-bold tracking-[0.12em] text-[#075EE8]">{index === 0 ? "OUTBOUND" : "RETURN"}</p><p className="mt-1 text-sm font-semibold">{leg.originAirport} → {leg.destinationAirport}</p><div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-600"><span>{formatTime(leg.departureTime, locale)}</span><span>{leg.duration} • {formatStops(leg.stops)}</span><span>{formatTime(leg.arrivalTime, locale)}</span></div></div>)}</div>
-    <div className="my-5 border-t border-[#E2E8F0]" /><dl className="space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-600">Fare</dt><dd className="font-medium text-slate-800">{selectedFare}</dd></div>{fareTerms.length ? <div><dt className="text-slate-600">Fare terms</dt><dd className="mt-1 space-y-1 text-xs leading-5 text-slate-700">{fareTerms.map((term) => <p key={term}>{term}</p>)}</dd></div> : null}<div className="flex justify-between gap-4"><dt className="text-slate-600">Traveler</dt><dd className="font-medium text-slate-800">{travelers}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-600">Handoff provider</dt><dd className="max-w-[60%] text-right font-medium text-slate-800">{handoff.available ? handoff.providerName : "Unavailable"}</dd></div></dl>
+    <div className="my-5 border-t border-[#E2E8F0]" /><dl className="space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-600">Fare</dt><dd className="font-medium text-slate-800">{selectedFare}</dd></div>{fareTerms.length ? <div><dt className="text-slate-600">Fare terms</dt><dd className="mt-1 space-y-1 text-xs leading-5 text-slate-700">{fareTerms.map((term) => <p key={`${term.category}-${term.legDirection || "trip"}-${term.text}`}>{term.text}</p>)}</dd></div> : null}<div className="flex justify-between gap-4"><dt className="text-slate-600">Traveler</dt><dd className="font-medium text-slate-800">{travelers}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-600">Handoff provider</dt><dd className="max-w-[60%] text-right font-medium text-slate-800">{handoff.available ? handoff.providerName : "Unavailable"}</dd></div></dl>
     <div className="my-5 border-t border-[#E2E8F0]" /><div className="flex items-end justify-between gap-4"><p className="text-sm font-semibold">Total per traveler</p>{price ? <p className="text-[30px] font-bold leading-none text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : null}</div>
     <button type="button" aria-label={handoff.available ? `Continue to ${handoff.providerName}` : "Booking link currently unavailable"} disabled={!canContinue || redirecting} onClick={onContinue} className="mt-6 h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{handoff.available ? (redirecting ? `Opening ${handoff.providerName}…` : `Continue to ${handoff.providerName}`) : "Booking link currently unavailable"}</button>
     {handoff.available ? <p className="mt-3 text-center text-xs leading-5 text-slate-500">You’ll complete your booking on {handoff.providerName}’s website.</p> : <p className="mt-3 text-center text-xs leading-5 text-slate-500">No verified external booking destination is available for this offer.</p>}<p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-slate-700"><LockKeyhole className="h-4 w-4" aria-hidden="true" /> Secure provider handoff</p>

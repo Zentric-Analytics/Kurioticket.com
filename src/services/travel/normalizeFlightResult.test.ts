@@ -229,6 +229,61 @@ test("normalizes both legs of a round-trip offer", () => {
   assert.equal(result?.providerOfferId, "off-1");
 });
 
+test("preserves slice fare brands and only summarizes a uniform trip brand", () => {
+  const uniform = offer();
+  Object.assign(uniform.slices[0], { fare_brand_name: "Basic" });
+  const oneWay = normalizeFlightResult("Duffel", uniform, search("one-way"));
+  assert.equal(oneWay?.legs?.[0].fareBrandName, "Basic");
+  assert.equal(oneWay?.fareBrandName, "Basic");
+
+  const mixed = offer();
+  Object.assign(mixed.slices[0], { fare_brand_name: "Basic" });
+  const returnSlice = slice("JFK", "LHR", "2027-01-08T10:00:00Z", "2027-01-08T18:00:00Z");
+  Object.assign(returnSlice, { fare_brand_name: "Standard" });
+  mixed.slices.push(returnSlice);
+  const roundTrip = normalizeFlightResult("Duffel", mixed, search("round-trip"));
+  assert.deepEqual(roundTrip?.legs?.map(({ fareBrandName }) => fareBrandName), ["Basic", "Standard"]);
+  assert.equal(roundTrip?.fareBrandName, undefined);
+});
+
+test("inspects baggage across legs and passengers without treating missing data as included", () => {
+  const raw = offer();
+  raw.slices[0].segments[0].passengers.push({ cabin_class: "economy", baggages: [] });
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.ok(result?.fareTerms?.some((term) => term.category === "baggage" && term.semantic === "positive"));
+  assert.ok(result?.fareTerms?.every((term) => !/paid|optional/i.test(term.text)));
+
+  raw.slices[0].segments[0].passengers = [{ cabin_class: "economy", baggages: [] }];
+  const unknown = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.equal(unknown?.fareTerms?.find((term) => term.category === "baggage")?.semantic, "informational");
+});
+
+test("retains positive, negative, and unknown condition semantics", () => {
+  const result = normalizeFlightResult("Duffel", offer(), search("one-way"));
+  assert.equal(result?.fareTerms?.find((term) => term.category === "refund")?.semantic, "positive");
+  assert.equal(result?.fareTerms?.find((term) => term.category === "change")?.semantic, "negative");
+  const raw = offer();
+  raw.conditions = undefined as unknown as typeof raw.conditions;
+  assert.equal(normalizeFlightResult("Duffel", raw, search("one-way"))?.fareTerms?.find((term) => term.category === "refund")?.semantic, "informational");
+});
+
+test("retains slice-level conditions and ignores paid optional baggage services", () => {
+  const raw = offer() as ReturnType<typeof offer> & { available_services?: unknown[] };
+  raw.conditions = undefined as unknown as typeof raw.conditions;
+  Object.assign(raw.slices[0], {
+    conditions: {
+      refund_before_departure: { allowed: false },
+      change_before_departure: { allowed: true },
+    },
+  });
+  raw.slices[0].segments[0].passengers[0].baggages = [];
+  raw.available_services = [{ type: "baggage", total_amount: "25.00" }];
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.equal(result?.fareTerms?.find((term) => term.category === "refund")?.semantic, "negative");
+  assert.equal(result?.fareTerms?.find((term) => term.category === "change")?.semantic, "positive");
+  assert.doesNotMatch(result?.baggageInfo || "", /included/i);
+});
+
 test("rejects missing or invalid provider identity and expiry", () => {
   assert.equal(
     normalizeFlightResult(
