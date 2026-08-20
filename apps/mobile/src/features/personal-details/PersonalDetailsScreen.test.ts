@@ -66,18 +66,18 @@ test("country and nationality search selectors wait for an explicit search-field
   assert.doesNotMatch(screen, /autoFocus/);
   assert.match(screen, /if \(visible\) Keyboard\.dismiss\(\)/);
 });
-test("selector query is session-scoped and reset on lifecycle boundaries", () => {
-  assert.match(screen, /const \[q, setQ\] = useState\(""\)/);
-  assert.match(
-    screen,
-    /useEffect\([\s\S]*?setQ\(""\)[\s\S]*?\[selectorType, visible\]\)/,
+test("country query is session-scoped and reset on lifecycle boundaries", () => {
+  const selector = screen.slice(
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
   );
+  assert.match(selector, /const \[q, setQ\] = useState\(""\)/);
   assert.match(
-    screen,
-    /const close = \(\) => \{[\s\S]*?Keyboard\.dismiss\(\);[\s\S]*?setQ\(""\)/,
+    selector,
+    /useEffect\([\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, visible\]\)/,
   );
-  assert.match(screen, /onSelect\(item\.value\);\s*setQ\(""\);\s*onClose\(\)/);
-  assert.match(screen, /selectorType=\{selector\}/);
+  assert.match(selector, /const cancel = \(\) => \{[\s\S]*?setQ\(""\)/);
+  assert.match(selector, /const saveSelection = \(\) => \{[\s\S]*?setQ\(""\)/);
 });
 test("phone, nationality, and address searches have independent aliases", () => {
   assert.match(
@@ -90,32 +90,58 @@ test("phone, nationality, and address searches have independent aliases", () => 
     /NATIONALITY_OPTIONS\.map[\s\S]*?searchTerms: \[COUNTRY_OPTIONS\[index\]\.code\]/,
   );
 });
-test("selector modal is keyboard-aware and only results scroll", () => {
-  assert.match(
-    screen,
-    /<KeyboardAvoidingView\s*behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
-  );
+test("country selector is full-screen, keyboard-aware, and only results scroll", () => {
   const selector = screen.slice(
-    screen.indexOf("function Selector("),
-    screen.indexOf("function Field("),
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
+  );
+  assert.match(selector, /presentationStyle="fullScreen"/);
+  assert.match(
+    selector,
+    /<KeyboardAvoidingView[\s\S]*?behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
   );
   assert.ok(selector.indexOf("{title}") < selector.indexOf("<ScrollView"));
   assert.ok(selector.indexOf("<TextInput") < selector.indexOf("<ScrollView"));
-  assert.match(selector, /maxHeight: height \* 0\.82/);
+  assert.doesNotMatch(selector, /maxHeight|0\.82|transparent/);
   assert.match(selector, /keyboardShouldPersistTaps="handled"/);
+  assert.match(selector, /style=\{s\.countryResults\}/);
+  assert.match(selector, /!keyboardVisible \? \(/);
 });
-test("all selector dismissal paths dismiss the keyboard", () => {
+test("all country-selector dismissal paths discard the draft and keyboard", () => {
   const selector = screen.slice(
-    screen.indexOf("function Selector("),
-    screen.indexOf("function Field("),
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
   );
-  assert.match(selector, /onRequestClose=\{close\}/);
-  assert.match(selector, /onPress=\{close\}/);
+  assert.match(selector, /onRequestClose=\{cancel\}/);
+  assert.match(selector, /onDismiss=\{cancel\}/);
+  assert.ok((selector.match(/onPress=\{cancel\}/g) ?? []).length >= 2);
+  assert.match(selector, /setDraftSelection\(selected\);[\s\S]*?onClose\(\)/);
+  assert.match(selector, /Keyboard\.dismiss\(\)/);
+});
+test("country selection has an explicit committed-versus-draft lifecycle", () => {
+  const selector = screen.slice(
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
+  );
+  assert.match(selector, /useState\(selected\)/);
+  assert.match(selector, /setDraftSelection\(selected\)/);
+  assert.match(selector, /setDraftSelection\(item\.value\)/);
+  assert.match(selector, /onSave\(draftSelection\)/);
+  assert.doesNotMatch(selector, /onSave\(item\.value\)/);
+  assert.match(selector, /if \(committing\.current\) return/);
+  assert.match(selector, /accessibilityState=\{\{ selected: isSelected \}\}/);
+});
+test("only country controls use the full-screen selector", () => {
   assert.match(
-    selector,
-    /onPress=\{\(\) => \{\s*Keyboard\.dismiss\(\);\s*onSelect/,
+    screen,
+    /selector !== "phone" &&\s*selector !== "nationality" &&\s*selector !== "addressCountry"/,
   );
-  assert.ok((selector.match(/onPress=\{close\}/g) ?? []).length >= 2);
+  assert.match(
+    screen,
+    /selector === "phone" \|\|\s*selector === "nationality" \|\|\s*selector === "addressCountry"/,
+  );
+  assert.match(screen, /onPress=\{\(\) => setSelector\("day"\)\}/);
+  assert.match(screen, /onPress=\{\(\) => setSelector\("gender"\)\}/);
 });
 test("opening Address does not programmatically focus its fields", () => {
   const addressSection = screen.slice(
@@ -185,6 +211,8 @@ test("editable controls keep stable component identity across draft updates", ()
   const screenStart = screen.indexOf("export function PersonalDetailsScreen");
   for (const component of [
     "Selector",
+    "CountrySelector",
+    "CountryFlag",
     "Field",
     "SelectButton",
     "PhoneControl",

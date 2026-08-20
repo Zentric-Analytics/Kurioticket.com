@@ -176,6 +176,232 @@ function Selector({
   );
 }
 
+type CountrySelectorProps = Omit<SelectorProps, "searchable" | "onSelect"> & {
+  kind: "phone" | "nationality" | "addressCountry";
+  onSave: (value: string) => void;
+};
+
+/** Full-screen country picker. Draft state intentionally lives inside the modal. */
+function CountrySelector({
+  visible,
+  title,
+  selectorType,
+  kind,
+  options,
+  selected,
+  onClose,
+  onSave,
+}: CountrySelectorProps) {
+  const { theme } = useAppTheme();
+  const { locale } = useMobileLocalization();
+  const c = personalDetailsCopy(locale);
+  const [q, setQ] = useState("");
+  const [draftSelection, setDraftSelection] = useState(selected);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const committing = useRef(false);
+  const shown = filterSelectorOptions(options, q);
+
+  useEffect(() => {
+    setQ("");
+    setDraftSelection(selected);
+    committing.current = false;
+    if (visible) Keyboard.dismiss();
+  }, [selected, selectorType, visible]);
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true),
+    );
+    const hide = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
+  const cancel = () => {
+    Keyboard.dismiss();
+    setQ("");
+    setDraftSelection(selected);
+    onClose();
+  };
+  const saveSelection = () => {
+    if (committing.current) return;
+    committing.current = true;
+    Keyboard.dismiss();
+    setQ("");
+    onSave(draftSelection);
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      onRequestClose={cancel}
+      onDismiss={cancel}
+    >
+      <SafeAreaView
+        edges={["top", "bottom"]}
+        style={[s.countryModalSafe, { backgroundColor: theme.background }]}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={s.countryModalLayout}
+        >
+          <View
+            style={[
+              s.header,
+              {
+                backgroundColor: theme.background,
+                borderBottomColor: theme.border,
+              },
+            ]}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={c.back}
+              onPress={cancel}
+              style={s.iconButton}
+            >
+              <FlowIcon name="back" color={theme.icon} />
+            </Pressable>
+            <Text
+              accessibilityRole="header"
+              style={[s.title, { color: theme.text }]}
+            >
+              {title}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={c.cancel}
+              onPress={cancel}
+              style={s.iconButton}
+            >
+              <FlowIcon name="close" color={theme.icon} />
+            </Pressable>
+          </View>
+          <View style={s.countrySearchArea}>
+            <TextInput
+              accessibilityLabel={c.searchCountry}
+              accessibilityHint={c.searchCountryHint}
+              placeholder={c.searchCountry}
+              placeholderTextColor={theme.muted}
+              value={q}
+              onChangeText={setQ}
+              style={[
+                s.input,
+                {
+                  color: theme.text,
+                  borderColor: theme.border,
+                  backgroundColor: theme.background,
+                },
+              ]}
+            />
+          </View>
+          <ScrollView
+            style={s.countryResults}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={s.countryResultsContent}
+          >
+            {shown.map((item) => {
+              const phoneOption = PHONE_COUNTRY_OPTIONS.find(
+                (option) => option.isoCode === item.value,
+              );
+              const isoCode =
+                kind === "nationality"
+                  ? COUNTRY_OPTIONS.find(
+                      (option) => option.label === item.value,
+                    )?.code
+                  : item.value;
+              const isSelected = item.value === draftSelection;
+              return (
+                <Pressable
+                  key={item.value}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.label}${phoneOption?.dialCode ? `, ${phoneOption.dialCode}` : ""}`}
+                  accessibilityState={{ selected: isSelected }}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setDraftSelection(item.value);
+                  }}
+                  style={[s.countryOption, { borderBottomColor: theme.border }]}
+                >
+                  <CountryFlag isoCode={isoCode} />
+                  <Text
+                    style={[
+                      s.countryOptionLabel,
+                      { color: isSelected ? flowColors.blue : theme.text },
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                  {phoneOption?.dialCode ? (
+                    <Text style={[s.countryDialCode, { color: theme.muted }]}>
+                      {phoneOption.dialCode}
+                    </Text>
+                  ) : null}
+                  {isSelected ? (
+                    <FlowIcon name="check" color={flowColors.blue} size={22} />
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          {!keyboardVisible ? (
+            <View
+              style={[
+                s.countryAction,
+                {
+                  backgroundColor: theme.background,
+                  borderTopColor: theme.border,
+                },
+              ]}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={c.selectorSave}
+                accessibilityState={{ disabled: !draftSelection }}
+                disabled={!draftSelection}
+                onPress={saveSelection}
+                style={[s.primary, !draftSelection && s.disabled]}
+              >
+                <Text style={s.primaryText}>{c.selectorSave}</Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+function CountryFlag({ isoCode }: { isoCode?: string }) {
+  const { theme } = useAppTheme();
+  const [failed, setFailed] = useState(false);
+  const uri = getCountryFlagUri(isoCode);
+  useEffect(() => setFailed(false), [uri]);
+  return uri && !failed ? (
+    <Image
+      accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      source={{ uri }}
+      onError={() => setFailed(true)}
+      style={s.flag}
+    />
+  ) : (
+    <Text
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[s.flagFallback, { color: theme.text }]}
+    >
+      {isoCode || "--"}
+    </Text>
+  );
+}
+
 function Field({
   label,
   value,
@@ -850,7 +1076,12 @@ export function PersonalDetailsScreen() {
         </KeyboardAvoidingView>
       )}
       <Selector
-        visible={!!selector}
+        visible={
+          !!selector &&
+          selector !== "phone" &&
+          selector !== "nationality" &&
+          selector !== "addressCountry"
+        }
         selectorType={selector}
         title={
           selector
@@ -886,6 +1117,38 @@ export function PersonalDetailsScreen() {
             if (y && m && d) patch("dateOfBirth", `${y}-${m}-${d}`);
             else patch("dateOfBirth", `${y}-${m}-${d}`);
           }
+        }}
+      />
+      <CountrySelector
+        visible={
+          selector === "phone" ||
+          selector === "nationality" ||
+          selector === "addressCountry"
+        }
+        selectorType={selector}
+        kind={
+          selector === "nationality"
+            ? "nationality"
+            : selector === "addressCountry"
+              ? "addressCountry"
+              : "phone"
+        }
+        title={
+          selector === "nationality"
+            ? c.nationality
+            : selector === "phone" || selector === "addressCountry"
+              ? c.country
+              : ""
+        }
+        options={selectOptions}
+        selected={selected}
+        onClose={() => setSelector(null)}
+        onSave={(value) => {
+          if (selector === "phone") patch("phoneCountryCode", value);
+          else if (selector === "nationality") patch("nationality", value);
+          else if (selector === "addressCountry")
+            patchAddress("countryCode", value);
+          setSelector(null);
         }}
       />
     </SafeAreaView>
@@ -1061,5 +1324,28 @@ const s = StyleSheet.create({
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
+  },
+  countryModalSafe: { flex: 1 },
+  countryModalLayout: { flex: 1 },
+  countrySearchArea: { paddingHorizontal: 16, paddingVertical: 12 },
+  countryResults: { flex: 1 },
+  countryResultsContent: { paddingHorizontal: 16 },
+  countryOption: {
+    minHeight: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  countryOptionLabel: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 23,
+    fontWeight: "500",
+  },
+  countryDialCode: { fontSize: 16, lineHeight: 23 },
+  countryAction: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    padding: 16,
   },
 });
