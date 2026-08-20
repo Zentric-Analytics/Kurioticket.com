@@ -816,10 +816,6 @@ export function HotelDetailsClient({
                 locationParts={locationParts}
                 propertyDetails={propertyDetails}
                 amenityItems={amenityItems}
-                recommendationReasons={hotel.recommendationReasons}
-                reviewScore={reviewBand && reviewScale ? new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(normalizedReviewScore ?? 0) : ""}
-                reviewLabel={reviewLabel}
-                reviewCountText={reviewCountText}
                 isSaved={isSaved}
                 savedHotelLabel={savedHotelLabel}
                 saveText={saveActionText}
@@ -872,12 +868,7 @@ export function HotelDetailsClient({
                   roomSupport: t("hotelDetails.roomOptionsSupport") || "You'll choose your room in the next step.",
                   roomTitle: t("hotelDetails.roomOptionsTitle") || "Room options",
                   closeRooms: t("hotelDetails.closeRoomOptions") || "Close room options",
-                  planningTitle: t("hotelDetails.planningSecureTitle") || "Secure Kurioticket experience",
-                  planningBody: t("hotelDetails.planningSecureBody") || "Your trip planning data stays protected.",
-                  termsTitle: t("hotelDetails.termsTitle") || "Planning estimates",
-                  termsBody: t("hotelDetails.termsBody") || "Final room availability and terms must be confirmed.",
-                  paymentTitle: t("hotelDetails.paymentTitle") || "No payment collected",
-                  paymentBody: t("hotelDetails.paymentBody") || "Kurioticket does not collect payment for this planning listing.",
+                  roomTerms: t("hotelDetails.termsBody") || "Final room availability and terms must be confirmed.",
                 }}
               />
             </div>
