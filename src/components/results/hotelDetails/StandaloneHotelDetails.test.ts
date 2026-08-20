@@ -20,7 +20,7 @@ test("renders the approved standalone section order", () => {
     "<HotelDetailsGallery",
     "data-hotel-amenities-strip",
     "hotel-about-heading",
-    "hotel-location-heading",
+    "<HotelLocationSection",
   ];
   let previous = -1;
   for (const contract of contracts) {
@@ -78,8 +78,7 @@ test("keeps save, share, gallery, amenity and description controls accessible", 
 test("uses public property metadata and truthful data-dependent claims", () => {
   for (const contract of [
     "propertyDetails?.description",
-    "propertyDetails.latitude",
-    "propertyDetails.longitude",
+    "propertyDetails={props.propertyDetails}",
     "props.taxesText || props.planningPriceText",
     "props.roomChoices.length",
   ]) assert.ok(source.includes(contract), contract);

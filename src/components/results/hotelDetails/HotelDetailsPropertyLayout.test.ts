@@ -18,6 +18,10 @@ const standaloneSource = readFileSync(
   new URL("./StandaloneHotelDetails.tsx", import.meta.url),
   "utf8",
 );
+const locationSource = readFileSync(
+  new URL("./HotelLocationSection.tsx", import.meta.url),
+  "utf8",
+);
 
 test("isolates the approved standalone property composition from guided mode", () => {
   assert.equal(clientSource.match(/<HotelDetailsGallery\b/g)?.length, 1);
@@ -32,12 +36,13 @@ test("isolates the approved standalone property composition from guided mode", (
   for (const contract of [
     "About this property",
     "propertyDetails?.description",
-    "openstreetmap.org/export/embed.html",
-    "google.com/maps/dir/",
+    "HotelLocationSection",
     "Your stay",
     "View room options",
     'role="dialog"',
   ]) assert.ok(clientSource.includes(contract) || standaloneSource.includes(contract), contract);
+  assert.match(locationSource, /buildHotelMapEmbedUrl/);
+  assert.match(locationSource, /buildHotelDirectionsUrl/);
 
   const guidedStart = clientSource.indexOf("const detailsContent = (");
   const guidedContent = clientSource.slice(guidedStart);
