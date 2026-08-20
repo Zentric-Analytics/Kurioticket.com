@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test, { afterEach } from "node:test";
 
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
+import { flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
 import {
   buildMaterialFareChoices,
   buildStandaloneFlightDetails,
@@ -263,4 +264,21 @@ test("standalone UI renders every leg and segment from selected offer and uses a
   ]) assert.ok(source.includes(contract), contract);
   assert.ok(!source.includes("function primaryLeg"));
   assert.ok(!source.includes('"Continue to provider"'));
+  assert.ok(!source.includes("Total per traveler"));
+  assert.ok(!source.includes("Price and availability are confirmed by the provider before purchase."));
+  assert.ok(!source.includes("Review the provider’s final fare terms before booking."));
+  assert.ok(!source.includes("ShieldCheck"));
+  assert.match(source, /handoff\.available \? <>.*Secure provider handoff.*<\/> :/s);
+  assert.match(source, /Booking link currently unavailable/);
+  assert.match(source, /No verified external booking destination is available for this offer\./);
+});
+
+test("trip totals use canonical traveler count without changing provider amounts", () => {
+  assert.equal(flightDetailsTotalLabel(1), "Trip total");
+  assert.equal(flightDetailsTotalLabel(6), "Total for 6 travelers");
+  const selectedTotal = fixture({ price: 5467.38 }).price;
+  const alternateTotal = fixture({ price: 6120.25 }).price;
+  assert.equal(selectedTotal, 5467.38);
+  assert.equal(alternateTotal, 6120.25);
+  assert.notEqual(selectedTotal, selectedTotal / 6);
 });

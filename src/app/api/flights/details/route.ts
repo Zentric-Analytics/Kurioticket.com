@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { getCompatibleFlightsFromCache, getFlightFromCache } from "@/lib/searchCache";
+import {
+  getCompatibleFlightsFromCache,
+  getFlightFromCache,
+  getFlightSearchFromCache,
+} from "@/lib/searchCache";
 import {
   buildStandaloneFlightDetails,
-  parseFlightDetailsSearch,
 } from "@/services/travel/standaloneFlightDetails";
 
 export async function GET(request: Request) {
@@ -17,11 +20,11 @@ export async function GET(request: Request) {
       { status: 404 },
     );
   }
-  const search = parseFlightDetailsSearch(searchParams);
+  const search = getFlightSearchFromCache(id);
   if (!search) {
     return NextResponse.json(
-      { status: "unavailable", error: "Flight search context is invalid or incomplete." },
-      { status: 400 },
+      { status: "unavailable", error: "This flight search context is no longer available. Please search again." },
+      { status: 409 },
     );
   }
   const details = await buildStandaloneFlightDetails({

@@ -13,7 +13,6 @@ import {
   MinusCircle,
   Pencil,
   Plane,
-  ShieldCheck,
 } from "lucide-react";
 
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -24,6 +23,7 @@ import type {
   FlightDetailsFareChoice,
   FlightDetailsResponse,
 } from "@/lib/flights/flightDetailsContract";
+import { flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
 import type { FlightLeg } from "@/lib/types";
 
 export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resultsHref: string }) {
@@ -198,7 +198,7 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
           </section>
 
-          <TripSidebar legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={continueToProvider} error={error || notice} />
+          <TripSidebar legs={legs} route={route} date={date} tripLine={tripLine} travelers={travelers.label} travelerCount={travelers.count} selectedFare={selectedFare?.label || selectedOffer.cabinClass || ""} fareTerms={selectedFare?.distinguishingTerms ?? []} price={providerPrice} locale={locale} redirecting={redirecting} handoff={handoff} canContinue={canContinue} onContinue={continueToProvider} error={error || notice} />
         </div>
       </div>
     </main>
@@ -243,17 +243,16 @@ function FareTerm({ term }: { term: FlightDetailsFareChoice["distinguishingTerms
   return <li className="flex items-start gap-2 text-[13px] leading-5 text-slate-700"><span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${iconClass}`}><Icon className="h-2.5 w-2.5" aria-hidden="true" /></span>{term.text}</li>;
 }
 
-function TripSidebar({ legs, route, date, tripLine, travelers, selectedFare, fareTerms, price, locale, redirecting, handoff, canContinue, onContinue, error }: { legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; selectedFare: string; fareTerms: FlightDetailsFareChoice["distinguishingTerms"]; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
+function TripSidebar({ legs, route, date, tripLine, travelers, travelerCount, selectedFare, fareTerms, price, locale, redirecting, handoff, canContinue, onContinue, error }: { legs: FlightLeg[]; route: string; date: string; tripLine: string; travelers: string; travelerCount: number; selectedFare: string; fareTerms: FlightDetailsFareChoice["distinguishingTerms"]; price: ReturnType<typeof formatDisplayPrice> | null; locale: string; redirecting: boolean; handoff: FlightDetailsFareChoice["handoff"]; canContinue: boolean; onContinue: () => void; error: string }) {
   return <aside className="rounded-[15px] border border-[#E2E8F0] bg-white p-6 shadow-[0_4px_18px_rgba(15,23,42,0.05)] lg:sticky lg:top-24" aria-labelledby="your-trip-heading">
     <h2 id="your-trip-heading" className="text-xl font-bold">Your trip</h2><p className="mt-4 text-base font-semibold">{route}</p><p className="mt-1 text-xs leading-5 text-slate-600">{date} • {tripLine}</p>
     <div className="my-5 border-t border-[#E2E8F0]" />
     <div className="space-y-5">{legs.map((leg, index) => <div key={`${leg.direction}-${leg.departureTime}`}><p className="text-xs font-bold tracking-[0.12em] text-[#075EE8]">{index === 0 ? "OUTBOUND" : "RETURN"}</p><p className="mt-1 text-sm font-semibold">{leg.originAirport} → {leg.destinationAirport}</p><div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-600"><span>{formatTime(leg.departureTime, locale)}</span><span>{leg.duration} • {formatStops(leg.stops)}</span><span>{formatTime(leg.arrivalTime, locale)}</span></div></div>)}</div>
     <div className="my-5 border-t border-[#E2E8F0]" /><dl className="space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-600">Fare</dt><dd className="font-medium text-slate-800">{selectedFare}</dd></div>{fareTerms.length ? <div><dt className="text-slate-600">Fare terms</dt><dd className="mt-1 space-y-1 text-xs leading-5 text-slate-700">{fareTerms.map((term) => <p key={`${term.category}-${term.legDirection || "trip"}-${term.text}`}>{term.text}</p>)}</dd></div> : null}<div className="flex justify-between gap-4"><dt className="text-slate-600">Traveler</dt><dd className="font-medium text-slate-800">{travelers}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-600">Handoff provider</dt><dd className="max-w-[60%] text-right font-medium text-slate-800">{handoff.available ? handoff.providerName : "Unavailable"}</dd></div></dl>
-    <div className="my-5 border-t border-[#E2E8F0]" /><div className="flex items-end justify-between gap-4"><p className="text-sm font-semibold">Total per traveler</p>{price ? <p className="text-[30px] font-bold leading-none text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : null}</div>
+    <div className="my-5 border-t border-[#E2E8F0]" /><div className="flex items-end justify-between gap-4"><p className="text-sm font-semibold">{flightDetailsTotalLabel(travelerCount)}</p>{price ? <p className="text-[30px] font-bold leading-none text-[#075EE8]" aria-label={price.ariaLabel}>{price.formatted}</p> : null}</div>
     <button type="button" aria-label={handoff.available ? `Continue to ${handoff.providerName}` : "Booking link currently unavailable"} disabled={!canContinue || redirecting} onClick={onContinue} className="mt-6 h-[52px] w-full rounded-[9px] bg-[#075EE8] text-base font-semibold text-white transition hover:bg-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">{handoff.available ? (redirecting ? `Opening ${handoff.providerName}…` : `Continue to ${handoff.providerName}`) : "Booking link currently unavailable"}</button>
-    {handoff.available ? <p className="mt-3 text-center text-xs leading-5 text-slate-500">You’ll complete your booking on {handoff.providerName}’s website.</p> : <p className="mt-3 text-center text-xs leading-5 text-slate-500">No verified external booking destination is available for this offer.</p>}<p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-slate-700"><LockKeyhole className="h-4 w-4" aria-hidden="true" /> Secure provider handoff</p>
+    {handoff.available ? <><p className="mt-3 text-center text-xs leading-5 text-slate-500">You’ll complete your booking on {handoff.providerName}’s website.</p><p className="mt-5 flex items-center justify-center gap-2 text-sm font-semibold text-slate-700"><LockKeyhole className="h-4 w-4" aria-hidden="true" /> Secure provider handoff</p></> : <p className="mt-3 text-center text-xs leading-5 text-slate-500">No verified external booking destination is available for this offer.</p>}
     {error ? <p role="alert" className="mt-4 text-sm font-medium text-red-700">{error}</p> : null}
-    <div className="mt-5 flex gap-3 rounded-[10px] border border-blue-200 bg-blue-50/60 p-4"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#075EE8]" aria-hidden="true" /><div><p className="text-xs font-medium text-slate-700">Price and availability are confirmed by the provider before purchase.</p><p className="mt-1 text-xs text-slate-500">Review the provider’s final fare terms before booking.</p></div></div>
   </aside>;
 }
 

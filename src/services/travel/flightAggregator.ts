@@ -55,7 +55,7 @@ export async function searchFlights(
     ),
   );
   const aggregationMs = performance.now() - aggregationStartedAt;
-  if (results.length) rememberFlights(results);
+  if (results.length) rememberFlights(results, now, search);
   return {
     results,
     providerStatuses: [provider],
