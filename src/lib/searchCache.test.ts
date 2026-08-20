@@ -1,12 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { NormalizedFlightResult } from "./types";
+import type { FlightSearchParams, NormalizedFlightResult } from "./types";
 import {
   getFlightFromCache,
+  getFlightSearchFromCache,
   rememberFlights,
   toFlightDetailsOffer,
   toPublicFlight,
 } from "./searchCache";
+
+const search: FlightSearchParams = {
+  tripType: "one-way",
+  origin: "LHR",
+  destination: "JFK",
+  departureDate: "2027-01-01",
+  adults: 1,
+  children: 0,
+  infants: 0,
+  travelers: 1,
+  cabinClass: "economy",
+};
 
 const flight = (id: string, expiresAt: number): NormalizedFlightResult => ({
   id,
@@ -64,4 +77,26 @@ test("public flight projection removes all internal provider metadata at runtime
   assert.equal("providerOfferId" in publicFlight, false);
   assert.equal("providerExpiresAt" in publicFlight, false);
   assert.equal("rawProviderReference" in publicFlight, false);
+});
+
+test("flight cache binds an immutable server-owned passenger composition to each result", () => {
+  const selected = flight("canonical-search", 20_000);
+  rememberFlights([selected], 10_000, search);
+  search.adults = 6;
+  search.travelers = 6;
+  assert.deepEqual(getFlightSearchFromCache(selected.id, 10_001), {
+    ...search,
+    adults: 1,
+    travelers: 1,
+  });
+  const returned = getFlightSearchFromCache(selected.id, 10_001)!;
+  returned.adults = 9;
+  assert.equal(getFlightSearchFromCache(selected.id, 10_001)?.adults, 1);
+});
+
+test("re-caching without search authority cannot retain stale passenger context", () => {
+  const selected = flight("cleared-search", 20_000);
+  rememberFlights([selected], 10_000, { ...search, adults: 1, travelers: 1 });
+  rememberFlights([selected], 10_001);
+  assert.equal(getFlightSearchFromCache(selected.id, 10_002), null);
 });
