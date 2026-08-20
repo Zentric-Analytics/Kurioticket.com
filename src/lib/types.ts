@@ -39,6 +39,84 @@ export type FlightSegment = {
   arrivalTime: string;
   airlineName?: string;
   flightNumber?: string;
+  originDetails?: FlightAirportDetails;
+  destinationDetails?: FlightAirportDetails;
+  marketingCarrier?: FlightCarrierDetails;
+  operatingCarrier?: FlightCarrierDetails;
+  marketingFlightNumber?: string;
+  operatingFlightNumber?: string;
+  aircraft?: FlightAircraftDetails;
+  duration?: string;
+  technicalStops?: FlightTechnicalStop[];
+  cabinDetails?: FlightCabinDetails[];
+};
+
+export type FlightAirportDetails = {
+  iataCode: string;
+  name?: string;
+  cityName?: string;
+  terminal?: string;
+  timeZone?: string;
+};
+
+export type FlightCarrierDetails = { name: string; iataCode?: string };
+export type FlightAircraftDetails = { name?: string; iataCode?: string };
+export type FlightTechnicalStop = {
+  airport: FlightAirportDetails;
+  duration?: string;
+  arrivalTime?: string;
+  departureTime?: string;
+};
+
+export type FlightProviderState = "included" | "not-included" | "unknown";
+export type FlightCabinAmenities = {
+  wifi?: { state: FlightProviderState; cost?: string };
+  power?: { state: FlightProviderState };
+  seat?: { type?: string; pitch?: string; legroom?: string };
+};
+export type FlightCabinDetails = {
+  cabinClass?: string;
+  cabinMarketingName?: string;
+  fareBrandName?: string;
+  fareBasisCode?: string;
+  amenities?: FlightCabinAmenities;
+};
+
+export type FlightProviderCondition = {
+  category: "change" | "refund" | "priority-check-in" | "priority-boarding" | "advance-seat-selection";
+  scope: "trip" | FlightLeg["direction"];
+  state: "allowed" | "not-allowed" | "unknown";
+  penaltyAmount?: number;
+  penaltyCurrency?: string;
+};
+
+export type FlightOptionalService = {
+  type: string;
+  description: string;
+  price: number;
+  currency: string;
+  maximumQuantity?: number;
+  travelerCount?: number;
+  journeyContext?: string;
+};
+
+/** Deliberately normalized provider-authored customer facts; never raw Duffel data. */
+export type FlightProviderDetails = {
+  price?: {
+    baseAmount?: number;
+    baseCurrency?: string;
+    taxAmount?: number;
+    taxCurrency?: string;
+    totalAmount: number;
+    totalCurrency: string;
+  };
+  totalEmissionsKg?: number;
+  updatedAt?: string;
+  passengerIdentityDocumentsRequired?: boolean;
+  supportedIdentityDocumentTypes?: string[];
+  supportedLoyaltyProgrammes?: string[];
+  conditions?: FlightProviderCondition[];
+  optionalServices?: FlightOptionalService[];
 };
 
 export type FlightLeg = {
@@ -57,7 +135,7 @@ export type FlightLeg = {
 };
 
 export type FlightFareTerm = {
-  category: "baggage" | "refund" | "change";
+  category: "baggage" | "refund" | "change" | "fare";
   semantic: "positive" | "negative" | "informational";
   text: string;
   legDirection?: FlightLeg["direction"];
@@ -85,6 +163,7 @@ export type NormalizedFlightResult = {
   refundInfo: string;
   /** Provider-authored terms with truthful presentation semantics. */
   fareTerms?: FlightFareTerm[];
+  providerDetails?: FlightProviderDetails;
   price: number;
   currency: string;
   bookingUrl: string;

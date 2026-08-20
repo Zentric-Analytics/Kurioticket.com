@@ -357,7 +357,7 @@ export function getDuffelFlightOffer(
 
   return runProvider("Duffel", async () => {
     const response = await fetchJson<{ data?: unknown }>(
-      `https://api.duffel.com/air/offers/${encodeURIComponent(providerOfferId)}`,
+      `https://api.duffel.com/air/offers/${encodeURIComponent(providerOfferId)}?return_available_services=true`,
       {
         headers: { Authorization: `Bearer ${apiKey}`, "Duffel-Version": "v2" },
       },

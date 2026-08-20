@@ -185,7 +185,7 @@ export function buildMaterialFareChoices(
     const key = materialKey(offer, upsellOfferIds);
     groups.set(key, [...(groups.get(key) ?? []), offer]);
   }
-  return [...groups.entries()]
+  const choices = [...groups.entries()]
     .map(([key, group]) => {
       const source = group.reduce((lowest, candidate) =>
         candidate.price < lowest.price ? candidate : lowest,
@@ -210,6 +210,22 @@ export function buildMaterialFareChoices(
       };
     })
     .sort((left, right) => left.source.price - right.source.price);
+  if (choices.length > 1) {
+    const comparableFacts = new Set(choices.map(({ source }) => JSON.stringify({
+      cabinClass: canonical(source.cabinClass),
+      terms: source.fareTerms,
+      cabinDetails: source.legs?.map((leg) => leg.segments.map((segment) => segment.cabinDetails)),
+      conditions: source.providerDetails?.conditions,
+    })));
+    if (comparableFacts.size === 1) {
+      for (const { choice } of choices) choice.distinguishingTerms.push({
+        category: "fare",
+        semantic: "informational",
+        text: "No additional comparable fare benefits were supplied by the provider.",
+      });
+    }
+  }
+  return choices;
 }
 
 export async function buildStandaloneFlightDetails({
@@ -289,6 +305,16 @@ export async function buildStandaloneFlightDetails({
     missingFareBrandCount: [selectedOffer, ...upsells].filter((offer) => !providerBrandIdentity(offer)).length,
     missingBaggageCount: [selectedOffer, ...upsells].filter((offer) => /not supplied/i.test(offer.baggageInfo)).length,
     missingConditionsCount: [selectedOffer, ...upsells].filter((offer) => /not supplied/i.test(offer.refundInfo)).length,
+    carrierNamesPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.marketingCarrier?.name))).length,
+    operatingCarrierPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.operatingCarrier?.name))).length,
+    airportDetailsPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.originDetails?.name || segment.destinationDetails?.name))).length,
+    terminalDataPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.originDetails?.terminal || segment.destinationDetails?.terminal))).length,
+    aircraftDataPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.aircraft))).length,
+    technicalStopsPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.technicalStops?.length))).length,
+    cabinAmenitiesPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.legs?.some((leg) => leg.segments.some((segment) => segment.cabinDetails?.some((cabin) => cabin.amenities)))).length,
+    priceBreakdownPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.providerDetails?.price?.baseAmount !== undefined || offer.providerDetails?.price?.taxAmount !== undefined).length,
+    emissionsPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.providerDetails?.totalEmissionsKg !== undefined).length,
+    optionalServicesPresentCount: [selectedOffer, ...upsells].filter((offer) => offer.providerDetails?.optionalServices?.length).length,
   });
   const handoff = resolveFlightHandoff(initial.source);
   return {

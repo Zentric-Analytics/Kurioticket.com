@@ -2,6 +2,8 @@ import { nanoid } from "nanoid";
 import type {
   FlightFareTerm,
   FlightLeg,
+  FlightProviderCondition,
+  FlightProviderDetails,
   FlightSearchParams,
   Layover,
   NormalizedFlightResult,
@@ -9,28 +11,39 @@ import type {
 import { minutesToDuration } from "@/lib/utils";
 import { scoreFlight } from "@/services/travel/scoring";
 
-const airlineNames: Record<string, string> = {
-  AA: "American Airlines",
-  AC: "Air Canada",
-  AF: "Air France",
-  AS: "Alaska Airlines",
-  BA: "British Airways",
-  B6: "JetBlue",
-  DL: "Delta Air Lines",
-  EK: "Emirates",
-  LH: "Lufthansa",
-  NK: "Spirit Airlines",
-  QR: "Qatar Airways",
-  UA: "United Airlines",
-  WN: "Southwest Airlines",
-};
-
 type DuffelCarrier = {
   id?: string;
   name?: string;
   iata_code?: string;
   logo_symbol_url?: string | null;
   logo_lockup_url?: string | null;
+};
+
+type DuffelPlace = {
+  iata_code?: string;
+  name?: string;
+  city_name?: string;
+  time_zone?: string;
+};
+
+type DuffelCabin = {
+  name?: string;
+  marketing_name?: string;
+  amenities?: {
+    wifi?: { available?: boolean | string | null; cost?: string | null };
+    power?: { available?: boolean | string | null };
+    seat?: { type?: string | null; pitch?: string | null; legroom?: string | null };
+  };
+};
+
+type DuffelSegmentPassenger = {
+  passenger_id?: string;
+  cabin_class?: string;
+  cabin_class_marketing_name?: string;
+  fare_brand_name?: string;
+  fare_basis_code?: string;
+  cabin?: DuffelCabin;
+  baggages?: Array<{ type?: string; quantity?: number }>;
 };
 
 const carrierWithName = (carrier?: DuffelCarrier) =>
@@ -92,6 +105,23 @@ function normalizeDuffelFlight(
     expires_at?: string;
     total_amount?: string;
     total_currency?: string;
+    base_amount?: string;
+    base_currency?: string;
+    tax_amount?: string | null;
+    tax_currency?: string | null;
+    total_emissions_kg?: string | null;
+    updated_at?: string;
+    passenger_identity_documents_required?: boolean;
+    supported_passenger_identity_document_types?: string[];
+    supported_loyalty_programmes?: string[];
+    available_services?: Array<{
+      type?: string;
+      total_amount?: string;
+      total_currency?: string;
+      maximum_quantity?: number;
+      passenger_ids?: string[];
+      segment_ids?: string[];
+    }>;
     fare_brand_name?: string;
     owner?: DuffelCarrier;
     conditions?: {
@@ -117,16 +147,23 @@ function normalizeDuffelFlight(
         id?: string;
         departing_at?: string;
         arriving_at?: string;
-        origin?: { iata_code?: string; name?: string };
-        destination?: { iata_code?: string; name?: string };
+        origin?: DuffelPlace;
+        destination?: DuffelPlace;
+        origin_terminal?: string | null;
+        destination_terminal?: string | null;
+        duration?: string;
+        aircraft?: { name?: string; iata_code?: string } | null;
+        stops?: Array<{
+          duration?: string;
+          departing_at?: string;
+          arriving_at?: string;
+          airport?: DuffelPlace;
+        }>;
         operating_carrier?: DuffelCarrier;
         marketing_carrier?: DuffelCarrier;
         marketing_carrier_flight_number?: string;
-        passengers?: Array<{
-          cabin_class?: string;
-          fare_brand_name?: string;
-          baggages?: Array<{ type?: string; quantity?: number }>;
-        }>;
+        operating_carrier_flight_number?: string;
+        passengers?: DuffelSegmentPassenger[];
       }>;
     }>;
   };
@@ -159,7 +196,7 @@ function normalizeDuffelFlight(
     first.marketing_carrier?.iata_code ||
     first.operating_carrier?.iata_code ||
     "";
-  const airlineName = displayedCarrier?.name || airlineNames[carrier];
+  const airlineName = displayedCarrier?.name?.trim();
   if (!airlineName) return null;
   const airlineLogo = displayedCarrier
     ? carrierLogo(displayedCarrier, [
@@ -207,6 +244,7 @@ function normalizeDuffelFlight(
     baggageInfo,
     refundInfo,
     fareTerms,
+    providerDetails: buildDuffelProviderDetails(offer, price, currency),
     price,
     currency,
     rawProviderReference: {
@@ -242,6 +280,7 @@ function buildFlight(input: {
   baggageInfo: string;
   refundInfo: string;
   fareTerms?: FlightFareTerm[];
+  providerDetails?: FlightProviderDetails;
   price: number;
   currency: string;
   bookingUrl?: string;
@@ -270,6 +309,7 @@ function buildFlight(input: {
     baggageInfo: input.baggageInfo,
     refundInfo: input.refundInfo,
     fareTerms: input.fareTerms,
+    providerDetails: input.providerDetails,
     price: Number(input.price.toFixed(2)),
     currency: input.currency,
     bookingUrl: partnerUrl,
@@ -311,12 +351,19 @@ function buildDuffelLegs(
       segments?: Array<{
         departing_at?: string;
         arriving_at?: string;
-        origin?: { iata_code?: string };
-        destination?: { iata_code?: string };
+        id?: string;
+        origin?: DuffelPlace;
+        destination?: DuffelPlace;
+        origin_terminal?: string | null;
+        destination_terminal?: string | null;
+        duration?: string;
+        aircraft?: { name?: string; iata_code?: string } | null;
+        stops?: Array<{ duration?: string; departing_at?: string; arriving_at?: string; airport?: DuffelPlace }>;
         operating_carrier?: { name?: string; iata_code?: string };
         marketing_carrier?: { name?: string; iata_code?: string };
         marketing_carrier_flight_number?: string;
-        passengers?: Array<{ fare_brand_name?: string }>;
+        operating_carrier_flight_number?: string;
+        passengers?: DuffelSegmentPassenger[];
       }>;
     }>;
   },
@@ -392,6 +439,22 @@ function buildDuffelLegs(
               airlineName,
               flightNumber:
                 `${carrier}${segment.marketing_carrier_flight_number || ""}`.trim(),
+              originDetails: airportDetails(segment.origin, segment.origin_terminal),
+              destinationDetails: airportDetails(segment.destination, segment.destination_terminal),
+              marketingCarrier: publicCarrier(segment.marketing_carrier),
+              operatingCarrier: publicCarrier(segment.operating_carrier),
+              marketingFlightNumber: flightNumber(segment.marketing_carrier?.iata_code, segment.marketing_carrier_flight_number),
+              operatingFlightNumber: flightNumber(segment.operating_carrier?.iata_code, segment.operating_carrier_flight_number),
+              aircraft: segment.aircraft ? {
+                ...(clean(segment.aircraft.name) ? { name: clean(segment.aircraft.name) } : {}),
+                ...(clean(segment.aircraft.iata_code) ? { iataCode: clean(segment.aircraft.iata_code)?.toUpperCase() } : {}),
+              } : undefined,
+              duration: providerDuration(segment.duration),
+              technicalStops: (segment.stops ?? []).flatMap((stop) => {
+                const airport = airportDetails(stop.airport);
+                return airport ? [{ airport, duration: providerDuration(stop.duration), arrivalTime: clean(stop.arriving_at), departureTime: clean(stop.departing_at) }] : [];
+              }),
+              cabinDetails: uniqueCabinDetails(segment.passengers),
             };
           }),
         ...(fareBrandName ? { fareBrandName } : {}),
@@ -421,6 +484,97 @@ function hasRequiredLegs(legs: FlightLeg[], search: FlightSearchParams) {
   if (search.tripType === "one-way")
     return legs.length === 1 && legs[0]?.direction === "outbound";
   return legs.length > 0;
+}
+
+const clean = (value?: string | null) => value?.trim() || undefined;
+const providerDuration = (value?: string | null) => {
+  const minutes = parseIsoDuration(clean(value));
+  return minutes ? minutesToDuration(minutes) : clean(value);
+};
+const providerState = (value?: boolean | string | null) =>
+  value === true || value === "true" ? "included" as const
+    : value === false || value === "false" ? "not-included" as const
+      : "unknown" as const;
+
+function airportDetails(place?: DuffelPlace, terminal?: string | null) {
+  const iataCode = clean(place?.iata_code)?.toUpperCase();
+  if (!iataCode) return undefined;
+  return {
+    iataCode,
+    ...(clean(place?.name) ? { name: clean(place?.name) } : {}),
+    ...(clean(place?.city_name) ? { cityName: clean(place?.city_name) } : {}),
+    ...(clean(terminal) ? { terminal: clean(terminal) } : {}),
+    ...(clean(place?.time_zone) ? { timeZone: clean(place?.time_zone) } : {}),
+  };
+}
+
+function publicCarrier(carrier?: DuffelCarrier) {
+  const name = clean(carrier?.name);
+  if (!name) return undefined;
+  return { name, ...(clean(carrier?.iata_code) ? { iataCode: clean(carrier?.iata_code)?.toUpperCase() } : {}) };
+}
+
+function flightNumber(code?: string, number?: string) {
+  const value = `${clean(code)?.toUpperCase() || ""}${clean(number) || ""}`;
+  return value || undefined;
+}
+
+function uniqueCabinDetails(passengers?: DuffelSegmentPassenger[]) {
+  const values = (passengers ?? []).map((passenger) => ({
+    ...(clean(passenger.cabin_class) ? { cabinClass: clean(passenger.cabin_class) } : {}),
+    ...(clean(passenger.cabin_class_marketing_name || passenger.cabin?.marketing_name) ? { cabinMarketingName: clean(passenger.cabin_class_marketing_name || passenger.cabin?.marketing_name) } : {}),
+    ...(clean(passenger.fare_brand_name) ? { fareBrandName: clean(passenger.fare_brand_name) } : {}),
+    ...(clean(passenger.fare_basis_code) ? { fareBasisCode: clean(passenger.fare_basis_code) } : {}),
+    ...(passenger.cabin?.amenities ? { amenities: {
+      ...(passenger.cabin.amenities.wifi ? { wifi: { state: providerState(passenger.cabin.amenities.wifi.available), ...(clean(passenger.cabin.amenities.wifi.cost) ? { cost: clean(passenger.cabin.amenities.wifi.cost) } : {}) } } : {}),
+      ...(passenger.cabin.amenities.power ? { power: { state: providerState(passenger.cabin.amenities.power.available) } } : {}),
+      ...(passenger.cabin.amenities.seat ? { seat: {
+        ...(clean(passenger.cabin.amenities.seat.type) ? { type: clean(passenger.cabin.amenities.seat.type) } : {}),
+        ...(clean(passenger.cabin.amenities.seat.pitch) ? { pitch: clean(passenger.cabin.amenities.seat.pitch) } : {}),
+        ...(clean(passenger.cabin.amenities.seat.legroom) ? { legroom: clean(passenger.cabin.amenities.seat.legroom) } : {}),
+      } } : {}),
+    } } : {}),
+  }));
+  return [...new Map(values.filter((value) => Object.keys(value).length).map((value) => [JSON.stringify(value), value])).values()];
+}
+
+function money(value?: string | null) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+function buildDuffelProviderDetails(offer: {
+  base_amount?: string; base_currency?: string; tax_amount?: string | null; tax_currency?: string | null;
+  total_emissions_kg?: string | null; updated_at?: string; passenger_identity_documents_required?: boolean;
+  supported_passenger_identity_document_types?: string[]; supported_loyalty_programmes?: string[];
+  conditions?: DuffelConditions; slices?: Array<{ conditions?: DuffelConditions; segments?: Array<{ id?: string; origin?: DuffelPlace; destination?: DuffelPlace; marketing_carrier?: DuffelCarrier; marketing_carrier_flight_number?: string }> }>;
+  available_services?: Array<{ type?: string; total_amount?: string; total_currency?: string; maximum_quantity?: number; passenger_ids?: string[]; segment_ids?: string[] }>;
+}, totalAmount: number, totalCurrency: string): FlightProviderDetails {
+  const segmentLabels = new Map((offer.slices ?? []).flatMap((slice) => (slice.segments ?? []).flatMap((segment) => segment.id ? [[segment.id, `${segment.origin?.iata_code || "?"} → ${segment.destination?.iata_code || "?"}${flightNumber(segment.marketing_carrier?.iata_code, segment.marketing_carrier_flight_number) ? ` · Flight ${flightNumber(segment.marketing_carrier?.iata_code, segment.marketing_carrier_flight_number)}` : ""}`] as const] : [])));
+  const conditions = buildProviderConditions(offer);
+  const optionalServices = (offer.available_services ?? []).flatMap((service) => {
+    const price = money(service.total_amount);
+    const currency = clean(service.total_currency)?.toUpperCase();
+    if (!clean(service.type) || price === undefined || !currency || !/^[A-Z]{3}$/.test(currency)) return [];
+    const contexts = (service.segment_ids ?? []).flatMap((id) => segmentLabels.get(id) ? [segmentLabels.get(id)!] : []);
+    return [{ type: clean(service.type)!, description: service.type === "baggage" ? "Additional baggage available" : `${clean(service.type)} available`, price, currency, ...(Number.isInteger(service.maximum_quantity) ? { maximumQuantity: service.maximum_quantity } : {}), ...(service.passenger_ids?.length ? { travelerCount: service.passenger_ids.length } : {}), ...(contexts.length ? { journeyContext: [...new Set(contexts)].join(", ") } : {}) }];
+  });
+  return {
+    price: {
+      ...(money(offer.base_amount) !== undefined ? { baseAmount: money(offer.base_amount) } : {}),
+      ...(clean(offer.base_currency) ? { baseCurrency: clean(offer.base_currency)?.toUpperCase() } : {}),
+      ...(money(offer.tax_amount) !== undefined ? { taxAmount: money(offer.tax_amount) } : {}),
+      ...(clean(offer.tax_currency) ? { taxCurrency: clean(offer.tax_currency)?.toUpperCase() } : {}),
+      totalAmount, totalCurrency,
+    },
+    ...(money(offer.total_emissions_kg) !== undefined ? { totalEmissionsKg: money(offer.total_emissions_kg) } : {}),
+    ...(clean(offer.updated_at) ? { updatedAt: clean(offer.updated_at) } : {}),
+    ...(typeof offer.passenger_identity_documents_required === "boolean" ? { passengerIdentityDocumentsRequired: offer.passenger_identity_documents_required } : {}),
+    ...(offer.supported_passenger_identity_document_types?.length ? { supportedIdentityDocumentTypes: offer.supported_passenger_identity_document_types.map((value) => value.trim()).filter(Boolean) } : {}),
+    ...(offer.supported_loyalty_programmes?.length ? { supportedLoyaltyProgrammes: offer.supported_loyalty_programmes.map((value) => value.trim().toUpperCase()).filter(Boolean) } : {}),
+    ...(conditions.length ? { conditions } : {}),
+    ...(optionalServices.length ? { optionalServices } : {}),
+  };
 }
 
 function parseProviderExpiry(value?: string) {
@@ -470,7 +624,28 @@ type DuffelConditions = {
     penalty_amount?: string;
     penalty_currency?: string;
   };
+  priority_check_in?: boolean | string | null;
+  priority_boarding?: boolean | string | null;
+  advance_seat_selection?: boolean | string | null;
 };
+
+function buildProviderConditions(offer: { conditions?: DuffelConditions; slices?: Array<{ conditions?: DuffelConditions }> }) {
+  const result: FlightProviderCondition[] = [];
+  const append = (conditions: DuffelConditions | undefined, scope: FlightProviderCondition["scope"]) => {
+    for (const [category, condition] of [["change", conditions?.change_before_departure], ["refund", conditions?.refund_before_departure]] as const) {
+      if (!condition) continue;
+      const amount = money(condition.penalty_amount);
+      result.push({ category, scope, state: condition.allowed === true ? "allowed" : condition.allowed === false ? "not-allowed" : "unknown", ...(amount !== undefined ? { penaltyAmount: amount } : {}), ...(clean(condition.penalty_currency) ? { penaltyCurrency: clean(condition.penalty_currency)?.toUpperCase() } : {}) });
+    }
+    for (const [category, value] of [["priority-check-in", conditions?.priority_check_in], ["priority-boarding", conditions?.priority_boarding], ["advance-seat-selection", conditions?.advance_seat_selection]] as const) {
+      if (value === undefined) continue;
+      result.push({ category, scope, state: value === true || value === "true" ? "allowed" : value === false || value === "false" ? "not-allowed" : "unknown" });
+    }
+  };
+  append(offer.conditions, "trip");
+  (offer.slices ?? []).forEach((slice, index) => append(slice.conditions, index === 0 ? "outbound" : index === 1 ? "return" : "leg"));
+  return result;
+}
 
 function resolveDuffelSliceFareBrand(slice: {
   fare_brand_name?: string;

@@ -32,6 +32,13 @@ test("selected-offer upsells use the server-owned Duffel endpoint", () => {
   assert.equal(url.origin, "https://api.duffel.com");
 });
 
+test("exact offer refresh requests current optional services without creating an order", async () => {
+  const source = await readFile(new URL("./duffelProvider.ts", import.meta.url), "utf8");
+  const exact = source.slice(source.indexOf("export function getDuffelFlightOffer"), source.indexOf("export function getDuffelFlightUpsellOffers"));
+  assert.match(exact, /\?return_available_services=true/);
+  assert.doesNotMatch(exact, /\/air\/orders|payment|passenger details/i);
+});
+
 test("upsell discovery is a bounded authenticated POST with no order creation", async () => {
   const source = await readFile(new URL("./duffelProvider.ts", import.meta.url), "utf8");
   const upsell = source.slice(source.indexOf("export function getDuffelFlightUpsellOffers"), source.indexOf("export async function checkDuffelHealth"));

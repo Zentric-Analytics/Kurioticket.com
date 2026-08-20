@@ -64,6 +64,8 @@ export const flightOfferMateriallyChanged = (
   cached.baggageInfo !== refreshed.baggageInfo ||
   cached.refundInfo !== refreshed.refundInfo ||
   JSON.stringify(cached.fareTerms) !== JSON.stringify(refreshed.fareTerms) ||
+  JSON.stringify(cached.providerDetails) !== JSON.stringify(refreshed.providerDetails) ||
+  JSON.stringify(cached.legs) !== JSON.stringify(refreshed.legs) ||
   cached.partnerRedirectUrl !== refreshed.partnerRedirectUrl ||
   cached.bookingUrl !== refreshed.bookingUrl;
 
@@ -81,6 +83,10 @@ const physicalItinerary = (offer: NormalizedFlightResult) =>
       segment.arrivalTime,
       segment.airlineName,
       segment.flightNumber,
+      segment.marketingCarrier,
+      segment.operatingCarrier,
+      segment.marketingFlightNumber,
+      segment.operatingFlightNumber,
     ]),
   ])).join("|");
 
