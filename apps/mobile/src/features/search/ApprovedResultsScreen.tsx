@@ -745,7 +745,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
           <Text style={[s0.sub, { color: theme.textSecondary }]}>{roundTrip ? "round trip" : "one way"}</Text>
         </View>
       </View>
-      <View style={[s0.benefits, { borderTopColor: theme.border }]}>
+      <View style={s0.benefits}>
         <View style={s0.benefitList}>
           <View style={s0.benefitItem}>
             <Luggage size={15} strokeWidth={1.9} color={theme.icon} />
@@ -1262,8 +1262,6 @@ const s0 = StyleSheet.create({
   priceBoxNarrow: { flexBasis: "auto", minWidth: 0, maxWidth: "100%" },
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   benefits: {
-    borderTopWidth: 1,
-    borderTopColor: "#EDF0F5",
     paddingTop: 8,
     flexDirection: "row",
     alignItems: "center",
