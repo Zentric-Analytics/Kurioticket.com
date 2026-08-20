@@ -79,6 +79,73 @@ test("normalizes a complete one-way Duffel provider offer", () => {
   assert.match(result.refundInfo, /Refundable/);
 });
 
+test("preserves complete customer-facing Duffel facts without provider identities", () => {
+  const raw = offer();
+  Object.assign(raw, {
+    base_amount: "600.00",
+    base_currency: "EUR",
+    tax_amount: "100.25",
+    tax_currency: "EUR",
+    total_emissions_kg: "460",
+    updated_at: "2026-12-01T12:00:00Z",
+    passenger_identity_documents_required: true,
+    supported_passenger_identity_document_types: ["passport"],
+    supported_loyalty_programmes: ["EX"],
+    available_services: [{ id: "ase_private", type: "baggage", total_amount: "50.00", total_currency: "EUR", maximum_quantity: 2, passenger_ids: ["pas_private"], segment_ids: ["LHR-JFK"] }],
+  });
+  const segment = raw.slices[0].segments[0];
+  Object.assign(segment, {
+    origin: { iata_code: "LHR", name: "Heathrow Airport", city_name: "London", time_zone: "Europe/London" },
+    destination: { iata_code: "JFK", name: "John F. Kennedy International Airport", city_name: "New York", time_zone: "America/New_York" },
+    origin_terminal: "5",
+    destination_terminal: "8",
+    operating_carrier: { name: "Operator Air", iata_code: "OP" },
+    operating_carrier_flight_number: "9001",
+    aircraft: { name: "Airbus A330-300", iata_code: "333" },
+    stops: [{ duration: "PT45M", arriving_at: "2027-01-01T11:00:00Z", departing_at: "2027-01-01T11:45:00Z", airport: { iata_code: "KEF", name: "Keflavik Airport", city_name: "Reykjavik", time_zone: "Atlantic/Reykjavik" } }],
+    passengers: [{
+      cabin_class: "economy",
+      cabin_class_marketing_name: "Economy Comfort",
+      fare_brand_name: "Standard",
+      fare_basis_code: "OXZ0RO",
+      baggages: [{ type: "checked", quantity: 1 }],
+      cabin: {
+        marketing_name: "Economy Comfort",
+        amenities: {
+          wifi: { available: "true", cost: "free" },
+          power: { available: "true" },
+          seat: { type: "standard", pitch: "32", legroom: "standard" },
+        },
+      },
+    }],
+  });
+  Object.assign(raw.slices[0], { conditions: { priority_check_in: true, priority_boarding: false, advance_seat_selection: null } });
+
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.ok(result);
+  const normalizedSegment = result.legs?.[0]?.segments[0];
+  assert.equal(normalizedSegment?.originDetails?.name, "Heathrow Airport");
+  assert.equal(normalizedSegment?.destinationDetails?.terminal, "8");
+  assert.equal(normalizedSegment?.marketingCarrier?.name, "Example Air");
+  assert.equal(normalizedSegment?.operatingCarrier?.name, "Operator Air");
+  assert.equal(normalizedSegment?.aircraft?.name, "Airbus A330-300");
+  assert.equal(normalizedSegment?.technicalStops?.[0]?.airport.iataCode, "KEF");
+  assert.equal(normalizedSegment?.cabinDetails?.[0]?.fareBasisCode, "OXZ0RO");
+  assert.equal(normalizedSegment?.cabinDetails?.[0]?.amenities?.wifi?.cost, "free");
+  assert.equal(result.providerDetails?.price?.baseAmount, 600);
+  assert.equal(result.providerDetails?.price?.taxAmount, 100.25);
+  assert.equal(result.providerDetails?.totalEmissionsKg, 460);
+  assert.equal(result.providerDetails?.optionalServices?.[0]?.description, "Additional baggage available");
+  assert.match(JSON.stringify(result), /Additional baggage available/);
+  assert.doesNotMatch(JSON.stringify(result), /ase_private|pas_private/);
+});
+
+test("does not use a static airline-name fallback", () => {
+  const raw = offer();
+  Object.assign(raw.slices[0].segments[0], { marketing_carrier: { iata_code: "BA" } });
+  assert.equal(normalizeFlightResult("Duffel", raw, search("one-way")), null);
+});
+
 test("keeps the logo aligned with the displayed Duffel carrier identity", () => {
   const raw = offer();
   const segment = raw.slices[0].segments[0];

@@ -261,6 +261,13 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     'tabIndex={selected ? 0 : -1}',
     "selectedFare?.label",
     "selectedOffer.price",
+    "<FareDetails offer={selectedOffer}",
+    "Operated by {segment.operatingCarrier.name}",
+    "Technical stop at {stop.airport.iataCode}",
+    "Optional extra",
+    "Estimated CO₂ emissions",
+    "Base fare",
+    "Fare basis:",
   ]) assert.ok(source.includes(contract), contract);
   assert.ok(!source.includes("function primaryLeg"));
   assert.ok(!source.includes('"Continue to provider"'));
@@ -281,4 +288,15 @@ test("trip totals use canonical traveler count without changing provider amounts
   assert.equal(selectedTotal, 5467.38);
   assert.equal(alternateTotal, 6120.25);
   assert.notEqual(selectedTotal, selectedTotal / 6);
+});
+
+test("provider brands with identical comparable facts receive no invented benefit", () => {
+  const standard = fixture({ providerOfferId: "off_standard", fareBrandName: "Standard", price: 620.5 });
+  const flex = fixture({ id: "duffel-flex", providerOfferId: "off_flex", fareBrandName: "Flex", price: 710.5 });
+  const choices = buildMaterialFareChoices([standard, flex]);
+  assert.equal(choices.length, 2);
+  for (const { choice } of choices) {
+    assert.match(choice.distinguishingTerms.at(-1)?.text || "", /No additional comparable fare benefits/);
+    assert.doesNotMatch(choice.distinguishingTerms.map(({ text }) => text).join(" "), /more flexible|priority boarding|free changes/i);
+  }
 });
