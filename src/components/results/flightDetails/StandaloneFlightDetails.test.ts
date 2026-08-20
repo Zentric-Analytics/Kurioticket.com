@@ -268,6 +268,16 @@ test("standalone UI renders every leg and segment from selected offer and uses a
     "Estimated CO₂ emissions",
     "Base fare",
     "Fare basis:",
+    "Time zone:",
+    "Provider fare refreshed",
+    "Supported identity documents:",
+    "Supported loyalty programmes:",
+    "Airline conditions of carriage",
+    "Offer airline:",
+    'permission ? "Allowed" : "Included"',
+    'service.pricedPerTraveler ? " each" : ""',
+    "Maximum quantity per traveler",
+    'condition.category === "change" ? "Changes"',
   ]) assert.ok(source.includes(contract), contract);
   assert.ok(!source.includes("function primaryLeg"));
   assert.ok(!source.includes('"Continue to provider"'));
@@ -275,6 +285,8 @@ test("standalone UI renders every leg and segment from selected offer and uses a
   assert.ok(!source.includes("Price and availability are confirmed by the provider before purchase."));
   assert.ok(!source.includes("Review the provider’s final fare terms before booking."));
   assert.ok(!source.includes("ShieldCheck"));
+  assert.ok(!source.includes("Included/allowed"));
+  assert.ok(!source.includes("Not included/not allowed"));
   assert.match(source, /handoff\.available \? <>.*Secure provider handoff.*<\/> :/s);
   assert.match(source, /Booking link currently unavailable/);
   assert.match(source, /No verified external booking destination is available for this offer\./);
