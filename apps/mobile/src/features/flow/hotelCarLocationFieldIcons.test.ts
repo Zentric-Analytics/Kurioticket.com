@@ -7,9 +7,9 @@ const hotel = read("HotelSearchPanel.tsx");
 const car = read("CarSearchPanel.tsx");
 const leadingLocationField = /<View style=\{styles\.locationFieldRow\}><FlowIcon name="location" size=\{22\} color=\{ft\.colors\.icon\}\/\><View style=\{styles\.locationFieldContent\}>/;
 
-test("Hotel Destination groups its label and editable input after a themed leading pin", () => {
+test("Hotel Destination groups its launcher value after a themed leading pin", () => {
   assert.match(hotel, leadingLocationField);
-  assert.match(hotel, /locationFieldContent\}><Text style=\{ft\.styles\.label\}>Destination<\/Text><TextInput[\s\S]*?accessibilityLabel="Hotel destination"[\s\S]*?placeholder="City, area, or hotel"[\s\S]*?returnKeyType="done"\/><\/View><\/View>/);
+  assert.match(hotel, /onPress=\{\(\) => setDestinationOpen\(true\)\}[\s\S]*?locationFieldContent\}><Text style=\{ft\.styles\.label\}>Destination<\/Text><TextInput[\s\S]*?accessibilityLabel="Hotel destination"[\s\S]*?editable=\{false\}[\s\S]*?placeholder="City, area, or hotel"/);
   assert.doesNotMatch(hotel, /<TextInput[^>]*accessibilityLabel="Hotel destination"[^>]*\/><FlowIcon name="location"/);
 });
 
@@ -27,11 +27,12 @@ test("Car keeps one LocationInput shared by pick-up and conditional drop-off fie
   assert.match(car, /form\.separateDropoff \? <LocationInput label="Drop-off location"/);
 });
 
-test("location rows use flexible normal layout and retain input behavior", () => {
+test("location rows use flexible normal layout and retain their intended behavior", () => {
   for (const source of [hotel, car]) {
     assert.match(source, /locationFieldRow:\{flexDirection:"row",alignItems:"center",gap:10\}/);
     assert.match(source, /locationFieldContent:\{flex:1\}/);
   }
-  assert.match(hotel, /ref=\{destinationRef\} accessibilityLabel="Hotel destination"[\s\S]*?returnKeyType="done"/);
+  assert.match(hotel, /ref=\{destinationRef\} accessibilityLabel="Hotel destination"[\s\S]*?editable=\{false\}/);
+  assert.match(hotel, /accessibilityLabel="Search hotel destinations"[\s\S]*?returnKeyType="search"/);
   assert.match(car, /ref=\{inputRef\} accessibilityLabel=\{label\}[\s\S]*?returnKeyType="done"/);
 });

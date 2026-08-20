@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { adjustDropoff, boundedAge, carSearchParams, defaultCarForm, initializeCarForm, initializeCarsPageForm, parseDriverAge, selectCarsPickupDate, selectCarsPickupTime, timeOptions, validateCarForm } from "./carSearchModel";
+import { adjustDropoff, boundedAge, carSearchParams, defaultCarForm, initializeCarForm, initializeCarsPageForm, initializeHomeCarForm, parseDriverAge, selectCarsPickupDate, selectCarsPickupTime, timeOptions, validateCarForm } from "./carSearchModel";
 import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
 const today = new Date(2026, 6, 30, 23, 30);
 const valid = () => ({ ...defaultCarForm(today), pickupLocation: " LAX ", separateDropoff: true, dropoffLocation: " SFO " });
@@ -11,6 +11,18 @@ test("empty and array parameters initialize once with local safe defaults", () =
   assert.equal(empty.pickupDate, "2026-08-13"); assert.equal(empty.dropoffDate, "2026-08-16"); assert.equal(empty.driverAge, 30);
   const array = initializeCarForm({ pickupLocation: ["LAX", "ignored"], dropoffLocation: ["SFO"], pickupDate: ["2026-08-10"], pickupTime: ["09:30"], dropoffDate: ["2026-08-11"], dropoffTime: ["10:00"], driverAge: ["35"] }, new Date(2026, 6, 1)).form;
   assert.deepEqual(array, { pickupLocation:"LAX",dropoffLocation:"SFO",separateDropoff:true,pickupDate:"2026-08-10",pickupTime:"09:30",dropoffDate:"2026-08-11",dropoffTime:"10:00",driverAge:35 });
+});
+test("fresh Home Cars keeps time and age defaults without generated rental dates", () => {
+  assert.deepEqual(initializeHomeCarForm({}, today).form, {
+    pickupLocation: "", separateDropoff: false, dropoffLocation: "", pickupDate: "", pickupTime: "10:00",
+    dropoffDate: "", dropoffTime: "10:00", driverAge: 30,
+  });
+});
+test("Home Cars preserves valid restored dates and leaves invalid date intent empty", () => {
+  const restored = initializeHomeCarForm({ pickupDate: "2026-08-10", dropoffDate: "2026-08-15" }, new Date(2026, 6, 1)).form;
+  assert.equal(restored.pickupDate, "2026-08-10"); assert.equal(restored.dropoffDate, "2026-08-15");
+  const invalid = initializeHomeCarForm({ pickupDate: "bad", dropoffDate: "2026-08-15" }, today).form;
+  assert.equal(invalid.pickupDate, ""); assert.equal(invalid.dropoffDate, "");
 });
 test("fresh Cars page state has no automatic search details for guests or signed-in users", () => {
   for (const _session of ["guest", "signed-in"]) {
@@ -36,7 +48,8 @@ test("Cars initializer contains no generated date, time, age, or location defaul
 });
 test("Cars page renders the manual-selection placeholders", () => {
   const panel = readFileSync(`${process.cwd()}/src/features/flow/CarSearchPanel.tsx`, "utf8");
-  for (const placeholder of ["Enter city or airport", "Select pick-up date", "Select pick-up time", "Select drop-off date", "Select drop-off time", "Select driver age"]) assert.match(panel, new RegExp(placeholder));
+  const model = readFileSync(`${process.cwd()}/src/features/flow/carSearchModel.ts`, "utf8");
+  for (const placeholder of ["Enter city or airport", "Select pick-up date", "Select return date", "Select pick-up time", "Select return time", "Select driver age"]) assert.match(panel + model, new RegExp(placeholder));
 });
 test("Cars page preserves valid restored and route-provided values", () => {
   const params = { pickupLocation:"LAX", dropoffLocation:"SFO", pickupDate:"2026-08-10", pickupTime:"09:30", dropoffDate:"2026-08-11", dropoffTime:"10:00", driverAge:"35" };

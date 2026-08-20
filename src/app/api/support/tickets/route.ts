@@ -2,10 +2,22 @@ import { NextResponse } from "next/server";
 import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { supportTicketSchema } from "@/lib/validation";
 import { createSupportTicket } from "@/services/supportService";
+import { checkSupportSubmissionRateLimit, type SupportLimitResult } from "@/lib/support-submission-rate-limit";
 
 const supportUnavailableMessage = "We could not save your support request right now. Please try again in a few minutes.";
 
-export async function POST(request: Request) {
+type Dependencies = {
+  session: () => Promise<Awaited<ReturnType<typeof resolveOptionalWebApiSession>>>;
+  create: typeof createSupportTicket;
+  limit: (request: Request, identity: { userId?: string; email: string }) => SupportLimitResult;
+};
+
+export function createWebSupportHandler(deps: Dependencies = {
+  session: resolveOptionalWebApiSession,
+  create: createSupportTicket,
+  limit: checkSupportSubmissionRateLimit,
+}) {
+return async function POST(request: Request) {
   let payload: unknown;
 
   try {
@@ -20,10 +32,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please add a little more support detail.", issues: parsed.error.flatten() }, { status: 400 });
   }
 
-  const session = (await resolveOptionalWebApiSession())?.session;
+  const session = (await deps.session())?.session;
 
   try {
-    const ticket = await createSupportTicket({
+    const limited = deps.limit(request, { userId: session?.user?.id, email: parsed.data.email });
+    if (!limited.allowed) return NextResponse.json(
+      { error: "Too many support requests. Please wait and try again.", retryAfterSeconds: limited.retryAfterSeconds },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSeconds) } },
+    );
+    const ticket = await deps.create({
       userId: session?.user?.id,
       ...parsed.data,
     });
@@ -33,4 +50,7 @@ export async function POST(request: Request) {
     console.error("[support] Failed to create support ticket", error);
     return NextResponse.json({ error: supportUnavailableMessage }, { status: 503 });
   }
+};
 }
+
+export const POST = createWebSupportHandler();

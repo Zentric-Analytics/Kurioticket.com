@@ -11,6 +11,7 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { useMobileLocalization } from "../../localization/MobileLocalization";
 import { ProfileCardSection } from "./ProfileCardSection";
 import { authenticatedProfileSections } from "./profileModel";
+import { AppVersionFooter } from "./AppVersionFooter";
 
 function Header({ unreadCount }: { unreadCount: number }) {
   const { theme } = useAppTheme(); const { t } = useMobileLocalization();
@@ -26,6 +27,7 @@ export function AuthenticatedProfileScreen() {
   return <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={["top"]}><ScrollView alwaysBounceVertical={false} bounces={false} overScrollMode="never" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}><Header unreadCount={unreadCount} />
     <View style={styles.sections}>{authenticatedProfileSections.map(section => <ProfileCardSection key={section.title} section={section} />)}</View>
     {authenticated ? <Pressable accessibilityRole="button" accessibilityLabel={t("logout")} accessibilityHint={t("logoutHint")} onPress={logout} style={({ pressed }) => [styles.logout, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}><FlowIcon name="logout" color={flowColors.red} size={27} /><Text style={styles.logoutText}>{t("logout")}</Text></Pressable> : null}
+    <AppVersionFooter />
   </ScrollView></SafeAreaView>;
 }
 const styles = StyleSheet.create({ safe: { flex: 1 }, scroll: { paddingHorizontal: 18, paddingBottom: 24 }, header: { minHeight: 76, flexDirection: "row", alignItems: "center" }, title: { flex: 1, fontSize: 30, lineHeight: 38, fontWeight: "800" }, iconButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center" }, badge: { position: "absolute", right: 0, top: 2, minWidth: 19, height: 19, borderRadius: 10, paddingHorizontal: 4, backgroundColor: "#D92D20", alignItems: "center", justifyContent: "center" }, badgeText: { color: "white", fontSize: 10, fontWeight: "800" }, sections: { gap: 14 }, logout: { minHeight: 64, marginTop: 20, borderRadius: 17, borderWidth: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, elevation: 2 }, logoutText: { color: flowColors.red, fontSize: 16, fontWeight: "800" }, pressed: { opacity: .68 } });
