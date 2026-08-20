@@ -70,3 +70,16 @@ test("the native sheet is keyboard-aware, safe-area-aware, and scrollable", () =
   assert.match(panel, /destinationResults:\{flexShrink:1,minHeight:0\}/);
   assert.doesNotMatch(sheet, /keyboardHeight|Dimensions\.get|useWindowDimensions/);
 });
+
+test("destination rows keep horizontal separators without a vertical selection rail", () => {
+  const destinationChoice = panel.match(/destinationChoice:\{([^}]*)\}/)?.[1] ?? "";
+
+  assert.match(destinationChoice, /borderBottomWidth:1/);
+  assert.doesNotMatch(destinationChoice, /borderLeftWidth/);
+  assert.match(sheet, /\{borderBottomColor:ft\.colors\.border\}/);
+  assert.doesNotMatch(sheet, /borderLeftColor/);
+  assert.match(sheet, /selected&&\{backgroundColor:ft\.colors\.selected\}/);
+  assert.match(sheet, /selected&&\{color:ft\.colors\.selectedPrimaryText\}/);
+  assert.match(sheet, /selected&&\{color:ft\.colors\.selectedSecondaryText\}/);
+  assert.match(sheet, /accessibilityState=\{\{selected\}\}/);
+});
