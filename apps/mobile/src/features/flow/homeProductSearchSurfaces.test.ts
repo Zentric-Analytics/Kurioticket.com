@@ -13,7 +13,9 @@ test("Home preserves Flights as the existing card reference", () => {
 test("Home contains embedded Hotel and Car forms in its themed search surface", () => {
   assert.match(home, /function HomeSearchSurface[\s\S]*?style=\{\[ft\.styles\.card, ft\.styles\.shadow\]\}/);
   assert.match(home, /<HomeSearchSurface>\s*<HotelSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
-  assert.match(home, /<HomeSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} \/>\s*<\/HomeSearchSurface>/);
+  assert.match(home, /<HomeSearchSurface>\s*<CarSearchPanel embedded params=\{\{\}\} startWithEmptyRentalDates \/>\s*<\/HomeSearchSurface>/);
+  assert.match(home, /cars:[\s\S]*startWithEmptyRentalDates/);
+  assert.doesNotMatch(products, /startWithEmptyRentalDates/);
 });
 
 test("Home Packages uses one package-owned card and dedicated route uses the same form", () => {

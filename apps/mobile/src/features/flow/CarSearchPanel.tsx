@@ -5,17 +5,17 @@ import { Field, PrimaryButton, UnavailableNotice } from "./FlowPrimitives";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { localDateFromIso } from "./localDateModel";
-import { adjustDropoff, boundedAge, CAR_AGE, carSearchParams, initializeCarForm, initializeCarsPageForm, rentalTimesSummary, type CarForm, type CarFormErrors, validateCarForm } from "./carSearchModel";
+import { adjustDropoff, boundedAge, CAR_AGE, carSearchParams, initializeCarForm, initializeCarsPageForm, initializeHomeCarForm, rentalTimesSummary, type CarForm, type CarFormErrors, validateCarForm } from "./carSearchModel";
 import { CarRentalDatesSheet, CarTimeRangeSheet } from "./CarSearchPickers";
 import type { RouteValue } from "./hotelSearchModel";
 
-type Props = { params: Record<string, RouteValue>; embedded?: boolean; showSubmit?: boolean; submitLabel?: string; requireManualDetails?: boolean };
+type Props = { params: Record<string, RouteValue>; embedded?: boolean; showSubmit?: boolean; submitLabel?: string; requireManualDetails?: boolean; startWithEmptyRentalDates?: boolean };
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 export const rentalDatesSummary = (pickupDate: string, returnDate: string) => `${pickupDate ? displayDate(pickupDate) : "Select pick-up date"} — ${returnDate ? displayDate(returnDate) : "Select return date"}`;
 
-export function CarSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search cars", requireManualDetails = false }: Props) {
+export function CarSearchPanel({ params, embedded = false, showSubmit = true, submitLabel = "Search cars", requireManualDetails = false, startWithEmptyRentalDates = false }: Props) {
   const ft = useFlowTheme();
-  const initialize = requireManualDetails ? initializeCarsPageForm : initializeCarForm;
+  const initialize = requireManualDetails ? initializeCarsPageForm : startWithEmptyRentalDates ? initializeHomeCarForm : initializeCarForm;
   const initial = useRef<ReturnType<typeof initialize> | undefined>(undefined);
   if (!initial.current) initial.current = initialize(params);
   const [form, setForm] = useState<CarForm>(initial.current.form);
