@@ -7,10 +7,10 @@ const notificationsSchema = z.object({
   priceAlertEmails: z.boolean().default(false),
   travelInspirationEmails: z.boolean().default(false),
 }).strict();
-const notificationsReadSchema = notificationsSchema.partial().passthrough();
+const notificationsReadSchema = notificationsSchema.partial();
 export const travelPreferencesPatchSchema = z.object({
   homeAirport: z.string().trim().max(80).optional(),
-  preferredAirlines: z.array(z.string().trim().min(1).max(80)).max(10).optional(),
+  preferredAirlines: z.array(z.string().trim().min(1).max(80)).max(10).transform((values) => [...new Set(values)]).optional(),
   notificationPreferences: notificationsSchema.optional(),
 }).strict().refine((value) => Object.keys(value).length > 0, "At least one preference must be provided.");
 export type TravelPreferencesPatch = z.infer<typeof travelPreferencesPatchSchema>;
