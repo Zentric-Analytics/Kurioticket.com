@@ -121,6 +121,7 @@ export function HotelDetailsClient({
   const [hotel, setHotel] = useState<PublicHotelResult | null>(null);
   const [propertyDetails, setPropertyDetails] = useState<PublicHotelPropertyDetails | null>(null);
   const [roomOptions, setRoomOptions] = useState<HotelRoomOption[]>([]);
+  const [relatedHotels, setRelatedHotels] = useState<PublicHotelResult[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -162,6 +163,7 @@ export function HotelDetailsClient({
       setHotel(null);
       setPropertyDetails(null);
       setRoomOptions([]);
+      setRelatedHotels([]);
       setSelectedRoomId("");
       setLoadError("");
       setRedirectError("");
@@ -180,6 +182,7 @@ export function HotelDetailsClient({
           hotel?: PublicHotelResult;
           propertyDetails?: PublicHotelPropertyDetails | null;
           roomOptions?: HotelRoomOption[];
+          relatedHotels?: PublicHotelResult[];
           error?: string;
         };
         if (!response.ok || !data.hotel)
@@ -190,13 +193,17 @@ export function HotelDetailsClient({
           hotel: data.hotel,
           propertyDetails: data.propertyDetails ?? null,
           roomOptions: Array.isArray(data.roomOptions) ? data.roomOptions : [],
+          relatedHotels: Array.isArray(data.relatedHotels)
+            ? data.relatedHotels
+            : [],
         };
       })
-      .then(({ hotel: nextHotel, propertyDetails: nextPropertyDetails, roomOptions: nextRoomOptions }) => {
+      .then(({ hotel: nextHotel, propertyDetails: nextPropertyDetails, roomOptions: nextRoomOptions, relatedHotels: nextRelatedHotels }) => {
         if (!active) return;
         setHotel(nextHotel);
         setPropertyDetails(nextPropertyDetails);
         setRoomOptions(nextRoomOptions);
+        setRelatedHotels(nextRelatedHotels);
         setResultReceivedAt(Date.now());
         setLoadError("");
       })
@@ -815,6 +822,14 @@ export function HotelDetailsClient({
                 starRatingAriaLabel={starRating ? t("hotelResults.starHotelAria").replace("{{rating}}", formatHotelDetailsRating(starRating, locale)) : ""}
                 locationParts={locationParts}
                 propertyDetails={propertyDetails}
+                relatedHotels={relatedHotels}
+                relatedSearchContext={{
+                  destination: propertyDetails?.city || searchContext?.destination,
+                  checkIn: requestCheckIn,
+                  checkOut: requestCheckOut,
+                  guests: requestGuests,
+                  rooms: requestRooms,
+                }}
                 amenityItems={amenityItems}
                 isSaved={isSaved}
                 savedHotelLabel={savedHotelLabel}
@@ -869,6 +884,15 @@ export function HotelDetailsClient({
                   roomTitle: t("hotelDetails.roomOptionsTitle") || "Room options",
                   closeRooms: t("hotelDetails.closeRoomOptions") || "Close room options",
                   roomTerms: t("hotelDetails.termsBody") || "Final room availability and terms must be confirmed.",
+                  moreHotelsIn: t("hotelDetails.moreHotelsIn") || "More hotels in {{destination}}",
+                  viewHotel: t("hotelResults.viewHotel") || "View hotel",
+                  pricePerNight: t("hotelResults.pricePerNight") || "{{price}} per night",
+                  estimatedStayTotal: t("hotelResults.estimatedStayTotal") || "estimated stay total",
+                  priceUnavailable: t("hotelDetails.priceUnavailable") || "Price unavailable",
+                  imageUnavailable: t("hotelResults.imageUnavailable") || "Image unavailable",
+                  imageAlt: t("hotelResults.hotelImageAlt") || "{{name}} stay option{{location}}",
+                  nearLocation: t("hotelResults.nearLocation") || "near {{location}}",
+                  starHotelAria: t("hotelResults.starHotelAria") || "{{rating}}-star hotel",
                 }}
               />
             </div>

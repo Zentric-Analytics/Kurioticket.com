@@ -9,7 +9,8 @@ const source = readFileSync(
 
 test("renders a factual responsive hotel location card", () => {
   for (const contract of [
-    "buildHotelMapEmbedUrl(propertyDetails)",
+    "buildHotelMapEmbedUrl({",
+    "NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY",
     "buildHotelDirectionsUrl(propertyDetails)",
     "data-hotel-location-section",
     "Map showing the location of ${hotelName}",

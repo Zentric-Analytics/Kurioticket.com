@@ -129,6 +129,8 @@ services:
           property: connectionString
       - key: NEXT_PUBLIC_APP_URL
         sync: false
+      - key: NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY
+        sync: false
       - key: AUTH_SECRET
         sync: false
       - key: NEXTAUTH_SECRET
@@ -172,6 +174,8 @@ services:
           name: kurioticket-postgres-staging
           property: connectionString
       - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY
         sync: false
       - key: AUTH_SECRET
         sync: false

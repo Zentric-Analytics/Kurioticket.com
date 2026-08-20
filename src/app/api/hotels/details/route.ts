@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getHotelFromCache, toPublicHotel } from "@/lib/searchCache";
 import {
   buildStaticHotelResult,
+  buildRelatedStaticHotelResults,
   buildStaticHotelRoomOptions,
   getStaticHotelById,
 } from "@/services/travel/staticHotelResults";
@@ -43,11 +44,15 @@ export function GET(request: Request) {
     rooms: Number(url.searchParams.get("rooms")) || 1,
   };
   const cached = getHotelFromCache(id);
+  const relatedHotels = record
+    ? buildRelatedStaticHotelResults(record, search).map(toPublicHotel)
+    : [];
   if (cached)
     return NextResponse.json({
       hotel: toPublicHotel(cached),
       propertyDetails: toPublicPropertyDetails(record),
       roomOptions: record ? buildStaticHotelRoomOptions(record, search) : [],
+      relatedHotels,
     });
   if (!record)
     return NextResponse.json({ error: "Hotel not found." }, { status: 404 });
@@ -56,5 +61,6 @@ export function GET(request: Request) {
     hotel: toPublicHotel(hotel),
     propertyDetails: toPublicPropertyDetails(record),
     roomOptions: buildStaticHotelRoomOptions(record, search),
+    relatedHotels,
   });
 }

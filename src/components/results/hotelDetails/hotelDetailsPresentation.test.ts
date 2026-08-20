@@ -4,6 +4,7 @@ import test from "node:test";
 import type { PublicHotelResult } from "@/lib/types";
 import {
   buildHotelDetailsResultsHref,
+  buildHotelDetailsHref,
   canUseHotelDetailsProviderLink,
   getDistinctHotelDetailsLocationParts,
   getHotelDetailsCancellationText,
@@ -78,6 +79,19 @@ test("hotel details results links preserve only valid search context", () => {
   assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "bad", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels/results");
   assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "2026-08-03", checkOut: "2026-08-03", guests: "2", rooms: "1" }), "/hotels/results");
   assert.equal(buildHotelDetailsResultsHref({ destination: "Paris", checkIn: "2026-08-01", checkOut: "2026-08-03", guests: "0", rooms: "1" }), "/hotels/results");
+});
+
+test("related hotel detail links preserve validated stay context", () => {
+  assert.equal(
+    buildHotelDetailsHref("the-savoy-london", {
+      destination: "London",
+      checkIn: "2026-09-09",
+      checkOut: "2026-09-12",
+      guests: "2",
+      rooms: "1",
+    }),
+    "/hotels/details/the-savoy-london?destination=London&checkIn=2026-09-09&checkOut=2026-09-12&guests=2&rooms=1",
+  );
 });
 
 test("hotel details location parts remove duplicate and contained text", () => {
