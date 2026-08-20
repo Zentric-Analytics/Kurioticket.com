@@ -3,6 +3,7 @@ import {
   AccessibilityInfo,
   ActivityIndicator,
   Alert,
+  FlatList,
   Image,
   Keyboard,
   KeyboardAvoidingView,
@@ -285,7 +286,11 @@ function CountrySelector({
           <View style={s.countrySearchArea}>
             <TextInput
               accessibilityLabel={c.searchCountry}
-              accessibilityHint={c.searchCountryHint}
+              accessibilityHint={
+                kind === "phone"
+                  ? c.searchCountryPhoneHint
+                  : c.searchCountryHint
+              }
               placeholder={c.searchCountry}
               placeholderTextColor={theme.muted}
               value={q}
@@ -300,12 +305,16 @@ function CountrySelector({
               ]}
             />
           </View>
-          <ScrollView
+          <FlatList
             style={s.countryResults}
+            data={shown}
+            keyExtractor={(item) => item.value}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={s.countryResultsContent}
-          >
-            {shown.map((item) => {
+            initialNumToRender={12}
+            maxToRenderPerBatch={12}
+            windowSize={7}
+            renderItem={({ item }) => {
               const phoneOption = PHONE_COUNTRY_OPTIONS.find(
                 (option) => option.isoCode === item.value,
               );
@@ -318,7 +327,6 @@ function CountrySelector({
               const isSelected = item.value === draftSelection;
               return (
                 <Pressable
-                  key={item.value}
                   accessibilityRole="button"
                   accessibilityLabel={`${item.label}${phoneOption?.dialCode ? `, ${phoneOption.dialCode}` : ""}`}
                   accessibilityState={{ selected: isSelected }}
@@ -347,8 +355,8 @@ function CountrySelector({
                   ) : null}
                 </Pressable>
               );
-            })}
-          </ScrollView>
+            }}
+          />
           {!keyboardVisible ? (
             <View
               style={[
