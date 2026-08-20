@@ -91,12 +91,14 @@ test("flight loading skeleton mirrors the stacked benefit footer", () => {
   assert.match(source, /skeletonButton: \{ width: 96, height: 44/);
 });
 
-test("flight card keeps long prices single-line in a responsive full-width price row", () => {
+test("flight card keeps long prices single-line in the stable footer action column", () => {
   assert.match(card, /style=\{s0\.flightMain\}/);
   assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch", gap: 4 \}/);
   assert.match(source, /flightDetails: \{ width: "100%", minWidth: 0, gap: 7 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 70, alignItems: "center" \}/);
-  assert.match(source, /priceBox: \{ width: "100%", minWidth: 0 \}/);
+  assert.match(source, /benefitList: \{ flex: 1, minWidth: 0/);
+  assert.match(source, /actionColumn: \{ flexShrink: 0, alignItems: "flex-end", gap: 12 \}/);
+  assert.doesNotMatch(source, /priceBox:/);
 
   for (const formattedPrice of ["NGN 89,482", "NGN 837,706", "NGN 1,245,800", "$597", "£1,250", "€1,099"]) {
     assert.ok(formattedPrice.length > 0, `${formattedPrice} remains a single Text value`);
