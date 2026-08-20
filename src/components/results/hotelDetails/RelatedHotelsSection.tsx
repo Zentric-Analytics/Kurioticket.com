@@ -75,7 +75,7 @@ function RelatedHotelCard({
     <Link
       href={href}
       aria-label={`${labels.viewHotel}: ${hotel.name}`}
-      className="group focus-ring block w-[82%] shrink-0 snap-start overflow-hidden rounded-[15px] border border-slate-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.09)] sm:w-[44%] lg:w-[31%]"
+      className="group focus-ring block min-w-0 w-full overflow-hidden rounded-[15px] border border-slate-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.09)]"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
         {hotel.imageUrl && !imageFailed ? (
@@ -90,7 +90,7 @@ function RelatedHotelCard({
                   : "",
               )}
             fill
-            sizes="(max-width: 640px) 82vw, (max-width: 1024px) 44vw, 290px"
+            sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
             className="object-cover transition-transform duration-200 motion-safe:group-hover:scale-[1.02]"
             onError={() => setImageFailed(true)}
           />
@@ -105,7 +105,10 @@ function RelatedHotelCard({
       <div className="flex min-h-[210px] flex-col p-4">
         {stars ? (
           <span
-            aria-label={labels.starHotelAria.replace("{{rating}}", String(stars))}
+            aria-label={labels.starHotelAria.replace(
+              "{{rating}}",
+              String(stars),
+            )}
             className="text-xs tracking-[0.08em] text-amber-500"
           >
             <span aria-hidden="true">{"★".repeat(stars)}</span>
@@ -167,8 +170,8 @@ export function RelatedHotelsSection({
         {labels.heading.replace("{{destination}}", city)}
       </h2>
       <div
-        className="mt-4 flex snap-x snap-proximity gap-4 overflow-x-auto pb-3"
-        data-related-hotels-rail
+        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+        data-related-hotels-grid
       >
         {displayedHotels.map((hotel) => (
           <RelatedHotelCard

@@ -30,6 +30,9 @@ test("renders the approved standalone section order", () => {
     previous = index;
   }
   assert.match(source, /lg:grid-cols-\[minmax\(0,1fr\)_334px\]/);
+  const mainGridEnd = source.indexOf("</div>\n\n      <RelatedHotelsSection");
+  assert.ok(mainGridEnd > source.indexOf("data-standalone-stay-summary"));
+  assert.match(source, /data-standalone-hotel-main-grid/);
   assert.match(source, /data-standalone-stay-summary/);
 });
 
@@ -41,9 +44,15 @@ test("standalone route hides travel navigation without changing AppHeader defaul
 });
 
 test("removes standalone promotional surfaces and normalizes stay-card flow", () => {
-  const stayAside = source.match(/<aside className="([^"]+)" data-standalone-stay-summary>/)?.[1] ?? "";
+  const stayAside =
+    source.match(
+      /<aside className="([^"]+)" data-standalone-stay-summary>/,
+    )?.[1] ?? "";
   assert.ok(stayAside);
-  assert.doesNotMatch(stayAside, /(?:^|\s)(?:sticky|fixed|lg:sticky|lg:fixed)(?:\s|$)/);
+  assert.doesNotMatch(
+    stayAside,
+    /(?:^|\s)(?:sticky|fixed|lg:sticky|lg:fixed)(?:\s|$)/,
+  );
   for (const removed of [
     "Property highlight",
     "recommendationReasons",
@@ -56,7 +65,8 @@ test("removes standalone promotional surfaces and normalizes stay-card flow", ()
     "paymentBody",
     "LockKeyhole",
     "ShieldCheck",
-  ]) assert.doesNotMatch(source, new RegExp(removed));
+  ])
+    assert.doesNotMatch(source, new RegExp(removed));
 });
 
 test("keeps save, share, gallery, amenity and description controls accessible", () => {
@@ -73,7 +83,8 @@ test("keeps save, share, gallery, amenity and description controls accessible", 
     "roomDialogRef",
     "trigger?.focus()",
     'document.body.style.overflow = "hidden"',
-  ]) assert.ok(source.includes(contract), contract);
+  ])
+    assert.ok(source.includes(contract), contract);
 });
 
 test("uses public property metadata and truthful data-dependent claims", () => {
@@ -82,8 +93,12 @@ test("uses public property metadata and truthful data-dependent claims", () => {
     "propertyDetails={props.propertyDetails}",
     "props.taxesText || props.planningPriceText",
     "props.roomChoices.length",
-  ]) assert.ok(source.includes(contract), contract);
-  assert.doesNotMatch(source, /1,248 reviews|Free cancellation|Best price guarantee|Taxes and fees included/);
+  ])
+    assert.ok(source.includes(contract), contract);
+  assert.doesNotMatch(
+    source,
+    /1,248 reviews|Free cancellation|Best price guarantee|Taxes and fees included/,
+  );
 });
 
 test("stay summary retains all functional data and pricing contracts", () => {
@@ -98,7 +113,8 @@ test("stay summary retains all functional data and pricing contracts", () => {
     "props.taxesText || props.planningPriceText",
     "props.labels.viewRooms",
     "disabled={!props.roomChoices.length}",
-  ]) assert.ok(source.includes(contract), contract);
+  ])
+    assert.ok(source.includes(contract), contract);
 });
 
 test("standalone pricing and search context are supplied by existing client pipelines", () => {
@@ -110,5 +126,6 @@ test("standalone pricing and search context are supplied by existing client pipe
     "roomOptions.map",
     "formatDisplayPrice",
     "relatedHotels={relatedHotels}",
-  ]) assert.ok(clientSource.includes(contract), contract);
+  ])
+    assert.ok(clientSource.includes(contract), contract);
 });
