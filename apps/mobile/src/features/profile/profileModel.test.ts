@@ -8,8 +8,8 @@ test("authenticated profile sections and destinations match the account architec
   assert.deepEqual(authenticatedProfileSections.flatMap(section => section.items.map(item => [item.label, item.destination.href])), [
     ["personalDetails", "/personal-information"], ["securitySettings", "https://kurioticket.com/dashboard/security"],
     ["myTrips", "/(tabs)/trips"], ["savedRecent", "/saved"], ["priceAlerts", "/price-alerts"],
-    ["emailPreferences", "https://kurioticket.com/dashboard/preferences/email"], ["customizationPreferences", "/settings"],
-    ["travelPreferences", "https://kurioticket.com/dashboard/preferences/travel"], ["contactSupport", "https://kurioticket.com/support"], ["faq", "https://kurioticket.com/faq"],
+    ["emailPreferences", "/email-preferences"], ["customizationPreferences", "/settings"],
+    ["travelPreferences", "/travel-preferences"], ["contactSupport", "/support"], ["faq", "/faq"],
   ]);
   assert.equal(authenticatedProfileSections.flatMap(section => section.items).filter(item => item.label === "personalDetails").length, 1);
 });

@@ -2,7 +2,7 @@ import type { FlowIconName } from "../flow/FlowIcon";
 import type { MobileTranslationKey } from "../../localization/mobileLocalization";
 
 export type ProfileDestination =
-  | { kind: "native"; href: "/personal-information" | "/price-alerts" | "/settings" | "/saved" | "/(tabs)/trips" }
+  | { kind: "native"; href: "/personal-information" | "/price-alerts" | "/settings" | "/saved" | "/(tabs)/trips" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" }
   | { kind: "external"; href: string };
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
@@ -18,12 +18,12 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "priceAlerts", icon: "bell", destination: { kind: "native", href: "/price-alerts" } },
   ] },
   { title: "preferences", items: [
-    { label: "emailPreferences", icon: "mail", destination: { kind: "external", href: "https://kurioticket.com/dashboard/preferences/email" } },
+    { label: "emailPreferences", icon: "mail", destination: { kind: "native", href: "/email-preferences" } },
     { label: "customizationPreferences", icon: "palette", destination: { kind: "native", href: "/settings" } },
-    { label: "travelPreferences", icon: "settings", destination: { kind: "external", href: "https://kurioticket.com/dashboard/preferences/travel" } },
+    { label: "travelPreferences", icon: "settings", destination: { kind: "native", href: "/travel-preferences" } },
   ] },
   { title: "helpSupport", items: [
-    { label: "contactSupport", icon: "headset", destination: { kind: "external", href: "https://kurioticket.com/support" } },
-    { label: "faq", icon: "help", destination: { kind: "external", href: "https://kurioticket.com/faq" } },
+    { label: "contactSupport", icon: "headset", destination: { kind: "native", href: "/support" } },
+    { label: "faq", icon: "help", destination: { kind: "native", href: "/faq" } },
   ] },
 ];
