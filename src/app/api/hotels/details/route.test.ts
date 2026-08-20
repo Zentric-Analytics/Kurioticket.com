@@ -132,3 +132,26 @@ test("hotel details does not return a different cached hotel for an unknown id",
   assert.equal(payload.hotel, undefined);
   assert.equal(payload.error, "Hotel not found.");
 });
+
+test("Park Plaza details expose the matching Westminster address and coordinates", async () => {
+  const response = GET(
+    new Request(
+      "https://kurioticket.test/api/hotels/details?id=park-plaza-westminster-bridge",
+    ),
+  );
+  const payload = (await response.json()) as {
+    hotel: { name: string };
+    propertyDetails: {
+      latitude: number;
+      longitude: number;
+      streetAddress: string;
+    };
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.hotel.name, "Park Plaza Westminster Bridge London");
+  assert.equal(payload.propertyDetails.latitude, 51.501);
+  assert.equal(payload.propertyDetails.longitude, -0.1167);
+  assert.match(payload.propertyDetails.streetAddress, /200 Westminster Bridge Rd/i);
+  assert.match(payload.propertyDetails.streetAddress, /SE1 7UT/i);
+});

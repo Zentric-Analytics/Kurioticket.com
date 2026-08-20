@@ -185,7 +185,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     country: "United Kingdom",
     region: "England",
     aliases: ["london", "lon", "united kingdom", "uk", "england"],
-    location: "Westminster Bridge Road, London",
+    location: "200 Westminster Bridge Rd, Lambeth, London SE1 7UT",
     latitude: 51.501,
     longitude: -0.1167,
     neighbourhood: "South Bank",

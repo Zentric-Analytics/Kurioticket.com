@@ -143,3 +143,13 @@ test("details resolve from the same catalogue", () => {
   assert.equal(getStaticHotelById(selected.id), selected);
   assert.equal(getStaticHotelById("unknown-hotel"), null);
 });
+
+test("Park Plaza Westminster Bridge retains its verified central-London location", () => {
+  const hotel = getStaticHotelById("park-plaza-westminster-bridge");
+  assert.ok(hotel);
+  assert.equal(hotel.name, "Park Plaza Westminster Bridge London");
+  assert.equal(hotel.latitude, 51.501);
+  assert.equal(hotel.longitude, -0.1167);
+  assert.match(hotel.location, /200 Westminster Bridge Rd/i);
+  assert.match(hotel.location, /SE1 7UT/i);
+});
