@@ -47,6 +47,18 @@ test("combined pickers preserve draft, dismissal, accessibility, range, and two-
   assert.doesNotMatch(pickers, /✓|position:"absolute"|margin(?:Left|Right|Top|Bottom):-|Platform\.OS/);
 });
 
+test("time rows keep horizontal separators and selected treatment without vertical rails", () => {
+  const timeChoice = pickers.match(/timeChoice:\{([^}]*)\}/)?.[1] ?? "";
+
+  assert.match(timeChoice, /borderBottomWidth:1/);
+  assert.doesNotMatch(timeChoice, /borderLeftWidth/);
+  assert.match(pickers, /\{borderBottomColor:ft\.colors\.border\}/);
+  assert.doesNotMatch(pickers, /borderLeftColor/);
+  assert.match(pickers, /chosen&&\{backgroundColor:ft\.colors\.selected\}/);
+  assert.match(pickers, /accessibilityState=\{\{selected:chosen\}\}/);
+  assert.match(pickers, /chosen\?<FlowIcon name="check"/);
+});
+
 test("Cars keeps person and themed chevron icons and FlowIcon clock", () => {
   assert.match(panel, /label="Driver age"[\s\S]*icon="person"[\s\S]*name="chevron" color=\{ft\.colors\.icon\}/);
   assert.match(icons, /\| "clock" \| "close"/);
