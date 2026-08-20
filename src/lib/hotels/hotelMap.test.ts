@@ -5,6 +5,7 @@ import {
   buildHotelAddress,
   buildHotelDirectionsUrl,
   buildGoogleHotelMapEmbedUrl,
+  buildGoogleHotelStreetViewEmbedUrl,
   buildHotelMapEmbedUrl,
   buildOpenStreetMapHotelMapEmbedUrl,
 } from "./hotelMap";
@@ -76,6 +77,41 @@ test("map selection uses Google only when configured and otherwise falls back", 
       googleMapsEmbedApiKey: "test-browser-key",
     }) ?? "",
     /google\.com\/maps\/embed\/v1\/place/,
+  );
+});
+
+test("builds Google Street View with validated latitude-longitude order", () => {
+  const streetViewUrl = buildGoogleHotelStreetViewEmbedUrl({
+    hotelName: "Park Plaza Westminster Bridge London",
+    propertyDetails: parkPlaza,
+    googleMapsEmbedApiKey: "test-browser-key",
+  });
+  assert.ok(streetViewUrl);
+  const url = new URL(streetViewUrl);
+  assert.equal(
+    url.origin + url.pathname,
+    "https://www.google.com/maps/embed/v1/streetview",
+  );
+  assert.equal(url.searchParams.get("key"), "test-browser-key");
+  assert.equal(url.searchParams.get("location"), "51.501,-0.1167");
+  assert.notEqual(url.searchParams.get("location"), "-0.1167,51.501");
+  assert.equal(url.searchParams.get("pitch"), "0");
+  assert.equal(url.searchParams.get("fov"), "80");
+});
+
+test("Street View requires both a Google key and valid coordinates", () => {
+  const configuration = {
+    hotelName: "Park Plaza Westminster Bridge London",
+    propertyDetails: parkPlaza,
+  };
+  assert.equal(buildGoogleHotelStreetViewEmbedUrl(configuration), null);
+  assert.equal(
+    buildGoogleHotelStreetViewEmbedUrl({
+      ...configuration,
+      propertyDetails: { ...parkPlaza, latitude: Number.NaN },
+      googleMapsEmbedApiKey: "test-browser-key",
+    }),
+    null,
   );
 });
 

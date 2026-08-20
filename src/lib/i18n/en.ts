@@ -4081,6 +4081,8 @@ export const translations: TranslationDictionary = {
   "hotelDetails.aboutProperty": "About this property",
   "hotelDetails.location": "Location",
   "hotelDetails.getDirections": "Get directions",
+  "hotelDetails.map": "Map",
+  "hotelDetails.streetView": "Street View",
   "hotelDetails.yourStay": "Your stay",
   "hotelDetails.viewRoomOptions": "View room options",
   "hotelDetails.roomOptionsSupport": "You'll choose your room in the next step.",

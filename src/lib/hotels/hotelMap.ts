@@ -113,6 +113,23 @@ export function buildGoogleHotelMapEmbedUrl({
   return url.toString();
 }
 
+export function buildGoogleHotelStreetViewEmbedUrl({
+  propertyDetails,
+  googleMapsEmbedApiKey,
+}: HotelMapConfiguration): string | null {
+  const apiKey = googleMapsEmbedApiKey?.trim();
+  if (!apiKey || !hasValidHotelCoordinates(propertyDetails)) return null;
+
+  const url = new URL("https://www.google.com/maps/embed/v1/streetview");
+  url.search = new URLSearchParams({
+    key: apiKey,
+    location: `${propertyDetails.latitude},${propertyDetails.longitude}`,
+    pitch: "0",
+    fov: "80",
+  }).toString();
+  return url.toString();
+}
+
 export function buildHotelMapEmbedUrl(
   configuration: HotelMapConfiguration,
 ): string | null {
