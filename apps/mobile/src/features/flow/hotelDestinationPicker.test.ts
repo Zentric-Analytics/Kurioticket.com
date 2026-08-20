@@ -30,11 +30,26 @@ test("search is debounced, cancellable, and guarded against stale responses", ()
   assert.match(sheet, /sequence !== requestSequence\.current/);
 });
 
-test("the picker keeps draft selection, clear, Done, and cancellation semantics", () => {
-  assert.match(sheet, /setDraft\(item\.searchValue\)/);
-  assert.match(sheet, /setQuery\(item\.searchValue\)/);
-  assert.match(sheet, /const clear = \(\) => \{ setQuery\(""\); setDraft\(""\)/);
-  assert.match(sheet, /label="Done" onPress=\{\(\) => onDone\(draft\.trim\(\)\)\}/);
+test("selection immediately commits the canonical search value", () => {
+  assert.match(sheet, /onPress=\{\(\) => onDone\(item\.searchValue\)\}/);
+  assert.match(panel, /onDone=\{\(destination\) => \{ update\(\{ \.\.\.form, destination \}\)/);
+  assert.doesNotMatch(sheet, /label="Done"|<PrimaryButton/);
+});
+
+test("the header only offers accessible Clear for a non-empty query", () => {
+  assert.match(sheet, /\{trimmedQuery \? <Pressable accessibilityRole="button" accessibilityLabel="Clear hotel destination search" onPress=\{clear\}>/);
+  assert.match(sheet, />Clear<\/Text><\/Pressable> : null\}/);
+  assert.doesNotMatch(sheet, /accessibilityLabel="Cancel destination changes"[^>]*>\s*<Text[^>]*>Cancel<\/Text><\/Pressable><\/View>\s*<View style=\{\[styles\.destinationSearch/);
+});
+
+test("Clear resets only active search state and leaves the picker open", () => {
+  assert.match(sheet, /const clear = \(\) => \{ setQuery\(""\); setSuggestions\(\[\]\); setError\(false\); inputRef\.current\?\.focus\(\); \}/);
+  assert.doesNotMatch(sheet, /const clear = .*setDraft/);
+  assert.doesNotMatch(sheet, /const clear = .*onCancel/);
+});
+
+test("bottom Cancel and native dismissal discard the draft", () => {
+  assert.match(sheet, /style=\{styles\.destinationCancel\}><Text[^>]*>Cancel<\/Text>/);
   assert.match(sheet, /onRequestClose=\{onCancel\}/);
   assert.match(sheet, /accessibilityLabel="Close hotel destination picker"/);
 });
