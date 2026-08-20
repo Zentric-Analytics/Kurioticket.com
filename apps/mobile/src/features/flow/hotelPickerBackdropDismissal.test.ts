@@ -7,10 +7,11 @@ const calendar = readFileSync("src/features/flow/LocalCalendarModal.tsx", "utf8"
 const destination = panel.slice(panel.indexOf("export function HotelDestinationSheet"), panel.indexOf("type GuestsRoomsDraft"));
 const guests = panel.slice(panel.indexOf("function HotelGuestsRoomsSheet"), panel.indexOf("function PickerRow"));
 
-test("Hotel destination backdrop is a sibling of a non-blocking interactive layer", () => {
+test("Hotel destination backdrop and sheet share the keyboard-adjusted viewport", () => {
   assert.match(destination, /<Pressable style=\{\[StyleSheet\.absoluteFill,[^>]+onPress=\{onCancel\}/);
-  assert.match(destination, /<KeyboardAvoidingView[^>]+pointerEvents="box-none">\s*<SafeAreaView[^>]+pointerEvents="box-none">\s*<View accessibilityViewIsModal/);
-  assert.ok(destination.indexOf('accessibilityLabel="Close hotel destination picker"') < destination.indexOf("<KeyboardAvoidingView"));
+  assert.match(destination, /<KeyboardAvoidingView[^>]*>\s*<SafeAreaView[^>]*>\s*<Pressable[^>]+Close hotel destination picker[^>]*\/>\s*<View accessibilityViewIsModal/);
+  assert.ok(destination.indexOf("<KeyboardAvoidingView") < destination.indexOf('accessibilityLabel="Close hotel destination picker"'));
+  assert.doesNotMatch(destination, /pointerEvents="box-none"/);
   assert.match(destination, /onRequestClose=\{onCancel\}/);
 });
 
