@@ -21,6 +21,7 @@ test("renders the approved standalone section order", () => {
     "data-hotel-amenities-strip",
     "hotel-about-heading",
     "<HotelLocationSection",
+    "<RelatedHotelsSection",
   ];
   let previous = -1;
   for (const contract of contracts) {
@@ -108,5 +109,6 @@ test("standalone pricing and search context are supplied by existing client pipe
     "staySummary={staySummary}",
     "roomOptions.map",
     "formatDisplayPrice",
+    "relatedHotels={relatedHotels}",
   ]) assert.ok(clientSource.includes(contract), contract);
 });

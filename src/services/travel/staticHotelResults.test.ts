@@ -4,6 +4,7 @@ import { buildHotelGalleryCandidates } from "@/components/results/hotelGalleryPr
 import {
   buildStaticHotelResults,
   buildStaticHotelRoomOptions,
+  buildRelatedStaticHotelResults,
   calculateHotelStayNights,
   getStaticHotelById,
   searchStaticHotelCatalogue,
@@ -152,4 +153,16 @@ test("Park Plaza Westminster Bridge retains its verified central-London location
   assert.equal(hotel.longitude, -0.1167);
   assert.match(hotel.location, /200 Westminster Bridge Rd/i);
   assert.match(hotel.location, /SE1 7UT/i);
+});
+
+test("related hotels are same-city, deterministic, capped, and preserve stay pricing", () => {
+  const parkPlaza = getStaticHotelById("park-plaza-westminster-bridge");
+  assert.ok(parkPlaza);
+  const related = buildRelatedStaticHotelResults(parkPlaza, search);
+  assert.deepEqual(related.map((hotel) => hotel.id), ["the-savoy-london"]);
+  assert.ok(related.length <= 5);
+  assert.ok(related.every((hotel) => hotel.id !== parkPlaza.id));
+  assert.ok(related.every((hotel) => hotel.location.startsWith("London")));
+  assert.equal(related[0]?.totalPrice, related[0]?.pricePerNight * 3 * 2);
+  assert.deepEqual(related, buildRelatedStaticHotelResults(parkPlaza, search));
 });
