@@ -153,6 +153,7 @@ function normalizeDuffelFlight(
         origin_terminal?: string | null;
         destination_terminal?: string | null;
         duration?: string;
+        distance?: string | null;
         aircraft?: { name?: string; iata_code?: string } | null;
         stops?: Array<{
           duration?: string;
@@ -359,10 +360,11 @@ function buildDuffelLegs(
         origin_terminal?: string | null;
         destination_terminal?: string | null;
         duration?: string;
+        distance?: string | null;
         aircraft?: { name?: string; iata_code?: string } | null;
         stops?: Array<{ duration?: string; departing_at?: string; arriving_at?: string; airport?: DuffelPlace }>;
-        operating_carrier?: { name?: string; iata_code?: string };
-        marketing_carrier?: { name?: string; iata_code?: string };
+        operating_carrier?: DuffelCarrier;
+        marketing_carrier?: DuffelCarrier;
         marketing_carrier_flight_number?: string;
         operating_carrier_flight_number?: string;
         passengers?: DuffelSegmentPassenger[];
@@ -452,6 +454,7 @@ function buildDuffelLegs(
                 ...(clean(segment.aircraft.iata_code) ? { iataCode: clean(segment.aircraft.iata_code)?.toUpperCase() } : {}),
               } : undefined,
               duration: providerDuration(segment.duration),
+              ...(positiveNumber(segment.distance) !== undefined ? { distanceKm: positiveNumber(segment.distance) } : {}),
               technicalStops: (segment.stops ?? []).flatMap((stop) => {
                 const airport = airportDetails(stop.airport);
                 return airport ? [{ airport, duration: providerDuration(stop.duration), arrivalTime: clean(stop.arriving_at), departureTime: clean(stop.departing_at) }] : [];
@@ -513,7 +516,12 @@ function airportDetails(place?: DuffelPlace, terminal?: string | null) {
 function publicCarrier(carrier?: DuffelCarrier) {
   const name = clean(carrier?.name);
   if (!name) return undefined;
-  return { name, ...(clean(carrier?.iata_code) ? { iataCode: clean(carrier?.iata_code)?.toUpperCase() } : {}) };
+  const conditionsOfCarriageUrl = cleanPublicUrl(carrier?.conditions_of_carriage_url);
+  return {
+    name,
+    ...(clean(carrier?.iata_code) ? { iataCode: clean(carrier?.iata_code)?.toUpperCase() } : {}),
+    ...(conditionsOfCarriageUrl ? { conditionsOfCarriageUrl } : {}),
+  };
 }
 
 function flightNumber(code?: string, number?: string) {
@@ -543,6 +551,11 @@ function uniqueCabinDetails(passengers?: DuffelSegmentPassenger[]) {
 function money(value?: string | null) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+function positiveNumber(value?: string | null) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 function buildDuffelProviderDetails(offer: {

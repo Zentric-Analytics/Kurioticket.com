@@ -47,6 +47,8 @@ export type FlightSegment = {
   operatingFlightNumber?: string;
   aircraft?: FlightAircraftDetails;
   duration?: string;
+  /** Provider-authored segment distance in kilometres. */
+  distanceKm?: number;
   technicalStops?: FlightTechnicalStop[];
   cabinDetails?: FlightCabinDetails[];
 };
@@ -59,7 +61,11 @@ export type FlightAirportDetails = {
   timeZone?: string;
 };
 
-export type FlightCarrierDetails = { name: string; iataCode?: string };
+export type FlightCarrierDetails = {
+  name: string;
+  iataCode?: string;
+  conditionsOfCarriageUrl?: string;
+};
 export type FlightAircraftDetails = { name?: string; iataCode?: string };
 export type FlightTechnicalStop = {
   airport: FlightAirportDetails;

@@ -101,7 +101,9 @@ test("preserves complete customer-facing Duffel facts without provider identitie
     destination: { iata_code: "JFK", name: "John F. Kennedy International Airport", city_name: "New York", time_zone: "America/New_York" },
     origin_terminal: "5",
     destination_terminal: "8",
-    operating_carrier: { name: "Operator Air", iata_code: "OP" },
+    distance: "5567.8",
+    marketing_carrier: { ...segment.marketing_carrier, conditions_of_carriage_url: "https://example.com/marketing-conditions" },
+    operating_carrier: { name: "Operator Air", iata_code: "OP", conditions_of_carriage_url: "https://example.com/operator-conditions" },
     operating_carrier_flight_number: "9001",
     aircraft: { name: "Airbus A330-300", iata_code: "333" },
     stops: [{ duration: "PT45M", arriving_at: "2027-01-01T11:00:00Z", departing_at: "2027-01-01T11:45:00Z", airport: { iata_code: "KEF", name: "Keflavik Airport", city_name: "Reykjavik", time_zone: "Atlantic/Reykjavik" } }],
@@ -130,6 +132,9 @@ test("preserves complete customer-facing Duffel facts without provider identitie
   assert.equal(normalizedSegment?.destinationDetails?.terminal, "8");
   assert.equal(normalizedSegment?.marketingCarrier?.name, "Example Air");
   assert.equal(normalizedSegment?.operatingCarrier?.name, "Operator Air");
+  assert.equal(normalizedSegment?.distanceKm, 5567.8);
+  assert.equal(normalizedSegment?.marketingCarrier?.conditionsOfCarriageUrl, "https://example.com/marketing-conditions");
+  assert.equal(normalizedSegment?.operatingCarrier?.conditionsOfCarriageUrl, "https://example.com/operator-conditions");
   assert.equal(normalizedSegment?.aircraft?.name, "Airbus A330-300");
   assert.equal(normalizedSegment?.technicalStops?.[0]?.airport.iataCode, "KEF");
   assert.equal(normalizedSegment?.cabinDetails?.[0]?.fareBasisCode, "OXZ0RO");
@@ -192,9 +197,21 @@ test("does not aggregate optional services with different price, currency, or jo
 test("rejects unsafe airline conditions links", () => {
   const raw = offer();
   Object.assign(raw, { owner: { name: "Example Air", conditions_of_carriage_url: "javascript:alert(1)" } });
+  Object.assign(raw.slices[0].segments[0].marketing_carrier, { conditions_of_carriage_url: "data:text/html,no" });
   const result = normalizeFlightResult("Duffel", raw, search("one-way"));
   assert.ok(result);
   assert.equal(result.providerDetails?.offerOwner?.conditionsOfCarriageUrl, undefined);
+  assert.equal(result.legs?.[0]?.segments[0]?.marketingCarrier?.conditionsOfCarriageUrl, undefined);
+});
+
+test("omits invalid or absent provider segment distance instead of deriving it", () => {
+  for (const distance of [undefined, null, "", "0", "-1", "unknown"]) {
+    const raw = offer();
+    Object.assign(raw.slices[0].segments[0], { distance });
+    const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+    assert.ok(result);
+    assert.equal(result.legs?.[0]?.segments[0]?.distanceKm, undefined);
+  }
 });
 
 test("does not use a static airline-name fallback", () => {
