@@ -732,11 +732,6 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
           <FlightJourneyRow label="OUTBOUND" leg={outbound} />
           {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
         </View>
-        <View style={[s0.priceBox, s0.rightColumnContract]}>
-          <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
-            {fare?.formatted ?? "—"}
-          </Text>
-        </View>
       </View>
       <View style={s0.benefits}>
         <View style={s0.benefitList}>
@@ -754,6 +749,9 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
           </View>
         </View>
         <View style={[s0.actionColumn, s0.rightColumnContract]}>
+          <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+            {fare?.formatted ?? "—"}
+          </Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="View details"
@@ -1346,7 +1344,6 @@ const s0 = StyleSheet.create({
     backgroundColor: ui.muted,
   },
   nonstop: { fontSize: 11, color: ui.blue },
-  priceBox: { width: "100%", minWidth: 0 },
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   benefits: {
     paddingTop: 8,
@@ -1355,7 +1352,7 @@ const s0 = StyleSheet.create({
     gap: 6,
   },
   benefitList: { flex: 1, minWidth: 0, flexDirection: "column", gap: 6 },
-  actionColumn: { flexShrink: 0 },
+  actionColumn: { flexShrink: 0, alignItems: "flex-end", gap: 12 },
   benefitItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
   benefit: { minWidth: 0, fontSize: 10.5, color: ui.muted, flex: 1 },
   detailsButton: { minWidth: 96, minHeight: 44, paddingHorizontal: 10, borderRadius: 8, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
