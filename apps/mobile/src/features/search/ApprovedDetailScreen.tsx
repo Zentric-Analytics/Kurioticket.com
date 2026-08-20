@@ -1,17 +1,13 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   Alert,
   Image,
-  KeyboardAvoidingView,
   Linking,
-  Modal,
-  Platform,
   Pressable,
   ScrollView,
   Share,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -20,11 +16,11 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { travelApi, TravelApiError, type FlightResult, type HotelResult } from "../../api/travelApi";
+import { travelApi, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
+import { ArrowLeft, FilePenLine } from "lucide-react-native";
 import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
-import { airports } from "../flow/airportData";
 import { useAppTheme } from "../../theme/AppTheme";
 import { AirlineLogo } from "./AirlineLogo";
 import { ProviderLogo } from "./ProviderLogo";
@@ -39,10 +35,8 @@ import {
 import { canReuseFlightDetailFare, createFlightDetailFare } from "./flightDetailCurrency";
 import { authoritativeProviderUrl } from "./providerBooking";
 import { flightShareMessage, shareFlightForAuthenticatedSession } from "./flightDetailInteractions";
-import { buildSearchPlan } from "../flow/travelSearchModel";
-import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "../flow/flightPriceAlertModel";
-import { useFeatureAvailability } from "../availability/FeatureAvailability";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
+import { flightDetailHeaderModel } from "./flightDetailHeaderModel";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -50,10 +44,6 @@ const parse = <T,>(v?: string | string[]) => {
   } catch {
     return undefined;
   }
-};
-const airportLabel = (code: string) => {
-  const airport = airports.find((item) => item.code === code);
-  return airport ? `${airport.city} (${code})` : code;
 };
 export function ApprovedDetailScreen({
   product,
@@ -94,15 +84,7 @@ export function ApprovedDetailScreen({
 function FlightDetail({ result, params }: { result: FlightResult; params: Record<string, string | string[]> }) {
   const inset = useSafeAreaInsets();
   const { theme } = useAppTheme();
-  const { availability } = useFeatureAvailability();
-  const searchPlan = useMemo(() => buildSearchPlan("flight", params), [JSON.stringify(params)]);
-  const alertPresentation = flightAlertPresentation("flight", Boolean(searchPlan.plan), [result]);
-  const alertCurrency = alertPresentation.currencies[0] || "";
-  const priceAlertAvailable = availability.priceAlerts && alertPresentation.enabled;
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [targetDraft, setTargetDraft] = useState("");
-  const [targetError, setTargetError] = useState("");
-  const [creatingAlert, setCreatingAlert] = useState(false);
+  const header = flightDetailHeaderModel(result, params);
   const passedFare = parse<DisplayPrice>(params.displayFare);
   const parsedDisplayCurrencyContext = parse<DisplayCurrencyResolution>(params.displayCurrencyContext);
   const passedDisplayCurrencyContext = typeof parsedDisplayCurrencyContext?.resolvedCurrency === "string"
@@ -214,38 +196,26 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
     catch { Alert.alert("Unable to share", "Please try again."); }
     finally { sharePendingRef.current = false; }
   };
-  const handlePriceAlert = () => { if (priceAlertAvailable) { setTargetError(""); setAlertOpen(true); } };
-  const createPriceAlert = async () => {
-    if (creatingAlert || !searchPlan.plan || !alertCurrency) return;
-    const parsed = parseTargetPrice(targetDraft);
-    if (parsed.error || parsed.value === undefined) { setTargetError(parsed.error || "Enter a target price."); return; }
-    setCreatingAlert(true); setTargetError("");
-    try {
-      await travelApi.createPriceAlert(buildFlightPriceAlertPayload(searchPlan.plan, parsed.value, alertCurrency));
-      setAlertOpen(false); setTargetDraft("");
-      Alert.alert("Price alert created", "We’ll track this flight search against your target price.", [{ text: "View price alerts", onPress: () => router.push("/price-alerts") }, { text: "Stay here" }]);
-    } catch (error) {
-      if (error instanceof TravelApiError && error.status === 401) { setAlertOpen(false); Alert.alert("Sign in required", "Sign in to create a price alert.", [{ text: "Sign in", onPress: () => router.push("/email-auth") }, { text: "Cancel" }]); }
-      else if (error instanceof TravelApiError && error.status === 409 && error.details?.duplicate === true) setTargetError("This alert already exists. Open Price alerts to manage it.");
-      else setTargetError(error instanceof TravelApiError ? error.message : "Unable to create price alert. Try again.");
-    } finally { setCreatingAlert(false); }
-  };
   return (
     <SafeAreaView style={[d.safe, { backgroundColor: theme.background }]} edges={["top"]}>
-      <TopBar detail onPriceAlertPress={handlePriceAlert} priceAlertDisabled={!priceAlertAvailable} onSharePress={() => void handleShare()} />
-      <View style={d.routeRow}>
-        <View style={d.routeCopy}>
-          <Text style={[d.route, { color: theme.textPrimary }]}>
-            {airportLabel(result.originAirport)} ⇄ {airportLabel(result.destinationAirport)}
-          </Text>
-          <Text style={[d.meta, { color: theme.textSecondary }]}>
-            {params.departureDate
-              ? `${shortDate(String(params.departureDate))} – ${shortDate(String(params.returnDate || ""))} · `
-              : ""}
-            {params.travelers || params.adults || 1} Traveler · {result.cabinClass.replace(/-/g, " ")}
-          </Text>
+      <View accessibilityLabel="Flight details header" style={[d.flightHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+        <View accessibilityLabel="Flight route controls" style={d.flightHeaderTopRow}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}>
+            <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
+          </Pressable>
+          <Text accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[d.headerRoute, { color: theme.textPrimary }]}>{header.route}</Text>
+          <View accessibilityLabel="Flight details actions" style={d.headerActions}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Edit search" onPress={() => router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) })} style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}>
+              <FilePenLine size={22} strokeWidth={2} color={theme.icon} />
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Share flight" onPress={() => void handleShare()} style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}>
+              <FlowIcon name="share" color={theme.icon} />
+            </Pressable>
+          </View>
         </View>
-        <Button label="Edit search" outline flightResults onPress={() => router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) })} />
+        <ScrollView accessibilityLabel="Trip metadata row" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={d.headerMetadataRow}>
+          <Text numberOfLines={1} style={[d.headerMetadata, { color: theme.textSecondary }]}>{header.metadata}</Text>
+        </ScrollView>
       </View>
       {/free|refund/i.test(result.refundInfo) ? (
         <View style={[d.reassure, theme.dark && { backgroundColor: "#153B2B" }]}>
@@ -369,19 +339,6 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
           <Text style={[d.redirect, { color: theme.textSecondary }]}>You’ll be redirected to {provider}’s site</Text>
         </View>
       </View>
-      <Modal visible={alertOpen} transparent animationType="slide" onRequestClose={() => !creatingAlert && setAlertOpen(false)} accessibilityViewIsModal>
-        <KeyboardAvoidingView style={d.modalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <View style={[d.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert">
-            <Text accessibilityRole="header" style={[d.h2, { color: theme.textPrimary }]}>Create price alert</Text>
-            <Text style={[d.provider, { color: theme.textPrimary }]}>{searchPlan.plan?.summary}</Text>
-            <Text style={[d.meta, { color: theme.textSecondary }]}>Target price ({alertCurrency})</Text>
-            <TextInput autoFocus accessibilityLabel={`Target price in ${alertCurrency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!creatingAlert} style={[d.alertInput, { color: theme.textPrimary, borderColor: theme.border }]} />
-            {targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={d.alertError}>{targetError}</Text> : null}
-            <Button label={creatingAlert ? "Creating…" : "Create price alert"} onPress={() => void createPriceAlert()} />
-            <Button label="Cancel" outline onPress={() => setAlertOpen(false)} />
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -654,10 +611,6 @@ function Offer({
   );
 }
 const d = StyleSheet.create({
-  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
-  alertSheet: { padding: 20, gap: 12, borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
-  alertInput: { minHeight: 48, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, fontSize: 18 },
-  alertError: { color: "#A4262C" },
   safe: { flex: 1, backgroundColor: "white" },
   missing: {
     flex: 1,
@@ -666,15 +619,54 @@ const d = StyleSheet.create({
     gap: 14,
     padding: 30,
   },
-  routeRow: {
-    paddingHorizontal: 26,
-    paddingBottom: 14,
+  flightHeader: {
+    paddingHorizontal: 12,
+    paddingTop: 4,
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  flightHeaderTopRow: {
+    minHeight: 44,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    position: "relative",
   },
-  routeCopy: { flex: 1, minWidth: 0, marginRight: 8 },
-  route: { fontSize: 21, fontWeight: "900", color: ui.navy, flexShrink: 1 },
+  headerAction: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerActionPressed: { opacity: 0.55 },
+  headerRoute: {
+    position: "absolute",
+    left: 96,
+    right: 96,
+    textAlign: "center",
+    fontSize: 21,
+    lineHeight: 27,
+    fontWeight: "900",
+  },
+  headerActions: {
+    marginLeft: "auto",
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 4,
+  },
+  headerMetadataRow: {
+    minWidth: "100%",
+    paddingHorizontal: 44,
+    paddingTop: 3,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerMetadata: {
+    flexShrink: 0,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: "center",
+  },
   h2: { fontSize: 18, fontWeight: "900", color: ui.navy },
   meta: { fontSize: 11, color: ui.muted, lineHeight: 16 },
   reassure: {
