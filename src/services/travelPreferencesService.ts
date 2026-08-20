@@ -7,7 +7,11 @@ const notificationsSchema = z.object({
   priceAlertEmails: z.boolean().default(false),
   travelInspirationEmails: z.boolean().default(false),
 }).strict();
-const notificationsReadSchema = notificationsSchema.partial();
+const notificationsReadSchema = z.object({
+  emailUpdates: z.boolean().optional(),
+  priceAlertEmails: z.boolean().optional(),
+  travelInspirationEmails: z.boolean().optional(),
+});
 export const travelPreferencesPatchSchema = z.object({
   homeAirport: z.string().trim().max(80).optional(),
   preferredAirlines: z.array(z.string().trim().min(1).max(80)).max(10).transform((values) => [...new Set(values)]).optional(),

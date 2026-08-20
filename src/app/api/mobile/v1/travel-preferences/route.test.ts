@@ -31,6 +31,14 @@ test("GET returns stored canonical travel fields without leaking email preferenc
   assert.equal(body.preferences.notificationPreferences.receiveOptionalEmails, undefined);
 });
 
+test("GET preserves recognized travel notification flags while stripping unrelated keys", async () => {
+  const s = setup();
+  Object.assign(s.value.notificationPreferences, { emailUpdates: true, priceAlertEmails: true, email: { marketing: true } });
+  const response = await s.handlers.GET(req()); const body = await response.json();
+  assert.equal(response.status, 200);
+  assert.deepEqual(body.preferences.notificationPreferences, { emailUpdates: true, priceAlertEmails: true, travelInspirationEmails: false });
+});
+
 test("PATCH updates/clears fields, deduplicates airlines, and preserves email JSON", async () => {
   const s = setup();
   assert.equal((await s.handlers.PATCH(req({ homeAirport: "LAX", preferredAirlines: ["DL", "UA"] }))).status, 200);
