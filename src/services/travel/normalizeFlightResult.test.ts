@@ -62,6 +62,7 @@ const offer = () => ({
 test("normalizes a complete one-way Duffel provider offer", () => {
   const result = normalizeFlightResult("Duffel", offer(), search("one-way"));
   assert.ok(result);
+  assert.doesNotMatch(result.id, /off-1/);
   assert.equal(result.providerOfferId, "off-1");
   assert.equal(
     result.providerExpiresAt,
@@ -91,6 +92,7 @@ test("preserves complete customer-facing Duffel facts without provider identitie
     passenger_identity_documents_required: true,
     supported_passenger_identity_document_types: ["passport"],
     supported_loyalty_programmes: ["EX"],
+    owner: { name: "Example Air", iata_code: "EX", conditions_of_carriage_url: "https://example.com/conditions" },
     available_services: [{ id: "ase_private", type: "baggage", total_amount: "50.00", total_currency: "EUR", maximum_quantity: 2, passenger_ids: ["pas_private"], segment_ids: ["LHR-JFK"] }],
   });
   const segment = raw.slices[0].segments[0];
@@ -136,8 +138,63 @@ test("preserves complete customer-facing Duffel facts without provider identitie
   assert.equal(result.providerDetails?.price?.taxAmount, 100.25);
   assert.equal(result.providerDetails?.totalEmissionsKg, 460);
   assert.equal(result.providerDetails?.optionalServices?.[0]?.description, "Additional baggage available");
+  assert.equal(result.providerDetails?.offerOwner?.name, "Example Air");
+  assert.equal(result.providerDetails?.offerOwner?.conditionsOfCarriageUrl, "https://example.com/conditions");
   assert.match(JSON.stringify(result), /Additional baggage available/);
   assert.doesNotMatch(JSON.stringify(result), /ase_private|pas_private/);
+});
+
+test("groups identical passenger-scoped optional services without exposing passenger IDs", () => {
+  const raw = offer();
+  Object.assign(raw, {
+    available_services: ["one", "two", "three", "four"].map((passenger) => ({
+      id: `ase_${passenger}`,
+      type: "baggage",
+      total_amount: "20.00",
+      total_currency: "USD",
+      maximum_quantity: 2,
+      passenger_ids: [`pas_${passenger}`],
+      segment_ids: ["LHR-JFK"],
+    })),
+  });
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.ok(result);
+  assert.deepEqual(result.providerDetails?.optionalServices, [{
+    type: "baggage",
+    description: "Additional baggage available",
+    price: 20,
+    currency: "USD",
+    maximumQuantity: 2,
+    travelerCount: 4,
+    journeyContext: "LHR → JFK · Flight EX101",
+    pricedPerTraveler: true,
+  }]);
+  assert.doesNotMatch(JSON.stringify(result.providerDetails), /ase_|pas_/);
+});
+
+test("does not aggregate optional services with different price, currency, or journey scope", () => {
+  const raw = offer();
+  Object.assign(raw, {
+    available_services: [
+      { type: "baggage", total_amount: "20.00", total_currency: "USD", maximum_quantity: 2, passenger_ids: ["pas_one"], segment_ids: ["LHR-JFK"] },
+      { type: "baggage", total_amount: "25.00", total_currency: "USD", maximum_quantity: 2, passenger_ids: ["pas_two"], segment_ids: ["LHR-JFK"] },
+      { type: "baggage", total_amount: "20.00", total_currency: "EUR", maximum_quantity: 2, passenger_ids: ["pas_three"], segment_ids: ["LHR-JFK"] },
+      { type: "baggage", total_amount: "20.00", total_currency: "USD", maximum_quantity: 2, passenger_ids: ["pas_four"], segment_ids: [] },
+    ],
+  });
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.ok(result);
+  assert.equal(result.providerDetails?.optionalServices?.length, 4);
+  assert.ok(result.providerDetails?.optionalServices?.every((service) => service.pricedPerTraveler !== true));
+  assert.doesNotMatch(JSON.stringify(result.providerDetails), /pas_/);
+});
+
+test("rejects unsafe airline conditions links", () => {
+  const raw = offer();
+  Object.assign(raw, { owner: { name: "Example Air", conditions_of_carriage_url: "javascript:alert(1)" } });
+  const result = normalizeFlightResult("Duffel", raw, search("one-way"));
+  assert.ok(result);
+  assert.equal(result.providerDetails?.offerOwner?.conditionsOfCarriageUrl, undefined);
 });
 
 test("does not use a static airline-name fallback", () => {
