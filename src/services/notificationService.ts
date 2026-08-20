@@ -4,10 +4,10 @@ import { sendOptionalEmail, sendTransactionalEmail } from "@/services/emailServi
 import type { OptionalEmailCategory } from "@/services/emailPreferencesService";
 
 export type CanonicalNotificationType = "PRICE_ALERT" | "SUPPORT_UPDATE" | "ACCOUNT_UPDATE" | "SECURITY_UPDATE" | "SYSTEM" | "TRAVEL_INSIGHT";
-export type NotificationActionPath = "/price-alerts"  | "/saved" | "/settings" | "/personal-information";
+export type NotificationActionPath = "/price-alerts"  | "/saved" | "/settings" | "/personal-information" | "/support";
 export type NotificationEmail = { kind: "none" } | { kind: "optional"; category: OptionalEmailCategory; to: string } | { kind: "transactional"; to: string };
 
-const allowedActionPaths = new Set<NotificationActionPath>(["/price-alerts", "/saved", "/settings", "/personal-information"]);
+const allowedActionPaths = new Set<NotificationActionPath>(["/price-alerts", "/saved", "/settings", "/personal-information", "/support"]);
 const mobileNotificationSelect = { id: true, type: true, title: true, body: true, actionPath: true, metadata: true, readAt: true, createdAt: true } as const;
 let notificationPrismaForTesting: ReturnType<typeof getPrisma> | null = null;
 function notificationDb() { return notificationPrismaForTesting ?? getPrisma(); }

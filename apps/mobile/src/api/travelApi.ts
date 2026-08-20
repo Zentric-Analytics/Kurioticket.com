@@ -22,9 +22,14 @@ export type CreateFlightPriceAlert = { type: "FLIGHT"; origin: string; destinati
 export type CurrencyRates = { base: string; rates: Record<string, number>; fetchedAt: string; source: string; stale?: boolean };
 export type MobileLocation = { source: "ipinfo-lite" | "fallback"; countryCode: string | null; country: string | null; continentCode: string | null; continent: string | null; ipDetected: boolean };
 export type MobileNotificationType = "PRICE_ALERT" | "SUPPORT_UPDATE" | "ACCOUNT_UPDATE" | "SECURITY_UPDATE" | "SYSTEM" | "TRAVEL_INSIGHT";
-export type MobileNotification = { id: string; type: MobileNotificationType; title: string; body: string; actionPath: "/price-alerts" | "/saved" | "/settings" | "/personal-information" | null; metadata: Record<string, unknown> | null; readAt: string | null; createdAt: string };
+export type MobileNotification = { id: string; type: MobileNotificationType; title: string; body: string; actionPath: "/price-alerts" | "/saved" | "/settings" | "/personal-information" | "/support" | null; metadata: Record<string, unknown> | null; readAt: string | null; createdAt: string };
 export type MobileNotificationPage = { items: MobileNotification[]; nextCursor: string | null };
 export type CustomizationPreferences = { locale: string; currency: string; region: string; personalizeRecommendations: boolean };
+export type SupportCategory = "search-help" | "price-alerts" | "redirect" | "account";
+export type SupportTicketInput = { email: string; subject: string; category: SupportCategory; body: string; sourceContext?: { page: "mobile_support"; platform: "ios" | "android" } };
+export type EmailPreferences = { receiveOptionalEmails: boolean; priceAlerts: boolean; travelInspiration: boolean; productUpdates: boolean; dealsRecommendations: boolean };
+export type TravelPreferences = { homeAirport: string; preferredAirlines: string[]; notificationPreferences: { emailUpdates: boolean; priceAlertEmails: boolean; travelInspirationEmails: boolean } };
+export type TravelPreferencesPatch = Partial<Pick<TravelPreferences, "homeAirport" | "preferredAirlines">>;
 export type MobileSavedItem = { id: string; type: "flight" | "hotel" | "search"; [key: string]: unknown };
 export type CreateMobileSavedItem = { type: "flight" | "hotel" | "search"; [key: string]: unknown };
 export type MobileRecentSearch = { id: string; type: "flight" | "hotel"; label: string; subtitle: string; href: string; params: unknown; createdAt: string; updatedAt: string };
@@ -61,6 +66,7 @@ async function request<T>(path: string, init: RequestInit = {}, options: { signa
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        "X-Mobile-Platform": Platform.OS,
         ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
         ...(options.requestId ? { "X-Search-Request-Id": options.requestId } : {}),
         ...init.headers,
@@ -119,6 +125,11 @@ export const travelApi = {
   updateProfile: (profile: MobileProfile) => request<{ profile: MobileProfile }>("/api/mobile/v1/profile", { method: "PATCH", body: JSON.stringify(profile) }),
   customizationPreferences: () => request<{ hasPreferences: boolean; preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences"),
   updateCustomizationPreferences: (preferences: Partial<CustomizationPreferences>) => request<{ preferences: CustomizationPreferences }>("/api/mobile/v1/customization-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
+  createSupportTicket: (input: SupportTicketInput) => request<{ ticket: { id: string; subject: string } }>("/api/mobile/v1/support/tickets", { method: "POST", body: JSON.stringify(input) }),
+  emailPreferences: () => request<{ hasPreferences: boolean; preferences: EmailPreferences }>("/api/mobile/v1/email-preferences"),
+  updateEmailPreferences: (preferences: EmailPreferences) => request<{ preferences: EmailPreferences }>("/api/mobile/v1/email-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
+  travelPreferences: () => request<{ hasPreferences: boolean; preferences: TravelPreferences }>("/api/mobile/v1/travel-preferences"),
+  updateTravelPreferences: (preferences: TravelPreferencesPatch) => request<{ preferences: TravelPreferences }>("/api/mobile/v1/travel-preferences", { method: "PATCH", body: JSON.stringify(preferences) }),
   savedItems: () => request<{ items: MobileSavedItem[]; summary: Record<string, number> }>("/api/mobile/v1/saved"),
   createSavedItem: (input: CreateMobileSavedItem) => request<{ item: MobileSavedItem }>("/api/mobile/v1/saved", { method: "POST", body: JSON.stringify(input) }),
   deleteSavedItem: (type: MobileSavedItem["type"], id: string) => request<{ success: true }>("/api/mobile/v1/saved", { method: "DELETE", body: JSON.stringify({ type, id }) }),
