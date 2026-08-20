@@ -154,7 +154,7 @@ export function SharedHomePage() {
       : <UnavailableNotice text="Hotel search is temporarily unavailable. Flights and cars remain available." />,
     cars: availability.carSearch
       ? <HomeSearchSurface>
-          <CarSearchPanel embedded params={{}} />
+          <CarSearchPanel embedded params={{}} startWithEmptyRentalDates />
         </HomeSearchSurface>
       : <UnavailableNotice text="Car search is temporarily unavailable. Flights and hotels remain available." />,
     packages: availability.deals
