@@ -1,4 +1,4 @@
-import type { PublicFlightResult } from "@/lib/types";
+import type { FlightFareTerm, PublicFlightResult } from "@/lib/types";
 
 export type FlightDetailsOffer = Omit<
   PublicFlightResult,
@@ -9,7 +9,8 @@ export type FlightDetailsFareChoice = {
   key: string;
   label: string;
   offer: FlightDetailsOffer;
-  distinguishingTerms: string[];
+  distinguishingTerms: FlightFareTerm[];
+  selectedOffer: boolean;
   handoff: FlightDetailsHandoff;
 };
 

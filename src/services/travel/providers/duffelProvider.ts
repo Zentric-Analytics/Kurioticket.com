@@ -368,6 +368,45 @@ export function getDuffelFlightOffer(
   });
 }
 
+/** Discovers provider-authored alternatives for one server-owned Duffel offer. */
+export function getDuffelFlightUpsellOffers(
+  providerOfferId: string,
+  search: FlightSearchParams,
+): Promise<ProviderResult<NormalizedFlightResult>> {
+  const apiKey = process.env.DUFFEL_API_KEY;
+  const stagingSafety = getStagingProviderSafety();
+  if (!stagingSafety.safe)
+    return Promise.resolve(skippedProvider("Duffel", stagingSafety.reason));
+  if (!apiKey)
+    return Promise.resolve(skippedProvider("Duffel", "Missing DUFFEL_API_KEY."));
+  const blockReason = getDuffelProviderBlockReason(apiKey);
+  if (blockReason)
+    return Promise.resolve(skippedProvider("Duffel", blockReason));
+
+  return runProvider("Duffel", async () => {
+    const response = await fetchJson<{ data?: unknown[] }>(
+      duffelUpsellOffersUrl(providerOfferId),
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "Duffel-Version": "v2",
+        },
+      },
+      16000,
+    );
+    if (!Array.isArray(response.data))
+      throw new ProviderResponseError({ code: "duffel_upsell_response_invalid" });
+    return response.data
+      .map((offer) => normalizeFlightResult("Duffel", offer, search))
+      .filter((offer): offer is NormalizedFlightResult => Boolean(offer));
+  });
+}
+
+export const duffelUpsellOffersUrl = (providerOfferId: string) =>
+  `https://api.duffel.com/air/offers/${encodeURIComponent(providerOfferId)}/upsell_offers`;
+
 export async function checkDuffelHealth() {
   const apiKey = process.env.DUFFEL_API_KEY;
   const checkedAt = new Date().toISOString();

@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import type {
+  FlightFareTerm,
   FlightLeg,
   FlightSearchParams,
   Layover,
@@ -109,6 +110,8 @@ function normalizeDuffelFlight(
       baggages?: Array<{ type?: string; quantity?: number }>;
     }>;
     slices?: Array<{
+      fare_brand_name?: string;
+      conditions?: DuffelConditions;
       duration?: string;
       segments?: Array<{
         id?: string;
@@ -167,14 +170,16 @@ function normalizeDuffelFlight(
       ])
     : null;
   const cabinClass = formatDuffelCabin(first.passengers?.[0]?.cabin_class);
-  const fareBrandName =
-    offer.fare_brand_name?.trim() ||
-    first.passengers?.[0]?.fare_brand_name?.trim() ||
-    undefined;
-  const baggageInfo = buildDuffelBaggageInfo(
-    first.passengers?.[0]?.baggages || offer.passengers?.[0]?.baggages,
-  );
-  const refundInfo = buildDuffelRefundInfo(offer.conditions);
+  const legBrands = legs.flatMap(({ fareBrandName }) => fareBrandName ? [fareBrandName] : []);
+  const uniqueLegBrands = [...new Set(legBrands.map((brand) => brand.trim()).filter(Boolean))];
+  const fareBrandName = uniqueLegBrands.length > 1
+    ? undefined
+    : uniqueLegBrands[0] || offer.fare_brand_name?.trim() || first.passengers?.[0]?.fare_brand_name?.trim() || undefined;
+  const baggageTerms = buildDuffelBaggageTerms(offer);
+  const conditionTerms = buildDuffelConditionTerms(offer);
+  const fareTerms = [...baggageTerms, ...conditionTerms];
+  const baggageInfo = summarizeBaggageTerms(baggageTerms);
+  const refundInfo = conditionTerms.map(({ text }) => text).join(". ") || "Change and refund rules not supplied by the provider";
   const price = Number(offer.total_amount);
   const currency = offer.total_currency?.trim().toUpperCase();
   if (!Number.isFinite(price) || price <= 0 || !currency || !/^[A-Z]{3}$/.test(currency))
@@ -201,6 +206,7 @@ function normalizeDuffelFlight(
     fareBrandName,
     baggageInfo,
     refundInfo,
+    fareTerms,
     price,
     currency,
     rawProviderReference: {
@@ -235,6 +241,7 @@ function buildFlight(input: {
   fareBrandName?: string;
   baggageInfo: string;
   refundInfo: string;
+  fareTerms?: FlightFareTerm[];
   price: number;
   currency: string;
   bookingUrl?: string;
@@ -262,6 +269,7 @@ function buildFlight(input: {
     fareBrandName: input.fareBrandName,
     baggageInfo: input.baggageInfo,
     refundInfo: input.refundInfo,
+    fareTerms: input.fareTerms,
     price: Number(input.price.toFixed(2)),
     currency: input.currency,
     bookingUrl: partnerUrl,
@@ -298,6 +306,7 @@ function buildDuffelLegs(
   offer: {
     owner?: { name?: string };
     slices?: Array<{
+      fare_brand_name?: string;
       duration?: string;
       segments?: Array<{
         departing_at?: string;
@@ -307,6 +316,7 @@ function buildDuffelLegs(
         operating_carrier?: { name?: string; iata_code?: string };
         marketing_carrier?: { name?: string; iata_code?: string };
         marketing_carrier_flight_number?: string;
+        passengers?: Array<{ fare_brand_name?: string }>;
       }>;
     }>;
   },
@@ -354,6 +364,7 @@ function buildDuffelLegs(
         estimateDuration(first.departing_at, last.arriving_at);
       if (!durationMinutes) return null;
 
+      const fareBrandName = resolveDuffelSliceFareBrand(slice);
       return {
         direction: legDirection(index, search),
         originAirport: first.origin.iata_code,
@@ -383,6 +394,7 @@ function buildDuffelLegs(
                 `${carrier}${segment.marketing_carrier_flight_number || ""}`.trim(),
             };
           }),
+        ...(fareBrandName ? { fareBrandName } : {}),
       } satisfies FlightLeg;
     })
     .filter(Boolean) as FlightLeg[];
@@ -447,26 +459,7 @@ function buildDuffelLayovers(
   return layovers;
 }
 
-function buildDuffelBaggageInfo(
-  baggages?: Array<{ type?: string; quantity?: number }>,
-) {
-  if (!baggages?.length)
-    return "Baggage details not supplied by the provider";
-
-  const checked = baggages.find((bag) => bag.type === "checked");
-  const carryOn = baggages.find((bag) => bag.type === "carry_on");
-  const parts = [];
-  if (carryOn?.quantity) parts.push(`${carryOn.quantity} carry-on included`);
-  if (checked?.quantity)
-    parts.push(
-      `${checked.quantity} checked bag${checked.quantity > 1 ? "s" : ""} included`,
-    );
-  return parts.length
-    ? parts.join(", ")
-    : "Baggage details not supplied by the provider";
-}
-
-function buildDuffelRefundInfo(conditions?: {
+type DuffelConditions = {
   change_before_departure?: {
     allowed?: boolean;
     penalty_amount?: string;
@@ -477,34 +470,92 @@ function buildDuffelRefundInfo(conditions?: {
     penalty_amount?: string;
     penalty_currency?: string;
   };
+};
+
+function resolveDuffelSliceFareBrand(slice: {
+  fare_brand_name?: string;
+  segments?: Array<{ passengers?: Array<{ fare_brand_name?: string }> }>;
 }) {
+  const sliceBrand = slice.fare_brand_name?.trim();
+  if (sliceBrand) return sliceBrand;
+  const passengerBrands = [...new Set((slice.segments ?? []).flatMap((segment) =>
+    (segment.passengers ?? []).flatMap((passenger) => passenger.fare_brand_name?.trim() ? [passenger.fare_brand_name.trim()] : []),
+  ))];
+  return passengerBrands.length === 1 ? passengerBrands[0] : undefined;
+}
+
+function buildDuffelBaggageTerms(offer: {
+  passengers?: Array<{ baggages?: Array<{ type?: string; quantity?: number }> }>;
+  slices?: Array<{ segments?: Array<{ passengers?: Array<{ baggages?: Array<{ type?: string; quantity?: number }> }> }> }>;
+}): FlightFareTerm[] {
+  const byLeg = (offer.slices ?? []).map((slice, index) => {
+    const allowances = (slice.segments ?? []).flatMap((segment) =>
+      (segment.passengers ?? []).map((passenger) => passenger.baggages ?? []),
+    );
+    const source = allowances.length ? allowances : (index === 0 ? (offer.passengers ?? []).map((passenger) => passenger.baggages ?? []) : []);
+    const descriptions = [...new Set(source.map((bags) => describeIncludedBaggage(bags)))];
+    const direction: FlightLeg["direction"] = index === 0 ? "outbound" : index === 1 ? "return" : "leg";
+    return descriptions.map((description) => ({
+      category: "baggage" as const,
+      semantic: description ? "positive" as const : "informational" as const,
+      text: `${direction === "outbound" ? "Outbound" : direction === "return" ? "Return" : "Leg"}: ${description || "baggage allowance not supplied for one or more passengers"}`,
+      legDirection: direction,
+    }));
+  }).flat();
+  return byLeg.length ? byLeg : [{ category: "baggage", semantic: "informational", text: "Baggage details not supplied by the provider" }];
+}
+
+function describeIncludedBaggage(baggages: Array<{ type?: string; quantity?: number }>) {
+  const parts: string[] = [];
+  for (const type of ["carry_on", "checked"] as const) {
+    const quantities = baggages.filter((bag) => bag.type === type && Number.isInteger(bag.quantity) && bag.quantity! > 0).map((bag) => bag.quantity!);
+    const quantity = quantities.length ? Math.min(...quantities) : 0;
+    if (quantity) parts.push(`${quantity} ${type === "carry_on" ? "carry-on" : `checked bag${quantity > 1 ? "s" : ""}`} included`);
+  }
+  return parts.join(", ");
+}
+
+function summarizeBaggageTerms(terms: FlightFareTerm[]) {
+  if (terms.length === 1) {
+    if (terms[0].semantic === "informational")
+      return "Baggage details not supplied by the provider";
+    return terms[0].text.replace(/^(Outbound|Return|Leg): /, "");
+  }
+  return terms.map(({ text }) => text).join(". ") || "Baggage details not supplied by the provider";
+}
+
+function buildDuffelConditionTerms(offer: { conditions?: DuffelConditions; slices?: Array<{ conditions?: DuffelConditions }> }): FlightFareTerm[] {
+  const sources = (offer.slices ?? []).some((slice) => slice.conditions)
+    ? (offer.slices ?? []).map((slice, index) => ({ conditions: slice.conditions, direction: index === 0 ? "outbound" as const : index === 1 ? "return" as const : "leg" as const }))
+    : [{ conditions: offer.conditions, direction: undefined }];
+  const terms = sources.flatMap(({ conditions, direction }) => conditionTerms(conditions, direction));
+  return terms.length ? terms : [
+    { category: "refund", semantic: "informational", text: "Change and refund rules not supplied by the provider" },
+  ];
+}
+
+function conditionTerms(conditions?: DuffelConditions, legDirection?: FlightLeg["direction"]): FlightFareTerm[] {
   const refund = conditions?.refund_before_departure;
   const change = conditions?.change_before_departure;
-  const parts = [];
+  const prefix = legDirection === "outbound" ? "Outbound: " : legDirection === "return" ? "Return: " : legDirection === "leg" ? "Leg: " : "";
+  const parts: FlightFareTerm[] = [];
 
   if (refund?.allowed === true) {
-    parts.push(
-      refund.penalty_amount
+    parts.push({ category: "refund", semantic: "positive", legDirection, text: prefix + (refund.penalty_amount
         ? `Refundable before departure with ${refund.penalty_currency || ""} ${refund.penalty_amount} penalty`.trim()
-        : "Refundable before departure",
-    );
+        : "Refundable before departure") });
   } else if (refund?.allowed === false) {
-    parts.push("Not refundable before departure");
+    parts.push({ category: "refund", semantic: "negative", legDirection, text: `${prefix}Not refundable before departure` });
   }
 
   if (change?.allowed === true) {
-    parts.push(
-      change.penalty_amount
+    parts.push({ category: "change", semantic: "positive", legDirection, text: prefix + (change.penalty_amount
         ? `Changes allowed with ${change.penalty_currency || ""} ${change.penalty_amount} penalty`.trim()
-        : "Changes allowed before departure",
-    );
+        : "Changes allowed before departure") });
   } else if (change?.allowed === false) {
-    parts.push("Changes not allowed before departure");
+    parts.push({ category: "change", semantic: "negative", legDirection, text: `${prefix}Changes not allowed before departure` });
   }
-
-  return parts.length
-    ? parts.join(". ")
-    : "Change and refund rules not supplied by the provider";
+  return parts;
 }
 
 function buildMetasearchPartnerUrl() {

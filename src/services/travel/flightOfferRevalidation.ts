@@ -59,8 +59,11 @@ export const flightOfferMateriallyChanged = (
   cached.currency !== refreshed.currency ||
   cached.cabinClass !== refreshed.cabinClass ||
   cached.fareBrandName !== refreshed.fareBrandName ||
+  JSON.stringify(cached.legs?.map(({ fareBrandName }) => fareBrandName)) !==
+    JSON.stringify(refreshed.legs?.map(({ fareBrandName }) => fareBrandName)) ||
   cached.baggageInfo !== refreshed.baggageInfo ||
   cached.refundInfo !== refreshed.refundInfo ||
+  JSON.stringify(cached.fareTerms) !== JSON.stringify(refreshed.fareTerms) ||
   cached.partnerRedirectUrl !== refreshed.partnerRedirectUrl ||
   cached.bookingUrl !== refreshed.bookingUrl;
 
