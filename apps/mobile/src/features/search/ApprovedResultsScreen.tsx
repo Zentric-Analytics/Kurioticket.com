@@ -679,8 +679,6 @@ function FlightFilterModal({
 }
 function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; rank: number; params: Record<string, string | string[]> }) {
   const { theme } = useAppTheme();
-  const { width } = useWindowDimensions();
-  const narrowCard = width < 430;
   const { savedFlights, toggle } = useSavedFlights();
   const saved = savedFlights.has(result.id);
   const roundTrip = one(params.tripType) === "round-trip";
@@ -724,7 +722,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
           />
         </Pressable>
       </View>
-      <View style={[s0.flightMain, narrowCard && s0.flightMainNarrow]}>
+      <View style={s0.flightMain}>
         <View style={s0.flightDetails}>
           <View style={s0.airlineIdentityRow}>
             <AirlineLogo
@@ -738,7 +736,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
           <FlightJourneyRow label="OUTBOUND" leg={outbound} />
           {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
         </View>
-        <View style={[s0.priceBox, narrowCard && s0.priceBoxNarrow]}>
+        <View style={[s0.priceBox, s0.rightColumnContract]}>
           <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {fare?.formatted ?? "—"}
           </Text>
@@ -760,19 +758,21 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
             <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{summarizeFareRules(result.refundInfo)}</Text>
           </View>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="View details"
-          style={s0.detailsButton}
-          onPress={() =>
-            router.push({
-              pathname: "/flight-details",
-              params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }),
-            })
-          }
-        >
-          <Text style={s0.detailsButtonText} numberOfLines={1}>View details</Text>
-        </Pressable>
+        <View style={[s0.actionColumn, s0.rightColumnContract]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="View details"
+            style={s0.detailsButton}
+            onPress={() =>
+              router.push({
+                pathname: "/flight-details",
+                params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }),
+              })
+            }
+          >
+            <Text style={s0.detailsButtonText} numberOfLines={1}>View details</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -799,7 +799,7 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
           </View>
           <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
         </View>
-        <View style={s0.arrivalColumn}>
+        <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
           <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
           <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
         </View>
@@ -1239,18 +1239,18 @@ const s0 = StyleSheet.create({
   resultBadgeGreen: { backgroundColor: "#EAF8ED" },
   resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
   resultBadgeTextGreen: { color: ui.green },
-  flightMain: { flexDirection: "row", alignItems: "center", gap: 6 },
-  flightMainNarrow: { flexDirection: "column", alignItems: "stretch", gap: 4 },
-  flightDetails: { flex: 1, minWidth: 0, maxWidth: 258, gap: 7 },
+  flightMain: { width: "100%", alignItems: "stretch", gap: 4 },
+  flightDetails: { width: "100%", minWidth: 0, gap: 7 },
   airlineIdentityRow: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 8 },
   airlineName: { flex: 1, minWidth: 0, fontSize: 12, lineHeight: 16, color: ui.navy, fontWeight: "700" },
   journeyBlock: { width: "100%", gap: 2 },
   journeyLabel: { fontSize: 9, lineHeight: 11, fontWeight: "800", letterSpacing: 0.7 },
   journeyRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   departureColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
-  arrivalColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0, alignItems: "flex-end" },
+  arrivalColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
+  rightColumnContract: { alignItems: "flex-end" },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
-  timelineColumn: { flex: 1, minWidth: 70, maxWidth: 90, alignItems: "center" },
+  timelineColumn: { flex: 1, minWidth: 70, alignItems: "center" },
   timelineTrack: { width: "100%", flexDirection: "row", alignItems: "center", gap: 2, marginVertical: 1 },
   line: {
     flex: 1,
@@ -1258,8 +1258,7 @@ const s0 = StyleSheet.create({
     backgroundColor: ui.muted,
   },
   nonstop: { fontSize: 11, color: ui.blue },
-  priceBox: { flexBasis: 104, minWidth: 96, maxWidth: 118, flexShrink: 0, alignItems: "flex-end" },
-  priceBoxNarrow: { flexBasis: "auto", minWidth: 0, maxWidth: "100%" },
+  priceBox: { width: "100%", minWidth: 0 },
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   benefits: {
     paddingTop: 8,
@@ -1268,6 +1267,7 @@ const s0 = StyleSheet.create({
     gap: 6,
   },
   benefitList: { flex: 1, minWidth: 0, flexDirection: "column", gap: 6 },
+  actionColumn: { flexShrink: 0 },
   benefitItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
   benefit: { minWidth: 0, fontSize: 10.5, color: ui.muted, flex: 1 },
   detailsButton: { minWidth: 96, minHeight: 44, paddingHorizontal: 10, borderRadius: 8, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
