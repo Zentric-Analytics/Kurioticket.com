@@ -111,6 +111,56 @@ const planningRoom = ({
   currency: "USD",
 });
 
+function buildPlanningRooms({
+  hotelId,
+  roomSummary,
+  bedSummary,
+  basePrice,
+}: {
+  hotelId: string;
+  roomSummary: string;
+  bedSummary: string;
+  basePrice: number;
+}): readonly StaticHotelRoomOption[] {
+  return [
+    planningRoom({
+      hotelId,
+      id: "room-only",
+      name: `${roomSummary} — room-only estimate`,
+      bedConfiguration: bedSummary,
+      features: ["Planning room category", "Wi-Fi"],
+      mealPlan: "Room only",
+      cancellationInfo:
+        "Planning estimate only; final terms are not yet confirmed.",
+      basePrice,
+    }),
+    planningRoom({
+      hotelId,
+      id: "breakfast",
+      name: `${roomSummary} — breakfast estimate`,
+      bedConfiguration: bedSummary,
+      features: ["Breakfast planning allowance", "Wi-Fi"],
+      mealPlan: "Breakfast included in planning estimate",
+      cancellationInfo:
+        "Planning estimate only; final terms are not yet confirmed.",
+      basePrice,
+      multiplier: 1.12,
+    }),
+    planningRoom({
+      hotelId,
+      id: "flexible",
+      name: `${roomSummary} — flexible estimate`,
+      bedConfiguration: bedSummary,
+      features: ["Flexible planning terms", "Wi-Fi"],
+      mealPlan: "Room only",
+      cancellationInfo:
+        "Flexible planning terms; final terms are not yet confirmed.",
+      basePrice,
+      multiplier: 1.18,
+    }),
+  ];
+}
+
 const staticHotelProperties: readonly StaticHotelRecord[] = [
   {
     ...common,
@@ -239,6 +289,156 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     interestTags: ["sightseeing", "culture"],
     familySuitable: true,
     businessSuitable: true,
+  },
+  {
+    ...common,
+    id: "park-plaza-county-hall-london",
+    slug: "park-plaza-county-hall-london",
+    name: "Park Plaza County Hall London",
+    city: "London",
+    country: "United Kingdom",
+    region: "England",
+    aliases: ["london", "lon", "united kingdom", "uk", "england"],
+    location: "1 Addington St, Lambeth, London SE1 7RY",
+    latitude: 51.5014,
+    longitude: -0.1163,
+    neighbourhood: "South Bank",
+    classificationStars: 4,
+    amenities: ["Wi-Fi", "Restaurant", "Fitness centre", "Spa"],
+    imageUrl: hotelImage,
+    imageUrls: buildStaticHotelGallery(
+      hotelImage,
+      "park-plaza-county-hall-london",
+    ),
+    roomSummary: "Superior room and studio options",
+    bedSummary: "Bed configuration varies by room",
+    description:
+      "A South Bank hotel beside County Hall, with family-oriented room categories and quick access to Waterloo and Westminster.",
+    indicativeNightlyPrice: 260,
+    roomOptions: buildPlanningRooms({
+      hotelId: "park-plaza-county-hall-london",
+      roomSummary: "Superior room and studio options",
+      bedSummary: "Bed configuration varies by room",
+      basePrice: 260,
+    }),
+    searchTags: ["south bank", "waterloo", "family"],
+    interestTags: ["sightseeing", "culture"],
+    familySuitable: true,
+    businessSuitable: true,
+    accessibility: [
+      "Accessible accommodation features are available; confirm the selected room directly with the property",
+    ],
+  },
+  {
+    ...common,
+    id: "citizenm-tower-of-london",
+    slug: "citizenm-tower-of-london",
+    name: "citizenM Tower of London",
+    city: "London",
+    country: "United Kingdom",
+    region: "England",
+    aliases: ["london", "lon", "united kingdom", "uk", "england"],
+    location: "40 Trinity Square, London EC3N 4DJ",
+    latitude: 51.51016,
+    longitude: -0.07643,
+    neighbourhood: "Tower Hill",
+    classificationStars: 4,
+    amenities: ["Wi-Fi", "Restaurant", "Bar", "Workspaces"],
+    imageUrl: londonImage,
+    imageUrls: buildStaticHotelGallery(
+      londonImage,
+      "citizenm-tower-of-london",
+    ),
+    roomSummary: "Smart king room options",
+    bedSummary: "XL king bed",
+    description:
+      "A technology-led Tower Hill hotel with compact smart rooms, shared living spaces and a rooftop bar overlooking central London landmarks.",
+    indicativeNightlyPrice: 230,
+    roomOptions: buildPlanningRooms({
+      hotelId: "citizenm-tower-of-london",
+      roomSummary: "Smart king room options",
+      bedSummary: "XL king bed",
+      basePrice: 230,
+    }),
+    searchTags: ["tower hill", "city of london", "smart hotel"],
+    interestTags: ["sightseeing", "business", "design"],
+    familySuitable: false,
+    businessSuitable: true,
+    accessibility: [
+      "Accessible routes and mobility-accessible rooms are available; confirm the selected room directly with the property",
+    ],
+  },
+  {
+    ...common,
+    id: "the-clermont-london-charing-cross",
+    slug: "the-clermont-london-charing-cross",
+    name: "The Clermont London, Charing Cross",
+    city: "London",
+    country: "United Kingdom",
+    region: "England",
+    aliases: ["london", "lon", "united kingdom", "uk", "england"],
+    location: "Strand, Charing Cross, London WC2N 5HX",
+    latitude: 51.5084,
+    longitude: -0.12472,
+    neighbourhood: "Charing Cross",
+    classificationStars: 4,
+    amenities: ["Wi-Fi", "Restaurant", "Bar", "Fitness centre"],
+    imageUrl: hotelImage,
+    imageUrls: buildStaticHotelGallery(
+      hotelImage,
+      "the-clermont-london-charing-cross",
+    ),
+    roomSummary: "Classic, superior and studio options",
+    bedSummary: "Bed configuration varies by room",
+    description:
+      "A Victorian railway hotel on the Strand, connecting central London transport with Trafalgar Square, Covent Garden and the West End.",
+    indicativeNightlyPrice: 310,
+    roomOptions: buildPlanningRooms({
+      hotelId: "the-clermont-london-charing-cross",
+      roomSummary: "Classic, superior and studio options",
+      bedSummary: "Bed configuration varies by room",
+      basePrice: 310,
+    }),
+    searchTags: ["charing cross", "strand", "west end"],
+    interestTags: ["culture", "theatre", "business"],
+    familySuitable: true,
+    businessSuitable: true,
+  },
+  {
+    ...common,
+    id: "sea-containers-london",
+    slug: "sea-containers-london",
+    name: "Sea Containers London",
+    city: "London",
+    country: "United Kingdom",
+    region: "England",
+    aliases: ["london", "lon", "united kingdom", "uk", "england"],
+    location: "20 Upper Ground, South Bank, London SE1 9PD",
+    latitude: 51.5083955,
+    longitude: -0.1066386,
+    neighbourhood: "South Bank",
+    classificationStars: 5,
+    amenities: ["Wi-Fi", "Restaurant", "Fitness centre", "Spa"],
+    imageUrl: londonImage,
+    imageUrls: buildStaticHotelGallery(londonImage, "sea-containers-london"),
+    roomSummary: "Guest room, suite and family options",
+    bedSummary: "Double, queen and king configurations vary by room",
+    description:
+      "A design-focused riverside hotel on the South Bank with dining, rooftop spaces, a cinema, spa and fitness facilities.",
+    indicativeNightlyPrice: 360,
+    roomOptions: buildPlanningRooms({
+      hotelId: "sea-containers-london",
+      roomSummary: "Guest room, suite and family options",
+      bedSummary: "Double, queen and king configurations vary by room",
+      basePrice: 360,
+    }),
+    searchTags: ["south bank", "riverside", "design hotel"],
+    interestTags: ["culture", "dining", "wellness"],
+    familySuitable: true,
+    businessSuitable: true,
+    accessibility: [
+      "The property states that disabled guests have access; confirm the selected room directly with the property",
+    ],
   },
   {
     ...common,
