@@ -7,9 +7,9 @@ const source = readFileSync(
   "utf8",
 );
 
-test("renders a keyboard-accessible five-item responsive grid", () => {
+test("renders a keyboard-accessible seven-item responsive grid", () => {
   for (const contract of [
-    "hotels.slice(0, 5)",
+    "hotels.slice(0, 7)",
     "buildHotelDetailsHref(hotel.id, searchContext)",
     "getHotelPriceDetails(hotel)",
     "formatDisplayPrice({",
@@ -18,7 +18,7 @@ test("renders a keyboard-accessible five-item responsive grid", () => {
     "grid-cols-1",
     "sm:grid-cols-2",
     "lg:grid-cols-3",
-    "xl:grid-cols-5",
+    "xl:grid-cols-4",
     "w-full",
     "estimatedStayTotal",
     "priceUnavailable",
@@ -26,7 +26,7 @@ test("renders a keyboard-accessible five-item responsive grid", () => {
     assert.ok(source.includes(contract), contract);
   assert.doesNotMatch(
     source,
-    /overflow-x-auto|snap-x|snap-start|shrink-0|w-\[82%\]|sm:w-\[44%\]|lg:w-\[31%\]/,
+    /overflow-x-auto|snap-x|snap-proximity|snap-start|shrink-0|w-\[82%\]|sm:w-\[44%\]|lg:w-\[31%\]/,
   );
   assert.doesNotMatch(source, /rawProviderReference|review count|only 1 room/i);
 });

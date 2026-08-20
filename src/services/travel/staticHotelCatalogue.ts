@@ -58,10 +58,11 @@ function buildStaticHotelGallery(primaryImage: string, hotelId: string) {
   const remainingImages = staticHotelGalleryImages.filter(
     (image) => image !== primaryImage,
   );
-  const offset = [...hotelId].reduce(
-    (total, character) => total + character.charCodeAt(0),
-    0,
-  ) % remainingImages.length;
+  const offset =
+    [...hotelId].reduce(
+      (total, character) => total + character.charCodeAt(0),
+      0,
+    ) % remainingImages.length;
   const rotated = remainingImages.map(
     (_image, index, images) => images[(index + offset) % images.length]!,
   );
@@ -242,7 +243,10 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Fitness centre", "Indoor pool", "Restaurant"],
     imageUrl: londonImage,
-    imageUrls: buildStaticHotelGallery(londonImage, "park-plaza-westminster-bridge"),
+    imageUrls: buildStaticHotelGallery(
+      londonImage,
+      "park-plaza-westminster-bridge",
+    ),
     roomSummary: "Guest room and studio options",
     bedSummary: "Bed configuration varies by room",
     description:
@@ -345,10 +349,7 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Restaurant", "Bar", "Workspaces"],
     imageUrl: londonImage,
-    imageUrls: buildStaticHotelGallery(
-      londonImage,
-      "citizenm-tower-of-london",
-    ),
+    imageUrls: buildStaticHotelGallery(londonImage, "citizenm-tower-of-london"),
     roomSummary: "Smart king room options",
     bedSummary: "XL king bed",
     description:
@@ -442,6 +443,84 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
   },
   {
     ...common,
+    id: "london-marriott-hotel-county-hall",
+    slug: "london-marriott-hotel-county-hall",
+    name: "London Marriott Hotel County Hall",
+    city: "London",
+    country: "United Kingdom",
+    region: "England",
+    aliases: ["london", "lon", "united kingdom", "uk", "england"],
+    location: "London County Hall, Westminster Bridge Road, London SE1 7PB",
+    latitude: 51.50171,
+    longitude: -0.11886,
+    neighbourhood: "South Bank",
+    classificationStars: 5,
+    amenities: ["Wi-Fi", "Restaurant", "Fitness centre", "Indoor pool"],
+    imageUrl: hotelImage,
+    imageUrls: buildStaticHotelGallery(
+      hotelImage,
+      "london-marriott-hotel-county-hall",
+    ),
+    roomSummary: "Guest room and suite options",
+    bedSummary: "Bed configuration varies by room",
+    description:
+      "A five-star County Hall hotel on the South Bank, close to Westminster Bridge, with river-facing rooms, dining and leisure facilities.",
+    indicativeNightlyPrice: 520,
+    roomOptions: buildPlanningRooms({
+      hotelId: "london-marriott-hotel-county-hall",
+      roomSummary: "Guest room and suite options",
+      bedSummary: "Bed configuration varies by room",
+      basePrice: 520,
+    }),
+    searchTags: ["south bank", "westminster", "river thames"],
+    interestTags: ["sightseeing", "dining", "wellness"],
+    familySuitable: true,
+    businessSuitable: true,
+    accessibility: [
+      "Accessible routes and room features are available; confirm the selected room directly with the property",
+    ],
+  },
+  {
+    ...common,
+    id: "shangri-la-the-shard-london",
+    slug: "shangri-la-the-shard-london",
+    name: "Shangri-La The Shard, London",
+    city: "London",
+    country: "United Kingdom",
+    region: "England",
+    aliases: ["london", "lon", "united kingdom", "uk", "england"],
+    location: "31 St Thomas Street, London SE1 9QU",
+    latitude: 51.50453,
+    longitude: -0.08673,
+    neighbourhood: "London Bridge",
+    classificationStars: 5,
+    amenities: ["Wi-Fi", "Restaurant", "Bar", "Indoor pool"],
+    imageUrl: londonImage,
+    imageUrls: buildStaticHotelGallery(
+      londonImage,
+      "shangri-la-the-shard-london",
+    ),
+    roomSummary: "Skyline room and suite options",
+    bedSummary: "Bed configuration varies by room",
+    description:
+      "A five-star hotel occupying upper floors of The Shard at London Bridge, with skyline rooms, restaurants and an indoor infinity pool.",
+    indicativeNightlyPrice: 650,
+    roomOptions: buildPlanningRooms({
+      hotelId: "shangri-la-the-shard-london",
+      roomSummary: "Skyline room and suite options",
+      bedSummary: "Bed configuration varies by room",
+      basePrice: 650,
+    }),
+    searchTags: ["london bridge", "southwark", "skyline"],
+    interestTags: ["sightseeing", "dining", "luxury"],
+    familySuitable: true,
+    businessSuitable: true,
+    accessibility: [
+      "Accessible access is available; confirm the selected room and required features directly with the property",
+    ],
+  },
+  {
+    ...common,
     id: "hotel-le-six-paris",
     slug: "hotel-le-six-paris",
     name: "Hôtel Le Six",
@@ -520,7 +599,10 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Restaurant", "Bar", "Workspaces"],
     imageUrl: parisImage,
-    imageUrls: buildStaticHotelGallery(parisImage, "citizenm-paris-gare-de-lyon"),
+    imageUrls: buildStaticHotelGallery(
+      parisImage,
+      "citizenm-paris-gare-de-lyon",
+    ),
     roomSummary: "Compact modern room options",
     bedSummary: "Large bed configuration",
     description:
@@ -776,7 +858,10 @@ const staticHotelProperties: readonly StaticHotelRecord[] = [
     classificationStars: 4,
     amenities: ["Wi-Fi", "Restaurant", "Fitness centre", "Laundry service"],
     imageUrl: hotelImage,
-    imageUrls: buildStaticHotelGallery(hotelImage, "shibuya-stream-excel-hotel-tokyu"),
+    imageUrls: buildStaticHotelGallery(
+      hotelImage,
+      "shibuya-stream-excel-hotel-tokyu",
+    ),
     roomSummary: "Modern city room options",
     bedSummary: "Bed configuration varies by room",
     description:

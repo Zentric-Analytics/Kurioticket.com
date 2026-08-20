@@ -104,7 +104,10 @@ test("static details include sanitized room options and requested stay totals", 
   assert.equal(typeof payload.propertyDetails.latitude, "number");
   assert.equal(typeof payload.propertyDetails.longitude, "number");
   assert.equal(payload.propertyDetails.city, "Paris");
-  assert.equal(Object.hasOwn(payload.propertyDetails, "rawProviderReference"), false);
+  assert.equal(
+    Object.hasOwn(payload.propertyDetails, "rawProviderReference"),
+    false,
+  );
   assert.ok(payload.roomOptions.length >= 2);
   for (const room of payload.roomOptions) {
     assert.equal(room.hotelId, "hotel-le-six-paris");
@@ -153,23 +156,27 @@ test("Park Plaza details expose the matching Westminster address and coordinates
   assert.equal(payload.hotel.name, "Park Plaza Westminster Bridge London");
   assert.equal(payload.propertyDetails.latitude, 51.501);
   assert.equal(payload.propertyDetails.longitude, -0.1167);
-  assert.match(payload.propertyDetails.streetAddress, /200 Westminster Bridge Rd/i);
-  assert.match(payload.propertyDetails.streetAddress, /SE1 7UT/i);
-  assert.equal(payload.relatedHotels.length, 5);
-  assert.equal(
-    new Set(payload.relatedHotels.map((hotel) => hotel.id)).size,
-    5,
+  assert.match(
+    payload.propertyDetails.streetAddress,
+    /200 Westminster Bridge Rd/i,
   );
+  assert.match(payload.propertyDetails.streetAddress, /SE1 7UT/i);
+  assert.equal(payload.relatedHotels.length, 7);
+  assert.equal(new Set(payload.relatedHotels.map((hotel) => hotel.id)).size, 7);
   assert.equal(
     new Set(payload.relatedHotels.map((hotel) => hotel.name)).size,
-    5,
+    7,
   );
   assert.equal(
-    payload.relatedHotels.some((hotel) => hotel.id === "park-plaza-westminster-bridge"),
+    payload.relatedHotels.some(
+      (hotel) => hotel.id === "park-plaza-westminster-bridge",
+    ),
     false,
   );
   assert.equal(
-    payload.relatedHotels.some((hotel) => Object.hasOwn(hotel, "rawProviderReference")),
+    payload.relatedHotels.some((hotel) =>
+      Object.hasOwn(hotel, "rawProviderReference"),
+    ),
     false,
   );
 });
