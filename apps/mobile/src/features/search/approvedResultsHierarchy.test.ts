@@ -60,6 +60,19 @@ test("the compact alert stays horizontal and readable on narrow screens", () => 
   assert.doesNotMatch(source, /flightAlertNarrow|flightAlertSkyNarrow/);
 });
 
+test("the flight alert uses content-driven compact vertical spacing", () => {
+  const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertIcon: {"));
+  const iconStyle = source.slice(source.indexOf("flightAlertIcon: {"), source.indexOf("flightAlertCopy: {"));
+  const copyStyles = source.slice(source.indexOf("flightAlertCopy: {"), source.indexOf("flightAlertSwitchTarget: {"));
+
+  assert.match(bannerStyle, /paddingVertical: 10/);
+  assert.doesNotMatch(bannerStyle, /(?:minHeight|height):/);
+  assert.match(iconStyle, /width: 38[\s\S]*height: 38/);
+  assert.match(copyStyles, /flightAlertCopy: \{[^}]*gap: 2/);
+  assert.match(copyStyles, /flightAlertTitle: \{ fontSize: 15, lineHeight: 19/);
+  assert.match(copyStyles, /flightAlertSubtitle: \{ fontSize: 12, lineHeight: 16/);
+});
+
 test("the flight alert has no aircraft placeholder or visible banner border", () => {
   const component = source.slice(source.indexOf("function PriceAlert"), source.indexOf("export function BottomNav"));
   const bannerStyle = source.slice(source.indexOf("flightAlert: {"), source.indexOf("flightAlertIcon: {"));
