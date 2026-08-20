@@ -136,3 +136,15 @@ test("address fields retain web order and canonical serializer", () => {
   assert.ok(address.indexOf("stateOrRegion") < address.indexOf("postalCode"));
   assert.match(screen, /serializeAddress/);
 });
+
+test("editable controls keep stable component identity across draft updates", () => {
+  const screenStart = screen.indexOf("export function PersonalDetailsScreen");
+  for (const component of ["Field", "SelectButton", "PhoneControl"]) {
+    const definition = screen.indexOf(`function ${component}(`);
+    assert.ok(definition >= 0, `${component} must be defined`);
+    assert.ok(
+      definition < screenStart,
+      `${component} must be module-scoped so draft updates do not remount focused inputs`,
+    );
+  }
+});

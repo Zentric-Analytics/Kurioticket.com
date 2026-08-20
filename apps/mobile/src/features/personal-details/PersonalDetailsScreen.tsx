@@ -166,6 +166,151 @@ function Selector({
   );
 }
 
+function Field({
+  label,
+  value,
+  onChange,
+  containerStyle,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  containerStyle?: object;
+}) {
+  const { theme } = useAppTheme();
+  return (
+    <View style={containerStyle}>
+      <Text style={[s.label, { color: theme.muted }]}>{label}</Text>
+      <TextInput
+        accessibilityLabel={label}
+        value={value}
+        onChangeText={onChange}
+        style={[
+          s.input,
+          {
+            color: theme.text,
+            borderColor: theme.border,
+            backgroundColor: theme.background,
+          },
+        ]}
+      />
+    </View>
+  );
+}
+function SelectButton({
+  label,
+  value,
+  onPress,
+  hideLabel = false,
+}: {
+  label: string;
+  value: string;
+  onPress: () => void;
+  hideLabel?: boolean;
+}) {
+  const { theme } = useAppTheme();
+  return (
+    <View style={s.selectField}>
+      {hideLabel ? null : (
+        <Text style={[s.label, { color: theme.muted }]}>{label}</Text>
+      )}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${label}, ${value}`}
+        accessibilityValue={{ text: value }}
+        onPress={onPress}
+        style={[
+          s.input,
+          s.select,
+          { borderColor: theme.border, backgroundColor: theme.background },
+        ]}
+      >
+        <Text numberOfLines={1} style={{ color: theme.text, flex: 1 }}>
+          {value}
+        </Text>
+        <FlowIcon name="chevron" color={theme.muted} size={16} />
+      </Pressable>
+    </View>
+  );
+}
+function PhoneControl({
+  countryCode,
+  localNumber,
+  label,
+  localLabel,
+  onOpenCountry,
+  onChangeNumber,
+}: {
+  countryCode: string;
+  localNumber: string;
+  label: string;
+  localLabel: string;
+  onOpenCountry: () => void;
+  onChangeNumber: (value: string) => void;
+}) {
+  const { theme } = useAppTheme();
+  const [failed, setFailed] = useState(false);
+  const option =
+    PHONE_COUNTRY_OPTIONS.find((x) => x.isoCode === countryCode) ||
+    PHONE_COUNTRY_OPTIONS[0];
+  const uri = getCountryFlagUri(option?.isoCode);
+  useEffect(() => setFailed(false), [uri]);
+  return (
+    <View style={s.phone} testID="personal-details-phone-row">
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${label} country, ${option?.countryName || countryCode}, ${option?.dialCode || ""}`}
+        accessibilityValue={{
+          text: `${option?.countryName || countryCode} ${option?.dialCode || ""}`,
+        }}
+        onPress={onOpenCountry}
+        style={[
+          s.input,
+          s.countrySegment,
+          { borderColor: theme.border, backgroundColor: theme.background },
+        ]}
+      >
+        {uri && !failed ? (
+          <Image
+            accessible={false}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            source={{ uri }}
+            onError={() => setFailed(true)}
+            style={s.flag}
+          />
+        ) : (
+          <Text
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[s.flagFallback, { color: theme.text }]}
+          >
+            {option?.isoCode || "--"}
+          </Text>
+        )}
+        <FlowIcon name="chevron" color={theme.muted} size={16} />
+      </Pressable>
+      <View
+        style={[
+          s.input,
+          s.phoneInput,
+          { borderColor: theme.border, backgroundColor: theme.background },
+        ]}
+      >
+        <Text style={{ color: theme.text }}>{option?.dialCode}</Text>
+        <TextInput
+          accessibilityLabel={localLabel}
+          accessibilityHint={label}
+          keyboardType="phone-pad"
+          value={localNumber}
+          onChangeText={onChangeNumber}
+          style={[s.localPhoneInput, { color: theme.text }]}
+        />
+      </View>
+    </View>
+  );
+}
+
 export function PersonalDetailsScreen() {
   const { theme } = useAppTheme();
   const { width } = useWindowDimensions();
@@ -728,150 +873,7 @@ export function PersonalDetailsScreen() {
       />
     </SafeAreaView>
   );
-  function Field({
-    label,
-    value,
-    onChange,
-    containerStyle,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    containerStyle?: object;
-  }) {
-    const { theme } = useAppTheme();
-    return (
-      <View style={containerStyle}>
-        <Text style={[s.label, { color: theme.muted }]}>{label}</Text>
-        <TextInput
-          accessibilityLabel={label}
-          value={value}
-          onChangeText={onChange}
-          style={[
-            s.input,
-            {
-              color: theme.text,
-              borderColor: theme.border,
-              backgroundColor: theme.background,
-            },
-          ]}
-        />
-      </View>
-    );
-  }
-  function SelectButton({
-    label,
-    value,
-    onPress,
-    hideLabel = false,
-  }: {
-    label: string;
-    value: string;
-    onPress: () => void;
-    hideLabel?: boolean;
-  }) {
-    const { theme } = useAppTheme();
-    return (
-      <View style={s.selectField}>
-        {hideLabel ? null : (
-          <Text style={[s.label, { color: theme.muted }]}>{label}</Text>
-        )}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${label}, ${value}`}
-          accessibilityValue={{ text: value }}
-          onPress={onPress}
-          style={[
-            s.input,
-            s.select,
-            { borderColor: theme.border, backgroundColor: theme.background },
-          ]}
-        >
-          <Text numberOfLines={1} style={{ color: theme.text, flex: 1 }}>
-            {value}
-          </Text>
-          <FlowIcon name="chevron" color={theme.muted} size={16} />
-        </Pressable>
-      </View>
-    );
-  }
-  function PhoneControl({
-    countryCode,
-    localNumber,
-    label,
-    localLabel,
-    onOpenCountry,
-    onChangeNumber,
-  }: {
-    countryCode: string;
-    localNumber: string;
-    label: string;
-    localLabel: string;
-    onOpenCountry: () => void;
-    onChangeNumber: (value: string) => void;
-  }) {
-    const { theme } = useAppTheme();
-    const [failed, setFailed] = useState(false);
-    const option =
-      PHONE_COUNTRY_OPTIONS.find((x) => x.isoCode === countryCode) ||
-      PHONE_COUNTRY_OPTIONS[0];
-    const uri = getCountryFlagUri(option?.isoCode);
-    useEffect(() => setFailed(false), [uri]);
-    return (
-      <View style={s.phone} testID="personal-details-phone-row">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${label} country, ${option?.countryName || countryCode}, ${option?.dialCode || ""}`}
-          accessibilityValue={{
-            text: `${option?.countryName || countryCode} ${option?.dialCode || ""}`,
-          }}
-          onPress={onOpenCountry}
-          style={[
-            s.input,
-            s.countrySegment,
-            { borderColor: theme.border, backgroundColor: theme.background },
-          ]}
-        >
-          {uri && !failed ? (
-            <Image
-              accessible={false}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              source={{ uri }}
-              onError={() => setFailed(true)}
-              style={s.flag}
-            />
-          ) : (
-            <Text
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={[s.flagFallback, { color: theme.text }]}
-            >
-              {option?.isoCode || "--"}
-            </Text>
-          )}
-          <FlowIcon name="chevron" color={theme.muted} size={16} />
-        </Pressable>
-        <View
-          style={[
-            s.input,
-            s.phoneInput,
-            { borderColor: theme.border, backgroundColor: theme.background },
-          ]}
-        >
-          <Text style={{ color: theme.text }}>{option?.dialCode}</Text>
-          <TextInput
-            accessibilityLabel={localLabel}
-            accessibilityHint={label}
-            keyboardType="phone-pad"
-            value={localNumber}
-            onChangeText={onChangeNumber}
-            style={[s.localPhoneInput, { color: theme.text }]}
-          />
-        </View>
-      </View>
-    );
-  }
+
 }
 function safeDate(value: string, locale: string) {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
