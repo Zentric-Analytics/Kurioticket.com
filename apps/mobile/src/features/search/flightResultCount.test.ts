@@ -29,7 +29,7 @@ test("flight summary copy is removed while the hotel summary stays intact", () =
 });
 
 test("price alert remains before the count and FlightCard rendering remains in place", () => {
-  const alert = source.indexOf('product === "flight" && availability.priceAlerts');
+  const alert = source.indexOf('product === "flight" && plan.plan');
   const count = source.indexOf("flightResultCountLabel(sorted.length)", alert);
   const card = source.indexOf("<FlightCard", count);
   assert.ok(alert >= 0 && alert < count && count < card);
