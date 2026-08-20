@@ -48,7 +48,8 @@ const en = {
   invalidName: "Full name must be 120 characters or fewer.",
   back: "Go back",
   searchCountry: "Search countries",
-  searchCountryHint: "Type a country name, code, or calling code",
+  searchCountryHint: "Type a country name or code",
+  searchCountryPhoneHint: "Type a country name, code, or calling code",
   selectorSave: "Save",
 };
 const es: typeof en = {
@@ -100,7 +101,8 @@ const es: typeof en = {
   invalidName: "El nombre completo debe tener 120 caracteres o menos.",
   back: "Volver",
   searchCountry: "Buscar países",
-  searchCountryHint: "Escribe un país, código o prefijo telefónico",
+  searchCountryHint: "Escribe un país o código",
+  searchCountryPhoneHint: "Escribe un país, código o prefijo telefónico",
   selectorSave: "Guardar",
 };
 export type PersonalDetailsCopy = typeof en;
