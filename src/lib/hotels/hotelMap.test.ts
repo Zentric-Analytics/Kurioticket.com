@@ -45,7 +45,7 @@ test("rejects invalid and out-of-range map coordinates", () => {
   }
 });
 
-test("directions prefer the non-duplicated property address", () => {
+test("directions preserve exact property coordinates when an address exists", () => {
   assert.equal(
     buildHotelAddress(parkPlaza),
     "200 Westminster Bridge Rd, Lambeth, London SE1 7UT, United Kingdom",
@@ -54,20 +54,19 @@ test("directions prefer the non-duplicated property address", () => {
   assert.ok(directionsUrl);
   assert.equal(
     new URL(directionsUrl).searchParams.get("destination"),
-    "200 Westminster Bridge Rd, Lambeth, London SE1 7UT, United Kingdom",
+    "51.501,-0.1167",
   );
 });
 
-test("directions fall back to valid coordinates when no address exists", () => {
+test("directions fall back to an address when coordinates are invalid", () => {
   const directionsUrl = buildHotelDirectionsUrl({
     ...parkPlaza,
-    streetAddress: "",
-    city: "",
-    country: "",
+    latitude: Number.NaN,
+    longitude: Number.NaN,
   });
   assert.ok(directionsUrl);
   assert.equal(
     new URL(directionsUrl).searchParams.get("destination"),
-    "51.501,-0.1167",
+    "200 Westminster Bridge Rd, Lambeth, London SE1 7UT, United Kingdom",
   );
 });

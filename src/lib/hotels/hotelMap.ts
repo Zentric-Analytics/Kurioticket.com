@@ -72,10 +72,9 @@ export function buildHotelDirectionsUrl(
   details: PublicHotelPropertyDetails,
 ): string | null {
   const address = buildHotelAddress(details);
-  const destination = address ||
-    (hasValidHotelCoordinates(details)
-      ? `${details.latitude},${details.longitude}`
-      : "");
+  const destination = hasValidHotelCoordinates(details)
+    ? `${details.latitude},${details.longitude}`
+    : address;
   if (!destination) return null;
 
   const url = new URL("https://www.google.com/maps/dir/");
