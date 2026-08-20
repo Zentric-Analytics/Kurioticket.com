@@ -23,8 +23,7 @@ test("From and To use the existing location icon without changing picker behavio
 });
 
 test("other Flight fields retain their intended icons", () => {
-  assert.match(field("Depart") ?? "", /icon="calendar"/);
-  assert.match(field("Return") ?? "", /icon="calendar"/);
+  assert.match(field("Travel dates") ?? "", /icon="calendar"/);
   assert.match(field("Travelers") ?? "", /icon="person"/);
   assert.doesNotMatch(field("Cabin") ?? "", /icon="location"/);
 });
