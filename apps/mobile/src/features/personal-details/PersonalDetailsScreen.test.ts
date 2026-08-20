@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";import {readFileSync} from "node:fs";import test from "node:test";
+const screen=readFileSync("src/features/personal-details/PersonalDetailsScreen.tsx","utf8");
+test("screen opens read-only and Edit switches the same card to editing",()=>{assert.match(screen,/!editing\?<View/);assert.match(screen,/setEditing\(true\)/)});
+test("missing values use localized fallback",()=>assert.match(screen,/values\[index\]\|\|c\.missing/));
+test("Cancel restores authoritative saved values",()=>{assert.match(screen,/setDraft\(saved\|\|\{\}\)/);assert.match(screen,/setEditing\(false\)/)});
+test("Save is disabled until dirty and while saving",()=>assert.match(screen,/disabled=\{!dirty\|\|saving\}/));
+test("duplicate submission is prevented and failed save retains draft",()=>{assert.match(screen,/submitting\.current/);assert.doesNotMatch(screen,/catch\{[^}]*setDraft/s)});
+test("success returns to read-only and refreshes stored session identity",()=>{assert.match(screen,/setEditing\(false\)/);assert.match(screen,/updateStoredSessionName/)});
+test("email is read-only and external handoff is accessible",()=>{assert.match(screen,/editable=\{false\}/);assert.match(screen,/accessibilityHint=\{c\.externalHint\}/)});
+test("authentication expiry preserves protected return intent",()=>assert.match(screen,/returnTo:"\/personal-information"/));
+test("theme semantics cover shell card inputs and selectors",()=>{for(const token of ["theme.background","theme.surface","theme.border","theme.text","theme.muted"])assert.ok(screen.includes(token))});
+test("no avatar identity hero or introductory card is introduced",()=>{assert.doesNotMatch(screen,/Avatar|initials|identityHero|welcomeCard/)});
+test("screen has loading retry feedback and discard confirmation",()=>{assert.match(screen,/c\.loading/);assert.match(screen,/c\.retry/);assert.match(screen,/Alert\.alert\(c\.discardTitle/)});
