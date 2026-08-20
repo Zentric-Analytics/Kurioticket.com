@@ -26,14 +26,11 @@ import {
   ArrowLeft,
   Award,
   Bell,
-  Briefcase,
-  CalendarDays,
   FilePenLine,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
   Tag,
-  User,
 } from "lucide-react-native";
 import { Heart } from "lucide-react-native";
 import {
@@ -106,10 +103,6 @@ import type { SearchPlan } from "../flow/travelSearchModel";
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
-const cabinLabel = (value: unknown) => {
-  const normalized = String(value || "economy").replace(/[-_]+/g, " ").toLowerCase();
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
-};
 export function ApprovedResultsScreen({ product }: { product: Product }) {
   const { theme } = useAppTheme();
   const flightResults = product === "flight";
@@ -472,7 +465,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             ? shortDate(String(payload.departureDate || ""))
             : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`}
           travelerCount={Number(payload.travelers)}
-          cabinClass={cabinLabel(payload.cabinClass)}
+          tripTypeLabel={payload.tripType === "round-trip" ? "Round trip" : "One way"}
           onEdit={edit}
         />
       ) : (
@@ -530,13 +523,13 @@ function FlightResultsHeader({
   route,
   dateRange,
   travelerCount,
-  cabinClass,
+  tripTypeLabel,
   onEdit,
 }: {
   route: string;
   dateRange: string;
   travelerCount: number;
-  cabinClass: string;
+  tripTypeLabel: string;
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -582,20 +575,11 @@ function FlightResultsHeader({
           style={s0.flightHeaderMetadataScroller}
           contentContainerStyle={s0.flightHeaderMetadataRow}
         >
-            <View style={s0.flightHeaderMetadataItem}>
-              <CalendarDays accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
-            </View>
-            <View style={s0.flightHeaderMetadataItem}>
-              <User accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
-                {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
-              </Text>
-            </View>
-            <View style={s0.flightHeaderMetadataItem}>
-              <Briefcase accessibilityElementsHidden accessible={false} color={theme.icon} size={16} strokeWidth={2} />
-              <Text style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{cabinClass}</Text>
-            </View>
+          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
+          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
+            {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
+          </Text>
+          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{tripTypeLabel}</Text>
         </ScrollView>
       </View>
     </View>
@@ -752,7 +736,6 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
           <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
             {fare?.formatted ?? "—"}
           </Text>
-          <Text style={[s0.sub, { color: theme.textSecondary }]}>{roundTrip ? "round trip" : "one way"}</Text>
         </View>
       </View>
       <View style={s0.benefits}>
@@ -1255,15 +1238,9 @@ const s0 = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "nowrap",
     alignItems: "center",
-    columnGap: 18,
+    columnGap: 14,
   },
-  flightHeaderMetadataItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexShrink: 0,
-    gap: 6,
-  },
-  flightHeaderMetadataText: { fontSize: 12, lineHeight: 17 },
+  flightHeaderMetadataText: { flexShrink: 0, fontSize: 12, lineHeight: 17 },
   flightHeaderEdit: {
     width: 44,
     height: 44,
