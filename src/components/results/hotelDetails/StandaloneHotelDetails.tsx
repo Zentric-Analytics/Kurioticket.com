@@ -5,7 +5,6 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
   Heart,
   Info,
   Laptop,
@@ -25,6 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import type { HotelAmenityPresentationItem } from "@/components/results/hotelAmenityPresentation";
 import type { PublicHotelPropertyDetails } from "@/lib/types";
 import { HotelDetailsGallery } from "@/components/results/hotelDetails/HotelDetailsGallery";
+import { HotelLocationSection } from "@/components/results/hotelDetails/HotelLocationSection";
 
 type DisplayPrice = {
   formatted: string;
@@ -157,13 +157,6 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
     window.setTimeout(() => setShareComplete(false), 1800);
   }
 
-  const directionsUrl = props.propertyDetails
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${props.propertyDetails.latitude},${props.propertyDetails.longitude}`)}`
-    : "";
-  const mapUrl = props.propertyDetails
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${props.propertyDetails.longitude - 0.012}%2C${props.propertyDetails.latitude - 0.006}%2C${props.propertyDetails.longitude + 0.012}%2C${props.propertyDetails.latitude + 0.006}&layer=mapnik&marker=${props.propertyDetails.latitude}%2C${props.propertyDetails.longitude}`
-    : "";
-
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_334px] lg:items-start lg:gap-7" data-standalone-hotel-details>
       <article className="min-w-0 rounded-[17px] border border-slate-200/80 bg-white p-5 shadow-[0_5px_24px_rgba(15,23,42,0.045)] sm:p-6">
@@ -187,7 +180,7 @@ export function StandaloneHotelDetails(props: StandaloneHotelDetailsProps) {
 
         {description ? <section className="mt-5" aria-labelledby="hotel-about-heading"><h2 id="hotel-about-heading" className="text-[17px] font-bold text-slate-950">{props.labels.about}</h2><p className={`mt-2 text-[13px] leading-5 text-slate-600 ${descriptionExpanded ? "" : "line-clamp-2"}`}>{description}</p>{canExpandDescription ? <button type="button" aria-expanded={descriptionExpanded} onClick={() => setDescriptionExpanded((value) => !value)} className="focus-ring mt-1 inline-flex items-center gap-1 text-xs font-bold text-blue hover:underline">{descriptionExpanded ? props.labels.less : props.labels.more}{descriptionExpanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}</button> : null}</section> : null}
 
-        {props.propertyDetails ? <section className="mt-4" aria-labelledby="hotel-location-heading"><h2 id="hotel-location-heading" className="text-[17px] font-bold text-slate-950">{props.labels.location}</h2><div className="mt-2 overflow-hidden rounded-xl border border-slate-200"><iframe title={`${props.hotelName} map`} src={mapUrl} loading="lazy" className="h-32 w-full border-0" /><a href={directionsUrl} target="_blank" rel="noopener noreferrer" className="focus-ring flex h-10 items-center justify-between border-t border-slate-200 bg-white px-4 text-sm font-bold text-blue hover:bg-slate-50">{props.labels.directions}<ExternalLink className="h-4 w-4" aria-hidden="true" /></a></div></section> : null}
+        {props.propertyDetails ? <HotelLocationSection hotelName={props.hotelName} propertyDetails={props.propertyDetails} locationLabel={props.labels.location} directionsLabel={props.labels.directions} /> : null}
       </article>
 
       <aside className="min-w-0 self-start" data-standalone-stay-summary>
