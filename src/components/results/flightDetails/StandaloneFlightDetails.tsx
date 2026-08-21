@@ -24,7 +24,7 @@ import type {
   FlightDetailsOffer,
   FlightDetailsResponse,
 } from "@/lib/flights/flightDetailsContract";
-import { flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
+import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
 import type { FlightLeg, FlightProviderCondition } from "@/lib/types";
 
 export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resultsHref: string }) {
@@ -128,9 +128,12 @@ export function StandaloneFlightDetails({ id, resultsHref }: { id: string; resul
 
   const flight = selectedOffer;
   const legs = flight.legs ?? [];
-  const origin = flight.originAirport;
-  const destination = available.search.tripType === "multi-city" ? legs.at(-1)?.destinationAirport ?? flight.destinationAirport : flight.destinationAirport;
-  const route = `${cleanLocation(origin)} to ${cleanLocation(destination)}`;
+  const route = flightDetailsRouteLabel(
+    available.search.tripType,
+    legs,
+    flight.originAirport,
+    flight.destinationAirport,
+  );
   const travelers = readTravelerSummary(available.search);
   const tripType = available.search.tripType === "round-trip" ? "Round-trip" : available.search.tripType === "multi-city" ? `Multi-city • ${legs.length} flights` : "One-way";
   const tripLine = `${tripType} • ${travelers.count} ${travelers.count === 1 ? "traveler" : "travelers"}`;
@@ -313,4 +316,3 @@ function formatTime(value: string, locale: string) { return new Intl.DateTimeFor
 function technicalStopCount(leg: FlightLeg) { return leg.segments.reduce((total, segment) => total + (segment.technicalStops?.length ?? 0), 0); }
 function formatStops(connections: number, technicalStops = 0) { const parts = []; if (connections) parts.push(`${connections} ${connections === 1 ? "connection" : "connections"}`); if (technicalStops) parts.push(`${technicalStops} technical ${technicalStops === 1 ? "stop" : "stops"}`); return parts.length ? parts.join(" • ") : "Non-stop"; }
 function titleCase(value: string) { return value.replace(/[-_]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()); }
-function cleanLocation(value: string) { return value.split("(")[0].split(",")[0].trim() || value; }
