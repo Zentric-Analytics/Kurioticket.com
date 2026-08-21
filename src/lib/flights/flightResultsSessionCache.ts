@@ -1,13 +1,14 @@
 import type { FlightSearchLeg, PublicFlightResult } from "@/lib/types";
 
 export const FLIGHT_RESULTS_SESSION_CACHE_KEY =
-  "kurioticket:flight-results-snapshot:v2";
+  "kurioticket:flight-results-snapshot:v3";
 export const FLIGHT_RESULTS_SESSION_CACHE_TTL_MS = 30 * 60 * 1000;
 
 export type FlightResultsSessionSnapshot = {
-  version: 2;
+  version: 3;
   searchKey: string;
   savedAt: number;
+  validUntil: number;
   results: PublicFlightResult[];
   warnings: string[];
 };
@@ -91,10 +92,13 @@ export function readFlightResultsSessionSnapshot(
     const valid =
       value !== null &&
       typeof value === "object" &&
-      value.version === 2 &&
+      value.version === 3 &&
       typeof value.searchKey === "string" &&
       typeof value.savedAt === "number" &&
       Number.isFinite(value.savedAt) &&
+      typeof value.validUntil === "number" &&
+      Number.isFinite(value.validUntil) &&
+      value.validUntil > value.savedAt &&
       Array.isArray(value.results) &&
       value.results.every((result) => result !== null && typeof result === "object") &&
       Array.isArray(value.warnings) &&
@@ -105,7 +109,7 @@ export function readFlightResultsSessionSnapshot(
       return null;
     }
 
-    if (now - value.savedAt! >= FLIGHT_RESULTS_SESSION_CACHE_TTL_MS) {
+    if (now >= value.validUntil! || now - value.savedAt! >= FLIGHT_RESULTS_SESSION_CACHE_TTL_MS) {
       removeSnapshot(storage);
       return null;
     }
@@ -122,10 +126,11 @@ export function writeFlightResultsSessionSnapshot(
   searchKey: string,
   results: PublicFlightResult[],
   warnings: string[],
+  resultsCacheValidForMs: number,
   storage: StorageLike | null = browserSessionStorage(),
   now = Date.now(),
 ): void {
-  if (!storage) return;
+  if (!storage || !Number.isFinite(resultsCacheValidForMs) || resultsCacheValidForMs <= 0) return;
 
   try {
     const publicResults = results.map((result) => {
@@ -136,9 +141,10 @@ export function writeFlightResultsSessionSnapshot(
       return copy;
     });
     const snapshot: FlightResultsSessionSnapshot = {
-      version: 2,
+      version: 3,
       searchKey,
       savedAt: now,
+      validUntil: now + Math.min(FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, resultsCacheValidForMs),
       results: publicResults,
       warnings: [...warnings],
     };

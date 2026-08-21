@@ -10,6 +10,7 @@ import { getPrisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { buildFlightItineraryKey } from "@/services/travel/flightOfferInventory";
+import { createHash } from "node:crypto";
 
 type CacheRecord<T> = {
   value: T;
@@ -26,7 +27,7 @@ export type SharedFlightCacheRecord = {
 };
 
 export interface SharedFlightCacheBackend {
-  write(records: SharedFlightCacheRecord[]): Promise<void>;
+  write(records: SharedFlightCacheRecord[]): Promise<string[]>;
   find(publicResultId: string, now: number): Promise<SharedFlightCacheRecord | null>;
   findCompatible(searchKey: string, itineraryKey: string, now: number): Promise<SharedFlightCacheRecord[]>;
   cleanupExpired(now: number, limit: number): Promise<number>;
@@ -39,6 +40,20 @@ const hotelCache = new Map<string, CacheRecord<NormalizedHotelResult>>();
 
 const clone = <T>(value: T): T => structuredClone(value);
 const jsonClone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+
+export function flightResultIdentityDigest(ids: string[]) {
+  return createHash("sha256").update([...ids].sort().join("\n")).digest("hex");
+}
+
+function identitySetsEqual(expected: string[], persisted: string[]) {
+  if (expected.length !== persisted.length) return false;
+  const expectedSet = new Set(expected);
+  const persistedSet = new Set(persisted);
+  return expectedSet.size === expected.length &&
+    persistedSet.size === persisted.length &&
+    expectedSet.size === persistedSet.size &&
+    [...expectedSet].every((id) => persistedSet.has(id));
+}
 
 function itineraryIdentity(result: NormalizedFlightResult) {
   return (result.legs ?? []).map(buildFlightItineraryKey).join("|");
@@ -95,13 +110,16 @@ export function createPrismaFlightCacheBackend(
 ): SharedFlightCacheBackend {
   return {
     async write(records) {
-      if (!records.length) return;
+      if (!records.length) return [];
       const db = getDatabase();
       // One PostgreSQL statement is atomic and keeps the database round-trip
       // count constant for large provider result sets. ON CONFLICT preserves
       // the existing refresh behavior for an opaque ID without a long-running
       // interactive transaction or partial chunk commits.
-      await db.$executeRaw(buildFlightCacheUpsertQuery(records));
+      const rows = await db.$queryRaw<Array<{ publicResultId: string }>>(
+        buildFlightCacheUpsertQuery(records),
+      );
+      return rows.map(({ publicResultId }) => publicResultId);
     },
     async find(publicResultId, now) {
       const row = await getDatabase().flightResultCache.findFirst({
@@ -162,6 +180,7 @@ export function buildFlightCacheUpsertQuery(records: SharedFlightCacheRecord[]) 
       "itineraryKey" = EXCLUDED."itineraryKey",
       "expiresAt" = EXCLUDED."expiresAt",
       "updatedAt" = CURRENT_TIMESTAMP
+    RETURNING "publicResultId"
   `;
 }
 
@@ -170,6 +189,7 @@ export function createMemoryFlightCacheBackend(): SharedFlightCacheBackend {
   return {
     async write(records) {
       for (const record of records) rows.set(record.publicResultId, clone(record));
+      return records.map(({ publicResultId }) => publicResultId);
     },
     async find(publicResultId, now) {
       const row = rows.get(publicResultId);
@@ -212,6 +232,7 @@ export function createFlightResultCache(backend: SharedFlightCacheBackend) {
       results: NormalizedFlightResult[],
       now = Date.now(),
       search?: FlightSearchParams,
+      requestId?: string,
     ) {
       const records = results.flatMap((result) => {
         const expiresAt = Math.min(
@@ -228,23 +249,63 @@ export function createFlightResultCache(backend: SharedFlightCacheBackend) {
           expiresAt,
         }];
       });
-      if (!records.length) return true;
+      const expectedIds = records.map(({ publicResultId }) => publicResultId);
+      const expectedIdentityDigest = flightResultIdentityDigest(expectedIds);
+      const startedAt = performance.now();
+      if (!records.length) {
+        console.error("[flight-result-cache]", {
+          event: "write_error",
+          outcome: "total_failure",
+          requestId,
+          expectedCount: results.length,
+          persistedCount: 0,
+          identityDigestMatch: false,
+          elapsedMs: performance.now() - startedAt,
+        });
+        return { persisted: false, validForMs: 0 };
+      }
       try {
-        await backend.write(records);
+        const persistedIds = await backend.write(records);
+        const persistedIdentityDigest = flightResultIdentityDigest(persistedIds);
+        const identityDigestMatch = expectedIdentityDigest === persistedIdentityDigest;
+        const setsMatch = identitySetsEqual(expectedIds, persistedIds);
+        if (!setsMatch || !identityDigestMatch) {
+          console.error("[flight-result-cache]", {
+            event: "write_error",
+            outcome: "total_failure",
+            requestId,
+            expectedCount: records.length,
+            persistedCount: persistedIds.length,
+            identityDigestMatch,
+            elapsedMs: performance.now() - startedAt,
+          });
+          return { persisted: false, validForMs: 0 };
+        }
         console.info("[flight-result-cache]", {
           event: "write",
           outcome: "full_success",
-          count: records.length,
+          requestId,
+          expectedCount: records.length,
+          persistedCount: persistedIds.length,
+          identityDigestMatch: true,
+          elapsedMs: performance.now() - startedAt,
         });
         await cleanup(now);
-        return true;
+        return {
+          persisted: true,
+          validForMs: Math.max(0, Math.min(...records.map(({ expiresAt }) => expiresAt)) - now),
+        };
       } catch {
         console.error("[flight-result-cache]", {
           event: "write_error",
           outcome: "total_failure",
-          count: records.length,
+          requestId,
+          expectedCount: records.length,
+          persistedCount: 0,
+          identityDigestMatch: false,
+          elapsedMs: performance.now() - startedAt,
         });
-        return false;
+        return { persisted: false, validForMs: 0 };
       }
     },
     async get(publicResultId: string, now = Date.now()) {
@@ -310,8 +371,9 @@ export async function rememberFlights(
   results: NormalizedFlightResult[],
   now = Date.now(),
   search?: FlightSearchParams,
+  requestId?: string,
 ) {
-  return flightResultCache.remember(results, now, search);
+  return flightResultCache.remember(results, now, search, requestId);
 }
 
 export async function getFlightFromCache(id: string, now = Date.now()) {
