@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -174,6 +175,56 @@ test('Production IPA verification validates active configuration without scannin
   assert.match(workflow, /--extract-certificates\s+"\$RUNNER_TEMP\/app-signer"/);
   assert.match(workflow, /--signer-certificate-serial\b/);
   assert.doesNotMatch(verifier, /contents\.includes\(|forbiddenIdentityFound/);
+});
+
+test('iOS Production EAS metadata guard tolerates only an omitted bundle identifier before authoritative IPA verification', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/ios-production-delivery.yml'), 'utf8');
+  const guard = workflow.match(/IPA_URL=\$\(node -e "([^"\n]+)"\)/)?.[1];
+  assert.ok(guard, 'iOS Production metadata guard is missing');
+  const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-ios-eas-guard-'));
+  const approvedSha = 'b'.repeat(40);
+  const validBuild = {
+    status: 'FINISHED',
+    platform: 'IOS',
+    project: { id: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' },
+    buildProfile: 'production',
+    distribution: 'STORE',
+    channel: 'production',
+    runtimeVersion: 'production-0.3.0',
+    appVersion: '0.3.0',
+    appBuildVersion: '2',
+    gitCommitHash: approvedSha,
+    artifacts: { applicationArchiveUrl: 'https://example.test/production.ipa' },
+  };
+  const verify = (overrides = {}) => {
+    writeFileSync(resolve(directory, 'build.json'), JSON.stringify({ ...validBuild, ...overrides }));
+    return execFileSync(process.execPath, ['-e', guard], {
+      encoding: 'utf8',
+      env: { ...process.env, RUNNER_TEMP: directory, CHECKED_OUT_SHA: approvedSha },
+    });
+  };
+  try {
+    assert.equal(verify(), validBuild.artifacts.applicationArchiveUrl);
+    assert.equal(verify({ applicationIdentifier: 'com.kurioticket.app' }), validBuild.artifacts.applicationArchiveUrl);
+    assert.throws(() => verify({ applicationIdentifier: 'com.kurioticket.app.preview' }), /Finished build identity mismatch/);
+    for (const invalid of [
+      { status: 'IN_PROGRESS' },
+      { platform: 'ANDROID' },
+      { gitCommitHash: 'c'.repeat(40) },
+      { project: { id: 'wrong-project' } },
+      { buildProfile: 'preview' },
+      { distribution: 'INTERNAL' },
+      { channel: 'preview' },
+      { runtimeVersion: 'preview-0.3.0' },
+      { appVersion: '0.2.0' },
+      { appBuildVersion: '0' },
+      { appBuildVersion: null },
+      { artifacts: { applicationArchiveUrl: 'http://example.test/production.ipa' } },
+    ]) assert.throws(() => verify(invalid));
+    assert.match(workflow, /curl --fail[\s\S]*unzip -q[\s\S]*codesign --verify --deep --strict[\s\S]*verify-production-ipa\.mjs/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 test('dispatcher has no baseline fingerprint or SHA inputs', () => {
   for (const name of ['android-preview-ota.yml', 'android-preview-build.yml', 'android-production-delivery.yml']) {
