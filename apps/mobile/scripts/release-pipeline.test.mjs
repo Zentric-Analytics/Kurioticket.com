@@ -242,7 +242,10 @@ test('Preview build preserves EAS failure through tee and freezes credential mut
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-preview-build.yml'), 'utf8');
   assert.match(workflow, /set -o pipefail[\s\S]*eas-cli@16\.17\.4 build --platform android --profile preview --freeze-credentials --non-interactive --json \| tee/);
   assert.match(workflow, /if-no-files-found:\s*warn/);
+  assert.match(workflow, /PRIOR_JOB_STATUS: "\$\{\{ job\.status \}\}"/);
+  assert.match(workflow, /AUDIT_EXIT=\$\?/);
   assert.match(workflow, /if \[ "\$AUDIT_EXIT" -ne 0 \] && \[ "\$PRIOR_JOB_STATUS" != failure \]; then exit "\$AUDIT_EXIT"; fi/);
+  assert.match(workflow, /if \[ "\$AUDIT_EXIT" -ne 0 \]; then echo 'Release audit generation also failed after the authoritative delivery failure\.' >&2; fi/);
   assert.doesNotMatch(workflow, /continue-on-error/);
 });
 test('failed build submission still produces a safe audit with no empty-result parser failure', () => {
@@ -629,10 +632,11 @@ test('Production delivery is manual-only, main-only, and requires the reviewed P
   assert.equal(history.package, policy.production.androidPackage);
   assert.equal(history.recordStatus, 'present');
   assert.equal(history.playApplicationRecord, 'present');
-  assert.deepEqual(history.uploadedBundles, []);
-  assert.equal(history.highestUploadedVersionCode, null);
+  assert.deepEqual(history.uploadedBundles, [2]);
+  assert.equal(history.highestUploadedVersionCode, 2);
   assert.ok(Date.parse(history.verifiedAt));
   assert.ok(history.evidenceReference.includes('9106799153088925304'));
+  assert.ok(history.evidenceReference.includes('versionCode 2'));
 });
 test('Production EAS fixtures enforce finished AAB identity and source attestation', () => {
   const fixture = readFileSync(resolve(root, 'scripts/fixtures/production-eas/build-finished.json'), 'utf8');

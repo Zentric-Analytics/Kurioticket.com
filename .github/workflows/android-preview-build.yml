@@ -120,7 +120,14 @@ jobs:
           AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
           WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
           FINAL_STATUS: "${{ job.status }}"
-        run: node scripts/write-release-audit.mjs
+          PRIOR_JOB_STATUS: "${{ job.status }}"
+        run: |
+          set +e
+          node scripts/write-release-audit.mjs
+          AUDIT_EXIT=$?
+          set -e
+          if [ "$AUDIT_EXIT" -ne 0 ] && [ "$PRIOR_JOB_STATUS" != failure ]; then exit "$AUDIT_EXIT"; fi
+          if [ "$AUDIT_EXIT" -ne 0 ]; then echo 'Release audit generation also failed after the authoritative delivery failure.' >&2; fi
       - name: Preserve non-secret release evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
