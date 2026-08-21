@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Redirect target is required." }, { status: 400 });
   }
 
-  let target = body.type === "flight" ? getFlightFromCache(body.id) : getHotelFromCache(body.id);
+  let target = body.type === "flight" ? await getFlightFromCache(body.id) : getHotelFromCache(body.id);
   if (!target) {
     return NextResponse.json(
       { error: "This partner link expired. Please search again for current prices." },

@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { NormalizedFlightResult } from "@/lib/types";
-import { rememberFlights } from "@/lib/searchCache";
+import {
+  createMemoryFlightCacheBackend,
+  rememberFlights,
+  setFlightResultCacheBackendForTests,
+} from "@/lib/searchCache";
 import { GET } from "./route";
 
 const cached = (): NormalizedFlightResult => ({
@@ -47,8 +51,9 @@ test("flight details fails closed for an unknown cached identity", async () => {
 });
 
 test("flight details fails closed without server-owned search context", async () => {
+  setFlightResultCacheBackendForTests(createMemoryFlightCacheBackend());
   const flight = cached();
-  rememberFlights([flight]);
+  await rememberFlights([flight]);
   const response = await GET(new Request(`https://kurioticket.test/api/flights/details?id=${flight.id}&adults=6&children=0&infants=0&travelers=6`));
   assert.equal(response.status, 409);
   assert.deepEqual(await response.json(), {
@@ -61,7 +66,7 @@ test("Flight Details never treats browser passenger parameters as authority", as
   const source = await import("node:fs/promises").then(({ readFile }) =>
     readFile(new URL("./route.ts", import.meta.url), "utf8"),
   );
-  assert.match(source, /getFlightSearchFromCache\(id\)/);
+  assert.match(source, /await getFlightDetailsCacheContext\(id\)/);
   assert.doesNotMatch(source, /parseFlightDetailsSearch\(searchParams\)/);
 });
 
