@@ -54,6 +54,21 @@ import {
 } from "./personalDetailsModel";
 import { personalDetailsCopy } from "./translations";
 
+type DateDraft = {
+  year: string;
+  month: string;
+  day: string;
+};
+
+function dateDraftFromValue(value?: string | null): DateDraft {
+  const match = (value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return {
+    year: match?.[1] || "",
+    month: match?.[2] || "",
+    day: match?.[3] || "",
+  };
+}
+
 type SelectorProps = {
   visible: boolean;
   title: string;
@@ -341,7 +356,7 @@ function CountrySelector({
                     {item.label}
                   </Text>
                   {kind === "phone" && phoneOption?.dialCode ? (
-                    <Text style={[s.countryDialCode, { color: theme.muted }]}>
+                    <Text style={[s.countryDialCode, { color: theme.muted }]}> 
                       {phoneOption.dialCode}
                     </Text>
                   ) : null}
@@ -558,12 +573,13 @@ export function PersonalDetailsScreen() {
     submitting = useRef(false);
   const [saved, setSaved] = useState<MobileProfile | null>(null),
     [draft, setDraft] = useState<MobileProfile>({}),
+    [dateDraft, setDateDraft] = useState<DateDraft>(() => dateDraftFromValue()),
     [email, setEmail] = useState(""),
     [editing, setEditing] = useState(false),
     [loading, setLoading] = useState(true),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
-    [success, setSuccess] = useState(""),
+    [success, setSuccess] = useState("") ,
     [selector, setSelector] = useState<
       | "phone"
       | "gender"
@@ -595,6 +611,7 @@ export function PersonalDetailsScreen() {
       const next = normalizeProfile(data.profile || {});
       setSaved(next);
       setDraft(next);
+      setDateDraft(dateDraftFromValue(next.dateOfBirth));
       setEmail(data.user.email);
       setEditing(false);
     } catch (e) {
@@ -619,10 +636,13 @@ export function PersonalDetailsScreen() {
       mounted.current = false;
     };
   }, [load]);
+  const resetDateDraft = (profile: MobileProfile | null) =>
+    setDateDraft(dateDraftFromValue(profile?.dateOfBirth));
   const discard = useCallback(
     (leave: boolean) => {
       if (!dirty) {
         setDraft(saved || {});
+        resetDateDraft(saved);
         setEditing(false);
         if (leave) router.back();
         return;
@@ -634,6 +654,7 @@ export function PersonalDetailsScreen() {
           style: "destructive",
           onPress: () => {
             setDraft(saved || {});
+            resetDateDraft(saved);
             setEditing(false);
             if (leave) router.back();
           },
@@ -662,6 +683,13 @@ export function PersonalDetailsScreen() {
     setDraft((current) => ({ ...current, [key]: value }));
   const patchAddress = (key: keyof AddressParts, value: string) =>
     patch("address", serializeAddress({ ...address, [key]: value }));
+  const updateDateDraft = (part: keyof DateDraft, value: string) => {
+    const next = { ...dateDraft, [part]: value };
+    setDateDraft(next);
+    if (next.year && next.month && next.day) {
+      patch("dateOfBirth", `${next.year}-${next.month}-${next.day}`);
+    }
+  };
   const save = async () => {
     if (!saved || !dirty || submitting.current) return;
     if ((draft.fullName || "").trim().length > 120) {
@@ -690,6 +718,7 @@ export function PersonalDetailsScreen() {
       const authoritative = normalizeProfile(result.profile);
       setSaved(authoritative);
       setDraft(authoritative);
+      setDateDraft(dateDraftFromValue(authoritative.dateOfBirth));
       await updateStoredSessionName(authoritative.fullName || null);
       setEditing(false);
       setSuccess(c.saveSuccess);
@@ -788,11 +817,11 @@ export function PersonalDetailsScreen() {
           : selector === "nationality"
             ? draft.nationality || ""
             : selector === "day"
-              ? date?.[3] || ""
+              ? dateDraft.day
               : selector === "month"
-                ? date?.[2] || ""
+                ? dateDraft.month
                 : selector === "year"
-                  ? date?.[1] || ""
+                  ? dateDraft.year
                   : "";
   return (
     <SafeAreaView
@@ -872,7 +901,7 @@ export function PersonalDetailsScreen() {
             ) : null}
             {!editing ? (
               <View>
-                <Text style={[s.description, { color: theme.muted }]}>
+                <Text style={[s.description, { color: theme.muted }]}> 
                   {c.description}
                 </Text>
                 {labels.map((label, index) => (
@@ -888,10 +917,10 @@ export function PersonalDetailsScreen() {
                       },
                     ]}
                   >
-                    <Text style={[s.label, { color: theme.muted }]}>
+                    <Text style={[s.label, { color: theme.muted }]}> 
                       {label}
                     </Text>
-                    <Text style={[s.value, { color: theme.text }]}>
+                    <Text style={[s.value, { color: theme.text }]}> 
                       {values[index] || c.missing}
                     </Text>
                   </View>
@@ -901,6 +930,7 @@ export function PersonalDetailsScreen() {
                   accessibilityLabel={c.edit}
                   onPress={() => {
                     setDraft(saved);
+                    setDateDraft(dateDraftFromValue(saved.dateOfBirth));
                     setError("");
                     setSuccess("");
                     setEditing(true);
@@ -964,7 +994,7 @@ export function PersonalDetailsScreen() {
                     <SelectButton
                       hideLabel
                       label={c.day}
-                      value={date?.[3] || c.day}
+                      value={dateDraft.day || c.day}
                       onPress={() => openSelector("day")}
                     />
                   </View>
@@ -972,7 +1002,7 @@ export function PersonalDetailsScreen() {
                     <SelectButton
                       hideLabel
                       label={c.month}
-                      value={date?.[2] || c.month}
+                      value={dateDraft.month || c.month}
                       onPress={() => openSelector("month")}
                     />
                   </View>
@@ -980,7 +1010,7 @@ export function PersonalDetailsScreen() {
                     <SelectButton
                       hideLabel
                       label={c.year}
-                      value={date?.[1] || c.year}
+                      value={dateDraft.year || c.year}
                       onPress={() => openSelector("year")}
                     />
                   </View>
@@ -1007,7 +1037,7 @@ export function PersonalDetailsScreen() {
                 >
                   {c.addressSection}
                 </Text>
-                <Text style={[s.addressDescription, { color: theme.muted }]}>
+                <Text style={[s.addressDescription, { color: theme.muted }]}> 
                   {c.addressDescription}
                 </Text>
                 <SelectButton
@@ -1061,7 +1091,7 @@ export function PersonalDetailsScreen() {
                     onPress={() => discard(false)}
                     style={[s.secondary, { borderColor: theme.border }]}
                   >
-                    <Text style={[s.buttonText, { color: theme.text }]}>
+                    <Text style={[s.buttonText, { color: theme.text }]}> 
                       {c.cancel}
                     </Text>
                   </Pressable>
@@ -1122,13 +1152,9 @@ export function PersonalDetailsScreen() {
           else if (selector === "nationality") patch("nationality", value);
           else if (selector === "addressCountry")
             patchAddress("countryCode", value);
-          else {
-            const y = selector === "year" ? value : date?.[1] || "",
-              m = selector === "month" ? value : date?.[2] || "",
-              d = selector === "day" ? value : date?.[3] || "";
-            if (y && m && d) patch("dateOfBirth", `${y}-${m}-${d}`);
-            else patch("dateOfBirth", `${y}-${m}-${d}`);
-          }
+          else if (selector === "year") updateDateDraft("year", value);
+          else if (selector === "month") updateDateDraft("month", value);
+          else if (selector === "day") updateDateDraft("day", value);
         }}
         onDismiss={() => setSelector(null)}
       />
