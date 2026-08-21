@@ -13,6 +13,7 @@
     "androidBuildType": "apk",
     "appVersion": "0.3.0",
     "runtimeVersion": "preview-0.3.0",
+    "googleIosClientId": "459496589401-gi52kj4fscgf092pasrelkth2mal0mph.apps.googleusercontent.com",
     "sourceBranch": "dev"
   },
   "production": {
@@ -28,6 +29,7 @@
     "androidBuildType": "app-bundle",
     "appVersion": "0.3.0",
     "runtimeVersion": "production-0.3.0",
+    "googleIosClientId": "459496589401-b4npe68m8c358rqr79edi7igvi3sauao.apps.googleusercontent.com",
     "sourceBranch": "main"
   }
 }

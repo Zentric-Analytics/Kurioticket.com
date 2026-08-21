@@ -1,4 +1,5 @@
 import * as Crypto from "expo-crypto";
+import { Platform } from "react-native";
 import {
   GoogleOneTapSignIn,
   isCancelledResponse,
@@ -7,7 +8,6 @@ import {
   statusCodes,
   type OneTapResponse,
 } from "react-native-nitro-google-signin";
-import { Platform } from "react-native";
 import { getRuntimeEnvironment } from "../../config/environment";
 import { getGoogleIosClientId, requireGoogleWebClientId } from "./googleConfig";
 import { getInitialGoogleSignInOperation } from "./googleSignInFlow";
@@ -59,7 +59,7 @@ export async function startNativeGoogleSignIn(
   { forceAccountSelection = false }: NativeGoogleSignInOptions = {},
 ): Promise<NativeGoogleResult> {
   const webClientId = requireGoogleWebClientId();
-  const iosClientId = getGoogleIosClientId();
+  const iosClientId = getGoogleIosClientId(getRuntimeEnvironment().variant, Platform.OS);
 
   const nonce = await createNonce();
   let operation: GoogleSignInOperation = "configure";
