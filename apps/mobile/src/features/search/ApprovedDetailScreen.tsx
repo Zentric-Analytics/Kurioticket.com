@@ -562,17 +562,24 @@ function DetailsRow({ label, icon, value, legs }: FlightTripDetail) {
         <Text style={[d.detailLabel, { color: theme.textPrimary }]}>{label}</Text>
       </View>
       {legs ? (
-        <View style={d.detailLegs}>
-          {legs.map((leg) => (
-            <View key={leg.label} style={d.detailLeg}>
-              <Text style={[d.detailLegLabel, { color: theme.textSecondary }]}>{leg.label}</Text>
-              <Text style={[d.detailValue, { color: theme.textSecondary }]}>{leg.value}</Text>
-            </View>
-          ))}
-        </View>
+        <LegSpecificDetail legs={legs} />
       ) : (
         <Text style={[d.detailValue, d.detailGenericValue, { color: theme.textSecondary }]}>{value}</Text>
       )}
+    </View>
+  );
+}
+
+function LegSpecificDetail({ legs }: Pick<FlightTripDetail, "legs">) {
+  const { theme } = useAppTheme();
+  return (
+    <View style={d.detailLegs}>
+      {legs?.map((leg) => (
+        <View key={leg.label} style={d.detailLeg}>
+          <Text style={[d.detailLegLabel, { color: theme.textSecondary }]}>{leg.label}</Text>
+          <Text style={[d.detailValue, { color: theme.textSecondary }]}>{leg.value}</Text>
+        </View>
+      ))}
     </View>
   );
 }

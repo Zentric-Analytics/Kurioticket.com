@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import type { FlightResult } from "../../api/travelApi";
-import { flightTripDetails } from "./flightTripDetails";
+import { flightTripDetails, stripLegPrefix } from "./flightTripDetails";
 
 const result = (patch: Partial<FlightResult> = {}) => ({
   baggageInfo: "Outbound: 1 carry-on included; checked baggage not supplied",
@@ -44,12 +44,12 @@ test("authoritative change and refund terms take precedence over truthful fallba
 
 test("leg-scoped provider terms become separate outbound and return blocks", () => {
   const details = flightTripDetails(result({ fareTerms: [
-    { category: "baggage", semantic: "positive", legDirection: "outbound", text: "1 carry-on included" },
-    { category: "baggage", semantic: "positive", legDirection: "return", text: "1 checked bag included" },
-    { category: "change", semantic: "negative", legDirection: "outbound", text: "Changes not allowed before departure" },
-    { category: "change", semantic: "negative", legDirection: "return", text: "Changes allowed for a provider fee" },
-    { category: "refund", semantic: "negative", legDirection: "outbound", text: "Non-refundable" },
-    { category: "refund", semantic: "informational", legDirection: "return", text: "Provider refund rules apply" },
+    { category: "baggage", semantic: "positive", legDirection: "outbound", text: "Outbound: 1 carry-on included" },
+    { category: "baggage", semantic: "positive", legDirection: "return", text: "Return: 1 checked bag included" },
+    { category: "change", semantic: "negative", legDirection: "outbound", text: "Outbound: Changes not allowed before departure" },
+    { category: "change", semantic: "negative", legDirection: "return", text: "Return: Changes allowed for a provider fee" },
+    { category: "refund", semantic: "negative", text: "Outbound: Non-refundable." },
+    { category: "refund", semantic: "informational", text: "Return: Provider refund rules apply" },
   ] }));
 
   assert.deepEqual(details[0].legs, [
@@ -61,12 +61,32 @@ test("leg-scoped provider terms become separate outbound and return blocks", () 
     { label: "Return", value: "Changes allowed for a provider fee" },
   ]);
   assert.deepEqual(details[3].legs, [
-    { label: "Outbound", value: "Non-refundable" },
+    { label: "Outbound", value: "Non-refundable." },
     { label: "Return", value: "Provider refund rules apply" },
   ]);
   assert.doesNotMatch(JSON.stringify(details), /Outbound:.*Return:/);
   assert.equal(details[1].legs, undefined);
   assert.equal(details[1].value, "Information unavailable");
+});
+
+test("prefixed authoritative cancellation terms do not remain one generic paragraph", () => {
+  const cancellation = flightTripDetails(result({ fareTerms: [
+    { category: "refund", semantic: "negative", text: "Outbound: Changes not allowed before departure." },
+    { category: "refund", semantic: "negative", text: "Return: Changes not allowed before departure" },
+  ] }))[3];
+
+  assert.equal(cancellation.value, undefined);
+  assert.deepEqual(cancellation.legs, [
+    { label: "Outbound", value: "Changes not allowed before departure." },
+    { label: "Return", value: "Changes not allowed before departure" },
+  ]);
+});
+
+test("display prefix removal is leg-specific and preserves provider wording", () => {
+  assert.equal(stripLegPrefix("Outbound: Changes not allowed.", "outbound"), "Changes not allowed.");
+  assert.equal(stripLegPrefix("outbound:  Keep provider punctuation!", "outbound"), "Keep provider punctuation!");
+  assert.equal(stripLegPrefix("Return: Changes not allowed", "outbound"), "Return: Changes not allowed");
+  assert.equal(stripLegPrefix("The Return: fare is restricted", "return"), "The Return: fare is restricted");
 });
 
 const source = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
@@ -87,7 +107,8 @@ test("Trip details removes its duplicate total while both booking prices remain"
 test("details values stack, wrap naturally, and remain accessible", () => {
   assert.match(tripCard, /flightTripDetails\(result\)\.map/);
   assert.match(detailsRow, /accessibilityLabel=\{`\$\{label\}\. \$\{accessibilityValue\}`\}/);
-  assert.match(detailsRow, /legs\.map[\s\S]*?d\.detailLegLabel[\s\S]*?d\.detailValue/);
+  assert.match(detailsRow, /<LegSpecificDetail legs=\{legs\}/);
+  assert.match(source, /function LegSpecificDetail[\s\S]*?legs\?\.map[\s\S]*?d\.detailLegLabel[\s\S]*?d\.detailValue/);
   assert.doesNotMatch(detailsRow, /numberOfLines/);
   assert.match(styles, /detailValue: \{[^}]*flexShrink: 1,[^}]*minWidth: 0/);
 });
