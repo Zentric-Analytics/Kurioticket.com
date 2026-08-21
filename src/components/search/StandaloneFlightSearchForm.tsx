@@ -9,7 +9,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -18,7 +17,6 @@ import {
   ArrowRightLeft,
   Calendar,
   ChevronDown,
-  MapPin,
   Minus,
   Plane,
   Plus,
@@ -32,6 +30,14 @@ import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
+import {
+  DesktopFlightPopover,
+  FlightAirportFieldControl,
+  flightDesktopPopoverSelector,
+  flightSearchFieldLabelClassName,
+  flightSearchFieldShellClassName,
+  flightSearchFieldValueButtonClassName,
+} from "@/components/search/FlightSearchFieldPrimitives";
 import type { FlightSearchLeg } from "@/lib/types";
 import { appendFlightLegParams, parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
 import {
@@ -86,19 +92,10 @@ type MonthCell = {
   isCurrentMonth: boolean;
 };
 
-const searchFieldShellClassName =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-e sm:border-slate-200 sm:bg-white sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200 sm:focus-within:border-slate-200 sm:focus-within:bg-white sm:focus-within:ring-0 lg:flex lg:flex-col lg:justify-center";
-const searchFieldLabelClassName =
-  "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
-const searchFieldValueButtonClassName =
-  "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
-const mobileFieldValueRowClassName =
-  "flex min-w-0 flex-1 items-center gap-2 sm:contents";
-const mobileFieldValueIconClassName =
-  "h-4 w-4 shrink-0 text-slate-500 sm:hidden";
-const mobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]";
-const desktopPopoverSelector = "[data-standalone-flight-desktop-popover]";
+const searchFieldShellClassName = flightSearchFieldShellClassName;
+const searchFieldLabelClassName = flightSearchFieldLabelClassName;
+const searchFieldValueButtonClassName = flightSearchFieldValueButtonClassName;
+const desktopPopoverSelector = flightDesktopPopoverSelector;
 
 const normalizeSuggestionText = (value: string) =>
   value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
@@ -306,6 +303,18 @@ export function StandaloneFlightSearchForm({
     ];
   });
   const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
+  /* URL restoration intentionally synchronizes client state after the server
+     render, where the browser query string is not available. */
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tripType") !== "multi-city") return;
+    const restored = parseFlightLegParams(params);
+    if (restored.length < 2) return;
+    setTripType("multi-city");
+    setMultiCityLegs(restored);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
   const [datesOpen, setDatesOpen] = useState(false);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const now = new Date();
@@ -1556,7 +1565,7 @@ export function StandaloneFlightSearchForm({
 
         <div className={cn("grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:items-stretch lg:gap-0", tripType === "multi-city" ? "mt-3 sm:grid-cols-[minmax(164px,1fr)_136px]" : "lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]")}>
           <div className={cn("grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent", tripType === "multi-city" && "hidden")}>
-            <AirportFieldControl
+            <FlightAirportFieldControl
               ref={originWrapRef}
               inputRef={originInputRef}
               label={t("origin")}
@@ -1602,7 +1611,7 @@ export function StandaloneFlightSearchForm({
               </button>
             </div>
 
-            <AirportFieldControl
+            <FlightAirportFieldControl
               ref={destinationWrapRef}
               inputRef={destinationInputRef}
               label={t("destination")}
@@ -1855,6 +1864,8 @@ export function StandaloneFlightSearchForm({
           >
             <MobileTravelerCabinPicker
               adults={draftAdultCount}
+              // Traveler count is a domain prop, not React's nested-content API.
+              // eslint-disable-next-line react/no-children-prop
               children={draftChildCount}
               infants={draftInfantCount}
               cabinClass={draftCabinClass}
@@ -1919,260 +1930,6 @@ export function StandaloneFlightSearchForm({
         })}
       </form>
     </section>
-  );
-}
-
-type AirportFieldControlProps = {
-  label: string;
-  value: string;
-  placeholder: string;
-  mobilePlaceholder: string;
-  useMainFlightLandingMobilePresentation: boolean;
-  open: boolean;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-  mobileLauncherRef: React.RefObject<HTMLButtonElement | null>;
-  desktopSuggestions: React.ReactNode;
-  className?: string;
-  onMobileOpen: () => void;
-  onDesktopFocus: () => void;
-  onChange: (value: string) => void;
-  onKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
-};
-
-const AirportFieldControl = React.forwardRef<
-  HTMLDivElement,
-  AirportFieldControlProps
->(function AirportFieldControl(
-  {
-    label,
-    value,
-    placeholder,
-    mobilePlaceholder,
-    useMainFlightLandingMobilePresentation,
-    open,
-    inputRef,
-    mobileLauncherRef,
-    desktopSuggestions,
-    className,
-    onMobileOpen,
-    onDesktopFocus,
-    onChange,
-    onKeyDown,
-  },
-  ref,
-) {
-  return (
-    <div ref={ref} className={cn(searchFieldShellClassName, className)}>
-      <label className={searchFieldLabelClassName}>{label}</label>
-      <button
-        ref={mobileLauncherRef}
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={onMobileOpen}
-        className={cn(searchFieldValueButtonClassName, "sm:hidden")}
-      >
-        {useMainFlightLandingMobilePresentation ? (
-          <span className={mobileFieldValueRowClassName}>
-            <MapPin
-              className={mobileFieldValueIconClassName}
-              aria-hidden="true"
-            />
-            <span className={cn("truncate", !value && "text-slate-400")}>
-              {value || mobilePlaceholder}
-            </span>
-          </span>
-        ) : (
-          <>
-            <span className={cn("truncate", !value && "text-slate-400")}>
-              {value || placeholder}
-            </span>
-            <ChevronDown
-              className="h-4 w-4 shrink-0 text-slate-500"
-              aria-hidden="true"
-            />
-          </>
-        )}
-      </button>
-      <div className="relative hidden min-w-0 items-center gap-2 sm:flex">
-        <MapPin
-          className="h-4 w-4 shrink-0 text-slate-500"
-          aria-hidden="true"
-        />
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onFocus={onDesktopFocus}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder={placeholder}
-          autoComplete="off"
-          className="h-7 min-w-0 flex-1 rounded-none border-0 bg-transparent pe-0 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
-        />
-      </div>
-      {desktopSuggestions}
-    </div>
-  );
-});
-
-type DesktopFlightPopoverProps = {
-  open: boolean;
-  anchorRef: React.RefObject<HTMLElement | null>;
-  desiredWidth: number;
-  align?: "start" | "end";
-  placement?: "auto" | "above" | "below";
-  offset?: number;
-  maxHeight?: number | string;
-  className?: string;
-  contentClassName?: string;
-  children: React.ReactNode;
-};
-
-function DesktopFlightPopover({
-  open,
-  anchorRef,
-  desiredWidth,
-  align = "start",
-  placement = "auto",
-  offset = 10,
-  maxHeight,
-  className,
-  contentClassName,
-  children,
-}: DesktopFlightPopoverProps) {
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{
-    left: number;
-    top: number | null;
-    bottom: number | null;
-    width: number;
-    availableHeight: number;
-  } | null>(null);
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const desktopMediaQuery = window.matchMedia("(min-width: 640px)");
-    const syncDesktopState = () => setIsDesktop(desktopMediaQuery.matches);
-
-    syncDesktopState();
-    desktopMediaQuery.addEventListener("change", syncDesktopState);
-
-    return () =>
-      desktopMediaQuery.removeEventListener("change", syncDesktopState);
-  }, []);
-
-  useEffect(() => {
-    if (!open || !isDesktop || typeof window === "undefined") {
-      return;
-    }
-
-    const updatePosition = () => {
-      const anchor = anchorRef.current;
-      if (!anchor) {
-        setPosition(null);
-        return;
-      }
-
-      const gutter = 16;
-      const anchorRect = anchor.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const width = Math.min(
-        desiredWidth,
-        Math.max(0, viewportWidth - gutter * 2),
-      );
-      const preferredLeft =
-        align === "end" ? anchorRect.right - width : anchorRect.left;
-      const left = Math.min(
-        Math.max(gutter, preferredLeft),
-        Math.max(gutter, viewportWidth - width - gutter),
-      );
-      const viewportHeight = window.innerHeight;
-      const measuredHeight = popoverRef.current?.getBoundingClientRect().height;
-      const estimatedHeight =
-        typeof maxHeight === "number"
-          ? maxHeight
-          : Math.min(520, viewportHeight * 0.72);
-      const popoverHeight = Math.min(
-        measuredHeight || estimatedHeight,
-        viewportHeight - gutter * 2,
-      );
-      const availableBelow =
-        viewportHeight - anchorRect.bottom - offset - gutter;
-      const availableAbove = anchorRect.top - offset - gutter;
-      const openAbove =
-        placement === "above" ||
-        (placement === "auto" &&
-          availableBelow < popoverHeight &&
-          availableAbove > availableBelow);
-      const availableHeight = Math.max(
-        160,
-        openAbove ? availableAbove : availableBelow,
-      );
-      const top = openAbove
-        ? null
-        : Math.max(gutter, anchorRect.bottom + offset);
-      const bottom = openAbove
-        ? Math.max(gutter, viewportHeight - anchorRect.top + offset)
-        : null;
-
-      setPosition({ left, top, bottom, width, availableHeight });
-    };
-
-    updatePosition();
-    const animationFrame = window.requestAnimationFrame(updatePosition);
-    const resizeObserver =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(() => updatePosition());
-    if (popoverRef.current) resizeObserver?.observe(popoverRef.current);
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-
-    return () => {
-      window.cancelAnimationFrame(animationFrame);
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [
-    align,
-    anchorRef,
-    desiredWidth,
-    isDesktop,
-    maxHeight,
-    offset,
-    open,
-    placement,
-  ]);
-
-  if (!open || !isDesktop || !position || typeof document === "undefined")
-    return null;
-
-  return createPortal(
-    <div
-      ref={popoverRef}
-      data-standalone-flight-desktop-popover
-      className={cn(
-        "fixed z-[1000] overflow-y-auto overscroll-contain",
-        contentClassName,
-      )}
-      style={{
-        left: position.left,
-        top: position.top ?? undefined,
-        bottom: position.bottom ?? undefined,
-        width: position.width,
-        maxHeight:
-          typeof maxHeight === "number"
-            ? `${Math.min(maxHeight, position.availableHeight)}px`
-            : maxHeight || `${position.availableHeight}px`,
-      }}
-    >
-      <div className={cn("bg-white", className)}>{children}</div>
-    </div>,
-    document.body,
   );
 }
 
