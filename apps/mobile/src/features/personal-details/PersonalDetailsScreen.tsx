@@ -62,6 +62,7 @@ type SelectorProps = {
   selected: string;
   searchable?: boolean;
   onClose: () => void;
+  onDismiss: () => void;
   onSelect: (value: string) => void;
 };
 function Selector({
@@ -72,6 +73,7 @@ function Selector({
   selected,
   searchable,
   onClose,
+  onDismiss,
   onSelect,
 }: SelectorProps) {
   const { theme } = useAppTheme();
@@ -95,6 +97,7 @@ function Selector({
       transparent
       animationType="slide"
       onRequestClose={close}
+      onDismiss={onDismiss}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -192,13 +195,13 @@ function CountrySelector({
   selected,
   onClose,
   onSave,
+  onDismiss,
 }: CountrySelectorProps) {
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
   const [q, setQ] = useState("");
   const [draftSelection, setDraftSelection] = useState(selected);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const committing = useRef(false);
   const shown = filterSelectorOptions(options, q);
 
@@ -208,19 +211,6 @@ function CountrySelector({
     committing.current = false;
     if (visible) Keyboard.dismiss();
   }, [selected, selectorType, visible]);
-  useEffect(() => {
-    const show = Keyboard.addListener("keyboardDidShow", () =>
-      setKeyboardVisible(true),
-    );
-    const hide = Keyboard.addListener("keyboardDidHide", () =>
-      setKeyboardVisible(false),
-    );
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
-
   const cancel = () => {
     Keyboard.dismiss();
     setQ("");
@@ -241,7 +231,7 @@ function CountrySelector({
       animationType="slide"
       presentationStyle="fullScreen"
       onRequestClose={cancel}
-      onDismiss={cancel}
+      onDismiss={onDismiss}
     >
       <SafeAreaView
         edges={["top", "bottom"]}
@@ -310,6 +300,7 @@ function CountrySelector({
             data={shown}
             keyExtractor={(item) => item.value}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
             contentContainerStyle={s.countryResultsContent}
             initialNumToRender={12}
             maxToRenderPerBatch={12}
@@ -328,7 +319,7 @@ function CountrySelector({
               return (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`${item.label}${phoneOption?.dialCode ? `, ${phoneOption.dialCode}` : ""}`}
+                  accessibilityLabel={`${item.label}${kind === "phone" && phoneOption?.dialCode ? `, ${phoneOption.dialCode}` : ""}`}
                   accessibilityState={{ selected: isSelected }}
                   onPress={() => {
                     Keyboard.dismiss();
@@ -345,7 +336,7 @@ function CountrySelector({
                   >
                     {item.label}
                   </Text>
-                  {phoneOption?.dialCode ? (
+                  {kind === "phone" && phoneOption?.dialCode ? (
                     <Text style={[s.countryDialCode, { color: theme.muted }]}>
                       {phoneOption.dialCode}
                     </Text>
@@ -357,28 +348,26 @@ function CountrySelector({
               );
             }}
           />
-          {!keyboardVisible ? (
-            <View
-              style={[
-                s.countryAction,
-                {
-                  backgroundColor: theme.background,
-                  borderTopColor: theme.border,
-                },
-              ]}
+          <View
+            style={[
+              s.countryAction,
+              {
+                backgroundColor: theme.background,
+                borderTopColor: theme.border,
+              },
+            ]}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={c.selectorSave}
+              accessibilityState={{ disabled: !draftSelection }}
+              disabled={!draftSelection}
+              onPress={saveSelection}
+              style={[s.primary, !draftSelection && s.disabled]}
             >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={c.selectorSave}
-                accessibilityState={{ disabled: !draftSelection }}
-                disabled={!draftSelection}
-                onPress={saveSelection}
-                style={[s.primary, !draftSelection && s.disabled]}
-              >
-                <Text style={s.primaryText}>{c.selectorSave}</Text>
-              </Pressable>
-            </View>
-          ) : null}
+              <Text style={s.primaryText}>{c.selectorSave}</Text>
+            </Pressable>
+          </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
@@ -580,7 +569,13 @@ export function PersonalDetailsScreen() {
       | "month"
       | "year"
       | null
-    >(null);
+    >(null),
+    [selectorVisible, setSelectorVisible] = useState(false);
+  const openSelector = (type: Exclude<typeof selector, null>) => {
+    setSelector(type);
+    setSelectorVisible(true);
+  };
+  const closeSelector = () => setSelectorVisible(false);
   const address = useMemo(
     () => parseAddress(draft.address || ""),
     [draft.address],
@@ -773,10 +768,12 @@ export function PersonalDetailsScreen() {
                       { month: "long", timeZone: "UTC" },
                     ).format(new Date(Date.UTC(2020, i, 1))),
                   }))
-                : Array.from({ length: 125 }, (_, i) => ({
-                    value: String(new Date().getUTCFullYear() - i),
-                    label: String(new Date().getUTCFullYear() - i),
-                  }));
+                : selector === "year"
+                  ? Array.from({ length: 125 }, (_, i) => ({
+                      value: String(new Date().getUTCFullYear() - i),
+                      label: String(new Date().getUTCFullYear() - i),
+                    }))
+                  : [];
   const selected =
     selector === "phone"
       ? draft.phoneCountryCode || ""
@@ -790,7 +787,9 @@ export function PersonalDetailsScreen() {
               ? date?.[3] || ""
               : selector === "month"
                 ? date?.[2] || ""
-                : date?.[1] || "";
+                : selector === "year"
+                  ? date?.[1] || ""
+                  : "";
   return (
     <SafeAreaView
       edges={["top", "bottom"]}
@@ -951,7 +950,7 @@ export function PersonalDetailsScreen() {
                   localLabel={c.localPhone}
                   onOpenCountry={() => {
                     Keyboard.dismiss();
-                    setSelector("phone");
+                    openSelector("phone");
                   }}
                   onChangeNumber={(v) => patch("phoneNumber", v)}
                 />
@@ -962,7 +961,7 @@ export function PersonalDetailsScreen() {
                       hideLabel
                       label={c.day}
                       value={date?.[3] || c.day}
-                      onPress={() => setSelector("day")}
+                      onPress={() => openSelector("day")}
                     />
                   </View>
                   <View style={s.monthControl}>
@@ -970,7 +969,7 @@ export function PersonalDetailsScreen() {
                       hideLabel
                       label={c.month}
                       value={date?.[2] || c.month}
-                      onPress={() => setSelector("month")}
+                      onPress={() => openSelector("month")}
                     />
                   </View>
                   <View style={s.yearControl}>
@@ -978,21 +977,21 @@ export function PersonalDetailsScreen() {
                       hideLabel
                       label={c.year}
                       value={date?.[1] || c.year}
-                      onPress={() => setSelector("year")}
+                      onPress={() => openSelector("year")}
                     />
                   </View>
                 </View>
                 <SelectButton
                   label={c.gender}
                   value={draft.gender || c.select}
-                  onPress={() => setSelector("gender")}
+                  onPress={() => openSelector("gender")}
                 />
                 <SelectButton
                   label={c.nationality}
                   value={draft.nationality || c.select}
                   onPress={() => {
                     Keyboard.dismiss();
-                    setSelector("nationality");
+                    openSelector("nationality");
                   }}
                 />
                 <View
@@ -1015,7 +1014,7 @@ export function PersonalDetailsScreen() {
                   }
                   onPress={() => {
                     Keyboard.dismiss();
-                    setSelector("addressCountry");
+                    openSelector("addressCountry");
                   }}
                 />
                 <Field
@@ -1085,6 +1084,7 @@ export function PersonalDetailsScreen() {
       )}
       <Selector
         visible={
+          selectorVisible &&
           !!selector &&
           selector !== "phone" &&
           selector !== "nationality" &&
@@ -1111,7 +1111,7 @@ export function PersonalDetailsScreen() {
           selector === "nationality" ||
           selector === "addressCountry"
         }
-        onClose={() => setSelector(null)}
+        onClose={closeSelector}
         onSelect={(value) => {
           if (selector === "phone") patch("phoneCountryCode", value);
           else if (selector === "gender") patch("gender", value);
@@ -1126,12 +1126,14 @@ export function PersonalDetailsScreen() {
             else patch("dateOfBirth", `${y}-${m}-${d}`);
           }
         }}
+        onDismiss={() => setSelector(null)}
       />
       <CountrySelector
         visible={
-          selector === "phone" ||
-          selector === "nationality" ||
-          selector === "addressCountry"
+          selectorVisible &&
+          (selector === "phone" ||
+            selector === "nationality" ||
+            selector === "addressCountry")
         }
         selectorType={selector}
         kind={
@@ -1150,14 +1152,15 @@ export function PersonalDetailsScreen() {
         }
         options={selectOptions}
         selected={selected}
-        onClose={() => setSelector(null)}
+        onClose={closeSelector}
         onSave={(value) => {
           if (selector === "phone") patch("phoneCountryCode", value);
           else if (selector === "nationality") patch("nationality", value);
           else if (selector === "addressCountry")
             patchAddress("countryCode", value);
-          setSelector(null);
+          closeSelector();
         }}
+        onDismiss={() => setSelector(null)}
       />
     </SafeAreaView>
   );

@@ -109,7 +109,11 @@ test("country selector is full-screen, keyboard-aware, and only results virtuali
   assert.match(selector, /keyExtractor=\{\(item\) => item\.value\}/);
   assert.match(selector, /initialNumToRender=\{12\}/);
   assert.doesNotMatch(selector, /shown\.map\(/);
-  assert.match(selector, /!keyboardVisible \? \(/);
+  assert.match(selector, /keyboardDismissMode="interactive"/);
+  assert.doesNotMatch(selector, /keyboardVisible/);
+  assert.ok(
+    selector.indexOf("s.countryAction") > selector.indexOf("<FlatList"),
+  );
 });
 test("country search accessibility hints match the available filters", () => {
   const selector = screen.slice(
@@ -127,10 +131,37 @@ test("all country-selector dismissal paths discard the draft and keyboard", () =
     screen.indexOf("function CountryFlag("),
   );
   assert.match(selector, /onRequestClose=\{cancel\}/);
-  assert.match(selector, /onDismiss=\{cancel\}/);
+  assert.match(selector, /onDismiss=\{onDismiss\}/);
   assert.ok((selector.match(/onPress=\{cancel\}/g) ?? []).length >= 2);
   assert.match(selector, /setDraftSelection\(selected\);[\s\S]*?onClose\(\)/);
   assert.match(selector, /Keyboard\.dismiss\(\)/);
+});
+test("picker mode and dataset survive the native close animation", () => {
+  assert.match(
+    screen,
+    /\[selectorVisible, setSelectorVisible\] = useState\(false\)/,
+  );
+  assert.match(
+    screen,
+    /const closeSelector = \(\) => setSelectorVisible\(false\)/,
+  );
+  assert.match(screen, /onDismiss=\{\(\) => setSelector\(null\)\}/);
+  assert.match(
+    screen,
+    /selector === "year"[\s\S]*?Array\.from\(\{ length: 125 \}/,
+  );
+  assert.match(screen, /selector === "year"[\s\S]*?: \[\];/);
+});
+test("dial codes are exclusive to the phone-country selector", () => {
+  const selector = screen.slice(
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
+  );
+  assert.match(selector, /kind === "phone" && phoneOption\?\.dialCode \? \(/);
+  assert.match(
+    selector,
+    /accessibilityLabel=\{`\$\{item\.label\}\$\{kind === "phone"/,
+  );
 });
 test("country selection has an explicit committed-versus-draft lifecycle", () => {
   const selector = screen.slice(
@@ -152,10 +183,10 @@ test("only country controls use the full-screen selector", () => {
   );
   assert.match(
     screen,
-    /selector === "phone" \|\|\s*selector === "nationality" \|\|\s*selector === "addressCountry"/,
+    /selectorVisible &&[\s\S]*?selector === "phone" \|\|\s*selector === "nationality" \|\|\s*selector === "addressCountry"/,
   );
-  assert.match(screen, /onPress=\{\(\) => setSelector\("day"\)\}/);
-  assert.match(screen, /onPress=\{\(\) => setSelector\("gender"\)\}/);
+  assert.match(screen, /onPress=\{\(\) => openSelector\("day"\)\}/);
+  assert.match(screen, /onPress=\{\(\) => openSelector\("gender"\)\}/);
 });
 test("opening Address does not programmatically focus its fields", () => {
   const addressSection = screen.slice(
