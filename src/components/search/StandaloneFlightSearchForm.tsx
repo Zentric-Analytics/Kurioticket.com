@@ -9,7 +9,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -21,12 +20,26 @@ import {
   Minus,
   Plane,
   Plus,
-  X,
+  UserRound,
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
+import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
+import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
+import {
+  DesktopFlightPopover,
+  FlightAirportFieldControl,
+  flightDesktopPopoverSelector,
+  flightSearchFieldLabelClassName,
+  flightSearchFieldShellClassName,
+  flightSearchFieldValueButtonClassName,
+} from "@/components/search/FlightSearchFieldPrimitives";
+import type { FlightSearchLeg } from "@/lib/types";
+import { appendFlightLegParams, parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
 import {
   formatFlightsDateSummary,
   formatFlightsMonthHeading,
@@ -52,7 +65,8 @@ import {
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
-type TripType = "round-trip" | "one-way";
+type TripType = "round-trip" | "one-way" | "multi-city";
+type MobileTripTypeOption = TripType;
 type CabinClass = "economy" | "business" | "first";
 type AirportField = "origin" | "destination";
 type MobilePickerField = AirportField | "dates" | "travelers";
@@ -78,15 +92,10 @@ type MonthCell = {
   isCurrentMonth: boolean;
 };
 
-const searchFieldShellClassName =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-e sm:border-slate-200 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-[#004BB8]/20 sm:focus-within:border-[#004BB8] sm:focus-within:bg-[#004BB8]/8 sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-[#004BB8]/20 lg:flex lg:flex-col lg:justify-center";
-const searchFieldLabelClassName =
-  "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
-const searchFieldValueButtonClassName =
-  "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
-const mobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]";
-const desktopPopoverSelector = "[data-standalone-flight-desktop-popover]";
+const searchFieldShellClassName = flightSearchFieldShellClassName;
+const searchFieldLabelClassName = flightSearchFieldLabelClassName;
+const searchFieldValueButtonClassName = flightSearchFieldValueButtonClassName;
+const desktopPopoverSelector = flightDesktopPopoverSelector;
 
 const normalizeSuggestionText = (value: string) =>
   value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
@@ -173,11 +182,13 @@ const buildMonthCells = (monthDate: Date) => {
 type StandaloneFlightSearchFormProps = {
   localizeCalendarLabels?: boolean;
   mobileHeroCard?: boolean;
+  presentation?: "default" | "main-flight-landing";
 };
 
 export function StandaloneFlightSearchForm({
   localizeCalendarLabels = true,
   mobileHeroCard = false,
+  presentation = "default",
 }: StandaloneFlightSearchFormProps = {}) {
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
@@ -221,23 +232,31 @@ export function StandaloneFlightSearchForm({
   const router = useRouter();
   const { status: sessionStatus } = useSession();
   const { start: startRouteProgress } = useRouteProgress();
+  const useMainFlightLandingMobilePresentation =
+    presentation === "main-flight-landing";
+  const defaultTripTypeOptions = [
+    ["round-trip", t("roundTrip")],
+    ["one-way", t("oneWay")],
+  ] as const;
 
   const standaloneFormCardRef = useRef<HTMLElement>(null);
   const originWrapRef = useRef<HTMLDivElement>(null);
   const originInputRef = useRef<HTMLInputElement>(null);
   const originMobileLauncherRef = useRef<HTMLButtonElement>(null);
-  const originMobilePickerInputRef = useRef<HTMLInputElement>(null);
   const destinationWrapRef = useRef<HTMLDivElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const destinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
-  const destinationMobilePickerInputRef = useRef<HTMLInputElement>(null);
   const dateWrapRef = useRef<HTMLDivElement>(null);
   const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const travelersWrapRef = useRef<HTMLDivElement>(null);
   const travelersLauncherRef = useRef<HTMLButtonElement>(null);
   const travelPreferencesRequestedRef = useRef(false);
 
-  const [tripType, setTripType] = useState<TripType>("round-trip");
+  const [tripType, setTripType] = useState<TripType>(() => {
+    if (typeof window === "undefined") return "round-trip";
+    const value = new URLSearchParams(window.location.search).get("tripType");
+    return value === "one-way" || value === "multi-city" ? value : "round-trip";
+  });
   const [originState, setOriginState] = useState<OriginFieldState>(() => {
     if (typeof window === "undefined") {
       return {
@@ -273,6 +292,29 @@ export function StandaloneFlightSearchForm({
   const [countryHint, setCountryHint] = useState("");
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
+  const [multiCityLegs, setMultiCityLegs] = useState<FlightSearchLeg[]>(() => {
+    if (typeof window !== "undefined") {
+      const restored = parseFlightLegParams(new URLSearchParams(window.location.search));
+      if (restored.length >= 2) return restored;
+    }
+    return [
+      { origin: "", destination: "", departureDate: "" },
+      { origin: "", destination: "", departureDate: "" },
+    ];
+  });
+  const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
+  /* URL restoration intentionally synchronizes client state after the server
+     render, where the browser query string is not available. */
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tripType") !== "multi-city") return;
+    const restored = parseFlightLegParams(params);
+    if (restored.length < 2) return;
+    setTripType("multi-city");
+    setMultiCityLegs(restored);
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
   const [datesOpen, setDatesOpen] = useState(false);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const now = new Date();
@@ -319,12 +361,12 @@ export function StandaloneFlightSearchForm({
       isValidFlightDate(departureDate) &&
       returnDate >= departureDate);
 
-  const isSearchDisabled =
-    isSubmitting ||
-    !origin.trim() ||
-    !destination.trim() ||
-    !isValidFlightDate(departureDate) ||
-    !isReturnRangeValid;
+  const validMultiCity = multiCityAirportsValid && multiCityLegs.length >= 2 && multiCityLegs.every((leg, index) =>
+    /^[A-Z0-9]{3}$/.test(leg.origin) && /^[A-Z0-9]{3}$/.test(leg.destination) && leg.origin !== leg.destination && isValidFlightDate(leg.departureDate) && (index === 0 || leg.departureDate >= multiCityLegs[index - 1].departureDate),
+  );
+  const isSearchDisabled = isSubmitting || (tripType === "multi-city"
+    ? !validMultiCity
+    : !origin.trim() || !destination.trim() || !isValidFlightDate(departureDate) || !isReturnRangeValid);
 
   const dateSummary = useMemo(() => {
     const departureSummary = departureParsed
@@ -349,15 +391,23 @@ export function StandaloneFlightSearchForm({
   const travelerCount = adultCount + childCount + infantCount;
   const travelerSummary = useMemo(() => {
     const isJapanese = locale.toLowerCase().startsWith("ja");
+    const isEnglish = locale.toLowerCase().startsWith("en");
     const listSeparator = isJapanese ? "、" : locale === "zh-cn" ? "，" : ", ";
     const formatTravelerPart = (
       count: number,
       singularLabel: string,
       pluralLabel: string,
-    ) =>
-      isJapanese
+    ) => {
+      const label = count === 1 ? singularLabel : pluralLabel;
+      const presentedLabel =
+        isEnglish && label
+          ? `${label.charAt(0).toLocaleUpperCase(locale)}${label.slice(1)}`
+          : label;
+
+      return isJapanese
         ? `${singularLabel}${count}名`
-        : `${count} ${count === 1 ? singularLabel : pluralLabel}`;
+        : `${count} ${presentedLabel}`;
+    };
     const parts: string[] = [];
     if (adultCount > 0)
       parts.push(
@@ -532,27 +582,6 @@ export function StandaloneFlightSearchForm({
     setLoading: setDestinationLoading,
     setSuggestions: setDestinationSuggestions,
   });
-
-  useEffect(() => {
-    if (
-      (activeMobilePicker !== "origin" &&
-        activeMobilePicker !== "destination") ||
-      typeof window === "undefined"
-    )
-      return;
-
-    const focusId = window.setTimeout(() => {
-      const inputRef =
-        activeMobilePicker === "origin"
-          ? originMobilePickerInputRef
-          : destinationMobilePickerInputRef;
-
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 80);
-
-    return () => window.clearTimeout(focusId);
-  }, [activeMobilePicker]);
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -812,7 +841,9 @@ export function StandaloneFlightSearchForm({
       setOriginOpen(false);
       setOriginHighlight(0);
       if (!activeMobilePicker)
-        window.requestAnimationFrame(() => originInputRef.current?.focus());
+        window.requestAnimationFrame(() =>
+          originInputRef.current?.focus({ preventScroll: true }),
+        );
     } else {
       setDestination("");
       setDestinationCode("");
@@ -822,7 +853,7 @@ export function StandaloneFlightSearchForm({
       setDestinationHighlight(0);
       if (!activeMobilePicker)
         window.requestAnimationFrame(() =>
-          destinationInputRef.current?.focus(),
+          destinationInputRef.current?.focus({ preventScroll: true }),
         );
     }
   };
@@ -915,8 +946,7 @@ export function StandaloneFlightSearchForm({
 
     if (
       isSearchDisabled ||
-      !parsedDeparture ||
-      isBeforeToday(parsedDeparture) ||
+      (tripType !== "multi-city" && (!parsedDeparture || isBeforeToday(parsedDeparture))) ||
       hasInvalidReturn
     )
       return;
@@ -935,11 +965,14 @@ export function StandaloneFlightSearchForm({
     );
     const normalizedTravelers =
       normalizedAdults + normalizedChildren + normalizedInfants;
+    const authoritativeLegs = tripType === "multi-city" ? multiCityLegs : [];
+    const firstLeg = authoritativeLegs[0];
+    const finalLeg = authoritativeLegs.at(-1);
     const params = new URLSearchParams({
       tripType,
-      origin: originCode || origin.trim(),
-      destination: destinationCode || destination.trim(),
-      departureDate,
+      origin: tripType === "multi-city" ? firstLeg?.origin ?? "" : originCode || origin.trim(),
+      destination: tripType === "multi-city" ? finalLeg?.destination ?? "" : destinationCode || destination.trim(),
+      departureDate: tripType === "multi-city" ? firstLeg?.departureDate ?? "" : departureDate,
       adults: String(normalizedAdults),
       children: String(normalizedChildren),
       infants: String(normalizedInfants),
@@ -948,6 +981,7 @@ export function StandaloneFlightSearchForm({
     });
 
     if (tripType === "round-trip") params.set("returnDate", returnDate);
+    if (tripType === "multi-city") appendFlightLegParams(params, authoritativeLegs);
 
     setIsSubmitting(true);
     startRouteProgress();
@@ -960,11 +994,7 @@ export function StandaloneFlightSearchForm({
     title,
     inputId,
     value,
-    suggestions,
-    isLoading,
     launcherRef,
-    inputRef,
-    onChange,
     onClear,
     onSelect,
     onClose,
@@ -974,144 +1004,25 @@ export function StandaloneFlightSearchForm({
     title: string;
     inputId: string;
     value: string;
-    suggestions: AirportOption[];
-    isLoading: boolean;
     launcherRef: React.RefObject<HTMLButtonElement | null>;
-    inputRef: React.RefObject<HTMLInputElement | null>;
-    onChange: (value: string) => void;
     onClear: () => void;
     onSelect: (option: AirportOption) => void;
     onClose: () => void;
   }) => {
-    if (!open) return null;
-
-    const titleId = `${inputId}-title`;
-    const query = value.trim();
-    const clearLabel =
-      field === "origin"
-        ? airportPickerLabels.clearOrigin
-        : airportPickerLabels.clearDestination;
-    const focusInput = () => {
-      window.requestAnimationFrame(() => inputRef.current?.focus());
-    };
-
     return (
-      <FlightMobilePickerShell
+      <MobileAirportPicker
         open={open}
+        field={field}
         title={title}
-        titleId={titleId}
+        inputId={inputId}
+        value={value}
+        selectedCode={field === "origin" ? originCode : destinationCode}
         launcherRef={launcherRef}
+        locale={locale}
+        labels={airportPickerLabels}
+        onCommit={(option) => (option ? onSelect(option) : onClear())}
         onClose={onClose}
-        contentClassName="bg-slate-50 px-4 py-5"
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                onClear();
-                focusInput();
-              }}
-              className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-            >
-              {airportPickerLabels.clear}
-            </button>
-            <button
-              type="button"
-              onClick={requestClose}
-              className={mobileDoneButtonClassName}
-            >
-              {airportPickerLabels.done}
-            </button>
-          </div>
-        )}
-      >
-        {(requestClose) => (
-          <div className="mx-auto w-full max-w-xl space-y-5">
-            <div className="space-y-2">
-              <label
-                className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500"
-                htmlFor={inputId}
-              >
-                {airportPickerLabels.searchAirportsAndCities}
-              </label>
-              <div className="relative">
-                <input
-                  ref={inputRef}
-                  id={inputId}
-                  type="text"
-                  value={value}
-                  onChange={(event) => onChange(event.target.value)}
-                  placeholder={airportPickerLabels.searchAirportsOrCities}
-                  autoComplete="off"
-                  className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/20"
-                />
-                {value.trim() ? (
-                  <button
-                    type="button"
-                    aria-label={clearLabel}
-                    onClick={() => {
-                      onClear();
-                      focusInput();
-                    }}
-                    className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              {query.length < 2 ? (
-                <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                  {airportPickerLabels.startTypingCityOrAirport}
-                </p>
-              ) : isLoading ? (
-                <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                  {airportPickerLabels.searchingAirportsAndCities}
-                </p>
-              ) : suggestions.length ? (
-                suggestions.map((option) => (
-                  <button
-                    key={`${option.code}-${option.airport}-${inputId}`}
-                    type="button"
-                    onClick={() => {
-                      onSelect(option);
-                      requestClose();
-                    }}
-                    className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
-                  >
-                    <span
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"
-                      aria-hidden="true"
-                    >
-                      <Plane className="h-4 w-4" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
-                        {getLocalizedCityName(option.city, locale)}
-                      </span>
-                      <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
-                        {option.airport}
-                        {option.country
-                          ? ` · ${getLocalizedAirportCountryName(option, locale)}`
-                          : ""}
-                      </span>
-                    </span>
-                    <span className="shrink-0 ps-2 text-end text-sm font-extrabold tracking-[0.12em] text-slate-700">
-                      {option.code}
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                  {airportPickerLabels.noMatchingAirportsOrCities}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-      </FlightMobilePickerShell>
+      />
     );
   };
 
@@ -1134,7 +1045,9 @@ export function StandaloneFlightSearchForm({
         anchorRef={anchorRef}
         desiredWidth={390}
         align="start"
-        offset={4}
+        placement="above"
+        offset={10}
+        maxHeight={300}
         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.14)] ring-1 ring-slate-950/[0.02]"
       >
         {loading ? (
@@ -1142,7 +1055,7 @@ export function StandaloneFlightSearchForm({
             {t("searchingAirportsAndCities")}
           </p>
         ) : suggestions.length ? (
-          <div className="max-h-[min(44vh,320px)] overflow-y-auto overscroll-contain py-1">
+          <div className="py-1">
             {suggestions.map((option, index) => (
               <button
                 key={`${field}-${option.code}-${option.airport}`}
@@ -1278,12 +1191,6 @@ export function StandaloneFlightSearchForm({
                   )}
                 >
                   {day.getDate()}
-                  {isToday && !isDeparture && !isReturn ? (
-                    <span
-                      className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]"
-                      aria-hidden="true"
-                    />
-                  ) : null}
                 </button>
               );
             })}
@@ -1527,28 +1434,72 @@ export function StandaloneFlightSearchForm({
     <section
       ref={standaloneFormCardRef}
       className={cn(
-        "relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_14px_34px_rgba(15,23,42,0.08)]",
+        "relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_16px_38px_rgba(15,23,42,0.10)] sm:backdrop-blur-none",
         mobileHeroCard &&
           "border-white/85 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] ring-slate-950/[0.06] sm:p-4",
       )}
     >
       <form onSubmit={onSubmit} className="relative space-y-3 sm:space-y-3">
+        {useMainFlightLandingMobilePresentation ? (
+          <div
+            className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3 py-2 shadow-sm ring-1 ring-[#004BB8]/10 sm:hidden"
+            data-testid="main-flight-landing-identity"
+          >
+            <Plane
+              aria-hidden="true"
+              className="h-5 w-5 shrink-0 text-[#004BB8]"
+              strokeWidth={2.1}
+            />
+            <h2 className="text-[16px] font-semibold text-navy">
+              {t("flights") || "Flights"}
+            </h2>
+          </div>
+        ) : null}
+
+        {!useMainFlightLandingMobilePresentation ? (
+          <div
+            className="hidden w-fit items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3 py-2 shadow-sm ring-1 ring-[#004BB8]/10 sm:flex"
+            data-testid="desktop-flight-landing-identity"
+          >
+            <Plane
+              aria-hidden="true"
+              className="h-5 w-5 shrink-0 text-[#004BB8]"
+              strokeWidth={2.1}
+            />
+            <h2 className="text-[16px] font-semibold text-navy">
+              {t("flights") || "Flights"}
+            </h2>
+          </div>
+        ) : null}
+
         <div
           role="radiogroup"
           aria-label={t("tripType") || "Trip type"}
-          className="inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5"
+          className={cn(
+            "items-center rounded-lg px-0.5 py-1 sm:inline-flex sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5",
+            useMainFlightLandingMobilePresentation
+              ? "grid h-11 grid-cols-3 gap-0 py-0 sm:h-auto"
+              : "inline-flex gap-3",
+          )}
+          data-testid={
+            useMainFlightLandingMobilePresentation
+              ? "main-flight-landing-trip-selector"
+              : undefined
+          }
         >
-          {[
-            ["round-trip", t("roundTrip")],
-            ["one-way", t("oneWay")],
-          ].map(([value, label]) => (
+          {(
+            [
+              ...defaultTripTypeOptions,
+              ["multi-city", "Multi-city"] as const,
+            ] satisfies ReadonlyArray<readonly [MobileTripTypeOption, string]>
+          ).map(([value, localizedLabel]) => (
             <button
               key={value}
               type="button"
               role="radio"
               aria-checked={tripType === value}
               onClick={() => {
-                const nextTripType = value as TripType;
+                const nextTripType = value;
                 setTripType(nextTripType);
                 if (nextTripType === "one-way") setReturnDate("");
               }}
@@ -1563,15 +1514,22 @@ export function StandaloneFlightSearchForm({
                 }
 
                 event.preventDefault();
-                const nextTripType =
-                  value === "round-trip" ? "one-way" : "round-trip";
+                const options: TripType[] = ["round-trip", "one-way", "multi-city"];
+                const currentIndex = options.indexOf(value);
+                const offset = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+                const nextTripType = options[(currentIndex + offset + options.length) % options.length];
                 setTripType(nextTripType);
                 if (nextTripType === "one-way") setReturnDate("");
               }}
               className={cn(
-                "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold",
+                "focus-ring group inline-flex rounded-lg py-1 font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:text-sm sm:font-bold",
+                useMainFlightLandingMobilePresentation
+                  ? "min-h-11 min-w-0 items-center justify-center gap-1 whitespace-nowrap bg-transparent px-0.5 text-[11px] font-medium text-slate-950 hover:bg-transparent hover:text-slate-950 max-[359px]:gap-0.5 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-950 sm:min-h-9 sm:hover:bg-slate-100/70 sm:hover:text-slate-950"
+                  : "min-h-8 items-center gap-2 px-1.5 text-sm",
                 tripType === value &&
-                  "bg-[#004BB8]/8 text-[#004BB8] ring-1 ring-[#004BB8]/10 sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:shadow-none",
+                  (useMainFlightLandingMobilePresentation
+                    ? "sm:bg-[#004BB8]/8 sm:text-[#004BB8] sm:ring-1 sm:ring-[#004BB8]/10 sm:shadow-none"
+                    : "bg-transparent text-slate-950 ring-0 shadow-none hover:bg-transparent hover:text-slate-950"),
               )}
             >
               <span
@@ -1585,24 +1543,38 @@ export function StandaloneFlightSearchForm({
               >
                 <span
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full bg-[#004BB8] transition-opacity",
+                    "h-[5px] w-[5px] rounded-full bg-[#004BB8] transition-opacity",
                     tripType === value ? "opacity-100" : "opacity-0",
                   )}
                 />
               </span>
-              <span>{label}</span>
+              <span>
+                {locale.toLowerCase().startsWith("en")
+                  ? value === "round-trip"
+                    ? "Round trip"
+                    : value === "one-way"
+                      ? "One way-trip"
+                      : "Multi-city trip"
+                  : localizedLabel}
+              </span>
             </button>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px] lg:items-stretch lg:gap-0">
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent">
-            <AirportFieldControl
+        {tripType === "multi-city" ? <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(todayLocal)} onAirportValidityChange={setMultiCityAirportsValid} /> : null}
+
+        <div className={cn("grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:items-stretch lg:gap-0", tripType === "multi-city" ? "mt-3 sm:grid-cols-[minmax(164px,1fr)_136px]" : "lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]")}>
+          <div className={cn("grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent", tripType === "multi-city" && "hidden")}>
+            <FlightAirportFieldControl
               ref={originWrapRef}
               inputRef={originInputRef}
               label={t("origin")}
               value={origin}
               placeholder={t("cityOrAirport")}
+              mobilePlaceholder={t("cityOrAirport")}
+              useMainFlightLandingMobilePresentation={
+                useMainFlightLandingMobilePresentation
+              }
               open={originOpen || activeMobilePicker === "origin"}
               onMobileOpen={() => setActiveMobilePicker("origin")}
               onDesktopFocus={openOriginDesktopPopover}
@@ -1617,14 +1589,12 @@ export function StandaloneFlightSearchForm({
                   setOriginLoading(false);
                 }
               }}
-              onClear={() => clearAirport("origin")}
               onKeyDown={(event) => onAirportKeyNav(event, "origin")}
               mobileLauncherRef={originMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("origin")}
               className={cn(
-                "lg:min-h-[58px] lg:rounded-s-2xl lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-[#004BB8]/8 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20",
-                originOpen &&
-                  "sm:z-20 lg:bg-[#004BB8]/8 lg:ring-1 lg:ring-inset lg:ring-[#004BB8]/20",
+                "lg:min-h-[58px] lg:rounded-s-2xl lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
+                originOpen && "sm:z-20",
               )}
             />
 
@@ -1641,12 +1611,16 @@ export function StandaloneFlightSearchForm({
               </button>
             </div>
 
-            <AirportFieldControl
+            <FlightAirportFieldControl
               ref={destinationWrapRef}
               inputRef={destinationInputRef}
               label={t("destination")}
               value={destination}
               placeholder={t("cityOrAirport")}
+              mobilePlaceholder={t("flightSearchDestinationPlaceholderShort")}
+              useMainFlightLandingMobilePresentation={
+                useMainFlightLandingMobilePresentation
+              }
               open={destinationOpen || activeMobilePicker === "destination"}
               onMobileOpen={() => setActiveMobilePicker("destination")}
               onDesktopFocus={openDestinationDesktopPopover}
@@ -1660,21 +1634,19 @@ export function StandaloneFlightSearchForm({
                   setDestinationLoading(false);
                 }
               }}
-              onClear={() => clearAirport("destination")}
               onKeyDown={(event) => onAirportKeyNav(event, "destination")}
               mobileLauncherRef={destinationMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("destination")}
               className={cn(
-                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-[#004BB8]/8 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-[#004BB8]/20",
-                destinationOpen &&
-                  "sm:z-20 lg:bg-[#004BB8]/8 lg:ring-1 lg:ring-inset lg:ring-[#004BB8]/20",
+                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
+                destinationOpen && "sm:z-20",
               )}
             />
           </div>
 
           <div
             ref={dateWrapRef}
-            className={cn(searchFieldShellClassName, datesOpen && "sm:z-20")}
+            className={cn(searchFieldShellClassName, datesOpen && "sm:z-20", tripType === "multi-city" && "!hidden")}
           >
             <label className={searchFieldLabelClassName}>
               {t("travelDates")}
@@ -1703,11 +1675,13 @@ export function StandaloneFlightSearchForm({
               }}
               className={searchFieldValueButtonClassName}
             >
-              <span>{dateSummary}</span>
-              <Calendar
-                className="h-4 w-4 shrink-0 text-slate-500"
-                aria-hidden="true"
-              />
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                <Calendar
+                  className="h-4 w-4 shrink-0 text-slate-500"
+                  aria-hidden="true"
+                />
+                <span className="truncate">{dateSummary}</span>
+              </span>
             </button>
             {datesOpen ? (
               <>
@@ -1778,7 +1752,13 @@ export function StandaloneFlightSearchForm({
               }}
               className={searchFieldValueButtonClassName}
             >
-              <span className="truncate">{travelerSummary}</span>
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                <UserRound
+                  className="h-4 w-4 shrink-0 text-slate-500"
+                  aria-hidden="true"
+                />
+                <span className="truncate">{travelerSummary}</span>
+              </span>
               <ChevronDown
                 className={cn(
                   "h-4 w-4 shrink-0 text-slate-500 transition-transform",
@@ -1831,63 +1811,98 @@ export function StandaloneFlightSearchForm({
         </div>
 
         {activeMobilePicker === "dates" ? (
-          <FlightMobilePickerShell
+          <MobileDatePickerDialog
             open={true}
             title={t("chooseTravelDates")}
             titleId="standalone-flight-mobile-dates-title"
             launcherRef={datesMobileLauncherRef}
+            startDate={departureDate}
+            endDate={returnDate}
+            rangeRequired={tripType !== "one-way"}
+            locale={calendarLocale}
+            weekdays={weekdays}
+            labels={{
+              selectDates: t("carsResults.selectDates") || "Select dates",
+              start: t("mobileDatePicker.start") || "Start",
+              end: t("mobileDatePicker.end") || "End",
+              done: t("done") || "Done",
+              selectDatePrefix: t("selectDateAriaPrefix") || "Select",
+            }}
+            isDateDisabled={isBeforeToday}
+            onCommit={(startDate, endDate) => {
+              setDepartureDate(startDate);
+              setReturnDate(endDate);
+            }}
             onClose={() => setActiveMobilePicker(null)}
-            contentClassName="px-4 py-4"
-            footer={(requestClose) => (
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDepartureDate("");
-                    setReturnDate("");
-                  }}
-                  className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-                >
-                  {t("clear")}
-                </button>
-                <button
-                  type="button"
-                  onClick={requestClose}
-                  className={mobileDoneButtonClassName}
-                >
-                  {t("done")}
-                </button>
-              </div>
-            )}
-          >
-            {renderDateCalendar(true)}
-          </FlightMobilePickerShell>
+          />
         ) : null}
 
         {activeMobilePicker === "travelers" ? (
           <FlightMobilePickerShell
             open={true}
-            title={t("passengers") || t("travelers") || "Travelers"}
+            title={t("mobileTravelerCabin.title") || "Travelers & Cabin"}
             titleId="standalone-flight-mobile-travelers-title"
             launcherRef={travelersLauncherRef}
             onClose={closeTravelersMobilePicker}
-            contentClassName="px-4 py-5"
+            contentClassName="bg-[#fcfdfe] px-4 py-6"
+            headerVariant="close"
+            pickerMarker="traveler-cabin"
             footer={(requestClose) => (
-              <div className="flex justify-end">
+              <div>
                 <button
                   type="button"
                   onClick={() => {
                     applyTravelersDraft(false);
                     requestClose();
                   }}
-                  className={cn(mobileDoneButtonClassName, "px-6 py-3")}
+                  className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white"
                 >
                   {t("done")}
                 </button>
               </div>
             )}
           >
-            {renderTravelersPicker()}
+            <MobileTravelerCabinPicker
+              adults={draftAdultCount}
+              // Traveler count is a domain prop, not React's nested-content API.
+              // eslint-disable-next-line react/no-children-prop
+              children={draftChildCount}
+              infants={draftInfantCount}
+              cabinClass={draftCabinClass}
+              strings={{
+                travelers: t("travelers") || "Travelers",
+                adults: t("adults") || "Adults",
+                adultDescription:
+                  t("mobileTravelerCabin.adultDescription") ||
+                  "18 years and above",
+                children: t("children") || "Children",
+                childDescription:
+                  t("mobileTravelerCabin.childDescription") || "2 to 17 years",
+                infants: t("infants") || "Infants",
+                infantDescription:
+                  t("mobileTravelerCabin.infantDescription") || "Under 2 years",
+                cabinClass: t("cabinClass") || "Cabin class",
+                economy: t("economy") || "Economy",
+                business: t("business") || "Business",
+                first: t("first") || "First",
+                tip: t("mobileTravelerCabin.tip") || "Tip",
+                baggageTip:
+                  t("mobileTravelerCabin.baggageTip") ||
+                  "Baggage allowance may vary by airline. Check details on the provider page.",
+                decrease: (label) =>
+                  (
+                    t("deals.decreaseCountAria") || "Decrease {{label}}"
+                  ).replace("{{label}}", label),
+                increase: (label) =>
+                  (
+                    t("deals.increaseCountAria") || "Increase {{label}}"
+                  ).replace("{{label}}", label),
+              }}
+              onAdultsChange={setDraftAdultCount}
+              onChildrenChange={setDraftChildCount}
+              onInfantsChange={setDraftInfantCount}
+              onCabinClassChange={setDraftCabinClass}
+            />
           </FlightMobilePickerShell>
         ) : null}
 
@@ -1897,20 +1912,7 @@ export function StandaloneFlightSearchForm({
           title: t("chooseOrigin"),
           inputId: "standalone-flight-origin-mobile-search",
           value: origin,
-          suggestions: visibleOriginSuggestions,
-          isLoading: originQuery.length >= 2 && originLoading,
           launcherRef: originMobileLauncherRef,
-          inputRef: originMobilePickerInputRef,
-          onChange: (nextValue) => {
-            setOriginState((current) =>
-              markOriginManualInput(current, nextValue),
-            );
-            setOriginHighlight(0);
-            if (nextValue.trim().length < 2) {
-              setOriginSuggestions([]);
-              setOriginLoading(false);
-            }
-          },
           onClear: () => clearAirport("origin"),
           onSelect: (option) => selectAirport("origin", option),
           onClose: () => setActiveMobilePicker(null),
@@ -1921,212 +1923,13 @@ export function StandaloneFlightSearchForm({
           title: t("chooseDestination"),
           inputId: "standalone-flight-destination-mobile-search",
           value: destination,
-          suggestions: visibleDestinationSuggestions,
-          isLoading: destinationQuery.length >= 2 && destinationLoading,
           launcherRef: destinationMobileLauncherRef,
-          inputRef: destinationMobilePickerInputRef,
-          onChange: (nextValue) => {
-            setDestination(nextValue);
-            setDestinationCode("");
-            setDestinationHighlight(0);
-            if (nextValue.trim().length < 2) {
-              setDestinationSuggestions([]);
-              setDestinationLoading(false);
-            }
-          },
           onClear: () => clearAirport("destination"),
           onSelect: (option) => selectAirport("destination", option),
           onClose: () => setActiveMobilePicker(null),
         })}
       </form>
     </section>
-  );
-}
-
-type AirportFieldControlProps = {
-  label: string;
-  value: string;
-  placeholder: string;
-  open: boolean;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-  mobileLauncherRef: React.RefObject<HTMLButtonElement | null>;
-  desktopSuggestions: React.ReactNode;
-  className?: string;
-  onMobileOpen: () => void;
-  onDesktopFocus: () => void;
-  onChange: (value: string) => void;
-  onClear: () => void;
-  onKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
-};
-
-const AirportFieldControl = React.forwardRef<
-  HTMLDivElement,
-  AirportFieldControlProps
->(function AirportFieldControl(
-  {
-    label,
-    value,
-    placeholder,
-    open,
-    inputRef,
-    mobileLauncherRef,
-    desktopSuggestions,
-    className,
-    onMobileOpen,
-    onDesktopFocus,
-    onChange,
-    onClear,
-    onKeyDown,
-  },
-  ref,
-) {
-  return (
-    <div ref={ref} className={cn(searchFieldShellClassName, className)}>
-      <label className={searchFieldLabelClassName}>{label}</label>
-      <button
-        ref={mobileLauncherRef}
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={onMobileOpen}
-        className={cn(searchFieldValueButtonClassName, "sm:hidden")}
-      >
-        <span className={cn("truncate", !value && "text-slate-400")}>
-          {value || placeholder}
-        </span>
-        <ChevronDown
-          className="h-4 w-4 shrink-0 text-slate-500"
-          aria-hidden="true"
-        />
-      </button>
-      <div className="relative hidden sm:block">
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onFocus={onDesktopFocus}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder={placeholder}
-          autoComplete="off"
-          className="h-7 w-full rounded-none border-0 bg-transparent pe-9 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
-        />
-        {value ? (
-          <button
-            type="button"
-            aria-label={`Clear ${label.toLowerCase()}`}
-            onClick={onClear}
-            className="focus-ring absolute end-0 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-[#004BB8]/8 hover:text-[#004BB8]"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        ) : null}
-      </div>
-      {desktopSuggestions}
-    </div>
-  );
-});
-
-type DesktopFlightPopoverProps = {
-  open: boolean;
-  anchorRef: React.RefObject<HTMLElement | null>;
-  desiredWidth: number;
-  align?: "start" | "end";
-  offset?: number;
-  maxHeight?: number | string;
-  className?: string;
-  contentClassName?: string;
-  children: React.ReactNode;
-};
-
-function DesktopFlightPopover({
-  open,
-  anchorRef,
-  desiredWidth,
-  align = "start",
-  offset = 10,
-  maxHeight,
-  className,
-  contentClassName,
-  children,
-}: DesktopFlightPopoverProps) {
-  const [position, setPosition] = useState<{
-    left: number;
-    top: number;
-    width: number;
-  } | null>(null);
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const desktopMediaQuery = window.matchMedia("(min-width: 640px)");
-    const syncDesktopState = () => setIsDesktop(desktopMediaQuery.matches);
-
-    syncDesktopState();
-    desktopMediaQuery.addEventListener("change", syncDesktopState);
-
-    return () =>
-      desktopMediaQuery.removeEventListener("change", syncDesktopState);
-  }, []);
-
-  useEffect(() => {
-    if (!open || !isDesktop || typeof window === "undefined") {
-      return;
-    }
-
-    const updatePosition = () => {
-      const anchor = anchorRef.current;
-      if (!anchor) {
-        setPosition(null);
-        return;
-      }
-
-      const gutter = 16;
-      const anchorRect = anchor.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const width = Math.min(
-        desiredWidth,
-        Math.max(0, viewportWidth - gutter * 2),
-      );
-      const preferredLeft =
-        align === "end" ? anchorRect.right - width : anchorRect.left;
-      const left = Math.min(
-        Math.max(gutter, preferredLeft),
-        Math.max(gutter, viewportWidth - width - gutter),
-      );
-      const top = Math.max(gutter, anchorRect.bottom + offset);
-
-      setPosition({ left, top, width });
-    };
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [align, anchorRef, desiredWidth, isDesktop, offset, open]);
-
-  if (!open || !isDesktop || !position || typeof document === "undefined")
-    return null;
-
-  return createPortal(
-    <div
-      data-standalone-flight-desktop-popover
-      className={cn("fixed z-[1000]", contentClassName)}
-      style={{
-        left: position.left,
-        top: position.top,
-        width: position.width,
-        maxHeight: typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
-      }}
-    >
-      <div className={cn("bg-white", className)}>{children}</div>
-    </div>,
-    document.body,
   );
 }
 

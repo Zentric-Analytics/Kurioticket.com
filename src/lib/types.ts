@@ -2,8 +2,16 @@ export type TripType = "round-trip" | "one-way" | "multi-city";
 export type CabinClass = "economy" | "premium-economy" | "business" | "first";
 export type SortMode = "cheapest" | "best" | "fastest" | "stops";
 
+export type FlightSearchLeg = {
+  origin: string;
+  destination: string;
+  departureDate: string;
+};
+
 export type FlightSearchParams = {
   tripType: TripType;
+  /** Authoritative journey representation. Legacy fields below are projections. */
+  legs?: FlightSearchLeg[];
   origin: string;
   destination: string;
   departureDate: string;
@@ -39,10 +47,103 @@ export type FlightSegment = {
   arrivalTime: string;
   airlineName?: string;
   flightNumber?: string;
+  originDetails?: FlightAirportDetails;
+  destinationDetails?: FlightAirportDetails;
+  marketingCarrier?: FlightCarrierDetails;
+  operatingCarrier?: FlightCarrierDetails;
+  marketingFlightNumber?: string;
+  operatingFlightNumber?: string;
+  aircraft?: FlightAircraftDetails;
+  duration?: string;
+  /** Provider-authored segment distance in kilometres. */
+  distanceKm?: number;
+  technicalStops?: FlightTechnicalStop[];
+  cabinDetails?: FlightCabinDetails[];
+};
+
+export type FlightAirportDetails = {
+  iataCode: string;
+  name?: string;
+  cityName?: string;
+  terminal?: string;
+  timeZone?: string;
+};
+
+export type FlightCarrierDetails = {
+  name: string;
+  iataCode?: string;
+  conditionsOfCarriageUrl?: string;
+};
+export type FlightAircraftDetails = { name?: string; iataCode?: string };
+export type FlightTechnicalStop = {
+  airport: FlightAirportDetails;
+  duration?: string;
+  arrivalTime?: string;
+  departureTime?: string;
+};
+
+export type FlightProviderState = "included" | "not-included" | "unknown";
+export type FlightCabinAmenities = {
+  wifi?: { state: FlightProviderState; cost?: string };
+  power?: { state: FlightProviderState };
+  seat?: { type?: string; pitch?: string; legroom?: string };
+};
+export type FlightCabinDetails = {
+  cabinClass?: string;
+  cabinMarketingName?: string;
+  fareBrandName?: string;
+  fareBasisCode?: string;
+  amenities?: FlightCabinAmenities;
+};
+
+export type FlightProviderCondition = {
+  category: "change" | "refund" | "priority-check-in" | "priority-boarding" | "advance-seat-selection";
+  scope: "trip" | FlightLeg["direction"];
+  legIndex?: number;
+  state: "allowed" | "not-allowed" | "unknown";
+  penaltyAmount?: number;
+  penaltyCurrency?: string;
+};
+
+export type FlightOptionalService = {
+  type: string;
+  description: string;
+  price: number;
+  currency: string;
+  maximumQuantity?: number;
+  travelerCount?: number;
+  journeyContext?: string;
+  /** True only when identical provider services were individually scoped to one traveler each. */
+  pricedPerTraveler?: boolean;
+};
+
+/** Deliberately normalized provider-authored customer facts; never raw Duffel data. */
+export type FlightProviderDetails = {
+  offerOwner?: {
+    name: string;
+    iataCode?: string;
+    conditionsOfCarriageUrl?: string;
+  };
+  price?: {
+    baseAmount?: number;
+    baseCurrency?: string;
+    taxAmount?: number;
+    taxCurrency?: string;
+    totalAmount: number;
+    totalCurrency: string;
+  };
+  totalEmissionsKg?: number;
+  updatedAt?: string;
+  passengerIdentityDocumentsRequired?: boolean;
+  supportedIdentityDocumentTypes?: string[];
+  supportedLoyaltyProgrammes?: string[];
+  conditions?: FlightProviderCondition[];
+  optionalServices?: FlightOptionalService[];
 };
 
 export type FlightLeg = {
   direction: "outbound" | "return" | "leg";
+  legIndex?: number;
   originAirport: string;
   destinationAirport: string;
   departureTime: string;
@@ -52,13 +153,23 @@ export type FlightLeg = {
   stops: number;
   layovers: Layover[];
   segments: FlightSegment[];
+  /** Provider-supplied fare brand for this leg/slice. Never inferred. */
+  fareBrandName?: string;
+};
+
+export type FlightFareTerm = {
+  category: "baggage" | "refund" | "change" | "fare";
+  semantic: "positive" | "negative" | "informational";
+  text: string;
+  legDirection?: FlightLeg["direction"];
+  legIndex?: number;
 };
 
 export type NormalizedFlightResult = {
   id: string;
   provider: string;
   airlineName: string;
-  airlineLogo?: string;
+  airlineLogo?: string | null;
   flightNumber?: string;
   originAirport: string;
   destinationAirport: string;
@@ -70,8 +181,13 @@ export type NormalizedFlightResult = {
   layovers: Layover[];
   legs?: FlightLeg[];
   cabinClass: string;
+  /** Provider-supplied fare brand. Never inferred from cabin class. */
+  fareBrandName?: string;
   baggageInfo: string;
   refundInfo: string;
+  /** Provider-authored terms with truthful presentation semantics. */
+  fareTerms?: FlightFareTerm[];
+  providerDetails?: FlightProviderDetails;
   price: number;
   currency: string;
   bookingUrl: string;
@@ -83,12 +199,16 @@ export type NormalizedFlightResult = {
   travelEffortScore: number;
   recommendationReasons: string[];
   badges: string[];
+  /** Server-only identity of the purchasable offer returned by the provider. */
+  providerOfferId?: string;
+  /** Server-only provider expiry, expressed as milliseconds since the Unix epoch. */
+  providerExpiresAt?: number;
   rawProviderReference?: unknown;
 };
 
 export type PublicFlightResult = Omit<
   NormalizedFlightResult,
-  "rawProviderReference"
+  "rawProviderReference" | "providerOfferId" | "providerExpiresAt"
 >;
 
 export type HotelInventoryKind = "bookable" | "discovery";
@@ -188,6 +308,16 @@ export type NormalizedHotelResult = NormalizedHotelBase & HotelInventory;
 
 export type PublicHotelResult = PublicHotelBase & HotelInventory;
 
+export type PublicHotelPropertyDetails = {
+  description: string;
+  latitude: number;
+  longitude: number;
+  streetAddress: string;
+  city: string;
+  country: string;
+  neighbourhood: string;
+};
+
 export type ProviderErrorCategory =
   | "no_inventory"
   | "route_unavailable"
@@ -218,6 +348,24 @@ export type ProviderResult<T> = {
   error?: string;
   errorCategory?: ProviderErrorCategory;
   errorReason?: ProviderErrorReason;
+  /** Sanitized, server-only integration diagnostics. Never serialize publicly. */
+  diagnostic?: {
+    code:
+      | "duffel_itinerary_parse_failed"
+      | "duffel_offer_request_identity_mismatch"
+      | "duffel_offer_normalization_dropped"
+      | "duffel_inventory_pruned_empty"
+      | "duffel_upsell_response_invalid";
+    counts?: Partial<
+      Record<
+        | "graphOfferCount"
+        | "flatMatchingOfferCount"
+        | "normalizedOfferCount"
+        | "usableOfferCount",
+        number
+      >
+    >;
+  };
 };
 
 export type AggregatedResult<T> = {

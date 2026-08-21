@@ -10,7 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -32,13 +32,18 @@ type FlightMobilePickerShellProps = {
   onClose: () => void;
   className?: string;
   contentClassName?: string;
+  contentLayout?: "scroll" | "contained";
   pickerMarker?: "flight-date" | "traveler-cabin";
+  headerVariant?: "navigation" | "close";
+  showCancelAction?: boolean;
+  showBackLabel?: boolean;
 };
 
 type ScrollLockSnapshot = {
   body: HTMLElement;
   root: HTMLElement;
   launcherElement: HTMLElement | null | undefined;
+  scrollX: number;
   scrollY: number;
   previousBodyStyles: {
     left: string;
@@ -54,6 +59,7 @@ type ScrollLockSnapshot = {
     height: string;
     overflow: string;
     overscrollBehavior: string;
+    scrollBehavior: string;
   };
 };
 
@@ -128,6 +134,12 @@ function waitForMobileViewportToSettle() {
   });
 }
 
+function waitForNextPaint() {
+  return new Promise<void>((resolve) =>
+    window.requestAnimationFrame(() => resolve()),
+  );
+}
+
 export function FlightMobilePickerShell({
   open,
   title,
@@ -139,7 +151,11 @@ export function FlightMobilePickerShell({
   onClose,
   className,
   contentClassName,
+  contentLayout = "scroll",
   pickerMarker,
+  headerVariant = "navigation",
+  showCancelAction = true,
+  showBackLabel = true,
 }: FlightMobilePickerShellProps) {
   const { t } = useLocale();
   const [isClosing, setIsClosing] = useState(false);
@@ -147,15 +163,16 @@ export function FlightMobilePickerShell({
   const closePromiseRef = useRef<Promise<void> | null>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const scrollLockSnapshotRef = useRef<ScrollLockSnapshot | null>(null);
-  const canRestoreScrollLockRef = useRef(false);
   const portalElement = typeof document === "undefined" ? null : document.body;
 
-  const restoreScrollLock = useCallback((restoreFocus: boolean) => {
-    if (typeof window === "undefined") return;
+  const restorePagePosition = useCallback(() => {
+    if (typeof window === "undefined") return null;
 
     const snapshot = scrollLockSnapshotRef.current;
-    if (!snapshot) return;
+    if (!snapshot) return null;
 
+    // Claim this session before touching the document so cleanup cannot
+    // perform a second restoration after a normal close.
     scrollLockSnapshotRef.current = null;
     snapshot.body.style.left = snapshot.previousBodyStyles.left;
     snapshot.body.style.overflow = snapshot.previousBodyStyles.overflow;
@@ -170,14 +187,27 @@ export function FlightMobilePickerShell({
     snapshot.root.style.overflow = snapshot.previousRootStyles.overflow;
     snapshot.root.style.overscrollBehavior =
       snapshot.previousRootStyles.overscrollBehavior;
-    window.scrollTo(0, snapshot.scrollY);
-
-    if (restoreFocus) {
-      window.requestAnimationFrame(() => {
-        snapshot.launcherElement?.focus({ preventScroll: true });
+    snapshot.root.style.scrollBehavior = "auto";
+    try {
+      window.scrollTo({
+        left: snapshot.scrollX,
+        top: snapshot.scrollY,
+        behavior: "instant" as ScrollBehavior,
       });
+    } finally {
+      snapshot.root.style.scrollBehavior =
+        snapshot.previousRootStyles.scrollBehavior;
     }
+
+    return snapshot.launcherElement;
   }, []);
+
+  const restoreLauncherFocus = useCallback(
+    (launcherElement: HTMLElement | null | undefined) => {
+      launcherElement?.focus({ preventScroll: true });
+    },
+    [],
+  );
 
   const requestClose = useCallback(() => {
     if (closePromiseRef.current) return;
@@ -204,19 +234,24 @@ export function FlightMobilePickerShell({
       activeElement.blur();
     }
 
-    closePromiseRef.current = waitForMobileViewportToSettle().then(() => {
-      canRestoreScrollLockRef.current = true;
+    closePromiseRef.current = (async () => {
+      await waitForMobileViewportToSettle();
+      // Restore behind the opaque shell, then give the browser one paint to
+      // settle the underlying page before the parent unmounts this portal.
+      const launcherElement = restorePagePosition();
+      await waitForNextPaint();
       onClose();
-      restoreScrollLock(closeInteractionRef.current === "keyboard");
-    });
-  }, [onClose, restoreScrollLock]);
+      if (closeInteractionRef.current === "keyboard") {
+        restoreLauncherFocus(launcherElement);
+      }
+    })();
+  }, [onClose, restoreLauncherFocus, restorePagePosition]);
 
   useEffect(() => {
     if (!open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsClosing(false);
       closePromiseRef.current = null;
-      canRestoreScrollLockRef.current = false;
     }
   }, [open]);
 
@@ -229,12 +264,14 @@ export function FlightMobilePickerShell({
     const launcherElement = launcherRef?.current;
     const bodyElement = document.body;
     const rootElement = document.documentElement;
+    const scrollX = window.scrollX;
     const scrollY = window.scrollY;
 
     scrollLockSnapshotRef.current = {
       body: bodyElement,
       root: rootElement,
       launcherElement,
+      scrollX,
       scrollY,
       previousBodyStyles: {
         left: bodyElement.style.left,
@@ -250,6 +287,7 @@ export function FlightMobilePickerShell({
         height: rootElement.style.height,
         overflow: rootElement.style.overflow,
         overscrollBehavior: rootElement.style.overscrollBehavior,
+        scrollBehavior: rootElement.style.scrollBehavior,
       },
     };
 
@@ -273,7 +311,10 @@ export function FlightMobilePickerShell({
     bodyElement.style.position = "fixed";
     bodyElement.style.right = "0";
     bodyElement.style.top = `-${scrollY}px`;
-    bodyElement.style.touchAction = "none";
+    // The fixed/overflow locks keep the document stationary. Do not disable
+    // touch gestures on body: touch-action participates in ancestor hit
+    // testing and `none` also suppresses panning in the portalled picker.
+    bodyElement.style.touchAction = "auto";
     bodyElement.style.width = "100%";
     rootElement.style.height = "100%";
     rootElement.style.overflow = "hidden";
@@ -292,7 +333,7 @@ export function FlightMobilePickerShell({
         capture: true,
       });
 
-      if (!canRestoreScrollLockRef.current) {
+      if (scrollLockSnapshotRef.current) {
         const activeElement = document.activeElement;
         if (
           activeElement instanceof HTMLElement &&
@@ -302,9 +343,12 @@ export function FlightMobilePickerShell({
         }
       }
 
-      restoreScrollLock(closeInteractionRef.current === "keyboard");
+      const launcherElement = restorePagePosition();
+      if (closeInteractionRef.current === "keyboard") {
+        restoreLauncherFocus(launcherElement);
+      }
     };
-  }, [launcherRef, open, restoreScrollLock]);
+  }, [launcherRef, open, restoreLauncherFocus, restorePagePosition]);
 
   if (!open || !portalElement) return null;
 
@@ -350,37 +394,57 @@ export function FlightMobilePickerShell({
           className,
         )}
       >
-        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-3">
-          <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={requestClose}
-              disabled={isClosing}
-              className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              {t.back}
-            </button>
+        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4">
+          <div data-mobile-picker-header={headerVariant} className="mx-auto grid min-h-[62px] w-full max-w-xl grid-cols-[1fr_auto_1fr] items-center gap-2">
+            {headerVariant === "close" ? (
+              <button type="button" aria-label={t.cancel} onClick={requestClose} disabled={isClosing} className="focus-ring inline-flex h-11 w-11 items-center justify-center justify-self-start rounded-full text-slate-950 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60">
+                <X className="h-6 w-6" aria-hidden="true" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label={showBackLabel ? undefined : t.back}
+                onClick={requestClose}
+                disabled={isClosing}
+                className="focus-ring inline-flex min-h-10 items-center justify-self-start gap-2 rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-60"
+              >
+                <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
+                {showBackLabel ? t.back : null}
+              </button>
+            )}
             <h2
               id={titleId}
-              className="min-w-0 truncate text-base font-bold text-slate-950"
+              className="max-w-[52vw] truncate text-[17px] font-bold text-slate-950"
             >
               {title}
             </h2>
-            <button
-              type="button"
-              onClick={requestClose}
-              disabled={isClosing}
-              className="focus-ring min-h-10 rounded-full px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:pointer-events-none disabled:opacity-60"
-            >
-              {t.cancel}
-            </button>
+            {headerVariant === "close" ? <span aria-hidden="true" /> : showCancelAction ? (
+              <button
+                type="button"
+                onClick={requestClose}
+                disabled={isClosing}
+                className="focus-ring min-h-10 justify-self-end rounded-full px-2 py-2 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:pointer-events-none disabled:opacity-60"
+              >
+                {t.cancel}
+              </button>
+            ) : (
+              <span
+                aria-hidden="true"
+                className="min-h-10"
+                data-mobile-picker-header-spacer
+              />
+            )}
           </div>
         </div>
 
         <div
+          data-flight-mobile-picker-content
+          data-content-layout={contentLayout}
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 px-4 py-4",
+            "min-h-0 flex-1 overflow-x-hidden bg-slate-50 px-4 py-4",
+            contentLayout === "scroll"
+              ? "touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
+              : "flex touch-auto flex-col overflow-y-hidden",
             contentClassName,
           )}
         >

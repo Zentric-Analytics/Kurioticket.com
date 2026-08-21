@@ -31,9 +31,11 @@ import {
   Calendar,
   ChevronDown,
   Heart,
+  MapPin,
   Minus,
   SquarePen,
   Users,
+  UserRound,
   Plus,
   SlidersHorizontal,
   X,
@@ -85,24 +87,27 @@ import {
   type TravelPreferencesAirlinePayload,
 } from "@/lib/flights/preferredAirlineFilters";
 import {
+  buildFlightResultsSearchKey,
   readFlightResultsSessionSnapshot,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
+import { isFlightResultsPreparing } from "@/components/results/flightResultsReadiness";
 import {
-  readSavedTripIds,
-  toggleSavedTripId,
-  writeSavedTripIds,
-} from "@/lib/saved-trips-local";
+  readSavedItemIds,
+  toggleSavedItemId,
+  writeSavedItemIds,
+} from "@/lib/saved-items-local";
 import {
-  deleteBackendTrip,
-  fetchBackendSavedTrips,
-  getSavedTripLocalId,
-  saveBackendTrip,
-  type SavedTripDisplayDetails,
-  type SavedTripFlightSearch,
-} from "@/lib/saved-trips-api";
+  deleteBackendDiscovery,
+  fetchBackendSavedDiscoveries,
+  getSavedDiscoveryLocalId,
+  saveBackendDiscovery,
+  type SavedDiscoveryDisplayDetails,
+  type SavedDiscoveryFlightSearch,
+} from "@/lib/saved-items-api";
 import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { FlightSearchParams, PublicFlightResult, SortMode } from "@/lib/types";
+import { appendFlightLegParams, parseFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
 import {
   calculateCompactFilterPlacement,
@@ -115,7 +120,6 @@ import {
   formatFlightsMonthHeading,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
-import { getDateWindowStart } from "@/lib/flights/flexibleDateWindow";
 import { MAX_PRICE_ALERT_TARGET, buildCanonicalFlightPriceAlertQuery } from "@/lib/price-alerts/flightPriceAlerts";
 
 const resultStackClass = "w-full min-w-0";
@@ -144,8 +148,9 @@ type NearbyFareRequest = {
   promise: Promise<void>;
 };
 
-const nearbyFareRangeSize = 14;
-const nearbyFareDaysBeforeAnchor = 6;
+const nearbyFareRangeSize = 10;
+const nearbyFareVisibleCount = 7;
+const nearbyFareDaysBeforeAnchor = 4;
 const nearbyFareRequestConcurrency = 4;
 const nearbyFareCacheTtlMs = 10 * 60 * 1000;
 
@@ -523,12 +528,15 @@ function RecentSearchCard({
     <>
       <div className="relative h-full min-h-[112px] w-20 shrink-0 overflow-hidden bg-gradient-to-br from-[#004BB8] via-[#004BB8] to-[#5CB6B2] sm:w-24">
         {entry.image ? (
-          <img
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Recent search thumbnails can be external saved-search data and preserve the existing lightweight card contract. */}
+            <img
             src={entry.image}
             alt={entry.imageAlt || entry.label}
             loading="lazy"
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
+          </>
         ) : (
           <div className="flex h-full flex-col justify-between p-3 text-white">
             <p className="text-[0.6rem] font-black uppercase tracking-[0.16em] text-white/75">
@@ -597,7 +605,7 @@ function SavedRouteCard({
   onHeartToggle: (
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) => void;
 }) {
   const { t: dictionary } = useLocale();
@@ -803,7 +811,49 @@ function lockDocumentScrollWithoutLayoutShift() {
   };
 }
 
-export function FlightResultsClient() {
+export type FlightResultsPresentationMode = "standalone" | "deals-guided";
+
+export type FlightResultsSearchInput = {
+  tripType: string;
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  adults: number;
+  children: number;
+  infants: number;
+  travelers: number;
+  cabinClass: string;
+  currency?: string;
+};
+
+export type FlightResultsClientProps = {
+  presentationMode?: FlightResultsPresentationMode;
+  searchInput?: FlightResultsSearchInput;
+  buildDetailsHref?: (flight: PublicFlightResult) => string | null;
+  actionLabel?: string;
+  actionAriaLabel?: (flight: PublicFlightResult) => string;
+  onSelectFlight?: (flight: PublicFlightResult) => void;
+};
+
+const searchInputToParams = (input: FlightResultsSearchInput) => {
+  const params = new URLSearchParams({
+    tripType: input.tripType,
+    origin: input.origin,
+    destination: input.destination,
+    departureDate: input.departureDate,
+    adults: String(input.adults),
+    children: String(input.children),
+    infants: String(input.infants),
+    travelers: String(input.travelers),
+    cabinClass: input.cabinClass,
+  });
+  if (input.tripType === "round-trip" && input.returnDate) params.set("returnDate", input.returnDate);
+  if (input.currency) params.set("currency", input.currency);
+  return params;
+};
+
+export function FlightResultsClient({ presentationMode = "standalone", searchInput, buildDetailsHref, actionLabel, actionAriaLabel, onSelectFlight }: FlightResultsClientProps = {}) {
   const { t: dictionary, locale } = useLocale();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
@@ -845,11 +895,13 @@ export function FlightResultsClient() {
     }),
     [dictionary],
   );
-  const params = useSearchParams();
+  const urlParams = useSearchParams();
   const router = useRouter();
+  const guidedMode = presentationMode === "deals-guided";
+  const params = useMemo(() => searchInput ? searchInputToParams(searchInput) : new URLSearchParams(urlParams.toString()), [searchInput, urlParams]);
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
-  const selectedCurrency = selectedOption.currency;
+  const selectedCurrency = searchInput?.currency ?? selectedOption.currency;
   const initialDateSafeParams = normalizeFlightDateSearchParams(params);
   const discoveryCards = useMemo(
     () => getHomeDiscoveryByRegion(selectedOption.code).slice(0, 4),
@@ -897,6 +949,15 @@ export function FlightResultsClient() {
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filtersReadySearchKey, setFiltersReadySearchKey] = useState<
+    string | null
+  >(null);
+  const [mainInventoryRetryGeneration, setMainInventoryRetryGeneration] = useState(0);
+  const userInitiatedRetryRef = useRef(false);
+  const loadingFocusRef = useRef<HTMLDivElement | null>(null);
+  const resultsHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const errorHeadingRef = useRef<HTMLHeadingElement | null>(null);
+  const emptyHeadingRef = useRef<HTMLHeadingElement | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileSortMenuOpen, setMobileSortMenuOpen] = useState(false);
   const [mobileAirportMenuOpen, setMobileAirportMenuOpen] = useState(false);
@@ -950,13 +1011,8 @@ export function FlightResultsClient() {
   const nearbyFareCacheRef = useRef(new Map<string, NearbyFareState>());
   const nearbyFareRequestsRef = useRef(new Map<string, NearbyFareRequest>());
   const nearbyFareGenerationRef = useRef(0);
-  const nearbyFareStripScrollRef = useRef<HTMLDivElement | null>(null);
-  const nearbyFarePositionedContextRef = useRef<string | null>(null);
   const [nearbyFares, setNearbyFares] = useState<NearbyFareState[]>([]);
-  const [nearbyFareCanScrollPrevious, setNearbyFareCanScrollPrevious] =
-    useState(false);
-  const [nearbyFareCanScrollNext, setNearbyFareCanScrollNext] =
-    useState(false);
+  const [nearbyFareVisibleStart, setNearbyFareVisibleStart] = useState(0);
   const [returnDateInput, setReturnDateInput] = useState(
     initialDateSafeParams.get("returnDate") || "",
   );
@@ -1038,20 +1094,20 @@ export function FlightResultsClient() {
   const [originSuggestions, setOriginSuggestions] = useState<AirportOption[]>(
     [],
   );
-  const [originSuggestionsLoading, setOriginSuggestionsLoading] =
+  const [, setOriginSuggestionsLoading] =
     useState(false);
   const [destinationSuggestions, setDestinationSuggestions] = useState<
     AirportOption[]
   >([]);
-  const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] =
+  const [, setDestinationSuggestionsLoading] =
     useState(false);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
   const { status: sessionStatus } = useSession();
-  const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
-  const [backendSavedTripIds, setBackendSavedTripIds] = useState<
+  const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
+  const [backendSavedItemIds, setBackendSavedItemIds] = useState<
     Record<string, string>
   >({});
-  const [savedTripError, setSavedTripError] = useState("");
+  const [savedItemError, setSavedItemError] = useState("");
   const [priceAlertDialogOpen, setPriceAlertDialogOpen] = useState(false);
   const [priceAlertTarget, setPriceAlertTarget] = useState("");
   const [priceAlertError, setPriceAlertError] = useState("");
@@ -1079,6 +1135,8 @@ export function FlightResultsClient() {
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
   const stickyOriginWrapRef = useRef<HTMLDivElement | null>(null);
   const stickyDestinationWrapRef = useRef<HTMLDivElement | null>(null);
+  const stickyDateButtonRef = useRef<HTMLButtonElement | null>(null);
+  const stickyTravelerButtonRef = useRef<HTMLButtonElement | null>(null);
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
@@ -1087,6 +1145,9 @@ export function FlightResultsClient() {
   const stickySearchPopoutRef = useRef<HTMLFormElement | null>(null);
   const stickySearchCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const stickySearchLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const pendingStickySearchTargetRef = useRef<
+    "route" | "dates" | "travelers" | null
+  >(null);
   const searchFormRef = useRef<HTMLFormElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
@@ -1100,6 +1161,8 @@ export function FlightResultsClient() {
   const mobileFiltersScrollLockRef = useRef<BodyScrollLock | null>(null);
   const mobileSearchLauncherRef = useRef<HTMLElement | null>(null);
   const mobileFiltersLauncherRef = useRef<HTMLElement | null>(null);
+  const mobileFiltersDialogRef = useRef<HTMLElement | null>(null);
+  const mobileFiltersCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const shouldRestoreMobileSearchFocusRef = useRef(true);
   const shouldRestoreMobileFiltersFocusRef = useRef(true);
   const shouldScrollToTopAfterFilterApplyRef = useRef(false);
@@ -1128,7 +1191,7 @@ export function FlightResultsClient() {
       ? destinationSuggestions
       : destinationFallbackSuggestions;
   const mobileTripTypeSummary =
-    tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip");
+    tripTypeInput === "multi-city" ? t("multiCity") : tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip");
   const mobileOriginSummary = (originCode || originInput || t("origin")).trim();
   const mobileDestinationSummary = (
     destinationCode ||
@@ -1168,36 +1231,55 @@ export function FlightResultsClient() {
     !isSearchExpandedWhileSticky;
   const savedRoutes = useMemo(
     () =>
-      savedTripIds
+      savedItemIds
         .map((id) => discoveryById.get(id))
         .filter((item): item is HomeDiscoveryItem => Boolean(item)),
-    [savedTripIds],
+    [savedItemIds],
   );
 
   const markExpandedSearchInteraction = useCallback(() => {}, []);
 
   const expandStickySearch = useCallback(() => {
+    if (tripTypeInput === "multi-city") {
+      router.push(`/flights?${searchQueryString}`);
+      return;
+    }
     const currentScrollY = window.scrollY;
     expandedSearchScrollYRef.current = currentScrollY;
     setIsSearchExpandedWhileSticky(true);
-  }, []);
+  }, [router, searchQueryString, tripTypeInput]);
 
   const openStickySearchEditor = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
+    (
+      event: React.MouseEvent<HTMLButtonElement>,
+      target: "route" | "dates" | "travelers",
+    ) => {
+      if (tripTypeInput === "multi-city") {
+        router.push(`/flights?${searchQueryString}`);
+        return;
+      }
       stickySearchLauncherRef.current = event.currentTarget;
+      pendingStickySearchTargetRef.current = target;
       const currentScrollY = window.scrollY;
       expandedSearchScrollYRef.current = currentScrollY;
       setIsSearchExpandedWhileSticky(true);
       setActiveDesktopSearchSurface("sticky");
       setTripTypeMenuOpen(false);
-      setActiveSuggest(null);
+      setActiveSuggest(
+        target === "route" && originInput.trim().length >= 2
+          ? "origin"
+          : null,
+      );
       setDropdownPosition(null);
-      setActiveDatePicker(null);
+      setActiveDatePicker(target === "dates" ? "departure" : null);
       setDatePickerPosition(null);
-      setTravelerPopoverOpen(false);
+      setTravelerPopoverOpen(target === "travelers");
       setTravelerPopoverPosition(null);
     },
     [
+      originInput,
+      router,
+      searchQueryString,
       setActiveDatePicker,
       setActiveSuggest,
       setDatePickerPosition,
@@ -1205,6 +1287,7 @@ export function FlightResultsClient() {
       setTravelerPopoverOpen,
       setTravelerPopoverPosition,
       setTripTypeMenuOpen,
+      tripTypeInput,
     ],
   );
 
@@ -1254,8 +1337,28 @@ export function FlightResultsClient() {
       return undefined;
     }
 
-    window.requestAnimationFrame(() => {
-      stickySearchCloseButtonRef.current?.focus();
+    const focusFrame = window.requestAnimationFrame(() => {
+      const pendingTarget = pendingStickySearchTargetRef.current;
+      pendingStickySearchTargetRef.current = null;
+
+      if (pendingTarget === "route") {
+        stickyOriginWrapRef.current
+          ?.querySelector<HTMLInputElement>("input")
+          ?.focus({ preventScroll: true });
+        return;
+      }
+
+      if (pendingTarget === "dates") {
+        stickyDateButtonRef.current?.focus({ preventScroll: true });
+        return;
+      }
+
+      if (pendingTarget === "travelers") {
+        stickyTravelerButtonRef.current?.focus({ preventScroll: true });
+        return;
+      }
+
+      stickySearchCloseButtonRef.current?.focus({ preventScroll: true });
     });
 
     const handleStickyPanelPointerDown = (event: MouseEvent) => {
@@ -1324,6 +1427,7 @@ export function FlightResultsClient() {
     document.addEventListener("keydown", handleStickyPanelKeyDown);
 
     return () => {
+      window.cancelAnimationFrame(focusFrame);
       document.removeEventListener("mousedown", handleStickyPanelPointerDown);
       document.removeEventListener("keydown", handleStickyPanelKeyDown);
     };
@@ -1493,22 +1597,23 @@ export function FlightResultsClient() {
     };
   }, [loading]);
 
-  const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
-    const result = await fetchBackendSavedTrips(signal);
+  const refreshBackendSavedItems = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchBackendSavedDiscoveries(signal);
     if (!result.ok || !result.items) return;
 
     const backendIds: Record<string, string> = {};
     const localIds = result.items.map((item) => {
-      const localId = getSavedTripLocalId(item);
+      const localId = getSavedDiscoveryLocalId(item);
       backendIds[localId] = item.id;
       return localId;
     });
 
-    setBackendSavedTripIds(backendIds);
-    setSavedTripIds(localIds);
+    setBackendSavedItemIds(backendIds);
+    setSavedItemIds(localIds);
   }, []);
 
   useEffect(() => {
+    if (guidedMode) return;
     if (sessionStatus === "loading") return;
 
     if (sessionStatus === "authenticated") {
@@ -1530,15 +1635,22 @@ export function FlightResultsClient() {
     }, 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [refreshBackendRecentSearches, sessionStatus]);
+  }, [guidedMode, refreshBackendRecentSearches, sessionStatus]);
 
   useEffect(() => {
+    if (guidedMode) {
+      const timer = window.setTimeout(() => {
+        setBackendSavedItemIds({});
+        setSavedItemIds([]);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
     if (sessionStatus === "loading") return;
 
     if (sessionStatus === "authenticated") {
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => {
-        void refreshBackendSavedTrips(controller.signal);
+        void refreshBackendSavedItems(controller.signal);
       }, 0);
       return () => {
         window.clearTimeout(timeoutId);
@@ -1547,11 +1659,11 @@ export function FlightResultsClient() {
     }
 
     const timeoutId = window.setTimeout(() => {
-      setBackendSavedTripIds({});
-      setSavedTripIds(readSavedTripIds());
+      setBackendSavedItemIds({});
+      setSavedItemIds(readSavedItemIds());
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [refreshBackendSavedTrips, sessionStatus]);
+  }, [guidedMode, refreshBackendSavedItems, sessionStatus]);
 
   useEffect(() => {
     return () => {
@@ -1756,6 +1868,7 @@ export function FlightResultsClient() {
       window.removeEventListener("keydown", handleKeyDown);
       releaseExistingLock();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Existing drawer lifecycle intentionally depends on open state only.
   }, [mobileSearchOpen]);
 
   useLayoutEffect(() => {
@@ -1767,7 +1880,7 @@ export function FlightResultsClient() {
       mobileFiltersScrollLockRef.current = null;
       shouldRestoreMobileFiltersFocusRef.current = true;
 
-      if (shouldRestoreFocus && launcher?.isConnected) {
+      if (shouldRestoreFocus && launcher?.isConnected && launcher.offsetParent !== null) {
         launcher.focus({ preventScroll: true });
       }
     };
@@ -1780,21 +1893,61 @@ export function FlightResultsClient() {
     const mobileQuery = window.matchMedia("(max-width: 1023px)");
 
     if (!mobileQuery.matches) {
+      closeMobileFiltersDrawer({ restoreFocus: false });
       releaseExistingLock();
       return releaseExistingLock;
     }
 
+    mobileFiltersScrollLockRef.current ??= lockMobileOverlayScroll();
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      mobileFiltersCloseButtonRef.current?.focus({ preventScroll: true });
+    });
+
+    const getFocusableDrawerControls = () =>
+      Array.from(
+        mobileFiltersDialogRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((element) => element.offsetParent !== null);
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         closeMobileFiltersDrawer();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const focusableControls = getFocusableDrawerControls();
+      if (focusableControls.length === 0) return;
+
+      const firstControl = focusableControls[0];
+      const lastControl = focusableControls[focusableControls.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstControl) {
+        event.preventDefault();
+        lastControl.focus({ preventScroll: true });
+      } else if (!event.shiftKey && document.activeElement === lastControl) {
+        event.preventDefault();
+        firstControl.focus({ preventScroll: true });
       }
     };
 
-    mobileFiltersScrollLockRef.current ??= lockMobileOverlayScroll();
-    window.addEventListener("keydown", handleKeyDown);
+    const handleViewportChange = (event: MediaQueryListEvent) => {
+      if (!event.matches) {
+        closeMobileFiltersDrawer({ restoreFocus: false });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    mobileQuery.addEventListener("change", handleViewportChange);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", handleKeyDown);
+      mobileQuery.removeEventListener("change", handleViewportChange);
       releaseExistingLock();
     };
   }, [filtersOpen]);
@@ -1844,6 +1997,31 @@ export function FlightResultsClient() {
 
   function handleTripTypeChange(nextTripType: string) {
     markExpandedSearchInteraction();
+
+    if (nextTripType === "multi-city") {
+      const firstLeg = { origin: originCode || originInput.trim().toUpperCase(), destination: destinationCode || destinationInput.trim().toUpperCase(), departureDate: departureDateInput };
+      const secondLeg = tripTypeInput === "round-trip" && returnDateInput
+        ? { origin: firstLeg.destination, destination: firstLeg.origin, departureDate: returnDateInput }
+        : { origin: firstLeg.destination, destination: "", departureDate: departureDateInput };
+      const legs = [firstLeg, secondLeg];
+      const projection = projectSearchLegs("multi-city", legs);
+      const params = new URLSearchParams({
+        tripType: "multi-city",
+        origin: projection.origin,
+        destination: projection.destination,
+        departureDate: projection.departureDate,
+        adults: String(adultCount),
+        children: String(childCount),
+        infants: String(infantCount),
+        travelers: String(adultCount + childCount + infantCount),
+        cabinClass: cabinClassInput,
+        currency: selectedCurrency,
+      });
+      appendFlightLegParams(params, legs);
+      setTripTypeMenuOpen(false);
+      router.push(`/flights?${params.toString()}`);
+      return;
+    }
 
     const normalizedTripType =
       nextTripType === "one-way" ? "one-way" : "round-trip";
@@ -2046,6 +2224,10 @@ export function FlightResultsClient() {
   }
 
   function openMobileSearchDrawer(launcher?: HTMLElement | null) {
+    if (tripTypeInput === "multi-city") {
+      router.push(`/flights?${searchQueryString}`);
+      return;
+    }
     mobileSearchLauncherRef.current = launcher ?? null;
     closeMobileFiltersDrawer({ restoreFocus: false });
     closeFlightSearchPopovers();
@@ -2061,12 +2243,6 @@ export function FlightResultsClient() {
   function openMobileFiltersDrawer(launcher?: HTMLElement | null) {
     mobileFiltersLauncherRef.current = launcher ?? null;
     closeMobileShortcutMenus();
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 1023px)").matches
-    ) {
-      mobileFiltersScrollLockRef.current ??= lockMobileOverlayScroll();
-    }
     setFiltersOpen(true);
   }
 
@@ -2078,29 +2254,13 @@ export function FlightResultsClient() {
     window.requestAnimationFrame(() => destinationInputRef.current?.focus());
   }
 
-  function clearOriginField() {
-    markExpandedSearchInteraction();
-    setOriginInput("");
-    setOriginCode("");
-    setOriginSuggestions([]);
-    setOriginSuggestionsLoading(false);
-    closeFlightSearchPopovers();
-    if (!activeMobileAirportPicker) focusOriginInput();
-  }
-
-  function clearDestinationField() {
-    markExpandedSearchInteraction();
-    setDestinationInput("");
-    setDestinationCode("");
-    setDestinationSuggestions([]);
-    setDestinationSuggestionsLoading(false);
-    closeFlightSearchPopovers();
-    if (!activeMobileAirportPicker) focusDestinationInput();
-  }
 
 
-  function getCurrentFlightSearchForSavedTrip(): SavedTripFlightSearch | undefined {
+  function getCurrentFlightSearchForSavedItem(): SavedDiscoveryFlightSearch | undefined {
     if (!body) return undefined;
+    // The legacy saved-discovery contract cannot restore intermediate multi-city legs.
+    // Keep it unavailable until that persistent model becomes leg-aware.
+    if (body.tripType === "multi-city") return undefined;
     const tripType = body.tripType === "one-way" ? "one-way" : "round-trip";
     const cabinClass = body.cabinClass === "business" || body.cabinClass === "first" ? body.cabinClass : "economy";
     if (!body.origin || !body.destination || !body.departureDate) return undefined;
@@ -2123,52 +2283,52 @@ export function FlightResultsClient() {
   async function handleSavedRouteToggle(
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) {
     event.preventDefault();
     event.stopPropagation();
 
     if (sessionStatus !== "authenticated") {
-      setSavedTripError("");
-      setSavedTripIds((current) => {
-        const next = toggleSavedTripId(current, itemId);
-        writeSavedTripIds(next);
+      setSavedItemError("");
+      setSavedItemIds((current) => {
+        const next = toggleSavedItemId(current, itemId);
+        writeSavedItemIds(next);
         return next;
       });
       return;
     }
 
-    if (savedTripIds.includes(itemId)) {
-      const backendId = backendSavedTripIds[itemId];
+    if (savedItemIds.includes(itemId)) {
+      const backendId = backendSavedItemIds[itemId];
       if (!backendId) {
-        await refreshBackendSavedTrips();
+        await refreshBackendSavedItems();
         return;
       }
 
-      const result = await deleteBackendTrip(backendId);
+      const result = await deleteBackendDiscovery(backendId);
       if (result.ok) {
-        setSavedTripError("");
-        setSavedTripIds((current) => current.filter((id) => id !== itemId));
-        setBackendSavedTripIds((current) => {
+        setSavedItemError("");
+        setSavedItemIds((current) => current.filter((id) => id !== itemId));
+        setBackendSavedItemIds((current) => {
           const next = { ...current };
           delete next[itemId];
           return next;
         });
       } else {
-        setSavedTripError(
-          result.error ?? "Unable to update saved trips right now.",
+        setSavedItemError(
+          result.error ?? "Unable to update saved items right now.",
         );
-        await refreshBackendSavedTrips();
+        await refreshBackendSavedItems();
       }
       return;
     }
 
-    const result = await saveBackendTrip(itemId, display, getCurrentFlightSearchForSavedTrip());
+    const result = await saveBackendDiscovery(itemId, display, getCurrentFlightSearchForSavedItem());
     if (result.ok || result.duplicate) {
-      setSavedTripError("");
-      await refreshBackendSavedTrips();
+      setSavedItemError("");
+      await refreshBackendSavedItems();
     } else {
-      setSavedTripError(result.error ?? "Unable to save trip right now.");
+      setSavedItemError(result.error ?? "Unable to save item right now.");
     }
   }
 
@@ -2183,6 +2343,7 @@ export function FlightResultsClient() {
   }, []);
 
   useEffect(() => {
+    if (guidedMode) return;
     const searchValues = new URLSearchParams(searchQueryString);
     const normalizedSearchValues =
       normalizeFlightDateSearchParams(searchValues);
@@ -2240,9 +2401,11 @@ export function FlightResultsClient() {
     setInfantCount(Math.min(Math.min(9, nextAdults), nextInfants));
     setCabinClassInput(nextCabinClass);
     closeFlightSearchPopovers();
-  }, [router, searchQueryString]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- Existing URL sync closes transient popovers after search params change.
+  }, [guidedMode, router, searchQueryString]);
 
   useEffect(() => {
+    if (guidedMode) return;
     const query = originInput.trim();
     if (query.length < 2) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears stale suggestions when the search query becomes too short.
@@ -2281,9 +2444,10 @@ export function FlightResultsClient() {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [originInput, countryHint]);
+  }, [guidedMode, originInput, countryHint]);
 
   useEffect(() => {
+    if (guidedMode) return;
     const query = destinationInput.trim();
     if (query.length < 2) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears stale suggestions when the search query becomes too short.
@@ -2323,7 +2487,7 @@ export function FlightResultsClient() {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [destinationInput, countryHint]);
+  }, [guidedMode, destinationInput, countryHint]);
 
   const body = useMemo(() => {
     const searchParams = normalizeFlightDateSearchParams(
@@ -2333,19 +2497,16 @@ export function FlightResultsClient() {
     const destination = searchParams.get("destination")?.trim() || "";
     const departureDate = searchParams.get("departureDate")?.trim() || "";
     const tripType = searchParams.get("tripType") || "round-trip";
+    const legs = tripType === "multi-city" ? parseFlightLegParams(searchParams) : undefined;
     const returnDate = searchParams.get("returnDate")?.trim() || "";
     const hasValidDepartureDate = isValidFutureOrTodayDateValue(departureDate);
     const hasValidReturnDate =
       tripType !== "round-trip" ||
       (isValidFutureOrTodayDateValue(returnDate) &&
         !isDateValueBefore(returnDate, departureDate));
-    const hasSearch = Boolean(
-      origin &&
-      destination &&
-      departureDate &&
-      hasValidDepartureDate &&
-      hasValidReturnDate,
-    );
+    const hasSearch = tripType === "multi-city"
+      ? Boolean(legs && legs.length >= 2 && legs.every((leg, index) => leg.origin && leg.destination && leg.origin !== leg.destination && isValidFutureOrTodayDateValue(leg.departureDate) && (index === 0 || leg.departureDate >= legs[index - 1].departureDate)))
+      : Boolean(origin && destination && departureDate && hasValidDepartureDate && hasValidReturnDate);
 
     if (!hasSearch) return null;
 
@@ -2366,6 +2527,7 @@ export function FlightResultsClient() {
 
     return {
       tripType,
+      ...(legs ? { legs } : {}),
       origin,
       destination,
       departureDate,
@@ -2379,6 +2541,10 @@ export function FlightResultsClient() {
       currency: selectedCurrency,
     };
   }, [searchQueryString, selectedCurrency]);
+  const currentFlightSearchKey = useMemo(
+    () => (body ? buildFlightResultsSearchKey(body) : ""),
+    [body],
+  );
 
   const canonicalPriceAlertQuery = useMemo(() => {
     if (!body) return null;
@@ -2535,13 +2701,16 @@ export function FlightResultsClient() {
     }
 
     let active = true;
+    let controller: AbortController | null = null;
     const searchKey = buildFlightResultsSearchKey(body);
     activeFlightSearchKeyRef.current = searchKey;
 
     const timer = window.setTimeout(() => {
       if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
+      setFiltersReadySearchKey(null);
 
-      const snapshot = readFlightResultsSessionSnapshot(searchKey);
+      const shouldBypassSnapshot = userInitiatedRetryRef.current && guidedMode;
+      const snapshot = shouldBypassSnapshot ? null : readFlightResultsSessionSnapshot(searchKey);
       if (snapshot) {
         if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
         setResults(
@@ -2558,13 +2727,18 @@ export function FlightResultsClient() {
 
       setResults([]);
       setLoading(true);
+      if (userInitiatedRetryRef.current) {
+        window.setTimeout(() => loadingFocusRef.current?.focus({ preventScroll: true }), 0);
+      }
       setError("");
       setWarnings([]);
 
+      controller = new AbortController();
       fetch("/api/flights/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        signal: controller.signal,
       })
         .then(async (response) => {
           const data = await response.json();
@@ -2593,7 +2767,7 @@ export function FlightResultsClient() {
           setWarnings(warnings);
         })
         .catch((searchError) => {
-          if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
+          if (controller?.signal.aborted || !active || activeFlightSearchKeyRef.current !== searchKey) return;
 
           setError(
             searchError instanceof Error
@@ -2604,15 +2778,28 @@ export function FlightResultsClient() {
           );
         })
         .finally(() => {
-          if (active && activeFlightSearchKeyRef.current === searchKey) setLoading(false);
+          if (active && activeFlightSearchKeyRef.current === searchKey) {
+            setLoading(false);
+          }
         });
     }, 0);
 
     return () => {
       active = false;
       window.clearTimeout(timer);
+      controller?.abort();
     };
-  }, [body, dictionary.unableToSearchFlights, t]);
+  }, [body, dictionary.unableToSearchFlights, guidedMode, mainInventoryRetryGeneration, t]);
+
+  const retryMainInventorySearch = useCallback(() => {
+    userInitiatedRetryRef.current = true;
+    setError("");
+    setWarnings([]);
+    setResults([]);
+    setLoading(true);
+    setFiltersReadySearchKey(null);
+    setMainInventoryRetryGeneration((generation) => generation + 1);
+  }, []);
 
   useEffect(() => {
     if (!desktopSortOpen) return;
@@ -2639,19 +2826,6 @@ export function FlightResultsClient() {
     };
   }, [desktopSortOpen]);
 
-  const updateNearbyFareScrollState = useCallback(() => {
-    const strip = nearbyFareStripScrollRef.current;
-    if (!strip) {
-      setNearbyFareCanScrollPrevious(false);
-      setNearbyFareCanScrollNext(false);
-      return;
-    }
-
-    const maxScrollLeft = Math.max(0, strip.scrollWidth - strip.clientWidth);
-    setNearbyFareCanScrollPrevious(strip.scrollLeft > 1);
-    setNearbyFareCanScrollNext(strip.scrollLeft < maxScrollLeft - 1);
-  }, []);
-
   useEffect(() => {
     const generation = nearbyFareGenerationRef.current + 1;
     nearbyFareGenerationRef.current = generation;
@@ -2659,6 +2833,14 @@ export function FlightResultsClient() {
     const activeRequests = nearbyFareRequestsRef.current;
     activeRequests.forEach((request) => request.controller.abort());
     activeRequests.clear();
+
+    if (guidedMode) {
+      nearbyFareCacheRef.current.clear();
+      const timer = window.setTimeout(() => {
+        setNearbyFares([]);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
 
     if (!body?.departureDate) {
       const timer = window.setTimeout(() => setNearbyFares([]), 0);
@@ -2672,7 +2854,7 @@ export function FlightResultsClient() {
     }
 
     let active = true;
-    const dates = getNearbyFareDateRange(centerDate);
+    const dates = getNearbyFareDateRange(getNearbyFareWindowStart(centerDate));
     const fetchedAt = Date.now();
     const currentFare = getLowestProviderFare(results);
     const selectedKey = getNearbyFareCacheKey(body, body.departureDate);
@@ -2699,7 +2881,6 @@ export function FlightResultsClient() {
     const syncTimer = window.setTimeout(() => {
       if (active && nearbyFareGenerationRef.current === generation) {
         setNearbyFares(nextFares);
-        window.requestAnimationFrame(updateNearbyFareScrollState);
       }
     }, 0);
 
@@ -2710,13 +2891,17 @@ export function FlightResultsClient() {
         const rightDistance = Math.abs(dates.indexOf(right) - selectedIndex);
         return leftDistance - rightDistance;
       })
-      .filter((date) => !getFreshNearbyFareCacheEntry(
-        nearbyFareCacheRef.current,
-        getNearbyFareCacheKey(body, date),
-      ));
+      .filter(
+        (date) =>
+          !getFreshNearbyFareCacheEntry(
+            nearbyFareCacheRef.current,
+            getNearbyFareCacheKey(body, date),
+          ),
+      );
 
     async function fetchFareForDate(date: string) {
-      if (!body || !active || nearbyFareGenerationRef.current !== generation) return;
+      if (!body || !active || nearbyFareGenerationRef.current !== generation)
+        return;
 
       const key = getNearbyFareCacheKey(body, date);
       const existing = nearbyFareRequestsRef.current.get(key);
@@ -2735,7 +2920,9 @@ export function FlightResultsClient() {
       })
         .then(async (response) => {
           if (!response.ok) throw new Error("nearby-fare-search-failed");
-          const data = (await response.json()) as { results?: PublicFlightResult[] };
+          const data = (await response.json()) as {
+            results?: PublicFlightResult[];
+          };
           const fare = getLowestProviderFare(data.results ?? []);
           const state: NearbyFareState = fare
             ? {
@@ -2755,7 +2942,12 @@ export function FlightResultsClient() {
           );
         })
         .catch((error) => {
-          if (controller.signal.aborted || !active || nearbyFareGenerationRef.current !== generation) return;
+          if (
+            controller.signal.aborted ||
+            !active ||
+            nearbyFareGenerationRef.current !== generation
+          )
+            return;
 
           const state: NearbyFareState = {
             date,
@@ -2769,7 +2961,9 @@ export function FlightResultsClient() {
           );
         })
         .finally(() => {
-          if (nearbyFareRequestsRef.current.get(key)?.controller === controller) {
+          if (
+            nearbyFareRequestsRef.current.get(key)?.controller === controller
+          ) {
             nearbyFareRequestsRef.current.delete(key);
           }
         });
@@ -2781,7 +2975,12 @@ export function FlightResultsClient() {
     async function runQueue() {
       let nextIndex = 0;
       const workers = Array.from(
-        { length: Math.min(nearbyFareRequestConcurrency, prioritizedDates.length) },
+        {
+          length: Math.min(
+            nearbyFareRequestConcurrency,
+            prioritizedDates.length,
+          ),
+        },
         async () => {
           while (active && nearbyFareGenerationRef.current === generation) {
             const date = prioritizedDates[nextIndex];
@@ -2803,7 +3002,7 @@ export function FlightResultsClient() {
       activeRequests.forEach((request) => request.controller.abort());
       activeRequests.clear();
     };
-  }, [body, results, updateNearbyFareScrollState]);
+  }, [body, guidedMode, results]);
 
   useEffect(() => {
     if (!tripTypeMenuOpen) return;
@@ -3259,96 +3458,28 @@ export function FlightResultsClient() {
 
 
 
-  useLayoutEffect(() => {
-    updateNearbyFareScrollState();
+  useEffect(() => {
+    if (!body?.departureDate) return;
 
-    const strip = nearbyFareStripScrollRef.current;
-    if (!strip) return;
+    const departureDate = parseDateValue(body.departureDate);
+    if (!departureDate) return;
 
-    const resizeObserver = new ResizeObserver(updateNearbyFareScrollState);
-    resizeObserver.observe(strip);
+    setNearbyFareVisibleStart(0);
+  }, [body?.departureDate]);
 
-    return () => resizeObserver.disconnect();
-  }, [nearbyFares, updateNearbyFareScrollState]);
-
-  useLayoutEffect(() => {
-    const departureDate = body?.departureDate;
-    if (!departureDate || nearbyFares.length === 0) return;
-
-    const strip = nearbyFareStripScrollRef.current;
-    if (!strip) return;
-
-    const selectedIndex = nearbyFares.findIndex((fare) => fare.date === departureDate);
-    if (selectedIndex < 0) return;
-
-    const positioningContext = [
-      body.tripType,
-      body.origin,
-      body.destination,
-      departureDate,
-      body.returnDate ?? "",
-      body.travelers,
-      body.cabinClass ?? "",
-    ].join("|");
-
-    if (nearbyFarePositionedContextRef.current === positioningContext) return;
-
-    const firstCell = strip.querySelector<HTMLElement>("[data-fare-date-cell]");
-    if (!firstCell) return;
-
-    const cellWidth = firstCell.getBoundingClientRect().width;
-    const gap =
-      Number.parseFloat(window.getComputedStyle(strip).columnGap || "0") || 0;
-    const step = cellWidth + gap;
-    if (step <= 0) return;
-
-    const visibleCount = Math.max(1, Math.floor((strip.clientWidth + gap) / step));
-    const windowStart = getDateWindowStart({
-      selectedIndex,
-      totalDates: nearbyFares.length,
-      visibleCount,
-      desiredPosition: 2,
-    });
-
-    strip.scrollTo({
-      left: windowStart * step,
-      behavior: "auto",
-    });
-    nearbyFarePositionedContextRef.current = positioningContext;
-    window.requestAnimationFrame(updateNearbyFareScrollState);
-  }, [
-    body?.cabinClass,
-    body?.departureDate,
-    body?.destination,
-    body?.origin,
-    body?.returnDate,
-    body?.travelers,
-    body?.tripType,
-    nearbyFares,
-    updateNearbyFareScrollState,
-  ]);
-
-  const scrollNearbyFareStrip = useCallback(
+  const navigateNearbyFareWindow = useCallback(
     (direction: "previous" | "next") => {
-      const strip = nearbyFareStripScrollRef.current;
-      if (!strip) return;
-
-      const firstCell = strip.querySelector<HTMLElement>(
-        "[data-fare-date-cell]",
+      setNearbyFareVisibleStart((current) =>
+        Math.max(
+          0,
+          Math.min(
+            current + (direction === "previous" ? -1 : 1),
+            nearbyFareRangeSize - nearbyFareVisibleCount,
+          ),
+        ),
       );
-      const cellWidth = firstCell?.getBoundingClientRect().width ?? 104;
-      const gap =
-        Number.parseFloat(window.getComputedStyle(strip).columnGap || "0") || 0;
-      const distance = cellWidth + gap;
-
-      strip.scrollBy({
-        left: direction === "previous" ? -distance : distance,
-        behavior: "smooth",
-      });
-
-      window.setTimeout(updateNearbyFareScrollState, 240);
     },
-    [updateNearbyFareScrollState],
+    [],
   );
 
   const sortOptions = useMemo(
@@ -3365,6 +3496,7 @@ export function FlightResultsClient() {
 
   const handleNearbyFareDateSelect = useCallback(
     (date: string) => {
+      if (guidedMode) return;
       if (!body || date === body.departureDate) return;
 
       const nextParams = new URLSearchParams(queryString);
@@ -3394,7 +3526,7 @@ export function FlightResultsClient() {
         scroll: true,
       });
     },
-    [body, queryString, router, triggerFilterApplying],
+    [body, guidedMode, queryString, router, triggerFilterApplying],
   );
 
   const stopOptions = useMemo(() => {
@@ -3495,6 +3627,10 @@ export function FlightResultsClient() {
   }, [formatResultPriceLabel, results]);
 
   useEffect(() => {
+    if (guidedMode) {
+      preferredAirlineDefaultResolvedRef.current = true;
+      return;
+    }
     if (sessionStatus === "loading") return;
 
     if (sessionStatus !== "authenticated") {
@@ -3534,7 +3670,7 @@ export function FlightResultsClient() {
     void loadPreferredAirlineDefaults();
 
     return () => controller.abort();
-  }, [sessionStatus]);
+  }, [guidedMode, sessionStatus]);
 
   const airportOptions = useMemo(() => {
     const airportsForResults = results.flatMap((flight) => [
@@ -3622,11 +3758,18 @@ export function FlightResultsClient() {
 
   useEffect(() => {
     if (loading) return;
+    if (
+      !currentFlightSearchKey ||
+      activeFlightSearchKeyRef.current !== currentFlightSearchKey
+    ) {
+      return;
+    }
 
     if (lastWrittenFilterQueryStringRef.current === queryString) {
       lastWrittenFilterQueryStringRef.current = null;
       hydratedFilterQueryStringRef.current = queryString;
       filtersHydratedFromUrlRef.current = true;
+      setFiltersReadySearchKey(currentFlightSearchKey);
       return;
     }
 
@@ -3736,12 +3879,14 @@ export function FlightResultsClient() {
     );
     hydratedFilterQueryStringRef.current = queryString;
     filtersHydratedFromUrlRef.current = true;
+    setFiltersReadySearchKey(currentFlightSearchKey);
   }, [
     airlineOptions,
     airportOptions,
     durationBounds?.max,
     durationBounds?.min,
     flightQualityOptions,
+    currentFlightSearchKey,
     loading,
     renderFlightQualityFilter,
     priceBounds.max,
@@ -3753,6 +3898,13 @@ export function FlightResultsClient() {
     timeBounds.takeoff?.max,
     timeBounds.takeoff?.min,
   ]);
+
+  const resultsUiPreparing = isFlightResultsPreparing({
+    loading,
+    error,
+    currentSearchKey: currentFlightSearchKey,
+    filtersReadySearchKey,
+  });
 
   useEffect(() => {
     if (
@@ -3792,6 +3944,7 @@ export function FlightResultsClient() {
   ]);
 
   useEffect(() => {
+    if (guidedMode) return;
     if (
       !filtersHydratedFromUrlRef.current ||
       hydratedFilterQueryStringRef.current !== queryString ||
@@ -3859,6 +4012,7 @@ export function FlightResultsClient() {
     baggageIncludedOnly,
     durationBounds,
     flexibleOnly,
+    guidedMode,
     loading,
     maxDurationMinutes,
     maxLandingMinutes,
@@ -4267,6 +4421,23 @@ export function FlightResultsClient() {
   }, [filtered, sortMode]);
 
 
+  useEffect(() => {
+    if (resultsUiPreparing || !userInitiatedRetryRef.current) return;
+
+    const focusTimer = window.setTimeout(() => {
+      if (error) {
+        errorHeadingRef.current?.focus({ preventScroll: true });
+      } else if (sortedResults.length > 0) {
+        resultsHeadingRef.current?.focus({ preventScroll: true });
+      } else {
+        emptyHeadingRef.current?.focus({ preventScroll: true });
+      }
+      userInitiatedRetryRef.current = false;
+    }, 0);
+
+    return () => window.clearTimeout(focusTimer);
+  }, [error, resultsUiPreparing, sortedResults.length]);
+
   const lowestDisplayedFare = useMemo(() => {
     if (warnings.length > 0) return null;
     const fare = getLowestProviderFare(sortedResults);
@@ -4442,7 +4613,7 @@ export function FlightResultsClient() {
                   }}
                   className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-950 sm:h-auto sm:rounded-md sm:border-0 sm:bg-transparent sm:px-1 sm:text-sm sm:font-medium sm:shadow-none"
                 >
-                  {tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip")}
+                  {tripTypeInput === "multi-city" ? t("multiCity") : tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip")}
                   <ChevronDown
                     aria-hidden="true"
                     className={cn(
@@ -4486,12 +4657,30 @@ export function FlightResultsClient() {
                     >
                       {t("oneWay")}
                     </button>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => handleTripTypeChange("multi-city")}
+                      className="focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                    >
+                      {t("multiCity")}
+                    </button>
                   </div>
                 ) : null}
               </div>
             </div>
 
-            <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03] backdrop-blur sm:rounded-none sm:border-slate-200 sm:bg-white sm:p-1.5 sm:shadow-none sm:ring-0 lg:p-1">
+            {tripTypeInput === "multi-city" ? (
+              <button
+                type="button"
+                onClick={() => router.push(`/flights?${searchQueryString}`)}
+                className="focus-ring min-h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[#004BB8] shadow-sm hover:bg-blue-50"
+              >
+                {t("editFlightSearch")} · {t("multiCity")}
+              </button>
+            ) : null}
+            <div className={cn("overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03] backdrop-blur sm:rounded-none sm:border-slate-200 sm:bg-white sm:p-1.5 sm:shadow-none sm:ring-0 lg:p-1", tripTypeInput === "multi-city" && "hidden")}>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_116px] lg:gap-0">
                 <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-stretch rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-[#004BB8]/25 lg:col-span-1 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                   <div
@@ -4534,24 +4723,6 @@ export function FlightResultsClient() {
                       autoComplete="off"
                       className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-medium md:text-sm"
                     />
-                    {originInput ? (
-                      <button
-                        type="button"
-                        aria-label={t("clearOrigin")}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          clearOriginField();
-                        }}
-                        className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    ) : null}
 
                     {activeSuggest === "origin" && dropdownPosition ? (
                       <SuggestionList
@@ -4621,24 +4792,6 @@ export function FlightResultsClient() {
                       autoComplete="off"
                       className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-medium md:text-sm"
                     />
-                    {destinationInput ? (
-                      <button
-                        type="button"
-                        aria-label={t("clearDestination")}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          clearDestinationField();
-                        }}
-                        className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    ) : null}
 
                     {activeSuggest === "destination" && dropdownPosition ? (
                       <SuggestionList
@@ -5068,7 +5221,7 @@ export function FlightResultsClient() {
 
   function renderDesktopMinimizedSearchBar() {
     const compactSectionClass =
-      "focus-ring flex h-[56px] min-w-0 items-center gap-2.5 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90";
+      "flex h-[56px] min-w-0 items-center gap-2.5 px-3 text-start outline-none transition-colors hover:bg-slate-50/80 focus:outline-none focus-visible:outline-none";
     const compactValueClass = "min-w-0 truncate text-[0.86rem] font-medium leading-5 text-slate-800";
     const compactDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
@@ -5095,14 +5248,14 @@ export function FlightResultsClient() {
               type="button"
               aria-expanded={isStickySearchPanelOpen}
               aria-label={`${t("editFlightSearch")}: ${mobileOriginSummary} ${t("to")} ${mobileDestinationSummary}`}
-              onClick={openStickySearchEditor}
+              onClick={(event) => openStickySearchEditor(event, "route")}
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
                 {mobileOriginSummary}
               </span>
               <ArrowRightLeft
-                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span className="min-w-0 truncate text-[0.92rem] font-semibold leading-5 text-slate-950">
@@ -5114,11 +5267,11 @@ export function FlightResultsClient() {
               type="button"
               aria-expanded={isStickySearchPanelOpen}
               aria-label={`${t("editFlightSearch")}: ${compactDateSummary}`}
-              onClick={openStickySearchEditor}
+              onClick={(event) => openStickySearchEditor(event, "dates")}
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <Calendar
-                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span className={compactValueClass}>{compactDateSummary}</span>
@@ -5128,11 +5281,11 @@ export function FlightResultsClient() {
               type="button"
               aria-expanded={isStickySearchPanelOpen}
               aria-label={`${t("editFlightSearch")}: ${travelerCabinSummary}`}
-              onClick={openStickySearchEditor}
+              onClick={(event) => openStickySearchEditor(event, "travelers")}
               className={cn(compactSectionClass, "border-r border-slate-200/85")}
             >
               <Users
-                className="h-4 w-4 shrink-0 text-[#004BB8]"
+                className="h-4 w-4 shrink-0 text-slate-500"
                 aria-hidden="true"
               />
               <span className={compactValueClass}>{travelerCabinSummary}</span>
@@ -5159,15 +5312,16 @@ export function FlightResultsClient() {
     const stickyValueClass =
       "mt-0.5 block min-w-0 truncate text-sm font-semibold leading-5 text-slate-950";
     const panelFieldClass =
-      "group relative flex min-h-[58px] min-w-0 flex-col justify-center border-r border-slate-200/80 bg-white/90 px-3 py-1.5 text-start transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/20";
+      "group relative flex min-h-[58px] min-w-0 flex-col justify-center border-r border-slate-200/80 bg-white/90 px-3 py-1.5 text-start outline-none transition-colors hover:bg-white focus-within:z-10 focus-within:bg-white focus-within:outline-none";
     const stickyDateSummary = departureDateInput
       ? tripTypeInput === "round-trip" && returnDateInput
         ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
         : formatCompactDateLabel(departureDateInput, calendarLocale)
       : t("travelDates");
     const tripTypeOptions = [
-      { label: t("oneWay"), value: "one-way" },
-      { label: t("roundTrip"), value: "round-trip" },
+      { label: t("roundTrip"), value: "round-trip", disabled: false },
+      { label: t("oneWay"), value: "one-way", disabled: false },
+      { label: t("multiCity"), value: "multi-city", disabled: false },
     ];
 
     return (
@@ -5183,7 +5337,7 @@ export function FlightResultsClient() {
             }}
           >
             <div
-              className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28"
+              className="flex min-h-dvh items-start justify-center px-6 pb-8 pt-12 xl:pt-16"
               onMouseDown={(event) => event.stopPropagation()}
             >
               <form
@@ -5266,11 +5420,13 @@ export function FlightResultsClient() {
                     >
                       {t("origin")}
                     </label>
-                    <input
-                      id="sticky-results-origin"
-                      name="origin"
-                      required
-                      value={originInput}
+                    <div className="mt-0.5 flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <input
+                        id="sticky-results-origin"
+                        name="origin"
+                        required
+                        value={originInput}
                       onFocus={() => {
                         setActiveDesktopSearchSurface("sticky");
                         setTripTypeMenuOpen(false);
@@ -5296,10 +5452,11 @@ export function FlightResultsClient() {
                             : null,
                         );
                       }}
-                      placeholder={t("fromPlaceholder")}
-                      autoComplete="off"
-                      className="mt-0.5 h-5 min-w-0 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
-                    />
+                        placeholder={t("fromPlaceholder")}
+                        autoComplete="off"
+                        className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
+                      />
+                    </div>
                     {activeSuggest === "origin" &&
                     activeDesktopSearchSurface === "sticky" ? (
                       <SuggestionList
@@ -5325,7 +5482,7 @@ export function FlightResultsClient() {
                       event.stopPropagation();
                       handleSwapLocations();
                     }}
-                    className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white/90 text-[#5CB6B2] transition-colors hover:bg-blue-50/60 hover:text-[#39948F]"
+                    className="focus-ring flex min-h-[58px] cursor-pointer items-center justify-center border-r border-slate-200/80 bg-white/90 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800"
                   >
                     <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -5340,11 +5497,13 @@ export function FlightResultsClient() {
                     >
                       {t("destination")}
                     </label>
-                    <input
-                      id="sticky-results-destination"
-                      name="destination"
-                      required
-                      value={destinationInput}
+                    <div className="mt-0.5 flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <input
+                        id="sticky-results-destination"
+                        name="destination"
+                        required
+                        value={destinationInput}
                       onFocus={() => {
                         setActiveDesktopSearchSurface("sticky");
                         setTripTypeMenuOpen(false);
@@ -5370,10 +5529,11 @@ export function FlightResultsClient() {
                             : null,
                         );
                       }}
-                      placeholder={t("toPlaceholder")}
-                      autoComplete="off"
-                      className="mt-0.5 h-5 min-w-0 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
-                    />
+                        placeholder={t("toPlaceholder")}
+                        autoComplete="off"
+                        className="h-5 min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium leading-5 text-slate-950 outline-none placeholder:text-slate-400"
+                      />
+                    </div>
                     {activeSuggest === "destination" &&
                     activeDesktopSearchSurface === "sticky" ? (
                       <SuggestionList
@@ -5394,6 +5554,7 @@ export function FlightResultsClient() {
 
                   <div className="relative">
                     <button
+                      ref={stickyDateButtonRef}
                       type="button"
                       onClick={() => {
                         setActiveDesktopSearchSurface("sticky");
@@ -5410,8 +5571,9 @@ export function FlightResultsClient() {
                       <span className={stickyLabelClass}>
                         {t("travelDates")}
                       </span>
-                      <span className={stickyValueClass}>
-                        {stickyDateSummary}
+                      <span className={cn(stickyValueClass, "flex items-center gap-2")}>
+                        <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                        <span className="min-w-0 truncate">{stickyDateSummary}</span>
                       </span>
                     </button>
                     {activeDatePicker &&
@@ -5451,6 +5613,7 @@ export function FlightResultsClient() {
 
                   <div className="relative">
                     <button
+                      ref={stickyTravelerButtonRef}
                       type="button"
                       onClick={() => {
                         setActiveDesktopSearchSurface("sticky");
@@ -5466,7 +5629,10 @@ export function FlightResultsClient() {
                     >
                       <span className={stickyLabelClass}>{t("travelers")}</span>
                       <span className="mt-0.5 flex min-w-0 items-center justify-between gap-2 text-sm font-medium leading-5 text-slate-950">
-                        <span className="truncate">{travelerCabinSummary}</span>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                          <span className="truncate">{travelerCabinSummary}</span>
+                        </span>
                         <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
                       </span>
                     </button>
@@ -5713,6 +5879,7 @@ export function FlightResultsClient() {
       const mobileTripTypeOptions = [
         { labelKey: "roundTrip", value: "round-trip" },
         { labelKey: "oneWay", value: "one-way" },
+        { labelKey: "multiCity", value: "multi-city" },
       ];
 
       return (
@@ -5984,6 +6151,20 @@ export function FlightResultsClient() {
       return null;
     }
 
+    if (tripTypeInput === "multi-city") {
+      return (
+        <div className={cn("mx-auto w-full min-w-0 max-w-5xl", placement === "desktop" && "hidden sm:block")}>
+          <button
+            type="button"
+            onClick={() => router.push(`/flights?${searchQueryString}`)}
+            className="focus-ring min-h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[#004BB8] shadow-sm hover:bg-blue-50"
+          >
+            {t("editFlightSearch")} · {t("multiCity")}
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div
         className={cn(
@@ -5996,11 +6177,12 @@ export function FlightResultsClient() {
             <div
               role="radiogroup"
               aria-label={t("tripType")}
-              className="hidden translate-y-2 items-center gap-4 px-1 pb-0 sm:flex"
+              className="hidden translate-y-2 items-center gap-8 px-1 pb-0 sm:flex"
             >
               {[
-                { label: t("oneWay"), value: "one-way" },
-                { label: t("roundTrip"), value: "round-trip" },
+                { label: "Round-trip", value: "round-trip" },
+                { label: "One-way", value: "one-way" },
+                { label: "Multi-city", value: "multi-city" },
               ].map((option) => {
                 const selected = tripTypeInput === option.value;
 
@@ -6012,25 +6194,20 @@ export function FlightResultsClient() {
                     aria-checked={selected}
                     onClick={() => handleTripTypeChange(option.value)}
                     className={cn(
-                      "focus-ring inline-flex min-h-6 items-center gap-1.5 rounded-full px-1 py-0.5 text-xs font-medium transition-colors",
-                      selected
-                        ? "text-slate-900"
-                        : "text-slate-500 hover:text-slate-800",
+                      "focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 py-1 text-[14px] font-medium text-slate-900 transition-colors hover:text-slate-950",
                     )}
                   >
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border transition-colors",
-                        selected
-                          ? "border-[#004BB8] bg-white shadow-[0_0_0_3px_rgba(0,75,184,0.10)]"
-                          : "border-slate-300 bg-white/70",
+                        "inline-flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 bg-white transition-colors",
+                        selected ? "border-[#075EE8]" : "border-slate-300",
                       )}
                     >
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 rounded-full transition-colors",
-                          selected ? "bg-[#004BB8]" : "bg-transparent",
+                          "h-2 w-2 rounded-full transition-colors",
+                          selected ? "bg-[#075EE8]" : "bg-transparent",
                         )}
                       />
                     </span>
@@ -6067,7 +6244,7 @@ export function FlightResultsClient() {
                 placement === "desktop" && "sm:bg-white sm:backdrop-blur-none",
               )}
             >
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.95fr)_minmax(0,1.35fr)_minmax(0,1.12fr)_116px] lg:gap-0">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.75fr)_minmax(0,1.3fr)_minmax(0,1.37fr)_116px] lg:gap-0">
                 <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] items-stretch rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 transition-colors hover:border-slate-300/90 focus-within:border-[#004BB8]/55 focus-within:ring-2 focus-within:ring-[#004BB8]/15 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85 lg:focus-within:border-slate-200/85 lg:focus-within:ring-0">
                   <div
                     ref={originWrapRef}
@@ -6079,7 +6256,9 @@ export function FlightResultsClient() {
                     >
                       {t("origin")}
                     </label>
-                    <input
+                    <div className="flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <input
                       id="results-origin"
                       ref={originInputRef}
                       name="origin"
@@ -6119,27 +6298,9 @@ export function FlightResultsClient() {
                       }}
                       placeholder={t("fromPlaceholder")}
                       autoComplete="off"
-                      className="h-6 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
-                    />
-
-                    {originInput ? (
-                      <button
-                        type="button"
-                        aria-label={t("clearOrigin")}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          clearOriginField();
-                        }}
-                        className="focus-ring absolute end-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    ) : null}
+                      className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
+                      />
+                    </div>
 
                     {activeSuggest === "origin" &&
                     activeDesktopSearchSurface !== "sticky" ? (
@@ -6184,7 +6345,9 @@ export function FlightResultsClient() {
                     >
                       {t("destination")}
                     </label>
-                    <input
+                    <div className="flex min-w-0 items-center gap-2">
+                      <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                      <input
                       id="results-destination"
                       ref={destinationInputRef}
                       name="destination"
@@ -6225,27 +6388,9 @@ export function FlightResultsClient() {
                       }}
                       placeholder={t("toPlaceholder")}
                       autoComplete="off"
-                      className="h-6 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
-                    />
-
-                    {destinationInput ? (
-                      <button
-                        type="button"
-                        aria-label={t("clearDestination")}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          clearDestinationField();
-                        }}
-                        className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    ) : null}
+                      className="h-6 min-w-0 flex-1 border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold leading-6 text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-400 md:text-sm"
+                      />
+                    </div>
 
                     {activeSuggest === "destination" &&
                     activeDesktopSearchSurface !== "sticky" ? (
@@ -6279,22 +6424,24 @@ export function FlightResultsClient() {
                       setActiveDatePicker("departure");
                       setDatePickerPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[58px] w-full items-center gap-2.5 rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 px-4 py-2.5 text-start transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85"
+                    className="focus-ring flex h-full min-h-[58px] w-full items-center rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 px-4 py-2.5 text-start transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85"
                   >
-                    <Calendar className="h-4 w-4 shrink-0 text-[#004BB8]" />
                     <span className="min-w-0">
                       <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelDates")}
                       </span>
-                      <span className="block truncate text-sm font-semibold leading-6 text-slate-950">
-                        {departureDateInput
-                          ? tripTypeInput === "round-trip" && returnDateInput
-                            ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
-                            : formatDateLabel(
-                                departureDateInput,
-                                calendarLocale,
-                              )
-                          : t("travelDates")}
+                      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-6 text-slate-950">
+                        <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600" />
+                        <span className="truncate">
+                          {departureDateInput
+                            ? tripTypeInput === "round-trip" && returnDateInput
+                              ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
+                              : formatDateLabel(
+                                  departureDateInput,
+                                  calendarLocale,
+                                )
+                            : t("travelDates")}
+                        </span>
                       </span>
                     </span>
                   </button>
@@ -6351,18 +6498,22 @@ export function FlightResultsClient() {
                     }}
                     className="focus-ring flex h-full min-h-[58px] w-full items-center justify-between gap-2.5 rounded-[0.9rem] border border-slate-200/85 bg-gradient-to-b from-white to-slate-50/35 px-4 py-2.5 text-start transition-colors hover:border-slate-300 hover:bg-slate-50 focus-visible:border-[#004BB8] focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200/85 lg:bg-transparent lg:hover:border-slate-200/85"
                   >
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <span className="mb-1.5 block text-[0.66rem] font-semibold uppercase leading-3 tracking-[0.13em] text-slate-500">
                         {t("travelers")}
                       </span>
-                      <span className="block truncate text-sm font-semibold leading-6 text-slate-950">
-                        {buildTravelerCabinSummary(
-                          adultCount,
-                          childCount,
-                          infantCount,
-                          cabinClassInput,
-                          t,
-                        )}
+                      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold leading-6 text-slate-950">
+                        <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-600" />
+                        <span className="truncate">
+                          {buildTravelerCabinSummary(
+                            adultCount,
+                            childCount,
+                            infantCount,
+                            cabinClassInput,
+                            t,
+                            locale,
+                          )}
+                        </span>
                       </span>
                     </span>
                     <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
@@ -6807,7 +6958,30 @@ export function FlightResultsClient() {
     );
   }
 
-  if (loading) {
+  function renderDesktopSortControl() {
+    return (
+      <div ref={desktopSortRef} className="relative hidden items-center gap-2 lg:flex">
+        <span className="text-[16px] font-medium text-[#142033]">Sort by:</span>
+        <button ref={desktopSortButtonRef} type="button" aria-label="Sort flight results" aria-haspopup="menu" aria-expanded={desktopSortOpen} className="inline-flex h-9 items-center justify-center gap-3 rounded-md bg-transparent px-2 text-[16px] font-semibold text-[#142033] transition hover:bg-[#004BB8]/5 hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" onClick={() => setDesktopSortOpen((open) => !open)}>
+          {selectedSortLabel}<ChevronDown size={16} aria-hidden="true" />
+        </button>
+        <div role="menu" className={cn("absolute right-0 top-11 z-30 w-44 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] transition duration-150", desktopSortOpen ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none -translate-y-1 scale-95 opacity-0")}>
+          {sortOptions.map((option) => (
+            <button key={option.value} type="button" role="menuitemradio" aria-checked={sortMode === option.value} className={cn("flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/25", sortMode === option.value ? "text-[#004BB8]" : "text-slate-700")} onClick={() => { triggerFilterApplying(); setSortMode(option.value); setDesktopSortOpen(false); handleUserFilterCommit(); }}>
+              <span className="w-4 text-[#004BB8]">{sortMode === option.value ? "✓" : ""}</span>{option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function renderGuidedRetryButton() {
+    return <Button type="button" className="mt-4 rounded-xl" onClick={retryMainInventorySearch}>{t("deals.guided.flightResults.retry")}</Button>;
+  }
+
+  if (resultsUiPreparing) {
+    if (guidedMode) return <section aria-labelledby="deals-guided-flight-results-heading" className="mt-6" data-flight-results-experience="deals-guided"><h2 id="deals-guided-flight-results-heading" tabIndex={-1} className="text-xl font-extrabold text-slate-950">{t("deals.guided.flightResults.loadingTitle")}</h2><div ref={loadingFocusRef} role="status" tabIndex={-1} className="mt-4 space-y-3"><FlightCardSkeleton /><FlightCardSkeleton /></div></section>;
     return (
       <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
         <BrandedLoading
@@ -6827,6 +7001,22 @@ export function FlightResultsClient() {
       </main>
     );
   }
+
+  if (guidedMode) return (
+    <section aria-labelledby="deals-guided-flight-results-heading" className="mt-0 lg:relative lg:left-1/2 lg:w-[min(1180px,calc(100vw-32px))] lg:-translate-x-1/2 xl:w-[min(1240px,calc(100vw-32px))]" data-flight-results-experience="deals-guided">
+      <h2 id="deals-guided-flight-results-heading" ref={resultsHeadingRef} tabIndex={-1} className="sr-only">{formatResultsFound(sortedResults.length, t)}</h2>
+      <div ref={resultsGridRef} className="grid gap-x-6 gap-y-4 pb-5 pt-4 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-x-6 xl:grid-cols-[304px_minmax(0,1fr)]">
+        <aside ref={desktopFilterSidebarRef} className="relative hidden self-stretch lg:block"><DesktopFlightFilters presentationMode="deals-guided" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} originCode={originCode} destinationCode={destinationCode} /></aside>
+        <section className="min-w-0 space-y-4">
+          <div className="flex w-full flex-col gap-3 py-1"><div className="flex items-center justify-between gap-4"><p className="text-[16px] font-semibold text-[#142033]">{formatResultsFound(sortedResults.length, t)}</p>{renderDesktopSortControl()}<Button variant="secondary" className="h-10 rounded-xl border-slate-300 text-sm font-bold lg:hidden" onClick={(event) => openMobileFiltersDrawer(event.currentTarget)}>{activeFilterCount > 0 ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount)) : t("filters")}</Button></div><div className="lg:hidden">{renderMobileSortResultsRow()}</div></div>
+          {error ? <div className="rounded-xl border border-danger/30 bg-red-50 p-5 text-danger" role="alert"><h2 ref={errorHeadingRef} tabIndex={-1} className="text-lg font-extrabold">{t("deals.guided.flightResults.errorTitle")}</h2><p className="mt-2">{error}</p><p className="mt-2">{t("deals.guided.flightResults.errorBody")}</p>{renderGuidedRetryButton()}</div> : filterApplying ? <div className="space-y-3"><div role="status" className="rounded-xl border border-[#004BB8]/10 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm">{t("updatingResults")}</div><FlightCardSkeleton /><FlightCardSkeleton /></div> : sortedResults.length ? sortedResults.map((flight, index) => <FlightCard key={flight.id} flight={flight} isAccented={index % 2 === 0} resultBadge={resultBadgeByFlightId.get(flight.id)} detailsHref={buildDetailsHref ? buildDetailsHref(flight) : undefined} actionLabel={actionLabel} actionAriaLabel={actionAriaLabel?.(flight)} onAction={onSelectFlight} showProviderHandoffCopy={false} />) : <div className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"><h2 ref={emptyHeadingRef} tabIndex={-1} className="text-lg font-extrabold text-slate-950">{t("deals.guided.flightResults.emptyTitle")}</h2><p className="mt-2">{t("deals.guided.flightResults.emptyBody")}</p>{renderGuidedRetryButton()}</div>}
+        </section>
+      </div>
+      {filtersOpen ? (
+        <aside ref={mobileFiltersDialogRef} id="flight-mobile-filters-dialog" role="dialog" aria-modal="true" aria-labelledby="flight-mobile-filters-title" className="fixed inset-0 z-[10000] flex h-[100dvh] flex-col overflow-hidden overscroll-contain bg-white transition-transform duration-200 ease-out lg:hidden translate-y-0"><div className="shrink-0 border-b border-slate-200 bg-white px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(15,23,42,0.04)]"><div className="flex items-center justify-between gap-3"><h2 id="flight-mobile-filters-title" className="text-lg font-bold leading-6 text-slate-950">{t("filters")}</h2><button ref={mobileFiltersCloseButtonRef} type="button" className="focus-ring inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-0 font-semibold text-navy transition hover:bg-surface-muted" aria-label={t("closeFilters")} onClick={() => closeMobileFiltersDrawer()}><X size={20} /></button></div></div><div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4"><Filters layout="mobile" activeFilterCount={activeFilterCount} maxPrice={maxPrice} setMaxPrice={setMaxPrice} priceBounds={priceBounds} priceLabelCurrency={priceLabelCurrency} selectedCurrency={selectedCurrency} timeFilterMode={timeFilterMode} setTimeFilterMode={setTimeFilterMode} timeBounds={timeBounds} maxTakeoffMinutes={maxTakeoffMinutes} setMaxTakeoffMinutes={setMaxTakeoffMinutes} maxLandingMinutes={maxLandingMinutes} setMaxLandingMinutes={setMaxLandingMinutes} durationBounds={durationBounds} maxDurationMinutes={maxDurationMinutes} setMaxDurationMinutes={setMaxDurationMinutes} stopOptions={stopOptions} selectedStops={selectedStops} setSelectedStops={setSelectedStops} airlineOptions={airlineOptions} selectedAirlines={selectedAirlines} setSelectedAirlines={setSelectedAirlines} airportOptions={airportOptions} selectedAirports={selectedAirports} setSelectedAirports={setSelectedAirports} flightQualityOptions={flightQualityOptions} renderFlightQualityFilter={renderFlightQualityFilter} selectedFlightQuality={selectedFlightQuality} setSelectedFlightQuality={setSelectedFlightQuality} baggageIncludedOnly={baggageIncludedOnly} setBaggageIncludedOnly={setBaggageIncludedOnly} flexibleOnly={flexibleOnly} setFlexibleOnly={setFlexibleOnly} onFilterChange={triggerFilterApplying} onFilterCommit={handleUserFilterCommit} onClear={clearFlightFilters} /></div><div className="flex shrink-0 items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"><Button type="button" variant="ghost" disabled={activeFilterCount === 0} onClick={clearFlightFilters}>{t("clearAll")}</Button><Button type="button" onClick={() => { shouldScrollToTopAfterFilterApplyRef.current = true; triggerFilterApplying(); closeMobileFiltersDrawer(); }}>{t("done")}</Button></div></aside>
+      ) : null}
+    </section>
+  );
 
   return (
     <main className="flex-1 bg-[#F3F6FA] pb-8">
@@ -6879,74 +7069,43 @@ export function FlightResultsClient() {
         <>
           <MobileAirportPicker
             open={activeMobileAirportPicker === "origin"}
+            field="origin"
             title={t("chooseOrigin")}
             inputId="results-mobile-origin-picker-search"
             value={originInput}
-            suggestions={originSuggestions}
-            isLoading={originSuggestionsLoading}
+            selectedCode={originCode}
             launcherRef={mobileOriginLauncherRef}
             labels={airportPickerLabels}
             locale={locale}
-            onChange={(nextValue) => {
-              setOriginInput(nextValue);
-              setOriginCode("");
-              if (nextValue.trim().length < 2) {
-                setOriginSuggestions([]);
-                setOriginSuggestionsLoading(false);
-              }
-            }}
-            onClear={() => {
-              setOriginInput("");
-              setOriginCode("");
+            onCommit={(option) => {
+              setOriginInput(option?.code ?? "");
+              setOriginCode(option?.code ?? "");
               setOriginSuggestions([]);
               setOriginSuggestionsLoading(false);
-            }}
-            onSelect={(option, requestClose) => {
-              setOriginInput(option.code);
-              setOriginCode(option.code);
-              if (!destinationCode && !destinationInput.trim()) {
-                setActiveMobileAirportPicker("destination");
-                return;
-              }
-              requestClose();
             }}
             onClose={closeMobileAirportPicker}
           />
           <MobileAirportPicker
             open={activeMobileAirportPicker === "destination"}
+            field="destination"
             title={t("chooseDestination")}
             inputId="results-mobile-destination-picker-search"
             value={destinationInput}
-            suggestions={destinationSuggestions}
-            isLoading={destinationSuggestionsLoading}
+            selectedCode={destinationCode}
             launcherRef={mobileDestinationLauncherRef}
             labels={airportPickerLabels}
             locale={locale}
-            onChange={(nextValue) => {
-              setDestinationInput(nextValue);
-              setDestinationCode("");
-              if (nextValue.trim().length < 2) {
-                setDestinationSuggestions([]);
-                setDestinationSuggestionsLoading(false);
-              }
-            }}
-            onClear={() => {
-              setDestinationInput("");
-              setDestinationCode("");
+            onCommit={(option) => {
+              setDestinationInput(option?.code ?? "");
+              setDestinationCode(option?.code ?? "");
               setDestinationSuggestions([]);
               setDestinationSuggestionsLoading(false);
-            }}
-            onSelect={(option, requestClose) => {
-              setDestinationInput(option.code);
-              setDestinationCode(option.code);
 
-              const missingDatePicker = getMissingMobileDatePicker();
+              const missingDatePicker = option ? getMissingMobileDatePicker() : null;
               if (missingDatePicker) {
                 rememberMobileSearchScrollPosition();
                 pendingMobileDatePickerRef.current = missingDatePicker;
               }
-
-              requestClose();
             }}
             onClose={closeMobileAirportPicker}
           />
@@ -7143,7 +7302,7 @@ export function FlightResultsClient() {
 
         <section className="min-w-0 space-y-4 lg:space-y-0">
           <p className="sr-only" aria-live="polite">
-            {savedTripError}
+            {savedItemError}
           </p>
           <p className="sr-only" aria-live="polite">
             {priceAlertStatusMessage || priceAlertError}
@@ -7155,118 +7314,152 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="hidden w-full sm:block" aria-label="Nearby departure fares">
-                <div className="relative">
-                  <button
-                    type="button"
-                    aria-label="Scroll to previous departure fares"
-                    aria-disabled={!nearbyFareCanScrollPrevious}
-                    disabled={!nearbyFareCanScrollPrevious}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      scrollNearbyFareStrip("previous");
-                    }}
-                    className="focus-ring absolute left-0 top-1/2 z-10 inline-flex h-12 w-8 -translate-x-5 -translate-y-1/2 items-center justify-start border-0 bg-transparent p-0 text-[#0057FF] shadow-none transition hover:text-[#003E91] focus-visible:text-[#003E91] disabled:cursor-not-allowed disabled:text-slate-300 lg:-translate-x-7 xl:-translate-x-7"
-                  >
-                    <ChevronLeft
-                      className="h-8 w-8"
-                      strokeWidth={2.7}
-                      aria-hidden="true"
-                    />
-                  </button>
+              {body?.tripType !== "multi-city" ? (
+                <div
+                  className="hidden w-full sm:block"
+                  aria-label="Nearby departure fares"
+                >
+                  <div className="mx-auto grid w-full max-w-[780px] grid-cols-[36px_repeat(7,minmax(72px,1fr))_36px] items-stretch overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <button
+                      type="button"
+                      aria-label="Previous nearby fare date"
+                      disabled={nearbyFareVisibleStart === 0}
+                      onClick={() => navigateNearbyFareWindow("previous")}
+                      className="focus-ring inline-flex min-h-[88px] items-center justify-center border-e border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
+                    >
+                      <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                    </button>
 
-                  <div
-                    ref={nearbyFareStripScrollRef}
-                    onScroll={updateNearbyFareScrollState}
-                    className="fare-strip-scroll grid auto-cols-[188px] grid-flow-col items-center gap-2 overflow-x-auto scroll-smooth px-0 py-1 sm:auto-cols-[192px]"
-                    role="list"
-                  >
-                    {nearbyFares.length
-                      ? nearbyFares.map((fare) => {
-                          const selected = fare.date === body?.departureDate;
-                          return (
-                            <button
-                              key={fare.date}
-                              type="button"
-                              data-fare-date-cell
-                              className={cn(
-                                "flex min-h-[112px] w-[188px] min-w-0 flex-col items-center justify-center bg-transparent px-3 py-3 text-center text-[#24324A] transition hover:text-[#004BB8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30 sm:w-[192px]",
-                                selected ? "text-[#0057FF]" : "text-[#24324A]",
-                              )}
-                              aria-current={selected ? "date" : undefined}
-                              aria-pressed={selected}
-                              disabled={selected || loading}
-                              onClick={() => handleNearbyFareDateSelect(fare.date)}
-                            >
-                              <span className={cn("text-[13px] font-semibold uppercase leading-5 tracking-[0.02em]", selected ? "text-[#0057FF]" : "text-slate-600")}>
-                                {formatFareStripDateLabel(fare.date, calendarLocale).toUpperCase()}
-                              </span>
-                              <span className={cn("text-[13px] font-semibold uppercase leading-5", selected ? "text-[#0057FF]" : "text-[#24324A]")}>
-                                {formatFareStripWeekdayLabel(fare.date, calendarLocale).toUpperCase()}
-                              </span>
-                              <span className={cn("mt-1 flex min-w-0 max-w-full justify-center text-[14px] font-semibold leading-5", selected ? "text-[#0057FF]" : "text-slate-950")} aria-live={fare.status === "loading" ? "polite" : undefined}>
-                                {fare.status === "loading" ? (
-                                  <span className="block h-5 w-32 animate-pulse rounded-full bg-slate-200" aria-label="Loading fare" />
-                                ) : fare.status === "success" ? (() => {
-                                  const nearbyDisplayPrice = formatDisplayPrice({
-                                    amount: fare.amount,
-                                    sourceCurrency: fare.currency,
-                                    displayCurrency: selectedCurrency,
-                                    convertUsdEstimate: true,
-                                    rates: currencyRates.rates,
-                                    isFallbackRate: currencyRates.isFallback,
-                                  }).formatted;
+                    {(nearbyFares.length
+                      ? nearbyFares.slice(
+                          nearbyFareVisibleStart,
+                          nearbyFareVisibleStart + nearbyFareVisibleCount,
+                        )
+                      : Array.from(
+                          { length: nearbyFareVisibleCount },
+                          (_, index) => ({
+                            date: `loading-${index}`,
+                            status: "loading" as const,
+                          }),
+                        )
+                    ).map((fare) => {
+                      const selected = fare.date === body?.departureDate;
+                      const displayPrice =
+                        fare.status === "success"
+                          ? formatDisplayPrice({
+                              amount: fare.amount,
+                              sourceCurrency: fare.currency,
+                              displayCurrency: selectedCurrency,
+                              convertUsdEstimate: true,
+                              rates: currencyRates.rates,
+                              isFallbackRate: currencyRates.isFallback,
+                            }).formatted
+                          : null;
+                      const accessibleFare =
+                        displayPrice ??
+                        (fare.status === "loading"
+                          ? "Loading fare"
+                          : "Unavailable");
+                      const accessibleDate = fare.date.startsWith("loading-")
+                        ? "Loading date"
+                        : `${formatFareStripWeekdayLabel(fare.date, calendarLocale)}, ${formatFareStripDateLabel(fare.date, calendarLocale)}`;
 
-                                  return (
-                                    <span
-                                      className="flight-fare-strip-price"
-                                      aria-label={nearbyDisplayPrice}
-                                      title={nearbyDisplayPrice}
-                                      dir="ltr"
-                                    >
-                                      {nearbyDisplayPrice}
-                                    </span>
-                                  );
-                                })() : (
-                                  "Unavailable"
+                      return (
+                        <button
+                          key={fare.date}
+                          type="button"
+                          data-fare-date-cell
+                          aria-label={`${accessibleDate}: ${accessibleFare}`}
+                          aria-current={selected ? "date" : undefined}
+                          aria-pressed={selected}
+                          disabled={
+                            selected || loading || fare.status === "loading"
+                          }
+                          onClick={() => handleNearbyFareDateSelect(fare.date)}
+                          className={cn(
+                            "focus-ring relative flex min-h-[88px] min-w-0 flex-col items-center justify-center border-e border-slate-100 px-1.5 py-2 text-center transition last:border-e-0 hover:bg-slate-50",
+                            selected && "bg-blue-50/60",
+                          )}
+                        >
+                          {selected ? (
+                            <span
+                              className="absolute inset-x-2 top-0 h-0.5 rounded-b bg-[#075EE8]"
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          {fare.status === "loading" ? (
+                            <>
+                              <span className="h-3 w-12 animate-pulse rounded bg-slate-200" />
+                              <span className="mt-2 h-3 w-8 animate-pulse rounded bg-slate-200" />
+                              <span className="mt-2 h-3 w-14 animate-pulse rounded bg-slate-200" />
+                            </>
+                          ) : (
+                            <>
+                              <span
+                                className={cn(
+                                  "text-[12px] font-semibold uppercase leading-4",
+                                  selected
+                                    ? "text-[#075EE8]"
+                                    : "text-slate-800",
                                 )}
+                              >
+                                {formatFareStripDateLabel(
+                                  fare.date,
+                                  calendarLocale,
+                                ).toUpperCase()}
                               </span>
-                            </button>
-                          );
-                        })
-                      : Array.from({ length: nearbyFareRangeSize }).map((_, index) => (
-                          <div
-                            key={index}
-                            className="flex min-h-[112px] w-[188px] min-w-0 flex-col items-center justify-center px-3 py-3 sm:w-[192px]"
-                          >
-                            <div className="h-3 w-14 animate-pulse rounded-full bg-slate-200" />
-                            <div className="mt-2 h-3 w-8 animate-pulse rounded-full bg-slate-200" />
-                            <div className="mt-2 h-5 w-32 animate-pulse rounded-full bg-slate-200" />
-                          </div>
-                        ))}
-                  </div>
+                              <span
+                                className={cn(
+                                  "text-[11px] font-medium uppercase leading-4",
+                                  selected
+                                    ? "text-[#075EE8]"
+                                    : "text-slate-500",
+                                )}
+                              >
+                                {formatFareStripWeekdayLabel(
+                                  fare.date,
+                                  calendarLocale,
+                                ).toUpperCase()}
+                              </span>
+                              <span
+                                className={cn(
+                                  "flight-fare-strip-price mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium leading-4",
+                                  selected
+                                    ? "font-semibold text-[#075EE8]"
+                                    : "text-slate-900",
+                                )}
+                                data-price-size={
+                                  ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 13
+                                    ? "extra-long"
+                                    : ((displayPrice ?? "Unavailable").replace(/\s/g, "").length) >= 10
+                                      ? "long"
+                                      : "default"
+                                }
+                                dir="ltr"
+                              >
+                                {displayPrice ?? "Unavailable"}
+                              </span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    })}
 
-                  <button
-                    type="button"
-                    aria-label="Scroll to next departure fares"
-                    aria-disabled={!nearbyFareCanScrollNext}
-                    disabled={!nearbyFareCanScrollNext}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      scrollNearbyFareStrip("next");
-                    }}
-                    className="focus-ring absolute right-0 top-1/2 z-10 inline-flex h-12 w-8 -translate-y-1/2 items-center justify-end border-0 bg-transparent p-0 text-[#0057FF] shadow-none transition hover:text-[#003E91] focus-visible:text-[#003E91] disabled:cursor-not-allowed disabled:text-slate-300 lg:translate-x-7 xl:translate-x-8"
-                  >
-                    <ChevronRight
-                      className="h-8 w-8"
-                      strokeWidth={2.7}
-                      aria-hidden="true"
-                    />
-                  </button>
+                    <button
+                      type="button"
+                      aria-label="Next nearby fare date"
+                      disabled={
+                        nearbyFareVisibleStart >=
+                        nearbyFareRangeSize - nearbyFareVisibleCount
+                      }
+                      onClick={() => navigateNearbyFareWindow("next")}
+                      className="focus-ring inline-flex min-h-[88px] items-center justify-center text-slate-500 transition hover:bg-slate-50 hover:text-[#075EE8] focus-visible:text-[#075EE8] disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white"
+                    >
+                      <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               <div className="flex w-full flex-col gap-3 rounded-2xl border border-[#D8E1EC] bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4 lg:bg-transparent">
                 <div className="min-w-0">
@@ -7634,34 +7827,6 @@ function airportInputValue(item: AirportOption) {
   return item.code;
 }
 
-function buildFlightResultsSearchKey(body: {
-  origin: string;
-  destination: string;
-  departureDate: string;
-  returnDate?: string;
-  tripType: string;
-  adults: number;
-  children: number;
-  infants: number;
-  travelers: number;
-  cabinClass: string;
-  currency?: string;
-}) {
-  return [
-    body.origin.trim().toUpperCase(),
-    body.destination.trim().toUpperCase(),
-    body.departureDate,
-    body.returnDate || "",
-    body.tripType,
-    body.adults,
-    body.children,
-    body.infants,
-    body.travelers,
-    body.cabinClass,
-    body.currency || "",
-  ].join("|");
-}
-
 function filterResultsByRequestedOutboundDate(
   results: PublicFlightResult[],
   requestedDepartureDate: string,
@@ -7761,11 +7926,16 @@ function formatFareStripWeekdayLabel(value: string, locale: string): string {
   }).format(date);
 }
 
-function getNearbyFareDateRange(anchorDate: Date): string[] {
+function getNearbyFareWindowStart(selectedDate: Date): Date {
   const today = startOfLocalDay(new Date());
-  const preferredStart = addDays(anchorDate, -nearbyFareDaysBeforeAnchor);
-  const startDate = startOfLocalDay(preferredStart) < today ? today : preferredStart;
+  const preferredStart = startOfLocalDay(
+    addDays(selectedDate, -nearbyFareDaysBeforeAnchor),
+  );
+  return preferredStart < today ? today : preferredStart;
+}
 
+function getNearbyFareDateRange(windowStart: Date): string[] {
+  const startDate = startOfLocalDay(windowStart);
   return Array.from({ length: nearbyFareRangeSize }, (_, index) =>
     formatDateValue(addDays(startDate, index)),
   );
@@ -8134,8 +8304,16 @@ function buildTravelerCabinSummary(
   const isArabic = locale === "ar";
   const formatTravelerCount = isArabic ? pluralizeArabicTraveler : pluralize;
   const joiner = isArabic ? "، " : ", ";
+  const adultSingular = t("adultSingular");
+  const adultPlural = t("adultPlural");
+  const displayAdultSingular = locale?.startsWith("en")
+    ? `${adultSingular.charAt(0).toUpperCase()}${adultSingular.slice(1)}`
+    : adultSingular;
+  const displayAdultPlural = locale?.startsWith("en")
+    ? `${adultPlural.charAt(0).toUpperCase()}${adultPlural.slice(1)}`
+    : adultPlural;
   const parts = [
-    formatTravelerCount(adults, t("adultSingular"), t("adultPlural")),
+    formatTravelerCount(adults, displayAdultSingular, displayAdultPlural),
   ];
 
   if (children > 0) {
@@ -8647,41 +8825,44 @@ function TravelerCabinPopover({
             </h3>
           ) : null}
 
-          <div className="mt-3 divide-y divide-slate-100">
+          <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white px-3">
             <CounterRow
-              label={t("adultPlural")}
-              description="18+"
+              label={t("adults")}
+              description={t("adultAgeRange")}
               value={adultCount}
               min={1}
               max={9}
               onChange={onAdultChange}
+              presentation="desktop"
             />
 
             <CounterRow
-              label={t("childPlural")}
+              label={t("children")}
               description={t("childAgeRange")}
               value={childCount}
               min={0}
               max={9}
               onChange={onChildChange}
+              presentation="desktop"
             />
 
             <CounterRow
-              label={t("infantsOnLap")}
+              label={t("infantPlural")}
               description={t("under2")}
               value={infantCount}
               min={0}
               max={adultCount}
               onChange={onInfantChange}
+              presentation="desktop"
             />
           </div>
         </div>
 
-        <div className="mt-2 border-t border-slate-200 pt-2">
+        <div className="mt-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">
             {t("cabinClass")}
           </h3>
-          <div className="mt-2 grid grid-cols-3 gap-1">
+          <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
             {cabinClassOptions.map((option) => {
               const selected = option.value === cabinClass;
 
@@ -8692,10 +8873,10 @@ function TravelerCabinPopover({
                   aria-pressed={selected}
                   onClick={() => onCabinClassChange(option.value)}
                   className={cn(
-                    "focus-ring min-h-11 rounded-xl border px-3 py-2 text-sm font-bold leading-4 text-center transition-colors",
+                    "focus-ring min-h-11 border-e border-slate-200 px-3 py-2 text-center text-sm font-semibold leading-4 transition-colors last:border-e-0",
                     selected
-                      ? "border-[#004BB8]/22 bg-[#004BB8]/6 text-[#021C2B]"
-                      : "border-slate-300 text-slate-700 hover:bg-slate-50",
+                      ? "bg-[#EEF5FF] text-[#004BB8] shadow-[inset_0_0_0_1px_#075EE8]"
+                      : "text-slate-700 hover:bg-slate-50",
                   )}
                 >
                   {t(option.labelKey)}
@@ -8728,6 +8909,7 @@ function CounterRow({
   min,
   max,
   onChange,
+  presentation = "default",
 }: {
   label: string;
   description: string;
@@ -8735,29 +8917,30 @@ function CounterRow({
   min: number;
   max: number;
   onChange: (value: number) => void;
+  presentation?: "default" | "desktop";
 }) {
   const decrementDisabled = value <= min;
   const incrementDisabled = value >= max;
 
   return (
-    <div className="flex min-h-10 items-center justify-between gap-3 py-2.5">
-      <div>
+    <div className={cn("flex items-center justify-between gap-3", presentation === "desktop" ? "min-h-[68px] py-3" : "min-h-10 py-2.5")}>
+      <div className="min-w-0">
         <p className="text-sm font-bold text-slate-950">{label}</p>
         <p className="text-xs font-semibold text-slate-500">{description}</p>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className={cn("flex shrink-0 items-center", presentation === "desktop" ? "gap-2" : "gap-1")}>
         <button
           type="button"
           aria-label={`Decrease ${label.toLowerCase()}`}
           disabled={decrementDisabled}
           onClick={() => onChange(value - 1)}
-          className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className={cn("focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:opacity-40", presentation === "desktop" ? "h-10 w-10" : "h-7 w-7")}
         >
-          <Minus className="h-3.5 w-3.5" />
+          <Minus className={presentation === "desktop" ? "h-4 w-4" : "h-3.5 w-3.5"} />
         </button>
 
-        <span className="min-w-7 text-center text-sm font-semibold text-slate-900">
+        <span className={cn("text-center font-semibold tabular-nums text-slate-900", presentation === "desktop" ? "min-w-8 text-base" : "min-w-7 text-sm")}>
           {value}
         </span>
 
@@ -8766,9 +8949,9 @@ function CounterRow({
           aria-label={`Increase ${label.toLowerCase()}`}
           disabled={incrementDisabled}
           onClick={() => onChange(value + 1)}
-          className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className={cn("focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:border-[#004BB8] hover:text-[#004BB8] disabled:cursor-not-allowed disabled:opacity-40", presentation === "desktop" ? "h-10 w-10" : "h-7 w-7")}
         >
-          <Plus className="h-3.5 w-3.5" />
+          <Plus className={presentation === "desktop" ? "h-4 w-4" : "h-3.5 w-3.5"} />
         </button>
       </div>
     </div>
@@ -8790,9 +8973,13 @@ function SuggestionList({
   alignToField?: boolean;
   locale?: string | null;
 }) {
+  const visibleSuggestions = suggestions.slice(0, 5);
+
   return (
     <div
       id={id}
+      role="listbox"
+      aria-label="Airport suggestions"
       style={
         alignToField
           ? {
@@ -8810,24 +8997,30 @@ function SuggestionList({
               zIndex: 9999,
             }
       }
-      className="w-full max-h-[min(42dvh,270px)] overflow-auto rounded-xl border border-slate-200 bg-white py-0.5 shadow-xl md:max-h-[220px]"
+      className="w-full overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_18px_42px_-22px_rgba(15,23,42,0.38)] ring-1 ring-slate-950/[0.025]"
     >
-      {suggestions.length ? (
-        suggestions.map((item) => (
+      {visibleSuggestions.length ? (
+        visibleSuggestions.map((item, index) => (
           <button
             key={`${item.code}-${item.airport}`}
             type="button"
+            role="option"
+            aria-selected="false"
+            aria-label={`${getLocalizedCityName(item.city, locale)}, ${item.airport}, ${item.code}`}
             onMouseDown={(event) => {
               event.preventDefault();
               event.stopPropagation();
             }}
             onClick={() => onSelect(airportInputValue(item))}
-            className="block w-full px-3 py-1.5 text-start transition-colors hover:bg-slate-50"
+            className={cn(
+              "block min-h-[58px] w-full px-4 py-2.5 text-start transition-colors hover:bg-slate-50 focus-visible:bg-blue-50/60 focus-visible:outline-none",
+              index < visibleSuggestions.length - 1 && "border-b border-slate-200/75",
+            )}
           >
-            <p className="text-[13px] font-medium text-slate-900">
+            <p className="truncate text-sm font-semibold leading-5 text-slate-950">
               {getLocalizedCityName(item.city, locale)} ({item.code})
             </p>
-            <p className="text-[11px] leading-4 text-slate-600">
+            <p className="mt-0.5 truncate text-xs font-medium leading-4 text-slate-500">
               {item.airport}
               {item.country
                 ? ` · ${getLocalizedAirportCountryName(item, locale)}`
@@ -8836,7 +9029,7 @@ function SuggestionList({
           </button>
         ))
       ) : (
-        <p className="whitespace-nowrap px-4 py-3 text-xs font-medium text-slate-500">
+        <p className="whitespace-nowrap px-4 py-3 text-sm font-medium text-slate-500">
           No matching airports found
         </p>
       )}

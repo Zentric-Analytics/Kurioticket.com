@@ -4,14 +4,38 @@ import {
   getDuffelApiMode,
   isProductionProviderMode,
 } from "@/lib/env";
-import type { FlightSearchParams, NormalizedFlightResult, ProviderResult } from "@/lib/types";
+import type {
+  FlightSearchParams,
+  NormalizedFlightResult,
+  ProviderResult,
+} from "@/lib/types";
+import { getSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
-import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
+import {
+  fetchJson,
+  ProviderResponseError,
+  runProvider,
+  skippedProvider,
+} from "@/services/travel/providerUtils";
 import { getStagingProviderSafety } from "@/lib/stagingSafety";
 import { airports, searchAirports, type AirportOption } from "@/data/airports";
-import { countryNameToCountryCode, isIsoCountryCode, normalizeCountryCode } from "@/lib/geo/context";
+import {
+  countryNameToCountryCode,
+  isIsoCountryCode,
+  normalizeCountryCode,
+} from "@/lib/geo/context";
 import { distanceKm } from "@/lib/geo/distance";
+import {
+  deduplicateFlightOffers,
+  isFlightProviderOfferUsableAt,
+} from "../flightOfferInventory";
+import {
+  getDuffelGraphProviderOfferIds,
+  parseDuffelItineraryView,
+  pruneDuffelItineraryGraph,
+  type DuffelItineraryInventoryGraph,
+} from "./duffelItineraryView";
 
 export type DuffelPlaceSuggestion = {
   code: string;
@@ -64,14 +88,172 @@ const cabinClassMap: Record<FlightSearchParams["cabinClass"], string> = {
   first: "first",
 };
 
-export function searchDuffelFlights(search: FlightSearchParams): Promise<ProviderResult<NormalizedFlightResult>> {
+export type DuffelDealsItineraryInventory = {
+  exactOffers: NormalizedFlightResult[];
+  itineraryGraph: DuffelItineraryInventoryGraph;
+};
+
+export const DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS = 10_000;
+export const DUFFEL_SEARCH_HTTP_TIMEOUT_MS = 11_000;
+
+export const duffelOfferRequestSearchUrl = (view?: "itineraries") => {
+  const params = new URLSearchParams({
+    ...(view ? { view } : {}),
+    return_offers: "true",
+    supplier_timeout: String(DUFFEL_SEARCH_SUPPLIER_TIMEOUT_MS),
+  });
+  return `https://api.duffel.com/air/offer_requests?${params}`;
+};
+
+export const duffelSearchBody = (search: FlightSearchParams) => {
+  const slices = getSearchLegs(search).map((leg) => ({
+    origin: sanitizeAirportCode(leg.origin),
+    destination: sanitizeAirportCode(leg.destination),
+    departure_date: leg.departureDate,
+  }));
+  return {
+    data: {
+      slices,
+      passengers: [
+        ...Array.from({ length: search.adults }, () => ({
+          type: "adult" as const,
+        })),
+        ...Array.from({ length: search.children }, () => ({
+          type: "child" as const,
+        })),
+        ...Array.from({ length: search.infants }, () => ({
+          type: "infant_without_seat" as const,
+        })),
+      ],
+      cabin_class: cabinClassMap[search.cabinClass],
+      include_split_ticket: false,
+    },
+  };
+};
+
+/** Intersects the flat view with authoritative graph membership. */
+export function selectGraphBackedDuffelOffers(
+  offers: unknown[],
+  graphIds: ReadonlySet<string>,
+) {
+  return offers.filter((value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value))
+      return false;
+    const id = (value as { id?: unknown }).id;
+    return typeof id === "string" && graphIds.has(id);
+  });
+}
+
+/** Deals-only dual-view hydration. Both views belong to one Duffel Offer Request. */
+export function searchDuffelDealsItineraryInventory(
+  search: FlightSearchParams,
+): Promise<ProviderResult<DuffelDealsItineraryInventory>> {
+  const apiKey = process.env.DUFFEL_API_KEY;
+  const stagingSafety = getStagingProviderSafety();
+  if (!stagingSafety.safe)
+    return Promise.resolve(skippedProvider("Duffel", stagingSafety.reason));
+  if (!apiKey)
+    return Promise.resolve(
+      skippedProvider("Duffel", "Missing DUFFEL_API_KEY."),
+    );
+  const blockReason = getDuffelProviderBlockReason(apiKey);
+  if (blockReason)
+    return Promise.resolve(skippedProvider("Duffel", blockReason));
+
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+    "Duffel-Version": "v2",
+  };
+  return runProvider("Duffel", async () => {
+    const grouped = await fetchJson<unknown>(
+      duffelOfferRequestSearchUrl("itineraries"),
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(duffelSearchBody(search)),
+      },
+      DUFFEL_SEARCH_HTTP_TIMEOUT_MS,
+    );
+    const graph = parseDuffelItineraryView(grouped);
+    if (!graph)
+      throw new ProviderResponseError({
+        code: "duffel_itinerary_parse_failed",
+      });
+    const flat = await fetchJson<{
+      data?: { id?: unknown; offers?: unknown[] };
+    }>(
+      `https://api.duffel.com/air/offer_requests/${encodeURIComponent(graph.offerRequestId)}?view=offers`,
+      { headers },
+      16000,
+    );
+    if (
+      flat.data?.id !== graph.offerRequestId ||
+      !Array.isArray(flat.data.offers)
+    )
+      throw new ProviderResponseError({
+        code: "duffel_offer_request_identity_mismatch",
+      });
+
+    const graphIds = getDuffelGraphProviderOfferIds(graph);
+    const now = Date.now();
+    const rawMatchingOffers = selectGraphBackedDuffelOffers(
+      flat.data.offers,
+      graphIds,
+    );
+    const normalizedMatchingOffers = rawMatchingOffers
+      .map((value) => normalizeFlightResult("Duffel", value, search))
+      .filter((value): value is NormalizedFlightResult => Boolean(value));
+    if (!normalizedMatchingOffers.length)
+      throw new ProviderResponseError({
+        code: "duffel_offer_normalization_dropped",
+        counts: {
+          graphOfferCount: graphIds.size,
+          flatMatchingOfferCount: rawMatchingOffers.length,
+          normalizedOfferCount: 0,
+        },
+      });
+    const exactOffers = deduplicateFlightOffers(
+      normalizedMatchingOffers.filter(
+        (value): value is NormalizedFlightResult =>
+          Boolean(
+            value?.providerOfferId && isFlightProviderOfferUsableAt(value, now),
+          ),
+      ),
+    );
+    const usableIds = new Set(
+      exactOffers.map(({ providerOfferId }) => providerOfferId!),
+    );
+    const itineraryGraph = pruneDuffelItineraryGraph(graph, usableIds);
+    // Successfully parsed but expired offers truthfully represent no current inventory.
+    if (!exactOffers.length) return [];
+    if (!itineraryGraph)
+      throw new ProviderResponseError({
+        code: "duffel_inventory_pruned_empty",
+        counts: {
+          graphOfferCount: graphIds.size,
+          flatMatchingOfferCount: rawMatchingOffers.length,
+          normalizedOfferCount: normalizedMatchingOffers.length,
+          usableOfferCount: exactOffers.length,
+        },
+      });
+    return [{ exactOffers, itineraryGraph }];
+  });
+}
+
+export function searchDuffelFlights(
+  search: FlightSearchParams,
+  signal?: AbortSignal,
+): Promise<ProviderResult<NormalizedFlightResult>> {
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
   if (!stagingSafety.safe) {
     return Promise.resolve(skippedProvider("Duffel", stagingSafety.reason));
   }
   if (!apiKey) {
-    return Promise.resolve(skippedProvider("Duffel", "Missing DUFFEL_API_KEY."));
+    return Promise.resolve(
+      skippedProvider("Duffel", "Missing DUFFEL_API_KEY."),
+    );
   }
 
   const blockReason = getDuffelProviderBlockReason(apiKey);
@@ -79,30 +261,102 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
     return Promise.resolve(skippedProvider("Duffel", blockReason));
   }
 
+  let supplierMs = 0;
+  let normalizationMs = 0;
+  let offerCount = 0;
+  let connectingOfferCount = 0;
+  const legCount = getSearchLegs(search).length;
   return runProvider("Duffel", async () => {
-    const slices = [
-      {
-        origin: sanitizeAirportCode(search.origin),
-        destination: sanitizeAirportCode(search.destination),
-        departure_date: search.departureDate,
-      },
-    ];
-
-    if (search.tripType === "round-trip" && search.returnDate) {
-      slices.push({
-        origin: sanitizeAirportCode(search.destination),
-        destination: sanitizeAirportCode(search.origin),
-        departure_date: search.returnDate,
-      });
-    }
-
-    const passengers = [
-      ...Array.from({ length: search.adults }, () => ({ type: "adult" as const })),
-      ...Array.from({ length: search.children }, () => ({ type: "child" as const })),
-      ...Array.from({ length: search.infants }, () => ({ type: "infant_without_seat" as const })),
-    ];
+    const supplierStartedAt = performance.now();
     const data = await fetchJson<{ data?: { offers?: unknown[] } }>(
-      "https://api.duffel.com/air/offer_requests?return_offers=true",
+      duffelOfferRequestSearchUrl(),
+      {
+        method: "POST",
+        signal,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "Duffel-Version": "v2",
+        },
+        body: JSON.stringify(duffelSearchBody(search)),
+      },
+      DUFFEL_SEARCH_HTTP_TIMEOUT_MS,
+    );
+    supplierMs = performance.now() - supplierStartedAt;
+    const offers = data.data?.offers || [];
+    offerCount = offers.length;
+    const normalizationStartedAt = performance.now();
+    const results = offers
+      .map((offer) => normalizeFlightResult("Duffel", offer, search))
+      .filter(Boolean) as NormalizedFlightResult[];
+    normalizationMs = performance.now() - normalizationStartedAt;
+    connectingOfferCount = results.filter((result) => result.stops > 0).length;
+    return results;
+  }).then((result) => {
+    console.info("[flight-search:duffel-request]", {
+      tripType: search.tripType,
+      legCount,
+      providerStatus: result.status,
+      providerErrorCategory: result.errorCategory ?? null,
+      providerErrorReason: result.errorReason ?? null,
+      offerCount,
+      normalizedCount: result.results.length,
+    });
+    return {
+      ...result,
+      performance: { supplierMs, normalizationMs, offerCount, connectingOfferCount },
+    };
+  });
+}
+
+/** Refreshes one server-owned offer identity; callers must never send the ID to a browser. */
+export function getDuffelFlightOffer(
+  providerOfferId: string,
+  search: FlightSearchParams,
+): Promise<ProviderResult<NormalizedFlightResult>> {
+  const apiKey = process.env.DUFFEL_API_KEY;
+  const stagingSafety = getStagingProviderSafety();
+  if (!stagingSafety.safe)
+    return Promise.resolve(skippedProvider("Duffel", stagingSafety.reason));
+  if (!apiKey)
+    return Promise.resolve(
+      skippedProvider("Duffel", "Missing DUFFEL_API_KEY."),
+    );
+  const blockReason = getDuffelProviderBlockReason(apiKey);
+  if (blockReason)
+    return Promise.resolve(skippedProvider("Duffel", blockReason));
+
+  return runProvider("Duffel", async () => {
+    const response = await fetchJson<{ data?: unknown }>(
+      `https://api.duffel.com/air/offers/${encodeURIComponent(providerOfferId)}?return_available_services=true`,
+      {
+        headers: { Authorization: `Bearer ${apiKey}`, "Duffel-Version": "v2" },
+      },
+      16000,
+    );
+    const normalized = normalizeFlightResult("Duffel", response.data, search);
+    return normalized ? [normalized] : [];
+  });
+}
+
+/** Discovers provider-authored alternatives for one server-owned Duffel offer. */
+export function getDuffelFlightUpsellOffers(
+  providerOfferId: string,
+  search: FlightSearchParams,
+): Promise<ProviderResult<NormalizedFlightResult>> {
+  const apiKey = process.env.DUFFEL_API_KEY;
+  const stagingSafety = getStagingProviderSafety();
+  if (!stagingSafety.safe)
+    return Promise.resolve(skippedProvider("Duffel", stagingSafety.reason));
+  if (!apiKey)
+    return Promise.resolve(skippedProvider("Duffel", "Missing DUFFEL_API_KEY."));
+  const blockReason = getDuffelProviderBlockReason(apiKey);
+  if (blockReason)
+    return Promise.resolve(skippedProvider("Duffel", blockReason));
+
+  return runProvider("Duffel", async () => {
+    const response = await fetchJson<{ data?: unknown[] }>(
+      duffelUpsellOffersUrl(providerOfferId),
       {
         method: "POST",
         headers: {
@@ -110,22 +364,19 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
           "Content-Type": "application/json",
           "Duffel-Version": "v2",
         },
-        body: JSON.stringify({
-          data: {
-            slices,
-            passengers,
-            cabin_class: cabinClassMap[search.cabinClass],
-          },
-        }),
       },
       16000,
     );
-
-    return (data.data?.offers || [])
+    if (!Array.isArray(response.data))
+      throw new ProviderResponseError({ code: "duffel_upsell_response_invalid" });
+    return response.data
       .map((offer) => normalizeFlightResult("Duffel", offer, search))
-      .filter(Boolean) as NormalizedFlightResult[];
+      .filter((offer): offer is NormalizedFlightResult => Boolean(offer));
   });
 }
+
+export const duffelUpsellOffersUrl = (providerOfferId: string) =>
+  `https://api.duffel.com/air/offers/${encodeURIComponent(providerOfferId)}/upsell_offers`;
 
 export async function checkDuffelHealth() {
   const apiKey = process.env.DUFFEL_API_KEY;
@@ -212,19 +463,19 @@ const toNumber = (value: unknown) => {
 };
 
 const normalizeSuggestionText = (value: string) =>
-  value
-    .normalize("NFKD")
-    .replace(/\p{M}/gu, "")
-    .trim()
-    .toLowerCase();
+  value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
 
 const MAX_PLACE_SUGGESTIONS = 8;
 
-const curatedAirportsByCode = new Map(airports.map((airport) => [airport.code.toUpperCase(), airport]));
+const curatedAirportsByCode = new Map(
+  airports.map((airport) => [airport.code.toUpperCase(), airport]),
+);
 
 const normalizeIsoCountryCode = (value?: string | null) => {
   const normalizedCountryCode = normalizeCountryCode(value);
-  return normalizedCountryCode && isIsoCountryCode(normalizedCountryCode) ? normalizedCountryCode : undefined;
+  return normalizedCountryCode && isIsoCountryCode(normalizedCountryCode)
+    ? normalizedCountryCode
+    : undefined;
 };
 
 const inferCountryCodeFromDuffelPlaceId = (duffelPlaceId?: string) => {
@@ -239,18 +490,28 @@ const inferPlaceCountryCode = (place: DuffelPlaceSuggestion) => {
   const explicitCountryCode = normalizeIsoCountryCode(place.countryCode);
   if (explicitCountryCode) return explicitCountryCode;
 
-  const providerCountryCode = normalizeIsoCountryCode(countryNameToCountryCode(place.country));
+  const providerCountryCode = normalizeIsoCountryCode(
+    countryNameToCountryCode(place.country),
+  );
   if (providerCountryCode) return providerCountryCode;
 
   const curatedAirport = curatedAirportsByCode.get(place.code.toUpperCase());
-  const curatedCountryCode = normalizeIsoCountryCode(curatedAirport?.countryCode || countryNameToCountryCode(curatedAirport?.country));
+  const curatedCountryCode = normalizeIsoCountryCode(
+    curatedAirport?.countryCode ||
+      countryNameToCountryCode(curatedAirport?.country),
+  );
   if (curatedCountryCode) return curatedCountryCode;
 
   return inferCountryCodeFromDuffelPlaceId(place.duffelPlaceId);
 };
 
-const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearchContext) => {
-  const normalizedCountryCode = normalizeCountryCode(searchContext?.countryCode);
+const rankPlaces = (
+  places: DuffelPlaceSuggestion[],
+  searchContext?: PlaceSearchContext,
+) => {
+  const normalizedCountryCode = normalizeCountryCode(
+    searchContext?.countryCode,
+  );
   const withIndex = places.map((place, index) => ({ place, index }));
 
   const distanceFor = (place: DuffelPlaceSuggestion) => {
@@ -263,7 +524,12 @@ const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearch
       return Number.POSITIVE_INFINITY;
     }
 
-    return distanceKm(searchContext.lat, searchContext.lng, place.latitude, place.longitude);
+    return distanceKm(
+      searchContext.lat,
+      searchContext.lng,
+      place.latitude,
+      place.longitude,
+    );
   };
 
   const destinationBoost = searchContext?.context === "destination" ? 0.12 : 1;
@@ -274,21 +540,32 @@ const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearch
       const bDistance = distanceFor(b.place);
 
       if (normalizedCountryCode) {
-        const aCountryMatch = inferPlaceCountryCode(a.place) === normalizedCountryCode ? 1 : 0;
-        const bCountryMatch = inferPlaceCountryCode(b.place) === normalizedCountryCode ? 1 : 0;
+        const aCountryMatch =
+          inferPlaceCountryCode(a.place) === normalizedCountryCode ? 1 : 0;
+        const bCountryMatch =
+          inferPlaceCountryCode(b.place) === normalizedCountryCode ? 1 : 0;
 
         if (aCountryMatch !== bCountryMatch) {
           return bCountryMatch - aCountryMatch;
         }
       }
 
-      if (searchContext?.context === "origin" && Number.isFinite(aDistance) && Number.isFinite(bDistance) && aDistance !== bDistance) {
+      if (
+        searchContext?.context === "origin" &&
+        Number.isFinite(aDistance) &&
+        Number.isFinite(bDistance) &&
+        aDistance !== bDistance
+      ) {
         return aDistance - bDistance;
       }
 
       if (searchContext?.context === "destination") {
-        const aScore = Number.isFinite(aDistance) ? aDistance * destinationBoost : Number.POSITIVE_INFINITY;
-        const bScore = Number.isFinite(bDistance) ? bDistance * destinationBoost : Number.POSITIVE_INFINITY;
+        const aScore = Number.isFinite(aDistance)
+          ? aDistance * destinationBoost
+          : Number.POSITIVE_INFINITY;
+        const bScore = Number.isFinite(bDistance)
+          ? bDistance * destinationBoost
+          : Number.POSITIVE_INFINITY;
         if (aScore !== bScore) {
           return aScore - bScore;
         }
@@ -299,33 +576,57 @@ const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearch
     .map((item) => item.place);
 };
 
-
 const normalizedWords = (value: string) =>
   normalizeSuggestionText(value)
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
 
-const textStronglyMatchesQuery = (value: string | undefined, normalizedQuery: string) => {
+const textStronglyMatchesQuery = (
+  value: string | undefined,
+  normalizedQuery: string,
+) => {
   const normalizedValue = normalizeSuggestionText(value || "");
   if (!normalizedValue) return false;
 
-  return normalizedValue.startsWith(normalizedQuery) || normalizedWords(normalizedValue).some((word) => word.startsWith(normalizedQuery));
+  return (
+    normalizedValue.startsWith(normalizedQuery) ||
+    normalizedWords(normalizedValue).some((word) =>
+      word.startsWith(normalizedQuery),
+    )
+  );
 };
 
-const codeStronglyMatchesQueryPrefix = (code: string | undefined, normalizedQuery: string) => {
+const codeStronglyMatchesQueryPrefix = (
+  code: string | undefined,
+  normalizedQuery: string,
+) => {
   const normalizedCode = normalizeSuggestionText(code || "");
   if (!normalizedCode) return false;
 
-  return normalizedCode.startsWith(normalizedQuery) || normalizedQuery.startsWith(normalizedCode);
+  return (
+    normalizedCode.startsWith(normalizedQuery) ||
+    normalizedQuery.startsWith(normalizedCode)
+  );
 };
 
-const placeCountryMatches = (place: DuffelPlaceSuggestion, normalizedCountryCode?: string) =>
-  Boolean(normalizedCountryCode && inferPlaceCountryCode(place) === normalizedCountryCode);
+const placeCountryMatches = (
+  place: DuffelPlaceSuggestion,
+  normalizedCountryCode?: string,
+) =>
+  Boolean(
+    normalizedCountryCode &&
+    inferPlaceCountryCode(place) === normalizedCountryCode,
+  );
 
-const placeExactlyMatchesIataCode = (place: DuffelPlaceSuggestion, normalizedQuery: string) =>
-  normalizeSuggestionText(place.code) === normalizedQuery;
+const placeExactlyMatchesIataCode = (
+  place: DuffelPlaceSuggestion,
+  normalizedQuery: string,
+) => normalizeSuggestionText(place.code) === normalizedQuery;
 
-const placeStronglyMatchesIntentionalForeignQuery = (place: DuffelPlaceSuggestion, normalizedQuery: string) => {
+const placeStronglyMatchesIntentionalForeignQuery = (
+  place: DuffelPlaceSuggestion,
+  normalizedQuery: string,
+) => {
   if (normalizedQuery.length < 4) return false;
 
   return (
@@ -340,8 +641,11 @@ const filterIntentionalForeignPlaces = (
   normalizedQuery: string,
   searchContext?: PlaceSearchContext,
 ) => {
-  const normalizedCountryCode = normalizeCountryCode(searchContext?.countryCode);
-  if (searchContext?.context !== "origin" || !normalizedCountryCode) return places;
+  const normalizedCountryCode = normalizeCountryCode(
+    searchContext?.countryCode,
+  );
+  if (searchContext?.context !== "origin" || !normalizedCountryCode)
+    return places;
 
   return places.filter((place) => {
     if (placeCountryMatches(place, normalizedCountryCode)) return true;
@@ -351,7 +655,9 @@ const filterIntentionalForeignPlaces = (
   });
 };
 
-const curatedAirportToSuggestion = (airport: AirportOption): DuffelPlaceSuggestion => ({
+const curatedAirportToSuggestion = (
+  airport: AirportOption,
+): DuffelPlaceSuggestion => ({
   code: airport.code,
   city: airport.city,
   airport: airport.airport,
@@ -376,12 +682,17 @@ const curatedQueryScore = (airport: AirportOption, normalizedQuery: string) => {
   return 6;
 };
 
-export const searchCuratedPlaceSuggestions = (query: string, searchContext?: PlaceSearchContext) => {
+export const searchCuratedPlaceSuggestions = (
+  query: string,
+  searchContext?: PlaceSearchContext,
+) => {
   const normalizedQuery = normalizeSuggestionText(query);
   if (!normalizedQuery) return [];
 
   const matchingAirports = searchAirports(query, airports.length);
-  const orderByCode = new Map(airports.map((airport, index) => [airport.code, index]));
+  const orderByCode = new Map(
+    airports.map((airport, index) => [airport.code, index]),
+  );
 
   const rankedPlaces = rankPlaces(
     matchingAirports
@@ -390,13 +701,19 @@ export const searchCuratedPlaceSuggestions = (query: string, searchContext?: Pla
         const bScore = curatedQueryScore(b, normalizedQuery);
         if (aScore !== bScore) return aScore - bScore;
 
-        return (orderByCode.get(a.code) ?? 9999) - (orderByCode.get(b.code) ?? 9999);
+        return (
+          (orderByCode.get(a.code) ?? 9999) - (orderByCode.get(b.code) ?? 9999)
+        );
       })
       .map(curatedAirportToSuggestion),
     searchContext,
   );
 
-  return filterIntentionalForeignPlaces(rankedPlaces, normalizedQuery, searchContext).slice(0, MAX_PLACE_SUGGESTIONS);
+  return filterIntentionalForeignPlaces(
+    rankedPlaces,
+    normalizedQuery,
+    searchContext,
+  ).slice(0, MAX_PLACE_SUGGESTIONS);
 };
 
 const mergeProviderAndCuratedPlaces = (
@@ -420,13 +737,20 @@ const mergeProviderAndCuratedPlaces = (
   const normalizedQuery = normalizeSuggestionText(query);
   const rankedPlaces = rankPlaces([...placesByCode.values()], searchContext);
   const filteredPlaces = normalizedQuery
-    ? filterIntentionalForeignPlaces(rankedPlaces, normalizedQuery, searchContext)
+    ? filterIntentionalForeignPlaces(
+        rankedPlaces,
+        normalizedQuery,
+        searchContext,
+      )
     : rankedPlaces;
 
   return filteredPlaces.slice(0, MAX_PLACE_SUGGESTIONS);
 };
 
-export async function searchDuffelPlaces(query: string, searchContext?: PlaceSearchContext): Promise<ProviderResult<DuffelPlaceSuggestion>> {
+export async function searchDuffelPlaces(
+  query: string,
+  searchContext?: PlaceSearchContext,
+): Promise<ProviderResult<DuffelPlaceSuggestion>> {
   const apiKey = process.env.DUFFEL_API_KEY;
   const stagingSafety = getStagingProviderSafety();
   if (!stagingSafety.safe) {
@@ -460,7 +784,12 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
 
     for (const item of response.data || []) {
       const code = (item.iata_code || "").trim().toUpperCase();
-      const city = (item.city_name || item.city?.name || item.name || "").trim();
+      const city = (
+        item.city_name ||
+        item.city?.name ||
+        item.name ||
+        ""
+      ).trim();
       const airport = (item.name || city || code).trim();
 
       if (!code || !city || !airport) continue;
@@ -478,7 +807,12 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
         airport,
         country: item.country_name?.trim() || undefined,
         duffelPlaceId: item.id?.trim() || undefined,
-        type: item.type === "city" ? "city" : item.type === "airport" ? "airport" : item.type,
+        type:
+          item.type === "city"
+            ? "city"
+            : item.type === "airport"
+              ? "airport"
+              : item.type,
         latitude: toNumber(item.latitude),
         longitude: toNumber(item.longitude),
       };
@@ -489,6 +823,11 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
       });
     }
 
-    return mergeProviderAndCuratedPlaces(query, results, searchCuratedPlaceSuggestions(query, searchContext), searchContext);
+    return mergeProviderAndCuratedPlaces(
+      query,
+      results,
+      searchCuratedPlaceSuggestions(query, searchContext),
+      searchContext,
+    );
   });
 }

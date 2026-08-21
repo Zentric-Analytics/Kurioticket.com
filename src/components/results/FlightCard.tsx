@@ -20,6 +20,7 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatItineraryShortDate, formatTime } from "@/lib/utils";
+import { formatFlightCardPrice } from "@/components/results/flightCardPrice";
 
 type DetailItem = {
   label: string;
@@ -34,11 +35,19 @@ export function FlightCard({
   isAccented = false,
   resultBadge,
   detailsHref,
+  actionLabel,
+  actionAriaLabel,
+  onAction,
+  showProviderHandoffCopy = true,
 }: {
   flight: PublicFlightResult;
   isAccented?: boolean;
   resultBadge?: ResultBadge;
-  detailsHref?: string;
+  detailsHref?: string | null;
+  actionLabel?: string;
+  actionAriaLabel?: string;
+  onAction?: (flight: PublicFlightResult) => void;
+  showProviderHandoffCopy?: boolean;
 }) {
   const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -51,6 +60,12 @@ export function FlightCard({
     convertUsdEstimate: true,
     rates: currencyRates.rates,
     isFallbackRate: currencyRates.isFallback,
+  });
+  const cardPrice = formatFlightCardPrice({
+    amount: displayPrice.amount,
+    currency: displayPrice.currency,
+    formatted: displayPrice.formatted,
+    locale,
   });
   const details = buildFlightDetails(flight, t);
   const desktopDetails = details.filter(
@@ -74,7 +89,10 @@ export function FlightCard({
     : t("providerPrice");
   const providerHandoffCopy = t("flightCardProviderHandoff");
   const resolvedDetailsHref =
-    detailsHref || `/flights/details/${encodeURIComponent(flight.id)}`;
+    detailsHref === undefined
+      ? `/flights/details/${encodeURIComponent(flight.id)}`
+      : detailsHref;
+  const resolvedActionLabel = actionLabel ?? t("viewFlight");
 
   const mobileCard = (
     <div className="p-2.5 sm:p-3 lg:hidden">
@@ -109,22 +127,27 @@ export function FlightCard({
             <FlightDetailLines details={details} />
             <FlightFareAction
               detailsHref={resolvedDetailsHref}
-              formattedPrice={displayPrice.formatted}
+              formattedPrice={cardPrice.formatted}
+              priceSize={cardPrice.size}
               priceAriaLabel={priceAriaLabel}
               priceTitle={priceTitle}
               priceLabel={priceLabel}
               showConvertedProviderPrice={displayPrice.isConvertedEstimate}
               providerPrice={providerPrice}
               providerPriceLabel={t("providerPrice")}
-              viewFlightLabel={t("viewFlight")}
+              viewFlightLabel={resolvedActionLabel}
+              viewFlightAriaLabel={actionAriaLabel}
+              onAction={onAction ? () => onAction(flight) : undefined}
             />
           </div>
         </div>
       </div>
 
-      <div className="mt-3 rounded-lg border border-[#D8E1EC]/70 bg-[#F8FAFC]/80 px-3 py-2.5 text-xs font-medium leading-5 text-slate-600">
-        {providerHandoffCopy}
-      </div>
+      {showProviderHandoffCopy ? (
+        <div className="mt-3 rounded-lg border border-[#D8E1EC]/70 bg-[#F8FAFC]/80 px-3 py-2.5 text-xs font-medium leading-5 text-slate-600">
+          {providerHandoffCopy}
+        </div>
+      ) : null}
     </div>
   );
 
@@ -175,14 +198,17 @@ export function FlightCard({
 
             <FlightFareAction
               detailsHref={resolvedDetailsHref}
-              formattedPrice={displayPrice.formatted}
+              formattedPrice={cardPrice.formatted}
+              priceSize={cardPrice.size}
               priceAriaLabel={priceAriaLabel}
               priceTitle={priceTitle}
               priceLabel={priceLabel}
               showConvertedProviderPrice={displayPrice.isConvertedEstimate}
               providerPrice={providerPrice}
               providerPriceLabel={t("providerPrice")}
-              viewFlightLabel={t("viewFlight")}
+              viewFlightLabel={resolvedActionLabel}
+              viewFlightAriaLabel={actionAriaLabel}
+              onAction={onAction ? () => onAction(flight) : undefined}
               desktop
             />
           </div>
@@ -472,10 +498,10 @@ function AirlineLogo({
   );
 }
 
-
 function FlightFareAction({
   detailsHref,
   formattedPrice,
+  priceSize,
   priceAriaLabel,
   priceTitle,
   priceLabel,
@@ -483,11 +509,14 @@ function FlightFareAction({
   providerPrice,
   providerPriceLabel,
   viewFlightLabel,
+  viewFlightAriaLabel,
+  onAction,
   className,
   desktop = false,
 }: {
-  detailsHref: string;
+  detailsHref: string | null;
   formattedPrice: string;
+  priceSize: "normal" | "large" | "compact";
   priceAriaLabel: string;
   priceTitle: string | undefined;
   priceLabel: string;
@@ -495,6 +524,8 @@ function FlightFareAction({
   providerPrice: string;
   providerPriceLabel: string;
   viewFlightLabel: string;
+  viewFlightAriaLabel?: string;
+  onAction?: () => void;
   className?: string;
   desktop?: boolean;
 }) {
@@ -522,6 +553,7 @@ function FlightFareAction({
           )}
           aria-label={priceAriaLabel}
           title={priceTitle}
+          data-price-size={priceSize}
           dir="ltr"
         >
           {formattedPrice}
@@ -538,19 +570,49 @@ function FlightFareAction({
           </div>
         ) : null}
       </div>
-      <LinkButton
-        href={detailsHref}
-        variant="primary"
-        size="sm"
-        className={cn(
-          "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
-          desktop
-            ? "flight-card-view-button rounded-md py-2.5"
-            : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
-        )}
-      >
-        {viewFlightLabel}
-      </LinkButton>
+      {onAction ? (
+        <button
+          type="button"
+          onClick={onAction}
+          aria-label={viewFlightAriaLabel}
+          className={cn(
+            "inline-flex min-h-11 w-auto shrink-0 items-center justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold text-white hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
+            desktop
+              ? "flight-card-view-button rounded-md px-3.5 py-2.5"
+              : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
+          )}
+        >
+          {viewFlightLabel}
+        </button>
+      ) : detailsHref ? (
+        <LinkButton
+          href={detailsHref}
+          aria-label={viewFlightAriaLabel}
+          variant="primary"
+          size="sm"
+          className={cn(
+            "w-auto shrink-0 justify-center whitespace-nowrap bg-[#004BB8] text-sm font-semibold hover:bg-[#021C2B] focus-visible:ring-[#004BB8]/35",
+            desktop
+              ? "flight-card-view-button rounded-md py-2.5"
+              : "min-w-[104px] rounded-full px-5 py-2.5 sm:px-4 sm:py-2 sm:text-sm lg:w-full lg:min-w-0 lg:px-3.5 lg:py-2 lg:text-sm",
+          )}
+        >
+          {viewFlightLabel}
+        </LinkButton>
+      ) : (
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          aria-label={viewFlightAriaLabel}
+          className={cn(
+            "inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-full bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-500",
+            desktop ? "flight-card-view-button rounded-md" : "min-w-[104px]",
+          )}
+        >
+          {viewFlightLabel}
+        </button>
+      )}
     </div>
   );
 }
@@ -650,7 +712,9 @@ function buildFlightDetails(
 function formatLegTitle(leg: FlightLeg, t: (key: string) => string) {
   if (leg.direction === "return") return t("return");
   if (leg.direction === "outbound") return t("outbound");
-  return t("flightLeg");
+  return leg.legIndex === undefined
+    ? t("flightLeg")
+    : (t("flightMultiCity.flight") || "Flight {{number}}").replace("{{number}}", String(leg.legIndex + 1));
 }
 
 function formatStopsLabel(stops: number, t: (key: string) => string) {
