@@ -132,18 +132,43 @@ test('Production IPA verification enforces identity, version, schemes, and Previ
     ITSAppUsesNonExemptEncryption: false,
     CFBundleURLTypes: [{ CFBundleURLSchemes: ['kurioticket', 'com.googleusercontent.apps.459496589401-b4npe68m8c358rqr79edi7igvi3sauao'] }],
   };
-  assert.equal(verifyProductionIpa({ plist, contents: 'https://kurioticket.com production-0.3.0' }).verified, true);
+  const provisioningProfile = {
+    UUID: '6888380e-ad09-4383-9fe4-8d8924661765',
+    Name: 'Kurioticket Production App Store',
+    TeamIdentifier: ['N23R45R4CY'],
+    Entitlements: {
+      'application-identifier': 'N23R45R4CY.com.kurioticket.app',
+      'com.apple.developer.team-identifier': 'N23R45R4CY',
+    },
+  };
+  const publicConfig = { name: 'Kurioticket', ios: { bundleIdentifier: 'com.kurioticket.app' }, runtimeVersion: 'production-0.3.0', extra: { environment: { apiBaseUrl: 'https://kurioticket.com', isPreview: false } } };
+  const expoConfig = { EXUpdatesRuntimeVersion: 'production-0.3.0' };
+  const validIpa = { plist, publicConfig, expoConfig, provisioningProfile, certificateSerials: ['5D:4F:E2:35:AA:B1:68:16:14:F1:12:3D:5F:D9:C2:F7'] };
+  assert.equal(verifyProductionIpa(validIpa).verified, true);
   for (const wrongScheme of [
     'com.googleusercontent.apps.459496589401-gi52kj4fscgf092pasrelkth2mal0mph',
     'com.googleusercontent.apps.arbitrary-valid-client',
   ]) {
     const wrong = { ...plist, CFBundleURLTypes: [{ CFBundleURLSchemes: ['kurioticket', wrongScheme] }] };
-    assert.throws(() => verifyProductionIpa({ plist: wrong, contents: 'https://kurioticket.com production-0.3.0' }), /approved release identity/);
+    assert.throws(() => verifyProductionIpa({ ...validIpa, plist: wrong }), /approved release identity/);
   }
-  assert.throws(() => verifyProductionIpa({ plist: { ...plist, CFBundleIdentifier: 'com.kurioticket.app.preview' }, contents: '' }), /bundle identifier/);
-  assert.throws(() => verifyProductionIpa({ plist, contents: 'https://staging.kurioticket.com' }), /Preview or staging/);
-  assert.throws(() => verifyProductionIpa({ plist, contents: 'production-0.3.0' }), /API origin/);
-  assert.throws(() => verifyProductionIpa({ plist, contents: 'https://kurioticket.com' }), /runtime/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, plist: { ...plist, CFBundleIdentifier: 'com.kurioticket.app.preview' } }), /bundle identifier/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, publicConfig: { ...publicConfig, extra: { environment: { apiBaseUrl: 'https://staging.kurioticket.com', isPreview: true } } } }), /environment/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, publicConfig: { ...publicConfig, runtimeVersion: 'preview-0.3.0' } }), /runtime/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, expoConfig: { EXUpdatesRuntimeVersion: 'preview-0.3.0' } }), /runtime/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: { ...provisioningProfile, UUID: 'wrong-profile' } }), /profile UUID/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: { ...provisioningProfile, TeamIdentifier: ['WRONGTEAM'] } }), /Apple Team identity/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: { ...provisioningProfile, Entitlements: { ...provisioningProfile.Entitlements, 'application-identifier': 'N23R45R4CY.com.kurioticket.app.preview' } } }), /application identifier/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, certificateSerials: ['DEADBEEF'] }), /signing certificate/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: undefined }), /profile UUID/);
+});
+test('Production IPA verification validates active configuration without scanning bundled policy literals', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/ios-production-delivery.yml'), 'utf8');
+  const verifier = readFileSync(resolve(root, 'scripts/verify-production-ipa.mjs'), 'utf8');
+  assert.doesNotMatch(workflow, /\bxargs\s+-0\s+strings\b|--contents\b/);
+  assert.match(workflow, /--public-config\b/);
+  assert.match(workflow, /--expo-config\b/);
+  assert.doesNotMatch(verifier, /contents\.includes\(|forbiddenIdentityFound/);
 });
 test('dispatcher has no baseline fingerprint or SHA inputs', () => {
   for (const name of ['android-preview-ota.yml', 'android-preview-build.yml', 'android-production-delivery.yml']) {
