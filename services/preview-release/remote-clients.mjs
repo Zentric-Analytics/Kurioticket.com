@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
-import { PREVIEW_IDENTITY, assertExactSha } from "./config.mjs";
+import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertExactSha } from "./config.mjs";
 import { normalizePreviewUpdatePage } from "../../apps/mobile/scripts/preview-ota-automation.mjs";
 import { fetchWithDeadline, LOCAL_COMMAND_TIMEOUT_MS } from "./deadlines.mjs";
 
@@ -85,12 +85,17 @@ export class RenderClient {
     const expectedRepository = `github.com/${PREVIEW_IDENTITY.repository}`;
     const autoDeployOnCommit = service?.autoDeployTrigger === "commit"
       || (service?.autoDeployTrigger === undefined && service?.autoDeploy === true);
+    const buildFilterPaths = Array.isArray(service?.buildFilter?.paths)
+      ? [...service.buildFilter.paths].sort()
+      : [];
+    const expectedBuildFilterPaths = [...PREVIEW_WORKER_BUILD_PATHS].sort();
     const checks = [
       [service?.id === this.serviceId, "Render Preview worker ID mismatch."],
       [service?.type === "background_worker", "Render Preview worker type mismatch."],
       [service?.branch === PREVIEW_IDENTITY.branch, "Render Preview worker branch mismatch."],
       [repository === expectedRepository, "Render Preview worker repository mismatch."],
       [autoDeployOnCommit, "Render Preview worker auto-deploy must be On Commit."],
+      [JSON.stringify(buildFilterPaths) === JSON.stringify(expectedBuildFilterPaths), "Render Preview worker build filters do not match the approved release-service paths."],
     ];
     for (const [passes, message] of checks) if (!passes) throw new Error(message);
     return { ...service, autoDeployOnCommit };
@@ -276,25 +281,43 @@ export class EasClient {
         encoding: "utf8",
         maxBuffer: 10 * 1024 * 1024,
         timeout: isUpdatePublish ? 20 * 60 * 1000 : 5 * 60 * 1000,
-        env: {
-          ...process.env,
-          EXPO_TOKEN: this.expoToken,
-          APP_VARIANT: "preview",
-          APP_BUILD_MODE: "release",
-          EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
-          // Metro needs more heap than the lightweight EAS inspection commands.
-          // Keep the publish child bounded well below the Standard worker's 2 GB
-          // instance limit while leaving headroom for npm, the worker, and native
-          // allocator overhead.
-          NODE_OPTIONS: `--max-old-space-size=${isUpdatePublish ? 512 : 128}`,
-          MALLOC_ARENA_MAX: "2",
-        },
+        env: easCommandEnvironment({
+          baseEnvironment: process.env,
+          directory,
+          expoToken: this.expoToken,
+          isUpdatePublish,
+        }),
       });
       await import("node:fs/promises").then(({ writeFile }) => writeFile(stdoutPath, stdout, { mode: 0o600 }));
       console.log(JSON.stringify({ event: "preview-release-eas-command-complete", command: args[1], platform, durationMs: Date.now() - startedAt, rssBytes: process.memoryUsage().rss }));
       return readFile(stdoutPath, "utf8");
     } finally { await rm(directory, { recursive: true, force: true }); }
   }
+}
+
+export function easCommandEnvironment({ baseEnvironment = process.env, directory, expoToken, isUpdatePublish }) {
+  if (!directory) throw new Error("EAS command temporary directory is required.");
+  return {
+    ...baseEnvironment,
+    EXPO_TOKEN: expoToken,
+    APP_VARIANT: "preview",
+    APP_BUILD_MODE: "release",
+    EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
+    CI: "1",
+    // Expo, Metro, and the EAS CLI create temporary artifacts outside their
+    // output directory. Scope every platform-specific temp variable to the
+    // command-owned directory so the runText finally block removes all of them,
+    // including after a failed export.
+    TMPDIR: directory,
+    TMP: directory,
+    TEMP: directory,
+    // Metro needs more heap than the lightweight EAS inspection commands.
+    // Keep the publish child bounded well below the Standard worker's 2 GB
+    // instance limit while leaving headroom for npm, the worker, and native
+    // allocator overhead.
+    NODE_OPTIONS: `--max-old-space-size=${isUpdatePublish ? 512 : 128}`,
+    MALLOC_ARENA_MAX: "2",
+  };
 }
 
 export class EasUpdateRuntimeMismatchError extends Error {

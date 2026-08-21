@@ -20,6 +20,22 @@ export const PREVIEW_IDENTITY = Object.freeze({
   renderWorkerServiceId: "srv-d9qisaaju40c73bbago0",
 });
 
+export const PREVIEW_WORKER_BUILD_PATHS = Object.freeze([
+  "services/preview-release/**",
+  "apps/mobile/scripts/**",
+  "apps/mobile/plugins/**",
+  "apps/mobile/config-plugins/**",
+  "apps/mobile/app.config.*",
+  "apps/mobile/app.json",
+  "apps/mobile/eas.json",
+  "apps/mobile/release-policy.json",
+  "apps/mobile/package.json",
+  "apps/mobile/package-lock.json",
+  "package.json",
+  "package-lock.json",
+  "render.yaml",
+]);
+
 export function requirePreviewEnvironment(env = process.env) {
   const required = [
     "DATABASE_URL",
