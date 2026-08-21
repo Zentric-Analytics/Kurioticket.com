@@ -18,7 +18,8 @@ export const NATIVE_FLIGHT_CABIN_OPTIONS = FLIGHT_CABINS.filter((cabin) => cabin
 export type FlightSearchHandle = { useRouteShortcut: () => void };
 type Picker = "from" | "to" | "departureDate" | "travelDates" | "travelers" | "cabin";
 type FlightTripSelectorValue = FlightForm["tripType"] | "multi-city";
-const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
+const FLIGHT_DATE_LOCALE = "en-US";
+const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(FLIGHT_DATE_LOCALE, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 const plural = (count: number, singular: string, pluralForm = `${singular}s`) => `${count} ${count === 1 ? singular : pluralForm}`;
 
 export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: boolean; embedded?: boolean; editAppearance?: boolean; showSubmit?: boolean; submitLabel?: string; submitNavigation?: "push" | "replace"; enableHomepageDefaultOrigin?: boolean; homepageAirportPicker?: boolean; initializeHomepageDates?: boolean; params?: Record<string, RouteValue> }>(({ compact = false, embedded = false, editAppearance = false, showSubmit = true, submitLabel = "Search flights", submitNavigation = "push", enableHomepageDefaultOrigin = false, homepageAirportPicker = false, initializeHomepageDates = false, params = {} }, ref) => {
