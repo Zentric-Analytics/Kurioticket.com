@@ -4,8 +4,10 @@ import test from "node:test";
 import type { FlightLeg, FlightSearchParams, NormalizedFlightResult } from "./types";
 import {
   FLIGHT_CACHE_TTL_MS,
+  buildFlightCacheUpsertQuery,
   createFlightResultCache,
   createMemoryFlightCacheBackend,
+  createPrismaFlightCacheBackend,
   type SharedFlightCacheBackend,
   type SharedFlightCacheRecord,
   toFlightDetailsOffer,
@@ -268,6 +270,97 @@ test("recaching without search authority clears stale passenger context", async 
   await cache.remember([selected], 10_000, oneWaySearch);
   await cache.remember([selected], 10_001);
   assert.equal(await cache.getSearch(selected.id, 10_002), null);
+});
+
+test("603-result cache writes remain complete and compatible", async () => {
+  const backend = createMemoryFlightCacheBackend();
+  const cache = createFlightResultCache(backend);
+  const results = Array.from({ length: 603 }, (_, index) =>
+    flight(`duffel-result-large-${index}`, 40_000),
+  );
+
+  assert.equal(await cache.remember(results, 10_000, oneWaySearch), true);
+  for (const result of results) {
+    assert.equal((await cache.get(result.id, 10_001))?.id, result.id);
+  }
+  assert.equal((await cache.getCompatible(results[0].id, 10_001)).length, 603);
+  assert.equal("rawProviderReference" in (await cache.get(results[0].id, 10_001))!, false);
+  assert.equal("providerOfferId" in toPublicFlight((await cache.get(results[0].id, 10_001))!), false);
+});
+
+test("1000-result cache writes preserve every opaque mapping", async () => {
+  const cache = createFlightResultCache(createMemoryFlightCacheBackend());
+  const results = Array.from({ length: 1000 }, (_, index) =>
+    flight(`duffel-result-thousand-${index}`, 40_000),
+  );
+
+  assert.equal(await cache.remember(results, 10_000, oneWaySearch), true);
+  const resolved = await Promise.all(results.map(({ id }) => cache.get(id, 10_001)));
+  assert.equal(resolved.filter(Boolean).length, 1000);
+});
+
+test("bulk upsert retains existing opaque-ID update semantics", async () => {
+  const cache = createFlightResultCache(createMemoryFlightCacheBackend());
+  const original = flight("duffel-result-refresh", 20_000);
+  const refreshed = {
+    ...original,
+    price: 175,
+    fareBrandName: "Provider refreshed fare",
+    providerExpiresAt: 25_000,
+  };
+
+  await cache.remember([original], 10_000, oneWaySearch);
+  await cache.remember([refreshed], 10_001, oneWaySearch);
+  const stored = await cache.get(original.id, 10_002);
+  assert.equal(stored?.price, 175);
+  assert.equal(stored?.fareBrandName, "Provider refreshed fare");
+  assert.equal(stored?.providerExpiresAt, 25_000);
+});
+
+test("Postgres cache persistence uses one atomic set-based upsert for 603 rows", () => {
+  const records = Array.from({ length: 603 }, (_, index): SharedFlightCacheRecord => ({
+    publicResultId: `duffel-result-sql-${index}`,
+    normalizedResult: flight(`duffel-result-sql-${index}`, 40_000),
+    searchContext: oneWaySearch,
+    searchKey: "search-key",
+    itineraryKey: "itinerary-key",
+    expiresAt: 40_000,
+  }));
+  const query = buildFlightCacheUpsertQuery(records);
+
+  assert.match(query.sql, /^\s*INSERT INTO "FlightResultCache"/);
+  assert.match(query.sql, /ON CONFLICT \("publicResultId"\) DO UPDATE SET/);
+  assert.doesNotMatch(query.sql, /BEGIN|COMMIT/);
+  assert.equal(query.values.length, records.length * 6);
+});
+
+test("production backend keeps query count constant through 1000 rows", async () => {
+  let executeCount = 0;
+  const database = {
+    async $executeRaw() {
+      executeCount += 1;
+      return 1000;
+    },
+  };
+  const backend = createPrismaFlightCacheBackend(() => database as never);
+  const measurements = [];
+  for (const size of [10, 100, 603, 1000]) {
+    const records = Array.from({ length: size }, (_, index): SharedFlightCacheRecord => ({
+      publicResultId: `duffel-result-query-${size}-${index}`,
+      normalizedResult: flight(`duffel-result-query-${size}-${index}`, 40_000),
+      searchContext: oneWaySearch,
+      searchKey: "search-key",
+      itineraryKey: "itinerary-key",
+      expiresAt: 40_000,
+    }));
+    const before = performance.now();
+    await backend.write(records);
+    measurements.push({ size, elapsedMs: performance.now() - before });
+  }
+
+  assert.equal(executeCount, 4);
+  assert.deepEqual(measurements.map(({ size }) => size), [10, 100, 603, 1000]);
+  console.info("[flight-cache-test:bulk-write]", measurements);
 });
 
 function cloneLegs(legs: FlightLeg[]) {
