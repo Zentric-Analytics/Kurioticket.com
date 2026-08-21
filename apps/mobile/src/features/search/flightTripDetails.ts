@@ -11,6 +11,21 @@ export type FlightTripDetail = {
 
 type FareTermCategory = "baggage" | "change" | "refund";
 
+export function stripLegPrefix(
+  value: string,
+  direction: "outbound" | "return",
+) {
+  const label = direction === "outbound" ? "Outbound" : "Return";
+  return value.replace(new RegExp(`^${label}:\\s*`, "i"), "");
+}
+
+function displayDirection(term: NonNullable<FlightResult["fareTerms"]>[number]) {
+  if (term.legDirection) return term.legDirection;
+  if (/^Outbound:\s*/i.test(term.text)) return "outbound" as const;
+  if (/^Return:\s*/i.test(term.text)) return "return" as const;
+  return undefined;
+}
+
 const termsFor = (result: FlightResult, category: FareTermCategory) =>
   result.fareTerms?.filter(
     (term) => term.category === category && term.text.trim(),
@@ -25,8 +40,10 @@ function legTerms(result: FlightResult, category: FareTermCategory) {
   const terms = termsFor(result, category);
   const legs: FlightTripDetailLeg[] = (["outbound", "return"] as const).flatMap((direction) => {
     const value = terms
-      .filter((term) => term.legDirection === direction)
+      .filter((term) => displayDirection(term) === direction)
       .map((term) => term.text.trim())
+      .map((value) => stripLegPrefix(value, direction))
+      .filter(Boolean)
       .join(". ");
     return value
       ? [{ label: direction === "outbound" ? "Outbound" as const : "Return" as const, value }]
@@ -35,7 +52,7 @@ function legTerms(result: FlightResult, category: FareTermCategory) {
 
   // A partial or mixed set of scoped terms should retain the existing generic
   // presentation rather than implying that provider data covers both legs.
-  return legs.length === 2 && terms.every((term) => term.legDirection)
+  return legs.length === 2 && terms.every((term) => displayDirection(term))
     ? legs
     : undefined;
 }
