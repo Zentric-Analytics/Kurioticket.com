@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  getCompatibleFlightsFromCache,
-  getFlightFromCache,
-  getFlightSearchFromCache,
+  getFlightDetailsCacheContext,
 } from "@/lib/searchCache";
 import {
   buildStandaloneFlightDetails,
@@ -13,14 +11,14 @@ export async function GET(request: Request) {
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Flight id is required." }, { status: 400 });
 
-  const flight = getFlightFromCache(id);
-  if (!flight) {
+  const cached = await getFlightDetailsCacheContext(id);
+  if (!cached) {
     return NextResponse.json(
       { error: "This flight quote is no longer available. Please search again for current prices." },
       { status: 404 },
     );
   }
-  const search = getFlightSearchFromCache(id);
+  const search = cached.search;
   if (!search) {
     return NextResponse.json(
       { status: "unavailable", error: "This flight search context is no longer available. Please search again." },
@@ -28,8 +26,8 @@ export async function GET(request: Request) {
     );
   }
   const details = await buildStandaloneFlightDetails({
-    cachedSelected: flight,
-    cachedAlternatives: getCompatibleFlightsFromCache(id),
+    cachedSelected: cached.flight,
+    cachedAlternatives: cached.compatibleFlights,
     search,
   });
   return NextResponse.json(details, {
