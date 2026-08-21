@@ -241,7 +241,7 @@ test("persisted normalized record omits unused raw provider references but retai
     ...memory,
     async write(records) {
       written = structuredClone(records);
-      await memory.write(records);
+      return memory.write(records);
     },
   };
   await createFlightResultCache(backend).remember([flight("private", 20_000)], 10_000, oneWaySearch);
@@ -258,10 +258,29 @@ test("database failures fail soft for Search and fail closed for Details reads",
     async cleanupExpired() { throw new Error("database unavailable"); },
   };
   const cache = createFlightResultCache(unavailable);
-  assert.equal(await cache.remember([flight("db-down", 20_000)], 10_000, oneWaySearch), false);
+  assert.equal((await cache.remember([flight("db-down", 20_000)], 10_000, oneWaySearch)).persisted, false);
   assert.equal(await cache.get("db-down", 10_001), null);
   assert.equal(await cache.getSearch("db-down", 10_001), null);
   assert.deepEqual(await cache.getCompatible("db-down", 10_001), []);
+});
+
+test("database RETURNING identity mismatch is a cache persistence failure", async () => {
+  const memory = createMemoryFlightCacheBackend();
+  const backend: SharedFlightCacheBackend = {
+    ...memory,
+    async write(records) {
+      await memory.write(records);
+      return records.slice(0, -1).map(({ publicResultId }) => publicResultId);
+    },
+  };
+  const outcome = await createFlightResultCache(backend).remember(
+    [flight("expected-a", 20_000), flight("expected-b", 20_000)],
+    10_000,
+    oneWaySearch,
+    "main-results-request",
+  );
+
+  assert.deepEqual(outcome, { persisted: false, validForMs: 0 });
 });
 
 test("recaching without search authority clears stale passenger context", async () => {
@@ -273,13 +292,28 @@ test("recaching without search authority clears stale passenger context", async 
 });
 
 test("603-result cache writes remain complete and compatible", async () => {
-  const backend = createMemoryFlightCacheBackend();
+  const memory = createMemoryFlightCacheBackend();
+  let databaseCommittedIds: string[] = [];
+  const backend: SharedFlightCacheBackend = {
+    ...memory,
+    async write(records) {
+      databaseCommittedIds = await memory.write(records);
+      return databaseCommittedIds;
+    },
+  };
   const cache = createFlightResultCache(backend);
   const results = Array.from({ length: 603 }, (_, index) =>
     flight(`duffel-result-large-${index}`, 40_000),
   );
 
-  assert.equal(await cache.remember(results, 10_000, oneWaySearch), true);
+  assert.equal((await cache.remember(results, 10_000, oneWaySearch)).persisted, true);
+  const cacheInputIds = results.map(({ id }) => id).sort();
+  const publicResponseIds = results.map(toPublicFlight).map(({ id }) => id).sort();
+  assert.deepEqual(databaseCommittedIds.sort(), cacheInputIds);
+  assert.deepEqual(publicResponseIds, cacheInputIds);
+  for (const index of [0, Math.floor(results.length / 2), results.length - 1]) {
+    assert.equal((await cache.get(results[index].id, 10_001))?.id, results[index].id);
+  }
   for (const result of results) {
     assert.equal((await cache.get(result.id, 10_001))?.id, result.id);
   }
@@ -289,14 +323,24 @@ test("603-result cache writes remain complete and compatible", async () => {
 });
 
 test("1000-result cache writes preserve every opaque mapping", async () => {
-  const cache = createFlightResultCache(createMemoryFlightCacheBackend());
+  const memory = createMemoryFlightCacheBackend();
+  let databaseCommittedIds: string[] = [];
+  const cache = createFlightResultCache({
+    ...memory,
+    async write(records) {
+      databaseCommittedIds = await memory.write(records);
+      return databaseCommittedIds;
+    },
+  });
   const results = Array.from({ length: 1000 }, (_, index) =>
     flight(`duffel-result-thousand-${index}`, 40_000),
   );
 
-  assert.equal(await cache.remember(results, 10_000, oneWaySearch), true);
+  assert.equal((await cache.remember(results, 10_000, oneWaySearch)).persisted, true);
   const resolved = await Promise.all(results.map(({ id }) => cache.get(id, 10_001)));
   assert.equal(resolved.filter(Boolean).length, 1000);
+  assert.deepEqual(databaseCommittedIds.sort(), results.map(({ id }) => id).sort());
+  assert.deepEqual(results.map(toPublicFlight).map(({ id }) => id).sort(), databaseCommittedIds);
 });
 
 test("bulk upsert retains existing opaque-ID update semantics", async () => {
@@ -330,6 +374,7 @@ test("Postgres cache persistence uses one atomic set-based upsert for 603 rows",
 
   assert.match(query.sql, /^\s*INSERT INTO "FlightResultCache"/);
   assert.match(query.sql, /ON CONFLICT \("publicResultId"\) DO UPDATE SET/);
+  assert.match(query.sql, /RETURNING "publicResultId"/);
   assert.doesNotMatch(query.sql, /BEGIN|COMMIT/);
   assert.equal(query.values.length, records.length * 6);
 });
@@ -337,9 +382,12 @@ test("Postgres cache persistence uses one atomic set-based upsert for 603 rows",
 test("production backend keeps query count constant through 1000 rows", async () => {
   let executeCount = 0;
   const database = {
-    async $executeRaw() {
+    async $queryRaw(query: { values: unknown[] }) {
       executeCount += 1;
-      return 1000;
+      const size = query.values.length / 6;
+      return Array.from({ length: size }, (_, index) => ({
+        publicResultId: `duffel-result-query-${size}-${index}`,
+      }));
     },
   };
   const backend = createPrismaFlightCacheBackend(() => database as never);
