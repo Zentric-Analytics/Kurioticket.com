@@ -98,9 +98,9 @@ test("trip type uses accessible radio-style options", () => {
 });
 
 test("mobile English trip labels are exact and multi-city is selectable", () => {
-  assert.match(source, /"Round-trip"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/);
-  assert.match(mobileBranch, /homepageTripTypeLabel\(mode\)/);
-  assert.doesNotMatch(source, /\? "One-way"|: "Multi-city";/);
+  assert.match(source, /t\.roundTrip[\s\S]*?t\.oneWay[\s\S]*?t\.multiCity/);
+  assert.match(mobileBranch, /tripTypeLabel\(mode\)/);
+  assert.doesNotMatch(source, /One way-trip|Multi-city trip/);
   assert.doesNotMatch(mobileBranch, /const unavailable = mode === "multi-city"|Multi-city search coming soon/);
   assert.match(mobileBranch, /onClick=\{\(\) => onSelectTripType\(mode\)\}/);
   assert.match(mobileBranch, /<MultiCityFlightEditor[\s\S]*?presentation="homepage"/);

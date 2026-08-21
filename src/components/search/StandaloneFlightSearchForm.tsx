@@ -1490,7 +1490,7 @@ export function StandaloneFlightSearchForm({
           {(
             [
               ...defaultTripTypeOptions,
-              ["multi-city", "Multi-city"] as const,
+              ["multi-city", t("multiCity")] as const,
             ] satisfies ReadonlyArray<readonly [MobileTripTypeOption, string]>
           ).map(([value, localizedLabel]) => (
             <button
@@ -1548,15 +1548,7 @@ export function StandaloneFlightSearchForm({
                   )}
                 />
               </span>
-              <span>
-                {locale.toLowerCase().startsWith("en")
-                  ? value === "round-trip"
-                    ? "Round trip"
-                    : value === "one-way"
-                      ? "One way-trip"
-                      : "Multi-city trip"
-                  : localizedLabel}
-              </span>
+              <span>{localizedLabel}</span>
             </button>
           ))}
         </div>

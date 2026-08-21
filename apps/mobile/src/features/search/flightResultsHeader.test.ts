@@ -66,7 +66,7 @@ test("metadata renders current dates and the canonical payload trip type", () =>
   assert.match(results, /shortDate\(String\(payload\.departureDate/);
   assert.match(results, /shortDate\(String\(payload\.returnDate/);
   assert.match(results, /dateRange=\{payload\.tripType === "one-way"/);
-  assert.match(results, /tripTypeLabel=\{payload\.tripType === "round-trip" \? "Round trip" : "One way"\}/);
+  assert.match(results, /tripTypeLabel=\{FLIGHT_TRIP_TYPE_LABELS\[payload\.tripType === "round-trip" \? "round-trip" : "one-way"\]\}/);
   assert.match(header, /\{tripTypeLabel\}/);
 });
 
