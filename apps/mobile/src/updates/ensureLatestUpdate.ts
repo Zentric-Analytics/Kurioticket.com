@@ -1,3 +1,5 @@
+import { recordUpdateCheckResult } from "./updateCheckDiagnostics";
+
 export type UpdateClient = {
   isEnabled: boolean;
   checkForUpdateAsync: () => Promise<{ isAvailable: boolean }>;
@@ -9,7 +11,10 @@ export type UpdateCheckResult = "disabled" | "current" | "reloading" | "timeout"
 export type UpdateAppState = "active" | "background" | "inactive" | "unknown" | "extension";
 
 export async function ensureLatestUpdate(client: UpdateClient, timeoutMs = 8_000): Promise<UpdateCheckResult> {
-  if (!client.isEnabled) return "disabled";
+  if (!client.isEnabled) {
+    recordUpdateCheckResult("disabled");
+    return "disabled";
+  }
 
   let expired = false;
   let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -37,6 +42,7 @@ export async function ensureLatestUpdate(client: UpdateClient, timeoutMs = 8_000
 
   const result = await Promise.race([update, deadline]);
   if (timeout) clearTimeout(timeout);
+  recordUpdateCheckResult(result);
   return result;
 }
 

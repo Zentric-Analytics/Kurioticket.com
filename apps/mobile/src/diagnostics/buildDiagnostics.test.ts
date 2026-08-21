@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildDiagnostics, buildStartupLog } from "./buildDiagnostics";
+import { buildDiagnostics, buildStartupLog, formatPreviewDiagnostics } from "./buildDiagnostics";
 test("diagnostics safely represent missing update metadata", () => { assert.deepEqual(buildDiagnostics({ isEmbeddedLaunch: true }), { applicationVersion: "unavailable", nativeBuildVersion: "unavailable", runtimeVersion: "unavailable", updateId: "unavailable", shortUpdateId: "embedded", channel: "unavailable", createdAt: "unavailable", embedded: true, projectId: "unavailable", apiBaseUrl: "not configured" }); });
 test("diagnostics format update identity and startup line", () => { const value = buildDiagnostics({ applicationVersion: "0.2.0", nativeBuildVersion: 7, runtimeVersion: "0.2.0", updateId: "12345678-abcd", channel: "preview", createdAt: "2030-01-01T00:00:00Z", projectId: "project", apiBaseUrl: "https://example.test" }); assert.equal(value.shortUpdateId, "12345678"); assert.match(buildStartupLog(value), /version=0\.2\.0 build=7 runtime=0\.2\.0 updateId=12345678-abcd channel=preview embedded=false/); });
+test("Preview diagnostics expose update retrieval state without secrets", () => {
+  const value = buildDiagnostics({ applicationVersion: "0.3.0", nativeBuildVersion: 36, runtimeVersion: "fingerprint", updateId: "12345678-abcd", channel: "preview", createdAt: "2030-01-01T00:00:00Z", apiBaseUrl: "https://staging.kurioticket.com" });
+  assert.deepEqual(formatPreviewDiagnostics(value, { result: "timeout", checkedAt: "2030-01-02T00:00:00.000Z" }), [
+    "Preview 0.3.0 (36)", "Runtime fingerprint", "Update 12345678 · OTA", "Channel preview",
+    "Published 2030-01-01T00:00:00.000Z", "Last check timeout · 2030-01-02T00:00:00.000Z", "API https://staging.kurioticket.com",
+  ]);
+});

@@ -277,6 +277,7 @@ const classifications = [
   [["src/app/page.tsx", "apps/mobile/src/a.ts"], "OTA+WEB"],
   [["src/app/page.tsx", "apps/mobile/ios/a.swift"], "IOS_NATIVE+WEB"],
   [["docs/readme.md"], "NO_DELIVERY"],
+  [["apps/mobile/release-baselines/ios/production-credential.json"], "NO_DELIVERY"],
   [["apps/mobile/unknown.bin"], "UNSAFE"],
 ];
 for (const [files, expected] of classifications) test(`classifies ${files.join(",")}`, () => assert.equal(classifyChangeSet(files).classification, expected));
@@ -439,6 +440,21 @@ test("native splash change remains native when its complete merge range includes
     "apps/mobile/src/__tests__/releaseArchitecture.test.ts",
   ]);
   assert.equal(classifyChangeSet(["apps/mobile/src/a.test.ts"]).classification, "NO_DELIVERY");
+});
+
+test("reviewed Production release evidence does not block an OTA-safe Preview progression", () => {
+  const result = classifyChangeSet([
+    "apps/mobile/release-baselines/ios/production-credential.json",
+    "apps/mobile/release-baselines/README.md",
+    "apps/mobile/src/features/search/SearchUi.tsx",
+    "apps/mobile/src/features/search/dateStripElevation.test.ts",
+  ]);
+  assert.equal(result.classification, "OTA");
+  assert.deepEqual(result.mobileTooling, [
+    "apps/mobile/release-baselines/README.md",
+    "apps/mobile/release-baselines/ios/production-credential.json",
+    "apps/mobile/src/features/search/dateStripElevation.test.ts",
+  ]);
 });
 
 test("last delivered native binary remains authoritative after web or OTA completion", () => {
