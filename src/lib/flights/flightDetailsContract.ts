@@ -56,9 +56,18 @@ export function flightDetailsRouteLabel(
   fallbackDestination: string,
 ) {
   if (tripType === "multi-city" && legs.length > 0) {
-    return [legs[0].originAirport, ...legs.map((leg) => leg.destinationAirport)]
-      .map(cleanRouteLocation)
-      .join(" → ");
+    let route = `${cleanRouteLocation(legs[0].originAirport)} → ${cleanRouteLocation(legs[0].destinationAirport)}`;
+
+    for (let index = 1; index < legs.length; index += 1) {
+      const previousDestination = cleanRouteLocation(legs[index - 1].destinationAirport);
+      const origin = cleanRouteLocation(legs[index].originAirport);
+      const destination = cleanRouteLocation(legs[index].destinationAirport);
+      route += previousDestination === origin
+        ? ` → ${destination}`
+        : ` · ${origin} → ${destination}`;
+    }
+
+    return route;
   }
 
   return `${cleanRouteLocation(fallbackOrigin)} to ${cleanRouteLocation(fallbackDestination)}`;

@@ -329,6 +329,13 @@ test("multi-city details use the complete route chain for two through five fligh
   assert.equal(flightDetailsRouteLabel("multi-city", routeLegs.slice(0, 3), "IAH", "JFK"), "IAH → LOS → LAX → JFK");
   assert.equal(flightDetailsRouteLabel("multi-city", routeLegs.slice(0, 4), "IAH", "CDG"), "IAH → LOS → LAX → JFK → CDG");
   assert.equal(flightDetailsRouteLabel("multi-city", routeLegs, "IAH", "IAH"), "IAH → LOS → LAX → JFK → CDG → IAH");
+  assert.equal(
+    flightDetailsRouteLabel("multi-city", [
+      { originAirport: "IAH", destinationAirport: "LHR" },
+      { originAirport: "CDG", destinationAirport: "FCO" },
+    ], "IAH", "FCO"),
+    "IAH → LHR · CDG → FCO",
+  );
   assert.equal(flightDetailsRouteLabel("one-way", routeLegs.slice(0, 1), "Houston (IAH)", "London (LHR)"), "Houston to London");
   assert.equal(flightDetailsRouteLabel("round-trip", routeLegs.slice(0, 2), "Houston, TX", "London, UK"), "Houston to London");
 });
