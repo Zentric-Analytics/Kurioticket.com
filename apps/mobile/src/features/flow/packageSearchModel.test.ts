@@ -11,6 +11,41 @@ test("package modes keep the exact customer order and internal mapping", () => {
   ]);
 });
 
+test("fresh package searches start with one traveler and one room", () => {
+  const search = createPackageSearch();
+
+  assert.equal(search.mode, "hotel-flight");
+  assert.equal(search.adults, 1);
+  assert.equal(search.children, 0);
+  assert.equal(search.infants, 0);
+  assert.equal(search.rooms, 1);
+  assert.equal(search.petFriendly, false);
+  assert.equal(search.adults + search.children + search.infants, 1);
+});
+
+test("package adults can be increased by the user but cannot fall below one", () => {
+  const search = createPackageSearch();
+
+  assert.equal(updatePackageParty(search, { adults: 2 }).adults, 2);
+  assert.equal(updatePackageParty(search, { adults: 0 }).adults, 1);
+});
+
+test("package mode transitions preserve fresh and user-selected party values", () => {
+  const modes = ["flight-car", "hotel-car", "hotel-flight-car", "hotel-flight"] as const;
+  let fresh = createPackageSearch();
+  let selected = updatePackageParty(fresh, { adults: 3, children: 1, infants: 1, rooms: 2 });
+
+  for (const mode of modes) {
+    fresh = transitionPackageMode(fresh, mode);
+    selected = transitionPackageMode(selected, mode);
+    assert.equal(fresh.adults, 1);
+    assert.deepEqual(
+      { adults: selected.adults, children: selected.children, infants: selected.infants, rooms: selected.rooms },
+      { adults: 3, children: 1, infants: 1, rooms: 2 },
+    );
+  }
+});
+
 test("shared destination and dates feed linked car fields through mode transitions", () => {
   let search = applyPackageDestination(createPackageSearch(), "Paris", "CDG");
   search = applyPackageDates(search, "2027-04-02", "2027-04-09");

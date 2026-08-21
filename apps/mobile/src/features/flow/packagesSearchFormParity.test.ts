@@ -25,3 +25,15 @@ test("package fields expose one destination, date and coordinated party definiti
   assert.match(form, /"Travelers & Rooms"/);
   assert.doesNotMatch(form, /Round-trip|One way-trip|Multi-city trip|packages\/results|package-results/);
 });
+
+test("package traveler summary derives from committed party state with singular grammar", () => {
+  assert.match(form, /const travelerCount = search\.adults \+ search\.children \+ search\.infants/);
+  assert.match(form, /travelerCount === 1 \? "traveler" : "travelers"/);
+  assert.doesNotMatch(form, /2 travelers/);
+});
+
+test("package party draft copies committed state when the sheet opens", () => {
+  assert.match(form, /useState\(search\)/);
+  assert.match(form, /if \(visible\) setDraft\(search\)/);
+  assert.doesNotMatch(form, /setDraft\(createPackageSearch/);
+});
