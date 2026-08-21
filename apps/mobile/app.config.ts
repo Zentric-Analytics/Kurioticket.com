@@ -34,6 +34,18 @@ export function googleIosUrlScheme(clientId: string): string {
   return `com.googleusercontent.apps.${match.groups.identifier}`;
 }
 
+export function validateGoogleIosClientId(clientId: string | undefined, variant: AppVariant): string {
+  const configured = clientId?.trim();
+  if (!configured) {
+    throw new Error(`[mobile-environment] ${RELEASES[variant].displayName} iOS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.`);
+  }
+  googleIosUrlScheme(configured);
+  if (configured !== RELEASES[variant].googleIosClientId) {
+    throw new Error(`[mobile-environment] ${RELEASES[variant].displayName} iOS OAuth identity does not match the approved release identity.`);
+  }
+  return configured;
+}
+
 export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileEnvironment {
   const variantValue = required(input, "APP_VARIANT");
   if (variantValue !== "preview" && variantValue !== "production") {
@@ -79,14 +91,15 @@ export function assertEasPlatformSupported(environment: MobileEnvironment, input
 const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   const environment = resolveMobileEnvironment(process.env);
   assertEasPlatformSupported(environment, process.env);
-  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
+  let googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
   const easBuildPlatform = process.env.EAS_BUILD_PLATFORM?.trim().toLowerCase();
   const isEasBuild = process.env.EAS_BUILD === "true";
-  if (isEasBuild && easBuildPlatform === "ios" && !googleIosClientId) {
-    throw new Error(`[mobile-environment] ${environment.displayName} iOS EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.`);
+  if (isEasBuild && easBuildPlatform === "ios") {
+    googleIosClientId = validateGoogleIosClientId(googleIosClientId, environment.variant);
   }
   const plugins: NonNullable<ExpoConfig["plugins"]> = ["expo-router"];
   if (googleIosClientId && (!isEasBuild || easBuildPlatform === "ios")) {
+    googleIosClientId = validateGoogleIosClientId(googleIosClientId, environment.variant);
     plugins.push(["react-native-nitro-google-signin", { iosUrlScheme: googleIosUrlScheme(googleIosClientId) }]);
   }
   return {
