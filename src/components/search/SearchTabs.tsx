@@ -1731,15 +1731,15 @@ export function SearchTabs({
     );
   };
 
-  const mobileHomepageTripTypeLabel = (mode: TripType) => {
+  const homepageTripTypeLabel = (mode: TripType) => {
     const isEnglish = (locale ?? activeLocale).toLowerCase().startsWith("en");
 
     if (isEnglish) {
       return mode === "round-trip"
         ? "Round-trip"
         : mode === "one-way"
-          ? "One-way"
-          : "Multi-city";
+          ? "One way-trip"
+          : "Multi-city trip";
     }
 
     return tripTypeLabel(mode);
@@ -2966,7 +2966,7 @@ export function SearchTabs({
                   >
                     <span className={cn("h-[5px] w-[5px] rounded-full bg-[#004BB8]", !selected && "invisible")} />
                   </span>
-                  {mobileHomepageTripTypeLabel(mode)}
+                  {homepageTripTypeLabel(mode)}
                 </button>
               );
             })}
@@ -3307,7 +3307,7 @@ export function SearchTabs({
                             )}
                           />
                         </span>
-                        <span>{tripTypeLabel(mode)}</span>
+                        <span>{homepageTripTypeLabel(mode)}</span>
                       </button>
                     );
                   })}
