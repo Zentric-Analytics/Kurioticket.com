@@ -60,7 +60,7 @@ type DateDraft = {
   day: string;
 };
 
-function dateDraftFromValue(value?: string): DateDraft {
+function dateDraftFromValue(value?: string | null): DateDraft {
   const match = (value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return {
     year: match?.[1] || "",
@@ -356,7 +356,7 @@ function CountrySelector({
                     {item.label}
                   </Text>
                   {kind === "phone" && phoneOption?.dialCode ? (
-                    <Text style={[s.countryDialCode, { color: theme.muted }]}>
+                    <Text style={[s.countryDialCode, { color: theme.muted }]}> 
                       {phoneOption.dialCode}
                     </Text>
                   ) : null}
@@ -579,7 +579,7 @@ export function PersonalDetailsScreen() {
     [loading, setLoading] = useState(true),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
-    [success, setSuccess] = useState(""),
+    [success, setSuccess] = useState("") ,
     [selector, setSelector] = useState<
       | "phone"
       | "gender"
@@ -901,7 +901,7 @@ export function PersonalDetailsScreen() {
             ) : null}
             {!editing ? (
               <View>
-                <Text style={[s.description, { color: theme.muted }]}>
+                <Text style={[s.description, { color: theme.muted }]}> 
                   {c.description}
                 </Text>
                 {labels.map((label, index) => (
@@ -917,10 +917,10 @@ export function PersonalDetailsScreen() {
                       },
                     ]}
                   >
-                    <Text style={[s.label, { color: theme.muted }]}>
+                    <Text style={[s.label, { color: theme.muted }]}> 
                       {label}
                     </Text>
-                    <Text style={[s.value, { color: theme.text }]}>
+                    <Text style={[s.value, { color: theme.text }]}> 
                       {values[index] || c.missing}
                     </Text>
                   </View>
@@ -1037,7 +1037,7 @@ export function PersonalDetailsScreen() {
                 >
                   {c.addressSection}
                 </Text>
-                <Text style={[s.addressDescription, { color: theme.muted }]}>
+                <Text style={[s.addressDescription, { color: theme.muted }]}> 
                   {c.addressDescription}
                 </Text>
                 <SelectButton
@@ -1091,7 +1091,7 @@ export function PersonalDetailsScreen() {
                     onPress={() => discard(false)}
                     style={[s.secondary, { borderColor: theme.border }]}
                   >
-                    <Text style={[s.buttonText, { color: theme.text }]}>
+                    <Text style={[s.buttonText, { color: theme.text }]}> 
                       {c.cancel}
                     </Text>
                   </Pressable>
