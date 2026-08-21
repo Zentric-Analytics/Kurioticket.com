@@ -114,7 +114,7 @@ export function HotelDestinationSheet({ visible, value, onDone, onCancel }: { vi
   return <Modal transparent animationType="slide" visible={visible} onRequestClose={onCancel}>
       <KeyboardAvoidingView style={styles.keyboardViewport} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <SafeAreaView edges={["top", "bottom"]} style={styles.destinationOverlay}>
-          <Pressable style={[StyleSheet.absoluteFill,{backgroundColor:ft.colors.overlay}]} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Close hotel destination picker"/>
+          <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessibilityRole="button" accessibilityLabel="Close hotel destination picker"/>
           <View accessibilityViewIsModal style={[styles.destinationSheet,{backgroundColor:ft.colors.surface}]}>
             <View style={styles.destinationHeader}><Text accessibilityRole="header" style={ft.styles.title}>Choose destination</Text>{trimmedQuery ? <Pressable accessibilityRole="button" accessibilityLabel="Clear hotel destination search" onPress={clear}><Text style={[styles.link,{color:ft.colors.selectedBorder}]}>Clear</Text></Pressable> : null}</View>
             <View style={[styles.destinationSearch,{backgroundColor:ft.colors.input,borderColor:ft.colors.border}]}><FlowIcon name="location" size={20} color={ft.colors.icon}/><TextInput ref={inputRef} accessibilityLabel="Search hotel destinations" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} value={query} onChangeText={setQuery} returnKeyType="search" style={[styles.destinationSearchInput,{color:ft.colors.text}]}/></View>
@@ -134,7 +134,7 @@ function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, 
   const setCount = (key: "adults" | "children" | "rooms", value: number) => setDraft((current) => ({ ...current, [key]: value }));
   return <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
     <View style={styles.modalRoot}>
-      <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: ft.colors.overlay }]} accessibilityRole="button" accessibilityLabel="Close Guests & Rooms picker" onPress={onCancel}/>
+      <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close Guests & Rooms picker" onPress={onCancel}/>
       <SafeAreaView edges={["bottom"]} style={styles.sheetPosition} pointerEvents="box-none">
         <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: ft.colors.surface }]}>
           <Text accessibilityRole="header" style={ft.styles.title}>Guests &amp; Rooms</Text>

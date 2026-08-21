@@ -8,7 +8,7 @@ const destination = panel.slice(panel.indexOf("export function HotelDestinationS
 const guests = panel.slice(panel.indexOf("function HotelGuestsRoomsSheet"), panel.indexOf("function PickerRow"));
 
 test("Hotel destination backdrop and sheet share the keyboard-adjusted viewport", () => {
-  assert.match(destination, /<Pressable style=\{\[StyleSheet\.absoluteFill,[^>]+onPress=\{onCancel\}/);
+  assert.match(destination, /<Pressable style=\{StyleSheet\.absoluteFill\}[^>]+onPress=\{onCancel\}/);
   assert.match(destination, /<KeyboardAvoidingView[^>]*>\s*<SafeAreaView[^>]*>\s*<Pressable[^>]+Close hotel destination picker[^>]*\/>\s*<View accessibilityViewIsModal/);
   assert.ok(destination.indexOf("<KeyboardAvoidingView") < destination.indexOf('accessibilityLabel="Close hotel destination picker"'));
   assert.doesNotMatch(destination, /pointerEvents="box-none"/);
@@ -23,7 +23,7 @@ test("Hotel date backdrop and Android Back cancel the shared range draft", () =>
 });
 
 test("Guests backdrop and Android Back cancel drafts while Done remains the only commit path", () => {
-  assert.match(guests, /<Pressable style=\{\[StyleSheet\.absoluteFill,[^>]+onPress=\{onCancel\}/);
+  assert.match(guests, /<Pressable style=\{StyleSheet\.absoluteFill\}[^>]+onPress=\{onCancel\}/);
   assert.match(guests, /onRequestClose=\{onCancel\}/);
   assert.match(guests, /<SafeAreaView[^>]+pointerEvents="box-none">\s*<View accessibilityViewIsModal/);
   assert.match(guests, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\) => onDone\(draft\)\}\/>/);

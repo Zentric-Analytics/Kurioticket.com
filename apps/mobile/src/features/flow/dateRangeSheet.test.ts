@@ -24,7 +24,9 @@ test("sheet initializes draft state and Done is the only commit path", () => {
 });
 
 test("sheet uses semantic theme colors, accessible controls, and horizontal flexible values", () => {
-  for (const token of ["surface", "overlay", "text", "secondaryText", "border", "selected", "selectedBorder"]) assert.match(sheet, new RegExp(`ft\\.colors\\.${token}`));
+  for (const token of ["surface", "text", "secondaryText", "border", "selected", "selectedBorder"]) assert.match(sheet, new RegExp(`ft\\.colors\\.${token}`));
+  assert.match(sheet, /style=\{StyleSheet\.absoluteFill\}/);
+  assert.doesNotMatch(sheet, /ft\.colors\.overlay/);
   assert.match(sheet, /accessibilityViewIsModal/);
   assert.match(sheet, /accessibilityState=\{\{disabled,selected\}\}/);
   assert.match(sheet, /rangeHeader:\{flexDirection:"row"/);

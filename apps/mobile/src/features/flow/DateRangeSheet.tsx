@@ -33,7 +33,7 @@ export function DateRangeSheet({ visible, title, startLabel, endLabel, startDate
   const valid = Boolean(draftStart && draftEnd && (endMustBeAfterStart ? draftEnd > draftStart : draftEnd >= draftStart));
   return <Modal transparent animationType="slide" visible onRequestClose={onCancel}>
     <View style={styles.modalRoot}>
-      <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: ft.colors.overlay }]} accessibilityRole="button" accessibilityLabel={`Cancel ${title.toLowerCase()} changes`} onPress={onCancel}/>
+      <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel={`Cancel ${title.toLowerCase()} changes`} onPress={onCancel}/>
       <SafeAreaView edges={["bottom"]} style={styles.safeLayer} pointerEvents="box-none"><View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: ft.colors.surface }]}>
         <Text accessibilityRole="header" style={ft.styles.title}>{title}</Text>
         <View style={styles.rangeHeader}><RangeValue label={startLabel} value={draftStart}/><RangeValue label={endLabel} value={draftEnd}/></View>
