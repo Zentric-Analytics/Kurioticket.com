@@ -6,15 +6,19 @@ const read = (file: string) => readFileSync(`src/features/flow/${file}`, "utf8")
 
 test("native Flights exposes the exact three trip selector labels in order", () => {
   const panel = read("FlightSearchPanel.tsx");
-  const roundTrip = panel.indexOf('{ value: "round-trip", label: "Round trip" }');
-  const oneWay = panel.indexOf('{ value: "one-way", label: "One way" }');
-  const multiCity = panel.indexOf('{ value: "multi-city", label: "Multi-city"');
+  const labels = read("flightTripTypeLabels.ts");
+  const roundTrip = panel.indexOf('{ value: "round-trip", label: FLIGHT_TRIP_TYPE_LABELS["round-trip"] }');
+  const oneWay = panel.indexOf('{ value: "one-way", label: FLIGHT_TRIP_TYPE_LABELS["one-way"] }');
+  const multiCity = panel.indexOf('{ value: "multi-city", label: FLIGHT_TRIP_TYPE_LABELS["multi-city"]');
 
   assert.ok(roundTrip >= 0);
   assert.ok(roundTrip < oneWay);
   assert.ok(oneWay < multiCity);
-  assert.doesNotMatch(panel, /value: "round-trip", label: "Round-trip"/);
-  assert.match(panel, /value: "multi-city", label: "Multi-city", disabled: true, accessibilityHint: "Multi-city search is coming soon"/);
+  assert.match(labels, /"round-trip": "Round-trip"/);
+  assert.match(labels, /"one-way": "One-way"/);
+  assert.match(labels, /"multi-city": "Multi-city"/);
+  assert.doesNotMatch(labels, /"Round trip"|"One way"|"One way-trip"|"Multi-city trip"/);
+  assert.match(panel, /value: "multi-city", label: FLIGHT_TRIP_TYPE_LABELS\["multi-city"\], disabled: true, accessibilityHint: "Multi-city search is coming soon"/);
 });
 
 test("multi-city is display-only and defensively cannot change the Flight form", () => {

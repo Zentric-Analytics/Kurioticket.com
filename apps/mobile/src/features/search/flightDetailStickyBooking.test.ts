@@ -23,7 +23,7 @@ test("round-trip and one-way labels come from the same canonical header model", 
   const headerModel = readFileSync(resolve("src/features/search/flightDetailHeaderModel.ts"), "utf8");
   assert.match(flightDetail, /const header = flightDetailHeaderModel\(result, params\)/);
   assert.match(headerModel, /const oneWay = firstFlightParam\(params\.tripType\) === "one-way"/);
-  assert.match(headerModel, /tripTypeLabel: oneWay \? "One way" : "Round trip"/);
+  assert.match(headerModel, /tripTypeLabel: FLIGHT_TRIP_TYPE_LABELS\[oneWay \? "one-way" : "round-trip"\]/);
 });
 
 test("provider handoff behavior and concise redirect disclosure remain intact", () => {

@@ -1,5 +1,6 @@
 import type { FlightResult } from "../../api/travelApi";
 import { firstFlightParam, normalizeCabin, type RouteValue } from "../flow/flightSearchModel";
+import { FLIGHT_TRIP_TYPE_LABELS } from "../flow/flightTripTypeLabels";
 
 type HeaderFlight = Pick<FlightResult, "originAirport" | "destinationAirport" | "cabinClass">;
 
@@ -27,7 +28,7 @@ export function flightDetailHeaderModel(result: HeaderFlight, params: Record<str
 
   return {
     route: `${result.originAirport.toUpperCase()} ${oneWay ? "→" : "⇄"} ${result.destinationAirport.toUpperCase()}`,
-    tripTypeLabel: oneWay ? "One way" : "Round trip",
+    tripTypeLabel: FLIGHT_TRIP_TYPE_LABELS[oneWay ? "one-way" : "round-trip"],
     metadata: [
       date,
       `${travelerCount} ${travelerCount === 1 ? "Traveler" : "Travelers"}`,

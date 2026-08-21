@@ -32,6 +32,7 @@ import {
   ShieldCheck,
   Tag,
 } from "lucide-react-native";
+import { FLIGHT_TRIP_TYPE_LABELS } from "../flow/flightTripTypeLabels";
 import { Heart } from "lucide-react-native";
 import {
   travelApi,
@@ -465,7 +466,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             ? shortDate(String(payload.departureDate || ""))
             : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`}
           travelerCount={Number(payload.travelers)}
-          tripTypeLabel={payload.tripType === "round-trip" ? "Round trip" : "One way"}
+          tripTypeLabel={FLIGHT_TRIP_TYPE_LABELS[payload.tripType === "round-trip" ? "round-trip" : "one-way"]}
           onEdit={edit}
         />
       ) : (
