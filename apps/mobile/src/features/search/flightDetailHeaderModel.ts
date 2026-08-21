@@ -27,6 +27,7 @@ export function flightDetailHeaderModel(result: HeaderFlight, params: Record<str
 
   return {
     route: `${result.originAirport.toUpperCase()} ${oneWay ? "→" : "⇄"} ${result.destinationAirport.toUpperCase()}`,
+    tripTypeLabel: oneWay ? "One way" : "Round trip",
     metadata: [
       date,
       `${travelerCount} ${travelerCount === 1 ? "Traveler" : "Travelers"}`,

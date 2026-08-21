@@ -228,7 +228,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
         </View>
       ) : null}
       <ScrollView
-        contentContainerStyle={[d.body, { paddingBottom: 130 + inset.bottom }]}
+        contentContainerStyle={[d.body, { paddingBottom: 110 + inset.bottom }]}
       >
         <View style={[d.itinerarySection, { backgroundColor: theme.surface }, theme.dark && d.itinerarySectionDark]}>
           <View style={d.sectionHead}>
@@ -324,11 +324,11 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
         <View style={d.stickyTotal}>
           <Text style={[d.meta, { color: theme.textSecondary }]}>Total</Text>
           <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[d.price, { color: theme.textPrimary }]}>{formattedFare}</Text>
-          <Text style={[d.meta, { color: theme.textSecondary }]}>Round trip</Text>
+          <Text style={[d.meta, { color: theme.textSecondary }]}>{header.tripTypeLabel}</Text>
         </View>
         <View style={d.stickyCta}>
           <Button label={`Continue to ${provider}`} onPress={handleProviderBooking} />
-          <Text style={[d.redirect, { color: theme.textSecondary }]}>You’ll be redirected to {provider}’s site</Text>
+          <Text numberOfLines={2} style={[d.redirect, { color: theme.textSecondary }]}>You’ll continue on {provider}’s site</Text>
         </View>
       </View>
     </SafeAreaView>
@@ -837,19 +837,20 @@ const d = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    minHeight: 105,
-    borderTopWidth: 1,
+    minHeight: 88,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: ui.border,
     backgroundColor: "white",
-    padding: 14,
+    paddingTop: 10,
+    paddingHorizontal: 14,
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    gap: 14,
+    gap: 10,
   },
-  stickyTotal: { flexShrink: 1, minWidth: 92, maxWidth: "42%" },
+  stickyTotal: { flexShrink: 1, minWidth: 92, maxWidth: "42%", gap: 1 },
   stickyCta: { flex: 1, minWidth: 0, maxWidth: 250 },
-  redirect: { fontSize: 9, color: ui.muted, textAlign: "center", marginTop: 4 },
+  redirect: { fontSize: 9, lineHeight: 12, color: ui.muted, textAlign: "center", marginTop: 3 },
   gallery: { height: 241, flexDirection: "row", backgroundColor: "#E7EBF2" },
   hero: { width: "77%", height: "100%", backgroundColor: "#E7EBF2" },
   thumbs: { width: "23%", gap: 3, paddingLeft: 3 },
