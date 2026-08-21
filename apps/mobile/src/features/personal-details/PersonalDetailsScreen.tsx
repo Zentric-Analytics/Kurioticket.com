@@ -206,23 +206,27 @@ function CountrySelector({
   const shown = filterSelectorOptions(options, q);
 
   useEffect(() => {
+    if (!visible) return;
     setQ("");
     setDraftSelection(selected);
     committing.current = false;
-    if (visible) Keyboard.dismiss();
+    Keyboard.dismiss();
   }, [selected, selectorType, visible]);
   const cancel = () => {
     Keyboard.dismiss();
-    setQ("");
-    setDraftSelection(selected);
     onClose();
   };
   const saveSelection = () => {
     if (committing.current) return;
     committing.current = true;
     Keyboard.dismiss();
-    setQ("");
     onSave(draftSelection);
+  };
+  const handleDismiss = () => {
+    setQ("");
+    setDraftSelection(selected);
+    committing.current = false;
+    onDismiss();
   };
 
   return (
@@ -231,7 +235,7 @@ function CountrySelector({
       animationType="slide"
       presentationStyle="fullScreen"
       onRequestClose={cancel}
-      onDismiss={onDismiss}
+      onDismiss={handleDismiss}
     >
       <SafeAreaView
         edges={["top", "bottom"]}

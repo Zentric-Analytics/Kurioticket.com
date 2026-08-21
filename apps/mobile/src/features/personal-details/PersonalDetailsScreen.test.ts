@@ -64,9 +64,9 @@ test("country and nationality search selectors wait for an explicit search-field
     /<TextInput autoFocus accessibilityLabel=\{c\.searchCountry\}/,
   );
   assert.doesNotMatch(screen, /autoFocus/);
-  assert.match(screen, /if \(visible\) Keyboard\.dismiss\(\)/);
+  assert.match(screen, /if \(!visible\) return;[\s\S]*?Keyboard\.dismiss\(\)/);
 });
-test("country query is session-scoped and reset on lifecycle boundaries", () => {
+test("country query stays stable through native dismissal and resets after dismissal", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
@@ -74,10 +74,23 @@ test("country query is session-scoped and reset on lifecycle boundaries", () => 
   assert.match(selector, /const \[q, setQ\] = useState\(""\)/);
   assert.match(
     selector,
-    /useEffect\([\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, visible\]\)/,
+    /useEffect\(\(\) => \{[\s\S]*?if \(!visible\) return;[\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, visible\]\)/,
   );
-  assert.match(selector, /const cancel = \(\) => \{[\s\S]*?setQ\(""\)/);
-  assert.match(selector, /const saveSelection = \(\) => \{[\s\S]*?setQ\(""\)/);
+  const cancel = selector.slice(
+    selector.indexOf("const cancel = () =>"),
+    selector.indexOf("const saveSelection = () =>"),
+  );
+  const save = selector.slice(
+    selector.indexOf("const saveSelection = () =>"),
+    selector.indexOf("const handleDismiss = () =>"),
+  );
+  assert.doesNotMatch(cancel, /setQ\(""\)/);
+  assert.doesNotMatch(save, /setQ\(""\)/);
+  assert.match(
+    selector,
+    /const handleDismiss = \(\) => \{[\s\S]*?setQ\(""\)[\s\S]*?onDismiss\(\)/,
+  );
+  assert.match(selector, /onDismiss=\{handleDismiss\}/);
 });
 test("phone, nationality, and address searches have independent aliases", () => {
   assert.match(
@@ -125,16 +138,25 @@ test("country search accessibility hints match the available filters", () => {
     /kind === "phone"[\s\S]*?c\.searchCountryPhoneHint[\s\S]*?c\.searchCountryHint/,
   );
 });
-test("all country-selector dismissal paths discard the draft and keyboard", () => {
+test("all country-selector dismissal paths preserve visible content until onDismiss", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
   );
   assert.match(selector, /onRequestClose=\{cancel\}/);
-  assert.match(selector, /onDismiss=\{onDismiss\}/);
+  assert.match(selector, /onDismiss=\{handleDismiss\}/);
   assert.ok((selector.match(/onPress=\{cancel\}/g) ?? []).length >= 2);
-  assert.match(selector, /setDraftSelection\(selected\);[\s\S]*?onClose\(\)/);
-  assert.match(selector, /Keyboard\.dismiss\(\)/);
+  const cancel = selector.slice(
+    selector.indexOf("const cancel = () =>"),
+    selector.indexOf("const saveSelection = () =>"),
+  );
+  assert.match(cancel, /Keyboard\.dismiss\(\)/);
+  assert.match(cancel, /onClose\(\)/);
+  assert.doesNotMatch(cancel, /setQ|setDraftSelection/);
+  assert.match(
+    selector,
+    /const handleDismiss = \(\) => \{[\s\S]*?setDraftSelection\(selected\)[\s\S]*?onDismiss\(\)/,
+  );
 });
 test("picker mode and dataset survive the native close animation", () => {
   assert.match(
