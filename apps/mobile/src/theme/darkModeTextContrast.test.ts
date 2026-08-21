@@ -17,8 +17,8 @@ test("flight-form captions and helper text stay theme-aware in dark mode", () =>
   assert.match(primitives, /<Text style=\{ft\.styles\.meta\}>\{meta\}<\/Text>/);
   assert.match(flight, /placeholderTextColor=\{ft\.colors\.placeholder\}/);
   assert.match(
-    flight,
-    /trailing=\{<FlowIcon name="chevron" color=\{ft\.colors\.icon\} size=\{18\}\/>\}/,
+    primitives,
+    /<FlowIcon name="chevron" size=\{16\} color=\{ft\.colors\.icon\} \/>/,
   );
 });
 

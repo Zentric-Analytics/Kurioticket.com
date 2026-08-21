@@ -5,7 +5,7 @@ import test from "node:test";
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
 
 test("Flights keeps one unified Travel dates launcher and routes round trips to one range sheet", () => {
-  assert.equal(panel.match(/<Field label="Travel dates"/g)?.length, 1);
+  assert.equal(panel.match(/<CompactSearchField label="Travel dates"/g)?.length, 1);
   assert.match(panel, /setPicker\(form\.tripType === "round-trip" \? "travelDates" : "departureDate"\)/);
   assert.match(panel, /<DateRangeSheet visible=\{picker === "travelDates"\} title="Travel dates" startLabel="Departure date" endLabel="Return date"/);
   assert.doesNotMatch(panel, /"returnDate" \|/);
@@ -23,9 +23,9 @@ test("validation opens the same range picker while one-way retains its single da
 });
 
 test("date validation errors remain directly after the unified launcher", () => {
-  const field = panel.indexOf('<Field label="Travel dates"');
+  const field = panel.indexOf('<CompactSearchField label="Travel dates"');
   const departure = panel.indexOf("errors.departureDate", field);
   const returned = panel.indexOf("errors.returnDate", departure);
-  const travelers = panel.indexOf('<Field label="Travelers"', returned);
+  const travelers = panel.indexOf('<CompactSearchField label="Travelers"', returned);
   assert.ok(field < departure && departure < returned && returned < travelers);
 });
