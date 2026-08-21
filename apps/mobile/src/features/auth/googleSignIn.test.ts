@@ -2,7 +2,7 @@ import * as assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
-import { getGoogleIosClientId } from "./googleConfig";
+import { resolveGoogleIosClientId } from "./googleConfig";
 
 test("Google sign-in uses native Credential Manager with nonce and server exchange", () => {
   const nativeSource = readFileSync(join(process.cwd(), "src/features/auth/googleSignIn.ts"), "utf8");
@@ -10,7 +10,7 @@ test("Google sign-in uses native Credential Manager with nonce and server exchan
   const apiSource = readFileSync(join(process.cwd(), "src/features/auth/authApi.ts"), "utf8");
   assert.match(nativeSource, /GoogleOneTapSignIn\.checkPlayServices/);
   assert.match(nativeSource, /nonce/);
-  assert.match(nativeSource, /const iosClientId = getGoogleIosClientId\(\)/);
+  assert.match(nativeSource, /const iosClientId = getGoogleIosClientId\(getRuntimeEnvironment\(\)\.variant, Platform\.OS\)/);
   assert.match(nativeSource, /iosClientId: iosClientId \|\| undefined/);
   assert.match(nativeSource, /isCancelledResponse/);
   assert.match(flowSource, /startNativeGoogleSignIn/);
@@ -18,17 +18,14 @@ test("Google sign-in uses native Credential Manager with nonce and server exchan
   assert.doesNotMatch(flowSource, /Google sign-in unavailable/);
 });
 
-test("Production iOS runtime uses its configured OAuth client without changing Android fallback", () => {
-  const previous = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-  try {
-    process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "  production-ios.apps.googleusercontent.com  ";
-    assert.equal(getGoogleIosClientId(), "production-ios.apps.googleusercontent.com");
-    delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-    assert.equal(getGoogleIosClientId(), "");
-  } finally {
-    if (previous === undefined) delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-    else process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = previous;
-  }
+test("Production iOS runtime accepts only its approved OAuth identity without changing Android", () => {
+  const production = "459496589401-b4npe68m8c358rqr79edi7igvi3sauao.apps.googleusercontent.com";
+  const preview = "459496589401-gi52kj4fscgf092pasrelkth2mal0mph.apps.googleusercontent.com";
+  assert.equal(resolveGoogleIosClientId(`  ${production}  `, "production", "ios"), production);
+  assert.throws(() => resolveGoogleIosClientId(preview, "production", "ios"), /does not match the approved release identity/);
+  assert.throws(() => resolveGoogleIosClientId(undefined, "production", "ios"), /require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID/);
+  assert.equal(resolveGoogleIosClientId(undefined, "production", "android"), "");
+  assert.equal(resolveGoogleIosClientId(preview, "production", "android"), preview);
 
   const nativeSource = readFileSync(join(process.cwd(), "src/features/auth/googleSignIn.ts"), "utf8");
   assert.match(nativeSource, /webClientId,/);
