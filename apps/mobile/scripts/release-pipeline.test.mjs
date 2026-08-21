@@ -113,6 +113,9 @@ test('approved matrix isolates runtimes and Android-only counters', () => {
   assert.doesNotThrow(() => assertReleasePolicy(policy, eas));
   assert.equal(policy.preview.runtimeVersion, 'preview-0.3.0');
   assert.equal(policy.production.runtimeVersion, 'production-0.3.0');
+  assert.equal(policy.preview.googleIosClientId, '459496589401-gi52kj4fscgf092pasrelkth2mal0mph.apps.googleusercontent.com');
+  assert.equal(policy.production.googleIosClientId, '459496589401-b4npe68m8c358rqr79edi7igvi3sauao.apps.googleusercontent.com');
+  assert.notEqual(policy.preview.googleIosClientId, policy.production.googleIosClientId);
   assert.equal(eas.build.preview.autoIncrement, undefined);
   assert.equal(eas.build.preview.android.autoIncrement, true);
   assert.deepEqual(policy.production.supportedPlatforms, ['android', 'ios']);
@@ -127,9 +130,16 @@ test('Production IPA verification enforces identity, version, schemes, and Previ
     CFBundleShortVersionString: '0.3.0',
     CFBundleVersion: '1',
     ITSAppUsesNonExemptEncryption: false,
-    CFBundleURLTypes: [{ CFBundleURLSchemes: ['kurioticket', 'com.googleusercontent.apps.production-client'] }],
+    CFBundleURLTypes: [{ CFBundleURLSchemes: ['kurioticket', 'com.googleusercontent.apps.459496589401-b4npe68m8c358rqr79edi7igvi3sauao'] }],
   };
   assert.equal(verifyProductionIpa({ plist, contents: 'https://kurioticket.com production-0.3.0' }).verified, true);
+  for (const wrongScheme of [
+    'com.googleusercontent.apps.459496589401-gi52kj4fscgf092pasrelkth2mal0mph',
+    'com.googleusercontent.apps.arbitrary-valid-client',
+  ]) {
+    const wrong = { ...plist, CFBundleURLTypes: [{ CFBundleURLSchemes: ['kurioticket', wrongScheme] }] };
+    assert.throws(() => verifyProductionIpa({ plist: wrong, contents: 'https://kurioticket.com production-0.3.0' }), /approved release identity/);
+  }
   assert.throws(() => verifyProductionIpa({ plist: { ...plist, CFBundleIdentifier: 'com.kurioticket.app.preview' }, contents: '' }), /bundle identifier/);
   assert.throws(() => verifyProductionIpa({ plist, contents: 'https://staging.kurioticket.com' }), /Preview or staging/);
   assert.throws(() => verifyProductionIpa({ plist, contents: 'production-0.3.0' }), /API origin/);

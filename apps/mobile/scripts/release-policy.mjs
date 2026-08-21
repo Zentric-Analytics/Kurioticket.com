@@ -34,6 +34,9 @@ export function assertReleasePolicy(policy, eas) {
   require(production.runtimeVersion === "production-0.3.0", "Production runtime is not isolated.");
   require(![preview.runtimeVersion, production.runtimeVersion].includes(legacyRuntime), "Legacy runtime is forbidden.");
   require(preview.runtimeVersion !== production.runtimeVersion, "Preview and Production runtimes must differ.");
+  require(preview.googleIosClientId === "459496589401-gi52kj4fscgf092pasrelkth2mal0mph.apps.googleusercontent.com", "Preview iOS OAuth client is not approved.");
+  require(production.googleIosClientId === "459496589401-b4npe68m8c358rqr79edi7igvi3sauao.apps.googleusercontent.com", "Production iOS OAuth client is not approved.");
+  require(preview.googleIosClientId !== production.googleIosClientId, "Preview and Production iOS OAuth clients must differ.");
   require(eas.build.preview.channel === preview.channel, "Preview EAS channel mismatch.");
   require(eas.build.production.channel === production.channel, "Production EAS channel mismatch.");
   require(eas.build.preview.android.distribution === preview.distribution && eas.build.preview.android.buildType === preview.androidBuildType, "Preview must produce an internal APK.");

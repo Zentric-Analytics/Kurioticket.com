@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import releasePolicy from "../release-policy.json" with { type: "json" };
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, value, index, values) => {
   if (index % 2 === 0) pairs.push([value.replace(/^--/, ""), values[index + 1]]);
@@ -8,6 +9,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((pairs, value, inde
 }, []));
 export function verifyProductionIpa({ plist, contents }) {
   const schemes = plist.CFBundleURLTypes?.flatMap((entry) => entry.CFBundleURLSchemes ?? []) ?? [];
+  const expectedGoogleScheme = `com.googleusercontent.apps.${releasePolicy.production.googleIosClientId.replace(/\.apps\.googleusercontent\.com$/, "")}`;
   const forbidden = ["com.kurioticket.app.preview", "kurioticket-preview", "https://staging.kurioticket.com"];
 
   if (plist.CFBundleIdentifier !== "com.kurioticket.app") throw new Error("IPA bundle identifier mismatch.");
@@ -16,7 +18,7 @@ export function verifyProductionIpa({ plist, contents }) {
   if (!/^\d+$/.test(String(plist.CFBundleVersion ?? ""))) throw new Error("IPA build number is invalid.");
   if (plist.ITSAppUsesNonExemptEncryption !== false) throw new Error("IPA export-compliance declaration mismatch.");
   if (!schemes.includes("kurioticket")) throw new Error("IPA Kurioticket URL scheme is missing.");
-  if (!schemes.some((scheme) => /^com\.googleusercontent\.apps\./.test(scheme))) throw new Error("IPA Production Google URL scheme is missing.");
+  if (!schemes.includes(expectedGoogleScheme)) throw new Error("IPA Production Google URL scheme does not match the approved release identity.");
   if (forbidden.some((value) => contents.includes(value) || JSON.stringify(plist).includes(value))) throw new Error("IPA contains a Preview or staging identity.");
   if (!contents.includes("https://kurioticket.com")) throw new Error("IPA Production API origin is missing.");
   if (!contents.includes("production-0.3.0")) throw new Error("IPA Production runtime is missing.");

@@ -76,7 +76,7 @@ jobs:
           npx eas-cli@16.17.4 env:exec production "npx expo config --type public --json" --non-interactive > "$RUNNER_TEMP/production-public.json"
           npx eas-cli@16.17.4 env:exec production "npx expo config --type prebuild --json" --non-interactive > "$RUNNER_TEMP/production-prebuild.json"
           node -e "const c=require(process.env.RUNNER_TEMP+'/production-public.json');if(c.name!=='Kurioticket'||c.ios.bundleIdentifier!=='com.kurioticket.app'||c.scheme!=='kurioticket'||c.runtimeVersion!=='production-0.3.0'||c.extra.environment.channel!=='production'||c.extra.environment.apiBaseUrl!=='https://kurioticket.com'||c.extra.environment.isPreview!==false)throw Error('Production iOS configuration mismatch')"
-          node -e "const c=require(process.env.RUNNER_TEMP+'/production-prebuild.json');const p=JSON.stringify(c.plugins);if(!p.includes('react-native-nitro-google-signin')||!p.includes('com.googleusercontent.apps.'))throw Error('Production Google iOS plugin is missing')"
+          node -e "const c=require(process.env.RUNNER_TEMP+'/production-prebuild.json');const r=require('./release-policy.json').production;const expected='com.googleusercontent.apps.'+r.googleIosClientId.replace(/\.apps\.googleusercontent\.com$/,'');const plugin=c.plugins.find(p=>Array.isArray(p)&&p[0]==='react-native-nitro-google-signin');if(plugin?.[1]?.iosUrlScheme!==expected)throw Error('Production Google iOS plugin identity mismatch')"
       - name: Verify remote iOS version and credential readiness
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
