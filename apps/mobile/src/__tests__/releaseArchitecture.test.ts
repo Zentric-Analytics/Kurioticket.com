@@ -99,6 +99,11 @@ test("iOS Production shell bodies never interpolate dispatch inputs directly", (
     assert.match(workflow, new RegExp(`${variable}: ".*inputs\\.`));
     assert.match(shellBodies, new RegExp(`"\\$${variable}"`));
   }
+  assert.match(workflow, /embedded\.mobileprovision/);
+  assert.match(workflow, /openssl smime -inform der -verify -noverify/);
+  assert.match(workflow, /openssl', 'x509', '-inform', 'DER'/);
+  assert.match(workflow, /--provisioning-profile/);
+  assert.match(workflow, /--certificate-serials/);
 });
 
 test("Preview iOS configuration declares truthful export compliance", async () => {
