@@ -5,6 +5,7 @@ import { formatTime, rentalTimesSummary, selectRentalRangeDate } from "./carSear
 
 const panel = readFileSync("src/features/flow/CarSearchPanel.tsx", "utf8");
 const pickers = readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8");
+const dateRange = readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8");
 const icons = readFileSync("src/features/flow/FlowIcon.tsx", "utf8");
 
 test("Cars presents one unified date field and one unified time field in form order", () => {
@@ -35,12 +36,12 @@ test("rental range selection starts, completes including same day, and restarts"
 });
 
 test("combined pickers preserve draft, dismissal, accessibility, range, and two-list structure", () => {
-  assert.match(pickers, /setDraftPickup\(pickupDate\)[\s\S]*setDraftReturn\(returnDate\)/);
-  assert.match(pickers, /onRequestClose=\{onCancel\}/);
-  assert.match(pickers, /accessibilityViewIsModal/g);
-  assert.match(pickers, /disabled=\{!draftPickup\|\|!draftReturn\}/g);
-  assert.match(pickers, /iso<today/);
-  assert.match(pickers, /inRange/);
+  assert.match(dateRange, /setDraftStart\(startDate\)[\s\S]*setDraftEnd\(endDate\)/);
+  assert.match(dateRange, /onRequestClose=\{onCancel\}/);
+  assert.match(dateRange, /accessibilityViewIsModal/g);
+  assert.match(dateRange, /disabled=\{!valid\}/g);
+  assert.match(dateRange, /iso<minimumStartDate/);
+  assert.match(dateRange, /inRange/);
   assert.match(pickers, /timeColumns:\{flex:1,flexDirection:"row"/);
   assert.equal((pickers.match(/<TimeColumn label=/g) ?? []).length,2);
   assert.match(pickers, /timeOptions\.map/);

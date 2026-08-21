@@ -3,40 +3,29 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
-const travelDatesStart = panel.indexOf('<Field label="Travel dates"');
-const travelDatesField = travelDatesStart < 0 ? "" : panel.slice(travelDatesStart, panel.indexOf("/>", travelDatesStart) + 2);
 
-test("Flights renders one unified Travel dates launcher with one calendar icon", () => {
+test("Flights keeps one unified Travel dates launcher and routes round trips to one range sheet", () => {
   assert.equal(panel.match(/<Field label="Travel dates"/g)?.length, 1);
-  assert.doesNotMatch(panel, /<Field label="(?:Depart|Return)"/);
-  assert.match(travelDatesField, /value=\{flightDatesValue\}/);
-  assert.match(travelDatesField, /icon="calendar"/);
-  assert.match(travelDatesField, /onPress=\{\(\) => setPicker\("departureDate"\)\}/);
-  assert.equal(panel.match(/icon="calendar"/g)?.length, 1);
+  assert.match(panel, /setPicker\(form\.tripType === "round-trip" \? "travelDates" : "departureDate"\)/);
+  assert.match(panel, /<DateRangeSheet visible=\{picker === "travelDates"\} title="Travel dates" startLabel="Departure date" endLabel="Return date"/);
+  assert.doesNotMatch(panel, /"returnDate" \|/);
 });
 
-test("the unified summary covers empty, partial, and complete round trips and departure-only one way trips", () => {
-  assert.match(panel, /const departureValue = form\.departureDate \? displayDate\(form\.departureDate\) : "Select departure date";/);
-  assert.match(panel, /const returnValue = form\.returnDate \? displayDate\(form\.returnDate\) : "Select return date";/);
+test("round-trip dates remain drafts until an atomic Done callback", () => {
+  assert.match(panel, /startDate=\{form\.departureDate\} endDate=\{form\.returnDate\}/);
+  assert.match(panel, /endMustBeAfterStart onDone=\{\(departureDate, returnDate\) => \{ setForm\(\{ \.\.\.form, departureDate, returnDate \}\); clear\("departureDate", "returnDate"\); setPicker\(undefined\); \}\} onCancel=\{\(\) => setPicker\(undefined\)\}/);
+});
+
+test("validation opens the same range picker while one-way retains its single date modal", () => {
+  assert.match(panel, /first === "departureDate" \|\| first === "returnDate"\) setPicker\(form\.tripType === "round-trip" \? "travelDates" : "departureDate"\)/);
+  assert.match(panel, /<LocalCalendarModal visible=\{picker === "departureDate"\} title="Choose departure date"/);
   assert.match(panel, /const flightDatesValue = form\.tripType === "round-trip" \? `\$\{departureValue\} — \$\{returnValue\}` : departureValue;/);
 });
 
-test("round trips advance from departure to return while one way closes after departure", () => {
-  assert.match(panel, /if \(picker === "departureDate"\)[\s\S]*?adjustFlightDeparture\(form, iso, initializeHomepageDates\)[\s\S]*?setPicker\(form\.tripType === "round-trip" \? "returnDate" : undefined\); return;/);
-  assert.match(panel, /if \(picker === "returnDate"\) \{ setForm\(\{ \.\.\.form, returnDate: iso \}\); clear\("departureDate", "returnDate"\); setPicker\(undefined\); \}/);
-});
-
-test("validation can still open the return stage and keeps its strict minimum", () => {
-  assert.match(panel, /\["from","to","departureDate","returnDate","travelers","cabin"\]\.includes\(first\)/);
-  assert.match(panel, /title=\{picker === "returnDate" \? "Choose return date" : "Choose departure date"\}/);
-  assert.match(panel, /minimum=\{picker === "returnDate" && form\.departureDate \? addCalendarDays\(form\.departureDate, 1\) : localIsoDate\(new Date\(\)\)\}/);
-});
-
-test("both date errors remain directly after the unified launcher", () => {
-  const fieldIndex = panel.indexOf('<Field label="Travel dates"');
-  const departureError = panel.indexOf("errors.departureDate", fieldIndex);
-  const returnError = panel.indexOf("errors.returnDate", departureError);
-  const travelers = panel.indexOf('<Field label="Travelers"', returnError);
-  assert.ok(fieldIndex >= 0 && fieldIndex < departureError && departureError < returnError && returnError < travelers);
-  assert.match(panel.slice(returnError - 40, returnError + 100), /form\.tripType === "round-trip" && errors\.returnDate/);
+test("date validation errors remain directly after the unified launcher", () => {
+  const field = panel.indexOf('<Field label="Travel dates"');
+  const departure = panel.indexOf("errors.departureDate", field);
+  const returned = panel.indexOf("errors.returnDate", departure);
+  const travelers = panel.indexOf('<Field label="Travelers"', returned);
+  assert.ok(field < departure && departure < returned && returned < travelers);
 });
