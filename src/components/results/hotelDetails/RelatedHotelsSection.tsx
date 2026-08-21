@@ -90,7 +90,7 @@ function RelatedHotelCard({
                   : "",
               )}
             fill
-            sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
+            sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1023px) 50vw, 25vw"
             className="object-cover transition-transform duration-200 motion-safe:group-hover:scale-[1.02]"
             onError={() => setImageFailed(true)}
           />
@@ -102,7 +102,7 @@ function RelatedHotelCard({
         )}
       </div>
 
-      <div className="flex min-h-[188px] flex-col p-3.5">
+      <div className="flex min-h-[174px] flex-col p-3">
         {stars ? (
           <span
             aria-label={labels.starHotelAria.replace(
@@ -170,7 +170,7 @@ export function RelatedHotelsSection({
         {labels.heading.replace("{{destination}}", city)}
       </h2>
       <div
-        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
         data-related-hotels-grid
       >
         {displayedHotels.map((hotel) => (
