@@ -90,53 +90,34 @@ function fromPrismaRow(row: PrismaFlightCacheRow): SharedFlightCacheRecord {
   };
 }
 
-export function createPrismaFlightCacheBackend(): SharedFlightCacheBackend {
+export function createPrismaFlightCacheBackend(
+  getDatabase: typeof getPrisma = getPrisma,
+): SharedFlightCacheBackend {
   return {
     async write(records) {
       if (!records.length) return;
-      const db = getPrisma();
-      await db.$transaction(
-        records.map((record) =>
-          db.flightResultCache.upsert({
-            where: { publicResultId: record.publicResultId },
-            create: {
-              publicResultId: record.publicResultId,
-              normalizedResult: record.normalizedResult as never,
-              searchContext: record.searchContext === null
-                ? Prisma.DbNull
-                : record.searchContext as never,
-              searchKey: record.searchKey,
-              itineraryKey: record.itineraryKey,
-              expiresAt: new Date(record.expiresAt),
-            },
-            update: {
-              normalizedResult: record.normalizedResult as never,
-              searchContext: record.searchContext === null
-                ? Prisma.DbNull
-                : record.searchContext as never,
-              searchKey: record.searchKey,
-              itineraryKey: record.itineraryKey,
-              expiresAt: new Date(record.expiresAt),
-            },
-          }),
-        ),
-      );
+      const db = getDatabase();
+      // One PostgreSQL statement is atomic and keeps the database round-trip
+      // count constant for large provider result sets. ON CONFLICT preserves
+      // the existing refresh behavior for an opaque ID without a long-running
+      // interactive transaction or partial chunk commits.
+      await db.$executeRaw(buildFlightCacheUpsertQuery(records));
     },
     async find(publicResultId, now) {
-      const row = await getPrisma().flightResultCache.findFirst({
+      const row = await getDatabase().flightResultCache.findFirst({
         where: { publicResultId, expiresAt: { gt: new Date(now) } },
       });
       return row ? fromPrismaRow(row) : null;
     },
     async findCompatible(searchKey, itineraryKey, now) {
-      const rows = await getPrisma().flightResultCache.findMany({
+      const rows = await getDatabase().flightResultCache.findMany({
         where: { searchKey, itineraryKey, expiresAt: { gt: new Date(now) } },
         orderBy: { createdAt: "desc" },
       });
       return rows.map(fromPrismaRow);
     },
     async cleanupExpired(now, limit) {
-      return getPrisma().$executeRaw`
+      return getDatabase().$executeRaw`
         DELETE FROM "FlightResultCache"
         WHERE "publicResultId" IN (
           SELECT "publicResultId"
@@ -148,6 +129,40 @@ export function createPrismaFlightCacheBackend(): SharedFlightCacheBackend {
       `;
     },
   };
+}
+
+export function buildFlightCacheUpsertQuery(records: SharedFlightCacheRecord[]) {
+  if (!records.length) throw new Error("Flight cache bulk upsert requires at least one record.");
+  const rows = records.map((record) => Prisma.sql`(
+    ${record.publicResultId},
+    ${JSON.stringify(record.normalizedResult)}::jsonb,
+    ${record.searchContext === null ? null : JSON.stringify(record.searchContext)}::jsonb,
+    ${record.searchKey},
+    ${record.itineraryKey},
+    ${new Date(record.expiresAt)},
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+  )`);
+  return Prisma.sql`
+    INSERT INTO "FlightResultCache" (
+      "publicResultId",
+      "normalizedResult",
+      "searchContext",
+      "searchKey",
+      "itineraryKey",
+      "expiresAt",
+      "createdAt",
+      "updatedAt"
+    )
+    VALUES ${Prisma.join(rows)}
+    ON CONFLICT ("publicResultId") DO UPDATE SET
+      "normalizedResult" = EXCLUDED."normalizedResult",
+      "searchContext" = EXCLUDED."searchContext",
+      "searchKey" = EXCLUDED."searchKey",
+      "itineraryKey" = EXCLUDED."itineraryKey",
+      "expiresAt" = EXCLUDED."expiresAt",
+      "updatedAt" = CURRENT_TIMESTAMP
+  `;
 }
 
 export function createMemoryFlightCacheBackend(): SharedFlightCacheBackend {
@@ -216,11 +231,19 @@ export function createFlightResultCache(backend: SharedFlightCacheBackend) {
       if (!records.length) return true;
       try {
         await backend.write(records);
-        console.info("[flight-result-cache]", { event: "write", count: records.length });
+        console.info("[flight-result-cache]", {
+          event: "write",
+          outcome: "full_success",
+          count: records.length,
+        });
         await cleanup(now);
         return true;
       } catch {
-        console.error("[flight-result-cache]", { event: "write_error", count: records.length });
+        console.error("[flight-result-cache]", {
+          event: "write_error",
+          outcome: "total_failure",
+          count: records.length,
+        });
         return false;
       }
     },
