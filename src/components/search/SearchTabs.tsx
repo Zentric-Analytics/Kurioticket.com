@@ -43,6 +43,7 @@ import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerS
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
+import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import {
   hotelDestinationKindLabels,
@@ -94,6 +95,12 @@ import {
   formatFlightsMonthHeading,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
+import {
+  appendFlightLegParams,
+  MULTI_CITY_MIN_LEGS,
+  projectSearchLegs,
+} from "@/lib/flights/flightSearchJourney";
+import type { FlightSearchLeg } from "@/lib/types";
 import {
   defaultDriverAge,
   addMonths as addCarsMonths,
@@ -762,6 +769,11 @@ export function SearchTabs({
     returnDate,
     setReturnDate,
   ] = useState("");
+  const [multiCityLegs, setMultiCityLegs] = useState<FlightSearchLeg[]>([
+    { origin: "", destination: "", departureDate: "" },
+    { origin: "", destination: "", departureDate: "" },
+  ]);
+  const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
   const [
     visibleMonthDate,
     setVisibleMonthDate,
@@ -1733,7 +1745,37 @@ export function SearchTabs({
     return tripTypeLabel(mode);
   };
 
-  const onSelectTripType = (mode: Exclude<TripType, "multi-city">) => {
+  const onSelectTripType = (mode: TripType) => {
+    if (mode === "multi-city") {
+      const firstLeg = {
+        origin: (fromCode || from.trim()).toUpperCase(),
+        destination: (toCode || to.trim()).toUpperCase(),
+        departureDate,
+      };
+      const secondLeg = tripType === "round-trip" && returnDate
+        ? { origin: firstLeg.destination, destination: firstLeg.origin, departureDate: returnDate }
+        : { origin: firstLeg.destination, destination: "", departureDate: departureDate || "" };
+      if (tripType !== "multi-city") setMultiCityLegs([firstLeg, secondLeg]);
+      setTripType(mode);
+      setTripTypeOpen(false);
+      return;
+    }
+
+    if (tripType === "multi-city") {
+      const firstLeg = multiCityLegs[0];
+      if (firstLeg) {
+        setFromState((current) => markOriginManualInput(current, firstLeg.origin, firstLeg.origin));
+        setTo(firstLeg.destination);
+        setToCode(firstLeg.destination);
+        setDepartureDate(firstLeg.departureDate);
+        if (mode === "round-trip") {
+          const reverseLeg = multiCityLegs.slice(1).find((leg) =>
+            leg.origin === firstLeg.destination && leg.destination === firstLeg.origin && leg.departureDate >= firstLeg.departureDate,
+          );
+          setReturnDate(reverseLeg?.departureDate ?? "");
+        }
+      }
+    }
     setTripType(mode);
     if (mode === "one-way") {
       setReturnDate("");
@@ -1942,6 +1984,10 @@ export function SearchTabs({
     onClearDestination();
     onClearTravelDates();
     setTripType("round-trip");
+    setMultiCityLegs([
+      { origin: "", destination: "", departureDate: "" },
+      { origin: "", destination: "", departureDate: "" },
+    ]);
     setAdultCount(1);
     setChildCount(0);
     setInfantCount(0);
@@ -1957,10 +2003,18 @@ export function SearchTabs({
 
   const isFlightSearchDisabled =
     isFlightSubmitting ||
-    !from.trim() ||
-    !to.trim() ||
-    !isValidFlightDate(departureDate) ||
-    !isFlightReturnRangeValid;
+    (tripType === "multi-city"
+      ? multiCityLegs.length < MULTI_CITY_MIN_LEGS || multiCityLegs.some((leg, index) =>
+          !/^[A-Z0-9]{3}$/.test(leg.origin) ||
+          !/^[A-Z0-9]{3}$/.test(leg.destination) ||
+          leg.origin === leg.destination ||
+          !isValidFlightDate(leg.departureDate) ||
+          (index > 0 && leg.departureDate < multiCityLegs[index - 1].departureDate),
+        ) || !multiCityAirportsValid
+      : !from.trim() ||
+        !to.trim() ||
+        !isValidFlightDate(departureDate) ||
+        !isFlightReturnRangeValid);
 
   const onFlightSubmit = (
     event: FormEvent<HTMLFormElement>
@@ -1969,7 +2023,7 @@ export function SearchTabs({
 
     if (
       isFlightSearchDisabled ||
-      isDepartureDateInvalid ||
+      (tripType !== "multi-city" && isDepartureDateInvalid) ||
       (tripType === "round-trip" && isReturnDateInvalid)
     ) {
       return;
@@ -1983,20 +2037,13 @@ export function SearchTabs({
     setInfantCount(normalizedInfants);
 
     const normalizedCabinClass = normalizeCabinClass(cabinClass);
-    const params =
-      new URLSearchParams({
-        tripType:
-          tripType ===
-          "one-way"
-            ? "one-way"
-            : "round-trip",
-        origin:
-          fromCode ||
-          from.trim(),
-        destination:
-          toCode ||
-          to.trim(),
-        departureDate,
+    const authoritativeLegs = tripType === "multi-city" ? multiCityLegs : [];
+    const projected = tripType === "multi-city" ? projectSearchLegs(tripType, authoritativeLegs) : null;
+    const params = new URLSearchParams({
+        tripType,
+        origin: projected?.origin ?? (fromCode || from.trim()),
+        destination: projected?.destination ?? (toCode || to.trim()),
+        departureDate: projected?.departureDate ?? departureDate,
         adults: String(normalizedAdults),
         children: String(normalizedChildren),
         infants: String(normalizedInfants),
@@ -2004,6 +2051,8 @@ export function SearchTabs({
           normalizedTravelers,
         cabinClass: normalizedCabinClass,
       });
+
+    if (tripType === "multi-city") appendFlightLegParams(params, authoritativeLegs);
 
     if (
       tripType ===
@@ -2018,7 +2067,7 @@ export function SearchTabs({
 
     const href = `/flights/results?${params.toString()}`;
 
-    try {
+    if (tripType !== "multi-city") try {
       const matchedFlightImage = findDiscoveryImageForFlight(
         params.get("origin") ?? "",
         params.get("destination") ?? ""
@@ -2890,21 +2939,19 @@ export function SearchTabs({
           >
             {(["round-trip", "one-way", "multi-city"] as const).map((mode) => {
               const selected = tripType === mode;
-              const unavailable = mode === "multi-city";
               return (
                 <button
                   key={mode}
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  aria-disabled={unavailable}
-                  disabled={unavailable}
-                  title={unavailable ? (t.multiCityComingSoon || "Multi-city search coming soon") : undefined}
-                  onClick={() => mode !== "multi-city" && onSelectTripType(mode)}
+                  onClick={() => onSelectTripType(mode)}
                   onKeyDown={(event) => {
                     if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(event.key)) {
                       event.preventDefault();
-                      onSelectTripType(mode === "round-trip" ? "one-way" : "round-trip");
+                      const modes = ["round-trip", "one-way", "multi-city"] as const;
+                      const offset = event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
+                      onSelectTripType(modes[(modes.indexOf(mode) + offset + modes.length) % modes.length]);
                     }
                   }}
                   className={cn(
@@ -2925,7 +2972,9 @@ export function SearchTabs({
             })}
           </div>
 
-          <div className="relative space-y-2" data-testid="mobile-homepage-route-fields">
+          {tripType === "multi-city" ? (
+            <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(new Date())} presentation="homepage" onAirportValidityChange={setMultiCityAirportsValid} />
+          ) : <><div className="relative space-y-2" data-testid="mobile-homepage-route-fields">
             {([
               ["origin", mobileOriginLabel, from, t.fromPlaceholder || "From?"],
               ["destination", mobileDestinationLabel, to, mobileDestinationPlaceholder],
@@ -2983,6 +3032,7 @@ export function SearchTabs({
               </span>
             </span>
           </button>
+          </>}
 
           <button
             ref={travelersLauncherRef}
@@ -3213,7 +3263,6 @@ export function SearchTabs({
                 >
                   {(["round-trip", "one-way", "multi-city"] as const).map((mode) => {
                     const selected = tripType === mode;
-                    const unavailable = mode === "multi-city";
 
                     return (
                       <button
@@ -3221,10 +3270,7 @@ export function SearchTabs({
                         type="button"
                         role="radio"
                         aria-checked={selected}
-                        aria-disabled={unavailable}
-                        disabled={unavailable}
-                        title={unavailable ? (t.useOneWayOrRoundTripSearch || "Use one-way or round-trip search") : undefined}
-                        onClick={() => !unavailable && onSelectTripType(mode)}
+                        onClick={() => onSelectTripType(mode)}
                         onKeyDown={(event) => {
                           if (
                             event.key !== "ArrowRight" &&
@@ -3236,12 +3282,13 @@ export function SearchTabs({
                           }
 
                           event.preventDefault();
-                          if (!unavailable) onSelectTripType(mode === "round-trip" ? "one-way" : "round-trip");
+                          const modes = ["round-trip", "one-way", "multi-city"] as const;
+                          const offset = event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
+                          onSelectTripType(modes[(modes.indexOf(mode) + offset + modes.length) % modes.length]);
                         }}
                         className={cn(
                           "focus-ring group inline-flex min-h-9 items-center gap-2 rounded-lg border px-4 py-1.5 text-sm font-semibold transition-colors",
                           selected ? "border-[#075EE8] bg-[#EEF5FF] text-[#075EE8]" : "border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:text-slate-950",
-                          unavailable && "cursor-not-allowed opacity-60"
                         )}
                       >
                         <span
@@ -3326,11 +3373,10 @@ export function SearchTabs({
                       ))}
                       <button
                         type="button"
-                        disabled
-                        className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium text-slate-500"
+                        onClick={() => onSelectTripType("multi-city")}
+                        className="focus-ring mt-0.5 flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium text-slate-700 hover:bg-slate-100"
                       >
-                        {t.multiCity || "Multi-city"} —
-                        {t.useOneWayOrRoundTripSearch || "Use one-way or round-trip search"}
+                        {t.multiCity || "Multi-city"}
                       </button>
                     </div>
                   )}
@@ -3338,8 +3384,12 @@ export function SearchTabs({
               )}
             </div>
           </div>
+          {tripType === "multi-city" ? (
+            <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(new Date())} presentation="homepage" onAirportValidityChange={setMultiCityAirportsValid} />
+          ) : null}
           <div className={fieldCardClassName}>
-            <div className={flightGridClassName}>
+            <div className={cn(flightGridClassName, tripType === "multi-city" && "lg:grid-cols-[minmax(220px,1fr)_112px]")}>
+              {tripType !== "multi-city" ? <>
               <div className={flightRouteGroupClassName}>
               <div
                 ref={fromWrapRef}
@@ -3642,6 +3692,8 @@ export function SearchTabs({
                   </>
                 ) : null}
               </div>
+
+              </> : null}
 
               <div
                 ref={travelersWrapRef}

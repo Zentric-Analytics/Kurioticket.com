@@ -92,16 +92,16 @@ test("trip type uses accessible radio-style options", () => {
   assert.match(mobileBranch, /\["round-trip", "one-way", "multi-city"\]/);
   assert.match(mobileBranch, /grid-cols-3/);
   assert.match(mobileBranch, /role="radio"[\s\S]*?aria-checked=\{selected\}/);
-  assert.match(mobileBranch, /aria-disabled=\{unavailable\}/);
+  assert.doesNotMatch(mobileBranch, /aria-disabled|disabled=\{unavailable\}/);
   assert.match(mobileBranch, /h-\[5px\] w-\[5px\] rounded-full bg-\[#004BB8\]/);
   assert.doesNotMatch(mobileBranch, /mobile-homepage-trip-selector[^\n]*border/);
 });
 
-test("mobile English trip labels are exact and multi-city is truthfully unavailable", () => {
+test("mobile English trip labels are exact and multi-city is selectable", () => {
   assert.match(source, /"Round-trip"[\s\S]*?"One-way"[\s\S]*?"Multi-city"/);
-  assert.match(source, /const unavailable = mode === "multi-city"/);
-  assert.match(mobileBranch, /disabled=\{unavailable\}/);
-  assert.match(mobileBranch, /Multi-city search coming soon/);
+  assert.doesNotMatch(mobileBranch, /const unavailable = mode === "multi-city"|Multi-city search coming soon/);
+  assert.match(mobileBranch, /onClick=\{\(\) => onSelectTripType\(mode\)\}/);
+  assert.match(mobileBranch, /<MultiCityFlightEditor[\s\S]*?presentation="homepage"/);
 });
 
 test("mobile homepage controls use one responsive product-tab renderer without scaling", () => {

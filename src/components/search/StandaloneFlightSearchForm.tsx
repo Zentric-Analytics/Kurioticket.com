@@ -305,6 +305,7 @@ export function StandaloneFlightSearchForm({
       { origin: "", destination: "", departureDate: "" },
     ];
   });
+  const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
   const [datesOpen, setDatesOpen] = useState(false);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const now = new Date();
@@ -351,7 +352,7 @@ export function StandaloneFlightSearchForm({
       isValidFlightDate(departureDate) &&
       returnDate >= departureDate);
 
-  const validMultiCity = multiCityLegs.length >= 2 && multiCityLegs.every((leg, index) =>
+  const validMultiCity = multiCityAirportsValid && multiCityLegs.length >= 2 && multiCityLegs.every((leg, index) =>
     /^[A-Z0-9]{3}$/.test(leg.origin) && /^[A-Z0-9]{3}$/.test(leg.destination) && leg.origin !== leg.destination && isValidFlightDate(leg.departureDate) && (index === 0 || leg.departureDate >= multiCityLegs[index - 1].departureDate),
   );
   const isSearchDisabled = isSubmitting || (tripType === "multi-city"
@@ -1551,7 +1552,7 @@ export function StandaloneFlightSearchForm({
           ))}
         </div>
 
-        {tripType === "multi-city" ? <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(todayLocal)} /> : null}
+        {tripType === "multi-city" ? <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(todayLocal)} onAirportValidityChange={setMultiCityAirportsValid} /> : null}
 
         <div className={cn("grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:items-stretch lg:gap-0", tripType === "multi-city" ? "mt-3 sm:grid-cols-[minmax(164px,1fr)_136px]" : "lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]")}>
           <div className={cn("grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent", tripType === "multi-city" && "hidden")}>

@@ -61,8 +61,9 @@ test("desktop flight controls expose the full truthful trip-type set", () => {
   assert.match(desktopBranch, /\["round-trip", "one-way", "multi-city"\]/);
   assert.match(desktopBranch, /role="radiogroup"/);
   assert.match(desktopBranch, /role="radio"/);
-  assert.match(desktopBranch, /aria-disabled=\{unavailable\}/);
-  assert.match(desktopBranch, /disabled=\{unavailable\}/);
+  assert.doesNotMatch(desktopBranch, /aria-disabled=\{unavailable\}|disabled=\{unavailable\}/);
+  assert.match(desktopBranch, /onClick=\{\(\) => onSelectTripType\(mode\)\}/);
+  assert.match(desktopBranch, /<MultiCityFlightEditor[\s\S]*?presentation="homepage"/);
 });
 
 test("desktop flight fields include semantic icons and omit compact clear controls", () => {
