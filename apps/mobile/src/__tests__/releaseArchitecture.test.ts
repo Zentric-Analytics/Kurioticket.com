@@ -93,6 +93,27 @@ test("Production delivery remains manual-only and isolated", () => {
   assert.doesNotMatch(iosProduction, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit/i);
 });
 
+test("iOS Production shell bodies never interpolate dispatch inputs directly", () => {
+  const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/ios-production-delivery.yml"), "utf8");
+  const shellBodies = [...workflow.matchAll(/^\s+run:\s*(?:\|\r?\n(?<block>(?:\s{10,}.*(?:\r?\n|$))*)|(?<inline>.*))$/gm)]
+    .map(({ groups }) => groups?.block ?? groups?.inline ?? "")
+    .join("\n");
+  assert.doesNotMatch(shellBodies, /\$\{\{\s*inputs\./);
+  for (const variable of [
+    "APPROVED_SHA",
+    "APPROVED_RUNTIME",
+    "APPROVED_BUNDLE_IDENTIFIER",
+    "APPROVED_CHANNEL",
+    "APPROVED_CONFIRMATION",
+    "DELIVERY_ACTION",
+    "RELEASE_REASON",
+    "BASELINE_EAS_BUILD_ID",
+  ]) {
+    assert.match(workflow, new RegExp(`${variable}: ".*inputs\\.`));
+    assert.match(shellBodies, new RegExp(`"\\$${variable}"`));
+  }
+});
+
 test("Preview iOS configuration declares truthful export compliance", async () => {
   process.env.APP_VARIANT = "preview";
   process.env.APP_BUILD_MODE = "release";

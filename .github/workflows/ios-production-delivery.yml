@@ -40,7 +40,25 @@ jobs:
         run: npm ci
       - name: Validate immutable iOS Production inputs
         working-directory: apps/mobile
-        run: node scripts/validate-ios-production-inputs.mjs "${{ inputs.commit_sha }}" "${{ inputs.runtime_version }}" "${{ inputs.expected_bundle_identifier }}" "${{ inputs.expected_channel }}" "${{ inputs.confirmation_phrase }}" "${{ inputs.action }}" "${{ inputs.release_reason }}" "${{ inputs.baseline_eas_build_id }}"
+        env:
+          APPROVED_SHA: "${{ inputs.commit_sha }}"
+          APPROVED_RUNTIME: "${{ inputs.runtime_version }}"
+          APPROVED_BUNDLE_IDENTIFIER: "${{ inputs.expected_bundle_identifier }}"
+          APPROVED_CHANNEL: "${{ inputs.expected_channel }}"
+          APPROVED_CONFIRMATION: "${{ inputs.confirmation_phrase }}"
+          DELIVERY_ACTION: "${{ inputs.action }}"
+          RELEASE_REASON: "${{ inputs.release_reason }}"
+          BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}"
+        run: |
+          node scripts/validate-ios-production-inputs.mjs \
+            "$APPROVED_SHA" \
+            "$APPROVED_RUNTIME" \
+            "$APPROVED_BUNDLE_IDENTIFIER" \
+            "$APPROVED_CHANNEL" \
+            "$APPROVED_CONFIRMATION" \
+            "$DELIVERY_ACTION" \
+            "$RELEASE_REASON" \
+            "$BASELINE_EAS_BUILD_ID"
       - name: Validate mobile and release architecture
         working-directory: apps/mobile
         run: |
