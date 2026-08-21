@@ -1508,6 +1508,7 @@ test("coalesced OTA compatibility fails closed without exact valid fingerprint e
 test("OTA client rejects all-platform publication and uses bounded sequential export memory", async () => {
   const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
   const calls = [];
+  client.validateOtaStartup = async () => {};
   client.run = async (args) => { calls.push(args); return [{ id: "update-id", runtimeVersion: "a".repeat(40) }]; };
   await client.publishUpdate("message", "ios", "a".repeat(40));
   assert.equal(calls[0][calls[0].indexOf("--platform") + 1], "ios");
@@ -1517,6 +1518,16 @@ test("OTA client rejects all-platform publication and uses bounded sequential ex
   await assert.rejects(client.publishUpdate("message", "ios", "a".repeat(40)), /runtime does not match/);
   const source = readFileSync(resolve(repositoryRoot, "services/preview-release/remote-clients.mjs"), "utf8");
   assert.match(source, /isUpdatePublish \? 1024 : 128/);
+});
+
+test("OTA publication fails closed before EAS mutation when startup validation fails", async () => {
+  const client = new EasClient({ expoToken: "x", cwd: repositoryRoot, command: "unused" });
+  let mutations = 0;
+  client.validateOtaStartup = async () => { throw new Error("startup incompatible"); };
+  client.run = async () => { mutations += 1; return []; };
+
+  await assert.rejects(client.publishUpdate("message", "ios", "a".repeat(40)), /startup incompatible/);
+  assert.equal(mutations, 0);
 });
 
 test("OTA runtime mismatch is recorded once and blocks automatic republication", async () => {

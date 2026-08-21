@@ -229,6 +229,7 @@ export class EasClient {
   async publishUpdate(message, platform, expectedRuntime) {
     if (platform !== "ios" && platform !== "android") throw new Error("EAS Update platform is invalid.");
     if (!/^[0-9a-f]{40,128}$/.test(expectedRuntime ?? "")) throw new Error("EAS Update expected runtime is invalid.");
+    await this.validateOtaStartup();
     const value = await this.run(["eas-cli@16.17.4", "update", "--channel", "preview", "--platform", platform, "--environment", "preview", "--message", message, "--non-interactive", "--json"]);
     const entries = Array.isArray(value) ? value : [value];
     if (!entries.length || entries.some((entry) => !entry?.id && !entry?.group)) throw new Error("EAS Update result is malformed.");
@@ -236,6 +237,17 @@ export class EasClient {
       throw new EasUpdateRuntimeMismatchError(platform, expectedRuntime, entries);
     }
     return entries;
+  }
+  async validateOtaStartup() {
+    try {
+      await exec(process.execPath, ["scripts/validate-hermes-startup.mjs"], {
+        cwd: this.cwd,
+        encoding: "utf8",
+        timeout: LOCAL_COMMAND_TIMEOUT_MS,
+      });
+    } catch (error) {
+      throw new Error(`Preview OTA startup validation failed: ${String(error?.stderr || error?.message || error).trim()}`, { cause: error });
+    }
   }
   async recentPreviewUpdates({ limit = 100 } = {}) {
     if (!Number.isInteger(limit) || limit < 1 || limit > 500) throw new Error("EAS recent update history limit is invalid.");

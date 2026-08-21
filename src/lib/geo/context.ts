@@ -289,7 +289,20 @@ const COUNTRY_NAME_ALIASES: Record<string, string> = {
   vietnam: "VN",
 };
 
-const countryDisplayNames = new Intl.DisplayNames(["en"], { type: "region" });
+const createCountryDisplayNames = () => {
+  try {
+    return typeof Intl.DisplayNames === "function"
+      ? new Intl.DisplayNames(["en"], { type: "region" })
+      : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+// Hermes does not currently provide Intl.DisplayNames. This module is shared
+// with the mobile app and can be evaluated during startup, so region names must
+// be an optional enhancement rather than a module-load requirement.
+const countryDisplayNames = createCountryDisplayNames();
 
 const normalizeCountryNameKey = (value: string) =>
   value
@@ -301,7 +314,7 @@ const normalizeCountryNameKey = (value: string) =>
     .toLowerCase();
 
 const COUNTRY_CODE_BY_NAME = ISO_COUNTRY_CODES.reduce<Record<string, string>>((countries, code) => {
-  const displayName = countryDisplayNames.of(code);
+  const displayName = countryDisplayNames?.of(code);
 
   if (displayName) {
     countries[normalizeCountryNameKey(displayName)] = code;
@@ -342,7 +355,7 @@ export const countryCodeToCountryName = (countryCode?: string | null) => {
   const normalizedCountryCode = normalizeCountryCode(countryCode);
   if (!normalizedCountryCode) return undefined;
 
-  return countryDisplayNames.of(normalizedCountryCode) || undefined;
+  return countryDisplayNames?.of(normalizedCountryCode) || undefined;
 };
 
 export const localeToCountryCode = (value?: string | null) => {
