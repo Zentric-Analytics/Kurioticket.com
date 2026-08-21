@@ -5,7 +5,7 @@ import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
 const flightDetail = source.slice(source.indexOf("function FlightDetail"), source.indexOf("function HotelDetail"));
-const itinerary = flightDetail.slice(flightDetail.indexOf("d.itinerarySection"), flightDetail.indexOf(">Fare summary<"));
+const itinerary = flightDetail.slice(flightDetail.indexOf("d.itinerarySection"), flightDetail.indexOf(">Trip details<"));
 const styles = source.slice(source.indexOf("const d = StyleSheet.create"));
 
 test("the unified itinerary maps only authoritative legs and supports one-way and round trips", () => {
@@ -48,12 +48,12 @@ test("the itinerary is one elevated themed card without bordered leg cards", () 
   assert.match(styles, /itinerarySectionDark: \{ shadowOpacity: 0\.28, elevation: 2 \}/);
 });
 
-test("the completed header, fare summary, and booking sections remain in place", () => {
+test("the completed header, trip details, and booking sections remain in place", () => {
   assert.match(flightDetail, /accessibilityLabel="Flight details header"/);
   assert.match(flightDetail, /accessibilityLabel="Go back"/);
   assert.match(flightDetail, /accessibilityLabel="Edit search"/);
   assert.match(flightDetail, /accessibilityLabel="Share flight"/);
-  assert.match(flightDetail, />Fare summary</);
+  assert.match(flightDetail, />Trip details</);
   assert.match(flightDetail, />Choose where to book</);
   assert.match(flightDetail, /Continue to \$\{provider\}/);
 });
