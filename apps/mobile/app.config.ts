@@ -34,6 +34,18 @@ export function googleIosUrlScheme(clientId: string): string {
   return `com.googleusercontent.apps.${match.groups.identifier}`;
 }
 
+export function validateGoogleIosClientId(clientId: string | undefined, variant: AppVariant): string {
+  const configured = clientId?.trim();
+  if (!configured) {
+    throw new Error(`[mobile-environment] ${RELEASES[variant].displayName} iOS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.`);
+  }
+  googleIosUrlScheme(configured);
+  if (configured !== RELEASES[variant].googleIosClientId) {
+    throw new Error(`[mobile-environment] ${RELEASES[variant].displayName} iOS OAuth identity does not match the approved release identity.`);
+  }
+  return configured;
+}
+
 export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileEnvironment {
   const variantValue = required(input, "APP_VARIANT");
   if (variantValue !== "preview" && variantValue !== "production") {
@@ -67,17 +79,23 @@ export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileE
 
 export function assertEasPlatformSupported(environment: MobileEnvironment, input: MobileEnvironmentInput) {
   const easBuildPlatform = input.EAS_BUILD_PLATFORM?.trim().toLowerCase();
-  if (input.EAS_BUILD === "true" && environment.variant === "production" && easBuildPlatform !== "android") {
-    throw new Error("[mobile-environment] iOS Production is deferred; Production EAS builds must target Android.");
+  if (input.EAS_BUILD !== "true") return;
+  if (easBuildPlatform !== "android" && easBuildPlatform !== "ios") {
+    throw new Error("[mobile-environment] EAS_BUILD_PLATFORM must be android or ios.");
+  }
+  if (!RELEASES[environment.variant].supportedPlatforms.includes(easBuildPlatform)) {
+    throw new Error(`[mobile-environment] ${easBuildPlatform} is not supported for ${environment.variant}.`);
   }
 }
 
 const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   const environment = resolveMobileEnvironment(process.env);
   assertEasPlatformSupported(environment, process.env);
-  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
-  if (process.env.EAS_BUILD === "true" && environment.variant === "preview" && !googleIosClientId) {
-    throw new Error("[mobile-environment] Preview EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.");
+  let googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
+  const easBuildPlatform = process.env.EAS_BUILD_PLATFORM?.trim().toLowerCase();
+  const isEasBuild = process.env.EAS_BUILD === "true";
+  if (isEasBuild && easBuildPlatform === "ios") {
+    googleIosClientId = validateGoogleIosClientId(googleIosClientId, environment.variant);
   }
   const splashBackgroundColor = "#F7FAFF";
   const plugins: NonNullable<ExpoConfig["plugins"]> = [
@@ -94,7 +112,8 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
       },
     ],
   ];
-  if (environment.variant === "preview" && googleIosClientId) {
+  if (googleIosClientId && (!isEasBuild || easBuildPlatform === "ios")) {
+    googleIosClientId = validateGoogleIosClientId(googleIosClientId, environment.variant);
     plugins.push(["react-native-nitro-google-signin", { iosUrlScheme: googleIosUrlScheme(googleIosClientId) }]);
   }
   return {

@@ -18,7 +18,7 @@ import {
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { travelApi, type FlightResult, type HotelResult } from "../../api/travelApi";
 import { FlowIcon } from "../flow/FlowIcon";
-import { ArrowLeft, FilePenLine } from "lucide-react-native";
+import { Armchair, ArrowLeft, FilePenLine, Luggage, Repeat2, ShieldX } from "lucide-react-native";
 import { Badge, Button, TopBar, clock, money, shortDate, ui } from "./SearchUi";
 import { visualFlights, visualHotels } from "./visualFixtures";
 import { useAppTheme } from "../../theme/AppTheme";
@@ -37,7 +37,7 @@ import { authoritativeProviderUrl } from "./providerBooking";
 import { flightShareMessage, shareFlightForAuthenticatedSession } from "./flightDetailInteractions";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
 import { flightDetailHeaderModel } from "./flightDetailHeaderModel";
-import { flightTripDetails } from "./flightTripDetails";
+import { flightTripDetails, type FlightTripDetail, type FlightTripDetailIcon } from "./flightTripDetails";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -542,12 +542,44 @@ function HotelDetail({
     </SafeAreaView>
   );
 }
-function DetailsRow({ label, value }: { label: string; value: string }) {
+const detailIcons: Record<FlightTripDetailIcon, typeof Luggage> = {
+  baggage: Luggage,
+  seat: Armchair,
+  changes: Repeat2,
+  cancellation: ShieldX,
+};
+
+function DetailsRow({ label, icon, value, legs }: FlightTripDetail) {
+  const { theme } = useAppTheme();
+  const DetailIcon = detailIcons[icon];
+  const accessibilityValue = legs
+    ?.map((leg) => `${leg.label}. ${leg.value}`)
+    .join(". ") ?? value ?? "";
+  return (
+    <View accessibilityLabel={`${label}. ${accessibilityValue}`} style={d.detailRow}>
+      <View style={d.detailHeading}>
+        <DetailIcon accessible={false} color={ui.blue} size={17} strokeWidth={2.2} />
+        <Text style={[d.detailLabel, { color: theme.textPrimary }]}>{label}</Text>
+      </View>
+      {legs ? (
+        <LegSpecificDetail legs={legs} />
+      ) : (
+        <Text style={[d.detailValue, d.detailGenericValue, { color: theme.textSecondary }]}>{value}</Text>
+      )}
+    </View>
+  );
+}
+
+function LegSpecificDetail({ legs }: Pick<FlightTripDetail, "legs">) {
   const { theme } = useAppTheme();
   return (
-    <View accessibilityLabel={`${label}. ${value}`} style={d.detailRow}>
-      <Text style={[d.detailLabel, { color: theme.textPrimary }]}>{label}</Text>
-      <Text style={[d.detailValue, { color: theme.textSecondary }]}>{value}</Text>
+    <View style={d.detailLegs}>
+      {legs?.map((leg) => (
+        <View key={leg.label} style={d.detailLeg}>
+          <Text style={[d.detailLegLabel, { color: theme.textSecondary }]}>{leg.label}</Text>
+          <Text style={[d.detailValue, { color: theme.textSecondary }]}>{leg.value}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -758,9 +790,14 @@ const d = StyleSheet.create({
     elevation: 3,
   },
   tripDetailsDark: { shadowOpacity: 0.28, elevation: 2 },
-  detailRow: { gap: 2 },
+  detailRow: { gap: 6, minWidth: 0 },
+  detailHeading: { flexDirection: "row", alignItems: "center", gap: 7 },
   detailLabel: { fontSize: 13, lineHeight: 18, fontWeight: "800" },
-  detailValue: { fontSize: 12, lineHeight: 17, flexShrink: 1 },
+  detailLegs: { gap: 8, paddingLeft: 24 },
+  detailLeg: { gap: 1, minWidth: 0 },
+  detailLegLabel: { fontSize: 11, lineHeight: 15, fontWeight: "700" },
+  detailValue: { fontSize: 12, lineHeight: 17, flexShrink: 1, minWidth: 0 },
+  detailGenericValue: { paddingLeft: 24 },
   offer: {
     borderWidth: 1,
     borderColor: ui.border,

@@ -1,12 +1,61 @@
 import type { FlightResult } from "../../api/travelApi";
 
-export type FlightTripDetail = { label: string; value: string };
+export type FlightTripDetailIcon = "baggage" | "seat" | "changes" | "cancellation";
+export type FlightTripDetailLeg = { label: "Outbound" | "Return"; value: string };
+export type FlightTripDetail = {
+  label: string;
+  icon: FlightTripDetailIcon;
+  value?: string;
+  legs?: FlightTripDetailLeg[];
+};
 
-const joinedTerms = (result: FlightResult, category: "change" | "refund") =>
-  result.fareTerms
-    ?.filter((term) => term.category === category && term.text.trim())
+type FareTermCategory = "baggage" | "change" | "refund";
+
+export function stripLegPrefix(
+  value: string,
+  direction: "outbound" | "return",
+) {
+  const label = direction === "outbound" ? "Outbound" : "Return";
+  return value.replace(new RegExp(`^${label}:\\s*`, "i"), "");
+}
+
+function displayDirection(term: NonNullable<FlightResult["fareTerms"]>[number]) {
+  if (term.legDirection) return term.legDirection;
+  if (/^Outbound:\s*/i.test(term.text)) return "outbound" as const;
+  if (/^Return:\s*/i.test(term.text)) return "return" as const;
+  return undefined;
+}
+
+const termsFor = (result: FlightResult, category: FareTermCategory) =>
+  result.fareTerms?.filter(
+    (term) => term.category === category && term.text.trim(),
+  ) ?? [];
+
+const joinedTerms = (result: FlightResult, category: FareTermCategory) =>
+  termsFor(result, category)
     .map((term) => term.text.trim())
     .join(". ");
+
+function legTerms(result: FlightResult, category: FareTermCategory) {
+  const terms = termsFor(result, category);
+  const legs: FlightTripDetailLeg[] = (["outbound", "return"] as const).flatMap((direction) => {
+    const value = terms
+      .filter((term) => displayDirection(term) === direction)
+      .map((term) => term.text.trim())
+      .map((value) => stripLegPrefix(value, direction))
+      .filter(Boolean)
+      .join(". ");
+    return value
+      ? [{ label: direction === "outbound" ? "Outbound" as const : "Return" as const, value }]
+      : [];
+  });
+
+  // A partial or mixed set of scoped terms should retain the existing generic
+  // presentation rather than implying that provider data covers both legs.
+  return legs.length === 2 && terms.every((term) => displayDirection(term))
+    ? legs
+    : undefined;
+}
 
 function seatSelection(result: FlightResult) {
   const conditions = result.providerDetails?.conditions?.filter(
@@ -19,12 +68,22 @@ function seatSelection(result: FlightResult) {
   return "Availability varies by flight";
 }
 
-/** Uses only normalized provider-authored facts; baggageInfo is a generic allowance. */
+/** Uses only normalized provider-authored facts and existing truthful fallbacks. */
 export function flightTripDetails(result: FlightResult): FlightTripDetail[] {
+  const baggageLegs = legTerms(result, "baggage");
+  const changeLegs = legTerms(result, "change");
+  const cancellationLegs = legTerms(result, "refund");
+
   return [
-    { label: "Baggage", value: result.baggageInfo?.trim() || "Information unavailable" },
-    { label: "Seat selection", value: seatSelection(result) },
-    { label: "Changes", value: joinedTerms(result, "change") || "Fare rules apply" },
-    { label: "Cancellation", value: joinedTerms(result, "refund") || result.refundInfo?.trim() || "Provider rules apply" },
+    baggageLegs
+      ? { label: "Baggage", icon: "baggage", legs: baggageLegs }
+      : { label: "Baggage", icon: "baggage", value: result.baggageInfo?.trim() || "Information unavailable" },
+    { label: "Seat selection", icon: "seat", value: seatSelection(result) },
+    changeLegs
+      ? { label: "Changes", icon: "changes", legs: changeLegs }
+      : { label: "Changes", icon: "changes", value: joinedTerms(result, "change") || "Fare rules apply" },
+    cancellationLegs
+      ? { label: "Cancellation", icon: "cancellation", legs: cancellationLegs }
+      : { label: "Cancellation", icon: "cancellation", value: joinedTerms(result, "refund") || result.refundInfo?.trim() || "Provider rules apply" },
   ];
 }
