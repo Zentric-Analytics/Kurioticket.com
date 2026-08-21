@@ -1,15 +1,25 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as Updates from "expo-updates";
 import { AppThemeProvider, useAppTheme } from "../src/theme/AppTheme";
 import { useEffect } from "react";
 import { buildStartupLog } from "../src/diagnostics/buildDiagnostics";
 import { getRuntimeDiagnostics } from "../src/diagnostics/runtimeDiagnostics";
-import { View } from "react-native";
+import { AppState, View } from "react-native";
 import { FeatureAvailabilityProvider } from "../src/features/availability/FeatureAvailability";
 import { MobileLocalizationProvider } from "../src/localization/MobileLocalization";
+import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
 
 export default function RootLayout() {
   useEffect(() => { console.info(buildStartupLog(getRuntimeDiagnostics())); }, []);
+  useEffect(() => {
+    const handleAppStateChange = createForegroundUpdateHandler(
+      () => ensureLatestUpdate(Updates),
+      AppState.currentState,
+    );
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
+    return () => subscription.remove();
+  }, []);
   return <AppThemeProvider><MobileLocalizationProvider><FeatureAvailabilityProvider><ThemedRootLayout /></FeatureAvailabilityProvider></MobileLocalizationProvider></AppThemeProvider>;
 }
 
