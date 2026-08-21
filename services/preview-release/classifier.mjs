@@ -27,6 +27,10 @@ const MOBILE_SHARED_RUNTIME = [
 ];
 const MOBILE_TOOLING = [
   /^apps\/mobile\/scripts\//,
+  // Reviewed release evidence describes artifacts that already exist. It is
+  // neither bundled by Metro nor consumed by native configuration, so it must
+  // not block a later OTA-compatible source progression.
+  /^apps\/mobile\/release-baselines\//,
   /^apps\/mobile\/src\/__tests__\//,
   /^apps\/mobile\/src\/.*\.(?:test|spec)\.[cm]?[jt]sx?$/,
 ];
