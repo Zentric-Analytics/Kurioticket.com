@@ -42,17 +42,20 @@ export async function ensureLatestUpdate(client: UpdateClient, timeoutMs = 8_000
 
 export function createForegroundUpdateHandler(
   runUpdate: () => Promise<unknown>,
-  initialState: UpdateAppState,
+  initialState: UpdateAppState | null,
 ) {
-  let previousState = initialState;
+  let foregroundCheckArmed = initialState === "background" || initialState === "inactive";
   let inFlight = false;
 
   return (nextState: UpdateAppState) => {
-    const returnedToForeground = previousState !== "active" && nextState === "active";
-    previousState = nextState;
+    if (nextState === "background" || nextState === "inactive") {
+      foregroundCheckArmed = true;
+      return;
+    }
 
-    if (!returnedToForeground || inFlight) return;
+    if (nextState !== "active" || !foregroundCheckArmed || inFlight) return;
 
+    foregroundCheckArmed = false;
     inFlight = true;
     void runUpdate()
       .catch(() => undefined)
