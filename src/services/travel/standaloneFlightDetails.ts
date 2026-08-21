@@ -289,7 +289,7 @@ export async function buildStandaloneFlightDetails({
     fareChoices.find(({ choice }) => choice.selectedOffer) ??
     fareChoices[0];
   if (!initial) return { status: "unavailable", error: unavailableMessage };
-  rememberFlights([selectedOffer, ...upsells, ...refreshedOffers.slice(1)], now, search);
+  await rememberFlights([selectedOffer, ...upsells, ...refreshedOffers.slice(1)], now, search);
   console.info("[flight-details:fare-discovery]", {
     upsellAttempted: Boolean(selectedOffer.providerOfferId),
     providerStatusCategory: upsellResponse?.errorCategory ?? upsellResponse?.status ?? "not_attempted",
