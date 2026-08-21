@@ -1352,7 +1352,7 @@ test("EAS commands isolate every temporary path inside the command-owned directo
 test("EAS native build creation evaluates app config with the exact build platform", () => {
   for (const platform of ["ios", "android"]) {
     const environment = easCommandEnvironment({
-      baseEnvironment: {},
+      baseEnvironment: { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: "inherited-wrong-client.apps.googleusercontent.com" },
       directory: "/tmp/kurioticket-eas-owned",
       expoToken: "expo-token",
       isUpdatePublish: false,
@@ -1361,6 +1361,10 @@ test("EAS native build creation evaluates app config with the exact build platfo
     });
     assert.equal(environment.EAS_BUILD, "true");
     assert.equal(environment.EAS_BUILD_PLATFORM, platform);
+    assert.equal(
+      environment.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      platform === "ios" ? PREVIEW_IDENTITY.googleIosClientId : undefined,
+    );
   }
   assert.throws(() => easCommandEnvironment({ directory: "/tmp/eas", expoToken: "token", isBuildCreate: true }), /build platform/);
 });

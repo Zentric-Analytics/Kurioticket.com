@@ -326,12 +326,14 @@ export function easCommandFailureMessage(command, error, secrets = []) {
 export function easCommandEnvironment({ baseEnvironment = process.env, directory, expoToken, isUpdatePublish, isBuildCreate = false, platform = null }) {
   if (!directory) throw new Error("EAS command temporary directory is required.");
   if (isBuildCreate && !["ios", "android"].includes(platform)) throw new Error("EAS build platform is required for app-config parity.");
+  const { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: _inheritedGoogleIosClientId, ...sanitizedBaseEnvironment } = baseEnvironment;
   return {
-    ...baseEnvironment,
+    ...sanitizedBaseEnvironment,
     EXPO_TOKEN: expoToken,
     APP_VARIANT: "preview",
     APP_BUILD_MODE: "release",
     EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
+    ...(platform === "ios" ? { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: PREVIEW_IDENTITY.googleIosClientId } : {}),
     ...(isBuildCreate ? { EAS_BUILD: "true", EAS_BUILD_PLATFORM: platform } : {}),
     CI: "1",
     // Expo, Metro, and the EAS CLI create temporary artifacts outside their
@@ -466,7 +468,7 @@ export async function prepareCheckout(directory, { dependencyRoot = runtimeRoot,
   }
 }
 
-export async function nativeFingerprints(directory, { commandRunner = exec, expoToken = process.env.EXPO_TOKEN } = {}) {
+export async function nativeFingerprints(directory, { commandRunner = exec, expoToken = process.env.EXPO_TOKEN, baseEnvironment = process.env } = {}) {
   if (!expoToken?.trim()) throw new Error("Canonical Preview fingerprinting requires EXPO_TOKEN to load the EAS Preview environment.");
   const cwd = join(directory, "apps/mobile");
   const command = process.platform === "win32" ? "npx.cmd" : "npx";
@@ -478,19 +480,21 @@ export async function nativeFingerprints(directory, { commandRunner = exec, expo
     const startedAt = Date.now();
     console.log(JSON.stringify({ event: "preview-release-fingerprint-started", platform, rssBytes: process.memoryUsage().rss }));
     const fingerprintCommand = `npx eas-cli@16.17.4 fingerprint:generate --build-profile preview --platform ${platform} --json --non-interactive`;
+    const { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: _inheritedGoogleIosClientId, ...sanitizedBaseEnvironment } = baseEnvironment;
     const { stdout } = await commandRunner(command, ["eas-cli@16.17.4", "env:exec", "preview", fingerprintCommand, "--non-interactive"], {
       cwd,
       encoding: "utf8",
       maxBuffer: 50 * 1024 * 1024,
       timeout: 5 * 60 * 1000,
       env: {
-        ...process.env,
+        ...sanitizedBaseEnvironment,
         EXPO_TOKEN: expoToken,
         APP_VARIANT: "preview",
         APP_BUILD_MODE: "release",
         EAS_BUILD: "true",
         EAS_BUILD_PLATFORM: platform,
         EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
+        ...(platform === "ios" ? { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: PREVIEW_IDENTITY.googleIosClientId } : {}),
         NODE_OPTIONS: "--max-old-space-size=192",
         MALLOC_ARENA_MAX: "2",
       },

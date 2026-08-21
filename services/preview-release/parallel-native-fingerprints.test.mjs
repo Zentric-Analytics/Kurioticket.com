@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { PREVIEW_IDENTITY } from "./config.mjs";
 import { nativeFingerprints } from "./remote-clients.mjs";
 
 const deferred = () => {
@@ -56,6 +57,7 @@ test("native fingerprints evaluate app config with the exact EAS build platform"
   const environments = new Map();
   await nativeFingerprints("/tmp/preview-checkout", {
     expoToken: "token",
+    baseEnvironment: { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: "inherited-wrong-client.apps.googleusercontent.com" },
     commandRunner: async (_command, args, options) => {
       const platform = fingerprintPlatform(args);
       environments.set(platform, options.env);
@@ -67,6 +69,8 @@ test("native fingerprints evaluate app config with the exact EAS build platform"
     assert.equal(environments.get(platform).EAS_BUILD, "true");
     assert.equal(environments.get(platform).EAS_BUILD_PLATFORM, platform);
   }
+  assert.equal(environments.get("ios").EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID, PREVIEW_IDENTITY.googleIosClientId);
+  assert.equal(environments.get("android").EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID, undefined);
 });
 
 test("one fingerprint failure waits for the sibling process before rejecting", async () => {
