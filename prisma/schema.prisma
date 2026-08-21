@@ -933,3 +933,19 @@ model DealsFlightInventorySession {
   @@index([expiresAt])
   @@index([sourceSearchKey, expiresAt])
 }
+
+/// Short-lived server-only mapping from an opaque public result ID to the
+/// normalized provider offer and canonical search that produced it.
+model FlightResultCache {
+  publicResultId   String   @id
+  normalizedResult Json
+  searchContext    Json?
+  searchKey        String?
+  itineraryKey     String
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@index([searchKey, itineraryKey, expiresAt])
+}
