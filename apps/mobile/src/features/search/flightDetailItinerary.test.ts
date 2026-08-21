@@ -54,6 +54,6 @@ test("the completed header, trip details, and booking sections remain in place",
   assert.match(flightDetail, /accessibilityLabel="Edit search"/);
   assert.match(flightDetail, /accessibilityLabel="Share flight"/);
   assert.match(flightDetail, />Trip details</);
-  assert.match(flightDetail, />Choose where to book</);
+  assert.match(flightDetail, />Booking provider</);
   assert.match(flightDetail, /Continue to \$\{provider\}/);
 });

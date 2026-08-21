@@ -59,7 +59,7 @@ test("Flight Results and Flight Details booking body remain structurally unchang
   assert.match(resultsSource, /<FlightResultsHeader/);
   assert.match(flightDetail, />Flight details</);
   assert.match(flightDetail, />Trip details</);
-  assert.match(flightDetail, />Choose where to book</);
+  assert.match(flightDetail, />Booking provider</);
   assert.match(flightDetail, /Continue to \$\{provider\}/);
   assert.match(flightDetail, /authoritativeProviderUrl\(result\)/);
 });

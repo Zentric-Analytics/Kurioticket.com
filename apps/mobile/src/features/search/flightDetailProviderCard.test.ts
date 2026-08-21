@@ -6,80 +6,64 @@ import { authoritativeProviderUrl } from "./providerBooking";
 
 const detailSource = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
 const flightDetail = detailSource.slice(detailSource.indexOf("function FlightDetail"), detailSource.indexOf("function HotelDetail"));
+const hotelDetail = detailSource.slice(detailSource.indexOf("function HotelDetail"), detailSource.indexOf("function DetailsRow"));
+const bookingCard = detailSource.slice(detailSource.indexOf("function BookingProviderCard"), detailSource.indexOf("function Offer"));
 const offer = detailSource.slice(detailSource.indexOf("function Offer"), detailSource.indexOf("const d = StyleSheet.create"));
 
-test("provider card shares a compact main row on normal phones and stacks only when unusually narrow", () => {
-  assert.match(offer, /useWindowDimensions\(\)\.width < 360/);
-  assert.match(offer, /compact && d\.offerCompact/);
-  assert.match(detailSource, /offer: \{[\s\S]*?flexDirection: "row"[\s\S]*?alignItems: "flex-start"/);
-  assert.match(detailSource, /offerCompact: \{[\s\S]*?flexDirection: "column"/);
-  assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?flexDirection: "column"[\s\S]*?alignItems: "flex-end"[\s\S]*?gap: 6/);
-  assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?alignSelf: "flex-end"/);
-  assert.match(detailSource, /priceSmall: \{[^}]*textAlign: "right"/);
-  assert.doesNotMatch(detailSource, /offerActionsCompact: \{[^}]*flexWrap/);
-});
-
-test("provider card height is content-driven and its action column cannot stretch", () => {
-  const offerStyles = detailSource.slice(detailSource.indexOf("  offer: {"), detailSource.indexOf("  offerCompact: {"));
-  const actionStyles = detailSource.slice(detailSource.indexOf("  offerActions: {"), detailSource.indexOf("  offerActionsCompact: {"));
-
-  assert.doesNotMatch(offerStyles, /\b(?:height|minHeight)\s*:/);
-  assert.match(actionStyles, /flexDirection: "column"/);
-  assert.match(actionStyles, /alignItems: "flex-end"/);
-  assert.match(actionStyles, /justifyContent: "flex-start"/);
-  assert.match(actionStyles, /gap: 9/);
-  assert.doesNotMatch(actionStyles, /\bflex\s*:|space-between/);
-});
-
-test("provider identity keeps readable space and labels do not shrink into vertical text", () => {
-  assert.match(detailSource, /providerIdentity: \{[\s\S]*?minWidth: 140/);
-  assert.match(detailSource, /providerCopy: \{ flex: 1, minWidth: 97 \}/);
-  assert.match(detailSource, /providerName: \{ flexShrink: 0 \}/);
-  assert.match(detailSource, /recommended: \{ alignSelf: "flex-start", flexShrink: 0 \}/);
-  assert.match(detailSource, /providerKind: \{ alignSelf: "flex-start", flexShrink: 0 \}/);
-  assert.match(offer, /\{provider\}[\s\S]*?★ Recommended[\s\S]*?\{kind\}/);
-});
-
-test("responsive actions retain the displayed fare and Select behavior", () => {
-  assert.match(offer, /<Text numberOfLines=\{1\} style=\{d\.priceSmall\}>\{price\}<\/Text>/);
-  assert.match(offer, /onSelect\?: \(\) => void/);
-  assert.match(offer, /<Button label="Select" onPress=\{onSelect\} \/>/);
-  assert.match(offer, /\{price\}<\/Text>[\s\S]*?<Button label="Select" onPress=\{onSelect\} \/>/);
-  assert.match(detailSource, /offerActions: \{[\s\S]*?flexDirection: "column"/);
-  assert.match(detailSource, /offerActions: \{[\s\S]*?alignItems: "flex-end"/);
-  assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?flexDirection: "column"/);
+test("flight details presents its single authoritative offer as a booking provider", () => {
+  assert.match(flightDetail, />Booking provider</);
+  assert.doesNotMatch(flightDetail, />Choose where to book</);
+  assert.match(flightDetail, /<BookingProviderCard[\s\S]*?provider=\{provider\}[\s\S]*?logoUrl=\{result\.airlineLogo\}/);
+  assert.match(flightDetail, /provider === result\.airlineName[\s\S]*?"Airline direct"[\s\S]*?: "Travel provider"/);
+  assert.match(bookingCard, /<ProviderLogo provider=\{provider\} logoUrl=\{logoUrl\} \/>/);
+  assert.match(bookingCard, /★ Recommended/);
   assert.match(flightDetail, /price=\{formattedFare\}/);
-  assert.match(flightDetail, /<Offer[\s\S]*?onSelect=\{handleProviderBooking\}/);
+  assert.match(flightDetail, /Booking provided by \{provider\}\./);
   assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 2);
 });
 
-test("flight offer reuses the normalized result logo regardless of provider identity", () => {
-  assert.match(flightDetail, /<Offer[\s\S]*?provider=\{provider\}[\s\S]*?logoUrl=\{result\.airlineLogo\}[\s\S]*?price=\{formattedFare\}/);
-  assert.match(offer, /<ProviderLogo provider=\{provider\} logoUrl=\{logoUrl\} \/>/);
-  assert.doesNotMatch(flightDetail, /providerMatchesCarrier|providerLogoUrl/);
+test("flight booking provider card is non-interactive and has no selected border", () => {
+  assert.doesNotMatch(bookingCard, /\bselected\b|onSelect|accessibilityRole="button"|<Button/);
+  assert.doesNotMatch(flightDetail, /<Offer|label="Select"|onSelect=|borderColor: ui\.blue/);
+  assert.match(bookingCard, /accessibilityLabel=\{`\$\{provider\}\. Recommended\. \$\{kind\}\. \$\{price\}`\}/);
+  const cardStyles = detailSource.slice(detailSource.indexOf("  bookingProviderCard: {"), detailSource.indexOf("  bookingProviderCardCompact:"));
+  assert.doesNotMatch(cardStyles, /borderWidth|borderColor/);
+  assert.match(cardStyles, /borderRadius: 13/);
+  assert.match(cardStyles, /shadowOpacity: 0\.1/);
 });
 
-test("provider card keeps its existing theme-aware surfaces", () => {
-  assert.match(offer, /backgroundColor: theme\.dark \? "#17243A" : theme\.surface/);
-  assert.match(offer, /<View style=\{\[d\.providerLogo, theme\.dark && \{ backgroundColor: "#142B55" \}\]\}>/);
+test("booking provider identity and fare remain readable on narrow screens", () => {
+  assert.match(bookingCard, /useWindowDimensions\(\)\.width < 360/);
+  assert.match(bookingCard, /compact && d\.bookingProviderCardCompact/);
+  assert.match(detailSource, /bookingProviderCardCompact: \{ flexDirection: "column" \}/);
+  assert.match(detailSource, /providerIdentity: \{[\s\S]*?flex: 1[\s\S]*?minWidth: 140/);
+  assert.match(detailSource, /providerLogo: \{[\s\S]*?width: 34[\s\S]*?height: 34[\s\S]*?flexShrink: 0/);
+  assert.match(bookingCard, /numberOfLines=\{1\}[\s\S]*?\{provider\}/);
+  assert.match(bookingCard, /numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.75\}[\s\S]*?\{price\}/);
 });
 
-test("provider booking redirect logic remains unchanged", () => {
-  assert.equal(authoritativeProviderUrl({
-    partnerRedirectUrl: "https://partner.example/flight",
-    bookingUrl: "https://booking.example/flight",
-  }), "https://partner.example/flight");
-  assert.equal(authoritativeProviderUrl({
-    bookingUrl: "https://booking.example/flight",
-  }), "https://booking.example/flight");
-  assert.equal(authoritativeProviderUrl({
-    partnerRedirectUrl: "",
-    bookingUrl: "",
-  }), "");
+test("booking provider card preserves semantic light and dark surfaces", () => {
+  assert.match(bookingCard, /backgroundColor: theme\.dark \? "#17243A" : theme\.surface/);
+  assert.match(bookingCard, /theme\.dark && d\.bookingProviderCardDark/);
+  assert.match(bookingCard, /<View style=\{\[d\.providerLogo, theme\.dark && \{ backgroundColor: "#142B55" \}\]\}>/);
+  assert.match(bookingCard, /color: theme\.textPrimary/);
+  assert.match(bookingCard, /color: theme\.textSecondary/);
+});
 
+test("hotel Offer selection behavior remains unchanged", () => {
+  assert.match(hotelDetail, />Choose where to book</);
+  assert.match(hotelDetail, /<Offer[\s\S]*?selected/);
+  assert.match(offer, /selected && \{ borderColor: ui\.blue \}/);
+  assert.match(offer, /<Button label="Select" onPress=\{onSelect\} \/>/);
+});
+
+test("provider booking redirect logic and sticky CTA remain unchanged", () => {
+  assert.equal(authoritativeProviderUrl({ partnerRedirectUrl: "https://partner.example/flight", bookingUrl: "https://booking.example/flight" }), "https://partner.example/flight");
+  assert.equal(authoritativeProviderUrl({ bookingUrl: "https://booking.example/flight" }), "https://booking.example/flight");
+  assert.equal(authoritativeProviderUrl({ partnerRedirectUrl: "", bookingUrl: "" }), "");
   assert.match(flightDetail, /const url = authoritativeProviderUrl\(result\)/);
+  assert.match(flightDetail, /if \(!\/\^https:\\\/\\\/\/.test\(url\)\)/);
   assert.match(flightDetail, /await Linking\.openURL\(url\)/);
   assert.equal(flightDetail.match(/onPress=\{handleProviderBooking\}/g)?.length, 1);
-  assert.match(flightDetail, /<Offer[\s\S]*?onSelect=\{handleProviderBooking\}/);
   assert.match(flightDetail, /<Button label=\{`Continue to \$\{provider\}`\} onPress=\{handleProviderBooking\} \/>/);
 });
