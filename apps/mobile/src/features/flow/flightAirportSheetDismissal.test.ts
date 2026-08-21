@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
-const airportSheet = panel.slice(panel.indexOf("function AirportSheet"), panel.indexOf("function TravelerSheet"));
+const airportSheet = panel.slice(panel.indexOf("function AirportSheet"), panel.indexOf("type TravelerCabinDraft"));
 
 test("the airport sheet has a dedicated accessible backdrop dismissal target", () => {
   assert.match(airportSheet, /<SafeAreaView[^>]*style=\{styles\.overlay\}><Pressable style=\{\[StyleSheet\.absoluteFill,\{backgroundColor:ft\.colors\.overlay\}\]\} onPress=\{onClose\} accessibilityRole="button" accessibilityLabel="Close airport picker"\/>/);

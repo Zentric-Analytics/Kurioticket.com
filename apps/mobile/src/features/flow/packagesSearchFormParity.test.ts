@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 
 const form = readFileSync("src/features/flow/PackageSearchForm.tsx", "utf8");
+const primitives = readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8");
 const screen = readFileSync("src/features/flow/ProductScreens.tsx", "utf8");
 
 test("Packages is one owned form with one CTA and no embedded product stack", () => {
@@ -36,4 +37,12 @@ test("package party draft copies committed state when the sheet opens", () => {
   assert.match(form, /useState\(search\)/);
   assert.match(form, /if \(visible\) setDraft\(search\)/);
   assert.doesNotMatch(form, /setDraft\(createPackageSearch/);
+});
+
+
+test("Packages shares the compact search field presentation", () => {
+  assert.match(form, /import \{ CompactSearchField, PrimaryButton \} from "\.\/FlowPrimitives"/);
+  assert.equal((form.match(/<CompactSearchField /g) ?? []).length, 5);
+  assert.doesNotMatch(form, /function CompactField/);
+  assert.match(primitives, /export function CompactSearchField/);
 });

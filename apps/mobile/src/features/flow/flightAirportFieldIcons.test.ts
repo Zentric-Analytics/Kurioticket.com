@@ -5,7 +5,7 @@ import test from "node:test";
 const read = (file: string) => readFileSync(`src/features/flow/${file}`, "utf8");
 const panel = read("FlightSearchPanel.tsx");
 const field = (label: string) => {
-  const start = panel.indexOf(`<Field label="${label}"`);
+  const start = panel.indexOf(`<CompactSearchField label="${label}"`);
   return start < 0 ? undefined : panel.slice(start, panel.indexOf("/>", start) + 2);
 };
 
@@ -28,18 +28,20 @@ test("other Flight fields retain their intended icons", () => {
   assert.doesNotMatch(field("Cabin") ?? "", /icon="location"/);
 });
 
-test("the location glyph stays decorative and precedes the Field text", () => {
+test("the location glyph stays decorative and precedes the compact field text", () => {
   const icon = read("FlowIcon.tsx");
   const primitives = read("FlowPrimitives.tsx");
 
   assert.match(icon, /\| "location"/);
   assert.match(icon, /location: <>[\s\S]*?<Path[\s\S]*?<Circle/);
   assert.match(icon, /accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/);
-  assert.match(primitives, /\{icon \? <FlowIcon name=\{icon\} size=\{22\} color=\{ft\.colors\.icon\} \/> : null\}[\s\S]*?<View style=\{styles\.grow\}>/);
-  assert.match(primitives, /accessibilityLabel=\{`\$\{label\}, \$\{value\}`\}/);
+  assert.match(primitives, /<View style=\{styles\.compactValueRow\}>[\s\S]*?<FlowIcon name=\{icon\} size=\{18\}[\s\S]*?<View style=\{styles\.compactTextColumn\}>/);
+  assert.match(primitives, /accessibilityLabel=\{\[label, value, meta\]\.filter\(Boolean\)\.join\(", "\)\}/);
 });
 
 test("the accessible swap control and icon remain in place", () => {
   assert.match(panel, /accessibilityLabel="Swap origin and destination"[\s\S]*?onPress=\{swapAirports\} style=\{\[styles\.swap,[\s\S]*?<FlowIcon name="swap"/);
-  assert.match(panel, /swap:\{position:"absolute",right:16,top:58,width:44,height:44/);
+  assert.match(panel, /routeFields:\{position:"relative"\}/);
+  assert.match(panel, /swap:\{position:"absolute",right:16,top:"50%",transform:\[\{translateY:-22\}\],width:44,height:44/);
+  assert.doesNotMatch(panel, /swap:\{[^}]*top:58/);
 });
