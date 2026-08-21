@@ -265,34 +265,8 @@ export function searchDuffelFlights(
   let normalizationMs = 0;
   let offerCount = 0;
   let connectingOfferCount = 0;
+  const legCount = getSearchLegs(search).length;
   return runProvider("Duffel", async () => {
-    const slices = [
-      {
-        origin: sanitizeAirportCode(search.origin),
-        destination: sanitizeAirportCode(search.destination),
-        departure_date: search.departureDate,
-      },
-    ];
-
-    if (search.tripType === "round-trip" && search.returnDate) {
-      slices.push({
-        origin: sanitizeAirportCode(search.destination),
-        destination: sanitizeAirportCode(search.origin),
-        departure_date: search.returnDate,
-      });
-    }
-
-    const passengers = [
-      ...Array.from({ length: search.adults }, () => ({
-        type: "adult" as const,
-      })),
-      ...Array.from({ length: search.children }, () => ({
-        type: "child" as const,
-      })),
-      ...Array.from({ length: search.infants }, () => ({
-        type: "infant_without_seat" as const,
-      })),
-    ];
     const supplierStartedAt = performance.now();
     const data = await fetchJson<{ data?: { offers?: unknown[] } }>(
       duffelOfferRequestSearchUrl(),
@@ -304,13 +278,7 @@ export function searchDuffelFlights(
           "Content-Type": "application/json",
           "Duffel-Version": "v2",
         },
-        body: JSON.stringify({
-          data: {
-            slices,
-            passengers,
-            cabin_class: cabinClassMap[search.cabinClass],
-          },
-        }),
+        body: JSON.stringify(duffelSearchBody(search)),
       },
       DUFFEL_SEARCH_HTTP_TIMEOUT_MS,
     );
@@ -324,10 +292,21 @@ export function searchDuffelFlights(
     normalizationMs = performance.now() - normalizationStartedAt;
     connectingOfferCount = results.filter((result) => result.stops > 0).length;
     return results;
-  }).then((result) => ({
-    ...result,
-    performance: { supplierMs, normalizationMs, offerCount, connectingOfferCount },
-  }));
+  }).then((result) => {
+    console.info("[flight-search:duffel-request]", {
+      tripType: search.tripType,
+      legCount,
+      providerStatus: result.status,
+      providerErrorCategory: result.errorCategory ?? null,
+      providerErrorReason: result.errorReason ?? null,
+      offerCount,
+      normalizedCount: result.results.length,
+    });
+    return {
+      ...result,
+      performance: { supplierMs, normalizationMs, offerCount, connectingOfferCount },
+    };
+  });
 }
 
 /** Refreshes one server-owned offer identity; callers must never send the ID to a browser. */

@@ -7,6 +7,7 @@ import {
   duffelSearchBody,
   duffelUpsellOffersUrl,
   duffelOfferRequestSearchUrl,
+  searchDuffelFlights,
   selectGraphBackedDuffelOffers,
 } from "./duffelProvider";
 import { fetchJson, runProvider } from "../providerUtils";
@@ -100,4 +101,96 @@ test("one-way, round-trip, and multi-city use one ordered Duffel slice path", ()
   assert.equal(multi.data.include_split_ticket, false);
   assert.deepEqual(multi.data.passengers.map(({ type }) => type), ["adult", "adult", "child", "infant_without_seat"]);
   assert.equal(multi.data.cabin_class, "business");
+});
+
+test("production flight search sends the canonical one-way, round-trip, and multi-city request bodies", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiKey = process.env.DUFFEL_API_KEY;
+  const originalProviderMode = process.env.TRAVEL_PROVIDER_MODE;
+  const originalApiMode = process.env.DUFFEL_API_MODE;
+  const bodies: Array<{
+    data: {
+      slices: unknown[];
+      passengers: Array<{ type: string }>;
+      cabin_class: string;
+      include_split_ticket?: boolean;
+    };
+  }> = [];
+  process.env.DUFFEL_API_KEY = "test-request-contract";
+  process.env.TRAVEL_PROVIDER_MODE = "local";
+  process.env.DUFFEL_API_MODE = "live";
+  globalThis.fetch = (async (_url, init) => {
+    bodies.push(JSON.parse(String(init?.body)));
+    return new Response(JSON.stringify({ data: { offers: [] } }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }) as typeof fetch;
+
+  const shared = {
+    adults: 2,
+    children: 1,
+    infants: 1,
+    travelers: 4,
+    cabinClass: "premium-economy" as const,
+  };
+  const legs = [
+    { origin: "IAH", destination: "LHR", departureDate: "2026-10-10" },
+    { origin: "LHR", destination: "CDG", departureDate: "2026-10-15" },
+    { origin: "CDG", destination: "IAH", departureDate: "2026-10-20" },
+  ];
+
+  try {
+    await searchDuffelFlights({
+      tripType: "one-way",
+      origin: "IAH",
+      destination: "LHR",
+      departureDate: "2026-10-10",
+      ...shared,
+    });
+    await searchDuffelFlights({
+      tripType: "round-trip",
+      origin: "IAH",
+      destination: "LHR",
+      departureDate: "2026-10-10",
+      returnDate: "2026-10-20",
+      ...shared,
+    });
+    await searchDuffelFlights({
+      tripType: "multi-city",
+      legs,
+      origin: "IAH",
+      destination: "IAH",
+      departureDate: "2026-10-10",
+      ...shared,
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalApiKey === undefined) delete process.env.DUFFEL_API_KEY;
+    else process.env.DUFFEL_API_KEY = originalApiKey;
+    if (originalProviderMode === undefined) delete process.env.TRAVEL_PROVIDER_MODE;
+    else process.env.TRAVEL_PROVIDER_MODE = originalProviderMode;
+    if (originalApiMode === undefined) delete process.env.DUFFEL_API_MODE;
+    else process.env.DUFFEL_API_MODE = originalApiMode;
+  }
+
+  assert.deepEqual(bodies[0].data.slices, [{ origin: "IAH", destination: "LHR", departure_date: "2026-10-10" }]);
+  assert.deepEqual(bodies[1].data.slices, [
+    { origin: "IAH", destination: "LHR", departure_date: "2026-10-10" },
+    { origin: "LHR", destination: "IAH", departure_date: "2026-10-20" },
+  ]);
+  assert.deepEqual(
+    bodies[2].data.slices,
+    legs.map((leg) => ({
+      origin: leg.origin,
+      destination: leg.destination,
+      departure_date: leg.departureDate,
+    })),
+  );
+  assert.deepEqual(
+    bodies[2].data.passengers.map(({ type }) => type),
+    ["adult", "adult", "child", "infant_without_seat"],
+  );
+  assert.equal(bodies[2].data.cabin_class, "premium_economy");
+  assert.equal(bodies[2].data.include_split_ticket, false);
 });
