@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { selectDateRange } from "./dateRangeModel";
+import { activeDateRangePart, selectDateRange } from "./dateRangeModel";
 
 const sheet = readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8");
 
@@ -11,6 +11,22 @@ test("range selection supports Cars same-day and strict travel ranges", () => {
   assert.deepEqual(selectDateRange("2026-08-24", "", "2026-08-24", true), { startDate: "2026-08-24", endDate: "" });
   assert.deepEqual(selectDateRange("2026-08-24", "", "2026-08-29", true), { startDate: "2026-08-24", endDate: "2026-08-29" });
   assert.deepEqual(selectDateRange("2026-08-24", "2026-08-29", "2026-08-26", true), { startDate: "2026-08-26", endDate: "" });
+});
+
+test("active stage describes the date part changed by the next selection", () => {
+  assert.equal(activeDateRangePart("", ""), "start");
+  assert.equal(activeDateRangePart("2026-08-24", ""), "end");
+  assert.equal(activeDateRangePart("2026-08-24", "2026-08-29"), "start");
+});
+
+test("range values reserve an accessible semantic active underline", () => {
+  assert.match(sheet, /activePart = activeDateRangePart\(draftStart, draftEnd\)/);
+  assert.match(sheet, /active=\{activePart === "start"\}/);
+  assert.match(sheet, /active=\{activePart === "end"\}/);
+  assert.match(sheet, /borderBottomColor:active\?ft\.colors\.selectedBorder:"transparent"/);
+  assert.match(sheet, /accessibilityState=\{\{selected:active\}\}/);
+  assert.match(sheet, /active \? ", currently selecting" : ""/);
+  assert.match(sheet, /rangeValue:\{flex:1,minWidth:0,padding:10,borderBottomWidth:2\}/);
 });
 
 test("sheet initializes draft state and Done is the only commit path", () => {
