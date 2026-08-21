@@ -16,7 +16,7 @@ concurrency: { group: ios-production-delivery, cancel-in-progress: false }
 jobs:
   deliver:
     environment: mobile-production
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     env:
       APP_VARIANT: production
       APP_BUILD_MODE: release
@@ -100,14 +100,53 @@ jobs:
           IPA_URL=$(node -e "const b=require(process.env.RUNNER_TEMP+'/build.json');if(b.status!=='FINISHED'||b.platform!=='IOS'||b.applicationIdentifier!=='com.kurioticket.app'||b.gitCommitHash!==process.env.CHECKED_OUT_SHA)throw Error('Finished build identity mismatch');const u=b.artifacts?.applicationArchiveUrl??b.artifacts?.buildUrl;if(!/^https:\/\//.test(u||''))throw Error('IPA URL missing');process.stdout.write(u)")
           curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --output "$RUNNER_TEMP/production.ipa" "$IPA_URL"
           unzip -q "$RUNNER_TEMP/production.ipa" -d "$RUNNER_TEMP/ipa"
-          PLIST=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 2 -name Info.plist -print -quit)
+          APP=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 1 -type d -name '*.app' -print -quit)
+          test -n "$APP" || { echo 'IPA application bundle is missing.' >&2; exit 1; }
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign --display --extract-certificates "$RUNNER_TEMP/app-signer" "$APP"
+          openssl x509 -inform DER -in "$RUNNER_TEMP/app-signer0" -noout -serial | sed 's/^serial=//' > "$RUNNER_TEMP/signer-certificate-serial.txt"
+          PLIST="$APP/Info.plist"
           python - "$PLIST" "$RUNNER_TEMP/info.json" <<'PY'
           import json, plistlib, sys
           with open(sys.argv[1], 'rb') as f: value=plistlib.load(f)
           with open(sys.argv[2], 'w') as f: json.dump(value, f)
           PY
-          find "$RUNNER_TEMP/ipa/Payload" -type f -print0 | xargs -0 strings > "$RUNNER_TEMP/ipa-contents.txt"
-          node scripts/verify-production-ipa.mjs --plist "$RUNNER_TEMP/info.json" --contents "$RUNNER_TEMP/ipa-contents.txt" --output "$RUNNER_TEMP/ipa-evidence.json"
+          APP_CONFIG=$(find "$APP" -path '*/EXConstants.bundle/app.config' -print -quit)
+          test -n "$APP_CONFIG" || { echo 'IPA embedded Expo app configuration is missing.' >&2; exit 1; }
+          python - "$APP_CONFIG" "$RUNNER_TEMP/app-config.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], 'r', encoding='utf-8') as f: value=json.load(f)
+          with open(sys.argv[2], 'w') as f: json.dump(value, f)
+          PY
+          EXPO_PLIST=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 3 -name Expo.plist -print -quit)
+          test -n "$EXPO_PLIST" || { echo 'IPA Expo Updates configuration is missing.' >&2; exit 1; }
+          python - "$EXPO_PLIST" "$RUNNER_TEMP/expo-config.json" <<'PY'
+          import json, plistlib, sys
+          with open(sys.argv[1], 'rb') as f: value=plistlib.load(f)
+          with open(sys.argv[2], 'w') as f: json.dump(value, f)
+          PY
+          PROFILE=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 2 -name embedded.mobileprovision -print -quit)
+          test -n "$PROFILE" || { echo 'IPA embedded provisioning profile is missing.' >&2; exit 1; }
+          openssl smime -inform der -verify -noverify -in "$PROFILE" -out "$RUNNER_TEMP/provisioning-profile.plist"
+          python - "$RUNNER_TEMP/provisioning-profile.plist" "$RUNNER_TEMP/provisioning-profile.json" "$RUNNER_TEMP" <<'PY'
+          import json, pathlib, plistlib, sys
+          with open(sys.argv[1], 'rb') as f: profile = plistlib.load(f)
+          certificates = profile.pop('DeveloperCertificates', [])
+          safe = {key: profile.get(key) for key in ('UUID', 'Name', 'TeamIdentifier', 'Entitlements')}
+          with open(sys.argv[2], 'w') as f: json.dump(safe, f)
+          for index, certificate in enumerate(certificates):
+              pathlib.Path(sys.argv[3], f'profile-certificate-{index}.der').write_bytes(certificate)
+          PY
+          python - "$RUNNER_TEMP" "$RUNNER_TEMP/certificate-serials.json" <<'PY'
+          import glob, json, subprocess, sys
+          serials = []
+          for path in glob.glob(sys.argv[1] + '/profile-certificate-*.der'):
+              output = subprocess.check_output(['openssl', 'x509', '-inform', 'DER', '-in', path, '-noout', '-serial'], text=True).strip()
+              serials.append(output.removeprefix('serial='))
+          if not serials: raise SystemExit('Provisioning profile contains no signing certificate')
+          with open(sys.argv[2], 'w') as f: json.dump(serials, f)
+          PY
+          node scripts/verify-production-ipa.mjs --plist "$RUNNER_TEMP/info.json" --app-config "$RUNNER_TEMP/app-config.json" --expo-config "$RUNNER_TEMP/expo-config.json" --provisioning-profile "$RUNNER_TEMP/provisioning-profile.json" --certificate-serials "$RUNNER_TEMP/certificate-serials.json" --signer-certificate-serial "$RUNNER_TEMP/signer-certificate-serial.txt" --output "$RUNNER_TEMP/ipa-evidence.json"
       - name: Preserve non-secret iOS release evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
