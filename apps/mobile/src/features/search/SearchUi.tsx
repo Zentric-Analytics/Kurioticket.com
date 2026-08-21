@@ -212,9 +212,9 @@ export function DateStrip({
 }) {
   const { theme } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
-  // Reserve a quarter-tile peek after three tiles. The 43px deduction accounts
+  // Reserve a generous next-tile peek after three compact tiles. The 43px deduction accounts
   // for the leading inset and the three gaps before the peeking tile.
-  const flightDateWidth = Math.min(116, Math.max(96, (windowWidth - 43) / 3.25));
+  const flightDateWidth = Math.min(112, Math.max(90, (windowWidth - 43) / 3.4));
   const [visibleStart, setVisibleStart] = useState(() =>
     initialDateWindowStart(date),
   );
@@ -256,6 +256,7 @@ export function DateStrip({
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               onPress={() => onSelect(iso)}
+              hitSlop={flightResults ? 4 : undefined}
               style={({ pressed }) => [
                 s.date,
                 flightResults && s.flightDate,
@@ -274,11 +275,23 @@ export function DateStrip({
                 pressed && s.datePressed,
               ]}
             >
-              <Text style={[s.day, flightResults && { color: theme.textSecondary }]}>
+              <Text
+                style={[
+                  s.day,
+                  flightResults && s.flightDateWeekday,
+                  flightResults && { color: theme.textSecondary },
+                  flightResults && active && { color: theme.dark ? "#A9C4FF" : "#5276C5" },
+                ]}
+              >
                 {x.toLocaleDateString("en-US", { weekday: "short" })}
               </Text>
               <Text
-                style={[s.day, flightResults && { color: theme.textSecondary }, active && { color: ui.blue, fontWeight: "800" }]}
+                style={[
+                  s.day,
+                  flightResults && s.flightDateLabel,
+                  flightResults && { color: theme.textPrimary },
+                  active && { color: theme.dark ? "#8FB5FF" : ui.blue },
+                ]}
               >
                 {shortDate(iso)}
               </Text>
@@ -288,7 +301,12 @@ export function DateStrip({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={flightResults ? 0.78 : 0.85}
-                  style={[s.datePrice, flightResults && s.flightDatePrice, flightResults && { color: theme.textPrimary }, active && { color: ui.blue }]}
+                  style={[
+                    s.datePrice,
+                    flightResults && s.flightDatePrice,
+                    flightResults && { color: theme.textPrimary },
+                    active && { color: theme.dark ? "#8FB5FF" : ui.blue },
+                  ]}
                 >
                   {hasPrice
                     ? (price.formatted ?? money(currency, price.amount))
@@ -452,9 +470,9 @@ export const s = StyleSheet.create({
   },
   dateRail: { height: 80, flex: 1 },
   dates: { gap: 9, alignItems: "center" },
-  flightDateNavigator: { height: 96, paddingHorizontal: 0 },
-  flightDateRail: { height: 96 },
-  flightDates: { paddingHorizontal: 16, paddingVertical: 8 },
+  flightDateNavigator: { height: 80, paddingHorizontal: 0 },
+  flightDateRail: { height: 80 },
+  flightDates: { paddingHorizontal: 16, paddingVertical: 7 },
   arrow: {
     width: 40,
     height: 40,
@@ -475,9 +493,11 @@ export const s = StyleSheet.create({
     backgroundColor: "white",
   },
   flightDate: {
-    minWidth: 96,
-    maxWidth: 116,
-    height: 76,
+    minWidth: 90,
+    maxWidth: 112,
+    height: 60,
+    paddingHorizontal: 4,
+    paddingVertical: 3,
     borderRadius: 14,
     borderWidth: 0,
     shadowColor: "#18305B",
@@ -490,7 +510,9 @@ export const s = StyleSheet.create({
   datePressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   day: { fontSize: 12, lineHeight: 16, color: ui.muted },
   datePrice: { maxWidth: "100%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
-  flightDatePrice: { width: "100%", height: 20, textAlign: "center", lineHeight: 20, marginTop: 2, paddingHorizontal: 4 },
+  flightDateWeekday: { width: "100%", fontSize: 12, fontWeight: "500", lineHeight: 15, letterSpacing: 0.1, textAlign: "center" },
+  flightDateLabel: { width: "100%", fontSize: 14, fontWeight: "600", lineHeight: 18, letterSpacing: -0.1, textAlign: "center" },
+  flightDatePrice: { width: "100%", height: 19, fontSize: 16, fontWeight: "700", textAlign: "center", lineHeight: 19, marginTop: 1, paddingHorizontal: 2 },
   button: {
     height: 45,
     minWidth: 104,
