@@ -16,6 +16,7 @@ export const PREVIEW_IDENTITY = Object.freeze({
   // runtime cutover. New Preview artifacts use their native fingerprint.
   runtime: "preview-0.3.0",
   apiOrigin: "https://staging.kurioticket.com",
+  googleIosClientId: "459496589401-gi52kj4fscgf092pasrelkth2mal0mph.apps.googleusercontent.com",
   renderStagingServiceId: "srv-d86ulfgg4nts73bctt20",
   renderWorkerServiceId: "srv-d9qisaaju40c73bbago0",
 });

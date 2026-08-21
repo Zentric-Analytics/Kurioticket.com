@@ -332,6 +332,7 @@ export function easCommandEnvironment({ baseEnvironment = process.env, directory
     APP_VARIANT: "preview",
     APP_BUILD_MODE: "release",
     EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
+    ...(platform === "ios" ? { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: PREVIEW_IDENTITY.googleIosClientId } : {}),
     ...(isBuildCreate ? { EAS_BUILD: "true", EAS_BUILD_PLATFORM: platform } : {}),
     CI: "1",
     // Expo, Metro, and the EAS CLI create temporary artifacts outside their
@@ -491,6 +492,7 @@ export async function nativeFingerprints(directory, { commandRunner = exec, expo
         EAS_BUILD: "true",
         EAS_BUILD_PLATFORM: platform,
         EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
+        ...(platform === "ios" ? { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: PREVIEW_IDENTITY.googleIosClientId } : {}),
         NODE_OPTIONS: "--max-old-space-size=192",
         MALLOC_ARENA_MAX: "2",
       },

@@ -1361,6 +1361,10 @@ test("EAS native build creation evaluates app config with the exact build platfo
     });
     assert.equal(environment.EAS_BUILD, "true");
     assert.equal(environment.EAS_BUILD_PLATFORM, platform);
+    assert.equal(
+      environment.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      platform === "ios" ? PREVIEW_IDENTITY.googleIosClientId : undefined,
+    );
   }
   assert.throws(() => easCommandEnvironment({ directory: "/tmp/eas", expoToken: "token", isBuildCreate: true }), /build platform/);
 });
