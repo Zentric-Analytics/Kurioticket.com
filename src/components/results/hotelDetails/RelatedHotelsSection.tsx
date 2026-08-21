@@ -77,7 +77,7 @@ function RelatedHotelCard({
       aria-label={`${labels.viewHotel}: ${hotel.name}`}
       className="group focus-ring block min-w-0 w-full overflow-hidden rounded-[15px] border border-slate-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.09)]"
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+      <div className="relative aspect-video overflow-hidden bg-slate-100">
         {hotel.imageUrl && !imageFailed ? (
           <Image
             src={hotel.imageUrl}
@@ -90,7 +90,7 @@ function RelatedHotelCard({
                   : "",
               )}
             fill
-            sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 20vw"
+            sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1023px) 50vw, 25vw"
             className="object-cover transition-transform duration-200 motion-safe:group-hover:scale-[1.02]"
             onError={() => setImageFailed(true)}
           />
@@ -102,7 +102,7 @@ function RelatedHotelCard({
         )}
       </div>
 
-      <div className="flex min-h-[210px] flex-col p-4">
+      <div className="flex min-h-[174px] flex-col p-3">
         {stars ? (
           <span
             aria-label={labels.starHotelAria.replace(
@@ -123,7 +123,7 @@ function RelatedHotelCard({
           </p>
         ) : null}
 
-        <div className="mt-auto pt-4">
+        <div className="mt-auto pt-3">
           {nightly && total ? (
             <div>
               <p className="text-sm font-bold text-slate-950">
@@ -138,7 +138,7 @@ function RelatedHotelCard({
               {labels.priceUnavailable}
             </p>
           )}
-          <span className="mt-3 flex min-h-11 items-center justify-between border-t border-slate-200 pt-3 text-sm font-bold text-blue">
+          <span className="mt-2.5 flex min-h-11 items-center justify-between border-t border-slate-200 pt-2.5 text-sm font-bold text-blue">
             {labels.viewHotel}
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </span>
@@ -154,7 +154,7 @@ export function RelatedHotelsSection({
   searchContext,
   labels,
 }: RelatedHotelsSectionProps) {
-  const displayedHotels = hotels.slice(0, 5);
+  const displayedHotels = hotels.slice(0, 7);
   if (!displayedHotels.length) return null;
 
   return (
@@ -170,7 +170,7 @@ export function RelatedHotelsSection({
         {labels.heading.replace("{{destination}}", city)}
       </h2>
       <div
-        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
         data-related-hotels-grid
       >
         {displayedHotels.map((hotel) => (

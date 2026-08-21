@@ -119,7 +119,7 @@ export function buildStaticHotelResults(search: HotelSearchParams) {
 export function buildRelatedStaticHotelResults(
   currentRecord: StaticHotelRecord,
   search: HotelSearchParams,
-  limit = 5,
+  limit = 7,
 ) {
   return searchStaticHotelCatalogue(currentRecord.city)
     .filter((record) => record.id !== currentRecord.id)
@@ -130,7 +130,7 @@ export function buildRelatedStaticHotelResults(
         second.arrivalSuitabilityScore - first.arrivalSuitabilityScore ||
         first.id.localeCompare(second.id),
     )
-    .slice(0, Math.max(0, Math.min(limit, 5)));
+    .slice(0, Math.max(0, Math.min(limit, 7)));
 }
 
 export function calculateHotelStayNights(checkIn: string, checkOut: string) {
