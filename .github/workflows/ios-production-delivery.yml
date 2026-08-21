@@ -103,7 +103,7 @@ jobs:
           APP=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 1 -type d -name '*.app' -print -quit)
           test -n "$APP" || { echo 'IPA application bundle is missing.' >&2; exit 1; }
           codesign --verify --deep --strict --verbose=2 "$APP"
-          codesign --display --extract-certificates "$RUNNER_TEMP/app-signer" "$APP"
+          codesign --display --extract-certificates="$RUNNER_TEMP/app-signer" "$APP"
           openssl x509 -inform DER -in "$RUNNER_TEMP/app-signer0" -noout -serial | sed 's/^serial=//' > "$RUNNER_TEMP/signer-certificate-serial.txt"
           PLIST="$APP/Info.plist"
           python - "$PLIST" "$RUNNER_TEMP/info.json" <<'PY'
