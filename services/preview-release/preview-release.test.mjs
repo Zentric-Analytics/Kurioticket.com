@@ -1311,6 +1311,8 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /"update:list", "--branch", "preview"/);
   assert.match(client, /APP_VARIANT: "preview"/);
   assert.match(client, /APP_BUILD_MODE: "release"/);
+  assert.match(client, /EAS_BUILD: "true"/);
+  assert.match(client, /EAS_BUILD_PLATFORM: platform/);
   assert.match(client, /EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY\.apiOrigin/);
   assert.match(client, /process\.platform === "win32" \? "npx\.cmd" : "npx"/);
   assert.match(client, /"env:exec", "preview", fingerprintCommand/);
@@ -1345,6 +1347,22 @@ test("EAS commands isolate every temporary path inside the command-owned directo
   assert.equal(environment.TEMP, "/tmp/kurioticket-eas-owned");
   assert.equal(environment.NODE_OPTIONS, "--max-old-space-size=1024");
   assert.equal(environment.EXPO_TOKEN, "expo-token");
+});
+
+test("EAS native build creation evaluates app config with the exact build platform", () => {
+  for (const platform of ["ios", "android"]) {
+    const environment = easCommandEnvironment({
+      baseEnvironment: {},
+      directory: "/tmp/kurioticket-eas-owned",
+      expoToken: "expo-token",
+      isUpdatePublish: false,
+      isBuildCreate: true,
+      platform,
+    });
+    assert.equal(environment.EAS_BUILD, "true");
+    assert.equal(environment.EAS_BUILD_PLATFORM, platform);
+  }
+  assert.throws(() => easCommandEnvironment({ directory: "/tmp/eas", expoToken: "token", isBuildCreate: true }), /build platform/);
 });
 
 test("EAS command failures preserve the actionable output tail and redact credentials", () => {
