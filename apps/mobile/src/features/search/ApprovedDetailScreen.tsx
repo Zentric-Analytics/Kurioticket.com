@@ -37,6 +37,7 @@ import { authoritativeProviderUrl } from "./providerBooking";
 import { flightShareMessage, shareFlightForAuthenticatedSession } from "./flightDetailInteractions";
 import { flightEditSearchParams } from "../flow/flightSearchModel";
 import { flightDetailHeaderModel } from "./flightDetailHeaderModel";
+import { flightTripDetails } from "./flightTripDetails";
 
 const parse = <T,>(v?: string | string[]) => {
   try {
@@ -296,28 +297,11 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             </View>
           ))}
         </View>
-        <View style={[d.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <View style={d.fareHead}>
-            <Text style={[d.h2, { color: theme.textPrimary }]}>Fare summary</Text>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={[d.meta, { color: theme.textSecondary }]}>Total (1 traveler)</Text>
-              <Text style={[d.price, { color: theme.textPrimary }]}>
-                {formattedFare}
-              </Text>
-              <Text style={[d.meta, { color: theme.textSecondary }]}>Taxes and fees per provider</Text>
-            </View>
-          </View>
-          <FareRow
-            label="Carry-on bag"
-            value={result.baggageInfo || "Information unavailable"}
-          />
-          <FareRow label="Checked bag" value="Provider information unavailable" />
-          <FareRow label="Seat selection" value="Provider information unavailable" />
-          <FareRow label="Changes" value="Provider fare rules apply" />
-          <FareRow
-            label="Cancellation"
-            value={result.refundInfo || "Provider rules apply"}
-          />
+        <View style={[d.tripDetails, { backgroundColor: theme.surface }, theme.dark && d.tripDetailsDark]}>
+          <Text style={[d.h2, { color: theme.textPrimary }]}>Trip details</Text>
+          {flightTripDetails(result).map((detail) => (
+            <DetailsRow key={detail.label} {...detail} />
+          ))}
         </View>
         <View style={[d.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <Text style={[d.h2, { color: theme.textPrimary }]}>Choose where to book</Text>
@@ -576,12 +560,12 @@ function HotelDetail({
     </SafeAreaView>
   );
 }
-function FareRow({ label, value }: { label: string; value: string }) {
+function DetailsRow({ label, value }: { label: string; value: string }) {
   const { theme } = useAppTheme();
   return (
-    <View style={[d.fareRow, { borderTopColor: theme.border }]}>
-      <Text style={[d.provider, { color: theme.textPrimary }]}>{label}</Text>
-      <Text style={[d.meta, { color: theme.textSecondary }]}>{value}</Text>
+    <View accessibilityLabel={`${label}. ${value}`} style={d.detailRow}>
+      <Text style={[d.detailLabel, { color: theme.textPrimary }]}>{label}</Text>
+      <Text style={[d.detailValue, { color: theme.textSecondary }]}>{value}</Text>
     </View>
   );
 }
@@ -736,15 +720,21 @@ const d = StyleSheet.create({
     backgroundColor: ui.muted,
   },
   plane: { paddingHorizontal: 5 },
-  fareHead: { flexDirection: "row", justifyContent: "space-between" },
   price: { fontSize: 24, fontWeight: "900", color: ui.navy },
-  fareRow: {
-    borderTopWidth: 1,
-    borderTopColor: "#EDF0F4",
-    paddingTop: 9,
-    flexDirection: "row",
-    justifyContent: "space-between",
+  tripDetails: {
+    borderRadius: 13,
+    padding: 14,
+    gap: 12,
+    shadowColor: "#07152F",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
+  tripDetailsDark: { shadowOpacity: 0.28, elevation: 2 },
+  detailRow: { gap: 2 },
+  detailLabel: { fontSize: 13, lineHeight: 18, fontWeight: "800" },
+  detailValue: { fontSize: 12, lineHeight: 17, flexShrink: 1 },
   offer: {
     borderWidth: 1,
     borderColor: ui.border,
