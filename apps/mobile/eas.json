@@ -35,6 +35,10 @@
         "autoIncrement": true,
         "distribution": "store",
         "buildType": "app-bundle"
+      },
+      "ios": {
+        "distribution": "store",
+        "autoIncrement": true
       }
     }
   },
@@ -45,7 +49,10 @@
       }
     },
     "production": {
-      "android": {}
+      "android": {},
+      "ios": {
+        "ascAppId": "6797446939"
+      }
     }
   }
 }

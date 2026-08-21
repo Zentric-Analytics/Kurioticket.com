@@ -15,6 +15,7 @@ import { resolveTrustedPreviousPlayHistory } from './resolve-production-play-his
 import { validateProductionDryRun } from './dry-run-production-delivery.mjs';
 import { verifyProductionBuildResult, verifyProductionUpdateResult } from './verify-production-eas-result.mjs';
 import { verifyProductionAab } from './verify-production-aab.mjs';
+import { verifyProductionIpa } from './verify-production-ipa.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
 import { buildReleaseAudit } from './write-release-audit.mjs';
 import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
@@ -121,8 +122,62 @@ test('approved matrix isolates runtimes and Android-only counters', () => {
   assert.doesNotThrow(() => assertReleasePolicy(policy, eas));
   assert.equal(policy.preview.runtimeVersion, 'preview-0.3.0');
   assert.equal(policy.production.runtimeVersion, 'production-0.3.0');
+  assert.equal(policy.preview.googleIosClientId, '459496589401-gi52kj4fscgf092pasrelkth2mal0mph.apps.googleusercontent.com');
+  assert.equal(policy.production.googleIosClientId, '459496589401-b4npe68m8c358rqr79edi7igvi3sauao.apps.googleusercontent.com');
+  assert.notEqual(policy.preview.googleIosClientId, policy.production.googleIosClientId);
   assert.equal(eas.build.preview.autoIncrement, undefined);
   assert.equal(eas.build.preview.android.autoIncrement, true);
+  assert.deepEqual(policy.production.supportedPlatforms, ['android', 'ios']);
+  assert.equal(eas.build.production.ios.distribution, 'store');
+  assert.equal(eas.build.production.ios.autoIncrement, true);
+});
+
+test('Production IPA verification enforces identity, version, schemes, and Preview isolation', () => {
+  const plist = {
+    CFBundleIdentifier: 'com.kurioticket.app',
+    CFBundleDisplayName: 'Kurioticket',
+    CFBundleShortVersionString: '0.3.0',
+    CFBundleVersion: '1',
+    ITSAppUsesNonExemptEncryption: false,
+    CFBundleURLTypes: [{ CFBundleURLSchemes: ['kurioticket', 'com.googleusercontent.apps.459496589401-b4npe68m8c358rqr79edi7igvi3sauao'] }],
+  };
+  const provisioningProfile = {
+    UUID: '6888380e-ad09-4383-9fe4-8d8924661765',
+    Name: 'Kurioticket Production App Store',
+    TeamIdentifier: ['N23R45R4CY'],
+    Entitlements: {
+      'application-identifier': 'N23R45R4CY.com.kurioticket.app',
+      'com.apple.developer.team-identifier': 'N23R45R4CY',
+    },
+  };
+  const publicConfig = { name: 'Kurioticket', ios: { bundleIdentifier: 'com.kurioticket.app' }, runtimeVersion: 'production-0.3.0', extra: { environment: { apiBaseUrl: 'https://kurioticket.com', isPreview: false } } };
+  const expoConfig = { EXUpdatesRuntimeVersion: 'production-0.3.0' };
+  const validIpa = { plist, publicConfig, expoConfig, provisioningProfile, certificateSerials: ['5D:4F:E2:35:AA:B1:68:16:14:F1:12:3D:5F:D9:C2:F7'] };
+  assert.equal(verifyProductionIpa(validIpa).verified, true);
+  for (const wrongScheme of [
+    'com.googleusercontent.apps.459496589401-gi52kj4fscgf092pasrelkth2mal0mph',
+    'com.googleusercontent.apps.arbitrary-valid-client',
+  ]) {
+    const wrong = { ...plist, CFBundleURLTypes: [{ CFBundleURLSchemes: ['kurioticket', wrongScheme] }] };
+    assert.throws(() => verifyProductionIpa({ ...validIpa, plist: wrong }), /approved release identity/);
+  }
+  assert.throws(() => verifyProductionIpa({ ...validIpa, plist: { ...plist, CFBundleIdentifier: 'com.kurioticket.app.preview' } }), /bundle identifier/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, publicConfig: { ...publicConfig, extra: { environment: { apiBaseUrl: 'https://staging.kurioticket.com', isPreview: true } } } }), /environment/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, publicConfig: { ...publicConfig, runtimeVersion: 'preview-0.3.0' } }), /runtime/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, expoConfig: { EXUpdatesRuntimeVersion: 'preview-0.3.0' } }), /runtime/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: { ...provisioningProfile, UUID: 'wrong-profile' } }), /profile UUID/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: { ...provisioningProfile, TeamIdentifier: ['WRONGTEAM'] } }), /Apple Team identity/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: { ...provisioningProfile, Entitlements: { ...provisioningProfile.Entitlements, 'application-identifier': 'N23R45R4CY.com.kurioticket.app.preview' } } }), /application identifier/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, certificateSerials: ['DEADBEEF'] }), /signing certificate/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: undefined }), /profile UUID/);
+});
+test('Production IPA verification validates active configuration without scanning bundled policy literals', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/ios-production-delivery.yml'), 'utf8');
+  const verifier = readFileSync(resolve(root, 'scripts/verify-production-ipa.mjs'), 'utf8');
+  assert.doesNotMatch(workflow, /\bxargs\s+-0\s+strings\b|--contents\b/);
+  assert.match(workflow, /--public-config\b/);
+  assert.match(workflow, /--expo-config\b/);
+  assert.doesNotMatch(verifier, /contents\.includes\(|forbiddenIdentityFound/);
 });
 test('failed build submission still produces a safe audit with no empty-result parser failure', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-audit-'));
