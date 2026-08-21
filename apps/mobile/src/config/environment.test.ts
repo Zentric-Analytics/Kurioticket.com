@@ -52,12 +52,13 @@ test("missing or unknown configuration never falls back", () => {
   assert.throws(() => resolveMobileEnvironment({ APP_VARIANT: "staging", APP_BUILD_MODE: "release", EXPO_PUBLIC_API_BASE_URL: "https://staging.kurioticket.com" }), /preview or production/);
 });
 
-test("release platform matrix allows Android Preview/Production and iOS Preview but rejects iOS Production", () => {
+test("release platform matrix allows Android and iOS for both permanent identities", () => {
   const previewEnvironment = resolveMobileEnvironment(preview);
   const productionEnvironment = resolveMobileEnvironment(production);
   assert.doesNotThrow(() => assertEasPlatformSupported(previewEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "android" }));
   assert.doesNotThrow(() => assertEasPlatformSupported(previewEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "ios" }));
   assert.doesNotThrow(() => assertEasPlatformSupported(productionEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "android" }));
-  assert.throws(() => assertEasPlatformSupported(productionEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "ios" }), /iOS Production is deferred/);
-  assert.throws(() => assertEasPlatformSupported(productionEnvironment, { EAS_BUILD: "true" }), /Production EAS builds must target Android/);
+  assert.doesNotThrow(() => assertEasPlatformSupported(productionEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "ios" }));
+  assert.throws(() => assertEasPlatformSupported(productionEnvironment, { EAS_BUILD: "true" }), /EAS_BUILD_PLATFORM must be android or ios/);
+  assert.throws(() => assertEasPlatformSupported(productionEnvironment, { EAS_BUILD: "true", EAS_BUILD_PLATFORM: "windows" }), /EAS_BUILD_PLATFORM must be android or ios/);
 });

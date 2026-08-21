@@ -15,14 +15,15 @@ test("mobile package and Expo config advertise only Android and iOS", () => {
   assert.match(appConfig, /platforms: \["android", "ios"\]/);
 });
 
-test("release policy fails closed for iOS Production and preserves approved identities", () => {
+test("release policy supports both permanent iOS identities and preserves isolation", () => {
   const policy = JSON.parse(read("release-policy.json"));
   const appConfig = read("app.config.ts");
   assert.deepEqual(policy.preview.supportedPlatforms, ["android", "ios"]);
-  assert.deepEqual(policy.production.supportedPlatforms, ["android"]);
+  assert.deepEqual(policy.production.supportedPlatforms, ["android", "ios"]);
   assert.equal(policy.preview.bundleIdentifier, "com.kurioticket.app.preview");
   assert.equal(policy.production.androidPackage, "com.kurioticket.app");
-  assert.match(appConfig, /iOS Production is deferred/);
+  assert.equal(policy.production.bundleIdentifier, "com.kurioticket.app");
+  assert.match(appConfig, /supportedPlatforms\.includes\(easBuildPlatform\)/);
 });
 
 test("Issue 6 preserves product architecture and Travel Inspiration", () => {

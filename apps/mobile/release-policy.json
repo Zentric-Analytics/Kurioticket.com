@@ -16,7 +16,7 @@
     "sourceBranch": "dev"
   },
   "production": {
-    "supportedPlatforms": ["android"],
+    "supportedPlatforms": ["android", "ios"],
     "displayName": "Kurioticket",
     "bundleIdentifier": "com.kurioticket.app",
     "androidPackage": "com.kurioticket.app",
