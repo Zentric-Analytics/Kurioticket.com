@@ -1,0 +1,106 @@
+name: iOS Production Delivery
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha: { description: "Exact approved full commit SHA reachable from protected main", required: true, type: string }
+      platform: { description: "Must be ios", required: true, type: choice, options: [ios] }
+      action: { description: "Approved delivery action", required: true, type: choice, options: [dry-run, build] }
+      runtime_version: { description: "Expected runtime", required: true, type: string }
+      release_reason: { description: "Approval or release reference", required: true, type: string }
+      confirmation_phrase: { description: "Type DELIVER IOS PRODUCTION", required: true, type: string }
+      expected_bundle_identifier: { description: "Expected iOS bundle identifier", required: true, type: string }
+      expected_channel: { description: "Expected EAS channel", required: true, type: string }
+      baseline_eas_build_id: { description: "Must be NONE until the first reviewed baseline exists", required: true, type: string }
+permissions: { contents: read }
+concurrency: { group: ios-production-delivery, cancel-in-progress: false }
+jobs:
+  deliver:
+    environment: mobile-production
+    runs-on: ubuntu-latest
+    env:
+      APP_VARIANT: production
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://kurioticket.com
+      EAS_BUILD_PLATFORM: ios
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
+      - name: Verify exact approved Production checkout
+        env: { APPROVED_SHA: "${{ inputs.commit_sha }}", WORKFLOW_SHA: "${{ github.sha }}" }
+        run: |
+          ACTUAL_SHA=$(git rev-parse HEAD)
+          test "$ACTUAL_SHA" = "$APPROVED_SHA" || { echo 'Checked-out Production SHA does not match approval.' >&2; exit 1; }
+          test "$WORKFLOW_SHA" = "$APPROVED_SHA" || { echo 'Workflow source SHA does not match approval.' >&2; exit 1; }
+          git fetch origin main
+          git merge-base --is-ancestor "$APPROVED_SHA" origin/main || { echo 'Approved SHA is not reachable from protected main.' >&2; exit 1; }
+          echo "CHECKED_OUT_SHA=$ACTUAL_SHA" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
+      - working-directory: apps/mobile
+        run: npm ci
+      - name: Validate immutable iOS Production inputs
+        working-directory: apps/mobile
+        run: node scripts/validate-ios-production-inputs.mjs "${{ inputs.commit_sha }}" "${{ inputs.runtime_version }}" "${{ inputs.expected_bundle_identifier }}" "${{ inputs.expected_channel }}" "${{ inputs.confirmation_phrase }}" "${{ inputs.action }}" "${{ inputs.release_reason }}" "${{ inputs.baseline_eas_build_id }}"
+      - name: Validate mobile and release architecture
+        working-directory: apps/mobile
+        run: |
+          npm run typecheck
+          npm test
+          npm run expo:doctor
+          npm run release:validate
+          npm run test:release-pipeline
+          npm run verify:ios-icon
+      - name: Resolve and validate Production iOS configuration
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          npx eas-cli@16.17.4 env:exec production "npx expo config --type public --json" --non-interactive > "$RUNNER_TEMP/production-public.json"
+          npx eas-cli@16.17.4 env:exec production "npx expo config --type prebuild --json" --non-interactive > "$RUNNER_TEMP/production-prebuild.json"
+          node -e "const c=require(process.env.RUNNER_TEMP+'/production-public.json');if(c.name!=='Kurioticket'||c.ios.bundleIdentifier!=='com.kurioticket.app'||c.scheme!=='kurioticket'||c.runtimeVersion!=='production-0.3.0'||c.extra.environment.channel!=='production'||c.extra.environment.apiBaseUrl!=='https://kurioticket.com'||c.extra.environment.isPreview!==false)throw Error('Production iOS configuration mismatch')"
+          node -e "const c=require(process.env.RUNNER_TEMP+'/production-prebuild.json');const p=JSON.stringify(c.plugins);if(!p.includes('react-native-nitro-google-signin')||!p.includes('com.googleusercontent.apps.'))throw Error('Production Google iOS plugin is missing')"
+      - name: Verify remote iOS version and credential readiness
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          test -f release-baselines/ios/production-credential.json || { echo 'Reviewed iOS Production credential evidence is missing.' >&2; exit 1; }
+          node -e "const c=require('./release-baselines/ios/production-credential.json');if(c.projectId!=='89f6fd88-c0d7-495a-9e2b-8301b09f407d'||c.bundleIdentifier!=='com.kurioticket.app'||c.profile!=='production'||c.appleTeamId!=='N23R45R4CY'||c.management!=='eas-managed'||c.status!=='complete'||c.buildPolicy!=='freeze-credentials')throw Error('iOS Production credential evidence mismatch')"
+          npx eas-cli@16.17.4 build:version:get --platform ios --profile production --json --non-interactive > "$RUNNER_TEMP/ios-version.json"
+          npx eas-cli@16.17.4 build:list --platform ios --build-profile production --app-identifier com.kurioticket.app --limit 10 --json --non-interactive > "$RUNNER_TEMP/ios-builds.json"
+          node -e "const v=require(process.env.RUNNER_TEMP+'/ios-version.json');const b=require(process.env.RUNNER_TEMP+'/ios-builds.json');const remote=Number(v.buildNumber??v.ios?.buildNumber??0);const highest=Math.max(0,...b.map(x=>Number(x.appBuildVersion||0)));if(remote<highest)throw Error('Remote iOS build number is behind build history')"
+      - name: Complete non-mutating Production dry run
+        if: inputs.action == 'dry-run'
+        run: echo "iOS Production dry run passed for $CHECKED_OUT_SHA; no build or submission was started."
+      - name: Build and verify approved Production IPA
+        if: inputs.action == 'build'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          npx eas-cli@16.17.4 build --platform ios --profile production --non-interactive --freeze-credentials --json > "$RUNNER_TEMP/build-result.json"
+          BUILD_ID=$(node -e "const x=require(process.env.RUNNER_TEMP+'/build-result.json');const b=Array.isArray(x)?x[0]:x;if(!b?.id)throw Error('Build result is missing an ID');process.stdout.write(b.id)")
+          npx eas-cli@16.17.4 build:view "$BUILD_ID" --json > "$RUNNER_TEMP/build.json"
+          IPA_URL=$(node -e "const b=require(process.env.RUNNER_TEMP+'/build.json');if(b.status!=='FINISHED'||b.platform!=='IOS'||b.applicationIdentifier!=='com.kurioticket.app'||b.gitCommitHash!==process.env.CHECKED_OUT_SHA)throw Error('Finished build identity mismatch');const u=b.artifacts?.applicationArchiveUrl??b.artifacts?.buildUrl;if(!/^https:\/\//.test(u||''))throw Error('IPA URL missing');process.stdout.write(u)")
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --output "$RUNNER_TEMP/production.ipa" "$IPA_URL"
+          unzip -q "$RUNNER_TEMP/production.ipa" -d "$RUNNER_TEMP/ipa"
+          PLIST=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 2 -name Info.plist -print -quit)
+          python - "$PLIST" "$RUNNER_TEMP/info.json" <<'PY'
+          import json, plistlib, sys
+          with open(sys.argv[1], 'rb') as f: value=plistlib.load(f)
+          with open(sys.argv[2], 'w') as f: json.dump(value, f)
+          PY
+          find "$RUNNER_TEMP/ipa/Payload" -type f -print0 | xargs -0 strings > "$RUNNER_TEMP/ipa-contents.txt"
+          node scripts/verify-production-ipa.mjs --plist "$RUNNER_TEMP/info.json" --contents "$RUNNER_TEMP/ipa-contents.txt" --output "$RUNNER_TEMP/ipa-evidence.json"
+      - name: Preserve non-secret iOS release evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ios-production-release-evidence-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/production-public.json
+            ${{ runner.temp }}/production-prebuild.json
+            ${{ runner.temp }}/ios-version.json
+            ${{ runner.temp }}/ios-builds.json
+            ${{ runner.temp }}/build.json
+            ${{ runner.temp }}/ipa-evidence.json
+          if-no-files-found: warn
+          retention-days: 365

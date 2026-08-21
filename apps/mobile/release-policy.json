@@ -1,6 +1,7 @@
 {
   "legacyRuntime": "0.2.0",
   "preview": {
+    "supportedPlatforms": ["android", "ios"],
     "displayName": "Kurioticket Preview",
     "bundleIdentifier": "com.kurioticket.app.preview",
     "androidPackage": "com.kurioticket.app.preview",
@@ -15,6 +16,7 @@
     "sourceBranch": "dev"
   },
   "production": {
+    "supportedPlatforms": ["android", "ios"],
     "displayName": "Kurioticket",
     "bundleIdentifier": "com.kurioticket.app",
     "androidPackage": "com.kurioticket.app",

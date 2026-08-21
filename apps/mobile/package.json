@@ -14,7 +14,8 @@
     "expo:doctor": "expo-doctor",
     "release:validate": "node ./scripts/validate-release-policy.mjs",
     "release:classify": "node ./scripts/classify-release.mjs",
-    "test:release-pipeline": "node --test ./scripts/release-pipeline.test.mjs"
+    "test:release-pipeline": "node --test ./scripts/release-pipeline.test.mjs",
+    "verify:ios-icon": "node ./scripts/verify-ios-icon-contract.mjs"
   },
   "dependencies": {
     "expo": "^54.0.0",
