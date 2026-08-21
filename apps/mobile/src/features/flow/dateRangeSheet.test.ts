@@ -15,7 +15,7 @@ test("range selection supports Cars same-day and strict travel ranges", () => {
 
 test("sheet initializes draft state and Done is the only commit path", () => {
   assert.match(sheet, /if \(visible\) \{ setDraftStart\(startDate\); setDraftEnd\(endDate\); setMonthOffset\(0\); \}/);
-  assert.match(sheet, /disabled=\{!valid\} onPress=\{\(\) => onDone\(draftStart,draftEnd\)\}/);
+  assert.match(sheet, /icon=\{null\} disabled=\{!valid\} onPress=\{\(\) => onDone\(draftStart,draftEnd\)\}/);
   assert.match(sheet, /onRequestClose=\{onCancel\}/);
   assert.match(sheet, /StyleSheet\.absoluteFill[^\n]+onPress=\{onCancel\}/);
   assert.match(sheet, /inRange&&\{backgroundColor:ft\.colors\.selected\}/);

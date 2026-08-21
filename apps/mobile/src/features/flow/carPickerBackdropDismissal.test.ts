@@ -33,7 +33,7 @@ test("driver age backdrop and sheet are siblings and close without confirming", 
 });
 
 test("driver age Done remains the only draft commit path", () => {
-  assert.match(ageSheet, /<PrimaryButton label="Done" icon="check" disabled=\{draftAge === undefined\} onPress=\{\(\) => \{ if \(draftAge !== undefined\) onConfirm\(draftAge\); \}\}\/>/);
+  assert.match(ageSheet, /<PrimaryButton label="Done" icon=\{null\} disabled=\{draftAge === undefined\} onPress=\{\(\) => \{ if \(draftAge !== undefined\) onConfirm\(draftAge\); \}\}\/>/);
   const backdrop = ageSheet.slice(ageSheet.indexOf('accessibilityLabel="Close driver age picker"'), ageSheet.indexOf("/>", ageSheet.indexOf('accessibilityLabel="Close driver age picker"')));
   assert.doesNotMatch(backdrop, /onConfirm/);
 });

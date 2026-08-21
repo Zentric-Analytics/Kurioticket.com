@@ -65,7 +65,7 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
     <Field label="Guests" value={`${countLabel(form.guests, "guest")}, ${countLabel(form.rooms, "room")}`} icon="person" trailing={<FlowIcon name="chevron" size={18}/>} onPress={() => setCountsOpen(true)}/>
     {errors.guests || errors.rooms ? <Text accessibilityRole="alert" style={styles.error}>{errors.guests || errors.rooms}</Text> : null}
     {notice ? <UnavailableNotice text={notice}/> : null}
-    {showSubmit ? <View style={styles.pad}><PrimaryButton label={submitLabel} onPress={submit}/></View> : null}
+    {showSubmit ? <View style={styles.pad}><PrimaryButton label={submitLabel} icon={null} onPress={submit}/></View> : null}
     <DateRangeSheet visible={datesOpen} title="Travel dates" startLabel="Check-in date" endLabel="Check-out date" startDate={form.checkIn} endDate={form.checkOut} minimumStartDate={localIsoDate(new Date())} endMustBeAfterStart onDone={(checkIn, checkOut) => { update({ ...form, checkIn, checkOut }); setErrors(value => ({ ...value, checkIn: undefined, checkOut: undefined })); setDatesOpen(false); }} onCancel={() => setDatesOpen(false)}/>
     <HotelDestinationSheet visible={destinationOpen} value={form.destination} onDone={(destination) => { update({ ...form, destination }); if (destination.trim()) setErrors((current) => ({ ...current, destination: undefined })); setDestinationOpen(false); destinationRef.current?.focus(); }} onCancel={() => setDestinationOpen(false)}/>
     <HotelGuestsRoomsSheet visible={countsOpen} adults={adultCount} children={childCount} rooms={form.rooms} petFriendly={petFriendly} onDone={(draft) => { setAdultCount(draft.adults); setChildCount(draft.children); setPetFriendly(draft.petFriendly); update({ ...form, guests: draft.adults + draft.children, rooms: draft.rooms }); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); setCountsOpen(false); }} onCancel={() => setCountsOpen(false)}/>
@@ -144,7 +144,7 @@ function HotelGuestsRoomsSheet({ visible, adults, children, rooms, petFriendly, 
             <PickerRow label="Rooms" description="Separate rooms" value={draft.rooms} minimum={HOTEL_LIMITS.rooms.min} maximum={HOTEL_LIMITS.rooms.max} onChange={(value) => setCount("rooms", value)}/>
             <View style={[styles.pickerRow, { borderBottomColor: ft.colors.border }]}><View style={styles.rowCopy}><Text style={ft.styles.value}>Pet-friendly</Text><Text style={ft.styles.meta}>Only show stays that allow pets</Text></View><Switch accessibilityLabel="Pet-friendly" accessibilityRole="switch" accessibilityState={{ checked: draft.petFriendly }} value={draft.petFriendly} onValueChange={(value) => setDraft((current) => ({ ...current, petFriendly: value }))} trackColor={{ false: ft.colors.border, true: ft.colors.selectedBorder }} thumbColor={ft.colors.surface}/></View>
           </ScrollView>
-          <PrimaryButton label="Done" onPress={() => onDone(draft)}/>
+          <PrimaryButton label="Done" icon={null} onPress={() => onDone(draft)}/>
         </View>
       </SafeAreaView>
     </View>

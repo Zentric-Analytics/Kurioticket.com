@@ -35,3 +35,10 @@ test("all package modes reuse the existing destination, dates, and time sheets",
   assert.ok(form.includes('<CarRentalDatesSheet visible={datesOpen} title="Travel dates"') && form.includes("onCancel={() => setDatesOpen(false)}"));
   assert.ok(form.includes("<CarTimeRangeSheet") && form.includes("onCancel={() => setTimesOpen(false)}"));
 });
+
+
+test("package party and shared picker Done actions are iconless", () => {
+  assert.match(party, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\) => onDone\(draft\)\}\/>/);
+  assert.match(readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8"), /label="Done" icon=\{null\}/);
+  assert.match(readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8"), /label="Done" icon=\{null\}/);
+});
