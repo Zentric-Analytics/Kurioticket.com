@@ -230,16 +230,17 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
       <ScrollView
         contentContainerStyle={[d.body, { paddingBottom: 110 + inset.bottom }]}
       >
-        <View style={[d.itinerarySection, { backgroundColor: theme.surface }, theme.dark && d.itinerarySectionDark]}>
+        <View style={[d.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <View style={d.sectionHead}>
             <Text style={[d.h2, { color: theme.textPrimary }]}>Flight details</Text>
             <Badge flightResults>★ Best overall</Badge>
           </View>
           {legs.map((leg, i) => (
-            <View key={`${leg.departureTime}-${i}`} style={[d.leg, i > 0 && d.legSpacing]}>
+            <View key={`${leg.departureTime}-${i}`} style={[d.leg, { backgroundColor: theme.dark ? "#17243A" : theme.surface, borderColor: theme.border }]}>
               <Text style={d.blue}>
                 {leg.direction.toUpperCase()} ·{" "}
                 {new Date(leg.departureTime).toLocaleDateString("en-US", {
+                  weekday: "short",
                   month: "short",
                   day: "numeric",
                 })}
@@ -254,36 +255,22 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
                   {result.flightNumber ? `  ·  ${result.flightNumber}` : ""}
                 </Text>
               </View>
-              <View style={d.routeDurationRow}>
-                <View style={d.routeEdge} />
-                <Text style={[d.meta, d.routeCenter, { color: theme.textSecondary }]}>{leg.duration}</Text>
-                <View style={d.routeEdge} />
-              </View>
               <View style={d.legRoute}>
-                <View style={d.routeEdge}>
+                <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[d.time, { color: theme.textPrimary }]}>{clock(leg.departureTime)}</Text>
-                </View>
-                <View style={d.middle}>
-                  <View style={[d.line, { backgroundColor: theme.border }]} />
-                  <View style={[d.plane, { backgroundColor: theme.surface }]}>
-                    <FlowIcon name="flight" size={18} color={theme.icon} />
-                  </View>
-                  <View style={[d.line, { backgroundColor: theme.border }]} />
-                </View>
-                <View style={[d.routeEdge, d.routeArrival]}>
-                  <Text style={[d.time, { color: theme.textPrimary }]}>{clock(leg.arrivalTime)}</Text>
-                </View>
-              </View>
-              <View style={d.routeDetailsRow}>
-                <View style={d.routeEdge}>
                   <Text style={[d.airport, { color: theme.textSecondary }]}>{leg.originAirport}</Text>
                 </View>
-                <Text style={[d.blue, d.routeCenter]}>
-                  {leg.stops
-                    ? `${leg.stops} stop${leg.stops > 1 ? "s" : ""}`
-                    : "Nonstop"}
-                </Text>
-                <View style={[d.routeEdge, d.routeArrival]}>
+                <View style={d.middle}>
+                  <Text style={[d.meta, { color: theme.textSecondary }]}>{leg.duration}</Text>
+                  <View style={[d.line, { backgroundColor: theme.border }]} />
+                  <Text style={d.blue}>
+                    {leg.stops
+                      ? `${leg.stops} stop${leg.stops > 1 ? "s" : ""}`
+                      : "Nonstop"}
+                  </Text>
+                </View>
+                <View style={{ flex: 1, alignItems: "flex-end" }}>
+                  <Text style={[d.time, { color: theme.textPrimary }]}>{clock(leg.arrivalTime)}</Text>
                   <Text style={[d.airport, { color: theme.textSecondary }]}>{leg.destinationAirport}</Text>
                 </View>
               </View>
@@ -735,40 +722,30 @@ const d = StyleSheet.create({
   },
   bookingProviderCardCompact: { flexDirection: "column" },
   bookingProviderCardDark: { shadowOpacity: 0.28, elevation: 2 },
-  itinerarySection: {
-    borderRadius: 13,
-    padding: 14,
-    gap: 10,
-    shadowColor: "#07152F",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  itinerarySectionDark: { shadowOpacity: 0.28, elevation: 2 },
   sectionHead: { flexDirection: "row", justifyContent: "space-between" },
   leg: {
+    borderWidth: 1,
+    borderColor: "#E4E8F0",
+    borderRadius: 11,
+    padding: 14,
     gap: 9,
+    shadowColor: "#07152F",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
   },
-  legSpacing: { marginTop: 14 },
   blue: { color: ui.blue, fontSize: 11, fontWeight: "800" },
   provider: { fontSize: 13, fontWeight: "800", color: ui.navy },
   carrierRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  routeDurationRow: { flexDirection: "row", alignItems: "center" },
-  legRoute: { flexDirection: "row", alignItems: "center", minHeight: 25 },
-  routeDetailsRow: { flexDirection: "row", alignItems: "flex-start" },
-  routeEdge: { width: 82, minWidth: 0 },
-  routeArrival: { alignItems: "flex-end" },
-  routeCenter: { flex: 1, minWidth: 56, textAlign: "center" },
+  legRoute: { flexDirection: "row", alignItems: "center" },
   time: { fontSize: 19, fontWeight: "900", color: ui.navy },
   airport: { fontSize: 12, color: ui.muted },
-  middle: { flex: 1, minWidth: 56, flexDirection: "row", alignItems: "center" },
+  middle: { width: 120, alignItems: "center" },
   line: {
     height: 1,
-    flex: 1,
+    width: "100%",
     backgroundColor: ui.muted,
+    marginVertical: 7,
   },
-  plane: { paddingHorizontal: 5 },
   price: { fontSize: 24, fontWeight: "900", color: ui.navy },
   tripDetails: {
     borderRadius: 13,
