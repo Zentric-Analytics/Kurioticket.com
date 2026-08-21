@@ -14,6 +14,17 @@ const OTA_SAFE = [
   /^apps\/mobile\/(?:app|src|components|hooks|lib|utils)\//,
   /^apps\/mobile\/assets\/(?!.*(?:icon|splash|adaptive|notification|font))/i,
 ];
+// apps/mobile maps @/* to the repository's src/* tree. Keep this allowlist in
+// sync with the shared runtime dependency graph rooted at CarSearchPanel so a
+// web-path change that ships inside the Metro bundle cannot be classified as
+// web-only.
+const MOBILE_SHARED_RUNTIME = [
+  /^src\/lib\/cars\/carLocationSuggestions\.ts$/,
+  /^src\/lib\/geo\/(?:context|distance)\.ts$/,
+  /^src\/lib\/region\/countryDisplayNames\.ts$/,
+  /^src\/lib\/supportedLocales\.ts$/,
+  /^src\/(?:data\/(?:airports|carRentalAreas)|shared\/airports)\.ts$/,
+];
 const MOBILE_TOOLING = [
   /^apps\/mobile\/scripts\//,
   /^apps\/mobile\/src\/__tests__\//,
@@ -33,7 +44,10 @@ export function classifyChangeSet(files) {
   const docsOnly = unique.every((file) => DOC_PATTERNS.some((pattern) => pattern.test(file)));
   const web = unique.filter((file) => WEB_PREFIXES.some((prefix) => file.startsWith(prefix)) || ["package.json", "package-lock.json", "next.config.ts"].includes(file));
   const mobileTooling = mobile.filter((file) => MOBILE_TOOLING.some((pattern) => pattern.test(file)));
-  const otaCandidates = mobile.filter((file) => !mobileTooling.includes(file) && OTA_SAFE.some((pattern) => pattern.test(file)));
+  const otaCandidates = [
+    ...mobile.filter((file) => !mobileTooling.includes(file) && OTA_SAFE.some((pattern) => pattern.test(file))),
+    ...unique.filter((file) => MOBILE_SHARED_RUNTIME.some((pattern) => pattern.test(file))),
+  ];
   const uncertainMobile = mobile.filter((file) => !iosNative.includes(file) && !androidNative.includes(file) && !otaCandidates.includes(file) && !mobileTooling.includes(file) && !DOC_PATTERNS.some((pattern) => pattern.test(file)));
 
   if (uncertainMobile.length) return result("UNSAFE", "uncertain-mobile-change", unique, { uncertainMobile });
