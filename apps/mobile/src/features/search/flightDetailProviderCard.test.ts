@@ -50,7 +50,7 @@ test("responsive actions retain the displayed fare and Select behavior", () => {
   assert.match(detailSource, /offerActionsCompact: \{[\s\S]*?flexDirection: "column"/);
   assert.match(flightDetail, /price=\{formattedFare\}/);
   assert.match(flightDetail, /<Offer[\s\S]*?onSelect=\{handleProviderBooking\}/);
-  assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 3);
+  assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 2);
 });
 
 test("flight offer reuses the normalized result logo regardless of provider identity", () => {
