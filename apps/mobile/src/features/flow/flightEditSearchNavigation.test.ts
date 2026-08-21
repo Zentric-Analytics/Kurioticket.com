@@ -16,8 +16,23 @@ test("dedicated edit screen hydrates the shared form, cancels, and replaces stal
   const screen = readFileSync("src/features/flow/EditFlightSearchScreen.tsx", "utf8");
   const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
   assert.match(screen, /useLocalSearchParams<Record<string, string \| string\[\]>>\(\)/);
-  assert.match(screen, /<FlightSearchPanel params=\{params\} submitNavigation="replace" \/>/);
+  assert.match(screen, /<FlightSearchPanel params=\{params\} submitNavigation="replace" editAppearance \/>/);
   assert.match(screen, /onPress=\{\(\) => router\.back\(\)\}/);
   assert.doesNotMatch(screen, /FlightsScreen|ResponsiveHero|Routes/);
   assert.match(panel, /router\[submitNavigation\]\(\{ pathname: "\/flight-results", params: flightSearchParams\(form\) \}\)/);
+});
+
+
+test("edit flight search uses the unified responsive editor hierarchy", () => {
+  const screen = readFileSync("src/features/flow/EditFlightSearchScreen.tsx", "utf8");
+  const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
+  assert.match(screen, /Update your trip details/);
+  assert.match(screen, /content: \{ flexGrow: 1/);
+  assert.match(panel, /appearance=\{editAppearance \? "filled" : "default"\}/);
+  assert.match(panel, /label: "One way"/);
+  assert.match(panel, /label: "Multi-city", disabled: true/);
+  assert.match(panel, /accessibilityLabel="Swap origin and destination"/);
+  assert.match(panel, /editCard:\{borderWidth:0,borderRadius:22/);
+  assert.match(panel, /form\.tripType === "round-trip" \? `\$\{departureValue\} — \$\{returnValue\}` : departureValue/);
+  assert.match(panel, /plural\(form\.children,"child","children"\)/);
 });

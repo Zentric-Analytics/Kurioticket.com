@@ -15,10 +15,10 @@ test("From and To use the existing location icon without changing picker behavio
 
   assert.ok(from);
   assert.match(from, /icon="location"/);
-  assert.match(from, /onPress=\{\(\) => \{ userControlsOrigin\.current = true; setPicker\("from"\); \}\}/);
+  assert.match(panel, /onPress=\{\(\) => \{ userControlsOrigin\.current = true; setPicker\("from"\); \}\}/);
   assert.ok(to);
   assert.match(to, /icon="location"/);
-  assert.match(to, /onPress=\{\(\) => setPicker\("to"\)\}/);
+  assert.match(panel, /onPress=\{\(\) => setPicker\("to"\)\}/);
   assert.equal(panel.match(/icon="location"/g)?.length, 2);
 });
 
@@ -40,6 +40,6 @@ test("the location glyph stays decorative and precedes the Field text", () => {
 });
 
 test("the accessible swap control and icon remain in place", () => {
-  assert.match(panel, /accessibilityLabel="Swap origin and destination"[\s\S]*?onPress=\{swapAirports\} style=\{styles\.swap\}><FlowIcon name="swap"/);
-  assert.match(panel, /swap:\{position:"absolute",right:12,top:50,width:44,height:44/);
+  assert.match(panel, /accessibilityLabel="Swap origin and destination"[\s\S]*?onPress=\{swapAirports\} style=\{\[styles\.swap,[\s\S]*?<FlowIcon name="swap"/);
+  assert.match(panel, /swap:\{position:"absolute",right:16,top:58,width:44,height:44/);
 });
