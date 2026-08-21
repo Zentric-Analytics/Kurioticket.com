@@ -69,6 +69,16 @@ function dateDraftFromValue(value?: string | null): DateDraft {
   };
 }
 
+function dateMonthLabel(value: string, locale: string) {
+  if (!/^\d{2}$/.test(value)) return "";
+  const monthIndex = Number(value) - 1;
+  if (monthIndex < 0 || monthIndex > 11) return "";
+  return new Intl.DateTimeFormat(locale === "es-es" ? "es-ES" : "en-US", {
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(2020, monthIndex, 1)));
+}
+
 type SelectorProps = {
   visible: boolean;
   title: string;
@@ -1002,7 +1012,7 @@ export function PersonalDetailsScreen() {
                     <SelectButton
                       hideLabel
                       label={c.month}
-                      value={dateDraft.month || c.month}
+                      value={dateMonthLabel(dateDraft.month, locale) || c.month}
                       onPress={() => openSelector("month")}
                     />
                   </View>
