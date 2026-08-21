@@ -40,7 +40,7 @@ test("standalone Flights mobile landing form enables every supported trip option
   );
   assert.match(
     source,
-    /"Round-trip"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/,
+    /"Round trip"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/,
   );
   assert.doesNotMatch(source, /aria-disabled=\{value === "multi-city"\}/);
   assert.doesNotMatch(source, /disabled=\{value === "multi-city"\}/);

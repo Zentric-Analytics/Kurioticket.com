@@ -1542,7 +1542,7 @@ export function StandaloneFlightSearchForm({
               <span>
                 {locale.toLowerCase().startsWith("en")
                   ? value === "round-trip"
-                    ? "Round-trip"
+                    ? "Round trip"
                     : value === "one-way"
                       ? "One way-trip"
                       : "Multi-city trip"
