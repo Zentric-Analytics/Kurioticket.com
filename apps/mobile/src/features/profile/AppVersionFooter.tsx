@@ -1,20 +1,22 @@
 import Constants from "expo-constants";
 import { StyleSheet, Text, View } from "react-native";
+import { useSyncExternalStore } from "react";
 import { useMobileLocalization } from "../../localization/MobileLocalization";
 import { useAppTheme } from "../../theme/AppTheme";
 import { formatPreviewDiagnostics } from "../../diagnostics/buildDiagnostics";
 import { getRuntimeDiagnostics } from "../../diagnostics/runtimeDiagnostics";
-import { getUpdateCheckDiagnostics } from "../../updates/updateCheckDiagnostics";
+import { getUpdateCheckDiagnostics, subscribeToUpdateCheckDiagnostics } from "../../updates/updateCheckDiagnostics";
 
 export function AppVersionFooter() {
   const { theme } = useAppTheme();
   const { t } = useMobileLocalization();
   const version = Constants.expoConfig?.version;
+  const updateCheck = useSyncExternalStore(subscribeToUpdateCheckDiagnostics, getUpdateCheckDiagnostics, getUpdateCheckDiagnostics);
   if (!version) return null;
   const label = `${t("version")} ${version}`;
   const isPreview = Constants.expoConfig?.extra?.environment?.isPreview === true;
   if (!isPreview) return <Text accessibilityLabel={label} style={[styles.text, { color: theme.muted }]}>{label}</Text>;
-  const lines = formatPreviewDiagnostics(getRuntimeDiagnostics(), getUpdateCheckDiagnostics());
+  const lines = formatPreviewDiagnostics(getRuntimeDiagnostics(), updateCheck);
   return <View accessibilityLabel={lines.join(". ")} style={styles.preview}><Text style={[styles.heading, { color: theme.text }]}>Preview delivery diagnostics</Text>{lines.map(line => <Text key={line} style={[styles.detail, { color: theme.muted }]}>{line}</Text>)}</View>;
 }
 
