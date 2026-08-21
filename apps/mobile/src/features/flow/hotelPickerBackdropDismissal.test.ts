@@ -20,7 +20,7 @@ test("Hotels explicitly opt into calendar backdrop dismissal without changing th
   assert.match(calendar, /dismissOnBackdropPress = false/);
   assert.match(calendar, /dismissOnBackdropPress \? <Pressable[^>]+onPress=\{onClose\}/);
   assert.match(calendar, /onRequestClose=\{onClose\}/);
-  assert.match(calendar, /<View accessibilityViewIsModal style=\{styles\.modal\}>/);
+  assert.match(calendar, /<View accessibilityViewIsModal style=\{\[styles\.modal, \{ backgroundColor: ft\.colors\.surface \}\]\}>/);
 });
 
 test("Guests backdrop and Android Back cancel drafts while Done remains the only commit path", () => {
