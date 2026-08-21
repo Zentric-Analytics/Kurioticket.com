@@ -26,7 +26,7 @@ export type PackageSearch = {
 
 export const createPackageSearch = (): PackageSearch => ({
   mode: "hotel-flight", origin: "", originCode: "", destination: "", destinationCode: "",
-  startDate: "", endDate: "", adults: 2, children: 0, infants: 0, rooms: 1,
+  startDate: "", endDate: "", adults: 1, children: 0, infants: 0, rooms: 1,
   petFriendly: false, cabin: "economy", carPickupLocation: "", carPickupDate: "", carReturnDate: "",
   carPickupTime: "10:00", carReturnTime: "10:00", carDriverAge: 30,
   stayDestinationLinked: true, stayDatesLinked: true, carPickupLinked: true, carDatesLinked: true,

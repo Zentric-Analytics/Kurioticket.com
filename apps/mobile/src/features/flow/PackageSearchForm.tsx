@@ -16,6 +16,7 @@ const dateText = (value: string) => value ? new Date(`${value}T12:00:00`).toLoca
 export function PackageSearchForm({ presentation }: { presentation: "home" | "standalone" }) {
   const ft = useFlowTheme();
   const [search, setSearch] = useState(createPackageSearch);
+  const travelerCount = search.adults + search.children + search.infants;
   const [airportField, setAirportField] = useState<"origin" | "destination">();
   const [hotelDestinationOpen, setHotelDestinationOpen] = useState(false);
   const [datesOpen, setDatesOpen] = useState(false);
@@ -42,7 +43,7 @@ export function PackageSearchForm({ presentation }: { presentation: "home" | "st
       {included.flight ? <CompactField label="Origin" value={search.origin || "City or airport"} muted={!search.origin} icon="location" onPress={() => setAirportField("origin")}/> : null}
       <CompactField label="Destination" value={search.destination || "Select destination"} muted={!search.destination} icon="location" onPress={() => included.flight ? setAirportField("destination") : setHotelDestinationOpen(true)}/>
       <CompactField label="Travel dates" value={search.startDate ? `${dateText(search.startDate)} — ${dateText(search.endDate)}` : "Choose dates"} muted={!search.startDate} icon="calendar" onPress={() => setDatesOpen(true)}/>
-      <CompactField label={included.hotel ? "Travelers & Rooms" : "Travelers"} value={`${search.adults + search.children + search.infants} travelers${included.hotel ? ` · ${search.rooms} ${search.rooms === 1 ? "room" : "rooms"}` : ""}`} icon="person" onPress={() => setPartyOpen(true)}/>
+      <CompactField label={included.hotel ? "Travelers & Rooms" : "Travelers"} value={`${travelerCount} ${travelerCount === 1 ? "traveler" : "travelers"}${included.hotel ? ` · ${search.rooms} ${search.rooms === 1 ? "room" : "rooms"}` : ""}`} icon="person" onPress={() => setPartyOpen(true)}/>
       {included.car ? <CompactField label="Pick-up / Return time" value={rentalTimesSummary(search.carPickupTime, search.carReturnTime)} icon="clock" onPress={() => setTimesOpen(true)}/> : null}
     </View>
     <View style={styles.submit}><PrimaryButton label="Search package" icon="search" onPress={submit}/></View>
