@@ -18,8 +18,12 @@ test("desktop Flights exposes the complete trip-type selector", () => {
   );
   assert.match(
     formSource,
-    /value === "round-trip"[\s\S]*?"Round-trip"[\s\S]*?value === "one-way"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/,
+    /value === "round-trip"[\s\S]*?"Round trip"[\s\S]*?value === "one-way"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/,
   );
+  assert.match(formSource, /\["round-trip", t\("roundTrip"\)\]/);
+  assert.match(formSource, /\["one-way", t\("oneWay"\)\]/);
+  assert.match(formSource, /\["multi-city", "Multi-city"\] as const/);
+  assert.doesNotMatch(formSource, /value === "round-trip"[\s\S]*?"Round-trip"/);
   assert.match(formSource, /data-testid="desktop-flight-landing-identity"/);
   assert.match(
     formSource,

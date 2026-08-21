@@ -6,13 +6,14 @@ const read = (file: string) => readFileSync(`src/features/flow/${file}`, "utf8")
 
 test("native Flights exposes the exact three trip selector labels in order", () => {
   const panel = read("FlightSearchPanel.tsx");
-  const roundTrip = panel.indexOf('{ value: "round-trip", label: "Round-trip" }');
+  const roundTrip = panel.indexOf('{ value: "round-trip", label: "Round trip" }');
   const oneWay = panel.indexOf('{ value: "one-way", label: "One way-trip" }');
   const multiCity = panel.indexOf('{ value: "multi-city", label: "Multi-city trip"');
 
   assert.ok(roundTrip >= 0);
   assert.ok(roundTrip < oneWay);
   assert.ok(oneWay < multiCity);
+  assert.doesNotMatch(panel, /value: "round-trip", label: "Round-trip"/);
   assert.match(panel, /value: "multi-city", label: "Multi-city trip", disabled: true, accessibilityHint: "Multi-city search is coming soon"/);
 });
 
