@@ -92,6 +92,22 @@ test("checks for an update when the app returns to the foreground", async () => 
   assert.equal(checks, 1);
 });
 
+test("does not duplicate the cold-start check when initial app state is unresolved", async () => {
+  let checks = 0;
+  const handleStateChange = createForegroundUpdateHandler(async () => {
+    checks += 1;
+  }, "unknown");
+
+  handleStateChange("active");
+  await flush();
+  assert.equal(checks, 0);
+
+  handleStateChange("background");
+  handleStateChange("active");
+  await flush();
+  assert.equal(checks, 1);
+});
+
 test("does not start parallel update checks across rapid foreground transitions", async () => {
   let checks = 0;
   let releaseFirstCheck: (() => void) | undefined;
