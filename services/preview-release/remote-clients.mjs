@@ -276,23 +276,37 @@ export class EasClient {
       const platform = platformIndex >= 0 ? args[platformIndex + 1] : null;
       const startedAt = Date.now();
       console.log(JSON.stringify({ event: "preview-release-eas-command-started", command: args[1], platform, rssBytes: process.memoryUsage().rss }));
-      const { stdout } = await exec(this.command, args, {
-        cwd: this.cwd,
-        encoding: "utf8",
-        maxBuffer: 10 * 1024 * 1024,
-        timeout: isUpdatePublish ? 20 * 60 * 1000 : 5 * 60 * 1000,
-        env: easCommandEnvironment({
-          baseEnvironment: process.env,
-          directory,
-          expoToken: this.expoToken,
-          isUpdatePublish,
-        }),
-      });
+      let stdout;
+      try {
+        ({ stdout } = await exec(this.command, args, {
+          cwd: this.cwd,
+          encoding: "utf8",
+          maxBuffer: 10 * 1024 * 1024,
+          timeout: isUpdatePublish ? 20 * 60 * 1000 : 5 * 60 * 1000,
+          env: easCommandEnvironment({
+            baseEnvironment: process.env,
+            directory,
+            expoToken: this.expoToken,
+            isUpdatePublish,
+          }),
+        }));
+      } catch (error) {
+        throw new Error(easCommandFailureMessage(args[1], error, [this.expoToken]), { cause: error });
+      }
       await import("node:fs/promises").then(({ writeFile }) => writeFile(stdoutPath, stdout, { mode: 0o600 }));
       console.log(JSON.stringify({ event: "preview-release-eas-command-complete", command: args[1], platform, durationMs: Date.now() - startedAt, rssBytes: process.memoryUsage().rss }));
       return readFile(stdoutPath, "utf8");
     } finally { await rm(directory, { recursive: true, force: true }); }
   }
+}
+
+export function easCommandFailureMessage(command, error, secrets = []) {
+  let detail = [error?.message, error?.stdout, error?.stderr].filter(Boolean).join("\n").replace(/\s+/g, " ").trim();
+  for (const secret of secrets) if (typeof secret === "string" && secret) detail = detail.split(secret).join("[REDACTED]");
+  // The worker's structured error envelope is deliberately bounded. Preserve
+  // the end of EAS/Metro output, where the actionable failure is emitted,
+  // instead of the repeated command and environment preamble at the start.
+  return `EAS ${command ?? "command"} failed: ${detail.slice(-440) || "No diagnostic output was returned."}`;
 }
 
 export function easCommandEnvironment({ baseEnvironment = process.env, directory, expoToken, isUpdatePublish }) {

@@ -9,7 +9,7 @@ import { classifyChangeSet } from "./classifier.mjs";
 import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, assertCoalescedOtaCompatibility, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry } from "./orchestrator.mjs";
-import { createExactCheckoutDirectory, easCommandEnvironment, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
+import { createExactCheckoutDirectory, easCommandEnvironment, easCommandFailureMessage, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { PreviewLedger } from "./ledger.mjs";
@@ -1325,6 +1325,18 @@ test("EAS commands isolate every temporary path inside the command-owned directo
   assert.equal(environment.TEMP, "/tmp/kurioticket-eas-owned");
   assert.equal(environment.NODE_OPTIONS, "--max-old-space-size=512");
   assert.equal(environment.EXPO_TOKEN, "expo-token");
+});
+
+test("EAS command failures preserve the actionable output tail and redact credentials", () => {
+  const secret = "expo-secret-token";
+  const error = Object.assign(new Error(`command preamble ${"x".repeat(600)}`), {
+    stderr: `environment ${secret}\nMetro export failed: Unable to resolve module MobileLocalization`,
+  });
+  const message = easCommandFailureMessage("update", error, [secret]);
+
+  assert.match(message, /^EAS update failed:/);
+  assert.match(message, /Metro export failed: Unable to resolve module MobileLocalization/);
+  assert.doesNotMatch(message, new RegExp(secret));
 });
 
 test("OTA delivery publishes platforms sequentially and resumes only a missing platform", async () => {
