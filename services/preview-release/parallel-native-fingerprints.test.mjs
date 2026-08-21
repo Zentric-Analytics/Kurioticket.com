@@ -57,6 +57,7 @@ test("native fingerprints evaluate app config with the exact EAS build platform"
   const environments = new Map();
   await nativeFingerprints("/tmp/preview-checkout", {
     expoToken: "token",
+    baseEnvironment: { EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: "inherited-wrong-client.apps.googleusercontent.com" },
     commandRunner: async (_command, args, options) => {
       const platform = fingerprintPlatform(args);
       environments.set(platform, options.env);
