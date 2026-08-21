@@ -12,11 +12,21 @@ test("empty and array parameters initialize once with local safe defaults", () =
   const array = initializeCarForm({ pickupLocation: ["LAX", "ignored"], dropoffLocation: ["SFO"], pickupDate: ["2026-08-10"], pickupTime: ["09:30"], dropoffDate: ["2026-08-11"], dropoffTime: ["10:00"], driverAge: ["35"] }, new Date(2026, 6, 1)).form;
   assert.deepEqual(array, { pickupLocation:"LAX",dropoffLocation:"SFO",separateDropoff:true,pickupDate:"2026-08-10",pickupTime:"09:30",dropoffDate:"2026-08-11",dropoffTime:"10:00",driverAge:35 });
 });
-test("fresh Home Cars keeps time and age defaults without generated rental dates", () => {
-  assert.deepEqual(initializeHomeCarForm({}, today).form, {
+test("fresh Home Cars keeps time defaults without inventing rental dates or driver age", () => {
+  const form = initializeHomeCarForm({}, today).form;
+  assert.deepEqual(form, {
     pickupLocation: "", separateDropoff: false, dropoffLocation: "", pickupDate: "", pickupTime: "10:00",
-    dropoffDate: "", dropoffTime: "10:00", driverAge: 30,
+    dropoffDate: "", dropoffTime: "10:00", driverAge: undefined,
   });
+  assert.equal(carSearchParams(form).driverAge, "");
+});
+test("Home Cars preserves valid driver age and rejects invalid age intent without a fallback", () => {
+  const restored = initializeHomeCarForm({ driverAge: "35" }, today).form;
+  assert.equal(restored.driverAge, 35);
+  assert.equal(carSearchParams(restored).driverAge, "35");
+  for (const driverAge of ["17", "71", "abc"]) {
+    assert.equal(initializeHomeCarForm({ driverAge }, today).form.driverAge, undefined);
+  }
 });
 test("Home Cars preserves valid restored dates and leaves invalid date intent empty", () => {
   const restored = initializeHomeCarForm({ pickupDate: "2026-08-10", dropoffDate: "2026-08-15" }, new Date(2026, 6, 1)).form;

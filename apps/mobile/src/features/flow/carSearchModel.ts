@@ -31,14 +31,15 @@ export function initializeCarForm(params: Record<string, RouteValue>, today = ne
   return { form: { ...defaults, pickupLocation, dropoffLocation, separateDropoff, ...(datesValid && timesValid ? { pickupDate, dropoffDate, pickupTime, dropoffTime } : {}), driverAge: age ?? CAR_AGE.default }, notice: hadInvalid ? "Some search details were invalid, so safe defaults were used." : undefined };
 }
 
-/** Home initialization: keep standard time/age defaults without inventing rental dates. */
+/** Home initialization: keep standard time defaults without inventing rental dates or driver age. */
 export function initializeHomeCarForm(params: Record<string, RouteValue>, today = new Date()): { form: CarForm; notice?: string } {
   const initialized = initializeCarForm(params, today);
   const pickupDate = firstRouteParam(params.pickupDate);
   const dropoffDate = firstRouteParam(params.dropoffDate);
+  const driverAge = parseDriverAge(firstRouteParam(params.driverAge));
   const todayIso = localIsoDate(today);
   const datesValid = Boolean(localDateFromIso(pickupDate) && localDateFromIso(dropoffDate) && pickupDate >= todayIso && dropoffDate >= pickupDate);
-  return { ...initialized, form: { ...initialized.form, pickupDate: datesValid ? pickupDate : "", dropoffDate: datesValid ? dropoffDate : "" } };
+  return { ...initialized, form: { ...initialized.form, pickupDate: datesValid ? pickupDate : "", dropoffDate: datesValid ? dropoffDate : "", driverAge } };
 }
 
 /** Cars-route initialization: valid incoming intent wins, while a fresh form stays empty. */
