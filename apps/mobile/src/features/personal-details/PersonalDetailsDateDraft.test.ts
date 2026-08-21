@@ -11,7 +11,10 @@ test("DOB picker keeps partial day month and year selections visible until compl
   assert.match(screen, /type DateDraft = \{/);
   assert.match(screen, /\[dateDraft, setDateDraft\] = useState<DateDraft>/);
   assert.match(screen, /value=\{dateDraft\.day \|\| c\.day\}/);
-  assert.match(screen, /value=\{dateDraft\.month \|\| c\.month\}/);
+  assert.match(
+    screen,
+    /value=\{dateMonthLabel\(dateDraft\.month, locale\) \|\| c\.month\}/,
+  );
   assert.match(screen, /value=\{dateDraft\.year \|\| c\.year\}/);
 
   assert.match(
