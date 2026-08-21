@@ -52,6 +52,23 @@ test("iOS and Android native fingerprints start together", async () => {
   });
 });
 
+test("native fingerprints evaluate app config with the exact EAS build platform", async () => {
+  const environments = new Map();
+  await nativeFingerprints("/tmp/preview-checkout", {
+    expoToken: "token",
+    commandRunner: async (_command, args, options) => {
+      const platform = fingerprintPlatform(args);
+      environments.set(platform, options.env);
+      return { stdout: JSON.stringify({ hash: hash(platform === "ios" ? "a" : "b") }) };
+    },
+  });
+
+  for (const platform of ["ios", "android"]) {
+    assert.equal(environments.get(platform).EAS_BUILD, "true");
+    assert.equal(environments.get(platform).EAS_BUILD_PLATFORM, platform);
+  }
+});
+
 test("one fingerprint failure waits for the sibling process before rejecting", async () => {
   const android = deferred();
   let androidFinished = false;

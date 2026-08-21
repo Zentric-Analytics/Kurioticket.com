@@ -300,6 +300,8 @@ export class EasClient {
             directory,
             expoToken: this.expoToken,
             isUpdatePublish,
+            isBuildCreate: args[1] === "build",
+            platform,
           }),
         }));
       } catch (error) {
@@ -321,14 +323,16 @@ export function easCommandFailureMessage(command, error, secrets = []) {
   return `EAS ${command ?? "command"} failed: ${detail.slice(-440) || "No diagnostic output was returned."}`;
 }
 
-export function easCommandEnvironment({ baseEnvironment = process.env, directory, expoToken, isUpdatePublish }) {
+export function easCommandEnvironment({ baseEnvironment = process.env, directory, expoToken, isUpdatePublish, isBuildCreate = false, platform = null }) {
   if (!directory) throw new Error("EAS command temporary directory is required.");
+  if (isBuildCreate && !["ios", "android"].includes(platform)) throw new Error("EAS build platform is required for app-config parity.");
   return {
     ...baseEnvironment,
     EXPO_TOKEN: expoToken,
     APP_VARIANT: "preview",
     APP_BUILD_MODE: "release",
     EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
+    ...(isBuildCreate ? { EAS_BUILD: "true", EAS_BUILD_PLATFORM: platform } : {}),
     CI: "1",
     // Expo, Metro, and the EAS CLI create temporary artifacts outside their
     // output directory. Scope every platform-specific temp variable to the
@@ -484,6 +488,8 @@ export async function nativeFingerprints(directory, { commandRunner = exec, expo
         EXPO_TOKEN: expoToken,
         APP_VARIANT: "preview",
         APP_BUILD_MODE: "release",
+        EAS_BUILD: "true",
+        EAS_BUILD_PLATFORM: platform,
         EXPO_PUBLIC_API_BASE_URL: PREVIEW_IDENTITY.apiOrigin,
         NODE_OPTIONS: "--max-old-space-size=192",
         MALLOC_ARENA_MAX: "2",
