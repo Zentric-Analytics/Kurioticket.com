@@ -5,14 +5,14 @@ import test from "node:test";
 
 const source = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
 const flightDetail = source.slice(source.indexOf("function FlightDetail"), source.indexOf("function HotelDetail"));
-const itinerary = flightDetail.slice(flightDetail.indexOf("d.itinerarySection"), flightDetail.indexOf(">Trip details<"));
+const itinerary = flightDetail.slice(flightDetail.indexOf("<View style={[d.section"), flightDetail.indexOf(">Trip details<"));
 const styles = source.slice(source.indexOf("const d = StyleSheet.create"));
 
-test("the unified itinerary maps only authoritative legs and supports one-way and round trips", () => {
+test("the itinerary maps authoritative legs for one-way and round trips", () => {
   assert.match(itinerary, /\{legs\.map\(\(leg, i\) => \(/);
   assert.match(itinerary, /leg\.direction\.toUpperCase\(\)/);
-  assert.match(itinerary, /new Date\(leg\.departureTime\)\.toLocaleDateString\("en-US", \{[\s\S]*?month: "short",[\s\S]*?day: "numeric"/);
-  assert.doesNotMatch(itinerary, /weekday:|RETURN|Return/);
+  assert.match(itinerary, /new Date\(leg\.departureTime\)\.toLocaleDateString\("en-US", \{[\s\S]*?weekday: "short",[\s\S]*?month: "short",[\s\S]*?day: "numeric"/);
+  assert.doesNotMatch(itinerary, /direction: "return"|>RETURN</);
   assert.match(flightDetail, /const legs = result\.legs\?\.length\s*\? result\.legs\s*:\s*\[[\s\S]*?direction: "outbound" as const/);
 });
 
@@ -28,24 +28,21 @@ test("each leg keeps the existing airline identity and all authoritative route v
   assert.match(itinerary, /leg\.layovers\?\.length[\s\S]*?\.map\(\(x\) => `\$\{x\.airport\} · \$\{x\.duration\}`\)/);
 });
 
-test("duration, timeline times, and airport/stop details use explicit vertical bands", () => {
-  const duration = itinerary.indexOf("d.routeDurationRow");
-  const timeline = itinerary.indexOf("d.legRoute");
-  const details = itinerary.indexOf("d.routeDetailsRow");
-  assert.ok(duration > -1 && duration < timeline && timeline < details);
-  const timelineBand = itinerary.slice(timeline, details);
-  assert.match(timelineBand, /clock\(leg\.departureTime\)[\s\S]*?<FlowIcon name="flight"[\s\S]*?clock\(leg\.arrivalTime\)/);
-  assert.match(styles, /legRoute: \{ flexDirection: "row", alignItems: "center"/);
-  assert.match(styles, /middle: \{ flex: 1, minWidth: 56, flexDirection: "row", alignItems: "center"/);
-  assert.match(styles, /routeEdge: \{ width: 82/);
+test("each leg uses the previous departure, middle timeline, and arrival columns", () => {
+  assert.match(itinerary, /<View style=\{d\.legRoute\}>[\s\S]*?<View style=\{\{ flex: 1, minWidth: 0 \}\}>[\s\S]*?clock\(leg\.departureTime\)[\s\S]*?leg\.originAirport[\s\S]*?<View style=\{d\.middle\}>[\s\S]*?leg\.duration[\s\S]*?d\.line[\s\S]*?leg\.stops[\s\S]*?<View style=\{\{ flex: 1, alignItems: "flex-end" \}\}>[\s\S]*?clock\(leg\.arrivalTime\)[\s\S]*?leg\.destinationAirport/);
+  assert.match(styles, /legRoute: \{ flexDirection: "row", alignItems: "center" \}/);
+  assert.match(styles, /middle: \{ width: 120, alignItems: "center" \}/);
+  assert.match(styles, /line: \{[\s\S]*?height: 1,[\s\S]*?width: "100%",[\s\S]*?marginVertical: 7/);
+  assert.doesNotMatch(itinerary, /d\.(?:routeDurationRow|routeDetailsRow|routeEdge|routeCenter|routeArrival|plane)/);
+  assert.doesNotMatch(itinerary, /<FlowIcon name="flight"/);
 });
 
-test("the itinerary is one elevated themed card without bordered leg cards", () => {
-  assert.match(itinerary, /d\.itinerarySection, \{ backgroundColor: theme\.surface \}, theme\.dark && d\.itinerarySectionDark/);
-  assert.match(styles, /itinerarySection: \{[\s\S]*?borderRadius: 13,[\s\S]*?shadowOpacity: 0\.1,[\s\S]*?elevation: 3/);
-  const legStyle = styles.slice(styles.indexOf("leg:"), styles.indexOf("legSpacing:"));
-  assert.doesNotMatch(legStyle, /border|shadow|backgroundColor|padding/);
-  assert.match(styles, /itinerarySectionDark: \{ shadowOpacity: 0\.28, elevation: 2 \}/);
+test("the standard section contains individually bordered and shadowed leg cards", () => {
+  assert.match(itinerary, /d\.section, \{ backgroundColor: theme\.surface, borderColor: theme\.border \}/);
+  assert.match(itinerary, /d\.leg, \{ backgroundColor: theme\.dark \? "#17243A" : theme\.surface, borderColor: theme\.border \}/);
+  const legStyle = styles.slice(styles.indexOf("leg:"), styles.indexOf("blue:"));
+  assert.match(legStyle, /borderWidth: 1,[\s\S]*?borderRadius: 11,[\s\S]*?padding: 14,[\s\S]*?shadowOpacity: 0\.06,[\s\S]*?shadowRadius: 8/);
+  assert.doesNotMatch(styles, /itinerarySection|legSpacing|routeDurationRow|routeDetailsRow|routeEdge|routeCenter|routeArrival|plane:/);
 });
 
 test("the completed header, trip details, and booking sections remain in place", () => {
