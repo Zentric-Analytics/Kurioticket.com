@@ -322,6 +322,31 @@ test("603-result cache writes remain complete and compatible", async () => {
   assert.equal("providerOfferId" in toPublicFlight((await cache.get(results[0].id, 10_001))!), false);
 });
 
+test("552-result browser identity set exactly matches cache input and database RETURNING", async () => {
+  const memory = createMemoryFlightCacheBackend();
+  let databaseCommittedIds: string[] = [];
+  const cache = createFlightResultCache({
+    ...memory,
+    async write(records) {
+      databaseCommittedIds = await memory.write(records);
+      return databaseCommittedIds;
+    },
+  });
+  const results = Array.from({ length: 552 }, (_, index) =>
+    flight(`duffel-result-production-${index}`, 40_000),
+  );
+
+  const outcome = await cache.remember(results, 10_000, oneWaySearch, "visible-main-request");
+  const cacheInputIds = results.map(({ id }) => id).sort();
+  const publicResponseIds = results.map(toPublicFlight).map(({ id }) => id).sort();
+  assert.equal(outcome.persisted, true);
+  assert.deepEqual(databaseCommittedIds.sort(), cacheInputIds);
+  assert.deepEqual(publicResponseIds, cacheInputIds);
+  for (const index of [0, Math.floor(results.length / 2), results.length - 1]) {
+    assert.equal((await cache.get(results[index].id, 10_001))?.id, results[index].id);
+  }
+});
+
 test("1000-result cache writes preserve every opaque mapping", async () => {
   const memory = createMemoryFlightCacheBackend();
   let databaseCommittedIds: string[] = [];
