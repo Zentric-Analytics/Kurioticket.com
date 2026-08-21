@@ -59,8 +59,8 @@ test("desktop homepage Hotel keeps empty focus closed and mutually excludes pick
 
 test("desktop flight controls expose the full truthful trip-type set", () => {
   assert.match(desktopBranch, /\["round-trip", "one-way", "multi-city"\]/);
-  assert.match(source, /"Round-trip"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/);
-  assert.match(desktopBranch, /homepageTripTypeLabel\(mode\)/);
+  assert.match(source, /t\.roundTrip[\s\S]*?t\.oneWay[\s\S]*?t\.multiCity/);
+  assert.match(desktopBranch, /tripTypeLabel\(mode\)/);
   assert.doesNotMatch(source, /\? "Round trip"[\s\S]*?: mode === "one-way"/);
   assert.match(desktopBranch, /role="radiogroup"/);
   assert.match(desktopBranch, /role="radio"/);

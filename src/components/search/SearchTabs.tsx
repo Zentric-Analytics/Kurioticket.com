@@ -1712,7 +1712,7 @@ export function SearchTabs({
       return (
         t.roundTrip ||
         t.tripRound ||
-        "Round trip"
+        "Round-trip"
       );
     }
 
@@ -1720,7 +1720,7 @@ export function SearchTabs({
       return (
         t.oneWay ||
         t.tripOneWay ||
-        "One way"
+        "One-way"
       );
     }
 
@@ -1729,20 +1729,6 @@ export function SearchTabs({
       t.tripMulti ||
       "Multi-city"
     );
-  };
-
-  const homepageTripTypeLabel = (mode: TripType) => {
-    const isEnglish = (locale ?? activeLocale).toLowerCase().startsWith("en");
-
-    if (isEnglish) {
-      return mode === "round-trip"
-        ? "Round-trip"
-        : mode === "one-way"
-          ? "One way-trip"
-          : "Multi-city trip";
-    }
-
-    return tripTypeLabel(mode);
   };
 
   const onSelectTripType = (mode: TripType) => {
@@ -2966,7 +2952,7 @@ export function SearchTabs({
                   >
                     <span className={cn("h-[5px] w-[5px] rounded-full bg-[#004BB8]", !selected && "invisible")} />
                   </span>
-                  {homepageTripTypeLabel(mode)}
+                  {tripTypeLabel(mode)}
                 </button>
               );
             })}
@@ -3307,7 +3293,7 @@ export function SearchTabs({
                             )}
                           />
                         </span>
-                        <span>{homepageTripTypeLabel(mode)}</span>
+                        <span>{tripTypeLabel(mode)}</span>
                       </button>
                     );
                   })}

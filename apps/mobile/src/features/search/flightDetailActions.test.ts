@@ -39,10 +39,10 @@ test("header model uses current airport codes, dates, passenger total, pluraliza
   assert.deepEqual(flightDetailHeaderModel(result, {
     tripType: "round-trip", departureDate: "2030-08-20", returnDate: "2030-08-22",
     adults: "1", children: "2", infants: "1", cabin: "Business",
-  }), { route: "LAX ⇄ LOS", tripTypeLabel: "Round trip", metadata: "Aug 20 – Aug 22 · 4 Travelers · Business" });
+  }), { route: "LAX ⇄ LOS", tripTypeLabel: "Round-trip", metadata: "Aug 20 – Aug 22 · 4 Travelers · Business" });
   assert.deepEqual(flightDetailHeaderModel(result, {
     tripType: "one-way", departureDate: "2030-08-20", adults: "1", children: "0", infants: "0", cabin: "premium-economy",
-  }), { route: "LAX → LOS", tripTypeLabel: "One way", metadata: "Aug 20 · 1 Traveler · Premium Economy" });
+  }), { route: "LAX → LOS", tripTypeLabel: "One-way", metadata: "Aug 20 · 1 Traveler · Premium Economy" });
 });
 
 test("metadata is plain text, one line, horizontally scrollable, and themed", () => {

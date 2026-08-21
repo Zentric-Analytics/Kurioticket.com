@@ -18,15 +18,15 @@ const fieldPrimitivesSource = readFileSync(
 test("desktop Flights exposes the complete trip-type selector", () => {
   assert.match(
     formSource,
-    /\.\.\.defaultTripTypeOptions,[\s\S]*?\["multi-city", "Multi-city"\] as const/,
+    /\.\.\.defaultTripTypeOptions,[\s\S]*?\["multi-city", t\("multiCity"\)\] as const/,
   );
   assert.match(
     formSource,
-    /value === "round-trip"[\s\S]*?"Round trip"[\s\S]*?value === "one-way"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/,
+    /\["round-trip", t\("roundTrip"\)\][\s\S]*?\["one-way", t\("oneWay"\)\][\s\S]*?\["multi-city", t\("multiCity"\)\]/,
   );
   assert.match(formSource, /\["round-trip", t\("roundTrip"\)\]/);
   assert.match(formSource, /\["one-way", t\("oneWay"\)\]/);
-  assert.match(formSource, /\["multi-city", "Multi-city"\] as const/);
+  assert.match(formSource, /\["multi-city", t\("multiCity"\)\] as const/);
   assert.doesNotMatch(formSource, /value === "round-trip"[\s\S]*?"Round-trip"/);
   assert.match(formSource, /data-testid="desktop-flight-landing-identity"/);
   assert.match(

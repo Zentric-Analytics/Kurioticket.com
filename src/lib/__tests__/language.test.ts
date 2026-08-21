@@ -11167,7 +11167,7 @@ test("Swedish Flights results active render path copy resolves without English f
     ["baggageIncluded", "Bagage ingår", "Baggage included"],
     ["flexibleRefundable", "Flexibel/återbetalningsbar", "Flexible/refundable"],
     ["tripType", "RESTYP", "Trip type"],
-    ["roundTrip", "Tur och retur", "Round trip"],
+    ["roundTrip", "Tur och retur", "Round-trip"],
     ["previousShort", "Föregående", "Prev"],
     ["nextShort", "Nästa", "Next"],
     ["weekdayMon", "Mån", "Mon"],
@@ -11337,8 +11337,8 @@ test("Vietnamese Flights Results page resolves search, filters, cards, and provi
 
   const expectedCopy: Array<[string, string, string, string[]]> = [
     ["tripType", "LOẠI CHUYẾN ĐI", "Trip type", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
-    ["roundTrip", "Khứ hồi", "Round trip", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
-    ["oneWay", "Một chiều", "One way", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
+    ["roundTrip", "Khứ hồi", "Round-trip", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
+    ["oneWay", "Một chiều", "One-way", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
     ["filterBy", "Lọc theo", "Filter by", [resultsSource]],
     ["airlines", "Hãng hàng không", "Airlines", [resultsSource]],
     ["airports", "Sân bay", "Airports", [resultsSource]],
