@@ -106,7 +106,13 @@ jobs:
           with open(sys.argv[1], 'rb') as f: value=plistlib.load(f)
           with open(sys.argv[2], 'w') as f: json.dump(value, f)
           PY
-          find "$RUNNER_TEMP/ipa/Payload" -type f -print0 | xargs -0 strings > "$RUNNER_TEMP/ipa-contents.txt"
+          EXPO_PLIST=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 3 -name Expo.plist -print -quit)
+          test -n "$EXPO_PLIST" || { echo 'IPA Expo Updates configuration is missing.' >&2; exit 1; }
+          python - "$EXPO_PLIST" "$RUNNER_TEMP/expo-config.json" <<'PY'
+          import json, plistlib, sys
+          with open(sys.argv[1], 'rb') as f: value=plistlib.load(f)
+          with open(sys.argv[2], 'w') as f: json.dump(value, f)
+          PY
           PROFILE=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 2 -name embedded.mobileprovision -print -quit)
           test -n "$PROFILE" || { echo 'IPA embedded provisioning profile is missing.' >&2; exit 1; }
           openssl smime -inform der -verify -noverify -in "$PROFILE" -out "$RUNNER_TEMP/provisioning-profile.plist"
@@ -128,7 +134,7 @@ jobs:
           if not serials: raise SystemExit('Provisioning profile contains no signing certificate')
           with open(sys.argv[2], 'w') as f: json.dump(serials, f)
           PY
-          node scripts/verify-production-ipa.mjs --plist "$RUNNER_TEMP/info.json" --contents "$RUNNER_TEMP/ipa-contents.txt" --provisioning-profile "$RUNNER_TEMP/provisioning-profile.json" --certificate-serials "$RUNNER_TEMP/certificate-serials.json" --output "$RUNNER_TEMP/ipa-evidence.json"
+          node scripts/verify-production-ipa.mjs --plist "$RUNNER_TEMP/info.json" --public-config "$RUNNER_TEMP/production-public.json" --expo-config "$RUNNER_TEMP/expo-config.json" --provisioning-profile "$RUNNER_TEMP/provisioning-profile.json" --certificate-serials "$RUNNER_TEMP/certificate-serials.json" --output "$RUNNER_TEMP/ipa-evidence.json"
       - name: Preserve non-secret iOS release evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
