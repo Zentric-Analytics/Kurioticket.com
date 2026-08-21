@@ -7,6 +7,9 @@ import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { getHotelPriceDetails } from "@/lib/hotels/hotelResultAvailability";
 import type { NormalizedHotelResult } from "@/lib/types";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
+import type { NormalizedFlightResult } from "@/lib/types";
+import type { FlightHandoff } from "@/services/travel/flightHandoff";
+import { revalidateFlightRedirectHandoff } from "@/services/travel/flightRedirectHandoff";
 
 export async function POST(request: Request) {
   if (isStagingEnvironment()) {
@@ -21,12 +24,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Redirect target is required." }, { status: 400 });
   }
 
-  const target = body.type === "flight" ? getFlightFromCache(body.id) : getHotelFromCache(body.id);
+  let target = body.type === "flight" ? await getFlightFromCache(body.id) : getHotelFromCache(body.id);
   if (!target) {
     return NextResponse.json(
       { error: "This partner link expired. Please search again for current prices." },
       { status: 404 },
     );
+  }
+
+  let verifiedFlightHandoff: FlightHandoff | null = null;
+  if (body.type === "flight") {
+    const cachedFlight = target as NormalizedFlightResult;
+    const verified = await revalidateFlightRedirectHandoff({ cachedOffer: cachedFlight });
+    if (verified.status === "changed") {
+      return NextResponse.json(
+        {
+          code: "offer_changed",
+          error: "The provider updated this offer. Review the current details before continuing.",
+        },
+        { status: 409 },
+      );
+    }
+    if (verified.status !== "ready") {
+      return NextResponse.json(
+        { error: "Booking link currently unavailable." },
+        { status: 409 },
+      );
+    }
+    verifiedFlightHandoff = verified.handoff;
+    target = verified.offer;
   }
 
   const hotelTarget = body.type === "hotel" ? (target as NormalizedHotelResult) : null;
@@ -49,7 +75,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!target.partnerRedirectUrl && !target.bookingUrl) {
+  if (body.type !== "flight" && !target.partnerRedirectUrl && !target.bookingUrl) {
     return NextResponse.json(
       {
         error: "No external provider link is available for this result right now. Please choose another flight option.",
@@ -58,7 +84,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const url = new URL(target.partnerRedirectUrl || target.bookingUrl);
+  const url = body.type === "flight"
+    ? verifiedFlightHandoff!.url
+    : new URL(target.partnerRedirectUrl! || target.bookingUrl!);
   if (!["http:", "https:"].includes(url.protocol)) {
     return NextResponse.json({ error: "Unsafe redirect target." }, { status: 400 });
   }
@@ -78,7 +106,7 @@ export async function POST(request: Request) {
           data: {
             userId: session?.user?.id,
             type: body.type === "flight" ? "FLIGHT" : "HOTEL",
-            provider: target.provider,
+            provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider,
             route,
             price: "price" in target ? target.price : hotelPriceDetails?.totalPrice,
             currency: "price" in target ? target.currency : hotelPriceDetails?.currency,
@@ -96,7 +124,7 @@ export async function POST(request: Request) {
       userId: session?.user?.id,
       type: "REDIRECT",
       name: `${body.type}_partner_redirect`,
-      metadata: { provider: target.provider, route },
+      metadata: { provider: body.type === "flight" ? verifiedFlightHandoff!.providerName : target.provider, route },
     }),
   ]);
 

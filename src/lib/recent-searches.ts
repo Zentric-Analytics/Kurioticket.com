@@ -1,3 +1,6 @@
+import { getAirportByCode, type AirportOption } from "@/data/airports";
+import { hotelDestinations, type HotelDestinationSuggestion } from "@/data/hotelDestinations";
+
 export type RecentSearchType = "flight" | "hotel";
 
 export type RecentFlightParams = {
@@ -32,6 +35,75 @@ export type RecentSearchEntry = {
   href: string;
   params: RecentFlightParams | RecentHotelParams;
 };
+
+const airportCodeFromRecentValue = (value: unknown) => {
+  if (typeof value !== "string") return "";
+  const normalized = value.trim().toUpperCase();
+  const exact = normalized.match(/^[A-Z]{3}$/)?.[0];
+  if (exact) return exact;
+  return normalized.match(/\(([A-Z]{3})\)\s*$/)?.[1] ?? "";
+};
+
+export function deriveRecentAirports(
+  entries: readonly RecentSearchEntry[],
+  max = 3,
+): AirportOption[] {
+  if (max <= 0) return [];
+  const seen = new Set<string>();
+  const result: AirportOption[] = [];
+  const ordered = [...entries].sort(
+    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+  );
+
+  for (const entry of ordered) {
+    if (entry.type !== "flight") continue;
+    const params = entry.params as RecentFlightParams;
+    for (const value of [params.origin, params.destination]) {
+      const code = airportCodeFromRecentValue(value);
+      if (!code || seen.has(code)) continue;
+      const airport = getAirportByCode(code);
+      if (!airport) continue;
+      seen.add(code);
+      result.push(airport);
+      if (result.length >= max) return result;
+    }
+  }
+
+  return result;
+}
+
+const normalizeRecentHotelDestination = (value: string) =>
+  value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
+
+export function deriveRecentHotelDestinations(
+  entries: readonly RecentSearchEntry[],
+  max = 3,
+): HotelDestinationSuggestion[] {
+  if (max <= 0) return [];
+  const seen = new Set<string>();
+  const result: HotelDestinationSuggestion[] = [];
+  const ordered = [...entries].sort(
+    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+  );
+
+  for (const entry of ordered) {
+    if (entry.type !== "hotel") continue;
+    const value = (entry.params as RecentHotelParams).destination;
+    if (typeof value !== "string" || !value.trim()) continue;
+    const normalized = normalizeRecentHotelDestination(value);
+    const destination = hotelDestinations.find((option) => {
+      const candidates = [option.name, option.searchValue, `${option.name}, ${option.country}`];
+      return candidates.some(
+        (candidate) => normalizeRecentHotelDestination(candidate) === normalized,
+      );
+    });
+    if (!destination || seen.has(destination.id)) continue;
+    seen.add(destination.id);
+    result.push(destination);
+    if (result.length >= max) return result;
+  }
+  return result;
+}
 
 const STORAGE_KEY = "kurioticket_recent_searches_v1";
 

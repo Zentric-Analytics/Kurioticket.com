@@ -106,6 +106,12 @@ enum FeatureFlagScope {
   ADMIN
 }
 
+enum FeatureFlagEnvironment {
+  LEGACY
+  STAGING
+  PRODUCTION
+}
+
 enum HomepageFareSnapshotStatus {
   ACTIVE
   STALE
@@ -793,17 +799,19 @@ model LegalDocument {
 
 model FeatureFlag {
   id          String           @id @default(cuid())
-  key         String           @unique
+  key         String
   name        String
   description String?
   enabled     Boolean          @default(false)
   scope       FeatureFlagScope @default(GLOBAL)
+  environment FeatureFlagEnvironment @default(LEGACY)
   payload     Json?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
   @@index([enabled])
   @@index([scope])
+  @@unique([key, environment])
 }
 
 model CurrencyRateSnapshot {
@@ -864,4 +872,18 @@ model AnalyticsEvent {
   @@index([type])
   @@index([name])
   @@index([createdAt])
+}
+
+model FlightResultCache {
+  publicResultId    String   @id
+  normalizedResult Json
+  searchContext    Json?
+  searchKey        String?
+  itineraryKey     String
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([expiresAt])
+  @@index([searchKey, itineraryKey, expiresAt])
 }

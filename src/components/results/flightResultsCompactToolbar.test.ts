@@ -29,12 +29,13 @@ test("desktop sticky compact search is a small four-section toolbar without trip
   assert.match(toolbar, /h-10 w-\[92px\]/);
   assert.match(toolbar, /top-0/);
   assert.match(toolbar, /rounded-lg/);
-  assert.match(toolbar, /onClick={openStickySearchEditor}/);
-  assert.doesNotMatch(toolbar, /openStickySearchEditor\("route"\)/);
-  assert.doesNotMatch(toolbar, /openStickySearchEditor\("dates"\)/);
-  assert.doesNotMatch(toolbar, /openStickySearchEditor\("travelers"\)/);
+  assert.match(toolbar, /openStickySearchEditor\(event, "route"\)/);
+  assert.match(toolbar, /openStickySearchEditor\(event, "dates"\)/);
+  assert.match(toolbar, /openStickySearchEditor\(event, "travelers"\)/);
   assert.doesNotMatch(toolbar, /t\("tripType"\)/);
   assert.doesNotMatch(toolbar, /mobileTripTypeSummary/);
+  assert.equal(toolbar.match(/text-slate-500/g)?.length, 3);
+  assert.doesNotMatch(toolbar, /text-\[#004BB8\]/);
 });
 
 
@@ -48,20 +49,71 @@ function stickyEditorCallbackSource() {
   return source.slice(start, end);
 }
 
-test("desktop sticky compact search opens the popout neutrally without targeting fields", () => {
+test("desktop sticky compact search opens the selected control on the first click", () => {
   const callback = stickyEditorCallbackSource();
 
-  assert.match(callback, /setActiveDatePicker\(null\)/);
-  assert.match(callback, /setTravelerPopoverOpen\(false\)/);
-  assert.match(callback, /setActiveSuggest\(null\)/);
+  assert.match(callback, /target: "route" \| "dates" \| "travelers"/);
+  assert.match(callback, /setActiveDatePicker\(target === "dates" \? "departure" : null\)/);
+  assert.match(callback, /setTravelerPopoverOpen\(target === "travelers"\)/);
+  assert.match(callback, /target === "route" && originInput\.trim\(\)\.length >= 2/);
   assert.match(callback, /stickySearchLauncherRef\.current = event\.currentTarget/);
-  assert.doesNotMatch(callback, /target ===/);
-  assert.doesNotMatch(callback, /\.focus\(\)/);
+  assert.match(callback, /pendingStickySearchTargetRef\.current = target/);
+});
+
+test("sticky search moves focus directly to the requested expanded control", () => {
+  assert.match(source, /pendingTarget === "route"/);
+  assert.match(source, /querySelector<HTMLInputElement>\("input"\)/);
+  assert.match(source, /pendingTarget === "dates"/);
+  assert.match(source, /stickyDateButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(source, /pendingTarget === "travelers"/);
+  assert.match(source, /stickyTravelerButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+});
+
+test("compact toolbar fields do not add colored focus surrounds", () => {
+  const toolbar = desktopMinimizedSearchBarSource();
+
+  assert.match(toolbar, /focus-visible:outline-none/);
+  assert.doesNotMatch(toolbar, /focus-ring flex h-\[56px\]/);
+  assert.doesNotMatch(toolbar, /focus-visible:bg-slate/);
+});
+
+test("sticky editor exposes all trip types in production order and closes from the backdrop", () => {
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchPopovers", start);
+  const popout = source.slice(start, end);
+  const roundTrip = popout.indexOf('label: t("roundTrip")');
+  const oneWay = popout.indexOf('label: t("oneWay")');
+  const multiCity = popout.indexOf('label: t("multiCity")');
+
+  assert.ok(roundTrip >= 0 && roundTrip < oneWay && oneWay < multiCity);
+  assert.match(popout, /aria-disabled=\{option\.disabled\}/);
+  assert.match(popout, /disabled=\{option\.disabled\}/);
+  assert.match(
+    popout,
+    /if \(event\.target === event\.currentTarget\) \{\s*collapseStickySearch\(\)/,
+  );
+  assert.doesNotMatch(popout, /focus-within:ring-\[#004BB8\]/);
 });
 
 test("sticky search popout uses neutral dialog focus and returns focus to trigger", () => {
   assert.match(source, /role="dialog"/);
   assert.match(source, /aria-modal="true"/);
-  assert.match(source, /stickySearchCloseButtonRef\.current\?\.focus\(\)/);
+  assert.match(
+    source,
+    /stickySearchCloseButtonRef\.current\?\.focus\(\{ preventScroll: true \}\)/,
+  );
   assert.match(source, /stickySearchLauncherRef\.current\?\.focus\(\)/);
+});
+
+test("sticky search popout uses neutral field icons and keeps the calendar controls in view", () => {
+  const start = source.indexOf("function renderStickySearchPopoutOverlay()");
+  const end = source.indexOf("function renderCompactSearchPopovers", start);
+  const popout = source.slice(start, end);
+
+  assert.equal(popout.match(/<MapPin aria-hidden="true"/g)?.length, 2);
+  assert.match(popout, /<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.match(popout, /<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.match(popout, /text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800/);
+  assert.doesNotMatch(popout, /text-\[#5CB6B2\]|text-\[#39948F\]/);
+  assert.match(popout, /pb-8 pt-12 xl:pt-16/);
 });

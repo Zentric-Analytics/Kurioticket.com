@@ -26,6 +26,7 @@ type TimeBounds = {
 };
 
 export type DesktopFlightFiltersProps = {
+  presentationMode?: "default" | "deals-guided";
   activeFilterCount: number;
   maxPrice: number;
   setMaxPrice: (value: number) => void;
@@ -109,6 +110,7 @@ function toggleFilterValue(value: string, setter: Dispatch<SetStateAction<string
 }
 
 export function DesktopFlightFilters({
+  presentationMode = "default",
   activeFilterCount,
   maxPrice,
   setMaxPrice,
@@ -187,14 +189,15 @@ export function DesktopFlightFilters({
   const renderQualitySection = renderFlightQualityFilter && flightQualityOptions.length > 0;
   const rangeClass = "h-1.5 w-full cursor-pointer appearance-none rounded-full bg-[#D7E5F8] accent-[#0067DB] disabled:cursor-not-allowed disabled:opacity-60";
   const hasActiveFilters = activeFilterCount > 0;
+  const isGuidedComfortable = presentationMode === "deals-guided";
 
   return (
-    <div className="rounded-[10px] border border-[#D8E1EC] bg-[#F5F8FC] px-4 py-4 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.5)] xl:px-5">
+    <div className={cn("rounded-[10px] border border-[#D8E1EC] bg-[#F5F8FC] px-4 py-4 shadow-[0_10px_26px_-24px_rgba(15,23,42,0.5)] xl:px-5", isGuidedComfortable && "px-5")}>
       <div className="mb-4 border-b border-[#C7D5E6]/80 pb-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <SlidersHorizontal aria-hidden="true" className="h-4 w-4 text-[#004BB8]" strokeWidth={2.2} />
-            <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-950">{t("filterBy")}</h2>
+            <h2 className={cn("text-[16px] font-semibold tracking-[-0.01em] text-slate-950", isGuidedComfortable && "text-[17px]")}>{t("filterBy")}</h2>
           </div>
           {hasActiveFilters ? (
             <button
@@ -212,9 +215,9 @@ export function DesktopFlightFilters({
       <div className="space-y-5">
         <section>
           <SectionTitle>{t("price")}</SectionTitle>
-          <div className="mb-2.5 flex justify-between text-[12px] font-semibold tabular-nums text-slate-950">
-            <span>{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span>
-            <span>{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.max) : "—"}</span>
+          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-semibold leading-5 tabular-nums text-slate-950", isGuidedComfortable && "text-[13px]")}>
+            <span className="min-w-0">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.min) : "—"}</span>
+            <span className="min-w-0 text-right">{priceBounds.max && priceLabelCurrency ? formatFilterPrice(priceBounds.max) : "—"}</span>
           </div>
           <input aria-label={t("price")} className={rangeClass} type="range" min={priceBounds.min || 0} max={priceBounds.max || 0} step={25} value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0} disabled={!priceBounds.max} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxPrice(Number(event.target.value)); }} />
         </section>
@@ -224,16 +227,16 @@ export function DesktopFlightFilters({
         <section>
           <SectionTitle>{timeFilterMode === "takeoff" ? `${t("takeoffTimeFromOrigin")} (${airportCode || "—"})` : `${t("landingTimeAtDestination")} (${airportCode || "—"})`}</SectionTitle>
           <div className="mb-2.5 grid grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-0.5">
-            {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("rounded px-2 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", timeFilterMode === mode ? "bg-white text-[#004BB8] shadow-sm" : "text-slate-600 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
+            {["takeoff", "landing"].map((mode) => <button key={mode} type="button" onClick={() => { onFilterChange(); setTimeFilterMode(mode as TimeFilterMode); onFilterCommit(); }} className={cn("rounded px-2 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/30", isGuidedComfortable && "min-h-8 text-[13px]", timeFilterMode === mode ? "bg-white text-[#004BB8] shadow-sm" : "text-slate-600 hover:text-slate-950")}>{mode === "takeoff" ? t("takeoff") : t("landing")}</button>)}
           </div>
-          <div className="mb-2.5 flex justify-between text-[12px] font-medium tabular-nums text-slate-700"><span>{timeBoundsForMode ? formatTimeFromMinutes(timeBoundsForMode.min, calendarLocale) : "—"}</span><span>{timeBoundsForMode ? formatTimeFromMinutes(timeBoundsForMode.max, calendarLocale) : "—"}</span></div>
+          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-medium leading-5 tabular-nums text-slate-700", isGuidedComfortable && "text-[13px]")}><span className="min-w-0">{timeBoundsForMode ? formatTimeFromMinutes(timeBoundsForMode.min, calendarLocale) : "—"}</span><span className="min-w-0 text-right">{timeBoundsForMode ? formatTimeFromMinutes(timeBoundsForMode.max, calendarLocale) : "—"}</span></div>
           <input aria-label={timeFilterMode === "takeoff" ? t("takeoff") : t("landing")} className={rangeClass} type="range" min={timeBoundsForMode?.min ?? 0} max={timeBoundsForMode?.max ?? 0} step={15} value={maxTimeForMode ?? timeBoundsForMode?.max ?? 0} disabled={!timeBoundsForMode} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxTimeForMode(Number(event.target.value)); }} />
-          <button type="button" className="mt-2.5 h-7 w-full rounded-md border border-slate-200 bg-white text-xs font-semibold text-[#004BB8] transition hover:border-[#9EC5FE] hover:bg-[#F4F8FF]" onClick={() => { onFilterChange(); setTimeFilterMode(timeFilterMode === "takeoff" ? "landing" : "takeoff"); onFilterCommit(); }}>{t(timeFilterMode === "takeoff" ? "landingTimeAtDestination" : "takeoffTimeFromOrigin")}</button>
+          <button type="button" className={cn("mt-2.5 min-h-7 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold leading-5 text-[#004BB8] transition hover:border-[#9EC5FE] hover:bg-[#F4F8FF]", isGuidedComfortable && "min-h-9 text-[13px]")} onClick={() => { onFilterChange(); setTimeFilterMode(timeFilterMode === "takeoff" ? "landing" : "takeoff"); onFilterCommit(); }}>{t(timeFilterMode === "takeoff" ? "landingTimeAtDestination" : "takeoffTimeFromOrigin")}</button>
         </section>
 
         <section>
           <SectionTitle>{t("duration")}</SectionTitle>
-          <div className="mb-2.5 flex justify-between text-[12px] font-medium tabular-nums text-slate-700"><span>{durationBounds ? formatDurationFromMinutes(durationBounds.min, t) : "—"}</span><span>{durationBounds ? formatDurationFromMinutes(durationBounds.max, t) : "—"}</span></div>
+          <div className={cn("mb-2.5 grid grid-cols-2 gap-4 text-[12px] font-medium leading-5 tabular-nums text-slate-700", isGuidedComfortable && "text-[13px]")}><span className="min-w-0">{durationBounds ? formatDurationFromMinutes(durationBounds.min, t) : "—"}</span><span className="min-w-0 text-right">{durationBounds ? formatDurationFromMinutes(durationBounds.max, t) : "—"}</span></div>
           <input aria-label={t("duration")} className={rangeClass} type="range" min={durationBounds?.min ?? 0} max={durationBounds?.max ?? 0} step={15} value={maxDurationMinutes ?? durationBounds?.max ?? 0} disabled={!durationBounds} onPointerUp={onFilterCommit} onMouseUp={onFilterCommit} onTouchEnd={onFilterCommit} onKeyUp={onFilterCommit} onBlur={onFilterCommit} onChange={(event) => { onFilterChange(); setMaxDurationMinutes(Number(event.target.value)); }} />
         </section>
 
@@ -273,5 +276,5 @@ function Accordion({ title, emptyText, children }: { title: string; emptyText?: 
 function FacetRow({ label, count, secondaryLabel, rightLabel, checked, onChange }: { label: string; count?: number; secondaryLabel?: string; rightLabel?: string; checked: boolean; onChange: () => void }) {
   const trailingLabel = rightLabel ?? (typeof count === "number" ? String(count) : null);
 
-  return <label className="flex min-h-9 cursor-pointer items-start justify-between gap-3 rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"><span className="flex min-w-0 items-start gap-2"><input type="checkbox" className="mt-0.5 h-[14px] w-[14px] shrink-0 rounded border-slate-300 accent-[#0067DB] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" checked={checked} onChange={onChange} /><span className="min-w-0"><span className="block truncate">{label}</span>{secondaryLabel ? <span className="block text-[11px] font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span></span>{trailingLabel ? <span className="shrink-0 text-[12px] font-medium leading-5 text-slate-500">{trailingLabel}</span> : null}</label>;
+  return <label className="flex min-h-9 cursor-pointer items-start gap-3 rounded-md px-0.5 py-1 text-[12px] font-medium leading-5 text-slate-700 transition hover:bg-slate-50 hover:text-slate-950"><span className="flex min-w-0 flex-1 items-start gap-2"><input type="checkbox" className="mt-0.5 h-[14px] w-[14px] shrink-0 rounded border-slate-300 accent-[#0067DB] focus-visible:ring-2 focus-visible:ring-[#004BB8]/25" checked={checked} onChange={onChange} /><span className="min-w-0 flex-1"><span className="block break-words">{label}</span>{secondaryLabel ? <span className="block break-words text-[12px] font-medium leading-4 text-slate-500">{secondaryLabel}</span> : null}</span></span>{trailingLabel ? <span className="shrink-0 text-[12px] font-medium leading-5 text-slate-500">{trailingLabel}</span> : null}</label>;
 }

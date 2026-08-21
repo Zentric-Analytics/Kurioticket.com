@@ -8,6 +8,7 @@ import {
   getStagingProviderSafety,
   isStagingEnvironment,
   withEnvironmentMetadata,
+  getStagingReleaseReadiness,
 } from "@/lib/stagingSafety";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 
@@ -25,6 +26,8 @@ const keys = [
   "GOOGLE_CLIENT_SECRET",
   "STAGING_EMAIL_ALLOWED_RECIPIENTS",
   "DUFFEL_API_KEY",
+  "RENDER_GIT_COMMIT",
+  "RENDER_SERVICE_ID",
 ] as const;
 const original = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
 
@@ -163,4 +166,16 @@ test("public and analytics environment values contain only the safe classificati
   configureStaging();
   assert.equal(getPublicEnvironment(), "staging");
   assert.deepEqual(withEnvironmentMetadata({ source: "test" }), { source: "test", environment: "staging" });
+});
+
+test("staging release evidence exposes immutable non-secret Render identity only in staging", () => {
+  configureStaging();
+  process.env.RENDER_GIT_COMMIT = "a".repeat(40);
+  process.env.RENDER_SERVICE_ID = "srv-staging";
+  assert.equal(getStagingReleaseReadiness()?.commitSha, "a".repeat(40));
+  assert.equal(getStagingReleaseReadiness()?.serviceId, "srv-staging");
+  process.env.NEXT_PUBLIC_APP_URL = "https://kurioticket.com";
+  process.env.NEXTAUTH_URL = "https://kurioticket.com";
+  process.env.TRAVEL_PROVIDER_MODE = "production";
+  assert.equal(getStagingReleaseReadiness(), null);
 });

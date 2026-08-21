@@ -15,6 +15,9 @@ type HotelMobilePickerShellProps = {
   onClose: () => void;
   className?: string;
   contentClassName?: string;
+  headerVariant?: "navigation" | "close";
+  showCancelAction?: boolean;
+  showBackLabel?: boolean;
 };
 
 export function HotelMobilePickerShell(props: HotelMobilePickerShellProps) {

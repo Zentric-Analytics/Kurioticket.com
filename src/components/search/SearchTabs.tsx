@@ -22,27 +22,46 @@ import { createPortal } from "react-dom";
 import {
   ArrowRightLeft,
   BedDouble,
+  Building2,
   Calendar,
   CarFront,
+  Clock,
   MapPin,
   ChevronDown,
   Minus,
   Plane,
   Plus,
   RotateCcw,
+  UserRound,
   X,
 } from "lucide-react";
+import { PackagesIcon } from "@/components/icons/PackagesIcon";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
+import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
+import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import {
+  hotelDestinationKindLabels,
+  hotelDestinationKindTranslationKeys,
+  useHotelDestinationAutocomplete,
+} from "@/components/search/useHotelDestinationAutocomplete";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
+import { MobileHotelGuestsRoomsPicker } from "@/components/search/MobileHotelGuestsRoomsPicker";
+import { DealsSearchForm } from "@/components/search/DealsSearchForm";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import { resolveDesktopPopoverGeometry } from "@/components/search/desktopPopoverGeometry";
+import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
   CarsTimeRangePickerContent,
+  MobileCarDriverAgePickerDialog,
+  MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -61,6 +80,11 @@ import {
 import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
+  getLocalizedHotelDestinationCityName,
+  getLocalizedHotelDestinationDetail,
+  type HotelDestinationSuggestion,
+} from "@/data/hotelDestinations";
+import {
   applyDefaultOrigin,
   canApplyDefaultOrigin,
   markOriginManualInput,
@@ -71,6 +95,12 @@ import {
   formatFlightsMonthHeading,
   normalizeFlightsCalendarLocale,
 } from "@/lib/flights/dateFormatting";
+import {
+  appendFlightLegParams,
+  MULTI_CITY_MIN_LEGS,
+  projectSearchLegs,
+} from "@/lib/flights/flightSearchJourney";
+import type { FlightSearchLeg } from "@/lib/types";
 import {
   defaultDriverAge,
   addMonths as addCarsMonths,
@@ -86,7 +116,8 @@ import {
 type TabMode =
   | "flights"
   | "hotels"
-  | "cars";
+  | "cars"
+  | "deals";
 
 type TripType =
   | "round-trip"
@@ -100,7 +131,9 @@ type SearchTabsTranslations =
 type SearchTabsProps = {
   t: SearchTabsTranslations;
   compactHero?: boolean;
+  mobileHomepage?: boolean;
   locale?: string;
+  onCarsResultsNavigationStart?: () => void;
 };
 
 const normalizeHomepageCalendarLocale = normalizeFlightsCalendarLocale;
@@ -242,7 +275,8 @@ const mobileDoneButtonClassName =
 
 type DesktopTopLayerPopoverProps = {
   open: boolean;
-  launcherRef: RefObject<HTMLElement | null>;
+  launcherRef?: RefObject<HTMLElement | null>;
+  launcherId?: string;
   align?: "left" | "center" | "right";
   width: number;
   maxViewportGutter?: number;
@@ -252,6 +286,8 @@ type DesktopTopLayerPopoverProps = {
   id?: string;
   role?: "dialog" | "listbox";
   ariaLabel?: string;
+  placement?: "auto" | "above" | "below";
+  desiredHeight?: number;
   children: ReactNode;
 };
 
@@ -272,6 +308,7 @@ const getDesktopPopoverServerSnapshot = () => "server";
 function DesktopTopLayerPopover({
   open,
   launcherRef,
+  launcherId,
   align = "left",
   width,
   maxViewportGutter = 16,
@@ -281,9 +318,12 @@ function DesktopTopLayerPopover({
   id,
   role,
   ariaLabel,
+  placement = "auto",
+  desiredHeight,
   children,
 }: DesktopTopLayerPopoverProps) {
   const [anchorRect, setAnchorRect] = useState<{
+    top: number;
     bottom: number;
     left: number;
     right: number;
@@ -294,21 +334,23 @@ function DesktopTopLayerPopover({
     subscribeToViewportChanges,
     () => (typeof window === "undefined"
       ? getDesktopPopoverServerSnapshot()
-      : `${window.innerWidth}:${window.scrollX}:${window.scrollY}`),
+      : `${window.innerWidth}:${window.innerHeight}:${window.scrollX}:${window.scrollY}`),
     getDesktopPopoverServerSnapshot
   );
 
   const updateAnchorRect = useCallback(() => {
-    const rect = launcherRef.current?.getBoundingClientRect();
+    const launcher = launcherRef?.current ?? (launcherId ? document.getElementById(launcherId) : null);
+    const rect = launcher?.getBoundingClientRect();
     setAnchorRect(rect
       ? {
           bottom: rect.bottom,
+          top: rect.top,
           left: rect.left,
           right: rect.right,
           width: rect.width,
         }
       : null);
-  }, [launcherRef]);
+  }, [launcherId, launcherRef]);
 
   useEffect(() => {
     if (!open) {
@@ -335,6 +377,24 @@ function DesktopTopLayerPopover({
     viewportWidth - maxViewportGutter - panelWidth,
     Math.max(maxViewportGutter, unclampedLeft)
   );
+  const availableAbove = Math.max(0, anchorRect.top - offset - maxViewportGutter);
+  const availableBelow = Math.max(
+    0,
+    window.innerHeight - anchorRect.bottom - offset - maxViewportGutter
+  );
+  const geometry = resolveDesktopPopoverGeometry({
+    availableAbove,
+    availableBelow,
+    desiredHeight,
+    placement,
+  });
+  const resolvedPlacement = geometry.placement;
+  const launcherIsVisible = anchorRect.bottom > maxViewportGutter
+    && anchorRect.top < window.innerHeight - maxViewportGutter
+    && anchorRect.right > maxViewportGutter
+    && anchorRect.left < viewportWidth - maxViewportGutter;
+
+  if (!launcherIsVisible) return null;
 
   return createPortal(
     <div
@@ -343,16 +403,19 @@ function DesktopTopLayerPopover({
       role={role}
       aria-label={ariaLabel}
       data-desktop-search-popover="true"
+      data-placement={resolvedPlacement}
       data-viewport-snapshot={viewportSnapshot}
       style={{
         left,
-        top: anchorRect.bottom + offset,
+        ...(resolvedPlacement === "above"
+          ? { bottom: window.innerHeight - anchorRect.top + offset }
+          : { top: anchorRect.bottom + offset }),
         width: panelWidth,
         maxWidth,
-        maxHeight: Math.max(0, window.innerHeight - anchorRect.bottom - offset - maxViewportGutter),
+        maxHeight: geometry.maxHeight,
       }}
       className={cn(
-        "fixed hidden overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
+        "fixed hidden overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.14)] sm:block",
         desktopPopoverPanelClassName,
         className
       )}
@@ -377,9 +440,12 @@ function CarsSummaryField({
   desktopAlign = "left",
   desktopWidth = 448,
   desktopPanelClassName = "p-3",
+  desktopPlacement = "auto",
+  desktopDesiredHeight,
   leadingIcon,
   showChevron = true,
   valueClassName,
+  mobilePresentation = "inline",
 }: {
   id: string;
   label: string;
@@ -392,9 +458,12 @@ function CarsSummaryField({
   desktopAlign?: "left" | "center" | "right";
   desktopWidth?: number;
   desktopPanelClassName?: string;
+  desktopPlacement?: "auto" | "above" | "below";
+  desktopDesiredHeight?: number;
   leadingIcon?: ReactNode;
   showChevron?: boolean;
   valueClassName?: string;
+  mobilePresentation?: "inline" | "shell";
 }) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const launcherRef = useRef<HTMLButtonElement | null>(null);
@@ -413,6 +482,11 @@ function CarsSummaryField({
 
   useEffect(() => {
     if (!open) return;
+    // A mobile shell is portalled outside wrapperRef. Its own full-screen
+    // dialog owns dismissal, so treating document pointer events as desktop
+    // outside clicks would unmount it on pointerdown before option clicks run.
+    const listenForOutsidePointer =
+      mobilePresentation !== "shell" || isSmViewport;
     const closeOnOutsideClick = (event: PointerEvent) => {
       const target = event.target as Node;
       if (!wrapperRef.current?.contains(target) && !panelRef.current?.contains(target)) onOpenChange(false);
@@ -423,13 +497,17 @@ function CarsSummaryField({
       onOpenChange(false);
       launcherRef.current?.focus({ preventScroll: true });
     };
-    document.addEventListener("pointerdown", closeOnOutsideClick);
+    if (listenForOutsidePointer) {
+      document.addEventListener("pointerdown", closeOnOutsideClick);
+    }
     document.addEventListener("keydown", closeOnEscape);
     return () => {
-      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      if (listenForOutsidePointer) {
+        document.removeEventListener("pointerdown", closeOnOutsideClick);
+      }
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [onOpenChange, open]);
+  }, [isSmViewport, mobilePresentation, onOpenChange, open]);
 
   useEffect(() => {
     if (wasOpenRef.current && !open) {
@@ -441,9 +519,9 @@ function CarsSummaryField({
   const panel = <div id={panelId} ref={panelRef} role={popupRole} aria-label={label} data-cars-popover-content className="w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-xl sm:w-auto">{children}</div>;
 
   return (
-    <div ref={wrapperRef} className={cn(className, "relative rounded-xl border border-slate-300 bg-white")}>
+    <div ref={wrapperRef} className={cn("relative rounded-xl border border-slate-300 bg-white", className)}>
       <span className="mb-1 block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500 lg:text-[10px] lg:tracking-[0.10em] lg:text-slate-600">{label}</span>
-      <button ref={launcherRef} type="button" aria-expanded={open} aria-controls={panelId} aria-haspopup={popupRole} onClick={() => onOpenChange(!open)} className="focus-ring flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 sm:text-[15px] lg:text-[15px]">
+      <button ref={launcherRef} type="button" aria-expanded={open} aria-controls={panelId} aria-haspopup={popupRole} onClick={() => onOpenChange(!open)} className="flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 outline-none focus-visible:ring-0 sm:text-[15px] lg:text-[15px]">
         <span className={cn("flex min-w-0 items-center gap-2 truncate", valueClassName)}>
           {leadingIcon}
           <span className="truncate">{value}</span>
@@ -451,8 +529,8 @@ function CarsSummaryField({
         {showChevron ? <ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", open && "rotate-180")} /> : null}
       </button>
       {open ? (isSmViewport
-        ? <DesktopTopLayerPopover open={open} launcherRef={launcherRef} align={desktopAlign} width={desktopWidth} panelRef={panelRef} id={panelId} role={popupRole} ariaLabel={label} className={desktopPanelClassName}>{children}</DesktopTopLayerPopover>
-        : <div className="mt-3">{panel}</div>) : null}
+        ? <DesktopTopLayerPopover open={open} launcherRef={launcherRef} align={desktopAlign} width={desktopWidth} panelRef={panelRef} id={panelId} role={popupRole} ariaLabel={label} className={desktopPanelClassName} placement={desktopPlacement} desiredHeight={desktopDesiredHeight}>{children}</DesktopTopLayerPopover>
+        : mobilePresentation === "inline" ? <div className="mt-3">{panel}</div> : null) : null}
     </div>
   );
 }
@@ -460,7 +538,9 @@ function CarsSummaryField({
 export function SearchTabs({
   t: translations,
   compactHero = false,
+  mobileHomepage = false,
   locale,
+  onCarsResultsNavigationStart,
 }: SearchTabsProps) {
   const {
     locale: activeLocale,
@@ -523,6 +603,13 @@ export function SearchTabs({
       )
     );
   }, [calendarLocale]);
+  const mobileDatePickerLabels = {
+    selectDates: translate("carsResults.selectDates") || "Select dates",
+    start: translate("mobileDatePicker.start") || "Start",
+    end: translate("mobileDatePicker.end") || "End",
+    done: translate("done") || "Done",
+    selectDatePrefix: translate("selectDateAriaPrefix") || "Select",
+  };
 
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
@@ -538,18 +625,16 @@ export function SearchTabs({
     useRef<HTMLInputElement>(null);
   const fromMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
-  const fromMobilePickerInputRef =
-    useRef<HTMLInputElement>(null);
   const toMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
-  const toMobilePickerInputRef =
-    useRef<HTMLInputElement>(null);
   const dateWrapRef =
     useRef<HTMLDivElement>(null);
   const flightDatesLauncherRef =
     useRef<HTMLButtonElement>(null);
   const hotelDestinationMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
+  const hotelDestinationDesktopWrapRef = useRef<HTMLDivElement>(null);
+  const hotelDestinationDesktopInputRef = useRef<HTMLInputElement>(null);
   const hotelDateWrapRef =
     useRef<HTMLDivElement>(null);
   const hotelDatesMobileLauncherRef =
@@ -589,6 +674,10 @@ export function SearchTabs({
   const [carsOpenPicker, setCarsOpenPicker] = useState<
     "pickup" | "dropoff" | "dates" | "times" | "age" | null
   >(null);
+  const [carsDraftTimes, setCarsDraftTimes] = useState({
+    pickupTime: "10:00",
+    dropoffTime: "10:00",
+  });
   const [carsVisibleMonthDate, setCarsVisibleMonthDate] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -596,6 +685,8 @@ export function SearchTabs({
   const carsSearchSurfaceRef = useRef<HTMLDivElement | null>(null);
   const carsPickupFieldRef = useRef<HTMLDivElement | null>(null);
   const carsDropoffFieldRef = useRef<HTMLDivElement | null>(null);
+  const carsPickupLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const carsDropoffLauncherRef = useRef<HTMLButtonElement | null>(null);
 
   const [tripType, setTripType] =
     useState<TripType>(
@@ -678,6 +769,11 @@ export function SearchTabs({
     returnDate,
     setReturnDate,
   ] = useState("");
+  const [multiCityLegs, setMultiCityLegs] = useState<FlightSearchLeg[]>([
+    { origin: "", destination: "", departureDate: "" },
+    { origin: "", destination: "", departureDate: "" },
+  ]);
+  const [multiCityAirportsValid, setMultiCityAirportsValid] = useState(false);
   const [
     visibleMonthDate,
     setVisibleMonthDate,
@@ -737,8 +833,42 @@ export function SearchTabs({
   const [rooms, setRooms] =
     useState("1");
   const [hotelPetFriendly, setHotelPetFriendly] = useState(false);
+  const [draftHotelAdults, setDraftHotelAdults] = useState(1);
+  const [draftHotelChildren, setDraftHotelChildren] = useState(0);
+  const [draftHotelRooms, setDraftHotelRooms] = useState(1);
+  const [draftHotelPetFriendly, setDraftHotelPetFriendly] = useState(false);
   const [hotelGuestsRoomsOpen, setHotelGuestsRoomsOpen] =
     useState(false);
+  const {
+    handleKeyDown: handleHotelDestinationKeyDown,
+    highlight: hotelDestinationHighlight,
+    loading: hotelDestinationLoading,
+    open: hotelDestinationSuggestionsOpen,
+    select: commitHotelDestinationSuggestion,
+    setHighlight: setHotelDestinationHighlight,
+    setOpen: setHotelDestinationSuggestionsOpen,
+    shouldShow: shouldShowHotelDestinationSuggestions,
+    suggestions: hotelDestinationSuggestions,
+  } = useHotelDestinationAutocomplete({
+    query: destination,
+    detectedCountryHint: countryHint,
+    locale: locale ?? activeLocale,
+  });
+
+  const selectHotelDestination = (suggestion: HotelDestinationSuggestion) => {
+    setDestination(commitHotelDestinationSuggestion(suggestion));
+    window.requestAnimationFrame(() =>
+      hotelDestinationDesktopInputRef.current?.focus({ preventScroll: true }),
+    );
+  };
+
+  useEffect(() => {
+    if (!hotelGuestsRoomsOpen) return;
+    setDraftHotelAdults(hotelAdultCount);
+    setDraftHotelChildren(hotelChildCount);
+    setDraftHotelRooms(Number(rooms));
+    setDraftHotelPetFriendly(hotelPetFriendly);
+  }, [hotelGuestsRoomsOpen]);
 
   const desktopPopoverOpen =
     flightDatesOpen ||
@@ -746,6 +876,7 @@ export function SearchTabs({
     travelersMenuOpen ||
     fromOpen ||
     toOpen ||
+    hotelDestinationSuggestionsOpen ||
     hotelGuestsRoomsOpen;
 
   const searchTabsOverlayOpen =
@@ -758,42 +889,54 @@ export function SearchTabs({
       cn(
         "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
         searchTabsOverlayOpen && desktopOverlayRootClassName,
-        compactHero
-          ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
+        mobileHomepage
+          ? "rounded-[14px] border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
+          : compactHero
+          ? "p-3 sm:p-4 lg:rounded-[22px] lg:border-white/80 lg:bg-white/95 lg:p-5 lg:shadow-[0_22px_54px_rgba(15,23,42,0.16)] lg:ring-1 lg:ring-white/80"
           : "p-2"
       ),
-    [compactHero, searchTabsOverlayOpen]
+    [compactHero, mobileHomepage, searchTabsOverlayOpen, tab]
   );
 
   const tabsClassName = cn(
     "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
-    compactHero
-      ? "mb-1 sm:mb-1.5 lg:mb-2 lg:gap-0.5 lg:border-slate-200/90 lg:bg-slate-100/80 lg:shadow-inner"
-      : "mb-2"
+    !mobileHomepage && compactHero
+      ? "mb-4 w-full gap-5 rounded-none border-0 border-b border-slate-200 bg-transparent p-0 lg:mb-5 lg:gap-7 lg:shadow-none"
+      : !mobileHomepage && "mb-2"
   );
-  const formClassName = compactHero ? "space-y-1 lg:space-y-1.5" : "space-y-2";
+  const formClassName = compactHero ? "space-y-3 lg:space-y-4" : "space-y-2";
   const fieldCardClassName = cn(
     "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
     compactHero
-      ? "p-0.5 lg:border-slate-200/90 lg:p-1 lg:shadow-[0_14px_34px_rgba(15,23,42,0.10)] lg:ring-1 lg:ring-slate-900/[0.02]"
+      ? "border-0 bg-transparent p-0 shadow-none ring-0"
       : "p-1"
   );
+  const hotelFieldCardClassName = mobileHomepage
+    ? "overflow-visible border-0 bg-transparent p-0 shadow-none ring-0"
+    : fieldCardClassName;
+  const carsFieldCardClassName = mobileHomepage
+    ? "overflow-visible border-0 bg-transparent p-0 shadow-none ring-0 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-0.5 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:ring-0"
+    : fieldCardClassName;
   const flightGridClassName = cn(
     "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
     compactHero
-      ? "gap-1 lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]"
+      ? "gap-2.5 lg:grid-cols-[minmax(0,2.75fr)_minmax(180px,1.15fr)_minmax(190px,1.22fr)_132px] lg:gap-3"
       : "gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]"
   );
   const hotelGridClassName = cn(
     "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
+    mobileHomepage && "gap-2.5",
     compactHero
-      ? "gap-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(172px,1.28fr)_minmax(158px,1.02fr)_136px]"
+      ? !mobileHomepage && "gap-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(172px,1.28fr)_minmax(158px,1.02fr)_136px]"
       : "gap-1.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]"
   );
   const carsGridClassName = cn(
     "grid grid-cols-1 gap-2 sm:grid-cols-2 lg:gap-0",
+    mobileHomepage && "sm:gap-2",
     compactHero
-      ? "lg:grid-cols-[minmax(0,1.65fr)_minmax(170px,1.25fr)_minmax(170px,1.15fr)_minmax(135px,0.85fr)_136px]"
+      ? carsValues.returnToDifferentLocation
+        ? "lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(150px,1fr)_minmax(150px,0.95fr)_minmax(120px,0.72fr)_136px]"
+        : "lg:grid-cols-[minmax(0,1.65fr)_minmax(170px,1.25fr)_minmax(170px,1.15fr)_minmax(135px,0.85fr)_136px]"
       : "lg:grid-cols-[minmax(0,1.65fr)_minmax(160px,1.2fr)_minmax(160px,1.1fr)_minmax(125px,0.8fr)_112px]"
   );
   const joinedFieldClassName = cn(
@@ -808,12 +951,15 @@ export function SearchTabs({
     joinedFieldClassName,
     compactHero ? "min-h-[58px] px-4 py-2 lg:min-h-[58px]" : "min-h-[58px] px-3.5 py-2"
   );
+  const carsMobileHomepageFieldClassName = mobileHomepage
+    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe] focus-within:border-[#dee5ed] focus-within:ring-0 sm:rounded-xl sm:border-slate-300 sm:bg-white sm:focus-within:border-[#004BB8] sm:focus-within:ring-2"
+    : "";
   const flightFieldLabelClassName = cn(
     "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
     compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const flightFieldValueClassName = cn(
-    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block sm:focus-visible:shadow-none md:text-sm lg:placeholder:text-slate-500",
+    "hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block sm:focus-visible:ring-0 sm:focus-visible:shadow-none md:text-sm lg:placeholder:text-slate-500",
     compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const flightFieldButtonClassName = cn(
@@ -825,17 +971,17 @@ export function SearchTabs({
     compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const hotelFieldValueClassName = cn(
-    "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start font-medium leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
+    "flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start font-medium leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-0 focus-visible:shadow-none",
     compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em] lg:text-slate-900 lg:placeholder:text-slate-500" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-[#004BB8]/35 sm:focus-within:ring-2 sm:focus-within:ring-[#004BB8]/20 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-[#004BB8]/35 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-[#004BB8]/20"
+    ? "grid grid-cols-1 overflow-visible rounded-xl border border-slate-200 bg-white shadow-[0_3px_10px_rgba(15,23,42,0.05)] transition-colors sm:grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] sm:items-stretch focus-within:border-[#075EE8] focus-within:ring-2 focus-within:ring-[#075EE8]/10"
     : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
       ? cn(
-          "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 transition-colors sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 lg:flex lg:flex-col lg:justify-center lg:rounded-lg",
-          side === "origin" ? "sm:pe-3" : "sm:ps-3"
+          "relative min-h-[68px] border-0 bg-transparent px-4 py-2.5 transition-colors lg:flex lg:flex-col lg:justify-center",
+          side === "origin" ? "sm:rounded-s-xl sm:pe-2" : "sm:rounded-e-xl sm:ps-2"
         )
       : cn("relative px-0 py-0 transition-colors lg:rounded-lg", side === "origin" ? "pe-3" : "ps-3");
   const submitWrapClassName = cn(
@@ -852,7 +998,8 @@ export function SearchTabs({
   );
   const hotelSubmitButtonClassName = cn(
     "w-full rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-[0_10px_22px_rgba(2,28,43,0.14)] enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-[#004BB8]/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(2,28,43,0.14)] lg:disabled:shadow-[0_10px_22px_rgba(2,28,43,0.14)]",
-    compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
+    compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]",
+    mobileHomepage && "rounded-[11px]",
   );
 
   const fromQuery = from.trim();
@@ -976,20 +1123,6 @@ export function SearchTabs({
 
     return () => controller.abort();
   }, []);
-
-  useEffect(() => {
-    if (!activeMobileAirportPicker) return;
-
-    const inputRef = activeMobileAirportPicker === "origin"
-      ? fromMobilePickerInputRef
-      : toMobilePickerInputRef;
-    const focusId = window.setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 80);
-
-    return () => window.clearTimeout(focusId);
-  }, [activeMobileAirportPicker]);
 
   useEffect(() => {
     if (!canApplyDefaultOrigin(fromState)) return;
@@ -1215,6 +1348,9 @@ export function SearchTabs({
       ) {
         setHotelDatesOpen(false);
       }
+      if (!hotelDestinationDesktopWrapRef.current?.contains(eventTarget)) {
+        setHotelDestinationSuggestionsOpen(false);
+      }
       if (
         !tripTypeWrapRef.current?.contains(
           eventTarget
@@ -1254,6 +1390,7 @@ export function SearchTabs({
         );
         setHotelDatesOpen(false);
         setHotelDestinationMobilePickerOpen(false);
+        setHotelDestinationSuggestionsOpen(false);
         setTripTypeOpen(false);
         if (travelersMenuOpen) {
           cancelTravelersDraft();
@@ -1282,7 +1419,12 @@ export function SearchTabs({
           onEscape
         );
       };
-  }, [applyTravelersFromValues, cancelTravelersDraft, travelersMenuOpen]);
+  }, [
+    applyTravelersFromValues,
+    cancelTravelersDraft,
+    setHotelDestinationSuggestionsOpen,
+    travelersMenuOpen,
+  ]);
 
 
   const guests = String(hotelAdultCount + hotelChildCount);
@@ -1589,7 +1731,51 @@ export function SearchTabs({
     );
   };
 
-  const onSelectTripType = (mode: Exclude<TripType, "multi-city">) => {
+  const homepageTripTypeLabel = (mode: TripType) => {
+    const isEnglish = (locale ?? activeLocale).toLowerCase().startsWith("en");
+
+    if (isEnglish) {
+      return mode === "round-trip"
+        ? "Round-trip"
+        : mode === "one-way"
+          ? "One way-trip"
+          : "Multi-city trip";
+    }
+
+    return tripTypeLabel(mode);
+  };
+
+  const onSelectTripType = (mode: TripType) => {
+    if (mode === "multi-city") {
+      const firstLeg = {
+        origin: (fromCode || from.trim()).toUpperCase(),
+        destination: (toCode || to.trim()).toUpperCase(),
+        departureDate,
+      };
+      const secondLeg = tripType === "round-trip" && returnDate
+        ? { origin: firstLeg.destination, destination: firstLeg.origin, departureDate: returnDate }
+        : { origin: firstLeg.destination, destination: "", departureDate: departureDate || "" };
+      if (tripType !== "multi-city") setMultiCityLegs([firstLeg, secondLeg]);
+      setTripType(mode);
+      setTripTypeOpen(false);
+      return;
+    }
+
+    if (tripType === "multi-city") {
+      const firstLeg = multiCityLegs[0];
+      if (firstLeg) {
+        setFromState((current) => markOriginManualInput(current, firstLeg.origin, firstLeg.origin));
+        setTo(firstLeg.destination);
+        setToCode(firstLeg.destination);
+        setDepartureDate(firstLeg.departureDate);
+        if (mode === "round-trip") {
+          const reverseLeg = multiCityLegs.slice(1).find((leg) =>
+            leg.origin === firstLeg.destination && leg.destination === firstLeg.origin && leg.departureDate >= firstLeg.departureDate,
+          );
+          setReturnDate(reverseLeg?.departureDate ?? "");
+        }
+      }
+    }
     setTripType(mode);
     if (mode === "one-way") {
       setReturnDate("");
@@ -1685,6 +1871,11 @@ export function SearchTabs({
       ? setFromOpen
       : setToOpen;
 
+    if (event.key === "Escape") {
+      setOpen(false);
+      return;
+    }
+
     if (!list.length) {
       return;
     }
@@ -1740,9 +1931,6 @@ export function SearchTabs({
       setOpen(false);
     }
 
-    if (event.key === "Escape") {
-      setOpen(false);
-    }
   };
 
   const onSwapAirports = () => {
@@ -1762,7 +1950,7 @@ export function SearchTabs({
   };
 
   const focusInputAfterClear = (input: HTMLInputElement | null) => {
-    window.requestAnimationFrame(() => input?.focus());
+    window.requestAnimationFrame(() => input?.focus({ preventScroll: true }));
   };
 
   const onClearOrigin = () => {
@@ -1796,6 +1984,10 @@ export function SearchTabs({
     onClearDestination();
     onClearTravelDates();
     setTripType("round-trip");
+    setMultiCityLegs([
+      { origin: "", destination: "", departureDate: "" },
+      { origin: "", destination: "", departureDate: "" },
+    ]);
     setAdultCount(1);
     setChildCount(0);
     setInfantCount(0);
@@ -1811,10 +2003,18 @@ export function SearchTabs({
 
   const isFlightSearchDisabled =
     isFlightSubmitting ||
-    !from.trim() ||
-    !to.trim() ||
-    !isValidFlightDate(departureDate) ||
-    !isFlightReturnRangeValid;
+    (tripType === "multi-city"
+      ? multiCityLegs.length < MULTI_CITY_MIN_LEGS || multiCityLegs.some((leg, index) =>
+          !/^[A-Z0-9]{3}$/.test(leg.origin) ||
+          !/^[A-Z0-9]{3}$/.test(leg.destination) ||
+          leg.origin === leg.destination ||
+          !isValidFlightDate(leg.departureDate) ||
+          (index > 0 && leg.departureDate < multiCityLegs[index - 1].departureDate),
+        ) || !multiCityAirportsValid
+      : !from.trim() ||
+        !to.trim() ||
+        !isValidFlightDate(departureDate) ||
+        !isFlightReturnRangeValid);
 
   const onFlightSubmit = (
     event: FormEvent<HTMLFormElement>
@@ -1823,7 +2023,7 @@ export function SearchTabs({
 
     if (
       isFlightSearchDisabled ||
-      isDepartureDateInvalid ||
+      (tripType !== "multi-city" && isDepartureDateInvalid) ||
       (tripType === "round-trip" && isReturnDateInvalid)
     ) {
       return;
@@ -1837,20 +2037,13 @@ export function SearchTabs({
     setInfantCount(normalizedInfants);
 
     const normalizedCabinClass = normalizeCabinClass(cabinClass);
-    const params =
-      new URLSearchParams({
-        tripType:
-          tripType ===
-          "one-way"
-            ? "one-way"
-            : "round-trip",
-        origin:
-          fromCode ||
-          from.trim(),
-        destination:
-          toCode ||
-          to.trim(),
-        departureDate,
+    const authoritativeLegs = tripType === "multi-city" ? multiCityLegs : [];
+    const projected = tripType === "multi-city" ? projectSearchLegs(tripType, authoritativeLegs) : null;
+    const params = new URLSearchParams({
+        tripType,
+        origin: projected?.origin ?? (fromCode || from.trim()),
+        destination: projected?.destination ?? (toCode || to.trim()),
+        departureDate: projected?.departureDate ?? departureDate,
         adults: String(normalizedAdults),
         children: String(normalizedChildren),
         infants: String(normalizedInfants),
@@ -1858,6 +2051,8 @@ export function SearchTabs({
           normalizedTravelers,
         cabinClass: normalizedCabinClass,
       });
+
+    if (tripType === "multi-city") appendFlightLegParams(params, authoritativeLegs);
 
     if (
       tripType ===
@@ -1872,7 +2067,7 @@ export function SearchTabs({
 
     const href = `/flights/results?${params.toString()}`;
 
-    try {
+    if (tripType !== "multi-city") try {
       const matchedFlightImage = findDiscoveryImageForFlight(
         params.get("origin") ?? "",
         params.get("destination") ?? ""
@@ -2008,8 +2203,14 @@ export function SearchTabs({
   const openHomepageCarsPicker = (picker: "dates" | "times" | "age", open: boolean) => {
     if (open && picker === "dates") {
       const selectedPickup = parseCarsIsoDate(carsValues.pickupDate);
-      const startingDate = selectedPickup ?? new Date();
+      const startingDate = mobileHomepage ? new Date() : (selectedPickup ?? new Date());
       setCarsVisibleMonthDate(new Date(startingDate.getFullYear(), startingDate.getMonth(), 1));
+    }
+    if (open && picker === "times") {
+      setCarsDraftTimes({
+        pickupTime: carsValues.pickupTime,
+        dropoffTime: carsValues.dropoffTime,
+      });
     }
     setCarsOpenPicker(open ? picker : null);
   };
@@ -2048,10 +2249,15 @@ export function SearchTabs({
       driverAge: carsValues.driverAge,
       dropoffLocation,
     });
+    if (carsValues.returnToDifferentLocation) {
+      params.set("returnToDifferentLocation", "1");
+    }
 
+    const href = `/cars/results?${params.toString()}`;
     setIsCarsSubmitting(true);
+    onCarsResultsNavigationStart?.();
     startRouteProgress();
-    router.push(`/cars/results?${params.toString()}`);
+    router.push(href);
   };
 
   const isCarsSearchDisabled =
@@ -2096,11 +2302,13 @@ export function SearchTabs({
     formatCarsDate(carsValues.dropoffDate) ||
     translate("carsSearch.returnDateLabel") ||
     "Return date";
+  const carsDateRangeIsEmpty = !carsValues.pickupDate && !carsValues.dropoffDate;
+  const carsEmptyDateTextClassName = mobileHomepage && carsDateRangeIsEmpty ? "text-slate-950" : undefined;
   const carsDateSummary = (
     <>
-      <span className={carsValues.pickupDate ? "text-slate-900" : "text-slate-500"}>{carsPickupDateDisplay}</span>
-      <span className="text-slate-400"> — </span>
-      <span className={carsValues.dropoffDate ? "text-slate-900" : "text-slate-500"}>{carsReturnDateDisplay}</span>
+      <span className={carsEmptyDateTextClassName ?? (carsValues.pickupDate ? "text-slate-900" : "text-slate-500")}>{carsPickupDateDisplay}</span>
+      <span className={carsEmptyDateTextClassName ?? "text-slate-400"}> — </span>
+      <span className={carsEmptyDateTextClassName ?? (carsValues.dropoffDate ? "text-slate-900" : "text-slate-500")}>{carsReturnDateDisplay}</span>
     </>
   );
   const formatCarsTime = (value: string) => {
@@ -2169,353 +2377,41 @@ export function SearchTabs({
     setCheckOut(selectedIso);
   };
 
-
-  const renderFlightDateCalendar = () => {
-    const mobileFlightCalendarMonths = Array.from(
-      { length: 12 },
-      (_, monthOffset) => addMonths(todayLocal, monthOffset)
-    );
-
-    return (
-      <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
-        {mobileFlightCalendarMonths.map((monthDate) => {
-          const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
-          const cells = buildMonthCells(monthDate);
-
-          return (
-            <section
-              key={monthKey}
-              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
-              className="space-y-2.5"
-            >
-              <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
-                {formatFlightsMonthHeading(monthDate, calendarLocale)}
-              </h3>
-              <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
-                {weekdays.map((weekday) => (
-                  <span key={weekday} className="py-2">{weekday}</span>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-y-1.5">
-                {cells.map((cell) => {
-                  const day = cell.date;
-                  const iso = toIsoDate(day);
-                  const isDeparture = iso === departureDate;
-                  const isReturn = iso === returnDate;
-                  const isDisabledDate = !isSelectableFlightDate(day);
-                  const isToday = toIsoDate(new Date()) === iso;
-                  const isInRange = !!(
-                    departureParsed &&
-                    returnParsed &&
-                    !isDisabledDate &&
-                    day > departureParsed &&
-                    day < returnParsed
-                  );
-
-                  if (!cell.isCurrentMonth) {
-                    return (
-                      <span
-                        key={`placeholder-${iso}`}
-                        aria-hidden="true"
-                        className="h-11 w-full"
-                      />
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      aria-label={`${translate("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
-                      aria-pressed={isDeparture || isReturn}
-                      onClick={() => {
-                        if (isDisabledDate || !isSelectableFlightDate(day)) return;
-                        onSelectDate(day);
-                      }}
-                      disabled={isDisabledDate}
-                      aria-disabled={isDisabledDate}
-                      className={cn(
-                        "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
-                        isDisabledDate
-                          ? "text-slate-300"
-                          : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
-                        isInRange && "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
-                        (isDeparture || isReturn) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
-                      )}
-                    >
-                      {day.getDate()}
-                      {isToday && !isDeparture && !isReturn ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const renderHotelDateCalendar = () => {
-    const mobileHotelCalendarMonths = Array.from(
-      { length: 12 },
-      (_, monthOffset) => addMonths(todayLocal, monthOffset)
-    );
-
-    return (
-      <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
-        {mobileHotelCalendarMonths.map((monthDate) => {
-          const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
-          const cells = buildMonthCells(monthDate);
-
-          return (
-            <section
-              key={monthKey}
-              aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
-              className="space-y-2.5"
-            >
-              <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
-                {formatFlightsMonthHeading(monthDate, calendarLocale)}
-              </h3>
-              <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
-                {weekdays.map((weekday) => (
-                  <span key={weekday} className="py-2">{weekday}</span>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-y-1.5">
-                {cells.map((cell) => {
-                  const day = cell.date;
-                  const iso = toIsoDate(day);
-                  const isCheckIn = iso === checkIn;
-                  const isCheckOut = iso === checkOut;
-                  const isPastDate = isBeforeToday(day);
-                  const isDisabledDate = isPastDate;
-                  const isToday = toIsoDate(new Date()) === iso;
-                  const isInRange = Boolean(
-                    checkInParsed &&
-                      checkOutParsed &&
-                      !isDisabledDate &&
-                      day > checkInParsed &&
-                      day < checkOutParsed,
-                  );
-
-                  if (!cell.isCurrentMonth) {
-                    return (
-                      <span
-                        key={`homepage-mobile-placeholder-${iso}`}
-                        aria-hidden="true"
-                        className="h-11 w-full"
-                      />
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      aria-label={`${translate("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
-                      aria-pressed={isCheckIn || isCheckOut}
-                      onClick={() => {
-                        if (isDisabledDate) return;
-                        onSelectHotelDate(day);
-                      }}
-                      disabled={isDisabledDate}
-                      aria-disabled={isDisabledDate}
-                      className={cn(
-                        "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
-                        isDisabledDate
-                          ? "text-slate-300"
-                          : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-[#004BB8]/25",
-                        isInRange && "bg-[#004BB8]/7 text-[#021C2B] hover:bg-[#004BB8]/10",
-                        (isCheckIn || isCheckOut) && "bg-[#004BB8] text-white shadow-sm hover:bg-[#004BB8] hover:text-white ring-0"
-                      )}
-                    >
-                      {day.getDate()}
-                      {isToday && !isCheckIn && !isCheckOut ? (
-                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const flightDatesFooter = (requestClose: () => void) => (
-    <div className="flex items-center justify-between gap-3">
-      <button
-        type="button"
-        onClick={() => {
-          setDepartureDate("");
-          setReturnDate("");
-        }}
-        className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-      >
-        {translate("clear") || "Clear"}
-      </button>
-      <button
-        type="button"
-        onClick={requestClose}
-        className={cn(mobileDoneButtonClassName, "px-4 py-2")}
-      >
-        {translate("done") || "Done"}
-      </button>
-    </div>
-  );
-
-
-
   const renderMobileAirportPicker = ({
+    field,
     open,
     title,
     inputId,
     value,
-    suggestions,
-    isLoading,
     launcherRef,
-    inputRef,
-    onChange,
     onClear,
     onSelect,
     onClose,
   }: {
+    field: "origin" | "destination";
     open: boolean;
     title: string;
     inputId: string;
     value: string;
-    suggestions: AirportOption[];
-    isLoading: boolean;
     launcherRef: typeof fromMobileLauncherRef;
-    inputRef: typeof fromMobilePickerInputRef;
-    onChange: (value: string) => void;
     onClear: () => void;
     onSelect: (option: AirportOption) => void;
     onClose: () => void;
   }) => {
-    if (!open) return null;
-
-    const titleId = `${inputId}-title`;
-    const query = value.trim();
-    const focusInput = () => {
-      window.requestAnimationFrame(() => inputRef.current?.focus());
-    };
-
     return (
-      <FlightMobilePickerShell
+      <MobileAirportPicker
         open={open}
+        field={field}
         title={title}
-        titleId={titleId}
+        inputId={inputId}
+        value={value}
+        selectedCode={field === "origin" ? fromCode : toCode}
         launcherRef={launcherRef}
         onClose={onClose}
-        contentClassName="bg-slate-50 px-4 py-5"
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                onClear();
-                focusInput();
-              }}
-              className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-            >
-              {t.clear || "Clear"}
-            </button>
-            <button
-              type="button"
-              onClick={requestClose}
-              className={mobileDoneButtonClassName}
-            >
-              {t.done || "Done"}
-            </button>
-          </div>
-        )}
-      >
-        {(requestClose) => (
-        <div className="mx-auto w-full max-w-xl space-y-5">
-          <div className="space-y-2">
-            <label className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500" htmlFor={inputId}>
-              {translate("searchAirportsAndCities")}
-            </label>
-            <div className="relative">
-              <input
-                ref={inputRef}
-                id={inputId}
-                type="text"
-                value={value}
-                onChange={(event) => onChange(event.target.value)}
-                placeholder={translate("cityAirportOrCode")}
-                autoComplete="off"
-                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-[#004BB8] focus:ring-2 focus:ring-[#004BB8]/25"
-              />
-              {value.trim() ? (
-                <button
-                  type="button"
-                  aria-label={title === (t.chooseOrigin || "Choose origin") ? (t.clearOrigin || "Clear origin") : (t.clearDestination || "Clear destination")}
-                  onClick={() => {
-                    onClear();
-                    focusInput();
-                  }}
-                  className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            {query.length < 2 ? (
-              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                {translate("startTypingCityAirportOrCode")}
-              </p>
-            ) : isLoading ? (
-              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                {translate("searchingAirportsAndCities")}
-              </p>
-            ) : suggestions.length ? (
-              suggestions.map((option) => (
-                <button
-                  key={`${option.code}-${option.airport}-${inputId}`}
-                  type="button"
-                  onClick={() => {
-                    onSelect(option);
-                    requestClose();
-                  }}
-                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true">
-                    <Plane className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
-                      {getLocalizedCityName(option.city, locale)}
-                    </span>
-                    <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
-                      {option.airport}
-                    </span>
-                  </span>
-                  <span className="shrink-0 ps-2 text-end text-sm font-extrabold tracking-[0.12em] text-slate-700">
-                    {option.code}
-                  </span>
-                </button>
-              ))
-            ) : (
-              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                {translate("noMatchingAirportsOrCities")}
-              </p>
-            )}
-          </div>
-        </div>
-        )}
-      </FlightMobilePickerShell>
+        locale={locale}
+        labels={t}
+        onCommit={(option) => (option ? onSelect(option) : onClear())}
+      />
     );
   };
 
@@ -2534,18 +2430,22 @@ export function SearchTabs({
     sectionLabel: string;
     onSelect: (option: AirportOption) => void;
   }) => (
-    <div
-      className={cn(
-        "absolute start-0 top-[calc(100%+10px)] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]",
-        desktopPopoverPanelClassName
-      )}
+    <DesktopTopLayerPopover
+      open
+      launcherId={inputId}
+      placement="auto"
+      desiredHeight={360}
+      width={520}
+      id={`${inputId}-suggestions`}
+      role="listbox"
+      ariaLabel={sectionLabel}
     >
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
           {sectionLabel}
         </p>
       </div>
-      <div className="max-h-[min(52vh,360px)] overflow-y-auto py-1">
+      <div className="py-1">
         {isLoading ? (
           <div className="flex items-center gap-3 px-4 py-4 text-sm font-medium text-slate-500">
             <span className="h-2 w-2 rounded-full bg-[#004BB8] shadow-[0_0_0_4px_rgba(0,75,184,0.18)]" aria-hidden="true" />
@@ -2555,6 +2455,9 @@ export function SearchTabs({
           <button
             key={`${option.code}-${option.airport}-${inputId}`}
             type="button"
+            id={`${inputId}-suggestion-${index}`}
+            role="option"
+            aria-selected={highlight === index}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(option)}
             className={cn(
@@ -2586,7 +2489,7 @@ export function SearchTabs({
           </div>
         )}
       </div>
-    </div>
+    </DesktopTopLayerPopover>
   );
 
   const renderDesktopCalendarMonth = ({
@@ -2603,12 +2506,12 @@ export function SearchTabs({
         aria-label={formatFlightsMonthHeading(monthDate, calendarLocale)}
         className="min-w-0"
       >
-        <h3 className="mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900">
+        <h3 className={cn("text-center text-sm font-medium tracking-tight text-slate-900", compactHero ? "mb-1.5" : "mb-2.5")}>
           {formatFlightsMonthHeading(monthDate, calendarLocale)}
         </h3>
-        <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium tracking-[0.09em] text-slate-500">
+        <div className={cn("grid grid-cols-7 text-center text-[10px] font-medium tracking-[0.09em] text-slate-500", compactHero ? "mb-1" : "mb-1.5")}>
           {weekdays.map((weekday) => (
-            <span key={weekday} className="py-1.5">{weekday}</span>
+            <span key={weekday} className={compactHero ? "py-1" : "py-1.5"}>{weekday}</span>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-y-0.5">
@@ -2631,7 +2534,7 @@ export function SearchTabs({
             );
 
             if (!cell.isCurrentMonth) {
-              return <span key={`desktop-placeholder-${mode}-${iso}`} aria-hidden="true" className="h-10" />;
+              return <span key={`desktop-placeholder-${mode}-${iso}`} aria-hidden="true" className={compactHero ? "h-8" : "h-10"} />;
             }
 
             return (
@@ -2652,7 +2555,8 @@ export function SearchTabs({
                 disabled={isDisabledDate}
                 aria-disabled={isDisabledDate}
                 className={cn(
-                  "focus-ring relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors disabled:cursor-not-allowed",
+                  "focus-ring relative mx-auto flex items-center justify-center rounded-full text-sm font-medium transition-colors disabled:cursor-not-allowed",
+                  compactHero ? "h-8 w-8" : "h-10 w-10",
                   isDisabledDate
                     ? "text-slate-300"
                     : "text-slate-800 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
@@ -2662,9 +2566,6 @@ export function SearchTabs({
                 )}
               >
                 {day.getDate()}
-                {isToday && !isStart && !isEnd ? (
-                  <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-[#004BB8]" aria-hidden="true" />
-                ) : null}
               </button>
             );
           })}
@@ -2691,11 +2592,13 @@ export function SearchTabs({
     <DesktopTopLayerPopover
       open
       launcherRef={launcherRef}
+      placement="auto"
       align={mode === "flights" ? "center" : "left"}
       width={mode === "flights" ? 760 : 660}
+      desiredHeight={440}
       className={cn(
-        "p-4",
-        mode === "flights" && "lg:p-5"
+        compactHero ? "p-3" : "p-4",
+        mode === "flights" && !compactHero && "lg:p-5"
       )}
     >
     <div
@@ -2705,7 +2608,7 @@ export function SearchTabs({
         : (translate("chooseTravelDates") || "Choose travel dates")}
       className="bg-white"
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className={cn("flex items-center justify-between gap-3", compactHero ? "mb-2" : "mb-3")}>
         <div>
           <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
             {mode === "flights"
@@ -2745,17 +2648,17 @@ export function SearchTabs({
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-5">
+      <div className={cn("grid grid-cols-2", compactHero ? "gap-3" : "gap-5")}>
         {[0, 1].map((monthOffset) => renderDesktopCalendarMonth({
           monthDate: addMonths(visibleMonth, monthOffset),
           mode,
         }))}
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+      <div className={cn("flex items-center justify-between gap-3 border-t border-slate-100", compactHero ? "mt-2 pt-2" : "mt-3 pt-3")}>
         <button
           type="button"
           onClick={onClear}
-          className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+          className={cn("focus-ring rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900", compactHero ? "py-2" : "py-2.5")}
         >
           {mode === "hotels"
             ? (translateHotelTravelDateText("clear") || "Clear")
@@ -2764,7 +2667,7 @@ export function SearchTabs({
         <button
           type="button"
           onClick={onDone}
-          className="focus-ring rounded-lg bg-[#004BB8] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
+          className={cn("focus-ring rounded-lg bg-[#004BB8] px-5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35", compactHero ? "py-2" : "py-2.5")}
         >
           {translate("done") || "Done"}
         </button>
@@ -2801,7 +2704,7 @@ export function SearchTabs({
             key={row.key}
             className={cn(
               "flex items-center justify-between gap-4 border-b border-slate-100 px-4 last:border-b-0",
-              compact ? "py-3" : "py-4"
+              compact ? (compactHero ? "py-2" : "py-3") : "py-4"
             )}
           >
             <span className="min-w-0">
@@ -2884,7 +2787,7 @@ export function SearchTabs({
   const renderCabinClassPicker = (compact = false) => (
     <div className={cn(
       "rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]",
-      compact && "rounded-2xl border-slate-100 p-3 shadow-none"
+      compact && cn("rounded-2xl border-slate-100 shadow-none", compactHero ? "p-2" : "p-3")
     )}>
       {!compact ? (
         <div className="mb-3 flex items-center justify-between">
@@ -2907,7 +2810,7 @@ export function SearchTabs({
                     compact && "border-[#004BB8]/20 bg-[#004BB8]/7 shadow-none"
                   )
                 : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-[#004BB8]/30 hover:bg-[#004BB8]/10 hover:text-[#004BB8]",
-              compact ? "min-h-9 rounded-xl text-xs font-medium" : "font-extrabold"
+              compact ? cn("rounded-xl text-xs font-medium", compactHero ? "min-h-8" : "min-h-9") : "font-extrabold"
             )}
           >
             {label}
@@ -2929,12 +2832,358 @@ export function SearchTabs({
     </div>
   );
 
+  const carsReturnLocationField = carsValues.returnToDifferentLocation ? (
+    <div
+      ref={carsDropoffFieldRef}
+      className={cn(
+        compactHero
+          ? hotelJoinedFieldClassName
+          : "relative rounded-xl border border-slate-300 bg-white px-4 py-2 sm:max-w-[50%]",
+        mobileHomepage && "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe] sm:rounded-xl sm:border-slate-300 sm:!bg-white",
+      )}
+      data-testid="cars-return-location-field"
+    >
+      <label htmlFor="homepage-cars-dropoff" className={hotelFieldLabelClassName}>
+        {translate("carsSearch.returnLocationLabel") || "Return location"}
+      </label>
+      {mobileHomepage ? <button ref={carsDropoffLauncherRef} id="homepage-cars-dropoff" type="button" onClick={() => setCarsOpenPicker("dropoff")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>{carsValues.dropoffLocation || translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"}</button> : null}
+      <div className={cn("relative", mobileHomepage && "hidden sm:block")}>
+        <MapPin aria-hidden="true" className="pointer-events-none absolute start-0 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500" />
+        <CarLocationAutocomplete
+        id="homepage-cars-dropoff"
+        name="dropoffLocation"
+        value={carsValues.dropoffLocation}
+        onValueChange={(value) => updateCarsValue("dropoffLocation", value)}
+        placeholder={translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"}
+        presentation="responsive"
+        inputClassName={cn(hotelFieldValueClassName, "h-8 w-full ps-6")}
+        strings={carsLocationStrings}
+        isOpen={carsOpenPicker === "dropoff"}
+        onOpenChange={(open) => setCarsOpenPicker(open ? "dropoff" : null)}
+        />
+      </div>
+      {carsErrors.dropoffLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.dropoffLocation}</p> : null}
+    </div>
+  ) : null;
+
+  const mobileHomepageProductTabs = (
+    <div
+      data-testid="mobile-homepage-product-tabs-breakout"
+      className="relative left-1/2 w-[calc(100%+28px)] -translate-x-1/2 sm:static sm:w-full sm:translate-x-0"
+    >
+      <div
+        role="tablist"
+        aria-label={translate("searchType") || "Search type"}
+        data-testid="mobile-homepage-product-tabs"
+        className="grid h-[68px] w-full grid-cols-4 gap-[clamp(6px,2vw,8px)]"
+      >
+        {([
+          ["flights", Plane, t.flights || "Flights"],
+          ["hotels", Building2, t.hotels || "Hotels"],
+          ["cars", CarFront, t.cars || "Cars"],
+          ["deals", PackagesIcon, t.deals || "Packages"],
+        ] as const).map(([mode, Icon, label]) => {
+          const selected = tab === mode;
+          return (
+            <button
+              key={mode}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => {
+                setCarsOpenPicker(null);
+                setTab(mode);
+              }}
+              className={cn(
+                "focus-ring flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-[10px] border px-0.5 text-[clamp(13px,3.85vw,16px)] font-medium text-slate-950 shadow-[0_3px_10px_rgba(15,23,42,0.07)] transition-colors",
+                selected
+                  ? "border-[#075ee8] bg-[#eef5ff] text-[#075ee8]"
+                  : "border-slate-200/70 bg-white",
+              )}
+            >
+              <Icon
+                aria-hidden="true"
+                className="h-[clamp(22px,6.15vw,25px)] w-[clamp(22px,6.15vw,25px)] shrink-0"
+                strokeWidth={1.8}
+              />
+              <span className="whitespace-nowrap tracking-[-0.01em]">{label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  if (mobileHomepage && tab === "flights") {
+    const isEnglishMobileHomepage = calendarLocale.toLowerCase().startsWith("en");
+    const mobileOriginLabel = t.origin || t.from || "Origin";
+    const mobileDestinationLabel = t.destination || t.to || "Destination";
+    const mobileDestinationPlaceholder = t.toPlaceholder || "To?";
+    const mobileTravelDatesLabel = t.travelDates || "Travel dates";
+    const mobileTravelersCabinLabel = isEnglishMobileHomepage
+      ? "Travelers & Cabin Class"
+      : t.travelersAndCabinClass || t.travelersAndCabin || t.travelers || "Travelers & Cabin Class";
+
+    return (
+      <section
+        data-testid="mobile-homepage-flight-search"
+        className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden"
+      >
+        {mobileHomepageProductTabs}
+        <form onSubmit={onFlightSubmit} className="mt-3 space-y-2">
+          <div
+            role="radiogroup"
+            aria-label={t.tripType || "Trip type"}
+            className="grid h-11 grid-cols-3 items-center gap-0 px-0.5"
+            data-testid="mobile-homepage-trip-selector"
+          >
+            {(["round-trip", "one-way", "multi-city"] as const).map((mode) => {
+              const selected = tripType === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => onSelectTripType(mode)}
+                  onKeyDown={(event) => {
+                    if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(event.key)) {
+                      event.preventDefault();
+                      const modes = ["round-trip", "one-way", "multi-city"] as const;
+                      const offset = event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
+                      onSelectTripType(modes[(modes.indexOf(mode) + offset + modes.length) % modes.length]);
+                    }
+                  }}
+                  className={cn(
+                    "focus-ring flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-0.5 text-start text-[12px] font-medium text-slate-950 transition-colors max-[359px]:gap-1 max-[359px]:text-[11px] disabled:cursor-not-allowed",
+                  )}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-slate-300 bg-white",
+                    )}
+                  >
+                    <span className={cn("h-[5px] w-[5px] rounded-full bg-[#004BB8]", !selected && "invisible")} />
+                  </span>
+                  {homepageTripTypeLabel(mode)}
+                </button>
+              );
+            })}
+          </div>
+
+          {tripType === "multi-city" ? (
+            <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(new Date())} presentation="homepage" onAirportValidityChange={setMultiCityAirportsValid} />
+          ) : <><div className="relative space-y-2" data-testid="mobile-homepage-route-fields">
+            {([
+              ["origin", mobileOriginLabel, from, t.fromPlaceholder || "From?"],
+              ["destination", mobileDestinationLabel, to, mobileDestinationPlaceholder],
+            ] as const).map(([kind, label, value, placeholder]) => (
+              <button
+                key={kind}
+                ref={kind === "origin" ? fromMobileLauncherRef : toMobileLauncherRef}
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={activeMobileAirportPicker === kind}
+                aria-label={`${label}: ${value.trim() || placeholder}`}
+                onClick={() => {
+                  setFromOpen(false);
+                  setToOpen(false);
+                  setActiveMobileAirportPicker(kind);
+                }}
+                className="focus-ring flex h-[68px] w-full items-center rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
+                data-testid={`mobile-homepage-${kind}-field`}
+              >
+                <span className="min-w-0">
+                  <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{label}</span>
+                  <span data-testid={`mobile-homepage-${kind}-value`} className={cn("mt-1.5 flex min-w-0 items-center gap-2 text-[17px] font-medium leading-5 text-slate-950", !value.trim() && "text-slate-500")}>
+                    <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                    <span className="truncate">{value.trim() || placeholder}</span>
+                  </span>
+                </span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={onSwapAirports}
+              aria-label={t.swapOriginDestination || "Swap origin and destination"}
+              data-testid="mobile-homepage-swap"
+              className="focus-ring absolute left-1/2 top-[72px] z-20 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#dee5ed] bg-[#fcfdfe] text-[#075ee8] shadow-[0_4px_10px_rgba(15,23,42,0.10)] before:absolute before:-inset-0.5 before:rounded-full"
+            >
+              <ArrowRightLeft aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+            </button>
+          </div>
+
+          <button
+            ref={flightDatesLauncherRef}
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={flightDatesOpen}
+            aria-label={translate("chooseTravelDates") || "Choose travel dates"}
+            onClick={() => setFlightDatesOpen(true)}
+            data-testid="mobile-homepage-travel-dates-field"
+            className="focus-ring flex h-[62px] w-full items-center rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
+          >
+            <span className="min-w-0">
+              <span className="block text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelDatesLabel}</span>
+              <span data-testid="mobile-homepage-travel-dates-value" className="mt-1.5 flex min-w-0 items-center gap-2 text-[16px] font-medium leading-5 text-slate-950">
+                <Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                <span className="truncate">{dateSummary}</span>
+              </span>
+            </span>
+          </button>
+          </>}
+
+          <button
+            ref={travelersLauncherRef}
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={travelersMenuOpen}
+            aria-label={`${mobileTravelersCabinLabel}: ${travelerSummary}`}
+            onClick={() => travelersMenuOpen ? cancelTravelersDraft() : openTravelersMenu()}
+            data-testid="mobile-homepage-travelers-field"
+            className="focus-ring flex h-16 w-full items-center justify-between gap-3 rounded-[10px] border border-[#dee5ed] bg-[#fcfdfe] px-4 text-start"
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-[10px] font-semibold uppercase leading-3 tracking-[0.11em] text-slate-600">{mobileTravelersCabinLabel}</span>
+              <span data-testid="mobile-homepage-travelers-value" className="mt-1.5 flex min-w-0 items-center gap-2 text-[16px] font-medium leading-5 text-slate-950">
+                <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                <span className="truncate">{travelerSummary}</span>
+              </span>
+            </span>
+            <ChevronDown aria-hidden="true" className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", travelersMenuOpen && "rotate-180")} />
+          </button>
+
+          <Button
+            type="submit"
+            disabled={isFlightSearchDisabled}
+            aria-busy={isFlightSubmitting}
+            aria-label={t.searchFlights || "Search flights"}
+            data-testid="mobile-homepage-search-submit"
+            className="h-12 w-full rounded-[10px] bg-[#004BB8] text-[16px] font-semibold text-white shadow-none enabled:hover:bg-[#003f9c] enabled:active:bg-[#003785] disabled:cursor-not-allowed disabled:bg-[#004BB8] disabled:text-white disabled:opacity-100"
+          >
+            {isFlightSubmitting ? t.searchingFlights || "Searching flights..." : t.search || "Search"}
+          </Button>
+        </form>
+
+        {renderMobileAirportPicker({
+          field: "origin",
+          open: activeMobileAirportPicker === "origin",
+          title: t.chooseOrigin || "Choose origin",
+          inputId: "homepage-origin-picker-search",
+          value: from,
+          launcherRef: fromMobileLauncherRef,
+          onClear: onClearOrigin,
+          onSelect: (option) => {
+            setFromState((current) =>
+              markOriginManualInput(
+                current,
+                formatAirportLabel(option, locale),
+                option.code,
+              ),
+            );
+          },
+          onClose: () => setActiveMobileAirportPicker(null),
+        })}
+        {renderMobileAirportPicker({
+          field: "destination",
+          open: activeMobileAirportPicker === "destination",
+          title: t.chooseDestination || "Choose destination",
+          inputId: "homepage-destination-picker-search",
+          value: to,
+          launcherRef: toMobileLauncherRef,
+          onClear: onClearDestination,
+          onSelect: (option) => {
+            setTo(formatAirportLabel(option, locale));
+            setToCode(option.code);
+          },
+          onClose: () => setActiveMobileAirportPicker(null),
+        })}
+        <MobileDatePickerDialog
+          open={flightDatesOpen}
+          title={translate("chooseTravelDates") || "Choose travel dates"}
+          titleId="homepage-flight-dates-title"
+          launcherRef={flightDatesLauncherRef}
+          startDate={departureDate}
+          endDate={returnDate}
+          rangeRequired={tripType !== "one-way"}
+          locale={calendarLocale}
+          weekdays={weekdays}
+          labels={mobileDatePickerLabels}
+          isDateDisabled={(date) => !isSelectableFlightDate(date)}
+          onCommit={(startDate, endDate) => {
+            setDepartureDate(startDate);
+            setReturnDate(endDate);
+          }}
+          onClose={() => setFlightDatesOpen(false)}
+        />
+        <FlightMobilePickerShell
+          open={travelersMenuOpen}
+          title={translate("mobileTravelerCabin.title") || "Travelers & Cabin"}
+          titleId="homepage-flight-travelers-title"
+          launcherRef={travelersLauncherRef}
+          footer={(requestClose) => (
+            <div>
+              <button type="button" onClick={() => { applyTravelersDraft(false); requestClose(); }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white">
+                {t.done || "Done"}
+              </button>
+            </div>
+          )}
+          onClose={cancelTravelersDraft}
+          contentClassName="bg-[#fcfdfe] px-4 py-6"
+          pickerMarker="traveler-cabin"
+          headerVariant="close"
+        >
+          <MobileTravelerCabinPicker
+            adults={draftAdultCount}
+            children={draftChildCount}
+            infants={draftInfantCount}
+            cabinClass={normalizeCabinClass(draftCabinClass)}
+            strings={{
+              travelers: translate("travelers") || "Travelers",
+              adults: translate("adults") || "Adults",
+              adultDescription: translate("mobileTravelerCabin.adultDescription") || "18 years and above",
+              children: translate("children") || "Children",
+              childDescription: translate("mobileTravelerCabin.childDescription") || "2 to 17 years",
+              infants: translate("infants") || "Infants",
+              infantDescription: translate("mobileTravelerCabin.infantDescription") || "Under 2 years",
+              cabinClass: translate("cabinClass") || "Cabin class",
+              economy: translate("economy") || "Economy",
+              business: translate("business") || "Business",
+              first: translate("first") || "First",
+              tip: translate("mobileTravelerCabin.tip") || "Tip",
+              baggageTip: translate("mobileTravelerCabin.baggageTip") || "Baggage allowance may vary by airline. Check details on the provider page.",
+              decrease: (label) => (translate("deals.decreaseCountAria") || "Decrease {{label}}").replace("{{label}}", label),
+              increase: (label) => (translate("deals.increaseCountAria") || "Increase {{label}}").replace("{{label}}", label),
+            }}
+            onAdultsChange={setDraftAdultCount}
+            onChildrenChange={setDraftChildCount}
+            onInfantsChange={setDraftInfantCount}
+            onCabinClassChange={setDraftCabinClass}
+          />
+        </FlightMobilePickerShell>
+      </section>
+    );
+  }
+
+  if (mobileHomepage && tab === "deals") {
+    return (
+      <section data-testid="mobile-homepage-deals-surface" className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
+        {mobileHomepageProductTabs}
+        <DealsSearchForm variant="landing" />
+      </section>
+    );
+  }
+
   return (
     <>
       <section className={wrapper}>
         {desktopPopoverOpen ? (
           <div aria-hidden="true" className={desktopOverlayGuardClassName} />
         ) : null}
+      {mobileHomepage ? (
+        <div className="mb-3">{mobileHomepageProductTabs}</div>
+      ) : (
       <div className={tabsClassName}>
         <button
           type="button"
@@ -2943,16 +3192,15 @@ export function SearchTabs({
             setTab("flights");
           }}
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            "relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/30 lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
             tab === "flights"
-              ? "bg-white text-navy shadow-sm"
+              ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
-            compactHero && tab === "flights" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
           <Plane className="h-4 w-4" />
-          {t.flights}
+          <span>{t.flights}</span>
         </button>
 
         <button
@@ -2962,16 +3210,15 @@ export function SearchTabs({
             setTab("hotels");
           }}
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            "relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/30 lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
             tab === "hotels"
-              ? "bg-white text-navy shadow-sm"
+              ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
-            compactHero && tab === "hotels" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
           <BedDouble className="h-4 w-4" />
-          {t.hotels}
+          <span>{t.hotels}</span>
         </button>
 
         <button
@@ -2981,24 +3228,26 @@ export function SearchTabs({
             setTab("cars");
           }}
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
-            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
+            "relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/30 lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
             tab === "cars"
-              ? "bg-white text-navy shadow-sm"
+              ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
-            compactHero && tab === "cars" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
           <CarFront className="h-4 w-4" />
-          {t.cars}
+          <span>{t.cars}</span>
         </button>
+
       </div>
+      )}
 
       {tab === "flights" ? (
         <form
           onSubmit={
             onFlightSubmit
           }
+          autoComplete="off"
           className={formClassName}
         >
           <div className="flex items-center justify-between gap-2 px-1">
@@ -3010,9 +3259,9 @@ export function SearchTabs({
                 <div
                   role="radiogroup"
                   aria-label={t.tripType || "Trip type"}
-                  className="inline-flex items-center gap-3 rounded-lg bg-white/80 px-0.5 py-1 lg:gap-1 lg:rounded-xl lg:border lg:border-slate-200 lg:bg-slate-50 lg:p-1"
+                  className="inline-flex items-center gap-2 bg-transparent py-0.5"
                 >
-                  {(["round-trip", "one-way"] as const).map((mode) => {
+                  {(["round-trip", "one-way", "multi-city"] as const).map((mode) => {
                     const selected = tripType === mode;
 
                     return (
@@ -3033,11 +3282,13 @@ export function SearchTabs({
                           }
 
                           event.preventDefault();
-                          onSelectTripType(mode === "round-trip" ? "one-way" : "round-trip");
+                          const modes = ["round-trip", "one-way", "multi-city"] as const;
+                          const offset = event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
+                          onSelectTripType(modes[(modes.indexOf(mode) + offset + modes.length) % modes.length]);
                         }}
                         className={cn(
-                          "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950 lg:px-2.5",
-                          selected && "text-slate-950 lg:bg-white lg:shadow-sm"
+                          "focus-ring group inline-flex min-h-9 items-center gap-2 rounded-lg border px-4 py-1.5 text-sm font-semibold transition-colors",
+                          selected ? "border-[#075EE8] bg-[#EEF5FF] text-[#075EE8]" : "border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:text-slate-950",
                         )}
                       >
                         <span
@@ -3056,7 +3307,7 @@ export function SearchTabs({
                             )}
                           />
                         </span>
-                        <span>{tripTypeLabel(mode)}</span>
+                        <span>{homepageTripTypeLabel(mode)}</span>
                       </button>
                     );
                   })}
@@ -3122,11 +3373,10 @@ export function SearchTabs({
                       ))}
                       <button
                         type="button"
-                        disabled
-                        className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium text-slate-500"
+                        onClick={() => onSelectTripType("multi-city")}
+                        className="focus-ring mt-0.5 flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium text-slate-700 hover:bg-slate-100"
                       >
-                        {t.multiCity || "Multi-city"} —
-                        {t.useOneWayOrRoundTripSearch || "Use one-way or round-trip search"}
+                        {t.multiCity || "Multi-city"}
                       </button>
                     </div>
                   )}
@@ -3134,8 +3384,12 @@ export function SearchTabs({
               )}
             </div>
           </div>
+          {tripType === "multi-city" ? (
+            <MultiCityFlightEditor legs={multiCityLegs} onChange={setMultiCityLegs} minimumDate={toIsoDate(new Date())} presentation="homepage" onAirportValidityChange={setMultiCityAirportsValid} />
+          ) : null}
           <div className={fieldCardClassName}>
-            <div className={flightGridClassName}>
+            <div className={cn(flightGridClassName, tripType === "multi-city" && "lg:grid-cols-[minmax(220px,1fr)_112px]")}>
+              {tripType !== "multi-city" ? <>
               <div className={flightRouteGroupClassName}>
               <div
                 ref={fromWrapRef}
@@ -3149,6 +3403,7 @@ export function SearchTabs({
                     "Origin"}
                 </label>
                 <div className="relative h-8">
+                  <MapPin aria-hidden="true" className="pointer-events-none absolute start-0 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-500 sm:block" />
                   <button
                     ref={fromMobileLauncherRef}
                     type="button"
@@ -3167,7 +3422,16 @@ export function SearchTabs({
                   </button>
                   <input
                     ref={fromInputRef}
+                    id="homepage-flight-origin"
                     type="text"
+                    autoComplete="off"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={shouldShowFromSuggestionsPanel}
+                    aria-controls="homepage-flight-origin-suggestions"
+                    aria-activedescendant={shouldShowFromSuggestionsPanel && fromSuggestions.length
+                      ? `homepage-flight-origin-suggestion-${fromHighlight}`
+                      : undefined}
                     value={from}
                     onChange={(
                       event
@@ -3204,9 +3468,9 @@ export function SearchTabs({
                       )
                     }
                     placeholder={t.fromPlaceholder || "From?"}
-                    className={flightFieldValueClassName}
+                    className={cn(flightFieldValueClassName, compactHero && "ps-6 pe-1")}
                   />
-                  {from.trim() ? (
+                  {!compactHero && from.trim() ? (
                     <button
                       type="button"
                       onClick={onClearOrigin}
@@ -3234,7 +3498,7 @@ export function SearchTabs({
                   },
                 }) : null}
               </div>
-              <div className="relative z-20 -my-2 flex h-4 items-center justify-center sm:my-0 sm:h-auto lg:z-30">
+              <div className="relative z-20 -my-px flex h-4 items-center justify-center before:absolute before:inset-y-0 before:start-1/2 before:w-px before:bg-slate-200 sm:my-0 sm:h-auto sm:before:inset-y-3 lg:z-30">
                 <button
                   type="button"
                   onClick={onSwapAirports}
@@ -3256,6 +3520,7 @@ export function SearchTabs({
                   {t.destination || "Destination"}
                 </label>
                 <div className="relative h-8">
+                  <MapPin aria-hidden="true" className="pointer-events-none absolute start-0 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-500 sm:block" />
                   <button
                     ref={toMobileLauncherRef}
                     type="button"
@@ -3274,7 +3539,16 @@ export function SearchTabs({
                   </button>
                   <input
                     ref={toInputRef}
+                    id="homepage-flight-destination"
                     type="text"
+                    autoComplete="off"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={shouldShowToSuggestionsPanel}
+                    aria-controls="homepage-flight-destination-suggestions"
+                    aria-activedescendant={shouldShowToSuggestionsPanel && toSuggestions.length
+                      ? `homepage-flight-destination-suggestion-${toHighlight}`
+                      : undefined}
                     value={to}
                     onChange={(
                       event
@@ -3305,9 +3579,9 @@ export function SearchTabs({
                       )
                     }
                     placeholder={t.toPlaceholder || "To?"}
-                    className={flightFieldValueClassName}
+                    className={cn(flightFieldValueClassName, compactHero && "ps-6 pe-1")}
                   />
-                  {to.trim() ? (
+                  {!compactHero && to.trim() ? (
                     <button
                       type="button"
                       onClick={onClearDestination}
@@ -3339,6 +3613,7 @@ export function SearchTabs({
                 className={cn(
                   "relative rounded-xl border border-slate-300 bg-white",
                   flightJoinedFieldClassName,
+                  compactHero && "lg:rounded-xl lg:border lg:border-slate-200 lg:shadow-[0_3px_10px_rgba(15,23,42,0.05)]",
                   flightDatesOpen && desktopActiveFieldClassName
                 )}
               >
@@ -3385,17 +3660,24 @@ export function SearchTabs({
 
                 {flightDatesOpen ? (
                   <>
-                    <FlightMobilePickerShell
+                    <MobileDatePickerDialog
                       open={flightDatesOpen}
                       title={translate("chooseTravelDates") || "Choose travel dates"}
                       titleId="homepage-flight-dates-title"
                       launcherRef={flightDatesLauncherRef}
-                      footer={flightDatesFooter}
+                      startDate={departureDate}
+                      endDate={returnDate}
+                      rangeRequired={tripType !== "one-way"}
+                      locale={calendarLocale}
+                      weekdays={weekdays}
+                      labels={mobileDatePickerLabels}
+                      isDateDisabled={(date) => !isSelectableFlightDate(date)}
+                      onCommit={(startDate, endDate) => {
+                        setDepartureDate(startDate);
+                        setReturnDate(endDate);
+                      }}
                       onClose={() => setFlightDatesOpen(false)}
-                      contentClassName="px-4 py-4"
-                    >
-                      {renderFlightDateCalendar()}
-                    </FlightMobilePickerShell>
+                    />
                     {renderDesktopCalendarPopover({
                       launcherRef: flightDatesLauncherRef,
                       mode: "flights",
@@ -3411,11 +3693,14 @@ export function SearchTabs({
                 ) : null}
               </div>
 
+              </> : null}
+
               <div
                 ref={travelersWrapRef}
                 className={cn(
                   "relative rounded-xl border border-slate-300 bg-white",
                   flightJoinedFieldClassName,
+                  compactHero && "lg:rounded-xl lg:border lg:border-slate-200 lg:shadow-[0_3px_10px_rgba(15,23,42,0.05)]",
                   travelersMenuOpen && desktopTravelersFieldClassName
                 )}
               >
@@ -3438,10 +3723,13 @@ export function SearchTabs({
                   }}
                   className={cn(flightFieldButtonClassName, "justify-between pe-0")}
                 >
-                  <span className="block min-w-0 truncate">
+                  <span className="flex min-w-0 items-center gap-2 truncate">
+                    <UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                    <span className="truncate">
                       {
                         travelerSummary
                       }
+                    </span>
                   </span>
                   <ChevronDown
                     className={cn(
@@ -3480,9 +3768,11 @@ export function SearchTabs({
                     <DesktopTopLayerPopover
                       open
                       launcherRef={travelersLauncherRef}
+                      placement="auto"
+                      desiredHeight={420}
                       align="right"
                       width={360}
-                      className={cn("p-4", desktopTravelersPopoverClassName)}
+                      className={cn(compactHero ? "p-3" : "p-4", desktopTravelersPopoverClassName)}
                     >
                     <div
                       role="dialog"
@@ -3497,7 +3787,7 @@ export function SearchTabs({
                           {translate("passengers") || t.travelers || "Travelers"}
                         </h3>
                       </div>
-                      <div className="mt-3 space-y-4">
+                      <div className={cn(compactHero ? "mt-2 space-y-2" : "mt-3 space-y-4")}>
                         {renderPassengerControlRows(true)}
                         <div>
                           <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
@@ -3506,7 +3796,7 @@ export function SearchTabs({
                           {renderCabinClassPicker(true)}
                         </div>
                       </div>
-                      <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                      <div className={cn("flex items-center justify-end gap-2 border-t border-slate-100 bg-white", compactHero ? "sticky bottom-0 mt-2 py-2" : "mt-3 pt-3")}>
                         <button type="button" onClick={() => applyTravelersDraft()} className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35">{t.done || "Done"}</button>
                       </div>
                     </div>
@@ -3547,22 +3837,12 @@ export function SearchTabs({
           ) : null}
 
           {renderMobileAirportPicker({
+            field: "origin",
             open: activeMobileAirportPicker === "origin",
             title: t.chooseOrigin || "Choose origin",
             inputId: "homepage-origin-picker-search",
             value: from,
-            suggestions: fromSuggestions,
-            isLoading: isFromLoadingVisible,
             launcherRef: fromMobileLauncherRef,
-            inputRef: fromMobilePickerInputRef,
-            onChange: (nextValue) => {
-              setFromState((current) => markOriginManualInput(current, nextValue));
-              if (nextValue.trim().length < 2) {
-                setFromLoading(false);
-                setFromLiveSuggestions([]);
-              }
-              setFromHighlight(0);
-            },
             onClear: () => {
               setFromState((current) => markOriginManualInput(current, ""));
               setFromLoading(false);
@@ -3575,23 +3855,12 @@ export function SearchTabs({
             onClose: () => setActiveMobileAirportPicker(null),
           })}
           {renderMobileAirportPicker({
+            field: "destination",
             open: activeMobileAirportPicker === "destination",
             title: t.chooseDestination || "Choose destination",
             inputId: "homepage-destination-picker-search",
             value: to,
-            suggestions: toSuggestions,
-            isLoading: isToLoadingVisible,
             launcherRef: toMobileLauncherRef,
-            inputRef: toMobilePickerInputRef,
-            onChange: (nextValue) => {
-              setTo(nextValue);
-              if (nextValue.trim().length < 2) {
-                setToLoading(false);
-                setToLiveSuggestions([]);
-              }
-              setToCode("");
-              setToHighlight(0);
-            },
             onClear: () => {
               setTo("");
               setToLoading(false);
@@ -3611,11 +3880,26 @@ export function SearchTabs({
           onSubmit={
             onHotelSubmit
           }
+          autoComplete="off"
           className={formClassName}
         >
-          <div className={fieldCardClassName}>
+          <div
+            className={hotelFieldCardClassName}
+            data-testid={mobileHomepage ? "mobile-homepage-hotel-controls" : undefined}
+          >
             <div className={hotelGridClassName}>
-              <div className={cn("relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", hotelJoinedFieldClassName)}>
+              <div
+                ref={hotelDestinationDesktopWrapRef}
+                className={cn(
+                  "relative border",
+                  mobileHomepage
+                    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe]"
+                    : "rounded-xl border-slate-300 bg-white lg:rounded-s-xl",
+                  hotelJoinedFieldClassName,
+                  hotelDestinationSuggestionsOpen && desktopActiveFieldClassName,
+                )}
+                data-testid={mobileHomepage ? "mobile-homepage-hotel-destination" : undefined}
+              >
                 <label className={hotelFieldLabelClassName}>
                   {t.hotelSearchDestinationLabel || t.destination || "Destination"}
                 </label>
@@ -3632,43 +3916,162 @@ export function SearchTabs({
                   aria-label={t.chooseHotelDestination || "Choose hotel destination"}
                   className={cn(hotelFieldValueClassName, "justify-between sm:hidden")}
                 >
-                  <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
-                    {destination.trim() || t.cityOrHotel || "City or hotel"}
-                  </span>
-                  <ChevronDown
-                    size={16}
-                    className={cn(
-                      "shrink-0 text-slate-500 transition-transform",
-                      hotelDestinationMobilePickerOpen && "rotate-180",
-                    )}
-                  />
+                  {mobileHomepage ? (
+                    <span
+                      className="flex min-w-0 items-center gap-2"
+                      data-testid="mobile-homepage-hotel-destination-value"
+                    >
+                      <MapPin
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0 text-slate-500"
+                      />
+                      <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
+                        {destination.trim() || t.cityOrHotel || "City or hotel"}
+                      </span>
+                    </span>
+                  ) : (
+                    <>
+                      <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
+                        {destination.trim() || t.cityOrHotel || "City or hotel"}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={cn(
+                          "shrink-0 text-slate-500 transition-transform",
+                          hotelDestinationMobilePickerOpen && "rotate-180",
+                        )}
+                      />
+                    </>
+                  )}
                 </button>
-                <input
-                  type="text"
-                  value={
-                    destination
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setDestination(
-                      event
-                        .target
-                        .value
-                    )
-                  }
-                  placeholder={t.cityOrHotel || "City or hotel"}
-                  className={cn(hotelFieldValueClassName, "hidden sm:block")}
-                  required
-                />
+                <div className="relative hidden sm:block">
+                  <MapPin
+                    aria-hidden="true"
+                    className="pointer-events-none absolute start-0 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500"
+                  />
+                  <input
+                    ref={hotelDestinationDesktopInputRef}
+                    id="homepage-hotel-destination"
+                    type="text"
+                    autoComplete="off"
+                    value={destination}
+                    onChange={(event) => {
+                      setDestination(event.target.value);
+                      setHotelDestinationSuggestionsOpen(
+                        event.target.value.trim().length > 0,
+                      );
+                      setHotelDestinationHighlight(0);
+                    }}
+                    onFocus={() => {
+                      if (destination.trim()) setHotelDestinationSuggestionsOpen(true);
+                      setHotelDatesOpen(false);
+                      setHotelGuestsRoomsOpen(false);
+                    }}
+                    onKeyDown={(event) =>
+                      handleHotelDestinationKeyDown(event, selectHotelDestination)
+                    }
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={shouldShowHotelDestinationSuggestions}
+                    aria-controls="homepage-hotel-destination-suggestions"
+                    aria-activedescendant={
+                      shouldShowHotelDestinationSuggestions &&
+                      hotelDestinationSuggestions[hotelDestinationHighlight]
+                        ? `homepage-hotel-destination-suggestion-${hotelDestinationSuggestions[hotelDestinationHighlight].id}`
+                        : undefined
+                    }
+                    placeholder={t.cityOrHotel || "City or hotel"}
+                    className={cn(hotelFieldValueClassName, "ps-6")}
+                    required
+                  />
+                </div>
+                {shouldShowHotelDestinationSuggestions ? (
+                  <DesktopTopLayerPopover
+                    open
+                    launcherRef={hotelDestinationDesktopInputRef}
+                    align="left"
+                    width={420}
+                    desiredHeight={320}
+                    placement="auto"
+                    id="homepage-hotel-destination-suggestions"
+                    role="listbox"
+                    ariaLabel={translate("hotelDestinationSuggestions") || "Hotel destination suggestions"}
+                    className="p-1.5"
+                  >
+                    {hotelDestinationLoading ? (
+                      <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
+                        {translate("findingDestinations") || "Finding destinations…"}
+                      </div>
+                    ) : hotelDestinationSuggestions.length ? (
+                      hotelDestinationSuggestions.map((suggestion, index) => {
+                        const active = hotelDestinationHighlight === index;
+                        const DestinationIcon = suggestion.kind === "airport-area"
+                          ? Plane
+                          : suggestion.kind === "city"
+                            ? Building2
+                            : MapPin;
+                        const kindLabel =
+                          translate(hotelDestinationKindTranslationKeys[suggestion.kind]) ||
+                          hotelDestinationKindLabels[suggestion.kind];
+
+                        return (
+                          <button
+                            key={suggestion.id}
+                            id={`homepage-hotel-destination-suggestion-${suggestion.id}`}
+                            type="button"
+                            role="option"
+                            aria-selected={active}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onMouseEnter={() => setHotelDestinationHighlight(index)}
+                            onClick={() => selectHotelDestination(suggestion)}
+                            className={cn(
+                              "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-start transition-colors",
+                              active ? "bg-slate-100" : "hover:bg-slate-50",
+                            )}
+                          >
+                            <DestinationIcon
+                              aria-hidden="true"
+                              className="mt-0.5 h-4 w-4 shrink-0 text-slate-500"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-semibold text-slate-950">
+                                {getLocalizedHotelDestinationCityName(
+                                  suggestion.name,
+                                  locale ?? activeLocale,
+                                )}
+                              </span>
+                              <span className="mt-0.5 block truncate text-xs font-medium text-slate-600">
+                                {getLocalizedHotelDestinationDetail(
+                                  suggestion,
+                                  locale ?? activeLocale,
+                                )}
+                              </span>
+                            </span>
+                            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">
+                              {kindLabel}
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
+                        {translate("noMatchingDestinations") || "No matching destinations"}
+                      </div>
+                    )}
+                  </DesktopTopLayerPopover>
+                ) : null}
               </div>
               <div
                 ref={hotelDateWrapRef}
                 className={cn(
-                  "relative rounded-xl border border-slate-300 bg-white",
+                  "relative border",
+                  mobileHomepage
+                    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe]"
+                    : "rounded-xl border-slate-300 bg-white",
                   hotelJoinedFieldClassName,
                   hotelDatesOpen && desktopActiveFieldClassName
                 )}
+                data-testid={mobileHomepage ? "mobile-homepage-hotel-dates" : undefined}
               >
                 <label className={hotelFieldLabelClassName}>
                   {translateHotelTravelDateText("hotelSearchTravelDatesLabel") ||
@@ -3679,6 +4082,7 @@ export function SearchTabs({
                   type="button"
                   onClick={() => {
                     setHotelDatesOpen((prev) => !prev);
+                    setHotelDestinationSuggestionsOpen(false);
                     setHotelDestinationMobilePickerOpen(false);
                     setHotelGuestsRoomsOpen(false);
                   }}
@@ -3718,10 +4122,14 @@ export function SearchTabs({
               <div
                 ref={hotelGuestsRoomsWrapRef}
                 className={cn(
-                  "relative rounded-xl border border-slate-300 bg-white",
+                  "relative border",
+                  mobileHomepage
+                    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe]"
+                    : "rounded-xl border-slate-300 bg-white",
                   hotelJoinedFieldClassName,
                   hotelGuestsRoomsOpen && desktopActiveFieldClassName
                 )}
+                data-testid={mobileHomepage ? "mobile-homepage-hotel-guests" : undefined}
               >
                 <label className={hotelFieldLabelClassName}>
                   {translate("hotelSearchGuestsLabel") ||
@@ -3733,6 +4141,7 @@ export function SearchTabs({
                   type="button"
                   onClick={() => {
                     setHotelGuestsRoomsOpen((prev) => !prev);
+                    setHotelDestinationSuggestionsOpen(false);
                     setHotelDestinationMobilePickerOpen(false);
                     setHotelDatesOpen(false);
                   }}
@@ -3743,8 +4152,17 @@ export function SearchTabs({
                   aria-label={translate("chooseGuestsAndRooms") || "Choose guests and rooms"}
                   className={cn(hotelFieldValueClassName, "justify-between")}
                 >
-                  <span className="truncate">
-                    {hotelGuestsRoomsSummary}
+                  <span
+                    className="flex min-w-0 items-center gap-2"
+                    data-testid={mobileHomepage ? "mobile-homepage-hotel-guests-value" : undefined}
+                  >
+                    <UserRound
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-slate-500"
+                    />
+                    <span className="truncate">
+                      {hotelGuestsRoomsSummary}
+                    </span>
                   </span>
                   <ChevronDown
                     size={16}
@@ -3760,6 +4178,7 @@ export function SearchTabs({
                     launcherRef={hotelGuestsRoomsMobileLauncherRef}
                     align="right"
                     width={360}
+                    desiredHeight={420}
                     className="p-4"
                   >
                   <div
@@ -3917,6 +4336,15 @@ export function SearchTabs({
                         </div>
                       </div>
                     </div>
+                    <div className="sticky bottom-0 mt-3 flex justify-end border-t border-slate-100 bg-white pt-3">
+                      <button
+                        type="button"
+                        onClick={() => setHotelGuestsRoomsOpen(false)}
+                        className="focus-ring rounded-lg bg-[#004BB8] px-4 py-2 text-sm font-medium text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35"
+                      >
+                        {translate("done") || "Done"}
+                      </button>
+                    </div>
                   </div>
                   </DesktopTopLayerPopover>
                 ) : null}
@@ -3929,6 +4357,7 @@ export function SearchTabs({
                   }
                   aria-busy={isHotelSubmitting}
                   aria-label={t.searchHotels || "Search hotels"}
+                  data-testid={mobileHomepage ? "mobile-homepage-hotel-search" : undefined}
                   className={hotelSubmitButtonClassName}
                 >
                   {isHotelSubmitting
@@ -3950,169 +4379,72 @@ export function SearchTabs({
             onClose={() => setHotelDestinationMobilePickerOpen(false)}
           />
 
-          <HotelMobilePickerShell
+          <MobileDatePickerDialog
             open={hotelDatesOpen}
             title={translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates"}
             titleId="homepage-hotel-mobile-dates-title"
             launcherRef={hotelDatesMobileLauncherRef}
+            startDate={checkIn}
+            endDate={checkOut}
+            rangeRequired
+            locale={calendarLocale}
+            weekdays={weekdays}
+            labels={mobileDatePickerLabels}
+            isDateDisabled={isBeforeToday}
+            onCommit={(startDate, endDate) => {
+              setCheckIn(startDate);
+              setCheckOut(endDate);
+            }}
             onClose={() => setHotelDatesOpen(false)}
-            contentClassName="px-3 py-3"
-            footer={(requestClose) => (
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCheckIn("");
-                    setCheckOut("");
-                  }}
-                  className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                >
-                  {translateHotelTravelDateText("clear") || "Clear"}
-                </button>
-                <button
-                  type="button"
-                  onClick={requestClose}
-                  className={cn(mobileDoneButtonClassName, "px-4 py-2")}
-                >
-                  {translate("done") || "Done"}
-                </button>
-              </div>
-            )}
-          >
-            {renderHotelDateCalendar()}
-          </HotelMobilePickerShell>
+          />
 
           <HotelMobilePickerShell
             open={hotelGuestsRoomsOpen}
-            title={translate("guestsAndRooms") || "Guests and rooms"}
+            title={translate("hotelGuestsRooms.mobileTitle")}
             titleId="homepage-hotel-mobile-guests-title"
             launcherRef={hotelGuestsRoomsMobileLauncherRef}
             onClose={() => setHotelGuestsRoomsOpen(false)}
+            showCancelAction={false}
+            showBackLabel={false}
+            contentClassName="bg-[#fcfdfe] px-4 py-6"
             footer={(requestClose) => (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={requestClose}
-                  className={cn(mobileDoneButtonClassName, "px-4 py-2")}
-                >
+                <button type="button" onClick={() => {
+                  setHotelAdultCount(draftHotelAdults);
+                  setHotelChildCount(draftHotelChildren);
+                  setRooms(String(draftHotelRooms));
+                  setHotelPetFriendly(draftHotelPetFriendly);
+                  requestClose();
+                }} className="focus-ring h-[52px] w-full rounded-[9px] bg-[#075ee8] text-[17px] font-bold text-white">
                   {t.done || "Done"}
                 </button>
-              </div>
             )}
           >
-            <div className="mx-auto w-full max-w-xl divide-y divide-slate-200/80">
-              {[
-                {
-                  key: "adults",
-                  label: translate("adults") || "Adults",
-                  value: hotelAdultCount,
-                  min: 1,
-                  max: 12 - hotelChildCount,
-                  onDecrement: () => setHotelAdultCount((prev) => Math.max(1, prev - 1)),
-                  onIncrement: () =>
-                    setHotelAdultCount((prev) => Math.min(12 - hotelChildCount, prev + 1)),
-                },
-                {
-                  key: "children",
-                  label: translate("children") || "Children",
-                  value: hotelChildCount,
-                  min: 0,
-                  max: 12 - hotelAdultCount,
-                  onDecrement: () => setHotelChildCount((prev) => Math.max(0, prev - 1)),
-                  onIncrement: () =>
-                    setHotelChildCount((prev) => Math.min(12 - hotelAdultCount, prev + 1)),
-                },
-                {
-                  key: "rooms",
-                  label: translate("rooms") || "Rooms",
-                  value: Number(rooms),
-                  min: 1,
-                  max: 6,
-                  onDecrement: () => setRooms((prev) => String(Math.max(1, Number(prev) - 1))),
-                  onIncrement: () => setRooms((prev) => String(Math.min(6, Number(prev) + 1))),
-                },
-              ].map((row) => {
-                const canDecrement = row.value > row.min;
-                const canIncrement = row.value < row.max;
-
-                return (
-                  <div
-                    key={row.key}
-                    className="flex items-center justify-between gap-4 px-1 py-4"
-                  >
-                    <span className="text-[15px] font-bold text-slate-950">{row.label}</span>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={row.onDecrement}
-                        disabled={!canDecrement}
-                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
-                      >
-                        <Minus className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                      <span className="min-w-8 text-center text-base font-black tabular-nums text-slate-950">
-                        {row.value}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={row.onIncrement}
-                        disabled={!canIncrement}
-                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
-                      >
-                        <Plus className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="flex items-center justify-between gap-4 px-1 py-4">
-                <div>
-                  <p className="text-[15px] font-bold text-slate-950">
-                    {translate("petFriendly") || "Pet-friendly"}
-                  </p>
-                  <p className="text-sm leading-5 text-slate-600">
-                    {translate("onlyShowPetFriendlyStays") ||
-                      "Only show stays that allow pets"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={hotelPetFriendly}
-                  aria-label={
-                    translate("togglePetFriendlyStays") ||
-                    "Toggle pet-friendly stays"
-                  }
-                  onClick={() => setHotelPetFriendly((prev) => !prev)}
-                  className={cn(
-                    "focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
-                    hotelPetFriendly
-                      ? "border-[#004BB8] bg-[#004BB8]"
-                      : "border-slate-300 bg-slate-200",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform",
-                      hotelPetFriendly ? "translate-x-5" : "translate-x-0.5",
-                    )}
-                  />
-                </button>
-              </div>
-            </div>
+            <MobileHotelGuestsRoomsPicker adults={draftHotelAdults} children={draftHotelChildren} rooms={draftHotelRooms} petFriendly={draftHotelPetFriendly} density={mobileHomepage ? "compact" : undefined}
+              onAdultsChange={setDraftHotelAdults} onChildrenChange={setDraftHotelChildren} onRoomsChange={setDraftHotelRooms} onPetFriendlyChange={setDraftHotelPetFriendly}
+              strings={{ guests: translate("guests") || "Guests", adults: translate("adults") || "Adults", adultDescription: translate("hotelGuests.adultDescription") || "Ages 18+", children: translate("children") || "Children", childDescription: translate("hotelGuests.childDescription") || "Ages 0–17", rooms: translate("rooms") || "Rooms", roomDescription: translate("hotelGuests.roomDescription") || "Separate rooms", petFriendly: translate("petFriendly") || "Pet-friendly", petDescription: translate("onlyShowPetFriendlyStays") || "Only show stays that allow pets", decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
           </HotelMobilePickerShell>
         </form>
       ) : (
-        <form onSubmit={onCarsSubmit} className={formClassName} noValidate>
+        <form onSubmit={onCarsSubmit} autoComplete="off" className={formClassName} noValidate>
           <div ref={carsSearchSurfaceRef} data-testid="cars-search-surface">
-          <div className={fieldCardClassName} data-testid="cars-joined-search-card">
+          <div className={carsFieldCardClassName} data-testid="cars-joined-search-card">
             <div className={carsGridClassName} data-testid="cars-primary-row">
-              <div ref={carsPickupFieldRef} className={cn(hotelJoinedFieldClassName, "relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl")}>
+              <div ref={carsPickupFieldRef} className={cn(hotelJoinedFieldClassName, "relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", carsMobileHomepageFieldClassName)} data-testid="cars-pickup-location-field">
                 <label htmlFor="homepage-cars-pickup" className={hotelFieldLabelClassName}>{translate("carsSearch.pickupLocationLabel") || "Pickup location"}</label>
-                <CarLocationAutocomplete id="homepage-cars-pickup" name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsPickupFieldRef} searchCardRef={carsSearchSurfaceRef} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
+                {mobileHomepage ? <button ref={carsPickupLauncherRef} id="homepage-cars-pickup" type="button" onClick={() => setCarsOpenPicker("pickup")} className={cn(hotelFieldValueClassName, "focus-ring block h-8 w-full text-start sm:hidden")}>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <MapPin aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />
+                    <span className={cn("truncate", carsValues.pickupLocation ? "font-normal" : "text-[16px] font-medium text-slate-500")}>{carsValues.pickupLocation || translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"}</span>
+                  </span>
+                </button> : null}
+                <div className={cn("relative", mobileHomepage && "hidden sm:block")}>
+                  <MapPin aria-hidden="true" className="pointer-events-none absolute start-0 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <CarLocationAutocomplete id={mobileHomepage ? "homepage-cars-pickup-desktop" : "homepage-cars-pickup"} name="pickupLocation" value={carsValues.pickupLocation} onValueChange={(value) => updateCarsValue("pickupLocation", value)} placeholder={translate("carsSearch.pickupLocationPlaceholder") || "Airport, city or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full ps-6")} strings={carsLocationStrings} isOpen={carsOpenPicker === "pickup"} onOpenChange={(open) => setCarsOpenPicker(open ? "pickup" : null)} />
+                </div>
                 {carsErrors.pickupLocation ? <p className="absolute start-3 top-full z-10 mt-1 text-xs font-semibold text-red-600">{carsErrors.pickupLocation}</p> : null}
               </div>
-              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={hotelJoinedFieldClassName} desktopWidth={620} desktopPanelClassName="p-4" leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false}>
+              {compactHero ? carsReturnLocationField : null}
+              <CarsSummaryField id="homepage-cars-rental-dates" label={translate("carsSearch.rentalDatesLabel") || "Rental dates"} value={carsDateSummary} open={carsOpenPicker === "dates"} onOpenChange={(open) => openHomepageCarsPicker("dates", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopWidth={620} desktopPanelClassName="p-4" desktopPlacement="auto" desktopDesiredHeight={430} leadingIcon={<Calendar aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />} showChevron={false} valueClassName={mobileHomepage && carsDateRangeIsEmpty ? "text-[17px] font-normal leading-6 text-slate-950" : undefined} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
                 <CarsRentalDatePickerContent
                   dropoffDate={carsValues.dropoffDate}
                   formatFullDate={(date) => new Intl.DateTimeFormat(calendarLocale, { dateStyle: "full" }).format(date)}
@@ -4128,26 +4460,66 @@ export function SearchTabs({
                   weekdays={getLocalizedWeekdays(calendarLocale)}
                 />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={hotelJoinedFieldClassName}>
-                <CarsTimeRangePickerContent formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsValues.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsValues.dropoffTime} onPickupTimeChange={(time) => updateCarsValue("pickupTime", time)} onReturnTimeChange={(time) => { updateCarsValue("dropoffTime", time); setCarsOpenPicker(null); }} />
+              <CarsSummaryField id="homepage-cars-time-range" label={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} value={carsTimeSummary} open={carsOpenPicker === "times"} onOpenChange={(open) => openHomepageCarsPicker("times", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} desktopPlacement="auto" desktopDesiredHeight={350} leadingIcon={<Clock aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+                <CarsTimeRangePickerContent formatTime={formatCarsTime} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} pickupTime={carsValues.pickupTime} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} returnTime={carsValues.dropoffTime} onPickupTimeChange={(time) => updateCarsValue("pickupTime", time)} onReturnTimeChange={(time) => updateCarsValue("dropoffTime", time)} />
               </CarsSummaryField>
-              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={hotelJoinedFieldClassName} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0">
-                <CarsDriverAgePickerContent anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => { updateCarsValue("driverAge", age); setCarsOpenPicker(null); }} />
+              <CarsSummaryField id="homepage-cars-driver-age" label={translate("carsSearch.driverAgeLabel") || "Driver age"} value={carsValues.driverAge === defaultDriverAge ? translate("carsSearch.driverAgeAnyAgeRange") || "Any age" : carsValues.driverAge} open={carsOpenPicker === "age"} onOpenChange={(open) => openHomepageCarsPicker("age", open)} className={cn(hotelJoinedFieldClassName, carsMobileHomepageFieldClassName)} popupRole="listbox" desktopAlign="right" desktopWidth={248} desktopPanelClassName="p-0" desktopPlacement="auto" desktopDesiredHeight={340} leadingIcon={<UserRound aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500" />} mobilePresentation={mobileHomepage ? "shell" : "inline"}>
+                <CarsDriverAgePickerContent anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age"} selectedAge={carsValues.driverAge} onSelect={(age) => updateCarsValue("driverAge", age)} />
               </CarsSummaryField>
               <div className={hotelSubmitWrapClassName}>
-                <Button type="submit" disabled={isCarsSearchDisabled} aria-busy={isCarsSubmitting} aria-label={translate("searchCars") || "Search cars"} className={cn(hotelSubmitButtonClassName, "whitespace-nowrap")}>
+                <Button type="submit" disabled={isCarsSearchDisabled} aria-busy={isCarsSubmitting} aria-label={translate("searchCars") || "Search cars"} className={cn(hotelSubmitButtonClassName, "whitespace-nowrap", mobileHomepage && "rounded-[11px] sm:rounded-xl")}>
                   {isCarsSubmitting ? translate("searching") || "Searching…" : translate("search") || "Search"}
                 </Button>
               </div>
             </div>
           </div>
-          <div className="flex min-h-8 items-center gap-3 px-1 text-sm font-semibold text-slate-600">
+          <div className={cn("flex min-h-8 items-center gap-3 px-1 text-sm font-semibold text-slate-600", mobileHomepage && "mt-[11px]")}>
             <label className="focus-within:text-slate-900 flex cursor-pointer items-center gap-2"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-[#004BB8]" checked={carsValues.returnToDifferentLocation} onChange={(event) => { updateCarsValue("returnToDifferentLocation", event.target.checked); if (!event.target.checked) setCarsOpenPicker(null); }} />{translate("carsSearch.differentReturnLocation") || "Different return location"}</label>
           </div>
-          {carsValues.returnToDifferentLocation ? <div ref={carsDropoffFieldRef} className="relative rounded-xl border border-slate-300 bg-white px-4 py-2 sm:max-w-[50%]" data-testid="cars-return-location-field"><label htmlFor="homepage-cars-dropoff" className={hotelFieldLabelClassName}>{translate("carsSearch.returnLocationLabel") || "Return location"}</label><CarLocationAutocomplete id="homepage-cars-dropoff" name="dropoffLocation" value={carsValues.dropoffLocation} onValueChange={(value) => updateCarsValue("dropoffLocation", value)} placeholder={translate("carsSearch.returnLocationPlaceholder") || "Return city, airport or address"} presentation="responsive" inputClassName={cn(hotelFieldValueClassName, "h-8 w-full")} strings={carsLocationStrings} fieldAnchorRef={carsDropoffFieldRef} searchCardRef={carsSearchSurfaceRef} isOpen={carsOpenPicker === "dropoff"} onOpenChange={(open) => setCarsOpenPicker(open ? "dropoff" : null)} />{carsErrors.dropoffLocation ? <p className="mt-1 text-xs font-semibold text-red-600">{carsErrors.dropoffLocation}</p> : null}</div> : null}
+          {!compactHero ? carsReturnLocationField : null}
           </div>
         </form>
       )}
+      {mobileHomepage && tab === "cars" ? (
+        <>
+          {(["pickup", "dropoff"] as const).map((mode) => {
+            const isPickup = mode === "pickup";
+            if (!isPickup && !carsValues.returnToDifferentLocation) return null;
+            return (
+              <MobileCarLocationPicker
+                key={mode}
+                open={carsOpenPicker === mode}
+                mode={isPickup ? "pickup" : "return"}
+                value={isPickup ? carsValues.pickupLocation : carsValues.dropoffLocation}
+                launcherRef={isPickup ? carsPickupLauncherRef : carsDropoffLauncherRef}
+                onClose={() => setCarsOpenPicker(null)}
+                onCommit={(value) => updateCarsValue(isPickup ? "pickupLocation" : "dropoffLocation", value)}
+              />
+            );
+          })}
+          <MobileDatePickerDialog
+            open={carsOpenPicker === "dates"}
+            title={translate("carsSearch.chooseRentalDates") || "Choose rental dates"}
+            titleId="cars-dates-mobile-title"
+            dialogId="cars-dates-mobile-dialog"
+            startDate={carsValues.pickupDate}
+            endDate={carsValues.dropoffDate}
+            rangeRequired
+            firstMonth={carsVisibleMonthDate}
+            locale={calendarLocale}
+            weekdays={getLocalizedWeekdays(calendarLocale)}
+            labels={{ ...mobileDatePickerLabels, selectDatePrefix: translate("carsSearch.selectDateAriaPrefix") || "Select" }}
+            isDateDisabled={isBeforeToday}
+            onCommit={(startDate, endDate) => {
+              updateCarsValue("pickupDate", startDate);
+              updateCarsValue("dropoffDate", endDate);
+            }}
+            onClose={() => setCarsOpenPicker(null)}
+          />
+          <MobileCarTimePickerDialog open={carsOpenPicker === "times"} onClose={() => setCarsOpenPicker(null)} pickupTime={carsValues.pickupTime} returnTime={carsValues.dropoffTime} onCommit={(pickupTime, dropoffTime) => { updateCarsValue("pickupTime", pickupTime); updateCarsValue("dropoffTime", dropoffTime); }} formatTime={formatCarsTime} title={translate("carsSearch.pickupReturnTimeLabel") || "Pickup / return time"} intro={translate("carsSearch.mobileTimeIntro") || "Select when you’ll pick up and return your car."} pickupLabel={translate("carsSearch.pickupTimeLabel") || "Pickup time"} returnLabel={translate("carsSearch.returnTimeLabel") || "Return time"} doneLabel={translate("done") || "Done"} />
+          <MobileCarDriverAgePickerDialog open={carsOpenPicker === "age"} onClose={() => setCarsOpenPicker(null)} driverAge={carsValues.driverAge} onCommit={(age) => updateCarsValue("driverAge", age)} title={translate("carsSearch.driverAgeLabel") || "Driver age"} intro={translate("carsSearch.mobileDriverAgeIntro") || "Driver must be between 18 and 70 years old."} anyAgeLabel={translate("carsSearch.driverAgeAnyAgeRange") || "Any age 18–70"} doneLabel={translate("done") || "Done"} />
+        </>
+      ) : null}
       </section>
     </>
   );
