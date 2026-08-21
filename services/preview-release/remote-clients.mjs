@@ -329,7 +329,7 @@ export function easCommandEnvironment({ baseEnvironment = process.env, directory
     // Keep the publish child bounded well below the Standard worker's 2 GB
     // instance limit while leaving headroom for npm, the worker, and native
     // allocator overhead.
-    NODE_OPTIONS: `--max-old-space-size=${isUpdatePublish ? 512 : 128}`,
+    NODE_OPTIONS: `--max-old-space-size=${isUpdatePublish ? 1024 : 128}`,
     MALLOC_ARENA_MAX: "2",
   };
 }
