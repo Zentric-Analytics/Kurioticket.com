@@ -15,7 +15,7 @@ test("Cars uses one canonical searchable picker for pickup and return", () => {
 
 test("Cars picker follows the native modal and keyboard contract", () => {
   assert.match(sheet, /<Modal[^>]*onRequestClose=\{onClose\}><KeyboardAvoidingView[^>]*behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}><SafeAreaView edges=\{\["top","bottom"\]\}/);
-  assert.match(sheet, /<Pressable style=\{\[StyleSheet\.absoluteFill,[^>]*onPress=\{onClose\}/);
+  assert.match(sheet, /<Pressable style=\{StyleSheet\.absoluteFill\}[^>]*onPress=\{onClose\}/);
   assert.match(sheet, /<View accessibilityViewIsModal/);
   assert.match(sheet, /<FlatList keyboardShouldPersistTaps="handled"/);
   assert.doesNotMatch(sheet, /autoFocus/);

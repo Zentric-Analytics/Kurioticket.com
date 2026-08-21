@@ -8,7 +8,8 @@ test("shared calendar presentation follows the active flow theme", () => {
   assert.match(calendar, /import \{ useFlowTheme \} from "\.\/flowStyles"/);
   assert.match(calendar, /const ft = useFlowTheme\(\)/);
   assert.match(calendar, /backgroundColor: ft\.colors\.surface/);
-  assert.match(calendar, /backgroundColor: ft\.colors\.overlay/g);
+  assert.match(calendar, /style=\{StyleSheet\.absoluteFill\}/g);
+  assert.doesNotMatch(calendar, /ft\.colors\.overlay/);
   assert.match(calendar, /style=\{ft\.styles\.title\}/);
   assert.doesNotMatch(calendar, /backgroundColor:\s*["']white["']/);
   assert.doesNotMatch(calendar, /#071A4866|flowColors\.(?:navy|muted)/);
