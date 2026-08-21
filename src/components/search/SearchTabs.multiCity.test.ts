@@ -26,8 +26,9 @@ test("homepage uses the canonical leg editor, limits, and indexed URL encoder", 
 
 test("homepage validates provider-backed airport suggestions before enabling search", () => {
   assert.match(editor, /\/api\/flights\/places/);
-  assert.match(editor, /exact = next\.find/);
-  assert.match(editor, /onVerified\(exact\?\.code\.toUpperCase\(\) \?\? null\)/);
+  assert.match(editor, /onSelect\(option\)/);
+  assert.match(editor, /markVerified\(index, "origin", option\.code\)/);
+  assert.match(editor, /markVerified\(index, "destination", option\.code\)/);
   assert.match(searchTabs, /!multiCityAirportsValid/);
 });
 
