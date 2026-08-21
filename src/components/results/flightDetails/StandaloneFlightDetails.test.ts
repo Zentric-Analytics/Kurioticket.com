@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test, { afterEach } from "node:test";
 
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
-import { flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
+import { flightDetailsRouteLabel, flightDetailsTotalLabel } from "@/lib/flights/flightDetailsContract";
 import {
   buildMaterialFareChoices,
   buildStandaloneFlightDetails,
@@ -314,6 +314,23 @@ test("trip totals use canonical traveler count without changing provider amounts
   assert.equal(selectedTotal, 5467.38);
   assert.equal(alternateTotal, 6120.25);
   assert.notEqual(selectedTotal, selectedTotal / 6);
+});
+
+test("multi-city details use the complete route chain for two through five flights", () => {
+  const routeLegs = [
+    { originAirport: "IAH", destinationAirport: "LOS" },
+    { originAirport: "LOS", destinationAirport: "LAX" },
+    { originAirport: "LAX", destinationAirport: "JFK" },
+    { originAirport: "JFK", destinationAirport: "CDG" },
+    { originAirport: "CDG", destinationAirport: "IAH" },
+  ];
+
+  assert.equal(flightDetailsRouteLabel("multi-city", routeLegs.slice(0, 2), "IAH", "LAX"), "IAH → LOS → LAX");
+  assert.equal(flightDetailsRouteLabel("multi-city", routeLegs.slice(0, 3), "IAH", "JFK"), "IAH → LOS → LAX → JFK");
+  assert.equal(flightDetailsRouteLabel("multi-city", routeLegs.slice(0, 4), "IAH", "CDG"), "IAH → LOS → LAX → JFK → CDG");
+  assert.equal(flightDetailsRouteLabel("multi-city", routeLegs, "IAH", "IAH"), "IAH → LOS → LAX → JFK → CDG → IAH");
+  assert.equal(flightDetailsRouteLabel("one-way", routeLegs.slice(0, 1), "Houston (IAH)", "London (LHR)"), "Houston to London");
+  assert.equal(flightDetailsRouteLabel("round-trip", routeLegs.slice(0, 2), "Houston, TX", "London, UK"), "Houston to London");
 });
 
 test("provider brands with identical comparable facts receive no invented benefit", () => {
