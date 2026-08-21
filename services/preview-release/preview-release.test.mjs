@@ -6,10 +6,10 @@ import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { classifyChangeSet } from "./classifier.mjs";
-import { PREVIEW_IDENTITY, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
+import { PREVIEW_IDENTITY, PREVIEW_WORKER_BUILD_PATHS, assertExactSha, assertPreviewIdentity, requirePreviewEnvironment } from "./config.mjs";
 import { reconcileBuilds, reconcileSubmission, reconcileSubmissionHistory } from "./eas-state.mjs";
 import { PreviewOrchestrator, applyCutoverBaseline, applyIosNativeBackfill, assertCoalescedOtaCompatibility, enforceDeliveredNativeBaseline, maintainLease, nativeBuildIdentityKey, nativeDriftTargets, retry } from "./orchestrator.mjs";
-import { createExactCheckoutDirectory, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
+import { createExactCheckoutDirectory, easCommandEnvironment, EasClient, EasRemoteObjectUnavailableError, EasUpdateRuntimeMismatchError, RenderClient, gitAuthEnvironment, prepareCheckout } from "./remote-clients.mjs";
 import { redactPreflightError, runPreviewPreflight } from "./preflight.mjs";
 import { AppStoreConnectClient } from "./app-store-connect.mjs";
 import { PreviewLedger } from "./ledger.mjs";
@@ -225,6 +225,7 @@ test("Render worker preflight requires automatic dev deployments", async () => {
     repo: `https://github.com/${PREVIEW_IDENTITY.repository}.git`,
     autoDeploy: false,
     autoDeployTrigger: "commit",
+    buildFilter: { paths: [...PREVIEW_WORKER_BUILD_PATHS], ignoredPaths: [] },
   };
   const client = new RenderClient({ apiKey: "render-secret", serviceId: PREVIEW_IDENTITY.renderWorkerServiceId, fetchImpl: async () => ({
     ok: true,
@@ -236,6 +237,7 @@ test("Render worker preflight requires automatic dev deployments", async () => {
     { ...valid, autoDeployTrigger: "checksPass" },
     { ...valid, branch: "main" },
     { ...valid, repo: "https://github.com/other/repository" },
+    { ...valid, buildFilter: { paths: [], ignoredPaths: [] } },
   ]) {
     client.fetch = async () => ({ ok: true, text: async () => JSON.stringify(service) });
     await assert.rejects(client.getPreviewWorkerService(), /Render Preview worker/);
@@ -1265,6 +1267,7 @@ test("Render blueprint matches the active auto-deployed worker and keeps staging
   assert.match(render, /PREVIEW_LEASE_MS\s+value: 90000/);
   assert.match(render, /name: kurioticket-preview-release-db/);
   assert.match(render, /name: kurioticket-web-staging[\s\S]*?autoDeploy: false/);
+  for (const path of PREVIEW_WORKER_BUILD_PATHS) assert.match(render, new RegExp(`- ${path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
 });
 
 test("ledger schema enforces per-SHA and per-remote-operation uniqueness", () => {
@@ -1305,6 +1308,23 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /timeout: 5 \* 60 \* 1000/);
   assert.doesNotMatch(client, /exec\(command, \["fingerprint", "fingerprint:generate"/);
   assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/);
+});
+
+test("EAS commands isolate every temporary path inside the command-owned directory", () => {
+  const environment = easCommandEnvironment({
+    baseEnvironment: { PATH: "test-path", TMPDIR: "/stale/tmp", TMP: "/stale/tmp", TEMP: "/stale/tmp" },
+    directory: "/tmp/kurioticket-eas-owned",
+    expoToken: "expo-token",
+    isUpdatePublish: true,
+  });
+
+  assert.equal(environment.PATH, "test-path");
+  assert.equal(environment.CI, "1");
+  assert.equal(environment.TMPDIR, "/tmp/kurioticket-eas-owned");
+  assert.equal(environment.TMP, "/tmp/kurioticket-eas-owned");
+  assert.equal(environment.TEMP, "/tmp/kurioticket-eas-owned");
+  assert.equal(environment.NODE_OPTIONS, "--max-old-space-size=512");
+  assert.equal(environment.EXPO_TOKEN, "expo-token");
 });
 
 test("OTA delivery publishes platforms sequentially and resumes only a missing platform", async () => {
