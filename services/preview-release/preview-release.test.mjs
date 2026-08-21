@@ -1300,7 +1300,7 @@ test("new release service pins supported no-wait auto-submit and exact-SHA recon
   assert.match(client, /preview-release-fingerprint-started/);
   assert.match(client, /preview-release-fingerprint-complete/);
   assert.match(client, /const isUpdatePublish = args\[1\] === "update"/);
-  assert.match(client, /--max-old-space-size=\$\{isUpdatePublish \? 512 : 128\}/);
+  assert.match(client, /--max-old-space-size=\$\{isUpdatePublish \? 1024 : 128\}/);
   assert.match(client, /timeout: isUpdatePublish \? 20 \* 60 \* 1000 : 5 \* 60 \* 1000/);
   assert.match(client, /MALLOC_ARENA_MAX: "2"/);
   assert.match(client, /preview-release-eas-command-started/);
@@ -1323,7 +1323,7 @@ test("EAS commands isolate every temporary path inside the command-owned directo
   assert.equal(environment.TMPDIR, "/tmp/kurioticket-eas-owned");
   assert.equal(environment.TMP, "/tmp/kurioticket-eas-owned");
   assert.equal(environment.TEMP, "/tmp/kurioticket-eas-owned");
-  assert.equal(environment.NODE_OPTIONS, "--max-old-space-size=512");
+  assert.equal(environment.NODE_OPTIONS, "--max-old-space-size=1024");
   assert.equal(environment.EXPO_TOKEN, "expo-token");
 });
 
@@ -1516,7 +1516,7 @@ test("OTA client rejects all-platform publication and uses bounded sequential ex
   client.run = async () => [{ id: "wrong-runtime", runtimeVersion: "b".repeat(40) }];
   await assert.rejects(client.publishUpdate("message", "ios", "a".repeat(40)), /runtime does not match/);
   const source = readFileSync(resolve(repositoryRoot, "services/preview-release/remote-clients.mjs"), "utf8");
-  assert.match(source, /isUpdatePublish \? 512 : 128/);
+  assert.match(source, /isUpdatePublish \? 1024 : 128/);
 });
 
 test("OTA runtime mismatch is recorded once and blocks automatic republication", async () => {
