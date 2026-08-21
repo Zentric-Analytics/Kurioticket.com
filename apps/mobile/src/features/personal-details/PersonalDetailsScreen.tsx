@@ -247,7 +247,7 @@ function CountrySelector({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={Platform.OS === "ios" ? "none" : "slide"}
       presentationStyle="fullScreen"
       onRequestClose={cancel}
       onDismiss={handleDismiss}
