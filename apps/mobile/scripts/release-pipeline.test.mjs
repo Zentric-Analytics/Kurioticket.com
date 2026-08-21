@@ -15,6 +15,7 @@ import { resolveTrustedPreviousPlayHistory } from './resolve-production-play-his
 import { validateProductionDryRun } from './dry-run-production-delivery.mjs';
 import { verifyProductionBuildResult, verifyProductionUpdateResult } from './verify-production-eas-result.mjs';
 import { verifyProductionAab } from './verify-production-aab.mjs';
+import { verifyProductionIpa } from './verify-production-ipa.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
 import { buildReleaseAudit } from './write-release-audit.mjs';
 import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
@@ -114,6 +115,25 @@ test('approved matrix isolates runtimes and Android-only counters', () => {
   assert.equal(policy.production.runtimeVersion, 'production-0.3.0');
   assert.equal(eas.build.preview.autoIncrement, undefined);
   assert.equal(eas.build.preview.android.autoIncrement, true);
+  assert.deepEqual(policy.production.supportedPlatforms, ['android', 'ios']);
+  assert.equal(eas.build.production.ios.distribution, 'store');
+  assert.equal(eas.build.production.ios.autoIncrement, true);
+});
+
+test('Production IPA verification enforces identity, version, schemes, and Preview isolation', () => {
+  const plist = {
+    CFBundleIdentifier: 'com.kurioticket.app',
+    CFBundleDisplayName: 'Kurioticket',
+    CFBundleShortVersionString: '0.3.0',
+    CFBundleVersion: '1',
+    ITSAppUsesNonExemptEncryption: false,
+    CFBundleURLTypes: [{ CFBundleURLSchemes: ['kurioticket', 'com.googleusercontent.apps.production-client'] }],
+  };
+  assert.equal(verifyProductionIpa({ plist, contents: 'https://kurioticket.com production-0.3.0' }).verified, true);
+  assert.throws(() => verifyProductionIpa({ plist: { ...plist, CFBundleIdentifier: 'com.kurioticket.app.preview' }, contents: '' }), /bundle identifier/);
+  assert.throws(() => verifyProductionIpa({ plist, contents: 'https://staging.kurioticket.com' }), /Preview or staging/);
+  assert.throws(() => verifyProductionIpa({ plist, contents: 'production-0.3.0' }), /API origin/);
+  assert.throws(() => verifyProductionIpa({ plist, contents: 'https://kurioticket.com' }), /runtime/);
 });
 test('dispatcher has no baseline fingerprint or SHA inputs', () => {
   for (const name of ['android-preview-ota.yml', 'android-preview-build.yml', 'android-production-delivery.yml']) {

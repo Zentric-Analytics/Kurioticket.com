@@ -26,6 +26,14 @@ function parseUrl(value: string): URL {
   return url;
 }
 
+export function googleIosUrlScheme(clientId: string): string {
+  const match = /^(?<identifier>[A-Za-z0-9-]+)\.apps\.googleusercontent\.com$/.exec(clientId.trim());
+  if (!match?.groups?.identifier) {
+    throw new Error("[mobile-environment] EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID must be a valid Google iOS OAuth client ID.");
+  }
+  return `com.googleusercontent.apps.${match.groups.identifier}`;
+}
+
 export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileEnvironment {
   const variantValue = required(input, "APP_VARIANT");
   if (variantValue !== "preview" && variantValue !== "production") {
@@ -57,8 +65,30 @@ export function resolveMobileEnvironment(input: MobileEnvironmentInput): MobileE
     appVersion: release.appVersion, isPreview: variant === "preview" };
 }
 
+export function assertEasPlatformSupported(environment: MobileEnvironment, input: MobileEnvironmentInput) {
+  const easBuildPlatform = input.EAS_BUILD_PLATFORM?.trim().toLowerCase();
+  if (input.EAS_BUILD !== "true") return;
+  if (easBuildPlatform !== "android" && easBuildPlatform !== "ios") {
+    throw new Error("[mobile-environment] EAS_BUILD_PLATFORM must be android or ios.");
+  }
+  if (!RELEASES[environment.variant].supportedPlatforms.includes(easBuildPlatform)) {
+    throw new Error(`[mobile-environment] ${easBuildPlatform} is not supported for ${environment.variant}.`);
+  }
+}
+
 const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   const environment = resolveMobileEnvironment(process.env);
+  assertEasPlatformSupported(environment, process.env);
+  const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim();
+  const easBuildPlatform = process.env.EAS_BUILD_PLATFORM?.trim().toLowerCase();
+  const isEasBuild = process.env.EAS_BUILD === "true";
+  if (isEasBuild && easBuildPlatform === "ios" && !googleIosClientId) {
+    throw new Error(`[mobile-environment] ${environment.displayName} iOS EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.`);
+  }
+  const plugins: NonNullable<ExpoConfig["plugins"]> = ["expo-router"];
+  if (googleIosClientId && (!isEasBuild || easBuildPlatform === "ios")) {
+    plugins.push(["react-native-nitro-google-signin", { iosUrlScheme: googleIosUrlScheme(googleIosClientId) }]);
+  }
   return {
     ...config,
     name: environment.displayName,
@@ -76,6 +106,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
       supportsTablet: true,
       bundleIdentifier: environment.bundleIdentifier,
       icon: "./assets/kurioticket-icon-blue.png",
+      infoPlist: { ITSAppUsesNonExemptEncryption: false },
     },
     android: {
       package: environment.androidPackage,
@@ -83,7 +114,7 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
       splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: "#F7FAFF" },
       adaptiveIcon: { foregroundImage: "./assets/kurioticket-adaptive-foreground.png", backgroundColor: "#F2F6FA" },
     },
-    plugins: ["expo-router"],
+    plugins,
     extra: {
       router: {},
       eas: { projectId: "89f6fd88-c0d7-495a-9e2b-8301b09f407d" },

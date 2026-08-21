@@ -8,6 +8,7 @@ const eas = JSON.parse(readFileSync(resolve(process.cwd(), "eas.json"), "utf8"))
 test("Preview uses platform-specific TestFlight and Android internal distribution", () => {
   assert.deepEqual(Object.keys(eas.build).sort(), ["preview", "production"]);
   assert.equal(eas.build.preview.ios.distribution, "store");
+  assert.equal(eas.build.preview.ios.autoIncrement, true);
   assert.equal(eas.build.preview.android.distribution, "internal");
   assert.equal(eas.build.preview.android.buildType, "apk");
   assert.equal(eas.build.preview.android.autoIncrement, true);
@@ -15,15 +16,24 @@ test("Preview uses platform-specific TestFlight and Android internal distributio
   assert.equal(eas.build.preview.channel, "preview");
 });
 
-test("Production release profile produces a store AAB", () => {
+test("Production release profile produces store Android and iOS binaries", () => {
   assert.equal(eas.build.production.distribution, "store");
   assert.equal(eas.build.production.android.distribution, "store");
   assert.equal(eas.build.production.android.buildType, "app-bundle");
   assert.equal(eas.build.production.android.autoIncrement, true);
+  assert.equal(eas.build.production.ios.distribution, "store");
+  assert.equal(eas.build.production.ios.autoIncrement, true);
   assert.equal(eas.build.production.autoIncrement, undefined);
   assert.equal(eas.build.production.channel, "production");
   assert.equal(eas.build.production.env.APP_VARIANT, "production");
   assert.equal(eas.build.production.env.EXPO_PUBLIC_API_BASE_URL, "https://kurioticket.com");
+  assert.equal(eas.submit.production.ios.ascAppId, "6797446939");
+  const credential = JSON.parse(readFileSync(resolve(process.cwd(), "release-baselines/ios/production-credential.json"), "utf8"));
+  assert.equal(credential.bundleIdentifier, "com.kurioticket.app");
+  assert.equal(credential.appleTeamId, "N23R45R4CY");
+  assert.equal(credential.management, "eas-managed");
+  assert.equal(credential.status, "complete");
+  assert.equal(credential.buildPolicy, "freeze-credentials");
 });
 
 test("repository workflows cannot build, update, submit, or upload mobile artifacts", () => {
@@ -64,6 +74,131 @@ test("push and pull-request workflows remain validation-only", () => {
     const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
     assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+(?:build|update|submit)\b/i);
   }
+});
+
+test("Production delivery remains manual-only and isolated", () => {
+  const production = readFileSync(resolve(process.cwd(), "../../.github/workflows/android-production-delivery.yml"), "utf8");
+  const iosProduction = readFileSync(resolve(process.cwd(), "../../.github/workflows/ios-production-delivery.yml"), "utf8");
+  assert.match(production, /^\s*workflow_dispatch:/m);
+  assert.doesNotMatch(production, /^\s*(?:workflow_call|push|pull_request|schedule):/m);
+  assert.match(production, /environment: mobile-production/);
+  assert.match(production, /validate-delivery-inputs\.mjs/);
+  assert.match(production, /classify-release\.mjs/);
+  assert.doesNotMatch(production, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|upload.*google play/i);
+  assert.match(iosProduction, /^\s*workflow_dispatch:/m);
+  assert.doesNotMatch(iosProduction, /^\s*(?:workflow_call|push|pull_request|schedule):/m);
+  assert.match(iosProduction, /environment: mobile-production/);
+  assert.match(iosProduction, /DELIVER IOS PRODUCTION/);
+  assert.match(iosProduction, /--platform ios --profile production/);
+  assert.doesNotMatch(iosProduction, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit/i);
+});
+
+test("Preview iOS configuration declares truthful export compliance", async () => {
+  process.env.APP_VARIANT = "preview";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://staging.kurioticket.com";
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "123456-preview.apps.googleusercontent.com";
+  const { default: createAppConfig } = await import("../../app.config");
+  const config = createAppConfig({ config: {} } as never);
+  assert.equal(config.ios?.infoPlist?.ITSAppUsesNonExemptEncryption, false);
+  assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app.preview");
+  assert.equal(config.runtimeVersion, "preview-0.3.0");
+  assert.deepEqual(config.splash, {
+    image: "./assets/kurioticket-logo-primary-light-bg.png",
+    resizeMode: "contain",
+    backgroundColor: "#F7FAFF",
+  });
+  assert.deepEqual(config.android?.splash, {
+    image: "./assets/kurioticket-logo-primary-light-bg.png",
+    resizeMode: "contain",
+    backgroundColor: "#F7FAFF",
+  });
+  assert.deepEqual(config.android?.adaptiveIcon, {
+    foregroundImage: "./assets/kurioticket-adaptive-foreground.png",
+    backgroundColor: "#F2F6FA",
+  });
+  assert.deepEqual(config.plugins?.[1], ["react-native-nitro-google-signin", { iosUrlScheme: "com.googleusercontent.apps.123456-preview" }]);
+});
+
+test("iOS EAS builds fail closed without an iOS OAuth client", async () => {
+  process.env.APP_VARIANT = "preview";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://staging.kurioticket.com";
+  process.env.EAS_BUILD = "true";
+  process.env.EAS_BUILD_PLATFORM = "ios";
+  delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  const { default: createAppConfig } = await import("../../app.config");
+  assert.throws(() => createAppConfig({ config: {} } as never), /require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID/);
+  delete process.env.EAS_BUILD;
+  delete process.env.EAS_BUILD_PLATFORM;
+});
+
+test("Production iOS configuration selects its own OAuth plugin and identity", async () => {
+  process.env.APP_VARIANT = "production";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://kurioticket.com";
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "987654-production.apps.googleusercontent.com";
+  const { default: createAppConfig } = await import("../../app.config");
+  const config = createAppConfig({ config: {} } as never);
+  assert.deepEqual(config.plugins, ["expo-router", ["react-native-nitro-google-signin", { iosUrlScheme: "com.googleusercontent.apps.987654-production" }]]);
+  assert.equal(config.name, "Kurioticket");
+  assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app");
+  assert.equal(config.scheme, "kurioticket");
+  assert.equal(config.runtimeVersion, "production-0.3.0");
+  assert.equal(config.extra?.environment?.apiBaseUrl, "https://kurioticket.com");
+  assert.deepEqual(config.splash, {
+    image: "./assets/kurioticket-logo-primary-light-bg.png",
+    resizeMode: "contain",
+    backgroundColor: "#F7FAFF",
+  });
+  assert.deepEqual(config.android?.splash, {
+    image: "./assets/kurioticket-logo-primary-light-bg.png",
+    resizeMode: "contain",
+    backgroundColor: "#F7FAFF",
+  });
+  delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+});
+
+test("Production iOS EAS configuration fails closed without its OAuth client", async () => {
+  process.env.APP_VARIANT = "production";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://kurioticket.com";
+  process.env.EAS_BUILD = "true";
+  process.env.EAS_BUILD_PLATFORM = "ios";
+  delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  const { default: createAppConfig } = await import("../../app.config");
+  assert.throws(() => createAppConfig({ config: {} } as never), /Kurioticket iOS EAS builds require EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID/);
+  delete process.env.EAS_BUILD;
+  delete process.env.EAS_BUILD_PLATFORM;
+});
+
+test("Production Android remains valid without an iOS OAuth client", async () => {
+  process.env.APP_VARIANT = "production";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://kurioticket.com";
+  process.env.EAS_BUILD = "true";
+  process.env.EAS_BUILD_PLATFORM = "android";
+  delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  const { default: createAppConfig } = await import("../../app.config");
+  assert.equal(createAppConfig({ config: {} } as never).android?.package, "com.kurioticket.app");
+  delete process.env.EAS_BUILD;
+  delete process.env.EAS_BUILD_PLATFORM;
+});
+
+test("Production Android does not apply the iOS OAuth native plugin even when EAS supplies the public client", async () => {
+  process.env.APP_VARIANT = "production";
+  process.env.APP_BUILD_MODE = "release";
+  process.env.EXPO_PUBLIC_API_BASE_URL = "https://kurioticket.com";
+  process.env.EAS_BUILD = "true";
+  process.env.EAS_BUILD_PLATFORM = "android";
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "987654-production.apps.googleusercontent.com";
+  const { default: createAppConfig } = await import("../../app.config");
+  const config = createAppConfig({ config: {} } as never);
+  assert.equal(config.android?.package, "com.kurioticket.app");
+  assert.doesNotMatch(JSON.stringify(config.plugins), /react-native-nitro-google-signin/);
+  delete process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+  delete process.env.EAS_BUILD;
+  delete process.env.EAS_BUILD_PLATFORM;
 });
 
 test("required Preview validation is always conclusive and conditionally runs the full suite", () => {

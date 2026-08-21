@@ -10,7 +10,7 @@ Kurioticket uses one Expo codebase and exactly two permanent application identit
 | Scheme | `kurioticket-preview` | `kurioticket` |
 | API origin | `https://staging.kurioticket.com` | `https://kurioticket.com` |
 | EAS profile/channel | `preview` | `production` |
-| Distribution | Internal / TestFlight | App Store / Google Play |
+| Distribution | Internal / TestFlight | Google Play / App Store Connect and TestFlight |
 | App/runtime version | `0.3.0` / `preview-0.3.0` | `0.3.0` / `production-0.3.0` |
 
 There are no separate staging or development identities. Local development reuses Preview and must be started explicitly:
@@ -30,14 +30,20 @@ Local mode requires `LOCAL_DEVELOPMENT=true`, which the script supplies, and is 
 
 ## Build preparation
 
-The approved commands are:
+Approved iOS builds use the identity-specific EAS profile:
 
 ```bash
 eas build --platform ios --profile preview
 eas build --platform ios --profile production
 ```
 
-Do not run either command without the relevant owner approval. A Preview build is a signing and environment-validation build. Production builds, uploads, submissions, and releases require separate approval.
+Do not run either command without the relevant owner approval. An iOS build creates an App Store-compatible artifact; building and submitting are separate operations. Never add `--auto-submit`, and never treat a Production IPA as authorization for TestFlight upload, App Review, or public release.
+
+### Public iOS release compliance checkpoint
+
+Creating and internally verifying the first Production IPA does not authorize App Review or public availability. Kurioticket currently offers Google Sign-In for a user's primary account and does not yet provide an equivalent login service with the privacy features required by Apple App Review Guideline 4.8. None of the documented exceptions has been established for this consumer travel app.
+
+`PUBLIC_APP_STORE_RELEASE_BLOCKER`: add and product-approve an Apple-compliant equivalent login option before submitting the app for public App Review. This checkpoint does not block an EAS Production build or a separately approved internal TestFlight upload.
 
 The `preview` profile is platform-specific: iOS uses store distribution to create a TestFlight-compatible IPA, while Android remains internal and produces an APK. A build only creates an EAS artifact. Submission to App Store Connect is a separate owner-approved action; never add `--auto-submit` to the build command.
 
@@ -45,7 +51,7 @@ Preview Android uses EAS internal distribution; no Preview Google Play record is
 
 EAS remote app-version management is authoritative. Android `versionCode` is independent of the user-visible `0.3.0` version and is tracked separately for each package/profile. Both profiles auto-increment remotely. The protected delivery workflow reports the current remote value before starting an approved build. A failed EAS build may consume a value; gaps are safe and values are never reused. Google Play upload history is the final authority for Production conflicts. This PR changes policy only and does not mutate any remote version code.
 
-The Apple Explicit App IDs and App Store Connect records for `Kurioticket` and `Kurioticket Preview` already exist under the approved organization. No iOS signing certificate, provisioning profile, or iOS build exists. Historical Android `0.2.0 (8)` Preview and Production builds remain preserved.
+Apple App IDs, App Store Connect records, signing credentials, and build history must be verified live before each first or replacement identity build. Repository documentation is release evidence, not authority for current Apple state. Historical Android `0.2.0 (8)` Preview and Production builds remain preserved.
 
 ## Public-variable policy
 
@@ -83,7 +89,7 @@ After separate build approval, run `eas build --platform android --profile previ
 
 ## Production release gates
 
-Production never builds from `dev`. Its validation workflow is scoped to `main`, and it contains no delivery command. Production build, signing, upload, submission, tester rollout, pricing, and release decisions each require explicit owner approval. Preview credentials and artifacts must never be selected for Production.
+Production never builds from `dev`. Its validation workflow is scoped to `main`; native delivery is available only through platform-specific, manually dispatched, protected workflows. Production build, signing, upload, submission, tester rollout, pricing, and release decisions each require explicit owner approval. Preview credentials and artifacts must never be selected for Production.
 
 ## Rollback
 
