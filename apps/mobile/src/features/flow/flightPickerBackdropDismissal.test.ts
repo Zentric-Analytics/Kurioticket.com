@@ -29,7 +29,7 @@ test("Travelers & Cabin backdrop and Android Back cancel rather than commit draf
   assert.ok(backdrop >= 0 && sheet > backdrop);
   assert.match(travelerSheet, /<Pressable[^>]*onPress=\{onCancel\}[^>]*accessibilityLabel="Close Travelers & Cabin picker"\/>/);
   assert.match(travelerSheet, /onRequestClose=\{onCancel\}/);
-  assert.match(travelerSheet, /<PrimaryButton label="Done" onPress=\{\(\)=>onDone\(draft\)\}\/>/);
+  assert.match(travelerSheet, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\)=>onDone\(draft\)\}\/>/);
   assert.match(travelerSheet, /<Cancel onPress=\{onCancel\}/);
   assert.doesNotMatch(travelerSheet.slice(travelerSheet.indexOf("<Modal"), sheet), /onPress=\{onDone\}/);
 });

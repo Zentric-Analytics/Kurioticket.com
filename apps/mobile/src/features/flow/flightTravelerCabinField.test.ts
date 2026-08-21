@@ -36,7 +36,7 @@ test("the combined picker uses a cancellable draft and Done owns commit", () => 
   assert.match(sheet, /if \(visible\) setDraft\(travelerCabinDraft\(form\)\)/);
   assert.match(sheet, /onRequestClose=\{onCancel\}/);
   assert.match(sheet, /onPress=\{\(\)=>setDraft\(\{\.\.\.draft,cabin\}\)\}/);
-  assert.match(sheet, /<PrimaryButton label="Done" onPress=\{\(\)=>onDone\(draft\)\}/);
+  assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\)=>onDone\(draft\)\}/);
   assert.match(sheet, /<Cancel onPress=\{onCancel\}/);
   assert.match(panel, /onDone=\{\(draft\) => \{ setForm\(\{ \.\.\.form, \.\.\.draft \}\); clear\("travelers", "cabin"\); setPicker\(undefined\); \}\}/);
 });
@@ -45,4 +45,9 @@ test("an empty committed form gets one draft adult without mutating on open", ()
   assert.match(panel, /adults: totalTravelers\(form\) \? form\.adults : 1/);
   assert.match(field, /onPress=\{\(\) => setPicker\("travelers"\)\}/);
   assert.doesNotMatch(field, /setForm/);
+});
+
+test("the selected cabin indication remains alongside the iconless Done action", () => {
+  assert.match(sheet, /\{cabin===draft\.cabin\?" ✓":""\}/);
+  assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\}/);
 });

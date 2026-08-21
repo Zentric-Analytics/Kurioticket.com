@@ -26,6 +26,6 @@ test("Guests backdrop and Android Back cancel drafts while Done remains the only
   assert.match(guests, /<Pressable style=\{\[StyleSheet\.absoluteFill,[^>]+onPress=\{onCancel\}/);
   assert.match(guests, /onRequestClose=\{onCancel\}/);
   assert.match(guests, /<SafeAreaView[^>]+pointerEvents="box-none">\s*<View accessibilityViewIsModal/);
-  assert.match(guests, /<PrimaryButton label="Done" onPress=\{\(\) => onDone\(draft\)\}\/>/);
+  assert.match(guests, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\) => onDone\(draft\)\}\/>/);
   assert.doesNotMatch(guests, /StyleSheet\.absoluteFill[^\n]+onDone/);
 });

@@ -46,3 +46,9 @@ test("Driver age list positions valid committed selections deterministically", (
   assert.match(ageSheet, /onScrollToIndexFailed=/);
   assert.doesNotMatch(ageSheet, /setTimeout/);
 });
+
+
+test("Driver age Done is iconless while the selected-age indicator remains", () => {
+  assert.match(ageSheet, /<PrimaryButton label="Done" icon=\{null\} disabled=\{draftAge === undefined\}/);
+  assert.match(ageSheet, /selected \? <FlowIcon name="check"/);
+});

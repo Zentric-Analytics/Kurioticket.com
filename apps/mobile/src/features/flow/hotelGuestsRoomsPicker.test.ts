@@ -43,3 +43,8 @@ test("sheet uses theme surface, safe area, and separate backdrop layers", () => 
   assert.match(source, /StyleSheet\.absoluteFill/);
   assert.doesNotMatch(source, /backgroundColor:\s*["']white["']/);
 });
+
+
+test("Guests and Rooms Done is explicitly iconless", () => {
+  assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\) => onDone\(draft\)\}\/>/);
+});

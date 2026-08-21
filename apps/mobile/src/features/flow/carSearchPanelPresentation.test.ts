@@ -65,3 +65,14 @@ test("Cars keeps person and themed chevron icons and FlowIcon clock", () => {
   assert.match(icons, /\| "clock" \| "close"/);
   assert.match(icons, /clock: <><Circle \{\.\.\.line\}[\s\S]*?<Path \{\.\.\.line\}/);
 });
+
+
+test("Cars Search and time Done CTAs are iconless while selection checks remain", () => {
+  assert.match(panel, /<PrimaryButton label=\{submitLabel\} icon=\{null\} onPress=\{submit\}\/>/);
+  assert.match(pickers, /<PrimaryButton label="Done" icon=\{null\} disabled=\{!draftPickup\|\|!draftReturn\} onPress=\{\(\)=>onDone\(draftPickup,draftReturn\)\}\/>/);
+  assert.match(pickers, /chosen\?<FlowIcon name="check"/);
+});
+
+test("Cars keeps the separate-return checkbox selection check", () => {
+  assert.match(panel, /form\.separateDropoff \? <FlowIcon name="check" color="white" size=\{15\}\/> : null/);
+});

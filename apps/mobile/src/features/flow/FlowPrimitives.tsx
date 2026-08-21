@@ -299,7 +299,7 @@ export function PrimaryButton({
 }: {
   label: string;
   onPress: () => void;
-  icon?: FlowIconName;
+  icon?: FlowIconName | null;
   disabled?: boolean;
 }) {
   const ft = useFlowTheme();
@@ -312,7 +312,7 @@ export function PrimaryButton({
       onPress={onPress}
       style={({ pressed }) => [ft.styles.primary, disabled && { opacity: 0.6 }, pressed && ft.styles.pressed]}
     >
-      <FlowIcon name={icon} color="white" />
+      {icon ? <FlowIcon name={icon} color="white" /> : null}
       <Text style={ft.styles.primaryText}>{label}</Text>
     </Pressable>
   );
