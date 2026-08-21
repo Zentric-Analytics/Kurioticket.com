@@ -87,6 +87,7 @@ import {
   type TravelPreferencesAirlinePayload,
 } from "@/lib/flights/preferredAirlineFilters";
 import {
+  buildFlightResultsSearchKey,
   readFlightResultsSessionSnapshot,
   writeFlightResultsSessionSnapshot,
 } from "@/lib/flights/flightResultsSessionCache";
@@ -7824,34 +7825,6 @@ function dedupeSuggestions(suggestions: AirportOption[]) {
 
 function airportInputValue(item: AirportOption) {
   return item.code;
-}
-
-function buildFlightResultsSearchKey(body: {
-  origin: string;
-  destination: string;
-  departureDate: string;
-  returnDate?: string;
-  tripType: string;
-  adults: number;
-  children: number;
-  infants: number;
-  travelers: number;
-  cabinClass: string;
-  currency?: string;
-}) {
-  return [
-    body.origin.trim().toUpperCase(),
-    body.destination.trim().toUpperCase(),
-    body.departureDate,
-    body.returnDate || "",
-    body.tripType,
-    body.adults,
-    body.children,
-    body.infants,
-    body.travelers,
-    body.cabinClass,
-    body.currency || "",
-  ].join("|");
 }
 
 function filterResultsByRequestedOutboundDate(

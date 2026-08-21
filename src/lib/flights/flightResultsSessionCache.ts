@@ -1,11 +1,11 @@
-import type { PublicFlightResult } from "@/lib/types";
+import type { FlightSearchLeg, PublicFlightResult } from "@/lib/types";
 
 export const FLIGHT_RESULTS_SESSION_CACHE_KEY =
-  "kurioticket:flight-results-snapshot:v1";
+  "kurioticket:flight-results-snapshot:v2";
 export const FLIGHT_RESULTS_SESSION_CACHE_TTL_MS = 30 * 60 * 1000;
 
 export type FlightResultsSessionSnapshot = {
-  version: 1;
+  version: 2;
   searchKey: string;
   savedAt: number;
   results: PublicFlightResult[];
@@ -13,6 +13,45 @@ export type FlightResultsSessionSnapshot = {
 };
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
+export function buildFlightResultsSearchKey(body: {
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  tripType: string;
+  legs?: FlightSearchLeg[];
+  adults: number;
+  children: number;
+  infants: number;
+  travelers: number;
+  cabinClass: string;
+  currency?: string;
+}) {
+  const journeyKey = body.legs?.length
+    ? body.legs
+        .map(
+          (leg) =>
+            `${leg.origin.trim().toUpperCase()}>${leg.destination.trim().toUpperCase()}@${leg.departureDate}`,
+        )
+        .join("|")
+    : "";
+
+  return [
+    body.origin.trim().toUpperCase(),
+    body.destination.trim().toUpperCase(),
+    body.departureDate,
+    body.returnDate || "",
+    body.tripType,
+    journeyKey,
+    body.adults,
+    body.children,
+    body.infants,
+    body.travelers,
+    body.cabinClass,
+    body.currency || "",
+  ].join("|");
+}
 
 function browserSessionStorage(): StorageLike | null {
   if (typeof window === "undefined") return null;
@@ -52,7 +91,7 @@ export function readFlightResultsSessionSnapshot(
     const valid =
       value !== null &&
       typeof value === "object" &&
-      value.version === 1 &&
+      value.version === 2 &&
       typeof value.searchKey === "string" &&
       typeof value.savedAt === "number" &&
       Number.isFinite(value.savedAt) &&
@@ -97,7 +136,7 @@ export function writeFlightResultsSessionSnapshot(
       return copy;
     });
     const snapshot: FlightResultsSessionSnapshot = {
-      version: 1,
+      version: 2,
       searchKey,
       savedAt: now,
       results: publicResults,

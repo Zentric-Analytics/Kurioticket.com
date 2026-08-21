@@ -3,11 +3,103 @@ import { test } from "node:test";
 
 import type { PublicFlightResult } from "@/lib/types";
 import {
+  buildFlightResultsSearchKey,
   FLIGHT_RESULTS_SESSION_CACHE_KEY,
   FLIGHT_RESULTS_SESSION_CACHE_TTL_MS,
   readFlightResultsSessionSnapshot,
   writeFlightResultsSessionSnapshot,
 } from "./flightResultsSessionCache";
+
+const multiCitySearch = {
+  origin: "IAH",
+  destination: "IAH",
+  departureDate: "2026-10-10",
+  tripType: "multi-city",
+  adults: 1,
+  children: 0,
+  infants: 0,
+  travelers: 1,
+  cabinClass: "economy",
+  currency: "USD",
+};
+
+const fourLegs = [
+  { origin: "IAH", destination: "LAX", departureDate: "2026-10-10" },
+  { origin: "LAX", destination: "JFK", departureDate: "2026-10-15" },
+  { origin: "JFK", destination: "LHR", departureDate: "2026-10-20" },
+  { origin: "LHR", destination: "IAH", departureDate: "2026-10-25" },
+];
+
+const fiveLegs = [
+  ...fourLegs.slice(0, 3),
+  { origin: "LHR", destination: "CDG", departureDate: "2026-10-25" },
+  { origin: "CDG", destination: "IAH", departureDate: "2026-10-30" },
+];
+
+test("multi-city session identity includes every requested leg", () => {
+  const fourLegKey = buildFlightResultsSearchKey({
+    ...multiCitySearch,
+    legs: fourLegs,
+  });
+  const fiveLegKey = buildFlightResultsSearchKey({
+    ...multiCitySearch,
+    legs: fiveLegs,
+  });
+
+  assert.notEqual(fourLegKey, fiveLegKey);
+  assert.match(fiveLegKey, /LHR>CDG@2026-10-25/);
+  assert.match(fiveLegKey, /CDG>IAH@2026-10-30/);
+
+  const storage = new MemoryStorage();
+  writeFlightResultsSessionSnapshot(fourLegKey, [result], [], storage, 100);
+  assert.equal(readFlightResultsSessionSnapshot(fiveLegKey, storage, 200), null);
+});
+
+test("multi-city identity is stable and sensitive to every canonical leg field", () => {
+  const key = (legs: typeof fiveLegs) =>
+    buildFlightResultsSearchKey({ ...multiCitySearch, legs });
+  const baseline = key(fiveLegs);
+
+  assert.equal(key(fiveLegs.map((leg) => ({ ...leg }))), baseline);
+  assert.notEqual(key(fiveLegs.map((leg, index) => index === 2 ? { ...leg, origin: "BOS" } : leg)), baseline);
+  assert.notEqual(key(fiveLegs.map((leg, index) => index === 2 ? { ...leg, destination: "MAD" } : leg)), baseline);
+  assert.notEqual(key(fiveLegs.map((leg, index) => index === 2 ? { ...leg, departureDate: "2026-10-21" } : leg)), baseline);
+  assert.notEqual(key(fiveLegs.slice(0, 4)), baseline);
+  assert.notEqual(key([...fiveLegs.slice(0, 4), { ...fiveLegs[4], destination: "DFW" }]), baseline);
+});
+
+test("traveler composition and cabin remain part of provider-result identity", () => {
+  const base = { ...multiCitySearch, legs: fiveLegs };
+  const baseline = buildFlightResultsSearchKey(base);
+
+  assert.notEqual(buildFlightResultsSearchKey({ ...base, adults: 2, travelers: 2 }), baseline);
+  assert.notEqual(buildFlightResultsSearchKey({ ...base, children: 1, travelers: 2 }), baseline);
+  assert.notEqual(buildFlightResultsSearchKey({ ...base, cabinClass: "business" }), baseline);
+});
+
+test("one-way, round-trip, and multi-city identities restore only themselves", () => {
+  const common = { adults: 1, children: 0, infants: 0, travelers: 1, cabinClass: "economy", currency: "USD" };
+  const oneWay = buildFlightResultsSearchKey({ ...common, tripType: "one-way", origin: "IAH", destination: "LAX", departureDate: "2026-10-10" });
+  const roundTrip = buildFlightResultsSearchKey({ ...common, tripType: "round-trip", origin: "IAH", destination: "LAX", departureDate: "2026-10-10", returnDate: "2026-10-20" });
+  const multiCity = buildFlightResultsSearchKey({ ...multiCitySearch, legs: fourLegs });
+  const storage = new MemoryStorage();
+
+  assert.equal(buildFlightResultsSearchKey({ ...common, tripType: "one-way", origin: "IAH", destination: "LAX", departureDate: "2026-10-10" }), oneWay);
+  assert.equal(buildFlightResultsSearchKey({ ...common, tripType: "round-trip", origin: "IAH", destination: "LAX", departureDate: "2026-10-10", returnDate: "2026-10-20" }), roundTrip);
+  assert.notEqual(oneWay, roundTrip);
+  assert.notEqual(roundTrip, multiCity);
+  writeFlightResultsSessionSnapshot(roundTrip, [result], [], storage, 100);
+  assert.ok(readFlightResultsSessionSnapshot(roundTrip, storage, 200));
+  assert.equal(readFlightResultsSessionSnapshot(multiCity, storage, 200), null);
+});
+
+test("legacy v1 snapshots are invalidated after the cache contract change", () => {
+  const storage = new MemoryStorage();
+  storage.setItem(FLIGHT_RESULTS_SESSION_CACHE_KEY, JSON.stringify({ version: 1, searchKey: "legacy", savedAt: 100, results: [result], warnings: [] }));
+
+  assert.equal(readFlightResultsSessionSnapshot("legacy", storage, 200), null);
+  assert.equal(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY), null);
+});
 
 class MemoryStorage {
   readonly values = new Map<string, string>();
@@ -55,7 +147,7 @@ test("writes and reads a matching snapshot with warnings", () => {
   writeFlightResultsSessionSnapshot("search", [result], ["limited"], storage, 100);
 
   assert.deepEqual(readFlightResultsSessionSnapshot("search", storage, 200), {
-    version: 1,
+    version: 2,
     searchKey: "search",
     savedAt: 100,
     results: [result],
@@ -97,7 +189,7 @@ test("invalid result and warning shapes return null", () => {
   storage.setItem(
     FLIGHT_RESULTS_SESSION_CACHE_KEY,
     JSON.stringify({
-      version: 1,
+      version: 2,
       searchKey: "search",
       savedAt: 100,
       results: [null],
