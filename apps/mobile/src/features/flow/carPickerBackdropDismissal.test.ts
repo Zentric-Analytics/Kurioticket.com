@@ -4,14 +4,17 @@ import test from "node:test";
 
 const panel = readFileSync("src/features/flow/CarSearchPanel.tsx", "utf8");
 const pickers = readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8");
+const dates = readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8");
 const ageSheet = panel.slice(panel.indexOf("function AgeSheet"), panel.indexOf("const styles"));
 
 test("rental date and time backdrops cancel drafts while Done commits", () => {
-  assert.match(pickers, /accessibilityLabel="Cancel rental date changes" onPress=\{onCancel\}/);
-  assert.match(pickers, /onPress=\{\(\)=>onDone\(draftPickup,draftReturn\)\}/);
+  assert.match(pickers, /<DateRangeSheet[^>]+onDone=\{onDone\} onCancel=\{onCancel\}/);
+  assert.match(dates, /StyleSheet\.absoluteFill[^\n]+onPress=\{onCancel\}/);
+  assert.match(dates, /onPress=\{\(\) => onDone\(draftStart,draftEnd\)\}/);
   assert.match(pickers, /accessibilityLabel="Cancel time changes" onPress=\{onCancel\}/);
-  assert.match(pickers, /onRequestClose=\{onCancel\}/g);
-  for (const label of ["Cancel rental date changes", "Cancel time changes"]) {
+  assert.match(dates, /onRequestClose=\{onCancel\}/);
+  assert.match(pickers, /onRequestClose=\{onCancel\}/);
+  for (const label of ["Cancel time changes"]) {
     const start = pickers.indexOf(`accessibilityLabel="${label}"`);
     const end = pickers.indexOf("/>", start);
     assert.doesNotMatch(pickers.slice(start, end), /onDone/);

@@ -5,9 +5,9 @@ import { router } from "expo-router";
 import { Field, PrimaryButton, UnavailableNotice } from "./FlowPrimitives";
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, useFlowTheme } from "./flowStyles";
-import { LocalCalendarModal } from "./LocalCalendarModal";
+import { DateRangeSheet } from "./DateRangeSheet";
 import { travelApi, TravelApiError, type HotelDestinationSuggestion } from "../../api/travelApi";
-import { addCalendarDays, HOTEL_LIMITS, countLabel, firstParam, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, type HotelForm, type RouteValue, validateHotelForm } from "./hotelSearchModel";
+import { HOTEL_LIMITS, countLabel, firstParam, hotelSearchParams, initializeHotelForm, localDateFromIso, localIsoDate, type HotelForm, type RouteValue, validateHotelForm } from "./hotelSearchModel";
 
 export type HotelSearchHandle = { useDestination: (destination: string) => void };
 type Props = { params: Record<string, RouteValue>; embedded?: boolean; showSubmit?: boolean; submitLabel?: string };
@@ -32,7 +32,7 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
   const [form, setForm] = useState<HotelForm>(initial.current.form);
   const [errors, setErrors] = useState<ReturnType<typeof validateHotelForm>>({});
   const [notice, setNotice] = useState(initial.current.notice);
-  const [calendar, setCalendar] = useState<"checkIn" | "checkOut" | undefined>();
+  const [datesOpen, setDatesOpen] = useState(false);
   const [countsOpen, setCountsOpen] = useState(false);
   const [destinationOpen, setDestinationOpen] = useState(false);
   const [adultCount, setAdultCount] = useState(initial.current.form.guests);
@@ -54,31 +54,19 @@ export const HotelSearchPanel = forwardRef<HotelSearchHandle, Props>(function Ho
   const submit = () => {
     const nextErrors = validateHotelForm(form);
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) { setNotice("Please correct the highlighted search details."); if (nextErrors.destination) setDestinationOpen(true); return; }
+    if (Object.keys(nextErrors).length) { setNotice("Please correct the highlighted search details."); if (nextErrors.destination) setDestinationOpen(true); else if (nextErrors.checkIn || nextErrors.checkOut) setDatesOpen(true); return; }
     router.push({ pathname: "/hotel-results", params: hotelSearchParams(form) });
-  };
-  const chooseDate = (iso: string) => {
-    if (calendar === "checkIn") {
-      const adjusted = !form.checkOut || iso >= form.checkOut;
-      update({ ...form, checkIn: iso, checkOut: adjusted ? "" : form.checkOut });
-      setErrors((value) => ({ ...value, checkIn: undefined, checkOut: undefined }));
-      setCalendar("checkOut");
-    } else {
-      update({ ...form, checkOut: iso });
-      setErrors((value) => ({ ...value, checkOut: undefined }));
-      setCalendar(undefined);
-    }
   };
   const datesValue = form.checkIn && form.checkOut ? `${displayDate(form.checkIn)} — ${displayDate(form.checkOut)}` : "Check-in — Check-out";
   return <View style={[!embedded && ft.styles.card, !embedded && ft.styles.shadow]}>
     <Pressable accessibilityRole="button" onPress={() => setDestinationOpen(true)}><View style={styles.inputField}><View style={styles.locationFieldRow}><FlowIcon name="location" size={22} color={ft.colors.icon}/><View style={styles.locationFieldContent}><Text style={ft.styles.label}>Destination</Text><TextInput ref={destinationRef} accessibilityLabel="Hotel destination" value={form.destination} editable={false} pointerEvents="none" placeholder="City, area, or hotel" placeholderTextColor={ft.colors.placeholder} style={[styles.input, { color: ft.colors.text }]}/></View></View>{errors.destination ? <Text accessibilityRole="alert" style={styles.error}>{errors.destination}</Text> : null}</View></Pressable>
-    <Field label="Travel dates" value={datesValue} icon="calendar" trailing={<FlowIcon name="chevron" size={18}/>} onPress={() => setCalendar("checkIn")}/>
+    <Field label="Travel dates" value={datesValue} icon="calendar" trailing={<FlowIcon name="chevron" size={18}/>} onPress={() => setDatesOpen(true)}/>
     {errors.checkIn || errors.checkOut ? <Text accessibilityRole="alert" style={styles.error}>{errors.checkIn || errors.checkOut}</Text> : null}
     <Field label="Guests" value={`${countLabel(form.guests, "guest")}, ${countLabel(form.rooms, "room")}`} icon="person" trailing={<FlowIcon name="chevron" size={18}/>} onPress={() => setCountsOpen(true)}/>
     {errors.guests || errors.rooms ? <Text accessibilityRole="alert" style={styles.error}>{errors.guests || errors.rooms}</Text> : null}
     {notice ? <UnavailableNotice text={notice}/> : null}
     {showSubmit ? <View style={styles.pad}><PrimaryButton label={submitLabel} onPress={submit}/></View> : null}
-    <LocalCalendarModal visible={Boolean(calendar)} title={calendar === "checkOut" ? "Choose check-out date" : "Choose check-in date"} selected={calendar ? form[calendar] : form.checkIn} minimum={calendar === "checkOut" && form.checkIn ? addCalendarDays(form.checkIn, 1) : localIsoDate(new Date())} onChoose={chooseDate} onClose={() => setCalendar(undefined)} dismissOnBackdropPress/>
+    <DateRangeSheet visible={datesOpen} title="Travel dates" startLabel="Check-in date" endLabel="Check-out date" startDate={form.checkIn} endDate={form.checkOut} minimumStartDate={localIsoDate(new Date())} endMustBeAfterStart onDone={(checkIn, checkOut) => { update({ ...form, checkIn, checkOut }); setErrors(value => ({ ...value, checkIn: undefined, checkOut: undefined })); setDatesOpen(false); }} onCancel={() => setDatesOpen(false)}/>
     <HotelDestinationSheet visible={destinationOpen} value={form.destination} onDone={(destination) => { update({ ...form, destination }); if (destination.trim()) setErrors((current) => ({ ...current, destination: undefined })); setDestinationOpen(false); destinationRef.current?.focus(); }} onCancel={() => setDestinationOpen(false)}/>
     <HotelGuestsRoomsSheet visible={countsOpen} adults={adultCount} children={childCount} rooms={form.rooms} petFriendly={petFriendly} onDone={(draft) => { setAdultCount(draft.adults); setChildCount(draft.children); setPetFriendly(draft.petFriendly); update({ ...form, guests: draft.adults + draft.children, rooms: draft.rooms }); setErrors((value) => ({ ...value, guests: undefined, rooms: undefined })); setCountsOpen(false); }} onCancel={() => setCountsOpen(false)}/>
   </View>;

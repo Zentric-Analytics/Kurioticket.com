@@ -6,7 +6,8 @@ import { Field, PrimaryButton, Segments, UnavailableNotice } from "./FlowPrimiti
 import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 import { LocalCalendarModal } from "./LocalCalendarModal";
-import { addCalendarDays, localDateFromIso, localIsoDate } from "./localDateModel";
+import { DateRangeSheet } from "./DateRangeSheet";
+import { localDateFromIso, localIsoDate } from "./localDateModel";
 import { adjustFlightDeparture, airportByCode, changeFlightTripType, changeTraveler, FLIGHT_CABINS, flightSearchParams, initializeFlightForm, searchAirports, totalTravelers, validateFlightForm, type FlightForm, type FlightFormErrors, type RouteValue } from "./flightSearchModel";
 import type { Airport } from "./airportData";
 import { searchHomepageAirports, type HomepageAirport, type HomepageAirportResult } from "../home/homepageAirports";
@@ -15,7 +16,7 @@ import { canApplyHomepageDefaultOrigin, fetchHomepageDefaultOrigin } from "../ho
 export const NATIVE_FLIGHT_CABIN_OPTIONS = FLIGHT_CABINS.filter((cabin) => cabin !== "Premium Economy");
 
 export type FlightSearchHandle = { useRouteShortcut: () => void };
-type Picker = "from" | "to" | "departureDate" | "returnDate" | "travelers" | "cabin";
+type Picker = "from" | "to" | "departureDate" | "travelDates" | "travelers" | "cabin";
 type FlightTripSelectorValue = FlightForm["tripType"] | "multi-city";
 const displayDate = (iso: string) => localDateFromIso(iso)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) ?? iso;
 const plural = (count: number, singular: string, pluralForm = `${singular}s`) => `${count} ${count === 1 ? singular : pluralForm}`;
@@ -50,9 +51,9 @@ export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: bool
   const shortcut = () => { setForm((current) => ({ ...current, from: airportByCode("JFK"), to: airportByCode("LAX") })); clear("from", "to"); setNotice("JFK to LAX selected. Review the form, then search when ready."); };
   const swapAirports = () => { userControlsOrigin.current = true; setForm((current) => current.from && current.to ? { ...current, from: current.to, to: current.from } : current); clear("from", "to"); };
   useImperativeHandle(ref, () => ({ useRouteShortcut: shortcut }));
-  const submit = () => { if (submitting) return; const next = validateFlightForm(form); setErrors(next); if (Object.keys(next).length) { setNotice("Please correct the highlighted search details."); const first = Object.keys(next)[0]; if (["from","to","departureDate","returnDate","travelers","cabin"].includes(first)) setPicker(first as Picker); return; } setSubmitting(true); router[submitNavigation]({ pathname: "/flight-results", params: flightSearchParams(form) }); };
+  const submit = () => { if (submitting) return; const next = validateFlightForm(form); setErrors(next); if (Object.keys(next).length) { setNotice("Please correct the highlighted search details."); const first = Object.keys(next)[0]; if (first === "departureDate" || first === "returnDate") setPicker(form.tripType === "round-trip" ? "travelDates" : "departureDate"); else if (["from","to","travelers","cabin"].includes(first)) setPicker(first as Picker); return; } setSubmitting(true); router[submitNavigation]({ pathname: "/flight-results", params: flightSearchParams(form) }); };
   const chooseAirport = (airport: Airport) => { const key = picker as "from" | "to"; if (key === "from") userControlsOrigin.current = true; setForm({ ...form, [key]: airport }); clear(key); setPicker(undefined); };
-  const chooseDate = (iso: string) => { if (picker === "departureDate") { const result = adjustFlightDeparture(form, iso, initializeHomepageDates); setForm(result.form); if (result.adjusted) setNotice("Return was adjusted to remain after departure."); clear("departureDate", "returnDate"); setPicker(form.tripType === "round-trip" ? "returnDate" : undefined); return; } if (picker === "returnDate") { setForm({ ...form, returnDate: iso }); clear("departureDate", "returnDate"); setPicker(undefined); } };
+  const chooseDepartureDate = (iso: string) => { const result = adjustFlightDeparture(form, iso, initializeHomepageDates); setForm(result.form); if (result.adjusted) setNotice("Return was adjusted to remain after departure."); clear("departureDate", "returnDate"); setPicker(undefined); };
   const departureValue = form.departureDate ? displayDate(form.departureDate) : "Select departure date";
   const returnValue = form.returnDate ? displayDate(form.returnDate) : "Select return date";
   const flightDatesValue = form.tripType === "round-trip" ? `${departureValue} — ${returnValue}` : departureValue;
@@ -64,7 +65,7 @@ export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: bool
     <Segments<FlightTripSelectorValue> value={form.tripType} onChange={(tripType) => { if (tripType === "multi-city") return; setForm(changeFlightTripType(form, tripType, initializeHomepageDates)); clear("tripType", "returnDate"); }} options={[{ value: "round-trip", label: "Round trip" }, { value: "one-way", label: "One way-trip" }, { value: "multi-city", label: "Multi-city trip", disabled: true, accessibilityHint: "Multi-city search is coming soon" }]} />
     {errors.tripType ? <ErrorText text={errors.tripType}/> : null}
     <View><Field label="From" value={form.from?.code ?? "Select origin"} meta={form.from ? `${form.from.city}, ${form.from.country}` : "No airport selected"} icon="location" onPress={() => { userControlsOrigin.current = true; setPicker("from"); }}/>{errors.from ? <ErrorText text={errors.from}/> : null}<Field label="To" value={form.to?.code ?? "Select destination"} meta={form.to ? `${form.to.city}, ${form.to.country}` : "No airport selected"} icon="location" onPress={() => setPicker("to")}/>{errors.to ? <ErrorText text={errors.to}/> : null}<Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" accessibilityState={{ disabled: !form.from || !form.to }} disabled={!form.from || !form.to} onPress={swapAirports} style={styles.swap}><FlowIcon name="swap" color={flowColors.blue}/></Pressable></View>
-    <Field label="Travel dates" value={flightDatesValue} icon="calendar" onPress={() => setPicker("departureDate")}/>
+    <Field label="Travel dates" value={flightDatesValue} icon="calendar" onPress={() => setPicker(form.tripType === "round-trip" ? "travelDates" : "departureDate")}/>
     {errors.departureDate ? <ErrorText text={errors.departureDate}/> : null}
     {form.tripType === "round-trip" && errors.returnDate ? <ErrorText text={errors.returnDate}/> : null}
     <Field label="Travelers" value={travelerCabinSummary} meta={travelerBreakdown} icon="person" trailing={<FlowIcon name="chevron" color={ft.colors.icon} size={18}/>} onPress={() => setPicker("travelers")}/>
@@ -72,7 +73,8 @@ export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: bool
     {errors.cabin ? <ErrorText text={errors.cabin}/> : null}
     {notice ? <UnavailableNotice text={notice}/> : null}{showSubmit ? <View style={styles.button}><PrimaryButton label={submitLabel} onPress={submit} disabled={submitting}/></View> : null}
     <AirportSheet kind={picker === "from" || picker === "to" ? picker : undefined} selected={picker === "from" ? form.from : form.to} homepageOnly={homepageAirportPicker} onChoose={chooseAirport} onClose={() => setPicker(undefined)}/>
-    <LocalCalendarModal visible={picker === "departureDate" || picker === "returnDate"} title={picker === "returnDate" ? "Choose return date" : "Choose departure date"} selected={picker === "returnDate" ? form.returnDate : form.departureDate} minimum={picker === "returnDate" && form.departureDate ? addCalendarDays(form.departureDate, 1) : localIsoDate(new Date())} onChoose={chooseDate} onClose={() => setPicker(undefined)} dismissOnBackdropPress/>
+    <DateRangeSheet visible={picker === "travelDates"} title="Travel dates" startLabel="Departure date" endLabel="Return date" startDate={form.departureDate} endDate={form.returnDate} minimumStartDate={localIsoDate(new Date())} endMustBeAfterStart onDone={(departureDate, returnDate) => { setForm({ ...form, departureDate, returnDate }); clear("departureDate", "returnDate"); setPicker(undefined); }} onCancel={() => setPicker(undefined)}/>
+    <LocalCalendarModal visible={picker === "departureDate"} title="Choose departure date" selected={form.departureDate} minimum={localIsoDate(new Date())} onChoose={chooseDepartureDate} onClose={() => setPicker(undefined)} dismissOnBackdropPress/>
     <TravelerCabinSheet visible={picker === "travelers" || picker === "cabin"} form={form} onDone={(draft) => { setForm({ ...form, ...draft }); clear("travelers", "cabin"); setPicker(undefined); }} onCancel={() => setPicker(undefined)}/>
   </View>;
 });
