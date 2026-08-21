@@ -264,6 +264,10 @@ test("worker preflight failure redacts secrets and exits before the polling loop
 
 const classifications = [
   [["src/app/page.tsx"], "WEB"],
+  [["src/lib/geo/context.ts"], "OTA+WEB"],
+  [["src/lib/cars/carLocationSuggestions.ts"], "OTA+WEB"],
+  [["src/data/airports.ts"], "OTA+WEB"],
+  [["src/lib/deals/dealsState.ts"], "WEB"],
   [["apps/mobile/src/screens/Explore.tsx"], "OTA"],
   [["apps/mobile/assets/kurioticket-icon-ios.png"], "ANDROID_NATIVE+IOS_NATIVE"],
   [["apps/mobile/app.config.ts"], "ANDROID_NATIVE+IOS_NATIVE"],

@@ -355,7 +355,7 @@ export const countryCodeToCountryName = (countryCode?: string | null) => {
   const normalizedCountryCode = normalizeCountryCode(countryCode);
   if (!normalizedCountryCode) return undefined;
 
-  return countryDisplayNames?.of(normalizedCountryCode) || undefined;
+  return countryDisplayNames?.of(normalizedCountryCode) || normalizedCountryCode;
 };
 
 export const localeToCountryCode = (value?: string | null) => {
