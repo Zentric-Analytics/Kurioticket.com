@@ -191,6 +191,52 @@ export function Field({
   );
 }
 
+export function CompactSearchField({
+  label,
+  value,
+  meta,
+  icon,
+  muted = false,
+  onPress,
+  trailing,
+  valueNumberOfLines = 1,
+}: {
+  label: string;
+  value: string;
+  meta?: string;
+  icon: FlowIconName;
+  muted?: boolean;
+  onPress: () => void;
+  trailing?: ReactNode;
+  valueNumberOfLines?: number;
+}) {
+  const ft = useFlowTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={[label, value, meta].filter(Boolean).join(", ")}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.compactField,
+        { backgroundColor: ft.colors.input, borderBottomColor: ft.colors.border },
+        pressed && ft.styles.pressed,
+      ]}
+    >
+      <Text style={[styles.compactLabel, { color: ft.colors.secondaryText }]}>
+        {label.toUpperCase()}
+      </Text>
+      <View style={styles.compactValueRow}>
+        <FlowIcon name={icon} size={18} color={ft.colors.icon} />
+        <View style={styles.compactTextColumn}>
+          <Text numberOfLines={valueNumberOfLines} style={[styles.compactValue, { color: muted ? ft.colors.placeholder : ft.colors.text }]}>{value}</Text>
+          {meta ? <Text style={[styles.compactMeta, { color: ft.colors.secondaryText }]}>{meta}</Text> : null}
+        </View>
+        {trailing ?? <FlowIcon name="chevron" size={16} color={ft.colors.icon} />}
+      </View>
+    </Pressable>
+  );
+}
+
 export function ChoiceSheet<T extends string>({
   visible,
   title,
@@ -332,6 +378,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   grow: { flex: 1 },
+  compactField: { minHeight: 66, paddingHorizontal: 12, paddingVertical: 9, borderBottomWidth: 1, justifyContent: "center", gap: 4 },
+  compactLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
+  compactValueRow: { flexDirection: "row", alignItems: "center", gap: 9 },
+  compactTextColumn: { flex: 1, minWidth: 0 },
+  compactValue: { fontSize: 15, fontWeight: "600", flexShrink: 1 },
+  compactMeta: { fontSize: 12, lineHeight: 17, marginTop: 1 },
   overlay: {
     flex: 1,
     backgroundColor: "#071A4866",

@@ -3,18 +3,19 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
-const fieldStart = panel.indexOf('<Field label="Travelers"');
+const fieldStart = panel.indexOf('<CompactSearchField label="Travelers"');
 const field = panel.slice(fieldStart, panel.indexOf("\n", fieldStart));
 const sheetStart = panel.indexOf("function TravelerCabinSheet");
 const sheet = panel.slice(sheetStart, panel.indexOf("function Counter", sheetStart));
 
 test("Flights renders one full-width combined Travelers field", () => {
-  assert.equal(panel.match(/<Field label="Travelers"/g)?.length, 1);
-  assert.doesNotMatch(panel, /<Field label="Cabin"/);
+  assert.equal(panel.match(/<CompactSearchField label="Travelers"/g)?.length, 1);
+  assert.doesNotMatch(panel, /<CompactSearchField label="Cabin"/);
   assert.match(field, /value=\{travelerCabinSummary\}/);
   assert.match(field, /meta=\{travelerBreakdown\}/);
   assert.match(field, /icon="person"/);
-  assert.equal(field.match(/name="chevron"/g)?.length, 1);
+  assert.doesNotMatch(field, /trailing=/);
+  assert.match(readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8"), /trailing \?\? <FlowIcon name="chevron"/);
   assert.doesNotMatch(field, /styles\.(?:row|half)/);
 });
 
