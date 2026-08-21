@@ -43,15 +43,15 @@ test("authoritative change and refund terms take precedence over truthful fallba
 
 const source = readFileSync(resolve("src/features/search/ApprovedDetailScreen.tsx"), "utf8");
 const flightDetail = source.slice(source.indexOf("function FlightDetail"), source.indexOf("function HotelDetail"));
-const tripCard = flightDetail.slice(flightDetail.indexOf(">Trip details<"), flightDetail.indexOf(">Choose where to book<"));
-const detailsRow = source.slice(source.indexOf("function DetailsRow"), source.indexOf("function Offer"));
+const tripCard = flightDetail.slice(flightDetail.indexOf(">Trip details<"), flightDetail.indexOf(">Booking provider<"));
+const detailsRow = source.slice(source.indexOf("function DetailsRow"), source.indexOf("function BookingProviderCard"));
 const styles = source.slice(source.indexOf("const d = StyleSheet.create"));
 
 test("Trip details removes its duplicate total while both booking prices remain", () => {
   assert.doesNotMatch(flightDetail, />Fare summary</);
   assert.match(tripCard, />Trip details</);
   assert.doesNotMatch(tripCard, /formattedFare|Total \(1 traveler\)|Taxes and fees per provider/);
-  assert.match(flightDetail, /<Offer[\s\S]*?price=\{formattedFare\}/);
+  assert.match(flightDetail, /<BookingProviderCard[\s\S]*?price=\{formattedFare\}/);
   assert.match(flightDetail, /d\.stickyTotal[\s\S]*?\{formattedFare\}/);
   assert.equal(flightDetail.match(/\{formattedFare\}/g)?.length, 2);
 });
