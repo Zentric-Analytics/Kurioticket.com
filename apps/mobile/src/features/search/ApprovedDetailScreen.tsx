@@ -303,12 +303,9 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
             <DetailsRow key={detail.label} {...detail} />
           ))}
         </View>
-        <View style={[d.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[d.h2, { color: theme.textPrimary }]}>Choose where to book</Text>
-          <Text style={[d.meta, { color: theme.textSecondary }]}>
-            Prices are per person and include taxes & fees when reported
-          </Text>
-          <Offer
+        <View style={d.bookingProviderSection}>
+          <Text style={[d.h2, { color: theme.textPrimary }]}>Booking provider</Text>
+          <BookingProviderCard
             provider={provider}
             logoUrl={result.airlineLogo}
             kind={
@@ -317,11 +314,9 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
                 : "Travel provider"
             }
             price={formattedFare}
-            selected
-            onSelect={handleProviderBooking}
           />
           <Text style={[d.disclosure, { color: theme.textSecondary }]}>
-            Only the authoritative offer returned for this search is shown.
+            Booking provided by {provider}.
           </Text>
         </View>
       </ScrollView>
@@ -569,6 +564,45 @@ function DetailsRow({ label, value }: { label: string; value: string }) {
     </View>
   );
 }
+function BookingProviderCard({
+  provider,
+  logoUrl,
+  kind,
+  price,
+}: {
+  provider: string;
+  logoUrl?: string | null;
+  kind: string;
+  price: string;
+}) {
+  const { theme } = useAppTheme();
+  const compact = useWindowDimensions().width < 360;
+  return (
+    <View
+      accessibilityLabel={`${provider}. Recommended. ${kind}. ${price}`}
+      style={[
+        d.bookingProviderCard,
+        compact && d.bookingProviderCardCompact,
+        { backgroundColor: theme.dark ? "#17243A" : theme.surface },
+        theme.dark && d.bookingProviderCardDark,
+      ]}
+    >
+      <View style={d.providerIdentity}>
+        <View style={[d.providerLogo, theme.dark && { backgroundColor: "#142B55" }]}>
+          <ProviderLogo provider={provider} logoUrl={logoUrl} />
+        </View>
+        <View style={d.providerCopy}>
+          <Text numberOfLines={1} style={[d.provider, d.providerName, { color: theme.textPrimary }]}>
+            {provider}
+          </Text>
+          <Text style={[d.green, d.recommended]}>★ Recommended</Text>
+          <Text style={[d.meta, d.providerKind, { color: theme.textSecondary }]}>{kind}</Text>
+        </View>
+      </View>
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={d.priceSmall}>{price}</Text>
+    </View>
+  );
+}
 function Offer({
   provider,
   logoUrl,
@@ -686,6 +720,21 @@ const d = StyleSheet.create({
     gap: 10,
     backgroundColor: "white",
   },
+  bookingProviderSection: { gap: 10, paddingVertical: 2 },
+  bookingProviderCard: {
+    borderRadius: 13,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    shadowColor: "#07152F",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  bookingProviderCardCompact: { flexDirection: "column" },
+  bookingProviderCardDark: { shadowOpacity: 0.28, elevation: 2 },
   itinerarySection: {
     borderRadius: 13,
     padding: 14,
