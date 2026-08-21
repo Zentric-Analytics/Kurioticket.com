@@ -22,6 +22,18 @@ test("validation opens the same range picker while one-way retains its single da
   assert.match(panel, /const flightDatesValue = form\.tripType === "round-trip" \? `\$\{departureValue\} — \$\{returnValue\}` : departureValue;/);
 });
 
+test("Travel dates summary always uses named English month labels", () => {
+  assert.match(panel, /const FLIGHT_DATE_LOCALE = "en-US"/);
+  assert.match(
+    panel,
+    /toLocaleDateString\(FLIGHT_DATE_LOCALE, \{ weekday: "short", month: "short", day: "numeric", year: "numeric" \}\)/,
+  );
+  assert.doesNotMatch(
+    panel,
+    /const displayDate = .*toLocaleDateString\(undefined, \{ weekday: "short", month: "short"/,
+  );
+});
+
 test("date validation errors remain directly after the unified launcher", () => {
   const field = panel.indexOf('<Field label="Travel dates"');
   const departure = panel.indexOf("errors.departureDate", field);
