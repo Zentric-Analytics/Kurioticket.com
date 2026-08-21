@@ -73,6 +73,7 @@ export function Segments<T extends string>({
   value,
   options,
   onChange,
+  appearance = "default",
 }: {
   value: T;
   options: readonly {
@@ -83,6 +84,7 @@ export function Segments<T extends string>({
     accessibilityHint?: string;
   }[];
   onChange: (value: T) => void;
+  appearance?: "default" | "filled";
 }) {
   const ft = useFlowTheme();
   return (
@@ -102,7 +104,9 @@ export function Segments<T extends string>({
             onPress={() => onChange(item.value)}
             style={({ pressed }) => [
               styles.segment,
-              selected && styles.segmentActive,
+              appearance === "filled" && styles.filledSegment,
+              appearance === "filled" && item.disabled && styles.disabledSegment,
+              selected && (appearance === "filled" ? styles.filledSegmentActive : styles.segmentActive),
               pressed && !item.disabled && ft.styles.pressed,
             ]}
           >
@@ -117,7 +121,7 @@ export function Segments<T extends string>({
               style={[
                 styles.segmentText,
                 { color: item.disabled ? ft.colors.secondaryText : ft.colors.text },
-                selected && styles.segmentTextActive,
+                selected && (appearance === "filled" ? styles.filledSegmentTextActive : styles.segmentTextActive),
               ]}
             >
               {item.label}
@@ -306,6 +310,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   segmentActive: { borderBottomColor: flowColors.blue, borderBottomWidth: 2 },
+  filledSegment: { margin: 4, minHeight: 44, borderRadius: 10 },
+  filledSegmentActive: { backgroundColor: flowColors.blue },
+  filledSegmentTextActive: { color: flowColors.white },
+  disabledSegment: { opacity: 0.48 },
   segmentText: {
     color: flowColors.navy,
     fontSize: 11,

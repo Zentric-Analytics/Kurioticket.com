@@ -16,15 +16,17 @@ export function EditFlightSearchScreen() {
       <View style={[styles.header, { borderBottomColor: ft.colors.border }]}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Cancel editing flight search"
+          accessibilityLabel="Back"
           hitSlop={8}
           onPress={() => router.back()}
           style={({ pressed }) => [ft.styles.iconButton, pressed && ft.styles.pressed]}
         >
           <ArrowLeft color={ft.colors.icon} size={24} strokeWidth={2.25} />
         </Pressable>
-        <Text accessibilityRole="header" style={[ft.styles.title, styles.title]}>Edit flight search</Text>
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={ft.styles.iconButton} />
+        <View style={styles.heading}>
+          <Text accessibilityRole="header" style={[ft.styles.title, styles.title]}>Edit flight search</Text>
+          <Text style={[styles.subtitle, { color: ft.colors.secondaryText }]}>Update your trip details</Text>
+        </View>
       </View>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <ScrollView
@@ -32,7 +34,7 @@ export function EditFlightSearchScreen() {
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
         >
-          <FlightSearchPanel params={params} submitNavigation="replace" />
+          <FlightSearchPanel params={params} submitNavigation="replace" editAppearance />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -41,7 +43,9 @@ export function EditFlightSearchScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  header: { minHeight: 58, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, paddingHorizontal: 4 },
-  title: { flex: 1, textAlign: "center", fontSize: 20 },
-  content: { paddingHorizontal: 14, paddingTop: 16, paddingBottom: 28 },
+  header: { minHeight: 76, flexDirection: "row", alignItems: "center", paddingHorizontal: 6, paddingVertical: 8 },
+  heading: { flex: 1, paddingRight: 12 },
+  title: { fontSize: 22, lineHeight: 28 },
+  subtitle: { fontSize: 13, lineHeight: 19, marginTop: 1 },
+  content: { flexGrow: 1, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 28 },
 });
