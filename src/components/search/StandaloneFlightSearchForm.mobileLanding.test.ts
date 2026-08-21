@@ -17,8 +17,8 @@ const identity = source.slice(
   ),
 );
 const selector = source.slice(
-  source.indexOf('<div\n          role="radiogroup"'),
-  source.indexOf("</div>", source.indexOf('<div\n          role="radiogroup"')),
+  source.lastIndexOf("<div", source.indexOf('role="radiogroup"')),
+  source.indexOf("</div>", source.indexOf('role="radiogroup"')),
 );
 
 test("standalone Flights calendar shows today with a ring and no decorative dot", () => {
@@ -33,7 +33,7 @@ test("standalone Flights calendar shows today with a ring and no decorative dot"
   );
 });
 
-test("standalone Flights mobile landing form has exact English labels and safe trip options", () => {
+test("standalone Flights mobile landing form enables every supported trip option", () => {
   assert.match(
     source,
     /useMainFlightLandingMobilePresentation \? \([\s\S]*?sm:hidden[\s\S]*?<Plane[\s\S]*?t\("flights"\) \|\| "Flights"/,
@@ -42,9 +42,9 @@ test("standalone Flights mobile landing form has exact English labels and safe t
     source,
     /"Round-trip"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/,
   );
-  assert.match(source, /aria-disabled=\{value === "multi-city"\}/);
-  assert.match(source, /disabled=\{value === "multi-city"\}/);
-  assert.match(source, /if \(value === "multi-city"\) return;/);
+  assert.doesNotMatch(source, /aria-disabled=\{value === "multi-city"\}/);
+  assert.doesNotMatch(source, /disabled=\{value === "multi-city"\}/);
+  assert.doesNotMatch(source, /if \(value === "multi-city"\) return;/);
   assert.match(source, /grid h-11 grid-cols-3 gap-0 py-0 sm:h-auto/);
 });
 
@@ -95,23 +95,25 @@ test("main-flight landing trip selector stays horizontal and readable at narrow 
   );
 });
 
-test("supported mobile trip options update canonical state while Multi-city cannot", () => {
+test("all mobile trip options update canonical state including Multi-city", () => {
   assert.match(
     source,
-    /const nextTripType = value as TripType;\s*setTripType\(nextTripType\)/,
+    /const nextTripType = value;\s*setTripType\(nextTripType\)/,
   );
   assert.match(source, /if \(nextTripType === "one-way"\) setReturnDate\(""\)/);
-  assert.match(source, /if \(value === "multi-city"\) return;/);
-  assert.doesNotMatch(source, /setTripType\("multi-city"\)/);
+  assert.doesNotMatch(source, /if \(value === "multi-city"\) return;/);
+  assert.match(source, /tripType === "multi-city"/);
+  assert.match(source, /<MultiCityFlightEditor/);
 });
 
-test("standalone Flights uses the complete selector without changing supported search semantics", () => {
+test("standalone Flights uses the canonical indexed Multi-city search contract", () => {
   assert.match(source, /sm:inline-flex sm:gap-1/);
   assert.match(
     source,
     /\.\.\.defaultTripTypeOptions,[\s\S]*?\["multi-city", "Multi-city"\] as const/,
   );
-  assert.match(source, /type TripType = "round-trip" \| "one-way";/);
+  assert.match(source, /FlightSearchLeg/);
+  assert.match(source, /appendFlightLegParams\(params, authoritativeLegs\)/);
   assert.match(
     source,
     /if \(tripType === "round-trip"\) params\.set\("returnDate", returnDate\);/,

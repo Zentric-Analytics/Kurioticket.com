@@ -106,7 +106,7 @@ import {
 } from "@/lib/saved-items-api";
 import { formatCurrency, formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { FlightSearchParams, PublicFlightResult, SortMode } from "@/lib/types";
-import { parseFlightLegParams } from "@/lib/flights/flightSearchJourney";
+import { appendFlightLegParams, parseFlightLegParams, projectSearchLegs } from "@/lib/flights/flightSearchJourney";
 import { cn, getItineraryDateKey } from "@/lib/utils";
 import {
   calculateCompactFilterPlacement,
@@ -1190,7 +1190,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       ? destinationSuggestions
       : destinationFallbackSuggestions;
   const mobileTripTypeSummary =
-    tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip");
+    tripTypeInput === "multi-city" ? t("multiCity") : tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip");
   const mobileOriginSummary = (originCode || originInput || t("origin")).trim();
   const mobileDestinationSummary = (
     destinationCode ||
@@ -1239,10 +1239,14 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
   const markExpandedSearchInteraction = useCallback(() => {}, []);
 
   const expandStickySearch = useCallback(() => {
+    if (tripTypeInput === "multi-city") {
+      router.push(`/flights?${searchQueryString}`);
+      return;
+    }
     const currentScrollY = window.scrollY;
     expandedSearchScrollYRef.current = currentScrollY;
     setIsSearchExpandedWhileSticky(true);
-  }, []);
+  }, [router, searchQueryString, tripTypeInput]);
 
   const openStickySearchEditor = useCallback(
     (
@@ -1992,6 +1996,31 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
 
   function handleTripTypeChange(nextTripType: string) {
     markExpandedSearchInteraction();
+
+    if (nextTripType === "multi-city") {
+      const firstLeg = { origin: originCode || originInput.trim().toUpperCase(), destination: destinationCode || destinationInput.trim().toUpperCase(), departureDate: departureDateInput };
+      const secondLeg = tripTypeInput === "round-trip" && returnDateInput
+        ? { origin: firstLeg.destination, destination: firstLeg.origin, departureDate: returnDateInput }
+        : { origin: firstLeg.destination, destination: "", departureDate: departureDateInput };
+      const legs = [firstLeg, secondLeg];
+      const projection = projectSearchLegs("multi-city", legs);
+      const params = new URLSearchParams({
+        tripType: "multi-city",
+        origin: projection.origin,
+        destination: projection.destination,
+        departureDate: projection.departureDate,
+        adults: String(adultCount),
+        children: String(childCount),
+        infants: String(infantCount),
+        travelers: String(adultCount + childCount + infantCount),
+        cabinClass: cabinClassInput,
+        currency: selectedCurrency,
+      });
+      appendFlightLegParams(params, legs);
+      setTripTypeMenuOpen(false);
+      router.push(`/flights?${params.toString()}`);
+      return;
+    }
 
     const normalizedTripType =
       nextTripType === "one-way" ? "one-way" : "round-trip";
@@ -4583,7 +4612,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                   }}
                   className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-950 sm:h-auto sm:rounded-md sm:border-0 sm:bg-transparent sm:px-1 sm:text-sm sm:font-medium sm:shadow-none"
                 >
-                  {tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip")}
+                  {tripTypeInput === "multi-city" ? t("multiCity") : tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip")}
                   <ChevronDown
                     aria-hidden="true"
                     className={cn(
@@ -4627,12 +4656,30 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     >
                       {t("oneWay")}
                     </button>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => handleTripTypeChange("multi-city")}
+                      className="focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+                    >
+                      {t("multiCity")}
+                    </button>
                   </div>
                 ) : null}
               </div>
             </div>
 
-            <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03] backdrop-blur sm:rounded-none sm:border-slate-200 sm:bg-white sm:p-1.5 sm:shadow-none sm:ring-0 lg:p-1">
+            {tripTypeInput === "multi-city" ? (
+              <button
+                type="button"
+                onClick={() => router.push(`/flights?${searchQueryString}`)}
+                className="focus-ring min-h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[#004BB8] shadow-sm hover:bg-blue-50"
+              >
+                {t("editFlightSearch")} · {t("multiCity")}
+              </button>
+            ) : null}
+            <div className={cn("overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03] backdrop-blur sm:rounded-none sm:border-slate-200 sm:bg-white sm:p-1.5 sm:shadow-none sm:ring-0 lg:p-1", tripTypeInput === "multi-city" && "hidden")}>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_116px] lg:gap-0">
                 <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-stretch rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-[#004BB8]/25 lg:col-span-1 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                   <div
@@ -5273,7 +5320,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
     const tripTypeOptions = [
       { label: t("roundTrip"), value: "round-trip", disabled: false },
       { label: t("oneWay"), value: "one-way", disabled: false },
-      { label: t("multiCity"), value: "multi-city", disabled: true },
+      { label: t("multiCity"), value: "multi-city", disabled: false },
     ];
 
     return (
@@ -5343,17 +5390,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                         type="button"
                         role="radio"
                         aria-checked={selected}
-                        aria-disabled={option.disabled}
-                        disabled={option.disabled}
-                        title={option.disabled ? t("multiCityComingSoon") : undefined}
                         onClick={() => handleTripTypeChange(option.value)}
                         className={cn(
                           "focus-ring inline-flex min-h-7 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
                           selected
                             ? "bg-[#004BB8]/10 text-[#004BB8]"
-                            : option.disabled
-                              ? "cursor-not-allowed text-slate-400"
-                              : "text-slate-500 hover:bg-white hover:text-slate-800",
+                            : "text-slate-500 hover:bg-white hover:text-slate-800",
                         )}
                       >
                         <span
@@ -5836,6 +5878,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       const mobileTripTypeOptions = [
         { labelKey: "roundTrip", value: "round-trip" },
         { labelKey: "oneWay", value: "one-way" },
+        { labelKey: "multiCity", value: "multi-city" },
       ];
 
       return (
@@ -6107,6 +6150,20 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
       return null;
     }
 
+    if (tripTypeInput === "multi-city") {
+      return (
+        <div className={cn("mx-auto w-full min-w-0 max-w-5xl", placement === "desktop" && "hidden sm:block")}>
+          <button
+            type="button"
+            onClick={() => router.push(`/flights?${searchQueryString}`)}
+            className="focus-ring min-h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[#004BB8] shadow-sm hover:bg-blue-50"
+          >
+            {t("editFlightSearch")} · {t("multiCity")}
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div
         className={cn(
@@ -6134,13 +6191,6 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
                     type="button"
                     role="radio"
                     aria-checked={selected}
-                    aria-disabled={option.value === "multi-city"}
-                    disabled={option.value === "multi-city"}
-                    title={
-                      option.value === "multi-city"
-                        ? t("multiCityComingSoon")
-                        : undefined
-                    }
                     onClick={() => handleTripTypeChange(option.value)}
                     className={cn(
                       "focus-ring inline-flex min-h-9 items-center gap-2 rounded-md px-1 py-1 text-[14px] font-medium text-slate-900 transition-colors hover:text-slate-950",
