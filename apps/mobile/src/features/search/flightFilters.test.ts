@@ -33,12 +33,12 @@ const loaded = [
   flight("two-american", "American", 2, "20:00", 200, 7),
 ];
 
-test("derives only stop, airline, and departure-time options present in loaded results", () => {
-  assert.deepEqual(flightFilterOptions(loaded), {
-    stops: ["nonstop", "one", "twoPlus"],
-    airlines: ["American", "British Airways"],
-    times: ["morning", "afternoon", "evening"],
-  });
+test("derives filter options from loaded results", () => {
+  const options = flightFilterOptions(loaded);
+  assert.deepEqual(options.stops, ["nonstop", "one", "twoPlus"]);
+  assert.deepEqual(options.airlines, ["American", "British Airways"]);
+  assert.deepEqual(options.departureTimes, ["morning", "afternoon", "evening"]);
+  assert.deepEqual(options.price, { min: 100, max: 300 });
 });
 
 test("Nonstop returns only the nonstop result", () => {
@@ -75,12 +75,12 @@ test("each departure time band filters the loaded set", () => {
     flight("night", "A", 0, "21:00", 1, 1),
   ];
   for (const bucket of ["morning", "afternoon", "evening", "night"] as const) {
-    assert.deepEqual(filterAndSortFlights(times, { ...emptyFlightFilters(), times: [bucket] }, "best").map((x) => x.id), [bucket]);
+    assert.deepEqual(filterAndSortFlights(times, { ...emptyFlightFilters(), departureTimes: [bucket] }, "best").map((x) => x.id), [bucket]);
   }
 });
 
 test("combined categories use intersection semantics", () => {
-  const filters: FlightFilters = { stops: ["nonstop"], airlines: ["American"], times: [] };
+  const filters: FlightFilters = { ...emptyFlightFilters(), stops: ["nonstop"], airlines: ["American"] };
   assert.deepEqual(filterAndSortFlights(loaded, filters, "best").map((x) => x.id), ["nonstop-american"]);
 });
 
@@ -92,10 +92,16 @@ test("price sorting composes with filters without mutating loaded results", () =
 });
 
 test("clearing filters restores all loaded results and visible count", () => {
-  const filtered = filterAndSortFlights(loaded, { stops: ["nonstop"], airlines: ["British Airways"], times: [] }, "best");
+  const filtered = filterAndSortFlights(loaded, { ...emptyFlightFilters(), stops: ["nonstop"], airlines: ["British Airways"] }, "best");
   assert.equal(filtered.length, 0);
-  assert.equal(activeFlightFilterCount({ stops: ["nonstop"], airlines: ["British Airways"], times: [] }), 2);
+  assert.equal(activeFlightFilterCount({ ...emptyFlightFilters(), stops: ["nonstop"], airlines: ["British Airways"] }), 2);
   const cleared = emptyFlightFilters();
   assert.equal(activeFlightFilterCount(cleared), 0);
   assert.equal(filterAndSortFlights(loaded, cleared, "best").length, loaded.length);
+});
+
+test("range and arrival filters count by meaningful selection and clear together", () => {
+  const filters: FlightFilters = { ...emptyFlightFilters(), price: { min: 100, max: 200 }, duration: { min: 60, max: 300 }, arrivalTimes: ["morning"] };
+  assert.equal(activeFlightFilterCount(filters), 3);
+  assert.equal(activeFlightFilterCount(emptyFlightFilters()), 0);
 });
