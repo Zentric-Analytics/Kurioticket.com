@@ -6,7 +6,6 @@ import {
   Animated,
   FlatList,
   Image,
-  InputAccessoryView,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -212,10 +211,8 @@ function Selector({
 
 type CountrySelectorProps = Omit<SelectorProps, "searchable" | "onSelect"> & {
   kind: "phone" | "nationality" | "addressCountry";
-  onSave: (value: string) => Promise<boolean>;
+  onSave: (value: string) => boolean;
 };
-
-const COUNTRY_SEARCH_ACCESSORY = "personal-details-country-search-accessory";
 
 /** Full-screen country picker. Draft state intentionally lives inside the modal. */
 function CountrySelector({
@@ -297,12 +294,12 @@ function CountrySelector({
     if (savingSelection) return;
     closeWithPushAnimation(onClose);
   };
-  const saveSelection = async () => {
+  const saveSelection = () => {
     if (committing.current || !draftSelection) return;
     committing.current = true;
     setSavingSelection(true);
     Keyboard.dismiss();
-    const savedSelection = await onSave(draftSelection);
+    const savedSelection = onSave(draftSelection);
     if (!savedSelection) {
       committing.current = false;
       setSavingSelection(false);
@@ -394,9 +391,6 @@ function CountrySelector({
               returnKeyType="done"
               blurOnSubmit
               onSubmitEditing={Keyboard.dismiss}
-              inputAccessoryViewID={
-                Platform.OS === "ios" ? COUNTRY_SEARCH_ACCESSORY : undefined
-              }
               style={[
                 s.input,
                 {
@@ -478,7 +472,7 @@ function CountrySelector({
                   busy: savingSelection,
                 }}
                 disabled={!draftSelection || savingSelection}
-                onPress={() => void saveSelection()}
+                onPress={saveSelection}
                 style={[
                   s.primary,
                   (!draftSelection || savingSelection) && s.disabled,
@@ -493,28 +487,6 @@ function CountrySelector({
             </View>
           ) : null}
         </KeyboardAvoidingView>
-        {Platform.OS === "ios" ? (
-          <InputAccessoryView nativeID={COUNTRY_SEARCH_ACCESSORY}>
-            <View
-              style={[
-                s.keyboardAccessory,
-                {
-                  backgroundColor: theme.surface,
-                  borderTopColor: theme.border,
-                },
-              ]}
-            >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={c.done}
-                onPress={Keyboard.dismiss}
-                style={s.keyboardDone}
-              >
-                <Text style={s.blue}>{c.done}</Text>
-              </Pressable>
-            </View>
-          </InputAccessoryView>
-        ) : null}
       </Animated.View>
     </Modal>
   );
@@ -825,60 +797,26 @@ export function PersonalDetailsScreen() {
       patch("dateOfBirth", `${next.year}-${next.month}-${next.day}`);
     }
   };
-  const saveCountrySelection = async (
+  const saveCountrySelection = (
     kind: "phone" | "nationality" | "addressCountry",
     value: string,
   ) => {
-    if (!saved) return false;
-    setError("");
-    setSuccess("");
-    try {
-      const payload: MobileProfile =
-        kind === "phone"
-          ? { phoneCountryCode: value }
-          : kind === "nationality"
-            ? { nationality: value }
-            : {
-                address: serializeAddress({
-                  ...parseAddress(saved.address || ""),
-                  countryCode: value,
-                }),
-              };
-      const result = await travelApi.updateProfile(payload);
-      if (!mounted.current) return false;
-      const authoritative = normalizeProfile(result.profile);
-      setSaved(authoritative);
-      setDraft((current) => {
-        if (kind === "phone") {
-          return {
-            ...current,
-            phoneCountryCode: authoritative.phoneCountryCode || value,
-          };
-        }
-        if (kind === "nationality") {
-          return {
-            ...current,
-            nationality: authoritative.nationality || value,
-          };
-        }
-        return {
-          ...current,
-          address: serializeAddress({
-            ...parseAddress(current.address || ""),
-            countryCode: value,
-          }),
-        };
-      });
-      setSuccess(c.saveSuccess);
-      AccessibilityInfo.announceForAccessibility(c.saveSuccess);
-      return true;
-    } catch {
-      if (mounted.current) {
-        setError(c.saveFailure);
-        AccessibilityInfo.announceForAccessibility(c.saveFailure);
+    setDraft((current) => {
+      if (kind === "phone") {
+        return { ...current, phoneCountryCode: value };
       }
-      return false;
-    }
+      if (kind === "nationality") {
+        return { ...current, nationality: value };
+      }
+      return {
+        ...current,
+        address: serializeAddress({
+          ...parseAddress(current.address || ""),
+          countryCode: value,
+        }),
+      };
+    });
+    return true;
   };
   const save = async () => {
     if (!saved || !dirty || submitting.current) return;
@@ -1580,18 +1518,5 @@ const s = StyleSheet.create({
   countryAction: {
     borderTopWidth: StyleSheet.hairlineWidth,
     padding: 16,
-  },
-  keyboardAccessory: {
-    minHeight: 44,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    alignItems: "flex-end",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  keyboardDone: {
-    minWidth: 64,
-    minHeight: 44,
-    alignItems: "flex-end",
-    justifyContent: "center",
   },
 });

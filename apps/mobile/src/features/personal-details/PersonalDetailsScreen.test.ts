@@ -188,20 +188,22 @@ test("country selection has an explicit committed-versus-draft lifecycle", () =>
   assert.match(selector, /useState\(selected\)/);
   assert.match(selector, /setDraftSelection\(selected\)/);
   assert.match(selector, /setDraftSelection\(item\.value\)/);
-  assert.match(selector, /await onSave\(draftSelection\)/);
+  assert.match(selector, /onSave\(draftSelection\)/);
+  assert.doesNotMatch(selector, /await onSave/);
   assert.doesNotMatch(selector, /onSave\(item\.value\)/);
   assert.match(selector, /if \(committing\.current \|\| !draftSelection\) return/);
   assert.match(selector, /accessibilityState=\{\{ selected: isSelected \}\}/);
 });
-test("country selector Save commits only the selected field immediately", () => {
-  assert.match(screen, /const saveCountrySelection = async/);
-  assert.match(screen, /kind === "phone"[\s\S]*?\{ phoneCountryCode: value \}/);
-  assert.match(screen, /kind === "nationality"[\s\S]*?\{ nationality: value \}/);
-  assert.match(
-    screen,
-    /parseAddress\(saved\.address \|\| ""\)[\s\S]*?countryCode: value/,
+test("country selector Save applies only to the current local draft", () => {
+  const saveSelector = screen.slice(
+    screen.indexOf("const saveCountrySelection"),
+    screen.indexOf("const save = async"),
   );
-  assert.match(screen, /travelApi\.updateProfile\(payload\)/);
+  assert.match(saveSelector, /setDraft\(\(current\) => \{/);
+  assert.doesNotMatch(saveSelector, /travelApi\.updateProfile|setSaved|setSuccess|announceForAccessibility/);
+  assert.match(saveSelector, /kind === "phone"[\s\S]*?\{ \.\.\.current, phoneCountryCode: value \}/);
+  assert.match(saveSelector, /kind === "nationality"[\s\S]*?\{ \.\.\.current, nationality: value \}/);
+  assert.match(saveSelector, /parseAddress\(current\.address \|\| ""\)[\s\S]*?countryCode: value/);
   assert.match(screen, /return saveCountrySelection\(kind, value\)/);
 });
 test("selector Save stays in Edit mode and merges only its committed value", () => {
@@ -213,11 +215,11 @@ test("selector Save stays in Edit mode and merges only its committed value", () 
   assert.match(saveSelector, /setDraft\(\(current\) => \{/);
   assert.match(
     saveSelector,
-    /kind === "phone"[\s\S]*?\.\.\.current,[\s\S]*?phoneCountryCode:/,
+    /kind === "phone"[\s\S]*?\.\.\.current, phoneCountryCode: value/,
   );
   assert.match(
     saveSelector,
-    /kind === "nationality"[\s\S]*?\.\.\.current,[\s\S]*?nationality:/,
+    /kind === "nationality"[\s\S]*?\.\.\.current, nationality: value/,
   );
   assert.match(
     saveSelector,
@@ -265,14 +267,26 @@ test("dynamic flag is decorative, validated and has a safe ISO fallback", () => 
   assert.match(screen, /option\?\.isoCode\s*\|\|\s*"--"/);
 });
 test("phone country changes preserve the local-number draft", () => {
-  assert.match(
-    screen,
-    /kind === "phone"[\s\S]*?phoneCountryCode: authoritative\.phoneCountryCode \|\| value/,
+  const saveSelector = screen.slice(
+    screen.indexOf("const saveCountrySelection"),
+    screen.indexOf("const save = async"),
   );
-  assert.doesNotMatch(
-    screen.slice(screen.indexOf("const saveCountrySelection"), screen.indexOf("const save = async")),
-    /phoneNumber:/,
+  assert.match(saveSelector, /return \{ \.\.\.current, phoneCountryCode: value \}/);
+  assert.doesNotMatch(saveSelector, /phoneNumber:/);
+});
+
+test("main Save remains the only persistence point and main Cancel restores saved", () => {
+  const saveSelector = screen.slice(
+    screen.indexOf("const saveCountrySelection"),
+    screen.indexOf("const save = async"),
   );
+  const mainSave = screen.slice(
+    screen.indexOf("const save = async"),
+    screen.indexOf("const goBack"),
+  );
+  assert.doesNotMatch(saveSelector, /travelApi\.updateProfile/);
+  assert.match(mainSave, /travelApi\.updateProfile\(payload\)/);
+  assert.match(screen, /setDraft\(saved \|\| \{\}\)/);
 });
 test("address fields retain web order and canonical serializer", () => {
   const address = screen.slice(
