@@ -18,6 +18,8 @@ const selectedCard = component.slice(
   component.indexOf("flightResults && active && {"),
   component.indexOf("pressed && s.datePressed"),
 );
+const previousCard = { minWidth: 96, maxWidth: 116, height: 76 } as const;
+const compactCard = { minWidth: 90, maxWidth: 112, height: 60 } as const;
 
 test("every date uses one borderless card structure and fixed dimensions", () => {
   assert.match(component, /visibleDates\.map[\s\S]*?<Pressable[\s\S]*?s\.date,[\s\S]*?s\.flightDate/);
@@ -31,6 +33,17 @@ test("every date uses one borderless card structure and fixed dimensions", () =>
   assert.match(baseCard, /borderWidth: 0/);
   assert.doesNotMatch(baseCard, /borderWidth: 1|borderColor/);
   assert.doesNotMatch(selectedCard, /borderWidth|borderColor|width|height|borderRadius|padding/);
+});
+
+test("flight result cards are moderately smaller than the previous layout", () => {
+  assert.ok(compactCard.height <= previousCard.height * 0.85);
+  assert.ok(compactCard.height >= previousCard.height * 0.75);
+  assert.ok(compactCard.minWidth < previousCard.minWidth);
+  assert.ok(compactCard.maxWidth < previousCard.maxWidth);
+
+  for (const [property, value] of Object.entries(compactCard)) {
+    assert.match(baseCard, new RegExp(`${property}: ${value}`));
+  }
 });
 
 test("date cards use soft native elevation and selected state only strengthens it", () => {
@@ -55,6 +68,7 @@ test("empty fares reserve the same price row and press behavior stays intact", (
   assert.match(component, /onPress=\{\(\) => onSelect\(iso\)\}/);
   assert.match(component, /hitSlop=\{flightResults \? 4 : undefined\}/);
   assert.match(component, /style=\{\(\{ pressed \}\) =>/);
+  assert.equal(component.match(/flightResults && \{ width: flightDateWidth \}/g)?.length, 1);
 });
 
 test("flight date typography stays centered with a clear three-level hierarchy", () => {
@@ -103,4 +117,14 @@ test("responsive card widths expose part of the fourth card", () => {
       `${windowWidth}px exposes only part of the fourth card`,
     );
   }
+});
+
+test("long localized prices stay centered on one readable, shrinkable line", () => {
+  assert.match(component, /numberOfLines=\{1\}/);
+  assert.match(component, /adjustsFontSizeToFit/);
+  assert.match(component, /minimumFontScale=\{flightResults \? 0\.78 : 0\.85\}/);
+  assert.match(priceLabel, /width: "100%"/);
+  assert.match(priceLabel, /paddingHorizontal: 2/);
+  assert.match(priceLabel, /textAlign: "center"/);
+  assert.doesNotMatch(priceLabel, /flexWrap|ellipsizeMode/);
 });
