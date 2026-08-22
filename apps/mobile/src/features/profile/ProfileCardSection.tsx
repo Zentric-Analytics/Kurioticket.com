@@ -1,7 +1,7 @@
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useAppTheme } from "../../theme/AppTheme";
-import { useMobileLocalization } from "../../localization/MobileLocalization";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import type { ProfileSection } from "./profileModel";
