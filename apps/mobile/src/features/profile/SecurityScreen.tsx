@@ -39,8 +39,13 @@ export function SecurityScreen() {
   const [sessions, setSessions] = useState<SecuritySession[]>([]);
   const [events, setEvents] = useState<SecurityEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [landingError, setLandingError] = useState("");
+  const [landingMessage, setLandingMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [devicesError, setDevicesError] = useState("");
+  const [twoFactorError, setTwoFactorError] = useState("");
+  const [deletionError, setDeletionError] = useState("");
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
@@ -56,6 +61,10 @@ export function SecurityScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [saving, setSaving] = useState(false);
   const preferenceRequest = useRef(0);
+  const passwordRequest = useRef(0);
+  const devicesRequest = useRef(0);
+  const twoFactorRequest = useRef(0);
+  const deletionRequest = useRef(0);
 
   const unauth = useCallback(async (e: unknown) => {
     if (e instanceof TravelApiError && e.status === 401) {
@@ -65,51 +74,61 @@ export function SecurityScreen() {
     }
     return false;
   }, []);
-  const load = useCallback(async () => {
-    setLoading(true); setError("");
+  const load = useCallback(async ({ showLandingFeedback = true }: { showLandingFeedback?: boolean } = {}) => {
+    setLoading(true); if (showLandingFeedback) setLandingError("");
     try {
       if (!await readSession()) { router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/security" } }); return; }
       const [o, s, a] = await Promise.all([travelApi.securityOverview(), travelApi.securitySessions(), travelApi.securityActivity()]);
       setOverview(o.overview); setSessions(s.sessions); setEvents(a.events);
-    } catch (e) { if (!await unauth(e)) setError(c.loadError); } finally { setLoading(false); }
+    } catch (e) { if (!await unauth(e) && showLandingFeedback) setLandingError(c.loadError); } finally { setLoading(false); }
   }, [c.loadError, unauth]);
   useEffect(() => { void load(); }, [load]);
 
-  const web = () => void Linking.canOpenURL(WEB).then((ok) => ok ? Linking.openURL(WEB) : Promise.reject()).catch(() => setError(c.openFailed));
+  const clearPasswordFeedback = () => { setPasswordError(""); setPasswordMessage(""); };
+  const openPassword = () => { passwordRequest.current += 1; clearPasswordFeedback(); setPasswordOpen(true); };
+  const closePassword = () => { passwordRequest.current += 1; setPasswordOpen(false); clearPasswordFeedback(); };
+  const openDevices = () => { devicesRequest.current += 1; setDevicesError(""); setDevicesOpen(true); };
+  const closeDevices = () => { devicesRequest.current += 1; setDevicesOpen(false); setDevicesError(""); };
+  const openTwoFactor = () => { twoFactorRequest.current += 1; setTwoFactorError(""); setTwoFactorOpen(true); };
+  const closeTwoFactor = () => { twoFactorRequest.current += 1; setTwoFactorOpen(false); setTwoFactorError(""); };
+  const closeDeletion = () => { deletionRequest.current += 1; setDeletionOpen(false); setDeletionError(""); };
+
+  const web = () => void Linking.canOpenURL(WEB).then((ok) => ok ? Linking.openURL(WEB) : Promise.reject()).catch(() => setLandingError(c.openFailed));
   const change = async () => {
     if (submitting) return;
-    if (passwords.newPassword.length < 8 || passwords.newPassword !== passwords.confirmPassword || passwords.currentPassword === passwords.newPassword) { setError(c.passwordInvalid); return; }
-    setSubmitting(true); setError("");
+    if (passwords.newPassword.length < 8 || passwords.newPassword !== passwords.confirmPassword || passwords.currentPassword === passwords.newPassword) { setPasswordError(c.passwordInvalid); return; }
+    const request = passwordRequest.current; setSubmitting(true); setPasswordError("");
     try {
       await travelApi.changePassword(passwords);
-      setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" }); setVisible(false); setPasswordOpen(false); setMessage(c.passwordSuccess);
+      if (request !== passwordRequest.current) { await load({ showLandingFeedback: false }); return; }
+      setPasswords({ currentPassword: "", newPassword: "", confirmPassword: "" }); setVisible(false); closePassword(); setLandingMessage(c.passwordSuccess);
       AccessibilityInfo.announceForAccessibility(c.passwordSuccess);
-      await load();
-    } catch (e) { if (!await unauth(e)) setError(e instanceof TravelApiError ? e.message : c.loadError); } finally { setSubmitting(false); }
+      await load({ showLandingFeedback: false });
+    } catch (e) { if (!await unauth(e) && request === passwordRequest.current) setPasswordError(e instanceof TravelApiError ? e.message : c.loadError); } finally { setSubmitting(false); }
   };
   const reset = async () => {
-    setError("");
-    try { await travelApi.requestAccountPasswordReset(); setMessage(c.resetSent); AccessibilityInfo.announceForAccessibility(c.resetSent); } catch (e) { if (!await unauth(e)) setError(c.loadError); }
+    const request = passwordRequest.current; setPasswordError(""); setPasswordMessage("");
+    try { await travelApi.requestAccountPasswordReset(); if (request === passwordRequest.current) { setPasswordMessage(c.resetSent); AccessibilityInfo.announceForAccessibility(c.resetSent); } } catch (e) { if (!await unauth(e) && request === passwordRequest.current) setPasswordError(c.loadError); }
   };
   const toggle = async (value: boolean) => {
     if (!overview) return;
     const previous = overview.securityEmailAlerts; const id = ++preferenceRequest.current;
-    setOverview({ ...overview, securityEmailAlerts: value }); setSaving(true); setMessage(""); setError("");
+    setOverview({ ...overview, securityEmailAlerts: value }); setSaving(true); setLandingMessage(""); setLandingError("");
     try {
       const r = await travelApi.updateSecurityPreference(value);
-      if (id === preferenceRequest.current) { setOverview((v) => v ? { ...v, securityEmailAlerts: r.preferences.securityEmailAlerts } : v); setMessage(c.saved); AccessibilityInfo.announceForAccessibility(c.saved); }
+      if (id === preferenceRequest.current) { setOverview((v) => v ? { ...v, securityEmailAlerts: r.preferences.securityEmailAlerts } : v); setLandingMessage(c.saved); AccessibilityInfo.announceForAccessibility(c.saved); }
     } catch (e) {
-      if (id === preferenceRequest.current) { setOverview((v) => v ? { ...v, securityEmailAlerts: previous } : v); if (!await unauth(e)) setError(c.saveFailed); }
+      if (id === preferenceRequest.current) { setOverview((v) => v ? { ...v, securityEmailAlerts: previous } : v); if (!await unauth(e)) setLandingError(c.saveFailed); }
     } finally { if (id === preferenceRequest.current) setSaving(false); }
   };
-  const remove = (item: SecuritySession) => Alert.alert(c.removeTitle, c.removeBody, [{ text: c.cancel, style: "cancel" }, { text: c.remove, style: "destructive", onPress: () => void travelApi.revokeSecuritySession(item.id).then(() => load()).catch(async (e) => { if (!await unauth(e)) setError(c.removeFailed); }) }]);
-  const all = () => Alert.alert(c.signOutTitle, c.signOutBody, [{ text: c.cancel, style: "cancel" }, { text: c.signOutAll, style: "destructive", onPress: () => void travelApi.revokeAllSecuritySessions().then(async () => { await clearSession(); router.replace("/(tabs)/profile/sign-in"); }).catch(async (e) => { if (!await unauth(e)) setError(c.signOutFailed); }) }]);
-  const startTwoFactor = async () => { if (submitting) return; setSubmitting(true); setError(""); try { setSetup((await travelApi.startTwoFactorSetup()).setup); } catch(e) { if(!await unauth(e)) setError(e instanceof TravelApiError?e.message:c.twoFactorError); } finally { setSubmitting(false); } };
-  const confirmTwoFactor = async () => { if(submitting)return;if(!/^\d{6}$/.test(authenticatorCode)){setError(c.codeInvalid);return;}setSubmitting(true);setError("");try{const result=await travelApi.confirmTwoFactor(authenticatorCode);setRecoveryCodes(result.recoveryCodes);setSetup(null);setAuthenticatorCode("");await load();}catch(e){if(!await unauth(e))setError(e instanceof TravelApiError?e.message:c.twoFactorError);}finally{setSubmitting(false);} };
-  const disableTwoFactor = () => Alert.alert(c.disableTitle,c.disableBody,[{text:c.cancel,style:"cancel"},{text:c.disable,style:"destructive",onPress:()=>void (async()=>{if(submitting)return;setSubmitting(true);setError("");try{await travelApi.disableTwoFactor({code:verification,password:verification});setVerification("");setTwoFactorOpen(false);await load();}catch(e){if(!await unauth(e))setError(e instanceof TravelApiError?e.message:c.twoFactorError);}finally{setSubmitting(false);}})()}]);
-  const openDeletion = async () => { setError("");setDeletionOpen(true);try{setDeletion((await travelApi.getDeletionRequest()).request);}catch(e){if(!await unauth(e))setError(e instanceof TravelApiError?e.message:c.deletionError);} };
-  const requestDeletion = () => Alert.alert(c.deletionConfirmTitle,c.deletionConfirmBody,[{text:c.cancel,style:"cancel"},{text:c.deleteAccount,style:"destructive",onPress:()=>void (async()=>{if(submitting)return;setSubmitting(true);setError("");try{setDeletion((await travelApi.requestDeletion()).request);}catch(e){if(!await unauth(e))setError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);}})()}]);
-  const reactivate = async () => { if(submitting)return;setSubmitting(true);setError("");try{await travelApi.reactivateDeletion();await clearSession();setDeletion(null);setDeletionOpen(false);router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/security" } });}catch(e){if(!await unauth(e))setError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);} };
+  const remove = (item: SecuritySession) => { const request = devicesRequest.current; Alert.alert(c.removeTitle, c.removeBody, [{ text: c.cancel, style: "cancel" }, { text: c.remove, style: "destructive", onPress: () => void travelApi.revokeSecuritySession(item.id).then(() => load({ showLandingFeedback: false })).catch(async (e) => { if (!await unauth(e) && request === devicesRequest.current) setDevicesError(c.removeFailed); }) }]); };
+  const all = () => Alert.alert(c.signOutTitle, c.signOutBody, [{ text: c.cancel, style: "cancel" }, { text: c.signOutAll, style: "destructive", onPress: () => void travelApi.revokeAllSecuritySessions().then(async () => { await clearSession(); router.replace("/(tabs)/profile/sign-in"); }).catch(async (e) => { if (!await unauth(e)) setLandingError(c.signOutFailed); }) }]);
+  const startTwoFactor = async () => { if (submitting) return; const request = twoFactorRequest.current; setSubmitting(true); setTwoFactorError(""); try { const result = await travelApi.startTwoFactorSetup(); if (request === twoFactorRequest.current) setSetup(result.setup); } catch(e) { if(!await unauth(e) && request === twoFactorRequest.current) setTwoFactorError(e instanceof TravelApiError?e.message:c.twoFactorError); } finally { setSubmitting(false); } };
+  const confirmTwoFactor = async () => { if(submitting)return;if(!/^\d{6}$/.test(authenticatorCode)){setTwoFactorError(c.codeInvalid);return;}const request=twoFactorRequest.current;setSubmitting(true);setTwoFactorError("");try{const result=await travelApi.confirmTwoFactor(authenticatorCode);if(request===twoFactorRequest.current){setRecoveryCodes(result.recoveryCodes);setSetup(null);setAuthenticatorCode("");}await load({showLandingFeedback:false});}catch(e){if(!await unauth(e)&&request===twoFactorRequest.current)setTwoFactorError(e instanceof TravelApiError?e.message:c.twoFactorError);}finally{setSubmitting(false);} };
+  const disableTwoFactor = () => { const request=twoFactorRequest.current; Alert.alert(c.disableTitle,c.disableBody,[{text:c.cancel,style:"cancel"},{text:c.disable,style:"destructive",onPress:()=>void (async()=>{if(submitting)return;setSubmitting(true);setTwoFactorError("");try{await travelApi.disableTwoFactor({code:verification,password:verification});if(request===twoFactorRequest.current){setVerification("");closeTwoFactor();}await load({showLandingFeedback:false});}catch(e){if(!await unauth(e)&&request===twoFactorRequest.current)setTwoFactorError(e instanceof TravelApiError?e.message:c.twoFactorError);}finally{setSubmitting(false);}})()}]); };
+  const openDeletion = async () => { const request=++deletionRequest.current;setDeletionError("");setDeletionOpen(true);try{const result=await travelApi.getDeletionRequest();if(request===deletionRequest.current)setDeletion(result.request);}catch(e){if(!await unauth(e)&&request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);} };
+  const requestDeletion = () => { const request=deletionRequest.current; Alert.alert(c.deletionConfirmTitle,c.deletionConfirmBody,[{text:c.cancel,style:"cancel"},{text:c.deleteAccount,style:"destructive",onPress:()=>void (async()=>{if(submitting)return;setSubmitting(true);setDeletionError("");try{const result=await travelApi.requestDeletion();if(request===deletionRequest.current)setDeletion(result.request);}catch(e){if(!await unauth(e)&&request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);}})()}]); };
+  const reactivate = async () => { if(submitting)return;const request=deletionRequest.current;setSubmitting(true);setDeletionError("");try{await travelApi.reactivateDeletion();await clearSession();setDeletion(null);closeDeletion();router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/security" } });}catch(e){if(!await unauth(e)&&request===deletionRequest.current)setDeletionError(e instanceof TravelApiError?e.message:c.deletionError);}finally{setSubmitting(false);} };
   const date = (value: string) => new Intl.DateTimeFormat(locale === "es-es" ? "es-ES" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
   const eventLabel = (event: SecurityEvent) => eventLabels[event.type]?.[locale === "es-es" ? "es" : "en"] || c.unknown;
   const field = (key: keyof typeof passwords, label: string) => <TextInput accessibilityLabel={label} secureTextEntry={!visible} value={passwords[key]} onChangeText={(value) => setPasswords((v) => ({ ...v, [key]: value }))} placeholder={label} placeholderTextColor={theme.muted} autoCapitalize="none" style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.surface }]} />;
@@ -119,13 +138,13 @@ export function SecurityScreen() {
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       <Text style={[styles.intro, { color: theme.muted }]}>{c.intro}</Text>
       {loading ? <Text style={{ color: theme.muted }}>{c.loading}</Text> : null}
-      <Feedback error={error} message={message} retry={c.retry} onRetry={load} />
+      <Feedback error={landingError} message={landingMessage} retry={c.retry} onRetry={load} />
       {overview ? <>
         <View style={styles.landingBlocks}>
-          <SecurityBlock label={c.password} description={c.passwordHelp} accessibilityValue={overview.hasPassword ? c.configured : c.notConfigured} onPress={() => { setError(""); setPasswordOpen(true); }} />
-          <SecurityBlock label={c.twoFactor} description={c.twoFactorHelp} accessibilityValue={overview.twoFactorEnabled ? c.enabled : c.disabled} onPress={() => { setError(""); setTwoFactorOpen(true); }} />
+          <SecurityBlock label={c.password} description={c.passwordHelp} accessibilityValue={overview.hasPassword ? c.configured : c.notConfigured} onPress={openPassword} />
+          <SecurityBlock label={c.twoFactor} description={c.twoFactorHelp} accessibilityValue={overview.twoFactorEnabled ? c.enabled : c.disabled} onPress={openTwoFactor} />
           <SecurityBlock label={c.passkeys} description={c.passkeysHelp} onPress={web} />
-          <SecurityBlock label={c.activeSessions} description={c.activeSessionsHelp} onPress={() => { setError(""); setDevicesOpen(true); }} />
+          <SecurityBlock label={c.activeSessions} description={c.activeSessionsHelp} onPress={openDevices} />
           <View style={[styles.notificationRow, { borderBottomColor: theme.border }]}><View style={styles.rowCopy}><Text style={[styles.rowLabel, { color: theme.text }]}>{c.notifications}</Text><Text style={[styles.rowDetail, { color: theme.muted }]}>{c.alertsHelp}</Text>{saving ? <Text style={[styles.saving, { color: theme.muted }]}>{c.saving}</Text> : null}</View><Switch accessibilityLabel={`${c.notifications}. ${c.alertsHelp}`} accessibilityRole="switch" accessibilityState={{ checked: overview.securityEmailAlerts, busy: saving }} value={overview.securityEmailAlerts} onValueChange={(value) => void toggle(value)} /></View>
           <SecurityBlock label={c.activity} description={c.activityHelp} onPress={() => setActivityOpen(true)} />
           <SecurityBlock label={c.signOutAll} description={c.signOutAllHelp} destructive chevron={false} onPress={all} />
@@ -134,23 +153,23 @@ export function SecurityScreen() {
       </> : null}
     </ScrollView>
 
-    <ScreenModal visible={passwordOpen} title={c.change} closeLabel={c.close} onClose={() => setPasswordOpen(false)}>
-      <Feedback error={error} message="" />
+    <ScreenModal visible={passwordOpen} title={c.change} closeLabel={c.close} onClose={closePassword}>
+      <Feedback error={passwordError} message={passwordMessage} />
       {overview?.hasPassword ? <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}><View style={styles.form}>{field("currentPassword", c.current)}{field("newPassword", c.next)}{field("confirmPassword", c.confirm)}<Pressable accessibilityRole="button" accessibilityLabel={visible ? c.hide : c.show} onPress={() => setVisible((v) => !v)} style={styles.textAction}><Text style={styles.link}>{visible ? c.hide : c.show}</Text></Pressable><Text style={{ color: theme.muted }}>{c.passwordRules}</Text><Button label={submitting ? c.changing : c.change} disabled={submitting} onPress={() => void change()} /></View></KeyboardAvoidingView> : <View style={styles.form}><Text style={{ color: theme.muted }}>{c.oauth}</Text><Button label={c.reset} onPress={() => void reset()} /></View>}
     </ScreenModal>
-    <ScreenModal visible={devicesOpen} title={c.yourDevices} closeLabel={c.close} onClose={() => setDevicesOpen(false)}>
-      <Text style={[styles.intro, { color: theme.muted }]}>{c.devicesHelp}</Text><Feedback error={error} message="" />
+    <ScreenModal visible={devicesOpen} title={c.yourDevices} closeLabel={c.close} onClose={closeDevices}>
+      <Text style={[styles.intro, { color: theme.muted }]}>{c.devicesHelp}</Text><Feedback error={devicesError} message="" />
       {sessions.map((item) => <View key={item.id} style={[styles.device, { borderBottomColor: theme.border }]}><View style={styles.deviceHeading}><Text style={[styles.rowLabel, { color: theme.text }]}>{item.deviceLabel}</Text>{item.isCurrent ? <Text style={styles.current}>{c.currentDevice}</Text> : null}</View><Text style={{ color: theme.muted }}>{item.client} · {item.browser} · {item.os}</Text>{item.maskedIp ? <Text style={{ color: theme.muted }}>{item.maskedIp}</Text> : null}<Text style={{ color: theme.muted }}>{c.lastActive}: {date(item.lastSeenAt)}</Text>{!item.isCurrent ? <Pressable accessibilityRole="button" accessibilityLabel={`${c.remove}: ${item.deviceLabel}`} onPress={() => remove(item)} style={styles.removeTouch}><Text style={styles.danger}>{c.remove}</Text></Pressable> : null}</View>)}
     </ScreenModal>
     <ScreenModal visible={activityOpen} title={c.activity} closeLabel={c.close} onClose={() => setActivityOpen(false)}>
       {events.length ? events.map((event) => <EventRow key={event.id} label={eventLabel(event)} date={date(event.occurredAt)} />) : <Text style={[styles.empty, { color: theme.muted }]}>{c.empty}</Text>}
     </ScreenModal>
-    <ScreenModal visible={twoFactorOpen} title={c.twoFactor} closeLabel={c.close} onClose={() => setTwoFactorOpen(false)}>
-      <Feedback error={error} message="" />
+    <ScreenModal visible={twoFactorOpen} title={c.twoFactor} closeLabel={c.close} onClose={closeTwoFactor}>
+      <Feedback error={twoFactorError} message="" />
       {recoveryCodes.length ? <View style={styles.form}><Text style={[styles.rowLabel,{color:theme.text}]}>{c.recoveryTitle}</Text><Text style={{color:theme.muted}}>{c.recoveryHelp}</Text>{recoveryCodes.map(code=><Text key={code} selectable style={{color:theme.text}}>{code}</Text>)}</View> : overview?.twoFactorEnabled ? <View style={styles.form}><Text style={[styles.success]}>{c.enabled}</Text><Text style={{color:theme.muted}}>{c.disableHelp}</Text><TextInput accessibilityLabel={c.verification} secureTextEntry value={verification} onChangeText={setVerification} placeholder={c.verification} placeholderTextColor={theme.muted} style={[styles.input,{color:theme.text,borderColor:theme.border,backgroundColor:theme.surface}]}/><Button label={c.disable} disabled={submitting||!verification} onPress={disableTwoFactor}/></View> : setup ? <View style={styles.form}><Text style={{color:theme.muted}}>{c.setupInstructions}</Text><Text selectable style={[styles.setupKey,{color:theme.text}]}>{setup.manualSetupKey}</Text><Text style={{color:theme.muted}}>{setup.otpauthUri}</Text><TextInput accessibilityLabel={c.authenticatorCode} keyboardType="number-pad" maxLength={6} value={authenticatorCode} onChangeText={value=>setAuthenticatorCode(value.replace(/\D/g,""))} placeholder={c.authenticatorCode} placeholderTextColor={theme.muted} style={[styles.input,{color:theme.text,borderColor:theme.border,backgroundColor:theme.surface}]}/><Button label={c.confirmSetup} disabled={submitting||authenticatorCode.length!==6} onPress={()=>void confirmTwoFactor()}/></View> : <View style={styles.form}><Text style={{color:theme.muted}}>{c.twoFactorSetupHelp}</Text><Button label={c.setupTwoFactor} disabled={submitting} onPress={()=>void startTwoFactor()}/></View>}
     </ScreenModal>
-    <ScreenModal visible={deletionOpen} title={c.deleteAccount} closeLabel={c.close} onClose={() => setDeletionOpen(false)}>
-      <Feedback error={error} message=""/><Text style={{color:theme.muted}}>{c.deletionHelp}</Text>
+    <ScreenModal visible={deletionOpen} title={c.deleteAccount} closeLabel={c.close} onClose={closeDeletion}>
+      <Feedback error={deletionError} message=""/><Text style={{color:theme.muted}}>{c.deletionHelp}</Text>
       {deletion ? <View style={styles.form}><Text style={[styles.rowLabel,{color:theme.text}]}>{c.pendingDeletion}: {deletion.status}</Text><Text style={{color:theme.muted}}>{c.scheduledDate}: {date(deletion.deletionScheduledAt)}</Text>{deletion.canReactivate?<Button label={c.keepAccount} disabled={submitting} onPress={()=>void reactivate()}/>:null}</View> : <Pressable accessibilityRole="button" onPress={requestDeletion} style={({pressed})=>[styles.deleteButton,{borderColor:flowColors.red},pressed&&styles.pressed]}><Text style={styles.deleteButtonText}>{c.requestDeletion}</Text></Pressable>}
     </ScreenModal>
   </SafeAreaView>;

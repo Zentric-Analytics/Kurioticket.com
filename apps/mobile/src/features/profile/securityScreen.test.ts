@@ -43,16 +43,16 @@ test("password fields exist only in a full-screen password flow", () => {
   assert.ok(landingEnd > 0);
   const landing = security.slice(0, landingEnd);
   assert.doesNotMatch(landing, /field\("currentPassword"|field\("newPassword"|field\("confirmPassword"/);
-  assert.match(security, /setPasswordOpen\(true\)/);
+  assert.match(security, /const openPassword = \(\) => \{[^}]*clearPasswordFeedback\(\); setPasswordOpen\(true\)/);
   assert.match(security, /presentationStyle="overFullScreen"/);
   assert.match(security, /travelApi\.changePassword\(passwords\)/);
-  assert.match(security, /setPasswordOpen\(false\)/);
+  assert.match(security, /const closePassword = \(\) => \{[^}]*setPasswordOpen\(false\); clearPasswordFeedback\(\)/);
   assert.match(security, /travelApi\.requestAccountPasswordReset\(\)/);
 });
 
 test("only passkeys retain the secure web handoff", () => {
   assert.doesNotMatch(security, /<SecurityBlock label=\{c\.twoFactor\}[^>]+onPress=\{web\}/);
-  assert.match(security, /<SecurityBlock label=\{c\.twoFactor\}[\s\S]*?setTwoFactorOpen\(true\)/);
+  assert.match(security, /<SecurityBlock label=\{c\.twoFactor\}[^>]+onPress=\{openTwoFactor\}/);
   assert.match(security, /<ScreenModal visible=\{twoFactorOpen\}/);
   assert.match(security, /<SecurityBlock label=\{c\.passkeys\}[^>]+onPress=\{web\}/);
   assert.doesNotMatch(security, /accessibilityLabel=\{c\.deleteAccount\} onPress=\{web\}/);
@@ -65,7 +65,7 @@ test("devices remain off the landing page and preserve revocation behavior", () 
   const landingEnd = security.indexOf("<ScreenModal visible={passwordOpen}");
   const landing = security.slice(0, landingEnd);
   assert.doesNotMatch(landing, /sessions\.map/);
-  assert.match(security, /setDevicesOpen\(true\)/);
+  assert.match(security, /const openDevices = \(\) => \{[^}]*setDevicesOpen\(true\)/);
   assert.match(security, /<ScreenModal visible=\{devicesOpen\}/);
   assert.match(security, /!item\.isCurrent \? <Pressable/);
   assert.match(security, /travelApi\.revokeSecuritySession\(item\.id\)/);
@@ -107,11 +107,71 @@ test("successful deletion reactivation discards the revoked session and requires
   assert.match(reactivate, /await travelApi\.reactivateDeletion\(\)/);
   assert.match(reactivate, /await clearSession\(\)/);
   assert.match(reactivate, /setDeletion\(null\)/);
-  assert.match(reactivate, /setDeletionOpen\(false\)/);
+  assert.match(reactivate, /closeDeletion\(\)/);
   assert.match(reactivate, /router\.replace\(\{ pathname: "\/\(tabs\)\/profile\/sign-in", params: \{ returnTo: "\/security" \} \}\)/);
-  assert.doesNotMatch(reactivate, /setMessage\(c\.reactivated\)/);
+  assert.doesNotMatch(reactivate, /setLandingMessage\(c\.reactivated\)/);
   assert.match(security, /travelApi\.requestDeletion\(\)/);
   assert.match(security, /Alert\.alert\(c\.deletionConfirmTitle,c\.deletionConfirmBody/);
+});
+
+test("visual feedback is owned by the landing and individual security flows", () => {
+  assert.doesNotMatch(security, /const \[error, setError\]|const \[message, setMessage\]/);
+  for (const state of ["landingError", "landingMessage", "passwordError", "passwordMessage", "devicesError", "twoFactorError", "deletionError"])
+    assert.match(security, new RegExp(`const \\[${state}, set${state[0].toUpperCase()}${state.slice(1)}\\]`));
+
+  const landing = security.slice(security.indexOf("return <SafeAreaView"), security.indexOf("<ScreenModal visible={passwordOpen}"));
+  assert.match(landing, /<Feedback error=\{landingError\} message=\{landingMessage\}/);
+  assert.doesNotMatch(landing, /passwordError|passwordMessage|devicesError|twoFactorError|deletionError/);
+  assert.match(security, /<Feedback error=\{passwordError\} message=\{passwordMessage\}/);
+  assert.match(security, /<Feedback error=\{devicesError\} message=""/);
+  assert.match(security, /<Feedback error=\{twoFactorError\} message=""/);
+  assert.match(security, /<Feedback error=\{deletionError\} message=""/);
+});
+
+test("drill-down feedback is cleared on both open and close", () => {
+  assert.match(security, /openPassword[^\n]+clearPasswordFeedback\(\)[^\n]+setPasswordOpen\(true\)/);
+  assert.match(security, /closePassword[^\n]+setPasswordOpen\(false\)[^\n]+clearPasswordFeedback\(\)/);
+  for (const flow of ["Devices", "TwoFactor"] ) {
+    assert.match(security, new RegExp(`open${flow}[^\\n]+set${flow}Error\\(""\\)[^\\n]+set${flow}Open\\(true\\)`));
+    assert.match(security, new RegExp(`close${flow}[^\\n]+set${flow}Open\\(false\\)[^\\n]+set${flow}Error\\(""\\)`));
+  }
+  assert.match(security, /openDeletion[^\n]+setDeletionError\(""\)[^\n]+setDeletionOpen\(true\)/);
+  assert.match(security, /closeDeletion[^\n]+setDeletionOpen\(false\)[^\n]+setDeletionError\(""\)/);
+});
+
+test("operation failures and messages target only their owning feedback scope", () => {
+  const expectations = [
+    ["startTwoFactor", "setTwoFactorError"], ["confirmTwoFactor", "setTwoFactorError"], ["disableTwoFactor", "setTwoFactorError"],
+    ["change", "setPasswordError"], ["reset", "setPasswordMessage"], ["remove", "setDevicesError"],
+    ["openDeletion", "setDeletionError"], ["requestDeletion", "setDeletionError"], ["reactivate", "setDeletionError"],
+    ["web", "setLandingError"], ["toggle", "setLandingMessage"], ["all", "setLandingError"],
+  ];
+  for (let index = 0; index < expectations.length; index += 1) {
+    const [operation, setter] = expectations[index];
+    const start = security.indexOf(`const ${operation} =`);
+    const next = index + 1 < expectations.length ? security.indexOf(`const ${expectations[index + 1][0]} =`, start) : security.indexOf("const date =", start);
+    assert.ok(start >= 0, `missing ${operation}`);
+    assert.match(security.slice(start, next > start ? next : undefined), new RegExp(`${setter}\\(`), `${operation} should use ${setter}`);
+  }
+  assert.match(security, /setLandingError\(c\.loadError\)/);
+  assert.match(security, /setLandingError\(c\.saveFailed\)/);
+  assert.match(security, /setLandingError\(c\.openFailed\)/);
+  assert.match(security, /setLandingError\(c\.signOutFailed\)/);
+});
+
+test("late modal requests cannot repopulate feedback after close or reopen", () => {
+  for (const flow of ["password", "devices", "twoFactor", "deletion"])
+    assert.match(security, new RegExp(`${flow}Request\\.current`));
+  assert.match(security, /request === twoFactorRequest\.current/);
+  assert.match(security, /request === passwordRequest\.current/);
+  assert.match(security, /request === devicesRequest\.current/);
+  assert.match(security, /request===deletionRequest\.current/);
+});
+
+test("internal modal refreshes do not overwrite landing feedback", () => {
+  assert.match(security, /showLandingFeedback = true/);
+  assert.match(security, /showLandingFeedback\) setLandingError/);
+  assert.match(security, /load\(\{\s*showLandingFeedback:\s*false\s*\}\)/);
 });
 
 test("English and Spanish security copy cover the compact hierarchy", () => {
