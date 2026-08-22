@@ -648,7 +648,6 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const tripTypeWrapRef =
     useRef<HTMLDivElement>(null);
-  const tripTypeButtonRefs = useRef<Partial<Record<TripType, HTMLButtonElement | null>>>({});
   const pointerDownTripTypeRef = useRef<TripType | null>(null);
   const travelersWrapRef =
     useRef<HTMLDivElement>(null);
@@ -1804,8 +1803,12 @@ export function SearchTabs({
       mode,
       event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1,
     );
+    const tripTypeGroup = event.currentTarget.closest('[role="radiogroup"]');
+    const nextControl = tripTypeGroup?.querySelector<HTMLButtonElement>(
+      `button[data-trip-type="${nextMode}"]`,
+    );
+    nextControl?.focus({ preventScroll: true });
     onSelectTripType(nextMode);
-    window.requestAnimationFrame(() => tripTypeButtonRefs.current[nextMode]?.focus());
   };
 
   const selectTripTypeFromControl = (control: HTMLButtonElement) => {
@@ -2972,7 +2975,6 @@ export function SearchTabs({
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  ref={(element) => { tripTypeButtonRefs.current[mode] = element; }}
                   data-trip-type={mode}
                   tabIndex={selected ? 0 : -1}
                   onPointerDown={() => onTripTypePointerDown(mode)}
@@ -3324,7 +3326,6 @@ export function SearchTabs({
                         type="button"
                         role="radio"
                         aria-checked={selected}
-                        ref={(element) => { tripTypeButtonRefs.current[mode] = element; }}
                         data-trip-type={mode}
                         tabIndex={selected ? 0 : -1}
                         onPointerDown={() => onTripTypePointerDown(mode)}
