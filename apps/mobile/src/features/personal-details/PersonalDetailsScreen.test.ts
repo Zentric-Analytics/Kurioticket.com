@@ -25,6 +25,65 @@ test("success returns to read-only and refreshes stored session identity", () =>
   assert.match(screen, /setEditing\(false\)/);
   assert.match(screen, /updateStoredSessionName/);
 });
+test("successful main Save shows a floating toast and preserves its announcement", () => {
+  const mainSave = screen.slice(
+    screen.indexOf("const save = async"),
+    screen.indexOf("const goBack"),
+  );
+  assert.match(mainSave, /showSuccess\(c\.saveSuccess\)/);
+  assert.match(
+    mainSave,
+    /AccessibilityInfo\.announceForAccessibility\(c\.saveSuccess\)/,
+  );
+  assert.match(screen, /testID="personal-details-success-toast"/);
+});
+test("success toast is an overlay outside ScrollView content", () => {
+  const contentScrollStart = screen.indexOf(
+    '<ScrollView\n            keyboardShouldPersistTaps="handled"',
+  );
+  const contentScrollEnd = screen.indexOf("</ScrollView>", contentScrollStart);
+  const toast = screen.indexOf('testID="personal-details-success-toast"');
+  assert.ok(contentScrollStart >= 0 && contentScrollEnd > contentScrollStart);
+  assert.ok(toast > contentScrollEnd);
+  assert.match(screen, /toastPosition:\s*\{[\s\S]*?position:\s*"absolute"/);
+  assert.match(screen, /bottom: insets\.bottom \+ 76/);
+});
+test("success toast clears after exactly 1500ms and Edit dismisses it", () => {
+  assert.match(
+    screen,
+    /successTimer\.current = setTimeout\(\(\) => \{[\s\S]*?setSuccess\(""\);[\s\S]*?\}, 1500\)/,
+  );
+  const editAction = screen.slice(
+    screen.indexOf("accessibilityLabel={c.edit}"),
+    screen.indexOf("setEditing(true)"),
+  );
+  assert.match(editAction, /dismissSuccess\(\)/);
+});
+test("toast timers are cleared on replacement, dismissal, and unmount", () => {
+  const lifecycle = screen.slice(
+    screen.indexOf("const dismissSuccess"),
+    screen.indexOf("const openSelector"),
+  );
+  assert.ok(
+    (lifecycle.match(/clearTimeout\(successTimer\.current\)/g) ?? []).length >=
+      3,
+  );
+  assert.match(lifecycle, /successTimer\.current = null/);
+  assert.match(lifecycle, /useEffect\([\s\S]*?\(\) => \(\) => \{/);
+});
+test("failed and selector draft-only Saves never show the success toast", () => {
+  const mainSave = screen.slice(
+    screen.indexOf("const save = async"),
+    screen.indexOf("const goBack"),
+  );
+  const failedSave = mainSave.slice(mainSave.indexOf("} catch"));
+  const selectorSave = screen.slice(
+    screen.indexOf("const saveCountrySelection"),
+    screen.indexOf("const save = async"),
+  );
+  assert.doesNotMatch(failedSave, /showSuccess|setSuccess/);
+  assert.doesNotMatch(selectorSave, /showSuccess|setSuccess/);
+});
 test("email is read-only and external handoff is accessible", () => {
   assert.match(screen, /editable=\{false\}/);
   assert.match(screen, /accessibilityHint=\{c\.externalHint\}/);
