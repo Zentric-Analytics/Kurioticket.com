@@ -4,13 +4,13 @@ on:
     inputs:
       commit_sha: { description: "Exact approved full commit SHA reachable from protected main", required: true, type: string }
       platform: { description: "Must be ios", required: true, type: choice, options: [ios] }
-      action: { description: "Approved delivery action", required: true, type: choice, options: [dry-run, build] }
+      action: { description: "Approved delivery action", required: true, type: choice, options: [dry-run, build, update] }
       runtime_version: { description: "Expected runtime", required: true, type: string }
       release_reason: { description: "Approval or release reference", required: true, type: string }
       confirmation_phrase: { description: "Type DELIVER IOS PRODUCTION", required: true, type: string }
       expected_bundle_identifier: { description: "Expected iOS bundle identifier", required: true, type: string }
       expected_channel: { description: "Expected EAS channel", required: true, type: string }
-      baseline_eas_build_id: { description: "Must be NONE until the first reviewed baseline exists", required: true, type: string }
+      baseline_eas_build_id: { description: "NONE for dry-run/build; exact reviewed iOS build ID for update", required: true, type: string }
 permissions: { contents: read }
 concurrency: { group: ios-production-delivery, cancel-in-progress: false }
 jobs:
@@ -77,6 +77,35 @@ jobs:
           npx eas-cli@16.17.4 env:exec production "npx expo config --type prebuild --json" --non-interactive > "$RUNNER_TEMP/production-prebuild.json"
           node -e "const c=require(process.env.RUNNER_TEMP+'/production-public.json');if(c.name!=='Kurioticket'||c.ios.bundleIdentifier!=='com.kurioticket.app'||c.scheme!=='kurioticket'||c.runtimeVersion!=='production-0.3.0'||c.extra.environment.channel!=='production'||c.extra.environment.apiBaseUrl!=='https://kurioticket.com'||c.extra.environment.isPreview!==false)throw Error('Production iOS configuration mismatch')"
           node -e "const c=require(process.env.RUNNER_TEMP+'/production-prebuild.json');const r=require('./release-policy.json').production;const expected='com.googleusercontent.apps.'+r.googleIosClientId.replace(/\.apps\.googleusercontent\.com$/,'');const plugin=c.plugins.find(p=>Array.isArray(p)&&p[0]==='react-native-nitro-google-signin');if(plugin?.[1]?.iosUrlScheme!==expected)throw Error('Production Google iOS plugin identity mismatch')"
+      - name: Resolve approved iOS binary baseline
+        if: inputs.action == 'update'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}" }
+        run: |
+          test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
+          test "$BASELINE_EAS_BUILD_ID" = ec28bb4d-44fe-4e07-bdb0-c0a8aec90fe9 || { echo 'Unreviewed iOS Production baseline.' >&2; exit 1; }
+          test -f release-baselines/ios/production.json || { echo 'Reviewed iOS Production binary manifest is missing.' >&2; exit 1; }
+          npx eas-cli@16.17.4 build:view "$BASELINE_EAS_BUILD_ID" --json > "$RUNNER_TEMP/baseline-build.json"
+          node scripts/verify-release-evidence.mjs --kind baseline --variant production --manifest release-baselines/ios/production.json --build "$RUNNER_TEMP/baseline-build.json" --output "$RUNNER_TEMP/baseline-evidence.json"
+      - name: Classify iOS native versus OTA delivery
+        if: inputs.action == 'update'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", APPROVED_SHA: "${{ inputs.commit_sha }}" }
+        run: |
+          set -o pipefail
+          npx eas-cli@16.17.4 env:exec production "npx fingerprint fingerprint:generate --platform ios" --non-interactive > "$RUNNER_TEMP/current-fingerprint.json"
+          BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)")
+          BASE_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.nativeFingerprint)")
+          CURRENT_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/current-fingerprint.json');process.stdout.write(x.hash)")
+          node scripts/classify-release.mjs --variant production --base "$BASE" --head "$APPROVED_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime production-0.3.0 --channel production --action update | tee "$RUNNER_TEMP/release-classification.json"
+          node -e "const x=require(process.env.RUNNER_TEMP+'/release-classification.json');if(x.classification!=='ota-compatible')throw Error('iOS Production update is not OTA-compatible')"
+      - name: Verify live Production channel mapping
+        if: inputs.action == 'update'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
+        run: |
+          npx eas-cli@16.17.4 channel:view production --json --non-interactive > "$RUNNER_TEMP/channel.json"
+          node scripts/verify-release-evidence.mjs --kind channel --variant production --input "$RUNNER_TEMP/channel.json" --output "$RUNNER_TEMP/channel-evidence.json"
       - name: Verify remote iOS version and credential readiness
         working-directory: apps/mobile
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}" }
@@ -149,6 +178,39 @@ jobs:
           with open(sys.argv[2], 'w') as f: json.dump(serials, f)
           PY
           node scripts/verify-production-ipa.mjs --plist "$RUNNER_TEMP/info.json" --app-config "$RUNNER_TEMP/app-config.json" --expo-config "$RUNNER_TEMP/expo-config.json" --provisioning-profile "$RUNNER_TEMP/provisioning-profile.json" --certificate-serials "$RUNNER_TEMP/certificate-serials.json" --signer-certificate-serial "$RUNNER_TEMP/signer-certificate-serial.txt" --output "$RUNNER_TEMP/ipa-evidence.json"
+      - name: Publish approved iOS Production OTA through verified channel
+        if: inputs.action == 'update'
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", RELEASE_REASON: "${{ inputs.release_reason }}" }
+        run: |
+          set -o pipefail
+          npx eas-cli@16.17.4 update --channel production --platform ios --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
+          node scripts/verify-production-eas-result.mjs --kind update --platform ios --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --output "$RUNNER_TEMP/delivery-result.json"
+      - name: Write consolidated iOS update audit
+        if: inputs.action == 'update'
+        working-directory: apps/mobile
+        env:
+          WORKFLOW_RUN_ID: "${{ github.run_id }}"
+          WORKFLOW_HEAD_SHA: "${{ env.CHECKED_OUT_SHA }}"
+          RELEASE_ACTOR: "${{ github.actor }}"
+          RELEASE_ENVIRONMENT: production
+          RELEASE_ACTION: update
+          RELEASE_REASON: "${{ inputs.release_reason }}"
+          RELEASE_COMMIT: "${{ inputs.commit_sha }}"
+          RELEASE_PACKAGE: com.kurioticket.app
+          RELEASE_PROFILE: production
+          RELEASE_RUNTIME: production-0.3.0
+          RELEASE_CHANNEL: production
+          BASELINE_EAS_BUILD_ID: "${{ inputs.baseline_eas_build_id }}"
+          BASELINE_EVIDENCE_PATH: "${{ runner.temp }}/baseline-evidence.json"
+          CHANNEL_EVIDENCE_PATH: "${{ runner.temp }}/channel-evidence.json"
+          CURRENT_FINGERPRINT_PATH: "${{ runner.temp }}/current-fingerprint.json"
+          CLASSIFIER_PATH: "${{ runner.temp }}/release-classification.json"
+          DELIVERY_RESULT_PATH: "${{ runner.temp }}/delivery-result.json"
+          AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
+          WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
+          FINAL_STATUS: "${{ job.status }}"
+        run: node scripts/write-release-audit.mjs
       - name: Preserve non-secret iOS release evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -161,5 +223,11 @@ jobs:
             ${{ runner.temp }}/ios-builds.json
             ${{ runner.temp }}/build.json
             ${{ runner.temp }}/ipa-evidence.json
+            ${{ runner.temp }}/baseline-evidence.json
+            ${{ runner.temp }}/channel-evidence.json
+            ${{ runner.temp }}/current-fingerprint.json
+            ${{ runner.temp }}/release-classification.json
+            ${{ runner.temp }}/delivery-result.json
+            ${{ runner.temp }}/release-audit.json
           if-no-files-found: warn
           retention-days: 365
