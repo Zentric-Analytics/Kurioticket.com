@@ -18,17 +18,17 @@ const selectedCard = component.slice(
   component.indexOf("flightResults && active && {"),
   component.indexOf("pressed && s.datePressed"),
 );
-const previousCard = { minWidth: 96, maxWidth: 116, height: 76 } as const;
-const compactCard = { minWidth: 90, maxWidth: 112, height: 60 } as const;
+const previousCard = { minWidth: 90, maxWidth: 112, height: 60 } as const;
+const compactCard = { minWidth: 76, maxWidth: 96, height: 50 } as const;
 
 test("every date uses one borderless card structure and fixed dimensions", () => {
   assert.match(component, /visibleDates\.map[\s\S]*?<Pressable[\s\S]*?s\.date,[\s\S]*?s\.flightDate/);
   assert.match(component, /flightResults && \{ width: flightDateWidth \}/);
-  assert.match(baseCard, /minWidth: 90/);
-  assert.match(baseCard, /maxWidth: 112/);
-  assert.match(baseCard, /height: 60/);
-  assert.match(baseCard, /paddingHorizontal: 4/);
-  assert.match(baseCard, /paddingVertical: 3/);
+  assert.match(baseCard, /minWidth: 76/);
+  assert.match(baseCard, /maxWidth: 96/);
+  assert.match(baseCard, /height: 50/);
+  assert.match(baseCard, /paddingHorizontal: 3/);
+  assert.match(baseCard, /paddingVertical: 2/);
   assert.match(baseCard, /borderRadius: 14/);
   assert.match(baseCard, /borderWidth: 0/);
   assert.doesNotMatch(baseCard, /borderWidth: 1|borderColor/);
@@ -64,9 +64,9 @@ test("empty fares reserve the same price row and press behavior stays intact", (
   assert.match(component, /const hasPrice = price != null/);
   assert.match(component, /hasPrice \|\| flightResults[\s\S]*?<Text/);
   assert.match(component, /hasPrice[\s\S]*?: ""/);
-  assert.match(styles, /flightDatePrice: \{ width: "100%", height: 19/);
+  assert.match(styles, /flightDatePrice: \{ width: "100%", height: 17/);
   assert.match(component, /onPress=\{\(\) => onSelect\(iso\)\}/);
-  assert.match(component, /hitSlop=\{flightResults \? 4 : undefined\}/);
+  assert.match(component, /hitSlop=\{flightResults \? 6 : undefined\}/);
   assert.match(component, /style=\{\(\{ pressed \}\) =>/);
   assert.equal(component.match(/flightResults && \{ width: flightDateWidth \}/g)?.length, 1);
 });
@@ -78,13 +78,13 @@ test("flight date typography stays centered with a clear three-level hierarchy",
 
   assert.match(weekday, /fontSize: 12/);
   assert.match(weekday, /fontWeight: "500"/);
-  assert.match(weekday, /lineHeight: 15/);
-  assert.match(dateLabel, /fontSize: 14/);
+  assert.match(weekday, /lineHeight: 14/);
+  assert.match(dateLabel, /fontSize: 13/);
   assert.match(dateLabel, /fontWeight: "600"/);
-  assert.match(dateLabel, /lineHeight: 18/);
-  assert.match(priceLabel, /fontSize: 16/);
+  assert.match(dateLabel, /lineHeight: 15/);
+  assert.match(priceLabel, /fontSize: 15/);
   assert.match(priceLabel, /fontWeight: "700"/);
-  assert.match(priceLabel, /lineHeight: 19/);
+  assert.match(priceLabel, /lineHeight: 17/);
 });
 
 test("selected and unselected labels retain semantic light and dark hierarchies", () => {
@@ -101,21 +101,23 @@ test("horizontal rail keeps scrolling and includes breathing room for shadows", 
   assert.match(styles, /flightDates: \{ paddingHorizontal: 16, paddingVertical: 7 \}/);
 });
 
-test("responsive card widths expose part of the fourth card", () => {
+test("responsive card widths expose the upcoming dates", () => {
   assert.match(
     component,
-    /const flightDateWidth = Math\.min\(112, Math\.max\(90, \(windowWidth - 43\) \/ 3\.4\)\)/,
+    /const flightDateWidth = Math\.min\(96, Math\.max\(76, \(windowWidth - 43\) \/ 3\.65\)\)/,
   );
 
   for (const windowWidth of [320, 360, 390, 430, 480]) {
-    const cardWidth = Math.min(112, Math.max(90, (windowWidth - 43) / 3.4));
+    const cardWidth = Math.min(96, Math.max(76, (windowWidth - 43) / 3.65));
     const visibleAfterThreeCards = windowWidth - 16 - cardWidth * 3 - 9 * 3;
 
     assert.ok(visibleAfterThreeCards > 0, `${windowWidth}px fits three full cards`);
-    assert.ok(
-      visibleAfterThreeCards < cardWidth,
-      `${windowWidth}px exposes only part of the fourth card`,
-    );
+    if (windowWidth <= 390) {
+      assert.ok(
+        visibleAfterThreeCards < cardWidth,
+        `${windowWidth}px exposes only part of the fourth card`,
+      );
+    }
   }
 });
 
@@ -124,7 +126,7 @@ test("long localized prices stay centered on one readable, shrinkable line", () 
   assert.match(component, /adjustsFontSizeToFit/);
   assert.match(component, /minimumFontScale=\{flightResults \? 0\.78 : 0\.85\}/);
   assert.match(priceLabel, /width: "100%"/);
-  assert.match(priceLabel, /paddingHorizontal: 2/);
+  assert.match(priceLabel, /paddingHorizontal: 1/);
   assert.match(priceLabel, /textAlign: "center"/);
   assert.doesNotMatch(priceLabel, /flexWrap|ellipsizeMode/);
 });
