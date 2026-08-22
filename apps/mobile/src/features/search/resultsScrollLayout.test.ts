@@ -26,7 +26,8 @@ test("date and filter rails retain their horizontal interactions", () => {
   assert.match(dateStrip, /export function DateStrip[\s\S]*?<ScrollView\s+horizontal/);
   assert.match(dateStrip, /onPress=\{\(\) => onSelect\(iso\)\}/);
   assert.match(screen, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal[\s\S]*?openFlightFilters\("all"\)/);
-  for (const label of ["Sort", "Filter", "Airlines", "Stops"]) {
+  assert.match(screen, /label=\{flightSortQuickLabel\(sort\)\}/);
+  for (const label of ["Filter", "Airlines", "Stops"]) {
     assert.match(screen, new RegExp(`"${label}"`));
   }
 });

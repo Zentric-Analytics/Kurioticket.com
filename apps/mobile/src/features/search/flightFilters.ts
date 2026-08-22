@@ -8,6 +8,25 @@ export type FlightFilters = {
   times: TimeBucket[];
 };
 
+export type FlightSort = "best" | "price" | "duration" | "departure-asc" | "departure-desc";
+
+export const flightSortOptions: readonly {
+  value: FlightSort;
+  label: string;
+  description: string;
+}[] = [
+  { value: "best", label: "Recommended", description: "Best overall option" },
+  { value: "price", label: "Cheapest", description: "Lowest total price" },
+  { value: "duration", label: "Fastest", description: "Shortest total journey" },
+  { value: "departure-asc", label: "Earliest departure", description: "Leaves earliest" },
+  { value: "departure-desc", label: "Latest departure", description: "Leaves latest" },
+];
+
+export function flightSortQuickLabel(sort: FlightSort) {
+  if (sort === "best") return "Sort";
+  return flightSortOptions.find((option) => option.value === sort)?.label ?? "Sort";
+}
+
 export const emptyFlightFilters = (): FlightFilters => ({
   stops: [],
   airlines: [],
@@ -51,11 +70,12 @@ export function activeFlightFilterCount(filters: FlightFilters) {
 export function filterAndSortFlights(
   results: readonly FlightResult[],
   filters: FlightFilters,
-  sort: string,
+  sort: FlightSort,
   normalizePrice?: (result: FlightResult) => number | null,
 ) {
   return results
-    .filter((result) => {
+    .map((result, originalIndex) => ({ result, originalIndex }))
+    .filter(({ result }) => {
       const departureBucket = timeBucket(result.departureTime);
       return (
         (!filters.stops.length ||
@@ -67,11 +87,27 @@ export function filterAndSortFlights(
       );
     })
     .sort((a, b) => {
-      if (sort !== "price") return b.valueScore - a.valueScore;
-      const normalizedA = normalizePrice?.(a);
-      const normalizedB = normalizePrice?.(b);
-      return normalizedA != null && normalizedB != null
-        ? normalizedA - normalizedB
-        : a.price - b.price;
-    });
+      const finite = (value: number | null | undefined) =>
+        typeof value === "number" && Number.isFinite(value) ? value : null;
+      const optional = (left: number | null, right: number | null, direction = 1) => {
+        if (left == null) return right == null ? 0 : 1;
+        if (right == null) return -1;
+        return (left - right) * direction;
+      };
+      let difference = 0;
+      if (sort === "best") difference = optional(finite(a.result.valueScore), finite(b.result.valueScore), -1);
+      if (sort === "price") {
+        const normalizedA = finite(normalizePrice ? normalizePrice(a.result) : a.result.price);
+        const normalizedB = finite(normalizePrice ? normalizePrice(b.result) : b.result.price);
+        difference = optional(normalizedA, normalizedB);
+      }
+      if (sort === "duration") difference = optional(finite(a.result.durationMinutes), finite(b.result.durationMinutes));
+      if (sort === "departure-asc" || sort === "departure-desc") {
+        const departureA = finite(Date.parse(a.result.departureTime));
+        const departureB = finite(Date.parse(b.result.departureTime));
+        difference = optional(departureA, departureB, sort === "departure-desc" ? -1 : 1);
+      }
+      return difference || a.originalIndex - b.originalIndex;
+    })
+    .map(({ result }) => result);
 }

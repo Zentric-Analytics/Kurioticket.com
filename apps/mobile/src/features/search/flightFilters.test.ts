@@ -5,6 +5,7 @@ import {
   activeFlightFilterCount,
   emptyFlightFilters,
   filterAndSortFlights,
+  flightSortQuickLabel,
   flightFilterOptions,
   timeBucket,
   type FlightFilters,
@@ -25,6 +26,7 @@ const flight = (
     departureTime: `2026-09-01T${hour}:00`,
     price,
     valueScore,
+    durationMinutes: 120,
   }) as FlightResult;
 
 const loaded = [
@@ -89,6 +91,58 @@ test("price sorting composes with filters without mutating loaded results", () =
   const visible = filterAndSortFlights(loaded, { ...emptyFlightFilters(), airlines: ["American"] }, "price");
   assert.deepEqual(visible.map((x) => x.id), ["two-american", "nonstop-american"]);
   assert.deepEqual(loaded, before);
+});
+
+test("Recommended restores the existing default ranking after selecting another sort", () => {
+  assert.deepEqual(filterAndSortFlights(loaded, emptyFlightFilters(), "price").map((x) => x.id), ["one-british", "two-american", "nonstop-american"]);
+  assert.deepEqual(filterAndSortFlights(loaded, emptyFlightFilters(), "best").map((x) => x.id), ["nonstop-american", "two-american", "one-british"]);
+});
+
+test("Cheapest uses normalized comparable prices and keeps missing prices last", () => {
+  const prices = [
+    { ...loaded[0], id: "usd", currency: "USD", price: 100 },
+    { ...loaded[1], id: "gbp", currency: "GBP", price: 90 },
+    { ...loaded[2], id: "missing", currency: "EUR", price: Number.NaN },
+  ];
+  const normalized = new Map([["usd", 100], ["gbp", 115]]);
+  assert.deepEqual(
+    filterAndSortFlights(prices, emptyFlightFilters(), "price", (result) => normalized.get(result.id) ?? null).map((x) => x.id),
+    ["usd", "gbp", "missing"],
+  );
+});
+
+test("Fastest uses total itinerary duration and handles missing values", () => {
+  const durations = [
+    { ...loaded[0], id: "long", durationMinutes: 500 },
+    { ...loaded[1], id: "fast", durationMinutes: 75 },
+    { ...loaded[2], id: "missing", durationMinutes: Number.NaN },
+  ];
+  assert.deepEqual(filterAndSortFlights(durations, emptyFlightFilters(), "duration").map((x) => x.id), ["fast", "long", "missing"]);
+});
+
+test("departure sorts use structured timestamps including date and timezone", () => {
+  const departures = [
+    { ...loaded[0], id: "later-date", departureTime: "2026-09-02T01:00:00+02:00" },
+    { ...loaded[1], id: "earlier-instant", departureTime: "2026-09-01T22:30:00Z" },
+    { ...loaded[2], id: "invalid", departureTime: "not-a-timestamp" },
+  ];
+  assert.deepEqual(filterAndSortFlights(departures, emptyFlightFilters(), "departure-asc").map((x) => x.id), ["earlier-instant", "later-date", "invalid"]);
+  assert.deepEqual(filterAndSortFlights(departures, emptyFlightFilters(), "departure-desc").map((x) => x.id), ["later-date", "earlier-instant", "invalid"]);
+});
+
+test("equal sort values preserve loaded result order deterministically", () => {
+  const equal = loaded.map((result) => ({ ...result, price: 100, durationMinutes: 60, departureTime: "2026-09-01T08:00:00Z" }));
+  for (const sort of ["price", "duration", "departure-asc", "departure-desc"] as const) {
+    assert.deepEqual(filterAndSortFlights(equal, emptyFlightFilters(), sort).map((x) => x.id), loaded.map((x) => x.id));
+  }
+});
+
+test("sort quick-control labels reflect exactly one active mode", () => {
+  assert.equal(flightSortQuickLabel("best"), "Sort");
+  assert.equal(flightSortQuickLabel("price"), "Cheapest");
+  assert.equal(flightSortQuickLabel("duration"), "Fastest");
+  assert.equal(flightSortQuickLabel("departure-asc"), "Earliest departure");
+  assert.equal(flightSortQuickLabel("departure-desc"), "Latest departure");
 });
 
 test("clearing filters restores all loaded results and visible count", () => {
