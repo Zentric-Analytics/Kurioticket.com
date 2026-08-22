@@ -18,7 +18,8 @@ test("the native cabin picker offers only Economy, Business, and First in order"
 test("the cabin picker retains selection, accessibility, and close behavior", () => {
   assert.match(cabinSheet, /accessibilityRole="radio" accessibilityState=\{\{selected:cabin===draft\.cabin\}\}/);
   assert.match(cabinSheet, /onPress=\{\(\)=>setDraft\(\{\.\.\.draft,cabin\}\)\}/);
-  assert.match(cabinSheet, /<Cancel onPress=\{onCancel\}/);
+  assert.match(cabinSheet, /<PickerSheetHeader title="Travelers & Cabin" onClose=\{onCancel\}\/>/);
+  assert.doesNotMatch(cabinSheet, /<Cancel onPress=\{onCancel\}/);
   assert.match(cabinSheet, /onRequestClose=\{onCancel\}/);
 });
 

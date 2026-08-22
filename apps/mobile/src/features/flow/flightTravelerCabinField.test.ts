@@ -27,7 +27,7 @@ test("the summary and breakdown cover selected and missing values", () => {
 
 test("traveler and cabin validation intents open the same combined sheet", () => {
   assert.match(panel, /visible=\{picker === "travelers" \|\| picker === "cabin"\}/);
-  assert.match(sheet, /Travelers &amp; Cabin/);
+  assert.match(sheet, /<PickerSheetHeader title="Travelers & Cabin" onClose=\{onCancel\}\/>/);
   assert.match(sheet, /\["adults","children","infants"\]/);
   assert.match(sheet, /NATIVE_FLIGHT_CABIN_OPTIONS\.map/);
 });
@@ -37,7 +37,7 @@ test("the combined picker uses a cancellable draft and Done owns commit", () => 
   assert.match(sheet, /onRequestClose=\{onCancel\}/);
   assert.match(sheet, /onPress=\{\(\)=>setDraft\(\{\.\.\.draft,cabin\}\)\}/);
   assert.match(sheet, /<PrimaryButton label="Done" icon=\{null\} onPress=\{\(\)=>onDone\(draft\)\}/);
-  assert.match(sheet, /<Cancel onPress=\{onCancel\}/);
+  assert.doesNotMatch(sheet, /<Cancel onPress=\{onCancel\}/);
   assert.match(panel, /onDone=\{\(draft\) => \{ setForm\(\{ \.\.\.form, \.\.\.draft \}\); clear\("travelers", "cabin"\); setPicker\(undefined\); \}\}/);
 });
 
