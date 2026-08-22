@@ -1645,6 +1645,24 @@ test("coalesced NO_DELIVERY overlay is accepted only with exact canonical finger
   assert.throws(() => assertCoalescedOtaCompatibility({ ...base, targetFingerprint: "b".repeat(40) }), /does not match/);
   assert.throws(() => assertCoalescedOtaCompatibility({ ...base, artifactFingerprint: undefined }), /artifact .* no valid canonical fingerprint/);
   assert.throws(() => assertCoalescedOtaCompatibility({ ...base, targetFingerprint: undefined }), /target .* no valid canonical fingerprint/);
+  assert.equal(assertCoalescedOtaCompatibility({
+    ...base,
+    artifactBuildId: "current-build",
+    artifactBuildNumber: "37",
+    deliveredNative: { buildId: "current-build", buildNumber: "37", fingerprint: valid },
+  }), "NO_DELIVERY");
+  assert.equal(assertCoalescedOtaCompatibility({
+    ...base,
+    artifactBuildId: "new-build",
+    artifactBuildNumber: "38",
+    deliveredNative: { buildId: "current-build", buildNumber: "37", fingerprint: "b".repeat(40) },
+  }), "NO_DELIVERY");
+  assert.throws(() => assertCoalescedOtaCompatibility({
+    ...base,
+    artifactBuildId: "stale-build",
+    artifactBuildNumber: "36",
+    deliveredNative: { buildId: "current-build", buildNumber: "37", fingerprint: "b".repeat(40) },
+  }), /cannot advance the delivered-native baseline/);
 });
 
 test("OTA client rejects all-platform publication and uses bounded sequential export memory", async () => {

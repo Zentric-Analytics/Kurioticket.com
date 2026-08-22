@@ -267,6 +267,9 @@ export class PreviewOrchestrator {
             artifactFingerprint: deliveryResults[platform].nativeFingerprint,
             targetFingerprint: fingerprints[platform],
             overlay,
+            artifactBuildId: deliveryResults[platform].buildId,
+            artifactBuildNumber: deliveryResults[platform].buildNumber,
+            deliveredNative: nativeBaselines[platform],
           });
           const platformEvidence = {
             platform,
@@ -709,7 +712,7 @@ export function nativeDriftTargets(fingerprints, deliveredNative) {
 
 const CANONICAL_FINGERPRINT = /^[0-9a-f]{40,128}$/;
 
-export function assertCoalescedOtaCompatibility({ platform, artifactSourceSha, targetSourceSha, artifactFingerprint, targetFingerprint, overlay }) {
+export function assertCoalescedOtaCompatibility({ platform, artifactSourceSha, targetSourceSha, artifactFingerprint, targetFingerprint, overlay, artifactBuildId, artifactBuildNumber, deliveredNative }) {
   if (!CANONICAL_FINGERPRINT.test(String(artifactFingerprint ?? ""))) {
     throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} has no valid canonical fingerprint.`);
   }
@@ -720,6 +723,13 @@ export function assertCoalescedOtaCompatibility({ platform, artifactSourceSha, t
     throw new Error(`Coalesced ${platform} artifact fingerprint does not match target ${targetSourceSha}.`);
   }
   if (overlay?.classification === "NO_DELIVERY" && (!Array.isArray(overlay.otaCandidates) || overlay.otaCandidates.length === 0)) {
+    if (deliveredNative && deliveredNative.buildId !== artifactBuildId) {
+      const artifactNumber = String(artifactBuildNumber ?? "");
+      const deliveredNumber = String(deliveredNative.buildNumber ?? "");
+      if (!/^\d+$/.test(artifactNumber) || !/^\d+$/.test(deliveredNumber) || BigInt(artifactNumber) <= BigInt(deliveredNumber)) {
+        throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} cannot advance the delivered-native baseline.`);
+      }
+    }
     return "NO_DELIVERY";
   }
   const hasOtaSource = String(overlay?.classification ?? "").split("+").includes("OTA")
