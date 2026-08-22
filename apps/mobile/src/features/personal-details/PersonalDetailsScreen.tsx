@@ -29,7 +29,7 @@ import {
   type MobileProfile,
 } from "../../api/travelApi";
 import { getApiBaseUrl } from "../../config/apiUrl";
-import { useMobileLocalization } from "../../localization/MobileLocalization";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import {
   readSession,
   updateStoredSessionName,

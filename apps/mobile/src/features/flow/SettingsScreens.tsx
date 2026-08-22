@@ -3,8 +3,8 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "re
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { travelApi } from "../../api/travelApi";
-import { useMobileLocalization } from "../../localization/MobileLocalization";
-import { mobileLocales } from "../../localization/mobileLocalization";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
+import { mobileLocales } from "../../localization/mobileLocalizationCatalog";
 import { useAppTheme } from "../../theme/AppTheme";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { flowColors } from "./flowStyles";

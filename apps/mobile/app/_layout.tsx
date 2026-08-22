@@ -7,7 +7,7 @@ import { buildStartupLog } from "../src/diagnostics/buildDiagnostics";
 import { getRuntimeDiagnostics } from "../src/diagnostics/runtimeDiagnostics";
 import { AppState, View } from "react-native";
 import { FeatureAvailabilityProvider } from "../src/features/availability/FeatureAvailability";
-import { MobileLocalizationProvider } from "../src/localization/MobileLocalization";
+import { MobileLocalizationProvider } from "../src/localization/MobileLocalizationProvider";
 import { createForegroundUpdateHandler, ensureLatestUpdate } from "../src/updates/ensureLatestUpdate";
 
 export default function RootLayout() {
