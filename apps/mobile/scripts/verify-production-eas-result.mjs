@@ -15,6 +15,13 @@ const EXPECTED = Object.freeze({
 export const isRfcUuid = (value) => typeof value === 'string'
   && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
+export function normalizeEasPlatform(value) {
+  if (typeof value !== 'string') throw new Error('EAS platform is missing or unsupported.');
+  const platform = value.trim().toUpperCase();
+  if (!['ANDROID', 'IOS'].includes(platform)) throw new Error('EAS platform is missing or unsupported.');
+  return platform;
+}
+
 function parseJson(source, label) {
   if (!source.trim()) throw new Error(`${label} returned empty stdout.`);
   try { return JSON.parse(source); } catch { throw new Error(`${label} returned malformed JSON.`); }
@@ -62,14 +69,14 @@ export function verifyProductionBuildResult({ source, historySource, aabEvidence
 }
 
 export function verifyProductionUpdateResult({ source, approvedSha, platform = 'android' }) {
-  const expectedPlatform = String(platform).toUpperCase();
-  if (!['ANDROID', 'IOS'].includes(expectedPlatform)) throw new Error('Expected update platform is unsupported.');
+  const expectedPlatform = normalizeEasPlatform(platform);
   const value = parseJson(source, 'EAS Production update');
   if (!Array.isArray(value) || value.length !== 1 || !value[0] || typeof value[0] !== 'object') throw new Error(`EAS Production update result must contain exactly one ${expectedPlatform} update.`);
   const update = value[0];
-  const checks = [[isRfcUuid(update.id), 'Update ID is missing or malformed.'], [update.platform === expectedPlatform, 'Update platform mismatch.'], [update.branch === EXPECTED.channel, 'Update branch mismatch.'], [update.runtimeVersion === EXPECTED.runtime, 'Update runtime mismatch.'], [update.gitCommitHash === approvedSha, 'Update Git commit metadata is missing or mismatched.'], [update.projectId === undefined || update.projectId === EXPECTED.projectId, 'Update project mismatch.']];
+  const actualPlatform = normalizeEasPlatform(update.platform);
+  const checks = [[isRfcUuid(update.id), 'Update ID is missing or malformed.'], [actualPlatform === expectedPlatform, 'Update platform mismatch.'], [update.branch === EXPECTED.channel, 'Update branch mismatch.'], [update.runtimeVersion === EXPECTED.runtime, 'Update runtime mismatch.'], [update.gitCommitHash === approvedSha, 'Update Git commit metadata is missing or mismatched.'], [update.projectId === undefined || update.projectId === EXPECTED.projectId, 'Update project mismatch.']];
   for (const [ok, message] of checks) if (!ok) throw new Error(message);
-  return { kind: 'update', id: update.id, status: 'PUBLISHED', platform: update.platform, branch: update.branch, runtime: update.runtimeVersion, commitSha: update.gitCommitHash };
+  return { kind: 'update', id: update.id, status: 'PUBLISHED', platform: actualPlatform, branch: update.branch, runtime: update.runtimeVersion, commitSha: update.gitCommitHash };
 }
 
 function args(values) { const out = {}; for (let i = 0; i < values.length; i += 2) { if (!values[i]?.startsWith('--') || values[i + 1] === undefined) throw new Error('Invalid EAS result-verifier arguments.'); out[values[i].slice(2)] = values[i + 1]; } return out; }

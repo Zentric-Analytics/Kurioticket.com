@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { isRfcUuid } from './verify-production-eas-result.mjs';
+import { isRfcUuid, normalizeEasPlatform } from './verify-production-eas-result.mjs';
 
 const PROJECT_ID = '89f6fd88-c0d7-495a-9e2b-8301b09f407d';
 const fullSha = (value) => /^[0-9a-f]{40}$/.test(value ?? '');
@@ -12,9 +12,13 @@ const readJson = (path, label) => {
 export function reconcileProductionOta({ view, list, expected, evidence, verifiedAt = new Date().toISOString() }) {
   if (!isRfcUuid(expected.updateId) || !isRfcUuid(expected.groupId)) throw new Error('Expected update or group ID is malformed.');
   if (!fullSha(expected.sourceSha) || !/^\d+$/.test(String(expected.originalWorkflowRunId ?? ''))) throw new Error('Expected publication provenance is malformed.');
-  if (expected.platform !== 'android' || expected.runtime !== 'production-0.3.0' || expected.branch !== 'production') throw new Error('Expected Production target is invalid.');
+  const expectedPlatform = normalizeEasPlatform(expected.platform);
+  if (expectedPlatform !== 'ANDROID' || expected.runtime !== 'production-0.3.0' || expected.branch !== 'production') throw new Error('Expected Production target is invalid.');
   if (!Array.isArray(view)) throw new Error('EAS update:view result must be an array.');
-  const candidates = view.filter((item) => item?.platform === expected.platform);
+  const candidates = view.filter((item) => {
+    try { return normalizeEasPlatform(item?.platform) === expectedPlatform; }
+    catch { return false; }
+  });
   if (candidates.length !== 1) throw new Error('EAS update:view must contain exactly one Android candidate.');
   const update = candidates[0];
   const checks = [
@@ -29,7 +33,9 @@ export function reconcileProductionOta({ view, list, expected, evidence, verifie
   ];
   const groups = list?.currentPage?.filter((item) => item?.group === expected.groupId) ?? [];
   checks.push([groups.length === 1, 'EAS update:list must contain exactly one matching group.']);
-  checks.push([groups[0]?.branch === expected.branch && groups[0]?.runtimeVersion === expected.runtime && groups[0]?.platforms === expected.platform, 'EAS update:list corroboration mismatch.']);
+  let listPlatform;
+  try { listPlatform = normalizeEasPlatform(groups[0]?.platforms); } catch { listPlatform = null; }
+  checks.push([groups[0]?.branch === expected.branch && groups[0]?.runtimeVersion === expected.runtime && listPlatform === expectedPlatform, 'EAS update:list corroboration mismatch.']);
   checks.push([evidence.baseline?.verified === true && evidence.baseline?.easBuildId === expected.baselineBuildId, 'Reviewed baseline evidence mismatch.']);
   checks.push([evidence.fingerprint?.hash === expected.fingerprint, 'Published-source fingerprint mismatch.']);
   checks.push([evidence.classifier?.classification === 'ota-compatible' && evidence.classifier?.nativeFiles?.length === 0, 'Published-source classifier is not OTA-compatible.']);
@@ -39,7 +45,7 @@ export function reconcileProductionOta({ view, list, expected, evidence, verifie
     schemaVersion: 1,
     action: 'reconcile-update',
     environment: 'production',
-    platform: 'ANDROID',
+    platform: expectedPlatform,
     projectId: PROJECT_ID,
     originalWorkflowRunId: String(expected.originalWorkflowRunId),
     originalEasUpdateId: update.id,
