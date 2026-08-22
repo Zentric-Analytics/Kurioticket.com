@@ -529,7 +529,9 @@ test('Production EAS fixtures enforce finished AAB identity and source attestati
   assert.equal(verified.status, 'FINISHED');
   assert.equal(verified.artifactType, 'AAB');
   assert.equal(verified.aabInspected, true);
+  assert.equal(verified.easPackageMetadata, 'verified');
   const mutate = (callback) => { const value = JSON.parse(fixture); callback(value[0]); return JSON.stringify(value); };
+  const omittedPackageHistory = mutate((build) => { delete build.applicationIdentifier; delete build.appIdentifier; });
   const initialized = verify({ historySource: mutate((build) => { build.appBuildVersion = '2'; }), aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), versionCode: 2 }), remoteVersionStatus: 'uninitialized' });
   assert.equal(initialized.versionCode, 2);
   assert.throws(() => verify({ source: '' }), /empty/);
@@ -540,15 +542,25 @@ test('Production EAS fixtures enforce finished AAB identity and source attestati
   assert.throws(() => verify({ historySource: mutate((build) => { build.status = 'CANCELED'; }) }), /not FINISHED/);
   assert.throws(() => verify({ historySource: mutate((build) => { delete build.artifacts; }) }), /AAB/);
   assert.throws(() => verify({ historySource: mutate((build) => { build.artifacts.applicationArchiveUrl = 'https://example.test/application.apk'; }) }), /AAB/);
-  assert.throws(() => verify({ historySource: mutate((build) => { delete build.applicationIdentifier; }) }), /package/);
-  assert.throws(() => verify({ historySource: mutate((build) => { build.applicationIdentifier = 'com.kurioticket.app.preview'; }) }), /package/);
+  assert.equal(verify({ historySource: omittedPackageHistory }).easPackageMetadata, 'omitted');
+  assert.equal(verify({ historySource: mutate((build) => { build.applicationIdentifier = null; }) }).easPackageMetadata, 'omitted');
+  assert.equal(verify({ historySource: mutate((build) => { delete build.applicationIdentifier; build.appIdentifier = 'com.kurioticket.app'; }) }).easPackageMetadata, 'verified');
+  for (const packageName of ['', 'com.kurioticket.app.preview', 'com.kurioticket.mobile', 'com.example.other']) {
+    assert.throws(() => verify({ historySource: mutate((build) => { build.applicationIdentifier = packageName; }) }), /package metadata/);
+  }
+  assert.throws(() => verify({ historySource: mutate((build) => { build.appIdentifier = 'com.kurioticket.app.preview'; }) }), /package metadata/);
   assert.throws(() => verify({ historySource: mutate((build) => { build.distribution = 'INTERNAL'; }) }), /distribution/);
   assert.throws(() => verify({ historySource: mutate((build) => { delete build.gitCommitHash; }) }), /Git commit/);
   assert.throws(() => verify({ historySource: mutate((build) => { build.gitCommitHash = 'a'.repeat(40); }) }), /Git commit/);
   assert.throws(() => verify({ historySource: mutate((build) => { build.appBuildVersion = '2'; }) }), /versionCode/);
-  assert.throws(() => verify({ aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), package: 'com.kurioticket.app.preview' }) }), /AAB package/);
-  assert.throws(() => verify({ aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), activeProductionIdentityVerified: false }) }), /active Production identity/);
+  assert.throws(() => verify({ historySource: omittedPackageHistory, aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), package: 'com.kurioticket.app.preview' }) }), /AAB package/);
+  assert.throws(() => verify({ historySource: omittedPackageHistory, aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), activeProductionIdentityVerified: false }) }), /active Production identity/);
+  assert.throws(() => verify({ historySource: omittedPackageHistory, aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), activeApiOrigin: 'https://staging.kurioticket.com' }) }), /active Production configuration/);
+  assert.throws(() => verify({ historySource: omittedPackageHistory, aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), runtimeVersion: 'preview-runtime', channel: 'preview' }) }), /active Production configuration/);
+  assert.throws(() => verify({ historySource: omittedPackageHistory, aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), isPreview: true }) }), /active Production configuration/);
   assert.throws(() => verify({ aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), projectId: '00000000-0000-4000-8000-000000000000' }) }), /active Production configuration/);
+  assert.throws(() => verify({ historySource: mutate((build) => { build.project.id = '00000000-0000-4000-8000-000000000000'; delete build.applicationIdentifier; }) }), /project/);
+  assert.throws(() => verify({ historySource: mutate((build) => { build.gitCommitHash = 'a'.repeat(40); delete build.applicationIdentifier; }) }), /Git commit/);
 });
 test('Production AAB inspection requires authoritative active Production identity', () => {
   const manifest = '<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="2" android:versionName="0.3.0" package="com.kurioticket.app">';
