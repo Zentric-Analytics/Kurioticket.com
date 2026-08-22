@@ -46,7 +46,7 @@ test("success toast is an overlay outside ScrollView content and measures around
   assert.ok(contentScrollStart >= 0 && contentScrollEnd > contentScrollStart);
   assert.ok(toast > contentScrollEnd);
   assert.match(screen, /toastPosition:\s*\{[\s\S]*?position:\s*"absolute"/);
-  assert.match(screen, /const editButtonRef = useRef<View>\(null\)/);
+  assert.match(screen, /editButtonRef = useRef<View>\(null\)/);
   assert.match(screen, /button\.measureInWindow/);
   assert.match(screen, /height - y \+ 12/);
   assert.match(screen, /ref=\{editButtonRef\}/);
