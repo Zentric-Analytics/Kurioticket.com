@@ -51,6 +51,7 @@ const en = {
   searchCountryHint: "Type a country name or code",
   searchCountryPhoneHint: "Type a country name, code, or calling code",
   selectorSave: "Save",
+  done: "Done",
 };
 const es: typeof en = {
   title: "Datos personales",
@@ -104,6 +105,7 @@ const es: typeof en = {
   searchCountryHint: "Escribe un país o código",
   searchCountryPhoneHint: "Escribe un país, código o prefijo telefónico",
   selectorSave: "Guardar",
+  done: "Listo",
 };
 export type PersonalDetailsCopy = typeof en;
 export function personalDetailsCopy(locale: MobileLocale) {
