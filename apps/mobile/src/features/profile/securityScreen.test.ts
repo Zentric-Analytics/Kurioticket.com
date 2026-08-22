@@ -11,16 +11,18 @@ const screenModal = security.slice(screenModalStart, screenModalEnd);
 test("shared security modals apply explicit safe-area insets", () => {
   assert.match(security, /import\s*\{[^}]*useSafeAreaInsets[^}]*\}\s*from\s*["']react-native-safe-area-context["']/s);
   assert.match(screenModal, /const\s+insets\s*=\s*useSafeAreaInsets\(\)/);
-  assert.match(screenModal, /<View\s+accessibilityViewIsModal/);
+  assert.match(screenModal, /<Animated\.View\s+accessibilityViewIsModal/);
   assert.doesNotMatch(screenModal, /<SafeAreaView/);
   assert.match(screenModal, /paddingTop:\s*insets\.top/);
   assert.match(screenModal, /paddingBottom:\s*insets\.bottom/);
-  assert.match(screenModal, /animationType=["']slide["']/);
-  assert.match(screenModal, /presentationStyle=["']fullScreen["']/);
+  assert.match(screenModal, /animationType=["']none["']/);
+  assert.match(screenModal, /presentationStyle=["']overFullScreen["']/);
+  assert.match(screenModal, /transparent/);
+  assert.match(screenModal, /translateX/);
 });
 
 test("all native security drill-downs retain the shared modal shell", () => {
-  for (const state of ["passwordOpen", "devicesOpen", "activityOpen"])
+  for (const state of ["passwordOpen", "devicesOpen", "activityOpen", "twoFactorOpen", "deletionOpen"])
     assert.match(security, new RegExp(`<ScreenModal\\s+visible=\\{${state}\\}`));
 });
 
@@ -42,16 +44,20 @@ test("password fields exist only in a full-screen password flow", () => {
   const landing = security.slice(0, landingEnd);
   assert.doesNotMatch(landing, /field\("currentPassword"|field\("newPassword"|field\("confirmPassword"/);
   assert.match(security, /setPasswordOpen\(true\)/);
-  assert.match(security, /presentationStyle="fullScreen"/);
+  assert.match(security, /presentationStyle="overFullScreen"/);
   assert.match(security, /travelApi\.changePassword\(passwords\)/);
   assert.match(security, /setPasswordOpen\(false\)/);
   assert.match(security, /travelApi\.requestAccountPasswordReset\(\)/);
 });
 
-test("web-only security features retain one secure handoff", () => {
-  assert.match(security, /<SecurityBlock label=\{c\.twoFactor\}[^>]+onPress=\{web\}/);
+test("only passkeys retain the secure web handoff", () => {
+  assert.doesNotMatch(security, /<SecurityBlock label=\{c\.twoFactor\}[^>]+onPress=\{web\}/);
+  assert.match(security, /<SecurityBlock label=\{c\.twoFactor\}[\s\S]*?setTwoFactorOpen\(true\)/);
+  assert.match(security, /<ScreenModal visible=\{twoFactorOpen\}/);
   assert.match(security, /<SecurityBlock label=\{c\.passkeys\}[^>]+onPress=\{web\}/);
-  assert.match(security, /accessibilityLabel=\{c\.deleteAccount\} onPress=\{web\}/);
+  assert.doesNotMatch(security, /accessibilityLabel=\{c\.deleteAccount\} onPress=\{web\}/);
+  assert.match(security, /accessibilityLabel=\{c\.deleteAccount\} onPress=\{\(\) => void openDeletion\(\)\}/);
+  assert.match(security, /<ScreenModal visible=\{deletionOpen\}/);
   assert.match(security, /Linking\.canOpenURL\(WEB\)/);
 });
 

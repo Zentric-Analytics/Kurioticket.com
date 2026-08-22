@@ -98,6 +98,16 @@ export async function disableTwoFactor(userId: string) {
   });
 }
 
+export async function disableTwoFactorForSession(input: { userId: string; accountSessionId: string; assuranceLevel: string }) {
+  const now = new Date();
+  return getPrisma().$transaction(async tx => {
+    await tx.userSecuritySettings.update({ where: { userId: input.userId }, data: { twoFactorEnabled: false, twoFactorMethod: null, twoFactorSecretEncrypted: null, twoFactorLastUsedStep: null, recoveryCodesHash: null, twoFactorDisabledAt: now } });
+    await tx.accountSession.update({ where: { id: input.accountSessionId }, data: { reauthenticatedAt: now } });
+    await tx.accountSession.updateMany({ where: { userId: input.userId, id: { not: input.accountSessionId }, revokedAt: null }, data: { revokedAt: now, revokeReason: "two_factor_disabled_other_device" } });
+    return tx.securityEvent.create({ data: { userId: input.userId, accountSessionId: input.accountSessionId, type: "TWO_FACTOR_DISABLED", assuranceLevel: input.assuranceLevel } });
+  });
+}
+
 export async function regenerateRecoveryCodes(input: { userId: string; accountSessionId: string; code: string }) {
   if (!(await verifySecondFactor({ userId: input.userId, code: input.code, consumeRecoveryCode: false }))) return null;
   const recoveryCodes = generateRecoveryCodes();
