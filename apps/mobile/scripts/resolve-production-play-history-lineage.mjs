@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 const PRODUCTION_PACKAGE = 'com.kurioticket.app';
 const FULL_SHA = /^[0-9a-f]{40}$/;
+const MAX_RELEVANT_HISTORY_COMMITS = 256;
 
 function parseManifest(raw, label) {
   let manifest;
@@ -66,31 +67,52 @@ function convergeEvidence(evidence) {
   };
 }
 
-function resolveParentSet(parents, currentCanonical, historyPath, git, depth, active) {
-  if (parents.length === 0) throw new Error('Reviewed release lineage has no immutable prior Play history.');
-  if (parents.length > 2) throw new Error('Reviewed release lineage contains an unsupported multi-parent merge.');
-  const inspected = parents.map((commit) => {
-    const raw = historyAt(commit, historyPath, git);
-    return raw === null ? { commit, raw: null, evidence: null } : { commit, raw, evidence: evidenceAt(commit, raw, 'Prior reviewed Production') };
-  });
-  const continuing = inspected.filter((entry) => entry.evidence?.canonical === currentCanonical);
-  if (continuing.length > 0) {
-    return convergeEvidence(continuing.map((entry) => resolveParentPath(entry.commit, currentCanonical, historyPath, git, depth, active)));
+function relevantHistoryGraph(approvedSha, historyPath, git) {
+  const output = git([
+    'rev-list',
+    '--parents',
+    '--simplify-merges',
+    `--max-count=${MAX_RELEVANT_HISTORY_COMMITS + 1}`,
+    approvedSha,
+    '--',
+    `:(top)${historyPath}`,
+  ]).stdout.trim();
+  const lines = output ? output.split(/\r?\n/) : [];
+  if (lines.length > MAX_RELEVANT_HISTORY_COMMITS) {
+    throw new Error('Reviewed release lineage exceeded the bounded relevant-history search.');
   }
-  if (inspected.some((entry) => entry.evidence === null)) throw new Error('Reviewed release lineage is missing prior Play history.');
-  return convergeEvidence(inspected.map((entry) => ({ ...entry.evidence, sourceCommits: [entry.commit] })));
+  const graph = new Map();
+  for (const line of lines) {
+    const [commit, ...parents] = line.trim().split(/\s+/);
+    if (!FULL_SHA.test(commit) || parents.some((parent) => !FULL_SHA.test(parent))) {
+      throw new Error('Reviewed release lineage contains malformed parent metadata.');
+    }
+    if (parents.length > 2) throw new Error('Reviewed release lineage contains an unsupported multi-parent merge.');
+    if (graph.has(commit)) throw new Error('Reviewed release lineage contains duplicate relevant commits.');
+    graph.set(commit, parents);
+  }
+  if (graph.size === 0) throw new Error('Reviewed release lineage has no immutable prior Play history.');
+  const referenced = new Set([...graph.values()].flat());
+  const roots = [...graph.keys()].filter((commit) => !referenced.has(commit));
+  if (roots.length < 1 || roots.length > 2) throw new Error('Reviewed release lineage has ambiguous relevant-history roots.');
+  return { graph, roots };
 }
 
-function resolveParentPath(commit, currentCanonical, historyPath, git, depth = 0, active = new Set()) {
-  if (depth >= 500) throw new Error('Reviewed release lineage exceeded the bounded prior-history search.');
+function resolveRelevantNode(commit, currentCanonical, historyPath, git, graph, active = new Set()) {
   if (active.has(commit)) throw new Error('Reviewed release lineage contains a cycle.');
   const raw = historyAt(commit, historyPath, git);
   if (raw === null) throw new Error('Reviewed release lineage is missing prior Play history.');
   const evidence = evidenceAt(commit, raw, 'Prior reviewed Production');
   if (evidence.canonical !== currentCanonical) return { ...evidence, sourceCommits: [commit] };
-  const parents = parentsOf(commit, git);
+  const parents = graph.get(commit);
+  if (!parents || parents.length === 0) throw new Error('Reviewed release lineage has no immutable prior Play history.');
+  if (parents.some((parent) => !graph.has(parent))) {
+    throw new Error('Reviewed release lineage exceeded the bounded relevant-history search.');
+  }
   const nextActive = new Set(active).add(commit);
-  return resolveParentSet(parents, currentCanonical, historyPath, git, depth + 1, nextActive);
+  return convergeEvidence(parents.map((parent) =>
+    resolveRelevantNode(parent, currentCanonical, historyPath, git, graph, nextActive),
+  ));
 }
 
 export function resolveTrustedPreviousPlayHistory({ approvedSha, historyPath, git = defaultGit }) {
@@ -106,7 +128,15 @@ export function resolveTrustedPreviousPlayHistory({ approvedSha, historyPath, gi
   const currentCanonical = canonicalManifest(currentRaw, 'Current reviewed Production');
   const parents = parentsOf(approvedSha, git);
   if (parents.length < 1 || parents.length > 2) throw new Error('Production source must have one parent or one normal two-parent merge.');
-  const prior = resolveParentSet(parents, currentCanonical, historyPath, git, 0, new Set([approvedSha]));
+  const { graph, roots } = relevantHistoryGraph(approvedSha, historyPath, git);
+  const prior = convergeEvidence(roots.map((root) =>
+    resolveRelevantNode(root, currentCanonical, historyPath, git, graph),
+  ));
+  for (const commit of prior.sourceCommits) {
+    if (git(['merge-base', '--is-ancestor', commit, approvedSha], { allowFailure: true }).status !== 0) {
+      throw new Error('Resolved prior Play history is not ancestral to the approved Production source.');
+    }
+  }
   return {
     previousCommit: prior.commit,
     previousCommits: prior.sourceCommits,

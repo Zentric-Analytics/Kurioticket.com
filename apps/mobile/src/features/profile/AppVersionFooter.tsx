@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { StyleSheet, Text, View } from "react-native";
 import { useSyncExternalStore } from "react";
-import { useMobileLocalization } from "../../localization/MobileLocalization";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { useAppTheme } from "../../theme/AppTheme";
 import { formatPreviewDiagnostics } from "../../diagnostics/buildDiagnostics";
 import { getRuntimeDiagnostics } from "../../diagnostics/runtimeDiagnostics";

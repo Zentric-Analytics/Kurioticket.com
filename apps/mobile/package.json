@@ -8,7 +8,7 @@
     "local:preview": "node ./scripts/start-local-preview.mjs",
     "android": "node ./scripts/start-local-preview.mjs --android",
     "ios": "node ./scripts/start-local-preview.mjs --ios",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node ./scripts/validate-case-insensitive-paths.mjs && tsc --noEmit",
     "test": "node --test --require ./testAssetSetup.cjs --import jiti/register \"src/**/*.test.ts\" \"scripts/start-local-preview.test.mjs\" \"scripts/issue6-boundaries.test.mjs\"",
     "expo:doctor": "expo-doctor",
     "release:validate": "node ./scripts/validate-release-policy.mjs",
