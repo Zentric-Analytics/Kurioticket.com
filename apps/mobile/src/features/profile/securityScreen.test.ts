@@ -4,13 +4,16 @@ import test from "node:test";
 
 const security = readFileSync("src/features/profile/SecurityScreen.tsx", "utf8");
 
-test("security landing uses compact native settings sections and drill-downs", () => {
-  for (const section of ["signInSecurity", "devices", "notifications", "activity", "account"])
-    assert.match(security, new RegExp(`<Section title=\\{c\\.${section}\\}`));
-  for (const row of ["password", "twoFactor", "passkeys", "yourDevices", "signOutAll", "deleteAccount"])
-    assert.match(security, new RegExp(`<SettingRow label=\\{c\\.${row}\\}`));
-  assert.match(security, /minHeight: 56/);
-  assert.doesNotMatch(security, /borderRadius: 14|styles\.destructive|Manage securely on the web/);
+test("security landing uses flat descriptive blocks and the native header", () => {
+  const landingEnd = security.indexOf("<ScreenModal visible={passwordOpen}");
+  const landing = security.slice(0, landingEnd);
+  assert.match(landing, /<Header title=\{c\.title\} backLabel=\{c\.back\}/);
+  for (const row of ["password", "twoFactor", "passkeys", "activeSessions", "activity", "signOutAll"])
+    assert.match(landing, new RegExp(`<SecurityBlock label=\\{c\\.${row}\\}`));
+  for (const detail of ["passwordHelp", "twoFactorHelp", "passkeysHelp", "activeSessionsHelp", "alertsHelp", "activityHelp", "signOutAllHelp"])
+    assert.match(landing, new RegExp(`c\\.${detail}`));
+  assert.doesNotMatch(landing, /<Section|shadow|elevation/);
+  assert.doesNotMatch(security, /#003B95|#0071C2|Booking/);
 });
 
 test("password fields exist only in a full-screen password flow", () => {
@@ -26,10 +29,9 @@ test("password fields exist only in a full-screen password flow", () => {
 });
 
 test("web-only security features retain one secure handoff", () => {
-  assert.match(security, /overview\.twoFactorEnabled \? c\.enabled : c\.disabled/);
-  assert.match(security, /<SettingRow label=\{c\.twoFactor\}[^>]+onPress=\{web\}/);
-  assert.match(security, /<SettingRow label=\{c\.passkeys\}[^>]+onPress=\{web\}/);
-  assert.match(security, /<SettingRow label=\{c\.deleteAccount\}[^>]+onPress=\{web\}/);
+  assert.match(security, /<SecurityBlock label=\{c\.twoFactor\}[^>]+onPress=\{web\}/);
+  assert.match(security, /<SecurityBlock label=\{c\.passkeys\}[^>]+onPress=\{web\}/);
+  assert.match(security, /accessibilityLabel=\{c\.deleteAccount\} onPress=\{web\}/);
   assert.match(security, /Linking\.canOpenURL\(WEB\)/);
 });
 
@@ -44,7 +46,7 @@ test("devices remain off the landing page and preserve revocation behavior", () 
   assert.match(security, /Alert\.alert\(c\.removeTitle, c\.removeBody/);
   assert.match(security, /travelApi\.revokeAllSecuritySessions\(\)/);
   assert.match(security, /Alert\.alert\(c\.signOutTitle, c\.signOutBody/);
-  assert.match(security, /label=\{c\.signOutAll\} destructive onPress=\{all\} chevron=\{false\}/);
+  assert.match(security, /label=\{c\.signOutAll\} description=\{c\.signOutAllHelp\} destructive chevron=\{false\} onPress=\{all\}/);
 });
 
 test("notification preference keeps optimistic, race-safe rollback semantics", () => {
@@ -56,9 +58,10 @@ test("notification preference keeps optimistic, race-safe rollback semantics", (
   assert.match(security, /accessibilityState=\{\{ checked: overview\.securityEmailAlerts, busy: saving \}\}/);
 });
 
-test("activity is limited to three until View all is opened", () => {
-  assert.match(security, /events\.slice\(0, 3\)\.map/);
-  assert.match(security, /events\.length > 3 \? <SettingRow label=\{c\.viewAll\}/);
+test("activity is a single landing block opening the full history", () => {
+  const landing = security.slice(0, security.indexOf("<ScreenModal visible={passwordOpen}"));
+  assert.match(landing, /label=\{c\.activity\} description=\{c\.activityHelp\} onPress=\{\(\) => setActivityOpen\(true\)\}/);
+  assert.doesNotMatch(landing, /events\.slice\(0, 3\)|c\.viewAll|<EventRow/);
   assert.match(security, /<ScreenModal visible=\{activityOpen\}/);
   assert.match(security, /events\.map\(\(event\)/);
 });
@@ -77,6 +80,6 @@ test("English and Spanish security copy cover the compact hierarchy", () => {
     "Gestiona el acceso y la seguridad de tu cuenta de Kurioticket.",
     "Review devices that have recently accessed your account.",
     "Revisa los dispositivos que han accedido recientemente a tu cuenta.",
-    "View all", "Ver todo", "Manage on web", "Gestionar en la web",
+    "Change the password used to sign in to your account.", "Add extra protection with an authenticator app.", "Review devices signed in to your account.", "Sesiones activas",
   ]) assert.ok(security.includes(phrase), `missing copy: ${phrase}`);
 });
