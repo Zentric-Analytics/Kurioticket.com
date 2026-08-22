@@ -10,8 +10,16 @@ const native = readFileSync("apps/mobile/src/features/flow/FlightSearchPanel.tsx
 test("every visible web Multi-city selector is enabled and has no coming-soon copy", () => {
   assert.doesNotMatch(searchTabs, /const unavailable = mode === "multi-city"|Multi-city search coming soon|aria-disabled=\{unavailable\}|disabled=\{unavailable\}/);
   assert.doesNotMatch(results, /aria-disabled=\{option\.value === "multi-city"\}|disabled=\{option\.value === "multi-city"\}|multiCityComingSoon/);
-  assert.match(searchTabs, /onClick=\{\(\) => onSelectTripType\(mode\)\}/);
+  assert.match(searchTabs, /data-trip-type=\{mode\}/);
+  assert.match(searchTabs, /onClick=\{\(event\) => selectTripTypeFromControl\(event\.currentTarget\)\}/);
   assert.match(results, /handleTripTypeChange\("multi-city"\)/);
+});
+
+test("homepage trip-type controls share one guarded pointer and keyboard state path", () => {
+  assert.match(searchTabs, /committedHomepageTripType\(pointerDownTripTypeRef\.current, mode\)/);
+  assert.match(searchTabs, /nextHomepageTripType\(/);
+  assert.match(searchTabs, /tabIndex=\{selected \? 0 : -1\}/);
+  assert.match(searchTabs, /tripTypeButtonRefs\.current\[nextMode\]\?\.focus\(\)/);
 });
 
 test("homepage uses the canonical leg editor, limits, and indexed URL encoder", () => {

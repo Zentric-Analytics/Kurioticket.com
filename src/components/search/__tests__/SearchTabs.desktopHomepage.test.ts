@@ -16,7 +16,7 @@ test("desktop homepage uses a clean tab rail and separate search fields", () => 
   assert.match(source, /sm:grid-cols-\[minmax\(0,1fr\)_34px_minmax\(0,1fr\)\]/);
   assert.match(source, /before:start-1\/2 before:w-px before:bg-slate-200/);
   assert.match(source, /lg:rounded-xl lg:border lg:border-slate-200/);
-  assert.match(desktopBranch, /Flights[\s\S]*?Hotels[\s\S]*?Cars/);
+  assert.match(desktopBranch, /<Plane[\s\S]*?<BedDouble[\s\S]*?<CarFront[\s\S]*?<PackagesIcon/);
 });
 
 test("desktop Cars keeps a different return location beside pickup and gives every summary a leading icon", () => {
@@ -65,7 +65,8 @@ test("desktop flight controls expose the full truthful trip-type set", () => {
   assert.match(desktopBranch, /role="radiogroup"/);
   assert.match(desktopBranch, /role="radio"/);
   assert.doesNotMatch(desktopBranch, /aria-disabled=\{unavailable\}|disabled=\{unavailable\}/);
-  assert.match(desktopBranch, /onClick=\{\(\) => onSelectTripType\(mode\)\}/);
+  assert.match(desktopBranch, /data-trip-type=\{mode\}/);
+  assert.match(desktopBranch, /onClick=\{\(event\) => selectTripTypeFromControl\(event\.currentTarget\)\}/);
   assert.match(desktopBranch, /<MultiCityFlightEditor[\s\S]*?presentation="homepage"/);
 });
 
@@ -116,4 +117,31 @@ test("desktop fields expose one clean focus boundary instead of nested input rin
   assert.doesNotMatch(hotelValueClasses, /focus-ring/);
   assert.match(flightValueClasses, /focus-visible:ring-0/);
   assert.match(hotelValueClasses, /focus-visible:ring-0/);
+});
+
+test("homepage pointer focus has no decorative halo while keyboard focus remains visible", () => {
+  const globals = readFileSync("src/app/globals.css", "utf8");
+  const fieldPrimitives = readFileSync(
+    "src/components/search/FlightSearchFieldPrimitives.tsx",
+    "utf8",
+  );
+
+  assert.doesNotMatch(desktopBranch, /compactHero && !mobileHomepage \? "[^"]*focus-visible:ring-2/);
+  assert.doesNotMatch(source, /flightRouteGroupClassName[\s\S]*?focus-within:ring-2/);
+  assert.match(fieldPrimitives, /homepage-no-decorative-focus homepage-keyboard-focus-within/);
+  assert.match(globals, /data-input-modality="pointer"[\s\S]*?box-shadow: none !important/);
+  assert.match(globals, /data-input-modality="keyboard"[\s\S]*?inset 0 -2px 0 #075ee8/);
+  assert.match(source, /const \[homepageInputModality, setHomepageInputModality\] = useState/);
+  assert.match(source, /data-input-modality=\{homepageInputModality\}/);
+  assert.match(source, /onPointerDownCapture=\{\(\) => setHomepageInputModality\("pointer"\)\}/);
+  assert.match(source, /setHomepageInputModality\("keyboard"\)/);
+});
+
+test("desktop product tabs are a single-selection tablist and Packages has its own panel", () => {
+  assert.match(desktopBranch, /role="tablist"/);
+  assert.match(desktopBranch, /aria-selected=\{tab === "flights"\}/);
+  assert.match(desktopBranch, /aria-selected=\{tab === "hotels"\}/);
+  assert.match(desktopBranch, /aria-selected=\{tab === "cars"\}/);
+  assert.match(desktopBranch, /aria-selected=\{tab === "deals"\}/);
+  assert.match(desktopBranch, /tab === "deals" \? \([\s\S]*?<DealsSearchForm variant="landing"/);
 });

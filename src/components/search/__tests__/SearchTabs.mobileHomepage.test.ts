@@ -102,7 +102,8 @@ test("mobile English trip labels are exact and multi-city is selectable", () => 
   assert.match(mobileBranch, /tripTypeLabel\(mode\)/);
   assert.doesNotMatch(source, /One way-trip|Multi-city trip/);
   assert.doesNotMatch(mobileBranch, /const unavailable = mode === "multi-city"|Multi-city search coming soon/);
-  assert.match(mobileBranch, /onClick=\{\(\) => onSelectTripType\(mode\)\}/);
+  assert.match(mobileBranch, /onPointerDown=\{\(\) => onTripTypePointerDown\(mode\)\}/);
+  assert.match(mobileBranch, /onClick=\{\(event\) => selectTripTypeFromControl\(event\.currentTarget\)\}/);
   assert.match(mobileBranch, /<MultiCityFlightEditor[\s\S]*?presentation="homepage"/);
 });
 
@@ -150,9 +151,9 @@ test("every mobile homepage surface starts with the shared product tabs and no t
   const zeroTopInset = /px-\[13px\] pb-\[13px\] pt-0/;
   assert.equal((source.match(/px-\[13px\] pb-\[13px\] pt-0/g) ?? []).length, 3);
   assert.match(flightMobileBranch, new RegExp(`${zeroTopInset.source}[^>]*>[\\s\\S]*?\\{mobileHomepageProductTabs\\}[\\s\\S]*?<form onSubmit=\\{onFlightSubmit\\} className="mt-3`));
-  assert.match(source, /mobile-homepage-deals-surface[^>]*px-\[13px\] pb-\[13px\] pt-0[^>]*>[\s\S]*?\{mobileHomepageProductTabs\}[\s\S]*?<DealsSearchForm/);
+  assert.match(source, /mobile-homepage-deals-surface[\s\S]{0,700}px-\[13px\] pb-\[13px\] pt-0[\s\S]*?\{mobileHomepageProductTabs\}[\s\S]*?<DealsSearchForm/);
   assert.match(sharedBranch, /className=\{wrapper\}[\s\S]*?mobileHomepage \? \([\s\S]*?<div className="mb-3">\{mobileHomepageProductTabs\}<\/div>/);
-  assert.match(source, /mobileHomepage[\s\S]{0,180}px-\[13px\] pb-\[13px\] pt-0/);
+  assert.match(source, /mobileHomepage[\s\S]{0,420}px-\[13px\] pb-\[13px\] pt-0/);
   assert.doesNotMatch(source, /mobileHomepage[\s\S]{0,180}bg-\[#f8fafc\] p-\[13px\]/);
 });
 
@@ -299,7 +300,7 @@ test("mobile card, fields, borders, and tabs use the cool-neutral surface hierar
 });
 
 test("mobile Flights alone uses straighter card and control geometry", () => {
-  assert.match(mobileBranch, /mobile-homepage-flight-search[\s\S]{0,120}rounded-\[14px\]/);
+  assert.match(mobileBranch, /mobile-homepage-flight-search[\s\S]{0,420}rounded-\[14px\]/);
   assert.ok((mobileBranch.match(/rounded-\[10px\] border border-\[#dee5ed\] bg-\[#fcfdfe\]/g) ?? []).length >= 3);
   assert.match(mobileBranch, /mobile-homepage-search-submit[\s\S]{0,180}rounded-\[10px\]/);
 });

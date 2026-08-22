@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 export const flightSearchFieldShellClassName =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-e sm:border-slate-200 sm:bg-white sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200 sm:focus-within:border-slate-200 sm:focus-within:bg-white sm:focus-within:ring-0 lg:flex lg:flex-col lg:justify-center";
+  "homepage-no-decorative-focus homepage-keyboard-focus-within relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-e sm:border-slate-200 sm:bg-white sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200 lg:flex lg:flex-col lg:justify-center";
 export const flightSearchFieldLabelClassName =
   "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
 export const flightSearchFieldValueButtonClassName =
