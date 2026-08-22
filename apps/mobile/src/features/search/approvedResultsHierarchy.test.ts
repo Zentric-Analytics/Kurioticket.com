@@ -9,17 +9,18 @@ const resultsBody = source.slice(
   source.indexOf("const stopLabels"),
 );
 
-test("ready flight results place one eligible price alert before their count and cards", () => {
+test("ready flight results place the hierarchy controls before the alert and cards", () => {
   const flightAlert = source.indexOf('status === "ready" && product === "flight" && plan.plan');
-  const summary = source.indexOf('status === "ready" && product === "flight" ? (', flightAlert);
-  const cards = source.indexOf('sorted.map((x, i)', summary);
+  const summary = source.indexOf("flightResultCountLabel(sorted.length)");
+  const controls = source.indexOf("{filterRail}", summary);
+  const cards = source.indexOf('sorted.map((x, i)', flightAlert);
   const filteredEmpty = source.indexOf('title="No flights match these filters"', cards);
   const hotelAlert = source.indexOf('product === "hotel" && availability.priceAlerts', filteredEmpty);
   const bottomNavigation = source.indexOf("<BottomNav flightResults={flightResults} />", hotelAlert);
 
   assert.ok(flightAlert >= 0, "the flight price-alert eligibility guard should exist");
-  assert.ok(flightAlert < summary, "the flight price alert should precede the results summary");
-  assert.ok(summary < cards, "the results summary should precede flight cards");
+  assert.ok(summary < controls, "the results count should precede controls");
+  assert.ok(flightAlert < cards, "the flight price alert should precede flight cards");
   assert.ok(cards < filteredEmpty, "flight cards should precede the filtered-empty state");
   assert.ok(filteredEmpty < hotelAlert, "the separately placed hotel price alert should remain after results");
   assert.ok(hotelAlert < bottomNavigation, "all result content should precede bottom navigation");

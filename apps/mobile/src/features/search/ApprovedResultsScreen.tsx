@@ -26,7 +26,6 @@ import {
   ArrowLeft,
   Award,
   Bell,
-  FilePenLine,
   Luggage,
   PlaneTakeoff,
   ShieldCheck,
@@ -332,8 +331,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={s0.filters}
           >
+            {product === "flight" ? (
+              <Pill
+                label="Sort"
+                active={sort === "price"}
+                flightResultsChevron
+                onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
+              />
+            ) : null}
             <Pill
-              label={product === "flight" && activeFilterCount ? `Filters (${activeFilterCount})` : "Filters"}
+              label={product === "flight" && activeFilterCount ? `Filter (${activeFilterCount})` : "Filter"}
               active={product === "flight" && activeFilterCount > 0}
               icon={product === "flight" ? undefined : "sliders"}
               flightResultsIcon={product === "flight" ? "filters" : undefined}
@@ -345,7 +352,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               }
             />
             {(product === "flight"
-              ? ["Stops", "Airlines", "Times"]
+              ? ["Airlines", "Stops"]
               : ["Price", "Guest rating", "Property type"]
             ).map((x) => (
               <Pill
@@ -365,12 +372,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 }
               />
             ))}
-            <Pill
-              label={`Sort: ${sort === "price" ? "Price" : product === "flight" ? "Best" : "Recommended"}`}
-              active
-              flightResultsChevron={product === "flight"}
-              onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
-            />
+            {product === "hotel" ? (
+              <Pill
+                label={`Sort: ${sort === "price" ? "Price" : "Recommended"}`}
+                active
+                onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
+              />
+            ) : null}
           </ScrollView>
   );
   const resultContent = (
@@ -401,14 +409,6 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               ) : null}
               {status === "ready" && product === "flight" && plan.plan ? (
                 <PriceAlert product={product} plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} />
-              ) : null}
-              {status === "ready" && product === "flight" ? (
-                <Text
-                  accessibilityRole="header"
-                  style={[s0.flightResultCount, { color: theme.textPrimary }]}
-                >
-                  {flightResultCountLabel(sorted.length)}
-                </Text>
               ) : null}
               {status === "ready" && product === "hotel" ? (
                 <View style={s0.found}>
@@ -467,6 +467,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`}
           travelerCount={Number(payload.travelers)}
           tripTypeLabel={FLIGHT_TRIP_TYPE_LABELS[payload.tripType === "round-trip" ? "round-trip" : "one-way"]}
+          cabinClass={String(payload.cabinClass || "economy")}
           onEdit={edit}
         />
       ) : (
@@ -495,7 +496,17 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           contentContainerStyle={s0.flightResultsContent}
         >
           <View>{dateStrip}</View>
-          <View style={[s0.stickyFilterSurface, { backgroundColor: theme.background }]}>{filterRail}</View>
+          <View style={[s0.stickyFilterSurface, { backgroundColor: theme.background }]}>
+            {status === "ready" ? (
+              <Text
+                accessibilityRole="header"
+                style={[s0.flightResultCount, { color: theme.textPrimary }]}
+              >
+                {flightResultCountLabel(sorted.length)}
+              </Text>
+            ) : null}
+            {filterRail}
+          </View>
           <View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View>
         </ScrollView>
       ) : (
@@ -525,12 +536,14 @@ function FlightResultsHeader({
   dateRange,
   travelerCount,
   tripTypeLabel,
+  cabinClass,
   onEdit,
 }: {
   route: string;
   dateRange: string;
   travelerCount: number;
   tripTypeLabel: string;
+  cabinClass: string;
   onEdit: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -564,7 +577,7 @@ function FlightResultsHeader({
             pressed && s0.flightHeaderControlPressed,
           ]}
         >
-          <FilePenLine size={18} strokeWidth={2} color={theme.icon} />
+          <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>Edit</Text>
         </Pressable>
       </View>
       <View style={s0.flightHeaderMetadataAlignmentRow}>
@@ -576,11 +589,17 @@ function FlightResultsHeader({
           style={s0.flightHeaderMetadataScroller}
           contentContainerStyle={s0.flightHeaderMetadataRow}
         >
+          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{tripTypeLabel}</Text>
+          <Text style={[s0.flightHeaderMetadataSeparator, { color: theme.textSecondary }]}>·</Text>
           <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
+          <Text style={[s0.flightHeaderMetadataSeparator, { color: theme.textSecondary }]}>·</Text>
           <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
             {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
           </Text>
-          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{tripTypeLabel}</Text>
+          <Text style={[s0.flightHeaderMetadataSeparator, { color: theme.textSecondary }]}>·</Text>
+          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
+            {cabinClass.split("-").map((word) => word[0]?.toUpperCase() + word.slice(1)).join(" ")}
+          </Text>
         </ScrollView>
       </View>
     </View>
@@ -1229,7 +1248,7 @@ const s0 = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  flightHeaderSide: { width: 44, flexShrink: 0 },
+  flightHeaderSide: { width: 52, flexShrink: 0 },
   flightHeaderBack: {
     width: 44,
     height: 44,
@@ -1251,23 +1270,25 @@ const s0 = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "nowrap",
     alignItems: "center",
-    columnGap: 14,
+    columnGap: 6,
   },
   flightHeaderMetadataText: { flexShrink: 0, fontSize: 12, lineHeight: 17 },
+  flightHeaderMetadataSeparator: { flexShrink: 0, fontSize: 12, lineHeight: 17 },
   flightHeaderEdit: {
-    width: 44,
+    width: 52,
     height: 44,
     flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
   },
-  filterRail: { height: 64, flexGrow: 0 },
+  flightHeaderEditText: { fontSize: 13, lineHeight: 18, fontWeight: "700" },
+  filterRail: { height: 52, flexGrow: 0 },
   resultsScroll: { flex: 1 },
   flightResultsContent: { flexGrow: 1 },
   stickyFilterSurface: { backgroundColor: "white", zIndex: 1 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
-  filters: { paddingHorizontal: 18, paddingVertical: 10, gap: 9, alignItems: "center" },
+  filters: { paddingHorizontal: 14, paddingVertical: 7, gap: 8, alignItems: "center" },
   modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
   sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
   sheetHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
@@ -1305,7 +1326,7 @@ const s0 = StyleSheet.create({
   },
   foundCopy: { flex: 1, minWidth: 0, gap: 2 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  flightResultCount: { fontSize: 18, lineHeight: 23, fontWeight: "800" },
+  flightResultCount: { paddingHorizontal: 14, paddingTop: 10, fontSize: 16, lineHeight: 21, fontWeight: "800" },
   card: {
     width: "100%",
     borderRadius: 14,
