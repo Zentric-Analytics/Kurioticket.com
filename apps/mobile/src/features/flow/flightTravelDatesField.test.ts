@@ -26,6 +26,6 @@ test("date validation errors remain directly after the unified launcher", () => 
   const field = panel.indexOf('<CompactSearchField label="Travel dates"');
   const departure = panel.indexOf("errors.departureDate", field);
   const returned = panel.indexOf("errors.returnDate", departure);
-  const travelers = panel.indexOf('<CompactSearchField label="Travelers"', returned);
+  const travelers = panel.indexOf('<CompactSearchField label="Travelers & Cabin Class"', returned);
   assert.ok(field < departure && departure < returned && returned < travelers);
 });

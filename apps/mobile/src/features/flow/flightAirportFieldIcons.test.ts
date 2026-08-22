@@ -22,9 +22,19 @@ test("Origin and Destination use the existing location icon without changing pic
   assert.equal(panel.match(/icon="location"/g)?.length, 2);
 });
 
+test("Destination has one concise empty value while retaining selected airport metadata", () => {
+  const destination = field("Destination");
+
+  assert.ok(destination);
+  assert.match(destination, /value=\{form\.to\?\.code \?\? "To\?"\}/);
+  assert.match(destination, /meta=\{form\.to \? `\$\{form\.to\.city\}, \$\{form\.to\.country\}` : undefined\}/);
+  assert.doesNotMatch(destination, /Select destination|No airport selected/);
+  assert.match(destination, /muted=\{!form\.to\}/);
+});
+
 test("other Flight fields retain their intended icons", () => {
   assert.match(field("Travel dates") ?? "", /icon="calendar"/);
-  assert.match(field("Travelers") ?? "", /icon="person"/);
+  assert.match(field("Travelers & Cabin Class") ?? "", /icon="person"/);
   assert.doesNotMatch(field("Cabin") ?? "", /icon="location"/);
 });
 

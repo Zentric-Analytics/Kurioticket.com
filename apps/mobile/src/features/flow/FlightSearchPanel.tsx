@@ -13,6 +13,7 @@ import type { Airport } from "./airportData";
 import { searchHomepageAirports, type HomepageAirport, type HomepageAirportResult } from "../home/homepageAirports";
 import { canApplyHomepageDefaultOrigin, fetchHomepageDefaultOrigin } from "../home/homepageDefaultOrigin";
 import { FLIGHT_TRIP_TYPE_LABELS } from "./flightTripTypeLabels";
+import { formatTravelerCabinSummary } from "./flightSearchPresentation";
 
 export const NATIVE_FLIGHT_CABIN_OPTIONS = FLIGHT_CABINS.filter((cabin) => cabin !== "Premium Economy");
 
@@ -59,17 +60,15 @@ export const FlightSearchPanel = forwardRef<FlightSearchHandle, { compact?: bool
   const returnValue = form.returnDate ? displayDate(form.returnDate) : "Select return date";
   const flightDatesValue = form.tripType === "round-trip" ? `${departureValue} — ${returnValue}` : departureValue;
   const travelerCount = totalTravelers(form);
-  const travelerValue = travelerCount ? plural(travelerCount, "traveler") : "Select travelers";
-  const travelerCabinSummary = `${travelerValue} · ${form.cabin ?? "Select cabin"}`;
-  const travelerBreakdown = travelerCount ? `${plural(form.adults,"adult")} · ${plural(form.children,"child","children")} · ${plural(form.infants,"infant")}` : "No travelers selected";
+  const travelerCabinSummary = formatTravelerCabinSummary(form);
   return <View style={[!embedded && ft.styles.card, !embedded && ft.styles.shadow, editAppearance && [styles.editCard, { backgroundColor: ft.colors.surface }], compact && styles.compact]}>
     <Segments<FlightTripSelectorValue> appearance={editAppearance ? "filled" : "default"} value={form.tripType} onChange={(tripType) => { if (tripType === "multi-city") return; setForm(changeFlightTripType(form, tripType, initializeHomepageDates)); clear("tripType", "returnDate"); }} options={[{ value: "round-trip", label: FLIGHT_TRIP_TYPE_LABELS["round-trip"] }, { value: "one-way", label: FLIGHT_TRIP_TYPE_LABELS["one-way"] }, { value: "multi-city", label: FLIGHT_TRIP_TYPE_LABELS["multi-city"], disabled: true, accessibilityHint: "Multi-city search is coming soon" }]} />
     {errors.tripType ? <ErrorText text={errors.tripType}/> : null}
-    <View style={styles.routeFields}><CompactSearchField label="Origin" value={form.from?.code ?? "Select origin"} meta={form.from ? `${form.from.city}, ${form.from.country}` : "No airport selected"} icon="location" muted={!form.from} onPress={() => { userControlsOrigin.current = true; setPicker("from"); }}/>{errors.from ? <ErrorText text={errors.from}/> : null}<CompactSearchField label="Destination" value={form.to?.code ?? "Select destination"} meta={form.to ? `${form.to.city}, ${form.to.country}` : "No airport selected"} icon="location" muted={!form.to} onPress={() => setPicker("to")}/>{errors.to ? <ErrorText text={errors.to}/> : null}<Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" accessibilityState={{ disabled: !form.from || !form.to }} disabled={!form.from || !form.to} onPress={swapAirports} style={[styles.swap, { backgroundColor: ft.colors.raised, borderColor: ft.colors.border }]}><FlowIcon name="swap" color={ft.colors.selectedBorder}/></Pressable></View>
+    <View style={styles.routeFields}><CompactSearchField label="Origin" value={form.from?.code ?? "Select origin"} meta={form.from ? `${form.from.city}, ${form.from.country}` : "No airport selected"} icon="location" muted={!form.from} onPress={() => { userControlsOrigin.current = true; setPicker("from"); }}/>{errors.from ? <ErrorText text={errors.from}/> : null}<CompactSearchField label="Destination" value={form.to?.code ?? "To?"} meta={form.to ? `${form.to.city}, ${form.to.country}` : undefined} icon="location" muted={!form.to} onPress={() => setPicker("to")}/>{errors.to ? <ErrorText text={errors.to}/> : null}<Pressable accessibilityRole="button" accessibilityLabel="Swap origin and destination" accessibilityState={{ disabled: !form.from || !form.to }} disabled={!form.from || !form.to} onPress={swapAirports} style={[styles.swap, { backgroundColor: ft.colors.raised, borderColor: ft.colors.border }]}><FlowIcon name="swap" color={ft.colors.selectedBorder}/></Pressable></View>
     <CompactSearchField label="Travel dates" value={flightDatesValue} valueNumberOfLines={2} icon="calendar" muted={!form.departureDate} onPress={() => setPicker(form.tripType === "round-trip" ? "travelDates" : "departureDate")}/>
     {errors.departureDate ? <ErrorText text={errors.departureDate}/> : null}
     {form.tripType === "round-trip" && errors.returnDate ? <ErrorText text={errors.returnDate}/> : null}
-    <CompactSearchField label="Travelers" value={travelerCabinSummary} meta={travelerBreakdown} icon="person" muted={!travelerCount || !form.cabin} onPress={() => setPicker("travelers")}/>
+    <CompactSearchField label="Travelers & Cabin Class" value={travelerCabinSummary} icon="person" muted={!travelerCount || !form.cabin} trailing={<FlowIcon name="chevronDown" size={16} color={ft.colors.icon}/>} onPress={() => setPicker("travelers")}/>
     {errors.travelers ? <ErrorText text={errors.travelers}/> : null}
     {errors.cabin ? <ErrorText text={errors.cabin}/> : null}
     {notice ? <UnavailableNotice text={notice}/> : null}{showSubmit ? <View style={styles.button}><PrimaryButton label={submitLabel} icon={null} onPress={submit} disabled={submitting}/></View> : null}

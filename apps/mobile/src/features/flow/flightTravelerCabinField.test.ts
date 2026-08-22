@@ -3,26 +3,41 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
-const fieldStart = panel.indexOf('<CompactSearchField label="Travelers"');
+const presentation = readFileSync("src/features/flow/flightSearchPresentation.ts", "utf8");
+const fieldStart = panel.indexOf('<CompactSearchField label="Travelers & Cabin Class"');
 const field = panel.slice(fieldStart, panel.indexOf("\n", fieldStart));
 const sheetStart = panel.indexOf("function TravelerCabinSheet");
 const sheet = panel.slice(sheetStart, panel.indexOf("function Counter", sheetStart));
 
-test("Flights renders one full-width combined Travelers field", () => {
-  assert.equal(panel.match(/<CompactSearchField label="Travelers"/g)?.length, 1);
+test("Flights renders one full-width combined Travelers and Cabin Class field", () => {
+  assert.equal(panel.match(/<CompactSearchField label="Travelers & Cabin Class"/g)?.length, 1);
   assert.doesNotMatch(panel, /<CompactSearchField label="Cabin"/);
   assert.match(field, /value=\{travelerCabinSummary\}/);
-  assert.match(field, /meta=\{travelerBreakdown\}/);
+  assert.doesNotMatch(field, /meta=/);
   assert.match(field, /icon="person"/);
-  assert.doesNotMatch(field, /trailing=/);
+  assert.match(field, /trailing=\{<FlowIcon name="chevronDown" size=\{16\} color=\{ft\.colors\.icon\}\/>\}/);
   assert.match(readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8"), /trailing \?\? <FlowIcon name="chevron"/);
   assert.doesNotMatch(field, /styles\.(?:row|half)/);
 });
 
-test("the summary and breakdown cover selected and missing values", () => {
-  assert.match(panel, /const travelerValue = travelerCount \? plural\(travelerCount, "traveler"\) : "Select travelers";/);
-  assert.match(panel, /const travelerCabinSummary = `\$\{travelerValue\} · \$\{form\.cabin \?\? "Select cabin"\}`;/);
-  assert.match(panel, /const travelerBreakdown = travelerCount \? `\$\{plural\(form\.adults,"adult"\)\} · \$\{plural\(form\.children,"child","children"\)\} · \$\{plural\(form\.infants,"infant"\)\}` : "No travelers selected";/);
+test("the single-line summary composes traveler categories and partial placeholders", () => {
+  assert.match(panel, /const travelerCabinSummary = formatTravelerCabinSummary\(form\)/);
+  assert.match(presentation, /export function formatTravelerCabinSummary/);
+  assert.match(presentation, /form\.adults \? plural\(form\.adults, "adult"\) : undefined/);
+  assert.match(presentation, /form\.children \? plural\(form\.children, "child", "children"\) : undefined/);
+  assert.match(presentation, /form\.infants \? plural\(form\.infants, "infant"\) : undefined/);
+  assert.match(presentation, /return `\$\{travelers \|\| "Select travelers"\}, \$\{form\.cabin \?\? "Select cabin"\}`/);
+  assert.doesNotMatch(field, /No travelers selected|travelerBreakdown| · /);
+});
+
+test("the disclosure chevron uses the decorative native SVG icon without changing the default chevron", () => {
+  const icon = readFileSync("src/features/flow/FlowIcon.tsx", "utf8");
+  const primitives = readFileSync("src/features/flow/FlowPrimitives.tsx", "utf8");
+
+  assert.match(icon, /\| "chevronDown"/);
+  assert.match(icon, /chevronDown: <Path \{\.\.\.line\} d="m6 9 6 6 6-6" \/>/);
+  assert.match(icon, /<Svg[\s\S]*accessibilityElementsHidden importantForAccessibility="no-hide-descendants"/);
+  assert.match(primitives, /trailing \?\? <FlowIcon name="chevron"/);
 });
 
 test("traveler and cabin validation intents open the same combined sheet", () => {
