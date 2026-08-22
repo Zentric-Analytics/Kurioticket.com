@@ -61,7 +61,7 @@ export function verifyBaseline({ manifest, build, variant, policy, workflowRun, 
     [[1, 2].includes(manifest.schemaVersion), 'Unsupported manifest schema.'],
     [manifest.environment === variant, 'Manifest environment mismatch.'],
     [manifest.easBuildId === build.id, 'EAS build ID mismatch.'],
-    [manifest.projectId === undefined || manifest.projectId === build.project?.id, 'EAS project mismatch.'],
+    [manifest.projectId === build.project?.id, 'EAS project mismatch.'],
     [manifestIdentifier === expectedIdentifier, platform === 'ANDROID' ? 'Build package mismatch.' : 'Build bundle identifier mismatch.'],
     [manifest.profile === expected.profile && build.buildProfile === expected.profile, 'Build profile mismatch.'],
     [build.platform === platform, 'Build platform mismatch.'],
@@ -72,7 +72,7 @@ export function verifyBaseline({ manifest, build, variant, policy, workflowRun, 
     [platform !== 'IOS' || (manifest.buildNumber !== undefined && String(manifest.buildNumber) === String(build.appBuildVersion)), 'Build number mismatch.'],
     [build.status === 'FINISHED', 'Baseline build is not finished.'],
     [fullSha(manifest.commitSha), 'Manifest commit is not a full SHA.'],
-    [typeof manifest.nativeFingerprint === 'string' && manifest.nativeFingerprint.length >= 16, 'Manifest fingerprint is missing.'],
+    [/^[a-f0-9]{40}$/.test(manifest.nativeFingerprint ?? ''), 'Manifest fingerprint is missing or malformed.'],
   ];
   for (const [ok, message] of checks) if (!ok) throw new Error(message);
   return { verified: true, environment: variant, platform, easBuildId: build.id, commitSha: manifest.commitSha, nativeFingerprint: manifest.nativeFingerprint, fingerprintSource: 'repository-reviewed-binary-manifest', sourceVerification, applicationIdentifierMetadata: suppliedIdentifiers.length ? 'verified' : 'omitted' };
