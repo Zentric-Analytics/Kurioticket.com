@@ -92,18 +92,36 @@ export async function POST(request: Request) {
   }
 }
 
-async function getOrCreateGoogleUser(input: {
+export async function getOrCreateGoogleUser(input: {
   providerAccountId: string;
   email: string;
   name: string | null;
   image: string | null;
-}) {
-  return getPrisma().$transaction(async (tx) => {
+}, db: Pick<ReturnType<typeof getPrisma>, "$transaction"> = getPrisma()) {
+  return db.$transaction(async (tx) => {
     const account = await tx.account.findUnique({
       where: { provider_providerAccountId: { provider: "google", providerAccountId: input.providerAccountId } },
       include: { user: true },
     });
-    if (account) return account.user;
+    if (account) {
+      const existing = account.user;
+      if (existing.status !== "ACTIVE") return existing;
+
+      const existingEmail = existing.email?.toLowerCase().trim();
+      if (existingEmail && existingEmail !== input.email) {
+        throw new Error("Existing Google account email does not match the verified Google email.");
+      }
+
+      if (existing.emailVerified && existing.name && existing.image) return existing;
+      return tx.user.update({
+        where: { id: existing.id },
+        data: {
+          emailVerified: existing.emailVerified || new Date(),
+          name: existing.name || input.name,
+          image: existing.image || input.image,
+        },
+      });
+    }
 
     const existing = await tx.user.findUnique({ where: { email: input.email } });
     if (existing) {

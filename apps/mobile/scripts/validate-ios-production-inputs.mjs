@@ -8,9 +8,10 @@ const production = policy.production;
 const fail = (message) => { throw new Error(message); };
 
 if (!/^[a-f0-9]{40}$/.test(sha ?? "")) fail("Commit SHA must be an exact lowercase 40-character SHA.");
-if (!["dry-run", "build"].includes(action)) fail("First iOS Production delivery supports dry-run or build only.");
+if (!["dry-run", "build", "update"].includes(action)) fail("iOS Production delivery action is unsupported.");
 if (!(releaseReason ?? "").trim()) fail("Release reason must not be empty.");
-if (baselineBuildId !== "NONE") fail("iOS Production OTA remains disabled until a reviewed binary baseline exists.");
+const reviewedBaselineId = "ec28bb4d-44fe-4e07-bdb0-c0a8aec90fe9";
+if (action === "update" ? baselineBuildId !== reviewedBaselineId : baselineBuildId !== "NONE") fail("iOS Production baseline selection mismatch.");
 if (confirmation !== "DELIVER IOS PRODUCTION") fail("Confirmation phrase mismatch.");
 if (runtime !== production.runtimeVersion) fail("Runtime mismatch.");
 if (bundleIdentifier !== production.bundleIdentifier) fail("Bundle identifier mismatch.");

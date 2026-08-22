@@ -21,6 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
         with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
+      - name: Capture release workflow start
+        run: echo "WORKFLOW_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
       - name: Verify exact approved Production checkout
         env:
           APPROVED_SHA: "${{ inputs.commit_sha }}"
@@ -142,8 +144,9 @@ jobs:
           java -jar "$RUNNER_TEMP/bundletool.jar" validate --bundle="$RUNNER_TEMP/production.aab" > "$RUNNER_TEMP/aab-validation.txt"
           java -jar "$RUNNER_TEMP/bundletool.jar" dump manifest --bundle="$RUNNER_TEMP/production.aab" --module=base > "$RUNNER_TEMP/aab-manifest.xml"
           jarsigner -verify "$RUNNER_TEMP/production.aab" > "$RUNNER_TEMP/aab-signing.txt" 2>&1
-          unzip -p "$RUNNER_TEMP/production.aab" base/assets/index.android.bundle base/assets/app.config base/assets/app.manifest > "$RUNNER_TEMP/aab-contents.txt"
-          node scripts/verify-production-aab.mjs --manifest "$RUNNER_TEMP/aab-manifest.xml" --validation "$RUNNER_TEMP/aab-validation.txt" --signing "$RUNNER_TEMP/aab-signing.txt" --contents "$RUNNER_TEMP/aab-contents.txt" --output "$RUNNER_TEMP/aab-evidence.json"
+          unzip -p "$RUNNER_TEMP/production.aab" base/assets/app.config > "$RUNNER_TEMP/aab-app-config.json"
+          test -s "$RUNNER_TEMP/aab-app-config.json" || { echo 'Embedded AAB app.config is missing or empty.' >&2; exit 1; }
+          node scripts/verify-production-aab.mjs --manifest "$RUNNER_TEMP/aab-manifest.xml" --validation "$RUNNER_TEMP/aab-validation.txt" --signing "$RUNNER_TEMP/aab-signing.txt" --app-config "$RUNNER_TEMP/aab-app-config.json" --output "$RUNNER_TEMP/aab-evidence.json"
           node scripts/verify-production-eas-result.mjs --kind build --input "$RUNNER_TEMP/delivery-result.raw.json" --history "$RUNNER_TEMP/production-built-history.json" --aab-evidence "$RUNNER_TEMP/aab-evidence.json" --sha "$CHECKED_OUT_SHA" --version-code "$PROPOSED_VERSION" --version-status "$VERSION_STATUS" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Publish approved Production OTA through verified channel
         if: inputs.action == 'update'
@@ -153,7 +156,7 @@ jobs:
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
           set -o pipefail
           npx eas-cli@16.17.4 update --channel production --platform android --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
-          node scripts/verify-production-eas-result.mjs --kind update --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --output "$RUNNER_TEMP/delivery-result.json"
+          node scripts/verify-production-eas-result.mjs --kind update --platform android --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Write consolidated release audit
         if: always()
         working-directory: apps/mobile
@@ -177,7 +180,7 @@ jobs:
           VERSION_EVIDENCE_PATH: "${{ runner.temp }}/version-evidence.json"
           DELIVERY_RESULT_PATH: "${{ runner.temp }}/delivery-result.json"
           AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
-          WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
+          WORKFLOW_STARTED_AT: "${{ env.WORKFLOW_STARTED_AT }}"
           FINAL_STATUS: "${{ job.status }}"
           PRIOR_JOB_STATUS: "${{ job.status }}"
         run: |
@@ -191,4 +194,17 @@ jobs:
         if: always()
         continue-on-error: ${{ job.status == 'failure' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with: { name: "android-production-release-evidence-${{ github.run_id }}", path: "${{ runner.temp }}/release-audit.json", if-no-files-found: warn, retention-days: 365 }
+        with:
+          name: "android-production-release-evidence-${{ github.run_id }}"
+          path: |
+            ${{ runner.temp }}/baseline-evidence.json
+            ${{ runner.temp }}/channel-evidence.json
+            ${{ runner.temp }}/current-fingerprint.json
+            ${{ runner.temp }}/release-classification.json
+            ${{ runner.temp }}/version-evidence.json
+            ${{ runner.temp }}/delivery-result.raw.json
+            ${{ runner.temp }}/delivery-result.json
+            ${{ runner.temp }}/aab-evidence.json
+            ${{ runner.temp }}/release-audit.json
+          if-no-files-found: warn
+          retention-days: 365
