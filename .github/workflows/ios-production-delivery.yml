@@ -100,8 +100,9 @@ jobs:
           IPA_URL=$(node -e "const b=require(process.env.RUNNER_TEMP+'/build.json');if(b.status!=='FINISHED'||b.platform!=='IOS'||b.gitCommitHash!==process.env.CHECKED_OUT_SHA||b.project?.id!=='89f6fd88-c0d7-495a-9e2b-8301b09f407d'||b.buildProfile!=='production'||b.distribution!=='STORE'||b.channel!=='production'||b.runtimeVersion!=='production-0.3.0'||b.appVersion!=='0.3.0'||!/^[1-9]\d*$/.test(String(b.appBuildVersion??''))||(b.applicationIdentifier!=null&&b.applicationIdentifier!=='com.kurioticket.app'))throw Error('Finished build identity mismatch');const u=b.artifacts?.applicationArchiveUrl??b.artifacts?.buildUrl;if(!/^https:\/\//.test(u||''))throw Error('IPA URL missing');process.stdout.write(u)")
           curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --output "$RUNNER_TEMP/production.ipa" "$IPA_URL"
           unzip -q "$RUNNER_TEMP/production.ipa" -d "$RUNNER_TEMP/ipa"
-          APP=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 1 -type d -name '*.app' -print -quit)
-          test -n "$APP" || { echo 'IPA application bundle is missing.' >&2; exit 1; }
+          APP_CANDIDATES=("$RUNNER_TEMP"/ipa/Payload/*.app)
+          test "${#APP_CANDIDATES[@]}" -eq 1 && test -d "${APP_CANDIDATES[0]}" || { echo 'IPA must contain exactly one application bundle.' >&2; exit 1; }
+          APP="${APP_CANDIDATES[0]}"
           codesign --verify --deep --strict --verbose=2 "$APP"
           codesign --display --extract-certificates="$RUNNER_TEMP/app-signer" "$APP"
           openssl x509 -inform DER -in "$RUNNER_TEMP/app-signer0" -noout -serial | sed 's/^serial=//' > "$RUNNER_TEMP/signer-certificate-serial.txt"
@@ -118,14 +119,15 @@ jobs:
           with open(sys.argv[1], 'r', encoding='utf-8') as f: value=json.load(f)
           with open(sys.argv[2], 'w') as f: json.dump(value, f)
           PY
-          EXPO_PLIST=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 3 -name Expo.plist -print -quit)
+          EXPO_PLIST=$(find "$APP" -name Expo.plist -print -quit)
           test -n "$EXPO_PLIST" || { echo 'IPA Expo Updates configuration is missing.' >&2; exit 1; }
           python - "$EXPO_PLIST" "$RUNNER_TEMP/expo-config.json" <<'PY'
           import json, plistlib, sys
           with open(sys.argv[1], 'rb') as f: value=plistlib.load(f)
           with open(sys.argv[2], 'w') as f: json.dump(value, f)
           PY
-          PROFILE=$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 2 -name embedded.mobileprovision -print -quit)
+          PROFILE="$APP/embedded.mobileprovision"
+          test -f "$PROFILE" || { echo 'IPA provisioning profile is missing.' >&2; exit 1; }
           test -n "$PROFILE" || { echo 'IPA embedded provisioning profile is missing.' >&2; exit 1; }
           openssl smime -inform der -verify -noverify -in "$PROFILE" -out "$RUNNER_TEMP/provisioning-profile.plist"
           python - "$RUNNER_TEMP/provisioning-profile.plist" "$RUNNER_TEMP/provisioning-profile.json" "$RUNNER_TEMP" <<'PY'

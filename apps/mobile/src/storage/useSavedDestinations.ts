@@ -1,45 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { router, useFocusEffect } from "expo-router";
-import { Alert } from "react-native";
-import { queueSavedDestinationIds, readSavedDestinationIds } from "./savedDestinationsStorage";
-import { SavedDestinationsStore } from "./savedDestinationsStore";
-import { readSession } from "./sessionStorage";
-import { favoriteAction } from "./favoriteAccess";
-
-const stores = new Map<string, SavedDestinationsStore>();
-function storeFor(userId: string) {
-  let store = stores.get(userId);
-  if (!store) {
-    store = new SavedDestinationsStore(() => readSavedDestinationIds(userId), (ids) => queueSavedDestinationIds(userId, ids));
-    stores.set(userId, store);
-  }
-  return store;
-}
-
-export function showFavoriteSignInPrompt() {
-  Alert.alert("Sign in to save favorites", "Create an account or sign in to save your favorite destinations and view them later.", [
-    { text: "Not now", style: "cancel" },
-    { text: "Sign in", onPress: () => router.push("/(tabs)/profile/sign-in") },
-  ]);
-}
-
-export function useSavedDestinations() {
-  const [userId, setUserId] = useState<string | null>(null);
-  const [authResolved, setAuthResolved] = useState(false);
-  const [savedState, setSavedState] = useState<{ userId: string | null; ids: Set<string> }>({ userId: null, ids: new Set() });
-  const refresh = useCallback(() => { void readSession().then((session) => setUserId(session?.user.id ?? null)).catch(() => setUserId(null)).finally(() => setAuthResolved(true)); }, []);
-  useEffect(() => {
-    if (!userId) { setSavedState({ userId: null, ids: new Set() }); return; }
-    const store = storeFor(userId);
-    setSavedState({ userId, ids: store.snapshot() });
-    const unsubscribe = store.subscribe((ids) => setSavedState({ userId, ids }));
-    void store.refresh().catch(() => undefined);
-    return unsubscribe;
-  }, [userId]);
-  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
-  const toggle = useCallback((id: string) => {
-    if (favoriteAction(userId) === "sign-in" || !userId) { showFavoriteSignInPrompt(); return; }
-    void storeFor(userId).toggle(id).catch(() => undefined);
-  }, [userId]);
-  return { savedIds: savedState.userId === userId ? savedState.ids : new Set<string>(), toggle, refresh, isAuthenticated: !!userId, authResolved };
-}
+import { router, useFocusEffect } from "expo-router"; import { Alert } from "react-native";
+import { readSession } from "./sessionStorage"; import { favoriteAction } from "./favoriteAccess"; import { savedRepositoryFor } from "./savedRepository";
+export function showFavoriteSignInPrompt(returnTo: import("../features/auth/signInIntent").ProtectedRoute="/(tabs)/profile") { Alert.alert("Sign in to save favorites", "Create an account or sign in to save your favorites and view them later.", [{text:"Not now",style:"cancel"},{text:"Sign in",onPress:()=>router.push({pathname:"/(tabs)/profile/sign-in",params:{returnTo}})}]); }
+export function useSavedDestinations(){const[userId,setUserId]=useState<string|null>(null);const[authResolved,setAuthResolved]=useState(false);const[savedIds,setSavedIds]=useState(new Set<string>());const refresh=useCallback(()=>{void readSession().then(s=>setUserId(s?.user.id??null)).catch(()=>setUserId(null)).finally(()=>setAuthResolved(true));},[]);useFocusEffect(refresh);useEffect(()=>{if(!userId){setSavedIds(new Set());return;}const repo=savedRepositoryFor(userId);setSavedIds(repo.snapshot().destinationIds);const unsubscribe=repo.subscribe(v=>setSavedIds(v.destinationIds));void repo.refresh();return unsubscribe;},[userId]);const toggle=useCallback((id:string)=>{if(favoriteAction(userId) === "sign-in"||!userId){showFavoriteSignInPrompt("/saved");return;}void savedRepositoryFor(userId).toggleDestination(id).catch(()=>undefined);},[userId]);return{savedIds,toggle,refresh,isAuthenticated:!!userId,authResolved};}

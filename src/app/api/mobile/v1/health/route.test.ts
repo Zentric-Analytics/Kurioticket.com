@@ -54,11 +54,11 @@ test("mobile health reports only the staging public classification", async () =>
   process.env.DUFFEL_API_MODE = "test";
   process.env.ALLOW_SANDBOX_PROVIDERS = "true";
   process.env.DUFFEL_API_KEY = "configured-test-credential";
-  const payload = await (await GET()).json() as { data: { environment: string; releaseReadiness: { commitSha: string; sandboxTravelSafe: boolean; emailPolicyRestricted: boolean } } };
+  const payload = await (await GET()).json() as { data: { environment: string; releaseReadiness: { commitSha: string; releaseTimestamp: string; applicationVersion: string | null; sandboxTravelSafe: boolean; emailPolicyRestricted: boolean } } };
   assert.equal(payload.data.environment, "staging");
-  assert.deepEqual(payload.data.releaseReadiness, {
-    commitSha: "a".repeat(40),
-    sandboxTravelSafe: true,
-    emailPolicyRestricted: true,
-  });
+  assert.equal(payload.data.releaseReadiness.commitSha, "a".repeat(40));
+  assert.match(payload.data.releaseReadiness.releaseTimestamp, /^\d{4}-\d{2}-\d{2}T/);
+  assert.equal(payload.data.releaseReadiness.applicationVersion, process.env.npm_package_version?.trim() || null);
+  assert.equal(payload.data.releaseReadiness.sandboxTravelSafe, true);
+  assert.equal(payload.data.releaseReadiness.emailPolicyRestricted, true);
 });

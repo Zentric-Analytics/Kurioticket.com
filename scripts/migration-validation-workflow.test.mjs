@@ -49,6 +49,13 @@ test("workflow always schedules and retains the conclusive required check", () =
   assert.match(workflow, /if: always\(\)/u);
 });
 
+test("workflow runs both representative upgrade validators", () => {
+  assert.match(workflow, /Verify Issue 3 upgrade from representative legacy data/u);
+  assert.match(workflow, /node scripts\/validate-four-system-upgrade\.mjs/u);
+  assert.match(workflow, /Verify Issue 4 security upgrade from representative legacy data/u);
+  assert.match(workflow, /node scripts\/verify-issue4-security-upgrade\.mjs/u);
+});
+
 test("the applicability decision does not execute pull-request classifier code", () => {
   assert.doesNotMatch(
     workflow,
@@ -74,6 +81,7 @@ test("package, lockfile, workflow, and validation-script changes run full valida
     "scripts/check-prisma-migration-timestamps.mjs",
     "scripts/deploy-render-migrations.mjs",
     "scripts/run-render-migrations.mjs",
+    "scripts/verify-issue4-security-upgrade.mjs",
     "scripts/verify-production-schema.mjs",
   ]) {
     assert.equal(isMigrationValidationPath(relevantPath), true, relevantPath);

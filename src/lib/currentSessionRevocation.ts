@@ -1,10 +1,10 @@
-export async function revokeCurrentSessionRecord() {
+export async function revokeCurrentAccountSession() {
   try {
     await fetch("/api/account/security/sessions/current/revoke", {
       method: "POST",
       credentials: "same-origin",
     });
   } catch {
-    // Sign-out should continue even if record-only revocation cannot be reached.
+    // Sign-out should continue even if server revocation cannot be reached.
   }
 }

@@ -10,88 +10,64 @@ import {
   View,
 } from "react-native";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
-import { FlowIcon } from "../flow/FlowIcon";
-import { flowColors } from "../flow/flowStyles";
+import { flowColors, useFlowTheme } from "../flow/flowStyles";
+import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
+import { popularDestinationStayNavigation } from "./homepageCardNavigation";
 
-export const popularDestinationStays = [
-  {
-    id: "ng-dubai",
-    city: "Dubai",
-    country: "United Arab Emirates",
-    image: {
-      uri: "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    },
-  },
-  {
-    id: "ng-london",
-    city: "London",
-    country: "United Kingdom",
-    image: {
-      uri: "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    },
-  },
-  {
-    id: "ng-johannesburg",
-    city: "Johannesburg",
-    country: "South Africa",
-    image: {
-      uri: "https://images.unsplash.com/photo-1604633193983-5ad0f0f9d4f8?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-accra",
-    city: "Accra",
-    country: "Ghana",
-    image: {
-      uri: "https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-nairobi",
-    city: "Nairobi",
-    country: "Kenya",
-    image: {
-      uri: "https://images.unsplash.com/photo-1611348586804-61bf6c080437?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-istanbul",
-    city: "Istanbul",
-    country: "Türkiye",
-    image: {
-      uri: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-  {
-    id: "ng-paris",
-    city: "Paris",
-    country: "France",
-    image: {
-      uri: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=90",
-    },
-  },
-] as const;
+export { popularDestinationStays } from "./PopularDestinationStaysData";
+import { popularDestinationStays } from "./PopularDestinationStaysData";
+
+// src/app/page.tsx DestinationCard at the mobile breakpoint: 17.25rem wide,
+// an 18rem image region, and a 4.5rem footer region.
+export const POPULAR_STAY_LAYOUT = {
+  cardWidth: 276,
+  minCardWidth: 260,
+  maxCardWidth: 292,
+  viewportReveal: 99,
+  imageHeight: 288,
+  ctaHeight: 72,
+  gap: 16,
+  radius: 16,
+  sideInset: 16,
+  nextCardVisible: 67,
+} as const;
+
+const { ctaHeight: CTA_HEIGHT } = POPULAR_STAY_LAYOUT;
 
 export function PopularDestinationStays() {
+  const ft = useFlowTheme();
   const { width } = useWindowDimensions();
+  const cardWidth = Math.min(
+    POPULAR_STAY_LAYOUT.maxCardWidth,
+    Math.max(
+      POPULAR_STAY_LAYOUT.minCardWidth,
+      width - POPULAR_STAY_LAYOUT.viewportReveal,
+    ),
+  );
+  const imageHeight =
+    cardWidth *
+    (POPULAR_STAY_LAYOUT.imageHeight / POPULAR_STAY_LAYOUT.cardWidth);
   const { savedIds, toggle } = useSavedDestinations();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const cardWidth = Math.min(280, Math.max(230, width * 0.7));
-
   return (
     <View
       collapsable={false}
       testID="popular-destination-stays"
       style={styles.section}
     >
-      <Text accessibilityRole="header" style={styles.heading}>
+      <Text
+        accessibilityRole="header"
+        style={[styles.heading, { color: ft.colors.textPrimary }]}
+      >
         Popular destination stays
       </Text>
       <ScrollView
+        testID="popular-destination-stays-rail"
         horizontal
         nestedScrollEnabled
+        directionalLockEnabled={false}
         removeClippedSubviews={false}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.carousel}
@@ -102,21 +78,40 @@ export function PopularDestinationStays() {
           return (
             <Pressable
               key={destination.id}
+              testID={`popular-stay-card-${destination.id}`}
               accessibilityRole="button"
-              accessibilityLabel={`Explore hotel stays in ${destination.city}, ${destination.country}`}
+              accessibilityLabel={`Explore stays in ${destination.city}, ${destination.country}`}
               onPress={() =>
-                router.push({
-                  pathname: "/hotels",
-                  params: { destination: destination.city },
-                })
+                router.push(popularDestinationStayNavigation(destination))
               }
               style={({ pressed }) => [
                 styles.card,
-                { width: cardWidth },
+                {
+                  width: cardWidth,
+                  height: imageHeight + CTA_HEIGHT,
+                  backgroundColor: ft.colors.card,
+                  borderColor: ft.colors.border,
+                  shadowColor: ft.colors.shadow,
+                  shadowOpacity: ft.theme.dark ? 0.18 : 0.1,
+                  elevation: ft.theme.dark ? 0 : 3,
+                },
                 pressed && styles.cardPressed,
               ]}
             >
-              <View style={styles.cardSurface}>
+              <View
+                style={[styles.imageFrame, { height: imageHeight }]}
+                testID={`popular-stay-image-${destination.id}`}
+              >
+                {imageFailed ? (
+                  <View
+                    accessibilityLabel={`${destination.city} image unavailable`}
+                    testID={`popular-stay-image-fallback-${destination.id}`}
+                    style={[
+                      styles.imageFallback,
+                      { backgroundColor: ft.colors.neutralImage },
+                    ]}
+                  />
+                ) : null}
                 <ImageBackground
                   accessibilityIgnoresInvertColors
                   accessibilityLabel={`${destination.city}, ${destination.country}`}
@@ -136,29 +131,60 @@ export function PopularDestinationStays() {
                   }}
                   style={styles.image}
                   imageStyle={styles.imageCorners}
+                />
+                <AndroidFavoriteButton
+                  saved={saved}
+                  label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    toggle(destination.id);
+                  }}
+                  style={styles.heart}
+                />
+                <View pointerEvents="none" style={styles.copy}>
+                  <Text style={styles.city}>{destination.city}</Text>
+                  <Text style={styles.country}>{destination.country}</Text>
+                </View>
+              </View>
+              <View
+                style={[
+                  styles.ctaSection,
+                  { backgroundColor: ft.colors.surface },
+                ]}
+                testID={`popular-stay-cta-${destination.id}`}
+              >
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Explore stays in ${destination.city}, ${destination.country}`}
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    router.push(popularDestinationStayNavigation(destination));
+                  }}
+                  style={({ pressed }) => [
+                    styles.ctaPill,
+                    {
+                      backgroundColor: ft.colors.raised,
+                      borderColor: ft.colors.border,
+                      shadowColor: ft.colors.shadow,
+                      shadowOpacity: ft.theme.dark ? 0.18 : 0.1,
+                      elevation: ft.theme.dark ? 0 : 1,
+                    },
+                    pressed && [
+                      styles.ctaPressed,
+                      {
+                        backgroundColor: ft.theme.dark
+                          ? ft.colors.status
+                          : ft.colors.page,
+                      },
+                    ],
+                  ]}
                 >
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
-                    accessibilityState={{ selected: saved }}
-                    hitSlop={8}
-                    onPress={(event) => {
-                      event.stopPropagation();
-                      toggle(destination.id);
-                    }}
-                    style={({ pressed }) => [
-                      styles.heart,
-                      saved && styles.heartSaved,
-                      pressed && styles.heartPressed,
-                    ]}
+                  <Text
+                    style={[styles.ctaText, { color: ft.colors.textPrimary }]}
                   >
-                    <FlowIcon name="heart" color="white" size={22} />
-                  </Pressable>
-                  <View pointerEvents="none" style={styles.copy}>
-                    <Text style={styles.city}>{destination.city}</Text>
-                    <Text style={styles.country}>{destination.country}</Text>
-                  </View>
-                </ImageBackground>
+                    Explore stays
+                  </Text>
+                </Pressable>
               </View>
             </Pressable>
           );
@@ -169,78 +195,98 @@ export function PopularDestinationStays() {
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 14, marginTop: 4 },
+  section: { gap: 24, marginTop: 4 },
   heading: {
-    color: flowColors.navy,
     fontSize: 21,
     lineHeight: 27,
     fontWeight: "800",
   },
-  carousel: { gap: 14, paddingBottom: 8, paddingRight: 34 },
+  carousel: {
+    gap: POPULAR_STAY_LAYOUT.gap,
+    paddingBottom: 8,
+    paddingLeft: 2,
+    paddingRight: 34,
+  },
   card: {
-    height: 350,
-    borderRadius: 20,
-    backgroundColor: "#DCE5F3",
-    shadowColor: "#10254D",
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 6,
-  },
-  cardPressed: {
-    transform: [{ scale: 0.985 }],
-  },
-  cardSurface: {
-    flex: 1,
-    borderRadius: 20,
+    borderRadius: POPULAR_STAY_LAYOUT.radius,
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
     overflow: "hidden",
   },
-  image: { flex: 1, justifyContent: "flex-end", padding: 16 },
-  imageCorners: { borderRadius: 20 },
+  cardPressed: { opacity: 0.96 },
+  imageFrame: {
+    width: "100%",
+    position: "relative",
+  },
+  image: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+  },
+  imageFallback: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  imageCorners: { borderTopLeftRadius: 16, borderTopRightRadius: 16 },
   heart: {
     position: "absolute",
-    top: 14,
-    right: 14,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.46)",
-    backgroundColor: "rgba(255,255,255,0.24)",
-    alignItems: "center",
-    justifyContent: "center",
+    zIndex: 2,
+    top: 12,
+    right: 12,
   },
-  heartSaved: {
-    borderColor: "rgba(255,255,255,0.72)",
-    backgroundColor: "rgba(6,76,247,0.92)",
-  },
-  heartPressed: { opacity: 0.76, transform: [{ scale: 0.94 }] },
   copy: {
+    position: "absolute",
     zIndex: 1,
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(2, 15, 42, 0.55)",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    bottom: 16,
+    left: 16,
+    right: 16,
+    gap: 1,
   },
   city: {
-    color: "white",
-    fontSize: 25,
-    lineHeight: 30,
+    color: flowColors.white,
+    fontSize: 20,
+    lineHeight: 25,
     fontWeight: "900",
-    letterSpacing: -0.35,
-    textShadowColor: "rgba(0,0,0,0.75)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    letterSpacing: -0.25,
+    textShadowColor: "rgba(15, 23, 42, 0.55)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12,
   },
   country: {
-    color: "white",
-    fontSize: 13,
+    color: flowColors.white,
+    fontSize: 14,
     lineHeight: 19,
     fontWeight: "600",
-    letterSpacing: 0.15,
-    textShadowColor: "rgba(0,0,0,0.75)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    opacity: 0.95,
+    textShadowColor: "rgba(15, 23, 42, 0.55)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12,
+  },
+  ctaSection: {
+    width: "100%",
+    height: CTA_HEIGHT,
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  ctaPill: {
+    minWidth: 156,
+    height: 40,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowOpacity: 0.1,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
+  },
+  ctaPressed: { transform: [{ scale: 0.98 }] },
+  ctaText: {
+    fontSize: 15,
+    lineHeight: 18,
+    fontWeight: "700",
   },
 });

@@ -1,0 +1,39 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const panel = readFileSync("src/features/flow/CarSearchPanel.tsx", "utf8");
+const pickers = readFileSync("src/features/flow/CarSearchPickers.tsx", "utf8");
+const dates = readFileSync("src/features/flow/DateRangeSheet.tsx", "utf8");
+const ageSheet = panel.slice(panel.indexOf("function AgeSheet"), panel.indexOf("const styles"));
+
+test("rental date and time backdrops cancel drafts while Done commits", () => {
+  assert.match(pickers, /<DateRangeSheet[^>]+onDone=\{onDone\} onCancel=\{onCancel\}/);
+  assert.match(dates, /StyleSheet\.absoluteFill[^\n]+onPress=\{onCancel\}/);
+  assert.match(dates, /onPress=\{\(\) => onDone\(draftStart,draftEnd\)\}/);
+  assert.match(pickers, /accessibilityLabel="Cancel time changes" onPress=\{onCancel\}/);
+  assert.match(dates, /onRequestClose=\{onCancel\}/);
+  assert.match(pickers, /onRequestClose=\{onCancel\}/);
+  for (const label of ["Cancel time changes"]) {
+    const start = pickers.indexOf(`accessibilityLabel="${label}"`);
+    const end = pickers.indexOf("/>", start);
+    assert.doesNotMatch(pickers.slice(start, end), /onDone/);
+  }
+});
+
+test("driver age backdrop and sheet are siblings and close without confirming", () => {
+  const backdrop = ageSheet.indexOf('accessibilityLabel="Close driver age picker"');
+  const sheet = ageSheet.indexOf("<View accessibilityViewIsModal");
+
+  assert.ok(backdrop >= 0 && sheet > backdrop);
+  assert.match(ageSheet, /<View style=\{styles\.modalRoot\}><Pressable[^>]+onPress=\{onClose\}\/?>/);
+  assert.match(ageSheet, /<SafeAreaView[^>]+pointerEvents="box-none"><View accessibilityViewIsModal/);
+  assert.match(ageSheet, /onRequestClose=\{onClose\}/);
+  assert.doesNotMatch(ageSheet.slice(ageSheet.indexOf("<Modal"), sheet), /<Pressable[^>]*>\s*<Pressable/);
+});
+
+test("driver age Done remains the only draft commit path", () => {
+  assert.match(ageSheet, /<PrimaryButton label="Done" icon=\{null\} disabled=\{draftAge === undefined\} onPress=\{\(\) => \{ if \(draftAge !== undefined\) onConfirm\(draftAge\); \}\}\/>/);
+  const backdrop = ageSheet.slice(ageSheet.indexOf('accessibilityLabel="Close driver age picker"'), ageSheet.indexOf("/>", ageSheet.indexOf('accessibilityLabel="Close driver age picker"')));
+  assert.doesNotMatch(backdrop, /onConfirm/);
+});

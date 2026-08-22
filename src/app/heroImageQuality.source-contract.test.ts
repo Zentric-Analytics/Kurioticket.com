@@ -14,18 +14,18 @@ const imageTagsUsing = (source: string, expression: string) =>
 
 describe("hero image quality source contracts", () => {
   it("uses a dedicated, hero-sized Cars source while retaining the SUV card source", () => {
-    const heroUrl = new URL(carsHeroImage);
     const suvCardUrl = new URL(tripStyleCards[1].image);
 
-    assert.match(heroUrl.pathname, /photo-1533473359331-0135ef1b58bf/);
-    assert.ok(Number(heroUrl.searchParams.get("w")) >= 2400);
-    assert.ok(Number(heroUrl.searchParams.get("q")) >= 90);
+    assert.equal(
+      carsHeroImage,
+      "/images/premium/cars/kurioticket-cars-hero-coastal-convertible-001.jpg",
+    );
     assert.equal(suvCardUrl.searchParams.get("w"), "1200");
     assert.equal(suvCardUrl.searchParams.get("q"), "80");
     assert.doesNotMatch(carsPageSource, /tripStyleCards\[1\]\.image/);
   });
 
-  it("keeps both Cars hero Image components responsive, prioritized, and quality 92", () => {
+  it("keeps both Cars hero Image components responsive, prioritized, and full quality", () => {
     const heroImages = imageTagsUsing(carsPageSource, "carsHeroImage");
 
     assert.equal(heroImages.length, 2);
@@ -33,18 +33,36 @@ describe("hero image quality source contracts", () => {
       assert.match(image, /\bfill\b/);
       assert.match(image, /\bpriority\b/);
       assert.match(image, /sizes="100vw"/);
-      assert.match(image, /quality=\{92\}/);
+      assert.match(image, /quality=\{100\}/);
       assert.doesNotMatch(image, /\b(?:blur|unoptimized)\b|image-rendering/);
     }
   });
 
-  it("keeps Cars hero dimensions and search positioning unchanged", () => {
+  it("keeps the mobile Cars photograph clean instead of darkening or color-filtering it", () => {
+    const mobileHero = carsPageSource.slice(
+      carsPageSource.indexOf(
+        'className="relative isolate z-20 min-h-[24.25rem]',
+      ),
+      carsPageSource.indexOf(
+        'className="relative hidden overflow-visible pb-44 sm:block',
+      ),
+    );
+
+    assert.doesNotMatch(mobileHero, /brightness-|saturate-|contrast-/);
+    assert.doesNotMatch(mobileHero, /from-slate-950|via-slate-950|to-slate-950/);
+  });
+
+  it("keeps Cars hero dimensions while protecting the finalized lower search positions", () => {
     assert.match(carsPageSource, /min-h-\[24\.25rem\]/);
-    assert.match(carsPageSource, /min-h-\[32rem\].*lg:min-h-\[36rem\]/);
-    assert.match(carsPageSource, /absolute inset-x-0 bottom-\[-23rem\] z-30/);
+    assert.match(carsPageSource, /min-h-\[25rem\].*lg:min-h-\[27rem\]/);
+    assert.match(carsPageSource, /absolute inset-x-0 bottom-\[-24\.5rem\] z-30/);
     assert.match(
       carsPageSource,
-      /absolute inset-x-0 bottom-\[-52px\] z-30 lg:bottom-\[-56px\]/,
+      /absolute inset-x-0 bottom-\[-126px\] z-30 lg:bottom-\[-130px\]/,
+    );
+    assert.doesNotMatch(
+      carsPageSource,
+      /bottom-\[-84px\]|lg:bottom-\[-88px\]|bottom-\[-100px\]|lg:bottom-\[-104px\]/,
     );
   });
 
@@ -60,12 +78,18 @@ describe("hero image quality source contracts", () => {
     assert.doesNotMatch(heroImage, /\b(?:blur|unoptimized)\b|image-rendering/);
   });
 
-  it("keeps homepage hero dimensions and SearchTabs positioning unchanged", () => {
+  it("aligns the 3rem mobile product row with the hero boundary without changing desktop", () => {
     assert.match(
       homepageSource,
       /min-h-\[420px\].*sm:min-h-\[550px\].*lg:min-h-\[610px\]/,
     );
-    assert.match(homepageSource, /bottom-\[-360px\] z-30 sm:hidden/);
+    assert.match(homepageSource, /data-testid="mobile-homepage-hero"/);
+    assert.match(homepageSource, /top-\[calc\(100%-3rem\)\] z-30 sm:hidden/);
+    assert.match(
+      homepageSource,
+      /pt-\[max\(1\.75rem,calc\(var\(--mobile-search-card-height\)_-_1\.25rem\)\)\]/,
+    );
+    assert.match(homepageSource, /--mobile-search-card-height[\s\S]*sm:pt-24.*lg:pt-28/);
     assert.match(
       homepageSource,
       /bottom-\[-52px\] z-30 hidden sm:block lg:bottom-\[-56px\]/,

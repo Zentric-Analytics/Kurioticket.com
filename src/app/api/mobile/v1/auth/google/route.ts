@@ -1,10 +1,16 @@
 import { OAuth2Client } from "google-auth-library";
 import { NextResponse } from "next/server";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
-import { getGoogleClientId } from "@/lib/env";
+import { getMobileGoogleClientId } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
 import { createMobileSession } from "@/lib/mobile-auth";
 import { canUseStagingGoogle } from "@/lib/previewTesterAccess";
+import { createMobileTwoFactorChallenge } from "@/lib/mobile-two-factor";
+import {
+  logMobileGoogleClaimsRejected,
+  logMobileGoogleVerificationPassed,
+  logMobileGoogleVerificationRejected,
+} from "@/lib/mobileGoogleVerificationDiagnostics";
 
 export const runtime = "nodejs";
 
@@ -19,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: genericError }, { status: 400 });
   }
 
-  const audience = getGoogleClientId().trim();
+  const audience = getMobileGoogleClientId();
   if (!audience) return NextResponse.json({ error: "Google sign-in is temporarily unavailable." }, { status: 503 });
 
   try {
@@ -35,15 +41,30 @@ export async function POST(request: Request) {
   try {
     const ticket = await googleClient.verifyIdToken({ idToken, audience });
     payload = ticket.getPayload();
-  } catch {
+  } catch (error) {
+    logMobileGoogleVerificationRejected(error);
     return NextResponse.json({ error: genericError }, { status: 401 });
   }
 
   const email = payload?.email?.toLowerCase().trim();
+  const claimChecks = {
+    subjectPresent: Boolean(payload?.sub),
+    emailPresent: Boolean(email),
+    emailVerified: payload?.email_verified === true,
+    noncePresent: typeof payload?.nonce === "string" && payload.nonce.length > 0,
+    nonceMatches: payload?.nonce === nonce,
+  };
   if (!payload?.sub || !email || payload.email_verified !== true || payload.nonce !== nonce) {
+    logMobileGoogleClaimsRejected(claimChecks);
     return NextResponse.json({ error: genericError }, { status: 401 });
   }
-  if (!(await canUseStagingGoogle(email, payload.email_verified === true))) return NextResponse.json({ error: "Preview access is restricted." }, { status: 403 });
+  logMobileGoogleVerificationPassed();
+  if (!(await canUseStagingGoogle(email, payload.email_verified === true))) {
+    return NextResponse.json(
+      { error: "Preview access is restricted.", code: "PREVIEW_ACCESS_REQUIRED" },
+      { status: 403 },
+    );
+  }
 
   try {
     const user = await getOrCreateGoogleUser({
@@ -52,10 +73,14 @@ export async function POST(request: Request) {
       name: payload.name || null,
       image: payload.picture || null,
     });
-    if (!user || user.status !== "ACTIVE") {
+    if (!user || !user.emailVerified || user.status !== "ACTIVE") {
       return NextResponse.json({ error: "This account is not available. Please contact support." }, { status: 403 });
     }
 
+    const settings = await getPrisma().userSecuritySettings.findUnique({ where: { userId: user.id }, select: { twoFactorEnabled: true } });
+    if (settings?.twoFactorEnabled) {
+      return NextResponse.json(await createMobileTwoFactorChallenge(user.id, "GOOGLE"), { status: 202 });
+    }
     const session = await createMobileSession(user.id, "google");
     return NextResponse.json({
       session,

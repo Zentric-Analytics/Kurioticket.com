@@ -1,0 +1,173 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const carsPageSource = readFileSync(
+  new URL("./page.tsx", import.meta.url),
+  "utf8",
+);
+const homepageSource = readFileSync(
+  new URL("../page.tsx", import.meta.url),
+  "utf8",
+);
+const searchBarSource = carsPageSource.slice(
+  carsPageSource.indexOf("function CarsSearchBar"),
+  carsPageSource.indexOf("function CarsMobilePickers"),
+);
+const timeFieldSource = carsPageSource.slice(
+  carsPageSource.indexOf("function TimeRangeField"),
+  carsPageSource.indexOf("function SearchCell"),
+);
+const rentalDatesSource = carsPageSource.slice(
+  carsPageSource.indexOf("function RentalDatesField"),
+  carsPageSource.indexOf("function TimeRangeField"),
+);
+
+test("mobile Cars card uses the refined radius and compact Cars identity", () => {
+  assert.match(searchBarSource, /rounded-\[15px\]/);
+  assert.doesNotMatch(searchBarSource, /rounded-\[1\.5rem\]/);
+  assert.match(
+    searchBarSource,
+    /className="flex items-center sm:-mb-0\.5">[\s\S]*?<CarFront[\s\S]*?className="h-5 w-5 text-\[#075EE8\]"[\s\S]*?\{t\("cars"\)\}/,
+  );
+  assert.match(searchBarSource, /sm:rounded-\[1\.35rem\]/);
+});
+
+test("Cars keeps one screen-reader heading while the mobile hero stays text-free", () => {
+  assert.equal(
+    carsPageSource.match(/t\("carsDesktopHeroTitle"\)/g)?.length,
+    1,
+  );
+  assert.match(
+    carsPageSource,
+    /<h1 className="sr-only">\{t\("carsDesktopHeroTitle"\)\}<\/h1>/,
+  );
+  assert.equal(carsPageSource.match(/<h1\b/g)?.length, 1);
+  assert.doesNotMatch(carsPageSource, /cars-mobile-search-heading/);
+  assert.doesNotMatch(carsPageSource, /text-balance drop-shadow/);
+  assert.doesNotMatch(carsPageSource, /t\("searchRentalCarsEveryPartTrip"\)/);
+  assert.match(carsPageSource, /bottom-\[-24\.5rem\]/);
+  assert.doesNotMatch(carsPageSource, /bottom-\[-23rem\]/);
+  assert.match(carsPageSource, /pt-\[26\.5rem\] sm:pt-0/);
+});
+
+test("mobile pickup and conditional return launchers lead values with MapPin and retain picker actions", () => {
+  assert.match(
+    searchBarSource,
+    /onClick=\{\(\) => openMobilePicker\("pickupLocation"\)\}[\s\S]*?<MapPin[\s\S]*?h-4 w-4 shrink-0 text-slate-500[\s\S]*?values\.pickupLocation/,
+  );
+  assert.match(
+    searchBarSource,
+    /values\.returnToDifferentLocation \? \([\s\S]*?onClick=\{\(\) => openMobilePicker\("dropoffLocation"\)\}[\s\S]*?<MapPin[\s\S]*?h-4 w-4 shrink-0 text-slate-500[\s\S]*?values\.dropoffLocation/,
+  );
+});
+
+test("rental dates keep Calendar and their dynamic summary left-aligned on mobile", () => {
+  assert.match(
+    rentalDatesSource,
+    /className="[^"]*items-center justify-start gap-2[^"]*sm:justify-between[^"]*"/,
+  );
+  assert.ok(
+    rentalDatesSource.indexOf("<Calendar") <
+      rentalDatesSource.indexOf("{dateSummary}"),
+  );
+  assert.match(
+    rentalDatesSource,
+    /<Calendar[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/,
+  );
+  assert.match(
+    rentalDatesSource,
+    /<ChevronDown[\s\S]*?className=\{`hidden h-4 w-4[\s\S]*?sm:block/,
+  );
+});
+
+test("time keeps its Clock across breakpoints, hides only the mobile chevron, and retains desktop behavior", () => {
+  assert.ok(
+    timeFieldSource.indexOf("<Clock") <
+      timeFieldSource.indexOf("{timeSummary}"),
+  );
+  assert.match(timeFieldSource, /className="h-4 w-4 shrink-0 text-slate-500"/);
+  assert.match(
+    timeFieldSource,
+    /<ChevronDown[\s\S]*?hidden h-4 w-4[\s\S]*?sm:block/,
+  );
+  assert.match(timeFieldSource, /onClick=\{onToggle\}/);
+  assert.match(timeFieldSource, /aria-expanded=\{isOpen\}/);
+  assert.match(timeFieldSource, /data-cars-desktop-popover="times"/);
+});
+
+test("mobile Driver Age leads its dynamic value with UserRound and retains its launcher chevron", () => {
+  const driverAgeFieldSource = searchBarSource.slice(
+    searchBarSource.indexOf('label={t("carsSearch.driverAgeLabel")}'),
+    searchBarSource.indexOf('type="submit"'),
+  );
+  const mobileLauncherSource = driverAgeFieldSource.slice(
+    driverAgeFieldSource.indexOf("<button"),
+    driverAgeFieldSource.indexOf("</button>") + "</button>".length,
+  );
+
+  assert.match(
+    mobileLauncherSource,
+    /onClick=\{\(\) => openMobilePicker\("driverAge"\)\}/,
+  );
+  assert.ok(
+    mobileLauncherSource.indexOf("<UserRound") <
+      mobileLauncherSource.indexOf("values.driverAge"),
+  );
+  assert.match(
+    mobileLauncherSource,
+    /<UserRound[\s\S]*?aria-hidden="true"[\s\S]*?className="h-4 w-4 shrink-0 text-slate-500"/,
+  );
+  assert.match(mobileLauncherSource, /flex min-w-0 flex-1 items-center gap-2/);
+  assert.match(mobileLauncherSource, /className="truncate"/);
+  assert.match(
+    mobileLauncherSource,
+    /values\.driverAge === defaultDriverAge[\s\S]*?t\("carsSearch\.driverAgeAnyAgeRange"\)[\s\S]*?: getDriverAgeOptionLabel\(values\.driverAge\)/,
+  );
+  assert.ok(
+    mobileLauncherSource.indexOf("values.driverAge") <
+      mobileLauncherSource.indexOf("<ChevronDown"),
+  );
+  assert.doesNotMatch(mobileLauncherSource, /rounded-full|bg-\[#004BB8\]/);
+  assert.ok(
+    driverAgeFieldSource.indexOf('label={t("carsSearch.driverAgeLabel")}') <
+      driverAgeFieldSource.indexOf("<UserRound"),
+  );
+  assert.match(searchBarSource, /type="submit"/);
+  assert.match(
+    searchBarSource,
+    /\{isSubmitting \? t\("searchingCars"\) : t\("searchCars"\)\}/,
+  );
+});
+
+test("Driver Age icon leads both launcher values and mobile picker uses the shared draft dialog", () => {
+  const driverAgeFieldSource = searchBarSource.slice(
+    searchBarSource.indexOf('label={t("carsSearch.driverAgeLabel")}'),
+    searchBarSource.indexOf('type="submit"'),
+  );
+  const desktopLauncherSource = driverAgeFieldSource.slice(
+    driverAgeFieldSource.indexOf(
+      "<button",
+      driverAgeFieldSource.indexOf("</button>") + 1,
+    ),
+    driverAgeFieldSource.lastIndexOf("</button>") + "</button>".length,
+  );
+  const driverAgePickerSource = searchBarSource.slice(
+    searchBarSource.lastIndexOf('activeMobilePicker === "driverAge"'),
+  );
+
+  assert.match(desktopLauncherSource, /className="hidden h-7[\s\S]*?sm:flex/);
+  assert.match(desktopLauncherSource, /ChevronDown/);
+  assert.match(desktopLauncherSource, /UserRound/);
+  assert.match(searchBarSource, /<MobileCarDriverAgePickerDialog/);
+  assert.match(
+    driverAgePickerSource,
+    /onCommit=\{\(age\) => updateValue\("driverAge", age\)\}/,
+  );
+  assert.doesNotMatch(driverAgePickerSource, /UserRound/);
+});
+
+test("homepage Cars SearchTabs remains independently owned", () => {
+  assert.match(homepageSource, /<SearchTabs/);
+  assert.doesNotMatch(homepageSource, /function CarsSearchBar/);
+});

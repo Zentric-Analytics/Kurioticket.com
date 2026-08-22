@@ -60,6 +60,7 @@ import {
 } from "@/lib/flights/desktopCompactFilter";
 import { calculateCompactFilterMaxHeight } from "@/lib/hotels/desktopCompactFilter";
 import { shouldShowDesktopStickySearch } from "@/lib/search/desktopStickySearch";
+import { lockDesktopPageScroll } from "@/lib/search/desktopPageScrollLock";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
 const desktopCompactFilterTopOffset = 116;
@@ -642,7 +643,7 @@ export function HotelResultsExperience({
       };
     }
 
-    stickyHotelScrollLockRef.current = lockBodyScroll();
+    stickyHotelScrollLockRef.current = lockDesktopPageScroll();
     const handleViewportChange = (event: MediaQueryListEvent) => {
       if (!event.matches) closeDesktopStickyHotelSearch();
     };
@@ -1469,7 +1470,7 @@ export function HotelResultsExperience({
 
   function renderDesktopMinimizedHotelSearchBar() {
     const compactSectionClass =
-      "focus-ring flex h-[56px] min-w-0 items-center gap-2.5 border-r border-slate-200/85 px-3 text-start transition-colors hover:bg-slate-50/80 focus-visible:bg-slate-50/90";
+      "flex h-[56px] min-w-0 items-center gap-2.5 border-r border-slate-200/85 px-3 text-start outline-none transition-colors hover:bg-slate-50/80 focus:outline-none focus-visible:outline-none";
     const compactValueClass =
       "min-w-0 truncate whitespace-nowrap text-[0.86rem] font-medium leading-5 text-slate-800";
     const destination =
@@ -1489,7 +1490,7 @@ export function HotelResultsExperience({
             className={compactSectionClass}
           >
             <MapPin
-              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              className="h-4 w-4 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className={compactValueClass}>{destination}</span>
@@ -1504,7 +1505,7 @@ export function HotelResultsExperience({
             className={compactSectionClass}
           >
             <Calendar
-              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              className="h-4 w-4 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className={compactValueClass}>
@@ -1521,7 +1522,7 @@ export function HotelResultsExperience({
             className={compactSectionClass}
           >
             <Users
-              className="h-4 w-4 shrink-0 text-[#004BB8]"
+              className="h-4 w-4 shrink-0 text-slate-500"
               aria-hidden="true"
             />
             <span className={compactValueClass}>
@@ -1554,10 +1555,7 @@ export function HotelResultsExperience({
       <div
         className="fixed inset-0 z-[1100] hidden bg-slate-950/30 backdrop-blur-[2px] lg:block"
         role="presentation"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget)
-            closeDesktopStickyHotelSearch();
-        }}
+        onPointerDown={closeDesktopStickyHotelSearch}
       >
         <div className="flex min-h-dvh items-start justify-center px-6 pb-10 pt-24 xl:pt-28">
           <div
@@ -1566,7 +1564,7 @@ export function HotelResultsExperience({
             role="dialog"
             aria-modal="true"
             aria-labelledby="sticky-hotel-search-title"
-            onMouseDown={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
             className="w-full max-w-4xl rounded-2xl border border-slate-200/90 bg-[#fbfaf7]/95 p-4 text-start shadow-[0_30px_90px_-32px_rgba(15,23,42,0.72)] ring-1 ring-white/80 backdrop-blur-md"
           >
             <div className="mb-4 flex items-start justify-between gap-4 border-b border-slate-200/80 pb-3">

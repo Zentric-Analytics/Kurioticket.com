@@ -2,12 +2,20 @@
 
 This record contains no secret values. It describes the read-only state observed before the first Preview iOS build.
 
+## Completed internal-testing evidence
+
+The first controlled iOS Preview delivery completed on August 4, 2026. The immutable application source was `6bbef26ac6a3abd4652bc7d9d974bf21b6dd315e` and the resulting EAS build was `5f537da8-356d-453b-9bf8-47623286657c`. The signed IPA is Kurioticket Preview `0.3.0 (3)`, bundle identifier `com.kurioticket.app.preview`, runtime `preview-0.3.0`, channel `preview`, and fingerprint `025c15ba554e644a51c68db62beeee9957afac4e`. Its independently recorded SHA-256 digest is `3593e9444c213a4d06218b7416295e0e73d3685266d2021cdccebf66e3f238ea`.
+
+The protected submission workflow run `30969940339` scheduled EAS submission `ad1e2182-1c0b-4f7a-b70d-c4f33cb8ba86` for App Store Connect application `6797447471`. Apple accepted and processed build upload `455dc5a2-5ea7-41b9-aa9a-a0c0dff352e5`. The build was assigned only to the internal group `Kurioticket Preview Internal`; automatic group distribution and External Testing were not enabled. The authorized KURIOTICKET LLC account holder installed the build through TestFlight and reported the controlled staging QA checklist passed, including launch, authentication/session behavior, primary travel surfaces, staging isolation, sandbox-provider controls, disabled external checkout, safe-area/keyboard behavior, and absence of crashes or native errors. No live booking or payment was performed.
+
+Production iOS remained untouched and no public App Store or Beta App Review submission occurred. Future iOS Preview binaries must use a build number greater than `3`.
+
 ## Version and delivery evidence
 
 - The live EAS build inventory contained Android `0.2.0 (8)` Preview and Production builds and no iOS build. No build or runtime using `0.3.0` was present.
 - The `preview` channel and branch contain historical runtime `0.2.0` updates with messages beginning `Automated preview update from dev`.
 - Git history identifies the former Preview GitHub Actions workflow as their source. Commit `e25b6d9` removed its `eas update` and Android `eas build` steps.
-- Current mobile GitHub Actions workflows are validation-only. The EAS Workflows page is unconfigured. No remaining repository or EAS server-side workflow capable of automatic mobile delivery was found.
+- Preview delivery has since moved to the independent Render Preview Release Service. GitHub Actions remains validation/Production governance only; TestFlight operations are reconciled by exact SHA and EAS build ID in the durable release ledger.
 
 Preview keeps marketing version `0.3.0` and uses isolated runtime `preview-0.3.0`. Production marketing version is also `0.3.0`, with isolated runtime `production-0.3.0`; neither can receive legacy runtime `0.2.0` updates.
 

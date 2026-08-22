@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { translations } from "../../../lib/i18n/en";
 
 const bookingSource = readFileSync(
   new URL("./HotelDetailsBookingPanel.tsx", import.meta.url),
@@ -10,6 +11,101 @@ const clientSource = readFileSync(
   new URL("../HotelDetailsClient.tsx", import.meta.url),
   "utf8",
 );
+
+test("guided estimates and standalone provider-backed prices use truthful labels", () => {
+  assert.match(
+    clientSource,
+    /mode === "guided"[\s\S]*\?\s*t\("deals\.guided\.hotelDetails\.sourceEstimate"\)[\s\S]*enTranslations\["deals\.guided\.hotelDetails\.sourceEstimate"\][\s\S]*:\s*t\("hotelDetails\.providerPrice"\)/,
+  );
+  assert.equal(
+    translations["deals.guided.hotelDetails.sourceEstimate"],
+    "Source estimate",
+  );
+  assert.doesNotMatch(clientSource, /\?\s*"Source estimate"/);
+});
+
+test("uses selected-room semantics for both guided Hotel continuation paths", () => {
+  assert.equal(
+    translations["deals.guided.hotelDetails.continueReview"],
+    "Continue with this room to review",
+  );
+  assert.equal(
+    translations["deals.guided.hotelDetails.continueCars"],
+    "Continue with this room to cars",
+  );
+});
+
+test("preserves guided stay selection behavior and truthful accessible labeling", () => {
+  for (const contract of [
+    'getGuidedDealsDownstreamProducts(guidedSearch.mode, "hotel")[0]',
+    't("deals.guided.hotelDetails.continueCars")',
+    't("deals.guided.hotelDetails.continueReview")',
+    'kind: "guided-room"',
+    "label: guidedActionLabel",
+    "accessibleLabel: `${guidedActionLabel}:",
+    "onGuidedSelection?.(guidedSelection)",
+  ])
+    assert.ok(clientSource.includes(contract), contract);
+
+  assert.match(bookingSource, /getDealsGuidedConfirmationActionId\("hotel"\)/);
+  assert.ok(
+    clientSource.includes(
+      "accessibleLabel: `${guidedActionLabel}: ${selectedRoom?.name ?? hotel.name}, ${hotel.name}`",
+    ),
+  );
+  assert.ok(
+    !clientSource.includes(
+      "accessibleLabel: `${guidedActionLabel}: ${hotel.name}${roomType",
+    ),
+  );
+});
+
+test("frames guided room content as a three-state planning experience", () => {
+  assert.equal(
+    translations["deals.guided.hotelDetails.roomInformation"],
+    "Room information",
+  );
+  assert.equal(
+    translations["deals.guided.hotelDetails.selectionRequiredTitle"],
+    "Select a room",
+  );
+  assert.ok(clientSource.includes('guidedPriceState === "selection-required"'));
+  assert.ok(clientSource.includes('"room-options-unavailable"'));
+  assert.ok(clientSource.includes("getGuidedHotelRoomState"));
+  assert.ok(bookingSource.includes("unavailablePresentation?.title"));
+  assert.ok(bookingSource.includes("unavailablePresentation?.body"));
+  assert.match(
+    bookingSource,
+    /disabled=\{!action\.enabled \|\| action\.pending\}/,
+  );
+  assert.match(bookingSource, /aria-describedby=/);
+
+  const selectionRequiredCopy = [
+    translations["deals.guided.hotelDetails.selectionRequiredTitle"],
+    translations["deals.guided.hotelDetails.selectionRequiredBody"],
+    translations["deals.guided.hotelDetails.selectRoomToContinue"],
+  ].join(" ");
+  assert.doesNotMatch(
+    selectionRequiredCopy,
+    /price unavailable|live room rate|planning estimate is unavailable/i,
+  );
+});
+
+test("does not emit exact-room claims in guided Hotel copy", () => {
+  const guidedCopy = Object.entries(translations)
+    .filter(([key]) => key.startsWith("deals.guided.hotel"))
+    .map(([, value]) => value)
+    .join("\n");
+
+  for (const misleadingClaim of [
+    "Choose this room",
+    "current live room rate",
+    "Hotel room added to your Trip Plan",
+    "save this room",
+  ]) {
+    assert.doesNotMatch(guidedCopy, new RegExp(misleadingClaim, "i"));
+  }
+});
 
 test("renders one restrained flight-style outer booking card", () => {
   assert.match(
@@ -237,4 +333,38 @@ test("retains every booking prop at the Hotel Details integration boundary", () 
     "providerDisclaimerText=",
   ])
     assert.ok(bookingCall.includes(contract), contract);
+});
+
+test("hides only the internal static catalogue provider label", () => {
+  const providerDisplay = clientSource.slice(
+    clientSource.indexOf("const providerText ="),
+    clientSource.indexOf("const providerUnavailableText ="),
+  );
+
+  assert.match(providerDisplay, /hotel\.provider/);
+  assert.match(providerDisplay, /hotel\.dataSource !== "demo"/);
+  assert.match(
+    providerDisplay,
+    /hotel\.provider !== "Kurioticket static catalogue"/,
+  );
+  assert.match(
+    providerDisplay,
+    /`\$\{t\("providedBy"\)\} \$\{hotel\.provider\}`/,
+  );
+  assert.match(providerDisplay, /:\s*"";/);
+  assert.match(clientSource, /providerText=\{providerText\}/);
+  assert.match(bookingSource, /providerText: string;/);
+  assert.match(bookingSource, /\{providerText \? \(/);
+});
+
+test("keeps the static catalogue estimated-price planning warning", () => {
+  assert.ok(
+    clientSource.includes(
+      '"Prices shown are estimated for trip planning. Live booking availability will be introduced before launch."',
+    ),
+  );
+  assert.match(
+    clientSource,
+    /providerUnavailableText=\{\s*mode === "guided" \? "" : providerUnavailableText\s*\}/,
+  );
 });

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { isPublicTripBookingStatus, listUserTripBookings } from "@/services/tripBookingService";
+import { requireWebApiSession } from "@/lib/web-api-auth";
+import { isPublicMyTripStatus, listUserMyTrips } from "@/services/myTripService";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -15,17 +15,17 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
 
-  if (status && !isPublicTripBookingStatus(status)) {
+  if (status && !isPublicMyTripStatus(status)) {
     return NextResponse.json(
       { error: "Invalid trip status.", allowedStatuses: ["upcoming", "past", "cancelled"] },
       { status: 400 },
     );
   }
 
-  const statusFilter = status && isPublicTripBookingStatus(status) ? status : undefined;
+  const statusFilter = status && isPublicMyTripStatus(status) ? status : undefined;
 
   try {
-    const result = await listUserTripBookings(session.user.id, statusFilter);
+    const result = await listUserMyTrips(session.user.id, statusFilter);
     return NextResponse.json(result);
   } catch (error) {
     console.error("[dashboard-trips:get]", error);

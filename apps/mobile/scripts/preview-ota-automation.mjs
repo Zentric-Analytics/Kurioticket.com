@@ -7,6 +7,9 @@ const FULL_SHA = /^[a-f0-9]{40}$/;
 const REPOSITORY = "Zentric-Analytics/Kurioticket.com";
 const PREVIEW_MESSAGE = /^Automated safe Preview OTA for ([a-f0-9]{40}); audit run ([0-9]+)$/;
 const FORMATTED_PREVIEW_MESSAGE = /^"Automated safe Preview OTA for ([a-f0-9]{40}); audit run ([0-9]+)" \(.+\)$/;
+const CROSS_PLATFORM_PREVIEW_MESSAGE = /^Automatic Preview (Android|iOS) OTA for ([a-f0-9]{40}); audit run ([0-9]+)$/;
+const FORMATTED_CROSS_PLATFORM_PREVIEW_MESSAGE = /^"Automatic Preview (Android|iOS) OTA for ([a-f0-9]{40}); audit run ([0-9]+)" \(.+\)$/;
+const INDEPENDENT_PREVIEW_MESSAGE = /^Independent Preview all OTA for ([a-f0-9]{40})$/;
 const PREVIEW_BRANCH = "preview";
 const PREVIEW_RUNTIME = "preview-0.3.0";
 
@@ -42,8 +45,16 @@ function parseGeneratedMessage(value) {
   requireValue(typeof value === "string", "EAS update message is malformed.");
   const raw = PREVIEW_MESSAGE.exec(value);
   const formatted = FORMATTED_PREVIEW_MESSAGE.exec(value);
-  if (raw || formatted) return { targetSha: (raw ?? formatted)[1], auditRunId: (raw ?? formatted)[2] };
-  requireValue(!value.includes("Automated safe Preview OTA"), "Generated Preview update message is malformed.");
+  if (raw || formatted) return { platform: "android", targetSha: (raw ?? formatted)[1], auditRunId: (raw ?? formatted)[2] };
+  const crossPlatform = CROSS_PLATFORM_PREVIEW_MESSAGE.exec(value);
+  const formattedCrossPlatform = FORMATTED_CROSS_PLATFORM_PREVIEW_MESSAGE.exec(value);
+  if (crossPlatform || formattedCrossPlatform) {
+    const match = crossPlatform ?? formattedCrossPlatform;
+    return { platform: match[1].toLowerCase(), targetSha: match[2], auditRunId: match[3] };
+  }
+  const independent = INDEPENDENT_PREVIEW_MESSAGE.exec(value);
+  if (independent) return { platform: "all", targetSha: independent[1], auditRunId: null };
+  requireValue(!value.includes("Preview") || !value.includes("OTA for"), "Generated Preview update message is malformed.");
   return null;
 }
 
@@ -67,22 +78,45 @@ export function normalizePreviewUpdatePage(value) {
   });
 }
 
-export function inspectPreviewUpdateHistory(value, targetSha) {
+export function canonicalPreviewOtaRemoteIdentity(entriesByPlatform) {
+  requireValue(entriesByPlatform && typeof entriesByPlatform === "object" && !Array.isArray(entriesByPlatform), "Preview OTA remote identity input is malformed.");
+  const parts = [];
+  for (const platform of ["ios", "android"]) {
+    const entries = entriesByPlatform[platform];
+    if (entries === undefined) continue;
+    requireValue(Array.isArray(entries) && entries.length > 0, `Preview OTA ${platform} remote identity is missing.`);
+    const groups = new Set(entries.map((entry) => {
+      requireValue(entry && typeof entry === "object" && !Array.isArray(entry), `Preview OTA ${platform} entry is malformed.`);
+      requireValue(typeof entry.group === "string" && entry.group.trim().length > 0, `Preview OTA ${platform} group is missing.`);
+      const entryPlatforms = Array.isArray(entry.platforms) ? entry.platforms : [entry.platform].filter(Boolean);
+      requireValue(entryPlatforms.includes(platform), `Preview OTA ${platform} entry has mismatched platform identity.`);
+      return entry.group;
+    }));
+    requireValue(groups.size === 1, `Preview OTA ${platform} remote groups conflict.`);
+    parts.push(`${platform}=${[...groups][0]}`);
+  }
+  requireValue(parts.length > 0, "Preview OTA remote identity is empty.");
+  return parts.join(",");
+}
+
+export function inspectPreviewUpdateHistory(value, targetSha, platform = "android", expectedRuntime = PREVIEW_RUNTIME) {
   requireValue(FULL_SHA.test(targetSha ?? ""), "Replay target SHA is invalid.");
+  requireValue(platform === "android" || platform === "ios", "Replay platform is invalid.");
   requireValue(Array.isArray(value), "EAS update history is malformed.");
   const matching = value.filter((entry) => {
     requireValue(entry && typeof entry === "object" && !Array.isArray(entry), "Normalized EAS update history entry is malformed.");
     requireValue(typeof entry.branch === "string" && typeof entry.runtimeVersion === "string", "Normalized EAS update identity is malformed.");
     requireValue(Array.isArray(entry.platforms), "Normalized EAS update platforms are malformed.");
-    if (entry.branch !== PREVIEW_BRANCH || entry.runtimeVersion !== PREVIEW_RUNTIME || !entry.platforms.includes("android")) return false;
-    return parseGeneratedMessage(entry.message)?.targetSha === targetSha;
+    if (entry.branch !== PREVIEW_BRANCH || entry.runtimeVersion !== expectedRuntime || !entry.platforms.includes(platform)) return false;
+    const generated = parseGeneratedMessage(entry.message);
+    return generated?.targetSha === targetSha && (generated.platform === platform || generated.platform === "all");
   });
   return {
     alreadyPublished: matching.length > 0,
     matchingUpdates: matching.length,
     branch: PREVIEW_BRANCH,
     runtimeVersion: PREVIEW_RUNTIME,
-    platform: "android",
+    platform,
     historyState: value.length === 0 ? "empty" : "queried",
   };
 }
@@ -110,20 +144,33 @@ export function validateStagingReadiness({ health, config, targetSha }) {
   return { ready: true, commitSha: targetSha, externalCheckoutDisabled: true, sandboxTravelSafe: true, emailPolicyRestricted: true };
 }
 
+export function validateStagingVisualResponse({ response, html, targetSha, viewport }) {
+  requireValue(response?.ok === true, `Staging ${viewport} page returned HTTP ${response?.status ?? "unknown"}.`);
+  requireValue(typeof html === "string" && html.length > 0, `Staging ${viewport} page response is empty.`);
+  requireValue(response.headers?.get?.("cache-control")?.toLowerCase().includes("no-store"), `Staging ${viewport} HTML is cacheable across deployments.`);
+  requireValue(html.includes(`data-staging-commit="${targetSha}"`), `Staging ${viewport} page does not render the target SHA.`);
+  requireValue(html.includes("Staging build"), `Staging ${viewport} page is missing the developer build marker.`);
+  return { viewport, rendered: true, cacheSafe: true };
+}
+
 export async function waitForStaging({ origin, targetSha, attempts = 20, delayMs = 30000, fetchImpl = fetch, sleep = (ms) => new Promise((done) => setTimeout(done, ms)) }) {
   requireValue(origin === "https://staging.kurioticket.com", "Unexpected staging origin.");
   requireValue(Number.isInteger(attempts) && attempts > 0 && attempts <= 30, "Staging retry count is invalid.");
   let lastError = new Error("Staging readiness was not checked.");
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
-      const [healthResponse, configResponse] = await Promise.all([
-        fetchImpl(`${origin}/api/mobile/v1/health`, { cache: "no-store" }),
-        fetchImpl(`${origin}/api/mobile/v1/config`, { cache: "no-store" }),
+      const [healthResponse, configResponse, desktopResponse, mobileResponse] = await Promise.all([
+        fetchImpl(`${origin}/api/mobile/v1/health`, { cache: "no-store", signal: AbortSignal.timeout(30_000) }),
+        fetchImpl(`${origin}/api/mobile/v1/config`, { cache: "no-store", signal: AbortSignal.timeout(30_000) }),
+        fetchImpl(`${origin}/`, { cache: "no-store", signal: AbortSignal.timeout(30_000), headers: { "user-agent": "Kurioticket-Web-Delivery-Probe/Desktop" } }),
+        fetchImpl(`${origin}/`, { cache: "no-store", signal: AbortSignal.timeout(30_000), headers: { "user-agent": "Kurioticket-Web-Delivery-Probe/Mobile" } }),
       ]);
       requireValue(healthResponse.ok, `Staging health returned HTTP ${healthResponse.status}.`);
       requireValue(configResponse.ok, `Staging config returned HTTP ${configResponse.status}.`);
       const result = validateStagingReadiness({ health: await healthResponse.json(), config: await configResponse.json(), targetSha });
-      return { ...result, attempt };
+      const desktop = validateStagingVisualResponse({ response: desktopResponse, html: await desktopResponse.text(), targetSha, viewport: "desktop" });
+      const mobile = validateStagingVisualResponse({ response: mobileResponse, html: await mobileResponse.text(), targetSha, viewport: "mobile" });
+      return { ...result, attempt, visual: { desktop, mobile } };
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       if (attempt < attempts) await sleep(delayMs);
@@ -154,7 +201,7 @@ async function main() {
   }
   if (command === "replay") {
     const history = JSON.parse(readFileSync(process.env.PREVIEW_UPDATE_HISTORY, "utf8"));
-    const result = inspectPreviewUpdateHistory(history, targetSha);
+    const result = inspectPreviewUpdateHistory(history, targetSha, process.env.PREVIEW_PLATFORM ?? "android");
     writeFileSync(process.env.PREVIEW_REPLAY_OUTPUT, `${JSON.stringify(result, null, 2)}\n`);
     if (process.env.GITHUB_OUTPUT) writeFileSync(process.env.GITHUB_OUTPUT, `already_published=${result.alreadyPublished}\n`, { flag: "a" });
     return;

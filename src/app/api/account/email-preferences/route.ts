@@ -1,9 +1,8 @@
 import { createHash } from "node:crypto";
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { z, ZodError } from "zod";
 import type { InputJsonValue } from "@prisma/client/runtime/client";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import {
   emailPreferenceLabels,
@@ -44,8 +43,6 @@ export const emailPreferencesSchema = z
   .object({
     receiveOptionalEmails: z.boolean(),
     priceAlerts: z.boolean(),
-    savedTripReminders: z.boolean(),
-    routeWatchUpdates: z.boolean(),
     travelInspiration: z.boolean(),
     productUpdates: z.boolean(),
     dealsRecommendations: z.boolean(),
@@ -54,7 +51,8 @@ export const emailPreferencesSchema = z
 
 async function getAuthenticatedUserId() {
   if (authenticatedUserForTesting) return (await authenticatedUserForTesting())?.id || null;
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   return session?.user?.id || null;
 }
 
@@ -178,12 +176,11 @@ async function sendEmailPreferencesUpdatedConfirmation(input: {
   });
 }
 
-export async function GET() {
-  const userId = await getAuthenticatedUserId();
+export async function handleEmailPreferencesGet(userId: string | null, prisma = getRoutePrisma()) {
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
   try {
-    const preferences = await getRoutePrisma().travelPreferences.findUnique({
+    const preferences = await prisma.travelPreferences.findUnique({
       where: { userId },
       select: { notificationPreferences: true },
     });
@@ -195,13 +192,11 @@ export async function GET() {
   }
 }
 
-export async function PATCH(request: Request) {
-  const userId = await getAuthenticatedUserId();
+export async function handleEmailPreferencesPatch(userId: string | null, request: Request, prisma = getRoutePrisma()) {
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
   try {
     const payload = emailPreferencesSchema.parse(await readJson(request));
-    const prisma = getRoutePrisma();
     const existingPreferences = await prisma.travelPreferences.findUnique({
       where: { userId },
       select: { notificationPreferences: true, updatedAt: true },
@@ -258,6 +253,9 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Unable to save email preferences." }, { status: 500 });
   }
 }
+
+export async function GET() { return handleEmailPreferencesGet(await getAuthenticatedUserId()); }
+export async function PATCH(request: Request) { return handleEmailPreferencesPatch(await getAuthenticatedUserId(), request); }
 
 export const __emailPreferencesRouteTest = {
   setPrismaForTesting(prisma: EmailPreferencesRoutePrisma | null) {

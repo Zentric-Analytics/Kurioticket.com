@@ -1,14 +1,14 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { ZodError } from "zod";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { serializeUserProfile, userProfileSchema } from "@/lib/userProfile";
 
 export const runtime = "nodejs";
 
 async function getAuthenticatedUserId() {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   const userId = session?.user?.id;
 
   return userId || null;

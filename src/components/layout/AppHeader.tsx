@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import { signOut, useSession } from "next-auth/react";
-import { revokeCurrentSessionRecord } from "@/lib/currentSessionRevocation";
+import { revokeCurrentAccountSession } from "@/lib/currentSessionRevocation";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -33,13 +33,13 @@ import {
   Plane,
   Scale,
   Search,
-  Clock,
   ShieldCheck,
   Tag,
   UserCircle,
   X,
 } from "lucide-react";
 
+import { PackagesIcon } from "@/components/icons/PackagesIcon";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 import { cn } from "@/lib/utils";
@@ -85,26 +85,9 @@ type AppHeaderProps = {
 };
 
 const signedInAccountMenuItems = [
-  {
-    href: "/dashboard/account",
-    labelKey: "accountMenu.myAccount.label",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/saved?from=account",
-    labelKey: "accountMenu.savedTrips.label",
-    icon: SavedHeartIcon,
-  },
-  {
-    href: "/dashboard/alerts?from=account",
-    labelKey: "accountMenu.priceAlerts.label",
-    icon: Tag,
-  },
-  {
-    href: "/recent-searches",
-    labelKey: "accountMenu.recentSearches.label",
-    icon: Clock,
-  },
+  { href: "/dashboard/trips", labelKey: "accountMenu.myTrips.label", icon: LayoutDashboard },
+  { href: "/saved?from=account", labelKey: "accountMenu.savedRecent.label", icon: SavedHeartIcon },
+  { href: "/dashboard/alerts?from=account", labelKey: "accountMenu.priceAlerts.label", icon: Tag },
 ];
 
 const mobileSignedInAccountMenuItems = [
@@ -419,9 +402,9 @@ export function AppHeader({
         icon: Car,
       },
       {
-        href: "/deals",
+        href: "/packages",
         label: t.deals,
-        icon: Tag,
+        icon: PackagesIcon,
       },
       {
         href: "/destinations",
@@ -464,8 +447,8 @@ export function AppHeader({
       return pathname.startsWith("/cars");
     }
 
-    if (href === "/deals") {
-      return pathname.startsWith("/deals");
+    if (href === "/packages") {
+      return pathname.startsWith("/packages");
     }
 
     if (href === "/destinations") {
@@ -503,7 +486,7 @@ export function AppHeader({
       "/flights",
       "/hotels",
       "/cars",
-      "/deals",
+      "/packages",
     ]);
 
     return navItems.filter((item) => desktopPrimaryHrefs.has(item.href));
@@ -520,7 +503,7 @@ export function AppHeader({
       "/flights",
       "/hotels",
       "/cars",
-      "/deals",
+      "/packages",
     ]);
 
     return navItems.filter(
@@ -539,21 +522,16 @@ export function AppHeader({
     }
 
     return mobilePrimaryNavItems;
-    // hideMobileSecondaryNavLinks is retained for the current header API even though
-    // mobile secondary links now live in the overlay drawer instead of this rail.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hideMobileCategoryTabs,
-    hideMobileSecondaryNavLinks,
     hideTravelNav,
-    mobileHeroOverlay,
     mobilePrimaryNavItems,
     shouldHideDesktopTravelNavLinks,
     simpleHeader,
   ]);
 
   const mobileTravelDrawerHrefs = useMemo(
-    () => new Set(["/flights", "/hotels", "/cars", "/deals"]),
+    () => new Set(["/flights", "/hotels", "/cars", "/packages"]),
     [],
   );
 
@@ -716,7 +694,7 @@ export function AppHeader({
     setMobileMenuOpen(false);
 
     try {
-      await revokeCurrentSessionRecord();
+      await revokeCurrentAccountSession();
       await signOut({ redirect: false, callbackUrl: "/" });
       window.location.assign("/");
     } catch {
@@ -728,7 +706,7 @@ export function AppHeader({
     <>
       <header
         className={cn(
-          "relative z-50 border-b border-[#D8E1EC] bg-white text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
+          "relative z-50 border-b border-[#D8E1EC] bg-white pt-[env(safe-area-inset-top)] text-[#021C2B] shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
           flushMobileBottom &&
             "border-b-0 shadow-none sm:border-b sm:shadow-[0_8px_24px_rgba(2,28,43,0.05)]",
           flushDesktopBottom && "sm:border-b-0 sm:shadow-none",
@@ -1142,7 +1120,13 @@ export function AppHeader({
           ) : null}
 
           {visibleMobilePrimaryNavItems.length > 0 ? (
-            <nav className="md:hidden" aria-label="Primary">
+            <nav
+              className={cn(
+                "md:hidden",
+                hideMobileSecondaryNavLinks && "hidden sm:block",
+              )}
+              aria-label="Primary"
+            >
               <div className="pb-1 pt-2.5">
                 <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {visibleMobilePrimaryNavItems.map((item) => {

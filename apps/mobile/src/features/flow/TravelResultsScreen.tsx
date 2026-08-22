@@ -9,6 +9,9 @@ import { FlowIcon } from "./FlowIcon";
 import { flowColors, flowStyles } from "./flowStyles";
 import { buildFlightPriceAlertPayload, flightAlertPresentation, parseTargetPrice } from "./flightPriceAlertModel";
 import { getRuntimeDiagnostics } from "../../diagnostics/runtimeDiagnostics";
+import { ApprovedResultsScreen } from "../search/ApprovedResultsScreen";
+import { ApprovedCarResultsScreen } from "../search/ApprovedCarResultsScreen";
+import { isMobileProductAvailable, useFeatureAvailability } from "../availability/FeatureAvailability";
 
 type Result = FlightResult | HotelResult | CarResult;
 type Status = "validating" | "loading" | "partial" | "ready" | "empty" | "unavailable" | "error";
@@ -29,9 +32,19 @@ function imageUri(value?: string) {
 }
 
 export function TravelResultsScreen({ product }: { product: Product }) {
+  const { availability, loading } = useFeatureAvailability();
+  if (loading || !isMobileProductAvailable(availability, product)) return <LegacyTravelResultsScreen product={product} />;
+  if (product === "flight" || product === "hotel") return <ApprovedResultsScreen product={product} />;
+  if (product === "car") return <ApprovedCarResultsScreen />;
+  return <LegacyTravelResultsScreen product={product} />;
+}
+
+function LegacyTravelResultsScreen({ product }: { product: Product }) {
+  const { availability, loading: availabilityLoading } = useFeatureAvailability();
+  const productAvailable = isMobileProductAvailable(availability, product);
   const params = useLocalSearchParams<Record<string, string | string[]>>();
   const primitives = [
-    one(params.tripType), one(params.from), one(params.to), one(params.departureDate), one(params.returnDate), one(params.travelers), one(params.adults), one(params.children), one(params.infants), one(params.cabin),
+    one(params.tripType), one(params.origin), one(params.destination), one(params.from), one(params.to), one(params.departureDate), one(params.returnDate), one(params.travelers), one(params.adults), one(params.children), one(params.infants), one(params.cabin), one(params.cabinClass), one(params.currency), one(params.market),
     one(params.destination), one(params.checkIn), one(params.checkOut), one(params.guests), one(params.rooms),
     one(params.pickupLocation), one(params.dropoffLocation), one(params.pickupDate), one(params.pickupTime), one(params.dropoffDate), one(params.dropoffTime), one(params.driverAge),
   ];
@@ -54,6 +67,8 @@ export function TravelResultsScreen({ product }: { product: Product }) {
 
   const load = useCallback((signal: AbortSignal) => {
     const runId = ++sequence.current;
+    if (availabilityLoading) { setResults([]); setMessage(""); setStatus("loading"); return Promise.resolve(); }
+    if (!availabilityLoading && !productAvailable) { setResults([]); setMessage(`${product[0].toUpperCase()}${product.slice(1)} search is temporarily unavailable.`); setStatus("unavailable"); return Promise.resolve(); }
     if (planResult.error) { setResults([]); setMessage(planResult.error); setStatus("validating"); return Promise.resolve(); }
     const payload = JSON.parse(payloadJson) as Record<string, unknown>;
     const requestId = `mobile-${Date.now().toString(36)}-${runId}`;
@@ -80,7 +95,7 @@ export function TravelResultsScreen({ product }: { product: Product }) {
       setMessage(error instanceof TravelApiError ? error.message : "Search failed. Please try again.");
       setStatus(unavailable ? "unavailable" : "error");
     });
-  }, [key, payloadJson, product, retry]);
+  }, [key, payloadJson, product, retry, availabilityLoading, productAvailable]);
 
   useEffect(() => {
     const executionKey = `${key}:${retry}`;
@@ -145,7 +160,7 @@ export function TravelResultsScreen({ product }: { product: Product }) {
     <ScrollView contentContainerStyle={flowStyles.scroll}>
       {status === "loading" ? <View style={styles.loading}><ActivityIndicator color={flowColors.blue} size="large" /><Text style={flowStyles.value}>{loadingCopy}</Text><Text style={flowStyles.meta}>This search will stop automatically if providers do not respond.</Text></View> : null}
       {message ? <Text accessibilityRole="alert" style={styles.notice}>{message}</Text> : null}
-      {flightAlert.visible ? <View style={[styles.track, flowStyles.shadow]}><Text style={flowStyles.sectionTitle}>Track this search</Text><Text style={flowStyles.meta}>Get notified when this flight search reaches your target price.</Text>{alertCurrencies.length > 1 ? <View accessibilityLabel="Choose alert currency" style={styles.currencyRow}>{alertCurrencies.map((currency) => <Pressable key={currency} accessibilityRole="button" accessibilityState={{ selected: alertCurrency === currency }} onPress={() => setSelectedCurrency(currency)} style={[styles.currency, alertCurrency === currency && styles.currencySelected]}><Text>{currency}</Text></Pressable>)}</View> : null}<Pressable accessibilityRole="button" accessibilityLabel="Create price alert" accessibilityState={{ disabled: !alertCurrency }} disabled={!alertCurrency} onPress={() => { if (!alertOpen) { setTargetError(""); setAlertOpen(true); } }} style={[flowStyles.primary, !alertCurrency && styles.disabled]}><Text style={flowStyles.primaryText}>Create price alert</Text></Pressable>{!alertCurrency ? <Text accessibilityRole="alert" style={flowStyles.meta}>{flightResults.length ? "A supported result currency was not available for this search." : "Price alerts require a valid live flight result."}</Text> : null}</View> : null}
+      {flightAlert.visible && availability.priceAlerts ? <View style={[styles.track, flowStyles.shadow]}><Text style={flowStyles.sectionTitle}>Track this search</Text><Text style={flowStyles.meta}>Get notified when this flight search reaches your target price.</Text>{alertCurrencies.length > 1 ? <View accessibilityLabel="Choose alert currency" style={styles.currencyRow}>{alertCurrencies.map((currency) => <Pressable key={currency} accessibilityRole="button" accessibilityState={{ selected: alertCurrency === currency }} onPress={() => setSelectedCurrency(currency)} style={[styles.currency, alertCurrency === currency && styles.currencySelected]}><Text>{currency}</Text></Pressable>)}</View> : null}<Pressable accessibilityRole="button" accessibilityLabel="Create price alert" accessibilityState={{ disabled: !alertCurrency }} disabled={!alertCurrency} onPress={() => { if (!alertOpen) { setTargetError(""); setAlertOpen(true); } }} style={[flowStyles.primary, !alertCurrency && styles.disabled]}><Text style={flowStyles.primaryText}>Create price alert</Text></Pressable>{!alertCurrency ? <Text accessibilityRole="alert" style={flowStyles.meta}>{flightResults.length ? "A supported result currency was not available for this search." : "Price alerts require a valid live flight result."}</Text> : null}</View> : null}
       {status === "validating" ? <State title="Search details need attention" body="Edit the search and keep your entered values." onEdit={editSearch} /> : null}
       {status === "empty" ? <State title="No results for this search" body="Try different dates or adjust the destination." retry={retrySearch} onEdit={editSearch} /> : null}
       {status === "unavailable" ? <State title="Results are temporarily unavailable" body="Please try again." retry={retrySearch} onEdit={editSearch} /> : null}

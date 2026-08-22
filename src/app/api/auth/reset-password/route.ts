@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { resetPasswordSchema } from "@/lib/validation";
 import { resetPasswordWithToken } from "@/services/authService";
+import { deliverSecurityEvent } from "@/services/securityEventService";
 
 export const runtime = "nodejs";
 
@@ -39,6 +40,8 @@ export async function POST(request: Request) {
   if (!reset) {
     return NextResponse.json({ error: "This reset link is invalid or expired. Please request a new password reset email." }, { status: 400 });
   }
+
+  await deliverSecurityEvent({ userId: reset.userId, email: reset.email, securityEventId: reset.securityEventId, title: "Password reset completed", body: "Your Kurioticket password was reset successfully. If this wasn’t you, contact Support immediately." });
 
   return NextResponse.json({ ok: true });
 }

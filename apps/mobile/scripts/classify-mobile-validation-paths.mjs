@@ -23,7 +23,7 @@ export function isMobileRelevantPath(value) {
     file.startsWith("src/shared/") ||
     file.startsWith("src/data/") ||
     file.startsWith(".github/actions/") ||
-    /^\.github\/workflows\/(?:android-|mobile-).+\.ya?ml$/.test(file) ||
+    file.startsWith(".github/workflows/") ||
     exactRootFiles.has(file);
 }
 

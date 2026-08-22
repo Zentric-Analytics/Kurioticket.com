@@ -4,12 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   FormEvent,
-  CSSProperties,
   ReactNode,
   RefObject,
   Suspense,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -25,19 +23,28 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock,
-  RotateCcw,
+  MapPin,
   ShieldCheck,
-  X,
+  UserRound,
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { CarLocationAutocomplete } from "@/components/search/CarLocationAutocomplete";
+import { MobileCarLocationPicker } from "@/components/search/MobileCarLocationPicker";
 import {
   CarsDriverAgePickerContent,
   CarsRentalDatePickerContent,
   CarsTimeRangePickerContent,
+  MobileCarDriverAgePickerDialog,
+  MobileCarTimePickerDialog,
 } from "@/components/search/CarsPickerContent";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import {
+  carsDesktopPopoverClassName,
+  useCarsDesktopPopover,
+} from "@/components/search/useCarsDesktopPopover";
+import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
@@ -236,14 +243,6 @@ function CarsSearchPage() {
   const [values, setValues] = useState<CarsFormValues>(initialValues);
   const [errors, setErrors] = useState<CarsFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasActiveSearch =
-    values.pickupLocation.trim() ||
-    values.pickupDate ||
-    values.dropoffDate ||
-    values.driverAge !== defaultDriverAge ||
-    values.returnToDifferentLocation ||
-    values.dropoffLocation.trim();
-
   const updateValue = <Key extends keyof CarsFormValues>(
     key: Key,
     value: CarsFormValues[Key],
@@ -268,20 +267,6 @@ function CarsSearchPage() {
     }));
   };
 
-  const clearSearch = () => {
-    setValues({
-      pickupLocation: "",
-      pickupDate: "",
-      pickupTime: "10:00",
-      dropoffDate: "",
-      dropoffTime: "10:00",
-      driverAge: defaultDriverAge,
-      returnToDifferentLocation: false,
-      dropoffLocation: "",
-    });
-    setErrors({});
-  };
-
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -297,10 +282,6 @@ function CarsSearchPage() {
     }
 
     const pickupLocation = values.pickupLocation.trim();
-    const dropoffLocation = values.returnToDifferentLocation
-      ? values.dropoffLocation.trim()
-      : pickupLocation;
-
     const params = new URLSearchParams({
       pickupLocation,
       pickupDate: values.pickupDate,
@@ -308,26 +289,59 @@ function CarsSearchPage() {
       dropoffDate: values.dropoffDate,
       dropoffTime: values.dropoffTime,
       driverAge: values.driverAge,
-      dropoffLocation,
     });
 
+    if (values.returnToDifferentLocation) {
+      params.set("dropoffLocation", values.dropoffLocation.trim());
+      params.set("returnToDifferentLocation", "1");
+    }
+
+    const href = `/cars/results?${params.toString()}`;
     setIsSubmitting(true);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     startRouteProgress();
-    router.push(`/cars/results?${params.toString()}`);
+    router.push(href);
   };
+
+  if (isSubmitting) {
+    return (
+      <>
+        <AppHeader
+          flushDesktopBottom
+          flushMobileBottom
+          hideDesktopTravelNav
+          hideMobileCategoryTabs
+        />
+        <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+          <BrandedLoading
+            variant="fullscreen"
+            visual="logoPulse"
+            showProgress={false}
+            className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+            contentClassName="max-w-md text-center"
+            title={t("carsResults.loading.title")}
+            messages={[
+              t("carsResults.loading.checkingCarsAndRates"),
+              t("carsResults.loading.comparingVehiclesAndProviders"),
+              t("carsResults.loading.findingBestAvailableOptions"),
+              t("carsResults.loading.preparingResults"),
+            ]}
+          />
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
       <AppHeader mobileHeroOverlay mobileHeroOverlayLowered />
       <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
+        <h1 className="sr-only">{t("carsDesktopHeroTitle")}</h1>
         <div className="pointer-events-none absolute start-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl sm:max-w-none">
-          <section
-            className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden"
-            aria-labelledby="cars-mobile-search-heading"
-          >
+          <section className="relative isolate z-20 min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
             <div className="absolute inset-0 overflow-hidden">
               <Image
                 src={carsHeroImage}
@@ -335,32 +349,15 @@ function CarsSearchPage() {
                 fill
                 priority
                 sizes="100vw"
-                quality={92}
-                className="object-cover object-[54%_45%] brightness-[1.03] saturate-[1.08] contrast-[1.03]"
+                quality={100}
+                className="object-cover object-[54%_45%]"
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/46 via-slate-950/14 to-slate-950/4" />
-              <div className="absolute inset-y-0 start-0 w-[84%] bg-gradient-to-r from-slate-950/58 via-slate-950/20 to-transparent" />
-              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/30 via-slate-950/8 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/38 via-slate-950/10 to-transparent" />
             </div>
 
-            <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
-              <div className="max-w-[22.5rem] pe-2 text-start text-white">
-                <h1
-                  id="cars-mobile-search-heading"
-                  className="text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.62)]"
-                >
-                  {t("searchRentalCarsEveryPartTrip")}
-                </h1>
-              </div>
-            </div>
-
-            <div className="page-shell absolute inset-x-0 bottom-[-23rem] z-30">
+            <div className="page-shell absolute inset-x-0 bottom-[-24.5rem] z-30">
               <div className="mx-auto max-w-6xl">
                 <CarsSearchBar
                   errors={errors}
-                  hasActiveSearch={Boolean(hasActiveSearch)}
-                  onClearSearch={clearSearch}
                   onSubmit={handleSubmit}
                   isSubmitting={isSubmitting}
                   updateValue={updateValue}
@@ -371,11 +368,8 @@ function CarsSearchPage() {
           </section>
 
           <div className="mx-auto mt-8 w-[min(1180px,calc(100%-32px))] space-y-8 sm:mt-0 sm:w-full md:space-y-10">
-            <section
-              className="relative hidden overflow-visible pb-28 sm:block lg:pb-32"
-              aria-labelledby="cars-search-heading"
-            >
-              <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
+            <section className="relative hidden overflow-visible pb-44 sm:block lg:pb-48">
+              <div className="relative isolate min-h-[25rem] bg-slate-950 lg:min-h-[27rem]">
                 <div className="absolute inset-0 overflow-hidden">
                   <Image
                     src={carsHeroImage}
@@ -383,32 +377,17 @@ function CarsSearchPage() {
                     fill
                     priority
                     sizes="100vw"
-                    quality={92}
-                    className="object-cover object-[56%_45%] brightness-[1.04] saturate-[1.08] contrast-[1.03]"
+                    quality={100}
+                    className="object-cover object-[50%_52%]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-950/62 via-slate-950/22 to-slate-950/6" />
-                  <div className="absolute inset-y-0 start-0 w-[78%] bg-gradient-to-r from-slate-950/70 via-slate-950/28 to-transparent" />
-                  <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/36 via-slate-950/10 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/62 via-slate-950/18 to-transparent" />
+                  <div className="absolute inset-y-0 start-0 w-[52%] bg-gradient-to-r from-white/62 via-white/24 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/12 to-transparent" />
                 </div>
 
-                <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-10 lg:min-h-[36rem] lg:pb-40 lg:pt-14">
-                  <div className="max-w-3xl text-start text-white">
-                    <h1
-                      id="cars-search-heading"
-                      className="max-w-[50rem] text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.3rem]"
-                    >
-                      {t("searchRentalCarsEveryPartTrip")}
-                    </h1>
-                  </div>
-                </div>
-
-                <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
+                <div className="page-shell absolute inset-x-0 bottom-[-126px] z-30 lg:bottom-[-130px]">
                   <div className="mx-auto max-w-6xl">
                     <CarsSearchBar
                       errors={errors}
-                      hasActiveSearch={Boolean(hasActiveSearch)}
-                      onClearSearch={clearSearch}
                       onSubmit={handleSubmit}
                       isSubmitting={isSubmitting}
                       updateValue={updateValue}
@@ -420,7 +399,7 @@ function CarsSearchPage() {
             </section>
 
             <section
-              className="mx-auto max-w-6xl space-y-4 pt-[25rem] sm:pt-0"
+              className="mx-auto max-w-6xl space-y-4 pt-[26.5rem] sm:pt-0"
               aria-labelledby="car-trip-style-heading"
             >
               <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
@@ -530,7 +509,10 @@ function CarsFaqSection() {
   const { dictionary, t } = useCarsLandingTranslations();
 
   return (
-    <section className="mx-auto max-w-6xl space-y-4 px-1" aria-labelledby="cars-faq-heading">
+    <section
+      className="mx-auto max-w-6xl space-y-4 px-1"
+      aria-labelledby="cars-faq-heading"
+    >
       <div className="max-w-2xl">
         <h2
           id="cars-faq-heading"
@@ -593,16 +575,12 @@ function getCarLocationAutocompleteStrings(t: (key: string) => string) {
 
 function CarsSearchBar({
   errors,
-  hasActiveSearch,
-  onClearSearch,
   onSubmit,
   isSubmitting,
   updateValue,
   values,
 }: {
   errors: CarsFormErrors;
-  hasActiveSearch: boolean;
-  onClearSearch: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   isSubmitting: boolean;
   updateValue: <Key extends keyof CarsFormValues>(
@@ -626,13 +604,23 @@ function CarsSearchBar({
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
   const driverAgeWrapRef = useRef<HTMLDivElement | null>(null);
   const driverAgePopoverRef = useRef<HTMLDivElement | null>(null);
-  const searchCardRef = useRef<HTMLElement | null>(null);
   const pickupFieldRef = useRef<HTMLDivElement | null>(null);
+  const dropoffFieldRef = useRef<HTMLDivElement | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
   const [timesOpen, setTimesOpen] = useState(false);
   const [driverAgeOpen, setDriverAgeOpen] = useState(false);
-  const [openDesktopLocation, setOpenDesktopLocation] = useState<"pickup" | "dropoff" | null>(null);
+  const [openDesktopLocation, setOpenDesktopLocation] = useState<
+    "pickup" | "dropoff" | null
+  >(null);
   const [focusedDriverAgeIndex, setFocusedDriverAgeIndex] = useState(0);
+
+  useEffect(() => {
+    if (!values.returnToDifferentLocation) {
+      setOpenDesktopLocation((current) =>
+        current === "dropoff" ? null : current,
+      );
+    }
+  }, [values.returnToDifferentLocation]);
   const driverAgeOptionRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [activeMobilePicker, setActiveMobilePicker] =
     useState<CarsMobilePicker>(null);
@@ -753,7 +741,6 @@ function CarsSearchBar({
     return () => window.clearTimeout(focusId);
   }, [activeMobilePicker]);
 
-
   const toggleDates = () => {
     if (isMobilePickerViewport()) {
       openMobilePicker("dates");
@@ -857,10 +844,7 @@ function CarsSearchBar({
   };
 
   return (
-    <section
-      ref={searchCardRef}
-      className="overflow-visible rounded-[1.5rem] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.35rem] sm:border-slate-200/80 sm:bg-white sm:p-4 sm:shadow-[0_18px_42px_-28px_rgba(15,23,42,0.42)] sm:ring-1 sm:ring-white/70"
-    >
+    <section className="overflow-visible rounded-[15px] border border-white/80 bg-white/95 p-3 pb-[calc(0.9rem+env(safe-area-inset-bottom))] shadow-[0_18px_44px_-18px_rgba(15,23,42,0.30)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.25rem] sm:border-slate-200/80 sm:bg-white sm:p-5 sm:shadow-[0_18px_42px_-24px_rgba(15,23,42,0.30)] sm:ring-1 sm:ring-white/70">
       <form
         onSubmit={onSubmit}
         className="relative flex flex-col gap-3 overflow-visible"
@@ -871,11 +855,11 @@ function CarsSearchBar({
         <input type="hidden" name="pickupTime" value={values.pickupTime} />
         <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
 
-        <div className="hidden items-center sm:flex">
-          <span className="inline-flex items-center gap-2 rounded-lg bg-[#004BB8]/8 px-3.5 py-1.5 text-[0.925rem] font-semibold text-navy shadow-sm ring-1 ring-[#004BB8]/10">
+        <div className="flex items-center sm:-mb-0.5">
+          <span className="inline-flex items-center gap-2 rounded-lg bg-[#075EE8]/8 px-3.5 py-2 text-[16px] font-semibold text-navy shadow-sm ring-1 ring-[#075EE8]/10">
             <CarFront
               aria-hidden="true"
-              className="h-[1.125rem] w-[1.125rem] text-[#004BB8]"
+              className="h-5 w-5 text-[#075EE8]"
               strokeWidth={2.15}
             />
             {t("cars")}
@@ -883,7 +867,14 @@ function CarsSearchBar({
         </div>
 
         <div className="relative z-20 overflow-visible rounded-none border-0 bg-transparent p-0 shadow-none sm:rounded-[1.35rem] sm:bg-white">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-2xl sm:border sm:border-slate-200/85 sm:bg-white lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(6.8rem,0.62fr)_118px] lg:gap-0">
+          <div
+            data-testid="cars-desktop-field-grid"
+            className={`grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-0 sm:rounded-xl sm:border sm:border-slate-200/85 sm:bg-white lg:gap-0 ${
+              values.returnToDifferentLocation
+                ? "lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1.25fr)_minmax(0,1.15fr)_minmax(0,1.15fr)_140px_154px]"
+                : "lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1.3fr)_minmax(0,1.05fr)_140px_154px]"
+            }`}
+          >
             <SearchCell
               divRef={pickupFieldRef}
               label={t("carsSearch.pickupLocationLabel")}
@@ -896,104 +887,116 @@ function CarsSearchBar({
                     ref={pickupLocationLauncherRef}
                     type="button"
                     onClick={() => openMobilePicker("pickupLocation")}
-                    className={`flex h-7 w-full items-center border-none bg-transparent py-0 ps-0 pe-9 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
-                      values.pickupLocation ? "text-slate-950" : "text-slate-400"
-                    }`}
+                    className="flex h-7 w-full items-center border-none bg-transparent py-0 text-start text-[16px] font-semibold focus:outline-none sm:hidden"
                   >
-                    <span className="truncate">
-                      {values.pickupLocation ||
-                        t("carsSearch.pickupLocationPlaceholder")}
+                    <span className="flex min-w-0 items-center gap-2">
+                      <MapPin
+                        aria-hidden="true"
+                        className="h-4 w-4 shrink-0 text-slate-500"
+                      />
+                      <span
+                        className={`truncate ${
+                          values.pickupLocation
+                            ? "text-slate-950"
+                            : "text-slate-400"
+                        }`}
+                      >
+                        {values.pickupLocation ||
+                          t("carsSearch.pickupLocationPlaceholder")}
+                      </span>
                     </span>
                   </button>
-                  <CarLocationAutocomplete
-                    id="pickupLocation"
-                    name="pickupLocation"
-                    value={values.pickupLocation}
-                    onValueChange={(nextValue) =>
-                      updateValue("pickupLocation", nextValue)
-                    }
-                    placeholder={t("carsSearch.pickupLocationPlaceholder")}
-                    inputRef={pickupLocationRef}
-                    inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
-                    presentation="desktop"
-                    fieldAnchorRef={pickupFieldRef}
-                    searchCardRef={searchCardRef}
-                    isOpen={openDesktopLocation === "pickup"}
-                    onOpenChange={(nextOpen) =>
-                      setLocationPopoverOpen("pickup", nextOpen)
-                    }
-                    strings={locationAutocompleteStrings}
-                  />
-
-                  {values.pickupLocation ? (
-                    <button
-                      type="button"
-                      aria-label={t("carsSearch.clearPickupLocation")}
-                      onClick={() => {
-                        updateValue("pickupLocation", "");
-                        pickupLocationRef.current?.focus();
-                      }}
-                      className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
-                    >
-                      <X className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  ) : null}
+                  <div className="hidden min-w-0 items-center gap-2 sm:flex">
+                    <MapPin
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-slate-500"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <CarLocationAutocomplete
+                        id="pickupLocation"
+                        name="pickupLocation"
+                        value={values.pickupLocation}
+                        onValueChange={(nextValue) =>
+                          updateValue("pickupLocation", nextValue)
+                        }
+                        placeholder={t("carsSearch.pickupLocationPlaceholder")}
+                        inputRef={pickupLocationRef}
+                        inputClassName="hidden h-7 w-full border-none bg-transparent py-0 ps-0 text-[16px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8"
+                        presentation="desktop"
+                        isOpen={openDesktopLocation === "pickup"}
+                        onOpenChange={(nextOpen) =>
+                          setLocationPopoverOpen("pickup", nextOpen)
+                        }
+                        strings={locationAutocompleteStrings}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {values.returnToDifferentLocation ? (
-                  <div className="relative">
+                  <div className="relative sm:hidden">
                     <button
                       ref={dropoffLocationLauncherRef}
                       type="button"
                       onClick={() => openMobilePicker("dropoffLocation")}
-                      className={`flex h-7 w-full items-center border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
+                      className={`flex h-7 w-full items-center border-t border-slate-100 bg-transparent py-0 pt-1.5 text-start text-[16px] font-semibold focus:outline-none sm:hidden ${
                         values.dropoffLocation
                           ? "text-slate-950"
                           : "text-slate-400"
                       }`}
                     >
-                      <span className="truncate">
-                        {values.dropoffLocation ||
-                          t("carsSearch.returnLocationPlaceholder")}
+                      <span className="flex min-w-0 items-center gap-2">
+                        <MapPin
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 text-slate-500"
+                        />
+                        <span className="truncate">
+                          {values.dropoffLocation ||
+                            t("carsSearch.returnLocationPlaceholder")}
+                        </span>
                       </span>
                     </button>
-                    <CarLocationAutocomplete
-                      id="dropoffLocation"
-                      name="dropoffLocation"
-                      value={values.dropoffLocation}
-                      onValueChange={(nextValue) =>
-                        updateValue("dropoffLocation", nextValue)
-                      }
-                      placeholder={t("carsSearch.returnLocationPlaceholder")}
-                      inputRef={dropoffLocationRef}
-                      inputClassName="hidden h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block md:text-[15px] lg:h-8 lg:pt-1.5"
-                      presentation="desktop"
-                      fieldAnchorRef={pickupFieldRef}
-                      searchCardRef={searchCardRef}
-                      isOpen={openDesktopLocation === "dropoff"}
-                      onOpenChange={(nextOpen) =>
-                        setLocationPopoverOpen("dropoff", nextOpen)
-                      }
-                      strings={locationAutocompleteStrings}
-                    />
-
-                    {values.dropoffLocation ? (
-                      <button
-                        type="button"
-                        aria-label={t("carsSearch.clearReturnLocation")}
-                        onClick={() => {
-                          updateValue("dropoffLocation", "");
-                          dropoffLocationRef.current?.focus();
-                        }}
-                        className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
-                      >
-                        <X className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    ) : null}
                   </div>
                 ) : null}
               </div>
             </SearchCell>
+
+            {values.returnToDifferentLocation ? (
+              <SearchCell
+                divRef={dropoffFieldRef}
+                label={t("carsSearch.returnLocationLabel")}
+                error={errors.dropoffLocation}
+                className="hidden sm:block sm:border-e sm:border-b sm:border-slate-200/80 lg:border-b-0"
+              >
+                <div className="relative">
+                  <div className="hidden min-w-0 items-center gap-2 sm:flex">
+                    <MapPin
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-slate-500"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <CarLocationAutocomplete
+                        id="dropoffLocationDesktop"
+                        name="dropoffLocation"
+                        value={values.dropoffLocation}
+                        onValueChange={(nextValue) =>
+                          updateValue("dropoffLocation", nextValue)
+                        }
+                        placeholder={t("carsSearch.returnLocationPlaceholder")}
+                        inputRef={dropoffLocationRef}
+                        inputClassName="hidden h-8 w-full border-none bg-transparent py-0 ps-0 text-[15px] font-medium text-slate-950 placeholder:text-slate-400 focus:outline-none sm:block"
+                        presentation="desktop"
+                        isOpen={openDesktopLocation === "dropoff"}
+                        onOpenChange={(nextOpen) =>
+                          setLocationPopoverOpen("dropoff", nextOpen)
+                        }
+                        strings={locationAutocompleteStrings}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </SearchCell>
+            ) : null}
 
             <SearchCell
               label={t("carsSearch.rentalDatesLabel")}
@@ -1006,7 +1009,13 @@ function CarsSearchBar({
                 dropoffDate={values.dropoffDate}
                 isOpen={datesOpen}
                 onClear={clearRentalDates}
-                onDone={() => setDatesOpen(false)}
+                onClose={() => setDatesOpen(false)}
+                onDone={() => {
+                  setDatesOpen(false);
+                  requestAnimationFrame(() =>
+                    datesLauncherRef.current?.focus({ preventScroll: true }),
+                  );
+                }}
                 onNextMonth={() =>
                   setVisibleMonthDate((current) => addMonths(current, 1))
                 }
@@ -1031,13 +1040,10 @@ function CarsSearchBar({
             >
               <TimeRangeField
                 isOpen={timesOpen}
+                onClose={() => setTimesOpen(false)}
                 onToggle={toggleTimes}
                 pickupTime={values.pickupTime}
                 returnTime={values.dropoffTime}
-                onDone={() => {
-                  setTimesOpen(false);
-                  requestAnimationFrame(() => timesLauncherRef.current?.focus({ preventScroll: true }));
-                }}
                 updateValue={updateValue}
                 launcherRef={timesLauncherRef}
                 wrapRef={timeWrapRef}
@@ -1055,12 +1061,21 @@ function CarsSearchBar({
                   onClick={() => openMobilePicker("driverAge")}
                   className="flex h-7 w-full items-center justify-between gap-2 border-none bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 focus:outline-none sm:hidden"
                 >
-                  <span className="truncate">
-                    {values.driverAge === defaultDriverAge
-                      ? t("carsSearch.driverAgeAnyAgeRange")
-                      : getDriverAgeOptionLabel(values.driverAge)}
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    <UserRound
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-slate-500"
+                    />
+                    <span className="truncate">
+                      {values.driverAge === defaultDriverAge
+                        ? t("carsSearch.driverAgeAnyAgeRange")
+                        : getDriverAgeOptionLabel(values.driverAge)}
+                    </span>
                   </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+                  <ChevronDown
+                    className="h-4 w-4 shrink-0 text-slate-500"
+                    aria-hidden="true"
+                  />
                 </button>
                 <button
                   ref={desktopDriverAgeLauncherRef}
@@ -1071,10 +1086,16 @@ function CarsSearchBar({
                   onClick={toggleDriverAge}
                   className="hidden h-7 w-full items-center justify-between gap-2 border-0 bg-transparent p-0 text-start text-[16px] font-semibold text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-[#004BB8]/35 sm:flex md:text-[15px] lg:h-8"
                 >
-                  <span className="truncate">
-                    {values.driverAge === defaultDriverAge
-                      ? t("carsSearch.driverAgeAnyAgeRange")
-                      : getDriverAgeOptionLabel(values.driverAge)}
+                  <span className="flex min-w-0 items-center gap-2">
+                    <UserRound
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0 text-slate-500"
+                    />
+                    <span className="truncate">
+                      {values.driverAge === defaultDriverAge
+                        ? t("carsSearch.driverAgeAnyAge")
+                        : getDriverAgeOptionLabel(values.driverAge)}
+                    </span>
                   </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-150 ${driverAgeOpen ? "rotate-180" : ""}`}
@@ -1085,15 +1106,10 @@ function CarsSearchBar({
                   focusedIndex={focusedDriverAgeIndex}
                   isOpen={driverAgeOpen}
                   launcherRef={desktopDriverAgeLauncherRef}
+                  onClose={() => setDriverAgeOpen(false)}
                   onFocusedIndexChange={setFocusedDriverAgeIndex}
                   onSelect={(age) => {
                     updateValue("driverAge", age);
-                    setDriverAgeOpen(false);
-                    requestAnimationFrame(() =>
-                      desktopDriverAgeLauncherRef.current?.focus({
-                        preventScroll: true,
-                      }),
-                    );
                   }}
                   optionRefs={driverAgeOptionRefs}
                   popoverRef={driverAgePopoverRef}
@@ -1105,7 +1121,7 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl bg-[#004BB8] px-4 text-sm font-bold text-white shadow-md shadow-[#004BB8]/20 enabled:hover:bg-[#021C2B] enabled:active:bg-[#021C2B] disabled:bg-[#004BB8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#004BB8]/20 sm:h-full sm:min-h-[58px] sm:rounded-none sm:rounded-e-2xl sm:border sm:border-s-0 sm:border-[#004BB8]/20 sm:px-5 sm:text-[15px] sm:font-bold sm:shadow-[0_10px_22px_rgba(0,75,184,0.22)] sm:disabled:shadow-[0_10px_22px_rgba(0,75,184,0.22)] lg:h-full"
+                className="focus-ring inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-xl bg-[#075EE8] px-4 text-sm font-bold text-white shadow-md shadow-[#075EE8]/20 enabled:hover:bg-[#004BB8] enabled:active:bg-[#003f9c] disabled:bg-[#075EE8] disabled:opacity-100 disabled:shadow-md disabled:shadow-[#075EE8]/20 sm:mx-[5px] sm:my-[5px] sm:h-[54px] sm:w-[calc(100%-10px)] sm:min-h-0 sm:rounded-[9px] sm:border-0 sm:px-4 sm:text-[15px] sm:shadow-[0_8px_18px_rgba(7,94,232,0.22)]"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
@@ -1115,7 +1131,7 @@ function CarsSearchBar({
           </div>
         </div>
 
-        <div className="relative z-0 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:min-h-9 sm:border-0 sm:bg-transparent sm:px-1 sm:py-0 sm:shadow-none sm:ring-0">
+        <div className="relative z-0 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 sm:min-h-11 sm:rounded-none sm:border-0 sm:border-t sm:border-slate-200/80 sm:bg-transparent sm:px-3 sm:pb-0 sm:pt-3 sm:shadow-none sm:ring-0">
           <label className="focus-within:ring-ring inline-flex min-h-8 cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900 sm:min-h-9">
             <input
               type="checkbox"
@@ -1127,17 +1143,6 @@ function CarsSearchBar({
             />
             {t("carsSearch.differentReturnLocation")}
           </label>
-
-          {hasActiveSearch ? (
-            <button
-              type="button"
-              onClick={onClearSearch}
-              className="focus-ring inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:min-h-9"
-            >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              {t("clearAll")}
-            </button>
-          ) : null}
         </div>
 
         <CarsMobilePickerDialogs
@@ -1162,12 +1167,10 @@ function CarsSearchBar({
           values={values}
           visibleMonthDate={visibleMonthDate}
         />
-
       </form>
     </section>
   );
 }
-
 
 function CarsMobilePickerDialogs({
   activeMobilePicker,
@@ -1218,231 +1221,87 @@ function CarsMobilePickerDialogs({
 
   return (
     <>
-      <FlightMobilePickerShell
+      <MobileCarLocationPicker
         open={activeMobilePicker === "pickupLocation"}
-        title={t("carsSearch.pickupLocationLabel")}
-        titleId="cars-mobile-pickup-location-title"
+        mode="pickup"
+        value={values.pickupLocation}
         launcherRef={pickupLocationLauncherRef}
         onClose={onClose}
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => updateValue("pickupLocation", "")}
-              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        <CarLocationAutocomplete
-          id="pickupLocationMobile"
-          value={values.pickupLocation}
-          onValueChange={(nextValue) => updateValue("pickupLocation", nextValue)}
-          placeholder={t("carsSearch.pickupLocationPlaceholder")}
-          inputRef={pickupMobileInputRef}
-          inputClassName="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
-          presentation="mobile"
-          strings={locationAutocompleteStrings}
-          onRequestClose={onClose}
-        />
-      </FlightMobilePickerShell>
+        onCommit={(nextValue) => updateValue("pickupLocation", nextValue)}
+      />
 
-      <FlightMobilePickerShell
+      <MobileCarLocationPicker
         open={activeMobilePicker === "dropoffLocation"}
-        title={t("carsSearch.returnLocationPlaceholder")}
-        titleId="cars-mobile-dropoff-location-title"
+        mode="return"
+        value={values.dropoffLocation}
         launcherRef={dropoffLocationLauncherRef}
         onClose={onClose}
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={() => updateValue("dropoffLocation", "")}
-              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        <CarLocationAutocomplete
-          id="dropoffLocationMobile"
-          value={values.dropoffLocation}
-          onValueChange={(nextValue) => updateValue("dropoffLocation", nextValue)}
-          placeholder={t("carsSearch.returnLocationPlaceholder")}
-          inputRef={dropoffMobileInputRef}
-          inputClassName="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400"
-          presentation="mobile"
-          strings={locationAutocompleteStrings}
-          onRequestClose={onClose}
-        />
-      </FlightMobilePickerShell>
+        onCommit={(nextValue) => updateValue("dropoffLocation", nextValue)}
+      />
 
-      <FlightMobilePickerShell
+      <MobileDatePickerDialog
         open={activeMobilePicker === "dates"}
         title={t("carsSearch.chooseRentalDates")}
         titleId="cars-mobile-rental-dates-title"
+        dialogId="cars-mobile-rental-dates"
         launcherRef={datesLauncherRef}
+        startDate={values.pickupDate}
+        endDate={values.dropoffDate}
+        rangeRequired
+        firstMonth={visibleMonthDate}
+        locale={intlLocale}
+        weekdays={weekdays}
+        labels={{
+          selectDates: t("carsResults.selectDates"),
+          start: t("mobileDatePicker.start"),
+          end: t("mobileDatePicker.end"),
+          done: t("done"),
+          selectDatePrefix: t("carsSearch.selectDateAriaPrefix"),
+        }}
+        isDateDisabled={isBeforeToday}
+        onCommit={(pickupDate, dropoffDate) => {
+          updateValue("pickupDate", pickupDate);
+          updateValue("dropoffDate", dropoffDate);
+        }}
         onClose={onClose}
-        footer={(requestClose) => (
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={clearRentalDates}
-              className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700"
-            >
-              {t("clear")}
-            </button>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="focus-ring rounded-full bg-[#004BB8] px-5 py-2 text-sm font-bold text-white"
-            >
-              {t("done")}
-            </button>
-          </div>
-        )}
-      >
-        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <button type="button" onClick={onPreviousMonth} className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">{t("carsSearch.previousMonthShort")}</button>
-            <button type="button" onClick={onNextMonth} className="focus-ring rounded-full border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700">{t("carsSearch.nextMonthShort")}</button>
-          </div>
-          <div className="grid gap-5">
-            {[0, 1].map((monthOffset) => {
-              const monthDate = addMonths(visibleMonthDate, monthOffset);
-              const cells = buildMonthCells(monthDate);
+      />
 
-              return (
-                <div key={monthOffset}>
-                  <p className="mb-2 text-center text-sm font-bold text-slate-900">
-                    {monthDate.toLocaleDateString(intlLocale, { month: "long", year: "numeric" })}
-                  </p>
-                  <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500">
-                    {weekdays.map((weekday) => <span key={weekday}>{weekday}</span>)}
-                  </div>
-                  <div className="grid grid-cols-7 gap-1.5">
-                    {cells.map((cell) => {
-                      const day = cell.date;
-                      const iso = toIsoDate(day);
-                      const isPickup = iso === values.pickupDate;
-                      const isDropoff = iso === values.dropoffDate;
-                      const isPastDate = isBeforeToday(day);
-                      const isInRange = Boolean(pickupParsed && dropoffParsed && !isPastDate && day > pickupParsed && day < dropoffParsed);
-
-                      if (!cell.isCurrentMonth) {
-                        return <span key={`mobile-placeholder-${iso}`} aria-hidden="true" className="h-10" />;
-                      }
-
-                      return (
-                        <button
-                          key={iso}
-                          type="button"
-                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, intlLocale)}`}
-                          onClick={() => onSelectDate(day)}
-                          disabled={isPastDate}
-                          className={`focus-ring flex h-10 items-center justify-center rounded-full text-sm font-semibold disabled:cursor-not-allowed ${
-                            isPastDate ? "text-slate-300" : "text-slate-900 hover:bg-[#004BB8]/8"
-                          } ${isInRange ? "rounded-xl bg-[#004BB8]/10 text-[#021C2B]" : ""} ${
-                            isPickup || isDropoff ? "bg-[#004BB8] text-white hover:bg-[#004BB8]" : ""
-                          }`}
-                        >
-                          {day.getDate()}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </FlightMobilePickerShell>
-
-      <FlightMobilePickerShell
+      <MobileCarTimePickerDialog
         open={activeMobilePicker === "times"}
-        title={t("carsSearch.pickupReturnTimeLabel")}
-        titleId="cars-mobile-times-title"
         launcherRef={timesLauncherRef}
         onClose={onClose}
-        footer={(requestClose) => (
-          <button type="button" onClick={requestClose} className="focus-ring w-full rounded-full bg-[#004BB8] px-5 py-3 text-sm font-bold text-white">{t("done")}</button>
-        )}
-      >
-        <div className="grid gap-5">
-          {[
-            ["pickupTime", t("carsSearch.pickupTimeLabel"), values.pickupTime],
-            ["dropoffTime", t("carsSearch.returnTimeLabel"), values.dropoffTime],
-          ].map(([field, label, selectedTime]) => (
-            <section key={field} className="space-y-2">
-              <h3 className="px-1 text-xs font-bold uppercase tracking-wide text-slate-500">{label}</h3>
-              <div className={timeListClass}>
-                {timeOptions.map((time) => (
-                  <button
-                    key={`${field}-${time}`}
-                    type="button"
-                    onClick={() => updateValue(field as "pickupTime" | "dropoffTime", time)}
-                    className={`focus-ring flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-bold ${
-                      selectedTime === time ? "bg-[#004BB8] text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
-                    }`}
-                  >
-                    {formatCarTimeLabel(time, intlLocale)}
-                    {selectedTime === time ? <span aria-hidden="true">✓</span> : null}
-                  </button>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </FlightMobilePickerShell>
+        pickupTime={values.pickupTime}
+        returnTime={values.dropoffTime}
+        onCommit={(pickupTime, dropoffTime) => {
+          updateValue("pickupTime", pickupTime);
+          updateValue("dropoffTime", dropoffTime);
+        }}
+        formatTime={(time) => formatCarTimeLabel(time, intlLocale)}
+        title={t("carsSearch.pickupReturnTimeLabel")}
+        intro={
+          t("carsSearch.mobileTimeIntro") ||
+          "Select when you’ll pick up and return your car."
+        }
+        pickupLabel={t("carsSearch.pickupTimeLabel")}
+        returnLabel={t("carsSearch.returnTimeLabel")}
+        doneLabel={t("done")}
+      />
 
-      <FlightMobilePickerShell
+      <MobileCarDriverAgePickerDialog
         open={activeMobilePicker === "driverAge"}
-        title={t("carsSearch.driverAgeLabel")}
-        titleId="cars-mobile-driver-age-title"
         launcherRef={driverAgeLauncherRef}
         onClose={onClose}
-        footer={(requestClose) => (
-          <button type="button" onClick={requestClose} className="focus-ring w-full rounded-full bg-[#004BB8] px-5 py-3 text-sm font-bold text-white">{t("done")}</button>
-        )}
-      >
-        <div className="grid gap-2 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
-          {driverAgeOptions.map((age) => {
-            const label = age === defaultDriverAge ? t("carsSearch.driverAgeAnyAgeRange") : getDriverAgeOptionLabel(age);
-            const selected = values.driverAge === age;
-
-            return (
-              <button
-                key={age}
-                type="button"
-                onClick={() => updateValue("driverAge", age)}
-                className={`focus-ring flex min-h-12 items-center justify-between rounded-2xl px-4 text-start text-sm font-bold ${
-                  selected ? "bg-[#004BB8] text-white" : "bg-slate-50 text-slate-800 hover:bg-slate-100"
-                }`}
-              >
-                {label}
-                {selected ? <span aria-hidden="true">✓</span> : null}
-              </button>
-            );
-          })}
-        </div>
-      </FlightMobilePickerShell>
+        driverAge={values.driverAge}
+        onCommit={(age) => updateValue("driverAge", age)}
+        title={t("carsSearch.driverAgeLabel")}
+        intro={
+          t("carsSearch.mobileDriverAgeIntro") ||
+          "Driver must be between 18 and 70 years old."
+        }
+        anyAgeLabel={t("carsSearch.driverAgeAnyAgeRange")}
+        formatAge={getDriverAgeOptionLabel}
+        doneLabel={t("done")}
+      />
     </>
   );
 }
@@ -1523,114 +1382,10 @@ function CarPickupCardLink({ card }: { card: TranslatedCarImageCard }) {
   );
 }
 
-type DesktopPopoverPlacement = "above" | "below";
-type DesktopPopoverPlacementMode = "auto" | "below";
-type DesktopPopoverAlignment = "center" | "end";
-
-const desktopPopoverViewportPadding = 16;
-const desktopPopoverOffset = 14;
-
-function useDesktopPopoverPosition(
-  isOpen: boolean,
-  launcherRef: RefObject<HTMLButtonElement | null> | undefined,
-  preferredWidth: number,
-  placementMode: DesktopPopoverPlacementMode = "auto",
-  alignment: DesktopPopoverAlignment = "center",
-  maximumHeight?: number,
-  providedPopoverRef?: RefObject<HTMLDivElement | null>,
-) {
-  const internalPopoverRef = useRef<HTMLDivElement | null>(null);
-  const popoverRef = providedPopoverRef ?? internalPopoverRef;
-  const [style, setStyle] = useState<CSSProperties | null>(null);
-  const [placement, setPlacement] = useState<DesktopPopoverPlacement>(
-    placementMode === "below" ? "below" : "above",
-  );
-
-  useLayoutEffect(() => {
-    if (!isOpen || !launcherRef?.current || typeof window === "undefined") {
-      return;
-    }
-
-    const updatePosition = () => {
-      const launcherRect = launcherRef.current?.getBoundingClientRect();
-
-      if (!launcherRect) {
-        return;
-      }
-
-      const popoverRect = popoverRef.current?.getBoundingClientRect();
-      const popoverWidth = Math.min(
-        preferredWidth,
-        window.innerWidth - desktopPopoverViewportPadding * 2,
-      );
-      const popoverHeight = popoverRect?.height ?? 420;
-      const centeredLeft =
-        alignment === "end"
-          ? launcherRect.right - popoverWidth
-          : launcherRect.left + launcherRect.width / 2 - popoverWidth / 2;
-      const left = Math.min(
-        Math.max(centeredLeft, desktopPopoverViewportPadding),
-        window.innerWidth - popoverWidth - desktopPopoverViewportPadding,
-      );
-      const spaceBelow =
-        window.innerHeight - launcherRect.bottom - desktopPopoverOffset;
-      const availableHeightBelow = Math.max(
-        0,
-        spaceBelow - desktopPopoverViewportPadding,
-      );
-      const shouldOpenBelow =
-        placementMode === "below" ||
-        spaceBelow >= popoverHeight + desktopPopoverViewportPadding;
-      const nextTop = shouldOpenBelow
-        ? launcherRect.bottom + desktopPopoverOffset
-        : Math.max(
-            desktopPopoverViewportPadding,
-            launcherRect.top - popoverHeight - desktopPopoverOffset,
-          );
-
-      setPlacement(shouldOpenBelow ? "below" : "above");
-      setStyle({
-        left,
-        top: nextTop,
-        width: popoverWidth,
-        ...(placementMode === "below"
-          ? {
-              maxHeight: Math.max(
-                0,
-                Math.min(
-                  maximumHeight ?? availableHeightBelow,
-                  availableHeightBelow,
-                ),
-              ),
-            }
-          : {}),
-      });
-    };
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [
-    alignment,
-    isOpen,
-    launcherRef,
-    maximumHeight,
-    placementMode,
-    popoverRef,
-    preferredWidth,
-  ]);
-
-  return { placement, popoverRef, style };
-}
-
 function DriverAgeDesktopPopover({
   isOpen,
   launcherRef,
+  onClose,
   onSelect,
   popoverRef,
   selectedAge,
@@ -1638,6 +1393,7 @@ function DriverAgeDesktopPopover({
   focusedIndex: number;
   isOpen: boolean;
   launcherRef: RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
   onFocusedIndexChange: (index: number) => void;
   onSelect: (age: string) => void;
   optionRefs: RefObject<Array<HTMLButtonElement | null>>;
@@ -1645,9 +1401,20 @@ function DriverAgeDesktopPopover({
   selectedAge: string;
 }) {
   const { t } = useCarsLandingTranslations();
-  const { popoverRef: positionedPopoverRef, style } = useDesktopPopoverPosition(
-    isOpen, launcherRef, 248, "below", "end", 360, popoverRef,
-  );
+  const {
+    placement,
+    popoverRef: positionedPopoverRef,
+    style,
+  } = useCarsDesktopPopover({
+    open: isOpen,
+    launcherRef,
+    preferredWidth: 288,
+    desiredHeight: 320,
+    maxHeight: 320,
+    align: "end",
+    providedPopoverRef: popoverRef,
+    onLauncherOutOfView: onClose,
+  });
 
   if (!isOpen || typeof document === "undefined") return null;
 
@@ -1658,9 +1425,9 @@ function DriverAgeDesktopPopover({
       role="listbox"
       aria-label={t("carsSearch.driverAgeLabel")}
       data-cars-desktop-popover="driver-age"
-      data-placement="below"
+      data-placement={placement}
       style={style ?? undefined}
-      className="fixed z-[1110] hidden w-[248px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_24px_60px_-24px_rgba(15,23,42,0.42)] ring-1 ring-slate-950/[0.06] sm:block"
+      className={`${carsDesktopPopoverClassName} overflow-hidden`}
     >
       <CarsDriverAgePickerContent
         anyAgeLabel={t("carsSearch.driverAgeAnyAgeRange")}
@@ -1677,6 +1444,7 @@ function RentalDatesField({
   dropoffDate,
   isOpen,
   onClear,
+  onClose,
   onDone,
   onNextMonth,
   onPreviousMonth,
@@ -1690,6 +1458,7 @@ function RentalDatesField({
   dropoffDate: string;
   isOpen: boolean;
   onClear: () => void;
+  onClose: () => void;
   onDone: () => void;
   onNextMonth: () => void;
   onPreviousMonth: () => void;
@@ -1710,12 +1479,30 @@ function RentalDatesField({
       ? `${pickupDisplay} — ${dropoffDisplay}`
       : pickupDisplay
     : t("carsSearch.rentalDatePlaceholder");
-  const { popoverRef, style } = useDesktopPopoverPosition(
-    isOpen,
-    launcherRef,
-    620,
-    "below",
+  const parsedPickupDate = parseIsoDate(pickupDate);
+  const parsedDropoffDate = parseIsoDate(dropoffDate);
+  const rentalDayCount =
+    parsedPickupDate && parsedDropoffDate
+      ? Math.max(
+          0,
+          Math.round(
+            (parsedDropoffDate.getTime() - parsedPickupDate.getTime()) /
+              86_400_000,
+          ),
+        )
+      : 0;
+  const rentalDaysLabel = t("carsSearch.rentalDays").replace(
+    "{count}",
+    String(rentalDayCount),
   );
+  const { placement, popoverRef, style } = useCarsDesktopPopover({
+    open: isOpen,
+    launcherRef,
+    preferredWidth: 580,
+    desiredHeight: 420,
+    align: "center",
+    onLauncherOutOfView: onClose,
+  });
 
   return (
     <div ref={wrapRef} className="relative overflow-visible">
@@ -1727,17 +1514,28 @@ function RentalDatesField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-rental-dates-dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
+        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-start gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors sm:h-10 sm:justify-between md:text-[15px]"
       >
         <Calendar
           className="h-4 w-4 shrink-0 text-slate-500"
           aria-hidden="true"
         />
-        <span
-          className={`truncate ${pickupDate ? "text-slate-950" : "text-slate-400"}`}
-        >
-          {dateSummary}
+        <span className="min-w-0">
+          <span
+            className={`block truncate ${pickupDate ? "text-slate-950" : "text-slate-950 sm:text-slate-400"}`}
+          >
+            {dateSummary}
+          </span>
+          {rentalDayCount > 0 ? (
+            <span className="mt-0.5 hidden text-[11px] font-medium leading-3 text-slate-500 sm:block">
+              {rentalDaysLabel}
+            </span>
+          ) : null}
         </span>
+        <ChevronDown
+          className={`hidden h-4 w-4 shrink-0 text-slate-500 transition-transform sm:block ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
       </button>
 
       {isOpen && typeof document !== "undefined"
@@ -1748,34 +1546,34 @@ function RentalDatesField({
               role="dialog"
               aria-label={t("carsSearch.rentalDatePickerAria")}
               data-cars-desktop-popover="dates"
-              data-placement="below"
+              data-placement={placement}
               style={style ?? undefined}
-              className="fixed z-[1100] hidden overflow-y-auto overscroll-contain rounded-[1.35rem] border border-slate-200/95 bg-white p-4 shadow-[0_30px_90px_-30px_rgba(15,23,42,0.52),0_16px_36px_-22px_rgba(15,23,42,0.34)] ring-1 ring-slate-950/[0.08] sm:block"
+              className={`${carsDesktopPopoverClassName} overflow-hidden p-4`}
             >
-          <CarsRentalDatePickerContent
-            dropoffDate={dropoffDate}
-            formatFullDate={(date) => formatCarFullDate(date, intlLocale)}
-            locale={intlLocale}
-            onClear={onClear}
-            onDone={onDone}
-            onNextMonth={onNextMonth}
-            onPreviousMonth={onPreviousMonth}
-            onSelectDate={onSelectDate}
-            pickupDate={pickupDate}
-            strings={{
-              chooseDates: t("carsSearch.chooseRentalDates"),
-              previousMonth: t("carsSearch.previousMonth"),
-              previousMonthShort: t("carsSearch.previousMonthShort"),
-              nextMonth: t("carsSearch.nextMonth"),
-              nextMonthShort: t("carsSearch.nextMonthShort"),
-              selectDatePrefix: t("carsSearch.selectDateAriaPrefix"),
-              startsNewPickupDate: t("carsSearch.startsNewPickupDate"),
-              clear: t("clear"),
-              done: t("done"),
-            }}
-            visibleMonthDate={visibleMonthDate}
-            weekdays={weekdays}
-          />
+              <CarsRentalDatePickerContent
+                dropoffDate={dropoffDate}
+                formatFullDate={(date) => formatCarFullDate(date, intlLocale)}
+                locale={intlLocale}
+                onClear={onClear}
+                onDone={onDone}
+                onNextMonth={onNextMonth}
+                onPreviousMonth={onPreviousMonth}
+                onSelectDate={onSelectDate}
+                pickupDate={pickupDate}
+                strings={{
+                  chooseDates: t("carsSearch.chooseRentalDates"),
+                  previousMonth: t("carsSearch.previousMonth"),
+                  previousMonthShort: t("carsSearch.previousMonthShort"),
+                  nextMonth: t("carsSearch.nextMonth"),
+                  nextMonthShort: t("carsSearch.nextMonthShort"),
+                  selectDatePrefix: t("carsSearch.selectDateAriaPrefix"),
+                  startsNewPickupDate: t("carsSearch.startsNewPickupDate"),
+                  clear: t("clear"),
+                  done: t("done"),
+                }}
+                visibleMonthDate={visibleMonthDate}
+                weekdays={weekdays}
+              />
             </div>,
             document.body,
           )
@@ -1786,7 +1584,7 @@ function RentalDatesField({
 
 function TimeRangeField({
   isOpen,
-  onDone,
+  onClose,
   onToggle,
   pickupTime,
   returnTime,
@@ -1795,12 +1593,15 @@ function TimeRangeField({
   wrapRef,
 }: {
   isOpen: boolean;
-  onDone: () => void;
+  onClose: () => void;
   onToggle: () => void;
   pickupTime: string;
   returnTime: string;
   launcherRef?: RefObject<HTMLButtonElement | null>;
-  updateValue: <Key extends keyof CarsFormValues>(key: Key, value: CarsFormValues[Key]) => void;
+  updateValue: <Key extends keyof CarsFormValues>(
+    key: Key,
+    value: CarsFormValues[Key],
+  ) => void;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
   const { locale, t } = useCarsLandingTranslations();
@@ -1810,7 +1611,14 @@ function TimeRangeField({
     formatCarTimeLabel(pickupTime, intlLocale),
     formatCarTimeLabel(returnTime, intlLocale),
   );
-  const { popoverRef, style } = useDesktopPopoverPosition(isOpen, launcherRef, 448, "below");
+  const { placement, popoverRef, style } = useCarsDesktopPopover({
+    open: isOpen,
+    launcherRef,
+    preferredWidth: 448,
+    desiredHeight: 320,
+    align: "center",
+    onLauncherOutOfView: onClose,
+  });
 
   return (
     <div ref={wrapRef} className="relative overflow-visible">
@@ -1822,33 +1630,50 @@ function TimeRangeField({
         aria-haspopup="dialog"
         aria-controls="cars-desktop-time-range-dialog"
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
-        className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
+        className="focus-ring flex h-7 w-full cursor-pointer items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-[15px] lg:h-8"
       >
-        <span className="truncate">{timeSummary}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />
-      </button>
-      {isOpen && typeof document !== "undefined" ? createPortal(
-        <div
-          id="cars-desktop-time-range-dialog"
-          ref={popoverRef}
-          role="dialog"
-          aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
-          data-cars-desktop-popover="times"
-          data-placement="below"
-          style={style ?? undefined}
-          className="fixed z-[990] hidden overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/95 bg-white p-3 shadow-[0_26px_70px_-28px_rgba(15,23,42,0.48),0_12px_28px_-20px_rgba(15,23,42,0.32)] ring-1 ring-slate-950/[0.08] sm:block"
-        >
-          <CarsTimeRangePickerContent
-            formatTime={(time) => formatCarTimeLabel(time, intlLocale)}
-            pickupLabel={t("carsSearch.pickupTimeLabel")}
-            pickupTime={pickupTime}
-            returnLabel={t("carsSearch.returnTimeLabel")}
-            returnTime={returnTime}
-            onPickupTimeChange={(time) => updateValue("pickupTime", time)}
-            onReturnTimeChange={(time) => { updateValue("dropoffTime", time); onDone(); }}
+        <span className="flex min-w-0 items-center gap-2">
+          <Clock
+            aria-hidden="true"
+            className="h-4 w-4 shrink-0 text-slate-500"
           />
-        </div>, document.body,
-      ) : null}
+          <span className="truncate sm:hidden">{timeSummary}</span>
+          <span className="hidden truncate sm:inline">
+            {formatCarTimeLabel(pickupTime, intlLocale)}
+          </span>
+        </span>
+        <ChevronDown
+          className={`hidden h-4 w-4 shrink-0 text-slate-500 transition-transform sm:block ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              id="cars-desktop-time-range-dialog"
+              ref={popoverRef}
+              role="dialog"
+              aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
+              data-cars-desktop-popover="times"
+              data-placement={placement}
+              style={style ?? undefined}
+              className={`${carsDesktopPopoverClassName} overflow-hidden p-3`}
+            >
+              <CarsTimeRangePickerContent
+                formatTime={(time) => formatCarTimeLabel(time, intlLocale)}
+                pickupLabel={t("carsSearch.pickupTimeLabel")}
+                pickupTime={pickupTime}
+                returnLabel={t("carsSearch.returnTimeLabel")}
+                returnTime={returnTime}
+                onPickupTimeChange={(time) => updateValue("pickupTime", time)}
+                onReturnTimeChange={(time) => {
+                  updateValue("dropoffTime", time);
+                }}
+              />
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -1871,8 +1696,8 @@ function SearchCell({
       ref={divRef}
       className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-400 focus-within:border-[#004BB8] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#004BB8]/25 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200/80 sm:focus-within:bg-white sm:focus-within:ring-0 lg:px-4 lg:py-2 ${className}`}
     >
-      <label className="mb-1 block text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-0.5 sm:text-[0.66rem] sm:text-slate-500 lg:mb-0.5">
-        {label}
+      <label className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase leading-4 tracking-[0.12em] text-slate-600 sm:mb-1 sm:text-[0.66rem] sm:text-slate-700 lg:mb-1">
+        <span>{label}</span>
       </label>
       {children}
       {error ? (

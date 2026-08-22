@@ -29,3 +29,4 @@ export async function revalidateFlightRedirectHandoff({
     ? { status: "ready", offer: refreshed.offer, handoff }
     : { status: "unavailable" };
 }
+

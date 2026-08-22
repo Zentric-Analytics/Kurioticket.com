@@ -1,14 +1,19 @@
 import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { getSafeSystemStatus } from "@/lib/admin-data";
 import { getAdminEmails } from "@/lib/env";
-import { withOptionalDb } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getFeatureControlProductionAdmins } from "@/lib/env";
+import { listFeatureControls } from "@/lib/feature-controls/service";
+import { FeatureControlsPanel } from "@/components/admin/FeatureControlsPanel";
 
 export const metadata = { title: "Admin System" };
 
 export default async function AdminSystemPage() {
-  const [system, flags] = await Promise.all([
+  const [system, featureControls, session] = await Promise.all([
     getSafeSystemStatus(),
-    withOptionalDb((db) => db.featureFlag.findMany({ orderBy: { key: "asc" }, take: 50 }), []),
+    listFeatureControls(),
+    getServerSession(authOptions),
   ]);
   const adminEmailCount = getAdminEmails().length;
   const rows = [
@@ -54,17 +59,9 @@ export default async function AdminSystemPage() {
       </AdminSectionCard>
 
       <AdminSectionCard className="p-5">
-        <h2 className="font-semibold text-slate-950">Feature Flags</h2>
-        {flags.length === 0 ? <p className="mt-2 text-sm text-slate-600">No feature flags configured yet.</p> : (
-          <div className="mt-3 grid gap-2">
-            {flags.map((flag) => (
-              <div key={flag.id} className="flex flex-col gap-2 rounded-xl bg-slate-50 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <span className="font-semibold text-slate-950">{flag.key}</span>
-                <AdminStatusBadge tone={flag.enabled ? "good" : "neutral"}>{flag.enabled ? "Enabled" : "Disabled"} / {flag.scope}</AdminStatusBadge>
-              </div>
-            ))}
-          </div>
-        )}
+        <h2 className="font-semibold text-slate-950">Feature Controls — {featureControls.environment}</h2>
+        <p className="mt-2 text-sm text-slate-600">Authoritative product availability and operational kill switches. Production changes require explicit controller permission and an audited reason.</p>
+        <div className="mt-5"><FeatureControlsPanel initialControls={featureControls.controls} environment={featureControls.environment} canControlProduction={getFeatureControlProductionAdmins().includes(session?.user?.email?.trim().toLowerCase() || "")} /></div>
       </AdminSectionCard>
     </AdminPageShell>
   );

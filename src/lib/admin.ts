@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-
-import { authOptions } from "@/lib/auth";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { logSafeAuthDiagnostics } from "@/lib/auth-diagnostics";
 import { getAdminEmails } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
@@ -13,10 +11,8 @@ type AdminRequest = Request & {
 };
 
 export async function requireAdminApiSession() {
-  const session =
-    await getServerSession(
-      authOptions,
-    );
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (
     !session?.user?.id ||
@@ -56,7 +52,7 @@ export async function requireAdminApiSession() {
     };
   }
 
-  return { session };
+  return { session, accountSession: canonical!.accountSession };
 }
 
 export function isProtectedAdminEmail(

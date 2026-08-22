@@ -1,10 +1,14 @@
-export type PopoverRect = Pick<DOMRect, "left" | "right" | "top" | "bottom" | "width" | "height">;
+export type PopoverRect = Pick<
+  DOMRect,
+  "left" | "right" | "top" | "bottom" | "width" | "height"
+>;
 
 export type DesktopPopoverGeometry = {
   left: number;
   top: number;
   width: number;
   maxHeight: number;
+  placement: "above" | "below";
 };
 
 export const MIN_VISIBLE_LOCATION_PANEL_HEIGHT = 160;
@@ -24,10 +28,20 @@ export function calculateLocationPanelScrollAdjustment({
   gap: number;
   minimumVisibleHeight?: number;
 }) {
-  const finite = (value: number) => Number.isFinite(value) ? value : 0;
-  const requiredBottom = finite(boundaryRect.bottom) + finite(gap) + Math.max(0, finite(minimumVisibleHeight)) + Math.max(0, finite(viewportPadding));
-  const shortfall = Math.max(0, requiredBottom - Math.max(0, finite(viewportHeight)));
-  const maximumUsefulScroll = Math.max(0, finite(boundaryRect.top) - Math.max(0, finite(topViewportPadding)));
+  const finite = (value: number) => (Number.isFinite(value) ? value : 0);
+  const requiredBottom =
+    finite(boundaryRect.bottom) +
+    finite(gap) +
+    Math.max(0, finite(minimumVisibleHeight)) +
+    Math.max(0, finite(viewportPadding));
+  const shortfall = Math.max(
+    0,
+    requiredBottom - Math.max(0, finite(viewportHeight)),
+  );
+  const maximumUsefulScroll = Math.max(
+    0,
+    finite(boundaryRect.top) - Math.max(0, finite(topViewportPadding)),
+  );
   return Math.max(0, Math.min(shortfall, maximumUsefulScroll));
 }
 
@@ -38,6 +52,9 @@ export function calculateDesktopPopoverGeometry({
   viewportHeight,
   viewportPadding,
   gap,
+  preferredWidth,
+  align = "start",
+  desiredHeight,
 }: {
   fieldRect: PopoverRect;
   boundaryRect: PopoverRect;
@@ -45,13 +62,44 @@ export function calculateDesktopPopoverGeometry({
   viewportHeight: number;
   viewportPadding: number;
   gap: number;
+  preferredWidth?: number;
+  align?: "start" | "center" | "end";
+  desiredHeight?: number;
 }): DesktopPopoverGeometry {
   const safeWidth = Math.max(0, viewportWidth - viewportPadding * 2);
-  const width = Math.max(0, Math.min(fieldRect.width, safeWidth));
-  const maximumLeft = Math.max(viewportPadding, viewportWidth - viewportPadding - width);
-  const left = Math.min(Math.max(fieldRect.left, viewportPadding), maximumLeft);
-  const top = boundaryRect.bottom + gap;
-  const maxHeight = Math.max(0, viewportHeight - viewportPadding - top);
+  const width = Math.max(
+    0,
+    Math.min(preferredWidth ?? fieldRect.width, safeWidth),
+  );
+  const maximumLeft = Math.max(
+    viewportPadding,
+    viewportWidth - viewportPadding - width,
+  );
+  const requestedLeft =
+    align === "end"
+      ? fieldRect.right - width
+      : align === "center"
+        ? fieldRect.left + fieldRect.width / 2 - width / 2
+        : fieldRect.left;
+  const left = Math.min(Math.max(requestedLeft, viewportPadding), maximumLeft);
+  const belowTop = boundaryRect.bottom + gap;
+  const belowHeight = Math.max(0, viewportHeight - viewportPadding - belowTop);
+  const aboveHeight = Math.max(0, boundaryRect.top - gap - viewportPadding);
+  const openAbove =
+    desiredHeight !== undefined &&
+    belowHeight < desiredHeight &&
+    aboveHeight > belowHeight;
+  const maxHeight = openAbove ? aboveHeight : belowHeight;
+  // For an above placement, `top` is the launcher's adjacent edge rather than
+  // the top of all available space. The popover translates by its own rendered
+  // height, so short content stays attached instead of floating near the header.
+  const top = openAbove ? boundaryRect.top - gap : belowTop;
 
-  return { left, top, width, maxHeight };
+  return {
+    left,
+    top,
+    width,
+    maxHeight,
+    placement: openAbove ? "above" : "below",
+  };
 }

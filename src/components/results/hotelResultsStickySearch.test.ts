@@ -22,6 +22,20 @@ function stickyHotelDialogSource() {
   return resultsSource.slice(start, end);
 }
 
+function minimizedHotelSearchBarSource() {
+  const start = resultsSource.indexOf(
+    "function renderDesktopMinimizedHotelSearchBar()",
+  );
+  const end = resultsSource.indexOf(
+    "function renderDesktopStickyHotelSearchDialog()",
+    start,
+  );
+
+  assert.notEqual(start, -1, "compact Hotel toolbar renderer exists");
+  assert.notEqual(end, -1, "sticky Hotel dialog follows the toolbar");
+  return resultsSource.slice(start, end);
+}
+
 test("Hotel Results connects its measurement ref to the visible search form", () => {
   assert.match(resultsSource, /desktopFormRef={setDesktopSearchFormRef}/);
   assert.match(searchBarSource, /<form[\s\S]*?ref={setSearchPanelRef}/);
@@ -61,14 +75,22 @@ test("Hotel sticky editor source contract preserves position and reuses HotelSea
   assert.match(resultsSource, /activeDesktopStickyHotelSearchSection/);
   assert.match(
     resultsSource,
-    /stickyHotelScrollLockRef\.current = lockBodyScroll\(\)/,
+    /stickyHotelScrollLockRef\.current = lockDesktopPageScroll\(\)/,
   );
   assert.match(resultsSource, /focus\(\{ preventScroll: true \}\)/);
   assert.match(resultsSource, /role="dialog"/);
   assert.match(resultsSource, /aria-modal="true"/);
   assert.match(resultsSource, /aria-labelledby="sticky-hotel-search-title"/);
   assert.match(resultsSource, /id="sticky-hotel-search-dialog"/);
-  assert.match(resultsSource, /event\.target === event\.currentTarget/);
+  assert.doesNotMatch(resultsSource, /event\.target === event\.currentTarget/);
+  assert.match(
+    resultsSource,
+    /role="presentation"\s+onPointerDown=\{closeDesktopStickyHotelSearch\}/,
+  );
+  assert.match(
+    resultsSource,
+    /ref=\{stickyHotelDialogRef\}[\s\S]*?onPointerDown=\{\(event\) => event\.stopPropagation\(\)\}/,
+  );
   assert.match(
     resultsSource,
     /initialDestination=\{activeDesktopHotelSearchDraft\.destination\}/,
@@ -174,4 +196,47 @@ test("HotelSearchBar sticky-dialog source contract renders a direct compact row"
   assert.match(searchBarSource, /handleToggleDates/);
   assert.match(searchBarSource, /handleToggleGuestsRooms/);
   assert.match(searchBarSource, /\$\{idPrefix\}-destination-suggestions/);
+});
+
+test("sticky Hotel calendar keeps both months and Done inside a non-scrolling compact popover", () => {
+  assert.match(searchBarSource, /desiredHeight=\{isStickyDialog \? 360 : 420\}/);
+  assert.match(searchBarSource, /isStickyDialog \? "overflow-hidden p-2" : "p-3"/);
+  assert.match(searchBarSource, /isStickyDialog \? "h-7 w-7 text-xs" : "h-8 w-8 text-sm"/);
+  assert.match(searchBarSource, /isStickyDialog \? "mt-2 pt-2" : "mt-4 pt-3"/);
+  assert.match(searchBarSource, /isStickyDialog \? "py-1\.5" : "py-2"/);
+});
+
+test("Hotel Results date icons stay neutral in the full and sticky search forms", () => {
+  assert.match(
+    searchBarSource,
+    /<Calendar[^>]*className="shrink-0 text-slate-500"/,
+  );
+  assert.doesNotMatch(
+    searchBarSource,
+    /compact \? "text-\[#004BB8\]" : "text-slate-500"/,
+  );
+});
+
+test("Hotel Results compact toolbar has neutral icons and no colored field focus surrounds", () => {
+  const toolbar = minimizedHotelSearchBarSource();
+
+  assert.equal(
+    toolbar.match(/className="h-4 w-4 shrink-0 text-slate-500"/g)?.length,
+    3,
+  );
+  assert.match(toolbar, /focus-visible:outline-none/);
+  assert.doesNotMatch(toolbar, /focus-ring flex h-\[56px\]/);
+  assert.doesNotMatch(toolbar, /text-\[#004BB8\]/);
+  assert.doesNotMatch(toolbar, /focus-visible:bg-slate/);
+});
+
+test("Hotel Results sticky editor suppresses colored field focus rings", () => {
+  assert.match(
+    searchBarSource,
+    /isStickyDialog[\s\S]*?focus-within:outline-none focus-within:ring-0/,
+  );
+  assert.doesNotMatch(
+    searchBarSource,
+    /isStickyDialog[\s\S]*?focus-within:ring-\[#004BB8\]\/20/,
+  );
 });

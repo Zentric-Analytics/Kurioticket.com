@@ -42,7 +42,7 @@ Approved Version 1 mobile scope:
 - flight results and flight details
 - secure external booking redirects
 - saved flights and saved searches
-- saved trips
+- saved items
 - profile and core preferences
 - price alerts using email and in-app delivery initially
 - support ticket creation

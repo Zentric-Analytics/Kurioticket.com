@@ -1,4 +1,5 @@
 import { Heart, MapPin } from "lucide-react";
+import type { RefObject } from "react";
 import { DetailsBackLink } from "@/components/results/DetailsBackLink";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -26,6 +27,12 @@ type HotelDetailsHeaderProps = {
   reviewCountText: string;
   sourceAttributions: SourceAttribution[];
   isSafeAttributionUrl: (value?: string) => boolean;
+  headingLevel?: "h1" | "h2";
+  showBackLink?: boolean;
+  showSave?: boolean;
+  allowExternalAttribution?: boolean;
+  headingRef?: RefObject<HTMLHeadingElement | null>;
+  embedded?: boolean;
 };
 
 export function HotelDetailsHeader({
@@ -49,12 +56,26 @@ export function HotelDetailsHeader({
   reviewCountText,
   sourceAttributions,
   isSafeAttributionUrl,
+  headingLevel = "h1",
+  showBackLink = true,
+  showSave = true,
+  allowExternalAttribution = true,
+  headingRef,
+  embedded = false,
 }: HotelDetailsHeaderProps) {
   return (
-    <header className="min-w-0 border-b border-border pb-6 sm:pb-8">
-      <DetailsBackLink href={resultsHref}>
-        {backToResultsText}
-      </DetailsBackLink>
+    <header
+      className={
+        embedded
+          ? "min-w-0 px-5 pb-5 pt-5 sm:px-6 sm:pb-6 sm:pt-6"
+          : "min-w-0 border-b border-border pb-6 sm:pb-8"
+      }
+    >
+      {showBackLink ? (
+        <DetailsBackLink href={resultsHref}>
+          {backToResultsText}
+        </DetailsBackLink>
+      ) : null}
       <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 sm:grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto] md:gap-x-8">
         <div className="col-start-1 row-start-1 flex min-w-0 flex-wrap items-center gap-2 md:col-span-2">
           {badges.map((badge) => (
@@ -63,6 +84,7 @@ export function HotelDetailsHeader({
             </Badge>
           ))}
         </div>
+        {showSave ? (
         <Button
           type="button"
           variant="secondary"
@@ -85,9 +107,16 @@ export function HotelDetailsHeader({
           />
           <span>{saveActionText}</span>
         </Button>
-        <h1 className="col-span-2 row-start-2 mt-3 min-w-0 max-w-4xl break-words text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:col-span-1 sm:text-4xl md:col-start-1 md:row-start-2 lg:text-[2.625rem]">
-          {name}
-        </h1>
+        ) : null}
+        {headingLevel === "h2" ? (
+          <h2 ref={headingRef} tabIndex={headingRef ? -1 : undefined} className="col-span-2 row-start-2 mt-3 min-w-0 max-w-4xl break-words text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:col-span-1 sm:text-4xl md:col-start-1 md:row-start-2 lg:text-[2.625rem]">
+            {name}
+          </h2>
+        ) : (
+          <h1 ref={headingRef} tabIndex={headingRef ? -1 : undefined} className="col-span-2 row-start-2 mt-3 min-w-0 max-w-4xl break-words text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:col-span-1 sm:text-4xl md:col-start-1 md:row-start-2 lg:text-[2.625rem]">
+            {name}
+          </h1>
+        )}
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
         {starRating ? (
@@ -142,7 +171,7 @@ export function HotelDetailsHeader({
                 className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-1 ring-1 ring-border"
               >
                 <span>Data:</span>
-                {isSafeAttributionUrl(attribution.providerUri) ? (
+                {allowExternalAttribution && isSafeAttributionUrl(attribution.providerUri) ? (
                   <a
                     href={attribution.providerUri}
                     target="_blank"

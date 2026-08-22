@@ -1,7 +1,7 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { ZodError, z } from "zod";
-import { authOptions } from "@/lib/auth";
+import { createHash } from "node:crypto";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getPrisma } from "@/lib/prisma";
 import { emailSchema } from "@/lib/validation";
@@ -10,6 +10,9 @@ import {
   getAccountEmailChangeIdentifier,
   verifyAccountEmailChangeCode,
 } from "@/services/emailVerificationService";
+import { recordAccountEventSafely } from "@/services/accountNotificationService";
+import { sendTransactionalEmail } from "@/services/emailService";
+import { escapeNotificationHtml } from "@/services/notificationService";
 
 export const runtime = "nodejs";
 
@@ -19,7 +22,8 @@ const confirmEmailChangeSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   const userId = session?.user?.id;
 
   if (!userId) {
@@ -87,6 +91,13 @@ export async function POST(request: Request) {
         where: { identifier: getAccountEmailChangeIdentifier(user.id, newEmail) },
       });
     });
+
+    const transitionId = createHash("sha256").update(`${user.email || "none"}->${newEmail}`).digest("hex").slice(0, 24);
+    const eventKey = `account:email-changed:${user.id}:${transitionId}`;
+    await recordAccountEventSafely({ userId: user.id, email: newEmail, eventKey, type: "ACCOUNT_UPDATE", title: "Email address changed", body: "Your registered Kurioticket email address was changed. If this wasn’t you, secure your account and contact Support immediately.", actionPath: "/personal-information" });
+    if (user.email) {
+      await sendTransactionalEmail({ to: user.email, subject: "Your Kurioticket email address changed", html: `<div style="font-family:Arial,sans-serif;color:#0f172a;line-height:1.6"><h1>Email address changed</h1><p>${escapeNotificationHtml("The email address on your Kurioticket account was changed. If you did not make this change, contact Kurioticket Support immediately.")}</p></div>`, template: "notification", idempotencyKey: `${eventKey}:previous-email`, metadata: { eventKey, notificationType: "ACCOUNT_UPDATE", audience: "previous-email" } }).catch((error) => console.error("[account-email-change:previous-email-failed]", { userId: user.id, eventKey, message: error instanceof Error ? error.message : "email_failed" }));
+    }
 
     return NextResponse.json({ ok: true, email: newEmail });
   } catch (error) {

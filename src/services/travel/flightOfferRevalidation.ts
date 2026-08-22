@@ -1,4 +1,4 @@
-import type { DealsCabinClass } from "@/lib/deals/dealsSearchParams";
+import type { DealsConfirmedFlightOfferV2 } from "@/lib/deals/dealsTripPlanV2";
 import type {
   FlightSearchParams,
   NormalizedFlightResult,
@@ -9,24 +9,6 @@ import {
   resolveDealsFlightOfferV2,
   toJourneyItinerary,
 } from "./dealsFlightInventoryV2";
-
-type DealsConfirmedFlightOfferV2 = {
-  provider: string;
-  airline: string;
-  flightNumber?: string;
-  outboundItineraryKey: string;
-  returnItineraryKey?: string;
-  fareKey: string;
-  legs: ReturnType<typeof toJourneyItinerary>[];
-  cabinClass: DealsCabinClass;
-  baggageInfo?: string;
-  refundInfo?: string;
-  sourcePrice: number;
-  sourceCurrency: string;
-  offerExpiresAt: number;
-  selectedAt: number;
-  validatedAt: number;
-};
 import { getDuffelFlightOffer } from "./providers/duffelProvider";
 
 export type FlightOfferRevalidationOutcome =

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { availableFlightAlertCurrencies, buildFlightPriceAlertPayload, flightAlertPresentation, MAX_PRICE_ALERT_TARGET, parseTargetPrice } from "./flightPriceAlertModel";
+import { availableFlightAlertCurrencies, buildFlightPriceAlertPayload, flightAlertPresentation, flightPriceAlertMatchesPlan, matchingFlightPriceAlert, MAX_PRICE_ALERT_TARGET, parseTargetPrice } from "./flightPriceAlertModel";
 
 const plan = { key: "flight", summary: "JFK → CDG", payload: { tripType: "round-trip", origin: "JFK", destination: "CDG", departureDate: "2030-01-01", returnDate: "2030-01-08", adults: 2, children: 1, infants: 0, travelers: 3, cabinClass: "premium-economy" } };
 test("builds canonical premium economy round-trip payload", () => {
@@ -33,4 +33,26 @@ test("hotel and car products never expose the flight alert", () => {
   const live = [{ currency: "USD", searchPolicy: { source: "duffel", bookable: true } }] as never;
   assert.equal(flightAlertPresentation("hotel", true, live).visible, false);
   assert.equal(flightAlertPresentation("car", true, live).visible, false);
+});
+
+const alert = (overrides: Record<string, unknown> = {}) => ({
+  id: "alert-1", type: "FLIGHT", origin: "JFK", destination: "CDG", targetPrice: "900", currency: "EUR", status: "ACTIVE",
+  createdAt: "", updatedAt: "", lastSeenPrice: null, lastCheckedAt: null,
+  query: { ...plan.payload, currency: "EUR" }, ...overrides,
+}) as never;
+
+test("matches the exact canonical route, dates, trip type, passenger composition, and cabin", () => {
+  assert.equal(flightPriceAlertMatchesPlan(alert(), plan), true);
+  assert.equal(flightPriceAlertMatchesPlan(alert({ query: { ...plan.payload, departureDate: "2030-01-02" } }), plan), false);
+  assert.equal(flightPriceAlertMatchesPlan(alert({ query: { ...plan.payload, cabinClass: "business" } }), plan), false);
+  assert.equal(flightPriceAlertMatchesPlan(alert({ query: { ...plan.payload, adults: 1 } }), plan), false);
+  assert.equal(flightPriceAlertMatchesPlan(alert({ query: { ...plan.payload, tripType: "one-way" } }), plan), false);
+});
+
+test("matching selection prefers ACTIVE over PAUSED without depending on object property order", () => {
+  const reordered = { cabinClass: "premium-economy", infants: 0, destination: "CDG", adults: 2, departureDate: "2030-01-01", tripType: "round-trip", returnDate: "2030-01-08", children: 1, origin: "JFK" };
+  const paused = alert({ id: "paused", status: "PAUSED", query: reordered });
+  const active = alert({ id: "active", status: "ACTIVE", query: reordered });
+  assert.equal(matchingFlightPriceAlert([paused, active], plan)?.id, "active");
+  assert.equal(matchingFlightPriceAlert([paused], plan)?.status, "PAUSED");
 });

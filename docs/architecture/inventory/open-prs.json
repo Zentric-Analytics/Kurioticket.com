@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-08-05T20:00:00Z",
+  "repository": "Zentric-Analytics/Kurioticket.com",
+  "openPrs": [],
+  "buildImpactPrs": [],
+  "releasePrs": [],
+  "documentationPrs": [],
+  "notes": [
+    "Open PR snapshots are documented during releases in the live branch workflows.",
+    "No open release-design or platform PRs were added during this phase-1 handbook snapshot."
+  ]
+}

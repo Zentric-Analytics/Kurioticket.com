@@ -13,6 +13,8 @@ test("Flight Search propagates its response request ID into cache persistence", 
   ]);
 
   assert.match(route, /searchFlights\(parsed\.data,[\s\S]*requestId,/);
+  assert.match(route, /resolveOptionalWebApiSession\(\)/);
+  assert.doesNotMatch(route, /getServerSession\(/);
   assert.match(aggregator, /rememberFlights\(results, now, search, options\.requestId\)/);
 });
 
@@ -31,6 +33,7 @@ test("browser snapshots require the server-owned cache validity from the same re
   ]);
 
   assert.match(route, /resultsCacheValidForMs: aggregate\.resultsCacheValidForMs/);
-  assert.match(client, /data\.resultsCacheValidForMs/);
-  assert.match(client, /writeFlightResultsSessionSnapshot\([\s\S]*data\.resultsCacheValidForMs/);
+  assert.match(route, /resultsCacheValidUntil: aggregate\.resultsCacheValidUntil/);
+  assert.match(client, /data\.resultsCacheValidUntil/);
+  assert.match(client, /writeFlightResultsSessionSnapshot\([\s\S]*data\.resultsCacheValidUntil/);
 });

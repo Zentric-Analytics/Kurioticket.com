@@ -20,10 +20,10 @@ function sourceBetween(source: string, startText: string, endText: string) {
 }
 
 test("source contract keeps getPrimaryCarOffer as the offer source passed to the hero", () => {
-  assert.match(clientSource, /const primaryOffer = getPrimaryCarOffer\(car\);/);
+  assert.match(clientSource, /const primaryOffer = suppliedPrimaryOffer \?\? getPrimaryCarOffer\(car\);/);
   assert.match(
     clientSource,
-    /<CarDetailsHero car={car} offer={primaryOffer} text={text} \/>/,
+    /<CarDetailsHero car={car} offer={primaryOffer} text={text} headingLevel={modelHeadingLevel} headingRef={modelHeadingRef} \/>/,
   );
   assert.doesNotMatch(clientSource, /car\.offers\[0\]/);
 });
@@ -89,7 +89,7 @@ test("source contract keeps only pricing and the provider CTA in BookingSummary"
   assert.match(summary, /carsResults\.perDay/);
   assert.match(
     summary,
-    /<button disabled className="mt-5 w-full rounded-lg bg-teal-dark px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60">{copy\("continueToProvider"\)}<\/button>/,
+    /<button disabled className="mt-5 w-full rounded-lg bg-teal-dark px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60">{action.label}<\/button>/,
   );
   assert.doesNotMatch(clientSource, /function Term|<Term|<dl/);
 });
@@ -124,7 +124,7 @@ test("source contract uses one in-flow responsive booking summary", () => {
 });
 
 test("source contract keeps the single provider CTA disabled, inert, teal, and localized", () => {
-  const buttons = clientSource.match(/<button disabled className="[^"]+">{copy\("continueToProvider"\)}<\/button>/g) ?? [];
+  const buttons = clientSource.match(/<button disabled className="[^"]+">{action.label}<\/button>/g) ?? [];
   assert.equal(buttons.length, 1);
   for (const button of buttons) {
     assert.match(button, /bg-teal-dark/);

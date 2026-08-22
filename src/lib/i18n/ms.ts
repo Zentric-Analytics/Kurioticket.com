@@ -3,6 +3,10 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "deals.mobileTravelersTitle": "Pengembara",
+  "mobileDatePicker.start": "Mula",
+  "mobileDatePicker.end": "Tamat",
+  deals: "Pakej pelancongan",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",
@@ -26,10 +30,10 @@ export const translations: TranslationDictionary = {
   homeViewAllDestinations: "Ver todos los destinos",
   homePromoFlightsTitle: "Ofertas de vuelos de aerolíneas líderes",
   homePromoFlightsBody: "Descubre tarifas por tiempo limitado y compara opciones al instante.",
-  homePromoFlightsCta: "Explorar ofertas de vuelos",
+  homePromoFlightsCta: "Explorar paquetes de vuelos",
   homePromoHotelsTitle: "Ahorros en hoteles en todo el mundo",
   homePromoHotelsBody: "Explora estancias desde hoteles boutique hasta cadenas globales con transparencia de precios.",
-  homePromoHotelsCta: "Explorar ofertas de hoteles",
+  homePromoHotelsCta: "Explorar paquetes de hoteles",
   homeHotelDestinationsTitle: "Explore stays around the world",
   homeHotelDestinationsSubtitle:
     "Discover hotel stays across popular countries and destinations.",
@@ -152,4 +156,5 @@ export const translations: TranslationDictionary = {
   "deals.journey.substate.choose-return": "Choose return",
   "deals.journey.substate.choose-car": "Choose car",
   "deals.journey.substate.review-trip": "Review trip",
+  flightSearchDestinationPlaceholderShort: 'Ke mana?',
 };

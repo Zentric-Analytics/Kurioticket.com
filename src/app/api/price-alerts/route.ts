@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { priceAlertSchema } from "@/lib/validation";
 import {
   createPriceAlert,
   DuplicatePriceAlertError,
+  PriceAlertUnavailableError,
   listUserPriceAlerts,
 } from "@/services/priceTrackingService";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Login is required to view price alerts." }, { status: 401 });
@@ -24,7 +25,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Login is required to create price alerts." }, { status: 401 });
   }
@@ -49,6 +51,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ alert }, { status: 201 });
   } catch (error) {
+    if (error instanceof PriceAlertUnavailableError) return NextResponse.json({ error: error.message, code: "FEATURE_DISABLED" }, { status: 503 });
     if (error instanceof DuplicatePriceAlertError) {
       return NextResponse.json({ error: error.message, duplicate: true, alert: error.alert }, { status: 409 });
     }

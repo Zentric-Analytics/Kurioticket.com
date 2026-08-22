@@ -10,23 +10,22 @@ const systemApi = readFileSync("src/app/api/admin/system/route.ts", "utf8");
 const homepageFareStatusApi = readFileSync("src/app/api/admin/homepage-fares/status/route.ts", "utf8");
 const homepageFareRefreshApi = readFileSync("src/app/api/admin/homepage-fares/refresh/route.ts", "utf8");
 
-test("settings route remains the linked operational settings workspace", () => {
+test("settings remains the homepage fare workspace without duplicate feature controls", () => {
   assert.match(settingsPage, /AdminPageShell title="Settings"/);
   assert.match(settingsPage, /HomepageFaresRefreshCard/);
-  assert.match(settingsPage, /Feature flags/);
+  assert.doesNotMatch(settingsPage, /Feature flags/i);
   assert.doesNotMatch(settingsPage, /redirect\(/);
 });
 
-test("system page owns admin configuration and read-only feature flag visibility", () => {
+test("system page owns interactive authoritative feature controls", () => {
   assert.match(systemPage, /title="System"/);
   assert.match(systemPage, /System Status/);
   assert.match(systemPage, /Admin Configuration/);
   assert.match(systemPage, /ADMIN_EMAILS configured/);
   assert.match(systemPage, /Configured admin count/);
-  assert.match(systemPage, /Feature Flags/);
-  assert.match(systemPage, /No feature flags configured yet\./);
-  assert.match(systemPage, /flag\.enabled \? "Enabled" : "Disabled"/);
-  assert.doesNotMatch(systemPage, /type="checkbox"|Switch|toggle|onClick|server action/i);
+  assert.match(systemPage, /Feature Controls/);
+  assert.match(systemPage, /FeatureControlsPanel/);
+  assert.match(systemPage, /canControlProduction/);
 });
 
 test("system page avoids duplicate admin email status rows", () => {
@@ -35,8 +34,9 @@ test("system page avoids duplicate admin email status rows", () => {
   assert.doesNotMatch(systemPage, /\["Admin emails configured"/);
 });
 
-test("feature flag query and configuration helpers remain unchanged", () => {
-  assert.match(systemPage, /db\.featureFlag\.findMany\(\{ orderBy: \{ key: "asc" \}, take: 50 \}\)/);
+test("feature control query and production configuration are centralized", () => {
+  assert.match(systemPage, /listFeatureControls\(\)/);
+  assert.match(envSource, /getFeatureControlProductionAdmins/);
   assert.match(envSource, /export function getAdminEmails\(\)/);
   assert.match(envSource, /process\.env\.ADMIN_EMAILS \|\| ""/);
   assert.match(adminDataSource, /export async function getSafeSystemStatus\(\)/);

@@ -18,6 +18,7 @@ function configuredPartners() {
     return new Map<string, string>();
   }
 }
+
 /** Resolves only an explicitly configured end-user booking destination. */
 export function resolveFlightHandoff(
   offer: Pick<NormalizedFlightResult, "partnerRedirectUrl" | "bookingUrl">,
@@ -34,3 +35,4 @@ export function resolveFlightHandoff(
   const providerName = configuredPartners().get(url.hostname.toLowerCase());
   return providerName ? { providerName, url } : null;
 }
+

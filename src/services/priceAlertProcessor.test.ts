@@ -23,9 +23,9 @@ function alert(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function db(alerts: Array<Record<string, unknown>>) {
-  const state = { alerts, snapshots: [] as Array<Record<string, unknown>>, updates: [] as Array<Record<string, unknown>>, updateMany: [] as Array<Record<string, unknown>> };
-  return {
+function db(alerts: Array<Record<string, unknown>>, options: { notificationFailures?: number; forceTriggerRace?: boolean } = {}) {
+  const state = { alerts, snapshots: [] as Array<Record<string, unknown>>, notifications: [] as Array<Record<string, unknown>>, updates: [] as Array<Record<string, unknown>>, updateMany: [] as Array<Record<string, unknown>>, notificationFailures: options.notificationFailures ?? 0, forceTriggerRace: options.forceTriggerRace ?? false };
+  const clientBase = {
     state,
     priceAlert: {
       async findMany(args: { where: { status: string; nextCheckAt: { lte: Date } }; take: number }) {
@@ -39,6 +39,7 @@ function db(alerts: Array<Record<string, unknown>>) {
       },
       async updateMany(args: { where: { id?: string; status?: string; nextCheckAt?: Date | null }; data: Record<string, unknown> }) {
         state.updateMany.push(args);
+        if (state.forceTriggerRace && args.data.status === "TRIGGERED") { state.forceTriggerRace = false; return { count: 0 }; }
         let count = 0;
         for (const found of state.alerts) {
           const matchesId = !args.where.id || found.id === args.where.id;
@@ -53,7 +54,40 @@ function db(alerts: Array<Record<string, unknown>>) {
       },
     },
     priceSnapshot: { async create(args: { data: Record<string, unknown> }) { state.snapshots.push(args.data); return args.data; } },
+    notification: {
+      async createMany(args: { data: Record<string, unknown>[]; skipDuplicates: boolean }) {
+        if (state.notificationFailures > 0) { state.notificationFailures -= 1; throw new Error("notification_failed"); }
+        const data = args.data[0];
+        if (state.notifications.some((item) => item.eventKey === data.eventKey)) return { count: 0 };
+        const created = { id: `notification-${state.notifications.length + 1}`, ...data };
+        state.notifications.push(created);
+        return { count: 1 };
+      },
+      async findUnique(args: { where: { eventKey: string } }) { return state.notifications.find((item) => item.eventKey === args.where.eventKey) ?? null; },
+    },
   };
+  type FakeClient = typeof clientBase & { $transaction<T>(fn: (tx: FakeClient) => Promise<T>): Promise<T> };
+  const client: FakeClient = {
+    ...clientBase,
+    async $transaction<T>(fn: (tx: FakeClient) => Promise<T>) {
+      const before = structuredClone({ alerts: state.alerts, snapshots: state.snapshots, notifications: state.notifications, updates: state.updates, updateMany: state.updateMany });
+      try { return await fn(client); }
+      catch (error) {
+        for (const snapshot of before.alerts) {
+          const current = state.alerts.find((candidate) => candidate.id === snapshot.id);
+          if (current) { for (const key of Object.keys(current)) delete current[key]; Object.assign(current, snapshot); }
+          else state.alerts.push(snapshot);
+        }
+        for (let index = state.alerts.length - 1; index >= 0; index -= 1) if (!before.alerts.some((snapshot) => snapshot.id === state.alerts[index].id)) state.alerts.splice(index, 1);
+        state.snapshots.splice(0, state.snapshots.length, ...before.snapshots);
+        state.notifications.splice(0, state.notifications.length, ...before.notifications);
+        state.updates.splice(0, state.updates.length, ...before.updates);
+        state.updateMany.splice(0, state.updateMany.length, ...before.updateMany);
+        throw error;
+      }
+    },
+  };
+  return client;
 }
 
 const resolved = (overrides: Partial<ResolvedPrice> = {}) => ({ provider: "Duffel", price: 150, currency: "USD", payload: {}, ...overrides });
@@ -126,8 +160,8 @@ function malformedLegacyHotel(overrides: Record<string, unknown> = {}): Normaliz
   }));
 }
 
-async function run(alerts: Array<Record<string, unknown>>, options: { price?: Partial<ResolvedPrice>; emailThrows?: boolean; emailResult?: { skipped: boolean; reason?: string; id?: string }; processor?: Record<string, unknown> } = {}) {
-  const fakeDb = db(alerts);
+async function run(alerts: Array<Record<string, unknown>>, options: { price?: Partial<ResolvedPrice>; emailThrows?: boolean; emailResult?: { skipped: boolean; reason?: string; id?: string }; notificationFailures?: number; forceTriggerRace?: boolean; processor?: Record<string, unknown> } = {}) {
+  const fakeDb = db(alerts, options);
   const emails: Array<Parameters<import("@/services/priceAlertProcessor").OptionalEmailSender>[0]> = [];
   const counts = await processDuePriceAlerts({
     now,
@@ -158,20 +192,23 @@ test("enabled preferences send and trigger", async () => {
   assert.equal(a.nextCheckAt, null);
   assert.equal(emails.length, 1);
   assert.equal(fakeDb.state.snapshots.length, 1);
+  assert.equal(fakeDb.state.notifications.length, 1);
+  assert.equal(counts.eventsCreated, 1);
 });
 
-test("disabled master blocks", async () => {
+test("disabled master skips email but still triggers", async () => {
+  const a = alert();
+  const { counts, fakeDb } = await run([a], { emailResult: { skipped: true, reason: "preferences_disabled" } });
+  assert.equal(counts.skippedByPreferences, 1);
+  assert.equal(a.status, "TRIGGERED");
+  assert.equal(fakeDb.state.notifications.length, 1);
+});
+
+test("disabled priceAlerts skips email but still triggers", async () => {
   const a = alert();
   const { counts } = await run([a], { emailResult: { skipped: true, reason: "preferences_disabled" } });
   assert.equal(counts.skippedByPreferences, 1);
-  assert.equal(a.status, "ACTIVE");
-});
-
-test("disabled priceAlerts blocks", async () => {
-  const a = alert();
-  const { counts } = await run([a], { emailResult: { skipped: true, reason: "preferences_disabled" } });
-  assert.equal(counts.skippedByPreferences, 1);
-  assert.equal(a.status, "ACTIVE");
+  assert.equal(a.status, "TRIGGERED");
 });
 
 test("above-target does not send", async () => {
@@ -199,19 +236,47 @@ test("provider failure retries", async () => {
   assert.ok(fakeDb.state.updateMany.at(-1).data.nextCheckAt > now);
 });
 
-test("email failure does not mark TRIGGERED", async () => {
+test("email failure does not revert TRIGGERED", async () => {
   const a = alert();
-  const { counts } = await run([a], { emailThrows: true });
+  const { counts, fakeDb } = await run([a], { emailThrows: true });
   assert.equal(counts.failed, 1);
+  assert.equal(a.status, "TRIGGERED");
+  assert.equal(fakeDb.state.notifications.length, 1);
+});
+
+test("canonical persistence failure rolls back trigger and a retry completes", async () => {
+  const a = alert();
+  const fakeDb = db([a], { notificationFailures: 1 });
+  const emails: unknown[] = [];
+  const process = (processingTime = now) => processDuePriceAlerts({ now: processingTime, db: fakeDb, resolvePrice: async () => resolved(), sendEmail: async (input) => { emails.push(input); return { skipped: false, id: "email-1" }; } });
+  const first = await process();
+  assert.equal(first.failed, 1);
   assert.equal(a.status, "ACTIVE");
+  assert.equal(fakeDb.state.notifications.length, 0);
+  assert.equal(emails.length, 0);
+  const second = await process(new Date(now.getTime() + 2 * 60 * 60 * 1000));
+  assert.equal(second.eventsCreated, 1);
+  assert.equal(a.status, "TRIGGERED");
+  assert.equal(fakeDb.state.notifications.length, 1);
+  assert.equal(emails.length, 1);
+});
+
+test("lost trigger race creates neither notification nor email", async () => {
+  const a = alert();
+  const { fakeDb, emails } = await run([a], { forceTriggerRace: true });
+  assert.equal(a.status, "ACTIVE");
+  assert.equal(fakeDb.state.notifications.length, 0);
+  assert.equal(emails.length, 0);
 });
 
 test("duplicate runs do not send twice", async () => {
   const a = alert();
-  const first = await run([a]);
-  const second = await run([a]);
-  assert.equal(first.emails.length, 1);
-  assert.equal(second.emails.length, 0);
+  const fakeDb = db([a]);
+  const emails: unknown[] = [];
+  const process = () => processDuePriceAlerts({ now, db: fakeDb, resolvePrice: async () => resolved(), sendEmail: async (input) => { emails.push(input); return { skipped: false, id: "email-1" }; } });
+  await Promise.all([process(), process()]);
+  assert.equal(fakeDb.state.notifications.length, 1);
+  assert.equal(emails.length, 1);
 });
 
 test("correct idempotency key", () => {
@@ -306,4 +371,10 @@ test("cron route authorization fails closed", () => {
   assert.equal(isAuthorizedCronRequest(new Request("https://example.com"), ""), false);
   assert.equal(isAuthorizedCronRequest(new Request("https://example.com", { headers: { authorization: "Bearer nope" } }), "secret"), false);
   assert.equal(isAuthorizedCronRequest(new Request("https://example.com", { headers: { authorization: "Bearer secret" } }), "secret"), true);
+});
+
+test("processing control disabled returns zero work before touching candidates", async () => {
+  const db = { priceAlert: { findMany: async () => { throw new Error("candidate query must not run"); } } } as never;
+  const result = await processDuePriceAlerts({ db, featureEnabled: async () => false });
+  assert.deepEqual(result, { disabled: true, processed: 0, eventsCreated: 0, sent: 0, skippedByPreferences: 0, notTriggered: 0, failed: 0 });
 });

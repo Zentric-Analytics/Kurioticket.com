@@ -28,6 +28,7 @@ export async function searchFlights(
     aggregationMs: number;
   };
   resultsCacheValidForMs?: number;
+  resultsCacheValidUntil?: number;
 }> {
   const startedAt = Date.now();
   const provider = await runWithFlightSearchDeadline(
@@ -80,6 +81,7 @@ export async function searchFlights(
       aggregationMs,
     },
     resultsCacheValidForMs: cacheResult.validForMs,
+    resultsCacheValidUntil: now + cacheResult.validForMs,
     ...(provider.status !== "success" || cacheUnavailable
       ? {
           unavailableMessage:

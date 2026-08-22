@@ -1,6 +1,7 @@
 import { getOptionalPrisma, getPrisma } from "@/lib/prisma";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 import { flightPriceAlertDuplicateKey } from "@/lib/price-alerts/flightPriceAlerts";
+import { isFeatureEnabled } from "@/lib/feature-controls/service";
 
 export type AccountPriceAlert = {
   id: string;
@@ -8,6 +9,7 @@ export type AccountPriceAlert = {
   origin: string | null;
   destination: string;
   targetPrice: string | null;
+  mode: "AUTOMATIC" | "TARGET";
   currency: string | null;
   status: "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED" | "DELETED";
   createdAt: string;
@@ -52,6 +54,7 @@ function serializePriceAlert(alert: {
   origin: string | null;
   destination: string;
   targetPrice: { toString: () => string } | number | string | null;
+  mode: "AUTOMATIC" | "TARGET";
   currency: string | null;
   status: "ACTIVE" | "PAUSED" | "TRIGGERED" | "EXPIRED" | "DELETED";
   createdAt: Date;
@@ -66,6 +69,7 @@ function serializePriceAlert(alert: {
     origin: alert.origin,
     destination: alert.destination,
     targetPrice: alert.targetPrice === null ? null : alert.targetPrice.toString(),
+    mode: alert.mode,
     currency: alert.currency,
     status: alert.status,
     createdAt: alert.createdAt.toISOString(),
@@ -100,6 +104,7 @@ export async function listUserPriceAlerts(userId: string): Promise<AccountPriceA
         origin: true,
         destination: true,
         targetPrice: true,
+        mode: true,
         currency: true,
         status: true,
         createdAt: true,
@@ -123,12 +128,16 @@ export async function createPriceAlert(input: {
   origin?: string;
   destination: string;
   targetPrice?: number;
+  mode?: "AUTOMATIC" | "TARGET";
   currency: string;
   query: Record<string, unknown>;
 }) {
+  if (!(await isFeatureEnabled("PRICE_ALERTS_ENABLED"))) throw new PriceAlertUnavailableError();
   try {
     const db = getPrisma();
-    if (input.type === "FLIGHT") {
+    const mode = input.mode ?? "TARGET";
+    if (mode === "TARGET" && input.targetPrice === undefined) throw new PriceAlertUnavailableError("Target price is required for target alerts.");
+    if (input.type === "FLIGHT" && mode === "TARGET") {
       const requestedKey = flightPriceAlertDuplicateKey({
         origin: input.origin ?? null,
         destination: input.destination,
@@ -148,7 +157,7 @@ export async function createPriceAlert(input: {
             currency: input.currency,
           },
           select: {
-            id: true, type: true, origin: true, destination: true, targetPrice: true, currency: true, status: true, query: true, createdAt: true, updatedAt: true,
+            id: true, type: true, origin: true, destination: true, targetPrice: true, mode: true, currency: true, status: true, query: true, createdAt: true, updatedAt: true,
           },
         });
         const duplicate = existingAlerts.find((alert) => flightPriceAlertDuplicateKey(alert) === requestedKey);
@@ -163,6 +172,7 @@ export async function createPriceAlert(input: {
         origin: input.origin,
         destination: input.destination,
         targetPrice: input.targetPrice,
+        mode,
         currency: input.currency,
         query: input.query as never,
         nextCheckAt: nextPriceAlertCheck(),
@@ -173,6 +183,7 @@ export async function createPriceAlert(input: {
         origin: true,
         destination: true,
         targetPrice: true,
+        mode: true,
         currency: true,
         status: true,
         createdAt: true,
@@ -199,11 +210,12 @@ export async function createPriceAlert(input: {
 }
 
 const alertSelect = {
-  id: true, type: true, origin: true, destination: true, targetPrice: true, currency: true,
+  id: true, type: true, origin: true, destination: true, targetPrice: true, mode: true, currency: true,
   status: true, createdAt: true, updatedAt: true, lastSeenPrice: true, lastCheckedAt: true, query: true,
 } as const;
 
 export async function updateUserPriceAlertStatus(input: { id: string; userId: string; status: "ACTIVE" | "PAUSED" }) {
+  if (input.status === "ACTIVE" && !(await isFeatureEnabled("PRICE_ALERTS_ENABLED"))) throw new PriceAlertUnavailableError();
   try {
     const db = getPrisma();
     const current = input.status === "PAUSED" ? "ACTIVE" : "PAUSED";

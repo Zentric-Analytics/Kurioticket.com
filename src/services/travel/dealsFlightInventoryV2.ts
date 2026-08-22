@@ -1,5 +1,8 @@
-import type { DealsCabinClass } from "@/lib/deals/dealsSearchParams";
-import type { FlightLeg, FlightSegment, Layover, NormalizedFlightResult } from "@/lib/types";
+import type {
+  DealsFlightFareV2,
+  DealsFlightItineraryV2,
+} from "@/lib/deals/dealsTripPlanV2";
+import type { FlightLeg, NormalizedFlightResult } from "@/lib/types";
 import {
   buildFlightFareKey,
   getCompatibleFlightReturnOptions,
@@ -8,30 +11,6 @@ import {
   getFlightOutboundOptions,
   isProviderBackedFlightOffer,
 } from "./flightOfferInventory";
-
-type DealsFlightItineraryV2 = {
-  itineraryKey: string;
-  direction: "outbound" | "return";
-  originAirport: string;
-  destinationAirport: string;
-  departureTime: string;
-  arrivalTime: string;
-  duration: string;
-  durationMinutes: number;
-  stops: number;
-  layovers: Layover[];
-  segments: FlightSegment[];
-  indicativeFromPrice?: number;
-  indicativeCurrency?: string;
-};
-
-type DealsFlightFareV2 = {
-  fareKey: string;
-  brand?: string;
-  cabinClass: DealsCabinClass;
-  baggageInfo?: string;
-  refundInfo?: string;
-};
 
 const toJourneyItinerary = (
   itineraryKey: string,

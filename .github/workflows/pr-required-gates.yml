@@ -1,0 +1,127 @@
+name: Required PR gates
+
+on:
+  pull_request:
+    branches:
+      - dev
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: pr-required-gates-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate-mobile-preview:
+    name: Validate mobile preview
+    runs-on: ubuntu-latest
+    env:
+      APP_VARIANT: preview
+      APP_BUILD_MODE: release
+      EXPO_PUBLIC_API_BASE_URL: https://staging.kurioticket.com
+    steps:
+      - name: Checkout proposed merge
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Classify mobile-relevant changes
+        id: changes
+        shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$PR_BASE_SHA" =~ ^[0-9a-f]{40}$ && "$PR_HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            printf '%s\n' 'mobile_relevant=true' 'classification=uncertain-invalid-pr-range' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --name-only -z "$PR_BASE_SHA...$PR_HEAD_SHA" > /tmp/mobile-validation-paths
+          node apps/mobile/scripts/classify-mobile-validation-paths.mjs --stdin-null < /tmp/mobile-validation-paths >> "$GITHUB_OUTPUT"
+
+      - name: Mobile validation not applicable
+        if: steps.changes.outputs.mobile_relevant == 'false'
+        run: echo "No mobile-relevant files changed; the required mobile check is conclusive without running the mobile suite."
+
+      - name: Setup Node.js
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        working-directory: apps/mobile
+        run: npm ci
+
+      - name: Type-check mobile app
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        working-directory: apps/mobile
+        run: npm run typecheck
+
+      - name: Test mobile app
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        working-directory: apps/mobile
+        run: npm test
+
+      - name: Validate Expo project
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        working-directory: apps/mobile
+        run: npm run expo:doctor
+
+      - name: Resolve Preview public configuration
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        working-directory: apps/mobile
+        run: npx expo config --type public --json > /tmp/kurioticket-preview-public.json
+
+      - name: Validate Preview iOS prebuild configuration
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        working-directory: apps/mobile
+        run: npx expo config --type prebuild --json > /tmp/kurioticket-preview-prebuild.json
+
+      - name: Resolve Production public configuration
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        working-directory: apps/mobile
+        env:
+          APP_VARIANT: production
+          APP_BUILD_MODE: release
+          EXPO_PUBLIC_API_BASE_URL: https://kurioticket.com
+        run: npx expo config --type public --json > /tmp/kurioticket-production-public.json
+
+      - name: Validate resolved application identities
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        run: >-
+          node -e "const fs=require('fs'); const preview=JSON.parse(fs.readFileSync('/tmp/kurioticket-preview-public.json')); const production=JSON.parse(fs.readFileSync('/tmp/kurioticket-production-public.json')); const ok=preview.name==='Kurioticket Preview'&&preview.ios.bundleIdentifier==='com.kurioticket.app.preview'&&preview.android.package==='com.kurioticket.app.preview'&&preview.scheme==='kurioticket-preview'&&preview.extra.environment.apiBaseUrl==='https://staging.kurioticket.com'&&production.name==='Kurioticket'&&production.ios.bundleIdentifier==='com.kurioticket.app'&&production.android.package==='com.kurioticket.app'&&production.scheme==='kurioticket'&&production.extra.environment.apiBaseUrl==='https://kurioticket.com'; if(!ok) throw new Error('Resolved mobile identities do not match the approved matrix');"
+
+      - name: Validate Metro export
+        if: steps.changes.outputs.mobile_relevant == 'true'
+        working-directory: apps/mobile
+        env:
+          CI: "1"
+        run: npx expo export --platform android --output-dir /tmp/kurioticket-mobile-export --clear
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout proposed merge
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify no committed secrets
+        run: npm run security:secrets
+

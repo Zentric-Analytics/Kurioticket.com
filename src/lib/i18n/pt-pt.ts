@@ -3,6 +3,10 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "deals.mobileTravelersTitle": "Viajantes",
+  "mobileDatePicker.start": "Início",
+  "mobileDatePicker.end": "Fim",
+  deals: "Pacotes de viagem",
   "brandedLoading.hotel.title": "Finding the best stays for you",
   "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
   "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",
@@ -26,10 +30,10 @@ export const translations: TranslationDictionary = {
   homeViewAllDestinations: "Ver todos los destinos",
   homePromoFlightsTitle: "Ofertas de vuelos de aerolíneas líderes",
   homePromoFlightsBody: "Descubre tarifas por tiempo limitado y compara opciones al instante.",
-  homePromoFlightsCta: "Explorar ofertas de vuelos",
+  homePromoFlightsCta: "Explorar paquetes de vuelos",
   homePromoHotelsTitle: "Ahorros en hoteles en todo el mundo",
   homePromoHotelsBody: "Explora estancias desde hoteles boutique hasta cadenas globales con transparencia de precios.",
-  homePromoHotelsCta: "Explorar ofertas de hoteles",
+  homePromoHotelsCta: "Explorar paquetes de hoteles",
   homeHotelDestinationsTitle: "Explore estadias pelo mundo",
   homeHotelDestinationsSubtitle:
     "Descubra destinos de hotel em cidades, países e regiões populares.",
@@ -152,4 +156,5 @@ export const translations: TranslationDictionary = {
   "deals.journey.substate.choose-return": "Choose return",
   "deals.journey.substate.choose-car": "Choose car",
   "deals.journey.substate.review-trip": "Review trip",
+  flightSearchDestinationPlaceholderShort: 'Para onde?',
 };

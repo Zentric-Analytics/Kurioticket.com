@@ -1,15 +1,23 @@
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { FlowIcon, type FlowIconName } from "../flow/FlowIcon";
-import { flowColors, flowStyles } from "../flow/flowStyles";
+import { flowColors, flowStyles, useFlowTheme } from "../flow/flowStyles";
+import {
+  buildHomepageHotelPromoRoute,
+  HOMEPAGE_FLIGHT_PROMO_ROUTE,
+} from "./homepagePromoNavigation";
 
 type DealPromo = {
   title: string;
   description: string;
   buttonLabel: string;
   icon: FlowIconName;
-  backgroundColor: string;
-  route: "/flights" | "/hotels";
+  lightBackgroundColor: string;
+  darkBackgroundColor: string;
+  lightBorderColor: string;
+  darkBorderColor: string;
+  darkIconBackgroundColor: string;
+  onPress: () => void;
 };
 
 const homepageDealPromos: readonly DealPromo[] = [
@@ -18,8 +26,12 @@ const homepageDealPromos: readonly DealPromo[] = [
     description: "Discover limited-time fares and compare options instantly.",
     buttonLabel: "Explore flight deals",
     icon: "flight",
-    backgroundColor: "#EAF2FF",
-    route: "/flights",
+    lightBackgroundColor: "#EAF2FF",
+    darkBackgroundColor: "#102A56",
+    lightBorderColor: "rgba(6,76,247,0.08)",
+    darkBorderColor: "rgba(91,141,255,0.38)",
+    darkIconBackgroundColor: "#193B74",
+    onPress: () => router.push(HOMEPAGE_FLIGHT_PROMO_ROUTE),
   },
   {
     title: "Hotel savings worldwide",
@@ -27,12 +39,19 @@ const homepageDealPromos: readonly DealPromo[] = [
       "Browse stays from boutique hotels to global chains with price transparency.",
     buttonLabel: "Explore hotel deals",
     icon: "hotel",
-    backgroundColor: "#E5F7F5",
-    route: "/hotels",
+    lightBackgroundColor: "#E5F7F5",
+    darkBackgroundColor: "#123A35",
+    lightBorderColor: "rgba(6,76,247,0.08)",
+    darkBorderColor: "rgba(64,196,176,0.36)",
+    darkIconBackgroundColor: "#1A514A",
+    onPress: () => router.push(buildHomepageHotelPromoRoute()),
   },
 ] as const;
 
 export function HomepageDealPromos() {
+  const ft = useFlowTheme();
+  const titleColor = ft.theme.dark ? "#F4F7FF" : ft.colors.textPrimary;
+  const descriptionColor = ft.theme.dark ? "#C8D2E6" : ft.colors.textSecondary;
   return (
     <View testID="homepage-deal-promos" style={styles.section}>
       {homepageDealPromos.map((promo) => (
@@ -41,18 +60,30 @@ export function HomepageDealPromos() {
           style={[
             styles.card,
             flowStyles.shadow,
-            { backgroundColor: promo.backgroundColor },
+            {
+              backgroundColor: ft.theme.dark
+                ? promo.darkBackgroundColor
+                : promo.lightBackgroundColor,
+              borderColor: ft.theme.dark
+                ? promo.darkBorderColor
+                : promo.lightBorderColor,
+            },
           ]}
         >
           <View style={styles.copy}>
-            <Text accessibilityRole="header" style={styles.heading}>
+            <Text
+              accessibilityRole="header"
+              style={[styles.heading, { color: titleColor }]}
+            >
               {promo.title}
             </Text>
-            <Text style={styles.description}>{promo.description}</Text>
+            <Text style={[styles.description, { color: descriptionColor }]}>
+              {promo.description}
+            </Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={promo.buttonLabel}
-              onPress={() => router.push(promo.route)}
+              onPress={promo.onPress}
               style={({ pressed }) => [
                 styles.button,
                 pressed && flowStyles.pressed,
@@ -61,7 +92,15 @@ export function HomepageDealPromos() {
               <Text style={styles.buttonText}>{promo.buttonLabel}</Text>
             </Pressable>
           </View>
-          <View pointerEvents="none" style={styles.icon}>
+          <View
+            pointerEvents="none"
+            style={[
+              styles.icon,
+              ft.theme.dark && {
+                backgroundColor: promo.darkIconBackgroundColor,
+              },
+            ]}
+          >
             <FlowIcon name={promo.icon} color={flowColors.blue} size={38} />
           </View>
         </View>
@@ -83,13 +122,11 @@ const styles = StyleSheet.create({
   },
   copy: { flex: 1, alignItems: "flex-start", gap: 10, paddingRight: 12 },
   heading: {
-    color: flowColors.navy,
     fontSize: 21,
     lineHeight: 27,
     fontWeight: "800",
   },
   description: {
-    color: flowColors.muted,
     fontSize: 14,
     lineHeight: 21,
   },

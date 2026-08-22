@@ -40,7 +40,7 @@ test("standalone Flights mobile landing form enables every supported trip option
   );
   assert.match(
     source,
-    /"Round trip"[\s\S]*?"One way-trip"[\s\S]*?"Multi-city trip"/,
+    /\["round-trip", t\("roundTrip"\)\][\s\S]*?\["one-way", t\("oneWay"\)\][\s\S]*?\["multi-city", t\("multiCity"\)\]/,
   );
   assert.doesNotMatch(source, /aria-disabled=\{value === "multi-city"\}/);
   assert.doesNotMatch(source, /disabled=\{value === "multi-city"\}/);
@@ -110,7 +110,7 @@ test("standalone Flights uses the canonical indexed Multi-city search contract",
   assert.match(source, /sm:inline-flex sm:gap-1/);
   assert.match(
     source,
-    /\.\.\.defaultTripTypeOptions,[\s\S]*?\["multi-city", "Multi-city"\] as const/,
+    /\.\.\.defaultTripTypeOptions,[\s\S]*?\["multi-city", t\("multiCity"\)\] as const/,
   );
   assert.match(source, /FlightSearchLeg/);
   assert.match(source, /appendFlightLegParams\(params, authoritativeLegs\)/);

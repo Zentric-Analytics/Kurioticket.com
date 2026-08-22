@@ -10,7 +10,7 @@ const databaseUrl =
   process.env["POSTGRES_URL_NON_POOLING"];
 
 export default defineConfig({
-  schema: "prisma/schema.prisma",
+  schema: "prisma",
   migrations: {
     path: "prisma/migrations",
   },

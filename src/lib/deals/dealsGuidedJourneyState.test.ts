@@ -1,14 +1,198 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clearDealsTripPlanFromCar, clearDealsTripPlanFromFlight, clearDealsTripPlanFromHotel, createDealsTripPlan, replaceDealsCarSelection, replaceDealsFlightSelection, replaceDealsHotelSelection, type DealsTripPlanCar, type DealsTripPlanFlight, type DealsTripPlanHotel } from "./dealsTripPlan";
-import { buildDealsPlanContextKey, DEALS_STAGED_JOURNEY_STORAGE_KEY, DEALS_TRIP_PLAN_STORAGE_KEY, getVisibleDealsPlan, readDealsStagedJourneyPlan, removeDealsStagedJourneyPlan, removeDealsTripPlan, writeDealsStagedJourneyPlan, writeDealsTripPlan } from "./dealsTripPlanStorage";
+import {
+  clearDealsTripPlanFromCar,
+  clearDealsTripPlanFromFlight,
+  clearDealsTripPlanFromHotel,
+  createDealsTripPlan,
+  replaceDealsCarSelection,
+  replaceDealsFlightSelection,
+  replaceDealsHotelSelection,
+  type DealsTripPlanCar,
+  type DealsTripPlanFlight,
+  type DealsTripPlanHotel,
+} from "./dealsTripPlan";
+import {
+  buildDealsPlanContextKey,
+  DEALS_STAGED_JOURNEY_STORAGE_KEY,
+  DEALS_TRIP_PLAN_STORAGE_KEY,
+  getVisibleDealsPlan,
+  readDealsStagedJourneyPlan,
+  removeDealsStagedJourneyPlan,
+  removeDealsTripPlan,
+  writeDealsStagedJourneyPlan,
+  writeDealsTripPlan,
+} from "./dealsTripPlanStorage";
 
-const hotel = { id: "h", provider: "H", name: "Stay", location: "LA", checkIn: "2026-08-01", checkOut: "2026-08-03", sourcePrice: 200, sourceCurrency: "USD", resultReceivedAt: 100 } satisfies DealsTripPlanHotel;
-const flight = { id: "f", provider: "F", airline: "Air", origin: "LOS", destination: "LAX", departure: "2026-08-01", arrival: "2026-08-02", duration: "10h", sourcePrice: 100, sourceCurrency: "USD", resultReceivedAt: 100 } satisfies DealsTripPlanFlight;
-const car = { id: "c", provider: "C", rentalCompany: "Rent", modelName: "Car", categoryLabel: "Compact", pickupLocation: "LA", returnLocation: "LA", pickupDate: "2026-08-01", pickupTime: "10:00", dropoffDate: "2026-08-03", dropoffTime: "10:00", sourcePrice: 90, sourceCurrency: "USD", resultReceivedAt: 100, detailsPath: "/cars/details/c?pickupLocation=LA&dropoffLocation=LA&pickupDate=2026-08-01&pickupTime=10%3A00&dropoffDate=2026-08-03&dropoffTime=10%3A00&driverAge=30" } satisfies DealsTripPlanCar;
-const base = () => ({ ...createDealsTripPlan({ mode: "hotel-flight-car", searchFingerprint: "fp", resultsPath: "/deals/results?mode=hotel-flight-car" }, 100), hotel, flight, car, opened: { hotel: 100, flight: 100, car: 100 } });
+const hotel = {
+  id: "h",
+  provider: "H",
+  name: "Stay",
+  location: "LA",
+  checkIn: "2026-08-01",
+  checkOut: "2026-08-03",
+  sourcePrice: 200,
+  sourceCurrency: "USD",
+  resultReceivedAt: 100,
+} satisfies DealsTripPlanHotel;
+const flight = {
+  id: "f",
+  provider: "F",
+  airline: "Air",
+  origin: "LOS",
+  destination: "LAX",
+  departure: "2026-08-01",
+  arrival: "2026-08-02",
+  duration: "10h",
+  sourcePrice: 100,
+  sourceCurrency: "USD",
+  resultReceivedAt: 100,
+} satisfies DealsTripPlanFlight;
+const car = {
+  id: "c",
+  provider: "C",
+  rentalCompany: "Rent",
+  modelName: "Car",
+  categoryLabel: "Compact",
+  pickupLocation: "LA",
+  returnLocation: "LA",
+  pickupDate: "2026-08-01",
+  pickupTime: "10:00",
+  dropoffDate: "2026-08-03",
+  dropoffTime: "10:00",
+  sourcePrice: 90,
+  sourceCurrency: "USD",
+  resultReceivedAt: 100,
+  detailsPath:
+    "/cars/details/c?pickupLocation=LA&dropoffLocation=LA&pickupDate=2026-08-01&pickupTime=10%3A00&dropoffDate=2026-08-03&dropoffTime=10%3A00&driverAge=30",
+} satisfies DealsTripPlanCar;
+const base = () => ({
+  ...createDealsTripPlan(
+    {
+      mode: "hotel-flight-car",
+      searchFingerprint: "fp",
+      resultsPath: "/packages/results?mode=hotel-flight-car",
+    },
+    100,
+  ),
+  hotel,
+  flight,
+  car,
+  opened: { hotel: 100, flight: 100, car: 100 },
+});
 
-test("selection replacement invalidates dependent products and opened timestamps", () => { const newHotel = { ...hotel, id: "h2" }, newFlight = { ...flight, id: "f2" }, newCar = { ...car, id: "c2" }; const fromHotel = replaceDealsHotelSelection(base(), newHotel, 110); assert.equal(fromHotel.hotel?.id, "h2"); assert.equal(fromHotel.flight, undefined); assert.equal(fromHotel.car, undefined); assert.deepEqual(fromHotel.opened, {}); const fromFlight = replaceDealsFlightSelection(base(), newFlight, 110); assert.equal(fromFlight.hotel?.id, "h"); assert.equal(fromFlight.flight?.id, "f2"); assert.equal(fromFlight.car, undefined); assert.deepEqual(fromFlight.opened, { hotel: 100 }); const fromCar = replaceDealsCarSelection(base(), newCar, 110); assert.equal(fromCar.hotel?.id, "h"); assert.equal(fromCar.flight?.id, "f"); assert.equal(fromCar.car?.id, "c2"); assert.deepEqual(fromCar.opened, { hotel: 100, flight: 100 }); });
-test("clear-from operations retain only valid earlier selections", () => { const fromHotel = clearDealsTripPlanFromHotel(base()); assert.equal(fromHotel.hotel, undefined); assert.equal(fromHotel.flight, undefined); assert.equal(fromHotel.car, undefined); assert.deepEqual(fromHotel.opened, {}); const fromFlight = clearDealsTripPlanFromFlight(base()); assert.equal(fromFlight.hotel?.id, "h"); assert.equal(fromFlight.flight, undefined); assert.equal(fromFlight.car, undefined); assert.deepEqual(fromFlight.opened, { hotel: 100 }); const fromCar = clearDealsTripPlanFromCar(base()); assert.equal(fromCar.hotel?.id, "h"); assert.equal(fromCar.flight?.id, "f"); assert.equal(fromCar.car, undefined); assert.deepEqual(fromCar.opened, { hotel: 100, flight: 100 }); });
-test("context keys isolate scope and fingerprint", () => { const plan = base(); const state = { plan, storedContextKey: "guided:fp", resolvedContextKey: "guided:fp", persistence: "saved" as const }; assert.notEqual(buildDealsPlanContextKey("legacy", "fp"), buildDealsPlanContextKey("guided", "fp")); assert.notEqual(buildDealsPlanContextKey("guided", "a"), buildDealsPlanContextKey("guided", "b")); assert.equal(getVisibleDealsPlan(state, "guided:b"), null); assert.equal(getVisibleDealsPlan(state, "legacy:fp"), null); assert.equal(getVisibleDealsPlan(state, "guided:fp"), plan); assert.equal(getVisibleDealsPlan({ ...state, resolvedContextKey: null }, "guided:fp"), null); });
-test("guided and legacy storage clearing remain isolated", () => { const values = new Map<string, string>(); const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); }, removeItem: (key: string) => { values.delete(key); } }; const plan = base(); assert.equal(writeDealsTripPlan(plan, storage), true); assert.equal(writeDealsStagedJourneyPlan(plan, storage), true); removeDealsStagedJourneyPlan(storage); assert.equal(values.has(DEALS_TRIP_PLAN_STORAGE_KEY), true); assert.equal(readDealsStagedJourneyPlan("fp", 110, storage).status, "missing"); writeDealsStagedJourneyPlan(plan, storage); removeDealsTripPlan(storage); assert.equal(values.has(DEALS_STAGED_JOURNEY_STORAGE_KEY), true); values.set(DEALS_STAGED_JOURNEY_STORAGE_KEY, "invalid"); assert.equal(readDealsStagedJourneyPlan("fp", 110, storage).status, "invalid"); });
+test("selection replacement invalidates only the product and its downstream products", () => {
+  const modes = [
+    "hotel-flight",
+    "flight-car",
+    "hotel-car",
+    "hotel-flight-car",
+  ] as const;
+  const expected = {
+    "hotel-flight": { flight: [], hotel: ["flight"] },
+    "flight-car": { flight: [], car: ["flight"] },
+    "hotel-car": { hotel: [], car: ["hotel"] },
+    "hotel-flight-car": {
+      flight: [],
+      hotel: ["flight"],
+      car: ["flight", "hotel"],
+    },
+  } as const;
+  for (const mode of modes)
+    for (const product of Object.keys(expected[mode]) as Array<
+      keyof (typeof expected)[typeof mode]
+    >) {
+      const plan = { ...base(), mode };
+      const next =
+        product === "flight"
+          ? replaceDealsFlightSelection(plan, { ...flight, id: "f2" }, 110)
+          : product === "hotel"
+            ? replaceDealsHotelSelection(plan, { ...hotel, id: "h2" }, 110)
+            : replaceDealsCarSelection(plan, { ...car, id: "c2" }, 110);
+      for (const preserved of expected[mode][product])
+        assert.ok(next[preserved], `${mode}:${product} preserves ${preserved}`);
+      const order =
+        mode === "hotel-flight"
+          ? ["flight", "hotel"]
+          : mode === "flight-car"
+            ? ["flight", "car"]
+            : mode === "hotel-car"
+              ? ["hotel", "car"]
+              : ["flight", "hotel", "car"];
+      for (const downstream of order.slice(order.indexOf(product) + 1))
+        assert.equal(
+          next[downstream as "flight" | "hotel" | "car"],
+          undefined,
+          `${mode}:${product} clears ${downstream}`,
+        );
+    }
+});
+
+test("clear-from operations use the same order-aware dependency", () => {
+  const plan = base();
+  const fromFlight = clearDealsTripPlanFromFlight(plan);
+  assert.equal(fromFlight.flight, undefined);
+  assert.equal(fromFlight.hotel, undefined);
+  assert.equal(fromFlight.car, undefined);
+  const fromHotel = clearDealsTripPlanFromHotel(plan);
+  assert.ok(fromHotel.flight);
+  assert.equal(fromHotel.hotel, undefined);
+  assert.equal(fromHotel.car, undefined);
+  const fromCar = clearDealsTripPlanFromCar(plan);
+  assert.ok(fromCar.flight);
+  assert.ok(fromCar.hotel);
+  assert.equal(fromCar.car, undefined);
+});
+test("context keys isolate scope and fingerprint", () => {
+  const plan = base();
+  const state = {
+    plan,
+    storedContextKey: "guided:fp",
+    resolvedContextKey: "guided:fp",
+    persistence: "saved" as const,
+  };
+  assert.notEqual(
+    buildDealsPlanContextKey("legacy", "fp"),
+    buildDealsPlanContextKey("guided", "fp"),
+  );
+  assert.notEqual(
+    buildDealsPlanContextKey("guided", "a"),
+    buildDealsPlanContextKey("guided", "b"),
+  );
+  assert.equal(getVisibleDealsPlan(state, "guided:b"), null);
+  assert.equal(getVisibleDealsPlan(state, "legacy:fp"), null);
+  assert.equal(getVisibleDealsPlan(state, "guided:fp"), plan);
+  assert.equal(
+    getVisibleDealsPlan({ ...state, resolvedContextKey: null }, "guided:fp"),
+    null,
+  );
+});
+test("guided and legacy storage clearing remain isolated", () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      values.set(key, value);
+    },
+    removeItem: (key: string) => {
+      values.delete(key);
+    },
+  };
+  const plan = base();
+  assert.equal(writeDealsTripPlan(plan, storage), true);
+  assert.equal(writeDealsStagedJourneyPlan(plan, storage), true);
+  removeDealsStagedJourneyPlan(storage);
+  assert.equal(values.has(DEALS_TRIP_PLAN_STORAGE_KEY), true);
+  assert.equal(
+    readDealsStagedJourneyPlan("fp", 110, storage).status,
+    "missing",
+  );
+  writeDealsStagedJourneyPlan(plan, storage);
+  removeDealsTripPlan(storage);
+  assert.equal(values.has(DEALS_STAGED_JOURNEY_STORAGE_KEY), true);
+  values.set(DEALS_STAGED_JOURNEY_STORAGE_KEY, "invalid");
+  assert.equal(
+    readDealsStagedJourneyPlan("fp", 110, storage).status,
+    "invalid",
+  );
+});

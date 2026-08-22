@@ -18,7 +18,7 @@ export const faqItemKeys = [
   ["faqQuestionManageChanges", "faqAnswerManageChanges"],
   ["supportFaqAccountQuestion", "supportFaqAccountAnswer"],
   ["supportFaqSearchQuestion", "supportFaqSearchAnswer"],
-  ["supportFaqSavedTripsQuestion", "supportFaqSavedTripsAnswer"],
+  ["supportFaqSavedRecentQuestion", "supportFaqSavedRecentAnswer"],
   ["supportFaqRedirectQuestion", "supportFaqRedirectAnswer"],
   ["supportFaqAlreadyBookedQuestion", "supportFaqAlreadyBookedAnswer"],
   ["supportFaqChangeBookingQuestion", "supportFaqChangeBookingAnswer"],
@@ -77,9 +77,9 @@ export const generalFaqs: FaqItem[] = getGeneralFaqs((key) => {
     supportFaqSearchQuestion: "Search and results help",
     supportFaqSearchAnswer:
       "Kurioticket can help when flight or hotel search is not working, results are not loading, filters are confusing, or prices and providers are not displaying as expected.",
-    supportFaqSavedTripsQuestion: "Saved trips and alerts",
-    supportFaqSavedTripsAnswer:
-      "Kurioticket can help with saved trips, recent searches, price alerts, notification issues, and account-linked travel tools.",
+    supportFaqSavedRecentQuestion: "Saved & Recent and Price Alerts",
+    supportFaqSavedRecentAnswer:
+      "Kurioticket can help with Saved & Recent, Price Alerts, reservation records, notifications, and account-linked travel tools.",
     supportFaqRedirectQuestion: "Booking/provider redirect help",
     supportFaqRedirectAnswer:
       "Kurioticket can help if a redirect to a partner or provider fails, opens the wrong page, or does not preserve the selected trip or search details.",
@@ -88,7 +88,7 @@ export const generalFaqs: FaqItem[] = getGeneralFaqs((key) => {
       "If your booking was completed with an airline, hotel, travel agency, or external provider, that provider is responsible for booking changes, refunds, cancellations, check-in, boarding, receipts, and travel documents.",
     supportFaqChangeBookingQuestion: "Can Kurioticket change my booking?",
     supportFaqChangeBookingAnswer:
-      "Kurioticket can only help with bookings made directly through Kurioticket if and when direct booking is supported. For bookings completed with external providers, contact that provider directly.",
+      "Kurioticket does not manage or change travel bookings. If you completed a reservation with an airline, hotel, travel agency, or other provider, contact that provider for changes, cancellations, refunds, check-in, receipts, and travel documents.",
     supportFaqWhyRedirectedQuestion: "Why was I sent to another provider?",
     supportFaqWhyRedirectedAnswer:
       "Kurioticket is a travel search and comparison platform, and some results redirect to trusted providers where you complete booking, payment, and provider-specific support.",

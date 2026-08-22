@@ -51,6 +51,7 @@ test("missing or unknown configuration never falls back", () => {
   assert.throws(() => resolveMobileEnvironment({}), /APP_VARIANT is required/);
   assert.throws(() => resolveMobileEnvironment({ APP_VARIANT: "staging", APP_BUILD_MODE: "release", EXPO_PUBLIC_API_BASE_URL: "https://staging.kurioticket.com" }), /preview or production/);
 });
+
 test("release platform matrix allows Android and iOS for both permanent identities", () => {
   const previewEnvironment = resolveMobileEnvironment(preview);
   const productionEnvironment = resolveMobileEnvironment(production);

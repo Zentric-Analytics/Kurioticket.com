@@ -1,19 +1,23 @@
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
+  "accountDashboard.recently": "Recently",
   "metadata.root.title.default": "Kurioticket | Find Cheap Flights Fast",
-  "metadata.root.description": "Compare affordable flights and hotels in seconds with a calmer travel decision platform.",
+  "metadata.root.description":
+    "Compare affordable flights and hotels in seconds with a calmer travel decision platform.",
   flights: "Flights",
   hotels: "Hotels",
   cars: "Cars",
-  deals: "Deals",
+  deals: "Packages",
   home: "Home",
   destinationsLoadingPage: "Loading destinations page...",
   "brandedLoading.default.title": "Loading Kurioticket...",
   "brandedLoading.default.preparingExperience": "Preparing your experience...",
   "brandedLoading.hotel.title": "Finding the best stays for you",
-  "brandedLoading.hotel.checkingAvailabilityAndRates": "Checking availability and rates...",
-  "brandedLoading.hotel.comparingHotelsAndRooms": "Comparing hotels and room options...",
+  "brandedLoading.hotel.checkingAvailabilityAndRates":
+    "Checking availability and rates...",
+  "brandedLoading.hotel.comparingHotelsAndRooms":
+    "Comparing hotels and room options...",
   "brandedLoading.hotel.preparingStays": "Preparing your stays...",
   "recentSearches.title": "Recent searches",
   "recentSearches.subtitle": "Quick routes from your latest searches.",
@@ -22,60 +26,84 @@ export const translations: TranslationDictionary = {
   "recentSearches.unsaveAria": "Unsave recent search",
   "recentSearches.removeAria": "Remove recent search",
   "redirect.title": "Secure partner redirect",
-  "redirect.description": "You are leaving Kurioticket for an external provider where pricing, availability, fare rules, and purchase steps are confirmed.",
+  "redirect.description":
+    "You are leaving Kurioticket for an external provider where pricing, availability, fare rules, and purchase steps are confirmed.",
   "redirect.missingTarget": "Redirect link is missing. Please search again.",
   "redirect.loading": "Preparing redirect...",
   "flightGuide.eyebrow": "Route planning guide",
-  "flightGuide.description": "Compare route details, airport options, seasonal timing, and travel planning notes before continuing your search.",
+  "flightGuide.description":
+    "Compare route details, airport options, seasonal timing, and travel planning notes before continuing your search.",
   "flightGuide.roadmapTitle": "Content roadmap",
   "flightGuide.roadmap.bestTimeToBook": "Best time to book",
   "flightGuide.roadmap.airportLayoverNotes": "Airport and layover notes",
   "flightGuide.roadmap.budgetRangesAlerts": "Budget ranges and alerts",
-  "flightGuide.roadmap.hotelCoordinationInsights": "Hotel coordination insights",
+  "flightGuide.roadmap.hotelCoordinationInsights":
+    "Hotel coordination insights",
   "hotelGuide.eyebrow": "Hotel destination guide",
   "hotelGuide.titleSuffix": "hotels",
-  "hotelGuide.description": "Review destination lodging considerations, arrival convenience, neighborhood fit, transportation access, and hotel quality signals before searching stays.",
+  "hotelGuide.description":
+    "Review destination lodging considerations, arrival convenience, neighborhood fit, transportation access, and hotel quality signals before searching stays.",
   "hotelGuide.contentSystemTitle": "Destination content system",
-  "hotelGuide.contentSystemBody": "Editors can add local convenience, airport transfer notes, and area recommendations in Phase 2.",
+  "hotelGuide.contentSystemBody":
+    "Editors can add local convenience, airport transfer notes, and area recommendations in Phase 2.",
   "guides.title": "Travel Planning Guides",
-  "guides.description": "Explore route, airport, destination, hotel, and travel planning guides designed to support confident trip decisions.",
-  "guides.metadata.best-time-to-book-flights.title": "Best Time to Book Flights",
-  "guides.metadata.best-time-to-book-flights.description": "Learn when to book flights, compare fare timing, and avoid overpaying for your next trip.",
-  "guides.metadata.how-to-avoid-risky-layovers.title": "How to Avoid Risky Layovers",
-  "guides.metadata.how-to-avoid-risky-layovers.description": "Learn how to compare layover times, airport changes, and connection risks before booking.",
-  "guides.metadata.how-to-compare-baggage-inclusive-fares.title": "How to Compare Baggage-Inclusive Fares",
-  "guides.metadata.how-to-compare-baggage-inclusive-fares.description": "Learn how to compare fares with baggage included so the cheapest ticket does not become more expensive later.",
+  "guides.description":
+    "Explore route, airport, destination, hotel, and travel planning guides designed to support confident trip decisions.",
+  "guides.metadata.best-time-to-book-flights.title":
+    "Best Time to Book Flights",
+  "guides.metadata.best-time-to-book-flights.description":
+    "Learn when to book flights, compare fare timing, and avoid overpaying for your next trip.",
+  "guides.metadata.how-to-avoid-risky-layovers.title":
+    "How to Avoid Risky Layovers",
+  "guides.metadata.how-to-avoid-risky-layovers.description":
+    "Learn how to compare layover times, airport changes, and connection risks before booking.",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.title":
+    "How to Compare Baggage-Inclusive Fares",
+  "guides.metadata.how-to-compare-baggage-inclusive-fares.description":
+    "Learn how to compare fares with baggage included so the cheapest ticket does not become more expensive later.",
   "guides.articleEyebrow": "Travel planning article",
-  "guides.articleBody": "Use this guide to organize trip planning details, compare travel considerations, and continue into Kurioticket flight and hotel search tools.",
-  "guides.cardPlaceholder": "Editorial page shell ready for SEO content and internal travel data.",
-  "travelersCabinDialogLabel": "Travelers and cabin",
+  "guides.articleBody":
+    "Use this guide to organize trip planning details, compare travel considerations, and continue into Kurioticket flight and hotel search tools.",
+  "guides.cardPlaceholder":
+    "Editorial page shell ready for SEO content and internal travel data.",
+  travelersCabinDialogLabel: "Travelers and cabin",
   mobileInfoLegalHeading: "Info & legal",
   explorePageEyebrow: "Travel discovery",
   exploreHeroTitle: "Explore travel ideas",
-  exploreHeroSubtitle: "Start with routes, stays, and planning tools designed to help you compare options clearly before continuing with a provider.",
+  exploreHeroSubtitle:
+    "Start with routes, stays, and planning tools designed to help you compare options clearly before continuing with a provider.",
   exploreWaysTitle: "Ways to explore",
   exploreWaysRouteTitle: "Route discovery",
-  exploreWaysRouteText: "Begin with a flight route, then compare schedules, stopovers, and provider options when results are available.",
+  exploreWaysRouteText:
+    "Begin with a flight route, then compare schedules, stopovers, and provider options when results are available.",
   exploreWaysHotelsTitle: "Hotel destination ideas",
-  exploreWaysHotelsText: "Use destination-focused hotel searches to compare stay options, locations, and cancellation terms.",
+  exploreWaysHotelsText:
+    "Use destination-focused hotel searches to compare stay options, locations, and cancellation terms.",
   exploreWaysSavedTitle: "Saved trips and recent searches",
-  exploreWaysSavedText: "Return to routes and searches you already started so planning stays organized over multiple sessions.",
+  exploreWaysSavedText:
+    "Return to routes and searches you already started so planning stays organized over multiple sessions.",
   exploreWaysBasicsTitle: "Travel planning basics",
-  exploreWaysBasicsText: "Think through timing, flexibility, baggage, lodging needs, and provider policies before committing.",
+  exploreWaysBasicsText:
+    "Think through timing, flexibility, baggage, lodging needs, and provider policies before committing.",
   exploreNeedsTitle: "Plan by travel need",
   exploreNeedsWeekendTitle: "Weekend city breaks",
-  exploreNeedsWeekendText: "Compare shorter routes, simple schedules, and hotel locations that fit limited time away.",
+  exploreNeedsWeekendText:
+    "Compare shorter routes, simple schedules, and hotel locations that fit limited time away.",
   exploreNeedsInternationalTitle: "International trips",
-  exploreNeedsInternationalText: "Review longer itineraries carefully, including total travel time, stopovers, entry needs, and provider terms.",
+  exploreNeedsInternationalText:
+    "Review longer itineraries carefully, including total travel time, stopovers, entry needs, and provider terms.",
   exploreNeedsHotelFirstTitle: "Hotel-first planning",
-  exploreNeedsHotelFirstText: "Start with where you want to stay, then line up flights and other trip pieces around that location.",
+  exploreNeedsHotelFirstText:
+    "Start with where you want to stay, then line up flights and other trip pieces around that location.",
   exploreNeedsCompleteTitle: "Complete trip planning",
-  exploreNeedsCompleteText: "Use flights, hotels, saved trips, and recent searches together to keep the full trip picture clear.",
+  exploreNeedsCompleteText:
+    "Use flights, hotels, saved trips, and recent searches together to keep the full trip picture clear.",
   exploreChecklistTitle: "Before you book",
   exploreChecklistTime: "Compare total travel time and stopovers",
   exploreChecklistBaggage: "Review baggage and flexibility",
   exploreChecklistHotel: "Check hotel location and cancellation rules",
-  exploreChecklistProvider: "Confirm final price and availability with the provider",
+  exploreChecklistProvider:
+    "Confirm final price and availability with the provider",
   exploreChecklistSave: "Save routes or searches for later",
   explorePrimaryCta: "Search flights",
   exploreSecondaryCta: "Search hotels",
@@ -124,23 +152,29 @@ export const translations: TranslationDictionary = {
   "countryCurrency.country.MX": "Mexico",
   "countryCurrency.country.SG": "Singapore",
   destinations: "Destinations",
-  "destinationsHeroBadge": "Destination discovery",
-  "destinationsHeroTitle": "Where do you want to go next?",
-  "destinationsHeroSubtitle": "Browse brighter, hand-picked city views, compare flights, and find travel deals in minutes.",
-  "destinationsRegionsAriaLabel": "Destination regions",
-  "destinationsCardAriaLabel": "Search flights to {destination}",
-  "destinationsImageAltSuffix": "travel photography",
+  destinationsHeroBadge: "Destination discovery",
+  destinationsHeroTitle: "Where do you want to go next?",
+  destinationsHeroSubtitle:
+    "Browse brighter, hand-picked city views, compare flights, and find travel deals in minutes.",
+  destinationsRegionsAriaLabel: "Destination regions",
+  destinationsCardAriaLabel: "Search flights to {destination}",
+  destinationsImageAltSuffix: "travel photography",
   "destinations.card.subtitle": "Bright views, flights, hotels, and deals",
   "destinations.region.europe": "Europe",
   "destinations.region.northAmerica": "North America",
   "destinations.region.asia": "Asia",
   "destinations.region.africa": "Africa",
   "destinations.region.middleEast": "Middle East",
-  "destinations.region.europe.summary": "A focused edit of landmark cities, romantic canals, design capitals, and timeless food-and-culture weekends.",
-  "destinations.region.northAmerica.summary": "Statement skylines, coastal icons, entertainment capitals, and cinematic city breaks worth planning around.",
-  "destinations.region.asia.summary": "Neon cityscapes, island escapes, street food legends, temples, beaches, and premium shopping gateways.",
-  "destinations.region.africa.summary": "High impact travel favorites with ocean scenery, safari access, creative capitals, and rich cultural texture.",
-  "destinations.region.middleEast.summary": "Luxury skylines, warm coasts, desert drama, heritage districts, and modern hospitality hubs.",
+  "destinations.region.europe.summary":
+    "A focused edit of landmark cities, romantic canals, design capitals, and timeless food-and-culture weekends.",
+  "destinations.region.northAmerica.summary":
+    "Statement skylines, coastal icons, entertainment capitals, and cinematic city breaks worth planning around.",
+  "destinations.region.asia.summary":
+    "Neon cityscapes, island escapes, street food legends, temples, beaches, and premium shopping gateways.",
+  "destinations.region.africa.summary":
+    "High impact travel favorites with ocean scenery, safari access, creative capitals, and rich cultural texture.",
+  "destinations.region.middleEast.summary":
+    "Luxury skylines, warm coasts, desert drama, heritage districts, and modern hospitality hubs.",
   "destinations.tag.iconicSkyline": "Iconic skyline",
   "destinations.tag.landmarkEscape": "Landmark escape",
   "destinations.tag.cultureCapital": "Culture capital",
@@ -240,45 +274,61 @@ export const translations: TranslationDictionary = {
   "accountDashboard.nav.security": "Security",
   "accountDashboard.nav.support": "Support",
   "accountDashboard.trips.title": "My Trips",
-  "accountDashboard.trips.subtitle": "View your upcoming, past, and cancelled trips.",
+  "accountDashboard.trips.subtitle":
+    "View your upcoming, past, and cancelled trips.",
   "accountDashboard.trips.findReservation": "Find a reservation",
-  "accountDashboard.trips.lookup.notFoundDescription": "We could not find a reservation with those details.",
+  "accountDashboard.trips.lookup.notFoundDescription":
+    "We could not find a reservation with those details.",
   "accountDashboard.trips.lookup.notFoundTitle": "Reservation not found",
   "accountDashboard.trips.lookup.loading": "Finding reservation...",
   "accountDashboard.trips.lookup.invalidEmail": "Enter a valid email address",
   "accountDashboard.trips.lookup.emailRequired": "Email address is required",
-  "accountDashboard.trips.lookup.reservationCodeRequired": "Reservation code is required",
+  "accountDashboard.trips.lookup.reservationCodeRequired":
+    "Reservation code is required",
   "accountDashboard.trips.lookup.title": "Enter booking details",
-  "accountDashboard.trips.lookup.body": "Enter your reservation code and email address to locate and manage your booking.",
+  "accountDashboard.trips.lookup.body":
+    "Enter your reservation code and email address to locate and manage your booking.",
   "accountDashboard.trips.lookup.closeAriaLabel": "Close",
   "accountDashboard.trips.lookup.reservationCode": "Reservation code",
   "accountDashboard.trips.lookup.emailAddress": "Email address",
   "accountDashboard.trips.lookup.submit": "Find reservation",
-  "accountDashboard.trips.lookup.unavailable": "Reservation lookup is not available yet.",
+  "accountDashboard.trips.lookup.unavailable":
+    "Reservation lookup is not available yet.",
   "accountDashboard.trips.current.empty.title": "Where to next?",
-  "accountDashboard.trips.current.empty.body": "You haven’t started any trips yet. When you make a reservation, it will appear here.",
+  "accountDashboard.trips.current.empty.body":
+    "You haven’t started any trips yet. When you make a reservation, it will appear here.",
   "accountDashboard.trips.history.title": "Trip history",
   "accountDashboard.trips.history.filtersAriaLabel": "Trip history filters",
   "accountDashboard.trips.history.tabs.active": "Active",
   "accountDashboard.trips.history.tabs.past": "Past",
   "accountDashboard.trips.history.tabs.cancelled": "Cancelled",
   "accountDashboard.trips.history.empty.past.title": "Remember your journeys",
-  "accountDashboard.trips.history.empty.past.body": "Your completed trips will appear here after you travel.",
+  "accountDashboard.trips.history.empty.past.body":
+    "Your completed trips will appear here after you travel.",
   "accountDashboard.trips.history.empty.cancelled.title": "Plans changed?",
-  "accountDashboard.trips.history.empty.cancelled.body": "Your cancelled reservations will appear here for reference.",
+  "accountDashboard.trips.history.empty.cancelled.body":
+    "Your cancelled reservations will appear here for reference.",
   "accountDashboard.trips.illustration.currentAriaLabel": "Travel illustration",
-  "accountDashboard.trips.illustration.historyAriaLabel": "Travel history illustration",
-  "accountDashboard.trips.illustration.cancelledAriaLabel": "Cancelled trip illustration",
-  "accountDashboard.trips.summary": "{{total}} total trips. {{upcoming}} upcoming, {{past}} past, {{cancelled}} cancelled.",
+  "accountDashboard.trips.illustration.historyAriaLabel":
+    "Travel history illustration",
+  "accountDashboard.trips.illustration.cancelledAriaLabel":
+    "Cancelled trip illustration",
+  "accountDashboard.trips.summary":
+    "{{total}} total trips. {{upcoming}} upcoming, {{past}} past, {{cancelled}} cancelled.",
   "accountDashboard.trips.state.loading": "Loading your trips...",
-  "accountDashboard.trips.state.unauthenticated.title": "Sign in to view your trips",
-  "accountDashboard.trips.state.unauthenticated.body": "Your trips are connected to your account. Please sign in, then return here to manage upcoming, past, and cancelled bookings.",
+  "accountDashboard.trips.state.unauthenticated.title":
+    "Sign in to view your trips",
+  "accountDashboard.trips.state.unauthenticated.body":
+    "Your trips are connected to your account. Please sign in, then return here to manage upcoming, past, and cancelled bookings.",
   "accountDashboard.trips.state.error.title": "Unable to load trips",
-  "accountDashboard.trips.state.error.body": "We could not load your trips. Please try again.",
+  "accountDashboard.trips.state.error.body":
+    "We could not load your trips. Please try again.",
   "accountDashboard.trips.state.error.retry": "Retry",
   "accountDashboard.trips.state.error.retryAriaLabel": "Retry loading trips",
-  "accountDashboard.trips.lookup.unauthenticated": "Please sign in to look up a reservation.",
-  "accountDashboard.trips.lookup.error": "We could not look up that reservation. Please try again.",
+  "accountDashboard.trips.lookup.unauthenticated":
+    "Please sign in to look up a reservation.",
+  "accountDashboard.trips.lookup.error":
+    "We could not look up that reservation. Please try again.",
   "accountDashboard.trips.lookup.found": "Reservation found.",
   "accountDashboard.trips.card.bookingReference": "Booking reference",
   "accountDashboard.trips.card.departure": "Departure",
@@ -288,17 +338,50 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.card.viewDetails": "View details",
   "accountDashboard.trips.card.unknownDestination": "Unknown destination",
   "accountDashboard.trips.status.upcoming": "Upcoming",
+  "accountDashboard.trips.metasearch.eyebrow": "Read-only partner itineraries",
+  "accountDashboard.trips.metasearch.description":
+    "Trips shown here were completed with external travel providers. Kurioticket does not sell or manage reservations.",
+  "accountDashboard.trips.metasearch.tabsAriaLabel": "Trip status",
+  "accountDashboard.trips.metasearch.tabs.upcoming": "Upcoming",
+  "accountDashboard.trips.metasearch.tabs.past": "Past",
+  "accountDashboard.trips.metasearch.tabs.cancelled": "Cancelled",
+  "accountDashboard.trips.metasearch.loading": "Loading trips…",
+  "accountDashboard.trips.metasearch.error":
+    "We could not load your trips. Please try again.",
+  "accountDashboard.trips.metasearch.retry": "Try again",
+  "accountDashboard.trips.metasearch.empty.title": "No {{status}} trips",
+  "accountDashboard.trips.metasearch.empty.body":
+    "Partner-confirmed trips will appear here after the provider confirms your reservation.",
+  "accountDashboard.trips.metasearch.provider": "Provider",
+  "accountDashboard.trips.metasearch.providerConfirmation":
+    "Provider confirmation",
+  "accountDashboard.trips.metasearch.travelers": "Travelers",
+  "accountDashboard.trips.metasearch.priceSnapshot": "Price snapshot",
+  "accountDashboard.trips.metasearch.priceUnavailable": "Not available",
+  "accountDashboard.trips.metasearch.disclaimer":
+    "Your reservation is managed by {{provider}}. Changes, cancellations, refunds, check-in, receipts and travel documents are handled on the provider's website.",
+  "accountDashboard.trips.metasearch.manageWith": "Manage with {{provider}}",
+  "accountDashboard.trips.metasearch.noProviderUrl":
+    "Manage this trip using your provider confirmation.",
+  "accountDashboard.trips.metasearch.externalAriaLabel":
+    "{{label}}, opens external provider website",
   "accountDashboard.priceAlerts.eyebrow": "Account tools",
   "accountDashboard.priceAlerts.title": "Price alerts",
-  "accountDashboard.priceAlerts.description": "Track prices and get notified when fares change.",
+  "accountDashboard.priceAlerts.description":
+    "Track prices and get notified when fares change.",
   "accountDashboard.priceAlerts.empty.title": "No price alerts yet.",
-  "accountDashboard.priceAlerts.empty.body": "Create an alert from a flight search to track fare changes and get notified.",
+  "accountDashboard.priceAlerts.empty.body":
+    "Create an alert from a flight search to track fare changes and get notified.",
   "accountDashboard.priceAlerts.guidance.flight.title": "Start with a flight",
-  "accountDashboard.priceAlerts.guidance.flight.body": "Compare provider-backed flight options before saving trips or routes.",
+  "accountDashboard.priceAlerts.guidance.flight.body":
+    "Compare provider-backed flight options before saving trips or routes.",
   "accountDashboard.priceAlerts.guidance.stays.title": "Review stays",
-  "accountDashboard.priceAlerts.guidance.stays.body": "Search hotels with current provider details before adding anything to your plans.",
-  "accountDashboard.priceAlerts.guidance.organized.title": "Keep planning organized",
-  "accountDashboard.priceAlerts.guidance.organized.body": "Your account shows saved travel records without made-up activity or static prices.",
+  "accountDashboard.priceAlerts.guidance.stays.body":
+    "Search hotels with current provider details before adding anything to your plans.",
+  "accountDashboard.priceAlerts.guidance.organized.title":
+    "Keep planning organized",
+  "accountDashboard.priceAlerts.guidance.organized.body":
+    "Your account shows saved travel records without made-up activity or static prices.",
   "accountDashboard.priceAlerts.cta.flights": "Search flights",
   "accountDashboard.priceAlerts.cta.hotels": "Search hotels",
   "accountDashboard.priceAlerts.cta.cars": "Search cars",
@@ -312,16 +395,23 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.sort.newest": "Newest",
   "accountDashboard.priceAlerts.sort.oldest": "Oldest",
   "accountDashboard.priceAlerts.sort.routeAz": "Route A-Z",
-  "accountDashboard.priceAlerts.features.monitoring.title": "Real-time monitoring",
-  "accountDashboard.priceAlerts.features.monitoring.body": "We monitor prices and let you know when alerts are triggered.",
+  "accountDashboard.priceAlerts.features.monitoring.title":
+    "Real-time monitoring",
+  "accountDashboard.priceAlerts.features.monitoring.body":
+    "We monitor prices and let you know when alerts are triggered.",
   "accountDashboard.priceAlerts.features.email.title": "Email notifications",
-  "accountDashboard.priceAlerts.features.email.body": "Get notified when fares change.",
+  "accountDashboard.priceAlerts.features.email.body":
+    "Get notified when fares change.",
   "accountDashboard.priceAlerts.features.trends.title": "Price trends",
-  "accountDashboard.priceAlerts.features.trends.body": "See how tracked fares move over time.",
+  "accountDashboard.priceAlerts.features.trends.body":
+    "See how tracked fares move over time.",
   "accountDashboard.priceAlerts.features.management.title": "Easy management",
-  "accountDashboard.priceAlerts.features.management.body": "Pause or remove alerts anytime.",
-  "accountDashboard.priceAlerts.error.title": "We could not load your alerts. Please try again.",
-  "accountDashboard.priceAlerts.error.body": "Your account details stay protected. Refresh the page or return to your dashboard.",
+  "accountDashboard.priceAlerts.features.management.body":
+    "Pause or remove alerts anytime.",
+  "accountDashboard.priceAlerts.error.title":
+    "We could not load your alerts. Please try again.",
+  "accountDashboard.priceAlerts.error.body":
+    "Your account details stay protected. Refresh the page or return to your dashboard.",
   "accountDashboard.priceAlerts.error.cta": "Return to dashboard",
   "accountDashboard.priceAlerts.alertType.flight": "Flight",
   "accountDashboard.priceAlerts.alertType.hotel": "Hotel",
@@ -343,7 +433,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.emptyDescription":
     "Just click on the heart icon on any trip, route, or stay and you'll save it here for easy reference later.",
   "accountDashboard.saved.explore": "Back",
-  "accountDashboard.saved.openSavedTrips": "Open saved trips",
+  "accountDashboard.saved.openSavedTrips": "Open Saved & Recent",
   "accountDashboard.saved.searchFlights": "Search flights",
   "accountDashboard.saved.searchHotels": "Search hotels",
   "accountSettings.eyebrow": "MY ACCOUNT",
@@ -365,22 +455,28 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.personalDetails.title": "Personal details",
   "accountDashboard.preferences.personalDetails.description":
     "Review your account profile details when editable profile controls are available.",
-  "accountDashboard.preferences.notifications.title": "Notification preferences",
+  "accountDashboard.preferences.notifications.title":
+    "Notification preferences",
   "accountDashboard.preferences.notifications.description":
     "Manage the optional website and email notifications you receive from Kurioticket.",
-  "accountDashboard.preferences.notifications.receive.title": "Receive notifications from Kurioticket",
+  "accountDashboard.preferences.notifications.receive.title":
+    "Receive notifications from Kurioticket",
   "accountDashboard.preferences.notifications.receive.description":
     "Manage the optional website and email notifications you receive from Kurioticket.",
-  "accountDashboard.preferences.notifications.emailUpdates.title": "Email updates",
+  "accountDashboard.preferences.notifications.emailUpdates.title":
+    "Email updates",
   "accountDashboard.preferences.notifications.emailUpdates.description":
     "Receive product updates, account tips, and general Kurioticket emails.",
-  "accountDashboard.preferences.notifications.priceAlertEmails.title": "Price alert emails",
+  "accountDashboard.preferences.notifications.priceAlertEmails.title":
+    "Price alert emails",
   "accountDashboard.preferences.notifications.priceAlertEmails.description":
     "Receive emails when saved routes, watched trips, or tracked prices change.",
-  "accountDashboard.preferences.notifications.travelInspirationEmails.title": "Travel inspiration emails",
+  "accountDashboard.preferences.notifications.travelInspirationEmails.title":
+    "Travel inspiration emails",
   "accountDashboard.preferences.notifications.travelInspirationEmails.description":
     "Receive destination ideas, travel tips, and occasional recommendations.",
-  "accountDashboard.preferences.notifications.turnOffAll": "Turn off all optional notifications",
+  "accountDashboard.preferences.notifications.turnOffAll":
+    "Turn off all optional notifications",
   "accountDashboard.preferences.notifications.requiredDisclaimer":
     "Important account, security, billing, legal, and service messages may still be sent when required.",
   "accountDashboard.preferences.travel.title": "Travel preferences",
@@ -390,67 +486,113 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.securityPrivacy.description":
     "Review current privacy and platform policy information.",
   "accountDashboard.preferences.email.title": "Email preferences",
-  "accountDashboard.preferences.email.subtitle": "Choose which Kurioticket emails you want to receive.",
-  "accountDashboard.preferences.email.masterOptional.title": "Unsubscribe from all optional emails",
-  "accountDashboard.preferences.email.masterOptional.description": "Turn this on to stop all optional Kurioticket emails. Your individual category choices will be preserved. Account, security, password-reset, login-verification, and support emails may still be sent when needed.",
-  "accountDashboard.preferences.email.masterOptional.shortDescription": "Stop optional emails while preserving category choices.",
-  "accountDashboard.preferences.email.masterOptional.disabledHelp": "Optional emails are turned off. Your individual email-category choices have been preserved and will apply again if you turn optional emails back on. Essential account, security, password-reset, login-verification, and support emails may still be sent when needed.",
-  "accountDashboard.preferences.email.sections.travelAlerts.title": "Travel alerts",
-  "accountDashboard.preferences.email.sections.inspirationUpdates.title": "Inspiration and updates",
-  "accountDashboard.preferences.email.rows.priceAlerts.title": "Price alert emails",
-  "accountDashboard.preferences.email.rows.priceAlerts.description": "Get notified when tracked trip prices change.",
-  "accountDashboard.preferences.email.rows.priceAlerts.shortDescription": "Tracked trip prices change.",
-  "accountDashboard.preferences.email.rows.savedTripReminders.title": "Saved trip reminders",
-  "accountDashboard.preferences.email.rows.savedTripReminders.description": "Receive reminders about saved routes and trips you may want to revisit.",
-  "accountDashboard.preferences.email.rows.savedTripReminders.shortDescription": "Reminders for saved routes and trips.",
-  "accountDashboard.preferences.email.rows.routeWatchUpdates.title": "Route watch updates",
-  "accountDashboard.preferences.email.rows.routeWatchUpdates.description": "Get occasional updates when routes you follow have meaningful changes.",
-  "accountDashboard.preferences.email.rows.routeWatchUpdates.shortDescription": "Updates for routes you follow.",
-  "accountDashboard.preferences.email.rows.travelInspiration.title": "Travel inspiration",
-  "accountDashboard.preferences.email.rows.travelInspiration.description": "Receive destination ideas, planning tips, and seasonal travel suggestions.",
-  "accountDashboard.preferences.email.rows.travelInspiration.shortDescription": "Destination ideas and planning tips.",
-  "accountDashboard.preferences.email.rows.productUpdates.title": "Product updates",
-  "accountDashboard.preferences.email.rows.productUpdates.description": "Hear about new Kurioticket features and account improvements.",
-  "accountDashboard.preferences.email.rows.productUpdates.shortDescription": "New Kurioticket features and account updates.",
-  "accountDashboard.preferences.email.rows.dealsRecommendations.title": "Deals and recommendations",
-  "accountDashboard.preferences.email.rows.dealsRecommendations.description": "Receive curated travel recommendations when they are relevant.",
-  "accountDashboard.preferences.email.rows.dealsRecommendations.shortDescription": "Relevant travel deals and recommendations.",
+  "accountDashboard.preferences.email.subtitle":
+    "Choose which Kurioticket emails you want to receive.",
+  "accountDashboard.preferences.email.masterOptional.title":
+    "Unsubscribe from all optional emails",
+  "accountDashboard.preferences.email.masterOptional.description":
+    "Turn this on to stop all optional Kurioticket emails. Your individual category choices will be preserved. Account, security, password-reset, login-verification, and support emails may still be sent when needed.",
+  "accountDashboard.preferences.email.masterOptional.shortDescription":
+    "Stop optional emails while preserving category choices.",
+  "accountDashboard.preferences.email.masterOptional.disabledHelp":
+    "Optional emails are turned off. Your individual email-category choices have been preserved and will apply again if you turn optional emails back on. Essential account, security, password-reset, login-verification, and support emails may still be sent when needed.",
+  "accountDashboard.preferences.email.sections.travelAlerts.title":
+    "Travel alerts",
+  "accountDashboard.preferences.email.sections.inspirationUpdates.title":
+    "Inspiration and updates",
+  "accountDashboard.preferences.email.rows.priceAlerts.title":
+    "Price alert emails",
+  "accountDashboard.preferences.email.rows.priceAlerts.description":
+    "Get notified when tracked trip prices change.",
+  "accountDashboard.preferences.email.rows.priceAlerts.shortDescription":
+    "Tracked trip prices change.",
+  "accountDashboard.preferences.email.rows.savedTripReminders.title":
+    "Saved trip reminders",
+  "accountDashboard.preferences.email.rows.savedTripReminders.description":
+    "Receive reminders about saved routes and trips you may want to revisit.",
+  "accountDashboard.preferences.email.rows.savedTripReminders.shortDescription":
+    "Reminders for saved routes and trips.",
+  "accountDashboard.preferences.email.rows.routeWatchUpdates.title":
+    "Route watch updates",
+  "accountDashboard.preferences.email.rows.routeWatchUpdates.description":
+    "Get occasional updates when routes you follow have meaningful changes.",
+  "accountDashboard.preferences.email.rows.routeWatchUpdates.shortDescription":
+    "Updates for routes you follow.",
+  "accountDashboard.preferences.email.rows.travelInspiration.title":
+    "Travel inspiration",
+  "accountDashboard.preferences.email.rows.travelInspiration.description":
+    "Receive destination ideas, planning tips, and seasonal travel suggestions.",
+  "accountDashboard.preferences.email.rows.travelInspiration.shortDescription":
+    "Destination ideas and planning tips.",
+  "accountDashboard.preferences.email.rows.productUpdates.title":
+    "Product updates",
+  "accountDashboard.preferences.email.rows.productUpdates.description":
+    "Hear about new Kurioticket features and account improvements.",
+  "accountDashboard.preferences.email.rows.productUpdates.shortDescription":
+    "New Kurioticket features and account updates.",
+  "accountDashboard.preferences.email.rows.dealsRecommendations.title":
+    "Packages and recommendations",
+  "accountDashboard.preferences.email.rows.dealsRecommendations.description":
+    "Receive curated travel recommendations when they are relevant.",
+  "accountDashboard.preferences.email.rows.dealsRecommendations.shortDescription":
+    "Relevant travel deals and recommendations.",
   "accountDashboard.preferences.email.on": "On",
   "accountDashboard.preferences.email.off": "Off",
   "accountDashboard.preferences.email.resetToDefault": "Reset to default",
   "accountDashboard.preferences.email.resetShort": "Reset",
   "accountDashboard.preferences.email.savePreferences": "Save preferences",
   "accountDashboard.preferences.email.saveShort": "Save",
-  "accountDashboard.preferences.email.trustNote": "Required account emails may still be sent when needed.",
-  "accountDashboard.preferences.email.saveSuccessStatus": "Email preferences saved.",
+  "accountDashboard.preferences.email.trustNote":
+    "Required account emails may still be sent when needed.",
+  "accountDashboard.preferences.email.saveSuccessStatus":
+    "Email preferences saved.",
   "accountDashboard.preferences.email.saveSuccessStatusShort": "Saved.",
-  "accountDashboard.preferences.email.saveErrorStatus": "Unable to save email preferences. Please try again.",
-  "accountDashboard.preferences.email.loadErrorStatus": "Unable to load email preferences. Using defaults for now.",
+  "accountDashboard.preferences.email.saveErrorStatus":
+    "Unable to save email preferences. Please try again.",
+  "accountDashboard.preferences.email.loadErrorStatus":
+    "Unable to load email preferences. Using defaults for now.",
   "accountDashboard.preferences.email.savingPreferences": "Saving…",
   "accountDashboard.preferences.email.savingShort": "Saving…",
-  "accountDashboard.preferences.customization.title": "Customization preferences",
-  "accountDashboard.preferences.customization.description": "Choose how Kurioticket personalizes your experience.",
-  "accountDashboard.preferences.customization.languageRegion.title": "Language and region",
-  "accountDashboard.preferences.customization.languageRegion.description": "Set your default language, currency, and region.",
-  "accountDashboard.preferences.customization.preferredLanguage": "Preferred language",
-  "accountDashboard.preferences.customization.selectPreferredLanguage": "Select preferred language",
+  "accountDashboard.preferences.customization.title":
+    "Customization preferences",
+  "accountDashboard.preferences.customization.description":
+    "Choose how Kurioticket personalizes your experience.",
+  "accountDashboard.preferences.customization.languageRegion.title":
+    "Language and region",
+  "accountDashboard.preferences.customization.languageRegion.description":
+    "Set your default language, currency, and region.",
+  "accountDashboard.preferences.customization.preferredLanguage":
+    "Preferred language",
+  "accountDashboard.preferences.customization.selectPreferredLanguage":
+    "Select preferred language",
   "accountDashboard.preferences.customization.currency": "Currency",
-  "accountDashboard.preferences.customization.selectCurrency": "Select currency",
+  "accountDashboard.preferences.customization.selectCurrency":
+    "Select currency",
   "accountDashboard.preferences.customization.region": "Region",
   "accountDashboard.preferences.customization.selectRegion": "Select region",
-  "accountDashboard.preferences.customization.personalization.title": "Personalization",
-  "accountDashboard.preferences.customization.personalization.description": "Control how Kurioticket personalizes your recommendations.",
-  "accountDashboard.preferences.customization.personalizeSearches": "Use my searches to personalize recommendations",
-  "accountDashboard.preferences.customization.personalizedTravelDeals": "Show personalized travel deals",
-  "accountDashboard.preferences.customization.rememberRecentSearches": "Remember my recent searches",
-  "accountDashboard.preferences.customization.communicationStyle.title": "Communication style",
-  "accountDashboard.preferences.customization.communicationStyle.description": "Choose how you want Kurioticket to communicate with you.",
+  "accountDashboard.preferences.customization.personalization.title":
+    "Personalization",
+  "accountDashboard.preferences.customization.personalization.description":
+    "Control how Kurioticket personalizes your recommendations.",
+  "accountDashboard.preferences.customization.personalizeSearches":
+    "Use my searches to personalize recommendations",
+  "accountDashboard.preferences.customization.personalizedTravelPackages":
+    "Show personalized travel deals",
+  "accountDashboard.preferences.customization.rememberRecentSearches":
+    "Remember my recent searches",
+  "accountDashboard.preferences.customization.communicationStyle.title":
+    "Communication style",
+  "accountDashboard.preferences.customization.communicationStyle.description":
+    "Choose how you want Kurioticket to communicate with you.",
   "accountDashboard.preferences.customization.emailUpdates": "Email updates",
-  "accountDashboard.preferences.customization.priceAlertEmails": "Price alert emails",
-  "accountDashboard.preferences.customization.travelInspirationEmails": "Travel inspiration emails",
+  "accountDashboard.preferences.customization.priceAlertEmails":
+    "Price alert emails",
+  "accountDashboard.preferences.customization.travelInspirationEmails":
+    "Travel inspiration emails",
   "onboarding.eyebrow": "Optional smart onboarding",
   "onboarding.title": "Tune your travel preferences",
-  "onboarding.description": "You can skip this now and adjust these details anytime from your account.",
+  "onboarding.description":
+    "You can skip this now and adjust these details anytime from your account.",
   "onboarding.homeAirport": "Preferred home airport",
   "onboarding.preferredAirlines": "Preferred airlines",
   "onboarding.savePreferencesLater": "Save preferences later",
@@ -459,58 +601,91 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.language.spanish": "Spanish",
   "accountDashboard.preferences.customization.language.french": "French",
   "accountDashboard.preferences.customization.language.german": "German",
-  "accountDashboard.preferences.customization.language.portuguese": "Portuguese",
+  "accountDashboard.preferences.customization.language.portuguese":
+    "Portuguese",
   "accountDashboard.preferences.customization.language.dutch": "Dutch",
   "accountDashboard.preferences.customization.currency.usd": "US Dollar (USD)",
   "accountDashboard.preferences.customization.currency.eur": "Euro (EUR)",
-  "accountDashboard.preferences.customization.currency.gbp": "British Pound (GBP)",
-  "accountDashboard.preferences.customization.currency.cad": "Canadian Dollar (CAD)",
-  "accountDashboard.preferences.customization.currency.aud": "Australian Dollar (AUD)",
-  "accountDashboard.preferences.customization.region.unitedStates": "United States",
+  "accountDashboard.preferences.customization.currency.gbp":
+    "British Pound (GBP)",
+  "accountDashboard.preferences.customization.currency.cad":
+    "Canadian Dollar (CAD)",
+  "accountDashboard.preferences.customization.currency.aud":
+    "Australian Dollar (AUD)",
+  "accountDashboard.preferences.customization.region.unitedStates":
+    "United States",
   "accountDashboard.preferences.customization.region.canada": "Canada",
-  "accountDashboard.preferences.customization.region.unitedKingdom": "United Kingdom",
+  "accountDashboard.preferences.customization.region.unitedKingdom":
+    "United Kingdom",
   "accountDashboard.preferences.customization.region.europe": "Europe",
   "accountDashboard.preferences.customization.region.australia": "Australia",
   "accountDashboard.preferences.booking.title": "Travel preferences",
-  "accountDashboard.preferences.booking.description": "Set the airport and airlines saved in your travel profile defaults.",
-  "accountDashboard.preferences.booking.status.loadError": "Unable to load travel preferences.",
-  "accountDashboard.preferences.booking.status.saved": "Travel preferences saved.",
+  "accountDashboard.preferences.booking.description":
+    "Set the airport and airlines saved in your travel profile defaults.",
+  "accountDashboard.preferences.booking.status.loadError":
+    "Unable to load travel preferences.",
+  "accountDashboard.preferences.booking.status.saved":
+    "Travel preferences saved.",
   "accountDashboard.preferences.booking.status.savedShort": "Saved.",
-  "accountDashboard.preferences.booking.status.saveError": "Unable to save travel preferences.",
+  "accountDashboard.preferences.booking.status.saveError":
+    "Unable to save travel preferences.",
   "accountDashboard.preferences.booking.status.reverted": "Changes reverted.",
-  "accountDashboard.preferences.booking.status.loading": "Loading your travel preferences…",
+  "accountDashboard.preferences.booking.status.loading":
+    "Loading your travel preferences…",
   "accountDashboard.preferences.booking.actions.revert": "Revert changes",
   "accountDashboard.preferences.booking.actions.saving": "Saving…",
-  "accountDashboard.preferences.booking.sections.flightDefaults.title": "Flight defaults",
-  "accountDashboard.preferences.booking.sections.flightDefaults.description": "Set the airport and airlines saved in your travel profile defaults.",
-  "accountDashboard.preferences.booking.preferredAirlinesHelp": "Separate airlines with commas.",
+  "accountDashboard.preferences.booking.sections.flightDefaults.title":
+    "Flight defaults",
+  "accountDashboard.preferences.booking.sections.flightDefaults.description":
+    "Set the airport and airlines saved in your travel profile defaults.",
+  "accountDashboard.preferences.booking.preferredAirlinesHelp":
+    "Separate airlines with commas.",
   "accountDashboard.preferences.booking.airports.title": "Airports",
-  "accountDashboard.preferences.booking.airports.description": "Choose the airports you prefer to fly from.",
+  "accountDashboard.preferences.booking.airports.description":
+    "Choose the airports you prefer to fly from.",
   "accountDashboard.preferences.booking.homeAirport": "Home airport",
   "accountDashboard.preferences.booking.searchAirport": "Search airport",
-  "accountDashboard.preferences.booking.airport.placeholder": "Search city, airport, or code",
+  "accountDashboard.preferences.booking.airport.placeholder":
+    "Search city, airport, or code",
   "accountDashboard.preferences.booking.airport.clear": "Clear home airport",
-  "accountDashboard.preferences.booking.airport.searching": "Searching airports…",
-  "accountDashboard.preferences.booking.airport.noMatches": "No matching airports found.",
-  "accountDashboard.preferences.booking.airport.startTyping": "Start typing to search airports.",
-  "accountDashboard.preferences.booking.airport.savedLegacy": "Saved as “{{value}}”. Search and select an airport to replace it, or clear it for no preference.",
-  "accountDashboard.preferences.booking.secondaryAirports": "Secondary airports",
-  "accountDashboard.preferences.booking.addAlternativeAirports": "Add alternative airports",
+  "accountDashboard.preferences.booking.airport.searching":
+    "Searching airports…",
+  "accountDashboard.preferences.booking.airport.noMatches":
+    "No matching airports found.",
+  "accountDashboard.preferences.booking.airport.startTyping":
+    "Start typing to search airports.",
+  "accountDashboard.preferences.booking.airport.savedLegacy":
+    "Saved as “{{value}}”. Search and select an airport to replace it, or clear it for no preference.",
+  "accountDashboard.preferences.booking.secondaryAirports":
+    "Secondary airports",
+  "accountDashboard.preferences.booking.addAlternativeAirports":
+    "Add alternative airports",
   "accountDashboard.preferences.booking.airlines.title": "Airlines",
-  "accountDashboard.preferences.booking.airlines.description": "Choose airlines you prefer or want to avoid.",
-  "accountDashboard.preferences.booking.preferredAirlines": "Preferred airlines",
+  "accountDashboard.preferences.booking.airlines.description":
+    "Choose airlines you prefer or want to avoid.",
+  "accountDashboard.preferences.booking.preferredAirlines":
+    "Preferred airlines",
   "accountDashboard.preferences.booking.searchAirlines": "Search airlines",
-  "accountDashboard.preferences.booking.airline.help": "Search by airline name or IATA code. Choose up to 10 airlines.",
-  "accountDashboard.preferences.booking.airline.placeholder": "Search airline or code",
-  "accountDashboard.preferences.booking.airline.limitPlaceholder": "Maximum of 10 airlines selected",
-  "accountDashboard.preferences.booking.airline.selectedCount": "{{count}}/{{max}} selected",
-  "accountDashboard.preferences.booking.airline.noMatches": "No matching airlines found.",
-  "accountDashboard.preferences.booking.airline.startTyping": "Start typing to search airlines.",
+  "accountDashboard.preferences.booking.airline.help":
+    "Search by airline name or IATA code. Choose up to 10 airlines.",
+  "accountDashboard.preferences.booking.airline.placeholder":
+    "Search airline or code",
+  "accountDashboard.preferences.booking.airline.limitPlaceholder":
+    "Maximum of 10 airlines selected",
+  "accountDashboard.preferences.booking.airline.selectedCount":
+    "{{count}}/{{max}} selected",
+  "accountDashboard.preferences.booking.airline.noMatches":
+    "No matching airlines found.",
+  "accountDashboard.preferences.booking.airline.startTyping":
+    "Start typing to search airlines.",
   "accountDashboard.preferences.booking.avoidAirlines": "Avoid airlines",
   "accountDashboard.preferences.booking.stays.title": "Stays",
-  "accountDashboard.preferences.booking.stays.description": "Set accommodation preferences for hotel bookings.",
-  "accountDashboard.preferences.booking.preferredHotelChains": "Preferred hotel chains",
-  "accountDashboard.preferences.booking.searchHotelChains": "Search hotel chains",
+  "accountDashboard.preferences.booking.stays.description":
+    "Set accommodation preferences for hotel bookings.",
+  "accountDashboard.preferences.booking.preferredHotelChains":
+    "Preferred hotel chains",
+  "accountDashboard.preferences.booking.searchHotelChains":
+    "Search hotel chains",
   "accountDashboard.preferences.booking.avoidHotelChains": "Avoid hotel chains",
   "accountDashboard.preferences.cancel": "Cancel",
   "accountDashboard.preferences.savePreferences": "Save preferences",
@@ -550,15 +725,20 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.action.turnOff": "Turn off",
   "accountDashboard.security.action.manage": "Manage",
   "accountDashboard.security.action.deleteAccount": "Delete account",
-  "accountDashboard.security.action.unavailable": "This security action is not available yet.",
+  "accountDashboard.security.action.unavailable":
+    "This security action is not available yet.",
   "account.pendingDeletion.eyebrow": "Welcome back",
   "account.pendingDeletion.title": "Your account deletion is pending.",
-  "account.pendingDeletion.scheduledPrefix": "Your account is scheduled for permanent deletion on",
-  "account.pendingDeletion.reactivateNotice": "You can reactivate your account before this date. Until then, normal dashboard browsing is restricted.",
-  "account.pendingDeletion.helperBefore": "Welcome back. Clicking Reactivate account cancels deletion before",
+  "account.pendingDeletion.scheduledPrefix":
+    "Your account is scheduled for permanent deletion on",
+  "account.pendingDeletion.reactivateNotice":
+    "You can reactivate your account before this date. Until then, normal dashboard browsing is restricted.",
+  "account.pendingDeletion.helperBefore":
+    "Welcome back. Clicking Reactivate account cancels deletion before",
   "account.pendingDeletion.helperAfter": "and restores normal app access.",
   "account.pendingDeletion.error.reactivate": "Unable to reactivate account.",
-  "account.pendingDeletion.error.expired": "The 7-day reactivation window has expired. Contact support.",
+  "account.pendingDeletion.error.expired":
+    "The 7-day reactivation window has expired. Contact support.",
   "account.pendingDeletion.action.reactivating": "Reactivating…",
   "account.pendingDeletion.action.reactivate": "Reactivate account",
   "account.pendingDeletion.action.logout": "Log out",
@@ -579,8 +759,10 @@ export const translations: TranslationDictionary = {
   "accountDashboard.mobile.backAriaLabel": "Back to My account",
   "accountDashboard.mobile.manageAccount": "Manage account",
   "accountDashboard.hub.title": "My Account",
-  "accountDashboard.hub.description": "Manage your trips, saved items, preferences, and account settings in one place.",
-  "accountDashboard.hub.mobileDescription": "Manage your trips, saved items, and preferences.",
+  "accountDashboard.hub.description":
+    "Manage your trips, saved items, preferences, and account settings in one place.",
+  "accountDashboard.hub.mobileDescription":
+    "Manage your trips, saved items, and preferences.",
   "accountDashboard.hub.manageAccount": "Manage account",
   "accountDashboard.hub.personalDetails": "Personal details",
   "accountDashboard.hub.securitySettings": "Security settings",
@@ -598,7 +780,8 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.faq": "FAQ",
   "accountDashboard.hub.serviceGuarantee": "Service guarantee",
   "accountDashboard.hub.infoTitle": "Everything in one place",
-  "accountDashboard.hub.infoBody": "Quick access to your account, trips, preferences, and support.",
+  "accountDashboard.hub.infoBody":
+    "Quick access to your account, trips, preferences, and support.",
   "accountDashboard.personalDetails.title": "Personal details",
   "accountDashboard.personalDetails.subtitle":
     "Update your information and manage how it is used across Kurioticket.",
@@ -619,38 +802,51 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.addNationality": "Add your nationality",
   "accountDashboard.personalDetails.addAddress": "Add your address",
   "accountDashboard.personalDetails.edit": "Edit",
-  "accountDashboard.personalDetails.editingComingSoon": "Profile editing coming soon.",
+  "accountDashboard.personalDetails.editingComingSoon":
+    "Profile editing coming soon.",
   "accountDashboard.personalDetails.cancel": "Cancel",
   "accountDashboard.personalDetails.saveChanges": "Save changes",
-  "accountDashboard.personalDetails.loading": "Loading your saved profile details…",
-  "accountDashboard.personalDetails.description": "Manage the information Kurioticket uses for your account.",
+  "accountDashboard.personalDetails.loading":
+    "Loading your saved profile details…",
+  "accountDashboard.personalDetails.description":
+    "Manage the information Kurioticket uses for your account.",
   "accountDashboard.personalDetails.saving": "Saving…",
   "accountDashboard.personalDetails.saveSuccess": "Personal details saved.",
-  "accountDashboard.personalDetails.saveError": "Unable to save profile details.",
-  "accountDashboard.personalDetails.section.basicInformation": "Basic information",
-  "accountDashboard.personalDetails.section.contactInformation": "Contact information",
-  "accountDashboard.personalDetails.section.personalInformation": "Personal information",
+  "accountDashboard.personalDetails.saveError":
+    "Unable to save profile details.",
+  "accountDashboard.personalDetails.section.basicInformation":
+    "Basic information",
+  "accountDashboard.personalDetails.section.contactInformation":
+    "Contact information",
+  "accountDashboard.personalDetails.section.personalInformation":
+    "Personal information",
   "accountDashboard.personalDetails.section.address": "Address",
   "accountDashboard.personalDetails.gender.male": "Male",
   "accountDashboard.personalDetails.gender.female": "Female",
-  "accountDashboard.personalDetails.gender.preferNotToSay": "I prefer not to say",
+  "accountDashboard.personalDetails.gender.preferNotToSay":
+    "I prefer not to say",
   "accountDashboard.personalDetails.dateOfBirthDay": "Date of birth day",
   "accountDashboard.personalDetails.dateOfBirthMonth": "Date of birth month",
   "accountDashboard.personalDetails.dateOfBirthYear": "Date of birth year",
   "accountDashboard.personalDetails.monthPlaceholder": "Month",
   "accountDashboard.personalDetails.emailVerified": "Verified",
   "accountDashboard.personalDetails.changeEmail": "Change email",
-  "accountDashboard.personalDetails.emailHelper": "This email is used for sign-in and booking confirmations. Changes require verification.",
-  "accountDashboard.personalDetails.phoneHelper": "We’ll use this number for booking updates.",
+  "accountDashboard.personalDetails.emailHelper":
+    "This email is used for sign-in and booking confirmations. Changes require verification.",
+  "accountDashboard.personalDetails.phoneHelper":
+    "We’ll use this number for booking updates.",
   "accountDashboard.personalDetails.dateOfBirthDayPlaceholder": "DD",
   "accountDashboard.personalDetails.dateOfBirthYearPlaceholder": "YYYY",
-  "accountDashboard.personalDetails.addressDescription": "Used for billing, booking records, and travel communication.",
+  "accountDashboard.personalDetails.addressDescription":
+    "Used for billing, booking records, and travel communication.",
   "accountDashboard.personalDetails.countryRegion": "Country/region",
   "accountDashboard.personalDetails.selectOne": "Select one",
   "accountDashboard.personalDetails.streetAddress": "Street address",
-  "accountDashboard.personalDetails.apartmentSuite": "Apartment, suite, unit, building",
+  "accountDashboard.personalDetails.apartmentSuite":
+    "Apartment, suite, unit, building",
   "accountDashboard.personalDetails.townCity": "Town / City",
-  "accountDashboard.personalDetails.stateProvinceRegion": "State / Province / Region",
+  "accountDashboard.personalDetails.stateProvinceRegion":
+    "State / Province / Region",
   "accountDashboard.personalDetails.postcodeZip": "Postcode / ZIP code",
   "accountDashboard.personalDetails.month.january": "January",
   "accountDashboard.personalDetails.month.february": "February",
@@ -686,11 +882,13 @@ export const translations: TranslationDictionary = {
   signupErrorPasswordRequirements: "Password must be at least 8 characters.",
   signupErrorUnableCreate:
     "We could not create your account. Please try again.",
-  signupErrorRateLimited: "Too many signup attempts. Please wait and try again.",
+  signupErrorRateLimited:
+    "Too many signup attempts. Please wait and try again.",
   signupErrorDuplicateEmail: "An account with this email already exists.",
   signupErrorUnableSendVerification:
     "Unable to send verification code right now. Please try again.",
-  signupVerificationRequiredRedirecting: "Verification required. Redirecting...",
+  signupVerificationRequiredRedirecting:
+    "Verification required. Redirecting...",
   signupAutomaticLoginFailed:
     "Your account was created, but automatic login failed. Please log in with your new password.",
   signupAccountCreatedRedirecting: "Account created. Redirecting...",
@@ -724,8 +922,10 @@ export const translations: TranslationDictionary = {
   loginStartOverError:
     "Start over so we can check your details before sending a new code.",
   loginSendingNewCode: "Sending a new verification code…",
-  loginUnableSendNewCode: "Unable to send a new code right now. Please try again.",
-  loginUnableSendLoginCode: "Unable to send login code right now. Please try again.",
+  loginUnableSendNewCode:
+    "Unable to send a new code right now. Please try again.",
+  loginUnableSendLoginCode:
+    "Unable to send login code right now. Please try again.",
   loginCodeInstructions:
     "Enter the 6-digit code sent to {{email}}. Codes expire after {{minutes}} minutes.",
   loginVerificationCodeLabel: "Verification code",
@@ -735,28 +935,34 @@ export const translations: TranslationDictionary = {
   loginResendIn: "Resend in {{seconds}}s",
   loginResendCode: "Resend code",
   loginUseDifferentDetails: "Use different details",
-  loginPasswordResetSuccess: "Your password was reset. Log in with your new password.",
+  loginPasswordResetSuccess:
+    "Your password was reset. Log in with your new password.",
   loginInactiveMessage:
     "You were signed out after 30 minutes of inactivity. Log in again to continue.",
-  loginErrorAccountUnavailable: "This account is not available. Please contact support.",
+  loginErrorAccountUnavailable:
+    "This account is not available. Please contact support.",
   loginErrorOAuthCallback:
     "Google sign-in was interrupted during callback. Please try again.",
   loginErrorOAuthAccountNotLinked:
     "This email is already associated with another sign-in method. Continue with your original method, or reset your password.",
-  loginErrorAccessDenied: "Access was denied by Google. Please allow access and try again.",
+  loginErrorAccessDenied:
+    "Access was denied by Google. Please allow access and try again.",
   loginErrorConfiguration:
     "Google sign-in is temporarily unavailable. Please try again shortly, or use email login.",
-  loginErrorCallback: "Google sign-in callback failed. Please try again, or use email login.",
+  loginErrorCallback:
+    "Google sign-in callback failed. Please try again, or use email login.",
   loginErrorGoogleGeneric:
     "Google sign-in could not be completed. Please try again, or use email login.",
   forgotPasswordMetadataTitle: "Forgot password",
   forgotPasswordTitle: "Reset your password",
-  forgotPasswordSubtitle: "Enter your email and we'll send instructions to reset your password.",
+  forgotPasswordSubtitle:
+    "Enter your email and we'll send instructions to reset your password.",
   forgotPasswordEmailLabel: "Email",
   forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordInvalidEmail: "Enter a valid email address.",
   forgotPasswordUnableRequest: "Unable to request a password reset right now.",
-  forgotPasswordSuccess: "If an account exists, we sent password reset instructions.",
+  forgotPasswordSuccess:
+    "If an account exists, we sent password reset instructions.",
   forgotPasswordSending: "Sending...",
   forgotPasswordSubmit: "Send reset link",
   forgotPasswordRemember: "Remember your password?",
@@ -764,43 +970,53 @@ export const translations: TranslationDictionary = {
   resetPasswordTitle: "Reset your password",
   resetPasswordCreateTitle: "Create a new password",
   resetPasswordSubtitle: "Enter your new password below.",
-  resetPasswordInvalidLink: "This reset link is invalid or expired. Please request a new password reset email.",
+  resetPasswordInvalidLink:
+    "This reset link is invalid or expired. Please request a new password reset email.",
   resetPasswordRequestNew: "Request a new reset email",
   resetPasswordNewPasswordLabel: "New password",
   resetPasswordConfirmPasswordLabel: "Confirm new password",
-  resetPasswordValidationError: "Enter a valid password and make sure both password fields match.",
+  resetPasswordValidationError:
+    "Enter a valid password and make sure both password fields match.",
   resetPasswordUnable: "Unable to reset password right now.",
-  resetPasswordSuccessMessage: "Password reset successful. Redirecting to sign in...",
+  resetPasswordSuccessMessage:
+    "Password reset successful. Redirecting to sign in...",
   resetPasswordResetting: "Resetting...",
   resetPasswordSubmit: "Reset password",
   resetPasswordRemember: "Remember your password?",
   resetPasswordLoginLink: "Log in",
   verifyEmailTitle: "Verify your email",
-  verifyEmailInstructions: "Enter the 6-digit code we sent to your email. Codes expire after 10 minutes.",
+  verifyEmailInstructions:
+    "Enter the 6-digit code we sent to your email. Codes expire after 10 minutes.",
   verifyEmailCodeLabel: "Verification code",
   verifyEmailInvalidCode: "The verification code is invalid or expired.",
-  verifyEmailSuccess: "Email verified. You can now log in and access your dashboard.",
+  verifyEmailSuccess:
+    "Email verified. You can now log in and access your dashboard.",
   verifyEmailVerifying: "Verifying...",
   verifyEmailSubmit: "Verify email",
   verifyEmailSending: "Sending...",
   verifyEmailSendNewCode: "Send a new code",
-  verifyEmailResendSuccess: "If this email needs verification, a new code has been sent.",
+  verifyEmailResendSuccess:
+    "If this email needs verification, a new code has been sent.",
   verifyEmailAlreadyVerified: "Already verified?",
   verifyEmailLoginLink: "Log in",
   verifyLoginTitle: "Verify your login",
-  verifyLoginInstructions: "Enter the 6-digit code we sent to your email. Codes expire after 10 minutes.",
+  verifyLoginInstructions:
+    "Enter the 6-digit code we sent to your email. Codes expire after 10 minutes.",
   verifyLoginCodeLabel: "Login code",
   verifyLoginSubmit: "Verify login",
-  verifyLoginNeedNewCode: "Need a new code? Enter your password so we can safely resend one.",
+  verifyLoginNeedNewCode:
+    "Need a new code? Enter your password so we can safely resend one.",
   verifyLoginPasswordLabel: "Password for resend",
   verifyLoginNeedStartOver: "Need to start over?",
   verifyLoginAgainLink: "Log in again",
   twoFactorLoadingChallenge: "Loading two-factor challenge…",
   twoFactorEyebrow: "Two-factor authentication",
   twoFactorTitle: "Enter your authenticator code",
-  twoFactorSubtitle: "Use the 6-digit code from your authenticator app, or enter one saved recovery code to finish signing in.",
+  twoFactorSubtitle:
+    "Use the 6-digit code from your authenticator app, or enter one saved recovery code to finish signing in.",
   twoFactorCodeLabel: "Authenticator or recovery code",
-  twoFactorHelperText: "Open your authenticator app and enter the current 6-digit code, or use a recovery code.",
+  twoFactorHelperText:
+    "Open your authenticator app and enter the current 6-digit code, or use a recovery code.",
   twoFactorInvalidCode: "The code is invalid or already used.",
   twoFactorVerifying: "Verifying…",
   twoFactorSubmit: "Verify and continue",
@@ -817,44 +1033,58 @@ export const translations: TranslationDictionary = {
   privacyPageTitle: "Privacy Policy",
   privacyPageEyebrow: "Kurioticket privacy",
   privacyHeroTitle: "Privacy policy",
-  privacyHeroSubtitle: "This lightweight privacy page summarizes how Kurioticket expects to handle information as the platform prepares for launch. It is concise by design and should be finalized before public launch.",
-  privacyNoticeBody: "Final privacy terms should be reviewed by qualified legal counsel before public launch. This page does not make unsupported compliance claims.",
+  privacyHeroSubtitle:
+    "This lightweight privacy page summarizes how Kurioticket expects to handle information as the platform prepares for launch. It is concise by design and should be finalized before public launch.",
+  privacyNoticeBody:
+    "Final privacy terms should be reviewed by qualified legal counsel before public launch. This page does not make unsupported compliance claims.",
   privacySectionInformationTitle: "Information Kurioticket may collect",
-  privacySectionInformationBody: "Kurioticket may collect account information, search details, saved travel preferences, alerts, support messages, and communication preferences when you use the platform.",
+  privacySectionInformationBody:
+    "Kurioticket may collect account information, search details, saved travel preferences, alerts, support messages, and communication preferences when you use the platform.",
   privacySectionUseTitle: "How information is used",
-  privacySectionUseBody: "Information may be used to operate searches, keep accounts working, remember preferences, provide support, send requested communications, improve reliability, and protect the platform from misuse.",
+  privacySectionUseBody:
+    "Information may be used to operate searches, keep accounts working, remember preferences, provide support, send requested communications, improve reliability, and protect the platform from misuse.",
   privacySectionProvidersTitle: "External providers",
-  privacySectionProvidersBody: "When you leave Kurioticket for an airline, hotel, rental car company, travel agency, or other provider, that provider handles its own terms, privacy practices, cookies, payments, and booking support.",
+  privacySectionProvidersBody:
+    "When you leave Kurioticket for an airline, hotel, rental car company, travel agency, or other provider, that provider handles its own terms, privacy practices, cookies, payments, and booking support.",
   privacySectionChoicesTitle: "Your choices",
-  privacySectionChoicesBody: "You can manage account and communication preferences through available Kurioticket account tools. Additional privacy request options should be finalized before public launch.",
+  privacySectionChoicesBody:
+    "You can manage account and communication preferences through available Kurioticket account tools. Additional privacy request options should be finalized before public launch.",
   privacyLegalCenterBeforeLink: "For a fuller draft, visit the",
   privacyLegalCenterLink: "legal center privacy policy",
   privacyLegalCenterAfterLink: ".",
   "legalCenter.heroTitle": "Legal Center",
-  "legalCenter.heroDescription": "Access important legal and policy information related to using Kurioticket.",
+  "legalCenter.heroDescription":
+    "Access important legal and policy information related to using Kurioticket.",
   "legalCenter.resourcesHeading": "Legal resources",
-  "legalCenter.resourcesDescription": "Choose a policy below to learn more about Kurioticket's legal terms and data practices.",
+  "legalCenter.resourcesDescription":
+    "Choose a policy below to learn more about Kurioticket's legal terms and data practices.",
   "legalCenter.policiesBadge": "POLICIES",
   "legalCenter.privacyPolicy.title": "Privacy Policy",
-  "legalCenter.privacyPolicy.description": "Learn how Kurioticket handles personal information, account data, search details, and privacy choices when you use the platform.",
+  "legalCenter.privacyPolicy.description":
+    "Learn how Kurioticket handles personal information, account data, search details, and privacy choices when you use the platform.",
   "legalCenter.privacyPolicy.cta": "View Privacy Policy",
   "legalCenter.termsOfService.title": "Terms of Service",
-  "legalCenter.termsOfService.description": "Review the terms that explain acceptable use, account responsibilities, provider redirects, and Kurioticket platform rules.",
+  "legalCenter.termsOfService.description":
+    "Review the terms that explain acceptable use, account responsibilities, provider redirects, and Kurioticket platform rules.",
   "legalCenter.termsOfService.cta": "View Terms of Service",
   "legalCenter.cookiePolicy.title": "Cookie Policy",
-  "legalCenter.cookiePolicy.description": "Understand how cookies and similar technologies support site functionality, preferences, analytics, and service improvements.",
+  "legalCenter.cookiePolicy.description":
+    "Understand how cookies and similar technologies support site functionality, preferences, analytics, and service improvements.",
   "legalCenter.cookiePolicy.cta": "View Cookie Policy",
   "legalCenter.additionalResourcesTitle": "Additional legal resources",
-  "legalCenter.additionalResourcesDescription": "Additional legal resources may be added as Kurioticket grows.",
+  "legalCenter.additionalResourcesDescription":
+    "Additional legal resources may be added as Kurioticket grows.",
   "legal.index.heroLabel": "LEGAL INFORMATION",
   "legal.index.heroTitle": "Legal Center",
-  "legal.index.heroDescription": "Kurioticket’s legal resources explain how our travel search, account, privacy, provider redirect, and compliance practices work.",
+  "legal.index.heroDescription":
+    "Kurioticket’s legal resources explain how our travel search, account, privacy, provider redirect, and compliance practices work.",
   "legal.index.compliance.eyebrow": "COMPANY & COMPLIANCE",
   "legal.index.compliance.sellerOfTravel": "California Seller of Travel",
   "legal.index.compliance.registrationNumberLabel": "Registration No.",
   "legal.index.compliance.registrationExpires": "Registration expires",
   "legal.index.compliance.registrationExpiresDate": "June 05, 2027",
-  "legal.index.compliance.publicNotice": "Registration as a seller of travel does not constitute approval by the State of California.",
+  "legal.index.compliance.publicNotice":
+    "Registration as a seller of travel does not constitute approval by the State of California.",
   "legal.index.contacts.support": "Support",
   "legal.index.contacts.legal": "Legal",
   "legal.index.contacts.privacy": "Privacy",
@@ -862,152 +1092,233 @@ export const translations: TranslationDictionary = {
   "legal.index.resourcesTitle": "Legal documents",
   "legal.index.documentsCountLabel": "policies and notices available",
   "legal.index.documents.privacyChoices.title": "Privacy Choices",
-  "legal.index.documents.privacyChoices.summary": "Privacy and account choices currently available for Kurioticket users.",
-  "legal.index.documents.californiaSellerOfTravelNotice.title": "California Seller of Travel Notice",
-  "legal.index.documents.californiaSellerOfTravelNotice.summary": "California Seller of Travel registration notice for Kurioticket’s travel search and redirect platform.",
-  "legal.index.documents.legalNoticeCompanyInformation.title": "Legal Notice & Company Information",
-  "legal.index.documents.legalNoticeCompanyInformation.summary": "Company, contact, product-scope, and provider-boundary information for Kurioticket.",
+  "legal.index.documents.privacyChoices.summary":
+    "Privacy and account choices currently available for Kurioticket users.",
+  "legal.index.documents.californiaSellerOfTravelNotice.title":
+    "California Seller of Travel Notice",
+  "legal.index.documents.californiaSellerOfTravelNotice.summary":
+    "California Seller of Travel registration notice for Kurioticket’s travel search and redirect platform.",
+  "legal.index.documents.legalNoticeCompanyInformation.title":
+    "Legal Notice & Company Information",
+  "legal.index.documents.legalNoticeCompanyInformation.summary":
+    "Company, contact, product-scope, and provider-boundary information for Kurioticket.",
   "legal.index.documents.securityStatement.title": "Security Statement",
-  "legal.index.documents.securityStatement.summary": "High-level security practices and user responsibilities for Kurioticket accounts and provider redirects.",
-  "legal.index.documents.accessibilityStatement.title": "Accessibility Statement",
-  "legal.index.documents.accessibilityStatement.summary": "Kurioticket’s accessibility commitment for travel search, account, and support experiences.",
-  "legal.index.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.index.documents.securityStatement.summary":
+    "High-level security practices and user responsibilities for Kurioticket accounts and provider redirects.",
+  "legal.index.documents.accessibilityStatement.title":
+    "Accessibility Statement",
+  "legal.index.documents.accessibilityStatement.summary":
+    "Kurioticket’s accessibility commitment for travel search, account, and support experiences.",
+  "legal.index.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   "legal.index.lastUpdated": "Last updated",
   "legal.index.lastUpdatedDate": "May 11, 2026",
   "legal.index.documents.termsOfService.title": "Terms of Service",
-  "legal.index.documents.termsOfService.summary": "Rules for using Kurioticket search, accounts, dashboards, saved travel tools, and partner redirects.",
+  "legal.index.documents.termsOfService.summary":
+    "Rules for using Kurioticket search, accounts, dashboards, saved travel tools, and partner redirects.",
   "legal.index.documents.privacyPolicy.title": "Privacy Policy",
-  "legal.index.documents.privacyPolicy.summary": "How Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) collects, uses, stores, and protects account, search, alert, support, and email data.",
+  "legal.index.documents.privacyPolicy.summary":
+    "How Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) collects, uses, stores, and protects account, search, alert, support, and email data.",
   "legal.index.documents.cookiePolicy.title": "Cookie Policy",
-  "legal.index.documents.cookiePolicy.summary": "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
+  "legal.index.documents.cookiePolicy.summary":
+    "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
   "legal.index.documents.affiliateDisclosure.title": "Affiliate Disclosure",
-  "legal.index.documents.affiliateDisclosure.summary": "How Kurioticket may earn commissions when users click or book through trusted partners.",
-  "legal.index.documents.refundBookingDisclaimer.title": "Refund & External Provider Disclaimer",
-  "legal.index.documents.refundBookingDisclaimer.summary": "Clarifies that purchases, ticketing, refunds, cancellations, and payment for travel inventory happen outside Kurioticket.",
+  "legal.index.documents.affiliateDisclosure.summary":
+    "How Kurioticket may earn commissions when users click or book through trusted partners.",
+  "legal.index.documents.refundBookingDisclaimer.title":
+    "Refund & External Provider Disclaimer",
+  "legal.index.documents.refundBookingDisclaimer.summary":
+    "Clarifies that purchases, ticketing, refunds, cancellations, and payment for travel inventory happen outside Kurioticket.",
   "legal.index.documents.acceptableUsePolicy.title": "Acceptable Use Policy",
-  "legal.index.documents.acceptableUsePolicy.summary": "Behavior rules for safe, fair, lawful use of Kurioticket systems.",
+  "legal.index.documents.acceptableUsePolicy.summary":
+    "Behavior rules for safe, fair, lawful use of Kurioticket systems.",
   "legal.index.documents.dataDeletionPolicy.title": "Data Deletion Policy",
-  "legal.index.documents.dataDeletionPolicy.summary": "How users may request account deletion and what data may need to be retained.",
-  "legal.index.documents.priceAvailabilityDisclaimer.title": "Price & Availability Disclaimer",
-  "legal.index.documents.priceAvailabilityDisclaimer.summary": "Explains why travel prices, fare rules, room rates, and availability can change.",
-  "legal.index.documents.partnerRedirectDisclaimer.title": "Partner Redirect Disclaimer",
-  "legal.index.documents.partnerRedirectDisclaimer.summary": "What happens when Kurioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
+  "legal.index.documents.dataDeletionPolicy.summary":
+    "How users may request account deletion and what data may need to be retained.",
+  "legal.index.documents.priceAvailabilityDisclaimer.title":
+    "Price & Availability Disclaimer",
+  "legal.index.documents.priceAvailabilityDisclaimer.summary":
+    "Explains why travel prices, fare rules, room rates, and availability can change.",
+  "legal.index.documents.partnerRedirectDisclaimer.title":
+    "Partner Redirect Disclaimer",
+  "legal.index.documents.partnerRedirectDisclaimer.summary":
+    "What happens when Kurioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
   "legal.lastUpdated": "Last updated",
   "legal.print": "Print",
   "legal.tableOfContents": "Table of contents",
   "legal.terms.title": "Terms of Service",
-  "legal.terms.summary": "Rules for using Kurioticket search, accounts, dashboards, saved travel tools, and partner redirects.",
+  "legal.terms.summary":
+    "Rules for using Kurioticket search, accounts, dashboards, saved travel tools, and partner redirects.",
   "legal.terms.lastUpdatedDate": "May 11, 2026",
   "legal.terms.lastUpdated": "Last updated: May 11, 2026",
   "legal.terms.tableOfContents": "TABLE OF CONTENTS",
   "legal.terms.sections.overview.title": "Overview",
-  "legal.terms.sections.overview.paragraph1": "Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) operates a travel search and comparison platform that helps users search flights, hotels, cars, compare provider options, save travel plans, and create alerts.",
-  "legal.terms.sections.overview.paragraph2": "Kurioticket is not an airline, hotel, online travel agency, travel agency, payment processor for travel purchases, or ticket issuer. Purchases, fare rules, ticketing, itinerary changes, cancellations, refunds, boarding, check-in, and travel documents are handled by the external provider.",
+  "legal.terms.sections.overview.paragraph1":
+    "Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) operates a travel search and comparison platform that helps users search flights, hotels, cars, compare provider options, save travel plans, and create alerts.",
+  "legal.terms.sections.overview.paragraph2":
+    "Kurioticket is not an airline, hotel, online travel agency, travel agency, payment processor for travel purchases, or ticket issuer. Purchases, fare rules, ticketing, itinerary changes, cancellations, refunds, boarding, check-in, and travel documents are handled by the external provider.",
   "legal.terms.sections.accounts.title": "Accounts",
-  "legal.terms.sections.accounts.paragraph1": "You may search and view travel results without an account. An account is required for saved flights, saved hotels, saved searches, alerts, dashboards, and support tickets.",
-  "legal.terms.sections.accounts.paragraph2": "You are responsible for safeguarding your login credentials and for activity under your account.",
+  "legal.terms.sections.accounts.paragraph1":
+    "You may search and view travel results without an account. An account is required for saved flights, saved hotels, saved searches, alerts, dashboards, and support tickets.",
+  "legal.terms.sections.accounts.paragraph2":
+    "You are responsible for safeguarding your login credentials and for activity under your account.",
   "legal.terms.sections.acceptable-use.title": "Acceptable Use",
-  "legal.terms.sections.acceptable-use.paragraph1": "You may not abuse search, alert, support, account, or provider-redirect systems; reverse engineer provider integrations; attempt to bypass rate limits; or use Kurioticket for fraudulent, unlawful, or harmful activity.",
-  "legal.terms.sections.acceptable-use.paragraph2": "We may suspend access if activity threatens platform reliability, provider relationships, service security, or user safety.",
+  "legal.terms.sections.acceptable-use.paragraph1":
+    "You may not abuse search, alert, support, account, or provider-redirect systems; reverse engineer provider integrations; attempt to bypass rate limits; or use Kurioticket for fraudulent, unlawful, or harmful activity.",
+  "legal.terms.sections.acceptable-use.paragraph2":
+    "We may suspend access if activity threatens platform reliability, provider relationships, service security, or user safety.",
   "legal.terms.sections.partner-services.title": "Partner Services",
-  "legal.terms.sections.partner-services.paragraph1": "Travel results may include prices, availability, policies, route data, hotel data, and external provider links supplied by APIs, airlines, hotels, or affiliate partners.",
-  "legal.terms.sections.partner-services.paragraph2": "Partner terms apply once you leave Kurioticket or complete a transaction with a partner. Review all fare, hotel, baggage, change, refund, visa, and traveler requirements before purchase.",
-  "legal.terms.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.terms.sections.partner-services.paragraph1":
+    "Travel results may include prices, availability, policies, route data, hotel data, and external provider links supplied by APIs, airlines, hotels, or affiliate partners.",
+  "legal.terms.sections.partner-services.paragraph2":
+    "Partner terms apply once you leave Kurioticket or complete a transaction with a partner. Review all fare, hotel, baggage, change, refund, visa, and traveler requirements before purchase.",
+  "legal.terms.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   "legal.acceptableUsePolicy.title": "Acceptable Use Policy",
-  "legal.acceptableUsePolicy.summary": "Behavior rules for safe, fair, lawful use of Kurioticket systems.",
+  "legal.acceptableUsePolicy.summary":
+    "Behavior rules for safe, fair, lawful use of Kurioticket systems.",
   "legal.acceptableUsePolicy.lastUpdatedDate": "May 11, 2026",
   "legal.acceptableUsePolicy.lastUpdated": "Last updated: May 11, 2026",
   "legal.acceptableUsePolicy.tableOfContents": "TABLE OF CONTENTS",
   "legal.acceptableUsePolicy.sections.prohibited.title": "Prohibited Conduct",
-  "legal.acceptableUsePolicy.sections.prohibited.paragraph1": "You may not scrape Kurioticket, scrape airline websites through Kurioticket, attack provider APIs, automate abusive searches, create fraudulent accounts, test stolen cards, spam support, or interfere with platform reliability.",
-  "legal.acceptableUsePolicy.sections.prohibited.paragraph2": "You may not use Kurioticket to facilitate unlawful travel activity, harassment, fraud, abuse, or unauthorized access.",
+  "legal.acceptableUsePolicy.sections.prohibited.paragraph1":
+    "You may not scrape Kurioticket, scrape airline websites through Kurioticket, attack provider APIs, automate abusive searches, create fraudulent accounts, test stolen cards, spam support, or interfere with platform reliability.",
+  "legal.acceptableUsePolicy.sections.prohibited.paragraph2":
+    "You may not use Kurioticket to facilitate unlawful travel activity, harassment, fraud, abuse, or unauthorized access.",
   "legal.acceptableUsePolicy.sections.enforcement.title": "Enforcement",
-  "legal.acceptableUsePolicy.sections.enforcement.paragraph1": "We may throttle, suspend, remove, or block access when needed to protect users, partners, providers, service security, and platform operations.",
-  "legal.acceptableUsePolicy.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.acceptableUsePolicy.sections.enforcement.paragraph1":
+    "We may throttle, suspend, remove, or block access when needed to protect users, partners, providers, service security, and platform operations.",
+  "legal.acceptableUsePolicy.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   "legal.privacy.title": "Privacy Policy",
-  "legal.privacy.summary": "How Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) collects, uses, stores, and protects account, search, alert, support, and email data.",
+  "legal.privacy.summary":
+    "How Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) collects, uses, stores, and protects account, search, alert, support, and email data.",
   "legal.privacy.lastUpdatedDate": "May 11, 2026",
   "legal.privacy.lastUpdated": "Last updated: May 11, 2026",
   "legal.privacy.tableOfContents": "TABLE OF CONTENTS",
   "legal.privacy.sections.data-we-collect.title": "Data We Collect",
-  "legal.privacy.sections.data-we-collect.paragraph1": "We collect account data such as name, email, hashed password, authentication provider identifiers, and optional travel preferences. We do not ask for passport data, government ID, or home address at signup.",
-  "legal.privacy.sections.data-we-collect.paragraph2": "We collect product data such as searches, saved flights, saved hotels, saved searches, price alerts, redirects, support tickets, notifications, analytics events, and feature usage.",
+  "legal.privacy.sections.data-we-collect.paragraph1":
+    "We collect account data such as name, email, hashed password, authentication provider identifiers, and optional travel preferences. We do not ask for passport data, government ID, or home address at signup.",
+  "legal.privacy.sections.data-we-collect.paragraph2":
+    "We collect product data such as searches, saved flights, saved hotels, saved searches, price alerts, redirects, support tickets, notifications, analytics events, and feature usage.",
   "legal.privacy.sections.vendors.title": "Service Providers",
-  "legal.privacy.sections.vendors.paragraph1": "We may use third-party service providers to help operate our services, send communications, protect the platform, measure performance, and support product functionality.",
-  "legal.privacy.sections.vendors.paragraph2": "Kurioticket does not ask for or store credit card numbers for travel bookings. Kurioticket does not store passport data.",
+  "legal.privacy.sections.vendors.paragraph1":
+    "We may use third-party service providers to help operate our services, send communications, protect the platform, measure performance, and support product functionality.",
+  "legal.privacy.sections.vendors.paragraph2":
+    "Kurioticket does not ask for or store credit card numbers for travel bookings. Kurioticket does not store passport data.",
   "legal.privacy.sections.choices.title": "Your Choices",
-  "legal.privacy.sections.choices.paragraph1": "You may update notification preferences, request account deletion, and request access or correction where required by applicable privacy laws.",
-  "legal.privacy.sections.choices.paragraph2": "We retain only data that is useful for product operation, security, support, analytics, compliance, or legitimate business needs.",
-  "legal.privacy.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.privacy.sections.choices.paragraph1":
+    "You may update notification preferences, request account deletion, and request access or correction where required by applicable privacy laws.",
+  "legal.privacy.sections.choices.paragraph2":
+    "We retain only data that is useful for product operation, security, support, analytics, compliance, or legitimate business needs.",
+  "legal.privacy.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   "legal.cookiePolicy.title": "Cookie Policy",
-  "legal.cookiePolicy.summary": "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
+  "legal.cookiePolicy.summary":
+    "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
   "legal.cookiePolicy.lastUpdatedDate": "May 11, 2026",
   "legal.cookiePolicy.lastUpdated": "Last updated: May 11, 2026",
   "legal.cookiePolicy.tableOfContents": "TABLE OF CONTENTS",
   "legal.cookiePolicy.sections.use.title": "How Cookies Are Used",
-  "legal.cookiePolicy.sections.use.paragraph1": "Kurioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
-  "legal.cookiePolicy.sections.use.paragraph2": "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences.",
+  "legal.cookiePolicy.sections.use.paragraph1":
+    "Kurioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
+  "legal.cookiePolicy.sections.use.paragraph2":
+    "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences.",
   "legal.cookiePolicy.sections.third-parties.title": "Third-Party Technologies",
-  "legal.cookiePolicy.sections.third-parties.paragraph1": "Authentication providers, analytics tools, hosting infrastructure, and security services may set or read cookies as needed to provide secure services.",
-  "legal.cookiePolicy.sections.third-parties.paragraph2": "External provider sites have their own cookie practices after redirect.",
+  "legal.cookiePolicy.sections.third-parties.paragraph1":
+    "Authentication providers, analytics tools, hosting infrastructure, and security services may set or read cookies as needed to provide secure services.",
+  "legal.cookiePolicy.sections.third-parties.paragraph2":
+    "External provider sites have their own cookie practices after redirect.",
   "legal.cookiePolicy.sections.controls.title": "Controls",
-  "legal.cookiePolicy.sections.controls.paragraph1": "You can control cookies through your browser settings. Blocking necessary cookies may prevent login, dashboards, saved items, preferences, and support tools from working correctly.",
-  "legal.cookiePolicy.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.cookiePolicy.sections.controls.paragraph1":
+    "You can control cookies through your browser settings. Blocking necessary cookies may prevent login, dashboards, saved items, preferences, and support tools from working correctly.",
+  "legal.cookiePolicy.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   "legal.affiliateDisclosure.title": "Affiliate Disclosure",
-  "legal.affiliateDisclosure.summary": "How Kurioticket may earn commissions when users click or book through trusted partners.",
+  "legal.affiliateDisclosure.summary":
+    "How Kurioticket may earn commissions when users click or book through trusted partners.",
   "legal.affiliateDisclosure.lastUpdatedDate": "May 11, 2026",
   "legal.affiliateDisclosure.lastUpdated": "Last updated: May 11, 2026",
   "legal.affiliateDisclosure.tableOfContents": "TABLE OF CONTENTS",
   "legal.affiliateDisclosure.sections.model.title": "Affiliate Model",
-  "legal.affiliateDisclosure.sections.model.paragraph1": "Kurioticket offers free flight and hotel search without service fees. We may earn affiliate commissions when users click, book, or purchase through airline, hotel, or travel partner links.",
-  "legal.affiliateDisclosure.sections.model.paragraph2": "Kurioticket may receive compensation from partners when users click or book through provider links. This helps operate and improve the service.",
+  "legal.affiliateDisclosure.sections.model.paragraph1":
+    "Kurioticket offers free flight and hotel search without service fees. We may earn affiliate commissions when users click, book, or purchase through airline, hotel, or travel partner links.",
+  "legal.affiliateDisclosure.sections.model.paragraph2":
+    "Kurioticket may receive compensation from partners when users click or book through provider links. This helps operate and improve the service.",
   "legal.affiliateDisclosure.sections.ranking.title": "Ranking Integrity",
-  "legal.affiliateDisclosure.sections.ranking.paragraph1": "Kurioticket aims to rank results by user value signals such as price, duration, stops, confidence, comfort, and stress reduction. Affiliate relationships should not create fake urgency, hidden fees, or misleading recommendations.",
-  "legal.affiliateDisclosure.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.affiliateDisclosure.sections.ranking.paragraph1":
+    "Kurioticket aims to rank results by user value signals such as price, duration, stops, confidence, comfort, and stress reduction. Affiliate relationships should not create fake urgency, hidden fees, or misleading recommendations.",
+  "legal.affiliateDisclosure.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   "legal.dataDeletionPolicy.title": "Data Deletion Policy",
-  "legal.dataDeletionPolicy.summary": "How users may request account deletion and what data may need to be retained.",
+  "legal.dataDeletionPolicy.summary":
+    "How users may request account deletion and what data may need to be retained.",
   "legal.dataDeletionPolicy.lastUpdatedDate": "May 11, 2026",
   "legal.dataDeletionPolicy.lastUpdated": "Last updated: May 11, 2026",
   "legal.dataDeletionPolicy.tableOfContents": "TABLE OF CONTENTS",
   "legal.dataDeletionPolicy.sections.request.title": "Deletion Requests",
-  "legal.dataDeletionPolicy.sections.request.paragraph1": "You may request account deletion from account settings or support. We will process deletion requests consistent with applicable law, identity verification needs, fraud prevention, legal obligations, and security requirements.",
+  "legal.dataDeletionPolicy.sections.request.paragraph1":
+    "You may request account deletion from account settings or support. We will process deletion requests consistent with applicable law, identity verification needs, fraud prevention, legal obligations, and security requirements.",
   "legal.dataDeletionPolicy.sections.retention.title": "Retained Records",
-  "legal.dataDeletionPolicy.sections.retention.paragraph1": "Some records may be retained for legitimate business, security, analytics, legal, abuse prevention, or dispute-resolution purposes. We minimize retained personal data where practical.",
-  "legal.dataDeletionPolicy.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
-  "legal.refundBookingDisclaimer.title": "Refund & External Provider Disclaimer",
-  "legal.refundBookingDisclaimer.summary": "Clarifies that purchases, ticketing, refunds, cancellations, and payment for travel inventory happen outside Kurioticket.",
+  "legal.dataDeletionPolicy.sections.retention.paragraph1":
+    "Some records may be retained for legitimate business, security, analytics, legal, abuse prevention, or dispute-resolution purposes. We minimize retained personal data where practical.",
+  "legal.dataDeletionPolicy.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.refundBookingDisclaimer.title":
+    "Refund & External Provider Disclaimer",
+  "legal.refundBookingDisclaimer.summary":
+    "Clarifies that purchases, ticketing, refunds, cancellations, and payment for travel inventory happen outside Kurioticket.",
   "legal.refundBookingDisclaimer.lastUpdatedDate": "May 11, 2026",
   "legal.refundBookingDisclaimer.tableOfContents": "TABLE OF CONTENTS",
   "legal.refundBookingDisclaimer.lastUpdated": "Last updated: May 11, 2026",
-  "legal.refundBookingDisclaimer.sections.no-ticketing.title": "No Direct Ticket Issuing",
-  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1": "Kurioticket does not sell airline tickets or hotel reservations. We redirect users to external airlines, hotels, affiliate partners, or travel providers to continue comparison and purchase steps.",
-  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2": "Your purchase contract is with the external provider that accepts your payment, not Kurioticket.",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.title":
+    "No Direct Ticket Issuing",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1":
+    "Kurioticket does not sell airline tickets or hotel reservations. We redirect users to external airlines, hotels, affiliate partners, or travel providers to continue comparison and purchase steps.",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2":
+    "Your purchase contract is with the external provider that accepts your payment, not Kurioticket.",
   "legal.refundBookingDisclaimer.sections.refunds.title": "Refunds and Changes",
-  "legal.refundBookingDisclaimer.sections.refunds.paragraph1": "Refunds, credits, schedule changes, cancellations, missed connections, check-in issues, baggage disputes, and purchase problems are handled by the external airline, hotel, or travel provider.",
-  "legal.refundBookingDisclaimer.sections.refunds.paragraph2": "Kurioticket support can help you understand platform usage and travel guidance boundaries, but cannot override partner or airline policies.",
-  "legal.refundBookingDisclaimer.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph1":
+    "Refunds, credits, schedule changes, cancellations, missed connections, check-in issues, baggage disputes, and purchase problems are handled by the external airline, hotel, or travel provider.",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph2":
+    "Kurioticket support can help you understand platform usage and travel guidance boundaries, but cannot override partner or airline policies.",
+  "legal.refundBookingDisclaimer.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   "legal.priceAvailabilityDisclaimer.title": "Price & Availability Disclaimer",
-  "legal.priceAvailabilityDisclaimer.summary": "Explains why travel prices, fare rules, room rates, and availability can change.",
+  "legal.priceAvailabilityDisclaimer.summary":
+    "Explains why travel prices, fare rules, room rates, and availability can change.",
   "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "May 11, 2026",
   "legal.priceAvailabilityDisclaimer.tableOfContents": "TABLE OF CONTENTS",
   "legal.priceAvailabilityDisclaimer.lastUpdated": "Last updated: May 11, 2026",
-  "legal.priceAvailabilityDisclaimer.sections.change.title": "Prices Can Change",
-  "legal.priceAvailabilityDisclaimer.sections.change.paragraph1": "Flight and hotel prices, taxes, fees, baggage rules, cabin availability, rooms, schedules, and policies can change quickly and may differ by the time you reach a provider purchase page.",
-  "legal.priceAvailabilityDisclaimer.sections.change.paragraph2": "Kurioticket aims to compare current provider data, but provider delays, rate limits, cache windows, currency conversion, partner rules, and user selections can affect displayed information.",
-  "legal.priceAvailabilityDisclaimer.sections.verify.title": "Verify Before Payment",
-  "legal.priceAvailabilityDisclaimer.sections.verify.paragraph1": "Always review the external provider site before purchase. The external provider site is the authoritative source for final price, availability, fare conditions, room conditions, and purchase terms.",
-  "legal.priceAvailabilityDisclaimer.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.priceAvailabilityDisclaimer.sections.change.title":
+    "Prices Can Change",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph1":
+    "Flight and hotel prices, taxes, fees, baggage rules, cabin availability, rooms, schedules, and policies can change quickly and may differ by the time you reach a provider purchase page.",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph2":
+    "Kurioticket aims to compare current provider data, but provider delays, rate limits, cache windows, currency conversion, partner rules, and user selections can affect displayed information.",
+  "legal.priceAvailabilityDisclaimer.sections.verify.title":
+    "Verify Before Payment",
+  "legal.priceAvailabilityDisclaimer.sections.verify.paragraph1":
+    "Always review the external provider site before purchase. The external provider site is the authoritative source for final price, availability, fare conditions, room conditions, and purchase terms.",
+  "legal.priceAvailabilityDisclaimer.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   "legal.partnerRedirectDisclaimer.title": "Partner Redirect Disclaimer",
-  "legal.partnerRedirectDisclaimer.summary": "What happens when Kurioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
+  "legal.partnerRedirectDisclaimer.summary":
+    "What happens when Kurioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
   "legal.partnerRedirectDisclaimer.lastUpdatedDate": "May 11, 2026",
   "legal.partnerRedirectDisclaimer.tableOfContents": "TABLE OF CONTENTS",
   "legal.partnerRedirectDisclaimer.lastUpdated": "Last updated: May 11, 2026",
   "legal.partnerRedirectDisclaimer.sections.redirect.title": "Secure Redirects",
-  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph1": "When you continue to an external provider, Kurioticket redirects you to an airline, hotel, affiliate partner, or travel provider. We may log redirect metadata such as provider, route, price, timestamp, user type, and source page for analytics, support, abuse prevention, and affiliate tracking.",
-  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph2": "Kurioticket does not auto-fill airline websites, scrape airline websites, or complete partner purchases on your behalf.",
-  "legal.partnerRedirectDisclaimer.sections.external-terms.title": "External Terms",
-  "legal.partnerRedirectDisclaimer.sections.external-terms.paragraph1": "External partner sites are governed by their own terms, privacy policies, refund policies, cookies, accessibility practices, and customer support processes.",
-  "legal.partnerRedirectDisclaimer.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
+  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph1":
+    "When you continue to an external provider, Kurioticket redirects you to an airline, hotel, affiliate partner, or travel provider. We may log redirect metadata such as provider, route, price, timestamp, user type, and source page for analytics, support, abuse prevention, and affiliate tracking.",
+  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph2":
+    "Kurioticket does not auto-fill airline websites, scrape airline websites, or complete partner purchases on your behalf.",
+  "legal.partnerRedirectDisclaimer.sections.external-terms.title":
+    "External Terms",
+  "legal.partnerRedirectDisclaimer.sections.external-terms.paragraph1":
+    "External partner sites are governed by their own terms, privacy policies, refund policies, cookies, accessibility practices, and customer support processes.",
+  "legal.partnerRedirectDisclaimer.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   footerAbout:
     "Search flights and hotels for free, compare trusted partner prices, and make calmer travel decisions.",
   footerMeta: "Kurioticket is a travel metasearch platform.",
@@ -1029,14 +1340,18 @@ export const translations: TranslationDictionary = {
   clear: "Clear",
   clearAll: "Clear all",
   done: "Done",
+  "mobileDatePicker.start": "Start",
+  "mobileDatePicker.end": "End",
   back: "Back",
   cancel: "Cancel",
   remove: "Remove",
   savedTripFallbackTitle: "Saved trip",
   savedTripFallbackRoute: "Destination details unavailable",
-  savedTripFallbackNote: "This trip was saved on this device and can still be removed anytime.",
+  savedTripFallbackNote:
+    "This trip was saved on this device and can still be removed anytime.",
   savedTripsPageTitle: "Saved Trips",
-  savedTripsPageSubtitle: "Quickly return to the routes and travel ideas you saved.",
+  savedTripsPageSubtitle:
+    "Quickly return to the routes and travel ideas you saved.",
   savedTripsTabsLabel: "Saved Trips / Search History",
   savedTripsTabSaved: "Saved Trips",
   savedTripsTabHistory: "Search History",
@@ -1045,7 +1360,7 @@ export const translations: TranslationDictionary = {
   savedTripsEmptyDescription:
     "Tap the heart icon on any route to build your personal shortlist and keep your next adventure one click away.",
   savedTripsExploreDestinations: "Explore destinations",
-  savedTripsRemoveSavedTrip: "Remove saved trip",
+  savedTripsRemoveSavedTrip: "Remove saved item",
   savedTripsSavedBadge: "Saved",
   savedTripsSavedRouteBadge: "Saved route",
   savedTripsTrendingBadge: "Trending",
@@ -1127,8 +1442,10 @@ export const translations: TranslationDictionary = {
   "hotelSearch.dateRange": "{{checkIn}} — {{checkOut}}",
   "hotelSearch.mobileSummary": "{{destination}} · {{dates}} · {{summary}}",
   "hotelSearch.resultsSummary": "{{dates}} · {{summary}}",
-  "hotelSearch.guestsRoomsSummary": "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}",
-  "hotelSearch.guestsRoomsPetsSummary": "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}, {{pets}}",
+  "hotelSearch.guestsRoomsSummary":
+    "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}",
+  "hotelSearch.guestsRoomsPetsSummary":
+    "{{guests}} {{guestLabel}}, {{rooms}} {{roomLabel}}, {{pets}}",
   hotelSearchGuestsLabel: "Guests",
   editHotelSearch: "Edit hotel search",
   closeSearchForm: "Close search form",
@@ -1143,6 +1460,7 @@ export const translations: TranslationDictionary = {
   nextMonthShort: "Next",
   chooseGuestsAndRooms: "Choose guests and rooms",
   guestsAndRooms: "Guests and rooms",
+  "hotelGuestsRooms.mobileTitle": "Guests & Rooms",
   adults: "Adults",
   adultAgeRange: "18+",
   children: "Children",
@@ -1151,6 +1469,15 @@ export const translations: TranslationDictionary = {
   hotelAdultHelper: "Guests 18+",
   hotelChildrenHelper: "Ages 0–17",
   hotelRoomsHelper: "Up to 6 rooms",
+  "hotelGuests.adultDescription": "Ages 18+",
+  "hotelGuests.childDescription": "Ages 0–17",
+  "hotelGuests.roomDescription": "Separate rooms",
+  "deals.mobileTravelersTitle": "Travelers",
+  "deals.mobileTravelersRoomsTitle": "Travelers/Rooms",
+  "deals.mobileTravelersRoomsIntro": "Add the number of travelers and rooms.",
+  "deals.mobileAdultDescription": "18+ years",
+  "deals.mobileInfantDescription": "Under 2 years",
+  "deals.petFriendlyRooms": "Pet-friendly rooms",
   togglePetFriendlyStays: "Toggle pet-friendly stays",
   hotelErrorEnterDestination: "Please enter a destination.",
   hotelErrorSelectCheckIn: "Please select a check-in date.",
@@ -1172,7 +1499,7 @@ export const translations: TranslationDictionary = {
   "accountMenu.mobileMyAccount.description": "Manage account pages",
   "accountMenu.savedTrips.label": "Saved trips",
   "accountMenu.savedTrips.description": "Shortlisted stays and searches",
-  "accountMenu.priceAlerts.label": "Price alerts",
+  "accountMenu.priceAlerts.label": "Price Alerts",
   "accountMenu.recentSearches.label": "Recent searches",
   "accountMenu.priceAlerts.description": "View saved alerts",
   "accountMenu.accountSettings.label": "Account settings",
@@ -1234,13 +1561,16 @@ export const translations: TranslationDictionary = {
   homeDiscoveryTravelerCountOne: "1 traveler",
   "hotelDestination.London.title": "United Kingdom",
   "hotelDestination.London.subtitle": "London stays",
-  "hotelDestination.London.linkLabel": "Search hotels in London, United Kingdom",
-  "hotelDestination.London.imageAlt": "Tower Bridge and the River Thames in London under a blue sky",
+  "hotelDestination.London.linkLabel":
+    "Search hotels in London, United Kingdom",
+  "hotelDestination.London.imageAlt":
+    "Tower Bridge and the River Thames in London under a blue sky",
   "hotelDestination.London.detail": "United Kingdom",
   "hotelDestination.Paris.title": "France",
   "hotelDestination.Paris.subtitle": "Paris stays",
   "hotelDestination.Paris.linkLabel": "Search hotels in Paris, France",
-  "hotelDestination.Paris.imageAlt": "Eiffel Tower and the Seine River in Paris at golden hour",
+  "hotelDestination.Paris.imageAlt":
+    "Eiffel Tower and the Seine River in Paris at golden hour",
   "hotelDestination.Paris.detail": "France",
   "hotelDestination.Rome.title": "Italy",
   "hotelDestination.Rome.subtitle": "Rome stays",
@@ -1248,11 +1578,13 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Rome.detail": "Italy",
   "hotelDestination.Dubai.title": "United Arab Emirates",
   "hotelDestination.Dubai.subtitle": "Dubai stays",
-  "hotelDestination.Dubai.linkLabel": "Search hotels in Dubai, United Arab Emirates",
+  "hotelDestination.Dubai.linkLabel":
+    "Search hotels in Dubai, United Arab Emirates",
   "hotelDestination.Dubai.detail": "United Arab Emirates",
   "hotelDestination.Singapore.title": "Singapore",
   "hotelDestination.Singapore.subtitle": "Singapore stays",
-  "hotelDestination.Singapore.linkLabel": "Search hotels in Singapore, Singapore",
+  "hotelDestination.Singapore.linkLabel":
+    "Search hotels in Singapore, Singapore",
   "hotelDestination.Singapore.detail": "Singapore",
   "hotelDestination.Barcelona.title": "Spain",
   "hotelDestination.Barcelona.subtitle": "Barcelona stays",
@@ -1264,7 +1596,8 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Toronto.detail": "Canada",
   "hotelDestination.Amsterdam.title": "Netherlands",
   "hotelDestination.Amsterdam.subtitle": "Amsterdam stays",
-  "hotelDestination.Amsterdam.linkLabel": "Search hotels in Amsterdam, Netherlands",
+  "hotelDestination.Amsterdam.linkLabel":
+    "Search hotels in Amsterdam, Netherlands",
   "hotelDestination.Amsterdam.detail": "Netherlands",
   "hotelDestination.Bangkok.title": "Thailand",
   "hotelDestination.Bangkok.subtitle": "Bangkok stays",
@@ -1281,12 +1614,15 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Tokyo.title": "Japan",
   "hotelDestination.Tokyo.subtitle": "Tokyo stays",
   "hotelDestination.Tokyo.linkLabel": "Search hotels in Tokyo, Japan",
-  "hotelDestination.Tokyo.imageAlt": "Tokyo skyline with dense high-rise buildings in daylight",
+  "hotelDestination.Tokyo.imageAlt":
+    "Tokyo skyline with dense high-rise buildings in daylight",
   "hotelDestination.Tokyo.detail": "Japan",
   "hotelDestination.New York.title": "United States",
   "hotelDestination.New York.subtitle": "New York stays",
-  "hotelDestination.New York.linkLabel": "Search hotels in New York, United States",
-  "hotelDestination.New York.imageAlt": "New York City skyline with One World Trade Center and waterfront",
+  "hotelDestination.New York.linkLabel":
+    "Search hotels in New York, United States",
+  "hotelDestination.New York.imageAlt":
+    "New York City skyline with One World Trade Center and waterfront",
   "hotelDestination.New York.detail": "United States",
   "hotelInspirationBadge.Coastal stays": "Coastal stays",
   "hotelInspirationBadge.City coast": "City coast",
@@ -1311,65 +1647,91 @@ export const translations: TranslationDictionary = {
   "hotelInspirationCategory.Family trips": "Family trips",
   "hotelInspirationCategory.Relaxed stays": "Relaxed stays",
   "hotelInspirationCategory.Weekend ideas": "Weekend ideas",
-  "hotelTrustCompareBody": "View hotel options from travel providers in one place before you continue.",
-  "hotelTrustReviewTitle": "Review stay details",
-  "hotelTrustReviewBody": "Check dates, guests, rooms, pricing context, and stay information before choosing.",
-  "hotelTrustProviderTitle": "Continue with the provider",
-  "hotelTrustProviderBody": "When you choose an option, continue with the provider to confirm final price, availability, fees, and cancellation rules.",
+  hotelTrustCompareBody:
+    "View hotel options from travel providers in one place before you continue.",
+  hotelTrustReviewTitle: "Review stay details",
+  hotelTrustReviewBody:
+    "Check dates, guests, rooms, pricing context, and stay information before choosing.",
+  hotelTrustProviderTitle: "Continue with the provider",
+  hotelTrustProviderBody:
+    "When you choose an option, continue with the provider to confirm final price, availability, fees, and cancellation rules.",
   "carsTripStyle.economy.title": "Economy cars",
   "carsTripStyle.economy.subtitle": "Affordable city and solo-trip searches",
   "carsTripStyle.economy.cta": "Start an economy car search",
-  "carsTripStyle.economy.ariaLabel": "Start an economy car search from City center pickup",
+  "carsTripStyle.economy.ariaLabel":
+    "Start an economy car search from City center pickup",
   "carsTripStyle.suv.title": "SUVs",
-  "carsTripStyle.suv.subtitle": "Room for family trips, luggage, and longer drives",
+  "carsTripStyle.suv.subtitle":
+    "Room for family trips, luggage, and longer drives",
   "carsTripStyle.suv.cta": "Open SUV rental search",
   "carsTripStyle.suv.ariaLabel": "Open SUV rental search from Airport pickup",
   "carsTripStyle.luxury.title": "Luxury cars",
-  "carsTripStyle.luxury.subtitle": "Premium search context for business or special trips",
+  "carsTripStyle.luxury.subtitle":
+    "Premium search context for business or special trips",
   "carsTripStyle.luxury.cta": "Plan a luxury car search",
-  "carsTripStyle.luxury.ariaLabel": "Plan a luxury car search from Hotel area pickup",
+  "carsTripStyle.luxury.ariaLabel":
+    "Plan a luxury car search from Hotel area pickup",
   "carsTripStyle.van.title": "Vans",
-  "carsTripStyle.van.subtitle": "Search context for group travel and family luggage",
+  "carsTripStyle.van.subtitle":
+    "Search context for group travel and family luggage",
   "carsTripStyle.van.cta": "Search vans for group trips",
-  "carsTripStyle.van.ariaLabel": "Search vans for group trips from Airport pickup",
+  "carsTripStyle.van.ariaLabel":
+    "Search vans for group trips from Airport pickup",
   "carsTrust.0.title": "Built for complete trips",
-  "carsTrust.0.description": "Plan flights, stays, and ground transportation in one Kurioticket flow.",
+  "carsTrust.0.description":
+    "Plan flights, stays, and ground transportation in one Kurioticket flow.",
   "carsTrust.1.title": "Pickup details first",
-  "carsTrust.1.description": "Enter pickup location, dates, times, and driver age so your rental search starts with the right trip details.",
+  "carsTrust.1.description":
+    "Enter pickup location, dates, times, and driver age so your rental search starts with the right trip details.",
   "carsTrust.2.title": "Clear rental review",
-  "carsTrust.2.description": "Review final price, availability, fees, and rental rules with the provider before booking.",
+  "carsTrust.2.description":
+    "Review final price, availability, fees, and rental rules with the provider before booking.",
   "carsPickup.Airport.title": "Airport pickups",
   "carsPickup.Airport.subtitle": "Start from major airport arrival points",
   "carsPickup.City center.title": "City center pickups",
-  "carsPickup.City center.subtitle": "Pick up near downtown hotels and business districts",
+  "carsPickup.City center.subtitle":
+    "Pick up near downtown hotels and business districts",
   "carsPickup.Train station.title": "Train station pickups",
   "carsPickup.Train station.subtitle": "Continue your trip after rail arrivals",
   "carsPickup.Hotel area.title": "Hotel area pickups",
-  "carsPickup.Hotel area.subtitle": "Plan a car pickup near where you are staying",
-  "carsPickupPointsTitle": "Start with popular car pickup points",
-  "carsPickupPointsBody": "Choose a pickup style and we’ll open the cars results page with search details ready.",
-  "carsTripStyle.economy.imageAlt": "Compact city cars traveling between downtown buildings",
+  "carsPickup.Hotel area.subtitle":
+    "Plan a car pickup near where you are staying",
+  carsPickupPointsTitle: "Start with popular car pickup points",
+  carsPickupPointsBody:
+    "Choose a pickup style and we’ll open the cars results page with search details ready.",
+  "carsTripStyle.economy.imageAlt":
+    "Compact city cars traveling between downtown buildings",
   "carsTripStyle.suv.imageAlt": "SUV driving along an open road near mountains",
-  "carsTripStyle.luxury.imageAlt": "Premium car parked near an elegant modern building",
-  "carsTripStyle.van.imageAlt": "Passenger van traveling through a bright scenic road",
+  "carsTripStyle.luxury.imageAlt":
+    "Premium car parked near an elegant modern building",
+  "carsTripStyle.van.imageAlt":
+    "Passenger van traveling through a bright scenic road",
   "carsPickup.Airport.ariaLabel": "Open car results for Airport pickup",
   "carsPickup.Airport.imageAlt": "Airplane parked at an airport gate at sunset",
   "carsPickup.City center.ariaLabel": "Open car results for City center pickup",
-  "carsPickup.City center.imageAlt": "Cars driving through a city street between tall buildings",
-  "carsPickup.Train station.ariaLabel": "Open car results for Train station pickup",
-  "carsPickup.Train station.imageAlt": "Train platform with tracks leading into a city station",
+  "carsPickup.City center.imageAlt":
+    "Cars driving through a city street between tall buildings",
+  "carsPickup.Train station.ariaLabel":
+    "Open car results for Train station pickup",
+  "carsPickup.Train station.imageAlt":
+    "Train platform with tracks leading into a city station",
   "carsPickup.Hotel area.ariaLabel": "Open car results for Hotel area pickup",
-  "carsPickup.Hotel area.imageAlt": "Hotel exterior with palm trees and a driveway",
+  "carsPickup.Hotel area.imageAlt":
+    "Hotel exterior with palm trees and a driveway",
   "carsSearch.pickupLocationLabel": "Pickup location",
+  "carsSearch.returnLocationLabel": "Return location",
   "carsSearch.pickupLocationPlaceholder": "Airport, city, or address",
   "carsSearch.returnLocationPlaceholder": "Return city, airport, or address",
+  "carsSearch.choosePickupLocation": "Choose pickup location",
+  "carsSearch.chooseReturnLocation": "Choose return location",
   "carsSearch.returnToSameLocation": "Return to same location",
   "carsSearch.differentReturnLocation": "Different return location",
   "carsSearch.locationSuggestions": "Location suggestions",
   "carsSearch.popularLocations": "Popular locations",
   "carsSearch.loadingSuggestions": "Loading location suggestions…",
   "carsSearch.noMatchingLocations": "No matching locations found.",
-  "carsSearch.suggestionsUnavailable": "Location suggestions are temporarily unavailable.",
+  "carsSearch.suggestionsUnavailable":
+    "Location suggestions are temporarily unavailable.",
   "carsSearch.continueTypingManually": "You can continue typing manually.",
   "carsSearch.useTypedLocation": "Use typed location",
   "carsSearch.unverifiedTypedLocation": "Unverified typed location",
@@ -1380,10 +1742,16 @@ export const translations: TranslationDictionary = {
   "carsSearch.rentalDatesLabel": "Rental dates",
   "carsSearch.rentalDatePlaceholder": "Pickup date — Return date",
   "carsSearch.pickupReturnTimeLabel": "Pickup / return time",
-  "carsSearch.pickupReturnTimeSummary": "{pickupTime} pickup — {returnTime} return",
+  "carsSearch.mobileTimeIntro":
+    "Select when you’ll pick up and return your car.",
+  "carsSearch.pickupReturnTimeSummary":
+    "{pickupTime} pickup — {returnTime} return",
   "carsSearch.driverAgeLabel": "Driver age",
+  "carsSearch.mobileDriverAgeIntro":
+    "Driver must be between 18 and 70 years old.",
   "carsSearch.driverAgeAnyAge": "Any age",
   "carsSearch.driverAgeAnyAgeRange": "Any age 18–70",
+  "carsSearch.rentalDays": "{count} days",
   "carsSearch.clearPickupLocation": "Clear pickup location",
   "carsSearch.clearReturnLocation": "Clear return location",
   "carsSearch.chooseRentalDatesAria": "Choose rental pickup and return dates",
@@ -1406,11 +1774,14 @@ export const translations: TranslationDictionary = {
   "carsSearch.error.dropoffDateRequired": "Select a drop-off date.",
   "carsSearch.error.dropoffDatePast": "Drop-off date cannot be in the past.",
   "carsSearch.error.dropoffTimeRequired": "Select a drop-off time.",
-  "carsSearch.error.driverAgeInvalid": "Select Any age 18–70 or a driver age from 18 to 70.",
+  "carsSearch.error.driverAgeInvalid":
+    "Select Any age 18–70 or a driver age from 18 to 70.",
   "carsSearch.error.dropoffLocationRequired": "Enter a drop-off location.",
-  "carsSearch.error.dropoffBeforePickup": "Drop-off date cannot be before pickup date.",
-  "carsSearch.error.sameDayDropoffAfterPickup": "For same-day returns, drop-off time must be after pickup time.",
-  "carsSearchPreparing": "Preparing car search...",
+  "carsSearch.error.dropoffBeforePickup":
+    "Drop-off date cannot be before pickup date.",
+  "carsSearch.error.sameDayDropoffAfterPickup":
+    "For same-day returns, drop-off time must be after pickup time.",
+  carsSearchPreparing: "Preparing car search...",
   "carsResults.resultsLabel": "Cars results",
   "carsResults.resultsFor": "Cars results for {location}",
   "carsResults.carResultsAria": "Car results",
@@ -1454,8 +1825,10 @@ export const translations: TranslationDictionary = {
   "carsResults.anyDriverAgeRange": "Any driver age 18–70",
   "carsResults.anyDriverAge": "Any driver age",
   "carsResults.yearsOld": "years old",
-  "carsResults.emptyInventory": "Live car inventory is not available to display for this search yet. Update the search details above or check again later.",
-  "carsResults.enterPickupDetails": "Enter pickup details above to prepare a car search.",
+  "carsResults.emptyInventory":
+    "Live car inventory is not available to display for this search yet. Update the search details above or check again later.",
+  "carsResults.enterPickupDetails":
+    "Enter pickup details above to prepare a car search.",
   "carsResults.vehicleType": "Vehicle type",
   "carsResults.smallCars": "Small cars",
   "carsResults.mediumCars": "Medium cars",
@@ -1489,408 +1862,600 @@ export const translations: TranslationDictionary = {
   "carsResults.location.hotelArea": "Hotel area",
   "carsResults.location.trainStation": "Train station",
   "carsFaq.heading": "Cars Frequently asked questions",
-  "carsFaq.0.question": "What information do I need to search for a rental car?",
-  "carsFaq.0.answer": "Enter your pickup location, pickup and return dates, pickup and return times, driver age, and whether you plan to return the car to a different location.",
+  "carsFaq.0.question":
+    "What information do I need to search for a rental car?",
+  "carsFaq.0.answer":
+    "Enter your pickup location, pickup and return dates, pickup and return times, driver age, and whether you plan to return the car to a different location.",
   "carsFaq.1.question": "Can I return the car to a different location?",
-  "carsFaq.1.answer": "Yes. Select Different return location in the search form and enter the drop-off city, airport, or address where you plan to return the car.",
+  "carsFaq.1.answer":
+    "Yes. Select Different return location in the search form and enter the drop-off city, airport, or address where you plan to return the car.",
   "carsFaq.2.question": "Why does driver age matter for rental cars?",
-  "carsFaq.2.answer": "Rental providers may apply different rules, fees, vehicle eligibility, or deposit requirements based on the driver’s age and location.",
+  "carsFaq.2.answer":
+    "Rental providers may apply different rules, fees, vehicle eligibility, or deposit requirements based on the driver’s age and location.",
   "carsFaq.3.question": "What should I check before booking a rental car?",
-  "carsFaq.3.answer": "Review the pickup and return location, dates, times, mileage policy, fuel policy, insurance options, cancellation terms, deposit requirements, and required documents before booking.",
+  "carsFaq.3.answer":
+    "Review the pickup and return location, dates, times, mileage policy, fuel policy, insurance options, cancellation terms, deposit requirements, and required documents before booking.",
   "carsFaq.4.question": "Where is the final rental price confirmed?",
-  "carsFaq.4.answer": "Final price, vehicle availability, taxes, fees, deposit requirements, and rental rules are confirmed by the provider before booking.",
+  "carsFaq.4.answer":
+    "Final price, vehicle availability, taxes, fees, deposit requirements, and rental rules are confirmed by the provider before booking.",
   "carsFaq.5.question": "What documents might I need at pickup?",
-  "carsFaq.5.answer": "Rental providers may require a valid driver’s license, payment card, proof of identity, and any documents required by the pickup country or location.",
+  "carsFaq.5.answer":
+    "Rental providers may require a valid driver’s license, payment card, proof of identity, and any documents required by the pickup country or location.",
   "homeDiscoveryRoute.fallback-nyc-lis.title": "Lisbon city break",
-  "homeDiscoveryRoute.fallback-nyc-lis.routeNote": "Sun-soaked streets, pastel facades, and Atlantic viewpoints.",
+  "homeDiscoveryRoute.fallback-nyc-lis.routeNote":
+    "Sun-soaked streets, pastel facades, and Atlantic viewpoints.",
   "homeDiscoveryRoute.fallback-lhr-ist.title": "Istanbul culture mix",
-  "homeDiscoveryRoute.fallback-lhr-ist.routeNote": "Mosque skylines, bazaars, and Bosphorus waterfront evenings.",
+  "homeDiscoveryRoute.fallback-lhr-ist.routeNote":
+    "Mosque skylines, bazaars, and Bosphorus waterfront evenings.",
   "homeDiscoveryRoute.fallback-dxb-sin.title": "Singapore skyline getaway",
-  "homeDiscoveryRoute.fallback-dxb-sin.routeNote": "Futuristic gardens, hawker food, and efficient city transit.",
+  "homeDiscoveryRoute.fallback-dxb-sin.routeNote":
+    "Futuristic gardens, hawker food, and efficient city transit.",
   "homeDiscoveryRoute.fallback-cdg-ath.title": "Athens history hop",
-  "homeDiscoveryRoute.fallback-cdg-ath.routeNote": "Ancient landmarks, rooftop views, and Mediterranean flavors.",
+  "homeDiscoveryRoute.fallback-cdg-ath.routeNote":
+    "Ancient landmarks, rooftop views, and Mediterranean flavors.",
   "homeDiscoveryRoute.fallback-yyz-cun.title": "Cancun beach escape",
-  "homeDiscoveryRoute.fallback-yyz-cun.routeNote": "Turquoise beaches and resort stays for easy warm-weather breaks.",
+  "homeDiscoveryRoute.fallback-yyz-cun.routeNote":
+    "Turquoise beaches and resort stays for easy warm-weather breaks.",
   "homeDiscoveryRoute.fallback-lax-tyo.title": "Tokyo city pulse",
-  "homeDiscoveryRoute.fallback-lax-tyo.routeNote": "Neon districts, late-night eats, and world-class rail links.",
+  "homeDiscoveryRoute.fallback-lax-tyo.routeNote":
+    "Neon districts, late-night eats, and world-class rail links.",
   "homeDiscoveryRoute.fallback-syd-dps.title": "Bali island reset",
-  "homeDiscoveryRoute.fallback-syd-dps.routeNote": "Tropical villas, rice terraces, and surf-ready coastlines.",
+  "homeDiscoveryRoute.fallback-syd-dps.routeNote":
+    "Tropical villas, rice terraces, and surf-ready coastlines.",
   "homeDiscoveryRoute.fallback-fra-cpt.title": "Cape Town adventure",
-  "homeDiscoveryRoute.fallback-fra-cpt.routeNote": "Table Mountain hikes, coastal drives, and vineyard day trips.",
+  "homeDiscoveryRoute.fallback-fra-cpt.routeNote":
+    "Table Mountain hikes, coastal drives, and vineyard day trips.",
   "homeDiscoveryRoute.fallback-cai-dxb.title": "Dubai connector break",
-  "homeDiscoveryRoute.fallback-cai-dxb.routeNote": "Middle East route for easy stopovers, shopping, and onward links.",
+  "homeDiscoveryRoute.fallback-cai-dxb.routeNote":
+    "Middle East route for easy stopovers, shopping, and onward links.",
   "homeDiscoveryRoute.fallback-mad-mrk.title": "Marrakech souk and riad stay",
-  "homeDiscoveryRoute.fallback-mad-mrk.routeNote": "Warm-weather medina escape with rooftop dining and markets.",
+  "homeDiscoveryRoute.fallback-mad-mrk.routeNote":
+    "Warm-weather medina escape with rooftop dining and markets.",
   "homeDiscoveryRoute.fallback-gru-lim.title": "Lima coastal food trip",
-  "homeDiscoveryRoute.fallback-gru-lim.routeNote": "Pacific views, world-class cuisine, and historic districts.",
+  "homeDiscoveryRoute.fallback-gru-lim.routeNote":
+    "Pacific views, world-class cuisine, and historic districts.",
   "homeDiscoveryRoute.fallback-del-bkk.title": "Bangkok city energy",
-  "homeDiscoveryRoute.fallback-del-bkk.routeNote": "Street-food hubs, temple visits, and lively night markets.",
+  "homeDiscoveryRoute.fallback-del-bkk.routeNote":
+    "Street-food hubs, temple visits, and lively night markets.",
   "homeDiscoveryRoute.fallback-bom-kul.title": "Kuala Lumpur city towers trip",
-  "homeDiscoveryRoute.fallback-bom-kul.routeNote": "Food districts, skyline viewpoints, and rainforest day options.",
+  "homeDiscoveryRoute.fallback-bom-kul.routeNote":
+    "Food districts, skyline viewpoints, and rainforest day options.",
   "homeDiscoveryRoute.fallback-mex-sjo.title": "San Jose nature launch",
-  "homeDiscoveryRoute.fallback-mex-sjo.routeNote": "Easy entry for cloud forests, volcano parks, and coffee estates.",
+  "homeDiscoveryRoute.fallback-mex-sjo.routeNote":
+    "Easy entry for cloud forests, volcano parks, and coffee estates.",
   "homeDiscoveryRoute.fallback-icn-hkg.title": "Hong Kong harbor city break",
-  "homeDiscoveryRoute.fallback-icn-hkg.routeNote": "Skyline ferries, market streets, and late-night dining scenes.",
+  "homeDiscoveryRoute.fallback-icn-hkg.routeNote":
+    "Skyline ferries, market streets, and late-night dining scenes.",
   "homeDiscoveryRoute.fallback-jnb-znz.title": "Zanzibar island unwind",
-  "homeDiscoveryRoute.fallback-jnb-znz.routeNote": "Indian Ocean beaches, Stone Town alleys, and diving reefs.",
+  "homeDiscoveryRoute.fallback-jnb-znz.routeNote":
+    "Indian Ocean beaches, Stone Town alleys, and diving reefs.",
   "homeDiscoveryRoute.fallback-fra-dxb.title": "Frankfurt to Dubai",
-  "homeDiscoveryRoute.fallback-fra-dxb.routeNote": "Global international Europe-to-Gulf route.",
+  "homeDiscoveryRoute.fallback-fra-dxb.routeNote":
+    "Global international Europe-to-Gulf route.",
   "homeDiscoveryRoute.fallback-dxb-lhr.title": "Dubai to London",
-  "homeDiscoveryRoute.fallback-dxb-lhr.routeNote": "Global international Gulf-to-UK route.",
+  "homeDiscoveryRoute.fallback-dxb-lhr.routeNote":
+    "Global international Gulf-to-UK route.",
   "homeDiscoveryRoute.fallback-sin-bkk.title": "Singapore to Bangkok",
-  "homeDiscoveryRoute.fallback-sin-bkk.routeNote": "Global international Southeast Asia route.",
+  "homeDiscoveryRoute.fallback-sin-bkk.routeNote":
+    "Global international Southeast Asia route.",
   "homeDiscoveryRoute.fallback-gru-mad.title": "Sao Paulo to Madrid",
-  "homeDiscoveryRoute.fallback-gru-mad.routeNote": "Global international Latin America-to-Europe route.",
+  "homeDiscoveryRoute.fallback-gru-mad.routeNote":
+    "Global international Latin America-to-Europe route.",
   "homeDiscoveryRoute.fallback-nbo-dxb.title": "Nairobi to Dubai",
-  "homeDiscoveryRoute.fallback-nbo-dxb.routeNote": "Global international Africa-to-Gulf route.",
+  "homeDiscoveryRoute.fallback-nbo-dxb.routeNote":
+    "Global international Africa-to-Gulf route.",
   "homeDiscoveryRoute.fallback-yyz-lhr.title": "Toronto to London",
-  "homeDiscoveryRoute.fallback-yyz-lhr.routeNote": "Global international Canada-to-UK route.",
+  "homeDiscoveryRoute.fallback-yyz-lhr.routeNote":
+    "Global international Canada-to-UK route.",
   "homeDiscoveryRoute.fallback-hnd-sin.title": "Tokyo to Singapore",
-  "homeDiscoveryRoute.fallback-hnd-sin.routeNote": "Global international Asia hub route.",
+  "homeDiscoveryRoute.fallback-hnd-sin.routeNote":
+    "Global international Asia hub route.",
   "homeDiscoveryRoute.fallback-lhr-cdg.title": "London to Paris",
-  "homeDiscoveryRoute.fallback-lhr-cdg.routeNote": "Global international Europe trunk route.",
+  "homeDiscoveryRoute.fallback-lhr-cdg.routeNote":
+    "Global international Europe trunk route.",
   "homeDiscoveryRoute.fallback-mex-mad.title": "Mexico City to Madrid",
-  "homeDiscoveryRoute.fallback-mex-mad.routeNote": "Global international Latin America-to-Europe route.",
+  "homeDiscoveryRoute.fallback-mex-mad.routeNote":
+    "Global international Latin America-to-Europe route.",
   "homeDiscoveryRoute.fallback-dxb-bkk.title": "Dubai to Bangkok",
-  "homeDiscoveryRoute.fallback-dxb-bkk.routeNote": "Global international Gulf-to-Asia route.",
+  "homeDiscoveryRoute.fallback-dxb-bkk.routeNote":
+    "Global international Gulf-to-Asia route.",
   "homeDiscoveryRoute.fallback-jnb-lhr.title": "Johannesburg to London",
-  "homeDiscoveryRoute.fallback-jnb-lhr.routeNote": "Global international Southern Africa-to-UK route.",
+  "homeDiscoveryRoute.fallback-jnb-lhr.routeNote":
+    "Global international Southern Africa-to-UK route.",
   "homeDiscoveryRoute.fallback-nrt-bkk.title": "Tokyo to Bangkok",
-  "homeDiscoveryRoute.fallback-nrt-bkk.routeNote": "Global international Asia leisure route.",
+  "homeDiscoveryRoute.fallback-nrt-bkk.routeNote":
+    "Global international Asia leisure route.",
   "homeDiscoveryRoute.fallback-lhr-ams.title": "London to Amsterdam",
-  "homeDiscoveryRoute.fallback-lhr-ams.routeNote": "Global international Europe city-pair route.",
+  "homeDiscoveryRoute.fallback-lhr-ams.routeNote":
+    "Global international Europe city-pair route.",
   "homeDiscoveryRoute.fallback-lim-mad.title": "Lima to Madrid",
-  "homeDiscoveryRoute.fallback-lim-mad.routeNote": "Global international South America-to-Europe route.",
+  "homeDiscoveryRoute.fallback-lim-mad.routeNote":
+    "Global international South America-to-Europe route.",
   "homeDiscoveryRoute.fallback-los-lhr.title": "Lagos to London",
-  "homeDiscoveryRoute.fallback-los-lhr.routeNote": "Global international West Africa-to-UK route.",
+  "homeDiscoveryRoute.fallback-los-lhr.routeNote":
+    "Global international West Africa-to-UK route.",
   "homeDiscoveryRoute.fallback-auh-lhr.title": "Abu Dhabi to London",
-  "homeDiscoveryRoute.fallback-auh-lhr.routeNote": "Global international Middle East-to-UK route.",
+  "homeDiscoveryRoute.fallback-auh-lhr.routeNote":
+    "Global international Middle East-to-UK route.",
   "homeDiscoveryRoute.ng-los-lhr.title": "London business and weekend mix",
-  "homeDiscoveryRoute.ng-los-lhr.routeNote": "High-frequency long-haul route for work trips and leisure add-ons.",
+  "homeDiscoveryRoute.ng-los-lhr.routeNote":
+    "High-frequency long-haul route for work trips and leisure add-ons.",
   "homeDiscoveryRoute.ng-los-dxb.title": "Dubai shopping stopover",
-  "homeDiscoveryRoute.ng-los-dxb.routeNote": "Popular for retail breaks, family travel, and onward connections.",
+  "homeDiscoveryRoute.ng-los-dxb.routeNote":
+    "Popular for retail breaks, family travel, and onward connections.",
   "homeDiscoveryRoute.ng-abv-acc.title": "Accra quick regional trip",
-  "homeDiscoveryRoute.ng-abv-acc.routeNote": "Short-haul regional route with efficient city-to-city access.",
+  "homeDiscoveryRoute.ng-abv-acc.routeNote":
+    "Short-haul regional route with efficient city-to-city access.",
   "homeDiscoveryRoute.ng-los-nbo.title": "Nairobi safari gateway",
-  "homeDiscoveryRoute.ng-los-nbo.routeNote": "East Africa access for business hubs and safari extensions.",
+  "homeDiscoveryRoute.ng-los-nbo.routeNote":
+    "East Africa access for business hubs and safari extensions.",
   "homeDiscoveryRoute.ng-abv-jnb.title": "Johannesburg city break",
-  "homeDiscoveryRoute.ng-abv-jnb.routeNote": "Strong southbound connectivity for meetings and urban escapes.",
+  "homeDiscoveryRoute.ng-abv-jnb.routeNote":
+    "Strong southbound connectivity for meetings and urban escapes.",
   "homeDiscoveryRoute.ng-los-ist.title": "Istanbul connector route",
-  "homeDiscoveryRoute.ng-los-ist.routeNote": "Great hub for Europe links with a vibrant city stopover.",
+  "homeDiscoveryRoute.ng-los-ist.routeNote":
+    "Great hub for Europe links with a vibrant city stopover.",
   "homeDiscoveryRoute.ng-abv-cdg.title": "Paris style escape",
-  "homeDiscoveryRoute.ng-abv-cdg.routeNote": "Classic Europe route for fashion, museums, and food scenes.",
+  "homeDiscoveryRoute.ng-abv-cdg.routeNote":
+    "Classic Europe route for fashion, museums, and food scenes.",
   "homeDiscoveryRoute.ng-los-doh.title": "Doha premium transit",
-  "homeDiscoveryRoute.ng-los-doh.routeNote": "Comfort-focused routing with smooth onward global connections.",
+  "homeDiscoveryRoute.ng-los-doh.routeNote":
+    "Comfort-focused routing with smooth onward global connections.",
   "homeDiscoveryRoute.ng-los-kig.title": "Kigali clean-city weekend",
-  "homeDiscoveryRoute.ng-los-kig.routeNote": "Rising regional hub with green hills and easy city navigation.",
+  "homeDiscoveryRoute.ng-los-kig.routeNote":
+    "Rising regional hub with green hills and easy city navigation.",
   "homeDiscoveryRoute.ng-abv-cai.title": "Cairo heritage stop",
-  "homeDiscoveryRoute.ng-abv-cai.routeNote": "Gateway for Nile history tours and bustling old-city markets.",
+  "homeDiscoveryRoute.ng-abv-cai.routeNote":
+    "Gateway for Nile history tours and bustling old-city markets.",
   "homeDiscoveryRoute.ng-los-add.title": "Addis Ababa east-africa link",
-  "homeDiscoveryRoute.ng-los-add.routeNote": "Major transfer point with growing dining and culture scenes.",
+  "homeDiscoveryRoute.ng-los-add.routeNote":
+    "Major transfer point with growing dining and culture scenes.",
   "homeDiscoveryRoute.ng-abv-fco.title": "Rome landmark getaway",
-  "homeDiscoveryRoute.ng-abv-fco.routeNote": "European classic for ruins, piazzas, and relaxed evenings.",
+  "homeDiscoveryRoute.ng-abv-fco.routeNote":
+    "European classic for ruins, piazzas, and relaxed evenings.",
   "homeDiscoveryRoute.ng-los-nrt.title": "Tokyo long-haul city pulse",
-  "homeDiscoveryRoute.ng-los-nrt.routeNote": "Major Asia gateway with neon districts and efficient rail transit.",
+  "homeDiscoveryRoute.ng-los-nrt.routeNote":
+    "Major Asia gateway with neon districts and efficient rail transit.",
   "homeDiscoveryRoute.ng-abv-mad.title": "Madrid tapas and art run",
-  "homeDiscoveryRoute.ng-abv-mad.routeNote": "Europe city break route for museums, boulevards, and late dinners.",
+  "homeDiscoveryRoute.ng-abv-mad.routeNote":
+    "Europe city break route for museums, boulevards, and late dinners.",
   "homeDiscoveryRoute.ng-los-cpt.title": "Cape Town coastal adventure",
-  "homeDiscoveryRoute.ng-los-cpt.routeNote": "Scenic South Africa route with beaches, mountains, and vineyards.",
+  "homeDiscoveryRoute.ng-los-cpt.routeNote":
+    "Scenic South Africa route with beaches, mountains, and vineyards.",
   "homeDiscoveryRoute.ng-abv-rob.title": "Monrovia regional seaside trip",
-  "homeDiscoveryRoute.ng-abv-rob.routeNote": "West African city break with Atlantic beaches and local markets.",
+  "homeDiscoveryRoute.ng-abv-rob.routeNote":
+    "West African city break with Atlantic beaches and local markets.",
   "homeDiscoveryRoute.ca-yyz-yvr.title": "Vancouver west coast city trip",
-  "homeDiscoveryRoute.ca-yyz-yvr.routeNote": "Coast-to-coast favorite for mountain views and urban food spots.",
+  "homeDiscoveryRoute.ca-yyz-yvr.routeNote":
+    "Coast-to-coast favorite for mountain views and urban food spots.",
   "homeDiscoveryRoute.ca-yul-cdg.title": "Paris transatlantic classic",
-  "homeDiscoveryRoute.ca-yul-cdg.routeNote": "Strong overnight options for quick Europe getaways.",
+  "homeDiscoveryRoute.ca-yul-cdg.routeNote":
+    "Strong overnight options for quick Europe getaways.",
   "homeDiscoveryRoute.ca-yvr-lax.title": "Los Angeles sunshine route",
-  "homeDiscoveryRoute.ca-yvr-lax.routeNote": "West coast favorite for beaches, entertainment, and short breaks.",
+  "homeDiscoveryRoute.ca-yvr-lax.routeNote":
+    "West coast favorite for beaches, entertainment, and short breaks.",
   "homeDiscoveryRoute.ca-yyz-cun.title": "Cancun winter escape",
-  "homeDiscoveryRoute.ca-yyz-cun.routeNote": "Reliable leisure route with nonstop options in peak season.",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "Reliable leisure route with nonstop options in peak season.",
   "homeDiscoveryRoute.ca-yyc-yhz.title": "Halifax harbor weekend",
-  "homeDiscoveryRoute.ca-yyc-yhz.routeNote": "Cross-country escape for seafood, waterfront walks, and history.",
+  "homeDiscoveryRoute.ca-yyc-yhz.routeNote":
+    "Cross-country escape for seafood, waterfront walks, and history.",
   "homeDiscoveryRoute.ca-yul-lhr.title": "London city and theatre trip",
-  "homeDiscoveryRoute.ca-yul-lhr.routeNote": "Year-round long-haul with strong premium and economy coverage.",
+  "homeDiscoveryRoute.ca-yul-lhr.routeNote":
+    "Year-round long-haul with strong premium and economy coverage.",
   "homeDiscoveryRoute.ca-yvr-sfo.title": "San Francisco tech-and-food run",
-  "homeDiscoveryRoute.ca-yvr-sfo.routeNote": "Short west-coast corridor for conferences and city weekends.",
+  "homeDiscoveryRoute.ca-yvr-sfo.routeNote":
+    "Short west-coast corridor for conferences and city weekends.",
   "homeDiscoveryRoute.ca-yyz-mco.title": "Orlando family parks run",
-  "homeDiscoveryRoute.ca-yyz-mco.routeNote": "Consistent family demand for theme parks and school breaks.",
+  "homeDiscoveryRoute.ca-yyz-mco.routeNote":
+    "Consistent family demand for theme parks and school breaks.",
   "homeDiscoveryRoute.ca-yeg-pvr.title": "Puerto Vallarta beach getaway",
-  "homeDiscoveryRoute.ca-yeg-pvr.routeNote": "Winter sun route with Pacific beaches and old-town charm.",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "Winter sun route with Pacific beaches and old-town charm.",
   "homeDiscoveryRoute.ca-yyz-hnl.title": "Honolulu long-haul island break",
-  "homeDiscoveryRoute.ca-yyz-hnl.routeNote": "Premium leisure option for beaches, surfing, and island hikes.",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "Premium leisure option for beaches, surfing, and island hikes.",
   "homeDiscoveryRoute.ca-yvr-nrt.title": "Tokyo Pacific gateway",
-  "homeDiscoveryRoute.ca-yvr-nrt.routeNote": "Strong transpacific demand for food scenes and city exploration.",
+  "homeDiscoveryRoute.ca-yvr-nrt.routeNote":
+    "Strong transpacific demand for food scenes and city exploration.",
   "homeDiscoveryRoute.ca-yhz-yyt.title": "St. John's Atlantic edge getaway",
-  "homeDiscoveryRoute.ca-yhz-yyt.routeNote": "Short eastern hop for colorful row houses and coastal trails.",
+  "homeDiscoveryRoute.ca-yhz-yyt.routeNote":
+    "Short eastern hop for colorful row houses and coastal trails.",
   "homeDiscoveryRoute.ca-yyz-san.title": "San Diego sun-and-surf trip",
-  "homeDiscoveryRoute.ca-yyz-san.routeNote": "Reliable cross-border route for beaches, parks, and harbor views.",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "Reliable cross-border route for beaches, parks, and harbor views.",
   "homeDiscoveryRoute.ca-yul-ber.title": "Berlin culture city break",
-  "homeDiscoveryRoute.ca-yul-ber.routeNote": "Europe city route for galleries, history districts, and nightlife.",
+  "homeDiscoveryRoute.ca-yul-ber.routeNote":
+    "Europe city route for galleries, history districts, and nightlife.",
   "homeDiscoveryRoute.ca-yyc-yyj.title": "Victoria harbor weekend",
-  "homeDiscoveryRoute.ca-yyc-yyj.routeNote": "West coast short break for gardens, harbor walks, and tea houses.",
+  "homeDiscoveryRoute.ca-yyc-yyj.routeNote":
+    "West coast short break for gardens, harbor walks, and tea houses.",
   "homeDiscoveryRoute.ca-yvr-syd.title": "Sydney transpacific adventure",
-  "homeDiscoveryRoute.ca-yvr-syd.routeNote": "Long-haul favorite for harbor landmarks and beach-side suburbs.",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "Long-haul favorite for harbor landmarks and beach-side suburbs.",
   "homeDiscoveryRoute.gb-lhr-bcn.title": "Barcelona sun break",
-  "homeDiscoveryRoute.gb-lhr-bcn.routeNote": "Quick weekend classic for tapas, beaches, and architecture.",
+  "homeDiscoveryRoute.gb-lhr-bcn.routeNote":
+    "Quick weekend classic for tapas, beaches, and architecture.",
   "homeDiscoveryRoute.gb-man-fco.title": "Rome history weekend",
-  "homeDiscoveryRoute.gb-man-fco.routeNote": "Easy city escape with iconic landmarks and piazza dining.",
+  "homeDiscoveryRoute.gb-man-fco.routeNote":
+    "Easy city escape with iconic landmarks and piazza dining.",
   "homeDiscoveryRoute.gb-edi-ams.title": "Amsterdam canal trip",
-  "homeDiscoveryRoute.gb-edi-ams.routeNote": "Short hop for canals, cycling routes, and museum stops.",
+  "homeDiscoveryRoute.gb-edi-ams.routeNote":
+    "Short hop for canals, cycling routes, and museum stops.",
   "homeDiscoveryRoute.gb-lhr-cdg.title": "Paris rail-alternative flight",
-  "homeDiscoveryRoute.gb-lhr-cdg.routeNote": "Fast and frequent links for fashion weekends and business travel.",
+  "homeDiscoveryRoute.gb-lhr-cdg.routeNote":
+    "Fast and frequent links for fashion weekends and business travel.",
   "homeDiscoveryRoute.gb-lhr-dxb.title": "Dubai luxury escape",
-  "homeDiscoveryRoute.gb-lhr-dxb.routeNote": "Strong long-haul demand for winter sun and premium cabins.",
+  "homeDiscoveryRoute.gb-lhr-dxb.routeNote":
+    "Strong long-haul demand for winter sun and premium cabins.",
   "homeDiscoveryRoute.gb-man-jfk.title": "New York long-weekender",
-  "homeDiscoveryRoute.gb-man-jfk.routeNote": "Direct transatlantic option for shopping, shows, and meetings.",
+  "homeDiscoveryRoute.gb-man-jfk.routeNote":
+    "Direct transatlantic option for shopping, shows, and meetings.",
   "homeDiscoveryRoute.gb-edi-dub.title": "Dublin short city break",
-  "homeDiscoveryRoute.gb-edi-dub.routeNote": "Quick hop for pubs, live music, and walkable neighborhoods.",
+  "homeDiscoveryRoute.gb-edi-dub.routeNote":
+    "Quick hop for pubs, live music, and walkable neighborhoods.",
   "homeDiscoveryRoute.gb-lgw-ath.title": "Athens ruins and rooftop views",
-  "homeDiscoveryRoute.gb-lgw-ath.routeNote": "Mediterranean city break with heritage sites and cafe districts.",
+  "homeDiscoveryRoute.gb-lgw-ath.routeNote":
+    "Mediterranean city break with heritage sites and cafe districts.",
   "homeDiscoveryRoute.gb-man-ber.title": "Berlin art-and-nightlife weekend",
-  "homeDiscoveryRoute.gb-man-ber.routeNote": "Strong city-break demand for galleries, history, and club culture.",
+  "homeDiscoveryRoute.gb-man-ber.routeNote":
+    "Strong city-break demand for galleries, history, and club culture.",
   "homeDiscoveryRoute.gb-edi-kef.title": "Reykjavik northern lights launch",
-  "homeDiscoveryRoute.gb-edi-kef.routeNote": "High-interest route for geothermal spas and winter aurora trips.",
+  "homeDiscoveryRoute.gb-edi-kef.routeNote":
+    "High-interest route for geothermal spas and winter aurora trips.",
   "homeDiscoveryRoute.gb-lhr-vie.title": "Vienna cafe-and-palace weekend",
-  "homeDiscoveryRoute.gb-lhr-vie.routeNote": "Comfortable city hop for classical music, coffee houses, and museums.",
+  "homeDiscoveryRoute.gb-lhr-vie.routeNote":
+    "Comfortable city hop for classical music, coffee houses, and museums.",
   "homeDiscoveryRoute.gb-man-fao.title": "Faro Algarve beach reset",
-  "homeDiscoveryRoute.gb-man-fao.routeNote": "Warm-weather route for coastal towns, cliffs, and ocean swims.",
+  "homeDiscoveryRoute.gb-man-fao.routeNote":
+    "Warm-weather route for coastal towns, cliffs, and ocean swims.",
   "homeDiscoveryRoute.gb-edi-zrh.title": "Zurich lake-and-alps city break",
-  "homeDiscoveryRoute.gb-edi-zrh.routeNote": "Swiss route for old-town walks and easy mountain train links.",
+  "homeDiscoveryRoute.gb-edi-zrh.routeNote":
+    "Swiss route for old-town walks and easy mountain train links.",
   "homeDiscoveryRoute.gb-lgw-mrk.title": "Marrakech medina weekend",
-  "homeDiscoveryRoute.gb-lgw-mrk.routeNote": "Short-haul winter sun option with souks, riads, and rooftop dining.",
+  "homeDiscoveryRoute.gb-lgw-mrk.routeNote":
+    "Short-haul winter sun option with souks, riads, and rooftop dining.",
   "homeDiscoveryRoute.gb-bhx-prg.title": "Prague old-town weekend",
-  "homeDiscoveryRoute.gb-bhx-prg.routeNote": "Affordable city-break route for bridges, castles, and cafes.",
+  "homeDiscoveryRoute.gb-bhx-prg.routeNote":
+    "Affordable city-break route for bridges, castles, and cafes.",
   "homeDiscoveryRoute.gb-man-otp.title": "Bucharest value city trip",
-  "homeDiscoveryRoute.gb-man-otp.routeNote": "Emerging city route for architecture, nightlife, and food halls.",
+  "homeDiscoveryRoute.gb-man-otp.routeNote":
+    "Emerging city route for architecture, nightlife, and food halls.",
   "homeDiscoveryRoute.ke-nbo-dxb.title": "Dubai east-africa hub run",
-  "homeDiscoveryRoute.ke-nbo-dxb.routeNote": "Strong Kenya-to-Gulf routing for shopping and onward links.",
+  "homeDiscoveryRoute.ke-nbo-dxb.routeNote":
+    "Strong Kenya-to-Gulf routing for shopping and onward links.",
   "homeDiscoveryRoute.ke-nbo-znz.title": "Zanzibar coast weekend",
-  "homeDiscoveryRoute.ke-nbo-znz.routeNote": "Short regional beach escape with spice-island stays.",
+  "homeDiscoveryRoute.ke-nbo-znz.routeNote":
+    "Short regional beach escape with spice-island stays.",
   "homeDiscoveryRoute.ke-nbo-jnb.title": "Johannesburg business link",
-  "homeDiscoveryRoute.ke-nbo-jnb.routeNote": "Key Africa corridor for meetings, events, and city breaks.",
+  "homeDiscoveryRoute.ke-nbo-jnb.routeNote":
+    "Key Africa corridor for meetings, events, and city breaks.",
   "homeDiscoveryRoute.ke-nbo-lhr.title": "London long-haul classic",
-  "homeDiscoveryRoute.ke-nbo-lhr.routeNote": "Major UK route for family, business, and culture trips.",
+  "homeDiscoveryRoute.ke-nbo-lhr.routeNote":
+    "Major UK route for family, business, and culture trips.",
   "homeDiscoveryRoute.ke-nbo-add.title": "Addis Ababa connector",
-  "homeDiscoveryRoute.ke-nbo-add.routeNote": "East Africa transfer route with highland city stopovers.",
+  "homeDiscoveryRoute.ke-nbo-add.routeNote":
+    "East Africa transfer route with highland city stopovers.",
   "homeDiscoveryRoute.ke-nbo-ist.title": "Istanbul Europe connector",
-  "homeDiscoveryRoute.ke-nbo-ist.routeNote": "Useful gateway for Europe links and Bosphorus stopovers.",
+  "homeDiscoveryRoute.ke-nbo-ist.routeNote":
+    "Useful gateway for Europe links and Bosphorus stopovers.",
   "homeDiscoveryRoute.za-jnb-cpt.title": "Cape Town coast and mountain break",
-  "homeDiscoveryRoute.za-jnb-cpt.routeNote": "Core domestic leisure route for beaches, vineyards, and hikes.",
+  "homeDiscoveryRoute.za-jnb-cpt.routeNote":
+    "Core domestic leisure route for beaches, vineyards, and hikes.",
   "homeDiscoveryRoute.za-jnb-dxb.title": "Dubai global hub escape",
-  "homeDiscoveryRoute.za-jnb-dxb.routeNote": "Gulf hub routing for shopping, stopovers, and onward trips.",
+  "homeDiscoveryRoute.za-jnb-dxb.routeNote":
+    "Gulf hub routing for shopping, stopovers, and onward trips.",
   "homeDiscoveryRoute.za-jnb-mru.title": "Mauritius island reset",
-  "homeDiscoveryRoute.za-jnb-mru.routeNote": "Indian Ocean resort route for warm-water breaks.",
+  "homeDiscoveryRoute.za-jnb-mru.routeNote":
+    "Indian Ocean resort route for warm-water breaks.",
   "homeDiscoveryRoute.za-jnb-lhr.title": "London long-haul link",
-  "homeDiscoveryRoute.za-jnb-lhr.routeNote": "Major UK route for business, culture, and family travel.",
+  "homeDiscoveryRoute.za-jnb-lhr.routeNote":
+    "Major UK route for business, culture, and family travel.",
   "homeDiscoveryRoute.za-cpt-ams.title": "Amsterdam Europe gateway",
-  "homeDiscoveryRoute.za-cpt-ams.routeNote": "Europe route for canals, museums, and onward rail links.",
+  "homeDiscoveryRoute.za-cpt-ams.routeNote":
+    "Europe route for canals, museums, and onward rail links.",
   "homeDiscoveryRoute.za-jnb-nbo.title": "Nairobi regional connector",
-  "homeDiscoveryRoute.za-jnb-nbo.routeNote": "East Africa link for safari add-ons and business travel.",
+  "homeDiscoveryRoute.za-jnb-nbo.routeNote":
+    "East Africa link for safari add-ons and business travel.",
   "homeDiscoveryRoute.de-fra-lhr.title": "London business and culture link",
-  "homeDiscoveryRoute.de-fra-lhr.routeNote": "High-frequency Europe route for meetings, weekends, and onward trips.",
+  "homeDiscoveryRoute.de-fra-lhr.routeNote":
+    "High-frequency Europe route for meetings, weekends, and onward trips.",
   "homeDiscoveryRoute.de-fra-cdg.title": "Paris rail-and-air alternative",
-  "homeDiscoveryRoute.de-fra-cdg.routeNote": "Core Europe corridor for fashion, museums, and business travel.",
+  "homeDiscoveryRoute.de-fra-cdg.routeNote":
+    "Core Europe corridor for fashion, museums, and business travel.",
   "homeDiscoveryRoute.de-fra-ams.title": "Amsterdam canal weekend",
-  "homeDiscoveryRoute.de-fra-ams.routeNote": "Short Europe hop for canals, museums, and conference travel.",
+  "homeDiscoveryRoute.de-fra-ams.routeNote":
+    "Short Europe hop for canals, museums, and conference travel.",
   "homeDiscoveryRoute.de-muc-fco.title": "Rome landmark getaway",
-  "homeDiscoveryRoute.de-muc-fco.routeNote": "Classic southern Europe break for ruins, piazzas, and food.",
+  "homeDiscoveryRoute.de-muc-fco.routeNote":
+    "Classic southern Europe break for ruins, piazzas, and food.",
   "homeDiscoveryRoute.de-fra-ist.title": "Istanbul Bosphorus connector",
-  "homeDiscoveryRoute.de-fra-ist.routeNote": "Major hub route for Türkiye trips and onward regional links.",
+  "homeDiscoveryRoute.de-fra-ist.routeNote":
+    "Major hub route for Türkiye trips and onward regional links.",
   "homeDiscoveryRoute.de-fra-dxb.title": "Dubai long-haul hub escape",
-  "homeDiscoveryRoute.de-fra-dxb.routeNote": "Strong Gulf route for winter sun and onward Asia connections.",
+  "homeDiscoveryRoute.de-fra-dxb.routeNote":
+    "Strong Gulf route for winter sun and onward Asia connections.",
   "homeDiscoveryRoute.ae-dxb-lhr.title": "London premium long-haul",
-  "homeDiscoveryRoute.ae-dxb-lhr.routeNote": "High-frequency global hub route for business and city stays.",
+  "homeDiscoveryRoute.ae-dxb-lhr.routeNote":
+    "High-frequency global hub route for business and city stays.",
   "homeDiscoveryRoute.ae-dxb-ist.title": "Istanbul cultural stopover",
-  "homeDiscoveryRoute.ae-dxb-ist.routeNote": "Shorter regional international route with Bosphorus evenings.",
+  "homeDiscoveryRoute.ae-dxb-ist.routeNote":
+    "Shorter regional international route with Bosphorus evenings.",
   "homeDiscoveryRoute.ae-dxb-cai.title": "Cairo heritage hop",
-  "homeDiscoveryRoute.ae-dxb-cai.routeNote": "Middle East route for Nile history and old-city markets.",
+  "homeDiscoveryRoute.ae-dxb-cai.routeNote":
+    "Middle East route for Nile history and old-city markets.",
   "homeDiscoveryRoute.ae-dxb-sin.title": "Singapore skyline getaway",
-  "homeDiscoveryRoute.ae-dxb-sin.routeNote": "Efficient hub-to-hub Asia route with gardens and hawker food.",
+  "homeDiscoveryRoute.ae-dxb-sin.routeNote":
+    "Efficient hub-to-hub Asia route with gardens and hawker food.",
   "homeDiscoveryRoute.ae-dxb-bkk.title": "Bangkok city energy",
-  "homeDiscoveryRoute.ae-dxb-bkk.routeNote": "Popular Asia escape for food, temples, and nightlife.",
+  "homeDiscoveryRoute.ae-dxb-bkk.routeNote":
+    "Popular Asia escape for food, temples, and nightlife.",
   "homeDiscoveryRoute.ae-dxb-cdg.title": "Paris global city break",
-  "homeDiscoveryRoute.ae-dxb-cdg.routeNote": "Classic Europe route for fashion, museums, and dining.",
+  "homeDiscoveryRoute.ae-dxb-cdg.routeNote":
+    "Classic Europe route for fashion, museums, and dining.",
   "homeDiscoveryRoute.jp-nrt-icn.title": "Seoul quick city hop",
-  "homeDiscoveryRoute.jp-nrt-icn.routeNote": "Short Asia corridor for food, shopping, and culture weekends.",
+  "homeDiscoveryRoute.jp-nrt-icn.routeNote":
+    "Short Asia corridor for food, shopping, and culture weekends.",
   "homeDiscoveryRoute.jp-nrt-sin.title": "Singapore skyline route",
-  "homeDiscoveryRoute.jp-nrt-sin.routeNote": "Southeast Asia city break with gardens and hawker food.",
+  "homeDiscoveryRoute.jp-nrt-sin.routeNote":
+    "Southeast Asia city break with gardens and hawker food.",
   "homeDiscoveryRoute.jp-nrt-bkk.title": "Bangkok food and temple trip",
-  "homeDiscoveryRoute.jp-nrt-bkk.routeNote": "Warm-weather Asia route for markets, temples, and nightlife.",
+  "homeDiscoveryRoute.jp-nrt-bkk.routeNote":
+    "Warm-weather Asia route for markets, temples, and nightlife.",
   "homeDiscoveryRoute.jp-nrt-hkg.title": "Hong Kong harbor lights",
-  "homeDiscoveryRoute.jp-nrt-hkg.routeNote": "Dense city route for skyline views, food, and shopping.",
+  "homeDiscoveryRoute.jp-nrt-hkg.routeNote":
+    "Dense city route for skyline views, food, and shopping.",
   "homeDiscoveryRoute.jp-nrt-dxb.title": "Dubai global hub link",
-  "homeDiscoveryRoute.jp-nrt-dxb.routeNote": "Long-haul gateway for Middle East stays and onward Europe links.",
+  "homeDiscoveryRoute.jp-nrt-dxb.routeNote":
+    "Long-haul gateway for Middle East stays and onward Europe links.",
   "homeDiscoveryRoute.jp-nrt-dps.title": "Bali island reset",
-  "homeDiscoveryRoute.jp-nrt-dps.routeNote": "Tropical island route for villas, surf, and rice terraces.",
+  "homeDiscoveryRoute.jp-nrt-dps.routeNote":
+    "Tropical island route for villas, surf, and rice terraces.",
   "homeDiscoveryRoute.br-gru-eze.title": "Buenos Aires culture hop",
-  "homeDiscoveryRoute.br-gru-eze.routeNote": "Short regional route for food, tango, and city weekends.",
+  "homeDiscoveryRoute.br-gru-eze.routeNote":
+    "Short regional route for food, tango, and city weekends.",
   "homeDiscoveryRoute.br-gru-lim.title": "Lima coastal food trip",
-  "homeDiscoveryRoute.br-gru-lim.routeNote": "Pacific views, world-class cuisine, and historic districts.",
+  "homeDiscoveryRoute.br-gru-lim.routeNote":
+    "Pacific views, world-class cuisine, and historic districts.",
   "homeDiscoveryRoute.br-gru-scl.title": "Santiago Andes gateway",
-  "homeDiscoveryRoute.br-gru-scl.routeNote": "Regional city route with wine valleys and mountain views.",
+  "homeDiscoveryRoute.br-gru-scl.routeNote":
+    "Regional city route with wine valleys and mountain views.",
   "homeDiscoveryRoute.br-gru-lis.title": "Lisbon Atlantic link",
-  "homeDiscoveryRoute.br-gru-lis.routeNote": "Major Brazil-Portugal route for culture and onward Europe links.",
+  "homeDiscoveryRoute.br-gru-lis.routeNote":
+    "Major Brazil-Portugal route for culture and onward Europe links.",
   "homeDiscoveryRoute.br-gru-mia.title": "Miami shopping and beach break",
-  "homeDiscoveryRoute.br-gru-mia.routeNote": "Popular Florida route for beaches, shopping, and family trips.",
+  "homeDiscoveryRoute.br-gru-mia.routeNote":
+    "Popular Florida route for beaches, shopping, and family trips.",
   "homeDiscoveryRoute.br-gru-gig.title": "Rio coast classic",
-  "homeDiscoveryRoute.br-gru-gig.routeNote": "Domestic city-and-beach route for quick coastal breaks.",
+  "homeDiscoveryRoute.br-gru-gig.routeNote":
+    "Domestic city-and-beach route for quick coastal breaks.",
   "homeDiscoveryRoute.ng-los-cdg-alt.title": "Paris Schengen gateway",
-  "homeDiscoveryRoute.ng-los-cdg-alt.routeNote": "West Africa to Europe route for business and culture trips.",
+  "homeDiscoveryRoute.ng-los-cdg-alt.routeNote":
+    "West Africa to Europe route for business and culture trips.",
   "homeDiscoveryRoute.ng-los-acc.title": "Accra regional hop",
-  "homeDiscoveryRoute.ng-los-acc.routeNote": "Short West Africa corridor for meetings and weekends.",
+  "homeDiscoveryRoute.ng-los-acc.routeNote":
+    "Short West Africa corridor for meetings and weekends.",
   "homeDiscoveryRoute.ng-abv-dxb.title": "Abuja to Dubai hub",
-  "homeDiscoveryRoute.ng-abv-dxb.routeNote": "Capital city to Gulf hub route for shopping and onward links.",
+  "homeDiscoveryRoute.ng-abv-dxb.routeNote":
+    "Capital city to Gulf hub route for shopping and onward links.",
   "homeDiscoveryRoute.ng-abv-lhr.title": "Abuja to London link",
-  "homeDiscoveryRoute.ng-abv-lhr.routeNote": "Provider-searchable UK route from Nigeria's capital.",
+  "homeDiscoveryRoute.ng-abv-lhr.routeNote":
+    "Provider-searchable UK route from Nigeria's capital.",
   "homeDiscoveryRoute.ng-acc-lhr.title": "Accra to London route",
-  "homeDiscoveryRoute.ng-acc-lhr.routeNote": "West Africa to UK route for family, business, and events.",
+  "homeDiscoveryRoute.ng-acc-lhr.routeNote":
+    "West Africa to UK route for family, business, and events.",
   "homeDiscoveryRoute.ng-acc-dxb.title": "Accra to Dubai route",
-  "homeDiscoveryRoute.ng-acc-dxb.routeNote": "West Africa to Gulf hub route with broad provider inventory.",
+  "homeDiscoveryRoute.ng-acc-dxb.routeNote":
+    "West Africa to Gulf hub route with broad provider inventory.",
   "homeDiscoveryRoute.ke-nbo-cpt.title": "Cape Town southern escape",
-  "homeDiscoveryRoute.ke-nbo-cpt.routeNote": "East Africa to South Africa route for coast, wine, and mountains.",
+  "homeDiscoveryRoute.ke-nbo-cpt.routeNote":
+    "East Africa to South Africa route for coast, wine, and mountains.",
   "homeDiscoveryRoute.ke-nbo-dar.title": "Dar es Salaam coastal link",
-  "homeDiscoveryRoute.ke-nbo-dar.routeNote": "Short East Africa business and coast route.",
+  "homeDiscoveryRoute.ke-nbo-dar.routeNote":
+    "Short East Africa business and coast route.",
   "homeDiscoveryRoute.ke-nbo-cdg.title": "Paris long-haul gateway",
-  "homeDiscoveryRoute.ke-nbo-cdg.routeNote": "Europe link for culture, fashion, and onward rail.",
+  "homeDiscoveryRoute.ke-nbo-cdg.routeNote":
+    "Europe link for culture, fashion, and onward rail.",
   "homeDiscoveryRoute.ke-nbo-bkk.title": "Bangkok Asia connector",
-  "homeDiscoveryRoute.ke-nbo-bkk.routeNote": "East Africa to Asia route for city breaks and onward links.",
+  "homeDiscoveryRoute.ke-nbo-bkk.routeNote":
+    "East Africa to Asia route for city breaks and onward links.",
   "homeDiscoveryRoute.ke-nbo-doh.title": "Doha Gulf connector",
-  "homeDiscoveryRoute.ke-nbo-doh.routeNote": "High-connectivity Gulf hub route for international trips.",
+  "homeDiscoveryRoute.ke-nbo-doh.routeNote":
+    "High-connectivity Gulf hub route for international trips.",
   "homeDiscoveryRoute.za-cpt-jnb.title": "Johannesburg return corridor",
-  "homeDiscoveryRoute.za-cpt-jnb.routeNote": "Core domestic business and leisure corridor.",
+  "homeDiscoveryRoute.za-cpt-jnb.routeNote":
+    "Core domestic business and leisure corridor.",
   "homeDiscoveryRoute.za-cpt-lhr.title": "Cape Town to London",
-  "homeDiscoveryRoute.za-cpt-lhr.routeNote": "Strong South Africa to UK provider route.",
+  "homeDiscoveryRoute.za-cpt-lhr.routeNote":
+    "Strong South Africa to UK provider route.",
   "homeDiscoveryRoute.za-cpt-dxb.title": "Cape Town to Dubai",
-  "homeDiscoveryRoute.za-cpt-dxb.routeNote": "Southern Africa to Gulf hub route.",
+  "homeDiscoveryRoute.za-cpt-dxb.routeNote":
+    "Southern Africa to Gulf hub route.",
   "homeDiscoveryRoute.za-jnb-ist.title": "Istanbul hub link",
-  "homeDiscoveryRoute.za-jnb-ist.routeNote": "International hub route for Europe and Middle East connections.",
+  "homeDiscoveryRoute.za-jnb-ist.routeNote":
+    "International hub route for Europe and Middle East connections.",
   "homeDiscoveryRoute.de-fra-fco.title": "Rome from Frankfurt",
-  "homeDiscoveryRoute.de-fra-fco.routeNote": "Provider-searchable intra-Europe city break.",
+  "homeDiscoveryRoute.de-fra-fco.routeNote":
+    "Provider-searchable intra-Europe city break.",
   "homeDiscoveryRoute.de-fra-bcn.title": "Barcelona from Frankfurt",
-  "homeDiscoveryRoute.de-fra-bcn.routeNote": "Strong leisure route for coast, food, and architecture.",
+  "homeDiscoveryRoute.de-fra-bcn.routeNote":
+    "Strong leisure route for coast, food, and architecture.",
   "homeDiscoveryRoute.de-lhr-cdg.title": "London to Paris alternate",
-  "homeDiscoveryRoute.de-lhr-cdg.routeNote": "Europe trunk route for backup priced cards.",
+  "homeDiscoveryRoute.de-lhr-cdg.routeNote":
+    "Europe trunk route for backup priced cards.",
   "homeDiscoveryRoute.de-lhr-ams.title": "London to Amsterdam",
-  "homeDiscoveryRoute.de-lhr-ams.routeNote": "High-frequency Europe route for short breaks.",
+  "homeDiscoveryRoute.de-lhr-ams.routeNote":
+    "High-frequency Europe route for short breaks.",
   "homeDiscoveryRoute.de-lhr-dxb.title": "London to Dubai hub",
-  "homeDiscoveryRoute.de-lhr-dxb.routeNote": "Europe to Middle East trunk route.",
+  "homeDiscoveryRoute.de-lhr-dxb.routeNote":
+    "Europe to Middle East trunk route.",
   "homeDiscoveryRoute.ae-dxb-jed.title": "Jeddah regional route",
-  "homeDiscoveryRoute.ae-dxb-jed.routeNote": "Middle East regional route for family and pilgrimage travel.",
+  "homeDiscoveryRoute.ae-dxb-jed.routeNote":
+    "Middle East regional route for family and pilgrimage travel.",
   "homeDiscoveryRoute.ae-auh-lhr.title": "Abu Dhabi to London",
   "homeDiscoveryRoute.ae-auh-lhr.routeNote": "UAE capital to UK trunk route.",
   "homeDiscoveryRoute.ae-doh-lhr.title": "Doha to London",
-  "homeDiscoveryRoute.ae-doh-lhr.routeNote": "Middle East hub to UK provider-backed route.",
+  "homeDiscoveryRoute.ae-doh-lhr.routeNote":
+    "Middle East hub to UK provider-backed route.",
   "homeDiscoveryRoute.ae-dxb-ams.title": "Dubai to Amsterdam",
-  "homeDiscoveryRoute.ae-dxb-ams.routeNote": "Gulf to Europe route for city breaks and onward rail.",
+  "homeDiscoveryRoute.ae-dxb-ams.routeNote":
+    "Gulf to Europe route for city breaks and onward rail.",
   "homeDiscoveryRoute.jp-hnd-icn.title": "Haneda to Seoul",
-  "homeDiscoveryRoute.jp-hnd-icn.routeNote": "Provider-searchable short Asia route from Haneda.",
+  "homeDiscoveryRoute.jp-hnd-icn.routeNote":
+    "Provider-searchable short Asia route from Haneda.",
   "homeDiscoveryRoute.jp-sin-bkk.title": "Singapore to Bangkok",
-  "homeDiscoveryRoute.jp-sin-bkk.routeNote": "Southeast Asia trunk route with strong fare inventory.",
+  "homeDiscoveryRoute.jp-sin-bkk.routeNote":
+    "Southeast Asia trunk route with strong fare inventory.",
   "homeDiscoveryRoute.jp-sin-dps.title": "Singapore to Bali",
-  "homeDiscoveryRoute.jp-sin-dps.routeNote": "Regional island route for warm-weather trips.",
+  "homeDiscoveryRoute.jp-sin-dps.routeNote":
+    "Regional island route for warm-weather trips.",
   "homeDiscoveryRoute.jp-sin-dxb.title": "Singapore to Dubai",
   "homeDiscoveryRoute.jp-sin-dxb.routeNote": "Asia to Gulf hub route.",
   "homeDiscoveryRoute.jp-bkk-hkg.title": "Bangkok to Hong Kong",
-  "homeDiscoveryRoute.jp-bkk-hkg.routeNote": "High-demand Asia city-pair route.",
+  "homeDiscoveryRoute.jp-bkk-hkg.routeNote":
+    "High-demand Asia city-pair route.",
   "homeDiscoveryRoute.br-gru-mad.title": "Madrid Atlantic link",
-  "homeDiscoveryRoute.br-gru-mad.routeNote": "Brazil to Spain trunk route for Europe trips.",
+  "homeDiscoveryRoute.br-gru-mad.routeNote":
+    "Brazil to Spain trunk route for Europe trips.",
   "homeDiscoveryRoute.br-gru-bog.title": "Bogota regional connector",
-  "homeDiscoveryRoute.br-gru-bog.routeNote": "Latin America business and culture route.",
+  "homeDiscoveryRoute.br-gru-bog.routeNote":
+    "Latin America business and culture route.",
   "homeDiscoveryRoute.br-gig-gru.title": "Rio to Sao Paulo",
-  "homeDiscoveryRoute.br-gig-gru.routeNote": "Core domestic Brazil corridor for backup cards.",
+  "homeDiscoveryRoute.br-gig-gru.routeNote":
+    "Core domestic Brazil corridor for backup cards.",
   "homeDiscoveryRoute.br-mex-cun.title": "Mexico City to Cancun",
-  "homeDiscoveryRoute.br-mex-cun.routeNote": "Latin America leisure trunk route.",
+  "homeDiscoveryRoute.br-mex-cun.routeNote":
+    "Latin America leisure trunk route.",
   "homeDiscoveryRoute.br-mex-mad.title": "Mexico City to Madrid",
-  "homeDiscoveryRoute.br-mex-mad.routeNote": "Latin America to Europe backup route.",
+  "homeDiscoveryRoute.br-mex-mad.routeNote":
+    "Latin America to Europe backup route.",
   "homeDiscoveryRoute.br-bog-mia.title": "Bogota to Miami",
-  "homeDiscoveryRoute.br-bog-mia.routeNote": "Latin America to Florida provider-searchable route.",
+  "homeDiscoveryRoute.br-bog-mia.routeNote":
+    "Latin America to Florida provider-searchable route.",
   "homeDiscoveryRoute.ca-yyz-yul.title": "Toronto to Montreal",
-  "homeDiscoveryRoute.ca-yyz-yul.routeNote": "Core Canadian city-pair route for reliable fare inventory.",
+  "homeDiscoveryRoute.ca-yyz-yul.routeNote":
+    "Core Canadian city-pair route for reliable fare inventory.",
   "homeDiscoveryRoute.ca-yyz-lhr.title": "Toronto to London",
   "homeDiscoveryRoute.ca-yyz-lhr.routeNote": "Major Canada to UK route.",
   "homeDiscoveryRoute.ca-yyz-cdg.title": "Toronto to Paris",
-  "homeDiscoveryRoute.ca-yyz-cdg.routeNote": "Canada to France route for culture and onward Europe.",
+  "homeDiscoveryRoute.ca-yyz-cdg.routeNote":
+    "Canada to France route for culture and onward Europe.",
   "homeDiscoveryRoute.ca-yvr-yyz.title": "Vancouver to Toronto",
-  "homeDiscoveryRoute.ca-yvr-yyz.routeNote": "Trans-Canada trunk route with broad provider coverage.",
+  "homeDiscoveryRoute.ca-yvr-yyz.routeNote":
+    "Trans-Canada trunk route with broad provider coverage.",
   "homeDiscoveryRoute.ke-nbo-ams.title": "Amsterdam Europe gateway",
-  "homeDiscoveryRoute.ke-nbo-ams.routeNote": "East Africa to Europe backup route for priced inventory.",
+  "homeDiscoveryRoute.ke-nbo-ams.routeNote":
+    "East Africa to Europe backup route for priced inventory.",
   "homeDiscoveryRoute.ke-nbo-cai.title": "Cairo North Africa link",
-  "homeDiscoveryRoute.ke-nbo-cai.routeNote": "Africa connector route for culture and onward links.",
+  "homeDiscoveryRoute.ke-nbo-cai.routeNote":
+    "Africa connector route for culture and onward links.",
   "homeDiscoveryRoute.ke-nbo-los.title": "Lagos Africa business route",
-  "homeDiscoveryRoute.ke-nbo-los.routeNote": "East-to-West Africa business corridor.",
+  "homeDiscoveryRoute.ke-nbo-los.routeNote":
+    "East-to-West Africa business corridor.",
   "homeDiscoveryRoute.ke-nbo-mru.title": "Mauritius island route",
-  "homeDiscoveryRoute.ke-nbo-mru.routeNote": "Indian Ocean leisure route for backup cards.",
+  "homeDiscoveryRoute.ke-nbo-mru.routeNote":
+    "Indian Ocean leisure route for backup cards.",
   "homeDiscoveryRoute.ke-nbo-jed.title": "Jeddah regional link",
-  "homeDiscoveryRoute.ke-nbo-jed.routeNote": "East Africa to Middle East route with provider coverage.",
+  "homeDiscoveryRoute.ke-nbo-jed.routeNote":
+    "East Africa to Middle East route with provider coverage.",
   "homeDiscoveryRoute.za-jnb-cdg.title": "Paris long-haul link",
-  "homeDiscoveryRoute.za-jnb-cdg.routeNote": "Southern Africa to Europe route for provider-backed alternates.",
+  "homeDiscoveryRoute.za-jnb-cdg.routeNote":
+    "Southern Africa to Europe route for provider-backed alternates.",
   "homeDiscoveryRoute.za-cpt-cdg.title": "Cape Town to Paris",
   "homeDiscoveryRoute.za-cpt-cdg.routeNote": "Cape Town Europe backup route.",
   "homeDiscoveryRoute.za-dur-jnb.title": "Durban to Johannesburg",
-  "homeDiscoveryRoute.za-dur-jnb.routeNote": "Domestic trunk route for reliable snapshots.",
+  "homeDiscoveryRoute.za-dur-jnb.routeNote":
+    "Domestic trunk route for reliable snapshots.",
   "homeDiscoveryRoute.za-jnb-add.title": "Addis Ababa connector",
-  "homeDiscoveryRoute.za-jnb-add.routeNote": "Africa hub route for backup pricing.",
+  "homeDiscoveryRoute.za-jnb-add.routeNote":
+    "Africa hub route for backup pricing.",
   "homeDiscoveryRoute.za-jnb-acc.title": "Accra regional link",
-  "homeDiscoveryRoute.za-jnb-acc.routeNote": "Southern-to-West Africa route for backup inventory.",
+  "homeDiscoveryRoute.za-jnb-acc.routeNote":
+    "Southern-to-West Africa route for backup inventory.",
   "homeDiscoveryRoute.za-cpt-mru.title": "Cape Town to Mauritius",
-  "homeDiscoveryRoute.za-cpt-mru.routeNote": "Indian Ocean leisure backup route.",
+  "homeDiscoveryRoute.za-cpt-mru.routeNote":
+    "Indian Ocean leisure backup route.",
   "homeDiscoveryRoute.de-fra-mad.title": "Madrid from Frankfurt",
-  "homeDiscoveryRoute.de-fra-mad.routeNote": "Intra-Europe trunk route for backup pricing.",
+  "homeDiscoveryRoute.de-fra-mad.routeNote":
+    "Intra-Europe trunk route for backup pricing.",
   "homeDiscoveryRoute.de-fra-lis.title": "Lisbon from Frankfurt",
-  "homeDiscoveryRoute.de-fra-lis.routeNote": "Europe leisure route with provider inventory.",
+  "homeDiscoveryRoute.de-fra-lis.routeNote":
+    "Europe leisure route with provider inventory.",
   "homeDiscoveryRoute.de-muc-lhr.title": "Munich to London",
   "homeDiscoveryRoute.de-muc-lhr.routeNote": "Germany to UK backup route.",
   "homeDiscoveryRoute.de-muc-cdg.title": "Munich to Paris",
   "homeDiscoveryRoute.de-muc-cdg.routeNote": "Germany to France backup route.",
   "homeDiscoveryRoute.de-ber-ams.title": "Berlin to Amsterdam",
-  "homeDiscoveryRoute.de-ber-ams.routeNote": "Europe city-pair route for backup inventory.",
+  "homeDiscoveryRoute.de-ber-ams.routeNote":
+    "Europe city-pair route for backup inventory.",
   "homeDiscoveryRoute.ae-dxb-mnl.title": "Manila long-haul route",
-  "homeDiscoveryRoute.ae-dxb-mnl.routeNote": "Middle East to Asia route with strong demand.",
+  "homeDiscoveryRoute.ae-dxb-mnl.routeNote":
+    "Middle East to Asia route with strong demand.",
   "homeDiscoveryRoute.ae-dxb-del.title": "Delhi regional connector",
   "homeDiscoveryRoute.ae-dxb-del.routeNote": "UAE to India trunk route.",
   "homeDiscoveryRoute.ae-dxb-bom.title": "Mumbai regional connector",
-  "homeDiscoveryRoute.ae-dxb-bom.routeNote": "UAE to India business and family route.",
+  "homeDiscoveryRoute.ae-dxb-bom.routeNote":
+    "UAE to India business and family route.",
   "homeDiscoveryRoute.ae-auh-bom.title": "Abu Dhabi to Mumbai",
-  "homeDiscoveryRoute.ae-auh-bom.routeNote": "UAE capital to India backup route.",
+  "homeDiscoveryRoute.ae-auh-bom.routeNote":
+    "UAE capital to India backup route.",
   "homeDiscoveryRoute.ae-dxb-mru.title": "Dubai to Mauritius",
-  "homeDiscoveryRoute.ae-dxb-mru.routeNote": "Indian Ocean leisure route from the Gulf.",
+  "homeDiscoveryRoute.ae-dxb-mru.routeNote":
+    "Indian Ocean leisure route from the Gulf.",
   "homeDiscoveryRoute.ae-doh-bkk.title": "Doha to Bangkok",
-  "homeDiscoveryRoute.ae-doh-bkk.routeNote": "Middle East hub to Asia backup route.",
+  "homeDiscoveryRoute.ae-doh-bkk.routeNote":
+    "Middle East hub to Asia backup route.",
   "homeDiscoveryRoute.jp-hnd-bkk.title": "Haneda to Bangkok",
-  "homeDiscoveryRoute.jp-hnd-bkk.routeNote": "Tokyo to Thailand route for backup cards.",
+  "homeDiscoveryRoute.jp-hnd-bkk.routeNote":
+    "Tokyo to Thailand route for backup cards.",
   "homeDiscoveryRoute.jp-hnd-sin.title": "Haneda to Singapore",
-  "homeDiscoveryRoute.jp-hnd-sin.routeNote": "Tokyo to Singapore route with broad inventory.",
+  "homeDiscoveryRoute.jp-hnd-sin.routeNote":
+    "Tokyo to Singapore route with broad inventory.",
   "homeDiscoveryRoute.jp-nrt-mnl.title": "Tokyo to Manila",
-  "homeDiscoveryRoute.jp-nrt-mnl.routeNote": "Asia city-pair route for backup snapshots.",
+  "homeDiscoveryRoute.jp-nrt-mnl.routeNote":
+    "Asia city-pair route for backup snapshots.",
   "homeDiscoveryRoute.jp-hnd-hkg.title": "Haneda to Hong Kong",
   "homeDiscoveryRoute.jp-hnd-hkg.routeNote": "High-demand Asia city route.",
   "homeDiscoveryRoute.jp-kix-icn.title": "Osaka to Seoul",
-  "homeDiscoveryRoute.jp-kix-icn.routeNote": "Japan to Korea regional backup route.",
+  "homeDiscoveryRoute.jp-kix-icn.routeNote":
+    "Japan to Korea regional backup route.",
   "homeDiscoveryRoute.br-gru-cun.title": "Sao Paulo to Cancun",
-  "homeDiscoveryRoute.br-gru-cun.routeNote": "Latin America leisure route for backup cards.",
+  "homeDiscoveryRoute.br-gru-cun.routeNote":
+    "Latin America leisure route for backup cards.",
   "homeDiscoveryRoute.br-gru-mex.title": "Sao Paulo to Mexico City",
-  "homeDiscoveryRoute.br-gru-mex.routeNote": "Latin America city-pair backup route.",
+  "homeDiscoveryRoute.br-gru-mex.routeNote":
+    "Latin America city-pair backup route.",
   "homeDiscoveryRoute.br-gig-mia.title": "Rio to Miami",
-  "homeDiscoveryRoute.br-gig-mia.routeNote": "Brazil to Florida route with provider coverage.",
+  "homeDiscoveryRoute.br-gig-mia.routeNote":
+    "Brazil to Florida route with provider coverage.",
   "homeDiscoveryRoute.br-gig-lis.title": "Rio to Lisbon",
-  "homeDiscoveryRoute.br-gig-lis.routeNote": "Brazil to Portugal long-haul backup route.",
+  "homeDiscoveryRoute.br-gig-lis.routeNote":
+    "Brazil to Portugal long-haul backup route.",
   "homeDiscoveryRoute.br-bog-mad.title": "Bogota to Madrid",
-  "homeDiscoveryRoute.br-bog-mad.routeNote": "Latin America to Europe backup route.",
+  "homeDiscoveryRoute.br-bog-mad.routeNote":
+    "Latin America to Europe backup route.",
   "homeDiscoveryRoute.ke-nbo-kgl.title": "Kigali regional connector",
-  "homeDiscoveryRoute.ke-nbo-kgl.routeNote": "East Africa backup route for provider snapshots.",
+  "homeDiscoveryRoute.ke-nbo-kgl.routeNote":
+    "East Africa backup route for provider snapshots.",
   "homeDiscoveryRoute.ke-nbo-acc.title": "Accra Africa connector",
-  "homeDiscoveryRoute.ke-nbo-acc.routeNote": "East-to-West Africa backup route.",
+  "homeDiscoveryRoute.ke-nbo-acc.routeNote":
+    "East-to-West Africa backup route.",
   "homeDiscoveryRoute.ke-nbo-mba.title": "Mombasa coast route",
-  "homeDiscoveryRoute.ke-nbo-mba.routeNote": "Domestic Kenya route for leisure backup pricing.",
+  "homeDiscoveryRoute.ke-nbo-mba.routeNote":
+    "Domestic Kenya route for leisure backup pricing.",
   "homeDiscoveryRoute.ke-nbo-mad.title": "Madrid Europe connector",
   "homeDiscoveryRoute.ke-nbo-mad.routeNote": "Long-haul Europe backup route.",
   "homeDiscoveryRoute.za-jnb-mad.title": "Madrid long-haul route",
-  "homeDiscoveryRoute.za-jnb-mad.routeNote": "Southern Africa to Europe backup route.",
+  "homeDiscoveryRoute.za-jnb-mad.routeNote":
+    "Southern Africa to Europe backup route.",
   "homeDiscoveryRoute.za-jnb-lis.title": "Lisbon long-haul route",
-  "homeDiscoveryRoute.za-jnb-lis.routeNote": "Southern Africa to Portugal backup route.",
+  "homeDiscoveryRoute.za-jnb-lis.routeNote":
+    "Southern Africa to Portugal backup route.",
   "homeDiscoveryRoute.za-cpt-acc.title": "Cape Town to Accra",
   "homeDiscoveryRoute.za-cpt-acc.routeNote": "Africa regional backup route.",
   "homeDiscoveryRoute.za-jnb-dar.title": "Dar es Salaam link",
-  "homeDiscoveryRoute.za-jnb-dar.routeNote": "Southern-to-East Africa backup route.",
+  "homeDiscoveryRoute.za-jnb-dar.routeNote":
+    "Southern-to-East Africa backup route.",
   "homeDiscoveryRoute.de-fra-vie.title": "Vienna from Frankfurt",
   "homeDiscoveryRoute.de-fra-vie.routeNote": "Europe backup city-pair route.",
   "homeDiscoveryRoute.de-fra-zrh.title": "Zurich from Frankfurt",
@@ -1900,71 +2465,94 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.de-ber-lhr.title": "Berlin to London",
   "homeDiscoveryRoute.de-ber-lhr.routeNote": "Germany to UK backup route.",
   "homeDiscoveryRoute.ae-dxb-kul.title": "Kuala Lumpur route",
-  "homeDiscoveryRoute.ae-dxb-kul.routeNote": "UAE to Southeast Asia backup route.",
+  "homeDiscoveryRoute.ae-dxb-kul.routeNote":
+    "UAE to Southeast Asia backup route.",
   "homeDiscoveryRoute.ae-auh-cai.title": "Abu Dhabi to Cairo",
-  "homeDiscoveryRoute.ae-auh-cai.routeNote": "Middle East regional backup route.",
+  "homeDiscoveryRoute.ae-auh-cai.routeNote":
+    "Middle East regional backup route.",
   "homeDiscoveryRoute.ae-doh-ist.title": "Doha to Istanbul",
-  "homeDiscoveryRoute.ae-doh-ist.routeNote": "Middle East to Türkiye backup route.",
+  "homeDiscoveryRoute.ae-doh-ist.routeNote":
+    "Middle East to Türkiye backup route.",
   "homeDiscoveryRoute.ae-dxb-mad.title": "Dubai to Madrid",
   "homeDiscoveryRoute.ae-dxb-mad.routeNote": "Gulf to Europe backup route.",
   "homeDiscoveryRoute.jp-nrt-kul.title": "Tokyo to Kuala Lumpur",
-  "homeDiscoveryRoute.jp-nrt-kul.routeNote": "Asia backup route for provider snapshots.",
+  "homeDiscoveryRoute.jp-nrt-kul.routeNote":
+    "Asia backup route for provider snapshots.",
   "homeDiscoveryRoute.jp-hnd-tpe.title": "Tokyo to Taipei",
-  "homeDiscoveryRoute.jp-hnd-tpe.routeNote": "Short Asia route for backup pricing.",
+  "homeDiscoveryRoute.jp-hnd-tpe.routeNote":
+    "Short Asia route for backup pricing.",
   "homeDiscoveryRoute.jp-kix-bkk.title": "Osaka to Bangkok",
   "homeDiscoveryRoute.jp-kix-bkk.routeNote": "Japan to Thailand backup route.",
   "homeDiscoveryRoute.jp-nrt-mad.title": "Tokyo to Madrid",
-  "homeDiscoveryRoute.jp-nrt-mad.routeNote": "Asia to Europe long-haul backup route.",
+  "homeDiscoveryRoute.jp-nrt-mad.routeNote":
+    "Asia to Europe long-haul backup route.",
   "homeDiscoveryRoute.br-gru-sjo.title": "Sao Paulo to San Jose",
-  "homeDiscoveryRoute.br-gru-sjo.routeNote": "Latin America backup route for nature trips.",
+  "homeDiscoveryRoute.br-gru-sjo.routeNote":
+    "Latin America backup route for nature trips.",
   "homeDiscoveryRoute.br-mex-sjo-alt.title": "Mexico City to San Jose",
-  "homeDiscoveryRoute.br-mex-sjo-alt.routeNote": "Central America backup route.",
+  "homeDiscoveryRoute.br-mex-sjo-alt.routeNote":
+    "Central America backup route.",
   "homeDiscoveryRoute.br-bog-cun.title": "Bogota to Cancun",
-  "homeDiscoveryRoute.br-bog-cun.routeNote": "Latin America leisure backup route.",
+  "homeDiscoveryRoute.br-bog-cun.routeNote":
+    "Latin America leisure backup route.",
   "homeDiscoveryRoute.br-gig-mad.title": "Rio to Madrid",
   "homeDiscoveryRoute.br-gig-mad.routeNote": "Brazil to Spain backup route.",
   "homeDiscoveryRoute.us-jfk-atl.title": "New York to Atlanta",
-  "homeDiscoveryRoute.us-jfk-atl.routeNote": "US trunk route for provider-backed homepage pricing.",
+  "homeDiscoveryRoute.us-jfk-atl.routeNote":
+    "US trunk route for provider-backed homepage pricing.",
   "homeDiscoveryRoute.us-lax-ord.title": "Los Angeles to Chicago",
-  "homeDiscoveryRoute.us-lax-ord.routeNote": "Cross-country US city-pair route.",
+  "homeDiscoveryRoute.us-lax-ord.routeNote":
+    "Cross-country US city-pair route.",
   "homeDiscoveryRoute.us-lax-dfw.title": "Los Angeles to Dallas",
-  "homeDiscoveryRoute.us-lax-dfw.routeNote": "High-volume US provider-searchable route.",
+  "homeDiscoveryRoute.us-lax-dfw.routeNote":
+    "High-volume US provider-searchable route.",
   "homeDiscoveryRoute.us-jfk-den.title": "New York to Denver",
   "homeDiscoveryRoute.us-jfk-den.routeNote": "Mountain gateway backup route.",
   "homeDiscoveryRoute.ng-los-cai.title": "Lagos to Cairo",
-  "homeDiscoveryRoute.ng-los-cai.routeNote": "West Africa to North Africa provider route.",
+  "homeDiscoveryRoute.ng-los-cai.routeNote":
+    "West Africa to North Africa provider route.",
   "homeDiscoveryRoute.ng-los-ams.title": "Lagos to Amsterdam",
   "homeDiscoveryRoute.ng-los-ams.routeNote": "Europe gateway route from Lagos.",
   "homeDiscoveryRoute.ng-abv-ist.title": "Abuja to Istanbul",
   "homeDiscoveryRoute.ng-abv-ist.routeNote": "Capital to Türkiye hub route.",
   "homeDiscoveryRoute.ng-acc-ams.title": "Accra to Amsterdam",
-  "homeDiscoveryRoute.ng-acc-ams.routeNote": "West Africa to Europe backup route.",
+  "homeDiscoveryRoute.ng-acc-ams.routeNote":
+    "West Africa to Europe backup route.",
   "homeDiscoveryRoute.ng-acc-jnb.title": "Accra to Johannesburg",
   "homeDiscoveryRoute.ng-acc-jnb.routeNote": "West to Southern Africa route.",
   "homeDiscoveryRoute.ng-los-mad.title": "Lagos to Madrid",
-  "homeDiscoveryRoute.ng-los-mad.routeNote": "West Africa to Spain backup route.",
+  "homeDiscoveryRoute.ng-los-mad.routeNote":
+    "West Africa to Spain backup route.",
   "homeDiscoveryRoute.ng-acc-cdg.title": "Accra to Paris",
   "homeDiscoveryRoute.ng-acc-cdg.routeNote": "Ghana to France provider route.",
   "homeDiscoveryRoute.ng-abv-add.title": "Abuja to Addis Ababa",
   "homeDiscoveryRoute.ng-abv-add.routeNote": "Africa hub route from Abuja.",
   "homeDiscoveryRoute.ke-nbo-ebb.title": "Nairobi to Entebbe",
-  "homeDiscoveryRoute.ke-nbo-ebb.routeNote": "Short East Africa route for backup cards.",
+  "homeDiscoveryRoute.ke-nbo-ebb.routeNote":
+    "Short East Africa route for backup cards.",
   "homeDiscoveryRoute.ke-nbo-jed-alt.title": "Nairobi to Jeddah",
-  "homeDiscoveryRoute.ke-nbo-jed-alt.routeNote": "Middle East route from Kenya.",
+  "homeDiscoveryRoute.ke-nbo-jed-alt.routeNote":
+    "Middle East route from Kenya.",
   "homeDiscoveryRoute.ke-nbo-kul.title": "Nairobi to Kuala Lumpur",
-  "homeDiscoveryRoute.ke-nbo-kul.routeNote": "East Africa to Asia backup route.",
+  "homeDiscoveryRoute.ke-nbo-kul.routeNote":
+    "East Africa to Asia backup route.",
   "homeDiscoveryRoute.ke-nbo-fra.title": "Nairobi to Frankfurt",
-  "homeDiscoveryRoute.ke-nbo-fra.routeNote": "Germany gateway route from Nairobi.",
+  "homeDiscoveryRoute.ke-nbo-fra.routeNote":
+    "Germany gateway route from Nairobi.",
   "homeDiscoveryRoute.za-jnb-mru-alt.title": "Johannesburg to Mauritius",
   "homeDiscoveryRoute.za-jnb-mru-alt.routeNote": "Indian Ocean leisure route.",
   "homeDiscoveryRoute.za-jnb-fra.title": "Johannesburg to Frankfurt",
-  "homeDiscoveryRoute.za-jnb-fra.routeNote": "Southern Africa to Germany route.",
+  "homeDiscoveryRoute.za-jnb-fra.routeNote":
+    "Southern Africa to Germany route.",
   "homeDiscoveryRoute.za-jnb-ams.title": "Johannesburg to Amsterdam",
-  "homeDiscoveryRoute.za-jnb-ams.routeNote": "Europe gateway route from South Africa.",
+  "homeDiscoveryRoute.za-jnb-ams.routeNote":
+    "Europe gateway route from South Africa.",
   "homeDiscoveryRoute.za-dur-cpt.title": "Durban to Cape Town",
-  "homeDiscoveryRoute.za-dur-cpt.routeNote": "Domestic South Africa backup route.",
+  "homeDiscoveryRoute.za-dur-cpt.routeNote":
+    "Domestic South Africa backup route.",
   "homeDiscoveryRoute.za-jnb-cai.title": "Johannesburg to Cairo",
-  "homeDiscoveryRoute.za-jnb-cai.routeNote": "Africa northbound provider route.",
+  "homeDiscoveryRoute.za-jnb-cai.routeNote":
+    "Africa northbound provider route.",
   "homeDiscoveryRoute.gb-lhr-mad.title": "London to Madrid",
   "homeDiscoveryRoute.gb-lhr-mad.routeNote": "UK to Spain provider route.",
   "homeDiscoveryRoute.gb-lhr-fco.title": "London to Rome",
@@ -1980,7 +2568,8 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.gb-lgw-dxb.title": "Gatwick to Dubai",
   "homeDiscoveryRoute.gb-lgw-dxb.routeNote": "UK to UAE route from Gatwick.",
   "homeDiscoveryRoute.gb-edi-cdg.title": "Edinburgh to Paris",
-  "homeDiscoveryRoute.gb-edi-cdg.routeNote": "Scotland to France provider route.",
+  "homeDiscoveryRoute.gb-edi-cdg.routeNote":
+    "Scotland to France provider route.",
   "homeDiscoveryRoute.gb-lhr-fra.title": "London to Frankfurt",
   "homeDiscoveryRoute.gb-lhr-fra.routeNote": "UK to Germany business route.",
   "homeDiscoveryRoute.gb-lhr-zrh.title": "London to Zurich",
@@ -1996,7 +2585,8 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.jp-nrt-han.title": "Tokyo to Hanoi",
   "homeDiscoveryRoute.jp-nrt-han.routeNote": "Japan to Vietnam route.",
   "homeDiscoveryRoute.jp-nrt-syd.title": "Tokyo to Sydney",
-  "homeDiscoveryRoute.jp-nrt-syd.routeNote": "Japan to Australia provider route.",
+  "homeDiscoveryRoute.jp-nrt-syd.routeNote":
+    "Japan to Australia provider route.",
   "homeDiscoveryRoute.br-lim-mia.title": "Lima to Miami",
   "homeDiscoveryRoute.br-lim-mia.routeNote": "Latin America to Florida route.",
   "homeDiscoveryRoute.ca-yvr-lhr.title": "Vancouver to London",
@@ -2012,17 +2602,21 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ca-yyc-yvr.title": "Calgary to Vancouver",
   "homeDiscoveryRoute.ca-yyc-yvr.routeNote": "Western Canada route.",
   "homeDiscoveryRoute.ke-nbo-sez.title": "Nairobi to Seychelles",
-  "homeDiscoveryRoute.ke-nbo-sez.routeNote": "East Africa island leisure backup route.",
+  "homeDiscoveryRoute.ke-nbo-sez.routeNote":
+    "East Africa island leisure backup route.",
   "homeDiscoveryRoute.ke-nbo-lis.title": "Nairobi to Lisbon",
   "homeDiscoveryRoute.ke-nbo-lis.routeNote": "Europe backup route from Kenya.",
   "homeDiscoveryRoute.ke-nbo-vie.title": "Nairobi to Vienna",
-  "homeDiscoveryRoute.ke-nbo-vie.routeNote": "Central Europe provider-searchable route.",
+  "homeDiscoveryRoute.ke-nbo-vie.routeNote":
+    "Central Europe provider-searchable route.",
   "homeDiscoveryRoute.ke-nbo-zrh.title": "Nairobi to Zurich",
   "homeDiscoveryRoute.ke-nbo-zrh.routeNote": "Europe business backup route.",
   "homeDiscoveryRoute.za-jnb-luanda.title": "Johannesburg to Luanda",
-  "homeDiscoveryRoute.za-jnb-luanda.routeNote": "Southern Africa business route.",
+  "homeDiscoveryRoute.za-jnb-luanda.routeNote":
+    "Southern Africa business route.",
   "homeDiscoveryRoute.za-jnb-windhoek.title": "Johannesburg to Windhoek",
-  "homeDiscoveryRoute.za-jnb-windhoek.routeNote": "Southern Africa regional route.",
+  "homeDiscoveryRoute.za-jnb-windhoek.routeNote":
+    "Southern Africa regional route.",
   "homeDiscoveryRoute.za-jnb-lusaka.title": "Johannesburg to Lusaka",
   "homeDiscoveryRoute.za-jnb-lusaka.routeNote": "Regional Africa backup route.",
   "homeDiscoveryRoute.za-jnb-hre.title": "Johannesburg to Harare",
@@ -2030,15 +2624,18 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.za-cpt-fra.title": "Cape Town to Frankfurt",
   "homeDiscoveryRoute.za-cpt-fra.routeNote": "Cape Town to Germany route.",
   "homeDiscoveryRoute.za-cpt-ams-alt.title": "Cape Town to Amsterdam",
-  "homeDiscoveryRoute.za-cpt-ams-alt.routeNote": "Cape Town Europe alternate route.",
+  "homeDiscoveryRoute.za-cpt-ams-alt.routeNote":
+    "Cape Town Europe alternate route.",
   "homeDiscoveryRoute.gb-lhr-ath.title": "London to Athens",
   "homeDiscoveryRoute.gb-lhr-ath.routeNote": "UK to Greece leisure route.",
   "homeDiscoveryRoute.gb-lhr-prg.title": "London to Prague",
   "homeDiscoveryRoute.gb-lhr-prg.routeNote": "UK to Central Europe route.",
   "homeDiscoveryRoute.gb-lhr-nce.title": "London to Nice",
-  "homeDiscoveryRoute.gb-lhr-nce.routeNote": "UK to French Riviera backup route.",
+  "homeDiscoveryRoute.gb-lhr-nce.routeNote":
+    "UK to French Riviera backup route.",
   "homeDiscoveryRoute.gb-lhr-cph.title": "London to Copenhagen",
-  "homeDiscoveryRoute.gb-lhr-cph.routeNote": "UK to Scandinavia provider route.",
+  "homeDiscoveryRoute.gb-lhr-cph.routeNote":
+    "UK to Scandinavia provider route.",
   "homeDiscoveryRoute.de-fra-cph.title": "Frankfurt to Copenhagen",
   "homeDiscoveryRoute.de-fra-cph.routeNote": "Germany to Scandinavia route.",
   "homeDiscoveryRoute.de-fra-nce.title": "Frankfurt to Nice",
@@ -2050,7 +2647,8 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.de-fra-waw.title": "Frankfurt to Warsaw",
   "homeDiscoveryRoute.de-fra-waw.routeNote": "Central Europe backup route.",
   "homeDiscoveryRoute.de-muc-zrh.title": "Munich to Zurich",
-  "homeDiscoveryRoute.de-muc-zrh.routeNote": "Short Europe route for fare snapshots.",
+  "homeDiscoveryRoute.de-muc-zrh.routeNote":
+    "Short Europe route for fare snapshots.",
   "homeDiscoveryRoute.de-ber-mad.title": "Berlin to Madrid",
   "homeDiscoveryRoute.de-ber-mad.routeNote": "Germany to Spain route.",
   "homeDiscoveryRoute.de-fra-doh.title": "Frankfurt to Doha",
@@ -2066,7 +2664,8 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ae-auh-mnl.title": "Abu Dhabi to Manila",
   "homeDiscoveryRoute.ae-auh-mnl.routeNote": "UAE to Philippines route.",
   "homeDiscoveryRoute.jp-hnd-tpe-alt.title": "Haneda to Taipei",
-  "homeDiscoveryRoute.jp-hnd-tpe-alt.routeNote": "Tokyo to Taiwan backup route.",
+  "homeDiscoveryRoute.jp-hnd-tpe-alt.routeNote":
+    "Tokyo to Taiwan backup route.",
   "homeDiscoveryRoute.jp-nrt-del.title": "Tokyo to Delhi",
   "homeDiscoveryRoute.jp-nrt-del.routeNote": "Japan to India provider route.",
   "homeDiscoveryRoute.jp-kix-hkg.title": "Osaka to Hong Kong",
@@ -2076,7 +2675,8 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.jp-hnd-lhr.title": "Haneda to London",
   "homeDiscoveryRoute.jp-hnd-lhr.routeNote": "Japan to UK provider route.",
   "homeDiscoveryRoute.br-mex-lax.title": "Mexico City to Los Angeles",
-  "homeDiscoveryRoute.br-mex-lax.routeNote": "Latin America to California route.",
+  "homeDiscoveryRoute.br-mex-lax.routeNote":
+    "Latin America to California route.",
   "homeDiscoveryRoute.br-gru-cdg.title": "Sao Paulo to Paris",
   "homeDiscoveryRoute.br-gru-cdg.routeNote": "Brazil to France provider route.",
   "homeDiscoveryRoute.br-gru-fra.title": "Sao Paulo to Frankfurt",
@@ -2088,107 +2688,156 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.br-mex-lim.title": "Mexico City to Lima",
   "homeDiscoveryRoute.br-mex-lim.routeNote": "Latin America backup route.",
   "homeDiscoveryRoute.ca-yyz-fra.title": "Toronto to Frankfurt",
-  "homeDiscoveryRoute.ca-yyz-fra.routeNote": "Canada to Germany provider route.",
+  "homeDiscoveryRoute.ca-yyz-fra.routeNote":
+    "Canada to Germany provider route.",
   "homeDiscoveryRoute.ca-yyz-lax.title": "Toronto to Los Angeles",
   "homeDiscoveryRoute.ca-yyz-lax.routeNote": "Canada to California route.",
   "homeDiscoveryRoute.ca-yul-mia.title": "Montreal to Miami",
   "homeDiscoveryRoute.ca-yul-mia.routeNote": "Quebec to Florida route.",
   "homeDiscoveryRoute.us-ewr-sav.title": "Savannah historic squares escape",
-  "homeDiscoveryRoute.us-ewr-sav.routeNote": "Southern weekend route for cobblestone walks, food, and riverfront stays.",
+  "homeDiscoveryRoute.us-ewr-sav.routeNote":
+    "Southern weekend route for cobblestone walks, food, and riverfront stays.",
   "homeDiscoveryRoute.us-bos-mia.title": "Miami winter-sun reset",
-  "homeDiscoveryRoute.us-bos-mia.routeNote": "Northeast-to-sunshine route for beaches, dining, and art districts.",
+  "homeDiscoveryRoute.us-bos-mia.routeNote":
+    "Northeast-to-sunshine route for beaches, dining, and art districts.",
   "homeDiscoveryRoute.us-lga-chs.title": "Charleston coastal food weekend",
-  "homeDiscoveryRoute.us-lga-chs.routeNote": "Low-country route for historic streets, seafood, and beach add-ons.",
+  "homeDiscoveryRoute.us-lga-chs.routeNote":
+    "Low-country route for historic streets, seafood, and beach add-ons.",
   "homeDiscoveryRoute.us-den-slc.title": "Salt Lake mountain base",
-  "homeDiscoveryRoute.us-den-slc.routeNote": "Short western hop for ski weekends, national parks, and downtown dining.",
+  "homeDiscoveryRoute.us-den-slc.routeNote":
+    "Short western hop for ski weekends, national parks, and downtown dining.",
   "homeDiscoveryRoute.us-iah-mex.title": "Mexico City culture weekend",
-  "homeDiscoveryRoute.us-iah-mex.routeNote": "Frequent cross-border route for museums, markets, and food neighborhoods.",
+  "homeDiscoveryRoute.us-iah-mex.routeNote":
+    "Frequent cross-border route for museums, markets, and food neighborhoods.",
   "homeDiscoveryRoute.us-lax-sjd.title": "Los Cabos beach quick trip",
-  "homeDiscoveryRoute.us-lax-sjd.routeNote": "Easy Baja route for resort weekends, desert scenery, and sea views.",
+  "homeDiscoveryRoute.us-lax-sjd.routeNote":
+    "Easy Baja route for resort weekends, desert scenery, and sea views.",
   "homeDiscoveryRoute.us-ord-rsw.title": "Fort Myers gulf-coast break",
-  "homeDiscoveryRoute.us-ord-rsw.routeNote": "Warm-weather route for barrier islands, beaches, and relaxed stays.",
+  "homeDiscoveryRoute.us-ord-rsw.routeNote":
+    "Warm-weather route for barrier islands, beaches, and relaxed stays.",
   "homeDiscoveryRoute.us-sea-san.title": "San Diego sunshine corridor",
-  "homeDiscoveryRoute.us-sea-san.routeNote": "West Coast route for beaches, parks, harbor days, and mild-weather weekends.",
+  "homeDiscoveryRoute.us-sea-san.routeNote":
+    "West Coast route for beaches, parks, harbor days, and mild-weather weekends.",
   "homeDiscoveryRoute.us-jfk-lax.title": "Los Angeles coast-to-coast link",
-  "homeDiscoveryRoute.us-jfk-lax.routeNote": "Major transcontinental corridor for beach days, studios, and West Coast weekends.",
+  "homeDiscoveryRoute.us-jfk-lax.routeNote":
+    "Major transcontinental corridor for beach days, studios, and West Coast weekends.",
   "homeDiscoveryRoute.us-ewr-mco.title": "Orlando theme-park getaway",
-  "homeDiscoveryRoute.us-ewr-mco.routeNote": "High-demand family route for parks, resorts, and quick warm-weather breaks.",
+  "homeDiscoveryRoute.us-ewr-mco.routeNote":
+    "High-demand family route for parks, resorts, and quick warm-weather breaks.",
   "homeDiscoveryRoute.us-lga-fll.title": "Fort Lauderdale beach run",
-  "homeDiscoveryRoute.us-lga-fll.routeNote": "Northeast-to-Florida corridor for beaches, cruises, and long weekends.",
+  "homeDiscoveryRoute.us-lga-fll.routeNote":
+    "Northeast-to-Florida corridor for beaches, cruises, and long weekends.",
   "homeDiscoveryRoute.us-bos-lax.title": "Los Angeles nonstop escape",
-  "homeDiscoveryRoute.us-bos-lax.routeNote": "Busy coast-to-coast route for entertainment, beaches, and city breaks.",
+  "homeDiscoveryRoute.us-bos-lax.routeNote":
+    "Busy coast-to-coast route for entertainment, beaches, and city breaks.",
   "homeDiscoveryRoute.us-ord-mia.title": "Miami lakefront-to-beach trip",
-  "homeDiscoveryRoute.us-ord-mia.routeNote": "Popular Midwest-to-sun route for beaches, nightlife, and cruise departures.",
+  "homeDiscoveryRoute.us-ord-mia.routeNote":
+    "Popular Midwest-to-sun route for beaches, nightlife, and cruise departures.",
   "homeDiscoveryRoute.us-atl-las.title": "Las Vegas long-weekend corridor",
-  "homeDiscoveryRoute.us-atl-las.routeNote": "Hub-to-leisure route for shows, dining, conventions, and desert side trips.",
+  "homeDiscoveryRoute.us-atl-las.routeNote":
+    "Hub-to-leisure route for shows, dining, conventions, and desert side trips.",
   "homeDiscoveryRoute.us-dfw-mco.title": "Orlando family flight path",
-  "homeDiscoveryRoute.us-dfw-mco.routeNote": "Large hub-to-theme-park route for resort stays and school-break trips.",
+  "homeDiscoveryRoute.us-dfw-mco.routeNote":
+    "Large hub-to-theme-park route for resort stays and school-break trips.",
   "homeDiscoveryRoute.us-den-las.title": "Vegas mountain-west hop",
-  "homeDiscoveryRoute.us-den-las.routeNote": "Short leisure corridor for entertainment weekends and desert getaways.",
+  "homeDiscoveryRoute.us-den-las.routeNote":
+    "Short leisure corridor for entertainment weekends and desert getaways.",
   "homeDiscoveryRoute.us-sfo-las.title": "Las Vegas Bay Area break",
-  "homeDiscoveryRoute.us-sfo-las.routeNote": "Frequent West Coast route for shows, food, events, and desert sun.",
+  "homeDiscoveryRoute.us-sfo-las.routeNote":
+    "Frequent West Coast route for shows, food, events, and desert sun.",
   "homeDiscoveryRoute.us-lax-hnl.title": "Honolulu Pacific beach link",
-  "homeDiscoveryRoute.us-lax-hnl.routeNote": "Heavy leisure route for Waikiki stays, island hikes, and warm ocean days.",
+  "homeDiscoveryRoute.us-lax-hnl.routeNote":
+    "Heavy leisure route for Waikiki stays, island hikes, and warm ocean days.",
   "homeDiscoveryRoute.us-sfo-sea.title": "Seattle Pacific Northwest hop",
-  "homeDiscoveryRoute.us-sfo-sea.routeNote": "Short West Coast corridor for coffee, waterfronts, music, and meetings.",
+  "homeDiscoveryRoute.us-sfo-sea.routeNote":
+    "Short West Coast corridor for coffee, waterfronts, music, and meetings.",
   "homeDiscoveryRoute.us-iad-mco.title": "Orlando capital-area escape",
-  "homeDiscoveryRoute.us-iad-mco.routeNote": "Reliable leisure route for theme parks, resorts, and sunny school breaks.",
+  "homeDiscoveryRoute.us-iad-mco.routeNote":
+    "Reliable leisure route for theme parks, resorts, and sunny school breaks.",
   "homeDiscoveryRoute.us-msp-rsw.title": "Fort Myers winter-sun route",
-  "homeDiscoveryRoute.us-msp-rsw.routeNote": "Upper Midwest-to-Gulf route for beaches, islands, and warm-weather stays.",
+  "homeDiscoveryRoute.us-msp-rsw.routeNote":
+    "Upper Midwest-to-Gulf route for beaches, islands, and warm-weather stays.",
   "homeDiscoveryRoute.us-clt-mia.title": "Miami southeast hub link",
-  "homeDiscoveryRoute.us-clt-mia.routeNote": "Common southeast corridor for beaches, business, and Caribbean connections.",
+  "homeDiscoveryRoute.us-clt-mia.routeNote":
+    "Common southeast corridor for beaches, business, and Caribbean connections.",
   "homeDiscoveryRoute.us-dtw-fll.title": "Fort Lauderdale Great Lakes escape",
-  "homeDiscoveryRoute.us-dtw-fll.routeNote": "Popular Florida route for beach weekends, cruises, and winter sunshine.",
+  "homeDiscoveryRoute.us-dtw-fll.routeNote":
+    "Popular Florida route for beach weekends, cruises, and winter sunshine.",
   "homeDiscoveryRoute.us-phl-mco.title": "Orlando Philadelphia family route",
-  "homeDiscoveryRoute.us-phl-mco.routeNote": "Northeast leisure route for theme parks, resorts, and sunshine breaks.",
+  "homeDiscoveryRoute.us-phl-mco.routeNote":
+    "Northeast leisure route for theme parks, resorts, and sunshine breaks.",
   "homeDiscoveryRoute.us-bwi-mco.title": "Orlando Baltimore getaway",
-  "homeDiscoveryRoute.us-bwi-mco.routeNote": "Frequent family route for park trips, weekend breaks, and resort stays.",
+  "homeDiscoveryRoute.us-bwi-mco.routeNote":
+    "Frequent family route for park trips, weekend breaks, and resort stays.",
   "homeDiscoveryRoute.us-dfw-las.title": "Vegas north Texas route",
-  "homeDiscoveryRoute.us-dfw-las.routeNote": "High-volume leisure and convention route for quick desert weekends.",
+  "homeDiscoveryRoute.us-dfw-las.routeNote":
+    "High-volume leisure and convention route for quick desert weekends.",
   "homeDiscoveryRoute.us-jfk-cun.title": "Cancun Caribbean quick trip",
-  "homeDiscoveryRoute.us-jfk-cun.routeNote": "Popular nonstop leisure route for beaches, resorts, and warm-water breaks.",
+  "homeDiscoveryRoute.us-jfk-cun.routeNote":
+    "Popular nonstop leisure route for beaches, resorts, and warm-water breaks.",
   "homeDiscoveryRoute.us-atl-cun.title": "Cancun Atlanta leisure route",
-  "homeDiscoveryRoute.us-atl-cun.routeNote": "Hub-to-resort corridor for beach vacations and easy Caribbean coast breaks.",
+  "homeDiscoveryRoute.us-atl-cun.routeNote":
+    "Hub-to-resort corridor for beach vacations and easy Caribbean coast breaks.",
   "homeDiscoveryRoute.us-dfw-sjd.title": "Los Cabos north Texas escape",
-  "homeDiscoveryRoute.us-dfw-sjd.routeNote": "Common resort route for Baja beaches, desert landscapes, and long weekends.",
+  "homeDiscoveryRoute.us-dfw-sjd.routeNote":
+    "Common resort route for Baja beaches, desert landscapes, and long weekends.",
   "homeDiscoveryRoute.us-ord-cun.title": "Cancun Midwest beach route",
-  "homeDiscoveryRoute.us-ord-cun.routeNote": "High-confidence leisure route for winter sun, resorts, and family trips.",
+  "homeDiscoveryRoute.us-ord-cun.routeNote":
+    "High-confidence leisure route for winter sun, resorts, and family trips.",
   "homeDiscoveryRoute.us-jfk-sju.title": "San Juan Caribbean city break",
-  "homeDiscoveryRoute.us-jfk-sju.routeNote": "Frequent leisure route for old-city streets, beaches, and island weekends.",
+  "homeDiscoveryRoute.us-jfk-sju.routeNote":
+    "Frequent leisure route for old-city streets, beaches, and island weekends.",
   "homeDiscoveryRoute.us-lax-mex.title": "Mexico City west-coast link",
-  "homeDiscoveryRoute.us-lax-mex.routeNote": "Major cross-border route for food, museums, neighborhoods, and events.",
+  "homeDiscoveryRoute.us-lax-mex.routeNote":
+    "Major cross-border route for food, museums, neighborhoods, and events.",
   "homeDiscoveryRoute.us-jfk-mia.title": "Miami beach weekend",
-  "homeDiscoveryRoute.us-jfk-mia.routeNote": "High-frequency nonstop route for warm-weather escapes.",
+  "homeDiscoveryRoute.us-jfk-mia.routeNote":
+    "High-frequency nonstop route for warm-weather escapes.",
   "homeDiscoveryRoute.us-ord-las.title": "Las Vegas entertainment run",
-  "homeDiscoveryRoute.us-ord-las.routeNote": "Popular for events, shows, and flexible weekend flights.",
+  "homeDiscoveryRoute.us-ord-las.routeNote":
+    "Popular for events, shows, and flexible weekend flights.",
   "homeDiscoveryRoute.us-lax-sfo.title": "San Francisco quick corridor",
-  "homeDiscoveryRoute.us-lax-sfo.routeNote": "Short-haul business favorite with frequent daily schedules.",
+  "homeDiscoveryRoute.us-lax-sfo.routeNote":
+    "Short-haul business favorite with frequent daily schedules.",
   "homeDiscoveryRoute.us-atl-mco.title": "Orlando family getaway",
-  "homeDiscoveryRoute.us-atl-mco.routeNote": "Theme-park route with family-friendly timing options.",
+  "homeDiscoveryRoute.us-atl-mco.routeNote":
+    "Theme-park route with family-friendly timing options.",
   "homeDiscoveryRoute.us-dfw-sea.title": "Seattle coffee-and-nature trip",
-  "homeDiscoveryRoute.us-dfw-sea.routeNote": "Great for urban food scenes and Pacific Northwest day trips.",
+  "homeDiscoveryRoute.us-dfw-sea.routeNote":
+    "Great for urban food scenes and Pacific Northwest day trips.",
   "homeDiscoveryRoute.us-mia-cun.title": "Cancun short leisure hop",
-  "homeDiscoveryRoute.us-mia-cun.routeNote": "Quick international route for beach resorts and long weekends.",
+  "homeDiscoveryRoute.us-mia-cun.routeNote":
+    "Quick international route for beach resorts and long weekends.",
   "homeDiscoveryRoute.us-ord-pdx.title": "Portland food-and-forest weekend",
-  "homeDiscoveryRoute.us-ord-pdx.routeNote": "Pacific Northwest city break for coffee roasters, parks, and nearby waterfalls.",
+  "homeDiscoveryRoute.us-ord-pdx.routeNote":
+    "Pacific Northwest city break for coffee roasters, parks, and nearby waterfalls.",
   "homeDiscoveryRoute.us-sea-hnl.title": "Honolulu tropical break",
-  "homeDiscoveryRoute.us-sea-hnl.routeNote": "Direct island escape for beaches, surfing, and volcano views.",
+  "homeDiscoveryRoute.us-sea-hnl.routeNote":
+    "Direct island escape for beaches, surfing, and volcano views.",
   "homeDiscoveryRoute.us-bos-sju.title": "San Juan Caribbean long weekend",
-  "homeDiscoveryRoute.us-bos-sju.routeNote": "Warm-weather US territory route with historic old town and beaches.",
+  "homeDiscoveryRoute.us-bos-sju.routeNote":
+    "Warm-weather US territory route with historic old town and beaches.",
   "homeDiscoveryRoute.us-den-phx.title": "Phoenix desert sun trip",
-  "homeDiscoveryRoute.us-den-phx.routeNote": "Short western route for golf weekends and Sonoran desert hikes.",
+  "homeDiscoveryRoute.us-den-phx.routeNote":
+    "Short western route for golf weekends and Sonoran desert hikes.",
   "homeDiscoveryRoute.us-iad-bna.title": "Nashville music-city getaway",
-  "homeDiscoveryRoute.us-iad-bna.routeNote": "High-demand domestic route for live music, food, and festivals.",
+  "homeDiscoveryRoute.us-iad-bna.routeNote":
+    "High-demand domestic route for live music, food, and festivals.",
   "homeDiscoveryRoute.us-lax-yvr.title": "Vancouver mountain-and-city escape",
-  "homeDiscoveryRoute.us-lax-yvr.routeNote": "Easy cross-border route for harbor views, seafood, and nearby alpine trails.",
+  "homeDiscoveryRoute.us-lax-yvr.routeNote":
+    "Easy cross-border route for harbor views, seafood, and nearby alpine trails.",
   "homeDiscoveryRoute.us-sea-anc.title": "Anchorage wilderness gateway",
-  "homeDiscoveryRoute.us-sea-anc.routeNote": "Seasonal favorite for glacier views, wildlife tours, and hiking.",
+  "homeDiscoveryRoute.us-sea-anc.routeNote":
+    "Seasonal favorite for glacier views, wildlife tours, and hiking.",
   "homeDiscoveryRoute.us-jfk-aus.title": "Austin live-music city hop",
-  "homeDiscoveryRoute.us-jfk-aus.routeNote": "Popular domestic route for festivals, startups, and food trucks.",
+  "homeDiscoveryRoute.us-jfk-aus.routeNote":
+    "Popular domestic route for festivals, startups, and food trucks.",
   "homeDiscoveryRoute.us-dtw-msy.title": "New Orleans jazz weekend",
-  "homeDiscoveryRoute.us-dtw-msy.routeNote": "Culture-rich route for jazz clubs, Creole dining, and French Quarter nights.",
+  "homeDiscoveryRoute.us-dtw-msy.routeNote":
+    "Culture-rich route for jazz clubs, Creole dining, and French Quarter nights.",
   "homeDiscoveryRoute.us-phl-san.title": "San Diego coastal break",
-  "homeDiscoveryRoute.us-phl-san.routeNote": "Cross-country escape with beaches, harbor cruises, and mild weather.",
+  "homeDiscoveryRoute.us-phl-san.routeNote":
+    "Cross-country escape with beaches, harbor cruises, and mild weather.",
   homeTrustTitle: "Why travelers compare on Kurioticket",
   homeTrustSubtitle:
     "Kurioticket helps you compare provider offers clearly, then complete booking on the provider’s site.",
@@ -2301,17 +2950,18 @@ export const translations: TranslationDictionary = {
   homePromoFlightsTitle: "Flight deals from top airlines",
   homePromoFlightsBody:
     "Discover limited-time fares and compare options instantly.",
-  homePromoFlightsCta: "Explore flight deals",
+  homePromoFlightsCta: "Explore flight packages",
   homePromoHotelsTitle: "Hotel savings worldwide",
   homePromoHotelsBody:
     "Browse stays from boutique hotels to global chains with price transparency.",
-  homePromoHotelsCta: "Explore hotel deals",
+  homePromoHotelsCta: "Explore hotel packages",
   homeHotelDestinationsTitle: "Explore stays around the world",
   homeHotelDestinationsSubtitle:
     "Discover hotel stays across popular countries and destinations.",
   homeHotelDestinationsExploreStays: "Explore stays",
   homeHotelDestinationsExploreAll: "Explore all stays",
-  homeHotelDestinationsCardAria: "Explore hotel stays in {{city}}, {{country}}.",
+  homeHotelDestinationsCardAria:
+    "Explore hotel stays in {{city}}, {{country}}.",
   "homeHotelDestinationsCountry.unitedStates": "United States",
   "homeHotelDestinationsCountry.uk": "UK",
   "homeHotelDestinationsCountry.france": "France",
@@ -2321,7 +2971,8 @@ export const translations: TranslationDictionary = {
   "homeHotelDestinationsCountry.italy": "Italy",
   "homeHotelDestinationsCountry.singapore": "Singapore",
   homeTripPlanningDirectoryTitle: "Start planning your trip around the world",
-  homeTripPlanningDirectorySubtitle: "Explore flights, stays, and rental cars across popular countries and destinations.",
+  homeTripPlanningDirectorySubtitle:
+    "Explore flights, stays, and rental cars across popular countries and destinations.",
   "homeHotelDestinationsCountry.spain": "Spain",
   "homeHotelDestinationsCountry.germany": "Germany",
   "homeHotelDestinationsCountry.indonesia": "Indonesia",
@@ -2364,9 +3015,12 @@ export const translations: TranslationDictionary = {
     "Learn how Kurioticket helps travelers search, compare, save, and organize travel options from multiple providers in one place.",
   moreServiceInfoContextTitle: "Plan with context",
   moreServiceInfoContextSubtitle: "From search results to provider redirects",
-  moreServiceInfoContextCompare: "Compare options from multiple travel providers.",
-  moreServiceInfoContextSave: "Save trips, alerts, and preferences when signed in.",
-  moreServiceInfoContextContinue: "Continue with provider details before booking externally.",
+  moreServiceInfoContextCompare:
+    "Compare options from multiple travel providers.",
+  moreServiceInfoContextSave:
+    "Save trips, alerts, and preferences when signed in.",
+  moreServiceInfoContextContinue:
+    "Continue with provider details before booking externally.",
   moreServiceInfoHowHeading: "How Kurioticket works",
   moreServiceInfoHowDescription:
     "These service details explain Kurioticket's role before, during, and after a travel search.",
@@ -2435,10 +3089,12 @@ export const translations: TranslationDictionary = {
   serviceGuaranteeFaqWhatGuaranteeQuestion: "What does Kurioticket guarantee?",
   serviceGuaranteeFaqWhatGuaranteeAnswer:
     "Kurioticket is designed to help travelers compare travel options clearly. We aim to provide a reliable platform experience, transparent search information, and clear paths to provider booking pages.",
-  serviceGuaranteeFaqResultsDisplayedQuestion: "How are travel results displayed?",
+  serviceGuaranteeFaqResultsDisplayedQuestion:
+    "How are travel results displayed?",
   serviceGuaranteeFaqResultsDisplayedAnswer:
     "Results are displayed using information available from travel providers, including routes, dates, prices, and provider details when available.",
-  serviceGuaranteeFaqRedirectedQuestion: "Why am I redirected to another provider?",
+  serviceGuaranteeFaqRedirectedQuestion:
+    "Why am I redirected to another provider?",
   serviceGuaranteeFaqRedirectedAnswer:
     "Some results are completed on an external provider site. When you choose one of those options, Kurioticket redirects you so the provider can handle booking, payment, and trip-specific service.",
   serviceGuaranteeFaqBookDirectlyQuestion: "Do I book directly on Kurioticket?",
@@ -2447,10 +3103,12 @@ export const translations: TranslationDictionary = {
   serviceGuaranteeFaqPricesGuaranteedQuestion: "Are prices always guaranteed?",
   serviceGuaranteeFaqPricesGuaranteedAnswer:
     "No. Prices can change based on provider availability, taxes, fees, currency, and timing. Always review the final price on the provider page before booking.",
-  serviceGuaranteeFaqChooseProvidersQuestion: "How does Kurioticket choose providers?",
+  serviceGuaranteeFaqChooseProvidersQuestion:
+    "How does Kurioticket choose providers?",
   serviceGuaranteeFaqChooseProvidersAnswer:
     "Kurioticket works with travel providers and data sources that can supply relevant search results. Availability, pricing, and displayed options may vary by route, destination, and provider coverage.",
-  serviceGuaranteeFaqEncounterIssueQuestion: "What should I do if I encounter an issue?",
+  serviceGuaranteeFaqEncounterIssueQuestion:
+    "What should I do if I encounter an issue?",
   serviceGuaranteeFaqEncounterIssueAnswer:
     "If the issue is related to search, account access, saved trips, alerts, or a redirect from Kurioticket, contact Kurioticket support. If you already booked with a provider, contact that provider for booking changes, refunds, cancellations, or travel documents.",
   serviceGuaranteeFaqContactSupportQuestion: "How can I contact support?",
@@ -2489,9 +3147,9 @@ export const translations: TranslationDictionary = {
   supportFaqSearchQuestion: "Search and results help",
   supportFaqSearchAnswer:
     "Kurioticket can help when flight or hotel search is not working, results are not loading, filters are confusing, or prices and providers are not displaying as expected.",
-  supportFaqSavedTripsQuestion: "Saved trips and alerts",
-  supportFaqSavedTripsAnswer:
-    "Kurioticket can help with saved trips, recent searches, price alerts, notification issues, and account-linked travel tools.",
+  supportFaqSavedRecentQuestion: "Saved & Recent and Price Alerts",
+  supportFaqSavedRecentAnswer:
+    "Kurioticket can help with Saved & Recent, Price Alerts, reservation records, notifications, and account-linked travel tools.",
   supportFaqRedirectQuestion: "Booking/provider redirect help",
   supportFaqRedirectAnswer:
     "Kurioticket can help if a redirect to a partner or provider fails, opens the wrong page, or does not preserve the selected trip or search details.",
@@ -2500,37 +3158,46 @@ export const translations: TranslationDictionary = {
     "If your booking was completed with an airline, hotel, travel agency, or external provider, that provider is responsible for booking changes, refunds, cancellations, check-in, boarding, receipts, and travel documents.",
   supportFaqChangeBookingQuestion: "Can Kurioticket change my booking?",
   supportFaqChangeBookingAnswer:
-    "Kurioticket can only help with bookings made directly through Kurioticket if and when direct booking is supported. For bookings completed with external providers, contact that provider directly.",
+    "Kurioticket does not manage or change travel bookings. If you completed a reservation with an airline, hotel, travel agency, or other provider, contact that provider for changes, cancellations, refunds, check-in, receipts, and travel documents.",
   supportFaqWhyRedirectedQuestion: "Why was I sent to another provider?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket is a travel search and comparison platform, and some results redirect to trusted providers where you complete booking, payment, and provider-specific support.",
   aboutPageEyebrow: "About Kurioticket",
   aboutPageTitle: "About Us",
-  aboutPageIntroPrimary: "Kurioticket is a travel search and comparison platform that helps travelers search, compare, and discover flights, hotels, cars, and travel deals.",
-  aboutPageIntroSecondary: "Our goal is to make travel planning clearer by bringing available options and provider information into one simple place, so travelers can review choices before continuing with the provider that fits their trip.",
+  aboutPageIntroPrimary:
+    "Kurioticket is a travel search and comparison platform that helps travelers search, compare, and discover flights, hotels, cars, and travel deals.",
+  aboutPageIntroSecondary:
+    "Our goal is to make travel planning clearer by bringing available options and provider information into one simple place, so travelers can review choices before continuing with the provider that fits their trip.",
   aboutPagePlanningCardHeading: "A practical travel planning tool",
-  aboutPagePlanningCardBody: "Kurioticket focuses on helping travelers evaluate travel options with useful context. Availability, prices, rules, and final booking steps may vary by provider, so travelers should review the provider page carefully before making a decision.",
+  aboutPagePlanningCardBody:
+    "Kurioticket focuses on helping travelers evaluate travel options with useful context. Availability, prices, rules, and final booking steps may vary by provider, so travelers should review the provider page carefully before making a decision.",
   howItWorksEyebrow: "How Kurioticket works",
   howItWorksTitle: "How Kurioticket Works",
-  howItWorksIntro: "Kurioticket helps travelers move from search to comparison, then on to the provider when an offer is selected.",
+  howItWorksIntro:
+    "Kurioticket helps travelers move from search to comparison, then on to the provider when an offer is selected.",
   howItWorksFlowHeading: "Basic flow",
   "howItWorks.steps.search.title": "Search travel options",
-  "howItWorks.steps.search.description": "Enter your trip details to look for available flights, hotels, cars, or travel deals.",
+  "howItWorks.steps.search.description":
+    "Enter your trip details to look for available flights, hotels, cars, or travel deals.",
   "howItWorks.steps.compare.title": "Compare available results",
-  "howItWorks.steps.compare.description": "Review available options, prices, schedules, provider details, and other travel information when shown.",
+  "howItWorks.steps.compare.description":
+    "Review available options, prices, schedules, provider details, and other travel information when shown.",
   "howItWorks.steps.choose.title": "Choose an offer",
-  "howItWorks.steps.choose.description": "Select the option that best matches your plans after reviewing the available details.",
+  "howItWorks.steps.choose.description":
+    "Select the option that best matches your plans after reviewing the available details.",
   "howItWorks.steps.continue.title": "Continue with the provider",
-  "howItWorks.steps.continue.description": "When redirected, continue on the provider website to review final details and complete any booking steps.",
+  "howItWorks.steps.continue.description":
+    "When redirected, continue on the provider website to review final details and complete any booking steps.",
   "howItWorks.providerWebsites.title": "Provider websites",
-  "howItWorks.providerWebsites.description": "Some bookings may be completed on provider websites after Kurioticket redirects you. Review the provider page for final availability, pricing, terms, payment steps, and booking details before completing a purchase.",
+  "howItWorks.providerWebsites.description":
+    "Some bookings may be completed on provider websites after Kurioticket redirects you. Review the provider page for final availability, pricing, terms, payment steps, and booking details before completing a purchase.",
   footerContactUs: "Contact Us",
   footerCustomerSupport: "Customer support",
   footerServiceGuarantee: "Service Guarantee",
   footerMoreServiceInfo: "More Service Info",
   footerDiscover: "Discover",
   footerSavedRecent: "Saved & recent",
-  footerSavedTrips: "Saved trips",
+  footerSavedTrips: "Saved & Recent",
   footerRecentSearches: "Recent searches",
   footerTermsSettings: "Terms & Settings",
   footerPrivacyPolicy: "Privacy Policy",
@@ -2547,7 +3214,8 @@ export const translations: TranslationDictionary = {
   footerCookies: "Cookies",
   flightDetailsLoading: "Loading flight details...",
   flightQuoteUnavailable: "Flight quote unavailable",
-  flightSearchAgainCurrentPrices: "This flight quote is no longer available. Please search again for current prices.",
+  flightSearchAgainCurrentPrices:
+    "This flight quote is no longer available. Please search again for current prices.",
   flightDetailsProviderDisclaimer:
     "Final price, availability, booking, and fare rules are confirmed by the provider.",
   selectedFlights: "Selected Flights",
@@ -2575,9 +3243,11 @@ export const translations: TranslationDictionary = {
     "No additional live provider options are available for this flight right now.",
   confirmedByProvider: "Confirmed by provider",
   notRefundableBeforeDeparture: "Not refundable before departure",
-  refundableBeforeDepartureWithPenalty: "Refundable before departure with {{currency}} {{amount}} penalty",
+  refundableBeforeDepartureWithPenalty:
+    "Refundable before departure with {{currency}} {{amount}} penalty",
   refundableBeforeDeparture: "Refundable before departure",
-  changesAllowedWithPenalty: "Changes allowed with {{currency}} {{amount}} penalty",
+  changesAllowedWithPenalty:
+    "Changes allowed with {{currency}} {{amount}} penalty",
   changesAllowedBeforeDeparture: "Changes allowed before departure",
   changesNotAllowedBeforeDeparture: "Changes not allowed before departure",
   baggage: "Baggage",
@@ -2625,13 +3295,15 @@ export const translations: TranslationDictionary = {
   faqQuestionFindOptions: "How does Kurioticket find flight and hotel options?",
   faqAnswerFindOptions:
     "Kurioticket searches live offers from travel providers and brings options together in one place so you can compare prices, routes, stays, and details before choosing.",
-  faqQuestionSellDirectly: "Does Kurioticket sell tickets or hotel rooms directly?",
+  faqQuestionSellDirectly:
+    "Does Kurioticket sell tickets or hotel rooms directly?",
   faqAnswerSellDirectly:
     "Kurioticket helps you compare travel options. When you choose an offer, you are sent to the selected provider to review details and complete the booking on that provider’s site.",
   faqQuestionPriceChanges: "Why can prices change after I click an offer?",
   faqAnswerPriceChanges:
     "Prices and availability can change in real time because airlines, hotels, and travel providers update inventory frequently. Always review the final price on the provider’s checkout page before booking.",
-  faqQuestionCompareProviders: "Can I compare multiple providers for the same trip?",
+  faqQuestionCompareProviders:
+    "Can I compare multiple providers for the same trip?",
   faqAnswerCompareProviders:
     "Yes. Kurioticket is designed to help you compare options side by side so you can evaluate price, timing, route details, hotel details, and overall value.",
   faqQuestionSecureBooking: "How do I complete my booking securely?",
@@ -2677,7 +3349,8 @@ export const translations: TranslationDictionary = {
     "Browse route ideas, then start a real search with dates and travelers before comparing available flights.",
   flightLandingRouteTemplate: "{{origin}} to {{destination}}",
   flightLandingRouteConnector: "to",
-  flightLandingRouteAriaLabel: "Search flights from {{origin}} to {{destination}}",
+  flightLandingRouteAriaLabel:
+    "Search flights from {{origin}} to {{destination}}",
   "flightLandingCity.Abu Dhabi": "Abu Dhabi",
   "flightLandingCity.Abuja": "Abuja",
   "flightLandingCity.Accra": "Accra",
@@ -2820,9 +3493,16 @@ export const translations: TranslationDictionary = {
   clearTravelDates: "Clear travel dates",
   clearDestination: "Clear destination",
   clearOrigin: "Clear origin",
-  roundTrip: "Round trip",
-  oneWay: "One way",
+  roundTrip: "Round-trip",
+  oneWay: "One-way",
   multiCity: "Multi-city",
+  "flightMultiCity.title": "Multi-city flights",
+  "flightMultiCity.flight": "Flight {{number}}",
+  "flightMultiCity.addFlight": "Add flight",
+  "flightMultiCity.removeFlight": "Remove flight {{number}}",
+  "flightMultiCity.departureDate": "Departure date",
+  "flightMultiCity.sameAirport": "Origin and destination must be different.",
+  "flightMultiCity.maximum": "Maximum flights reached",
   economy: "Economy",
   premium: "Premium",
   business: "Business",
@@ -2843,8 +3523,10 @@ export const translations: TranslationDictionary = {
   searchAirportsOrCities: "Search airports or cities",
   cityAirportOrCode: "City, airport, or code",
   cityOrAirport: "City or airport",
-  startTypingCityAirportOrCode: "Start typing a city, airport, or IATA code to see suggestions.",
-  startTypingCityOrAirport: "Start typing a city or airport name to see suggestions.",
+  startTypingCityAirportOrCode:
+    "Start typing a city, airport, or IATA code to see suggestions.",
+  startTypingCityOrAirport:
+    "Start typing a city or airport name to see suggestions.",
   searchingAirportsAndCities: "Searching airports and cities…",
   noMatchingAirportsOrCities: "No matching airports or cities",
   chooseOrigin: "Choose origin",
@@ -2856,18 +3538,25 @@ export const translations: TranslationDictionary = {
   exploreHotelStaysByDestination: "Explore hotel stays by destination",
   featuredHotelDestinations: "Featured hotel destinations",
   findStaysEveryKindTrip: "Find stays for every kind of trip",
-  hotelInspirationBody: "Browse destination ideas by the kind of stay you have in mind.",
+  hotelInspirationBody:
+    "Browse destination ideas by the kind of stay you have in mind.",
   hotelInspirationCategories: "Hotel inspiration categories",
-  searchRentalCarsEveryPartTrip: "Search rental cars for every part of your trip",
+  searchRentalCarsEveryPartTrip:
+    "Search rental cars for every part of your trip",
+  carsDesktopHeroTitle: "Find the perfect car for your next trip",
+  carsDesktopHeroBody:
+    "Compare top car rental brands and explore at your own pace.",
   exploreRoute: "Explore route",
   beachVacations: "Beach vacations",
   beachVacationsBody:
     "Explore flight routes to sunny coastlines, island escapes, and warm-weather beach destinations.",
   exploreStaysWorldwide: "Explore stays around the world",
   exploreCarsByTripStyle: "Explore rental cars by trip style",
-  carsTripStyleBody: "Choose a car type and we’ll open results with the search context ready.",
+  carsTripStyleBody:
+    "Choose a car type and we’ll open results with the search context ready.",
   flightBookingFaqs: "Flight booking FAQs",
-  flightBookingFaqIntro: "Review common flight-search details before continuing with a provider.",
+  flightBookingFaqIntro:
+    "Review common flight-search details before continuing with a provider.",
   flightFaqBestTimeQuestion: "When is the best time to book a flight?",
   flightFaqBestTimeAnswer:
     "Flight prices can change based on route, season, demand, and availability. It is usually helpful to compare several dates, check nearby airports when possible, and review the full itinerary before choosing a fare.",
@@ -2886,7 +3575,8 @@ export const translations: TranslationDictionary = {
   flightFaqChangeCancelQuestion: "Can I change or cancel my ticket?",
   flightFaqChangeCancelAnswer:
     "Change and cancellation options depend on the fare rules and provider policies. Some tickets may be non-refundable or include fees, so review the terms carefully before booking.",
-  flightFaqInternationalQuestion: "What should I know about international flights?",
+  flightFaqInternationalQuestion:
+    "What should I know about international flights?",
   flightFaqInternationalAnswer:
     "For international travel, review passport validity, visa requirements, transit rules, baggage policies, and arrival requirements for your destination before booking.",
   price: "Price",
@@ -2943,14 +3633,24 @@ export const translations: TranslationDictionary = {
   quickest: "Quickest",
   departs: "Departs",
   updatingResults: "Updating results...",
-  noFlightsMatchFilters: "No flights match these filters. Widen your filters to see more live options.",
+  noFlightsMatchFilters:
+    "No flights match these filters. Widen your filters to see more live options.",
   unableToSearchFlights: "Unable to search flights.",
-  "Live flight results are temporarily unavailable. Please try again shortly.": "Live flight results are temporarily unavailable. Please try again shortly.",
-  limitedProviderChecks: "Some provider checks may be limited for this search. Review final availability and fare details with the provider before booking.",
+  "Live flight results are temporarily unavailable. Please try again shortly.":
+    "Live flight results are temporarily unavailable. Please try again shortly.",
+  limitedProviderChecks:
+    "Some provider checks may be limited for this search. Review final availability and fare details with the provider before booking.",
   closeFilters: "Close filters",
   editFlightSearch: "Edit flight search",
   travelersAndCabin: "Travelers and cabin",
   travelersAndCabinClass: "Travelers and cabin class",
+  "mobileTravelerCabin.title": "Travelers & Cabin",
+  "mobileTravelerCabin.adultDescription": "18 years and above",
+  "mobileTravelerCabin.childDescription": "2 to 17 years",
+  "mobileTravelerCabin.infantDescription": "Under 2 years",
+  "mobileTravelerCabin.tip": "Tip",
+  "mobileTravelerCabin.baggageTip":
+    "Baggage allowance may vary by airline. Check details on the provider page.",
   infantsOnLap: "Infants on lap",
   childAgeRange: "Ages 2–17",
   under2: "Under 2",
@@ -2973,12 +3673,17 @@ export const translations: TranslationDictionary = {
   flightOption: "Flight option",
   estimatedPrice: "Estimated price",
   providerPrice: "Provider price",
-  displayEstimateConvertedFromProviderPrice: "{{formatted}}. Display estimate converted from {{providerPrice}}. Final provider price may differ.",
-  convertedDisplayEstimateProviderPrice: "Converted display estimate. Provider price: {{providerPrice}}. Final provider price may differ.",
+  displayEstimateConvertedFromProviderPrice:
+    "{{formatted}}. Display estimate converted from {{providerPrice}}. Final provider price may differ.",
+  convertedDisplayEstimateProviderPrice:
+    "Converted display estimate. Provider price: {{providerPrice}}. Final provider price may differ.",
   viewFlight: "View Flight",
-  flightCardProviderHandoff: "Final price, availability, booking, and fare rules are confirmed by the provider.",
-  flightCardProviderHandoffConverted: "Final price, availability, booking, and fare rules are confirmed by the provider. Final provider currency may differ from your selected display currency.",
-  providerNormalizedItineraryPrefix: "Outbound and return details are shown from provider-normalized itinerary data.",
+  flightCardProviderHandoff:
+    "Final price, availability, booking, and fare rules are confirmed by the provider.",
+  flightCardProviderHandoffConverted:
+    "Final price, availability, booking, and fare rules are confirmed by the provider. Final provider currency may differ from your selected display currency.",
+  providerNormalizedItineraryPrefix:
+    "Outbound and return details are shown from provider-normalized itinerary data.",
   checkProvider: "Check provider",
   carryOnIncluded: "carry-on included",
   flightLeg: "Flight leg",
@@ -2986,15 +3691,17 @@ export const translations: TranslationDictionary = {
   layoverSummaryTemplate: "Layover: {{airport}} {{duration}}",
   moreCount: "{{count}} more",
   loadingCarRentalResults: "Loading car rental results",
-  loadingSavedTripsAndRecentSearches: "Loading saved trips and recent searches",
+  loadingSavedTripsAndRecentSearches: "Loading Saved & Recent",
   loadingHotelSearch: "Loading hotel search...",
-  "deals.heroTitle": "Find travel deals for your next trip",
-  "deals.heroSubtitle": "Search flights, stays, and cars together in one place.",
+  "deals.heroTitle": "Find travel packages for your next trip",
+  "deals.heroSubtitle":
+    "Search flights, stays, and cars together in one place.",
   "deals.packageLegend": "Choose trip type",
   "deals.package.hotelFlight": "Hotel + Flight",
   "deals.package.hotelFlightCar": "Hotel + Flight + Car",
   "deals.package.flightCar": "Flight + Car",
   "deals.package.hotelCar": "Hotel + Car",
+  "deals.packageSelector.instruction": "Choose a package",
   "deals.originLabel": "Where from?",
   "deals.destinationLabel": "Where to?",
   "deals.datesLabel": "Travel dates",
@@ -3004,7 +3711,61 @@ export const translations: TranslationDictionary = {
   "deals.travelersDetailsLabel": "Travelers / details",
   "deals.travelersRoomsCarLabel": "Travelers / rooms / car",
   "deals.originPlaceholder": "City or airport",
-  "deals.searchButton": "Search deals",
+  "deals.searchButton": "Search packages",
+  "deals.guidedPreview.availableReview":
+    "Trip Review with persisted opened-step progress",
+  "deals.guidedPreview.availableHandoff":
+    "Final booking-partner handoff for each included product",
+  "deals.guidedPreview.previewOnlyTitle": "Preview limitations",
+  "deals.guidedPreview.previewOnlyPublicLaunch":
+    "Public activation has not occurred; normal Search remains unchanged.",
+  "deals.guidedPreview.previewOnlyBooking":
+    "Kurioticket does not complete booking or payment. Complete each provider step separately.",
+  "deals.guided.confirmation.readError":
+    "Saved preview progress could not be read. Try confirmation again.",
+  "deals.guided.confirmation.saveError":
+    "Preview progress could not be saved. Try confirmation again.",
+  "deals.guided.confirmation.retry": "Try again",
+  "deals.guided.crossTabUpdated": "This trip was updated in another tab.",
+  "deals.guided.prerequisiteChanged":
+    "An earlier trip choice changed in another tab. Your current saved trip is now shown.",
+  "deals.guided.conflict.title": "Another guided preview is saved",
+  "deals.guided.conflict.body":
+    "This page belongs to a different guided search. To protect its progress, no trip choices or booking-partner actions are available here.",
+  "deals.guided.conflict.restart": "Start this preview trip again",
+  "deals.guided.conflict.restartDisclosure":
+    "Starting again replaces the guided-preview progress currently saved in this browser.",
+  "deals.guided.storageUnavailable.title":
+    "Temporary preview storage is unavailable",
+  "deals.guided.storageUnavailable.body":
+    "This guided stage cannot safely save progress. Restore browser storage, then reload and try again.",
+  "deals.guided.invalid.title": "Saved preview progress is invalid",
+  "deals.guided.invalid.body":
+    "Return to the first guided stage to choose fresh trip options.",
+  "deals.guided.expired.title": "Your guided preview has expired",
+  "deals.guided.expired.body":
+    "Return to the first guided stage and refresh your trip options.",
+  "deals.guided.error.title": "We could not show this guided Packages page",
+  "deals.guided.error.body":
+    "Your booking-partner pages were not opened. Try this page again or return safely to Packages.",
+  "deals.guided.error.retry": "Try again",
+  "deals.guided.error.returnDeals": "Return to Packages",
+  "deals.guidedPreview.badge": "Internal guided preview",
+  "deals.guidedPreview.title": "Preview the new Packages journey",
+  "deals.guidedPreview.description":
+    "Explore the complete internal preview: Hotel, Flight, and Car results, details, and confirmation, followed by Review and the final booking-partner handoff.",
+  "deals.guidedPreview.availableTitle": "Available now",
+  "deals.guidedPreview.availableHotel":
+    "Hotel results, room selection, details, and confirmation",
+  "deals.guidedPreview.availableFlight":
+    "Flight results, filters, sorting, details, and confirmation",
+  "deals.guidedPreview.availableCar":
+    "Car results, filters, sorting, details, and confirmation",
+  "deals.guidedPreview.normalSearchNote":
+    "This internal preview remains a separate action. Normal Search begins your package journey with its first Hotel or Flight results.",
+  "deals.guidedPreview.action": "Preview guided journey",
+  "deals.guidedPreview.accessibleName":
+    "Internal preview of the guided Packages journey",
   "deals.destinationPlaceholder": "City, airport, or area",
   "deals.dateFlightPlaceholder": "Departure — Return",
   "deals.dateHotelPlaceholder": "Check-in — Check-out",
@@ -3023,6 +3784,10 @@ export const translations: TranslationDictionary = {
   "deals.carRow": "Car",
   "deals.travellersRow": "Travellers",
   "deals.travellersRooms": "Travellers / rooms",
+  "deals.desktopPackages.travelersRoomsLabel": "Travelers/Rooms",
+  "deals.changeDatesForStay": "Change dates for stay",
+  "deals.datesForStay": "Dates for stay",
+  "deals.chooseStayDates": "Choose dates for stay",
   "deals.pickup": "Pick-up",
   "deals.returnLocation": "Return location",
   "deals.sameAsPickup": "Same as pick-up",
@@ -3061,28 +3826,34 @@ export const translations: TranslationDictionary = {
   "deals.error.children": "Children cannot be below zero.",
   "deals.error.rooms": "At least one room is required.",
   "deals.error.guests": "At least one guest is required.",
-  "deals.destinationIdeasTitle": "Places to start your deal search",
+  "deals.destinationIdeasTitle": "Places to start your package search",
   "deals.destinationIdeasSubtitle":
     "Choose a destination idea, then compare provider results when you continue.",
   "deals.destinationCardAriaPrefix": "Search trip ideas for",
   "deals.destination.tokyo.city": "Tokyo",
   "deals.destination.tokyo.country": "Japan",
-  "deals.destination.tokyo.imageAlt": "Tokyo skyline with dense high-rise buildings in daylight",
+  "deals.destination.tokyo.imageAlt":
+    "Tokyo skyline with dense high-rise buildings in daylight",
   "deals.destination.london.city": "London",
   "deals.destination.london.country": "United Kingdom",
-  "deals.destination.london.imageAlt": "Tower Bridge and the River Thames in London under a blue sky",
+  "deals.destination.london.imageAlt":
+    "Tower Bridge and the River Thames in London under a blue sky",
   "deals.destination.paris.city": "Paris",
   "deals.destination.paris.country": "France",
-  "deals.destination.paris.imageAlt": "Eiffel Tower and the Seine River in Paris at golden hour",
+  "deals.destination.paris.imageAlt":
+    "Eiffel Tower and the Seine River in Paris at golden hour",
   "deals.destination.dubai.city": "Dubai",
   "deals.destination.dubai.country": "United Arab Emirates",
-  "deals.destination.dubai.imageAlt": "Dubai skyline with the Burj Khalifa rising above skyscrapers",
+  "deals.destination.dubai.imageAlt":
+    "Dubai skyline with the Burj Khalifa rising above skyscrapers",
   "deals.destination.cancun.city": "Cancun",
   "deals.destination.cancun.country": "Mexico",
-  "deals.destination.cancun.imageAlt": "Cancun beach with white sand and turquoise water",
+  "deals.destination.cancun.imageAlt":
+    "Cancun beach with white sand and turquoise water",
   "deals.destination.rome.city": "Rome",
   "deals.destination.rome.country": "Italy",
-  "deals.destination.rome.imageAlt": "The Colosseum in Rome beneath a clear blue sky",
+  "deals.destination.rome.imageAlt":
+    "The Colosseum in Rome beneath a clear blue sky",
   "hotelResults.backToResults": "Back to Hotels results",
   "hotelResults.openFilters": "Open filters",
   "hotelResults.selectDateAriaPrefix": "Select",
@@ -3090,14 +3861,20 @@ export const translations: TranslationDictionary = {
   "hotelResults.comparingTotalStayPrices": "Comparing total stay prices...",
   "hotelResults.checkingArrivalConvenience": "Checking arrival convenience...",
   "hotelResults.findingLowStressStays": "Finding low-stress stays...",
-  "hotelResults.liveSearchUnavailable": "Live hotel search is temporarily unavailable. Please try again shortly.",
-  "hotelResults.searchUnavailableDetailed": "Hotel search is temporarily unavailable for this request. We only show stay options when price, availability, fees, and rules can be reviewed with the provider. Please try again later or start a new search.",
+  "hotelResults.liveSearchUnavailable":
+    "Live hotel search is temporarily unavailable. Please try again shortly.",
+  "hotelResults.searchUnavailableDetailed":
+    "Hotel search is temporarily unavailable for this request. We only show stay options when price, availability, fees, and rules can be reviewed with the provider. Please try again later or start a new search.",
   "hotelResults.unableToSearchHotels": "Unable to search hotels.",
-  "hotelResults.unableToOpenProvider": "Unable to open the provider right now. Please try again.",
-  "hotelResults.limitedProviderChecks": "Some provider checks may be limited for this hotel search. Review final availability, taxes, fees, and cancellation rules with the provider before booking.",
+  "hotelResults.unableToOpenProvider":
+    "Unable to open the provider right now. Please try again.",
+  "hotelResults.limitedProviderChecks":
+    "Some provider checks may be limited for this hotel search. Review final availability, taxes, fees, and cancellation rules with the provider before booking.",
   "hotelResults.noStaysMatchFiltersTitle": "No stays match these filters",
-  "hotelResults.noStaysMatchFiltersBody": "Try increasing the price range, lowering the star rating, or clearing selected hotel filters to see more available options.",
-  "hotelResults.noStaysMatchFiltersInline": "No stays match these filters. Widen your filters to see more available options.",
+  "hotelResults.noStaysMatchFiltersBody":
+    "Try increasing the price range, lowering the star rating, or clearing selected hotel filters to see more available options.",
+  "hotelResults.noStaysMatchFiltersInline":
+    "No stays match these filters. Widen your filters to see more available options.",
   "hotelResults.resetFilters": "Reset filters",
   "hotelResults.foundPlacesToStay": "We found {{count}} places to stay for you",
   "hotelResults.summaryAria": "Hotel result summary",
@@ -3143,7 +3920,8 @@ export const translations: TranslationDictionary = {
   "hotelResults.pricePerNight": "{{price}} per night",
   "hotelResults.viewHotel": "View hotel",
   "hotelResults.filter.freeWifi": "Free Wi-Fi",
-  "hotelResults.filter.breakfastIncludedAvailable": "Breakfast included/available",
+  "hotelResults.filter.breakfastIncludedAvailable":
+    "Breakfast included/available",
   "hotelResults.filter.freeCancellation": "Free cancellation",
   "hotelResults.filter.parking": "Parking",
   "hotelResults.filter.pool": "Pool",
@@ -3154,7 +3932,8 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.fullBoard": "Full board",
   "hotelResults.filter.allInclusive": "All inclusive",
   "hotelResults.filter.flexibleCancellation": "Flexible cancellation",
-  "hotelResults.filter.cancellationPolicyAvailable": "Cancellation policy available",
+  "hotelResults.filter.cancellationPolicyAvailable":
+    "Cancellation policy available",
   "hotelResults.filter.spa": "Spa",
   "hotelResults.filter.fitnessCenter": "Fitness center",
   "hotelResults.filter.workspace": "Workspace",
@@ -3192,27 +3971,42 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.superiorDoubleRoom": "Superior Double Room",
   "hotelResults.filter.superiorRoom": "Superior Room",
   searchRentalCars: "Search rental cars",
-  "flightLandingImageAlt.Johannesburg skyline at golden hour": "Johannesburg skyline at golden hour",
-  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza": "Cairo skyline with the Pyramids of Giza",
-  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands": "Addis Ababa cityscape in the Ethiopian highlands",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour":
+    "Johannesburg skyline at golden hour",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza":
+    "Cairo skyline with the Pyramids of Giza",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
+    "Addis Ababa cityscape in the Ethiopian highlands",
 
   // Hotels landing static render-path localization coverage.
-  "hotelsHeroImageAlt": "Hotel bellboy welcoming a guest with luggage in a premium lobby",
-  "hotelDestination.Rome.imageAlt": "The Colosseum in Rome beneath a clear blue sky",
-  "hotelDestination.Dubai.imageAlt": "Dubai skyline with the Burj Khalifa rising above skyscrapers",
-  "hotelDestination.Singapore.imageAlt": "Marina Bay skyline in Singapore at dusk",
-  "hotelDestination.Barcelona.imageAlt": "Barcelona cityscape with Sagrada Familia in daylight",
-  "hotelDestination.Toronto.imageAlt": "Toronto skyline with the CN Tower beside Lake Ontario",
-  "hotelDestination.Amsterdam.imageAlt": "Amsterdam canal houses and bridge along the water",
-  "hotelDestination.Bangkok.imageAlt": "Bangkok city skyline and Chao Phraya river at sunset",
-  "hotelDestination.Cancun.imageAlt": "Cancun beach with white sand and turquoise water",
-  "hotelDestination.Istanbul.imageAlt": "Istanbul waterfront with domes and minarets at golden hour",
-  "newsletter.accountEmailLine": "Subscribe with your account email: {{email}}.",
+  hotelsHeroImageAlt:
+    "Hotel bellboy welcoming a guest with luggage in a premium lobby",
+  "hotelDestination.Rome.imageAlt":
+    "The Colosseum in Rome beneath a clear blue sky",
+  "hotelDestination.Dubai.imageAlt":
+    "Dubai skyline with the Burj Khalifa rising above skyscrapers",
+  "hotelDestination.Singapore.imageAlt":
+    "Marina Bay skyline in Singapore at dusk",
+  "hotelDestination.Barcelona.imageAlt":
+    "Barcelona cityscape with Sagrada Familia in daylight",
+  "hotelDestination.Toronto.imageAlt":
+    "Toronto skyline with the CN Tower beside Lake Ontario",
+  "hotelDestination.Amsterdam.imageAlt":
+    "Amsterdam canal houses and bridge along the water",
+  "hotelDestination.Bangkok.imageAlt":
+    "Bangkok city skyline and Chao Phraya river at sunset",
+  "hotelDestination.Cancun.imageAlt":
+    "Cancun beach with white sand and turquoise water",
+  "hotelDestination.Istanbul.imageAlt":
+    "Istanbul waterfront with domes and minarets at golden hour",
+  "newsletter.accountEmailLine":
+    "Subscribe with your account email: {{email}}.",
   "newsletter.manageEmailPreferences": "Manage email preferences",
   emailPreferencesMetadataTitle: "Email preferences",
   "emailUpdates.eyebrow": "KURIOTICKET UPDATES",
   "emailUpdates.title": "Manage email updates",
-  "emailUpdates.description": "Choose whether Kurioticket can send travel updates and product news to this email address.",
+  "emailUpdates.description":
+    "Choose whether Kurioticket can send travel updates and product news to this email address.",
   "emailUpdates.emailLabel": "EMAIL",
   "emailUpdates.subscribedStatus": "You are subscribed.",
   "emailUpdates.subscribedButton": "Subscribed",
@@ -3229,109 +4023,201 @@ export const translations: TranslationDictionary = {
   "emailUpdates.updateError": "We could not update this preference right now.",
   "emailUpdates.preferenceUpdated": "Preference updated.",
   "legal.privacyChoices.title": "Privacy Choices",
-  "legal.privacyChoices.summary": "Privacy and account choices currently available for Kurioticket users.",
+  "legal.privacyChoices.summary":
+    "Privacy and account choices currently available for Kurioticket users.",
   "legal.privacyChoices.lastUpdatedDate": "June 28, 2026",
   "legal.privacyChoices.lastUpdated": "Last updated: June 28, 2026",
   "legal.privacyChoices.tableOfContents": "TABLE OF CONTENTS",
   "legal.privacyChoices.sections.requests.title": "Privacy Requests",
-  "legal.privacyChoices.sections.requests.paragraph1": "You can contact privacy@kurioticket.com for privacy requests, account-data questions, and requests involving personal information handled by Kurioticket.",
-  "legal.privacyChoices.sections.requests.paragraph2": "You may request access, correction, deletion, or ask questions about account or personal data. Kurioticket may need to verify your identity and may retain limited records where required for security, legal, fraud-prevention, dispute-resolution, or legitimate business purposes.",
-  "legal.privacyChoices.sections.account-alerts.title": "Account and Alert Choices",
-  "legal.privacyChoices.sections.account-alerts.paragraph1": "Where account settings are available, users can manage account details, saved travel features, alerts, and communication preferences.",
-  "legal.privacyChoices.sections.account-alerts.paragraph2": "For email or alert preferences, use unsubscribe or preference-management links where provided, adjust available account settings, or contact support@kurioticket.com for help.",
-  "legal.privacyChoices.sections.tracking-choices.title": "Ads and Analytics Choices",
-  "legal.privacyChoices.sections.tracking-choices.paragraph1": "Kurioticket LLC does not currently use active ads or third-party analytics tracking tools.",
-  "legal.privacyChoices.sections.tracking-choices.paragraph2": "If ads or third-party analytics tracking tools are added later, Kurioticket should update applicable policies and provide privacy choices where required by law.",
-  "legal.privacyChoices.developerNote": "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before a large-scale public launch.",
+  "legal.privacyChoices.sections.requests.paragraph1":
+    "You can contact privacy@kurioticket.com for privacy requests, account-data questions, and requests involving personal information handled by Kurioticket.",
+  "legal.privacyChoices.sections.requests.paragraph2":
+    "You may request access, correction, deletion, or ask questions about account or personal data. Kurioticket may need to verify your identity and may retain limited records where required for security, legal, fraud-prevention, dispute-resolution, or legitimate business purposes.",
+  "legal.privacyChoices.sections.account-alerts.title":
+    "Account and Alert Choices",
+  "legal.privacyChoices.sections.account-alerts.paragraph1":
+    "Where account settings are available, users can manage account details, saved travel features, alerts, and communication preferences.",
+  "legal.privacyChoices.sections.account-alerts.paragraph2":
+    "For email or alert preferences, use unsubscribe or preference-management links where provided, adjust available account settings, or contact support@kurioticket.com for help.",
+  "legal.privacyChoices.sections.tracking-choices.title":
+    "Ads and Analytics Choices",
+  "legal.privacyChoices.sections.tracking-choices.paragraph1":
+    "Kurioticket LLC does not currently use active ads or third-party analytics tracking tools.",
+  "legal.privacyChoices.sections.tracking-choices.paragraph2":
+    "If ads or third-party analytics tracking tools are added later, Kurioticket should update applicable policies and provide privacy choices where required by law.",
+  "legal.privacyChoices.developerNote":
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before a large-scale public launch.",
 
   "metadata.flightResults.title": "Flight Results",
-  "metadata.flightResults.description": "Compare available flight options and continue with the provider to confirm final prices and fare rules.",
+  "metadata.flightResults.description":
+    "Compare available flight options and continue with the provider to confirm final prices and fare rules.",
   "metadata.flightDetails.title": "Flight Details",
-  "metadata.flightDetails.description": "Review flight details, provider handoff information, and fare context before continuing with your trip.",
+  "metadata.flightDetails.description":
+    "Review flight details, provider handoff information, and fare context before continuing with your trip.",
   "metadata.hotelResults.title": "Hotel Results",
-  "metadata.hotelResults.description": "Compare available hotel options and continue with the provider to confirm final prices, availability, fees, and cancellation rules.",
+  "metadata.hotelResults.description":
+    "Compare available hotel options and continue with the provider to confirm final prices, availability, fees, and cancellation rules.",
   "metadata.hotelDetails.title": "Hotel Details",
-  "metadata.hotelDetails.description": "Review the selected hotel, room details, amenities, pricing, and provider information before continuing with the provider.",
+  "metadata.hotelDetails.description":
+    "Review the selected hotel, room details, amenities, pricing, and provider information before continuing with the provider.",
   "hotelDetails.loading": "Loading hotel details...",
   "hotelDetails.unavailableTitle": "Hotel quote unavailable",
-  "hotelDetails.unavailableBody": "This hotel quote is no longer available. Please search again for current prices.",
-  "hotelDetails.providerDisclaimer": "Final price, availability, room conditions, taxes, fees, cancellation terms, and booking are confirmed by the provider.",
-  "hotelDetails.demoBookingUnavailable": "This illustrative demo listing cannot be booked with an external provider.",
-  "hotelDetails.directLinkUnavailable": "A provider link is not available for this hotel right now.",
-  "hotelDetails.redirectError": "We could not open the provider right now. Please try again.",
+  "hotelDetails.unavailableBody":
+    "This hotel quote is no longer available. Please search again for current prices.",
+  "hotelDetails.providerDisclaimer":
+    "Final price, availability, room conditions, taxes, fees, cancellation terms, and booking are confirmed by the provider.",
+  "hotelDetails.demoBookingUnavailable":
+    "This illustrative demo listing cannot be booked with an external provider.",
+  "hotelDetails.directLinkUnavailable":
+    "A provider link is not available for this hotel right now.",
+  "hotelDetails.redirectError":
+    "We could not open the provider right now. Please try again.",
   "hotelDetails.viewAllPhotos": "View all photos",
   "hotelDetails.viewPhoto": "View photo",
   "hotelDetails.closePhotoViewer": "Close photo viewer",
   "hotelDetails.photoViewerTitle": "Photos for {{hotelName}}",
-  "hotelDetails.openPhotoViewer": "Open photo {{current}} of {{total}} for {{hotelName}}",
+  "hotelDetails.openPhotoViewer":
+    "Open photo {{current}} of {{total}} for {{hotelName}}",
   "hotelDetails.photoPositionAnnouncement": "Photo {{current}} of {{total}}",
+  "hotelDetails.backToHotelResults": "Back to hotel results",
+  "hotelDetails.remainingPhotos": "+{{count}} photos",
+  "hotelDetails.share": "Share",
+  "hotelDetails.shared": "Copied",
+  "hotelDetails.more": "More",
+  "hotelDetails.showLess": "Show less",
+  "hotelDetails.aboutProperty": "About this property",
+  "hotelDetails.location": "Location",
+  "hotelDetails.getDirections": "Get directions",
+  "hotelDetails.map": "Map",
+  "hotelDetails.streetView": "Street View",
+  "hotelDetails.yourStay": "Your stay",
+  "hotelDetails.viewRoomOptions": "View room options",
+  "hotelDetails.roomOptionsSupport": "You'll choose your room in the next step.",
+  "hotelDetails.roomOptionsTitle": "Room options",
+  "hotelDetails.closeRoomOptions": "Close room options",
+  "hotelDetails.planningPriceMayVary": "Final taxes, availability, and terms may vary.",
+  "hotelDetails.planningSecureTitle": "Secure Kurioticket experience",
+  "hotelDetails.planningSecureBody": "Your trip planning data stays protected.",
+  "hotelDetails.termsTitle": "Planning estimates",
+  "hotelDetails.termsBody": "Final room availability and terms must be confirmed.",
+  "hotelDetails.paymentTitle": "No payment collected",
+  "hotelDetails.paymentBody": "Kurioticket does not collect payment for this planning listing.",
+  "hotelDetails.moreHotelsIn": "More hotels in {{destination}}",
+  "hotelDetails.priceUnavailable": "Price unavailable",
 
   "flightResults.loading.title": "Searching the best flights for you",
-  "flightResults.loading.checkingAirlinesAndFares": "Checking airlines and fares...",
-  "flightResults.loading.comparingRoutesAndProviders": "Comparing routes and providers...",
-  "flightResults.loading.findingBestAvailableOptions": "Finding the best available options...",
+  "carsResults.loading.title": "Searching the best cars for you",
+  "carsResults.loading.checkingCarsAndRates":
+    "Checking rental cars and rates...",
+  "carsResults.loading.comparingVehiclesAndProviders":
+    "Comparing vehicles and providers...",
+  "carsResults.loading.findingBestAvailableOptions":
+    "Finding the best available options...",
+  "carsResults.loading.preparingResults": "Preparing your results...",
+  "flightResults.loading.checkingAirlinesAndFares":
+    "Checking airlines and fares...",
+  "flightResults.loading.comparingRoutesAndProviders":
+    "Comparing routes and providers...",
+  "flightResults.loading.findingBestAvailableOptions":
+    "Finding the best available options...",
   "flightResults.loading.preparingResults": "Preparing your results...",
-  "flightResults.beachVisual.CUN.alt": "Bright Cancun beach with white sand and turquoise water",
-  "flightResults.beachVisual.HNL.alt": "Sunny Waikiki beach and clear Pacific water in Honolulu",
-  "flightResults.beachVisual.SJU.alt": "Turquoise Caribbean shoreline with palms",
-  "flightResults.beachVisual.DPS.alt": "Sunny Bali coastline with tropical ocean views",
-  "flightResults.beachVisual.ZNZ.alt": "Zanzibar beach with palm trees and turquoise water",
-  "flightResults.beachVisual.PVR.alt": "Puerto Vallarta coastline with bright Pacific water",
-  "flightResults.beachVisual.FAO.alt": "Sunny Algarve cliffs and beach near Faro",
-  "flightResults.beachVisual.CPT.alt": "Cape Town coastline with ocean and mountains",
-  "flightResults.beachVisual.SYD.alt": "Bright ocean beach with turquoise water",
-  "flightResults.beachVisual.SAN.alt": "Sunny San Diego coastline and blue ocean",
-  "flightResults.beachVisual.MIA.alt": "Bright Miami coast and Biscayne Bay waterfront",
+  "flightResults.beachVisual.CUN.alt":
+    "Bright Cancun beach with white sand and turquoise water",
+  "flightResults.beachVisual.HNL.alt":
+    "Sunny Waikiki beach and clear Pacific water in Honolulu",
+  "flightResults.beachVisual.SJU.alt":
+    "Turquoise Caribbean shoreline with palms",
+  "flightResults.beachVisual.DPS.alt":
+    "Sunny Bali coastline with tropical ocean views",
+  "flightResults.beachVisual.ZNZ.alt":
+    "Zanzibar beach with palm trees and turquoise water",
+  "flightResults.beachVisual.PVR.alt":
+    "Puerto Vallarta coastline with bright Pacific water",
+  "flightResults.beachVisual.FAO.alt":
+    "Sunny Algarve cliffs and beach near Faro",
+  "flightResults.beachVisual.CPT.alt":
+    "Cape Town coastline with ocean and mountains",
+  "flightResults.beachVisual.SYD.alt":
+    "Bright ocean beach with turquoise water",
+  "flightResults.beachVisual.SAN.alt":
+    "Sunny San Diego coastline and blue ocean",
+  "flightResults.beachVisual.MIA.alt":
+    "Bright Miami coast and Biscayne Bay waterfront",
 
   "flightResults.duration.minutesOnly": "{{minutes}}m",
   "flightResults.duration.hoursOnly": "{{hours}}h",
   "flightResults.duration.hoursMinutes": "{{hours}}h {{minutes}}m",
 
   "accountDashboard.hub.customizationPreferences": "Customization preferences",
-  "accountDashboard.preferences.customization.subtitle": "Settings that make the website feel personal to you.",
+  "accountDashboard.preferences.customization.subtitle":
+    "Settings that make the website feel personal to you.",
   "accountDashboard.preferences.customization.sections.display": "Display",
-  "accountDashboard.preferences.customization.sections.regionalDefaults": "Regional defaults",
-  "accountDashboard.preferences.customization.sections.personalization": "Personalization",
-  "accountDashboard.preferences.customization.fields.theme.label": "Theme preference",
-  "accountDashboard.preferences.customization.fields.theme.description": "Choose how Kurioticket should look while you use it.",
-  "accountDashboard.preferences.customization.fields.density.label": "Display density",
-  "accountDashboard.preferences.customization.fields.density.description": "Adjust how spacious lists and controls feel.",
-  "accountDashboard.preferences.customization.fields.language.label": "Language",
-  "accountDashboard.preferences.customization.fields.currency.label": "Currency",
-  "accountDashboard.preferences.customization.fields.region.label": "Display/search market",
-  "accountDashboard.preferences.customization.fields.personalizeRecommendations.label": "Personalize recommendations",
-  "accountDashboard.preferences.customization.fields.personalizeRecommendations.description": "Use your saved trips to personalize homepage destination recommendations.",
-  "accountDashboard.preferences.customization.options.theme.system": "System default",
+  "accountDashboard.preferences.customization.sections.regionalDefaults":
+    "Regional defaults",
+  "accountDashboard.preferences.customization.sections.personalization":
+    "Personalization",
+  "accountDashboard.preferences.customization.fields.theme.label":
+    "Theme preference",
+  "accountDashboard.preferences.customization.fields.theme.description":
+    "Choose how Kurioticket should look while you use it.",
+  "accountDashboard.preferences.customization.fields.density.label":
+    "Display density",
+  "accountDashboard.preferences.customization.fields.density.description":
+    "Adjust how spacious lists and controls feel.",
+  "accountDashboard.preferences.customization.fields.language.label":
+    "Language",
+  "accountDashboard.preferences.customization.fields.currency.label":
+    "Currency",
+  "accountDashboard.preferences.customization.fields.region.label":
+    "Display/search market",
+  "accountDashboard.preferences.customization.fields.personalizeRecommendations.label":
+    "Personalize recommendations",
+  "accountDashboard.preferences.customization.fields.personalizeRecommendations.description":
+    "Use your saved trips to personalize homepage destination recommendations.",
+  "accountDashboard.preferences.customization.options.theme.system":
+    "System default",
   "accountDashboard.preferences.customization.options.theme.light": "Light",
   "accountDashboard.preferences.customization.options.theme.dark": "Dark",
-  "accountDashboard.preferences.customization.options.density.comfortable": "Comfortable",
-  "accountDashboard.preferences.customization.options.density.compact": "Compact",
-  "accountDashboard.preferences.customization.options.language.english": "English",
+  "accountDashboard.preferences.customization.options.density.comfortable":
+    "Comfortable",
+  "accountDashboard.preferences.customization.options.density.compact":
+    "Compact",
+  "accountDashboard.preferences.customization.options.language.english":
+    "English",
   "accountDashboard.preferences.customization.options.currency.USD": "USD",
   "accountDashboard.preferences.customization.options.currency.GBP": "GBP",
   "accountDashboard.preferences.customization.options.currency.EUR": "EUR",
   "accountDashboard.preferences.customization.options.currency.NGN": "NGN",
-  "accountDashboard.preferences.customization.options.region.nigeria": "Nigeria",
-  "accountDashboard.preferences.customization.options.region.unitedKingdom": "United Kingdom",
-  "accountDashboard.preferences.customization.options.region.unitedStates": "United States",
+  "accountDashboard.preferences.customization.options.region.nigeria":
+    "Nigeria",
+  "accountDashboard.preferences.customization.options.region.unitedKingdom":
+    "United Kingdom",
+  "accountDashboard.preferences.customization.options.region.unitedStates":
+    "United States",
   "accountDashboard.preferences.customization.options.region.europe": "Europe",
   "accountDashboard.preferences.customization.actions.reset": "Reset",
   "accountDashboard.preferences.customization.actions.save": "Save",
   "accountDashboard.preferences.customization.actions.saving": "Saving…",
-  "accountDashboard.preferences.customization.status.loadError": "Unable to load saved customization preferences. Using this device’s settings for now.",
-  "accountDashboard.preferences.customization.status.updatedOnDeviceSignedOut": "Customization preferences are updated on this device. Sign in to sync them across devices.",
-  "accountDashboard.preferences.customization.status.saving": "Saving customization preferences…",
+  "accountDashboard.preferences.customization.status.loadError":
+    "Unable to load saved customization preferences. Using this device’s settings for now.",
+  "accountDashboard.preferences.customization.status.updatedOnDeviceSignedOut":
+    "Customization preferences are updated on this device. Sign in to sync them across devices.",
+  "accountDashboard.preferences.customization.status.saving":
+    "Saving customization preferences…",
   "accountDashboard.preferences.customization.status.savingShort": "Saving…",
-  "accountDashboard.preferences.customization.status.saved": "Customization preferences saved.",
+  "accountDashboard.preferences.customization.status.saved":
+    "Customization preferences saved.",
   "accountDashboard.preferences.customization.status.savedShort": "Saved.",
-  "accountDashboard.preferences.customization.status.saveError": "Unable to save customization preferences. Please try again.",
+  "accountDashboard.preferences.customization.status.saveError":
+    "Unable to save customization preferences. Please try again.",
   "deals.results.title": "Coordinated trip results",
-  "deals.results.explanation": "These results align each included product with your trip. Prices stay product-specific and selections are completed separately.",
+  "deals.results.explanation":
+    "These results align each included product with your trip. Prices stay product-specific and selections are completed separately.",
   "deals.results.modify": "Modify search",
   "deals.results.breadcrumb.label": "Breadcrumb",
-  "deals.results.breadcrumb.current": "Deals results",
-  "deals.results.returnToDeals": "Return to Deals",
-  "deals.results.summary.currentSearch": "Current Deals search",
+  "deals.results.breadcrumb.current": "Package results",
+  "deals.results.returnToDeals": "Return to Packages",
+  "deals.results.summary.currentSearch": "Current package search",
   "deals.results.summary.package": "Package",
   "deals.results.summary.route": "Route",
   "deals.results.summary.destination": "Destination",
@@ -3343,22 +4229,30 @@ export const translations: TranslationDictionary = {
   "deals.results.summary.carIncluded": "Car included",
   "deals.results.editor.title": "Modify your search",
   "deals.results.editor.eyebrow": "Modify search",
-  "deals.results.editor.description": "Adjust your trip details and update the results without leaving this page.",
+  "deals.results.editor.description":
+    "Adjust your trip details and update the results without leaving this page.",
   "deals.results.editor.close": "Close search editor",
   "deals.results.editor.update": "Update results",
   "deals.results.editor.updating": "Updating results…",
   "deals.results.editor.unchanged": "No search changes were made.",
-  "deals.results.editor.updatedAnnouncement": "Search updated. Refreshing your trip options.",
+  "deals.results.editor.updatedAnnouncement":
+    "Search updated. Refreshing your trip options.",
   "deals.results.editor.updatingAnnouncement": "Updating your search results.",
-  "deals.results.editor.updateFailed": "Results could not be updated. Try updating again.",
+  "deals.results.editor.updateFailed":
+    "Results could not be updated. Try updating again.",
   "deals.results.editor.correctSearch": "Correct search",
   "deals.results.editor.tripSuffix": "trip",
   "deals.results.editor.carIncluded": "Car included",
-  "deals.results.editor.clearFlight": "Updating this search will clear your selected flight.",
-  "deals.results.editor.clearStay": "Updating this search will clear your selected stay.",
-  "deals.results.editor.clearBoth": "Updating this search will clear your selected flight and stay.",
-  "deals.results.editor.selectionsCleared": "Your selected trip options were cleared because the search details changed.",
-  "deals.results.editor.correctHere": "Correct your search on this page without returning to Deals home.",
+  "deals.results.editor.clearFlight":
+    "Updating this search will clear your selected flight.",
+  "deals.results.editor.clearStay":
+    "Updating this search will clear your selected stay.",
+  "deals.results.editor.clearBoth":
+    "Updating this search will clear your selected flight and stay.",
+  "deals.results.editor.selectionsCleared":
+    "Your selected trip options were cleared because the search details changed.",
+  "deals.results.editor.correctHere":
+    "Correct your search on this page without returning to Packages home.",
   "deals.results.viewFlights": "View all flights",
   "deals.results.viewHotels": "View all hotels",
   "deals.results.viewFlightsCount": "View all {{count}} flight options",
@@ -3367,9 +4261,11 @@ export const translations: TranslationDictionary = {
   "deals.results.invalidTitle": "Review your search",
   "deals.results.invalidMessage": "Some trip details are missing or invalid.",
   "deals.results.noResults": "No matching results were found.",
-  "deals.results.providerUnavailable": "The provider is temporarily unavailable.",
+  "deals.results.providerUnavailable":
+    "The provider is temporarily unavailable.",
   "deals.results.rateLimited": "Too many searches. Please wait and try again.",
-  "deals.results.unsupportedDestination": "This hotel destination is not supported.",
+  "deals.results.unsupportedDestination":
+    "This hotel destination is not supported.",
   "deals.error.flightOriginCode": "Airport selection is required.",
   "deals.error.flightDestinationCode": "Select a valid arrival airport.",
   "deals.error.flightPassengers": "Use 1–9 whole-number passengers.",
@@ -3380,17 +4276,21 @@ export const translations: TranslationDictionary = {
   "deals.error.hotelRooms": "Select 1–6 rooms.",
   "deals.error.hotelDates": "Select valid hotel dates.",
   "deals.results.separateBooking": "Coordinated results, separate selections.",
-  "deals.results.tripOptionsExplanation": "Compare the included products and choose the options you want to continue with. Prices and bookings remain separate with each provider.",
+  "deals.results.tripOptionsExplanation":
+    "Compare the included products and choose the options you want to continue with. Prices and bookings remain separate with each provider.",
   "deals.results.tripOverview": "Trip overview",
   "deals.results.flightOptions": "Flight options",
   "deals.results.stayOptions": "Stay options",
   "deals.results.showingOptions": "Showing {{visible}} of {{total}} options",
-  "deals.results.priceResponsibility": "Prices can change. Confirm the final amount, availability and terms with the provider.",
+  "deals.results.priceResponsibility":
+    "Prices can change. Confirm the final amount, availability and terms with the provider.",
   "deals.results.flightEmpty": "No flight options matched this search.",
   "deals.results.hotelEmpty": "No stay options matched these dates.",
-  "deals.results.fallbackNotice": "Fallback options are shown while live provider results are unavailable.",
+  "deals.results.fallbackNotice":
+    "Fallback options are shown while live provider results are unavailable.",
   "deals.results.carContinuationTitle": "Continue with car rental",
-  "deals.results.carContinuationDescription": "Your car search details are ready. Open Cars results to compare available vehicles.",
+  "deals.results.carContinuationDescription":
+    "Your car search details are ready. Open Cars results to compare available vehicles.",
   "deals.results.hotelImageAlt": "Photo of {{name}}",
   "deals.results.hotelImageUnavailable": "Hotel image unavailable",
   "deals.results.totalStay": "Total stay",
@@ -3416,24 +4316,37 @@ export const translations: TranslationDictionary = {
   "deals.results.arrives": "Arrives",
   "deals.results.providerHandoff.continue": "Continue to provider",
   "deals.results.providerHandoff.providerGeneric": "the provider",
-  "deals.results.providerHandoff.flight.explanation": "You’ll leave Kurioticket to review the final price and booking details with {{provider}}.",
-  "deals.results.providerHandoff.flight.explanationGeneric": "You’ll leave Kurioticket to review the final price and booking details with the provider.",
-  "deals.results.providerHandoff.hotel.explanation": "You’ll leave Kurioticket to review the final price, availability and booking details with {{provider}}.",
-  "deals.results.providerHandoff.hotel.explanationGeneric": "You’ll leave Kurioticket to review the final price, availability and booking details with the provider.",
-  "deals.results.providerHandoff.unavailable": "Provider link unavailable for this preview.",
-  "deals.results.providerHandoff.hotel.discoveryUnavailable": "A live provider booking link is not available for this preview.",
-  "deals.results.providerHandoff.hotel.demoUnavailable": "This illustrative stay cannot be opened with an external provider.",
-  "deals.results.providerHandoff.flight.accessible": "Continue to {{provider}} for {{airline}} from {{origin}} to {{destination}}",
-  "deals.results.providerHandoff.hotel.accessible": "Continue to {{provider}} for {{hotel}}",
-  "deals.selection.disclosure": "Choosing an option does not book it. You will continue separately with each provider.",
+  "deals.results.providerHandoff.flight.explanation":
+    "You’ll leave Kurioticket to review the final price and booking details with {{provider}}.",
+  "deals.results.providerHandoff.flight.explanationGeneric":
+    "You’ll leave Kurioticket to review the final price and booking details with the provider.",
+  "deals.results.providerHandoff.hotel.explanation":
+    "You’ll leave Kurioticket to review the final price, availability and booking details with {{provider}}.",
+  "deals.results.providerHandoff.hotel.explanationGeneric":
+    "You’ll leave Kurioticket to review the final price, availability and booking details with the provider.",
+  "deals.results.providerHandoff.unavailable":
+    "Provider link unavailable for this preview.",
+  "deals.results.providerHandoff.hotel.discoveryUnavailable":
+    "A live provider booking link is not available for this preview.",
+  "deals.results.providerHandoff.hotel.demoUnavailable":
+    "This illustrative stay cannot be opened with an external provider.",
+  "deals.results.providerHandoff.flight.accessible":
+    "Continue to {{provider}} for {{airline}} from {{origin}} to {{destination}}",
+  "deals.results.providerHandoff.hotel.accessible":
+    "Continue to {{provider}} for {{hotel}}",
+  "deals.selection.disclosure":
+    "Choosing an option does not book it. You will continue separately with each provider.",
   "deals.selection.flight.choose": "Choose this flight",
   "deals.selection.flight.selected": "Flight selected",
-  "deals.selection.flight.accessible": "Choose {{airline}} from {{origin}} to {{destination}} for your trip plan",
-  "deals.selection.flight.selectedAccessible": "{{airline}} from {{origin}} to {{destination}} is selected for your trip plan",
+  "deals.selection.flight.accessible":
+    "Choose {{airline}} from {{origin}} to {{destination}} for your trip plan",
+  "deals.selection.flight.selectedAccessible":
+    "{{airline}} from {{origin}} to {{destination}} is selected for your trip plan",
   "deals.selection.hotel.choose": "Choose this stay",
   "deals.selection.hotel.selected": "Stay selected",
   "deals.selection.hotel.accessible": "Choose {{hotel}} for your trip plan",
-  "deals.selection.hotel.selectedAccessible": "{{hotel}} is selected for your trip plan",
+  "deals.selection.hotel.selectedAccessible":
+    "{{hotel}} is selected for your trip plan",
   "deals.tripPlan.title": "Selected trip option",
   "deals.tripPlan.flight": "Flight",
   "deals.tripPlan.hotel": "Stay",
@@ -3446,7 +4359,8 @@ export const translations: TranslationDictionary = {
   "deals.tripPlan.chooseBoth": "Choose a flight and stay to continue",
   "deals.tripPlan.chooseFlight": "Choose a flight to continue",
   "deals.tripPlan.chooseStay": "Choose a stay to continue",
-  "deals.tripPlan.disclosure": "Live items continue to their provider; planning-only items are reviewed on Kurioticket.",
+  "deals.tripPlan.disclosure":
+    "Live items continue to their provider; planning-only items are reviewed on Kurioticket.",
   "deals.tripPlan.estimatedTotal": "Estimated trip total",
   "deals.tripPlan.changeOption": "Change trip option",
   "deals.tripPlan.reviewSteps": "Review separate trip steps",
@@ -3458,23 +4372,28 @@ export const translations: TranslationDictionary = {
   "deals.tripPlan.stayAdded": "Stay added to your trip plan.",
   "deals.tripPlan.stayReplaced": "Stay replaced in your trip plan.",
   "deals.tripPlan.cleared": "Trip plan cleared.",
-  "deals.tripPlan.storageUnavailable": "Your browser could not save this temporary trip plan. Enable browser storage or try saving again before continuing.",
+  "deals.tripPlan.storageUnavailable":
+    "Your browser could not save this temporary trip plan. Enable browser storage or try saving again before continuing.",
   "deals.tripPlan.notSaved": "Temporary trip plan not saved",
   "deals.tripPlan.trySavingAgain": "Try saving again",
   "deals.tripPlan.planSaved": "Trip plan saved.",
-  "deals.tripPlan.resultTimestampUnavailable": "This option cannot be saved until fresh results are available.",
-  "deals.tripPlan.flightRemoved": "The previously selected flight is no longer available and was removed from your trip plan.",
-  "deals.tripPlan.stayRemoved": "The previously selected stay is no longer available and was removed from your trip plan.",
+  "deals.tripPlan.resultTimestampUnavailable":
+    "This option cannot be saved until fresh results are available.",
+  "deals.tripPlan.flightRemoved":
+    "The previously selected flight is no longer available and was removed from your trip plan.",
+  "deals.tripPlan.stayRemoved":
+    "The previously selected stay is no longer available and was removed from your trip plan.",
   "deals.handoff.eyebrow": "Booking steps",
   "deals.handoff.title": "Review separate trip steps",
-  "deals.handoff.explanation": "Review each selected item separately. Live items continue to their provider; planning-only items remain on Kurioticket.",
+  "deals.handoff.explanation":
+    "Review each selected item separately. Live items continue to their provider; planning-only items remain on Kurioticket.",
   "deals.handoff.loading": "Loading your trip plan…",
   "deals.handoff.empty": "No trip options have been selected.",
-  "deals.handoff.returnSearch": "Return to Deals search",
+  "deals.handoff.returnSearch": "Return to Packages search",
   "deals.handoff.expired": "Your selected options may have expired.",
   "deals.handoff.refresh": "Refresh results",
   "deals.handoff.incomplete": "Your trip plan is incomplete. Choose:",
-  "deals.handoff.returnResults": "Back to Deals results",
+  "deals.handoff.returnResults": "Back to Package results",
   "deals.handoff.provider": "Provided by {{provider}}",
   "deals.handoff.opened": "Details opened",
   "deals.handoff.notOpened": "Provider not yet opened",
@@ -3483,17 +4402,23 @@ export const translations: TranslationDictionary = {
   "deals.handoff.openStay": "Review Stay details",
   "deals.handoff.continueToProvider": "Continue to provider",
   "deals.handoff.newTab": "opens in a new tab",
-  "deals.handoff.productExpired": "This selected option may have expired. Refresh results before continuing.",
+  "deals.handoff.productExpired":
+    "This selected option may have expired. Refresh results before continuing.",
   "deals.handoff.carsStep": "Compare cars on Kurioticket",
-  "deals.handoff.carsExplanation": "Cars remains a separate Kurioticket comparison step.",
+  "deals.handoff.carsExplanation":
+    "Cars remains a separate Kurioticket comparison step.",
   "deals.handoff.compareCars": "Compare car options on Kurioticket",
-  "deals.handoff.storageUnavailable": "Browser storage is unavailable, so this temporary trip plan cannot be loaded.",
-  "deals.handoff.progressUnsaved": "Your provider was opened, but this progress may not survive a refresh.",
+  "deals.handoff.storageUnavailable":
+    "Browser storage is unavailable, so this temporary trip plan cannot be loaded.",
+  "deals.handoff.progressUnsaved":
+    "Your provider was opened, but this progress may not survive a refresh.",
   "deals.handoff.openNext": "Review next trip item",
   "deals.handoff.reviewSteps": "Review provider steps",
   "deals.handoff.openProvider": "Open details",
-  "deals.handoff.flightExpired": "This selected flight may have expired. Refresh the results to confirm current pricing and availability.",
-  "deals.handoff.stayExpired": "This selected stay may have expired. Refresh the results to confirm current pricing and availability.",
+  "deals.handoff.flightExpired":
+    "This selected flight may have expired. Refresh the results to confirm current pricing and availability.",
+  "deals.handoff.stayExpired":
+    "This selected stay may have expired. Refresh the results to confirm current pricing and availability.",
   "deals.handoff.flightPrice": "Selected flight price",
   "deals.handoff.stayPrice": "Selected stay total",
   "deals.handoff.estimatedPrice": "Estimated display price",
@@ -3506,9 +4431,12 @@ export const translations: TranslationDictionary = {
   "deals.handoff.allPagesOpened": "All trip steps reviewed",
   "deals.handoff.estimatedCombinedTotal": "Estimated trip total",
   "deals.handoff.combinedEstimateUnavailable": "Combined estimate unavailable",
-  "deals.handoff.estimateDisclosure": "This total combines live prices and planning estimates from separate sources. Final provider prices and availability are confirmed where booking is offered.",
-  "deals.handoff.openingDoesNotBook": "Opening a trip step marks it as reviewed. It does not book or reserve anything.",
-  "deals.handoff.summaryRefreshRequired": "One or more selected options need fresh prices. Refresh results before continuing with those items.",
+  "deals.handoff.estimateDisclosure":
+    "This total combines live prices and planning estimates from separate sources. Final provider prices and availability are confirmed where booking is offered.",
+  "deals.handoff.openingDoesNotBook":
+    "Opening a trip step marks it as reviewed. It does not book or reserve anything.",
+  "deals.handoff.summaryRefreshRequired":
+    "One or more selected options need fresh prices. Refresh results before continuing with those items.",
   "deals.handoff.nextToReview": "Next to review",
   "deals.handoff.pending": "Not opened",
   "deals.handoff.refreshRequired": "Refresh required",
@@ -3529,26 +4457,32 @@ export const translations: TranslationDictionary = {
   "deals.handoff.reviewStayAgain": "Review Stay details again",
   "deals.handoff.storageTitle": "Your temporary trip plan cannot be read",
   "deals.handoff.missingTitle": "Your trip plan is no longer available",
-  "deals.handoff.missingBody": "Return to Deals and choose a complete trip option again.",
+  "deals.handoff.missingBody":
+    "Return to Packages and choose a complete trip option again.",
   "deals.handoff.expiredTitle": "Your selected options need fresh prices",
-  "deals.handoff.expiredBody": "Refresh your results to check current prices and availability before continuing.",
+  "deals.handoff.expiredBody":
+    "Refresh your results to check current prices and availability before continuing.",
   "deals.handoff.incompleteTitle": "Your trip plan needs more options",
-  "deals.handoff.incompleteBody": "Return to your results and choose the missing items before continuing.",
-  "deals.handoff.openedAnnouncement": "{{product}} step opened in a new tab. {{opened}} of {{total}} trip steps reviewed.",
+  "deals.handoff.incompleteBody":
+    "Return to your results and choose the missing items before continuing.",
+  "deals.handoff.openedAnnouncement":
+    "{{product}} step opened in a new tab. {{opened}} of {{total}} trip steps reviewed.",
   "deals.results.flight.recommended.badge": "Recommended option",
   "deals.results.flight.lowest.badge": "Lowest price in these results",
   "deals.results.flight.shortest.badge": "Shortest journey in these results",
   "deals.results.hotel.recommended.badge": "Recommended stay",
   "deals.results.hotel.lowest.badge": "Lowest total in these results",
   "deals.results.hotel.rating.badge": "Highest guest rating in these results",
-  "deals.results.hotel.rating.reason": "The strongest normalized guest rating among the returned stays.",
+  "deals.results.hotel.rating.reason":
+    "The strongest normalized guest rating among the returned stays.",
   "deals.results.preview.more.badge": "More option",
   "hotelResults.reviewBand.exceptional": "Exceptional",
   "hotelResults.reviewBand.veryGood": "Very good",
   "hotelResults.reviewBand.good": "Good",
   "hotelResults.reviewBand.pleasant": "Pleasant",
   "hotelResults.reviewBand.reviewScore": "Guest rating",
-  "carsResults.demoNotice": "Demo inventory — vehicles and prices are illustrative and are not live availability.",
+  "carsResults.demoNotice":
+    "Demo inventory — vehicles and prices are illustrative and are not live availability.",
   "carsResults.resultsCount": "{count} cars",
   "carsResults.sortBy": "Sort by",
   "carsResults.recommended": "Recommended",
@@ -3595,17 +4529,25 @@ export const translations: TranslationDictionary = {
   "carDetails.unavailable": "Car unavailable",
   "deals.results.package.title": "Mix-and-match trip options",
   "deals.results.package.loading": "Building mix-and-match trip options…",
-  "deals.results.package.empty": "We could not build a complete trip option because one or more required products are unavailable.",
+  "deals.results.package.empty":
+    "We could not build a complete trip option because one or more required products are unavailable.",
   "deals.results.package.unavailableTitle": "No complete trip options found",
   "deals.results.package.flightEmpty": "Flights returned no results.",
-  "deals.results.package.flightUnavailable": "The returned flights are not live, priced, bookable options with a safe details action.",
-  "deals.results.package.hotelEmpty": "No stays are available for this destination in Kurioticket’s current hotel catalogue.",
-  "deals.results.package.hotelDemoOnly": "Hotels are sample listings only. You can preview them, but they cannot be added to a live package.",
-  "deals.results.package.hotelDiscoveryOnly": "Hotels are discovery listings only. You can explore them, but they are not bookable package inventory.",
-  "deals.results.package.hotelUnavailable": "The returned stays are missing an indicative total or a safe Kurioticket details page.",
+  "deals.results.package.flightUnavailable":
+    "The returned flights are not live, priced, bookable options with a safe details action.",
+  "deals.results.package.hotelEmpty":
+    "No stays are available for this destination in Kurioticket’s current hotel catalogue.",
+  "deals.results.package.hotelDemoOnly":
+    "Hotels are sample listings only. You can preview them, but they cannot be added to a live package.",
+  "deals.results.package.hotelDiscoveryOnly":
+    "Hotels are discovery listings only. You can explore them, but they are not bookable package inventory.",
+  "deals.results.package.hotelUnavailable":
+    "The returned stays are missing an indicative total or a safe Kurioticket details page.",
   "deals.results.package.carEmpty": "Cars returned no results.",
-  "deals.results.package.carDemoOnly": "Cars are sample listings only and cannot be added to a live package.",
-  "deals.results.package.carUnavailable": "The returned cars do not have a live price and a safe booking action.",
+  "deals.results.package.carDemoOnly":
+    "Cars are sample listings only and cannot be added to a live package.",
+  "deals.results.package.carUnavailable":
+    "The returned cars do not have a live price and a safe booking action.",
   "deals.results.package.view.flight": "View flight results",
   "deals.results.package.view.hotel": "View hotel results",
   "deals.results.package.view.car": "View car results",
@@ -3628,7 +4570,8 @@ export const translations: TranslationDictionary = {
   "deals.results.package.stars": "{{count}}-star hotel",
   "deals.results.package.unclassified": "Hotel classification not supplied",
   "deals.results.package.reviews": "{{count}} reviews",
-  "deals.results.package.staySummary": "{{nights}} nights · {{rooms}} rooms · {{guests}} guests",
+  "deals.results.package.staySummary":
+    "{{nights}} nights · {{rooms}} rooms · {{guests}} guests",
   "deals.results.package.passengers": "passengers",
   "deals.results.package.bags": "bags",
   "deals.results.package.rentalDays": "{{count}} rental days",
@@ -3642,11 +4585,14 @@ export const translations: TranslationDictionary = {
   "deals.results.package.providerPrice": "Source price",
   "deals.results.package.notProvided": "Not provided",
   "deals.results.package.estimatedTotal": "Estimated trip total",
-  "deals.results.package.disclosure": "This is not one package booking. Live provider prices and availability are confirmed separately; planning estimates are not bookings.",
-  "deals.results.package.bookingModel": "Mix-and-match trip option. Live items continue separately to providers, while planning-only items are reviewed on Kurioticket.",
+  "deals.results.package.disclosure":
+    "This is not one package booking. Live provider prices and availability are confirmed separately; planning estimates are not bookings.",
+  "deals.results.package.bookingModel":
+    "Mix-and-match trip option. Live items continue separately to providers, while planning-only items are reviewed on Kurioticket.",
   "deals.results.package.choose": "Choose trip option",
   "deals.results.package.selected": "Trip option selected",
-  "deals.results.package.selectedAnnouncement": "Trip option added to your Trip Plan. Nothing has been booked or reserved.",
+  "deals.results.package.selectedAnnouncement":
+    "Trip option added to your Trip Plan. Nothing has been booked or reserved.",
   "deals.results.tripOptions.count": "{{count}} trip options",
   "deals.results.tripOptions.sort": "Sort trip options",
   "deals.results.sort.recommended": "Recommended",
@@ -3655,19 +4601,24 @@ export const translations: TranslationDictionary = {
   "deals.results.sort.highestHotel": "Highest-rated hotel",
   "deals.results.sort.highestCar": "Highest-rated car supplier",
   "deals.results.package.recommended.badge": "Recommended trip",
-  "deals.results.package.recommended.reason": "A balanced combination from the returned options.",
+  "deals.results.package.recommended.reason":
+    "A balanced combination from the returned options.",
   "deals.results.package.lowest-total.badge": "Lowest estimated total",
-  "deals.results.package.lowest-total.reason": "The lowest converted price for every required item in the returned live inventory.",
+  "deals.results.package.lowest-total.reason":
+    "The lowest converted price for every required item in the returned live inventory.",
   "deals.results.package.comfort.badge": "Comfort-focused",
-  "deals.results.package.comfort.reason": "A combination emphasizing journey and stay quality.",
+  "deals.results.package.comfort.reason":
+    "A combination emphasizing journey and stay quality.",
   "deals.results.package.alternative.badge": "Alternative trip",
-  "deals.results.package.alternative.reason": "Another complete combination to compare.",
+  "deals.results.package.alternative.reason":
+    "Another complete combination to compare.",
   "deals.results.carOptions": "Car options",
   "deals.results.viewCarsCount": "View all {{count}} cars",
   "deals.results.carEmpty": "No cars are available for this search.",
   "deals.results.carUnavailable": "Car inventory is temporarily unavailable.",
   "deals.results.car.recommended.badge": "Best value",
-  "deals.results.car.recommended.reason": "Recommended for value and rental terms",
+  "deals.results.car.recommended.reason":
+    "Recommended for value and rental terms",
   "deals.results.car.lowest.badge": "Lowest total",
   "deals.results.car.lowest.reason": "Lowest available total price",
   "deals.results.car.rating.badge": "Top rated",
@@ -3691,10 +4642,12 @@ export const translations: TranslationDictionary = {
   "deals.results.car.fuel.other": "Fuel policy varies",
   "deals.results.car.freeCancellation": "Free cancellation",
   "deals.results.car.payAtPickup": "Pay at pickup",
-  "deals.results.car.perDayAndDays": "{{price}} per day · {{count}} rental days",
+  "deals.results.car.perDayAndDays":
+    "{{price}} per day · {{count}} rental days",
   "deals.results.car.taxesIncluded": "Taxes and fees included",
   "deals.results.car.taxesUnknown": "Taxes and fees shown where known",
-  "deals.results.car.selectionDisclosure": "Choose this car for your trip option. This does not book the car.",
+  "deals.results.car.selectionDisclosure":
+    "Choose this car for your trip option. This does not book the car.",
   "deals.results.car.choose": "Choose car",
   "deals.results.car.selected": "Selected",
   "deals.results.car.chooseAccessible": "Choose this car for your trip option",
@@ -3707,13 +4660,17 @@ export const translations: TranslationDictionary = {
   "deals.tripPlan.chooseMultiple": "Choose the remaining trip options",
   "deals.tripPlan.carAdded": "Car added to your Trip Plan.",
   "deals.tripPlan.carReplaced": "Car replaced in your Trip Plan.",
-  "deals.tripPlan.carRemoved": "An unavailable car was removed from your Trip Plan.",
-  "deals.results.editor.clearCar": "Updating this search will clear your selected car.",
-  "deals.results.editor.clearMultiple": "Updating this search will clear your selected trip options.",
+  "deals.tripPlan.carRemoved":
+    "An unavailable car was removed from your Trip Plan.",
+  "deals.results.editor.clearCar":
+    "Updating this search will clear your selected car.",
+  "deals.results.editor.clearMultiple":
+    "Updating this search will clear your selected trip options.",
   "deals.handoff.carPrice": "Selected car total",
   "deals.handoff.openCarDetails": "Open car details",
   "deals.handoff.reviewCarAgain": "Review Car details again",
-  "deals.handoff.carExpired": "This car result has expired. Refresh your results to choose again.",
+  "deals.handoff.carExpired":
+    "This car result has expired. Refresh your results to choose again.",
   "deals.stayRow": "Stay",
   "deals.destination": "Destination",
   "deals.travelDates": "Travel dates",
@@ -3721,7 +4678,8 @@ export const translations: TranslationDictionary = {
   "deals.useMainDestination": "Use main destination",
   "deals.useMainTravelDates": "Use main travel dates",
   "deals.productSelector.instruction": "Choose at least two products",
-  "deals.productSelector.minimumTwo": "Deals requires at least two products.",
+  "deals.productSelector.minimumTwo":
+    "Packages requires at least two products.",
   "deals.journey.navigationLabel": "Build your trip progress",
   "deals.journey.stepCount": "Step {{current}} of {{total}}",
   "deals.journey.step.hotel": "Hotel",
@@ -3735,45 +4693,182 @@ export const translations: TranslationDictionary = {
   "deals.journey.substate.choose-property": "Choose property",
   "deals.journey.substate.choose-room": "Choose room",
   "deals.journey.substate.choose-outbound": "Choose outbound",
+  "deals.journey.substate.choose-fare-brand": "Choose fare option",
   "deals.journey.substate.choose-return": "Choose return",
+  "deals.journey.substate.choose-final-fare": "Choose final fare",
+  "deals.journey.substate.verify-flight": "Verify flight",
   "deals.journey.substate.choose-car": "Choose car",
   "deals.journey.substate.review-flight": "Review flight",
   "deals.journey.substate.review-car": "Review car",
   "deals.journey.substate.review-trip": "Review trip",
+  "deals.breadcrumb.navigationLabel": "Packages journey pages",
+  "deals.breadcrumb.selectStay": "Select stay",
+  "deals.breadcrumb.selectFlight": "Select flight",
+  "deals.breadcrumb.selectCar": "Select car",
+  "deals.breadcrumb.details": "Details",
+  "deals.breadcrumb.stay": "Stay",
+  "deals.breadcrumb.flight": "Flight",
+  "deals.breadcrumb.car": "Car",
+  "deals.breadcrumb.complete": "Complete",
+  "deals.breadcrumb.hotelDetailsAccessible":
+    "Hotel details — back to hotel results",
+  "deals.breadcrumb.flightDetailsAccessible":
+    "Flight details — back to flight results",
+  "deals.breadcrumb.carDetailsAccessible": "Car details — back to car results",
   "deals.guided.back": "Back",
   "deals.guided.escape": "Use current trip options",
   "deals.guided.loading": "Loading your guided trip",
-  "deals.guided.routeCorrected": "We moved you to the first step that still needs a selection.",
+  "deals.guided.routeCorrected":
+    "We moved you to the first step that still needs a selection.",
   "deals.guided.foundationTitle": "Your guided trip options will appear here.",
-  "deals.guided.foundationBody": "Product options will be added in the next stage of this guided experience. You can continue using the current trip options in the meantime.",
+  "deals.guided.foundationBody":
+    "Product options will be added in the next stage of this guided experience. You can continue using the current trip options in the meantime.",
   "deals.guided.heading.hotel-results": "Choose your hotel",
   "deals.guided.heading.hotel-details": "Choose your room",
   "deals.guided.heading.flight-results": "Choose your flight",
   "deals.guided.heading.flight-details": "Confirm your flight",
+  "deals.guided.flightResults.viewDetails": "View flight",
+  "deals.guided.flightResults.viewDetailsAria":
+    "View flight details for {{airline}}, {{origin}} to {{destination}}",
+  "deals.guided.flightResults.loadingTitle": "Loading flight results",
+  "deals.guided.flightResults.emptyTitle": "No flight inventory found",
+  "deals.guided.flightResults.emptyBody":
+    "Try modifying your search or retrying flights to check availability again.",
+  "deals.guided.flightResults.errorTitle": "Unable to load flight results",
+  "deals.guided.flightResults.errorBody":
+    "Retry flights to check availability again without changing your guided trip plan.",
+  "deals.guided.flightResults.retry": "Retry Flights",
+  "deals.guided.flightDetails.pendingTitle":
+    "Your selected flight is ready for review",
+  "deals.guided.flightDetails.pendingBody":
+    "Flight details and fare confirmation will appear on this step.",
+  "deals.guided.flightDetails.confirmCars": "Choose this flight",
+  "deals.guided.flightDetails.confirmReview":
+    "Choose this flight and review trip",
+  "deals.guided.flightDetails.confirmCarsA11y":
+    "Choose {airline} flight from {origin} to {destination}",
+  "deals.guided.flightDetails.confirmReviewA11y":
+    "Choose {airline} flight from {origin} to {destination} and review trip",
+  "deals.guided.flightDetails.choose": "Choose flight",
+  "deals.guided.flightDetails.chooseA11y":
+    "Choose {airline} flight from {origin} to {destination}",
+  "deals.guided.flightDetails.unavailableConfirm":
+    "This flight cannot be confirmed until current details and source fare are available.",
+  "deals.guided.flightDetails.saving": "Saving flight...",
+  "deals.guided.flightDetails.retry": "Retry Flight details",
+  "deals.guided.flightDetails.saveError":
+    "We could not save this flight. Please try again.",
+  "deals.guided.flightDetails.confirmed": "Your flight is saved.",
+  "deals.guided.carResults.pendingTitle": "Your flight is saved",
+  "deals.guided.carResults.pendingBody":
+    "Car options will appear on this step.",
+  "deals.guided.carResults.title": "Car options for your trip",
+  "deals.guided.carResults.loading": "Loading car planning options",
+  "deals.guided.carResults.errorTitle": "This car option could not be loaded",
+  "deals.guided.carResults.errorBody":
+    "Please retry the car search. Your confirmed trip selections are unchanged.",
+  "deals.guided.carResults.emptyTitle":
+    "No car planning options were found for this search",
+  "deals.guided.carResults.emptyBody":
+    "No car inventory is currently available for this search. You can retry or modify your search.",
+  "deals.guided.carResults.retry": "Refresh car options",
+  "deals.guided.carResults.actionLabel": "Continue with this car option",
+  "deals.guided.carResults.orSimilar": "or similar",
+  "deals.guided.carResults.estimatedTotal": "Estimated total",
+  "deals.guided.carResults.estimatedPerDay": "Estimated per day",
+  "deals.guided.carResults.lowestEstimatedTotal": "Lowest estimated total",
+  "deals.guided.carResults.disclosure":
+    "Planning estimate — not real-time supplier availability.",
+  "deals.guided.carResults.actionAriaLabel": "Continue with {model} car option",
+  "deals.guided.carDetails.pendingTitle":
+    "Your selected car is ready for review",
+  "deals.guided.carDetails.pendingBody":
+    "Car details and rental confirmation will appear on this step.",
+  "deals.guided.carDetails.loading": "Loading car details…",
+  "deals.guided.carDetails.errorTitle": "We could not load this car",
+  "deals.guided.carDetails.errorBody":
+    "Car details are temporarily unavailable. Your confirmed trip options have not changed.",
+  "deals.guided.carDetails.unavailableTitle": "This car is no longer available",
+  "deals.guided.carDetails.unavailableBody":
+    "Return to Car results or retry the search for this vehicle.",
+  "deals.guided.carDetails.retry": "Retry car details",
+  "deals.guided.carDetails.confirmReview": "Confirm car and review trip",
+  "deals.guided.carDetails.confirmReviewA11y":
+    "Confirm {model} from {company} and review trip",
+  "deals.guided.carDetails.choose": "Choose car",
+  "deals.guided.carDetails.chooseA11y": "Choose {model} from {company}",
+  "deals.guided.carDetails.saving": "Saving car…",
+  "deals.guided.carDetails.saveError":
+    "We could not save this car. Your confirmed Hotel and Flight selections have not changed. Try again.",
+  "deals.guided.carDetails.unavailableConfirm":
+    "Car confirmation is unavailable until the selected vehicle has loaded.",
+  "deals.guided.carDetails.confirmed": "Car option added to your Trip Plan.",
+  "deals.guided.review.pendingTitle":
+    "Your trip selections are ready for review",
+  "deals.guided.review.pendingBody":
+    "Your complete trip summary will appear on this step.",
   "deals.guided.heading.car-results": "Choose your car",
-  "deals.guided.heading.car-details": "Confirm your car",
+  "deals.guided.heading.car-details": "Review your car",
   "deals.guided.heading.review": "Review your trip",
   "deals.guided.hotelResults.loading": "Searching for hotels",
   "deals.guided.hotelResults.retry": "Retry hotel search",
   "deals.guided.hotelResults.empty": "No hotels were found for this search.",
-  "deals.guided.hotelResults.viewRooms": "View rooms",
-  "deals.guided.hotelResults.viewRoomsFor": "View rooms for {{hotelName}}",
-  "deals.guided.hotelResults.roomsUnavailable": "Room options unavailable",
-  "deals.guided.hotelResults.roomsUnavailableFor": "Room options unavailable for {{hotelName}}",
-  "deals.guided.hotelDetails.pendingTitle": "Your selected hotel is ready for review.",
-  "deals.guided.hotelDetails.pendingBody": "Hotel details and available room options will appear on this step.",
+  "deals.guided.hotelResults.viewRooms": "View stay details",
+  "deals.guided.hotelResults.viewRoomsFor":
+    "View stay details for {{hotelName}}",
+  "deals.guided.hotelResults.roomsUnavailable": "Stay details unavailable",
+  "deals.guided.hotelResults.roomsUnavailableFor":
+    "Stay details unavailable for {{hotelName}}",
+  "deals.guided.hotelDetails.pendingTitle":
+    "Your selected hotel is ready for review.",
+  "deals.guided.hotelDetails.pendingBody":
+    "Hotel details and descriptive room information will appear on this step.",
+  "deals.guided.hotelDetails.roomInformation": "Room information",
+  "deals.guided.hotelDetails.chooseRoom": "Choose your room",
+  "deals.guided.hotelDetails.planningDisclosure":
+    "Indicative room options for trip planning. Final room and bed availability is not yet confirmed, and prices are planning estimates for the selected stay.",
+  "deals.guided.hotelDetails.optionsUnavailable":
+    "Room planning options are unavailable for this property.",
+  "deals.guided.hotelDetails.optionsUnavailableBody":
+    "Choose another property to continue planning your trip.",
+  "deals.guided.hotelDetails.selectionRequiredTitle": "Select a room",
+  "deals.guided.hotelDetails.selectionRequiredBody":
+    "Choose a room to see your indicative stay total.",
+  "deals.guided.hotelDetails.selectRoomToContinue":
+    "Select a room to continue.",
+  "deals.guided.hotelDetails.perRoomNight": "per room, per night",
+  "deals.guided.hotelDetails.indicativeTotal": "indicative total for this stay",
+  "deals.guided.hotelDetails.planningOption": "Planning option",
+  "deals.guided.hotelDetails.lowestEstimate": "Lowest estimate",
+  "deals.guided.hotelDetails.selectRoom": "Select room",
+  "deals.guided.hotelDetails.selected": "Selected",
+  "deals.guided.review.bedConfiguration": "Bed configuration",
+  "deals.guided.review.mealPlan": "Meal plan",
+  "deals.guided.hotelDetails.sourceEstimate": "Source estimate",
+  "deals.guided.hotelDetails.continueFlights":
+    "Continue with this room to flights",
+  "deals.guided.hotelDetails.continueCars": "Continue with this room to cars",
+  "deals.guided.hotelDetails.continueReview":
+    "Continue with this room to review",
+  "deals.guided.hotelDetails.saveError":
+    "We could not save this stay to your guided Trip Plan. Please try again.",
+  "deals.guided.hotelDetails.confirmed": "Stay added to your Trip Plan.",
   "deals.staged.property.title": "Choose your stay",
-  "deals.staged.property.summary": "{{count}} stays for {{destination}}, {{checkIn}} to {{checkOut}}",
+  "deals.staged.property.summary":
+    "{{count}} stays for {{destination}}, {{checkIn}} to {{checkOut}}",
   "deals.staged.property.listLabel": "Hotel property results",
   "deals.staged.property.indicativeTotal": "Indicative stay total",
   "deals.staged.property.perNight": "per night",
   "deals.staged.property.details": "View property details",
   "deals.staged.property.choose": "Choose property",
-  "deals.staged.property.selected": "{{name}} selected. Review its room option.",
+  "deals.staged.property.selected":
+    "{{name}} selected. Review its room option.",
   "deals.staged.hotel.loading": "Finding stays for your Hotel stage…",
-  "deals.staged.hotel.empty": "No eligible planning stays were found for this search.",
+  "deals.staged.hotel.empty":
+    "No eligible planning stays were found for this search.",
   "deals.staged.hotel.retry": "Retry Hotel",
-  "deals.staged.hotel.invalidated": "Your selected stay is no longer in these results. Please select it again.",
+  "deals.staged.hotel.invalidated":
+    "Your selected stay is no longer in these results. Please select it again.",
   "deals.staged.room.back": "Back to properties",
   "deals.staged.room.title": "Review your room option",
   "deals.staged.room.planningLabel": "Planning room option",
@@ -3786,8 +4881,10 @@ export const translations: TranslationDictionary = {
   "deals.staged.room.cancellation": "Cancellation information",
   "deals.staged.room.sourcePrice": "Source indicative price",
   "deals.staged.room.taxes": "Taxes and fees",
-  "deals.staged.room.disclosure": "This is an indicative planning estimate. Live room availability and booking terms are not currently offered for this property.",
-  "deals.staged.room.invalid": "This room option cannot be confirmed from the current result.",
+  "deals.staged.room.disclosure":
+    "This is an indicative planning estimate. Live room availability and booking terms are not currently offered for this property.",
+  "deals.staged.room.invalid":
+    "This room option cannot be confirmed from the current result.",
   "deals.staged.room.confirm": "Confirm room option",
   "deals.staged.room.confirmed": "Room option confirmed for {{name}}.",
   "deals.staged.complete.title": "Your stay is confirmed for planning",
@@ -3798,4 +4895,148 @@ export const translations: TranslationDictionary = {
   "deals.staged.complete.flightNext": "Flight selection is next",
   "deals.staged.complete.carNext": "Car selection is next",
   "deals.staged.complete.notAvailable": "Next stage not available yet",
+  "deals.guided.review.title": "Trip Review",
+  "deals.guided.review.introduction":
+    "Review your selected options before continuing.",
+  "deals.guided.review.stay": "Stay",
+  "deals.guided.review.flight": "Flight",
+  "deals.guided.review.car": "Car option",
+  "deals.guided.review.provider": "Provided by",
+  "deals.guided.review.changeStay": "Change stay",
+  "deals.guided.review.changeFlight": "Change flight",
+  "deals.guided.review.changeCar": "Change car",
+  "deals.guided.review.sourcePrice": "Provider price",
+  "deals.guided.review.estimatedPrice": "Estimated in {{currency}}",
+  "deals.guided.review.conversionUnavailable":
+    "A converted estimate is currently unavailable.",
+  "deals.guided.review.estimatedTotal": "Estimated trip total",
+  "deals.guided.review.totalUnavailable":
+    "A combined estimate is currently unavailable. Review the provider prices for each trip option.",
+  "deals.guided.review.estimateDisclosure":
+    "This combines the values currently shown. Stay and car amounts are planning estimates where included. This is not a bundled rate or guaranteed checkout total.",
+  "deals.guided.review.fallbackDisclosure":
+    "Estimated using fallback exchange rates. Each booking partner sets the final price.",
+  "deals.guided.review.priceNeedsRefresh": "Price needs refreshing",
+  "deals.guided.review.expiredBody":
+    "This option is too old to continue safely. Choose a current option before continuing.",
+  "deals.guided.review.continue": "Continue",
+  "deals.guided.review.continueUnavailable":
+    "Refresh every expired option before continuing.",
+  "deals.guided.review.bookingDisclosure":
+    "Nothing has been booked or charged. Downstream prices and terms may still change.",
+  "deals.guided.review.nights": "{{count}} nights",
+  "deals.guided.review.rentalDays": "{{count}} rental days",
+  "deals.guided.handoffPending.title": "Booking partner handoff is coming next",
+  "deals.guided.handoffPending.body":
+    "Your confirmed trip is still saved temporarily. Provider pages remain disabled in this preview milestone.",
+  "deals.guided.handoffPending.backReview": "Back to trip review",
+  "deals.guided.handoffPending.returnDeals": "Return to Packages",
+  "deals.guided.handoffPending.loading": "Loading your confirmed trip…",
+  "deals.guided.handoffPending.missingTitle":
+    "We could not load this guided trip",
+  "deals.guided.handoffPending.missingBody":
+    "Return to Packages and confirm your trip options again.",
+  "deals.guided.handoffPending.expiredTitle": "Your guided trip has expired",
+  "deals.guided.handoffPending.expiredBody":
+    "Return to the guided journey and refresh your trip options.",
+  "deals.guided.handoffPending.incompleteTitle":
+    "Your guided trip is incomplete",
+  "deals.guided.handoffPending.incompleteBody":
+    "Confirm every included trip option before continuing.",
+  "deals.guided.handoffPending.storageTitle":
+    "Temporary trip storage is unavailable",
+  "deals.guided.handoffPending.storageBody":
+    "Your browser could not load the guided trip safely.",
+  "deals.guided.review.package": "Package",
+  "deals.guided.review.includedOptions": "Included options",
+  "deals.guided.review.location": "Location",
+  "deals.guided.review.checkIn": "Check-in",
+  "deals.guided.review.checkOut": "Check-out",
+  "deals.guided.review.nightsLabel": "Nights",
+  "deals.guided.review.room": "Room information",
+  "deals.guided.review.roomInformation": "Room information",
+  "deals.guided.review.estimatedStayTotal": "Estimated stay total",
+  "deals.guided.review.stayPlanningNote":
+    "Planning estimate. Room information is descriptive and nothing has been reserved.",
+  "deals.guided.review.flightSource": "Flight source",
+  "deals.guided.review.flightResultPrice": "Flight price shown in results",
+  "deals.guided.review.estimatedCarTotal": "Estimated car total",
+  "deals.guided.review.carPlanningNote":
+    "Planning estimate — live supplier availability is not currently verified.",
+  "deals.guided.review.flightNumber": "Flight",
+  "deals.guided.review.route": "Route",
+  "deals.guided.review.departure": "Departure",
+  "deals.guided.review.arrival": "Arrival",
+  "deals.guided.review.duration": "Duration",
+  "deals.guided.review.model": "Model",
+  "deals.guided.review.category": "Category",
+  "deals.guided.review.pickup": "Pickup",
+  "deals.guided.review.return": "Return",
+  "deals.guided.review.rentalDaysLabel": "Rental days",
+  "deals.guided.handoffInvalid.title": "This handoff request is not valid",
+  "deals.guided.handoffInvalid.body":
+    "For your safety, no booking partner was opened. Return to Packages and try again.",
+  "deals.guided.handoffInvalid.returnDeals": "Return to Packages",
+  "deals.guided.handoffPending.useCurrentOptions": "Use current trip options",
+  "deals.guided.handoff.title": "Continue with your booking partners",
+  "deals.guided.handoff.introduction":
+    "Open each step separately. Kurioticket does not book or take payment on this page.",
+  "deals.guided.handoff.backReview": "Back to trip review",
+  "deals.guided.handoff.useCurrentOptions": "Use current trip options",
+  "deals.guided.handoff.changeSelections": "Change selections",
+  "deals.guided.handoff.startOver": "Start over",
+  "deals.guided.handoff.activationFailedTitle":
+    "This step could not be opened safely",
+  "deals.guided.handoff.activationFailedBody":
+    "We could not save your handoff progress, so the booking-partner page was not opened. Try again.",
+  "deals.guided.handoff.storageReadFailedBody":
+    "We could not recheck your saved trip, so this step was not opened. Try again.",
+  "deals.guided.handoff.retry": "Try again",
+  "deals.guided.handoff.actionUnavailable":
+    "This option does not currently have a safe handoff action.",
+  "deals.guided.handoff.summaryActionUnavailable":
+    "One or more steps need a different trip option before they can be opened.",
+  "deals.guided.handoff.selectionChanged":
+    "Your trip changed in another tab. Review the updated step, then open it again.",
+  "deals.guided.handoff.planExpiredAtClick":
+    "Your guided trip expired before this step could be opened. Refresh your trip options.",
+  "deals.guided.handoff.productExpiredAtClick":
+    "This option expired before it could be opened. Return to Review for fresh results.",
+  "deals.guided.handoff.retryStep": "Try this step again",
+  "deals.guided.handoff.changeStay": "Change stay",
+  "deals.guided.handoff.changeFlight": "Change flight",
+  "deals.guided.handoff.changeCar": "Change car",
+  "deals.guided.handoff.openedDisclosure":
+    "Opened means the handoff page was launched. It does not mean the booking is complete.",
+  "deals.guided.handoff.allOpened":
+    "All booking-partner steps have been opened",
+  "deals.guided.handoff.allOpenedBody":
+    "Complete each booking separately with the provider. Kurioticket has not booked or charged for this trip.",
+  "deals.guided.handoff.progressUnsaved":
+    "Your progress could not be saved. No new handoff page was opened.",
+  "deals.guided.handoff.loading": "Loading your confirmed trip…",
+  "deals.guided.handoff.storageTitle": "Temporary trip storage is unavailable",
+  "deals.guided.handoff.storageBody":
+    "Your browser could not load the guided trip safely.",
+  "deals.guided.handoff.returnDeals": "Return to Packages",
+  "deals.guided.handoff.missingTitle": "We could not load this guided trip",
+  "deals.guided.handoff.missingBody":
+    "Return to Packages and confirm your trip options again.",
+  "deals.guided.handoff.expiredTitle": "Your guided trip has expired",
+  "deals.guided.handoff.expiredBody":
+    "Return to the guided journey and refresh your trip options.",
+  "deals.guided.handoff.incompleteTitle": "Your guided trip is incomplete",
+  "deals.guided.handoff.incompleteBody":
+    "Confirm every included trip option before continuing.",
+  "deals.guided.handoff.refresh": "Refresh trip options",
+  "deals.guided.handoff.refreshTitle": "One or more options need fresh results",
+  "deals.guided.handoff.refreshBody":
+    "Return to trip review and refresh the expired option before opening a handoff step.",
+  "accountDashboard.hub.savedRecent": "Saved & Recent",
+  "accountDashboard.hub.notifications": "Notifications",
+  "accountMenu.myTrips.label": "My Trips",
+  "accountMenu.savedRecent.label": "Saved & Recent",
+  "accountMenu.notifications.label": "Notifications",
+  loadingSavedAndRecent: "Loading Saved & Recent",
+  flightSearchDestinationPlaceholderShort: "To?",
 };

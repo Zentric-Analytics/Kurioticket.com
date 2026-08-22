@@ -1,0 +1,152 @@
+﻿{
+  "generatedAt": "2026-08-05T00:00:00Z",
+  "generatedBy": "docs/finalize-delivery-platform-baseline",
+  "evidenceLevel": "repository-verified",
+  "repository": {
+    "owner": "Zentric-Analytics",
+    "name": "Kurioticket.com",
+    "defaultBranch": "dev",
+    "devSha": "4e424369b70ccab7a3863b7b88f713ce33cf1c7e",
+    "mainSha": "20e3f10baf7fa1e9bb85df81dedaff964e4da043",
+    "mergeBase": "20e3f10baf7fa1e9bb85df81dedaff964e4da043",
+    "mainAncestorOfDev": true,
+    "handbookSourceCommit": "4e424369b70ccab7a3863b7b88f713ce33cf1c7e",
+    "handbookBranch": "docs/finalize-delivery-platform-baseline"
+  },
+  "governance": {
+    "devAccess": "team merges via pull request",
+    "mainAccess": "owner/admin controlled",
+    "requiredChecks": [
+      "migration-validation",
+      "required mobile validation",
+      "security checks",
+      "mobile-production-update"
+    ],
+    "ownerBoundaries": [
+      "no production publish without owner approval",
+      "no public rollout from dev automation",
+      "no runtime credential changes without approved workflow changes"
+    ]
+  },
+  "web": {
+    "service": "Kurioticket.com-staging",
+    "serviceId": "srv-d86ulfgg4nts73bctt20",
+    "branch": "dev",
+    "url": "https://staging.kurioticket.com",
+    "build": "npm ci && npm run build",
+    "preDeploy": "npm run db:deploy:render",
+    "start": "npm run start",
+    "healthPath": "/api/health",
+    "caching": {
+      "html": "no-store",
+      "assetCache": "normal"
+    },
+    "latestDeployment": {
+      "id": "dep-d9pncerncjis73ca8e00",
+      "sha": "0f21cf30683ea23b5aa1781481d1f3ff029df1f0",
+      "status": "successful",
+      "environment": "staging"
+    }
+  },
+  "androidPreview": {
+    "appName": "Kurioticket Preview",
+    "package": "com.kurioticket.app.preview",
+    "runtime": "preview-0.3.0",
+    "channel": "preview",
+    "api": "https://staging.kurioticket.com",
+    "deliveryMode": "OTA when compatible, controlled native build fallback"
+  },
+  "androidProduction": {
+    "appName": "Kurioticket",
+    "package": "com.kurioticket.app",
+    "version": "0.3.0",
+    "runtime": "production-0.3.0",
+    "channel": "production",
+    "distribution": "Google Play AAB",
+    "latestVersionCode": 2,
+    "nextMinimumVersionCode": 3,
+    "latestBuildId": "c84c196e-7928-4f26-8b7c-a15f37f031db",
+    "latestSourceSha": "20e3f10baf7fa1e9bb85df81dedaff964e4da043",
+    "playAppSigning": "active",
+    "deliveryState": "internal testing active"
+  },
+  "iosPreview": {
+    "appName": "Kurioticket Preview",
+    "bundleId": "com.kurioticket.app.preview",
+    "runtime": "preview-0.3.0",
+    "channel": "preview",
+    "api": "https://staging.kurioticket.com",
+    "appStoreConnectAppId": "6797447471",
+    "testflightGroup": "Kurioticket Preview Internal",
+    "latestBuildNumber": 3,
+    "deliveryMode": "native build + TestFlight internal submission"
+  },
+  "iosProduction": {
+    "status": "DEFERRED",
+    "note": "No active iOS production release path exists in this architecture snapshot."
+  },
+  "workflows": [
+    {
+      "file": ".github/workflows/android-production-delivery.yml",
+      "classifies": ["production-delivery", "build"],
+      "mutatesState": true
+    },
+    {
+      "file": ".github/workflows/migration-validation.yml",
+      "classifies": ["validation", "security"],
+      "mutatesState": false
+    },
+    {
+      "file": ".github/workflows/pr-required-gates.yml",
+      "classifies": ["pull-request", "validation"],
+      "mutatesState": false
+    },
+    {
+      "file": ".github/workflows/mobile-production-update.yml",
+      "classifies": ["orchestration", "release-control"],
+      "mutatesState": false
+    },
+    {
+      "file": ".github/workflows/security.yml",
+      "classifies": ["security", "validation"],
+      "mutatesState": false
+    }
+  ],
+  "previewDeliveryService": {
+    "path": "services/preview-release",
+    "host": "Render worker",
+    "polls": "dev every 60 seconds",
+    "ledger": "dedicated PostgreSQL",
+    "githubActionsDependency": false
+  },
+  "external": {
+    "render": {
+      "status": "VERIFIED",
+      "verification": "phase-1 verified staging deployment evidence"
+    },
+    "eas": {
+      "status": "VERIFIED",
+      "verification": "release gates and profile evidence in repository"
+    },
+    "googlePlay": {
+      "status": "VERIFIED",
+      "verification": "AAB and internal testing evidence recorded"
+    },
+    "appStoreConnect": {
+      "status": "VERIFIED",
+      "verification": "iOS preview build and TestFlight status recorded"
+    }
+  },
+  "testState": {
+    "repositoryTests": {
+      "status": "documented inherited baseline debt",
+      "notes": "No new repo-wide functional blockers introduced in this baseline snapshot"
+    },
+    "mobileTests": {
+      "status": "documented inherited debt"
+    },
+    "releasePipeline": {
+      "status": "passed in source branches"
+    }
+  }
+}

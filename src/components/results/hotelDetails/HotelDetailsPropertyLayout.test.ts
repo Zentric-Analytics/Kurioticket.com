@@ -14,30 +14,104 @@ const bookingSource = readFileSync(
   new URL("./HotelDetailsBookingPanel.tsx", import.meta.url),
   "utf8",
 );
+const standaloneSource = readFileSync(
+  new URL("./StandaloneHotelDetails.tsx", import.meta.url),
+  "utf8",
+);
+const locationSource = readFileSync(
+  new URL("./HotelLocationSection.tsx", import.meta.url),
+  "utf8",
+);
 
-test("joins one embedded gallery and details summary before the booking sibling", () => {
+test("isolates the approved standalone property composition from guided mode", () => {
   assert.equal(clientSource.match(/<HotelDetailsGallery\b/g)?.length, 1);
   assert.equal(clientSource.match(/<HotelDetailsSections\b/g)?.length, 1);
   assert.equal(clientSource.match(/<HotelDetailsBookingPanel\b/g)?.length, 1);
+  assert.equal(clientSource.match(/<StandaloneHotelDetails\b/g)?.length, 1);
+  assert.match(clientSource, /if \(mode === "standalone"\)/);
+  assert.match(standaloneSource, /data-standalone-hotel-details/);
+  assert.match(standaloneSource, /lg:grid-cols-\[minmax\(0,1fr\)_334px\]/);
+  assert.match(standaloneSource, /<HotelDetailsGallery[\s\S]*layout="mosaic"/);
+  assert.match(standaloneSource, /data-hotel-amenities-strip/);
+  for (const contract of [
+    "About this property",
+    "propertyDetails?.description",
+    "HotelLocationSection",
+    "Your stay",
+    "View room options",
+    'role="dialog"',
+  ]) assert.ok(clientSource.includes(contract) || standaloneSource.includes(contract), contract);
+  assert.match(locationSource, /buildHotelMapEmbedUrl/);
+  assert.match(locationSource, /buildHotelDirectionsUrl/);
+
+  const guidedStart = clientSource.indexOf("const detailsContent = (");
+  const guidedContent = clientSource.slice(guidedStart);
   assert.match(clientSource, /import { Card } from "@\/components\/ui\/Card"/);
   assert.match(
-    clientSource,
+    guidedContent,
     /lg:grid-cols-\[minmax\(0,1fr\)_360px\] lg:items-start lg:gap-8/,
   );
-  const propertyCard = clientSource.slice(
-    clientSource.indexOf('<Card\n              variant="flat"'),
-    clientSource.indexOf("<HotelDetailsBookingPanel"),
-  );
-  assert.ok(propertyCard.indexOf("<HotelDetailsGallery") >= 0);
+  assert.ok(guidedContent.indexOf("<HotelDetailsGallery") >= 0);
   assert.ok(
-    propertyCard.indexOf("<HotelDetailsSections") >
-      propertyCard.indexOf("<HotelDetailsGallery"),
+    guidedContent.indexOf("<HotelDetailsSections") >
+      guidedContent.indexOf("<HotelDetailsGallery"),
   );
-  assert.equal(propertyCard.match(/\bembedded\b/g)?.length, 2);
+  assert.ok(
+    guidedContent.indexOf("<HotelDetailsBookingPanel") >
+      guidedContent.indexOf("<HotelDetailsSections"),
+  );
+});
+
+test("places the guided room selector after the full upper property layout", () => {
+  const composition = clientSource.slice(
+    clientSource.indexOf("data-hotel-property-booking-layout"),
+    clientSource.indexOf(
+      "</div>\n    </section>",
+      clientSource.indexOf("data-hotel-property-booking-layout"),
+    ),
+  );
+
+  assert.ok(composition.indexOf("<HotelDetailsBookingPanel") >= 0);
+  assert.ok(
+    composition.indexOf("{guidedRoomSelector}") >
+      composition.indexOf("<HotelDetailsBookingPanel"),
+  );
   assert.match(
-    propertyCard,
-    /shadow-\[0_12px_32px_-26px_rgba\(2,28,43,0\.32\)\]/,
+    clientSource,
+    /const guidedRoomSelector =\s*mode === "guided" \? \(\s*<fieldset/,
   );
+  assert.equal(clientSource.match(/<fieldset\b/g)?.length, 1);
+  assert.equal(clientSource.match(/<GuidedHotelRoomCard\b/g)?.length, 1);
+});
+
+test("places the room grid directly after the guided room legend", () => {
+  const selectorStart = clientSource.indexOf("data-guided-room-selector");
+  const legendStart = clientSource.indexOf("<legend", selectorStart);
+  const gridStart = clientSource.indexOf("data-guided-room-grid", legendStart);
+  const legendToGrid = clientSource.slice(legendStart, gridStart);
+
+  assert.match(legendToGrid, /deals\.guided\.hotelDetails\.chooseRoom/);
+  assert.doesNotMatch(legendToGrid, /<p\b/);
+  assert.doesNotMatch(
+    clientSource,
+    /deals\.guided\.hotelDetails\.planningDisclosure/,
+  );
+});
+
+test("uses a non-scrolling one, two, then three-column guided room grid", () => {
+  const roomGridStart = clientSource.lastIndexOf(
+    "<div",
+    clientSource.indexOf("data-guided-room-grid"),
+  );
+  const roomGrid = clientSource.slice(
+    roomGridStart,
+    clientSource.indexOf("{roomOptions.map", roomGridStart),
+  );
+
+  assert.match(roomGrid, /grid-cols-1/);
+  assert.match(roomGrid, /md:grid-cols-2/);
+  assert.match(roomGrid, /xl:grid-cols-3/);
+  assert.doesNotMatch(roomGrid, /overflow-x|snap-|flex-nowrap/);
 });
 
 test("retains every booking integration prop and booking-panel contract", () => {
@@ -62,7 +136,6 @@ test("retains every booking integration prop and booking-panel contract", () => 
     "changeSearchText=",
     "providerPriceLabel=",
     "providerText=",
-    "providerUnavailableText={providerUnavailableText}",
     "redirectError={redirectError}",
     "providerEnabled={providerEnabled}",
     "redirecting={redirecting}",
@@ -71,6 +144,11 @@ test("retains every booking integration prop and booking-panel contract", () => 
     "providerDisclaimerText=",
   ])
     assert.ok(bookingCall.includes(contract), contract);
+
+  assert.match(
+    bookingCall,
+    /providerUnavailableText=\{\s*mode === "guided" \? "" : providerUnavailableText\s*\}/,
+  );
 
   for (const contract of [
     "totalDisplayPrice.formatted",

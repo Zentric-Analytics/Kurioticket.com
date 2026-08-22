@@ -9,6 +9,8 @@ declare module "next-auth" {
       emailVerified: boolean;
       twoFactorEnabled: boolean;
       twoFactorVerified: boolean;
+      accountSessionId?: string;
+      assuranceLevel?: "PRIMARY" | "MFA" | "PHISHING_RESISTANT";
     } & DefaultSession["user"];
   }
 
@@ -28,9 +30,12 @@ declare module "next-auth/jwt" {
     role?: string;
     status?: string;
     emailVerified?: boolean;
-    sessionActivityId?: string;
     twoFactorEnabled?: boolean;
     twoFactorVerified?: boolean;
     previewAuthMethod?: "credentials" | "google";
+    accountSessionId?: string;
+    sessionVersion?: number;
+    authMethod?: "PASSWORD" | "EMAIL_CODE" | "GOOGLE" | "PASSKEY" | "UNKNOWN";
+    assuranceLevel?: "PRIMARY" | "MFA" | "PHISHING_RESISTANT";
   }
 }

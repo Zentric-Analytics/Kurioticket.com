@@ -16,10 +16,10 @@ test("profile route distinguishes authenticated, intentional guest, and signed-o
 
 test("guest Profile has one sign-in choice and no fake account identity", () => {
   const guest = source("src/features/profile/GuestProfileScreen.tsx");
-  assert.match(guest, /Your journey starts here/);
-  assert.match(guest, /Sign in to access your trips, saved items/);
+  assert.match(guest, /t\("guestHeroTitle"\)/);
+  assert.match(guest, /t\("guestHeroBody"\)/);
   assert.match(guest, /profile\/sign-in/);
-  for (const forbidden of ["Guest traveler", "Member since", "Personal information", "Saved travelers", "Continue with Email", "Continue with Google", "Continue as Guest"]) assert.doesNotMatch(guest, new RegExp(forbidden));
+  for (const forbidden of ["Guest traveler", "Member since", "personalDetails", "securitySettings", "emailPreferences", "travelPreferences", "myTrips", "priceAlerts", "Continue with Email", "Continue with Google", "Continue as Guest"]) assert.doesNotMatch(guest, new RegExp(forbidden));
 });
 
 test("guest sign-in method offers Email and Google only with production wiring", () => {
@@ -37,6 +37,6 @@ test("guest email upgrade enters the existing email flow and returns to Profile"
   const route = source("app/email-auth.tsx");
   const flow = source("src/features/auth/AuthFlow.tsx");
   assert.match(route, /initialStep=\{entry === "email" \? "email" : "welcome"\}/);
-  assert.match(route, /successRoute=\{returnTo === "profile" \? "\/\(tabs\)\/profile" : "\/"\}/);
+  assert.match(route, /successRoute=\{returnTo \? validateSignInIntent\(returnTo\) : "\/"\}/);
   assert.match(flow, /router\.replace\(successRoute\)/);
 });

@@ -39,17 +39,14 @@ const cached = (): NormalizedFlightResult => ({
   recommendationReasons: [],
   badges: [],
 });
+
 test("flight details requires a Kurioticket result id", async () => {
-  const response = await GET(
-    new Request("https://kurioticket.test/api/flights/details"),
-  );
+  const response = await GET(new Request("https://kurioticket.test/api/flights/details"));
   assert.equal(response.status, 400);
 });
 
 test("flight details fails closed for an unknown cached identity", async () => {
-  const response = await GET(
-    new Request("https://kurioticket.test/api/flights/details?id=unknown"),
-  );
+  const response = await GET(new Request("https://kurioticket.test/api/flights/details?id=unknown"));
   assert.equal(response.status, 404);
 });
 
@@ -57,16 +54,11 @@ test("flight details fails closed without server-owned search context", async ()
   setFlightResultCacheBackendForTests(createMemoryFlightCacheBackend());
   const flight = cached();
   await rememberFlights([flight]);
-  const response = await GET(
-    new Request(
-      `https://kurioticket.test/api/flights/details?id=${flight.id}&adults=6&children=0&infants=0&travelers=6`,
-    ),
-  );
+  const response = await GET(new Request(`https://kurioticket.test/api/flights/details?id=${flight.id}&adults=6&children=0&infants=0&travelers=6`));
   assert.equal(response.status, 409);
   assert.deepEqual(await response.json(), {
     status: "unavailable",
-    error:
-      "This flight search context is no longer available. Please search again.",
+    error: "This flight search context is no longer available. Please search again.",
   });
 });
 
@@ -77,3 +69,4 @@ test("Flight Details never treats browser passenger parameters as authority", as
   assert.match(source, /await getFlightDetailsCacheContext\(id\)/);
   assert.doesNotMatch(source, /parseFlightDetailsSearch\(searchParams\)/);
 });
+

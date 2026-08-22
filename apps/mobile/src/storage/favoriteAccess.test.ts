@@ -15,19 +15,15 @@ test("favorite prompt offers dismissal and the existing sign-in flow", () => {
   assert.match(hook, /Sign in to save favorites/);
   assert.match(hook, /Not now/);
   assert.match(hook, /\(tabs\)\/profile\/sign-in/);
-  assert.match(hook, /favoriteAction\(userId\).*showFavoriteSignInPrompt\(\).*return/s);
+  assert.match(hook, /favoriteAction\(userId\).*showFavoriteSignInPrompt\("\/saved"\).*return/s);
 });
 
 test("every existing favorite-bearing section uses the protected shared hook", () => {
-  for (const path of ["src/features/home/PopularDestinationStays.tsx", "src/features/home/DiscoverNextAdventure.tsx", "src/features/explore/ExploreScreen.tsx"]) {
+  for (const path of ["src/features/explore/ExploreScreen.tsx"]) {
     const contents = source(path);
     assert.match(contents, /useSavedDestinations\(\)/, path);
-    if (path.includes("ExploreScreen")) {
-      assert.match(contents, /style=\{s\.rowHeart\}/, `${path} keeps the search heart outside its navigation pressable`);
-      assert.match(contents, /style=\{s\.heart\}/, `${path} keeps the card heart outside its navigation pressable`);
-    } else {
-      assert.match(contents, /stopPropagation\(\)/, `${path} keeps card navigation isolated from heart presses`);
-    }
+    assert.match(contents, /style=\{s\.rowHeart\}/, `${path} keeps the search heart outside its navigation pressable`);
+    assert.match(contents, /style=\{s\.heart\}/, `${path} keeps the card heart outside its navigation pressable`);
   }
 });
 

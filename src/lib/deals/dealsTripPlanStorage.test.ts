@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createDealsTripPlan, DEALS_TRIP_PLAN_TTL_MS, updateDealsTripPlan } from "./dealsTripPlan";
-import { applyDealsPlanReadResult, buildDealsPlanContextKey, DEALS_STAGED_JOURNEY_STORAGE_KEY, DEALS_TRIP_PLAN_STORAGE_KEY, getVisibleDealsPlan, parseDealsTripPlan, readDealsStagedJourneyPlan, readDealsTripPlan, removeDealsStagedJourneyPlan, removeDealsTripPlan, serializeDealsTripPlan, unresolvedDealsPlanState, writeDealsStagedJourneyPlan, writeDealsTripPlan } from "./dealsTripPlanStorage";
+import { applyDealsPlanReadResult, buildDealsPlanContextKey, DEALS_STAGED_JOURNEY_STORAGE_KEY, DEALS_TRIP_PLAN_STORAGE_KEY, getVisibleDealsPlan, parseDealsTripPlan, classifyDealsStagedJourneySnapshot, readDealsStagedJourneyPlan, readDealsTripPlan, removeDealsStagedJourneyPlan, removeDealsTripPlan, serializeDealsTripPlan, unresolvedDealsPlanState, writeDealsStagedJourneyPlan, writeDealsTripPlan } from "./dealsTripPlanStorage";
 
-const makePlan = () => updateDealsTripPlan(createDealsTripPlan({ mode: "flight-car", searchFingerprint: "safe", resultsPath: "/deals/results?q=x", carsResultsPath: "/cars/results?q=x" }, 100), { flight: { id: " f ", provider: " P ", airline: " A ", origin: "LOS", destination: "LAX", departure: "d", arrival: "a", duration: "1h", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 100 } }, 101);
+const makePlan = () => updateDealsTripPlan(createDealsTripPlan({ mode: "flight-car", searchFingerprint: "safe", resultsPath: "/packages/results?q=x", carsResultsPath: "/cars/results?q=x" }, 100), { flight: { id: " f ", provider: " P ", airline: " A ", origin: "LOS", destination: "LAX", departure: "d", arrival: "a", duration: "1h", sourcePrice: 1, sourceCurrency: "USD", resultReceivedAt: 100 } }, 101);
 const memoryStorage = (initial?: string) => { let value = initial ?? null; return { getItem: () => value, setItem: (_key: string, next: string) => { value = next; }, removeItem: () => { value = null; }, value: () => value }; };
 
 test("canonical serialization drops all unknown and forbidden data", () => {
@@ -27,7 +27,7 @@ test("structured reads distinguish missing, valid, mismatch, expired and invalid
   assert.equal(readDealsTripPlan("safe", 101, memoryStorage(raw)).status, "valid");
   assert.equal(readDealsTripPlan("other", 101, memoryStorage(raw)).status, "fingerprint_mismatch");
   const expired = readDealsTripPlan(undefined, 100 + DEALS_TRIP_PLAN_TTL_MS, memoryStorage(raw));
-  assert.equal(expired.status, "expired"); if (expired.status === "expired") assert.equal(expired.plan.resultsPath, "/deals/results?q=x");
+  assert.equal(expired.status, "expired"); if (expired.status === "expired") assert.equal(expired.plan.resultsPath, "/packages/results?q=x");
   assert.equal(readDealsTripPlan(undefined, 101, memoryStorage("{" )).status, "invalid");
   assert.equal(readDealsTripPlan(undefined, 101, null).status, "storage_unavailable");
 });
@@ -42,7 +42,7 @@ test("storage failures are explicit and a later retry can succeed", () => {
 
 test("staged and legacy storage reads, writes, removals, and invalidation are isolated", () => {
   const values = new Map<string, string>(); const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); }, removeItem: (key: string) => { values.delete(key); } };
-  const legacy = makePlan(); const staged = { ...makePlan(), resultsPath: "/deals/results?q=x&journey=staged" };
+  const legacy = makePlan(); const staged = { ...makePlan(), resultsPath: "/packages/results?q=x&journey=staged" };
   assert.equal(writeDealsTripPlan(legacy, storage), true); const legacyRaw = values.get(DEALS_TRIP_PLAN_STORAGE_KEY);
   assert.equal(writeDealsStagedJourneyPlan(staged, storage), true); assert.equal(values.get(DEALS_TRIP_PLAN_STORAGE_KEY), legacyRaw);
   assert.equal(readDealsTripPlan("safe", 101, storage).status, "valid"); assert.equal(readDealsStagedJourneyPlan("safe", 101, storage).status, "valid");
@@ -64,7 +64,7 @@ test("resolved plan state installs only a valid current-context read", () => {
 test("every non-valid current-context read clears retained state", () => {
   const context = buildDealsPlanContextKey("guided", "safe"); const plan = makePlan();
   const retained = { plan, storedContextKey: context, resolvedContextKey: context, persistence: "saved" as const };
-  const results = [{ status: "missing" }, { status: "invalid" }, { status: "expired", plan }, { status: "fingerprint_mismatch" }, { status: "storage_unavailable" }] as const;
+  const results = [{ status: "missing" }, { status: "invalid" }, { status: "expired", plan }, { status: "fingerprint_mismatch", plan }, { status: "storage_unavailable" }] as const;
   for (const result of results) {
     const state = applyDealsPlanReadResult(context, context, retained, result);
     assert.equal(state.plan, null, result.status); assert.equal(state.storedContextKey, null, result.status); assert.equal(state.resolvedContextKey, context, result.status);
@@ -74,7 +74,7 @@ test("every non-valid current-context read clears retained state", () => {
 
 test("A to B to A cannot revive a plan after mismatch or missing storage", () => {
   const a = buildDealsPlanContextKey("guided", "safe"); const b = buildDealsPlanContextKey("guided", "other"); const plan = makePlan();
-  for (const result of [{ status: "fingerprint_mismatch" }, { status: "missing" }] as const) {
+  for (const result of [{ status: "fingerprint_mismatch", plan }, { status: "missing" }] as const) {
     let state = applyDealsPlanReadResult(a, a, unresolvedDealsPlanState(), { status: "valid", plan });
     assert.equal(getVisibleDealsPlan(state, b), null);
     state = applyDealsPlanReadResult(b, b, state, result); assert.equal(state.plan, null);
@@ -93,4 +93,22 @@ test("scope and fingerprint define context while route stage does not", () => {
   assert.equal(buildDealsPlanContextKey("guided", fingerprint), buildDealsPlanContextKey("guided", fingerprint));
   assert.notEqual(buildDealsPlanContextKey("guided", fingerprint), buildDealsPlanContextKey("guided", "other"));
   assert.notEqual(buildDealsPlanContextKey("guided", fingerprint), buildDealsPlanContextKey("legacy", fingerprint));
+});
+
+
+test("guided mismatch and pure snapshots are non-destructive", () => {
+  const raw = serializeDealsTripPlan(makePlan()); const storage = memoryStorage(raw);
+  const mismatch = readDealsStagedJourneyPlan("other", 101, storage);
+  assert.equal(mismatch.status, "fingerprint_mismatch"); assert.equal(storage.value(), raw);
+  assert.equal(classifyDealsStagedJourneySnapshot(raw, "other", 101).status, "fingerprint_mismatch"); assert.equal(storage.value(), raw);
+  assert.deepEqual(classifyDealsStagedJourneySnapshot(null, "safe", 101), { status: "missing" });
+  assert.deepEqual(classifyDealsStagedJourneySnapshot("{", "safe", 101), { status: "invalid" });
+  const legacy = memoryStorage(raw); assert.equal(readDealsTripPlan("other", 101, legacy).status, "fingerprint_mismatch"); assert.equal(legacy.value(), null);
+});
+
+test("staged cleanup is best-effort when browser persistence is blocked", () => {
+  const throwing = { getItem: () => null, setItem: () => undefined, removeItem: () => { throw new Error("blocked"); } };
+  assert.doesNotThrow(() => removeDealsStagedJourneyPlan(throwing));
+  assert.equal(removeDealsStagedJourneyPlan(throwing), false);
+  assert.equal(removeDealsStagedJourneyPlan(null), false);
 });

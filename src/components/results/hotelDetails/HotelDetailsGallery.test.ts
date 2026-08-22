@@ -83,3 +83,14 @@ test("preserves the photo-viewer dialog navigation contract", () => {
   ])
     assert.ok(dialogCall.includes(dialogContract), dialogContract);
 });
+
+test("builds a responsive four-tile mosaic with a dynamic remaining count", () => {
+  for (const contract of [
+    'layout?: "hero" | "mosaic"',
+    "data-hotel-gallery-mosaic",
+    "usableIndices.slice(0, 4)",
+    "usableIndices.length - visibleIndices.length",
+    'remainingPhotosLabel.replace("{{count}}"',
+    'layout === "hero" && showGalleryControls',
+  ]) assert.ok(gallerySource.includes(contract), contract);
+});

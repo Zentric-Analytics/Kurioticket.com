@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
 import { MessageBanner } from "@/components/ui/MessageBanner";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { GoogleLogo } from "@/components/auth/GoogleLogo";
 import { signinSchema } from "@/lib/validation";
 
 type SigninFormProps = {
@@ -435,16 +436,18 @@ export function SigninForm({
           <Button
             type="button"
             variant="secondary"
-            className="w-full focus-visible:ring-blue/30"
+            className="w-full gap-2.5 focus-visible:ring-blue/30"
             onClick={() =>
-              signIn("google", {
-                callbackUrl: callbackUrl || "/",
-                prompt: "select_account",
-              })
+              signIn(
+                "google",
+                { callbackUrl: callbackUrl || "/" },
+                { prompt: "select_account" },
+              )
             }
             disabled={busy}
           >
-            {t.loginGoogle}
+            <GoogleLogo />
+            <span>{t.loginGoogle}</span>
           </Button>
         </div>
       ) : null}

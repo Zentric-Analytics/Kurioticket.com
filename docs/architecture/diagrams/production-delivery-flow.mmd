@@ -1,0 +1,16 @@
+flowchart TD
+  A[Owner requests production] --> B[Prepare/refresh release branch]
+  B --> C[Merge/advance main]
+  C --> D[Owner runs dry-run mode in android-production-delivery]
+  D --> E[Validate source SHA and ancestry]
+  E --> F[EAS version query + Play history checks]
+  F --> G{checks pass}
+  G -->|yes| H[workflow_dispatch manual approval]
+  G -->|no| I[stop before submission]
+  H --> J[android-production-delivery build --platform android]
+  J --> K[build:view verification]
+  K --> L[artifact and identity checks]
+  L --> M{approved for upload?}
+  M -->|not yet| N[manual upload to Internal Testing]
+  N --> O[QA + monitoring]
+  M -->|future iOS| P[No automatic iOS flow]

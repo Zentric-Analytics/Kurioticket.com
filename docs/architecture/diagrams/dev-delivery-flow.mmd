@@ -1,0 +1,16 @@
+flowchart TD
+  A[Developer pushes feature branch] --> B[Pull request to dev]
+  B --> C[GitHub required validation]
+  C -->|pass| D[Merge to dev]
+  D --> E[Independent Render worker polls dev]
+  E --> F[Exact SHA checkout and Preview identity validation]
+  F --> G[Durable ledger and classifier]
+  G -->|web| H[Render exact-SHA staging deploy]
+  G -->|OTA safe and fingerprint equal| I[EAS Preview OTA]
+  G -->|native iOS| J[EAS iOS Preview build and auto-submit]
+  G -->|native Android| K[EAS Android Preview build]
+  G -->|uncertain| L[Fail closed]
+  H --> M[Evidence and status]
+  I --> M
+  J --> M
+  K --> M

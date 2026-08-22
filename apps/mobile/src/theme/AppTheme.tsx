@@ -6,9 +6,19 @@ export const lightTheme = {
   background: "#FAFBFF",
   surface: "#FFFFFF",
   text: "#071A48",
+  textPrimary: "#071A48",
+  textSecondary: "#56658E",
+  textMuted: "#56658E",
+  textOnSurface: "#071A48",
+  textOnImage: "#FFFFFF",
   muted: "#56658E",
   border: "#E7ECF5",
   icon: "#071A48",
+  priceAlertSurface: "#EDF6FF",
+  priceAlertBorder: "#C8DFF7",
+  priceAlertAccent: "#1769AA",
+  switchTrack: "#FFFFFF",
+  switchTrackActive: "#2563EB",
 } as const;
 
 export const darkTheme = {
@@ -16,9 +26,19 @@ export const darkTheme = {
   background: "#091224",
   surface: "#121E33",
   text: "#F4F7FF",
+  textPrimary: "#F4F7FF",
+  textSecondary: "#AAB5CD",
+  textMuted: "#AAB5CD",
+  textOnSurface: "#F4F7FF",
+  textOnImage: "#FFFFFF",
   muted: "#AAB5CD",
   border: "#2B3952",
   icon: "#EAF0FF",
+  priceAlertSurface: "#122A43",
+  priceAlertBorder: "#294D70",
+  priceAlertAccent: "#75BFFF",
+  switchTrack: "#33435D",
+  switchTrackActive: "#4D82F7",
 } as const;
 
 type ThemeValue = {

@@ -97,7 +97,21 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
   if (isEasBuild && easBuildPlatform === "ios") {
     googleIosClientId = validateGoogleIosClientId(googleIosClientId, environment.variant);
   }
-  const plugins: NonNullable<ExpoConfig["plugins"]> = ["expo-router"];
+  const splashBackgroundColor = "#F7FAFF";
+  const plugins: NonNullable<ExpoConfig["plugins"]> = [
+    "expo-router",
+    [
+      "expo-splash-screen",
+      {
+        ios: {
+          image: "./assets/kurioticket-logo-primary-light-bg.png",
+          imageWidth: 200,
+          resizeMode: "contain",
+          backgroundColor: splashBackgroundColor,
+        },
+      },
+    ],
+  ];
   if (googleIosClientId && (!isEasBuild || easBuildPlatform === "ios")) {
     googleIosClientId = validateGoogleIosClientId(googleIosClientId, environment.variant);
     plugins.push(["react-native-nitro-google-signin", { iosUrlScheme: googleIosUrlScheme(googleIosClientId) }]);
@@ -114,17 +128,17 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     icon: "./assets/kurioticket-icon-blue.png",
-    splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: "#F7FAFF" },
+    splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: splashBackgroundColor },
     ios: {
       supportsTablet: true,
       bundleIdentifier: environment.bundleIdentifier,
-      icon: "./assets/kurioticket-icon-blue.png",
+      icon: "./assets/kurioticket-icon-ios.png",
       infoPlist: { ITSAppUsesNonExemptEncryption: false },
     },
     android: {
       package: environment.androidPackage,
       icon: "./assets/kurioticket-icon-blue.png",
-      splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: "#F7FAFF" },
+      splash: { image: "./assets/kurioticket-logo-primary-light-bg.png", resizeMode: "contain", backgroundColor: splashBackgroundColor },
       adaptiveIcon: { foregroundImage: "./assets/kurioticket-adaptive-foreground.png", backgroundColor: "#F2F6FA" },
     },
     plugins,
@@ -139,7 +153,9 @@ const createAppConfig = ({ config }: ConfigContext): ExpoConfig => {
         isPreview: environment.isPreview,
       },
     },
-    runtimeVersion: RELEASES[environment.variant].runtimeVersion,
+    runtimeVersion: environment.variant === "preview"
+      ? { policy: "fingerprint" }
+      : RELEASES.production.runtimeVersion,
     updates: {
       url: "https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d",
       checkAutomatically: "ON_LOAD",

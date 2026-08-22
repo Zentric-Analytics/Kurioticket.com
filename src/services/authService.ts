@@ -309,21 +309,23 @@ export async function resetPasswordWithToken(input: { token: string; password: s
   }
 
   const email = identifier.slice("password-reset:".length);
-  const passwordHash = await bcrypt.hash(password, 12);
-  const updateResult = await getPrisma().user.updateMany({
-    where: { email, status: "ACTIVE" },
-    data: { passwordHash },
-  });
-
-  await getPrisma().verificationToken.deleteMany({ where: { token: tokenHash } });
-
-  if (updateResult.count < 1) {
+  const user = await getPrisma().user.findFirst({ where: { email, status: "ACTIVE" }, select: { id: true } });
+  if (!user) {
+    await getPrisma().verificationToken.deleteMany({ where: { token: tokenHash } });
     logAuthEvent("password-reset-failed", { email, reason: "user-not-found" });
     return false;
   }
+  const passwordHash = await bcrypt.hash(password, 12);
+  const securityEvent = await getPrisma().$transaction(async (tx) => {
+    await tx.user.update({ where: { id: user.id }, data: { passwordHash, sessionVersion: { increment: 1 } } });
+    await tx.accountSession.updateMany({ where: { userId: user.id, revokedAt: null }, data: { revokedAt: new Date(), revokeReason: "password_reset" } });
+    const event = await tx.securityEvent.create({ data: { userId: user.id, type: "PASSWORD_RESET" } });
+    await tx.verificationToken.delete({ where: { token: tokenHash } });
+    return event;
+  });
 
   logAuthEvent("password-reset-succeeded", { email });
-  return true;
+  return { userId: user.id, email, transitionId: tokenHash.slice(0, 24), securityEventId: securityEvent.id };
 }
 
 function getPasswordResetIdentifier(email: string) {

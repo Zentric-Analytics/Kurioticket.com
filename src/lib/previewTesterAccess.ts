@@ -1,5 +1,6 @@
 import { getPrisma } from "@/lib/prisma";
 import { isStagingEnvironment } from "@/lib/stagingSafety";
+import { hasTeamAccessCapability, normalizeTeamAccessRoles, type TeamAccessRole } from "@/lib/teamAccessRoles";
 
 export const TRUSTED_PREVIEW_DOMAINS = new Set([
   "kurioticket.com",
@@ -27,6 +28,7 @@ type TesterRecord = {
   allowStagingEmail: boolean;
   expiresAt: Date | null;
   approvedAt: Date | null;
+  roles?: TeamAccessRole[];
 };
 
 export function isActivePreviewTester(record: TesterRecord | null | undefined, now = new Date()) {
@@ -35,6 +37,12 @@ export function isActivePreviewTester(record: TesterRecord | null | undefined, n
 
 export function hasPreviewTesterPermission(record: TesterRecord | null | undefined, permission: "google" | "email", now = new Date()) {
   if (!isActivePreviewTester(record, now)) return false;
+  const roles = record?.roles ?? [];
+  if (roles.length) {
+    return permission === "google"
+      ? hasTeamAccessCapability(roles, "GOOGLE_PREVIEW_LOGIN")
+      : hasTeamAccessCapability(roles, "STAGING_EMAIL");
+  }
   return permission === "google" ? Boolean(record?.allowGoogleSignIn) : Boolean(record?.allowStagingEmail);
 }
 
@@ -55,10 +63,18 @@ export function isStagingEmailRecipientAllowed(
 }
 
 export async function findTester(email: string) {
-  return getPrisma().previewTester.findUnique({
+  const tester = await getPrisma().previewTester.findUnique({
     where: { emailNormalized: normalizePreviewTesterEmail(email) },
-    select: { status: true, allowGoogleSignIn: true, allowStagingEmail: true, expiresAt: true, approvedAt: true },
+    select: {
+      status: true,
+      allowGoogleSignIn: true,
+      allowStagingEmail: true,
+      expiresAt: true,
+      approvedAt: true,
+      roles: true,
+    },
   });
+  return tester ? { ...tester, roles: normalizeTeamAccessRoles(tester.roles) } : null;
 }
 
 export async function canUseStagingCredentials(

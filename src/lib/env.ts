@@ -1,3 +1,5 @@
+import { isStagingEnvironment } from "./stagingSafety";
+
 export function getBaseUrl() {
   return (
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -20,6 +22,16 @@ export function getGoogleClientId() {
 
 export function getGoogleClientSecret() {
   return process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || "";
+}
+
+export function getMobileGoogleClientId() {
+  const configuredAudience = process.env.MOBILE_GOOGLE_WEB_CLIENT_ID?.trim();
+  if (configuredAudience) return configuredAudience;
+
+  // Preview must never accept the website audience implicitly. Production
+  // temporarily retains the legacy audience until its separate mobile OAuth
+  // provider remediation can configure MOBILE_GOOGLE_WEB_CLIENT_ID.
+  return isStagingEnvironment() ? "" : getGoogleClientId().trim();
 }
 
 
@@ -50,6 +62,13 @@ export function getAdminEmails() {
       email.trim().toLowerCase()
     )
     .filter(Boolean);
+}
+
+export function getFeatureControlProductionAdmins() {
+  const email = /^[^\s,@<>]+@[^\s,@<>]+\.[^\s,@<>]+$/;
+  return (process.env.FEATURE_CONTROL_PRODUCTION_ADMINS || "").split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter((value, index, all) => email.test(value) && !value.includes("*") && all.indexOf(value) === index);
 }
 
 export function requireServerEnv(

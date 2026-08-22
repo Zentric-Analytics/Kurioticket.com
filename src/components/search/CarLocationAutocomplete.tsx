@@ -1,11 +1,11 @@
 "use client";
 
-import { CSSProperties, ChangeEvent, KeyboardEvent, RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { ChangeEvent, KeyboardEvent, RefObject, useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Building2, LocateFixed, MapPin, Plane } from "lucide-react";
 
 import type { CarLocationSuggestion, CarLocationSuggestionKind } from "@/lib/cars/carLocationSuggestions";
-import { calculateDesktopPopoverGeometry, calculateLocationPanelScrollAdjustment } from "./desktopPopoverPosition";
+import { carsDesktopPopoverClassName, useCarsDesktopPopover } from "./useCarsDesktopPopover";
 
 type Strings = {
   locationSuggestions: string;
@@ -36,10 +36,10 @@ type Props = {
   countryHint?: string;
   strings: Strings;
   onRequestClose?: () => void;
-  fieldAnchorRef?: RefObject<HTMLElement | null>;
-  searchCardRef?: RefObject<HTMLElement | null>;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  autoFocus?: boolean;
+  mobileShell?: boolean;
 };
 
 type ApiResponse = { suggestions?: CarLocationSuggestion[]; source?: "local-fallback" };
@@ -65,10 +65,10 @@ export function CarLocationAutocomplete({
   countryHint,
   strings,
   onRequestClose,
-  fieldAnchorRef,
-  searchCardRef,
   isOpen,
   onOpenChange,
+  autoFocus = false,
+  mobileShell = false,
 }: Props) {
   const reactId = useId().replace(/:/g, "");
   const listboxId = `${id}-${reactId}-listbox`;
@@ -77,7 +77,7 @@ export function CarLocationAutocomplete({
   const panelRef = useRef<HTMLDivElement | null>(null);
   const activeInputRef = inputRef ?? fallbackRef;
   const [internalOpen, setInternalOpen] = useState(false);
-  const [panelStyle, setPanelStyle] = useState<CSSProperties>();
+  const [hasUserEditedQuery, setHasUserEditedQuery] = useState(false);
   const [suggestions, setSuggestions] = useState<CarLocationSuggestion[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const open = isOpen ?? internalOpen;
@@ -100,7 +100,19 @@ export function CarLocationAutocomplete({
   const [error, setError] = useState(false);
   const requestIdRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
-  const previouslyOpenRef = useRef(false);
+  const trimmedQuery = value.trim();
+  const showPanel = usesDesktopPanel
+    ? open && hasUserEditedQuery && trimmedQuery.length > 0
+    : open;
+  const { placement, popoverRef, style } = useCarsDesktopPopover({
+    open: showPanel && usesDesktopPanel,
+    launcherRef: activeInputRef,
+    preferredWidth: 420,
+    desiredHeight: 320,
+    maxHeight: 320,
+    providedPopoverRef: panelRef,
+    onLauncherOutOfView: () => setOpen(false),
+  });
 
   useEffect(() => {
     if (open) return;
@@ -108,21 +120,18 @@ export function CarLocationAutocomplete({
     return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
-  useLayoutEffect(() => {
-    const opening = open && !previouslyOpenRef.current;
-    previouslyOpenRef.current = open;
-    if (!opening || !usesDesktopPanel || !searchCardRef?.current) return;
-    const adjustment = calculateLocationPanelScrollAdjustment({
-      boundaryRect: searchCardRef.current.getBoundingClientRect(),
-      viewportHeight: window.innerHeight,
-      viewportPadding: 16,
-      topViewportPadding: 16,
-      gap: 10,
-    });
-    if (adjustment > 0) window.scrollBy({ top: adjustment, behavior: "auto" });
-  }, [open, searchCardRef, usesDesktopPanel]);
-
   useEffect(() => {
+    if (usesDesktopPanel && (!hasUserEditedQuery || !trimmedQuery)) {
+      requestIdRef.current += 1;
+      abortRef.current?.abort();
+      abortRef.current = null;
+      setSuggestions([]);
+      setLoading(false);
+      setError(false);
+      setHighlightedIndex(-1);
+      if (open) setOpen(false);
+      return;
+    }
     if (!open || disabled) return;
     const requestId = ++requestIdRef.current;
     const controller = new AbortController();
@@ -131,7 +140,7 @@ export function CarLocationAutocomplete({
     const timeout = window.setTimeout(() => {
       setLoading(true);
       setError(false);
-      const params = new URLSearchParams({ q: value, limit: "8" });
+      const params = new URLSearchParams({ q: trimmedQuery, limit: "8" });
       if (countryHint && /^[A-Za-z]{2}$/.test(countryHint)) params.set("country", countryHint.toUpperCase());
       fetch(`/api/cars/locations?${params.toString()}`, { signal: controller.signal, cache: "no-store" })
         .then((response) => (response.ok ? response.json() : Promise.reject(new Error("Location suggestions unavailable"))))
@@ -154,7 +163,7 @@ export function CarLocationAutocomplete({
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [countryHint, disabled, open, value]);
+  }, [countryHint, disabled, hasUserEditedQuery, open, setOpen, trimmedQuery, usesDesktopPanel]);
 
   useEffect(() => {
     if (!open || !usesDesktopPanel) return;
@@ -165,34 +174,6 @@ export function CarLocationAutocomplete({
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open, setOpen, usesDesktopPanel]);
-
-  useLayoutEffect(() => {
-    if (!open || !usesDesktopPanel || !fieldAnchorRef?.current || !searchCardRef?.current) return;
-    const updatePosition = () => {
-      if (!fieldAnchorRef.current || !searchCardRef.current) return;
-      const geometry = calculateDesktopPopoverGeometry({
-        fieldRect: fieldAnchorRef.current.getBoundingClientRect(),
-        boundaryRect: searchCardRef.current.getBoundingClientRect(),
-        viewportWidth: window.innerWidth,
-        viewportHeight: window.innerHeight,
-        viewportPadding: 16,
-        gap: 10,
-      });
-      setPanelStyle({ left: geometry.left, top: geometry.top, width: geometry.width, maxHeight: geometry.maxHeight });
-    };
-    updatePosition();
-    const observer = new ResizeObserver(updatePosition);
-    observer.observe(fieldAnchorRef.current);
-    observer.observe(searchCardRef.current);
-    if (panelRef.current) observer.observe(panelRef.current);
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [fieldAnchorRef, open, searchCardRef, suggestions.length, loading, error, usesDesktopPanel]);
 
   useEffect(() => {
     if (!open || highlightedIndex < 0) return;
@@ -206,21 +187,40 @@ export function CarLocationAutocomplete({
 
   const selectSuggestion = (suggestion: CarLocationSuggestion) => {
     onValueChange(suggestion.value);
+    setHasUserEditedQuery(false);
     onSelect?.(suggestion);
     close();
   };
 
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onValueChange(event.target.value);
+    const nextValue = event.target.value;
+    const nextQuery = nextValue.trim();
+    onValueChange(nextValue);
+    if (usesDesktopPanel) {
+      setHasUserEditedQuery(nextQuery.length > 0);
+      if (!nextQuery) {
+        requestIdRef.current += 1;
+        abortRef.current?.abort();
+        abortRef.current = null;
+        setSuggestions([]);
+        setLoading(false);
+        setError(false);
+        setHighlightedIndex(-1);
+        setOpen(false);
+        return;
+      }
+    }
     setOpen(true);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown") {
+      if (usesDesktopPanel && (!hasUserEditedQuery || !trimmedQuery)) return;
       event.preventDefault();
       setOpen(true);
       setHighlightedIndex((current) => Math.min(suggestions.length - 1, current + 1));
     } else if (event.key === "ArrowUp") {
+      if (usesDesktopPanel && (!hasUserEditedQuery || !trimmedQuery)) return;
       event.preventDefault();
       setOpen(true);
       setHighlightedIndex((current) => Math.max(0, current === -1 ? suggestions.length - 1 : current - 1));
@@ -239,15 +239,21 @@ export function CarLocationAutocomplete({
     }
   };
 
-  const activeId = open && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined;
-  const label = value.trim() ? strings.locationSuggestions : strings.popularLocations;
+  const activeId = showPanel && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined;
+  const label = usesDesktopPanel
+    ? strings.locationSuggestions
+    : trimmedQuery
+      ? strings.locationSuggestions
+      : strings.popularLocations;
   const panelClass = usesDesktopPanel
-    ? "fixed z-[1110] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-950/12 ring-1 ring-slate-950/5"
-    : "mt-4 max-h-[48vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm";
+    ? `${carsDesktopPopoverClassName} overflow-y-auto overscroll-contain p-2`
+    : mobileShell
+      ? "mt-4 overflow-y-auto border-t border-slate-200 bg-white pt-2"
+      : "mt-4 max-h-[48vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-sm";
 
   const panelContent = (
     <>
-      <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{label}</div>
+      {!usesDesktopPanel ? <div className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</div> : null}
       {loading ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.loadingSuggestions}</p> : null}
       {error ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.suggestionsUnavailable} {strings.continueTypingManually}</p> : null}
       {!loading && !error && suggestions.length === 0 ? <p className="px-3 py-3 text-sm font-semibold text-slate-600" aria-live="polite">{strings.noMatchingLocations} {strings.continueTypingManually}</p> : null}
@@ -266,9 +272,9 @@ export function CarLocationAutocomplete({
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => setHighlightedIndex(index)}
               onClick={() => selectSuggestion(suggestion)}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start transition ${selected ? "bg-[#004BB8]/10 text-slate-950" : "text-slate-900 hover:bg-[#004BB8]/8"}`}
+              className={`flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-start transition ${selected ? "bg-slate-50 text-slate-950" : "text-slate-900 hover:bg-slate-50"}`}
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[#004BB8]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
                 <Icon className="h-4 w-4" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
@@ -293,7 +299,9 @@ export function CarLocationAutocomplete({
         type="text"
         value={value}
         onChange={onChange}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          if (!usesDesktopPanel) setOpen(true);
+        }}
         onBlur={(event) => {
           if (usesDesktopPanel && !panelRef.current?.contains(event.relatedTarget as Node | null)) close();
         }}
@@ -302,15 +310,16 @@ export function CarLocationAutocomplete({
         className={inputClassName}
         autoComplete="off"
         disabled={disabled}
+        autoFocus={autoFocus}
         role="combobox"
         aria-autocomplete="list"
-        aria-expanded={open}
+        aria-expanded={showPanel}
         aria-controls={listboxId}
         aria-activedescendant={activeId}
       />
 
-      {open ? (usesDesktopPanel && typeof document !== "undefined" ? createPortal(
-        <div ref={panelRef} style={panelStyle} className={panelClass} data-cars-desktop-popover="locations">
+      {showPanel ? (usesDesktopPanel && typeof document !== "undefined" ? createPortal(
+        <div ref={popoverRef} style={style} data-placement={placement} className={panelClass} data-cars-desktop-popover="locations">
           {panelContent}
         </div>,
         document.body,

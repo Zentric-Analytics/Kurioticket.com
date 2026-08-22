@@ -1,7 +1,6 @@
-import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
+import { requireWebApiSession } from "@/lib/web-api-auth";
 import { z, ZodError } from "zod";
-import { authOptions } from "@/lib/auth";
 import { isSupportedDisplayCurrency } from "@/lib/currency/exchangeRates";
 import { publicLocaleOptions } from "@/lib/i18n";
 import { isAvailableLanguage, normalizeLanguage } from "@/lib/language";
@@ -123,7 +122,8 @@ export function serializeCustomizationPreferences(
 }
 
 async function getAuthenticatedUserId() {
-  const session = await getServerSession(authOptions);
+  const canonical = await requireWebApiSession();
+  const session = canonical?.session;
   return session?.user?.id || null;
 }
 

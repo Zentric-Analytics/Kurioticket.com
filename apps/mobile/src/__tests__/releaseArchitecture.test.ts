@@ -28,6 +28,7 @@ test("Production release profile produces store Android and iOS binaries", () =>
   assert.equal(eas.build.production.env.APP_VARIANT, "production");
   assert.equal(eas.build.production.env.EXPO_PUBLIC_API_BASE_URL, "https://kurioticket.com");
   assert.equal(eas.submit.production.ios.ascAppId, "6797446939");
+  assert.notEqual(eas.submit.production.ios.ascAppId, eas.submit.preview.ios.ascAppId);
   const credential = JSON.parse(readFileSync(resolve(process.cwd(), "release-baselines/ios/production-credential.json"), "utf8"));
   assert.equal(credential.bundleIdentifier, "com.kurioticket.app");
   assert.equal(credential.appleTeamId, "N23R45R4CY");
@@ -36,42 +37,13 @@ test("Production release profile produces store Android and iOS binaries", () =>
   assert.equal(credential.buildPolicy, "freeze-credentials");
 });
 
-test("repository workflows cannot build, update, submit, or upload mobile artifacts", () => {
-  for (const name of ["mobile-preview-update.yml", "mobile-production-update.yml"]) {
-    const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
-    assert.doesNotMatch(workflow, /\beas\s+(?:build|update|submit)\b/i);
-    assert.doesNotMatch(workflow, /\bexpo\s+upload\b/i);
+test("GitHub Actions has no Preview delivery owner", () => {
+  const workflowRoot = resolve(process.cwd(), "../../.github/workflows");
+  for (const removed of ["mobile-preview-update.yml", "preview-dev-delivery.yml", "android-preview-build.yml", "android-preview-ota.yml", "ios-preview-build.yml", "ios-preview-testflight-submit.yml"]) {
+    assert.equal(readFileIfPresent(resolve(workflowRoot, removed)), null);
   }
-});
-
-test("native and Production delivery workflows are manual-only, protected, and never submit", () => {
-  for (const [name, environment] of [["android-preview-build.yml", "mobile-preview-build"], ["android-production-delivery.yml", "mobile-production"]]) {
-    const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
-    assert.match(workflow, /^\s*workflow_dispatch:/m);
-    assert.doesNotMatch(workflow, /^\s*(?:push|pull_request|schedule):/m);
-    assert.match(workflow, new RegExp(`environment: ${environment}`));
-    assert.match(workflow, /validate-delivery-inputs\.mjs/);
-    assert.match(workflow, /classify-release\.mjs/);
-    assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit|upload.*google play/i);
-  }
-});
-
-test("Preview OTA is reusable only after validation and retains a protected manual break-glass path", () => {
-  const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/android-preview-ota.yml"), "utf8");
-  assert.match(workflow, /^\s*workflow_call:/m);
-  assert.match(workflow, /^\s*workflow_dispatch:/m);
-  assert.doesNotMatch(workflow, /^\s*(?:push|pull_request|schedule):/m);
-  assert.match(workflow, /environment: mobile-preview-ota/);
-  assert.match(workflow, /PREVIEW_TRIGGER_MODE/);
-  assert.match(workflow, /Resolve trusted Preview target/);
-  assert.match(workflow, /BREAK_GLASS_CONFIRMATION/);
-  assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+(?:build|submit)\s|--auto-submit|upload.*google play/i);
-});
-
-test("push and pull-request workflows remain validation-only", () => {
-  const workflows = ["mobile-preview-update.yml", "mobile-production-update.yml"];
-  for (const name of workflows) {
-    const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows", name), "utf8");
+  for (const name of ["pr-required-gates.yml", "mobile-production-update.yml", "security.yml", "migration-validation.yml"]) {
+    const workflow = readFileSync(resolve(workflowRoot, name), "utf8");
     assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+(?:build|update|submit)\b/i);
   }
 });
@@ -96,6 +68,18 @@ test("Production delivery remains manual-only and isolated", () => {
   assert.doesNotMatch(iosProduction, /\beas(?:-cli@[^\s]+)?\s+submit\b|--auto-submit/i);
 });
 
+test("independent Preview service is identity-locked, frozen, and TestFlight-internal only", () => {
+  const config = readFileSync(resolve(process.cwd(), "../../services/preview-release/config.mjs"), "utf8");
+  const client = readFileSync(resolve(process.cwd(), "../../services/preview-release/remote-clients.mjs"), "utf8");
+  assert.match(config, /com\.kurioticket\.app\.preview/);
+  assert.match(config, /preview-0\.3\.0/);
+  assert.match(config, /https:\/\/staging\.kurioticket\.com/);
+  assert.match(client, /"build", "--platform", "ios", "--profile", "preview"/);
+  assert.match(client, /"--freeze-credentials", "--no-wait", "--auto-submit-with-profile", "preview"/);
+  assert.equal(eas.submit.preview.ios.ascAppId, "6797447471");
+  assert.doesNotMatch(client, /production-0\.3\.0|com\.kurioticket\.app["']/i);
+});
+
 test("iOS Production shell bodies never interpolate dispatch inputs directly", () => {
   const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/ios-production-delivery.yml"), "utf8");
   const shellBodies = [...workflow.matchAll(/^\s+run:\s*(?:\|\r?\n(?<block>(?:\s{10,}.*(?:\r?\n|$))*)|(?<inline>.*))$/gm)]
@@ -115,6 +99,11 @@ test("iOS Production shell bodies never interpolate dispatch inputs directly", (
     assert.match(workflow, new RegExp(`${variable}: ".*inputs\\.`));
     assert.match(shellBodies, new RegExp(`"\\$${variable}"`));
   }
+  assert.match(workflow, /embedded\.mobileprovision/);
+  assert.match(workflow, /openssl smime -inform der -verify -noverify/);
+  assert.match(workflow, /openssl', 'x509', '-inform', 'DER'/);
+  assert.match(workflow, /--provisioning-profile/);
+  assert.match(workflow, /--certificate-serials/);
 });
 
 test("Preview iOS configuration declares truthful export compliance", async () => {
@@ -126,7 +115,15 @@ test("Preview iOS configuration declares truthful export compliance", async () =
   const config = createAppConfig({ config: {} } as never);
   assert.equal(config.ios?.infoPlist?.ITSAppUsesNonExemptEncryption, false);
   assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app.preview");
-  assert.equal(config.runtimeVersion, "preview-0.3.0");
+  assert.deepEqual(config.runtimeVersion, { policy: "fingerprint" });
+  assert.deepEqual(config.plugins?.[1], ["expo-splash-screen", {
+    ios: {
+      image: "./assets/kurioticket-logo-primary-light-bg.png",
+      imageWidth: 200,
+      resizeMode: "contain",
+      backgroundColor: "#F7FAFF",
+    },
+  }]);
   assert.deepEqual(config.splash, {
     image: "./assets/kurioticket-logo-primary-light-bg.png",
     resizeMode: "contain",
@@ -141,7 +138,7 @@ test("Preview iOS configuration declares truthful export compliance", async () =
     foregroundImage: "./assets/kurioticket-adaptive-foreground.png",
     backgroundColor: "#F2F6FA",
   });
-  assert.deepEqual(config.plugins?.[1], ["react-native-nitro-google-signin", { iosUrlScheme: "com.googleusercontent.apps.459496589401-gi52kj4fscgf092pasrelkth2mal0mph" }]);
+  assert.deepEqual(config.plugins?.[2], ["react-native-nitro-google-signin", { iosUrlScheme: "com.googleusercontent.apps.459496589401-gi52kj4fscgf092pasrelkth2mal0mph" }]);
 });
 
 test("iOS EAS builds fail closed without an iOS OAuth client", async () => {
@@ -164,7 +161,14 @@ test("Production iOS configuration selects its own OAuth plugin and identity", a
   process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "459496589401-b4npe68m8c358rqr79edi7igvi3sauao.apps.googleusercontent.com";
   const { default: createAppConfig } = await import("../../app.config");
   const config = createAppConfig({ config: {} } as never);
-  assert.deepEqual(config.plugins, ["expo-router", ["react-native-nitro-google-signin", { iosUrlScheme: "com.googleusercontent.apps.459496589401-b4npe68m8c358rqr79edi7igvi3sauao" }]]);
+  assert.deepEqual(config.plugins, ["expo-router", ["expo-splash-screen", {
+    ios: {
+      image: "./assets/kurioticket-logo-primary-light-bg.png",
+      imageWidth: 200,
+      resizeMode: "contain",
+      backgroundColor: "#F7FAFF",
+    },
+  }], ["react-native-nitro-google-signin", { iosUrlScheme: "com.googleusercontent.apps.459496589401-b4npe68m8c358rqr79edi7igvi3sauao" }]]);
   assert.equal(config.name, "Kurioticket");
   assert.equal(config.ios?.bundleIdentifier, "com.kurioticket.app");
   assert.equal(config.scheme, "kurioticket");
@@ -246,31 +250,17 @@ test("Production Android does not apply the iOS OAuth native plugin even when EA
   delete process.env.EAS_BUILD_PLATFORM;
 });
 
-test("required Preview validation is always conclusive and conditionally runs the full suite", () => {
-  const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/mobile-preview-update.yml"), "utf8");
+test("required Preview validation remains conclusive and delivery-free", () => {
+  const workflow = readFileSync(resolve(process.cwd(), "../../.github/workflows/pr-required-gates.yml"), "utf8");
   assert.match(workflow, /name: Validate mobile preview/);
-  assert.doesNotMatch(workflow, /^\s+paths:/m);
-  assert.match(workflow, /name: Classify mobile-relevant changes/);
-  assert.match(workflow, /name: Mobile validation not applicable/);
-  assert.match(workflow, /if: steps\.changes\.outputs\.mobile_relevant == 'false'/);
-  assert.match(workflow, /name: Evaluate automatic Android Preview OTA/);
-  assert.match(workflow, /needs: validate-preview/);
-  assert.match(workflow, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev' && needs\.validate-preview\.result == 'success'/);
-  assert.match(workflow, /target_sha: \$\{\{ github\.sha \}\}/);
-  for (const step of [
-    "Setup Node.js",
-    "Install mobile dependencies",
-    "Type-check mobile app",
-    "Test mobile app",
-    "Validate Expo project",
-    "Resolve Preview public configuration",
-    "Validate Preview iOS prebuild configuration",
-    "Resolve Production public configuration",
-    "Validate resolved application identities",
-    "Validate Metro export",
-    "Confirm delivery remains gated",
-  ]) {
-    assert.match(workflow, new RegExp(`name: ${step}\\r?\\n\\s+if: steps\\.changes\\.outputs\\.mobile_relevant == 'true'`));
-  }
+  assert.match(workflow, /name: secret-scan/);
+  assert.doesNotMatch(workflow, /\beas(?:-cli@[^\s]+)?\s+(?:build|update|submit)\b/i);
   assert.doesNotMatch(workflow, /continue-on-error/);
 });
+
+function readFileIfPresent(path: string): string | null {
+  try { return readFileSync(path, "utf8"); } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}

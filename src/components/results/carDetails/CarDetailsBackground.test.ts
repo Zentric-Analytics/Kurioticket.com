@@ -52,7 +52,7 @@ function assertNoForbiddenBackgroundTreatments(wrapper: string) {
 test("reference details pages retain the shared background architecture", () => {
   for (const source of [flightSource, hotelSource]) {
     assert.match(source, /<main className="flex-1 bg-surface-muted\/40">/);
-    assert.match(source, /<section className="border-b border-border bg-white">/);
+    assert.match(source, /border-b border-border bg-white/);
   }
 });
 

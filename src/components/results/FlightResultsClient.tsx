@@ -2752,7 +2752,7 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             );
           }
 
-          return data as { results: PublicFlightResult[]; warnings?: string[]; resultsCacheValidForMs?: number };
+          return data as { results: PublicFlightResult[]; warnings?: string[]; resultsCacheValidUntil?: number };
         })
         .then((data) => {
           if (!active || activeFlightSearchKeyRef.current !== searchKey) return;
@@ -2762,12 +2762,12 @@ export function FlightResultsClient({ presentationMode = "standalone", searchInp
             body.departureDate,
           );
           const warnings = Array.isArray(data.warnings) ? data.warnings : [];
-          if (typeof data.resultsCacheValidForMs === "number") {
+          if (typeof data.resultsCacheValidUntil === "number") {
             writeFlightResultsSessionSnapshot(
               searchKey,
               filteredResults,
               warnings,
-              data.resultsCacheValidForMs,
+              data.resultsCacheValidUntil,
             );
           }
           setResults(filteredResults);

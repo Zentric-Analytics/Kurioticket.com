@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Image,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,87 +15,140 @@ import { travelApi, type MobileTrip } from "../../api/travelApi";
 import { locationImageByCity } from "./locationCatalogue";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { ScreenHeader, Segments } from "./FlowPrimitives";
-import { flowColors, flowStyles } from "./flowStyles";
+import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
 
-type TripTab = "upcoming" | "past";
-export function TripsFlowScreen() {
+type TripTab = "upcoming" | "past" | "cancelled";
+export function MyTripsFlowScreen() {
+  const ft = useFlowTheme();
   const [tab, setTab] = useState<TripTab>("upcoming");
   const [trips, setTrips] = useState<MobileTrip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
-    setLoading(true); setError("");
-    void travelApi.trips(tab).then((data) => { if (active) setTrips(data.trips); }).catch(() => {
-      if (!active) return;
-      void readSession().then((session) => {
-        if (!session) router.replace("/email-auth");
-        else setError("Unable to load trips. Check your connection and try again.");
+    setLoading(true);
+    setError("");
+    void travelApi
+      .trips(tab)
+      .then((data) => {
+        if (active) setTrips(data.trips);
+      })
+      .catch(() => {
+        if (!active) return;
+        void readSession().then((session) => {
+          if (!session) router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/(tabs)/trips" } });
+          else
+            setError(
+              "Unable to load trips. Check your connection and try again.",
+            );
+        });
+      })
+      .finally(() => {
+        if (active) setLoading(false);
       });
-    }).finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [tab]);
   return (
-    <SafeAreaView style={flowStyles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={flowStyles.scroll}>
-        <ScreenHeader title="Trips" />
-        <View style={[flowStyles.card, flowStyles.shadow]}>
+    <SafeAreaView style={ft.styles.safe} edges={["top"]}>
+      <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={ft.styles.scroll} overScrollMode="never">
+        <ScreenHeader title="My Trips" />
+        <View style={[ft.styles.card, ft.styles.shadow]}>
           <Segments
             value={tab}
             onChange={setTab}
             options={[
               { value: "upcoming", label: "Upcoming" },
               { value: "past", label: "Past" },
+              { value: "cancelled", label: "Cancelled" },
             ]}
           />
         </View>
-        <Text style={flowStyles.sectionTitle}>{tab === "upcoming" ? "Upcoming trips" : "Past trips"}</Text>
-        {loading ? <Text style={flowStyles.meta}>Loading trips…</Text> : null}
-        {error ? <Text accessibilityRole="alert" style={flowStyles.meta}>{error}</Text> : null}
-        {!loading && !error && !trips.length ? <View style={styles.empty}><FlowIcon name="calendar" color={flowColors.blue} size={36} /><Text style={flowStyles.value}>No {tab} trips</Text><Text style={flowStyles.meta}>Your provider-backed bookings will appear here.</Text></View> : null}
-        {trips.map((trip) => <TripCard key={trip.id} trip={trip} />)}
+        <Text style={ft.styles.sectionTitle}>
+          {tab === "upcoming"
+            ? "Upcoming trips"
+            : tab === "past"
+              ? "Past trips"
+              : "Cancelled trips"}
+        </Text>
+        {loading ? <Text style={ft.styles.meta}>Loading reservations…</Text> : null}
+        {error ? (
+          <Text accessibilityRole="alert" style={ft.styles.meta}>
+            {error}
+          </Text>
+        ) : null}
+        {!loading && !error && !trips.length ? (
+          <View style={styles.empty}>
+            <FlowIcon name="calendar" color={flowColors.blue} size={36} />
+            <Text style={ft.styles.value}>No {tab} trips</Text>
+            <Text style={ft.styles.meta}>
+              Partner-confirmed trips will appear here.
+            </Text>
+          </View>
+        ) : null}
+        {trips.map((trip) => (
+          <TripCard key={trip.id} trip={trip} />
+        ))}
       </ScrollView>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Add a trip"
-        onPress={() => router.push("/explore-trip")}
-        style={styles.fab}
-      >
-        <FlowIcon name="plus" color="white" />
-      </Pressable>
     </SafeAreaView>
   );
 }
 function TripCard({ trip }: { trip: MobileTrip }) {
+  const ft = useFlowTheme();
   const image = locationImageByCity(trip.destination);
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Open trip ${trip.origin ? `${trip.origin} to ` : ""}${trip.destination}`}
-      onPress={() =>
-        router.push({ pathname: "/trips/[id]", params: { id: trip.id } })
-      }
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.trip,
-        flowStyles.shadow,
-        pressed && flowStyles.pressed,
+        { backgroundColor: ft.colors.card, borderColor: ft.colors.border },
+        ft.styles.shadow,
       ]}
     >
-      {image ? <Image source={image} style={styles.tripImage} /> : <View style={[styles.tripImage, styles.neutralImage]} />}
+      {image ? (
+        <Image source={image} style={styles.tripImage} />
+      ) : (
+        <View
+          style={[
+            styles.tripImage,
+            styles.neutralImage,
+            { backgroundColor: ft.colors.neutralImage },
+          ]}
+        />
+      )}
       <View style={styles.grow}>
-        <Text style={flowStyles.value}>{trip.origin ? `${trip.origin} → ` : ""}{trip.destination}</Text>
-        <Text style={flowStyles.meta}>{new Date(trip.departureDate).toLocaleDateString()} {trip.returnDate ? `– ${new Date(trip.returnDate).toLocaleDateString()}` : ""}</Text>
+        <Text style={ft.styles.value}>
+          {trip.origin ? `${trip.origin} → ` : ""}
+          {trip.destination}
+        </Text>
+        <Text style={ft.styles.meta}>Provider: {trip.providerName}</Text>
+        <Text style={ft.styles.meta}>Confirmation: {trip.providerConfirmationCode}</Text>
+        <Text style={ft.styles.meta}>{trip.travelerCount} traveler{trip.travelerCount === 1 ? "" : "s"}</Text>
+        <Text style={ft.styles.meta}>
+          {new Date(trip.departureDate).toLocaleDateString()}{" "}
+          {trip.returnDate
+            ? `– ${new Date(trip.returnDate).toLocaleDateString()}`
+            : ""}
+        </Text>
         <View
           style={[
             styles.status,
+            { backgroundColor: ft.colors.status },
             trip.status === "upcoming" && styles.confirmed,
           ]}
         >
-          <Text style={styles.statusText}>{trip.status[0].toUpperCase() + trip.status.slice(1)}</Text>
+          <Text style={[styles.statusText, { color: ft.colors.text }]}>
+            {trip.status[0].toUpperCase() + trip.status.slice(1)}
+          </Text>
         </View>
       </View>
-      <FlowIcon name="chevron" size={18} />
-    </Pressable>
+      {trip.providerAction ? (
+        <Pressable accessibilityRole="link" accessibilityLabel={`${trip.providerAction.label}, opens external website`} onPress={() => void Linking.openURL(trip.providerAction!.url)} style={flowStyles.primary}>
+          <Text style={flowStyles.primaryText}>{trip.providerAction.label} ↗</Text>
+        </Pressable>
+      ) : <Text style={ft.styles.meta}>Manage this trip using your provider confirmation.</Text>}
+      <Text style={ft.styles.meta}>Your reservation is managed by {trip.providerName}. Changes, cancellations, refunds, check-in and travel documents are handled by the provider.</Text>
+    </View>
   );
 }
 
@@ -104,11 +158,16 @@ const rows: {
   icon: FlowIconName;
   trailing?: string;
 }[] = [
-  { label: "Personal information", route: "/personal-information", icon: "person" },
+  {
+    label: "Personal information",
+    route: "/personal-information",
+    icon: "person",
+  },
   { label: "Price alerts", route: "/price-alerts", icon: "bell" },
   { label: "Currency", route: "/currency", icon: "compass", trailing: "USD" },
 ];
 export function ProfileFlowScreen() {
+  const ft = useFlowTheme();
   const [name, setName] = useState("Traveler");
   useEffect(() => {
     void readSession()
@@ -118,28 +177,30 @@ export function ProfileFlowScreen() {
       .catch(() => undefined);
   }, []);
   return (
-    <SafeAreaView style={flowStyles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={flowStyles.scroll}>
+    <SafeAreaView style={ft.styles.safe} edges={["top"]}>
+      <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={ft.styles.scroll} overScrollMode="never">
         <ScreenHeader title="Profile" settings />
         <View style={styles.user}>
-          <View style={styles.avatar}>
+          <View
+            style={[styles.avatar, { backgroundColor: ft.colors.selected }]}
+          >
             <Text style={styles.avatarText}>
               {name.slice(0, 1).toUpperCase()}
             </Text>
           </View>
           <View>
-            <Text style={flowStyles.value}>{name}</Text>
-            <Text style={flowStyles.meta}>View and manage your account</Text>
+            <Text style={ft.styles.value}>{name}</Text>
+            <Text style={ft.styles.meta}>View and manage your account</Text>
           </View>
         </View>
-        <Text style={flowStyles.sectionTitle}>Account</Text>
-        <View style={[flowStyles.card, flowStyles.shadow]}>
+        <Text style={ft.styles.sectionTitle}>Account</Text>
+        <View style={[ft.styles.card, ft.styles.shadow]}>
           {rows.slice(0, 2).map((row) => (
             <ProfileRow key={row.label} {...row} />
           ))}
         </View>
-        <Text style={flowStyles.sectionTitle}>Settings</Text>
-        <View style={[flowStyles.card, flowStyles.shadow]}>
+        <Text style={ft.styles.sectionTitle}>Settings</Text>
+        <View style={[ft.styles.card, ft.styles.shadow]}>
           {rows.slice(2).map((row) => (
             <ProfileRow key={row.label} {...row} />
           ))}
@@ -149,6 +210,7 @@ export function ProfileFlowScreen() {
   );
 }
 function ProfileRow({ label, route, icon, trailing }: (typeof rows)[number]) {
+  const ft = useFlowTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -156,13 +218,14 @@ function ProfileRow({ label, route, icon, trailing }: (typeof rows)[number]) {
       onPress={() => router.push(route)}
       style={({ pressed }) => [
         styles.profileRow,
-        pressed && flowStyles.pressed,
+        { borderBottomColor: ft.colors.border },
+        pressed && ft.styles.pressed,
       ]}
     >
-      <FlowIcon name={icon} size={20} />
-      <Text style={[flowStyles.value, styles.grow]}>{label}</Text>
-      {trailing ? <Text style={flowStyles.meta}>{trailing}</Text> : null}
-      <FlowIcon name="chevron" size={17} />
+      <FlowIcon name={icon} size={20} color={ft.colors.icon} />
+      <Text style={[ft.styles.value, styles.grow]}>{label}</Text>
+      {trailing ? <Text style={ft.styles.meta}>{trailing}</Text> : null}
+      <FlowIcon name="chevron" size={17} color={ft.colors.icon} />
     </Pressable>
   );
 }
@@ -192,18 +255,6 @@ const styles = StyleSheet.create({
   },
   confirmed: { backgroundColor: flowColors.paleGreen },
   statusText: { color: flowColors.navy, fontSize: 9, fontWeight: "700" },
-  fab: {
-    position: "absolute",
-    right: 18,
-    bottom: 18,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: flowColors.blue,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
-  },
   destinations: { flexDirection: "row", gap: 7 },
   destination: {
     flex: 1,

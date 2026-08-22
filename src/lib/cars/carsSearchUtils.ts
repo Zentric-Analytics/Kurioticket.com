@@ -34,6 +34,20 @@ export const timeOptions = Array.from({ length: 48 }, (_, index) => {
 const getSearchParam = (params: URLSearchParams | null, key: string) =>
   params?.get(key)?.trim() ?? "";
 
+export const hasExplicitDifferentReturnLocation = ({
+  pickupLocation,
+  dropoffLocation,
+  marker,
+}: {
+  pickupLocation: string;
+  dropoffLocation: string;
+  marker: string;
+}) =>
+  marker === "1" ||
+  Boolean(
+    dropoffLocation && pickupLocation && dropoffLocation !== pickupLocation,
+  );
+
 export const toIsoDate = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -153,7 +167,6 @@ export const buildCarResultsHref = ({
     dropoffDate,
     dropoffTime: "10:00",
     driverAge: defaultDriverAge,
-    dropoffLocation: pickupLocation,
   });
 
   if (vehicleType) {
@@ -171,9 +184,11 @@ export const getInitialValues = (
 ): CarsFormValues => {
   const pickupLocation = getSearchParam(params, "pickupLocation");
   const dropoffLocation = getSearchParam(params, "dropoffLocation");
-  const differentDropoff = Boolean(
-    dropoffLocation && pickupLocation && dropoffLocation !== pickupLocation,
-  );
+  const differentDropoff = hasExplicitDifferentReturnLocation({
+    pickupLocation,
+    dropoffLocation,
+    marker: getSearchParam(params, "returnToDifferentLocation"),
+  });
 
   return {
     pickupLocation,
@@ -245,8 +260,7 @@ export const validateCarsForm = (
       values.dropoffTime &&
       values.dropoffTime <= values.pickupTime
     ) {
-      errors.dateRange =
-        "carsSearch.error.sameDayDropoffAfterPickup";
+      errors.dateRange = "carsSearch.error.sameDayDropoffAfterPickup";
     }
   }
 

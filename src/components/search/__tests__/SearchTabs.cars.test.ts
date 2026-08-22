@@ -3,7 +3,21 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const source = readFileSync("src/components/search/SearchTabs.tsx", "utf8");
+const carLocationAutocompleteSource = readFileSync(
+  "src/components/search/CarLocationAutocomplete.tsx",
+  "utf8",
+);
 const carsBranch = source.slice(source.lastIndexOf("<form onSubmit={onCarsSubmit}"));
+const returnLocationField = source.slice(
+  source.indexOf("const carsReturnLocationField"),
+  source.indexOf('if (mobileHomepage && tab === "flights")'),
+);
+
+test("homepage calendar shows today with a ring and no decorative dot", () => {
+  assert.match(source, /isToday && !isDisabledDate && "ring-1 ring-inset ring-\[#004BB8\]\/25"/);
+  assert.doesNotMatch(source, /isToday && !isStart && !isEnd \? \(/);
+  assert.doesNotMatch(source, /bottom-1\.5 h-1 w-1 rounded-full bg-\[#004BB8\]/);
+});
 
 test("homepage Cars search uses one responsive joined primary row", () => {
   assert.match(source, /data-testid="cars-joined-search-card"/);
@@ -14,13 +28,15 @@ test("homepage Cars search uses one responsive joined primary row", () => {
 });
 
 test("homepage Cars primary fields use summaries and the location autocomplete", () => {
+  assert.match(carsBranch, /<form onSubmit=\{onCarsSubmit\} autoComplete="off"/);
+  assert.match(carLocationAutocompleteSource, /autoComplete="off"[\s\S]*?aria-autocomplete="list"/);
   for (const label of [
     "carsSearch.pickupLocationLabel",
     "carsSearch.rentalDatesLabel",
     "carsSearch.pickupReturnTimeLabel",
     "carsSearch.driverAgeLabel",
   ]) assert.ok(carsBranch.includes(label), label);
-  assert.match(carsBranch, /<CarLocationAutocomplete id="homepage-cars-pickup"/);
+  assert.match(carsBranch, /<CarLocationAutocomplete id=\{mobileHomepage \? "homepage-cars-pickup-desktop" : "homepage-cars-pickup"\}/);
   assert.match(carsBranch, /value=\{carsDateSummary\}/);
   assert.match(carsBranch, /value=\{carsTimeSummary\}/);
   assert.equal(carsBranch.includes("<select"), false);
@@ -29,7 +45,7 @@ test("homepage Cars primary fields use summaries and the location autocomplete",
 test("source contract: homepage Rental Dates renders localized two-slot summary states", () => {
   assert.match(source, /const carsPickupDateDisplay =\s*formatCarsDate\(carsValues\.pickupDate\) \|\|\s*translate\("carsSearch\.pickupDateLabel"\) \|\|\s*"Pickup date";/);
   assert.match(source, /const carsReturnDateDisplay =\s*formatCarsDate\(carsValues\.dropoffDate\) \|\|\s*translate\("carsSearch\.returnDateLabel"\) \|\|\s*"Return date";/);
-  assert.match(source, /\{carsPickupDateDisplay\}<\/span>\s*<span className="text-slate-400"> — <\/span>\s*<span className=\{carsValues\.dropoffDate \? "text-slate-900" : "text-slate-500"\}>\{carsReturnDateDisplay\}/);
+  assert.match(source, /\{carsPickupDateDisplay\}<\/span>\s*<span className=\{carsEmptyDateTextClassName \?\? "text-slate-400"\}> — <\/span>\s*<span className=\{carsEmptyDateTextClassName \?\? \(carsValues\.dropoffDate \? "text-slate-900" : "text-slate-500"\)\}>\{carsReturnDateDisplay\}/);
   assert.equal(source.slice(source.indexOf("const carsDateSummary"), source.indexOf("const formatCarsTime")).includes("chooseRentalDates"), false);
 });
 
@@ -59,20 +75,22 @@ test("source contract: Time and Driver Age retain the default summary-field chev
   }
 });
 
-test("homepage Cars return location is conditional and outside the primary row", () => {
-  const primaryRowEnd = carsBranch.indexOf("</div>\n          </div>\n          <div className=\"flex min-h-8");
-  const primaryRow = carsBranch.slice(0, primaryRowEnd);
-  assert.equal(primaryRow.includes("homepage-cars-dropoff"), false);
-  assert.match(carsBranch, /carsValues\.returnToDifferentLocation \? <div ref=\{carsDropoffFieldRef\}/);
+test("wide homepage Cars renders one conditional return-location field beside pickup", () => {
+  assert.match(returnLocationField, /carsValues\.returnToDifferentLocation \? \(/);
+  assert.equal((source.match(/data-testid="cars-return-location-field"/g) ?? []).length, 1);
+  assert.match(carsBranch, /cars-pickup-location-field[\s\S]*?\{compactHero \? carsReturnLocationField : null\}[\s\S]*?homepage-cars-rental-dates/);
+  assert.match(carsBranch, /Different return location[\s\S]*?\{!compactHero \? carsReturnLocationField : null\}/);
+  assert.match(carsBranch, /homepage-cars-driver-age[\s\S]*?Different return location/);
   assert.match(source, /if \(key === "returnToDifferentLocation" && value === false\) \{\s*next\.dropoffLocation = "";/);
+  assert.match(returnLocationField, /sm:!bg-white/);
 });
 
-test("Cars autocomplete uses responsive presentation and the complete surface boundary", () => {
+test("Cars autocomplete uses responsive presentation and input anchoring", () => {
   assert.match(carsBranch, /ref=\{carsSearchSurfaceRef\} data-testid="cars-search-surface"/);
-  assert.equal((carsBranch.match(/presentation="responsive"/g) ?? []).length, 2);
-  assert.equal((carsBranch.match(/searchCardRef=\{carsSearchSurfaceRef\}/g) ?? []).length, 2);
-  assert.match(carsBranch, /fieldAnchorRef=\{carsPickupFieldRef\}/);
-  assert.match(carsBranch, /fieldAnchorRef=\{carsDropoffFieldRef\}/);
+  const allCarsFields = carsBranch + returnLocationField;
+  assert.equal((allCarsFields.match(/presentation="responsive"/g) ?? []).length, 2);
+  assert.doesNotMatch(allCarsFields, /fieldAnchorRef=|searchCardRef=/);
+  assert.match(returnLocationField, /value=\{carsValues\.dropoffLocation\}/);
 });
 
 test("Cars summary popup IDs are stable and field-specific", () => {
@@ -93,6 +111,52 @@ test("homepage Cars picker source contracts use the shared experiences", () => {
   assert.match(carsBranch, /<CarsDriverAgePickerContent/);
   assert.match(carsBranch, /desktopAlign="right" desktopWidth=\{248\}/);
   assert.match(carsBranch, /popupRole="listbox"/);
+});
+
+test("desktop Cars pickers stay open for selection and use viewport-safe homepage placement", () => {
+  for (const id of ["homepage-cars-rental-dates", "homepage-cars-time-range", "homepage-cars-driver-age"]) {
+    const start = carsBranch.indexOf(`<CarsSummaryField id="${id}"`);
+    const invocation = carsBranch.slice(start, carsBranch.indexOf("\n", start));
+    assert.match(invocation, /desktopPlacement="auto"/, id);
+  }
+
+  const timePicker = carsBranch.slice(
+    carsBranch.indexOf("<CarsTimeRangePickerContent"),
+    carsBranch.indexOf("</CarsSummaryField>", carsBranch.indexOf("<CarsTimeRangePickerContent")),
+  );
+  const agePicker = carsBranch.slice(
+    carsBranch.indexOf("<CarsDriverAgePickerContent"),
+    carsBranch.indexOf("</CarsSummaryField>", carsBranch.indexOf("<CarsDriverAgePickerContent")),
+  );
+  assert.doesNotMatch(timePicker, /setCarsOpenPicker\(null\)/);
+  assert.doesNotMatch(agePicker, /setCarsOpenPicker\(null\)/);
+});
+
+test("mobile homepage Cars launches every picker in the shared full-screen shell", () => {
+  assert.match(carsBranch, /mobilePresentation=\{mobileHomepage \? "shell" : "inline"\}/);
+  assert.match(carsBranch, /mobileHomepage && tab === "cars"/);
+  assert.match(carsBranch, /<MobileCarLocationPicker/);
+  assert.match(carsBranch, /<MobileCarTimePickerDialog/);
+  assert.match(carsBranch, /<MobileCarDriverAgePickerDialog/);
+  assert.match(carsBranch, /\(\["pickup", "dropoff"\] as const\)\.map/);
+  assert.match(carsBranch, /<MobileCarLocationPicker/);
+  assert.match(carsBranch, /<MobileDatePickerDialog/);
+});
+
+test("mobile Cars fields stay launchers without inline panels or persistent open rings", () => {
+  const summaryField = source.slice(source.indexOf("function CarsSummaryField"), source.indexOf("export function SearchTabs"));
+  assert.match(summaryField, /mobilePresentation === "inline" \? <div className="mt-3">\{panel\}<\/div> : null/);
+  assert.match(source, /focus-within:border-\[#dee5ed\] focus-within:ring-0 sm:rounded-xl/);
+  assert.match(carsBranch, /carsPickupLauncherRef[\s\S]*sm:hidden/);
+  assert.match(returnLocationField, /carsDropoffLauncherRef[\s\S]*sm:hidden/);
+});
+
+test("mobile time and age selection use pale connected rows and filled check indicators", () => {
+  const pickerSource = readFileSync("src/components/search/CarsPickerContent.tsx", "utf8");
+  assert.match(pickerSource, /data-selected-time-indicator/);
+  assert.match(pickerSource, /data-selected-age-indicator/);
+  assert.match(pickerSource, /bg-\[#eff6ff\] font-bold text-\[#075EE8\]/);
+  assert.match(pickerSource, /selected \? "bg-\[#075EE8\]" : "border border-slate-400"/);
 });
 
 test("homepage Cars calendar preserves range selection and localized controls", () => {
@@ -117,5 +181,26 @@ test("Cars results URL retains every required parameter and validation", () => {
   for (const parameter of ["pickupLocation", "pickupDate", "pickupTime", "dropoffDate", "dropoffTime", "driverAge", "dropoffLocation"]) {
     assert.ok(submit.includes(parameter), parameter);
   }
-  assert.match(submit, /router\.push\(`\/cars\/results\?\$\{params\.toString\(\)\}`\)/);
+  assert.match(submit, /params\.set\("returnToDifferentLocation", "1"\)/);
+  assert.match(submit, /const href = `\/cars\/results\?\$\{params\.toString\(\)\}`/);
+  assert.match(submit, /router\.push\(href\)/);
+});
+
+test("valid Cars submission signals page pending only after validation and href construction", () => {
+  const submit = source.slice(source.indexOf("const onCarsSubmit"), source.indexOf("const isCarsSearchDisabled"));
+  const validationIndex = submit.indexOf("validateCarsForm");
+  const invalidReturnIndex = submit.indexOf("if (Object.values(nextErrors).some(Boolean))");
+  const hrefIndex = submit.indexOf("const href = `/cars/results?${params.toString()}`");
+  const submittingIndex = submit.indexOf("setIsCarsSubmitting(true)");
+  const pendingIndex = submit.indexOf("onCarsResultsNavigationStart?.()");
+  const progressIndex = submit.indexOf("startRouteProgress()");
+  const navigationIndex = submit.indexOf("router.push(href)");
+
+  assert.ok(validationIndex < invalidReturnIndex);
+  assert.ok(invalidReturnIndex < hrefIndex);
+  assert.ok(hrefIndex < submittingIndex);
+  assert.ok(submittingIndex < pendingIndex);
+  assert.ok(pendingIndex < progressIndex);
+  assert.ok(progressIndex < navigationIndex);
+  assert.doesNotMatch(submit, /setTimeout|sleep|delay\(/);
 });

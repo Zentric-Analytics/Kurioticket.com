@@ -1,4 +1,67 @@
 services:
+  - type: worker
+    name: kurioticket-preview-release-worker
+    runtime: node
+    plan: standard
+    branch: dev
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - services/preview-release/**
+        - apps/mobile/scripts/**
+        - apps/mobile/plugins/**
+        - apps/mobile/config-plugins/**
+        - apps/mobile/app.config.*
+        - apps/mobile/app.json
+        - apps/mobile/eas.json
+        - apps/mobile/release-policy.json
+        - apps/mobile/package.json
+        - apps/mobile/package-lock.json
+        - package.json
+        - package-lock.json
+        - render.yaml
+    buildCommand: npm ci && npm --prefix apps/mobile ci
+    startCommand: node services/preview-release/worker.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: 24.14.0
+      - key: PREVIEW_RELEASE_MODE
+        value: active
+      - key: PREVIEW_POLL_INTERVAL_MS
+        value: 60000
+      - key: PREVIEW_LEASE_MS
+        value: 90000
+      - key: PREVIEW_CYCLE_DEADLINE_MS
+        value: 18000000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kurioticket-preview-release-db
+          property: connectionString
+      - key: GITHUB_READ_TOKEN
+        sync: false
+      # Optional, separately scoped to commit-status write. Read-only polling works without it.
+      - key: GITHUB_STATUS_TOKEN
+        sync: false
+      - key: RENDER_API_KEY
+        sync: false
+      - key: RENDER_STAGING_SERVICE_ID
+        sync: false
+      - key: EXPO_TOKEN
+        sync: false
+      - key: APP_STORE_CONNECT_ISSUER_ID
+        sync: false
+      - key: APP_STORE_CONNECT_KEY_ID
+        sync: false
+      - key: APP_STORE_CONNECT_PRIVATE_KEY
+        sync: false
+      - key: APP_STORE_CONNECT_PREVIEW_APP_ID
+        sync: false
+      - key: APP_STORE_CONNECT_PREVIEW_BETA_GROUP_ID
+        sync: false
+      # Must match the same secret on kurioticket-web-staging.
+      - key: PREVIEW_BUILD_NOTIFICATION_SECRET
+        sync: false
+
   - type: cron
     name: kurioticket-price-alerts
     runtime: node
@@ -13,22 +76,6 @@ services:
       -H "Content-Type: application/json"
     envVars:
       - key: PRICE_ALERTS_CRON_SECRET
-        sync: false
-
-  - type: cron
-    name: kurioticket-saved-trip-reminders
-    runtime: node
-    plan: starter
-    branch: main
-    autoDeploy: true
-    schedule: '0 * * * *'
-    buildCommand: 'true'
-    startCommand: >-
-      curl -fsS -X POST "https://kurioticket.com/api/cron/saved-trip-reminders"
-      -H "Authorization: Bearer $SAVED_TRIP_REMINDERS_CRON_SECRET"
-      -H "Content-Type: application/json"
-    envVars:
-      - key: SAVED_TRIP_REMINDERS_CRON_SECRET
         sync: false
 
   - type: cron
@@ -47,22 +94,6 @@ services:
       - key: TRAVEL_INSPIRATION_CRON_SECRET
         sync: false
 
-
-  - type: cron
-    name: kurioticket-route-watch-updates
-    runtime: node
-    plan: starter
-    branch: main
-    autoDeploy: true
-    schedule: '0 * * * *'
-    buildCommand: 'true'
-    startCommand: >-
-      curl -fsS -X POST "https://kurioticket.com/api/cron/route-watch-updates"
-      -H "Authorization: Bearer $ROUTE_WATCH_UPDATES_CRON_SECRET"
-      -H "Content-Type: application/json"
-    envVars:
-      - key: ROUTE_WATCH_UPDATES_CRON_SECRET
-        sync: false
 
   - type: cron
     name: kurioticket-homepage-fares-refresh
@@ -98,6 +129,8 @@ services:
           property: connectionString
       - key: NEXT_PUBLIC_APP_URL
         sync: false
+      - key: NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY
+        sync: false
       - key: AUTH_SECRET
         sync: false
       - key: NEXTAUTH_SECRET
@@ -112,8 +145,6 @@ services:
         sync: false
       - key: RESEND_FROM_EMAIL
         sync: false
-      - key: SAVED_TRIP_REMINDERS_CRON_SECRET
-        sync: false
       - key: DUFFEL_API_KEY
         sync: false
       - key: ADMIN_EMAILS
@@ -122,8 +153,6 @@ services:
         sync: false
       - key: PRICE_ALERTS_CRON_SECRET
         sync: false
-      - key: ROUTE_WATCH_UPDATES_CRON_SECRET
-        sync: false
       # Return production to exact `live` when an approved Cars provider is connected.
 
   - type: web
@@ -131,9 +160,11 @@ services:
     runtime: node
     plan: free
     branch: dev
-    autoDeploy: true
-    buildCommand: npm ci && npm run db:deploy:render && npm run build
+    # Preview delivery is owned exclusively by kurioticket-preview-release.
+    autoDeploy: false
+    buildCommand: npm ci && npm run build
     startCommand: npm run start
+    preDeployCommand: npm run db:deploy:render
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
@@ -144,6 +175,8 @@ services:
           property: connectionString
       - key: NEXT_PUBLIC_APP_URL
         sync: false
+      - key: NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY
+        sync: false
       - key: AUTH_SECRET
         sync: false
       - key: NEXTAUTH_SECRET
@@ -158,7 +191,9 @@ services:
         sync: false
       - key: RESEND_FROM_EMAIL
         sync: false
-      - key: SAVED_TRIP_REMINDERS_CRON_SECRET
+      - key: STAGING_EMAIL_DELIVERY_ENABLED
+        value: "true"
+      - key: PREVIEW_BUILD_NOTIFICATION_SECRET
         sync: false
       - key: DUFFEL_API_KEY
         sync: false
@@ -168,10 +203,13 @@ services:
         sync: false
       - key: PRICE_ALERTS_CRON_SECRET
         sync: false
-      - key: ROUTE_WATCH_UPDATES_CRON_SECRET
-        sync: false
 
 databases:
+  - name: kurioticket-preview-release-db
+    databaseName: kurioticket_preview_release
+    user: kurioticket_preview_release
+    plan: starter
+
   - name: kurioticket-postgres
     databaseName: kurioticket
     user: kurioticket

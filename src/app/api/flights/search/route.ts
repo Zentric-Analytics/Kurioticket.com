@@ -1,6 +1,5 @@
 import { after, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { resolveOptionalWebApiSession } from "@/lib/web-api-auth";
 import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 import { toPublicFlight } from "@/lib/searchCache";
 import { flightSearchSchema } from "@/lib/validation";
@@ -87,7 +86,7 @@ export async function POST(request: Request) {
       : "SUCCESS";
 
   after(async () => {
-    const session = await getServerSession(authOptions);
+    const session = (await resolveOptionalWebApiSession())?.session;
     return Promise.all([
     logSearchHistory({
       userId: session?.user?.id,
@@ -127,6 +126,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ...classifyFlights(publicResults, parsed.data, aggregate.warnings, requestId),
     resultsCacheValidForMs: aggregate.resultsCacheValidForMs,
+    resultsCacheValidUntil: aggregate.resultsCacheValidUntil,
     latencyMs: aggregate.latencyMs,
     performance: { ...performanceMetrics, beforeProviderMs, routeDurationMs },
   }, { headers: { "Server-Timing": serverTiming } });

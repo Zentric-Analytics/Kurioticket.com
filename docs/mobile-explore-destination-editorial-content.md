@@ -1,0 +1,681 @@
+# Mobile Explore destination editorial content
+
+## Why this source exists
+
+The shared Explore destination catalogue is derived from the airport catalogue and is intentionally factual: stable destination IDs, names, countries, airport mappings, search aliases, image lookup IDs and provenance. The mobile destination-details screen already supports optional summary, description and highlights fields, but the repository did not have a maintained destination-keyed editorial source for those fields.
+
+`src/shared/destinations/exploreDestinationEditorial.ts` exposes a Kurioticket-managed, platform-neutral editorial dataset so mobile can populate those existing fields now and the website can reuse the same source in a later task.
+
+## Regional module architecture
+
+The editorial data is split under `src/shared/destinations/editorial/` to keep regional ownership maintainable. `legacy.ts` owns the original 25-record fixture, while `europe.ts`, `africa.ts`, `asia.ts`, `northAmerica.ts`, `centralAmerica.ts`, `caribbean.ts`, `southAmerica.ts` and `oceania.ts` own the records introduced by their respective regional rollouts. `index.ts` aggregates those modules in explicit historical order, and the existing `exploreDestinationEditorial.ts` path remains the compatibility facade containing the single global validation boundary.
+
+## Current completion state
+
+**GLOBAL EDITORIAL COVERAGE: 235/235. REMAINING: 0.** Regional coverage is Central America 6/6, North America 16/16, Caribbean 10/10, South America 15/15, Europe 52/52, Africa 54/54, Asia 64/64 and Oceania/Pacific 18/18. Featured membership and ordering remain independently maintained in `exploreDestinationPopularIds.ts`.
+
+The historical 175-record prefix retains its copy, provenance, source ordering and verification dates. Its semantic-preservation guard intentionally remains scoped to that historical dataset rather than being regenerated against the completed 235-record aggregate.
+
+## Historical rollout record and Featured independence
+
+### North America Batch 1 — United States
+
+North America Batch 1, verified on 2026-08-10, adds eight United States records in this rollout order: `us-atlanta` — Atlanta, `us-chicago` — Chicago, `us-dallas-fort-worth` — Dallas-Fort Worth, `us-denver` — Denver, `us-san-francisco` — San Francisco, `us-miami` — Miami, `us-seattle` — Seattle and `us-houston` — Houston. The records live in `src/shared/destinations/editorial/northAmerica.ts` and are appended centrally by `editorial/index.ts` after the historical legacy, Europe, Africa and Asia modules.
+
+Research prioritised official city tourism organisations, municipal and federal sources, official museums and established cultural institutions. Each record carries at least two distinct, titled HTTPS references and uses durable geographic, heritage and cultural themes rather than current operating conditions.
+
+Scope safeguards keep Dallas-Fort Worth explicitly a dual-city metropolitan destination, with Dallas and Fort Worth attractions attributed to their respective cities. Miami remains distinct from the separate City of Miami Beach; San Francisco remains distinct from the wider Bay Area; and Seattle's canonical `SEA` airport mapping remains unchanged even though the airport is in SeaTac. Houston retains grouped airport data with `IAH` primary and `HOU` secondary, while Space Center Houston is placed southeast of central Houston in association with NASA's Johnson Space Center.
+
+Repository-derived North American coverage moves from **3 of 16** canonical destinations before the batch to **11 of 16** afterward. The five remaining North American destinations are `ca-vancouver`, `ca-montreal`, `mx-mexico-city`, `mx-cancun` and `mx-guadalajara`. Global editorial coverage moves from **175 of 235** to **183 of 235**, leaving **52** destinations without editorial content. Europe remains **52/52**, Africa **54/54** and Asia **64/64**; the first 175 records and their exact order remain protected by the historical semantic-payload guard.
+
+Featured membership and its exact order remain independently maintained. This batch includes no UI, image, gallery, map, search, flight or hotel, booking, related-destination or canonical-data changes.
+
+### North America Batch 2 — Canada + Mexico
+
+North America Batch 2, verified on 2026-08-10, adds the five remaining canonical North American destinations in deterministic rollout order:
+
+- `ca-vancouver` — Vancouver, Canada
+- `ca-montreal` — Montreal, Canada
+- `mx-mexico-city` — Mexico City, Mexico
+- `mx-cancun` — Cancún, Mexico
+- `mx-guadalajara` — Guadalajara, Mexico
+
+Research prioritised official municipal and tourism sources, government museums, public cultural institutions and UNESCO. Every record has at least two distinct, titled HTTPS references supporting durable geography, heritage, architecture, museums, public spaces and cultural context. Restricted external access was treated as an environment limitation rather than evidence of source failure, and no provenance URL was fabricated.
+
+Geographic safeguards keep Vancouver city distinct from Richmond, Metro Vancouver, North Vancouver, West Vancouver, Vancouver Island and Vancouver, Washington; YVR remains unchanged in canonical airport data and is not described as physically inside Vancouver. Montreal retains its exact canonical unaccented name, while authoritative French-language institution and source titles may use “Montréal”. Mexico City remains distinct from the State of Mexico and the wider Valley of Mexico metropolitan area, and no site outside the city is presented as a city attraction.
+
+Cancún is scoped to its urban centre and Hotel Zone between the Caribbean and Nichupté Lagoon, not the Riviera Maya, wider Quintana Roo or the whole Yucatán Peninsula; Playa del Carmen, Tulum, Cozumel and Chichén Itzá are not imported into its record. Guadalajara remains distinct from its metropolitan area and Jalisco generally, and its copy does not relocate Tequila, Lake Chapala or Puerto Vallarta into the city.
+
+Repository-derived North American coverage moves from **11 of 16** canonical destinations to **16 of 16**, leaving **0** North American canonical destinations without editorial content. Here, 16/16 means every canonical North American destination currently represented by the Explore catalogue is editorialized; it does not mean that the catalogue represents every possible North American destination. Global coverage moves from **183 of 235** to **188 of 235**, leaving **47** destinations. Europe remains **52/52**, Africa **54/54** and Asia **64/64**.
+
+The historical 175-record semantic payload and all eight North America Batch 1 records remain unchanged, while Batch 2 appends after Batch 1. Featured membership and its exact order remain independently maintained. This batch includes no UI, image, gallery, map, search, flight or hotel, booking, related-destination or canonical-data work.
+
+Editorial scope expanded to all canonical Explore destinations during the rollout. Editorial completeness is independent of Featured membership: `exploreDestinationPopularIds.ts` alone controls the destinations and maintained order shown in the default Explore landing-page section, while editorial records only enrich canonical destinations by ID.
+
+The completed rollout retains the original 25 records for these Featured destinations, with their copy and provenance unchanged:
+
+1. `fr-paris`
+2. `gb-london`
+3. `us-new-york`
+4. `id-bali`
+5. `ng-lagos`
+6. `ae-dubai`
+7. `jp-tokyo`
+8. `za-cape-town`
+9. `it-rome`
+10. `tr-istanbul`
+11. `th-bangkok`
+12. `es-barcelona`
+13. `eg-cairo`
+14. `ma-marrakesh`
+15. `sg-singapore`
+16. `nl-amsterdam`
+17. `ca-toronto`
+18. `us-los-angeles`
+19. `ng-abuja`
+20. `gh-accra`
+21. `za-johannesburg`
+22. `ke-nairobi`
+23. `pt-lisbon`
+24. `au-sydney`
+25. `br-rio-de-janeiro`
+
+The first reviewed Europe batch adds editorial content for 10 previously non-editorial canonical destinations without changing Featured membership or ordering:
+
+1. `dk-copenhagen`
+2. `ee-tallinn`
+3. `fi-helsinki`
+4. `is-reykjavik`
+5. `lv-riga`
+6. `lt-vilnius`
+7. `no-oslo`
+8. `pl-warsaw`
+9. `se-stockholm`
+10. `de-berlin`
+
+The second reviewed Europe batch, verified on 2026-08-08, adds 10 more previously non-editorial canonical destinations:
+
+1. `at-vienna`
+2. `cz-prague`
+3. `hu-budapest`
+4. `be-brussels`
+5. `ch-zurich`
+6. `ch-geneva`
+7. `de-munich`
+8. `de-frankfurt`
+9. `gr-athens`
+10. `ie-dublin`
+
+The third reviewed Europe batch, verified on 2026-08-08, adds 10 previously non-editorial canonical destinations from a geographically coherent Balkan and southeastern European group:
+
+1. `al-tirana`
+2. `ba-sarajevo`
+3. `bg-sofia`
+4. `hr-zagreb`
+5. `gr-thessaloniki`
+6. `me-podgorica`
+7. `mk-skopje`
+8. `ro-bucharest`
+9. `rs-belgrade`
+10. `si-ljubljana`
+
+Before Batch 4 selection, the latest canonical catalogue contained these 15 European destinations without editorial content:
+
+1. `de-cologne` — Cologne
+2. `de-dusseldorf` — Düsseldorf
+3. `de-hamburg` — Hamburg
+4. `ua-kyiv` — Kyiv
+5. `cy-larnaca` — Larnaca
+6. `lu-luxembourg` — Luxembourg
+7. `es-madrid` — Madrid
+8. `gb-manchester` — Manchester
+9. `it-milan` — Milan
+10. `ru-moscow` — Moscow
+11. `fr-nice` — Nice
+12. `cy-paphos` — Paphos
+13. `pt-porto` — Porto
+14. `ru-st-petersburg` — St. Petersburg
+15. `de-stuttgart` — Stuttgart
+
+The fourth reviewed Europe batch, verified on 2026-08-10, adds this western European group of 10 previously non-editorial canonical destinations:
+
+1. `de-cologne`
+2. `de-dusseldorf`
+3. `de-hamburg`
+4. `de-stuttgart`
+5. `lu-luxembourg`
+6. `es-madrid`
+7. `gb-manchester`
+8. `it-milan`
+9. `fr-nice`
+10. `pt-porto`
+
+Four German cities form the geographic core, joined by nearby western and southern European cities with strong official tourism, UNESCO, museum or cultural-institution coverage. The grouping leaves the two Cypriot, two Russian and one Ukrainian destinations together for the final Europe batch rather than switching regions.
+
+After Batch 4, these five European canonical destinations remained without editorial content:
+
+1. `ua-kyiv` — Kyiv
+2. `cy-larnaca` — Larnaca
+3. `ru-moscow` — Moscow
+4. `cy-paphos` — Paphos
+5. `ru-st-petersburg` — St. Petersburg
+
+The final Europe Batch 5, verified on 2026-08-10, adds all five of those destinations:
+
+1. `ua-kyiv` — Kyiv
+2. `cy-larnaca` — Larnaca
+3. `ru-moscow` — Moscow
+4. `cy-paphos` — Paphos
+5. `ru-st-petersburg` — St. Petersburg
+
+Batch 5 brings European coverage to 52 of 52 canonical European destinations and confirms that European editorial coverage is complete. It brings the cumulative global rollout to 70 editorial destinations: the original 25, four reviewed Europe batches of 10 and the final Europe batch of five. The original 25 and Europe Batches 1–4 remain intact, while the global editorial rollout remains incomplete for regions outside Europe.
+
+Africa Batch 1, verified on 2026-08-10, adds these 10 previously non-editorial canonical destinations:
+
+1. `et-addis-ababa` — Addis Ababa
+2. `ke-mombasa` — Mombasa
+3. `tz-dar-es-salaam` — Dar es Salaam
+4. `tz-zanzibar` — Zanzibar
+5. `ug-entebbe` — Entebbe
+6. `rw-kigali` — Kigali
+7. `mg-antananarivo` — Antananarivo
+8. `sc-mahe` — Mahé
+9. `mu-mauritius` — Mauritius
+10. `re-saint-denis` — Saint-Denis
+
+The batch groups eastern African highland and coastal cities with western Indian Ocean islands. These destinations were selected first after catalogue inspection because their city, heritage, museum, conservation and official destination sources could support specific, durable copy while maintaining clear canonical scope. Entebbe remains separate from Kampala; Mauritius is covered at country and island scale; Mahé remains an island destination with Victoria clearly scoped within it; Zanzibar distinguishes the archipelago, Unguja and Zanzibar City's Stone Town; and Saint-Denis uses Réunion-specific context.
+
+After Africa Batch 1, 18 of 54 canonical African destinations have editorial content and 36 remain without it. The eight existing African editorial records remain unchanged, and Europe remains complete at 52 of 52 destinations. Featured membership and ordering remain independently maintained; this batch includes no image, mobile UI, map or related-destination work.
+
+Africa Batch 2 evaluated the six remaining North African destinations identified during catalogue inspection. The source gate, applied on 2026-08-10, produced these outcomes:
+
+| Destination | Outcome | Rationale |
+| --- | --- | --- |
+| `dz-algiers` — Algiers | READY | UNESCO and an official city museum support city-specific Casbah, architectural and coastal context. |
+| `ma-casablanca` — Casablanca | READY | Official regional tourism and Hassan II Mosque foundation material support durable urban, architectural and Atlantic context. |
+| `sd-khartoum` — Khartoum | DEFER | Two durable, destination-specific authoritative references could not be verified without relying on unstable current institutional or visitor information. |
+| `eg-sharm-el-sheikh` — Sharm El Sheikh | READY | Official Egyptian destination and protected-landscape material support Red Sea, Sinai, reef and Ras Mohammed context. |
+| `ly-tripoli` — Tripoli | DEFER | Two durable, Tripoli-Libya-specific authoritative references meeting the editorial standard could not be verified. |
+| `tn-tunis` — Tunis | READY | UNESCO and Tunisia's official destination organisation support precise medina, city and nearby museum context. |
+
+The four READY destinations—Algiers, Casablanca, Sharm El Sheikh and Tunis—were added as the North Africa grouping. Khartoum and Tripoli remain valid canonical destinations without editorial content; no weaker sources or substitute destinations were used. Cumulative African coverage is now 22 of 54 destinations, leaving 32 without editorial content, while all 10 Africa Batch 1 records remain intact and Europe remains complete at 52 of 52.
+
+Featured membership and ordering remain independent from editorial completeness. Africa Batch 2 changes no images, ExploreScreen or DestinationDetailsScreen UI, maps, search, flight or hotel behaviour, and it adds no related destinations; related-destination work remains deferred.
+
+Africa Batch 3, verified on 2026-08-10, adds this Southern Africa grouping of six previously non-editorial canonical destinations:
+
+1. `za-durban` — Durban
+2. `bw-gaborone` — Gaborone
+3. `zw-harare` — Harare
+4. `zm-lusaka` — Lusaka
+5. `mz-maputo` — Maputo
+6. `na-windhoek` — Windhoek
+
+The grouping keeps each record at city scale: Durban and Maputo retain their distinct Indian Ocean and port-city settings, while Gaborone, Harare, Lusaka and Windhoek are grounded in their own civic, museum, landscape and urban-history contexts rather than country-wide safari or nature material. Sources were checked against official tourism, government, municipal, museum, archive and cultural-institution material.
+
+After Africa Batch 3, cumulative African coverage is 28 of 54 canonical destinations, leaving 26 without editorial content. Africa Batches 1 and 2 remain intact, Khartoum and Tripoli continue to be deferred as canonical destinations without editorial content, and Europe remains complete at 52 of 52 destinations.
+
+Africa Batch 3 includes no image, ExploreScreen or DestinationDetailsScreen UI, map, search, flight, hotel or related-destination work. Featured membership and ordering remain unchanged and independent from editorial completeness.
+
+Africa Batch 4, verified on 2026-08-10, applies the authoritative-source gate to the Atlantic West Africa grouping. Nine READY destinations were implemented:
+
+1. `ci-abidjan` — Abidjan
+2. `gm-banjul` — Banjul
+3. `bj-cotonou` — Cotonou
+4. `sn-dakar` — Dakar
+5. `ng-enugu` — Enugu
+6. `sl-freetown` — Freetown
+7. `tg-lome` — Lomé
+8. `lr-monrovia` — Monrovia
+9. `ng-port-harcourt` — Port Harcourt
+
+`gn-conakry` — Conakry remains deferred pending stronger destination-specific authoritative provenance. It remains a canonical, searchable destination without editorial or partial enrichment, and no substitute destination was added.
+
+The batch uses official national and state tourism, government, museum, cultural-authority and UNESCO material. Copy remains scoped to each canonical city: offshore Gorée retains its correct relationship to Dakar, Banjul is not expanded to Greater Banjul, and country- or state-wide attractions are not presented as sites within Cotonou, Enugu, Lomé or Port Harcourt.
+
+After Africa Batch 4, cumulative African coverage is 37 of 54 canonical destinations, leaving 17 without editorial content. Africa Batches 1–3 remain intact; Khartoum, Tripoli and Conakry continue as documented deferrals; and Europe remains complete at 52 of 52 destinations.
+
+Africa Batch 4 changes no images, ExploreScreen or DestinationDetailsScreen UI, maps, search, flight or hotel behaviour, or related destinations. Featured membership and ordering remain unchanged and independent from editorial completeness.
+
+Africa Batch 5, verified on 2026-08-10, covers the planned inland West Africa and Central Africa grouping. All 10 candidates passed the provenance gate and were implemented:
+
+1. `ml-bamako` — Bamako
+2. `ng-kano` — Kano
+3. `ne-niamey` — Niamey
+4. `bf-ouagadougou` — Ouagadougou
+5. `cg-brazzaville` — Brazzaville
+6. `cm-douala` — Douala
+7. `cd-kinshasa` — Kinshasa
+8. `ga-libreville` — Libreville
+9. `ao-luanda` — Luanda
+10. `cm-yaounde` — Yaoundé
+
+No Batch 5 candidate was deferred. Sources were selected from durable reference works and official UNESCO, museum, government and cultural-institution sites, with two distinct titled HTTPS references retained on every record. City copy keeps Bamako and Niamey anchored to their Niger River settings, separates Kano and Ouagadougou from country-wide claims, distinguishes Brazzaville from Kinshasa and Douala from Yaoundé, and treats Libreville and Luanda as their specific estuary and Atlantic capitals.
+
+After Africa Batch 5, cumulative African coverage is 47 of 54 canonical destinations, leaving 7 without editorial content. Conakry, Khartoum and Tripoli continue as documented canonical deferrals, Africa Batches 1–4 remain intact, and Europe remains complete at 52 of 52 destinations.
+
+Africa Batch 5 changes no images, ExploreScreen or DestinationDetailsScreen UI, maps, search, flight or hotel behaviour, booking flows, or related destinations. Featured membership and ordering remain unchanged and independent from editorial completeness.
+
+Africa Batch 6, verified on 2026-08-10, evaluated the four remaining candidates not subject to an earlier source-gate deferral. All four were implemented as a Horn of Africa and Great Lakes grouping:
+
+1. `bi-bujumbura` — Bujumbura
+2. `dj-djibouti` — Djibouti
+3. `so-hargeisa` — Hargeisa
+4. `ss-juba` — Juba
+
+No Batch 6 candidate was deferred. Each record uses two distinct, titled HTTPS references selected from durable institutional or reference sources. Copy keeps Bujumbura at city and Lake Tanganyika scale, distinguishes Djibouti City from the Republic of Djibouti, limits Juba to its White Nile urban setting, and describes Hargeisa neutrally as Somaliland's administrative centre while preserving the canonical `so-hargeisa` country assignment to Somalia.
+
+After Africa Batch 6, cumulative African coverage is 51 of 54 canonical destinations, leaving 3 without editorial content. Those three are the continuing documented source-gate deferrals: `gn-conakry` — Conakry, `sd-khartoum` — Khartoum and `ly-tripoli` — Tripoli. Africa Batches 1–5 remain intact, and Europe remains complete at 52 of 52 destinations.
+
+Africa Batch 6 changes no images, ExploreScreen or DestinationDetailsScreen UI, galleries, maps, search, flight or hotel behaviour, booking flows, or related destinations. Featured membership and ordering remain unchanged and independently maintained.
+
+### Final Africa batch
+
+The final Africa batch, verified on 2026-08-10, implements the three canonical destinations that had been temporarily deferred while stronger source resolution was completed:
+
+1. `gn-conakry` — Conakry
+2. `sd-khartoum` — Khartoum
+3. `ly-tripoli` — Tripoli
+
+The separate source-resolution pass supplied exact, pre-verified authoritative references, which were represented directly in editorial provenance without substituting or inventing URLs. Conakry uses official Guinea Ministry of Culture material about the national museum and Sandervalia cultural context. Khartoum uses UNESCO material only for durable geography, archaeological collections and institutional history; its copy makes no claim that the Sudan National Museum is currently open, intact, accessible or operating. Tripoli is explicitly disambiguated as Tripoli, Libya, and its UNESCO references and copy concern Libya rather than Tripoli, Lebanon; the record does not describe Tripoli itself as a UNESCO World Heritage Site.
+
+The three temporary deferrals are removed because all three destinations now have complete editorial records. Repository-derived coverage is **54 of 54 canonical African destinations editorialized**, with **0 remaining**. Here, 54/54 means every canonical African destination currently represented by the Explore catalogue has editorial enrichment; it does not imply that the catalogue represents every possible destination in Africa. Europe remains complete at 52 of 52 destinations, and Featured membership and ordering remain independent and unchanged.
+
+### Asia Batch 1 — East Asia
+
+Asia Batch 1, verified on 2026-08-10, adds editorial content for exactly these 10 previously non-editorial canonical destinations:
+
+- `cn-beijing` — Beijing, China
+- `cn-guangzhou` — Guangzhou, China
+- `hk-hong-kong` — Hong Kong, Hong Kong SAR China
+- `mo-macau` — Macau, Macao SAR China
+- `jp-osaka` — Osaka, Japan
+- `kr-seoul` — Seoul, South Korea
+- `cn-shanghai` — Shanghai, China
+- `cn-shenzhen` — Shenzhen, China
+- `tw-taipei` — Taipei, Taiwan
+- `mn-ulaanbaatar` — Ulaanbaatar, Mongolia
+
+The batch represents a separate authoritative-source research pass using exact, pre-verified UNESCO, municipal or national tourism, museum and cultural-institution references. Each record carries at least two distinct titled HTTPS references and durable, destination-specific claims; no fallback URL was invented or substituted. Hong Kong retains the country label `Hong Kong SAR China`, while destination `Macau` retains the distinct country label `Macao SAR China`. Taipei remains `Taipei, Taiwan`, with neutral cultural and geographic treatment and no political-status commentary.
+
+Airport-backed scope and identity remain separate from editorial copy. Seoul retains its GMP/ICN grouping without treating Incheon as part of Seoul, and Osaka remains scoped to Osaka rather than Kyoto, Nara, Kobe or wider Kansai attractions; KIX's airport mapping does not broaden the editorial record. Beijing's PEK/PKX grouping and all other canonical names, countries, airports, aliases, image identities and provenance remain unchanged.
+
+Repository-derived Asian coverage moves from **5 of 64** canonical destinations before the batch to **15 of 64** after it, leaving **49** Asian destinations without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Featured membership and ordering remain independently maintained and unchanged.
+
+This implementation includes no ExploreScreen or DestinationDetailsScreen UI work, image or gallery work, map work, search changes, flight or hotel booking changes, related-destination work, or editorial architecture split. The shared editorial module remains intact for a later dedicated refactor.
+
+### Asia Batch 2 — Mainland Southeast Asia
+
+Asia Batch 2, verified on 2026-08-10, considered and implemented all seven candidates, with no deferrals:
+
+- `vn-hanoi` — Hanoi, Vietnam
+- `vn-ho-chi-minh-city` — Ho Chi Minh City, Vietnam
+- `kh-phnom-penh` — Phnom Penh, Cambodia
+- `kh-siem-reap` — Siem Reap, Cambodia
+- `th-phuket` — Phuket, Thailand
+- `la-vientiane` — Vientiane, Laos
+- `mm-yangon` — Yangon, Myanmar (Burma)
+
+The research pass uses durable facts supported by national tourism authorities, UNESCO, official museums, heritage authorities and public cultural institutions. Every record carries at least two distinct titled HTTPS references, checked on the verification date; restricted external HTTPS access in the implementation environment did not become a reason to defer otherwise supportable records.
+
+Canonical and geographic scope remains deliberate. `Ho Chi Minh City` stays the canonical name, with `Saigon` used only for historical context. Siem Reap is described as the city and a gateway to the nearby Angkor archaeological landscape, not as though every Angkor monument stands within the city. Phuket retains the catalogue's broader island-destination scope, including province-wide coastlines and communities alongside Phuket City's historic town. Vientiane means the capital city in this editorial record, rather than the wider prefecture or a province.
+
+Yangon retains the country label `Myanmar (Burma)` and uses neutral, evergreen river, religious, architectural, market and museum context. Its copy makes no claims about current safety, political control, demonstrations, borders, transport, airport operations, museum opening, accessibility or tourism normality. Phnom Penh and Siem Reap also retain their repository airport facts unchanged; editorial research does not revise operational airport data.
+
+Repository-derived Asian coverage moves from **15 of 64** canonical destinations before the batch to **22 of 64** after it, leaving **42** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batch 1 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or editorial-architecture changes. It changes only shared editorial content, focused regression tests and this rollout documentation.
+
+### Asia Batch 3 — Maritime Southeast Asia
+
+Asia Batch 3, verified on 2026-08-10, considered and implemented all seven candidates, with no individual blockers or deferrals:
+
+- `bn-bandar-seri-begawan` — Bandar Seri Begawan, Brunei
+- `ph-cebu` — Cebu, Philippines
+- `tl-dili` — Dili, Timor-Leste
+- `id-jakarta` — Jakarta, Indonesia
+- `my-kuala-lumpur` — Kuala Lumpur, Malaysia
+- `ph-manila` — Manila, Philippines
+- `my-penang` — Penang, Malaysia
+
+The source pass uses exact URLs from durable reference works, UNESCO, national museums, heritage administrations, official tourism bodies and cultural institutions. Every implemented record has at least two distinct, titled HTTPS references; no URL was invented, and restricted external HTTPS access was not treated as an implementation blocker.
+
+Geographic scope follows each canonical destination carefully. Cebu is the broader island and provincial travel destination, with Cebu City identified as its historic urban centre and CEB's Lapu-Lapu geography left to unchanged canonical airport data. Penang covers the Malaysian state across Penang Island and the mainland, while George Town is identified as the island's state capital rather than a synonym for all Penang. Manila means the City of Manila, not Metro Manila, and its copy does not relocate metropolitan attractions into the city.
+
+Jakarta remains distinct from Jabodetabek, and CGK is not presented as physically within Jakarta. Kuala Lumpur remains the federal territory rather than the wider Klang Valley, with KUL left outside its editorial scope. Dili is described at city scale on Timor-Leste's north coast rather than expanded to Dili municipality or the country, and Bandar Seri Begawan remains distinct from Brunei and Brunei-Muara District generally.
+
+Repository-derived Asian coverage moves from **22 of 64** canonical destinations before the batch to **29 of 64** after it, leaving **35** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batches 1 and 2 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch includes no ExploreScreen or DestinationDetailsScreen UI work, image or gallery work, map work, search changes, flight or hotel booking changes, related-destination work, or editorial-architecture changes. Canonical IDs, names, countries, airport data, aliases, image identities and image provenance remain unchanged.
+
+### Asia Batch 4 — India + Colombo
+
+Asia Batch 4, verified on 2026-08-10, considered and implemented all eight candidates, with no individual blockers or deferrals:
+
+- `in-bengaluru` — Bengaluru, India
+- `in-chennai` — Chennai, India
+- `lk-colombo` — Colombo, Sri Lanka
+- `in-hyderabad` — Hyderabad, India
+- `in-kochi` — Kochi, India
+- `in-kolkata` — Kolkata, India
+- `in-mumbai` — Mumbai, India
+- `in-new-delhi` — New Delhi, India
+
+The source pass uses exact URLs from official tourism bodies, government museums, cultural institutions, UNESCO and a durable reference work. Every record has at least two distinct, titled HTTPS references. Sources were selected for stable geography, urban history, architecture and institutional heritage; no URL was fabricated, and restricted external HTTPS access was not treated as a batch blocker.
+
+Canonical naming and historical terminology remain deliberate. Bengaluru, Chennai, Kochi, Kolkata and Mumbai lead every record by their canonical names; Bangalore, Madras, Cochin, Calcutta and Bombay appear only where useful historical context supports them. Hyderabad is explicitly scoped to India. New Delhi remains the planned capital district rather than a synonym for Delhi, the National Capital Territory or Old Delhi.
+
+Colombo remains specific to the Indian Ocean city rather than Sri Lanka generally. Its CMB airport data remains unchanged, and the editorial copy does not place the airport at Katunayake in central Colombo. Mumbai likewise retains BOM unchanged. No airport geography or other canonical airport fact was modified.
+
+Repository-derived Asian coverage moves from **29 of 64** canonical destinations before the batch to **37 of 64** after it, leaving **27** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batches 1–3 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch includes no ExploreScreen or DestinationDetailsScreen UI work, images or galleries, maps, search changes, flight, hotel or booking changes, related destinations, or editorial-architecture changes. Canonical IDs, names, countries, airport data, aliases, image identities and image provenance remain unchanged.
+
+### Asia Batch 5 — South Asia + Tehran
+
+Asia Batch 5, verified on 2026-08-10, considered and implemented all eight candidates, with no deferrals:
+
+- `bd-dhaka` — Dhaka, Bangladesh
+- `pk-islamabad` — Islamabad, Pakistan
+- `pk-karachi` — Karachi, Pakistan
+- `np-kathmandu` — Kathmandu, Nepal
+- `pk-lahore` — Lahore, Pakistan
+- `mv-male` — Malé, Maldives
+- `bt-paro` — Paro, Bhutan
+- `ir-tehran` — Tehran, Iran
+
+The source pass uses exact URLs from government tourism and heritage bodies, national museums, UNESCO and established cultural institutions. Every record has at least two distinct, titled HTTPS references selected to support durable geography, architecture, history and institutional heritage. Tehran passed the stricter gate through exact UNESCO Golestan Palace and National Museum of Iran references; its copy excludes current political conditions, demonstrations, sanctions, safety, visas, transport, airport operations and institutional accessibility.
+
+Geographic scope remains destination-specific. Dhaka is the city beside the Buriganga, not Dhaka Division or every site in its metropolitan area. Islamabad remains distinct from Rawalpindi, and Karachi does not absorb Sindh-wide heritage. Kathmandu's record distinguishes the city from the wider Kathmandu Valley, while Lahore remains city-specific rather than province-wide.
+
+Malé retains its accented canonical name and compact island-city scope; its unchanged MLE airport is correctly understood to be on neighbouring Hulhulé, not Malé island. Paro town is placed accurately within Paro Valley without treating Paro District or Bhutan as the town. Tehran remains the canonical Iranian capital and is presented solely through durable geographic, historical, architectural and cultural context.
+
+Repository-derived Asian coverage moves from **37 of 64** canonical destinations before the batch to **45 of 64** after it, leaving **19** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batches 1–4 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch includes no ExploreScreen or DestinationDetailsScreen UI work, images or galleries, maps, search changes, flight, hotel or booking changes, related destinations, or editorial-architecture changes. Canonical IDs, names, countries, airport data, aliases, image identities and image provenance remain unchanged.
+
+### Asia Batch 6 — Central Asia + Caucasus
+
+Asia Batch 6, verified on 2026-08-10, considered these eight canonical candidates:
+
+- `kz-almaty` — Almaty, Kazakhstan
+- `tm-ashgabat` — Ashgabat, Turkmenistan
+- `az-baku` — Baku, Azerbaijan
+- `kg-bishkek` — Bishkek, Kyrgyzstan
+- `tj-dushanbe` — Dushanbe, Tajikistan
+- `uz-tashkent` — Tashkent, Uzbekistan
+- `ge-tbilisi` — Tbilisi, Georgia
+- `am-yerevan` — Yerevan, Armenia
+
+Seven destinations were implemented: Almaty, Baku, Bishkek, Dushanbe, Tashkent, Tbilisi and Yerevan. Ashgabat alone was deferred and remains wholly non-editorial. Its strict source gate was applied conservatively: two exact, durable and authoritative HTTPS references supporting city-specific material could not be established safely without risking fabricated provenance. External access errors were not treated as evidence against a source, and no weak aggregator was substituted.
+
+Implemented records use exact URLs from UNESCO, official national or city tourism bodies, municipal sources, a national museum, an official manuscript institute and an established public reference work. Every implemented record has at least two distinct, titled HTTPS references selected for durable geography, urban history, architecture and cultural institutions; no provenance URL was invented.
+
+Geographic scope remains deliberately narrow. Almaty is framed through its Trans-Ili Alatau setting and city institutions rather than distant lakes, canyons or resorts. Bishkek does not absorb Ala Archa or other excursions outside the city, and Dushanbe does not stand in for the Pamirs or Tajikistan-wide heritage. Tashkent's record uses its own market, religious, museum and planning history rather than monuments in Samarkand, Bukhara or Khiva. Baku remains specific to its Caspian waterfront and walled historic core rather than Azerbaijan-wide attractions.
+
+Baku, Tbilisi and Yerevan use neutral geographic and cultural wording. Tbilisi follows its Mtkvari valley and historic neighbourhoods; Yerevan treats Mount Ararat solely as a distant landscape backdrop and does not relocate it into the city or country. Repository classifications and country assignments for all three remain unchanged, with no transcontinental debate or geopolitical, territorial, border, conflict or current-condition commentary.
+
+Repository-derived Asian coverage moves from **45 of 64** canonical destinations before the batch to **52 of 64** after the seven implemented records, leaving **12** without editorial enrichment. Europe remains complete at **52 of 52**, and Africa remains complete at **54 of 54**. Asia Batches 1–5 and the original 25 records remain intact, while Featured membership and ordering remain independently maintained and unchanged.
+
+This batch contains no UI work, image work, gallery work, map work, search changes, flight, hotel or booking changes, related-destination work, or editorial-architecture refactor. Canonical IDs, names, countries, country codes, airport data, aliases, image identities and image provenance remain unchanged.
+
+### Asia Batch 7 — Gulf + Arabian Peninsula
+
+Asia Batch 7, verified on 2026-08-10, considered and implemented all eight candidates, with no deferrals:
+
+- `ae-abu-dhabi` — Abu Dhabi, United Arab Emirates
+- `jo-amman` — Amman, Jordan
+- `qa-doha` — Doha, Qatar
+- `sa-jeddah` — Jeddah, Saudi Arabia
+- `kw-kuwait-city` — Kuwait City, Kuwait
+- `bh-manama` — Manama, Bahrain
+- `om-muscat` — Muscat, Oman
+- `sa-riyadh` — Riyadh, Saudi Arabia
+
+The source pass uses exact URLs from official tourism authorities, government and public cultural bodies, UNESCO, and official museums. Every record has at least two distinct, titled HTTPS references supporting durable geography, urban history, architecture, markets, heritage and cultural institutions; no provenance URL was invented. Fast-changing Gulf claims were excluded: the copy makes no newest, largest, tallest, popularity, development, event, operating-status or other mutable claims.
+
+Geographic scope remains city-specific. Abu Dhabi city is not treated as the emirate, and its record does not import emirate-wide desert or oasis attractions. Amman does not absorb Petra, Wadi Rum, Jerash or the Dead Sea, while Doha does not stand in for Qatar. Historic Jeddah is handled through UNESCO-listed Al-Balad, its coral-stone architecture and Red Sea port history without drawing Mecca into the city.
+
+Kuwait City remains distinct from Kuwait nationally and does not acquire island or desert attractions. Manama is distinguished from Bahrain island and the country; its wording explicitly locates the UNESCO Pearling Path in separate Muharraq rather than central Manama. Muscat city is distinguished from its governorate, Greater Muscat and Oman-wide destinations. Riyadh remains distinct from Riyadh Province, and nearby Diriyah is accurately identified as a separate municipality with a connected Najdi history.
+
+Repository-derived Asian coverage moves from **52 of 64** canonical destinations before the batch to **60 of 64** after it, leaving **4** without editorial enrichment: `tm-ashgabat`, `iq-baghdad`, `lb-beirut` and `il-tel-aviv`. Ashgabat remains the sole deferred candidate from Batch 6. Europe remains complete at **52 of 52**, Africa remains complete at **54 of 54**, Asia Batches 1–6 and the original 25 remain intact, and Featured membership and ordering remain independently maintained and unchanged.
+
+This batch contains no UI work, image work, gallery work, map work, search changes, flight or hotel changes, booking changes, related-destination work, or editorial-architecture refactor. Canonical IDs, names, countries, country codes, airport data, aliases, image identities and image provenance remain unchanged.
+
+### Final Asia source-resolution batch
+
+The final Asia source-resolution pass, verified on 2026-08-10, adds complete editorial records for the four remaining canonical Asian destinations:
+
+- `tm-ashgabat` — Ashgabat, Turkmenistan
+- `iq-baghdad` — Baghdad, Iraq
+- `lb-beirut` — Beirut, Lebanon
+- `il-tel-aviv` — Tel Aviv, Israel
+
+This pass used exact, separately pre-verified URLs from government, UNESCO, a national culture ministry, a university museum and a municipality. Ashgabat's historical Batch 6 deferral is now cleared by two Government of Turkmenistan references covering the city's development and museum institutions. Baghdad uses UNESCO references for the National Museum of Iraq and the historic Tigris riverfront from Al-Mustansiriya to the Abbasid Palace; its copy makes no claims about current security, conflict, museum opening or visitor access.
+
+Beirut uses the Lebanon Ministry of Culture and American University of Beirut for durable museum, collection and city-centre archaeological context. It does not import Lebanon-wide heritage or make claims about current conflict, port operations, reconstruction, damage, opening or access. Tel Aviv retains the canonical country assignment to Israel and uses UNESCO and Tel Aviv–Yafo municipal material for the bounded White City property, Geddes plan and Modern Movement architecture; the copy does not treat all Tel Aviv as World Heritage, merge Jaffa into its highlights or introduce current political, conflict, border, security or sovereignty commentary.
+
+Repository-derived Asian coverage therefore moves from **60 of 64** to **64 of 64**, leaving **0** canonical Asian destinations without editorial enrichment. Here, 64/64 means every canonical Asian destination currently represented by the Explore catalogue has editorial content; it does not imply that the catalogue represents every possible destination in Asia. Europe remains complete at **52 of 52**, Africa remains complete at **54 of 54**, and Featured membership and ordering remain independently maintained and unchanged.
+
+The final batch changes no UI, images, galleries, maps, search, flight or hotel behaviour, booking flows, related destinations or editorial architecture. Canonical IDs, names, countries, country codes, airports, aliases, image identities and image provenance remain unchanged.
+
+This final batch includes no image work, ExploreScreen or DestinationDetailsScreen UI work, galleries, maps, search changes, flight or hotel changes, booking changes, or related-destination work.
+
+### Central America Batch 1
+
+Central America Batch 1, verified on 2026-08-10, considered these six canonical candidates:
+
+- `gt-guatemala-city` — Guatemala City, Guatemala
+- `sv-san-salvador` — San Salvador, El Salvador
+- `hn-san-pedro-sula` — San Pedro Sula, Honduras
+- `ni-managua` — Managua, Nicaragua
+- `cr-san-jose` — San José, Costa Rica
+- `pa-panama-city` — Panama City, Panama
+
+Five records were implemented: Guatemala City, San Salvador, Managua, San José and Panama City. San Pedro Sula was the only deferral. The strict city-specific source gate could not be cleared with two exact, durable authoritative HTTPS references supporting enough material for a summary, three-sentence description and four meaningful highlights; unavailable external HTTPS verification in the working environment was treated as an environment limitation, not as evidence that weaker sources were acceptable. San Pedro Sula therefore remains wholly non-editorial rather than receiving Honduras-wide or weakly sourced copy.
+
+The implemented records use exact URLs from national culture bodies, official museums, UNESCO and public heritage institutions. Each has at least two distinct, titled HTTPS references and limits its wording to durable geography, architecture, archaeology, museums, civic spaces and cultural history. The records live in `src/shared/destinations/editorial/centralAmerica.ts` and are appended by the central regional aggregator after the complete North America module; validation remains in the compatibility façade.
+
+Geographic safeguards remain city-specific. Guatemala City is not treated as Guatemala nationally and does not import Antigua Guatemala, Lake Atitlán or Tikal. San Salvador does not import country-wide beaches, volcanoes or archaeological sites, and SAL is not described as being inside the city. Managua uses Lake Managua, civic landmarks and cultural institutions without claims about current politics, demonstrations, security, access or institutional opening.
+
+San José retains its accented canonical name, remains distinct from its province and Greater San José, and does not place SJO airport—which is in Alajuela—inside the city. Panama City remains distinct from Panama nationally; Panamá Viejo and Casco Antiguo are treated within their accurate UNESCO context, while the Panama Canal is described as a wider regional system rather than infrastructure wholly contained in the central city. No record makes current-condition claims about transport, airports, politics, safety, events, opening, restoration or access.
+
+Repository-derived Central America coverage moves from **0 of 6** canonical destinations before the batch to **5 of 6**, leaving only `hn-san-pedro-sula`. Global coverage moves from **188 of 235** to **193 of 235**, leaving **42** canonical destinations without editorial enrichment. North America remains complete at **16 of 16**, Europe at **52 of 52**, Africa at **54 of 54** and Asia at **64 of 64**. The historical 175-record prefix and all 13 post-refactor North America records remain semantically unchanged. Featured membership and its exact ordering remain independently maintained and unchanged.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no IDs, names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
+
+### Caribbean Batch 1
+
+Caribbean Batch 1, verified on 2026-08-10, considered and implemented all ten canonical candidates, with no deferrals:
+
+- `cu-havana` — Havana, Cuba
+- `do-santo-domingo` — Santo Domingo, Dominican Republic
+- `do-punta-cana` — Punta Cana, Dominican Republic
+- `jm-kingston` — Kingston, Jamaica
+- `jm-montego-bay` — Montego Bay, Jamaica
+- `tt-port-of-spain` — Port of Spain, Trinidad & Tobago
+- `bb-bridgetown` — Bridgetown, Barbados
+- `bs-nassau` — Nassau, Bahamas
+- `ag-st-john-s` — St. John's, Antigua & Barbuda
+- `aw-oranjestad` — Oranjestad, Aruba
+
+The source review used exact URLs from UNESCO, national tourism authorities, national heritage bodies, official museums, public cultural institutions and a conservation foundation. Every record has at least two distinct, titled HTTPS references supporting durable city geography, architecture, history, civic spaces, museums or ecological context. No source URL was fabricated, and external-network limitations were not treated as destination-source failures.
+
+Scope safeguards are destination-specific. Havana uses Old Havana, its fortifications, harbour and Malecón without current travel, currency, political or transport claims. Santo Domingo's Colonial City is treated as a bounded historic core beside the Ozama, and unchanged SDQ airport data is not used to place the airport inside the centre. Punta Cana is limited to the named destination, its relationship with Bávaro and its Caribbean–Atlantic coastal and ecological setting; it does not stand in for Higüey, the province or the entire eastern Dominican Republic resort region.
+
+Kingston remains the harbour capital rather than shorthand for Jamaica, and Montego Bay is distinguished from Saint James Parish and the wider north-coast resort corridor. Port of Spain retains the exact `Trinidad & Tobago` label, while unchanged POS data is not used to place the airport—located at Piarco—inside the city. Bridgetown's copy distinguishes the UNESCO property of Historic Bridgetown and its Garrison from the whole modern city.
+
+Nassau is described on New Providence, with separate Paradise Island identified across the harbour rather than absorbed into Nassau city proper. St. John's is the Antiguan capital, not the Canadian city; its existing canonical punctuation and exact `Antigua & Barbuda` country label remain unchanged. Oranjestad retains its canonical Aruba assignment and does not import Aruba-wide beaches or resort zones into the capital.
+
+The records live in `src/shared/destinations/editorial/caribbean.ts` and aggregate centrally, deterministically after Central America. Repository-derived Caribbean coverage moves from **0 of 10** to **10 of 10**, leaving **0**. Global coverage moves from **193 of 235** to **203 of 235**, leaving **32**. Central America remains **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; North America remains **16 of 16**, Europe **52 of 52**, Africa **54 of 54** and Asia **64 of 64**. The historical 175-record semantic prefix and all North America and Central America rollout records remain unchanged. Featured membership and exact order remain independently maintained.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data changes. It changes no IDs, names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
+
+### South America Batch 1 — Northern + Andean cities
+
+South America Batch 1, verified on 2026-08-10, considered and implemented all seven canonical candidates, with no deferrals:
+
+- `co-bogota` — Bogotá, Colombia
+- `co-medellin` — Medellín, Colombia
+- `ec-quito` — Quito, Ecuador
+- `ec-guayaquil` — Guayaquil, Ecuador
+- `pe-lima` — Lima, Peru
+- `bo-la-paz` — La Paz, Bolivia
+- `bo-santa-cruz` — Santa Cruz, Bolivia
+
+The source review used exact URLs from UNESCO, municipal and national government bodies, official city tourism portals, central-bank cultural museums and public cultural institutions. Every record has at least two distinct, titled HTTPS references supporting durable city geography, heritage, architecture, archaeology, museums or civic spaces. No source URL was fabricated; external-network authorization failures were treated as an environment limitation rather than a destination-source failure.
+
+Scope safeguards keep each record city-specific. Bogotá retains its accented canonical name and focuses on its Andean plateau, La Candelaria, Plaza de Bolívar and city museums. Medellín retains its accent and Aburrá Valley city setting; unchanged MDE data is not used to place the Rionegro airport inside Medellín. Quito remains bounded to the city and its historic core, without importing Cotopaxi or Otavalo, and unchanged UIO data is not used as city-centre geography. Guayaquil is treated through its Guayas waterfront, Malecón and Las Peñas rather than as shorthand for Ecuador's coast or the Galápagos.
+
+Lima remains distinct from Callao, the wider metropolitan area and Lima Region; its record uses the historic centre and archaeology within Lima. La Paz is accurately described as Bolivia's seat of government rather than its constitutional capital, and it remains separate from El Alto, where LPB is located. Santa Cruz retains the exact canonical short name while its copy identifies the urban history of Santa Cruz de la Sierra; it does not absorb the department, Jesuit Missions or wider lowlands.
+
+The records live in `src/shared/destinations/editorial/southAmerica.ts` and aggregate centrally and deterministically after the Caribbean module. Repository-derived South America coverage moves from **1 of 15** to **8 of 15**, leaving **7**. Global coverage moves from **203 of 235** to **210 of 235**, leaving **25**. Caribbean remains complete at **10 of 10**; Central America remains **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; North America remains **16 of 16**, Europe **52 of 52**, Africa **54 of 54** and Asia **64 of 64**. The historical 175-record semantic prefix and all North America, Central America and Caribbean rollout records remain unchanged. Featured membership and exact order remain independently maintained.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking or related-destination work and no canonical-data changes. It changes no IDs, canonical names, countries, country codes, airport data, aliases, image identities, image provenance or Featured configuration.
+
+### South America Batch 2 — Southern Cone + Brazil
+
+South America Batch 2, verified on 2026-08-10, considered and implemented all seven canonical candidates, with no deferrals:
+
+- `cl-santiago` — Santiago, Chile
+- `ar-buenos-aires` — Buenos Aires, Argentina
+- `uy-montevideo` — Montevideo, Uruguay
+- `py-asuncion` — Asunción, Paraguay
+- `br-sao-paulo` — São Paulo, Brazil
+- `br-brasilia` — Brasília, Brazil
+- `br-manaus` — Manaus, Brazil
+
+The source review used exact URLs from official municipal and national tourism bodies, UNESCO, official museums and public cultural institutions. Each record carries at least two distinct, titled authoritative HTTPS references supporting durable city geography, heritage, architecture, museums, markets or cultural traditions. No provenance URL was fabricated. External HTTPS authorization failures were treated as an environment limitation rather than a source failure, and no candidate was weakened or deferred because of that limitation.
+
+Scope safeguards keep Santiago's central municipality and city material distinct from Greater Santiago, the Metropolitan Region, Valparaíso and Chile-wide attractions. Buenos Aires remains the autonomous city rather than Buenos Aires Province or the wider metropolitan area; its canonical AEP primary and EZE secondary airport data remains unchanged. Montevideo stays bounded to its Río de la Plata waterfront, Ciudad Vieja and city institutions rather than absorbing Uruguay's beach or wine destinations.
+
+Asunción remains distinct from Greater Asunción and Paraguay generally; unchanged ASU data is not used to place the airport, which is in Luque, inside the central city. São Paulo remains the city rather than the state or Greater São Paulo, and unchanged GRU data is not used to place the Guarulhos airport within the city. Brasília's planned central ensemble is distinguished from the wider Federal District and its surrounding administrative regions. Manaus is treated as a Rio Negro port city with its own markets, museums and rubber-era architecture, not as a synonym for the entire Amazon or distant rainforest destinations.
+
+The records remain in `src/shared/destinations/editorial/southAmerica.ts` and aggregate centrally in deterministic order after South America Batch 1. Repository-derived South America coverage moves from **8 of 15** to **15 of 15**, leaving **0** canonical South American destinations without editorial content. Global coverage moves from **210 of 235** to **217 of 235**, leaving **18**. Central America remains **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; Caribbean remains **10 of 10**; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic prefix and all North America, Central America, Caribbean and South America Batch 1 records remain unchanged. Featured membership and exact ordering remain independently maintained and unchanged.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no canonical IDs, names, countries, country codes, airport data, aliases, image identities or image provenance.
+
+### Oceania Batch 1 — Australia + New Zealand
+
+Oceania Batch 1, verified on 2026-08-10, considered and implemented all seven canonical candidates, with no deferrals:
+
+- `au-melbourne` — Melbourne, Australia
+- `au-brisbane` — Brisbane, Australia
+- `au-perth` — Perth, Australia
+- `au-adelaide` — Adelaide, Australia
+- `nz-auckland` — Auckland, New Zealand
+- `nz-wellington` — Wellington, New Zealand
+- `nz-christchurch` — Christchurch, New Zealand
+
+The source review used exact URLs from municipal and state authorities, official museums, public galleries, botanic-garden authorities and other public cultural institutions. Every record has at least two distinct, titled authoritative HTTPS references supporting durable geography, urban form, heritage and cultural context. Indigenous and Māori terms appear only where supported by authoritative local sources, with established spelling and macrons preserved.
+
+Melbourne remains the city on the Yarra River rather than Greater Melbourne or Victoria; the record does not absorb the Great Ocean Road, Phillip Island or Yarra Valley. Brisbane stays within the city and its river, South Bank and civic institutions rather than Greater Brisbane, South East Queensland, the Gold Coast or Sunshine Coast. Perth is the Australian city on the Swan River, not Perth in Scotland; Fremantle is not presented as central Perth, and wider Western Australian destinations remain outside its scope. Adelaide's planned centre, Park Lands and North Terrace remain distinct from Greater Adelaide, South Australia and surrounding wine regions.
+
+Auckland's isthmus, central waterfront and immediate volcanic landscape are distinguished from the wider Auckland Region; Tāmaki Makaurau and other Māori naming is used only in supported local context. Wellington remains the harbour city rather than the wider Wellington Region or Wairarapa, with Māori institutional naming retained accurately. Christchurch copy uses durable geography, architectural history, gardens, institutions and Ngāi Tahu context; it makes no claim that earthquake reconstruction or restoration is complete and no claim about current building access, reopenings, temporary museum locations or construction.
+
+The records live in `src/shared/destinations/editorial/oceania.ts` and aggregate centrally and deterministically after the complete South America module. Repository-derived Oceania/Pacific coverage moves from **1 of 18** to **8 of 18**, leaving **10**. Global coverage moves from **217 of 235** to **224 of 235**, leaving **11**: `hn-san-pedro-sula` plus the ten final Pacific candidates (`fj-nadi`, `pf-papeete`, `pg-port-moresby`, `sb-honiara`, `vu-port-vila`, `ws-apia`, `to-nuku-alofa`, `ck-rarotonga`, `gu-guam` and `mp-saipan`).
+
+South America remains complete at **15 of 15**; Caribbean **10 of 10**; Central America **5 of 6**, with `hn-san-pedro-sula` wholly non-editorial; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic guard and every prior regional rollout remain unchanged. Featured membership and exact order remain independently maintained.
+
+This batch includes no UI, image, gallery, map, search, flight, hotel, booking, related-destination or canonical-data work. It changes no canonical IDs, names, countries, country codes, airport data, aliases, image identities or image provenance.
+
+### Pacific Final Batch — Islands + Territories
+
+The Pacific final batch, verified on 2026-08-10, considered and implemented all ten canonical candidates, with no deferrals:
+
+- `fj-nadi` — Nadi, Fiji
+- `pf-papeete` — Papeete, French Polynesia
+- `pg-port-moresby` — Port Moresby, Papua New Guinea
+- `sb-honiara` — Honiara, Solomon Islands
+- `vu-port-vila` — Port Vila, Vanuatu
+- `ws-apia` — Apia, Samoa
+- `to-nuku-alofa` — Nukuʻalofa, Tonga
+- `ck-rarotonga` — Rarotonga, Cook Islands
+- `gu-guam` — Guam, Guam
+- `mp-saipan` — Saipan, Northern Mariana Islands
+
+The source review used exact, titled HTTPS references from official tourism authorities, national and municipal government bodies, official museums and cultural centres, and the United States National Park Service. Each destination has at least two distinct authoritative references supporting durable destination geography, heritage, institutions, markets or historic landscapes. External HTTPS requests in the working environment returned authorization failures; those failures were treated as an environment limitation rather than evidence of weak sources, and no provenance URL was fabricated.
+
+Scope safeguards distinguish city destinations from their surrounding islands and countries. Nadi remains within western Viti Levu and does not absorb Denarau, the Coral Coast or offshore island groups. Papeete remains the Tahiti harbour city, not Tahiti or French Polynesia generally, and unchanged PPT data is not used to place the Faaʻa airport in Papeete. Port Moresby is limited to its Gulf of Papua, Motu-Koitabu and Waigani contexts; Honiara's city institutions remain distinct from wider Guadalcanal battlefield landscapes; and Port Vila does not stand in for Efate or Vanuatu nationally. Apia remains a north-coast Upolu city, and unchanged APW data is not used to place Faleolo airport inside it. Nukuʻalofa retains its exact ʻokina and is not expanded across Tongatapu; unchanged TBU data is not used to place Fuaʻamotu airport in the central city.
+
+Rarotonga is correctly treated as an island destination, with Avarua identified only as its principal settlement and the outer Cook Islands excluded. Guam is also treated at island scope rather than as one city: Hagåtña appears as a settlement within Guam, while the canonical destination and country both remain exactly `Guam`. Saipan remains an island and municipality within the Northern Mariana Islands, not shorthand for the entire archipelago. CHamoru, Chamorro, Carolinian, Motu-Koitabu, iTaukei and other local or Indigenous naming appears only in bounded, authoritatively supported contexts; canonical diacritics, territorial labels and local spellings are preserved.
+
+All copy excludes current cyclone or typhoon recovery, earthquakes, tsunami or volcanic status, reconstruction, schedules, airport or ferry operations, entry rules, resort openings, beach or lagoon conditions, safety rankings, political conditions, institutional opening status and temporary events. The records add no related destinations and make no UI, image, gallery, map, search, flight, hotel or booking changes.
+
+Repository-derived Oceania/Pacific coverage moves from **8 of 18** to **18 of 18**, with no Pacific deferrals. Global editorial coverage moves from **224 of 235** to **234 of 235**, leaving exactly one canonical destination without editorial content: `hn-san-pedro-sula`. Central America remains **5 of 6**, with San Pedro Sula canonical and wholly non-editorial. South America remains **15 of 15**; Caribbean **10 of 10**; North America **16 of 16**; Europe **52 of 52**; Africa **54 of 54**; and Asia **64 of 64**. The historical 175-record semantic prefix and every prior regional rollout remain unchanged. Featured membership and exact ordering remain independently maintained and unchanged.
+
+### Global Editorial Completion — San Pedro Sula
+
+The final completion pass, verified on **2026-08-10**, adds `hn-san-pedro-sula` after resolving its earlier strict-source deferral. Source review established two exact, titled, durable HTTPS references: the Municipality of San Pedro Sula for city geography, civic spaces, landmarks and market context, and the Museum of Anthropology and History of San Pedro Sula for the city's established museum and its interpretive scope. Authorization failures affecting outbound HTTPS inspection were treated as an environment limitation, not as evidence against those institutional sources; no URL was inferred or fabricated.
+
+The record remains bounded to San Pedro Sula. Sula Valley geography is explicitly contextual, and no attraction from Honduras generally, Cortés Department, Puerto Cortés, Omoa, Lake Yojoa, Copán, Tela or La Ceiba is presented as a city attraction. Its copy excludes current safety, crime, politics, demonstrations, weather, flooding, storms, transport, airport or airline operations, opening hours, prices, access, closures, construction, tourism and population conditions.
+
+Repository-derived coverage changes as follows:
+
+- Central America: **5/6 → 6/6**
+- North America: **16/16**
+- Caribbean: **10/10**
+- South America: **15/15**
+- Europe: **52/52**
+- Africa: **54/54**
+- Asia: **64/64**
+- Oceania/Pacific: **18/18**
+- Global: **234/235 → 235/235**
+- Remaining: **1 → 0**
+
+**GLOBAL EDITORIAL COVERAGE: 235/235. REMAINING: 0.** This means every canonical destination currently represented in the Explore catalogue has editorial enrichment; it does not mean that the catalogue represents every possible destination worldwide.
+
+This completion adds no UI, image, gallery, map, search, flight, hotel, booking, related-destination, Featured or canonical-catalogue changes. The historical 175-record semantic guard, every prior editorial payload and prior-record relative order, deterministic regional aggregation, and independently maintained Featured membership and ordering remain preserved.
+
+This historical list records the rollout sequence, not an editorial allowlist or required editorial order. The compatibility facade continues to support missing-editorial fallback behavior for future canonical catalogue changes, so a canonical destination remains valid, searchable and safe to open before any future editorial enrichment is added.
+
+These editorial batches do not change Featured membership or order and include no image or UI work. Africa Batch 1 includes no destination-image, ExploreScreen, DestinationDetailsScreen or other interface changes, and no map functionality. It adds no related destinations; those remain deferred until a separate recommendation policy is approved.
+
+## Content fields
+
+Each editorial record contains:
+
+- `id` resolving to exactly one canonical Explore destination;
+- `summary`, a single neutral sentence;
+- `description`, one concise paragraph of durable destination context;
+- `highlights`, three to five short factual phrases;
+- `editorialProvenance`, including `source`, `sourceReferences` and `lastVerifiedAt`.
+
+The editorial records deliberately do not populate `relatedDestinationIds`. Related destinations need a separate recommendation policy.
+
+## Source-verification standard
+
+Every destination must have at least two distinct, titled HTTPS source references attached to its typed record. Prefer official city, regional or national tourism organisations. Official government, municipal, UNESCO, cultural-institution or destination-management sources are also acceptable. Airport sources should only be used for airport facts, which are maintained separately.
+
+`lastVerifiedAt` is the date Kurioticket checked the factual claims against the listed references. It does not mean the referenced organisations approved or endorsed Kurioticket wording.
+
+## Airport facts versus editorial content
+
+Airport-derived facts remain in the shared canonical catalogue and continue to drive search, airport handoffs, IDs, names, country data, aliases and image lookup IDs. Editorial copy remains in the regional editorial modules, is exposed through the `exploreDestinationEditorial.ts` compatibility facade and is attached after airport-backed records are constructed, by stable destination ID. Airport facts must not be duplicated into or changed for editorial content. Destinations without editorial content remain valid.
+
+## Original wording requirement
+
+Do not copy paragraphs or close paraphrases from source websites. The source references support factual verification only; Kurioticket wording must be original, neutral and durable.
+
+## Omitted unstable or prohibited content
+
+Editorial records must not include flight or hotel prices, availability, discounts, travel dates, temporary events, opening hours, visa or immigration advice, safety guarantees, weather forecasts, unsupported rankings, “best” claims, fabricated facts or promotional superlatives.
+
+## Adding future destinations
+
+To add a future editorial destination:
+
+1. Resolve and use the existing canonical Explore destination ID; never invent an ID or use an arbitrary string.
+2. Research durable destination facts using at least two credible HTTPS references.
+3. Add one typed record with summary, description, highlights and editorial provenance.
+4. Keep airport facts and editorial copy separate; do not change airport mappings for copy reasons.
+5. Run the shared editorial validation and destination tests.
+6. Update this document only for process or scope changes; keep source references attached to the typed records.
+
+`relatedDestinationIds` remains optional and deferred until a separate recommendation policy is approved.
+
+Regional records use deterministic historical aggregation; aggregate order does not acquire Featured product semantics.
+
+## Website integration
+
+Website UI integration is intentionally deferred. The shared module has no React Native, Expo, storage, navigation or mobile-image dependency so website code can import it later without changing the current website destinations page.

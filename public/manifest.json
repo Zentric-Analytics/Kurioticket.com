@@ -5,7 +5,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
-  "theme_color": "#021C2B",
+  "theme_color": "#FFFFFF",
   "icons": [
     {
       "src": "/brand/kurioticket-icon-192.png",

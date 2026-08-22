@@ -15,29 +15,29 @@ const geometry = (overrides: Partial<Parameters<typeof calculateDesktopPopoverGe
   });
 
 test("begins below the complete search card and matches the field", () => {
-  assert.deepEqual(geometry(), { left: 100, top: 270, width: 300, maxHeight: 514 });
+  assert.deepEqual(geometry(), { left: 100, top: 270, width: 300, maxHeight: 514, placement: "below" });
 });
 
-test("remains below when there is much more room above the card", () => {
+test("opens directly above with the configured gap when below is too short", () => {
   const boundaryRect = rect(50, 500, 900, 180);
-  const result = geometry({ boundaryRect, viewportHeight: 720 });
+  const result = geometry({ boundaryRect, fieldRect: rect(400, 500, 200, 78), viewportHeight: 720, desiredHeight: 350, gap: 8 });
 
-  assert.equal(result.top, boundaryRect.bottom + 10);
-  assert.equal(result.maxHeight, 14);
+  assert.equal(result.placement, "above");
+  // The renderer translates above popovers by their actual height, so geometry
+  // must return the adjacent edge and must not subtract desiredHeight too.
+  assert.equal(result.top, boundaryRect.top - 8);
+  assert.notEqual(result.top, boundaryRect.top - 8 - 350);
+  assert.equal(result.maxHeight, boundaryRect.top - 8 - 16);
 });
 
-test("remains below on a short-height viewport", () => {
-  const boundaryRect = rect(50, 300, 900, 180);
-  const result = geometry({ boundaryRect, viewportHeight: 400 });
+test("keeps a small message panel adjacent rather than allocating its desired height", () => {
+  const boundaryRect = rect(50, 500, 900, 78);
+  const result = geometry({ boundaryRect, viewportHeight: 640, desiredHeight: 30, gap: 8 });
 
-  assert.equal(result.top, 490);
-  assert.equal(result.maxHeight, 0);
-});
-
-test("always derives top from the boundary bottom and gap", () => {
-  for (const boundaryRect of [rect(0, 0, 900, 100), rect(0, 275, 900, 125), rect(0, 900, 900, 50)]) {
-    assert.equal(geometry({ boundaryRect, gap: 12 }).top, boundaryRect.bottom + 12);
-  }
+  assert.equal(result.placement, "below");
+  assert.equal(result.top, boundaryRect.bottom + 8);
+  assert.equal(result.maxHeight, 38);
+  assert.notEqual(result.maxHeight, 30);
 });
 
 test("uses the actual viewport space below as maxHeight", () => {
@@ -68,12 +68,11 @@ test("shrinks safely on narrow and degenerate viewports", () => {
   assert.equal(result.maxHeight, 0);
 });
 
-test("does not need a measured panel height for below-only placement", () => {
-  assert.deepEqual(Object.keys(geometry()).sort(), ["left", "maxHeight", "top", "width"]);
-});
-
-test("never returns an above placement", () => {
-  assert.equal("placement" in geometry({ boundaryRect: rect(0, 700, 900, 100) }), false);
+test("preferred panel height only decides placement and never forces expansion", () => {
+  const result = geometry({ boundaryRect: rect(0, 260, 900, 60), viewportHeight: 800, desiredHeight: 120 });
+  assert.equal(result.placement, "below");
+  assert.equal(result.maxHeight, 454);
+  assert.ok(result.maxHeight > 120);
 });
 
 test("scrolls only enough to expose the minimum location panel height", () => {

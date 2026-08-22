@@ -1,0 +1,36 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { readFileSync } from "node:fs";
+
+const page = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
+
+test("Deals hero is a clean high-resolution image without marketing copy or readability overlays", () => {
+  assert.match(
+    page,
+    /const dealsHeroImage =\s*"https:\/\/images\.unsplash\.com\/photo-1464037866556-6812c9d1c72e/,
+  );
+  assert.match(
+    page,
+    /import packagesHeroImage from "\.\.\/\.\.\/\.\.\/public\/images\/premium\/packages\/kurioticket-packages-hero-tropical-resort-001\.jpg"/,
+  );
+  assert.match(page, /quality=\{pathname === "\/packages" \? 100 : 90\}/);
+  assert.match(
+    page,
+    /pathname === "\/packages" \? packagesHeroImage : dealsHeroImage/,
+  );
+  assert.match(page, /fit=crop&w=2400&q=90/);
+  assert.match(
+    page,
+    /<Image[\s\S]*?src=\{heroImage\}[\s\S]*?alt=""[\s\S]*?fill[\s\S]*?priority[\s\S]*?quality=\{pathname === "\/packages" \? 100 : 90\}[\s\S]*?sizes="100vw"/,
+  );
+  assert.match(
+    page,
+    /object-cover[\s\S]*pathname === "\/packages" \? "object-\[center_66%\] sm:object-\[center_52%\] lg:object-\[center_62%\]" : "object-\[center_52%\] lg:object-\[center_48%\]"/,
+  );
+  assert.doesNotMatch(page, /linear-gradient|bg-gradient/);
+  assert.doesNotMatch(page, /packages\.heroTitle|deals\.heroSubtitle|<h1/);
+  assert.match(
+    page,
+    /pathname === "\/packages"\s*\? "packages-landing"\s*: "desktop-landing"/,
+  );
+});

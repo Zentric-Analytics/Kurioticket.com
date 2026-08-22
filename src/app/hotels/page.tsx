@@ -38,19 +38,6 @@ const toIsoDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const splitMobileHeroText = (text: string, lines: readonly string[]) =>
-  text === lines.join(" ") ? lines : null;
-
-const mobileHotelsHeroTitleLines = [
-  "Find the stays that start the",
-  "right trip.",
-] as const;
-
-const mobileHotelsHeroSubtitleLines = [
-  "Compare hotels in one place, from polished city arrivals",
-  "to easy resort and escapes.",
-] as const;
-
 const hotelInspirationCategoryChips = [
   "Beach",
   "City breaks",
@@ -366,21 +353,11 @@ export default function HotelsSearchPage() {
     href: destinationCardHref(card.destinationQuery),
   }));
   const hotelSearchIntroLabel = t("hotelSearchIntroLabel");
-  const mobileHotelsHeroTitle = t("hotelsHeroMobileTitle");
-  const mobileHotelsHeroSubtitle = t("hotelsHeroMobileSubtitle");
-  const mobileHotelsHeroTitleSplit = splitMobileHeroText(
-    mobileHotelsHeroTitle,
-    mobileHotelsHeroTitleLines,
-  );
-  const mobileHotelsHeroSubtitleSplit = splitMobileHeroText(
-    mobileHotelsHeroSubtitle,
-    mobileHotelsHeroSubtitleLines,
-  );
-
   return (
     <>
       <AppHeader mobileHeroOverlay />
       <main className="relative isolate flex-1 overflow-x-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
+        <h1 className="sr-only">{t("hotelsHeroTitle")}</h1>
         <section className="relative z-20 isolate min-h-[24.25rem] overflow-visible bg-slate-950 sm:hidden">
           <div className="absolute inset-0 overflow-hidden">
             <Image
@@ -395,49 +372,20 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/22 via-slate-950/6 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[24.25rem] items-start pt-8">
-            <div className="max-w-[22.25rem] text-white">
-              <p className="sr-only">
-                {t("hotelsHeroEyebrow")}
-              </p>
-              <h1 className="w-max max-w-none text-[clamp(1.38rem,6.1vw,2rem)] font-semibold leading-[1.05] tracking-[-0.041em] text-white drop-shadow-[0_2px_10px_rgba(2,6,23,0.6)]">
-                {mobileHotelsHeroTitleSplit ? (
-                  mobileHotelsHeroTitleSplit.map((line) => (
-                    <span key={line} className="block whitespace-nowrap">
-                      {line}
-                    </span>
-                  ))
-                ) : (
-                  mobileHotelsHeroTitle
-                )}
-              </h1>
-              <p className="mt-4 w-max max-w-none text-[clamp(0.72rem,3.28vw,0.89rem)] font-medium leading-[1.5] tracking-[-0.012em] text-white/92 drop-shadow-[0_2px_8px_rgba(2,6,23,0.54)]">
-                {mobileHotelsHeroSubtitleSplit ? (
-                  mobileHotelsHeroSubtitleSplit.map((line) => (
-                    <span key={line} className="block whitespace-nowrap">
-                      {line}
-                    </span>
-                  ))
-                ) : (
-                  mobileHotelsHeroSubtitle
-                )}
-              </p>
-            </div>
-          </div>
-
           <div className="page-shell absolute inset-x-0 bottom-[-18.05rem] z-30">
             <div className="mx-auto max-w-6xl">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
                 desktopIdentityLabel={t("hotels")}
-                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.5rem] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!pb-[calc(0.9rem+env(safe-area-inset-bottom))] [&>form>div]:!shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] [&>form>div>div]:!gap-2 [&>form>div>div>label]:!min-h-[50px] [&>form>div>div>div]:!min-h-[50px] [&>form>div>div>div:last-child>button]:!h-12"
+                mobileLandingPresentation
+                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[15px] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!pb-[calc(0.9rem+env(safe-area-inset-bottom))] [&>form>div]:!shadow-[0_18px_44px_-18px_rgba(15,23,42,0.38)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] [&>form>div>div]:!gap-2 [&>form>div>div>label]:!min-h-[50px] [&>form>div>div>div]:!min-h-[50px] [&>form>div>div>div:last-child>button]:!h-12"
               />
             </div>
           </div>
         </section>
 
         <section className="relative z-20 hidden overflow-visible pb-28 sm:block lg:pb-32">
-          <div className="relative isolate min-h-[35rem] bg-slate-950 lg:min-h-[39rem]">
+          <div className="relative isolate min-h-[28rem] bg-slate-950 lg:min-h-[29rem]">
             <div className="absolute inset-0 overflow-hidden">
               <Image
                 src={hotelsHeroImage}
@@ -445,7 +393,7 @@ export default function HotelsSearchPage() {
                 fill
                 priority
                 sizes="100vw"
-                className="object-cover object-[50%_46%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
+                className="object-cover object-[50%_38%] brightness-[1.2] saturate-[1.1] contrast-[1.01]"
               />
               <div className="absolute inset-y-0 left-0 w-[58%] bg-gradient-to-r from-slate-950/56 via-slate-950/20 to-transparent" />
               <div className="absolute left-0 top-0 h-[66%] w-[62%] bg-[radial-gradient(ellipse_at_22%_26%,rgba(15,23,42,0.42),rgba(15,23,42,0.18)_42%,transparent_72%)]" />
@@ -453,26 +401,12 @@ export default function HotelsSearchPage() {
               <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/34 via-slate-950/8 to-transparent" />
             </div>
 
-            <div className="page-shell relative z-10 flex min-h-[35rem] flex-col items-start pb-36 pt-14 lg:min-h-[39rem] lg:pb-40 lg:pt-16">
-              <div className="max-w-[44rem] text-white">
-                <p className="sr-only">
-                  {t("hotelsHeroEyebrow")}
-                </p>
-                <h1 className="text-[3rem] font-semibold leading-[1.04] tracking-[-0.038em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.32rem]">
-                  {t("hotelsHeroTitle")}
-                </h1>
-                <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] lg:text-lg lg:leading-8">
-                  {t("hotelsHeroSubtitle")}
-                </p>
-              </div>
-            </div>
-
-            <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
+            <div className="page-shell absolute inset-x-0 bottom-[-78px] z-30 lg:bottom-[-80px]">
               <div className="mx-auto max-w-6xl">
                 <HotelSearchBar
                   introLabel={hotelSearchIntroLabel}
                   desktopIdentityLabel={t("hotels")}
-                  className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/[0.97] [&>form>div]:!p-4 [&>form>div]:!shadow-[0_34px_86px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-5 lg:[&>form>div>div:last-child]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_142px] lg:[&>form>div>div:last-child>*]:!min-h-[68px] lg:[&>form>div>div:last-child>div:last-child>button]:!min-h-[68px]"
+                  className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[14px] [&>form>div]:!border-white/80 [&>form>div]:!bg-white/[0.97] [&>form>div]:!p-4 [&>form>div]:!shadow-[0_34px_86px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[16px] lg:[&>form>div]:!p-5 lg:[&>form>div>div:last-child]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_142px] lg:[&>form>div>div:last-child>*]:!min-h-[68px] lg:[&>form>div>div:last-child>div:last-child>button]:!min-h-[68px]"
                 />
               </div>
             </div>

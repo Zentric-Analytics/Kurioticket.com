@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { hasFreshProviderPrice } from "@/lib/homepageFareDisplay";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BrandedLoading } from "@/components/layout/BrandedLoading";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -55,17 +56,17 @@ import { applyHomepageRecommendationOrder } from "@/lib/recommendations/homepage
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { useSession } from "next-auth/react";
 import {
-  readSavedTripIds,
-  toggleSavedTripId,
-  writeSavedTripIds,
-} from "@/lib/saved-trips-local";
+  readSavedItemIds,
+  toggleSavedItemId,
+  writeSavedItemIds,
+} from "@/lib/saved-items-local";
 import {
-  deleteBackendTrip,
-  fetchBackendSavedTrips,
-  getSavedTripLocalId,
-  saveBackendTrip,
-  type SavedTripDisplayDetails,
-} from "@/lib/saved-trips-api";
+  deleteBackendDiscovery,
+  fetchBackendSavedDiscoveries,
+  getSavedDiscoveryLocalId,
+  saveBackendDiscovery,
+  type SavedDiscoveryDisplayDetails,
+} from "@/lib/saved-items-api";
 
 function CompareOffersIllustration() {
   return (
@@ -398,18 +399,6 @@ type DiscoveryFareCardState = {
 type HomepageRecommendationSurface = "popular" | "discovery" | "regionalRoutes";
 type HomepageRecommendationOrder = Partial<Record<HomepageRecommendationSurface, string[]>>;
 
-type NewsletterStatus = "idle" | "success" | "error";
-
-function isNewsletterEmail(value: string) {
-  const email = value.trim();
-  return (
-    email.length > 2 &&
-    email.length <= 254 &&
-    !/\s/.test(email) &&
-    /^[^@]+@[^@]+\.[^@]+$/.test(email)
-  );
-}
-
 // Production rule: the public homepage must never initiate passkey setup,
 // passkey authentication, or passkey setup-state fetches. Optional account-security
 // onboarding belongs on /auth/signin, /onboarding/security, /dashboard/security,
@@ -417,17 +406,13 @@ function isNewsletterEmail(value: string) {
 export default function Home() {
   const { locale, t: dictionary } = useLocale();
   const { mode: regionCode, selectedOption } = useRegion();
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterMessage, setNewsletterMessage] = useState("");
-  const [newsletterStatus, setNewsletterStatus] =
-    useState<NewsletterStatus>("idle");
-  const [newsletterPending, setNewsletterPending] = useState(false);
   const { status: sessionStatus } = useSession();
-  const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
-  const [backendSavedTripIds, setBackendSavedTripIds] = useState<
+  const [savedItemIds, setSavedItemIds] = useState<string[]>([]);
+  const [backendSavedItemIds, setBackendSavedItemIds] = useState<
     Record<string, string>
   >({});
-  const [savedTripError, setSavedTripError] = useState("");
+  const [savedItemError, setSavedItemError] = useState("");
+  const [carsResultsPending, setCarsResultsPending] = useState(false);
   const [destinationPriceState, setDestinationPriceState] =
     useState<DestinationPriceState>({
       loading: true,
@@ -442,6 +427,8 @@ export default function Home() {
     useState<HomepageRecommendationOrder>({});
   const effectiveHomepageRecommendationOrder =
     sessionStatus === "authenticated" ? homepageRecommendationOrder : {};
+  const mobileSearchCardRef = useRef<HTMLDivElement>(null);
+  const [mobileSearchCardHeight, setMobileSearchCardHeight] = useState(0);
   const destinationsRailRef = useRef<HTMLDivElement>(null);
   const [canScrollDestinationsLeft, setCanScrollDestinationsLeft] =
     useState(false);
@@ -455,6 +442,27 @@ export default function Home() {
   const [expandedCountryDirectoryId, setExpandedCountryDirectoryId] = useState<
     string | null
   >(null);
+
+  useEffect(() => {
+    const card = mobileSearchCardRef.current;
+    if (!card) return;
+
+    const updateHeight = () => {
+      const nextHeight = Math.ceil(card.getBoundingClientRect().height);
+      setMobileSearchCardHeight((currentHeight) =>
+        currentHeight === nextHeight ? currentHeight : nextHeight,
+      );
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
+
+  const mobileSearchClearanceStyle = {
+    "--mobile-search-card-height": `${mobileSearchCardHeight}px`,
+  } as CSSProperties;
 
   const setHasAdvancedWithNextArrow = useCallback((value: boolean) => {
     hasAdvancedWithNextArrowRef.current = value;
@@ -773,70 +781,19 @@ export default function Home() {
     [sortedCountryDirectoryCountries],
   );
 
-  const handleNewsletterSubmit = async (
-    event: React.FormEvent<HTMLFormElement>,
-  ) => {
-    event.preventDefault();
-
-    if (newsletterPending) return;
-
-    const email = newsletterEmail.trim();
-    if (!isNewsletterEmail(email)) {
-      setNewsletterStatus("error");
-      setNewsletterMessage(t("homeNewsletterInvalidEmail"));
-      return;
-    }
-
-    setNewsletterPending(true);
-    setNewsletterStatus("idle");
-    setNewsletterMessage("");
-
-    try {
-      const response = await fetch("/api/newsletter/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          source: "homepage",
-          locale,
-          regionCode,
-        }),
-      });
-      const data = (await response.json().catch(() => null)) as {
-        ok?: boolean;
-        message?: string;
-      } | null;
-
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || t("homeNewsletterUnableSubscribe"));
-      }
-
-      setNewsletterStatus("success");
-      setNewsletterMessage(t("homeNewsletterThanks"));
-      setNewsletterEmail("");
-    } catch (error) {
-      setNewsletterStatus("error");
-      setNewsletterMessage(
-        error instanceof Error ? error.message : t("homeNewsletterTryAgain"),
-      );
-    } finally {
-      setNewsletterPending(false);
-    }
-  };
-
-  const refreshBackendSavedTrips = useCallback(async (signal?: AbortSignal) => {
-    const result = await fetchBackendSavedTrips(signal);
+  const refreshBackendSavedItems = useCallback(async (signal?: AbortSignal) => {
+    const result = await fetchBackendSavedDiscoveries(signal);
     if (!result.ok || !result.items) return;
 
     const backendIds: Record<string, string> = {};
     const localIds = result.items.map((item) => {
-      const localId = getSavedTripLocalId(item);
+      const localId = getSavedDiscoveryLocalId(item);
       backendIds[localId] = item.id;
       return localId;
     });
 
-    setBackendSavedTripIds(backendIds);
-    setSavedTripIds(localIds);
+    setBackendSavedItemIds(backendIds);
+    setSavedItemIds(localIds);
   }, []);
 
   useEffect(() => {
@@ -845,7 +802,7 @@ export default function Home() {
     if (sessionStatus === "authenticated") {
       const controller = new AbortController();
       const timeoutId = window.setTimeout(() => {
-        void refreshBackendSavedTrips(controller.signal);
+        void refreshBackendSavedItems(controller.signal);
       }, 0);
       return () => {
         window.clearTimeout(timeoutId);
@@ -854,11 +811,11 @@ export default function Home() {
     }
 
     const timeoutId = window.setTimeout(() => {
-      setBackendSavedTripIds({});
-      setSavedTripIds(readSavedTripIds());
+      setBackendSavedItemIds({});
+      setSavedItemIds(readSavedItemIds());
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [refreshBackendSavedTrips, sessionStatus]);
+  }, [refreshBackendSavedItems, sessionStatus]);
 
   useEffect(() => {
     const rail = destinationsRailRef.current;
@@ -1000,64 +957,101 @@ export default function Home() {
     return () => controller.abort();
   }, [regionCode]);
 
-  const handleSavedTripToggle = async (
+  const handleSavedItemToggle = async (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) => {
     event.preventDefault();
     event.stopPropagation();
 
     if (sessionStatus !== "authenticated") {
-      setSavedTripError("");
-      setSavedTripIds((current) => {
-        const next = toggleSavedTripId(current, itemId);
-        writeSavedTripIds(next);
+      setSavedItemError("");
+      setSavedItemIds((current) => {
+        const next = toggleSavedItemId(current, itemId);
+        writeSavedItemIds(next);
         return next;
       });
       return;
     }
 
-    if (savedTripIds.includes(itemId)) {
-      const backendId = backendSavedTripIds[itemId];
+    if (savedItemIds.includes(itemId)) {
+      const backendId = backendSavedItemIds[itemId];
       if (!backendId) {
-        await refreshBackendSavedTrips();
+        await refreshBackendSavedItems();
         return;
       }
 
-      const result = await deleteBackendTrip(backendId);
+      const result = await deleteBackendDiscovery(backendId);
       if (result.ok) {
-        setSavedTripError("");
-        setSavedTripIds((current) => current.filter((id) => id !== itemId));
-        setBackendSavedTripIds((current) => {
+        setSavedItemError("");
+        setSavedItemIds((current) => current.filter((id) => id !== itemId));
+        setBackendSavedItemIds((current) => {
           const next = { ...current };
           delete next[itemId];
           return next;
         });
       } else {
-        setSavedTripError(
-          result.error ?? "Unable to update saved trips right now.",
+        setSavedItemError(
+          result.error ?? "Unable to update saved items right now.",
         );
-        await refreshBackendSavedTrips();
+        await refreshBackendSavedItems();
       }
       return;
     }
 
-    const result = await saveBackendTrip(itemId, display);
+    const result = await saveBackendDiscovery(itemId, display);
     if (result.ok || result.duplicate) {
-      setSavedTripError("");
-      await refreshBackendSavedTrips();
+      setSavedItemError("");
+      await refreshBackendSavedItems();
     } else {
-      setSavedTripError(result.error ?? "Unable to save trip right now.");
+      setSavedItemError(result.error ?? "Unable to save item right now.");
     }
   };
+
+  const handleCarsResultsNavigationStart = useCallback(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    setCarsResultsPending(true);
+  }, []);
+
+  if (carsResultsPending) {
+    return (
+      <>
+        <AppHeader
+          flushDesktopBottom
+          flushMobileBottom
+          hideDesktopTravelNav
+          hideMobileCategoryTabs
+        />
+        <main className="flex min-h-[calc(100svh-5rem)] flex-1 bg-white">
+          <BrandedLoading
+            variant="fullscreen"
+            visual="logoPulse"
+            showProgress={false}
+            className="min-h-[calc(100svh-5rem)] flex-1 bg-transparent px-5"
+            contentClassName="max-w-md text-center"
+            title={t("carsResults.loading.title")}
+            messages={[
+              t("carsResults.loading.checkingCarsAndRates"),
+              t("carsResults.loading.comparingVehiclesAndProviders"),
+              t("carsResults.loading.findingBestAvailableOptions"),
+              t("carsResults.loading.preparingResults"),
+            ]}
+          />
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
       <AppHeader hideMobileSecondaryNavLinks />
 
       <main className="flex-1 bg-white">
-        <section className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
+        <section
+          data-testid="mobile-homepage-hero"
+          className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[540px]"
+        >
           <div className="absolute inset-0">
             <Image
               src={homepageHeroImage.url}
@@ -1086,11 +1080,17 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="page-shell absolute inset-x-0 bottom-[-360px] z-30 sm:hidden">
+          <div
+            ref={mobileSearchCardRef}
+            data-testid="mobile-homepage-search-card-wrapper"
+            className="page-shell absolute inset-x-0 top-[calc(100%-3rem)] z-30 sm:hidden"
+          >
             <SearchTabs
               t={t as unknown as Record<string, string>}
               compactHero
+              mobileHomepage
               locale={locale}
+              onCarsResultsNavigationStart={handleCarsResultsNavigationStart}
             />
           </div>
 
@@ -1100,12 +1100,17 @@ export default function Home() {
                 t={t as unknown as Record<string, string>}
                 compactHero
                 locale={locale}
+                onCarsResultsNavigationStart={handleCarsResultsNavigationStart}
               />
             </div>
           </div>
         </section>
 
-        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[25rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
+        <section
+          data-testid="homepage-content-after-search"
+          style={mobileSearchClearanceStyle}
+          className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[max(1.75rem,calc(var(--mobile-search-card-height)_-_1.25rem))] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28"
+        >
           <div className="mx-auto h-px w-[calc(100%-2rem)] max-w-[1280px] bg-slate-200/80 sm:hidden" />
           <div className="page-shell pt-5 sm:pt-0">
             <div className="flex items-center">
@@ -1175,8 +1180,8 @@ export default function Home() {
                         market: regionCode,
                       })}
                       isPriceLoading={destinationPriceState.loading}
-                      isSaved={savedTripIds.includes(destination.id)}
-                      onHeartToggle={handleSavedTripToggle}
+                      isSaved={savedItemIds.includes(destination.id)}
+                      onHeartToggle={handleSavedItemToggle}
                     />
                   );
                 })}
@@ -1187,7 +1192,7 @@ export default function Home() {
 
         <section className="page-shell bg-white py-7 sm:bg-transparent sm:py-6">
           <p className="sr-only" aria-live="polite">
-            {savedTripError}
+            {savedItemError}
           </p>
           <div className="space-y-3 sm:space-y-5">
             <div className="space-y-2">
@@ -1244,8 +1249,8 @@ export default function Home() {
                                 card.item.destinationCode
                               }
                               isPriceLoading={discoveryFareCardState.loading}
-                              isSaved={savedTripIds.includes(card.item.id)}
-                              onHeartToggle={handleSavedTripToggle}
+                              isSaved={savedItemIds.includes(card.item.id)}
+                              onHeartToggle={handleSavedItemToggle}
                             />
                           </div>
                         );
@@ -1283,8 +1288,8 @@ export default function Home() {
                     expectedOriginCode={card.item.originCode}
                     expectedDestinationCode={card.item.destinationCode}
                     isPriceLoading={discoveryFareCardState.loading}
-                    isSaved={savedTripIds.includes(card.item.id)}
-                    onHeartToggle={handleSavedTripToggle}
+                    isSaved={savedItemIds.includes(card.item.id)}
+                    onHeartToggle={handleSavedItemToggle}
                   />
                 );
               })}
@@ -1357,7 +1362,7 @@ export default function Home() {
           className="page-shell bg-white pb-8 pt-8 sm:bg-transparent sm:pb-9 sm:pt-11"
           aria-labelledby="regional-routes-heading"
         >
-          <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="mb-4">
             <h2
               id="regional-routes-heading"
               className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl"
@@ -1365,13 +1370,6 @@ export default function Home() {
               {t("homeRegionalRoutesTitle") ||
                 "Discover destinations from your region"}
             </h2>
-            <Link
-              href="/flights"
-              className="focus-ring hidden items-center gap-1.5 rounded-full px-2 py-1 text-sm font-bold text-[#004BB8] hover:text-[#021C2B] sm:inline-flex"
-            >
-              {t("homeRegionalRoutesViewAll") || "View all route ideas"}
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
           </div>
           <div className="-mx-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
             <div className="flex snap-x snap-mandatory gap-4 sm:grid sm:grid-cols-5 sm:gap-5">
@@ -1407,7 +1405,7 @@ export default function Home() {
             title={t("homePromoFlightsTitle")}
             body={t("homePromoFlightsBody")}
             cta={t("homePromoFlightsCta")}
-            href="/deals"
+            href="/packages"
             icon={<Plane size={74} />}
           />
 
@@ -1416,7 +1414,7 @@ export default function Home() {
             title={t("homePromoHotelsTitle")}
             body={t("homePromoHotelsBody")}
             cta={t("homePromoHotelsCta")}
-            href="/hotels/results"
+            href="/packages"
             icon={<Hotel size={74} />}
           />
         </section>
@@ -1617,87 +1615,6 @@ export default function Home() {
                 })}
               </div>
             ))}
-          </div>
-        </section>
-
-        <section className="page-shell pb-5 pt-1 sm:pb-7 sm:pt-2">
-          <div className="overflow-hidden rounded-2xl bg-[#062B63] px-5 py-4 text-white shadow-[0_22px_50px_-30px_rgba(2,28,43,0.7)] sm:rounded-3xl sm:px-7 sm:py-5 lg:grid lg:grid-cols-[150px_minmax(0,1fr)_minmax(360px,0.9fr)] lg:items-center lg:gap-6">
-            <div
-              className="mx-auto mb-3 h-16 w-36 text-white/90 lg:mb-0 lg:mx-0"
-              aria-hidden="true"
-            >
-              <svg viewBox="0 0 180 90" fill="none" className="h-full w-full">
-                <path
-                  d="M2 62C32 36 46 87 68 55C84 31 103 40 121 22"
-                  stroke="white"
-                  strokeOpacity="0.62"
-                  strokeWidth="2"
-                  strokeDasharray="6 7"
-                  strokeLinecap="round"
-                />
-                <path d="M83 36L160 8L132 76L116 49L83 36Z" fill="#EAF7FF" />
-                <path
-                  d="M116 49L160 8L102 43"
-                  stroke="#94DFF0"
-                  strokeWidth="3"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div className="text-center lg:text-start">
-              <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">
-                {t("homeNewsletterTitle")}
-              </h2>
-              <p className="mt-1.5 text-sm font-medium leading-6 text-white/82">
-                {t("homeNewsletterBody")}
-              </p>
-            </div>
-            <div className="mt-4 lg:mt-0">
-              <form
-                className="flex flex-col gap-2 sm:flex-row sm:gap-0"
-                onSubmit={handleNewsletterSubmit}
-                aria-busy={newsletterPending}
-              >
-                <input
-                  type="email"
-                  value={newsletterEmail}
-                  onChange={(event) => {
-                    setNewsletterEmail(event.target.value);
-                    if (newsletterStatus !== "idle") {
-                      setNewsletterStatus("idle");
-                      setNewsletterMessage("");
-                    }
-                  }}
-                  placeholder={t("homeNewsletterPlaceholder")}
-                  className="focus-ring h-12 min-w-0 flex-1 rounded-xl border-0 bg-white px-4 text-base font-semibold text-slate-950 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 sm:rounded-e-none"
-                  aria-label={t("homeEmailAddress")}
-                  disabled={newsletterPending}
-                  required
-                />
-                <button
-                  type="submit"
-                  className="focus-ring h-12 shrink-0 rounded-xl bg-[#5CB6B2] px-5 text-sm font-extrabold text-white transition hover:bg-[#48a5a1] disabled:cursor-not-allowed disabled:bg-slate-500 sm:rounded-s-none"
-                  aria-busy={newsletterPending}
-                  disabled={newsletterPending}
-                >
-                  {newsletterPending
-                    ? t("homeSubscribing")
-                    : t("homeSubscribe")}
-                </button>
-              </form>
-              <p className="mt-1.5 text-xs font-medium leading-5 text-white/72">
-                {t("homeNewsletterConsent")}
-              </p>
-              {newsletterMessage ? (
-                <p
-                  className={`mt-1.5 text-xs font-semibold ${newsletterStatus === "error" ? "text-red-200" : "text-teal-100"}`}
-                  role="status"
-                  aria-live="polite"
-                >
-                  {newsletterMessage}
-                </p>
-              ) : null}
-            </div>
           </div>
         </section>
       </main>
@@ -1944,7 +1861,7 @@ function DiscoverySuggestionCard({
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) => void;
 }) {
   const { t: dictionary } = useLocale();
@@ -2162,7 +2079,7 @@ function DestinationCard({
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
     itemId: string,
-    display?: SavedTripDisplayDetails,
+    display?: SavedDiscoveryDisplayDetails,
   ) => void;
 }) {
   const { t: dictionary } = useLocale();

@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-08-06T00:00:00Z",
+  "repository": "Zentric-Analytics/Kurioticket.com",
+  "workflowCount": 5,
+  "previewDeliveryOwner": "services/preview-release on Render (not GitHub Actions)",
+  "workflows": [
+    {"file":".github/workflows/pr-required-gates.yml","category":"pull-request-validation","mutatesExternalState":false},
+    {"file":".github/workflows/security.yml","category":"security","mutatesExternalState":false},
+    {"file":".github/workflows/migration-validation.yml","category":"migration-validation","mutatesExternalState":false},
+    {"file":".github/workflows/mobile-production-update.yml","category":"production-validation","mutatesExternalState":false},
+    {"file":".github/workflows/android-production-delivery.yml","category":"owner-gated-production-delivery","mutatesExternalState":true}
+  ],
+  "removedPreviewDeliveryWorkflows": [
+    "android-preview-build.yml",
+    "android-preview-ota.yml",
+    "ios-preview-build.yml",
+    "ios-preview-testflight-submit.yml",
+    "mobile-preview-update.yml",
+    "preview-dev-delivery.yml"
+  ]
+}

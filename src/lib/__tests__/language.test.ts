@@ -1,8 +1,6 @@
 import test from "node:test";
 
 const activeDealsRenderKeys = new Set([
-  "deals.heroTitle",
-  "deals.heroSubtitle",
   "deals.package.hotelFlight",
   "deals.package.hotelFlightCar",
   "deals.package.flightCar",
@@ -397,7 +395,7 @@ test("Vietnamese Cars landing copy resolves through active i18n render paths", (
   const vi = viTranslations as Record<string, string>;
   const en = enTranslations as Record<string, string>;
 
-  assert.ok(carsPageSource.includes('t("searchRentalCarsEveryPartTrip")'));
+  assert.ok(carsPageSource.includes('t("carsDesktopHeroTitle")'));
   assert.ok(carsPageSource.includes('t("carsSearch.pickupLocationLabel")'));
   assert.ok(carsPageSource.includes('t("carsSearch.chooseRentalDates")'));
   assert.ok(carsPageSource.includes('dictionary[`${key}.title`]'));
@@ -755,7 +753,7 @@ test("Vietnamese service and support active render path copy resolves without En
   }
 
   for (const key of [
-    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedRecentAnswer", "supportFaqRedirectAnswer",
     "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
     "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
     "serviceGuaranteeFaqEncounterIssueAnswer", "serviceGuaranteeFaqContactSupportAnswer",
@@ -1794,12 +1792,13 @@ test("Deals landing package values and destination card data remain unchanged wh
     "Search flights, stays, and cars together in one place.",
     "Hotel + Flight",
     "Hotel + Flight + Car",
-    "Flight + Car",
-    "Hotel + Car",
     "Places to start your deal search",
     "Choose a destination idea, then compare provider results when you continue.",
   ]) {
     assert.equal(dealsPageSource.includes(englishCopy), false, `${englishCopy} should not be hardcoded in DealsPage`);
+  }
+  for (const desktopLabel of ["Flight+Hotel", "Flight+Car", "Hotel+Car", "Flight+Hotel+Car"]) {
+    assert.ok(dealsPageSource.includes(`text: "${desktopLabel}"`), `${desktopLabel} should remain the exact desktop presentation label`);
   }
 });
 
@@ -1836,7 +1835,7 @@ test("Indonesian service and support active render path copy resolves without En
     supportFaqHeading: "Pertanyaan yang sering diajukan",
     supportFaqAccountQuestion: "Bantuan akun dan masuk",
     supportFaqSearchQuestion: "Bantuan pencarian dan hasil",
-    supportFaqSavedTripsQuestion: "Perjalanan tersimpan dan peringatan",
+    supportFaqSavedRecentQuestion: "Perjalanan tersimpan dan peringatan",
     supportFaqRedirectQuestion: "Bantuan pemesanan/pengalihan penyedia",
     supportFaqAlreadyBookedQuestion: "Sudah memesan dengan penyedia?",
     supportFaqChangeBookingQuestion: "Bisakah Kurioticket mengubah pemesanan saya?",
@@ -1910,7 +1909,7 @@ test("Indonesian service and support active render path copy resolves without En
   }
 
   const hiddenAnswerKeys = [
-    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedRecentAnswer", "supportFaqRedirectAnswer",
     "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
     "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
     "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
@@ -3296,9 +3295,9 @@ test("Hindi homepage and primary search UI copy resolves without English fallbac
     ["homeTrustPricingTitle", "पारदर्शी कीमत संदर्भ"],
     ["homeTrustHandoffTitle", "सुरक्षित प्रदाता हैंडऑफ़"],
     ["homePromoFlightsTitle", "शीर्ष एयरलाइनों की उड़ान डील्स"],
-    ["homePromoFlightsCta", "उड़ान डील्स देखें"],
+    ["homePromoFlightsCta", "उड़ान पैकेज देखें"],
     ["homePromoHotelsTitle", "दुनिया भर में होटल बचत"],
-    ["homePromoHotelsCta", "होटल डील्स देखें"],
+    ["homePromoHotelsCta", "होटल पैकेज देखें"],
     ["faqHeading", "अक्सर पूछे जाने वाले प्रश्न"],
     ["faqGeneralQuestions", "सामान्य प्रश्न"],
     ["faqNeedMoreHelpPrefix", "और सहायता चाहिए? सेवा और संपर्क विकल्पों के लिए"],
@@ -4127,13 +4126,13 @@ test("Turkish homepage hotel search and lower homepage copy resolve without Engl
       "homePromoFlightsBody",
       "Sınırlı süreli ücretleri keşfedin ve seçenekleri anında karşılaştırın.",
     ],
-    ["homePromoFlightsCta", "Uçuş fırsatlarını keşfet"],
+    ["homePromoFlightsCta", "Uçuş paketlerini keşfet"],
     ["homePromoHotelsTitle", "Dünya çapında otel tasarrufları"],
     [
       "homePromoHotelsBody",
       "Butik otellerden global zincirlere kadar konaklamaları fiyat şeffaflığıyla inceleyin.",
     ],
-    ["homePromoHotelsCta", "Otel fırsatlarını keşfet"],
+    ["homePromoHotelsCta", "Otel paketlerini keşfet"],
     ["faqHeading", "Sıkça sorulan sorular"],
     [
       "faqIntro",
@@ -4193,8 +4192,8 @@ test("Turkish lower homepage FAQ and newsletter copy do not fall back to English
     supportFaqSearchQuestion: "Arama ve sonuçlar yardımı",
     supportFaqSearchAnswer:
       "Kurioticket; uçuş veya otel araması çalışmadığında, sonuçlar yüklenmediğinde, filtreler kafa karıştırdığında ya da fiyatlar ve sağlayıcılar beklendiği gibi görünmediğinde yardımcı olabilir.",
-    supportFaqSavedTripsQuestion: "Kaydedilen seyahatler ve uyarılar",
-    supportFaqSavedTripsAnswer:
+    supportFaqSavedRecentQuestion: "Kaydedilen seyahatler ve uyarılar",
+    supportFaqSavedRecentAnswer:
       "Kurioticket kaydedilen seyahatler, son aramalar, fiyat uyarıları, bildirim sorunları ve hesaba bağlı seyahat araçları konusunda yardımcı olabilir.",
     supportFaqRedirectQuestion: "Rezervasyon/sağlayıcı yönlendirme yardımı",
     supportFaqRedirectAnswer:
@@ -4204,7 +4203,7 @@ test("Turkish lower homepage FAQ and newsletter copy do not fall back to English
       "Rezervasyonunuz bir hava yolu, otel, seyahat acentesi veya harici sağlayıcıyla tamamlandıysa rezervasyon değişiklikleri, iadeler, iptaller, check-in, biniş, makbuzlar ve seyahat belgelerinden o sağlayıcı sorumludur.",
     supportFaqChangeBookingQuestion: "Kurioticket rezervasyonumu değiştirebilir mi?",
     supportFaqChangeBookingAnswer:
-      "Kurioticket yalnızca doğrudan rezervasyon desteklendiği zaman ve destekleniyorsa Kurioticket üzerinden doğrudan yapılan rezervasyonlarda yardımcı olabilir. Harici sağlayıcılarla tamamlanan rezervasyonlar için doğrudan o sağlayıcıyla iletişime geçin.",
+      "Kurioticket seyahat rezervasyonlarını yönetmez veya değiştirmez. Değişiklikler, iptaller, iadeler, check-in, makbuzlar ve seyahat belgeleri harici sağlayıcı tarafından yönetilir.",
     supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya gönderildim?",
     supportFaqWhyRedirectedAnswer:
       "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyonu, ödemeyi ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",
@@ -6935,7 +6934,7 @@ test("Hindi homepage search support newsletter and footer strings are localized"
     destinations: "गंतव्य",
     supportFaqAccountQuestion: "खाता और साइन-इन सहायता",
     supportFaqSearchQuestion: "खोज और परिणाम सहायता",
-    supportFaqSavedTripsQuestion: "सहेजी गई यात्राएँ और अलर्ट",
+    supportFaqSavedRecentQuestion: "सहेजी गई यात्राएँ और अलर्ट",
     supportFaqRedirectQuestion: "बुकिंग/प्रदाता रीडायरेक्ट सहायता",
     supportFaqAlreadyBookedQuestion: "क्या आपने पहले ही किसी प्रदाता के साथ बुकिंग कर ली है?",
     supportFaqChangeBookingQuestion: "क्या Kurioticket मेरी बुकिंग बदल सकता है?",
@@ -8148,7 +8147,7 @@ test("Polish legal detail pages localize active render path without English fall
   assert.ok(legalViewerSource.includes("legalDocumentTranslationNamespaces"));
   assert.ok(legalViewerSource.includes("`${namespace}.sections.${section.id}.paragraph${index + 1}`"));
   assert.ok(legalViewerSource.includes("window.print()"));
-  assert.ok(legalViewerSource.includes("<div className=\"rounded-md border border-amber/30 bg-amber/10 p-4 text-sm leading-6 text-amber\">"));
+  assert.doesNotMatch(legalViewerSource, /developerNote|legalDeveloperNote|startup placeholder/i);
 
   const expected = {
     "terms-of-service": {
@@ -8189,7 +8188,6 @@ test("Polish legal detail pages localize active render path without English fall
     assert.equal(pl[`${detail.namespace}.title`], detail.title);
     assert.equal(pl[`${detail.namespace}.summary`], detail.summary);
     assert.equal(pl[`${detail.namespace}.tableOfContents`], "SPIS TREŚCI");
-    assert.equal(pl[`${detail.namespace}.developerNote`], "Te projekty dokumentów prawnych są roboczymi materiałami startowymi i przed publicznym uruchomieniem na dużą skalę powinny zostać sprawdzone przez wykwalifikowanego prawnika.");
     assert.equal(pl[`${detail.namespace}.sections.${detail.sections[0]}.title`], detail.sampleHeading);
     assert.equal(pl[`${detail.namespace}.sections.${detail.sections[0]}.paragraph1`], detail.sampleBody);
     assert.notEqual(pl[`${detail.namespace}.title`], enTranslations[`${detail.namespace}.title`]);
@@ -8315,8 +8313,8 @@ test("Turkish service and support page strings are localized", () => {
     supportFaqSearchQuestion: "Arama ve sonuçlar yardımı",
     supportFaqSearchAnswer:
       "Kurioticket; uçuş veya otel araması çalışmadığında, sonuçlar yüklenmediğinde, filtreler kafa karıştırdığında ya da fiyatlar ve sağlayıcılar beklendiği gibi görünmediğinde yardımcı olabilir.",
-    supportFaqSavedTripsQuestion: "Kaydedilen seyahatler ve uyarılar",
-    supportFaqSavedTripsAnswer:
+    supportFaqSavedRecentQuestion: "Kaydedilen seyahatler ve uyarılar",
+    supportFaqSavedRecentAnswer:
       "Kurioticket kaydedilen seyahatler, son aramalar, fiyat uyarıları, bildirim sorunları ve hesaba bağlı seyahat araçları konusunda yardımcı olabilir.",
     supportFaqRedirectQuestion: "Rezervasyon/sağlayıcı yönlendirme yardımı",
     supportFaqRedirectAnswer:
@@ -8326,7 +8324,7 @@ test("Turkish service and support page strings are localized", () => {
       "Rezervasyonunuz bir hava yolu, otel, seyahat acentesi veya harici sağlayıcıyla tamamlandıysa rezervasyon değişiklikleri, iadeler, iptaller, check-in, biniş, makbuzlar ve seyahat belgelerinden o sağlayıcı sorumludur.",
     supportFaqChangeBookingQuestion: "Kurioticket rezervasyonumu değiştirebilir mi?",
     supportFaqChangeBookingAnswer:
-      "Kurioticket yalnızca doğrudan rezervasyon desteklendiği zaman ve destekleniyorsa Kurioticket üzerinden doğrudan yapılan rezervasyonlarda yardımcı olabilir. Harici sağlayıcılarla tamamlanan rezervasyonlar için doğrudan o sağlayıcıyla iletişime geçin.",
+      "Kurioticket seyahat rezervasyonlarını yönetmez veya değiştirmez. Değişiklikler, iptaller, iadeler, check-in, makbuzlar ve seyahat belgeleri harici sağlayıcı tarafından yönetilir.",
     supportFaqWhyRedirectedQuestion: "Neden başka bir sağlayıcıya gönderildim?",
     supportFaqWhyRedirectedAnswer:
       "Kurioticket bir seyahat arama ve karşılaştırma platformudur; bazı sonuçlar rezervasyonu, ödemeyi ve sağlayıcıya özel desteği tamamlayacağınız güvenilir sağlayıcılara yönlendirir.",
@@ -8787,22 +8785,15 @@ test("Indonesian and Swedish active account Trips and Price Alerts copy is local
   assert.equal(languageOptions.find((o) => o.code === "ar")?.direction, "rtl");
 
   const tripsManagementSource = readFileSync("src/app/dashboard/trips/TripsManagementPage.tsx", "utf8");
-  assert.ok(tripsManagementSource.includes('type TripStatusTab = "upcoming" | "past" | "cancelled"'));
-  assert.ok(tripsManagementSource.includes('{ id: "upcoming", labelKey: "accountDashboard.trips.history.tabs.active", fallback: "Upcoming" }'));
-  assert.ok(tripsManagementSource.includes('{ id: "past", labelKey: "accountDashboard.trips.history.tabs.past", fallback: "Past" }'));
-  assert.ok(tripsManagementSource.includes('labelKey: "accountDashboard.trips.history.tabs.cancelled"'));
-  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.current.empty.title"'));
-  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.current.empty.body"'));
-  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.past.title"'));
-  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.past.body"'));
-  assert.ok(tripsManagementSource.includes('titleKey: "accountDashboard.trips.history.empty.cancelled.title"'));
-  assert.ok(tripsManagementSource.includes('bodyKey: "accountDashboard.trips.history.empty.cancelled.body"'));
-  assert.ok(tripsManagementSource.includes('const activeTrips = useMemo('));
-  assert.ok(tripsManagementSource.includes('() => trips.filter((trip) => trip.status === activeTab)'));
-  assert.ok(tripsManagementSource.includes('id={`${activeTab}-trips-panel`}'));
-  assert.ok(tripsManagementSource.includes('aria-controls={`${tab.id}-trips-panel`}'));
-  assert.ok(tripsManagementSource.includes('fetch("/api/dashboard/trips/lookup"'));
-  assert.ok(!tripsManagementSource.includes('>My Trips<'));
+  assert.ok(tripsManagementSource.includes('type TripStatus = "upcoming" | "past" | "cancelled"'));
+  assert.ok(tripsManagementSource.includes('fetch("/api/dashboard/trips"'));
+  assert.ok(tripsManagementSource.includes('providerConfirmationCode'));
+  assert.ok(tripsManagementSource.includes('providerAction'));
+  assert.ok(tripsManagementSource.includes('useLocale()'));
+  assert.ok(tripsManagementSource.includes('accountDashboard.trips.metasearch.manageWith'));
+  assert.ok(tripsManagementSource.includes('accountDashboard.trips.metasearch.disclaimer'));
+  assert.ok(tripsManagementSource.includes('accountDashboard.trips.metasearch.externalAriaLabel'));
+  assert.ok(!tripsManagementSource.includes('/api/dashboard/trips/lookup'));
   assert.ok(!tripsManagementSource.includes('>Find a reservation<'));
 
   const priceAlertsSource = readFileSync("src/app/dashboard/alerts/PriceAlertsContent.tsx", "utf8");
@@ -9981,10 +9972,10 @@ test("Swedish homepage-visible copy resolves without English fallback", () => {
     homeTrustHandoffBody: "När du väljer ett erbjudande fortsätter du till leverantören för att slutföra bokningen säkert.",
     homePromoFlightsTitle: "Flygerbjudanden från ledande flygbolag",
     homePromoFlightsBody: "Upptäck tidsbegränsade priser och jämför alternativ direkt.",
-    homePromoFlightsCta: "Utforska flygerbjudanden",
+    homePromoFlightsCta: "Utforska flygpaket",
     homePromoHotelsTitle: "Hotellbesparingar världen över",
     homePromoHotelsBody: "Bläddra bland boenden från boutiquehotell till globala kedjor med tydliga priser.",
-    homePromoHotelsCta: "Utforska hotellerbjudanden",
+    homePromoHotelsCta: "Utforska hotellpaket",
     faqHeading: "Vanliga frågor",
     faqQuestionFindOptions: "Hur hittar Kurioticket flyg- och hotellalternativ?",
     supportFaqAccountQuestion: "Hjälp med konto och inloggning",
@@ -11176,7 +11167,7 @@ test("Swedish Flights results active render path copy resolves without English f
     ["baggageIncluded", "Bagage ingår", "Baggage included"],
     ["flexibleRefundable", "Flexibel/återbetalningsbar", "Flexible/refundable"],
     ["tripType", "RESTYP", "Trip type"],
-    ["roundTrip", "Tur och retur", "Round trip"],
+    ["roundTrip", "Tur och retur", "Round-trip"],
     ["previousShort", "Föregående", "Prev"],
     ["nextShort", "Nästa", "Next"],
     ["weekdayMon", "Mån", "Mon"],
@@ -11346,8 +11337,8 @@ test("Vietnamese Flights Results page resolves search, filters, cards, and provi
 
   const expectedCopy: Array<[string, string, string, string[]]> = [
     ["tripType", "LOẠI CHUYẾN ĐI", "Trip type", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
-    ["roundTrip", "Khứ hồi", "Round trip", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
-    ["oneWay", "Một chiều", "One way", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
+    ["roundTrip", "Khứ hồi", "Round-trip", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
+    ["oneWay", "Một chiều", "One-way", [resultsSource, standaloneFlightSearchSource, searchTabsSource]],
     ["filterBy", "Lọc theo", "Filter by", [resultsSource]],
     ["airlines", "Hãng hàng không", "Airlines", [resultsSource]],
     ["airports", "Sân bay", "Airports", [resultsSource]],
@@ -11790,7 +11781,7 @@ test("Swedish service and support active render path copy resolves without Engli
     supportFaqHeading: "Vanliga frågor",
     supportFaqAccountQuestion: "Hjälp med konto och inloggning",
     supportFaqSearchQuestion: "Hjälp med sökning och resultat",
-    supportFaqSavedTripsQuestion: "Sparade resor och aviseringar",
+    supportFaqSavedRecentQuestion: "Sparade resor och aviseringar",
     supportFaqRedirectQuestion: "Hjälp med boknings- och leverantörsomdirigering",
     supportFaqAlreadyBookedQuestion: "Har du redan bokat hos en leverantör?",
     supportFaqChangeBookingQuestion: "Kan Kurioticket ändra min bokning?",
@@ -11856,7 +11847,7 @@ test("Swedish service and support active render path copy resolves without Engli
   }
 
   const hiddenAnswerKeys = [
-    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedRecentAnswer", "supportFaqRedirectAnswer",
     "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
     "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
     "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
@@ -11912,7 +11903,7 @@ test("Polish service and support active render path copy resolves without Englis
     supportFaqHeading: "Często zadawane pytania",
     supportFaqAccountQuestion: "Pomoc dotycząca konta i logowania",
     supportFaqSearchQuestion: "Pomoc dotycząca wyszukiwania i wyników",
-    supportFaqSavedTripsQuestion: "Zapisane podróże i alerty",
+    supportFaqSavedRecentQuestion: "Zapisane podróże i alerty",
     supportFaqRedirectQuestion: "Pomoc dotycząca rezerwacji/przekierowania do dostawcy",
     supportFaqAlreadyBookedQuestion: "Masz już rezerwację u dostawcy?",
     supportFaqChangeBookingQuestion: "Czy Kurioticket może zmienić moją rezerwację?",
@@ -11976,7 +11967,7 @@ test("Polish service and support active render path copy resolves without Englis
   const hiddenAnswerKeys = [
     "supportFaqAccountAnswer",
     "supportFaqSearchAnswer",
-    "supportFaqSavedTripsAnswer",
+    "supportFaqSavedRecentAnswer",
     "supportFaqRedirectAnswer",
     "supportFaqAlreadyBookedAnswer",
     "supportFaqChangeBookingAnswer",
@@ -13458,10 +13449,10 @@ test("Thai homepage visible copy and render paths resolve without English fallba
     homeTrustHandoffBody: "เมื่อคุณเลือกข้อเสนอ คุณจะไปยังผู้ให้บริการเพื่อทำการจองให้เสร็จอย่างปลอดภัย",
     homePromoFlightsTitle: "ดีลเที่ยวบินจากสายการบินชั้นนำ",
     homePromoFlightsBody: "ค้นหาค่าโดยสารช่วงเวลาจำกัดและเปรียบเทียบตัวเลือกได้ทันที",
-    homePromoFlightsCta: "ดูดีลเที่ยวบิน",
+    homePromoFlightsCta: "ดูแพ็กเกจเที่ยวบิน",
     homePromoHotelsTitle: "ประหยัดค่าโรงแรมทั่วโลก",
     homePromoHotelsBody: "เลือกดูที่พักตั้งแต่โรงแรมบูติกไปจนถึงเครือโรงแรมระดับโลก พร้อมราคาที่โปร่งใส",
-    homePromoHotelsCta: "ดูดีลโรงแรม",
+    homePromoHotelsCta: "ดูแพ็กเกจโรงแรม",
     faqHeading: "คำถามที่พบบ่อย",
     faqIntro: "เรียนรู้ว่า Kurioticket ช่วยให้คุณเปรียบเทียบเที่ยวบิน โรงแรม และตัวเลือกการเดินทางก่อนจองกับผู้ให้บริการที่เชื่อถือได้อย่างไร",
     faqQuestionFindOptions: "Kurioticket ค้นหาตัวเลือกเที่ยวบินและโรงแรมอย่างไร?",
@@ -13474,7 +13465,7 @@ test("Thai homepage visible copy and render paths resolve without English fallba
     faqQuestionManageChanges: "ฉันจะจัดการการเปลี่ยนแปลงหรือการยกเลิกได้ที่ไหน?",
     supportFaqAccountQuestion: "ความช่วยเหลือเกี่ยวกับบัญชีและการเข้าสู่ระบบ",
     supportFaqSearchQuestion: "ความช่วยเหลือเกี่ยวกับการค้นหาและผลลัพธ์",
-    supportFaqSavedTripsQuestion: "ทริปที่บันทึกไว้และการแจ้งเตือน",
+    supportFaqSavedRecentQuestion: "ทริปที่บันทึกไว้และการแจ้งเตือน",
     supportFaqRedirectQuestion: "ความช่วยเหลือเกี่ยวกับการจอง/การเปลี่ยนเส้นทางไปยังผู้ให้บริการ",
     supportFaqAlreadyBookedQuestion: "จองกับผู้ให้บริการแล้วใช่ไหม?",
     supportFaqChangeBookingQuestion: "Kurioticket สามารถเปลี่ยนแปลงการจองของฉันได้หรือไม่?",
@@ -13649,7 +13640,7 @@ test("Thai support, service guarantee, and more service pages resolve localized 
   }
 
   const localizedAnswerKeys = [
-    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedTripsAnswer", "supportFaqRedirectAnswer",
+    "supportFaqAccountAnswer", "supportFaqSearchAnswer", "supportFaqSavedRecentAnswer", "supportFaqRedirectAnswer",
     "supportFaqAlreadyBookedAnswer", "supportFaqChangeBookingAnswer", "supportFaqWhyRedirectedAnswer",
     "serviceGuaranteeFaqWhatGuaranteeAnswer", "serviceGuaranteeFaqResultsDisplayedAnswer", "serviceGuaranteeFaqRedirectedAnswer",
     "serviceGuaranteeFaqBookDirectlyAnswer", "serviceGuaranteeFaqPricesGuaranteedAnswer", "serviceGuaranteeFaqChooseProvidersAnswer",
@@ -13753,8 +13744,8 @@ test("Indonesian homepage visible copy and render paths resolve without English 
     supportFaqSearchQuestion: "Bantuan pencarian dan hasil",
     supportFaqSearchAnswer:
       "Kurioticket dapat membantu saat pencarian penerbangan atau hotel tidak berfungsi, hasil tidak dimuat, filter membingungkan, atau harga dan penyedia tidak tampil seperti yang diharapkan.",
-    supportFaqSavedTripsQuestion: "Perjalanan tersimpan dan peringatan",
-    supportFaqSavedTripsAnswer:
+    supportFaqSavedRecentQuestion: "Perjalanan tersimpan dan peringatan",
+    supportFaqSavedRecentAnswer:
       "Kurioticket dapat membantu dengan perjalanan tersimpan, pencarian terbaru, peringatan harga, masalah notifikasi, dan alat perjalanan yang terhubung ke akun.",
     supportFaqRedirectQuestion: "Bantuan pemesanan/pengalihan penyedia",
     supportFaqRedirectAnswer:
@@ -13764,7 +13755,7 @@ test("Indonesian homepage visible copy and render paths resolve without English 
       "Jika pemesanan Anda diselesaikan dengan maskapai, hotel, agen perjalanan, atau penyedia eksternal, penyedia tersebut bertanggung jawab atas perubahan pemesanan, pengembalian dana, pembatalan, check-in, boarding, tanda terima, dan dokumen perjalanan.",
     supportFaqChangeBookingQuestion: "Bisakah Kurioticket mengubah pemesanan saya?",
     supportFaqChangeBookingAnswer:
-      "Kurioticket hanya dapat membantu pemesanan yang dibuat langsung melalui Kurioticket jika dan ketika pemesanan langsung didukung. Untuk pemesanan yang diselesaikan dengan penyedia eksternal, hubungi penyedia tersebut secara langsung.",
+      "Kurioticket tidak mengelola atau mengubah pemesanan perjalanan. Penyedia eksternal menangani perubahan, pembatalan, pengembalian dana, check-in, tanda terima, dan dokumen perjalanan.",
     supportFaqWhyRedirectedQuestion: "Mengapa saya diarahkan ke penyedia lain?",
     supportFaqWhyRedirectedAnswer:
       "Kurioticket adalah platform pencarian dan perbandingan perjalanan, dan beberapa hasil mengarahkan Anda ke penyedia tepercaya tempat Anda menyelesaikan pemesanan, pembayaran, dan dukungan khusus penyedia.",
@@ -14762,9 +14753,10 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
   assert.equal(`${th["accountDashboard.priceAlerts.tabs.all"]} (0)`, "ทั้งหมด (0)");
   assert.equal(`${th["accountDashboard.priceAlerts.sort.label"]}: ${th["accountDashboard.priceAlerts.sort.newest"]}`, "เรียงตาม: ใหม่ล่าสุด");
 
-  for (const key of Object.keys(tripsCopy)) {
+  for (const key of ["accountDashboard.trips.title", "accountDashboard.trips.metasearch.empty.title", "accountDashboard.trips.metasearch.empty.body", "accountDashboard.trips.metasearch.disclaimer", "accountDashboard.trips.metasearch.manageWith"]) {
     assert.ok(tripsSource.includes(key), `Trips render path should read ${key}`);
   }
+  assert.ok(tripsSource.includes('accountDashboard.trips.metasearch.tabs.${tab}'));
   for (const key of Object.keys(alertsCopy)) {
     assert.ok(alertsSource.includes(key), `Price alerts render path should read ${key}`);
   }
@@ -14777,11 +14769,9 @@ test("Thai My Trips and Price alerts account pages resolve localized copy withou
   assert.ok(tripsPageSource.includes("<TripsManagementPage />"));
   assert.ok(alertsPageSource.includes("<PriceAlertsContent showAccountLink={showAccountLink} />"));
   assert.ok(tripsSource.includes('fetch("/api/dashboard/trips"'));
-  assert.ok(tripsSource.includes('fetch("/api/dashboard/trips/lookup"'));
-  assert.ok(tripsSource.includes('body: JSON.stringify({ reservationCode, email })'));
-  assert.ok(tripsSource.includes('id: "past"'));
-  assert.ok(tripsSource.includes('id: "cancelled"'));
-  assert.ok(tripsSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
+  assert.ok(!tripsSource.includes('/api/dashboard/trips/lookup'));
+  assert.ok(tripsSource.includes('"past"'));
+  assert.ok(tripsSource.includes('"cancelled"'));
   assert.ok(alertsSource.includes('id: "active"'));
   assert.ok(alertsSource.includes('id: "triggered"'));
   assert.ok(alertsSource.includes('id: "all"'));
@@ -15563,16 +15553,14 @@ test("Vietnamese account trips and price alerts render paths resolve without Eng
   }
 
   assert.ok(tripsPageSource.includes("<TripsManagementPage />"));
-  assert.ok(tripsSource.includes('labelKey: "accountDashboard.trips.history.tabs.past"'));
-  assert.ok(tripsSource.includes('labelKey: "accountDashboard.trips.history.tabs.cancelled"'));
-  assert.ok(tripsSource.includes('titleKey: "accountDashboard.trips.current.empty.title"'));
-  assert.ok(tripsSource.includes('bodyKey: "accountDashboard.trips.current.empty.body"'));
-  assert.ok(tripsSource.includes('aria-controls={`${tab.id}-history-trips-panel`}'));
-  assert.ok(tripsSource.includes('id={`${tab.id}-history-trips-tab`}'));
-  assert.ok(tripsSource.includes('trips.filter((trip) => trip.status === "upcoming")'));
-  assert.ok(tripsSource.includes('trips.filter((trip) => trip.status === activeHistoryTab)'));
+  assert.ok(tripsSource.includes('accountDashboard.trips.metasearch.tabs.${tab}'));
+  assert.ok(tripsSource.includes('accountDashboard.trips.metasearch.empty.title'));
+  assert.ok(tripsSource.includes('accountDashboard.trips.metasearch.empty.body'));
+  assert.ok(tripsSource.includes('trips.filter((trip) => trip.status === active)'));
   assert.ok(tripsSource.includes('key={trip.id}'));
-  assert.ok(tripsSource.includes('reservationCode'));
+  assert.ok(tripsSource.includes('providerConfirmationCode'));
+  assert.ok(tripsSource.includes('useLocale()'));
+  assert.ok(!tripsSource.includes('/api/dashboard/trips/lookup'));
   assert.ok(accountBackLinkSource.includes('href="/dashboard/account"'));
   assert.ok(accountBackLinkSource.includes('t["accountDashboard.hub.title"]'));
 
@@ -15601,4 +15589,56 @@ test("Vietnamese account trips and price alerts render paths resolve without Eng
   assert.equal(languageOptions.find((option) => option.code === "th")?.direction, "ltr");
   assert.equal(languageOptions.find((option) => option.code === "id")?.status, "available");
   assert.equal(languageOptions.find((option) => option.code === "id")?.direction, "ltr");
+});
+
+test("main Flights mobile fields use the scoped icon and value-row presentation", () => {
+  const formSource = readFileSync(
+    "src/components/search/StandaloneFlightSearchForm.tsx",
+    "utf8",
+  );
+  const landingSource = readFileSync(
+    "src/components/flights/FlightLandingClient.tsx",
+    "utf8",
+  );
+  const routeLandingSource = readFileSync(
+    "src/app/flights/[slug]/page.tsx",
+    "utf8",
+  );
+
+  assert.equal(enTranslations.flightSearchDestinationPlaceholderShort, "To?");
+  assert.ok(
+    landingSource.includes('presentation="main-flight-landing"'),
+    "the main /flights mobile form should opt into the scoped presentation",
+  );
+  assert.ok(
+    routeLandingSource.includes("<StandaloneFlightSearchForm />"),
+    "route landing pages should retain the default presentation",
+  );
+  assert.ok(formSource.includes("MapPin,"));
+  assert.ok(formSource.includes("UserRound,"));
+  assert.ok(formSource.includes('mobilePlaceholder={t("flightSearchDestinationPlaceholderShort")}'));
+  assert.match(
+    formSource,
+    /<MapPin[\s\S]*?mobileFieldValueIconClassName[\s\S]*?aria-hidden="true"/,
+  );
+  assert.match(
+    formSource,
+    /<UserRound[\s\S]*?mobileFieldValueIconClassName[\s\S]*?aria-hidden="true"[\s\S]*?travelerSummary/,
+  );
+  assert.match(
+    formSource,
+    /<Calendar[\s\S]*?mobileFieldValueIconClassName[\s\S]*?aria-hidden="true"[\s\S]*?dateSummary/,
+  );
+  assert.match(
+    formSource,
+    /useMainFlightLandingMobilePresentation \? \([\s\S]*?<MapPin[\s\S]*?\) : \([\s\S]*?<ChevronDown/,
+    "airport chevrons should render only outside the scoped main landing presentation",
+  );
+  assert.match(
+    formSource,
+    /travelerSummary[\s\S]*?<ChevronDown/,
+    "the Travelers summary should retain its trailing chevron",
+  );
+  assert.ok(formSource.includes("onClick={swapAirports}"));
+  assert.ok(formSource.includes("<form onSubmit={onSubmit}"));
 });

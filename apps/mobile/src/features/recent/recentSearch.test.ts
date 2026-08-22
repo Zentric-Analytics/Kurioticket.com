@@ -1,0 +1,4 @@
+import assert from "node:assert/strict"; import test from "node:test"; import { buildRecentSearch, recentSearchId } from "./recentSearchModel";
+test("repeated query has deterministic id",()=>{const p={origin:"LOS",destination:"LHR",departureDate:"2027-01-01",adults:1};assert.equal(recentSearchId("flight",p),recentSearchId("flight",{adults:1,departureDate:"2027-01-01",destination:"LHR",origin:"LOS"}));});
+test("builds canonical flight and hotel inputs",()=>{assert.equal(buildRecentSearch("flight",{origin:"LOS",destination:"LHR",departureDate:"2027-01-01",adults:1})?.href,"/flights/results");assert.equal(buildRecentSearch("hotel",{destination:"Paris",checkIn:"2027-01-01",checkOut:"2027-01-02"})?.href,"/hotels/results");});
+test("invalid successful-search payload is excluded",()=>assert.equal(buildRecentSearch("hotel",{}),null));

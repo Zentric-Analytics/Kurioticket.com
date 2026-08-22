@@ -1,22 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { membershipLabel, profileIdentity } from "./profileModel";
+import { authenticatedProfileSections } from "./profileModel";
 
-test("derives the profile identity from real session values", () => {
-  assert.deepEqual(profileIdentity({ name: "Admin", email: "admin@kurioticket.com" }), {
-    name: "Admin", email: "admin@kurioticket.com", initial: "A",
-  });
+test("authenticated profile keeps its existing order and appends legal", () => {
+  assert.deepEqual(authenticatedProfileSections.map(section => section.title), ["manageAccount", "travelActivity", "preferences", "helpSupport", "aboutLegal"]);
+  assert.deepEqual(authenticatedProfileSections.find(section => section.title === "travelActivity")?.items.map(item => [item.label, item.destination.href]), [["savedRecent", "/saved"], ["priceAlerts", "/price-alerts"]]);
+  assert.deepEqual(authenticatedProfileSections.at(-1)?.items.map(item => [item.label, item.destination.href]), [["terms", "/terms"], ["privacy", "/privacy"]]);
 });
 
-test("falls back to email and never invents authenticated data", () => {
-  assert.deepEqual(profileIdentity({ email: "traveler@example.com" }), {
-    name: "traveler", email: "traveler@example.com", initial: "T",
-  });
-  assert.deepEqual(profileIdentity(null), { name: "Traveler", email: "", initial: "T" });
-});
-
-test("formats a valid membership date and uses truthful status when absent", () => {
-  assert.equal(membershipLabel("2024-05-10T00:00:00.000Z", "en-US"), "Member since May 2024");
-  assert.equal(membershipLabel(null, "en-US"), "Member");
-  assert.equal(membershipLabel("bad-date", "en-US"), "Member");
+test("authenticated profile controls remain unique", () => {
+  assert.equal(authenticatedProfileSections.flatMap(section => section.items).filter(item => item.label === "personalDetails").length, 1);
+  assert.equal(authenticatedProfileSections.flatMap(section => section.items).filter(item => item.label === "terms").length, 1);
+  assert.equal(authenticatedProfileSections.flatMap(section => section.items).filter(item => item.label === "privacy").length, 1);
+  assert.equal(authenticatedProfileSections.flatMap(section => section.items).filter(item => item.label === "myTrips").length, 0);
 });

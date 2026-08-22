@@ -65,7 +65,6 @@ Requires macOS and Xcode. iOS simulators can usually reach `http://localhost:300
 
 - **Missing environment variable:** create `apps/mobile/.env` with `EXPO_PUBLIC_API_BASE_URL` and restart Expo.
 - **Unreachable API:** check backend is running, URL includes protocol, device is on the same network, and firewall allows port 3000.
-- **CORS:** Expo native requests usually do not enforce browser CORS, but Expo web does. Configure the backend only after separate approval if web CORS blocks review.
 - **Firewall:** allow local network access to the backend port.
 
 ## Current milestone scope

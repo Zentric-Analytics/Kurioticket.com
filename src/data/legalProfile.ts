@@ -107,7 +107,7 @@ export const legalProfile = {
       "profile photo",
     ],
     accountFeatures: [
-      "saved trips",
+      "Saved & Recent",
       "dashboard access",
       "account support",
       "price alerts",

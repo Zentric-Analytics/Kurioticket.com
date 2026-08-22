@@ -1,0 +1,8 @@
+flowchart LR
+  A[pr-required-gates.yml] --> B[Validate mobile preview]
+  A --> C[secret-scan]
+  D[migration-validation.yml] --> E[Migration validation]
+  F[security.yml] --> G[Security validation]
+  H[mobile-production-update.yml] --> I[Production readiness]
+  J[android-production-delivery.yml] --> K[Owner-gated Production delivery]
+  L[Render Preview release worker] --> M[Preview web OTA and native delivery]

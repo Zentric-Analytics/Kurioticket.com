@@ -7,3 +7,15 @@ export function buildDiagnostics(metadata: BuildMetadata): BuildDiagnostics {
   return { applicationVersion: metadata.applicationVersion?.trim() || missing, nativeBuildVersion: metadata.nativeBuildVersion == null ? missing : String(metadata.nativeBuildVersion), runtimeVersion: metadata.runtimeVersion?.trim() || missing, updateId, shortUpdateId: updateId === missing ? (metadata.isEmbeddedLaunch ? "embedded" : missing) : updateId.slice(0, 8), channel: metadata.channel?.trim() || missing, createdAt: createdAt && !Number.isNaN(createdAt.valueOf()) ? createdAt.toISOString() : missing, embedded: metadata.isEmbeddedLaunch === true, projectId: metadata.projectId?.trim() || missing, apiBaseUrl: metadata.apiBaseUrl?.trim() || "not configured" };
 }
 export function buildStartupLog(value: BuildDiagnostics) { return `[kurioticket-build] version=${value.applicationVersion} build=${value.nativeBuildVersion} runtime=${value.runtimeVersion} updateId=${value.updateId} channel=${value.channel} embedded=${value.embedded}`; }
+
+export function formatPreviewDiagnostics(value: BuildDiagnostics, check: { result: string; checkedAt: string }) {
+  return [
+    `Preview ${value.applicationVersion} (${value.nativeBuildVersion})`,
+    `Runtime ${value.runtimeVersion}`,
+    `Update ${value.shortUpdateId} · ${value.embedded ? "embedded" : "OTA"}`,
+    `Channel ${value.channel}`,
+    `Published ${value.createdAt}`,
+    `Last check ${check.result} · ${check.checkedAt}`,
+    `API ${value.apiBaseUrl}`,
+  ];
+}
