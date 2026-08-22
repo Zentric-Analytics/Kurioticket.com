@@ -496,7 +496,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         >
           <View>{dateStrip}</View>
           <View style={[s0.stickyFilterSurface, { backgroundColor: theme.background }]}>{filterRail}</View>
-          <View style={s0.body}>{resultContent}</View>
+          <View style={[s0.body, s0.flightResultsBody]}>{resultContent}</View>
         </ScrollView>
       ) : (
         <>
@@ -1284,6 +1284,7 @@ const s0 = StyleSheet.create({
   noChoices: { color: ui.muted, fontSize: 13, lineHeight: 19 },
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
+  flightResultsBody: { paddingHorizontal: 14 },
   notice: {
     backgroundColor: "#F2F6FF",
     color: ui.navy,
@@ -1306,6 +1307,7 @@ const s0 = StyleSheet.create({
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
   flightResultCount: { fontSize: 18, lineHeight: 23, fontWeight: "800" },
   card: {
+    width: "100%",
     borderRadius: 14,
     padding: 13,
     gap: 10,
