@@ -126,11 +126,15 @@ export function writeFlightResultsSessionSnapshot(
   searchKey: string,
   results: PublicFlightResult[],
   warnings: string[],
-  resultsCacheValidForMs: number,
+  resultsCacheValidUntil: number,
   storage: StorageLike | null = browserSessionStorage(),
   now = Date.now(),
 ): void {
-  if (!storage || !Number.isFinite(resultsCacheValidForMs) || resultsCacheValidForMs <= 0) return;
+  if (!storage) return;
+  if (!Number.isFinite(resultsCacheValidUntil) || resultsCacheValidUntil <= now) {
+    removeSnapshot(storage);
+    return;
+  }
 
   try {
     const publicResults = results.map((result) => {
@@ -144,7 +148,7 @@ export function writeFlightResultsSessionSnapshot(
       version: 3,
       searchKey,
       savedAt: now,
-      validUntil: now + Math.min(FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, resultsCacheValidForMs),
+      validUntil: Math.min(now + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, resultsCacheValidUntil),
       results: publicResults,
       warnings: [...warnings],
     };

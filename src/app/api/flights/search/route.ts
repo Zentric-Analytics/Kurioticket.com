@@ -126,6 +126,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ...classifyFlights(publicResults, parsed.data, aggregate.warnings, requestId),
     resultsCacheValidForMs: aggregate.resultsCacheValidForMs,
+    resultsCacheValidUntil: aggregate.resultsCacheValidUntil,
     latencyMs: aggregate.latencyMs,
     performance: { ...performanceMetrics, beforeProviderMs, routeDurationMs },
   }, { headers: { "Server-Timing": serverTiming } });

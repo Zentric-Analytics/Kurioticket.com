@@ -33,6 +33,7 @@ test("browser snapshots require the server-owned cache validity from the same re
   ]);
 
   assert.match(route, /resultsCacheValidForMs: aggregate\.resultsCacheValidForMs/);
-  assert.match(client, /data\.resultsCacheValidForMs/);
-  assert.match(client, /writeFlightResultsSessionSnapshot\([\s\S]*data\.resultsCacheValidForMs/);
+  assert.match(route, /resultsCacheValidUntil: aggregate\.resultsCacheValidUntil/);
+  assert.match(client, /data\.resultsCacheValidUntil/);
+  assert.match(client, /writeFlightResultsSessionSnapshot\([\s\S]*data\.resultsCacheValidUntil/);
 });

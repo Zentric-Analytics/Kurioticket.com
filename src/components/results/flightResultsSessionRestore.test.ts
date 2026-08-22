@@ -36,9 +36,9 @@ test("successful date-filtered responses are cached while errors retain existing
   assert.ok(responseIndex >= 0 && responseIndex < writeIndex && writeIndex < catchIndex);
   assert.match(
     source.slice(writeIndex, catchIndex),
-    /searchKey,[\s\S]*filteredResults,[\s\S]*warnings,[\s\S]*data\.resultsCacheValidForMs/,
+    /searchKey,[\s\S]*filteredResults,[\s\S]*warnings,[\s\S]*data\.resultsCacheValidUntil/,
   );
-  assert.match(source.slice(responseIndex, catchIndex), /typeof data\.resultsCacheValidForMs === "number"/);
+  assert.match(source.slice(responseIndex, catchIndex), /typeof data\.resultsCacheValidUntil === "number"/);
   assert.doesNotMatch(source.slice(catchIndex, finallyIndex), /writeFlightResultsSessionSnapshot/);
   assert.match(source.slice(catchIndex, finallyIndex), /setError\(/);
   assert.match(source.slice(responseIndex, finallyIndex), /activeFlightSearchKeyRef\.current !== searchKey/);
