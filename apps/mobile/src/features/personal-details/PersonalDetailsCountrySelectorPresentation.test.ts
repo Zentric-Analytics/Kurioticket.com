@@ -7,17 +7,19 @@ const screen = readFileSync(
   "utf8",
 );
 
-test("country selector uses a smooth iOS fade without sliding through the parent header", () => {
+test("country selector pushes horizontally like a native detail screen", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
   );
 
-  assert.match(selector, /presentationStyle="fullScreen"/);
-  assert.match(
-    selector,
-    /animationType=\{Platform\.OS === "ios" \? "fade" : "slide"\}/,
-  );
+  assert.match(selector, /transparent/);
+  assert.match(selector, /animationType="none"/);
+  assert.match(selector, /presentationStyle="overFullScreen"/);
+  assert.match(selector, /const translateX = useRef\(new Animated\.Value\(width\)\)\.current/);
+  assert.match(selector, /Animated\.timing\(translateX,[\s\S]*?toValue: 0/);
+  assert.match(selector, /Animated\.timing\(translateX,[\s\S]*?toValue: width/);
+  assert.match(selector, /transform: \[\{ translateX \}\]/);
 });
 
 test("country selector keeps first-open controls below the device status bar", () => {
@@ -30,10 +32,6 @@ test("country selector keeps first-open controls below the device status bar", (
   assert.match(selector, /const insets = useSafeAreaInsets\(\)/);
   assert.match(selector, /paddingTop: insets\.top/);
   assert.match(selector, /paddingBottom: insets\.bottom/);
-  assert.doesNotMatch(
-    selector,
-    /<SafeAreaView[\s\S]*?edges=\{\["top", "bottom"\]\}/,
-  );
 });
 
 test("country selector ignores a stale native dismiss after a new open", () => {
@@ -51,4 +49,28 @@ test("country selector ignores a stale native dismiss after a new open", () => {
     selector,
     /const handleDismiss = \(\) => \{\s*if \(visibleRef\.current\) return;/,
   );
+});
+
+test("country selector dismisses the keyboard on choice and offers Done on iOS", () => {
+  const selector = screen.slice(
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
+  );
+
+  assert.match(selector, /onPress=\{\(\) => \{\s*Keyboard\.dismiss\(\);\s*setDraftSelection\(item\.value\)/);
+  assert.match(selector, /inputAccessoryViewID=/);
+  assert.match(selector, /<InputAccessoryView nativeID=\{COUNTRY_SEARCH_ACCESSORY\}>/);
+  assert.match(selector, /onPress=\{Keyboard\.dismiss\}/);
+});
+
+test("country selector hides its save action while the keyboard is visible", () => {
+  const selector = screen.slice(
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
+  );
+
+  assert.match(selector, /const \[keyboardVisible, setKeyboardVisible\] = useState\(false\)/);
+  assert.match(selector, /Keyboard\.addListener\("keyboardDidShow"/);
+  assert.match(selector, /Keyboard\.addListener\("keyboardDidHide"/);
+  assert.match(selector, /!keyboardVisible \? \(/);
 });

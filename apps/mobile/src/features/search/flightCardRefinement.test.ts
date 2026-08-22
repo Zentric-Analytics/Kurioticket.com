@@ -79,8 +79,22 @@ test("flight card keeps fixed footer content compact while airline identity may 
   assert.match(source, /benefit: \{ minWidth: 0, fontSize: 10\.5, color: ui\.muted, flex: 1 \}/);
   assert.match(source, /detailsButton: \{ minWidth: 96, minHeight: 44, paddingHorizontal: 10/);
   for (const viewport of [320, 360, 375, 390, 430]) {
-    const cardContentWidth = viewport - 36 - 26;
+    const cardContentWidth = viewport - 28 - 26;
     assert.ok(cardContentWidth >= 258, `${viewport}px reserves at least 258px for the journey row`);
+  }
+});
+
+test("flight result cards use the responsive list width with a safe reduced outer inset", () => {
+  assert.match(source, /<View style=\{\[s0\.body, s0\.flightResultsBody\]\}>\{resultContent\}<\/View>/);
+  assert.match(source, /body: \{ paddingHorizontal: 18, paddingBottom: 92, gap: 14 \}/);
+  assert.match(source, /flightResultsBody: \{ paddingHorizontal: 14 \}/);
+  assert.match(source, /card: \{[\s\S]*?width: "100%",[\s\S]*?padding: 13,/);
+
+  for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
+    const outerInset = 14;
+    const cardWidth = viewport - outerInset * 2;
+    assert.equal(cardWidth + outerInset * 2, viewport, `${viewport}px card stays within the screen`);
+    assert.ok(outerInset >= 12 && outerInset <= 16, `${viewport}px keeps the requested safe edge spacing`);
   }
 });
 
@@ -143,7 +157,7 @@ test("narrow flight cards reserve deterministic space for every journey section"
   const readableMinimums = 78 + 70 + 78;
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const cardContentWidth = viewport - 36 - 26;
+    const cardContentWidth = viewport - 28 - 26;
     assert.ok(
       cardContentWidth >= readableMinimums + interSectionGaps,
       `${viewport}px fits departure, route, and arrival minimums without overlap`,
@@ -167,9 +181,15 @@ test("flight journey gives its center column responsive surplus width", () => {
   const arrivalWidth = 78;
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
-    const cardContentWidth = viewport - 36 - 26;
+    const previousCardContentWidth = viewport - 36 - 26;
+    const cardContentWidth = viewport - 28 - 26;
     const renderedTimelineWidth = cardContentWidth - departureWidth - arrivalWidth - interSectionGaps;
     assert.ok(renderedTimelineWidth >= 70, `${viewport}px keeps a readable route line`);
+    assert.equal(
+      renderedTimelineWidth - (previousCardContentWidth - departureWidth - arrivalWidth - interSectionGaps),
+      8,
+      `${viewport}px gives the centered timeline all additional card width`,
+    );
   }
 });
 

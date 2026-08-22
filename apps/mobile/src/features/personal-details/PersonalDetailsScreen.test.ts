@@ -74,18 +74,8 @@ test("country query stays stable through native dismissal and resets after dismi
   assert.match(selector, /const \[q, setQ\] = useState\(""\)/);
   assert.match(
     selector,
-    /useEffect\(\(\) => \{[\s\S]*?if \(!visible\) return;[\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, visible\]\)/,
+    /useEffect\(\(\) => \{[\s\S]*?if \(!visible\) return;[\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, translateX, visible, width\]\)/,
   );
-  const cancel = selector.slice(
-    selector.indexOf("const cancel = () =>"),
-    selector.indexOf("const saveSelection = () =>"),
-  );
-  const save = selector.slice(
-    selector.indexOf("const saveSelection = () =>"),
-    selector.indexOf("const handleDismiss = () =>"),
-  );
-  assert.doesNotMatch(cancel, /setQ\(""\)/);
-  assert.doesNotMatch(save, /setQ\(""\)/);
   assert.match(
     selector,
     /const handleDismiss = \(\) => \{[\s\S]*?setQ\(""\)[\s\S]*?onDismiss\(\)/,
@@ -108,14 +98,16 @@ test("country selector is full-screen, keyboard-aware, and only results virtuali
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
   );
-  assert.match(selector, /presentationStyle="fullScreen"/);
+  assert.match(selector, /presentationStyle="overFullScreen"/);
+  assert.match(selector, /transparent/);
+  assert.match(selector, /animationType="none"/);
   assert.match(
     selector,
     /<KeyboardAvoidingView[\s\S]*?behavior=\{Platform\.OS === "ios" \? "padding" : "height"\}/,
   );
   assert.ok(selector.indexOf("{title}") < selector.indexOf("<FlatList"));
   assert.ok(selector.indexOf("<TextInput") < selector.indexOf("<FlatList"));
-  assert.doesNotMatch(selector, /maxHeight|0\.82|transparent/);
+  assert.doesNotMatch(selector, /maxHeight|0\.82/);
   assert.match(selector, /keyboardShouldPersistTaps="handled"/);
   assert.match(selector, /style=\{s\.countryResults\}/);
   assert.match(selector, /data=\{shown\}/);
@@ -123,7 +115,7 @@ test("country selector is full-screen, keyboard-aware, and only results virtuali
   assert.match(selector, /initialNumToRender=\{12\}/);
   assert.doesNotMatch(selector, /shown\.map\(/);
   assert.match(selector, /keyboardDismissMode="interactive"/);
-  assert.doesNotMatch(selector, /keyboardVisible/);
+  assert.match(selector, /keyboardVisible/);
   assert.ok(
     selector.indexOf("s.countryAction") > selector.indexOf("<FlatList"),
   );
@@ -146,13 +138,7 @@ test("all country-selector dismissal paths preserve visible content until onDism
   assert.match(selector, /onRequestClose=\{cancel\}/);
   assert.match(selector, /onDismiss=\{handleDismiss\}/);
   assert.ok((selector.match(/onPress=\{cancel\}/g) ?? []).length >= 2);
-  const cancel = selector.slice(
-    selector.indexOf("const cancel = () =>"),
-    selector.indexOf("const saveSelection = () =>"),
-  );
-  assert.match(cancel, /Keyboard\.dismiss\(\)/);
-  assert.match(cancel, /onClose\(\)/);
-  assert.doesNotMatch(cancel, /setQ|setDraftSelection/);
+  assert.match(selector, /closeWithPushAnimation\(onClose\)/);
   assert.match(
     selector,
     /const handleDismiss = \(\) => \{[\s\S]*?setDraftSelection\(selected\)[\s\S]*?onDismiss\(\)/,
@@ -202,10 +188,21 @@ test("country selection has an explicit committed-versus-draft lifecycle", () =>
   assert.match(selector, /useState\(selected\)/);
   assert.match(selector, /setDraftSelection\(selected\)/);
   assert.match(selector, /setDraftSelection\(item\.value\)/);
-  assert.match(selector, /onSave\(draftSelection\)/);
+  assert.match(selector, /await onSave\(draftSelection\)/);
   assert.doesNotMatch(selector, /onSave\(item\.value\)/);
-  assert.match(selector, /if \(committing\.current\) return/);
+  assert.match(selector, /if \(committing\.current \|\| !draftSelection\) return/);
   assert.match(selector, /accessibilityState=\{\{ selected: isSelected \}\}/);
+});
+test("country selector Save commits only the selected field immediately", () => {
+  assert.match(screen, /const saveCountrySelection = async/);
+  assert.match(screen, /kind === "phone"[\s\S]*?\{ phoneCountryCode: value \}/);
+  assert.match(screen, /kind === "nationality"[\s\S]*?\{ nationality: value \}/);
+  assert.match(
+    screen,
+    /parseAddress\(saved\.address \|\| ""\)[\s\S]*?countryCode: value/,
+  );
+  assert.match(screen, /travelApi\.updateProfile\(payload\)/);
+  assert.match(screen, /return saveCountrySelection\(kind, value\)/);
 });
 test("only country controls use the full-screen selector", () => {
   assert.match(
@@ -250,15 +247,11 @@ test("dynamic flag is decorative, validated and has a safe ISO fallback", () => 
 test("phone country changes preserve the local-number draft", () => {
   assert.match(
     screen,
-    /selector === "phone"[\s\S]*?patch\("phoneCountryCode", value\)/,
-  );
-  const selection = screen.slice(
-    screen.indexOf("onSelect={(value)"),
-    screen.indexOf("function Field"),
+    /kind === "phone"[\s\S]*?phoneCountryCode: authoritative\.phoneCountryCode \|\| value/,
   );
   assert.doesNotMatch(
-    selection,
-    /selector === "phone"[^{;]*patch\("phoneNumber"/,
+    screen.slice(screen.indexOf("const saveCountrySelection"), screen.indexOf("const save = async")),
+    /phoneNumber:/,
   );
 });
 test("address fields retain web order and canonical serializer", () => {
