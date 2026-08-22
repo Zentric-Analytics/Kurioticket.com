@@ -1,5 +1,5 @@
 import type { FlowIconName } from "../flow/FlowIcon";
-import type { MobileTranslationKey } from "../../localization/mobileLocalization";
+import type { MobileTranslationKey } from "../../localization/mobileLocalizationCatalog";
 
 export type ProfileDestination =
   | { kind: "native"; href: "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" }

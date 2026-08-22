@@ -22,6 +22,7 @@ import { buildReleaseAudit } from './write-release-audit.mjs';
 import { classifyMobileValidationPaths, isMobileRelevantPath } from './classify-mobile-validation-paths.mjs';
 import { canonicalPreviewOtaRemoteIdentity, classifyReplayLookupFailure, inspectPreviewUpdateHistory, normalizePreviewUpdatePage, resolveTrustedPreviewTarget, validateStagingReadiness, validateStagingVisualResponse, waitForStaging } from './preview-ota-automation.mjs';
 import { classifyPreviewPlatform, combinePreviewDecisions, resolveLatestPreviewBaseline, selectReviewedPreviewBuild } from './preview-delivery-contract.mjs';
+import { findCaseInsensitiveTypeScriptPathCollisions } from './validate-case-insensitive-paths.mjs';
 
 const { policy, eas, root } = loadReleaseFiles();
 
@@ -56,9 +57,9 @@ test('required PR gateway always schedules exact protected contexts and classifi
   assert.doesNotMatch(workflow, /continue-on-error|\beas(?:-cli@[^\s]+)?\s+(?:build|update|submit)\b/i);
 });
 
-test('legacy security workflow no longer competes for the required PR context', () => {
+test('security workflow preserves the required pull-request secret scan', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/security.yml'), 'utf8');
-  assert.doesNotMatch(workflow, /^\s+pull_request:/m);
+  assert.match(workflow, /^\s+pull_request:/m);
   assert.match(workflow, /^\s+push:/m);
 });
 const valid = (variant = 'preview', overrides = {}) => ({ variant, sha: 'a'.repeat(40), runtime: policy[variant].runtimeVersion, packageName: policy[variant].androidPackage, channel: policy[variant].channel, profile: policy[variant].profile, apiBaseUrl: policy[variant].apiBaseUrl, confirmation: variant === 'preview' ? 'DELIVER ANDROID PREVIEW' : 'DELIVER ANDROID PRODUCTION', action: 'build', releaseReason: 'approved release', baselineBuildId: 'NONE', policy, eas, ...overrides });
@@ -583,9 +584,18 @@ test('Production workflow separates structured stdout, validates results, and ne
   assert.doesNotMatch(workflow, /--auto-submit|eas-cli@[^\n]*submit/);
   assert.match(workflow, /options: \[build, update, dry-run\]/);
 });
-function lineageGit({ approved, main = approved, parents, histories }) {
+function lineageGit({ approved, main = approved, parents, histories, relevantGraph, ancestral = true }) {
   return (args, { allowFailure = false } = {}) => {
-    if (args[0] === 'merge-base') return { status: approved === main ? 0 : 1, stdout: '', stderr: '' };
+    if (args[0] === 'merge-base') {
+      const checkingProtectedMain = args[3] === 'refs/remotes/origin/main';
+      return { status: checkingProtectedMain ? (approved === main ? 0 : 1) : (ancestral ? 0 : 1), stdout: '', stderr: '' };
+    }
+    if (args[0] === 'rev-list') {
+      const relevantCommits = [...new Set([...Object.keys(parents), ...Object.values(parents).flat()])]
+        .filter((commit) => commit !== approved);
+      const lines = relevantGraph ?? relevantCommits.map((commit) => [commit, ...(parents[commit] ?? [])].join(' '));
+      return { status: 0, stdout: `${lines.join('\n')}\n`, stderr: '' };
+    }
     if (args[0] === 'show' && args[1] === '-s') return { status: 0, stdout: `${(parents[args[3]] ?? []).join(' ')}\n`, stderr: '' };
     if (args[0] === 'show') {
       const commit = args[1].split(':', 1)[0];
@@ -602,7 +612,7 @@ test('Production Play history resolves the reviewed second-parent release lineag
   const merge = 'a'.repeat(40); const mainParent = 'b'.repeat(40); const releaseParent = 'c'.repeat(40); const prior = 'd'.repeat(40);
   const result = resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents: { [merge]: [mainParent, releaseParent], [releaseParent]: [prior] }, histories: { [merge]: present, [mainParent]: absent, [releaseParent]: present, [prior]: absent } }) });
   assert.equal(result.sourceType, 'convergent-merge');
-  assert.deepEqual(result.previousCommits, [prior]);
+  assert.deepEqual(result.previousCommits, [mainParent, prior].sort());
   const evidence = resolveProductionVersionEvidence({ versionOutput: '{}', versionExitCode: 0, buildsOutput: '[]', buildsExitCode: 0, history: present, previousHistory: JSON.parse(result.previousRaw), packageName: 'com.kurioticket.app', profile: 'production', runtime: 'production-0.3.0', now: new Date('2026-08-04T19:30:00Z') });
   assert.equal(evidence.proposedVersionCode, 1);
 });
@@ -633,6 +643,31 @@ test('Production Play lineage fails closed for divergent, malformed, missing, wr
   assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents, histories: { [merge]: present, [left]: present, [right]: present, [leftPrior]: absent } }) }), /missing/);
   assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents, histories: { [merge]: { ...present, package: 'com.kurioticket.app.preview' } } }) }), /package-mismatched/);
   assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'dispatcher/history.json', git: lineageGit({ approved: merge, parents, histories: {} }) }), /repository-owned/);
+  assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: merge, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved: merge, parents: { [merge]: [left] }, histories: { [merge]: present, [left]: absent }, ancestral: false }) }), /not ancestral/);
+});
+test('Production Play lineage skips more than 500 unrelated commits by querying only path-relevant history', () => {
+  const prior = { schemaVersion: 2, package: 'com.kurioticket.app', recordStatus: 'absent', playApplicationRecord: 'absent', uploadedBundles: [], highestUploadedVersionCode: null, verifiedAt: '2026-08-03T19:00:00Z', evidenceReference: 'prior state' };
+  const current = { ...prior, recordStatus: 'present', playApplicationRecord: 'present', verifiedAt: '2026-08-04T19:00:00Z', evidenceReference: 'current state' };
+  const approved = 'a'.repeat(40); const transition = 'b'.repeat(40); const previous = 'c'.repeat(40);
+  const unrelated = Array.from({ length: 1001 }, (_, index) => (index + 16).toString(16).padStart(40, '0'));
+  const parents = { [approved]: [unrelated[0]], [transition]: [previous] };
+  const git = lineageGit({ approved, parents, histories: { [approved]: current, [transition]: current, [previous]: prior }, relevantGraph: [`${transition} ${previous}`, previous] });
+  const guardedGit = (args, options) => {
+    assert.equal(args.some((argument) => unrelated.includes(argument)), false, 'unrelated commits must not be inspected individually');
+    return git(args, options);
+  };
+  const result = resolveTrustedPreviousPlayHistory({ approvedSha: approved, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: guardedGit });
+  assert.equal(result.previousCommit, previous);
+});
+test('Production Play lineage retains a finite bound on relevant history transitions', () => {
+  const present = { schemaVersion: 2, package: 'com.kurioticket.app', recordStatus: 'present', playApplicationRecord: 'present', uploadedBundles: [], highestUploadedVersionCode: null, verifiedAt: '2026-08-04T19:00:00Z', evidenceReference: 'reviewed state' };
+  const approved = 'a'.repeat(40); const parent = 'b'.repeat(40);
+  const relevantGraph = Array.from({ length: 257 }, (_, index) => (index + 32).toString(16).padStart(40, '0'));
+  assert.throws(() => resolveTrustedPreviousPlayHistory({ approvedSha: approved, historyPath: 'apps/mobile/release-baselines/android/production-play-history.json', git: lineageGit({ approved, parents: { [approved]: [parent] }, histories: { [approved]: present }, relevantGraph }) }), /bounded relevant-history/);
+});
+test('mobile TypeScript collision guard normalizes case and TypeScript module extensions', () => {
+  assert.deepEqual(findCaseInsensitiveTypeScriptPathCollisions(['src/Foo.ts', 'src/foo.tsx']), [['src/Foo.ts', 'src/foo.tsx']]);
+  assert.deepEqual(findCaseInsensitiveTypeScriptPathCollisions(['src/Foo.ts', 'src/foo.test.ts']), []);
 });
 test('first Preview binary proposes versionCode 1 only with exact uninitialized state and no builds', () => {
   const result = resolvePreviewVersionEvidence({ versionOutput: 'No remote versions are configured for this project.\n', versionExitCode: 0, buildsOutput: '[]', buildsExitCode: 0, packageName: policy.preview.androidPackage, profile: 'preview', runtime: 'preview-0.3.0' });
