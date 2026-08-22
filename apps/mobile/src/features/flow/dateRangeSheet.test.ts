@@ -19,14 +19,18 @@ test("active stage describes the date part changed by the next selection", () =>
   assert.equal(activeDateRangePart("2026-08-24", "2026-08-29"), "start");
 });
 
-test("range values reserve an accessible semantic active underline", () => {
+test("range values render an accessible content-sized active underline", () => {
   assert.match(sheet, /activePart = activeDateRangePart\(draftStart, draftEnd\)/);
   assert.match(sheet, /active=\{activePart === "start"\}/);
   assert.match(sheet, /active=\{activePart === "end"\}/);
-  assert.match(sheet, /borderBottomColor:active\?ft\.colors\.selectedBorder:"transparent"/);
   assert.match(sheet, /accessibilityState=\{\{selected:active\}\}/);
   assert.match(sheet, /active \? ", currently selecting" : ""/);
-  assert.match(sheet, /rangeValue:\{flex:1,minWidth:0,padding:10,borderBottomWidth:2\}/);
+  assert.match(sheet, /style=\{\[styles\.valueIndicator,\{borderBottomColor:active\?ft\.colors\.selectedBorder:"transparent"\}\]\}/);
+  assert.match(sheet, /rangeValue:\{flex:1,minWidth:0,padding:10\}/);
+  assert.match(sheet, /valueIndicator:\{alignSelf:"flex-start",borderBottomWidth:1,paddingBottom:2\}/);
+  assert.doesNotMatch(sheet, /rangeValue:\{[^}]*borderBottomWidth/);
+  assert.doesNotMatch(sheet, /style=\{\[styles\.rangeValue,[^\]]*borderBottomColor/);
+  assert.doesNotMatch(sheet, /valueIndicator:\{[^}]*width:/);
 });
 
 test("sheet initializes draft state and Done is the only commit path", () => {
