@@ -155,7 +155,8 @@ jobs:
         run: |
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
           set -o pipefail
-          npx eas-cli@16.17.4 update --channel production --platform android --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
+          npx eas-cli@16.17.4 env:exec production "node scripts/preflight-production-ota.mjs --platform android --output-dir '$RUNNER_TEMP/production-ota-preflight-android' --evidence '$RUNNER_TEMP/production-ota-public-env.json'" --non-interactive
+          npx eas-cli@16.17.4 update --channel production --platform android --environment production --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
           node scripts/verify-production-eas-result.mjs --kind update --platform android --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Write consolidated release audit
         if: always()
@@ -202,6 +203,7 @@ jobs:
             ${{ runner.temp }}/current-fingerprint.json
             ${{ runner.temp }}/release-classification.json
             ${{ runner.temp }}/version-evidence.json
+            ${{ runner.temp }}/production-ota-public-env.json
             ${{ runner.temp }}/delivery-result.raw.json
             ${{ runner.temp }}/delivery-result.json
             ${{ runner.temp }}/aab-evidence.json

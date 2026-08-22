@@ -16,6 +16,7 @@ import { resolveTrustedPreviousPlayHistory } from './resolve-production-play-his
 import { validateProductionDryRun } from './dry-run-production-delivery.mjs';
 import { isRfcUuid, verifyProductionBuildResult, verifyProductionUpdateResult } from './verify-production-eas-result.mjs';
 import { reconcileProductionOta } from './reconcile-production-ota.mjs';
+import { inspectProductionOtaBundle, validateProductionOtaConfig, validateProductionOtaPublicEnvironment } from './preflight-production-ota.mjs';
 import { verifyProductionAab } from './verify-production-aab.mjs';
 import { verifyProductionIpa } from './verify-production-ipa.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
@@ -677,6 +678,52 @@ test('Production reconciliation workflow is strictly read-only and Android deliv
   assert.match(android, /baseline-evidence\.json[\s\S]*channel-evidence\.json[\s\S]*current-fingerprint\.json[\s\S]*release-classification\.json/);
   const publishSteps = android.match(/eas-cli@16\.17\.4 update --channel production --platform android/g) ?? [];
   assert.equal(publishSteps.length, 1);
+});
+
+test('Production OTA workflows load and preflight the EAS Production public environment before publishing', () => {
+  const android = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
+  const ios = readFileSync(resolve(root, '../../.github/workflows/ios-production-delivery.yml'), 'utf8');
+  const androidUpdate = android.match(/- name: Publish approved Production OTA[\s\S]*?(?=\n      - name:)/)?.[0] ?? '';
+  const iosUpdate = ios.match(/- name: Publish approved iOS Production OTA[\s\S]*?(?=\n      - name:)/)?.[0] ?? '';
+  assert.match(androidUpdate, /env:exec production[\s\S]*preflight-production-ota\.mjs --platform android/);
+  assert.match(androidUpdate, /update --channel production --platform android --environment production/);
+  assert.match(iosUpdate, /env:exec production[\s\S]*preflight-production-ota\.mjs --platform ios/);
+  assert.match(iosUpdate, /update --channel production --platform ios --environment production/);
+  assert.ok(androidUpdate.indexOf('preflight-production-ota.mjs') < androidUpdate.indexOf(' update --channel'));
+  assert.ok(iosUpdate.indexOf('preflight-production-ota.mjs') < iosUpdate.indexOf(' update --channel'));
+  assert.match(android, /build --platform android --profile production --non-interactive --freeze-credentials/);
+  assert.match(ios, /build --platform ios --profile production --non-interactive --freeze-credentials/);
+});
+
+test('Production OTA public environment and exported bundle checks fail closed', () => {
+  const environment = {
+    APP_VARIANT: 'production',
+    APP_BUILD_MODE: 'release',
+    EXPO_PUBLIC_API_BASE_URL: policy.production.apiBaseUrl,
+    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: 'approved-web.apps.googleusercontent.com',
+    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: policy.production.googleIosClientId,
+  };
+  const config = {
+    name: policy.production.displayName,
+    scheme: policy.production.scheme,
+    runtimeVersion: policy.production.runtimeVersion,
+    android: { package: policy.production.androidPackage },
+    ios: { bundleIdentifier: policy.production.bundleIdentifier },
+    extra: { eas: { projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' }, environment: { variant: 'production', buildMode: 'release', apiBaseUrl: policy.production.apiBaseUrl, channel: 'production', isPreview: false } },
+  };
+  const androidBundle = Buffer.from(`${environment.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID} ${policy.production.apiBaseUrl}`);
+  const iosBundle = Buffer.from(`${environment.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID} ${environment.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID} ${policy.production.apiBaseUrl}`);
+  assert.equal(validateProductionOtaPublicEnvironment(environment, 'android', policy.production).webClientPresent, true);
+  assert.equal(validateProductionOtaPublicEnvironment(environment, 'ios', policy.production).iosClientVerified, true);
+  assert.equal(validateProductionOtaConfig(config, 'android', policy.production).activeProductionIdentityVerified, true);
+  assert.equal(validateProductionOtaConfig(config, 'ios', policy.production).activeProductionIdentityVerified, true);
+  assert.equal(inspectProductionOtaBundle(androidBundle, environment, 'android', policy.production).webClientEmbedded, true);
+  assert.equal(inspectProductionOtaBundle(iosBundle, environment, 'ios', policy.production).iosClientEmbedded, true);
+  assert.throws(() => validateProductionOtaPublicEnvironment({ ...environment, EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: '' }, 'android', policy.production), /web client/);
+  assert.throws(() => validateProductionOtaPublicEnvironment({ ...environment, EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: 'preview.apps.googleusercontent.com' }, 'ios', policy.production), /iOS client/);
+  assert.throws(() => inspectProductionOtaBundle(Buffer.from(policy.production.apiBaseUrl), environment, 'android', policy.production), /web client/);
+  assert.throws(() => inspectProductionOtaBundle(androidBundle, environment, 'ios', policy.production), /iOS client/);
+  assert.throws(() => validateProductionOtaConfig({ ...config, extra: { ...config.extra, environment: { ...config.extra.environment, variant: 'preview' } } }, 'android', policy.production), /variant/);
 });
 
 test('reviewed Production binary baselines bind Android and iOS independently', () => {
