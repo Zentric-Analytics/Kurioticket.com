@@ -6,11 +6,12 @@ on:
       update_id: { description: "Existing EAS update UUID", required: true, type: string }
       update_group_id: { description: "Existing EAS update group UUID", required: true, type: string }
       publication_source_sha: { description: "Exact already-published source SHA", required: true, type: string }
+      published_at: { description: "Exact EAS publication timestamp", required: true, type: string }
       platform: { description: "Existing publication platform", required: true, type: choice, options: [android] }
       runtime_version: { description: "Existing publication runtime", required: true, type: string }
       channel: { description: "Existing publication branch/channel", required: true, type: string }
       baseline_eas_build_id: { description: "Reviewed installed binary baseline", required: true, type: string }
-permissions: { contents: read }
+permissions: { contents: read, actions: read }
 concurrency: { group: production-ota-reconciliation, cancel-in-progress: false }
 jobs:
   reconcile:
@@ -30,20 +31,41 @@ jobs:
           UPDATE_ID: "${{ inputs.update_id }}"
           GROUP_ID: "${{ inputs.update_group_id }}"
           SOURCE_SHA: "${{ inputs.publication_source_sha }}"
+          PUBLISHED_AT: "${{ inputs.published_at }}"
           PLATFORM: "${{ inputs.platform }}"
           RUNTIME: "${{ inputs.runtime_version }}"
           CHANNEL: "${{ inputs.channel }}"
           BASELINE: "${{ inputs.baseline_eas_build_id }}"
         run: |
-          test "$ORIGINAL_RUN" = 32591979671
-          test "$UPDATE_ID" = 01a02ad2-129b-7d5a-b850-cc218bcde637
-          test "$GROUP_ID" = 769912ca-6f8b-4f4f-afae-7baa8674384f
-          test "$SOURCE_SHA" = 962904391c6055ca44d3a599347029b720c80531
+          [[ "$ORIGINAL_RUN" =~ ^[1-9][0-9]*$ ]]
+          [[ "$UPDATE_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]
+          [[ "$GROUP_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          node -e "if(!Number.isFinite(Date.parse(process.env.PUBLISHED_AT)))throw Error('Publication timestamp is malformed')"
           test "$PLATFORM" = android
           test "$RUNTIME" = production-0.3.0
           test "$CHANNEL" = production
           test "$BASELINE" = 1bfe53cc-e806-4dd3-8fd7-6c3b8ca2f513
           git merge-base --is-ancestor "$SOURCE_SHA" origin/main
+      - name: Verify original failed delivery provenance and preserved publication result
+        env:
+          GH_TOKEN: "${{ github.token }}"
+          ORIGINAL_RUN: "${{ inputs.original_workflow_run_id }}"
+          SOURCE_SHA: "${{ inputs.publication_source_sha }}"
+          UPDATE_ID: "${{ inputs.update_id }}"
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${ORIGINAL_RUN}" > "$RUNNER_TEMP/original-workflow-run.json"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${ORIGINAL_RUN}/artifacts" > "$RUNNER_TEMP/original-artifacts.json"
+          node -e "const r=require(process.env.RUNNER_TEMP+'/original-workflow-run.json');if(r.path!=='.github/workflows/android-production-delivery.yml'||r.event!=='workflow_dispatch'||r.head_sha!==process.env.SOURCE_SHA||r.conclusion!=='failure')throw Error('Original delivery workflow provenance mismatch')"
+          ARTIFACT_NAME="android-production-release-evidence-${ORIGINAL_RUN}"
+          ARTIFACT_NAME="$ARTIFACT_NAME" node -e "const x=require(process.env.RUNNER_TEMP+'/original-artifacts.json'),a=x.artifacts?.filter(v=>v.name===process.env.ARTIFACT_NAME);if(a?.length!==1||a[0].expired||!/^sha256:[0-9a-f]{64}$/.test(a[0].digest||''))throw Error('Original delivery artifact metadata mismatch')"
+          mkdir "$RUNNER_TEMP/original-evidence"
+          gh run download "$ORIGINAL_RUN" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT_NAME" --dir "$RUNNER_TEMP/original-evidence"
+          test -s "$RUNNER_TEMP/original-evidence/delivery-result.raw.json"
+          node apps/mobile/scripts/verify-production-eas-result.mjs --kind update --platform android \
+            --input "$RUNNER_TEMP/original-evidence/delivery-result.raw.json" --sha "$SOURCE_SHA" \
+            --output "$RUNNER_TEMP/original-delivery-result.json"
+          node -e "const x=require(process.env.RUNNER_TEMP+'/original-delivery-result.json');if(x.id!==process.env.UPDATE_ID||x.platform!=='ANDROID')throw Error('Original publication result mismatch')"
       - working-directory: apps/mobile
         run: npm ci
       - name: Verify reviewed binary baseline and live channel
@@ -79,7 +101,7 @@ jobs:
             --view "$RUNNER_TEMP/update-view.json" --list "$RUNNER_TEMP/update-list.json" \
             --update-id "${{ inputs.update_id }}" --group-id "${{ inputs.update_group_id }}" \
             --source-sha "${{ inputs.publication_source_sha }}" --original-workflow-run-id "${{ inputs.original_workflow_run_id }}" \
-            --platform android --runtime production-0.3.0 --branch production --published-at 2026-08-22T18:53:25.531Z \
+            --platform "${{ inputs.platform }}" --runtime "${{ inputs.runtime_version }}" --branch "${{ inputs.channel }}" --published-at "${{ inputs.published_at }}" \
             --baseline-build-id "${{ inputs.baseline_eas_build_id }}" --fingerprint 596900e057c6b8ba75f9d48c7484be88fd1d679a \
             --baseline "$RUNNER_TEMP/baseline-evidence.json" --current-fingerprint "$RUNNER_TEMP/current-fingerprint.json" \
             --classifier "$RUNNER_TEMP/release-classification.json" --channel "$RUNNER_TEMP/channel-evidence.json" \
@@ -96,6 +118,9 @@ jobs:
             ${{ runner.temp }}/release-classification.json
             ${{ runner.temp }}/update-view.json
             ${{ runner.temp }}/update-list.json
+            ${{ runner.temp }}/original-workflow-run.json
+            ${{ runner.temp }}/original-artifacts.json
+            ${{ runner.temp }}/original-delivery-result.json
             ${{ runner.temp }}/reconciliation-audit.json
           if-no-files-found: error
           retention-days: 365

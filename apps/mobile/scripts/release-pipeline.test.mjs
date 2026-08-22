@@ -14,7 +14,7 @@ import { resolvePreviewVersionEvidence } from './resolve-preview-version-code.mj
 import { resolveProductionVersionEvidence, validateProductionPlayHistory } from './resolve-production-version-code.mjs';
 import { resolveTrustedPreviousPlayHistory } from './resolve-production-play-history-lineage.mjs';
 import { validateProductionDryRun } from './dry-run-production-delivery.mjs';
-import { isRfcUuid, verifyProductionBuildResult, verifyProductionUpdateResult } from './verify-production-eas-result.mjs';
+import { isRfcUuid, normalizeEasPlatform, verifyProductionBuildResult, verifyProductionUpdateResult } from './verify-production-eas-result.mjs';
 import { reconcileProductionOta } from './reconcile-production-ota.mjs';
 import { inspectProductionOtaBundle, validateProductionOtaConfig, validateProductionOtaPublicEnvironment } from './preflight-production-ota.mjs';
 import { verifyProductionAab } from './verify-production-aab.mjs';
@@ -647,6 +647,17 @@ test('EAS identifiers accept RFC UUIDv4 and UUIDv7 while malformed identifiers f
   assert.throws(() => verifyProductionUpdateResult({ source: JSON.stringify(update), approvedSha: sha, platform: 'android' }), /project/);
 });
 
+test('EAS update platform values normalize strictly to canonical Android and iOS evidence', () => {
+  const sha = '8ce0dd84b1bc2624217f8a2a51b6e9b1f61ca52c';
+  const make = (platform) => JSON.stringify([{ id: '01a02b49-b3e4-7627-a603-d3a1b337fd15', platform, branch: 'production', runtimeVersion: 'production-0.3.0', gitCommitHash: sha }]);
+  for (const platform of ['android', 'ANDROID', 'Android']) assert.equal(verifyProductionUpdateResult({ source: make(platform), approvedSha: sha, platform: 'android' }).platform, 'ANDROID');
+  for (const platform of ['ios', 'IOS', 'iOS']) assert.equal(verifyProductionUpdateResult({ source: make(platform), approvedSha: sha, platform: 'ios' }).platform, 'IOS');
+  assert.equal(normalizeEasPlatform(' Android '), 'ANDROID');
+  for (const platform of ['web', '', 'android-ios', null, undefined]) assert.throws(() => normalizeEasPlatform(platform), /platform/);
+  assert.throws(() => verifyProductionUpdateResult({ source: make('ios'), approvedSha: sha, platform: 'android' }), /platform/);
+  assert.throws(() => verifyProductionUpdateResult({ source: make('android'), approvedSha: sha, platform: 'ios' }), /platform/);
+});
+
 test('existing Android Production OTA reconciles exactly once without publication semantics', () => {
   const expected = { updateId: '01a02ad2-129b-7d5a-b850-cc218bcde637', groupId: '769912ca-6f8b-4f4f-afae-7baa8674384f', sourceSha: '962904391c6055ca44d3a599347029b720c80531', originalWorkflowRunId: '32591979671', platform: 'android', runtime: 'production-0.3.0', branch: 'production', publishedAt: '2026-08-22T18:53:25.531Z', baselineBuildId: '1bfe53cc-e806-4dd3-8fd7-6c3b8ca2f513', fingerprint: '596900e057c6b8ba75f9d48c7484be88fd1d679a' };
   const update = { id: expected.updateId, group: expected.groupId, platform: 'android', runtimeVersion: expected.runtime, branch: expected.branch, gitCommitHash: expected.sourceSha, createdAt: expected.publishedAt };
@@ -657,12 +668,15 @@ test('existing Android Production OTA reconciles exactly once without publicatio
   assert.equal(result.publicationPerformed, false);
   assert.equal(result.publicationDecision, 'already-published-verified');
   assert.equal(result.originalWorkflowRunId, '32591979671');
+  assert.equal(result.platform, 'ANDROID');
   for (const mutate of [
     (value) => { value.updateId = '11111111-1111-4111-8111-111111111111'; },
     (value) => { value.groupId = '11111111-1111-4111-8111-111111111111'; },
     (value) => { value.runtime = 'preview-0.3.0'; },
   ]) { const invalid = structuredClone(expected); mutate(invalid); assert.throws(() => reconcileProductionOta({ view: [update], list: { name: 'production', currentPage: [listEntry] }, expected: invalid, evidence })); }
   assert.throws(() => reconcileProductionOta({ view: [update, { ...update, id: '11111111-1111-4111-8111-111111111111' }], list: { name: 'production', currentPage: [listEntry] }, expected, evidence }), /exactly one/);
+  assert.equal(reconcileProductionOta({ view: [{ ...update, platform: 'ANDROID' }], list: { name: 'production', currentPage: [{ ...listEntry, platforms: 'Android' }] }, expected, evidence }).platform, 'ANDROID');
+  assert.throws(() => reconcileProductionOta({ view: [{ ...update, platform: 'ios' }], list: { name: 'production', currentPage: [listEntry] }, expected, evidence }), /exactly one/);
 });
 
 test('Production reconciliation workflow is strictly read-only and Android delivery preserves failure evidence', () => {
@@ -673,6 +687,12 @@ test('Production reconciliation workflow is strictly read-only and Android deliv
   assert.doesNotMatch(reconciliation, /eas-cli@[^\s]+\s+update(?:\s|\\)/);
   assert.doesNotMatch(reconciliation, /eas-cli@[^\s]+\s+(?:build|submit)(?:\s|\\)/);
   assert.match(reconciliation, /publicationPerformed: false|reconcile-production-ota\.mjs/);
+  assert.match(reconciliation, /published_at:/);
+  assert.match(reconciliation, /actions: read/);
+  assert.match(reconciliation, /original-workflow-run\.json/);
+  assert.match(reconciliation, /original-delivery-result\.json/);
+  assert.doesNotMatch(reconciliation, /test "\$ORIGINAL_RUN" = 32591979671/);
+  assert.doesNotMatch(reconciliation, /test "\$UPDATE_ID" = 01a02ad2/);
   assert.match(android, /WORKFLOW_STARTED_AT=\$\(date -u/);
   assert.match(android, /delivery-result\.raw\.json/);
   assert.match(android, /baseline-evidence\.json[\s\S]*channel-evidence\.json[\s\S]*current-fingerprint\.json[\s\S]*release-classification\.json/);
