@@ -383,6 +383,7 @@ function CountrySelector({
               placeholderTextColor={theme.muted}
               value={q}
               onChangeText={setQ}
+              onFocus={() => setKeyboardVisible(true)}
               returnKeyType="done"
               blurOnSubmit
               onSubmitEditing={Keyboard.dismiss}
@@ -822,6 +823,22 @@ export function PersonalDetailsScreen() {
     value: string,
   ) => {
     if (!saved) return false;
+    const comparisonDraft = normalizeProfile(draft);
+    const comparisonSaved = normalizeProfile(saved);
+    if (kind === "phone") {
+      comparisonDraft.phoneCountryCode = comparisonSaved.phoneCountryCode;
+    } else if (kind === "nationality") {
+      comparisonDraft.nationality = comparisonSaved.nationality;
+    } else {
+      comparisonDraft.address = serializeAddress({
+        ...parseAddress(comparisonDraft.address || ""),
+        countryCode: parseAddress(comparisonSaved.address || "").countryCode,
+      });
+    }
+    const hasOtherUnsavedChanges = profilesDiffer(
+      comparisonDraft,
+      comparisonSaved,
+    );
     setError("");
     setSuccess("");
     try {
@@ -840,27 +857,33 @@ export function PersonalDetailsScreen() {
       if (!mounted.current) return false;
       const authoritative = normalizeProfile(result.profile);
       setSaved(authoritative);
-      setDraft((current) => {
-        if (kind === "phone") {
+      if (!hasOtherUnsavedChanges) {
+        setDraft(authoritative);
+        setDateDraft(dateDraftFromValue(authoritative.dateOfBirth));
+        setEditing(false);
+      } else {
+        setDraft((current) => {
+          if (kind === "phone") {
+            return {
+              ...current,
+              phoneCountryCode: authoritative.phoneCountryCode || value,
+            };
+          }
+          if (kind === "nationality") {
+            return {
+              ...current,
+              nationality: authoritative.nationality || value,
+            };
+          }
           return {
             ...current,
-            phoneCountryCode: authoritative.phoneCountryCode || value,
+            address: serializeAddress({
+              ...parseAddress(current.address || ""),
+              countryCode: value,
+            }),
           };
-        }
-        if (kind === "nationality") {
-          return {
-            ...current,
-            nationality: authoritative.nationality || value,
-          };
-        }
-        return {
-          ...current,
-          address: serializeAddress({
-            ...parseAddress(current.address || ""),
-            countryCode: value,
-          }),
-        };
-      });
+        });
+      }
       setSuccess(c.saveSuccess);
       AccessibilityInfo.announceForAccessibility(c.saveSuccess);
       return true;
