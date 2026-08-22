@@ -142,8 +142,9 @@ jobs:
           java -jar "$RUNNER_TEMP/bundletool.jar" validate --bundle="$RUNNER_TEMP/production.aab" > "$RUNNER_TEMP/aab-validation.txt"
           java -jar "$RUNNER_TEMP/bundletool.jar" dump manifest --bundle="$RUNNER_TEMP/production.aab" --module=base > "$RUNNER_TEMP/aab-manifest.xml"
           jarsigner -verify "$RUNNER_TEMP/production.aab" > "$RUNNER_TEMP/aab-signing.txt" 2>&1
-          unzip -p "$RUNNER_TEMP/production.aab" base/assets/index.android.bundle base/assets/app.config base/assets/app.manifest > "$RUNNER_TEMP/aab-contents.txt"
-          node scripts/verify-production-aab.mjs --manifest "$RUNNER_TEMP/aab-manifest.xml" --validation "$RUNNER_TEMP/aab-validation.txt" --signing "$RUNNER_TEMP/aab-signing.txt" --contents "$RUNNER_TEMP/aab-contents.txt" --output "$RUNNER_TEMP/aab-evidence.json"
+          unzip -p "$RUNNER_TEMP/production.aab" base/assets/app.config > "$RUNNER_TEMP/aab-app-config.json"
+          test -s "$RUNNER_TEMP/aab-app-config.json" || { echo 'Embedded AAB app.config is missing or empty.' >&2; exit 1; }
+          node scripts/verify-production-aab.mjs --manifest "$RUNNER_TEMP/aab-manifest.xml" --validation "$RUNNER_TEMP/aab-validation.txt" --signing "$RUNNER_TEMP/aab-signing.txt" --app-config "$RUNNER_TEMP/aab-app-config.json" --output "$RUNNER_TEMP/aab-evidence.json"
           node scripts/verify-production-eas-result.mjs --kind build --input "$RUNNER_TEMP/delivery-result.raw.json" --history "$RUNNER_TEMP/production-built-history.json" --aab-evidence "$RUNNER_TEMP/aab-evidence.json" --sha "$CHECKED_OUT_SHA" --version-code "$PROPOSED_VERSION" --version-status "$VERSION_STATUS" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Publish approved Production OTA through verified channel
         if: inputs.action == 'update'

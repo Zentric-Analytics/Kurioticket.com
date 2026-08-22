@@ -44,7 +44,8 @@ export function verifyProductionBuildResult({ source, historySource, aabEvidence
     [typeof archive === 'string' && /^https:\/\//.test(archive) && /\.aab(?:\?|$)/i.test(archive), 'Finished Production build is missing a Play-compatible AAB artifact.'],
     [aab.verified === true && aab.package === EXPECTED.packageName, 'Inspected AAB package mismatch.'],
     [aab.versionName === EXPECTED.appVersion && String(aab.versionCode) === String(expectedBuiltVersionCode), 'Inspected AAB version mismatch.'],
-    [aab.signed === true && aab.forbiddenIdentityFound === false, 'AAB signing or identity-isolation verification failed.'],
+    [aab.signed === true && aab.activeProductionIdentityVerified === true, 'AAB signing or active Production identity verification failed.'],
+    [aab.activeApiOrigin === 'https://kurioticket.com' && aab.runtimeVersion === EXPECTED.runtime && aab.channel === EXPECTED.channel && aab.isPreview === false && aab.projectId === EXPECTED.projectId, 'Inspected AAB active Production configuration mismatch.'],
   ];
   for (const [ok, message] of checks) if (!ok) throw new Error(message);
   return { kind: 'build', id: authoritative.id, status: authoritative.status, platform: authoritative.platform, package: EXPECTED.packageName, projectId: EXPECTED.projectId, profile: authoritative.buildProfile, runtime: authoritative.runtimeVersion, channel: authoritative.channel, appVersion: authoritative.appVersion, versionCode: Number(authoritative.appBuildVersion), commitSha: authoritative.gitCommitHash, artifactType: 'AAB', artifactUrlPresent: true, aabInspected: true, signed: true };

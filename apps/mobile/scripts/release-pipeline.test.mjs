@@ -523,7 +523,7 @@ test('Production delivery is manual-only, main-only, and requires the reviewed P
 test('Production EAS fixtures enforce finished AAB identity and source attestation', () => {
   const fixture = readFileSync(resolve(root, 'scripts/fixtures/production-eas/build-finished.json'), 'utf8');
   const submission = JSON.parse(fixture); delete submission[0].applicationIdentifier;
-  const aabEvidence = JSON.stringify({ verified: true, signed: true, package: 'com.kurioticket.app', versionName: '0.3.0', versionCode: 1, forbiddenIdentityFound: false });
+  const aabEvidence = JSON.stringify({ verified: true, signed: true, package: 'com.kurioticket.app', versionName: '0.3.0', versionCode: 1, activeProductionIdentityVerified: true, activeApiOrigin: 'https://kurioticket.com', runtimeVersion: 'production-0.3.0', channel: 'production', isPreview: false, projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' });
   const verify = (overrides = {}) => verifyProductionBuildResult({ source: JSON.stringify(submission), historySource: fixture, aabEvidenceSource: aabEvidence, approvedSha: 'd97d8e01245a1b77c77d3499d02d5f355b885025', proposedVersionCode: 1, remoteVersionStatus: 'configured', ...overrides });
   const verified = verify();
   assert.equal(verified.status, 'FINISHED');
@@ -547,15 +547,30 @@ test('Production EAS fixtures enforce finished AAB identity and source attestati
   assert.throws(() => verify({ historySource: mutate((build) => { build.gitCommitHash = 'a'.repeat(40); }) }), /Git commit/);
   assert.throws(() => verify({ historySource: mutate((build) => { build.appBuildVersion = '2'; }) }), /versionCode/);
   assert.throws(() => verify({ aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), package: 'com.kurioticket.app.preview' }) }), /AAB package/);
+  assert.throws(() => verify({ aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), activeProductionIdentityVerified: false }) }), /active Production identity/);
+  assert.throws(() => verify({ aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), projectId: '00000000-0000-4000-8000-000000000000' }) }), /active Production configuration/);
 });
-test('Production AAB inspection requires exact package, version, signature, and isolation', () => {
+test('Production AAB inspection requires authoritative active Production identity', () => {
   const manifest = '<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="2" android:versionName="0.3.0" package="com.kurioticket.app">';
-  const input = { manifest, validation: 'App Bundle information', signing: 'jar verified.', contents: 'https://kurioticket.com' };
-  assert.deepEqual(verifyProductionAab(input), { verified: true, signed: true, package: 'com.kurioticket.app', versionName: '0.3.0', versionCode: 2, forbiddenIdentityFound: false });
+  const appConfig = { name: 'Kurioticket', version: '0.3.0', android: { package: 'com.kurioticket.app' }, scheme: 'kurioticket', runtimeVersion: 'production-0.3.0', extra: { eas: { projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' }, environment: { variant: 'production', buildMode: 'release', apiBaseUrl: 'https://kurioticket.com', channel: 'production', isPreview: false } }, updates: { url: 'https://u.expo.dev/89f6fd88-c0d7-495a-9e2b-8301b09f407d' } };
+  const input = { manifest, validation: 'App Bundle information', signing: 'jar verified.', appConfigSource: JSON.stringify(appConfig) };
+  assert.deepEqual(verifyProductionAab(input), { verified: true, signed: true, package: 'com.kurioticket.app', versionName: '0.3.0', versionCode: 2, activeProductionIdentityVerified: true, activeApiOrigin: 'https://kurioticket.com', runtimeVersion: 'production-0.3.0', channel: 'production', isPreview: false, projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' });
+  assert.equal(verifyProductionAab({ ...input, javascriptBundle: 'com.kurioticket.app.preview' }).verified, true);
+  assert.equal(verifyProductionAab({ ...input, javascriptBundle: 'https://staging.kurioticket.com' }).verified, true);
   assert.throws(() => verifyProductionAab({ ...input, manifest: manifest.replace('com.kurioticket.app', 'com.kurioticket.app.preview') }), /package/);
+  assert.throws(() => verifyProductionAab({ ...input, manifest: manifest.replace('com.kurioticket.app', 'com.kurioticket.mobile') }), /package/);
   assert.throws(() => verifyProductionAab({ ...input, manifest: manifest.replace('versionCode="2"', 'versionCode="3"').replace('versionName="0.3.0"', 'versionName="0.4.0"') }), /version/);
+  assert.throws(() => verifyProductionAab({ ...input, validation: 'invalid bundle' }), /bundletool/);
   assert.throws(() => verifyProductionAab({ ...input, signing: 'unsigned' }), /signature/);
-  assert.throws(() => verifyProductionAab({ ...input, contents: 'https://staging.kurioticket.com' }), /forbidden/);
+  const withConfig = (mutate) => { const value = structuredClone(appConfig); mutate(value); return { ...input, appConfigSource: JSON.stringify(value) }; };
+  assert.throws(() => verifyProductionAab(withConfig((value) => { value.android.package = 'com.kurioticket.app.preview'; })), /application identity/);
+  assert.throws(() => verifyProductionAab(withConfig((value) => { value.extra.environment.apiBaseUrl = 'https://staging.kurioticket.com'; })), /Production environment/);
+  assert.throws(() => verifyProductionAab(withConfig((value) => { value.extra.environment.isPreview = true; })), /Production environment/);
+  assert.throws(() => verifyProductionAab(withConfig((value) => { value.runtimeVersion = 'preview-0.3.0'; })), /runtime/);
+  assert.throws(() => verifyProductionAab(withConfig((value) => { value.extra.environment.channel = 'preview'; })), /Production environment/);
+  assert.throws(() => verifyProductionAab({ ...input, appConfigSource: '' }), /missing or empty/);
+  assert.throws(() => verifyProductionAab({ ...input, appConfigSource: '{' }), /malformed JSON/);
+  assert.throws(() => verifyProductionAab(withConfig((value) => { value.extra.eas.projectId = '00000000-0000-4000-8000-000000000000'; })), /EAS project/);
 });
 test('Production update JSON is strictly bound to Android Production runtime and source', () => {
   const fixture = readFileSync(resolve(root, 'scripts/fixtures/production-eas/update-published.json'), 'utf8');
@@ -597,6 +612,9 @@ test('Production workflow separates structured stdout, validates results, and ne
   assert.match(workflow, /build:list --platform android --build-profile production --app-identifier com\.kurioticket\.app --app-version 0\.3\.0 --app-build-version "\$EXPECTED_BUILT_VERSION" --runtime-version production-0\.3\.0 --channel production --git-commit-hash "\$CHECKED_OUT_SHA" --status finished --limit 2 --json --non-interactive/);
   assert.match(workflow, /bundletool-all-1\.18\.3\.jar/);
   assert.match(workflow, /a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29/);
+  assert.match(workflow, /base\/assets\/app\.config > "\$RUNNER_TEMP\/aab-app-config\.json"/);
+  assert.match(workflow, /--app-config "\$RUNNER_TEMP\/aab-app-config\.json"/);
+  assert.doesNotMatch(workflow, /aab-contents\.txt|verify-production-aab\.mjs[^\n]*--contents\b/);
   assert.match(workflow, /verify-production-aab\.mjs/);
   assert.match(workflow, /verify-production-eas-result\.mjs --kind update/);
   assert.doesNotMatch(workflow, /--auto-submit|eas-cli@[^\n]*submit/);
