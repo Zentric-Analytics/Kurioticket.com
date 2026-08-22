@@ -212,9 +212,8 @@ export function DateStrip({
 }) {
   const { theme } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
-  // Reserve a generous next-tile peek after three compact tiles. The 43px deduction accounts
-  // for the leading inset and the three gaps before the peeking tile.
-  const flightDateWidth = Math.min(112, Math.max(90, (windowWidth - 43) / 3.4));
+  // Keep three dates fully visible while letting the narrower fourth tile peek into view.
+  const flightDateWidth = Math.min(96, Math.max(76, (windowWidth - 43) / 3.65));
   const [visibleStart, setVisibleStart] = useState(() =>
     initialDateWindowStart(date),
   );
@@ -256,7 +255,7 @@ export function DateStrip({
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               onPress={() => onSelect(iso)}
-              hitSlop={flightResults ? 4 : undefined}
+              hitSlop={flightResults ? 6 : undefined}
               style={({ pressed }) => [
                 s.date,
                 flightResults && s.flightDate,
@@ -493,11 +492,11 @@ export const s = StyleSheet.create({
     backgroundColor: "white",
   },
   flightDate: {
-    minWidth: 90,
-    maxWidth: 112,
-    height: 60,
-    paddingHorizontal: 4,
-    paddingVertical: 3,
+    minWidth: 76,
+    maxWidth: 96,
+    height: 50,
+    paddingHorizontal: 3,
+    paddingVertical: 2,
     borderRadius: 14,
     borderWidth: 0,
     shadowColor: "#18305B",
@@ -510,9 +509,9 @@ export const s = StyleSheet.create({
   datePressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   day: { fontSize: 12, lineHeight: 16, color: ui.muted },
   datePrice: { maxWidth: "100%", fontSize: 16, fontWeight: "800", color: ui.navy, marginTop: 1 },
-  flightDateWeekday: { width: "100%", fontSize: 12, fontWeight: "500", lineHeight: 15, letterSpacing: 0.1, textAlign: "center" },
-  flightDateLabel: { width: "100%", fontSize: 14, fontWeight: "600", lineHeight: 18, letterSpacing: -0.1, textAlign: "center" },
-  flightDatePrice: { width: "100%", height: 19, fontSize: 16, fontWeight: "700", textAlign: "center", lineHeight: 19, marginTop: 1, paddingHorizontal: 2 },
+  flightDateWeekday: { width: "100%", fontSize: 12, fontWeight: "500", lineHeight: 14, letterSpacing: 0.1, textAlign: "center" },
+  flightDateLabel: { width: "100%", fontSize: 13, fontWeight: "600", lineHeight: 15, letterSpacing: -0.1, textAlign: "center" },
+  flightDatePrice: { width: "100%", height: 17, fontSize: 15, fontWeight: "700", textAlign: "center", lineHeight: 17, paddingHorizontal: 1 },
   button: {
     height: 45,
     minWidth: 104,
