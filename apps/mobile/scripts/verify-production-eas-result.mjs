@@ -54,7 +54,7 @@ export function verifyProductionBuildResult({ source, historySource, aabEvidence
     [aab.activeApiOrigin === 'https://kurioticket.com' && aab.runtimeVersion === EXPECTED.runtime && aab.channel === EXPECTED.channel && aab.isPreview === false && aab.projectId === EXPECTED.projectId, 'Inspected AAB active Production configuration mismatch.'],
   ];
   for (const [ok, message] of checks) if (!ok) throw new Error(message);
-  return { kind: 'build', id: authoritative.id, status: authoritative.status, platform: authoritative.platform, package: EXPECTED.packageName, easPackageMetadata, projectId: EXPECTED.projectId, profile: authoritative.buildProfile, runtime: authoritative.runtimeVersion, channel: authoritative.channel, appVersion: authoritative.appVersion, versionCode: Number(authoritative.appBuildVersion), commitSha: authoritative.gitCommitHash, artifactType: 'AAB', artifactUrlPresent: true, aabInspected: true, signed: true };
+  return { kind: 'build', id: authoritative.id, status: authoritative.status, platform: authoritative.platform, package: EXPECTED.packageName, easPackageMetadata, projectId: EXPECTED.projectId, profile: authoritative.buildProfile, runtime: authoritative.runtimeVersion, channel: authoritative.channel, appVersion: authoritative.appVersion, versionCode: Number(authoritative.appBuildVersion), commitSha: authoritative.gitCommitHash, artifactType: 'AAB', artifactUrlPresent: true, aabInspected: true, signed: true, activeProductionIdentityVerified: true, activeApiOrigin: aab.activeApiOrigin, isPreview: aab.isPreview };
 }
 
 export function verifyProductionUpdateResult({ source, approvedSha }) {
