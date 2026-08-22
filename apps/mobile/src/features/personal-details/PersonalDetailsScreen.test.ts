@@ -64,7 +64,7 @@ test("country and nationality search selectors wait for an explicit search-field
     /<TextInput autoFocus accessibilityLabel=\{c\.searchCountry\}/,
   );
   assert.doesNotMatch(screen, /autoFocus/);
-  assert.match(screen, /if \(!visible\) return;[\s\S]*?Keyboard\.dismiss\(\)/);
+  assert.match(screen, /if \(!isOpening\) return;[\s\S]*?Keyboard\.dismiss\(\)/);
 });
 test("country query stays stable through native dismissal and resets after dismissal", () => {
   const selector = screen.slice(
@@ -74,7 +74,7 @@ test("country query stays stable through native dismissal and resets after dismi
   assert.match(selector, /const \[q, setQ\] = useState\(""\)/);
   assert.match(
     selector,
-    /useEffect\(\(\) => \{[\s\S]*?if \(!visible\) return;[\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, translateX, visible, width\]\)/,
+    /useEffect\(\(\) => \{[\s\S]*?if \(!isOpening\) return;[\s\S]*?setQ\(""\)[\s\S]*?\[selected, selectorType, translateX, visible, width\]\)/,
   );
   assert.match(
     selector,
@@ -203,6 +203,26 @@ test("country selector Save commits only the selected field immediately", () => 
   );
   assert.match(screen, /travelApi\.updateProfile\(payload\)/);
   assert.match(screen, /return saveCountrySelection\(kind, value\)/);
+});
+test("selector Save stays in Edit mode and merges only its committed value", () => {
+  const saveSelector = screen.slice(
+    screen.indexOf("const saveCountrySelection"),
+    screen.indexOf("const save = async"),
+  );
+  assert.doesNotMatch(saveSelector, /setEditing\(false\)/);
+  assert.match(saveSelector, /setDraft\(\(current\) => \{/);
+  assert.match(
+    saveSelector,
+    /kind === "phone"[\s\S]*?\.\.\.current,[\s\S]*?phoneCountryCode:/,
+  );
+  assert.match(
+    saveSelector,
+    /kind === "nationality"[\s\S]*?\.\.\.current,[\s\S]*?nationality:/,
+  );
+  assert.match(
+    saveSelector,
+    /address: serializeAddress\(\{[\s\S]*?\.\.\.parseAddress\(current\.address \|\| ""\),[\s\S]*?countryCode: value/,
+  );
 });
 test("only country controls use the full-screen selector", () => {
   assert.match(

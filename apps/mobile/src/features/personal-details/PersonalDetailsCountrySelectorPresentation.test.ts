@@ -22,6 +22,34 @@ test("country selector pushes horizontally like a native detail screen", () => {
   assert.match(selector, /transform: \[\{ translateX \}\]/);
 });
 
+test("enter animation runs only for a closed-to-open transition", () => {
+  const selector = screen.slice(
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
+  );
+
+  assert.match(selector, /const wasVisibleRef = useRef\(false\)/);
+  assert.match(
+    selector,
+    /const isOpening = visible && !wasVisibleRef\.current;\s*wasVisibleRef\.current = visible;\s*if \(!isOpening\) return;/,
+  );
+  assert.ok(
+    selector.indexOf("if (!isOpening) return") <
+      selector.indexOf("translateX.setValue(width)"),
+  );
+});
+
+test("a selected prop update cannot restart enter or interrupt exit", () => {
+  const selector = screen.slice(
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
+  );
+
+  assert.match(selector, /\[selected, selectorType, translateX, visible, width\]/);
+  assert.equal((selector.match(/translateX\.setValue\(width\)/g) ?? []).length, 1);
+  assert.match(selector, /if \(!isOpening\) return;[\s\S]*?translateX\.stopAnimation\(\)/);
+});
+
 test("country selector keeps first-open controls below the device status bar", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
@@ -71,6 +99,22 @@ test("country selector hides its save action while the keyboard is visible", () 
 
   assert.match(selector, /const \[keyboardVisible, setKeyboardVisible\] = useState\(false\)/);
   assert.match(selector, /Keyboard\.addListener\("keyboardDidShow"/);
+  assert.match(selector, /Keyboard\.addListener\("keyboardWillShow"/);
   assert.match(selector, /Keyboard\.addListener\("keyboardDidHide"/);
+  assert.match(selector, /onFocus=\{\(\) => setKeyboardVisible\(true\)\}/);
   assert.match(selector, /!keyboardVisible \? \(/);
+});
+
+test("row selection updates the draft and dismisses only the keyboard", () => {
+  const selector = screen.slice(
+    screen.indexOf("function CountrySelector("),
+    screen.indexOf("function CountryFlag("),
+  );
+  const rowHandler = selector.slice(
+    selector.indexOf("onPress={() => {", selector.indexOf("renderItem=")),
+    selector.indexOf("style={[s.countryOption", selector.indexOf("renderItem=")),
+  );
+
+  assert.match(rowHandler, /Keyboard\.dismiss\(\);\s*setDraftSelection\(item\.value\)/);
+  assert.doesNotMatch(rowHandler, /onClose|closeWithPushAnimation|onSave/);
 });
