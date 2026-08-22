@@ -87,7 +87,10 @@ import { useAppTheme } from "../../theme/AppTheme";
 import { buildFlightDetailParams } from "./flightDetailNavigation";
 import { withinFlightLoadingDeadline } from "./flightLoadingDeadline";
 import { startFlightSearchEventLoopMonitor } from "./flightSearchDiagnostics";
-import { buildRecentSearch, recordRecentSearchBestEffort } from "../recent/recentSearch";
+import {
+  buildRecentSearch,
+  recordRecentSearchBestEffort,
+} from "../recent/recentSearch";
 import { buildPriceByDate, calendarIsoFromTimestamp } from "./dateStripModel";
 import { flightResultCountLabel } from "./flightResultCount";
 import { flightCardLegs, type FlightCardLeg } from "./flightCardLegs";
@@ -123,30 +126,40 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [filterSection, setFilterSection] = useState<
     "all" | "stops" | "airlines" | "times"
   >("all");
-  const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
+  const [currencyState, setCurrencyState] = useState<{
+    resolution: DisplayCurrencyResolution;
+    rates: ExchangeRates;
+  } | null>(null);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
-  useFocusEffect(useCallback(() => {
-    let active = true;
-    const ratesRequest = currencyRatesRef.current
-      ? Promise.resolve(currencyRatesRef.current)
-      : travelApi.currencyRates().then((payload) => payload.rates).catch(() => ({}));
-    void Promise.all([
-      readCurrencyPreference().catch(() => null),
-      travelApi.location().catch(() => null),
-      ratesRequest,
-    ]).then(([preferredCurrency, location, rates]) => {
-      if (!active) return;
-      const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-      const resolution = resolveDisplayCurrencyContext({
-        preferredCurrency,
-        ipCountryCode: location?.countryCode,
-        locale,
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      const ratesRequest = currencyRatesRef.current
+        ? Promise.resolve(currencyRatesRef.current)
+        : travelApi
+            .currencyRates()
+            .then((payload) => payload.rates)
+            .catch(() => ({}));
+      void Promise.all([
+        readCurrencyPreference().catch(() => null),
+        travelApi.location().catch(() => null),
+        ratesRequest,
+      ]).then(([preferredCurrency, location, rates]) => {
+        if (!active) return;
+        const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+        const resolution = resolveDisplayCurrencyContext({
+          preferredCurrency,
+          ipCountryCode: location?.countryCode,
+          locale,
+        });
+        if (Object.keys(rates).length) currencyRatesRef.current = rates;
+        setCurrencyState({ resolution, rates });
       });
-      if (Object.keys(rates).length) currencyRatesRef.current = rates;
-      setCurrencyState({ resolution, rates });
-    });
-    return () => { active = false; };
-  }, []));
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
   const visualTest =
     process.env.EXPO_PUBLIC_VISUAL_TEST === "1" && one(params.visual) === "1";
   const load = useCallback(async () => {
@@ -171,20 +184,27 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setStatus("ready");
       return;
     }
-    const stopEventLoopMonitor = __DEV__ && product === "flight"
-      ? startFlightSearchEventLoopMonitor()
-      : undefined;
+    const stopEventLoopMonitor =
+      __DEV__ && product === "flight"
+        ? startFlightSearchEventLoopMonitor()
+        : undefined;
     try {
       const response =
         product === "flight"
           ? await withinFlightLoadingDeadline(
-              travelApi.searchFlights(plan.plan.payload, { signal: controller.signal, requestId }),
+              travelApi.searchFlights(plan.plan.payload, {
+                signal: controller.signal,
+                requestId,
+              }),
               () => {
                 deadlineExpired = true;
                 controller.abort("ui-deadline");
               },
             )
-          : await travelApi.searchHotels(plan.plan.payload, { signal: controller.signal, requestId });
+          : await travelApi.searchHotels(plan.plan.payload, {
+              signal: controller.signal,
+              requestId,
+            });
       if (!isCurrent()) return;
       const validationStartedAt = performance.now();
       const valid =
@@ -197,7 +217,9 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       setResults(valid);
       setStatus(valid.length ? "ready" : "empty");
       setMessage(response.warnings?.[0] || "");
-      void recordRecentSearchBestEffort(buildRecentSearch(product, plan.plan.payload));
+      void recordRecentSearchBestEffort(
+        buildRecentSearch(product, plan.plan.payload),
+      );
       if (__DEV__ && product === "flight") {
         console.info("[flight-search:client-processing]", {
           requestId,
@@ -209,21 +231,31 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       }
     } catch (e) {
       if (!isLatest()) return;
-      if (!deadlineExpired && (controller.signal.aborted || (e instanceof TravelApiError && e.code === "cancelled"))) return;
+      if (
+        !deadlineExpired &&
+        (controller.signal.aborted ||
+          (e instanceof TravelApiError && e.code === "cancelled"))
+      )
+        return;
       setStatus("error");
       setMessage(
         deadlineExpired ||
-        (e instanceof TravelApiError && e.code === "timeout") ||
-        (e instanceof Error && e.message === "flight_loading_deadline")
+          (e instanceof TravelApiError && e.code === "timeout") ||
+          (e instanceof Error && e.message === "flight_loading_deadline")
           ? "Flight search took too long. Please try again."
-          : e instanceof Error ? e.message : "Search failed",
+          : e instanceof Error
+            ? e.message
+            : "Search failed",
       );
     } finally {
       if (stopEventLoopMonitor) {
         // Let an overdue interval run before clearing it so a blocking parse or
         // validation phase at request completion is included in max drift.
         await new Promise((resolve) => setTimeout(resolve, 0));
-        console.info("[flight-search:event-loop]", { requestId, ...stopEventLoopMonitor() });
+        console.info("[flight-search:event-loop]", {
+          requestId,
+          ...stopEventLoopMonitor(),
+        });
       }
     }
   }, [product, plan.plan?.key, retry, visualTest]);
@@ -234,14 +266,22 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       activeSearch.current?.abort("screen-cleanup");
     };
   }, [load]);
-  useFocusEffect(useCallback(() => () => {
-    searchSequence.current += 1;
-    activeSearch.current?.abort("screen-blur");
-  }, []));
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        searchSequence.current += 1;
+        activeSearch.current?.abort("screen-blur");
+      },
+      [],
+    ),
+  );
   const edit = () => {
     activeSearch.current?.abort("edit-search");
     if (product === "flight") {
-      router.push({ pathname: "/edit-flight-search", params: flightEditSearchParams(params) });
+      router.push({
+        pathname: "/edit-flight-search",
+        params: flightEditSearchParams(params),
+      });
       return;
     }
     router.push({
@@ -262,19 +302,25 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         filters,
         sort,
         currencyState
-          ? (result) => convertAmount(result.price, result.currency, "USD", currencyState.rates)
+          ? (result) =>
+              convertAmount(
+                result.price,
+                result.currency,
+                "USD",
+                currencyState.rates,
+              )
           : undefined,
       );
     }
     return [...results].sort((a, b) =>
-        sort === "price"
-          ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
-          : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
-      );
+      sort === "price"
+        ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
+        : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
+    );
   }, [results, filters, sort, product, currencyState]);
   const flightOptions = useMemo(
-    () => flightFilterOptions(results as FlightResult[]),
-    [results],
+    () => flightFilterOptions(results as FlightResult[], currencyState ? result => convertAmount(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates) : undefined),
+    [results, currencyState],
   );
   const activeFilterCount = activeFlightFilterCount(filters);
   const openFlightFilters = (
@@ -290,183 +336,247 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       : payload.checkIn || new Date().toISOString().slice(0, 10),
   );
   const flightDisplayPrices = useMemo(() => {
-    if (product !== "flight" || !currencyState) return new Map<string, DisplayPrice>();
-    return new Map((results as FlightResult[]).map((result) => [
-      result.id,
-      displayPrice(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates),
-    ]));
+    if (product !== "flight" || !currencyState)
+      return new Map<string, DisplayPrice>();
+    return new Map(
+      (results as FlightResult[]).map((result) => [
+        result.id,
+        displayPrice(
+          result.price,
+          result.currency,
+          currencyState.resolution.resolvedCurrency,
+          currencyState.rates,
+        ),
+      ]),
+    );
   }, [currencyState, product, results]);
   const dateStripPriceByDate = useMemo(() => {
     if (product === "flight") {
-      return buildPriceByDate((results as FlightResult[]).flatMap((result) => {
-        const departureDate = calendarIsoFromTimestamp(result.departureTime);
-        const displayed = flightDisplayPrices.get(result.id);
-        return departureDate && displayed ? [{
-          date: departureDate,
-          amount: displayed.amount,
-          formatted: displayed.formatted,
-          accessibilityLabel: displayed.formatted,
-        }] : [];
-      }));
+      return buildPriceByDate(
+        (results as FlightResult[]).flatMap((result) => {
+          const departureDate = calendarIsoFromTimestamp(result.departureTime);
+          const displayed = flightDisplayPrices.get(result.id);
+          return departureDate && displayed
+            ? [
+                {
+                  date: departureDate,
+                  amount: displayed.amount,
+                  formatted: displayed.formatted,
+                  accessibilityLabel: displayed.formatted,
+                },
+              ]
+            : [];
+        }),
+      );
     }
     const lowest = (sorted as HotelResult[])[0]?.pricePerNight;
     return lowest == null ? {} : buildPriceByDate([{ date, amount: lowest }]);
   }, [date, flightDisplayPrices, product, results, sorted]);
   const dateStrip = (
     <DateStrip
-            date={date}
-            priceByDate={dateStripPriceByDate}
-            flightResults={product === "flight"}
-            onSelect={(v) =>
-              router.setParams(
-                product === "flight" ? { departureDate: v } : { checkIn: v },
-              )
-            }
-          />
+      date={date}
+      priceByDate={dateStripPriceByDate}
+      flightResults={product === "flight"}
+      onSelect={(v) =>
+        router.setParams(
+          product === "flight" ? { departureDate: v } : { checkIn: v },
+        )
+      }
+    />
   );
   const filterRail = (
     <ScrollView
-            horizontal
-            style={s0.filterRail}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s0.filters}
-          >
-            {product === "flight" ? (
-              <Pill
-                label="Sort"
-                active={sort === "price"}
-                flightResultsChevron
-                onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
-              />
-            ) : null}
-            <Pill
-              label={product === "flight" && activeFilterCount ? `Filter (${activeFilterCount})` : "Filter"}
-              active={product === "flight" && activeFilterCount > 0}
-              icon={product === "flight" ? undefined : "sliders"}
-              flightResultsIcon={product === "flight" ? "filters" : undefined}
-              onPress={() => product === "flight" ? openFlightFilters("all") :
-                Alert.alert(
-                  "Filters",
-                  "Filter controls use the current live result set.",
+      horizontal
+      style={s0.filterRail}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={s0.filters}
+    >
+      {product === "flight" ? (
+        <Pill
+          label="Sort"
+          active={sort === "price"}
+          flightResultsChevron
+          onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
+        />
+      ) : null}
+      <Pill
+        label={
+          product === "flight" && activeFilterCount
+            ? `Filter · ${activeFilterCount}`
+            : "Filter"
+        }
+        active={product === "flight" && activeFilterCount > 0}
+        icon={product === "flight" ? undefined : "sliders"}
+        flightResultsIcon={product === "flight" ? "filters" : undefined}
+        onPress={() =>
+          product === "flight"
+            ? openFlightFilters("all")
+            : Alert.alert(
+                "Filters",
+                "Filter controls use the current live result set.",
+              )
+        }
+      />
+      {(product === "flight"
+        ? ["Airlines", "Stops"]
+        : ["Price", "Guest rating", "Property type"]
+      ).map((x) => (
+        <Pill
+          key={x}
+          label={x}
+          active={
+            product === "flight" &&
+            (x === "Stops"
+              ? filters.stops.length > 0
+              : x === "Airlines"
+                ? filters.airlines.length > 0
+                : x === "Times"
+                  ? filters.departureTimes.length + filters.arrivalTimes.length > 0
+                  : false)
+          }
+          flightResultsChevron={product === "flight"}
+          onPress={() =>
+            product === "flight"
+              ? openFlightFilters(
+                  x.toLowerCase() as "stops" | "airlines" | "times",
                 )
-              }
-            />
-            {(product === "flight"
-              ? ["Airlines", "Stops"]
-              : ["Price", "Guest rating", "Property type"]
-            ).map((x) => (
-              <Pill
-                key={x}
-                label={x}
-                active={product === "flight" && (
-                  x === "Stops" ? filters.stops.length > 0 :
-                  x === "Airlines" ? filters.airlines.length > 0 :
-                  x === "Times" ? filters.times.length > 0 : false
-                )}
-                flightResultsChevron={product === "flight"}
-                onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines" | "times") :
-                  Alert.alert(
-                    x,
-                    "No additional values are available from this search response.",
-                  )
-                }
-              />
-            ))}
-            {product === "hotel" ? (
-              <Pill
-                label={`Sort: ${sort === "price" ? "Price" : "Recommended"}`}
-                active
-                onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
-              />
-            ) : null}
-          </ScrollView>
+              : Alert.alert(
+                  x,
+                  "No additional values are available from this search response.",
+                )
+          }
+        />
+      ))}
+      {product === "hotel" ? (
+        <Pill
+          label={`Sort: ${sort === "price" ? "Price" : "Recommended"}`}
+          active
+          onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
+        />
+      ) : null}
+    </ScrollView>
   );
   const resultContent = (
     <>
       {status === "loading" ? <Loading product={product} /> : null}
-              {message ? (
-                <Text accessibilityRole="alert" style={[s0.notice, flightResults && { backgroundColor: theme.surface, color: theme.textPrimary, borderColor: theme.border, borderWidth: 1 }]}>
-                  {message}
-                </Text>
-              ) : null}
-              {status === "empty" ? (
-                <Empty
-                  title={`No ${product === "flight" ? "flights" : "properties"} found`}
-                  body="Try changing your dates or removing filters."
-                  retry={() => setRetry((x) => x + 1)}
-                  edit={edit}
-                  flightResults={flightResults}
-                />
-              ) : null}
-              {status === "error" ? (
-                <Empty
-                  title="Search could not be completed"
-                  body={message || "Check your connection and try again."}
-                  retry={() => setRetry((x) => x + 1)}
-                  edit={edit}
-                  flightResults={flightResults}
-                />
-              ) : null}
-              {status === "ready" && product === "flight" && plan.plan ? (
-                <PriceAlert product={product} plan={plan.plan} results={results as FlightResult[]} available={availability.priceAlerts} />
-              ) : null}
-              {status === "ready" && product === "hotel" ? (
-                <View style={s0.found}>
-                  <View style={s0.foundCopy}>
-                    <Text style={s0.foundTitle}>
-                      {sorted.length} properties found
-                    </Text>
-                    <Text style={s0.sub}>
-                      Prices include taxes and fees when reported by the provider
-                    </Text>
-                  </View>
-                  <Button
-                    label="Map view"
-                    outline
-                    onPress={() =>
-                      Alert.alert(
-                        "Map view",
-                        "Map inventory is not available from this provider response.",
-                      )
-                    }
-                  />
-                </View>
-              ) : null}
-              {sorted.map((x, i) =>
-                product === "flight" ? (
-                  <FlightCard key={x.id} result={x as FlightResult} displayPrice={flightDisplayPrices.get(x.id)} displayCurrencyContext={currencyState?.resolution} rank={i} params={params} />
-                ) : (
-                  <HotelCard
-                    key={x.id}
-                    result={x as HotelResult}
-                    rank={i}
-                    params={params}
-                  />
-                ),
-              )}
-              {status === "ready" && product === "flight" && results.length > 0 && sorted.length === 0 ? (
-                <Empty
-                  title="No flights match these filters"
-                  body="Clear the selected filters to see all loaded flights."
-                  retry={() => setFilters(emptyFlightFilters())}
-                  retryLabel="Clear filters"
-                  edit={edit}
-                  flightResults
-                />
-              ) : null}
-              {status === "ready" && product === "hotel" && availability.priceAlerts ? <PriceAlert product={product} /> : null}
+      {message ? (
+        <Text
+          accessibilityRole="alert"
+          style={[
+            s0.notice,
+            flightResults && {
+              backgroundColor: theme.surface,
+              color: theme.textPrimary,
+              borderColor: theme.border,
+              borderWidth: 1,
+            },
+          ]}
+        >
+          {message}
+        </Text>
+      ) : null}
+      {status === "empty" ? (
+        <Empty
+          title={`No ${product === "flight" ? "flights" : "properties"} found`}
+          body="Try changing your dates or removing filters."
+          retry={() => setRetry((x) => x + 1)}
+          edit={edit}
+          flightResults={flightResults}
+        />
+      ) : null}
+      {status === "error" ? (
+        <Empty
+          title="Search could not be completed"
+          body={message || "Check your connection and try again."}
+          retry={() => setRetry((x) => x + 1)}
+          edit={edit}
+          flightResults={flightResults}
+        />
+      ) : null}
+      {status === "ready" && product === "flight" && plan.plan ? (
+        <PriceAlert
+          product={product}
+          plan={plan.plan}
+          results={results as FlightResult[]}
+          available={availability.priceAlerts}
+        />
+      ) : null}
+      {status === "ready" && product === "hotel" ? (
+        <View style={s0.found}>
+          <View style={s0.foundCopy}>
+            <Text style={s0.foundTitle}>{sorted.length} properties found</Text>
+            <Text style={s0.sub}>
+              Prices include taxes and fees when reported by the provider
+            </Text>
+          </View>
+          <Button
+            label="Map view"
+            outline
+            onPress={() =>
+              Alert.alert(
+                "Map view",
+                "Map inventory is not available from this provider response.",
+              )
+            }
+          />
+        </View>
+      ) : null}
+      {sorted.map((x, i) =>
+        product === "flight" ? (
+          <FlightCard
+            key={x.id}
+            result={x as FlightResult}
+            displayPrice={flightDisplayPrices.get(x.id)}
+            displayCurrencyContext={currencyState?.resolution}
+            rank={i}
+            params={params}
+          />
+        ) : (
+          <HotelCard
+            key={x.id}
+            result={x as HotelResult}
+            rank={i}
+            params={params}
+          />
+        ),
+      )}
+      {status === "ready" &&
+      product === "flight" &&
+      results.length > 0 &&
+      sorted.length === 0 ? (
+        <Empty
+          title="No flights match these filters"
+          body="Clear the selected filters to see all loaded flights."
+          retry={() => setFilters(emptyFlightFilters())}
+          retryLabel="Clear filters"
+          edit={edit}
+          flightResults
+        />
+      ) : null}
+      {status === "ready" && product === "hotel" && availability.priceAlerts ? (
+        <PriceAlert product={product} />
+      ) : null}
     </>
   );
   return (
-    <SafeAreaView style={[s0.safe, flightResults && { backgroundColor: theme.background }]} edges={["top"]}>
+    <SafeAreaView
+      style={[s0.safe, flightResults && { backgroundColor: theme.background }]}
+      edges={["top"]}
+    >
       {flightResults ? (
         <FlightResultsHeader
           route={`${String(payload.origin || "").toUpperCase()} ${payload.tripType === "one-way" ? "→" : "⇄"} ${String(payload.destination || "").toUpperCase()}`}
-          dateRange={payload.tripType === "one-way"
-            ? shortDate(String(payload.departureDate || ""))
-            : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`}
+          dateRange={
+            payload.tripType === "one-way"
+              ? shortDate(String(payload.departureDate || ""))
+              : `${shortDate(String(payload.departureDate || ""))} – ${shortDate(String(payload.returnDate || ""))}`
+          }
           travelerCount={Number(payload.travelers)}
-          tripTypeLabel={FLIGHT_TRIP_TYPE_LABELS[payload.tripType === "round-trip" ? "round-trip" : "one-way"]}
+          tripTypeLabel={
+            FLIGHT_TRIP_TYPE_LABELS[
+              payload.tripType === "round-trip" ? "round-trip" : "one-way"
+            ]
+          }
           cabinClass={String(payload.cabinClass || "economy")}
           onEdit={edit}
         />
@@ -496,7 +606,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           contentContainerStyle={s0.flightResultsContent}
         >
           <View>{dateStrip}</View>
-          <View style={[s0.stickyFilterSurface, { backgroundColor: theme.background }]}>
+          <View
+            style={[
+              s0.stickyFilterSurface,
+              { backgroundColor: theme.background },
+            ]}
+          >
             {status === "ready" ? (
               <Text
                 accessibilityRole="header"
@@ -513,7 +628,14 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         <>
           {dateStrip}
           {filterRail}
-          <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={s0.body} overScrollMode="never">{resultContent}</ScrollView>
+          <ScrollView
+            alwaysBounceVertical={false}
+            bounces={false}
+            contentContainerStyle={s0.body}
+            overScrollMode="never"
+          >
+            {resultContent}
+          </ScrollView>
         </>
       )}
       {product === "flight" ? (
@@ -552,19 +674,31 @@ function FlightResultsHeader({
       accessibilityLabel="Flight search summary"
       style={[s0.flightHeader, { backgroundColor: theme.background }]}
     >
-      <View accessibilityLabel="Flight route controls" style={s0.flightHeaderMainRow}>
+      <View
+        accessibilityLabel="Flight route controls"
+        style={s0.flightHeaderMainRow}
+      >
         <View style={s0.flightHeaderSide}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Go back"
             onPress={() => router.back()}
-            style={({ pressed }) => [s0.flightHeaderBack, pressed && s0.flightHeaderControlPressed]}
+            style={({ pressed }) => [
+              s0.flightHeaderBack,
+              pressed && s0.flightHeaderControlPressed,
+            ]}
           >
             <ArrowLeft size={25} strokeWidth={2} color={theme.icon} />
           </Pressable>
         </View>
         <View style={s0.flightHeaderRouteBlock}>
-          <Text style={[s0.route, s0.flightHeaderRoute, { color: theme.textPrimary }]}>
+          <Text
+            style={[
+              s0.route,
+              s0.flightHeaderRoute,
+              { color: theme.textPrimary },
+            ]}
+          >
             {route}
           </Text>
         </View>
@@ -577,7 +711,9 @@ function FlightResultsHeader({
             pressed && s0.flightHeaderControlPressed,
           ]}
         >
-          <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>Edit</Text>
+          <Text style={[s0.flightHeaderEditText, { color: theme.textPrimary }]}>
+            Edit
+          </Text>
         </Pressable>
       </View>
       <View style={s0.flightHeaderMetadataAlignmentRow}>
@@ -589,16 +725,68 @@ function FlightResultsHeader({
           style={s0.flightHeaderMetadataScroller}
           contentContainerStyle={s0.flightHeaderMetadataRow}
         >
-          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{tripTypeLabel}</Text>
-          <Text style={[s0.flightHeaderMetadataSeparator, { color: theme.textSecondary }]}>·</Text>
-          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>{dateRange}</Text>
-          <Text style={[s0.flightHeaderMetadataSeparator, { color: theme.textSecondary }]}>·</Text>
-          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
+          <Text
+            numberOfLines={1}
+            style={[
+              s0.flightHeaderMetadataText,
+              { color: theme.textSecondary },
+            ]}
+          >
+            {tripTypeLabel}
+          </Text>
+          <Text
+            style={[
+              s0.flightHeaderMetadataSeparator,
+              { color: theme.textSecondary },
+            ]}
+          >
+            ·
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={[
+              s0.flightHeaderMetadataText,
+              { color: theme.textSecondary },
+            ]}
+          >
+            {dateRange}
+          </Text>
+          <Text
+            style={[
+              s0.flightHeaderMetadataSeparator,
+              { color: theme.textSecondary },
+            ]}
+          >
+            ·
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={[
+              s0.flightHeaderMetadataText,
+              { color: theme.textSecondary },
+            ]}
+          >
             {travelerCount} {travelerCount === 1 ? "Traveler" : "Travelers"}
           </Text>
-          <Text style={[s0.flightHeaderMetadataSeparator, { color: theme.textSecondary }]}>·</Text>
-          <Text numberOfLines={1} style={[s0.flightHeaderMetadataText, { color: theme.textSecondary }]}>
-            {cabinClass.split("-").map((word) => word[0]?.toUpperCase() + word.slice(1)).join(" ")}
+          <Text
+            style={[
+              s0.flightHeaderMetadataSeparator,
+              { color: theme.textSecondary },
+            ]}
+          >
+            ·
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={[
+              s0.flightHeaderMetadataText,
+              { color: theme.textSecondary },
+            ]}
+          >
+            {cabinClass
+              .split("-")
+              .map((word) => word[0]?.toUpperCase() + word.slice(1))
+              .join(" ")}
           </Text>
         </ScrollView>
       </View>
@@ -638,83 +826,218 @@ function FlightFilterModal({
   useEffect(() => {
     if (visible) setDraft(filters);
   }, [visible, filters]);
-  const toggle = (key: keyof FlightFilters, value: string) =>
-    setDraft((current) => ({
-      ...current,
-      [key]: current[key].includes(value as never)
-        ? current[key].filter((item) => item !== value)
-        : [...current[key], value],
-    }) as FlightFilters);
+  const toggle = (key: "stops" | "airlines" | "departureTimes" | "arrivalTimes" | "originAirports" | "destinationAirports", value: string) =>
+    setDraft(
+      (current) =>
+        ({
+          ...current,
+          [key]: current[key].includes(value as never)
+            ? current[key].filter((item) => item !== value)
+            : [...current[key], value],
+        }) as FlightFilters,
+    );
   const choices = (
-    key: keyof FlightFilters,
+    key: "stops" | "airlines" | "departureTimes" | "arrivalTimes" | "originAirports" | "destinationAirports",
     values: readonly string[],
     labels?: Record<string, string>,
-  ) => values.length ? (
-    <View style={s0.choiceRow}>
-      {values.map((value) => {
-        const selected = draft[key].includes(value as never);
-        return (
-          <Pressable
-            key={value}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: selected }}
-            onPress={() => toggle(key, value)}
-            style={[s0.choice, { backgroundColor: theme.surface, borderColor: theme.border }, selected && s0.choiceActive, selected && theme.dark && { backgroundColor: "#142B55", borderColor: ui.blue }]}
-          >
-            <Text style={[s0.choiceText, { color: theme.textPrimary }, selected && s0.choiceTextActive]}>
-              {labels?.[value] || value}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  ) : <Text style={[s0.noChoices, { color: theme.textSecondary }]}>No additional values are available in these results.</Text>;
+  ) =>
+    values.length ? (
+      <View style={s0.choiceRow}>
+        {values.map((value) => {
+          const selected = draft[key].includes(value as never);
+          return (
+            <Pressable
+              key={value}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: selected }}
+              onPress={() => toggle(key, value)}
+              style={[
+                s0.choice,
+                { backgroundColor: theme.surface, borderColor: theme.border },
+                selected && s0.choiceActive,
+                selected &&
+                  theme.dark && {
+                    backgroundColor: "#142B55",
+                    borderColor: ui.blue,
+                  },
+              ]}
+            >
+              <Text
+                style={[
+                  s0.choiceText,
+                  { color: theme.textPrimary },
+                  selected && s0.choiceTextActive,
+                ]}
+              >
+                {labels?.[value] || value}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    ) : (
+      <Text style={[s0.noChoices, { color: theme.textSecondary }]}>
+        No additional values are available in these results.
+      </Text>
+    );
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      accessibilityViewIsModal
+    >
       <View style={s0.modalBackdrop}>
-        <View style={[s0.sheet, { paddingBottom: Math.max(inset.bottom, 18), backgroundColor: theme.surface }]} accessibilityLabel="Flight filters">
+        <View
+          style={[
+            s0.sheet,
+            {
+              paddingBottom: Math.max(inset.bottom, 18),
+              backgroundColor: theme.surface,
+            },
+          ]}
+          accessibilityLabel="Flight filters"
+        >
           <View style={s0.sheetHead}>
-            <Text accessibilityRole="header" style={[s0.foundTitle, { color: theme.textPrimary }]}>Filter flights</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={s0.closeButton}>
+            <Text
+              accessibilityRole="header"
+              style={[s0.foundTitle, { color: theme.textPrimary }]}
+            >
+              Filters
+            </Text>
+            <Pressable accessibilityRole="button" onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }}><Text style={s0.clearAll}>Clear all</Text></Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close filters"
+              onPress={onClose}
+              style={s0.closeButton}
+            >
               <FlowIcon name="close" color={theme.icon} />
             </Pressable>
           </View>
-          <ScrollView style={s0.sheetScroll} contentContainerStyle={s0.sheetContent} showsVerticalScrollIndicator={false}>
-            {section === "all" || section === "stops" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Stops</Text>{choices("stops", options.stops, stopLabels)}</View> : null}
-            {section === "all" || section === "airlines" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Airlines</Text>{choices("airlines", options.airlines)}</View> : null}
-            {section === "all" || section === "times" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Departure time</Text>{choices("times", options.times, timeLabels)}</View> : null}
+          <ScrollView
+            style={s0.sheetScroll}
+            contentContainerStyle={s0.sheetContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {section === "all" && options.price ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Price</Text><Text style={[s0.noChoices, { color: theme.textSecondary }]}>{options.currency} {Math.round(draft.price?.min ?? options.price.min)} — {options.currency} {Math.round(draft.price?.max ?? options.price.max)}</Text><Pressable accessibilityRole="checkbox" accessibilityState={{ checked: Boolean(draft.price) }} onPress={() => setDraft(current => ({ ...current, price: current.price ? null : { min: options.price!.min, max: (options.price!.min + options.price!.max) / 2 } }))} style={[s0.choice, { borderColor: theme.border }, draft.price && s0.choiceActive]}><Text style={[s0.choiceText, { color: theme.textPrimary }]}>Lower fare range</Text></Pressable></View> : null}
+            {section === "all" || section === "times" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Times</Text><Text style={[s0.filterSubhead, { color: theme.textSecondary }]}>Takeoff</Text>{choices("departureTimes", options.departureTimes, timeLabels)}<Text style={[s0.filterSubhead, { color: theme.textSecondary }]}>Landing</Text>{choices("arrivalTimes", options.arrivalTimes, timeLabels)}</View> : null}
+            {section === "all" && options.duration ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Duration</Text><Text style={[s0.noChoices, { color: theme.textSecondary }]}>{Math.floor((draft.duration?.min ?? options.duration.min)/60)}h {(draft.duration?.min ?? options.duration.min)%60}m — {Math.floor((draft.duration?.max ?? options.duration.max)/60)}h {(draft.duration?.max ?? options.duration.max)%60}m</Text><Pressable accessibilityRole="checkbox" accessibilityState={{ checked: Boolean(draft.duration) }} onPress={() => setDraft(current => ({ ...current, duration: current.duration ? null : { min: options.duration!.min, max: (options.duration!.min + options.duration!.max) / 2 } }))} style={[s0.choice, { borderColor: theme.border }, draft.duration && s0.choiceActive]}><Text style={[s0.choiceText, { color: theme.textPrimary }]}>Shorter trips</Text></Pressable></View> : null}
+            {section === "all" || section === "stops" ? (
+              <View style={s0.filterSection}>
+                <Text
+                  style={[s0.filterSectionTitle, { color: theme.textPrimary }]}
+                >
+                  Stops
+                </Text>
+                {choices("stops", options.stops, stopLabels)}
+              </View>
+            ) : null}
+            {section === "all" || section === "airlines" ? (
+              <View style={s0.filterSection}>
+                <Text
+                  style={[s0.filterSectionTitle, { color: theme.textPrimary }]}
+                >
+                  Airlines
+                </Text>
+                {choices("airlines", options.airlines)}
+              </View>
+            ) : null}
+            {section === "all" && (options.originAirports.length > 1 || options.destinationAirports.length > 1) ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Airports</Text>{options.originAirports.length > 1 ? <><Text style={[s0.filterSubhead, { color: theme.textSecondary }]}>Origin</Text>{choices("originAirports", options.originAirports)}</> : null}{options.destinationAirports.length > 1 ? <><Text style={[s0.filterSubhead, { color: theme.textSecondary }]}>Destination</Text>{choices("destinationAirports", options.destinationAirports)}</> : null}</View> : null}
+            {section === "all" && (options.amenities.baggageIncluded || options.amenities.refundable) ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Amenities</Text>{options.amenities.baggageIncluded ? <View style={s0.toggleRow}><Text style={[s0.choiceText, { color: theme.textPrimary }]}>Baggage included</Text><Switch value={draft.baggageIncluded} onValueChange={value => setDraft(current => ({ ...current, baggageIncluded: value }))} /></View> : null}{options.amenities.refundable ? <View style={s0.toggleRow}><Text style={[s0.choiceText, { color: theme.textPrimary }]}>Flexible / refundable</Text><Switch value={draft.refundable} onValueChange={value => setDraft(current => ({ ...current, refundable: value }))} /></View> : null}</View> : null}
           </ScrollView>
           <View style={s0.sheetActions}>
-            <Button label="Apply filters" flightResults onPress={() => { onChange(draft); onClose(); }} />
-            <Button label="Clear filters" outline flightResults onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} />
+            <Button
+              label="Show flights"
+              flightResults
+              onPress={() => {
+                onChange(draft);
+                onClose();
+              }}
+            />
+
           </View>
         </View>
       </View>
     </Modal>
   );
 }
-function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; rank: number; params: Record<string, string | string[]> }) {
+function FlightCard({
+  result,
+  displayPrice: fare,
+  displayCurrencyContext,
+  rank,
+  params,
+}: {
+  result: FlightResult;
+  displayPrice?: DisplayPrice;
+  displayCurrencyContext?: DisplayCurrencyResolution;
+  rank: number;
+  params: Record<string, string | string[]>;
+}) {
   const { theme } = useAppTheme();
   const { savedFlights, toggle } = useSavedFlights();
   const saved = savedFlights.has(result.id);
   const roundTrip = one(params.tripType) === "round-trip";
   const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
   return (
-    <View style={[s0.card, { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : "#18305B" }]}>
+    <View
+      style={[
+        s0.card,
+        {
+          backgroundColor: theme.surface,
+          shadowColor: theme.dark ? "#000000" : "#18305B",
+        },
+      ]}
+    >
       <View style={s0.cardTop}>
         {rank === 0 ? (
           <View style={s0.badgeRow}>
-            <View style={[s0.resultBadge, theme.dark && { backgroundColor: "#173568" }]}>
-              <Award size={12} strokeWidth={2} color={theme.dark ? "#8FB5FF" : ui.blue} />
-              <Text style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}>Best overall</Text>
+            <View
+              style={[
+                s0.resultBadge,
+                theme.dark && { backgroundColor: "#173568" },
+              ]}
+            >
+              <Award
+                size={12}
+                strokeWidth={2}
+                color={theme.dark ? "#8FB5FF" : ui.blue}
+              />
+              <Text
+                style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}
+              >
+                Best overall
+              </Text>
             </View>
-            <View style={[s0.resultBadge, s0.resultBadgeGreen, theme.dark && { backgroundColor: "#153B2B" }]}>
-              <Tag size={12} strokeWidth={2} color={theme.dark ? "#72D69A" : ui.green} />
-              <Text style={[s0.resultBadgeText, s0.resultBadgeTextGreen, theme.dark && { color: "#72D69A" }]}>Great price</Text>
+            <View
+              style={[
+                s0.resultBadge,
+                s0.resultBadgeGreen,
+                theme.dark && { backgroundColor: "#153B2B" },
+              ]}
+            >
+              <Tag
+                size={12}
+                strokeWidth={2}
+                color={theme.dark ? "#72D69A" : ui.green}
+              />
+              <Text
+                style={[
+                  s0.resultBadgeText,
+                  s0.resultBadgeTextGreen,
+                  theme.dark && { color: "#72D69A" },
+                ]}
+              >
+                Great price
+              </Text>
             </View>
           </View>
         ) : rank === 1 ? (
-          <Badge green flightResults>2nd best</Badge>
+          <Badge green flightResults>
+            2nd best
+          </Badge>
         ) : (
           <Badge flightResults>
             {result.stops
@@ -724,10 +1047,17 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
         )}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
+          accessibilityLabel={
+            saved
+              ? `Remove ${result.airlineName} flight from saved`
+              : `Save ${result.airlineName} flight`
+          }
           accessibilityState={{ selected: saved }}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          onPress={(event) => { event.stopPropagation(); toggle(result); }}
+          onPress={(event) => {
+            event.stopPropagation();
+            toggle(result);
+          }}
           style={({ pressed }) => pressed && s0.favoritePressed}
         >
           <Heart
@@ -750,26 +1080,48 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
             </Text>
           </View>
           <FlightJourneyRow label="OUTBOUND" leg={outbound} />
-          {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
+          {returnLeg ? (
+            <FlightJourneyRow label="RETURN" leg={returnLeg} />
+          ) : null}
         </View>
       </View>
       <View style={s0.benefits}>
         <View style={s0.benefitList}>
           <View style={s0.benefitItem}>
             <Luggage size={15} strokeWidth={1.9} color={theme.icon} />
-            <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{summarizeBaggage(result.baggageInfo)}</Text>
+            <Text
+              style={[s0.benefit, { color: theme.textSecondary }]}
+              numberOfLines={1}
+            >
+              {summarizeBaggage(result.baggageInfo)}
+            </Text>
           </View>
           <View style={s0.benefitItem}>
             <Armchair size={15} strokeWidth={1.9} color={theme.icon} />
-            <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>Seat unavailable</Text>
+            <Text
+              style={[s0.benefit, { color: theme.textSecondary }]}
+              numberOfLines={1}
+            >
+              Seat unavailable
+            </Text>
           </View>
           <View style={s0.benefitItem}>
             <ShieldCheck size={15} strokeWidth={1.9} color={theme.icon} />
-            <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{summarizeFareRules(result.refundInfo)}</Text>
+            <Text
+              style={[s0.benefit, { color: theme.textSecondary }]}
+              numberOfLines={1}
+            >
+              {summarizeFareRules(result.refundInfo)}
+            </Text>
           </View>
         </View>
         <View style={[s0.actionColumn, s0.rightColumnContract]}>
-          <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          <Text
+            style={[s0.bigPrice, { color: theme.textPrimary }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
             {fare?.formatted ?? "—"}
           </Text>
           <Pressable
@@ -779,36 +1131,63 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
             onPress={() =>
               router.push({
                 pathname: "/flight-details",
-                params: buildFlightDetailParams({ searchParams: params, result, fare, displayCurrencyContext }),
+                params: buildFlightDetailParams({
+                  searchParams: params,
+                  result,
+                  fare,
+                  displayCurrencyContext,
+                }),
               })
             }
           >
-            <Text style={s0.detailsButtonText} numberOfLines={1}>View details</Text>
+            <Text style={s0.detailsButtonText} numberOfLines={1}>
+              View details
+            </Text>
           </Pressable>
         </View>
       </View>
     </View>
   );
 }
-function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: FlightCardLeg }) {
+function FlightJourneyRow({
+  label,
+  leg,
+}: {
+  label: "OUTBOUND" | "RETURN";
+  leg: FlightCardLeg;
+}) {
   const { theme } = useAppTheme();
   const stopLabel = leg.stops
     ? `${leg.stops} stop${leg.stops === 1 ? "" : "s"}`
     : "Nonstop";
   return (
     <View style={s0.journeyBlock}>
-      <Text style={[s0.journeyLabel, { color: theme.textSecondary }]}>{label}</Text>
+      <Text style={[s0.journeyLabel, { color: theme.textSecondary }]}>
+        {label}
+      </Text>
       <View style={s0.journeyRow}>
         <View style={s0.durationRow}>
           <View style={s0.departureColumn} />
           <View style={s0.timelineColumn}>
-            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.duration}</Text>
+            <Text
+              style={[s0.sub, { color: theme.textSecondary }]}
+              numberOfLines={1}
+            >
+              {leg.duration}
+            </Text>
           </View>
           <View style={s0.arrivalColumn} />
         </View>
         <View style={s0.timeTimelineRow}>
           <View style={s0.departureColumn}>
-            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
+            <Text
+              style={[s0.time, { color: theme.textPrimary }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+            >
+              {clock(leg.departureTime)}
+            </Text>
           </View>
           <View style={s0.timelineTrack}>
             <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
@@ -816,18 +1195,37 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
             <View style={[s0.line, { backgroundColor: theme.textSecondary }]} />
           </View>
           <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
-            <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.arrivalTime)}</Text>
+            <Text
+              style={[s0.time, { color: theme.textPrimary }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+            >
+              {clock(leg.arrivalTime)}
+            </Text>
           </View>
         </View>
         <View style={s0.airportStopRow}>
           <View style={s0.departureColumn}>
-            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport}</Text>
+            <Text
+              style={[s0.sub, { color: theme.textSecondary }]}
+              numberOfLines={1}
+            >
+              {leg.originAirport}
+            </Text>
           </View>
           <View style={s0.timelineColumn}>
-            <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
+            <Text style={s0.nonstop} numberOfLines={1}>
+              {stopLabel}
+            </Text>
           </View>
           <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
-            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
+            <Text
+              style={[s0.sub, { color: theme.textSecondary }]}
+              numberOfLines={1}
+            >
+              {leg.destinationAirport}
+            </Text>
           </View>
         </View>
       </View>
@@ -844,7 +1242,15 @@ function HotelCard({
   params: Record<string, string | string[]>;
 }) {
   const canonical = useCanonicalSaved();
-  const saved = canonical.items.some(item => item.type === "hotel" && ((item.payload as Record<string, unknown> | undefined)?.result as { id?: string } | undefined)?.id === result.id);
+  const saved = canonical.items.some(
+    (item) =>
+      item.type === "hotel" &&
+      (
+        (item.payload as Record<string, unknown> | undefined)?.result as
+          | { id?: string }
+          | undefined
+      )?.id === result.id,
+  );
   const compact = useWindowDimensions().width < 430;
   const score =
     result.reviewScore == null
@@ -876,7 +1282,10 @@ function HotelCard({
         </View>
       </View>
       <View style={[s0.hotelCopy, compact && s0.hotelCopyCompact]}>
-        <Pressable onPress={() => void canonical.toggleHotel(result, params)} style={s0.heart}>
+        <Pressable
+          onPress={() => void canonical.toggleHotel(result, params)}
+          style={s0.heart}
+        >
           <FlowIcon name="heart" fill={saved ? ui.blue : "white"} />
         </Pressable>
         <Text style={s0.hotelName}>{result.name}</Text>
@@ -966,7 +1375,10 @@ function Loading({ product }: { product: Product }) {
         <Text
           accessibilityRole="text"
           accessibilityLiveRegion="polite"
-          style={[s0.loadingText, product === "flight" && { color: theme.textPrimary }]}
+          style={[
+            s0.loadingText,
+            product === "flight" && { color: theme.textPrimary },
+          ]}
         >
           Searching available {product === "flight" ? "flights" : "stays"}…
         </Text>
@@ -984,16 +1396,36 @@ function Loading({ product }: { product: Product }) {
   );
 }
 
-function SkeletonLine({ style, flightResults = false }: { style?: object; flightResults?: boolean }) {
+function SkeletonLine({
+  style,
+  flightResults = false,
+}: {
+  style?: object;
+  flightResults?: boolean;
+}) {
   const { theme } = useAppTheme();
-  return <View style={[s0.skeletonLine, flightResults && { backgroundColor: theme.border }, style]} />;
+  return (
+    <View
+      style={[
+        s0.skeletonLine,
+        flightResults && { backgroundColor: theme.border },
+        style,
+      ]}
+    />
+  );
 }
 
 function FlightLoadingSkeleton() {
   const { theme } = useAppTheme();
   const placeholder = { backgroundColor: theme.border };
   return (
-    <View style={[s0.skeletonCard, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityElementsHidden>
+    <View
+      style={[
+        s0.skeletonCard,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+      ]}
+      accessibilityElementsHidden
+    >
       <View style={s0.skeletonTopRow}>
         <View style={[s0.skeletonBadge, placeholder]} />
         <View style={[s0.skeletonHeart, placeholder]} />
@@ -1050,12 +1482,27 @@ function HotelLoadingSkeleton() {
     </View>
   );
 }
-function PriceAlert({ product, plan, results, available = true }: { product: Product; plan?: SearchPlan; results?: FlightResult[]; available?: boolean }) {
+function PriceAlert({
+  product,
+  plan,
+  results,
+  available = true,
+}: {
+  product: Product;
+  plan?: SearchPlan;
+  results?: FlightResult[];
+  available?: boolean;
+}) {
   const { theme } = useAppTheme();
   const flight = product === "flight";
-  const presentation = useMemo(() => flightAlertPresentation(product, Boolean(plan), results || []), [plan?.key, product, results]);
+  const presentation = useMemo(
+    () => flightAlertPresentation(product, Boolean(plan), results || []),
+    [plan?.key, product, results],
+  );
   const currency = presentation.currencies[0] || "";
-  const [matchingAlert, setMatchingAlert] = useState<MobilePriceAlert | undefined>();
+  const [matchingAlert, setMatchingAlert] = useState<
+    MobilePriceAlert | undefined
+  >();
   const [loadingAlert, setLoadingAlert] = useState(flight);
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
@@ -1064,74 +1511,159 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
   const [targetError, setTargetError] = useState("");
   const isTracking = matchingAlert?.status === "ACTIVE";
   const unavailable = !presentation.enabled || (!available && !isTracking);
-  const requireSignIn = useCallback(() => Alert.alert(
-    "Sign in required",
-    "Sign in to track prices for this route.",
-    [{ text: "Sign in", onPress: () => router.push("/(tabs)/profile/sign-in") }, { text: "Cancel", style: "cancel" }],
-  ), []);
+  const requireSignIn = useCallback(
+    () =>
+      Alert.alert(
+        "Sign in required",
+        "Sign in to track prices for this route.",
+        [
+          {
+            text: "Sign in",
+            onPress: () => router.push("/(tabs)/profile/sign-in"),
+          },
+          { text: "Cancel", style: "cancel" },
+        ],
+      ),
+    [],
+  );
   const reconcile = useCallback(async () => {
     if (!flight || !plan) return;
     setLoadingAlert(true);
     try {
-      if (!await readSession().catch(() => null)) { setMatchingAlert(undefined); return; }
+      if (!(await readSession().catch(() => null))) {
+        setMatchingAlert(undefined);
+        return;
+      }
       const alerts = (await travelApi.priceAlerts()).alerts;
       setMatchingAlert(matchingFlightPriceAlert(alerts, plan));
     } catch (error) {
-      if (error instanceof TravelApiError && error.status === 401) setMatchingAlert(undefined);
-    } finally { setLoadingAlert(false); }
+      if (error instanceof TravelApiError && error.status === 401)
+        setMatchingAlert(undefined);
+    } finally {
+      setLoadingAlert(false);
+    }
   }, [flight, plan?.key]);
-  useFocusEffect(useCallback(() => { void reconcile(); }, [reconcile]));
+  useFocusEffect(
+    useCallback(() => {
+      void reconcile();
+    }, [reconcile]),
+  );
   const handleToggle = async (next: boolean) => {
     if (pendingRef.current || loadingAlert || !plan) return;
     if (next) {
       if (unavailable) return;
-      if (!await readSession().catch(() => null)) { requireSignIn(); return; }
+      if (!(await readSession().catch(() => null))) {
+        requireSignIn();
+        return;
+      }
       if (isTracking) return;
-      if (!matchingAlert) { setTargetError(""); setTargetOpen(true); return; }
-      pendingRef.current = true; setPending(true);
-      try { setMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE")).alert); }
-      catch (error) {
-        if (error instanceof TravelApiError && error.status === 401) requireSignIn();
-        else Alert.alert("Unable to track prices", error instanceof TravelApiError ? error.message : "Please try again.");
-      } finally { pendingRef.current = false; setPending(false); }
+      if (!matchingAlert) {
+        setTargetError("");
+        setTargetOpen(true);
+        return;
+      }
+      pendingRef.current = true;
+      setPending(true);
+      try {
+        setMatchingAlert(
+          (await travelApi.updatePriceAlertStatus(matchingAlert.id, "ACTIVE"))
+            .alert,
+        );
+      } catch (error) {
+        if (error instanceof TravelApiError && error.status === 401)
+          requireSignIn();
+        else
+          Alert.alert(
+            "Unable to track prices",
+            error instanceof TravelApiError
+              ? error.message
+              : "Please try again.",
+          );
+      } finally {
+        pendingRef.current = false;
+        setPending(false);
+      }
       return;
     }
     if (!isTracking || !matchingAlert) return;
-    pendingRef.current = true; setPending(true);
-    try { setMatchingAlert((await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED")).alert); }
-    catch (error) {
-      if (error instanceof TravelApiError && error.status === 401) requireSignIn();
-      else Alert.alert("Unable to pause price tracking", error instanceof TravelApiError ? error.message : "Please try again.");
-    } finally { pendingRef.current = false; setPending(false); }
+    pendingRef.current = true;
+    setPending(true);
+    try {
+      setMatchingAlert(
+        (await travelApi.updatePriceAlertStatus(matchingAlert.id, "PAUSED"))
+          .alert,
+      );
+    } catch (error) {
+      if (error instanceof TravelApiError && error.status === 401)
+        requireSignIn();
+      else
+        Alert.alert(
+          "Unable to pause price tracking",
+          error instanceof TravelApiError ? error.message : "Please try again.",
+        );
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
+    }
   };
   const createAlert = async () => {
     if (pendingRef.current || !plan || !currency) return;
     const parsed = parseTargetPrice(targetDraft);
-    if (parsed.error || parsed.value === undefined) { setTargetError(parsed.error || "Enter a target price."); return; }
-    pendingRef.current = true; setPending(true); setTargetError("");
+    if (parsed.error || parsed.value === undefined) {
+      setTargetError(parsed.error || "Enter a target price.");
+      return;
+    }
+    pendingRef.current = true;
+    setPending(true);
+    setTargetError("");
     try {
       const session = await readSession().catch(() => null);
-      if (!session) { setTargetOpen(false); requireSignIn(); return; }
-      const created = await travelApi.createPriceAlert(buildFlightPriceAlertPayload(plan, parsed.value, currency));
-      setMatchingAlert(created.alert); setTargetOpen(false); setTargetDraft("");
+      if (!session) {
+        setTargetOpen(false);
+        requireSignIn();
+        return;
+      }
+      const created = await travelApi.createPriceAlert(
+        buildFlightPriceAlertPayload(plan, parsed.value, currency),
+      );
+      setMatchingAlert(created.alert);
+      setTargetOpen(false);
+      setTargetDraft("");
     } catch (error) {
-      if (error instanceof TravelApiError && error.status === 401) { setTargetOpen(false); requireSignIn(); }
-      else if (error instanceof TravelApiError && error.status === 409) {
+      if (error instanceof TravelApiError && error.status === 401) {
+        setTargetOpen(false);
+        requireSignIn();
+      } else if (error instanceof TravelApiError && error.status === 409) {
         await reconcile();
-        setTargetError("An alert for this search already exists. Its current status has been refreshed.");
-      } else setTargetError(error instanceof TravelApiError ? error.message : "Unable to create price alert. Try again.");
-    } finally { pendingRef.current = false; setPending(false); }
+        setTargetError(
+          "An alert for this search already exists. Its current status has been refreshed.",
+        );
+      } else
+        setTargetError(
+          error instanceof TravelApiError
+            ? error.message
+            : "Unable to create price alert. Try again.",
+        );
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
+    }
   };
   if (flight) {
     return (
       <View
         accessibilityLabel="Flight price alert"
-        style={[
-          s0.flightAlert,
-          { backgroundColor: theme.priceAlertSurface },
-        ]}
+        style={[s0.flightAlert, { backgroundColor: theme.priceAlertSurface }]}
       >
-        <View style={[s0.flightAlertIcon, { backgroundColor: theme.surface, borderColor: theme.priceAlertBorder }]}>
+        <View
+          style={[
+            s0.flightAlertIcon,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.priceAlertBorder,
+            },
+          ]}
+        >
           <Bell
             accessibilityElementsHidden
             accessible={false}
@@ -1142,31 +1674,96 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
           />
         </View>
         <View style={s0.flightAlertCopy}>
-          <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices for this route</Text>
-          <Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Get notified when prices drop.</Text>
+          <Text style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>
+            Track prices for this route
+          </Text>
+          <Text
+            style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}
+          >
+            Get notified when prices drop.
+          </Text>
         </View>
         <View style={s0.flightAlertSwitchTarget}>
           <Switch
             accessibilityLabel="Track prices"
             accessibilityRole="switch"
-            accessibilityState={{ checked: isTracking, disabled: pending || loadingAlert || unavailable }}
+            accessibilityState={{
+              checked: isTracking,
+              disabled: pending || loadingAlert || unavailable,
+            }}
             value={isTracking}
             disabled={pending || loadingAlert || unavailable}
             onValueChange={(next) => void handleToggle(next)}
-            trackColor={{ false: theme.switchTrack, true: theme.switchTrackActive }}
+            trackColor={{
+              false: theme.switchTrack,
+              true: theme.switchTrackActive,
+            }}
             ios_backgroundColor={theme.switchTrack}
             thumbColor={theme.surface}
           />
         </View>
-        <Modal visible={targetOpen} transparent animationType="slide" onRequestClose={() => !pending && setTargetOpen(false)} accessibilityViewIsModal>
-          <KeyboardAvoidingView style={s0.alertModalBackdrop} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={[s0.alertSheet, { backgroundColor: theme.surface, borderColor: theme.border }]} accessibilityLabel="Create flight price alert">
-              <Text accessibilityRole="header" style={[s0.flightAlertTitle, { color: theme.textPrimary }]}>Track prices</Text>
-              <Text style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}>Target price ({currency})</Text>
-              <TextInput autoFocus accessibilityLabel={`Target price in ${currency}`} value={targetDraft} onChangeText={(value) => { setTargetDraft(value); setTargetError(""); }} keyboardType="decimal-pad" editable={!pending} style={[s0.alertInput, { color: theme.textPrimary, borderColor: theme.border }]} />
-              {targetError ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s0.alertError}>{targetError}</Text> : null}
-              <Button label={pending ? "Creating…" : "Create alert"} onPress={() => void createAlert()} />
-              <Button label="Cancel" outline onPress={() => setTargetOpen(false)} />
+        <Modal
+          visible={targetOpen}
+          transparent
+          animationType="slide"
+          onRequestClose={() => !pending && setTargetOpen(false)}
+          accessibilityViewIsModal
+        >
+          <KeyboardAvoidingView
+            style={s0.alertModalBackdrop}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+          >
+            <View
+              style={[
+                s0.alertSheet,
+                { backgroundColor: theme.surface, borderColor: theme.border },
+              ]}
+              accessibilityLabel="Create flight price alert"
+            >
+              <Text
+                accessibilityRole="header"
+                style={[s0.flightAlertTitle, { color: theme.textPrimary }]}
+              >
+                Track prices
+              </Text>
+              <Text
+                style={[s0.flightAlertSubtitle, { color: theme.textSecondary }]}
+              >
+                Target price ({currency})
+              </Text>
+              <TextInput
+                autoFocus
+                accessibilityLabel={`Target price in ${currency}`}
+                value={targetDraft}
+                onChangeText={(value) => {
+                  setTargetDraft(value);
+                  setTargetError("");
+                }}
+                keyboardType="decimal-pad"
+                editable={!pending}
+                style={[
+                  s0.alertInput,
+                  { color: theme.textPrimary, borderColor: theme.border },
+                ]}
+              />
+              {targetError ? (
+                <Text
+                  accessibilityRole="alert"
+                  accessibilityLiveRegion="polite"
+                  style={s0.alertError}
+                >
+                  {targetError}
+                </Text>
+              ) : null}
+              <Button
+                label={pending ? "Creating…" : "Create alert"}
+                onPress={() => void createAlert()}
+              />
+              <Button
+                label="Cancel"
+                outline
+                onPress={() => setTargetOpen(false)}
+              />
             </View>
           </KeyboardAvoidingView>
         </Modal>
@@ -1177,32 +1774,79 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
     <View style={s0.alert}>
       <View style={s0.alertCopy}>
         <Text style={s0.foundTitle}>Price alerts</Text>
-        <Text style={s0.sub}>Track this search and get notified when prices drop.</Text>
+        <Text style={s0.sub}>
+          Track this search and get notified when prices drop.
+        </Text>
       </View>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Track prices"
         onPress={() => router.push("/price-alerts")}
-        style={({ pressed }) => [s0.alertButton, pressed && s0.alertButtonPressed]}
+        style={({ pressed }) => [
+          s0.alertButton,
+          pressed && s0.alertButtonPressed,
+        ]}
       >
-        <Bell accessibilityElementsHidden accessible={false} color={ui.blue} size={18} strokeWidth={2.25} />
+        <Bell
+          accessibilityElementsHidden
+          accessible={false}
+          color={ui.blue}
+          size={18}
+          strokeWidth={2.25}
+        />
         <Text style={s0.alertButtonText}>Track prices</Text>
       </Pressable>
     </View>
   );
 }
-export function BottomNav({ flightResults = false }: { flightResults?: boolean } = {}) {
+export function BottomNav({
+  flightResults = false,
+}: { flightResults?: boolean } = {}) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const items = [
-    { icon: "compass", label: "Explore", accessibilityLabel: "Explore", route: "/(tabs)/explore" },
-    { icon: "trip", label: "Trips", accessibilityLabel: "My Trips", route: "/(tabs)/trips" },
-    { icon: "search", label: "Search", accessibilityLabel: "Search", route: "/flights" },
-    { icon: "heart", label: "Saved", accessibilityLabel: "Saved", route: "/saved" },
-    { icon: "person", label: "Profile", accessibilityLabel: "Profile", route: "/(tabs)/profile" },
+    {
+      icon: "compass",
+      label: "Explore",
+      accessibilityLabel: "Explore",
+      route: "/(tabs)/explore",
+    },
+    {
+      icon: "trip",
+      label: "Trips",
+      accessibilityLabel: "My Trips",
+      route: "/(tabs)/trips",
+    },
+    {
+      icon: "search",
+      label: "Search",
+      accessibilityLabel: "Search",
+      route: "/flights",
+    },
+    {
+      icon: "heart",
+      label: "Saved",
+      accessibilityLabel: "Saved",
+      route: "/saved",
+    },
+    {
+      icon: "person",
+      label: "Profile",
+      accessibilityLabel: "Profile",
+      route: "/(tabs)/profile",
+    },
   ] as const;
   return (
-    <View style={[s0.nav, flightResults && { backgroundColor: theme.surface, borderTopColor: theme.border }, { paddingBottom: Math.max(inset.bottom, 8) }]}>
+    <View
+      style={[
+        s0.nav,
+        flightResults && {
+          backgroundColor: theme.surface,
+          borderTopColor: theme.border,
+        },
+        { paddingBottom: Math.max(inset.bottom, 8) },
+      ]}
+    >
       {items.map(({ icon, label, accessibilityLabel, route }) => (
         <Pressable
           key={label}
@@ -1214,9 +1858,21 @@ export function BottomNav({ flightResults = false }: { flightResults?: boolean }
         >
           <FlowIcon
             name={icon as never}
-            color={label === "Search" ? ui.blue : flightResults ? theme.textSecondary : ui.muted}
+            color={
+              label === "Search"
+                ? ui.blue
+                : flightResults
+                  ? theme.textSecondary
+                  : ui.muted
+            }
           />
-          <Text style={[s0.navText, flightResults && { color: theme.textSecondary }, label === "Search" && { color: ui.blue }]}>
+          <Text
+            style={[
+              s0.navText,
+              flightResults && { color: theme.textSecondary },
+              label === "Search" && { color: ui.blue },
+            ]}
+          >
             {label}
           </Text>
         </Pressable>
@@ -1273,7 +1929,11 @@ const s0 = StyleSheet.create({
     columnGap: 6,
   },
   flightHeaderMetadataText: { flexShrink: 0, fontSize: 12, lineHeight: 17 },
-  flightHeaderMetadataSeparator: { flexShrink: 0, fontSize: 12, lineHeight: 17 },
+  flightHeaderMetadataSeparator: {
+    flexShrink: 0,
+    fontSize: 12,
+    lineHeight: 17,
+  },
   flightHeaderEdit: {
     width: 52,
     height: 44,
@@ -1288,17 +1948,54 @@ const s0 = StyleSheet.create({
   stickyFilterSurface: { backgroundColor: "white", zIndex: 1 },
   route: { fontSize: 20, lineHeight: 25, fontWeight: "900", color: ui.navy },
   sub: { fontSize: 12, color: ui.muted, lineHeight: 17 },
-  filters: { paddingHorizontal: 14, paddingVertical: 7, gap: 8, alignItems: "center" },
-  modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
-  sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
-  sheetHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  filters: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    gap: 8,
+    alignItems: "center",
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(10, 24, 48, 0.42)",
+  },
+  sheet: {
+    maxHeight: "82%",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    padding: 18,
+    gap: 14,
+    backgroundColor: "white",
+  },
+  sheetHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  closeButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   sheetScroll: { flexGrow: 0 },
   sheetContent: { gap: 22, paddingBottom: 4 },
   filterSection: { gap: 10 },
+  clearAll: { color: ui.blue, fontSize: 13, fontWeight: "700" },
+  filterSubhead: { fontSize: 12, fontWeight: "700" },
+  toggleRow: { minHeight: 42, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   filterSectionTitle: { fontSize: 14, fontWeight: "800", color: ui.navy },
   choiceRow: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
-  choice: { minHeight: 42, justifyContent: "center", borderWidth: 1, borderColor: ui.border, borderRadius: 21, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: "white" },
+  choice: {
+    minHeight: 42,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: ui.border,
+    borderRadius: 21,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    backgroundColor: "white",
+  },
   choiceActive: { borderColor: ui.blue, backgroundColor: "#EEF4FF" },
   choiceText: { color: ui.navy, fontSize: 13, fontWeight: "600" },
   choiceTextActive: { color: ui.blue },
@@ -1326,7 +2023,13 @@ const s0 = StyleSheet.create({
   },
   foundCopy: { flex: 1, minWidth: 0, gap: 2 },
   foundTitle: { fontSize: 16, fontWeight: "800", color: ui.navy },
-  flightResultCount: { paddingHorizontal: 14, paddingTop: 10, fontSize: 16, lineHeight: 21, fontWeight: "800" },
+  flightResultCount: {
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: "800",
+  },
   card: {
     width: "100%",
     borderRadius: 14,
@@ -1339,36 +2042,92 @@ const s0 = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
-  cardTop: { minHeight: 23, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  cardTop: {
+    minHeight: 23,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
   badgeRow: { flex: 1, minWidth: 0, flexDirection: "row", gap: 6 },
-  resultBadge: { height: 23, flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, borderRadius: 12, backgroundColor: "#EEF4FF" },
+  resultBadge: {
+    height: 23,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    backgroundColor: "#EEF4FF",
+  },
   resultBadgeGreen: { backgroundColor: "#EAF8ED" },
   resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
   resultBadgeTextGreen: { color: ui.green },
   flightMain: { width: "100%", alignItems: "stretch", gap: 4 },
   flightDetails: { width: "100%", minWidth: 0, gap: 7 },
-  airlineIdentityRow: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 8 },
-  airlineName: { flex: 1, minWidth: 0, fontSize: 12, lineHeight: 16, color: ui.navy, fontWeight: "700" },
+  airlineIdentityRow: {
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  airlineName: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 12,
+    lineHeight: 16,
+    color: ui.navy,
+    fontWeight: "700",
+  },
   journeyBlock: { width: "100%", gap: 2 },
-  journeyLabel: { fontSize: 9, lineHeight: 11, fontWeight: "800", letterSpacing: 0.7 },
+  journeyLabel: {
+    fontSize: 9,
+    lineHeight: 11,
+    fontWeight: "800",
+    letterSpacing: 0.7,
+  },
   journeyRow: { width: "100%" },
-  durationRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
-  timeTimelineRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
-  airportStopRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
+  durationRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  timeTimelineRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  airportStopRow: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   departureColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
   arrivalColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
   rightColumnContract: { alignItems: "flex-end" },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
   timelineColumn: { flex: 1, minWidth: 70, alignItems: "center" },
-  timelineTrack: { flex: 1, minWidth: 70, flexDirection: "row", alignItems: "center", gap: 2 },
+  timelineTrack: {
+    flex: 1,
+    minWidth: 70,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
   line: {
     flex: 1,
     height: 1,
     backgroundColor: ui.muted,
   },
   nonstop: { fontSize: 11, color: ui.blue },
-  bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
+  bigPrice: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: ui.navy,
+    textAlign: "right",
+  },
   benefits: {
     paddingTop: 8,
     flexDirection: "row",
@@ -1377,9 +2136,22 @@ const s0 = StyleSheet.create({
   },
   benefitList: { flex: 1, minWidth: 0, flexDirection: "column", gap: 6 },
   actionColumn: { flexShrink: 0, alignItems: "flex-end", gap: 12 },
-  benefitItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
+  benefitItem: {
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
   benefit: { minWidth: 0, fontSize: 10.5, color: ui.muted, flex: 1 },
-  detailsButton: { minWidth: 96, minHeight: 44, paddingHorizontal: 10, borderRadius: 8, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
+  detailsButton: {
+    minWidth: 96,
+    minHeight: 44,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: ui.blue,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   detailsButtonText: { color: "white", fontWeight: "800", fontSize: 12 },
   hotelCard: {
     height: 234,
@@ -1433,7 +2205,12 @@ const s0 = StyleSheet.create({
     justifyContent: "center",
     gap: 9,
   },
-  loadingText: { fontSize: 13, lineHeight: 18, color: ui.navy, fontWeight: "700" },
+  loadingText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: ui.navy,
+    fontWeight: "700",
+  },
   skeletonList: { width: "100%", gap: 14 },
   skeletonCard: {
     width: "100%",
@@ -1451,13 +2228,34 @@ const s0 = StyleSheet.create({
     justifyContent: "space-between",
   },
   skeletonIdentityRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  skeletonBadge: { width: 92, height: 23, borderRadius: 12, backgroundColor: "#E7EBF1" },
-  skeletonHeart: { width: 22, height: 22, borderRadius: 11, backgroundColor: "#E7EBF1" },
+  skeletonBadge: {
+    width: 92,
+    height: 23,
+    borderRadius: 12,
+    backgroundColor: "#E7EBF1",
+  },
+  skeletonHeart: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#E7EBF1",
+  },
   skeletonFlightRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  skeletonLogo: { width: 38, height: 38, borderRadius: 9, backgroundColor: "#E7EBF1" },
+  skeletonLogo: {
+    width: 38,
+    height: 38,
+    borderRadius: 9,
+    backgroundColor: "#E7EBF1",
+  },
   skeletonDeparture: { flex: 1.15, minWidth: 0, gap: 5 },
   skeletonArrival: { flex: 0.9, minWidth: 0, gap: 5 },
-  skeletonRoute: { flex: 1, minWidth: 38, maxWidth: 95, alignItems: "center", gap: 6 },
+  skeletonRoute: {
+    flex: 1,
+    minWidth: 38,
+    maxWidth: 95,
+    alignItems: "center",
+    gap: 6,
+  },
   skeletonPrice: { width: 52, flexShrink: 0, alignItems: "flex-end", gap: 6 },
   skeletonLine: { height: 7, borderRadius: 4, backgroundColor: "#E7EBF1" },
   skeletonName: { width: "54%" },
@@ -1479,7 +2277,12 @@ const s0 = StyleSheet.create({
   skeletonBenefitLines: { flex: 1, gap: 6 },
   skeletonBenefitLine: { width: "82%" },
   skeletonBenefitLineShort: { width: "64%" },
-  skeletonButton: { width: 96, height: 44, borderRadius: 8, backgroundColor: "#E7EBF1" },
+  skeletonButton: {
+    width: 96,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: "#E7EBF1",
+  },
   hotelSkeletonCard: {
     width: "100%",
     height: 234,
@@ -1490,7 +2293,11 @@ const s0 = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "white",
   },
-  hotelSkeletonImage: { width: "39%", height: "100%", backgroundColor: "#E7EBF1" },
+  hotelSkeletonImage: {
+    width: "39%",
+    height: "100%",
+    backgroundColor: "#E7EBF1",
+  },
   hotelSkeletonCopy: { flex: 1, padding: 12, gap: 12 },
   hotelSkeletonTitle: { width: "82%", height: 15 },
   hotelSkeletonMeta: { width: "62%" },
@@ -1533,10 +2340,31 @@ const s0 = StyleSheet.create({
   flightAlertCopy: { flex: 1, minWidth: 0, gap: 2 },
   flightAlertTitle: { fontSize: 15, lineHeight: 19, fontWeight: "900" },
   flightAlertSubtitle: { fontSize: 12, lineHeight: 16, fontWeight: "500" },
-  flightAlertSwitchTarget: { minWidth: 48, minHeight: 48, alignItems: "center", justifyContent: "center" },
-  alertModalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,.45)" },
-  alertSheet: { padding: 20, gap: 12, borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
-  alertInput: { minHeight: 48, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, fontSize: 18 },
+  flightAlertSwitchTarget: {
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  alertModalBackdrop: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,.45)",
+  },
+  alertSheet: {
+    padding: 20,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+  },
+  alertInput: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 18,
+  },
   alertError: { color: "#A4262C" },
   alertButton: {
     width: "100%",
@@ -1563,7 +2391,13 @@ const s0 = StyleSheet.create({
     paddingTop: 9,
     backgroundColor: "white",
   },
-  navItem: { flex: 1, minHeight: 48, alignItems: "center", justifyContent: "center", gap: 3 },
+  navItem: {
+    flex: 1,
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+  },
   navItemPressed: { opacity: 0.72 },
   navText: { fontSize: 10, color: ui.muted, fontWeight: "700" },
 });
