@@ -228,8 +228,12 @@ function CountrySelector({
   const [q, setQ] = useState("");
   const [draftSelection, setDraftSelection] = useState(selected);
   const committing = useRef(false);
+  const visibleRef = useRef(visible);
   const shown = filterSelectorOptions(options, q);
 
+  useEffect(() => {
+    visibleRef.current = visible;
+  }, [visible]);
   useEffect(() => {
     if (!visible) return;
     setQ("");
@@ -248,6 +252,7 @@ function CountrySelector({
     onSave(draftSelection);
   };
   const handleDismiss = () => {
+    if (visibleRef.current) return;
     setQ("");
     setDraftSelection(selected);
     committing.current = false;
@@ -257,7 +262,7 @@ function CountrySelector({
   return (
     <Modal
       visible={visible}
-      animationType={Platform.OS === "ios" ? "none" : "slide"}
+      animationType={Platform.OS === "ios" ? "fade" : "slide"}
       presentationStyle="fullScreen"
       onRequestClose={cancel}
       onDismiss={handleDismiss}
@@ -580,7 +585,8 @@ export function PersonalDetailsScreen() {
   const c = personalDetailsCopy(locale);
   const navigation = useNavigation();
   const mounted = useRef(true),
-    submitting = useRef(false);
+    submitting = useRef(false),
+    selectorVisibleRef = useRef(false);
   const [saved, setSaved] = useState<MobileProfile | null>(null),
     [draft, setDraft] = useState<MobileProfile>({}),
     [dateDraft, setDateDraft] = useState<DateDraft>(() => dateDraftFromValue()),
@@ -602,10 +608,17 @@ export function PersonalDetailsScreen() {
     >(null),
     [selectorVisible, setSelectorVisible] = useState(false);
   const openSelector = (type: Exclude<typeof selector, null>) => {
+    selectorVisibleRef.current = true;
     setSelector(type);
     setSelectorVisible(true);
   };
-  const closeSelector = () => setSelectorVisible(false);
+  const closeSelector = () => {
+    selectorVisibleRef.current = false;
+    setSelectorVisible(false);
+  };
+  const finishSelectorDismiss = () => {
+    if (!selectorVisibleRef.current) setSelector(null);
+  };
   const address = useMemo(
     () => parseAddress(draft.address || ""),
     [draft.address],
@@ -1166,7 +1179,7 @@ export function PersonalDetailsScreen() {
           else if (selector === "month") updateDateDraft("month", value);
           else if (selector === "day") updateDateDraft("day", value);
         }}
-        onDismiss={() => setSelector(null)}
+        onDismiss={finishSelectorDismiss}
       />
       <CountrySelector
         visible={
@@ -1200,7 +1213,7 @@ export function PersonalDetailsScreen() {
             patchAddress("countryCode", value);
           closeSelector();
         }}
-        onDismiss={() => setSelector(null)}
+        onDismiss={finishSelectorDismiss}
       />
     </SafeAreaView>
   );
