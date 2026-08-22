@@ -8,7 +8,7 @@ import { authApi } from "../auth/authApi";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { useAppTheme } from "../../theme/AppTheme";
-import { useMobileLocalization } from "../../localization/MobileLocalization";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { ProfileCardSection } from "./ProfileCardSection";
 import { authenticatedProfileSections } from "./profileModel";
 import { AppVersionFooter } from "./AppVersionFooter";

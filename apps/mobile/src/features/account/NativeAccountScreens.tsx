@@ -8,7 +8,7 @@ import { airlines } from "../../../../../src/data/airlines";
 import { travelApi, TravelApiError, type EmailPreferences, type TravelPreferences } from "../../api/travelApi";
 import { readSession } from "../../storage/sessionStorage";
 import { useAppTheme } from "../../theme/AppTheme";
-import { useMobileLocalization } from "../../localization/MobileLocalization";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { FlowIcon } from "../flow/FlowIcon";
 import { addAirline, beginLoad, beginSave, canSubmitSupport, editDraft, failLoad, failSave, faqAccessibility, filterFaqs, filterOptions, finishLoad, finishSave, initialAsyncDraft, invalidateRequests, isDirty, supportCategories, supportDraft, toggleExpanded, type AsyncDraft } from "./nativeAccountModels";
 

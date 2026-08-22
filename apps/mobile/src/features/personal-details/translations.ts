@@ -1,4 +1,4 @@
-import type { MobileLocale } from "../../localization/mobileLocalization";
+import type { MobileLocale } from "../../localization/mobileLocalizationCatalog";
 const en = {
   title: "Personal details",
   description: "Manage the information Kurioticket uses for your account",

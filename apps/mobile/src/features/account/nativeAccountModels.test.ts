@@ -4,7 +4,7 @@ import { addAirline, beginLoad, beginSave, canSubmitSupport, editDraft, failSave
 import { getGeneralFaqs } from "../../../../../src/content/faqs";
 import { airports } from "../../../../../src/shared/airports";
 import { airlines } from "../../../../../src/data/airlines";
-import { dictionaries } from "../../localization/mobileLocalization";
+import { dictionaries } from "../../localization/mobileLocalizationCatalog";
 
 test("FAQ localization, search, uniqueness, empty state, and isolated expansion", () => {
   for (const locale of ["en-us", "es-es"] as const) { const t = (key: string) => (dictionaries[locale] as Record<string, string>)[key] ?? key; const items = getGeneralFaqs(t); assert.ok(items.length); assert.ok(items.every(x => x.question && x.answer)); }

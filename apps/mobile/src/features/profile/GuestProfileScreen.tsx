@@ -2,7 +2,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppTheme } from "../../theme/AppTheme";
-import { useMobileLocalization } from "../../localization/MobileLocalization";
+import { useMobileLocalization } from "../../localization/MobileLocalizationProvider";
 import { FlowIcon } from "../flow/FlowIcon";
 import { TravelIllustration } from "./TravelIllustration";
 import { ProfileCardSection } from "./ProfileCardSection";
