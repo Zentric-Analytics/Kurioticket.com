@@ -181,6 +181,7 @@ test('Production IPA verification validates active configuration without scannin
   assert.match(workflow, /--app-config\b/);
   assert.match(workflow, /--expo-config\b/);
   assert.match(workflow, /codesign --verify --deep --strict/);
+  assert.doesNotMatch(workflow, /\bfind\b[^\n]*\s-maxdepth\b/);
   assert.match(workflow, /--extract-certificates="\$RUNNER_TEMP\/app-signer"/);
   assert.doesNotMatch(workflow, /--extract-certificates\s+"\$RUNNER_TEMP\/app-signer"/);
   assert.match(workflow, /--signer-certificate-serial\b/);
