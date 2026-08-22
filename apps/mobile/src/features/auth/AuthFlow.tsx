@@ -14,7 +14,9 @@ export function AuthFlow({ initialStep = "welcome", successRoute = "/" }: { init
   const run = async (task: () => Promise<void>) => { if (loading) return; setLoading(true); setError(""); try { await task(); } catch (e) { setError(e instanceof AuthApiError || (e instanceof Error && e.name === "NativeGoogleSignInError") ? e.message : "Something went wrong. Please try again."); } finally { setLoading(false); } };
   const requestCode = (value: string) => void run(async () => { const normalized = normalizeEmail(value); const result = await authApi.requestCode(normalized); setEmail(normalized); setCooldown(result.cooldownSeconds || 28); setStep("verify"); });
   const verify = useCallback((code: string) => { void run(async () => { const result = await authApi.verifyCode(email, code); setProof(result.verificationToken); setStep(result.accountType === "existing" ? "password" : "create"); }); }, [email, loading]);
-  const done = () => { void writeOnboardingCompleted().finally(() => router.replace(successRoute)); };
+  const done = useCallback(() => {
+    void writeOnboardingCompleted().finally(() => router.dismissTo(successRoute));
+  }, [successRoute]);
   const continueGoogle = () => void run(async () => {
     // Validate configuration in plain JavaScript before resolving the native
     // module. This keeps incompatible legacy binaries from terminating if they

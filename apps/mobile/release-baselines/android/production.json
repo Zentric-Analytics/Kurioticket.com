@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "environment": "production",
+  "easBuildId": "1bfe53cc-e806-4dd3-8fd7-6c3b8ca2f513",
+  "projectId": "89f6fd88-c0d7-495a-9e2b-8301b09f407d",
+  "commitSha": "f5482695a6ebb7d8cdda6aa06c6ffb1b1005324e",
+  "package": "com.kurioticket.app",
+  "profile": "production",
+  "platform": "ANDROID",
+  "runtime": "production-0.3.0",
+  "channel": "production",
+  "appVersion": "0.3.0",
+  "versionCode": 5,
+  "nativeFingerprint": "596900e057c6b8ba75f9d48c7484be88fd1d679a",
+  "sourceAttestation": {
+    "type": "github-actions-build",
+    "repository": "Zentric-Analytics/Kurioticket.com",
+    "workflowRunId": "32578551010",
+    "artifactId": 9477367831,
+    "artifactName": "android-production-release-evidence-32578551010",
+    "artifactDigest": "sha256:bdbe890af499d2b3da75db7182135a56100613a58893dcdef96c2e1f51441009"
+  }
+}

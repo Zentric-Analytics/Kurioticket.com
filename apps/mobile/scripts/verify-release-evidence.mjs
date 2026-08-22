@@ -40,7 +40,16 @@ function verifyCompositeAttestation({ manifest, build, workflowRun, artifact, au
 
 export function verifyBaseline({ manifest, build, variant, policy, workflowRun, artifact, audit }) {
   const expected = policy[variant];
-  const buildPackage = build.applicationIdentifier ?? build.appIdentifier;
+  const platform = manifest.platform;
+  if (!['ANDROID', 'IOS'].includes(platform)) throw new Error('Manifest platform mismatch.');
+  const expectedIdentifier = platform === 'ANDROID' ? expected.androidPackage : expected.bundleIdentifier;
+  const manifestIdentifier = platform === 'ANDROID' ? manifest.package : manifest.bundleIdentifier;
+  const suppliedIdentifiers = ['applicationIdentifier', 'appIdentifier']
+    .filter((field) => Object.hasOwn(build, field) && build[field] !== null && build[field] !== undefined)
+    .map((field) => build[field]);
+  if (suppliedIdentifiers.some((value) => typeof value !== 'string' || value.length === 0 || value !== expectedIdentifier)) {
+    throw new Error('Build application identifier mismatch.');
+  }
   let sourceVerification;
   if (fullSha(build.gitCommitHash)) {
     if (manifest.commitSha !== build.gitCommitHash) throw new Error('Build commit mismatch.');
@@ -52,20 +61,21 @@ export function verifyBaseline({ manifest, build, variant, policy, workflowRun, 
     [[1, 2].includes(manifest.schemaVersion), 'Unsupported manifest schema.'],
     [manifest.environment === variant, 'Manifest environment mismatch.'],
     [manifest.easBuildId === build.id, 'EAS build ID mismatch.'],
-    [manifest.projectId === undefined || manifest.projectId === build.project?.id, 'EAS project mismatch.'],
-    [manifest.package === expected.androidPackage && (!buildPackage || buildPackage === expected.androidPackage), 'Build package mismatch.'],
+    [manifest.projectId === build.project?.id, 'EAS project mismatch.'],
+    [manifestIdentifier === expectedIdentifier, platform === 'ANDROID' ? 'Build package mismatch.' : 'Build bundle identifier mismatch.'],
     [manifest.profile === expected.profile && build.buildProfile === expected.profile, 'Build profile mismatch.'],
-    [manifest.platform === 'ANDROID' && build.platform === 'ANDROID', 'Build platform mismatch.'],
+    [build.platform === platform, 'Build platform mismatch.'],
     [manifest.runtime === expected.runtimeVersion && build.runtimeVersion === expected.runtimeVersion, 'Build runtime mismatch.'],
     [manifest.channel === expected.channel && build.channel === expected.channel, 'Build channel mismatch.'],
     [manifest.appVersion === undefined || manifest.appVersion === build.appVersion, 'Build app version mismatch.'],
-    [manifest.versionCode === undefined || String(manifest.versionCode) === String(build.appBuildVersion), 'Build versionCode mismatch.'],
+    [platform !== 'ANDROID' || (manifest.versionCode !== undefined && String(manifest.versionCode) === String(build.appBuildVersion)), 'Build versionCode mismatch.'],
+    [platform !== 'IOS' || (manifest.buildNumber !== undefined && String(manifest.buildNumber) === String(build.appBuildVersion)), 'Build number mismatch.'],
     [build.status === 'FINISHED', 'Baseline build is not finished.'],
     [fullSha(manifest.commitSha), 'Manifest commit is not a full SHA.'],
-    [typeof manifest.nativeFingerprint === 'string' && manifest.nativeFingerprint.length >= 16, 'Manifest fingerprint is missing.'],
+    [/^[a-f0-9]{40}$/.test(manifest.nativeFingerprint ?? ''), 'Manifest fingerprint is missing or malformed.'],
   ];
   for (const [ok, message] of checks) if (!ok) throw new Error(message);
-  return { verified: true, environment: variant, easBuildId: build.id, commitSha: manifest.commitSha, nativeFingerprint: manifest.nativeFingerprint, fingerprintSource: 'repository-reviewed-binary-manifest', sourceVerification };
+  return { verified: true, environment: variant, platform, easBuildId: build.id, commitSha: manifest.commitSha, nativeFingerprint: manifest.nativeFingerprint, fingerprintSource: 'repository-reviewed-binary-manifest', sourceVerification, applicationIdentifierMetadata: suppliedIdentifiers.length ? 'verified' : 'omitted' };
 }
 
 export function verifyChannelMapping({ document, expectedChannel, expectedBranch }) {

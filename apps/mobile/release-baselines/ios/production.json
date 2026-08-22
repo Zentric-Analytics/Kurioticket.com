@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "environment": "production",
+  "easBuildId": "ec28bb4d-44fe-4e07-bdb0-c0a8aec90fe9",
+  "projectId": "89f6fd88-c0d7-495a-9e2b-8301b09f407d",
+  "commitSha": "f5482695a6ebb7d8cdda6aa06c6ffb1b1005324e",
+  "bundleIdentifier": "com.kurioticket.app",
+  "profile": "production",
+  "platform": "IOS",
+  "runtime": "production-0.3.0",
+  "channel": "production",
+  "appVersion": "0.3.0",
+  "buildNumber": 4,
+  "nativeFingerprint": "f45d36b8995a6819bcd5a2857c0304035d4317e5",
+  "sourceAttestation": {
+    "type": "github-actions-build",
+    "repository": "Zentric-Analytics/Kurioticket.com",
+    "workflowRunId": "32579648517",
+    "artifactId": 9477530029,
+    "artifactName": "ios-production-release-evidence-32579648517",
+    "artifactDigest": "sha256:4109306cafaa552c931b9eb24b30202aaafca51a2eee7ecece7f295381ff696c"
+  }
+}
