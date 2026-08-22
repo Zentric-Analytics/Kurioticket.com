@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import type { AuthenticationAssurance } from "@/generated/prisma/enums";
 import { getPrisma } from "@/lib/prisma";
 
 const method = "TOTP";
@@ -98,7 +99,7 @@ export async function disableTwoFactor(userId: string) {
   });
 }
 
-export async function disableTwoFactorForSession(input: { userId: string; accountSessionId: string; assuranceLevel: string }) {
+export async function disableTwoFactorForSession(input: { userId: string; accountSessionId: string; assuranceLevel: AuthenticationAssurance }) {
   const now = new Date();
   return getPrisma().$transaction(async tx => {
     await tx.userSecuritySettings.update({ where: { userId: input.userId }, data: { twoFactorEnabled: false, twoFactorMethod: null, twoFactorSecretEncrypted: null, twoFactorLastUsedStep: null, recoveryCodesHash: null, twoFactorDisabledAt: now } });

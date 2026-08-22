@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { AuthenticationAssurance } from "@/generated/prisma/enums";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { hasRecentReauthentication } from "@/lib/account-session";
 import { getPrisma } from "@/lib/prisma";
@@ -9,7 +10,7 @@ import { disableTwoFactorForSession, getTwoFactorStatus, verifySecondFactor } fr
 import { deliverSecurityEvent } from "@/services/securityEventService";
 export const runtime="nodejs";
 const schema=z.object({code:z.string().min(6).optional(),password:z.string().min(1).optional()});
-type Auth={id:string;reauthenticatedAt:Date|null;assuranceLevel:string;user:{id:string;email:string}};
+type Auth={id:string;reauthenticatedAt:Date|null;assuranceLevel:AuthenticationAssurance;user:{id:string;email:string}};
 type Dependencies={authenticate:(r:Request)=>Promise<Auth|null>;rateLimit:typeof checkAuthRateLimit;verify:typeof verifySecondFactor;passwordHash:(id:string)=>Promise<string|null>;compare:(a:string,b:string)=>Promise<boolean>;disable:typeof disableTwoFactorForSession;status:typeof getTwoFactorStatus;notify:typeof deliverSecurityEvent};
 const defaults:Dependencies={authenticate:requireMobileSecurity,rateLimit:checkAuthRateLimit,verify:verifySecondFactor,passwordHash:async id=>(await getPrisma().user.findUnique({where:{id},select:{passwordHash:true}}))?.passwordHash??null,compare:bcrypt.compare,disable:disableTwoFactorForSession,status:getTwoFactorStatus,notify:deliverSecurityEvent};
 export function createDisableHandler(deps:Dependencies=defaults){return async(request:Request)=>{const auth=await deps.authenticate(request);if(!auth)return mobileUnauthorized();
