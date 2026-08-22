@@ -9,16 +9,16 @@ const field = (label: string) => {
   return start < 0 ? undefined : panel.slice(start, panel.indexOf("/>", start) + 2);
 };
 
-test("From and To use the existing location icon without changing picker behavior", () => {
-  const from = field("From");
-  const to = field("To");
+test("Origin and Destination use the existing location icon without changing picker behavior", () => {
+  const origin = field("Origin");
+  const destination = field("Destination");
 
-  assert.ok(from);
-  assert.match(from, /icon="location"/);
-  assert.match(panel, /onPress=\{\(\) => \{ userControlsOrigin\.current = true; setPicker\("from"\); \}\}/);
-  assert.ok(to);
-  assert.match(to, /icon="location"/);
-  assert.match(panel, /onPress=\{\(\) => setPicker\("to"\)\}/);
+  assert.ok(origin);
+  assert.match(origin, /icon="location"/);
+  assert.match(origin, /onPress=\{\(\) => \{ userControlsOrigin\.current = true; setPicker\("from"\); \}\}/);
+  assert.ok(destination);
+  assert.match(destination, /icon="location"/);
+  assert.match(destination, /onPress=\{\(\) => setPicker\("to"\)\}/);
   assert.equal(panel.match(/icon="location"/g)?.length, 2);
 });
 
