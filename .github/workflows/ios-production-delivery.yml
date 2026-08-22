@@ -25,6 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
         with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
+      - name: Capture release workflow start
+        run: echo "WORKFLOW_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
       - name: Verify exact approved Production checkout
         env: { APPROVED_SHA: "${{ inputs.commit_sha }}", WORKFLOW_SHA: "${{ github.sha }}" }
         run: |
@@ -187,7 +189,7 @@ jobs:
           npx eas-cli@16.17.4 update --channel production --platform ios --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
           node scripts/verify-production-eas-result.mjs --kind update --platform ios --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Write consolidated iOS update audit
-        if: inputs.action == 'update'
+        if: always() && inputs.action == 'update'
         working-directory: apps/mobile
         env:
           WORKFLOW_RUN_ID: "${{ github.run_id }}"
@@ -208,9 +210,16 @@ jobs:
           CLASSIFIER_PATH: "${{ runner.temp }}/release-classification.json"
           DELIVERY_RESULT_PATH: "${{ runner.temp }}/delivery-result.json"
           AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
-          WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
+          WORKFLOW_STARTED_AT: "${{ env.WORKFLOW_STARTED_AT }}"
           FINAL_STATUS: "${{ job.status }}"
-        run: node scripts/write-release-audit.mjs
+          PRIOR_JOB_STATUS: "${{ job.status }}"
+        run: |
+          set +e
+          node scripts/write-release-audit.mjs
+          AUDIT_EXIT=$?
+          set -e
+          if [ "$AUDIT_EXIT" -ne 0 ] && [ "$PRIOR_JOB_STATUS" != failure ]; then exit "$AUDIT_EXIT"; fi
+          if [ "$AUDIT_EXIT" -ne 0 ]; then echo 'Release audit generation also failed after the authoritative delivery failure.' >&2; fi
       - name: Preserve non-secret iOS release evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -227,6 +236,7 @@ jobs:
             ${{ runner.temp }}/channel-evidence.json
             ${{ runner.temp }}/current-fingerprint.json
             ${{ runner.temp }}/release-classification.json
+            ${{ runner.temp }}/delivery-result.raw.json
             ${{ runner.temp }}/delivery-result.json
             ${{ runner.temp }}/release-audit.json
           if-no-files-found: warn

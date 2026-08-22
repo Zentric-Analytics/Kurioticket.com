@@ -667,6 +667,12 @@ test('iOS Production workflow has a fail-closed, build-free reviewed update path
   assert.match(workflow, /update --channel production --platform ios/);
   assert.match(workflow, /verify-production-eas-result\.mjs --kind update --platform ios/);
   assert.match(workflow, /RELEASE_ACTION: update[\s\S]*write-release-audit\.mjs/);
+  assert.match(workflow, /if: always\(\) && inputs\.action == 'update'/);
+  assert.match(workflow, /PRIOR_JOB_STATUS:[\s\S]*AUDIT_EXIT[\s\S]*PRIOR_JOB_STATUS/);
+  assert.match(workflow, /delivery-result\.raw\.json/);
+  assert.match(workflow, /WORKFLOW_STARTED_AT=\$\(date -u/);
+  assert.match(workflow, /WORKFLOW_STARTED_AT: "\$\{\{ env\.WORKFLOW_STARTED_AT \}\}"/);
+  assert.doesNotMatch(workflow, /WORKFLOW_STARTED_AT: "\$\{\{ github\.event\.repository\.updated_at \}\}"/);
   const updateBlock = workflow.match(/- name: Publish approved iOS Production OTA[\s\S]*?(?=\n      - name:)/)?.[0] ?? '';
   assert.doesNotMatch(updateBlock, /\beas-cli@16\.17\.4 build\b/);
   assert.match(inputValidator, /confirmation !== "DELIVER IOS PRODUCTION"/);
