@@ -3,8 +3,10 @@ import {
   AccessibilityInfo,
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Image,
+  InputAccessoryView,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -210,8 +212,10 @@ function Selector({
 
 type CountrySelectorProps = Omit<SelectorProps, "searchable" | "onSelect"> & {
   kind: "phone" | "nationality" | "addressCountry";
-  onSave: (value: string) => void;
+  onSave: (value: string) => Promise<boolean>;
 };
+
+const COUNTRY_SEARCH_ACCESSORY = "personal-details-country-search-accessory";
 
 /** Full-screen country picker. Draft state intentionally lives inside the modal. */
 function CountrySelector({
@@ -229,36 +233,82 @@ function CountrySelector({
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const [q, setQ] = useState("");
   const [draftSelection, setDraftSelection] = useState(selected);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [savingSelection, setSavingSelection] = useState(false);
   const committing = useRef(false);
   const visibleRef = useRef(visible);
+  const translateX = useRef(new Animated.Value(width)).current;
   const shown = filterSelectorOptions(options, q);
 
   useEffect(() => {
     visibleRef.current = visible;
   }, [visible]);
   useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true),
+    );
+    const hide = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  useEffect(() => {
     if (!visible) return;
     setQ("");
     setDraftSelection(selected);
     committing.current = false;
+    setSavingSelection(false);
+    setKeyboardVisible(false);
     Keyboard.dismiss();
-  }, [selected, selectorType, visible]);
-  const cancel = () => {
+    translateX.stopAnimation();
+    translateX.setValue(width);
+    Animated.timing(translateX, {
+      toValue: 0,
+      duration: 240,
+      useNativeDriver: true,
+    }).start();
+  }, [selected, selectorType, translateX, visible, width]);
+
+  const closeWithPushAnimation = (afterClose: () => void) => {
     Keyboard.dismiss();
-    onClose();
+    translateX.stopAnimation();
+    Animated.timing(translateX, {
+      toValue: width,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) afterClose();
+    });
   };
-  const saveSelection = () => {
-    if (committing.current) return;
+  const cancel = () => {
+    if (savingSelection) return;
+    closeWithPushAnimation(onClose);
+  };
+  const saveSelection = async () => {
+    if (committing.current || !draftSelection) return;
     committing.current = true;
+    setSavingSelection(true);
     Keyboard.dismiss();
-    onSave(draftSelection);
+    const savedSelection = await onSave(draftSelection);
+    if (!savedSelection) {
+      committing.current = false;
+      setSavingSelection(false);
+      return;
+    }
+    closeWithPushAnimation(onClose);
   };
   const handleDismiss = () => {
     if (visibleRef.current) return;
     setQ("");
     setDraftSelection(selected);
+    setKeyboardVisible(false);
+    setSavingSelection(false);
     committing.current = false;
     onDismiss();
   };
@@ -266,18 +316,20 @@ function CountrySelector({
   return (
     <Modal
       visible={visible}
-      animationType={Platform.OS === "ios" ? "fade" : "slide"}
-      presentationStyle="fullScreen"
+      transparent
+      animationType="none"
+      presentationStyle="overFullScreen"
       onRequestClose={cancel}
       onDismiss={handleDismiss}
     >
-      <View
+      <Animated.View
         style={[
           s.countryModalSafe,
           {
             backgroundColor: theme.background,
             paddingTop: insets.top,
             paddingBottom: insets.bottom,
+            transform: [{ translateX }],
           },
         ]}
       >
@@ -298,6 +350,7 @@ function CountrySelector({
               accessibilityRole="button"
               accessibilityLabel={c.back}
               onPress={cancel}
+              disabled={savingSelection}
               style={s.iconButton}
             >
               <FlowIcon name="back" color={theme.icon} />
@@ -312,6 +365,7 @@ function CountrySelector({
               accessibilityRole="button"
               accessibilityLabel={c.cancel}
               onPress={cancel}
+              disabled={savingSelection}
               style={s.iconButton}
             >
               <FlowIcon name="close" color={theme.icon} />
@@ -329,6 +383,12 @@ function CountrySelector({
               placeholderTextColor={theme.muted}
               value={q}
               onChangeText={setQ}
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={Keyboard.dismiss}
+              inputAccessoryViewID={
+                Platform.OS === "ios" ? COUNTRY_SEARCH_ACCESSORY : undefined
+              }
               style={[
                 s.input,
                 {
@@ -392,28 +452,62 @@ function CountrySelector({
               );
             }}
           />
-          <View
-            style={[
-              s.countryAction,
-              {
-                backgroundColor: theme.background,
-                borderTopColor: theme.border,
-              },
-            ]}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={c.selectorSave}
-              accessibilityState={{ disabled: !draftSelection }}
-              disabled={!draftSelection}
-              onPress={saveSelection}
-              style={[s.primary, !draftSelection && s.disabled]}
+          {!keyboardVisible ? (
+            <View
+              style={[
+                s.countryAction,
+                {
+                  backgroundColor: theme.background,
+                  borderTopColor: theme.border,
+                },
+              ]}
             >
-              <Text style={s.primaryText}>{c.selectorSave}</Text>
-            </Pressable>
-          </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={c.selectorSave}
+                accessibilityState={{
+                  disabled: !draftSelection || savingSelection,
+                  busy: savingSelection,
+                }}
+                disabled={!draftSelection || savingSelection}
+                onPress={() => void saveSelection()}
+                style={[
+                  s.primary,
+                  (!draftSelection || savingSelection) && s.disabled,
+                ]}
+              >
+                {savingSelection ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={s.primaryText}>{c.selectorSave}</Text>
+                )}
+              </Pressable>
+            </View>
+          ) : null}
         </KeyboardAvoidingView>
-      </View>
+        {Platform.OS === "ios" ? (
+          <InputAccessoryView nativeID={COUNTRY_SEARCH_ACCESSORY}>
+            <View
+              style={[
+                s.keyboardAccessory,
+                {
+                  backgroundColor: theme.surface,
+                  borderTopColor: theme.border,
+                },
+              ]}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={c.done}
+                onPress={Keyboard.dismiss}
+                style={s.keyboardDone}
+              >
+                <Text style={s.blue}>{c.done}</Text>
+              </Pressable>
+            </View>
+          </InputAccessoryView>
+        ) : null}
+      </Animated.View>
     </Modal>
   );
 }
@@ -721,6 +815,61 @@ export function PersonalDetailsScreen() {
     setDateDraft(next);
     if (next.year && next.month && next.day) {
       patch("dateOfBirth", `${next.year}-${next.month}-${next.day}`);
+    }
+  };
+  const saveCountrySelection = async (
+    kind: "phone" | "nationality" | "addressCountry",
+    value: string,
+  ) => {
+    if (!saved) return false;
+    setError("");
+    setSuccess("");
+    try {
+      const payload: MobileProfile =
+        kind === "phone"
+          ? { phoneCountryCode: value }
+          : kind === "nationality"
+            ? { nationality: value }
+            : {
+                address: serializeAddress({
+                  ...parseAddress(saved.address || ""),
+                  countryCode: value,
+                }),
+              };
+      const result = await travelApi.updateProfile(payload);
+      if (!mounted.current) return false;
+      const authoritative = normalizeProfile(result.profile);
+      setSaved(authoritative);
+      setDraft((current) => {
+        if (kind === "phone") {
+          return {
+            ...current,
+            phoneCountryCode: authoritative.phoneCountryCode || value,
+          };
+        }
+        if (kind === "nationality") {
+          return {
+            ...current,
+            nationality: authoritative.nationality || value,
+          };
+        }
+        return {
+          ...current,
+          address: serializeAddress({
+            ...parseAddress(current.address || ""),
+            countryCode: value,
+          }),
+        };
+      });
+      setSuccess(c.saveSuccess);
+      AccessibilityInfo.announceForAccessibility(c.saveSuccess);
+      return true;
+    } catch {
+      if (mounted.current) {
+        setError(c.saveFailure);
+        AccessibilityInfo.announceForAccessibility(c.saveFailure);
+      }
+      return false;
     }
   };
   const save = async () => {
@@ -1217,11 +1366,13 @@ export function PersonalDetailsScreen() {
         selected={selected}
         onClose={closeSelector}
         onSave={(value) => {
-          if (selector === "phone") patch("phoneCountryCode", value);
-          else if (selector === "nationality") patch("nationality", value);
-          else if (selector === "addressCountry")
-            patchAddress("countryCode", value);
-          closeSelector();
+          const kind =
+            selector === "nationality"
+              ? "nationality"
+              : selector === "addressCountry"
+                ? "addressCountry"
+                : "phone";
+          return saveCountrySelection(kind, value);
         }}
         onDismiss={finishSelectorDismiss}
       />
@@ -1421,5 +1572,18 @@ const s = StyleSheet.create({
   countryAction: {
     borderTopWidth: StyleSheet.hairlineWidth,
     padding: 16,
+  },
+  keyboardAccessory: {
+    minHeight: 44,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  keyboardDone: {
+    minWidth: 64,
+    minHeight: 44,
+    alignItems: "flex-end",
+    justifyContent: "center",
   },
 });
