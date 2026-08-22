@@ -1,0 +1,101 @@
+name: Production OTA Reconciliation
+on:
+  workflow_dispatch:
+    inputs:
+      original_workflow_run_id: { description: "Original delivery workflow run", required: true, type: string }
+      update_id: { description: "Existing EAS update UUID", required: true, type: string }
+      update_group_id: { description: "Existing EAS update group UUID", required: true, type: string }
+      publication_source_sha: { description: "Exact already-published source SHA", required: true, type: string }
+      platform: { description: "Existing publication platform", required: true, type: choice, options: [android] }
+      runtime_version: { description: "Existing publication runtime", required: true, type: string }
+      channel: { description: "Existing publication branch/channel", required: true, type: string }
+      baseline_eas_build_id: { description: "Reviewed installed binary baseline", required: true, type: string }
+permissions: { contents: read }
+concurrency: { group: production-ota-reconciliation, cancel-in-progress: false }
+jobs:
+  reconcile:
+    environment: mobile-production
+    runs-on: ubuntu-latest
+    env: { APP_VARIANT: production, APP_BUILD_MODE: release, EXPO_PUBLIC_API_BASE_URL: "https://kurioticket.com" }
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
+        with: { fetch-depth: 0 }
+      - name: Capture reconciliation start
+        run: echo "WORKFLOW_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.0.0
+        with: { node-version: 24, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
+      - name: Validate immutable reconciliation inputs
+        env:
+          ORIGINAL_RUN: "${{ inputs.original_workflow_run_id }}"
+          UPDATE_ID: "${{ inputs.update_id }}"
+          GROUP_ID: "${{ inputs.update_group_id }}"
+          SOURCE_SHA: "${{ inputs.publication_source_sha }}"
+          PLATFORM: "${{ inputs.platform }}"
+          RUNTIME: "${{ inputs.runtime_version }}"
+          CHANNEL: "${{ inputs.channel }}"
+          BASELINE: "${{ inputs.baseline_eas_build_id }}"
+        run: |
+          test "$ORIGINAL_RUN" = 32591979671
+          test "$UPDATE_ID" = 01a02ad2-129b-7d5a-b850-cc218bcde637
+          test "$GROUP_ID" = 769912ca-6f8b-4f4f-afae-7baa8674384f
+          test "$SOURCE_SHA" = 962904391c6055ca44d3a599347029b720c80531
+          test "$PLATFORM" = android
+          test "$RUNTIME" = production-0.3.0
+          test "$CHANNEL" = production
+          test "$BASELINE" = 1bfe53cc-e806-4dd3-8fd7-6c3b8ca2f513
+          git merge-base --is-ancestor "$SOURCE_SHA" origin/main
+      - working-directory: apps/mobile
+        run: npm ci
+      - name: Verify reviewed binary baseline and live channel
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", BASELINE: "${{ inputs.baseline_eas_build_id }}" }
+        run: |
+          test -n "$EXPO_TOKEN"
+          npx eas-cli@16.17.4 build:view "$BASELINE" --json > "$RUNNER_TEMP/baseline-build.json"
+          node scripts/verify-release-evidence.mjs --kind baseline --variant production --manifest release-baselines/android/production.json --build "$RUNNER_TEMP/baseline-build.json" --output "$RUNNER_TEMP/baseline-evidence.json"
+          npx eas-cli@16.17.4 channel:view production --json --non-interactive > "$RUNNER_TEMP/channel.json"
+          node scripts/verify-release-evidence.mjs --kind channel --variant production --input "$RUNNER_TEMP/channel.json" --output "$RUNNER_TEMP/channel-evidence.json"
+      - name: Reproduce published-source compatibility
+        env: { SOURCE_SHA: "${{ inputs.publication_source_sha }}" }
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/published-source" "$SOURCE_SHA"
+          npm --prefix "$RUNNER_TEMP/published-source/apps/mobile" ci
+          (cd "$RUNNER_TEMP/published-source/apps/mobile" && npx fingerprint fingerprint:generate --platform android) > "$RUNNER_TEMP/current-fingerprint.json"
+          BASE=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.commitSha)")
+          BASE_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/baseline-evidence.json');process.stdout.write(x.nativeFingerprint)")
+          CURRENT_FP=$(node -e "const x=require(process.env.RUNNER_TEMP+'/current-fingerprint.json');process.stdout.write(x.hash)")
+          node apps/mobile/scripts/classify-release.mjs --variant production --base "$BASE" --head "$SOURCE_SHA" --baseline-fingerprint "$BASE_FP" --current-fingerprint "$CURRENT_FP" --runtime production-0.3.0 --channel production --action update > "$RUNNER_TEMP/release-classification.json"
+          node -e "const f=require(process.env.RUNNER_TEMP+'/current-fingerprint.json'),c=require(process.env.RUNNER_TEMP+'/release-classification.json');if(f.hash!=='596900e057c6b8ba75f9d48c7484be88fd1d679a'||c.classification!=='ota-compatible'||c.nativeFiles.length)throw Error('Published-source compatibility mismatch')"
+      - name: Inspect existing EAS publication read-only
+        working-directory: apps/mobile
+        env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", GROUP_ID: "${{ inputs.update_group_id }}" }
+        run: |
+          npx eas-cli@16.17.4 update:view "$GROUP_ID" --json > "$RUNNER_TEMP/update-view.json"
+          npx eas-cli@16.17.4 update:list --branch production --limit 50 --json --non-interactive > "$RUNNER_TEMP/update-list.json"
+      - name: Verify and record existing publication
+        working-directory: apps/mobile
+        run: |
+          node scripts/reconcile-production-ota.mjs \
+            --view "$RUNNER_TEMP/update-view.json" --list "$RUNNER_TEMP/update-list.json" \
+            --update-id "${{ inputs.update_id }}" --group-id "${{ inputs.update_group_id }}" \
+            --source-sha "${{ inputs.publication_source_sha }}" --original-workflow-run-id "${{ inputs.original_workflow_run_id }}" \
+            --platform android --runtime production-0.3.0 --branch production --published-at 2026-08-22T18:53:25.531Z \
+            --baseline-build-id "${{ inputs.baseline_eas_build_id }}" --fingerprint 596900e057c6b8ba75f9d48c7484be88fd1d679a \
+            --baseline "$RUNNER_TEMP/baseline-evidence.json" --current-fingerprint "$RUNNER_TEMP/current-fingerprint.json" \
+            --classifier "$RUNNER_TEMP/release-classification.json" --channel "$RUNNER_TEMP/channel-evidence.json" \
+            --output "$RUNNER_TEMP/reconciliation-audit.json"
+      - name: Preserve non-secret reconciliation evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: "android-production-ota-reconciliation-${{ github.run_id }}"
+          path: |
+            ${{ runner.temp }}/baseline-evidence.json
+            ${{ runner.temp }}/channel-evidence.json
+            ${{ runner.temp }}/current-fingerprint.json
+            ${{ runner.temp }}/release-classification.json
+            ${{ runner.temp }}/update-view.json
+            ${{ runner.temp }}/update-list.json
+            ${{ runner.temp }}/reconciliation-audit.json
+          if-no-files-found: error
+          retention-days: 365

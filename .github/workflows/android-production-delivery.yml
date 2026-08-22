@@ -21,6 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.0
         with: { ref: "${{ inputs.commit_sha }}", fetch-depth: 0 }
+      - name: Capture release workflow start
+        run: echo "WORKFLOW_STARTED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
       - name: Verify exact approved Production checkout
         env:
           APPROVED_SHA: "${{ inputs.commit_sha }}"
@@ -178,7 +180,7 @@ jobs:
           VERSION_EVIDENCE_PATH: "${{ runner.temp }}/version-evidence.json"
           DELIVERY_RESULT_PATH: "${{ runner.temp }}/delivery-result.json"
           AUDIT_OUTPUT: "${{ runner.temp }}/release-audit.json"
-          WORKFLOW_STARTED_AT: "${{ github.event.repository.updated_at }}"
+          WORKFLOW_STARTED_AT: "${{ env.WORKFLOW_STARTED_AT }}"
           FINAL_STATUS: "${{ job.status }}"
           PRIOR_JOB_STATUS: "${{ job.status }}"
         run: |
@@ -192,4 +194,17 @@ jobs:
         if: always()
         continue-on-error: ${{ job.status == 'failure' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with: { name: "android-production-release-evidence-${{ github.run_id }}", path: "${{ runner.temp }}/release-audit.json", if-no-files-found: warn, retention-days: 365 }
+        with:
+          name: "android-production-release-evidence-${{ github.run_id }}"
+          path: |
+            ${{ runner.temp }}/baseline-evidence.json
+            ${{ runner.temp }}/channel-evidence.json
+            ${{ runner.temp }}/current-fingerprint.json
+            ${{ runner.temp }}/release-classification.json
+            ${{ runner.temp }}/version-evidence.json
+            ${{ runner.temp }}/delivery-result.raw.json
+            ${{ runner.temp }}/delivery-result.json
+            ${{ runner.temp }}/aab-evidence.json
+            ${{ runner.temp }}/release-audit.json
+          if-no-files-found: warn
+          retention-days: 365
