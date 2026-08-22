@@ -17,7 +17,7 @@ import {
 /** The sole production flight pipeline. Provider policy is deliberately not configurable. */
 export async function searchFlights(
   search: FlightSearchParams,
-  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void } = {},
+  options: { signal?: AbortSignal; deadlineMs?: number; onProviderStart?: () => void; requestId?: string } = {},
 ): Promise<AggregatedResult<NormalizedFlightResult> & {
   performance: {
     supplierMs: number;
@@ -27,6 +27,7 @@ export async function searchFlights(
     deduplicationMs: number;
     aggregationMs: number;
   };
+  resultsCacheValidForMs?: number;
 }> {
   const startedAt = Date.now();
   const provider = await runWithFlightSearchDeadline(
@@ -56,12 +57,16 @@ export async function searchFlights(
     ),
   );
   const aggregationMs = performance.now() - aggregationStartedAt;
-  if (results.length) await rememberFlights(results, now, search);
+  const cacheResult = results.length
+    ? await rememberFlights(results, now, search, options.requestId)
+    : { persisted: true, validForMs: 0 };
+  const actionableResults = cacheResult.persisted ? results : [];
+  const cacheUnavailable = results.length > 0 && !cacheResult.persisted;
   return {
-    results,
+    results: actionableResults,
     providerStatuses: [provider],
     warnings:
-      provider.status === "failed"
+      provider.status === "failed" || cacheUnavailable
         ? ["Flight results are temporarily unavailable. Please try again."]
         : [],
     latencyMs: Date.now() - startedAt,
@@ -74,7 +79,8 @@ export async function searchFlights(
       deduplicationMs,
       aggregationMs,
     },
-    ...(provider.status !== "success"
+    resultsCacheValidForMs: cacheResult.validForMs,
+    ...(provider.status !== "success" || cacheUnavailable
       ? {
           unavailableMessage:
             "Flight results are temporarily unavailable. Please try again.",
