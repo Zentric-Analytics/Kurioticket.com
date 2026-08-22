@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AccessibilityInfo,
+  Animated,
   Alert,
   KeyboardAvoidingView,
   Linking,
@@ -12,6 +13,7 @@ import {
   Switch,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { router } from "expo-router";
@@ -135,7 +137,70 @@ export function SecurityScreen() {
 }
 
 function Header({ title, backLabel, onBack, close = false }: { title: string; backLabel: string; onBack: () => void; close?: boolean }) { const { theme } = useAppTheme(); return <View style={[styles.header, { borderBottomColor: theme.border }]}><Pressable accessibilityRole="button" accessibilityLabel={backLabel} onPress={onBack} style={styles.iconButton}><FlowIcon name={close ? "close" : "back"} color={theme.icon} /></Pressable><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>{title}</Text><View style={styles.iconButton} /></View>; }
-function ScreenModal({ visible, title, closeLabel, onClose, children }: { visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode }) { const { theme } = useAppTheme(); const insets = useSafeAreaInsets(); return <Modal animationType="slide" presentationStyle="fullScreen" visible={visible} onRequestClose={onClose}><View accessibilityViewIsModal style={[styles.safe, { backgroundColor: theme.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}><Header title={title} backLabel={closeLabel} onBack={onClose} close /><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.modalContent}>{children}</ScrollView></View></Modal>; }
+function ScreenModal({ visible, title, closeLabel, onClose, children }: { visible: boolean; title: string; closeLabel: string; onClose: () => void; children: ReactNode }) {
+  const { theme } = useAppTheme();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const [presented, setPresented] = useState(visible);
+  const presentedRef = useRef(visible);
+  const visibleRef = useRef(visible);
+  const wasVisibleRef = useRef(false);
+  const transitionRef = useRef(0);
+  const translateX = useRef(new Animated.Value(width)).current;
+
+  const setModalPresented = (next: boolean) => {
+    presentedRef.current = next;
+    setPresented(next);
+  };
+  const animateClosed = (afterClose?: () => void) => {
+    const transition = ++transitionRef.current;
+    translateX.stopAnimation();
+    Animated.timing(translateX, {
+      toValue: width,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (!finished || transition !== transitionRef.current || visibleRef.current !== visible) return;
+      if (afterClose) {
+        wasVisibleRef.current = false;
+        afterClose();
+      }
+      setModalPresented(false);
+    });
+  };
+
+  useEffect(() => {
+    visibleRef.current = visible;
+    const isOpening = visible && !wasVisibleRef.current;
+    const isClosing = !visible && wasVisibleRef.current;
+    wasVisibleRef.current = visible;
+
+    if (isOpening) {
+      ++transitionRef.current;
+      setModalPresented(true);
+      translateX.stopAnimation();
+      translateX.setValue(width);
+      Animated.timing(translateX, {
+        toValue: 0,
+        duration: 240,
+        useNativeDriver: true,
+      }).start();
+    } else if (isClosing && presentedRef.current) {
+      animateClosed();
+    }
+  }, [translateX, visible, width]);
+
+  const requestClose = () => {
+    if (!visibleRef.current) return;
+    animateClosed(onClose);
+  };
+  const handleDismiss = () => {
+    if (visibleRef.current || presentedRef.current) return;
+    translateX.stopAnimation();
+  };
+
+  return <Modal transparent animationType="none" presentationStyle="overFullScreen" visible={presented} onRequestClose={requestClose} onDismiss={handleDismiss}><Animated.View accessibilityViewIsModal style={[styles.safe, { backgroundColor: theme.background, paddingTop: insets.top, paddingBottom: insets.bottom, transform: [{ translateX }] }]}><Header title={title} backLabel={closeLabel} onBack={requestClose} close /><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.modalContent}>{children}</ScrollView></Animated.View></Modal>;
+}
 function SecurityBlock({ label, description, onPress, accessibilityValue, destructive = false, chevron = true }: { label: string; description: string; onPress: () => void; accessibilityValue?: string; destructive?: boolean; chevron?: boolean }) { const { theme } = useAppTheme(); return <Pressable accessibilityRole="button" accessibilityLabel={`${label}. ${description}`} accessibilityValue={accessibilityValue ? { text: accessibilityValue } : undefined} onPress={onPress} style={({ pressed }) => [styles.securityBlock, { borderBottomColor: theme.border }, pressed && styles.pressed]}><View style={styles.rowCopy}><Text style={[styles.rowLabel, { color: destructive ? flowColors.red : theme.text }]}>{label}</Text><Text style={[styles.rowDetail, { color: theme.muted }]}>{description}</Text></View>{chevron ? <FlowIcon name="chevron" color={theme.muted} size={18} /> : null}</Pressable>; }
 function EventRow({ label, date }: { label: string; date: string }) { const { theme } = useAppTheme(); return <View style={[styles.event, { borderBottomColor: theme.border }]}><Text style={[styles.rowLabel, { color: theme.text }]}>{label}</Text><Text style={[styles.rowDetail, { color: theme.muted }]}>{date}</Text></View>; }
 function Feedback({ error, message, retry, onRetry }: { error: string; message: string; retry?: string; onRetry?: () => Promise<void> }) { return <>{error ? <View><Text accessibilityRole="alert" style={styles.error}>{error}</Text>{retry && onRetry ? <Pressable accessibilityRole="button" onPress={() => void onRetry()} style={styles.textAction}><Text style={styles.link}>{retry}</Text></Pressable> : null}</View> : null}{message ? <Text accessibilityRole="alert" style={styles.success}>{message}</Text> : null}</>; }

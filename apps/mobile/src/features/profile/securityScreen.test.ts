@@ -8,15 +8,36 @@ const screenModalStart = security.indexOf("function ScreenModal");
 const screenModalEnd = security.indexOf("function SecurityBlock", screenModalStart);
 const screenModal = security.slice(screenModalStart, screenModalEnd);
 
-test("shared security modals apply explicit safe-area insets", () => {
+test("shared security modals use the proven over-full-screen presentation shell", () => {
   assert.match(security, /import\s*\{[^}]*useSafeAreaInsets[^}]*\}\s*from\s*["']react-native-safe-area-context["']/s);
+  assert.match(security, /import\s*\{[^}]*Animated[^}]*useWindowDimensions[^}]*\}\s*from\s*["']react-native["']/s);
   assert.match(screenModal, /const\s+insets\s*=\s*useSafeAreaInsets\(\)/);
-  assert.match(screenModal, /<View\s+accessibilityViewIsModal/);
+  assert.match(screenModal, /const\s+\{\s*width\s*\}\s*=\s*useWindowDimensions\(\)/);
+  assert.match(screenModal, /new Animated\.Value\(width\)/);
+  assert.match(screenModal, /<Modal transparent animationType="none" presentationStyle="overFullScreen"/);
+  assert.match(screenModal, /<Animated\.View\s+accessibilityViewIsModal/);
   assert.doesNotMatch(screenModal, /<SafeAreaView/);
   assert.match(screenModal, /paddingTop:\s*insets\.top/);
   assert.match(screenModal, /paddingBottom:\s*insets\.bottom/);
-  assert.match(screenModal, /animationType=["']slide["']/);
-  assert.match(screenModal, /presentationStyle=["']fullScreen["']/);
+  assert.doesNotMatch(screenModal, /animationType=["']slide["']/);
+  assert.doesNotMatch(screenModal, /presentationStyle=["']fullScreen["']/);
+});
+
+test("shared security modals animate in and defer hiding until push-out finishes", () => {
+  assert.match(screenModal, /translateX\.setValue\(width\)/);
+  assert.match(screenModal, /toValue:\s*0,\s*duration:\s*240,\s*useNativeDriver:\s*true/s);
+  assert.match(screenModal, /toValue:\s*width,\s*duration:\s*220,\s*useNativeDriver:\s*true/s);
+  assert.match(screenModal, /visible=\{presented\}/);
+  assert.match(screenModal, /\.start\(\(\{ finished \}\) => \{[\s\S]*setModalPresented\(false\)/);
+  assert.match(screenModal, /const requestClose = \(\) => \{[\s\S]*animateClosed\(onClose\)/);
+});
+
+test("shared security modal guards rapid reopen and stale dismiss callbacks", () => {
+  assert.match(screenModal, /const transitionRef = useRef\(0\)/);
+  assert.match(screenModal, /transition !== transitionRef\.current/);
+  assert.match(screenModal, /visibleRef\.current !== visible/);
+  assert.match(screenModal, /if \(visibleRef\.current \|\| presentedRef\.current\) return/);
+  assert.match(screenModal, /const isOpening = visible && !wasVisibleRef\.current/);
 });
 
 test("all native security drill-downs retain the shared modal shell", () => {
@@ -36,13 +57,13 @@ test("security landing uses flat descriptive blocks and the native header", () =
   assert.doesNotMatch(security, /#003B95|#0071C2|Booking/);
 });
 
-test("password fields exist only in a full-screen password flow", () => {
+test("password fields exist only in the shared modal password flow", () => {
   const landingEnd = security.indexOf("<ScreenModal visible={passwordOpen}");
   assert.ok(landingEnd > 0);
   const landing = security.slice(0, landingEnd);
   assert.doesNotMatch(landing, /field\("currentPassword"|field\("newPassword"|field\("confirmPassword"/);
   assert.match(security, /setPasswordOpen\(true\)/);
-  assert.match(security, /presentationStyle="fullScreen"/);
+  assert.match(security, /<ScreenModal visible=\{passwordOpen\}/);
   assert.match(security, /travelApi\.changePassword\(passwords\)/);
   assert.match(security, /setPasswordOpen\(false\)/);
   assert.match(security, /travelApi\.requestAccountPasswordReset\(\)/);
