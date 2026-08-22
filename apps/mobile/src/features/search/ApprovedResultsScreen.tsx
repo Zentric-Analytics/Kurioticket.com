@@ -66,7 +66,10 @@ import {
   activeFlightFilterCount,
   emptyFlightFilters,
   filterAndSortFlights,
+  flightSortOptions,
+  flightSortQuickLabel,
   flightFilterOptions,
+  type FlightSort,
   type FlightFilters,
 } from "./flightFilters";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
@@ -117,7 +120,8 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [retry, setRetry] = useState(0);
   const searchSequence = useRef(0);
   const activeSearch = useRef<AbortController | null>(null);
-  const [sort, setSort] = useState("best");
+  const [sort, setSort] = useState<FlightSort>("best");
+  const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterSection, setFilterSection] = useState<
@@ -333,10 +337,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           >
             {product === "flight" ? (
               <Pill
-                label="Sort"
-                active={sort === "price"}
+                label={flightSortQuickLabel(sort)}
+                active={sort !== "best"}
                 flightResultsChevron
-                onPress={() => setSort((x) => (x === "best" ? "price" : "best"))}
+                onPress={() => setSortOpen(true)}
               />
             ) : null}
             <Pill
@@ -517,14 +521,17 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
         </>
       )}
       {product === "flight" ? (
-        <FlightFilterModal
-          visible={filterOpen}
-          section={filterSection}
-          filters={filters}
-          options={flightOptions}
-          onChange={setFilters}
-          onClose={() => setFilterOpen(false)}
-        />
+        <>
+          <FlightSortModal visible={sortOpen} sort={sort} onChange={setSort} onClose={() => setSortOpen(false)} />
+          <FlightFilterModal
+            visible={filterOpen}
+            section={filterSection}
+            filters={filters}
+            options={flightOptions}
+            onChange={setFilters}
+            onClose={() => setFilterOpen(false)}
+          />
+        </>
       ) : null}
       <BottomNav flightResults={flightResults} />
     </SafeAreaView>
@@ -616,6 +623,57 @@ const timeLabels = {
   evening: "Evening",
   night: "Night",
 } as const;
+
+function FlightSortModal({
+  visible,
+  sort,
+  onChange,
+  onClose,
+}: {
+  visible: boolean;
+  sort: FlightSort;
+  onChange: (sort: FlightSort) => void;
+  onClose: () => void;
+}) {
+  const { theme } = useAppTheme();
+  const inset = useSafeAreaInsets();
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
+      <View style={s0.modalBackdrop}>
+        <View style={[s0.sortSheet, { paddingBottom: Math.max(inset.bottom, 18), backgroundColor: theme.surface }]} accessibilityLabel="Sort flights">
+          <View style={s0.sheetHead}>
+            <Text accessibilityRole="header" style={[s0.foundTitle, { color: theme.textPrimary }]}>Sort flights</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Close sort options" onPress={onClose} style={s0.closeButton}>
+              <FlowIcon name="close" color={theme.icon} />
+            </Pressable>
+          </View>
+          <View accessibilityRole="radiogroup" style={s0.sortOptions}>
+            {flightSortOptions.map((option) => {
+              const selected = sort === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: selected }}
+                  onPress={() => { onChange(option.value); onClose(); }}
+                  style={({ pressed }) => [s0.sortOption, pressed && s0.sortOptionPressed]}
+                >
+                  <View style={[s0.radio, { borderColor: selected ? ui.blue : theme.border }]}>
+                    {selected ? <View style={s0.radioDot} /> : null}
+                  </View>
+                  <View style={s0.sortOptionCopy}>
+                    <Text style={[s0.sortOptionLabel, { color: theme.textPrimary }, selected && { color: ui.blue }]}>{option.label}</Text>
+                    <Text style={[s0.sortOptionDescription, { color: theme.textSecondary }]}>{option.description}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
 
 function FlightFilterModal({
   visible,
@@ -1291,10 +1349,19 @@ const s0 = StyleSheet.create({
   filters: { paddingHorizontal: 14, paddingVertical: 7, gap: 8, alignItems: "center" },
   modalBackdrop: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10, 24, 48, 0.42)" },
   sheet: { maxHeight: "82%", borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18, gap: 14, backgroundColor: "white" },
+  sortSheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 18, paddingTop: 14, gap: 4, backgroundColor: "white" },
   sheetHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   closeButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   sheetScroll: { flexGrow: 0 },
   sheetContent: { gap: 22, paddingBottom: 4 },
+  sortOptions: { paddingVertical: 2 },
+  sortOption: { minHeight: 58, flexDirection: "row", alignItems: "center", gap: 13, paddingHorizontal: 2, paddingVertical: 8 },
+  sortOptionPressed: { opacity: 0.62 },
+  radio: { width: 21, height: 21, borderRadius: 11, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
+  radioDot: { width: 11, height: 11, borderRadius: 6, backgroundColor: ui.blue },
+  sortOptionCopy: { flex: 1, minWidth: 0, gap: 1 },
+  sortOptionLabel: { fontSize: 15, lineHeight: 20, fontWeight: "700" },
+  sortOptionDescription: { fontSize: 12, lineHeight: 17 },
   filterSection: { gap: 10 },
   filterSectionTitle: { fontSize: 14, fontWeight: "800", color: ui.navy },
   choiceRow: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
