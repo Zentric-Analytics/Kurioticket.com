@@ -567,10 +567,28 @@ test('Production update JSON is strictly bound to Android Production runtime and
 test('Production non-mutating dry run verifies the frozen submission boundary', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
   const credential = JSON.parse(readFileSync(resolve(root, 'release-baselines/android/production-credential.json'), 'utf8'));
-  const result = validateProductionDryRun({ approvedSha: 'd97d8e01245a1b77c77d3499d02d5f355b885025', headSha: 'd97d8e01245a1b77c77d3499d02d5f355b885025', mainContainsSha: true, versionEvidence: { proposedVersionCode: 1, remoteVersionStatus: 'uninitialized', playRecordStatus: 'present', uploadedVersionCodes: [] }, credential, workflow, policy, eas });
+  const approvedSha = 'd97d8e01245a1b77c77d3499d02d5f355b885025';
+  const validate = (versionEvidence, credentialOverride = credential) => validateProductionDryRun({ approvedSha, headSha: approvedSha, mainContainsSha: true, versionEvidence, credential: credentialOverride, workflow, policy, eas });
+  const firstBuild = { currentRemoteVersionCode: null, proposedVersionCode: 1, remoteVersionStatus: 'uninitialized', playRecordStatus: 'present', highestUploadedVersionCode: null, uploadedVersionCodes: [] };
+  const initialized = { currentRemoteVersionCode: 2, proposedVersionCode: 3, remoteVersionStatus: 'configured', playRecordStatus: 'present', highestUploadedVersionCode: 2, uploadedVersionCodes: [2] };
+
+  assert.equal(validate(firstBuild).proposedVersionCode, 1);
+  const result = validate(initialized);
   assert.equal(result.status, 'READY_TO_SUBMIT_PRODUCTION_BUILD');
+  assert.equal(result.proposedVersionCode, 3);
   assert.equal(result.submissionPerformed, false);
-  assert.throws(() => validateProductionDryRun({ approvedSha: result.approvedSha, headSha: result.approvedSha, mainContainsSha: true, versionEvidence: { proposedVersionCode: 1, remoteVersionStatus: 'uninitialized', playRecordStatus: 'present', uploadedVersionCodes: [] }, credential: { ...credential, package: 'com.kurioticket.app.preview' }, workflow, policy, eas }), /credential/);
+  assert.equal(validate({ currentRemoteVersionCode: 5, proposedVersionCode: 6, remoteVersionStatus: 'configured', playRecordStatus: 'present', highestUploadedVersionCode: 3, uploadedVersionCodes: [2, 3] }).proposedVersionCode, 6);
+
+  assert.throws(() => validate({ ...initialized, proposedVersionCode: 4 }), /next EAS version/);
+  assert.throws(() => validate({ ...initialized, proposedVersionCode: 2 }), /next EAS version/);
+  assert.throws(() => validate({ ...initialized, highestUploadedVersionCode: 3, uploadedVersionCodes: [2, 3] }), /does not exceed reviewed Play history/);
+  assert.throws(() => validate({ ...initialized, highestUploadedVersionCode: 2, uploadedVersionCodes: [2, 4] }), /internally inconsistent/);
+  assert.throws(() => validate({ ...initialized, highestUploadedVersionCode: null }), /internally inconsistent/);
+  assert.throws(() => validate({ ...initialized, uploadedVersionCodes: [2, '3'] }), /malformed/);
+  assert.throws(() => validate({ ...initialized, currentRemoteVersionCode: null }), /configured EAS version evidence is malformed/);
+  assert.throws(() => validate({ ...initialized, remoteVersionStatus: 'unknown' }), /unsupported remote state/);
+  assert.throws(() => validate({ ...initialized, uploadedVersionCodes: [2, 2] }), /malformed/);
+  assert.throws(() => validate(firstBuild, { ...credential, package: 'com.kurioticket.app.preview' }), /credential/);
 });
 test('Production workflow separates structured stdout, validates results, and never auto-submits', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
