@@ -37,7 +37,7 @@ test("successful main Save shows a floating toast and preserves its announcement
   );
   assert.match(screen, /testID="personal-details-success-toast"/);
 });
-test("success toast is an overlay outside ScrollView content", () => {
+test("success toast is an overlay outside ScrollView content and measures around Edit", () => {
   const contentScrollStart = screen.indexOf(
     '<ScrollView\n            keyboardShouldPersistTaps="handled"',
   );
@@ -46,7 +46,12 @@ test("success toast is an overlay outside ScrollView content", () => {
   assert.ok(contentScrollStart >= 0 && contentScrollEnd > contentScrollStart);
   assert.ok(toast > contentScrollEnd);
   assert.match(screen, /toastPosition:\s*\{[\s\S]*?position:\s*"absolute"/);
-  assert.match(screen, /bottom: insets\.bottom \+ 76/);
+  assert.match(screen, /const editButtonRef = useRef<View>\(null\)/);
+  assert.match(screen, /button\.measureInWindow/);
+  assert.match(screen, /height - y \+ 12/);
+  assert.match(screen, /ref=\{editButtonRef\}/);
+  assert.match(screen, /onLayout=\{updateToastPosition\}/);
+  assert.doesNotMatch(screen, /bottom: insets\.bottom \+ 76/);
 });
 test("success toast clears after exactly 1500ms and Edit dismisses it", () => {
   assert.match(
