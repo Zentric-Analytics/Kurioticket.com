@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -150,9 +151,9 @@ test('Production IPA verification enforces identity, version, schemes, and Previ
       'com.apple.developer.team-identifier': 'N23R45R4CY',
     },
   };
-  const publicConfig = { name: 'Kurioticket', ios: { bundleIdentifier: 'com.kurioticket.app' }, runtimeVersion: 'production-0.3.0', extra: { environment: { apiBaseUrl: 'https://kurioticket.com', isPreview: false } } };
+  const appConfig = { name: 'Kurioticket', ios: { bundleIdentifier: 'com.kurioticket.app' }, runtimeVersion: 'production-0.3.0', extra: { environment: { apiBaseUrl: 'https://kurioticket.com', isPreview: false } } };
   const expoConfig = { EXUpdatesRuntimeVersion: 'production-0.3.0' };
-  const validIpa = { plist, publicConfig, expoConfig, provisioningProfile, certificateSerials: ['5D:4F:E2:35:AA:B1:68:16:14:F1:12:3D:5F:D9:C2:F7'] };
+  const validIpa = { plist, appConfig, expoConfig, provisioningProfile, certificateSerials: ['5D:4F:E2:35:AA:B1:68:16:14:F1:12:3D:5F:D9:C2:F7'], signerCertificateSerial: '5D:4F:E2:35:AA:B1:68:16:14:F1:12:3D:5F:D9:C2:F7' };
   assert.equal(verifyProductionIpa(validIpa).verified, true);
   for (const wrongScheme of [
     'com.googleusercontent.apps.459496589401-gi52kj4fscgf092pasrelkth2mal0mph',
@@ -162,22 +163,72 @@ test('Production IPA verification enforces identity, version, schemes, and Previ
     assert.throws(() => verifyProductionIpa({ ...validIpa, plist: wrong }), /approved release identity/);
   }
   assert.throws(() => verifyProductionIpa({ ...validIpa, plist: { ...plist, CFBundleIdentifier: 'com.kurioticket.app.preview' } }), /bundle identifier/);
-  assert.throws(() => verifyProductionIpa({ ...validIpa, publicConfig: { ...publicConfig, extra: { environment: { apiBaseUrl: 'https://staging.kurioticket.com', isPreview: true } } } }), /environment/);
-  assert.throws(() => verifyProductionIpa({ ...validIpa, publicConfig: { ...publicConfig, runtimeVersion: 'preview-0.3.0' } }), /runtime/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, appConfig: { ...appConfig, extra: { environment: { apiBaseUrl: 'https://staging.kurioticket.com', isPreview: true } } } }), /environment/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, appConfig: { ...appConfig, runtimeVersion: 'preview-0.3.0' } }), /runtime/);
   assert.throws(() => verifyProductionIpa({ ...validIpa, expoConfig: { EXUpdatesRuntimeVersion: 'preview-0.3.0' } }), /runtime/);
   assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: { ...provisioningProfile, UUID: 'wrong-profile' } }), /profile UUID/);
   assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: { ...provisioningProfile, TeamIdentifier: ['WRONGTEAM'] } }), /Apple Team identity/);
   assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: { ...provisioningProfile, Entitlements: { ...provisioningProfile.Entitlements, 'application-identifier': 'N23R45R4CY.com.kurioticket.app.preview' } } }), /application identifier/);
   assert.throws(() => verifyProductionIpa({ ...validIpa, certificateSerials: ['DEADBEEF'] }), /signing certificate/);
+  assert.throws(() => verifyProductionIpa({ ...validIpa, signerCertificateSerial: 'DEADBEEF' }), /actual code-signing certificate/);
   assert.throws(() => verifyProductionIpa({ ...validIpa, provisioningProfile: undefined }), /profile UUID/);
 });
 test('Production IPA verification validates active configuration without scanning bundled policy literals', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/ios-production-delivery.yml'), 'utf8');
   const verifier = readFileSync(resolve(root, 'scripts/verify-production-ipa.mjs'), 'utf8');
   assert.doesNotMatch(workflow, /\bxargs\s+-0\s+strings\b|--contents\b/);
-  assert.match(workflow, /--public-config\b/);
+  assert.match(workflow, /EXConstants\.bundle\/app\.config/);
+  assert.match(workflow, /--app-config\b/);
   assert.match(workflow, /--expo-config\b/);
+  assert.match(workflow, /codesign --verify --deep --strict/);
+  assert.doesNotMatch(workflow, /\bfind\b[^\n]*\s-maxdepth\b/);
+  assert.match(workflow, /--extract-certificates="\$RUNNER_TEMP\/app-signer"/);
+  assert.doesNotMatch(workflow, /--extract-certificates\s+"\$RUNNER_TEMP\/app-signer"/);
+  assert.match(workflow, /--signer-certificate-serial\b/);
   assert.doesNotMatch(verifier, /contents\.includes\(|forbiddenIdentityFound/);
+});
+
+test('iOS Production EAS metadata guard tolerates only an omitted bundle identifier before authoritative IPA verification', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/ios-production-delivery.yml'), 'utf8');
+  const guard = workflow.match(/IPA_URL=\$\(node -e "([^"\n]+)"\)/)?.[1];
+  assert.ok(guard, 'iOS Production metadata guard is missing');
+  const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-ios-eas-guard-'));
+  const approvedSha = 'b'.repeat(40);
+  const validBuild = {
+    status: 'FINISHED',
+    platform: 'IOS',
+    project: { id: '89f6fd88-c0d7-495a-9e2b-8301b09f407d' },
+    buildProfile: 'production',
+    distribution: 'STORE',
+    channel: 'production',
+    runtimeVersion: 'production-0.3.0',
+    appVersion: '0.3.0',
+    appBuildVersion: '2',
+    gitCommitHash: approvedSha,
+    artifacts: { applicationArchiveUrl: 'https://example.test/production.ipa' },
+  };
+  const verify = (overrides = {}) => {
+    writeFileSync(resolve(directory, 'build.json'), JSON.stringify({ ...validBuild, ...overrides }));
+    return execFileSync(process.execPath, ['-e', guard], {
+      encoding: 'utf8',
+      env: { ...process.env, RUNNER_TEMP: directory, CHECKED_OUT_SHA: approvedSha },
+    });
+  };
+  try {
+    assert.equal(verify(), validBuild.artifacts.applicationArchiveUrl);
+    assert.equal(verify({ applicationIdentifier: 'com.kurioticket.app' }), validBuild.artifacts.applicationArchiveUrl);
+    assert.throws(() => verify({ applicationIdentifier: 'com.kurioticket.app.preview' }), /Finished build identity mismatch/);
+    for (const invalid of [
+      { status: 'IN_PROGRESS' }, { platform: 'ANDROID' }, { gitCommitHash: 'c'.repeat(40) },
+      { project: { id: 'wrong-project' } }, { buildProfile: 'preview' }, { distribution: 'INTERNAL' },
+      { channel: 'preview' }, { runtimeVersion: 'preview-0.3.0' }, { appVersion: '0.2.0' },
+      { appBuildVersion: '0' }, { appBuildVersion: null },
+      { artifacts: { applicationArchiveUrl: 'http://example.test/production.ipa' } },
+    ]) assert.throws(() => verify(invalid));
+    assert.match(workflow, /curl --fail[\s\S]*unzip -q[\s\S]*codesign --verify --deep --strict[\s\S]*verify-production-ipa\.mjs/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 test('failed build submission still produces a safe audit with no empty-result parser failure', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-audit-'));

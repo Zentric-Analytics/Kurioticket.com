@@ -51,7 +51,7 @@ test("multi-city session identity includes every requested leg", () => {
   assert.match(fiveLegKey, /CDG>IAH@2026-10-30/);
 
   const storage = new MemoryStorage();
-  writeFlightResultsSessionSnapshot(fourLegKey, [result], [], storage, 100);
+  writeFlightResultsSessionSnapshot(fourLegKey, [result], [], 100 + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, storage, 100);
   assert.equal(readFlightResultsSessionSnapshot(fiveLegKey, storage, 200), null);
 });
 
@@ -88,14 +88,14 @@ test("one-way, round-trip, and multi-city identities restore only themselves", (
   assert.equal(buildFlightResultsSearchKey({ ...common, tripType: "round-trip", origin: "IAH", destination: "LAX", departureDate: "2026-10-10", returnDate: "2026-10-20" }), roundTrip);
   assert.notEqual(oneWay, roundTrip);
   assert.notEqual(roundTrip, multiCity);
-  writeFlightResultsSessionSnapshot(roundTrip, [result], [], storage, 100);
+  writeFlightResultsSessionSnapshot(roundTrip, [result], [], 100 + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, storage, 100);
   assert.ok(readFlightResultsSessionSnapshot(roundTrip, storage, 200));
   assert.equal(readFlightResultsSessionSnapshot(multiCity, storage, 200), null);
 });
 
-test("legacy v1 snapshots are invalidated after the cache contract change", () => {
+test("legacy snapshots without server-owned validity are invalidated", () => {
   const storage = new MemoryStorage();
-  storage.setItem(FLIGHT_RESULTS_SESSION_CACHE_KEY, JSON.stringify({ version: 1, searchKey: "legacy", savedAt: 100, results: [result], warnings: [] }));
+  storage.setItem(FLIGHT_RESULTS_SESSION_CACHE_KEY, JSON.stringify({ version: 2, searchKey: "legacy", savedAt: 100, results: [result], warnings: [] }));
 
   assert.equal(readFlightResultsSessionSnapshot("legacy", storage, 200), null);
   assert.equal(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY), null);
@@ -144,12 +144,13 @@ const result = {
 
 test("writes and reads a matching snapshot with warnings", () => {
   const storage = new MemoryStorage();
-  writeFlightResultsSessionSnapshot("search", [result], ["limited"], storage, 100);
+  writeFlightResultsSessionSnapshot("search", [result], ["limited"], 100 + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, storage, 100);
 
   assert.deepEqual(readFlightResultsSessionSnapshot("search", storage, 200), {
-    version: 2,
+    version: 3,
     searchKey: "search",
     savedAt: 100,
+    validUntil: 100 + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS,
     results: [result],
     warnings: ["limited"],
   });
@@ -157,14 +158,14 @@ test("writes and reads a matching snapshot with warnings", () => {
 
 test("requires the requested search key to match", () => {
   const storage = new MemoryStorage();
-  writeFlightResultsSessionSnapshot("first", [result], [], storage, 100);
+  writeFlightResultsSessionSnapshot("first", [result], [], 100 + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, storage, 100);
   assert.equal(readFlightResultsSessionSnapshot("second", storage, 200), null);
   assert.ok(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY));
 });
 
 test("expires and removes snapshots after thirty minutes", () => {
   const storage = new MemoryStorage();
-  writeFlightResultsSessionSnapshot("search", [result], [], storage, 100);
+  writeFlightResultsSessionSnapshot("search", [result], [], 100 + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, storage, 100);
   assert.equal(
     readFlightResultsSessionSnapshot(
       "search",
@@ -173,6 +174,39 @@ test("expires and removes snapshots after thirty minutes", () => {
     ),
     null,
   );
+  assert.equal(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY), null);
+});
+
+test("provider-bounded server validity shortens the browser snapshot lifetime", () => {
+  const storage = new MemoryStorage();
+  const twelveMinutes = 12 * 60 * 1000;
+  writeFlightResultsSessionSnapshot("search", [result], [], 100 + twelveMinutes, storage, 100);
+
+  assert.ok(readFlightResultsSessionSnapshot("search", storage, 100 + twelveMinutes - 1));
+  assert.equal(readFlightResultsSessionSnapshot("search", storage, 100 + twelveMinutes), null);
+});
+
+test("response delay does not extend the server-owned snapshot expiry", () => {
+  const storage = new MemoryStorage();
+  const serverExpiry = 10_000;
+  writeFlightResultsSessionSnapshot("search", [result], [], serverExpiry, storage, 9_500);
+
+  assert.ok(readFlightResultsSessionSnapshot("search", storage, serverExpiry - 1));
+  assert.equal(readFlightResultsSessionSnapshot("search", storage, serverExpiry), null);
+});
+
+test("valid snapshots retain the exact opaque result identity", () => {
+  const storage = new MemoryStorage();
+  writeFlightResultsSessionSnapshot("search", [result], [], 60_100, storage, 100);
+
+  assert.equal(readFlightResultsSessionSnapshot("search", storage, 200)?.results[0].id, result.id);
+});
+
+test("writer refuses snapshots without a positive server-owned validity", () => {
+  const storage = new MemoryStorage();
+  writeFlightResultsSessionSnapshot("search", [result], [], 1_000, storage, 100);
+  writeFlightResultsSessionSnapshot("search", [result], [], 100, storage, 100);
+
   assert.equal(storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY), null);
 });
 
@@ -189,7 +223,7 @@ test("invalid result and warning shapes return null", () => {
   storage.setItem(
     FLIGHT_RESULTS_SESSION_CACHE_KEY,
     JSON.stringify({
-      version: 2,
+      version: 3,
       searchKey: "search",
       savedAt: 100,
       results: [null],
@@ -221,7 +255,7 @@ test("storage write failures do not throw", () => {
     removeItem() {},
   };
   assert.doesNotThrow(() =>
-    writeFlightResultsSessionSnapshot("search", [result], [], storage),
+    writeFlightResultsSessionSnapshot("search", [result], [], Date.now() + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, storage),
   );
 });
 
@@ -231,7 +265,7 @@ test("writer strips non-public provider references", () => {
     ...result,
     rawProviderReference: { credential: "secret" },
   } as PublicFlightResult;
-  writeFlightResultsSessionSnapshot("search", [unsafeResult], [], storage, 100);
+  writeFlightResultsSessionSnapshot("search", [unsafeResult], [], 100 + FLIGHT_RESULTS_SESSION_CACHE_TTL_MS, storage, 100);
 
   const serialized = storage.getItem(FLIGHT_RESULTS_SESSION_CACHE_KEY) ?? "";
   assert.equal(serialized.includes("rawProviderReference"), false);
