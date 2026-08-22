@@ -7,16 +7,14 @@ const screen = readFileSync(
   resolve("src/features/search/ApprovedResultsScreen.tsx"),
   "utf8",
 );
-const flightLayout = screen.slice(
-  screen.indexOf('{product === "flight" ? ('),
-  screen.indexOf(') : (\n        <>', screen.indexOf('{product === "flight" ? (')),
-);
+const layoutStart = screen.indexOf('<ScrollView\n          style={[s0.resultsScroll');
+const flightLayout = screen.slice(layoutStart, screen.indexOf(') : (\n        <>', layoutStart));
 
 test("flight results naturally scroll the date strip into a sticky filter rail", () => {
   assert.match(flightLayout, /stickyHeaderIndices=\{\[1\]\}/);
   assert.match(
     flightLayout,
-    /<View>\{dateStrip\}<\/View>[\s\S]*?<View style=\{\[s0\.stickyFilterSurface, \{ backgroundColor: theme\.background \}\]\}>\{filterRail\}<\/View>[\s\S]*?<View style=\{\[s0\.body, s0\.flightResultsBody\]\}>\{resultContent\}<\/View>/,
+    /<View>\{dateStrip\}<\/View>[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?\{filterRail\}[\s\S]*?<View style=\{\[s0\.body, s0\.flightResultsBody\]\}>\{resultContent\}<\/View>/,
   );
   assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=/);
   assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
@@ -28,7 +26,7 @@ test("date and filter rails retain their horizontal interactions", () => {
   assert.match(dateStrip, /export function DateStrip[\s\S]*?<ScrollView\s+horizontal/);
   assert.match(dateStrip, /onPress=\{\(\) => onSelect\(iso\)\}/);
   assert.match(screen, /const filterRail = \([\s\S]*?<ScrollView\s+horizontal[\s\S]*?openFlightFilters\("all"\)/);
-  for (const label of ["Filters", "Stops", "Airlines", "Times"]) {
+  for (const label of ["Sort", "Filter", "Airlines", "Stops"]) {
     assert.match(screen, new RegExp(`"${label}"`));
   }
 });
@@ -50,10 +48,8 @@ test("flight dates use full resolved fares in wider, single-line tiles", () => {
 });
 
 test("hotel results retain their non-sticky header and separate result scroll", () => {
-  const hotelLayout = screen.slice(
-    screen.indexOf(') : (\n        <>', screen.indexOf('{product === "flight" ? (')),
-    screen.indexOf("<FlightFilterModal", screen.indexOf(') : (\n        <>')),
-  );
+  const hotelStart = screen.indexOf(') : (\n        <>', layoutStart);
+  const hotelLayout = screen.slice(hotelStart, screen.indexOf("<FlightFilterModal", hotelStart));
 
   assert.match(hotelLayout, /\{dateStrip\}/);
   assert.match(hotelLayout, /\{filterRail\}/);

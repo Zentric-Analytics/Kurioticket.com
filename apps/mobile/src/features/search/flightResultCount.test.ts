@@ -7,9 +7,9 @@ import { flightResultCountLabel } from "./flightResultCount";
 const source = readFileSync(resolve("src/features/search/ApprovedResultsScreen.tsx"), "utf8");
 
 test("flight result count uses correct singular and plural grammar", () => {
-  assert.equal(flightResultCountLabel(1), "1 result found");
-  assert.equal(flightResultCountLabel(2), "2 results found");
-  assert.equal(flightResultCountLabel(31), "31 results found");
+  assert.equal(flightResultCountLabel(1), "1 Result found");
+  assert.equal(flightResultCountLabel(2), "2 Results found");
+  assert.equal(flightResultCountLabel(31), "31 Results found");
 });
 
 test("flight count is derived from the collection rendered as FlightCards", () => {
@@ -19,8 +19,8 @@ test("flight count is derived from the collection rendered as FlightCards", () =
 
 test("flight summary copy is removed while the hotel summary stays intact", () => {
   const flightSummary = source.slice(
-    source.indexOf('status === "ready" && product === "flight" ? ('),
-    source.indexOf('status === "ready" && product === "hotel" ? ('),
+    source.indexOf('status === "ready" ? ('),
+    source.indexOf('{filterRail}', source.indexOf('status === "ready" ? (')),
   );
   assert.match(flightSummary, /accessibilityRole="header"/);
   assert.doesNotMatch(flightSummary, /s0\.found|Prices include taxes|Price may change|Book soon/);
@@ -28,9 +28,10 @@ test("flight summary copy is removed while the hotel summary stays intact", () =
   assert.doesNotMatch(source, /Price may change|Book soon to lock in this price\./);
 });
 
-test("price alert remains before the count and FlightCard rendering remains in place", () => {
+test("count and controls precede the price alert while FlightCard rendering remains in place", () => {
   const alert = source.indexOf('product === "flight" && plan.plan');
-  const count = source.indexOf("flightResultCountLabel(sorted.length)", alert);
-  const card = source.indexOf("<FlightCard", count);
-  assert.ok(alert >= 0 && alert < count && count < card);
+  const count = source.indexOf("flightResultCountLabel(sorted.length)");
+  const controls = source.indexOf("{filterRail}", count);
+  const card = source.indexOf("<FlightCard", alert);
+  assert.ok(count >= 0 && count < controls && alert >= 0 && alert < card);
 });
