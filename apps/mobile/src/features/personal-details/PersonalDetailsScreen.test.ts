@@ -158,16 +158,25 @@ test("all country-selector dismissal paths preserve visible content until onDism
     /const handleDismiss = \(\) => \{[\s\S]*?setDraftSelection\(selected\)[\s\S]*?onDismiss\(\)/,
   );
 });
-test("picker mode and dataset survive the native close animation", () => {
+test("picker mode and dataset survive native close and rapid reopen", () => {
   assert.match(
     screen,
     /\[selectorVisible, setSelectorVisible\] = useState\(false\)/,
   );
+  assert.match(screen, /selectorVisibleRef = useRef\(false\)/);
   assert.match(
     screen,
-    /const closeSelector = \(\) => setSelectorVisible\(false\)/,
+    /const openSelector = \(type:[\s\S]*?selectorVisibleRef\.current = true;[\s\S]*?setSelector\(type\);[\s\S]*?setSelectorVisible\(true\)/,
   );
-  assert.match(screen, /onDismiss=\{\(\) => setSelector\(null\)\}/);
+  assert.match(
+    screen,
+    /const closeSelector = \(\) => \{[\s\S]*?selectorVisibleRef\.current = false;[\s\S]*?setSelectorVisible\(false\)/,
+  );
+  assert.match(
+    screen,
+    /const finishSelectorDismiss = \(\) => \{[\s\S]*?if \(!selectorVisibleRef\.current\) setSelector\(null\)/,
+  );
+  assert.ok((screen.match(/onDismiss=\{finishSelectorDismiss\}/g) ?? []).length >= 2);
   assert.match(
     screen,
     /selector === "year"[\s\S]*?Array\.from\(\{ length: 125 \}/,
