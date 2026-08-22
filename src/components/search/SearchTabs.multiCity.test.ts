@@ -16,10 +16,26 @@ test("every visible web Multi-city selector is enabled and has no coming-soon co
 });
 
 test("homepage trip-type controls share one guarded pointer and keyboard state path", () => {
+  const keyboardHandler = searchTabs.slice(
+    searchTabs.indexOf("const onTripTypeKeyDown"),
+    searchTabs.indexOf("const selectTripTypeFromControl"),
+  );
   assert.match(searchTabs, /committedHomepageTripType\(pointerDownTripTypeRef\.current, mode\)/);
-  assert.match(searchTabs, /nextHomepageTripType\(/);
+  assert.match(keyboardHandler, /nextHomepageTripType\(/);
   assert.match(searchTabs, /tabIndex=\{selected \? 0 : -1\}/);
-  assert.match(searchTabs, /tripTypeButtonRefs\.current\[nextMode\]\?\.focus\(\)/);
+  assert.match(keyboardHandler, /event\.currentTarget\.closest\('\[role="radiogroup"\]'\)/);
+  assert.match(keyboardHandler, /querySelector<HTMLButtonElement>\(/);
+  assert.match(keyboardHandler, /nextControl\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.doesNotMatch(keyboardHandler, /tripTypeButtonRefs|requestAnimationFrame/);
+  assert.ok(
+    keyboardHandler.indexOf("nextControl?.focus") < keyboardHandler.indexOf("onSelectTripType(nextMode)"),
+    "DOM focus must move before the selected trip type commits",
+  );
+  assert.equal(
+    searchTabs.match(/onKeyDown=\{\(event\) => onTripTypeKeyDown\(mode, event\)\}/g)?.length,
+    2,
+    "desktop and mobile radiogroups must share the synchronized handler",
+  );
 });
 
 test("homepage uses the canonical leg editor, limits, and indexed URL encoder", () => {
