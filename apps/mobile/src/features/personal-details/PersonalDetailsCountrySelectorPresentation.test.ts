@@ -79,16 +79,18 @@ test("country selector ignores a stale native dismiss after a new open", () => {
   );
 });
 
-test("country selector dismisses the keyboard on choice and offers Done on iOS", () => {
+test("country selector dismisses the keyboard on choice and keeps the native Done key", () => {
   const selector = screen.slice(
     screen.indexOf("function CountrySelector("),
     screen.indexOf("function CountryFlag("),
   );
 
   assert.match(selector, /onPress=\{\(\) => \{\s*Keyboard\.dismiss\(\);\s*setDraftSelection\(item\.value\)/);
-  assert.match(selector, /inputAccessoryViewID=/);
-  assert.match(selector, /<InputAccessoryView nativeID=\{COUNTRY_SEARCH_ACCESSORY\}>/);
-  assert.match(selector, /onPress=\{Keyboard\.dismiss\}/);
+  assert.match(selector, /returnKeyType="done"/);
+  assert.match(selector, /blurOnSubmit/);
+  assert.match(selector, /onSubmitEditing=\{Keyboard\.dismiss\}/);
+  assert.doesNotMatch(selector, /inputAccessoryViewID|InputAccessoryView/);
+  assert.doesNotMatch(screen, /COUNTRY_SEARCH_ACCESSORY/);
 });
 
 test("country selector hides its save action while the keyboard is visible", () => {
