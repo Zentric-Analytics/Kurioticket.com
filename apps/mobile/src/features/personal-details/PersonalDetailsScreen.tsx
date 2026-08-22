@@ -17,7 +17,10 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { router, useNavigation } from "expo-router";
 import {
   travelApi,
@@ -225,6 +228,7 @@ function CountrySelector({
   const { theme } = useAppTheme();
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
+  const insets = useSafeAreaInsets();
   const [q, setQ] = useState("");
   const [draftSelection, setDraftSelection] = useState(selected);
   const committing = useRef(false);
@@ -267,9 +271,15 @@ function CountrySelector({
       onRequestClose={cancel}
       onDismiss={handleDismiss}
     >
-      <SafeAreaView
-        edges={["top", "bottom"]}
-        style={[s.countryModalSafe, { backgroundColor: theme.background }]}
+      <View
+        style={[
+          s.countryModalSafe,
+          {
+            backgroundColor: theme.background,
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom,
+          },
+        ]}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -403,7 +413,7 @@ function CountrySelector({
             </Pressable>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
