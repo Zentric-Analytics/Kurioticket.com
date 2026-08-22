@@ -154,7 +154,7 @@ jobs:
           test -n "$EXPO_TOKEN" || { echo 'Required environment EXPO_TOKEN is missing.' >&2; exit 1; }
           set -o pipefail
           npx eas-cli@16.17.4 update --channel production --platform android --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
-          node scripts/verify-production-eas-result.mjs --kind update --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --output "$RUNNER_TEMP/delivery-result.json"
+          node scripts/verify-production-eas-result.mjs --kind update --platform android --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Write consolidated release audit
         if: always()
         working-directory: apps/mobile

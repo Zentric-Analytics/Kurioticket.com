@@ -616,12 +616,67 @@ test('Production AAB inspection requires authoritative active Production identit
   assert.throws(() => verifyProductionAab({ ...input, appConfigSource: '{' }), /malformed JSON/);
   assert.throws(() => verifyProductionAab(withConfig((value) => { value.extra.eas.projectId = '00000000-0000-4000-8000-000000000000'; })), /EAS project/);
 });
-test('Production update JSON is strictly bound to Android Production runtime and source', () => {
+test('Production update JSON is strictly bound to the requested Production platform, runtime, and source', () => {
   const fixture = readFileSync(resolve(root, 'scripts/fixtures/production-eas/update-published.json'), 'utf8');
   const sha = 'd97d8e01245a1b77c77d3499d02d5f355b885025';
-  assert.equal(verifyProductionUpdateResult({ source: fixture, approvedSha: sha }).status, 'PUBLISHED');
-  const value = JSON.parse(fixture); value[0].platform = 'IOS';
-  assert.throws(() => verifyProductionUpdateResult({ source: JSON.stringify(value), approvedSha: sha }), /platform/);
+  assert.equal(verifyProductionUpdateResult({ source: fixture, approvedSha: sha, platform: 'android' }).status, 'PUBLISHED');
+  const ios = JSON.parse(fixture); ios[0].platform = 'IOS';
+  assert.equal(verifyProductionUpdateResult({ source: JSON.stringify(ios), approvedSha: sha, platform: 'ios' }).platform, 'IOS');
+  assert.throws(() => verifyProductionUpdateResult({ source: JSON.stringify(ios), approvedSha: sha, platform: 'android' }), /platform/);
+  assert.throws(() => verifyProductionUpdateResult({ source: fixture, approvedSha: sha, platform: 'ios' }), /platform/);
+  for (const [field, value] of [['runtimeVersion', 'preview-0.3.0'], ['branch', 'preview'], ['gitCommitHash', 'a'.repeat(40)]]) {
+    const invalid = JSON.parse(fixture); invalid[0][field] = value;
+    assert.throws(() => verifyProductionUpdateResult({ source: JSON.stringify(invalid), approvedSha: sha, platform: 'android' }));
+  }
+  assert.throws(() => verifyProductionUpdateResult({ source: JSON.stringify([...JSON.parse(fixture), ...JSON.parse(fixture)]), approvedSha: sha, platform: 'android' }), /exactly one/);
+});
+
+test('reviewed Production binary baselines bind Android and iOS independently', () => {
+  const androidManifest = JSON.parse(readFileSync(resolve(root, 'release-baselines/android/production.json'), 'utf8'));
+  const iosManifest = JSON.parse(readFileSync(resolve(root, 'release-baselines/ios/production.json'), 'utf8'));
+  const build = (manifest) => ({ id: manifest.easBuildId, status: 'FINISHED', platform: manifest.platform, project: { id: manifest.projectId }, buildProfile: 'production', distribution: 'STORE', runtimeVersion: 'production-0.3.0', channel: 'production', appVersion: '0.3.0', appBuildVersion: String(manifest.versionCode ?? manifest.buildNumber), gitCommitHash: manifest.commitSha });
+  assert.equal(verifyBaseline({ manifest: androidManifest, build: build(androidManifest), variant: 'production', policy }).platform, 'ANDROID');
+  assert.equal(verifyBaseline({ manifest: iosManifest, build: build(iosManifest), variant: 'production', policy }).platform, 'IOS');
+  assert.equal(verifyBaseline({ manifest: iosManifest, build: build(iosManifest), variant: 'production', policy }).applicationIdentifierMetadata, 'omitted');
+  for (const mutate of [
+    (manifest) => { manifest.easBuildId = '00000000-0000-4000-8000-000000000000'; },
+    (manifest) => { manifest.nativeFingerprint = ''; },
+    (manifest) => { manifest.package = 'com.kurioticket.app.preview'; },
+  ]) {
+    const invalid = structuredClone(androidManifest); mutate(invalid);
+    assert.throws(() => verifyBaseline({ manifest: invalid, build: build(androidManifest), variant: 'production', policy }));
+  }
+  for (const mutate of [
+    (manifest) => { manifest.easBuildId = '00000000-0000-4000-8000-000000000000'; },
+    (manifest) => { manifest.bundleIdentifier = 'com.kurioticket.app.preview'; },
+    (manifest) => { manifest.platform = 'ANDROID'; },
+  ]) {
+    const invalid = structuredClone(iosManifest); mutate(invalid);
+    assert.throws(() => verifyBaseline({ manifest: invalid, build: build(iosManifest), variant: 'production', policy }));
+  }
+  assert.throws(() => verifyBaseline({ manifest: iosManifest, build: { ...build(iosManifest), applicationIdentifier: 'com.kurioticket.app.preview' }, variant: 'production', policy }), /identifier/);
+});
+
+test('iOS Production workflow has a fail-closed, build-free reviewed update path', () => {
+  const workflow = readFileSync(resolve(root, '../../.github/workflows/ios-production-delivery.yml'), 'utf8');
+  const inputValidator = readFileSync(resolve(root, 'scripts/validate-ios-production-inputs.mjs'), 'utf8');
+  assert.match(workflow, /options: \[dry-run, build, update\]/);
+  assert.match(workflow, /test "\$BASELINE_EAS_BUILD_ID" = ec28bb4d-44fe-4e07-bdb0-c0a8aec90fe9/);
+  assert.match(workflow, /fingerprint:generate --platform ios/);
+  assert.match(workflow, /classification!=='ota-compatible'/);
+  assert.match(workflow, /update --channel production --platform ios/);
+  assert.match(workflow, /verify-production-eas-result\.mjs --kind update --platform ios/);
+  assert.match(workflow, /RELEASE_ACTION: update[\s\S]*write-release-audit\.mjs/);
+  assert.match(workflow, /if: always\(\) && inputs\.action == 'update'/);
+  assert.match(workflow, /PRIOR_JOB_STATUS:[\s\S]*AUDIT_EXIT[\s\S]*PRIOR_JOB_STATUS/);
+  assert.match(workflow, /delivery-result\.raw\.json/);
+  assert.match(workflow, /WORKFLOW_STARTED_AT=\$\(date -u/);
+  assert.match(workflow, /WORKFLOW_STARTED_AT: "\$\{\{ env\.WORKFLOW_STARTED_AT \}\}"/);
+  assert.doesNotMatch(workflow, /WORKFLOW_STARTED_AT: "\$\{\{ github\.event\.repository\.updated_at \}\}"/);
+  const updateBlock = workflow.match(/- name: Publish approved iOS Production OTA[\s\S]*?(?=\n      - name:)/)?.[0] ?? '';
+  assert.doesNotMatch(updateBlock, /\beas-cli@16\.17\.4 build\b/);
+  assert.match(inputValidator, /confirmation !== "DELIVER IOS PRODUCTION"/);
+  assert.match(inputValidator, /reviewedBaselineId = "ec28bb4d-44fe-4e07-bdb0-c0a8aec90fe9"/);
 });
 test('Production non-mutating dry run verifies the frozen submission boundary', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');

@@ -57,11 +57,13 @@ export function verifyProductionBuildResult({ source, historySource, aabEvidence
   return { kind: 'build', id: authoritative.id, status: authoritative.status, platform: authoritative.platform, package: EXPECTED.packageName, easPackageMetadata, projectId: EXPECTED.projectId, profile: authoritative.buildProfile, runtime: authoritative.runtimeVersion, channel: authoritative.channel, appVersion: authoritative.appVersion, versionCode: Number(authoritative.appBuildVersion), commitSha: authoritative.gitCommitHash, artifactType: 'AAB', artifactUrlPresent: true, aabInspected: true, signed: true, activeProductionIdentityVerified: true, activeApiOrigin: aab.activeApiOrigin, isPreview: aab.isPreview };
 }
 
-export function verifyProductionUpdateResult({ source, approvedSha }) {
+export function verifyProductionUpdateResult({ source, approvedSha, platform = 'android' }) {
+  const expectedPlatform = String(platform).toUpperCase();
+  if (!['ANDROID', 'IOS'].includes(expectedPlatform)) throw new Error('Expected update platform is unsupported.');
   const value = parseJson(source, 'EAS Production update');
-  if (!Array.isArray(value) || value.length !== 1 || !value[0] || typeof value[0] !== 'object') throw new Error('EAS Production update result must contain exactly one Android update.');
+  if (!Array.isArray(value) || value.length !== 1 || !value[0] || typeof value[0] !== 'object') throw new Error(`EAS Production update result must contain exactly one ${expectedPlatform} update.`);
   const update = value[0];
-  const checks = [[uuid.test(update.id ?? ''), 'Update ID is missing or malformed.'], [update.platform === 'ANDROID', 'Update platform mismatch.'], [update.branch === EXPECTED.channel, 'Update branch mismatch.'], [update.runtimeVersion === EXPECTED.runtime, 'Update runtime mismatch.'], [update.gitCommitHash === approvedSha, 'Update Git commit metadata is missing or mismatched.']];
+  const checks = [[uuid.test(update.id ?? ''), 'Update ID is missing or malformed.'], [update.platform === expectedPlatform, 'Update platform mismatch.'], [update.branch === EXPECTED.channel, 'Update branch mismatch.'], [update.runtimeVersion === EXPECTED.runtime, 'Update runtime mismatch.'], [update.gitCommitHash === approvedSha, 'Update Git commit metadata is missing or mismatched.'], [update.projectId === undefined || update.projectId === EXPECTED.projectId, 'Update project mismatch.']];
   for (const [ok, message] of checks) if (!ok) throw new Error(message);
   return { kind: 'update', id: update.id, status: 'PUBLISHED', platform: update.platform, branch: update.branch, runtime: update.runtimeVersion, commitSha: update.gitCommitHash };
 }
@@ -70,7 +72,7 @@ function args(values) { const out = {}; for (let i = 0; i < values.length; i += 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const a = args(process.argv.slice(2));
   const source = readFileSync(a.input, 'utf8');
-  const evidence = a.kind === 'build' ? verifyProductionBuildResult({ source, historySource: readFileSync(a.history, 'utf8'), aabEvidenceSource: readFileSync(a['aab-evidence'], 'utf8'), approvedSha: a.sha, proposedVersionCode: Number(a['version-code']), remoteVersionStatus: a['version-status'] }) : verifyProductionUpdateResult({ source, approvedSha: a.sha });
+  const evidence = a.kind === 'build' ? verifyProductionBuildResult({ source, historySource: readFileSync(a.history, 'utf8'), aabEvidenceSource: readFileSync(a['aab-evidence'], 'utf8'), approvedSha: a.sha, proposedVersionCode: Number(a['version-code']), remoteVersionStatus: a['version-status'] }) : verifyProductionUpdateResult({ source, approvedSha: a.sha, platform: a.platform });
   writeFileSync(a.output, `${JSON.stringify(evidence, null, 2)}\n`);
   console.log(`Verified Production EAS ${a.kind} result ${evidence.id}.`);
 }
