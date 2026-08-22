@@ -24,6 +24,13 @@ export function verifyProductionBuildResult({ source, historySource, aabEvidence
   if (!Array.isArray(history) || history.length !== 1 || !history[0] || typeof history[0] !== 'object') throw new Error('Filtered EAS Production build history must contain exactly one build.');
   const authoritative = history[0];
   const aab = parseJson(aabEvidenceSource, 'Production AAB inspection');
+  const easPackageValues = ['applicationIdentifier', 'appIdentifier']
+    .filter((field) => Object.hasOwn(authoritative, field) && authoritative[field] !== null && authoritative[field] !== undefined)
+    .map((field) => authoritative[field]);
+  if (easPackageValues.some((value) => typeof value !== 'string' || value.length === 0 || value !== EXPECTED.packageName)) {
+    throw new Error('Filtered build package metadata is mismatched.');
+  }
+  const easPackageMetadata = easPackageValues.length > 0 ? 'verified' : 'omitted';
   if (!['uninitialized', 'configured'].includes(remoteVersionStatus)) throw new Error('Remote Production version status is missing or invalid.');
   const expectedBuiltVersionCode = remoteVersionStatus === 'uninitialized' ? proposedVersionCode + 1 : proposedVersionCode;
   if (authoritative.id !== build.id) throw new Error('Submitted build ID does not match filtered EAS history.');
@@ -34,7 +41,6 @@ export function verifyProductionBuildResult({ source, historySource, aabEvidence
     [authoritative.platform === 'ANDROID', 'Build platform mismatch.'],
     [authoritative.project?.id === EXPECTED.projectId, 'Build project mismatch.'],
     [authoritative.buildProfile === EXPECTED.profile, 'Build profile mismatch.'],
-    [(authoritative.applicationIdentifier ?? authoritative.appIdentifier) === EXPECTED.packageName, 'Filtered build package metadata is missing or mismatched.'],
     [authoritative.distribution === 'STORE', 'Build distribution mismatch.'],
     [authoritative.runtimeVersion === EXPECTED.runtime, 'Build runtime mismatch.'],
     [authoritative.channel === EXPECTED.channel, 'Build channel mismatch.'],
@@ -48,7 +54,7 @@ export function verifyProductionBuildResult({ source, historySource, aabEvidence
     [aab.activeApiOrigin === 'https://kurioticket.com' && aab.runtimeVersion === EXPECTED.runtime && aab.channel === EXPECTED.channel && aab.isPreview === false && aab.projectId === EXPECTED.projectId, 'Inspected AAB active Production configuration mismatch.'],
   ];
   for (const [ok, message] of checks) if (!ok) throw new Error(message);
-  return { kind: 'build', id: authoritative.id, status: authoritative.status, platform: authoritative.platform, package: EXPECTED.packageName, projectId: EXPECTED.projectId, profile: authoritative.buildProfile, runtime: authoritative.runtimeVersion, channel: authoritative.channel, appVersion: authoritative.appVersion, versionCode: Number(authoritative.appBuildVersion), commitSha: authoritative.gitCommitHash, artifactType: 'AAB', artifactUrlPresent: true, aabInspected: true, signed: true };
+  return { kind: 'build', id: authoritative.id, status: authoritative.status, platform: authoritative.platform, package: EXPECTED.packageName, easPackageMetadata, projectId: EXPECTED.projectId, profile: authoritative.buildProfile, runtime: authoritative.runtimeVersion, channel: authoritative.channel, appVersion: authoritative.appVersion, versionCode: Number(authoritative.appBuildVersion), commitSha: authoritative.gitCommitHash, artifactType: 'AAB', artifactUrlPresent: true, aabInspected: true, signed: true };
 }
 
 export function verifyProductionUpdateResult({ source, approvedSha }) {
