@@ -664,13 +664,16 @@ function PhoneControl({
 
 export function PersonalDetailsScreen() {
   const { theme } = useAppTheme();
-  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
   const { locale } = useMobileLocalization();
   const c = personalDetailsCopy(locale);
   const navigation = useNavigation();
   const mounted = useRef(true),
     submitting = useRef(false),
-    selectorVisibleRef = useRef(false);
+    selectorVisibleRef = useRef(false),
+    successTimer = useRef<ReturnType<typeof setTimeout> | null>(null),
+    editButtonRef = useRef<View>(null);
   const [saved, setSaved] = useState<MobileProfile | null>(null),
     [draft, setDraft] = useState<MobileProfile>({}),
     [dateDraft, setDateDraft] = useState<DateDraft>(() => dateDraftFromValue()),
@@ -679,7 +682,9 @@ export function PersonalDetailsScreen() {
     [loading, setLoading] = useState(true),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
-    [success, setSuccess] = useState("") ,
+    [success, setSuccess] = useState(""),
+    [toastBottom, setToastBottom] = useState(0),
+    [toastPositionReady, setToastPositionReady] = useState(false),
     [selector, setSelector] = useState<
       | "phone"
       | "gender"
@@ -691,6 +696,46 @@ export function PersonalDetailsScreen() {
       | null
     >(null),
     [selectorVisible, setSelectorVisible] = useState(false);
+  const dismissSuccess = useCallback(() => {
+    if (successTimer.current) {
+      clearTimeout(successTimer.current);
+      successTimer.current = null;
+    }
+    setSuccess("");
+    setToastPositionReady(false);
+  }, []);
+  const showSuccess = useCallback(
+    (message: string) => {
+      if (successTimer.current) clearTimeout(successTimer.current);
+      setToastBottom(insets.bottom + 16);
+      setToastPositionReady(false);
+      setSuccess(message);
+      successTimer.current = setTimeout(() => {
+        successTimer.current = null;
+        setSuccess("");
+        setToastPositionReady(false);
+      }, 1500);
+    },
+    [insets.bottom],
+  );
+  const updateToastPosition = useCallback(() => {
+    const button = editButtonRef.current;
+    if (!button) return;
+    button.measureInWindow((_x, y, _buttonWidth, buttonHeight) => {
+      const safeBottom = insets.bottom + 16;
+      const buttonVisible = y < height && y + buttonHeight > 0;
+      setToastBottom(
+        buttonVisible ? Math.max(safeBottom, height - y + 12) : safeBottom,
+      );
+      setToastPositionReady(true);
+    });
+  }, [height, insets.bottom]);
+  useEffect(
+    () => () => {
+      if (successTimer.current) clearTimeout(successTimer.current);
+    },
+    [],
+  );
   const openSelector = (type: Exclude<typeof selector, null>) => {
     selectorVisibleRef.current = true;
     setSelector(type);
@@ -834,7 +879,7 @@ export function PersonalDetailsScreen() {
     submitting.current = true;
     setSaving(true);
     setError("");
-    setSuccess("");
+    dismissSuccess();
     try {
       const phone = serializePhone(
         draft.phoneCountryCode || "",
@@ -849,7 +894,7 @@ export function PersonalDetailsScreen() {
       setDateDraft(dateDraftFromValue(authoritative.dateOfBirth));
       await updateStoredSessionName(authoritative.fullName || null);
       setEditing(false);
-      setSuccess(c.saveSuccess);
+      showSuccess(c.saveSuccess);
       AccessibilityInfo.announceForAccessibility(c.saveSuccess);
     } catch {
       if (mounted.current) {
@@ -1007,6 +1052,8 @@ export function PersonalDetailsScreen() {
           <ScrollView
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
+            onScroll={success ? updateToastPosition : undefined}
+            scrollEventThrottle={16}
             contentContainerStyle={s.scroll}
           >
             {error ? (
@@ -1016,15 +1063,6 @@ export function PersonalDetailsScreen() {
                 style={[s.feedback, { color: "#D92D20" }]}
               >
                 {error}
-              </Text>
-            ) : null}
-            {success ? (
-              <Text
-                accessibilityRole="alert"
-                accessibilityLiveRegion="polite"
-                style={[s.feedback, { color: "#16803C" }]}
-              >
-                {success}
               </Text>
             ) : null}
             {!editing ? (
@@ -1054,13 +1092,15 @@ export function PersonalDetailsScreen() {
                   </View>
                 ))}
                 <Pressable
+                  ref={editButtonRef}
+                  onLayout={updateToastPosition}
                   accessibilityRole="button"
                   accessibilityLabel={c.edit}
                   onPress={() => {
                     setDraft(saved);
                     setDateDraft(dateDraftFromValue(saved.dateOfBirth));
                     setError("");
-                    setSuccess("");
+                    dismissSuccess();
                     setEditing(true);
                   }}
                   style={s.edit}
@@ -1244,6 +1284,41 @@ export function PersonalDetailsScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       )}
+      {success ? (
+        <View
+          accessible={false}
+          pointerEvents="none"
+          testID="personal-details-success-toast"
+          style={[
+            s.toastPosition,
+            {
+              bottom: toastBottom,
+              opacity: toastPositionReady ? 1 : 0,
+            },
+          ]}
+        >
+          <View
+            style={[
+              s.toast,
+              { backgroundColor: theme.dark ? "#163B2A" : "#E9F8EF" },
+            ]}
+          >
+            <FlowIcon
+              name="check"
+              color={theme.dark ? "#86E3A7" : "#16803C"}
+              size={18}
+            />
+            <Text
+              style={[
+                s.toastText,
+                { color: theme.dark ? "#C6F6D5" : "#126B34" },
+              ]}
+            >
+              {success}
+            </Text>
+          </View>
+        </View>
+      ) : null}
       <Selector
         visible={
           selectorVisible &&
@@ -1478,6 +1553,23 @@ const s = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 12,
   },
+  toastPosition: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    alignItems: "center",
+    zIndex: 10,
+  },
+  toast: {
+    maxWidth: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  toastText: { fontSize: 14, lineHeight: 20, fontWeight: "700" },
   modalRoot: { flex: 1, justifyContent: "flex-end" },
   sheet: {
     maxHeight: "82%",
