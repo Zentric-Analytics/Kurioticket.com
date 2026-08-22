@@ -141,6 +141,26 @@ textarea {
   box-shadow: 0 0 0 3px rgba(0, 75, 184, 0.3);
 }
 
+/* Homepage search focus is modality-owned so Chromium pointer focus never
+   masquerades as keyboard focus. Keyboard focus uses an inset underline that
+   does not enlarge or reflow a control. */
+.homepage-search-modality[data-input-modality="pointer"] .focus-ring:focus,
+.homepage-search-modality[data-input-modality="pointer"] .homepage-keyboard-focus:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.homepage-search-modality .homepage-no-decorative-focus:focus-within {
+  box-shadow: none !important;
+}
+
+.homepage-search-modality[data-input-modality="keyboard"] .focus-ring:focus,
+.homepage-search-modality[data-input-modality="keyboard"] .homepage-keyboard-focus:focus,
+.homepage-search-modality[data-input-modality="keyboard"] .homepage-keyboard-focus-within:focus-within {
+  box-shadow: inset 0 -2px 0 #075ee8 !important;
+  outline: none !important;
+}
+
 .legal-paper {
   background:
     linear-gradient(#ffffff, #ffffff) padding-box,

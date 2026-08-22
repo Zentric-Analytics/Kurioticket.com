@@ -44,6 +44,11 @@ import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { MobileDatePickerDialog } from "@/components/search/MobileDateRangePicker";
 import { MobileTravelerCabinPicker } from "@/components/search/MobileTravelerCabinPicker";
 import { MultiCityFlightEditor } from "@/components/search/MultiCityFlightEditor";
+import {
+  committedHomepageTripType,
+  isHomepageTripType,
+  nextHomepageTripType,
+} from "@/components/search/homepageSearchInteraction";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import {
   hotelDestinationKindLabels,
@@ -271,7 +276,7 @@ const desktopPopoverPanelClassName = "z-[2147483400]";
 const desktopTravelersFieldClassName = "z-[2147483500]";
 const desktopTravelersPopoverClassName = "z-[2147483600]";
 const mobileDoneButtonClassName =
-  "focus-ring min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B] focus-visible:ring-[#004BB8]/35";
+  "focus-ring homepage-keyboard-focus min-h-11 rounded-xl bg-[#004BB8] px-6 text-sm font-bold text-white shadow-[0_8px_18px_rgba(2,28,43,0.14)] transition-colors hover:bg-[#021C2B] active:bg-[#021C2B]";
 
 type DesktopTopLayerPopoverProps = {
   open: boolean;
@@ -643,6 +648,8 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const tripTypeWrapRef =
     useRef<HTMLDivElement>(null);
+  const tripTypeButtonRefs = useRef<Partial<Record<TripType, HTMLButtonElement | null>>>({});
+  const pointerDownTripTypeRef = useRef<TripType | null>(null);
   const travelersWrapRef =
     useRef<HTMLDivElement>(null);
   const travelersLauncherRef =
@@ -654,6 +661,9 @@ export function SearchTabs({
 
   const [tab, setTab] =
     useState<TabMode>("flights");
+  const [homepageInputModality, setHomepageInputModality] = useState<
+    "pointer" | "keyboard"
+  >("pointer");
   const [isFlightSubmitting, setIsFlightSubmitting] =
     useState(false);
   const [isHotelSubmitting, setIsHotelSubmitting] =
@@ -887,7 +897,7 @@ export function SearchTabs({
   const wrapper = useMemo(
     () =>
       cn(
-        "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+        "homepage-search-modality rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
         searchTabsOverlayOpen && desktopOverlayRootClassName,
         mobileHomepage
           ? "rounded-[14px] border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_16px_36px_rgba(15,23,42,0.12)]"
@@ -940,7 +950,7 @@ export function SearchTabs({
       : "lg:grid-cols-[minmax(0,1.65fr)_minmax(160px,1.2fr)_minmax(160px,1.1fr)_minmax(125px,0.8fr)_112px]"
   );
   const joinedFieldClassName = cn(
-    "transition-colors hover:border-slate-400 focus-within:border-[#004BB8] focus-within:ring-2 focus-within:ring-[#004BB8]/30 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+    "homepage-no-decorative-focus homepage-keyboard-focus-within transition-colors hover:border-slate-400 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200",
     compactHero ? "min-h-[50px] px-3 py-1 lg:min-h-[56px] lg:px-4 lg:py-2" : "min-h-[54px] px-3 py-1.5"
   );
   const flightJoinedFieldClassName = cn(
@@ -952,7 +962,7 @@ export function SearchTabs({
     compactHero ? "min-h-[58px] px-4 py-2 lg:min-h-[58px]" : "min-h-[58px] px-3.5 py-2"
   );
   const carsMobileHomepageFieldClassName = mobileHomepage
-    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe] focus-within:border-[#dee5ed] focus-within:ring-0 sm:rounded-xl sm:border-slate-300 sm:bg-white sm:focus-within:border-[#004BB8] sm:focus-within:ring-2"
+    ? "rounded-[11px] border-[#dee5ed] bg-[#fcfdfe] sm:rounded-xl sm:border-slate-300 sm:bg-white"
     : "";
   const flightFieldLabelClassName = cn(
     "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
@@ -975,12 +985,12 @@ export function SearchTabs({
     compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em] lg:text-slate-900 lg:placeholder:text-slate-500" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 overflow-visible rounded-xl border border-slate-200 bg-white shadow-[0_3px_10px_rgba(15,23,42,0.05)] transition-colors sm:grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] sm:items-stretch focus-within:border-[#075EE8] focus-within:ring-2 focus-within:ring-[#075EE8]/10"
+    ? "homepage-no-decorative-focus grid grid-cols-1 overflow-visible rounded-xl border border-slate-200 bg-white shadow-[0_3px_10px_rgba(15,23,42,0.05)] transition-colors sm:grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] sm:items-stretch"
     : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
       ? cn(
-          "relative min-h-[68px] border-0 bg-transparent px-4 py-2.5 transition-colors lg:flex lg:flex-col lg:justify-center",
+          "homepage-keyboard-focus-within relative min-h-[68px] border-0 bg-transparent px-4 py-2.5 transition-colors lg:flex lg:flex-col lg:justify-center",
           side === "origin" ? "sm:rounded-s-xl sm:pe-2" : "sm:rounded-e-xl sm:ps-2"
         )
       : cn("relative px-0 py-0 transition-colors lg:rounded-lg", side === "origin" ? "pe-3" : "ps-3");
@@ -1774,6 +1784,33 @@ export function SearchTabs({
       setReturnDate("");
     }
     setTripTypeOpen(false);
+  };
+
+  const onTripTypePointerDown = (mode: TripType) => {
+    pointerDownTripTypeRef.current = mode;
+  };
+
+  const onTripTypeClick = (mode: TripType) => {
+    const committedMode = committedHomepageTripType(pointerDownTripTypeRef.current, mode);
+    pointerDownTripTypeRef.current = null;
+    if (committedMode) onSelectTripType(committedMode);
+  };
+
+  const onTripTypeKeyDown = (mode: TripType, event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "Enter" || event.key === " ") pointerDownTripTypeRef.current = null;
+    if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(event.key)) return;
+    event.preventDefault();
+    const nextMode = nextHomepageTripType(
+      mode,
+      event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1,
+    );
+    onSelectTripType(nextMode);
+    window.requestAnimationFrame(() => tripTypeButtonRefs.current[nextMode]?.focus());
+  };
+
+  const selectTripTypeFromControl = (control: HTMLButtonElement) => {
+    const mode = control.dataset.tripType;
+    if (isHomepageTripType(mode)) onTripTypeClick(mode);
   };
 
   const travelerCount = adultCount + childCount + infantCount;
@@ -2876,12 +2913,13 @@ export function SearchTabs({
               type="button"
               role="tab"
               aria-selected={selected}
+              tabIndex={selected ? 0 : -1}
               onClick={() => {
                 setCarsOpenPicker(null);
                 setTab(mode);
               }}
               className={cn(
-                "focus-ring flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-[10px] border px-0.5 text-[clamp(13px,3.85vw,16px)] font-medium text-slate-950 shadow-[0_3px_10px_rgba(15,23,42,0.07)] transition-colors",
+                "focus-ring homepage-keyboard-focus flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-[10px] border px-0.5 text-[clamp(13px,3.85vw,16px)] font-medium text-slate-950 shadow-[0_3px_10px_rgba(15,23,42,0.07)] transition-colors",
                 selected
                   ? "border-[#075ee8] bg-[#eef5ff] text-[#075ee8]"
                   : "border-slate-200/70 bg-white",
@@ -2913,7 +2951,10 @@ export function SearchTabs({
     return (
       <section
         data-testid="mobile-homepage-flight-search"
-        className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden"
+        data-input-modality={homepageInputModality}
+        onPointerDownCapture={() => setHomepageInputModality("pointer")}
+        onKeyDownCapture={(event) => { if (event.key === "Tab" || event.key.startsWith("Arrow")) setHomepageInputModality("keyboard"); }}
+        className="homepage-search-modality rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden"
       >
         {mobileHomepageProductTabs}
         <form onSubmit={onFlightSubmit} className="mt-3 space-y-2">
@@ -2931,17 +2972,14 @@ export function SearchTabs({
                   type="button"
                   role="radio"
                   aria-checked={selected}
-                  onClick={() => onSelectTripType(mode)}
-                  onKeyDown={(event) => {
-                    if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(event.key)) {
-                      event.preventDefault();
-                      const modes = ["round-trip", "one-way", "multi-city"] as const;
-                      const offset = event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
-                      onSelectTripType(modes[(modes.indexOf(mode) + offset + modes.length) % modes.length]);
-                    }
-                  }}
+                  ref={(element) => { tripTypeButtonRefs.current[mode] = element; }}
+                  data-trip-type={mode}
+                  tabIndex={selected ? 0 : -1}
+                  onPointerDown={() => onTripTypePointerDown(mode)}
+                  onClick={(event) => selectTripTypeFromControl(event.currentTarget)}
+                  onKeyDown={(event) => onTripTypeKeyDown(mode, event)}
                   className={cn(
-                    "focus-ring flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-0.5 text-start text-[12px] font-medium text-slate-950 transition-colors max-[359px]:gap-1 max-[359px]:text-[11px] disabled:cursor-not-allowed",
+                    "focus-ring homepage-keyboard-focus flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-0.5 text-start text-[12px] font-medium text-slate-950 transition-colors max-[359px]:gap-1 max-[359px]:text-[11px] disabled:cursor-not-allowed",
                   )}
                 >
                   <span
@@ -3154,7 +3192,7 @@ export function SearchTabs({
 
   if (mobileHomepage && tab === "deals") {
     return (
-      <section data-testid="mobile-homepage-deals-surface" className="rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
+      <section data-testid="mobile-homepage-deals-surface" data-input-modality={homepageInputModality} onPointerDownCapture={() => setHomepageInputModality("pointer")} onKeyDownCapture={(event) => { if (event.key === "Tab" || event.key.startsWith("Arrow")) setHomepageInputModality("keyboard"); }} className="homepage-search-modality rounded-[14px] border border-[#dee5ed] bg-[#f8fafc] px-[13px] pb-[13px] pt-0 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:hidden">
         {mobileHomepageProductTabs}
         <DealsSearchForm variant="landing" presentation="mobile-homepage" />
       </section>
@@ -3163,23 +3201,26 @@ export function SearchTabs({
 
   return (
     <>
-      <section className={wrapper}>
+      <section data-input-modality={homepageInputModality} onPointerDownCapture={() => setHomepageInputModality("pointer")} onKeyDownCapture={(event) => { if (event.key === "Tab" || event.key.startsWith("Arrow")) setHomepageInputModality("keyboard"); }} className={wrapper}>
         {desktopPopoverOpen ? (
           <div aria-hidden="true" className={desktopOverlayGuardClassName} />
         ) : null}
       {mobileHomepage ? (
         <div className="mb-3">{mobileHomepageProductTabs}</div>
       ) : (
-      <div className={tabsClassName}>
+      <div role="tablist" aria-label={translate("searchType") || "Search type"} className={tabsClassName}>
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === "flights"}
+          tabIndex={tab === "flights" ? 0 : -1}
           onClick={() => {
             setCarsOpenPicker(null);
             setTab("flights");
           }}
           className={cn(
-            "relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
-            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/30 lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
+            "homepage-keyboard-focus relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
             tab === "flights"
               ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
@@ -3191,13 +3232,16 @@ export function SearchTabs({
 
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === "hotels"}
+          tabIndex={tab === "hotels" ? 0 : -1}
           onClick={() => {
             setCarsOpenPicker(null);
             setTab("hotels");
           }}
           className={cn(
-            "relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
-            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/30 lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
+            "homepage-keyboard-focus relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
             tab === "hotels"
               ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
@@ -3209,13 +3253,16 @@ export function SearchTabs({
 
         <button
           type="button"
+          role="tab"
+          aria-selected={tab === "cars"}
+          tabIndex={tab === "cars" ? 0 : -1}
           onClick={() => {
             setCarsOpenPicker(null);
             setTab("cars");
           }}
           className={cn(
-            "relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
-            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none focus-visible:ring-2 focus-visible:ring-[#075EE8]/30 lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
+            "homepage-keyboard-focus relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
             tab === "cars"
               ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800",
@@ -3223,6 +3270,27 @@ export function SearchTabs({
         >
           <CarFront className="h-4 w-4" />
           <span>{t.cars}</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "deals"}
+          tabIndex={tab === "deals" ? 0 : -1}
+          onClick={() => {
+            setCarsOpenPicker(null);
+            setTab("deals");
+          }}
+          className={cn(
+            "homepage-keyboard-focus relative inline-flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+            compactHero && !mobileHomepage ? "rounded-none px-2 pb-3 pt-2 outline-none lg:px-2 lg:text-[15px]" : "focus-ring rounded-lg px-3 py-1.5",
+            tab === "deals"
+              ? compactHero ? "text-[#075EE8] after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:rounded-full after:bg-[#075EE8]" : "bg-white text-navy shadow-sm"
+              : "text-slate-600 hover:text-slate-800",
+          )}
+        >
+          <PackagesIcon className="h-4 w-4" />
+          <span>{t.deals || "Packages"}</span>
         </button>
 
       </div>
@@ -3256,24 +3324,14 @@ export function SearchTabs({
                         type="button"
                         role="radio"
                         aria-checked={selected}
-                        onClick={() => onSelectTripType(mode)}
-                        onKeyDown={(event) => {
-                          if (
-                            event.key !== "ArrowRight" &&
-                            event.key !== "ArrowLeft" &&
-                            event.key !== "ArrowDown" &&
-                            event.key !== "ArrowUp"
-                          ) {
-                            return;
-                          }
-
-                          event.preventDefault();
-                          const modes = ["round-trip", "one-way", "multi-city"] as const;
-                          const offset = event.key === "ArrowLeft" || event.key === "ArrowUp" ? -1 : 1;
-                          onSelectTripType(modes[(modes.indexOf(mode) + offset + modes.length) % modes.length]);
-                        }}
+                        ref={(element) => { tripTypeButtonRefs.current[mode] = element; }}
+                        data-trip-type={mode}
+                        tabIndex={selected ? 0 : -1}
+                        onPointerDown={() => onTripTypePointerDown(mode)}
+                        onClick={(event) => selectTripTypeFromControl(event.currentTarget)}
+                        onKeyDown={(event) => onTripTypeKeyDown(mode, event)}
                         className={cn(
-                          "focus-ring group inline-flex min-h-9 items-center gap-2 rounded-lg border px-4 py-1.5 text-sm font-semibold transition-colors",
+                          "focus-ring homepage-keyboard-focus group inline-flex min-h-9 items-center gap-2 rounded-lg border px-4 py-1.5 text-sm font-semibold transition-colors",
                           selected ? "border-[#075EE8] bg-[#EEF5FF] text-[#075EE8]" : "border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:text-slate-950",
                         )}
                       >
@@ -4410,6 +4468,8 @@ export function SearchTabs({
               strings={{ guests: translate("guests") || "Guests", adults: translate("adults") || "Adults", adultDescription: translate("hotelGuests.adultDescription") || "Ages 18+", children: translate("children") || "Children", childDescription: translate("hotelGuests.childDescription") || "Ages 0–17", rooms: translate("rooms") || "Rooms", roomDescription: translate("hotelGuests.roomDescription") || "Separate rooms", petFriendly: translate("petFriendly") || "Pet-friendly", petDescription: translate("onlyShowPetFriendlyStays") || "Only show stays that allow pets", decrease: (label) => `Decrease ${label}`, increase: (label) => `Increase ${label}` }} />
           </HotelMobilePickerShell>
         </form>
+      ) : tab === "deals" ? (
+        <DealsSearchForm variant="landing" />
       ) : (
         <form onSubmit={onCarsSubmit} autoComplete="off" className={formClassName} noValidate>
           <div ref={carsSearchSurfaceRef} data-testid="cars-search-surface">
