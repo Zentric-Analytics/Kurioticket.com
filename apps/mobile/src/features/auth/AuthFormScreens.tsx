@@ -3,6 +3,7 @@ import { AccessibilityInfo, Pressable, StyleSheet, Text, TextInput, View } from 
 import { AuthIcon } from "./AuthIcon";
 import { AuthButton, authColors, ErrorText, Field, FormHeading, FormShell, SecurityMessage } from "./AuthPrimitives";
 import { formatCountdown, isValidEmail, sanitizeCode } from "./authUtils";
+import { scheduleAuthCompletion } from "./authCompletion";
 
 export function EmailScreen({ initialEmail, onBack, onContinue, loading, error }: { initialEmail: string; onBack: () => void; onContinue: (email: string) => void; loading: boolean; error?: string }) {
   const [email, setEmail] = useState(initialEmail);
@@ -59,7 +60,12 @@ export function CreateAccountScreen({ onBack, onSubmit, loading, error }: { onBa
 }
 
 export function SuccessScreen({ onDone }: { onDone: () => void }) {
-  useEffect(() => { void AccessibilityInfo.announceForAccessibility("Authentication successful. You’re all set."); const timer = setTimeout(onDone, 800); return () => clearTimeout(timer); }, [onDone]);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  useEffect(() => {
+    void AccessibilityInfo.announceForAccessibility("Authentication successful. You’re all set.");
+    return scheduleAuthCompletion(() => onDoneRef.current());
+  }, []);
   return <View style={styles.success}><View style={styles.successCircle}><AuthIcon name="check" color="white" size={58} /></View><Text style={styles.successTitle}>You’re all set!</Text><Text style={styles.successBody}>Welcome to Kurioticket.{"\n"}Let’s explore the world together.</Text><View style={styles.progress}><View style={styles.progressFill} /></View><Text style={styles.muted}>Taking you to your account…</Text></View>;
 }
 const styles = StyleSheet.create({

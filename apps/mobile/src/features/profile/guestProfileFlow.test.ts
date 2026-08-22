@@ -6,9 +6,11 @@ const source = (path: string) => readFileSync(path, "utf8");
 
 test("profile route distinguishes authenticated, intentional guest, and signed-out states", () => {
   const route = source("src/features/profile/ProfileRouteScreen.tsx");
-  assert.match(route, /readSession\(\)/);
-  assert.match(route, /readOnboardingCompleted\(\)/);
-  assert.match(route, /session \? "authenticated" : guest \? "guest" : "signed-out"/);
+  const reconciliation = source("src/features/profile/profileSessionReconciliation.ts");
+  assert.match(route, /readSession/);
+  assert.match(route, /readOnboardingCompleted/);
+  assert.match(route, /subscribeSession/);
+  assert.match(reconciliation, /session \? "authenticated" : guest \? "guest" : "signed-out"/);
   assert.match(route, /<AuthenticatedProfileScreen \/>/);
   assert.match(route, /<GuestProfileScreen \/>/);
   assert.match(route, /Redirect href="\/email-auth"/);
@@ -38,5 +40,5 @@ test("guest email upgrade enters the existing email flow and returns to Profile"
   const flow = source("src/features/auth/AuthFlow.tsx");
   assert.match(route, /initialStep=\{entry === "email" \? "email" : "welcome"\}/);
   assert.match(route, /successRoute=\{returnTo \? validateSignInIntent\(returnTo\) : "\/"\}/);
-  assert.match(flow, /router\.replace\(successRoute\)/);
+  assert.match(flow, /router\.dismissTo\(successRoute\)/);
 });

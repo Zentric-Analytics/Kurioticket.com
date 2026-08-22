@@ -25,16 +25,42 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
     stagingReadiness: read(env.STAGING_EVIDENCE_PATH),
   };
   const deliveryResult = evidence.deliveryResult.value;
-  const easBuildId = deliveryResult?.id ?? (Array.isArray(deliveryResult) ? deliveryResult[0]?.id : null) ?? null;
-  const publicationDecision = deliveryResult?.kind === 'dry-run'
-    ? 'ready-not-submitted'
-    : deliveryResult?.kind === 'update' || easBuildId
-    ? 'published'
-    : evidence.replay.value?.alreadyPublished === true
-      ? 'already-published'
-      : evidence.classifier.value?.classification === 'native-build-required'
-        ? 'preview-build-required'
-        : 'blocked-or-not-reached';
+  if (env.RELEASE_ENVIRONMENT === 'production' && env.FINAL_STATUS === 'success') {
+    const expectedKind = { 'dry-run': 'dry-run', build: 'build', update: 'update' }[env.RELEASE_ACTION];
+    if (!expectedKind || evidence.deliveryResult.status !== 'present' || deliveryResult?.kind !== expectedKind) {
+      throw new Error('Successful Production release audit is missing its exact delivery result.');
+    }
+    if (expectedKind === 'build') {
+      const validBuild = typeof deliveryResult.id === 'string'
+        && deliveryResult.status === 'FINISHED'
+        && deliveryResult.platform === 'ANDROID'
+        && deliveryResult.package === env.RELEASE_PACKAGE
+        && deliveryResult.projectId === '89f6fd88-c0d7-495a-9e2b-8301b09f407d'
+        && deliveryResult.profile === env.RELEASE_PROFILE
+        && deliveryResult.runtime === env.RELEASE_RUNTIME
+        && deliveryResult.channel === env.RELEASE_CHANNEL
+        && deliveryResult.commitSha === env.RELEASE_COMMIT
+        && deliveryResult.artifactType === 'AAB'
+        && Number.isSafeInteger(deliveryResult.versionCode) && deliveryResult.versionCode > 0
+        && deliveryResult.aabInspected === true
+        && deliveryResult.signed === true
+        && deliveryResult.activeProductionIdentityVerified === true
+        && deliveryResult.activeApiOrigin === 'https://kurioticket.com'
+        && deliveryResult.isPreview === false;
+      if (!validBuild) throw new Error('Successful Production build audit is missing verified artifact evidence.');
+    }
+    if (expectedKind === 'update' && typeof deliveryResult.id !== 'string') {
+      throw new Error('Successful Production update audit is missing publication evidence.');
+    }
+  }
+  const easBuildId = deliveryResult?.kind === 'build' ? deliveryResult.id ?? null : null;
+  const easUpdateId = deliveryResult?.kind === 'update' ? deliveryResult.id ?? null : null;
+  let publicationDecision = 'blocked-or-not-reached';
+  if (deliveryResult?.kind === 'dry-run') publicationDecision = 'ready-not-submitted';
+  else if (deliveryResult?.kind === 'build') publicationDecision = 'artifact-verified';
+  else if (deliveryResult?.kind === 'update') publicationDecision = 'published';
+  else if (evidence.replay.value?.alreadyPublished === true) publicationDecision = 'already-published';
+  else if (evidence.classifier.value?.classification === 'native-build-required') publicationDecision = 'preview-build-required';
   return {
     schemaVersion: 1,
     workflowRunId: env.WORKFLOW_RUN_ID,
@@ -50,6 +76,7 @@ export function buildReleaseAudit(env = process.env, completedAt = new Date().to
     channel: env.RELEASE_CHANNEL,
     baselineEasBuildId: env.BASELINE_EAS_BUILD_ID === 'NONE' ? null : env.BASELINE_EAS_BUILD_ID,
     easBuildId,
+    easUpdateId,
     publicationDecision,
     baseline: evidence.baseline.value,
     channelMapping: evidence.channelMapping.value,
