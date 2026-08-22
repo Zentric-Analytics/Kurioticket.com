@@ -4,6 +4,26 @@ import test from "node:test";
 
 const security = readFileSync("src/features/profile/SecurityScreen.tsx", "utf8");
 
+const screenModalStart = security.indexOf("function ScreenModal");
+const screenModalEnd = security.indexOf("function SecurityBlock", screenModalStart);
+const screenModal = security.slice(screenModalStart, screenModalEnd);
+
+test("shared security modals apply explicit safe-area insets", () => {
+  assert.match(security, /import\s*\{[^}]*useSafeAreaInsets[^}]*\}\s*from\s*["']react-native-safe-area-context["']/s);
+  assert.match(screenModal, /const\s+insets\s*=\s*useSafeAreaInsets\(\)/);
+  assert.match(screenModal, /<View\s+accessibilityViewIsModal/);
+  assert.doesNotMatch(screenModal, /<SafeAreaView/);
+  assert.match(screenModal, /paddingTop:\s*insets\.top/);
+  assert.match(screenModal, /paddingBottom:\s*insets\.bottom/);
+  assert.match(screenModal, /animationType=["']slide["']/);
+  assert.match(screenModal, /presentationStyle=["']fullScreen["']/);
+});
+
+test("all native security drill-downs retain the shared modal shell", () => {
+  for (const state of ["passwordOpen", "devicesOpen", "activityOpen"])
+    assert.match(security, new RegExp(`<ScreenModal\\s+visible=\\{${state}\\}`));
+});
+
 test("security landing uses flat descriptive blocks and the native header", () => {
   const landingEnd = security.indexOf("<ScreenModal visible={passwordOpen}");
   const landing = security.slice(0, landingEnd);
