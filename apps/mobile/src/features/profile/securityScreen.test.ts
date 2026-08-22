@@ -100,6 +100,20 @@ test("security loading and mutations retain API and session-expiry contracts", (
   assert.match(security, /await clearSession\(\)/);
 });
 
+test("successful deletion reactivation discards the revoked session and requires sign-in", () => {
+  const start = security.indexOf("const reactivate = async");
+  const end = security.indexOf("const date =", start);
+  const reactivate = security.slice(start, end);
+  assert.match(reactivate, /await travelApi\.reactivateDeletion\(\)/);
+  assert.match(reactivate, /await clearSession\(\)/);
+  assert.match(reactivate, /setDeletion\(null\)/);
+  assert.match(reactivate, /setDeletionOpen\(false\)/);
+  assert.match(reactivate, /router\.replace\(\{ pathname: "\/\(tabs\)\/profile\/sign-in", params: \{ returnTo: "\/security" \} \}\)/);
+  assert.doesNotMatch(reactivate, /setMessage\(c\.reactivated\)/);
+  assert.match(security, /travelApi\.requestDeletion\(\)/);
+  assert.match(security, /Alert\.alert\(c\.deletionConfirmTitle,c\.deletionConfirmBody/);
+});
+
 test("English and Spanish security copy cover the compact hierarchy", () => {
   for (const phrase of [
     "Manage sign-in and account security for your Kurioticket account.",

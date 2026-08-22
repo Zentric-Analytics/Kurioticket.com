@@ -11,6 +11,26 @@ type AuthMethod = "PASSWORD" | "EMAIL_CODE" | "GOOGLE" | "PASSKEY" | "UNKNOWN";
 type Assurance = "PRIMARY" | "MFA" | "PHISHING_RESISTANT";
 const hash = (secret: string) => createHash("sha256").update(secret).digest("hex");
 
+async function findMobileBearerSession(id: string) {
+  return getPrisma().accountSession.findUnique({ where: { id }, include: { user: { include: { accounts: { select: { provider: true } }, securitySettings: { select: { twoFactorEnabled: true } } } } } });
+}
+
+type MobileBearerSession = NonNullable<Awaited<ReturnType<typeof findMobileBearerSession>>>;
+type MobileBearerLookup = (id: string) => Promise<MobileBearerSession | null>;
+
+async function validateMobileBearerToken(request: Request, lookup: MobileBearerLookup) {
+  const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const match = /^ktm1\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]{43})$/.exec(token);
+  if (!match) return null;
+
+  const session = await lookup(match[1]);
+  const supplied = Buffer.from(hash(match[2]), "hex");
+  const stored = Buffer.from(session?.tokenHash || "", "hex");
+  if (!session || session.client !== "MOBILE" || stored.length !== supplied.length || !timingSafeEqual(stored, supplied)) return null;
+  if (session.expiresAt <= new Date()) return null;
+  return session;
+}
+
 export async function createAccountSession(input: { userId: string; client: "WEB" | "MOBILE"; authMethod: AuthMethod; assuranceLevel: Assurance; expiresAt?: Date; platform?: string; appVersion?: string }) {
   const prisma = getPrisma();
   return prisma.$transaction(async (tx) => {
@@ -35,19 +55,22 @@ export async function issueMobileSession(userId: string, authMethod: AuthMethod,
   return { token: `ktm1.${session.id}.${secret}`, expires: session.expiresAt.toISOString() };
 }
 
-export async function validateMobileBearer(request: Request) {
-  const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  const match = /^ktm1\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]{43})$/.exec(token);
-  if (!match) return null;
-  const session = await getPrisma().accountSession.findUnique({ where: { id: match[1] }, include: { user: { include: { accounts: { select: { provider: true } }, securitySettings: { select: { twoFactorEnabled: true } } } } } });
-  const supplied = Buffer.from(hash(match[2]), "hex");
-  const stored = Buffer.from(session?.tokenHash || "", "hex");
-  if (!session || session.client !== "MOBILE" || stored.length !== supplied.length || !timingSafeEqual(stored, supplied)) return null;
-  if (session.revokedAt || session.expiresAt <= new Date() || session.sessionVersion !== session.user.sessionVersion) return null;
+export async function validateMobileBearer(request: Request, lookup: MobileBearerLookup = findMobileBearerSession) {
+  const session = await validateMobileBearerToken(request, lookup);
+  if (!session || session.revokedAt || session.sessionVersion !== session.user.sessionVersion) return null;
   if (!(await canAuthenticateAccount(session.user, session.authMethod === "GOOGLE" ? "google" : "credentials"))) return null;
   if (session.user.securitySettings?.twoFactorEnabled && session.assuranceLevel === "PRIMARY") return null;
   if (Date.now() - session.lastSeenAt.getTime() >= LAST_SEEN_WRITE_MS) void getPrisma().accountSession.updateMany({ where: { id: session.id, revokedAt: null }, data: { lastSeenAt: new Date() } });
   return session;
+}
+
+/** Accepts only the obsolete bearer created by the account-deletion transition. */
+export async function validateMobileDeletionReactivationBearer(request: Request, lookup: MobileBearerLookup = findMobileBearerSession) {
+  const session = await validateMobileBearerToken(request, lookup);
+  if (!session?.revokedAt || session.revokeReason !== "account_deletion_requested") return null;
+  if (session.user.status !== "PENDING_DELETION" || !session.user.email || !session.user.emailVerified) return null;
+  if (session.userId !== session.user.id || session.user.sessionVersion !== session.sessionVersion + 1) return null;
+  return { ...session, user: { ...session.user, email: session.user.email } };
 }
 
 export async function validateAccountSession(id: string, userId: string, options: { requireCompletedTwoFactor?: boolean } = {}) {
