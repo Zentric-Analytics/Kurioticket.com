@@ -253,11 +253,14 @@ export class PreviewOrchestrator {
         return result?.nativeArtifactSourceSha && result.nativeArtifactSourceSha !== sha;
       });
       if (!classification.classification.includes("OTA") && coalescedPlatforms.length) {
+        const coalescedOtaPlatforms = [];
+        const coalescedNoDeliveryPlatforms = [];
+        const coalescedOverlayEvidence = {};
         for (const platform of coalescedPlatforms) {
           const artifactSourceSha = deliveryResults[platform].nativeArtifactSourceSha;
           const overlayFiles = await this.changeSetFactory({ directory: checkout.directory, repository: this.config.repository, token: this.config.githubReadToken, previousSha: artifactSourceSha, targetSha: sha });
           const overlay = classifyChangeSet(overlayFiles);
-          assertCoalescedOtaCompatibility({
+          const disposition = assertCoalescedOtaCompatibility({
             platform,
             artifactSourceSha,
             targetSourceSha: sha,
@@ -265,9 +268,25 @@ export class PreviewOrchestrator {
             targetFingerprint: fingerprints[platform],
             overlay,
           });
+          const platformEvidence = {
+            platform,
+            nativeArtifactSourceSha: artifactSourceSha,
+            targetSourceSha: sha,
+            artifactFingerprint: deliveryResults[platform].nativeFingerprint,
+            targetFingerprint: fingerprints[platform],
+            overlayClassification: overlay.classification,
+            deliveryAction: disposition === "OTA" ? "OTA" : "NONE",
+          };
+          coalescedOverlayEvidence[platform] = platformEvidence;
+          if (disposition === "OTA") coalescedOtaPlatforms.push(platform);
+          else coalescedNoDeliveryPlatforms.push(platform);
         }
-        evidence.ota = await this.deliverOta(sha, checkout.directory, lease, coalescedPlatforms, fingerprints);
-        evidence.coalescedOtaPlatforms = coalescedPlatforms;
+        if (coalescedOtaPlatforms.length) {
+          evidence.ota = await this.deliverOta(sha, checkout.directory, lease, coalescedOtaPlatforms, fingerprints);
+          evidence.coalescedOtaPlatforms = coalescedOtaPlatforms;
+        }
+        if (coalescedNoDeliveryPlatforms.length) evidence.coalescedNoDeliveryPlatforms = coalescedNoDeliveryPlatforms;
+        evidence.coalescedOverlayEvidence = coalescedOverlayEvidence;
       }
       const complete = await this.ledger.transition(sha, this.config.workerId, ["DELIVERING"], "COMPLETE", { evidence });
       await this.github.report(sha, "success", `Preview delivery complete: ${classification.classification}`);
@@ -691,11 +710,6 @@ export function nativeDriftTargets(fingerprints, deliveredNative) {
 const CANONICAL_FINGERPRINT = /^[0-9a-f]{40,128}$/;
 
 export function assertCoalescedOtaCompatibility({ platform, artifactSourceSha, targetSourceSha, artifactFingerprint, targetFingerprint, overlay }) {
-  const hasOtaSource = String(overlay?.classification ?? "").split("+").includes("OTA")
-    || (Array.isArray(overlay?.otaCandidates) && overlay.otaCandidates.length > 0);
-  if (overlay?.classification === "UNSAFE" || !hasOtaSource) {
-    throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} cannot receive a safe OTA overlay for ${targetSourceSha}.`);
-  }
   if (!CANONICAL_FINGERPRINT.test(String(artifactFingerprint ?? ""))) {
     throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} has no valid canonical fingerprint.`);
   }
@@ -705,7 +719,15 @@ export function assertCoalescedOtaCompatibility({ platform, artifactSourceSha, t
   if (artifactFingerprint !== targetFingerprint) {
     throw new Error(`Coalesced ${platform} artifact fingerprint does not match target ${targetSourceSha}.`);
   }
-  return true;
+  if (overlay?.classification === "NO_DELIVERY" && (!Array.isArray(overlay.otaCandidates) || overlay.otaCandidates.length === 0)) {
+    return "NO_DELIVERY";
+  }
+  const hasOtaSource = String(overlay?.classification ?? "").split("+").includes("OTA")
+    || (Array.isArray(overlay?.otaCandidates) && overlay.otaCandidates.length > 0);
+  if (overlay?.classification === "UNSAFE" || !hasOtaSource) {
+    throw new Error(`Coalesced ${platform} artifact ${artifactSourceSha} cannot receive a safe OTA overlay for ${targetSourceSha}.`);
+  }
+  return "OTA";
 }
 
 export function enforceDeliveredNativeBaseline({ classification, fingerprints, deliveredNative, requiredNativeTargets = [] }) {
