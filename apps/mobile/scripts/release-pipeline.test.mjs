@@ -14,7 +14,8 @@ import { resolvePreviewVersionEvidence } from './resolve-preview-version-code.mj
 import { resolveProductionVersionEvidence, validateProductionPlayHistory } from './resolve-production-version-code.mjs';
 import { resolveTrustedPreviousPlayHistory } from './resolve-production-play-history-lineage.mjs';
 import { validateProductionDryRun } from './dry-run-production-delivery.mjs';
-import { verifyProductionBuildResult, verifyProductionUpdateResult } from './verify-production-eas-result.mjs';
+import { isRfcUuid, verifyProductionBuildResult, verifyProductionUpdateResult } from './verify-production-eas-result.mjs';
+import { reconcileProductionOta } from './reconcile-production-ota.mjs';
 import { verifyProductionAab } from './verify-production-aab.mjs';
 import { verifyProductionIpa } from './verify-production-ipa.mjs';
 import { verifyBaseline, verifyChannelMapping, verifyPlayVersion } from './verify-release-evidence.mjs';
@@ -629,6 +630,53 @@ test('Production update JSON is strictly bound to the requested Production platf
     assert.throws(() => verifyProductionUpdateResult({ source: JSON.stringify(invalid), approvedSha: sha, platform: 'android' }));
   }
   assert.throws(() => verifyProductionUpdateResult({ source: JSON.stringify([...JSON.parse(fixture), ...JSON.parse(fixture)]), approvedSha: sha, platform: 'android' }), /exactly one/);
+});
+
+test('EAS identifiers accept RFC UUIDv4 and UUIDv7 while malformed identifiers fail closed', () => {
+  assert.equal(isRfcUuid('1bfe53cc-e806-4dd3-8fd7-6c3b8ca2f513'), true);
+  assert.equal(isRfcUuid('01a02ad2-129b-7d5a-b850-cc218bcde637'), true);
+  for (const value of [null, '', 'not-a-uuid', '01a02ad2-129b-7d5a-7850-cc218bcde637', '01a02ad2-129b-0d5a-b850-cc218bcde637']) assert.equal(isRfcUuid(value), false);
+  const sha = '962904391c6055ca44d3a599347029b720c80531';
+  const update = [{ id: '01a02ad2-129b-7d5a-b850-cc218bcde637', platform: 'ANDROID', branch: 'production', runtimeVersion: 'production-0.3.0', gitCommitHash: sha }];
+  assert.equal(verifyProductionUpdateResult({ source: JSON.stringify(update), approvedSha: sha, platform: 'android' }).id, update[0].id);
+  update[0].platform = 'IOS';
+  assert.equal(verifyProductionUpdateResult({ source: JSON.stringify(update), approvedSha: sha, platform: 'ios' }).platform, 'IOS');
+  assert.throws(() => verifyProductionUpdateResult({ source: JSON.stringify(update), approvedSha: sha, platform: 'android' }), /platform/);
+  update[0].platform = 'ANDROID'; update[0].projectId = '00000000-0000-4000-8000-000000000000';
+  assert.throws(() => verifyProductionUpdateResult({ source: JSON.stringify(update), approvedSha: sha, platform: 'android' }), /project/);
+});
+
+test('existing Android Production OTA reconciles exactly once without publication semantics', () => {
+  const expected = { updateId: '01a02ad2-129b-7d5a-b850-cc218bcde637', groupId: '769912ca-6f8b-4f4f-afae-7baa8674384f', sourceSha: '962904391c6055ca44d3a599347029b720c80531', originalWorkflowRunId: '32591979671', platform: 'android', runtime: 'production-0.3.0', branch: 'production', publishedAt: '2026-08-22T18:53:25.531Z', baselineBuildId: '1bfe53cc-e806-4dd3-8fd7-6c3b8ca2f513', fingerprint: '596900e057c6b8ba75f9d48c7484be88fd1d679a' };
+  const update = { id: expected.updateId, group: expected.groupId, platform: 'android', runtimeVersion: expected.runtime, branch: expected.branch, gitCommitHash: expected.sourceSha, createdAt: expected.publishedAt };
+  const listEntry = { group: expected.groupId, branch: expected.branch, runtimeVersion: expected.runtime, platforms: 'android' };
+  const evidence = { baseline: { verified: true, easBuildId: expected.baselineBuildId }, fingerprint: { hash: expected.fingerprint }, classifier: { classification: 'ota-compatible', nativeFiles: [] }, channel: { verified: true, channel: 'production', branches: ['production'] } };
+  const result = reconcileProductionOta({ view: [update], list: { name: 'production', currentPage: [listEntry] }, expected, evidence, verifiedAt: '2026-08-22T19:00:00.000Z' });
+  assert.equal(result.finalStatus, 'success');
+  assert.equal(result.publicationPerformed, false);
+  assert.equal(result.publicationDecision, 'already-published-verified');
+  assert.equal(result.originalWorkflowRunId, '32591979671');
+  for (const mutate of [
+    (value) => { value.updateId = '11111111-1111-4111-8111-111111111111'; },
+    (value) => { value.groupId = '11111111-1111-4111-8111-111111111111'; },
+    (value) => { value.runtime = 'preview-0.3.0'; },
+  ]) { const invalid = structuredClone(expected); mutate(invalid); assert.throws(() => reconcileProductionOta({ view: [update], list: { name: 'production', currentPage: [listEntry] }, expected: invalid, evidence })); }
+  assert.throws(() => reconcileProductionOta({ view: [update, { ...update, id: '11111111-1111-4111-8111-111111111111' }], list: { name: 'production', currentPage: [listEntry] }, expected, evidence }), /exactly one/);
+});
+
+test('Production reconciliation workflow is strictly read-only and Android delivery preserves failure evidence', () => {
+  const reconciliation = readFileSync(resolve(root, '../../.github/workflows/production-ota-reconcile.yml'), 'utf8');
+  const android = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
+  assert.match(reconciliation, /update:view/);
+  assert.match(reconciliation, /update:list/);
+  assert.doesNotMatch(reconciliation, /eas-cli@[^\s]+\s+update(?:\s|\\)/);
+  assert.doesNotMatch(reconciliation, /eas-cli@[^\s]+\s+(?:build|submit)(?:\s|\\)/);
+  assert.match(reconciliation, /publicationPerformed: false|reconcile-production-ota\.mjs/);
+  assert.match(android, /WORKFLOW_STARTED_AT=\$\(date -u/);
+  assert.match(android, /delivery-result\.raw\.json/);
+  assert.match(android, /baseline-evidence\.json[\s\S]*channel-evidence\.json[\s\S]*current-fingerprint\.json[\s\S]*release-classification\.json/);
+  const publishSteps = android.match(/eas-cli@16\.17\.4 update --channel production --platform android/g) ?? [];
+  assert.equal(publishSteps.length, 1);
 });
 
 test('reviewed Production binary baselines bind Android and iOS independently', () => {

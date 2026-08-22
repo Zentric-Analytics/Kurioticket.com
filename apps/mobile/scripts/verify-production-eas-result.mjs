@@ -9,7 +9,11 @@ const EXPECTED = Object.freeze({
   channel: 'production',
   appVersion: '0.3.0',
 });
-const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// EAS currently emits both UUIDv4 build IDs and UUIDv7 update IDs. Keep the
+// RFC 4122/9562 shape and variant checks fail-closed while accepting defined
+// version nibbles 1 through 8.
+export const isRfcUuid = (value) => typeof value === 'string'
+  && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 function parseJson(source, label) {
   if (!source.trim()) throw new Error(`${label} returned empty stdout.`);
@@ -36,7 +40,7 @@ export function verifyProductionBuildResult({ source, historySource, aabEvidence
   if (authoritative.id !== build.id) throw new Error('Submitted build ID does not match filtered EAS history.');
   const archive = authoritative.artifacts?.applicationArchiveUrl ?? authoritative.artifacts?.buildUrl;
   const checks = [
-    [uuid.test(authoritative.id ?? ''), 'Build ID is missing or malformed.'],
+    [isRfcUuid(authoritative.id), 'Build ID is missing or malformed.'],
     [authoritative.status === 'FINISHED', `Build status is not FINISHED (${authoritative.status ?? 'missing'}).`],
     [authoritative.platform === 'ANDROID', 'Build platform mismatch.'],
     [authoritative.project?.id === EXPECTED.projectId, 'Build project mismatch.'],
@@ -63,7 +67,7 @@ export function verifyProductionUpdateResult({ source, approvedSha, platform = '
   const value = parseJson(source, 'EAS Production update');
   if (!Array.isArray(value) || value.length !== 1 || !value[0] || typeof value[0] !== 'object') throw new Error(`EAS Production update result must contain exactly one ${expectedPlatform} update.`);
   const update = value[0];
-  const checks = [[uuid.test(update.id ?? ''), 'Update ID is missing or malformed.'], [update.platform === expectedPlatform, 'Update platform mismatch.'], [update.branch === EXPECTED.channel, 'Update branch mismatch.'], [update.runtimeVersion === EXPECTED.runtime, 'Update runtime mismatch.'], [update.gitCommitHash === approvedSha, 'Update Git commit metadata is missing or mismatched.'], [update.projectId === undefined || update.projectId === EXPECTED.projectId, 'Update project mismatch.']];
+  const checks = [[isRfcUuid(update.id), 'Update ID is missing or malformed.'], [update.platform === expectedPlatform, 'Update platform mismatch.'], [update.branch === EXPECTED.channel, 'Update branch mismatch.'], [update.runtimeVersion === EXPECTED.runtime, 'Update runtime mismatch.'], [update.gitCommitHash === approvedSha, 'Update Git commit metadata is missing or mismatched.'], [update.projectId === undefined || update.projectId === EXPECTED.projectId, 'Update project mismatch.']];
   for (const [ok, message] of checks) if (!ok) throw new Error(message);
   return { kind: 'update', id: update.id, status: 'PUBLISHED', platform: update.platform, branch: update.branch, runtime: update.runtimeVersion, commitSha: update.gitCommitHash };
 }
