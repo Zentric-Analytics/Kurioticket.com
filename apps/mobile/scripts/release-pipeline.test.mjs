@@ -485,6 +485,30 @@ test('Production build freezes credentials, propagates CLI failure, and retains 
     assert.equal(audit.evidenceStatus.deliveryResult, 'empty');
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+test('Production release audit distinguishes verified artifacts from publication and fails closed on missing success evidence', () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-production-success-audit-'));
+  try {
+    const delivery = resolve(directory, 'delivery.json');
+    const baseEnv = { WORKFLOW_RUN_ID: 'run', WORKFLOW_HEAD_SHA: 'f'.repeat(40), RELEASE_ACTOR: 'release-owner', RELEASE_ENVIRONMENT: 'production', RELEASE_ACTION: 'build', RELEASE_REASON: 'verified artifact rehearsal', RELEASE_COMMIT: 'f'.repeat(40), RELEASE_PACKAGE: policy.production.androidPackage, RELEASE_PROFILE: 'production', RELEASE_RUNTIME: 'production-0.3.0', RELEASE_CHANNEL: 'production', BASELINE_EAS_BUILD_ID: 'NONE', DELIVERY_RESULT_PATH: delivery, FINAL_STATUS: 'success' };
+    const build = { kind: 'build', id: '11111111-1111-4111-8111-111111111111', status: 'FINISHED', platform: 'ANDROID', package: policy.production.androidPackage, projectId: '89f6fd88-c0d7-495a-9e2b-8301b09f407d', profile: 'production', runtime: 'production-0.3.0', channel: 'production', commitSha: 'f'.repeat(40), artifactType: 'AAB', versionCode: 4, aabInspected: true, signed: true, activeProductionIdentityVerified: true, activeApiOrigin: 'https://kurioticket.com', isPreview: false };
+    writeFileSync(delivery, JSON.stringify(build));
+    const audit = buildReleaseAudit(baseEnv, '2026-08-22T14:00:00.000Z');
+    assert.equal(audit.easBuildId, build.id);
+    assert.equal(audit.easUpdateId, null);
+    assert.equal(audit.publicationDecision, 'artifact-verified');
+    assert.equal(audit.finalStatus, 'success');
+    for (const invalid of [null, { ...build, kind: 'update' }, { ...build, aabInspected: false }, { ...build, signed: false }, { ...build, activeProductionIdentityVerified: false }]) {
+      if (invalid === null) writeFileSync(delivery, ''); else writeFileSync(delivery, JSON.stringify(invalid));
+      assert.throws(() => buildReleaseAudit(baseEnv), /delivery result|artifact evidence/);
+    }
+    const update = { kind: 'update', id: '22222222-2222-4222-8222-222222222222' };
+    writeFileSync(delivery, JSON.stringify(update));
+    const updateAudit = buildReleaseAudit({ ...baseEnv, RELEASE_ACTION: 'update' });
+    assert.equal(updateAudit.easBuildId, null);
+    assert.equal(updateAudit.easUpdateId, update.id);
+    assert.equal(updateAudit.publicationDecision, 'published');
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
 test('Production classifier preserves every nonzero exit through tee and blocks downstream OTA work', () => {
   const workflow = readFileSync(resolve(root, '../../.github/workflows/android-production-delivery.yml'), 'utf8');
   const classifierStart = workflow.indexOf('- name: Classify native versus OTA delivery');
@@ -530,12 +554,16 @@ test('Production EAS fixtures enforce finished AAB identity and source attestati
   assert.equal(verified.artifactType, 'AAB');
   assert.equal(verified.aabInspected, true);
   assert.equal(verified.easPackageMetadata, 'verified');
+  assert.equal(verified.activeProductionIdentityVerified, true);
+  assert.equal(verified.activeApiOrigin, 'https://kurioticket.com');
+  assert.equal(verified.isPreview, false);
   const mutate = (callback) => { const value = JSON.parse(fixture); callback(value[0]); return JSON.stringify(value); };
   const omittedPackageHistory = mutate((build) => { delete build.applicationIdentifier; delete build.appIdentifier; });
   const initialized = verify({ historySource: mutate((build) => { build.appBuildVersion = '2'; }), aabEvidenceSource: JSON.stringify({ ...JSON.parse(aabEvidence), versionCode: 2 }), remoteVersionStatus: 'uninitialized' });
   assert.equal(initialized.versionCode, 2);
   assert.throws(() => verify({ source: '' }), /empty/);
   assert.throws(() => verify({ source: '{' }), /malformed/);
+  assert.throws(() => verify({ source: JSON.stringify([{ ...submission[0], id: '22222222-2222-4222-8222-222222222222' }]) }), /build ID/);
   assert.throws(() => verify({ historySource: '[]' }), /exactly one/);
   assert.throws(() => verify({ historySource: JSON.stringify([JSON.parse(fixture)[0], JSON.parse(fixture)[0]]) }), /exactly one/);
   assert.throws(() => verify({ historySource: mutate((build) => { build.status = 'ERRORED'; }) }), /not FINISHED/);
@@ -549,7 +577,11 @@ test('Production EAS fixtures enforce finished AAB identity and source attestati
     assert.throws(() => verify({ historySource: mutate((build) => { build.applicationIdentifier = packageName; }) }), /package metadata/);
   }
   assert.throws(() => verify({ historySource: mutate((build) => { build.appIdentifier = 'com.kurioticket.app.preview'; }) }), /package metadata/);
+  assert.throws(() => verify({ historySource: mutate((build) => { build.project.id = '00000000-0000-4000-8000-000000000000'; }) }), /project/);
+  assert.throws(() => verify({ historySource: mutate((build) => { build.buildProfile = 'preview'; }) }), /profile/);
   assert.throws(() => verify({ historySource: mutate((build) => { build.distribution = 'INTERNAL'; }) }), /distribution/);
+  assert.throws(() => verify({ historySource: mutate((build) => { build.runtimeVersion = 'preview-runtime'; }) }), /runtime/);
+  assert.throws(() => verify({ historySource: mutate((build) => { build.channel = 'preview'; }) }), /channel/);
   assert.throws(() => verify({ historySource: mutate((build) => { delete build.gitCommitHash; }) }), /Git commit/);
   assert.throws(() => verify({ historySource: mutate((build) => { build.gitCommitHash = 'a'.repeat(40); }) }), /Git commit/);
   assert.throws(() => verify({ historySource: mutate((build) => { build.appBuildVersion = '2'; }) }), /versionCode/);
@@ -816,13 +848,14 @@ test('staging visual probe rejects stale, cacheable, or viewport-incomplete HTML
 test('Preview evaluation audit includes trigger, replay, staging, classifier, and delivery evidence', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'kurioticket-preview-auto-audit-'));
   try {
-    for (const [name, value] of Object.entries({ trigger: { triggerType: 'validated-dev-push' }, replay: { alreadyPublished: false }, staging: { ready: true }, classifier: { classification: 'ota-compatible' }, delivery: [{ id: 'update-id' }] })) writeFileSync(resolve(directory, `${name}.json`), JSON.stringify(value));
+    for (const [name, value] of Object.entries({ trigger: { triggerType: 'validated-dev-push' }, replay: { alreadyPublished: false }, staging: { ready: true }, classifier: { classification: 'ota-compatible' }, delivery: { kind: 'update', id: 'update-id' } })) writeFileSync(resolve(directory, `${name}.json`), JSON.stringify(value));
     const audit = buildReleaseAudit({ WORKFLOW_RUN_ID: '123', RELEASE_ENVIRONMENT: 'preview', RELEASE_COMMIT: 'a'.repeat(40), RELEASE_PACKAGE: policy.preview.androidPackage, RELEASE_PROFILE: 'preview', RELEASE_RUNTIME: 'preview-0.3.0', RELEASE_CHANNEL: 'preview', TRIGGER_EVIDENCE_PATH: resolve(directory, 'trigger.json'), REPLAY_EVIDENCE_PATH: resolve(directory, 'replay.json'), STAGING_EVIDENCE_PATH: resolve(directory, 'staging.json'), CLASSIFIER_PATH: resolve(directory, 'classifier.json'), DELIVERY_RESULT_PATH: resolve(directory, 'delivery.json'), FINAL_STATUS: 'success' });
     assert.equal(audit.trigger.triggerType, 'validated-dev-push');
     assert.equal(audit.replay.alreadyPublished, false);
     assert.equal(audit.stagingReadiness.ready, true);
     assert.equal(audit.classifier.classification, 'ota-compatible');
-    assert.equal(audit.easBuildId, 'update-id');
+    assert.equal(audit.easBuildId, null);
+    assert.equal(audit.easUpdateId, 'update-id');
     assert.equal(audit.publicationDecision, 'published');
     assert.equal(JSON.stringify(audit).includes('EXPO_TOKEN'), false);
   } finally { rmSync(directory, { recursive: true, force: true }); }
