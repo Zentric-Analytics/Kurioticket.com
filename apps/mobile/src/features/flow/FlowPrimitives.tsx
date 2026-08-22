@@ -69,6 +69,16 @@ export function ScreenHeader({
   );
 }
 
+export function PickerSheetHeader({ title, onClose, closeLabel }: { title: string; onClose: () => void; closeLabel?: string }) {
+  const ft = useFlowTheme();
+  return <View style={styles.pickerSheetHeader}>
+    <Text accessibilityRole="header" style={[ft.styles.title, styles.pickerSheetTitle]}>{title}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={closeLabel ?? `Close ${title}`} accessibilityHint="Discards uncommitted changes" onPress={onClose} style={({ pressed }) => [ft.styles.iconButton, pressed && ft.styles.pressed]}>
+      <FlowIcon name="close" size={22} color={ft.colors.icon}/>
+    </Pressable>
+  </View>;
+}
+
 export function Segments<T extends string>({
   value,
   options,
@@ -334,6 +344,8 @@ export function UnavailableNotice({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
+  pickerSheetHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  pickerSheetTitle: { flex: 1, minWidth: 0 },
   centerTitle: {
     position: "absolute",
     left: 60,
