@@ -186,7 +186,8 @@ jobs:
         env: { EXPO_TOKEN: "${{ secrets.EXPO_TOKEN }}", RELEASE_REASON: "${{ inputs.release_reason }}" }
         run: |
           set -o pipefail
-          npx eas-cli@16.17.4 update --channel production --platform ios --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
+          npx eas-cli@16.17.4 env:exec production "node scripts/preflight-production-ota.mjs --platform ios --output-dir '$RUNNER_TEMP/production-ota-preflight-ios' --evidence '$RUNNER_TEMP/production-ota-public-env.json'" --non-interactive
+          npx eas-cli@16.17.4 update --channel production --platform ios --environment production --message "$RELEASE_REASON" --non-interactive --json | tee "$RUNNER_TEMP/delivery-result.raw.json"
           node scripts/verify-production-eas-result.mjs --kind update --platform ios --input "$RUNNER_TEMP/delivery-result.raw.json" --sha "$CHECKED_OUT_SHA" --output "$RUNNER_TEMP/delivery-result.json"
       - name: Write consolidated iOS update audit
         if: always() && inputs.action == 'update'
@@ -236,6 +237,7 @@ jobs:
             ${{ runner.temp }}/channel-evidence.json
             ${{ runner.temp }}/current-fingerprint.json
             ${{ runner.temp }}/release-classification.json
+            ${{ runner.temp }}/production-ota-public-env.json
             ${{ runner.temp }}/delivery-result.raw.json
             ${{ runner.temp }}/delivery-result.json
             ${{ runner.temp }}/release-audit.json
