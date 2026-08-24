@@ -115,10 +115,13 @@ export function SavedRecentScreen() {
   const [recentLoading, setRecentLoading] = useState(false);
   const [recentMutations, setRecentMutations] = useState<ReadonlySet<string>>(new Set());
   const recentLoadSequence = useRef(0);
+  const activeRecentLoadSequence = useRef<number | null>(null);
+  const reloadRecentAfterMutations = useRef(false);
   const recentMutationCount = useRef(0);
   const loadServer = useCallback(async () => {
     if (!isAuthenticated || recentMutationCount.current) return;
     const sequence = ++recentLoadSequence.current;
+    activeRecentLoadSequence.current = sequence;
     setRecentLoading(true);
     setRecentError("");
     try {
@@ -129,11 +132,13 @@ export function SavedRecentScreen() {
     } catch {
       if (sequence === recentLoadSequence.current && !recentMutationCount.current) setRecentError("Unable to synchronize recent searches. Your last synchronized recent searches remain available.");
     } finally {
+      if (activeRecentLoadSequence.current === sequence) activeRecentLoadSequence.current = null;
       if (sequence === recentLoadSequence.current) setRecentLoading(false);
     }
   }, [isAuthenticated]);
   useFocusEffect(useCallback(() => { void loadServer(); }, [loadServer]));
   const beginRecentMutation = (key: string) => {
+    if (activeRecentLoadSequence.current !== null) reloadRecentAfterMutations.current = true;
     recentLoadSequence.current += 1;
     recentMutationCount.current += 1;
     setRecentLoading(false);
@@ -141,8 +146,12 @@ export function SavedRecentScreen() {
     setRecentMutations((current) => new Set(current).add(key));
   };
   const finishRecentMutation = (key: string) => {
-    recentMutationCount.current -= 1;
+    recentMutationCount.current = Math.max(0, recentMutationCount.current - 1);
     setRecentMutations((current) => { const next = new Set(current); next.delete(key); return next; });
+    if (!recentMutationCount.current && reloadRecentAfterMutations.current) {
+      reloadRecentAfterMutations.current = false;
+      void loadServer();
+    }
   };
   const removeRecent = async (item: MobileRecentSearch) => {
     const key = `delete:${item.id}`;
