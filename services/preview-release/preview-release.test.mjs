@@ -1920,11 +1920,12 @@ test("successful authorized iOS replacement advances the canonical baseline afte
   const canonicalFailed = { source_sha: "2".repeat(40), identity_key: `native-build:ios:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}`, remote_id: "ios-failed", state: "ERRORED" };
   const recovery = { source_sha: sha, identity_key: `native-build-recovery:ios:${PREVIEW_IDENTITY.easProjectId}:${fingerprint}:1`, remote_id: "ios-replacement", state: "FINISHED" };
   const advances = [];
+  const writes = [];
   const ledger = {
     reserveNativeBuild: async () => ({ action: canonicalFailed, created: false }),
     latestNativeBuildRecovery: async () => recovery,
     getAction: async (_kind, identity) => identity === recovery.identity_key ? recovery : canonicalFailed,
-    recordAction: async (action) => action,
+    recordAction: async (action) => { writes.push(action); return action; },
     advanceDeliveredNative: async (value) => { advances.push(value); },
   };
   const orchestrator = new PreviewOrchestrator({
@@ -1941,6 +1942,7 @@ test("successful authorized iOS replacement advances the canonical baseline afte
   assert.equal(advances.length, 1);
   assert.equal(advances[0].buildId, "ios-replacement");
   assert.equal(advances[0].fingerprint, fingerprint);
+  assert.ok(writes.filter(({ kind }) => kind === "IOS_BUILD").every(({ identityKey }) => identityKey === recovery.identity_key));
   assert.equal(canonicalFailed.state, "ERRORED");
 });
 

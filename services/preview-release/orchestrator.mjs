@@ -470,6 +470,7 @@ export class PreviewOrchestrator {
       const recovery = await this.ledger.latestNativeBuildRecovery({ platform: "ios", fingerprint });
       if (recovery) recordedBuildAction = recovery;
     }
+    const recordedBuildIdentityKey = recordedBuildAction?.identity_key ?? buildIdentityKey;
     const artifactSourceSha = recordedBuildAction?.source_sha ?? sha;
     console.log(JSON.stringify({ event: reservation?.created ? "native-build-created" : recordedBuildAction ? "native-build-coalesced" : "native-build-reconciled", platform: "ios", sourceSha: sha, nativeArtifactSourceSha: artifactSourceSha, fingerprint, buildId: recordedBuildAction?.remote_id ?? null }));
     if (recordedBuildAction && !recordedBuildAction.remote_id && artifactSourceSha !== sha) {
@@ -498,12 +499,12 @@ export class PreviewOrchestrator {
       build = await eas.createIosBuild();
       decision = { decision: "CREATED", build };
     }
-    await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: buildIdentityKey, remoteId: build.id, state: decision.decision, evidence: { ...build, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
+    await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: recordedBuildIdentityKey, remoteId: build.id, state: decision.decision, evidence: { ...build, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
     for (let attempt = 0; attempt < 240; attempt += 1) {
       await lease.checkpoint();
       const current = await eas.viewBuild(build.id);
       const status = String(current.status ?? "").toUpperCase();
-      await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: buildIdentityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
+      await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "IOS_BUILD", identityKey: recordedBuildIdentityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
       if (status === "FINISHED") {
         const submission = reconcileSubmissionHistory(await eas.listIosSubmissions(), build.id);
         if (["CONFLICT", "UNKNOWN", "FAILED"].includes(submission.state)) throw new Error(`TestFlight auto-submit state is ${submission.state}; no duplicate recovery submission was attempted.`);
@@ -567,6 +568,7 @@ export class PreviewOrchestrator {
       const recovery = await this.ledger.latestNativeBuildRecovery({ platform: "android", fingerprint });
       if (recovery) recordedBuildAction = recovery;
     }
+    const recordedBuildIdentityKey = recordedBuildAction?.identity_key ?? identityKey;
     const artifactSourceSha = recordedBuildAction?.source_sha ?? sha;
     console.log(JSON.stringify({ event: reservation?.created ? "native-build-created" : recordedBuildAction ? "native-build-coalesced" : "native-build-reconciled", platform: "android", sourceSha: sha, nativeArtifactSourceSha: artifactSourceSha, fingerprint, buildId: recordedBuildAction?.remote_id ?? null }));
     if (recordedBuildAction && !recordedBuildAction.remote_id && artifactSourceSha !== sha) {
@@ -588,12 +590,12 @@ export class PreviewOrchestrator {
       build = await eas.createAndroidBuild();
       decision = { decision: "CREATED", build };
     }
-    await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: decision.decision, evidence: { ...build, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
+    await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey: recordedBuildIdentityKey, remoteId: build.id, state: decision.decision, evidence: { ...build, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
     for (let attempt = 0; attempt < 240; attempt += 1) {
       await lease.checkpoint();
       const current = await eas.viewBuild(build.id);
       const status = String(current.status ?? "").toUpperCase();
-      await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
+      await this.ledger.recordAction({ sourceSha: artifactSourceSha, kind: "ANDROID_BUILD", identityKey: recordedBuildIdentityKey, remoteId: build.id, state: status, evidence: { ...current, nativeFingerprint: fingerprint, nativeArtifactSourceSha: artifactSourceSha, latestCompatibleSourceSha: sha } });
       if (status === "FINISHED") {
         if (typeof this.ledger.advanceDeliveredNative === "function") await this.ledger.advanceDeliveredNative({ platform: "android", sourceSha: artifactSourceSha, fingerprint, buildId: build.id, appVersion: current.appVersion, buildNumber: current.appBuildVersion });
         return { buildId: build.id, buildNumber: current.appBuildVersion, status, nativeArtifactSourceSha: artifactSourceSha, nativeFingerprint: fingerprint };
