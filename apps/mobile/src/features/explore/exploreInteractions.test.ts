@@ -443,13 +443,15 @@ test("Explore defaults to deterministic region discovery instead of Popular", ()
 
 test("region preview geometry matches the wide Kayak carousel proportions responsively", () => {
   const source = screen();
-  assert.match(source, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.928/);
-  assert.doesNotMatch(source, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.84/);
-  assert.match(source, /REGION_PREVIEW_INSET_RATIO = 0\.024/);
-  assert.match(source, /REGION_PREVIEW_GAP_RATIO = 0\.024/);
-  assert.match(source, /REGION_PREVIEW_ASPECT_RATIO = 2\.13/);
-  assert.match(source, /REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3\.21/);
-  assert.match(source, /REGION_PREVIEW_IMAGE_HEIGHT_SCALE = 1\.12/);
+  const layout = readFileSync("src/features/explore/regionPreviewLayout.ts", "utf8");
+  assert.match(layout, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.928/);
+  assert.doesNotMatch(layout, /REGION_PREVIEW_CARD_WIDTH_RATIO = 0\.84/);
+  assert.match(layout, /REGION_PREVIEW_INSET_RATIO = 0\.024/);
+  assert.match(layout, /REGION_PREVIEW_GAP_RATIO = 0\.024/);
+  assert.match(layout, /REGION_PREVIEW_ASPECT_RATIO = 2\.13/);
+  assert.match(layout, /REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3\.21/);
+  assert.match(layout, /REGION_PREVIEW_IMAGE_HEIGHT_SCALE = 1\.12/);
+  assert.match(source, /regionPreviewCardLayout\(windowWidth\)/);
 
   for (const windowWidth of [320, 390, 430, 768]) {
     const cardWidth = windowWidth * 0.928;

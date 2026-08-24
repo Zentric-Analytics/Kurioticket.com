@@ -21,6 +21,11 @@ import { destinationDetailsRoute } from "./exploreInteractionModels";
 import { destinationMedia, FALLBACK_SOURCE } from "./destinationMedia";
 import { useExploreCatalogue } from "./exploreCatalogueStore";
 import {
+  REGION_PREVIEW_GAP_RATIO,
+  REGION_PREVIEW_INSET_RATIO,
+  regionPreviewCardLayout,
+} from "./regionPreviewLayout";
+import {
   allLiveExploreDestinations,
   exactLiveExploreResult,
   liveRegionDiscovery,
@@ -30,13 +35,6 @@ import {
 
 const BLUE = "#0754F7";
 const SEARCH_RESULTS_BOTTOM_SPACING = 18;
-export const REGION_PREVIEW_CARD_WIDTH_RATIO = 0.928;
-export const REGION_PREVIEW_NEXT_CARD_PEEK_EXPANSION_RATIO = 0.058;
-export const REGION_PREVIEW_INSET_RATIO = 0.024;
-export const REGION_PREVIEW_GAP_RATIO = 0.024;
-export const REGION_PREVIEW_ASPECT_RATIO = 2.13;
-export const REGION_PREVIEW_IMAGE_ASPECT_RATIO = 3.21;
-export const REGION_PREVIEW_IMAGE_HEIGHT_SCALE = 1.12;
 const shadow = { shadowColor: "#18305B", shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 };
 
 export function DestinationThumbnail({ destination }: { destination: LiveExploreDestination }) {
@@ -122,11 +120,7 @@ function ExploreDiscoveryContent({ REGION_DISCOVERY, select }: { REGION_DISCOVER
   const { theme } = useAppTheme();
   const { savedIds, toggle } = useSavedDestinations();
   const { width: windowWidth } = useWindowDimensions();
-  const previewCardWidth = windowWidth * (REGION_PREVIEW_CARD_WIDTH_RATIO - REGION_PREVIEW_NEXT_CARD_PEEK_EXPANSION_RATIO);
-  const previousCardHeight = previewCardWidth / REGION_PREVIEW_ASPECT_RATIO;
-  const previousImageHeight = previewCardWidth / REGION_PREVIEW_IMAGE_ASPECT_RATIO;
-  const previewImageHeight = previousImageHeight * REGION_PREVIEW_IMAGE_HEIGHT_SCALE;
-  const previewCardHeight = previousCardHeight + (previewImageHeight - previousImageHeight);
+  const { width: previewCardWidth, height: previewCardHeight, imageHeight: previewImageHeight } = regionPreviewCardLayout(windowWidth);
   const previewInset = windowWidth * REGION_PREVIEW_INSET_RATIO;
   const previewGap = windowWidth * REGION_PREVIEW_GAP_RATIO;
   const openRegion = (regionSlug: string) => router.push({ pathname: "/explore/region/[region]", params: { region: regionSlug } });
