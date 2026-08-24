@@ -26,7 +26,7 @@ test("arrival, price, and action terminate on the shared right edge", () => {
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.doesNotMatch(source, /priceBox:/);
   assert.match(source, /benefits: \{[\s\S]*?flexDirection: "row"/);
-  assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 5 \}/);
+  assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 \}/);
   assert.doesNotMatch(card, /marginRight/);
   const actionColumnStyle = /actionColumn: \{([^}]*)\}/.exec(source)?.[1] ?? "";
   assert.doesNotMatch(actionColumnStyle, /position|top|bottom|marginTop/);

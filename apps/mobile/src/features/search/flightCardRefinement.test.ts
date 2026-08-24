@@ -18,10 +18,10 @@ test("main flight card is borderless and uses theme-aware native depth", () => {
   const cardStyle = /card: \{([\s\S]*?)\n  \},/.exec(source)?.[1] ?? "";
   assert.doesNotMatch(cardStyle, /borderWidth|borderColor/);
   assert.match(cardStyle, /borderRadius: 14/);
-  assert.match(cardStyle, /shadowOffset: \{ width: 0, height: 4 \}/);
-  assert.match(cardStyle, /shadowOpacity: 0\.1/);
-  assert.match(cardStyle, /shadowRadius: 10/);
-  assert.match(cardStyle, /elevation: 3/);
+  assert.match(cardStyle, /shadowOffset: \{ width: 0, height: 3 \}/);
+  assert.match(cardStyle, /shadowOpacity: 0\.08/);
+  assert.match(cardStyle, /shadowRadius: 8/);
+  assert.match(cardStyle, /elevation: 2/);
   assert.match(card, /backgroundColor: theme\.surface/);
   assert.match(card, /shadowColor: theme\.dark \? "#000000" : "#18305B"/);
 });
@@ -73,8 +73,8 @@ test("flight card keeps fixed footer content compact while airline identity may 
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{2\} ellipsizeMode="tail">/);
   assert.equal(card.match(/style=\{\[s0\.benefit, \{ color: theme\.textSecondary \}\]\} numberOfLines=\{1\}/g)?.length, 2);
-  assert.match(source, /card: \{[\s\S]*?padding: 12,[\s\S]*?gap: 7,/);
-  assert.match(source, /benefits: \{[\s\S]*?paddingTop: 4,[\s\S]*?flexDirection: "row"/);
+  assert.match(source, /card: \{[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,[\s\S]*?gap: 5,/);
+  assert.match(source, /benefits: \{[\s\S]*?paddingTop: 2,[\s\S]*?flexDirection: "row"/);
   assert.match(source, /benefitList: \{ flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", gap: 5, alignSelf: "center" \}/);
   assert.match(source, /benefit: \{ minWidth: 0, fontSize: 10\.5, color: ui\.muted, flex: 1 \}/);
   assert.match(source, /detailsButton: \{ width: "100%", minHeight: 44, paddingHorizontal: 10/);
@@ -87,8 +87,8 @@ test("flight card keeps fixed footer content compact while airline identity may 
 test("flight result cards use the responsive list width with a safe reduced outer inset", () => {
   assert.match(source, /<View style=\{\[s0\.body, s0\.flightResultsBody\]\}>\{resultContent\}<\/View>/);
   assert.match(source, /body: \{ paddingHorizontal: 18, paddingBottom: 92, gap: 14 \}/);
-  assert.match(source, /flightResultsBody: \{ paddingHorizontal: 14, gap: 10 \}/);
-  assert.match(source, /card: \{[\s\S]*?width: "100%",[\s\S]*?padding: 12,/);
+  assert.match(source, /flightResultsBody: \{ paddingHorizontal: 14, gap: 8 \}/);
+  assert.match(source, /card: \{[\s\S]*?width: "100%",[\s\S]*?paddingHorizontal: 12,[\s\S]*?paddingVertical: 9,/);
 
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const outerInset = 14;
@@ -111,7 +111,7 @@ test("flight card keeps long prices single-line in the stable footer action colu
   assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
   assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /benefitList: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 5 \}/);
+  assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 \}/);
   assert.doesNotMatch(source, /priceBox:/);
 
   for (const formattedPrice of ["NGN 89,482", "NGN 837,706", "NGN 1,245,800", "$597", "£1,250", "€1,099"]) {
@@ -125,8 +125,8 @@ test("airline identity preserves its accessible name while bounding very long vi
   assert.match(airlineText, /numberOfLines=\{2\}/);
   assert.match(airlineText, /ellipsizeMode="tail"/);
   assert.doesNotMatch(source, /airlineName: \{[^}]*maxWidth/);
-  assert.match(source, /airlineName: \{ minWidth: 0,[^}]*lineHeight: 18/);
-  assert.match(card, /<View style=\{s0\.flightIdentityLayout\}>[\s\S]*?<AirlineLogo[\s\S]*?<Text accessibilityLabel=[\s\S]*?style=\{\[s0\.airlineName/);
+  assert.match(source, /airlineName: \{ flex: 1, minWidth: 0,[^}]*lineHeight: 18/);
+  assert.match(card, /<View style=\{s0\.flightIdentityLayout\}>[\s\S]*?<AirlineLogo[\s\S]*?<View style=\{s0\.airlineHeader\}>[\s\S]*?<Text accessibilityLabel=[\s\S]*?style=\{\[s0\.airlineName/);
 
   for (const airlineName of [
     "Qatar Airways",
@@ -195,10 +195,10 @@ test("flight journey gives its center column responsive surplus width", () => {
 
 test("flight times, airports, duration, and stop labels remain single-line", () => {
   assert.equal(card.match(/style=\{\[s0\.time, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.85\}/g)?.length, 2);
-  assert.match(card, /\{leg\.duration\}<\/Text>/);
+  assert.match(card, /\{leg\.duration\} · \{stopLabel\}<\/Text>/);
   assert.match(card, /\{leg\.originAirport\}<\/Text>/);
   assert.match(card, /\{leg\.destinationAirport\}<\/Text>/);
-  assert.match(card, /<Text style=\{s0\.nonstop\} numberOfLines=\{1\}>\{stopLabel\}<\/Text>/);
+  assert.match(card, /<Text style=\{s0\.nonstop\} numberOfLines=\{1\}>\{leg\.duration\} · \{stopLabel\}<\/Text>/);
 });
 
 test("flight card uses Lucide icons for route, benefits, and saved state", () => {
@@ -231,8 +231,22 @@ test("flight favorite is accessible, isolated, and does not enlarge the top row"
   assert.match(card, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(card, /hitSlop=\{\{ top: 12, bottom: 12, left: 12, right: 12 \}\}/);
   assert.match(card, /event\.stopPropagation\(\); toggle\(result, params\)/);
-  assert.match(source, /cardTop: \{ minHeight: 20/);
+  assert.match(source, /airlineHeader: \{ minHeight: 20/);
+  assert.match(source, /favoriteButton: \{ width: 20, height: 20/);
   assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggle\(result, params\)/);
+});
+
+test("compact density keeps identity controls in one band and preserves practical touch targets", () => {
+  const header = card.slice(card.indexOf('<View style={s0.airlineHeader}>'), card.indexOf('<View style={s0.journeyList}>'));
+  assert.match(header, /s0\.airlineName[\s\S]*?highlight[\s\S]*?s0\.favoriteButton/);
+  assert.match(source, /airlineHeader: \{ minHeight: 20,[^}]*gap: 6 \}/);
+  assert.match(source, /journeyList: \{ marginTop: 3, gap: 4 \}/);
+  assert.match(source, /journeyLabel: \{ fontSize: 9, lineHeight: 10/);
+  assert.match(source, /detailsButton: \{ width: "100%", minHeight: 44/);
+
+  const favoriteVisualSize = 20;
+  const favoriteHitSlop = 12 * 2;
+  assert.ok(favoriteVisualSize + favoriteHitSlop >= 44, "save control retains a 44px effective touch target");
 });
 
 test("saved flights remain visible through the canonical Saved source", () => {

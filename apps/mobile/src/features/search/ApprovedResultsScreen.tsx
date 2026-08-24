@@ -716,34 +716,6 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
   const fareBenefit = summarizeFareRules(result.refundInfo);
   return (
     <View style={[s0.card, { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : "#18305B" }]}>
-      <View style={s0.cardTop}>
-        <View style={s0.badgeRow}>
-          {highlight ? (
-            <View
-              accessible
-              accessibilityLabel={`${highlight} flight result`}
-              style={[s0.resultBadge, theme.dark && { backgroundColor: "#173568" }]}
-            >
-              <Text style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}>{highlight}</Text>
-            </View>
-          ) : null}
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
-          accessibilityState={{ selected: saved }}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          onPress={(event) => { event.stopPropagation(); toggle(result, params); }}
-          style={({ pressed }) => pressed && s0.favoritePressed}
-        >
-          <Heart
-            size={20}
-            strokeWidth={2}
-            fill={saved ? androidFavoriteColors.active : "transparent"}
-            color={saved ? androidFavoriteColors.active : theme.textSecondary}
-          />
-        </Pressable>
-      </View>
       <View style={s0.flightMain}>
         <View style={s0.flightIdentityLayout}>
           <View style={s0.airlineLogoColumn}>
@@ -753,9 +725,35 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
             />
           </View>
           <View style={s0.flightDetails}>
-            <Text accessibilityLabel={`Airline ${result.airlineName}`} style={[s0.airlineName, { color: theme.textPrimary }]} numberOfLines={2} ellipsizeMode="tail">
-              {result.airlineName}
-            </Text>
+            <View style={s0.airlineHeader}>
+              <Text accessibilityLabel={`Airline ${result.airlineName}`} style={[s0.airlineName, { color: theme.textPrimary }]} numberOfLines={2} ellipsizeMode="tail">
+                {result.airlineName}
+              </Text>
+              {highlight ? (
+                <View
+                  accessible
+                  accessibilityLabel={`${highlight} flight result`}
+                  style={[s0.resultBadge, theme.dark && { backgroundColor: "#173568" }]}
+                >
+                  <Text style={[s0.resultBadgeText, theme.dark && { color: "#8FB5FF" }]}>{highlight}</Text>
+                </View>
+              ) : null}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
+                accessibilityState={{ selected: saved }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                onPress={(event) => { event.stopPropagation(); toggle(result, params); }}
+                style={({ pressed }) => [s0.favoriteButton, pressed && s0.favoritePressed]}
+              >
+                <Heart
+                  size={20}
+                  strokeWidth={2}
+                  fill={saved ? androidFavoriteColors.active : "transparent"}
+                  color={saved ? androidFavoriteColors.active : theme.textSecondary}
+                />
+              </Pressable>
+            </View>
             <View style={s0.journeyList}>
               <FlightJourneyRow label="OUTBOUND" leg={outbound} />
               {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
@@ -813,13 +811,6 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
     >
       <Text style={[s0.journeyLabel, { color: theme.textSecondary }]}>{label}</Text>
       <View style={s0.journeyRow}>
-        <View style={s0.durationRow}>
-          <View style={s0.departureColumn} />
-          <View style={s0.timelineColumn}>
-            <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.duration}</Text>
-          </View>
-          <View style={s0.arrivalColumn} />
-        </View>
         <View style={s0.timeTimelineRow}>
           <View style={s0.departureColumn}>
             <Text style={[s0.time, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>{clock(leg.departureTime)}</Text>
@@ -838,7 +829,7 @@ function FlightJourneyRow({ label, leg }: { label: "OUTBOUND" | "RETURN"; leg: F
             <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.originAirport}</Text>
           </View>
           <View style={s0.timelineColumn}>
-            <Text style={s0.nonstop} numberOfLines={1}>{stopLabel}</Text>
+            <Text style={s0.nonstop} numberOfLines={1}>{leg.duration} · {stopLabel}</Text>
           </View>
           <View style={[s0.arrivalColumn, s0.rightColumnContract]}>
             <Text style={[s0.sub, { color: theme.textSecondary }]} numberOfLines={1}>{leg.destinationAirport}</Text>
@@ -1328,7 +1319,7 @@ const s0 = StyleSheet.create({
   noChoices: { color: ui.muted, fontSize: 13, lineHeight: 19 },
   sheetActions: { gap: 9 },
   body: { paddingHorizontal: 18, paddingBottom: 92, gap: 14 },
-  flightResultsBody: { paddingHorizontal: 14, gap: 10 },
+  flightResultsBody: { paddingHorizontal: 14, gap: 8 },
   notice: {
     backgroundColor: "#F2F6FF",
     color: ui.navy,
@@ -1353,18 +1344,19 @@ const s0 = StyleSheet.create({
   card: {
     width: "100%",
     borderRadius: 14,
-    padding: 12,
-    gap: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    gap: 5,
     backgroundColor: "white",
     shadowColor: "#18305B",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  cardTop: { minHeight: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  airlineHeader: { minHeight: 20, flexDirection: "row", alignItems: "center", gap: 6 },
+  favoriteButton: { width: 20, height: 20, flexShrink: 0, alignItems: "center", justifyContent: "center" },
   favoritePressed: { opacity: 0.7, transform: [{ scale: 0.94 }] },
-  badgeRow: { flex: 1, minWidth: 0, flexDirection: "row" },
   resultBadge: { height: 20, flexDirection: "row", alignItems: "center", paddingHorizontal: 7, borderRadius: 10, backgroundColor: "#EEF4FF" },
   resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
   resultBadgeTextGreen: { color: ui.green },
@@ -1372,12 +1364,11 @@ const s0 = StyleSheet.create({
   flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
   airlineLogoColumn: { width: 32, flexShrink: 0, alignItems: "center" },
   flightDetails: { flex: 1, minWidth: 0 },
-  airlineName: { minWidth: 0, fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "800" },
-  journeyList: { marginTop: 5, gap: 6 },
-  journeyBlock: { width: "100%", gap: 1 },
-  journeyLabel: { fontSize: 9, lineHeight: 11, fontWeight: "800", letterSpacing: 0.7 },
+  airlineName: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "800" },
+  journeyList: { marginTop: 3, gap: 4 },
+  journeyBlock: { width: "100%", gap: 0 },
+  journeyLabel: { fontSize: 9, lineHeight: 10, fontWeight: "800", letterSpacing: 0.7 },
   journeyRow: { width: "100%" },
-  durationRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   timeTimelineRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   airportStopRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   departureColumn: { flexBasis: 62, minWidth: 62, flexShrink: 0 },
@@ -1394,13 +1385,13 @@ const s0 = StyleSheet.create({
   nonstop: { fontSize: 11, color: ui.blue },
   bigPrice: { fontSize: 20, fontWeight: "900", color: ui.navy, textAlign: "right" },
   benefits: {
-    paddingTop: 4,
+    paddingTop: 2,
     flexDirection: "row",
     alignItems: "flex-end",
     gap: 6,
   },
   benefitList: { flex: 1, minWidth: 0, flexDirection: "row", flexWrap: "wrap", gap: 5, alignSelf: "center" },
-  actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 5 },
+  actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 3 },
   benefitItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
   benefit: { minWidth: 0, fontSize: 10.5, color: ui.muted, flex: 1 },
   detailsButton: { width: "100%", minHeight: 44, paddingHorizontal: 10, borderRadius: 9, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
