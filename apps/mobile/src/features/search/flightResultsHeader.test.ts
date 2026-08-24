@@ -8,7 +8,7 @@ const read = (path: string) => readFileSync(resolve(path), "utf8");
 const results = read("src/features/search/ApprovedResultsScreen.tsx");
 const searchUi = read("src/features/search/SearchUi.tsx");
 const details = read("src/features/search/ApprovedDetailScreen.tsx");
-const header = results.slice(results.indexOf("function FlightResultsHeader"), results.indexOf("const stopLabels"));
+const header = results.slice(results.indexOf("function FlightResultsHeader"), results.indexOf("function FlightSortModal"));
 const styles = results.slice(results.indexOf("const s0 = StyleSheet.create"));
 
 const payload = buildSearchPlan("flight", { tripType:"round-trip", origin:"LOS", destination:"ABV", departureDate:"2030-08-19", returnDate:"2030-08-20", adults:"2", children:"1", infants:"1", cabin:"premium-economy" }, new Date("2030-01-01T00:00:00Z")).plan?.payload;

@@ -72,6 +72,7 @@ import {
   type FlightSort,
   type FlightFilters,
 } from "./flightFilters";
+import { FlightFilterSheet, type FlightFilterSectionName } from "./FlightFilterSheet";
 import { readCurrencyPreference } from "../../storage/preferenceStorage";
 import {
   convertAmount,
@@ -124,9 +125,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [sortOpen, setSortOpen] = useState(false);
   const [filters, setFilters] = useState<FlightFilters>(emptyFlightFilters);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterSection, setFilterSection] = useState<
-    "all" | "stops" | "airlines" | "times"
-  >("all");
+  const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
   useFocusEffect(useCallback(() => {
@@ -259,15 +258,16 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       },
     });
   };
+  const normalizeFlightPrice = useCallback((result: FlightResult) => currencyState
+    ? convertAmount(result.price, result.currency, currencyState.resolution.resolvedCurrency, currencyState.rates)
+    : result.price, [currencyState]);
   const sorted = useMemo(() => {
     if (product === "flight") {
       return filterAndSortFlights(
         results as FlightResult[],
         filters,
         sort,
-        currencyState
-          ? (result) => convertAmount(result.price, result.currency, "USD", currencyState.rates)
-          : undefined,
+        normalizeFlightPrice,
       );
     }
     return [...results].sort((a, b) =>
@@ -275,15 +275,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
           ? (a as HotelResult).totalPrice! - (b as HotelResult).totalPrice!
           : (b as HotelResult).valueScore - (a as HotelResult).valueScore,
       );
-  }, [results, filters, sort, product, currencyState]);
-  const flightOptions = useMemo(
-    () => flightFilterOptions(results as FlightResult[]),
-    [results],
-  );
-  const activeFilterCount = activeFlightFilterCount(filters);
-  const openFlightFilters = (
-    section: "all" | "stops" | "airlines" | "times",
-  ) => {
+  }, [results, filters, sort, product, normalizeFlightPrice]);
+  const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[], normalizeFlightPrice), [results, normalizeFlightPrice]);
+  const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
+  const openFlightFilters = (section: FlightFilterSectionName) => {
     setFilterSection(section);
     setFilterOpen(true);
   };
@@ -344,7 +339,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
               />
             ) : null}
             <Pill
-              label={product === "flight" && activeFilterCount ? `Filter (${activeFilterCount})` : "Filter"}
+              label={product === "flight" && activeFilterCount ? `Filter · ${activeFilterCount}` : "Filter"}
               active={product === "flight" && activeFilterCount > 0}
               icon={product === "flight" ? undefined : "sliders"}
               flightResultsIcon={product === "flight" ? "filters" : undefined}
@@ -364,11 +359,10 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
                 label={x}
                 active={product === "flight" && (
                   x === "Stops" ? filters.stops.length > 0 :
-                  x === "Airlines" ? filters.airlines.length > 0 :
-                  x === "Times" ? filters.times.length > 0 : false
+                  x === "Airlines" ? filters.airlines.length > 0 : false
                 )}
                 flightResultsChevron={product === "flight"}
-                onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines" | "times") :
+                onPress={() => product === "flight" ? openFlightFilters(x.toLowerCase() as "stops" | "airlines") :
                   Alert.alert(
                     x,
                     "No additional values are available from this search response.",
@@ -523,11 +517,12 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
       {product === "flight" ? (
         <>
           <FlightSortModal visible={sortOpen} sort={sort} onChange={setSort} onClose={() => setSortOpen(false)} />
-          <FlightFilterModal
+          <FlightFilterSheet
             visible={filterOpen}
             section={filterSection}
             filters={filters}
             options={flightOptions}
+            currency={currencyState?.resolution.resolvedCurrency ?? (results[0] as FlightResult | undefined)?.currency ?? "USD"}
             onChange={setFilters}
             onClose={() => setFilterOpen(false)}
           />
@@ -612,18 +607,6 @@ function FlightResultsHeader({
     </View>
   );
 }
-const stopLabels = {
-  nonstop: "Nonstop",
-  one: "1 stop",
-  twoPlus: "2+ stops",
-} as const;
-const timeLabels = {
-  morning: "Morning",
-  afternoon: "Afternoon",
-  evening: "Evening",
-  night: "Night",
-} as const;
-
 function FlightSortModal({
   visible,
   sort,
@@ -675,82 +658,6 @@ function FlightSortModal({
   );
 }
 
-function FlightFilterModal({
-  visible,
-  section,
-  filters,
-  options,
-  onChange,
-  onClose,
-}: {
-  visible: boolean;
-  section: "all" | "stops" | "airlines" | "times";
-  filters: FlightFilters;
-  options: ReturnType<typeof flightFilterOptions>;
-  onChange: (filters: FlightFilters) => void;
-  onClose: () => void;
-}) {
-  const { theme } = useAppTheme();
-  const inset = useSafeAreaInsets();
-  const [draft, setDraft] = useState(filters);
-  useEffect(() => {
-    if (visible) setDraft(filters);
-  }, [visible, filters]);
-  const toggle = (key: keyof FlightFilters, value: string) =>
-    setDraft((current) => ({
-      ...current,
-      [key]: current[key].includes(value as never)
-        ? current[key].filter((item) => item !== value)
-        : [...current[key], value],
-    }) as FlightFilters);
-  const choices = (
-    key: keyof FlightFilters,
-    values: readonly string[],
-    labels?: Record<string, string>,
-  ) => values.length ? (
-    <View style={s0.choiceRow}>
-      {values.map((value) => {
-        const selected = draft[key].includes(value as never);
-        return (
-          <Pressable
-            key={value}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: selected }}
-            onPress={() => toggle(key, value)}
-            style={[s0.choice, { backgroundColor: theme.surface, borderColor: theme.border }, selected && s0.choiceActive, selected && theme.dark && { backgroundColor: "#142B55", borderColor: ui.blue }]}
-          >
-            <Text style={[s0.choiceText, { color: theme.textPrimary }, selected && s0.choiceTextActive]}>
-              {labels?.[value] || value}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  ) : <Text style={[s0.noChoices, { color: theme.textSecondary }]}>No additional values are available in these results.</Text>;
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} accessibilityViewIsModal>
-      <View style={s0.modalBackdrop}>
-        <View style={[s0.sheet, { paddingBottom: Math.max(inset.bottom, 18), backgroundColor: theme.surface }]} accessibilityLabel="Flight filters">
-          <View style={s0.sheetHead}>
-            <Text accessibilityRole="header" style={[s0.foundTitle, { color: theme.textPrimary }]}>Filter flights</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={onClose} style={s0.closeButton}>
-              <FlowIcon name="close" color={theme.icon} />
-            </Pressable>
-          </View>
-          <ScrollView style={s0.sheetScroll} contentContainerStyle={s0.sheetContent} showsVerticalScrollIndicator={false}>
-            {section === "all" || section === "stops" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Stops</Text>{choices("stops", options.stops, stopLabels)}</View> : null}
-            {section === "all" || section === "airlines" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Airlines</Text>{choices("airlines", options.airlines)}</View> : null}
-            {section === "all" || section === "times" ? <View style={s0.filterSection}><Text style={[s0.filterSectionTitle, { color: theme.textPrimary }]}>Departure time</Text>{choices("times", options.times, timeLabels)}</View> : null}
-          </ScrollView>
-          <View style={s0.sheetActions}>
-            <Button label="Apply filters" flightResults onPress={() => { onChange(draft); onClose(); }} />
-            <Button label="Clear filters" outline flightResults onPress={() => { const clear = emptyFlightFilters(); setDraft(clear); onChange(clear); }} />
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
-}
 function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, params }: { result: FlightResult; displayPrice?: DisplayPrice; displayCurrencyContext?: DisplayCurrencyResolution; rank: number; params: Record<string, string | string[]> }) {
   const { theme } = useAppTheme();
   const { savedFlights, toggle } = useSavedFlights();

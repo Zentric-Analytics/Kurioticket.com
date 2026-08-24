@@ -35,12 +35,14 @@ const loaded = [
   flight("two-american", "American", 2, "20:00", 200, 7),
 ];
 
-test("derives only stop, airline, and departure-time options present in loaded results", () => {
-  assert.deepEqual(flightFilterOptions(loaded), {
-    stops: ["nonstop", "one", "twoPlus"],
-    airlines: ["American", "British Airways"],
-    times: ["morning", "afternoon", "evening"],
-  });
+test("derives loaded options and hides unsupported optional sections", () => {
+  const options = flightFilterOptions(loaded);
+  assert.deepEqual(options.stops, ["nonstop", "one", "twoPlus"]);
+  assert.deepEqual(options.airlines, ["American", "British Airways"]);
+  assert.deepEqual(options.takeoffTimes, ["morning", "afternoon", "evening"]);
+  assert.equal(options.showAirports, false);
+  assert.equal(options.baggage, false);
+  assert.equal(options.refundable, false);
 });
 
 test("Nonstop returns only the nonstop result", () => {
@@ -82,7 +84,7 @@ test("each departure time band filters the loaded set", () => {
 });
 
 test("combined categories use intersection semantics", () => {
-  const filters: FlightFilters = { stops: ["nonstop"], airlines: ["American"], times: [] };
+  const filters: FlightFilters = { ...emptyFlightFilters(), stops: ["nonstop"], airlines: ["American"] };
   assert.deepEqual(filterAndSortFlights(loaded, filters, "best").map((x) => x.id), ["nonstop-american"]);
 });
 
@@ -146,10 +148,55 @@ test("sort quick-control labels reflect exactly one active mode", () => {
 });
 
 test("clearing filters restores all loaded results and visible count", () => {
-  const filtered = filterAndSortFlights(loaded, { stops: ["nonstop"], airlines: ["British Airways"], times: [] }, "best");
+  const filtered = filterAndSortFlights(loaded, { ...emptyFlightFilters(), stops: ["nonstop"], airlines: ["British Airways"] }, "best");
   assert.equal(filtered.length, 0);
-  assert.equal(activeFlightFilterCount({ stops: ["nonstop"], airlines: ["British Airways"], times: [] }), 2);
+  assert.equal(activeFlightFilterCount({ ...emptyFlightFilters(), stops: ["nonstop"], airlines: ["British Airways"] }), 2);
   const cleared = emptyFlightFilters();
   assert.equal(activeFlightFilterCount(cleared), 0);
   assert.equal(filterAndSortFlights(loaded, cleared, "best").length, loaded.length);
+});
+
+const detailed = [
+  { ...loaded[0], originAirport: "JFK", destinationAirport: "LHR", arrivalTime: "2026-09-01T16:00:00+01:00", durationMinutes: 480, fareTerms: [{ category: "baggage", semantic: "positive", text: "Included" }] },
+  { ...loaded[1], originAirport: "EWR", destinationAirport: "LGW", arrivalTime: "2026-09-01T22:00:00+01:00", durationMinutes: 600, fareTerms: [{ category: "refund", semantic: "positive", text: "Refundable" }] },
+  { ...loaded[2], originAirport: "JFK", destinationAirport: "LGW", arrivalTime: "2026-09-02T03:00:00+01:00", durationMinutes: 720 },
+] as FlightResult[];
+const ids = (filters: FlightFilters, sort: Parameters<typeof filterAndSortFlights>[2] = "best") => filterAndSortFlights(detailed, filters, sort).map((x) => x.id);
+
+test("default filters preserve every result and never mutate the source", () => {
+  const before = detailed.slice();
+  assert.equal(ids(emptyFlightFilters()).length, detailed.length);
+  assert.deepEqual(detailed, before);
+});
+test("price and structured duration ranges filter independently", () => {
+  assert.deepEqual(ids({ ...emptyFlightFilters(), price: { min: 150, max: 250 } }), ["two-american"]);
+  assert.deepEqual(ids({ ...emptyFlightFilters(), duration: { min: 550, max: 650 } }), ["one-british"]);
+});
+test("takeoff and landing bands read their respective structured timestamps", () => {
+  assert.deepEqual(ids({ ...emptyFlightFilters(), times: ["morning"] }), ["nonstop-american"]);
+  assert.deepEqual(ids({ ...emptyFlightFilters(), timeField: "landing", times: ["night"] }), ["one-british"]);
+});
+test("all three stop buckets use the shared result model", () => {
+  assert.deepEqual(ids({ ...emptyFlightFilters(), stops: ["nonstop"] }), ["nonstop-american"]);
+  assert.deepEqual(ids({ ...emptyFlightFilters(), stops: ["one"] }), ["one-british"]);
+  assert.deepEqual(ids({ ...emptyFlightFilters(), stops: ["twoPlus"] }), ["two-american"]);
+});
+test("airport selections use actual route codes", () => {
+  assert.deepEqual(ids({ ...emptyFlightFilters(), fromAirports: ["EWR"] }), ["one-british"]);
+  assert.deepEqual(ids({ ...emptyFlightFilters(), toAirports: ["LHR"] }), ["nonstop-american"]);
+});
+test("amenities require positive structured provider fare terms", () => {
+  assert.deepEqual(ids({ ...emptyFlightFilters(), baggageIncluded: true }), ["nonstop-american"]);
+  assert.deepEqual(ids({ ...emptyFlightFilters(), refundable: true }), ["one-british"]);
+  assert.equal(flightFilterOptions(detailed).baggage, true);
+  assert.equal(flightFilterOptions(detailed).refundable, true);
+});
+test("meaningful count counts each selection, each changed range once, and not default ranges", () => {
+  const options = flightFilterOptions(detailed);
+  assert.equal(activeFlightFilterCount({ ...emptyFlightFilters(), price: options.price, duration: options.duration }, options), 0);
+  assert.equal(activeFlightFilterCount({ ...emptyFlightFilters(), price: { min: 150, max: 300 }, stops: ["nonstop"], airlines: ["American", "British Airways"], baggageIncluded: true }, options), 5);
+});
+test("filters compose before the selected sort and missing optional data is safe", () => {
+  assert.deepEqual(ids({ ...emptyFlightFilters(), toAirports: ["LGW"] }, "price"), ["one-british", "two-american"]);
+  assert.doesNotThrow(() => flightFilterOptions([{ ...loaded[0], arrivalTime: undefined, fareTerms: undefined } as unknown as FlightResult]));
 });
