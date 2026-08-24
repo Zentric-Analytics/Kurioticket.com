@@ -739,7 +739,7 @@ export class PreviewLedger {
       `UPDATE preview_release_action
        SET remote_id=$5, state=$6, evidence=$7::jsonb, updated_at=now()
        WHERE source_sha=$1 AND kind=$2 AND identity_key=$3 AND remote_id=$4
-         AND state IN ('BUILD_FAILED','UPDATE_FAILED','ERRORED','FAILED','CANCELED','CANCELLED','DEACTIVATED')
+         AND state IN ('BUILD_FAILED','UPDATE_FAILED','ERRORED','FAILED','CANCELED','CANCELLED','DEACTIVATED','RUNTIME_MISMATCH')
        RETURNING *`,
       [sourceSha, kind, identityKey, expectedRemoteId, remoteId, state, JSON.stringify(evidence)],
     );
