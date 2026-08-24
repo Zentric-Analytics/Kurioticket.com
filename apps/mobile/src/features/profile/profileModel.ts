@@ -2,7 +2,7 @@ import type { FlowIconName } from "../flow/FlowIcon";
 import type { MobileTranslationKey } from "../../localization/mobileLocalizationCatalog";
 
 export type ProfileDestination =
-  | { kind: "native"; href: "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" }
+  | { kind: "native"; href: "/personal-information" | "/security" | "/price-alerts" | "/settings" | "/saved" | "/recent" | "/faq" | "/support" | "/email-preferences" | "/travel-preferences" }
   | { kind: "external"; href: "/terms" | "/privacy" };
 export type ProfileItem = { label: MobileTranslationKey; icon: FlowIconName; destination: ProfileDestination };
 export type ProfileSection = { title: MobileTranslationKey; items: ProfileItem[] };
@@ -13,7 +13,8 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "securitySettings", icon: "shield", destination: { kind: "native", href: "/security" } },
   ] },
   { title: "travelActivity", items: [
-    { label: "savedRecent", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
+    { label: "savedItems", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
+    { label: "recentSearches", icon: "clock", destination: { kind: "native", href: "/recent" } },
     { label: "priceAlerts", icon: "bell", destination: { kind: "native", href: "/price-alerts" } },
   ] },
   { title: "preferences", items: [

@@ -250,7 +250,7 @@ test("compact density keeps identity controls in one band and preserves practica
 });
 
 test("saved flights remain visible through the canonical Saved source", () => {
-  const savedScreen = readFileSync(resolve("src/features/saved/SavedRecentScreen.tsx"), "utf8");
+  const savedScreen = readFileSync(resolve("src/features/saved/SavedScreen.tsx"), "utf8");
   assert.match(savedScreen, /canonicalSavedCards\(canonical\.items\)/);
   assert.match(savedScreen, /item\.type === "flight"/);
   assert.match(savedScreen, /pathname: resultsReady \? "\/flight-results" : "\/flights"/);

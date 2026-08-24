@@ -8,7 +8,7 @@ const favorite = source("src/features/home/AndroidFavoriteButton.tsx");
 const shim = source("src/features/home/HomepageFavoriteButton.tsx");
 const explore = source("src/features/explore/ExploreScreen.tsx");
 const details = source("src/features/explore/DestinationDetailsScreen.tsx");
-const savedRecent = source("src/features/saved/SavedRecentScreen.tsx");
+const savedRecent = source("src/features/saved/SavedScreen.tsx");
 
 test("shared Android favorite button renders smaller visuals while preserving state colors", () => {
   assert.match(favorite, /background:\s*"rgba\(2,15,42,\.62\)"/);

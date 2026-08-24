@@ -1,4 +1,4 @@
-export const protectedRoutes = ["/saved", "/price-alerts", "/notifications", "/personal-information", "/security", "/email-preferences", "/travel-preferences", "/(tabs)/trips", "/(tabs)/profile"] as const;
+export const protectedRoutes = ["/saved", "/recent", "/price-alerts", "/notifications", "/personal-information", "/security", "/email-preferences", "/travel-preferences", "/(tabs)/trips", "/(tabs)/profile"] as const;
 export type ProtectedRoute = typeof protectedRoutes[number];
 const allowed = new Set<string>(protectedRoutes);
 export const defaultProtectedRoute: ProtectedRoute = "/(tabs)/profile";
