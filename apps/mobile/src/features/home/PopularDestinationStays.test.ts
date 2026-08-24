@@ -16,6 +16,10 @@ const section = readFileSync(
   join(process.cwd(), "src/features/home/PopularDestinationStays.tsx"),
   "utf8",
 );
+const layout = readFileSync(
+  join(process.cwd(), "src/features/home/popularStayCardLayout.ts"),
+  "utf8",
+);
 
 test("uses one unsynchronised horizontal rail without a grid or wrapping", () => {
   assert.equal(section.match(/<ScrollView/g)?.length, 1);
@@ -30,10 +34,11 @@ test("uses one unsynchronised horizontal rail without a grid or wrapping", () =>
 });
 
 test("matches the mobile-web portrait card geometry", () => {
-  assert.match(section, /cardWidth: 276/);
-  assert.match(section, /imageHeight: 288/);
-  assert.match(section, /ctaHeight: 72/);
+  assert.match(layout, /cardWidth: 276/);
+  assert.match(layout, /imageHeight: 288/);
+  assert.match(layout, /ctaHeight: 72/);
   assert.match(section, /useWindowDimensions/);
+  assert.match(section, /popularStayCardLayout\(width\)/);
   assert.match(section, /styles\.copy/);
   assert.match(
     section,

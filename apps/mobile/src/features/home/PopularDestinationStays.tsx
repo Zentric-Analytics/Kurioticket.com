@@ -13,6 +13,12 @@ import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { flowColors, useFlowTheme } from "../flow/flowStyles";
 import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { popularDestinationStayNavigation } from "./homepageCardNavigation";
+import {
+  popularStayCardLayout,
+  POPULAR_STAY_LAYOUT,
+} from "./popularStayCardLayout";
+
+export { POPULAR_STAY_LAYOUT } from "./popularStayCardLayout";
 
 export { popularDestinationStays } from "./PopularDestinationStaysData";
 import {
@@ -20,36 +26,12 @@ import {
   resolvePopularDestinationStay,
 } from "./PopularDestinationStaysData";
 
-// src/app/page.tsx DestinationCard at the mobile breakpoint: 17.25rem wide,
-// an 18rem image region, and a 4.5rem footer region.
-export const POPULAR_STAY_LAYOUT = {
-  cardWidth: 276,
-  minCardWidth: 260,
-  maxCardWidth: 292,
-  viewportReveal: 99,
-  imageHeight: 288,
-  ctaHeight: 72,
-  gap: 16,
-  radius: 16,
-  sideInset: 16,
-  nextCardVisible: 67,
-} as const;
-
 const { ctaHeight: CTA_HEIGHT } = POPULAR_STAY_LAYOUT;
 
 export function PopularDestinationStays() {
   const ft = useFlowTheme();
   const { width } = useWindowDimensions();
-  const cardWidth = Math.min(
-    POPULAR_STAY_LAYOUT.maxCardWidth,
-    Math.max(
-      POPULAR_STAY_LAYOUT.minCardWidth,
-      width - POPULAR_STAY_LAYOUT.viewportReveal,
-    ),
-  );
-  const imageHeight =
-    cardWidth *
-    (POPULAR_STAY_LAYOUT.imageHeight / POPULAR_STAY_LAYOUT.cardWidth);
+  const { width: cardWidth, imageHeight } = popularStayCardLayout(width);
   const { savedIds, toggle } = useSavedDestinations();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(
     () => new Set(),

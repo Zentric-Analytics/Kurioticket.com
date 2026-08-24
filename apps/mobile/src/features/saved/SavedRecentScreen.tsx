@@ -7,15 +7,18 @@ import { travelApi } from "../../api/travelApi";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useAppTheme } from "../../theme/AppTheme";
+import { destinationById } from "../explore/destinationCatalogue";
 import { FALLBACK_SOURCE } from "../explore/destinationMedia";
-import { regionPreviewCardLayout } from "../explore/regionPreviewLayout";
+import { formatFlightAccess } from "../explore/exploreModels";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
+import { popularStayCardLayout, POPULAR_STAY_LAYOUT } from "../home/popularStayCardLayout";
 
 type SavedCardModel = {
   item: MobileSavedItem;
   title: string;
   secondary: string;
+  supporting?: string;
   open?: () => void;
 };
 
@@ -37,7 +40,7 @@ export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCar
       const title = text(item.airlineName) ?? text(item.label) ?? "Saved flight";
       const origin = text(item.originAirport);
       const destination = text(item.destinationAirport);
-      return { item, title, secondary: origin && destination ? `${origin} → ${destination}` : "Flight", open: result?.id ? () => router.push({ pathname: "/flight-details", params: { result: JSON.stringify(result) } }) : undefined };
+      return { item, title, secondary: origin && destination ? `${origin} → ${destination}` : "Flight", supporting: text(item.flightNumber), open: result?.id ? () => router.push({ pathname: "/flight-details", params: { result: JSON.stringify(result) } }) : undefined };
     }
     if (item.type === "hotel") {
       const result = record(payload?.result) as HotelResult | undefined;
@@ -45,25 +48,32 @@ export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCar
       const title = text(item.hotelName) ?? text(item.label) ?? "Saved hotel";
       return { item, title, secondary: text(item.destination) ?? "Hotel", open: result?.id ? () => router.push({ pathname: "/hotel-details", params: { ...params, result: JSON.stringify(result) } }) : undefined };
     }
-    const title = text(item.label) ?? "Saved search";
+    const destinationId = text(query?.destinationId);
+    const canonicalDestination = destinationId
+      ? destinationById.get(destinationId)
+      : undefined;
+    const title = canonicalDestination?.name ?? text(item.label) ?? "Saved search";
     const searchType = text(item.searchType)?.toLowerCase();
     const destination = text(item.destination);
     const origin = text(item.origin);
-    const secondary = origin && destination ? `${origin} → ${destination}` : destination ?? (searchType === "hotel" ? "Hotel search" : searchType === "flight" ? "Flight search" : "Search");
+    const secondary = canonicalDestination?.country ?? (origin && destination ? `${origin} → ${destination}` : destination ?? (searchType === "hotel" ? "Hotel search" : searchType === "flight" ? "Flight search" : "Search"));
+    const supporting = canonicalDestination
+      ? formatFlightAccess(canonicalDestination.primaryAirportCode, canonicalDestination.airportCodes)
+      : undefined;
     const params = routeParams(query);
     const hasFlightRoute = searchType === "flight" && (text(query?.to) || text(query?.destination));
     const hasHotelRoute = searchType === "hotel" && text(query?.destination);
     const open = hasFlightRoute ? () => router.push({ pathname: "/flights", params }) : hasHotelRoute ? () => router.push({ pathname: "/hotels", params }) : undefined;
-    return { item, title, secondary, open };
+    return { item, title, secondary, supporting, open };
   });
 }
 
 function SavedCard({ model, remove }: { model: SavedCardModel; remove: (item: MobileSavedItem) => void }) {
   const { theme } = useAppTheme();
   const { width: windowWidth } = useWindowDimensions();
-  const layout = regionPreviewCardLayout(windowWidth);
+  const layout = popularStayCardLayout(windowWidth, windowWidth - 36);
   const geometry = { width: layout.width, height: layout.height };
-  const content = <Fragment><Image source={FALLBACK_SOURCE} accessibilityLabel="Travel image" resizeMode="cover" style={[styles.image, { height: layout.imageHeight }]} /><View style={[styles.copy, { height: layout.height - layout.imageHeight }]}><Text numberOfLines={1} style={[styles.name, { color: theme.text }]}>{model.title}</Text><Text numberOfLines={1} style={[styles.secondary, { color: theme.muted }]}>{model.secondary}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${model.title} from saved`} hitSlop={8} onPress={(event) => { event.stopPropagation(); remove(model.item); }} style={({ pressed }) => [styles.removeTouchTarget, pressed && styles.removePressed]}><View style={[styles.remove, { backgroundColor: theme.surface, borderColor: theme.border }]}><FlowIcon name="close" color={theme.icon} size={16} /></View></Pressable></Fragment>;
+  const content = <Fragment><View testID="saved-card-image" style={[styles.imageFrame, { height: layout.imageHeight }]}><Image source={FALLBACK_SOURCE} accessibilityLabel="Travel image" resizeMode="cover" style={styles.image} /><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${model.title} from saved`} hitSlop={8} onPress={(event) => { event.stopPropagation(); remove(model.item); }} style={({ pressed }) => [styles.removeTouchTarget, pressed && styles.removePressed]}><View style={[styles.remove, { backgroundColor: theme.surface, borderColor: theme.border }]}><FlowIcon name="close" color={theme.icon} size={16} /></View></Pressable></View><View testID="saved-card-footer" style={[styles.copy, { height: layout.footerHeight }]}><Text numberOfLines={1} style={[styles.name, { color: theme.text }]}>{model.title}</Text><Text numberOfLines={1} style={[styles.secondary, { color: theme.muted }]}>{model.secondary}</Text>{model.supporting ? <Text numberOfLines={1} style={[styles.supporting, { color: theme.muted }]}>{model.supporting}</Text> : null}</View></Fragment>;
   return model.open ? <Pressable testID="saved-card" accessibilityRole="button" accessibilityLabel={`Open ${model.title}, ${model.secondary}`} onPress={model.open} style={({ pressed }) => [styles.card, geometry, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}>{content}</Pressable> : <View testID="saved-card" accessibilityLabel={`${model.title}, ${model.secondary}`} style={[styles.card, geometry, { backgroundColor: theme.surface, borderColor: theme.border }]}>{content}</View>;
 }
 
@@ -92,4 +102,4 @@ export function SavedRecentScreen() {
   </SafeAreaView>;
 }
 
-const styles = StyleSheet.create({ safe: { flex: 1 }, header: { height: 68, flexDirection: "row", alignItems: "center", paddingHorizontal: 12 }, back: { width: 46, height: 46, alignItems: "center", justifyContent: "center" }, title: { fontSize: 25, lineHeight: 32, fontWeight: "800" }, content: { paddingHorizontal: 18, paddingBottom: 30 }, tabs: { flexDirection: "row", borderWidth: 1, borderRadius: 12, padding: 3 }, tab: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: 9 }, activeTab: { backgroundColor: flowColors.blue }, syncError: { color: "#A4262C", marginTop: 10 }, clear: { color: flowColors.blue, fontWeight: "800", textAlign: "right", paddingVertical: 12 }, recentRow: { minHeight: 68, borderWidth: 1, borderRadius: 12, paddingLeft: 14, marginBottom: 10, flexDirection: "row", alignItems: "center" }, sectionTitle: { fontSize: 19, fontWeight: "800", marginTop: 14 }, explanation: { fontSize: 13, marginTop: 5, marginBottom: 12 }, card: { borderWidth: 1, borderRadius: 6, overflow: "hidden", marginBottom: 12 }, image: { width: "100%", backgroundColor: "#DCE5F3" }, copy: { paddingHorizontal: 14, paddingVertical: 4, justifyContent: "center" }, name: { fontSize: 15, lineHeight: 20, fontWeight: "800" }, secondary: { fontSize: 12, lineHeight: 18, marginTop: 2 }, removeTouchTarget: { position: "absolute", right: 10, top: 10, width: 44, height: 44, alignItems: "center", justifyContent: "center" }, remove: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" }, removePressed: { opacity: 0.76, transform: [{ scale: 0.94 }] }, center: { flex: 1, minHeight: 300, alignItems: "center", justifyContent: "center", paddingHorizontal: 34 }, emptyTitle: { fontSize: 20, lineHeight: 27, fontWeight: "800", textAlign: "center", marginTop: 15 }, emptyText: { fontSize: 14, lineHeight: 21, textAlign: "center", marginTop: 6 }, primary: { minHeight: 48, marginTop: 20, borderRadius: 10, paddingHorizontal: 22, alignItems: "center", justifyContent: "center", backgroundColor: flowColors.blue }, primaryText: { color: "white", fontSize: 15, fontWeight: "800" }, pressed: { opacity: 0.72 } });
+const styles = StyleSheet.create({ safe: { flex: 1 }, header: { height: 68, flexDirection: "row", alignItems: "center", paddingHorizontal: 12 }, back: { width: 46, height: 46, alignItems: "center", justifyContent: "center" }, title: { fontSize: 25, lineHeight: 32, fontWeight: "800" }, content: { paddingHorizontal: 18, paddingBottom: 30 }, tabs: { flexDirection: "row", borderWidth: 1, borderRadius: 12, padding: 3 }, tab: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: 9 }, activeTab: { backgroundColor: flowColors.blue }, syncError: { color: "#A4262C", marginTop: 10 }, clear: { color: flowColors.blue, fontWeight: "800", textAlign: "right", paddingVertical: 12 }, recentRow: { minHeight: 68, borderWidth: 1, borderRadius: 12, paddingLeft: 14, marginBottom: 10, flexDirection: "row", alignItems: "center" }, sectionTitle: { fontSize: 19, fontWeight: "800", marginTop: 14 }, explanation: { fontSize: 13, marginTop: 5, marginBottom: 12 }, card: { alignSelf: "center", borderWidth: StyleSheet.hairlineWidth, borderRadius: POPULAR_STAY_LAYOUT.radius, overflow: "hidden", marginBottom: POPULAR_STAY_LAYOUT.gap }, imageFrame: { width: "100%", position: "relative", backgroundColor: "#DCE5F3" }, image: { width: "100%", height: "100%" }, copy: { width: "100%", paddingHorizontal: 16, justifyContent: "center" }, name: { fontSize: 15, lineHeight: 19, fontWeight: "800" }, secondary: { fontSize: 12, lineHeight: 16, marginTop: 1 }, supporting: { fontSize: 11, lineHeight: 15 }, removeTouchTarget: { position: "absolute", right: 10, top: 10, width: 44, height: 44, alignItems: "center", justifyContent: "center" }, remove: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" }, removePressed: { opacity: 0.76, transform: [{ scale: 0.94 }] }, center: { flex: 1, minHeight: 300, alignItems: "center", justifyContent: "center", paddingHorizontal: 34 }, emptyTitle: { fontSize: 20, lineHeight: 27, fontWeight: "800", textAlign: "center", marginTop: 15 }, emptyText: { fontSize: 14, lineHeight: 21, textAlign: "center", marginTop: 6 }, primary: { minHeight: 48, marginTop: 20, borderRadius: 10, paddingHorizontal: 22, alignItems: "center", justifyContent: "center", backgroundColor: flowColors.blue }, primaryText: { color: "white", fontSize: 15, fontWeight: "800" }, pressed: { opacity: 0.72 } });

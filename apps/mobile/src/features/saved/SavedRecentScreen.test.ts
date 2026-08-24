@@ -3,6 +3,9 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import type { MobileSavedItem } from "../../api/travelApi";
 import { canonicalItemsNewestFirst } from "../../storage/savedRepositoryCore";
+import { destinationById } from "../explore/destinationCatalogue";
+import { formatFlightAccess } from "../explore/exploreModels";
+import { popularStayCardLayout, POPULAR_STAY_LAYOUT } from "../home/popularStayCardLayout";
 
 const source = (path: string) => readFileSync(path, "utf8");
 const item = (value: Record<string, unknown>) => value as MobileSavedItem;
@@ -17,7 +20,7 @@ test("Saved UI has one canonical visible source and keeps guest protection", () 
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
   assert.match(screen, /canonicalSavedCards\(canonical\.items\)/);
   assert.doesNotMatch(screen, /savedIds|savedFlights|savedSections|savedCategoryOrder/);
-  assert.doesNotMatch(screen, /useSavedFlights|popularDestinationStays|destinationCatalogue/);
+  assert.doesNotMatch(screen, /useSavedFlights|popularDestinationStays/);
   assert.match(screen, /!isAuthenticated/);
   assert.match(screen, /pathname: "\/\(tabs\)\/profile\/sign-in"/);
 });
@@ -29,19 +32,63 @@ test("flight, hotel, and search become the same stable card model", () => {
   assert.match(screen, /const searchType = text\(item\.searchType\)/);
   assert.match(screen, /origin && destination \? `\$\{origin\} → \$\{destination\}`/);
   assert.equal((screen.match(/testID="saved-card"/g) ?? []).length, 2);
-  assert.match(screen, /regionPreviewCardLayout\(windowWidth\)/);
+  assert.match(screen, /popularStayCardLayout\(windowWidth, windowWidth - 36\)/);
+  assert.doesNotMatch(screen, /regionPreviewCardLayout/);
   assert.doesNotMatch(screen, /(?:height|width): 104/);
   assert.match(screen, /source=\{FALLBACK_SOURCE\}/);
 });
 
-test("Saved and Explore cards derive responsive geometry from one layout helper", () => {
+test("Saved and Home Popular stays derive responsive geometry from one layout helper", () => {
   const saved = source("src/features/saved/SavedRecentScreen.tsx");
-  const explore = source("src/features/explore/ExploreScreen.tsx");
-  const layout = source("src/features/explore/regionPreviewLayout.ts");
-  assert.match(saved, /import \{ regionPreviewCardLayout \} from "\.\.\/explore\/regionPreviewLayout"/);
-  assert.match(explore, /regionPreviewCardLayout\(windowWidth\)/);
-  assert.match(layout, /REGION_PREVIEW_CARD_WIDTH_RATIO/);
-  assert.match(layout, /height: previousHeight \+ \(imageHeight - previousImageHeight\)/);
+  const home = source("src/features/home/PopularDestinationStays.tsx");
+  assert.match(saved, /from "\.\.\/home\/popularStayCardLayout"/);
+  assert.match(home, /from "\.\/popularStayCardLayout"/);
+  assert.match(saved, /popularStayCardLayout\(windowWidth, windowWidth - 36\)/);
+  assert.match(home, /popularStayCardLayout\(width\)/);
+  assert.deepEqual(popularStayCardLayout(390), {
+    width: 291,
+    imageHeight: 303.6521739130435,
+    footerHeight: 72,
+    height: 375.6521739130435,
+  });
+  assert.equal(popularStayCardLayout(280, 244).width, 244);
+  assert.equal(POPULAR_STAY_LAYOUT.radius, 16);
+});
+
+test("Saved cards have a full-width image, footer below it, and floating remove control", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  const image = screen.indexOf('testID="saved-card-image"');
+  const remove = screen.indexOf('accessibilityLabel={`Remove ${model.title} from saved`}', image);
+  const footer = screen.indexOf('testID="saved-card-footer"', remove);
+  assert.ok(image >= 0 && remove > image && footer > remove);
+  assert.match(screen, /imageFrame: \{ width: "100%", position: "relative"/);
+  assert.match(screen, /removeTouchTarget: \{ position: "absolute"/);
+  assert.match(screen, /card: \{ alignSelf: "center"/);
+  assert.match(screen, /source=\{FALLBACK_SOURCE\}/);
+  assert.doesNotMatch(screen, /destinationMediaFor|popularDestinationStays.*image/);
+});
+
+test("canonical destination saves use catalogue country and flight access instead of duplicate copy", () => {
+  const abuDhabi = destinationById.get("ae-abu-dhabi");
+  assert.ok(abuDhabi);
+  assert.equal(abuDhabi.name, "Abu Dhabi");
+  assert.equal(abuDhabi.country, "United Arab Emirates");
+  assert.equal(formatFlightAccess(abuDhabi.primaryAirportCode, abuDhabi.airportCodes), "Flights via AUH");
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /const destinationId = text\(query\?\.destinationId\)/);
+  assert.match(screen, /destinationById\.get\(destinationId\)/);
+  assert.match(screen, /canonicalDestination\?\.name/);
+  assert.match(screen, /canonicalDestination\?\.country/);
+  assert.match(screen, /formatFlightAccess\(canonicalDestination\.primaryAirportCode, canonicalDestination\.airportCodes\)/);
+});
+
+test("flight and hotel cards retain useful canonical presentation", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /text\(item\.airlineName\)/);
+  assert.match(screen, /`\$\{origin\} → \$\{destination\}`/);
+  assert.match(screen, /supporting: text\(item\.flightNumber\)/);
+  assert.match(screen, /text\(item\.hotelName\)/);
+  assert.match(screen, /text\(item\.destination\) \?\? "Hotel"/);
 });
 
 test("repository normalization preserves the newest canonical duplicate", () => {
