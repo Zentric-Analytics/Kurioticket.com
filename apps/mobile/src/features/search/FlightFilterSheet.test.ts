@@ -46,3 +46,14 @@ test("clear all is subdued when draft filters are empty and the CTA remains avai
   assert.match(sheet, /accessibilityState=\{\{ disabled: !hasDraftFilters \}\}[\s\S]*?disabled=\{!hasDraftFilters\}/);
   assert.doesNotMatch(sheet, /<Button label=\{cta\}[^>]*disabled=/);
 });
+
+test("price and duration use real accessible gesture sliders instead of numeric range inputs", () => {
+  const slider = readFileSync("src/features/search/FlightRangeSlider.tsx", "utf8");
+  assert.match(sheet, /<FlightRangeSlider[\s\S]*?onChange=/);
+  assert.match(slider, /PanResponder\.create/);
+  assert.match(slider, /accessibilityRole="adjustable"/);
+  assert.match(slider, /Minimum price/);
+  assert.match(slider, /Maximum price/);
+  assert.match(slider, /Maximum flight duration/);
+  assert.doesNotMatch(sheet, /accessibilityLabel=\{`\$\{key\} \$\{edge\}`\}/);
+});
