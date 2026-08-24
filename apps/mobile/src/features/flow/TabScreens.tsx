@@ -16,6 +16,7 @@ import { locationImageByCity } from "./locationCatalogue";
 import { FlowIcon, type FlowIconName } from "./FlowIcon";
 import { ScreenHeader, Segments } from "./FlowPrimitives";
 import { flowColors, flowStyles, useFlowTheme } from "./flowStyles";
+import { signInHref } from "../auth/signInIntent";
 
 type TripTab = "upcoming" | "past" | "cancelled";
 export function MyTripsFlowScreen() {
@@ -36,7 +37,7 @@ export function MyTripsFlowScreen() {
       .catch(() => {
         if (!active) return;
         void readSession().then((session) => {
-          if (!session) router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/(tabs)/trips" } });
+          if (!session) router.replace(signInHref("/(tabs)/trips"));
           else
             setError(
               "Unable to load trips. Check your connection and try again.",

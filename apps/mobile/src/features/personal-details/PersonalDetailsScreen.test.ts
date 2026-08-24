@@ -94,7 +94,7 @@ test("email is read-only and external handoff is accessible", () => {
   assert.match(screen, /accessibilityHint=\{c\.externalHint\}/);
 });
 test("authentication expiry preserves protected return intent", () =>
-  assert.match(screen, /returnTo:\s*"\/personal-information"/));
+  assert.match(screen, /signInHref\("\/personal-information"\)/));
 test("theme semantics cover shell card inputs and selectors", () => {
   for (const token of [
     "theme.background",

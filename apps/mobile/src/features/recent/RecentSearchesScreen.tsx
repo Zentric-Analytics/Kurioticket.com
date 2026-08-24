@@ -10,6 +10,7 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { recentSearchNavigation } from "./recentSearchNavigation";
 import { recentSearchPresentation } from "./recentSearchPresentation";
+import { signInHref } from "../auth/signInIntent";
 
 export function RecentSearchesScreen() {
   const { theme } = useAppTheme();
@@ -86,7 +87,7 @@ export function RecentSearchesScreen() {
   };
   return <SafeAreaView edges={["top", "bottom"]} style={[styles.safe, { backgroundColor: theme.background }]}>
     <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><FlowIcon name="back" color={theme.icon} size={27} /></Pressable><View style={styles.headerCopy}><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>Recent searches</Text><Text style={[styles.description, { color: theme.muted }]}>Search again from your recent activity.</Text></View></View>
-    {!authResolved ? null : !isAuthenticated ? <View style={styles.center}><FlowIcon name="clock" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>Sign in to view recent searches</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Your recent searches are private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/recent" } })} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never">
+    {!authResolved ? null : !isAuthenticated ? <View style={styles.center}><FlowIcon name="clock" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>Sign in to view recent searches</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Your recent searches are private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push(signInHref("/recent"))} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never">
       {recentError ? <Text accessibilityRole="alert" style={styles.syncError}>{recentError}</Text> : null}
       {recent.length ? <><View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: theme.text }]}>Recent</Text><Pressable accessibilityRole="button" accessibilityLabel="Clear recent searches" disabled={recentMutations.size > 0} onPress={() => void clearRecent()} style={styles.clearTouchTarget}><Text style={[styles.clear, recentMutations.size > 0 && styles.disabled]}>Clear all</Text></Pressable></View>{recent.map((item) => {
         const presentation = recentSearchPresentation(item);

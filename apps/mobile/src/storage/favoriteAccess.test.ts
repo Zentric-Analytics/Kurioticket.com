@@ -14,7 +14,7 @@ test("favorite prompt offers dismissal and the existing sign-in flow", () => {
   const hook = source("src/storage/useSavedDestinations.ts");
   assert.match(hook, /Sign in to save favorites/);
   assert.match(hook, /Not now/);
-  assert.match(hook, /\(tabs\)\/profile\/sign-in/);
+  assert.match(hook, /router\.push\(signInHref\(returnTo\)\)/);
   assert.match(hook, /favoriteAction\(userId\).*showFavoriteSignInPrompt\("\/saved"\).*return/s);
 });
 

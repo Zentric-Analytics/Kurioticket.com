@@ -15,15 +15,31 @@ test("all successful common auth paths converge on one success completion", () =
   assert.ok((flow.match(/setStep\("success"\)/g) ?? []).length >= 4);
 });
 
-test("successful auth dismisses the nested sign-in route to the Profile root", () => {
+test("root-owned auth completion dismisses to its validated destination", () => {
   const flow = source("src/features/auth/AuthFlow.tsx");
+  const root = source("app/_layout.tsx");
+  const tabs = source("app/(tabs)/_layout.tsx");
+  const authRoute = source("app/email-auth.tsx");
   const signIn = source("app/(tabs)/profile/sign-in.tsx");
   const profileRoot = source("app/(tabs)/profile/index.tsx");
   assert.match(flow, /useCallback\(\(\) =>/);
   assert.match(flow, /router\.dismissTo\(successRoute\)/);
-  assert.match(signIn, /AuthFlow successRoute=\{validateSignInIntent\(returnTo\)\}/);
+  assert.match(root, /Stack\.Screen name="email-auth"/);
+  assert.doesNotMatch(tabs, /email-auth/);
+  assert.match(authRoute, /validateSignInIntent\(returnTo\)/);
+  assert.match(signIn, /Redirect href=\{signInHref\(validateSignInIntent\(returnTo\)\)\}/);
+  assert.doesNotMatch(signIn, /AuthFlow/);
   assert.match(profileRoot, /ProfileRouteScreen/);
   assert.doesNotMatch(flow, /router\.replace\(successRoute\)/);
+});
+
+test("welcome panel owns bottom safe-area without translation or a bottom SafeAreaView gap", () => {
+  const welcome = source("src/features/auth/AuthWelcomeScreen.tsx");
+  assert.match(welcome, /SafeAreaView style=\{styles\.safe\} edges=\{\["top"\]\}/);
+  assert.match(welcome, /paddingBottom: 10 \+ insets\.bottom/);
+  assert.match(welcome, /justifyContent: "space-between"/);
+  assert.doesNotMatch(welcome, /panelOffset|translateY/);
+  assert.doesNotMatch(welcome, /borderBottomLeftRadius|borderBottomRightRadius/);
 });
 
 test("Profile root subscribes to session lifecycle changes", () => {

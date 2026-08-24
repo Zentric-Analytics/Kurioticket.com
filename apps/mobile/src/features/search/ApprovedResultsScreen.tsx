@@ -104,6 +104,7 @@ import {
 import type { SearchPlan } from "../flow/travelSearchModel";
 import { FlightResultsState } from "./FlightResultsState";
 import { resolveFlightResultsState } from "./flightResultsStateModel";
+import { signInHref } from "../auth/signInIntent";
 
 type Product = "flight" | "hotel";
 type Status = "loading" | "ready" | "empty" | "error";
@@ -1072,7 +1073,7 @@ function PriceAlert({ product, plan, results, available = true }: { product: Pro
   const requireSignIn = useCallback(() => Alert.alert(
     "Sign in required",
     "Sign in to track prices for this route.",
-    [{ text: "Sign in", onPress: () => router.push("/(tabs)/profile/sign-in") }, { text: "Cancel", style: "cancel" }],
+    [{ text: "Sign in", onPress: () => router.push(signInHref("/(tabs)/profile")) }, { text: "Cancel", style: "cancel" }],
   ), []);
   const reconcile = useCallback(async () => {
     if (!flight || !plan) return;

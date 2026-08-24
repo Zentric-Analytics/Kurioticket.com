@@ -96,7 +96,7 @@ test("security loading and mutations retain API and session-expiry contracts", (
   for (const call of ["securityOverview", "securitySessions", "securityActivity"])
     assert.match(security, new RegExp(`travelApi\\.${call}\\(\\)`));
   assert.match(security, /e instanceof TravelApiError && e\.status === 401/);
-  assert.match(security, /params: \{ returnTo: "\/security" \}/);
+  assert.match(security, /signInHref\("\/security"\)/);
   assert.match(security, /await clearSession\(\)/);
 });
 
@@ -108,7 +108,7 @@ test("successful deletion reactivation discards the revoked session and requires
   assert.match(reactivate, /await clearSession\(\)/);
   assert.match(reactivate, /setDeletion\(null\)/);
   assert.match(reactivate, /closeDeletion\(\)/);
-  assert.match(reactivate, /router\.replace\(\{ pathname: "\/\(tabs\)\/profile\/sign-in", params: \{ returnTo: "\/security" \} \}\)/);
+  assert.match(reactivate, /router\.replace\(signInHref\("\/security"\)\)/);
   assert.doesNotMatch(reactivate, /setLandingMessage\(c\.reactivated\)/);
   assert.match(security, /travelApi\.requestDeletion\(\)/);
   assert.match(security, /Alert\.alert\(c\.deletionConfirmTitle,c\.deletionConfirmBody/);

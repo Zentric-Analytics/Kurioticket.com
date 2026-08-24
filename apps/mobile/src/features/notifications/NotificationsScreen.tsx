@@ -8,6 +8,7 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors, flowStyles } from "../flow/flowStyles";
 import { canLoadMore, initialNotificationPaginationState, notificationPaginationReducer } from "./notificationPagination";
 import { useAppTheme } from "../../theme/AppTheme";
+import { signInHref } from "../auth/signInIntent";
 
 export function NotificationsScreen() {
   const { theme } = useAppTheme();
@@ -24,7 +25,7 @@ export function NotificationsScreen() {
       const page = await travelApi.notifications();
       dispatch({ type: "first-success", requestId, items: page.items, nextCursor: page.nextCursor });
     } catch (cause) {
-      if ((cause instanceof TravelApiError && cause.status === 401) || !await readSession().catch(() => null)) { router.replace({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/notifications" } }); return; }
+      if ((cause instanceof TravelApiError && cause.status === 401) || !await readSession().catch(() => null)) { router.replace(signInHref("/notifications")); return; }
       dispatch({ type: "first-failure", requestId, message: cause instanceof TravelApiError ? cause.message : "Unable to load notifications." });
     }
   }, []);

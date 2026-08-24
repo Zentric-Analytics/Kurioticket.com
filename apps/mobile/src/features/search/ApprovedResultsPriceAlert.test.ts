@@ -23,7 +23,7 @@ test("guest activation is gated by the canonical session and sign-in flow", () =
   assert.match(flightAlert, /if \(!await readSession\(\)\.catch\(\(\) => null\)\)/);
   assert.match(flightAlert, /"Sign in required"/);
   assert.match(flightAlert, /"Sign in to track prices for this route\."/);
-  assert.match(flightAlert, /router\.push\("\/\(tabs\)\/profile\/sign-in"\)/);
+  assert.match(flightAlert, /router\.push\(signInHref\("\/\(tabs\)\/profile"\)\)/);
 });
 
 test("new alerts validate target input through the shared helper before creation", () => {

@@ -20,7 +20,6 @@ function GoogleG() {
 export function AuthWelcomeScreen({ onEmail, onGoogle, onGuest, busy, error }: { onEmail: () => void; onGoogle: () => void; onGuest: () => void; busy?: boolean; error?: string }) {
   const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const panelOffset = Math.min(height < 720 ? 6 : 12, Math.max(0, insets.bottom / 2));
   const coverScale = Math.max(width / heroSource.width, height / heroSource.height);
   const renderedHeroWidth = heroSource.width * coverScale;
   const renderedHeroHeight = heroSource.height * coverScale;
@@ -32,9 +31,9 @@ export function AuthWelcomeScreen({ onEmail, onGoogle, onGuest, busy, error }: {
     top: -heroShift,
     width: renderedHeroWidth,
   };
-  return <View style={styles.background}><Image source={hero} resizeMode="cover" style={[styles.image, heroStyle]} /><View style={styles.overlay} /><SafeAreaView style={styles.safe}>
+  return <View style={styles.background}><Image source={hero} resizeMode="cover" style={[styles.image, heroStyle]} /><View style={styles.overlay} /><SafeAreaView style={styles.safe} edges={["top"]}>
     <View style={styles.brand}><Image source={logo} resizeMode="contain" style={styles.logo} accessibilityLabel="Kurioticket" /><Text style={styles.tagline}>Your journey starts here</Text></View>
-    <View style={[styles.panel, { transform: [{ translateY: panelOffset }] }]}><Text style={styles.title}>Continue your journey</Text><Text style={styles.body}>Sign in or create an account to get the{"\n"}best travel experience.</Text>
+    <View style={[styles.panel, { paddingBottom: 10 + insets.bottom }]}><Text style={styles.title}>Continue your journey</Text><Text style={styles.body}>Sign in or create an account to get the{"\n"}best travel experience.</Text>
       <View style={styles.buttons}><AuthButton label="Continue with Email" onPress={onEmail} disabled={busy} icon={<AuthIcon name="mail" color="white" size={21} />} /><AuthButton label="Continue with Google" onPress={onGoogle} disabled={busy} secondary icon={<GoogleG />} /><AuthButton label="Continue as Guest" onPress={onGuest} disabled={busy} secondary icon={<AuthIcon name="user" color={authColors.navy} size={21} />} /></View>
       {error ? <Text accessibilityLiveRegion="assertive" style={styles.error}>{error}</Text> : null}
       <Text style={styles.legal}>By continuing, you agree to our{"\n"}<Text accessibilityRole="link" onPress={() => void Linking.openURL(TERMS)} style={styles.link}>Terms of Service</Text> and <Text accessibilityRole="link" onPress={() => void Linking.openURL(PRIVACY)} style={styles.link}>Privacy Policy</Text></Text>
