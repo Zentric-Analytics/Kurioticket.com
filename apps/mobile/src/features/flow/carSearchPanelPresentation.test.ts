@@ -46,6 +46,12 @@ test("Cars presents one unified date field and one unified time field in form or
   let cursor = -1; for (const marker of order) { const next=panel.indexOf(marker,cursor+1); assert.ok(next>cursor,`${marker} must follow the preceding control`); cursor=next; }
 });
 
+test("Cars does not finitely cap paired date or time summaries", () => {
+  assert.match(panel, /label="Rental dates"[^\n]*valueNumberOfLines=\{0\}/);
+  assert.match(panel, /label="Pick-up \/ Return time"[^\n]*valueNumberOfLines=\{0\}/);
+  assert.doesNotMatch(panel, /label="(?:Rental dates|Pick-up \/ Return time)"[^\n]*valueNumberOfLines=\{[1-9]\d*\}/);
+});
+
 test("Cars summaries cover empty, partial, and complete values with Return terminology", () => {
   assert.match(panel, /pickupDate \? displayDate\(pickupDate\) : "Select pick-up date"/);
   assert.match(panel, /returnDate \? displayDate\(returnDate\) : "Select return date"/);
