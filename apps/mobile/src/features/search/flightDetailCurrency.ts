@@ -1,5 +1,6 @@
 import {
   convertAmount,
+  currencyAccessibilityLabel,
   formatCurrency,
   type DisplayPrice,
   type ExchangeRates,
@@ -66,6 +67,7 @@ export function createFlightDetailFare(
     amount,
     currency,
     formatted: formatCurrency(amount, currency),
+    accessibilityLabel: currencyAccessibilityLabel(amount, currency),
     providerAmount,
     providerCurrency: provider,
     converted: provider !== currency,

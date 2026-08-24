@@ -15,6 +15,7 @@ const ngnFare: DisplayPrice = {
   amount: 100_000,
   currency: "NGN",
   formatted: "NGN 100,000",
+  accessibilityLabel: "100,000 Nigerian nairas",
   providerAmount: 65,
   providerCurrency: "USD",
   converted: true,
