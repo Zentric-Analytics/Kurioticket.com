@@ -14,7 +14,7 @@ test("flight results naturally scroll the date strip into a sticky filter rail",
   assert.match(flightLayout, /stickyHeaderIndices=\{\[1\]\}/);
   assert.match(
     flightLayout,
-    /<View>\{dateStrip\}<\/View>[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?\{filterRail\}[\s\S]*?<View style=\{\[s0\.body, s0\.flightResultsBody\]\}>\{resultContent\}<\/View>/,
+    /<View>\{dateStrip\}<\/View>[\s\S]*?flightResultCountLabel\(sorted\.length\)[\s\S]*?filterRail : null[\s\S]*?<View style=\{\[s0\.body, s0\.flightResultsBody\]\}>\{resultContent\}<\/View>/,
   );
   assert.doesNotMatch(flightLayout, /onScroll=|scrollEventThrottle=/);
   assert.doesNotMatch(screen, /dateHeaderCollapsed|dateHeaderProgress|Animated\.timing\(dateHeaderProgress/);
