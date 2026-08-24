@@ -39,7 +39,7 @@ export const timeBucket = (value: string | undefined): TimeBucket | undefined =>
   const match = value.match(/T(\d{2}):/); // Provider-local clock time; deliberately do not convert zones.
   if (!match) return undefined;
   const hour = Number(match[1]);
-  return hour >= 5 && hour < 12 ? "morning" : hour < 17 ? "afternoon" : hour < 21 ? "evening" : "night";
+  return hour >= 5 && hour < 12 ? "morning" : hour >= 12 && hour < 17 ? "afternoon" : hour >= 17 && hour < 21 ? "evening" : "night";
 };
 const finite = (value: number | null | undefined) => typeof value === "number" && Number.isFinite(value) ? value : null;
 const extent = (values: (number | null)[]): NumericRange | null => {
@@ -53,11 +53,14 @@ export function flightMatchesFilters(result: FlightResult, filters: FlightFilter
   const selectedTime = timeBucket(filters.timeField === "landing" ? result.arrivalTime : result.departureTime);
   const price = finite(normalizePrice ? normalizePrice(result) : result.price);
   const duration = finite(result.durationMinutes);
+  const validRange = (range: NumericRange | null, nonNegative = false) => range && Number.isFinite(range.min) && Number.isFinite(range.max) && range.min <= range.max && (!nonNegative || range.min >= 0) ? range : null;
+  const priceRange = validRange(filters.price, true);
+  const durationRange = validRange(filters.duration, true);
   return (!filters.stops.length || filters.stops.includes(stopBucket(result.stops))) &&
     (!filters.airlines.length || filters.airlines.includes(result.airlineName)) &&
     (!filters.times.length || Boolean(selectedTime && filters.times.includes(selectedTime))) &&
-    (!filters.price || (price != null && price >= filters.price.min && price <= filters.price.max)) &&
-    (!filters.duration || (duration != null && duration >= filters.duration.min && duration <= filters.duration.max)) &&
+    (!priceRange || (price != null && price >= priceRange.min && price <= priceRange.max)) &&
+    (!durationRange || (duration != null && duration >= durationRange.min && duration <= durationRange.max)) &&
     (!filters.fromAirports.length || filters.fromAirports.includes(result.originAirport)) &&
     (!filters.toAirports.length || filters.toAirports.includes(result.destinationAirport)) &&
     (!filters.baggageIncluded || hasPositiveTerm(result, "baggage")) &&
@@ -81,15 +84,23 @@ export function flightFacetCounts(results: readonly FlightResult[], filters: Fli
   };
 }
 
-export function flightFilterOptions(results: readonly FlightResult[], normalizePrice?: (result: FlightResult) => number | null) {
+export function flightFilterOptions(results: readonly FlightResult[], normalizePrice?: (result: FlightResult) => number | null, normalizedCurrency?: string) {
   const fromAirports = [...new Set(results.map((result) => result.originAirport).filter(Boolean))].sort();
   const toAirports = [...new Set(results.map((result) => result.destinationAirport).filter(Boolean))].sort();
+  const pricedResults = results.filter((result) => finite(result.price) != null);
+  const currencies = new Set(pricedResults.map((result) => result.currency?.toUpperCase()).filter(Boolean));
+  const normalizedPrices = normalizePrice ? pricedResults.map((result) => finite(normalizePrice(result))) : [];
+  const completeNormalization = Boolean(normalizePrice && pricedResults.length && normalizedPrices.every((price) => price != null));
+  const sameProviderCurrency = currencies.size <= 1;
+  const priceValues = completeNormalization ? normalizedPrices : sameProviderCurrency ? pricedResults.map((result) => finite(result.price)) : [];
   return {
     stops: [...new Set(results.map((result) => stopBucket(result.stops)))],
     airlines: [...new Set(results.map((result) => result.airlineName).filter(Boolean))].sort(),
     takeoffTimes: [...new Set(results.map((result) => timeBucket(result.departureTime)).filter((x): x is TimeBucket => Boolean(x)))],
     landingTimes: [...new Set(results.map((result) => timeBucket(result.arrivalTime)).filter((x): x is TimeBucket => Boolean(x)))],
-    price: extent(results.map((result) => finite(normalizePrice ? normalizePrice(result) : result.price))),
+    // Never form an extent from unconverted amounts belonging to different currencies.
+    price: priceValues.length ? extent(priceValues) : null,
+    priceCurrency: completeNormalization ? normalizedCurrency ?? null : sameProviderCurrency ? [...currencies][0] ?? normalizedCurrency ?? null : null,
     duration: extent(results.map((result) => finite(result.durationMinutes))),
     fromAirports, toAirports,
     showAirports: fromAirports.length > 1 || toAirports.length > 1,
@@ -99,8 +110,10 @@ export function flightFilterOptions(results: readonly FlightResult[], normalizeP
 }
 export type FlightFilterOptions = ReturnType<typeof flightFilterOptions>;
 export function activeFlightFilterCount(filters: FlightFilters, options?: FlightFilterOptions) {
-  const changedRange = (selected: NumericRange | null, available?: NumericRange | null) =>
-    selected && (!available || selected.min !== available.min || selected.max !== available.max) ? 1 : 0;
+  const changedRange = (selected: NumericRange | null, available?: NumericRange | null) => {
+    if (!selected || !Number.isFinite(selected.min) || !Number.isFinite(selected.max) || selected.min < 0 || selected.min > selected.max) return 0;
+    return !available || selected.min !== available.min || selected.max !== available.max ? 1 : 0;
+  };
   return filters.stops.length + filters.airlines.length + filters.times.length + filters.fromAirports.length +
     filters.toAirports.length + changedRange(filters.price, options?.price) + changedRange(filters.duration, options?.duration) +
     Number(filters.baggageIncluded) + Number(filters.refundable);

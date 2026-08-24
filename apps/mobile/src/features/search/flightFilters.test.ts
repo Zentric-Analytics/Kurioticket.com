@@ -68,7 +68,7 @@ test("historical time bands include every boundary", () => {
     ["00:00", "04:59", "05:00", "11:59", "12:00", "16:59", "17:00", "20:59", "21:00", "23:59"].map(
       (hour) => timeBucket(`2026-09-01T${hour}:00`),
     ),
-    ["afternoon", "afternoon", "morning", "morning", "afternoon", "afternoon", "evening", "evening", "night", "night"],
+    ["night", "night", "morning", "morning", "afternoon", "afternoon", "evening", "evening", "night", "night"],
   );
   assert.equal(timeBucket("not-a-provider-timestamp"), undefined);
 });
@@ -176,7 +176,7 @@ test("price and structured duration ranges filter independently", () => {
 });
 test("takeoff and landing bands read their respective structured timestamps", () => {
   assert.deepEqual(ids({ ...emptyFlightFilters(), times: ["morning"] }), ["nonstop-american"]);
-  assert.deepEqual(ids({ ...emptyFlightFilters(), timeField: "landing", times: ["night"] }), ["one-british"]);
+  assert.deepEqual(ids({ ...emptyFlightFilters(), timeField: "landing", times: ["night"] }), ["two-american", "one-british"]);
 });
 test("all three stop buckets use the shared result model", () => {
   assert.deepEqual(ids({ ...emptyFlightFilters(), stops: ["nonstop"] }), ["nonstop-american"]);
@@ -218,4 +218,38 @@ test("facet counts retain other draft categories but replace their own category"
 test("filters compose before the selected sort and missing optional data is safe", () => {
   assert.deepEqual(ids({ ...emptyFlightFilters(), toAirports: ["LGW"] }, "price"), ["one-british", "two-american"]);
   assert.doesNotThrow(() => flightFilterOptions([{ ...loaded[0], arrivalTime: undefined, fareTerms: undefined } as unknown as FlightResult]));
+});
+
+test("price options use same-currency fares without conversion", () => {
+  const fares = loaded.map((result, index) => ({ ...result, currency: "USD", price: 100 + index * 50 }));
+  const options = flightFilterOptions(fares);
+  assert.deepEqual(options.price, { min: 100, max: 200 });
+  assert.equal(options.priceCurrency, "USD");
+});
+
+test("price options use complete normalized values for mixed currencies", () => {
+  const fares = [
+    { ...loaded[0], currency: "USD", price: 100 },
+    { ...loaded[1], currency: "GBP", price: 100 },
+  ];
+  const options = flightFilterOptions(fares, (result) => result.currency === "GBP" ? 125 : 100, "USD");
+  assert.deepEqual(options.price, { min: 100, max: 125 });
+  assert.equal(options.priceCurrency, "USD");
+});
+
+test("price options hide mixed currencies when normalization is unavailable or incomplete", () => {
+  const fares = [
+    { ...loaded[0], currency: "USD", price: 100 },
+    { ...loaded[1], currency: "GBP", price: 90 },
+  ];
+  assert.equal(flightFilterOptions(fares).price, null);
+  assert.equal(flightFilterOptions(fares, (result) => result.currency === "USD" ? 100 : null, "USD").price, null);
+});
+
+test("defensive predicate ignores malformed numeric ranges rather than comparing NaN, infinity, crossing, or negative duration", () => {
+  for (const filters of [
+    { ...emptyFlightFilters(), price: { min: Number.NaN, max: 200 } },
+    { ...emptyFlightFilters(), price: { min: 300, max: 100 } },
+    { ...emptyFlightFilters(), duration: { min: -1, max: Number.POSITIVE_INFINITY } },
+  ]) assert.equal(matchingFlightCount(loaded, filters), loaded.length);
 });

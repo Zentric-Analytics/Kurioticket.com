@@ -1,0 +1,61 @@
+import { useMemo, useRef, useState } from "react";
+import { PanResponder, Pressable, StyleSheet, View } from "react-native";
+import { useAppTheme } from "../../theme/AppTheme";
+import { ui } from "./SearchUi";
+import type { NumericRange } from "./flightFilters";
+import { moveRangeEdge, positionForRangeValue, rangeValueForPosition } from "./flightRange";
+
+type Props = {
+  available: NumericRange;
+  selected: NumericRange;
+  step: number;
+  singleMaximum?: boolean;
+  formatValue: (value: number) => string;
+  onChange: (range: NumericRange) => void;
+};
+
+export function FlightRangeSlider({ available, selected, step, singleMaximum = false, formatValue, onChange }: Props) {
+  const { theme } = useAppTheme();
+  const [width, setWidth] = useState(0);
+  const selectedRef = useRef(selected);
+  const dragStartRef = useRef({ min: 0, max: 0 });
+  selectedRef.current = selected;
+  const updateEdge = (edge: "min" | "max", position: number) =>
+    onChange(moveRangeEdge(selectedRef.current, edge, rangeValueForPosition(position, available, width, step), available));
+  const responder = (edge: "min" | "max") => PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => { dragStartRef.current[edge] = positionForRangeValue(selectedRef.current[edge], available, width); },
+    onPanResponderMove: (_event, gesture) => updateEdge(edge, dragStartRef.current[edge] + gesture.dx),
+  });
+  // Responders stay stable while dragging; refs provide the latest selection.
+  const minResponder = useMemo(() => responder("min"), [available.min, available.max, step, width]);
+  const maxResponder = useMemo(() => responder("max"), [available.min, available.max, step, width]);
+  const minX = positionForRangeValue(selected.min, available, width);
+  const maxX = positionForRangeValue(selected.max, available, width);
+  const action = (edge: "min" | "max", direction: number) => onChange(moveRangeEdge(selectedRef.current, edge, selectedRef.current[edge] + direction * step, available));
+  const thumb = (edge: "min" | "max", x: number, handlers: typeof minResponder.panHandlers, label: string) => <Pressable
+    accessibilityRole="adjustable"
+    accessibilityLabel={label}
+    accessibilityValue={{ text: formatValue(selected[edge]), min: available.min, max: available.max, now: selected[edge] }}
+    accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
+    onAccessibilityAction={(event) => action(edge, event.nativeEvent.actionName === "increment" ? 1 : -1)}
+    {...handlers}
+    style={({ pressed }) => [styles.hitTarget, { left: x - 22 }, pressed && styles.pressed]}
+  ><View style={[styles.thumb, { backgroundColor: ui.blue, borderColor: theme.surface }]} /></Pressable>;
+  return <View style={styles.container} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+    <View pointerEvents="none" style={[styles.track, { backgroundColor: theme.border }]} />
+    <View pointerEvents="none" style={[styles.active, { backgroundColor: ui.blue, left: singleMaximum ? 0 : minX, width: Math.max(0, maxX - (singleMaximum ? 0 : minX)) }]} />
+    {!singleMaximum ? thumb("min", minX, minResponder.panHandlers, "Minimum price") : null}
+    {thumb("max", maxX, maxResponder.panHandlers, singleMaximum ? "Maximum flight duration" : "Maximum price")}
+  </View>;
+}
+
+const styles = StyleSheet.create({
+  container: { height: 44, justifyContent: "center", marginHorizontal: 4 },
+  track: { position: "absolute", left: 0, right: 0, height: 4, borderRadius: 2 },
+  active: { position: "absolute", height: 4, borderRadius: 2 },
+  hitTarget: { position: "absolute", top: 0, width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  thumb: { width: 18, height: 18, borderRadius: 9, borderWidth: 3 },
+  pressed: { opacity: 0.72 },
+});

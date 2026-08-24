@@ -299,7 +299,11 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const flightHighlights = useMemo(() => product === "flight"
     ? deriveFlightResultHighlights(sorted as FlightResult[], normalizeFlightPrice)
     : new Map<string, FlightResultHighlight>(), [normalizeFlightPrice, product, sorted]);
-  const flightOptions = useMemo(() => flightFilterOptions(results as FlightResult[], normalizeFlightPrice), [results, normalizeFlightPrice]);
+  const flightOptions = useMemo(() => flightFilterOptions(
+    results as FlightResult[],
+    currencyState ? normalizeFlightPrice : undefined,
+    currencyState?.resolution.resolvedCurrency,
+  ), [currencyState, results, normalizeFlightPrice]);
   const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
   const flightState = product === "flight" ? resolveFlightResultsState({
     status,
