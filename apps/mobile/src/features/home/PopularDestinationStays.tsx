@@ -15,7 +15,10 @@ import { AndroidFavoriteButton } from "./AndroidFavoriteButton";
 import { popularDestinationStayNavigation } from "./homepageCardNavigation";
 
 export { popularDestinationStays } from "./PopularDestinationStaysData";
-import { popularDestinationStays } from "./PopularDestinationStaysData";
+import {
+  popularDestinationStays,
+  resolvePopularDestinationStay,
+} from "./PopularDestinationStaysData";
 
 // src/app/page.tsx DestinationCard at the mobile breakpoint: 17.25rem wide,
 // an 18rem image region, and a 4.5rem footer region.
@@ -73,7 +76,15 @@ export function PopularDestinationStays() {
         contentContainerStyle={styles.carousel}
       >
         {popularDestinationStays.map((destination) => {
-          const saved = savedIds.has(destination.id);
+          const canonicalDestination = resolvePopularDestinationStay(destination);
+          if (__DEV__ && !canonicalDestination) {
+            console.warn(
+              `[Popular destination stays] Could not resolve ${destination.id} (${destination.city}) to an Explore destination`,
+            );
+          }
+          const saved = canonicalDestination
+            ? savedIds.has(canonicalDestination.id)
+            : false;
           const imageFailed = failedImageIds.has(destination.id);
           return (
             <Pressable
@@ -137,7 +148,9 @@ export function PopularDestinationStays() {
                   label={`${saved ? "Remove" : "Add"} ${destination.city} ${saved ? "from" : "to"} favorites`}
                   onPress={(event) => {
                     event.stopPropagation();
-                    toggle(destination.id);
+                    if (canonicalDestination) {
+                      toggle(canonicalDestination.id);
+                    }
                   }}
                   style={styles.heart}
                 />

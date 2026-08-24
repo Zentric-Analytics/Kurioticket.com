@@ -1,3 +1,5 @@
+import { destinationByUnambiguousName } from "../explore/destinationCatalogue";
+
 export const popularDestinationStays = [
   {
     id: "ng-dubai",
@@ -58,3 +60,12 @@ export const popularDestinationStays = [
     },
   },
 ] as const;
+
+export type PopularDestinationStay = (typeof popularDestinationStays)[number];
+
+/** Resolve a Home presentation card to the identity shared by Explore and Saved. */
+export function resolvePopularDestinationStay(
+  destination: { city: string },
+) {
+  return destinationByUnambiguousName(destination.city);
+}

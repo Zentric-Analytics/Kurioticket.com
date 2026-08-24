@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
-import { popularDestinationStays } from "./PopularDestinationStaysData";
+import {
+  popularDestinationStays,
+  resolvePopularDestinationStay,
+} from "./PopularDestinationStaysData";
+import { destinationById } from "../explore/destinationCatalogue";
 import {
   homepageHotelDestinationParams,
   popularDestinationStayNavigation,
@@ -64,7 +68,7 @@ test("makes the complete card an accessible destination control", () => {
 test("keeps nested actions independent from card navigation", () => {
   assert.match(
     section,
-    /<AndroidFavoriteButton[\s\S]*onPress=\{\(event\) => \{\s*event\.stopPropagation\(\);\s*toggle\(destination\.id\);/,
+    /<AndroidFavoriteButton[\s\S]*onPress=\{\(event\) => \{\s*event\.stopPropagation\(\);\s*if \(canonicalDestination\) \{\s*toggle\(canonicalDestination\.id\);/,
   );
   assert.match(
     section,
@@ -78,13 +82,54 @@ test("uses the shared Android favorite button and existing saved state", () => {
     /import \{ AndroidFavoriteButton \} from "\.\/AndroidFavoriteButton"/,
   );
   assert.match(section, /const \{ savedIds, toggle \} = useSavedDestinations\(\)/);
-  assert.match(section, /const saved = savedIds\.has\(destination\.id\)/);
   assert.match(
     section,
-    /<AndroidFavoriteButton[\s\S]*saved=\{saved\}[\s\S]*label=\{`\$\{saved \? "Remove" : "Add"\} \$\{destination\.city\} \$\{saved \? "from" : "to"\} favorites`\}[\s\S]*event\.stopPropagation\(\);[\s\S]*toggle\(destination\.id\);[\s\S]*style=\{styles\.heart\}[\s\S]*\/>/,
+    /const saved = canonicalDestination\s*\? savedIds\.has\(canonicalDestination\.id\)\s*:\s*false/,
+  );
+  assert.match(
+    section,
+    /<AndroidFavoriteButton[\s\S]*saved=\{saved\}[\s\S]*label=\{`\$\{saved \? "Remove" : "Add"\} \$\{destination\.city\} \$\{saved \? "from" : "to"\} favorites`\}[\s\S]*event\.stopPropagation\(\);[\s\S]*toggle\(canonicalDestination\.id\);[\s\S]*style=\{styles\.heart\}[\s\S]*\/>/,
   );
   assert.doesNotMatch(section, /<FlowIcon|heartUnsaved|heartSaved|heartPressed/);
   assert.doesNotMatch(section, /#F43F5E|#E11D48|fill=\{flowColors\.white\}/);
+});
+
+test("every Home stay resolves to the canonical Explore destination identity", () => {
+  for (const card of popularDestinationStays) {
+    const canonical = resolvePopularDestinationStay(card);
+    assert.ok(canonical, `${card.id} must resolve`);
+    assert.ok(canonical.id);
+    assert.equal(canonical, destinationById.get(canonical.id));
+  }
+});
+
+test("Dubai reads and toggles the canonical identity shared with Explore", () => {
+  const dubai = popularDestinationStays.find(({ id }) => id === "ng-dubai")!;
+  const canonicalDubai = resolvePopularDestinationStay(dubai)!;
+
+  assert.equal(canonicalDubai.id, "ae-dubai");
+  assert.notEqual(canonicalDubai.id, dubai.id);
+  assert.equal(canonicalDubai, destinationById.get("ae-dubai"));
+  assert.match(section, /savedIds\.has\(canonicalDestination\.id\)/);
+  assert.match(section, /toggle\(canonicalDestination\.id\)/);
+  assert.doesNotMatch(section, /toggle\(destination\.id\)/);
+});
+
+test("an unresolved Home card warns in development and never toggles its raw ID", () => {
+  assert.equal(resolvePopularDestinationStay({ city: "Not a real destination" }), undefined);
+  assert.match(section, /__DEV__ && !canonicalDestination/);
+  assert.match(section, /Could not resolve \$\{destination\.id\}/);
+  assert.match(section, /if \(canonicalDestination\) \{\s*toggle\(canonicalDestination\.id\)/);
+  assert.doesNotMatch(section, /toggle\(destination\.id\)/);
+});
+
+test("guest canonical toggles retain the existing sign-in prompt path", () => {
+  const savedHook = readFileSync(
+    join(process.cwd(), "src/storage/useSavedDestinations.ts"),
+    "utf8",
+  );
+  assert.match(savedHook, /favoriteAction\(userId\) === "sign-in"/);
+  assert.match(savedHook, /showFavoriteSignInPrompt\("\/saved"\)/);
 });
 
 test("keeps destination copy over the image and the compact footer separate", () => {
