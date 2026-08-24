@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import type { MobileSavedItem } from "../../api/travelApi";
 import { canonicalItemsNewestFirst } from "../../storage/savedRepositoryCore";
+import { regionPreviewCardLayout } from "../explore/regionPreviewLayout";
 
 const source = (path: string) => readFileSync(path, "utf8");
 const item = (value: Record<string, unknown>) => value as MobileSavedItem;
@@ -29,8 +30,14 @@ test("flight, hotel, and search become the same stable card model", () => {
   assert.match(screen, /const searchType = text\(item\.searchType\)/);
   assert.match(screen, /origin && destination \? `\$\{origin\} → \$\{destination\}`/);
   assert.equal((screen.match(/testID="saved-card"/g) ?? []).length, 2);
-  assert.match(screen, /card: \{ minHeight: 104, height: 104/);
+  assert.match(screen, /regionPreviewCardLayout\(windowWidth\)/);
+  assert.doesNotMatch(screen, /height: 104|width: 104/);
   assert.match(screen, /source=\{FALLBACK_SOURCE\}/);
+  for (const width of [320, 390, 430]) {
+    const layout = regionPreviewCardLayout(width);
+    assert.equal(layout.cardWidth, width * (0.928 - 0.058));
+    assert.ok(layout.cardHeight > layout.imageHeight);
+  }
 });
 
 test("repository normalization preserves the newest canonical duplicate", () => {
