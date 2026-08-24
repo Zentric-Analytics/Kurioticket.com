@@ -8,6 +8,7 @@ import {
   flightSortQuickLabel,
   flightFilterOptions,
   flightFacetCounts,
+  isPriceFilteringAvailable,
   matchingFlightCount,
   timeBucket,
   type FlightFilters,
@@ -244,6 +245,27 @@ test("price options hide mixed currencies when normalization is unavailable or i
   ];
   assert.equal(flightFilterOptions(fares).price, null);
   assert.equal(flightFilterOptions(fares, (result) => result.currency === "USD" ? 100 : null, "USD").price, null);
+});
+
+test("price filtering requires resolved currency context and a comparable extent", () => {
+  const sameCurrency = flightFilterOptions(loaded.map((result) => ({ ...result, currency: "USD" })));
+  assert.equal(isPriceFilteringAvailable(sameCurrency, false), false);
+  assert.equal(isPriceFilteringAvailable(sameCurrency, true), true);
+  const mixed = [
+    { ...loaded[0], currency: "USD", price: 100 },
+    { ...loaded[1], currency: "GBP", price: 90 },
+  ];
+  assert.equal(isPriceFilteringAvailable(flightFilterOptions(mixed), true), false);
+  const normalized = flightFilterOptions(mixed, (result) => result.currency === "GBP" ? 115 : 100, "USD");
+  assert.equal(isPriceFilteringAvailable(normalized, true), true);
+});
+
+test("restored full price and duration extents are inactive", () => {
+  const options = flightFilterOptions(loaded);
+  assert.ok(options.price);
+  assert.ok(options.duration);
+  assert.equal(activeFlightFilterCount({ ...emptyFlightFilters(), price: { ...options.price! } }, options), 0);
+  assert.equal(activeFlightFilterCount({ ...emptyFlightFilters(), duration: { ...options.duration! } }, options), 0);
 });
 
 test("defensive predicate ignores malformed numeric ranges rather than comparing NaN, infinity, crossing, or negative duration", () => {

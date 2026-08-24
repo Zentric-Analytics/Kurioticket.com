@@ -3,7 +3,7 @@ import { PanResponder, Pressable, StyleSheet, View } from "react-native";
 import { useAppTheme } from "../../theme/AppTheme";
 import { ui } from "./SearchUi";
 import type { NumericRange } from "./flightFilters";
-import { moveRangeEdge, positionForRangeValue, rangeValueForPosition } from "./flightRange";
+import { moveRangeEdge, positionForRangeValue, rangeEdgeForDrag, rangeValueForPosition } from "./flightRange";
 
 type Props = {
   available: NumericRange;
@@ -17,6 +17,8 @@ type Props = {
 export function FlightRangeSlider({ available, selected, step, singleMaximum = false, formatValue, onChange }: Props) {
   const { theme } = useAppTheme();
   const [width, setWidth] = useState(0);
+  const [activeEdge, setActiveEdge] = useState<"min" | "max" | null>(null);
+  const activeEdgeRef = useRef<"min" | "max" | null>(null);
   const selectedRef = useRef(selected);
   const dragStartRef = useRef({ min: 0, max: 0 });
   selectedRef.current = selected;
@@ -25,8 +27,19 @@ export function FlightRangeSlider({ available, selected, step, singleMaximum = f
   const responder = (edge: "min" | "max") => PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: () => { dragStartRef.current[edge] = positionForRangeValue(selectedRef.current[edge], available, width); },
-    onPanResponderMove: (_event, gesture) => updateEdge(edge, dragStartRef.current[edge] + gesture.dx),
+    onPanResponderGrant: () => {
+      activeEdgeRef.current = edge;
+      setActiveEdge(edge);
+      dragStartRef.current[edge] = positionForRangeValue(selectedRef.current[edge], available, width);
+    },
+    onPanResponderMove: (_event, gesture) => {
+      const movingEdge = rangeEdgeForDrag(selectedRef.current, edge, gesture.dx);
+      if (movingEdge !== activeEdgeRef.current) {
+        activeEdgeRef.current = movingEdge;
+        setActiveEdge(movingEdge);
+      }
+      updateEdge(movingEdge, dragStartRef.current[edge] + gesture.dx);
+    },
   });
   // Responders stay stable while dragging; refs provide the latest selection.
   const minResponder = useMemo(() => responder("min"), [available.min, available.max, step, width]);
@@ -41,7 +54,7 @@ export function FlightRangeSlider({ available, selected, step, singleMaximum = f
     accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
     onAccessibilityAction={(event) => action(edge, event.nativeEvent.actionName === "increment" ? 1 : -1)}
     {...handlers}
-    style={({ pressed }) => [styles.hitTarget, { left: x - 22 }, pressed && styles.pressed]}
+    style={({ pressed }) => [styles.hitTarget, { left: x - 22, zIndex: activeEdge === edge ? 2 : 1, elevation: activeEdge === edge ? 2 : 0 }, pressed && styles.pressed]}
   ><View style={[styles.thumb, { backgroundColor: ui.blue, borderColor: theme.surface }]} /></Pressable>;
   return <View style={styles.container} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
     <View pointerEvents="none" style={[styles.track, { backgroundColor: theme.border }]} />

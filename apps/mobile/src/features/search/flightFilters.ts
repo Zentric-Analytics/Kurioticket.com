@@ -109,6 +109,9 @@ export function flightFilterOptions(results: readonly FlightResult[], normalizeP
   };
 }
 export type FlightFilterOptions = ReturnType<typeof flightFilterOptions>;
+export function isPriceFilteringAvailable(options: FlightFilterOptions, currencyComparisonReady: boolean) {
+  return currencyComparisonReady && options.price != null;
+}
 export function activeFlightFilterCount(filters: FlightFilters, options?: FlightFilterOptions) {
   const changedRange = (selected: NumericRange | null, available?: NumericRange | null) => {
     if (!selected || !Number.isFinite(selected.min) || !Number.isFinite(selected.max) || selected.min < 0 || selected.min > selected.max) return 0;

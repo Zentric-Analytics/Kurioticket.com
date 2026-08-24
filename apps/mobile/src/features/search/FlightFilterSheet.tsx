@@ -7,8 +7,8 @@ import { FlowIcon } from "../flow/FlowIcon";
 import { AirlineLogo } from "./AirlineLogo";
 import { FlightRangeSlider } from "./FlightRangeSlider";
 import { Button, ui } from "./SearchUi";
-import { activeFlightFilterCount, emptyFlightFilters, flightFacetCounts, matchingFlightCount, type FlightFilterOptions, type FlightFilters, type NumericRange } from "./flightFilters";
-import { clampNumericRange, rangeStepForSpan } from "./flightRange";
+import { activeFlightFilterCount, emptyFlightFilters, flightFacetCounts, isPriceFilteringAvailable, matchingFlightCount, type FlightFilterOptions, type FlightFilters, type NumericRange } from "./flightFilters";
+import { clampNumericRange, priceRangeStep } from "./flightRange";
 
 export type FlightFilterSectionName = "all" | "stops" | "airlines";
 const stopLabels = { nonstop: "Nonstop", one: "1 stop", twoPlus: "2+ stops" } as const;
@@ -31,10 +31,11 @@ export function FlightFilterSection({ title, children }: { title: string; childr
 type SheetProps = {
   visible: boolean; section: FlightFilterSectionName; filters: FlightFilters; options: FlightFilterOptions;
   results: readonly FlightResult[]; normalizePrice?: (result: FlightResult) => number | null; currency: string;
+  priceFilteringReady: boolean;
   onChange: (filters: FlightFilters) => void; onClose: () => void;
 };
 
-export function FlightFilterSheet({ visible, section, filters, options, results, normalizePrice, currency, onChange, onClose }: SheetProps) {
+export function FlightFilterSheet({ visible, section, filters, options, results, normalizePrice, currency, priceFilteringReady, onChange, onClose }: SheetProps) {
   const { theme } = useAppTheme();
   const inset = useSafeAreaInsets();
   const [draft, setDraft] = useState(filters);
@@ -58,7 +59,7 @@ export function FlightFilterSheet({ visible, section, filters, options, results,
     values.map((value) => <FilterOptionRow key={value} label={labels?.[value] ?? value} selected={draft[key].includes(value as never)} count={facetCounts[key][value] ?? 0} onPress={() => toggle(key, value as never)} />);
   const range = (key: "price" | "duration", available: NumericRange, format: (value: number) => string, singleMaximum = false) => {
     const selected = clampNumericRange(draft[key], available);
-    const step = key === "price" ? rangeStepForSpan(available.min, available.max) : 5;
+    const step = key === "price" ? priceRangeStep(available.min, available.max) : 5;
     return <><View style={styles.rangeLabels}>{singleMaximum ? <Text style={[styles.durationLead, { color: theme.textPrimary }]}>Up to {format(selected.max)}</Text> : <><Text numberOfLines={1} adjustsFontSizeToFit style={[styles.rangeValue, { color: theme.textPrimary }]}>{format(selected.min)}</Text><Text numberOfLines={1} adjustsFontSizeToFit style={[styles.rangeValue, styles.rangeValueRight, { color: theme.textPrimary }]}>{format(selected.max)}</Text></>}</View><FlightRangeSlider available={available} selected={selected} step={step} singleMaximum={singleMaximum} formatValue={format} onChange={(next) => setDraft((current) => ({ ...current, [key]: singleMaximum ? { min: available.min, max: next.max } : next }))} /></>;
   };
   const cta = `Show ${previewCount} ${previewCount === 1 ? "flight" : "flights"}`;
@@ -68,7 +69,7 @@ export function FlightFilterSheet({ visible, section, filters, options, results,
       <View accessibilityLabel="Flight filters" style={[styles.sheet, { backgroundColor: theme.surface, paddingBottom: Math.max(inset.bottom, 12) }]}>
         <View style={[styles.header, { borderBottomColor: theme.border }]}><Text accessibilityRole="header" style={[styles.title, { color: theme.textPrimary }]}>Filters</Text><View style={styles.headerActions}><Pressable accessibilityRole="button" accessibilityLabel="Clear all flight filters" accessibilityState={{ disabled: !hasDraftFilters }} disabled={!hasDraftFilters} hitSlop={10} onPress={() => setDraft(emptyFlightFilters())}><Text style={[styles.clear, !hasDraftFilters && { color: theme.textSecondary, opacity: 0.55 }]}>Clear all</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Close filters" onPress={() => { Keyboard.dismiss(); onClose(); }} style={styles.close}><FlowIcon name="close" color={theme.icon} /></Pressable></View></View>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {full && options.price ? <FlightFilterSection title="Price">{range("price", options.price, (value) => currencyFormatter.format(value))}</FlightFilterSection> : null}
+          {full && isPriceFilteringAvailable(options, priceFilteringReady) ? <FlightFilterSection title="Price">{range("price", options.price!, (value) => currencyFormatter.format(value))}</FlightFilterSection> : null}
           {full && (options.takeoffTimes.length || options.landingTimes.length) ? <FlightFilterSection title="Times"><View accessibilityRole="tablist" style={[styles.segment, { backgroundColor: theme.background }]}>{(["takeoff", "landing"] as const).map((field) => { const selected = draft.timeField === field; return <Pressable key={field} accessibilityRole="tab" accessibilityState={{ selected }} onPress={() => setDraft((current) => ({ ...current, timeField: field, times: [] }))} style={[styles.segmentChoice, selected && { backgroundColor: theme.surface }]}><Text style={[styles.segmentText, { color: selected ? theme.textPrimary : theme.textSecondary }]}>{field === "takeoff" ? "Departure" : "Arrival"}</Text></Pressable>; })}</View><View>{(draft.timeField === "takeoff" ? options.takeoffTimes : options.landingTimes).map((value) => <FilterOptionRow key={value} label={timeLabels[value][0]} detail={timeLabels[value][1]} selected={draft.times.includes(value)} onPress={() => toggle("times", value)} />)}</View></FlightFilterSection> : null}
           {full && options.duration ? <FlightFilterSection title="Duration">{range("duration", options.duration, formatFlightDuration, true)}</FlightFilterSection> : null}
           {(full || section === "stops") && options.stops.length ? <FlightFilterSection title="Stops"><View>{optionRows("stops", options.stops, stopLabels)}</View></FlightFilterSection> : null}

@@ -130,6 +130,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
   const [filterSection, setFilterSection] = useState<FlightFilterSectionName>("all");
   const [currencyState, setCurrencyState] = useState<{ resolution: DisplayCurrencyResolution; rates: ExchangeRates } | null>(null);
   const currencyRatesRef = useRef<ExchangeRates | null>(null);
+  const previousComparisonCurrency = useRef<string | null>(null);
   const previousFlightSearchKey = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!flightResults || !plan.plan?.key) return;
@@ -304,6 +305,13 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
     currencyState ? normalizeFlightPrice : undefined,
     currencyState?.resolution.resolvedCurrency,
   ), [currencyState, results, normalizeFlightPrice]);
+  useEffect(() => {
+    const nextCurrency = currencyState?.resolution.resolvedCurrency ?? null;
+    if (nextCurrency && previousComparisonCurrency.current && previousComparisonCurrency.current !== nextCurrency) {
+      setFilters((current) => current.price ? { ...current, price: null } : current);
+    }
+    if (nextCurrency) previousComparisonCurrency.current = nextCurrency;
+  }, [currencyState?.resolution.resolvedCurrency]);
   const activeFilterCount = activeFlightFilterCount(filters, flightOptions);
   const flightState = product === "flight" ? resolveFlightResultsState({
     status,
@@ -561,6 +569,7 @@ export function ApprovedResultsScreen({ product }: { product: Product }) {
             results={results as FlightResult[]}
             normalizePrice={normalizeFlightPrice}
             currency={currencyState?.resolution.resolvedCurrency ?? (results[0] as FlightResult | undefined)?.currency ?? "USD"}
+            priceFilteringReady={currencyState != null}
             onChange={setFilters}
             onClose={() => setFilterOpen(false)}
           />

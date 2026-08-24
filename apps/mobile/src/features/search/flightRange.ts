@@ -26,6 +26,11 @@ export function rangeStepForSpan(min: number, max: number): number {
   return nice * magnitude;
 }
 
+/** Price labels display whole currency units, so their slider step must do the same. */
+export function priceRangeStep(min: number, max: number): number {
+  return Math.max(1, rangeStepForSpan(min, max));
+}
+
 export function snapRangeValue(value: number, available: NumericRange, step: number): number {
   if (!finite(value)) return available.min;
   const safeStep = finite(step) && step > 0 ? step : 1;
@@ -42,7 +47,16 @@ export function positionForRangeValue(value: number, available: NumericRange, wi
 export function rangeValueForPosition(position: number, available: NumericRange, width: number, step: number): number {
   const span = available.max - available.min;
   if (!finite(position) || !finite(width) || width <= 0 || !finite(span) || span <= 0) return available.min;
-  return snapRangeValue(available.min + (Math.min(width, Math.max(0, position)) / width) * span, available, step);
+  // Physical endpoints must restore the exact extent even when the span is not divisible by the step.
+  if (position <= 0) return available.min;
+  if (position >= width) return available.max;
+  return snapRangeValue(available.min + (position / width) * span, available, step);
+}
+
+/** At an overlap, drag direction determines which edge can move away from the shared value. */
+export function rangeEdgeForDrag(selected: NumericRange, requested: "min" | "max", deltaX: number): "min" | "max" {
+  if (selected.min !== selected.max || deltaX === 0 || !finite(deltaX)) return requested;
+  return deltaX < 0 ? "min" : "max";
 }
 
 export function moveRangeEdge(selected: NumericRange, edge: "min" | "max", value: number, available: NumericRange): NumericRange {
