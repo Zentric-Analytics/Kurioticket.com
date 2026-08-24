@@ -200,6 +200,26 @@ test("empty copy covers canonical types while Recent semantics remain intact", (
   assert.match(screen, /travelApi\.clearRecentSearches\(\)/);
 });
 
+test("Recent loading, mutations, and navigation use the race-safe server-backed contract", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /recentSearchNavigation\(item\)/);
+  assert.match(screen, /!recentLoaded \? \(recentLoading && !recentError/);
+  assert.match(screen, /setRecent\(searches\.items\);[\s\S]*setRecentLoaded\(true\)/);
+  assert.match(screen, /setRecent\(\(current\) => current\.filter\(\(row\) => row\.id !== item\.id\)\)/);
+  assert.match(screen, /await travelApi\.clearRecentSearches\(\);[\s\S]*setRecent\(\[\]\)/);
+  assert.match(screen, /recentLoadSequence\.current \+= 1/);
+  assert.match(screen, /sequence !== recentLoadSequence\.current \|\| recentMutationCount\.current/);
+  assert.match(screen, /activeRecentLoadSequence\.current !== null/);
+  assert.match(screen, /reloadRecentAfterMutations\.current = true/);
+  assert.match(screen, /!recentMutationCount\.current && reloadRecentAfterMutations\.current/);
+  assert.match(screen, /reloadRecentAfterMutations\.current = false;[\s\S]*void loadServer\(\)/);
+  assert.match(screen, /Unable to remove that recent search\./);
+  assert.match(screen, /Unable to clear recent searches\./);
+  assert.match(screen, /event\.stopPropagation\(\); void removeRecent\(item\)/);
+  assert.doesNotMatch(screen, /deleteRecentSearch\(item\.id\)\.then\(loadServer\)/);
+  assert.doesNotMatch(screen, /clearRecentSearches\(\)\.then\(loadServer\)/);
+});
+
 test("legacy destination and flight migration remains repository-only", () => {
   const repository = source("src/storage/savedRepositoryCore.ts");
   assert.match(repository, /readDestinations/);

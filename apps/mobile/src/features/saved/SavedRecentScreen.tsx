@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from "expo-router";
-import { Fragment, useCallback, useState } from "react";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Fragment, useCallback, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { FlightResult, MobileRecentSearch, MobileSavedItem } from "../../api/travelApi";
 import { travelApi } from "../../api/travelApi";
@@ -15,6 +15,7 @@ import { regionBrowseCardLayout } from "../explore/regionBrowseCardLayout";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
 import { hasValidSearchPlan, legacyFlightSearchParams, legacyHotelSearchParams, sanitizeSearchParams } from "../flow/savedSearchContext";
+import { recentSearchNavigation } from "../recent/recentSearchNavigation";
 
 type SavedCardModel = {
   item: MobileSavedItem;
@@ -110,8 +111,74 @@ export function SavedRecentScreen() {
   const [tab, setTab] = useState<"saved" | "recent">("saved");
   const [recent, setRecent] = useState<MobileRecentSearch[]>([]);
   const [recentError, setRecentError] = useState("");
-  const loadServer = useCallback(async () => { if (!isAuthenticated) return; setRecentError(""); try { const searches = await travelApi.recentSearches(); setRecent(searches.items); } catch { setRecentError("Unable to synchronize recent searches. Your last synchronized recent searches remain available."); } }, [isAuthenticated]);
+  const [recentLoaded, setRecentLoaded] = useState(false);
+  const [recentLoading, setRecentLoading] = useState(false);
+  const [recentMutations, setRecentMutations] = useState<ReadonlySet<string>>(new Set());
+  const recentLoadSequence = useRef(0);
+  const activeRecentLoadSequence = useRef<number | null>(null);
+  const reloadRecentAfterMutations = useRef(false);
+  const recentMutationCount = useRef(0);
+  const loadServer = useCallback(async () => {
+    if (!isAuthenticated || recentMutationCount.current) return;
+    const sequence = ++recentLoadSequence.current;
+    activeRecentLoadSequence.current = sequence;
+    setRecentLoading(true);
+    setRecentError("");
+    try {
+      const searches = await travelApi.recentSearches();
+      if (sequence !== recentLoadSequence.current || recentMutationCount.current) return;
+      setRecent(searches.items);
+      setRecentLoaded(true);
+    } catch {
+      if (sequence === recentLoadSequence.current && !recentMutationCount.current) setRecentError("Unable to synchronize recent searches. Your last synchronized recent searches remain available.");
+    } finally {
+      if (activeRecentLoadSequence.current === sequence) activeRecentLoadSequence.current = null;
+      if (sequence === recentLoadSequence.current) setRecentLoading(false);
+    }
+  }, [isAuthenticated]);
   useFocusEffect(useCallback(() => { void loadServer(); }, [loadServer]));
+  const beginRecentMutation = (key: string) => {
+    if (activeRecentLoadSequence.current !== null) reloadRecentAfterMutations.current = true;
+    recentLoadSequence.current += 1;
+    recentMutationCount.current += 1;
+    setRecentLoading(false);
+    setRecentError("");
+    setRecentMutations((current) => new Set(current).add(key));
+  };
+  const finishRecentMutation = (key: string) => {
+    recentMutationCount.current = Math.max(0, recentMutationCount.current - 1);
+    setRecentMutations((current) => { const next = new Set(current); next.delete(key); return next; });
+    if (!recentMutationCount.current && reloadRecentAfterMutations.current) {
+      reloadRecentAfterMutations.current = false;
+      void loadServer();
+    }
+  };
+  const removeRecent = async (item: MobileRecentSearch) => {
+    const key = `delete:${item.id}`;
+    if (recentMutations.has(key) || recentMutations.has("clear")) return;
+    beginRecentMutation(key);
+    try {
+      await travelApi.deleteRecentSearch(item.id);
+      setRecent((current) => current.filter((row) => row.id !== item.id));
+    } catch {
+      setRecentError("Unable to remove that recent search.");
+    } finally {
+      finishRecentMutation(key);
+    }
+  };
+  const clearRecent = async () => {
+    if (recentMutationCount.current) return;
+    beginRecentMutation("clear");
+    try {
+      await travelApi.clearRecentSearches();
+      setRecent([]);
+      setRecentLoaded(true);
+    } catch {
+      setRecentError("Unable to clear recent searches.");
+    } finally {
+      finishRecentMutation("clear");
+    }
+  };
   const cards = canonicalSavedCards(canonical.items);
   const confirmRemove = (item: MobileSavedItem, title: string) => Alert.alert("Remove from saved?", `Remove ${title} from your saved travel?`, [
     { text: "Cancel", style: "cancel" },
@@ -123,7 +190,7 @@ export function SavedRecentScreen() {
       <View accessibilityRole="tablist" style={[styles.tabs, { backgroundColor: theme.surface, borderColor: theme.border }]}>{(["saved", "recent"] as const).map((value) => <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected: tab === value }} onPress={() => setTab(value)} style={[styles.tab, tab === value && styles.activeTab]}><Text style={{ color: tab === value ? "white" : theme.text, fontWeight: "800" }}>{value === "saved" ? "Saved" : "Recent"}</Text></Pressable>)}</View>
       {tab === "saved" && canonical.error ? <Text accessibilityRole="alert" style={styles.syncError}>{canonical.error}</Text> : null}
       {tab === "recent" && recentError ? <Text accessibilityRole="alert" style={styles.syncError}>{recentError}</Text> : null}
-      {tab === "saved" ? <><Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>Saved travel</Text><Text style={[styles.explanation, { color: theme.muted }]}>Saved items are things you chose to keep.</Text>{cards.length ? cards.map((model) => <SavedCard key={`${model.item.type}:${model.item.id}`} model={model} remove={(item) => confirmRemove(item, model.title)} />) : !canonical.loading ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>No saved travel yet</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Use Save on a flight, hotel, or search to keep it here.</Text></View> : null}</> : <>{recent.length ? <><Pressable accessibilityRole="button" onPress={() => void travelApi.clearRecentSearches().then(loadServer)}><Text style={styles.clear}>Clear all</Text></Pressable>{recent.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Rerun ${item.label}`} onPress={() => router.push({ pathname: item.type === "flight" ? "/flights" : "/hotels", params: item.params as Record<string, string> })} style={[styles.recentRow, { backgroundColor: theme.surface, borderColor: theme.border }]}><View style={{ flex: 1 }}><Text style={[styles.name, { color: theme.text }]}>{item.label}</Text><Text style={{ color: theme.muted }}>{item.subtitle}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.label}`} onPress={(event) => { event.stopPropagation(); void travelApi.deleteRecentSearch(item.id).then(loadServer); }} style={styles.removeTouchTarget}><FlowIcon name="close" color={theme.icon} size={16} /></Pressable></Pressable>)}</> : <View style={styles.center}><Text style={[styles.emptyTitle, { color: theme.text }]}>No recent searches</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Successful flight and hotel searches will appear here.</Text></View>}</>}
+      {tab === "saved" ? <><Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>Saved travel</Text><Text style={[styles.explanation, { color: theme.muted }]}>Saved items are things you chose to keep.</Text>{cards.length ? cards.map((model) => <SavedCard key={`${model.item.type}:${model.item.id}`} model={model} remove={(item) => confirmRemove(item, model.title)} />) : !canonical.loading ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>No saved travel yet</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Use Save on a flight, hotel, or search to keep it here.</Text></View> : null}</> : <>{recent.length ? <><Pressable accessibilityRole="button" accessibilityLabel="Clear recent searches" disabled={recentMutations.size > 0} onPress={() => void clearRecent()}><Text style={styles.clear}>Clear all</Text></Pressable>{recent.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Rerun ${item.label}`} onPress={() => router.push(recentSearchNavigation(item))} style={[styles.recentRow, { backgroundColor: theme.surface, borderColor: theme.border }]}><View style={{ flex: 1 }}><Text style={[styles.name, { color: theme.text }]}>{item.label}</Text><Text style={{ color: theme.muted }}>{item.subtitle}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.label}`} disabled={recentMutations.has(`delete:${item.id}`) || recentMutations.has("clear")} onPress={(event) => { event.stopPropagation(); void removeRecent(item); }} style={styles.removeTouchTarget}><FlowIcon name="close" color={theme.icon} size={16} /></Pressable></Pressable>)}</> : !recentLoaded ? (recentLoading && !recentError ? <View style={styles.center}><ActivityIndicator accessibilityLabel="Loading recent searches" color={flowColors.blue} /></View> : null) : <View style={styles.center}><Text style={[styles.emptyTitle, { color: theme.text }]}>No recent searches</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Successful flight and hotel searches will appear here.</Text></View>}</>}
     </ScrollView>}
   </SafeAreaView>;
 }
