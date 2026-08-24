@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { formatCurrency } from "../currency/displayCurrency";
 
 const sheet = readFileSync("src/features/search/FlightFilterSheet.tsx", "utf8");
 const screen = readFileSync("src/features/search/ApprovedResultsScreen.tsx", "utf8");
@@ -30,6 +31,25 @@ test("price waits for stable currency context without withholding other sections
   for (const title of ["Times", "Duration", "Stops", "Airlines", "Airports", "Amenities"]) {
     assert.match(sheet, new RegExp(`title="${title}"`));
   }
+});
+
+test("price labels reuse shared unambiguous fare currency formatting", () => {
+  assert.match(sheet, /import \{ formatCurrency \} from "\.\.\/currency\/displayCurrency"/);
+  assert.match(sheet, /range\("price", options\.price!, \(value\) => formatCurrency\(value, priceCurrency\)\)/);
+  assert.doesNotMatch(sheet, /new Intl\.NumberFormat/);
+  assert.deepEqual(
+    ["NGN", "USD", "CAD", "AUD", "GBP", "EUR"].map((currency) => formatCurrency(420, currency)),
+    ["₦420", "US$420", "CA$420", "A$420", "£420", "€420"],
+  );
+});
+
+test("price labels retain the authoritative provider fallback currency and slider formatter contract", () => {
+  assert.match(sheet, /const priceCurrency = options\.priceCurrency \?\? currency/);
+  assert.equal(formatCurrency(300, "USD"), "US$300");
+  assert.equal(formatCurrency(700, "USD"), "US$700");
+  assert.match(sheet, /<FlightRangeSlider[\s\S]*?formatValue=\{format\}[\s\S]*?onChange=/);
+  assert.match(sheet, /matchingFlightCount\(results, draft, priceValue\)/);
+  assert.match(sheet, /flightFacetCounts\(results, draft, priceValue\)/);
 });
 
 test("a comparison-currency identity change clears only the local price filter", () => {
