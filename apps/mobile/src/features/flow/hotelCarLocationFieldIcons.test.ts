@@ -11,24 +11,18 @@ test("Hotel Destination uses the shared compact launcher with a leading location
   assert.doesNotMatch(hotel, /accessibilityLabel="Hotel destination"/);
 });
 
-test("reusable Car LocationLauncher groups its label and non-editable value after a themed leading pin", () => {
-  const locationInput = car.slice(car.indexOf("function LocationLauncher"), car.indexOf("export function CarLocationSheet"));
-  assert.match(locationInput, /style=\{styles\.locationFieldRow\}><FlowIcon name="location" size=\{22\} color=\{ft\.colors\.icon\}\/><View style=\{styles\.locationFieldContent\}>/);
-  assert.match(locationInput, /<Pressable accessibilityRole="button" accessibilityLabel=\{label\} onPress=\{onPress\}/);
-  assert.match(locationInput, /locationFieldContent\}><Text style=\{ft\.styles\.label\}>\{label\}<\/Text><Text[^>]*>\{value \|\| "Enter city or airport"\}<\/Text>/);
-  assert.doesNotMatch(locationInput, /TextInput/);
+test("Car uses shared compact location fields for pick-up and conditional drop-off", () => {
+  const closedForm = car.slice(0, car.indexOf("export function CarLocationSheet"));
+
+  assert.match(closedForm, /<CompactSearchField label="Pick-up location"[^\n]*value=\{form\.pickupLocation \|\| "Enter city or airport"\}[^\n]*icon="location"[^\n]*setLocationPicker\("pickup"\)/);
+  assert.match(closedForm, /form\.separateDropoff \? <FieldError[^\n]*<CompactSearchField label="Drop-off location"[^\n]*value=\{form\.dropoffLocation \|\| "Enter city or airport"\}[^\n]*icon="location"[^\n]*setLocationPicker\("return"\)/);
+  assert.doesNotMatch(closedForm, /LocationLauncher|TextInput[^>]*accessibilityLabel="Pick-up location"/);
 });
 
-test("Car keeps one LocationLauncher shared by pick-up and conditional drop-off fields", () => {
-  assert.equal(car.match(/function LocationLauncher/g)?.length, 1);
-  assert.match(car, /<LocationLauncher label="Pick-up location"[^\n]*setLocationPicker\("pickup"\)/);
-  assert.match(car, /form\.separateDropoff \? <LocationLauncher label="Drop-off location"[^\n]*setLocationPicker\("return"\)/);
-});
-
-test("location rows retain their intended behavior", () => {
-  assert.match(car, /locationFieldRow:\{flexDirection:"row",alignItems:"center",gap:10/);
-  assert.match(car, /locationFieldContent:\{flex:1\}/);
-  assert.doesNotMatch(hotel, /destinationRef/);
+test("location rows use flexible normal layout and retain their intended behavior", () => {
+  assert.match(hotel, /locationFieldRow:\{flexDirection:"row",alignItems:"center",gap:10/);
+  assert.match(hotel, /locationFieldContent:\{flex:1\}/);
+  assert.match(hotel, /ref=\{destinationRef\} accessibilityLabel="Hotel destination"[\s\S]*?editable=\{false\}/);
   assert.match(hotel, /accessibilityLabel="Search hotel destinations"[\s\S]*?returnKeyType="search"/);
   assert.doesNotMatch(car.slice(0, car.indexOf("export function CarLocationSheet")), /TextInput[^>]*accessibilityLabel="Pick-up location"/);
 });
