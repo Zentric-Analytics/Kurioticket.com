@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { requireMobileSecurity,mobileUnauthorized } from "@/lib/mobile-security-route"; import { verifyRegistration } from "@/services/passkeyService";
+export async function POST(request:Request){const s=await requireMobileSecurity(request);if(!s)return mobileUnauthorized();try{await verifyRegistration({userId:s.user.id,email:s.user.email,name:s.user.name,accountSessionId:s.id},await request.json());return NextResponse.json({ok:true});}catch{return NextResponse.json({error:"Unable to verify passkey registration."},{status:400});}}

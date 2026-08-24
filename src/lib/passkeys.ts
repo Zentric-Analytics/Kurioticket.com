@@ -17,9 +17,16 @@ export function getWebAuthnConfig() {
     .split(",").map((v) => v.trim()).filter(Boolean);
   return { rpName: process.env.WEBAUTHN_RP_NAME || "Kurioticket", rpID, origins };
 }
-export function assertAllowedOrigin(origin: string) {
+function androidOrigins() {
+  const fingerprints = (process.env.WEBAUTHN_ANDROID_CERT_SHA256 || "").split(",").map(v => v.trim()).filter(v => /^([0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2}$/.test(v));
+  return fingerprints.map(value => `android:apk-key-hash:${Buffer.from(value.replace(/:/g, ""), "hex").toString("base64url")}`);
+}
+export function assertAllowedOrigin(origin: string, androidPackageName?: unknown) {
   const { origins } = getWebAuthnConfig();
-  if (!origins.includes(origin)) throw new Error("Origin is not allowed for passkey authentication.");
+  if (origins.includes(origin)) return;
+  if (!androidOrigins().includes(origin)) throw new Error("Origin is not allowed for passkey authentication.");
+  const configuredPackage = process.env.WEBAUTHN_ANDROID_PACKAGE_NAME?.trim();
+  if (!configuredPackage || (androidPackageName !== undefined && androidPackageName !== configuredPackage)) throw new Error("Android package is not allowed for passkey authentication.");
 }
 export function newChallenge() { return b64url(randomBytes(32)); }
 export function newPasskeyLoginToken() { return `${PASSKEY_LOGIN_TOKEN_PREFIX}${randomUUID()}:${b64url(randomBytes(32))}`; }
