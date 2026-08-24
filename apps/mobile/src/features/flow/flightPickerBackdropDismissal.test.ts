@@ -5,7 +5,7 @@ import test from "node:test";
 const panel = readFileSync("src/features/flow/FlightSearchPanel.tsx", "utf8");
 const calendar = readFileSync("src/features/flow/LocalCalendarModal.tsx", "utf8");
 const airportSheet = panel.slice(panel.indexOf("function AirportSheet"), panel.indexOf("type TravelerCabinDraft"));
-const travelerSheet = panel.slice(panel.indexOf("function TravelerCabinSheet"), panel.indexOf("function Counter"));
+const travelerSheet = panel.slice(panel.indexOf("function TravelerCabinSheet"), panel.indexOf("function Cancel"));
 
 test("From and To share a backdrop that closes without choosing an airport", () => {
   assert.match(panel, /kind=\{picker === "from" \|\| picker === "to" \? picker : undefined\}/);
@@ -37,6 +37,6 @@ test("Travelers & Cabin backdrop and Android Back cancel rather than commit draf
 
 test("all interactive content is rendered in sibling sheets above each backdrop", () => {
   assert.ok(airportSheet.indexOf('accessibilityLabel="Search airports"') > airportSheet.indexOf("<View accessibilityViewIsModal"));
-  assert.ok(travelerSheet.indexOf("<ScrollView>") > travelerSheet.indexOf("<View accessibilityViewIsModal"));
+  assert.ok(travelerSheet.indexOf("<ScrollView") > travelerSheet.indexOf("<View accessibilityViewIsModal"));
   assert.ok(calendar.indexOf('accessibilityLabel="Previous month"') > calendar.indexOf("<View accessibilityViewIsModal"));
 });
