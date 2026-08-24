@@ -27,6 +27,32 @@ test("package fields expose one destination, date and coordinated party definiti
   assert.doesNotMatch(form, /Round-trip|One way-trip|Multi-city trip|packages\/results|package-results/);
 });
 
+test("package origin uses the shared default service without replacing user-controlled state", () => {
+  assert.match(form, /import \{ fetchHomepageDefaultOrigin \} from "\.\.\/home\/homepageDefaultOrigin"/);
+  assert.match(form, /void fetchHomepageDefaultOrigin\(\)\.then\(airport =>/);
+  assert.match(form, /const origin = `\$\{airport\.city\} \(\$\{airport\.code\}\)`/);
+  assert.match(form, /return \{ \.\.\.current, origin, originCode: airport\.code \}/);
+  assert.match(form, /if \(!active \|\| !airport \|\| userControlsOrigin\.current\) return/);
+  assert.match(form, /if \(current\.origin\.trim\(\) \|\| current\.originCode\.trim\(\) \|\| userControlsOrigin\.current\) return current/);
+  assert.match(form, /onPress=\{\(\) => \{ userControlsOrigin\.current = true; setAirportField\("origin"\); \}\}/);
+  assert.match(form, /if \(airportField === "origin"\) userControlsOrigin\.current = true/);
+  assert.doesNotMatch(form, /expo-location|react-native-geolocation|ACCESS_(?:FINE|COARSE)_LOCATION/);
+  assert.match(form, /value=\{search\.origin \|\| "City or airport"\}/);
+});
+
+test("package destination uses the exact empty copy and preserves picker routing", () => {
+  const destinationField = form.match(/<CompactSearchField label="Destination"[^\n]+/)?.[0] ?? "";
+
+  assert.match(destinationField, /value=\{search\.destination \|\| "Where to\?"\}/);
+  assert.doesNotMatch(destinationField, /Select destination/);
+  assert.match(destinationField, /muted=\{!search\.destination\}/);
+  assert.match(destinationField, /included\.flight \? setAirportField\("destination"\) : setHotelDestinationOpen\(true\)/);
+});
+
+test("package origin remains limited to modes that include flights", () => {
+  assert.match(form, /\{included\.flight \? <CompactSearchField label="Origin"[^\n]+ : null\}/);
+});
+
 test("package traveler summary derives from committed party state with singular grammar", () => {
   assert.match(form, /const travelerCount = search\.adults \+ search\.children \+ search\.infants/);
   assert.match(form, /travelerCount === 1 \? "traveler" : "travelers"/);
