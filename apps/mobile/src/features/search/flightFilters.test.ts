@@ -10,6 +10,9 @@ import {
   flightFacetCounts,
   isPriceFilteringAvailable,
   matchingFlightCount,
+  flightFilterDurationMinutes,
+  flightStopBucket,
+  resolveFlightPriceComparisonContext,
   timeBucket,
   type FlightFilters,
 } from "./flightFilters";
@@ -28,6 +31,7 @@ const flight = (
     stops,
     departureTime: `2026-09-01T${hour}:00`,
     price,
+    currency: "USD",
     valueScore,
     durationMinutes: 120,
   }) as FlightResult;
@@ -223,7 +227,7 @@ test("filters compose before the selected sort and missing optional data is safe
 
 test("price options use same-currency fares without conversion", () => {
   const fares = loaded.map((result, index) => ({ ...result, currency: "USD", price: 100 + index * 50 }));
-  const options = flightFilterOptions(fares);
+  const options = flightFilterOptions(fares, resolveFlightPriceComparisonContext(fares, "USD", (result) => result.price));
   assert.deepEqual(options.price, { min: 100, max: 200 });
   assert.equal(options.priceCurrency, "USD");
 });
@@ -233,7 +237,8 @@ test("price options use complete normalized values for mixed currencies", () => 
     { ...loaded[0], currency: "USD", price: 100 },
     { ...loaded[1], currency: "GBP", price: 100 },
   ];
-  const options = flightFilterOptions(fares, (result) => result.currency === "GBP" ? 125 : 100, "USD");
+  const context = resolveFlightPriceComparisonContext(fares, "USD", (result) => result.currency === "GBP" ? 125 : 100);
+  const options = flightFilterOptions(fares, context);
   assert.deepEqual(options.price, { min: 100, max: 125 });
   assert.equal(options.priceCurrency, "USD");
 });
@@ -244,11 +249,12 @@ test("price options hide mixed currencies when normalization is unavailable or i
     { ...loaded[1], currency: "GBP", price: 90 },
   ];
   assert.equal(flightFilterOptions(fares).price, null);
-  assert.equal(flightFilterOptions(fares, (result) => result.currency === "USD" ? 100 : null, "USD").price, null);
+  assert.equal(flightFilterOptions(fares, resolveFlightPriceComparisonContext(fares, "USD", (result) => result.currency === "USD" ? 100 : null)).price, null);
 });
 
 test("price filtering requires resolved currency context and a comparable extent", () => {
-  const sameCurrency = flightFilterOptions(loaded.map((result) => ({ ...result, currency: "USD" })));
+  const sameFares = loaded.map((result) => ({ ...result, currency: "USD" }));
+  const sameCurrency = flightFilterOptions(sameFares, resolveFlightPriceComparisonContext(sameFares, "USD", (result) => result.price));
   assert.equal(isPriceFilteringAvailable(sameCurrency, false), false);
   assert.equal(isPriceFilteringAvailable(sameCurrency, true), true);
   const mixed = [
@@ -256,12 +262,12 @@ test("price filtering requires resolved currency context and a comparable extent
     { ...loaded[1], currency: "GBP", price: 90 },
   ];
   assert.equal(isPriceFilteringAvailable(flightFilterOptions(mixed), true), false);
-  const normalized = flightFilterOptions(mixed, (result) => result.currency === "GBP" ? 115 : 100, "USD");
+  const normalized = flightFilterOptions(mixed, resolveFlightPriceComparisonContext(mixed, "USD", (result) => result.currency === "GBP" ? 115 : 100));
   assert.equal(isPriceFilteringAvailable(normalized, true), true);
 });
 
 test("restored full price and duration extents are inactive", () => {
-  const options = flightFilterOptions(loaded);
+  const options = flightFilterOptions(loaded, resolveFlightPriceComparisonContext(loaded, "USD", (result) => result.price));
   assert.ok(options.price);
   assert.ok(options.duration);
   assert.equal(activeFlightFilterCount({ ...emptyFlightFilters(), price: { ...options.price! } }, options), 0);
@@ -274,4 +280,60 @@ test("defensive predicate ignores malformed numeric ranges rather than comparing
     { ...emptyFlightFilters(), price: { min: 300, max: 100 } },
     { ...emptyFlightFilters(), duration: { min: -1, max: Number.POSITIVE_INFINITY } },
   ]) assert.equal(matchingFlightCount(loaded, filters), loaded.length);
+});
+
+const roundTrip = (id: string, outboundStops: number, returnStops: number, outboundDuration = 480, returnDuration = 720) => ({
+  ...flight(id, "Round Trip Air", outboundStops, "08:00", 100, 1),
+  arrivalTime: "2026-09-01T12:00:00Z",
+  legs: [
+    { direction: "outbound", stops: outboundStops, durationMinutes: outboundDuration, departureTime: "2026-09-01T08:00:00Z", arrivalTime: "2026-09-01T12:00:00Z" },
+    { direction: "return", stops: returnStops, durationMinutes: returnDuration, departureTime: "2026-09-08T22:00:00Z", arrivalTime: "2026-09-09T02:00:00Z" },
+  ],
+}) as FlightResult;
+
+test("round-trip stops use the worst authoritative journey leg", () => {
+  const outboundNonstopReturnOne = roundTrip("zero-one", 0, 1);
+  const bothNonstop = roundTrip("zero-zero", 0, 0);
+  const outboundOneReturnTwo = roundTrip("one-two", 1, 2);
+  assert.equal(flightStopBucket(outboundNonstopReturnOne), "one");
+  assert.equal(matchingFlightCount([outboundNonstopReturnOne], { ...emptyFlightFilters(), stops: ["nonstop"] }), 0);
+  assert.equal(matchingFlightCount([outboundNonstopReturnOne], { ...emptyFlightFilters(), stops: ["one"] }), 1);
+  assert.equal(flightStopBucket(bothNonstop), "nonstop");
+  assert.equal(flightStopBucket(outboundOneReturnTwo), "twoPlus");
+  assert.equal(flightStopBucket(flight("one-way", "A", 1, "08:00", 100, 1)), "one");
+});
+
+test("round-trip duration is the longest leg and one-way duration is unchanged", () => {
+  const result = roundTrip("duration", 0, 0, 480, 720);
+  assert.equal(flightFilterDurationMinutes(result), 720);
+  assert.equal(matchingFlightCount([result], { ...emptyFlightFilters(), duration: { min: 0, max: 600 } }), 0);
+  assert.equal(matchingFlightCount([result], { ...emptyFlightFilters(), duration: { min: 0, max: 720 } }), 1);
+  assert.equal(flightFilterDurationMinutes(flight("one-way", "A", 0, "08:00", 100, 1)), 120);
+});
+
+test("time filtering and option derivation are explicitly outbound scoped", () => {
+  const result = roundTrip("times", 0, 0);
+  const options = flightFilterOptions([result]);
+  assert.deepEqual(options.takeoffTimes, ["morning"]);
+  assert.equal(matchingFlightCount([result], { ...emptyFlightFilters(), times: ["morning"] }), 1);
+  assert.equal(matchingFlightCount([result], { ...emptyFlightFilters(), times: ["night"] }), 0);
+});
+
+test("one price context drives normalized, raw fallback, and unavailable mixed-currency filtering", () => {
+  const usd = [{ ...loaded[0], price: 100, currency: "USD" }, { ...loaded[1], price: 200, currency: "USD" }];
+  const normalized = resolveFlightPriceComparisonContext(usd, "NGN", (result) => result.price * 1500)!;
+  assert.equal(normalized.identity, "normalized:NGN");
+  assert.deepEqual(flightFilterOptions(usd, normalized).price, { min: 150000, max: 300000 });
+  assert.equal(matchingFlightCount(usd, { ...emptyFlightFilters(), price: { min: 200000, max: 350000 } }, normalized.valueForResult), 1);
+
+  const rawFallback = resolveFlightPriceComparisonContext(usd, "NGN", () => null)!;
+  assert.equal(rawFallback.identity, "raw:USD");
+  assert.equal(flightFilterOptions(usd, rawFallback).priceCurrency, "USD");
+  assert.equal(matchingFlightCount(usd, { ...emptyFlightFilters(), price: { min: 150, max: 250 } }, rawFallback.valueForResult), 1);
+
+  const mixed = [usd[0], { ...usd[1], currency: "GBP" }];
+  const mixedNormalized = resolveFlightPriceComparisonContext(mixed, "NGN", (result) => result.currency === "USD" ? 150000 : 400000)!;
+  assert.deepEqual(flightFilterOptions(mixed, mixedNormalized).price, { min: 150000, max: 400000 });
+  assert.equal(resolveFlightPriceComparisonContext(mixed, "NGN", () => null), null);
+  assert.equal(flightFilterOptions(mixed, null).price, null);
 });

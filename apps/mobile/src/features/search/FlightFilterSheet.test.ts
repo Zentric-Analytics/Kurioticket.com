@@ -24,7 +24,7 @@ test("full sheet exposes required supported groups and conditionally hides optio
 });
 
 test("price waits for stable currency context without withholding other sections", () => {
-  assert.match(screen, /priceFilteringReady=\{currencyState != null\}/);
+  assert.match(screen, /priceFilteringReady=\{flightPriceContext != null\}/);
   assert.match(sheet, /isPriceFilteringAvailable\(options, priceFilteringReady\)/);
   assert.match(sheet, /isPriceFilteringAvailable\(options, priceFilteringReady\)[\s\S]*?title="Price"/);
   for (const title of ["Times", "Duration", "Stops", "Airlines", "Airports", "Amenities"]) {
@@ -49,8 +49,8 @@ test("dynamic count uses the dedicated helper and requested middle-dot label", (
 });
 
 test("decision rows expose local counts, airline logos, and accessible dynamic labels", () => {
-  assert.match(sheet, /flightFacetCounts\(results, draft, normalizePrice\)/);
-  assert.match(sheet, /matchingFlightCount\(results, draft, normalizePrice\)/);
+  assert.match(sheet, /flightFacetCounts\(results, draft, priceValue\)/);
+  assert.match(sheet, /matchingFlightCount\(results, draft, priceValue\)/);
   assert.match(sheet, /<AirlineLogo airlineName=\{name\} logoUrl=\{logoByAirline\.get\(name\)\}/);
   assert.match(sheet, /accessibilityLabel=\{count == null \? label : `\$\{label\}, \$\{count\} flights`\}/);
 });
@@ -68,7 +68,12 @@ test("price and duration use real accessible gesture sliders instead of numeric 
   assert.match(slider, /Minimum price/);
   assert.match(slider, /Maximum price/);
   assert.match(slider, /Maximum flight duration/);
-  assert.match(slider, /rangeEdgeForDrag/);
+  assert.match(slider, /lockedRangeEdgeForDrag/);
   assert.match(slider, /zIndex: activeEdge === edge \? 2 : 1/);
+  assert.match(slider, /onPanResponderRelease: finishDrag/);
+  assert.match(slider, /onPanResponderTerminate: finishDrag/);
+  assert.match(slider, /onPanResponderTerminationRequest: \(\) => false/);
+  assert.match(sheet, /scrollEnabled=\{!sliderDragging\}/);
+  assert.match(sheet, /Outbound journey/);
   assert.doesNotMatch(sheet, /accessibilityLabel=\{`\$\{key\} \$\{edge\}`\}/);
 });
