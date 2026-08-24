@@ -71,8 +71,16 @@ function buildStressInventory(options: FixtureOptions): FlightResult[] {
       travelEffortScore: 20,
       recommendationReasons: ["Deterministic stress fixture"],
       badges: [],
-      searchPolicy: { inventoryKind: "bookable", action: { enabled: true, kind: "internal-detail" } },
-    } as FlightResult;
+      searchPolicy: {
+        source: "duffel",
+        bookable: true,
+        action: {
+          kind: "internal-detail",
+          href: `/flights/details/public-fixture-${index}`,
+          enabled: true,
+        },
+      },
+    } satisfies FlightResult;
   });
 }
 
