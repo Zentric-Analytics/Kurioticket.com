@@ -42,8 +42,24 @@ test("Cars presents one unified date field and one unified time field in form or
   assert.doesNotMatch(panel, /<Field label="(?:Pick-up|Drop-off) (?:date|time)"/);
   assert.match(panel, /label="Rental dates"[\s\S]*icon="calendar"/);
   assert.match(panel, /label="Pick-up \/ Return time"[\s\S]*icon="clock"/);
-  const order = ["Pick-up location", "Return to a different location", "Drop-off location", "Rental dates", "Pick-up / Return time", "Driver age", "PrimaryButton"];
+  const order = ["Pick-up location", "Drop-off location", "Rental dates", "Pick-up / Return time", "Driver age", "PrimaryButton", "Return to a different location"];
   let cursor = -1; for (const marker of order) { const next=panel.indexOf(marker,cursor+1); assert.ok(next>cursor,`${marker} must follow the preceding control`); cursor=next; }
+});
+
+test("Cars keeps the return-location checkbox after and outside the optional submit CTA", () => {
+  const submitStart = panel.indexOf("{showSubmit ? <View style={styles.pad}>");
+  const submitEnd = panel.indexOf("</View> : null}", submitStart) + "</View> : null}".length;
+  const checkboxStart = panel.indexOf('<Pressable accessibilityRole="checkbox"');
+  const checkboxEnd = panel.indexOf("</Pressable>", checkboxStart) + "</Pressable>".length;
+  const dropoffField = panel.indexOf('label="Drop-off location"');
+  const rentalDatesField = panel.indexOf('label="Rental dates"');
+
+  assert.ok(submitStart >= 0 && submitEnd > submitStart, "the optional submit block must exist");
+  assert.ok(checkboxStart > submitEnd, "the checkbox must follow and remain outside the showSubmit block");
+  assert.ok(checkboxEnd > checkboxStart, "the complete checkbox must remain independently rendered");
+  assert.ok(dropoffField > 0 && dropoffField < rentalDatesField, "conditional Drop-off location must precede Rental dates");
+  assert.equal((panel.match(/<Pressable accessibilityRole="checkbox"/g) ?? []).length, 1);
+  assert.equal((panel.match(/accessibilityLabel="Return to a different location"/g) ?? []).length, 1);
 });
 
 test("Cars does not finitely cap paired date or time summaries", () => {
