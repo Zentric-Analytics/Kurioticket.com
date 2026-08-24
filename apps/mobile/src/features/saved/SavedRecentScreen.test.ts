@@ -1,137 +1,99 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import type { MobileSavedItem } from "../../api/travelApi";
+import { canonicalItemsNewestFirst } from "../../storage/savedRepositoryCore";
 
 const source = (path: string) => readFileSync(path, "utf8");
+const item = (value: Record<string, unknown>) => value as MobileSavedItem;
 
 test("Profile exposes Saved & recent without changing the bottom tabs", () => {
   assert.match(source("src/features/profile/profileModel.ts"), /label: "savedRecent"[\s\S]*?href: "\/saved"/);
   assert.match(source("src/features/profile/GuestProfileScreen.tsx"), /label: "savedRecent"[\s\S]*?href: "\/saved"/);
   assert.equal((source("app/(tabs)/_layout.tsx").match(/<Tabs\.Screen/g) ?? []).length, 4);
-  assert.doesNotMatch(source("app/(tabs)/_layout.tsx"), /name="saved"/);
 });
 
-test("Saved & recent resolves existing records, protects guests, and supports close removal and empty state", () => {
+test("Saved UI has one canonical visible source and keeps guest protection", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /useSavedDestinations\(\)/);
-  assert.match(screen, /popularDestinationStays\.find/);
-  assert.match(screen, /destinations\.find/);
+  assert.match(screen, /canonicalSavedCards\(canonical\.items\)/);
+  assert.doesNotMatch(screen, /savedIds|savedFlights|savedSections|savedCategoryOrder/);
+  assert.doesNotMatch(screen, /useSavedFlights|popularDestinationStays|destinationCatalogue/);
   assert.match(screen, /!isAuthenticated/);
   assert.match(screen, /pathname: "\/\(tabs\)\/profile\/sign-in"/);
-  assert.match(screen, /No saved favorites yet/);
-  assert.match(screen, /Tap the heart on a destination to save it here\./);
-  assert.match(screen, /event\.stopPropagation\(\); confirmRemove\(item\)/);
-  assert.match(screen, /<FlowIcon name="close" color=\{theme\.icon\} size=\{16\} \/>/);
-  assert.doesNotMatch(screen, /<FlowIcon name="heart" color="#E11D48" size=\{22\} \/>/);
-  assert.match(screen, /styles\.remove/);
-  assert.match(screen, /remove: \{ width: 30, height: 30, borderRadius: 15/);
-  assert.match(screen, /removePressed: \{ opacity: 0\.76, transform: \[\{ scale: 0\.94 \}\] \}/);
-  assert.match(screen, /destinationMedia\(id\)\?\.source \?\? FALLBACK_SOURCE/);
-  assert.match(screen, /failed \? FALLBACK_SOURCE : item\.image/);
-  assert.match(screen, /onError=\{\(\) => \{ if \(!failed\) setFailed\(true\); \}\}/);
-  assert.match(screen, /destinationId: destination\.id/);
-  assert.match(screen, /airportCodes: destination\.airportCodes\.join\(","\)/);
-  assert.match(screen, /to: destination\.primaryAirportCode/);
 });
 
-test("saved favorites use compact, stable cards and covered images", () => {
+test("flight, hotel, and search become the same stable card model", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /card: \{ height: 104,/);
-  assert.match(screen, /image: \{ width: 112, height: 104, flexShrink: 0,/);
-  assert.match(screen, /resizeMode="cover"/);
-  assert.doesNotMatch(screen, /alignSelf: "stretch"/);
-  assert.match(screen, /copy: \{ flex: 1, minWidth: 0,/);
-  assert.match(screen, /<Text numberOfLines=\{2\}[^>]*styles\.name/);
-  assert.match(screen, /items\.map\(\(item\) => <Pressable key=\{item\.id\}/);
+  assert.match(screen, /if \(item\.type === "flight"\)/);
+  assert.match(screen, /if \(item\.type === "hotel"\)/);
+  assert.match(screen, /const searchType = text\(item\.searchType\)/);
+  assert.match(screen, /origin && destination \? `\$\{origin\} → \$\{destination\}`/);
+  assert.equal((screen.match(/testID="saved-card"/g) ?? []).length, 2);
+  assert.match(screen, /card: \{ minHeight: 104, height: 104/);
+  assert.match(screen, /source=\{FALLBACK_SOURCE\}/);
 });
 
-test("saved destination media keeps catalogue resolution and a loop-safe fallback", () => {
+test("repository normalization preserves the newest canonical duplicate", () => {
+  const duplicate = { type: "search", searchType: "hotel", label: "Stay", destination: "Rome", query: { destination: "Rome" } };
+  const cards = canonicalItemsNewestFirst([
+    item({ ...duplicate, id: "old", createdAt: "2026-01-01T00:00:00Z" }),
+    item({ id: "flight", type: "flight", provider: "p", originAirport: "A", destinationAirport: "B", departureTime: "1", arrivalTime: "2", createdAt: "2026-01-02T00:00:00Z" }),
+    item({ ...duplicate, id: "new", createdAt: "2026-01-03T00:00:00Z" }),
+  ]);
+  assert.deepEqual(cards.map((saved) => saved.id), ["new", "flight"]);
+  const repository = source("src/storage/savedRepositoryCore.ts");
+  assert.match(repository, /items=canonicalItemsNewestFirst\(items\)/);
+  assert.doesNotMatch(repository, /new Map\(items\.map\(item=>\[savedSignature\(item\),item\]\)\)/);
+});
+
+test("Saved card mapping trusts repository normalization instead of deduplicating again", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /image: destinationMedia\(id\)\?\.source \?\? FALLBACK_SOURCE/);
-  assert.match(screen, /source=\{failed \? FALLBACK_SOURCE : item\.image\}/);
-  assert.match(screen, /if \(!failed\) setFailed\(true\)/);
+  assert.match(screen, /return items\.map\(\(item\) => \{/);
+  assert.doesNotMatch(screen, /savedSignature|const unique = new Map/);
 });
 
-test("Saved favorites uses the close icon only for saved-list removal while other favorite surfaces keep hearts", () => {
-  const saved = source("src/features/saved/SavedRecentScreen.tsx");
-  const flowIcon = source("src/features/flow/FlowIcon.tsx");
-  const homeFavorite = source("src/features/home/AndroidFavoriteButton.tsx");
-  const explore = source("src/features/explore/ExploreScreen.tsx");
-  const details = source("src/features/explore/DestinationDetailsScreen.tsx");
-
-  assert.match(flowIcon, /\| "close" \| "compass"/);
-  assert.match(flowIcon, /close: <Path \{\.\.\.line\} d="M6 6l12 12M18 6 6 18" \/>/);
-  assert.match(saved, /<FlowIcon name="close"/);
-  assert.match(saved, /accessibilityLabel=\{`Remove \$\{item\.name\} from favorites`\}/);
-  assert.match(saved, /onPress: \(\) => toggle\(item\.id\)/);
-  assert.match(saved, /No saved favorites yet/);
-  assert.match(homeFavorite, /<FlowIcon name="heart"/);
-  assert.match(homeFavorite, /onPress=\{onPress\}/);
-  assert.match(homeFavorite, /androidFavoriteColors\.inactive/);
-  assert.match(explore, /<AndroidFavoriteButton/);
-  assert.match(details, /<AndroidFavoriteButton/);
-  assert.doesNotMatch(`${homeFavorite}\n${explore}\n${details}`, /name="close"/);
-});
-
-
-test("Explore and Profile share saved destination IDs, including search-only destinations", () => {
-  const explore = source("src/features/explore/ExploreScreen.tsx");
-  const saved = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(explore, /useSavedDestinations\(\)/);
-  assert.match(saved, /useSavedDestinations\(\)/);
-  assert.match(explore, /onToggle=\{\(\) => toggle\(item\.destination\.id\)\}/);
-  assert.match(saved, /\[\.\.\.savedIds\]\.map\(savedItem\)/);
-  assert.match(saved, /destinations\.find\(\(item\) => item\.id === id\)/);
-  assert.match(saved, /onPress: \(\) => toggle\(item\.id\)/);
-});
-
-test("Saved & recent groups supported saved item categories in a stable non-empty order", () => {
+test("reopen is only exposed with valid canonical data", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /export type SavedCategory = "destinations" \| "stays"/);
-  assert.match(screen, /savedCategoryOrder[\s\S]*key: "destinations", title: "Destinations"[\s\S]*key: "stays", title: "Stays"/);
-  assert.match(screen, /category: "stays"/);
-  assert.match(screen, /category: "destinations"/);
-  assert.match(screen, /savedCategoryOrder\.flatMap/);
-  assert.match(screen, /return sectionItems\.length \? \[\{ key, title, items: sectionItems \}\] : \[\]/);
-  assert.match(screen, /sections\.length \? sections\.map/);
-  assert.match(screen, /<Text accessibilityRole="header" style=\{\[styles\.categoryTitle, \{ color: theme\.text \}\]\}>\{section\.title\}<\/Text>/);
-  assert.doesNotMatch(screen, /Cars/);
-  assert.doesNotMatch(screen, /Deals/);
+  assert.match(screen, /result\?\.id \? \(\) => router\.push/);
+  assert.match(screen, /const hasFlightRoute = searchType === "flight"/);
+  assert.match(screen, /const hasHotelRoute = searchType === "hotel"/);
+  assert.match(screen, /: undefined/);
 });
 
-test("Saved & recent removal prompts before toggling and supports Cancel or destructive Remove", () => {
+test("all canonical types share confirmation, removal, propagation, and accessibility behavior", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /import \{ Alert,/);
-  assert.match(screen, /const confirmRemove = \(item: SavedItem\) => \{/);
-  assert.match(screen, /Alert\.alert\("Remove from saved\?", "Are you sure you want to remove this item from your saved favorites\?"/);
-  assert.match(screen, /\{ text: "Cancel", style: "cancel" \}/);
-  assert.match(screen, /\{ text: "Remove", style: "destructive", onPress: \(\) => toggle\(item\.id\) \}/);
-  assert.match(screen, /event\.stopPropagation\(\); confirmRemove\(item\);/);
-  assert.doesNotMatch(screen, /event\.stopPropagation\(\); toggle\(item\.id\)/);
+  assert.match(screen, /Alert\.alert\("Remove from saved\?"/);
+  assert.match(screen, /text: "Cancel", style: "cancel"/);
+  assert.match(screen, /text: "Remove", style: "destructive"/);
+  assert.match(screen, /canonical\.remove\(item\.type, item\.id\)/);
+  assert.match(screen, /event\.stopPropagation\(\); remove\(model\.item\)/);
+  assert.match(screen, /`Remove \$\{model\.title\} from saved`/);
 });
 
-test("Saved & recent close control is visually smaller but keeps an accessible touch target", () => {
+test("Saved and Recent keep their error feedback scoped to the owning tab", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /removeTouchTarget: \{ width: 44, height: 44/);
-  assert.match(screen, /hitSlop=\{\{ top: 8, bottom: 8, left: 8, right: 8 \}\}/);
-  assert.match(screen, /remove: \{ width: 30, height: 30, borderRadius: 15, borderWidth: 1/);
-  assert.match(screen, /<FlowIcon name="close" color=\{theme\.icon\} size=\{16\} \/>/);
-  assert.match(screen, /backgroundColor: theme\.surface, borderColor: theme\.border/);
-  assert.doesNotMatch(screen, /backgroundColor: "#FFFFFF"/);
-  assert.doesNotMatch(screen, /shadowOpacity: 0\.16/);
+  assert.match(screen, /tab === "saved" && canonical\.error/);
+  assert.match(screen, /tab === "recent" && recentError/);
+  assert.doesNotMatch(screen, /syncError \|\| canonical\.error/);
+  assert.match(screen, /setRecentError\(""\)/);
+  assert.match(screen, /Unable to synchronize recent searches/);
 });
 
-test("Saved & recent access rules and other favorite surfaces keep normal heart behavior without confirmation", () => {
-  const saved = source("src/features/saved/SavedRecentScreen.tsx");
-  const access = source("src/storage/favoriteAccess.ts");
-  const homeFavorite = source("src/features/home/AndroidFavoriteButton.tsx");
-  const explore = source("src/features/explore/ExploreScreen.tsx");
-  const details = source("src/features/explore/DestinationDetailsScreen.tsx");
-  assert.match(saved, /!isAuthenticated/);
-  assert.match(saved, /authResolved/);
-  assert.match(access, /"toggle" \| "sign-in"/);
-  assert.match(homeFavorite, /<FlowIcon name="heart"/);
-  assert.match(explore, /<AndroidFavoriteButton/);
-  assert.match(details, /<AndroidFavoriteButton/);
-  assert.doesNotMatch(`${homeFavorite}\n${explore}\n${details}`, /Alert\.alert\("Remove from saved\?"|confirmRemove/);
+test("empty copy covers canonical types while Recent semantics remain intact", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /No saved travel yet/);
+  assert.match(screen, /Use Save on a flight, hotel, or search to keep it here\./);
+  assert.match(screen, /travelApi\.recentSearches\(\)/);
+  assert.match(screen, /travelApi\.deleteRecentSearch\(item\.id\)/);
+  assert.match(screen, /travelApi\.clearRecentSearches\(\)/);
+});
+
+test("legacy destination and flight migration remains repository-only", () => {
+  const repository = source("src/storage/savedRepositoryCore.ts");
+  assert.match(repository, /readDestinations/);
+  assert.match(repository, /readFlights/);
+  assert.match(repository, /mapDestinationToSaved/);
+  assert.match(repository, /mapFlightToSaved/);
+  assert.match(repository, /previous state was restored/);
+  assert.match(repository, /requested!==this\.revision/);
 });
