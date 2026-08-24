@@ -732,7 +732,7 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, highli
           accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
           accessibilityState={{ selected: saved }}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          onPress={(event) => { event.stopPropagation(); toggle(result); }}
+          onPress={(event) => { event.stopPropagation(); toggle(result, params); }}
           style={({ pressed }) => pressed && s0.favoritePressed}
         >
           <Heart

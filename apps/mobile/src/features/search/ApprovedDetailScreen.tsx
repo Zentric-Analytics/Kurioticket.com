@@ -215,7 +215,7 @@ function FlightDetail({ result, params }: { result: FlightResult; params: Record
               accessibilityRole="button"
               accessibilityLabel={saved ? `Remove ${result.airlineName} flight from saved` : `Save ${result.airlineName} flight`}
               accessibilityState={{ selected: saved }}
-              onPress={() => toggleSavedFlight(result)}
+              onPress={() => toggleSavedFlight(result, params)}
               style={({ pressed }) => [d.headerAction, pressed && d.headerActionPressed]}
             >
               <Heart
