@@ -22,7 +22,6 @@ import {
 } from "react-native-safe-area-context";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
-  Armchair,
   ArrowLeft,
   Award,
   Bell,
@@ -664,6 +663,8 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
   const saved = savedFlights.has(result.id);
   const roundTrip = one(params.tripType) === "round-trip";
   const { outbound, returnLeg } = flightCardLegs(result, roundTrip);
+  const baggageBenefit = summarizeBaggage(result.baggageInfo);
+  const fareBenefit = summarizeFareRules(result.refundInfo);
   return (
     <View style={[s0.card, { backgroundColor: theme.surface, shadowColor: theme.dark ? "#000000" : "#18305B" }]}>
       <View style={s0.cardTop}>
@@ -704,34 +705,38 @@ function FlightCard({ result, displayPrice: fare, displayCurrencyContext, rank, 
         </Pressable>
       </View>
       <View style={s0.flightMain}>
-        <View style={s0.flightDetails}>
-          <View style={s0.airlineIdentityRow}>
+        <View style={s0.flightIdentityLayout}>
+          <View style={s0.airlineLogoColumn}>
             <AirlineLogo
               airlineName={result.airlineName}
               logoUrl={result.airlineLogo}
             />
+          </View>
+          <View style={s0.flightDetails}>
             <Text style={[s0.airlineName, { color: theme.textPrimary }]}>
               {result.airlineName}
             </Text>
+            <View style={s0.journeyList}>
+              <FlightJourneyRow label="OUTBOUND" leg={outbound} />
+              {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
+            </View>
           </View>
-          <FlightJourneyRow label="OUTBOUND" leg={outbound} />
-          {returnLeg ? <FlightJourneyRow label="RETURN" leg={returnLeg} /> : null}
         </View>
       </View>
       <View style={s0.benefits}>
         <View style={s0.benefitList}>
-          <View style={s0.benefitItem}>
-            <Luggage size={15} strokeWidth={1.9} color={theme.icon} />
-            <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{summarizeBaggage(result.baggageInfo)}</Text>
-          </View>
-          <View style={s0.benefitItem}>
-            <Armchair size={15} strokeWidth={1.9} color={theme.icon} />
-            <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>Seat unavailable</Text>
-          </View>
-          <View style={s0.benefitItem}>
-            <ShieldCheck size={15} strokeWidth={1.9} color={theme.icon} />
-            <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={1}>{summarizeFareRules(result.refundInfo)}</Text>
-          </View>
+          {baggageBenefit ? (
+            <View style={s0.benefitItem}>
+              <Luggage size={15} strokeWidth={1.9} color={theme.icon} />
+              <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={2}>{baggageBenefit}</Text>
+            </View>
+          ) : null}
+          {fareBenefit ? (
+            <View style={s0.benefitItem}>
+              <ShieldCheck size={15} strokeWidth={1.9} color={theme.icon} />
+              <Text style={[s0.benefit, { color: theme.textSecondary }]} numberOfLines={2}>{fareBenefit}</Text>
+            </View>
+          ) : null}
         </View>
         <View style={[s0.actionColumn, s0.rightColumnContract]}>
           <Text style={[s0.bigPrice, { color: theme.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
@@ -1320,22 +1325,24 @@ const s0 = StyleSheet.create({
   resultBadgeGreen: { backgroundColor: "#EAF8ED" },
   resultBadgeText: { fontSize: 10, fontWeight: "800", color: ui.blue },
   resultBadgeTextGreen: { color: ui.green },
-  flightMain: { width: "100%", alignItems: "stretch", gap: 4 },
-  flightDetails: { width: "100%", minWidth: 0, gap: 7 },
-  airlineIdentityRow: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 8 },
-  airlineName: { flex: 1, minWidth: 0, fontSize: 12, lineHeight: 16, color: ui.navy, fontWeight: "700" },
+  flightMain: { width: "100%", alignItems: "stretch" },
+  flightIdentityLayout: { width: "100%", minWidth: 0, flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  airlineLogoColumn: { width: 32, flexShrink: 0, alignItems: "center" },
+  flightDetails: { flex: 1, minWidth: 0 },
+  airlineName: { minWidth: 0, fontSize: 14, lineHeight: 18, color: ui.navy, fontWeight: "800" },
+  journeyList: { marginTop: 8, gap: 9 },
   journeyBlock: { width: "100%", gap: 2 },
   journeyLabel: { fontSize: 9, lineHeight: 11, fontWeight: "800", letterSpacing: 0.7 },
   journeyRow: { width: "100%" },
   durationRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   timeTimelineRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
   airportStopRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 6 },
-  departureColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
-  arrivalColumn: { flexBasis: 78, minWidth: 78, flexShrink: 0 },
+  departureColumn: { flexBasis: 62, minWidth: 62, flexShrink: 0 },
+  arrivalColumn: { flexBasis: 62, minWidth: 62, flexShrink: 0 },
   rightColumnContract: { alignItems: "flex-end" },
   time: { fontSize: 15, fontWeight: "900", color: ui.navy },
-  timelineColumn: { flex: 1, minWidth: 70, alignItems: "center" },
-  timelineTrack: { flex: 1, minWidth: 70, flexDirection: "row", alignItems: "center", gap: 2 },
+  timelineColumn: { flex: 1, minWidth: 46, alignItems: "center" },
+  timelineTrack: { flex: 1, minWidth: 46, flexDirection: "row", alignItems: "center", gap: 2 },
   line: {
     flex: 1,
     height: 1,
@@ -1346,14 +1353,14 @@ const s0 = StyleSheet.create({
   benefits: {
     paddingTop: 8,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     gap: 6,
   },
-  benefitList: { flex: 1, minWidth: 0, flexDirection: "column", gap: 6 },
-  actionColumn: { flexShrink: 0, alignItems: "flex-end", gap: 12 },
+  benefitList: { flex: 1, minWidth: 0, flexDirection: "column", gap: 6, alignSelf: "center" },
+  actionColumn: { width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 8 },
   benefitItem: { minWidth: 0, flexDirection: "row", alignItems: "center", gap: 5 },
   benefit: { minWidth: 0, fontSize: 10.5, color: ui.muted, flex: 1 },
-  detailsButton: { minWidth: 96, minHeight: 44, paddingHorizontal: 10, borderRadius: 8, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
+  detailsButton: { width: "100%", minHeight: 44, paddingHorizontal: 10, borderRadius: 9, backgroundColor: ui.blue, alignItems: "center", justifyContent: "center" },
   detailsButtonText: { color: "white", fontWeight: "800", fontSize: 12 },
   hotelCard: {
     height: 234,
