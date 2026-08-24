@@ -33,7 +33,7 @@ test("flight, hotel, and search become the same stable card model", () => {
   assert.match(screen, /source=\{FALLBACK_SOURCE\}/);
 });
 
-test("canonical cards preserve newest-first order and hide duplicate signatures", () => {
+test("repository normalization preserves the newest canonical duplicate", () => {
   const duplicate = { type: "search", searchType: "hotel", label: "Stay", destination: "Rome", query: { destination: "Rome" } };
   const cards = canonicalItemsNewestFirst([
     item({ ...duplicate, id: "old", createdAt: "2026-01-01T00:00:00Z" }),
@@ -41,6 +41,15 @@ test("canonical cards preserve newest-first order and hide duplicate signatures"
     item({ ...duplicate, id: "new", createdAt: "2026-01-03T00:00:00Z" }),
   ]);
   assert.deepEqual(cards.map((saved) => saved.id), ["new", "flight"]);
+  const repository = source("src/storage/savedRepositoryCore.ts");
+  assert.match(repository, /items=canonicalItemsNewestFirst\(items\)/);
+  assert.doesNotMatch(repository, /new Map\(items\.map\(item=>\[savedSignature\(item\),item\]\)\)/);
+});
+
+test("Saved card mapping trusts repository normalization instead of deduplicating again", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /return items\.map\(\(item\) => \{/);
+  assert.doesNotMatch(screen, /savedSignature|const unique = new Map/);
 });
 
 test("reopen is only exposed with valid canonical data", () => {
@@ -59,6 +68,15 @@ test("all canonical types share confirmation, removal, propagation, and accessib
   assert.match(screen, /canonical\.remove\(item\.type, item\.id\)/);
   assert.match(screen, /event\.stopPropagation\(\); remove\(model\.item\)/);
   assert.match(screen, /`Remove \$\{model\.title\} from saved`/);
+});
+
+test("Saved and Recent keep their error feedback scoped to the owning tab", () => {
+  const screen = source("src/features/saved/SavedRecentScreen.tsx");
+  assert.match(screen, /tab === "saved" && canonical\.error/);
+  assert.match(screen, /tab === "recent" && recentError/);
+  assert.doesNotMatch(screen, /syncError \|\| canonical\.error/);
+  assert.match(screen, /setRecentError\(""\)/);
+  assert.match(screen, /Unable to synchronize recent searches/);
 });
 
 test("empty copy covers canonical types while Recent semantics remain intact", () => {
