@@ -51,33 +51,33 @@ test("flight card derives singular, plural, and nonstop labels from provider sto
 test("flight benefits use concise summaries while retaining provider data for details", () => {
   assert.match(card, /summarizeBaggage\(result\.baggageInfo\)/);
   assert.match(card, /summarizeFareRules\(result\.refundInfo\)/);
-  assert.match(card, /Seat unavailable/);
+  assert.doesNotMatch(card, /Seat unavailable/);
   assert.match(card, /numberOfLines=\{1\}/);
 });
 
 test("baggage summary only claims inclusions supported by provider copy", () => {
   assert.equal(summarizeBaggage("Carry-on and 1 checked bag included"), "Carry-on + checked bag");
   assert.equal(summarizeBaggage("Cabin baggage included"), "Carry-on included");
-  assert.equal(summarizeBaggage("Baggage subject to airline policy"), "Baggage details");
-  assert.equal(summarizeBaggage("No baggage included"), "Baggage details");
+  assert.equal(summarizeBaggage("Baggage subject to airline policy"), null);
+  assert.equal(summarizeBaggage("No baggage included"), null);
 });
 
 test("fare-rule summary classifies varied provider language without exact matching", () => {
-  assert.equal(summarizeFareRules("This ticket is NON-REFUNDABLE; changes cost USD 150"), "Not refundable");
+  assert.equal(summarizeFareRules("This ticket is NON-REFUNDABLE; changes cost USD 150"), null);
   assert.equal(summarizeFareRules("Refund available before departure with a fee"), "Refundable");
-  assert.equal(summarizeFareRules("Changes allowed with USD 150.00 penalty"), "Fare rules apply");
-  assert.equal(summarizeFareRules(), "Fare rules apply");
+  assert.equal(summarizeFareRules("Changes allowed with USD 150.00 penalty"), null);
+  assert.equal(summarizeFareRules(), null);
 });
 
 test("flight card keeps fixed footer content compact while airline identity may grow", () => {
   assert.match(card, /style=\{\[s0\.bigPrice, \{ color: theme\.textPrimary \}\]\} numberOfLines=\{1\} adjustsFontSizeToFit minimumFontScale=\{0\.8\}/);
   assert.match(card, /style=\{\[s0\.airlineName, \{ color: theme\.textPrimary \}\]\}>/);
-  assert.equal(card.match(/style=\{\[s0\.benefit, \{ color: theme\.textSecondary \}\]\} numberOfLines=\{1\}/g)?.length, 3);
+  assert.equal(card.match(/style=\{\[s0\.benefit, \{ color: theme\.textSecondary \}\]\} numberOfLines=\{2\}/g)?.length, 2);
   assert.match(source, /card: \{[\s\S]*?padding: 13,[\s\S]*?gap: 10,/);
   assert.match(source, /benefits: \{[\s\S]*?paddingTop: 8,[\s\S]*?flexDirection: "row"/);
-  assert.match(source, /benefitList: \{ flex: 1, minWidth: 0, flexDirection: "column", gap: 6 \}/);
+  assert.match(source, /benefitList: \{ flex: 1, minWidth: 0, flexDirection: "column", gap: 6, alignSelf: "center" \}/);
   assert.match(source, /benefit: \{ minWidth: 0, fontSize: 10\.5, color: ui\.muted, flex: 1 \}/);
-  assert.match(source, /detailsButton: \{ minWidth: 96, minHeight: 44, paddingHorizontal: 10/);
+  assert.match(source, /detailsButton: \{ width: "100%", minHeight: 44, paddingHorizontal: 10/);
   for (const viewport of [320, 360, 375, 390, 430]) {
     const cardContentWidth = viewport - 28 - 26;
     assert.ok(cardContentWidth >= 258, `${viewport}px reserves at least 258px for the journey row`);
@@ -107,11 +107,11 @@ test("flight loading skeleton mirrors the stacked benefit footer", () => {
 
 test("flight card keeps long prices single-line in the stable footer action column", () => {
   assert.match(card, /style=\{s0\.flightMain\}/);
-  assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch", gap: 4 \}/);
-  assert.match(source, /flightDetails: \{ width: "100%", minWidth: 0, gap: 7 \}/);
-  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 70, alignItems: "center" \}/);
+  assert.match(source, /flightMain: \{ width: "100%", alignItems: "stretch" \}/);
+  assert.match(source, /flightDetails: \{ flex: 1, minWidth: 0 \}/);
+  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46, alignItems: "center" \}/);
   assert.match(source, /benefitList: \{ flex: 1, minWidth: 0/);
-  assert.match(source, /actionColumn: \{ flexShrink: 0, alignItems: "flex-end", gap: 12 \}/);
+  assert.match(source, /actionColumn: \{ width: 112, maxWidth: "45%", flexShrink: 0, alignItems: "flex-end", gap: 8 \}/);
   assert.doesNotMatch(source, /priceBox:/);
 
   for (const formattedPrice of ["NGN 89,482", "NGN 837,706", "NGN 1,245,800", "$597", "£1,250", "€1,099"]) {
@@ -125,8 +125,8 @@ test("airline identity renders every full carrier name without a truncation cont
   assert.doesNotMatch(airlineText, /numberOfLines/);
   assert.doesNotMatch(airlineText, /ellipsizeMode/);
   assert.doesNotMatch(source, /airlineName: \{[^}]*maxWidth/);
-  assert.match(source, /airlineName: \{ flex: 1, minWidth: 0,[^}]*lineHeight: 16/);
-  assert.match(card, /<View style=\{s0\.airlineIdentityRow\}>[\s\S]*?<AirlineLogo[\s\S]*?<Text style=\{\[s0\.airlineName/);
+  assert.match(source, /airlineName: \{ minWidth: 0,[^}]*lineHeight: 18/);
+  assert.match(card, /<View style=\{s0\.flightIdentityLayout\}>[\s\S]*?<AirlineLogo[\s\S]*?<Text style=\{\[s0\.airlineName/);
 
   for (const airlineName of [
     "Qatar Airways",
@@ -150,9 +150,9 @@ test("narrow flight cards reserve deterministic space for every journey section"
   assert.match(card, /<AirlineLogo[\s\S]*logoUrl=\{result\.airlineLogo\}/);
   assert.match(airlineLogo, /logo: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
   assert.match(airlineLogo, /tile: \{[\s\S]*?width: 32,[\s\S]*?height: 32,[\s\S]*?flexShrink: 0/);
-  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 70/);
-  assert.match(source, /departureColumn: \{ flexBasis: 78, minWidth: 78, flexShrink: 0 \}/);
-  assert.match(source, /arrivalColumn: \{ flexBasis: 78, minWidth: 78, flexShrink: 0 \}/);
+  assert.match(source, /timelineColumn: \{ flex: 1, minWidth: 46/);
+  assert.match(source, /departureColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
+  assert.match(source, /arrivalColumn: \{ flexBasis: 62, minWidth: 62, flexShrink: 0 \}/);
 
   const readableMinimums = 78 + 70 + 78;
   const interSectionGaps = 6 * 2;
@@ -177,8 +177,8 @@ test("live airline logos support SVG and raster URLs with URL-scoped fallback", 
 });
 
 test("flight journey gives its center column responsive surplus width", () => {
-  const departureWidth = 78;
-  const arrivalWidth = 78;
+  const departureWidth = 62;
+  const arrivalWidth = 62;
   const interSectionGaps = 6 * 2;
   for (const viewport of [320, 360, 375, 390, 412, 430, 480]) {
     const previousCardContentWidth = viewport - 36 - 26;
@@ -202,7 +202,7 @@ test("flight times, airports, duration, and stop labels remain single-line", () 
 });
 
 test("flight card uses Lucide icons for route, benefits, badges, and saved state", () => {
-  for (const icon of ["PlaneTakeoff", "Luggage", "Armchair", "ShieldCheck", "Award", "Tag"]) {
+  for (const icon of ["PlaneTakeoff", "Luggage", "ShieldCheck", "Award", "Tag"]) {
     assert.match(card, new RegExp(`<${icon}\\b`));
   }
   assert.match(source, /import \{ Heart \} from "lucide-react-native"/);

@@ -20,9 +20,9 @@ test("flight details navigation remains wired to the action", () => {
   assert.match(flightCard, /<Text style=\{s0\.detailsButtonText\}[^>]*>View details<\/Text>/);
 });
 
-test("baggage, seat, and fare-rule summaries remain visible", () => {
+test("only provider-backed baggage and refundable benefits remain eligible", () => {
   assert.match(flightCard, /summarizeBaggage\(result\.baggageInfo\)/);
-  assert.match(flightCard, />Seat unavailable<\/Text>/);
+  assert.doesNotMatch(flightCard, /Seat unavailable/);
   assert.match(flightCard, /summarizeFareRules\(result\.refundInfo\)/);
 });
 
