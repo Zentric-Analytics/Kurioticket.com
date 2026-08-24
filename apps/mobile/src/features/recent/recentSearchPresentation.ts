@@ -22,8 +22,9 @@ function formatDateOnly(value?: string) {
 
 function formatDateRange(start?: string, end?: string) {
   const formattedStart = formatDateOnly(start);
+  if (!formattedStart) return "";
   const formattedEnd = formatDateOnly(end);
-  return formattedStart && formattedEnd ? `${formattedStart} – ${formattedEnd}` : formattedStart || formattedEnd;
+  return formattedEnd ? `${formattedStart} – ${formattedEnd}` : formattedStart;
 }
 
 function formatCount(value: string | undefined, singular: string) {
