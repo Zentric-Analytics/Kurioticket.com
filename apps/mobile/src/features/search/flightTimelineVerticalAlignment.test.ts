@@ -16,13 +16,12 @@ test("departure time, timeline, and arrival time share one explicit vertical ban
   assert.match(source, /timeTimelineRow: \{ width: "100%", flexDirection: "row", alignItems: "center", gap: 6 \}/);
 });
 
-test("duration and airport/stop content occupy the bands above and below the time anchor", () => {
-  const durationBand = journey.slice(journey.indexOf("<View style={s0.durationRow}>"), journey.indexOf("<View style={s0.timeTimelineRow}>"));
+test("duration and stops share the compact airport metadata band below the time anchor", () => {
   const lowerBand = journey.slice(journey.indexOf("<View style={s0.airportStopRow}>"));
-  assert.match(durationBand, /leg\.duration/);
   assert.match(lowerBand, /leg\.originAirport/);
-  assert.match(lowerBand, /\{stopLabel\}/);
+  assert.match(lowerBand, /\{leg\.duration\} · \{stopLabel\}/);
   assert.match(lowerBand, /leg\.destinationAirport/);
+  assert.doesNotMatch(journey, /durationRow/);
 });
 
 test("outbound, return, and one-way cards use the same journey implementation", () => {
