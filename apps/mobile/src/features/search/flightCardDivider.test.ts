@@ -11,7 +11,7 @@ test("the flight card summary and action area has spacing without a divider", ()
   assert.match(flightCard, /<View style=\{s0\.benefits\}>/);
   assert.doesNotMatch(flightCard, /borderTopColor|borderBottomColor|divider|separator|hairlineWidth/i);
   assert.doesNotMatch(benefitsStyle, /borderTopWidth|borderBottomWidth|borderColor/);
-  assert.match(benefitsStyle, /paddingTop: 8/);
+  assert.match(benefitsStyle, /paddingTop: 4/);
 });
 
 test("flight details navigation remains wired to the action", () => {
