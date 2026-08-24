@@ -27,6 +27,15 @@ test("formats hotel dates and singular or plural occupancy", () => {
   })).metadata, "1 guest · 1 room");
 });
 
+test("does not display orphaned end dates without a valid start date", () => {
+  assert.equal(recentSearchPresentation(recent("flight", {
+    origin: "LOS", destination: "LHR", returnDate: "2099-09-10", travelers: 1,
+  })).metadata, "1 traveler");
+  assert.equal(recentSearchPresentation(recent("hotel", {
+    destination: "Accra", checkOut: "2099-09-05", guests: 2,
+  })).metadata, "2 guests");
+});
+
 test("malformed params safely use stored display fallbacks", () => {
   assert.deepEqual(recentSearchPresentation(recent("flight", { departureDate: "not-a-date", travelers: 0 })), {
     icon: "flight", title: "Previous search", metadata: "Stored search",
