@@ -50,6 +50,7 @@ test("destination handoff uses the homepage origin to open flight results", asyn
   }));
   assert.ok(typeof route === "object");
   assert.equal(route.pathname, "/flight-results");
+  assert.ok(route.params);
   assert.equal(route.params.origin, "LOS");
   assert.equal(route.params.destination, "ABJ");
 });
