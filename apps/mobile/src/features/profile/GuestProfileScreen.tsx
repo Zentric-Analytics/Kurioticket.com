@@ -14,7 +14,7 @@ export function GuestProfileScreen() {
   const { theme } = useAppTheme(); const { t } = useMobileLocalization();
   const sections: ProfileSection[] = [
     { title: "travelActivity", items: [
-      { label: "saved", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
+      { label: "savedItems", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
       { label: "recentSearches", icon: "clock", destination: { kind: "native", href: "/recent" } },
     ] },
     { title: "preferences", items: [{ label: "customizationPreferences", icon: "palette", destination: { kind: "native", href: "/settings" } }] },
