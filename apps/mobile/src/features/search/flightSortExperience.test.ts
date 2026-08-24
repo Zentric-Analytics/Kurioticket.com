@@ -11,7 +11,7 @@ test("the existing Sort quick control opens one compact radio sheet", () => {
 });
 
 test("selecting a sort updates shared state and dismisses without changing filters", () => {
-  const modal = screen.slice(screen.indexOf("function FlightSortModal"), screen.indexOf("function FlightFilterModal"));
+  const modal = screen.slice(screen.indexOf("function FlightSortModal"), screen.indexOf("function FlightCard"));
   assert.match(modal, /onPress=\{\(\) => \{ onChange\(option\.value\); onClose\(\); \}\}/);
   assert.doesNotMatch(modal, /setFilters|onChange\(emptyFlightFilters/);
   assert.match(screen, /filterAndSortFlights\([\s\S]*?filters,[\s\S]*?sort,/);
