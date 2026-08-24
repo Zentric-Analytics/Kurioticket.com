@@ -13,7 +13,7 @@ export const authenticatedProfileSections: ProfileSection[] = [
     { label: "securitySettings", icon: "shield", destination: { kind: "native", href: "/security" } },
   ] },
   { title: "travelActivity", items: [
-    { label: "saved", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
+    { label: "savedItems", icon: "bookmark", destination: { kind: "native", href: "/saved" } },
     { label: "recentSearches", icon: "clock", destination: { kind: "native", href: "/recent" } },
     { label: "priceAlerts", icon: "bell", destination: { kind: "native", href: "/price-alerts" } },
   ] },
