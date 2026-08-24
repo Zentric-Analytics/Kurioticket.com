@@ -29,8 +29,19 @@ test("flight, hotel, and search become the same stable card model", () => {
   assert.match(screen, /const searchType = text\(item\.searchType\)/);
   assert.match(screen, /origin && destination \? `\$\{origin\} → \$\{destination\}`/);
   assert.equal((screen.match(/testID="saved-card"/g) ?? []).length, 2);
-  assert.match(screen, /card: \{ minHeight: 104, height: 104/);
+  assert.match(screen, /regionPreviewCardLayout\(windowWidth\)/);
+  assert.doesNotMatch(screen, /(?:height|width): 104/);
   assert.match(screen, /source=\{FALLBACK_SOURCE\}/);
+});
+
+test("Saved and Explore cards derive responsive geometry from one layout helper", () => {
+  const saved = source("src/features/saved/SavedRecentScreen.tsx");
+  const explore = source("src/features/explore/ExploreScreen.tsx");
+  const layout = source("src/features/explore/regionPreviewLayout.ts");
+  assert.match(saved, /import \{ regionPreviewCardLayout \} from "\.\.\/explore\/regionPreviewLayout"/);
+  assert.match(explore, /regionPreviewCardLayout\(windowWidth\)/);
+  assert.match(layout, /REGION_PREVIEW_CARD_WIDTH_RATIO/);
+  assert.match(layout, /height: previousHeight \+ \(imageHeight - previousImageHeight\)/);
 });
 
 test("repository normalization preserves the newest canonical duplicate", () => {
