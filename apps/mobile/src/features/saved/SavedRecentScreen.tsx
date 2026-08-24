@@ -5,7 +5,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import type { FlightResult, HotelResult, MobileRecentSearch, MobileSavedItem } from "../../api/travelApi";
 import { travelApi } from "../../api/travelApi";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
-import { savedSignature } from "../../storage/savedMapping";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useAppTheme } from "../../theme/AppTheme";
 import { FALLBACK_SOURCE } from "../explore/destinationMedia";
@@ -29,13 +28,7 @@ const routeParams = (value: unknown) => Object.fromEntries(Object.entries(record
 }));
 
 export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCardModel[] {
-  const unique = new Map<string, MobileSavedItem>();
-  for (const item of items) if (!unique.has(savedSignature(item))) unique.set(savedSignature(item), item);
-  return [...unique.values()].sort((a, b) => {
-    const aTime = Date.parse(text(a.createdAt) ?? "") || 0;
-    const bTime = Date.parse(text(b.createdAt) ?? "") || 0;
-    return bTime - aTime;
-  }).map((item) => {
+  return items.map((item) => {
     const payload = record(item.payload);
     const query = record(item.query);
     if (item.type === "flight") {
@@ -76,8 +69,8 @@ export function SavedRecentScreen() {
   const canonical = useCanonicalSaved();
   const [tab, setTab] = useState<"saved" | "recent">("saved");
   const [recent, setRecent] = useState<MobileRecentSearch[]>([]);
-  const [syncError, setSyncError] = useState("");
-  const loadServer = useCallback(async () => { if (!isAuthenticated) return; setSyncError(""); try { const searches = await travelApi.recentSearches(); setRecent(searches.items); } catch { setSyncError("Unable to synchronize Saved & Recent. Your last synchronized saves remain available."); } }, [isAuthenticated]);
+  const [recentError, setRecentError] = useState("");
+  const loadServer = useCallback(async () => { if (!isAuthenticated) return; setRecentError(""); try { const searches = await travelApi.recentSearches(); setRecent(searches.items); } catch { setRecentError("Unable to synchronize recent searches. Your last synchronized recent searches remain available."); } }, [isAuthenticated]);
   useFocusEffect(useCallback(() => { void loadServer(); }, [loadServer]));
   const cards = canonicalSavedCards(canonical.items);
   const confirmRemove = (item: MobileSavedItem, title: string) => Alert.alert("Remove from saved?", `Remove ${title} from your saved travel?`, [
@@ -88,7 +81,8 @@ export function SavedRecentScreen() {
     <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><FlowIcon name="back" color={theme.icon} size={27} /></Pressable><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>Saved & recent</Text></View>
     {!authResolved ? null : !isAuthenticated ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>Sign in to view saved favorites</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Your saved travel is private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/saved" } })} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never">
       <View accessibilityRole="tablist" style={[styles.tabs, { backgroundColor: theme.surface, borderColor: theme.border }]}>{(["saved", "recent"] as const).map((value) => <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected: tab === value }} onPress={() => setTab(value)} style={[styles.tab, tab === value && styles.activeTab]}><Text style={{ color: tab === value ? "white" : theme.text, fontWeight: "800" }}>{value === "saved" ? "Saved" : "Recent"}</Text></Pressable>)}</View>
-      {syncError || canonical.error ? <Text accessibilityRole="alert" style={styles.syncError}>{syncError || canonical.error}</Text> : null}
+      {tab === "saved" && canonical.error ? <Text accessibilityRole="alert" style={styles.syncError}>{canonical.error}</Text> : null}
+      {tab === "recent" && recentError ? <Text accessibilityRole="alert" style={styles.syncError}>{recentError}</Text> : null}
       {tab === "saved" ? <><Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>Saved travel</Text><Text style={[styles.explanation, { color: theme.muted }]}>Saved items are things you chose to keep.</Text>{cards.length ? cards.map((model) => <SavedCard key={`${model.item.type}:${model.item.id}`} model={model} remove={(item) => confirmRemove(item, model.title)} />) : !canonical.loading ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>No saved travel yet</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Use Save on a flight, hotel, or search to keep it here.</Text></View> : null}</> : <>{recent.length ? <><Pressable accessibilityRole="button" onPress={() => void travelApi.clearRecentSearches().then(loadServer)}><Text style={styles.clear}>Clear all</Text></Pressable>{recent.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Rerun ${item.label}`} onPress={() => router.push({ pathname: item.type === "flight" ? "/flights" : "/hotels", params: item.params as Record<string, string> })} style={[styles.recentRow, { backgroundColor: theme.surface, borderColor: theme.border }]}><View style={{ flex: 1 }}><Text style={[styles.name, { color: theme.text }]}>{item.label}</Text><Text style={{ color: theme.muted }}>{item.subtitle}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.label}`} onPress={(event) => { event.stopPropagation(); void travelApi.deleteRecentSearch(item.id).then(loadServer); }} style={styles.removeTouchTarget}><FlowIcon name="close" color={theme.icon} size={16} /></Pressable></Pressable>)}</> : <View style={styles.center}><Text style={[styles.emptyTitle, { color: theme.text }]}>No recent searches</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Successful flight and hotel searches will appear here.</Text></View>}</>}
     </ScrollView>}
   </SafeAreaView>;
