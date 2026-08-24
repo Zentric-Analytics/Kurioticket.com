@@ -71,7 +71,7 @@ test("Hotels starts with its hero and overlaps it with search without marketing 
   assert.match(hotels, /<HotelSearchPanel ref=\{panel\} params=\{params\} \/>/);
   assert.match(hotels, /title="Featured destinations"/);
   assert.match(products, /hotelBody:\s*\{\s*marginTop:\s*-22/);
-  assert.match(hotelSearch, />Destination<\/Text>/);
+  assert.match(hotelSearch, /<CompactSearchField label="Destination"/);
   assert.match(hotelSearch, /label="Travel dates"/);
   assert.match(hotelSearch, /label="Guests"/);
   assert.match(hotelSearch, /submitLabel = "Search hotels"/);
