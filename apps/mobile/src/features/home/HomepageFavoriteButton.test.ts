@@ -61,6 +61,6 @@ test("no old blue favorite circle remains and Saved & Recent keeps remove close 
     assert.doesNotMatch(file, /heartSaved/, `${name} does not keep a second heart design`);
   }
   assert.match(savedRecent, /<FlowIcon name="close"/);
-  assert.match(savedRecent, /accessibilityLabel=\{`Remove \$\{item\.name\} from favorites`\}/);
+  assert.match(savedRecent, /accessibilityLabel=\{`Remove \$\{model\.title\} from saved`\}/);
   assert.doesNotMatch(savedRecent, /<AndroidFavoriteButton/);
 });

@@ -1,100 +1,91 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View, type ImageSourcePropType } from "react-native";
+import { Fragment, useCallback, useState } from "react";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { destinations } from "../explore/destinationCatalogue";
-import { destinationMedia, FALLBACK_SOURCE } from "../explore/destinationMedia";
-import { popularDestinationStays } from "../home/PopularDestinationStaysData";
-import { FlowIcon } from "../flow/FlowIcon";
-import { flowColors } from "../flow/flowStyles";
+import type { FlightResult, HotelResult, MobileRecentSearch, MobileSavedItem } from "../../api/travelApi";
+import { travelApi } from "../../api/travelApi";
+import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
 import { useAppTheme } from "../../theme/AppTheme";
-import { useSavedFlights } from "../../storage/useSavedFlights";
-import { travelApi, type FlightResult, type MobileRecentSearch } from "../../api/travelApi";
-import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
+import { FALLBACK_SOURCE } from "../explore/destinationMedia";
+import { FlowIcon } from "../flow/FlowIcon";
+import { flowColors } from "../flow/flowStyles";
 
-export type SavedCategory = "destinations" | "stays" | "flights";
-export type SavedItem = { id: string; category: SavedCategory; name: string; country: string; image: ImageSourcePropType; open: () => void };
+type SavedCardModel = {
+  item: MobileSavedItem;
+  title: string;
+  secondary: string;
+  open?: () => void;
+};
 
-type SavedSection = { key: SavedCategory; title: string; items: SavedItem[] };
+const record = (value: unknown): Record<string, unknown> | undefined =>
+  value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+const text = (value: unknown) => typeof value === "string" && value.trim() ? value.trim() : undefined;
+const routeParams = (value: unknown) => Object.fromEntries(Object.entries(record(value) ?? {}).flatMap(([key, raw]) => {
+  if (typeof raw === "string" || typeof raw === "number" || typeof raw === "boolean") return [[key, String(raw)]];
+  if (Array.isArray(raw) && raw.every((part) => typeof part === "string")) return [[key, raw.join(",")]];
+  return [];
+}));
 
-export const savedCategoryOrder: readonly { key: SavedCategory; title: string }[] = [
-  { key: "destinations", title: "Destinations" },
-  { key: "stays", title: "Stays" },
-  { key: "flights", title: "Flights" },
-] as const;
-
-export function savedItem(id: string): SavedItem | undefined {
-  const stay = popularDestinationStays.find((item) => item.id === id);
-  if (stay) return { id, category: "stays", name: stay.city, country: stay.country, image: stay.image, open: () => router.push({ pathname: "/hotels", params: { destination: stay.city } }) };
-  const destination = destinations.find((item) => item.id === id);
-  if (destination) return { id, category: "destinations", name: destination.name, country: destination.country, image: destinationMedia(id)?.source ?? FALLBACK_SOURCE, open: () => router.push({ pathname: "/flights", params: { destination: destination.name, destinationId: destination.id, airportCodes: destination.airportCodes.join(","), to: destination.primaryAirportCode } }) };
-}
-
-export function savedFlightItem(flight: FlightResult): SavedItem {
-  return {
-    id: flight.id,
-    category: "flights",
-    name: `${flight.airlineName} flight`,
-    country: `${flight.originAirport} to ${flight.destinationAirport}`,
-    image: FALLBACK_SOURCE,
-    open: () => router.push({ pathname: "/flight-details", params: { result: JSON.stringify(flight) } }),
-  };
-}
-
-export function savedSections(items: readonly SavedItem[]): SavedSection[] {
-  return savedCategoryOrder.flatMap(({ key, title }) => {
-    const sectionItems = items.filter((item) => item.category === key);
-    return sectionItems.length ? [{ key, title, items: sectionItems }] : [];
+export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCardModel[] {
+  return items.map((item) => {
+    const payload = record(item.payload);
+    const query = record(item.query);
+    if (item.type === "flight") {
+      const result = record(payload?.result) as FlightResult | undefined;
+      const title = text(item.airlineName) ?? text(item.label) ?? "Saved flight";
+      const origin = text(item.originAirport);
+      const destination = text(item.destinationAirport);
+      return { item, title, secondary: origin && destination ? `${origin} → ${destination}` : "Flight", open: result?.id ? () => router.push({ pathname: "/flight-details", params: { result: JSON.stringify(result) } }) : undefined };
+    }
+    if (item.type === "hotel") {
+      const result = record(payload?.result) as HotelResult | undefined;
+      const params = routeParams(payload?.searchParams);
+      const title = text(item.hotelName) ?? text(item.label) ?? "Saved hotel";
+      return { item, title, secondary: text(item.destination) ?? "Hotel", open: result?.id ? () => router.push({ pathname: "/hotel-details", params: { ...params, result: JSON.stringify(result) } }) : undefined };
+    }
+    const title = text(item.label) ?? "Saved search";
+    const searchType = text(item.searchType)?.toLowerCase();
+    const destination = text(item.destination);
+    const origin = text(item.origin);
+    const secondary = origin && destination ? `${origin} → ${destination}` : destination ?? (searchType === "hotel" ? "Hotel search" : searchType === "flight" ? "Flight search" : "Search");
+    const params = routeParams(query);
+    const hasFlightRoute = searchType === "flight" && (text(query?.to) || text(query?.destination));
+    const hasHotelRoute = searchType === "hotel" && text(query?.destination);
+    const open = hasFlightRoute ? () => router.push({ pathname: "/flights", params }) : hasHotelRoute ? () => router.push({ pathname: "/hotels", params }) : undefined;
+    return { item, title, secondary, open };
   });
 }
 
-function SavedItemImage({ item }: { item: SavedItem }) {
-  const [failed, setFailed] = useState(false);
-  return <Image source={failed ? FALLBACK_SOURCE : item.image} onError={() => { if (!failed) setFailed(true); }} accessibilityLabel={`${item.name}, ${item.country} travel image`} resizeMode="cover" style={styles.image} />;
+function SavedCard({ model, remove }: { model: SavedCardModel; remove: (item: MobileSavedItem) => void }) {
+  const { theme } = useAppTheme();
+  const content = <Fragment><Image source={FALLBACK_SOURCE} accessibilityLabel="Travel image" resizeMode="cover" style={styles.image} /><View style={styles.copy}><Text numberOfLines={2} style={[styles.name, { color: theme.text }]}>{model.title}</Text><Text numberOfLines={1} style={[styles.secondary, { color: theme.muted }]}>{model.secondary}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${model.title} from saved`} hitSlop={8} onPress={(event) => { event.stopPropagation(); remove(model.item); }} style={({ pressed }) => [styles.removeTouchTarget, pressed && styles.removePressed]}><View style={[styles.remove, { backgroundColor: theme.surface, borderColor: theme.border }]}><FlowIcon name="close" color={theme.icon} size={16} /></View></Pressable></Fragment>;
+  return model.open ? <Pressable testID="saved-card" accessibilityRole="button" accessibilityLabel={`Open ${model.title}, ${model.secondary}`} onPress={model.open} style={({ pressed }) => [styles.card, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}>{content}</Pressable> : <View testID="saved-card" accessibilityLabel={`${model.title}, ${model.secondary}`} style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>{content}</View>;
 }
 
 export function SavedRecentScreen() {
   const { theme } = useAppTheme();
-  const { savedIds, toggle, isAuthenticated, authResolved } = useSavedDestinations();
-  const { savedFlights, toggle: toggleFlight } = useSavedFlights();
-  const [tab, setTab] = useState<"saved" | "recent">("saved");
+  const { isAuthenticated, authResolved } = useSavedDestinations();
   const canonical = useCanonicalSaved();
+  const [tab, setTab] = useState<"saved" | "recent">("saved");
   const [recent, setRecent] = useState<MobileRecentSearch[]>([]);
-  const [syncError, setSyncError] = useState("");
-  const loadServer = useCallback(async () => { if (!isAuthenticated) return; setSyncError(""); try { const searches = await travelApi.recentSearches(); setRecent(searches.items); } catch { setSyncError("Unable to synchronize Saved & Recent. Your device saves remain available."); } }, [isAuthenticated]);
+  const [recentError, setRecentError] = useState("");
+  const loadServer = useCallback(async () => { if (!isAuthenticated) return; setRecentError(""); try { const searches = await travelApi.recentSearches(); setRecent(searches.items); } catch { setRecentError("Unable to synchronize recent searches. Your last synchronized recent searches remain available."); } }, [isAuthenticated]);
   useFocusEffect(useCallback(() => { void loadServer(); }, [loadServer]));
-  const items = [
-    ...[...savedIds].map(savedItem).filter((item): item is SavedItem => !!item),
-    ...[...savedFlights.values()].map(savedFlightItem),
-  ];
-  const sections = savedSections(items);
-  const confirmRemove = (item: SavedItem) => {
-    if (item.category === "flights") {
-      Alert.alert("Remove from saved?", "Are you sure you want to remove this item from your saved favorites?", [
-        { text: "Cancel", style: "cancel" },
-        { text: "Remove", style: "destructive", onPress: () => toggleFlight(savedFlights.get(item.id)!) },
-      ]);
-      return;
-    }
-    Alert.alert("Remove from saved?", "Are you sure you want to remove this item from your saved favorites?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Remove", style: "destructive", onPress: () => toggle(item.id) },
-    ]);
-  };
+  const cards = canonicalSavedCards(canonical.items);
+  const confirmRemove = (item: MobileSavedItem, title: string) => Alert.alert("Remove from saved?", `Remove ${title} from your saved travel?`, [
+    { text: "Cancel", style: "cancel" },
+    { text: "Remove", style: "destructive", onPress: () => { void canonical.remove(item.type, item.id).catch(() => undefined); } },
+  ]);
   return <SafeAreaView edges={["top", "bottom"]} style={[styles.safe, { backgroundColor: theme.background }]}>
     <View style={styles.header}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><FlowIcon name="back" color={theme.icon} size={27} /></Pressable><Text accessibilityRole="header" style={[styles.title, { color: theme.text }]}>Saved & recent</Text></View>
     {!authResolved ? null : !isAuthenticated ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>Sign in to view saved favorites</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Your saved travel is private to your account.</Text><Pressable accessibilityRole="button" accessibilityLabel="Sign in" onPress={() => router.push({ pathname: "/(tabs)/profile/sign-in", params: { returnTo: "/saved" } })} style={styles.primary}><Text style={styles.primaryText}>Sign in</Text></Pressable></View> : <ScrollView alwaysBounceVertical={false} bounces={false} contentContainerStyle={styles.content} overScrollMode="never">
       <View accessibilityRole="tablist" style={[styles.tabs, { backgroundColor: theme.surface, borderColor: theme.border }]}>{(["saved", "recent"] as const).map((value) => <Pressable key={value} accessibilityRole="tab" accessibilityState={{ selected: tab === value }} onPress={() => setTab(value)} style={[styles.tab, tab === value && styles.activeTab]}><Text style={{ color: tab === value ? "white" : theme.text, fontWeight: "800" }}>{value === "saved" ? "Saved" : "Recent"}</Text></Pressable>)}</View>
-      {syncError ? <Text accessibilityRole="alert" style={styles.syncError}>{syncError}</Text> : null}
-      {tab === "saved" ? <>
-      <Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>Saved favorites</Text>
-      <Text style={[styles.recentExplanation, { color: theme.muted }]}>Saved items are things you chose to keep.</Text>
-      {sections.length ? sections.map((section) => <View key={section.key} style={styles.section}><Text accessibilityRole="header" style={[styles.categoryTitle, { color: theme.text }]}>{section.title}</Text>{section.items.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Open ${item.name}, ${item.country}`} onPress={item.open} style={({ pressed }) => [styles.card, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}><SavedItemImage item={item} /><View style={styles.copy}><Text numberOfLines={2} style={[styles.name, { color: theme.text }]}>{item.name}</Text><Text numberOfLines={1} style={[styles.country, { color: theme.muted }]}>{item.country}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.name} from favorites`} accessibilityState={{ selected: true }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={(event) => { event.stopPropagation(); confirmRemove(item); }} style={({ pressed }) => [styles.removeTouchTarget, pressed && styles.removePressed]}><View style={[styles.remove, { backgroundColor: theme.surface, borderColor: theme.border }]}><FlowIcon name="close" color={theme.icon} size={16} /></View></Pressable></Pressable>)}</View>) : <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>No saved favorites yet</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Tap the heart on a destination to save it here.</Text><Pressable accessibilityRole="button" accessibilityLabel="Explore destinations" onPress={() => router.replace("/(tabs)/explore")} style={styles.primary}><Text style={styles.primaryText}>Explore destinations</Text></Pressable></View>}
-      {canonical.items.filter((item) => !(item.type === "search" && typeof (item.query as Record<string, unknown> | undefined)?.destinationId === "string") && !(item.type === "flight" && Boolean(((item.payload as Record<string, unknown> | undefined)?.result as FlightResult | undefined)?.id))).map((item) => <View key={`${item.type}-${item.id}`} style={[styles.serverRow, { backgroundColor: theme.surface, borderColor: theme.border }]}><Text style={[styles.name, { color: theme.text, flex: 1 }]}>{String(item.airlineName || item.hotelName || item.label || "Saved search")}</Text><Pressable accessibilityRole="button" accessibilityLabel="Remove saved item" onPress={() => void canonical.remove(item.type, item.id)} style={styles.removeTouchTarget}><FlowIcon name="close" color={theme.icon} size={16} /></Pressable></View>)}
-      </> : <>{recent.length ? <><Pressable accessibilityRole="button" onPress={() => void travelApi.clearRecentSearches().then(loadServer)}><Text style={styles.clear}>Clear all</Text></Pressable>{recent.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Rerun ${item.label}`} onPress={() => router.push({ pathname: item.type === "flight" ? "/flights" : "/hotels", params: item.params as Record<string, string> })} style={[styles.serverRow, { backgroundColor: theme.surface, borderColor: theme.border }]}><View style={{ flex: 1 }}><Text style={[styles.name, { color: theme.text }]}>{item.label}</Text><Text style={{ color: theme.muted }}>{item.subtitle}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.label}`} onPress={(event) => { event.stopPropagation(); void travelApi.deleteRecentSearch(item.id).then(loadServer); }} style={styles.removeTouchTarget}><FlowIcon name="close" color={theme.icon} size={16} /></Pressable></Pressable>)}</> : <View style={styles.center}><Text style={[styles.emptyTitle, { color: theme.text }]}>No recent searches</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Successful flight and hotel searches will appear here.</Text></View>}</>}
+      {tab === "saved" && canonical.error ? <Text accessibilityRole="alert" style={styles.syncError}>{canonical.error}</Text> : null}
+      {tab === "recent" && recentError ? <Text accessibilityRole="alert" style={styles.syncError}>{recentError}</Text> : null}
+      {tab === "saved" ? <><Text accessibilityRole="header" style={[styles.sectionTitle, { color: theme.text }]}>Saved travel</Text><Text style={[styles.explanation, { color: theme.muted }]}>Saved items are things you chose to keep.</Text>{cards.length ? cards.map((model) => <SavedCard key={`${model.item.type}:${model.item.id}`} model={model} remove={(item) => confirmRemove(item, model.title)} />) : !canonical.loading ? <View style={styles.center}><FlowIcon name="heart" color={flowColors.blue} size={42} /><Text style={[styles.emptyTitle, { color: theme.text }]}>No saved travel yet</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Use Save on a flight, hotel, or search to keep it here.</Text></View> : null}</> : <>{recent.length ? <><Pressable accessibilityRole="button" onPress={() => void travelApi.clearRecentSearches().then(loadServer)}><Text style={styles.clear}>Clear all</Text></Pressable>{recent.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`Rerun ${item.label}`} onPress={() => router.push({ pathname: item.type === "flight" ? "/flights" : "/hotels", params: item.params as Record<string, string> })} style={[styles.recentRow, { backgroundColor: theme.surface, borderColor: theme.border }]}><View style={{ flex: 1 }}><Text style={[styles.name, { color: theme.text }]}>{item.label}</Text><Text style={{ color: theme.muted }}>{item.subtitle}</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Remove ${item.label}`} onPress={(event) => { event.stopPropagation(); void travelApi.deleteRecentSearch(item.id).then(loadServer); }} style={styles.removeTouchTarget}><FlowIcon name="close" color={theme.icon} size={16} /></Pressable></Pressable>)}</> : <View style={styles.center}><Text style={[styles.emptyTitle, { color: theme.text }]}>No recent searches</Text><Text style={[styles.emptyText, { color: theme.muted }]}>Successful flight and hotel searches will appear here.</Text></View>}</>}
     </ScrollView>}
   </SafeAreaView>;
 }
 
-const styles = StyleSheet.create({ safe: { flex: 1 }, header: { height: 68, flexDirection: "row", alignItems: "center", paddingHorizontal: 12 }, back: { width: 46, height: 46, alignItems: "center", justifyContent: "center" }, title: { fontSize: 25, lineHeight: 32, fontWeight: "800" }, content: { paddingHorizontal: 18, paddingBottom: 30 }, tabs: { flexDirection: "row", borderWidth: 1, borderRadius: 12, padding: 3 }, tab: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: 9 }, activeTab: { backgroundColor: flowColors.blue }, syncError: { color: "#A4262C", marginTop: 10 }, clear: { color: flowColors.blue, fontWeight: "800", textAlign: "right", paddingVertical: 12 }, serverRow: { minHeight: 68, borderWidth: 1, borderRadius: 12, paddingLeft: 14, marginBottom: 10, flexDirection: "row", alignItems: "center" }, sectionTitle: { fontSize: 19, fontWeight: "800", marginVertical: 14 }, section: { marginBottom: 6 }, categoryTitle: { fontSize: 16, lineHeight: 22, fontWeight: "800", marginBottom: 10 }, card: { height: 104, borderWidth: 1, borderRadius: 16, overflow: "hidden", flexDirection: "row", alignItems: "center", marginBottom: 12 }, image: { width: 112, height: 104, flexShrink: 0, backgroundColor: "#DCE5F3" }, copy: { flex: 1, minWidth: 0, paddingLeft: 12, paddingRight: 6, paddingVertical: 10 }, name: { fontSize: 15, lineHeight: 20, fontWeight: "800" }, country: { fontSize: 12, lineHeight: 18, marginTop: 3 }, removeTouchTarget: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center", marginRight: 8 }, remove: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" }, removePressed: { opacity: 0.76, transform: [{ scale: 0.94 }] }, center: { flex: 1, minHeight: 300, alignItems: "center", justifyContent: "center", paddingHorizontal: 34 }, emptyTitle: { fontSize: 20, lineHeight: 27, fontWeight: "800", textAlign: "center", marginTop: 15 }, emptyText: { fontSize: 14, lineHeight: 21, textAlign: "center", marginTop: 6 }, primary: { minHeight: 48, marginTop: 20, borderRadius: 10, paddingHorizontal: 22, alignItems: "center", justifyContent: "center", backgroundColor: flowColors.blue }, primaryText: { color: "white", fontSize: 15, fontWeight: "800" }, recentExplanation: { fontSize: 13, marginBottom: 10 }, recentSection: { marginTop: 20, alignItems: "flex-start" }, pressed: { opacity: .72 } });
+const styles = StyleSheet.create({ safe: { flex: 1 }, header: { height: 68, flexDirection: "row", alignItems: "center", paddingHorizontal: 12 }, back: { width: 46, height: 46, alignItems: "center", justifyContent: "center" }, title: { fontSize: 25, lineHeight: 32, fontWeight: "800" }, content: { paddingHorizontal: 18, paddingBottom: 30 }, tabs: { flexDirection: "row", borderWidth: 1, borderRadius: 12, padding: 3 }, tab: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: 9 }, activeTab: { backgroundColor: flowColors.blue }, syncError: { color: "#A4262C", marginTop: 10 }, clear: { color: flowColors.blue, fontWeight: "800", textAlign: "right", paddingVertical: 12 }, recentRow: { minHeight: 68, borderWidth: 1, borderRadius: 12, paddingLeft: 14, marginBottom: 10, flexDirection: "row", alignItems: "center" }, sectionTitle: { fontSize: 19, fontWeight: "800", marginTop: 14 }, explanation: { fontSize: 13, marginTop: 5, marginBottom: 12 }, card: { minHeight: 104, height: 104, borderWidth: 1, borderRadius: 16, overflow: "hidden", flexDirection: "row", alignItems: "center", marginBottom: 12 }, image: { width: 104, height: 104, flexShrink: 0, backgroundColor: "#DCE5F3" }, copy: { flex: 1, minWidth: 0, paddingLeft: 12, paddingRight: 4, paddingVertical: 10 }, name: { fontSize: 15, lineHeight: 20, fontWeight: "800" }, secondary: { fontSize: 12, lineHeight: 18, marginTop: 3 }, removeTouchTarget: { width: 44, height: 44, flexShrink: 0, alignItems: "center", justifyContent: "center", marginRight: 8 }, remove: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" }, removePressed: { opacity: 0.76, transform: [{ scale: 0.94 }] }, center: { flex: 1, minHeight: 300, alignItems: "center", justifyContent: "center", paddingHorizontal: 34 }, emptyTitle: { fontSize: 20, lineHeight: 27, fontWeight: "800", textAlign: "center", marginTop: 15 }, emptyText: { fontSize: 14, lineHeight: 21, textAlign: "center", marginTop: 6 }, primary: { minHeight: 48, marginTop: 20, borderRadius: 10, paddingHorizontal: 22, alignItems: "center", justifyContent: "center", backgroundColor: flowColors.blue }, primaryText: { color: "white", fontSize: 15, fontWeight: "800" }, pressed: { opacity: 0.72 } });

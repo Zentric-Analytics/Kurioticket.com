@@ -235,11 +235,10 @@ test("flight favorite is accessible, isolated, and does not enlarge the top row"
   assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggle\(result\)/);
 });
 
-test("saved flights remain visible in the established Saved screen", () => {
+test("saved flights remain visible through the canonical Saved source", () => {
   const savedScreen = readFileSync(resolve("src/features/saved/SavedRecentScreen.tsx"), "utf8");
-  assert.match(savedScreen, /useSavedFlights\(\)/);
-  assert.match(savedScreen, /key: "flights", title: "Flights"/);
-  assert.match(savedScreen, /\[\.\.\.savedFlights\.values\(\)\]\.map\(savedFlightItem\)/);
-  assert.match(savedScreen, /item\.category === "flights"/);
-  assert.match(savedScreen, /toggleFlight\(savedFlights\.get\(item\.id\)!\)/);
+  assert.match(savedScreen, /canonicalSavedCards\(canonical\.items\)/);
+  assert.match(savedScreen, /item\.type === "flight"/);
+  assert.match(savedScreen, /pathname: "\/flight-details"/);
+  assert.doesNotMatch(savedScreen, /useSavedFlights\(\)|savedFlights\.values/);
 });
