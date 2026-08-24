@@ -216,7 +216,7 @@ test("flight card uses Lucide icons for route, benefits, and saved state", () =>
 test("flight favorite uses persistent shared state for initial, save, and remove behavior", () => {
   assert.match(card, /const \{ savedFlights, toggle \} = useSavedFlights\(\)/);
   assert.match(card, /const saved = savedFlights\.has\(result\.id\)/);
-  assert.match(card, /toggle\(result\)/);
+  assert.match(card, /toggle\(result, params\)/);
   assert.doesNotMatch(card, /useState\(false\)/);
   const hook = readFileSync(resolve("src/storage/useSavedFlights.ts"), "utf8");
   assert.match(hook, /SAVED_FLIGHTS_KEY/);
@@ -230,15 +230,16 @@ test("flight favorite is accessible, isolated, and does not enlarge the top row"
   assert.match(card, /accessibilityRole="button"/);
   assert.match(card, /accessibilityState=\{\{ selected: saved \}\}/);
   assert.match(card, /hitSlop=\{\{ top: 12, bottom: 12, left: 12, right: 12 \}\}/);
-  assert.match(card, /event\.stopPropagation\(\); toggle\(result\)/);
+  assert.match(card, /event\.stopPropagation\(\); toggle\(result, params\)/);
   assert.match(source, /cardTop: \{ minHeight: 20/);
-  assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggle\(result\)/);
+  assert.doesNotMatch(card, /onPress=.*View details[\s\S]*toggle\(result, params\)/);
 });
 
 test("saved flights remain visible through the canonical Saved source", () => {
   const savedScreen = readFileSync(resolve("src/features/saved/SavedRecentScreen.tsx"), "utf8");
   assert.match(savedScreen, /canonicalSavedCards\(canonical\.items\)/);
   assert.match(savedScreen, /item\.type === "flight"/);
-  assert.match(savedScreen, /pathname: "\/flight-details"/);
+  assert.match(savedScreen, /pathname: resultsReady \? "\/flight-results" : "\/flights"/);
+  assert.doesNotMatch(savedScreen, /pathname: "\/flight-details"/);
   assert.doesNotMatch(savedScreen, /useSavedFlights\(\)|savedFlights\.values/);
 });

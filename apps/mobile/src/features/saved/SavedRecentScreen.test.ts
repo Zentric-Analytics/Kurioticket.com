@@ -142,7 +142,10 @@ test("Saved card mapping trusts repository normalization instead of deduplicatin
 
 test("reopen is only exposed with valid canonical data", () => {
   const screen = source("src/features/saved/SavedRecentScreen.tsx");
-  assert.match(screen, /result\?\.id \? \(\) => router\.push/);
+  assert.match(screen, /hasValidSearchPlan\("flight", storedParams\)/);
+  assert.match(screen, /resultsReady \? "\/flight-results" : "\/flights"/);
+  assert.match(screen, /resultsReady \? "\/hotel-results" : "\/hotels"/);
+  assert.doesNotMatch(screen, /pathname: "\/flight-details"|pathname: "\/hotel-details"/);
   assert.match(screen, /const hasFlightRoute = searchType === "flight"/);
   assert.match(screen, /const hasHotelRoute = searchType === "hotel"/);
   assert.match(screen, /: undefined/);

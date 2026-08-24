@@ -14,7 +14,7 @@ const hotelDetail = detailSource.slice(detailSource.indexOf("function HotelDetai
 test("flight detail reflects canonical saved state and toggles the displayed result", () => {
   assert.match(flightDetail, /useSavedFlights\(\)/);
   assert.match(flightDetail, /savedFlights\.has\(result\.id\)/);
-  assert.match(flightDetail, /onPress=\{\(\) => toggleSavedFlight\(result\)\}/);
+  assert.match(flightDetail, /onPress=\{\(\) => toggleSavedFlight\(result, params\)\}/);
   assert.match(flightDetail, /accessibilityRole="button"/);
   assert.match(flightDetail, /accessibilityLabel=\{saved \? `Remove \$\{result\.airlineName\} flight from saved` : `Save \$\{result\.airlineName\} flight`\}/);
   assert.match(flightDetail, /accessibilityState=\{\{ selected: saved \}\}/);
@@ -34,11 +34,16 @@ test("result cards and detail actions share the same repositories", () => {
   assert.match(flightDetail, /useSavedFlights\(\)/);
   assert.match(resultsSource, /function HotelCard[\s\S]*?useCanonicalSaved\(\)/);
   assert.match(hotelDetail, /useCanonicalSaved\(\)/);
-  assert.match(flightHook, /savedRepositoryFor\(userId\)\.toggleFlight\(flight\)/);
+  assert.match(flightHook, /savedRepositoryFor\(userId\)\.toggleFlight\(flight, searchParams\)/);
 });
 
 test("guest hotel detail taps use the existing favorite sign-in flow", () => {
   assert.match(canonicalHook, /favoriteAction\(userId\) === "sign-in"/);
   assert.match(canonicalHook, /showFavoriteSignInPrompt\("\/saved"\);[\s\S]*?return;/);
   assert.match(flightHook, /favoriteAction\(userId\) === "sign-in"[\s\S]*?showFavoriteSignInPrompt\("\/saved"\)/);
+});
+
+test("flight result and detail saves pass their current search context", () => {
+  assert.match(resultsSource, /toggle\(result, params\)/);
+  assert.match(flightDetail, /toggleSavedFlight\(result, params\)/);
 });

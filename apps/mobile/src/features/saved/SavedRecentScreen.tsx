@@ -2,7 +2,7 @@ import { router, useFocusEffect } from "expo-router";
 import { Fragment, useCallback, useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import type { FlightResult, HotelResult, MobileRecentSearch, MobileSavedItem } from "../../api/travelApi";
+import type { FlightResult, MobileRecentSearch, MobileSavedItem } from "../../api/travelApi";
 import { travelApi } from "../../api/travelApi";
 import { useCanonicalSaved } from "../../storage/useCanonicalSaved";
 import { useSavedDestinations } from "../../storage/useSavedDestinations";
@@ -13,6 +13,7 @@ import { formatFlightAccess } from "../explore/exploreModels";
 import { regionBrowseCardLayout } from "../explore/regionBrowseCardLayout";
 import { FlowIcon } from "../flow/FlowIcon";
 import { flowColors } from "../flow/flowStyles";
+import { hasValidSearchPlan, legacyFlightSearchParams, legacyHotelSearchParams, sanitizeSearchParams } from "../flow/savedSearchContext";
 
 type SavedCardModel = {
   item: MobileSavedItem;
@@ -27,11 +28,6 @@ type SavedCardModel = {
 const record = (value: unknown): Record<string, unknown> | undefined =>
   value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
 const text = (value: unknown) => typeof value === "string" && value.trim() ? value.trim() : undefined;
-const routeParams = (value: unknown) => Object.fromEntries(Object.entries(record(value) ?? {}).flatMap(([key, raw]) => {
-  if (typeof raw === "string" || typeof raw === "number" || typeof raw === "boolean") return [[key, String(raw)]];
-  if (Array.isArray(raw) && raw.every((part) => typeof part === "string")) return [[key, raw.join(",")]];
-  return [];
-}));
 
 export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCardModel[] {
   return items.map((item) => {
@@ -39,16 +35,22 @@ export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCar
     const query = record(item.query);
     if (item.type === "flight") {
       const result = record(payload?.result) as FlightResult | undefined;
+      const storedParams = sanitizeSearchParams("flight", payload?.searchParams);
+      const legacyParams = legacyFlightSearchParams(item, result);
+      const params = hasValidSearchPlan("flight", storedParams) ? storedParams : legacyParams;
+      const resultsReady = hasValidSearchPlan("flight", params);
       const title = text(item.airlineName) ?? text(item.label) ?? "Saved flight";
       const origin = text(item.originAirport);
       const destination = text(item.destinationAirport);
-      return { item, title, secondary: origin && destination ? `${origin} → ${destination}` : "Flight", supporting: text(item.flightNumber), open: result?.id ? () => router.push({ pathname: "/flight-details", params: { result: JSON.stringify(result) } }) : undefined };
+      return { item, title, secondary: origin && destination ? `${origin} → ${destination}` : "Flight", supporting: text(item.flightNumber), open: Object.keys(params).length ? () => router.push({ pathname: resultsReady ? "/flight-results" : "/flights", params }) : undefined };
     }
     if (item.type === "hotel") {
-      const result = record(payload?.result) as HotelResult | undefined;
-      const params = routeParams(payload?.searchParams);
+      const storedParams = sanitizeSearchParams("hotel", payload?.searchParams);
+      const legacyParams = legacyHotelSearchParams(item);
+      const params = hasValidSearchPlan("hotel", storedParams) ? storedParams : legacyParams;
+      const resultsReady = hasValidSearchPlan("hotel", params);
       const title = text(item.hotelName) ?? text(item.label) ?? "Saved hotel";
-      return { item, title, secondary: text(item.destination) ?? "Hotel", open: result?.id ? () => router.push({ pathname: "/hotel-details", params: { ...params, result: JSON.stringify(result) } }) : undefined };
+      return { item, title, secondary: text(item.destination) ?? "Hotel", open: Object.keys(params).length ? () => router.push({ pathname: resultsReady ? "/hotel-results" : "/hotels", params }) : undefined };
     }
     const destinationId = text(query?.destinationId);
     const canonicalDestination = destinationId
@@ -65,10 +67,11 @@ export function canonicalSavedCards(items: readonly MobileSavedItem[]): SavedCar
     const media = canonicalDestination
       ? destinationMedia(canonicalDestination.imageDestinationId) ?? destinationMedia(canonicalDestination.id)
       : undefined;
-    const params = routeParams(query);
+    const params = searchType === "hotel" ? sanitizeSearchParams("hotel", query) : sanitizeSearchParams("flight", query);
     const hasFlightRoute = searchType === "flight" && (text(query?.to) || text(query?.destination));
     const hasHotelRoute = searchType === "hotel" && text(query?.destination);
-    const open = hasFlightRoute ? () => router.push({ pathname: "/flights", params }) : hasHotelRoute ? () => router.push({ pathname: "/hotels", params }) : undefined;
+    const resultsReady = (searchType === "flight" || searchType === "hotel") && hasValidSearchPlan(searchType, params);
+    const open = hasFlightRoute ? () => router.push({ pathname: resultsReady ? "/flight-results" : "/flights", params }) : hasHotelRoute ? () => router.push({ pathname: resultsReady ? "/hotel-results" : "/hotels", params }) : undefined;
     return { item, title, secondary, supporting, summary: canonicalDestination?.summary, media, open };
   });
 }
