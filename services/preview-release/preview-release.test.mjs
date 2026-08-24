@@ -1745,7 +1745,49 @@ test("OTA runtime mismatch is recorded once and blocks automatic republication",
 
 test("legacy runtime mismatch gets one corrective publication under native platform context", async () => {
   const expectedRuntime = "a".repeat(40);
-  let action = { state: "RUNTIME_MISMATCH", evidence: { expectedRuntime } };
+  const identityKey = `${sha}:android=${expectedRuntime}:${PREVIEW_IDENTITY.channel}`;
+  let action = { source_sha: sha, identity_key: identityKey, remote_id: "android=legacy-mismatch-group", state: "RUNTIME_MISMATCH", evidence: { expectedRuntime } };
+  let publishes = 0;
+  let replacements = 0;
+  let history = [];
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, github: {}, render: {},
+    ledger: {
+      getAction: async () => action,
+      recordAction: async (value) => { action = { ...value, remote_id: value.remoteId }; return action; },
+      replaceTerminalAction: async (value) => {
+        replacements += 1;
+        assert.equal(value.expectedRemoteId, "android=legacy-mismatch-group");
+        action = { ...value, identity_key: value.identityKey, remote_id: value.remoteId };
+        return action;
+      },
+    },
+    easFactory: () => ({
+      listUpdates: async () => history,
+      publishUpdate: async (_message, platform, runtime) => {
+        publishes += 1;
+        history = [{ id: "corrected-update", group: "corrected-group", platform, platforms: [platform], runtimeVersion: runtime, branch: "preview", message: `Automatic Preview Android OTA for ${sha}; audit run 0` }];
+        return history;
+      },
+    }),
+  });
+  const result = await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["android"], { android: expectedRuntime });
+  assert.equal(publishes, 1);
+  assert.equal(replacements, 1);
+  assert.equal(action.state, "PUBLISHED");
+  assert.equal(action.evidence.runtimeContextVersion, "native-platform-v1");
+  assert.equal(action.evidence.previousState, "RUNTIME_MISMATCH");
+  assert.equal(action.evidence.previousRemoteId, "android=legacy-mismatch-group");
+  assert.deepEqual(result.runtimes, { android: expectedRuntime });
+
+  await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["android"], { android: expectedRuntime });
+  assert.equal(publishes, 1);
+  assert.equal(replacements, 1);
+});
+
+test("failed legacy OTA correction preserves the old identity and blocks another automatic attempt", async () => {
+  const expectedRuntime = "a".repeat(40);
+  let action = { source_sha: sha, identity_key: "legacy-ota", remote_id: "android=legacy-group", state: "RUNTIME_MISMATCH", evidence: { expectedRuntime } };
   let publishes = 0;
   const orchestrator = new PreviewOrchestrator({
     config: {}, github: {}, render: {},
@@ -1753,19 +1795,50 @@ test("legacy runtime mismatch gets one corrective publication under native platf
       getAction: async () => action,
       recordAction: async (value) => { action = { ...value, remote_id: value.remoteId }; return action; },
     },
+    easFactory: () => ({ listUpdates: async () => [], publishUpdate: async () => { publishes += 1; throw new Error("provider unavailable"); } }),
+  });
+  await assert.rejects(orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["android"], { android: expectedRuntime }), /provider unavailable/);
+  assert.equal(action.remote_id, "android=legacy-group");
+  assert.equal(action.state, "RUNTIME_MISMATCH");
+  assert.equal(action.evidence.runtimeContextVersion, "native-platform-v1");
+  await assert.rejects(orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["android"], { android: expectedRuntime }), /automatic republication is blocked/);
+  assert.equal(publishes, 1);
+});
+
+test("a corrected OTA whose first ledger replacement fails is reconciled without republishing", async () => {
+  const expectedRuntime = "a".repeat(40);
+  const legacy = { source_sha: sha, identity_key: "legacy-ota", remote_id: "android=legacy-group", state: "RUNTIME_MISMATCH", evidence: { expectedRuntime } };
+  let action = legacy;
+  let publishes = 0;
+  let replacements = 0;
+  let history = [];
+  const orchestrator = new PreviewOrchestrator({
+    config: {}, github: {}, render: {},
+    ledger: {
+      getAction: async () => action,
+      recordAction: async (value) => value,
+      replaceTerminalAction: async (value) => {
+        replacements += 1;
+        if (replacements === 1) throw new Error("concurrent ledger replacement rejected");
+        action = { ...value, identity_key: value.identityKey, remote_id: value.remoteId };
+        return action;
+      },
+    },
     easFactory: () => ({
-      listUpdates: async () => [],
+      listUpdates: async () => history,
       publishUpdate: async (_message, platform, runtime) => {
         publishes += 1;
-        return [{ id: "corrected-update", group: "corrected-group", platform, platforms: [platform], runtimeVersion: runtime }];
+        history = [{ id: "corrected-update", group: "corrected-group", platform, platforms: [platform], runtimeVersion: runtime, branch: "preview", message: `Automatic Preview Android OTA for ${sha}; audit run 0` }];
+        return history;
       },
     }),
   });
-  const result = await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["android"], { android: expectedRuntime });
+  await assert.rejects(orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["android"], { android: expectedRuntime }), /replacement rejected/);
+  assert.equal(action, legacy);
+  await orchestrator.deliverOta(sha, repositoryRoot, { checkpoint: async () => {} }, ["android"], { android: expectedRuntime });
   assert.equal(publishes, 1);
-  assert.equal(action.state, "PUBLISHED");
-  assert.equal(action.evidence.runtimeContextVersion, "native-platform-v1");
-  assert.deepEqual(result.runtimes, { android: expectedRuntime });
+  assert.equal(replacements, 2);
+  assert.equal(action.remote_id, "android=corrected-group");
 });
 
 test("web recovery replaces a terminal exact-SHA deploy discovered before the ledger action exists", async () => {
@@ -2012,6 +2085,52 @@ test("failed iOS replacement remains durable and does not enter an automatic ret
   assert.equal(replacementFailed.state, "ERRORED");
   assert.equal(canonicalFailed.state, "ERRORED");
 });
+
+for (const platform of ["ios", "android"]) {
+  test(`${platform} first native reservation creates exactly one build and then reconciles it`, async () => {
+    const fingerprint = (platform === "ios" ? "7" : "8").repeat(40);
+    const kind = platform === "ios" ? "IOS_BUILD" : "ANDROID_BUILD";
+    const identity = nativeBuildIdentityKey(platform, fingerprint);
+    const remoteId = `${platform}-first-build`;
+    let action = { source_sha: sha, identity_key: identity, remote_id: null, state: "RESERVED" };
+    let creates = 0;
+    let historyReads = 0;
+    let ownerReads = 0;
+    const ledger = {
+      reserveNativeBuild: async () => ({ action, created: action.remote_id == null }),
+      getAction: async () => { ownerReads += 1; return action; },
+      recordAction: async (value) => {
+        if (value.kind === kind) action = { ...action, identity_key: value.identityKey, remote_id: value.remoteId, state: value.state, evidence: value.evidence };
+        return action;
+      },
+      advanceDeliveredNative: async () => {},
+    };
+    const finished = build({
+      id: remoteId, status: "FINISHED", platform: platform.toUpperCase(), gitCommitHash: sha,
+      runtimeVersion: fingerprint, appVersion: "0.3.0", appBuildVersion: "50",
+    });
+    const eas = {
+      listIosBuilds: async () => { historyReads += 1; return []; },
+      listAndroidBuilds: async () => { historyReads += 1; return []; },
+      createIosBuild: async () => { creates += 1; return finished; },
+      createAndroidBuild: async () => { creates += 1; return finished; },
+      viewBuild: async (id) => { assert.equal(id, remoteId); return finished; },
+      listIosSubmissions: async () => [submission({ id: "submission-first", submittedBuild: { id: remoteId } })],
+    };
+    const orchestrator = new PreviewOrchestrator({ config: {}, ledger, github: {}, render: {}, easFactory: () => eas, sleep: async () => {} });
+    orchestrator.distributeIosToInternalGroup = async () => ({ appleBuildId: "apple-first", betaGroupId: "preview", state: "FINISHED", associated: true });
+    const deliver = () => platform === "ios"
+      ? orchestrator.deliverIos(sha, repositoryRoot, { checkpoint: async () => {} }, fingerprint)
+      : orchestrator.deliverAndroid(sha, repositoryRoot, { checkpoint: async () => {} }, fingerprint);
+    assert.equal((await deliver()).buildId, remoteId);
+    assert.equal((await deliver()).buildId, remoteId);
+    assert.equal(creates, 1);
+    assert.equal(historyReads, 1);
+    assert.equal(ownerReads, 0, "the creating worker must not wait on its own reservation");
+    assert.equal(action.identity_key, identity);
+    assert.equal(action.remote_id, remoteId);
+  });
+}
 
 for (const platform of ["ios", "android"]) {
   for (const sameSource of [true, false]) {

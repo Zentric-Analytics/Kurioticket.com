@@ -419,7 +419,8 @@ export class PreviewOrchestrator {
     const identityKey = `${sha}:${platforms.map((platform) => `${platform}=${runtimes[platform]}`).join(",")}:${PREVIEW_IDENTITY.channel}`;
     const recorded = typeof this.ledger.getAction === "function" ? await this.ledger.getAction("OTA", identityKey) : null;
     const recordedEvidence = parseActionEvidence(recorded?.evidence);
-    if (recorded?.state === "RUNTIME_MISMATCH" && recordedEvidence?.runtimeContextVersion === OTA_RUNTIME_CONTEXT_VERSION) {
+    const correctingLegacyMismatch = recorded?.state === "RUNTIME_MISMATCH" && recordedEvidence?.runtimeContextVersion !== OTA_RUNTIME_CONTEXT_VERSION;
+    if (recorded?.state === "RUNTIME_MISMATCH" && !correctingLegacyMismatch) {
       throw new Error(`EAS Update runtime mismatch is already recorded for ${sha}; automatic republication is blocked.`);
     }
     const history = await eas.listUpdates();
@@ -430,7 +431,7 @@ export class PreviewOrchestrator {
       const replay = inspectPreviewUpdateHistory(history, sha, platform, expectedRuntime);
       if (replay.matchingUpdates > 1) throw new Error(`EAS update history contains conflicting exact-SHA ${platform} groups.`);
       if (replay.alreadyPublished) {
-        const replayed = history.filter((entry) => entry.message.includes(sha) && entry.platforms.includes(platform));
+        const replayed = history.filter((entry) => entry.message.includes(sha) && entry.runtimeVersion === expectedRuntime && entry.platforms.includes(platform));
         updates.push(...replayed);
         updatesByPlatform[platform] = replayed;
         continue;
@@ -441,6 +442,16 @@ export class PreviewOrchestrator {
       try {
         published = await eas.publishUpdate(message, platform, expectedRuntime);
       } catch (error) {
+        if (correctingLegacyMismatch) {
+          await this.ledger.recordAction({
+            sourceSha: sha, kind: "OTA", identityKey, remoteId: recorded.remote_id, state: "RUNTIME_MISMATCH",
+            evidence: {
+              ...recordedEvidence, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION,
+              correctivePublication: "FAILED", correctiveFailureType: error?.name ?? "Error",
+            },
+          });
+          throw error;
+        }
         if (!(error instanceof EasUpdateRuntimeMismatchError)) throw error;
         const mutatedUpdates = [...updates, ...error.updates];
         const mismatchUpdatesByPlatform = { ...updatesByPlatform, [platform]: error.updates };
@@ -458,7 +469,29 @@ export class PreviewOrchestrator {
       updatesByPlatform[platform] = published;
     }
     const ids = updates.map((entry) => entry.id ?? entry.group);
-    await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: canonicalPreviewOtaRemoteIdentity(updatesByPlatform), state: "PUBLISHED", evidence: { updates, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION } });
+    const correctedRemoteId = canonicalPreviewOtaRemoteIdentity(updatesByPlatform);
+    const evidence = { updates, runtimeContextVersion: OTA_RUNTIME_CONTEXT_VERSION };
+    if (correctingLegacyMismatch) {
+      if (!recorded.remote_id || typeof this.ledger.replaceTerminalAction !== "function") {
+        throw new Error("Legacy OTA runtime correction requires atomic durable identity replacement.");
+      }
+      if (correctedRemoteId === recorded.remote_id) {
+        throw new Error("Legacy OTA runtime correction did not produce a distinct durable remote identity.");
+      }
+      await this.ledger.replaceTerminalAction({
+        sourceSha: sha, kind: "OTA", identityKey, expectedRemoteId: recorded.remote_id,
+        remoteId: correctedRemoteId, state: "PUBLISHED",
+        evidence: {
+          ...evidence,
+          replacementReason: "corrected-native-platform-runtime-context",
+          previousRemoteId: recorded.remote_id,
+          previousState: recorded.state,
+          previousEvidence: recordedEvidence,
+        },
+      });
+    } else {
+      await this.ledger.recordAction({ sourceSha: sha, kind: "OTA", identityKey, remoteId: correctedRemoteId, state: "PUBLISHED", evidence });
+    }
     return { updateIds: ids, runtimes, channel: PREVIEW_IDENTITY.channel };
   }
 
@@ -469,16 +502,19 @@ export class PreviewOrchestrator {
       ? await this.ledger.reserveNativeBuild({ sourceSha: sha, platform: "ios", identityKey: buildIdentityKey })
       : null;
     let recordedBuildAction = reservation?.action ?? await this.ledger.getAction("IOS_BUILD", buildIdentityKey);
+    let selectedExistingOwner = Boolean(recordedBuildAction) && reservation?.created !== true;
     if (recordedBuildAction && isTerminalNativeAction(recordedBuildAction) && typeof this.ledger.latestNativeBuildRecovery === "function") {
       const recovery = await this.ledger.latestNativeBuildRecovery({ platform: "ios", fingerprint });
-      if (recovery) recordedBuildAction = recovery;
+      if (recovery) { recordedBuildAction = recovery; selectedExistingOwner = true; }
     }
     const recordedBuildIdentityKey = recordedBuildAction?.identity_key ?? buildIdentityKey;
     const artifactSourceSha = recordedBuildAction?.source_sha ?? sha;
     console.log(JSON.stringify({ event: reservation?.created ? "native-build-created" : recordedBuildAction ? "native-build-coalesced" : "native-build-reconciled", platform: "ios", sourceSha: sha, nativeArtifactSourceSha: artifactSourceSha, fingerprint, buildId: recordedBuildAction?.remote_id ?? null }));
-    recordedBuildAction = await waitForOwnedNativeRemoteId({
-      action: recordedBuildAction, platform: "ios", ledger: this.ledger, lease, sleep: this.sleep,
-    });
+    if (selectedExistingOwner) {
+      recordedBuildAction = await waitForOwnedNativeRemoteId({
+        action: recordedBuildAction, platform: "ios", ledger: this.ledger, lease, sleep: this.sleep,
+      });
+    }
     let decision;
     if (recordedBuildAction?.remote_id) {
       decision = reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha, "ios", fingerprint ?? PREVIEW_IDENTITY.runtime);
@@ -562,16 +598,19 @@ export class PreviewOrchestrator {
       ? await this.ledger.reserveNativeBuild({ sourceSha: sha, platform: "android", identityKey })
       : null;
     let recordedBuildAction = reservation?.action ?? await this.ledger.getAction("ANDROID_BUILD", identityKey);
+    let selectedExistingOwner = Boolean(recordedBuildAction) && reservation?.created !== true;
     if (recordedBuildAction && isTerminalNativeAction(recordedBuildAction) && typeof this.ledger.latestNativeBuildRecovery === "function") {
       const recovery = await this.ledger.latestNativeBuildRecovery({ platform: "android", fingerprint });
-      if (recovery) recordedBuildAction = recovery;
+      if (recovery) { recordedBuildAction = recovery; selectedExistingOwner = true; }
     }
     const recordedBuildIdentityKey = recordedBuildAction?.identity_key ?? identityKey;
     const artifactSourceSha = recordedBuildAction?.source_sha ?? sha;
     console.log(JSON.stringify({ event: reservation?.created ? "native-build-created" : recordedBuildAction ? "native-build-coalesced" : "native-build-reconciled", platform: "android", sourceSha: sha, nativeArtifactSourceSha: artifactSourceSha, fingerprint, buildId: recordedBuildAction?.remote_id ?? null }));
-    recordedBuildAction = await waitForOwnedNativeRemoteId({
-      action: recordedBuildAction, platform: "android", ledger: this.ledger, lease, sleep: this.sleep,
-    });
+    if (selectedExistingOwner) {
+      recordedBuildAction = await waitForOwnedNativeRemoteId({
+        action: recordedBuildAction, platform: "android", ledger: this.ledger, lease, sleep: this.sleep,
+      });
+    }
     let decision = recordedBuildAction?.remote_id
       ? reconcileBuilds([await eas.viewBuild(recordedBuildAction.remote_id)], artifactSourceSha, "android", fingerprint ?? PREVIEW_IDENTITY.runtime)
       : reconcileBuilds(await eas.listAndroidBuilds(artifactSourceSha), artifactSourceSha, "android", fingerprint ?? PREVIEW_IDENTITY.runtime);
